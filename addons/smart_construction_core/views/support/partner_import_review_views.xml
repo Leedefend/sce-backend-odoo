@@ -75,6 +75,12 @@
                             <group>
                                 <field name="vat"/>
                                 <field name="sc_supplier_type"/>
+                                <field name="sc_region"/>
+                                <field name="street"/>
+                                <field name="sc_registered_capital"/>
+                                <field name="sc_default_tax_rate"/>
+                                <field name="sc_default_tax_rate_text"/>
+                                <field name="sc_account_name"/>
                                 <field name="sc_bank_name"/>
                                 <field name="sc_bank_account"/>
                             </group>
@@ -87,10 +93,19 @@
                         </group>
                         <notebook>
                             <page string="来源">
+                                <group>
+                                    <field name="source_created_by"/>
+                                    <field name="source_created_at"/>
+                                    <field name="source_document_state"/>
+                                    <field name="source_push_result"/>
+                                </group>
                                 <field name="source_project_name"/>
                                 <field name="source_files"/>
                                 <field name="review_flags"/>
                                 <field name="evidence"/>
+                            </page>
+                            <page string="经营范围">
+                                <field name="sc_business_scope"/>
                             </page>
                             <page string="处理记录">
                                 <group>

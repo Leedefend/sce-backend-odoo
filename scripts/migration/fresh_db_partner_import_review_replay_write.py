@@ -50,9 +50,20 @@ SAFE_FIELDS = [
     "suggested_customer_rank",
     "suggested_supplier_rank",
     "sc_supplier_type",
+    "sc_region",
+    "street",
+    "sc_registered_capital",
+    "sc_business_scope",
+    "sc_default_tax_rate",
+    "sc_default_tax_rate_text",
     "vat",
+    "sc_account_name",
     "sc_bank_name",
     "sc_bank_account",
+    "source_created_by",
+    "source_created_at",
+    "source_document_state",
+    "source_push_result",
     "source_project_name",
     "source_files",
     "review_flags",
@@ -82,6 +93,13 @@ def to_int(value: object) -> int:
         return 0
 
 
+def to_float(value: object) -> float:
+    try:
+        return float(clean(value) or "0")
+    except ValueError:
+        return 0.0
+
+
 def vals_for(row: dict[str, str]) -> dict[str, object]:
     vals: dict[str, object] = {
         "import_batch": clean(row.get("import_batch")) or "partner_business_fit_v1",
@@ -94,9 +112,20 @@ def vals_for(row: dict[str, str]) -> dict[str, object]:
         "suggested_customer_rank": to_int(row.get("suggested_customer_rank")),
         "suggested_supplier_rank": to_int(row.get("suggested_supplier_rank")),
         "sc_supplier_type": clean(row.get("sc_supplier_type")),
+        "sc_region": clean(row.get("sc_region")),
+        "street": clean(row.get("street")),
+        "sc_registered_capital": clean(row.get("sc_registered_capital")),
+        "sc_business_scope": clean(row.get("sc_business_scope")),
+        "sc_default_tax_rate": to_float(row.get("sc_default_tax_rate")),
+        "sc_default_tax_rate_text": clean(row.get("sc_default_tax_rate_text")),
         "vat": clean(row.get("vat")),
+        "sc_account_name": clean(row.get("sc_account_name")),
         "sc_bank_name": clean(row.get("sc_bank_name")),
         "sc_bank_account": clean(row.get("sc_bank_account")),
+        "source_created_by": clean(row.get("source_created_by")),
+        "source_created_at": clean(row.get("source_created_at")),
+        "source_document_state": clean(row.get("source_document_state")),
+        "source_push_result": clean(row.get("source_push_result")),
         "source_project_name": clean(row.get("source_project_name")),
         "source_files": clean(row.get("source_files")),
         "review_flags": clean(row.get("review_flags")),

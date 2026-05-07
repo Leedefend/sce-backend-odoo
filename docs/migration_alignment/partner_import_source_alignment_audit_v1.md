@@ -354,6 +354,8 @@ Review queue result:
 | invalid bank account review | 84 |
 | invalid or placeholder credit | 70 |
 | multiple current payload matches | 28 |
+| review rows carrying tax rate | 446 |
+| review rows carrying region | 134 |
 
 The fresh-db replay script for this queue is:
 
@@ -362,6 +364,17 @@ FRESH_DB_PARTNER_IMPORT_REVIEW_INPUT_CSV=artifacts/migration/partner_business_al
 FRESH_DB_PARTNER_IMPORT_REVIEW_EXPECTED_ROWS=1444 \
 python3 scripts/migration/fresh_db_partner_import_review_replay_write.py
 ```
+
+Resolved reviews can be exported back into the partner write contract with:
+
+```bash
+PARTNER_IMPORT_REVIEW_BATCH=partner_business_fit_v1 \
+python3 scripts/migration/fresh_db_partner_import_review_resolution_export.py
+```
+
+The export writes resolved rows as `gate_action=write_candidate` into
+`partner_import_review_resolved_promotions_v1.csv`, while ignored rows are kept
+in `partner_import_review_ignored_v1.csv`.
 
 ## Unified Payload
 
