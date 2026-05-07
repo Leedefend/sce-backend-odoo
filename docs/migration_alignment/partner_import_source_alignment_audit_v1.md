@@ -128,6 +128,17 @@ Regression guard:
 python3 scripts/migration/partner_asset_business_fit_guard.py --check
 ```
 
+Closure guard:
+
+```bash
+python3 scripts/migration/partner_business_fit_closure_guard.py --check
+```
+
+The closure guard regenerates and verifies the partner asset, partner-bank
+asset, review queue, and rehearsal package. Current closure result: payload
+7,792 rows, gate split 2,123 write / 4,225 update-only / 1,444 review, package
+29 files, DB writes 0.
+
 Replay rehearsal package generated with:
 
 ```bash
