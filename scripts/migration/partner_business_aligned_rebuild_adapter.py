@@ -48,6 +48,8 @@ PAYLOAD_FIELDS = [
     "street",
     "sc_registered_capital",
     "sc_business_scope",
+    "sc_default_tax_rate",
+    "sc_default_tax_rate_text",
     "sc_account_name",
     "sc_bank_name",
     "sc_bank_account",
@@ -127,6 +129,20 @@ def is_valid_bank_account(value: object) -> bool:
     return bool(re.search(r"\d{6,}", text))
 
 
+def normalize_tax_rate(value: object) -> str:
+    text = clean(value)
+    if not text:
+        return ""
+    normalized = text.replace("%", "").replace("％", "").replace(",", "").strip()
+    try:
+        number = float(normalized)
+    except ValueError:
+        return ""
+    if "%" not in text and "％" not in text and 0 < number < 1:
+        number *= 100
+    return f"{number:.4f}".rstrip("0").rstrip(".")
+
+
 def build_payload_rows(source_records: list[dict[str, str]], current_rows: list[dict[str, str]]) -> tuple[list[dict[str, object]], list[dict[str, object]]]:
     grouped: dict[str, list[dict[str, str]]] = defaultdict(list)
     for record in source_records:
@@ -154,6 +170,7 @@ def build_payload_rows(source_records: list[dict[str, str]], current_rows: list[
         name = norm_name(entity.get("canonical_name"))
         tax_no = norm_tax(entity.get("tax_no"))
         bank_account = first_value(rows, "bank_account")
+        tax_rate_text = first_value(rows, "tax_rate")
         review_flags = set()
         if role == "unknown":
             review_flags.add("unknown_business_role")
@@ -185,6 +202,8 @@ def build_payload_rows(source_records: list[dict[str, str]], current_rows: list[
                 "street": first_value(rows, "address"),
                 "sc_registered_capital": first_value(rows, "register_capital"),
                 "sc_business_scope": first_value(rows, "business_scope"),
+                "sc_default_tax_rate": normalize_tax_rate(tax_rate_text),
+                "sc_default_tax_rate_text": tax_rate_text,
                 "sc_account_name": first_value(rows, "bank_account_name") or name,
                 "sc_bank_name": first_value(rows, "bank_name"),
                 "sc_bank_account": bank_account,
@@ -246,6 +265,7 @@ def summarize(payload_rows: list[dict[str, object]], current_rows: list[dict[str
         "rows_with_address": sum(1 for row in payload_rows if clean(row["street"])),
         "rows_with_registered_capital": sum(1 for row in payload_rows if clean(row["sc_registered_capital"])),
         "rows_with_business_scope": sum(1 for row in payload_rows if clean(row["sc_business_scope"])),
+        "rows_with_tax_rate": sum(1 for row in payload_rows if clean(row["sc_default_tax_rate"])),
         "rows_with_credit_code": sum(1 for row in payload_rows if clean(row["vat"])),
         "db_write": False,
         "decision": "business_aligned_partner_payload_ready",

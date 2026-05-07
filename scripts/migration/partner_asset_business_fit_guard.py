@@ -24,6 +24,8 @@ REQUIRED_BUSINESS_FIELDS = {
     "sc_region",
     "street",
     "sc_registered_capital",
+    "sc_default_tax_rate",
+    "sc_default_tax_rate_text",
     "sc_account_name",
     "sc_bank_name",
     "sc_bank_account",

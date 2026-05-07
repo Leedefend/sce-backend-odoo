@@ -309,6 +309,8 @@ in the earlier business-fit payload. The model and payload surface now carry:
 - `street`
 - `sc_registered_capital`
 - `sc_business_scope`
+- `sc_default_tax_rate`
+- `sc_default_tax_rate_text`
 
 Regenerated payload evidence:
 
@@ -319,10 +321,15 @@ Regenerated payload evidence:
 | rows with address | 8 |
 | rows with registered capital | 10 |
 | rows with business scope | 0 |
+| rows with tax rate | 3,741 |
 
 `sc_business_scope` is still kept on the model because it is a valid partner
 business fact, but it is not a required non-empty guard for this source snapshot
 because the current Excel files did not provide populated values.
+
+Tax rates are stored as both normalized percentage values and original source
+text. For example, `13%` and `0.1300` both normalize to `13`, while the original
+text remains available for audit.
 
 ## Unified Payload
 

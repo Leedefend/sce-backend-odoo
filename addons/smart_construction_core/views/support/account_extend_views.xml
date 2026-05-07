@@ -59,6 +59,8 @@
                             <field name="vat" string="统一社会信用代码"/>
                             <field name="sc_region"/>
                             <field name="sc_registered_capital"/>
+                            <field name="sc_default_tax_rate"/>
+                            <field name="sc_default_tax_rate_text"/>
                             <field name="sc_business_scope"/>
                         </group>
                         <group string="联系方式">
@@ -169,6 +171,8 @@
                             <field name="vat" string="统一社会信用代码"/>
                             <field name="sc_region"/>
                             <field name="sc_registered_capital"/>
+                            <field name="sc_default_tax_rate"/>
+                            <field name="sc_default_tax_rate_text"/>
                             <field name="sc_business_scope"/>
                             <field name="legacy_partner_id"/>
                             <field name="legacy_partner_source"/>

@@ -24,6 +24,8 @@ class ResPartner(models.Model):
     sc_region = fields.Char(string="所属地区", index=True)
     sc_registered_capital = fields.Char(string="注册资本")
     sc_business_scope = fields.Text(string="经营范围")
+    sc_default_tax_rate = fields.Float(string="默认税率%", digits=(16, 4))
+    sc_default_tax_rate_text = fields.Char(string="历史税率文本")
     sc_supplier_note = fields.Text(string="供应商备注")
     sc_attachment_ids = fields.Many2many(
         "ir.attachment",

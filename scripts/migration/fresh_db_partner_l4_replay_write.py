@@ -46,6 +46,8 @@ SAFE_FIELDS = [
     "street",
     "sc_registered_capital",
     "sc_business_scope",
+    "sc_default_tax_rate",
+    "sc_default_tax_rate_text",
     "sc_account_name",
     "sc_bank_name",
     "sc_bank_account",
@@ -91,6 +93,16 @@ def parse_rank(value: str, fallback: int) -> int:
         return fallback
 
 
+def parse_float(value: str) -> float | str:
+    text = clean(value)
+    if not text:
+        return ""
+    try:
+        return float(text)
+    except ValueError:
+        return ""
+
+
 def build_vals(row: dict[str, str]) -> dict[str, object]:
     source = clean(row.get("legacy_partner_source"))
     source_type = clean(row.get("source_type"))
@@ -110,6 +122,8 @@ def build_vals(row: dict[str, str]) -> dict[str, object]:
         "street": clean(row.get("street")),
         "sc_registered_capital": clean(row.get("sc_registered_capital")),
         "sc_business_scope": clean(row.get("sc_business_scope")),
+        "sc_default_tax_rate": parse_float(clean(row.get("sc_default_tax_rate"))),
+        "sc_default_tax_rate_text": clean(row.get("sc_default_tax_rate_text")),
         "sc_account_name": clean(row.get("sc_account_name")),
         "sc_bank_name": clean(row.get("sc_bank_name")),
         "sc_bank_account": clean(row.get("sc_bank_account")),

@@ -47,6 +47,8 @@ SAFE_FIELDS = [
     "street",
     "sc_registered_capital",
     "sc_business_scope",
+    "sc_default_tax_rate",
+    "sc_default_tax_rate_text",
     "sc_account_name",
     "sc_bank_name",
     "sc_bank_account",
@@ -98,6 +100,7 @@ def ensure_allowed() -> None:
 
 
 def row_to_vals(row: dict[str, str]) -> dict[str, object]:
+    tax_rate = clean(row.get("sc_default_tax_rate"))
     vals: dict[str, object] = {
         "name": clean(row.get("name")),
         "company_type": clean(row.get("company_type")) or "company",
@@ -108,6 +111,8 @@ def row_to_vals(row: dict[str, str]) -> dict[str, object]:
         "street": clean(row.get("street")) or False,
         "sc_registered_capital": clean(row.get("sc_registered_capital")) or False,
         "sc_business_scope": clean(row.get("sc_business_scope")) or False,
+        "sc_default_tax_rate": float(tax_rate) if tax_rate else 0.0,
+        "sc_default_tax_rate_text": clean(row.get("sc_default_tax_rate_text")) or False,
         "sc_account_name": clean(row.get("sc_account_name")) or False,
         "sc_bank_name": clean(row.get("sc_bank_name")) or False,
         "sc_bank_account": clean(row.get("sc_bank_account")) or False,
