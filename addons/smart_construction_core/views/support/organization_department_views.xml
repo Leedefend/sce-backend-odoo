@@ -61,9 +61,9 @@
         <field name="view_mode">tree,form</field>
         <field name="view_id" ref="view_sc_organization_department_tree"/>
         <field name="search_view_id" ref="view_sc_organization_department_search"/>
-        <field name="domain">[('company_id', '=', allowed_company_ids[0])]</field>
+        <field name="domain">[('company_id', '=', allowed_company_ids[0]), ('name', 'not in', ['系统管理', 'Administration'])]</field>
         <field name="context">{'default_company_id': allowed_company_ids[0]}</field>
-        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_data_read')])]"/>
     </record>
 
     <menuitem id="menu_sc_organization_department"
@@ -71,5 +71,5 @@
               parent="menu_sc_business_config_center"
               action="action_sc_organization_department"
               sequence="10"
-              groups="smart_construction_core.group_sc_cap_business_config_admin"/>
+              groups="smart_construction_core.group_sc_cap_data_read"/>
 </odoo>

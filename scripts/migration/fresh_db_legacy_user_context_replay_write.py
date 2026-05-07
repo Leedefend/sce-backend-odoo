@@ -49,6 +49,16 @@ def bool_from_legacy_active(deleted_flag: str, state: str = "") -> bool:
     return True
 
 
+def int_from(value: object) -> int:
+    text = clean(value)
+    if not text:
+        return 0
+    try:
+        return int(float(text))
+    except ValueError:
+        return 0
+
+
 REPO_ROOT = repo_root()
 ARTIFACT_ROOT = Path(os.getenv("MIGRATION_ARTIFACT_ROOT", str(REPO_ROOT / "artifacts/migration")))
 INPUT_MANIFEST = REPO_ROOT / "artifacts/migration/fresh_db_legacy_user_context_replay_adapter_result_v1.json"
@@ -153,8 +163,28 @@ for row in profile_rows:
         "source_login": clean(row.get("source_login")) or False,
         "display_name": clean(row.get("display_name")) or clean(row.get("source_login")) or legacy_id,
         "phone": clean(row.get("phone")) or False,
+        "legacy_created_at": clean(row.get("legacy_created_at")) or False,
+        "department_scope_summary": clean(row.get("department_scope_summary")) or False,
+        "department_scope_count": int_from(row.get("department_scope_count")),
+        "account_state_label": clean(row.get("account_state_label")) or False,
+        "login_count": int_from(row.get("login_count")),
+        "last_login_at": clean(row.get("last_login_at")) or False,
         "email": clean(row.get("email")) or False,
         "employee_no": clean(row.get("employee_no")) or False,
+        "credential_type": clean(row.get("credential_type")) or False,
+        "credential_no": clean(row.get("credential_no")) or False,
+        "residence_address": clean(row.get("residence_address")) or False,
+        "archive_no": clean(row.get("archive_no")) or False,
+        "birth_date": clean(row.get("birth_date")) or False,
+        "political_status": clean(row.get("political_status")) or False,
+        "nation": clean(row.get("nation")) or False,
+        "native_place": clean(row.get("native_place")) or False,
+        "graduation_school": clean(row.get("graduation_school")) or False,
+        "graduation_date": clean(row.get("graduation_date")) or False,
+        "major": clean(row.get("major")) or False,
+        "education": clean(row.get("education")) or False,
+        "professional_title": clean(row.get("professional_title")) or False,
+        "professional_qualification": clean(row.get("professional_qualification")) or False,
         "person_state": clean(row.get("person_state")) or False,
         "deleted_flag": clean(row.get("deleted_flag")) or False,
         "locked_flag": clean(row.get("locked_flag")) or False,
@@ -162,9 +192,22 @@ for row in profile_rows:
         "sex": clean(row.get("sex")) or False,
         "account_type": clean(row.get("account_type")) or False,
         "user_type": clean(row.get("user_type")) or False,
+        "personnel_type": clean(row.get("personnel_type")) or False,
         "legacy_department_id": clean(row.get("legacy_department_id")) or False,
         "department_id": department_by_legacy.get(clean(row.get("legacy_department_id"))) or False,
         "department_name": clean(row.get("department_name")) or False,
+        "work_unit": clean(row.get("work_unit")) or False,
+        "project_name": clean(row.get("project_name")) or False,
+        "company_email": clean(row.get("company_email")) or False,
+        "emergency_contact": clean(row.get("emergency_contact")) or False,
+        "emergency_phone": clean(row.get("emergency_phone")) or False,
+        "emergency_relation": clean(row.get("emergency_relation")) or False,
+        "bank_name": clean(row.get("bank_name")) or False,
+        "bank_account": clean(row.get("bank_account")) or False,
+        "onboarding_date": clean(row.get("onboarding_date")) or False,
+        "post_salary": clean(row.get("post_salary")) or False,
+        "construction_site": clean(row.get("construction_site")) or False,
+        "age": clean(row.get("age")) or False,
         "tr_user_id": clean(row.get("tr_user_id")) or False,
         "tr_user_state": clean(row.get("tr_user_state")) or False,
         "tr_user_operator": clean(row.get("tr_user_operator")) or False,
@@ -212,6 +255,19 @@ for row in role_rows:
         Role.create(vals)
         role_created += 1
 
+role_summary_updated = 0
+for legacy_user_id, profile_id in profiles_by_legacy.items():
+    roles = Role.search([("legacy_user_id", "=", legacy_user_id), ("role_name", "not in", [False, ""])])
+    role_names = []
+    for role_name in roles.mapped("role_name"):
+        if role_name and role_name not in role_names:
+            role_names.append(role_name)
+    summary = ",".join(role_names[:8])
+    if len(role_names) > 8:
+        summary = f"{summary}等{len(role_names)}个角色"
+    Profile.browse(profile_id).write({"role_summary": summary or False, "role_count": len(role_names)})
+    role_summary_updated += 1
+
 env.cr.commit()  # noqa: F821
 status = "PASS" if len(role_blocked) == 0 else "PASS_WITH_BLOCKED"
 payload = {
@@ -227,6 +283,7 @@ payload = {
     "updated_profiles": profile_updated,
     "created_roles": role_created,
     "updated_roles": role_updated,
+    "updated_profile_role_summaries": role_summary_updated,
     "deduped_departments": deduped_departments,
     "deduped_profiles": deduped_profiles,
     "deduped_roles": deduped_roles,

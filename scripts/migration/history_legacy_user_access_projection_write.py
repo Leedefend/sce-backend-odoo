@@ -61,74 +61,107 @@ def group(xmlid: str):
         return env["res.groups"]  # noqa: F821
 
 
+def split_role_tokens(raw: str | None) -> list[str]:
+    return [item.strip() for item in re.split(r"[,，;；/、\n]+", raw or "") if item.strip()]
+
+
 def role_group_xmlids(role_name: str) -> set[str]:
     name = (role_name or "").strip()
     groups: set[str] = set()
-    if not name or name.isdigit() or "通用角色" in name or "管理员角色" in name:
+    if not name or name.isdigit():
         return groups
 
-    manager_markers = ("经理", "负责人", "审批", "总经理", "董事长", "管理")
-    is_manager = any(marker in name for marker in manager_markers)
+    if "通用角色" in name or "行政部" in name or "公司员工" in name:
+        groups.add("smart_construction_core.group_sc_role_general_user")
+    if "管理员角色" in name:
+        groups.add("smart_construction_core.group_sc_role_business_admin")
+    if any(marker in name for marker in ("总经理", "副总经理", "董事长", "管理层")):
+        groups.add("smart_construction_core.group_sc_role_executive")
 
-    if any(marker in name for marker in ("项目", "工程", "施工", "资料", "机械", "项目部")):
-        groups.add(
-            "smart_construction_core.group_sc_cap_project_manager"
-            if is_manager
-            else "smart_construction_core.group_sc_cap_project_user"
-        )
-    if any(marker in name for marker in ("经营", "合同", "招投标")):
-        groups.add(
-            "smart_construction_core.group_sc_cap_contract_manager"
-            if is_manager
-            else "smart_construction_core.group_sc_cap_contract_user"
-        )
-    if any(marker in name for marker in ("财务", "出纳", "审计", "保证金")):
-        groups.add(
-            "smart_construction_core.group_sc_cap_finance_manager"
-            if is_manager
-            else "smart_construction_core.group_sc_cap_finance_user"
-        )
-    if "材料" in name:
-        groups.add(
-            "smart_construction_core.group_sc_cap_material_manager"
-            if is_manager
-            else "smart_construction_core.group_sc_cap_material_user"
-        )
+    if "临时财务" in name:
+        groups.add("smart_construction_core.group_sc_role_temporary_finance")
+    elif "财务经理" in name:
+        groups.add("smart_construction_core.group_sc_role_finance_manager")
+    elif any(marker in name for marker in ("财务助理", "财务部", "出纳", "财务", "税务经办")):
+        groups.add("smart_construction_core.group_sc_role_finance_user")
+
+    if any(marker in name for marker in ("经营部", "经营", "招投标")):
+        groups.add("smart_construction_core.group_sc_role_operation_user")
+    if any(marker in name for marker in ("合同管理员", "合同管理", "合同")):
+        groups.add("smart_construction_core.group_sc_role_contract_admin")
+    if any(marker in name for marker in ("客户", "供应商", "客商", "往来单位")):
+        groups.add("smart_construction_core.group_sc_role_partner_manager")
+
+    if any(marker in name for marker in ("项目负责人", "临时项目负责人", "项目经理")):
+        groups.add("smart_construction_core.group_sc_role_project_manager")
+    elif any(marker in name for marker in ("项目部", "工程部", "项目人员", "工程", "施工")):
+        groups.add("smart_construction_core.group_sc_role_project_user")
+
+    if any(marker in name for marker in ("物资主管", "材料主管")):
+        groups.add("smart_construction_core.group_sc_role_material_manager")
+    elif any(marker in name for marker in ("物资", "材料")):
+        groups.add("smart_construction_core.group_sc_role_material_user")
+
     if "采购" in name:
-        groups.add(
-            "smart_construction_core.group_sc_cap_purchase_manager"
-            if is_manager
-            else "smart_construction_core.group_sc_cap_purchase_user"
-        )
+        groups.add("smart_construction_core.group_sc_role_purchase_user")
     if any(marker in name for marker in ("成本", "成控", "预算")):
-        groups.add(
-            "smart_construction_core.group_sc_cap_cost_manager"
-            if is_manager
-            else "smart_construction_core.group_sc_cap_cost_user"
-        )
-    if "结算" in name:
-        groups.add(
-            "smart_construction_core.group_sc_cap_settlement_manager"
-            if is_manager
-            else "smart_construction_core.group_sc_cap_settlement_user"
-        )
-
-    if any(marker in name for marker in ("总经理", "副总经理", "董事长")):
-        groups.update(
-            {
-                "smart_construction_core.group_sc_cap_project_manager",
-                "smart_construction_core.group_sc_cap_contract_manager",
-                "smart_construction_core.group_sc_cap_finance_manager",
-                "smart_construction_core.group_sc_cap_material_manager",
-                "smart_construction_core.group_sc_cap_purchase_manager",
-                "smart_construction_core.group_sc_cap_cost_manager",
-                "smart_construction_core.group_sc_cap_settlement_manager",
-                "smart_construction_core.group_sc_cap_contact_manager",
-                "smart_construction_core.group_sc_cap_data_read",
-            }
-        )
+        groups.add("smart_construction_core.group_sc_role_cost_user")
+    if "结算主管" in name:
+        groups.add("smart_construction_core.group_sc_role_settlement_manager")
+    elif "结算" in name:
+        groups.add("smart_construction_core.group_sc_role_settlement_user")
 
     return groups
+
+
+def role_group_xmlids_from_text(raw: str | None) -> set[str]:
+    groups: set[str] = set()
+    for token in split_role_tokens(raw):
+        groups.update(role_group_xmlids(token))
+    return groups
+
+
+def cleanup_direct_runtime_groups(user, role_groups):
+    assignable = env["res.groups"].sudo().search([("sc_assignable_user_permission", "=", True)])  # noqa: F821
+    removable_xmlids = {
+        "smart_construction_core.group_sc_cap_business_initiator",
+        "smart_construction_core.group_sc_cap_project_read",
+        "smart_construction_core.group_sc_cap_project_user",
+        "smart_construction_core.group_sc_cap_project_manager",
+        "smart_construction_core.group_sc_cap_contract_read",
+        "smart_construction_core.group_sc_cap_contract_user",
+        "smart_construction_core.group_sc_cap_contract_manager",
+        "smart_construction_core.group_sc_cap_cost_read",
+        "smart_construction_core.group_sc_cap_cost_user",
+        "smart_construction_core.group_sc_cap_cost_manager",
+        "smart_construction_core.group_sc_cap_material_read",
+        "smart_construction_core.group_sc_cap_material_user",
+        "smart_construction_core.group_sc_cap_material_manager",
+        "smart_construction_core.group_sc_cap_purchase_read",
+        "smart_construction_core.group_sc_cap_purchase_user",
+        "smart_construction_core.group_sc_cap_purchase_manager",
+        "smart_construction_core.group_sc_cap_finance_read",
+        "smart_construction_core.group_sc_cap_finance_user",
+        "smart_construction_core.group_sc_cap_finance_manager",
+        "smart_construction_core.group_sc_cap_settlement_read",
+        "smart_construction_core.group_sc_cap_settlement_user",
+        "smart_construction_core.group_sc_cap_settlement_manager",
+        "smart_construction_core.group_sc_cap_data_read",
+        "smart_construction_core.group_sc_cap_contact_manager",
+        "smart_construction_core.group_sc_cap_business_config_admin",
+    }
+    removable = env["res.groups"].sudo()  # noqa: F821
+    for xmlid in removable_xmlids:
+        removable |= group(xmlid)
+    internal_group = group("smart_construction_core.group_sc_internal_user")
+    keep_groups = user.groups_id - assignable - removable
+    target_groups = keep_groups | role_groups
+    if internal_group and not user.share:
+        target_groups |= internal_group
+    before_ids = set(user.groups_id.ids)
+    user.sudo().write({"groups_id": [(6, 0, target_groups.ids)]})
+    after_ids = set(user.groups_id.ids)
+    return {"added": len(after_ids - before_ids), "removed": len(before_ids - after_ids)}
 
 
 def normalized_project_ref(raw: str | None) -> str | None:
@@ -148,6 +181,7 @@ artifact_root = resolve_artifact_root()
 output_json = artifact_root / "history_legacy_user_access_projection_write_result_v1.json"
 
 Role = env["sc.legacy.user.role"].sudo().with_context(active_test=False)  # noqa: F821
+Profile = env["sc.legacy.user.profile"].sudo().with_context(active_test=False)  # noqa: F821
 Scope = env["sc.legacy.user.project.scope"].sudo().with_context(active_test=False)  # noqa: F821
 Project = env["project.project"].sudo().with_context(active_test=False)  # noqa: F821
 
@@ -155,28 +189,55 @@ roles_total = Role.search_count([])
 roles_projected = 0
 roles_unmapped = 0
 user_group_links_added = 0
+user_group_links_removed = 0
 projected_users: set[int] = set()
 projection_by_role: dict[str, int] = {}
+projection_by_profile_role: dict[str, int] = {}
+
+profiles_total = Profile.search_count([("user_id", "!=", False)])
+profiles_projected = 0
+profiles_unmapped = 0
+
+for profile in Profile.search([("user_id", "!=", False)]):
+    xmlids = role_group_xmlids_from_text(profile.role_summary)
+    groups = env["res.groups"].sudo()  # noqa: F821
+    for xmlid in sorted(xmlids):
+        groups |= group(xmlid)
+    if not groups:
+        # Keep scoped project users operational even when the old role name is not explicit enough.
+        has_current_scope = Scope.search_count(
+            [("user_id", "=", profile.user_id.id), ("scope_state", "=", "current"), ("project_id", "!=", False)]
+        )
+        if has_current_scope:
+            groups |= group("smart_construction_core.group_sc_role_project_user")
+    if groups:
+        delta = cleanup_direct_runtime_groups(profile.user_id, groups)
+        user_group_links_added += delta["added"]
+        user_group_links_removed += delta["removed"]
+        projected_users.add(profile.user_id.id)
+        profiles_projected += 1
+        for token in split_role_tokens(profile.role_summary):
+            projection_by_profile_role[token] = projection_by_profile_role.get(token, 0) + 1
+    else:
+        profiles_unmapped += 1
 
 for role in Role.search([]):
     xmlids = sorted(role_group_xmlids(role.role_name or ""))
     groups = env["res.groups"].sudo()  # noqa: F821
     for xmlid in xmlids:
         groups |= group(xmlid)
-    before_group_ids = set(role.user_id.groups_id.ids) if role.user_id else set()
-    if groups and role.user_id:
-        role.user_id.sudo().write({"groups_id": [(4, group_id) for group_id in groups.ids]})
-        after_group_ids = set(role.user_id.groups_id.ids)
-        user_group_links_added += len(after_group_ids - before_group_ids)
-        projected_users.add(role.user_id.id)
     role.write(
         {
             "projected_group_ids": [(6, 0, groups.ids)],
-            "projection_state": "projected" if groups else "unmapped",
-            "projection_note": "legacy role name projected to runtime capability groups" if groups else "no safe runtime mapping from legacy role name",
+            "projection_state": "projected" if groups and role.user_id else "unmapped",
+            "projection_note": (
+                "legacy role name projected to default business role groups"
+                if groups
+                else "no safe default business role mapping from legacy role name"
+            ),
         }
     )
-    if groups:
+    if groups and role.user_id:
         roles_projected += 1
         projection_by_role[role.role_name or ""] = projection_by_role.get(role.role_name or "", 0) + 1
     else:
@@ -220,7 +281,7 @@ eligible_project_scope_rows = len(current_scopes)
 scope_access_applied = 0
 subscriber_pairs_added = 0
 
-project_user_group = group("smart_construction_core.group_sc_cap_project_user")
+project_user_group = group("smart_construction_core.group_sc_role_project_user")
 for scope in current_scopes:
     user = scope.user_id
     project = scope.project_id
@@ -246,11 +307,15 @@ for scope in current_scopes:
 env.cr.commit()  # noqa: F821
 
 counts = {
+    "legacy_profiles_with_user_total": profiles_total,
+    "legacy_profiles_projected_to_business_roles": profiles_projected,
+    "legacy_profiles_unmapped_to_business_roles": profiles_unmapped,
     "legacy_roles_total": roles_total,
     "legacy_roles_projected": roles_projected,
     "legacy_roles_unmapped": roles_unmapped,
     "projected_users": len(projected_users),
     "user_group_links_added": user_group_links_added,
+    "user_group_links_removed": user_group_links_removed,
     "legacy_scope_rows_total": Scope.search_count([]),
     "legacy_scope_rows_current": Scope.search_count([("scope_state", "=", "current")]),
     "legacy_scope_rows_with_project": Scope.search_count([("project_id", "!=", False)]),
@@ -270,8 +335,9 @@ payload = {
     "database": env.cr.dbname,  # noqa: F821
     "counts": counts,
     "projection_by_role": dict(sorted(projection_by_role.items(), key=lambda item: (-item[1], item[0]))),
-    "db_writes": user_group_links_added + resolved_scope_updates + scope_access_applied + subscriber_pairs_added,
-    "decision": "legacy_user_access_projected_to_runtime",
+    "projection_by_profile_role": dict(sorted(projection_by_profile_role.items(), key=lambda item: (-item[1], item[0]))),
+    "db_writes": user_group_links_added + user_group_links_removed + resolved_scope_updates + scope_access_applied + subscriber_pairs_added,
+    "decision": "legacy_user_access_projected_to_default_business_role_groups",
 }
 write_json(output_json, payload)
 print("HISTORY_LEGACY_USER_ACCESS_PROJECTION_WRITE=" + json.dumps(payload, ensure_ascii=False, sort_keys=True))

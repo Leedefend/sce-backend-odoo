@@ -42,8 +42,28 @@ PROFILE_FIELDS = [
     "source_login",
     "display_name",
     "phone",
+    "legacy_created_at",
+    "department_scope_summary",
+    "department_scope_count",
+    "account_state_label",
+    "login_count",
+    "last_login_at",
     "email",
     "employee_no",
+    "credential_type",
+    "credential_no",
+    "residence_address",
+    "archive_no",
+    "birth_date",
+    "political_status",
+    "nation",
+    "native_place",
+    "graduation_school",
+    "graduation_date",
+    "major",
+    "education",
+    "professional_title",
+    "professional_qualification",
     "person_state",
     "deleted_flag",
     "locked_flag",
@@ -51,8 +71,21 @@ PROFILE_FIELDS = [
     "sex",
     "account_type",
     "user_type",
+    "personnel_type",
     "legacy_department_id",
     "department_name",
+    "work_unit",
+    "project_name",
+    "company_email",
+    "emergency_contact",
+    "emergency_phone",
+    "emergency_relation",
+    "bank_name",
+    "bank_account",
+    "onboarding_date",
+    "post_salary",
+    "construction_site",
+    "age",
     "tr_user_id",
     "tr_user_state",
     "tr_user_operator",
@@ -91,11 +124,12 @@ def run_sql(sql: str) -> str:
         "-C",
         "-d",
         SQL_DATABASE,
-        "-W",
         "-s",
         "\t",
-        "-h",
-        "-1",
+        "-y",
+        "0",
+        "-Y",
+        "0",
         "-Q",
         sql,
     ]
@@ -109,9 +143,13 @@ def parse_rows(raw: str, fields: list[str]) -> list[dict[str, str]]:
         if not stripped or stripped.startswith("(") and stripped.endswith("rows affected)"):
             continue
         parts = line.rstrip("\r\n").split("\t")
+        if [part.strip() for part in parts] == fields:
+            continue
+        if all(part.strip().strip("-") == "" for part in parts):
+            continue
         if len(parts) != len(fields):
             raise RuntimeError({"unexpected_sqlcmd_row_shape": len(parts), "expected": len(fields), "line": line[:500]})
-        rows.append(dict(zip(fields, parts)))
+        rows.append(dict(zip(fields, [part.strip() for part in parts])))
     return rows
 
 
@@ -153,6 +191,7 @@ ORDER BY ID;
 
 def profile_rows() -> list[dict[str, str]]:
     sql = f"""
+SET QUOTED_IDENTIFIER ON;
 SET NOCOUNT ON;
 WITH tr_ranked AS (
   SELECT *, ROW_NUMBER() OVER (
@@ -160,6 +199,17 @@ WITH tr_ranked AS (
     ORDER BY CASE WHEN ISNULL(user_state, 0) = 1 THEN 0 ELSE 1 END, user_id
   ) AS rn
   FROM dbo.tr_user
+),
+login_stats AS (
+  SELECT
+    CONVERT(varchar(80), DLRID) AS legacy_user_id,
+    COUNT(*) AS login_count,
+    MAX(CONVERT(datetime, DLSJ)) AS last_login_at
+  FROM dbo.View_Select_ts_system_loginData
+  WHERE IsLoginSucess = '是'
+    AND NULLIF(LTRIM(RTRIM(DLRID)), '') IS NOT NULL
+    AND NULLIF(LTRIM(RTRIM(DLSJ)), '') IS NOT NULL
+  GROUP BY CONVERT(varchar(80), DLRID)
 )
 SELECT
   {clean_sql("u.ID")} AS legacy_user_id,
@@ -167,8 +217,28 @@ SELECT
   {clean_sql("u.USERNAME")} AS source_login,
   {clean_sql("COALESCE(NULLIF(LTRIM(RTRIM(u.PERSON_NAME)), ''), u.USERNAME)")} AS display_name,
   {clean_sql("u.PHONE_NUMBER")} AS phone,
+  {clean_sql("CONVERT(varchar(30), u.LRSJ, 120)")} AS legacy_created_at,
+  {clean_sql("CASE WHEN u.USERNAME = 'admin' THEN '' ELSE COALESCE(scope.department_scope_summary, d.PNAME, u.D_AXB_DWMC) END")} AS department_scope_summary,
+  {clean_sql("CASE WHEN u.USERNAME = 'admin' THEN '' ELSE COALESCE(CONVERT(varchar(30), scope.department_scope_count), '') END")} AS department_scope_count,
+  {clean_sql("CASE WHEN ISNULL(u.DEL, 0) = 1 THEN '停用' WHEN ISNULL(u.ISLOCK, 0) = 1 THEN '停用' WHEN ISNULL(u.PERSON_STATE, 0) = 0 THEN '启用' ELSE '停用' END")} AS account_state_label,
+  {clean_sql("COALESCE(CONVERT(varchar(30), login_stats.login_count), '')")} AS login_count,
+  {clean_sql("CONVERT(varchar(30), login_stats.last_login_at, 120)")} AS last_login_at,
   {clean_sql("u.EMAIL")} AS email,
   {clean_sql("u.YGGH")} AS employee_no,
+  {clean_sql("u.ZJLX")} AS credential_type,
+  {clean_sql("u.ZJH")} AS credential_no,
+  {clean_sql("u.JZDZ")} AS residence_address,
+  {clean_sql("u.DABH")} AS archive_no,
+  {clean_sql("CONVERT(varchar(30), u.CSRQ, 23)")} AS birth_date,
+  {clean_sql("u.ZZMM")} AS political_status,
+  {clean_sql("u.MZ")} AS nation,
+  {clean_sql("u.JG")} AS native_place,
+  {clean_sql("u.BYYX")} AS graduation_school,
+  {clean_sql("CONVERT(varchar(30), u.BYSJ, 23)")} AS graduation_date,
+  {clean_sql("u.SXZY")} AS major,
+  {clean_sql("u.XL")} AS education,
+  {clean_sql("u.ZC")} AS professional_title,
+  {clean_sql("u.ZYZG")} AS professional_qualification,
   {clean_sql("u.PERSON_STATE")} AS person_state,
   {clean_sql("u.DEL")} AS deleted_flag,
   {clean_sql("u.ISLOCK")} AS locked_flag,
@@ -176,8 +246,21 @@ SELECT
   {clean_sql("u.SEX")} AS sex,
   {clean_sql("u.ZHLX")} AS account_type,
   {clean_sql("u.USER_TYPE")} AS user_type,
+  {clean_sql("u.RYLX")} AS personnel_type,
   {clean_sql("t.user_departmentid")} AS legacy_department_id,
-  {clean_sql("d.PNAME")} AS department_name,
+  {clean_sql("COALESCE(NULLIF(LTRIM(RTRIM(d.PNAME)), ''), NULLIF(LTRIM(RTRIM(u.D_AXB_DWMC)), ''))")} AS department_name,
+  {clean_sql("u.D_AXB_DWMC")} AS work_unit,
+  {clean_sql("u.D_AXB_XMMC")} AS project_name,
+  {clean_sql("u.GSYX")} AS company_email,
+  {clean_sql("u.JJLXR")} AS emergency_contact,
+  {clean_sql("u.JJLXDH")} AS emergency_phone,
+  {clean_sql("u.GX")} AS emergency_relation,
+  {clean_sql("u.KHH")} AS bank_name,
+  {clean_sql("u.KH")} AS bank_account,
+  {clean_sql("CONVERT(varchar(30), u.RZRQ, 23)")} AS onboarding_date,
+  {clean_sql("u.D_AXB_GWGZ")} AS post_salary,
+  {clean_sql("u.D_AXB_SGD")} AS construction_site,
+  {clean_sql("u.D_AXB_NL")} AS age,
   {clean_sql("t.user_id")} AS tr_user_id,
   {clean_sql("t.user_state")} AS tr_user_state,
   {clean_sql("t.user_operator")} AS tr_user_operator,
@@ -186,6 +269,28 @@ SELECT
 FROM dbo.BASE_SYSTEM_USER u
 LEFT JOIN tr_ranked t ON CONVERT(varchar(80), t.user_operator) = CONVERT(varchar(80), u.USERNAME) AND t.rn = 1
 LEFT JOIN dbo.BASE_ORGANIZATION_DEPARTMENT d ON CONVERT(varchar(80), d.ID) = CONVERT(varchar(80), t.user_departmentid)
+LEFT JOIN login_stats ON login_stats.legacy_user_id = CONVERT(varchar(80), u.ID)
+OUTER APPLY (
+  SELECT
+    COUNT(*) AS department_scope_count,
+    STUFF((
+      SELECT ',' + names.XMMC
+      FROM (
+        SELECT DISTINCT NULLIF(LTRIM(RTRIM(pu.XMMC)), '') AS XMMC
+        FROM dbo.BASE_SYSTEM_PROJECT_USER pu
+        WHERE CONVERT(varchar(80), pu.USERID) = CONVERT(varchar(80), u.ID)
+          AND NULLIF(LTRIM(RTRIM(pu.XMMC)), '') IS NOT NULL
+      ) names
+      ORDER BY names.XMMC
+      FOR XML PATH(''), TYPE
+    ).value('.', 'nvarchar(max)'), 1, 1, '') AS department_scope_summary
+  FROM (
+    SELECT DISTINCT NULLIF(LTRIM(RTRIM(pu.XMMC)), '') AS XMMC
+    FROM dbo.BASE_SYSTEM_PROJECT_USER pu
+    WHERE CONVERT(varchar(80), pu.USERID) = CONVERT(varchar(80), u.ID)
+      AND NULLIF(LTRIM(RTRIM(pu.XMMC)), '') IS NOT NULL
+  ) counted
+) scope
 WHERE NULLIF(LTRIM(RTRIM(u.ID)), '') IS NOT NULL
 ORDER BY u.ID;
 """

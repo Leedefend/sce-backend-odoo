@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import hashlib
 from pathlib import Path
 
 
@@ -17,6 +18,34 @@ ALLOWED_DBS = {
 MAIN_COMPANY_NAME = os.getenv("HISTORY_ORG_MAIN_COMPANY_NAME", "四川保盛建设集团有限公司").strip()
 BRANCH_NAME_HINTS = ("分公司", "直属项目", "综合平台", "项目实施")
 ROOT_PARENT_SENTINELS = {"-1", "0"}
+FORMAL_DEPARTMENT_NAMES = {
+    "四川保盛建设集团有限公司",
+    "总经理",
+    "工程部",
+    "经营部",
+    "财务部",
+    "行政部",
+    "综合行政部",
+    "项目部",
+    "材料部",
+    "采购部",
+    "成本部",
+    "商务部",
+    "质安部",
+}
+PROJECT_LIKE_TOKENS = (
+    "工程",
+    "项目",
+    "施工",
+    "改造",
+    "维修",
+    "建设",
+    "总承包",
+    "分包",
+    "采购",
+    "装修",
+    "安装",
+)
 
 
 def artifact_root() -> Path:
@@ -44,7 +73,10 @@ def clean_text(value) -> str:
 
 def xml_name(prefix: str, raw: str) -> str:
     token = re.sub(r"[^0-9A-Za-z_]+", "_", clean_text(raw)).strip("_").lower()
-    return f"{prefix}_{token or 'empty'}"
+    if token:
+        return f"{prefix}_{token}"
+    digest = hashlib.sha1(clean_text(raw).encode("utf-8")).hexdigest()[:12]
+    return f"{prefix}_{digest}"
 
 
 def external_record(xmlid_name: str, model: str, res_id: int):
@@ -89,6 +121,28 @@ def branch_department_xmlid(company_legacy_id: str, name: str) -> str:
     return xml_name("legacy_branch_department_sc", f"{company_legacy_id}_{name}")
 
 
+def is_root_parent(parent_legacy_id: str) -> bool:
+    return not parent_legacy_id or parent_legacy_id in ROOT_PARENT_SENTINELS
+
+
+def should_materialize_formal_department(legacy) -> bool:
+    name = clean_text(legacy.name)
+    if not name:
+        return False
+    legacy_id = clean_text(legacy.legacy_department_id)
+    if name == MAIN_COMPANY_NAME and legacy_id != "1":
+        return False
+    if "保证金" in name:
+        return False
+    if legacy_id == "1" or name in FORMAL_DEPARTMENT_NAMES:
+        return True
+    if any(token in name for token in PROJECT_LIKE_TOKENS):
+        return False
+    if any(hint in name for hint in BRANCH_NAME_HINTS) and len(name) <= 20:
+        return True
+    return clean_text(legacy.is_child_company) == "1"
+
+
 if env.cr.dbname not in ALLOWED_DBS:  # noqa: F821
     raise RuntimeError({"db_name_not_allowed_for_org_materialize": env.cr.dbname, "allowlist": sorted(ALLOWED_DBS)})  # noqa: F821
 
@@ -98,6 +152,7 @@ if "hr.department" not in env:  # noqa: F821
 Department = env["hr.department"].sudo().with_context(active_test=False)  # noqa: F821
 LegacyDepartment = env["sc.legacy.department"].sudo().with_context(active_test=False)  # noqa: F821
 Profile = env["sc.legacy.user.profile"].sudo().with_context(active_test=False)  # noqa: F821
+Role = env["sc.legacy.user.role"].sudo().with_context(active_test=False)  # noqa: F821
 IMD = env["ir.model.data"].sudo()  # noqa: F821
 Company = env["res.company"].sudo()  # noqa: F821
 
@@ -107,6 +162,8 @@ if not main_company:
 
 created = []
 updated = []
+archived_non_formal = []
+archived_duplicate_formal = []
 linked_profiles = 0
 legacy_parent_linked = 0
 derived_departments = []
@@ -206,12 +263,25 @@ for legacy in legacy_rows:
     legacy_id = clean_text(legacy.legacy_department_id)
     if not legacy_id:
         continue
+    if not should_materialize_formal_department(legacy):
+        existing = record_by_external(legacy_department_xmlid(legacy_id), "hr.department")
+        if existing and existing.active:
+            existing.write({"active": False})
+            archived_non_formal.append(
+                {
+                    "legacy_department_id": legacy_id,
+                    "hr_department_id": existing.id,
+                    "name": existing.name,
+                    "reason": "project_or_non_formal_legacy_department",
+                }
+            )
+        continue
     dept, was_created = upsert_department(
         legacy_department_xmlid(legacy_id),
         {
             "name": clean_text(legacy.name) or f"legacy_department_{legacy_id}",
             "company_id": main_company.id,
-            "active": bool(legacy.active),
+            "active": True,
         },
     )
     (created if was_created else updated).append(
@@ -228,10 +298,14 @@ for legacy in legacy_rows:
     legacy_id = clean_text(legacy.legacy_department_id)
     if not legacy_id:
         continue
+    if not should_materialize_formal_department(legacy):
+        continue
     dept = record_by_external(legacy_department_xmlid(legacy_id), "hr.department")
     if not dept:
         continue
     parent_legacy_id = clean_text(legacy.parent_legacy_department_id)
+    if is_root_parent(parent_legacy_id):
+        parent_legacy_id = ""
     if not safe_parent_link(legacy_id, parent_legacy_id):
         continue
     parent_department = record_by_external(legacy_department_xmlid(parent_legacy_id), "hr.department") if parent_legacy_id else Department.browse()
@@ -255,6 +329,101 @@ for legacy in legacy_rows:
         if legacy_parent:
             legacy.write({"parent_id": legacy_parent.id})
             legacy_parent_linked += 1
+
+root_department = record_by_external(legacy_department_xmlid("1"), "hr.department")
+role_department_created = []
+role_department_seen = []
+stale_role_department = record_by_external("legacy_role_department_sc_empty", "hr.department")
+if stale_role_department and stale_role_department.active:
+    stale_role_department.write({"active": False})
+    archived_non_formal.append(
+        {
+            "legacy_department_id": "legacy_role_department_sc_empty",
+            "hr_department_id": stale_role_department.id,
+            "name": stale_role_department.name,
+            "reason": "stale_chinese_role_department_external_id_collision",
+        }
+    )
+role_names = {
+    clean_text(row["role_name"])
+    for row in Role.search_read([("role_name", "not in", [False, ""])], ["role_name"])
+}
+role_names.update({"综合行政部"})
+for name in sorted(role_names.intersection(FORMAL_DEPARTMENT_NAMES - {MAIN_COMPANY_NAME})):
+    xmlid_name = xml_name("legacy_role_department_sc", name)
+    existing_same_name = Department.search(
+        [
+            ("name", "=", name),
+            ("company_id", "=", main_company.id),
+            ("active", "=", True),
+        ],
+        order="id",
+        limit=1,
+    )
+    if existing_same_name:
+        stale_role_department = record_by_external(xmlid_name, "hr.department")
+        if stale_role_department and stale_role_department.id != existing_same_name.id and stale_role_department.active:
+            stale_role_department.write({"active": False})
+            archived_non_formal.append(
+                {
+                    "legacy_department_id": xmlid_name,
+                    "hr_department_id": stale_role_department.id,
+                    "name": stale_role_department.name,
+                    "reason": "duplicate_role_department_replaced_by_legacy_department",
+                }
+            )
+        external_record(xmlid_name, "hr.department", existing_same_name.id)
+        role_department_seen.append(
+            {
+                "name": existing_same_name.name,
+                "hr_department_id": existing_same_name.id,
+                "created": False,
+                "source": "sc.legacy.user.role.role_name",
+            }
+        )
+        continue
+    dept, was_created = upsert_department(
+        xmlid_name,
+        {
+            "name": name,
+            "company_id": main_company.id,
+            "parent_id": root_department.id if root_department else False,
+            "active": True,
+        },
+    )
+    (role_department_created if was_created else role_department_seen).append(
+        {
+            "name": dept.name,
+            "hr_department_id": dept.id,
+            "created": was_created,
+            "source": "sc.legacy.user.role.role_name",
+        }
+    )
+
+for name in sorted(FORMAL_DEPARTMENT_NAMES):
+    duplicates = Department.search(
+        [
+            ("name", "=", name),
+            ("company_id", "=", main_company.id),
+            ("active", "=", True),
+        ],
+        order="id",
+    )
+    if len(duplicates) <= 1:
+        continue
+    canonical = duplicates[0]
+    for duplicate in duplicates[1:]:
+        for row in IMD.search([("model", "=", "hr.department"), ("res_id", "=", duplicate.id)]):
+            row.write({"res_id": canonical.id})
+        duplicate.write({"active": False})
+        archived_duplicate_formal.append(
+            {
+                "name": duplicate.name,
+                "hr_department_id": duplicate.id,
+                "canonical_hr_department_id": canonical.id,
+                "reason": "duplicate_formal_department_name",
+            }
+        )
 
 for profile in Profile.search([("legacy_department_id", "not in", [False, ""])]):
     legacy = legacy_by_id.get(clean_text(profile.legacy_department_id))
@@ -311,7 +480,11 @@ payload = {
     "derived_parent_department_count": len(derived_parent_departments),
     "created_count": sum(1 for row in created if row["created"]),
     "updated_or_seen_count": len(updated),
+    "archived_non_formal_count": len(archived_non_formal),
+    "archived_duplicate_formal_count": len(archived_duplicate_formal),
     "branch_department_count": len(branch_created),
+    "role_department_count": len(role_department_created) + len(role_department_seen),
+    "role_department_created_count": len(role_department_created),
     "linked_profiles": linked_profiles,
     "legacy_parent_linked": legacy_parent_linked,
     "missing_parent_legacy_ids": sorted(missing_parent_legacy_ids),
@@ -320,8 +493,11 @@ payload = {
     "derived_departments_sample": derived_departments[:20],
     "derived_parent_departments_sample": derived_parent_departments[:20],
     "created_sample": [row for row in created if row["created"]][:20],
+    "archived_non_formal_sample": archived_non_formal[:20],
+    "archived_duplicate_formal_sample": archived_duplicate_formal[:20],
+    "role_departments": role_department_created + role_department_seen,
     "branch_departments": branch_created,
-    "db_writes": len(legacy_rows) + len(branch_created) + linked_profiles + legacy_parent_linked,
+    "db_writes": len(created) + len(updated) + len(archived_non_formal) + len(archived_duplicate_formal) + len(branch_created) + len(role_department_created) + len(role_department_seen) + linked_profiles + legacy_parent_linked,
 }
 output = artifact_root() / "history_organization_department_materialize_write_result_v1.json"
 output.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
