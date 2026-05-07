@@ -8,6 +8,7 @@ from . import product_extend
 from . import res_company
 from . import quota_spec
 from . import contract_center
+from . import contract_professional
 from . import document_center
 from . import audit_log
 from . import system_default_mixin

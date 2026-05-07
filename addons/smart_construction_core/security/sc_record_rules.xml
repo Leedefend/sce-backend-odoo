@@ -256,6 +256,138 @@
             <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_config_admin'))]"/>
         </record>
 
+        <record id="rule_sc_business_initiator_construction_contract_income" model="ir.rule">
+            <field name="name">SC Business Initiator - construction.contract.income own or project member</field>
+            <field name="model_id" ref="model_construction_contract_income"/>
+            <field name="domain_force">['|','|', ('create_uid', '=', user.id), ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_business_initiator'))]"/>
+        </record>
+
+        <record id="rule_sc_contract_read_construction_contract_income" model="ir.rule">
+            <field name="name">SC Contract Read - construction.contract.income ALL</field>
+            <field name="model_id" ref="model_construction_contract_income"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
+        </record>
+
+        <record id="rule_sc_contract_user_construction_contract_income" model="ir.rule">
+            <field name="name">SC Contract User - construction.contract.income ALL</field>
+            <field name="model_id" ref="model_construction_contract_income"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_user'))]"/>
+        </record>
+
+        <record id="rule_sc_contract_manager_construction_contract_income" model="ir.rule">
+            <field name="name">SC Contract Manager - construction.contract.income ALL</field>
+            <field name="model_id" ref="model_construction_contract_income"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_manager'))]"/>
+        </record>
+
+        <record id="rule_sc_finance_read_construction_contract_income" model="ir.rule">
+            <field name="name">SC Finance Read - construction.contract.income ALL</field>
+            <field name="model_id" ref="model_construction_contract_income"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read'))]"/>
+        </record>
+
+        <record id="rule_sc_config_admin_construction_contract_income" model="ir.rule">
+            <field name="name">SC Config Admin - construction.contract.income ALL</field>
+            <field name="model_id" ref="model_construction_contract_income"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_config_admin'))]"/>
+        </record>
+
+        <record id="rule_sc_business_initiator_construction_contract_expense" model="ir.rule">
+            <field name="name">SC Business Initiator - construction.contract.expense own or project member</field>
+            <field name="model_id" ref="model_construction_contract_expense"/>
+            <field name="domain_force">['|','|', ('create_uid', '=', user.id), ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_business_initiator'))]"/>
+        </record>
+
+        <record id="rule_sc_contract_read_construction_contract_expense" model="ir.rule">
+            <field name="name">SC Contract Read - construction.contract.expense ALL</field>
+            <field name="model_id" ref="model_construction_contract_expense"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
+        </record>
+
+        <record id="rule_sc_contract_user_construction_contract_expense" model="ir.rule">
+            <field name="name">SC Contract User - construction.contract.expense ALL</field>
+            <field name="model_id" ref="model_construction_contract_expense"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_user'))]"/>
+        </record>
+
+        <record id="rule_sc_contract_manager_construction_contract_expense" model="ir.rule">
+            <field name="name">SC Contract Manager - construction.contract.expense ALL</field>
+            <field name="model_id" ref="model_construction_contract_expense"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_manager'))]"/>
+        </record>
+
+        <record id="rule_sc_finance_read_construction_contract_expense" model="ir.rule">
+            <field name="name">SC Finance Read - construction.contract.expense ALL</field>
+            <field name="model_id" ref="model_construction_contract_expense"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read'))]"/>
+        </record>
+
+        <record id="rule_sc_config_admin_construction_contract_expense" model="ir.rule">
+            <field name="name">SC Config Admin - construction.contract.expense ALL</field>
+            <field name="model_id" ref="model_construction_contract_expense"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_config_admin'))]"/>
+        </record>
+
         <record id="rule_sc_business_initiator_general_contract" model="ir.rule">
             <field name="name">SC Business Initiator - sc.general.contract own or project member</field>
             <field name="model_id" ref="model_sc_general_contract"/>

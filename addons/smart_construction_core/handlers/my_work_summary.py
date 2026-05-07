@@ -85,7 +85,6 @@ class MyWorkSummaryHandler(BaseIntentHandler):
         },
         "construction.contract": {
             "action_xmlid": "smart_construction_core.action_construction_contract",
-            "menu_xmlid": "smart_construction_core.menu_sc_construction_contract",
         },
         "payment.request": {
             "action_xmlid": "smart_construction_core.action_payment_request",
