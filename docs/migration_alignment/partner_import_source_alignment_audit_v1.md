@@ -300,6 +300,30 @@ The write script requires the completed `res.partner.bank` extension fields and
 resolves each account parent through `res.partner.legacy_partner_source` plus
 `res.partner.legacy_partner_id`.
 
+## Partner Basic Information Surface
+
+The source snapshot also carries partner-level basic facts that were not present
+in the earlier business-fit payload. The model and payload surface now carry:
+
+- `sc_region`
+- `street`
+- `sc_registered_capital`
+- `sc_business_scope`
+
+Regenerated payload evidence:
+
+| Item | Value |
+| --- | ---: |
+| business-aligned payload rows | 7,792 |
+| rows with region | 791 |
+| rows with address | 8 |
+| rows with registered capital | 10 |
+| rows with business scope | 0 |
+
+`sc_business_scope` is still kept on the model because it is a valid partner
+business fact, but it is not a required non-empty guard for this source snapshot
+because the current Excel files did not provide populated values.
+
 ## Unified Payload
 
 `partner_business_aligned_rebuild_adapter.py` keeps the existing fact-based

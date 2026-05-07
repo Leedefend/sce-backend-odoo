@@ -22,6 +22,8 @@ class ResPartner(models.Model):
     sc_bank_name = fields.Char(string="开户银行")
     sc_bank_account = fields.Char(string="账号")
     sc_region = fields.Char(string="所属地区", index=True)
+    sc_registered_capital = fields.Char(string="注册资本")
+    sc_business_scope = fields.Text(string="经营范围")
     sc_supplier_note = fields.Text(string="供应商备注")
     sc_attachment_ids = fields.Many2many(
         "ir.attachment",
