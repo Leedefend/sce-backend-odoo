@@ -18,6 +18,9 @@ class ScContractEvent(models.Model):
             ("material_price_adjustment", "材料调差"),
             ("claim", "争议索赔"),
             ("output_value_report", "产值申报"),
+            ("settlement_audit", "结算审核"),
+            ("legacy_amount_difference", "历史金额差异"),
+            ("legacy_approval", "历史审批"),
         ],
         string="事件类型",
         required=True,
@@ -52,6 +55,7 @@ class ScContractEvent(models.Model):
     )
     legacy_fact_model = fields.Char(string="来源通用模型", index=True)
     legacy_fact_id = fields.Integer(string="来源通用记录ID", index=True)
+    legacy_fact_key = fields.Char(string="来源业务键", index=True)
     legacy_fact_type = fields.Char(string="来源业务类型", index=True)
 
     @api.constrains("amount_impact", "tax_amount")

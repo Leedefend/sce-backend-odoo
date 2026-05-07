@@ -32,13 +32,13 @@ class ConstructionContract(models.Model):
 
     # --- Identity & basics -------------------------------------------------
     name = fields.Char(
-        string="单据编号",
+        string="平台单据编号",
         default="新建",
         readonly=True,
         copy=False,
         tracking=True,
     )
-    subject = fields.Char(string="合同名称", required=True, tracking=True)
+    subject = fields.Char(string="合同标题", required=True, tracking=True)
     type = fields.Selection(
         [
             ("out", "收入合同"),
@@ -52,7 +52,7 @@ class ConstructionContract(models.Model):
     )
     project_id = fields.Many2one(
         "project.project",
-        string="所属项目",
+        string="项目名称",
         required=True,
         index=True,
         tracking=True,
@@ -66,7 +66,7 @@ class ConstructionContract(models.Model):
     )
     partner_id = fields.Many2one(
         "res.partner",
-        string="合同相对方",
+        string="发包人",
         required=True,
         index=True,
         tracking=True,
@@ -105,7 +105,7 @@ class ConstructionContract(models.Model):
         help="使用 account.tax 主数据进行税额计算，收入合同使用销项税，支出合同使用进项税。",
     )
     amount_untaxed = fields.Monetary(
-        string="不含税金额",
+        string="合同金额",
         compute="_compute_amount_total",
         store=True,
         tracking=True,
@@ -183,7 +183,7 @@ class ConstructionContract(models.Model):
     )
 
     # --- Dates & relations -------------------------------------------------
-    date_contract = fields.Date(string="签订日期")
+    date_contract = fields.Date(string="合同订立日期")
     date_start = fields.Date(string="计划开工日")
     date_end = fields.Date(string="计划竣工日")
 
@@ -193,9 +193,9 @@ class ConstructionContract(models.Model):
     )
     engineering_address = fields.Char(string="工程地址")
     handler_id = fields.Many2one("res.users", string="经办人", default=lambda self: self.env.user, index=True)
-    entry_user_id = fields.Many2one("res.users", string="录入人", default=lambda self: self.env.user, index=True)
+    entry_user_id = fields.Many2one("res.users", string="平台录入人", default=lambda self: self.env.user, index=True)
     entry_data = fields.Char(string="录入数据")
-    archived = fields.Boolean(string="是否归档", index=True)
+    archived = fields.Boolean(string="原件是否归档", index=True)
     budget_id = fields.Many2one(
         "project.budget",
         string="控制预算版本",
@@ -465,7 +465,7 @@ class ConstructionContract(models.Model):
 
     state = fields.Selection(
         ScStateMachine.selection(ScStateMachine.CONTRACT),
-        string="状态",
+        string="平台状态",
         default="draft",
         tracking=True,
     )

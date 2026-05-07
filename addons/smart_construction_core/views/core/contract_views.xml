@@ -5,29 +5,43 @@
         <field name="model">construction.contract</field>
         <field name="arch" type="xml">
             <tree>
-                <field name="name"/>
+                <field name="document_status"/>
+                <field name="legacy_document_no"/>
+                <field name="date_contract" string="合同订立日期"/>
+                <field name="archived" string="原件是否归档"/>
+                <field name="partner_id" string="发包人"/>
+                <field name="project_id" string="项目名称"/>
+                <field name="engineering_category_text"/>
+                <field name="subject" string="合同标题"/>
                 <field name="legacy_contract_no"/>
+                <field name="visible_contract_amount" string="合同金额" sum="合同金额合计"/>
+                <field name="settlement_amount" sum="结算金额合计"/>
+                <field name="visible_invoice_amount" sum="累计开票合计"/>
+                <field name="visible_received_amount" sum="累计收款合计"/>
+                <field name="visible_unreceived_amount" sum="未收款合计"/>
+                <field name="visible_unreceived_rate"/>
+                <field name="affiliated_person"/>
+                <field name="engineering_address"/>
+                <field name="engineering_content"/>
+                <field name="entry_user_text"/>
+                <field name="entry_time"/>
+                <field name="approval_info"/>
+                <field name="attachment_text"/>
+                <field name="name" string="平台单据编号"/>
                 <field name="legacy_external_contract_no"/>
-                <field name="state"/>
-                <field name="subject"/>
-                <field name="project_id"/>
+                <field name="state" string="平台状态"/>
                 <field name="operation_strategy"/>
                 <field name="type"/>
-                <field name="partner_id"/>
                 <field name="category_id"/>
-                <field name="date_contract"/>
                 <field name="amount_tax" sum="税额合计"/>
                 <field name="amount_final" sum="最终合同价合计"/>
-                <field name="settlement_amount" sum="结算金额合计"/>
-                <field name="invoice_amount" sum="开票金额合计"/>
+                <field name="amount_untaxed" optional="show" sum="平台合同金额合计"/>
+                <field name="legacy_contract_amount" optional="show" sum="原系统合同金额合计"/>
+                <field name="legacy_contract_amount_delta" optional="show" sum="口径差额合计"/>
                 <field name="uninvoiced_amount" sum="未开票金额合计"/>
-                <field name="received_amount" sum="收款金额合计"/>
-                <field name="unreceived_amount" sum="未收款金额合计"/>
                 <field name="paid_amount" sum="付款金额合计"/>
                 <field name="unpaid_amount" sum="未付款金额合计"/>
-                <field name="archived"/>
                 <field name="handler_id"/>
-                <field name="engineering_address"/>
             </tree>
         </field>
     </record>
@@ -91,6 +105,7 @@
                             <field name="legacy_contract_no"/>
                             <field name="legacy_external_contract_no"/>
                             <field name="legacy_document_no"/>
+                            <field name="document_status"/>
                             <field name="subject"/>
                             <field name="type" required="1"/>
                             <field name="project_id" required="1"/>
@@ -99,6 +114,9 @@
                             <field name="category_id"/>
                             <field name="contract_type_id"/>
                             <field name="engineering_address"/>
+                            <field name="engineering_category_text"/>
+                            <field name="affiliated_person"/>
+                            <field name="engineering_content"/>
                         </group>
                         <group>
                             <field name="company_id" readonly="1"/>
@@ -112,6 +130,8 @@
                             <field name="handler_id"/>
                             <field name="entry_user_id"/>
                             <field name="entry_data"/>
+                            <field name="entry_user_text"/>
+                            <field name="entry_time"/>
                             <field name="archived"/>
                             <field name="legacy_status"/>
                         </group>
@@ -119,6 +139,9 @@
 
                     <group string="金额概览" colspan="2">
                         <field name="tax_id"/>
+                        <field name="visible_contract_amount" readonly="1"/>
+                        <field name="legacy_contract_amount" readonly="1"/>
+                        <field name="legacy_contract_amount_delta" readonly="1"/>
                         <field name="amount_untaxed" readonly="1"/>
                         <field name="amount_tax" readonly="1"/>
                         <field name="amount_total" readonly="1"/>
@@ -130,8 +153,18 @@
                         <field name="uninvoiced_amount" readonly="1"/>
                         <field name="received_amount" readonly="1"/>
                         <field name="unreceived_amount" readonly="1"/>
+                        <field name="visible_invoice_amount"/>
+                        <field name="visible_received_amount"/>
+                        <field name="visible_unreceived_amount"/>
+                        <field name="visible_unreceived_rate"/>
+                        <field name="contract_unreceived_amount" readonly="1"/>
+                        <field name="contract_unreceived_rate" readonly="1"/>
                         <field name="paid_amount" readonly="1"/>
                         <field name="unpaid_amount" readonly="1"/>
+                    </group>
+                    <group string="审批信息" colspan="2">
+                        <field name="approval_info"/>
+                        <field name="attachment_text"/>
                     </group>
 
                     <notebook>
@@ -185,7 +218,7 @@
                 <filter name="state_running" string="执行中" domain="[('state', '=', 'running')]"/>
                 <filter name="state_closed" string="已完成" domain="[('state', '=', 'closed')]"/>
                 <filter name="state_cancel" string="已取消" domain="[('state', '=', 'cancel')]"/>
-                <filter name="income_contract" string="收入合同" domain="[('type', '=', 'out')]"/>
+                <filter name="income_contract" string="收入合同" domain="['&amp;', ('type', '=', 'out'), '|', ('legacy_contract_id', '=', False), ('legacy_income_surface_visible', '=', True)]"/>
                 <filter name="expense_contract" string="支出合同" domain="[('type', '=', 'in')]"/>
                 <filter name="operation_direct" string="公司直营" domain="[('operation_strategy', '=', 'direct')]"/>
                 <filter name="operation_joint" string="联营项目" domain="[('operation_strategy', '=', 'joint')]"/>
@@ -227,7 +260,7 @@
         <field name="res_model">construction.contract</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="view_construction_contract_search"/>
-        <field name="domain">[('type', '=', 'out')]</field>
+        <field name="domain">['&amp;', ('type', '=', 'out'), '|', ('legacy_contract_id', '=', False), ('legacy_income_surface_visible', '=', True)]</field>
         <field name="context">{'default_type': 'out'}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
     </record>
