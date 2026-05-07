@@ -147,6 +147,20 @@ def build_assets(rows: list[dict[str, str]]) -> tuple[list[dict[str, Any]], list
                 }
             )
             continue
+        if not bank_name:
+            discard_rows.append(
+                {
+                    "discard_reason": "missing_bank_name",
+                    "partner_legacy_partner_source": partner_source,
+                    "partner_legacy_partner_id": partner_legacy_id,
+                    "partner_name": partner_name,
+                    "acc_number": acc_number,
+                    "bank_name": "",
+                    "gate_action": gate_action,
+                    "review_flags": review_flags,
+                }
+            )
+            continue
         partner_external_id = stable_partner_external_id(partner_legacy_id or clean(row.get("partner_key")) or partner_name)
         key = (partner_external_id, acc_number)
         if key in seen_keys:

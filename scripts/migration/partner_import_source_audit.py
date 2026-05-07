@@ -42,7 +42,8 @@ INVALID_TAX_VALUES = {"", "/", "0", "1", "无", "null", "NULL", "None"}
 def clean(value: object) -> str:
     if value is None:
         return ""
-    return str(value).strip()
+    text = str(value).strip()
+    return "" if text.lower() in {"null", "none", "nan"} else text
 
 
 def norm_space(value: object) -> str:
@@ -174,11 +175,10 @@ def source_record(path: Path, source_root: Path, row: dict[str, str], row_number
     file_kind = classify_file(path)
     receipt_amount = parse_amount(row.get("收款金额"))
     payment_amount = parse_amount(row.get("付款金额"))
-    category = pick(row, "合作类型", "分类标签", "主供类型", "信息来源")
     name = norm_name(pick(row, "单位名称", "开户姓名"))
     tax_no = norm_tax(pick(row, "统一社会信用代码", "税号", "纳税人识别号"))
-    supplier_hint = file_kind == "supplier_registry" or payment_amount > 0 or bool(pick(row, "单位编号"))
-    customer_hint = receipt_amount > 0 or "甲方" in category
+    supplier_hint = payment_amount > 0
+    customer_hint = receipt_amount > 0
     return {
         "source_file": str(path.relative_to(source_root)),
         "source_kind": file_kind,

@@ -116,14 +116,14 @@ def main() -> int:
             errors.append({"missing_business_gates": missing_gates})
         if not business_fit.get("enabled"):
             errors.append({"business_fit_not_enabled": business_fit})
-        if int((manifest.get("counts") or {}).get("loadable_records") or 0) != 6348:
+        if int((manifest.get("counts") or {}).get("loadable_records") or 0) != 6842:
             errors.append({"unexpected_loadable_records": (manifest.get("counts") or {}).get("loadable_records")})
-        if int((manifest.get("counts") or {}).get("discarded_records") or 0) != 1444:
+        if int((manifest.get("counts") or {}).get("discarded_records") or 0) != 1935:
             errors.append({"unexpected_discarded_records": (manifest.get("counts") or {}).get("discarded_records")})
         bank_counts = bank_manifest.get("counts") or {}
-        if int(bank_counts.get("loadable_records") or 0) != 5574:
+        if int(bank_counts.get("loadable_records") or 0) != 5640:
             errors.append({"unexpected_bank_loadable_records": bank_counts.get("loadable_records")})
-        if int(bank_counts.get("discarded_records") or 0) != 2218:
+        if int(bank_counts.get("discarded_records") or 0) != 3137:
             errors.append({"unexpected_bank_discarded_records": bank_counts.get("discarded_records")})
         if bank_manifest.get("target", {}).get("model") != "res.partner.bank":
             errors.append({"unexpected_bank_target": bank_manifest.get("target")})

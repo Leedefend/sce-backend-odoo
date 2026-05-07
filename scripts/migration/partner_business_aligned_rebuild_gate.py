@@ -18,6 +18,7 @@ DEFAULT_PAYLOAD = (
     "fact_based_partner_rebuild_payload_business_aligned_v1.csv"
 )
 BLOCKING_FLAGS = {
+    "background_only_no_user_requested_business_fact",
     "invalid_bank_account_review",
     "invalid_or_placeholder_credit",
     "multiple_current_payload_matches",

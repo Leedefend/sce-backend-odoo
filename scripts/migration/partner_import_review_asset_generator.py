@@ -50,6 +50,7 @@ FIELDS = [
     "evidence",
 ]
 REASON_PRIORITY = [
+    "background_only_no_user_requested_business_fact",
     "unknown_business_role",
     "personal_fragment_review",
     "invalid_bank_account_review",
