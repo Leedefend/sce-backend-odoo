@@ -121,6 +121,12 @@ python3 scripts/migration/partner_asset_verify.py \
   --check
 ```
 
+Regression guard:
+
+```bash
+python3 scripts/migration/partner_asset_business_fit_guard.py --check
+```
+
 Replay rehearsal package generated with:
 
 ```bash
@@ -374,6 +380,13 @@ Runtime verification result:
 | loadable XML records | 6,348 |
 | review/discard rows | 1,444 |
 | DB writes | 0 |
+
+The regression guard verifies both sides:
+
+- existing `migration_assets` partner lane still passes with 6,541 records;
+- business-fit runtime lane generates and verifies with 6,348 loadable records;
+- 1,444 rows remain in review/discard;
+- required business fields and gates are present.
 
 The generated XML now allows the current customer/supplier information surface:
 
