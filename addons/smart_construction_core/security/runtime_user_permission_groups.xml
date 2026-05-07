@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <!-- 用户配置管理员只能分配用户角色组；能力组由平台管理员在角色定义层维护。 -->
+        <record id="group_sc_business_full" model="res.groups">
+            <field name="sc_assignable_user_permission">0</field>
+        </record>
+        <record id="group_sc_internal_user" model="res.groups">
+            <field name="sc_assignable_user_permission">0</field>
+        </record>
+        <record id="group_sc_cap_business_initiator" model="res.groups">
+            <field name="sc_assignable_user_permission">0</field>
+        </record>
+        <record id="group_sc_cap_project_read" model="res.groups">
+            <field name="sc_assignable_user_permission">0</field>
+        </record>
+        <record id="group_sc_cap_project_user" model="res.groups">
+            <field name="sc_assignable_user_permission">0</field>
+        </record>
+        <record id="group_sc_cap_project_manager" model="res.groups">
+            <field name="sc_assignable_user_permission">0</field>
+        </record>
+        <record id="group_sc_cap_contract_read" model="res.groups">
+            <field name="sc_assignable_user_permission">0</field>
+        </record>
+        <record id="group_sc_cap_contract_user" model="res.groups">
+            <field name="sc_assignable_user_permission">0</field>
+        </record>
+        <record id="group_sc_cap_contract_manager" model="res.groups">
+            <field name="sc_assignable_user_permission">0</field>
+        </record>
+        <record id="group_sc_cap_cost_read" model="res.groups">
+            <field name="sc_assignable_user_permission">0</field>
+        </record>
+        <record id="group_sc_cap_cost_user" model="res.groups">
+            <field name="sc_assignable_user_permission">0</field>
+        </record>
+        <record id="group_sc_cap_cost_manager" model="res.groups">
+            <field name="sc_assignable_user_permission">0</field>
+        </record>
+        <record id="group_sc_cap_material_read" model="res.groups">
+            <field name="sc_assignable_user_permission">0</field>
+        </record>
+        <record id="group_sc_cap_material_user" model="res.groups">
+            <field name="sc_assignable_user_permission">0</field>
+        </record>
+        <record id="group_sc_cap_material_manager" model="res.groups">
+            <field name="sc_assignable_user_permission">0</field>
+        </record>
+        <record id="group_sc_cap_purchase_read" model="res.groups">
+            <field name="sc_assignable_user_permission">0</field>
+        </record>
+        <record id="group_sc_cap_purchase_user" model="res.groups">
+            <field name="sc_assignable_user_permission">0</field>
+        </record>
+        <record id="group_sc_cap_purchase_manager" model="res.groups">
+            <field name="sc_assignable_user_permission">0</field>
+        </record>
+        <record id="group_sc_cap_finance_read" model="res.groups">
+            <field name="sc_assignable_user_permission">0</field>
+        </record>
+        <record id="group_sc_cap_finance_user" model="res.groups">
+            <field name="sc_assignable_user_permission">0</field>
+        </record>
+        <record id="group_sc_cap_finance_manager" model="res.groups">
+            <field name="sc_assignable_user_permission">0</field>
+        </record>
+        <record id="group_sc_cap_settlement_read" model="res.groups">
+            <field name="sc_assignable_user_permission">0</field>
+        </record>
+        <record id="group_sc_cap_settlement_user" model="res.groups">
+            <field name="sc_assignable_user_permission">0</field>
+        </record>
+        <record id="group_sc_cap_settlement_manager" model="res.groups">
+            <field name="sc_assignable_user_permission">0</field>
+        </record>
+        <record id="group_sc_cap_data_read" model="res.groups">
+            <field name="sc_assignable_user_permission">0</field>
+        </record>
+        <record id="group_sc_cap_business_config_admin" model="res.groups">
+            <field name="sc_assignable_user_permission">0</field>
+        </record>
+        <record id="group_sc_cap_config_admin" model="res.groups">
+            <field name="sc_assignable_user_permission">0</field>
+        </record>
+        <record id="group_sc_cap_contact_manager" model="res.groups">
+            <field name="sc_assignable_user_permission">0</field>
+        </record>
+
+        <record id="group_sc_role_general_user" model="res.groups">
+            <field name="sc_assignable_user_permission">1</field>
+        </record>
+        <record id="group_sc_role_business_admin" model="res.groups">
+            <field name="sc_assignable_user_permission">1</field>
+        </record>
+        <record id="group_sc_role_executive" model="res.groups">
+            <field name="sc_assignable_user_permission">1</field>
+        </record>
+        <record id="group_sc_role_project_user" model="res.groups">
+            <field name="sc_assignable_user_permission">1</field>
+        </record>
+        <record id="group_sc_role_project_manager" model="res.groups">
+            <field name="sc_assignable_user_permission">1</field>
+        </record>
+        <record id="group_sc_role_operation_user" model="res.groups">
+            <field name="sc_assignable_user_permission">1</field>
+        </record>
+        <record id="group_sc_role_partner_manager" model="res.groups">
+            <field name="sc_assignable_user_permission">1</field>
+        </record>
+        <record id="group_sc_role_material_user" model="res.groups">
+            <field name="sc_assignable_user_permission">1</field>
+        </record>
+        <record id="group_sc_role_material_manager" model="res.groups">
+            <field name="sc_assignable_user_permission">1</field>
+        </record>
+        <record id="group_sc_role_purchase_user" model="res.groups">
+            <field name="sc_assignable_user_permission">1</field>
+        </record>
+        <record id="group_sc_role_finance_user" model="res.groups">
+            <field name="sc_assignable_user_permission">1</field>
+        </record>
+        <record id="group_sc_role_finance_manager" model="res.groups">
+            <field name="sc_assignable_user_permission">1</field>
+        </record>
+        <record id="group_sc_role_temporary_finance" model="res.groups">
+            <field name="sc_assignable_user_permission">1</field>
+        </record>
+        <record id="group_sc_role_contract_admin" model="res.groups">
+            <field name="sc_assignable_user_permission">1</field>
+        </record>
+        <record id="group_sc_role_cost_user" model="res.groups">
+            <field name="sc_assignable_user_permission">1</field>
+        </record>
+        <record id="group_sc_role_settlement_user" model="res.groups">
+            <field name="sc_assignable_user_permission">1</field>
+        </record>
+        <record id="group_sc_role_settlement_manager" model="res.groups">
+            <field name="sc_assignable_user_permission">1</field>
+        </record>
+    </data>
+</odoo>

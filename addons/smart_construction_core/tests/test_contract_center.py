@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from odoo.exceptions import ValidationError
 from odoo.tests import TransactionCase
 from odoo.tests.common import tagged
 
@@ -50,6 +51,7 @@ class TestConstructionContract(TransactionCase):
             "project_id": self.project.id,
         })
         self.tax_sale_9 = self._create_test_tax("销项VAT 9%", 9, "sale")
+        self.tax_purchase_9 = self._create_test_tax("进项VAT 9%", 9, "purchase")
         self.budget = self.env["project.budget"].create({
             "name": "控制版",
             "project_id": self.project.id,
@@ -148,3 +150,84 @@ class TestConstructionContract(TransactionCase):
         self.assertEqual(first_line.boq_line_id, self.boq_line_1)
         self.assertEqual(first_line.qty_contract, 10)
         self.assertEqual(first_line.price_contract, 1000.0)
+
+    @tagged("post_install", "-at_install", "sc_regression", "contract")
+    def test_professional_contract_wrappers_sync_with_base_contract(self):
+        income = self.env["construction.contract"].create(
+            {
+                "type": "out",
+                "subject": "底层收入合同同步",
+                "project_id": self.project.id,
+                "partner_id": self.partner.id,
+                "tax_id": self.tax_sale_9.id,
+            }
+        )
+        expense = self.env["construction.contract"].create(
+            {
+                "type": "in",
+                "subject": "底层支出合同同步",
+                "project_id": self.project.id,
+                "partner_id": self.partner.id,
+                "tax_id": self.tax_purchase_9.id,
+            }
+        )
+
+        self.assertEqual(
+            self.env["construction.contract.income"].search([("contract_id", "=", income.id)]).type,
+            "out",
+        )
+        self.assertEqual(
+            self.env["construction.contract.expense"].search([("contract_id", "=", expense.id)]).type,
+            "in",
+        )
+
+        income.write({"type": "in", "tax_id": self.tax_purchase_9.id})
+        self.assertFalse(self.env["construction.contract.income"].search([("contract_id", "=", income.id)]))
+        self.assertEqual(
+            self.env["construction.contract.expense"].search([("contract_id", "=", income.id)]).type,
+            "in",
+        )
+
+    @tagged("post_install", "-at_install", "sc_regression", "contract")
+    def test_professional_contract_entry_forces_type_and_blocks_switch(self):
+        income = self.env["construction.contract.income"].create(
+            {
+                "subject": "专业收入合同",
+                "project_id": self.project.id,
+                "partner_id": self.partner.id,
+                "tax_id": self.tax_sale_9.id,
+            }
+        )
+        expense = self.env["construction.contract.expense"].create(
+            {
+                "subject": "专业支出合同",
+                "project_id": self.project.id,
+                "partner_id": self.partner.id,
+                "tax_id": self.tax_purchase_9.id,
+            }
+        )
+
+        self.assertEqual(income.type, "out")
+        self.assertEqual(expense.type, "in")
+        with self.assertRaises(ValidationError):
+            income.write({"type": "in"})
+        with self.assertRaises(ValidationError):
+            expense.write({"type": "out"})
+        with self.assertRaises(ValidationError):
+            self.env["construction.contract.income"].create({"contract_id": expense.contract_id.id})
+        with self.assertRaises(ValidationError):
+            income.write({"contract_id": expense.contract_id.id})
+
+    @tagged("post_install", "-at_install", "sc_regression", "contract")
+    def test_professional_contract_actions_and_mixed_menu_contract(self):
+        income_action = self.env.ref("smart_construction_core.action_construction_contract_income")
+        expense_action = self.env.ref("smart_construction_core.action_construction_contract_expense")
+        income_execution = self.env.ref("smart_construction_core.action_construction_contract_income_execution")
+        expense_execution = self.env.ref("smart_construction_core.action_construction_contract_expense_execution")
+        mixed_menu = self.env.ref("smart_construction_core.menu_sc_construction_contract")
+
+        self.assertEqual(income_action.res_model, "construction.contract.income")
+        self.assertEqual(expense_action.res_model, "construction.contract.expense")
+        self.assertEqual(income_execution.res_model, "construction.contract.income")
+        self.assertEqual(expense_execution.res_model, "construction.contract.expense")
+        self.assertFalse(mixed_menu.active)

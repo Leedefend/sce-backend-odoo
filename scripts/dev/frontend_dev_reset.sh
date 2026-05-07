@@ -26,6 +26,10 @@ resolve_profile_defaults() {
       PROFILE_DB="sc_prod_sim"
       PROFILE_PROXY_TARGET="http://localhost:18069"
       ;;
+    partner-acceptance)
+      PROFILE_DB="sc_partner_acceptance"
+      PROFILE_PROXY_TARGET="http://localhost:18079"
+      ;;
     *)
       log "unknown FRONTEND_PROFILE=${FRONTEND_PROFILE}, fallback to daily"
       FRONTEND_PROFILE="daily"

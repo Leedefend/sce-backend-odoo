@@ -34,6 +34,8 @@ PRECHECK_SCRIPT="$ROOT_DIR/scripts/migration/fresh_db_replay_payload_precheck.py
 PROBE_SCRIPT="$ROOT_DIR/scripts/migration/history_continuity_usability_probe.py"
 USER_REBUILD="$ROOT_DIR/scripts/migration/user_history_rebuild.sh"
 REAL_USER_NORMALIZE_SCRIPT="$ROOT_DIR/scripts/migration/history_real_user_normalize_write.py"
+USER_VISIBLE_SURFACE_OVERLAY_SCRIPT="$ROOT_DIR/scripts/migration/legacy_user_visible_surface_overlay_write.py"
+USER_PROFILE_RUNTIME_PROJECTION_SCRIPT="$ROOT_DIR/scripts/migration/history_user_profile_runtime_projection_write.py"
 USER_ACCESS_PROJECTION_SCRIPT="$ROOT_DIR/scripts/migration/history_legacy_user_access_projection_write.py"
 CONTRACT_COUNTERPARTY_ADAPTER="$ROOT_DIR/scripts/migration/fresh_db_contract_counterparty_partner_replay_adapter.py"
 RECEIPT_COUNTERPARTY_ADAPTER="$ROOT_DIR/scripts/migration/fresh_db_receipt_counterparty_partner_replay_adapter.py"
@@ -49,6 +51,7 @@ INCLUDE_FILE_INDEX="${HISTORY_CONTINUITY_INCLUDE_FILE_INDEX:-1}"
 INCLUDE_ATTENDANCE_CHECKIN="${HISTORY_CONTINUITY_INCLUDE_ATTENDANCE_CHECKIN:-0}"
 INCLUDE_PERSONNEL_MOVEMENT="${HISTORY_CONTINUITY_INCLUDE_PERSONNEL_MOVEMENT:-0}"
 INCLUDE_SALARY_LINE="${HISTORY_CONTINUITY_INCLUDE_SALARY_LINE:-0}"
+INCLUDE_USER_VISIBLE_SURFACE_OVERLAY="${HISTORY_CONTINUITY_INCLUDE_USER_VISIBLE_SURFACE_OVERLAY:-1}"
 USE_PACKAGED_PAYLOADS="${HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS:-0}"
 MATERIALIZED_FILES=()
 
@@ -172,6 +175,12 @@ case "$MODE" in
     run_step legacy_user_context_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_user_context_replay_adapter.py"
     run_step legacy_user_context_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_user_context_replay_write.py"
     run_step real_user_normalize run_odoo_script "$REAL_USER_NORMALIZE_SCRIPT"
+    if [[ "$INCLUDE_USER_VISIBLE_SURFACE_OVERLAY" == "1" ]]; then
+      run_step legacy_user_visible_surface_overlay run_odoo_script "$USER_VISIBLE_SURFACE_OVERLAY_SCRIPT"
+    else
+      echo "[history.continuity] skip legacy user visible surface overlay by HISTORY_CONTINUITY_INCLUDE_USER_VISIBLE_SURFACE_OVERLAY=0"
+    fi
+    run_step legacy_user_profile_runtime_projection run_odoo_script "$USER_PROFILE_RUNTIME_PROJECTION_SCRIPT"
     run_step legacy_user_project_scope_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_user_project_scope_replay_adapter.py"
     run_step legacy_user_project_scope_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_user_project_scope_replay_write.py"
     run_step legacy_task_evidence_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_task_evidence_replay_adapter.py"

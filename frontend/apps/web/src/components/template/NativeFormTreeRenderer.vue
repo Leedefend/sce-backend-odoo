@@ -277,8 +277,6 @@ function activeNotebookChildren(node: NativeFormLayoutNode) {
 }
 
 function fieldSectionTitle(node: NativeFormLayoutNode) {
-  const title = containerTitle(node);
-  if (title) return title;
   return '';
 }
 

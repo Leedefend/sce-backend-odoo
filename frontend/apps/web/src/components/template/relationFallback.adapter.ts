@@ -12,6 +12,7 @@ export function createRelationFallbackAdapter(context: CreateRelationFallbackAda
     selectedRelationOptions: context.selectedRelationOptions,
     filteredRelationOptions: context.filteredRelationOptions,
     setRelationMultiField: context.setRelationMultiField,
+    setRelationIds: context.setRelationIds,
     one2manyCanCreate: context.one2manyCanCreate,
     one2manyCreateLabel: context.one2manyCreateLabel,
     addOne2manyRow: context.addOne2manyRow,

@@ -333,6 +333,15 @@ class TestMyWorkBackend(TransactionCase):
         self.assertIn("sc.settlement.order", sources)
         self.assertIn("construction.contract", sources)
 
+    def test_contract_target_keeps_action_without_hidden_mixed_menu(self):
+        handler = MyWorkSummaryHandler(self.env, payload={})
+        action_ctx = handler._resolve_action_context_for_model("construction.contract")
+        mixed_menu = self.env.ref("smart_construction_core.menu_sc_construction_contract")
+
+        self.assertTrue(action_ctx.get("action_id"))
+        self.assertFalse(action_ctx.get("menu_id"))
+        self.assertFalse(mixed_menu.active)
+
     def test_retryable_summary_counts(self):
         summary = _retryable_summary(
             [

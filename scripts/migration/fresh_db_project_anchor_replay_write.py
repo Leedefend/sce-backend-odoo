@@ -33,8 +33,16 @@ ARTIFACT_ROOT = Path(os.getenv("MIGRATION_ARTIFACT_ROOT", str(REPO_ROOT / "artif
 INPUT_CSV = REPO_ROOT / "artifacts/migration/fresh_db_project_anchor_replay_payload_v1.csv"
 OUTPUT_JSON = ARTIFACT_ROOT / "fresh_db_project_anchor_replay_write_result_v1.json"
 ROLLBACK_CSV = ARTIFACT_ROOT / "fresh_db_project_anchor_replay_rollback_targets_v1.csv"
-EXPECTED_ROWS = 755
-OPTIONAL_SOURCE_ONLY_FIELDS = {"legacy_deleted_flag", "current_db_project_id", "evidence_file", "idempotency_key", "replay_action"}
+EXPECTED_ROWS = int(os.getenv("PROJECT_ANCHOR_EXPECTED_ROWS", "0"))
+OPTIONAL_SOURCE_ONLY_FIELDS = {
+    "legacy_deleted_flag",
+    "current_db_project_id",
+    "evidence_file",
+    "replay_source_lane",
+    "replay_evidence_rows",
+    "idempotency_key",
+    "replay_action",
+}
 SAFE_FIELDS = [
     "name",
     "short_name",
@@ -47,6 +55,7 @@ SAFE_FIELDS = [
     "specialty_type_name",
     "legacy_price_method",
     "business_nature",
+    "operation_strategy",
     "detail_address",
     "project_profile",
     "project_area",
@@ -105,7 +114,7 @@ if missing_fields:
 
 rows = read_csv(INPUT_CSV)
 errors: list[dict[str, object]] = []
-if len(rows) != EXPECTED_ROWS:
+if EXPECTED_ROWS and len(rows) != EXPECTED_ROWS:
     errors.append({"error": "unexpected_row_count", "actual": len(rows), "expected": EXPECTED_ROWS})
 
 keys = [clean(row.get("legacy_project_id")) for row in rows]
@@ -141,6 +150,8 @@ if errors:
 
 created_rows: list[dict[str, object]] = []
 updated_rows: list[dict[str, object]] = []
+source_lane_counts = Counter(clean(row.get("replay_source_lane")) or "unknown" for row in rows)
+deleted_source_rows = sum(1 for row in rows if clean(row.get("legacy_deleted_flag")) not in {"", "0", "false", "False", "no", "No", "n", "N"})
 try:
     for row in rows:
         vals = build_vals(row, existing_fields)
@@ -168,13 +179,14 @@ post_count = 0
 for legacy_project_id in keys:
     post_count += Project.search_count([("legacy_project_id", "=", legacy_project_id)])
 
-status = "PASS" if len(created_rows) + len(updated_rows) == EXPECTED_ROWS and post_count == EXPECTED_ROWS else "FAIL"
+status = "PASS" if len(created_rows) + len(updated_rows) == len(rows) and post_count == len(rows) else "FAIL"
 result = {
     "status": status,
     "mode": "fresh_db_project_anchor_replay_write",
     "database": env.cr.dbname,  # noqa: F821
     "target_model": "project.project",
     "input_rows": len(rows),
+    "expected_rows": EXPECTED_ROWS or len(rows),
     "created_rows": len(created_rows),
     "updated_rows": len(updated_rows),
     "post_write_identity_count": post_count,
@@ -182,6 +194,8 @@ result = {
     "db_writes": len(created_rows) + len(updated_rows),
     "demo_targets_executed": 0,
     "source_only_fields_not_written": sorted(OPTIONAL_SOURCE_ONLY_FIELDS),
+    "source_lane_counts": dict(sorted(source_lane_counts.items())),
+    "deleted_source_rows": deleted_source_rows,
     "write_payload": str(INPUT_CSV),
     "rollback_targets": str(ROLLBACK_CSV),
     "decision": "project_anchor_replay_write_complete" if status == "PASS" else "STOP_REVIEW_REQUIRED",

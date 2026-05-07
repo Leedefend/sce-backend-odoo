@@ -71,6 +71,7 @@ SNAPSHOT_FIELDS = [
     "line_count",
     "is_locked",
 ]
+CREATED_PARTNER_ANCHORS: list[dict[str, object]] = []
 
 
 def clean(value: object) -> str:
@@ -189,11 +190,71 @@ def resolve_partner_id(row: dict[str, str], partner_model) -> int | None:
             raise RuntimeError({"duplicate_legacy_partner_ref_matches": partner_ref, "partner_ids": matches.ids})
     partner_text = clean(row.get("legacy_counterparty_text"))
     if partner_text:
-        matches = partner_model.search([("name", "=", partner_text)], limit=2)
+        legacy_contract_id = clean(row.get("legacy_contract_id"))
+        generated_legacy_id = f"contract_counterparty:contract:{legacy_contract_id}" if legacy_contract_id else ""
+        if generated_legacy_id:
+            generated = partner_model.search(
+                [
+                    ("legacy_partner_source", "=", "contract_counterparty_runtime"),
+                    ("legacy_partner_id", "=", generated_legacy_id),
+                ],
+                limit=1,
+            )
+            if generated:
+                return generated.id
+        matches = partner_model.search([("name", "=", partner_text)], order="id")
         if len(matches) == 1:
             return matches.id
         if len(matches) > 1:
-            raise RuntimeError({"duplicate_partner_name_matches": partner_text, "partner_ids": matches.ids})
+            contract_type = clean(row.get("type"))
+            if contract_type == "out":
+                ranked = matches.filtered(lambda rec: rec.customer_rank > 0)
+                if ranked:
+                    return ranked.sorted(
+                        key=lambda rec: (
+                            1 if rec.legacy_partner_source == "contract_counterparty" else 0,
+                            rec.id,
+                        )
+                    )[0].id
+            if contract_type == "in":
+                ranked = matches.filtered(lambda rec: rec.supplier_rank > 0)
+                if ranked:
+                    return ranked.sorted(
+                        key=lambda rec: (
+                            1 if rec.legacy_partner_source == "contract_counterparty" else 0,
+                            rec.id,
+                        )
+                    )[0].id
+            non_anchor = matches.filtered(lambda rec: rec.legacy_partner_source != "contract_counterparty")
+            if non_anchor:
+                return non_anchor.sorted(key=lambda rec: rec.id)[0].id
+            return matches.sorted(key=lambda rec: rec.id)[0].id
+        if generated_legacy_id:
+            vals = {
+                "name": partner_text,
+                "company_type": "company",
+                "legacy_partner_id": generated_legacy_id,
+                "legacy_partner_source": "contract_counterparty_runtime",
+                "legacy_partner_name": partner_text,
+                "legacy_source_evidence": f"fresh_db_contract_remaining:{legacy_contract_id}",
+            }
+            if "is_company" in partner_model._fields:
+                vals["is_company"] = True
+            if clean(row.get("type")) == "out" and "customer_rank" in partner_model._fields:
+                vals["customer_rank"] = 1
+            if clean(row.get("type")) == "in" and "supplier_rank" in partner_model._fields:
+                vals["supplier_rank"] = 1
+            rec = partner_model.create(vals)
+            CREATED_PARTNER_ANCHORS.append(
+                {
+                    "id": rec.id,
+                    "legacy_contract_id": legacy_contract_id,
+                    "legacy_partner_id": generated_legacy_id,
+                    "name": partner_text,
+                    "type": clean(row.get("type")),
+                }
+            )
+            return rec.id
     return None
 
 
@@ -348,6 +409,7 @@ result = {
     "post_write_match_count": len(post_records),
     "rollback_target_rows": len(rollback_rows),
     "updated_rows": len(updated),
+    "created_partner_anchor_rows": len(CREATED_PARTNER_ANCHORS),
     "contract_line_rows": contract_line_rows,
     "payment_rows": 0,
     "settlement_rows": 0,

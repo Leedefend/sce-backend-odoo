@@ -78,12 +78,13 @@ def main() -> int:
     if not MANIFEST.exists():
         raise RuntimeError({"missing_manifest": str(MANIFEST)})
     manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    lanes = manifest.get("lanes", [])
     missing_references: list[dict[str, object]] = []
     high_risk_default_violations: list[str] = []
     status_counts: Counter[str] = Counter()
     default_run_lanes = 0
 
-    for lane in manifest.get("lanes", []):
+    for lane in lanes:
         lane_id = lane["lane_id"]
         status_counts[lane["status"]] += 1
         if lane.get("default_run"):
@@ -100,12 +101,16 @@ def main() -> int:
         for item in missing_references
         if item["kind"] in {"source_files", "aggregate_artifacts"}
     ]
-    status = "PASS" if not blocking_missing and not high_risk_default_violations else "FAIL"
+    status = "PASS" if lanes and not blocking_missing and not high_risk_default_violations else "FAIL"
     adapter_gaps = status_counts.get("needs_adapter", 0) + status_counts.get("design_only", 0)
     next_step = (
+        "refresh or regenerate the replay manifest before treating the runner dry-run as replay evidence"
+        if not lanes
+        else (
         "open a dedicated fresh database operation contract; keep default_run disabled until that contract exists"
         if status == "PASS" and adapter_gaps == 0
         else "open fresh database operation contract only after replay adapters are implemented for needs_adapter/design_only lanes"
+        )
     )
     payload = {
         "status": status,
@@ -114,7 +119,8 @@ def main() -> int:
         "database_operations": 0,
         "write_scripts_executed": 0,
         "manifest": str(MANIFEST),
-        "lane_count": len(manifest.get("lanes", [])),
+        "lane_count": len(lanes),
+        "empty_manifest": not bool(lanes),
         "lane_status_counts": dict(sorted(status_counts.items())),
         "default_run_lanes": default_run_lanes,
         "missing_references": missing_references,

@@ -130,19 +130,21 @@
     </record>
     <record id="action_construction_contract_income_execution" model="ir.actions.act_window">
         <field name="name">收入合同执行</field>
-        <field name="res_model">construction.contract</field>
+        <field name="res_model">construction.contract.income</field>
         <field name="view_mode">tree,form</field>
-        <field name="search_view_id" ref="smart_construction_core.view_construction_contract_search"/>
-        <field name="domain">[('type', '=', 'out'), ('state', 'in', ['confirmed', 'running'])]</field>
-        <field name="context">{'default_type': 'out'}</field>
+        <field name="views" eval="[(ref('smart_construction_core.view_construction_contract_income_tree'), 'tree'), (ref('smart_construction_core.view_construction_contract_income_form'), 'form')]"/>
+        <field name="search_view_id" ref="smart_construction_core.view_construction_contract_income_search"/>
+        <field name="domain">[('state', 'in', ['confirmed', 'running']), '|', ('legacy_contract_id', '=', False), ('legacy_income_surface_visible', '=', True)]</field>
+        <field name="context">{'default_type': 'out', 'search_default_visible_income': 1}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
     </record>
     <record id="action_construction_contract_expense_execution" model="ir.actions.act_window">
         <field name="name">支出合同执行</field>
-        <field name="res_model">construction.contract</field>
+        <field name="res_model">construction.contract.expense</field>
         <field name="view_mode">tree,form</field>
-        <field name="search_view_id" ref="smart_construction_core.view_construction_contract_search"/>
-        <field name="domain">[('type', '=', 'in'), ('state', 'in', ['confirmed', 'running'])]</field>
+        <field name="views" eval="[(ref('smart_construction_core.view_construction_contract_expense_tree'), 'tree'), (ref('smart_construction_core.view_construction_contract_expense_form'), 'form')]"/>
+        <field name="search_view_id" ref="smart_construction_core.view_construction_contract_expense_search"/>
+        <field name="domain">[('state', 'in', ['confirmed', 'running'])]</field>
         <field name="context">{'default_type': 'in'}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
     </record>
@@ -459,6 +461,7 @@
     <record id="menu_sc_construction_contract" model="ir.ui.menu">
         <field name="parent_id" ref="smart_construction_core.menu_sc_income_contract_group"/>
         <field name="sequence">5</field>
+        <field name="active">0</field>
     </record>
     <record id="menu_sc_contract_income" model="ir.ui.menu">
         <field name="name">收入合同台账</field>
@@ -1037,8 +1040,9 @@
         <field name="sequence">90</field>
     </record>
     <record id="menu_sc_legacy_user_context" model="ir.ui.menu">
-        <field name="parent_id" ref="smart_construction_core.menu_sc_config_center"/>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_business_config_center"/>
         <field name="sequence">70</field>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_internal_user')])]"/>
     </record>
     <record id="menu_sc_ar_ap_project_summary" model="ir.ui.menu">
         <field name="name">客户账款</field>
@@ -1100,9 +1104,10 @@
         <field name="sequence">10</field>
     </record>
     <record id="menu_sc_organization_department" model="ir.ui.menu">
-        <field name="name">内部单位</field>
+        <field name="name">组织架构</field>
         <field name="parent_id" ref="smart_construction_core.menu_sc_business_config_center"/>
         <field name="sequence">20</field>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_data_read')])]"/>
     </record>
     <record id="menu_sc_legacy_material_detail" model="ir.ui.menu">
         <field name="name">材料档案</field>

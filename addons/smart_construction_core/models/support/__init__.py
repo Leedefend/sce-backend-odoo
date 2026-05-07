@@ -8,6 +8,7 @@ from . import product_extend
 from . import res_company
 from . import quota_spec
 from . import contract_center
+from . import contract_professional
 from . import document_center
 from . import audit_log
 from . import system_default_mixin
@@ -73,3 +74,4 @@ from . import legacy_personnel_movement
 from . import legacy_salary_line
 from . import legacy_purchase_contract_fact
 from . import legacy_report_inventory
+from . import runtime_user_management

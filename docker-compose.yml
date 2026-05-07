@@ -85,8 +85,10 @@ services:
       - ./addons:/mnt/extra-addons
       - ./addons_external:/mnt/addons_external
       - ./artifacts:/mnt/artifacts
+      - ./migration_assets:/mnt/migration_assets:ro
       - ./scripts:/mnt/scripts:ro
       - ./docs:/mnt/docs:ro
+      - ./tmp:/mnt/tmp:ro
       - ./config/odoo.conf.template:/etc/odoo/odoo.conf.template:ro
       - ./scripts/render_odoo_conf.py:/usr/local/bin/render_odoo_conf.py:ro
       - ./scripts/odoo-entrypoint.sh:/usr/local/bin/odoo-entrypoint.sh:ro

@@ -45,59 +45,62 @@
         <field name="arch" type="xml">
             <form string="审批规则">
                 <sheet>
-                    <group>
+                    <group string="业务规则">
+                        <group string="适用业务">
+                            <field name="name" string="规则名称"/>
+                            <field name="target_model" string="业务单据"/>
+                            <field name="approval_required" string="需要审批"/>
+                            <field name="active" string="启用"/>
+                        </group>
+                        <group string="执行方式">
+                            <field name="trigger" string="触发时点"/>
+                            <field name="mode" string="审批方式"/>
+                            <field name="manager_scope_key" string="默认审批岗位"/>
+                            <field name="step_count" readonly="1" string="步骤数"/>
+                        </group>
+                    </group>
+                    <group string="系统承载">
                         <group>
-                            <field name="name"/>
-                            <field name="code"/>
-                            <field name="company_id" groups="base.group_multi_company"/>
-                            <field name="active"/>
+                            <field name="runtime_state" string="执行状态"/>
                         </group>
                         <group>
-                            <field name="target_model"/>
-                            <field name="model_name" readonly="1"/>
-                            <field name="approval_required"/>
-                            <field name="trigger"/>
-                            <field name="mode"/>
-                            <field name="runtime_state"/>
-                            <field name="manager_scope_key"/>
-                            <field name="step_count" readonly="1"/>
+                            <field name="company_id" groups="base.group_multi_company" string="公司"/>
                             <field name="manager_group_id" invisible="1"/>
                         </group>
                     </group>
                     <notebook>
-                        <page string="审核流程">
-                            <field name="step_ids">
+                        <page string="审批步骤">
+                            <field name="step_ids" string="审批步骤">
                                 <tree editable="bottom" decoration-muted="not active">
                                     <field name="sequence" widget="handle"/>
-                                    <field name="active"/>
-                                    <field name="name"/>
-                                    <field name="approval_scope_key"/>
+                                    <field name="name" string="步骤名称"/>
+                                    <field name="approval_scope_key" string="审批岗位"/>
                                     <field name="approve_group_id" column_invisible="1"/>
-                                    <field name="amount_min"/>
-                                    <field name="amount_max"/>
-                                    <field name="condition_note"/>
+                                    <field name="amount_min" string="金额下限"/>
+                                    <field name="amount_max" string="金额上限"/>
+                                    <field name="active" string="启用"/>
                                 </tree>
                                 <form string="审核步骤">
-                                    <group>
-                                        <group>
-                                            <field name="name"/>
-                                            <field name="sequence"/>
-                                            <field name="active"/>
-                                            <field name="approval_scope_key"/>
+                                    <group string="步骤配置">
+                                        <group string="审批节点">
+                                            <field name="name" string="步骤名称"/>
+                                            <field name="approval_scope_key" string="审批岗位"/>
                                             <field name="approve_group_id" invisible="1"/>
+                                            <field name="active" string="启用"/>
                                         </group>
-                                        <group>
-                                            <field name="amount_min"/>
-                                            <field name="amount_max"/>
-                                            <field name="condition_note"/>
+                                        <group string="适用条件">
+                                            <field name="sequence" string="顺序"/>
+                                            <field name="amount_min" string="金额下限"/>
+                                            <field name="amount_max" string="金额上限"/>
+                                            <field name="condition_note" string="备注"/>
                                         </group>
                                     </group>
-                                    <field name="note"/>
+                                    <field name="note" string="备注"/>
                                 </form>
                             </field>
                         </page>
-                        <page string="说明">
-                            <field name="note" nolabel="1"/>
+                        <page string="业务说明">
+                            <field name="note" nolabel="1" placeholder="填写该审批规则的业务口径、适用范围和特殊说明。"/>
                         </page>
                     </notebook>
                 </sheet>

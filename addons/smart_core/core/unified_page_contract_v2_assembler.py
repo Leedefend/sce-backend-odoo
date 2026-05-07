@@ -476,15 +476,44 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
 def _field_rows(source: dict[str, Any], ui: dict[str, Any], *, view_type: str = "") -> list[dict[str, Any]]:
     rows = source.get("meta_fields")
     if isinstance(rows, list) and rows:
+        if view_type in {"tree", "list", "kanban"}:
+            schema_by_name = _view_column_schema_by_name(ui, view_type)
+            out = []
+            for row in rows:
+                if not isinstance(row, dict):
+                    continue
+                item = dict(row)
+                name = _text(item.get("name") or item.get("field") or item.get("fieldCode"))
+                schema = schema_by_name.get(name)
+                if schema:
+                    item.update(schema)
+                    item.setdefault("name", name)
+                out.append(item)
+            return out
         return [row for row in rows if isinstance(row, dict)]
     fields = ui.get("fields") or source.get("fields")
+    layout_labels = _form_layout_field_labels(ui) if view_type == "form" else {}
+    if isinstance(fields, dict) and view_type == "form" and layout_labels:
+        out = []
+        for name, label in layout_labels.items():
+            value = fields.get(name)
+            row = dict(value) if isinstance(value, dict) else {}
+            row.setdefault("name", name)
+            row["string"] = label
+            row["label"] = label
+            out.append(row)
+        return out
     if isinstance(fields, dict) and view_type in {"tree", "list", "kanban"}:
         view_fields = _view_field_names(ui, view_type)
+        schema_by_name = _view_column_schema_by_name(ui, view_type)
         if view_fields:
             out = []
             for name in view_fields:
                 value = fields.get(name)
                 row = dict(value) if isinstance(value, dict) else {}
+                schema = schema_by_name.get(name)
+                if schema:
+                    row.update(schema)
                 row.setdefault("name", name)
                 out.append(row)
             return out
@@ -493,9 +522,37 @@ def _field_rows(source: dict[str, Any], ui: dict[str, Any], *, view_type: str = 
         for key, value in fields.items():
             row = dict(value) if isinstance(value, dict) else {}
             row.setdefault("name", key)
+            label = layout_labels.get(key)
+            if label:
+                row["string"] = label
+                row["label"] = label
             out.append(row)
         return out
     return []
+
+
+def _form_layout_field_labels(ui: dict[str, Any]) -> dict[str, str]:
+    form = _dict(_dict(ui.get("views")).get("form"))
+    labels: dict[str, str] = {}
+
+    def walk(obj: Any) -> None:
+        if isinstance(obj, dict):
+            node_type = _text(obj.get("type") or obj.get("kind")).lower()
+            name = _text(obj.get("name") or obj.get("field"))
+            if node_type == "field" and name and name not in labels:
+                field_info = _dict(obj.get("fieldInfo") or obj.get("field_info"))
+                label = _text(obj.get("string") or obj.get("label") or field_info.get("string") or field_info.get("label"))
+                if label:
+                    labels[name] = label
+            for value in obj.values():
+                walk(value)
+            return
+        if isinstance(obj, list):
+            for value in obj:
+                walk(value)
+
+    walk(form.get("layout"))
+    return labels
 
 
 def _view_field_names(ui: dict[str, Any], view_type: str) -> list[str]:
@@ -523,6 +580,29 @@ def _view_field_names(ui: dict[str, Any], view_type: str) -> list[str]:
     return out
 
 
+def _view_column_schema_by_name(ui: dict[str, Any], view_type: str) -> dict[str, dict[str, Any]]:
+    views = _dict(ui.get("views"))
+    candidates = [view_type]
+    if view_type == "tree":
+        candidates.append("list")
+    if view_type == "list":
+        candidates.append("tree")
+    for key in candidates:
+        view = _dict(views.get(key))
+        out: dict[str, dict[str, Any]] = {}
+        for row in _list(view.get("columnsSchema") or view.get("columns_schema")):
+            if not isinstance(row, dict):
+                continue
+            name = _text(row.get("name") or row.get("field") or row.get("fieldCode"))
+            if not name or name in out:
+                continue
+            out[name] = dict(row)
+            out[name].setdefault("name", name)
+        if out:
+            return out
+    return {}
+
+
 def _field_widget(field: dict[str, Any], *, layout_type: str) -> dict[str, Any]:
     field_name = _stable_id(field.get("name"), "field")
     widget_type = "table" if layout_type == "table" else _widget_type_from_field(field)
@@ -530,6 +610,10 @@ def _field_widget(field: dict[str, Any], *, layout_type: str) -> dict[str, Any]:
     capabilities = ["sortable", "filterable"] if layout_type == "table" else []
     if widget_type == "select":
         capabilities.append("searchable")
+    component_config = {}
+    for key in ("optional", "invisible", "column_invisible", "readonly", "required"):
+        if key in field:
+            component_config[key] = deepcopy(field.get(key))
     return {
         "widgetId": f"field.{field_name}",
         "widgetType": widget_type,
@@ -538,7 +622,7 @@ def _field_widget(field: dict[str, Any], *, layout_type: str) -> dict[str, Any]:
         "span": 12 if layout_type == "table" else 6,
         "componentKey": component_key,
         "capabilities": capabilities,
-        "componentConfig": {},
+        "componentConfig": component_config,
     }
 
 
@@ -720,11 +804,20 @@ def _positive_int(value: Any, fallback: int = 0) -> int:
     return fallback
 
 
+def _modifier_true(value: Any) -> bool:
+    if value is True:
+        return True
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes"}
+    return False
+
+
 def _field_status(field: dict[str, Any], widget_id: str) -> dict[str, Any]:
     readonly = bool(field.get("readonly") is True)
+    visible = not (_modifier_true(field.get("invisible")) or _modifier_true(field.get("column_invisible")))
     return {
         "widgetId": widget_id,
-        "visible": True,
+        "visible": visible,
         "readonly": readonly,
         "required": bool(field.get("required") is True),
         "disabled": False,

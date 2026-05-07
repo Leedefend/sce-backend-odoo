@@ -427,6 +427,10 @@ class _TreeFormParserMixin:
                     if fname not in columns:
                         columns.append(fname)
                     mods = modifiers.setdefault(fname, {})
+                    field_string = (el.get('string') or '').strip()
+                    if field_string:
+                        mods['string'] = field_string
+                        mods['label'] = field_string
                     # optional: hide/show/column
                     opt = el.get('optional')
                     if opt:
@@ -503,10 +507,11 @@ class _TreeFormParserMixin:
         meta = field_meta if isinstance(field_meta, dict) else {}
         mods = modifiers if isinstance(modifiers, dict) else {}
         widget = str(mods.get('widget') or meta.get('type') or 'char').strip() or 'char'
+        label = mods.get('string') or mods.get('label') or meta.get('string') or name
         schema = {
             "name": name,
-            "label": meta.get('string') or name,
-            "string": meta.get('string') or name,
+            "label": label,
+            "string": label,
             "type": meta.get('type') or 'char',
             "widget": widget,
         }

@@ -211,6 +211,7 @@ _ENTERPRISE_USER_FORM_FIELDS = [
     "login",
     "password",
     "phone",
+    "email",
     "active",
     "company_id",
     "sc_department_id",
@@ -218,12 +219,14 @@ _ENTERPRISE_USER_FORM_FIELDS = [
     "sc_role_profile",
     "sc_role_effective",
     "sc_role_landing_label",
+    "sc_user_role_group_ids",
 ]
 _ENTERPRISE_USER_FIELD_LABELS = {
     "name": "姓名",
-    "login": "登录账号",
-    "password": "初始密码",
+    "login": "用户名",
+    "password": "重置密码",
     "phone": "手机号",
+    "email": "邮箱",
     "active": "启用",
     "company_id": "所属公司",
     "sc_department_id": "所属部门",
@@ -231,6 +234,7 @@ _ENTERPRISE_USER_FIELD_LABELS = {
     "sc_role_profile": "产品角色",
     "sc_role_effective": "当前生效角色",
     "sc_role_landing_label": "默认首页",
+    "sc_user_role_group_ids": "业务角色组",
 }
 _PROJECT_FORM_ACTION_PRIORITIES = (
     "提交",
@@ -3429,22 +3433,36 @@ def _govern_enterprise_user_form_for_user(data: dict) -> None:
     data["visible_fields"] = selected
     data["field_groups"] = [
         {
-            "name": "basic",
-            "label": "用户基础信息",
+            "name": "account",
+            "label": "账号信息",
             "priority": 1,
             "collapsible": False,
-            "fields": [name for name in selected if name in {"name", "login", "password", "phone", "active"}],
+            "fields": [name for name in selected if name in {"login", "name", "active", "password"}],
+        },
+        {
+            "name": "contact",
+            "label": "联系方式",
+            "priority": 2,
+            "collapsible": False,
+            "fields": [name for name in selected if name in {"phone", "email"}],
         },
         {
             "name": "assignment",
-            "label": "组织与角色",
-            "priority": 2,
+            "label": "组织归属",
+            "priority": 3,
             "collapsible": False,
             "fields": [
                 name
                 for name in selected
                 if name in {"company_id", "sc_department_id", "sc_manager_user_id", "sc_role_profile", "sc_role_effective", "sc_role_landing_label"}
             ],
+        },
+        {
+            "name": "permissions",
+            "label": "业务角色",
+            "priority": 4,
+            "collapsible": False,
+            "fields": [name for name in selected if name in {"sc_user_role_group_ids"}],
         },
     ]
     views = _as_dict(data.get("views"))
@@ -3457,31 +3475,55 @@ def _govern_enterprise_user_form_for_user(data: dict) -> None:
                 {
                     "type": "group",
                     "name": "enterprise_user_basic_group",
-                    "string": "用户基础信息",
+                    "string": "账号信息",
                     "children": [
-                        _make_labeled_field_node(name, fields_map, _ENTERPRISE_USER_FIELD_LABELS)
+                        _make_labeled_field_node(name, fields_map)
                         for name in selected
-                        if name in {"name", "login", "password", "phone", "active"}
+                        if name in {"login", "name", "active", "password"}
+                    ],
+                },
+                {
+                    "type": "group",
+                    "name": "enterprise_user_contact_group",
+                    "string": "联系方式",
+                    "children": [
+                        _make_labeled_field_node(name, fields_map)
+                        for name in selected
+                        if name in {"phone", "email"}
                     ],
                 },
                 {
                     "type": "group",
                     "name": "enterprise_user_assignment_group",
-                    "string": "组织与角色",
+                    "string": "组织归属",
                     "children": [
-                        _make_labeled_field_node(name, fields_map, _ENTERPRISE_USER_FIELD_LABELS)
+                        _make_labeled_field_node(name, fields_map)
                         for name in selected
                         if name in {"company_id", "sc_department_id", "sc_manager_user_id", "sc_role_profile", "sc_role_effective", "sc_role_landing_label"}
+                    ],
+                },
+                {
+                    "type": "group",
+                    "name": "enterprise_user_permissions_group",
+                    "string": "业务角色",
+                    "children": [
+                        _make_labeled_field_node(name, fields_map)
+                        for name in selected
+                        if name in {"sc_user_role_group_ids"}
                     ],
                 },
             ],
         }
     ]
+    form["statusbar"] = {"field": None, "states": []}
+    form["header_buttons"] = []
+    form["button_box"] = []
+    form["stat_buttons"] = []
     views["form"] = form
     data["views"] = views
 
     field_policies = _as_dict(data.get("field_policies"))
-    basic_fields = {"name", "login", "password", "phone", "active"}
+    basic_fields = {"name", "login", "password", "phone", "email", "active", "sc_user_role_group_ids"}
     readonly_fields = {"sc_role_effective", "sc_role_landing_label"}
     contract_required_fields = set(_resolve_contract_required_fields(data, fields_map))
     for name in selected:
@@ -3509,13 +3551,12 @@ def _govern_enterprise_user_form_for_user(data: dict) -> None:
         }
     data["field_policies"] = field_policies
 
-    if _resolve_render_profile(data) == _RENDER_PROFILE_CREATE:
-        toolbar = _as_dict(data.get("toolbar"))
-        if isinstance(toolbar.get("header"), list):
-            toolbar["header"] = []
-        data["toolbar"] = toolbar
-        data["buttons"] = []
-        data["action_groups"] = []
+    toolbar = _as_dict(data.get("toolbar"))
+    if isinstance(toolbar.get("header"), list):
+        toolbar["header"] = []
+    data["toolbar"] = toolbar
+    data["buttons"] = []
+    data["action_groups"] = []
     _inject_enterprise_form_governance(data)
 
 
@@ -3752,6 +3793,8 @@ def _hide_create_profile_noise_fields(data: dict) -> None:
     semantics_map = _as_dict(data.get("field_semantics"))
     for name, raw_descriptor in list(fields_map.items()):
         descriptor = _as_dict(raw_descriptor)
+        if _is_enterprise_user_form_contract(data) and _safe_lower(name) == "active":
+            continue
         if not descriptor or not _is_create_profile_noise_field(name, descriptor):
             continue
         descriptor["semantic_type"] = "technical"

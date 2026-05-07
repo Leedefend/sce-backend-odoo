@@ -155,6 +155,60 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
 
         self.assertEqual(full["statusContract"]["globalStatus"]["pageAuth"], "read")
 
+    def test_ui_contract_v2_preserves_tree_column_optional_hide(self):
+        source = {
+            "ui_contract": {
+                "model": "hr.department",
+                "view_type": "tree",
+                "fields": {
+                    "name": {"name": "name", "type": "char", "string": "部门名称"},
+                    "create_uid": {"name": "create_uid", "type": "many2one", "string": "创建人"},
+                    "create_date": {"name": "create_date", "type": "datetime", "string": "创建日期"},
+                },
+                "views": {
+                    "tree": {
+                        "columns": ["name", "create_uid", "create_date"],
+                        "columns_schema": [
+                            {"name": "name", "string": "部门名称", "type": "char"},
+                            {
+                                "name": "create_uid",
+                                "string": "创建人",
+                                "type": "many2one",
+                                "optional": "hide",
+                            },
+                            {
+                                "name": "create_date",
+                                "string": "创建日期",
+                                "type": "datetime",
+                                "optional": "hide",
+                            },
+                        ],
+                    },
+                },
+            },
+            "model": "hr.department",
+            "view_type": "tree",
+        }
+
+        full = assembler.assemble_unified_page_contract_v2(
+            source,
+            source_type="ui.contract",
+            client_type="web_pc",
+            request_id="test.web.tree.optional.hide",
+        )
+
+        widgets = [
+            widget
+            for container in full["layoutContract"]["containerTree"]
+            for widget in container["widgetList"]
+        ]
+        by_field = {widget["fieldCode"]: widget for widget in widgets}
+        self.assertEqual(by_field["create_uid"]["componentConfig"]["optional"], "hide")
+        self.assertEqual(by_field["create_date"]["componentConfig"]["optional"], "hide")
+        status = {row["widgetId"]: row for row in full["statusContract"]["widgetStatus"]}
+        self.assertTrue(status[by_field["create_uid"]["widgetId"]]["visible"])
+        self.assertTrue(status[by_field["create_date"]["widgetId"]]["visible"])
+
 
 if __name__ == "__main__":
     unittest.main()

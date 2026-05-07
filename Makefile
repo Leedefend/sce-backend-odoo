@@ -10,6 +10,9 @@ SHELL := bash
 ROOT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 MIGRATION_ASSET_ROOT ?= migration_assets
 MIGRATION_ASSET_LOCK ?= docs/migration_alignment/migration_asset_package_lock_v1.json
+MIGRATION_FILE_INDEX_CSV ?= /mnt/artifacts/migration/fresh_db_legacy_file_index_replay_payload_v1.csv
+CONSTRUCTION_CONTRACT_VISIBLE_XLSX ?= /mnt/artifacts/migration/source_extracts/construction_contract_visible_surface.xlsx
+CONSTRUCTION_CONTRACT_RAW_CSV ?= /mnt/tmp/raw/contract/contract.csv
 FORMAL_PROJECTION_ARTIFACT_ROOT ?= $(if $(MIGRATION_ARTIFACT_ROOT),$(MIGRATION_ARTIFACT_ROOT),/tmp/history_continuity/$(DB_NAME)/adhoc)
 
 # Snapshot DB knobs from invocation context before .env include so explicit
@@ -548,8 +551,9 @@ odoo.exec: check-compose-project check-compose-env
 # ======================================================
 # ==================== Diagnostics =====================
 # ======================================================
-.PHONY: diag.project odoo.shell.exec runtime.language.ensure verify.runtime.language.baseline verify.business.oca_runtime_smoke verify.business.document_state_policy_switch history.users.verify history.users.rebuild history.real_users.normalize.write history.continuity.rehearse history.continuity.replay history.production.fresh_init history.business.usable.probe history.legacy_user_access.projection.write history.settlement_adjustment.runtime.probe history.expense_claim.runtime.probe history.treasury_reconciliation.runtime.probe history.receipt_income.runtime.probe history.payment_execution.runtime.probe history.construction_diary.runtime.probe history.attachment.custody.probe history.invoice_tax.runtime.probe history.treasury.reconciliation.probe history.expense_deposit.runtime.probe history.material_catalog.runtime.probe history.material_product.projection.probe history.purchase_contract.runtime.probe history.project.lifecycle.continuity.adapter migration.assets.fetch migration.assets.verify_all migration.assets.delivery_audit history.contract.core.gap.audit history.contract.partner.gap.audit history.contract.strong_evidence.backtrace.audit history.contract.direction_defer.audit history.partner.master.targeted.replay.adapter history.contract.partner.recovery.adapter history.contract.direction_defer.recovery.adapter history.partner.master.direction_defer.replay.adapter history.supplier.partner.targeted.replay.adapter history.outflow.partner.targeted.replay.adapter history.actual_outflow.partner.targeted.replay.adapter history.receipt.parent.recovery.adapter history.receipt.partner.targeted.replay.adapter history.receipt_income.partner.targeted.replay.adapter history.expense_deposit.partner.targeted.replay.adapter history.project_member.attachment.targeted.replay.adapter history.payment_request.outflow.state_activation.adapter history.payment_request.outflow.approved_recovery.adapter history.payment_request.outflow.done_recovery.adapter fresh_db.legacy_user_context.replay.adapter fresh_db.legacy_user_project_scope.replay.adapter fresh_db.legacy_task_evidence.replay.adapter fresh_db.legacy_attendance_checkin.replay.adapter fresh_db.legacy_personnel_movement.replay.adapter fresh_db.legacy_salary_line.replay.adapter fresh_db.legacy_purchase_contract.replay.adapter fresh_db.legacy_account_master.replay.adapter fresh_db.legacy_account_master.replay.write fresh_db.fund_account.projection.write fresh_db.workbench_item.projection.write fresh_db.dashboard_cockpit.projection.write fresh_db.material_category.projection.write fresh_db.material_catalog.projection.write fresh_db.supplier_contract_pricing.projection.write prod.sim.formal.projections.refresh verify.prod.sim.formal.projections fresh_db.legacy_account_transaction.replay.adapter fresh_db.legacy_account_transaction.replay.write fresh_db.legacy_material_catalog.replay.adapter fresh_db.material_product.projection.write fresh_db.legacy_file_index.replay.adapter fresh_db.outflow_request.replay.adapter fresh_db.actual_outflow.replay.adapter fresh_db.actual_outflow_residual.replay.adapter fresh_db.actual_outflow_line.replay.adapter fresh_db.outflow_request_line.replay.adapter fresh_db.receipt_invoice_line.replay.adapter fresh_db.receipt_invoice_attachment.replay.adapter fresh_db.legacy_attachment_backfill.replay.adapter fresh_db.legacy_fund_daily_snapshot.replay.adapter fresh_db.legacy_fund_daily_line.replay.adapter fresh_db.legacy_financing_loan.replay.adapter fresh_db.legacy_receipt_income.replay.adapter fresh_db.legacy_expense_deposit.replay.adapter fresh_db.legacy_invoice_tax.replay.adapter fresh_db.legacy_tax_deduction.replay.adapter fresh_db.legacy_self_funding.replay.adapter fresh_db.legacy_invoice_registration_line.replay.adapter fresh_db.legacy_deduction_adjustment_line.replay.adapter fresh_db.legacy_fund_confirmation_line.replay.adapter fresh_db.legacy_expense_reimbursement_line.replay.adapter fresh_db.legacy_construction_diary_line.replay.adapter fresh_db.legacy_payment_residual.replay.adapter fresh_db.legacy_receipt_residual.replay.adapter fresh_db.legacy_workflow_audit.replay.adapter fresh_db.legacy_tax_deduction.replay.write fresh_db.legacy_self_funding.replay.write fresh_db.history_todo.projection.write fresh_db.treasury_ledger.projection.write fresh_db.settlement_adjustment.projection.write fresh_db.expense_claim.projection.write fresh_db.treasury_reconciliation.projection.write fresh_db.receipt_income.projection.write fresh_db.payment_execution.projection.write fresh_db.construction_diary.projection.write
+.PHONY: diag.project odoo.shell.exec runtime.language.ensure verify.runtime.language.baseline verify.business.oca_runtime_smoke verify.business.document_state_policy_switch verify.user_role_approval_matrix.guard history.users.verify history.users.rebuild history.real_users.normalize.write history.continuity.rehearse history.continuity.replay history.production.fresh_init history.business.usable.probe history.legacy_user_access.projection.write history.organization.department.materialize.write history.organization.carrying.audit.probe history.settlement_adjustment.runtime.probe history.expense_claim.runtime.probe history.treasury_reconciliation.runtime.probe history.receipt_income.runtime.probe history.payment_execution.runtime.probe history.construction_diary.runtime.probe history.attachment.custody.probe history.invoice_tax.runtime.probe history.treasury.reconciliation.probe history.expense_deposit.runtime.probe history.material_catalog.runtime.probe history.material_product.projection.probe history.purchase_contract.runtime.probe history.project.lifecycle.continuity.adapter migration.assets.fetch migration.assets.verify_all migration.assets.delivery_audit history.contract.core.gap.audit history.contract.partner.gap.audit history.contract.strong_evidence.backtrace.audit history.contract.direction_defer.audit history.partner.master.targeted.replay.adapter history.contract.partner.recovery.adapter history.contract.direction_defer.recovery.adapter history.partner.master.direction_defer.replay.adapter history.supplier.partner.targeted.replay.adapter history.outflow.partner.targeted.replay.adapter history.actual_outflow.partner.targeted.replay.adapter history.receipt.parent.recovery.adapter history.receipt.partner.targeted.replay.adapter history.receipt_income.partner.targeted.replay.adapter history.expense_deposit.partner.targeted.replay.adapter history.project_member.attachment.targeted.replay.adapter history.payment_request.outflow.state_activation.adapter history.payment_request.outflow.approved_recovery.adapter history.payment_request.outflow.done_recovery.adapter fresh_db.legacy_user_context.replay.adapter fresh_db.legacy_user_context.replay.write fresh_db.legacy_user_project_scope.replay.adapter fresh_db.legacy_task_evidence.replay.adapter fresh_db.legacy_attendance_checkin.replay.adapter fresh_db.legacy_personnel_movement.replay.adapter fresh_db.legacy_salary_line.replay.adapter fresh_db.legacy_purchase_contract.replay.adapter fresh_db.legacy_account_master.replay.adapter fresh_db.legacy_account_master.replay.write fresh_db.construction_contract.income_count_alignment.write fresh_db.construction_contract.income_count.probe fresh_db.construction_contract.visible_trace.write fresh_db.construction_contract.attachment.write fresh_db.construction_contract.attachment.probe fresh_db.construction_contract.replay_manifest.refresh fresh_db.fund_account.projection.write fresh_db.workbench_item.projection.write fresh_db.dashboard_cockpit.projection.write fresh_db.material_category.projection.write fresh_db.material_catalog.projection.write fresh_db.supplier_contract_pricing.projection.write prod.sim.formal.projections.refresh verify.prod.sim.formal.projections fresh_db.legacy_account_transaction.replay.adapter fresh_db.legacy_account_transaction.replay.write fresh_db.legacy_material_catalog.replay.adapter fresh_db.material_product.projection.write fresh_db.legacy_file_index.replay.adapter fresh_db.outflow_request.replay.adapter fresh_db.actual_outflow.replay.adapter fresh_db.actual_outflow_residual.replay.adapter fresh_db.actual_outflow_line.replay.adapter fresh_db.outflow_request_line.replay.adapter fresh_db.receipt_invoice_line.replay.adapter fresh_db.receipt_invoice_attachment.replay.adapter fresh_db.legacy_attachment_backfill.replay.adapter fresh_db.legacy_fund_daily_snapshot.replay.adapter fresh_db.legacy_fund_daily_line.replay.adapter fresh_db.legacy_financing_loan.replay.adapter fresh_db.legacy_receipt_income.replay.adapter fresh_db.legacy_expense_deposit.replay.adapter fresh_db.legacy_invoice_tax.replay.adapter fresh_db.legacy_tax_deduction.replay.adapter fresh_db.legacy_self_funding.replay.adapter fresh_db.legacy_invoice_registration_line.replay.adapter fresh_db.legacy_deduction_adjustment_line.replay.adapter fresh_db.legacy_fund_confirmation_line.replay.adapter fresh_db.legacy_expense_reimbursement_line.replay.adapter fresh_db.legacy_construction_diary_line.replay.adapter fresh_db.legacy_payment_residual.replay.adapter fresh_db.legacy_receipt_residual.replay.adapter fresh_db.legacy_workflow_audit.replay.adapter fresh_db.legacy_tax_deduction.replay.write fresh_db.legacy_self_funding.replay.write fresh_db.history_todo.projection.write fresh_db.treasury_ledger.projection.write fresh_db.settlement_adjustment.projection.write fresh_db.expense_claim.projection.write fresh_db.treasury_reconciliation.projection.write fresh_db.receipt_income.projection.write fresh_db.payment_execution.projection.write fresh_db.construction_diary.projection.write
 .PHONY: verify.business.finance_document_tier_runtime_smoke
+.PHONY: history.legacy_user_visible_surface.overlay.write history.legacy_user_recovery.probe fresh_db.legacy_user_project_scope.replay.write
 .PHONY: fresh_db.legacy_project_fund_balance.replay.adapter fresh_db.legacy_project_fund_balance.replay.write fresh_db.legacy_invoice_surcharge.replay.adapter fresh_db.legacy_invoice_surcharge.replay.write fresh_db.legacy_supplier_contract_pricing.replay.adapter fresh_db.legacy_supplier_contract_pricing.replay.write
 diag.project: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/diag/project.sh
@@ -572,6 +576,13 @@ verify.business.finance_document_tier_runtime_smoke: check-compose-project check
 verify.business.document_state_policy_switch: check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/business_document_state_policy_switch_smoke.py
 
+verify.user_role_approval_matrix.guard: check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/user_role_approval_matrix_guard.py
+
+.PHONY: verify.user_permission_view_contract_boundary.guard
+verify.user_permission_view_contract_boundary.guard: check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/user_permission_view_contract_boundary_guard.py
+
 history.users.verify: guard.prod.forbid check-compose-project check-compose-env
 	@python3 scripts/migration/user_asset_verify.py --asset-root "$(MIGRATION_ASSET_ROOT)" --lane user --check
 
@@ -581,11 +592,32 @@ history.users.rebuild: guard.prod.forbid check-compose-project check-compose-env
 history.real_users.normalize.write: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/history_real_user_normalize_write.py
 
+history.legacy_user_visible_surface.overlay.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" LEGACY_USER_VISIBLE_SURFACE_FILES="$(LEGACY_USER_VISIBLE_SURFACE_FILES)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/legacy_user_visible_surface_overlay_write.py
+
+history.user_profile_runtime_projection.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/history_user_profile_runtime_projection_write.py
+
+history.legacy_user_recovery.probe: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/history_legacy_user_recovery_probe.py
+
 fresh_db.legacy_user_context.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
 	@python3 scripts/migration/fresh_db_legacy_user_context_replay_adapter.py
 
+fresh_db.legacy_user_context.replay.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_legacy_user_context_replay_write.py
+
+history.organization.department.materialize.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/history_organization_department_materialize_write.py
+
+history.organization.carrying.audit.probe: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/history_organization_carrying_audit_probe.py
+
 fresh_db.legacy_user_project_scope.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
 	@python3 scripts/migration/fresh_db_legacy_user_project_scope_replay_adapter.py
+
+fresh_db.legacy_user_project_scope.replay.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_legacy_user_project_scope_replay_write.py
 
 fresh_db.legacy_task_evidence.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
 	@python3 scripts/migration/fresh_db_legacy_task_evidence_replay_adapter.py
@@ -634,6 +666,24 @@ fresh_db.legacy_account_master.replay.adapter: guard.prod.forbid check-compose-p
 
 fresh_db.legacy_account_master.replay.write: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_legacy_account_master_replay_write.py
+
+fresh_db.construction_contract.income_count_alignment.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_construction_contract_income_count_alignment_write.py
+
+fresh_db.construction_contract.income_count.probe: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_construction_contract_income_count_probe.py
+
+fresh_db.construction_contract.visible_trace.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" MIGRATION_FILE_INDEX_CSV="$(MIGRATION_FILE_INDEX_CSV)" CONSTRUCTION_CONTRACT_VISIBLE_XLSX="$(CONSTRUCTION_CONTRACT_VISIBLE_XLSX)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_construction_contract_visible_trace_write.py
+
+fresh_db.construction_contract.attachment.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" MIGRATION_FILE_INDEX_CSV="$(MIGRATION_FILE_INDEX_CSV)" CONSTRUCTION_CONTRACT_RAW_CSV="$(CONSTRUCTION_CONTRACT_RAW_CSV)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_construction_contract_attachment_write.py
+
+fresh_db.construction_contract.attachment.probe: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" MIGRATION_FILE_INDEX_CSV="$(MIGRATION_FILE_INDEX_CSV)" CONSTRUCTION_CONTRACT_RAW_CSV="$(CONSTRUCTION_CONTRACT_RAW_CSV)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_construction_contract_attachment_probe.py
+
+fresh_db.construction_contract.replay_manifest.refresh: guard.prod.forbid
+	@python3 scripts/migration/fresh_db_construction_contract_replay_manifest_refresh.py
 
 fresh_db.fund_account.projection.write: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_fund_account_projection_write.py

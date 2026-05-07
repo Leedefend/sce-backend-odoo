@@ -24,7 +24,7 @@ RESULTS = {
         "path": "artifacts/migration/fresh_db_project_anchor_replay_write_result_v1.json",
         "status": "fresh_replay_executed",
         "expected_key": "created_rows",
-        "expected_value": 755,
+        "expected_value": 798,
     },
     "project_member_neutral_completed": {
         "path": "artifacts/migration/fresh_db_project_member_neutral_replay_write_result_v1.json",
@@ -237,7 +237,7 @@ def main() -> int:
         "database": "sc_migration_fresh",
         "demo_modules_installed": False,
         "partner_l4_rows": 4797,
-        "project_anchor_rows": 755,
+        "project_anchor_rows": 798,
         "project_member_neutral_rows": 7389,
         "contract_partner_anchor_rows": 12,
         "contract_missing_partner_anchor_rows": contract_missing_partner_anchor_rows,
