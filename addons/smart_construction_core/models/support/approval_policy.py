@@ -30,22 +30,121 @@ class ScApprovalPolicy(models.Model):
         ("sc.settlement.adjustment", "结算调整"),
     ]
     APPROVAL_SCOPE_GROUP_XMLIDS = {
+        "executive": "smart_construction_core.group_sc_role_executive",
+        "business_admin": "smart_construction_core.group_sc_role_business_admin",
+        "operation_user": "smart_construction_core.group_sc_role_operation_user",
+        "partner_manager": "smart_construction_core.group_sc_role_partner_manager",
+        "project_user": "smart_construction_core.group_sc_role_project_user",
         "project_manager": "smart_construction_core.group_sc_cap_project_manager",
         "material_manager": "smart_construction_core.group_sc_cap_material_manager",
         "purchase_manager": "smart_construction_core.group_sc_cap_purchase_manager",
         "finance_manager": "smart_construction_core.group_sc_cap_finance_manager",
+        "finance_user": "smart_construction_core.group_sc_role_finance_user",
+        "temporary_finance": "smart_construction_core.group_sc_role_temporary_finance",
         "contract_manager": "smart_construction_core.group_sc_cap_contract_manager",
+        "contract_user": "smart_construction_core.group_sc_role_contract_admin",
         "cost_manager": "smart_construction_core.group_sc_cap_cost_manager",
+        "cost_user": "smart_construction_core.group_sc_role_cost_user",
         "settlement_manager": "smart_construction_core.group_sc_cap_settlement_manager",
+        "settlement_user": "smart_construction_core.group_sc_role_settlement_user",
     }
     APPROVAL_SCOPE_LABELS = {
+        "executive": "管理层/总经理终审",
+        "business_admin": "业务管理员",
+        "operation_user": "经营审核人",
+        "partner_manager": "客商资料审核人",
+        "project_user": "项目部/工程部经办",
         "project_manager": "项目负责人",
         "material_manager": "物资审核人",
         "purchase_manager": "采购审核人",
+        "finance_user": "财务经办人",
         "finance_manager": "财务审核人",
+        "temporary_finance": "临时财务",
+        "contract_user": "合同经办人",
         "contract_manager": "合同审核人",
+        "cost_user": "成本经办人",
         "cost_manager": "成控审核人",
+        "settlement_user": "结算经办人",
         "settlement_manager": "结算审核人",
+    }
+    USER_VISIBLE_TEMPLATE_MARKER = "[user_visible_approval_template_v1]"
+    USER_VISIBLE_APPROVAL_TEMPLATES = {
+        "project_contract_approval": {
+            "mode": "linear",
+            "manager_scope_key": "contract_manager",
+            "note": "施工/收入合同默认按用户可见业务流程审核：合同经办、经营审核、项目负责人、成控审核、管理层终审。业务管理员可按金额或管理要求调整步骤。",
+            "steps": [
+                ("合同经办确认", "contract_user"),
+                ("经营部审核", "operation_user"),
+                ("项目负责人审核", "project_manager"),
+                ("成控审核", "cost_manager"),
+                ("管理层/总经理终审", "executive"),
+            ],
+        },
+        "general_contract_approval": {
+            "mode": "linear",
+            "manager_scope_key": "contract_manager",
+            "note": "一般合同默认按合同经办、经营审核、财务审核、管理层终审处理。",
+            "steps": [
+                ("合同经办确认", "contract_user"),
+                ("经营部审核", "operation_user"),
+                ("财务审核", "finance_manager"),
+                ("管理层/总经理终审", "executive"),
+            ],
+        },
+        "purchase_order_approval": {
+            "mode": "linear",
+            "manager_scope_key": "purchase_manager",
+            "note": "采购订单默认按项目经办、项目负责人、采购审核、财务审核处理。",
+            "steps": [
+                ("项目部/工程部经办确认", "project_user"),
+                ("项目负责人审核", "project_manager"),
+                ("采购审核", "purchase_manager"),
+                ("财务审核", "finance_manager"),
+            ],
+        },
+        "settlement_order_approval": {
+            "mode": "linear",
+            "manager_scope_key": "settlement_manager",
+            "note": "结算单默认按结算经办、项目负责人、成控审核、结算审核处理。",
+            "steps": [
+                ("结算经办确认", "settlement_user"),
+                ("项目负责人审核", "project_manager"),
+                ("成控审核", "cost_manager"),
+                ("结算审核", "settlement_manager"),
+            ],
+        },
+        "payment_request_approval": {
+            "mode": "linear",
+            "manager_scope_key": "finance_manager",
+            "note": "付款/收款申请默认按财务经办、项目负责人、财务审核、管理层终审处理。",
+            "steps": [
+                ("财务经办确认", "finance_user"),
+                ("项目负责人审核", "project_manager"),
+                ("财务审核", "finance_manager"),
+                ("管理层/总经理终审", "executive"),
+            ],
+        },
+        "receipt_income_optional_approval": {
+            "mode": "none",
+            "manager_scope_key": "finance_manager",
+            "note": "收款登记默认不强制审核；启用后建议按财务经办、经营审核、财务审核处理。",
+            "steps": [
+                ("财务经办确认", "finance_user"),
+                ("经营部审核", "operation_user"),
+                ("财务审核", "finance_manager"),
+            ],
+        },
+        "settlement_adjustment_optional_approval": {
+            "mode": "none",
+            "manager_scope_key": "settlement_manager",
+            "note": "结算调整默认不强制审核；启用后建议按结算经办、成控审核、结算审核处理。",
+            "steps": [
+                ("结算经办确认", "settlement_user"),
+                ("成控审核", "cost_manager"),
+                ("结算审核", "settlement_manager"),
+            ],
+        },
     }
 
     name = fields.Char(required=True, tracking=True, string="业务名称")
@@ -349,6 +448,56 @@ class ScApprovalPolicy(models.Model):
     @api.model
     def sync_all_tier_definitions(self):
         return self.search([]).sync_tier_definitions()
+
+    @api.model
+    def apply_user_visible_approval_templates(self):
+        """Align default approval templates with user-visible business roles."""
+        Step = self.env["sc.approval.step"].sudo()
+        changed = False
+        for code, template in self.USER_VISIBLE_APPROVAL_TEMPLATES.items():
+            policy = self.sudo().search([("code", "=", code)], limit=1)
+            if not policy:
+                continue
+            current_scope_keys = policy.step_ids.sorted("sequence").mapped("approval_scope_key")
+            template_scope_keys = [scope_key for _name, scope_key in template["steps"]]
+            already_template = current_scope_keys == template_scope_keys
+            managed_template = self.USER_VISIBLE_TEMPLATE_MARKER in (policy.note or "")
+            user_customized = (
+                not managed_template
+                and len(current_scope_keys) > 1
+                and not already_template
+            )
+            if user_customized:
+                continue
+            manager_group = self._group_for_approval_scope(template["manager_scope_key"])
+            policy_vals = {
+                "approval_required": template["mode"] != "none",
+                "mode": template["mode"],
+                "manager_scope_key": template["manager_scope_key"],
+                "manager_group_id": manager_group.id if manager_group else False,
+                "note": "%s %s" % (self.USER_VISIBLE_TEMPLATE_MARKER, template["note"]),
+            }
+            policy.with_context(skip_tier_sync=True).write(policy_vals)
+
+            if not already_template:
+                policy.step_ids.with_context(skip_tier_sync=True).unlink()
+                sequence = 10
+                for name, scope_key in template["steps"]:
+                    group = self._group_for_approval_scope(scope_key)
+                    Step.with_context(skip_tier_sync=True).create(
+                        {
+                            "policy_id": policy.id,
+                            "sequence": sequence,
+                            "name": name,
+                            "approval_scope_key": scope_key,
+                            "approve_group_id": group.id if group else False,
+                        }
+                    )
+                    sequence += 10
+            changed = True
+        if changed:
+            self.search([("code", "in", list(self.USER_VISIBLE_APPROVAL_TEMPLATES))]).sync_tier_definitions()
+        return True
 
     @api.model_create_multi
     def create(self, vals_list):
