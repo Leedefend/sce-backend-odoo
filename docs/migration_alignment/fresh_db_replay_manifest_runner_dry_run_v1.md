@@ -13,14 +13,13 @@ executing write scripts, or mutating business data.
 
 ```json
 {
-  "excluded_high_risk": 1,
-  "fresh_replay_executed": 6
+  "replay_ready_candidate": 5
 }
 ```
 
 ## Result
 
-- lanes: `7`
+- lanes: `5`
 - default-run lanes: `0`
 - missing references: `0`
 - high-risk default violations: `0`
