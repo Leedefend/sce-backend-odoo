@@ -77,6 +77,20 @@ Unified payload artifacts:
 - `artifacts/migration/partner_business_aligned_rebuild_v1/fact_based_partner_rebuild_payload_business_aligned_v1.csv`
 - `artifacts/migration/partner_business_aligned_rebuild_v1/fact_based_partner_rebuild_current_only_review_v1.csv`
 
+Write gate generated with:
+
+```bash
+python3 scripts/migration/partner_business_aligned_rebuild_gate.py
+```
+
+Write gate artifacts:
+
+- `artifacts/migration/partner_business_aligned_rebuild_v1/fact_based_partner_rebuild_business_aligned_gate_result_v1.json`
+- `artifacts/migration/partner_business_aligned_rebuild_v1/fact_based_partner_rebuild_business_aligned_gate_v1.csv`
+- `artifacts/migration/partner_business_aligned_rebuild_v1/fact_based_partner_rebuild_business_aligned_write_candidates_v1.csv`
+- `artifacts/migration/partner_business_aligned_rebuild_v1/fact_based_partner_rebuild_business_aligned_update_only_v1.csv`
+- `artifacts/migration/partner_business_aligned_rebuild_v1/fact_based_partner_rebuild_business_aligned_blocked_review_v1.csv`
+
 ## Source Shape
 
 | Metric | Value |
@@ -211,6 +225,37 @@ include `missing_credit_code` for 5,539 rows, `personal_fragment_review` for 705
 rows, and `unknown_business_role` for 645 rows. These flags should gate write
 mode rather than block the unified payload generation itself.
 
+## Write Gate
+
+The gate classifies the unified payload before any Odoo write:
+
+| Gate action | Rows | Meaning |
+| --- | ---: | --- |
+| write candidate | 2,123 | may create or update when target matching is unambiguous |
+| update-only candidate | 4,225 | may update an existing unique target but must not create a new partner |
+| blocked review | 1,444 | manual review only |
+
+Blocking review flags include invalid bank accounts, placeholder credit codes,
+multiple current matches, personal fragments, and unknown business roles.
+`missing_credit_code` rows are update-only by default because many historical
+suppliers are valid business counterparties but unsafe to create automatically
+without stronger identity.
+
+The guarded Odoo shell writer is:
+
+```bash
+ENV=test ENV_FILE=.env.prod.sim DB_NAME=sc_prod_sim \
+  MIGRATION_WRITE_MODE=dry-run \
+  bash scripts/ops/odoo_shell_exec.sh \
+  < scripts/migration/partner_business_aligned_rebuild_write.py
+```
+
+Use `MIGRATION_WRITE_MODE=write` only after the dry-run result has been reviewed.
+The writer resolves targets by legacy identity, VAT, then exact name. It writes
+only the fields already present on the current `res.partner` extension:
+role ranks, supplier type, account name, bank name, bank account, VAT, and
+legacy traceability.
+
 ## Design Implication
 
 The next iteration should not patch `customer_rank` and `supplier_rank` directly
@@ -233,3 +278,6 @@ from `review_flags`, and keep the 26 current-only rows in manual review. This
 keeps the existing rebuild package structure intact while correcting the
 business alignment gap and avoids silently losing user-provided basic
 information.
+
+Current environment note: local static generation and Python compilation passed.
+The Odoo dry-run command requires the compose `odoo` service to be running.
