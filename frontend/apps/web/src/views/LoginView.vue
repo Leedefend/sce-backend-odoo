@@ -1,5 +1,5 @@
 <template>
-  <main class="login-page">
+  <main class="login-page sc-page">
     <div class="login-bg-orb login-bg-orb--left" aria-hidden="true"></div>
     <div class="login-bg-orb login-bg-orb--right" aria-hidden="true"></div>
     <div class="login-bg-grid" aria-hidden="true"></div>
@@ -37,7 +37,7 @@
 
         <section
           v-if="pageSectionEnabled('card', true) && pageSectionTagIs('card', 'section')"
-          class="login-card"
+          class="login-card sc-panel"
           :style="pageSectionStyle('card')"
         >
           <header class="brand-header">
@@ -88,7 +88,7 @@
             >
               {{ error }}
             </p>
-            <button class="submit" type="submit" :disabled="loading">{{ loading ? pageText('submit_loading', '系统正在登录，请稍候…') : pageText('submit_idle', '登录') }}</button>
+            <button class="submit sc-btn sc-btn-primary" type="submit" :disabled="loading">{{ loading ? pageText('submit_loading', '系统正在登录，请稍候…') : pageText('submit_idle', '登录') }}</button>
           </form>
         </section>
       </section>

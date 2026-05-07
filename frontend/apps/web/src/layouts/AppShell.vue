@@ -42,7 +42,7 @@
         <div v-if="projectMenuOpen && projectContextEnabled" class="project-dropdown" @click.stop>
           <input
             v-model="projectSearch"
-            class="project-search"
+            class="project-search sc-search"
             type="search"
             :placeholder="projectSearchPlaceholder"
             @input="queueProjectSearch"
@@ -52,7 +52,7 @@
             <button
               v-for="option in projectOptions"
               :key="`project-${option.id}`"
-              class="project-option"
+              class="project-option sc-list-item"
               :class="{ active: option.id === selectedProject?.id }"
               type="button"
               @click="selectProject(option)"
@@ -98,8 +98,8 @@
       </div>
 
       <div class="footer">
-        <button v-if="showRefresh" class="ghost" @click="refreshInit">刷新</button>
-        <button class="ghost" @click="logout">退出登录</button>
+        <button v-if="showRefresh" class="ghost sc-btn sc-btn-ghost" @click="refreshInit">刷新</button>
+        <button class="ghost sc-btn sc-btn-ghost" @click="logout">退出登录</button>
       </div>
     </aside>
 
@@ -127,7 +127,7 @@
           <p v-if="!useMinimalTopbar && !sceneHeaderMinimal && topbarSubtitle" class="headline-subtitle">{{ topbarSubtitle }}</p>
         </div>
         <div class="topbar-actions">
-          <button class="theme-switch" type="button" @click="toggleTheme">主题：{{ themeLabel }}</button>
+          <button class="theme-switch sc-btn" type="button" @click="toggleTheme">主题：{{ themeLabel }}</button>
         </div>
       </header>
 
