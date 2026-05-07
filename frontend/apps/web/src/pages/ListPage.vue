@@ -26,7 +26,7 @@
       <section class="list-toolbar">
         <div class="list-title">
           <h2>{{ title }}</h2>
-          <p>{{ subtitle }}</p>
+          <p v-if="toolbarSubtitle">{{ toolbarSubtitle }}</p>
         </div>
         <div class="list-header-toolbar">
           <slot name="toolbar"></slot>
@@ -46,7 +46,7 @@
             {{ uiLabel('search_submit', '搜索') }}
           </button>
         </div>
-        <span v-else class="list-count">{{ uiLabel('record_count', '{count} 条记录', { count: records.length }) }}</span>
+        <span v-else-if="!showPagination" class="list-count">{{ uiLabel('record_count', '{count} 条记录', { count: records.length }) }}</span>
       </section>
       <section class="list-empty-state">
         <div class="list-empty-copy">
@@ -74,7 +74,7 @@
       <section class="list-toolbar">
         <div class="list-title">
           <h2>{{ title }}</h2>
-          <p>{{ subtitle }}</p>
+          <p v-if="toolbarSubtitle">{{ toolbarSubtitle }}</p>
         </div>
         <div class="list-header-toolbar">
           <slot name="toolbar"></slot>
@@ -94,7 +94,7 @@
             {{ uiLabel('search_submit', '搜索') }}
           </button>
         </div>
-        <span v-else class="list-count">{{ uiLabel('record_count', '{count} 条记录', { count: records.length }) }}</span>
+        <span v-else-if="!showPagination" class="list-count">{{ uiLabel('record_count', '{count} 条记录', { count: records.length }) }}</span>
       </section>
 
       <section v-if="enableSummaryStrip && summaryItems.length" class="summary-strip">
@@ -1102,6 +1102,7 @@ const rangeEnd = computed(() => {
   return Math.min(total, listOffset.value + props.records.length);
 });
 const showPagination = computed(() => listTotal.value !== null && props.status === 'ok' && !showGroupedRows.value);
+const toolbarSubtitle = computed(() => showPagination.value ? '' : props.subtitle || '');
 const canPagePrev = computed(() => listOffset.value > 0);
 const canPageNext = computed(() => {
   const total = listTotal.value || 0;
@@ -2245,8 +2246,8 @@ onBeforeUnmount(() => {
 }
 
 .pagination-input--size {
-  width: 54px;
-  padding-right: 22px;
+  width: 64px;
+  padding-right: 28px;
 }
 
 .pagination-size-combo {
@@ -2260,11 +2261,12 @@ onBeforeUnmount(() => {
   top: 1px;
   right: 1px;
   bottom: 1px;
-  width: 22px;
+  width: 26px;
   border: 0;
   border-left: 1px solid #bfdbfe;
   border-radius: 0 5px 5px 0;
   background: #eff6ff;
+  font-size: 0;
   color: #1d4ed8;
   cursor: pointer;
 }
