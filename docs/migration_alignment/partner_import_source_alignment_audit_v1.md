@@ -1,6 +1,6 @@
 # Partner Import Source Alignment Audit v1
 
-Status: Business alignment evidence batch
+Status: Business-fit iteration batch
 Branch: `feature/user-history-data-alignment`
 Source root: `/home/odoo/workspace/partner_import_source`
 Current payload: `artifacts/migration/fresh_db_partner_l4_replay_payload_v1.csv`
@@ -91,13 +91,23 @@ Write gate artifacts:
 - `artifacts/migration/partner_business_aligned_rebuild_v1/fact_based_partner_rebuild_business_aligned_update_only_v1.csv`
 - `artifacts/migration/partner_business_aligned_rebuild_v1/fact_based_partner_rebuild_business_aligned_blocked_review_v1.csv`
 
-Replay package generated with:
+Business-fit audit generated with:
+
+```bash
+python3 scripts/migration/partner_asset_business_fit_audit.py
+```
+
+Business-fit audit artifact:
+
+- `artifacts/migration/partner_asset_business_fit_audit_v1.json`
+
+Replay rehearsal package generated with:
 
 ```bash
 python3 scripts/migration/partner_business_aligned_replay_package_build.py
 ```
 
-Replay package artifacts:
+Replay rehearsal artifacts:
 
 - `artifacts/migration/partner_business_aligned_replay_package_v1/manifest.json`
 - `artifacts/migration/partner_business_aligned_replay_package_v1/package_build_result_v1.json`
@@ -294,25 +304,59 @@ information.
 Current environment note: local static generation and Python compilation passed.
 The Odoo dry-run command requires the compose `odoo` service to be running.
 
-## Replay Package
+## Asset Business-Fit Audit
 
-The replay package is the handoff unit for the updated logical data page. It is
-not a new model design and does not fork the rebuild flow. It freezes the current
-business-aligned partner lane into a replayable package for the current model
-surface.
+The important output of this iteration is not the tarball. The primary finding
+is that the old `partner_sc_v1` asset lane no longer fits the current model and
+business source.
 
-Package result:
+| Check | Old asset | Current business-fit result |
+| --- | ---: | ---: |
+| partner rows | 6,541 | 7,792 |
+| row delta |  | 1,251 |
+| write candidates |  | 2,123 |
+| update-only candidates |  | 4,225 |
+| blocked review rows |  | 1,444 |
+
+Old XML field surface:
+
+- keeps: `name`, `company_type`, `vat`, legacy identity/evidence fields;
+- misses current business fields:
+  `customer_rank`, `supplier_rank`, `sc_supplier_type`, `sc_account_name`,
+  `sc_bank_name`, `sc_bank_account`;
+- carries an outdated validation gate: `no_partner_rank_fields`.
+
+The logical pages that need iteration are therefore:
+
+| Logical page | Required change |
+| --- | --- |
+| identity and dedup | Move from old 6,541-row asset logic to the 7,792-row business source normalization. |
+| role semantics | Replace `no_partner_rank_fields`; roles now need explicit customer/supplier/mixed evidence. |
+| basic info surface | Include supplier type and account fields now available on `res.partner`. |
+| write gate | Keep write/update-only/blocked queues as part of the replay contract. |
+| review queue | Preserve missing-credit, personal-fragment, unknown-role, invalid-account cases for review. |
+
+This is the actual iteration target for the original asset package.
+
+## Replay Rehearsal Package
+
+The generated tarball is a rehearsal artifact for checking package completeness.
+It is not the final package to submit. It helps verify which files a future
+complete replay package must include after the old partner asset lane has been
+iterated.
+
+Rehearsal result:
 
 | Item | Value |
 | --- | --- |
-| package root | `artifacts/migration/partner_business_aligned_replay_package_v1` |
+| rehearsal root | `artifacts/migration/partner_business_aligned_replay_package_v1` |
 | tarball | `artifacts/migration/partner_business_aligned_replay_package_v1.tar.gz` |
 | tarball sha256 | `f530d77b87fe45759ba304735d04804074b140b0c33956865c5a8b6c8361171e` |
 | tarball bytes | `1,610,738` |
 | packaged file count | 17 |
 | package build DB writes | 0 |
 
-The package includes:
+The rehearsal includes:
 
 - the business-aligned payload and gate queues;
 - the current-only and blocked review queues;
@@ -322,7 +366,6 @@ The package includes:
 - `manifest.json` with row counts, byte sizes, sha256 checksums, build commands,
   dry-run command, and write command.
 
-This is the synchronized replacement for the older logical partner data page:
-it reflects the current `res.partner` extension fields
-`sc_supplier_type/sc_account_name/sc_bank_name/sc_bank_account` and the
-business source role evidence from `/home/odoo/workspace/partner_import_source`.
+This rehearsal must not be treated as final delivery. The next code iteration
+should refresh the original partner asset generator/manifest logic so the asset
+lane itself produces the business-fit payload and gates.
