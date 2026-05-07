@@ -65,6 +65,18 @@ Overlay artifacts:
 - `artifacts/migration/partner_business_alignment_overlay_v1/partner_business_alignment_overlay_v1.csv`
 - `artifacts/migration/partner_business_alignment_overlay_v1/partner_business_alignment_action_queue_v1.csv`
 
+Unified rebuild payload generated with:
+
+```bash
+python3 scripts/migration/partner_business_aligned_rebuild_adapter.py
+```
+
+Unified payload artifacts:
+
+- `artifacts/migration/partner_business_aligned_rebuild_v1/fact_based_partner_rebuild_business_aligned_result_v1.json`
+- `artifacts/migration/partner_business_aligned_rebuild_v1/fact_based_partner_rebuild_payload_business_aligned_v1.csv`
+- `artifacts/migration/partner_business_aligned_rebuild_v1/fact_based_partner_rebuild_current_only_review_v1.csv`
+
 ## Source Shape
 
 | Metric | Value |
@@ -170,6 +182,35 @@ write partner identity and role fields to `res.partner`, then write account
 holder, bank name, and account number to `res.partner.bank` linked to the same
 partner. It does not mean a separate business objective or a new rebuild process.
 
+## Unified Payload
+
+`partner_business_aligned_rebuild_adapter.py` keeps the existing fact-based
+payload column contract and refreshes it from the full business source root. This
+turns the overlay into the next loader input instead of a parallel asset lane.
+
+| Metric | Value |
+| --- | ---: |
+| existing fact-based payload rows | 5,233 |
+| business-aligned payload rows | 7,792 |
+| current-only rows for review | 26 |
+| rows with bank account | 6,602 |
+| rows with bank name | 6,606 |
+| rows with credit code | 2,253 |
+
+Role split in the unified payload:
+
+| Role | Rows |
+| --- | ---: |
+| supplier | 7,083 |
+| customer and supplier | 51 |
+| customer | 13 |
+| unknown review | 645 |
+
+Review flags are carried in the existing `review_flags` column. High-volume flags
+include `missing_credit_code` for 5,539 rows, `personal_fragment_review` for 705
+rows, and `unknown_business_role` for 645 rows. These flags should gate write
+mode rather than block the unified payload generation itself.
+
 ## Design Implication
 
 The next iteration should not patch `customer_rank` and `supplier_rank` directly
@@ -186,7 +227,9 @@ that contains explicit evidence:
 - conflict status: loadable, mixed-role, missing-tax, personal-fragment,
   duplicate-name, and unknown-role.
 
-Only after that overlay is reviewed should the current loader update
-`res.partner` and related `res.partner.bank` records. This keeps the existing
-rebuild package structure intact while correcting the business alignment gap and
-avoids silently losing user-provided basic information.
+The next step is to point the current loader at
+`fact_based_partner_rebuild_payload_business_aligned_v1.csv`, apply write gates
+from `review_flags`, and keep the 26 current-only rows in manual review. This
+keeps the existing rebuild package structure intact while correcting the
+business alignment gap and avoids silently losing user-provided basic
+information.
