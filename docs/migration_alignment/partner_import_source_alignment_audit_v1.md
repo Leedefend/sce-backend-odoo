@@ -421,6 +421,26 @@ multiple current matches, personal fragments, and unknown business roles.
 suppliers are valid business counterparties but unsafe to create automatically
 without stronger identity.
 
+The update-only queue carries substantial business facts and needs a read-only
+target match probe before write mode:
+
+| Item | Value |
+| --- | ---: |
+| update-only rows | 4,225 |
+| rows with bank account | 3,815 |
+| rows with tax rate | 1,867 |
+
+Probe command:
+
+```bash
+PARTNER_UPDATE_ONLY_GATE_CSV=artifacts/migration/partner_business_aligned_rebuild_v1/fact_based_partner_rebuild_business_aligned_gate_v1.csv \
+python3 scripts/migration/fresh_db_partner_update_only_match_probe.py
+```
+
+The probe outputs unique-match, not-found, and ambiguous counts without writing
+to the database. Rows that do not resolve to exactly one `res.partner` must stay
+outside write mode or be sent to the review path.
+
 The guarded Odoo shell writer is:
 
 ```bash
