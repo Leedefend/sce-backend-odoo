@@ -509,12 +509,11 @@
               />
               <select
                 class="pagination-size-select"
-                :value="pageLimitOptions.includes(listLimit) ? String(listLimit) : ''"
+                :value="pageLimitOptions.includes(listLimit) ? String(listLimit) : undefined"
                 :disabled="loading"
                 :aria-label="uiLabel('pagination_page_size_select', '选择每页条数')"
                 @change="onPageLimitSelectChange"
               >
-                <option value="" disabled></option>
                 <option v-for="option in pageLimitOptions" :key="`page-limit-${option}`" :value="String(option)">
                   {{ option }}
                 </option>
@@ -2274,6 +2273,11 @@ onBeforeUnmount(() => {
 .pagination-size-select:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.pagination-size-select option {
+  font-size: 12px;
+  color: #0f172a;
 }
 
 @media (max-width: 900px) {
