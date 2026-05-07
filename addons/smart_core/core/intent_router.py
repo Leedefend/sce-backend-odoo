@@ -70,7 +70,11 @@ def _build_envs(params: Dict[str, Any], add_ctx: Dict[str, Any]) -> Tuple[api.En
         base_ctx.update(add_ctx)
 
     if target_db == cur_db:
-        env = request.env(context=base_ctx)  # 复用当前 cursor/uid，替换 context
+        env = api.Environment(
+            request.env.cr,
+            request_uid(request, default=getattr(request.env, "uid", None)),
+            base_ctx,
+        )
         su_env = api.Environment(env.cr, SUPERUSER_ID, dict(env.context))
         return env, su_env, None
 
