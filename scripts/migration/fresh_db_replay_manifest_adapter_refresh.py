@@ -21,7 +21,7 @@ ADAPTERS = {
     "project_anchor_completed": {
         "result": "artifacts/migration/fresh_db_project_anchor_replay_adapter_result_v1.json",
         "payload": "artifacts/migration/fresh_db_project_anchor_replay_payload_v1.csv",
-        "expected_payload_rows": 755,
+        "expected_payload_rows": 798,
     },
     "contract_partner_source_12_anchor_design": {
         "result": "artifacts/migration/fresh_db_contract_partner_12_anchor_replay_adapter_result_v1.json",
