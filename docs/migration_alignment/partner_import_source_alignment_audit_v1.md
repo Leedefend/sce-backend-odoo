@@ -1,22 +1,30 @@
 # Partner Import Source Alignment Audit v1
 
-Status: Evidence batch
+Status: Business alignment evidence batch
 Branch: `feature/user-history-data-alignment`
 Source root: `/home/odoo/workspace/partner_import_source`
 Current payload: `artifacts/migration/fresh_db_partner_l4_replay_payload_v1.csv`
+Current rebuild payload:
+`artifacts/migration/fact_based_partner_rebuild_2_fact_only_20260506T2055/fact_based_partner_rebuild_payload_v1.csv`
 
 ## Conclusion
 
-The current partner replay payload is not aligned with the user's current source
-snapshot. The source is not a pure customer list or a pure supplier list: it is a
-mixed counterparty register assembled from supplier registry files, expense-unit
+The current partner replay and rebuild payloads are structurally valid, but they
+are not fully aligned with the user's current business source snapshot. The
+source is not a pure customer list or a pure supplier list: it is a mixed
+counterparty register assembled from supplier registry files, expense-unit
 registry files, and counterparty cash-flow files.
 
-The current payload also loses basic entity information. It only carries
+The old replay payload also loses basic entity information. It only carries
 identity and role fields such as `legacy_partner_source`, `legacy_partner_id`,
 `name`, `tax_no`, `source_type`, and replay metadata. It does not carry bank
 account, bank name, project source, cooperation type, region, address, or tax
 rate evidence from the Excel source.
+
+The newer fact-based rebuild payload already carries several of these columns,
+but it was generated in `fact-only` role mode and only used the `2/` source
+directory. That leaves root-level supplier registry files and registry-only
+supplier role evidence under-aligned with business reality.
 
 ## Evidence
 
@@ -44,6 +52,18 @@ Asset artifacts:
 - `artifacts/migration/partner_import_source_asset_v1/partner_master_source_v1.csv`
 - `artifacts/migration/partner_import_source_asset_v1/partner_master_review_queue_v1.csv`
 - `artifacts/migration/partner_import_source_asset_v1/partner_master_source_summary_v1.json`
+
+Business-alignment overlay generated with:
+
+```bash
+python3 scripts/migration/partner_business_alignment_overlay.py
+```
+
+Overlay artifacts:
+
+- `artifacts/migration/partner_business_alignment_overlay_v1/partner_business_alignment_summary_v1.json`
+- `artifacts/migration/partner_business_alignment_overlay_v1/partner_business_alignment_overlay_v1.csv`
+- `artifacts/migration/partner_business_alignment_overlay_v1/partner_business_alignment_action_queue_v1.csv`
 
 ## Source Shape
 
@@ -122,11 +142,40 @@ and 6,606 rows with bank name evidence. Review rows are intentionally separated
 into `partner_master_review_queue_v1.csv` so the loader can later apply a narrow
 write policy instead of silently importing ambiguous identities.
 
+This asset is not a replacement data-rebuild package. It is a comparison and
+normalization layer for the existing rebuild flow.
+
+## Business Alignment Overlay
+
+Compared with the latest fact-based rebuild payload, the source snapshot
+produces these alignment actions:
+
+| Action | Rows |
+| --- | ---: |
+| fill basic info | 5,794 |
+| adjust business role | 1,151 |
+| add missing partner candidate | 668 |
+| already aligned | 179 |
+
+The large `fill basic info` queue is mostly caused by bank, bank account,
+project, and tax-rate evidence being present in the source snapshot but absent
+or empty in the current rebuild payload row. The `adjust business role` queue is
+the evidence that `fact-only` role mode is too narrow for this user source:
+supplier registry and payment-flow evidence need to participate in
+`supplier_rank` and mixed-role decisions.
+
+In Odoo, bank accounts belong to `res.partner.bank`, not to `res.partner`.
+Therefore, "handle bank information separately" means the aligned rebuild must
+write partner identity and role fields to `res.partner`, then write account
+holder, bank name, and account number to `res.partner.bank` linked to the same
+partner. It does not mean a separate business objective or a new rebuild process.
+
 ## Design Implication
 
 The next iteration should not patch `customer_rank` and `supplier_rank` directly
-from the old replay payload. It should first build a normalized partner source
-asset from `/home/odoo/workspace/partner_import_source` with explicit evidence:
+from the old replay payload. It should feed the existing rebuild flow with a
+business-alignment overlay from `/home/odoo/workspace/partner_import_source`
+that contains explicit evidence:
 
 - stable identity: tax number when valid, otherwise normalized name plus source
   provenance;
@@ -137,7 +186,7 @@ asset from `/home/odoo/workspace/partner_import_source` with explicit evidence:
 - conflict status: loadable, mixed-role, missing-tax, personal-fragment,
   duplicate-name, and unknown-role.
 
-Only after that asset is reviewed should a loader update `res.partner` and, where
-appropriate, create `res.partner.bank` records. This keeps the partner entity
-contract separate from cash-flow facts and avoids silently losing user-provided
-basic information.
+Only after that overlay is reviewed should the current loader update
+`res.partner` and related `res.partner.bank` records. This keeps the existing
+rebuild package structure intact while correcting the business alignment gap and
+avoids silently losing user-provided basic information.
