@@ -34,6 +34,7 @@ INPUT_CSV = REPO_ROOT / "artifacts/migration/fresh_db_project_anchor_replay_payl
 OUTPUT_JSON = ARTIFACT_ROOT / "fresh_db_project_anchor_replay_write_result_v1.json"
 ROLLBACK_CSV = ARTIFACT_ROOT / "fresh_db_project_anchor_replay_rollback_targets_v1.csv"
 EXPECTED_ROWS = int(os.getenv("PROJECT_ANCHOR_EXPECTED_ROWS", "0"))
+UNSPECIFIED_OPERATION_STRATEGY_DEFAULT = os.getenv("PROJECT_ANCHOR_UNSPECIFIED_OPERATION_STRATEGY_DEFAULT", "direct").strip()
 OPTIONAL_SOURCE_ONLY_FIELDS = {
     "legacy_deleted_flag",
     "current_db_project_id",
@@ -100,7 +101,14 @@ def write_json(path: Path, payload: dict[str, object]) -> None:
 
 
 def build_vals(row: dict[str, str], existing_fields: set[str]) -> dict[str, object]:
-    vals = {field: clean(row.get(field)) for field in SAFE_FIELDS if field in existing_fields}
+    vals = {}
+    for field in SAFE_FIELDS:
+        if field not in existing_fields:
+            continue
+        value = clean(row.get(field))
+        if field == "operation_strategy" and not value:
+            value = UNSPECIFIED_OPERATION_STRATEGY_DEFAULT
+        vals[field] = value
     return {field: value for field, value in vals.items() if value not in ("", None)}
 
 
@@ -196,6 +204,7 @@ result = {
     "source_only_fields_not_written": sorted(OPTIONAL_SOURCE_ONLY_FIELDS),
     "source_lane_counts": dict(sorted(source_lane_counts.items())),
     "deleted_source_rows": deleted_source_rows,
+    "unspecified_operation_strategy_default": UNSPECIFIED_OPERATION_STRATEGY_DEFAULT,
     "write_payload": str(INPUT_CSV),
     "rollback_targets": str(ROLLBACK_CSV),
     "decision": "project_anchor_replay_write_complete" if status == "PASS" else "STOP_REVIEW_REQUIRED",

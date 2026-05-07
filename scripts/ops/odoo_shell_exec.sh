@@ -11,7 +11,7 @@ fi
 ENV_FORWARD_ARGS=()
 while IFS='=' read -r env_name _; do
   case "$env_name" in
-    MIGRATION_*|FRESH_DB_*|LEGACY_USER_*|PARTNER_ASSET_XML|PARTNER_BUSINESS_ALIGNED_GATE_CSV)
+    MIGRATION_*|FRESH_DB_*|LEGACY_USER_*|PROJECT_ANCHOR_*|PARTNER_ASSET_XML|PARTNER_BUSINESS_ALIGNED_GATE_CSV)
       if [[ -n "${!env_name:-}" ]]; then
         ENV_FORWARD_ARGS+=("-e" "${env_name}=${!env_name}")
       fi
