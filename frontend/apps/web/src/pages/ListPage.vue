@@ -94,60 +94,6 @@
             {{ uiLabel('search_submit', '搜索') }}
           </button>
         </div>
-        <div v-if="showPagination" class="pagination-actions pagination-actions--top">
-          <button
-            type="button"
-            class="pagination-btn"
-            :disabled="loading || !canPagePrev"
-            @click="pagePrev"
-          >
-            {{ uiLabel('pagination_prev', '上一页') }}
-          </button>
-          <span>{{ paginationPageText }}</span>
-          <button
-            type="button"
-            class="pagination-btn"
-            :disabled="loading || !canPageNext"
-            @click="pageNext"
-          >
-            {{ uiLabel('pagination_next', '下一页') }}
-          </button>
-          <input
-            class="pagination-input"
-            :value="pageJumpInput"
-            :disabled="loading || totalPages <= 1"
-            inputmode="numeric"
-            pattern="[0-9]*"
-            @input="onPageJumpInput"
-            @keyup.enter="jumpPage"
-          />
-          <button
-            type="button"
-            class="pagination-btn"
-            :disabled="loading || totalPages <= 1"
-            @click="jumpPage"
-          >
-            {{ uiLabel('pagination_jump', '跳转') }}
-          </button>
-          <span class="pagination-size-label">{{ uiLabel('pagination_page_size', '每页') }}</span>
-          <input
-            class="pagination-input pagination-input--size"
-            :value="pageLimitInput"
-            :disabled="loading"
-            inputmode="numeric"
-            pattern="[0-9]*"
-            @input="onPageLimitInput"
-            @keyup.enter="applyPageLimit"
-          />
-          <button
-            type="button"
-            class="pagination-btn"
-            :disabled="loading"
-            @click="applyPageLimit"
-          >
-            {{ uiLabel('pagination_apply_size', '应用') }}
-          </button>
-        </div>
         <span v-else class="list-count">{{ uiLabel('record_count', '{count} 条记录', { count: records.length }) }}</span>
       </section>
 
@@ -511,6 +457,72 @@
         </tfoot>
       </table>
     </section>
+
+      <section v-if="showPagination" class="pagination-footer">
+        <div class="pagination-actions pagination-actions--bottom">
+          <button
+            type="button"
+            class="pagination-btn"
+            :disabled="loading || !canPagePrev"
+            @click="pagePrev"
+          >
+            {{ uiLabel('pagination_prev', '上一页') }}
+          </button>
+          <span>{{ paginationPageText }}</span>
+          <button
+            type="button"
+            class="pagination-btn"
+            :disabled="loading || !canPageNext"
+            @click="pageNext"
+          >
+            {{ uiLabel('pagination_next', '下一页') }}
+          </button>
+          <input
+            class="pagination-input"
+            :value="pageJumpInput"
+            :disabled="loading || totalPages <= 1"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            @input="onPageJumpInput"
+            @keyup.enter="jumpPage"
+          />
+          <button
+            type="button"
+            class="pagination-btn"
+            :disabled="loading || totalPages <= 1"
+            @click="jumpPage"
+          >
+            {{ uiLabel('pagination_jump', '跳转') }}
+          </button>
+          <label class="pagination-size-control">
+            <span class="pagination-size-label">{{ uiLabel('pagination_page_size', '每页') }}</span>
+            <span class="pagination-size-combo">
+              <input
+                class="pagination-input pagination-input--size"
+                :value="pageLimitInput"
+                :disabled="loading"
+                inputmode="numeric"
+                pattern="[0-9]*"
+                @input="onPageLimitInput"
+                @change="applyPageLimit"
+                @keyup.enter="applyPageLimit"
+              />
+              <select
+                class="pagination-size-select"
+                :value="pageLimitOptions.includes(listLimit) ? String(listLimit) : ''"
+                :disabled="loading"
+                :aria-label="uiLabel('pagination_page_size_select', '选择每页条数')"
+                @change="onPageLimitSelectChange"
+              >
+                <option value="" disabled></option>
+                <option v-for="option in pageLimitOptions" :key="`page-limit-${option}`" :value="String(option)">
+                  {{ option }}
+                </option>
+              </select>
+            </span>
+          </label>
+        </div>
+      </section>
 
     </template>
   </section>
@@ -1062,6 +1074,7 @@ const listLimit = computed(() => {
   const limit = Number(props.listLimit || 40);
   return Number.isFinite(limit) && limit > 0 ? Math.trunc(limit) : 40;
 });
+const pageLimitOptions = computed(() => [10, 20, 50]);
 const listTotal = computed(() => {
   if (props.listTotalCount === null || typeof props.listTotalCount === 'undefined') return null;
   const raw = Number(props.listTotalCount);
@@ -1164,18 +1177,25 @@ function jumpPage() {
   emitPageOffset((normalizedPage - 1) * listLimit.value);
 }
 
-function onPageLimitInput(event: Event) {
-  pageLimitInput.value = String((event.target as HTMLInputElement | null)?.value || '');
-}
-
-function applyPageLimit() {
-  const raw = Number(pageLimitInput.value || listLimit.value);
+function applyPageLimitValue(raw: number) {
   if (!Number.isFinite(raw)) return;
   const normalized = Math.min(Math.max(Math.trunc(raw), 1), 200);
   pageLimitInput.value = String(normalized);
   if (normalized === listLimit.value) return;
   observedListLimit.value = normalized;
   props.onPageLimitChange?.(normalized);
+}
+
+function onPageLimitInput(event: Event) {
+  pageLimitInput.value = String((event.target as HTMLInputElement | null)?.value || '');
+}
+
+function applyPageLimit() {
+  applyPageLimitValue(Number(pageLimitInput.value || listLimit.value));
+}
+
+function onPageLimitSelectChange(event: Event) {
+  applyPageLimitValue(Number((event.target as HTMLSelectElement | null)?.value || 0));
 }
 
 function onPlainSearchInput(event: Event) {
@@ -2073,19 +2093,29 @@ onBeforeUnmount(() => {
   gap: 5px;
 }
 
-.pagination-size-label {
-  color: #64748b;
-  font-size: 12px;
+.pagination-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 8px;
 }
 
-.pagination-actions--top {
-  justify-self: end;
-  flex: 0 0 auto;
+.pagination-actions--bottom {
   justify-content: flex-end;
   flex-wrap: nowrap;
   color: #475569;
   font-size: 12px;
   white-space: nowrap;
+}
+
+.pagination-size-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pagination-size-label {
+  color: #64748b;
+  font-size: 12px;
 }
 
 .cell-column-picker {
@@ -2216,6 +2246,32 @@ onBeforeUnmount(() => {
 
 .pagination-input--size {
   width: 54px;
+  padding-right: 22px;
+}
+
+.pagination-size-combo {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.pagination-size-select {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  bottom: 1px;
+  width: 22px;
+  border: 0;
+  border-left: 1px solid #bfdbfe;
+  border-radius: 0 5px 5px 0;
+  background: #eff6ff;
+  color: #1d4ed8;
+  cursor: pointer;
+}
+
+.pagination-size-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 @media (max-width: 900px) {
@@ -2236,6 +2292,11 @@ onBeforeUnmount(() => {
 
   .pagination-actions {
     flex-wrap: wrap;
+  }
+
+  .pagination-actions--bottom {
+    justify-content: flex-start;
+    white-space: normal;
   }
 
   .list-plain-search {
