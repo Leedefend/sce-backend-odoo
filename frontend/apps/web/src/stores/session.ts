@@ -1166,7 +1166,15 @@ export const useSessionStore = defineStore('session', {
           menu_id: undefined,
         };
       }
-      const candidates = [result.nav];
+      const releaseNavigation = (result as AppInitResponse & {
+        release_navigation_v1?: { nav?: unknown };
+        delivery_engine_v1?: { nav?: unknown };
+      }).release_navigation_v1;
+      const deliveryEngine = (result as AppInitResponse & {
+        release_navigation_v1?: { nav?: unknown };
+        delivery_engine_v1?: { nav?: unknown };
+      }).delivery_engine_v1;
+      const candidates = [releaseNavigation?.nav, deliveryEngine?.nav, result.nav];
       if (debugIntent) {
         console.info('[debug] system.init candidates:', candidates.map(c => ({
           type: typeof c,

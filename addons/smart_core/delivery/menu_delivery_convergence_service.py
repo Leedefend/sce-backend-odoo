@@ -74,6 +74,8 @@ class MenuDeliveryConvergenceService:
         "项目驾驶舱",
         "我的工作",
         "工程资料",
+        "客户",
+        "供应商",
         "业务配置",
         "系统配置",
     )
