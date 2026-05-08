@@ -18,6 +18,7 @@ LEGACY_SOURCE_PROBE_SCRIPT="$ROOT_DIR/scripts/migration/business_fact_visible_ba
 ADDITIONAL_FACT_INVENTORY_SCRIPT="$ROOT_DIR/scripts/migration/business_fact_additional_fact_inventory.py"
 EXPENSE_FACT_TAXONOMY_ACCEPTANCE_SCRIPT="$ROOT_DIR/scripts/migration/business_expense_fact_taxonomy_acceptance.py"
 EXPENSE_CONTRACT_SUBTYPE_EVIDENCE_SCRIPT="$ROOT_DIR/scripts/migration/business_expense_contract_subtype_evidence.py"
+EXPENSE_PAYMENT_FACT_ACCEPTANCE_SCRIPT="$ROOT_DIR/scripts/migration/business_expense_contract_payment_fact_acceptance.py"
 ACCEPTANCE_SUMMARY_SCRIPT="$ROOT_DIR/scripts/migration/business_fact_acceptance_bundle_summary.py"
 
 export MIGRATION_REPO_ROOT="${MIGRATION_REPO_ROOT:-$ROOT_DIR}"
@@ -51,12 +52,12 @@ run_odoo_script() {
     MIGRATION_REPO_ROOT="$MIGRATION_REPO_ROOT_ODOO" \
     MIGRATION_ARTIFACT_ROOT="$MIGRATION_ARTIFACT_ROOT_ODOO" \
     MIGRATION_REPLAY_DB_ALLOWLIST="$MIGRATION_REPLAY_DB_ALLOWLIST" \
-    BUSINESS_FACT_EXPECTED_PROJECT_ROWS="${BUSINESS_FACT_EXPECTED_PROJECT_ROWS:-798}" \
-    BUSINESS_FACT_EXPECTED_CONTRACT_TOTAL="${BUSINESS_FACT_EXPECTED_CONTRACT_TOTAL:-6850}" \
-    BUSINESS_FACT_EXPECTED_INCOME_CONTRACTS="${BUSINESS_FACT_EXPECTED_INCOME_CONTRACTS:-1541}" \
-    BUSINESS_FACT_EXPECTED_EXPENSE_CONTRACTS="${BUSINESS_FACT_EXPECTED_EXPENSE_CONTRACTS:-5309}" \
+    BUSINESS_FACT_EXPECTED_PROJECT_ROWS="${BUSINESS_FACT_EXPECTED_PROJECT_ROWS:-810}" \
+    BUSINESS_FACT_EXPECTED_CONTRACT_TOTAL="${BUSINESS_FACT_EXPECTED_CONTRACT_TOTAL:-6985}" \
+    BUSINESS_FACT_EXPECTED_INCOME_CONTRACTS="${BUSINESS_FACT_EXPECTED_INCOME_CONTRACTS:-1537}" \
+    BUSINESS_FACT_EXPECTED_EXPENSE_CONTRACTS="${BUSINESS_FACT_EXPECTED_EXPENSE_CONTRACTS:-5448}" \
     BUSINESS_FACT_EXPECTED_CONTRACT_LINES="${BUSINESS_FACT_EXPECTED_CONTRACT_LINES:-6566}" \
-    BUSINESS_FACT_EXPECTED_GENERAL_CONTRACTS="${BUSINESS_FACT_EXPECTED_GENERAL_CONTRACTS:-41}" \
+    BUSINESS_FACT_EXPECTED_GENERAL_CONTRACTS="${BUSINESS_FACT_EXPECTED_GENERAL_CONTRACTS:-45}" \
     BUSINESS_FACT_EXPECTED_PURCHASE_FACTS="${BUSINESS_FACT_EXPECTED_PURCHASE_FACTS:-49}" \
     BUSINESS_FACT_EXPECTED_VISIBLE_INVOICE_FACTS="${BUSINESS_FACT_EXPECTED_VISIBLE_INVOICE_FACTS:-6}" \
     BUSINESS_FACT_EXPECTED_VISIBLE_RECEIPT_FACTS="${BUSINESS_FACT_EXPECTED_VISIBLE_RECEIPT_FACTS:-5}" \
@@ -88,9 +89,26 @@ run_writes() {
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_contract_line_replay_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_supplier_contract_replay_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_supplier_contract_line_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_supplier_contract_pricing_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_supplier_contract_pricing_projection_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_purchase_contract_replay_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_construction_contract_visible_business_fact_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_general_contract_projection_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/history_outflow_partner_targeted_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/history_actual_outflow_partner_targeted_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_outflow_request_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_actual_outflow_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_actual_outflow_residual_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_outflow_request_line_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_actual_outflow_line_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/history_payment_request_outflow_state_activation_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/history_payment_request_outflow_approved_recovery_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/history_payment_request_outflow_done_recovery_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_payment_residual_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_payment_execution_projection_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_actual_outflow_line_payment_execution_projection_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_deduction_adjustment_line_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_settlement_adjustment_projection_write.py"
 }
 
 run_postcheck() {
@@ -120,6 +138,11 @@ run_additional_fact_inventory() {
 run_expense_fact_taxonomy_acceptance() {
   echo "[business.fact.replay] step=expense-fact-taxonomy db=$DB_NAME"
   run_odoo_script "$EXPENSE_FACT_TAXONOMY_ACCEPTANCE_SCRIPT"
+}
+
+run_expense_payment_fact_acceptance() {
+  echo "[business.fact.replay] step=expense-payment-facts db=$DB_NAME"
+  run_odoo_script "$EXPENSE_PAYMENT_FACT_ACCEPTANCE_SCRIPT"
 }
 
 run_expense_contract_subtype_evidence() {
@@ -168,6 +191,7 @@ case "$MODE" in
     run_additional_fact_inventory
     run_expense_contract_subtype_evidence
     run_expense_fact_taxonomy_acceptance
+    run_expense_payment_fact_acceptance
     run_acceptance_summary
     ;;
   write)
@@ -182,6 +206,7 @@ case "$MODE" in
     run_additional_fact_inventory
     run_expense_contract_subtype_evidence
     run_expense_fact_taxonomy_acceptance
+    run_expense_payment_fact_acceptance
     run_acceptance_summary
     ;;
   all)
@@ -197,6 +222,7 @@ case "$MODE" in
     run_additional_fact_inventory
     run_expense_contract_subtype_evidence
     run_expense_fact_taxonomy_acceptance
+    run_expense_payment_fact_acceptance
     run_acceptance_summary
     ;;
   *)

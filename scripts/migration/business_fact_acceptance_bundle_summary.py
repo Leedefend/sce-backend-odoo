@@ -46,6 +46,10 @@ expense_contract_subtypes, expense_contract_subtypes_presence = load_json(
     "business_expense_contract_subtype_evidence_v1.json",
     required=False,
 )
+expense_payment_facts, expense_payment_facts_presence = load_json(
+    "business_expense_contract_payment_fact_acceptance_v1.json",
+    required=False,
+)
 
 post_visible = (postcheck or {}).get("visible_business_fact_reconciliation") or {}
 cleanup_summary = (cleanup or {}).get("summary") or {}
@@ -53,6 +57,7 @@ legacy_summary = (legacy_source or {}).get("summary") or {}
 additional_facts_summary = (additional_facts or {}).get("summary") or {}
 expense_taxonomy_summary = (expense_taxonomy or {}).get("summary") or {}
 expense_contract_subtypes_summary = (expense_contract_subtypes or {}).get("summary") or {}
+expense_payment_facts_summary = (expense_payment_facts or {}).get("summary") or {}
 
 summary = {
     "artifact_root": str(ARTIFACT_ROOT),
@@ -110,6 +115,13 @@ summary = {
             "recommended_user_facing_expense_contract_subjects"
         ),
     },
+    "expense_payment_facts": {
+        "presence": expense_payment_facts_presence,
+        "status": status_of(expense_payment_facts, expense_payment_facts_presence),
+        "counts": expense_payment_facts_summary.get("counts"),
+        "amounts": expense_payment_facts_summary.get("amounts"),
+        "settlement_boundary": expense_payment_facts_summary.get("settlement_boundary"),
+    },
 }
 
 errors = []
@@ -130,6 +142,8 @@ if expense_contract_subtypes_presence == "present" and summary["expense_contract
     errors.append(
         {"error": "expense_contract_subtype_evidence_failed", "status": summary["expense_contract_subtypes"]["status"]}
     )
+if expense_payment_facts_presence == "present" and summary["expense_payment_facts"]["status"] != "PASS":
+    errors.append({"error": "expense_payment_facts_failed", "status": summary["expense_payment_facts"]["status"]})
 
 status = "PASS" if not errors else "FAIL"
 payload = {
@@ -175,6 +189,7 @@ print(
             "additional_facts": summary["additional_facts"]["status"],
             "expense_taxonomy": summary["expense_taxonomy"]["status"],
             "expense_contract_subtypes": summary["expense_contract_subtypes"]["status"],
+            "expense_payment_facts": summary["expense_payment_facts"]["status"],
             "artifact_root": str(ARTIFACT_ROOT),
         },
         ensure_ascii=False,
