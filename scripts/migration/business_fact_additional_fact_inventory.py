@@ -275,6 +275,13 @@ LANES = [
         "decision_keys": ["decision"],
     },
     {
+        "lane": "legacy_equipment_lease",
+        "path": "fresh_db_legacy_equipment_lease_replay_adapter_result_v1.json",
+        "row_keys": ["total_rows", "active_rows"],
+        "amount_keys": ["amount_total_sum"],
+        "decision_keys": ["decision"],
+    },
+    {
         "lane": "supplier_contract",
         "path": "fresh_db_supplier_contract_replay_adapter_result_v1.json",
         "row_keys": ["replay_payload_rows", "expected_rows"],

@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sc_legacy_equipment_lease_fact_search" model="ir.ui.view">
+        <field name="name">sc.legacy.equipment.lease.fact.search</field>
+        <field name="model">sc.legacy.equipment.lease.fact</field>
+        <field name="arch" type="xml">
+            <search string="历史设备/租赁事实">
+                <field name="document_no"/>
+                <field name="project_id"/>
+                <field name="project_name"/>
+                <field name="partner_name"/>
+                <field name="contract_no"/>
+                <field name="equipment_name"/>
+                <field name="source_table"/>
+                <filter string="有效" name="active_only" domain="[('active', '=', True)]"/>
+                <filter string="有项目锚点" name="with_project" domain="[('project_id', '!=', False)]"/>
+                <filter string="有金额" name="with_amount" domain="[('amount_total', '!=', 0)]"/>
+                <filter string="租赁合同" name="lease_contract" domain="[('fact_type', 'in', ['lease_contract', 'lease_contract_line'])]"/>
+                <filter string="设备台班/转入" name="usage" domain="[('fact_type', 'in', ['equipment_transfer', 'equipment_shift'])]"/>
+                <filter string="租赁结算" name="settlement" domain="[('fact_type', '=', 'lease_settlement')]"/>
+                <filter string="按事实类型" name="group_fact_type" context="{'group_by': 'fact_type'}"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按单位" name="group_partner_name" context="{'group_by': 'partner_name'}"/>
+                <filter string="按来源表" name="group_source_table" context="{'group_by': 'source_table'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_legacy_equipment_lease_fact_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.equipment.lease.fact.tree</field>
+        <field name="model">sc.legacy.equipment.lease.fact</field>
+        <field name="arch" type="xml">
+            <tree string="历史设备/租赁事实" create="0" edit="0" delete="0">
+                <field name="document_date"/>
+                <field name="fact_type"/>
+                <field name="document_no"/>
+                <field name="project_id"/>
+                <field name="project_name"/>
+                <field name="partner_name"/>
+                <field name="contract_no"/>
+                <field name="equipment_name"/>
+                <field name="equipment_spec"/>
+                <field name="equipment_uom"/>
+                <field name="qty" sum="数量合计"/>
+                <field name="unit_price"/>
+                <field name="amount_total" sum="金额合计"/>
+                <field name="source_table"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_legacy_equipment_lease_fact_form" model="ir.ui.view">
+        <field name="name">sc.legacy.equipment.lease.fact.form</field>
+        <field name="model">sc.legacy.equipment.lease.fact</field>
+        <field name="arch" type="xml">
+            <form string="历史设备/租赁事实" create="0" edit="0" delete="0">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="state" readonly="1"/>
+                            <field name="fact_type"/>
+                            <field name="source_table"/>
+                            <field name="source_dataset"/>
+                            <field name="document_no"/>
+                            <field name="document_state"/>
+                        </group>
+                        <group>
+                            <field name="project_id"/>
+                            <field name="company_id" readonly="1"/>
+                            <field name="project_legacy_id"/>
+                            <field name="project_name"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <group string="设备与单位">
+                        <group>
+                            <field name="equipment_legacy_id"/>
+                            <field name="equipment_name"/>
+                            <field name="equipment_spec"/>
+                            <field name="equipment_uom"/>
+                            <field name="work_part"/>
+                        </group>
+                        <group>
+                            <field name="partner_legacy_id"/>
+                            <field name="partner_name"/>
+                            <field name="contract_legacy_id"/>
+                            <field name="contract_no"/>
+                            <field name="department_name"/>
+                        </group>
+                    </group>
+                    <group string="数量金额">
+                        <group>
+                            <field name="qty"/>
+                            <field name="unit_price"/>
+                            <field name="amount_total"/>
+                            <field name="amount_payable"/>
+                        </group>
+                        <group>
+                            <field name="amount_no_tax"/>
+                            <field name="tax_amount"/>
+                            <field name="tax_rate"/>
+                            <field name="amount_deduction"/>
+                        </group>
+                    </group>
+                    <group string="日期与来源">
+                        <group>
+                            <field name="document_date"/>
+                            <field name="start_date"/>
+                            <field name="end_date"/>
+                            <field name="created_time"/>
+                        </group>
+                        <group>
+                            <field name="legacy_record_id"/>
+                            <field name="legacy_parent_id"/>
+                            <field name="legacy_pid"/>
+                            <field name="attachment_ref"/>
+                        </group>
+                    </group>
+                    <group string="账户">
+                        <group>
+                            <field name="bank_name"/>
+                            <field name="bank_account"/>
+                        </group>
+                        <group>
+                            <field name="creator_name"/>
+                            <field name="creator_legacy_user_id"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="note" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sc_legacy_equipment_lease_fact" model="ir.actions.act_window">
+        <field name="name">历史设备/租赁事实</field>
+        <field name="res_model">sc.legacy.equipment.lease.fact</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_sc_legacy_equipment_lease_fact_search"/>
+        <field name="context">{'search_default_active_only': 1, 'search_default_group_fact_type': 1}</field>
+    </record>
+
+    <menuitem id="menu_sc_legacy_equipment_lease_fact_equipment"
+              name="历史设备/租赁事实"
+              parent="smart_construction_core.menu_sc_equipment_management_group"
+              action="smart_construction_core.action_sc_legacy_equipment_lease_fact"
+              sequence="45"
+              groups="smart_construction_core.group_sc_internal_user"/>
+    <menuitem id="menu_sc_legacy_equipment_lease_fact_rental"
+              name="历史设备/租赁事实"
+              parent="smart_construction_core.menu_sc_material_rental_group"
+              action="smart_construction_core.action_sc_legacy_equipment_lease_fact"
+              sequence="45"
+              groups="smart_construction_core.group_sc_internal_user"/>
+</odoo>
