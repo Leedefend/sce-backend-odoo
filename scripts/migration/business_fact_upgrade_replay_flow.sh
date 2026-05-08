@@ -22,6 +22,7 @@ EXPENSE_PAYMENT_FACT_ACCEPTANCE_SCRIPT="$ROOT_DIR/scripts/migration/business_exp
 ACCEPTANCE_SUMMARY_SCRIPT="$ROOT_DIR/scripts/migration/business_fact_acceptance_bundle_summary.py"
 ATTACHMENT_CUSTODY_PROBE_SCRIPT="$ROOT_DIR/scripts/migration/history_attachment_custody_probe.py"
 FULL_LEGACY_LOSS_SCAN_SCRIPT="$ROOT_DIR/scripts/migration/legacy_db_full_business_fact_loss_scan.py"
+REMAINING_FACT_FAMILY_SCREEN_SCRIPT="$ROOT_DIR/scripts/migration/legacy_db_remaining_business_fact_family_screen.py"
 
 export MIGRATION_REPO_ROOT="${MIGRATION_REPO_ROOT:-$ROOT_DIR}"
 MIGRATION_REPO_ROOT_ODOO="${MIGRATION_REPO_ROOT_ODOO:-/mnt}"
@@ -73,6 +74,7 @@ run_adapters() {
   python3 "$ROOT_DIR/scripts/migration/fresh_db_project_anchor_replay_adapter.py"
   python3 "$ROOT_DIR/scripts/migration/fresh_db_partner_l4_replay_adapter.py"
   python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_material_catalog_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_tender_registration_replay_adapter.py"
   python3 "$ROOT_DIR/scripts/migration/fresh_db_contract_counterparty_partner_replay_adapter.py"
   python3 "$ROOT_DIR/scripts/migration/fresh_db_contract_remaining_adapter.py"
   python3 "$ROOT_DIR/scripts/migration/fresh_db_contract_line_replay_adapter.py"
@@ -127,6 +129,7 @@ run_writes() {
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_project_anchor_replay_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_partner_l4_replay_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_material_catalog_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_tender_registration_replay_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_contract_counterparty_partner_replay_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_contract_remaining_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_contract_line_replay_write.py"
@@ -229,6 +232,11 @@ run_full_legacy_loss_scan() {
   MIGRATION_ARTIFACT_ROOT="$ARTIFACT_ROOT" python3 "$FULL_LEGACY_LOSS_SCAN_SCRIPT"
 }
 
+run_remaining_fact_family_screen() {
+  echo "[business.fact.replay] step=remaining-fact-family-screen artifact_root=$ARTIFACT_ROOT"
+  MIGRATION_ARTIFACT_ROOT="$ARTIFACT_ROOT" python3 "$REMAINING_FACT_FAMILY_SCREEN_SCRIPT"
+}
+
 run_expense_contract_subtype_evidence() {
   echo "[business.fact.replay] step=expense-contract-subtype-evidence artifact_root=$ARTIFACT_ROOT"
   ROOT_DIR="$ROOT_DIR" MIGRATION_ARTIFACT_ROOT="$ARTIFACT_ROOT" python3 "$EXPENSE_CONTRACT_SUBTYPE_EVIDENCE_SCRIPT"
@@ -278,6 +286,7 @@ case "$MODE" in
     run_expense_payment_fact_acceptance
     run_attachment_custody_probe
     run_full_legacy_loss_scan
+    run_remaining_fact_family_screen
     run_acceptance_summary
     ;;
   write)
@@ -295,6 +304,7 @@ case "$MODE" in
     run_expense_payment_fact_acceptance
     run_attachment_custody_probe
     run_full_legacy_loss_scan
+    run_remaining_fact_family_screen
     run_acceptance_summary
     ;;
   all)
@@ -313,6 +323,7 @@ case "$MODE" in
     run_expense_payment_fact_acceptance
     run_attachment_custody_probe
     run_full_legacy_loss_scan
+    run_remaining_fact_family_screen
     run_acceptance_summary
     ;;
   *)

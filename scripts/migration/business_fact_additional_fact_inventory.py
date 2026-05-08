@@ -254,6 +254,13 @@ LANES = [
         "decision_keys": ["decision"],
     },
     {
+        "lane": "legacy_tender_registration",
+        "path": "fresh_db_legacy_tender_registration_replay_adapter_result_v1.json",
+        "row_keys": ["total_rows", "active_rows", "project_count"],
+        "amount_keys": ["guarantee_amount_sum", "document_fee_amount_sum"],
+        "decision_keys": ["decision"],
+    },
+    {
         "lane": "supplier_contract",
         "path": "fresh_db_supplier_contract_replay_adapter_result_v1.json",
         "row_keys": ["replay_payload_rows", "expected_rows"],

@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sc_legacy_tender_registration_fact_search" model="ir.ui.view">
+        <field name="name">sc.legacy.tender.registration.fact.search</field>
+        <field name="model">sc.legacy.tender.registration.fact</field>
+        <field name="arch" type="xml">
+            <search string="历史投标报名事实">
+                <field name="document_no"/>
+                <field name="project_name"/>
+                <field name="project_id"/>
+                <field name="owner_name"/>
+                <field name="construction_unit_name"/>
+                <field name="creator_name"/>
+                <filter string="有保证金" name="with_guarantee" domain="[('guarantee_amount', '!=', 0)]"/>
+                <filter string="有项目锚点" name="with_project" domain="[('project_id', '!=', False)]"/>
+                <filter string="有效" name="active_only" domain="[('active', '=', True)]"/>
+                <filter string="按项目锚点" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按业主" name="group_owner" context="{'group_by': 'owner_name'}"/>
+                <filter string="按投标状态" name="group_tender_status" context="{'group_by': 'tender_status'}"/>
+                <filter string="按创建人" name="group_creator" context="{'group_by': 'creator_name'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_legacy_tender_registration_fact_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.tender.registration.fact.tree</field>
+        <field name="model">sc.legacy.tender.registration.fact</field>
+        <field name="arch" type="xml">
+            <tree string="历史投标报名事实" create="0" edit="0" delete="0">
+                <field name="registration_time"/>
+                <field name="document_no"/>
+                <field name="project_name"/>
+                <field name="project_id"/>
+                <field name="owner_name"/>
+                <field name="guarantee_amount"/>
+                <field name="document_fee_amount"/>
+                <field name="bid_time"/>
+                <field name="opening_time"/>
+                <field name="tender_status"/>
+                <field name="creator_name"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_legacy_tender_registration_fact_form" model="ir.ui.view">
+        <field name="name">sc.legacy.tender.registration.fact.form</field>
+        <field name="model">sc.legacy.tender.registration.fact</field>
+        <field name="arch" type="xml">
+            <form string="历史投标报名事实" create="0" edit="0" delete="0">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="state" readonly="1"/>
+                            <field name="document_no"/>
+                            <field name="document_state"/>
+                            <field name="source_table"/>
+                            <field name="source_dataset"/>
+                            <field name="legacy_record_id"/>
+                            <field name="legacy_pid"/>
+                        </group>
+                        <group>
+                            <field name="project_id"/>
+                            <field name="company_id" readonly="1"/>
+                            <field name="project_legacy_id"/>
+                            <field name="project_name"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <group string="投标事实">
+                        <group>
+                            <field name="owner_name"/>
+                            <field name="construction_unit_name"/>
+                            <field name="project_manager_name"/>
+                            <field name="contact_name"/>
+                            <field name="tender_status"/>
+                            <field name="bid_participation"/>
+                            <field name="bid_method"/>
+                        </group>
+                        <group>
+                            <field name="registration_time"/>
+                            <field name="bid_time"/>
+                            <field name="opening_time"/>
+                            <field name="guarantee_deadline"/>
+                            <field name="bid_opening_place"/>
+                            <field name="attachment_ref"/>
+                        </group>
+                    </group>
+                    <group string="金额与账户">
+                        <group>
+                            <field name="guarantee_amount"/>
+                            <field name="document_fee_amount"/>
+                            <field name="max_price"/>
+                        </group>
+                        <group>
+                            <field name="bank_name"/>
+                            <field name="bank_account"/>
+                        </group>
+                    </group>
+                    <group string="历史记录">
+                        <group>
+                            <field name="creator_name"/>
+                            <field name="creator_legacy_user_id"/>
+                            <field name="created_time"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="note" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sc_legacy_tender_registration_fact" model="ir.actions.act_window">
+        <field name="name">历史投标报名事实</field>
+        <field name="res_model">sc.legacy.tender.registration.fact</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_sc_legacy_tender_registration_fact_search"/>
+        <field name="context">{'search_default_active_only': 1}</field>
+    </record>
+
+    <menuitem id="menu_sc_legacy_tender_registration_fact"
+              name="历史投标报名"
+              parent="smart_construction_core.menu_sc_tender_management_group"
+              action="smart_construction_core.action_sc_legacy_tender_registration_fact"
+              sequence="55"
+              groups="smart_construction_core.group_sc_cap_project_read"/>
+</odoo>

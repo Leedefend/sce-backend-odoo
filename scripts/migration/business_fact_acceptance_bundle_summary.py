@@ -58,6 +58,10 @@ full_legacy_loss_scan, full_legacy_loss_scan_presence = load_json(
     "legacy_db_full_business_fact_loss_scan_v1.json",
     required=False,
 )
+remaining_fact_family_screen, remaining_fact_family_screen_presence = load_json(
+    "legacy_db_remaining_business_fact_family_screen_v1.json",
+    required=False,
+)
 
 post_visible = (postcheck or {}).get("visible_business_fact_reconciliation") or {}
 cleanup_summary = (cleanup or {}).get("summary") or {}
@@ -68,6 +72,7 @@ expense_contract_subtypes_summary = (expense_contract_subtypes or {}).get("summa
 expense_payment_facts_summary = (expense_payment_facts or {}).get("summary") or {}
 attachment_custody_summary = (attachment_custody or {}).get("counts") or {}
 full_legacy_loss_scan_summary = (full_legacy_loss_scan or {}).get("summary") or {}
+remaining_fact_family_screen_summary = (remaining_fact_family_screen or {}).get("summary") or {}
 
 summary = {
     "artifact_root": str(ARTIFACT_ROOT),
@@ -153,6 +158,14 @@ summary = {
         "candidate_rows": full_legacy_loss_scan_summary.get("candidate_rows"),
         "top_candidate": ((full_legacy_loss_scan_summary.get("top_candidates") or [{}])[0] or {}).get("table"),
     },
+    "remaining_fact_family_screen": {
+        "presence": remaining_fact_family_screen_presence,
+        "status": status_of(remaining_fact_family_screen, remaining_fact_family_screen_presence),
+        "screened_tables": remaining_fact_family_screen_summary.get("screened_tables"),
+        "screened_rows": remaining_fact_family_screen_summary.get("screened_rows"),
+        "screened_active_rows": remaining_fact_family_screen_summary.get("screened_active_rows"),
+        "top_family": ((remaining_fact_family_screen_summary.get("families") or [{}])[0] or {}).get("family"),
+    },
 }
 
 errors = []
@@ -179,6 +192,10 @@ if attachment_custody_presence == "present" and summary["attachment_custody"]["s
     errors.append({"error": "attachment_custody_failed", "status": summary["attachment_custody"]["status"]})
 if full_legacy_loss_scan_presence == "present" and summary["full_legacy_loss_scan"]["status"] != "PASS":
     errors.append({"error": "full_legacy_loss_scan_failed", "status": summary["full_legacy_loss_scan"]["status"]})
+if remaining_fact_family_screen_presence == "present" and summary["remaining_fact_family_screen"]["status"] != "PASS":
+    errors.append(
+        {"error": "remaining_fact_family_screen_failed", "status": summary["remaining_fact_family_screen"]["status"]}
+    )
 
 status = "PASS" if not errors else "FAIL"
 payload = {
@@ -227,6 +244,7 @@ print(
             "expense_payment_facts": summary["expense_payment_facts"]["status"],
             "attachment_custody": summary["attachment_custody"]["status"],
             "full_legacy_loss_scan": summary["full_legacy_loss_scan"]["status"],
+            "remaining_fact_family_screen": summary["remaining_fact_family_screen"]["status"],
             "artifact_root": str(ARTIFACT_ROOT),
         },
         ensure_ascii=False,

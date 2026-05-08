@@ -53,6 +53,7 @@ KNOWN_COVERED_TABLES = {
     "CWGL_FYBX_CB",
     "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
     "D_SCBSJS_ZJGL_ZJSZ_ZJRBB_CB",
+    "P_ZTB_GCBMGL",
     "S_Execute_Approval",
     "SGZL_RZRJ",
     "SGZL_RZRJ_CB",
