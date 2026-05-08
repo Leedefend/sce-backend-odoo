@@ -117,6 +117,7 @@
         'views/support/legacy_account_master_views.xml',
         'views/support/legacy_account_transaction_line_views.xml',
         'views/support/legacy_finance_auxiliary_views.xml',
+        'views/support/legacy_business_fact_residual_views.xml',
         'views/core/project_project_financial_views.xml',
         'views/core/project_budget_views.xml',
         'views/support/legacy_finance_internal_views.xml',

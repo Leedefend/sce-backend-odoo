@@ -54,6 +54,10 @@ attachment_custody, attachment_custody_presence = load_json(
     "history_attachment_custody_probe_result_v1.json",
     required=False,
 )
+business_fact_residual, business_fact_residual_presence = load_json(
+    "fresh_db_legacy_business_fact_residual_replay_write_result_v1.json",
+    required=False,
+)
 full_legacy_loss_scan, full_legacy_loss_scan_presence = load_json(
     "legacy_db_full_business_fact_loss_scan_v1.json",
     required=False,
@@ -79,6 +83,8 @@ expense_taxonomy_summary = (expense_taxonomy or {}).get("summary") or {}
 expense_contract_subtypes_summary = (expense_contract_subtypes or {}).get("summary") or {}
 expense_payment_facts_summary = (expense_payment_facts or {}).get("summary") or {}
 attachment_custody_summary = (attachment_custody or {}).get("counts") or {}
+business_fact_residual_family_counts = (business_fact_residual or {}).get("family_counts") or {}
+business_fact_residual_source_counts = (business_fact_residual or {}).get("source_database_counts") or {}
 full_legacy_loss_scan_summary = (full_legacy_loss_scan or {}).get("summary") or {}
 remaining_fact_family_screen_summary = (remaining_fact_family_screen or {}).get("summary") or {}
 multi_db_fact_scan_totals = (multi_db_fact_scan or {}).get("totals") or {}
@@ -160,6 +166,15 @@ summary = {
         ),
         "gap_count": sum(1 for value in ((attachment_custody or {}).get("gaps") or {}).values() if value),
     },
+    "business_fact_residual": {
+        "presence": business_fact_residual_presence,
+        "status": status_of(business_fact_residual, business_fact_residual_presence),
+        "input_rows": (business_fact_residual or {}).get("input_rows"),
+        "after": (business_fact_residual or {}).get("after"),
+        "active_rows": (business_fact_residual or {}).get("active_rows"),
+        "source_database_counts": business_fact_residual_source_counts,
+        "family_counts": business_fact_residual_family_counts,
+    },
     "full_legacy_loss_scan": {
         "presence": full_legacy_loss_scan_presence,
         "status": status_of(full_legacy_loss_scan, full_legacy_loss_scan_presence),
@@ -223,6 +238,8 @@ if expense_payment_facts_presence == "present" and summary["expense_payment_fact
     errors.append({"error": "expense_payment_facts_failed", "status": summary["expense_payment_facts"]["status"]})
 if attachment_custody_presence == "present" and summary["attachment_custody"]["status"] != "PASS":
     errors.append({"error": "attachment_custody_failed", "status": summary["attachment_custody"]["status"]})
+if business_fact_residual_presence == "present" and summary["business_fact_residual"]["status"] != "PASS":
+    errors.append({"error": "business_fact_residual_failed", "status": summary["business_fact_residual"]["status"]})
 if full_legacy_loss_scan_presence == "present" and summary["full_legacy_loss_scan"]["status"] != "PASS":
     errors.append({"error": "full_legacy_loss_scan_failed", "status": summary["full_legacy_loss_scan"]["status"]})
 if remaining_fact_family_screen_presence == "present" and summary["remaining_fact_family_screen"]["status"] != "PASS":
@@ -280,6 +297,7 @@ print(
             "expense_contract_subtypes": summary["expense_contract_subtypes"]["status"],
             "expense_payment_facts": summary["expense_payment_facts"]["status"],
             "attachment_custody": summary["attachment_custody"]["status"],
+            "business_fact_residual": summary["business_fact_residual"]["status"],
             "full_legacy_loss_scan": summary["full_legacy_loss_scan"]["status"],
             "remaining_fact_family_screen": summary["remaining_fact_family_screen"]["status"],
             "multi_db_fact_scan": summary["multi_db_fact_scan"]["status"],
