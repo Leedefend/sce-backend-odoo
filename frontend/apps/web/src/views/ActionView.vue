@@ -1856,6 +1856,7 @@ const {
 } = useActionViewGroupRuntime({
   activeGroupSummaryKey,
   activeGroupSummaryDomain,
+  activeGroupByField,
   searchTerm,
   groupWindowOffset,
   groupWindowPrevOffset,
@@ -2294,6 +2295,7 @@ const {
     routeFilterRaw: route.query.preset_filter,
     routeSavedFilterRaw: route.query.saved_filter,
     routeGroupByRaw: route.query.group_by,
+    routeGroupValueRaw: route.query.group_value,
     sceneReadyDefaultSortRaw: '',
     sceneDefaultSortRaw: '',
     sessionCapabilities: session.capabilities,

@@ -21,6 +21,7 @@ type SyncRouteFn = (patch: Record<string, unknown>) => void;
 export function useActionViewGroupRuntime(options: {
   activeGroupSummaryKey: Ref<string>;
   activeGroupSummaryDomain: Ref<unknown[]>;
+  activeGroupByField: Ref<string>;
   searchTerm: Ref<string>;
   groupWindowOffset: Ref<number>;
   groupWindowPrevOffset: Ref<number | null>;
@@ -58,6 +59,7 @@ export function useActionViewGroupRuntime(options: {
     const nextState = buildOpenGroupedRowsState(group);
     options.activeGroupSummaryKey.value = nextState.activeGroupSummaryKey;
     options.activeGroupSummaryDomain.value = nextState.activeGroupSummaryDomain;
+    options.activeGroupByField.value = '';
     options.searchTerm.value = nextState.searchTerm;
     options.groupWindowOffset.value = nextState.groupWindowOffset;
     options.syncRouteStateAndReload(buildOpenGroupedRowsPatch(group.label || ''));
