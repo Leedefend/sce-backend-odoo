@@ -277,7 +277,7 @@ def main() -> int:
                 "score": row["business_signal_score"],
             }
         )
-    family_rows = sorted(families.values(), key=lambda row: (TARGET_FAMILIES.index(row["family"]), -row["rows"]))
+    family_rows = sorted(families.values(), key=lambda row: (-int(row["active_rows"] or 0), -int(row["rows"] or 0), TARGET_FAMILIES.index(row["family"])))
     for row in family_rows:
         row["top_tables"] = sorted(row["top_tables"], key=lambda item: (-int(item["score"]), -int(item["rows"]), item["table"]))
 

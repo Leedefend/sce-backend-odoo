@@ -74,5 +74,6 @@ from . import legacy_personnel_movement
 from . import legacy_salary_line
 from . import legacy_purchase_contract_fact
 from . import legacy_tender_registration_fact
+from . import legacy_labor_subcontract_fact
 from . import legacy_report_inventory
 from . import runtime_user_management

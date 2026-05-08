@@ -164,6 +164,7 @@
         'views/support/legacy_material_catalog_views.xml',
         'views/support/legacy_purchase_contract_views.xml',
         'views/support/legacy_tender_registration_views.xml',
+        'views/support/legacy_labor_subcontract_views.xml',
         'views/support/legacy_user_context_views.xml',
         'views/support/runtime_user_management_views.xml',
         'views/project_workbench_action.xml',
