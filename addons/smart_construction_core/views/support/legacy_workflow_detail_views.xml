@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="view_sc_legacy_workflow_detail_fact_search" model="ir.ui.view">
+    <field name="name">sc.legacy.workflow.detail.fact.search</field>
+    <field name="model">sc.legacy.workflow.detail.fact</field>
+    <field name="arch" type="xml">
+      <search string="历史流程扩展事实">
+        <field name="source_table"/>
+        <field name="fact_type"/>
+        <field name="document_no"/>
+        <field name="document_title"/>
+        <field name="project_name"/>
+        <field name="actor_name"/>
+        <field name="target_name"/>
+        <field name="business_table"/>
+        <filter name="active" string="有效" domain="[('active', '=', True)]"/>
+        <group expand="0" string="分组">
+          <filter name="group_source_table" string="来源表" context="{'group_by': 'source_table'}"/>
+          <filter name="group_fact_type" string="事实类型" context="{'group_by': 'fact_type'}"/>
+          <filter name="group_project" string="项目" context="{'group_by': 'project_id'}"/>
+          <filter name="group_actor" string="处理人" context="{'group_by': 'actor_name'}"/>
+          <filter name="group_business_table" string="业务表" context="{'group_by': 'business_table'}"/>
+        </group>
+      </search>
+    </field>
+  </record>
+
+  <record id="view_sc_legacy_workflow_detail_fact_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.workflow.detail.fact.tree</field>
+    <field name="model">sc.legacy.workflow.detail.fact</field>
+    <field name="arch" type="xml">
+      <tree string="历史流程扩展事实" create="false" edit="false" delete="false" default_order="event_time desc, id desc">
+        <field name="event_time"/>
+        <field name="fact_type"/>
+        <field name="source_table"/>
+        <field name="document_no"/>
+        <field name="document_title"/>
+        <field name="project_id"/>
+        <field name="project_name"/>
+        <field name="actor_name"/>
+        <field name="target_name"/>
+        <field name="step_name"/>
+        <field name="status_code"/>
+        <field name="business_table"/>
+        <field name="business_id"/>
+        <field name="active"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_sc_legacy_workflow_detail_fact_form" model="ir.ui.view">
+    <field name="name">sc.legacy.workflow.detail.fact.form</field>
+    <field name="model">sc.legacy.workflow.detail.fact</field>
+    <field name="arch" type="xml">
+      <form string="历史流程扩展事实" create="false" edit="false" delete="false">
+        <sheet>
+          <group>
+            <group>
+              <field name="event_time"/>
+              <field name="fact_type"/>
+              <field name="source_table"/>
+              <field name="source_dataset"/>
+              <field name="status_code"/>
+              <field name="active"/>
+            </group>
+            <group>
+              <field name="document_no"/>
+              <field name="document_title"/>
+              <field name="business_table"/>
+              <field name="business_id"/>
+              <field name="project_id"/>
+              <field name="project_legacy_id"/>
+              <field name="project_name"/>
+            </group>
+          </group>
+          <group>
+            <group>
+              <field name="actor_name"/>
+              <field name="actor_legacy_user_id"/>
+              <field name="target_name"/>
+              <field name="target_legacy_user_id"/>
+            </group>
+            <group>
+              <field name="step_name"/>
+              <field name="step_legacy_id"/>
+              <field name="template_legacy_id"/>
+              <field name="detail_status_legacy_id"/>
+              <field name="detail_step_legacy_id"/>
+            </group>
+          </group>
+          <group>
+            <field name="message"/>
+            <field name="note"/>
+            <field name="attachment_ref"/>
+            <field name="pc_url"/>
+            <field name="mobile_url"/>
+          </group>
+          <group>
+            <field name="legacy_record_id"/>
+            <field name="legacy_parent_id"/>
+            <field name="legacy_pid"/>
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <record id="action_sc_legacy_workflow_detail_fact" model="ir.actions.act_window">
+    <field name="name">历史流程扩展事实</field>
+    <field name="res_model">sc.legacy.workflow.detail.fact</field>
+    <field name="view_mode">tree,form</field>
+    <field name="search_view_id" ref="view_sc_legacy_workflow_detail_fact_search"/>
+  </record>
+
+  <menuitem id="menu_sc_legacy_workflow_detail_fact"
+            name="历史流程扩展事实"
+            parent="smart_construction_core.menu_sc_finance_history_center"
+            action="action_sc_legacy_workflow_detail_fact"
+            sequence="8"
+            groups="smart_construction_core.group_sc_cap_config_admin"/>
+
+  <record id="menu_sc_legacy_workflow_detail_fact" model="ir.ui.menu">
+    <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+  </record>
+</odoo>

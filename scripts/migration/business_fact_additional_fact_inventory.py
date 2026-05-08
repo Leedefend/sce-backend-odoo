@@ -317,6 +317,14 @@ LANES = [
         "decision_keys": [],
     },
     {
+        "lane": "legacy_workflow_detail",
+        "path": "fresh_db_legacy_workflow_detail_replay_adapter_result_v1.json",
+        "row_keys": ["total_rows", "active_rows"],
+        "amount_keys": [],
+        "decision_keys": ["decision"],
+        "payload_checks": [{"csv_key": "payload_csv", "expected_key": "total_rows"}],
+    },
+    {
         "lane": "legacy_user_context",
         "path": "fresh_db_legacy_user_context_replay_adapter_result_v1.json",
         "row_keys": ["department_rows", "profile_rows", "role_rows"],

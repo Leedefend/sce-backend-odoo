@@ -111,6 +111,7 @@
         'views/support/legacy_project_fund_balance_views.xml',
         'views/support/legacy_supplier_contract_pricing_views.xml',
         'views/support/legacy_workflow_audit_views.xml',
+        'views/support/legacy_workflow_detail_views.xml',
         'views/support/legacy_financing_loan_views.xml',
         'views/support/legacy_fund_daily_snapshot_views.xml',
         'views/support/legacy_account_master_views.xml',
