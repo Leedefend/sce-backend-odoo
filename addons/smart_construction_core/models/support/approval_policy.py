@@ -50,7 +50,7 @@ class ScApprovalPolicy(models.Model):
     }
     APPROVAL_SCOPE_LABELS = {
         "executive": "管理层/总经理终审",
-        "business_admin": "业务管理员",
+        "business_admin": "业务配置管理员",
         "operation_user": "经营审核人",
         "partner_manager": "客商资料审核人",
         "project_user": "项目部/工程部经办",
@@ -72,7 +72,7 @@ class ScApprovalPolicy(models.Model):
         "project_contract_approval": {
             "mode": "linear",
             "manager_scope_key": "contract_manager",
-            "note": "施工/收入合同默认按用户可见业务流程审核：合同经办、经营审核、项目负责人、成控审核、管理层终审。业务管理员可按金额或管理要求调整步骤。",
+            "note": "施工/收入合同默认按用户可见业务流程审核：合同经办、经营审核、项目负责人、成控审核、管理层终审。业务配置管理员可按金额或管理要求调整步骤。",
             "steps": [
                 ("合同经办确认", "contract_user"),
                 ("经营部审核", "operation_user"),

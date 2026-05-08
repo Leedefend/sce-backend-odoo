@@ -9,7 +9,7 @@
         </record>
         <record id="approval_scope_business_admin" model="sc.approval.scope">
             <field name="sequence">2</field>
-            <field name="name">业务管理员</field>
+            <field name="name">业务配置管理员</field>
             <field name="scope_key">business_admin</field>
             <field name="note">用于业务配置、主数据规则类审批。</field>
         </record>
