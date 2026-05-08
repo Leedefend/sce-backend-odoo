@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sc_legacy_material_stock_fact_search" model="ir.ui.view">
+        <field name="name">sc.legacy.material.stock.fact.search</field>
+        <field name="model">sc.legacy.material.stock.fact</field>
+        <field name="arch" type="xml">
+            <search string="历史物资库存事实">
+                <field name="document_no"/>
+                <field name="project_id"/>
+                <field name="project_name"/>
+                <field name="partner_name"/>
+                <field name="contract_no"/>
+                <field name="material_code"/>
+                <field name="material_name"/>
+                <field name="material_spec"/>
+                <field name="source_table"/>
+                <filter string="有效" name="active_only" domain="[('active', '=', True)]"/>
+                <filter string="有项目锚点" name="with_project" domain="[('project_id', '!=', False)]"/>
+                <filter string="有材料" name="with_material" domain="[('material_name', '!=', False)]"/>
+                <filter string="有金额" name="with_amount" domain="[('amount_total', '!=', 0)]"/>
+                <filter string="入库" name="stock_in" domain="[('fact_type', 'in', ['stock_in', 'stock_in_line', 'scbs_stock_in'])]"/>
+                <filter string="出库" name="stock_out" domain="[('fact_type', 'in', ['stock_out', 'stock_out_line'])]"/>
+                <filter string="预算/清单" name="budget" domain="[('fact_type', 'in', ['material_budget_item', 'material_cost_relation'])]"/>
+                <filter string="租赁" name="lease" domain="[('fact_type', 'in', ['material_lease_contract', 'material_lease_settlement'])]"/>
+                <filter string="按事实类型" name="group_fact_type" context="{'group_by': 'fact_type'}"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按材料" name="group_material_name" context="{'group_by': 'material_name'}"/>
+                <filter string="按来源表" name="group_source_table" context="{'group_by': 'source_table'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_legacy_material_stock_fact_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.material.stock.fact.tree</field>
+        <field name="model">sc.legacy.material.stock.fact</field>
+        <field name="arch" type="xml">
+            <tree string="历史物资库存事实" create="0" edit="0" delete="0">
+                <field name="document_date"/>
+                <field name="fact_type"/>
+                <field name="document_no"/>
+                <field name="project_id"/>
+                <field name="project_name"/>
+                <field name="partner_name"/>
+                <field name="contract_no"/>
+                <field name="material_code"/>
+                <field name="material_name"/>
+                <field name="material_spec"/>
+                <field name="material_uom"/>
+                <field name="qty" sum="数量合计"/>
+                <field name="unit_price"/>
+                <field name="amount_total" sum="金额合计"/>
+                <field name="source_table"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_legacy_material_stock_fact_form" model="ir.ui.view">
+        <field name="name">sc.legacy.material.stock.fact.form</field>
+        <field name="model">sc.legacy.material.stock.fact</field>
+        <field name="arch" type="xml">
+            <form string="历史物资库存事实" create="0" edit="0" delete="0">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="state" readonly="1"/>
+                            <field name="fact_type"/>
+                            <field name="source_table"/>
+                            <field name="source_dataset"/>
+                            <field name="document_no"/>
+                            <field name="document_state"/>
+                        </group>
+                        <group>
+                            <field name="project_id"/>
+                            <field name="company_id" readonly="1"/>
+                            <field name="project_legacy_id"/>
+                            <field name="project_name"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <group string="材料与单位">
+                        <group>
+                            <field name="material_legacy_id"/>
+                            <field name="material_code"/>
+                            <field name="material_name"/>
+                            <field name="material_spec"/>
+                            <field name="material_uom"/>
+                        </group>
+                        <group>
+                            <field name="partner_legacy_id"/>
+                            <field name="partner_name"/>
+                            <field name="contract_legacy_id"/>
+                            <field name="contract_no"/>
+                        </group>
+                    </group>
+                    <group string="数量金额">
+                        <group>
+                            <field name="qty"/>
+                            <field name="unit_price"/>
+                            <field name="amount_total"/>
+                        </group>
+                        <group>
+                            <field name="amount_no_tax"/>
+                            <field name="tax_amount"/>
+                            <field name="tax_rate"/>
+                        </group>
+                    </group>
+                    <group string="日期与来源">
+                        <group>
+                            <field name="document_date"/>
+                            <field name="created_time"/>
+                            <field name="creator_name"/>
+                            <field name="creator_legacy_user_id"/>
+                        </group>
+                        <group>
+                            <field name="legacy_record_id"/>
+                            <field name="legacy_parent_id"/>
+                            <field name="legacy_pid"/>
+                            <field name="attachment_ref"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="work_part"/>
+                            <field name="department_name"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="note" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sc_legacy_material_stock_fact" model="ir.actions.act_window">
+        <field name="name">历史物资库存事实</field>
+        <field name="res_model">sc.legacy.material.stock.fact</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_sc_legacy_material_stock_fact_search"/>
+        <field name="context">{'search_default_active_only': 1, 'search_default_group_fact_type': 1}</field>
+    </record>
+
+    <menuitem id="menu_sc_legacy_material_stock_fact"
+              name="历史物资库存事实"
+              parent="smart_construction_core.menu_sc_material_management_group"
+              action="smart_construction_core.action_sc_legacy_material_stock_fact"
+              sequence="48"
+              groups="smart_construction_core.group_sc_internal_user"/>
+</odoo>
