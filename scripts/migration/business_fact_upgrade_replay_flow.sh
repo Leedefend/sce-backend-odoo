@@ -20,6 +20,7 @@ EXPENSE_FACT_TAXONOMY_ACCEPTANCE_SCRIPT="$ROOT_DIR/scripts/migration/business_ex
 EXPENSE_CONTRACT_SUBTYPE_EVIDENCE_SCRIPT="$ROOT_DIR/scripts/migration/business_expense_contract_subtype_evidence.py"
 EXPENSE_PAYMENT_FACT_ACCEPTANCE_SCRIPT="$ROOT_DIR/scripts/migration/business_expense_contract_payment_fact_acceptance.py"
 ACCEPTANCE_SUMMARY_SCRIPT="$ROOT_DIR/scripts/migration/business_fact_acceptance_bundle_summary.py"
+ATTACHMENT_CUSTODY_PROBE_SCRIPT="$ROOT_DIR/scripts/migration/history_attachment_custody_probe.py"
 
 export MIGRATION_REPO_ROOT="${MIGRATION_REPO_ROOT:-$ROOT_DIR}"
 MIGRATION_REPO_ROOT_ODOO="${MIGRATION_REPO_ROOT_ODOO:-/mnt}"
@@ -76,6 +77,14 @@ run_adapters() {
   else
     echo "[business.fact.replay] skip legacy purchase contract adapter by BUSINESS_FACT_REPLAY_REFRESH_LEGACY_PURCHASE=0"
   fi
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_project_member_neutral_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_receipt_counterparty_partner_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_receipt_core_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_receipt_invoice_line_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_receipt_invoice_attachment_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_file_index_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/history_project_member_attachment_targeted_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_attachment_backfill_replay_adapter.py"
 }
 
 run_writes() {
@@ -109,6 +118,14 @@ run_writes() {
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_actual_outflow_line_payment_execution_projection_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_deduction_adjustment_line_replay_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_settlement_adjustment_projection_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_project_member_neutral_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_receipt_counterparty_partner_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_receipt_core_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_receipt_invoice_line_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_receipt_invoice_attachment_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_file_index_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/history_project_member_attachment_targeted_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_attachment_backfill_replay_write.py"
 }
 
 run_postcheck() {
@@ -143,6 +160,11 @@ run_expense_fact_taxonomy_acceptance() {
 run_expense_payment_fact_acceptance() {
   echo "[business.fact.replay] step=expense-payment-facts db=$DB_NAME"
   run_odoo_script "$EXPENSE_PAYMENT_FACT_ACCEPTANCE_SCRIPT"
+}
+
+run_attachment_custody_probe() {
+  echo "[business.fact.replay] step=attachment-custody db=$DB_NAME"
+  run_odoo_script "$ATTACHMENT_CUSTODY_PROBE_SCRIPT"
 }
 
 run_expense_contract_subtype_evidence() {
@@ -192,6 +214,7 @@ case "$MODE" in
     run_expense_contract_subtype_evidence
     run_expense_fact_taxonomy_acceptance
     run_expense_payment_fact_acceptance
+    run_attachment_custody_probe
     run_acceptance_summary
     ;;
   write)
@@ -207,6 +230,7 @@ case "$MODE" in
     run_expense_contract_subtype_evidence
     run_expense_fact_taxonomy_acceptance
     run_expense_payment_fact_acceptance
+    run_attachment_custody_probe
     run_acceptance_summary
     ;;
   all)
@@ -223,6 +247,7 @@ case "$MODE" in
     run_expense_contract_subtype_evidence
     run_expense_fact_taxonomy_acceptance
     run_expense_payment_fact_acceptance
+    run_attachment_custody_probe
     run_acceptance_summary
     ;;
   *)

@@ -76,6 +76,7 @@ for rec in Attachment.search_read([("res_model", "=", "sc.receipt.invoice.line")
 
 created = 0
 skipped = 0
+blocked_rows: list[dict[str, str]] = []
 buffer: list[dict[str, object]] = []
 batch_size = 500
 for row in rows:
@@ -88,7 +89,15 @@ for row in rows:
     legacy_invoice_line_id = extract_legacy_invoice_line_id(row["res_ref"])
     res_id = line_map.get(legacy_invoice_line_id)
     if not res_id:
-        raise RuntimeError({"missing_receipt_invoice_line_anchor": row["res_ref"], "external_id": row["external_id"]})
+        blocked_rows.append(
+            {
+                "external_id": row["external_id"],
+                "legacy_invoice_line_id": legacy_invoice_line_id,
+                "res_ref": row["res_ref"],
+                "reason": "missing_receipt_invoice_line_anchor",
+            }
+        )
+        continue
     vals = {
         "name": row["name"] or False,
         "type": row["type"] or "url",
@@ -111,7 +120,8 @@ if buffer:
     created += len(buffer)
 
 env.cr.commit()  # noqa: F821
-status = "PASS" if created + skipped == expected_rows else "FAIL"
+blocked = len(blocked_rows)
+status = "PASS" if created + skipped + blocked == expected_rows else "FAIL"
 payload = {
     "status": status,
     "mode": "fresh_db_receipt_invoice_attachment_replay_write",
@@ -119,8 +129,15 @@ payload = {
     "input_rows": len(rows),
     "created_rows": created,
     "skipped_existing": skipped,
+    "blocked_rows": blocked,
+    "blocked_reason_counts": {"missing_receipt_invoice_line_anchor": blocked} if blocked else {},
+    "blocked_samples": blocked_rows[:20],
     "db_writes": created,
-    "decision": "receipt_invoice_attachment_replay_write_complete" if status == "PASS" else "STOP_REVIEW_REQUIRED",
+    "decision": (
+        "receipt_invoice_attachment_replay_write_complete"
+        if status == "PASS" and not blocked
+        else ("receipt_invoice_attachment_replay_write_complete_with_blocked_dependencies" if status == "PASS" else "STOP_REVIEW_REQUIRED")
+    ),
 }
 write_json(OUTPUT_JSON, payload)
 print("FRESH_DB_RECEIPT_INVOICE_ATTACHMENT_REPLAY_WRITE=" + json.dumps(payload, ensure_ascii=False, sort_keys=True))

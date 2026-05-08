@@ -50,6 +50,10 @@ expense_payment_facts, expense_payment_facts_presence = load_json(
     "business_expense_contract_payment_fact_acceptance_v1.json",
     required=False,
 )
+attachment_custody, attachment_custody_presence = load_json(
+    "history_attachment_custody_probe_result_v1.json",
+    required=False,
+)
 
 post_visible = (postcheck or {}).get("visible_business_fact_reconciliation") or {}
 cleanup_summary = (cleanup or {}).get("summary") or {}
@@ -58,6 +62,7 @@ additional_facts_summary = (additional_facts or {}).get("summary") or {}
 expense_taxonomy_summary = (expense_taxonomy or {}).get("summary") or {}
 expense_contract_subtypes_summary = (expense_contract_subtypes or {}).get("summary") or {}
 expense_payment_facts_summary = (expense_payment_facts or {}).get("summary") or {}
+attachment_custody_summary = (attachment_custody or {}).get("counts") or {}
 
 summary = {
     "artifact_root": str(ARTIFACT_ROOT),
@@ -122,6 +127,19 @@ summary = {
         "amounts": expense_payment_facts_summary.get("amounts"),
         "settlement_boundary": expense_payment_facts_summary.get("settlement_boundary"),
     },
+    "attachment_custody": {
+        "presence": attachment_custody_presence,
+        "status": status_of(attachment_custody, attachment_custody_presence),
+        "legacy_file_index_rows": attachment_custody_summary.get("legacy_file_index_rows"),
+        "legacy_url_attachments": attachment_custody_summary.get("legacy_url_attachments"),
+        "receipt_invoice_attachment_runtime_records": attachment_custody_summary.get(
+            "receipt_invoice_attachment_runtime_records"
+        ),
+        "legacy_attachment_backfill_runtime_records": attachment_custody_summary.get(
+            "legacy_attachment_backfill_runtime_records"
+        ),
+        "gap_count": sum(1 for value in ((attachment_custody or {}).get("gaps") or {}).values() if value),
+    },
 }
 
 errors = []
@@ -144,6 +162,8 @@ if expense_contract_subtypes_presence == "present" and summary["expense_contract
     )
 if expense_payment_facts_presence == "present" and summary["expense_payment_facts"]["status"] != "PASS":
     errors.append({"error": "expense_payment_facts_failed", "status": summary["expense_payment_facts"]["status"]})
+if attachment_custody_presence == "present" and summary["attachment_custody"]["status"] != "PASS":
+    errors.append({"error": "attachment_custody_failed", "status": summary["attachment_custody"]["status"]})
 
 status = "PASS" if not errors else "FAIL"
 payload = {
@@ -190,6 +210,7 @@ print(
             "expense_taxonomy": summary["expense_taxonomy"]["status"],
             "expense_contract_subtypes": summary["expense_contract_subtypes"]["status"],
             "expense_payment_facts": summary["expense_payment_facts"]["status"],
+            "attachment_custody": summary["attachment_custody"]["status"],
             "artifact_root": str(ARTIFACT_ROOT),
         },
         ensure_ascii=False,
