@@ -74,6 +74,15 @@ bulk_load(INPUT_CSV, "tmp_legacy_business_fact_residual", COLUMNS)
 
 env.cr.execute("SELECT COUNT(*) FROM sc_legacy_business_fact_residual")  # noqa: F821
 before = env.cr.fetchone()[0]  # noqa: F821
+env.cr.execute(  # noqa: F821
+    """
+    DELETE FROM sc_legacy_business_fact_residual
+    WHERE source_database IN (
+      SELECT DISTINCT source_database FROM tmp_legacy_business_fact_residual
+    )
+    """
+)
+deleted_before_reload = env.cr.rowcount  # noqa: F821
 
 env.cr.execute(  # noqa: F821
     """
@@ -147,13 +156,14 @@ payload = {
     "database": env.cr.dbname,  # noqa: F821
     "input_rows": manifest.get("total_rows"),
     "before": before,
+    "deleted_before_reload": deleted_before_reload,
     "after": after,
     "delta": after - before,
     "active_rows": active_rows,
     "source_database_counts": source_database_counts,
     "family_counts": family_counts,
-    "db_writes": max(after - before, 0),
-    "decision": "remaining_legacy_business_fact_residual_replay_complete",
+    "db_writes": after,
+    "decision": "full_candidate_legacy_business_fact_residual_replay_complete",
 }
 write_json(OUTPUT_JSON, payload)
 print("FRESH_DB_LEGACY_BUSINESS_FACT_RESIDUAL_REPLAY_WRITE=" + json.dumps(payload, ensure_ascii=False, sort_keys=True))

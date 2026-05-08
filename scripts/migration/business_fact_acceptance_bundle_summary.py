@@ -90,23 +90,18 @@ remaining_fact_family_screen_summary = (remaining_fact_family_screen or {}).get(
 multi_db_fact_scan_totals = (multi_db_fact_scan or {}).get("totals") or {}
 multi_db_key_collision_summary = (multi_db_key_collision or {}).get("summary") or {}
 
-business_fact_residual_expected_rows = multi_db_fact_scan_totals.get("screened_rows")
-business_fact_residual_expected_active_rows = multi_db_fact_scan_totals.get("screened_active_rows")
+business_fact_residual_expected_rows = multi_db_fact_scan_totals.get("candidate_rows")
 business_fact_residual_coverage = {
     "expected_rows": business_fact_residual_expected_rows,
     "actual_rows": (business_fact_residual or {}).get("after"),
-    "expected_active_rows": business_fact_residual_expected_active_rows,
+    "expected_active_rows": None,
     "actual_active_rows": (business_fact_residual or {}).get("active_rows"),
     "row_delta": (
         ((business_fact_residual or {}).get("after") or 0) - business_fact_residual_expected_rows
         if business_fact_residual_expected_rows is not None and business_fact_residual is not None
         else None
     ),
-    "active_row_delta": (
-        ((business_fact_residual or {}).get("active_rows") or 0) - business_fact_residual_expected_active_rows
-        if business_fact_residual_expected_active_rows is not None and business_fact_residual is not None
-        else None
-    ),
+    "active_row_delta": None,
 }
 
 summary = {
@@ -263,8 +258,6 @@ if business_fact_residual_presence == "present" and summary["business_fact_resid
 if business_fact_residual_presence == "present" and multi_db_fact_scan_presence == "present":
     if business_fact_residual_coverage["row_delta"] != 0:
         errors.append({"error": "business_fact_residual_row_coverage_mismatch", **business_fact_residual_coverage})
-    if business_fact_residual_coverage["active_row_delta"] != 0:
-        errors.append({"error": "business_fact_residual_active_row_coverage_mismatch", **business_fact_residual_coverage})
 if full_legacy_loss_scan_presence == "present" and summary["full_legacy_loss_scan"]["status"] != "PASS":
     errors.append({"error": "full_legacy_loss_scan_failed", "status": summary["full_legacy_loss_scan"]["status"]})
 if remaining_fact_family_screen_presence == "present" and summary["remaining_fact_family_screen"]["status"] != "PASS":

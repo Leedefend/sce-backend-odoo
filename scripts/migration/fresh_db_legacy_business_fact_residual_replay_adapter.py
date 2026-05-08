@@ -6,7 +6,6 @@ from __future__ import annotations
 import csv
 import json
 import os
-import re
 import subprocess
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
@@ -61,6 +60,11 @@ PARTNER_ID_CANDIDATES = ("Supplier_ID", "GYSID", "f_GYSID", "f_Supplier_ID", "DW
 PARTNER_NAME_CANDIDATES = ("SupplierName", "GYSMC", "f_SupplierName", "DWMC", "WLDW", "FBDW", "SKDW", "LWGS")
 AMOUNT_CANDIDATES = ("JE", "ZJE", "HJ", "RK_ZJE", "FYXJE", "HTJE", "f_HTJE", "JSHJ", "SE", "BZJJE")
 DELETE_KEYS = ("DEL", "SCRQ", "SCRID", "IsDelete", "DELETED")
+BUSINESS_CLASSES = {
+    "candidate_effective_business_fact",
+    "candidate_secondary_business_fact",
+    "candidate_needs_manual_screen",
+}
 
 
 def parse_sources(raw: str) -> list[dict[str, str]]:
@@ -140,26 +144,26 @@ def choose(columns: list[str], candidates: tuple[str, ...]) -> str | None:
     return None
 
 
-def load_screen_tables(label: str) -> list[dict[str, Any]]:
-    path = source_scan_root(label) / "legacy_db_remaining_business_fact_family_screen_v1.json"
+def load_candidate_tables(label: str) -> list[dict[str, Any]]:
+    path = source_scan_root(label) / "legacy_db_full_business_fact_loss_scan_v1.json"
     payload = json.loads(path.read_text(encoding="utf-8"))
     rows = []
     seen = set()
-    for family in payload["summary"]["families"]:
-        for table in family.get("top_tables") or []:
-            name = table["table"]
-            if name in seen:
-                continue
-            seen.add(name)
-            rows.append(
-                {
-                    "family": family["family"],
-                    "table": name,
-                    "classification": table.get("classification") or "remaining_business_fact_candidate",
-                    "score": int(table.get("score") or 0),
-                    "rows": int(table.get("rows") or 0),
-                }
-            )
+    for table in payload.get("tables") or []:
+        name = table["table"]
+        if name in seen or table.get("classification") not in BUSINESS_CLASSES or int(table.get("row_count") or 0) <= 0:
+            continue
+        seen.add(name)
+        rows.append(
+            {
+                "family": table.get("family") or "",
+                "table": name,
+                "classification": table.get("classification") or "candidate_business_fact",
+                "score": int(table.get("business_signal_score") or 0),
+                "rows": int(table.get("row_count") or 0),
+            }
+        )
+    rows.sort(key=lambda row: (str(row["family"]), -int(row["score"]), -int(row["rows"]), str(row["table"])))
     return rows
 
 
@@ -197,7 +201,11 @@ def active_from_payload(payload: dict[str, Any], columns: list[str]) -> str:
 
 def row_sql(table: str, id_column: str | None) -> str:
     if id_column:
-        id_expr = f"COALESCE(NULLIF(CONVERT(varchar(200), src.{sql_identifier(id_column)}), ''), CONCAT('__row__', src.__legacy_rownum))"
+        id_expr = (
+            "CONCAT("
+            f"COALESCE(NULLIF(CONVERT(varchar(200), src.{sql_identifier(id_column)}), ''), '__row__'),"
+            "'#', src.__legacy_rownum)"
+        )
     else:
         id_expr = "CONCAT('__row__', src.__legacy_rownum)"
     return f"""
@@ -217,7 +225,7 @@ def build_rows() -> tuple[list[dict[str, str]], dict[str, Any]]:
     output_rows: list[dict[str, str]] = []
     source_summaries = []
     for source in parse_sources(SOURCE_SPEC):
-        tables = load_screen_tables(source["label"])
+        tables = load_candidate_tables(source["label"])
         source_row_count = 0
         for table_meta in tables:
             table = table_meta["table"]
@@ -286,7 +294,7 @@ def main() -> int:
         "scan_root": str(SCAN_ROOT),
         "payload_csv": str(OUTPUT_CSV.relative_to(REPO_ROOT)),
         **summary,
-        "decision": "remaining_legacy_business_fact_residual_payload_ready",
+        "decision": "full_candidate_legacy_business_fact_residual_payload_ready",
     }
     OUTPUT_JSON.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(
