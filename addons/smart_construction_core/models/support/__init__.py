@@ -77,5 +77,6 @@ from . import legacy_tender_registration_fact
 from . import legacy_labor_subcontract_fact
 from . import legacy_material_stock_fact
 from . import legacy_equipment_lease_fact
+from . import legacy_income_invoice_fact
 from . import legacy_report_inventory
 from . import runtime_user_management
