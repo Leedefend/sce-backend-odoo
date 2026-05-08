@@ -58,6 +58,10 @@ business_fact_residual, business_fact_residual_presence = load_json(
     "fresh_db_legacy_business_fact_residual_replay_write_result_v1.json",
     required=False,
 )
+business_fact_residual_screen, business_fact_residual_screen_presence = load_json(
+    "business_fact_residual_assetization_screen_v1.json",
+    required=False,
+)
 full_legacy_loss_scan, full_legacy_loss_scan_presence = load_json(
     "legacy_db_full_business_fact_loss_scan_v1.json",
     required=False,
@@ -85,6 +89,7 @@ expense_payment_facts_summary = (expense_payment_facts or {}).get("summary") or 
 attachment_custody_summary = (attachment_custody or {}).get("counts") or {}
 business_fact_residual_family_counts = (business_fact_residual or {}).get("family_counts") or {}
 business_fact_residual_source_counts = (business_fact_residual or {}).get("source_database_counts") or {}
+business_fact_residual_screen_summary = (business_fact_residual_screen or {}).get("summary") or {}
 full_legacy_loss_scan_summary = (full_legacy_loss_scan or {}).get("summary") or {}
 remaining_fact_family_screen_summary = (remaining_fact_family_screen or {}).get("summary") or {}
 multi_db_fact_scan_totals = (multi_db_fact_scan or {}).get("totals") or {}
@@ -197,6 +202,25 @@ summary = {
         "source_table_count_mismatch_count": (business_fact_residual or {}).get("source_table_count_mismatch_count"),
         "coverage": business_fact_residual_coverage,
     },
+    "business_fact_residual_screen": {
+        "presence": business_fact_residual_screen_presence,
+        "status": status_of(business_fact_residual_screen, business_fact_residual_screen_presence),
+        "residual_rows": business_fact_residual_screen_summary.get("residual_rows"),
+        "residual_table_count": business_fact_residual_screen_summary.get("residual_table_count"),
+        "specialized_source_table_matched_rows": business_fact_residual_screen_summary.get(
+            "specialized_source_table_matched_rows"
+        ),
+        "residual_only_source_table_rows": business_fact_residual_screen_summary.get(
+            "residual_only_source_table_rows"
+        ),
+        "next_assetization_candidate_rows": business_fact_residual_screen_summary.get(
+            "next_assetization_candidate_rows"
+        ),
+        "next_assetization_candidate_tables": business_fact_residual_screen_summary.get(
+            "next_assetization_candidate_tables"
+        ),
+        "band_row_counts": business_fact_residual_screen_summary.get("band_row_counts"),
+    },
     "full_legacy_loss_scan": {
         "presence": full_legacy_loss_scan_presence,
         "status": status_of(full_legacy_loss_scan, full_legacy_loss_scan_presence),
@@ -262,6 +286,13 @@ if attachment_custody_presence == "present" and summary["attachment_custody"]["s
     errors.append({"error": "attachment_custody_failed", "status": summary["attachment_custody"]["status"]})
 if business_fact_residual_presence == "present" and summary["business_fact_residual"]["status"] != "PASS":
     errors.append({"error": "business_fact_residual_failed", "status": summary["business_fact_residual"]["status"]})
+if (
+    business_fact_residual_screen_presence == "present"
+    and summary["business_fact_residual_screen"]["status"] != "PASS"
+):
+    errors.append(
+        {"error": "business_fact_residual_screen_failed", "status": summary["business_fact_residual_screen"]["status"]}
+    )
 if business_fact_residual_presence == "present" and multi_db_fact_scan_presence == "present":
     if business_fact_residual_coverage["row_delta"] != 0:
         errors.append({"error": "business_fact_residual_row_coverage_mismatch", **business_fact_residual_coverage})
@@ -327,6 +358,7 @@ print(
             "expense_payment_facts": summary["expense_payment_facts"]["status"],
             "attachment_custody": summary["attachment_custody"]["status"],
             "business_fact_residual": summary["business_fact_residual"]["status"],
+            "business_fact_residual_screen": summary["business_fact_residual_screen"]["status"],
             "full_legacy_loss_scan": summary["full_legacy_loss_scan"]["status"],
             "remaining_fact_family_screen": summary["remaining_fact_family_screen"]["status"],
             "multi_db_fact_scan": summary["multi_db_fact_scan"]["status"],
