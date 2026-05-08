@@ -51,7 +51,8 @@ def main() -> int:
         "export function resolveEffectiveRequestContext(filterContext: Dict, groupContext: Dict): Dict",
         "export function resolveEffectiveRequestContextRaw(filterContextRaw: string, groupContextRaw: string): string",
         "return { ...(found?.context || {}), group_by: field };",
-        "`{'group_by': '${field}'}`",
+        "return found?.contextRaw || '';",
+        "return filterContextRaw || groupContextRaw || '';",
     ]
     for marker in request_markers:
         if marker not in request_runtime:
@@ -67,7 +68,7 @@ def main() -> int:
 
     api_markers = [
         "def _normalize_group_by(self, val):",
-        'group_by = self._normalize_group_by(self._dig(p, "group_by"))',
+        "group_by_norm = self._normalize_group_by(group_by)",
         '"group_by": group_by,',
     ]
     for marker in api_markers:
