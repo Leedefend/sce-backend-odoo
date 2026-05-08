@@ -38,11 +38,16 @@ additional_facts, additional_facts_presence = load_json(
     "business_fact_additional_fact_inventory_v1.json",
     required=False,
 )
+expense_taxonomy, expense_taxonomy_presence = load_json(
+    "business_expense_fact_taxonomy_acceptance_v1.json",
+    required=False,
+)
 
 post_visible = (postcheck or {}).get("visible_business_fact_reconciliation") or {}
 cleanup_summary = (cleanup or {}).get("summary") or {}
 legacy_summary = (legacy_source or {}).get("summary") or {}
 additional_facts_summary = (additional_facts or {}).get("summary") or {}
+expense_taxonomy_summary = (expense_taxonomy or {}).get("summary") or {}
 
 summary = {
     "artifact_root": str(ARTIFACT_ROOT),
@@ -82,6 +87,14 @@ summary = {
         "payload_present_lanes": additional_facts_summary.get("payload_present_lanes"),
         "payload_missing_lanes": additional_facts_summary.get("payload_missing_lanes"),
     },
+    "expense_taxonomy": {
+        "presence": expense_taxonomy_presence,
+        "status": status_of(expense_taxonomy, expense_taxonomy_presence),
+        "action_count": expense_taxonomy_summary.get("action_count"),
+        "menu_count": expense_taxonomy_summary.get("menu_count"),
+        "db_writes": expense_taxonomy_summary.get("db_writes"),
+        "fact_counts": expense_taxonomy_summary.get("fact_counts"),
+    },
 }
 
 errors = []
@@ -96,6 +109,8 @@ if legacy_source_presence == "present" and summary["legacy_source"]["status"] !=
     errors.append({"error": "legacy_source_probe_failed", "status": summary["legacy_source"]["status"]})
 if additional_facts_presence == "present" and summary["additional_facts"]["status"] != "PASS":
     errors.append({"error": "additional_fact_inventory_failed", "status": summary["additional_facts"]["status"]})
+if expense_taxonomy_presence == "present" and summary["expense_taxonomy"]["status"] != "PASS":
+    errors.append({"error": "expense_fact_taxonomy_failed", "status": summary["expense_taxonomy"]["status"]})
 
 status = "PASS" if not errors else "FAIL"
 payload = {
@@ -139,6 +154,7 @@ print(
             "cleanup": summary["cleanup"]["status"],
             "legacy_source": summary["legacy_source"]["status"],
             "additional_facts": summary["additional_facts"]["status"],
+            "expense_taxonomy": summary["expense_taxonomy"]["status"],
             "artifact_root": str(ARTIFACT_ROOT),
         },
         ensure_ascii=False,

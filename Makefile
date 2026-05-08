@@ -4334,6 +4334,7 @@ verify.native.business_fact.static: guard.prod.forbid
 	  scripts/migration/business_fact_visible_balance_legacy_source_probe.py \
 	  scripts/migration/business_fact_additional_fact_inventory.py \
 	  scripts/migration/business_fact_acceptance_bundle_summary.py \
+	  scripts/migration/business_expense_fact_taxonomy_acceptance.py \
 	  scripts/migration/fresh_db_construction_contract_visible_business_fact_write.py
 
 verify.unified_page_contract.lite: guard.prod.forbid

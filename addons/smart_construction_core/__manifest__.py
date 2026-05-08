@@ -182,6 +182,7 @@
         'security/menu_tech_hide_patch.xml',
         'actions/project_native_action_overrides.xml',
         'views/menu_business_taxonomy.xml',
+        'views/core/expense_business_fact_taxonomy_views.xml',
         'views/support/audit_list_fields_views.xml',
     ],
     'assets': {

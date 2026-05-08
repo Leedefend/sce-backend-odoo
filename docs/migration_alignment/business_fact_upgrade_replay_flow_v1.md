@@ -110,13 +110,16 @@ the business-fact shell flow and Python scripts for syntax/compile drift without
 touching Odoo or legacy MSSQL.
 
 The `acceptance` mode is the preferred read-only handoff command. It runs the
-postcheck and cleanup in the same artifact root, and adds legacy-source evidence
-only when `BUSINESS_FACT_REPLAY_LEGACY_SOURCE_PROBE=1`.
+postcheck, cleanup, additional fact inventory, and expense fact taxonomy
+acceptance in the same artifact root. It adds legacy-source evidence only when
+`BUSINESS_FACT_REPLAY_LEGACY_SOURCE_PROBE=1`.
 
 `acceptance`, `write`, and `all` emit a final summary:
 
 - `business_fact_additional_fact_inventory_v1.json`
 - `business_fact_additional_fact_inventory_v1.md`
+- `business_expense_fact_taxonomy_acceptance_v1.json`
+- `business_expense_fact_taxonomy_acceptance_v1.md`
 - `business_fact_acceptance_bundle_summary_v1.json`
 - `business_fact_acceptance_bundle_summary_v1.md`
 
@@ -126,6 +129,13 @@ tax, fund, account, construction diary, evidence, catalog, attachment,
 workflow, user context, and residual facts. Where an adapter declares row
 artifacts, it also checks payload CSV presence and parsed record counts. It does
 not create or replay those rows into Odoo.
+
+The expense fact taxonomy acceptance is read-only. It verifies the user-facing
+actions and menus that split expense-side facts by source business fact:
+contract/purchase commitment, payment request, actual outflow, expense/deposit,
+deduction/tax/fund confirmation, and financing/borrowing. It records current
+acceptance counts separately so payload-backed lanes are not mistaken for
+already-loaded Odoo facts.
 
 ## Acceptance Facts
 

@@ -16,6 +16,7 @@ POSTCHECK_SCRIPT="$ROOT_DIR/scripts/migration/fresh_db_business_fact_replay_post
 BALANCE_CLEANUP_SCRIPT="$ROOT_DIR/scripts/migration/business_fact_visible_balance_cleanup.py"
 LEGACY_SOURCE_PROBE_SCRIPT="$ROOT_DIR/scripts/migration/business_fact_visible_balance_legacy_source_probe.py"
 ADDITIONAL_FACT_INVENTORY_SCRIPT="$ROOT_DIR/scripts/migration/business_fact_additional_fact_inventory.py"
+EXPENSE_FACT_TAXONOMY_ACCEPTANCE_SCRIPT="$ROOT_DIR/scripts/migration/business_expense_fact_taxonomy_acceptance.py"
 ACCEPTANCE_SUMMARY_SCRIPT="$ROOT_DIR/scripts/migration/business_fact_acceptance_bundle_summary.py"
 
 export MIGRATION_REPO_ROOT="${MIGRATION_REPO_ROOT:-$ROOT_DIR}"
@@ -115,6 +116,11 @@ run_additional_fact_inventory() {
   ROOT_DIR="$ROOT_DIR" MIGRATION_ARTIFACT_ROOT="$ARTIFACT_ROOT" python3 "$ADDITIONAL_FACT_INVENTORY_SCRIPT"
 }
 
+run_expense_fact_taxonomy_acceptance() {
+  echo "[business.fact.replay] step=expense-fact-taxonomy db=$DB_NAME"
+  run_odoo_script "$EXPENSE_FACT_TAXONOMY_ACCEPTANCE_SCRIPT"
+}
+
 run_acceptance_summary() {
   echo "[business.fact.replay] step=acceptance-summary artifact_root=$ARTIFACT_ROOT"
   MIGRATION_ARTIFACT_ROOT="$ARTIFACT_ROOT" python3 "$ACCEPTANCE_SUMMARY_SCRIPT"
@@ -154,6 +160,7 @@ case "$MODE" in
     run_cleanup
     run_legacy_source_probe
     run_additional_fact_inventory
+    run_expense_fact_taxonomy_acceptance
     run_acceptance_summary
     ;;
   write)
@@ -166,6 +173,7 @@ case "$MODE" in
     run_cleanup
     run_legacy_source_probe
     run_additional_fact_inventory
+    run_expense_fact_taxonomy_acceptance
     run_acceptance_summary
     ;;
   all)
@@ -179,6 +187,7 @@ case "$MODE" in
     run_cleanup
     run_legacy_source_probe
     run_additional_fact_inventory
+    run_expense_fact_taxonomy_acceptance
     run_acceptance_summary
     ;;
   *)
