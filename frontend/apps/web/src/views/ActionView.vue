@@ -1769,14 +1769,8 @@ const {
   routerPush: (target) => router.push(target as never),
 });
 
-const {
-  applyRoutePreset,
-  clearRoutePreset,
-  applyRoutePatchAndReload,
-  syncRouteListState,
-  syncRouteStateAndReload,
-  restartLoadWithRouteSync,
-} = useActionViewRoutePresetRuntime({
+const suppressNextRouteReload = ref(false);
+const routePresetRuntime = useActionViewRoutePresetRuntime({
   routeQueryMap,
   pageText,
   showHud,
@@ -1828,6 +1822,27 @@ const {
   resolveRouteSyncExtra,
   resolveRouteSyncShouldAwaitLoad,
 });
+
+const {
+  applyRoutePreset,
+  clearRoutePreset,
+  applyRoutePatchAndReload,
+} = routePresetRuntime;
+
+function syncRouteListState(extra?: Record<string, unknown>): void {
+  suppressNextRouteReload.value = true;
+  routePresetRuntime.syncRouteListState(extra);
+}
+
+function syncRouteStateAndReload(extra?: Record<string, unknown>): void {
+  suppressNextRouteReload.value = true;
+  routePresetRuntime.syncRouteStateAndReload(extra);
+}
+
+function restartLoadWithRouteSync(extra?: Record<string, unknown>): Promise<void> | void {
+  suppressNextRouteReload.value = true;
+  return routePresetRuntime.restartLoadWithRouteSync(extra) as Promise<void> | void;
+}
 
 const {
   handleGroupSummaryPick,
@@ -2818,6 +2833,11 @@ onErrorCaptured((err) => {
 watch(
   () => route.fullPath,
   () => {
+    if (suppressNextRouteReload.value) {
+      suppressNextRouteReload.value = false;
+      applyRoutePreset();
+      return;
+    }
     renderErrorMessage.value = '';
     listOffset.value = 0;
     clearSelection();
