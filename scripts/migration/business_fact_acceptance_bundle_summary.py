@@ -42,12 +42,17 @@ expense_taxonomy, expense_taxonomy_presence = load_json(
     "business_expense_fact_taxonomy_acceptance_v1.json",
     required=False,
 )
+expense_contract_subtypes, expense_contract_subtypes_presence = load_json(
+    "business_expense_contract_subtype_evidence_v1.json",
+    required=False,
+)
 
 post_visible = (postcheck or {}).get("visible_business_fact_reconciliation") or {}
 cleanup_summary = (cleanup or {}).get("summary") or {}
 legacy_summary = (legacy_source or {}).get("summary") or {}
 additional_facts_summary = (additional_facts or {}).get("summary") or {}
 expense_taxonomy_summary = (expense_taxonomy or {}).get("summary") or {}
+expense_contract_subtypes_summary = (expense_contract_subtypes or {}).get("summary") or {}
 
 summary = {
     "artifact_root": str(ARTIFACT_ROOT),
@@ -95,6 +100,16 @@ summary = {
         "db_writes": expense_taxonomy_summary.get("db_writes"),
         "fact_counts": expense_taxonomy_summary.get("fact_counts"),
     },
+    "expense_contract_subtypes": {
+        "presence": expense_contract_subtypes_presence,
+        "status": status_of(expense_contract_subtypes, expense_contract_subtypes_presence),
+        "supplier_subject_counts": (
+            (expense_contract_subtypes_summary.get("supplier_contract_payload") or {}).get("subject_counts")
+        ),
+        "recommended_subjects": expense_contract_subtypes_summary.get(
+            "recommended_user_facing_expense_contract_subjects"
+        ),
+    },
 }
 
 errors = []
@@ -111,6 +126,10 @@ if additional_facts_presence == "present" and summary["additional_facts"]["statu
     errors.append({"error": "additional_fact_inventory_failed", "status": summary["additional_facts"]["status"]})
 if expense_taxonomy_presence == "present" and summary["expense_taxonomy"]["status"] != "PASS":
     errors.append({"error": "expense_fact_taxonomy_failed", "status": summary["expense_taxonomy"]["status"]})
+if expense_contract_subtypes_presence == "present" and summary["expense_contract_subtypes"]["status"] != "PASS":
+    errors.append(
+        {"error": "expense_contract_subtype_evidence_failed", "status": summary["expense_contract_subtypes"]["status"]}
+    )
 
 status = "PASS" if not errors else "FAIL"
 payload = {
@@ -155,6 +174,7 @@ print(
             "legacy_source": summary["legacy_source"]["status"],
             "additional_facts": summary["additional_facts"]["status"],
             "expense_taxonomy": summary["expense_taxonomy"]["status"],
+            "expense_contract_subtypes": summary["expense_contract_subtypes"]["status"],
             "artifact_root": str(ARTIFACT_ROOT),
         },
         ensure_ascii=False,

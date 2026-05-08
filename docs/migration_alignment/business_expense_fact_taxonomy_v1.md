@@ -17,11 +17,40 @@ source business fact and keeps each fact in its own lane:
 No menu in this taxonomy promotes historical facts into new payment,
 settlement, treasury, or accounting workflow state.
 
+## Expense Contract Subtype Evidence
+
+Supplier contract replay carries an explicit `subject` value from
+`migration_assets/20_business/supplier_contract/supplier_contract_header_v1.xml`.
+The current payload distribution is:
+
+| Subject | Rows |
+| --- | ---: |
+| 材料合同 | 2409 |
+| 正常合同 | 1779 |
+| 劳务合同 | 439 |
+| 租赁合同 | 423 |
+| 分包合同 | 215 |
+| 其他合同 | 34 |
+| 补充合同 | 2 |
+
+Therefore the contract-side split follows these seven factual subjects.
+`费用` is not a supplier contract subject in this payload; fee reimbursement,
+deposit, and historical expense/deposit outflow remain in their own expense
+fact lanes. Supplier pricing method also remains a pricing fact because it
+describes payment/pricing behavior rather than the contract family.
+
 ## User-Facing Split
 
 | Business fact | User-facing entry | Carrier |
 | --- | --- | --- |
 | Expense contract | 支出合同台账 | `construction.contract.expense` |
+| Material supplier contract | 材料合同 | `construction.contract.expense`, `subject = 材料合同` |
+| Normal supplier contract | 正常合同 | `construction.contract.expense`, `subject = 正常合同` |
+| Labor supplier contract | 劳务合同 | `construction.contract.expense`, `subject = 劳务合同` |
+| Rental supplier contract | 租赁合同 | `construction.contract.expense`, `subject = 租赁合同` |
+| Subcontract supplier contract | 分包合同 | `construction.contract.expense`, `subject = 分包合同` |
+| Other supplier contract | 其他合同 | `construction.contract.expense`, `subject = 其他合同` |
+| Supplement supplier contract | 补充合同 | `construction.contract.expense`, `subject = 补充合同` |
 | Supplier contract pricing | 供应商合同计价事实 | `sc.legacy.supplier.contract.pricing.fact` |
 | Legacy purchase/general contract | 历史采购/一般合同事实 | `sc.legacy.purchase.contract.fact` |
 | Payment request | 付款申请 | `payment.request`, `type = pay` |
@@ -67,9 +96,10 @@ docker exec -i \
 Result:
 
 - status: `PASS`
-- actions checked: 13
-- menus checked: 22
+- actions checked: 20
+- menus checked: 29
 - database writes: 0
+- expense contract subtype evidence: `PASS`
 - artifact:
   `artifacts/migration/business_fact_upgrade/20260508T_expense_fact_taxonomy/business_expense_fact_taxonomy_acceptance_v1.json`
 

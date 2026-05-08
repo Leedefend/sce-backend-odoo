@@ -16,6 +16,41 @@ OUTPUT_REPORT = ARTIFACT_ROOT / "business_expense_fact_taxonomy_acceptance_v1.md
 
 EXPECTED_ACTIONS = [
     {
+        "xmlid": "smart_construction_core.action_construction_contract_expense_material",
+        "model": "construction.contract.expense",
+        "domain": [("subject", "=", "材料合同")],
+    },
+    {
+        "xmlid": "smart_construction_core.action_construction_contract_expense_normal",
+        "model": "construction.contract.expense",
+        "domain": [("subject", "=", "正常合同")],
+    },
+    {
+        "xmlid": "smart_construction_core.action_construction_contract_expense_labor",
+        "model": "construction.contract.expense",
+        "domain": [("subject", "=", "劳务合同")],
+    },
+    {
+        "xmlid": "smart_construction_core.action_construction_contract_expense_rental",
+        "model": "construction.contract.expense",
+        "domain": [("subject", "=", "租赁合同")],
+    },
+    {
+        "xmlid": "smart_construction_core.action_construction_contract_expense_subcontract",
+        "model": "construction.contract.expense",
+        "domain": [("subject", "=", "分包合同")],
+    },
+    {
+        "xmlid": "smart_construction_core.action_construction_contract_expense_other",
+        "model": "construction.contract.expense",
+        "domain": [("subject", "=", "其他合同")],
+    },
+    {
+        "xmlid": "smart_construction_core.action_construction_contract_expense_supplement",
+        "model": "construction.contract.expense",
+        "domain": [("subject", "=", "补充合同")],
+    },
+    {
         "xmlid": "smart_construction_core.action_sc_legacy_purchase_contract_fact_business",
         "model": "sc.legacy.purchase.contract.fact",
     },
@@ -79,6 +114,41 @@ EXPECTED_ACTIONS = [
 
 
 EXPECTED_MENUS = [
+    {
+        "xmlid": "smart_construction_core.menu_sc_expense_contract_material",
+        "parent": "smart_construction_core.menu_sc_expense_contract_group",
+        "action": "smart_construction_core.action_construction_contract_expense_material",
+    },
+    {
+        "xmlid": "smart_construction_core.menu_sc_expense_contract_normal",
+        "parent": "smart_construction_core.menu_sc_expense_contract_group",
+        "action": "smart_construction_core.action_construction_contract_expense_normal",
+    },
+    {
+        "xmlid": "smart_construction_core.menu_sc_expense_contract_labor",
+        "parent": "smart_construction_core.menu_sc_expense_contract_group",
+        "action": "smart_construction_core.action_construction_contract_expense_labor",
+    },
+    {
+        "xmlid": "smart_construction_core.menu_sc_expense_contract_rental",
+        "parent": "smart_construction_core.menu_sc_expense_contract_group",
+        "action": "smart_construction_core.action_construction_contract_expense_rental",
+    },
+    {
+        "xmlid": "smart_construction_core.menu_sc_expense_contract_subcontract",
+        "parent": "smart_construction_core.menu_sc_expense_contract_group",
+        "action": "smart_construction_core.action_construction_contract_expense_subcontract",
+    },
+    {
+        "xmlid": "smart_construction_core.menu_sc_expense_contract_other",
+        "parent": "smart_construction_core.menu_sc_expense_contract_group",
+        "action": "smart_construction_core.action_construction_contract_expense_other",
+    },
+    {
+        "xmlid": "smart_construction_core.menu_sc_expense_contract_supplement",
+        "parent": "smart_construction_core.menu_sc_expense_contract_group",
+        "action": "smart_construction_core.action_construction_contract_expense_supplement",
+    },
     {
         "xmlid": "smart_construction_core.menu_sc_expense_contract_supplier_pricing_fact",
         "parent": "smart_construction_core.menu_sc_expense_contract_group",
@@ -188,6 +258,13 @@ EXPECTED_MENUS = [
 
 FACT_COUNTS = [
     ("expense_contracts", "construction.contract.expense", []),
+    ("expense_contracts_material", "construction.contract.expense", [("subject", "=", "材料合同")]),
+    ("expense_contracts_normal", "construction.contract.expense", [("subject", "=", "正常合同")]),
+    ("expense_contracts_labor", "construction.contract.expense", [("subject", "=", "劳务合同")]),
+    ("expense_contracts_rental", "construction.contract.expense", [("subject", "=", "租赁合同")]),
+    ("expense_contracts_subcontract", "construction.contract.expense", [("subject", "=", "分包合同")]),
+    ("expense_contracts_other", "construction.contract.expense", [("subject", "=", "其他合同")]),
+    ("expense_contracts_supplement", "construction.contract.expense", [("subject", "=", "补充合同")]),
     ("payment_requests", "payment.request", [("type", "=", "pay")]),
     ("payment_request_lines", "payment.request.line", []),
     ("actual_outflow_execution", "sc.payment.execution", [("source_kind", "=", "actual_outflow")]),

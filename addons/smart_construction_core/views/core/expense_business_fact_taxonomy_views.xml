@@ -29,6 +29,133 @@
                   sequence="60"
                   groups="smart_construction_core.group_sc_cap_contract_read,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
 
+        <!-- 支出合同细分：只按旧供应合同 subject 已给出的合同科目筛选，不把费用报销伪装成合同类型。 -->
+        <record id="action_construction_contract_expense_material" model="ir.actions.act_window">
+            <field name="name">材料合同</field>
+            <field name="res_model">construction.contract.expense</field>
+            <field name="view_mode">tree,form</field>
+            <field name="views" eval="[(ref('smart_construction_core.view_construction_contract_expense_tree'), 'tree'), (ref('smart_construction_core.view_construction_contract_expense_form'), 'form')]"/>
+            <field name="search_view_id" ref="smart_construction_core.view_construction_contract_expense_search"/>
+            <field name="domain">[('subject', '=', '材料合同')]</field>
+            <field name="context">{'default_type': 'in', 'default_subject': '材料合同'}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
+        </record>
+
+        <record id="action_construction_contract_expense_normal" model="ir.actions.act_window">
+            <field name="name">正常合同</field>
+            <field name="res_model">construction.contract.expense</field>
+            <field name="view_mode">tree,form</field>
+            <field name="views" eval="[(ref('smart_construction_core.view_construction_contract_expense_tree'), 'tree'), (ref('smart_construction_core.view_construction_contract_expense_form'), 'form')]"/>
+            <field name="search_view_id" ref="smart_construction_core.view_construction_contract_expense_search"/>
+            <field name="domain">[('subject', '=', '正常合同')]</field>
+            <field name="context">{'default_type': 'in', 'default_subject': '正常合同'}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
+        </record>
+
+        <record id="action_construction_contract_expense_labor" model="ir.actions.act_window">
+            <field name="name">劳务合同</field>
+            <field name="res_model">construction.contract.expense</field>
+            <field name="view_mode">tree,form</field>
+            <field name="views" eval="[(ref('smart_construction_core.view_construction_contract_expense_tree'), 'tree'), (ref('smart_construction_core.view_construction_contract_expense_form'), 'form')]"/>
+            <field name="search_view_id" ref="smart_construction_core.view_construction_contract_expense_search"/>
+            <field name="domain">[('subject', '=', '劳务合同')]</field>
+            <field name="context">{'default_type': 'in', 'default_subject': '劳务合同'}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
+        </record>
+
+        <record id="action_construction_contract_expense_rental" model="ir.actions.act_window">
+            <field name="name">租赁合同</field>
+            <field name="res_model">construction.contract.expense</field>
+            <field name="view_mode">tree,form</field>
+            <field name="views" eval="[(ref('smart_construction_core.view_construction_contract_expense_tree'), 'tree'), (ref('smart_construction_core.view_construction_contract_expense_form'), 'form')]"/>
+            <field name="search_view_id" ref="smart_construction_core.view_construction_contract_expense_search"/>
+            <field name="domain">[('subject', '=', '租赁合同')]</field>
+            <field name="context">{'default_type': 'in', 'default_subject': '租赁合同'}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
+        </record>
+
+        <record id="action_construction_contract_expense_subcontract" model="ir.actions.act_window">
+            <field name="name">分包合同</field>
+            <field name="res_model">construction.contract.expense</field>
+            <field name="view_mode">tree,form</field>
+            <field name="views" eval="[(ref('smart_construction_core.view_construction_contract_expense_tree'), 'tree'), (ref('smart_construction_core.view_construction_contract_expense_form'), 'form')]"/>
+            <field name="search_view_id" ref="smart_construction_core.view_construction_contract_expense_search"/>
+            <field name="domain">[('subject', '=', '分包合同')]</field>
+            <field name="context">{'default_type': 'in', 'default_subject': '分包合同'}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
+        </record>
+
+        <record id="action_construction_contract_expense_other" model="ir.actions.act_window">
+            <field name="name">其他合同</field>
+            <field name="res_model">construction.contract.expense</field>
+            <field name="view_mode">tree,form</field>
+            <field name="views" eval="[(ref('smart_construction_core.view_construction_contract_expense_tree'), 'tree'), (ref('smart_construction_core.view_construction_contract_expense_form'), 'form')]"/>
+            <field name="search_view_id" ref="smart_construction_core.view_construction_contract_expense_search"/>
+            <field name="domain">[('subject', '=', '其他合同')]</field>
+            <field name="context">{'default_type': 'in', 'default_subject': '其他合同'}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
+        </record>
+
+        <record id="action_construction_contract_expense_supplement" model="ir.actions.act_window">
+            <field name="name">补充合同</field>
+            <field name="res_model">construction.contract.expense</field>
+            <field name="view_mode">tree,form</field>
+            <field name="views" eval="[(ref('smart_construction_core.view_construction_contract_expense_tree'), 'tree'), (ref('smart_construction_core.view_construction_contract_expense_form'), 'form')]"/>
+            <field name="search_view_id" ref="smart_construction_core.view_construction_contract_expense_search"/>
+            <field name="domain">[('subject', '=', '补充合同')]</field>
+            <field name="context">{'default_type': 'in', 'default_subject': '补充合同'}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
+        </record>
+
+        <menuitem id="menu_sc_expense_contract_material"
+                  name="材料合同"
+                  parent="smart_construction_core.menu_sc_expense_contract_group"
+                  action="smart_construction_core.action_construction_contract_expense_material"
+                  sequence="11"
+                  groups="smart_construction_core.group_sc_cap_contract_read,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
+
+        <menuitem id="menu_sc_expense_contract_normal"
+                  name="正常合同"
+                  parent="smart_construction_core.menu_sc_expense_contract_group"
+                  action="smart_construction_core.action_construction_contract_expense_normal"
+                  sequence="12"
+                  groups="smart_construction_core.group_sc_cap_contract_read,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
+
+        <menuitem id="menu_sc_expense_contract_labor"
+                  name="劳务合同"
+                  parent="smart_construction_core.menu_sc_expense_contract_group"
+                  action="smart_construction_core.action_construction_contract_expense_labor"
+                  sequence="13"
+                  groups="smart_construction_core.group_sc_cap_contract_read,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
+
+        <menuitem id="menu_sc_expense_contract_rental"
+                  name="租赁合同"
+                  parent="smart_construction_core.menu_sc_expense_contract_group"
+                  action="smart_construction_core.action_construction_contract_expense_rental"
+                  sequence="14"
+                  groups="smart_construction_core.group_sc_cap_contract_read,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
+
+        <menuitem id="menu_sc_expense_contract_subcontract"
+                  name="分包合同"
+                  parent="smart_construction_core.menu_sc_expense_contract_group"
+                  action="smart_construction_core.action_construction_contract_expense_subcontract"
+                  sequence="15"
+                  groups="smart_construction_core.group_sc_cap_contract_read,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
+
+        <menuitem id="menu_sc_expense_contract_other"
+                  name="其他合同"
+                  parent="smart_construction_core.menu_sc_expense_contract_group"
+                  action="smart_construction_core.action_construction_contract_expense_other"
+                  sequence="16"
+                  groups="smart_construction_core.group_sc_cap_contract_read,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
+
+        <menuitem id="menu_sc_expense_contract_supplement"
+                  name="补充合同"
+                  parent="smart_construction_core.menu_sc_expense_contract_group"
+                  action="smart_construction_core.action_construction_contract_expense_supplement"
+                  sequence="17"
+                  groups="smart_construction_core.group_sc_cap_contract_read,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
+
         <!-- 付款事实：申请、申请明细、实付、实付残余分开看。 -->
         <record id="action_sc_payment_execution_actual_outflow" model="ir.actions.act_window">
             <field name="name">实付登记</field>

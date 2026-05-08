@@ -17,6 +17,7 @@ BALANCE_CLEANUP_SCRIPT="$ROOT_DIR/scripts/migration/business_fact_visible_balanc
 LEGACY_SOURCE_PROBE_SCRIPT="$ROOT_DIR/scripts/migration/business_fact_visible_balance_legacy_source_probe.py"
 ADDITIONAL_FACT_INVENTORY_SCRIPT="$ROOT_DIR/scripts/migration/business_fact_additional_fact_inventory.py"
 EXPENSE_FACT_TAXONOMY_ACCEPTANCE_SCRIPT="$ROOT_DIR/scripts/migration/business_expense_fact_taxonomy_acceptance.py"
+EXPENSE_CONTRACT_SUBTYPE_EVIDENCE_SCRIPT="$ROOT_DIR/scripts/migration/business_expense_contract_subtype_evidence.py"
 ACCEPTANCE_SUMMARY_SCRIPT="$ROOT_DIR/scripts/migration/business_fact_acceptance_bundle_summary.py"
 
 export MIGRATION_REPO_ROOT="${MIGRATION_REPO_ROOT:-$ROOT_DIR}"
@@ -121,6 +122,11 @@ run_expense_fact_taxonomy_acceptance() {
   run_odoo_script "$EXPENSE_FACT_TAXONOMY_ACCEPTANCE_SCRIPT"
 }
 
+run_expense_contract_subtype_evidence() {
+  echo "[business.fact.replay] step=expense-contract-subtype-evidence artifact_root=$ARTIFACT_ROOT"
+  ROOT_DIR="$ROOT_DIR" MIGRATION_ARTIFACT_ROOT="$ARTIFACT_ROOT" python3 "$EXPENSE_CONTRACT_SUBTYPE_EVIDENCE_SCRIPT"
+}
+
 run_acceptance_summary() {
   echo "[business.fact.replay] step=acceptance-summary artifact_root=$ARTIFACT_ROOT"
   MIGRATION_ARTIFACT_ROOT="$ARTIFACT_ROOT" python3 "$ACCEPTANCE_SUMMARY_SCRIPT"
@@ -160,6 +166,7 @@ case "$MODE" in
     run_cleanup
     run_legacy_source_probe
     run_additional_fact_inventory
+    run_expense_contract_subtype_evidence
     run_expense_fact_taxonomy_acceptance
     run_acceptance_summary
     ;;
@@ -173,6 +180,7 @@ case "$MODE" in
     run_cleanup
     run_legacy_source_probe
     run_additional_fact_inventory
+    run_expense_contract_subtype_evidence
     run_expense_fact_taxonomy_acceptance
     run_acceptance_summary
     ;;
@@ -187,6 +195,7 @@ case "$MODE" in
     run_cleanup
     run_legacy_source_probe
     run_additional_fact_inventory
+    run_expense_contract_subtype_evidence
     run_expense_fact_taxonomy_acceptance
     run_acceptance_summary
     ;;
