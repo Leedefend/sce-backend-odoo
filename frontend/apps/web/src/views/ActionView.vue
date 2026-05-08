@@ -380,6 +380,15 @@
       :ui-labels="toolbarUiLabels"
       :show-plain-search="!showTopActionToolbar"
       :grouped-rows="currentPageGroupedRows"
+      :group-window-offset="groupWindowOffset"
+      :group-window-count="groupWindowCount"
+      :group-window-total="groupWindowTotal ?? undefined"
+      :group-window-start="groupWindowStart ?? undefined"
+      :group-window-end="groupWindowEnd ?? undefined"
+      :can-group-window-prev="groupWindowPrevOffset !== null"
+      :can-group-window-next="groupWindowNextOffset !== null"
+      :on-group-window-prev="handleGroupWindowPrev"
+      :on-group-window-next="handleGroupWindowNext"
       :can-create-record="canCreateRecord"
       :create-label="toolbarUiLabel('create', '新建')"
       :on-open-group="handleOpenGroupedRows"
@@ -1247,6 +1256,7 @@ function normalizeGroupCell(field: string, value: unknown) {
 const currentPageGroupedRows = computed(() => {
   const field = String(activeGroupByField.value || '').trim();
   if (!field || !groupViewVisible.value) return [];
+  if (groupedRows.value.length) return groupedRows.value;
   const groups = new Map<string, {
     key: string;
     label: string;

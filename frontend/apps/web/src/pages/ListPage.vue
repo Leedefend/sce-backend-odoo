@@ -123,8 +123,29 @@
       <section class="table">
 	        <section v-if="showGroupedRows" class="grouped-table">
         <header class="grouped-toolbar">
-          <span>{{ uiLabel('grouped_result', '分组结果') }}</span>
+          <div class="grouped-toolbar-title">
+            <span>{{ uiLabel('grouped_result', '分组结果') }}</span>
+            <span v-if="groupWindowInfoText" class="group-window-info">{{ groupWindowInfoText }}</span>
+          </div>
           <div class="grouped-toolbar-actions">
+            <button
+              v-if="onGroupWindowPrev"
+              type="button"
+              class="grouped-sort-btn"
+              :disabled="loading || !canGroupWindowPrev"
+              @click="onGroupWindowPrev"
+            >
+              {{ uiLabel('group_window_prev', '上一组') }}
+            </button>
+            <button
+              v-if="onGroupWindowNext"
+              type="button"
+              class="grouped-sort-btn"
+              :disabled="loading || !canGroupWindowNext"
+              @click="onGroupWindowNext"
+            >
+              {{ uiLabel('group_window_next', '下一组') }}
+            </button>
             <button
               type="button"
               class="grouped-sort-btn"
@@ -638,6 +659,15 @@ const props = defineProps<{
     offset: number;
     limit: number;
   }) => void;
+  groupWindowOffset?: number;
+  groupWindowCount?: number;
+  groupWindowTotal?: number;
+  groupWindowStart?: number;
+  groupWindowEnd?: number;
+  canGroupWindowPrev?: boolean;
+  canGroupWindowNext?: boolean;
+  onGroupWindowPrev?: () => void;
+  onGroupWindowNext?: () => void;
   groupSampleLimit?: number;
   onGroupSampleLimitChange?: (limit: number) => void;
   groupSort?: 'asc' | 'desc';
@@ -743,6 +773,25 @@ const groupSortLabel = computed(() =>
     ? uiLabel('group_sort_desc', '按数量降序')
     : uiLabel('group_sort_asc', '按数量升序'),
 );
+const groupWindowInfoText = computed(() => {
+  if (!showGroupedRows.value) return '';
+  const count = Math.max(0, Math.trunc(Number(props.groupWindowCount || 0)));
+  if (count <= 0) return '';
+  const offset = Math.max(0, Math.trunc(Number(props.groupWindowOffset || 0)));
+  const startRaw = Number(props.groupWindowStart);
+  const endRaw = Number(props.groupWindowEnd);
+  const totalRaw = Number(props.groupWindowTotal);
+  const start = Number.isFinite(startRaw) && startRaw > 0 ? Math.trunc(startRaw) : offset + 1;
+  const end = Number.isFinite(endRaw) && endRaw >= start ? Math.trunc(endRaw) : offset + count;
+  if (Number.isFinite(totalRaw) && totalRaw >= 0) {
+    return uiLabel('group_window_range_total', '当前分组 {start}-{end} / {total}', {
+      start,
+      end,
+      total: Math.trunc(totalRaw),
+    });
+  }
+  return uiLabel('group_window_range', '当前分组 {start}-{end}', { start, end });
+});
 const summaryItems = computed(() => Array.isArray(props.summaryItems) ? props.summaryItems : []);
 const collapsedSet = computed(() => new Set(Array.isArray(props.collapsedGroupKeys) ? props.collapsedGroupKeys : []));
 const allGroupsCollapsed = computed(() => {
@@ -1894,6 +1943,20 @@ onBeforeUnmount(() => {
   color: #0f172a;
   font-size: 13px;
   font-weight: 700;
+}
+
+.grouped-toolbar-title {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.grouped-toolbar-title .group-window-info {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .grouped-toolbar-actions {
