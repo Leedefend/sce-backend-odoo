@@ -2,10 +2,10 @@
 
 Status: `PASS`
 
-- package_id: `migration_assets_release_20260508T080812Z`
-- package_path: `/tmp/sce_migration_asset_release/migration_assets_release_20260508T080812Z.tar.gz`
-- sha256_path: `/tmp/sce_migration_asset_release/migration_assets_release_20260508T080812Z.tar.gz.sha256`
-- sha256: `c90abd2e00c326ace2bbda353e58fd434f7535c7d12f16477bb87f114dad0b60`
+- package_id: `migration_assets_release_20260508T081336Z`
+- package_path: `/tmp/sce_migration_asset_release/migration_assets_release_20260508T081336Z.tar.gz`
+- sha256_path: `/tmp/sce_migration_asset_release/migration_assets_release_20260508T081336Z.tar.gz.sha256`
+- sha256: `918c192974473698bd08654e50958ea09433d3d2a09cbe4cf1388a4c8f0522e8`
 - package_size_mb: `318.18`
 - included_file_count: `1912`
 - excluded_file_count: `0`
