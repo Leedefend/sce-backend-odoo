@@ -181,6 +181,14 @@ LANES = [
         "payload_checks": [{"csv_key": "csv", "expected_key": "rows"}],
     },
     {
+        "lane": "legacy_finance_auxiliary",
+        "path": "fresh_db_legacy_finance_auxiliary_replay_adapter_result_v1.json",
+        "row_keys": ["total_rows", "active_rows"],
+        "amount_keys": ["amount_total_sum", "tax_amount_sum"],
+        "decision_keys": ["decision"],
+        "payload_checks": [{"csv_key": "payload_csv", "expected_key": "total_rows"}],
+    },
+    {
         "lane": "legacy_fund_daily_line",
         "path": "fresh_db_legacy_fund_daily_line_replay_adapter_result_v1.json",
         "row_keys": ["total_rows", "header_rows", "active_header_rows", "line_rows", "orphan_line_rows"],

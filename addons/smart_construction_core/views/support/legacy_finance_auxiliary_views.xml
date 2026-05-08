@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="view_sc_legacy_finance_auxiliary_fact_search" model="ir.ui.view">
+    <field name="name">sc.legacy.finance.auxiliary.fact.search</field>
+    <field name="model">sc.legacy.finance.auxiliary.fact</field>
+    <field name="arch" type="xml">
+      <search string="历史财税辅助事实">
+        <field name="source_table"/>
+        <field name="fact_type"/>
+        <field name="document_no"/>
+        <field name="project_name"/>
+        <field name="partner_name"/>
+        <field name="invoice_no"/>
+        <field name="category_name"/>
+        <filter name="active" string="有效" domain="[('active', '=', True)]"/>
+        <group expand="0" string="分组">
+          <filter name="group_source_table" string="来源表" context="{'group_by': 'source_table'}"/>
+          <filter name="group_fact_type" string="事实类型" context="{'group_by': 'fact_type'}"/>
+          <filter name="group_project" string="项目" context="{'group_by': 'project_id'}"/>
+          <filter name="group_partner" string="往来单位" context="{'group_by': 'partner_name'}"/>
+          <filter name="group_category" string="分类" context="{'group_by': 'category_name'}"/>
+        </group>
+      </search>
+    </field>
+  </record>
+
+  <record id="view_sc_legacy_finance_auxiliary_fact_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.finance.auxiliary.fact.tree</field>
+    <field name="model">sc.legacy.finance.auxiliary.fact</field>
+    <field name="arch" type="xml">
+      <tree string="历史财税辅助事实" create="false" edit="false" delete="false" default_order="document_date desc, id desc">
+        <field name="document_date"/>
+        <field name="fact_type"/>
+        <field name="source_table"/>
+        <field name="document_no"/>
+        <field name="project_id"/>
+        <field name="project_name"/>
+        <field name="partner_name"/>
+        <field name="invoice_no"/>
+        <field name="category_name"/>
+        <field name="amount_total" sum="价税合计"/>
+        <field name="amount_no_tax" sum="不含税金额"/>
+        <field name="tax_amount" sum="税额"/>
+        <field name="document_state"/>
+        <field name="active"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_sc_legacy_finance_auxiliary_fact_form" model="ir.ui.view">
+    <field name="name">sc.legacy.finance.auxiliary.fact.form</field>
+    <field name="model">sc.legacy.finance.auxiliary.fact</field>
+    <field name="arch" type="xml">
+      <form string="历史财税辅助事实" create="false" edit="false" delete="false">
+        <sheet>
+          <group>
+            <group>
+              <field name="document_date"/>
+              <field name="fact_type"/>
+              <field name="source_table"/>
+              <field name="source_dataset"/>
+              <field name="document_no"/>
+              <field name="document_state"/>
+            </group>
+            <group>
+              <field name="project_id"/>
+              <field name="project_legacy_id"/>
+              <field name="project_name"/>
+              <field name="partner_legacy_id"/>
+              <field name="partner_name"/>
+            </group>
+          </group>
+          <group>
+            <group>
+              <field name="invoice_code"/>
+              <field name="invoice_no"/>
+              <field name="invoice_type"/>
+              <field name="tax_rate"/>
+            </group>
+            <group>
+              <field name="amount_total"/>
+              <field name="amount_no_tax"/>
+              <field name="tax_amount"/>
+            </group>
+          </group>
+          <group>
+            <group>
+              <field name="category_code"/>
+              <field name="category_name"/>
+              <field name="handler_name"/>
+            </group>
+            <group>
+              <field name="creator_name"/>
+              <field name="creator_legacy_user_id"/>
+              <field name="created_time"/>
+              <field name="active"/>
+            </group>
+          </group>
+          <group>
+            <field name="attachment_ref"/>
+            <field name="note"/>
+          </group>
+          <group>
+            <field name="legacy_record_id"/>
+            <field name="legacy_parent_id"/>
+            <field name="legacy_pid"/>
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <record id="action_sc_legacy_finance_auxiliary_fact" model="ir.actions.act_window">
+    <field name="name">历史财税辅助事实</field>
+    <field name="res_model">sc.legacy.finance.auxiliary.fact</field>
+    <field name="view_mode">tree,form</field>
+    <field name="search_view_id" ref="view_sc_legacy_finance_auxiliary_fact_search"/>
+  </record>
+
+  <menuitem id="menu_sc_legacy_finance_auxiliary_fact"
+            name="历史财税辅助事实"
+            parent="smart_construction_core.menu_sc_finance_history_center"
+            action="action_sc_legacy_finance_auxiliary_fact"
+            sequence="9"
+            groups="smart_construction_core.group_sc_cap_finance_read"/>
+</odoo>
