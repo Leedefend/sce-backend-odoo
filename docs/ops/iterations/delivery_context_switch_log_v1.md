@@ -16,6 +16,16 @@ Each entry must include:
 
 ## Entries
 
+### 2026-05-08T16:11:31+08:00
+- blocker_key: `independent_migration_asset_release_closure_v1`
+- layer_target: `Ops Deploy / Migration Artifact Delivery`
+- module: `Makefile + scripts/migration + docs/migration_alignment + docs/ops`
+- reason: `继续完成独立资产收口：发布包必须自带离线 replay payload、资产 catalog、重放入口、迁移脚本与可复核 sha256/解包校验路径，避免依赖旧库或仓库外脚本。`
+- completed_step: `修正 migration.assets.release_package.verify 使用 MIGRATION_ASSET_RELEASE_PACKAGE canonical 变量并兼容旧变量；发布包收集补齐 scripts/migration/*.sh，确保 history_continuity_oneclick.sh 调用的 user_history_rebuild.sh 随包交付；重新生成 /tmp/sce_migration_asset_release/migration_assets_release_20260508T080812Z.tar.gz 与 sha256，包内 catalog verify PASS，交付审计无 blocker。`
+- verification: `python3 -m py_compile scripts/migration/migration_asset_release_package.py PASS；git diff --check PASS；make migration.assets.release_package PASS；MIGRATION_ASSET_RELEASE_PACKAGE=/tmp/sce_migration_asset_release/migration_assets_release_20260508T080812Z.tar.gz make migration.assets.release_package.verify PASS；make migration.assets.verify_all PASS；make migration.assets.delivery_audit PASS_WITH_PACKAGING_ACTIONS blockers=0；make verify.docs.links PASS。`
+- active_commit: `cc9f4f1e`
+- next_step: `提交本批独立资产收口改动；如进入 prod-sim/UAT，使用 docs/migration_alignment/migration_asset_release_package_v1.md 记录的包路径和 HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS=1 执行 rehearse/replay。`
+
 ### 2026-05-05T04:49:57+08:00
 - blocker_key: `mobile_v2_global_status_sync_batch`
 - layer_target: `Frontend Mobile Contract Consumer`

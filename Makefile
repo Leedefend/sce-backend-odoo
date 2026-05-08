@@ -847,9 +847,18 @@ migration.assets.verify_all: guard.prod.forbid check-compose-project check-compo
 migration.assets.delivery_audit: guard.prod.forbid check-compose-project check-compose-env
 	@python3 scripts/migration/migration_asset_delivery_audit.py --asset-root "$(MIGRATION_ASSET_ROOT)"
 
-.PHONY: migration.assets.release_package
+.PHONY: migration.assets.release_package migration.assets.release_package.verify
 migration.assets.release_package: guard.prod.forbid
 	@python3 scripts/migration/migration_asset_release_package.py --asset-root "$(MIGRATION_ASSET_ROOT)"
+
+migration.assets.release_package.verify: guard.prod.forbid
+	@package_path="$${MIGRATION_ASSET_RELEASE_PACKAGE:-$${MIGRATION_RELEASE_PACKAGE:-}}"; \
+	  if [ -z "$$package_path" ]; then echo "MIGRATION_ASSET_RELEASE_PACKAGE is required"; exit 2; fi; \
+	  cd "$$(dirname "$$package_path")" && sha256sum -c "$$(basename "$$package_path").sha256"; \
+	  rm -rf /tmp/sce_migration_asset_release_verify; \
+	  mkdir -p /tmp/sce_migration_asset_release_verify; \
+	  tar -xzf "$$package_path" -C /tmp/sce_migration_asset_release_verify; \
+	  cd /tmp/sce_migration_asset_release_verify && python3 scripts/migration/migration_asset_bus.py --asset-root migration_assets --catalog migration_assets/manifest/migration_asset_catalog_v1.json --verify-only --check
 
 history.contract.core.gap.audit: guard.prod.forbid check-compose-project check-compose-env
 	@python3 scripts/migration/history_contract_core_gap_audit.py
