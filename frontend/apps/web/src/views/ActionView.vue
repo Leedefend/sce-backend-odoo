@@ -1230,7 +1230,7 @@ const showToolbarFilter = computed(() => canRenderActionSurfaceToolbar.value && 
 const showToolbarSavedFilter = computed(() => canRenderActionSurfaceToolbar.value && savedFiltersVisible.value);
 const showToolbarGroup = computed(() => canRenderActionSurfaceToolbar.value && groupViewVisible.value);
 const listGroupedRowsEnabled = computed(() =>
-  pageSectionEnabled('grouped_table', Boolean(activeGroupByField.value && groupViewVisible.value)),
+  Boolean(activeGroupByField.value && groupViewVisible.value),
 );
 function normalizeGroupCell(field: string, value: unknown) {
   const option = listColumnOptions.value.find((column) => column.name === field);

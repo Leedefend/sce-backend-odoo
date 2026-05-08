@@ -479,7 +479,28 @@
       </table>
     </section>
 
-      <section v-if="showPagination" class="pagination-footer">
+      <section v-if="showGroupedWindowPagination" class="pagination-footer">
+        <div class="pagination-actions pagination-actions--bottom">
+          <button
+            type="button"
+            class="pagination-btn"
+            :disabled="loading || !canGroupWindowPrev"
+            @click="onGroupWindowPrev?.()"
+          >
+            {{ uiLabel('group_window_prev', '上一组') }}
+          </button>
+          <span>{{ groupWindowPageText }}</span>
+          <button
+            type="button"
+            class="pagination-btn"
+            :disabled="loading || !canGroupWindowNext"
+            @click="onGroupWindowNext?.()"
+          >
+            {{ uiLabel('group_window_next', '下一组') }}
+          </button>
+        </div>
+      </section>
+      <section v-else-if="showPagination" class="pagination-footer">
         <div class="pagination-actions pagination-actions--bottom">
           <button
             type="button"
@@ -773,7 +794,16 @@ const groupSortLabel = computed(() =>
     ? uiLabel('group_sort_desc', '按数量降序')
     : uiLabel('group_sort_asc', '按数量升序'),
 );
-const groupWindowInfoText = computed(() => {
+const showGroupedWindowPagination = computed(() =>
+  showGroupedRows.value
+  && Boolean(props.onGroupWindowPrev || props.onGroupWindowNext)
+  && (
+    Math.max(0, Math.trunc(Number(props.groupWindowCount || 0))) > 0
+    || Boolean(props.canGroupWindowPrev)
+    || Boolean(props.canGroupWindowNext)
+  ),
+);
+const groupWindowRange = computed(() => {
   if (!showGroupedRows.value) return '';
   const count = Math.max(0, Math.trunc(Number(props.groupWindowCount || 0)));
   if (count <= 0) return '';
@@ -783,14 +813,23 @@ const groupWindowInfoText = computed(() => {
   const totalRaw = Number(props.groupWindowTotal);
   const start = Number.isFinite(startRaw) && startRaw > 0 ? Math.trunc(startRaw) : offset + 1;
   const end = Number.isFinite(endRaw) && endRaw >= start ? Math.trunc(endRaw) : offset + count;
-  if (Number.isFinite(totalRaw) && totalRaw >= 0) {
-    return uiLabel('group_window_range_total', '当前分组 {start}-{end} / {total}', {
-      start,
-      end,
-      total: Math.trunc(totalRaw),
-    });
+  return { start, end, total: Number.isFinite(totalRaw) && totalRaw >= 0 ? Math.trunc(totalRaw) : null };
+});
+const groupWindowInfoText = computed(() => {
+  if (!groupWindowRange.value) return '';
+  const range = groupWindowRange.value;
+  if (range.total !== null) {
+    return uiLabel('group_window_range_total', '当前分组 {start}-{end} / {total}', range);
   }
-  return uiLabel('group_window_range', '当前分组 {start}-{end}', { start, end });
+  return uiLabel('group_window_range', '当前分组 {start}-{end}', range);
+});
+const groupWindowPageText = computed(() => {
+  if (!groupWindowRange.value) return uiLabel('group_window_page_empty', '分组 0 / 0');
+  const range = groupWindowRange.value;
+  if (range.total !== null) {
+    return uiLabel('group_window_page_total', '分组 {start}-{end} / {total}', range);
+  }
+  return uiLabel('group_window_page', '分组 {start}-{end}', range);
 });
 const summaryItems = computed(() => Array.isArray(props.summaryItems) ? props.summaryItems : []);
 const collapsedSet = computed(() => new Set(Array.isArray(props.collapsedGroupKeys) ? props.collapsedGroupKeys : []));
