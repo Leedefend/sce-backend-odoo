@@ -1,4 +1,12 @@
 type Dict = Record<string, unknown>;
+
+function resolveGroupWindowDisplayLimit(groupPaging: Dict): number {
+  const count = Number(groupPaging.group_count);
+  if (Number.isFinite(count) && count > 0) return Math.trunc(count);
+  const limit = Number(groupPaging.group_limit);
+  if (Number.isFinite(limit) && limit > 0) return Math.trunc(limit);
+  return 12;
+}
 type StatusInput = { error: string; recordsLength: number };
 
 type ApplyLoadSuccessOptions = {
@@ -174,6 +182,7 @@ export function useActionViewLoadSuccessRuntime() {
     }
 
     const resultData = pagingState.resultData;
+    const groupWindowDisplayLimit = resolveGroupWindowDisplayLimit(groupPaging);
     const listTotalState = options.resolveLoadListTotalApplyState({ resultData, readTotalFromListResultFn: options.readTotalFromListResult });
     options.listTotalCountRef.value = listTotalState.listTotalCount;
     if (options.listAggregatesRef) {
@@ -205,7 +214,7 @@ export function useActionViewLoadSuccessRuntime() {
     const groupSummaryState = options.resolveLoadGroupSummaryApplyState({
       resultData,
       emptyLabel: options.pageText('group_label_unset', '未设置'),
-      maxItems: 12,
+      maxItems: groupWindowDisplayLimit,
       buildGroupKey: options.buildGroupKey,
       resolveLoadSuccessGroupSummaryStateFn: options.resolveLoadSuccessGroupSummaryState,
     });
@@ -230,7 +239,7 @@ export function useActionViewLoadSuccessRuntime() {
       groupSampleLimit: options.groupSampleLimit,
       groupPageOffsets: options.groupPageOffsetsRef.value,
       emptyLabel: options.pageText('group_label_unset', '未设置'),
-      maxItems: 12,
+      maxItems: groupWindowDisplayLimit,
       buildGroupKey: options.buildGroupKey,
       normalizeGroupPageOffset: options.normalizeGroupPageOffset,
       resolveLoadSuccessGroupedRowsStateFn: options.resolveLoadSuccessGroupedRowsState,
