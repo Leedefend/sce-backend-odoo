@@ -143,6 +143,7 @@
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="view_sc_legacy_income_invoice_fact_search"/>
         <field name="context">{'search_default_active_only': 1, 'search_default_group_fact_type': 1}</field>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
     </record>
 
     <menuitem id="menu_sc_legacy_income_invoice_fact"
@@ -150,5 +151,8 @@
               parent="smart_construction_core.menu_sc_invoice_management_group"
               action="smart_construction_core.action_sc_legacy_income_invoice_fact"
               sequence="48"
-              groups="smart_construction_core.group_sc_internal_user"/>
+              groups="smart_construction_core.group_sc_cap_config_admin"/>
+    <record id="menu_sc_legacy_income_invoice_fact" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    </record>
 </odoo>
