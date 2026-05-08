@@ -132,8 +132,8 @@ LANES = [
     {
         "lane": "legacy_payment_residual",
         "path": "fresh_db_legacy_payment_residual_replay_adapter_result_v1.json",
-        "row_keys": ["total_rows", "outflow_request_rows", "actual_outflow_rows"],
-        "amount_keys": [],
+        "row_keys": ["total_rows", "active_rows", "outflow_request_rows", "actual_outflow_rows"],
+        "amount_keys": ["planned_amount_sum", "paid_amount_sum"],
         "decision_keys": ["decision"],
     },
     {

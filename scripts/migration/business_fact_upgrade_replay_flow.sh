@@ -117,6 +117,7 @@ run_adapters() {
   python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_financing_loan_replay_adapter.py"
   python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_account_master_replay_adapter.py"
   python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_account_transaction_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_payment_residual_replay_adapter.py"
   python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_construction_diary_line_replay_adapter.py"
   python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_salary_line_replay_adapter.py"
   python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_attendance_checkin_replay_adapter.py"
