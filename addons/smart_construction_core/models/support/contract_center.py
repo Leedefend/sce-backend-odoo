@@ -579,13 +579,17 @@ class ConstructionContract(models.Model):
         return _("OCA审批驳回（未填写原因）")
 
     def action_on_tier_approved(self):
+        contracts_to_confirm = self.browse()
         for contract in self:
             if contract.state != "draft":
                 continue
             if contract.validation_status != "validated":
-                raise UserError(_("项目合同尚未完成统一审批流程。"))
+                continue
             contract.with_context(skip_validation_check=True).write({"reject_reason": False})
-        return self.action_confirm()
+            contracts_to_confirm |= contract
+        if contracts_to_confirm:
+            return contracts_to_confirm.with_context(skip_validation_check=True).action_confirm()
+        return True
 
     def action_on_tier_rejected(self, reason=None):
         for contract in self:
