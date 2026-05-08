@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="view_sc_legacy_business_fact_residual_search" model="ir.ui.view">
+    <field name="name">sc.legacy.business.fact.residual.search</field>
+    <field name="model">sc.legacy.business.fact.residual</field>
+    <field name="arch" type="xml">
+      <search string="历史业务事实原貌承接">
+        <field name="source_database"/>
+        <field name="source_table"/>
+        <field name="family"/>
+        <field name="document_no"/>
+        <field name="project_name"/>
+        <field name="partner_name"/>
+        <filter name="active_only" string="有效" domain="[('active', '=', True)]"/>
+        <group expand="0" string="分组">
+          <filter name="group_source_database" string="来源库" context="{'group_by': 'source_database'}"/>
+          <filter name="group_family" string="业务族群" context="{'group_by': 'family'}"/>
+          <filter name="group_source_table" string="来源表" context="{'group_by': 'source_table'}"/>
+          <filter name="group_classification" string="扫描分类" context="{'group_by': 'classification'}"/>
+        </group>
+      </search>
+    </field>
+  </record>
+
+  <record id="view_sc_legacy_business_fact_residual_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.business.fact.residual.tree</field>
+    <field name="model">sc.legacy.business.fact.residual</field>
+    <field name="arch" type="xml">
+      <tree string="历史业务事实原貌承接" create="false" edit="false" delete="false" default_order="source_label, family, source_table, legacy_record_id">
+        <field name="source_database"/>
+        <field name="family"/>
+        <field name="source_table"/>
+        <field name="legacy_record_id"/>
+        <field name="source_dataset"/>
+        <field name="document_no"/>
+        <field name="document_date"/>
+        <field name="project_name"/>
+        <field name="partner_name"/>
+        <field name="amount_total" sum="金额"/>
+        <field name="classification"/>
+        <field name="business_signal_score"/>
+        <field name="active"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_sc_legacy_business_fact_residual_form" model="ir.ui.view">
+    <field name="name">sc.legacy.business.fact.residual.form</field>
+    <field name="model">sc.legacy.business.fact.residual</field>
+    <field name="arch" type="xml">
+      <form string="历史业务事实原貌承接" create="false" edit="false" delete="false">
+        <sheet>
+          <group>
+            <group>
+              <field name="source_label"/>
+              <field name="source_database"/>
+              <field name="source_table"/>
+              <field name="source_dataset"/>
+              <field name="family"/>
+              <field name="classification"/>
+            </group>
+            <group>
+              <field name="legacy_record_id"/>
+              <field name="legacy_parent_id"/>
+              <field name="legacy_pid"/>
+              <field name="business_signal_score"/>
+              <field name="active"/>
+            </group>
+          </group>
+          <group>
+            <group>
+              <field name="document_no"/>
+              <field name="document_date"/>
+              <field name="amount_total"/>
+            </group>
+            <group>
+              <field name="project_legacy_id"/>
+              <field name="project_name"/>
+              <field name="partner_legacy_id"/>
+              <field name="partner_name"/>
+            </group>
+          </group>
+          <group string="原始字段">
+            <field name="raw_payload" nolabel="1"/>
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <record id="action_sc_legacy_business_fact_residual" model="ir.actions.act_window">
+    <field name="name">历史业务事实原貌承接</field>
+    <field name="res_model">sc.legacy.business.fact.residual</field>
+    <field name="view_mode">tree,form</field>
+    <field name="search_view_id" ref="view_sc_legacy_business_fact_residual_search"/>
+    <field name="context">{'search_default_active_only': 1, 'search_default_group_source_database': 1, 'search_default_group_family': 1}</field>
+    <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+  </record>
+
+  <menuitem id="menu_sc_legacy_business_fact_residual"
+            name="历史业务事实原貌承接"
+            parent="smart_construction_core.menu_sc_data_center"
+            action="action_sc_legacy_business_fact_residual"
+            sequence="85"
+            groups="smart_construction_core.group_sc_cap_config_admin"/>
+  <record id="menu_sc_legacy_business_fact_residual" model="ir.ui.menu">
+    <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+  </record>
+</odoo>

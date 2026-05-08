@@ -49,6 +49,7 @@ from . import legacy_self_funding_fact
 from . import legacy_project_fund_balance_fact
 from . import legacy_supplier_contract_pricing_fact
 from . import legacy_workflow_audit
+from . import legacy_workflow_detail_fact
 from . import history_todo
 from . import legacy_receipt_income_fact
 from . import legacy_financing_loan_fact
@@ -56,6 +57,9 @@ from . import legacy_fund_daily_snapshot_fact
 from . import legacy_fund_daily_line
 from . import legacy_account_master
 from . import legacy_account_transaction_line
+from . import legacy_finance_auxiliary_fact
+from . import legacy_business_fact_residual
+from . import legacy_user_priority_menu_plan
 from . import legacy_user_context
 from . import legacy_material_catalog
 from . import legacy_file_index
@@ -73,5 +77,10 @@ from . import legacy_attendance_checkin
 from . import legacy_personnel_movement
 from . import legacy_salary_line
 from . import legacy_purchase_contract_fact
+from . import legacy_tender_registration_fact
+from . import legacy_labor_subcontract_fact
+from . import legacy_material_stock_fact
+from . import legacy_equipment_lease_fact
+from . import legacy_income_invoice_fact
 from . import legacy_report_inventory
 from . import runtime_user_management

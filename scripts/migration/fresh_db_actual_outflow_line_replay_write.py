@@ -7,6 +7,7 @@ import csv
 import json
 import os
 import re
+from decimal import Decimal
 from pathlib import Path
 
 
@@ -36,6 +37,15 @@ def read_csv(path: Path) -> list[dict[str, str]]:
 def write_json(path: Path, payload: dict[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def positive_or_fallback(primary: str, fallback: str) -> str:
+    try:
+        if Decimal(primary or "0") > 0:
+            return primary
+    except Exception:
+        pass
+    return fallback or primary or "0.0"
 
 
 LEGACY_ACTUAL_OUTFLOW_ID_RE = re.compile(r"legacy_actual_outflow_id=([0-9a-fA-F]+)")
@@ -108,7 +118,7 @@ for index, row in enumerate(rows, start=1):
         "amount": row["amount"] or 0.0,
         "paid_before_amount": row["paid_before_amount"] or 0.0,
         "remaining_amount": row["remaining_amount"] or 0.0,
-        "current_pay_amount": row["actual_pay_amount"] or row["current_pay_amount"] or 0.0,
+        "current_pay_amount": positive_or_fallback(row["actual_pay_amount"], row["current_pay_amount"]),
         "note": row["note"] or False,
         "import_batch": "history_continuity_actual_outflow_line_v1",
     }

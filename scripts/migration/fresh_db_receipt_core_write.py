@@ -214,10 +214,15 @@ def resolve_partner_id(row: dict[str, str], partner_model) -> int | None:
     partner_ref = clean(row.get("partner_ref"))
     if partner_ref.startswith("legacy_receipt_counterparty_sc_"):
         token = partner_ref.removeprefix("legacy_receipt_counterparty_sc_")
+        token_hyphen = token.replace("_", "-")
         matches = partner_model.search(
             [
                 ("legacy_partner_source", "=", "receipt_counterparty"),
-                ("legacy_partner_id", "in", [token, f"receipt_counterparty:{token}"]),
+                (
+                    "legacy_partner_id",
+                    "in",
+                    [token, token_hyphen, f"receipt_counterparty:{token}", f"receipt_counterparty:{token_hyphen}"],
+                ),
             ],
             limit=2,
         )

@@ -14,7 +14,7 @@ connect to Odoo, execute replay writes, or mutate migration assets.
 - referenced files: `93`
 - unreferenced files: `2`
 - total asset size MB: `347.26`
-- replay steps: `166`
+- replay steps: `168`
 - required replay artifacts: `96`
 - missing required replay artifacts: `0`
 - duplicate materialized parts: `0`

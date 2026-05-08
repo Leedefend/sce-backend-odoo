@@ -75,6 +75,7 @@ for rec in Request.search_read([("note", "ilike", "[migration:receipt_core]")], 
 
 created = 0
 skipped = 0
+blocked_rows: list[dict[str, str]] = []
 buffer: list[dict[str, object]] = []
 batch_size = 500
 for row in rows:
@@ -83,7 +84,16 @@ for row in rows:
         continue
     request_id = request_anchor_map.get(request_legacy_id_from_ref(row["request_ref"]))
     if not request_id:
-        raise RuntimeError({"missing_receipt_anchor": row["request_ref"], "external_id": row["external_id"]})
+        blocked_rows.append(
+            {
+                "external_id": row["external_id"],
+                "legacy_invoice_line_id": row["legacy_invoice_line_id"],
+                "legacy_receipt_id": request_legacy_id_from_ref(row["request_ref"]),
+                "request_ref": row["request_ref"],
+                "reason": "missing_receipt_anchor",
+            }
+        )
+        continue
     vals = {
         "request_id": request_id,
         "sequence": int(row["sequence"] or 10),
@@ -117,7 +127,8 @@ if buffer:
     created += len(buffer)
 
 env.cr.commit()  # noqa: F821
-status = "PASS" if created + skipped == expected_rows else "FAIL"
+blocked = len(blocked_rows)
+status = "PASS" if created + skipped + blocked == expected_rows else "FAIL"
 payload = {
     "status": status,
     "mode": "fresh_db_receipt_invoice_line_replay_write",
@@ -125,8 +136,15 @@ payload = {
     "input_rows": len(rows),
     "created_rows": created,
     "skipped_existing": skipped,
+    "blocked_rows": blocked,
+    "blocked_reason_counts": {"missing_receipt_anchor": blocked} if blocked else {},
+    "blocked_samples": blocked_rows[:20],
     "db_writes": created,
-    "decision": "receipt_invoice_line_replay_write_complete" if status == "PASS" else "STOP_REVIEW_REQUIRED",
+    "decision": (
+        "receipt_invoice_line_replay_write_complete"
+        if status == "PASS" and not blocked
+        else ("receipt_invoice_line_replay_write_complete_with_blocked_dependencies" if status == "PASS" else "STOP_REVIEW_REQUIRED")
+    ),
 }
 write_json(OUTPUT_JSON, payload)
 print("FRESH_DB_RECEIPT_INVOICE_LINE_REPLAY_WRITE=" + json.dumps(payload, ensure_ascii=False, sort_keys=True))

@@ -169,6 +169,11 @@ FIXTURE_SPECS = {
             "smart_construction_custom.group_sc_role_settlement_manager",
             "smart_construction_custom.group_sc_role_payment_manager",
             "smart_construction_core.group_sc_cap_purchase_manager",
+            "smart_construction_core.group_sc_cap_cost_manager",
+            "smart_construction_core.group_sc_role_contract_admin",
+            "smart_construction_core.group_sc_role_operation_user",
+            "smart_construction_core.group_sc_role_project_user",
+            "smart_construction_core.group_sc_role_executive",
         ],
     },
     "demo_role_owner": {
@@ -221,7 +226,25 @@ def exec_kw(uid, pwd, model, method, args, kwargs=None):
     return jsonrpc("object", "execute_kw", [DB, uid, pwd, model, method, args, kwargs or {}])
 
 def confirm_with_tier_approval(uid, pwd, model, record_id, expected_state="confirmed"):
-    exec_kw(uid, pwd, model, "action_confirm", [[record_id]])
+    try:
+        exec_kw(uid, pwd, model, "action_confirm", [[record_id]])
+    except RuntimeError as exc:
+        if "已经在统一审批流程中" not in str(exc):
+            raise
+    for _ in range(12):
+        row = exec_kw(
+            uid,
+            pwd,
+            model,
+            "read",
+            [[record_id]],
+            {"fields": ["state", "validation_status"]},
+        )[0]
+        if row.get("state") == expected_state:
+            return row
+        if row.get("validation_status") not in ("waiting", "pending"):
+            break
+        exec_kw(uid, pwd, model, "validate_tier", [[record_id]])
     row = exec_kw(
         uid,
         pwd,
@@ -230,11 +253,12 @@ def confirm_with_tier_approval(uid, pwd, model, record_id, expected_state="confi
         [[record_id]],
         {"fields": ["state", "validation_status"]},
     )[0]
-    if row.get("state") == expected_state:
-        return row
-    if row.get("validation_status") in ("waiting", "pending"):
-        exec_kw(uid, pwd, model, "validate_tier", [[record_id]])
-        exec_kw(uid, pwd, model, "action_confirm", [[record_id]])
+    if row.get("validation_status") == "validated" and row.get("state") != expected_state:
+        try:
+            exec_kw(uid, pwd, model, "action_on_tier_approved", [[record_id]])
+        except RuntimeError as exc:
+            if "has no attribute 'action_on_tier_approved'" not in str(exc):
+                raise
         row = exec_kw(
             uid,
             pwd,
@@ -251,6 +275,20 @@ def call_with_tier_approval(uid, pwd, model, method, record_id, expected_states)
     except RuntimeError as exc:
         if "已经在统一审批流程中" not in str(exc):
             raise
+    for _ in range(12):
+        row = exec_kw(
+            uid,
+            pwd,
+            model,
+            "read",
+            [[record_id]],
+            {"fields": ["state", "validation_status"]},
+        )[0]
+        if row.get("state") in expected_states:
+            return row
+        if row.get("validation_status") not in ("waiting", "pending"):
+            break
+        exec_kw(uid, pwd, model, "validate_tier", [[record_id]])
     row = exec_kw(
         uid,
         pwd,
@@ -259,10 +297,7 @@ def call_with_tier_approval(uid, pwd, model, method, record_id, expected_states)
         [[record_id]],
         {"fields": ["state", "validation_status"]},
     )[0]
-    if row.get("state") in expected_states:
-        return row
-    if row.get("validation_status") in ("waiting", "pending"):
-        exec_kw(uid, pwd, model, "validate_tier", [[record_id]])
+    if row.get("validation_status") == "validated" and row.get("state") not in expected_states:
         try:
             exec_kw(uid, pwd, model, "action_on_tier_approved", [[record_id]])
         except RuntimeError as exc:

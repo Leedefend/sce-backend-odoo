@@ -93,13 +93,17 @@ class PurchaseOrder(models.Model):
         return _("OCA审批驳回（未填写原因）")
 
     def action_on_tier_approved(self):
+        orders_to_confirm = self.browse()
         for order in self:
             if order.state not in ("draft", "sent"):
                 continue
             if order.validation_status != "validated":
-                raise UserError(_("采购订单尚未完成统一审批流程。"))
+                continue
             order.with_context(skip_validation_check=True).write({"reject_reason": False})
-        return self.button_confirm()
+            orders_to_confirm |= order
+        if orders_to_confirm:
+            return orders_to_confirm.with_context(skip_validation_check=True).button_confirm()
+        return True
 
     def action_on_tier_rejected(self, reason=None):
         for order in self:

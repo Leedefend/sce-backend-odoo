@@ -123,8 +123,29 @@
       <section class="table">
 	        <section v-if="showGroupedRows" class="grouped-table">
         <header class="grouped-toolbar">
-          <span>{{ uiLabel('grouped_result', '分组结果') }}</span>
+          <div class="grouped-toolbar-title">
+            <span>{{ uiLabel('grouped_result', '分组结果') }}</span>
+            <span v-if="groupWindowInfoText" class="group-window-info">{{ groupWindowInfoText }}</span>
+          </div>
           <div class="grouped-toolbar-actions">
+            <button
+              v-if="onGroupWindowPrev"
+              type="button"
+              class="grouped-sort-btn"
+              :disabled="loading || !canGroupWindowPrev"
+              @click="onGroupWindowPrev"
+            >
+              {{ uiLabel('group_window_prev', '上一组') }}
+            </button>
+            <button
+              v-if="onGroupWindowNext"
+              type="button"
+              class="grouped-sort-btn"
+              :disabled="loading || !canGroupWindowNext"
+              @click="onGroupWindowNext"
+            >
+              {{ uiLabel('group_window_next', '下一组') }}
+            </button>
             <button
               type="button"
               class="grouped-sort-btn"
@@ -152,7 +173,7 @@
               {{ isGroupCollapsed(group.key) ? uiLabel('group_toggle_expand', '展开') : uiLabel('group_toggle_collapse', '收起') }}
             </button>
             <p>{{ group.label }}</p>
-            <span>{{ uiLabel('group_count', '{count} 条', { count: group.count }) }}</span>
+            <span>{{ groupCountText(group) }}</span>
             <div v-if="onGroupPageChange && groupTotalPages(group) > 1" class="group-page">
               <button
                 type="button"
@@ -458,7 +479,28 @@
       </table>
     </section>
 
-      <section v-if="showPagination" class="pagination-footer">
+      <section v-if="showGroupedWindowPagination" class="pagination-footer">
+        <div class="pagination-actions pagination-actions--bottom">
+          <button
+            type="button"
+            class="pagination-btn"
+            :disabled="loading || !canGroupWindowPrev"
+            @click="onGroupWindowPrev?.()"
+          >
+            {{ uiLabel('group_window_prev', '上一组') }}
+          </button>
+          <span>{{ groupWindowPageText }}</span>
+          <button
+            type="button"
+            class="pagination-btn"
+            :disabled="loading || !canGroupWindowNext"
+            @click="onGroupWindowNext?.()"
+          >
+            {{ uiLabel('group_window_next', '下一组') }}
+          </button>
+        </div>
+      </section>
+      <section v-else-if="showPagination" class="pagination-footer">
         <div class="pagination-actions pagination-actions--bottom">
           <button
             type="button"
@@ -611,6 +653,8 @@ const props = defineProps<{
     label: string;
     count: number;
     sampleRows: Array<Record<string, unknown>>;
+    sampleCount?: number;
+    isSampled?: boolean;
     domain?: unknown[];
     pageOffset?: number;
     pageLimit?: number;
@@ -638,6 +682,15 @@ const props = defineProps<{
     offset: number;
     limit: number;
   }) => void;
+  groupWindowOffset?: number;
+  groupWindowCount?: number;
+  groupWindowTotal?: number;
+  groupWindowStart?: number;
+  groupWindowEnd?: number;
+  canGroupWindowPrev?: boolean;
+  canGroupWindowNext?: boolean;
+  onGroupWindowPrev?: () => void;
+  onGroupWindowNext?: () => void;
   groupSampleLimit?: number;
   onGroupSampleLimitChange?: (limit: number) => void;
   groupSort?: 'asc' | 'desc';
@@ -743,6 +796,43 @@ const groupSortLabel = computed(() =>
     ? uiLabel('group_sort_desc', '按数量降序')
     : uiLabel('group_sort_asc', '按数量升序'),
 );
+const showGroupedWindowPagination = computed(() =>
+  showGroupedRows.value
+  && Boolean(props.onGroupWindowPrev || props.onGroupWindowNext)
+  && (
+    Math.max(0, Math.trunc(Number(props.groupWindowCount || 0))) > 0
+    || Boolean(props.canGroupWindowPrev)
+    || Boolean(props.canGroupWindowNext)
+  ),
+);
+const groupWindowRange = computed(() => {
+  if (!showGroupedRows.value) return '';
+  const count = Math.max(0, Math.trunc(Number(props.groupWindowCount || 0)));
+  if (count <= 0) return '';
+  const offset = Math.max(0, Math.trunc(Number(props.groupWindowOffset || 0)));
+  const startRaw = Number(props.groupWindowStart);
+  const endRaw = Number(props.groupWindowEnd);
+  const totalRaw = Number(props.groupWindowTotal);
+  const start = Number.isFinite(startRaw) && startRaw > 0 ? Math.trunc(startRaw) : offset + 1;
+  const end = Number.isFinite(endRaw) && endRaw >= start ? Math.trunc(endRaw) : offset + count;
+  return { start, end, total: Number.isFinite(totalRaw) && totalRaw >= 0 ? Math.trunc(totalRaw) : null };
+});
+const groupWindowInfoText = computed(() => {
+  if (!groupWindowRange.value) return '';
+  const range = groupWindowRange.value;
+  if (range.total !== null) {
+    return uiLabel('group_window_range_total', '当前显示第 {start}-{end} 组 / 共 {total} 组', range);
+  }
+  return uiLabel('group_window_range', '当前显示第 {start}-{end} 组', range);
+});
+const groupWindowPageText = computed(() => {
+  if (!groupWindowRange.value) return uiLabel('group_window_page_empty', '分组 0 组');
+  const range = groupWindowRange.value;
+  if (range.total !== null) {
+    return uiLabel('group_window_page_total', '第 {start}-{end} 组 / 共 {total} 组', range);
+  }
+  return uiLabel('group_window_page', '第 {start}-{end} 组', range);
+});
 const summaryItems = computed(() => Array.isArray(props.summaryItems) ? props.summaryItems : []);
 const collapsedSet = computed(() => new Set(Array.isArray(props.collapsedGroupKeys) ? props.collapsedGroupKeys : []));
 const allGroupsCollapsed = computed(() => {
@@ -847,6 +937,22 @@ function groupedRowNumber(groupKey: string, rowIndex: number) {
   return priorVisibleCount + Math.trunc(Number(rowIndex || 0)) + 1;
 }
 
+function groupVisibleCount(group: { sampleRows?: Array<Record<string, unknown>>; sampleCount?: number }) {
+  const explicit = Number(group.sampleCount);
+  if (Number.isFinite(explicit) && explicit >= 0) return Math.trunc(explicit);
+  return Array.isArray(group.sampleRows) ? group.sampleRows.length : 0;
+}
+
+function groupCountText(group: { count: number; sampleRows?: Array<Record<string, unknown>>; sampleCount?: number; isSampled?: boolean }) {
+  const total = Math.max(0, Math.trunc(Number(group.count || 0)));
+  const visible = groupVisibleCount(group);
+  const sampled = typeof group.isSampled === 'boolean' ? group.isSampled : visible < total;
+  if (sampled) {
+    return uiLabel('group_count_sampled', '共 {total} 条 · 当前显示 {visible} 条', { total, visible });
+  }
+  return uiLabel('group_count', '共 {count} 条', { count: total });
+}
+
 function resolveGroupPageLimit(group: { pageLimit?: number }) {
   const limitRaw = Number(group.pageLimit || effectiveGroupSampleLimit.value);
   return Number.isFinite(limitRaw) && limitRaw > 0 ? Math.trunc(limitRaw) : 3;
@@ -887,8 +993,8 @@ function resolveGroupPageMeta(group: {
   return {
     totalPages: backendTotal > 0 ? backendTotal : fallbackTotal,
     currentPage: backendCurrent > 0 ? backendCurrent : fallbackCurrent,
-    rangeStart: backendWindowStart >= 0 ? backendWindowStart : (backendStart >= 0 ? backendStart : fallbackStart),
-    rangeEnd: backendWindowEnd >= 0 ? backendWindowEnd : (backendEnd >= 0 ? backendEnd : fallbackEnd),
+    rangeStart: backendWindowStart > 0 ? backendWindowStart : (backendStart > 0 ? backendStart : fallbackStart),
+    rangeEnd: backendWindowEnd > 0 ? backendWindowEnd : (backendEnd > 0 ? backendEnd : fallbackEnd),
   };
 }
 
@@ -1896,6 +2002,20 @@ onBeforeUnmount(() => {
   font-weight: 700;
 }
 
+.grouped-toolbar-title {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.grouped-toolbar-title .group-window-info {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .grouped-toolbar-actions {
   display: inline-flex;
   align-items: center;
@@ -2325,7 +2445,7 @@ table {
 }
 
 .col-row-number {
-  width: 64px;
+  width: 52px;
 }
 
 .col-select {
@@ -2359,8 +2479,11 @@ tbody td {
 }
 
 .cell-row-number {
-  width: 64px;
-  min-width: 64px;
+  box-sizing: border-box;
+  width: 52px;
+  min-width: 52px;
+  padding-right: 4px;
+  padding-left: 4px;
   color: #64748b;
   font-variant-numeric: tabular-nums;
   text-align: center;
@@ -2426,12 +2549,13 @@ tfoot tr:nth-child(2) td {
 
 .footer-row-label {
   color: #0f172a;
-  font-size: 12px;
-  line-height: 1.2;
-  min-width: 88px;
-  width: 88px;
-  white-space: nowrap;
-  overflow-wrap: normal;
+  font-size: 11px;
+  line-height: 1.15;
+  min-width: 52px;
+  width: 52px;
+  max-width: 52px;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .footer-number {

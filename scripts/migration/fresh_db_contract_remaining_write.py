@@ -49,6 +49,7 @@ SAFE_FIELDS = {
     "legacy_status",
     "legacy_deleted_flag",
     "legacy_counterparty_text",
+    "tax_id",
 }
 SNAPSHOT_FIELDS = [
     "contract_id",
@@ -297,6 +298,11 @@ for index, row in enumerate(rows, start=2):
         vals["project_id"] = resolved_project_id
     if resolved_partner_id:
         vals["partner_id"] = resolved_partner_id
+    if vals.get("type"):
+        existing = existing_by_legacy.get(vals.get("legacy_contract_id"))
+        existing_tax = existing.tax_id if existing else False
+        if not Contract._is_contract_tax_compatible(existing_tax, vals["type"]):
+            vals["tax_id"] = Contract._get_default_tax(vals["type"]).id
     unsafe_fields = sorted(set(vals) - SAFE_FIELDS)
     if unsafe_fields:
         errors.append({"line": index, "legacy_contract_id": vals.get("legacy_contract_id"), "error": "unsafe_fields", "fields": unsafe_fields})

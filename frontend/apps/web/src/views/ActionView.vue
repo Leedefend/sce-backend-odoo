@@ -380,6 +380,15 @@
       :ui-labels="toolbarUiLabels"
       :show-plain-search="!showTopActionToolbar"
       :grouped-rows="currentPageGroupedRows"
+      :group-window-offset="groupWindowOffset"
+      :group-window-count="groupWindowCount"
+      :group-window-total="groupWindowTotal ?? undefined"
+      :group-window-start="groupWindowStart ?? undefined"
+      :group-window-end="groupWindowEnd ?? undefined"
+      :can-group-window-prev="groupWindowPrevOffset !== null"
+      :can-group-window-next="groupWindowNextOffset !== null"
+      :on-group-window-prev="handleGroupWindowPrev"
+      :on-group-window-next="handleGroupWindowNext"
       :can-create-record="canCreateRecord"
       :create-label="toolbarUiLabel('create', '新建')"
       :on-open-group="handleOpenGroupedRows"
@@ -1221,7 +1230,7 @@ const showToolbarFilter = computed(() => canRenderActionSurfaceToolbar.value && 
 const showToolbarSavedFilter = computed(() => canRenderActionSurfaceToolbar.value && savedFiltersVisible.value);
 const showToolbarGroup = computed(() => canRenderActionSurfaceToolbar.value && groupViewVisible.value);
 const listGroupedRowsEnabled = computed(() =>
-  pageSectionEnabled('grouped_table', Boolean(activeGroupByField.value && groupViewVisible.value)),
+  Boolean(activeGroupByField.value && groupViewVisible.value),
 );
 function normalizeGroupCell(field: string, value: unknown) {
   const option = listColumnOptions.value.find((column) => column.name === field);
@@ -1247,6 +1256,7 @@ function normalizeGroupCell(field: string, value: unknown) {
 const currentPageGroupedRows = computed(() => {
   const field = String(activeGroupByField.value || '').trim();
   if (!field || !groupViewVisible.value) return [];
+  if (groupedRows.value.length) return groupedRows.value;
   const groups = new Map<string, {
     key: string;
     label: string;
@@ -1759,14 +1769,8 @@ const {
   routerPush: (target) => router.push(target as never),
 });
 
-const {
-  applyRoutePreset,
-  clearRoutePreset,
-  applyRoutePatchAndReload,
-  syncRouteListState,
-  syncRouteStateAndReload,
-  restartLoadWithRouteSync,
-} = useActionViewRoutePresetRuntime({
+const suppressNextRouteReload = ref(false);
+const routePresetRuntime = useActionViewRoutePresetRuntime({
   routeQueryMap,
   pageText,
   showHud,
@@ -1820,6 +1824,27 @@ const {
 });
 
 const {
+  applyRoutePreset,
+  clearRoutePreset,
+  applyRoutePatchAndReload,
+} = routePresetRuntime;
+
+function syncRouteListState(extra?: Record<string, unknown>): void {
+  suppressNextRouteReload.value = true;
+  routePresetRuntime.syncRouteListState(extra);
+}
+
+function syncRouteStateAndReload(extra?: Record<string, unknown>): void {
+  suppressNextRouteReload.value = true;
+  routePresetRuntime.syncRouteStateAndReload(extra);
+}
+
+function restartLoadWithRouteSync(extra?: Record<string, unknown>): Promise<void> | void {
+  suppressNextRouteReload.value = true;
+  return routePresetRuntime.restartLoadWithRouteSync(extra) as Promise<void> | void;
+}
+
+const {
   handleGroupSummaryPick,
   handleOpenGroupedRows,
   clearGroupSummaryDrilldown,
@@ -1831,7 +1856,11 @@ const {
 } = useActionViewGroupRuntime({
   activeGroupSummaryKey,
   activeGroupSummaryDomain,
+  activeGroupByField,
   searchTerm,
+  listOffset,
+  listLimitOverride,
+  contractLimit,
   groupWindowOffset,
   groupWindowPrevOffset,
   groupWindowNextOffset,
@@ -2269,6 +2298,7 @@ const {
     routeFilterRaw: route.query.preset_filter,
     routeSavedFilterRaw: route.query.saved_filter,
     routeGroupByRaw: route.query.group_by,
+    routeGroupValueRaw: route.query.group_value,
     sceneReadyDefaultSortRaw: '',
     sceneDefaultSortRaw: '',
     sessionCapabilities: session.capabilities,
@@ -2808,6 +2838,11 @@ onErrorCaptured((err) => {
 watch(
   () => route.fullPath,
   () => {
+    if (suppressNextRouteReload.value) {
+      suppressNextRouteReload.value = false;
+      applyRoutePreset();
+      return;
+    }
     renderErrorMessage.value = '';
     listOffset.value = 0;
     clearSelection();

@@ -21,7 +21,11 @@ type SyncRouteFn = (patch: Record<string, unknown>) => void;
 export function useActionViewGroupRuntime(options: {
   activeGroupSummaryKey: Ref<string>;
   activeGroupSummaryDomain: Ref<unknown[]>;
+  activeGroupByField: Ref<string>;
   searchTerm: Ref<string>;
+  listOffset: Ref<number>;
+  listLimitOverride: Ref<number>;
+  contractLimit: Ref<number>;
   groupWindowOffset: Ref<number>;
   groupWindowPrevOffset: Ref<number | null>;
   groupWindowNextOffset: Ref<number | null>;
@@ -58,9 +62,14 @@ export function useActionViewGroupRuntime(options: {
     const nextState = buildOpenGroupedRowsState(group);
     options.activeGroupSummaryKey.value = nextState.activeGroupSummaryKey;
     options.activeGroupSummaryDomain.value = nextState.activeGroupSummaryDomain;
+    options.activeGroupByField.value = '';
     options.searchTerm.value = nextState.searchTerm;
+    options.listOffset.value = 0;
+    const drilldownLimit = Math.min(200, Math.max(20, Math.trunc(Number(group.count || 0))));
+    options.listLimitOverride.value = drilldownLimit;
+    options.contractLimit.value = drilldownLimit;
     options.groupWindowOffset.value = nextState.groupWindowOffset;
-    options.syncRouteStateAndReload(buildOpenGroupedRowsPatch(group.label || ''));
+    options.applyRoutePatchAndReload(buildOpenGroupedRowsPatch(group.label || ''));
   };
 
   const clearGroupSummaryDrilldown = () => {

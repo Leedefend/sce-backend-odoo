@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!--
+        Early placeholders for taxonomy submenus referenced by support views.
+        The full taxonomy file loaded later may refine names, actions, sequences,
+        and group restrictions, but fresh installs need these xmlids available
+        before historical support views are parsed.
+    -->
+    <menuitem id="menu_sc_tender_management_group"
+              name="投标管理"
+              parent="smart_construction_core.menu_sc_project_center"
+              sequence="20"/>
+    <menuitem id="menu_sc_material_management_group"
+              name="物资管理"
+              parent="smart_construction_core.menu_sc_material_center"
+              sequence="10"/>
+    <menuitem id="menu_sc_labor_management_group"
+              name="劳务管理"
+              parent="smart_construction_core.menu_sc_material_center"
+              sequence="20"/>
+    <menuitem id="menu_sc_equipment_management_group"
+              name="设备管理"
+              parent="smart_construction_core.menu_sc_material_center"
+              sequence="30"/>
+    <menuitem id="menu_sc_material_rental_group"
+              name="周转材料租赁"
+              parent="smart_construction_core.menu_sc_material_center"
+              sequence="40"/>
+    <menuitem id="menu_sc_subcontract_management_group"
+              name="专业分包"
+              parent="smart_construction_core.menu_sc_material_center"
+              sequence="50"/>
+    <menuitem id="menu_sc_invoice_management_group"
+              name="发票税务"
+              parent="smart_construction_core.menu_sc_data_center"
+              sequence="40"/>
+</odoo>

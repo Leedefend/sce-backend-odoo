@@ -93,9 +93,9 @@ const windowInfo = computed(() => {
   const start = Number.isFinite(backendStart) && backendStart > 0 ? Math.trunc(backendStart) : offset + 1;
   const end = Number.isFinite(backendEnd) && backendEnd >= start ? Math.trunc(backendEnd) : (offset + count);
   if (Number.isFinite(Number(props.windowTotal)) && Number(props.windowTotal) >= 0) {
-    return `${start}-${end} / ${Math.trunc(Number(props.windowTotal))}`;
+    return `第 ${start}-${end} 组 / 共 ${Math.trunc(Number(props.windowTotal))} 组`;
   }
-  return `${start}-${end}`;
+  return `第 ${start}-${end} 组`;
 });
 </script>
 

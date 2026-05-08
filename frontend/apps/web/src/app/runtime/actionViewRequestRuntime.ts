@@ -120,7 +120,7 @@ export function resolveGroupByContext(chips: GroupByChip[], field: string): Dict
 export function resolveGroupByContextRaw(chips: GroupByChip[], field: string): string {
   if (!field) return '';
   const found = findGroupByChip(chips, field);
-  return [found?.contextRaw || '', `{'group_by': '${field}'}`].filter(Boolean).join(' && ');
+  return found?.contextRaw || '';
 }
 
 export function resolveEffectiveRequestContext(filterContext: Dict, groupContext: Dict): Dict {
@@ -128,7 +128,7 @@ export function resolveEffectiveRequestContext(filterContext: Dict, groupContext
 }
 
 export function resolveEffectiveRequestContextRaw(filterContextRaw: string, groupContextRaw: string): string {
-  return [filterContextRaw, groupContextRaw].filter(Boolean).join(' && ');
+  return filterContextRaw || groupContextRaw || '';
 }
 
 export function mergeRequestContext(options: {

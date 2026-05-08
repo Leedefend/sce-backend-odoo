@@ -32,6 +32,16 @@ EVIDENCE_FILES = [
     "migration_assets/manifest/migration_asset_coverage_snapshot_v1.json",
     "migration_assets/manifest/receipt_blocker_policy_snapshot_v1.json",
 ]
+DEPLOYMENT_FILES = [
+    "Makefile",
+    "scripts/common/env.sh",
+    "scripts/common/guard_prod.sh",
+    "scripts/ops/odoo_shell_exec.sh",
+    "scripts/migration/history_continuity_oneclick.sh",
+    "scripts/migration/migration_asset_bus.py",
+    "scripts/migration/migration_asset_catalog_verify.py",
+    "scripts/migration/migration_asset_release_package.py",
+]
 ARTIFACT_INPUT_RE = re.compile(
     r'^\s*(?P<var>[A-Z][A-Z0-9_]*)\s*=\s*REPO_ROOT\s*/\s*"(?P<path>artifacts/migration/[^"]+)"',
     re.MULTILINE,
@@ -122,6 +132,14 @@ def required_replay_artifacts() -> list[str]:
     return sorted(required)
 
 
+def deployment_script_files() -> list[str]:
+    files = set(DEPLOYMENT_FILES)
+    for pattern in ("*.py", "*.sh"):
+        for path in sorted((REPO_ROOT / "scripts/migration").glob(pattern)):
+            files.add(rel(path))
+    return sorted(files)
+
+
 def collect_files(asset_root: Path) -> tuple[list[dict[str, Any]], list[str]]:
     catalog_path = asset_root / "manifest/migration_asset_catalog_v1.json"
     catalog = load_json(catalog_path)
@@ -174,6 +192,13 @@ def collect_files(asset_root: Path) -> tuple[list[dict[str, Any]], list[str]]:
             continue
         add(path, "migration_artifact")
 
+    for path_text in deployment_script_files():
+        path = REPO_ROOT / path_text
+        if path.is_file():
+            add(path, "deployment_runtime")
+        else:
+            warnings.append(f"missing_optional_deployment_file={path_text}")
+
     return [files[key] for key in sorted(files)], warnings
 
 
@@ -218,6 +243,12 @@ def build_package(asset_root: Path, out_dir: Path, package_id: str) -> dict[str,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "catalog": rel(asset_root / "manifest/migration_asset_catalog_v1.json"),
         "payload_mode": "packaged_artifacts",
+        "deployment_entrypoint": "scripts/migration/history_continuity_oneclick.sh",
+        "deployment_verification_commands": [
+            "python3 scripts/migration/migration_asset_bus.py --asset-root migration_assets --catalog migration_assets/manifest/migration_asset_catalog_v1.json --verify-only --check",
+            "HISTORY_CONTINUITY_MODE=rehearse HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS=1 DB_NAME=<target_db> MIGRATION_REPLAY_DB_ALLOWLIST=<target_db> bash scripts/migration/history_continuity_oneclick.sh",
+            "HISTORY_CONTINUITY_MODE=replay HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS=1 DB_NAME=<target_db> MIGRATION_REPLAY_DB_ALLOWLIST=<target_db> bash scripts/migration/history_continuity_oneclick.sh",
+        ],
         "file_count": len(files),
         "excluded_paths": excluded_paths,
         "files": files,
@@ -265,6 +296,7 @@ def build_package(asset_root: Path, out_dir: Path, package_id: str) -> dict[str,
         f"- included_file_count: `{len(files)}`",
         f"- excluded_file_count: `{len(excluded_paths)}`",
         "- payload_mode: `packaged_artifacts`",
+        "- deployment_entrypoint: `scripts/migration/history_continuity_oneclick.sh`",
         "",
         "## Excluded Paths",
         "",
@@ -280,6 +312,10 @@ def build_package(asset_root: Path, out_dir: Path, package_id: str) -> dict[str,
             "",
             "- Excluded `.xml.parts` files are not packaged.",
             "- `artifacts/migration` replay payloads are packaged for old-DB-free production replay.",
+            "- Replay entrypoint, migration Python scripts, and migration shell scripts are packaged with the assets.",
+            "- Verify the package with `MIGRATION_ASSET_RELEASE_PACKAGE=<package_path> make migration.assets.release_package.verify`.",
+            "- Verify after extraction with `python3 scripts/migration/migration_asset_bus.py --asset-root migration_assets --catalog migration_assets/manifest/migration_asset_catalog_v1.json --verify-only --check`.",
+            "- Rehearse against a fresh target DB with `HISTORY_CONTINUITY_MODE=rehearse HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS=1 DB_NAME=<target_db> MIGRATION_REPLAY_DB_ALLOWLIST=<target_db> bash scripts/migration/history_continuity_oneclick.sh`.",
         ]
     )
     OUTPUT_MD.parent.mkdir(parents=True, exist_ok=True)
