@@ -707,6 +707,7 @@ prod.sim.formal.projections.refresh: guard.prod.forbid check-compose-project che
 	@echo "[formal.projections.refresh] db=$(DB_NAME)"
 	@$(MAKE) MIGRATION_ARTIFACT_ROOT="$(FORMAL_PROJECTION_ARTIFACT_ROOT)" fresh_db.fund_account.projection.write
 	@$(MAKE) MIGRATION_ARTIFACT_ROOT="$(FORMAL_PROJECTION_ARTIFACT_ROOT)" fresh_db.workbench_item.projection.write
+	@$(MAKE) MIGRATION_ARTIFACT_ROOT="$(FORMAL_PROJECTION_ARTIFACT_ROOT)" history.organization.department.materialize.write
 	@$(MAKE) MIGRATION_ARTIFACT_ROOT="$(FORMAL_PROJECTION_ARTIFACT_ROOT)" fresh_db.supplier_contract_pricing.projection.write
 	@$(MAKE) MIGRATION_ARTIFACT_ROOT="$(FORMAL_PROJECTION_ARTIFACT_ROOT)" fresh_db.dashboard_cockpit.projection.write
 	@$(MAKE) MIGRATION_ARTIFACT_ROOT="$(FORMAL_PROJECTION_ARTIFACT_ROOT)" fresh_db.treasury_ledger.projection.write
