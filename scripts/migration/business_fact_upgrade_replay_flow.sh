@@ -21,6 +21,7 @@ EXPENSE_CONTRACT_SUBTYPE_EVIDENCE_SCRIPT="$ROOT_DIR/scripts/migration/business_e
 EXPENSE_PAYMENT_FACT_ACCEPTANCE_SCRIPT="$ROOT_DIR/scripts/migration/business_expense_contract_payment_fact_acceptance.py"
 ACCEPTANCE_SUMMARY_SCRIPT="$ROOT_DIR/scripts/migration/business_fact_acceptance_bundle_summary.py"
 ATTACHMENT_CUSTODY_PROBE_SCRIPT="$ROOT_DIR/scripts/migration/history_attachment_custody_probe.py"
+FULL_LEGACY_LOSS_SCAN_SCRIPT="$ROOT_DIR/scripts/migration/legacy_db_full_business_fact_loss_scan.py"
 
 export MIGRATION_REPO_ROOT="${MIGRATION_REPO_ROOT:-$ROOT_DIR}"
 MIGRATION_REPO_ROOT_ODOO="${MIGRATION_REPO_ROOT_ODOO:-/mnt}"
@@ -67,6 +68,11 @@ run_odoo_script() {
 
 run_adapters() {
   echo "[business.fact.replay] step=adapters"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_user_context_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_user_project_scope_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_project_anchor_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_partner_l4_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_material_catalog_replay_adapter.py"
   python3 "$ROOT_DIR/scripts/migration/fresh_db_contract_counterparty_partner_replay_adapter.py"
   python3 "$ROOT_DIR/scripts/migration/fresh_db_contract_remaining_adapter.py"
   python3 "$ROOT_DIR/scripts/migration/fresh_db_contract_line_replay_adapter.py"
@@ -81,11 +87,33 @@ run_adapters() {
   python3 "$ROOT_DIR/scripts/migration/fresh_db_receipt_counterparty_partner_replay_adapter.py"
   python3 "$ROOT_DIR/scripts/migration/history_receipt_core_partner_targeted_replay_adapter.py"
   python3 "$ROOT_DIR/scripts/migration/fresh_db_receipt_core_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_receipt_income_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_receipt_residual_replay_adapter.py"
   python3 "$ROOT_DIR/scripts/migration/fresh_db_receipt_invoice_line_replay_adapter.py"
   python3 "$ROOT_DIR/scripts/migration/fresh_db_receipt_invoice_attachment_replay_adapter.py"
   python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_file_index_replay_adapter.py"
   python3 "$ROOT_DIR/scripts/migration/history_project_member_attachment_targeted_replay_adapter.py"
   python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_attachment_backfill_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_workflow_audit_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_task_evidence_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_invoice_registration_line_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_invoice_surcharge_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_invoice_tax_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_tax_deduction_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_fund_confirmation_line_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_fund_daily_snapshot_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_fund_daily_line_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_project_fund_balance_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_expense_deposit_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/history_expense_deposit_partner_targeted_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_expense_reimbursement_line_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_self_funding_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_financing_loan_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_account_master_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_account_transaction_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_construction_diary_line_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_salary_line_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_attendance_checkin_replay_adapter.py"
 }
 
 run_writes() {
@@ -94,6 +122,11 @@ run_writes() {
     exit 2
   fi
   echo "[business.fact.replay] step=writes db=$DB_NAME"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_user_context_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_user_project_scope_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_project_anchor_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_partner_l4_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_material_catalog_replay_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_contract_counterparty_partner_replay_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_contract_remaining_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_contract_line_replay_write.py"
@@ -123,11 +156,33 @@ run_writes() {
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_receipt_counterparty_partner_replay_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/history_receipt_core_partner_targeted_replay_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_receipt_core_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_receipt_income_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_receipt_residual_replay_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_receipt_invoice_line_replay_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_receipt_invoice_attachment_replay_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_file_index_replay_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/history_project_member_attachment_targeted_replay_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_attachment_backfill_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_workflow_audit_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_task_evidence_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_invoice_registration_line_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_invoice_surcharge_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_invoice_tax_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_tax_deduction_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_fund_confirmation_line_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_fund_daily_snapshot_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_fund_daily_line_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_project_fund_balance_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/history_expense_deposit_partner_targeted_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_expense_deposit_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_expense_reimbursement_line_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_self_funding_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_financing_loan_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_account_master_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_account_transaction_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_construction_diary_line_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_salary_line_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_attendance_checkin_replay_write.py"
 }
 
 run_postcheck() {
@@ -167,6 +222,11 @@ run_expense_payment_fact_acceptance() {
 run_attachment_custody_probe() {
   echo "[business.fact.replay] step=attachment-custody db=$DB_NAME"
   run_odoo_script "$ATTACHMENT_CUSTODY_PROBE_SCRIPT"
+}
+
+run_full_legacy_loss_scan() {
+  echo "[business.fact.replay] step=full-legacy-loss-scan artifact_root=$ARTIFACT_ROOT"
+  MIGRATION_ARTIFACT_ROOT="$ARTIFACT_ROOT" python3 "$FULL_LEGACY_LOSS_SCAN_SCRIPT"
 }
 
 run_expense_contract_subtype_evidence() {
@@ -217,6 +277,7 @@ case "$MODE" in
     run_expense_fact_taxonomy_acceptance
     run_expense_payment_fact_acceptance
     run_attachment_custody_probe
+    run_full_legacy_loss_scan
     run_acceptance_summary
     ;;
   write)
@@ -233,6 +294,7 @@ case "$MODE" in
     run_expense_fact_taxonomy_acceptance
     run_expense_payment_fact_acceptance
     run_attachment_custody_probe
+    run_full_legacy_loss_scan
     run_acceptance_summary
     ;;
   all)
@@ -250,6 +312,7 @@ case "$MODE" in
     run_expense_fact_taxonomy_acceptance
     run_expense_payment_fact_acceptance
     run_attachment_custody_probe
+    run_full_legacy_loss_scan
     run_acceptance_summary
     ;;
   *)

@@ -54,6 +54,10 @@ attachment_custody, attachment_custody_presence = load_json(
     "history_attachment_custody_probe_result_v1.json",
     required=False,
 )
+full_legacy_loss_scan, full_legacy_loss_scan_presence = load_json(
+    "legacy_db_full_business_fact_loss_scan_v1.json",
+    required=False,
+)
 
 post_visible = (postcheck or {}).get("visible_business_fact_reconciliation") or {}
 cleanup_summary = (cleanup or {}).get("summary") or {}
@@ -63,6 +67,7 @@ expense_taxonomy_summary = (expense_taxonomy or {}).get("summary") or {}
 expense_contract_subtypes_summary = (expense_contract_subtypes or {}).get("summary") or {}
 expense_payment_facts_summary = (expense_payment_facts or {}).get("summary") or {}
 attachment_custody_summary = (attachment_custody or {}).get("counts") or {}
+full_legacy_loss_scan_summary = (full_legacy_loss_scan or {}).get("summary") or {}
 
 summary = {
     "artifact_root": str(ARTIFACT_ROOT),
@@ -140,6 +145,14 @@ summary = {
         ),
         "gap_count": sum(1 for value in ((attachment_custody or {}).get("gaps") or {}).values() if value),
     },
+    "full_legacy_loss_scan": {
+        "presence": full_legacy_loss_scan_presence,
+        "status": status_of(full_legacy_loss_scan, full_legacy_loss_scan_presence),
+        "non_empty_tables": full_legacy_loss_scan_summary.get("non_empty_tables"),
+        "candidate_tables": full_legacy_loss_scan_summary.get("candidate_tables"),
+        "candidate_rows": full_legacy_loss_scan_summary.get("candidate_rows"),
+        "top_candidate": ((full_legacy_loss_scan_summary.get("top_candidates") or [{}])[0] or {}).get("table"),
+    },
 }
 
 errors = []
@@ -164,6 +177,8 @@ if expense_payment_facts_presence == "present" and summary["expense_payment_fact
     errors.append({"error": "expense_payment_facts_failed", "status": summary["expense_payment_facts"]["status"]})
 if attachment_custody_presence == "present" and summary["attachment_custody"]["status"] != "PASS":
     errors.append({"error": "attachment_custody_failed", "status": summary["attachment_custody"]["status"]})
+if full_legacy_loss_scan_presence == "present" and summary["full_legacy_loss_scan"]["status"] != "PASS":
+    errors.append({"error": "full_legacy_loss_scan_failed", "status": summary["full_legacy_loss_scan"]["status"]})
 
 status = "PASS" if not errors else "FAIL"
 payload = {
@@ -211,6 +226,7 @@ print(
             "expense_contract_subtypes": summary["expense_contract_subtypes"]["status"],
             "expense_payment_facts": summary["expense_payment_facts"]["status"],
             "attachment_custody": summary["attachment_custody"]["status"],
+            "full_legacy_loss_scan": summary["full_legacy_loss_scan"]["status"],
             "artifact_root": str(ARTIFACT_ROOT),
         },
         ensure_ascii=False,
