@@ -184,15 +184,14 @@ def first_payload_value(payload: dict[str, Any], candidates: tuple[str, ...]) ->
     return ""
 
 
-def active_from_payload(payload: dict[str, Any]) -> str:
-    for key in DELETE_KEYS:
-        value = first_payload_value(payload, (key,))
-        if not value:
-            continue
-        text = value.strip().lower()
-        if key.upper() == "DEL" and text in {"0", "false", "none"}:
-            continue
-        return "0"
+def active_from_payload(payload: dict[str, Any], columns: list[str]) -> str:
+    column_set = set(columns)
+    if "DEL" in column_set:
+        value = first_payload_value(payload, ("DEL",))
+        return "1" if value.strip().lower() in {"", "0", "false", "none"} else "0"
+    if "SCRQ" in column_set:
+        value = first_payload_value(payload, ("SCRQ",))
+        return "0" if value.strip() else "1"
     return "1"
 
 
@@ -257,7 +256,7 @@ def build_rows() -> tuple[list[dict[str, str]], dict[str, Any]]:
                     "partner_name": first_payload_value(payload, PARTNER_NAME_CANDIDATES),
                     "amount_total": normalize_decimal(first_payload_value(payload, AMOUNT_CANDIDATES)),
                     "raw_payload": json.dumps(payload, ensure_ascii=False, sort_keys=True),
-                    "active": active_from_payload(payload),
+                    "active": active_from_payload(payload, columns),
                 }
                 output_rows.append(row)
                 source_row_count += 1
