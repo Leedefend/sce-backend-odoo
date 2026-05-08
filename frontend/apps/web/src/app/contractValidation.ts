@@ -45,7 +45,7 @@ export function validateContractFormData(params: {
       ? rule.when_profiles.map((item) => String(item || '').trim().toLowerCase()).filter(Boolean)
       : [];
     if (whenProfiles.length && renderProfile && !whenProfiles.includes(renderProfile)) return;
-    if (renderProfile !== 'create' && !Object.prototype.hasOwnProperty.call(values, field)) return;
+    if (!Object.prototype.hasOwnProperty.call(values, field)) return;
     if (isEmpty(values[field])) {
       issues.push({
         code: 'REQUIRED',

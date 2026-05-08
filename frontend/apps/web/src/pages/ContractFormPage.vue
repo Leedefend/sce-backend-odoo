@@ -5156,7 +5156,10 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
       fieldLabels: labels,
       values: editableMap,
     });
-    const policyIssues = collectPolicyValidationErrors(contract.value, policyContext.value);
+    const policyIssues = collectPolicyValidationErrors(contract.value, {
+      ...policyContext.value,
+      submittedFields: new Set(Object.keys(editableMap)),
+    });
     if (policyIssues.length) {
       validationErrors.value = Array.from(new Set(policyIssues)).slice(0, 5);
       submissionFeedback.value = { kind: 'warn', message: '创建失败，请检查填写内容' };

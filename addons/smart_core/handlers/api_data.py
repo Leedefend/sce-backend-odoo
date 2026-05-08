@@ -47,6 +47,7 @@ class ApiDataHandler(BaseIntentHandler):
     INTENT_TYPE = "api.data"
     DESCRIPTION = "通用数据读取：list/read/count（P0 可用版）"
     VERSION = "2.1.1"
+    REQUIRED_GROUPS = ["base.group_user"]
     ETAG_ENABLED = False  # 列表不缓存，避免错判
     GROUP_WINDOW_IDENTITY_VERSION = "v1"
     GROUP_WINDOW_IDENTITY_ALGO = "sha1"
