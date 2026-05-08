@@ -819,17 +819,17 @@ const groupWindowInfoText = computed(() => {
   if (!groupWindowRange.value) return '';
   const range = groupWindowRange.value;
   if (range.total !== null) {
-    return uiLabel('group_window_range_total', '当前分组 {start}-{end} / {total}', range);
+    return uiLabel('group_window_range_total', '当前显示第 {start}-{end} 组 / 共 {total} 组', range);
   }
-  return uiLabel('group_window_range', '当前分组 {start}-{end}', range);
+  return uiLabel('group_window_range', '当前显示第 {start}-{end} 组', range);
 });
 const groupWindowPageText = computed(() => {
-  if (!groupWindowRange.value) return uiLabel('group_window_page_empty', '分组 0 / 0');
+  if (!groupWindowRange.value) return uiLabel('group_window_page_empty', '分组 0 组');
   const range = groupWindowRange.value;
   if (range.total !== null) {
-    return uiLabel('group_window_page_total', '分组 {start}-{end} / {total}', range);
+    return uiLabel('group_window_page_total', '第 {start}-{end} 组 / 共 {total} 组', range);
   }
-  return uiLabel('group_window_page', '分组 {start}-{end}', range);
+  return uiLabel('group_window_page', '第 {start}-{end} 组', range);
 });
 const summaryItems = computed(() => Array.isArray(props.summaryItems) ? props.summaryItems : []);
 const collapsedSet = computed(() => new Set(Array.isArray(props.collapsedGroupKeys) ? props.collapsedGroupKeys : []));
