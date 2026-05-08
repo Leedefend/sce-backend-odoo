@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="view_sc_legacy_user_priority_menu_plan_search" model="ir.ui.view">
+    <field name="name">sc.legacy.user.priority.menu.plan.search</field>
+    <field name="model">sc.legacy.user.priority.menu.plan</field>
+    <field name="arch" type="xml">
+      <search string="用户优先入口迭代计划">
+        <field name="legacy_menu_name"/>
+        <field name="legacy_menu_group"/>
+        <field name="business_domain"/>
+        <field name="target_iteration"/>
+        <filter name="active_only" string="有效" domain="[('active', '=', True)]"/>
+        <filter name="next_topic_required" string="下轮专题实现" domain="[('current_round_action', '=', 'next_topic_required')]"/>
+        <filter name="verified" string="已验证" domain="[('replay_status', '=', 'verified')]"/>
+        <group expand="0" string="分组">
+          <filter name="group_domain" string="业务域" context="{'group_by': 'business_domain'}"/>
+          <filter name="group_menu_group" string="老系统菜单分组" context="{'group_by': 'legacy_menu_group'}"/>
+          <filter name="group_action" string="本轮动作" context="{'group_by': 'current_round_action'}"/>
+          <filter name="group_iteration" string="目标迭代" context="{'group_by': 'target_iteration'}"/>
+        </group>
+      </search>
+    </field>
+  </record>
+
+  <record id="view_sc_legacy_user_priority_menu_plan_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.user.priority.menu.plan.tree</field>
+    <field name="model">sc.legacy.user.priority.menu.plan</field>
+    <field name="arch" type="xml">
+      <tree string="用户优先入口迭代计划" create="0" edit="0" delete="0" default_order="priority_sequence, legacy_menu_group, legacy_menu_name">
+        <field name="priority_sequence"/>
+        <field name="legacy_menu_group"/>
+        <field name="legacy_menu_name"/>
+        <field name="business_domain"/>
+        <field name="current_round_action"/>
+        <field name="target_iteration"/>
+        <field name="next_development_topic"/>
+        <field name="replay_status"/>
+        <field name="screenshot_ref"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_sc_legacy_user_priority_menu_plan_form" model="ir.ui.view">
+    <field name="name">sc.legacy.user.priority.menu.plan.form</field>
+    <field name="model">sc.legacy.user.priority.menu.plan</field>
+    <field name="arch" type="xml">
+      <form string="用户优先入口迭代计划" create="0" edit="0" delete="0">
+        <sheet>
+          <group>
+            <group>
+              <field name="priority_sequence"/>
+              <field name="source_document"/>
+              <field name="screenshot_ref"/>
+              <field name="active"/>
+            </group>
+            <group>
+              <field name="legacy_menu_group"/>
+              <field name="legacy_menu_name"/>
+              <field name="business_domain"/>
+              <field name="old_system_path"/>
+            </group>
+          </group>
+          <group string="迭代计划">
+            <group>
+              <field name="current_round_action"/>
+              <field name="target_iteration"/>
+              <field name="replay_status"/>
+            </group>
+            <group>
+              <field name="next_development_topic"/>
+            </group>
+          </group>
+          <group string="旧库与字段线索">
+            <field name="legacy_source_tables" nolabel="1"/>
+            <field name="legacy_field_list" nolabel="1"/>
+          </group>
+          <group string="提取证据">
+            <field name="extracted_evidence" nolabel="1"/>
+          </group>
+          <group string="下一轮实现范围">
+            <field name="next_scope" nolabel="1"/>
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <record id="action_sc_legacy_user_priority_menu_plan" model="ir.actions.act_window">
+    <field name="name">用户优先入口迭代计划</field>
+    <field name="res_model">sc.legacy.user.priority.menu.plan</field>
+    <field name="view_mode">tree,form</field>
+    <field name="search_view_id" ref="view_sc_legacy_user_priority_menu_plan_search"/>
+    <field name="context">{'search_default_active_only': 1, 'search_default_group_domain': 1}</field>
+  </record>
+
+  <menuitem id="menu_sc_legacy_user_priority_menu_plan"
+            name="用户优先入口迭代计划"
+            parent="smart_construction_core.menu_sc_data_center"
+            action="action_sc_legacy_user_priority_menu_plan"
+            sequence="83"
+            groups="smart_construction_core.group_sc_internal_user"/>
+</odoo>

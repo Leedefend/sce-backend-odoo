@@ -60,6 +60,7 @@
         'actions/project_list_actions.xml',
         'views/menu_root.xml',
         'views/menu_centers.xml',
+        'views/menu_business_taxonomy_groups.xml',
 
         # 视图
         'views/core/cost_domain_views.xml',
@@ -110,6 +111,7 @@
         'views/support/legacy_self_funding_views.xml',
         'views/support/legacy_project_fund_balance_views.xml',
         'views/support/legacy_supplier_contract_pricing_views.xml',
+        'views/support/legacy_finance_internal_views.xml',
         'views/support/legacy_workflow_audit_views.xml',
         'views/support/legacy_workflow_detail_views.xml',
         'views/support/legacy_financing_loan_views.xml',
@@ -118,9 +120,9 @@
         'views/support/legacy_account_transaction_line_views.xml',
         'views/support/legacy_finance_auxiliary_views.xml',
         'views/support/legacy_business_fact_residual_views.xml',
+        'views/support/legacy_user_priority_menu_plan_views.xml',
         'views/core/project_project_financial_views.xml',
         'views/core/project_budget_views.xml',
-        'views/support/legacy_finance_internal_views.xml',
         'views/support/history_todo_views.xml',
         'views/support/legacy_file_index_views.xml',
         'views/support/legacy_invoice_runtime_views.xml',

@@ -59,6 +59,7 @@ from . import legacy_account_master
 from . import legacy_account_transaction_line
 from . import legacy_finance_auxiliary_fact
 from . import legacy_business_fact_residual
+from . import legacy_user_priority_menu_plan
 from . import legacy_user_context
 from . import legacy_material_catalog
 from . import legacy_file_index
