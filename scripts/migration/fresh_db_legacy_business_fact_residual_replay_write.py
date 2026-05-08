@@ -149,6 +149,25 @@ env.cr.execute("SELECT source_database, COUNT(*) FROM sc_legacy_business_fact_re
 source_database_counts = dict(env.cr.fetchall())  # noqa: F821
 env.cr.execute("SELECT family, COUNT(*) FROM sc_legacy_business_fact_residual GROUP BY family ORDER BY COUNT(*) DESC, family")  # noqa: F821
 family_counts = dict(env.cr.fetchall())  # noqa: F821
+env.cr.execute(  # noqa: F821
+    """
+    SELECT source_database || ':' || source_table, COUNT(*)
+    FROM sc_legacy_business_fact_residual
+    GROUP BY source_database, source_table
+    ORDER BY source_database || ':' || source_table
+    """
+)
+source_table_counts = dict(env.cr.fetchall())  # noqa: F821
+
+manifest_source_table_counts = manifest.get("source_table_counts") or {}
+source_table_count_mismatches = []
+for key in sorted(set(manifest_source_table_counts) | set(source_table_counts)):
+    expected_count = int(manifest_source_table_counts.get(key) or 0)
+    actual_count = int(source_table_counts.get(key) or 0)
+    if expected_count != actual_count:
+        source_table_count_mismatches.append(
+            {"source_table": key, "expected_rows": expected_count, "actual_rows": actual_count}
+        )
 
 payload = {
     "status": "PASS",
@@ -162,6 +181,11 @@ payload = {
     "active_rows": active_rows,
     "source_database_counts": source_database_counts,
     "family_counts": family_counts,
+    "source_table_count": len(source_table_counts),
+    "source_table_counts": source_table_counts,
+    "manifest_source_table_count": len(manifest_source_table_counts),
+    "source_table_count_mismatch_count": len(source_table_count_mismatches),
+    "source_table_count_mismatches": source_table_count_mismatches[:100],
     "db_writes": after,
     "decision": "full_candidate_legacy_business_fact_residual_replay_complete",
 }

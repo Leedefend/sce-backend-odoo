@@ -224,6 +224,7 @@ ORDER BY src.__legacy_rownum;
 def build_rows() -> tuple[list[dict[str, str]], dict[str, Any]]:
     output_rows: list[dict[str, str]] = []
     source_summaries = []
+    source_table_counts: dict[str, int] = {}
     for source in parse_sources(SOURCE_SPEC):
         tables = load_candidate_tables(source["label"])
         source_row_count = 0
@@ -268,12 +269,15 @@ def build_rows() -> tuple[list[dict[str, str]], dict[str, Any]]:
                 }
                 output_rows.append(row)
                 source_row_count += 1
+                key = f"{source['database']}:{table}"
+                source_table_counts[key] = source_table_counts.get(key, 0) + 1
         source_summaries.append({"source": source, "tables": len(tables), "rows": source_row_count})
     summary = {
         "sources": source_summaries,
         "total_rows": len(output_rows),
         "active_rows": sum(1 for row in output_rows if row["active"] == "1"),
         "table_count": len({(row["source_database"], row["source_table"]) for row in output_rows}),
+        "source_table_counts": dict(sorted(source_table_counts.items())),
         "family_counts": {},
     }
     for row in output_rows:

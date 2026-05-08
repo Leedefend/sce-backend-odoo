@@ -96,6 +96,10 @@ business_fact_residual_coverage = {
     "actual_rows": (business_fact_residual or {}).get("after"),
     "expected_active_rows": None,
     "actual_active_rows": (business_fact_residual or {}).get("active_rows"),
+    "manifest_source_table_count": (business_fact_residual or {}).get("manifest_source_table_count"),
+    "actual_source_table_count": (business_fact_residual or {}).get("source_table_count"),
+    "source_table_count_mismatch_count": (business_fact_residual or {}).get("source_table_count_mismatch_count"),
+    "source_table_count_mismatches": (business_fact_residual or {}).get("source_table_count_mismatches"),
     "row_delta": (
         ((business_fact_residual or {}).get("after") or 0) - business_fact_residual_expected_rows
         if business_fact_residual_expected_rows is not None and business_fact_residual is not None
@@ -188,6 +192,9 @@ summary = {
         "active_rows": (business_fact_residual or {}).get("active_rows"),
         "source_database_counts": business_fact_residual_source_counts,
         "family_counts": business_fact_residual_family_counts,
+        "source_table_count": (business_fact_residual or {}).get("source_table_count"),
+        "manifest_source_table_count": (business_fact_residual or {}).get("manifest_source_table_count"),
+        "source_table_count_mismatch_count": (business_fact_residual or {}).get("source_table_count_mismatch_count"),
         "coverage": business_fact_residual_coverage,
     },
     "full_legacy_loss_scan": {
@@ -258,6 +265,10 @@ if business_fact_residual_presence == "present" and summary["business_fact_resid
 if business_fact_residual_presence == "present" and multi_db_fact_scan_presence == "present":
     if business_fact_residual_coverage["row_delta"] != 0:
         errors.append({"error": "business_fact_residual_row_coverage_mismatch", **business_fact_residual_coverage})
+    if business_fact_residual_coverage["source_table_count_mismatch_count"] not in (None, 0):
+        errors.append(
+            {"error": "business_fact_residual_source_table_coverage_mismatch", **business_fact_residual_coverage}
+        )
 if full_legacy_loss_scan_presence == "present" and summary["full_legacy_loss_scan"]["status"] != "PASS":
     errors.append({"error": "full_legacy_loss_scan_failed", "status": summary["full_legacy_loss_scan"]["status"]})
 if remaining_fact_family_screen_presence == "present" and summary["remaining_fact_family_screen"]["status"] != "PASS":
