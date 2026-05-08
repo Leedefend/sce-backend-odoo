@@ -79,6 +79,7 @@ run_adapters() {
   fi
   python3 "$ROOT_DIR/scripts/migration/fresh_db_project_member_neutral_replay_adapter.py"
   python3 "$ROOT_DIR/scripts/migration/fresh_db_receipt_counterparty_partner_replay_adapter.py"
+  python3 "$ROOT_DIR/scripts/migration/history_receipt_core_partner_targeted_replay_adapter.py"
   python3 "$ROOT_DIR/scripts/migration/fresh_db_receipt_core_replay_adapter.py"
   python3 "$ROOT_DIR/scripts/migration/fresh_db_receipt_invoice_line_replay_adapter.py"
   python3 "$ROOT_DIR/scripts/migration/fresh_db_receipt_invoice_attachment_replay_adapter.py"
@@ -120,6 +121,7 @@ run_writes() {
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_settlement_adjustment_projection_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_project_member_neutral_replay_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_receipt_counterparty_partner_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/history_receipt_core_partner_targeted_replay_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_receipt_core_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_receipt_invoice_line_replay_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_receipt_invoice_attachment_replay_write.py"
