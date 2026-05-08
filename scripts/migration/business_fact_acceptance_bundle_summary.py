@@ -62,6 +62,10 @@ remaining_fact_family_screen, remaining_fact_family_screen_presence = load_json(
     "legacy_db_remaining_business_fact_family_screen_v1.json",
     required=False,
 )
+multi_db_fact_scan, multi_db_fact_scan_presence = load_json(
+    "legacy_multi_db_business_fact_scan_summary_v1.json",
+    required=False,
+)
 
 post_visible = (postcheck or {}).get("visible_business_fact_reconciliation") or {}
 cleanup_summary = (cleanup or {}).get("summary") or {}
@@ -73,6 +77,7 @@ expense_payment_facts_summary = (expense_payment_facts or {}).get("summary") or 
 attachment_custody_summary = (attachment_custody or {}).get("counts") or {}
 full_legacy_loss_scan_summary = (full_legacy_loss_scan or {}).get("summary") or {}
 remaining_fact_family_screen_summary = (remaining_fact_family_screen or {}).get("summary") or {}
+multi_db_fact_scan_totals = (multi_db_fact_scan or {}).get("totals") or {}
 
 summary = {
     "artifact_root": str(ARTIFACT_ROOT),
@@ -166,6 +171,17 @@ summary = {
         "screened_active_rows": remaining_fact_family_screen_summary.get("screened_active_rows"),
         "top_family": ((remaining_fact_family_screen_summary.get("families") or [{}])[0] or {}).get("family"),
     },
+    "multi_db_fact_scan": {
+        "presence": multi_db_fact_scan_presence,
+        "status": status_of(multi_db_fact_scan, multi_db_fact_scan_presence),
+        "source_count": multi_db_fact_scan_totals.get("source_count"),
+        "candidate_tables": multi_db_fact_scan_totals.get("candidate_tables"),
+        "candidate_rows": multi_db_fact_scan_totals.get("candidate_rows"),
+        "screened_tables": multi_db_fact_scan_totals.get("screened_tables"),
+        "screened_rows": multi_db_fact_scan_totals.get("screened_rows"),
+        "screened_active_rows": multi_db_fact_scan_totals.get("screened_active_rows"),
+        "sources": (multi_db_fact_scan or {}).get("sources"),
+    },
 }
 
 errors = []
@@ -196,6 +212,8 @@ if remaining_fact_family_screen_presence == "present" and summary["remaining_fac
     errors.append(
         {"error": "remaining_fact_family_screen_failed", "status": summary["remaining_fact_family_screen"]["status"]}
     )
+if multi_db_fact_scan_presence == "present" and summary["multi_db_fact_scan"]["status"] != "PASS":
+    errors.append({"error": "multi_db_fact_scan_failed", "status": summary["multi_db_fact_scan"]["status"]})
 
 status = "PASS" if not errors else "FAIL"
 payload = {
@@ -245,6 +263,7 @@ print(
             "attachment_custody": summary["attachment_custody"]["status"],
             "full_legacy_loss_scan": summary["full_legacy_loss_scan"]["status"],
             "remaining_fact_family_screen": summary["remaining_fact_family_screen"]["status"],
+            "multi_db_fact_scan": summary["multi_db_fact_scan"]["status"],
             "artifact_root": str(ARTIFACT_ROOT),
         },
         ensure_ascii=False,

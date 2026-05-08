@@ -23,6 +23,7 @@ ACCEPTANCE_SUMMARY_SCRIPT="$ROOT_DIR/scripts/migration/business_fact_acceptance_
 ATTACHMENT_CUSTODY_PROBE_SCRIPT="$ROOT_DIR/scripts/migration/history_attachment_custody_probe.py"
 FULL_LEGACY_LOSS_SCAN_SCRIPT="$ROOT_DIR/scripts/migration/legacy_db_full_business_fact_loss_scan.py"
 REMAINING_FACT_FAMILY_SCREEN_SCRIPT="$ROOT_DIR/scripts/migration/legacy_db_remaining_business_fact_family_screen.py"
+MULTI_DB_FACT_SCAN_SUMMARY_SCRIPT="$ROOT_DIR/scripts/migration/legacy_multi_db_business_fact_scan_summary.py"
 
 export MIGRATION_REPO_ROOT="${MIGRATION_REPO_ROOT:-$ROOT_DIR}"
 MIGRATION_REPO_ROOT_ODOO="${MIGRATION_REPO_ROOT_ODOO:-/mnt}"
@@ -240,14 +241,54 @@ run_attachment_custody_probe() {
   run_odoo_script "$ATTACHMENT_CUSTODY_PROBE_SCRIPT"
 }
 
-run_full_legacy_loss_scan() {
-  echo "[business.fact.replay] step=full-legacy-loss-scan artifact_root=$ARTIFACT_ROOT"
-  MIGRATION_ARTIFACT_ROOT="$ARTIFACT_ROOT" python3 "$FULL_LEGACY_LOSS_SCAN_SCRIPT"
+legacy_source_artifact_root() {
+  local label="$1"
+  if [[ "$label" == "main" ]]; then
+    printf '%s\n' "$ARTIFACT_ROOT"
+  else
+    printf '%s/%s\n' "$ARTIFACT_ROOT" "$label"
+  fi
 }
 
-run_remaining_fact_family_screen() {
-  echo "[business.fact.replay] step=remaining-fact-family-screen artifact_root=$ARTIFACT_ROOT"
-  MIGRATION_ARTIFACT_ROOT="$ARTIFACT_ROOT" python3 "$REMAINING_FACT_FAMILY_SCREEN_SCRIPT"
+run_full_legacy_loss_scans() {
+  local sources="${LEGACY_BUSINESS_FACT_SOURCES:-main:legacy-mssql-restore:LegacyDb,scbs:legacy-mssql-scbs:LegacyScbs20260417}"
+  echo "[business.fact.replay] step=full-legacy-loss-scans artifact_root=$ARTIFACT_ROOT sources=$sources"
+  IFS=',' read -r -a source_items <<<"$sources"
+  for source_item in "${source_items[@]}"; do
+    IFS=':' read -r label container database <<<"$source_item"
+    if [[ -z "$label" || -z "$container" || -z "$database" ]]; then
+      echo "❌ invalid LEGACY_BUSINESS_FACT_SOURCES item=$source_item expected label:container:database" >&2
+      exit 2
+    fi
+    local source_artifact_root
+    source_artifact_root="$(legacy_source_artifact_root "$label")"
+    mkdir -p "$source_artifact_root"
+    echo "[business.fact.replay] step=full-legacy-loss-scan source=$label container=$container database=$database artifact_root=$source_artifact_root"
+    MIGRATION_ARTIFACT_ROOT="$source_artifact_root" LEGACY_MSSQL_CONTAINER="$container" LEGACY_MSSQL_DATABASE="$database" python3 "$FULL_LEGACY_LOSS_SCAN_SCRIPT"
+  done
+}
+
+run_remaining_fact_family_screens() {
+  local sources="${LEGACY_BUSINESS_FACT_SOURCES:-main:legacy-mssql-restore:LegacyDb,scbs:legacy-mssql-scbs:LegacyScbs20260417}"
+  echo "[business.fact.replay] step=remaining-fact-family-screens artifact_root=$ARTIFACT_ROOT sources=$sources"
+  IFS=',' read -r -a source_items <<<"$sources"
+  for source_item in "${source_items[@]}"; do
+    IFS=':' read -r label container database <<<"$source_item"
+    if [[ -z "$label" || -z "$container" || -z "$database" ]]; then
+      echo "❌ invalid LEGACY_BUSINESS_FACT_SOURCES item=$source_item expected label:container:database" >&2
+      exit 2
+    fi
+    local source_artifact_root
+    source_artifact_root="$(legacy_source_artifact_root "$label")"
+    echo "[business.fact.replay] step=remaining-fact-family-screen source=$label container=$container database=$database artifact_root=$source_artifact_root"
+    MIGRATION_ARTIFACT_ROOT="$source_artifact_root" LEGACY_MSSQL_CONTAINER="$container" LEGACY_MSSQL_DATABASE="$database" python3 "$REMAINING_FACT_FAMILY_SCREEN_SCRIPT"
+  done
+}
+
+run_multi_db_fact_scan_summary() {
+  local sources="${LEGACY_BUSINESS_FACT_SOURCES:-main:legacy-mssql-restore:LegacyDb,scbs:legacy-mssql-scbs:LegacyScbs20260417}"
+  echo "[business.fact.replay] step=multi-db-fact-scan-summary artifact_root=$ARTIFACT_ROOT sources=$sources"
+  MIGRATION_ARTIFACT_ROOT="$ARTIFACT_ROOT" LEGACY_BUSINESS_FACT_SOURCES="$sources" python3 "$MULTI_DB_FACT_SCAN_SUMMARY_SCRIPT"
 }
 
 run_expense_contract_subtype_evidence() {
@@ -298,8 +339,9 @@ case "$MODE" in
     run_expense_fact_taxonomy_acceptance
     run_expense_payment_fact_acceptance
     run_attachment_custody_probe
-    run_full_legacy_loss_scan
-    run_remaining_fact_family_screen
+    run_full_legacy_loss_scans
+    run_remaining_fact_family_screens
+    run_multi_db_fact_scan_summary
     run_acceptance_summary
     ;;
   write)
@@ -316,8 +358,9 @@ case "$MODE" in
     run_expense_fact_taxonomy_acceptance
     run_expense_payment_fact_acceptance
     run_attachment_custody_probe
-    run_full_legacy_loss_scan
-    run_remaining_fact_family_screen
+    run_full_legacy_loss_scans
+    run_remaining_fact_family_screens
+    run_multi_db_fact_scan_summary
     run_acceptance_summary
     ;;
   all)
@@ -335,8 +378,9 @@ case "$MODE" in
     run_expense_fact_taxonomy_acceptance
     run_expense_payment_fact_acceptance
     run_attachment_custody_probe
-    run_full_legacy_loss_scan
-    run_remaining_fact_family_screen
+    run_full_legacy_loss_scans
+    run_remaining_fact_family_screens
+    run_multi_db_fact_scan_summary
     run_acceptance_summary
     ;;
   *)
