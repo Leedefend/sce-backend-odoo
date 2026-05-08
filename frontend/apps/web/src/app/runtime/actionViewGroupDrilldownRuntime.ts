@@ -56,7 +56,12 @@ export function buildGroupSummaryPickPatch(search: string, label: string): Dict 
 export function buildOpenGroupedRowsPatch(label: string): Dict {
   return {
     search: undefined,
+    group_by: undefined,
     group_value: label || undefined,
+    group_sort: undefined,
+    group_collapsed: undefined,
+    group_page: undefined,
+    group_sample_limit: undefined,
     group_offset: undefined,
     group_fp: undefined,
     group_wid: undefined,

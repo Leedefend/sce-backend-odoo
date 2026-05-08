@@ -2445,7 +2445,7 @@ table {
 }
 
 .col-row-number {
-  width: 64px;
+  width: 52px;
 }
 
 .col-select {
@@ -2479,8 +2479,11 @@ tbody td {
 }
 
 .cell-row-number {
-  width: 64px;
-  min-width: 64px;
+  box-sizing: border-box;
+  width: 52px;
+  min-width: 52px;
+  padding-right: 4px;
+  padding-left: 4px;
   color: #64748b;
   font-variant-numeric: tabular-nums;
   text-align: center;
@@ -2546,12 +2549,13 @@ tfoot tr:nth-child(2) td {
 
 .footer-row-label {
   color: #0f172a;
-  font-size: 12px;
-  line-height: 1.2;
-  min-width: 88px;
-  width: 88px;
-  white-space: nowrap;
-  overflow-wrap: normal;
+  font-size: 11px;
+  line-height: 1.15;
+  min-width: 52px;
+  width: 52px;
+  max-width: 52px;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .footer-number {

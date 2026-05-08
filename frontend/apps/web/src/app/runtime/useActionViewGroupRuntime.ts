@@ -69,7 +69,7 @@ export function useActionViewGroupRuntime(options: {
     options.listLimitOverride.value = drilldownLimit;
     options.contractLimit.value = drilldownLimit;
     options.groupWindowOffset.value = nextState.groupWindowOffset;
-    options.syncRouteStateAndReload(buildOpenGroupedRowsPatch(group.label || ''));
+    options.applyRoutePatchAndReload(buildOpenGroupedRowsPatch(group.label || ''));
   };
 
   const clearGroupSummaryDrilldown = () => {
