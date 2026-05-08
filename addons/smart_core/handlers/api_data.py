@@ -599,6 +599,7 @@ class ApiDataHandler(BaseIntentHandler):
             except Exception:
                 _logger.exception("group sample query failed model=%s group=%s", env_model._name, item.get("label"))
                 sample_rows = []
+            sample_count = len(sample_rows)
             out.append(
                 {
                     "group_key": group_key,
@@ -606,8 +607,11 @@ class ApiDataHandler(BaseIntentHandler):
                     "value": item.get("value"),
                     "label": item.get("label"),
                     "count": item.get("count"),
+                    "total_count": count,
                     "domain": group_domain,
                     "sample_rows": sample_rows,
+                    "sample_count": sample_count,
+                    "is_sampled": sample_count < count,
                     "page_requested_size": requested_page_size,
                     "page_applied_size": page_limit,
                     "page_requested_offset": req_offset,

@@ -173,7 +173,7 @@
               {{ isGroupCollapsed(group.key) ? uiLabel('group_toggle_expand', '展开') : uiLabel('group_toggle_collapse', '收起') }}
             </button>
             <p>{{ group.label }}</p>
-            <span>{{ uiLabel('group_count', '{count} 条', { count: group.count }) }}</span>
+            <span>{{ groupCountText(group) }}</span>
             <div v-if="onGroupPageChange && groupTotalPages(group) > 1" class="group-page">
               <button
                 type="button"
@@ -653,6 +653,8 @@ const props = defineProps<{
     label: string;
     count: number;
     sampleRows: Array<Record<string, unknown>>;
+    sampleCount?: number;
+    isSampled?: boolean;
     domain?: unknown[];
     pageOffset?: number;
     pageLimit?: number;
@@ -935,6 +937,22 @@ function groupedRowNumber(groupKey: string, rowIndex: number) {
   return priorVisibleCount + Math.trunc(Number(rowIndex || 0)) + 1;
 }
 
+function groupVisibleCount(group: { sampleRows?: Array<Record<string, unknown>>; sampleCount?: number }) {
+  const explicit = Number(group.sampleCount);
+  if (Number.isFinite(explicit) && explicit >= 0) return Math.trunc(explicit);
+  return Array.isArray(group.sampleRows) ? group.sampleRows.length : 0;
+}
+
+function groupCountText(group: { count: number; sampleRows?: Array<Record<string, unknown>>; sampleCount?: number; isSampled?: boolean }) {
+  const total = Math.max(0, Math.trunc(Number(group.count || 0)));
+  const visible = groupVisibleCount(group);
+  const sampled = typeof group.isSampled === 'boolean' ? group.isSampled : visible < total;
+  if (sampled) {
+    return uiLabel('group_count_sampled', '共 {total} 条 · 当前显示 {visible} 条', { total, visible });
+  }
+  return uiLabel('group_count', '共 {count} 条', { count: total });
+}
+
 function resolveGroupPageLimit(group: { pageLimit?: number }) {
   const limitRaw = Number(group.pageLimit || effectiveGroupSampleLimit.value);
   return Number.isFinite(limitRaw) && limitRaw > 0 ? Math.trunc(limitRaw) : 3;
@@ -975,8 +993,8 @@ function resolveGroupPageMeta(group: {
   return {
     totalPages: backendTotal > 0 ? backendTotal : fallbackTotal,
     currentPage: backendCurrent > 0 ? backendCurrent : fallbackCurrent,
-    rangeStart: backendWindowStart >= 0 ? backendWindowStart : (backendStart >= 0 ? backendStart : fallbackStart),
-    rangeEnd: backendWindowEnd >= 0 ? backendWindowEnd : (backendEnd >= 0 ? backendEnd : fallbackEnd),
+    rangeStart: backendWindowStart > 0 ? backendWindowStart : (backendStart > 0 ? backendStart : fallbackStart),
+    rangeEnd: backendWindowEnd > 0 ? backendWindowEnd : (backendEnd > 0 ? backendEnd : fallbackEnd),
   };
 }
 

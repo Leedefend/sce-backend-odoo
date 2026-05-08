@@ -13,6 +13,8 @@ export type ActionViewGroupedRow = {
   label: string;
   count: number;
   sampleRows: Array<Record<string, unknown>>;
+  sampleCount?: number;
+  isSampled?: boolean;
   domain?: unknown[];
   pageOffset: number;
   pageLimit: number;
@@ -57,15 +59,19 @@ export function mapActionViewGroupedRows(options: {
       const label = String(item.label ?? item.value ?? options.emptyLabel).trim() || options.emptyLabel;
       const fallbackKey = options.buildGroupKey(item.field, item.value, label);
       const key = String(item.group_key || fallbackKey);
+      const totalCount = Number(item.total_count ?? item.count ?? 0);
       const pageLimit = Math.max(1, Number((item.page_size ?? item.page_limit) || fallbackPageSize));
       const pageOffsetRaw = Number((item.page_applied_offset ?? item.page_offset ?? options.groupPageOffsets[key]) || 0);
+      const sampleRows = Array.isArray(item.sample_rows) ? (item.sample_rows as Array<Record<string, unknown>>) : [];
       return {
         key,
         label,
-        count: Number(item.count || 0),
+        count: totalCount,
         domain: Array.isArray(item.domain) ? item.domain : [],
-        sampleRows: Array.isArray(item.sample_rows) ? (item.sample_rows as Array<Record<string, unknown>>) : [],
-        pageOffset: options.normalizeGroupPageOffset(pageOffsetRaw, pageLimit, Number(item.count || 0)),
+        sampleRows,
+        sampleCount: Number.isFinite(Number(item.sample_count)) ? Math.max(0, Math.trunc(Number(item.sample_count))) : sampleRows.length,
+        isSampled: typeof item.is_sampled === 'boolean' ? Boolean(item.is_sampled) : sampleRows.length < totalCount,
+        pageOffset: options.normalizeGroupPageOffset(pageOffsetRaw, pageLimit, totalCount),
         pageLimit,
         pageCurrent: Number(item.page_current || 0) > 0 ? Number(item.page_current || 0) : undefined,
         pageTotal: Number(item.page_total || 0) > 0 ? Number(item.page_total || 0) : undefined,
@@ -123,4 +129,3 @@ export function reconcileActionViewSelectedIds(options: {
   );
   return options.selectedIds.filter((id) => currentIds.has(id));
 }
-
