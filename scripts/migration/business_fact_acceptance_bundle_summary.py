@@ -66,6 +66,10 @@ multi_db_fact_scan, multi_db_fact_scan_presence = load_json(
     "legacy_multi_db_business_fact_scan_summary_v1.json",
     required=False,
 )
+multi_db_key_collision, multi_db_key_collision_presence = load_json(
+    "legacy_multi_db_replay_key_collision_probe_v1.json",
+    required=False,
+)
 
 post_visible = (postcheck or {}).get("visible_business_fact_reconciliation") or {}
 cleanup_summary = (cleanup or {}).get("summary") or {}
@@ -78,6 +82,7 @@ attachment_custody_summary = (attachment_custody or {}).get("counts") or {}
 full_legacy_loss_scan_summary = (full_legacy_loss_scan or {}).get("summary") or {}
 remaining_fact_family_screen_summary = (remaining_fact_family_screen or {}).get("summary") or {}
 multi_db_fact_scan_totals = (multi_db_fact_scan or {}).get("totals") or {}
+multi_db_key_collision_summary = (multi_db_key_collision or {}).get("summary") or {}
 
 summary = {
     "artifact_root": str(ARTIFACT_ROOT),
@@ -182,6 +187,18 @@ summary = {
         "screened_active_rows": multi_db_fact_scan_totals.get("screened_active_rows"),
         "sources": (multi_db_fact_scan or {}).get("sources"),
     },
+    "multi_db_key_collision": {
+        "presence": multi_db_key_collision_presence,
+        "status": status_of(multi_db_key_collision, multi_db_key_collision_presence),
+        "common_candidate_tables": (multi_db_key_collision or {}).get("common_candidate_tables"),
+        "checked_tables": (multi_db_key_collision or {}).get("checked_tables"),
+        "collision_table_count": multi_db_key_collision_summary.get("collision_table_count"),
+        "collision_key_sample_count": multi_db_key_collision_summary.get("collision_key_sample_count"),
+        "requires_source_database_in_replay_key": multi_db_key_collision_summary.get(
+            "requires_source_database_in_replay_key"
+        ),
+        "decision": (multi_db_key_collision or {}).get("decision"),
+    },
 }
 
 errors = []
@@ -214,6 +231,8 @@ if remaining_fact_family_screen_presence == "present" and summary["remaining_fac
     )
 if multi_db_fact_scan_presence == "present" and summary["multi_db_fact_scan"]["status"] != "PASS":
     errors.append({"error": "multi_db_fact_scan_failed", "status": summary["multi_db_fact_scan"]["status"]})
+if multi_db_key_collision_presence == "present" and summary["multi_db_key_collision"]["status"] != "PASS":
+    errors.append({"error": "multi_db_key_collision_failed", "status": summary["multi_db_key_collision"]["status"]})
 
 status = "PASS" if not errors else "FAIL"
 payload = {
@@ -264,6 +283,7 @@ print(
             "full_legacy_loss_scan": summary["full_legacy_loss_scan"]["status"],
             "remaining_fact_family_screen": summary["remaining_fact_family_screen"]["status"],
             "multi_db_fact_scan": summary["multi_db_fact_scan"]["status"],
+            "multi_db_key_collision": summary["multi_db_key_collision"]["status"],
             "artifact_root": str(ARTIFACT_ROOT),
         },
         ensure_ascii=False,

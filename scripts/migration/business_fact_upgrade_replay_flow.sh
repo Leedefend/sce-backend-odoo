@@ -24,6 +24,7 @@ ATTACHMENT_CUSTODY_PROBE_SCRIPT="$ROOT_DIR/scripts/migration/history_attachment_
 FULL_LEGACY_LOSS_SCAN_SCRIPT="$ROOT_DIR/scripts/migration/legacy_db_full_business_fact_loss_scan.py"
 REMAINING_FACT_FAMILY_SCREEN_SCRIPT="$ROOT_DIR/scripts/migration/legacy_db_remaining_business_fact_family_screen.py"
 MULTI_DB_FACT_SCAN_SUMMARY_SCRIPT="$ROOT_DIR/scripts/migration/legacy_multi_db_business_fact_scan_summary.py"
+MULTI_DB_REPLAY_KEY_COLLISION_PROBE_SCRIPT="$ROOT_DIR/scripts/migration/legacy_multi_db_replay_key_collision_probe.py"
 
 export MIGRATION_REPO_ROOT="${MIGRATION_REPO_ROOT:-$ROOT_DIR}"
 MIGRATION_REPO_ROOT_ODOO="${MIGRATION_REPO_ROOT_ODOO:-/mnt}"
@@ -291,6 +292,12 @@ run_multi_db_fact_scan_summary() {
   MIGRATION_ARTIFACT_ROOT="$ARTIFACT_ROOT" LEGACY_BUSINESS_FACT_SOURCES="$sources" python3 "$MULTI_DB_FACT_SCAN_SUMMARY_SCRIPT"
 }
 
+run_multi_db_replay_key_collision_probe() {
+  local sources="${LEGACY_BUSINESS_FACT_SOURCES:-main:legacy-mssql-restore:LegacyDb,scbs:legacy-mssql-scbs:LegacyScbs20260417}"
+  echo "[business.fact.replay] step=multi-db-replay-key-collision-probe artifact_root=$ARTIFACT_ROOT sources=$sources"
+  MIGRATION_ARTIFACT_ROOT="$ARTIFACT_ROOT" LEGACY_BUSINESS_FACT_SOURCES="$sources" python3 "$MULTI_DB_REPLAY_KEY_COLLISION_PROBE_SCRIPT"
+}
+
 run_expense_contract_subtype_evidence() {
   echo "[business.fact.replay] step=expense-contract-subtype-evidence artifact_root=$ARTIFACT_ROOT"
   ROOT_DIR="$ROOT_DIR" MIGRATION_ARTIFACT_ROOT="$ARTIFACT_ROOT" python3 "$EXPENSE_CONTRACT_SUBTYPE_EVIDENCE_SCRIPT"
@@ -342,6 +349,7 @@ case "$MODE" in
     run_full_legacy_loss_scans
     run_remaining_fact_family_screens
     run_multi_db_fact_scan_summary
+    run_multi_db_replay_key_collision_probe
     run_acceptance_summary
     ;;
   write)
@@ -361,6 +369,7 @@ case "$MODE" in
     run_full_legacy_loss_scans
     run_remaining_fact_family_screens
     run_multi_db_fact_scan_summary
+    run_multi_db_replay_key_collision_probe
     run_acceptance_summary
     ;;
   all)
@@ -381,6 +390,7 @@ case "$MODE" in
     run_full_legacy_loss_scans
     run_remaining_fact_family_screens
     run_multi_db_fact_scan_summary
+    run_multi_db_replay_key_collision_probe
     run_acceptance_summary
     ;;
   *)
