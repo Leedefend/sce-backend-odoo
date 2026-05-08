@@ -15,6 +15,11 @@ class ResUsers(models.Model):
     name = fields.Char(string="姓名")
     phone = fields.Char(string="手机号")
     email = fields.Char(string="邮箱")
+    sc_runtime_company_real_user = fields.Boolean(
+        string="公司真实用户",
+        compute="_compute_sc_runtime_company_real_user",
+        search="_search_sc_runtime_company_real_user",
+    )
 
     sc_user_role_group_ids = fields.Many2many(
         "res.groups",
@@ -41,6 +46,41 @@ class ResUsers(models.Model):
     @api.model
     def _sc_assignable_groups(self):
         return self.env["res.groups"].sudo().search([("sc_assignable_user_permission", "=", True)])
+
+    @api.model
+    def _sc_runtime_company_real_user_ids(self):
+        if "sc.legacy.user.profile" not in self.env.registry:
+            return []
+        profiles = self.env["sc.legacy.user.profile"].sudo().with_context(active_test=False).search(
+            [("user_id", "!=", False)]
+        )
+        blocked_name_tokens = ("测试", "临时账号")
+        blocked_name_prefixes = ("Demo", "Smoke", "技术")
+        users = self.env["res.users"].sudo().with_context(active_test=False)
+        for profile in profiles:
+            user = profile.user_id
+            login = str(user.login or "")
+            display_name = str(profile.display_name or user.name or "")
+            if not user.active or user.share or not login:
+                continue
+            if login.startswith(("demo_", "legacy_", "history_system_user_")) or login == "default":
+                continue
+            if any(token in display_name for token in blocked_name_tokens):
+                continue
+            if display_name.startswith(blocked_name_prefixes):
+                continue
+            users |= user
+        return users.ids
+
+    def _compute_sc_runtime_company_real_user(self):
+        real_user_ids = set(self._sc_runtime_company_real_user_ids())
+        for user in self:
+            user.sc_runtime_company_real_user = user.id in real_user_ids
+
+    def _search_sc_runtime_company_real_user(self, operator, value):
+        real_user_ids = self._sc_runtime_company_real_user_ids()
+        positive = operator in ("=", "==") and bool(value) or operator in ("!=", "<>") and not bool(value)
+        return [("id", "in" if positive else "not in", real_user_ids)]
 
     @api.depends("groups_id")
     def _compute_sc_user_role_group_ids(self):
