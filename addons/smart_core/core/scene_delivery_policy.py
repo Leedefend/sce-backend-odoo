@@ -96,14 +96,22 @@ def legacy_surface_alias_source_authority_contract() -> dict[str, Any]:
 def _builtin_surface_nav_allowlist(env=None) -> dict:
     payload = call_extension_hook_first(env, "smart_core_surface_nav_allowlist", env)
     if isinstance(payload, dict):
-        return payload
+        return {
+            _normalize_surface(surface): list(codes) if isinstance(codes, (list, tuple, set)) else []
+            for surface, codes in payload.items()
+            if _normalize_surface(surface)
+        }
     return BUILTIN_SURFACE_NAV_ALLOWLIST
 
 
 def _builtin_surface_deep_link_allowlist(env=None) -> dict:
     payload = call_extension_hook_first(env, "smart_core_surface_deep_link_allowlist", env)
     if isinstance(payload, dict):
-        return payload
+        return {
+            _normalize_surface(surface): list(codes) if isinstance(codes, (list, tuple, set)) else []
+            for surface, codes in payload.items()
+            if _normalize_surface(surface)
+        }
     return BUILTIN_SURFACE_DEEP_LINK_ALLOWLIST
 
 

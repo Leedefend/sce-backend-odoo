@@ -168,6 +168,11 @@ SURFACE_DEEP_LINK_ALLOWLIST = {
         "finance.settlement_orders",
         "finance.treasury_ledger",
         "config.project_cost_code",
+        "portal.capability_matrix",
+        "portal.dashboard",
+        "portal.lifecycle",
+        "projects.dashboard_showcase",
+        "projects.execution",
         "risk.monitor",
         "task.center",
     ]
@@ -284,6 +289,24 @@ def smart_core_nav_scene_maps(env):
         "action_xmlid_scene_map": action_xmlid_scene_map,
         "model_view_scene_map": model_view_scene_map,
     }
+
+
+def smart_core_load_scene_configs(env, drift=None):
+    return scene_registry.load_scene_configs(env, drift=drift)
+
+
+def smart_core_has_db_scenes(env):
+    return scene_registry.has_db_scenes(env)
+
+
+def smart_core_get_scene_version(env):
+    del env
+    return scene_registry.get_scene_version()
+
+
+def smart_core_get_schema_version(env):
+    del env
+    return scene_registry.get_schema_version()
 
 
 def smart_core_surface_nav_allowlist(env):
