@@ -189,7 +189,7 @@
         <field name="res_model">sc.invoice.registration</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="smart_construction_core.view_sc_invoice_registration_search"/>
-        <field name="domain">[('source_kind', '=', 'output_invoice_tax'), ('direction', '=', 'output'), ('invoice_type', '=', '开票申请')]</field>
+        <field name="domain">[('source_kind', '=', 'output_invoice_tax'), ('direction', '=', 'output')]</field>
         <field name="context">{'default_source_kind': 'output_invoice_tax', 'default_direction': 'output', 'default_invoice_type': '开票申请', 'default_invoice_content': '开票申请', 'search_default_group_project': 1}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
