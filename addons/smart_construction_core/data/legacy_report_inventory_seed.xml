@@ -176,6 +176,40 @@
         <field name="evidence">旧库追加扫描：112 clicks, 12 users, last 2023-03-31；当前开发库 sc.legacy.invoice.registration.line 为 24792 行。</field>
     </record>
 
+    <record id="legacy_report_inventory_salary_statistics" model="sc.legacy.report.inventory">
+        <field name="priority">p1</field>
+        <field name="name">工资统计表</field>
+        <field name="source_kind">legacy_page</field>
+        <field name="domain_group">expense</field>
+        <field name="click_count">73</field>
+        <field name="user_count">3</field>
+        <field name="last_click_date">2026-03-30</field>
+        <field name="parameter_summary">年度、月份、部门、人员、发放单位。</field>
+        <field name="metric_summary">工资单数、人员数、薪资基数、应发工资、扣款合计、实发工资。</field>
+        <field name="source_tables">BGGL_XZ_GZ, BGGL_XZ_GZ_CB。</field>
+        <field name="target_model">sc.salary.summary；复用 sc.hr.payroll.document 的工资登记事实，按年度、月份、部门和发放单位汇总。</field>
+        <field name="carrier_status">ready</field>
+        <field name="next_action">继续核对旧工资统计的部门/人员过滤和历史工资明细补录情况。</field>
+        <field name="evidence">旧库追加扫描：73 clicks, 3 users, last 2026-03-30；当前开发库 sc.hr.payroll.document 工资登记 3290 行。</field>
+    </record>
+
+    <record id="legacy_report_inventory_expense_reimbursement_statistics" model="sc.legacy.report.inventory">
+        <field name="priority">p1</field>
+        <field name="name">报销统计</field>
+        <field name="source_kind">legacy_page</field>
+        <field name="domain_group">expense</field>
+        <field name="click_count">68</field>
+        <field name="user_count">4</field>
+        <field name="last_click_date">2026-04-09</field>
+        <field name="parameter_summary">项目、费用类型、申请人、往来单位、状态、日期。</field>
+        <field name="metric_summary">报销单数、申请金额、批准金额，按费用类型、项目、申请人和来源汇总。</field>
+        <field name="source_tables">CWGL_FYBX, CWGL_FYBX_CB。</field>
+        <field name="target_model">sc.expense.reimbursement.summary；复用 sc.expense.claim 费用报销事实，按项目、费用类型、申请人、来源和状态汇总。</field>
+        <field name="carrier_status">ready</field>
+        <field name="next_action">继续核对旧报销统计的日期区间和费用科目过滤口径。</field>
+        <field name="evidence">旧库追加扫描：68 clicks, 4 users, last 2026-04-09；当前开发库 sc.expense.claim 费用报销 22544 行。</field>
+    </record>
+
     <record id="legacy_report_inventory_cost_composite" model="sc.legacy.report.inventory">
         <field name="priority">p1</field>
         <field name="name">成本统计表（综合）</field>

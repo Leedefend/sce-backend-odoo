@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_sc_expense_reimbursement_summary_search" model="ir.ui.view">
+        <field name="name">sc.expense.reimbursement.summary.search</field>
+        <field name="model">sc.expense.reimbursement.summary</field>
+        <field name="arch" type="xml">
+            <search string="报销统计">
+                <field name="project_id"/>
+                <field name="partner_id"/>
+                <field name="applicant_name"/>
+                <field name="expense_type"/>
+                <filter string="历史迁移" name="legacy" domain="[('source_origin', '=', 'legacy')]"/>
+                <filter string="新系统登记" name="manual" domain="[('source_origin', '=', 'manual')]"/>
+                <group expand="0" string="分组">
+                    <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="按费用类型" name="group_expense_type" context="{'group_by': 'expense_type'}"/>
+                    <filter string="按申请人" name="group_applicant" context="{'group_by': 'applicant_name'}"/>
+                    <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="按来源" name="group_source" context="{'group_by': 'source_origin'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_expense_reimbursement_summary_tree" model="ir.ui.view">
+        <field name="name">sc.expense.reimbursement.summary.tree</field>
+        <field name="model">sc.expense.reimbursement.summary</field>
+        <field name="arch" type="xml">
+            <tree string="报销统计" create="0" edit="0" delete="0">
+                <field name="project_id"/>
+                <field name="expense_type"/>
+                <field name="applicant_name"/>
+                <field name="partner_id" optional="show"/>
+                <field name="source_origin"/>
+                <field name="state"/>
+                <field name="amount" sum="申请金额合计"/>
+                <field name="approved_amount" sum="批准金额合计"/>
+                <field name="claim_count" sum="报销单数"/>
+                <field name="legacy_count" optional="show" sum="历史报销数"/>
+                <field name="manual_count" optional="show" sum="新系统报销数"/>
+                <field name="first_date" optional="hide"/>
+                <field name="last_date" optional="show"/>
+                <field name="coverage_note" optional="show"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_expense_reimbursement_summary_form" model="ir.ui.view">
+        <field name="name">sc.expense.reimbursement.summary.form</field>
+        <field name="model">sc.expense.reimbursement.summary</field>
+        <field name="arch" type="xml">
+            <form string="报销统计" create="0" edit="0" delete="0">
+                <sheet>
+                    <group>
+                        <group string="分类">
+                            <field name="display_name"/>
+                            <field name="project_id"/>
+                            <field name="partner_id"/>
+                            <field name="expense_type"/>
+                            <field name="applicant_name"/>
+                            <field name="source_origin"/>
+                            <field name="state"/>
+                        </group>
+                        <group string="金额">
+                            <field name="amount"/>
+                            <field name="approved_amount"/>
+                            <field name="claim_count"/>
+                            <field name="legacy_count"/>
+                            <field name="manual_count"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="first_date"/>
+                        <field name="last_date"/>
+                        <field name="coverage_note"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_expense_reimbursement_summary_pivot" model="ir.ui.view">
+        <field name="name">sc.expense.reimbursement.summary.pivot</field>
+        <field name="model">sc.expense.reimbursement.summary</field>
+        <field name="arch" type="xml">
+            <pivot string="报销统计">
+                <field name="expense_type" type="row"/>
+                <field name="project_id" type="row"/>
+                <field name="amount" type="measure"/>
+                <field name="approved_amount" type="measure"/>
+                <field name="claim_count" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_sc_salary_summary_search" model="ir.ui.view">
+        <field name="name">sc.salary.summary.search</field>
+        <field name="model">sc.salary.summary</field>
+        <field name="arch" type="xml">
+            <search string="工资统计表">
+                <field name="period_year"/>
+                <field name="period_month"/>
+                <field name="department_id"/>
+                <field name="payer_unit"/>
+                <group expand="0" string="分组">
+                    <filter string="按年度" name="group_year" context="{'group_by': 'period_year'}"/>
+                    <filter string="按月份" name="group_month" context="{'group_by': 'period_month'}"/>
+                    <filter string="按部门" name="group_department" context="{'group_by': 'department_id'}"/>
+                    <filter string="按发放单位" name="group_payer_unit" context="{'group_by': 'payer_unit'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_salary_summary_tree" model="ir.ui.view">
+        <field name="name">sc.salary.summary.tree</field>
+        <field name="model">sc.salary.summary</field>
+        <field name="arch" type="xml">
+            <tree string="工资统计表" create="0" edit="0" delete="0">
+                <field name="period_year"/>
+                <field name="period_month"/>
+                <field name="department_id"/>
+                <field name="payer_unit"/>
+                <field name="salary_base" sum="薪资基数合计"/>
+                <field name="gross_amount" sum="应发工资合计"/>
+                <field name="deduction_amount" sum="扣款合计"/>
+                <field name="net_salary" sum="实发工资合计"/>
+                <field name="employee_count" sum="人员数"/>
+                <field name="document_count" sum="工资单数"/>
+                <field name="legacy_count" optional="show" sum="历史工资数"/>
+                <field name="manual_count" optional="show" sum="新系统工资数"/>
+                <field name="last_business_date" optional="show"/>
+                <field name="coverage_note" optional="show"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_salary_summary_form" model="ir.ui.view">
+        <field name="name">sc.salary.summary.form</field>
+        <field name="model">sc.salary.summary</field>
+        <field name="arch" type="xml">
+            <form string="工资统计表" create="0" edit="0" delete="0">
+                <sheet>
+                    <group>
+                        <group string="期间">
+                            <field name="display_name"/>
+                            <field name="period_year"/>
+                            <field name="period_month"/>
+                            <field name="department_id"/>
+                            <field name="payer_unit"/>
+                        </group>
+                        <group string="工资">
+                            <field name="salary_base"/>
+                            <field name="gross_amount"/>
+                            <field name="deduction_amount"/>
+                            <field name="net_salary"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="employee_count"/>
+                        <field name="document_count"/>
+                        <field name="legacy_count"/>
+                        <field name="manual_count"/>
+                        <field name="coverage_note"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_salary_summary_pivot" model="ir.ui.view">
+        <field name="name">sc.salary.summary.pivot</field>
+        <field name="model">sc.salary.summary</field>
+        <field name="arch" type="xml">
+            <pivot string="工资统计表">
+                <field name="period_year" type="row"/>
+                <field name="period_month" type="row"/>
+                <field name="department_id" type="row"/>
+                <field name="gross_amount" type="measure"/>
+                <field name="deduction_amount" type="measure"/>
+                <field name="net_salary" type="measure"/>
+                <field name="employee_count" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_sc_expense_reimbursement_summary" model="ir.actions.act_window">
+        <field name="name">报销统计</field>
+        <field name="res_model">sc.expense.reimbursement.summary</field>
+        <field name="view_mode">tree,form,pivot</field>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_expense_reimbursement_summary_search"/>
+        <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_group_expense_type': 1}</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_business_initiator'),
+            ref('smart_construction_core.group_sc_cap_finance_read'),
+            ref('smart_construction_core.group_sc_cap_finance_user'),
+            ref('smart_construction_core.group_sc_cap_finance_manager')
+        ])]"/>
+    </record>
+
+    <record id="action_sc_salary_summary" model="ir.actions.act_window">
+        <field name="name">工资统计表</field>
+        <field name="res_model">sc.salary.summary</field>
+        <field name="view_mode">tree,form,pivot</field>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_salary_summary_search"/>
+        <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_group_year': 1, 'search_default_group_month': 1}</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_business_initiator'),
+            ref('smart_construction_core.group_sc_cap_business_config_admin'),
+            ref('smart_construction_core.group_sc_cap_finance_read'),
+            ref('smart_construction_core.group_sc_cap_finance_user'),
+            ref('smart_construction_core.group_sc_cap_finance_manager')
+        ])]"/>
+    </record>
+</odoo>

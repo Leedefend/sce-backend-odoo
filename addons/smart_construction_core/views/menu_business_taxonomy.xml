@@ -1832,6 +1832,18 @@
               action="smart_construction_core.action_sc_invoice_category_summary"
               sequence="75"
               groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+    <menuitem id="menu_sc_expense_reimbursement_summary_report"
+              name="报销统计"
+              parent="smart_construction_core.menu_sc_cost_report_group"
+              action="smart_construction_core.action_sc_expense_reimbursement_summary"
+              sequence="80"
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+    <menuitem id="menu_sc_salary_summary_report"
+              name="工资统计表"
+              parent="smart_construction_core.menu_sc_cost_report_group"
+              action="smart_construction_core.action_sc_salary_summary"
+              sequence="85"
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_business_config_admin,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
 
     <menuitem id="menu_sc_finance_analysis_group"
               name="财务分析"

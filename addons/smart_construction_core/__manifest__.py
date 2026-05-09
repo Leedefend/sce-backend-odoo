@@ -160,6 +160,7 @@
         'views/projection/account_income_expense_summary_views.xml',
         'views/projection/company_operation_summary_views.xml',
         'views/projection/invoice_category_summary_views.xml',
+        'views/projection/expense_salary_summary_views.xml',
         'views/projection/financing_ledger_views.xml',
         'views/projection/treasury_ledger_views.xml',
         'views/core/workflow_views.xml',
