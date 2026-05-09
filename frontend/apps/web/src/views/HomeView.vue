@@ -1741,14 +1741,32 @@ function findEntryForActionItem(item: Record<string, unknown>) {
   return findEntryForHomeActionItemTyped(item, entries.value);
 }
 
+function workspaceBlockActionEventType(event: PageBlockActionEvent, item: Record<string, unknown>) {
+  const actionKey = asText(event.actionKey);
+  const blockKey = asText(event.blockKey);
+  const zoneKey = asText(event.zoneKey);
+  const itemRoute = asText(item.path || item.route || item.scene_key || item.sceneKey);
+  if (blockKey.includes('risk') || actionKey.includes('risk') || itemRoute.includes('risk')) return 'workspace.risk_action_click';
+  if (zoneKey === 'today_focus' || blockKey.includes('todo')) return 'workspace.enter_click';
+  if (actionKey === 'open_landing' || actionKey === 'open_my_work' || actionKey === 'open_scene') return 'workspace.nav_click';
+  return 'workspace.nav_click';
+}
+
 async function handleHomeBlockAction(event: PageBlockActionEvent) {
   const actionKey = asText(event.actionKey);
+  const item = event.item && typeof event.item === 'object' ? event.item as Record<string, unknown> : {};
+  void trackUsageEvent(workspaceBlockActionEventType(event, item), {
+    action_key: actionKey,
+    block_key: asText(event.blockKey),
+    zone_key: asText(event.zoneKey),
+    from: 'workspace.home',
+  }).catch(() => {});
+
   if (actionKey === 'open_landing') {
     openRoleLanding();
     return;
   }
 
-  const item = event.item && typeof event.item === 'object' ? event.item as Record<string, unknown> : {};
   const linkedEntry = findEntryForActionItem(item);
   if (linkedEntry) {
     await openScene(linkedEntry);
