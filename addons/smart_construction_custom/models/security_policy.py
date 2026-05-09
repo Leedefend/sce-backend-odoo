@@ -65,12 +65,8 @@ class ScSecurityPolicy(models.TransientModel):
 
         executive = self.env.ref("smart_construction_custom.group_sc_role_executive", raise_if_not_found=False)
         platform_admin = self.env.ref("smart_construction_core.group_sc_cap_config_admin", raise_if_not_found=False)
-        business_config = self.env.ref("smart_construction_core.group_sc_cap_business_config_admin", raise_if_not_found=False)
         if executive and platform_admin and platform_admin in executive.implied_ids:
             executive.write({"implied_ids": [(3, platform_admin.id)]})
-            updated = True
-        if executive and business_config and business_config not in executive.implied_ids:
-            executive.write({"implied_ids": [(4, business_config.id)]})
             updated = True
 
         user_map = {
@@ -121,6 +117,7 @@ class ScSecurityPolicy(models.TransientModel):
                 "base.group_no_one",
                 "project.group_project_manager",
                 "smart_construction_core.group_sc_cap_config_admin",
+                "smart_construction_core.group_sc_cap_business_config_admin",
                 "smart_construction_core.group_sc_super_admin",
                 "smart_construction_core.group_sc_task_entry_access",
             ],

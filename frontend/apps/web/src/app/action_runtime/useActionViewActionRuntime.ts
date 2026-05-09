@@ -30,6 +30,29 @@ type ContractActionButtonLike = {
   refreshPolicy?: Dict;
 };
 
+type ProjectionRefreshInput = {
+  policy: Dict;
+  refreshScene: () => Promise<void>;
+  refreshWorkbench: () => Promise<void>;
+  refreshRoleSurface: () => Promise<void>;
+  recordTrace: (input: { intent: string; writeMode: string; latencyMs?: number }) => void;
+};
+
+type SceneMutationInput = {
+  mutation: MutationPayload;
+  actionKey: string;
+  recordId?: number | null;
+  model?: string;
+  context?: Dict;
+};
+
+type ExecuteButtonInput = {
+  model: string;
+  res_id: number;
+  button: { name: string; type: string };
+  context?: Dict;
+};
+
 type UseActionViewActionRuntimeOptions = {
   selectedIds: Ref<number[]>;
   batchBusy: Ref<boolean>;
@@ -52,9 +75,9 @@ type UseActionViewActionRuntimeOptions = {
   resolveRequiresRecordContextMessage: (text: (key: string, fallback: string) => string) => string;
   resolveSelectionBlockMessage: (input: { selection: ContractActionSelection; selectedCount: number; text: (key: string, fallback: string) => string }) => string;
   resolveMissingModelMessage: (text: (key: string, fallback: string) => string) => string;
-  executeProjectionRefresh: (options: any) => Promise<void>;
-  executeSceneMutation: (options: any) => Promise<unknown>;
-  executeButton: (payload: any) => Promise<unknown>;
+  executeProjectionRefresh: (options: ProjectionRefreshInput) => Promise<void>;
+  executeSceneMutation: (options: SceneMutationInput) => Promise<unknown>;
+  executeButton: (payload: ExecuteButtonInput) => Promise<unknown>;
   buildButtonRequest: (input: {
     model: string;
     recordId: number;

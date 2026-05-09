@@ -9,7 +9,15 @@ type UseActionViewHeaderRuntimeOptions = {
   resolveFocusActionPushState: (input: { action: unknown; workspaceContextQuery: Record<string, unknown> }) => { target: unknown };
   resolveWorkspaceContextQuery: () => Record<string, unknown>;
   routerPush: (target: unknown) => Promise<unknown>;
-  executePageContractAction: (input: any) => Promise<boolean>;
+  executePageContractAction: (input: {
+    actionKey: string;
+    router: unknown;
+    actionIntent: unknown;
+    actionTarget: unknown;
+    query: Record<string, unknown>;
+    onRefresh: () => void;
+    onFallback: (key: string) => Promise<boolean>;
+  }) => Promise<boolean>;
   router: unknown;
   pageActionIntent: unknown;
   pageActionTarget: unknown;

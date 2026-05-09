@@ -112,8 +112,7 @@
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
             <field name="implied_ids" eval="[(6, 0, [
                 ref('smart_construction_custom.group_sc_role_pm'),
-                ref('smart_construction_custom.group_sc_role_finance'),
-                ref('smart_construction_core.group_sc_cap_business_config_admin')
+                ref('smart_construction_custom.group_sc_role_finance')
             ])]"/>
         </record>
     </data>

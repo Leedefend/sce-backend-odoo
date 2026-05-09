@@ -14,7 +14,6 @@ export type ContractActionDeps = {
 };
 
 export async function executePageContractAction(deps: ContractActionDeps): Promise<boolean> {
-  const intent = deps.actionIntent(deps.actionKey, 'ui.contract');
   const target = deps.actionTarget(deps.actionKey);
   const kind = String(target.kind || '');
   const scene = String(target.scene_key || '');

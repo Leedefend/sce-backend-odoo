@@ -222,8 +222,8 @@
           </template>
         </NativeFormTreeRenderer>
         <FormSectionTemplate
-          v-else
           v-for="section in templateSections"
+          v-else
           :key="section.key"
           :title="section.title"
           :hint="section.hint"
@@ -1031,7 +1031,6 @@ const submitButtonLabel = computed(() => {
   }
   return formUiLabel('save');
 });
-const normalCreateButtonLabel = computed(() => (busy.value && busyKind.value === 'save' ? '创建中...' : '创建项目'));
 const showDiscardAction = computed(() => !isProjectIntakeCreateMode.value && Boolean(recordId.value) && hasChanges.value);
 
 const headerActionsVisible = computed(() => {
@@ -5038,7 +5037,7 @@ async function runAction(action: ContractAction) {
 function isTierValidationActionHidden(methodName: string): boolean {
   const method = String(methodName || '').trim();
   const validationStatus = String(formData.validation_status || '').trim();
-  if ((method === 'validate_tier' || method === 'reject_tier') && !Boolean(formData.can_review)) {
+  if ((method === 'validate_tier' || method === 'reject_tier') && !formData.can_review) {
     return true;
   }
   if (

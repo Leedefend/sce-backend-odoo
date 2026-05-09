@@ -42,6 +42,7 @@ for login in required_logins:
     user.write(vals)
     updated.append({"login": login, "active": bool(user.active)})
 
+env.cr.commit()
 print("[policy.ensure.role_surface_demo] PASS set role demo passwords")
 print(json.dumps({"db": env.cr.dbname, "updated": updated}, ensure_ascii=False, indent=2))
 PY

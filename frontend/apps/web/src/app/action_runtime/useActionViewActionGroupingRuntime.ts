@@ -10,7 +10,7 @@ type ActionGroup = {
   actions: ContractActionButton[];
 };
 
-type ActionPresentation = {
+export type ActionPresentation = {
   groups: ActionGroup[];
   primaryActions: ContractActionButton[];
   overflowActionGroups: ActionGroup[];

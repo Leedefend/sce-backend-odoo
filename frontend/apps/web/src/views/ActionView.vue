@@ -532,6 +532,7 @@ import { getUserViewPreference, setUserViewPreference } from '../api/preferences
 import { executeButton } from '../api/executeButton';
 import { trackUsageEvent } from '../api/usage';
 import { resolveAction } from '../app/resolvers/actionResolver';
+import { resolveMenuAction } from '../app/resolvers/menuResolver';
 import { loadActionContract } from '../api/contract';
 import { config } from '../config';
 import { useSessionStore } from '../stores/session';
@@ -545,8 +546,7 @@ import { deriveListStatus } from '../app/view_state';
 import { isHudEnabled } from '../config/debug';
 import { ErrorCodes } from '../app/error_codes';
 import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
-import { resolveSuggestedAction, useStatus } from '../composables/useStatus';
-import { describeSuggestedAction, runSuggestedAction } from '../composables/useSuggestedAction';
+import { useStatus } from '../composables/useStatus';
 import {
   parseContractContextRaw,
   resolveContractAccessPolicy,
@@ -694,9 +694,6 @@ import {
   shouldNavigateContractAction,
 } from '../app/runtime/actionViewContractActionRuntime';
 import {
-  resolveExportDoneMessage,
-} from '../app/runtime/actionViewAssigneeExportRuntime';
-import {
   buildBatchUpdateRequest,
   resolveBatchActionFailureMessage,
   resolveBatchActionGuardMessage,
@@ -818,8 +815,6 @@ const session = useSessionStore();
 const PROJECT_CONTEXT_CHANGED_EVENT = 'sc:project-context-changed';
 const {
   resolveSceneCode,
-  resolveNodeSceneKey,
-  findMenuNode,
 } = useActionViewSceneIdentityRuntime();
 const pageContract = usePageContract('action');
 const pageText = pageContract.text;
@@ -1400,11 +1395,9 @@ const {
   resolveActionViewSurfaceKind,
 });
 const {
-  sortOptions,
   subtitle,
   statusLabel,
   pageStatus,
-  recordCount,
 } = useActionViewDisplayComputedRuntime({
   actionContract,
   records,
@@ -1540,7 +1533,6 @@ const {
   contractSavedFilterChips,
   savedFilterPrimaryChips,
   savedFilterOverflowChips,
-  contractGroupByChips,
   customFilterFields,
   customGroupByChips,
   routeGroupByChips,
@@ -2105,8 +2097,8 @@ const { runContractAction } = useActionViewActionRuntime({
       recordTrace: (input: { intent: string; writeMode: string; latencyMs?: number }) => void;
     });
   },
-  executeSceneMutation: executeSceneMutation as (options: any) => Promise<unknown>,
-  executeButton: executeButton as (payload: any) => Promise<unknown>,
+  executeSceneMutation,
+  executeButton,
   buildButtonRequest: buildContractActionButtonRequest,
   resolveResponseActionId: resolveContractActionResponseActionId,
   shouldNavigate: shouldNavigateContractAction,
@@ -2809,9 +2801,79 @@ const {
 });
 clearSelectionInvoker = selectionRuntimeClearSelection;
 
+function findMenuNodeByLabel(nodes: Array<Record<string, unknown>>, label: string): Record<string, unknown> | null {
+  const expected = String(label || '').trim();
+  if (!expected || !Array.isArray(nodes)) return null;
+  for (const node of nodes) {
+    if (!node || typeof node !== 'object') continue;
+    const current = String(node.label || node.title || node.name || '').trim();
+    if (current === expected) return node;
+    const found = findMenuNodeByLabel((node.children as Array<Record<string, unknown>>) || [], expected);
+    if (found) return found;
+  }
+  return null;
+}
+
+async function redirectMenuOnlyRouteIfNeeded(): Promise<boolean> {
+  const currentMenuId = Number(menuId.value || 0);
+  if (Number(actionId.value || 0) > 0 || currentMenuId <= 0) {
+    return false;
+  }
+  let result = resolveMenuAction(session.menuTree, currentMenuId);
+  if (result.kind === 'broken' && result.reason === 'menu not found') {
+    const fallbackNode = findMenuNodeByLabel(
+      session.menuTree as unknown as Array<Record<string, unknown>>,
+      String(route.query.label || ''),
+    );
+    const fallbackMenuId = Number(fallbackNode?.menu_id || fallbackNode?.id || 0);
+    if (fallbackMenuId > 0) {
+      result = resolveMenuAction(session.menuTree, fallbackMenuId);
+    }
+  }
+  if (result.kind === 'leaf') {
+    const targetActionId = Number(result.meta.action_id || 0);
+    if (targetActionId <= 0) return false;
+    session.setActionMeta(result.meta);
+    await router.replace({
+      name: 'action',
+      params: { actionId: targetActionId },
+      query: resolveCarryQuery({ menu_id: currentMenuId, action_id: targetActionId }),
+    });
+    return true;
+  }
+  if (result.kind === 'redirect') {
+    if (result.target.scene_key) {
+      await router.replace({
+        path: `/s/${result.target.scene_key}`,
+        query: resolveCarryQuery({ menu_id: result.target.menu_id || currentMenuId }),
+      });
+      return true;
+    }
+    const targetActionId = Number(result.target.action_id || 0);
+    if (targetActionId > 0) {
+      if (result.target.meta) {
+        session.setActionMeta(result.target.meta);
+      }
+      await router.replace({
+        name: 'action',
+        params: { actionId: targetActionId },
+        query: resolveCarryQuery({
+          menu_id: result.target.menu_id || currentMenuId,
+          action_id: targetActionId,
+        }),
+      });
+      return true;
+    }
+  }
+  return false;
+}
+
 onMounted(async () => {
   renderErrorMessage.value = '';
   applyRoutePreset();
+  if (await redirectMenuOnlyRouteIfNeeded()) {
+    return;
+  }
   await requestLoadPage();
   if (typeof window !== 'undefined') {
     window.addEventListener(PROJECT_CONTEXT_CHANGED_EVENT, handleProjectContextChanged);
@@ -2837,7 +2899,7 @@ onErrorCaptured((err) => {
 
 watch(
   () => route.fullPath,
-  () => {
+  async () => {
     if (suppressNextRouteReload.value) {
       suppressNextRouteReload.value = false;
       applyRoutePreset();
@@ -2847,6 +2909,9 @@ watch(
     listOffset.value = 0;
     clearSelection();
     applyRoutePreset();
+    if (await redirectMenuOnlyRouteIfNeeded()) {
+      return;
+    }
     void requestLoadPage();
   },
 );

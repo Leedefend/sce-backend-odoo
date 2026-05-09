@@ -1,8 +1,6 @@
 import { computed, type ComputedRef, type Ref } from 'vue';
 import type { RouteLocationNormalizedLoaded } from 'vue-router';
 
-type Dict = Record<string, unknown>;
-
 type ActionContractLike = {
   head?: {
     title?: string;

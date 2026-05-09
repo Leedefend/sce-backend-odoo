@@ -47,23 +47,6 @@ type UseActionViewRequestContextRuntimeOptions = {
   activeGroupByField: Ref<string>;
 };
 
-function parseContextRaw(raw: unknown): Dict {
-  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
-    return { ...(raw as Dict) };
-  }
-  const text = String(raw || '').trim();
-  if (!text) return {};
-  try {
-    const parsed = JSON.parse(text);
-    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-      return parsed as Dict;
-    }
-  } catch {
-    return {};
-  }
-  return {};
-}
-
 export function useActionViewRequestContextRuntime(options: UseActionViewRequestContextRuntimeOptions) {
   function resolveContractFilterDomain() {
     return resolveFilterDomain(options.contractFilterChips.value, options.activeContractFilterKey.value);
