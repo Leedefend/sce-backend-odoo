@@ -70,12 +70,12 @@ function writeReports(report) {
     `- pass_count: ${report.summary.pass_count}`,
     `- error_count: ${report.summary.error_count}`,
     '',
-    '| role | mode | initial_path | final_path | expected_text | product_order | one_hop | errors |',
-    '| --- | --- | --- | --- | ---: | ---: | ---: | ---: |',
+    '| role | mode | initial_path | final_path | expected_text | product_order | click_chain | one_hop | errors |',
+    '| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |',
   ];
   for (const row of report.rows) {
     lines.push(
-      `| ${row.role} | ${row.mode} | ${row.initial_path || ''} | ${row.final_path || ''} | ${row.expected_text_ok ? 'yes' : 'no'} | ${row.product_order_ok ? 'yes' : 'n/a'} | ${row.one_hop_ok ? 'yes' : 'n/a'} | ${row.errors.length} |`,
+      `| ${row.role} | ${row.mode} | ${row.initial_path || ''} | ${row.final_path || ''} | ${row.expected_text_ok ? 'yes' : 'no'} | ${row.product_order_ok ? 'yes' : 'n/a'} | ${row.click_chain_ok ? 'yes' : 'n/a'} | ${row.one_hop_ok ? 'yes' : 'n/a'} | ${row.errors.length} |`,
     );
   }
   ensureDir(REPORT_MD);
@@ -84,6 +84,23 @@ function writeReports(report) {
 
 function hasBlockingError(text) {
   return /NAV_MENU_NO_ACTION|当前账号暂无可用功能|当前无可用入口|页面加载失败|页面渲染失败|System exception/.test(String(text || ''));
+}
+
+function summarizeClickChain(events) {
+  const rows = Array.isArray(events) ? events : [];
+  const telemetryEvents = rows
+    .filter((row) => row.intent === 'telemetry.track')
+    .map((row) => row.event_type)
+    .filter(Boolean);
+  const businessIntents = rows
+    .map((row) => row.intent)
+    .filter((intent) => ['ui.contract', 'ui.contract.v2', 'load_view', 'api.data'].includes(intent));
+  return {
+    telemetry_events: Array.from(new Set(telemetryEvents)),
+    business_intents: Array.from(new Set(businessIntents)),
+    telemetry_ok: telemetryEvents.some((eventType) => /^workspace\./.test(eventType)),
+    business_intent_ok: businessIntents.length > 0,
+  };
 }
 
 function firstTextIndex(text, patterns) {
@@ -125,7 +142,7 @@ async function runRole(browser, role) {
   const context = await browser.newContext({ viewport: { width: 1440, height: 960 } });
   const page = await context.newPage();
   const consoleErrors = [];
-  const intents = [];
+  const intentEvents = [];
   page.on('console', (msg) => {
     if (msg.type() === 'error') consoleErrors.push(msg.text());
   });
@@ -134,7 +151,13 @@ async function runRole(browser, role) {
     if (!request.url().includes('/api/v1/intent')) return;
     try {
       const payload = JSON.parse(request.postData() || '{}');
-      if (payload.intent) intents.push(String(payload.intent));
+      if (payload.intent) {
+        const params = payload.params && typeof payload.params === 'object' ? payload.params : {};
+        intentEvents.push({
+          intent: String(payload.intent),
+          event_type: typeof params.event_type === 'string' ? params.event_type : '',
+        });
+      }
     } catch {
       // ignore non-json request bodies
     }
@@ -151,7 +174,16 @@ async function runRole(browser, role) {
     product_order_ok: role.mode === 'direct_business',
     order_positions: {},
     one_hop_ok: role.mode === 'direct_business',
+    click_chain_ok: role.mode === 'direct_business',
+    click_chain: {
+      clicked_button: '',
+      telemetry_events: [],
+      business_intents: [],
+      telemetry_ok: role.mode === 'direct_business',
+      business_intent_ok: role.mode === 'direct_business',
+    },
     captured_intents: [],
+    captured_telemetry_events: [],
     console_errors: [],
     errors: [],
     ok: false,
@@ -178,23 +210,34 @@ async function runRole(browser, role) {
       if (!count) {
         row.errors.push(`missing click button: ${role.clickButton}`);
       } else {
+        const clickStartedAt = intentEvents.length;
+        row.click_chain.clicked_button = String(role.clickButton);
         await button.click();
         await page.waitForLoadState('networkidle').catch(() => {});
         await page.waitForTimeout(1200);
         row.final_path = new URL(page.url()).pathname;
         text = await page.locator('body').innerText().catch(() => '');
         row.one_hop_ok = role.targetPath.test(row.final_path) && !hasBlockingError(text);
+        row.click_chain = {
+          ...row.click_chain,
+          ...summarizeClickChain(intentEvents.slice(clickStartedAt)),
+        };
+        row.click_chain_ok = row.click_chain.telemetry_ok && row.click_chain.business_intent_ok;
+        if (!row.click_chain_ok) {
+          row.errors.push(`click_chain=${JSON.stringify(row.click_chain)}`);
+        }
       }
     }
   } catch (err) {
     row.errors.push(err && err.message ? err.message : String(err));
   } finally {
-    row.captured_intents = Array.from(new Set(intents));
+    row.captured_intents = Array.from(new Set(intentEvents.map((event) => event.intent)));
+    row.captured_telemetry_events = Array.from(new Set(intentEvents.map((event) => event.event_type).filter(Boolean)));
     row.console_errors = consoleErrors.slice(0, 20);
     if (consoleErrors.length) {
       row.errors.push(`console_errors=${consoleErrors.length}`);
     }
-    row.ok = row.expected_text_ok && row.no_blocking_empty && row.product_order_ok && row.one_hop_ok && row.errors.length === 0;
+    row.ok = row.expected_text_ok && row.no_blocking_empty && row.product_order_ok && row.one_hop_ok && row.click_chain_ok && row.errors.length === 0;
     await context.close();
   }
   return row;
