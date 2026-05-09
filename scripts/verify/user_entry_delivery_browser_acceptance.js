@@ -70,12 +70,12 @@ function writeReports(report) {
     `- pass_count: ${report.summary.pass_count}`,
     `- error_count: ${report.summary.error_count}`,
     '',
-    '| role | mode | initial_path | final_path | expected_text | one_hop | errors |',
-    '| --- | --- | --- | --- | ---: | ---: | ---: |',
+    '| role | mode | initial_path | final_path | expected_text | product_order | one_hop | errors |',
+    '| --- | --- | --- | --- | ---: | ---: | ---: | ---: |',
   ];
   for (const row of report.rows) {
     lines.push(
-      `| ${row.role} | ${row.mode} | ${row.initial_path || ''} | ${row.final_path || ''} | ${row.expected_text_ok ? 'yes' : 'no'} | ${row.one_hop_ok ? 'yes' : 'n/a'} | ${row.errors.length} |`,
+      `| ${row.role} | ${row.mode} | ${row.initial_path || ''} | ${row.final_path || ''} | ${row.expected_text_ok ? 'yes' : 'no'} | ${row.product_order_ok ? 'yes' : 'n/a'} | ${row.one_hop_ok ? 'yes' : 'n/a'} | ${row.errors.length} |`,
     );
   }
   ensureDir(REPORT_MD);
@@ -84,6 +84,29 @@ function writeReports(report) {
 
 function hasBlockingError(text) {
   return /NAV_MENU_NO_ACTION|当前账号暂无可用功能|当前无可用入口|页面加载失败|页面渲染失败|System exception/.test(String(text || ''));
+}
+
+function firstTextIndex(text, patterns) {
+  const candidates = patterns
+    .map((pattern) => String(text || '').search(pattern))
+    .filter((idx) => idx >= 0);
+  return candidates.length ? Math.min(...candidates) : -1;
+}
+
+function checkProductOrder(text, role) {
+  if (!/^home_/.test(role.mode)) {
+    return { ok: true, positions: {} };
+  }
+  const positions = {
+    today: firstTextIndex(text, [/今天先做什么/, /今日优先动作/]),
+    risk: firstTextIndex(text, [/系统提醒（高优先）/, /风险待处理清单/]),
+    quick: firstTextIndex(text, [/我可以做什么/, /可使用的业务域/]),
+  };
+  const todayBeforeQuick = positions.today >= 0 && positions.quick >= 0 && positions.today < positions.quick;
+  const riskBeforeQuick = role.mode === 'home_today_and_risk'
+    ? positions.risk >= 0 && positions.risk < positions.quick
+    : true;
+  return { ok: todayBeforeQuick && riskBeforeQuick, positions };
 }
 
 async function login(page, role) {
@@ -125,6 +148,8 @@ async function runRole(browser, role) {
     final_path: '',
     expected_text_ok: false,
     no_blocking_empty: false,
+    product_order_ok: role.mode === 'direct_business',
+    order_positions: {},
     one_hop_ok: role.mode === 'direct_business',
     captured_intents: [],
     console_errors: [],
@@ -138,6 +163,12 @@ async function runRole(browser, role) {
     let text = await page.locator('body').innerText({ timeout: 10000 });
     row.expected_text_ok = role.initialText.every((pattern) => pattern.test(text));
     row.no_blocking_empty = !hasBlockingError(text);
+    const productOrder = checkProductOrder(text, role);
+    row.product_order_ok = productOrder.ok;
+    row.order_positions = productOrder.positions;
+    if (!row.product_order_ok) {
+      row.errors.push(`product_order=${JSON.stringify(row.order_positions)}`);
+    }
 
     if (role.mode === 'direct_business') {
       row.one_hop_ok = role.targetPath.test(row.initial_path);
@@ -163,7 +194,7 @@ async function runRole(browser, role) {
     if (consoleErrors.length) {
       row.errors.push(`console_errors=${consoleErrors.length}`);
     }
-    row.ok = row.expected_text_ok && row.no_blocking_empty && row.one_hop_ok && row.errors.length === 0;
+    row.ok = row.expected_text_ok && row.no_blocking_empty && row.product_order_ok && row.one_hop_ok && row.errors.length === 0;
     await context.close();
   }
   return row;

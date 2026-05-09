@@ -999,9 +999,9 @@ def _workspace_v1_zone_order(role_code: str) -> List[str]:
                 pass
 
     default_order = {
-        "pm": ["hero", "quick_entries", "today_focus", "analysis"],
-        "finance": ["hero", "quick_entries", "today_focus", "analysis"],
-        "owner": ["hero", "quick_entries", "today_focus", "analysis"],
+        "pm": ["today_focus", "analysis", "quick_entries", "hero"],
+        "finance": ["today_focus", "analysis", "quick_entries", "hero"],
+        "owner": ["today_focus", "analysis", "quick_entries", "hero"],
     }
     return list(default_order.get(_to_text(role_code).lower(), default_order["owner"]))
 
