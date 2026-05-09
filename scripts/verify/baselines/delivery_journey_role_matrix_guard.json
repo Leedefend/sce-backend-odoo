@@ -1,5 +1,5 @@
 {
-  "min_scene_count": 50,
+  "min_scene_count": 30,
   "state_files": {
     "pm": "artifacts/backend/scene_registry_asset_snapshot_state.pm.json",
     "finance": "artifacts/backend/scene_registry_asset_snapshot_state.finance.json",

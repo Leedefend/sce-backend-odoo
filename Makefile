@@ -2908,7 +2908,7 @@ verify.scene.registry_asset_snapshot.finance: guard.prod.forbid
 	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_FETCH_BACKOFF_SEC=$${SC_SCENE_REGISTRY_ASSET_SNAPSHOT_FETCH_BACKOFF_SEC:-1} \
 	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_ALLOW_STATE_FALLBACK_ON_LIVE_FAIL=1 \
 	SC_SCENE_REGISTRY_ASSET_SNAPSHOT_STATE_FILE=artifacts/backend/scene_registry_asset_snapshot_state.finance.json \
-	E2E_LOGIN=$${ROLE_FINANCE_LOGIN:-$${ROLE_PM_LOGIN:-demo_role_pm}} \
+	E2E_LOGIN=$${ROLE_FINANCE_LOGIN:-demo_role_finance} \
 	E2E_PASSWORD=$${ROLE_FINANCE_PASSWORD:-$${ROLE_PM_PASSWORD:-demo}} \
 	python3 scripts/verify/scene_registry_asset_snapshot_guard.py
 
