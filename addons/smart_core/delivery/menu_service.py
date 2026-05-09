@@ -98,7 +98,7 @@ class MenuService:
             if label:
                 key = str(ancestor.get("key") or "").strip().replace(":", "_") or "ungrouped"
                 return key, label
-        return "ungrouped", "原生菜单"
+        return "ungrouped", "业务菜单"
 
     def _menu_dedupe_key(self, row: dict) -> str:
         menu_id = row.get("menu_id")
