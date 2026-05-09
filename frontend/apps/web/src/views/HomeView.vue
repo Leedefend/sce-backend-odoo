@@ -423,6 +423,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import type { NavNode } from '@sc/schema';
 import { useSessionStore, type CapabilityRuntimeMeta, type WorkspaceAdviceRow, type WorkspaceCapabilityGroupRow, type WorkspaceSceneEntryRow } from '../stores/session';
 import { trackCapabilityOpen, trackUsageEvent } from '../api/usage';
 import { readWorkspaceContext } from '../app/workspaceContext';
@@ -969,6 +970,74 @@ function toPositiveInt(raw: unknown) {
     if (Number.isFinite(parsed) && parsed > 0) return Math.trunc(parsed);
   }
   return 0;
+}
+
+function navNodeLabel(node: NavNode) {
+  return asText(node.label || node.name || node.title || node.meta?.name);
+}
+
+function navNodeMenuId(node: NavNode) {
+  return toPositiveInt(node.menu_id || node.id || node.meta?.menu_id);
+}
+
+function navNodeActionId(node: NavNode) {
+  const metaActionId = toPositiveInt(node.meta?.action_id);
+  if (metaActionId) return metaActionId;
+  const action = node.action;
+  if (typeof action === 'number' || typeof action === 'string') return toPositiveInt(action);
+  if (action && typeof action === 'object') {
+    return toPositiveInt((action as Record<string, unknown>).id || (action as Record<string, unknown>).action_id);
+  }
+  return 0;
+}
+
+function navNodeSceneKey(node: NavNode) {
+  return asText(node.meta?.scene_key || (node as NavNode & { scene_key?: unknown }).scene_key);
+}
+
+function navNodeModel(node: NavNode) {
+  return asText(node.meta?.model || (node as NavNode & { model?: unknown }).model);
+}
+
+function buildWorkspaceMenuEntries(nodes: NavNode[]) {
+  const rows: Array<Record<string, unknown>> = [];
+  const seen = new Set<number>();
+
+  function walk(source: NavNode[], parents: string[]) {
+    source.forEach((node, index) => {
+      const menuId = navNodeMenuId(node);
+      const title = navNodeLabel(node);
+      const children = Array.isArray(node.children) ? node.children : [];
+      const actionId = navNodeActionId(node);
+      const sceneKey = navNodeSceneKey(node);
+      const model = navNodeModel(node);
+      const hasOwnTarget = Boolean(menuId && (actionId || sceneKey || model || node.action));
+      if (menuId && title && hasOwnTarget && !seen.has(menuId)) {
+        seen.add(menuId);
+        rows.push({
+          id: `menu-${menuId}`,
+          key: `menu-${menuId}`,
+          title,
+          hint: parents.filter(Boolean).join(' / '),
+          action_key: 'open_menu',
+          route: `/m/${menuId}`,
+          menu_id: menuId,
+          action_id: actionId || undefined,
+          scene_key: sceneKey,
+          model,
+          sequence: Number(node.sequence || node.meta?.sequence || 9999) + (index / 100),
+        });
+      }
+      if (children.length) {
+        walk(children, title ? [...parents, title] : parents);
+      }
+    });
+  }
+
+  walk(nodes, []);
+  return rows
+    .sort((a, b) => Number(a.sequence || 9999) - Number(b.sequence || 9999) || asText(a.title).localeCompare(asText(b.title)))
+    .slice(0, 24);
 }
 
 function resolveSceneTitle(scene: { title?: unknown; key?: unknown }) {
@@ -1572,6 +1641,7 @@ const homeSectionDatasetPayloads = computed<Record<string, unknown>>(() => {
         examples,
       };
     });
+  const menuEntries = buildWorkspaceMenuEntries(session.menuTree);
   return {
     hero: session.workspaceHeroRows,
     metrics: session.workspaceMetricRows,
@@ -1605,6 +1675,7 @@ const homeSectionDatasetPayloads = computed<Record<string, unknown>>(() => {
     })),
     ops: session.workspaceOpsSummary,
     scene_groups: capabilityEntries.length ? capabilityEntries : readyEntries,
+    menu_entries: menuEntries.length ? menuEntries : readyEntries,
     group_overview: capabilityEntries,
     advice: systemAdvice.value,
     filters: {
@@ -1622,6 +1693,7 @@ function resolveHomeDatasetForSpec(dataSourceKey: string, spec: Record<string, u
   if (provider === 'workspace.risk.alerts') return payloads.risk ?? null;
   if (provider === 'workspace.progress.summary') return payloads.ops ?? null;
   if (provider === 'workspace.scene.groups') return payloads.scene_groups ?? null;
+  if (provider === 'workspace.menu.entries') return payloads.menu_entries ?? null;
   if (provider === 'workspace.capability.groups') return payloads.group_overview ?? null;
   if (provider === 'workspace.advice') return payloads.advice ?? null;
   if (provider === 'workspace.filters') return payloads.filters ?? null;
@@ -1777,6 +1849,14 @@ async function handleHomeBlockAction(event: PageBlockActionEvent) {
   if (path) {
     await router.push({ path, query: normalizeContextQuery(item.query) || workspaceContextQuery.value });
     return;
+  }
+
+  if (actionKey === 'open_menu') {
+    const menuId = toPositiveInt(item.menu_id);
+    if (menuId) {
+      await router.push({ path: `/m/${menuId}`, query: workspaceContextQuery.value });
+      return;
+    }
   }
 
   const handled = await executePageContractAction({
