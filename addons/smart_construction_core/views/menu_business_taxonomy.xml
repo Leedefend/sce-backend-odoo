@@ -529,7 +529,7 @@
         <field name="res_model">sc.financing.loan</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="smart_construction_core.view_sc_financing_loan_search"/>
-        <field name="domain">[('loan_type', '=', 'borrowing_request'), ('purpose', 'ilike', '项目借公司款登记')]</field>
+        <field name="domain">[('loan_type', '=', 'borrowing_request'), ('direction', '=', 'borrowed_fund')]</field>
         <field name="context">{'default_loan_type': 'borrowing_request', 'default_direction': 'borrowed_fund', 'default_purpose': '项目借公司款登记', 'search_default_group_project': 1}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
