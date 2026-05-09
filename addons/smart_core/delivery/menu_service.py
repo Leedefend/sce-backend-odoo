@@ -73,28 +73,31 @@ class MenuService:
             if not isinstance(node, dict):
                 continue
             children = node.get("children") if isinstance(node.get("children"), list) else []
-            if children and self._node_has_target(node):
-                yield parent_chain, node
             if children:
                 yield from self._iter_leaf_nodes(children, parent_chain + [node])
                 continue
             yield parent_chain, node
 
     def _resolve_preview_group_anchor(self, ancestors: list[dict]) -> tuple[str, str]:
-        for ancestor in reversed(ancestors or []):
+        skipped_labels = {"智慧施工管理平台", "系统菜单", "业务菜单", "产品发布面"}
+        for ancestor in ancestors or []:
             if not isinstance(ancestor, dict):
                 continue
             key = str(ancestor.get("key") or "").strip()
             if key.startswith("root:"):
                 continue
             label = str(ancestor.get("label") or ancestor.get("title") or ancestor.get("name") or "").strip()
+            if label in skipped_labels:
+                continue
             menu_id = ancestor.get("menu_id")
             if (isinstance(menu_id, int) and menu_id > 0) and label:
                 return f"menu_{menu_id}", label
-        for ancestor in reversed(ancestors or []):
+        for ancestor in ancestors or []:
             if not isinstance(ancestor, dict):
                 continue
             label = str(ancestor.get("label") or ancestor.get("title") or ancestor.get("name") or "").strip()
+            if label in skipped_labels:
+                continue
             if label:
                 key = str(ancestor.get("key") or "").strip().replace(":", "_") or "ungrouped"
                 return key, label
