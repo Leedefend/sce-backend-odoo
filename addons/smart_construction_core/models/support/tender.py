@@ -276,6 +276,22 @@ class TenderDocPurchase(models.Model):
         "res.currency", related="bid_id.currency_id", store=True, readonly=True
     )
 
+    def action_submit(self):
+        self.write({"state": "submitted"})
+        return True
+
+    def action_approve(self):
+        self.write({"state": "approved"})
+        return True
+
+    def action_reject(self):
+        self.write({"state": "rejected"})
+        return True
+
+    def action_reset_draft(self):
+        self.write({"state": "draft"})
+        return True
+
 
 class TenderSurvey(models.Model):
     _name = "tender.survey"
