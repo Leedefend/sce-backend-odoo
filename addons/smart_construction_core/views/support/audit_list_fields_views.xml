@@ -908,8 +908,8 @@
         <field name="inherit_id" ref="view_payment_request_tree" />
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
-                <field name="create_uid" />
-                <field name="create_date" />
+                <field name="create_uid" string="创建人" />
+                <field name="create_date" string="创建时间" />
             </xpath>
         </field>
     </record>
