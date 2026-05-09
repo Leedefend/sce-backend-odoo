@@ -119,9 +119,9 @@
         <field name="parameter_summary">年份、开始日期、结束日期。</field>
         <field name="metric_summary">营收、支出、管理费、企业所得税、增值税附加、工资、手续费、各类公司经营收入/支出。</field>
         <field name="source_tables">C_CWSFK_GSCWSR, C_CWSFK_GSCWZC, C_JFHKLR, C_JFHKLR_CB, CWGL_FYBX, CWGL_FYBX_CB, BGGL_XZ_GZ, BGGL_XZ_GZ_CB, T_ProjectContract_Out, T_ProjectContract_Out_CB, ZJGL_SZQR_DKQRB, ZJGL_SZQR_DKQRB_CB。</field>
-        <field name="target_model">待建公司经营统计聚合。</field>
-        <field name="carrier_status">gap</field>
-        <field name="next_action">先确认工资、公司财务收支、费用报销事实是否已迁移；未迁移前不能承诺完整报表。</field>
+        <field name="target_model">sc.company.operation.summary；已按已迁移事实承载收款、公司财务收支、费用/保证金、发票税额，工资事实为空时明确标注缺口。</field>
+        <field name="carrier_status">partial</field>
+        <field name="next_action">继续补工资事实投影与旧过程年度/区间过滤对账；未完成前不标记为完整 ready。</field>
         <field name="evidence">ts_function_RecordUserClick: 726 clicks, 7 users, last 2026-04-08。</field>
     </record>
 

@@ -1832,6 +1832,12 @@
               action="smart_construction_core.action_sc_project_operation_statistics_report"
               sequence="10"
               groups="smart_construction_core.group_sc_cap_project_read,smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_finance_read"/>
+    <menuitem id="menu_sc_company_operation_summary_report"
+              name="公司经营情况表"
+              parent="smart_construction_core.menu_sc_tax_finance_report_group"
+              action="smart_construction_core.action_sc_company_operation_summary"
+              sequence="15"
+              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager,smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
     <record id="menu_sc_ar_ap_finance_tax_report" model="ir.ui.menu">
         <field name="name">应收应付报表</field>
         <field name="parent_id" ref="smart_construction_core.menu_sc_tax_finance_report_group"/>
