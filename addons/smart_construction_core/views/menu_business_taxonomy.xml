@@ -1518,6 +1518,63 @@
               sequence="10"
               groups="smart_construction_core.group_sc_cap_data_read,smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
 
+    <menuitem id="menu_sc_cost_report_group"
+              name="成本报表"
+              parent="smart_construction_core.menu_sc_data_center"
+              sequence="15"/>
+    <record id="action_sc_supplier_contract_analysis_report" model="ir.actions.act_window">
+        <field name="name">供货合同分析</field>
+        <field name="res_model">sc.legacy.purchase.contract.fact</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_purchase_contract_fact_search"/>
+        <field name="context">{'search_default_group_partner_name': 1, 'create': False, 'edit': False, 'delete': False}</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_business_initiator'),
+            ref('smart_construction_core.group_sc_cap_contract_read'),
+            ref('smart_construction_core.group_sc_cap_contract_user'),
+            ref('smart_construction_core.group_sc_cap_contract_manager')
+        ])]"/>
+    </record>
+    <menuitem id="menu_sc_supplier_contract_analysis_report"
+              name="供货合同分析"
+              parent="smart_construction_core.menu_sc_cost_report_group"
+              action="smart_construction_core.action_sc_supplier_contract_analysis_report"
+              sequence="10"
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_contract_read,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
+    <record id="action_sc_material_stock_statistics_report" model="ir.actions.act_window">
+        <field name="name">库存统计表（新）</field>
+        <field name="res_model">sc.legacy.material.stock.fact</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_material_stock_fact_search"/>
+        <field name="context">{'search_default_active_only': 1, 'search_default_group_material_name': 1, 'create': False, 'edit': False, 'delete': False}</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_business_initiator'),
+            ref('smart_construction_core.group_sc_cap_material_read'),
+            ref('smart_construction_core.group_sc_cap_material_user'),
+            ref('smart_construction_core.group_sc_cap_material_manager'),
+            ref('smart_construction_core.group_sc_cap_cost_read'),
+            ref('smart_construction_core.group_sc_cap_cost_user'),
+            ref('smart_construction_core.group_sc_cap_cost_manager')
+        ])]"/>
+    </record>
+    <menuitem id="menu_sc_material_stock_statistics_report"
+              name="库存统计表（新）"
+              parent="smart_construction_core.menu_sc_cost_report_group"
+              action="smart_construction_core.action_sc_material_stock_statistics_report"
+              sequence="20"
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_material_read,smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager,smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager"/>
+    <record id="menu_sc_account_income_expense_cost_report" model="ir.ui.menu">
+        <field name="name">账户收支统计表</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_cost_report_group"/>
+        <field name="action" ref="smart_construction_core.action_sc_account_income_expense_summary"/>
+        <field name="sequence">30</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_finance_read'),
+            ref('smart_construction_core.group_sc_cap_finance_user'),
+            ref('smart_construction_core.group_sc_cap_finance_manager')
+        ])]"/>
+    </record>
+
     <menuitem id="menu_sc_finance_analysis_group"
               name="财务分析"
               parent="smart_construction_core.menu_sc_data_center"
