@@ -14,6 +14,7 @@
                 <filter string="资金划拨" name="type_transfer_out" domain="[('operation_type', '=', 'transfer_out')]"/>
                 <filter string="资金调拨" name="type_transfer_between" domain="[('operation_type', '=', 'transfer_between')]"/>
                 <filter string="余额调整" name="type_balance_adjustment" domain="[('operation_type', '=', 'balance_adjustment')]"/>
+                <filter string="资金日报表" name="type_fund_daily_report" domain="[('operation_type', '=', 'fund_daily_report')]"/>
                 <filter string="已完成" name="state_done" domain="[('state', '=', 'done')]"/>
                 <filter string="公司直营" name="operation_direct" domain="[('operation_strategy', '=', 'direct')]"/>
                 <filter string="联营项目" name="operation_joint" domain="[('operation_strategy', '=', 'joint')]"/>
@@ -35,9 +36,14 @@
                 <field name="operation_date"/>
                 <field name="project_id"/>
                 <field name="operation_strategy"/>
+                <field name="fund_account_id"/>
                 <field name="source_account_id"/>
                 <field name="target_account_id"/>
                 <field name="amount" sum="金额合计"/>
+                <field name="daily_income" sum="收入合计"/>
+                <field name="daily_expense" sum="支出合计"/>
+                <field name="account_balance"/>
+                <field name="bank_balance"/>
                 <field name="before_balance"/>
                 <field name="after_balance"/>
                 <field name="state"/>
@@ -70,9 +76,14 @@
                         </group>
                         <group string="账户与金额">
                             <field name="currency_id" invisible="1"/>
-                            <field name="source_account_id"/>
-                            <field name="target_account_id"/>
-                            <field name="amount" invisible="operation_type == 'balance_adjustment'"/>
+                            <field name="fund_account_id" invisible="operation_type != 'fund_daily_report'"/>
+                            <field name="source_account_id" invisible="operation_type == 'fund_daily_report'"/>
+                            <field name="target_account_id" invisible="operation_type == 'fund_daily_report'"/>
+                            <field name="amount" invisible="operation_type in ('balance_adjustment', 'fund_daily_report')"/>
+                            <field name="daily_income" invisible="operation_type != 'fund_daily_report'"/>
+                            <field name="daily_expense" invisible="operation_type != 'fund_daily_report'"/>
+                            <field name="account_balance" invisible="operation_type != 'fund_daily_report'"/>
+                            <field name="bank_balance" invisible="operation_type != 'fund_daily_report'"/>
                             <field name="before_balance" invisible="operation_type != 'balance_adjustment'"/>
                             <field name="after_balance" invisible="operation_type != 'balance_adjustment'"/>
                         </group>
