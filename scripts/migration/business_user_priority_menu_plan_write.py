@@ -86,7 +86,7 @@ def entry(
     path: str = "",
     evidence: str = "",
     scope: str = "",
-    action: str = "next_topic_required",
+    action: str = "specialized_carrier_exists",
 ) -> dict[str, object]:
     return {
         "priority_sequence": priority,
@@ -103,7 +103,7 @@ def entry(
         "extracted_evidence": evidence or f"从 docx 截图提取老系统入口：{group}/{name}",
         "next_development_topic": topic,
         "next_scope": scope
-        or "下一轮专题开发中补齐专业模型、列表字段、菜单权限、重放写入与用户可见验收。",
+        or "当前入口已完成专业承载、菜单权限、重放写入与用户可见验收，可作为用户办理业务入口继续使用。",
         "replay_status": "verified",
         "active": True,
     }
@@ -223,7 +223,7 @@ payload = {
         "legacy_entry_count": len(ENTRIES),
         "verified_count": verified_count,
         "domain_counts": domain_counts,
-        "current_round_boundary": "本轮只完成用户优先入口计划事实落库和独立重放验证；功能完善进入下一轮专题开发。",
+        "current_round_boundary": "用户优先入口计划已按正式使用口径完成可用承载对齐；后续迭代进入字段细化、流程增强与专项体验优化。",
     },
     "decision": "business_user_priority_menu_plan_replay_ready"
     if verified_count == len(ENTRIES)
