@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_sc_invoice_category_summary_search" model="ir.ui.view">
+        <field name="name">sc.invoice.category.summary.search</field>
+        <field name="model">sc.invoice.category.summary</field>
+        <field name="arch" type="xml">
+            <search string="发票分类汇总表">
+                <field name="project_id"/>
+                <field name="partner_id"/>
+                <field name="invoice_type"/>
+                <field name="tax_rate"/>
+                <field name="cost_category_name"/>
+                <field name="invoice_content"/>
+                <filter string="进项" name="direction_input" domain="[('direction', '=', 'input')]"/>
+                <filter string="销项" name="direction_output" domain="[('direction', '=', 'output')]"/>
+                <filter string="预缴" name="direction_prepaid" domain="[('direction', '=', 'prepaid')]"/>
+                <filter string="历史迁移" name="has_legacy" domain="[('legacy_invoice_count', '>', 0)]"/>
+                <filter string="新系统登记" name="has_manual" domain="[('manual_invoice_count', '>', 0)]"/>
+                <group expand="0" string="分组">
+                    <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="按方向" name="group_direction" context="{'group_by': 'direction'}"/>
+                    <filter string="按业务类型" name="group_source_kind" context="{'group_by': 'source_kind'}"/>
+                    <filter string="按发票类型" name="group_invoice_type" context="{'group_by': 'invoice_type'}"/>
+                    <filter string="按税率" name="group_tax_rate" context="{'group_by': 'tax_rate'}"/>
+                    <filter string="按成本类别" name="group_cost_category" context="{'group_by': 'cost_category_name'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_invoice_category_summary_tree" model="ir.ui.view">
+        <field name="name">sc.invoice.category.summary.tree</field>
+        <field name="model">sc.invoice.category.summary</field>
+        <field name="arch" type="xml">
+            <tree string="发票分类汇总表" create="0" edit="0" delete="0">
+                <field name="project_id"/>
+                <field name="direction"/>
+                <field name="source_kind"/>
+                <field name="invoice_type"/>
+                <field name="tax_rate"/>
+                <field name="cost_category_name"/>
+                <field name="invoice_content" optional="show"/>
+                <field name="amount_no_tax" sum="不含税金额合计"/>
+                <field name="tax_amount" sum="税额合计"/>
+                <field name="amount_total" sum="价税合计"/>
+                <field name="invoice_count" sum="发票数"/>
+                <field name="legacy_invoice_count" optional="show" sum="历史发票数"/>
+                <field name="manual_invoice_count" optional="show" sum="新系统发票数"/>
+                <field name="first_invoice_date" optional="hide"/>
+                <field name="last_invoice_date" optional="show"/>
+                <field name="coverage_note" optional="show"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_invoice_category_summary_form" model="ir.ui.view">
+        <field name="name">sc.invoice.category.summary.form</field>
+        <field name="model">sc.invoice.category.summary</field>
+        <field name="arch" type="xml">
+            <form string="发票分类汇总表" create="0" edit="0" delete="0">
+                <sheet>
+                    <group>
+                        <group string="分类">
+                            <field name="display_name"/>
+                            <field name="company_id"/>
+                            <field name="project_id"/>
+                            <field name="partner_id"/>
+                            <field name="direction"/>
+                            <field name="source_kind"/>
+                            <field name="state"/>
+                        </group>
+                        <group string="发票属性">
+                            <field name="invoice_type"/>
+                            <field name="tax_rate"/>
+                            <field name="cost_category_name"/>
+                            <field name="invoice_content"/>
+                            <field name="first_invoice_date"/>
+                            <field name="last_invoice_date"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="金额">
+                            <field name="amount_no_tax"/>
+                            <field name="tax_amount"/>
+                            <field name="amount_total"/>
+                        </group>
+                        <group string="数量">
+                            <field name="invoice_count"/>
+                            <field name="legacy_invoice_count"/>
+                            <field name="manual_invoice_count"/>
+                        </group>
+                    </group>
+                    <group string="说明">
+                        <field name="coverage_note"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_invoice_category_summary_pivot" model="ir.ui.view">
+        <field name="name">sc.invoice.category.summary.pivot</field>
+        <field name="model">sc.invoice.category.summary</field>
+        <field name="arch" type="xml">
+            <pivot string="发票分类汇总表">
+                <field name="direction" type="row"/>
+                <field name="source_kind" type="row"/>
+                <field name="invoice_type" type="row"/>
+                <field name="tax_rate" type="col"/>
+                <field name="amount_no_tax" type="measure"/>
+                <field name="tax_amount" type="measure"/>
+                <field name="amount_total" type="measure"/>
+                <field name="invoice_count" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_sc_invoice_category_summary_graph" model="ir.ui.view">
+        <field name="name">sc.invoice.category.summary.graph</field>
+        <field name="model">sc.invoice.category.summary</field>
+        <field name="arch" type="xml">
+            <graph string="发票分类汇总表" type="bar" stacked="True">
+                <field name="direction" type="row"/>
+                <field name="source_kind" type="row"/>
+                <field name="amount_total" type="measure"/>
+                <field name="tax_amount" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="action_sc_invoice_category_summary" model="ir.actions.act_window">
+        <field name="name">发票分类汇总表</field>
+        <field name="res_model">sc.invoice.category.summary</field>
+        <field name="view_mode">tree,form,pivot,graph</field>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_invoice_category_summary_search"/>
+        <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_group_direction': 1, 'search_default_group_source_kind': 1}</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_business_initiator'),
+            ref('smart_construction_core.group_sc_cap_finance_read'),
+            ref('smart_construction_core.group_sc_cap_finance_user'),
+            ref('smart_construction_core.group_sc_cap_finance_manager')
+        ])]"/>
+    </record>
+</odoo>

@@ -125,6 +125,23 @@
         <field name="evidence">ts_function_RecordUserClick: 726 clicks, 7 users, last 2026-04-08。</field>
     </record>
 
+    <record id="legacy_report_inventory_invoice_category_summary" model="sc.legacy.report.inventory">
+        <field name="priority">p1</field>
+        <field name="name">发票分类汇总表</field>
+        <field name="source_kind">legacy_page</field>
+        <field name="domain_group">invoice</field>
+        <field name="click_count">86</field>
+        <field name="user_count">12</field>
+        <field name="last_click_date">2023-01-05</field>
+        <field name="parameter_summary">项目、方向、业务类型、发票类型、税率等分类条件。</field>
+        <field name="metric_summary">发票数、不含税金额、税额、价税合计，按进项、销项、预缴及发票分类汇总。</field>
+        <field name="source_tables">C_JXXP_DKDJ_New, C_JXXP_DKDJ_CB, C_JXXP_XXKPDJ, C_JXXP_XXKPDJ_CB, C_JXXP_YJSKDJ, C_JXXP_YJSKDJ_CB, C_JXXP_ZYFPJJD, C_JXXP_ZYFPJJD_CB。</field>
+        <field name="target_model">sc.invoice.category.summary；复用 sc.invoice.registration 已迁移发票事实，按项目、方向、业务类型、发票类型、税率、成本类别和开票内容汇总。</field>
+        <field name="carrier_status">ready</field>
+        <field name="next_action">继续核对进项发票明细表、成本发票明细表的明细字段，不把分类汇总入口替代明细入口。</field>
+        <field name="evidence">旧库追加扫描：86 clicks, 12 users, last 2023-01-05；当前开发库 sc.invoice.registration 已有 28010 行。</field>
+    </record>
+
     <record id="legacy_report_inventory_cost_composite" model="sc.legacy.report.inventory">
         <field name="priority">p1</field>
         <field name="name">成本统计表（综合）</field>

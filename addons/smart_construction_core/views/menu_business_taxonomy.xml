@@ -1806,6 +1806,12 @@
               action="smart_construction_core.action_sc_invoice_analysis_report"
               sequence="70"
               groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+    <menuitem id="menu_sc_invoice_category_summary_report"
+              name="发票分类汇总表"
+              parent="smart_construction_core.menu_sc_cost_report_group"
+              action="smart_construction_core.action_sc_invoice_category_summary"
+              sequence="75"
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
 
     <menuitem id="menu_sc_finance_analysis_group"
               name="财务分析"
