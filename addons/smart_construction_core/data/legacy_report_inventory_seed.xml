@@ -142,6 +142,40 @@
         <field name="evidence">旧库追加扫描：86 clicks, 12 users, last 2023-01-05；当前开发库 sc.invoice.registration 已有 28010 行。</field>
     </record>
 
+    <record id="legacy_report_inventory_input_invoice_detail" model="sc.legacy.report.inventory">
+        <field name="priority">p1</field>
+        <field name="name">进项发票明细表</field>
+        <field name="source_kind">legacy_page</field>
+        <field name="domain_group">invoice</field>
+        <field name="click_count">127</field>
+        <field name="user_count">14</field>
+        <field name="last_click_date">2023-05-23</field>
+        <field name="parameter_summary">项目、往来单位、发票号码、发票类型、税率、日期、状态。</field>
+        <field name="metric_summary">进项发票明细，包含不含税金额、税额、价税合计、成本类别、开票内容、经办人、凭证号等。</field>
+        <field name="source_tables">C_JXXP_DKDJ_New, C_JXXP_DKDJ_CB, C_JXXP_ZYFPJJD, C_JXXP_ZYFPJJD_CB。</field>
+        <field name="target_model">sc.invoice.registration；通过进项发票明细表入口限定 direction=input，当前开发库 24003 行进项事实可见。</field>
+        <field name="carrier_status">ready</field>
+        <field name="next_action">继续核对旧进项明细的专用查询条件和附件字段，不把汇总入口替代明细入口。</field>
+        <field name="evidence">旧库追加扫描：127 clicks, 14 users, last 2023-05-23；当前开发库 sc.invoice.registration direction=input 为 24003 行。</field>
+    </record>
+
+    <record id="legacy_report_inventory_cost_invoice_detail" model="sc.legacy.report.inventory">
+        <field name="priority">p1</field>
+        <field name="name">成本发票明细表</field>
+        <field name="source_kind">legacy_page</field>
+        <field name="domain_group">invoice</field>
+        <field name="click_count">112</field>
+        <field name="user_count">12</field>
+        <field name="last_click_date">2023-03-31</field>
+        <field name="parameter_summary">项目、供应商、发票号码、发票类型、税率、日期、核算状态。</field>
+        <field name="metric_summary">成本发票明细，包含不含税金额、税额、价税合计、项目成本金额、成本类别、开票内容、开票单位、经办人、凭证号等。</field>
+        <field name="source_tables">C_JXXP_ZYFPJJD, C_JXXP_ZYFPJJD_CB。</field>
+        <field name="target_model">sc.legacy.invoice.registration.line；当前开发库 24792 行历史成本发票明细可见，列表已补金额合计与成本字段。</field>
+        <field name="carrier_status">ready</field>
+        <field name="next_action">继续核对旧成本发票明细专用过滤和项目成本金额口径。</field>
+        <field name="evidence">旧库追加扫描：112 clicks, 12 users, last 2023-03-31；当前开发库 sc.legacy.invoice.registration.line 为 24792 行。</field>
+    </record>
+
     <record id="legacy_report_inventory_cost_composite" model="sc.legacy.report.inventory">
         <field name="priority">p1</field>
         <field name="name">成本统计表（综合）</field>

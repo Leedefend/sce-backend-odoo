@@ -6,21 +6,29 @@
       <field name="name">sc.legacy.invoice.registration.line.tree</field>
       <field name="model">sc.legacy.invoice.registration.line</field>
       <field name="arch" type="xml">
-        <tree string="历史发票登记" create="false" edit="false" delete="false">
+        <tree string="成本发票明细表" create="false" edit="false" delete="false">
           <field name="invoice_date"/>
           <field name="document_no"/>
           <field name="invoice_no"/>
+          <field name="invoice_code" optional="hide"/>
           <field name="invoice_type"/>
           <field name="project_id"/>
           <field name="supplier_name"/>
           <field name="partner_id"/>
-          <field name="amount_no_tax"/>
-          <field name="tax_amount"/>
-          <field name="amount_total"/>
+          <field name="billing_unit" optional="show"/>
+          <field name="cost_category_name" optional="show"/>
+          <field name="invoice_content" optional="show"/>
+          <field name="amount_no_tax" sum="不含税金额合计"/>
+          <field name="tax_amount" sum="税额合计"/>
+          <field name="amount_total" sum="价税合计"/>
           <field name="tax_rate"/>
+          <field name="quantity" optional="hide" sum="数量合计"/>
+          <field name="project_cost_amount" optional="show" sum="项目成本金额合计"/>
+          <field name="handler_name" optional="hide"/>
           <field name="accounting_state"/>
           <field name="voucher_no"/>
-          <field name="active"/>
+          <field name="invoice_source" optional="hide"/>
+          <field name="active" optional="hide"/>
         </tree>
       </field>
     </record>
