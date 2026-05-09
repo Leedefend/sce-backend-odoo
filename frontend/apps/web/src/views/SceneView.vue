@@ -551,6 +551,10 @@ function resolveVisibleActionTarget(target: SceneTarget, sceneKey = '') {
 
   const actionId = Number(target.action_id || 0);
   if (actionId > 0) {
+    const targetRoute = String(target.route || '').trim();
+    if (normalizedSceneKey && resolveRoutePathOnly(targetRoute) === `/s/${normalizedSceneKey}`) {
+      return { actionId, menuId: Number(target.menu_id || 0) || undefined };
+    }
     if (!session.menuTree.length || findActionMeta(session.menuTree, actionId) || isSceneContractNav) {
       return { actionId, menuId: Number(target.menu_id || 0) || undefined };
     }
