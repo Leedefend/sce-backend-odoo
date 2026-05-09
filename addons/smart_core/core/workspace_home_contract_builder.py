@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from collections import Counter
 from datetime import datetime
+from importlib import import_module
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Tuple
@@ -598,6 +599,14 @@ def _shared_action_target(action_key: str, page_key: str) -> Dict[str, Any]:
     global _ACTION_TARGET_RESOLVER
     if callable(_ACTION_TARGET_RESOLVER):
         return _ACTION_TARGET_RESOLVER(action_key, page_key)
+    try:
+        module = import_module("odoo.addons.smart_core.core.action_target_schema")
+        resolver = getattr(module, "resolve_action_target", None)
+        if callable(resolver):
+            _ACTION_TARGET_RESOLVER = resolver
+            return resolver(action_key, page_key)
+    except Exception:
+        pass
     helper_path = Path(__file__).with_name("action_target_schema.py")
     try:
         spec = spec_from_file_location("smart_core_action_target_schema_workspace_home", helper_path)
@@ -611,6 +620,13 @@ def _shared_action_target(action_key: str, page_key: str) -> Dict[str, Any]:
             return resolver(action_key, page_key)
     except Exception:
         pass
+    fallback_key = str(action_key or "").strip().lower()
+    if fallback_key in {"open_workbench", "open_landing"}:
+        return {"kind": "scene.key", "scene_key": "workspace.home"}
+    if fallback_key in {"open_my_work", "open_workspace_overview"}:
+        return {"kind": "scene.key", "scene_key": "my_work.workspace"}
+    if fallback_key in {"refresh_page", "refresh"}:
+        return {"kind": "page.refresh"}
     fallback_scene = str(page_key or "").strip().lower() or "workspace.home"
     return {"kind": "scene.key", "scene_key": fallback_scene}
 

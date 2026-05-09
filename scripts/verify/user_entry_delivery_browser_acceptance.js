@@ -53,6 +53,16 @@ const ROLES = [
     targetPath: /^\/(my-work|s\/my_work\.workspace)$/,
   },
   {
+    role: 'pm_my_work_back_home',
+    login: process.env.ROLE_PM_LOGIN || 'demo_role_pm',
+    password: process.env.ROLE_PM_PASSWORD || DEFAULT_PASSWORD,
+    mode: 'my_work_back_home',
+    navigatePath: `/m/${MY_WORK_MENU_ID}`,
+    initialText: [/我的工作/, /待办|风险|已完成|失败/],
+    clickButton: /返回角色首页/,
+    targetPath: /^\/(s\/workspace\.home)?$/,
+  },
+  {
     role: 'finance',
     login: process.env.ROLE_FINANCE_LOGIN || 'demo_role_finance',
     password: process.env.ROLE_FINANCE_PASSWORD || DEFAULT_PASSWORD,
@@ -93,7 +103,7 @@ function writeReports(report) {
 }
 
 function hasBlockingError(text) {
-  return /NAV_MENU_NO_ACTION|当前账号暂无可用功能|当前无可用入口|页面加载失败|页面渲染失败|System exception/.test(String(text || ''));
+  return /NAV_MENU_NO_ACTION|scene not found|当前账号暂无可用功能|当前无可用入口|页面加载失败|页面渲染失败|System exception/i.test(String(text || ''));
 }
 
 function summarizeClickChain(events) {
@@ -170,7 +180,7 @@ function checkProductOrder(text, role) {
 }
 
 function checkMenuMyWorkIntent(row) {
-  if (row.mode !== 'menu_my_work') return true;
+  if (!['menu_my_work', 'my_work_back_home'].includes(row.mode)) return true;
   return row.captured_intents.includes('my.work.summary');
 }
 
@@ -293,7 +303,9 @@ async function runRole(browser, role) {
           ...row.click_chain,
           ...summarizeClickChain(intentEvents.slice(clickStartedAt)),
         };
-        row.click_chain_ok = row.click_chain.telemetry_ok && row.click_chain.business_intent_ok;
+        row.click_chain_ok = role.mode === 'my_work_back_home'
+          ? row.click_chain.telemetry_ok
+          : row.click_chain.telemetry_ok && row.click_chain.business_intent_ok;
         if (!row.click_chain_ok) {
           row.errors.push(`click_chain=${JSON.stringify(row.click_chain)}`);
         }
