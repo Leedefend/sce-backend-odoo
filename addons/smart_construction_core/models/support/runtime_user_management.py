@@ -20,6 +20,12 @@ class ResUsers(models.Model):
         compute="_compute_sc_runtime_company_real_user",
         search="_search_sc_runtime_company_real_user",
     )
+    sc_runtime_user_managed = fields.Boolean(
+        string="用户配置管理员维护",
+        default=False,
+        index=True,
+        copy=False,
+    )
 
     sc_user_role_group_ids = fields.Many2many(
         "res.groups",
@@ -49,14 +55,20 @@ class ResUsers(models.Model):
 
     @api.model
     def _sc_runtime_company_real_user_ids(self):
+        users = self.env["res.users"].sudo().with_context(active_test=False).search(
+            [
+                ("sc_runtime_user_managed", "=", True),
+                ("share", "=", False),
+                ("login", "!=", False),
+            ]
+        )
         if "sc.legacy.user.profile" not in self.env.registry:
-            return []
+            return users.ids
         profiles = self.env["sc.legacy.user.profile"].sudo().with_context(active_test=False).search(
             [("user_id", "!=", False)]
         )
         blocked_name_tokens = ("测试", "临时账号")
         blocked_name_prefixes = ("Demo", "Smoke", "技术")
-        users = self.env["res.users"].sudo().with_context(active_test=False)
         for profile in profiles:
             user = profile.user_id
             login = str(user.login or "")
@@ -106,8 +118,85 @@ class ResUsers(models.Model):
     def _inverse_sc_user_permission_group_ids(self):
         self._inverse_assignable_user_groups("sc_user_permission_group_ids")
 
+    @api.model
+    def _sc_runtime_user_management_allowed(self):
+        return bool(
+            self.env.context.get("sc_runtime_user_management")
+            and self.env.user.has_group("smart_construction_core.group_sc_cap_business_config_admin")
+        )
+
+    @api.model
+    def _sc_group_ids_from_commands(self, commands):
+        ids = set()
+        if not commands:
+            return ids
+        if isinstance(commands, (int, str)):
+            try:
+                return {int(commands)}
+            except Exception:
+                return set()
+        for command in commands:
+            if isinstance(command, int):
+                ids.add(command)
+                continue
+            if not isinstance(command, (list, tuple)) or not command:
+                continue
+            op = int(command[0] or 0)
+            if op == 6 and len(command) > 2 and isinstance(command[2], (list, tuple)):
+                ids = {int(group_id) for group_id in command[2] if int(group_id or 0) > 0}
+            elif op == 4 and len(command) > 1 and int(command[1] or 0) > 0:
+                ids.add(int(command[1]))
+            elif op == 3 and len(command) > 1:
+                ids.discard(int(command[1] or 0))
+            elif op == 5:
+                ids.clear()
+        return ids
+
+    @api.model
+    def _sc_runtime_user_safe_vals(self, vals, existing_user=False):
+        allowed_fields = {
+            "login",
+            "name",
+            "active",
+            "phone",
+            "email",
+            "company_id",
+            "password",
+        }
+        safe_vals = {key: vals[key] for key in allowed_fields if key in vals}
+        safe_vals["share"] = False
+        safe_vals["sc_runtime_user_managed"] = True
+
+        role_commands = vals.get("sc_user_role_group_ids")
+        if role_commands is None:
+            role_commands = vals.get("sc_user_permission_group_ids")
+        if role_commands is not None:
+            assignable = self._sc_assignable_groups()
+            requested = self.env["res.groups"].sudo().browse(list(self._sc_group_ids_from_commands(role_commands)))
+            target_groups = requested & assignable
+            if existing_user:
+                target_groups |= existing_user.sudo().groups_id - assignable
+            internal_group = self._sc_internal_group()
+            if internal_group:
+                target_groups |= internal_group
+            safe_vals["groups_id"] = [(6, 0, target_groups.ids)]
+        elif not existing_user:
+            internal_group = self._sc_internal_group()
+            if internal_group:
+                safe_vals["groups_id"] = [(4, internal_group.id)]
+
+        if not existing_user and not safe_vals.get("password"):
+            safe_vals["password"] = self.env.context.get("sc_default_initial_password") or "123456"
+        return safe_vals
+
     @api.model_create_multi
     def create(self, vals_list):
+        if self._sc_runtime_user_management_allowed() and not self.env.context.get("sc_runtime_user_management_sudo"):
+            safe_vals_list = [self._sc_runtime_user_safe_vals(dict(vals or {})) for vals in vals_list]
+            return self.sudo().with_context(
+                dict(self.env.context, sc_runtime_user_management_sudo=True, no_reset_password=True)
+            ).create(safe_vals_list).with_env(self.env)
+
         internal_group = self._sc_internal_group()
         for vals in vals_list:
             if vals.get("share"):
@@ -122,3 +211,13 @@ class ResUsers(models.Model):
             if self.env.context.get("sc_runtime_user_management") and not vals.get("password"):
                 vals["password"] = self.env.context.get("sc_default_initial_password") or "123456"
         return super().create(vals_list)
+
+    def write(self, vals):
+        if self._sc_runtime_user_management_allowed() and not self.env.context.get("sc_runtime_user_management_sudo"):
+            for user in self:
+                safe_vals = self._sc_runtime_user_safe_vals(dict(vals or {}), existing_user=user)
+                user.sudo().with_context(
+                    dict(self.env.context, sc_runtime_user_management_sudo=True, no_reset_password=True)
+                ).write(safe_vals)
+            return True
+        return super().write(vals)
