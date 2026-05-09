@@ -277,7 +277,7 @@
         <field name="name">sc.legacy.payment.residual.fact.tax.certificate.tree</field>
         <field name="model">sc.legacy.payment.residual.fact</field>
         <field name="arch" type="xml">
-            <tree string="外经证登记" create="false" edit="false" delete="false" default_order="document_date desc, id desc">
+            <tree string="外经证登记" create="true" edit="true" delete="false" default_order="document_date desc, id desc">
                 <field name="document_date" string="登记日期"/>
                 <field name="document_no" string="外经证编号"/>
                 <field name="project_id" string="项目"/>
@@ -297,7 +297,7 @@
         <field name="name">sc.legacy.payment.residual.fact.tax.certificate.form</field>
         <field name="model">sc.legacy.payment.residual.fact</field>
         <field name="arch" type="xml">
-            <form string="外经证登记" create="false" edit="false" delete="false">
+            <form string="外经证登记" create="true" edit="true" delete="false">
                 <sheet>
                     <group>
                         <group string="外经证">
@@ -329,8 +329,8 @@
                         <field name="note" string="合同名称/外经证地址" nolabel="1"/>
                     </group>
                     <group string="旧系统来源">
-                        <field name="source_table" string="来源表"/>
-                        <field name="legacy_record_id" string="旧系统记录ID"/>
+                        <field name="source_table" string="来源表" readonly="1"/>
+                        <field name="legacy_record_id" string="记录ID" readonly="1"/>
                         <field name="legacy_pid" string="旧系统PID"/>
                     </group>
                 </sheet>
@@ -344,9 +344,10 @@
         <field name="views" eval="[(ref('smart_construction_core.view_sc_tax_certificate_registration_tree'), 'tree'), (ref('smart_construction_core.view_sc_tax_certificate_registration_form'), 'form')]"/>
         <field name="search_view_id" ref="smart_construction_core.view_sc_tax_certificate_registration_search"/>
         <field name="domain">[('payment_family', '=', 'tax_certificate_registration')]</field>
-        <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_group_project': 1}</field>
+        <field name="context">{'create': True, 'edit': True, 'delete': False, 'search_default_group_project': 1, 'default_payment_family': 'tax_certificate_registration', 'default_source_table': 'USER_TAX_CERTIFICATE_REGISTRATION'}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
+            ref('smart_construction_core.group_sc_cap_business_config_admin'),
             ref('smart_construction_core.group_sc_cap_finance_read'),
             ref('smart_construction_core.group_sc_cap_finance_user'),
             ref('smart_construction_core.group_sc_cap_finance_manager')
@@ -1356,7 +1357,7 @@
               parent="smart_construction_core.menu_sc_invoice_tax_user_group"
               action="smart_construction_core.action_sc_tax_certificate_registration_user"
               sequence="60"
-              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_business_config_admin,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
 
     <menuitem id="menu_sc_funding_plan_group"
               name="资金计划"
