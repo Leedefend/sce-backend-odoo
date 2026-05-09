@@ -35,6 +35,7 @@ from . import treasury_reconciliation
 from . import receipt_income
 from . import payment_execution
 from . import invoice_registration
+from . import tax_deduction_registration
 from . import financing_loan
 from . import general_contract
 from . import construction_diary
