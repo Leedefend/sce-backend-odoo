@@ -239,6 +239,20 @@
             ref('smart_construction_core.group_sc_cap_finance_manager')
         ])]"/>
     </record>
+    <record id="action_sc_expense_claim_contractor_project_repay" model="ir.actions.act_window">
+        <field name="name">承包人还项目款</field>
+        <field name="res_model">sc.expense.claim</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_expense_claim_search"/>
+        <field name="domain">[('claim_type', '=', 'expense'), ('expense_type', '=', '承包人还项目款')]</field>
+        <field name="context">{'default_claim_type': 'expense', 'default_expense_type': '承包人还项目款', 'default_summary': '承包人还项目款', 'search_default_active_rows': 1, 'search_default_group_project': 1}</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_business_initiator'),
+            ref('smart_construction_core.group_sc_cap_finance_read'),
+            ref('smart_construction_core.group_sc_cap_finance_user'),
+            ref('smart_construction_core.group_sc_cap_finance_manager')
+        ])]"/>
+    </record>
     <record id="action_sc_expense_claim_project" model="ir.actions.act_window">
         <field name="name">项目费用报销单</field>
         <field name="res_model">sc.expense.claim</field>
@@ -264,6 +278,48 @@
         <field name="search_view_id" ref="smart_construction_core.view_sc_financing_loan_search"/>
         <field name="domain">[('loan_type', '=', 'borrowing_request')]</field>
         <field name="context">{'default_loan_type': 'borrowing_request', 'default_direction': 'borrowed_fund', 'search_default_group_project': 1}</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_business_initiator'),
+            ref('smart_construction_core.group_sc_cap_finance_read'),
+            ref('smart_construction_core.group_sc_cap_finance_user'),
+            ref('smart_construction_core.group_sc_cap_finance_manager')
+        ])]"/>
+    </record>
+    <record id="action_sc_financing_loan_contractor_project_borrow" model="ir.actions.act_window">
+        <field name="name">承包人借项目款</field>
+        <field name="res_model">sc.financing.loan</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_financing_loan_search"/>
+        <field name="domain">[('loan_type', '=', 'borrowing_request'), ('purpose', 'ilike', '承包人借项目款')]</field>
+        <field name="context">{'default_loan_type': 'borrowing_request', 'default_direction': 'borrowed_fund', 'default_purpose': '承包人借项目款', 'search_default_group_project': 1}</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_business_initiator'),
+            ref('smart_construction_core.group_sc_cap_finance_read'),
+            ref('smart_construction_core.group_sc_cap_finance_user'),
+            ref('smart_construction_core.group_sc_cap_finance_manager')
+        ])]"/>
+    </record>
+    <record id="action_sc_receipt_income_user_income" model="ir.actions.act_window">
+        <field name="name">收入</field>
+        <field name="res_model">sc.receipt.income</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_receipt_income_search"/>
+        <field name="domain">[('source_kind', '=', 'receipt_income')]</field>
+        <field name="context">{'default_source_kind': 'receipt_income', 'default_income_category': '收入', 'search_default_group_project': 1}</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_business_initiator'),
+            ref('smart_construction_core.group_sc_cap_finance_read'),
+            ref('smart_construction_core.group_sc_cap_finance_user'),
+            ref('smart_construction_core.group_sc_cap_finance_manager')
+        ])]"/>
+    </record>
+    <record id="action_sc_payment_execution_company_finance_expense" model="ir.actions.act_window">
+        <field name="name">公司财务支出</field>
+        <field name="res_model">sc.payment.execution</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_payment_execution_search"/>
+        <field name="domain">[('source_kind', '=', 'actual_outflow')]</field>
+        <field name="context">{'default_source_kind': 'actual_outflow', 'default_payment_family': '公司财务支出', 'search_default_group_project': 1}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
             ref('smart_construction_core.group_sc_cap_finance_read'),
@@ -936,6 +992,22 @@
               name="费用中心"
               parent="smart_construction_core.menu_sc_finance_center"
               sequence="40"/>
+    <menuitem id="menu_sc_income_expense_user_group"
+              name="收支"
+              parent="smart_construction_core.menu_sc_finance_center"
+              sequence="34"/>
+    <menuitem id="menu_sc_user_income"
+              name="收入"
+              parent="smart_construction_core.menu_sc_income_expense_user_group"
+              action="smart_construction_core.action_sc_receipt_income_user_income"
+              sequence="10"
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+    <menuitem id="menu_sc_company_finance_expense"
+              name="公司财务支出"
+              parent="smart_construction_core.menu_sc_income_expense_user_group"
+              action="smart_construction_core.action_sc_payment_execution_company_finance_expense"
+              sequence="20"
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
     <menuitem id="menu_sc_fund_loan_repayment_group"
               name="资金借还"
               parent="smart_construction_core.menu_sc_finance_center"
@@ -950,6 +1022,22 @@
               name="还款登记"
               parent="smart_construction_core.menu_sc_fund_loan_repayment_group"
               action="smart_construction_core.action_sc_expense_claim_repayment_registration"
+              sequence="20"
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+    <menuitem id="menu_sc_project_fund_user_group"
+              name="项目资金"
+              parent="smart_construction_core.menu_sc_finance_center"
+              sequence="36"/>
+    <menuitem id="menu_sc_contractor_project_repay"
+              name="承包人还项目款"
+              parent="smart_construction_core.menu_sc_project_fund_user_group"
+              action="smart_construction_core.action_sc_expense_claim_contractor_project_repay"
+              sequence="10"
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+    <menuitem id="menu_sc_contractor_project_borrow"
+              name="承包人借项目款"
+              parent="smart_construction_core.menu_sc_project_fund_user_group"
+              action="smart_construction_core.action_sc_financing_loan_contractor_project_borrow"
               sequence="20"
               groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
     <menuitem id="menu_sc_company_deduction"
