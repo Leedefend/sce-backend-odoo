@@ -11,6 +11,7 @@
     "data": [
         "security/ir.model.access.csv",
         "views/scene_governance_views.xml",
+        "data/scene_delivery_params.xml",
         "data/sc_scene_orchestration.xml",
         "data/sc_scene_layout.xml",
         "data/sc_scene_tiles.xml",

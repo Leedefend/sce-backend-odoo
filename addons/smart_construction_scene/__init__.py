@@ -14,6 +14,10 @@ else:
     from .core_extension import (  # noqa: F401
         get_intent_handler_contributions,
         smart_core_extend_system_init,
+        smart_core_get_schema_version,
+        smart_core_get_scene_version,
+        smart_core_has_db_scenes,
+        smart_core_load_scene_configs,
         smart_core_identity_profile,
         smart_core_nav_scene_maps,
         smart_core_surface_nav_allowlist,

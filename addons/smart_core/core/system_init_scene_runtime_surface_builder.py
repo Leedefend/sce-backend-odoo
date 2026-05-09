@@ -61,6 +61,16 @@ class SystemInitSceneRuntimeSurfaceBuilder:
             delivery_result.get("delivery_scenes") if isinstance(delivery_result, dict) else [],
             startup_scene_subset,
         )
+        scene_ready_input = []
+        scene_ready_seen = set()
+        for scene_row in list(preload_scenes or []) + list(delivery_result.get("deep_link_scenes") or []):
+            if not isinstance(scene_row, dict):
+                continue
+            scene_key = str(scene_row.get("code") or scene_row.get("key") or "").strip()
+            if not scene_key or scene_key in scene_ready_seen:
+                continue
+            scene_ready_seen.add(scene_key)
+            scene_ready_input.append(scene_row)
 
         nav_contract_input = dict(data)
         nav_contract_input["scenes"] = preload_scenes
@@ -68,15 +78,15 @@ class SystemInitSceneRuntimeSurfaceBuilder:
         role_code = str(role_surface.get("role_code") or "").strip()
         bind_result = surface_ctx.bind_scene_assets_fn(
             env,
-            scenes=nav_contract_input.get("scenes") if isinstance(nav_contract_input.get("scenes"), list) else [],
+            scenes=scene_ready_input,
             role_code=role_code or None,
             company_id=env.company.id if env.company else None,
         )
         if isinstance(bind_result, dict) and bind_result:
-            nav_contract_input["scenes"] = bind_result.get("scenes") or nav_contract_input.get("scenes") or []
+            scene_ready_input = bind_result.get("scenes") or scene_ready_input
 
         data["scene_ready_contract_v1"] = surface_ctx.build_scene_ready_contract_fn(
-            scenes=nav_contract_input.get("scenes") if isinstance(nav_contract_input.get("scenes"), list) else [],
+            scenes=scene_ready_input,
             role_surface=role_surface,
             scene_version=data.get("scene_version"),
             schema_version=data.get("schema_version"),
