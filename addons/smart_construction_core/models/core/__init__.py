@@ -25,6 +25,7 @@ from . import fund_account_operation
 from . import business_menu_facts
 from . import office_admin_document
 from . import hr_payroll_document
+from . import document_admin_document
 from . import plan_management
 from . import quality_management
 from . import safety_management

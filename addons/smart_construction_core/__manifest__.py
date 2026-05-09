@@ -143,6 +143,7 @@
         'views/core/business_menu_fact_views.xml',
         'views/core/office_admin_document_views.xml',
         'views/core/hr_payroll_document_views.xml',
+        'views/core/document_admin_document_views.xml',
         'views/core/plan_management_views.xml',
         'views/core/quality_management_views.xml',
         'views/core/safety_management_views.xml',
