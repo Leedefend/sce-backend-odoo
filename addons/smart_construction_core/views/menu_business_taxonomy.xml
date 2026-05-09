@@ -1724,6 +1724,7 @@
         <field name="parent_id" ref="smart_construction_core.menu_sc_cost_report_group"/>
         <field name="action" ref="smart_construction_core.action_sc_account_income_expense_summary"/>
         <field name="sequence">30</field>
+        <field name="active">False</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_finance_read'),
             ref('smart_construction_core.group_sc_cap_finance_user'),
@@ -1930,6 +1931,12 @@
     <record id="menu_sc_account_income_expense_summary" model="ir.ui.menu">
         <field name="parent_id" ref="smart_construction_core.menu_sc_finance_analysis_group"/>
         <field name="sequence">50</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_business_initiator'),
+            ref('smart_construction_core.group_sc_cap_finance_read'),
+            ref('smart_construction_core.group_sc_cap_finance_user'),
+            ref('smart_construction_core.group_sc_cap_finance_manager')
+        ])]"/>
     </record>
     <record id="menu_sc_treasury_ledger" model="ir.ui.menu">
         <field name="parent_id" ref="smart_construction_core.menu_sc_finance_analysis_group"/>
