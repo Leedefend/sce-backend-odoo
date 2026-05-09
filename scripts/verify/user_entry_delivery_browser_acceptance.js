@@ -70,12 +70,12 @@ function writeReports(report) {
     `- pass_count: ${report.summary.pass_count}`,
     `- error_count: ${report.summary.error_count}`,
     '',
-    '| role | mode | initial_path | final_path | expected_text | product_order | click_chain | one_hop | errors |',
-    '| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |',
+    '| role | mode | initial_path | final_path | expected_text | first_screen | no_debug_noise | product_order | click_chain | one_hop | errors |',
+    '| --- | --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |',
   ];
   for (const row of report.rows) {
     lines.push(
-      `| ${row.role} | ${row.mode} | ${row.initial_path || ''} | ${row.final_path || ''} | ${row.expected_text_ok ? 'yes' : 'no'} | ${row.product_order_ok ? 'yes' : 'n/a'} | ${row.click_chain_ok ? 'yes' : 'n/a'} | ${row.one_hop_ok ? 'yes' : 'n/a'} | ${row.errors.length} |`,
+      `| ${row.role} | ${row.mode} | ${row.initial_path || ''} | ${row.final_path || ''} | ${row.expected_text_ok ? 'yes' : 'no'} | ${row.first_screen_ok ? 'yes' : 'n/a'} | ${row.no_debug_noise ? 'yes' : 'no'} | ${row.product_order_ok ? 'yes' : 'n/a'} | ${row.click_chain_ok ? 'yes' : 'n/a'} | ${row.one_hop_ok ? 'yes' : 'n/a'} | ${row.errors.length} |`,
     );
   }
   ensureDir(REPORT_MD);
@@ -108,6 +108,39 @@ function firstTextIndex(text, patterns) {
     .map((pattern) => String(text || '').search(pattern))
     .filter((idx) => idx >= 0);
   return candidates.length ? Math.min(...candidates) : -1;
+}
+
+async function firstVisibleBox(page, pattern) {
+  const locator = page.getByText(pattern).first();
+  if (!(await locator.count())) return null;
+  const box = await locator.boundingBox().catch(() => null);
+  return box ? {
+    x: Math.round(box.x),
+    y: Math.round(box.y),
+    width: Math.round(box.width),
+    height: Math.round(box.height),
+  } : null;
+}
+
+function boxInFirstScreen(box, viewport) {
+  if (!box || !viewport) return false;
+  return box.y >= 0 && box.y < Math.max(1, viewport.height - 24);
+}
+
+async function checkFirstScreen(page, role) {
+  if (!/^home_/.test(role.mode)) {
+    return { ok: true, boxes: {} };
+  }
+  const viewport = page.viewportSize() || { width: 1440, height: 960 };
+  const boxes = {
+    today: await firstVisibleBox(page, /今天先做什么|今日优先动作/),
+    risk: await firstVisibleBox(page, /系统提醒（高优先）|风险待处理清单/),
+    action: await firstVisibleBox(page, role.clickButton),
+  };
+  const todayOk = boxInFirstScreen(boxes.today, viewport);
+  const riskOk = boxInFirstScreen(boxes.risk, viewport);
+  const actionOk = boxInFirstScreen(boxes.action, viewport);
+  return { ok: todayOk && riskOk && actionOk, boxes };
 }
 
 function checkProductOrder(text, role) {
@@ -171,6 +204,9 @@ async function runRole(browser, role) {
     final_path: '',
     expected_text_ok: false,
     no_blocking_empty: false,
+    first_screen_ok: role.mode === 'direct_business',
+    first_screen_boxes: {},
+    no_debug_noise: false,
     product_order_ok: role.mode === 'direct_business',
     order_positions: {},
     one_hop_ok: role.mode === 'direct_business',
@@ -195,6 +231,16 @@ async function runRole(browser, role) {
     let text = await page.locator('body').innerText({ timeout: 10000 });
     row.expected_text_ok = role.initialText.every((pattern) => pattern.test(text));
     row.no_blocking_empty = !hasBlockingError(text);
+    row.no_debug_noise = !/result_summary|active_filters|debug|traceback/i.test(text);
+    const firstScreen = await checkFirstScreen(page, role);
+    row.first_screen_ok = firstScreen.ok;
+    row.first_screen_boxes = firstScreen.boxes;
+    if (!row.no_debug_noise) {
+      row.errors.push('debug_noise_visible');
+    }
+    if (!row.first_screen_ok) {
+      row.errors.push(`first_screen=${JSON.stringify(row.first_screen_boxes)}`);
+    }
     const productOrder = checkProductOrder(text, role);
     row.product_order_ok = productOrder.ok;
     row.order_positions = productOrder.positions;
@@ -237,7 +283,7 @@ async function runRole(browser, role) {
     if (consoleErrors.length) {
       row.errors.push(`console_errors=${consoleErrors.length}`);
     }
-    row.ok = row.expected_text_ok && row.no_blocking_empty && row.product_order_ok && row.one_hop_ok && row.click_chain_ok && row.errors.length === 0;
+    row.ok = row.expected_text_ok && row.no_blocking_empty && row.first_screen_ok && row.no_debug_noise && row.product_order_ok && row.one_hop_ok && row.click_chain_ok && row.errors.length === 0;
     await context.close();
   }
   return row;
