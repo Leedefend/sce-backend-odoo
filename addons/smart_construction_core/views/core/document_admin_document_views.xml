@@ -15,6 +15,7 @@
           <field name="document_title"/>
           <field name="borrow_user_id"/>
           <field name="legacy_document_no"/>
+          <filter string="公司资料存档" name="company_document_archive" domain="[('fact_type', '=', 'company_document_archive')]"/>
           <filter string="证照登记" name="certificate_registration" domain="[('fact_type', '=', 'certificate_registration')]"/>
           <filter string="借阅申请" name="document_borrow" domain="[('fact_type', '=', 'document_borrow')]"/>
           <filter string="草稿" name="draft" domain="[('state', '=', 'draft')]"/>
@@ -75,6 +76,10 @@
                 <field name="requester_id"/>
                 <field name="department_id"/>
               </group>
+              <group string="公司资料存档" invisible="fact_type != 'company_document_archive'">
+                <field name="document_title" required="fact_type == 'company_document_archive'"/>
+                <field name="holder_name" string="保管单位/部门"/>
+              </group>
               <group string="证照登记" invisible="fact_type != 'certificate_registration'">
                 <field name="certificate_name" required="fact_type == 'certificate_registration'"/>
                 <field name="certificate_no" required="fact_type == 'certificate_registration'"/>
@@ -119,6 +124,16 @@
       </field>
     </record>
 
+    <record id="action_sc_company_document_archive" model="ir.actions.act_window">
+      <field name="name">公司资料存档</field>
+      <field name="res_model">sc.document.admin.document</field>
+      <field name="view_mode">tree,form</field>
+      <field name="search_view_id" ref="smart_construction_core.view_sc_document_admin_document_search"/>
+      <field name="domain">[('fact_type', '=', 'company_document_archive')]</field>
+      <field name="context">{'default_fact_type': 'company_document_archive', 'search_default_company_document_archive': 1}</field>
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_initiator'), ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
+    </record>
+
     <record id="action_sc_certificate_registration" model="ir.actions.act_window">
       <field name="name">证照登记</field>
       <field name="res_model">sc.document.admin.document</field>
@@ -143,6 +158,12 @@
               name="资料证照"
               parent="smart_construction_core.menu_sc_root"
               sequence="58"
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_business_config_admin"/>
+    <menuitem id="menu_sc_company_document_archive"
+              name="公司资料存档"
+              parent="smart_construction_core.menu_sc_document_admin_center"
+              action="smart_construction_core.action_sc_company_document_archive"
+              sequence="5"
               groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_business_config_admin"/>
     <menuitem id="menu_sc_certificate_registration"
               name="证照登记"

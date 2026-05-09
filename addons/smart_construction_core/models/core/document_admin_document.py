@@ -12,6 +12,7 @@ class ScDocumentAdminDocument(models.Model):
 
     def _selection_fact_type(self):
         return [
+            ("company_document_archive", "公司资料存档"),
             ("certificate_registration", "证照登记"),
             ("document_borrow", "借阅申请"),
         ]
@@ -49,13 +50,13 @@ class ScDocumentAdminDocument(models.Model):
 
     def _business_specific_fields(self):
         return [
+            "document_title",
             "certificate_name",
             "certificate_no",
             "holder_name",
             "issue_authority",
             "issue_date",
             "valid_until",
-            "document_title",
             "borrow_user_id",
             "borrow_date",
             "expected_return_date",
@@ -69,7 +70,9 @@ class ScDocumentAdminDocument(models.Model):
     def _check_submit_requirements(self):
         super()._check_submit_requirements()
         for record in self:
-            if record.fact_type == "certificate_registration":
+            if record.fact_type == "company_document_archive":
+                record._require_fields(["document_title", "requester_id", "business_date"])
+            elif record.fact_type == "certificate_registration":
                 record._require_fields(["certificate_name", "certificate_no", "holder_name"])
                 if record.issue_date and record.valid_until and record.issue_date > record.valid_until:
                     raise ValidationError(_("发证日期不能晚于有效期。"))
