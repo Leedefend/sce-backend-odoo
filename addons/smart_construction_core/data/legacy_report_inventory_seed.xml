@@ -77,9 +77,9 @@
         <field name="parameter_summary">项目。</field>
         <field name="metric_summary">本期收款、抵扣、税费、管理费、销项、进项、可抵扣金额、经手人等项目经营指标。</field>
         <field name="source_tables">BASE_SYSTEM_PROJECT, C_JXXP_DKDJ_New, C_JXXP_DKDJ_CB, C_JXXP_XXKPDJ, C_JXXP_XXKPDJ_CB, C_JXXP_YJSKDJ, C_JXXP_YJSKDJ_CB, C_JXXP_ZYFPJJD, C_JXXP_ZYFPJJD_CB, T_KK_SJDJB, T_KK_SJDJB_CB, ZJGL_SZQR_DKQRB, ZJGL_SZQR_DKQRB_CB。</field>
-        <field name="target_model">待建项目经营统计聚合；现有 sc.operating.metrics.project 可作为承载候选。</field>
-        <field name="carrier_status">partial</field>
-        <field name="next_action">比对 sc.operating.metrics.project 字段与旧过程输出，缺口字段优先补聚合，不直接复用空成本报表。</field>
+        <field name="target_model">sc.operating.metrics.project；已承载项目维度收款、销项/进项/预缴税、抵扣登记、扣款实缴/退回、公司财务收支、费用支出、结算与付款风险。</field>
+        <field name="carrier_status">ready</field>
+        <field name="next_action">继续按旧过程输出细项补经手人、管理费等展示维度；当前不把贷款登记/还款登记误并入扣款口径。</field>
         <field name="evidence">ts_function_RecordUserClick: 866 clicks, 8 users, last 2026-04-10。</field>
     </record>
 
