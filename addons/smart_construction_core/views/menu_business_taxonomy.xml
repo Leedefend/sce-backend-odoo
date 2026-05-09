@@ -413,8 +413,8 @@
         <field name="res_model">sc.expense.claim</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="smart_construction_core.view_sc_expense_claim_search"/>
-        <field name="domain">[('claim_type', '=', 'expense'), ('expense_type', '=', '承包人还项目款')]</field>
-        <field name="context">{'default_claim_type': 'expense', 'default_expense_type': '承包人还项目款', 'default_summary': '承包人还项目款', 'search_default_active_rows': 1, 'search_default_group_project': 1}</field>
+        <field name="domain">[('claim_type', 'in', ['expense', 'deposit_receive']), ('expense_type', '=', '承包人还项目款')]</field>
+        <field name="context">{'default_claim_type': 'deposit_receive', 'default_expense_type': '承包人还项目款', 'default_summary': '承包人还项目款', 'search_default_active_rows': 1, 'search_default_group_project': 1}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
             ref('smart_construction_core.group_sc_cap_finance_read'),
@@ -515,7 +515,7 @@
         <field name="res_model">sc.financing.loan</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="smart_construction_core.view_sc_financing_loan_search"/>
-        <field name="domain">[('loan_type', '=', 'borrowing_request'), ('purpose', 'ilike', '承包人借项目款')]</field>
+        <field name="domain">[('loan_type', '=', 'borrowing_request'), ('purpose', 'ilike', '借'), ('purpose', 'ilike', '项目'), ('purpose', 'ilike', '款')]</field>
         <field name="context">{'default_loan_type': 'borrowing_request', 'default_direction': 'borrowed_fund', 'default_purpose': '承包人借项目款', 'search_default_group_project': 1}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
