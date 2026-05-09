@@ -318,6 +318,15 @@ class PageAssembler:
             _logger.warning("app.permission.config missing; fallback permissions for model=%s", model)
             data["permissions"] = {}
             versions["perm"] = 0
+        if isinstance(effective_context, dict) and effective_context.get("create") is False:
+            permissions_root = data["permissions"] if isinstance(data.get("permissions"), dict) else {}
+            effective_permissions = permissions_root.get("effective") if isinstance(permissions_root.get("effective"), dict) else {}
+            effective_rights = effective_permissions.get("rights") if isinstance(effective_permissions.get("rights"), dict) else {}
+            permissions_root["create"] = False
+            effective_rights["create"] = False
+            effective_permissions["rights"] = effective_rights
+            permissions_root["effective"] = effective_permissions
+            data["permissions"] = permissions_root
 
         # 6) 动作按钮 + 工具栏（元数据可 su_env，最终显隐由前端结合 groups/permissions 再次裁剪）
         try:
@@ -370,6 +379,9 @@ class PageAssembler:
 
         # 8) head（标题/ACL 概览/上下文）
         #    - ACL 概览继续用 check_access_rights（仅四权），与 permissions.effective.rights 一致
+        can_create = env[model].check_access_rights('create', raise_exception=False)
+        if isinstance(effective_context, dict) and effective_context.get("create") is False:
+            can_create = False
         data["head"] = {
             "title": self._resolve_page_title(model, action),
             "model": model,
@@ -382,7 +394,7 @@ class PageAssembler:
             "permissions": {
                 "read": env[model].check_access_rights('read', raise_exception=False),
                 "write": env[model].check_access_rights('write', raise_exception=False),
-                "create": env[model].check_access_rights('create', raise_exception=False),
+                "create": can_create,
                 "unlink": env[model].check_access_rights('unlink', raise_exception=False),
             }
         }

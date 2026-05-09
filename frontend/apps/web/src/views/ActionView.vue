@@ -793,6 +793,7 @@ import {
 } from '../app/contracts/actionViewSurfaceContract';
 import {
   collectUnifiedPageContractV2ButtonStatus,
+  resolveUnifiedPageContractV2GlobalStatus,
   type UnifiedPageContractV2ButtonStatus,
 } from '../app/contracts/unifiedPageContractV2';
 import {
@@ -1003,6 +1004,7 @@ type ActionContractLoose = Awaited<ReturnType<typeof loadActionContract>> & {
       };
     };
   };
+  __unified_page_contract_v2?: Record<string, unknown>;
 };
 type ContractActionSelection = 'none' | 'single' | 'multi';
 type ContractActionButton = {
@@ -1173,6 +1175,8 @@ const {
 });
 
 function resolveCreateRight(contract: ActionContractLoose | null): boolean {
+  const globalStatus = resolveUnifiedPageContractV2GlobalStatus(contract?.__unified_page_contract_v2);
+  if (String(globalStatus?.pageAuth || '').trim().toLowerCase() === 'read') return false;
   const effective = contract?.permissions?.effective?.rights?.create;
   if (typeof effective === 'boolean') return effective;
   return false;

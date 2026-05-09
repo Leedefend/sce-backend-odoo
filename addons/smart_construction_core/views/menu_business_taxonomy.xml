@@ -212,6 +212,47 @@
             ref('smart_construction_core.group_sc_cap_finance_manager')
         ])]"/>
     </record>
+    <record id="action_sc_invoice_prepaid_tax_user" model="ir.actions.act_window">
+        <field name="name">预缴税款</field>
+        <field name="res_model">sc.invoice.registration</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_invoice_registration_search"/>
+        <field name="domain">[('source_kind', '=', 'prepaid_tax'), ('direction', '=', 'prepaid'), ('invoice_type', '=', '预缴税款')]</field>
+        <field name="context">{'default_source_kind': 'prepaid_tax', 'default_direction': 'prepaid', 'default_invoice_type': '预缴税款', 'default_invoice_content': '预缴税款', 'search_default_group_project': 1}</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_business_initiator'),
+            ref('smart_construction_core.group_sc_cap_finance_read'),
+            ref('smart_construction_core.group_sc_cap_finance_user'),
+            ref('smart_construction_core.group_sc_cap_finance_manager')
+        ])]"/>
+    </record>
+    <record id="action_sc_invoice_input_report_user" model="ir.actions.act_window">
+        <field name="name">进项上报</field>
+        <field name="res_model">sc.invoice.registration</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_invoice_registration_search"/>
+        <field name="domain">[('source_kind', '=', 'input_invoice_tax'), ('direction', '=', 'input'), ('invoice_type', '=', '进项上报')]</field>
+        <field name="context">{'default_source_kind': 'input_invoice_tax', 'default_direction': 'input', 'default_invoice_type': '进项上报', 'default_invoice_content': '进项上报', 'search_default_group_project': 1}</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_business_initiator'),
+            ref('smart_construction_core.group_sc_cap_finance_read'),
+            ref('smart_construction_core.group_sc_cap_finance_user'),
+            ref('smart_construction_core.group_sc_cap_finance_manager')
+        ])]"/>
+    </record>
+    <record id="action_sc_tax_deduction_registration_user" model="ir.actions.act_window">
+        <field name="name">抵扣登记</field>
+        <field name="res_model">sc.legacy.tax.deduction.fact</field>
+        <field name="view_mode">tree</field>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_tax_deduction_fact_search"/>
+        <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_group_project': 1}</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_business_initiator'),
+            ref('smart_construction_core.group_sc_cap_finance_read'),
+            ref('smart_construction_core.group_sc_cap_finance_user'),
+            ref('smart_construction_core.group_sc_cap_finance_manager')
+        ])]"/>
+    </record>
     <record id="action_sc_expense_claim_expense" model="ir.actions.act_window">
         <field name="name">费用报销单</field>
         <field name="res_model">sc.expense.claim</field>
@@ -1153,6 +1194,24 @@
               parent="smart_construction_core.menu_sc_invoice_tax_user_group"
               action="smart_construction_core.action_sc_invoice_registration_user"
               sequence="20"
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+    <menuitem id="menu_sc_invoice_prepaid_tax_user"
+              name="预缴税款"
+              parent="smart_construction_core.menu_sc_invoice_tax_user_group"
+              action="smart_construction_core.action_sc_invoice_prepaid_tax_user"
+              sequence="30"
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+    <menuitem id="menu_sc_invoice_input_report_user"
+              name="进项上报"
+              parent="smart_construction_core.menu_sc_invoice_tax_user_group"
+              action="smart_construction_core.action_sc_invoice_input_report_user"
+              sequence="40"
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+    <menuitem id="menu_sc_tax_deduction_registration_user"
+              name="抵扣登记"
+              parent="smart_construction_core.menu_sc_invoice_tax_user_group"
+              action="smart_construction_core.action_sc_tax_deduction_registration_user"
+              sequence="50"
               groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
 
     <menuitem id="menu_sc_funding_plan_group"
