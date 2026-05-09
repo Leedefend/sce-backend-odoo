@@ -487,7 +487,7 @@ def build_v1_focus_map() -> Dict[str, List[str]]:
 
 
 def build_v1_zone_order() -> Dict[str, List[str]]:
-    role_home_order = ["today_focus", "analysis", "quick_entries", "hero"]
+    role_home_order = ["today_focus", "analysis", "quick_entries"]
     return {
         "pm": role_home_order,
         "finance": role_home_order,
@@ -534,14 +534,14 @@ def build_v1_page_profile(role_code: str) -> Dict[str, Any]:
     audience = audience_map.get(role, ["owner"])
     priority_model = "task_first" if role == "pm" else "metric_first" if role == "finance" else "role_first"
     mobile_priority_map = {
-        "pm": ["today_focus", "analysis", "quick_entries", "hero"],
-        "finance": ["today_focus", "analysis", "quick_entries", "hero"],
-        "owner": ["today_focus", "analysis", "quick_entries", "hero"],
+        "pm": ["today_focus", "analysis", "quick_entries"],
+        "finance": ["today_focus", "analysis", "quick_entries"],
+        "owner": ["today_focus", "analysis", "quick_entries"],
     }
     return {
         "audience": audience,
         "priority_model": priority_model,
-        "mobile_priority": mobile_priority_map.get(role, ["today_focus", "analysis", "quick_entries", "hero"]),
+        "mobile_priority": mobile_priority_map.get(role, ["today_focus", "analysis", "quick_entries"]),
     }
 
 
@@ -834,23 +834,6 @@ def build_v1_zones(role_code: str, audience: List[str], zone_rank: Dict[str, int
                     "actions": [],
                     "payload": {"show_percentage": True},
                 },
-                {
-                    "key": "activity_feed_risk",
-                    "block_type": "activity_feed",
-                    "title": "风险动态",
-                    "priority": 60,
-                    "importance": "medium",
-                    "tone": "info",
-                    "progress": "running",
-                    "section_key": "risk",
-                    "data_source": "ds_risk_alerts",
-                    "loading_strategy": "lazy",
-                    "refreshable": True,
-                    "collapsible": False,
-                    "visibility": {"roles": audience, "capabilities": [], "expr": None},
-                    "actions": [],
-                    "payload": {"stream": "risk.actions"},
-                },
             ],
         },
         {
@@ -884,11 +867,13 @@ def build_v1_zones(role_code: str, audience: List[str], zone_rank: Dict[str, int
     ]
 
     role_zone_order: Dict[str, List[str]] = {
-        "pm": ["today_focus", "analysis", "quick_entries", "hero"],
-        "finance": ["today_focus", "analysis", "quick_entries", "hero"],
-        "owner": ["today_focus", "analysis", "quick_entries", "hero"],
+        "pm": ["today_focus", "analysis", "quick_entries"],
+        "finance": ["today_focus", "analysis", "quick_entries"],
+        "owner": ["today_focus", "analysis", "quick_entries"],
     }
     preferred_order = role_zone_order.get(_to_text(role_code), role_zone_order["owner"])
+    allowed_zone_keys = set(preferred_order)
+    zones = [zone for zone in zones if _to_text(zone.get("key")) in allowed_zone_keys]
     max_priority = 100
     priority_step = 10
     priority_map = {key: max_priority - (idx * priority_step) for idx, key in enumerate(preferred_order)}
