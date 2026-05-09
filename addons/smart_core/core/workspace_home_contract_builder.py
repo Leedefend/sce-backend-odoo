@@ -1015,9 +1015,9 @@ def _workspace_v1_zone_order(role_code: str) -> List[str]:
                 pass
 
     default_order = {
-        "pm": ["today_focus", "analysis", "quick_entries", "hero"],
-        "finance": ["today_focus", "analysis", "quick_entries", "hero"],
-        "owner": ["today_focus", "analysis", "quick_entries", "hero"],
+        "pm": ["today_focus", "analysis", "quick_entries"],
+        "finance": ["today_focus", "analysis", "quick_entries"],
+        "owner": ["today_focus", "analysis", "quick_entries"],
     }
     return list(default_order.get(_to_text(role_code).lower(), default_order["owner"]))
 
@@ -2047,7 +2047,7 @@ def _v1_page_profile(role_code: str) -> Dict[str, Any]:
     }
     audience = audience_map.get(role_code, ["owner"])
     priority_model = "task_first" if role_code == "pm" else "metric_first" if role_code == "finance" else "role_first"
-    return {"audience": audience, "priority_model": priority_model, "mobile_priority": ["hero", "today_focus", "analysis"]}
+    return {"audience": audience, "priority_model": priority_model, "mobile_priority": ["today_focus", "analysis", "quick_entries"]}
 
 
 def _v1_data_sources() -> Dict[str, Dict[str, Any]]:
@@ -2340,7 +2340,7 @@ def _build_page_orchestration_v1(role_code: str, role_source_code: str | None = 
             "page.action.refresh": "刷新",
         }
     )
-    mobile_priority = profile.get("mobile_priority") if isinstance(profile.get("mobile_priority"), list) and profile.get("mobile_priority") else ["hero", "today_focus", "analysis"]
+    mobile_priority = profile.get("mobile_priority") if isinstance(profile.get("mobile_priority"), list) and profile.get("mobile_priority") else ["today_focus", "analysis", "quick_entries"]
 
     zones: List[Dict[str, Any]] = []
     provider = _load_data_provider()
@@ -2486,23 +2486,6 @@ def _build_page_orchestration_v1(role_code: str, role_source_code: str | None = 
                     "actions": [],
                     "payload": {"show_percentage": True},
                 },
-                {
-                    "key": "activity_feed_risk",
-                    "block_type": "activity_feed",
-                    "title": v1_copy.get("block.activity_feed_risk.title") or "风险动态",
-                    "priority": 60,
-                    "importance": "medium",
-                    "tone": "info",
-                    "progress": "running",
-                    "section_key": "risk",
-                    "data_source": "ds_risk_alerts",
-                    "loading_strategy": "lazy",
-                    "refreshable": True,
-                    "collapsible": False,
-                    "visibility": {"roles": audience, "capabilities": [], "expr": None},
-                    "actions": [],
-                    "payload": {"stream": "risk.actions"},
-                },
             ],
         },
         {
@@ -2546,6 +2529,8 @@ def _build_page_orchestration_v1(role_code: str, role_source_code: str | None = 
             break
     preferred_order = _workspace_v1_zone_order(role_code)
     effective_order = preferred_order
+    allowed_zone_keys = set(effective_order)
+    zones = [zone for zone in zones if _to_text(zone.get("key")) in allowed_zone_keys]
     priority_map = {key: 100 - (idx * 10) for idx, key in enumerate(effective_order)}
     for zone in zones:
         zone_key = _to_text(zone.get("key"))
