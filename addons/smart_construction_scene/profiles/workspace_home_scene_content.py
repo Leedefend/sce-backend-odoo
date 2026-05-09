@@ -487,7 +487,7 @@ def build_v1_focus_map() -> Dict[str, List[str]]:
 
 
 def build_v1_zone_order() -> Dict[str, List[str]]:
-    role_home_order = ["hero", "quick_entries", "today_focus", "analysis"]
+    role_home_order = ["today_focus", "analysis", "quick_entries", "hero"]
     return {
         "pm": role_home_order,
         "finance": role_home_order,
@@ -884,9 +884,9 @@ def build_v1_zones(role_code: str, audience: List[str], zone_rank: Dict[str, int
     ]
 
     role_zone_order: Dict[str, List[str]] = {
-        "pm": ["hero", "quick_entries", "today_focus", "analysis"],
-        "finance": ["hero", "quick_entries", "today_focus", "analysis"],
-        "owner": ["hero", "quick_entries", "today_focus", "analysis"],
+        "pm": ["today_focus", "analysis", "quick_entries", "hero"],
+        "finance": ["today_focus", "analysis", "quick_entries", "hero"],
+        "owner": ["today_focus", "analysis", "quick_entries", "hero"],
     }
     preferred_order = role_zone_order.get(_to_text(role_code), role_zone_order["owner"])
     max_priority = 100
