@@ -572,7 +572,6 @@ const heroQuickActions = computed(() => {
 });
 const productFacts = computed(() => session.productFacts);
 const roleSurface = computed(() => session.roleSurface);
-const capabilityGroups = computed(() => session.capabilityGroups);
 const workspaceHome = computed(() => (session.workspaceHome || {}) as Record<string, unknown>);
 const workspaceLayout = computed(() => (
   workspaceHome.value.layout && typeof workspaceHome.value.layout === 'object'
@@ -655,11 +654,6 @@ const workspacePageOrchestration = computed(() => (
 const workspacePageOrchestrationV1 = computed(() => (
   workspaceHome.value.page_orchestration_v1 && typeof workspaceHome.value.page_orchestration_v1 === 'object'
     ? workspaceHome.value.page_orchestration_v1 as Record<string, unknown>
-    : {}
-));
-const workspaceSceneContractV1 = computed(() => (
-  workspaceHome.value.scene_contract_v1 && typeof workspaceHome.value.scene_contract_v1 === 'object'
-    ? workspaceHome.value.scene_contract_v1 as Record<string, unknown>
     : {}
 ));
 const workspacePageOrchestrationV1DataSources = computed(() => (
@@ -826,13 +820,6 @@ const capabilityGroupCards = computed(() => {
       denyCount: group.denyCount,
       examples: group.examples || [],
     }));
-});
-const capabilityGroupScoreMap = computed(() => {
-  const map = new Map<string, number>();
-  session.workspaceCapabilityGroupRows.forEach((group: WorkspaceCapabilityGroupRow) => {
-    map.set(group.key, group.score);
-  });
-  return map;
 });
 const licenseLevelLabel = computed(() => String(productFacts.value?.license?.level || '').trim() || 'unknown');
 const bundleNameLabel = computed(() => String(productFacts.value?.bundle?.name || '').trim() || 'default');

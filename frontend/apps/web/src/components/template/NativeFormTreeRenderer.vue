@@ -45,7 +45,7 @@
         <template v-else>
           <FormSection
             v-if="fieldSchemasForNodes(fieldChildren(node)).length"
-            :title="fieldSectionTitle(node)"
+            :title="fieldSectionTitle()"
             :columns="columns"
             :fields="fieldSchemasForNodes(fieldChildren(node))"
             tone="core"
@@ -122,7 +122,7 @@
 
       <FormSection
         v-else-if="nodeType(node) === 'field' && fieldSchemasForNodes([node]).length"
-        :title="fieldSectionTitle(node)"
+          :title="fieldSectionTitle()"
         :columns="columns"
         :fields="fieldSchemasForNodes([node])"
         tone="core"
@@ -194,9 +194,9 @@ const emit = defineEmits<{
 const activePageIndex = ref(0);
 const openMoreKeys = ref<Record<string, boolean>>({});
 const SMART_BUTTON_DIRECT_LIMIT = 4;
-const visibleNodes = computed(() => (props.nodes || []).filter((node) => isNodeVisible(node)));
+const visibleNodes = computed(() => (props.nodes || []).filter((node) => isNodeRenderable(node)));
 
-function isNodeVisible(node: NativeFormLayoutNode) {
+function isNodeRenderable(node: NativeFormLayoutNode) {
   return props.isNodeVisible(node);
 }
 
@@ -230,11 +230,11 @@ function rawChildren(node: NativeFormLayoutNode) {
 }
 
 function fieldChildren(node: NativeFormLayoutNode) {
-  return rawChildren(node).filter((child) => nodeType(child) === 'field' && isNodeVisible(child));
+  return rawChildren(node).filter((child) => nodeType(child) === 'field' && isNodeRenderable(child));
 }
 
 function buttonChildren(node: NativeFormLayoutNode) {
-  return rawChildren(node).filter((child) => nodeType(child) === 'button' && isNodeVisible(child));
+  return rawChildren(node).filter((child) => nodeType(child) === 'button' && isNodeRenderable(child));
 }
 
 function visibleActionButtons(node: NativeFormLayoutNode) {
@@ -259,7 +259,7 @@ function overflowActionButtons(node: NativeFormLayoutNode) {
 }
 
 function widgetChildren(node: NativeFormLayoutNode) {
-  return rawChildren(node).filter((child) => nodeType(child) === 'widget' && isNodeVisible(child));
+  return rawChildren(node).filter((child) => nodeType(child) === 'widget' && isNodeRenderable(child));
 }
 
 function containerChildren(node: NativeFormLayoutNode) {
@@ -276,7 +276,7 @@ function activeNotebookChildren(node: NativeFormLayoutNode) {
   return page ? rawChildren(page) : [];
 }
 
-function fieldSectionTitle(node: NativeFormLayoutNode) {
+function fieldSectionTitle() {
   return '';
 }
 

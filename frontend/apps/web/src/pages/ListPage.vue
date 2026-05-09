@@ -1093,14 +1093,6 @@ watch(
   { immediate: true },
 );
 
-function onGroupSampleLimitSelectChange(event: Event) {
-  const value = Number((event.target as HTMLSelectElement | null)?.value || 0);
-  if (!Number.isFinite(value)) return;
-  const normalized = Math.trunc(value);
-  if (!groupSampleLimitOptions.value.includes(normalized)) return;
-  props.onGroupSampleLimitChange?.(normalized);
-}
-
 const groupSampleLimitOptions = computed(() => {
   const values = Array.isArray(props.listProfile?.grouping?.sample_limits)
     ? props.listProfile?.grouping?.sample_limits || []
@@ -1196,16 +1188,6 @@ const totalPages = computed(() => {
   return Math.max(1, Math.ceil(total / listLimit.value));
 });
 const currentPage = computed(() => Math.min(totalPages.value, Math.floor(listOffset.value / listLimit.value) + 1));
-const rangeStart = computed(() => {
-  const total = listTotal.value || 0;
-  if (!total) return 0;
-  return Math.min(total, listOffset.value + 1);
-});
-const rangeEnd = computed(() => {
-  const total = listTotal.value || 0;
-  if (!total) return 0;
-  return Math.min(total, listOffset.value + props.records.length);
-});
 const showPagination = computed(() => listTotal.value !== null && props.status === 'ok' && !showGroupedRows.value);
 const toolbarSubtitle = computed(() => {
   if (listTotal.value !== null) {
@@ -1217,15 +1199,6 @@ const canPagePrev = computed(() => listOffset.value > 0);
 const canPageNext = computed(() => {
   const total = listTotal.value || 0;
   return listOffset.value + listLimit.value < total;
-});
-const paginationSummary = computed(() => {
-  const total = listTotal.value || 0;
-  if (!total) return uiLabel('pagination_total_empty', '共 0 条');
-  return uiLabel('pagination_summary', '共 {total} 条，当前 {start}-{end} 条', {
-    total,
-    start: rangeStart.value,
-    end: rangeEnd.value,
-  });
 });
 const paginationPageText = computed(() =>
   uiLabel('pagination_page', '第 {current} / {total} 页', {
