@@ -52,10 +52,11 @@ fall back to:
 /tmp/history_continuity/<db>/adhoc
 ```
 
-Replay in non-production rehearsal environments:
+Replay in non-production rehearsal environments runs in two phases:
 
 ```bash
 DB_NAME=<target_db> make history.continuity.replay
+DB_NAME=<target_db> make history.business.usable.init
 ```
 
 For a fresh production database, use the auditable production entry:
@@ -74,8 +75,8 @@ This production entry runs:
 3. apply extension module registry
 4. restart Odoo
 5. platform initialization preflight
-6. history continuity replay from packaged payloads
-7. business usable probe
+6. phase 1 history continuity data replay from packaged payloads
+7. phase 2 user-usable initialization
 8. full business smoke
 9. role matrix smoke
 10. frontend smoke
@@ -286,6 +287,7 @@ The canonical non-production replay entry remains:
 
 ```bash
 DB_NAME=<target_db> make history.continuity.replay
+DB_NAME=<target_db> make history.business.usable.init
 ```
 
 The canonical production entry is:
