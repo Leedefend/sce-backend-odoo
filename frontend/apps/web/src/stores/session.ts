@@ -848,7 +848,33 @@ export const useSessionStore = defineStore('session', {
         defaultRoute: this.defaultRoute,
         bootstrapNextIntent: this.bootstrapNextIntent,
       };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+        return;
+      } catch {
+        // Persistence is only a reload optimization. A quota or serialization
+        // failure must not block login or user initialization.
+      }
+      try {
+        const minimalSnapshot: Partial<SessionState> = {
+          user: this.user,
+          menuExpandedKeys: this.menuExpandedKeys,
+          currentAction: this.currentAction,
+          roleSurface: this.roleSurface,
+          projectContext: this.projectContext,
+          workspaceHomeRef: this.workspaceHomeRef,
+          lastTraceId: this.lastTraceId,
+          lastIntent: this.lastIntent,
+          lastLatencyMs: this.lastLatencyMs,
+          lastWriteMode: this.lastWriteMode,
+          initMeta: this.initMeta,
+          defaultRoute: this.defaultRoute,
+          bootstrapNextIntent: this.bootstrapNextIntent,
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(minimalSnapshot));
+      } catch {
+        localStorage.removeItem(STORAGE_KEY);
+      }
     },
     recordIntentTrace(params: { traceId?: string; intent: string; latencyMs?: number | null; writeMode?: string }) {
       if (params.traceId) {
@@ -922,7 +948,8 @@ export const useSessionStore = defineStore('session', {
         intent: 'system.init',
         params: {
           scene: 'web',
-          with_preload: false,
+          with_preload: true,
+          with: ['workspace_home'],
           root_xmlid: 'smart_construction_core.menu_sc_root',
           ...(this.projectContext?.selected?.id ? { current_project_id: this.projectContext.selected.id } : {}),
         },
