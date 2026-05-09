@@ -18,6 +18,7 @@
           <field name="legacy_document_no"/>
           <filter string="社保人员登记" name="social_person_registration" domain="[('fact_type', '=', 'social_person_registration')]"/>
           <filter string="社保登记" name="social_registration" domain="[('fact_type', '=', 'social_registration')]"/>
+          <filter string="工资登记" name="salary_registration" domain="[('fact_type', '=', 'salary_registration')]"/>
           <filter string="补助" name="subsidy" domain="[('fact_type', '=', 'subsidy')]"/>
           <filter string="奖金" name="bonus" domain="[('fact_type', '=', 'bonus')]"/>
           <filter string="草稿" name="draft" domain="[('state', '=', 'draft')]"/>
@@ -52,6 +53,10 @@
           <field name="social_security_base" optional="show" sum="社保基数合计"/>
           <field name="company_amount" optional="show" sum="公司承担合计"/>
           <field name="individual_amount" optional="show" sum="个人承担合计"/>
+          <field name="salary_base" optional="show" sum="薪资基数合计"/>
+          <field name="gross_amount" optional="show" sum="应发工资合计"/>
+          <field name="deduction_amount" optional="show" sum="扣款合计"/>
+          <field name="net_salary" optional="show" sum="实发工资合计"/>
           <field name="amount" optional="show" sum="金额合计"/>
           <field name="item_type" optional="show"/>
           <field name="occurrence_date" optional="show"/>
@@ -98,6 +103,14 @@
                 <field name="social_security_base" required="fact_type == 'social_person_registration'"/>
                 <field name="company_amount" required="fact_type == 'social_registration'"/>
                 <field name="individual_amount" required="fact_type == 'social_registration'"/>
+              </group>
+              <group string="工资" invisible="fact_type != 'salary_registration'">
+                <field name="period_year" required="fact_type == 'salary_registration'"/>
+                <field name="period_month" required="fact_type == 'salary_registration'"/>
+                <field name="salary_base"/>
+                <field name="gross_amount" required="fact_type == 'salary_registration'"/>
+                <field name="deduction_amount"/>
+                <field name="net_salary" required="fact_type == 'salary_registration'"/>
               </group>
               <group string="补助/奖金" invisible="fact_type not in ['subsidy', 'bonus']">
                 <field name="item_type" required="fact_type in ['subsidy', 'bonus']"/>
@@ -160,6 +173,16 @@
       <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_initiator'), ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
     </record>
 
+    <record id="action_sc_salary_registration" model="ir.actions.act_window">
+      <field name="name">工资登记</field>
+      <field name="res_model">sc.hr.payroll.document</field>
+      <field name="view_mode">tree,form</field>
+      <field name="search_view_id" ref="smart_construction_core.view_sc_hr_payroll_document_search"/>
+      <field name="domain">[('fact_type', '=', 'salary_registration')]</field>
+      <field name="context">{'default_fact_type': 'salary_registration', 'search_default_salary_registration': 1}</field>
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_initiator'), ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
+    </record>
+
     <record id="action_sc_bonus" model="ir.actions.act_window">
       <field name="name">奖金</field>
       <field name="res_model">sc.hr.payroll.document</field>
@@ -181,6 +204,12 @@
               parent="smart_construction_core.menu_sc_hr_admin_center"
               action="smart_construction_core.action_sc_social_registration"
               sequence="40"
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_business_config_admin"/>
+    <menuitem id="menu_sc_salary_registration"
+              name="工资登记"
+              parent="smart_construction_core.menu_sc_hr_admin_center"
+              action="smart_construction_core.action_sc_salary_registration"
+              sequence="45"
               groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_business_config_admin"/>
     <menuitem id="menu_sc_subsidy"
               name="补助"

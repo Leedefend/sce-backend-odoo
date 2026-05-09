@@ -14,6 +14,7 @@ class ScHrPayrollDocument(models.Model):
         return [
             ("social_person_registration", "社保人员登记"),
             ("social_registration", "社保登记"),
+            ("salary_registration", "工资登记"),
             ("subsidy", "补助"),
             ("bonus", "奖金"),
         ]
@@ -27,6 +28,10 @@ class ScHrPayrollDocument(models.Model):
     social_security_base = fields.Monetary(string="社保基数", currency_field="currency_id")
     company_amount = fields.Monetary(string="公司承担", currency_field="currency_id")
     individual_amount = fields.Monetary(string="个人承担", currency_field="currency_id")
+    salary_base = fields.Monetary(string="薪资基数", currency_field="currency_id")
+    gross_amount = fields.Monetary(string="应发工资", currency_field="currency_id")
+    deduction_amount = fields.Monetary(string="扣款合计", currency_field="currency_id")
+    net_salary = fields.Monetary(string="实发工资", currency_field="currency_id")
     item_type = fields.Char(string="事项类型", tracking=True)
     amount = fields.Monetary(string="金额", currency_field="currency_id", tracking=True)
     occurrence_date = fields.Date(string="发生日期", index=True)
@@ -54,6 +59,10 @@ class ScHrPayrollDocument(models.Model):
             "social_security_base",
             "company_amount",
             "individual_amount",
+            "salary_base",
+            "gross_amount",
+            "deduction_amount",
+            "net_salary",
             "item_type",
             "amount",
             "occurrence_date",
@@ -74,6 +83,10 @@ class ScHrPayrollDocument(models.Model):
                     record._require_fields(["id_number", "social_security_base"])
                 else:
                     record._require_fields(["company_amount", "individual_amount"])
+            elif record.fact_type == "salary_registration":
+                if not record.employee_user_id and not record.employee_name:
+                    raise ValidationError(_("请补齐人员后再办理。"))
+                record._require_fields(["department_id", "period_year", "period_month", "gross_amount", "net_salary"])
             elif record.fact_type in ("subsidy", "bonus"):
                 if not record.employee_user_id and not record.employee_name:
                     raise ValidationError(_("请补齐人员后再办理。"))
