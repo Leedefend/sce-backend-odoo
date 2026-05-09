@@ -1,4 +1,5 @@
 import type { Ref } from 'vue';
+import type { LocationQueryRaw, Router } from 'vue-router';
 
 type UseActionViewHeaderRuntimeOptions = {
   batchMessage: Ref<string>;
@@ -11,16 +12,16 @@ type UseActionViewHeaderRuntimeOptions = {
   routerPush: (target: unknown) => Promise<unknown>;
   executePageContractAction: (input: {
     actionKey: string;
-    router: unknown;
-    actionIntent: unknown;
-    actionTarget: unknown;
-    query: Record<string, unknown>;
+    router: Router;
+    actionIntent: (key: string, fallback?: string) => string;
+    actionTarget: (key: string) => Record<string, unknown>;
+    query: LocationQueryRaw;
     onRefresh: () => void;
     onFallback: (key: string) => Promise<boolean>;
   }) => Promise<boolean>;
-  router: unknown;
-  pageActionIntent: unknown;
-  pageActionTarget: unknown;
+  router: Router;
+  pageActionIntent: (key: string, fallback?: string) => string;
+  pageActionTarget: (key: string) => Record<string, unknown>;
 };
 
 export function useActionViewHeaderRuntime(options: UseActionViewHeaderRuntimeOptions) {
@@ -44,7 +45,7 @@ export function useActionViewHeaderRuntime(options: UseActionViewHeaderRuntimeOp
       router: options.router,
       actionIntent: options.pageActionIntent,
       actionTarget: options.pageActionTarget,
-      query: options.resolveWorkspaceContextQuery(),
+      query: options.resolveWorkspaceContextQuery() as LocationQueryRaw,
       onRefresh: reload,
       onFallback: async (key) => {
         if (key === 'open_my_work') {
