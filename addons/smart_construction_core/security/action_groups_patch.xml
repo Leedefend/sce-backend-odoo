@@ -185,6 +185,7 @@
         <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
     </record>
     <record id="menu_project_quota_center" model="ir.ui.menu">
+        <field name="action" ref="smart_construction_core.action_project_quota_tree"/>
         <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
     </record>
     <record id="menu_quota_import_wizard" model="ir.ui.menu">

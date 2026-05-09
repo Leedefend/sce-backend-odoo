@@ -748,6 +748,13 @@ def _ui_source_context(source: dict[str, Any], ui: dict[str, Any]) -> dict[str, 
 def _ui_contract_page_auth(source: dict[str, Any], ui: dict[str, Any], render_profile: str, view_type: str) -> str:
     if render_profile == "readonly":
         return "read"
+    source_context = _ui_source_context(source, ui)
+    context = _dict(source_context.get("context"))
+    if (
+        context.get("sc_runtime_user_management") is True
+        and render_profile in {"create", "edit"}
+    ):
+        return "edit"
     permission_sources = [
         _dict(_dict(ui.get("head")).get("permissions")),
         _dict(_dict(source.get("head")).get("permissions")),

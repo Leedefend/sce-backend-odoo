@@ -310,6 +310,7 @@ class IntentDispatcher(http.Controller):
 
             # 修复 Header 传 DB 但后端不读的问题：统一 DB 解析优先级 + 安全边界
             hdr = request.httprequest.headers
+            x_db_locked_hdr = hdr.get("X-Odoo-DB-Locked")
             x_db_hdr = hdr.get("X-Odoo-DB") or hdr.get("X-DB")
 
             def _is_local_request() -> bool:
@@ -344,11 +345,14 @@ class IntentDispatcher(http.Controller):
                     return request.env.cr.dbname
                 return None
 
-            # DB 解析优先级: params > query > header > session > env
+            # DB 解析优先级: locked header > params > query > header > session > env
             effective_db = None
             db_source = "unknown"
 
-            if params.get("db"):
+            if x_db_locked_hdr:
+                effective_db = x_db_locked_hdr
+                db_source = "locked_header"
+            elif params.get("db"):
                 effective_db = params.get("db")
                 db_source = "params"
             elif kwargs.get("db"):
@@ -361,7 +365,7 @@ class IntentDispatcher(http.Controller):
                 effective_db = request.session.db
                 db_source = "session"
 
-            # 非 DEV 且非管理员：禁止通过 params/query/header 覆盖 DB
+            # 非 DEV 且非管理员：禁止通过 params/query/header 覆盖 DB；反代锁库头除外。
             if effective_db and db_source in {"params", "query", "header"} and not _env_is_dev() and not _user_is_admin():
                 _logger.warning("Blocked db override from %s in non-dev env", db_source)
                 effective_db = _default_db()

@@ -169,6 +169,23 @@ def _check_action_domain():
         errors.append("runtime user action domain leaked platform/system admin users")
     if env["res.users"].sudo().search([("login", "=", "weihuguanliyuan")], limit=1) not in users:
         errors.append("runtime user action domain should keep business config admin user visible")
+    forbidden_logins = {"default"}
+    leaked_non_real = users.filtered(
+        lambda user: (
+            not user.active
+            or user.share
+            or str(user.login or "").startswith(("demo_", "legacy_", "history_system_user_"))
+            or str(user.login or "") in forbidden_logins
+            or "测试" in str(user.name or "")
+            or "临时账号" in str(user.name or "")
+            or str(user.name or "").startswith(("Demo", "Smoke", "技术"))
+            or not env["sc.legacy.user.profile"].sudo().with_context(active_test=False).search_count(
+                [("user_id", "=", user.id)]
+            )
+        )
+    )
+    if leaked_non_real:
+        errors.append("runtime user action domain leaked non-company-real users: %s" % ", ".join(leaked_non_real.mapped("login")))
     _fail(errors)
     print("USER_PERMISSION_ACTION_DOMAIN_VISIBLE_COUNT=%s" % len(users))
 

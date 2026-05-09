@@ -47,6 +47,7 @@ type PolicyContext = {
   capabilities: Set<string>;
   userGroups: Set<string>;
   roleCode: string;
+  submittedFields?: Set<string>;
 };
 
 function hasProfile(list: unknown, profile: RenderProfile): boolean {
@@ -245,6 +246,7 @@ export function collectPolicyValidationErrors(contract: ActionContract | null, c
     if (!hasProfile(profiles, ctx.profile)) continue;
     const field = String(item.field || '').trim();
     if (!field) continue;
+    if (ctx.submittedFields && !ctx.submittedFields.has(field)) continue;
     if (isEmpty(ctx.formData[field])) {
       const message = String(item.message || `${field} is required`).trim();
       errors.push(message);

@@ -23,10 +23,23 @@ Rehearsal:
 DB_NAME=sc_demo make history.continuity.rehearse
 ```
 
-Replay:
+Replay, phase 1 data replay only:
 
 ```bash
 DB_NAME=<target_db> make history.continuity.replay
+```
+
+Phase 2 user-usable initialization:
+
+```bash
+DB_NAME=<target_db> make history.business.usable.init
+```
+
+Two-phase prod-sim replay:
+
+```bash
+DB_NAME=<target_db> make prod.sim.data.replay
+DB_NAME=<target_db> make prod.sim.business.usable.init
 ```
 
 Fresh production initialization:
@@ -63,7 +76,7 @@ Rehearsal mode:
 3. replay payload precheck
 4. usability probe
 
-Replay mode:
+Replay mode phase 1, data replay:
 
 1. historical users rebuild
 2. legacy user context replay
@@ -72,7 +85,13 @@ Replay mode:
 5. project anchor replay
 6. legacy material catalog archive replay
 7. contract / receipt / project-member / payment / finance history replay
-8. usability probe
+
+Phase 2, user-usable initialization:
+
+1. formal projection refresh into user-visible runtime models
+2. organization materialization and partner semantic normalization
+3. formal projection refresh probe
+4. business usability probe
 
 Supported resume step names:
 
@@ -298,9 +317,9 @@ Supported resume step names:
 
 ## Runtime Surface Closure Requirement
 
-The replay contract requires the runtime projection lanes above before final
-business usability. Importing carrier/fact rows alone is incomplete when a
-formal runtime model exists for user-facing work.
+The replay contract requires the phase 2 user-usable initialization before
+final business usability. Importing carrier/fact rows alone is incomplete when
+a formal runtime model exists for user-facing work.
 
 Final acceptance must use:
 
@@ -392,10 +411,11 @@ Replay acceptance:
 
 ## Server Use
 
-Server deployment should call the same Make target:
+Server-side non-production replay should call both phases:
 
 ```bash
 DB_NAME=<server_db> make history.continuity.replay
+DB_NAME=<server_db> make history.business.usable.init
 ```
 
 Fresh production deployment should call:

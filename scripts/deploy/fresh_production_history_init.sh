@@ -63,17 +63,15 @@ echo "[fresh.production.history.init] step=runtime_language_baseline_probe"
 DB_NAME="$DB_NAME" COMPOSE_FILES="$COMPOSE_FILES" SC_RUNTIME_LANG="${SC_RUNTIME_LANG:-zh_CN}" \
   "$ROOT_DIR/scripts/ops/odoo_shell_exec.sh" <"$ROOT_DIR/scripts/verify/runtime_language_baseline_probe.py"
 
-echo "[fresh.production.history.init] step=history_replay"
-DB_NAME="$DB_NAME" HISTORY_CONTINUITY_MODE=replay bash "$ROOT_DIR/scripts/migration/history_continuity_oneclick.sh"
+echo "[fresh.production.history.init] phase=1 step=data_replay"
+DB_NAME="$DB_NAME" COMPOSE_FILES="$COMPOSE_FILES" HISTORY_CONTINUITY_MODE=replay HISTORY_CONTINUITY_INCLUDE_FORMAL_PROJECTIONS=0 \
+  bash "$ROOT_DIR/scripts/migration/history_continuity_oneclick.sh"
 
-echo "[fresh.production.history.init] step=formal_projection_refresh"
-$(command -v make) -C "$ROOT_DIR" DB_NAME="$DB_NAME" COMPOSE_FILES="$COMPOSE_FILES" \
-  MIGRATION_ARTIFACT_ROOT="$ARTIFACT_ROOT" \
+echo "[fresh.production.history.init] phase=2 step=business_usable_init"
+DB_NAME="$DB_NAME" COMPOSE_FILES="$COMPOSE_FILES" \
+  MIGRATION_REPLAY_DB_ALLOWLIST="$ALLOWLIST" \
   FORMAL_PROJECTION_ARTIFACT_ROOT="$ARTIFACT_ROOT" \
-  prod.sim.formal.projections.refresh
-
-echo "[fresh.production.history.init] step=business_usable_probe"
-DB_NAME="$DB_NAME" "$ROOT_DIR/scripts/ops/odoo_shell_exec.sh" <"$ROOT_DIR/scripts/migration/history_business_usable_probe.py"
+  bash "$ROOT_DIR/scripts/migration/history_business_usable_init.sh"
 
 echo "[fresh.production.history.init] step=business_smoke"
 DB_NAME="$DB_NAME" BASE_URL="${BASE_URL:-http://127.0.0.1:18069}" "$ROOT_DIR/scripts/audit/smoke_business_full.sh"

@@ -48,12 +48,15 @@ platform_config_group = env.ref("smart_construction_core.group_sc_cap_config_adm
 
 business_config_menus = []
 system_config_menus = []
+user_permission_menus = []
 if user:
     visible_ids = Menu.with_user(user)._visible_menu_ids(debug=False)
     for menu in Menu.browse(visible_ids):
         path = menu_path(menu)
         if "业务配置" in path:
             business_config_menus.append(path)
+        if "用户信息与权限" in path or "用户账号与权限" in path:
+            user_permission_menus.append(path)
         if "系统配置" in path:
             system_config_menus.append(path)
 
@@ -75,6 +78,8 @@ payload = {
         "is_system": bool(user and user.has_group("base.group_system")),
         "business_config_menu_count": len(business_config_menus),
         "business_config_menus": sorted(business_config_menus),
+        "user_permission_menu_count": len(user_permission_menus),
+        "user_permission_menus": sorted(user_permission_menus),
         "system_config_menu_count": len(system_config_menus),
         "system_config_menus": sorted(system_config_menus),
     },
@@ -89,7 +94,7 @@ elif not payload["user"]["has_business_config"]:
     errors.append("wutao: missing business configuration capability")
 elif payload["user"]["has_platform_config"] or payload["user"]["is_system"]:
     errors.append("wutao: must not have platform/system administrator capability")
-elif not business_config_menus:
+elif not business_config_menus and not user_permission_menus:
     errors.append("wutao: business configuration menus are not visible")
 
 if errors:

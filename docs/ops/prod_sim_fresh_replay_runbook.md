@@ -94,16 +94,18 @@ make prod.sim.fresh.replay \
 5. 安装生产模块集。
 6. 应用扩展模块注册。
 7. 重建核心税率基线，确保历史合同写入需要的 `销项VAT 9%` 和 `进项VAT 13%` 存在。
-8. 执行第一次历史完整重放主链 `history_continuity_oneclick.sh`：
+8. 阶段 1：执行历史完整重放主链 `history_continuity_oneclick.sh`，只负责导入/重放历史数据，不执行正式投影：
    - 历史用户、部门、角色、真实登录账号。
    - 项目锚点、往来单位、合同、采购合同、收款、付款/支出、实际付款。
    - 附件索引/附件回填、税票、资金流水/快照、融资、结算调整、费用报销、施工日志。
-   - 历史待办、工作台、驾驶舱和运行态投影。
-   - 历史业务运行探针。
 9. 设置运行语言基线，确保 `admin/wutao/chenshuai` 为 `zh_CN` / `Asia/Shanghai`。
 10. 执行平台初始化预检。
-11. 执行第二次 SCBS no-legacy 材料/业务事实重放。
-12. 执行 SCBS closure、no-legacy acceptance 和 strict release acceptance。
+11. 阶段 1：执行 SCBS no-legacy 材料/业务事实重放，仍属于数据重放阶段。
+12. 阶段 2：执行用户可直接使用初始化 `history_business_usable_init.sh`，将导入数据统一投影到用户可见运行面：
+   - 工作台、资金台账、费用、收款、付款、发票、合同、施工日志、材料等正式模型。
+   - 组织架构物化、客户/供应商业务身份归一化。
+   - `formal_projection_refresh_probe` 验收投影完整性。
+   - `history_business_usable_probe` 验收用户可直接使用状态。
 13. 执行 Business Full 和角色矩阵 smoke。
 
 该入口不构建前端，不执行前端 smoke，不导出数据库备份，不生成 zip，不上传服务器。前端验证、备份和上传都是重建验收通过后的独立动作。
@@ -113,8 +115,8 @@ make prod.sim.fresh.replay \
 该流程只验证数据库和业务运行态：
 
 - 新库能从零安装生产模块。
-- 第一次历史完整重放主链能一次跑通，并修复历史业务数据。
-- 第二次 SCBS no-legacy 重放能一次跑通。
+- 阶段 1 数据重放能一次跑通，并修复历史业务数据。
+- 阶段 2 用户可直接使用初始化能一次跑通，且用户可见运行态验收为 ready。
 - 用户、权限、语言、项目、合同、收付款、材料入库等核心业务数据通过运行态探针。
 - 不以任意前端构建、前端页面访问或浏览器 smoke 作为数据重建达标条件。
 
@@ -182,7 +184,7 @@ sha256sum artifacts/db_backups/<run_id>/sc_prod_sim.dump \
 - `make deploy.prod.sim.oneclick`：只部署 prod-sim 栈和模块，不保证从零重放。
 - `scripts/diag/fe_smoke.sh`：前端独立验收，不属于数据重建流程。
 - `make history.production.fresh_init`：旧生产初始化入口，不作为当前模拟生产统一重建入口。
-- `make history.continuity.replay`：第一次历史完整重放主链，只能作为统一入口的内部步骤或局部排障入口，不能单独代表最终 SCBS 正式重建。
+- `make history.continuity.replay`：阶段 1 历史数据重放主链，只能作为统一入口的内部步骤或局部排障入口，不能单独代表用户可直接使用状态。
 - 单个 `fresh_db.*`、`history.*`：只用于定位某一条数据通道。
 
 ## 失败续跑

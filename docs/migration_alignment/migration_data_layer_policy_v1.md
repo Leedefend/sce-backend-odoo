@@ -148,3 +148,28 @@ Fresh replay must default to:
 
 Any row that cannot satisfy its layer rule becomes evidence in the discard/hold
 ledger. It must not be forced into the new database.
+
+## Replay And User-Usable Initialization Boundary
+
+Historical data replay and user-usable initialization are separate phases.
+
+- Phase 1 data replay imports or rebuilds legacy-backed source facts and
+  carrier records. It must not run formal projections or projection-dependent
+  runtime probes.
+- Phase 2 user-usable initialization materializes those facts into
+  user-visible runtime models after replay finishes.
+- Do not rely on a projection refresh to backfill missing replay input fields.
+- After restoring or replaying data, run one unified user-usable initialization
+  instead of hand-running individual projection scripts.
+
+Recommended daily/prod-sim sequence:
+
+1. `make prod.sim.data.replay DB_NAME=<db>` for import/replay only.
+2. `make prod.sim.business.usable.init DB_NAME=<db>` for user-visible formal
+   surfaces and business usability acceptance.
+
+The combined convenience entry is:
+
+```bash
+make prod.sim.replay.then.usable.init DB_NAME=<db>
+```

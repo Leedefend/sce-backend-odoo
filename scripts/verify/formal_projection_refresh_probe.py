@@ -58,6 +58,10 @@ def count_table(table_name: str, where: str = "TRUE") -> int:
     return int(scalar(f"SELECT COUNT(*) FROM {table_name} WHERE {where}") or 0)
 
 
+def count_query(sql: str) -> int:
+    return int(scalar(f"SELECT COUNT(*) FROM ({sql}) AS probe_count_query") or 0)
+
+
 def count_legacy_or_all(table_name: str) -> int:
     if column_exists(table_name, "source_origin"):
         return count_table(table_name, "source_origin = 'legacy'")
@@ -127,6 +131,94 @@ counts = {
     "treasury_reconciliation": count_table("sc_treasury_reconciliation", "source_origin = 'legacy'"),
     "account_transaction_line": count_table("sc_legacy_account_transaction_line"),
     "treasury_ledger": count_legacy_or_all("sc_treasury_ledger"),
+    "partner_semantic_customer_target": count_query(
+        """
+        SELECT DISTINCT partner_id
+          FROM construction_contract
+         WHERE type = 'out'
+           AND partner_id IS NOT NULL
+        UNION
+        SELECT DISTINCT partner_id
+          FROM sc_receipt_income
+         WHERE partner_id IS NOT NULL
+           AND state IN ('received', 'legacy_confirmed')
+           AND COALESCE(amount, 0) > 0
+        UNION
+        SELECT DISTINCT partner_id
+          FROM sc_legacy_receipt_income_fact
+         WHERE partner_id IS NOT NULL
+           AND COALESCE(source_amount, 0) > 0
+        """
+    ),
+    "partner_semantic_supplier_target": count_query(
+        """
+        SELECT DISTINCT partner_id
+          FROM construction_contract
+         WHERE type = 'in'
+           AND partner_id IS NOT NULL
+        UNION
+        SELECT DISTINCT partner_id
+          FROM sc_general_contract
+         WHERE partner_id IS NOT NULL
+        UNION
+        SELECT DISTINCT partner_id
+          FROM sc_payment_execution
+         WHERE partner_id IS NOT NULL
+           AND source_kind = 'actual_outflow'
+           AND state IN ('paid', 'legacy_confirmed')
+           AND COALESCE(paid_amount, 0) > 0
+        """
+    ),
+    "partner_semantic_customer_rank_mismatch": count_query(
+        """
+        WITH customer_target AS (
+            SELECT DISTINCT partner_id
+              FROM construction_contract
+             WHERE type = 'out'
+               AND partner_id IS NOT NULL
+            UNION
+            SELECT DISTINCT partner_id
+              FROM sc_receipt_income
+             WHERE partner_id IS NOT NULL
+               AND state IN ('received', 'legacy_confirmed')
+               AND COALESCE(amount, 0) > 0
+            UNION
+            SELECT DISTINCT partner_id
+              FROM sc_legacy_receipt_income_fact
+             WHERE partner_id IS NOT NULL
+               AND COALESCE(source_amount, 0) > 0
+        )
+        SELECT p.id
+          FROM res_partner p
+          LEFT JOIN customer_target t ON t.partner_id = p.id
+         WHERE (t.partner_id IS NOT NULL) IS DISTINCT FROM (COALESCE(p.customer_rank, 0) > 0)
+        """
+    ),
+    "partner_semantic_supplier_rank_mismatch": count_query(
+        """
+        WITH supplier_target AS (
+            SELECT DISTINCT partner_id
+              FROM construction_contract
+             WHERE type = 'in'
+               AND partner_id IS NOT NULL
+            UNION
+            SELECT DISTINCT partner_id
+              FROM sc_general_contract
+             WHERE partner_id IS NOT NULL
+            UNION
+            SELECT DISTINCT partner_id
+              FROM sc_payment_execution
+             WHERE partner_id IS NOT NULL
+               AND source_kind = 'actual_outflow'
+               AND state IN ('paid', 'legacy_confirmed')
+               AND COALESCE(paid_amount, 0) > 0
+        )
+        SELECT p.id
+          FROM res_partner p
+          LEFT JOIN supplier_target t ON t.partner_id = p.id
+         WHERE (t.partner_id IS NOT NULL) IS DISTINCT FROM (COALESCE(p.supplier_rank, 0) > 0)
+        """
+    ),
 }
 
 gaps: list[dict[str, object]] = []
@@ -183,6 +275,24 @@ add_gap(
     "资金对账正式模型为空",
 )
 add_gap(gaps, "treasury_ledger", counts["account_transaction_line"], counts["treasury_ledger"], "资金台账正式模型为空")
+if counts["partner_semantic_customer_rank_mismatch"] > 0:
+    gaps.append(
+        {
+            "key": "partner_semantic_customer_rank",
+            "source": counts["partner_semantic_customer_rank_mismatch"],
+            "target": 0,
+            "detail": "客户身份与收款/收入业务事实不一致",
+        }
+    )
+if counts["partner_semantic_supplier_rank_mismatch"] > 0:
+    gaps.append(
+        {
+            "key": "partner_semantic_supplier_rank",
+            "source": counts["partner_semantic_supplier_rank_mismatch"],
+            "target": 0,
+            "detail": "供应商身份与合同/付款业务事实不一致",
+        }
+    )
 
 warnings = []
 if counts["legacy_material_detail"] > 0 and counts["material_catalog_with_category"] <= 0:
