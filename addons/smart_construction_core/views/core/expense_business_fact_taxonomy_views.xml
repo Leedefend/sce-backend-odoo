@@ -411,10 +411,10 @@
         </record>
 
         <record id="menu_sc_expense_claim" model="ir.ui.menu">
-            <field name="sequence">10</field>
+            <field name="sequence">20</field>
         </record>
         <record id="menu_sc_project_expense_claim" model="ir.ui.menu">
-            <field name="sequence">20</field>
+            <field name="sequence">30</field>
         </record>
         <record id="menu_sc_bid_deposit_pay" model="ir.ui.menu">
             <field name="name">投标保证金支付</field>
@@ -466,19 +466,19 @@
                   name="历史费用/保证金流出"
                   parent="smart_construction_core.menu_sc_expense_reimbursement_group"
                   action="smart_construction_core.action_sc_legacy_expense_deposit_outflow_fact"
-                  sequence="70"
+                  sequence="110"
                   groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
         <menuitem id="menu_sc_legacy_expense_deposit_refund_fact"
                   name="历史费用/保证金流入退回"
                   parent="smart_construction_core.menu_sc_expense_reimbursement_group"
                   action="smart_construction_core.action_sc_legacy_expense_deposit_refund_fact"
-                  sequence="80"
+                  sequence="120"
                   groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
         <menuitem id="menu_sc_legacy_expense_reimbursement_line_finance"
                   name="历史费用报销明细"
                   parent="smart_construction_core.menu_sc_expense_reimbursement_group"
                   action="smart_construction_core.action_sc_legacy_expense_reimbursement_line_finance"
-                  sequence="90"
+                  sequence="130"
                   groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
 
         <!-- 扣款、税费和资金确认事实。 -->

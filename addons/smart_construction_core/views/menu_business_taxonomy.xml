@@ -1380,6 +1380,7 @@
     <menuitem id="menu_sc_expense_reimbursement_group"
               name="费用中心"
               parent="smart_construction_core.menu_sc_finance_center"
+              action="smart_construction_core.action_sc_expense_claim_reimbursement_request"
               sequence="40"/>
     <menuitem id="menu_sc_income_expense_user_group"
               name="收支"
@@ -1513,55 +1514,55 @@
               name="公司扣款"
               parent="smart_construction_core.menu_sc_expense_reimbursement_group"
               action="smart_construction_core.action_sc_expense_claim_expense"
-              sequence="10"
+              sequence="40"
               groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
     <menuitem id="menu_sc_company_income"
               name="公司收入"
               parent="smart_construction_core.menu_sc_expense_reimbursement_group"
               action="smart_construction_core.action_sc_receipt_income"
-              sequence="20"
+              sequence="50"
               groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
     <menuitem id="menu_sc_company_expense"
               name="公司支出"
               parent="smart_construction_core.menu_sc_expense_reimbursement_group"
               action="smart_construction_core.action_sc_payment_execution"
-              sequence="30"
+              sequence="60"
               groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
     <menuitem id="menu_sc_advance_fund"
               name="备用金"
               parent="smart_construction_core.menu_sc_expense_reimbursement_group"
               action="smart_construction_core.action_sc_expense_claim_advance_fund"
-              sequence="35"
+              sequence="70"
               groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
     <menuitem id="menu_sc_borrowing_bill"
               name="借款单"
               parent="smart_construction_core.menu_sc_expense_reimbursement_group"
               action="smart_construction_core.action_sc_financing_loan_borrowing"
-              sequence="36"
+              sequence="80"
               groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
     <menuitem id="menu_sc_repayment_bill"
               name="还款单"
               parent="smart_construction_core.menu_sc_expense_reimbursement_group"
               action="smart_construction_core.action_sc_expense_claim_repayment"
-              sequence="37"
+              sequence="90"
               groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
     <record id="menu_sc_expense_claim" model="ir.ui.menu">
         <field name="name">费用报销单</field>
         <field name="parent_id" ref="smart_construction_core.menu_sc_expense_reimbursement_group"/>
-        <field name="sequence">40</field>
+        <field name="sequence">20</field>
         <field name="action" ref="smart_construction_core.action_sc_expense_claim_expense"/>
     </record>
     <menuitem id="menu_sc_reimbursement_request"
               name="报销申请"
               parent="smart_construction_core.menu_sc_expense_reimbursement_group"
               action="smart_construction_core.action_sc_expense_claim_reimbursement_request"
-              sequence="38"
+              sequence="10"
               groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
     <menuitem id="menu_sc_project_expense_claim"
               name="项目费用报销单"
               parent="smart_construction_core.menu_sc_expense_reimbursement_group"
               action="smart_construction_core.action_sc_expense_claim_project"
-              sequence="50"
+              sequence="30"
               groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
     <menuitem id="menu_sc_deposit_management_group"
               name="保证金管理"
@@ -1850,7 +1851,7 @@
     <record id="menu_sc_legacy_user_context" model="ir.ui.menu">
         <field name="parent_id" ref="smart_construction_core.menu_sc_business_config_center"/>
         <field name="action" ref="smart_construction_core.action_sc_runtime_user_management"/>
-        <field name="sequence">70</field>
+        <field name="sequence">20</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_config_admin'),
             ref('smart_construction_core.group_sc_cap_config_admin'),
@@ -1913,28 +1914,46 @@
     <record id="menu_sc_dictionary" model="ir.ui.menu">
         <field name="name">数据字典</field>
         <field name="parent_id" ref="smart_construction_core.menu_sc_business_config_center"/>
-        <field name="sequence">10</field>
+        <field name="sequence">70</field>
     </record>
     <record id="menu_sc_organization_department" model="ir.ui.menu">
         <field name="name">组织架构</field>
         <field name="parent_id" ref="smart_construction_core.menu_sc_business_config_center"/>
-        <field name="sequence">20</field>
+        <field name="sequence">10</field>
         <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_data_read')])]"/>
     </record>
     <record id="menu_sc_legacy_material_detail" model="ir.ui.menu">
         <field name="name">材料档案</field>
         <field name="parent_id" ref="smart_construction_core.menu_sc_business_config_center"/>
         <field name="action" ref="smart_construction_core.action_sc_material_product_template"/>
-        <field name="sequence">30</field>
+        <field name="sequence">60</field>
     </record>
     <record id="menu_sc_approval_policy" model="ir.ui.menu">
         <field name="name">审批配置</field>
         <field name="parent_id" ref="smart_construction_core.menu_sc_business_config_center"/>
-        <field name="sequence">60</field>
+        <field name="sequence">31</field>
     </record>
     <record id="menu_sc_project_cost_code" model="ir.ui.menu">
         <field name="name">预算类型</field>
         <field name="parent_id" ref="smart_construction_core.menu_sc_business_config_center"/>
         <field name="sequence">50</field>
+    </record>
+    <record id="menu_sc_approval_scope" model="ir.ui.menu">
+        <field name="sequence">30</field>
+    </record>
+    <record id="menu_sc_company_document_archive" model="ir.ui.menu">
+        <field name="sequence">35</field>
+    </record>
+    <record id="menu_sc_project_stage_requirement_items" model="ir.ui.menu">
+        <field name="sequence">40</field>
+    </record>
+    <record id="menu_project_quota_root" model="ir.ui.menu">
+        <field name="sequence">80</field>
+    </record>
+    <record id="menu_sc_dictionary_root" model="ir.ui.menu">
+        <field name="sequence">90</field>
+    </record>
+    <record id="menu_sc_legacy_user_priority_menu_plan" model="ir.ui.menu">
+        <field name="sequence">100</field>
     </record>
 </odoo>

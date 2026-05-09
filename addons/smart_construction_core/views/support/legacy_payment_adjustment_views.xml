@@ -100,6 +100,6 @@
               name="历史付款退款/调整"
               parent="smart_construction_core.menu_sc_finance_center"
               action="action_sc_legacy_payment_adjustment_fact"
-              sequence="37"
+              sequence="90"
               groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
 </odoo>
