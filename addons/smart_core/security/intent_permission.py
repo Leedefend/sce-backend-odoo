@@ -139,6 +139,13 @@ def _resolve_action(env, action_id, action_type=None):
     return None
 
 
+def _is_ui_only_user_preference_intent(intent_name):
+    return str(intent_name or "").strip() in {
+        "user.view.preference.get",
+        "user.view.preference.set",
+    }
+
+
 def _effective_flags(Entitlement, company):
     ent = Entitlement.get_effective(company)
     if not ent:
@@ -196,7 +203,8 @@ def check_intent_permission(ctx):
 
     # ✅ 校验模型访问权限
     model_obj = _resolve_model(env, model) if model else None
-    if model:
+    skip_model_acl = _is_ui_only_user_preference_intent(intent_name)
+    if model and not skip_model_acl:
         try:
             model_obj.check_access_rights(access_mode)
         except AccessError:
@@ -204,7 +212,7 @@ def check_intent_permission(ctx):
 
     # ✅ 校验记录访问权限（如果传入 record_id/id/ids；create 无既有记录可校验）
     record_ids = _record_ids(ctx_params)
-    if model and record_ids and access_mode != "create":
+    if model and record_ids and access_mode != "create" and not skip_model_acl:
         rec = model_obj.browse(record_ids)
         existing = rec.exists()
         try:

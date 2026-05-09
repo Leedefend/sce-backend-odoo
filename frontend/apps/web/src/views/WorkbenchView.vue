@@ -191,6 +191,7 @@ const router = useRouter();
 
 const reason = computed(() => String(route.query.reason || ''));
 const menuId = computed(() => Number(route.query.menu_id || 0) || undefined);
+const menuLabel = computed(() => String(route.query.label || '').trim());
 const actionId = computed(() => Number(route.query.action_id || 0) || undefined);
 const sceneKey = computed(() => parseSceneKeyFromQuery(route.query as LocationQueryRaw));
 const session = useSessionStore();
@@ -342,12 +343,36 @@ const panelVariant = computed(() => {
 });
 
 const firstReachableMenuId = computed(() => findFirstReachableMenuId(session.menuTree));
+const navNoActionMenuHidden = computed(() => {
+  return reason.value === ErrorCodes.NAV_MENU_NO_ACTION
+    && !!menuId.value
+    && session.menuTree.length > 0
+    && !findMenuNodeById(session.menuTree, menuId.value)
+    && !findMenuNodeByLabel(session.menuTree, menuLabel.value);
+});
 
 onMounted(() => {
   const normalized = normalizeEmbeddedSceneQuery(route.query as LocationQueryRaw);
   if (normalized.changed) {
     router.replace({ path: route.path, query: normalized.query }).catch(() => {});
     return;
+  }
+  if (navNoActionMenuHidden.value) {
+    const fallbackMenuId = firstReachableMenuId.value;
+    if (fallbackMenuId) {
+      router.replace({ path: `/m/${fallbackMenuId}`, query: workspaceContextQuery.value }).catch(() => {});
+      return;
+    }
+    router.replace({ path: session.resolveLandingPath('/'), query: workspaceContextQuery.value }).catch(() => {});
+    return;
+  }
+  if (reason.value === ErrorCodes.NAV_MENU_NO_ACTION && menuLabel.value) {
+    const visibleGroup = findMenuNodeByLabel(session.menuTree, menuLabel.value);
+    const childMenuId = visibleGroup ? findFirstReachableMenuId(visibleGroup.children || []) : null;
+    if (childMenuId) {
+      router.replace({ path: `/m/${childMenuId}`, query: workspaceContextQuery.value }).catch(() => {});
+      return;
+    }
   }
   if (!reason.value) {
     if (sceneKey.value) {
@@ -496,6 +521,52 @@ function resolveNodeSceneKey(node: NavNode): string {
   return asText((node as NavNode & { scene_key?: string; sceneKey?: string }).scene_key)
     || asText((node as NavNode & { scene_key?: string; sceneKey?: string }).sceneKey)
     || asText(node.meta?.scene_key);
+}
+
+function findMenuNodeById(nodes: NavNode[], targetMenuId: number): NavNode | null {
+  if (!Array.isArray(nodes)) {
+    return null;
+  }
+  for (const node of nodes) {
+    if (!node) {
+      continue;
+    }
+    const nodeMenuId = Number(node.menu_id || node.id || 0) || 0;
+    if (nodeMenuId === targetMenuId) {
+      return node;
+    }
+    const nested = findMenuNodeById(node.children || [], targetMenuId);
+    if (nested) {
+      return nested;
+    }
+  }
+  return null;
+}
+
+function resolveNodeLabel(node: NavNode): string {
+  return asText((node as NavNode & { title?: string; label?: string; name?: string }).title)
+    || asText((node as NavNode & { title?: string; label?: string; name?: string }).label)
+    || asText((node as NavNode & { title?: string; label?: string; name?: string }).name);
+}
+
+function findMenuNodeByLabel(nodes: NavNode[], targetLabel: string): NavNode | null {
+  const normalized = targetLabel.trim();
+  if (!normalized || !Array.isArray(nodes)) {
+    return null;
+  }
+  for (const node of nodes) {
+    if (!node) {
+      continue;
+    }
+    if (resolveNodeLabel(node) === normalized) {
+      return node;
+    }
+    const nested = findMenuNodeByLabel(node.children || [], normalized);
+    if (nested) {
+      return nested;
+    }
+  }
+  return null;
 }
 
 function findFirstReachableMenuId(nodes: NavNode[]): number | null {

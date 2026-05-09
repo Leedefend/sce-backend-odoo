@@ -60,7 +60,7 @@ type ExecuteLoadPreflightOptions = {
   extractListOrderFromContract: (contract: unknown) => string;
   resolveLoadPreflightSortValue: (input: Dict) => string;
   resolveLoadPreflightContractLimit: (input: Dict) => number;
-  evaluateCapabilityPolicy: (input: { source: unknown; available: unknown }) => { state?: unknown; missing?: unknown };
+  evaluateCapabilityPolicy: (input: { source: unknown; available: unknown; required?: string[] }) => { state?: unknown; missing?: unknown };
   resolveLoadCapabilityRedirectPayload: (input: Dict) => Dict;
   resolveModelFromContract: (contract: unknown) => string;
   resolveActionViewResolvedModel: (input: Dict) => string;
@@ -86,6 +86,26 @@ type ExecuteLoadPreflightOptions = {
   };
   capabilityMissingCode: string;
 };
+
+function normalizeRequiredCapabilities(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item || '').trim()).filter(Boolean);
+  }
+  if (typeof value === 'string' && value.trim()) {
+    return [value.trim()];
+  }
+  return [];
+}
+
+function resolveActionRequiredCapabilities(meta: Dict | null): string[] {
+  if (!meta) {
+    return [];
+  }
+  return [
+    ...normalizeRequiredCapabilities(meta.required_capabilities),
+    ...normalizeRequiredCapabilities(meta.requiredCapabilities),
+  ];
+}
 
 export type ExecuteLoadPreflightResult =
   | { kind: 'blocked'; message: string; statusInput: string }
@@ -252,7 +272,11 @@ export function useActionViewLoadPreflightRuntime() {
     const searchDefaults = (typedContract.search as Dict | undefined)?.defaults as Dict | undefined;
     const contractLimit = options.resolveLoadPreflightContractLimit({ searchDefaultLimitRaw: v2PrimaryParams.limit || searchDefaults?.limit });
 
-    const policy = options.evaluateCapabilityPolicy({ source: nextMeta, available: options.sessionCapabilities });
+    const policy = options.evaluateCapabilityPolicy({
+      source: nextMeta,
+      available: options.sessionCapabilities,
+      required: resolveActionRequiredCapabilities(nextMeta),
+    });
     const capabilityGuardPayload = options.resolveLoadCapabilityRedirectPayload({
       stateRaw: policy.state,
       missingRaw: policy.missing,

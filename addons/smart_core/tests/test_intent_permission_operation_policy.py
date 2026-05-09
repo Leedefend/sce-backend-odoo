@@ -305,6 +305,26 @@ class TestIntentPermissionOperationPolicy(unittest.TestCase):
         self.assertEqual(self.model.access_modes, ["write"])
         self.assertEqual(self.model.rule_modes, ["write"])
 
+    def test_user_view_preference_get_does_not_gate_on_target_business_model_acl(self):
+        ctx = _Ctx({"intent": "user.view.preference.get", "params": {"model": "x.model", "action_id": 31}})
+
+        self.permission.check_intent_permission(ctx)
+
+        self.assertEqual(self.model.access_modes, [])
+        self.assertEqual(self.model.browsed_ids, [])
+        self.assertEqual(self.model.rule_modes, [])
+        self.assertEqual(self.env.generic_action_model.browsed_ids, [31])
+
+    def test_user_view_preference_set_does_not_gate_on_target_business_model_acl(self):
+        ctx = _Ctx({"intent": "user.view.preference.set", "params": {"model": "x.model", "action_id": 31}})
+
+        self.permission.check_intent_permission(ctx)
+
+        self.assertEqual(self.model.access_modes, [])
+        self.assertEqual(self.model.browsed_ids, [])
+        self.assertEqual(self.model.rule_modes, [])
+        self.assertEqual(self.env.generic_action_model.browsed_ids, [31])
+
     def test_action_permission_resolves_generic_action_model(self):
         ctx = _Ctx({"intent": "ui.contract", "params": {"action_id": 31}})
 
