@@ -28,6 +28,7 @@
                 <field name="expense_amount" sum="支出合计"/>
                 <field name="company_finance_expense_amount" sum="公司财务支出"/>
                 <field name="expense_reimbursement_amount" sum="费用报销"/>
+                <field name="salary_gross_amount" sum="应发工资"/>
                 <field name="salary_net_amount" sum="实发工资"/>
                 <field name="claim_outflow_amount" sum="其他流出"/>
                 <field name="net_operation_amount" sum="经营净额"/>

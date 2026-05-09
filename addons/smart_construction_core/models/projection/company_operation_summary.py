@@ -46,7 +46,7 @@ class ScCompanyOperationSummary(models.Model):
                 to_regclass('sc_receipt_income'),
                 to_regclass('sc_expense_claim'),
                 to_regclass('sc_legacy_account_transaction_line'),
-                to_regclass('sc_legacy_salary_line'),
+                to_regclass('sc_hr_payroll_document'),
                 to_regclass('sc_invoice_registration')
             """
         )
@@ -126,9 +126,11 @@ class ScCompanyOperationSummary(models.Model):
                         COALESCE(SUM(s.gross_amount), 0.0) AS salary_gross_amount,
                         COALESCE(SUM(s.net_salary), 0.0) AS salary_net_amount,
                         COUNT(*)::integer AS salary_line_count
-                    FROM sc_legacy_salary_line s
+                    FROM sc_hr_payroll_document s
                     LEFT JOIN project_project p ON p.id = s.project_id
                     WHERE s.active IS TRUE
+                      AND s.state <> 'cancel'
+                      AND s.fact_type = 'salary_registration'
                     GROUP BY p.company_id
                 ),
                 invoice_by_company AS (
@@ -202,12 +204,7 @@ class ScCompanyOperationSummary(models.Model):
                     COALESCE(s.salary_line_count, 0)::integer AS salary_line_count,
                     COALESCE(i.invoice_count, 0)::integer AS invoice_count,
                     COALESCE(t.source_line_count, 0)::integer AS source_line_count,
-                    CASE
-                        WHEN COALESCE(s.salary_line_count, 0) = 0 THEN
-                            '已承载收款、公司财务收支、费用/保证金、发票税额；工资事实当前为空，工资列不计入完整口径'
-                        ELSE
-                            '已承载收款、公司财务收支、费用/保证金、工资、发票税额'
-                    END AS coverage_note
+                    '已承载收款、公司财务收支、费用/保证金、工资、发票税额' AS coverage_note
                 FROM company_keys k
                 LEFT JOIN res_company c ON c.id = k.company_id
                 LEFT JOIN receipt_by_company r ON r.company_id IS NOT DISTINCT FROM k.company_id
