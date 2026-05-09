@@ -2134,6 +2134,10 @@ verify.workbench.extraction_hit_rate.report: guard.prod.forbid
 	@python3 scripts/verify/workbench_extraction_hit_rate_report.py
 	@echo "[OK] verify.workbench.extraction_hit_rate.report done"
 
+.PHONY: verify.user.entry.delivery.browser_acceptance
+verify.user.entry.delivery.browser_acceptance: guard.prod.forbid
+	@pnpm -C frontend/apps/web exec node ../../../scripts/verify/user_entry_delivery_browser_acceptance.js
+
 .PHONY: verify.project.dashboard.snapshot
 verify.project.dashboard.snapshot: guard.prod.forbid
 	@python3 scripts/verify/project_dashboard_contract_snapshot_export.py
