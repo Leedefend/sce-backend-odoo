@@ -15,9 +15,9 @@
         <field name="parameter_summary">项目、单位名称。</field>
         <field name="metric_summary">合同金额、已开票、应收款、未收款、应付款、已付款、未付款、税额、抵扣、实际可用余额。</field>
         <field name="source_tables">BASE_SYSTEM_PROJECT, T_ProjectContract_Out, T_GYSHT_INFO, C_JFHKLR, C_JFHKLR_TH_ZCDF, C_JXXP_DKDJ_New, C_JXXP_DKDJ_CB, C_JXXP_XXKPDJ, C_JXXP_XXKPDJ_CB, C_JXXP_ZYFPJJD, C_JXXP_ZYFPJJD_CB。</field>
-        <field name="target_model">待建聚合报表；依赖 construction.contract、sc.receipt.income、sc.payment.execution、sc.invoice.registration、legacy invoice/payment facts。</field>
-        <field name="carrier_status">partial</field>
-        <field name="next_action">先按旧过程字段定义新报表契约，再校验新系统付款、收款、开票、进项事实是否覆盖全部口径。</field>
+        <field name="target_model">sc.ar.ap.project.summary；复用收入合同、供应商合同、收款、付款、进销项发票、抵扣、附加税、自筹与项目资金余额事实，按项目和往来单位形成项目级应收应付入口。</field>
+        <field name="carrier_status">ready</field>
+        <field name="next_action">已提供“客户账款”用户入口承载项目级应收应付；后续继续按旧过程常用查询条件做项目、往来单位、日期区间对账。</field>
         <field name="evidence">ts_function_RecordUserClick: 8243 clicks, 18 users, last 2026-04-10。</field>
     </record>
 

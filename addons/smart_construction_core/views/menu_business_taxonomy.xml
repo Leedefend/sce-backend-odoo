@@ -1886,6 +1886,7 @@
         <field name="parent_id" ref="smart_construction_core.menu_sc_tax_finance_report_group"/>
         <field name="action" ref="smart_construction_core.action_sc_ar_ap_company_summary"/>
         <field name="sequence">20</field>
+        <field name="active">False</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_finance_read'),
             ref('smart_construction_core.group_sc_cap_finance_user'),
@@ -1912,11 +1913,29 @@
         <field name="name">客户账款</field>
         <field name="parent_id" ref="smart_construction_core.menu_sc_finance_analysis_group"/>
         <field name="sequence">10</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_business_initiator'),
+            ref('smart_construction_core.group_sc_cap_finance_read'),
+            ref('smart_construction_core.group_sc_cap_finance_user'),
+            ref('smart_construction_core.group_sc_cap_finance_manager'),
+            ref('smart_construction_core.group_sc_cap_contract_read'),
+            ref('smart_construction_core.group_sc_cap_contract_user'),
+            ref('smart_construction_core.group_sc_cap_contract_manager')
+        ])]"/>
     </record>
     <record id="menu_sc_ar_ap_company_summary" model="ir.ui.menu">
         <field name="name">供应商账款</field>
         <field name="parent_id" ref="smart_construction_core.menu_sc_finance_analysis_group"/>
         <field name="sequence">20</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_business_initiator'),
+            ref('smart_construction_core.group_sc_cap_finance_read'),
+            ref('smart_construction_core.group_sc_cap_finance_user'),
+            ref('smart_construction_core.group_sc_cap_finance_manager'),
+            ref('smart_construction_core.group_sc_cap_contract_read'),
+            ref('smart_construction_core.group_sc_cap_contract_user'),
+            ref('smart_construction_core.group_sc_cap_contract_manager')
+        ])]"/>
     </record>
     <record id="menu_sc_treasury_ledger_income" model="ir.ui.menu">
         <field name="name">收款统计表</field>
