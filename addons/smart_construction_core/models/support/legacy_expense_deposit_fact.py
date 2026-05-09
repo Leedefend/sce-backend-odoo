@@ -11,7 +11,15 @@ class ScLegacyExpenseDepositFact(models.Model):
     legacy_record_id = fields.Char(string="旧系统记录ID", required=True, index=True)
     legacy_pid = fields.Char(string="旧系统PID", index=True)
     source_family = fields.Char(string="来源类型", index=True)
-    direction = fields.Char(string="收支方向", index=True)
+    direction = fields.Selection(
+        selection=[
+            ("outflow", "流出"),
+            ("inflow", "流入"),
+            ("inflow_or_refund", "流入或退回"),
+        ],
+        string="收支方向",
+        index=True,
+    )
     document_no = fields.Char(string="单号", index=True)
     document_date = fields.Date(string="单据日期", index=True)
     legacy_state = fields.Char(string="旧系统状态", index=True)
