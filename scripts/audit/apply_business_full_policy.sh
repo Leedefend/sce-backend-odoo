@@ -13,5 +13,6 @@ make mod.upgrade MODULE="$POLICY_MODULE" DB_NAME="$DB_NAME"
 
 DB_NAME="$DB_NAME" docker compose exec -T odoo odoo shell -d "$DB_NAME" -c /var/lib/odoo/odoo.conf <<'PY'
 res = env["sc.security.policy"].apply_business_full_policy()
+env.cr.commit()
 print("apply_business_full_policy:", res)
 PY

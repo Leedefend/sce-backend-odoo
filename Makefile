@@ -1443,6 +1443,7 @@ policy.ensure.role_surface_demo: guard.prod.forbid check-compose-project check-c
 	  echo "[policy.ensure.role_surface_demo] applying auto-fix for role surface demo baseline"; \
 	  $(MAKE) --no-print-directory mod.install MODULE=smart_construction_custom DB_NAME=$(DB_NAME); \
 	  $(MAKE) --no-print-directory mod.install MODULE=smart_construction_seed DB_NAME=$(DB_NAME); \
+	  $(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/link_existing_demo_user_xmlids.sh; \
 	  $(MAKE) --no-print-directory mod.install MODULE=smart_construction_demo DB_NAME=$(DB_NAME); \
 	  $(RUN_ENV) DB_NAME=$(DB_NAME) ROLE_SMOKE_PASSWORD="$${ROLE_SMOKE_PASSWORD:-demo}" bash scripts/ops/ensure_role_surface_demo.sh; \
 	  $(MAKE) --no-print-directory restart; \
