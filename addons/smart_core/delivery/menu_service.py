@@ -54,12 +54,27 @@ class MenuService:
         row["source_authority"] = self.source_authority_contract()
         return row
 
+    def _node_has_target(self, node: dict) -> bool:
+        meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+        return bool(
+            node.get("route")
+            or node.get("scene_key")
+            or node.get("action_id")
+            or node.get("model")
+            or meta.get("route")
+            or meta.get("scene_key")
+            or meta.get("action_id")
+            or meta.get("model")
+        )
+
     def _iter_leaf_nodes(self, nodes, ancestors=None):
         parent_chain = list(ancestors or [])
         for node in nodes or []:
             if not isinstance(node, dict):
                 continue
             children = node.get("children") if isinstance(node.get("children"), list) else []
+            if children and self._node_has_target(node):
+                yield parent_chain, node
             if children:
                 yield from self._iter_leaf_nodes(children, parent_chain + [node])
                 continue
