@@ -88,7 +88,7 @@ function shouldUseSceneRoute(node, actionId) {
   if (sceneSource === 'scene_contract' || actionType === 'scene.contract') {
     return true;
   }
-  if (explicitSceneKey === 'workspace.home' || explicitSceneKey === 'dashboard.company') {
+  if (explicitSceneKey === 'workspace.home' || explicitSceneKey === 'dashboard.company' || explicitSceneKey === 'my_work.workspace') {
     return true;
   }
   return false;
