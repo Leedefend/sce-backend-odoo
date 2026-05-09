@@ -1596,6 +1596,13 @@
               name="资金账户"
               parent="smart_construction_core.menu_sc_finance_center"
               sequence="50"/>
+    <record id="menu_sc_fund_account_between_user" model="ir.ui.menu">
+        <field name="parent_id" ref="smart_construction_core.menu_sc_fund_account_group"/>
+        <field name="sequence">44</field>
+    </record>
+    <record id="menu_sc_fund_account_user_group" model="ir.ui.menu">
+        <field name="active">False</field>
+    </record>
     <record id="menu_sc_legacy_account_master" model="ir.ui.menu">
         <field name="name">账户管理</field>
         <field name="parent_id" ref="smart_construction_core.menu_sc_fund_account_group"/>
