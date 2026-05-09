@@ -217,8 +217,8 @@
         <field name="res_model">sc.invoice.registration</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="smart_construction_core.view_sc_invoice_registration_search"/>
-        <field name="domain">[('source_kind', '=', 'prepaid_tax'), ('direction', '=', 'prepaid'), ('invoice_type', '=', '预缴税款')]</field>
-        <field name="context">{'default_source_kind': 'prepaid_tax', 'default_direction': 'prepaid', 'default_invoice_type': '预缴税款', 'default_invoice_content': '预缴税款', 'search_default_group_project': 1}</field>
+        <field name="domain">[('source_kind', '=', 'prepaid_tax'), ('direction', '=', 'prepaid')]</field>
+        <field name="context">{'default_source_kind': 'prepaid_tax', 'default_direction': 'prepaid', 'default_invoice_content': '预缴税款', 'search_default_group_project': 1}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
             ref('smart_construction_core.group_sc_cap_finance_read'),
@@ -231,8 +231,8 @@
         <field name="res_model">sc.invoice.registration</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="smart_construction_core.view_sc_invoice_registration_search"/>
-        <field name="domain">[('source_kind', '=', 'input_invoice_tax'), ('direction', '=', 'input'), ('invoice_type', '=', '进项上报')]</field>
-        <field name="context">{'default_source_kind': 'input_invoice_tax', 'default_direction': 'input', 'default_invoice_type': '进项上报', 'default_invoice_content': '进项上报', 'search_default_group_project': 1}</field>
+        <field name="domain">[('source_kind', '=', 'input_invoice_tax'), ('direction', '=', 'input')]</field>
+        <field name="context">{'default_source_kind': 'input_invoice_tax', 'default_direction': 'input', 'default_invoice_content': '进项上报', 'search_default_group_project': 1}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
             ref('smart_construction_core.group_sc_cap_finance_read'),
