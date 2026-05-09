@@ -1,0 +1,206 @@
+#!/usr/bin/env node
+'use strict';
+
+const fs = require('fs');
+const path = require('path');
+const { createRequire } = require('module');
+
+const requireBase = fs.existsSync(path.join(process.cwd(), 'frontend/apps/web/package.json'))
+  ? path.join(process.cwd(), 'frontend/apps/web/package.json')
+  : path.join(process.cwd(), 'package.json');
+const requireFromRoot = createRequire(requireBase);
+const { chromium } = requireFromRoot('playwright');
+const ROOT_DIR = fs.existsSync(path.join(process.cwd(), 'frontend/apps/web/package.json'))
+  ? process.cwd()
+  : path.resolve(process.cwd(), '../../..');
+
+const FRONTEND_URL = process.env.FRONTEND_URL || process.env.E2E_BASE_URL || 'http://localhost:18081';
+const DB_NAME = process.env.DB_NAME || process.env.E2E_DB || 'sc_demo';
+const DEFAULT_PASSWORD = process.env.E2E_ROLE_MATRIX_DEFAULT_PASSWORD || process.env.E2E_PASSWORD || 'demo';
+const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || path.join(ROOT_DIR, 'artifacts');
+const HEADLESS = String(process.env.HEADLESS || '1').trim() !== '0';
+
+const REPORT_JSON = path.join(ARTIFACTS_DIR, 'backend', 'user_entry_delivery_browser_acceptance.json');
+const REPORT_MD = path.join(ARTIFACTS_DIR, 'backend', 'user_entry_delivery_browser_acceptance.md');
+
+const ROLES = [
+  {
+    role: 'executive',
+    login: process.env.ROLE_EXECUTIVE_LOGIN || 'demo_role_executive',
+    password: process.env.ROLE_EXECUTIVE_PASSWORD || DEFAULT_PASSWORD,
+    mode: 'home_today',
+    initialText: [/今天先做什么/, /付款申请待审批|任务逾期风险|项目跟进/],
+    clickButton: /查看详情/,
+    targetPath: /^\/s\/(finance\.payment_requests|project\.management|task\.center|risk\.center)/,
+  },
+  {
+    role: 'pm',
+    login: process.env.ROLE_PM_LOGIN || 'demo_role_pm',
+    password: process.env.ROLE_PM_PASSWORD || DEFAULT_PASSWORD,
+    mode: 'home_today_and_risk',
+    initialText: [/今天先做什么/, /系统提醒（高优先）|风险待处理清单/, /任务逾期风险|项目跟进/],
+    clickButton: /看详情/,
+    targetPath: /^\/s\/risk\.center/,
+  },
+  {
+    role: 'finance',
+    login: process.env.ROLE_FINANCE_LOGIN || 'demo_role_finance',
+    password: process.env.ROLE_FINANCE_PASSWORD || DEFAULT_PASSWORD,
+    mode: 'direct_business',
+    initialText: [/付款申请|付款申请审批|PRQ|新建|记录/],
+    targetPath: /^\/s\/finance\.payment_requests/,
+  },
+];
+
+function ensureDir(filePath) {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+}
+
+function writeReports(report) {
+  ensureDir(REPORT_JSON);
+  fs.writeFileSync(REPORT_JSON, JSON.stringify(report, null, 2) + '\n', 'utf8');
+
+  const lines = [
+    '# User Entry Delivery Browser Acceptance',
+    '',
+    `- ok: ${report.ok}`,
+    `- frontend_url: ${report.frontend_url}`,
+    `- db_name: ${report.db_name}`,
+    `- role_count: ${report.summary.role_count}`,
+    `- pass_count: ${report.summary.pass_count}`,
+    `- error_count: ${report.summary.error_count}`,
+    '',
+    '| role | mode | initial_path | final_path | expected_text | one_hop | errors |',
+    '| --- | --- | --- | --- | ---: | ---: | ---: |',
+  ];
+  for (const row of report.rows) {
+    lines.push(
+      `| ${row.role} | ${row.mode} | ${row.initial_path || ''} | ${row.final_path || ''} | ${row.expected_text_ok ? 'yes' : 'no'} | ${row.one_hop_ok ? 'yes' : 'n/a'} | ${row.errors.length} |`,
+    );
+  }
+  ensureDir(REPORT_MD);
+  fs.writeFileSync(REPORT_MD, lines.join('\n') + '\n', 'utf8');
+}
+
+function hasBlockingError(text) {
+  return /NAV_MENU_NO_ACTION|当前账号暂无可用功能|当前无可用入口|页面加载失败|页面渲染失败|System exception/.test(String(text || ''));
+}
+
+async function login(page, role) {
+  const url = `${FRONTEND_URL}/login?db=${encodeURIComponent(DB_NAME)}&t=${Date.now()}`;
+  await page.goto(url, { waitUntil: 'networkidle' });
+  await page.locator('input[autocomplete="username"]').fill(role.login);
+  await page.locator('input[autocomplete="current-password"]').fill(role.password);
+  await page.locator('input[autocomplete="off"]').fill(DB_NAME);
+  await page.getByRole('button', { name: /^登录$/ }).click();
+  await page.waitForFunction(() => !window.location.pathname.includes('/login'), null, { timeout: 30000 });
+  await page.waitForLoadState('networkidle').catch(() => {});
+  await page.waitForTimeout(1000);
+}
+
+async function runRole(browser, role) {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 960 } });
+  const page = await context.newPage();
+  const consoleErrors = [];
+  const intents = [];
+  page.on('console', (msg) => {
+    if (msg.type() === 'error') consoleErrors.push(msg.text());
+  });
+  page.on('pageerror', (err) => consoleErrors.push(err.message));
+  page.on('request', (request) => {
+    if (!request.url().includes('/api/v1/intent')) return;
+    try {
+      const payload = JSON.parse(request.postData() || '{}');
+      if (payload.intent) intents.push(String(payload.intent));
+    } catch {
+      // ignore non-json request bodies
+    }
+  });
+
+  const row = {
+    role: role.role,
+    login: role.login,
+    mode: role.mode,
+    initial_path: '',
+    final_path: '',
+    expected_text_ok: false,
+    no_blocking_empty: false,
+    one_hop_ok: role.mode === 'direct_business',
+    captured_intents: [],
+    console_errors: [],
+    errors: [],
+    ok: false,
+  };
+
+  try {
+    await login(page, role);
+    row.initial_path = new URL(page.url()).pathname;
+    let text = await page.locator('body').innerText({ timeout: 10000 });
+    row.expected_text_ok = role.initialText.every((pattern) => pattern.test(text));
+    row.no_blocking_empty = !hasBlockingError(text);
+
+    if (role.mode === 'direct_business') {
+      row.one_hop_ok = role.targetPath.test(row.initial_path);
+    } else {
+      const button = page.getByRole('button', { name: role.clickButton }).first();
+      const count = await button.count();
+      if (!count) {
+        row.errors.push(`missing click button: ${role.clickButton}`);
+      } else {
+        await button.click();
+        await page.waitForLoadState('networkidle').catch(() => {});
+        await page.waitForTimeout(1200);
+        row.final_path = new URL(page.url()).pathname;
+        text = await page.locator('body').innerText().catch(() => '');
+        row.one_hop_ok = role.targetPath.test(row.final_path) && !hasBlockingError(text);
+      }
+    }
+  } catch (err) {
+    row.errors.push(err && err.message ? err.message : String(err));
+  } finally {
+    row.captured_intents = Array.from(new Set(intents));
+    row.console_errors = consoleErrors.slice(0, 20);
+    if (consoleErrors.length) {
+      row.errors.push(`console_errors=${consoleErrors.length}`);
+    }
+    row.ok = row.expected_text_ok && row.no_blocking_empty && row.one_hop_ok && row.errors.length === 0;
+    await context.close();
+  }
+  return row;
+}
+
+async function main() {
+  const browser = await chromium.launch({ headless: HEADLESS });
+  let rows = [];
+  try {
+    for (const role of ROLES) {
+      rows.push(await runRole(browser, role));
+    }
+  } finally {
+    await browser.close();
+  }
+
+  const report = {
+    ok: rows.every((row) => row.ok),
+    frontend_url: FRONTEND_URL,
+    db_name: DB_NAME,
+    summary: {
+      role_count: rows.length,
+      pass_count: rows.filter((row) => row.ok).length,
+      error_count: rows.reduce((acc, row) => acc + row.errors.length, 0),
+    },
+    rows,
+  };
+  writeReports(report);
+  if (!report.ok) {
+    console.error(`[user_entry_delivery_browser_acceptance] FAIL ${REPORT_JSON}`);
+    console.error(JSON.stringify(report.summary, null, 2));
+    process.exit(1);
+  }
+  console.log(`[user_entry_delivery_browser_acceptance] PASS ${REPORT_JSON}`);
+}
+
+main().catch((err) => {
+  console.error(`[user_entry_delivery_browser_acceptance] FAIL: ${err.message}`);
+  process.exit(1);
+});
