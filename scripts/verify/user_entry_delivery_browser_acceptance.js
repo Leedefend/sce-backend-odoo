@@ -19,6 +19,7 @@ const DB_NAME = process.env.DB_NAME || process.env.E2E_DB || 'sc_demo';
 const DEFAULT_PASSWORD = process.env.E2E_ROLE_MATRIX_DEFAULT_PASSWORD || process.env.E2E_PASSWORD || 'demo';
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || path.join(ROOT_DIR, 'artifacts');
 const HEADLESS = String(process.env.HEADLESS || '1').trim() !== '0';
+const MY_WORK_MENU_ID = process.env.MY_WORK_MENU_ID || '941991035';
 
 const REPORT_JSON = path.join(ARTIFACTS_DIR, 'backend', 'user_entry_delivery_browser_acceptance.json');
 const REPORT_MD = path.join(ARTIFACTS_DIR, 'backend', 'user_entry_delivery_browser_acceptance.md');
@@ -41,6 +42,15 @@ const ROLES = [
     initialText: [/今天先做什么/, /系统提醒（高优先）|风险待处理清单/, /任务逾期风险|项目跟进/],
     clickButton: /看详情/,
     targetPath: /^\/s\/risk\.center/,
+  },
+  {
+    role: 'pm_my_work_menu',
+    login: process.env.ROLE_PM_LOGIN || 'demo_role_pm',
+    password: process.env.ROLE_PM_PASSWORD || DEFAULT_PASSWORD,
+    mode: 'menu_my_work',
+    navigatePath: `/m/${MY_WORK_MENU_ID}`,
+    initialText: [/我的工作/, /待办|风险|已完成|失败/],
+    targetPath: /^\/(my-work|s\/my_work\.workspace)$/,
   },
   {
     role: 'finance',
@@ -159,6 +169,11 @@ function checkProductOrder(text, role) {
   return { ok: todayBeforeQuick && riskBeforeQuick, positions };
 }
 
+function checkMenuMyWorkIntent(row) {
+  if (row.mode !== 'menu_my_work') return true;
+  return row.captured_intents.includes('my.work.summary');
+}
+
 async function login(page, role) {
   const url = `${FRONTEND_URL}/login?db=${encodeURIComponent(DB_NAME)}&t=${Date.now()}`;
   await page.goto(url, { waitUntil: 'networkidle' });
@@ -209,14 +224,14 @@ async function runRole(browser, role) {
     no_debug_noise: false,
     product_order_ok: role.mode === 'direct_business',
     order_positions: {},
-    one_hop_ok: role.mode === 'direct_business',
-    click_chain_ok: role.mode === 'direct_business',
+    one_hop_ok: role.mode === 'direct_business' || role.mode === 'menu_my_work',
+    click_chain_ok: role.mode === 'direct_business' || role.mode === 'menu_my_work',
     click_chain: {
       clicked_button: '',
       telemetry_events: [],
       business_intents: [],
-      telemetry_ok: role.mode === 'direct_business',
-      business_intent_ok: role.mode === 'direct_business',
+      telemetry_ok: role.mode === 'direct_business' || role.mode === 'menu_my_work',
+      business_intent_ok: role.mode === 'direct_business' || role.mode === 'menu_my_work',
     },
     captured_intents: [],
     captured_telemetry_events: [],
@@ -229,6 +244,13 @@ async function runRole(browser, role) {
     await login(page, role);
     row.initial_path = new URL(page.url()).pathname;
     let text = await page.locator('body').innerText({ timeout: 10000 });
+    if (role.navigatePath) {
+      await page.goto(`${FRONTEND_URL}${role.navigatePath}`, { waitUntil: 'networkidle' });
+      await page.waitForTimeout(1200);
+      row.initial_path = new URL(page.url()).pathname;
+      row.final_path = row.initial_path;
+      text = await page.locator('body').innerText({ timeout: 10000 }).catch(() => '');
+    }
     row.expected_text_ok = role.initialText.every((pattern) => pattern.test(text));
     row.no_blocking_empty = !hasBlockingError(text);
     row.no_debug_noise = !/result_summary|active_filters|debug|traceback/i.test(text);
@@ -248,8 +270,11 @@ async function runRole(browser, role) {
       row.errors.push(`product_order=${JSON.stringify(row.order_positions)}`);
     }
 
-    if (role.mode === 'direct_business') {
+    if (role.mode === 'direct_business' || role.mode === 'menu_my_work') {
       row.one_hop_ok = role.targetPath.test(row.initial_path);
+      if (role.mode === 'menu_my_work' && !row.one_hop_ok) {
+        row.errors.push(`menu_my_work_path=${row.initial_path}`);
+      }
     } else {
       const button = page.getByRole('button', { name: role.clickButton }).first();
       const count = await button.count();
@@ -279,6 +304,9 @@ async function runRole(browser, role) {
   } finally {
     row.captured_intents = Array.from(new Set(intentEvents.map((event) => event.intent)));
     row.captured_telemetry_events = Array.from(new Set(intentEvents.map((event) => event.event_type).filter(Boolean)));
+    if (!checkMenuMyWorkIntent(row)) {
+      row.errors.push(`missing_my_work_summary_intent=${JSON.stringify(row.captured_intents)}`);
+    }
     row.console_errors = consoleErrors.slice(0, 20);
     if (consoleErrors.length) {
       row.errors.push(`console_errors=${consoleErrors.length}`);
