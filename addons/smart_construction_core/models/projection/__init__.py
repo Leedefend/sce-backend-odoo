@@ -10,3 +10,4 @@ from . import company_operation_summary
 from . import invoice_category_summary
 from . import expense_reimbursement_summary
 from . import salary_summary
+from . import material_stock_summary

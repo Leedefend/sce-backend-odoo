@@ -1699,10 +1699,10 @@
               groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_contract_read,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
     <record id="action_sc_material_stock_statistics_report" model="ir.actions.act_window">
         <field name="name">库存统计表（新）</field>
-        <field name="res_model">sc.legacy.material.stock.fact</field>
-        <field name="view_mode">tree,form</field>
-        <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_material_stock_fact_search"/>
-        <field name="context">{'search_default_active_only': 1, 'search_default_group_material_name': 1, 'create': False, 'edit': False, 'delete': False}</field>
+        <field name="res_model">sc.material.stock.summary</field>
+        <field name="view_mode">tree,form,pivot,graph</field>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_material_stock_summary_search"/>
+        <field name="context">{'search_default_group_material': 1, 'create': False, 'edit': False, 'delete': False}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
             ref('smart_construction_core.group_sc_cap_material_read'),

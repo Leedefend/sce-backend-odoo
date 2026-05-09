@@ -243,9 +243,9 @@
         <field name="parameter_summary">项目、材料名称、开始日期、截止日期。</field>
         <field name="metric_summary">入库数量、入库单价、出库数量、出库单价、库存数量、库存金额、利润/价差。</field>
         <field name="source_tables">T_RK_RKD, T_RK_RKDCB, T_CK_CKD, T_CK_CKDCB。</field>
-        <field name="target_model">stock.move / 旧库材料库存事实待确认。</field>
-        <field name="carrier_status">gap</field>
-        <field name="next_action">旧库库存样本量较小但有近期使用，需确认是否需要补材料出入库事实。</field>
-        <field name="evidence">旧库 T_RK_RKD 37 rows, T_RK_RKDCB 62 rows, T_CK_CKD 4 rows, T_CK_CKDCB 5 rows。</field>
+        <field name="target_model">sc.material.stock.summary；复用 sc.legacy.material.stock.fact 出入库事实，按项目、材料、规格、单位和往来单位汇总入库、出库、库存数量与金额。</field>
+        <field name="carrier_status">ready</field>
+        <field name="next_action">继续核对旧库存统计的利润/价差字段，当前先保证用户可从统计分析入口看到库存数量和金额汇总。</field>
+        <field name="evidence">旧库 T_RK_RKD 37 rows, T_RK_RKDCB 62 rows, T_CK_CKD 4 rows, T_CK_CKDCB 5 rows；当前开发库 sc.legacy.material.stock.fact 16389 行，出入库相关事实 130 行。</field>
     </record>
 </odoo>
