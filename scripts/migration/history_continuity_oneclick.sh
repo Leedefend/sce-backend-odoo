@@ -52,6 +52,7 @@ INCLUDE_ATTENDANCE_CHECKIN="${HISTORY_CONTINUITY_INCLUDE_ATTENDANCE_CHECKIN:-0}"
 INCLUDE_PERSONNEL_MOVEMENT="${HISTORY_CONTINUITY_INCLUDE_PERSONNEL_MOVEMENT:-0}"
 INCLUDE_SALARY_LINE="${HISTORY_CONTINUITY_INCLUDE_SALARY_LINE:-0}"
 INCLUDE_USER_VISIBLE_SURFACE_OVERLAY="${HISTORY_CONTINUITY_INCLUDE_USER_VISIBLE_SURFACE_OVERLAY:-1}"
+INCLUDE_FORMAL_PROJECTIONS="${HISTORY_CONTINUITY_INCLUDE_FORMAL_PROJECTIONS:-1}"
 USE_PACKAGED_PAYLOADS="${HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS:-0}"
 MATERIALIZED_FILES=()
 
@@ -346,8 +347,12 @@ case "$MODE" in
     run_step legacy_receipt_residual_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_receipt_residual_replay_write.py"
     run_step legacy_workflow_audit_adapter run_legacy_workflow_audit_adapter
     run_step legacy_workflow_audit_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_workflow_audit_replay_write.py"
-    run_step history_todo_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_history_todo_projection_write.py"
-    run_step treasury_ledger_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_treasury_ledger_projection_write.py"
+    if [[ "$INCLUDE_FORMAL_PROJECTIONS" == "1" ]]; then
+      run_step history_todo_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_history_todo_projection_write.py"
+      run_step treasury_ledger_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_treasury_ledger_projection_write.py"
+    else
+      echo "[history.continuity] skip formal projections by HISTORY_CONTINUITY_INCLUDE_FORMAL_PROJECTIONS=0"
+    fi
     if [[ "$INCLUDE_PAYMENT_STATE_RECOVERY" == "1" ]]; then
       run_step payment_request_outflow_state_activation_adapter run_payment_request_outflow_state_activation_adapter
       run_step payment_request_outflow_state_activation_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_payment_request_outflow_state_activation_write.py"
@@ -370,30 +375,38 @@ case "$MODE" in
     run_step legacy_fund_daily_snapshot_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_fund_daily_snapshot_replay_write.py"
     run_step legacy_fund_daily_line_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_fund_daily_line_replay_adapter.py"
     run_step legacy_fund_daily_line_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_fund_daily_line_replay_write.py"
-    run_step settlement_adjustment_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_settlement_adjustment_projection_write.py"
-    run_step expense_claim_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_expense_claim_projection_write.py"
-    run_step treasury_reconciliation_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_treasury_reconciliation_projection_write.py"
-    run_step receipt_income_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_receipt_income_projection_write.py"
-    run_step payment_execution_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_payment_execution_projection_write.py"
-    run_step invoice_registration_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_invoice_registration_projection_write.py"
-    run_step financing_loan_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_financing_loan_projection_write.py"
-    run_step general_contract_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_general_contract_projection_write.py"
-    run_step construction_diary_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_construction_diary_projection_write.py"
-    run_step attachment_custody_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_attachment_custody_probe.py"
-    run_step invoice_tax_runtime_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_invoice_tax_runtime_probe.py"
-    run_step settlement_adjustment_runtime_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_settlement_adjustment_runtime_probe.py"
-    run_step expense_claim_runtime_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_expense_claim_runtime_probe.py"
-    run_step treasury_reconciliation_runtime_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_treasury_reconciliation_runtime_probe.py"
-    run_step receipt_income_runtime_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_receipt_income_runtime_probe.py"
-    run_step payment_execution_runtime_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_payment_execution_runtime_probe.py"
-    run_step financing_loan_runtime_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_financing_loan_runtime_probe.py"
-    run_step general_contract_runtime_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_general_contract_runtime_probe.py"
-    run_step construction_diary_runtime_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_construction_diary_runtime_probe.py"
-    run_step treasury_reconciliation_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_treasury_reconciliation_probe.py"
-    run_step expense_deposit_runtime_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_expense_deposit_runtime_probe.py"
-    run_step material_catalog_runtime_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_material_catalog_runtime_probe.py"
-    run_step purchase_contract_runtime_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_purchase_contract_runtime_probe.py"
-    run_step usability_probe run_odoo_script "$PROBE_SCRIPT"
+    if [[ "$INCLUDE_FORMAL_PROJECTIONS" == "1" ]]; then
+      run_step settlement_adjustment_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_settlement_adjustment_projection_write.py"
+      run_step expense_claim_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_expense_claim_projection_write.py"
+      run_step treasury_reconciliation_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_treasury_reconciliation_projection_write.py"
+      run_step receipt_income_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_receipt_income_projection_write.py"
+      run_step payment_execution_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_payment_execution_projection_write.py"
+      run_step invoice_registration_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_invoice_registration_projection_write.py"
+      run_step financing_loan_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_financing_loan_projection_write.py"
+      run_step general_contract_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_general_contract_projection_write.py"
+      run_step construction_diary_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_construction_diary_projection_write.py"
+    else
+      echo "[history.continuity] skip runtime formal projections by HISTORY_CONTINUITY_INCLUDE_FORMAL_PROJECTIONS=0"
+    fi
+    if [[ "$INCLUDE_FORMAL_PROJECTIONS" == "1" ]]; then
+      run_step attachment_custody_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_attachment_custody_probe.py"
+      run_step invoice_tax_runtime_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_invoice_tax_runtime_probe.py"
+      run_step settlement_adjustment_runtime_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_settlement_adjustment_runtime_probe.py"
+      run_step expense_claim_runtime_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_expense_claim_runtime_probe.py"
+      run_step treasury_reconciliation_runtime_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_treasury_reconciliation_runtime_probe.py"
+      run_step receipt_income_runtime_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_receipt_income_runtime_probe.py"
+      run_step payment_execution_runtime_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_payment_execution_runtime_probe.py"
+      run_step financing_loan_runtime_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_financing_loan_runtime_probe.py"
+      run_step general_contract_runtime_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_general_contract_runtime_probe.py"
+      run_step construction_diary_runtime_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_construction_diary_runtime_probe.py"
+      run_step treasury_reconciliation_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_treasury_reconciliation_probe.py"
+      run_step expense_deposit_runtime_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_expense_deposit_runtime_probe.py"
+      run_step material_catalog_runtime_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_material_catalog_runtime_probe.py"
+      run_step purchase_contract_runtime_probe run_odoo_script "$ROOT_DIR/scripts/migration/history_purchase_contract_runtime_probe.py"
+      run_step usability_probe run_odoo_script "$PROBE_SCRIPT"
+    else
+      echo "[history.continuity] skip projection-dependent runtime probes by HISTORY_CONTINUITY_INCLUDE_FORMAL_PROJECTIONS=0"
+    fi
     ;;
   *)
     echo "❌ unsupported HISTORY_CONTINUITY_MODE: $MODE" >&2

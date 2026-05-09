@@ -251,7 +251,7 @@ log "step=ensure_core_tax_baseline"
 DB_NAME="$DB_NAME" COMPOSE_FILES="$COMPOSE_FILES" \
   "$ROOT_DIR/scripts/ops/odoo_shell_exec.sh" <"$ROOT_DIR/scripts/ops/ensure_core_tax_baseline.py"
 
-log "step=history_continuity_full_replay"
+log "phase=1 step=history_continuity_data_replay"
 DB_NAME="$DB_NAME" COMPOSE_FILES="$COMPOSE_FILES" \
   MIGRATION_REPO_ROOT="$ROOT_DIR" \
   MIGRATION_REPO_ROOT_ODOO="/mnt" \
@@ -259,6 +259,7 @@ DB_NAME="$DB_NAME" COMPOSE_FILES="$COMPOSE_FILES" \
   MIGRATION_ARTIFACT_ROOT_ODOO="$CONTAINER_ARTIFACT_ROOT" \
   MIGRATION_REPLAY_DB_ALLOWLIST="$DB_NAME" \
   HISTORY_CONTINUITY_MODE=replay \
+  HISTORY_CONTINUITY_INCLUDE_FORMAL_PROJECTIONS=0 \
   HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS="$HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS" \
   HISTORY_CONTINUITY_INCLUDE_MATERIAL_CATALOG=0 \
   HISTORY_CONTINUITY_INCLUDE_PAYMENT_STATE_RECOVERY="$HISTORY_CONTINUITY_INCLUDE_PAYMENT_STATE_RECOVERY" \
@@ -276,12 +277,18 @@ compose ${COMPOSE_FILES} restart odoo
 log "step=platform_init_preflight"
 DB_NAME="$DB_NAME" COMPOSE_FILES="${COMPOSE_FILES}" "$ROOT_DIR/scripts/verify/platform_init_preflight.sh"
 
-log "step=scbs_no_legacy_business_replay"
+log "phase=1 step=scbs_no_legacy_business_replay"
 SCBS_ODOO_CONTAINER="${SCBS_ODOO_CONTAINER:-${COMPOSE_PROJECT_NAME}-odoo-1}" \
   bash "$ROOT_DIR/scripts/migration/scbs_no_legacy_replay_apply.sh" \
   "$DB_NAME" \
   "$SCBS_REPLAY_ASSET_ROOT" \
   "$CONTAINER_ARTIFACT_ROOT"
+
+log "phase=2 step=business_usable_init"
+DB_NAME="$DB_NAME" COMPOSE_FILES="$COMPOSE_FILES" \
+  MIGRATION_REPLAY_DB_ALLOWLIST="$DB_NAME" \
+  FORMAL_PROJECTION_ARTIFACT_ROOT="$ARTIFACT_ROOT" \
+  bash "$ROOT_DIR/scripts/migration/history_business_usable_init.sh"
 
 log "step=business_smoke"
 DB_NAME="$DB_NAME" BASE_URL="$BASE_URL" "$ROOT_DIR/scripts/audit/smoke_business_full.sh"
