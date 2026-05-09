@@ -186,10 +186,12 @@ class TestApiDataListParamBoundaries(unittest.TestCase):
                 return [("company_id", "=", runtime_env["allowed_company_ids"][0])]
             if value == "{'default_company_id': allowed_company_ids[0]}":
                 return {"default_company_id": runtime_env["allowed_company_ids"][0]}
+            if value == "{'search_default_project_id': context.get('default_project_id')}":
+                return {"search_default_project_id": runtime_env["context"].get("default_project_id")}
             return value
 
         module.safe_eval = fake_safe_eval
-        env = types.SimpleNamespace(uid=7, context={"allowed_company_ids": [42, 43]}, user=None)
+        env = types.SimpleNamespace(uid=7, context={"allowed_company_ids": [42, 43], "default_project_id": 99}, user=None)
         handler = module.ApiDataHandler(env=env)
 
         self.assertEqual(
@@ -199,6 +201,10 @@ class TestApiDataListParamBoundaries(unittest.TestCase):
         self.assertEqual(
             handler._safe_eval_with_runtime("{'default_company_id': allowed_company_ids[0]}"),
             {"default_company_id": 42},
+        )
+        self.assertEqual(
+            handler._safe_eval_with_runtime("{'search_default_project_id': context.get('default_project_id')}"),
+            {"search_default_project_id": 99},
         )
 
     def test_list_rejects_invalid_fields_domain_and_group_by(self):

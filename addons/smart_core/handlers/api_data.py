@@ -654,6 +654,7 @@ class ApiDataHandler(BaseIntentHandler):
             "active_id": context.get("active_id"),
             "active_ids": context.get("active_ids") or [],
             "active_model": context.get("active_model"),
+            "context": context,
             "context_today": lambda: datetime.now().date(),
             "datetime": datetime,
         }
