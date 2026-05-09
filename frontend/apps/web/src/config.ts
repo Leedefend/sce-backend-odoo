@@ -12,8 +12,9 @@ const runtimeDb = typeof window !== 'undefined'
 // Auto-forcing may cause token/db mismatch when frontend host is not localhost.
 const enforcedDb = '';
 const envDbNormalized = envDb.toLowerCase();
-const localBlockedEnvDb = isLocalHost && envDbNormalized === 'sc_delivery_local' ? '' : envDb;
-const allowLocalFallbackDb = appEnv === 'dev' || appEnv === 'test' || appEnv === 'local';
+const localBlockedProductionDb = isLocalHost && ['sc_delivery_local', 'sc_prod_sim'].includes(envDbNormalized);
+const localBlockedEnvDb = localBlockedProductionDb ? '' : envDb;
+const allowLocalFallbackDb = isLocalHost || appEnv === 'dev' || appEnv === 'test' || appEnv === 'local';
 // For local dev/test only, fallback to sc_demo when db env is not explicitly set.
 const localDefaultDb = allowLocalFallbackDb && !runtimeDb && !localBlockedEnvDb && isLocalHost ? 'sc_demo' : '';
 const pinnedDb = localBlockedEnvDb || enforcedDb || runtimeDb;
@@ -26,7 +27,7 @@ export const config = {
     .split(',')
     .map((flag: string) => flag.trim())
     .filter(Boolean),
-  odooDb: pinnedDb || resolveActiveDb(localDefaultDb),
+  odooDb: pinnedDb || (localBlockedProductionDb ? localDefaultDb : resolveActiveDb(localDefaultDb)),
   odooDbPinned: Boolean(pinnedDb),
 };
 
