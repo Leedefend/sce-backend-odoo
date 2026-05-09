@@ -613,6 +613,45 @@
               parent="smart_construction_core.menu_sc_projection_root"
               action="smart_construction_core.action_sc_dashboard_cost_cockpit_fact"
               sequence="40"/>
+    <record id="action_sc_cost_big_screen_delivery" model="ir.actions.act_window">
+        <field name="name">成本大屏</field>
+        <field name="res_model">sc.dashboard.cockpit.fact</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_dashboard_cockpit_fact_search"/>
+        <field name="domain">[('fact_type', '=', 'cost_cockpit')]</field>
+        <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_group_project': 1}</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_cost_read'),
+            ref('smart_construction_core.group_sc_cap_cost_user'),
+            ref('smart_construction_core.group_sc_cap_cost_manager'),
+            ref('smart_construction_core.group_sc_cap_finance_read'),
+            ref('smart_construction_core.group_sc_cap_finance_user'),
+            ref('smart_construction_core.group_sc_cap_finance_manager')
+        ])]"/>
+    </record>
+    <menuitem id="menu_sc_cost_big_screen_delivery"
+              name="成本大屏"
+              parent="smart_construction_core.menu_sc_projection_root"
+              action="smart_construction_core.action_sc_cost_big_screen_delivery"
+              sequence="50"
+              groups="smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+    <record id="action_sc_operation_big_screen_delivery" model="ir.actions.act_window">
+        <field name="name">经营大屏</field>
+        <field name="res_model">sc.operating.metrics.project</field>
+        <field name="view_mode">tree,form,pivot</field>
+        <field name="context">{'create': False, 'edit': False, 'delete': False}</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_project_read'),
+            ref('smart_construction_core.group_sc_cap_cost_read'),
+            ref('smart_construction_core.group_sc_cap_finance_read')
+        ])]"/>
+    </record>
+    <menuitem id="menu_sc_operation_big_screen_delivery"
+              name="经营大屏"
+              parent="smart_construction_core.menu_sc_projection_root"
+              action="smart_construction_core.action_sc_operation_big_screen_delivery"
+              sequence="60"
+              groups="smart_construction_core.group_sc_cap_project_read,smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_finance_read"/>
     <delete model="ir.ui.menu"
             search="[('name', 'in', ['资金驾驶舱', '成本驾驶舱']), ('parent_id', '=', ref('smart_construction_core.menu_sc_projection_root')), ('id', 'not in', [ref('smart_construction_core.menu_sc_dashboard_fund_cockpit_fact'), ref('smart_construction_core.menu_sc_dashboard_cost_cockpit_fact')])]"/>
 
