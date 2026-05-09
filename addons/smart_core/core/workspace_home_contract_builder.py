@@ -760,12 +760,41 @@ def _extract_business_collections(data: Dict[str, Any]) -> Dict[str, List[Dict[s
         "user",
     }
     collections: Dict[str, List[Dict[str, Any]]] = {}
+
+    ext_facts = data.get("ext_facts") if isinstance(data.get("ext_facts"), dict) else {}
+    extension_collection_keys = (
+        "today_actions",
+        "tasks",
+        "task_items",
+        "payment_requests",
+        "risk_actions",
+        "risk",
+        "project_actions",
+        "project_tasks",
+    )
+    for module_facts in ext_facts.values():
+        if not isinstance(module_facts, dict):
+            continue
+        workspace_collections = (
+            module_facts.get("workspace_collections")
+            if isinstance(module_facts.get("workspace_collections"), dict)
+            else {}
+        )
+        for key, value in workspace_collections.items():
+            rows = _as_record_list(value)
+            if rows:
+                collections.setdefault(str(key), []).extend(rows)
+        for key in extension_collection_keys:
+            rows = _as_record_list(module_facts.get(key))
+            if rows:
+                collections.setdefault(str(key), []).extend(rows)
+
     for key, value in data.items():
         if key in ignored_top_keys:
             continue
         rows = _as_record_list(value)
         if rows:
-            collections[str(key)] = rows
+            collections.setdefault(str(key), []).extend(rows)
     return collections
 
 
@@ -1325,6 +1354,72 @@ def _build_scene_group_rows(scenes: Iterable[Dict[str, Any]], capabilities: Iter
                     ],
                 }
             )
+    return rows
+
+
+def _scene_label_from_business_action(scene_key: str, title: str) -> str:
+    key = _to_text(scene_key)
+    if key == "finance.payment_requests":
+        return "付款申请"
+    if key in {"project.management", "projects.dashboard"}:
+        return "项目管理"
+    if key in {"risk.center", "workspace.risk"}:
+        return "风险中心"
+    text = _to_text(title)
+    if "付款" in text:
+        return "付款申请"
+    if "项目" in text:
+        return "项目管理"
+    if "风险" in text:
+        return "风险中心"
+    return key or "业务入口"
+
+
+def _build_business_scene_group_rows(actions: Iterable[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    rows: List[Dict[str, Any]] = []
+    seen: set = set()
+    for index, action in enumerate(actions):
+        if not isinstance(action, dict):
+            continue
+        route = _to_text(action.get("route"))
+        scene_key = _to_text(action.get("scene_key")) or _scene_from_route(route)
+        if not scene_key:
+            continue
+        entry_key = _to_text(action.get("entry_key")) or scene_key
+        marker = (scene_key, entry_key)
+        if marker in seen:
+            continue
+        seen.add(marker)
+        title = _to_text(action.get("title"))
+        rows.append(
+            {
+                "id": _to_text(action.get("entry_id")) or f"business-{scene_key}-{index + 1}",
+                "key": entry_key,
+                "title": _scene_label_from_business_action(scene_key, title),
+                "action_label": _to_text(action.get("action_label")) or _today_action_default_label(),
+                "subtitle": title or _to_text(action.get("description")),
+                "scene_key": scene_key,
+                "scene_label": _scene_label_from_business_action(scene_key, title),
+                "sequence": 100 + index,
+                "status": "ga",
+                "state": "READY",
+                "capability_state": "allow",
+                "group_key": "business_actions",
+                "group_label": "业务办理",
+                "reason": "",
+                "reason_code": "",
+                "route": route or f"/s/{scene_key}",
+                "action_id": _to_int(action.get("action_id")),
+                "menu_id": _to_int(action.get("menu_id")),
+                "model": _to_text(action.get("model")),
+                "record_id": _to_text(action.get("record_id")),
+                "query": action.get("query") if isinstance(action.get("query"), dict) else {},
+                "scene_tags": ["business"],
+                "tile_tags": ["business"],
+            }
+        )
+        if len(rows) >= 6:
+            break
     return rows
 
 
@@ -2705,8 +2800,10 @@ def build_workspace_home_contract(data: Dict[str, Any]) -> Dict[str, Any]:
         today_business_count=today_business_count,
     )
     ops_meta = _workspace_ops_meta(has_business_signal=has_business_signal)
-    scene_group_rows: List[Dict[str, Any]] = []
-    capability_group_rows: List[Dict[str, Any]] = []
+    scene_group_rows = _build_scene_group_rows(scenes, normalized_caps)
+    if not scene_group_rows:
+        scene_group_rows = _build_business_scene_group_rows(list(today_actions) + list(risk_actions))
+    capability_group_rows = _build_capability_group_rows(capability_groups, normalized_caps)
     return {
         "scene": scene_contract_core.get("scene") or {},
         "page": scene_contract_core.get("page") or {},
