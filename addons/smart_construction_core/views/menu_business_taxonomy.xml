@@ -253,6 +253,105 @@
             ref('smart_construction_core.group_sc_cap_finance_manager')
         ])]"/>
     </record>
+    <record id="view_sc_tax_certificate_registration_search" model="ir.ui.view">
+        <field name="name">sc.legacy.payment.residual.fact.tax.certificate.search</field>
+        <field name="model">sc.legacy.payment.residual.fact</field>
+        <field name="arch" type="xml">
+            <search string="外经证登记">
+                <field name="document_no" string="外经证编号"/>
+                <field name="project_id" string="项目"/>
+                <field name="project_name" string="旧系统项目"/>
+                <field name="partner_id" string="机构"/>
+                <field name="partner_name" string="旧系统机构"/>
+                <field name="contract_no" string="合同编号"/>
+                <field name="handler_name" string="经办人"/>
+                <filter string="有项目" name="has_project" domain="[('project_id', '!=', False)]"/>
+                <filter string="有附件" name="has_attachment" domain="[('attachment_ref', '!=', False)]"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按机构" name="group_partner" context="{'group_by': 'partner_id'}"/>
+                <filter string="按经办人" name="group_handler" context="{'group_by': 'handler_name'}"/>
+            </search>
+        </field>
+    </record>
+    <record id="view_sc_tax_certificate_registration_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.payment.residual.fact.tax.certificate.tree</field>
+        <field name="model">sc.legacy.payment.residual.fact</field>
+        <field name="arch" type="xml">
+            <tree string="外经证登记" create="false" edit="false" delete="false" default_order="document_date desc, id desc">
+                <field name="document_date" string="登记日期"/>
+                <field name="document_no" string="外经证编号"/>
+                <field name="project_id" string="项目"/>
+                <field name="project_name" string="旧系统项目"/>
+                <field name="partner_id" string="机构"/>
+                <field name="partner_name" string="旧系统机构"/>
+                <field name="contract_no" string="合同编号"/>
+                <field name="planned_amount" string="合同金额" sum="合同金额合计"/>
+                <field name="payment_method" string="经营方式"/>
+                <field name="handler_name" string="经办人"/>
+                <field name="attachment_ref" string="附件"/>
+                <field name="note" string="合同名称/外经证地址"/>
+            </tree>
+        </field>
+    </record>
+    <record id="view_sc_tax_certificate_registration_form" model="ir.ui.view">
+        <field name="name">sc.legacy.payment.residual.fact.tax.certificate.form</field>
+        <field name="model">sc.legacy.payment.residual.fact</field>
+        <field name="arch" type="xml">
+            <form string="外经证登记" create="false" edit="false" delete="false">
+                <sheet>
+                    <group>
+                        <group string="外经证">
+                            <field name="document_no" string="外经证编号"/>
+                            <field name="document_date" string="登记日期"/>
+                            <field name="document_state" string="办理状态"/>
+                            <field name="payment_method" string="经营方式"/>
+                            <field name="handler_name" string="经办人"/>
+                        </group>
+                        <group string="项目与机构">
+                            <field name="project_id" string="项目"/>
+                            <field name="project_name" string="旧系统项目"/>
+                            <field name="partner_id" string="机构"/>
+                            <field name="partner_name" string="旧系统机构"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="合同">
+                            <field name="contract_no" string="合同编号"/>
+                            <field name="planned_amount" string="合同金额"/>
+                        </group>
+                        <group string="附件">
+                            <field name="attachment_ref" string="附件"/>
+                            <field name="created_time" string="创建时间"/>
+                            <field name="creator_name" string="创建人"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="note" string="合同名称/外经证地址" nolabel="1"/>
+                    </group>
+                    <group string="旧系统来源">
+                        <field name="source_table" string="来源表"/>
+                        <field name="legacy_record_id" string="旧系统记录ID"/>
+                        <field name="legacy_pid" string="旧系统PID"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+    <record id="action_sc_tax_certificate_registration_user" model="ir.actions.act_window">
+        <field name="name">外经证登记</field>
+        <field name="res_model">sc.legacy.payment.residual.fact</field>
+        <field name="view_mode">tree,form</field>
+        <field name="views" eval="[(ref('smart_construction_core.view_sc_tax_certificate_registration_tree'), 'tree'), (ref('smart_construction_core.view_sc_tax_certificate_registration_form'), 'form')]"/>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_tax_certificate_registration_search"/>
+        <field name="domain">[('payment_family', '=', 'tax_certificate_registration')]</field>
+        <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_group_project': 1}</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_business_initiator'),
+            ref('smart_construction_core.group_sc_cap_finance_read'),
+            ref('smart_construction_core.group_sc_cap_finance_user'),
+            ref('smart_construction_core.group_sc_cap_finance_manager')
+        ])]"/>
+    </record>
     <record id="action_sc_expense_claim_expense" model="ir.actions.act_window">
         <field name="name">费用报销单</field>
         <field name="res_model">sc.expense.claim</field>
@@ -1251,6 +1350,12 @@
               parent="smart_construction_core.menu_sc_invoice_tax_user_group"
               action="smart_construction_core.action_sc_tax_deduction_registration_user"
               sequence="50"
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+    <menuitem id="menu_sc_tax_certificate_registration_user"
+              name="外经证登记"
+              parent="smart_construction_core.menu_sc_invoice_tax_user_group"
+              action="smart_construction_core.action_sc_tax_certificate_registration_user"
+              sequence="60"
               groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
 
     <menuitem id="menu_sc_funding_plan_group"
