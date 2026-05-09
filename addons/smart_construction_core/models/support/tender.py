@@ -270,6 +270,7 @@ class TenderDocPurchase(models.Model):
     attachment_ids = fields.Many2many("ir.attachment", string="附件")
     state = fields.Selection(
         [("draft", "草稿"), ("submitted", "审批中"), ("approved", "已通过"), ("rejected", "已驳回")],
+        string="状态",
         default="draft",
     )
     currency_id = fields.Many2one(
