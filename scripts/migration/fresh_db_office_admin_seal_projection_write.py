@@ -13,7 +13,7 @@ from pathlib import Path
 
 
 FACT_TYPE = "seal_use"
-SOURCE_TABLE = "BGGL_QSJRW_GZQS"
+SOURCE_TABLES = ("BGGL_XZD_YZSYSPB", "BGGL_QSJRW_GZQS")
 INPUT_CSV_NAME = "fresh_db_legacy_business_fact_residual_replay_payload_v1.csv"
 
 SEAL_INCLUDE_TERMS = ("印章", "用章", "盖章", "公章", "合同章", "财务章", "法人章", "项目章", "印油", "签章")
@@ -76,23 +76,25 @@ def seal_type(text):
     return "other"
 
 
-def is_seal_request(raw):
+def is_seal_request(source_table, raw):
+    if source_table == "BGGL_XZD_YZSYSPB":
+        return True
     text = " ".join(str(raw.get(field) or "") for field in ("BT", "QSJS", "QSXS"))
     return any(term in text for term in SEAL_INCLUDE_TERMS)
 
 
-def existing_legacy_ids():
+def existing_legacy_pairs():
     env.cr.execute(  # noqa: F821
         """
-        SELECT legacy_source_id
+        SELECT legacy_source_table, legacy_source_id
           FROM sc_office_admin_document
          WHERE fact_type = %s
-           AND legacy_source_table = %s
+           AND legacy_source_table = ANY(%s)
            AND legacy_source_id IS NOT NULL
         """,
-        (FACT_TYPE, SOURCE_TABLE),
+        (FACT_TYPE, list(SOURCE_TABLES)),
     )
-    return {row[0] for row in env.cr.fetchall()}  # noqa: F821
+    return {(row[0], row[1]) for row in env.cr.fetchall()}  # noqa: F821
 
 
 def currency_id():
@@ -114,18 +116,56 @@ def iter_rows():
     with input_csv.open(newline="", encoding="utf-8") as handle:
         reader = csv.DictReader(handle)
         for row in reader:
-            if row.get("source_table") != SOURCE_TABLE:
+            source_table = row.get("source_table")
+            if source_table not in SOURCE_TABLES:
                 continue
             raw = json.loads(row.get("raw_payload") or "{}")
-            if not is_seal_request(raw):
+            if not is_seal_request(source_table, raw):
                 continue
             legacy_source_id = row.get("legacy_record_id") or raw.get("ID")
             yield row, raw, legacy_source_id
 
 
+def row_title(source_table, raw):
+    if source_table == "BGGL_XZD_YZSYSPB":
+        purpose = str(raw.get("GZWJNBGY") or "").strip()
+        return purpose or "印章使用审批"
+    return str(raw.get("BT") or "").strip() or "印章使用审批"
+
+
+def row_use_purpose(source_table, raw, title):
+    if source_table == "BGGL_XZD_YZSYSPB":
+        parts = [
+            str(raw.get("GZWJNBGY") or "").strip(),
+            str(raw.get("YYWBMCJWH") or "").strip(),
+            str(raw.get("BZ") or "").strip(),
+        ]
+        text = " / ".join([item for item in parts if item])
+        return text or title
+    return str(raw.get("QSJS") or raw.get("QSXS") or title).strip()
+
+
+def row_applicant(source_table, raw):
+    if source_table == "BGGL_XZD_YZSYSPB":
+        return str(raw.get("YYSQR") or raw.get("LRR") or "").strip()
+    return str(raw.get("QSR") or raw.get("LRR") or "").strip()
+
+
+def row_department(source_table, raw):
+    if source_table == "BGGL_XZD_YZSYSPB":
+        return str(raw.get("YYBM") or raw.get("SJBMC") or "").strip()
+    return str(raw.get("SSBM") or raw.get("SJBMC") or "").strip()
+
+
+def row_use_date(source_table, row, raw):
+    if source_table == "BGGL_XZD_YZSYSPB":
+        return parse_date(raw.get("YYSJ") or row.get("document_date") or raw.get("LRSJ"))
+    return parse_date(raw.get("QSRQ") or row.get("document_date") or raw.get("LRSJ"))
+
+
 output_json = resolve_artifact_root() / "fresh_db_office_admin_seal_projection_write_result_v1.json"
 input_csv = resolve_input_csv()
-seen = existing_legacy_ids()
+seen = existing_legacy_pairs()
 created = 0
 samples = []
 cur_currency_id = currency_id()
@@ -134,19 +174,23 @@ env.cr.execute("SELECT COUNT(*) FROM sc_office_admin_document WHERE fact_type = 
 before_count = env.cr.fetchone()[0]  # noqa: F821
 
 for row, raw, legacy_source_id in iter_rows():
-    if legacy_source_id in seen:
+    source_table = row.get("source_table")
+    legacy_pair = (source_table, legacy_source_id)
+    if legacy_pair in seen:
         continue
     document_no = str(row.get("document_no") or raw.get("DJBH") or "").strip()
-    document_date = parse_date(raw.get("QSRQ") or row.get("document_date") or raw.get("LRSJ"))
-    applicant = str(raw.get("QSR") or raw.get("LRR") or "").strip()
-    department = str(raw.get("SSBM") or raw.get("SJBMC") or "").strip()
-    title = str(raw.get("BT") or "").strip() or "印章使用审批"
-    use_purpose = str(raw.get("QSJS") or raw.get("QSXS") or title).strip()
-    text = "%s %s" % (title, use_purpose)
+    document_date = row_use_date(source_table, row, raw)
+    applicant = row_applicant(source_table, raw)
+    department = row_department(source_table, raw)
+    title = row_title(source_table, raw)
+    use_purpose = row_use_purpose(source_table, raw, title)
+    text = "%s %s %s" % (title, use_purpose, raw.get("YYZL") or "")
     description_parts = [
         "旧系统标题: %s" % title,
         "申请人: %s" % applicant,
         "部门: %s" % department,
+        "印章资料: %s" % (raw.get("YYZL") or ""),
+        "使用类型: %s" % (raw.get("SYLX") or ""),
         "紧急程度: %s" % (raw.get("JJCD") or ""),
         "附件引用: %s" % (raw.get("FJ") or ""),
         "旧系统说明: %s" % use_purpose,
@@ -208,13 +252,13 @@ for row, raw, legacy_source_id in iter_rows():
             "\n".join(description_parts),
             document_no or None,
             str(raw.get("DJZT") or ""),
-            SOURCE_TABLE,
+            source_table,
             legacy_source_id,
             cur_currency_id,
         ),
     )
     created += 1
-    seen.add(legacy_source_id)
+    seen.add(legacy_pair)
     if len(samples) < 5:
         samples.append(
             {
@@ -224,6 +268,7 @@ for row, raw, legacy_source_id in iter_rows():
                 "department": department,
                 "seal_type": seal_type(text),
                 "use_date": document_date.isoformat() if document_date else None,
+                "source_table": source_table,
             }
         )
 
@@ -235,7 +280,7 @@ after_count = env.cr.fetchone()[0]  # noqa: F821
 result = {
     "mode": "fresh_db_office_admin_seal_projection_write",
     "source_csv": str(input_csv),
-    "source_table": SOURCE_TABLE,
+    "source_tables": list(SOURCE_TABLES),
     "target_model": "sc.office.admin.document",
     "fact_type": FACT_TYPE,
     "before_count": before_count,
