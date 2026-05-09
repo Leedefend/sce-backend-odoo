@@ -270,7 +270,7 @@
 
         <!-- =========================
              业务配置管理员
-             - 管业务主数据、业务规则、阶段要求、定额/字典
+             - 管业务主数据、客户/供应商、业务规则、阶段要求、定额/字典
              - 不继承 Odoo base.group_system
         ========================== -->
         <record id="group_sc_cap_business_config_admin" model="res.groups">
@@ -279,7 +279,8 @@
             <field name="implied_ids" eval="[
                 (6, 0, [
                     ref('smart_construction_core.group_sc_internal_user'),
-                    ref('smart_construction_core.group_sc_cap_data_read')
+                    ref('smart_construction_core.group_sc_cap_data_read'),
+                    ref('smart_construction_core.group_sc_cap_contact_manager')
                 ])
             ]"/>
         </record>
