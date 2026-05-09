@@ -1732,14 +1732,18 @@
     </record>
     <record id="action_sc_comprehensive_cost_statistics_report" model="ir.actions.act_window">
         <field name="name">成本统计表（综合）</field>
-        <field name="res_model">sc.ar.ap.project.summary</field>
+        <field name="res_model">sc.comprehensive.cost.summary</field>
         <field name="view_mode">tree,form,pivot,graph</field>
-        <field name="search_view_id" ref="smart_construction_core.view_sc_ar_ap_project_summary_search"/>
-        <field name="context">{'create': False, 'search_default_has_payable_contract': 1}</field>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_comprehensive_cost_summary_search"/>
+        <field name="context">{'create': False, 'edit': False, 'delete': False}</field>
         <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_business_initiator'),
             ref('smart_construction_core.group_sc_cap_finance_read'),
             ref('smart_construction_core.group_sc_cap_finance_user'),
             ref('smart_construction_core.group_sc_cap_finance_manager'),
+            ref('smart_construction_core.group_sc_cap_cost_read'),
+            ref('smart_construction_core.group_sc_cap_cost_user'),
+            ref('smart_construction_core.group_sc_cap_cost_manager'),
             ref('smart_construction_core.group_sc_cap_contract_read'),
             ref('smart_construction_core.group_sc_cap_contract_user'),
             ref('smart_construction_core.group_sc_cap_contract_manager')
@@ -1750,7 +1754,7 @@
               parent="smart_construction_core.menu_sc_cost_report_group"
               action="smart_construction_core.action_sc_comprehensive_cost_statistics_report"
               sequence="40"
-              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager,smart_construction_core.group_sc_cap_contract_read,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager,smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_cost_user,smart_construction_core.group_sc_cap_cost_manager,smart_construction_core.group_sc_cap_contract_read,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
     <record id="action_sc_tender_deposit_statistics_report" model="ir.actions.act_window">
         <field name="name">投标保证金报表</field>
         <field name="res_model">sc.legacy.expense.deposit.fact</field>

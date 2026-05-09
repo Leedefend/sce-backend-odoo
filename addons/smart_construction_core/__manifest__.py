@@ -162,6 +162,7 @@
         'views/projection/invoice_category_summary_views.xml',
         'views/projection/expense_salary_summary_views.xml',
         'views/projection/material_stock_summary_views.xml',
+        'views/projection/comprehensive_cost_summary_views.xml',
         'views/projection/financing_ledger_views.xml',
         'views/projection/treasury_ledger_views.xml',
         'views/core/workflow_views.xml',
