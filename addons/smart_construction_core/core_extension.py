@@ -2,6 +2,7 @@
 import logging
 from typing import Any, Dict, List
 
+from odoo import fields
 from odoo.exceptions import AccessError
 
 _logger = logging.getLogger(__name__)
@@ -279,28 +280,43 @@ def _build_enterprise_enablement_contract(env, user) -> Dict[str, Any]:
 
 
 def _build_task_action_rows(env, user) -> List[Dict[str, Any]]:
-    user_domain = ["|", ("user_id", "=", user.id), ("user_ids", "in", [user.id])]
+    task_fields = ["id", "name", "project_id", "date_deadline", "write_date"]
+    if _model_has_field(env, "project.task", "sc_state"):
+        task_fields.append("sc_state")
+    if _model_has_field(env, "project.task", "kanban_state"):
+        task_fields.append("kanban_state")
+    user_domain: List[Any] = []
+    if _model_has_field(env, "project.task", "user_id"):
+        task_fields.append("user_id")
+        user_domain.append(("user_id", "=", user.id))
+    if _model_has_field(env, "project.task", "user_ids"):
+        task_fields.append("user_ids")
+        user_domain.append(("user_ids", "in", [user.id]))
+    if len(user_domain) == 2:
+        scoped_user_domain = ["|"] + user_domain
+    else:
+        scoped_user_domain = list(user_domain)
     rows = _safe_search_read(
         env,
         "project.task",
-        domain=[("sc_state", "in", ["draft", "ready", "in_progress"])] + user_domain,
-        fields=["id", "name", "project_id", "sc_state", "date_deadline", "user_id", "write_date"],
+        domain=[("sc_state", "in", ["draft", "ready", "in_progress"])] + scoped_user_domain,
+        fields=task_fields,
         limit=6,
-    )
+    ) if _model_has_field(env, "project.task", "sc_state") else []
     if not rows:
         rows = _safe_search_read(
             env,
             "project.task",
             domain=[("sc_state", "in", ["draft", "ready", "in_progress"])],
-            fields=["id", "name", "project_id", "sc_state", "date_deadline", "user_id", "write_date"],
+            fields=task_fields,
             limit=6,
-        )
+        ) if _model_has_field(env, "project.task", "sc_state") else []
     if not rows and _model_has_field(env, "project.task", "kanban_state"):
         rows = _safe_search_read(
             env,
             "project.task",
-            domain=[("kanban_state", "in", ["normal", "blocked"])] + user_domain,
-            fields=["id", "name", "project_id", "kanban_state", "date_deadline", "user_id", "write_date"],
+            domain=[("kanban_state", "in", ["normal", "blocked"])] + scoped_user_domain,
+            fields=task_fields,
             limit=6,
         )
     if not rows and _model_has_field(env, "project.task", "kanban_state"):
@@ -308,7 +324,7 @@ def _build_task_action_rows(env, user) -> List[Dict[str, Any]]:
             env,
             "project.task",
             domain=[("kanban_state", "in", ["normal", "blocked"])],
-            fields=["id", "name", "project_id", "kanban_state", "date_deadline", "user_id", "write_date"],
+            fields=task_fields,
             limit=6,
         )
     result: List[Dict[str, Any]] = []
@@ -391,7 +407,7 @@ def _build_risk_action_rows(env) -> List[Dict[str, Any]]:
                     "status": status,
                     "count": 1,
                     "risk_action_id": int(row.get("id") or 0),
-                    "source_detail": "mutation_record",
+                    "source_detail": "factual_record",
                 }
             )
         return result
@@ -411,6 +427,42 @@ def _build_risk_action_rows(env) -> List[Dict[str, Any]]:
             fields=["id", "name", "health_state", "write_date"],
             limit=6,
         )
+    if not rows:
+        task_fields = ["id", "name", "project_id", "date_deadline", "write_date"]
+        if _model_has_field(env, "project.task", "sc_state"):
+            task_fields.append("sc_state")
+        if _model_has_field(env, "project.task", "kanban_state"):
+            task_fields.append("kanban_state")
+        overdue_rows = _safe_search_read(
+            env,
+            "project.task",
+            domain=[("date_deadline", "<", fields.Datetime.now())],
+            fields=task_fields,
+            limit=6,
+        )
+        result: List[Dict[str, Any]] = []
+        for row in overdue_rows:
+            task_name = _as_text(row.get("name")) or "逾期任务"
+            project_name = ""
+            project_raw = row.get("project_id")
+            if isinstance(project_raw, list) and len(project_raw) > 1:
+                project_name = _as_text(project_raw[1])
+            result.append(
+                {
+                    "id": f"task-risk-{row.get('id')}",
+                    "title": f"任务逾期风险 · {task_name}",
+                    "description": f"{project_name} 存在逾期任务，请优先跟进。" if project_name else "存在逾期任务，请优先跟进。",
+                    "status": "urgent",
+                    "count": 1,
+                    "model": "project.task",
+                    "record_id": int(row.get("id") or 0),
+                    "task_id": int(row.get("id") or 0),
+                    "deadline": row.get("date_deadline"),
+                    "source_detail": "factual_record",
+                }
+            )
+        if result:
+            return result
     result: List[Dict[str, Any]] = []
     for row in rows:
         health = _as_text(row.get("health_state"))
@@ -530,12 +582,22 @@ def get_api_data_unlink_allowed_model_contributions(env):
 
 def get_model_code_mapping_contributions(env):
     return dict(MODEL_CODE_MAPPING)
+
+
+def _dictionary_fields(env) -> List[str]:
+    fields_to_read = ["code", "name", "value_json", "sequence"]
+    for field_name in ("scope_type", "scope_ref"):
+        if _model_has_field(env, "sc.dictionary", field_name):
+            fields_to_read.append(field_name)
+    return fields_to_read
+
+
 def _build_role_entry_contract_rows(env) -> List[Dict[str, Any]]:
     rows = _safe_search_read(
         env,
         "sc.dictionary",
         domain=[("type", "=", "role_entry"), ("active", "=", True)],
-        fields=["code", "name", "scope_type", "scope_ref", "value_json", "sequence"],
+        fields=_dictionary_fields(env),
         limit=200,
     )
     grouped: Dict[str, List[Dict[str, Any]]] = {}
@@ -600,7 +662,7 @@ def _build_home_block_contract_rows(env) -> List[Dict[str, Any]]:
         env,
         "sc.dictionary",
         domain=[("type", "=", "home_block"), ("active", "=", True)],
-        fields=["code", "name", "scope_type", "scope_ref", "value_json", "sequence"],
+        fields=_dictionary_fields(env),
         limit=200,
     )
     grouped: Dict[str, List[Dict[str, Any]]] = {}

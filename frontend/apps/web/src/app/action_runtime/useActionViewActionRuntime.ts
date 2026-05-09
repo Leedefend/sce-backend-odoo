@@ -85,7 +85,7 @@ type UseActionViewActionRuntimeOptions = {
     actionKey: string;
     kind: string;
     context?: Dict;
-  }) => Dict;
+  }) => ExecuteButtonInput;
   resolveResponseActionId: (response: unknown) => number | null;
   shouldNavigate: (input: { nextActionId: number | null }) => boolean;
 };
