@@ -1655,6 +1655,41 @@
               name="财务分析"
               parent="smart_construction_core.menu_sc_data_center"
               sequence="20"/>
+    <menuitem id="menu_sc_tax_finance_report_group"
+              name="财税报表"
+              parent="smart_construction_core.menu_sc_data_center"
+              sequence="18"/>
+    <record id="action_sc_project_operation_statistics_report" model="ir.actions.act_window">
+        <field name="name">项目经营统计表</field>
+        <field name="res_model">sc.operating.metrics.project</field>
+        <field name="view_mode">tree,form,pivot</field>
+        <field name="context">{'create': False, 'edit': False, 'delete': False}</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_project_read'),
+            ref('smart_construction_core.group_sc_cap_cost_read'),
+            ref('smart_construction_core.group_sc_cap_finance_read')
+        ])]"/>
+    </record>
+    <menuitem id="menu_sc_project_operation_statistics_report"
+              name="项目经营统计表"
+              parent="smart_construction_core.menu_sc_tax_finance_report_group"
+              action="smart_construction_core.action_sc_project_operation_statistics_report"
+              sequence="10"
+              groups="smart_construction_core.group_sc_cap_project_read,smart_construction_core.group_sc_cap_cost_read,smart_construction_core.group_sc_cap_finance_read"/>
+    <record id="menu_sc_ar_ap_finance_tax_report" model="ir.ui.menu">
+        <field name="name">应收应付报表</field>
+        <field name="parent_id" ref="smart_construction_core.menu_sc_tax_finance_report_group"/>
+        <field name="action" ref="smart_construction_core.action_sc_ar_ap_company_summary"/>
+        <field name="sequence">20</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_finance_read'),
+            ref('smart_construction_core.group_sc_cap_finance_user'),
+            ref('smart_construction_core.group_sc_cap_finance_manager'),
+            ref('smart_construction_core.group_sc_cap_contract_read'),
+            ref('smart_construction_core.group_sc_cap_contract_user'),
+            ref('smart_construction_core.group_sc_cap_contract_manager')
+        ])]"/>
+    </record>
     <record id="menu_sc_legacy_report_inventory" model="ir.ui.menu">
         <field name="parent_id" ref="smart_construction_core.menu_sc_business_analysis_group"/>
         <field name="sequence">90</field>
