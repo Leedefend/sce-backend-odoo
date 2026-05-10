@@ -19,6 +19,9 @@ from pathlib import Path
 
 DB_NAME = env.cr.dbname  # noqa: F821
 ROOT = Path(os.getenv("BUSINESS_FACT_RESIDUAL_ROOT") or f"/mnt/artifacts/business-fact-audit/{DB_NAME}_residual_gap_classifier")
+RAW_CONTRACT_CSV = Path(os.getenv("CONSTRUCTION_CONTRACT_RAW_CSV", "/mnt/tmp/raw/contract/contract.csv"))
+RAW_AMOUNT_FIELDS = ("GCYSZJ", "D_SCBSJS_QYHTJ", "D_SCBSJS_JSJE", "f_HTJK", "YFK", "ZLBZJ")
+RAW_BALANCE_FIELDS = ("GCLJYSK_1", "GCLJYSK_2", "GCQK", "GCLJKPJE")
 
 
 def clean(value) -> str:
@@ -32,6 +35,28 @@ def rows(sql: str, params: list[object] | None = None) -> list[dict[str, object]
     env.cr.execute(sql, params or [])  # noqa: F821
     columns = [desc[0] for desc in env.cr.description]  # noqa: F821
     return [dict(zip(columns, row)) for row in env.cr.fetchall()]  # noqa: F821
+
+
+def money_present(value) -> bool:
+    text = clean(value).replace(",", "")
+    if not text:
+        return False
+    try:
+        return abs(float(text)) > 0.000001
+    except ValueError:
+        return False
+
+
+def read_raw_contract_rows() -> dict[str, dict[str, str]]:
+    if not RAW_CONTRACT_CSV.is_file():
+        return {}
+    raw_rows: dict[str, dict[str, str]] = {}
+    with RAW_CONTRACT_CSV.open("r", encoding="utf-8-sig", newline="") as handle:
+        for row in csv.DictReader(handle):
+            legacy_id = clean(row.get("Id"))
+            if legacy_id:
+                raw_rows[legacy_id] = row
+    return raw_rows
 
 
 def write_csv(path: Path, csv_rows: list[dict[str, object]]) -> None:
@@ -154,6 +179,7 @@ def classify_partner_residuals() -> tuple[dict[str, object], list[dict[str, obje
 
 
 def classify_contract_residuals() -> tuple[dict[str, object], list[dict[str, object]], list[dict[str, object]]]:
+    raw_contract_rows = read_raw_contract_rows()
     amount_rows = rows(
         """
         SELECT id AS contract_id,
@@ -210,16 +236,67 @@ def classify_contract_residuals() -> tuple[dict[str, object], list[dict[str, obj
         """
     )
     amount_type_counts = Counter(clean(row["type"]) or "unknown" for row in amount_rows)
+    amount_source_counts: Counter[str] = Counter()
+    amount_source_by_type_counts: Counter[str] = Counter()
+    amount_detail_rows: list[dict[str, object]] = []
+    for row in amount_rows:
+        contract_type = clean(row.get("type")) or "unknown"
+        raw_row = raw_contract_rows.get(clean(row.get("legacy_contract_id")))
+        if not raw_row:
+            source_status = "raw_contract_row_missing"
+            source_field = ""
+            source_amount = ""
+        else:
+            source_field = ""
+            source_amount = ""
+            for field_name in RAW_AMOUNT_FIELDS:
+                if money_present(raw_row.get(field_name)):
+                    source_field = field_name
+                    source_amount = clean(raw_row.get(field_name))
+                    break
+            source_status = "raw_amount_present" if source_field else "raw_amount_zero_or_blank"
+        amount_source_counts[source_status] += 1
+        amount_source_by_type_counts[f"{contract_type}:{source_status}"] += 1
+        amount_detail_rows.append(
+            {
+                **row,
+                "raw_source_status": source_status,
+                "raw_source_field": source_field,
+                "raw_source_amount": source_amount,
+            }
+        )
+
+    balance_source_counts: Counter[str] = Counter()
+    balance_detail_rows: list[dict[str, object]] = []
+    for row in balance_rows:
+        raw_row = raw_contract_rows.get(clean(row.get("legacy_contract_id")))
+        if not raw_row:
+            source_status = "raw_contract_row_missing"
+            populated_fields: list[str] = []
+        else:
+            populated_fields = [field_name for field_name in RAW_BALANCE_FIELDS if clean(raw_row.get(field_name))]
+            source_status = "raw_balance_field_present" if populated_fields else "raw_balance_fields_blank"
+        balance_source_counts[source_status] += 1
+        balance_detail_rows.append(
+            {
+                **row,
+                "raw_source_status": source_status,
+                "raw_balance_fields": ",".join(populated_fields),
+            }
+        )
     return (
         {
             "contract_amount_missing_total": len(amount_rows),
             "contract_amount_missing_by_type": dict(sorted(amount_type_counts.items())),
+            "contract_amount_source_status_counts": dict(sorted(amount_source_counts.items())),
+            "contract_amount_source_status_by_type": dict(sorted(amount_source_by_type_counts.items())),
             "contract_receivable_balance_missing_total": len(balance_rows),
+            "contract_receivable_balance_source_status_counts": dict(sorted(balance_source_counts.items())),
             "supplier_contract_entry_source_missing_total": len(supplier_entry_rows),
             "decision": "amount_and_balance_residuals_require_old_system_fields_or_business_confirmation",
         },
-        amount_rows,
-        balance_rows + supplier_entry_rows,
+        amount_detail_rows,
+        balance_detail_rows + supplier_entry_rows,
     )
 
 
@@ -237,6 +314,7 @@ payload = {
     "partner": partner_summary,
     "contract": contract_summary,
     "artifact_root": str(ROOT),
+    "raw_contract_csv": str(RAW_CONTRACT_CSV),
     "objective_fact_policy": (
         "Only legacy creator/time/amount/balance fields are acceptable backfill evidence; "
         "Odoo create_uid/create_date and import timestamps are technical metadata."
