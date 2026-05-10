@@ -392,14 +392,17 @@ def collect_issues(counts: dict[str, int]) -> list[dict[str, object]]:
         severity="warn",
         count=count_table(
             "construction_contract",
-            "legacy_contract_id IS NOT NULL AND COALESCE(visible_contract_amount, 0) = 0",
+            "legacy_contract_id IS NOT NULL AND COALESCE(visible_contract_amount, 0) = 0 "
+            "AND COALESCE(legacy_contract_amount_source, '') = ''",
         ),
-        message="历史合同合同金额为空或为 0，需确认是否为旧系统客观事实。",
+        message="历史合同合同金额为空或为 0，且缺少旧库金额来源证据。",
         sample_sql="""
-            SELECT id, legacy_contract_id, legacy_document_no, subject, legacy_contract_amount, amount_untaxed, visible_contract_amount
+            SELECT id, legacy_contract_id, legacy_document_no, subject,
+                   legacy_contract_amount, legacy_contract_amount_source, amount_untaxed, visible_contract_amount
               FROM construction_contract
              WHERE legacy_contract_id IS NOT NULL
                AND COALESCE(visible_contract_amount, 0) = 0
+               AND COALESCE(legacy_contract_amount_source, '') = ''
              ORDER BY id
         """,
     )
@@ -456,12 +459,14 @@ def export_gap_details(root: Path) -> dict[str, object]:
                legacy_contract_no,
                subject,
                legacy_contract_amount,
+               legacy_contract_amount_source,
                amount_untaxed,
                visible_contract_amount,
                note
           FROM construction_contract
          WHERE legacy_contract_id IS NOT NULL
            AND COALESCE(visible_contract_amount, 0) = 0
+           AND COALESCE(legacy_contract_amount_source, '') = ''
          ORDER BY type, legacy_document_no, id
         """
     )

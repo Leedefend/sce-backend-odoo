@@ -197,6 +197,7 @@ def classify_contract_residuals() -> tuple[dict[str, object], list[dict[str, obj
           FROM construction_contract
          WHERE legacy_contract_id IS NOT NULL
            AND COALESCE(visible_contract_amount, 0) = 0
+           AND COALESCE(legacy_contract_amount_source, '') = ''
          ORDER BY type, legacy_document_no, id
         """
     )
