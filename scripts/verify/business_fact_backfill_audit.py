@@ -568,6 +568,48 @@ def export_gap_details(root: Path) -> dict[str, object]:
          ORDER BY f.legacy_source_table, f.legacy_record_id, p.id
         """
     )
+    fact_time_record_gap_rows = rows(
+        """
+        WITH fact_sources AS (
+            SELECT partner_id,
+                   'sc.receipt.income' AS runtime_model,
+                   legacy_source_table,
+                   legacy_record_id,
+                   COALESCE(amount, 0) AS amount
+              FROM sc_receipt_income
+             WHERE source_origin = 'legacy'
+               AND partner_id IS NOT NULL
+            UNION ALL
+            SELECT partner_id,
+                   'sc.payment.execution' AS runtime_model,
+                   legacy_source_table,
+                   legacy_record_id,
+                   COALESCE(paid_amount, 0) AS amount
+              FROM sc_payment_execution
+             WHERE source_origin = 'legacy'
+               AND partner_id IS NOT NULL
+            UNION ALL
+            SELECT partner_id,
+                   'sc.legacy.enterprise.business.fact' AS runtime_model,
+                   legacy_source_table,
+                   legacy_record_id,
+                   COALESCE(amount_total, 0) AS amount
+              FROM sc_legacy_enterprise_business_fact
+             WHERE partner_id IS NOT NULL
+        )
+        SELECT p.id AS partner_id,
+               p.name AS partner_name,
+               f.runtime_model,
+               f.legacy_source_table,
+               f.legacy_record_id,
+               f.amount
+          FROM res_partner p
+          JOIN fact_sources f ON f.partner_id = p.id
+         WHERE (p.customer_rank > 0 OR p.supplier_rank > 0 OR COALESCE(p.sc_source_fact_count, 0) > 0)
+           AND COALESCE(p.sc_source_created_at, '') = ''
+         ORDER BY f.legacy_source_table, f.legacy_record_id, p.id
+        """
+    )
     balance_rows = rows(
         """
         SELECT id AS contract_id,
@@ -590,6 +632,7 @@ def export_gap_details(root: Path) -> dict[str, object]:
     write_csv(root / "partner_source_creator_missing_rows_v1.csv", partner_creator_rows)
     write_csv(root / "partner_fact_creator_source_gap_rows_v1.csv", fact_creator_source_gap_rows)
     write_csv(root / "partner_fact_creator_record_gap_rows_v1.csv", fact_creator_record_gap_rows)
+    write_csv(root / "partner_fact_time_record_gap_rows_v1.csv", fact_time_record_gap_rows)
     write_csv(root / "contract_receivable_balance_missing_rows_v1.csv", balance_rows)
     return {
         "contract_amount_missing_rows": len(amount_rows),
@@ -597,6 +640,7 @@ def export_gap_details(root: Path) -> dict[str, object]:
         "partner_source_creator_missing_rows": len(partner_creator_rows),
         "partner_fact_creator_source_gap_rows": len(fact_creator_source_gap_rows),
         "partner_fact_creator_record_gap_rows": len(fact_creator_record_gap_rows),
+        "partner_fact_time_record_gap_rows": len(fact_time_record_gap_rows),
         "contract_receivable_balance_missing_rows": len(balance_rows),
         "gap_artifact_root": str(root),
     }
