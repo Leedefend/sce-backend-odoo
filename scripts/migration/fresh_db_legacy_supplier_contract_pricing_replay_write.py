@@ -79,11 +79,14 @@ Project = env["project.project"].sudo().with_context(active_test=False)  # noqa:
 Partner = env["res.partner"].sudo().with_context(active_test=False)  # noqa: F821
 
 project_legacy_ids = sorted({clean(row.get("project_legacy_id")) for row in rows if clean(row.get("project_legacy_id"))})
-project_map = {
-    rec["legacy_project_id"]: rec["id"]
-    for rec in Project.search_read([("legacy_project_id", "in", project_legacy_ids)], ["legacy_project_id"])
-    if rec.get("legacy_project_id")
-}
+project_map = {}
+project_name_map = {}
+for rec in Project.search_read([("legacy_project_id", "in", project_legacy_ids)], ["legacy_project_id", "name"]):
+    legacy_project_id = clean(rec.get("legacy_project_id"))
+    if not legacy_project_id:
+        continue
+    project_map[legacy_project_id] = rec["id"]
+    project_name_map[legacy_project_id] = clean(rec.get("name"))
 partner_legacy_ids = sorted({clean(row.get("partner_legacy_id")) for row in rows if clean(row.get("partner_legacy_id"))})
 partner_map = {
     rec["legacy_partner_id"]: rec["id"]
@@ -108,7 +111,8 @@ missing_project = 0
 missing_partner = 0
 for row in rows:
     legacy_contract_id = clean(row.get("legacy_contract_id"))
-    project_id = project_map.get(clean(row.get("project_legacy_id")))
+    project_legacy_id = clean(row.get("project_legacy_id"))
+    project_id = project_map.get(project_legacy_id)
     partner_id = partner_map.get(clean(row.get("partner_legacy_id"))) or partner_name_map.get(clean(row.get("partner_name")))
     if not project_id:
         missing_project += 1
@@ -119,8 +123,8 @@ for row in rows:
         "legacy_source_table": "T_GYSHT_INFO",
         "document_state": clean(row.get("document_state")),
         "deleted_flag": clean(row.get("deleted_flag")),
-        "project_legacy_id": clean(row.get("project_legacy_id")),
-        "project_name": clean(row.get("project_name")),
+        "project_legacy_id": project_legacy_id,
+        "project_name": clean(row.get("project_name")) or project_name_map.get(project_legacy_id, ""),
         "project_id": project_id or False,
         "partner_legacy_id": clean(row.get("partner_legacy_id")),
         "partner_name": clean(row.get("partner_name")),

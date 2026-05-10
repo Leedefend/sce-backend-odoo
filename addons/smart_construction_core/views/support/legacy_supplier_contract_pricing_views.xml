@@ -24,13 +24,16 @@
             <field name="name">sc.legacy.supplier.contract.pricing.fact.tree</field>
             <field name="model">sc.legacy.supplier.contract.pricing.fact</field>
             <field name="arch" type="xml">
-                <tree string="历史供应商合同计价方式" create="false" edit="false" delete="false">
-                    <field name="project_id"/>
-                    <field name="partner_name"/>
-                    <field name="pricing_method_text"/>
-                    <field name="amount_total" sum="合同金额合计"/>
-                    <field name="document_state"/>
-                    <field name="legacy_contract_id"/>
+                <tree string="供货合同分析" create="false" edit="false" delete="false">
+                    <field name="project_name" string="项目"/>
+                    <field name="partner_name" string="供应商"/>
+                    <field name="legacy_contract_id" string="历史合同ID"/>
+                    <field name="pricing_method_text" string="计价方式"/>
+                    <field name="amount_total" string="合同金额" sum="合同金额合计"/>
+                    <field name="document_state" string="历史状态"/>
+                    <field name="creator_name" string="历史录入人"/>
+                    <field name="created_time" string="历史录入时间"/>
+                    <field name="legacy_source_table" string="来源表"/>
                 </tree>
             </field>
         </record>
