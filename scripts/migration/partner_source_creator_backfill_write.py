@@ -156,6 +156,9 @@ def source_identity(row: dict[str, str]) -> tuple[str, str]:
 
 def fact_specs():
     specs = [
+        ("sc.receipt.income", "legacy_source_table", "legacy_record_id", "partner_id"),
+        ("sc.payment.execution", "legacy_source_table", "legacy_record_id", "partner_id"),
+        ("sc.legacy.enterprise.business.fact", "legacy_source_table", "legacy_record_id", "partner_id"),
         ("sc.legacy.receipt.income.fact", "legacy_source_table", "legacy_record_id", "partner_id"),
         ("sc.legacy.expense.deposit.fact", "legacy_source_table", "legacy_record_id", "partner_id"),
         ("sc.legacy.payment.residual.fact", "source_table", "legacy_record_id", "partner_id"),
