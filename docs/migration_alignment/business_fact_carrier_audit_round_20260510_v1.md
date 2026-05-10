@@ -41,6 +41,7 @@ Artifact:
 | 投标残余事实 | `P_ZTB_GCXXGL`, `WS_HTGL_ZBHT`, `CGPT_T_Base_ZBXX`, `CGPT_T_Base_ZBXX_CB`, `BGGL_ZTBJHT_TBBM_TBBMFSQ`, `WS_ZBJGL_ZBJ`, `WS_ZBJGL_BZJ`, `WS_BDGL_TZEGL` | `sc.legacy.business.fact.residual` | `169` rows, `162` active |
 | 供应商/付款残余事实 | `T_FK_Supplier_SD`, `T_HTGL_HTBG`, `T_CollectionPlan_New`, `T_GYSHT_INFO_Ext_XAKW`, `T_CGHT_CGDD`, `T_CG_CGDD`, `T_JH_CGJH`, `T_ZJZC_DB` | `sc.legacy.business.fact.residual` | `24` rows, `22` active |
 | 劳务/设备/材料残余事实 | `GLFY_*`, `LW_*`, `SGGL_FBGL_*`, `T_ZL_*`, `A_SCBS_*`, `YT_JGZS_*`, `ZYJX_*` selected candidate tables | `sc.legacy.business.fact.residual` | `5562` rows, `5558` active |
+| 剩余有效事实候选 | all remaining `candidate_effective_business_fact` tables from the latest scan | `sc.legacy.business.fact.residual` | `12093` rows, `12057` active |
 
 Tender registration replay evidence:
 
@@ -244,6 +245,37 @@ amount-like fields. It is useful for prioritization and audit spotting, but
 dedicated domain projection must review field semantics before these numbers
 are used as business report figures.
 
+Remaining effective-fact residual replay evidence:
+
+| Metric | Value |
+| --- | ---: |
+| source table count | 102 |
+| input rows | 12093 |
+| active rows | 12057 |
+| write mismatch count | 0 |
+
+Runtime residual carrier total:
+
+| Metric | Value |
+| --- | ---: |
+| source table count | 192 |
+| rows | 17841 |
+| active rows | 17792 |
+
+Top carried residual families after this batch:
+
+| family | tables | rows | active rows |
+| --- | ---: | ---: | ---: |
+| `labor_subcontract` | 42 | 5147 | 5143 |
+| `base` | 2 | 4919 | 4919 |
+| `t` | 25 | 2615 | 2613 |
+| `office_admin` | 11 | 1968 | 1937 |
+| `zlgl` | 1 | 1817 | 1817 |
+| `lease_equipment` | 15 | 237 | 237 |
+| `dataspider` | 1 | 219 | 219 |
+| `sggl` | 15 | 185 | 185 |
+| `d` | 3 | 170 | 159 |
+
 ## Scan Baseline Correction
 
 The full legacy scan had already listed `P_ZTB_GCBMGL` as known covered, but
@@ -319,6 +351,22 @@ Artifact:
 
 `artifacts/migration/business_fact_upgrade/current_audit/legacy_db_full_business_fact_loss_scan_20260510_after_labor_equipment_material_residual.json`
 
+Full legacy scan after remaining effective residual carrier:
+
+| Metric | Before remaining effective residual | After remaining effective residual |
+| --- | ---: | ---: |
+| candidate fact tables | 253 | 150 |
+| candidate fact rows | 68931 | 56833 |
+| effective fact candidate tables | 102 | 0 |
+| effective fact candidate rows | 12093 | 0 |
+| secondary fact candidate tables | 143 | 142 |
+| secondary fact candidate rows | 33841 | 33836 |
+| known replayed/assetized tables | 245 | 348 |
+
+Artifact:
+
+`artifacts/migration/business_fact_upgrade/current_audit/legacy_db_full_business_fact_loss_scan_20260510_after_effective_residual.json`
+
 ## Remaining Priority
 
 The next carrier work should continue from high-signal remaining candidates,
@@ -326,7 +374,7 @@ with priority on objective amount/project/partner facts:
 
 | Priority | Family | Examples |
 | --- | --- | --- |
-| 1 | remaining high-signal residual | `YSZJ_*`, `PM_*`, remaining `BGGL_*`, remaining `SGGL_*`, remaining `CWGL_*` |
+| 1 | secondary/manual-screen residual review | remaining `candidate_secondary_business_fact` and `candidate_needs_manual_screen` tables |
 | 2 | labor/equipment/material specialization | residual rows already carried; next step is semantic projection |
 | 3 | supplier/payment specialization | supplier/payment residual rows already carried; next step is semantic projection |
 | 4 | tender/project settlement specialization | tender and project residual rows already carried; next step is specialized projection |

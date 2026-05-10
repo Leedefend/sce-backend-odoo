@@ -21,6 +21,12 @@ SQL_CONTAINER = os.getenv("LEGACY_MSSQL_CONTAINER", "legacy-mssql-restore")
 SQL_DATABASE = os.getenv("LEGACY_MSSQL_DATABASE", "LegacyDb")
 SQL_PASSWORD = os.getenv("LEGACY_MSSQL_SA_PASSWORD") or os.getenv("LEGACY_MSSQL_PASSWORD") or "LegacyRestore!2026"
 SQLCMD = os.getenv("LEGACY_SQLCMD", "/opt/mssql-tools18/bin/sqlcmd")
+RESIDUAL_WRITE_RESULT = Path(os.getenv("LEGACY_BUSINESS_FACT_RESIDUAL_WRITE_RESULT", "artifacts/migration/fresh_db_legacy_business_fact_residual_replay_write_result_v1.json"))
+EXTRA_COVERED_TABLES = {
+    item.strip()
+    for item in os.getenv("LEGACY_BUSINESS_FACT_COVERED_TABLES", "").split(",")
+    if item.strip()
+}
 
 KNOWN_COVERED_TABLES = {
     "BASE_SYSTEM_FILE",
@@ -277,6 +283,24 @@ KNOWN_ASSETIZED_PREFIXES = (
     "S_Execute_",
 )
 
+
+def _residual_carried_tables() -> set[str]:
+    if not RESIDUAL_WRITE_RESULT.exists():
+        return set()
+    try:
+        payload = json.loads(RESIDUAL_WRITE_RESULT.read_text(encoding="utf-8"))
+    except Exception:
+        return set()
+    tables = set()
+    for key in (payload.get("source_table_counts") or {}):
+        table = str(key).split(":", 1)[-1].strip()
+        if table:
+            tables.add(table)
+    return tables
+
+
+RUNTIME_COVERED_TABLES = KNOWN_COVERED_TABLES | EXTRA_COVERED_TABLES | _residual_carried_tables()
+
 SYSTEM_NAME_PATTERNS = re.compile(
     r"(^BASE_LOWCODE_|^BASE_SYSTEM_(API|LOG|MENU|MOBILE|SHARING|KEYVALUE)|^S_Setup_|^T_System_|^ts_|^tr_|"
     r"History$|_History$|_bak$|_BAK|_Record|LOG|Log|Click|LOGIN|PUSH|Template|Config|Function|Role|Menu)",
@@ -393,7 +417,7 @@ def classify_table(meta: TableMeta) -> dict[str, Any]:
     signal_count = sum(1 for key in ("amount", "date", "project", "partner", "contract", "parent") if signals[key])
     is_system = bool(SYSTEM_NAME_PATTERNS.search(name))
     is_reference = bool(IMPORT_OR_REFERENCE_PATTERNS.search(name))
-    is_covered = name in KNOWN_COVERED_TABLES
+    is_covered = name in RUNTIME_COVERED_TABLES
     if is_covered:
         classification = "known_replayed_or_assetized"
     elif is_system:
