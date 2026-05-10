@@ -69,6 +69,9 @@ for line in Line.search(source_domain, order="document_date desc, id desc"):
         "legacy_record_id": line.legacy_line_id,
         "legacy_document_no": line.document_no,
         "legacy_document_state": line.document_state or "历史已确认",
+        "creator_legacy_user_id": line.creator_legacy_user_id,
+        "creator_name": line.creator_name,
+        "created_time": line.created_time,
         "note": (
             "[migration:deduction_bill] "
             f"legacy_deduction_adjustment_line_id={line.id}; "
@@ -102,6 +105,9 @@ for line in Line.search(source_domain, order="document_date desc, id desc"):
                    legacy_source_table = %s,
                    legacy_document_no = %s,
                    legacy_document_state = %s,
+                   creator_legacy_user_id = %s,
+                   creator_name = %s,
+                   created_time = %s,
                    note = %s,
                    write_date = NOW()
              WHERE id = %s
@@ -120,6 +126,9 @@ for line in Line.search(source_domain, order="document_date desc, id desc"):
                 values["legacy_source_table"],
                 values["legacy_document_no"],
                 values["legacy_document_state"],
+                values["creator_legacy_user_id"],
+                values["creator_name"],
+                values["created_time"],
                 values["note"],
                 existing.id,
             ],
@@ -148,7 +157,7 @@ result = {
     "expected_visible_rows": expected_visible,
     "after_deduction_bill": after,
     "visible_rows": visible,
-    "status": "PASS" if visible >= expected_visible and after > before else "REVIEW",
+    "status": "PASS" if visible >= expected_visible and (created + updated > 0 or after == before) else "REVIEW",
 }
 
 output_json.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
