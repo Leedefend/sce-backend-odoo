@@ -226,16 +226,20 @@ def source_trace_issues() -> list[dict[str, object]]:
     return issues
 
 
-def collect_issues(counts: dict[str, int], semantic: dict[str, int]) -> list[dict[str, object]]:
+def collect_projection_followup_issues(semantic: dict[str, int]) -> list[dict[str, object]]:
+    """Collect partner projection gaps that should not gate source fact replay.
+
+    Customer/supplier ranks and partner source attribution are projections from
+    business facts. They are useful acceptance follow-ups, but the primary audit
+    pass should first complete deterministic old-database facts that have direct
+    source fields.
+    """
+
     issues: list[dict[str, object]] = []
-    supplier_contract_entry_missing = count_table(
-        "construction_contract",
-        "legacy_contract_id IS NOT NULL AND type = 'in' AND (COALESCE(entry_user_text, '') = '' OR entry_time IS NULL)",
-    )
     add_issue(
         issues,
         key="partner.supplier_type_missing",
-        severity="error",
+        severity="info",
         count=count_table(
             "res_partner",
             "COALESCE(supplier_rank, 0) > 0 AND NOT EXISTS "
@@ -257,7 +261,7 @@ def collect_issues(counts: dict[str, int], semantic: dict[str, int]) -> list[dic
     add_issue(
         issues,
         key="partner.business_source_creator_missing",
-        severity="warn",
+        severity="info",
         count=count_table(
             "res_partner",
             "(COALESCE(customer_rank, 0) > 0 OR COALESCE(supplier_rank, 0) > 0) "
@@ -277,7 +281,7 @@ def collect_issues(counts: dict[str, int], semantic: dict[str, int]) -> list[dic
     add_issue(
         issues,
         key="partner.business_source_time_missing",
-        severity="warn",
+        severity="info",
         count=count_table(
             "res_partner",
             "(COALESCE(customer_rank, 0) > 0 OR COALESCE(supplier_rank, 0) > 0) "
@@ -297,7 +301,7 @@ def collect_issues(counts: dict[str, int], semantic: dict[str, int]) -> list[dic
     add_issue(
         issues,
         key="partner.creator_placeholder",
-        severity="warn",
+        severity="info",
         count=count_table(
             "res_partner",
             "LOWER(COALESCE(sc_source_created_by, '')) IN ('odoobot', 'false', 'admin', 'administrator')",
@@ -312,13 +316,36 @@ def collect_issues(counts: dict[str, int], semantic: dict[str, int]) -> list[dic
     )
     add_issue(
         issues,
+        key="partner.customer_rank_mismatch",
+        severity="info",
+        count=semantic["customer_rank_mismatch"],
+        message="客户身份与收入合同/收款事实不一致。",
+    )
+    add_issue(
+        issues,
+        key="partner.supplier_rank_mismatch",
+        severity="info",
+        count=semantic["supplier_rank_mismatch"],
+        message="供应商身份与支出合同/付款事实不一致。",
+    )
+    return issues
+
+
+def collect_issues(counts: dict[str, int]) -> list[dict[str, object]]:
+    issues: list[dict[str, object]] = []
+    supplier_contract_entry_missing = count_table(
+        "construction_contract",
+        "legacy_contract_id IS NOT NULL AND type = 'in' AND (COALESCE(entry_user_text, '') = '' OR entry_time IS NULL)",
+    )
+    add_issue(
+        issues,
         key="contract.entry_user_missing",
         severity="warn",
         count=count_table(
             "construction_contract",
             "legacy_contract_id IS NOT NULL AND COALESCE(entry_user_text, '') = ''",
         ),
-        message="历史合同缺少录入人。",
+        message="历史合同缺少旧库直接对应的录入人。",
         sample_sql="""
             SELECT id, legacy_contract_id, legacy_document_no, subject, entry_user_text, entry_time
               FROM construction_contract
@@ -335,7 +362,7 @@ def collect_issues(counts: dict[str, int], semantic: dict[str, int]) -> list[dic
             "construction_contract",
             "legacy_contract_id IS NOT NULL AND entry_time IS NULL",
         ),
-        message="历史合同缺少录入时间。",
+        message="历史合同缺少旧库直接对应的录入时间。",
         sample_sql="""
             SELECT id, legacy_contract_id, legacy_document_no, subject, entry_user_text, entry_time
               FROM construction_contract
@@ -414,20 +441,6 @@ def collect_issues(counts: dict[str, int], semantic: dict[str, int]) -> list[dic
                AND ABS(COALESCE(visible_contract_amount, 0) - COALESCE(visible_received_amount, 0) - COALESCE(visible_unreceived_amount, 0)) > 0.05
              ORDER BY id
         """,
-    )
-    add_issue(
-        issues,
-        key="partner.customer_rank_mismatch",
-        severity="error",
-        count=semantic["customer_rank_mismatch"],
-        message="客户身份与收入合同/收款事实不一致。",
-    )
-    add_issue(
-        issues,
-        key="partner.supplier_rank_mismatch",
-        severity="error",
-        count=semantic["supplier_rank_mismatch"],
-        message="供应商身份与支出合同/付款事实不一致。",
     )
     issues.extend(source_trace_issues())
     return issues
@@ -648,9 +661,11 @@ def export_gap_details(root: Path) -> dict[str, object]:
 
 counts = collect_counts()
 semantic_counts = partner_semantic_counts()
-issues = collect_issues(counts, semantic_counts)
+issues = collect_issues(counts)
+projection_followup_issues = collect_projection_followup_issues(semantic_counts)
 error_count = sum(1 for issue in issues if issue["severity"] == "error")
 warn_count = sum(1 for issue in issues if issue["severity"] == "warn")
+projection_warn_count = sum(1 for issue in projection_followup_issues if issue["severity"] == "warn")
 root = artifact_root()
 gap_exports = export_gap_details(root)
 
@@ -665,8 +680,12 @@ payload = {
     "error_count": error_count,
     "warn_count": warn_count,
     "issues": issues,
+    "projection_followup_issue_count": len(projection_followup_issues),
+    "projection_followup_warn_count": projection_warn_count,
+    "projection_followup_issues": projection_followup_issues,
     "gap_exports": gap_exports,
-    "decision": "backfill_needs_remediation" if issues else "backfill_audit_clean",
+    "audit_strategy": "deterministic_old_database_facts_first_then_partner_projection",
+    "decision": "deterministic_fact_backfill_needs_remediation" if issues else "deterministic_fact_audit_clean",
 }
 
 output = root / "business_fact_backfill_audit_v1.json"

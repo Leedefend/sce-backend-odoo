@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Backfill income contract entry user/time from raw legacy contract CSV."""
+"""Backfill contract entry user/time from raw legacy contract CSV."""
 
 from __future__ import annotations
 
@@ -31,6 +31,11 @@ ALLOWLIST = {
     if item.strip()
 }
 TECHNICAL_USERS = {"admin", "administrator", "odoobot", "system", "系统", "系统导入"}
+CONTRACT_TYPES = {
+    item.strip()
+    for item in os.getenv("CONSTRUCTION_CONTRACT_ENTRY_TYPES", "out,in").split(",")
+    if item.strip()
+}
 
 
 def clean(value: object) -> str:
@@ -89,7 +94,13 @@ ensure_allowed()
 raw_rows = read_raw(RAW_CSV)
 Contract = env["construction.contract"].sudo().with_context(active_test=False)  # noqa: F821
 contracts = Contract.search(
-    [("legacy_contract_id", "in", sorted(raw_rows)), ("type", "=", "out"), "|", ("entry_user_text", "=", False), ("entry_time", "=", False)]
+    [
+        ("legacy_contract_id", "in", sorted(raw_rows)),
+        ("type", "in", sorted(CONTRACT_TYPES)),
+        "|",
+        ("entry_user_text", "=", False),
+        ("entry_time", "=", False),
+    ]
 )
 
 updates: list[dict[str, object]] = []
@@ -128,6 +139,7 @@ summary = {
     "database": env.cr.dbname,  # noqa: F821
     "write_mode": MODE,
     "raw_csv": str(RAW_CSV),
+    "contract_types": sorted(CONTRACT_TYPES),
     "matched_contracts": len(contracts),
     "contracts_to_update": len(updates),
     "field_update_counts": dict(sorted(field_update_counts.items())),
