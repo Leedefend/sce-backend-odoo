@@ -752,9 +752,13 @@ Artifacts:
 ## Semantic Projection Batch G
 
 This batch covered legacy project settlement application facts from
-`XMGL_HTGL_XMJSSQ`. All rows had target project anchors, but only rows with an
-explicit old counterparty (`JFDW`) were projected. Rows without `JFDW` remain as
-carried residual facts instead of inventing an employer/customer.
+`XMGL_HTGL_XMJSSQ`. All rows had target project anchors. The first pass only
+projected rows with explicit old counterparties (`JFDW`); the strategy was then
+corrected for this audit round: objective old settlement facts must be carried
+even when they do not satisfy the new-system partner requirement. The target
+model now keeps `legacy_counterparty_name` and allows legacy-sourced settlement
+orders without a `res.partner` anchor, while regular new entry still requires a
+partner.
 
 Field policy:
 
@@ -766,29 +770,32 @@ Field policy:
   `二审`);
 - map old state `DJZT = 2` to target `approve`, `DJZT = 0` to `draft`, and
   `DJZT = -1` to `cancel`;
+- allow legacy-sourced settlement orders to carry missing old counterparty as
+  `旧系统未填往来单位`, without creating a synthetic customer;
 - allow the migration context to create historical settlement lines without a
-  new-system `construction.contract` anchor, while keeping the normal user
-  entry rule unchanged.
+  new-system `construction.contract` anchor, while keeping the normal user entry
+  rule unchanged.
 
 Runtime verification:
 
 | Target | Rows | Amount |
 | --- | ---: | ---: |
-| `sc.settlement.order` | 25 | 90219950.97 |
-| `sc.settlement.order.line` | 25 | 90219950.97 |
+| `sc.settlement.order` | 55 | 172475195.14 |
+| `sc.settlement.order.line` | 55 | 172475195.14 |
 
 State distribution:
 
 | State | Rows |
 | --- | ---: |
-| `approve` | 24 |
+| `approve` | 53 |
+| `cancel` | 1 |
 | `draft` | 1 |
 
 Projection residuals:
 
 | Reason | Rows | Amount |
 | --- | ---: | ---: |
-| `missing_counterparty_name` | 30 | 82255244.17 |
+| n/a | 0 | 0.00 |
 
 Artifacts:
 

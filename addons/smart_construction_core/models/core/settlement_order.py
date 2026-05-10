@@ -32,7 +32,8 @@ class ScSettlementOrder(models.Model):
         string="合同",
         index=True,
     )
-    partner_id = fields.Many2one("res.partner", string="往来单位", required=True)
+    partner_id = fields.Many2one("res.partner", string="往来单位")
+    legacy_counterparty_name = fields.Char(string="历史往来单位文本", index=True)
     title = fields.Char(string="标题", index=True)
     document_date = fields.Date(string="单据日期", default=fields.Date.context_today, index=True)
     settlement_unit_id = fields.Many2one("res.partner", string="结算单位", index=True)
@@ -217,17 +218,23 @@ class ScSettlementOrder(models.Model):
         ("legacy_settlement_order_unique", "unique(legacy_fact_model, legacy_fact_id)", "来源通用结算单已迁移为专业结算单。"),
     ]
 
+    @api.constrains("partner_id", "legacy_fact_model")
+    def _check_partner_required_for_manual_records(self):
+        for order in self:
+            if not order.partner_id and not order.legacy_fact_model:
+                raise ValidationError(_("结算单必须选择往来单位。"))
+
     @api.depends("line_ids.amount")
     def _compute_amount_total(self):
         for order in self:
             order.amount_total = sum(order.line_ids.mapped("amount"))
 
-    @api.depends("settlement_type", "partner_id", "company_id.partner_id")
+    @api.depends("settlement_type", "partner_id", "legacy_counterparty_name", "company_id.partner_id")
     def _compute_party_names(self):
         for order in self:
             company_partner = order.company_id.partner_id
             company_name = company_partner.display_name if company_partner else (order.company_id.name or "")
-            partner_name = order.partner_id.display_name or ""
+            partner_name = order.partner_id.display_name or order.legacy_counterparty_name or ""
             if order.settlement_type == "in":
                 order.employer_name = partner_name
                 order.contractor_name = company_name

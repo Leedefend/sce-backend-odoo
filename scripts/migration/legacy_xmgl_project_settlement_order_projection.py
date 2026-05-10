@@ -164,10 +164,6 @@ def main() -> None:
             reason = "inactive_legacy_record"
         elif not project_id:
             reason = "missing_project_anchor"
-        elif not counterparty_name:
-            reason = "missing_counterparty_name"
-        elif approved_amount <= 0:
-            reason = "non_positive_approved_amount"
         elif not settlement_date:
             reason = "missing_settlement_date"
 
@@ -193,7 +189,7 @@ def main() -> None:
             planned += 1
             planned_amount += approved_amount
             if apply:
-                customer_id = customer_by_name(customer_cache, counterparty_name)
+                customer_id = customer_by_name(customer_cache, counterparty_name) if counterparty_name else False
                 entry_user_id = user_by_legacy_or_name(user_cache, payload.get("LRRID"), payload.get("LRR"))
                 settlement = Settlement.create(
                     {
@@ -201,6 +197,7 @@ def main() -> None:
                         "project_id": project_id,
                         "partner_id": customer_id,
                         "settlement_unit_id": customer_id,
+                        "legacy_counterparty_name": counterparty_name or "旧系统未填往来单位",
                         "title": clean(payload.get("BT")) or record.document_no or "历史项目结算申请",
                         "document_date": settlement_date,
                         "settlement_type": "in",
