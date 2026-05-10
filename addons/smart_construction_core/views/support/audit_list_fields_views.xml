@@ -1164,6 +1164,7 @@
         <field name="name">sc.fund.account.operation.audit.fields.view_sc_fund_account_operation_tree</field>
         <field name="model">sc.fund.account.operation</field>
         <field name="inherit_id" ref="view_sc_fund_account_operation_tree" />
+        <field name="active">False</field>
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
                 <field name="create_uid" string="创建人" />

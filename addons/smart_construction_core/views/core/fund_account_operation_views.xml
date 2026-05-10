@@ -46,6 +46,8 @@
                 <field name="bank_balance"/>
                 <field name="before_balance"/>
                 <field name="after_balance"/>
+                <field name="creator_name" optional="show"/>
+                <field name="created_time" optional="show"/>
                 <field name="state"/>
             </tree>
         </field>
@@ -94,11 +96,15 @@
                         <field name="attachment_ids" widget="many2many_binary"/>
                     </group>
                     <notebook>
-                        <page string="历史来源" groups="smart_construction_core.group_sc_cap_config_admin">
+                        <page string="历史来源">
                             <group>
                                 <field name="legacy_source_model"/>
+                                <field name="legacy_source_table"/>
                                 <field name="legacy_record_id"/>
                                 <field name="legacy_document_state"/>
+                                <field name="creator_legacy_user_id"/>
+                                <field name="creator_name"/>
+                                <field name="created_time"/>
                             </group>
                         </page>
                     </notebook>
