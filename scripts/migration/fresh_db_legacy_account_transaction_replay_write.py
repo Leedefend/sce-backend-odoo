@@ -196,9 +196,30 @@ for row in rows:
         should_update_account = bool(account_id and not existing_account_id)
         if account_id and existing_account_id and existing_account_id != account_id:
             should_update_account = not account_active_by_id.get(existing_account_id, False)
+        updates = {
+            "document_no": clean(row.get("document_no")),
+            "transaction_date": clean(row.get("transaction_date")) or False,
+            "document_state": clean(row.get("document_state")),
+            "deleted_flag": clean(row.get("deleted_flag")) or "0",
+            "project_legacy_id": clean(row.get("project_legacy_id")),
+            "project_name": clean(row.get("project_name")),
+            "project_id": project_map.get(clean(row.get("project_legacy_id"))) or False,
+            "account_legacy_id": account_legacy_id,
+            "account_name": clean(row.get("account_name")),
+            "counterparty_account_legacy_id": clean(row.get("counterparty_account_legacy_id")),
+            "counterparty_account_name": clean(row.get("counterparty_account_name")),
+            "direction": clean(row.get("direction")),
+            "metric_bucket": clean(row.get("metric_bucket")) or "account_transfer",
+            "amount": as_float(row.get("amount")),
+            "category": clean(row.get("category")),
+            "source_summary": clean(row.get("source_summary")),
+            "note": clean(row.get("note")),
+            "active": clean(row.get("active")) != "0",
+        }
         if should_update_account:
-            Model.browse(existing["id"]).write({"account_id": account_id})
-            updated_existing += 1
+            updates["account_id"] = account_id
+        Model.browse(existing["id"]).write(updates)
+        updated_existing += 1
         skipped += 1
         continue
     if not account_id:

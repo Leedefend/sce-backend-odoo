@@ -67,7 +67,29 @@ exposes the workbook-aligned columns above.
 | 报销申请/报销 | `sc.legacy.expense.reimbursement.line` |
 | 工资/员工社保 | `sc.hr.payroll.document` |
 | 扣款实缴退回 | `sc.legacy.account.transaction.line`, `source_table='T_KK_SJTHB_CB'` |
-| 公司财务支出 | `sc.legacy.account.transaction.line`, `source_table='C_CWSFK_GSCWZC'`, currently classified from available note/category text |
+| 公司财务支出 | `sc.legacy.account.transaction.line`, `source_table='C_CWSFK_GSCWZC'`, classified from structured `D_SCBSJS_CWZCLB`/category |
+
+## Fact Supplement Replay
+
+This iteration supplements deterministic legacy facts before further business
+ability upgrades:
+
+| Fact family | Result |
+| --- | ---: |
+| `BGGL_XZ_JXDJ_ZB` + `BGGL_XZ_JXDJ` social registration payload rows | 2523 |
+| social registration rows replayed into `sc.hr.payroll.document` | 2517 |
+| active social registration rows | 1908 |
+| 2026 active social registration amount, 个人挂靠 | 143881.76 |
+| 2026 active social registration amount, 员工 | 229979.04 |
+| 2026 active social registration amount, 证书挂靠 | 12839.52 |
+| account transaction payload rows after refund fact recovery | 41384 |
+| existing account transaction rows refreshed | 39707 |
+| `T_KK_SJTHB_CB` refund rows newly replayed | 1677 |
+| replayed refund rows with missing old account fields | 1677 |
+
+The `T_KK_SJTHB_CB` legacy refund headers frequently have empty `KKZH/KKZHID`.
+Those rows are still objective business facts, so the replay now keeps them and
+marks account resolution as missing instead of dropping the refund facts.
 
 ## Current Runtime Evidence
 
@@ -75,11 +97,21 @@ Runtime rows on `sc_acceptance_audit_20260510` after module upgrade:
 
 | 年-月份 | 收入合计 | 支出合计 | 营收 | 管理费 | 企业所得税 | 报销 | 工资 | 增值税附加交税务局 | 来源明细数 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 2026年-1月 | 897752.10 | 304902.30 | 592849.80 | 185556.70 | 487864.21 | 90969.59 | 115949.19 | 50032.25 | 494 |
-| 2026年-2月 | 2289686.53 | 225010.36 | 2064676.17 | 354470.21 | 1359725.07 | 34570.20 | 114970.81 | 40101.84 | 760 |
-| 2026年-3月 | 172998.23 | 225368.66 | -52370.43 | 30041.27 | 79748.42 | 42210.00 | 0.00 | 177805.37 | 261 |
-| 2026年-4月 | 49953.68 | 6066.40 | 43887.28 | 2699.43 | 18688.86 | 5985.40 | 0.00 | 0.00 | 56 |
+| 2026年-1月 | 897752.10 | 405466.28 | 492285.82 | 185556.70 | 487864.21 | 90969.59 | 115949.19 | 50032.25 | 494 |
+| 2026年-2月 | 2289686.53 | 416919.35 | 1872767.18 | 354470.21 | 1359725.07 | 34570.20 | 114970.81 | 40101.84 | 760 |
+| 2026年-3月 | 172998.23 | 414230.55 | -241232.32 | 30041.27 | 79748.42 | 42210.00 | 0.00 | 177805.37 | 261 |
+| 2026年-4月 | 49953.68 | 5986.40 | 43967.28 | 2699.43 | 18688.86 | 5985.40 | 0.00 | 0.00 | 56 |
 | 2026年-5月 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0 |
+
+Supplemented runtime evidence:
+
+| 年-月份 | 员工社保 | 证书社保 | 扣款实缴退回/增值税附加退项目 |
+| --- | ---: | ---: | ---: |
+| 2026年-1月 | 77734.80 | 3204.72 | 24085.58 |
+| 2026年-2月 | 77734.80 | 3204.72 | 142951.41 |
+| 2026年-3月 | 74509.44 | 6430.08 | 108191.06 |
+| 2026年-4月 | 0.00 | 0.00 | 0.00 |
+| 2026年-5月 | 0.00 | 0.00 | 0.00 |
 
 ## Source Audit
 
@@ -89,7 +121,7 @@ Audit command:
 
 Current artifact:
 
-`artifacts/company-operation-summary-source-audit/20260510T214107/summary.json`
+`artifacts/company-operation-summary-source-audit/20260510T215620/summary.json`
 
 The audit compares three surfaces:
 
@@ -103,8 +135,8 @@ Current result:
 | --- | ---: |
 | compared periods | 5 |
 | compared columns | 31 |
-| Excel vs runtime mismatches | 55 |
-| full mismatch records including restored proc | 114 |
+| Excel vs runtime mismatches | 34 |
+| full mismatch records including restored proc | 111 |
 
 Corrections already made from this audit:
 
@@ -114,23 +146,28 @@ Corrections already made from this audit:
   project-department wages.
 - `公司财务支出/增值税附加交税务局` no longer double-counts the VAT principal
   row when the same note also contains surcharge components.
+- `社保登记/员工社保` and `社保登记/证书社保` now use replayed
+  `BGGL_XZ_JXDJ*` facts and split `员工` from `证书挂靠`.
+- `扣款实缴退回/增值税附加退项目` now uses replayed `T_KK_SJTHB_CB`
+  refund facts, including old rows whose refund header has no account field.
+- `公司财务支出` subcolumns now use the structured old category field
+  `D_SCBSJS_CWZCLB` where available instead of note-text guessing.
 
 Remaining audit conclusions:
 
-- `社保登记/员工社保` and `社保登记/证书社保` are not fully aligned because the
-  workbook/procedure source is `BGGL_XZ_JXDJ_ZB` + `BGGL_XZ_JXDJ`, while the
-  audit database does not currently carry those rows as structured runtime
-  facts.
-- `扣款实缴退回/增值税附加退项目` is not aligned because `T_KK_SJTHB_CB` refund
-  rows are not present in `sc.legacy.account.transaction.line` on the audit DB.
-- Several `公司财务支出` subcolumns still rely on available note text because
-  the old source field `D_SCBSJS_CWZCLB` was not preserved as a structured
-  category in the current account transaction replay.
-- The supplied workbook has non-zero May 2026 data, but the restored legacy DB
-  and current audit DB both have zero May rows for the queried source families.
-  This indicates the audit DB/legacy restore snapshot is older or incomplete
-  relative to the workbook export, so May cannot be reconciled from the current
-  available facts.
+- January and February now have zero Excel-vs-runtime differences in the
+  audited user workbook columns.
+- March still differs on `工资登记/工资`: the workbook has `114182.16`, while
+  runtime has no company-side salary fact for March in the currently restored
+  source snapshot.
+- April and May still differ because the supplied workbook contains later
+  business facts that are not present in the currently restored legacy DB
+  snapshot for several source families. This is a source-snapshot gap, not a
+  reason to invent values in the runtime projection.
+- The restored legacy procedure `Report_GSJYQKB_BSJZ` still differs from both
+  the workbook and runtime in many columns, indicating that the procedure is not
+  a reliable single authority for this workbook export without further source
+  date/snapshot alignment.
 
 ## Browser Acceptance
 
@@ -151,15 +188,15 @@ Required visible checks:
 
 Browser evidence:
 
-`artifacts/company-operation-summary-browser-acceptance/20260510T134107/summary.json`
+`artifacts/company-operation-summary-browser-acceptance/20260510T135638/summary.json`
 
 ## Residual Interpretation
 
 This iteration corrects the major口径 mistake: the runtime report is now a
 monthly operating statement aligned to the user workbook.
 
-Remaining differences should be handled as source-field reconciliation, not by
-forcing old data into new concepts. The next replay/projection iteration should
-preserve `D_SCBSJS_CWZCLB`, load `BGGL_XZ_JXDJ*`, load `T_KK_SJTHB_CB`, and
-refresh the audit DB from a source snapshot that contains the workbook's May
-2026 facts before declaring full numeric parity.
+Remaining differences should be handled as source-snapshot and source-field
+reconciliation, not by forcing old data into new concepts. The next
+reconciliation step should refresh the audit DB from a source snapshot that
+contains the workbook's later March, April, and May 2026 facts before declaring
+full numeric parity.

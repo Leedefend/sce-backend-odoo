@@ -206,7 +206,7 @@ SELECT
   'expense' AS direction,
   'cumulative' AS metric_bucket,
   {clean_sql("FKJE")} AS amount,
-  {clean_sql("CBLBMC")} AS category,
+  {clean_sql("COALESCE(NULLIF(D_SCBSJS_CWZCLB, ''), NULLIF(CBLBMC, ''))")} AS category,
   {clean_sql("BT")} AS source_summary,
   {clean_sql("BZ")} AS note,
   '1' AS active
@@ -693,7 +693,6 @@ SELECT
 FROM dbo.T_KK_SJTHB_CB c
 JOIN dbo.T_KK_SJTHB h ON h.Id = c.ZBID
 WHERE NULLIF(LTRIM(RTRIM(c.Id)), '') IS NOT NULL
-  AND NULLIF(LTRIM(RTRIM(h.KKZHID)), '') IS NOT NULL
   AND ISNULL(h.DEL, 0) = 0
   AND ISNULL(h.DJZT, '0') = '2'
   AND ISNULL(c.BCTHS, 0) <> 0

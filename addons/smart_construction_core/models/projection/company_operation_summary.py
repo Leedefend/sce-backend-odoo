@@ -181,9 +181,20 @@ class ScCompanyOperationSummary(models.Model):
                             THEN COALESCE(s.net_salary, s.amount, 0.0) ELSE 0 END
                         )
                             AS salary_amount,
-                        SUM(CASE WHEN s.fact_type = 'social_registration' THEN COALESCE(s.company_amount, 0.0) + COALESCE(s.individual_amount, 0.0) ELSE 0 END)
+                        SUM(CASE
+                            WHEN s.fact_type = 'social_registration'
+                             AND s.legacy_source_table = 'BGGL_XZ_JXDJ'
+                             AND s.item_type = '员工'
+                            THEN COALESCE(s.amount, s.company_amount + s.individual_amount, 0.0) ELSE 0 END
+                        )
                             AS employee_social_security_amount,
-                        0.0 AS certificate_social_security_amount,
+                        SUM(CASE
+                            WHEN s.fact_type = 'social_registration'
+                             AND s.legacy_source_table = 'BGGL_XZ_JXDJ'
+                             AND s.item_type = '证书挂靠'
+                            THEN COALESCE(s.amount, s.company_amount + s.individual_amount, 0.0) ELSE 0 END
+                        )
+                            AS certificate_social_security_amount,
                         COUNT(*)::integer AS source_line_count
                     FROM sc_hr_payroll_document s
                     LEFT JOIN hr_department dept ON dept.id = s.department_id
@@ -206,32 +217,18 @@ class ScCompanyOperationSummary(models.Model):
                 company_expense AS (
                     SELECT
                         date_trunc('month', t.transaction_date)::date AS month_start,
-                        SUM(CASE WHEN t.note ILIKE '%企业所得税%' THEN t.amount ELSE 0 END) AS company_enterprise_income_tax_expense_amount,
-                        SUM(CASE WHEN t.note ILIKE '%个人所得税%' THEN t.amount ELSE 0 END) AS company_personal_income_tax_expense_amount,
-                        SUM(CASE
-                            WHEN (
-                                t.note ILIKE '%增值税附加%'
-                                OR t.note ILIKE '%教育费附加%'
-                                OR t.note ILIKE '%城市维护建设税%'
-                            )
-                            AND NOT (
-                                substring(t.note from '增值税([0-9]+(\\.[0-9]+)?)') IS NOT NULL
-                                AND abs(
-                                    t.amount
-                                    - (substring(t.note from '增值税([0-9]+(\\.[0-9]+)?)'))::float
-                                ) < 0.01
-                            )
-                            THEN t.amount ELSE 0 END
-                        )
+                        SUM(CASE WHEN t.category = '企业所得税' THEN t.amount ELSE 0 END) AS company_enterprise_income_tax_expense_amount,
+                        SUM(CASE WHEN t.category = '个人所得税' THEN t.amount ELSE 0 END) AS company_personal_income_tax_expense_amount,
+                        SUM(CASE WHEN t.category = '增值税附加' THEN t.amount ELSE 0 END)
                             AS company_vat_surcharge_tax_bureau_amount,
-                        SUM(CASE WHEN t.note ILIKE '%投标费%' OR t.note ILIKE '%报名费%' OR t.note ILIKE '%标书费%' THEN t.amount ELSE 0 END)
+                        SUM(CASE WHEN t.category = '投标费' THEN t.amount ELSE 0 END)
                             AS tender_fee_expense_amount,
-                        SUM(CASE WHEN t.note ILIKE '%出场费%' THEN t.amount ELSE 0 END) AS appearance_fee_expense_amount,
-                        SUM(CASE WHEN t.note ILIKE '%经营支出%' THEN t.amount ELSE 0 END) AS company_operation_expense_amount,
-                        SUM(CASE WHEN t.note ILIKE '%贷款利息%' OR t.note ILIKE '%利息公司%' THEN t.amount ELSE 0 END) AS company_interest_expense_amount,
-                        SUM(CASE WHEN t.note ILIKE '%残保金%' THEN t.amount ELSE 0 END) AS disability_fund_expense_amount,
-                        SUM(CASE WHEN t.note ILIKE '%工会经费%' OR t.note ILIKE '%会费%' THEN t.amount ELSE 0 END) AS union_fee_expense_amount,
-                        SUM(CASE WHEN t.note ILIKE '%手续费%' THEN t.amount ELSE 0 END) AS service_fee_expense_amount,
+                        SUM(CASE WHEN t.category = '出场费' THEN t.amount ELSE 0 END) AS appearance_fee_expense_amount,
+                        SUM(CASE WHEN t.category = '公司经营支出' THEN t.amount ELSE 0 END) AS company_operation_expense_amount,
+                        SUM(CASE WHEN t.category = '利息公司' THEN t.amount ELSE 0 END) AS company_interest_expense_amount,
+                        SUM(CASE WHEN t.category = '残保金' THEN t.amount ELSE 0 END) AS disability_fund_expense_amount,
+                        SUM(CASE WHEN t.category = '工会经费' THEN t.amount ELSE 0 END) AS union_fee_expense_amount,
+                        SUM(CASE WHEN t.category = '手续费' THEN t.amount ELSE 0 END) AS service_fee_expense_amount,
                         COUNT(*)::integer AS source_line_count
                     FROM sc_legacy_account_transaction_line t
                     WHERE t.active IS TRUE
