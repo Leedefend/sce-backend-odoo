@@ -645,6 +645,56 @@ Artifacts:
 - `artifacts/migration/legacy_a_scbs_labor_settlement_projection_residual_v1.csv`
 - `artifacts/migration/legacy_a_scbs_labor_settlement_projection_result_v1.json`
 
+## Semantic Projection Batch E
+
+This batch covered the remaining A_SCBS progress diary and screened the A_SCBS
+expense claim source:
+
+| Legacy source | Target model | Result |
+| --- | --- | --- |
+| `A_SCBS_JDRB` | `sc.construction.diary` | `1` legacy-confirmed daily report |
+| `A_SCBS_FYD` + `A_SCBS_FYD_CB` | `sc.expense.claim` | blocked, `1` document / `360.00` amount lacks a project anchor |
+
+Construction diary projection policy:
+
+- use the legacy progress daily table for document number, date, project,
+  construction unit/location, handler, progress description, creator, and
+  attachment reference;
+- write the target as `source_origin = legacy` and
+  `state = legacy_confirmed`;
+- block rows without a project anchor. This batch had no construction-diary
+  residuals.
+
+Runtime verification:
+
+```sql
+SELECT count(*) AS rows
+FROM sc_construction_diary
+WHERE legacy_source_model = 'legacy.main.A_SCBS_JDRB';
+```
+
+Result:
+
+| Document | Project | Type | Construction unit | Handler | Description | State |
+| --- | --- | --- | --- | --- | --- | --- |
+| `JDRB-20220225-001` | `测试001` | `日报表` | `堡坎` | `思敏路` | `堡坎施工到350米` | `legacy_confirmed` |
+
+Expense screening conclusion:
+
+| Legacy document | Source | Target candidate | Amount | Blocking reason |
+| --- | --- | --- | ---: | --- |
+| `FYD-20220226-001` | `A_SCBS_FYD` + `A_SCBS_FYD_CB` | `sc.expense.claim` | 360.00 | `missing_project_anchor` |
+
+The expense row remains carried in `sc.legacy.business.fact.residual`. It
+should not be projected to `sc.expense.claim` until the old project
+`7a7f8b5476a34a74ad907808839a9c89` is anchored to a target project.
+
+Artifacts:
+
+- `artifacts/migration/legacy_a_scbs_construction_diary_projection_plan_v1.csv`
+- `artifacts/migration/legacy_a_scbs_construction_diary_projection_residual_v1.csv`
+- `artifacts/migration/legacy_a_scbs_construction_diary_projection_result_v1.json`
+
 ## Remaining Priority
 
 The next work should move from raw fact carrying to semantic projection and
