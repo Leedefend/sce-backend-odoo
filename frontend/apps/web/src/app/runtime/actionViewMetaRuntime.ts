@@ -13,6 +13,17 @@ type ActionContractMetaShape = {
   view_type?: string;
 };
 
+function resolveFirstRenderableViewMode(value: unknown): string {
+  const rawModes = Array.isArray(value)
+    ? value
+    : String(value || '').split(',');
+  const modes = rawModes
+    .map((item) => String(item || '').trim())
+    .filter(Boolean);
+  const supported = new Set(['tree', 'list', 'kanban', 'form']);
+  return modes.find((mode) => supported.has(mode)) || modes[0] || '';
+}
+
 export function resolveActionViewType(meta: unknown, contract: unknown): string {
   const v2 = resolveUnifiedPageContractV2(contract);
   const v2ViewType = String(v2?.pageInfo?.viewType || '').trim();
@@ -24,13 +35,8 @@ export function resolveActionViewType(meta: unknown, contract: unknown): string 
   const fromContract = String(typedContract.view_type || nestedContract.view_type || '').trim();
   if (fromContract) return fromContract;
   const metaViewModes = (meta as { view_modes?: unknown } | null)?.view_modes;
-  if (Array.isArray(metaViewModes) && metaViewModes.length) {
-    const normalized = metaViewModes
-      .map((item) => String(item || '').trim())
-      .filter(Boolean)
-      .join(',');
-    if (normalized) return normalized;
-  }
+  const normalizedMetaViewMode = resolveFirstRenderableViewMode(metaViewModes);
+  if (normalizedMetaViewMode) return normalizedMetaViewMode;
   return '';
 }
 

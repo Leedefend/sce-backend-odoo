@@ -84,6 +84,30 @@ Runtime view check on `sc_acceptance_audit_20260510`:
 | search has old project code | `true` |
 | old field labels | Chinese |
 
+Browser acceptance on daily dev port `http://localhost:18081`:
+
+| Check | Result |
+| --- | --- |
+| frontend/runtime DB | `sc_acceptance_audit_20260510` |
+| login user | `wutao` / `吴涛` |
+| action/menu | `action_id=506`, `menu_id=367` |
+| project list has `旧系统项目编号` | `true` |
+| form has `历史项目资料` tab | `true` |
+| form shows sample old project code | `STJ-MYHSTLDCDPZGC-255` |
+| form shows sample old project id | `00c73f013e234461883beac337e8d75d` |
+| form shows sample old company | `四川保盛建设集团有限公司` |
+| form shows sample old source time | `03/31/2020 14:42:08` |
+| console errors | `0` |
+
+Browser evidence:
+
+`artifacts/project-legacy-fact-browser-acceptance/20260510T123010/summary.json`
+
+Daily dev acceptance uses `.env.dev.audit` to lock Odoo to the dedicated audit
+database while reusing the normal dev compose project and volumes. The nginx
+dev proxy forwards the request DB instead of forcing `sc_demo`, so frontend
+tokens and backend initialization remain on the same database.
+
 ## Runtime Write Evidence
 
 Project anchor write on `sc_acceptance_audit_20260510`:
