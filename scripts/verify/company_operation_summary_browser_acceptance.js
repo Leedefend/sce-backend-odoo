@@ -79,6 +79,17 @@ async function snapshot(page, name) {
   return data;
 }
 
+async function openFromMenu(page) {
+  const statsGroup = page.locator('button.label', { hasText: '统计分析' });
+  await statsGroup.click();
+  const reportEntry = page.locator('button.label', { hasText: '公司经营情况表' });
+  await reportEntry.waitFor({ state: 'visible', timeout: 15000 });
+  await reportEntry.click();
+  await page.waitForFunction((actionId) => {
+    return window.location.pathname === `/a/${actionId}`;
+  }, ACTION_ID, { timeout: 30000 });
+}
+
 function requireIncludes(text, needle, label, errors) {
   if (!String(text || '').includes(needle)) {
     errors.push({ label, expected: needle });
@@ -103,10 +114,7 @@ async function main() {
   attachConsoleCapture(page);
   try {
     await login(page);
-    await page.goto(`${FRONTEND_URL}/a/${ACTION_ID}?menu_id=${MENU_ID}`, {
-      waitUntil: 'domcontentloaded',
-      timeout: 45000,
-    });
+    await openFromMenu(page);
     await waitForActionReady(page);
     const action = await snapshot(page, 'company_operation_summary');
     requireIncludes(action.text, '公司经营情况表', 'report_title', result.errors);

@@ -98,6 +98,7 @@ Browser acceptance on daily dev port `http://localhost:18081`:
 | frontend/runtime DB | `sc_acceptance_audit_20260510` |
 | login user | `wutao` / `吴涛` |
 | action/menu | `action_id=821`, `menu_id=626` |
+| menu entry visible and clickable | `统计分析` -> `公司经营情况表` |
 | report title visible | `true` |
 | company row visible | `四川保盛建设集团有限公司` |
 | `收入合计` visible | `true` |
@@ -107,7 +108,7 @@ Browser acceptance on daily dev port `http://localhost:18081`:
 
 Browser evidence:
 
-`artifacts/company-operation-summary-browser-acceptance/20260510T124513/summary.json`
+`artifacts/company-operation-summary-browser-acceptance/20260510T125430/summary.json`
 
 ## Residual Interpretation
 

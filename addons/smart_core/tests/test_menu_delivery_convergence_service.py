@@ -77,3 +77,9 @@ class TestMenuDeliveryConvergenceService(TransactionCase):
             self._classify("项目台账", ["智能施工 2.0", "项目管理", "项目台账"]),
             "delivery_user",
         )
+
+    def test_company_operation_summary_report_remains_visible_to_user(self):
+        self.assertEqual(
+            self._classify("公司经营情况表", ["智能施工 2.0", "统计分析", "公司经营情况表"]),
+            "delivery_user",
+        )
