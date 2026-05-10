@@ -40,6 +40,7 @@ Artifact:
 | 项目结算/合同残余事实 | `T_ProjectContract_In`, `XMGL_HTGL_XMJSSQ`, `T_Project_GCQZD`, `XM_SBBF`, `T_ProjectContract_Process`, `T_ProjectContract_Out_CB_BZJ` | `sc.legacy.business.fact.residual` | `74` rows, `74` active |
 | 投标残余事实 | `P_ZTB_GCXXGL`, `WS_HTGL_ZBHT`, `CGPT_T_Base_ZBXX`, `CGPT_T_Base_ZBXX_CB`, `BGGL_ZTBJHT_TBBM_TBBMFSQ`, `WS_ZBJGL_ZBJ`, `WS_ZBJGL_BZJ`, `WS_BDGL_TZEGL` | `sc.legacy.business.fact.residual` | `169` rows, `162` active |
 | 供应商/付款残余事实 | `T_FK_Supplier_SD`, `T_HTGL_HTBG`, `T_CollectionPlan_New`, `T_GYSHT_INFO_Ext_XAKW`, `T_CGHT_CGDD`, `T_CG_CGDD`, `T_JH_CGJH`, `T_ZJZC_DB` | `sc.legacy.business.fact.residual` | `24` rows, `22` active |
+| 劳务/设备/材料残余事实 | `GLFY_*`, `LW_*`, `SGGL_FBGL_*`, `T_ZL_*`, `A_SCBS_*`, `YT_JGZS_*`, `ZYJX_*` selected candidate tables | `sc.legacy.business.fact.residual` | `5562` rows, `5558` active |
 
 Tender registration replay evidence:
 
@@ -206,6 +207,43 @@ These rows are original residual carrier facts. Several tables contain supplier
 or payment semantics in non-standard field names, so dedicated projection must
 review each table before assigning customer/supplier or payable labels.
 
+Labor/equipment/material residual replay evidence:
+
+| Metric | Value |
+| --- | ---: |
+| source table count | 74 |
+| input rows | 5562 |
+| active rows | 5558 |
+| write mismatch count | 0 |
+
+Runtime family summary:
+
+```sql
+SELECT family,
+       count(DISTINCT source_table) AS tables,
+       count(*) AS rows,
+       count(*) FILTER (WHERE active) AS active_rows,
+       round(sum(amount_total)::numeric, 2) AS amount_total
+FROM sc_legacy_business_fact_residual
+WHERE family IN ('labor_subcontract','lease_equipment','material_stock','a')
+GROUP BY family
+ORDER BY family;
+```
+
+Result:
+
+| family | tables | rows | active rows | heuristic amount total |
+| --- | ---: | ---: | ---: | ---: |
+| `a` | 9 | 104 | 104 | 525411.60 |
+| `labor_subcontract` | 42 | 5147 | 5143 | 5933441.37 |
+| `lease_equipment` | 15 | 237 | 237 | 21300339480.32 |
+| `material_stock` | 8 | 74 | 74 | 593906.27 |
+
+`amount_total` in residual carrier rows is a heuristic extraction from legacy
+amount-like fields. It is useful for prioritization and audit spotting, but
+dedicated domain projection must review field semantics before these numbers
+are used as business report figures.
+
 ## Scan Baseline Correction
 
 The full legacy scan had already listed `P_ZTB_GCBMGL` as known covered, but
@@ -265,6 +303,22 @@ Artifact:
 
 `artifacts/migration/business_fact_upgrade/current_audit/legacy_db_full_business_fact_loss_scan_20260510_after_supplier_payment_residual.json`
 
+Full legacy scan after labor/equipment/material residual carrier:
+
+| Metric | Before labor/equipment/material residual | After labor/equipment/material residual |
+| --- | ---: | ---: |
+| candidate fact tables | 326 | 253 |
+| candidate fact rows | 74481 | 68931 |
+| effective fact candidate tables | 131 | 102 |
+| effective fact candidate rows | 17006 | 12093 |
+| secondary fact candidate tables | 187 | 143 |
+| secondary fact candidate rows | 34478 | 33841 |
+| known replayed/assetized tables | 172 | 245 |
+
+Artifact:
+
+`artifacts/migration/business_fact_upgrade/current_audit/legacy_db_full_business_fact_loss_scan_20260510_after_labor_equipment_material_residual.json`
+
 ## Remaining Priority
 
 The next carrier work should continue from high-signal remaining candidates,
@@ -272,10 +326,10 @@ with priority on objective amount/project/partner facts:
 
 | Priority | Family | Examples |
 | --- | --- | --- |
-| 1 | labor/equipment/material residual | `GLFY_*`, `LW_*`, `T_ZL_*`, `A_SCBS_*` |
-| 2 | supplier/payment specialization | supplier/payment residual rows already carried; next step is semantic projection |
-| 3 | tender specialization | tender residual rows already carried; next step is specialized projection into tender/guarantee surfaces |
-| 4 | project settlement specialization | project residual rows already carried; next step is specialized projection into contract/settlement surfaces |
+| 1 | remaining high-signal residual | `YSZJ_*`, `PM_*`, remaining `BGGL_*`, remaining `SGGL_*`, remaining `CWGL_*` |
+| 2 | labor/equipment/material specialization | residual rows already carried; next step is semantic projection |
+| 3 | supplier/payment specialization | supplier/payment residual rows already carried; next step is semantic projection |
+| 4 | tender/project settlement specialization | tender and project residual rows already carried; next step is specialized projection |
 
 Do not force old records into new customer/supplier classifications during this
 phase. Each source table should be either carried into a neutral or specialized
