@@ -87,7 +87,8 @@ env.cr.execute(  # noqa: F821
       company_id, currency_id, amount, daily_income, daily_expense,
       account_balance, bank_balance, before_balance, after_balance,
       operation_reason, state, note, legacy_source_model, legacy_record_id,
-      legacy_document_state, active, create_uid, write_uid, create_date, write_date
+      legacy_source_table, legacy_document_state, creator_legacy_user_id,
+      creator_name, created_time, active, create_uid, write_uid, create_date, write_date
     )
     SELECT
       COALESCE(NULLIF(l.document_no, '') || '-' || LEFT(l.legacy_line_id, 8), 'ZJRB-' || LEFT(l.legacy_line_id, 12)),
@@ -118,7 +119,11 @@ env.cr.execute(  # noqa: F821
       ),
       'sc.legacy.fund.daily.line',
       l.legacy_line_id,
+      NULLIF(l.source_table, ''),
       NULLIF(l.document_state, ''),
+      NULLIF(l.creator_legacy_user_id, ''),
+      NULLIF(l.creator_name, ''),
+      l.created_time,
       l.active,
       1,
       1,
@@ -160,7 +165,11 @@ env.cr.execute(  # noqa: F821
       operation_reason = EXCLUDED.operation_reason,
       state = EXCLUDED.state,
       note = EXCLUDED.note,
+      legacy_source_table = EXCLUDED.legacy_source_table,
       legacy_document_state = EXCLUDED.legacy_document_state,
+      creator_legacy_user_id = EXCLUDED.creator_legacy_user_id,
+      creator_name = EXCLUDED.creator_name,
+      created_time = EXCLUDED.created_time,
       active = EXCLUDED.active,
       write_uid = 1,
       write_date = NOW()
