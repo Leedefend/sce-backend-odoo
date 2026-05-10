@@ -30,6 +30,7 @@ SOURCE_CREATOR_CSVS = [
     ).split(",")
     if item.strip()
 ]
+TECHNICAL_CREATED_BY_VALUES = {"odoobot", "administrator", "admin", "system", "系统", "系统导入"}
 
 
 def clean(value) -> str:
@@ -37,6 +38,11 @@ def clean(value) -> str:
         return ""
     text = str(value).strip()
     return "" if text.lower() in {"false", "none", "null"} else text
+
+
+def business_creator_present(value) -> bool:
+    text = clean(value)
+    return bool(text and text.lower() not in TECHNICAL_CREATED_BY_VALUES and text not in TECHNICAL_CREATED_BY_VALUES)
 
 
 def rows(sql: str, params: list[object] | None = None) -> list[dict[str, object]]:
@@ -102,7 +108,7 @@ def model_exists(model_name: str) -> bool:
     return model_name in env.registry  # noqa: F821
 
 
-def fact_field_values(record, field_names: tuple[str, ...]) -> list[str]:
+def fact_field_values(record, field_names: tuple[str, ...], *, creator: bool = False) -> list[str]:
     values: list[str] = []
     for field_name in field_names:
         if field_name not in record._fields:
@@ -111,6 +117,8 @@ def fact_field_values(record, field_names: tuple[str, ...]) -> list[str]:
         if hasattr(value, "display_name"):
             value = value.display_name
         text = clean(value)
+        if creator and not business_creator_present(text):
+            continue
         if text:
             values.append(text)
     return values
@@ -119,6 +127,7 @@ def fact_field_values(record, field_names: tuple[str, ...]) -> list[str]:
 def source_identity(record) -> tuple[str, str]:
     for table_field, record_field in (
         ("legacy_source_table", "legacy_record_id"),
+        ("legacy_source_table", "legacy_contract_id"),
         ("source_table", "legacy_record_id"),
         ("source_table", "legacy_line_id"),
     ):
@@ -127,6 +136,11 @@ def source_identity(record) -> tuple[str, str]:
             legacy_record_id = clean(getattr(record, record_field))
             if source_table and legacy_record_id:
                 return source_table, legacy_record_id
+    if record._name == "construction.contract" and "legacy_contract_id" in record._fields:
+        legacy_contract_id = clean(getattr(record, "legacy_contract_id"))
+        note = clean(getattr(record, "note")) if "note" in record._fields else ""
+        if legacy_contract_id and "supplier_contract_pricing" in note:
+            return "T_GYSHT_INFO", legacy_contract_id
     return "", ""
 
 
@@ -145,7 +159,7 @@ def source_gap_status(
     creator_status = "not_missing"
     time_status = "not_missing"
     if missing_creator:
-        creator_status = "source_creator_present" if clean(row.get("creator_name")) else "source_creator_blank"
+        creator_status = "source_creator_present" if business_creator_present(row.get("creator_name")) else "source_creator_blank"
     if missing_time:
         time_status = "source_time_present" if clean(row.get("created_time")) else "source_time_blank"
     return creator_status, time_status
@@ -183,9 +197,15 @@ def classify_partner_residuals() -> tuple[dict[str, object], list[dict[str, obje
     objective_field_counter: Counter[str] = Counter()
     residual_evidence_counter: Counter[str] = Counter()
     residual_source_counter: Counter[str] = Counter()
+    excluded_counter: Counter[str] = Counter()
     detail_rows: list[dict[str, object]] = []
     residual_record_rows: list[dict[str, object]] = []
+    included_partner_count = 0
     for partner in partners:
+        if "示例" in clean(partner.name):
+            excluded_counter["example_named_partner"] += 1
+            continue
+        included_partner_count += 1
         source_text = clean(partner.sc_source_fact_source)
         for source in [part for part in source_text.split("；") if part]:
             source_counter[source] += 1
@@ -195,9 +215,6 @@ def classify_partner_residuals() -> tuple[dict[str, object], list[dict[str, obje
             missing_shape_counter["missing_creator_only"] += 1
         elif not partner.sc_source_created_at:
             missing_shape_counter["missing_time_only"] += 1
-        if "示例" in clean(partner.name):
-            missing_shape_counter["example_named_partner"] += 1
-
         fact_summary: Counter[str] = Counter()
         for model_name in fact_models:
             if not model_exists(model_name):
@@ -209,6 +226,7 @@ def classify_partner_residuals() -> tuple[dict[str, object], list[dict[str, obje
                 creator_values = fact_field_values(
                     record,
                     ("creator_name", "created_by_name", "source_operator", "entry_user_text"),
+                    creator=True,
                 )
                 time_values = fact_field_values(record, ("created_time", "source_time", "legacy_created_at", "entry_time"))
                 if creator_values:
@@ -263,7 +281,7 @@ def classify_partner_residuals() -> tuple[dict[str, object], list[dict[str, obje
         )
     return (
         {
-            "partner_residual_total": len(partners),
+            "partner_residual_total": included_partner_count,
             "missing_shape_counts": dict(sorted(missing_shape_counter.items())),
             "source_label_counts": dict(sorted(source_counter.items())),
             "objective_fact_field_counts": dict(sorted(objective_field_counter.items())),
@@ -271,6 +289,7 @@ def classify_partner_residuals() -> tuple[dict[str, object], list[dict[str, obje
             "residual_evidence_counts": dict(sorted(residual_evidence_counter.items())),
             "source_creator_evidence_csvs": [str(path) for path in SOURCE_CREATOR_CSVS],
             "source_creator_evidence_keys": len(source_evidence),
+            "excluded_counts": dict(sorted(excluded_counter.items())),
             "decision": "do_not_use_odoo_import_metadata_as_business_fact",
         },
         detail_rows,

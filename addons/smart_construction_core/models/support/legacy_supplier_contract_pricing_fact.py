@@ -7,6 +7,7 @@ class ScLegacySupplierContractPricingFact(models.Model):
     _description = "历史供应商合同计价方式事实"
     _order = "project_name, partner_name, legacy_contract_id"
 
+    legacy_source_table = fields.Char(string="来源表", default="T_GYSHT_INFO", required=True, index=True)
     legacy_contract_id = fields.Char(string="历史合同ID", required=True, index=True)
     document_state = fields.Char(string="历史状态", index=True)
     deleted_flag = fields.Char(string="删除标记", index=True)
@@ -19,6 +20,9 @@ class ScLegacySupplierContractPricingFact(models.Model):
     pricing_method_legacy_id = fields.Char(string="历史计价方式ID", index=True)
     pricing_method_text = fields.Char(string="计价方式", index=True)
     amount_total = fields.Float(string="合同金额")
+    creator_legacy_user_id = fields.Char(string="历史录入人ID", index=True)
+    creator_name = fields.Char(string="历史录入人", index=True)
+    created_time = fields.Datetime(string="历史录入时间", index=True)
     import_batch = fields.Char(string="导入批次", default="legacy_supplier_contract_pricing_v1", required=True, index=True)
     active = fields.Boolean(string="有效", default=True, index=True)
 
