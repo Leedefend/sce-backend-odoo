@@ -173,6 +173,7 @@ def fact_specs():
         ("sc.legacy.receipt.residual.fact", "source_table", "legacy_record_id"),
         ("sc.legacy.payment.residual.fact", "source_table", "legacy_record_id"),
         ("sc.legacy.fund.confirmation.line", "source_table", "legacy_line_id"),
+        ("sc.legacy.invoice.registration.line", "source_table", "legacy_line_id"),
     ]
     for model_name, table_field, record_field in specs:
         if model_name not in env.registry:  # noqa: F821
