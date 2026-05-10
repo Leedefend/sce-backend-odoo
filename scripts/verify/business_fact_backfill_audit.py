@@ -69,6 +69,19 @@ def sample_query(sql: str, limit: int = 10) -> list[dict[str, object]]:
     return rows(f"SELECT * FROM ({sql}) AS audit_sample_query LIMIT {int(limit)}")
 
 
+def write_csv(path: Path, csv_rows: list[dict[str, object]]) -> None:
+    import csv
+
+    if not csv_rows:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fields = list(csv_rows[0])
+    with path.open("w", encoding="utf-8-sig", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fields, extrasaction="ignore")
+        writer.writeheader()
+        writer.writerows(csv_rows)
+
+
 def add_issue(
     issues: list[dict[str, object]],
     *,
@@ -420,11 +433,111 @@ def collect_issues(counts: dict[str, int], semantic: dict[str, int]) -> list[dic
     return issues
 
 
+def export_gap_details(root: Path) -> dict[str, object]:
+    amount_rows = rows(
+        """
+        SELECT id AS contract_id,
+               type,
+               legacy_contract_id,
+               legacy_document_no,
+               legacy_contract_no,
+               subject,
+               legacy_contract_amount,
+               amount_untaxed,
+               visible_contract_amount,
+               note
+          FROM construction_contract
+         WHERE legacy_contract_id IS NOT NULL
+           AND COALESCE(visible_contract_amount, 0) = 0
+         ORDER BY type, legacy_document_no, id
+        """
+    )
+    supplier_entry_rows = rows(
+        """
+        SELECT id AS contract_id,
+               type,
+               legacy_contract_id,
+               legacy_document_no,
+               legacy_contract_no,
+               subject,
+               note
+          FROM construction_contract
+         WHERE legacy_contract_id IS NOT NULL
+           AND type = 'in'
+           AND (COALESCE(entry_user_text, '') = '' OR entry_time IS NULL)
+         ORDER BY legacy_document_no, id
+        """
+    )
+    partner_creator_rows = rows(
+        """
+        SELECT p.id AS partner_id,
+               p.name,
+               p.customer_rank,
+               p.supplier_rank,
+               p.sc_source_fact_count,
+               p.sc_source_fact_source
+          FROM res_partner p
+         WHERE (p.customer_rank > 0 OR p.supplier_rank > 0 OR COALESCE(p.sc_source_fact_count, 0) > 0)
+           AND COALESCE(p.sc_source_created_by, '') = ''
+         ORDER BY p.sc_source_fact_count DESC, p.id
+        """
+    )
+    receipt_creator_source_gap_rows = rows(
+        """
+        SELECT p.id AS partner_id,
+               p.name AS partner_name,
+               r.legacy_source_table,
+               COUNT(*) AS fact_rows,
+               MIN(r.legacy_record_id) AS sample_legacy_record_id,
+               SUM(COALESCE(r.amount, 0)) AS amount_total
+          FROM res_partner p
+          JOIN sc_receipt_income r ON r.partner_id = p.id
+         WHERE (p.customer_rank > 0 OR p.supplier_rank > 0 OR COALESCE(p.sc_source_fact_count, 0) > 0)
+           AND COALESCE(p.sc_source_created_by, '') = ''
+           AND r.source_origin = 'legacy'
+         GROUP BY p.id, p.name, r.legacy_source_table
+         ORDER BY fact_rows DESC, p.id
+        """
+    )
+    balance_rows = rows(
+        """
+        SELECT id AS contract_id,
+               legacy_contract_id,
+               legacy_document_no,
+               legacy_contract_no,
+               subject,
+               visible_contract_amount,
+               visible_received_amount,
+               visible_unreceived_amount
+          FROM construction_contract
+         WHERE type = 'out'
+           AND COALESCE(visible_contract_amount, 0) <> 0
+           AND (visible_received_amount IS NULL OR visible_unreceived_amount IS NULL)
+         ORDER BY legacy_document_no, id
+        """
+    )
+    write_csv(root / "contract_amount_missing_rows_v1.csv", amount_rows)
+    write_csv(root / "contract_supplier_entry_source_missing_rows_v1.csv", supplier_entry_rows)
+    write_csv(root / "partner_source_creator_missing_rows_v1.csv", partner_creator_rows)
+    write_csv(root / "partner_receipt_creator_source_gap_rows_v1.csv", receipt_creator_source_gap_rows)
+    write_csv(root / "contract_receivable_balance_missing_rows_v1.csv", balance_rows)
+    return {
+        "contract_amount_missing_rows": len(amount_rows),
+        "contract_supplier_entry_source_missing_rows": len(supplier_entry_rows),
+        "partner_source_creator_missing_rows": len(partner_creator_rows),
+        "partner_receipt_creator_source_gap_rows": len(receipt_creator_source_gap_rows),
+        "contract_receivable_balance_missing_rows": len(balance_rows),
+        "gap_artifact_root": str(root),
+    }
+
+
 counts = collect_counts()
 semantic_counts = partner_semantic_counts()
 issues = collect_issues(counts, semantic_counts)
 error_count = sum(1 for issue in issues if issue["severity"] == "error")
 warn_count = sum(1 for issue in issues if issue["severity"] == "warn")
+root = artifact_root()
+gap_exports = export_gap_details(root)
 
 payload = {
     "status": "FAIL" if error_count else ("WARN" if warn_count else "PASS"),
@@ -437,9 +550,10 @@ payload = {
     "error_count": error_count,
     "warn_count": warn_count,
     "issues": issues,
+    "gap_exports": gap_exports,
     "decision": "backfill_needs_remediation" if issues else "backfill_audit_clean",
 }
 
-output = artifact_root() / "business_fact_backfill_audit_v1.json"
+output = root / "business_fact_backfill_audit_v1.json"
 output.write_text(json.dumps(payload, ensure_ascii=False, indent=2, default=str) + "\n", encoding="utf-8")
 print("BUSINESS_FACT_BACKFILL_AUDIT=" + json.dumps(payload, ensure_ascii=False, sort_keys=True, default=str))
