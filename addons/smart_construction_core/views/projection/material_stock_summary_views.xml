@@ -29,9 +29,8 @@
         <field name="name">sc.material.stock.summary.tree</field>
         <field name="model">sc.material.stock.summary</field>
         <field name="arch" type="xml">
-            <tree string="库存统计表（新）" create="0" edit="0" delete="0">
-                <field name="project_id"/>
-                <field name="project_name" optional="hide"/>
+            <tree string="库存统计表（新）" create="0" edit="0" delete="0" default_order="material_name asc, project_name asc">
+                <field name="project_name" string="项目"/>
                 <field name="material_code"/>
                 <field name="material_name"/>
                 <field name="material_spec"/>
