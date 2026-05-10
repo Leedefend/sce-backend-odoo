@@ -279,6 +279,7 @@
         <field name="name">res.partner.audit.fields.view_sc_customer_partner_tree</field>
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="view_sc_customer_partner_tree" />
+        <field name="active" eval="False"/>
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
                 <field name="create_uid" />
@@ -290,6 +291,7 @@
         <field name="name">res.partner.audit.fields.view_sc_supplier_partner_tree</field>
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="view_sc_supplier_partner_tree" />
+        <field name="active" eval="False"/>
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
                 <field name="create_uid" />
