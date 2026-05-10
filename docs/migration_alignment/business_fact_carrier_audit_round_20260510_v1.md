@@ -803,6 +803,59 @@ Artifacts:
 - `artifacts/migration/legacy_xmgl_project_settlement_order_projection_residual_v1.csv`
 - `artifacts/migration/legacy_xmgl_project_settlement_order_projection_result_v1.json`
 
+## Semantic Projection Batch H
+
+This batch covered legacy tender/bid facts from the bid-tender family. The new
+system already has `tender.bid` and `tender.guarantee`, so the migration added
+legacy identity fields to `tender.bid` and projected the old facts into the
+formal tender workflow surface.
+
+Sources:
+
+| Legacy source | Business meaning | Target | Rows |
+| --- | --- | --- | ---: |
+| `P_ZTB_GCXXGL` | project tender / bid information | `tender.bid` | 20 |
+| `WS_HTGL_ZBHT` | winning bid contract fact | `tender.bid` | 2 |
+
+Compatibility policy:
+
+- keep `legacy_fact_model`, `legacy_fact_id`, and `legacy_fact_type` on
+  `tender.bid` for idempotent replay;
+- keep old owner/employer text in `legacy_owner_name` when no new partner
+  anchor is required or available;
+- project tender deposits into `tender.guarantee` when the old source has a
+  guarantee amount;
+- for `P_ZTB_GCXXGL`, prefer exact project-name anchoring over `XMID`, because
+  the old tender rows reused a generic `XMID` that pointed to `公司综合平台`;
+- for `WS_HTGL_ZBHT`, carry the old winning bid as `state = won`.
+
+Runtime verification:
+
+| Target | Rows | Amount |
+| --- | ---: | ---: |
+| `tender.bid` | 22 | 73479843.47 |
+| `tender.guarantee` | 5 | 4072344.10 |
+
+State distribution:
+
+| State | Rows |
+| --- | ---: |
+| `prepare` | 1 |
+| `submitted` | 19 |
+| `won` | 2 |
+
+Projection residuals:
+
+| Reason | Rows | Amount |
+| --- | ---: | ---: |
+| n/a | 0 | 0.00 |
+
+Artifacts:
+
+- `artifacts/migration/legacy_bid_tender_projection_plan_v1.csv`
+- `artifacts/migration/legacy_bid_tender_projection_residual_v1.csv`
+- `artifacts/migration/legacy_bid_tender_projection_result_v1.json`
+
 ## Remaining Priority
 
 The next work should move from raw fact carrying to semantic projection and

@@ -26,6 +26,7 @@ class TenderBid(models.Model):
     )
     tender_round = fields.Integer("投标轮次", default=1)
     owner_id = fields.Many2one("res.partner", string="招标人/业主")
+    legacy_owner_name = fields.Char("历史招标人/业主文本", index=True)
     bid_amount = fields.Monetary("投标报价", currency_field="currency_id", tracking=True)
     deadline = fields.Datetime("投标截止时间")
     open_date = fields.Datetime("开标时间")
@@ -87,6 +88,14 @@ class TenderBid(models.Model):
     )
 
     contract_id = fields.Many2one("construction.contract", string="关联合同", readonly=True)
+    legacy_fact_model = fields.Char("来源通用模型", index=True)
+    legacy_fact_id = fields.Integer("来源通用记录ID", index=True)
+    legacy_fact_type = fields.Char("来源业务类型", index=True)
+    legacy_note = fields.Text("历史来源说明")
+
+    _sql_constraints = [
+        ("legacy_tender_bid_unique", "unique(legacy_fact_model, legacy_fact_id)", "来源通用投标事实已迁移为投标记录。"),
+    ]
 
     @api.model
     def _context_project_id(self):
