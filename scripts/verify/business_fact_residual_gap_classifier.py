@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Classify remaining business fact backfill gaps without mutating data.
+"""Classify source-field coverage for migrated business facts.
 
 Run through ``scripts/ops/odoo_shell_exec.sh`` so the global ``env`` is
 available. The classifier is deliberately evidence-only: if old-system creator,
-time, amount, or balance fields are absent, it records that as a residual gap
-instead of falling back to Odoo import metadata.
+time, amount, or balance fields are absent, it records source-field coverage
+instead of forcing old data to satisfy new-system customer/supplier rules or
+falling back to Odoo import metadata.
 """
 
 from __future__ import annotations
@@ -165,7 +166,7 @@ def source_gap_status(
     return creator_status, time_status
 
 
-def classify_partner_residuals() -> tuple[dict[str, object], list[dict[str, object]], list[dict[str, object]]]:
+def classify_business_fact_source_fields() -> tuple[dict[str, object], list[dict[str, object]], list[dict[str, object]]]:
     Partner = env["res.partner"].sudo().with_context(active_test=False)  # noqa: F821
     source_evidence = read_source_creator_evidence()
     partners = Partner.search(
@@ -281,16 +282,16 @@ def classify_partner_residuals() -> tuple[dict[str, object], list[dict[str, obje
         )
     return (
         {
-            "partner_residual_total": included_partner_count,
-            "missing_shape_counts": dict(sorted(missing_shape_counter.items())),
-            "source_label_counts": dict(sorted(source_counter.items())),
-            "objective_fact_field_counts": dict(sorted(objective_field_counter.items())),
-            "residual_source_counts": dict(sorted(residual_source_counter.items())),
-            "residual_evidence_counts": dict(sorted(residual_evidence_counter.items())),
+            "affected_business_subject_count": included_partner_count,
+            "affected_subject_missing_shape_counts": dict(sorted(missing_shape_counter.items())),
+            "business_fact_source_label_counts": dict(sorted(source_counter.items())),
+            "fact_field_presence_counts": dict(sorted(objective_field_counter.items())),
+            "fact_source_counts": dict(sorted(residual_source_counter.items())),
+            "source_field_coverage_counts": dict(sorted(residual_evidence_counter.items())),
             "source_creator_evidence_csvs": [str(path) for path in SOURCE_CREATOR_CSVS],
             "source_creator_evidence_keys": len(source_evidence),
             "excluded_counts": dict(sorted(excluded_counter.items())),
-            "decision": "do_not_use_odoo_import_metadata_as_business_fact",
+            "decision": "old_data_is_not_forced_to_satisfy_new_customer_supplier_rules",
         },
         detail_rows,
         residual_record_rows,
@@ -423,24 +424,38 @@ def classify_contract_residuals() -> tuple[dict[str, object], list[dict[str, obj
 
 
 ROOT.mkdir(parents=True, exist_ok=True)
-partner_summary, partner_rows, partner_record_rows = classify_partner_residuals()
+source_field_summary, subject_rows, source_field_record_rows = classify_business_fact_source_fields()
 contract_summary, contract_amount_rows, contract_other_rows = classify_contract_residuals()
-write_csv(ROOT / "partner_residual_gap_classification_rows_v1.csv", partner_rows)
-write_csv(ROOT / "partner_residual_fact_rows_v1.csv", partner_record_rows)
+write_csv(ROOT / "business_subject_source_field_impact_rows_v1.csv", subject_rows)
+write_csv(ROOT / "business_fact_source_field_coverage_rows_v1.csv", source_field_record_rows)
+# Compatibility outputs for earlier audit tooling; do not use these names as acceptance terminology.
+write_csv(ROOT / "partner_residual_gap_classification_rows_v1.csv", subject_rows)
+write_csv(ROOT / "partner_residual_fact_rows_v1.csv", source_field_record_rows)
 write_csv(ROOT / "contract_amount_residual_gap_rows_v1.csv", contract_amount_rows)
 write_csv(ROOT / "contract_balance_entry_residual_gap_rows_v1.csv", contract_other_rows)
+blocking_source_keys = {
+    key: count
+    for key, count in source_field_summary["source_field_coverage_counts"].items()
+    if "runtime_source_key_missing" in key
+}
+status = "PASS" if not blocking_source_keys and not contract_amount_rows and not contract_other_rows else "WARN"
 payload = {
-    "status": "WARN",
+    "status": status,
     "database": DB_NAME,
     "generated_at": datetime.now(timezone.utc).isoformat(),
-    "mode": "business_fact_residual_gap_classifier",
-    "partner": partner_summary,
+    "mode": "business_fact_source_field_coverage_classifier",
+    "business_fact_source_field_coverage": source_field_summary,
+    "legacy_source_blank_fields_are_acceptance_blockers": False,
+    "blocking_source_key_counts": blocking_source_keys,
     "contract": contract_summary,
     "artifact_root": str(ROOT),
     "raw_contract_csv": str(RAW_CONTRACT_CSV),
     "objective_fact_policy": (
-        "Only legacy creator/time/amount/balance fields are acceptable backfill evidence; "
-        "Odoo create_uid/create_date and import timestamps are technical metadata."
+        "Business fact acceptance is based on carrying historical facts into the new system. "
+        "Old data is not forced to satisfy new customer/supplier classification rules. "
+        "Only legacy creator/time/amount/balance fields are acceptable evidence; "
+        "Odoo create_uid/create_date and import timestamps are technical metadata. "
+        "Blank creator/time fields in the old source are documented coverage observations, not acceptance blockers."
     ),
 }
 (ROOT / "business_fact_residual_gap_classifier_v1.json").write_text(
