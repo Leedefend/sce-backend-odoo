@@ -1,0 +1,72 @@
+<odoo>
+    <data noupdate="0">
+        <!-- 用户验收菜单收敛：保留可办理入口，避免同动作/同名菜单直接暴露给业务用户。 -->
+        <record id="menu_sc_receipt_payment_group" model="ir.ui.menu">
+            <field name="name">收付款办理</field>
+            <field name="sequence">10</field>
+        </record>
+        <record id="menu_sc_invoice_management_group" model="ir.ui.menu">
+            <field name="name">发票台账</field>
+            <field name="sequence">20</field>
+        </record>
+        <record id="menu_sc_invoice_tax_user_group" model="ir.ui.menu">
+            <field name="name">开票与税务办理</field>
+            <field name="sequence">25</field>
+        </record>
+
+        <record id="menu_payment_request" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_receipt_payment_group"/>
+            <field name="sequence">20</field>
+        </record>
+        <record id="menu_payment_request_line" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_receipt_payment_group"/>
+            <field name="sequence">25</field>
+        </record>
+        <record id="menu_sc_payment_execution" model="ir.ui.menu">
+            <field name="name">实付登记</field>
+            <field name="parent_id" ref="smart_construction_core.menu_sc_receipt_payment_group"/>
+            <field name="sequence">30</field>
+        </record>
+        <record id="menu_sc_partner_payment" model="ir.ui.menu">
+            <field name="parent_id" ref="smart_construction_core.menu_sc_receipt_payment_group"/>
+            <field name="sequence">35</field>
+        </record>
+
+        <record id="menu_sc_invoice_registration" model="ir.ui.menu">
+            <field name="name">发票总台账</field>
+            <field name="sequence">10</field>
+        </record>
+
+        <record id="menu_sc_fund_loan_repayment_group" model="ir.ui.menu">
+            <field name="name">借还款办理</field>
+        </record>
+        <record id="menu_sc_expense_tax_adjustment_fact_group" model="ir.ui.menu">
+            <field name="name">扣款税费核对</field>
+        </record>
+        <record id="menu_sc_legacy_enterprise_business_fact" model="ir.ui.menu">
+            <field name="name">历史企业级数据核对</field>
+        </record>
+
+        <!-- 与“付款申请”“借款申请”同模型同域的旧入口保留后台记录，但不再出现在业务菜单。 -->
+        <record id="menu_sc_payment_user_group" model="ir.ui.menu">
+            <field name="active">0</field>
+        </record>
+        <record id="menu_sc_user_payment_apply" model="ir.ui.menu">
+            <field name="active">0</field>
+        </record>
+        <record id="menu_sc_financing_loan" model="ir.ui.menu">
+            <field name="active">0</field>
+        </record>
+
+        <!-- 历史承载校验入口不作为日常业务办理菜单暴露。 -->
+        <record id="menu_sc_payment_fact_group" model="ir.ui.menu">
+            <field name="active">0</field>
+        </record>
+        <record id="menu_sc_payment_request_residual_fact" model="ir.ui.menu">
+            <field name="active">0</field>
+        </record>
+        <record id="menu_sc_legacy_payment_residual_fact" model="ir.ui.menu">
+            <field name="active">0</field>
+        </record>
+    </data>
+</odoo>
