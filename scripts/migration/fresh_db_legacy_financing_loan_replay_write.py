@@ -149,6 +149,12 @@ for row in rows:
         "source_extra_ref": clean(row.get("source_extra_ref")),
         "source_extra_label": clean(row.get("source_extra_label")),
         "due_date": clean(row.get("due_date")) or False,
+        "creator_legacy_user_id": clean(row.get("creator_legacy_user_id")),
+        "creator_name": clean(row.get("creator_name")),
+        "created_time": clean(row.get("created_time")) or False,
+        "modifier_legacy_user_id": clean(row.get("modifier_legacy_user_id")),
+        "modifier_name": clean(row.get("modifier_name")),
+        "modified_time": clean(row.get("modified_time")) or False,
         "note": clean(row.get("note")),
         "import_batch": clean(row.get("import_batch")) or "legacy_financing_loan_asset_v1",
     }

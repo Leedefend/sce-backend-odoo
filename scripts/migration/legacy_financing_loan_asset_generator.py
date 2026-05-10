@@ -156,7 +156,19 @@ def write_xml(path: Path, records: list[dict[str, str]]) -> None:
         add_text(record, "legacy_counterparty_name", row["legacy_counterparty_name"], True)
         add_text(record, "source_amount", row["source_amount"], True)
         add_text(record, "source_amount_field", row["source_amount_field"], True)
-        for field in ("purpose", "source_type_label", "source_extra_ref", "source_extra_label", "note"):
+        for field in (
+            "purpose",
+            "source_type_label",
+            "source_extra_ref",
+            "source_extra_label",
+            "creator_legacy_user_id",
+            "creator_name",
+            "created_time",
+            "modifier_legacy_user_id",
+            "modifier_name",
+            "modified_time",
+            "note",
+        ):
             add_text(record, field, row[field])
         add_text(record, "import_batch", "legacy_financing_loan_asset_v1", True)
     ET.indent(root, space="  ")
@@ -250,6 +262,12 @@ def build_records(asset_root: Path) -> tuple[list[dict[str, str]], dict[str, Any
                 "source_type_label": clean(row.get("amount_secondary")) if family == "borrowing_request" else clean(row.get("extra_label")),
                 "source_extra_ref": clean(row.get("extra_ref")),
                 "source_extra_label": clean(row.get("extra_label")),
+                "creator_legacy_user_id": clean(row.get("creator_legacy_user_id")),
+                "creator_name": clean(row.get("creator_name")),
+                "created_time": clean(row.get("created_time")),
+                "modifier_legacy_user_id": clean(row.get("modifier_legacy_user_id")),
+                "modifier_name": clean(row.get("modifier_name")),
+                "modified_time": clean(row.get("modified_time")),
                 "note": clean(row.get("note")),
             }
         )

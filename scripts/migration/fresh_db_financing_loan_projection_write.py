@@ -53,6 +53,7 @@ env.cr.execute(  # noqa: F821
       rate_label, extra_ref, extra_label, legacy_source_model,
       legacy_source_table, legacy_record_id, legacy_document_state,
       legacy_counterparty_id, legacy_counterparty_name, legacy_amount_field,
+      creator_legacy_user_id, creator_name, created_time,
       note, active, create_uid, write_uid, create_date, write_date
     )
     SELECT
@@ -79,6 +80,9 @@ env.cr.execute(  # noqa: F821
       NULLIF(f.legacy_counterparty_id, ''),
       NULLIF(f.legacy_counterparty_name, ''),
       NULLIF(f.source_amount_field, ''),
+      NULLIF(f.creator_legacy_user_id, ''),
+      NULLIF(f.creator_name, ''),
+      f.created_time,
       CONCAT_WS(E'\n',
         '[migration:financing_loan] legacy_record_id=' || f.legacy_record_id,
         NULLIF(f.source_family, ''),
@@ -114,6 +118,9 @@ env.cr.execute(  # noqa: F821
       legacy_counterparty_id = EXCLUDED.legacy_counterparty_id,
       legacy_counterparty_name = EXCLUDED.legacy_counterparty_name,
       legacy_amount_field = EXCLUDED.legacy_amount_field,
+      creator_legacy_user_id = EXCLUDED.creator_legacy_user_id,
+      creator_name = EXCLUDED.creator_name,
+      created_time = EXCLUDED.created_time,
       note = EXCLUDED.note,
       active = EXCLUDED.active,
       write_uid = 1,
