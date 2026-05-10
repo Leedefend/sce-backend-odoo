@@ -532,6 +532,56 @@ Artifacts:
 - `artifacts/migration/legacy_a_scbs_material_outbound_projection_residual_v1.csv`
 - `artifacts/migration/legacy_a_scbs_material_outbound_projection_result_v1.json`
 
+## Semantic Projection Batch C
+
+The next projection batch covered legacy equipment usage facts:
+
+| Legacy source | Target model | Result |
+| --- | --- | --- |
+| `A_SCBS_JXD` + `A_SCBS_JXD_CB` | `sc.equipment.usage` | `37` confirmed usage records, `515.8366` usage hours |
+
+Projection policy:
+
+- use the legacy header table for document number, usage date, project,
+  construction location, operator, creator, and header evidence;
+- use `A_SCBS_JXD_CB` lines for equipment name, usage quantity/hour signal,
+  unit, unit price, and amount evidence;
+- write formal equipment usage records with `usage_qty = 1` and
+  `usage_hours = legacy SL`, preserving original unit, unit price, amount, and
+  line remark in `note`;
+- keep legacy amount as evidence because `sc.equipment.usage` is an operational
+  usage model and does not carry settlement amount fields;
+- block rows without a project anchor.
+
+Runtime verification:
+
+```sql
+SELECT count(*) AS rows,
+       round(sum(usage_hours)::numeric, 4) AS usage_hours
+FROM sc_equipment_usage
+WHERE legacy_fact_model = 'legacy.main.A_SCBS_JXD_CB';
+```
+
+Result:
+
+| Target | Rows | Usage hours | Legacy amount evidence |
+| --- | ---: | ---: | ---: |
+| `sc.equipment.usage` | 37 | 515.8366 | 64360.80 |
+
+Projection residuals:
+
+| Legacy document | Equipment | Qty | Unit | Amount | Reason |
+| --- | --- | ---: | --- | ---: | --- |
+| `JXD-20220303-002` | `装载机` | 8 | `10型` | 4000.00 | `missing_project_anchor` |
+| `JXD-20220301-001` | `装机` | 10 | `50` | 2000.00 | `missing_project_anchor` |
+| `JXD-20220228-001` | `挖机` | 10 | `60` | 1500.00 | `missing_project_anchor` |
+
+Artifacts:
+
+- `artifacts/migration/legacy_a_scbs_equipment_usage_projection_plan_v1.csv`
+- `artifacts/migration/legacy_a_scbs_equipment_usage_projection_residual_v1.csv`
+- `artifacts/migration/legacy_a_scbs_equipment_usage_projection_result_v1.json`
+
 ## Remaining Priority
 
 The next work should move from raw fact carrying to semantic projection and
