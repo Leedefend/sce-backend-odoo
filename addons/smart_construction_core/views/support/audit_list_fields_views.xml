@@ -1183,6 +1183,7 @@
         <field name="name">sc.financing.loan.audit.fields.view_sc_financing_loan_tree</field>
         <field name="model">sc.financing.loan</field>
         <field name="inherit_id" ref="view_sc_financing_loan_tree" />
+        <field name="active">False</field>
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
                 <field name="create_uid" string="创建人" />
@@ -1359,6 +1360,7 @@
         <field name="name">sc.expense.claim.audit.fields.view_sc_expense_claim_tree</field>
         <field name="model">sc.expense.claim</field>
         <field name="inherit_id" ref="view_sc_expense_claim_tree" />
+        <field name="active">False</field>
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
                 <field name="create_uid" string="创建人" />

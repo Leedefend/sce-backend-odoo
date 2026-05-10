@@ -1122,3 +1122,21 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         ):
             self.assertIn('name="%s"' % field_name, tree + form)
         self.assertEqual(contract_field.string, "最终合同价")
+
+    def test_repayment_registration_is_inflow_business_entry(self):
+        action = self.env.ref("smart_construction_core.action_sc_expense_claim_repayment_registration")
+        claim = self.env["sc.expense.claim"].create(
+            {
+                "claim_type": "project_company_repay",
+                "expense_type": "还款登记",
+                "summary": "还款登记",
+                "project_id": self.project.id,
+                "amount": 1200,
+            }
+        )
+
+        self.assertEqual(claim.direction, "inflow")
+        self.assertIn("project_company_repay", action.domain)
+        self.assertIn("'search_default_inflow': 1", action.context)
+        self.assertFalse(self.env.ref("smart_construction_core.view_audit_fields_view_sc_expense_claim_tree").active)
+        self.assertFalse(self.env.ref("smart_construction_core.view_audit_fields_view_sc_financing_loan_tree").active)
