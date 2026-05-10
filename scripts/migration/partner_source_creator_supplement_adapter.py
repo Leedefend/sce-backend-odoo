@@ -76,6 +76,14 @@ SOURCE_COLUMNS = {
         "creator": "LRR",
         "created": "LRSJ",
     },
+    "ZJGL_SZQR_ZFQRB_CB": {
+        "id": "Id",
+        "header_id": "ZBID",
+        "header_table": "ZJGL_SZQR_ZFQRB",
+        "creator_id": "LRRID",
+        "creator": "LRR",
+        "created": "LRSJ",
+    },
 }
 
 
@@ -164,7 +172,7 @@ def chunks(values: list[str], size: int):
 def query_chunk(table: str, record_ids: list[str]) -> list[dict[str, str]]:
     columns = SOURCE_COLUMNS[table]
     values_sql = ", ".join(f"({sql_literal(item)})" for item in record_ids)
-    if table == "ZJGL_SZQR_DKQRB_CB":
+    if table in {"ZJGL_SZQR_DKQRB_CB", "ZJGL_SZQR_ZFQRB_CB"}:
         sql = f"""
 SET NOCOUNT ON;
 WITH required(record_id) AS (
