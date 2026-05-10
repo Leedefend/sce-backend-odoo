@@ -480,6 +480,58 @@ Artifacts:
 - `artifacts/migration/legacy_a_scbs_material_inbound_projection_residual_v1.csv`
 - `artifacts/migration/legacy_a_scbs_material_inbound_projection_result_v1.json`
 
+## Semantic Projection Batch B
+
+The next projection batch covered the matching material outbound source pair:
+
+| Legacy source | Target model | Result |
+| --- | --- | --- |
+| `A_SCBS_CLCKD` + `A_SCBS_CLCKD_CB` | `sc.material.outbound` + `sc.material.outbound.line` | `1` issued outbound document, `1` line, `1` quantity |
+
+Projection policy:
+
+- use the legacy header table for document number, outbound date, project,
+  receiver, purpose, creator, and header evidence;
+- use the already carried `A_SCBS_CLCKD_CB` residual row for material name,
+  spec, quantity, and line amount evidence;
+- write to the formal outbound quantity workflow and keep legacy amount in
+  line notes because `sc.material.outbound` does not currently carry amount
+  fields;
+- block rows without a project anchor. This batch had no projection residuals.
+
+Runtime verification:
+
+```sql
+SELECT count(*) AS headers
+FROM sc_material_outbound
+WHERE legacy_fact_model = 'legacy.main.A_SCBS_CLCKD';
+
+SELECT count(*) AS lines,
+       sum(l.qty) AS qty
+FROM sc_material_outbound_line l
+JOIN sc_material_outbound h ON h.id = l.outbound_id
+WHERE h.legacy_fact_model = 'legacy.main.A_SCBS_CLCKD';
+```
+
+Result:
+
+| Target | Rows | Quantity |
+| --- | ---: | ---: |
+| `sc.material.outbound` | 1 | |
+| `sc.material.outbound.line` | 1 | 1 |
+
+Projected document:
+
+| Document | Project | Receiver | Purpose | Material | Spec | Qty | Legacy amount | State |
+| --- | --- | --- | --- | --- | --- | ---: | ---: | --- |
+| `CLCKD-20220225-002` | `测试001` | `得个` | `随便` | `天猫` | `20型` | 1 | 300.00 | `issued` |
+
+Artifacts:
+
+- `artifacts/migration/legacy_a_scbs_material_outbound_projection_plan_v1.csv`
+- `artifacts/migration/legacy_a_scbs_material_outbound_projection_residual_v1.csv`
+- `artifacts/migration/legacy_a_scbs_material_outbound_projection_result_v1.json`
+
 ## Remaining Priority
 
 The next work should move from raw fact carrying to semantic projection and
