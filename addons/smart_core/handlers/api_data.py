@@ -841,6 +841,8 @@ class ApiDataHandler(BaseIntentHandler):
             if not field:
                 continue
             field_type = str(getattr(field, "type", "") or "")
+            if not bool(getattr(field, "store", False)) and not getattr(field, "search", None):
+                continue
             if field_type in ("char", "text", "html", "many2one"):
                 candidates.append(field_name)
 
