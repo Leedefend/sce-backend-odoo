@@ -695,6 +695,60 @@ Artifacts:
 - `artifacts/migration/legacy_a_scbs_construction_diary_projection_residual_v1.csv`
 - `artifacts/migration/legacy_a_scbs_construction_diary_projection_result_v1.json`
 
+## Semantic Projection Batch F
+
+This batch covered legacy machine-shift facts from the equipment lease family.
+The old detail table had already been carried as residual facts, but its header
+table had not been present in `sc.legacy.equipment.lease.fact`. The batch first
+loaded the objective `T_ZL_MachineShift` headers, then projected deterministically
+matched documents into equipment settlements.
+
+| Legacy source | Carry target | Business target | Result |
+| --- | --- | --- | --- |
+| `T_ZL_MachineShift` | `sc.legacy.equipment.lease.fact` | header anchor for projection | `54` headers carried, `53` active |
+| `T_ZL_MachineShift` + `T_ZL_MachineShift_CB` | existing residual details | `sc.equipment.settlement` | `36` settlements / `38` lines / `29722.40` amount |
+
+Projection policy:
+
+- use `T_ZL_MachineShift` as the settlement header source and
+  `T_ZL_MachineShift_CB` as settlement lines;
+- require a target project anchor and a non-empty supplier name before writing
+  `sc.equipment.settlement`;
+- create or mark the supplier partner as supplier only when the old supplier
+  name is explicit;
+- calculate each line price from the legacy fact amount divided by legacy
+  work quantity (`JE / GZSJ`) so the target total equals the old fact amount;
+- keep raw line evidence in notes, including old equipment code, specification,
+  work content, source unit price, source amount, work time, and remark.
+
+Runtime verification:
+
+| Target | Rows | Amount |
+| --- | ---: | ---: |
+| `sc.legacy.equipment.lease.fact` (`T_ZL_MachineShift`) | 54 headers | n/a |
+| `sc.equipment.settlement` | 36 | 29722.40 |
+| `sc.equipment.settlement.line` | 38 | 29722.40 |
+
+Projection residuals:
+
+| Reason | Headers | Amount |
+| --- | ---: | ---: |
+| `missing_project_anchor` | 15 | 5021.50 |
+| `missing_equipment_name` | 2 | 5640.00 |
+| `inactive_legacy_header` | 1 | 0.00 |
+
+These residuals remain carried as objective facts. They should not be forced
+into equipment settlement until the old project anchors or source line names
+are resolved.
+
+Artifacts:
+
+- `artifacts/migration/legacy_t_zl_machine_shift_headers_v1.csv`
+- `artifacts/migration/legacy_t_zl_machine_shift_header_adapter_result_v1.json`
+- `artifacts/migration/legacy_t_zl_machine_shift_settlement_projection_plan_v1.csv`
+- `artifacts/migration/legacy_t_zl_machine_shift_settlement_projection_residual_v1.csv`
+- `artifacts/migration/legacy_t_zl_machine_shift_settlement_projection_result_v1.json`
+
 ## Remaining Priority
 
 The next work should move from raw fact carrying to semantic projection and
