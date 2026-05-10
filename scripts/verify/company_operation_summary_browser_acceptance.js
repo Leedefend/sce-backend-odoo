@@ -17,7 +17,6 @@ const LOGIN = process.env.E2E_LOGIN || 'wutao';
 const PASSWORD = process.env.E2E_PASSWORD || '123456';
 const ACTION_ID = process.env.ACTION_ID || '821';
 const MENU_ID = process.env.MENU_ID || '626';
-const EXPECTED_COMPANY = process.env.EXPECTED_COMPANY || '四川保盛建设集团有限公司';
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
 const LONG_DECIMAL_CELL_RE = /^-?\d{1,3}(?:,\d{3})*(?:\.\d{3,}|\d*\.\d{3,})$/;
 
@@ -56,17 +55,18 @@ async function login(page) {
 
 async function waitForActionReady(page) {
   await page.locator('.template-layout-shell, .page').first().waitFor({ timeout: 30000 });
-  await page.waitForFunction((expectedCompany) => {
+  await page.waitForFunction(() => {
     const text = String(document.body?.textContent || '');
     return text.includes('公司经营情况表')
-      && text.includes(expectedCompany)
+      && text.includes('年-月份')
+      && text.includes('2026年-5月')
+      && text.includes('营收')
       && text.includes('收入合计')
       && text.includes('支出合计')
-      && text.includes('经营净额')
       && !text.includes('未匹配公司')
       && !text.includes('正在加载列表')
       && !text.includes('当前视图使用可读降级渲染');
-  }, EXPECTED_COMPANY, { timeout: 90000 });
+  }, { timeout: 90000 });
 }
 
 async function snapshot(page, name) {
@@ -106,7 +106,6 @@ async function main() {
     login: LOGIN,
     action_id: ACTION_ID,
     menu_id: MENU_ID,
-    expected_company: EXPECTED_COMPANY,
     artifacts: outDir,
     errors: [],
   };
@@ -119,10 +118,14 @@ async function main() {
     await waitForActionReady(page);
     const action = await snapshot(page, 'company_operation_summary');
     requireIncludes(action.text, '公司经营情况表', 'report_title', result.errors);
-    requireIncludes(action.text, EXPECTED_COMPANY, 'company_row', result.errors);
+    requireIncludes(action.text, '年-月份', 'period_header', result.errors);
+    requireIncludes(action.text, '2026年-5月', 'period_row', result.errors);
+    requireIncludes(action.text, '营收', 'revenue_header', result.errors);
     requireIncludes(action.text, '收入合计', 'income_header', result.errors);
     requireIncludes(action.text, '支出合计', 'expense_header', result.errors);
-    requireIncludes(action.text, '经营净额', 'net_header', result.errors);
+    requireIncludes(action.text, '扣款实缴登记/管理费', 'deduction_management_fee_header', result.errors);
+    requireIncludes(action.text, '财务收入/标书制作费', 'bid_document_fee_income_header', result.errors);
+    requireIncludes(action.text, '报销申请/报销', 'reimbursement_header', result.errors);
     if (action.text.includes('未匹配公司')) {
       result.errors.push({ label: 'unmatched_company_should_not_show', expected: 'no 未匹配公司' });
     }
