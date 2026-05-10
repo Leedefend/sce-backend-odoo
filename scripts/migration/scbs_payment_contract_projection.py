@@ -88,6 +88,9 @@ def payment_values(fact):
         "legacy_record_id": fact.legacy_record_id,
         "legacy_document_state": fact.document_state,
         "legacy_residual_reason": "SCBS_PROJECT_FACT_IMPORT",
+        "creator_legacy_user_id": fact.creator_legacy_user_id,
+        "creator_name": fact.creator_name,
+        "created_time": fact.created_time,
         "note": "\n".join(
             item
             for item in [
@@ -119,6 +122,9 @@ def contract_values(fact):
         "legacy_source_table": fact.source_table,
         "legacy_record_id": fact.legacy_record_id,
         "legacy_document_state": fact.document_state,
+        "creator_legacy_user_id": fact.creator_legacy_user_id,
+        "creator_name": fact.creator_name,
+        "created_time": fact.created_time,
         "note": "\n".join(
             item
             for item in [
