@@ -927,3 +927,61 @@ Artifacts:
 - `artifacts/migration/legacy_project_contract_deposit_projection_plan_v1.csv`
 - `artifacts/migration/legacy_project_contract_deposit_projection_residual_v1.csv`
 - `artifacts/migration/legacy_project_contract_deposit_projection_result_v1.json`
+
+## Semantic Projection Batch J
+
+This batch covered legacy project site instruction / visa documents. The
+generic residual scanner had kept these rows but did not classify `SJJE` as the
+family amount, so the semantic projection reads the original raw payload and
+uses `SJJE` as the objective amount impact.
+
+Sources:
+
+| Legacy source | Business meaning | Target | Rows | Amount |
+| --- | --- | --- | ---: | ---: |
+| `T_Project_GCQZD` | project site instruction / project visa | `sc.contract.event` | 6 | 1865.00 |
+
+Compatibility policy:
+
+- project all legacy rows into `sc.contract.event` with
+  `event_type = site_instruction`;
+- keep old project anchors through `project.project.legacy_project_id`, with
+  name fallback only when needed;
+- map `DJZT = 2` to approved and other in-progress states to draft, preserving
+  the old state evidence in the source trace fields and description;
+- keep `QZLX` as `legacy_fact_type`, so the UI can distinguish `工期签证` from
+  `现场经济签证`;
+- preserve old `JSDW/JLDW/LRR/LRSJ/QZMS/FXMC/FJ` text in the description or
+  basis instead of forcing missing contract or partner anchors.
+
+Runtime verification:
+
+| Target | Rows | Amount |
+| --- | ---: | ---: |
+| `sc.contract.event` site instruction facts | 6 | 1865.00 |
+
+State distribution:
+
+| State | Rows |
+| --- | ---: |
+| `approved` | 4 |
+| `draft` | 2 |
+
+Type distribution:
+
+| Legacy type | Rows |
+| --- | ---: |
+| `现场经济签证` | 4 |
+| `工期签证` | 2 |
+
+Projection residuals:
+
+| Reason | Rows | Amount |
+| --- | ---: | ---: |
+| n/a | 0 | 0.00 |
+
+Artifacts:
+
+- `artifacts/migration/legacy_project_site_instruction_projection_plan_v1.csv`
+- `artifacts/migration/legacy_project_site_instruction_projection_residual_v1.csv`
+- `artifacts/migration/legacy_project_site_instruction_projection_result_v1.json`
