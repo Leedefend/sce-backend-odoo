@@ -247,13 +247,13 @@ try:
         table_name, record_id = source_identity(row)
         creator = normalize_creator(row.get("creator_name"), row.get("creator_legacy_user_id"))
         created_time = clean(row.get("created_time"))
-        if not table_name or not record_id or not creator:
+        if not table_name or not record_id or (not creator and not created_time):
             continue
         index_item = source_partner_index.get((table_name, record_id)) or {"partner_ids": set(), "routes": set()}
         partner_ids = index_item["partner_ids"]
         routes = sorted(index_item["routes"])
         if not partner_ids:
-            misses.append({"source_table": table_name, "legacy_record_id": record_id, "creator_name": creator})
+            misses.append({"source_table": table_name, "legacy_record_id": record_id, "creator_name": creator, "created_time": created_time})
             continue
         for route in routes:
             route_counts[route] += 1
@@ -298,7 +298,7 @@ write_csv(
 )
 write_csv(
     output_root / "partner_source_creator_backfill_misses_v1.csv",
-    ["source_table", "legacy_record_id", "creator_name"],
+    ["source_table", "legacy_record_id", "creator_name", "created_time"],
     misses[:1000],
 )
 summary = {
