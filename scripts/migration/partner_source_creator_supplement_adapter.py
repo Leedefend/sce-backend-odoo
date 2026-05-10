@@ -41,14 +41,14 @@ SOURCE_COLUMNS = {
     "T_FK_Supplier": {
         "id": "Id",
         "creator_id": "LRRID",
-        "creator": "LRR",
-        "created": "LRRQ",
+        "creator": "f_LRR",
+        "created": "f_LRSJ",
     },
     "T_GYSHT_INFO": {
         "id": "Id",
         "creator_id": "LRRID",
-        "creator": "LRR",
-        "created": "LRRQ",
+        "creator": "f_LRR",
+        "created": "f_LRRQ",
     },
 }
 
