@@ -198,7 +198,7 @@ def build_source_partner_index(source_keys: set[tuple[str, str]]) -> dict[tuple[
     Contract = env["construction.contract"].sudo().with_context(active_test=False)  # noqa: F821
     if "legacy_contract_id" in Contract._fields:
         for rec in Contract.search_read([("legacy_contract_id", "in", record_ids), ("partner_id", "!=", False)], ["legacy_contract_id", "partner_id"]):
-            for table_name in ("T_CGHT_INFO", "T_HTGL_INFO", "T_HTGL_HTINFO", "T_HTGL_FBHT", "T_WBHTGL_INFO"):
+            for table_name in ("T_CGHT_INFO", "T_GYSHT_INFO", "T_HTGL_INFO", "T_HTGL_HTINFO", "T_HTGL_FBHT", "T_WBHTGL_INFO"):
                 key = (table_name, clean(rec.get("legacy_contract_id")))
                 if key not in source_keys:
                     continue
