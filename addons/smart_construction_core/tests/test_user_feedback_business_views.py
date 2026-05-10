@@ -175,6 +175,73 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         self.assertIn('name="legacy_partner_name"', form.arch_db)
         self.assertIn('name="legacy_deleted_flag"', search.arch_db)
 
+    @tagged("post_install", "-at_install", "user_feedback", "partner_role_alignment")
+    def test_partner_roles_align_from_contract_receipt_and_expenditure_facts(self):
+        tax = self.env["account.tax"].search([("amount", "=", 0), ("amount_type", "=", "percent")], limit=1)
+        if not tax:
+            tax = self.env["account.tax"].create(
+                {
+                    "name": "Feedback 0%",
+                    "amount": 0,
+                    "amount_type": "percent",
+                    "type_tax_use": "sale",
+                }
+            )
+        contract_customer = self.env["res.partner"].create({"name": "Feedback Contract Customer"})
+        receipt_customer = self.env["res.partner"].create({"name": "Feedback Receipt Customer"})
+        supplier = self.env["res.partner"].create({"name": "Feedback Expenditure Supplier"})
+        stale = self.env["res.partner"].create({"name": "Feedback Stale Supplier", "supplier_rank": 1})
+
+        self.env["construction.contract"].create(
+            {
+                "subject": "Feedback Income Contract",
+                "type": "out",
+                "project_id": self.project.id,
+                "partner_id": contract_customer.id,
+                "tax_id": tax.id,
+            }
+        )
+        self.env["sc.receipt.income"].create(
+            {
+                "name": "FB-RCPT-001",
+                "project_id": self.project.id,
+                "partner_id": receipt_customer.id,
+                "amount": 123,
+                "receiving_account_name": "Feedback Receipt Customer",
+                "receiving_bank_name": "Feedback Bank",
+                "receiving_account_no": "62220001",
+            }
+        )
+        self.env["payment.request"].create(
+            {
+                "name": "FB-PAY-001",
+                "type": "pay",
+                "project_id": self.project.id,
+                "partner_id": supplier.id,
+                "amount": 456,
+            }
+        )
+
+        summary = self.env["res.partner"].action_sc_align_partner_roles_from_business_facts(demote_no_fact=True)
+        self.env.invalidate_all()
+        contract_customer = self.env["res.partner"].browse(contract_customer.id)
+        receipt_customer = self.env["res.partner"].browse(receipt_customer.id)
+        supplier = self.env["res.partner"].browse(supplier.id)
+        stale = self.env["res.partner"].browse(stale.id)
+
+        self.assertEqual(summary["status"], "PASS")
+        self.assertEqual(contract_customer.customer_rank, 1)
+        self.assertEqual(contract_customer.supplier_rank, 0)
+        self.assertEqual(receipt_customer.customer_rank, 1)
+        self.assertEqual(receipt_customer.supplier_rank, 0)
+        self.assertEqual(receipt_customer.sc_source_receipt_amount, 123)
+        self.assertEqual(receipt_customer.sc_bank_name, "Feedback Bank")
+        self.assertEqual(receipt_customer.sc_bank_account, "62220001")
+        self.assertEqual(supplier.customer_rank, 0)
+        self.assertEqual(supplier.supplier_rank, 1)
+        self.assertEqual(supplier.sc_source_payment_amount, 456)
+        self.assertEqual(stale.supplier_rank, 0)
+
     def test_material_rfq_exposes_contact_and_supplier_set(self):
         supplier = self.env["res.partner"].create(
             {"name": "Feedback RFQ Supplier", "supplier_rank": 1, "phone": "028-100000"}

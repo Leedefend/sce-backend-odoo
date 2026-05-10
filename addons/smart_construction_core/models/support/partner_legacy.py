@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+import re
+from collections import defaultdict
+
 from odoo import api, fields, models
 
 
@@ -90,6 +93,439 @@ class ResPartner(models.Model):
                 partner.sc_legacy_source_label = source
             else:
                 partner.sc_legacy_source_label = ""
+
+    @api.model
+    def _sc_fact_model(self, model_name):
+        if model_name not in self.env.registry:
+            return False
+        return self.env[model_name].sudo().with_context(active_test=False)
+
+    @api.model
+    def _sc_partner_id_from_read(self, value):
+        if isinstance(value, (list, tuple)) and value:
+            return value[0]
+        return value if isinstance(value, int) else False
+
+    @api.model
+    def _sc_partner_text_from_read(self, value):
+        if isinstance(value, (list, tuple)) and len(value) > 1:
+            return value[1] or ""
+        return value or ""
+
+    @api.model
+    def _sc_is_supplier_business_counterparty(self, partner):
+        name = (partner.name or "").strip()
+        if not name:
+            return False
+        if name.lower() in {"admin", "administrator", "odoobot", "system"}:
+            return False
+        if name.lower().startswith("unknown legacy supplier"):
+            return False
+        if re.match(r"^\d{1,2}月报销$", name) or name.endswith("报销"):
+            return False
+        if partner.is_company or partner.vat or partner.legacy_partner_id:
+            return True
+        return False
+
+    @api.model
+    def _sc_collect_partner_business_facts(self):
+        """Collect fact-backed customer/supplier roles from runtime business data.
+
+        User-facing customer/supplier menus should be driven by business facts:
+        income contracts or receipt facts make a counterparty a customer; other
+        expenditure-side facts make a counterparty a supplier.
+        """
+
+        facts = defaultdict(
+            lambda: {
+                "customer": False,
+                "supplier": False,
+                "count": 0,
+                "receipt_amount": 0.0,
+                "payment_amount": 0.0,
+                "sources": set(),
+                "projects": set(),
+                "account_name": "",
+                "bank_name": "",
+                "bank_account": "",
+                "created_by": "",
+                "created_at": "",
+                "created_sort": "",
+            }
+        )
+
+        user_display_by_legacy_id = {}
+        user_display_by_login = {}
+        if "sc.legacy.user.profile" in self.env.registry:
+            Profile = self.env["sc.legacy.user.profile"].sudo().with_context(active_test=False)
+            for profile in Profile.search([]):
+                display_name = (profile.display_name or profile.user_id.name or "").strip()
+                if not display_name:
+                    continue
+                legacy_user_id = (profile.legacy_user_id or "").strip()
+                if legacy_user_id:
+                    user_display_by_legacy_id[legacy_user_id] = display_name
+                for login in (profile.source_login, profile.generated_login):
+                    login_text = (login or "").strip().lower()
+                    if login_text:
+                        user_display_by_login[login_text] = display_name
+        for user in self.env["res.users"].sudo().with_context(active_test=False).search([]):
+            login = (user.login or "").strip().lower()
+            display_name = (user.name or "").strip()
+            if login and display_name and login != display_name.lower():
+                user_display_by_login.setdefault(login, display_name)
+
+        def clean_text(value):
+            if value in (None, False):
+                return ""
+            text = str(value).strip()
+            return "" if text in {"False", "false", "None", "none", "NULL", "null"} else text
+
+        def normalize_source_user(value, legacy_user_id=None):
+            def valid_display(text):
+                lowered = text.lower()
+                return not (
+                    lowered in {"odoobot", "administrator", "admin", "system"}
+                    or text in {"系统", "系统导入"}
+                )
+
+            legacy_key = clean_text(legacy_user_id)
+            if legacy_key and legacy_key in user_display_by_legacy_id:
+                mapped_legacy_user = user_display_by_legacy_id[legacy_key]
+                return mapped_legacy_user if valid_display(mapped_legacy_user) else ""
+            text = clean_text(value)
+            if not text:
+                return ""
+            if not valid_display(text):
+                return ""
+            lowered = text.lower()
+            mapped = user_display_by_login.get(lowered)
+            if mapped:
+                return mapped if valid_display(mapped) else ""
+            if re.fullmatch(r"[A-Za-z][A-Za-z0-9_.@-]{1,63}", text) and not re.search(r"[\u4e00-\u9fff]", text):
+                return ""
+            return text
+
+        def datetime_text(value):
+            if not value:
+                return ""
+            if hasattr(value, "strftime"):
+                return value.strftime("%Y-%m-%d %H:%M:%S")
+            return clean_text(value)
+
+        def source_sort_value(value):
+            if not value:
+                return ""
+            if hasattr(value, "isoformat"):
+                return value.isoformat()
+            return clean_text(value)
+
+        def should_replace_created_fact(data, created_at):
+            current_sort = data.get("created_sort") or ""
+            next_sort = source_sort_value(created_at)
+            if not data.get("created_by"):
+                return True
+            if next_sort and (not current_sort or next_sort < current_sort):
+                return True
+            return False
+
+        def add_records(
+            model_name,
+            domain,
+            *,
+            role,
+            source_label,
+            partner_field="partner_id",
+            amount_field=None,
+            amount_bucket=None,
+            project_field="project_id",
+            account_name_field=None,
+            bank_name_field=None,
+            bank_account_field=None,
+            created_by_fields=("creator_name", "created_by_name", "source_operator"),
+            created_by_legacy_fields=("creator_legacy_user_id", "created_by_legacy_user_id"),
+            created_at_fields=("created_time", "source_time", "legacy_created_at"),
+        ):
+            Model = self._sc_fact_model(model_name)
+            if Model is False or partner_field not in Model._fields:
+                return
+            fields_to_read = [partner_field]
+            for field_name in (
+                amount_field,
+                project_field,
+                account_name_field,
+                bank_name_field,
+                bank_account_field,
+            ):
+                if field_name and field_name in Model._fields and field_name not in fields_to_read:
+                    fields_to_read.append(field_name)
+            source_created_by_fields = [
+                field_name for field_name in created_by_fields if field_name and field_name in Model._fields
+            ]
+            source_created_by_legacy_fields = [
+                field_name for field_name in created_by_legacy_fields if field_name and field_name in Model._fields
+            ]
+            source_created_at_fields = [
+                field_name for field_name in created_at_fields if field_name and field_name in Model._fields
+            ]
+            for field_name in source_created_by_fields + source_created_by_legacy_fields + source_created_at_fields:
+                if field_name not in fields_to_read:
+                    fields_to_read.append(field_name)
+            for row in Model.search_read(domain, fields_to_read):
+                partner_id = self._sc_partner_id_from_read(row.get(partner_field))
+                if not partner_id:
+                    continue
+                data = facts[partner_id]
+                data[role] = True
+                data["count"] += 1
+                data["sources"].add(source_label)
+                if amount_field and amount_bucket:
+                    try:
+                        data[amount_bucket] += float(row.get(amount_field) or 0.0)
+                    except (TypeError, ValueError):
+                        pass
+                if project_field and project_field in row:
+                    project_name = self._sc_partner_text_from_read(row.get(project_field))
+                    if project_name:
+                        data["projects"].add(project_name)
+                if account_name_field and not data["account_name"]:
+                    data["account_name"] = row.get(account_name_field) or ""
+                if bank_name_field and not data["bank_name"]:
+                    data["bank_name"] = row.get(bank_name_field) or ""
+                if bank_account_field and not data["bank_account"]:
+                    data["bank_account"] = row.get(bank_account_field) or ""
+                source_created_by = ""
+                for field_name in source_created_by_fields:
+                    source_created_by = normalize_source_user(row.get(field_name))
+                    if source_created_by:
+                        break
+                for field_name in source_created_by_legacy_fields:
+                    source_legacy_user_id = clean_text(row.get(field_name))
+                    if not source_legacy_user_id:
+                        continue
+                    mapped_user = normalize_source_user(source_created_by, source_legacy_user_id)
+                    if mapped_user:
+                        source_created_by = mapped_user
+                    break
+                source_created_at = False
+                for field_name in source_created_at_fields:
+                    source_created_at = row.get(field_name)
+                    if source_created_at:
+                        break
+                if source_created_by and should_replace_created_fact(data, source_created_at):
+                    data["created_by"] = source_created_by
+                    data["created_at"] = datetime_text(source_created_at)
+                    data["created_sort"] = source_sort_value(source_created_at)
+
+        add_records(
+            "construction.contract",
+            [("type", "=", "out"), ("partner_id", "!=", False)],
+            role="customer",
+            source_label="收入合同",
+            amount_field="amount_final",
+            amount_bucket="receipt_amount",
+            created_by_fields=("entry_user_text",),
+            created_by_legacy_fields=(),
+            created_at_fields=("entry_time",),
+        )
+        add_records(
+            "sc.receipt.income",
+            [("partner_id", "!=", False)],
+            role="customer",
+            source_label="收款事实",
+            amount_field="amount",
+            amount_bucket="receipt_amount",
+            account_name_field="receiving_account_name",
+            bank_name_field="receiving_bank_name",
+            bank_account_field="receiving_account_no",
+        )
+        add_records(
+            "payment.request",
+            [("type", "=", "receive"), ("partner_id", "!=", False)],
+            role="customer",
+            source_label="收款申请",
+            amount_field="amount",
+            amount_bucket="receipt_amount",
+        )
+        add_records(
+            "sc.legacy.receipt.residual.fact",
+            [("partner_id", "!=", False)],
+            role="customer",
+            source_label="历史收款事实",
+            amount_field="amount",
+            amount_bucket="receipt_amount",
+            project_field="project_id",
+            bank_account_field="receiving_account",
+        )
+
+        add_records(
+            "construction.contract",
+            [("type", "=", "in"), ("partner_id", "!=", False)],
+            role="supplier",
+            source_label="支出合同",
+            amount_field="amount_final",
+            amount_bucket="payment_amount",
+            created_by_fields=("entry_user_text",),
+            created_by_legacy_fields=(),
+            created_at_fields=("entry_time",),
+        )
+        add_records(
+            "payment.request",
+            [("type", "=", "pay"), ("partner_id", "!=", False)],
+            role="supplier",
+            source_label="付款申请",
+            amount_field="amount",
+            amount_bucket="payment_amount",
+        )
+        add_records(
+            "sc.payment.execution",
+            [("partner_id", "!=", False)],
+            role="supplier",
+            source_label="付款执行",
+            amount_field="paid_amount",
+            amount_bucket="payment_amount",
+            account_name_field="receipt_account_name",
+            bank_name_field="receipt_bank_name",
+            bank_account_field="receipt_account_no",
+        )
+        add_records(
+            "sc.legacy.payment.residual.fact",
+            [("partner_id", "!=", False)],
+            role="supplier",
+            source_label="历史付款事实",
+            amount_field="paid_amount",
+            amount_bucket="payment_amount",
+            project_field="project_id",
+            bank_account_field="bank_account",
+        )
+        add_records(
+            "sc.settlement.order",
+            [("partner_id", "!=", False)],
+            role="supplier",
+            source_label="支出结算",
+            amount_field="amount_total",
+            amount_bucket="payment_amount",
+        )
+        add_records(
+            "sc.legacy.enterprise.business.fact",
+            [("partner_id", "!=", False), ("fact_family", "in", ["payment", "supplier_contract"])],
+            role="supplier",
+            source_label="历史支出事实",
+            amount_field="amount_total",
+            amount_bucket="payment_amount",
+            project_field="legacy_project_name",
+        )
+        add_records(
+            "sc.legacy.expense.deposit.fact",
+            [("partner_id", "!=", False), ("direction", "=", "outflow")],
+            role="supplier",
+            source_label="历史费用/保证金支出",
+            amount_field="source_amount",
+            amount_bucket="payment_amount",
+        )
+        add_records(
+            "sc.legacy.supplier.contract.pricing.fact",
+            [("partner_id", "!=", False)],
+            role="supplier",
+            source_label="历史供应商合同",
+            amount_field="amount_total",
+            amount_bucket="payment_amount",
+        )
+        add_records(
+            "sc.legacy.invoice.registration.line",
+            [("partner_id", "!=", False)],
+            role="supplier",
+            source_label="历史供应商发票",
+            amount_field="amount_total",
+            amount_bucket="payment_amount",
+        )
+        return facts
+
+    @api.model
+    def action_sc_align_partner_roles_from_business_facts(self, demote_no_fact=True):
+        facts = self._sc_collect_partner_business_facts()
+        Partner = self.sudo().with_context(active_test=False)
+        target_ids = set(facts)
+        if demote_no_fact:
+            current = Partner.search(["|", ("customer_rank", ">", 0), ("supplier_rank", ">", 0)])
+            target_ids.update(current.ids)
+
+        action_counts = defaultdict(int)
+        for partner in Partner.browse(sorted(target_ids)).exists():
+            data = facts.get(partner.id)
+            customer = bool(data and data["customer"])
+            supplier = bool(data and data["supplier"] and self._sc_is_supplier_business_counterparty(partner))
+            vals = {}
+            if customer and not partner.customer_rank:
+                vals["customer_rank"] = 1
+            elif demote_no_fact and not customer and partner.customer_rank:
+                vals["customer_rank"] = 0
+            if supplier and not partner.supplier_rank:
+                vals["supplier_rank"] = 1
+            elif demote_no_fact and not supplier and partner.supplier_rank:
+                vals["supplier_rank"] = 0
+            if data:
+                vals.update(
+                    {
+                        "sc_source_fact_count": data["count"],
+                        "sc_source_fact_source": "；".join(sorted(data["sources"]))[:255],
+                        "sc_source_project_name": "；".join(sorted(data["projects"]))[:1000] or False,
+                        "sc_source_receipt_amount": data["receipt_amount"],
+                        "sc_source_payment_amount": data["payment_amount"],
+                    }
+                )
+                if data["account_name"] and not partner.sc_account_name:
+                    vals["sc_account_name"] = data["account_name"]
+                if data["bank_name"] and not partner.sc_bank_name:
+                    vals["sc_bank_name"] = data["bank_name"]
+                if data["bank_account"] and not partner.sc_bank_account:
+                    vals["sc_bank_account"] = data["bank_account"]
+                if data["created_by"] and (
+                    not partner.sc_source_created_by
+                    or partner.sc_source_created_by.strip().lower() in {"odoobot", "administrator", "admin", "system"}
+                    or partner.sc_source_created_by in {"系统", "系统导入"}
+                ):
+                    vals["sc_source_created_by"] = data["created_by"]
+                if data["created_at"] and (
+                    not partner.sc_source_created_at
+                    or partner.sc_source_created_at.startswith(("2026-05-08", "2026-05-09"))
+                ):
+                    vals["sc_source_created_at"] = data["created_at"]
+                if supplier and not partner.sc_supplier_type:
+                    vals["sc_supplier_type"] = "other"
+            if vals:
+                partner.write(vals)
+                action_counts["updated"] += 1
+            else:
+                action_counts["unchanged"] += 1
+
+        customer_fact_partners = 0
+        supplier_fact_partners = 0
+        source_created_by_fact_partners = 0
+        source_created_at_fact_partners = 0
+        for partner in Partner.browse(sorted(facts)).exists():
+            data = facts.get(partner.id)
+            if data and data["customer"]:
+                customer_fact_partners += 1
+            if data and data["supplier"] and self._sc_is_supplier_business_counterparty(partner):
+                supplier_fact_partners += 1
+            if data and data["created_by"]:
+                source_created_by_fact_partners += 1
+            if data and data["created_at"]:
+                source_created_at_fact_partners += 1
+
+        summary = {
+            "status": "PASS",
+            "customer_fact_partners": customer_fact_partners,
+            "supplier_fact_partners": supplier_fact_partners,
+            "source_created_by_fact_partners": source_created_by_fact_partners,
+            "source_created_at_fact_partners": source_created_at_fact_partners,
+            "fact_partner_total": len(facts),
+            "target_partner_total": len(target_ids),
+            "demote_no_fact": bool(demote_no_fact),
+            "action_counts": dict(sorted(action_counts.items())),
+        }
+        return summary
 
 
 class ResPartnerBank(models.Model):
