@@ -582,6 +582,69 @@ Artifacts:
 - `artifacts/migration/legacy_a_scbs_equipment_usage_projection_residual_v1.csv`
 - `artifacts/migration/legacy_a_scbs_equipment_usage_projection_result_v1.json`
 
+## Semantic Projection Batch D
+
+The next projection batch covered legacy labor wage settlement facts:
+
+| Legacy source | Target model | Result |
+| --- | --- | --- |
+| `A_SCBS_RYGZD` + `A_SCBS_RYGZD_CB` | `sc.labor.settlement` + `sc.labor.settlement.line` | `2` confirmed settlement documents, `5` lines, `63950.00` amount |
+
+Projection policy:
+
+- use the legacy header table for document number, settlement date, project,
+  labor contractor, creator, and header evidence;
+- use `A_SCBS_RYGZD_CB` lines for work content, quantity, unit, unit price,
+  amount, and remarks;
+- compute target unit price as `legacy line amount / quantity`, so formal
+  totals follow source facts;
+- require both a project anchor and a labor contractor anchor because
+  `sc.labor.settlement` requires both fields. Rows missing either anchor remain
+  residual facts instead of being assigned a default contractor or default
+  project.
+
+Runtime verification:
+
+```sql
+SELECT count(*) AS headers,
+       round(sum(amount_total)::numeric, 2) AS amount
+FROM sc_labor_settlement
+WHERE legacy_fact_model = 'legacy.main.A_SCBS_RYGZD';
+
+SELECT count(*) AS lines,
+       round(sum(l.amount_total)::numeric, 2) AS amount
+FROM sc_labor_settlement_line l
+JOIN sc_labor_settlement h ON h.id = l.settlement_id
+WHERE h.legacy_fact_model = 'legacy.main.A_SCBS_RYGZD';
+```
+
+Result:
+
+| Target | Rows | Amount |
+| --- | ---: | ---: |
+| `sc.labor.settlement` | 2 | 63950.00 |
+| `sc.labor.settlement.line` | 5 | 63950.00 |
+
+Projected documents:
+
+| Document | Project | Contractor | Amount | State |
+| --- | --- | --- | ---: | --- |
+| `RYGZD-20220303-001` | `德阳市旌阳区天山路（黄河路-凯江路）改造项目` | `李合贵` | 21120.00 | `confirmed` |
+| `RYGZD-20220304-001` | `德阳市旌阳区天山路（黄河路-凯江路）改造项目` | `朱龙钊` | 42830.00 | `confirmed` |
+
+Projection residuals:
+
+| Reason | Documents | Lines | Amount |
+| --- | ---: | ---: | ---: |
+| `missing_project_anchor` | 3 | 6 | 14400.00 |
+| `missing_labor_contractor` | 3 | 3 | 4080.00 |
+
+Artifacts:
+
+- `artifacts/migration/legacy_a_scbs_labor_settlement_projection_plan_v1.csv`
+- `artifacts/migration/legacy_a_scbs_labor_settlement_projection_residual_v1.csv`
+- `artifacts/migration/legacy_a_scbs_labor_settlement_projection_result_v1.json`
+
 ## Remaining Priority
 
 The next work should move from raw fact carrying to semantic projection and
