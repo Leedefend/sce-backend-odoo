@@ -73,20 +73,27 @@ class ScCompanyOperationSummary(models.Model):
         self._cr.execute(
             f"""
             CREATE OR REPLACE VIEW {self._table} AS (
-                WITH receipt_by_company AS (
+                WITH default_company AS (
+                    SELECT id AS company_id, currency_id
+                    FROM res_company
+                    ORDER BY id
+                    LIMIT 1
+                ),
+                receipt_by_company AS (
                     SELECT
-                        p.company_id,
+                        COALESCE(p.company_id, dc.company_id) AS company_id,
                         COALESCE(SUM(r.amount), 0.0) AS receipt_amount,
                         COUNT(*)::integer AS receipt_count
                     FROM sc_receipt_income r
                     LEFT JOIN project_project p ON p.id = r.project_id
+                    CROSS JOIN default_company dc
                     WHERE r.active IS TRUE
                       AND r.state <> 'cancel'
-                    GROUP BY p.company_id
+                    GROUP BY COALESCE(p.company_id, dc.company_id)
                 ),
                 account_tx_by_company AS (
                     SELECT
-                        p.company_id,
+                        COALESCE(p.company_id, dc.company_id) AS company_id,
                         COALESCE(SUM(CASE
                             WHEN t.source_table = 'C_CWSFK_GSCWSR'
                              AND t.direction = 'income'
@@ -98,12 +105,13 @@ class ScCompanyOperationSummary(models.Model):
                         COUNT(*)::integer AS source_line_count
                     FROM sc_legacy_account_transaction_line t
                     LEFT JOIN project_project p ON p.id = t.project_id
+                    CROSS JOIN default_company dc
                     WHERE t.active IS TRUE
-                    GROUP BY p.company_id
+                    GROUP BY COALESCE(p.company_id, dc.company_id)
                 ),
                 claim_by_company AS (
                     SELECT
-                        p.company_id,
+                        COALESCE(p.company_id, dc.company_id) AS company_id,
                         COALESCE(SUM(CASE
                             WHEN c.claim_type = 'expense' THEN c.amount ELSE 0 END), 0.0)
                             AS expense_reimbursement_amount,
@@ -116,26 +124,28 @@ class ScCompanyOperationSummary(models.Model):
                         COUNT(*)::integer AS expense_claim_count
                     FROM sc_expense_claim c
                     LEFT JOIN project_project p ON p.id = c.project_id
+                    CROSS JOIN default_company dc
                     WHERE c.active IS TRUE
                       AND c.state <> 'cancel'
-                    GROUP BY p.company_id
+                    GROUP BY COALESCE(p.company_id, dc.company_id)
                 ),
                 salary_by_company AS (
                     SELECT
-                        p.company_id,
+                        COALESCE(p.company_id, dc.company_id) AS company_id,
                         COALESCE(SUM(s.gross_amount), 0.0) AS salary_gross_amount,
                         COALESCE(SUM(s.net_salary), 0.0) AS salary_net_amount,
                         COUNT(*)::integer AS salary_line_count
                     FROM sc_hr_payroll_document s
                     LEFT JOIN project_project p ON p.id = s.project_id
+                    CROSS JOIN default_company dc
                     WHERE s.active IS TRUE
                       AND s.state <> 'cancel'
                       AND s.fact_type = 'salary_registration'
-                    GROUP BY p.company_id
+                    GROUP BY COALESCE(p.company_id, dc.company_id)
                 ),
                 invoice_by_company AS (
                     SELECT
-                        p.company_id,
+                        COALESCE(p.company_id, dc.company_id) AS company_id,
                         COALESCE(SUM(CASE WHEN i.direction = 'output' THEN i.tax_amount ELSE 0 END), 0.0)
                             AS output_tax_amount,
                         COALESCE(SUM(CASE WHEN i.direction = 'input' THEN i.tax_amount ELSE 0 END), 0.0)
@@ -145,9 +155,10 @@ class ScCompanyOperationSummary(models.Model):
                         COUNT(*)::integer AS invoice_count
                     FROM sc_invoice_registration i
                     LEFT JOIN project_project p ON p.id = i.project_id
+                    CROSS JOIN default_company dc
                     WHERE i.active IS TRUE
                       AND i.state <> 'cancel'
-                    GROUP BY p.company_id
+                    GROUP BY COALESCE(p.company_id, dc.company_id)
                 ),
                 company_keys AS (
                     SELECT company_id FROM receipt_by_company
