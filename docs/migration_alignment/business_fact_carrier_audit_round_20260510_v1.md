@@ -424,6 +424,62 @@ objective fact-carrier pass is closed at original-data level. It does not mean
 every residual row has already been semantically projected into a dedicated
 new-system business model.
 
+## Semantic Projection Batch A
+
+After carrier closure, the first semantic projection batch focused on a source
+pair with strong business certainty:
+
+| Legacy source | Target model | Result |
+| --- | --- | --- |
+| `A_SCBS_CLRKD` + `A_SCBS_CLRKD_CB` | `sc.material.inbound` + `sc.material.inbound.line` | `33` received inbound documents, `44` lines, `539339.12` amount |
+
+Projection policy:
+
+- use the legacy header table for document number, inbound date, project,
+  supplier, creator, and header evidence;
+- use the already carried `A_SCBS_CLRKD_CB` residual rows for material name,
+  spec, unit, quantity, and line amount;
+- compute target unit price as `legacy line amount / quantity`, so formal
+  totals follow source facts instead of recalculating from rounded legacy unit
+  price;
+- block rows without a project anchor instead of assigning a default project.
+
+Runtime verification:
+
+```sql
+SELECT count(*) AS headers,
+       round(sum(amount_total)::numeric, 2) AS amount
+FROM sc_material_inbound
+WHERE legacy_fact_model = 'legacy.main.A_SCBS_CLRKD';
+
+SELECT count(*) AS lines,
+       round(sum(amount)::numeric, 2) AS amount
+FROM sc_material_inbound_line l
+JOIN sc_material_inbound h ON h.id = l.inbound_id
+WHERE h.legacy_fact_model = 'legacy.main.A_SCBS_CLRKD';
+```
+
+Result:
+
+| Target | Rows | Amount |
+| --- | ---: | ---: |
+| `sc.material.inbound` | 33 | 539339.12 |
+| `sc.material.inbound.line` | 44 | 539339.12 |
+
+Projection residuals:
+
+| Legacy document | Project legacy id | Amount | Reason |
+| --- | --- | ---: | --- |
+| `CLRKD-20220301-001` | `7a7f8b5476a34a74ad907808839a9c89` | 27092.80 | `missing_project_anchor` |
+| `CLRKD-20220226-001` | `7a7f8b5476a34a74ad907808839a9c89` | 360.00 | `missing_project_anchor` |
+
+Artifacts:
+
+- `artifacts/migration/legacy_a_scbs_material_inbound_headers_v1.csv`
+- `artifacts/migration/legacy_a_scbs_material_inbound_projection_plan_v1.csv`
+- `artifacts/migration/legacy_a_scbs_material_inbound_projection_residual_v1.csv`
+- `artifacts/migration/legacy_a_scbs_material_inbound_projection_result_v1.json`
+
 ## Remaining Priority
 
 The next work should move from raw fact carrying to semantic projection and
