@@ -30,6 +30,8 @@
                     <field name="approved_amount" sum="批准金额合计"/>
                     <field name="legacy_document_no"/>
                     <field name="legacy_document_state"/>
+                    <field name="creator_name" optional="show"/>
+                    <field name="created_time" optional="show"/>
                     <field name="state"/>
                 </tree>
             </field>
@@ -110,6 +112,9 @@
                         </group>
                         <group>
                             <field name="note"/>
+                            <field name="creator_name" readonly="1"/>
+                            <field name="creator_legacy_user_id" readonly="1"/>
+                            <field name="created_time" readonly="1"/>
                             <field name="attachment_ids" widget="many2many_binary"/>
                         </group>
                     </sheet>

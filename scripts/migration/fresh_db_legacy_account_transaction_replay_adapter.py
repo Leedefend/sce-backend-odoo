@@ -40,6 +40,12 @@ FIELDS = [
     "category",
     "source_summary",
     "note",
+    "creator_legacy_user_id",
+    "creator_name",
+    "created_time",
+    "modifier_legacy_user_id",
+    "modifier_name",
+    "modified_time",
     "active",
 ]
 
@@ -133,6 +139,12 @@ SELECT
   {clean_sql("f_LB")} AS category,
   {clean_sql("SY")} AS source_summary,
   {clean_sql("BZ")} AS note,
+  {clean_sql("LRRID")} AS creator_legacy_user_id,
+  {clean_sql("LRR")} AS creator_name,
+  {clean_sql("CONVERT(varchar(19), LRSJ, 120)")} AS created_time,
+  {clean_sql("XGRID")} AS modifier_legacy_user_id,
+  {clean_sql("XGR")} AS modifier_name,
+  {clean_sql("CONVERT(varchar(19), XGSJ, 120)")} AS modified_time,
   '1' AS active
 FROM base
 WHERE NULLIF(LTRIM(RTRIM(ZCZH_Id)), '') IS NOT NULL
@@ -157,6 +169,12 @@ SELECT
   {clean_sql("f_LB")} AS category,
   {clean_sql("SY")} AS source_summary,
   {clean_sql("BZ")} AS note,
+  {clean_sql("LRRID")} AS creator_legacy_user_id,
+  {clean_sql("LRR")} AS creator_name,
+  {clean_sql("CONVERT(varchar(19), LRSJ, 120)")} AS created_time,
+  {clean_sql("XGRID")} AS modifier_legacy_user_id,
+  {clean_sql("XGR")} AS modifier_name,
+  {clean_sql("CONVERT(varchar(19), XGSJ, 120)")} AS modified_time,
   '1' AS active
 FROM base
 WHERE NULLIF(LTRIM(RTRIM(SKZH_Id)), '') IS NOT NULL
@@ -181,6 +199,12 @@ SELECT
   {clean_sql("SKLB")} AS category,
   {clean_sql("BT")} AS source_summary,
   {clean_sql("BZ")} AS note,
+  '' AS creator_legacy_user_id,
+  '' AS creator_name,
+  '' AS created_time,
+  '' AS modifier_legacy_user_id,
+  '' AS modifier_name,
+  '' AS modified_time,
   '1' AS active
 FROM dbo.C_CWSFK_GSCWSR
 WHERE NULLIF(LTRIM(RTRIM(Id)), '') IS NOT NULL
@@ -209,6 +233,12 @@ SELECT
   {clean_sql("COALESCE(NULLIF(D_SCBSJS_CWZCLB, ''), NULLIF(CBLBMC, ''))")} AS category,
   {clean_sql("BT")} AS source_summary,
   {clean_sql("BZ")} AS note,
+  '' AS creator_legacy_user_id,
+  '' AS creator_name,
+  '' AS created_time,
+  '' AS modifier_legacy_user_id,
+  '' AS modifier_name,
+  '' AS modified_time,
   '1' AS active
 FROM dbo.C_CWSFK_GSCWZC
 WHERE NULLIF(LTRIM(RTRIM(Id)), '') IS NOT NULL
@@ -237,6 +267,12 @@ SELECT
   {clean_sql("f_SRLBName")} AS category,
   {clean_sql("BT")} AS source_summary,
   {clean_sql("f_BZ")} AS note,
+  '' AS creator_legacy_user_id,
+  '' AS creator_name,
+  '' AS created_time,
+  '' AS modifier_legacy_user_id,
+  '' AS modifier_name,
+  '' AS modified_time,
   '1' AS active
 FROM dbo.C_JFHKLR
 WHERE NULLIF(LTRIM(RTRIM(Id)), '') IS NOT NULL
@@ -265,6 +301,12 @@ SELECT
   {clean_sql("ZJLB")} AS category,
   {clean_sql("THBZ")} AS source_summary,
   {clean_sql("BZ")} AS note,
+  '' AS creator_legacy_user_id,
+  '' AS creator_name,
+  '' AS created_time,
+  '' AS modifier_legacy_user_id,
+  '' AS modifier_name,
+  '' AS modified_time,
   '1' AS active
 FROM dbo.C_JFHKLR_TH
 WHERE NULLIF(LTRIM(RTRIM(Id)), '') IS NOT NULL
@@ -293,6 +335,12 @@ SELECT
   {clean_sql("cb.ZJLB")} AS category,
   {clean_sql("zb.WLDWFKDW")} AS source_summary,
   {clean_sql("cb.BZ")} AS note,
+  '' AS creator_legacy_user_id,
+  '' AS creator_name,
+  '' AS created_time,
+  '' AS modifier_legacy_user_id,
+  '' AS modifier_name,
+  '' AS modified_time,
   '1' AS active
 FROM dbo.C_JFHKLR_TH_ZCDF zb
 JOIN dbo.C_JFHKLR_TH_ZCDF_CB cb ON zb.Id = cb.ZBID
@@ -322,6 +370,12 @@ SELECT
   {clean_sql("COALESCE(NULLIF(f_LB, ''), NULLIF(f_FKLX, ''))")} AS category,
   {clean_sql("f_YT")} AS source_summary,
   {clean_sql("COALESCE(NULLIF(BZ, ''), NULLIF(f_BZ, ''), NULLIF(Remark, ''))")} AS note,
+  '' AS creator_legacy_user_id,
+  '' AS creator_name,
+  '' AS created_time,
+  '' AS modifier_legacy_user_id,
+  '' AS modifier_name,
+  '' AS modified_time,
   '1' AS active
 FROM dbo.T_FK_Supplier
 WHERE NULLIF(LTRIM(RTRIM(Id)), '') IS NOT NULL
@@ -351,6 +405,12 @@ SELECT
   {clean_sql("COALESCE(NULLIF(f_LB, ''), NULLIF(f_FKLX, ''))")} AS category,
   {clean_sql("f_YT")} AS source_summary,
   {clean_sql("COALESCE(NULLIF(BZ, ''), NULLIF(f_BZ, ''), NULLIF(Remark, ''))")} AS note,
+  '' AS creator_legacy_user_id,
+  '' AS creator_name,
+  '' AS created_time,
+  '' AS modifier_legacy_user_id,
+  '' AS modifier_name,
+  '' AS modified_time,
   '1' AS active
 FROM dbo.T_FK_Supplier
 WHERE NULLIF(LTRIM(RTRIM(Id)), '') IS NOT NULL
@@ -380,6 +440,12 @@ SELECT
   '借款还款' AS category,
   {clean_sql("ZYZJSYAP")} AS source_summary,
   {clean_sql("FJ")} AS note,
+  '' AS creator_legacy_user_id,
+  '' AS creator_name,
+  '' AS created_time,
+  '' AS modifier_legacy_user_id,
+  '' AS modifier_name,
+  '' AS modified_time,
   '1' AS active
 FROM dbo.BGGL_JHK_HKDJ
 WHERE NULLIF(LTRIM(RTRIM(Id)), '') IS NOT NULL
@@ -408,6 +474,12 @@ SELECT
   {clean_sql("COALESCE(NULLIF(FKFSMC, ''), NULLIF(FX, ''), NULLIF(SX, ''))")} AS category,
   {clean_sql("ZYZJSYAP")} AS source_summary,
   {clean_sql("COALESCE(NULLIF(BZ, ''), NULLIF(BZ1, ''))")} AS note,
+  '' AS creator_legacy_user_id,
+  '' AS creator_name,
+  '' AS created_time,
+  '' AS modifier_legacy_user_id,
+  '' AS modifier_name,
+  '' AS modified_time,
   '1' AS active
 FROM dbo.BGGL_JHK_JKSQ
 WHERE NULLIF(LTRIM(RTRIM(Id)), '') IS NOT NULL
@@ -436,6 +508,12 @@ SELECT
   {clean_sql("JKLX")} AS category,
   {clean_sql("YT")} AS source_summary,
   {clean_sql("BZ")} AS note,
+  '' AS creator_legacy_user_id,
+  '' AS creator_name,
+  '' AS created_time,
+  '' AS modifier_legacy_user_id,
+  '' AS modifier_name,
+  '' AS modified_time,
   '1' AS active
 FROM dbo.ZJGL_ZCDFSZ_FXJK_HK
 WHERE NULLIF(LTRIM(RTRIM(Id)), '') IS NOT NULL
@@ -464,6 +542,12 @@ SELECT
   {clean_sql("JKLX")} AS category,
   {clean_sql("YT")} AS source_summary,
   {clean_sql("BZ")} AS note,
+  '' AS creator_legacy_user_id,
+  '' AS creator_name,
+  '' AS created_time,
+  '' AS modifier_legacy_user_id,
+  '' AS modifier_name,
+  '' AS modified_time,
   '1' AS active
 FROM dbo.ZJGL_ZCDFSZ_FXJK_JK
 WHERE NULLIF(LTRIM(RTRIM(Id)), '') IS NOT NULL
@@ -492,6 +576,12 @@ SELECT
   {clean_sql("BZJLX")} AS category,
   {clean_sql("D_QKXYJD_THBZ")} AS source_summary,
   {clean_sql("BZ")} AS note,
+  '' AS creator_legacy_user_id,
+  '' AS creator_name,
+  '' AS created_time,
+  '' AS modifier_legacy_user_id,
+  '' AS modifier_name,
+  '' AS modified_time,
   '1' AS active
 FROM dbo.ZJGL_BZJGL_Pay_FBZJ
 WHERE NULLIF(LTRIM(RTRIM(Id)), '') IS NOT NULL
@@ -520,6 +610,12 @@ SELECT
   {clean_sql("Y_BZJLX")} AS category,
   {clean_sql("SM")} AS source_summary,
   {clean_sql("Y_BZ")} AS note,
+  '' AS creator_legacy_user_id,
+  '' AS creator_name,
+  '' AS created_time,
+  '' AS modifier_legacy_user_id,
+  '' AS modifier_name,
+  '' AS modified_time,
   '1' AS active
 FROM dbo.ZJGL_BZJGL_Pay_FBZJTH
 WHERE NULLIF(LTRIM(RTRIM(Id)), '') IS NOT NULL
@@ -548,6 +644,12 @@ SELECT
   {clean_sql("BZJLX")} AS category,
   {clean_sql("BT")} AS source_summary,
   {clean_sql("BZ")} AS note,
+  '' AS creator_legacy_user_id,
+  '' AS creator_name,
+  '' AS created_time,
+  '' AS modifier_legacy_user_id,
+  '' AS modifier_name,
+  '' AS modified_time,
   '1' AS active
 FROM dbo.ZJGL_BZJGL_Branch_SBZJDJ
 WHERE NULLIF(LTRIM(RTRIM(ID)), '') IS NOT NULL
@@ -576,6 +678,12 @@ SELECT
   {clean_sql("LX")} AS category,
   {clean_sql("BT")} AS source_summary,
   {clean_sql("BZ")} AS note,
+  '' AS creator_legacy_user_id,
+  '' AS creator_name,
+  '' AS created_time,
+  '' AS modifier_legacy_user_id,
+  '' AS modifier_name,
+  '' AS modified_time,
   '1' AS active
 FROM dbo.ZJGL_BZJGL_Branch_SBZJTH
 WHERE NULLIF(LTRIM(RTRIM(Id)), '') IS NOT NULL
@@ -604,6 +712,12 @@ SELECT
   {clean_sql("D_SCBSJS_DQLX")} AS category,
   {clean_sql("CONVERT(varchar(10), HKRQ, 23)")} AS source_summary,
   {clean_sql("BZ")} AS note,
+  '' AS creator_legacy_user_id,
+  '' AS creator_name,
+  '' AS created_time,
+  '' AS modifier_legacy_user_id,
+  '' AS modifier_name,
+  '' AS modified_time,
   '1' AS active
 FROM dbo.ZJGL_ZJSZ_DKGL_DKDJ
 WHERE NULLIF(LTRIM(RTRIM(Id)), '') IS NOT NULL
@@ -632,6 +746,12 @@ SELECT
   {clean_sql("DKLX")} AS category,
   {clean_sql("COALESCE(NULLIF(BM, ''), NULLIF(TXR, ''))")} AS source_summary,
   {clean_sql("BZ")} AS note,
+  '' AS creator_legacy_user_id,
+  '' AS creator_name,
+  '' AS created_time,
+  '' AS modifier_legacy_user_id,
+  '' AS modifier_name,
+  '' AS modified_time,
   '1' AS active
 FROM dbo.ZJGL_ZJSZ_DKGL_HKDJ
 WHERE NULLIF(LTRIM(RTRIM(Id)), '') IS NOT NULL
@@ -660,6 +780,12 @@ SELECT
   {clean_sql("c.SJNR")} AS category,
   '扣款实缴登记' AS source_summary,
   {clean_sql("c.BZ")} AS note,
+  '' AS creator_legacy_user_id,
+  '' AS creator_name,
+  '' AS created_time,
+  '' AS modifier_legacy_user_id,
+  '' AS modifier_name,
+  '' AS modified_time,
   '1' AS active
 FROM dbo.T_KK_SJDJB_CB c
 JOIN dbo.T_KK_SJDJB h ON h.Id = c.ZBID
@@ -689,6 +815,12 @@ SELECT
   {clean_sql("c.NR")} AS category,
   '扣款实缴退回' AS source_summary,
   {clean_sql("c.BZ")} AS note,
+  '' AS creator_legacy_user_id,
+  '' AS creator_name,
+  '' AS created_time,
+  '' AS modifier_legacy_user_id,
+  '' AS modifier_name,
+  '' AS modified_time,
   '1' AS active
 FROM dbo.T_KK_SJTHB_CB c
 JOIN dbo.T_KK_SJTHB h ON h.Id = c.ZBID

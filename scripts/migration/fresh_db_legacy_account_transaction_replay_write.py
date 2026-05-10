@@ -214,6 +214,12 @@ for row in rows:
             "category": clean(row.get("category")),
             "source_summary": clean(row.get("source_summary")),
             "note": clean(row.get("note")),
+            "creator_legacy_user_id": clean(row.get("creator_legacy_user_id")),
+            "creator_name": clean(row.get("creator_name")),
+            "created_time": clean(row.get("created_time")) or False,
+            "modifier_legacy_user_id": clean(row.get("modifier_legacy_user_id")),
+            "modifier_name": clean(row.get("modifier_name")),
+            "modified_time": clean(row.get("modified_time")) or False,
             "active": clean(row.get("active")) != "0",
         }
         if should_update_account:
@@ -246,6 +252,12 @@ for row in rows:
         "category": clean(row.get("category")),
         "source_summary": clean(row.get("source_summary")),
         "note": clean(row.get("note")),
+        "creator_legacy_user_id": clean(row.get("creator_legacy_user_id")),
+        "creator_name": clean(row.get("creator_name")),
+        "created_time": clean(row.get("created_time")) or False,
+        "modifier_legacy_user_id": clean(row.get("modifier_legacy_user_id")),
+        "modifier_name": clean(row.get("modifier_name")),
+        "modified_time": clean(row.get("modified_time")) or False,
         "import_batch": "legacy_account_transaction_v1",
         "active": clean(row.get("active")) != "0",
     }
