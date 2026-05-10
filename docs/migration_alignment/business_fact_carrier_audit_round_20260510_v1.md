@@ -871,3 +871,59 @@ user-facing continuation. Priority should stay evidence-based:
 Do not force old records into new customer/supplier classifications during this
 phase. Each source table should be either carried into a neutral or specialized
 runtime fact carrier, or explicitly excluded with evidence.
+
+## Semantic Projection Batch I
+
+This batch covered legacy outbound project-contract deposit lines. The old
+detail table has the amount and deposit type, while the project, counterparty,
+document state, and delete flag live on `T_ProjectContract_Out`; the migration
+therefore extracts the two tables together before projection.
+
+Sources:
+
+| Legacy source | Business meaning | Target | Rows | Amount |
+| --- | --- | --- | ---: | ---: |
+| `T_ProjectContract_Out_CB_BZJ` + `T_ProjectContract_Out` | external project-contract deposit detail | `sc.expense.claim` | 5 | 3053466.63 |
+
+Compatibility policy:
+
+- keep old deposit lines on the user-operable `sc.expense.claim` guarantee
+  surface with `claim_type = deposit_pay` and `guarantee_type = contract`;
+- resolve project anchors from `T_ProjectContract_Out.XMID` to
+  `project.project.legacy_project_id`, falling back to old project name only
+  when necessary;
+- use the old employer/construction-unit text as the counterparty anchor and
+  preserve contractor/employer/header evidence in the note;
+- carry deleted legacy rows as archived `cancel` records instead of counting
+  them as current active business;
+- keep zero-amount rows when the old row exists, because that is still an
+  objective legacy fact with contract and document context.
+
+Runtime verification:
+
+| Target slice | Rows | Amount |
+| --- | ---: | ---: |
+| All migrated contract deposit facts | 5 | 3053466.63 |
+| Active migrated contract deposit facts | 3 | 3020000.00 |
+
+State distribution:
+
+| State | Rows |
+| --- | ---: |
+| `legacy_confirmed` | 2 |
+| `draft` | 1 |
+| `cancel` | 2 |
+
+Projection residuals:
+
+| Reason | Rows | Amount |
+| --- | ---: | ---: |
+| n/a | 0 | 0.00 |
+
+Artifacts:
+
+- `artifacts/migration/legacy_project_contract_deposit_lines_v1.csv`
+- `artifacts/migration/legacy_project_contract_deposit_adapter_result_v1.json`
+- `artifacts/migration/legacy_project_contract_deposit_projection_plan_v1.csv`
+- `artifacts/migration/legacy_project_contract_deposit_projection_residual_v1.csv`
+- `artifacts/migration/legacy_project_contract_deposit_projection_result_v1.json`
