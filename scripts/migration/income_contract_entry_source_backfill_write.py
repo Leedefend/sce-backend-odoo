@@ -30,7 +30,9 @@ ALLOWLIST = {
     for item in os.getenv("MIGRATION_REPLAY_DB_ALLOWLIST", "sc_demo,sc_prod_sim,sc_migration_fresh").split(",")
     if item.strip()
 }
-TECHNICAL_USERS = {"admin", "administrator", "odoobot", "system", "系统", "系统导入"}
+TECHNICAL_USERS = {"administrator", "odoobot", "system", "系统", "系统导入"}
+LEGACY_SYSTEM_USER_IDS = {"10000000"}
+LEGACY_SYSTEM_USER_LABEL = os.getenv("LEGACY_SYSTEM_USER_LABEL", "历史系统账号（不启用）")
 CONTRACT_TYPES = {
     item.strip()
     for item in os.getenv("CONSTRUCTION_CONTRACT_ENTRY_TYPES", "out,in").split(",")
@@ -45,8 +47,10 @@ def clean(value: object) -> str:
     return "" if text in {"False", "false", "None", "none", "NULL", "null"} else text
 
 
-def normalize_user(value: object) -> str:
+def normalize_user(value: object, legacy_user_id: object = "") -> str:
     text = clean(value)
+    if clean(legacy_user_id) in LEGACY_SYSTEM_USER_IDS and text.lower() == "admin":
+        return LEGACY_SYSTEM_USER_LABEL
     return "" if text.lower() in TECHNICAL_USERS or text in TECHNICAL_USERS else text
 
 
@@ -82,10 +86,13 @@ def read_raw(path: Path) -> dict[str, dict[str, str]]:
             legacy_id = clean(row.get("Id"))
             if not legacy_id:
                 continue
+            entry_legacy_user_id = clean(row.get("LRRID"))
+            fallback_legacy_user_id = clean(row.get("f_LRRID"))
             rows[legacy_id] = {
-                "entry_user_text": normalize_user(row.get("LRR")) or normalize_user(row.get("f_LRR")),
+                "entry_user_text": normalize_user(row.get("LRR"), entry_legacy_user_id)
+                or normalize_user(row.get("f_LRR"), fallback_legacy_user_id),
                 "entry_time": parse_datetime(row.get("LRRQ")) or parse_datetime(row.get("f_LRSJ")),
-                "entry_legacy_user_id": clean(row.get("LRRID")),
+                "entry_legacy_user_id": entry_legacy_user_id or fallback_legacy_user_id,
             }
     return rows
 

@@ -412,16 +412,21 @@ def collect_issues(counts: dict[str, int]) -> list[dict[str, object]]:
         severity="warn",
         count=count_table(
             "construction_contract",
-            "type = 'out' AND COALESCE(visible_contract_amount, 0) <> 0 AND (visible_received_amount IS NULL OR visible_unreceived_amount IS NULL)",
+            "type = 'out' AND legacy_contract_id IS NOT NULL AND COALESCE(visible_contract_amount, 0) <> 0 "
+            "AND (visible_received_amount IS NULL OR visible_unreceived_amount IS NULL) "
+            "AND (COALESCE(visible_received_amount_source, '') = '' OR COALESCE(visible_unreceived_amount_source, '') = '')",
         ),
-        message="收入合同缺少旧系统累计收款/未收款余额来源，不能按合同金额倒推造数。",
+        message="收入合同缺少旧系统累计收款/未收款余额来源证据，不能按合同金额倒推造数。",
         sample_sql="""
             SELECT id, legacy_contract_id, legacy_document_no, subject,
-                   visible_contract_amount, visible_received_amount, visible_unreceived_amount
+                   visible_contract_amount, visible_received_amount, visible_unreceived_amount,
+                   visible_received_amount_source, visible_unreceived_amount_source
               FROM construction_contract
              WHERE type = 'out'
+               AND legacy_contract_id IS NOT NULL
                AND COALESCE(visible_contract_amount, 0) <> 0
                AND (visible_received_amount IS NULL OR visible_unreceived_amount IS NULL)
+               AND (COALESCE(visible_received_amount_source, '') = '' OR COALESCE(visible_unreceived_amount_source, '') = '')
              ORDER BY id
         """,
     )
@@ -637,11 +642,16 @@ def export_gap_details(root: Path) -> dict[str, object]:
                subject,
                visible_contract_amount,
                visible_received_amount,
-               visible_unreceived_amount
-          FROM construction_contract
+               visible_unreceived_amount,
+               visible_invoice_amount_source,
+               visible_received_amount_source,
+               visible_unreceived_amount_source
+         FROM construction_contract
          WHERE type = 'out'
+           AND legacy_contract_id IS NOT NULL
            AND COALESCE(visible_contract_amount, 0) <> 0
            AND (visible_received_amount IS NULL OR visible_unreceived_amount IS NULL)
+           AND (COALESCE(visible_received_amount_source, '') = '' OR COALESCE(visible_unreceived_amount_source, '') = '')
          ORDER BY legacy_document_no, id
         """
     )

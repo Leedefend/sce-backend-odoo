@@ -211,10 +211,12 @@ def classify_contract_residuals() -> tuple[dict[str, object], list[dict[str, obj
                visible_contract_amount,
                visible_received_amount,
                visible_unreceived_amount
-          FROM construction_contract
+         FROM construction_contract
          WHERE type = 'out'
+           AND legacy_contract_id IS NOT NULL
            AND COALESCE(visible_contract_amount, 0) <> 0
            AND (visible_received_amount IS NULL OR visible_unreceived_amount IS NULL)
+           AND (COALESCE(visible_received_amount_source, '') = '' OR COALESCE(visible_unreceived_amount_source, '') = '')
          ORDER BY legacy_document_no, id
         """
     )
