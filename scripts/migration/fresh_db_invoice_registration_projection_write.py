@@ -55,7 +55,8 @@ env.cr.execute(  # noqa: F821
       handler_name, invoice_holder, accounting_state, voucher_no,
       legacy_source_model, legacy_source_table, legacy_record_id,
       legacy_document_state, legacy_partner_id, legacy_partner_name,
-      legacy_partner_tax_no, legacy_attachment_ref, note, active,
+      legacy_partner_tax_no, legacy_attachment_ref, creator_legacy_user_id,
+      creator_name, created_time, note, active,
       create_uid, write_uid, create_date, write_date
     )
     SELECT
@@ -93,6 +94,9 @@ env.cr.execute(  # noqa: F821
       NULLIF(l.supplier_name, ''),
       NULLIF(l.supplier_tax_no, ''),
       COALESCE(NULLIF(l.attachment_ref, ''), NULLIF(l.attachment_path, ''), NULLIF(l.attachment_name, '')),
+      NULLIF(l.creator_legacy_user_id, ''),
+      NULLIF(l.creator_name, ''),
+      l.created_time,
       CONCAT_WS(E'\n',
         '[migration:invoice_registration] legacy_line_id=' || l.legacy_line_id,
         NULLIF(l.project_name, ''),
@@ -147,6 +151,9 @@ env.cr.execute(  # noqa: F821
       legacy_partner_name = EXCLUDED.legacy_partner_name,
       legacy_partner_tax_no = EXCLUDED.legacy_partner_tax_no,
       legacy_attachment_ref = EXCLUDED.legacy_attachment_ref,
+      creator_legacy_user_id = EXCLUDED.creator_legacy_user_id,
+      creator_name = EXCLUDED.creator_name,
+      created_time = EXCLUDED.created_time,
       note = EXCLUDED.note,
       active = EXCLUDED.active,
       write_uid = 1,

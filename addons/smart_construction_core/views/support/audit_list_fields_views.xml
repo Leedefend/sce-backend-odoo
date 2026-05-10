@@ -886,6 +886,7 @@
         <field name="name">sc.invoice.registration.audit.fields.view_sc_invoice_registration_tree</field>
         <field name="model">sc.invoice.registration</field>
         <field name="inherit_id" ref="view_sc_invoice_registration_tree" />
+        <field name="active">False</field>
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
                 <field name="create_uid" string="创建人" />
