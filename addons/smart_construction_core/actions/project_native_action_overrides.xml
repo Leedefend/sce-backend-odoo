@@ -26,4 +26,26 @@
         <field name="view_id" ref="smart_construction_core.view_project_my_list_tree"/>
         <field name="search_view_id" ref="smart_construction_core.view_project_project_search_sc_business"/>
     </record>
+
+    <record id="account.res_partner_action_supplier" model="ir.actions.act_window">
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="smart_construction_core.view_sc_supplier_partner_tree"/>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_supplier_partner_search"/>
+        <field name="domain">[('supplier_rank', '&gt;', 0)]</field>
+        <field name="context">{'default_supplier_rank': 1, 'default_is_company': True, 'active_test': False}</field>
+    </record>
+
+    <record id="action_account_supplier_partner_tree_view" model="ir.actions.act_window.view">
+        <field name="sequence" eval="1"/>
+        <field name="view_mode">tree</field>
+        <field name="view_id" ref="smart_construction_core.view_sc_supplier_partner_tree"/>
+        <field name="act_window_id" ref="account.res_partner_action_supplier"/>
+    </record>
+
+    <record id="action_account_supplier_partner_form_view" model="ir.actions.act_window.view">
+        <field name="sequence" eval="2"/>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="smart_construction_core.view_sc_supplier_partner_form"/>
+        <field name="act_window_id" ref="account.res_partner_action_supplier"/>
+    </record>
 </odoo>
