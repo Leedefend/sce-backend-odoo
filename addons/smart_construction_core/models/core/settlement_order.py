@@ -119,6 +119,9 @@ class ScSettlementOrder(models.Model):
     entry_user_id = fields.Many2one("res.users", string="录入人", default=lambda self: self.env.user, index=True)
     entry_data = fields.Char(string="录入数据")
     note = fields.Text(string="备注")
+    legacy_fact_model = fields.Char(string="来源通用模型", index=True)
+    legacy_fact_id = fields.Integer(string="来源通用记录ID", index=True)
+    legacy_fact_type = fields.Char(string="来源业务类型", index=True)
 
     line_ids = fields.One2many(
         "sc.settlement.order.line",
@@ -209,6 +212,10 @@ class ScSettlementOrder(models.Model):
         string="状态",
         default="draft",
     )
+
+    _sql_constraints = [
+        ("legacy_settlement_order_unique", "unique(legacy_fact_model, legacy_fact_id)", "来源通用结算单已迁移为专业结算单。"),
+    ]
 
     @api.depends("line_ids.amount")
     def _compute_amount_total(self):
@@ -724,7 +731,8 @@ class ScSettlementOrderLine(models.Model):
                 settlement = self.env["sc.settlement.order"].browse(vals.get("settlement_id"))
                 if settlement.contract_id:
                     vals["contract_id"] = settlement.contract_id.id
-            self._ensure_contract_required(vals.get("contract_id"))
+            if not self.env.context.get("legacy_migration_allow_missing_contract"):
+                self._ensure_contract_required(vals.get("contract_id"))
             if vals.get("settlement_id"):
                 settlement = self.env["sc.settlement.order"].browse(vals.get("settlement_id"))
                 self._ensure_contract_match(vals.get("contract_id"), settlement.project_id.id)

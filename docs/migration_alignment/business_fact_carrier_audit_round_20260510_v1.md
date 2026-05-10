@@ -749,6 +749,53 @@ Artifacts:
 - `artifacts/migration/legacy_t_zl_machine_shift_settlement_projection_residual_v1.csv`
 - `artifacts/migration/legacy_t_zl_machine_shift_settlement_projection_result_v1.json`
 
+## Semantic Projection Batch G
+
+This batch covered legacy project settlement application facts from
+`XMGL_HTGL_XMJSSQ`. All rows had target project anchors, but only rows with an
+explicit old counterparty (`JFDW`) were projected. Rows without `JFDW` remain as
+carried residual facts instead of inventing an employer/customer.
+
+Field policy:
+
+- use `JSJE` as the formal project-settlement amount because it is the legacy
+  settlement amount field;
+- retain `HTZE`, `YSKJE`, and `HTJE` as source amount evidence in the target
+  note, not as forced mappings to submitted/requested fields;
+- map `JSJD` to the target settlement stage where deterministic (`一审`,
+  `二审`);
+- map old state `DJZT = 2` to target `approve`, `DJZT = 0` to `draft`, and
+  `DJZT = -1` to `cancel`;
+- allow the migration context to create historical settlement lines without a
+  new-system `construction.contract` anchor, while keeping the normal user
+  entry rule unchanged.
+
+Runtime verification:
+
+| Target | Rows | Amount |
+| --- | ---: | ---: |
+| `sc.settlement.order` | 25 | 90219950.97 |
+| `sc.settlement.order.line` | 25 | 90219950.97 |
+
+State distribution:
+
+| State | Rows |
+| --- | ---: |
+| `approve` | 24 |
+| `draft` | 1 |
+
+Projection residuals:
+
+| Reason | Rows | Amount |
+| --- | ---: | ---: |
+| `missing_counterparty_name` | 30 | 82255244.17 |
+
+Artifacts:
+
+- `artifacts/migration/legacy_xmgl_project_settlement_order_projection_plan_v1.csv`
+- `artifacts/migration/legacy_xmgl_project_settlement_order_projection_residual_v1.csv`
+- `artifacts/migration/legacy_xmgl_project_settlement_order_projection_result_v1.json`
+
 ## Remaining Priority
 
 The next work should move from raw fact carrying to semantic projection and
