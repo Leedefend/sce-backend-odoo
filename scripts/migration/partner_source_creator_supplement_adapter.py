@@ -38,6 +38,24 @@ SQL_DATABASE = os.getenv("LEGACY_MSSQL_DATABASE", "LegacyDb")
 CHUNK_SIZE = int(os.getenv("PARTNER_SOURCE_CREATOR_SUPPLEMENT_CHUNK_SIZE", "500"))
 
 SOURCE_COLUMNS = {
+    "C_CWSFK_GSCWSR": {
+        "id": "Id",
+        "creator_id": "LRRID",
+        "creator": "LRR",
+        "created": "LRSJ",
+    },
+    "C_JFHKLR": {
+        "id": "Id",
+        "creator_id": "LRRID",
+        "creator": "LRR",
+        "created": "LRSJ",
+    },
+    "C_ZFSQGL": {
+        "id": "Id",
+        "creator_id": "LRRID",
+        "creator": "f_LRR",
+        "created": "f_LRSJ",
+    },
     "T_FK_Supplier": {
         "id": "Id",
         "creator_id": "LRRID",
@@ -49,6 +67,14 @@ SOURCE_COLUMNS = {
         "creator_id": "LRRID",
         "creator": "f_LRR",
         "created": "f_LRRQ",
+    },
+    "ZJGL_SZQR_DKQRB_CB": {
+        "id": "Id",
+        "header_id": "ZBID",
+        "header_table": "ZJGL_SZQR_DKQRB",
+        "creator_id": "LRRID",
+        "creator": "LRR",
+        "created": "LRSJ",
     },
 }
 
@@ -138,6 +164,37 @@ def chunks(values: list[str], size: int):
 def query_chunk(table: str, record_ids: list[str]) -> list[dict[str, str]]:
     columns = SOURCE_COLUMNS[table]
     values_sql = ", ".join(f"({sql_literal(item)})" for item in record_ids)
+    if table == "ZJGL_SZQR_DKQRB_CB":
+        sql = f"""
+SET NOCOUNT ON;
+WITH required(record_id) AS (
+  SELECT * FROM (VALUES {values_sql}) v(record_id)
+)
+SELECT
+  {sql_literal(table)} AS source_table,
+  {clean_sql('src.' + columns['id'])} AS legacy_record_id,
+  {clean_sql('parent.' + columns['creator_id'])} AS creator_legacy_user_id,
+  {clean_sql('parent.' + columns['creator'])} AS creator_name,
+  COALESCE(CONVERT(varchar(23), parent.{columns['created']}, 121), '') AS created_time
+FROM required r
+JOIN dbo.{table} src ON CONVERT(varchar(max), src.{columns['id']}) = r.record_id
+LEFT JOIN dbo.{columns['header_table']} parent ON parent.Id = src.{columns['header_id']}
+WHERE NULLIF(LTRIM(RTRIM(COALESCE(CONVERT(varchar(max), parent.{columns['creator']}), ''))), '') IS NOT NULL
+   OR parent.{columns['created']} IS NOT NULL
+ORDER BY src.{columns['id']};
+"""
+        completed = subprocess.run(sqlcmd(sql), text=True, capture_output=True, check=False)
+        if completed.returncode != 0:
+            raise RuntimeError(
+                {
+                    "sqlcmd_failed": completed.returncode,
+                    "table": table,
+                    "stdout": completed.stdout[-2000:],
+                    "stderr": completed.stderr[-2000:],
+                }
+            )
+        return parse_sqlcmd_rows(completed.stdout)
+
     sql = f"""
 SET NOCOUNT ON;
 WITH required(record_id) AS (
@@ -165,9 +222,13 @@ ORDER BY src.{columns['id']};
                 "stderr": completed.stderr[-2000:],
             }
         )
+    return parse_sqlcmd_rows(completed.stdout)
+
+
+def parse_sqlcmd_rows(output: str) -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
     fields = ["source_table", "legacy_record_id", "creator_legacy_user_id", "creator_name", "created_time"]
-    for line in completed.stdout.splitlines():
+    for line in output.splitlines():
         stripped = line.strip()
         if not stripped or stripped.startswith("("):
             continue

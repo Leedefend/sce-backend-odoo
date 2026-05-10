@@ -47,7 +47,8 @@ env.cr.execute(  # noqa: F821
       name, source_origin, source_kind, state, project_id, partner_id,
       date_receipt, document_no, income_category, amount, currency_id,
       legacy_source_model, legacy_source_table, legacy_record_id,
-      legacy_document_state, note, active, create_uid, write_uid, create_date, write_date
+      legacy_document_state, creator_legacy_user_id, creator_name, created_time,
+      note, active, create_uid, write_uid, create_date, write_date
     )
     SELECT
       COALESCE(NULLIF(f.document_no, ''), 'LEGACY-INCOME-' || f.legacy_record_id),
@@ -65,6 +66,9 @@ env.cr.execute(  # noqa: F821
       f.legacy_source_table,
       f.legacy_record_id,
       NULLIF(f.legacy_state, ''),
+      NULLIF(f.creator_legacy_user_id, ''),
+      NULLIF(f.creator_name, ''),
+      f.created_time,
       CONCAT_WS(E'\n',
         '[migration:receipt_income] legacy_record_id=' || f.legacy_record_id,
         NULLIF(f.source_family, ''),
@@ -89,6 +93,9 @@ env.cr.execute(  # noqa: F821
       income_category = EXCLUDED.income_category,
       amount = EXCLUDED.amount,
       legacy_document_state = EXCLUDED.legacy_document_state,
+      creator_legacy_user_id = EXCLUDED.creator_legacy_user_id,
+      creator_name = EXCLUDED.creator_name,
+      created_time = EXCLUDED.created_time,
       note = EXCLUDED.note,
       active = EXCLUDED.active,
       write_uid = 1,
@@ -105,7 +112,8 @@ env.cr.execute(  # noqa: F821
       receiving_account, bill_no, invoice_ref, amount, deducted_invoice_amount,
       deducted_tax_amount, settlement_amount, currency_id, legacy_source_model,
       legacy_source_table, legacy_record_id, legacy_document_state,
-      legacy_residual_reason, legacy_attachment_ref, note, active,
+      legacy_residual_reason, legacy_attachment_ref, creator_legacy_user_id,
+      creator_name, created_time, note, active,
       create_uid, write_uid, create_date, write_date
     )
     SELECT
@@ -135,6 +143,9 @@ env.cr.execute(  # noqa: F821
       NULLIF(r.document_state, ''),
       NULLIF(r.residual_reason, ''),
       NULLIF(r.attachment_ref, ''),
+      NULLIF(r.creator_legacy_user_id, ''),
+      NULLIF(r.creator_name, ''),
+      r.created_time,
       CONCAT_WS(E'\n',
         '[migration:receipt_income] legacy_record_id=' || r.legacy_record_id,
         NULLIF(r.residual_reason, ''),
@@ -173,6 +184,9 @@ env.cr.execute(  # noqa: F821
       legacy_document_state = EXCLUDED.legacy_document_state,
       legacy_residual_reason = EXCLUDED.legacy_residual_reason,
       legacy_attachment_ref = EXCLUDED.legacy_attachment_ref,
+      creator_legacy_user_id = EXCLUDED.creator_legacy_user_id,
+      creator_name = EXCLUDED.creator_name,
+      created_time = EXCLUDED.created_time,
       note = EXCLUDED.note,
       active = EXCLUDED.active,
       write_uid = 1,
