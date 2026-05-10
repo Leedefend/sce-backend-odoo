@@ -6,11 +6,18 @@
         <field name="arch" type="xml">
             <search string="项目台账">
                 <field name="name"/>
+                <field name="legacy_project_code"/>
+                <field name="legacy_project_id"/>
+                <field name="legacy_company_name"/>
+                <field name="legacy_project_manager_name"/>
+                <field name="legacy_owner_unit"/>
+                <field name="legacy_source_created_by"/>
                 <field name="partner_id"/>
                 <field name="owner_id"/>
                 <field name="manager_id"/>
                 <field name="user_id"/>
                 <field name="operation_strategy"/>
+                <field name="business_nature"/>
                 <filter name="filter_my_projects"
                         string="我的项目"
                         domain="['|', ('manager_id', '=', uid), '|', ('owner_id', '=', uid), ('user_id', '=', uid)]"/>
@@ -47,6 +54,9 @@
                     <filter name="group_owner" string="按业主单位" context="{'group_by': 'owner_id'}"/>
                     <filter name="group_partner" string="按客户" context="{'group_by': 'partner_id'}"/>
                     <filter name="group_operation_strategy" string="按经营策略" context="{'group_by': 'operation_strategy'}"/>
+                    <filter name="group_business_nature" string="按旧经营性质" context="{'group_by': 'business_nature'}"/>
+                    <filter name="group_legacy_company" string="按旧系统公司" context="{'group_by': 'legacy_company_name'}"/>
+                    <filter name="group_legacy_stage" string="按旧系统阶段" context="{'group_by': 'legacy_stage_name'}"/>
                     <filter name="group_state" string="按项目状态" context="{'group_by': 'lifecycle_state'}"/>
                     <filter name="group_stage" string="按阶段" context="{'group_by': 'stage_id'}"/>
                     <filter name="group_company" string="按公司" context="{'group_by': 'company_id'}"/>

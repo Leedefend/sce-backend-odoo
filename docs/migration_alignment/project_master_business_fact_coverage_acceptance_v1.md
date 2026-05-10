@@ -57,6 +57,33 @@ through explicit target fields. Empty old-source columns remain empty evidence;
 non-empty old-source values are required to appear in both the replay payload
 and `project.project`.
 
+## User Verification Surface
+
+The project form includes a read-only `历史项目资料` page for acceptance
+reconciliation. It exposes old-system project identifiers, organization,
+classification, contacts, finance/tax fields, address, source creator/update
+trace, and supplemental source text.
+
+The project list and search views expose the core reconciliation keys:
+
+- `旧系统项目编号`
+- `旧系统项目ID`
+- `旧系统公司`
+- `旧系统项目经理`
+- `旧系统阶段`
+- `旧系统录入人`
+- `旧系统录入时间`
+
+Runtime view check on `sc_acceptance_audit_20260510`:
+
+| Check | Result |
+| --- | --- |
+| form has `历史项目资料` page | `true` |
+| form has old-source creator fields | `true` |
+| list has old project code | `true` |
+| search has old project code | `true` |
+| old field labels | Chinese |
+
 ## Runtime Write Evidence
 
 Project anchor write on `sc_acceptance_audit_20260510`:

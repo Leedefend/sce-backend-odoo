@@ -6,10 +6,18 @@
         <field name="arch" type="xml">
             <tree string="我的项目">
                 <field name="name"/>
+                <field name="legacy_project_code" optional="show"/>
+                <field name="legacy_project_id" optional="hide"/>
+                <field name="legacy_company_name" optional="show"/>
                 <field name="operation_strategy"/>
+                <field name="business_nature" optional="show"/>
+                <field name="legacy_stage_name" optional="show"/>
                 <field name="manager_id"/>
+                <field name="legacy_project_manager_name" optional="show"/>
                 <field name="owner_id"/>
                 <field name="lifecycle_state"/>
+                <field name="legacy_source_created_by" optional="hide"/>
+                <field name="legacy_source_created_at" optional="hide"/>
                 <field name="write_date" string="更新时间"/>
             </tree>
         </field>
