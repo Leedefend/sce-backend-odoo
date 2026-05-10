@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from odoo import fields, models, tools
+from odoo import api, fields, models
+from odoo.exceptions import UserError
 
 
 class ScArApCompanySummary(models.Model):
@@ -46,14 +47,48 @@ class ScArApCompanySummary(models.Model):
         help="项目级指标：来自旧库项目资金余额。本报表每个项目只展示一次。",
     )
 
+    def _raise_readonly_projection(self):
+        raise UserError("应收应付报表是历史事实汇总结果，请从来源业务单据维护数据。")
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        self._raise_readonly_projection()
+
+    def write(self, vals):
+        self._raise_readonly_projection()
+
+    def unlink(self):
+        self._raise_readonly_projection()
+
     def init(self):
         self._cr.execute("SELECT to_regclass('sc_ar_ap_project_summary')")
         if not self._cr.fetchone()[0]:
             return
-        tools.drop_view_if_exists(self._cr, self._table)
         self._cr.execute(
             f"""
-            CREATE OR REPLACE VIEW {self._table} AS (
+            DO $$
+            BEGIN
+                IF EXISTS (
+                    SELECT 1 FROM pg_class
+                    WHERE oid = to_regclass('{self._table}')
+                      AND relkind = 'v'
+                ) THEN
+                    EXECUTE 'DROP VIEW IF EXISTS {self._table} CASCADE';
+                ELSIF EXISTS (
+                    SELECT 1 FROM pg_class
+                    WHERE oid = to_regclass('{self._table}')
+                      AND relkind = 'm'
+                ) THEN
+                    EXECUTE 'DROP MATERIALIZED VIEW IF EXISTS {self._table} CASCADE';
+                ELSE
+                    EXECUTE 'DROP TABLE IF EXISTS {self._table} CASCADE';
+                END IF;
+            END $$;
+            """
+        )
+        self._cr.execute(
+            f"""
+            CREATE TABLE {self._table} AS (
                 WITH pricing AS (
                     SELECT
                         project_id,
@@ -107,3 +142,6 @@ class ScArApCompanySummary(models.Model):
             )
             """
         )
+        self._cr.execute(f"ALTER TABLE {self._table} ADD PRIMARY KEY (id)")
+        self._cr.execute(f"CREATE INDEX {self._table}_project_id_idx ON {self._table} (project_id)")
+        self._cr.execute(f"CREATE INDEX {self._table}_project_name_idx ON {self._table} (project_name)")
