@@ -1140,3 +1140,4 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         self.assertIn("'search_default_inflow': 1", action.context)
         self.assertFalse(self.env.ref("smart_construction_core.view_audit_fields_view_sc_expense_claim_tree").active)
         self.assertFalse(self.env.ref("smart_construction_core.view_audit_fields_view_sc_financing_loan_tree").active)
+        self.assertFalse(self.env.ref("smart_construction_core.view_audit_fields_view_sc_receipt_income_tree").active)

@@ -57,7 +57,7 @@ env.cr.execute(  # noqa: F821
       CASE WHEN COALESCE(f.legacy_state, '') = '2' THEN 'legacy_confirmed' ELSE 'draft' END,
       f.project_id,
       f.partner_id,
-      COALESCE(f.document_date, CURRENT_DATE),
+      COALESCE(f.document_date, f.created_time::date),
       NULLIF(f.document_no, ''),
       NULLIF(f.income_category, ''),
       COALESCE(f.source_amount, 0),
