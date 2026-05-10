@@ -137,7 +137,7 @@ if contract_partner_ids:
         partner_map[f"legacy_contract_counterparty_sc_{rec['legacy_partner_id']}"] = rec["id"]
 
 existing_actual_notes = {
-    rec["note"]
+    rec["note"]: rec["id"]
     for rec in Request.search_read([("note", "ilike", "[migration:actual_outflow_core]")], ["note"])
     if rec.get("note")
 }
@@ -149,11 +149,20 @@ for rec in Request.search_read([("note", "ilike", "[migration:outflow_request_co
         request_anchor_map[match.group(1)] = rec["id"]
 
 created = 0
+updated_existing = 0
 skipped = 0
 buffer: list[dict[str, object]] = []
 batch_size = 500
 for row in rows:
     if row["note"] in existing_actual_notes:
+        request = Request.browse(existing_actual_notes[row["note"]]).exists()
+        updates = {}
+        for field in ["legacy_source_table", "legacy_record_id"]:
+            if row.get(field) and not request[field]:
+                updates[field] = row[field]
+        if updates:
+            request.write(updates)
+            updated_existing += 1
         skipped += 1
         continue
     project_id = project_map.get(row["project_ref"].removeprefix("legacy_project_sc_"))
@@ -174,11 +183,13 @@ for row in rows:
         "partner_id": partner_id,
         "amount": row["amount"],
         "note": row["note"],
+        "legacy_source_table": row.get("legacy_source_table") or "T_FK_Supplier",
+        "legacy_record_id": row.get("legacy_record_id") or False,
     }
     if row.get("date_request"):
         vals["date_request"] = row["date_request"]
     buffer.append(vals)
-    existing_actual_notes.add(row["note"])
+    existing_actual_notes[row["note"]] = 0
     if len(buffer) >= batch_size:
         Request.create(buffer)
         created += len(buffer)
@@ -196,6 +207,7 @@ payload = {
     "database": env.cr.dbname,  # noqa: F821
     "input_rows": len(rows),
     "created_rows": created,
+    "updated_existing": updated_existing,
     "skipped_existing": skipped,
     "db_writes": created,
     "decision": "actual_outflow_replay_write_complete" if status == "PASS" else "STOP_REVIEW_REQUIRED",

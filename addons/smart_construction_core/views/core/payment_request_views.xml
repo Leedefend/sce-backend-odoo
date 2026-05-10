@@ -19,6 +19,8 @@
                     <field name="amount"/>
                     <field name="state"/>
                     <field name="date_request"/>
+                    <field name="creator_name"/>
+                    <field name="created_time"/>
                 </tree>
             </field>
         </record>
@@ -110,6 +112,13 @@
                         <group>
                             <field name="note"/>
                             <field name="attachment_ids" widget="many2many_binary"/>
+                        </group>
+                        <group string="历史来源">
+                            <field name="legacy_source_table" readonly="1"/>
+                            <field name="legacy_record_id" readonly="1"/>
+                            <field name="creator_legacy_user_id" readonly="1"/>
+                            <field name="creator_name" readonly="1"/>
+                            <field name="created_time" readonly="1"/>
                         </group>
                         <group string="付款申请明细">
                             <field name="outflow_line_ids" nolabel="1">

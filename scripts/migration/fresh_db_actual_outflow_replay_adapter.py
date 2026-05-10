@@ -15,6 +15,7 @@ INPUT_XML = REPO_ROOT / "migration_assets/20_business/actual_outflow/actual_outf
 OUTPUT_CSV = REPO_ROOT / "artifacts/migration/fresh_db_actual_outflow_replay_payload_v1.csv"
 OUTPUT_JSON = REPO_ROOT / "artifacts/migration/fresh_db_actual_outflow_replay_adapter_result_v1.json"
 REQUEST_EXTERNAL_RE = re.compile(r"request_external_id=([^;]+)")
+ACTUAL_OUTFLOW_ID_RE = re.compile(r"legacy_actual_outflow_id=([^;\s]+)")
 
 
 def clean(value: object) -> str:
@@ -39,6 +40,11 @@ def parse_request_external_id(note: str) -> str:
     return clean(match.group(1)) if match else ""
 
 
+def parse_actual_outflow_id(note: str) -> str:
+    match = ACTUAL_OUTFLOW_ID_RE.search(note)
+    return clean(match.group(1)) if match else ""
+
+
 def main() -> int:
     rows: list[dict[str, object]] = []
     for _, elem in ET.iterparse(INPUT_XML, events=("end",)):
@@ -54,6 +60,8 @@ def main() -> int:
             "partner_ref": "",
             "amount": "",
             "date_request": "",
+            "legacy_source_table": "T_FK_Supplier",
+            "legacy_record_id": "",
             "note": "",
             "request_external_id": "",
             "idempotency_key": "",
@@ -75,6 +83,7 @@ def main() -> int:
             elif name == "note":
                 record["note"] = value
         record["request_external_id"] = parse_request_external_id(clean(record["note"]))
+        record["legacy_record_id"] = parse_actual_outflow_id(clean(record["note"]))
         record["idempotency_key"] = clean(record["external_id"])
         rows.append(record)
         elem.clear()
@@ -86,6 +95,8 @@ def main() -> int:
         "partner_ref",
         "amount",
         "date_request",
+        "legacy_source_table",
+        "legacy_record_id",
         "note",
         "request_external_id",
         "idempotency_key",
