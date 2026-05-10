@@ -42,6 +42,7 @@ Artifact:
 | 供应商/付款残余事实 | `T_FK_Supplier_SD`, `T_HTGL_HTBG`, `T_CollectionPlan_New`, `T_GYSHT_INFO_Ext_XAKW`, `T_CGHT_CGDD`, `T_CG_CGDD`, `T_JH_CGJH`, `T_ZJZC_DB` | `sc.legacy.business.fact.residual` | `24` rows, `22` active |
 | 劳务/设备/材料残余事实 | `GLFY_*`, `LW_*`, `SGGL_FBGL_*`, `T_ZL_*`, `A_SCBS_*`, `YT_JGZS_*`, `ZYJX_*` selected candidate tables | `sc.legacy.business.fact.residual` | `5562` rows, `5558` active |
 | 剩余有效事实候选 | all remaining `candidate_effective_business_fact` tables from the latest scan | `sc.legacy.business.fact.residual` | `12093` rows, `12057` active |
+| 二级/人工筛查候选残余事实 | all remaining `candidate_secondary_business_fact` and `candidate_needs_manual_screen` tables from the latest scan | `sc.legacy.business.fact.residual` | `56833` rows, `56813` active |
 
 Tender registration replay evidence:
 
@@ -276,6 +277,38 @@ Top carried residual families after this batch:
 | `sggl` | 15 | 185 | 185 |
 | `d` | 3 | 170 | 159 |
 
+Secondary/manual-screen residual replay evidence:
+
+| Metric | Value |
+| --- | ---: |
+| source table count | 150 |
+| input rows | 56833 |
+| active rows | 56813 |
+| write mismatch count | 0 |
+
+Runtime residual carrier total after this batch:
+
+| Metric | Value |
+| --- | ---: |
+| source table count | 342 |
+| rows | 74674 |
+| active rows | 74605 |
+
+Top carried residual families after this batch:
+
+| family | tables | rows | active rows |
+| --- | ---: | ---: | ---: |
+| `pm` | 5 | 21773 | 21773 |
+| `t` | 63 | 19166 | 19159 |
+| `cgpt` | 7 | 9519 | 9519 |
+| `office_admin` | 38 | 5779 | 5736 |
+| `labor_subcontract` | 42 | 5147 | 5143 |
+| `base` | 3 | 5044 | 5044 |
+| `zlgl` | 3 | 1994 | 1994 |
+| `sgbw` | 1 | 1439 | 1439 |
+| `sggl` | 32 | 1172 | 1172 |
+| `a` | 10 | 820 | 820 |
+
 ## Scan Baseline Correction
 
 The full legacy scan had already listed `P_ZTB_GCBMGL` as known covered, but
@@ -367,17 +400,41 @@ Artifact:
 
 `artifacts/migration/business_fact_upgrade/current_audit/legacy_db_full_business_fact_loss_scan_20260510_after_effective_residual.json`
 
+Full legacy scan after secondary/manual-screen residual carrier:
+
+| Metric | Before secondary/manual residual | After secondary/manual residual |
+| --- | ---: | ---: |
+| candidate fact tables | 150 | 0 |
+| candidate fact rows | 56833 | 0 |
+| effective fact candidate tables | 0 | 0 |
+| effective fact candidate rows | 0 | 0 |
+| secondary fact candidate tables | 142 | 0 |
+| secondary fact candidate rows | 33836 | 0 |
+| manual-screen candidate tables | 8 | 0 |
+| manual-screen candidate rows | 22997 | 0 |
+| known replayed/assetized tables | 348 | 498 |
+
+Artifact:
+
+`artifacts/migration/business_fact_upgrade/current_audit/legacy_db_full_business_fact_loss_scan_20260510_after_secondary_manual_residual.json`
+
+Under the current full-scan rules, no legacy table remains classified as a
+candidate business fact without a runtime carrier. This means the current
+objective fact-carrier pass is closed at original-data level. It does not mean
+every residual row has already been semantically projected into a dedicated
+new-system business model.
+
 ## Remaining Priority
 
-The next carrier work should continue from high-signal remaining candidates,
-with priority on objective amount/project/partner facts:
+The next work should move from raw fact carrying to semantic projection and
+user-facing continuation. Priority should stay evidence-based:
 
 | Priority | Family | Examples |
 | --- | --- | --- |
-| 1 | secondary/manual-screen residual review | remaining `candidate_secondary_business_fact` and `candidate_needs_manual_screen` tables |
-| 2 | labor/equipment/material specialization | residual rows already carried; next step is semantic projection |
-| 3 | supplier/payment specialization | supplier/payment residual rows already carried; next step is semantic projection |
-| 4 | tender/project settlement specialization | tender and project residual rows already carried; next step is specialized projection |
+| 1 | labor/equipment/material specialization | residual rows already carried; next step is semantic projection |
+| 2 | supplier/payment specialization | supplier/payment residual rows already carried; next step is semantic projection |
+| 3 | tender/project settlement specialization | tender and project residual rows already carried; next step is specialized projection |
+| 4 | secondary/manual-screen review | residual originals already carried; next step is decide whether they need dedicated models, reports, or documented exclusion from user-visible workflows |
 
 Do not force old records into new customer/supplier classifications during this
 phase. Each source table should be either carried into a neutral or specialized
