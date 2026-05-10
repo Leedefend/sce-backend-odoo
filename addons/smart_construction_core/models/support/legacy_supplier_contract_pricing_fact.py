@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from odoo import fields, models
+from odoo import api, fields, models
 
 
 class ScLegacySupplierContractPricingFact(models.Model):
@@ -10,6 +10,7 @@ class ScLegacySupplierContractPricingFact(models.Model):
     legacy_source_table = fields.Char(string="来源表", default="T_GYSHT_INFO", required=True, index=True)
     legacy_contract_id = fields.Char(string="历史合同ID", required=True, index=True)
     document_state = fields.Char(string="历史状态", index=True)
+    document_state_label = fields.Char(string="合同状态", compute="_compute_document_state_label")
     deleted_flag = fields.Char(string="删除标记", index=True)
     project_legacy_id = fields.Char(string="历史项目ID", index=True)
     project_name = fields.Char(string="项目名称", index=True)
@@ -33,3 +34,17 @@ class ScLegacySupplierContractPricingFact(models.Model):
             "Legacy supplier contract pricing must be unique.",
         ),
     ]
+
+    @api.depends("document_state", "deleted_flag")
+    def _compute_document_state_label(self):
+        state_labels = {
+            "0": "草稿",
+            "1": "审批中",
+            "2": "已生效",
+            "3": "已关闭",
+        }
+        for record in self:
+            if record.deleted_flag and record.deleted_flag not in ("0", "false", "False"):
+                record.document_state_label = "已删除"
+            else:
+                record.document_state_label = state_labels.get(record.document_state or "", record.document_state or "")
