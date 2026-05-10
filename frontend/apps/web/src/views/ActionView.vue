@@ -1346,7 +1346,7 @@ const availableViewModes = computed(() =>
 );
 const viewMode = computed(() => {
   const modes = availableViewModes.value;
-  const mode = normalizeActionViewMode(preferredViewMode.value) || modes[0] || '';
+  const mode = normalizeActionViewMode(preferredViewMode.value) || modes[0] || (resolvedModelRef.value ? 'tree' : '');
   if (mode === 'kanban') return 'kanban';
   if (mode === 'list' || mode === 'tree') return 'tree';
   if (mode === 'pivot' || mode === 'graph' || mode === 'calendar' || mode === 'gantt' || mode === 'activity' || mode === 'dashboard') {
