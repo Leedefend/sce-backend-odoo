@@ -42,11 +42,20 @@ Latest result:
 | target project anchors | `818` |
 | uncovered business-fact project anchors | `0` |
 | contract anchors missing from payload | `0` |
+| mapped raw project fields | `63` |
+| raw fields with source values | `35` |
+| fields with payload missing values | `0` |
+| fields with target missing values | `0` |
 
 The replay adapter now carries 20 non-visible contract-source project anchors as
 historical business facts. These were previously deferred because they did not
 pass a user-facing visible-income-contract filter, but that filter is not a
 valid reason to drop historical project fact anchors.
+
+The project master payload now also carries all 63 raw project table columns
+through explicit target fields. Empty old-source columns remain empty evidence;
+non-empty old-source values are required to appear in both the replay payload
+and `project.project`.
 
 ## Runtime Write Evidence
 
