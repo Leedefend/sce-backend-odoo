@@ -133,6 +133,27 @@ def collect_counts() -> dict[str, int]:
     }
 
 
+def collect_environment_boundary() -> dict[str, object]:
+    demo_module_state = scalar("SELECT state FROM ir_module_module WHERE name = 'smart_construction_demo' LIMIT 1")
+    contracts_without_legacy_id = count_table("construction_contract", "legacy_contract_id IS NULL")
+    example_named_partners = count_table("res_partner", "name ILIKE '%示例%'")
+    findings = []
+    if demo_module_state == "installed":
+        findings.append("smart_construction_demo_installed")
+    if contracts_without_legacy_id:
+        findings.append("construction_contract_without_legacy_id")
+    if example_named_partners:
+        findings.append("example_named_partner")
+    return {
+        "clean": not findings,
+        "findings": findings,
+        "smart_construction_demo_state": demo_module_state or "",
+        "contracts_without_legacy_id": contracts_without_legacy_id,
+        "example_named_partners": example_named_partners,
+        "rule": "historical business fact acceptance must run on a no-demo database; mixed development databases are legacy-row-only provisional evidence.",
+    }
+
+
 def partner_semantic_counts() -> dict[str, int]:
     Partner = env["res.partner"].sudo().with_context(active_test=False)  # noqa: F821
     facts = Partner._sc_collect_partner_business_facts()
@@ -675,32 +696,40 @@ def export_gap_details(root: Path) -> dict[str, object]:
 
 
 counts = collect_counts()
+environment_boundary = collect_environment_boundary()
 semantic_counts = partner_semantic_counts()
 issues = collect_issues(counts)
 projection_followup_issues = collect_projection_followup_issues(semantic_counts)
 error_count = sum(1 for issue in issues if issue["severity"] == "error")
 warn_count = sum(1 for issue in issues if issue["severity"] == "warn")
+environment_warn_count = 0 if environment_boundary["clean"] else 1
 projection_warn_count = sum(1 for issue in projection_followup_issues if issue["severity"] == "warn")
 root = artifact_root()
 gap_exports = export_gap_details(root)
+deterministic_fact_status = "FAIL" if error_count else ("WARN" if warn_count else "PASS")
 
 payload = {
-    "status": "FAIL" if error_count else ("WARN" if warn_count else "PASS"),
+    "status": "FAIL" if error_count else ("WARN" if warn_count or environment_warn_count else "PASS"),
+    "deterministic_fact_status": deterministic_fact_status,
     "database": DB_NAME,
     "generated_at": datetime.now(timezone.utc).isoformat(),
     "mode": "business_fact_backfill_audit",
+    "environment_boundary": environment_boundary,
     "counts": counts,
     "semantic_counts": semantic_counts,
     "issue_count": len(issues),
     "error_count": error_count,
     "warn_count": warn_count,
+    "environment_warn_count": environment_warn_count,
     "issues": issues,
     "projection_followup_issue_count": len(projection_followup_issues),
     "projection_followup_warn_count": projection_warn_count,
     "projection_followup_issues": projection_followup_issues,
     "gap_exports": gap_exports,
     "audit_strategy": "deterministic_old_database_facts_first_then_partner_projection",
-    "decision": "deterministic_fact_backfill_needs_remediation" if issues else "deterministic_fact_audit_clean",
+    "decision": "deterministic_fact_backfill_needs_remediation"
+    if issues
+    else ("deterministic_fact_audit_clean_environment_mixed" if environment_warn_count else "deterministic_fact_audit_clean"),
 }
 
 output = root / "business_fact_backfill_audit_v1.json"
