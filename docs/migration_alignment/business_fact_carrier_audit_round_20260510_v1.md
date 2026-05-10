@@ -39,6 +39,7 @@ Artifact:
 | 投标报名主事实 | `P_ZTB_GCBMGL` | `sc.legacy.tender.registration.fact` | `2848` rows, `2829` active |
 | 项目结算/合同残余事实 | `T_ProjectContract_In`, `XMGL_HTGL_XMJSSQ`, `T_Project_GCQZD`, `XM_SBBF`, `T_ProjectContract_Process`, `T_ProjectContract_Out_CB_BZJ` | `sc.legacy.business.fact.residual` | `74` rows, `74` active |
 | 投标残余事实 | `P_ZTB_GCXXGL`, `WS_HTGL_ZBHT`, `CGPT_T_Base_ZBXX`, `CGPT_T_Base_ZBXX_CB`, `BGGL_ZTBJHT_TBBM_TBBMFSQ`, `WS_ZBJGL_ZBJ`, `WS_ZBJGL_BZJ`, `WS_BDGL_TZEGL` | `sc.legacy.business.fact.residual` | `169` rows, `162` active |
+| 供应商/付款残余事实 | `T_FK_Supplier_SD`, `T_HTGL_HTBG`, `T_CollectionPlan_New`, `T_GYSHT_INFO_Ext_XAKW`, `T_CGHT_CGDD`, `T_CG_CGDD`, `T_JH_CGJH`, `T_ZJZC_DB` | `sc.legacy.business.fact.residual` | `24` rows, `22` active |
 
 Tender registration replay evidence:
 
@@ -155,6 +156,56 @@ These facts are carried as residual originals first. Later tender-domain
 projection should decide which rows become tender projects, tender contracts,
 guarantee facts, or registration-fee facts.
 
+Supplier/payment residual replay evidence:
+
+| Metric | Value |
+| --- | ---: |
+| source table count | 8 |
+| input rows | 24 |
+| active rows | 22 |
+| write mismatch count | 0 |
+
+Runtime query:
+
+```sql
+SELECT source_table,
+       count(*) AS rows,
+       count(*) FILTER (WHERE active) AS active_rows,
+       round(sum(amount_total)::numeric, 2) AS amount_total,
+       count(*) FILTER (WHERE project_legacy_id IS NOT NULL AND project_legacy_id <> '') AS with_project,
+       count(*) FILTER (WHERE partner_legacy_id IS NOT NULL AND partner_legacy_id <> '') AS with_partner
+FROM sc_legacy_business_fact_residual
+WHERE source_table IN (
+  'T_FK_Supplier_SD',
+  'T_HTGL_HTBG',
+  'T_CollectionPlan_New',
+  'T_GYSHT_INFO_Ext_XAKW',
+  'T_CGHT_CGDD',
+  'T_CG_CGDD',
+  'T_JH_CGJH',
+  'T_ZJZC_DB'
+)
+GROUP BY source_table
+ORDER BY source_table;
+```
+
+Result:
+
+| source_table | rows | active rows | amount total | with project | with partner |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `T_CG_CGDD` | 3 | 3 | 0.00 | 3 | 0 |
+| `T_CGHT_CGDD` | 4 | 4 | 0.00 | 4 | 0 |
+| `T_CollectionPlan_New` | 1 | 0 | 0.00 | 1 | 0 |
+| `T_FK_Supplier_SD` | 7 | 7 | 0.00 | 7 | 0 |
+| `T_GYSHT_INFO_Ext_XAKW` | 1 | 1 | 0.00 | 0 | 0 |
+| `T_HTGL_HTBG` | 5 | 5 | 0.00 | 5 | 0 |
+| `T_JH_CGJH` | 2 | 1 | 0.00 | 2 | 0 |
+| `T_ZJZC_DB` | 1 | 1 | 0.00 | 1 | 1 |
+
+These rows are original residual carrier facts. Several tables contain supplier
+or payment semantics in non-standard field names, so dedicated projection must
+review each table before assigning customer/supplier or payable labels.
+
 ## Scan Baseline Correction
 
 The full legacy scan had already listed `P_ZTB_GCBMGL` as known covered, but
@@ -200,6 +251,20 @@ Artifact:
 
 `artifacts/migration/business_fact_upgrade/current_audit/legacy_db_full_business_fact_loss_scan_20260510_after_tender_residual.json`
 
+Full legacy scan after supplier/payment residual carrier:
+
+| Metric | Before supplier/payment residual | After supplier/payment residual |
+| --- | ---: | ---: |
+| candidate fact tables | 334 | 326 |
+| candidate fact rows | 74505 | 74481 |
+| effective fact candidate tables | 139 | 131 |
+| effective fact candidate rows | 17030 | 17006 |
+| known replayed/assetized tables | 164 | 172 |
+
+Artifact:
+
+`artifacts/migration/business_fact_upgrade/current_audit/legacy_db_full_business_fact_loss_scan_20260510_after_supplier_payment_residual.json`
+
 ## Remaining Priority
 
 The next carrier work should continue from high-signal remaining candidates,
@@ -207,8 +272,8 @@ with priority on objective amount/project/partner facts:
 
 | Priority | Family | Examples |
 | --- | --- | --- |
-| 1 | supplier/payment residual | `T_FK_Supplier_SD`, `T_HTGL_HTBG`, `T_CollectionPlan_New` |
-| 2 | labor/equipment/material residual | `GLFY_*`, `LW_*`, `T_ZL_*`, `A_SCBS_*` |
+| 1 | labor/equipment/material residual | `GLFY_*`, `LW_*`, `T_ZL_*`, `A_SCBS_*` |
+| 2 | supplier/payment specialization | supplier/payment residual rows already carried; next step is semantic projection |
 | 3 | tender specialization | tender residual rows already carried; next step is specialized projection into tender/guarantee surfaces |
 | 4 | project settlement specialization | project residual rows already carried; next step is specialized projection into contract/settlement surfaces |
 
