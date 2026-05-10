@@ -12,7 +12,7 @@ from pathlib import Path
 from xml.etree import ElementTree as ET
 
 
-DEFAULT_XLSX = "/home/odoo/workspace/partner_import_source/施工合同（新）639137606365482500.xlsx"
+DEFAULT_XLSX = "/mnt/artifacts/migration/source_extracts/construction_contract_visible_surface.xlsx"
 OUTPUT_JSON = Path(os.getenv("MIGRATION_ARTIFACT_ROOT", "/mnt/artifacts/migration")) / "fresh_db_construction_contract_visible_surface_write_result_v1.json"
 FILE_INDEX_CSV = Path(os.getenv("MIGRATION_FILE_INDEX_CSV", "/mnt/artifacts/migration/fresh_db_legacy_file_index_replay_payload_v1.csv"))
 EXPECTED_HEADERS = [

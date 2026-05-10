@@ -20,7 +20,19 @@ ALLOWLIST = {
     for item in os.getenv("MIGRATION_REPLAY_DB_ALLOWLIST", "sc_demo,sc_prod_sim,sc_migration_fresh").split(",")
     if item.strip()
 }
-REPO_ROOT = Path(os.getenv("MIGRATION_REPO_ROOT", Path.cwd()))
+def repo_root() -> Path:
+    env_root = os.getenv("MIGRATION_REPO_ROOT")
+    candidates = []
+    if env_root:
+        candidates.append(Path(env_root))
+    candidates.extend([Path("/mnt"), Path.cwd()])
+    for candidate in candidates:
+        if (candidate / "addons/smart_construction_core").exists() or (candidate / "artifacts").exists():
+            return candidate
+    return Path.cwd()
+
+
+REPO_ROOT = repo_root()
 ARTIFACT_ROOT = Path(
     os.getenv(
         "MIGRATION_ARTIFACT_ROOT",
