@@ -678,6 +678,50 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         for field_name in ("purpose", "rate_label", "extra_ref", "extra_label"):
             self.assertIn('name="%s"' % field_name, financing_tree)
 
+    def test_tender_registration_fee_exposes_receipt_facts(self):
+        bid = self.env["tender.bid"].create(
+            {
+                "tender_name": "Feedback Tender Registration",
+                "project_id": self.project.id,
+            }
+        )
+        purchase = self.env["tender.doc.purchase"].create(
+            {
+                "bid_id": bid.id,
+                "amount": 500,
+                "payment_method": "基本户转账缴纳",
+                "receipt_partner_name": "中国石油天然气第七建设有限公司",
+                "receipt_payee_name": "张三",
+                "receipt_bank_name": "中国建设银行青岛市崂山支行",
+                "receipt_bank_account": "37101986827051021071",
+                "legacy_source_created_by": "段奕俊",
+                "legacy_source_created_at": "2022-03-07 14:28:32",
+            }
+        )
+
+        self.assertEqual(purchase.receipt_partner_name, "中国石油天然气第七建设有限公司")
+        self.assertEqual(purchase.receipt_bank_account, "37101986827051021071")
+
+        tree = self.env.ref("smart_construction_core.view_tender_doc_purchase_tree").arch_db
+        form = self.env.ref("smart_construction_core.view_tender_doc_purchase_form").arch_db
+        search = self.env.ref("smart_construction_core.view_tender_doc_purchase_search").arch_db
+        bid_form = self.env.ref("smart_construction_core.view_tender_bid_form").arch_db
+
+        for field_name in (
+            "payment_method",
+            "receipt_partner_name",
+            "receipt_payee_name",
+            "receipt_bank_name",
+            "receipt_bank_account",
+            "legacy_source_created_by",
+            "legacy_source_created_at",
+        ):
+            self.assertIn('name="%s"' % field_name, tree)
+            self.assertIn('name="%s"' % field_name, form)
+            self.assertIn('name="%s"' % field_name, search)
+        self.assertIn('name="receipt_partner_name"', bid_form)
+        self.assertIn('name="receipt_bank_account"', bid_form)
+
     def test_construction_diary_list_exposes_projected_site_fields(self):
         tree = self.env.ref("smart_construction_core.view_sc_construction_diary_tree").arch_db
 

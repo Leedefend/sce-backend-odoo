@@ -41,12 +41,12 @@ export function formatDisplayValue(
     return normalized.emptyText;
   }
 
-  if (typeof value === 'boolean') {
+  if (fieldType === 'boolean') {
     return value ? normalized.booleanTrueText : normalized.booleanFalseText;
   }
 
-  if (fieldType === 'boolean') {
-    return value ? normalized.booleanTrueText : normalized.booleanFalseText;
+  if (typeof value === 'boolean') {
+    return value ? String(value) : normalized.emptyText;
   }
 
   if (fieldType === 'selection' && Array.isArray(field?.selection)) {

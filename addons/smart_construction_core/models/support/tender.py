@@ -276,6 +276,16 @@ class TenderDocPurchase(models.Model):
     apply_date = fields.Date("申请日期", default=fields.Date.context_today)
     amount = fields.Monetary("金额", currency_field="currency_id")
     invoice_no = fields.Char("发票号/凭证号")
+    payment_method = fields.Char("缴费方式", index=True)
+    receipt_partner_name = fields.Char("收款单位", index=True)
+    receipt_payee_name = fields.Char("收款人", index=True)
+    receipt_bank_name = fields.Char("开户银行", index=True)
+    receipt_bank_account = fields.Char("收款账户", index=True)
+    remark = fields.Text("备注")
+    legacy_source_created_by = fields.Char("录入人", index=True)
+    legacy_source_created_at = fields.Datetime("录入时间", index=True)
+    legacy_record_id = fields.Char("旧系统记录ID", index=True)
+    legacy_source_table = fields.Char("来源表", index=True)
     attachment_ids = fields.Many2many("ir.attachment", string="附件")
     state = fields.Selection(
         [("draft", "草稿"), ("submitted", "审批中"), ("approved", "已通过"), ("rejected", "已驳回")],

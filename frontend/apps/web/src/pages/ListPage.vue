@@ -863,11 +863,12 @@ function semanticCell(field: string, value: unknown) {
   const raw = normalizeCellRawValue(value);
   const selectionText = selectionLabel(option, value);
   const numericText = formatNumericCellValue(field, raw);
+  const fieldType = String(option?.type || '').trim().toLowerCase();
   const text = selectionText
     || (raw === null || raw === undefined || raw === ''
       ? '--'
       : (typeof raw === 'boolean'
-        ? uiLabel(raw ? 'boolean_true' : 'boolean_false', raw ? '是' : '否')
+        ? (fieldType === 'boolean' ? uiLabel(raw ? 'boolean_true' : 'boolean_false', raw ? '是' : '否') : '--')
         : numericText || String(raw)));
   const toneKey = String(raw ?? '').trim();
   const tone = option?.cellRole === 'status'
