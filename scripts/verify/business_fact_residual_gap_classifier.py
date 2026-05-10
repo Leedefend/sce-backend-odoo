@@ -151,7 +151,7 @@ def source_gap_status(
     return creator_status, time_status
 
 
-def classify_partner_residuals() -> tuple[dict[str, object], list[dict[str, object]]]:
+def classify_partner_residuals() -> tuple[dict[str, object], list[dict[str, object]], list[dict[str, object]]]:
     Partner = env["res.partner"].sudo().with_context(active_test=False)  # noqa: F821
     source_evidence = read_source_creator_evidence()
     partners = Partner.search(
@@ -184,6 +184,7 @@ def classify_partner_residuals() -> tuple[dict[str, object], list[dict[str, obje
     residual_evidence_counter: Counter[str] = Counter()
     residual_source_counter: Counter[str] = Counter()
     detail_rows: list[dict[str, object]] = []
+    residual_record_rows: list[dict[str, object]] = []
     for partner in partners:
         source_text = clean(partner.sc_source_fact_source)
         for source in [part for part in source_text.split("；") if part]:
@@ -231,6 +232,20 @@ def classify_partner_residuals() -> tuple[dict[str, object], list[dict[str, obje
                         residual_evidence_counter[f"{model_name}:creator:{creator_status}"] += 1
                     if not time_values:
                         residual_evidence_counter[f"{model_name}:time:{time_status}"] += 1
+                    residual_record_rows.append(
+                        {
+                            "partner_id": partner.id,
+                            "partner_name": clean(partner.name),
+                            "model": model_name,
+                            "record_id": record.id,
+                            "source_table": key[0],
+                            "legacy_record_id": key[1],
+                            "missing_creator": int(not bool(creator_values)),
+                            "missing_time": int(not bool(time_values)),
+                            "source_creator_status": creator_status,
+                            "source_time_status": time_status,
+                        }
+                    )
         for key, count in fact_summary.items():
             objective_field_counter[key] += count
         detail_rows.append(
@@ -259,6 +274,7 @@ def classify_partner_residuals() -> tuple[dict[str, object], list[dict[str, obje
             "decision": "do_not_use_odoo_import_metadata_as_business_fact",
         },
         detail_rows,
+        residual_record_rows,
     )
 
 
@@ -388,9 +404,10 @@ def classify_contract_residuals() -> tuple[dict[str, object], list[dict[str, obj
 
 
 ROOT.mkdir(parents=True, exist_ok=True)
-partner_summary, partner_rows = classify_partner_residuals()
+partner_summary, partner_rows, partner_record_rows = classify_partner_residuals()
 contract_summary, contract_amount_rows, contract_other_rows = classify_contract_residuals()
 write_csv(ROOT / "partner_residual_gap_classification_rows_v1.csv", partner_rows)
+write_csv(ROOT / "partner_residual_fact_rows_v1.csv", partner_record_rows)
 write_csv(ROOT / "contract_amount_residual_gap_rows_v1.csv", contract_amount_rows)
 write_csv(ROOT / "contract_balance_entry_residual_gap_rows_v1.csv", contract_other_rows)
 payload = {

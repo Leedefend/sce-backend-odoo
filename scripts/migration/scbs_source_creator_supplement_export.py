@@ -119,6 +119,7 @@ SELECT
 FROM required r
 JOIN dbo.{table} src ON CONVERT(varchar(max), src.{id_col}) = r.record_id
 WHERE NULLIF(LTRIM(RTRIM(COALESCE(CONVERT(varchar(max), src.{creator_col}), ''))), '') IS NOT NULL
+   OR NULLIF(LTRIM(RTRIM(COALESCE(CONVERT(varchar(max), src.{creator_id_col}), ''))), '') IS NOT NULL
    OR src.{created_col} IS NOT NULL
 ORDER BY src.{id_col};
 """

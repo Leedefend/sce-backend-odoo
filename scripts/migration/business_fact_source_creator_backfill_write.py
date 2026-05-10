@@ -222,7 +222,7 @@ def payment_request_source_key(note: object) -> tuple[str, str]:
         ("C_ZFSQGL", "legacy_outflow_id"),
         ("T_FK_Supplier", "legacy_actual_outflow_id"),
     ):
-        match = re.search(r"%s=([^;\\s]+)" % token, note_text)
+        match = re.search(r"%s=([^;\s]+)" % token, note_text)
         if match:
             return source_table, match.group(1).strip()
     return "", ""

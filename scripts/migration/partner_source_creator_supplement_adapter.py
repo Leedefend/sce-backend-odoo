@@ -196,6 +196,7 @@ FROM required r
 JOIN dbo.{table} src ON CONVERT(varchar(max), src.{columns['id']}) = r.record_id
 LEFT JOIN dbo.{columns['header_table']} parent ON parent.Id = src.{columns['header_id']}
 WHERE NULLIF(LTRIM(RTRIM(COALESCE(CONVERT(varchar(max), parent.{columns['creator']}), ''))), '') IS NOT NULL
+   OR NULLIF(LTRIM(RTRIM(COALESCE(CONVERT(varchar(max), parent.{columns['creator_id']}), ''))), '') IS NOT NULL
    OR parent.{columns['created']} IS NOT NULL
 ORDER BY src.{columns['id']};
 """
@@ -225,6 +226,7 @@ SELECT
 FROM required r
 JOIN dbo.{table} src ON CONVERT(varchar(max), src.{columns['id']}) = r.record_id
 WHERE NULLIF(LTRIM(RTRIM(COALESCE(CONVERT(varchar(max), src.{columns['creator']}), ''))), '') IS NOT NULL
+   OR NULLIF(LTRIM(RTRIM(COALESCE(CONVERT(varchar(max), src.{columns['creator_id']}), ''))), '') IS NOT NULL
    OR src.{columns['created']} IS NOT NULL
 ORDER BY src.{columns['id']};
 """

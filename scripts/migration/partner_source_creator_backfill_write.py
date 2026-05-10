@@ -217,7 +217,7 @@ def build_source_partner_index(source_keys: set[tuple[str, str]]) -> dict[tuple[
             ("C_ZFSQGL", "legacy_outflow_id"),
             ("T_FK_Supplier", "legacy_actual_outflow_id"),
         ):
-            match = re.search(r"%s=([^;\\s]+)" % token, note)
+            match = re.search(r"%s=([^;\s]+)" % token, note)
             if match:
                 candidate = (source_table, match.group(1).strip())
                 if candidate in source_keys:
