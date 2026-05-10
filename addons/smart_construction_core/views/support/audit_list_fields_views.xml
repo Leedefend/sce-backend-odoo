@@ -39,8 +39,8 @@
         <field name="inherit_id" ref="view_sc_legacy_receipt_income_fact_tree" />
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
-                <field name="create_uid" />
-                <field name="create_date" />
+                <field name="create_uid" string="创建人" />
+                <field name="create_date" string="创建时间" />
             </xpath>
         </field>
     </record>
@@ -50,8 +50,8 @@
         <field name="inherit_id" ref="view_sc_legacy_project_fund_balance_fact_tree" />
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
-                <field name="create_uid" />
-                <field name="create_date" />
+                <field name="create_uid" string="创建人" />
+                <field name="create_date" string="创建时间" />
             </xpath>
         </field>
     </record>
@@ -204,8 +204,8 @@
         <field name="inherit_id" ref="view_tender_bid_tree" />
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
-                <field name="create_uid" />
-                <field name="create_date" />
+                <field name="create_uid" string="创建人" />
+                <field name="create_date" string="创建时间" />
             </xpath>
         </field>
     </record>
@@ -347,8 +347,8 @@
         <field name="inherit_id" ref="view_sc_legacy_expense_deposit_fact_tree" />
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
-                <field name="create_uid" />
-                <field name="create_date" />
+                <field name="create_uid" string="创建人" />
+                <field name="create_date" string="创建时间" />
             </xpath>
         </field>
     </record>
@@ -380,8 +380,8 @@
         <field name="inherit_id" ref="view_sc_legacy_purchase_contract_fact_tree" />
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
-                <field name="create_uid" />
-                <field name="create_date" />
+                <field name="create_uid" string="创建人" />
+                <field name="create_date" string="创建时间" />
             </xpath>
         </field>
     </record>
@@ -468,8 +468,8 @@
         <field name="inherit_id" ref="view_sc_legacy_invoice_registration_line_tree" />
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
-                <field name="create_uid" />
-                <field name="create_date" />
+                <field name="create_uid" string="创建人" />
+                <field name="create_date" string="创建时间" />
             </xpath>
         </field>
     </record>
@@ -644,8 +644,8 @@
         <field name="inherit_id" ref="view_sc_dashboard_cockpit_fact_tree" />
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
-                <field name="create_uid" />
-                <field name="create_date" />
+                <field name="create_uid" string="创建人" />
+                <field name="create_date" string="创建时间" />
             </xpath>
         </field>
     </record>
@@ -886,8 +886,8 @@
         <field name="inherit_id" ref="view_sc_invoice_registration_tree" />
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
-                <field name="create_uid" />
-                <field name="create_date" />
+                <field name="create_uid" string="创建人" />
+                <field name="create_date" string="创建时间" />
             </xpath>
         </field>
     </record>
@@ -897,8 +897,8 @@
         <field name="inherit_id" ref="view_sc_receipt_income_tree" />
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
-                <field name="create_uid" />
-                <field name="create_date" />
+                <field name="create_uid" string="创建人" />
+                <field name="create_date" string="创建时间" />
             </xpath>
         </field>
     </record>
@@ -908,8 +908,8 @@
         <field name="inherit_id" ref="view_payment_request_tree" />
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
-                <field name="create_uid" />
-                <field name="create_date" />
+                <field name="create_uid" string="创建人" />
+                <field name="create_date" string="创建时间" />
             </xpath>
         </field>
     </record>
@@ -985,8 +985,8 @@
         <field name="inherit_id" ref="view_sc_payment_execution_tree" />
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
-                <field name="create_uid" />
-                <field name="create_date" />
+                <field name="create_uid" string="创建人" />
+                <field name="create_date" string="创建时间" />
             </xpath>
         </field>
     </record>
@@ -1161,8 +1161,8 @@
         <field name="inherit_id" ref="view_sc_fund_account_operation_tree" />
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
-                <field name="create_uid" />
-                <field name="create_date" />
+                <field name="create_uid" string="创建人" />
+                <field name="create_date" string="创建时间" />
             </xpath>
         </field>
     </record>
@@ -1183,8 +1183,8 @@
         <field name="inherit_id" ref="view_sc_financing_loan_tree" />
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
-                <field name="create_uid" />
-                <field name="create_date" />
+                <field name="create_uid" string="创建人" />
+                <field name="create_date" string="创建时间" />
             </xpath>
         </field>
     </record>
@@ -1359,8 +1359,8 @@
         <field name="inherit_id" ref="view_sc_expense_claim_tree" />
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
-                <field name="create_uid" />
-                <field name="create_date" />
+                <field name="create_uid" string="创建人" />
+                <field name="create_date" string="创建时间" />
             </xpath>
         </field>
     </record>

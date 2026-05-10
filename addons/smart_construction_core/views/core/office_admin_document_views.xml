@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data>
+
+    <record id="view_sc_office_admin_document_search" model="ir.ui.view">
+      <field name="name">sc.office.admin.document.search</field>
+      <field name="model">sc.office.admin.document</field>
+      <field name="arch" type="xml">
+        <search string="人事行政审批">
+          <field name="name"/>
+          <field name="document_no"/>
+          <field name="requester_id"/>
+          <field name="department_id"/>
+          <field name="fact_type"/>
+          <field name="legacy_document_no"/>
+          <filter string="请假/休假" name="leave_request" domain="[('fact_type', '=', 'leave_request')]"/>
+          <filter string="印章使用" name="seal_use" domain="[('fact_type', '=', 'seal_use')]"/>
+          <filter string="草稿" name="draft" domain="[('state', '=', 'draft')]"/>
+          <filter string="办理中" name="in_progress" domain="[('state', '=', 'in_progress')]"/>
+          <filter string="已完成" name="done" domain="[('state', '=', 'done')]"/>
+          <group expand="0" string="分组">
+            <filter string="按类型" name="group_type" context="{'group_by': 'fact_type'}"/>
+            <filter string="按部门" name="group_department" context="{'group_by': 'department_id'}"/>
+            <filter string="按申请人" name="group_requester" context="{'group_by': 'requester_id'}"/>
+            <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
+          </group>
+        </search>
+      </field>
+    </record>
+
+    <record id="view_sc_office_admin_document_tree" model="ir.ui.view">
+      <field name="name">sc.office.admin.document.tree</field>
+      <field name="model">sc.office.admin.document</field>
+      <field name="arch" type="xml">
+        <tree string="人事行政审批" default_order="business_date desc, id desc">
+          <field name="document_no"/>
+          <field name="business_date"/>
+          <field name="fact_type"/>
+          <field name="name"/>
+          <field name="requester_id"/>
+          <field name="department_id"/>
+          <field name="leave_type" optional="show"/>
+          <field name="start_datetime" optional="hide"/>
+          <field name="end_datetime" optional="hide"/>
+          <field name="duration_days" optional="show" sum="天数合计"/>
+          <field name="seal_type" optional="show"/>
+          <field name="use_purpose" optional="show"/>
+          <field name="use_date" optional="show"/>
+          <field name="legacy_document_no" optional="hide"/>
+          <field name="legacy_document_state" optional="hide"/>
+          <field name="state"/>
+        </tree>
+      </field>
+    </record>
+
+    <record id="view_sc_office_admin_document_form" model="ir.ui.view">
+      <field name="name">sc.office.admin.document.form</field>
+      <field name="model">sc.office.admin.document</field>
+      <field name="arch" type="xml">
+        <form string="人事行政审批">
+          <header>
+            <button name="action_submit" type="object" string="提交" class="btn-primary" invisible="state != 'draft'"/>
+            <button name="action_done" type="object" string="完成" class="btn-primary" invisible="state not in ['draft', 'in_progress']"/>
+            <button name="action_cancel" type="object" string="取消" invisible="state in ['done', 'cancel']"/>
+            <button name="action_reset_draft" type="object" string="重置草稿" invisible="state == 'draft'"/>
+            <field name="state" widget="statusbar" statusbar_visible="draft,in_progress,done,cancel"/>
+          </header>
+          <sheet>
+            <group>
+              <group string="申请信息">
+                <field name="document_no"/>
+                <field name="name"/>
+                <field name="fact_type"/>
+                <field name="business_date"/>
+                <field name="requester_id"/>
+                <field name="department_id"/>
+              </group>
+              <group string="请假/休假" invisible="fact_type != 'leave_request'">
+                <field name="leave_type" required="fact_type == 'leave_request'"/>
+                <field name="start_datetime" required="fact_type == 'leave_request'"/>
+                <field name="end_datetime" required="fact_type == 'leave_request'"/>
+                <field name="duration_days"/>
+              </group>
+              <group string="印章使用" invisible="fact_type != 'seal_use'">
+                <field name="seal_type" required="fact_type == 'seal_use'"/>
+                <field name="use_purpose" required="fact_type == 'seal_use'"/>
+                <field name="use_date" required="fact_type == 'seal_use'"/>
+                <field name="return_date"/>
+              </group>
+            </group>
+            <group>
+              <group string="办理">
+                <field name="handler_id"/>
+                <field name="due_date"/>
+                <field name="active"/>
+              </group>
+              <group string="历史来源">
+                <field name="legacy_document_no" readonly="1"/>
+                <field name="legacy_document_state" readonly="1"/>
+                <field name="legacy_source_table" readonly="1"/>
+                <field name="legacy_source_id" readonly="1"/>
+              </group>
+            </group>
+            <notebook>
+              <page string="说明">
+                <field name="description"/>
+                <field name="result_note"/>
+              </page>
+              <page string="附件">
+                <field name="attachment_ids" widget="many2many_binary"/>
+              </page>
+            </notebook>
+          </sheet>
+          <chatter/>
+        </form>
+      </field>
+    </record>
+
+    <record id="action_sc_leave_request" model="ir.actions.act_window">
+      <field name="name">请假/休假审批单</field>
+      <field name="res_model">sc.office.admin.document</field>
+      <field name="view_mode">tree,form</field>
+      <field name="search_view_id" ref="smart_construction_core.view_sc_office_admin_document_search"/>
+      <field name="domain">[('fact_type', '=', 'leave_request')]</field>
+      <field name="context">{'default_fact_type': 'leave_request', 'search_default_leave_request': 1}</field>
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_initiator'), ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
+    </record>
+
+    <record id="action_sc_seal_use_request" model="ir.actions.act_window">
+      <field name="name">印章使用审批表</field>
+      <field name="res_model">sc.office.admin.document</field>
+      <field name="view_mode">tree,form</field>
+      <field name="search_view_id" ref="smart_construction_core.view_sc_office_admin_document_search"/>
+      <field name="domain">[('fact_type', '=', 'seal_use')]</field>
+      <field name="context">{'default_fact_type': 'seal_use', 'search_default_seal_use': 1}</field>
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_initiator'), ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
+    </record>
+
+    <menuitem id="menu_sc_hr_admin_center"
+              name="人事行政"
+              parent="smart_construction_core.menu_sc_root"
+              sequence="55"
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_business_config_admin"/>
+    <menuitem id="menu_sc_leave_request"
+              name="请假/休假审批单"
+              parent="smart_construction_core.menu_sc_hr_admin_center"
+              action="smart_construction_core.action_sc_leave_request"
+              sequence="10"
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_business_config_admin"/>
+    <menuitem id="menu_sc_seal_use_request"
+              name="印章使用审批表"
+              parent="smart_construction_core.menu_sc_hr_admin_center"
+              action="smart_construction_core.action_sc_seal_use_request"
+              sequence="20"
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_business_config_admin"/>
+
+  </data>
+</odoo>

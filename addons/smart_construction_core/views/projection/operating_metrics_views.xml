@@ -2,10 +2,10 @@
 <odoo>
     <!-- Action -->
     <record id="action_sc_operating_metrics_project" model="ir.actions.act_window">
-        <field name="name">经营指标（项目）</field>
+        <field name="name">项目经营统计表</field>
         <field name="res_model">sc.operating.metrics.project</field>
         <field name="view_mode">tree,form,pivot</field>
-        <field name="context">{}</field>
+        <field name="context">{'create': False, 'edit': False, 'delete': False}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
                 经营指标（项目维度）
@@ -22,11 +22,45 @@
                     <group>
                         <group string="项目">
                             <field name="project_id"/>
+                            <field name="company_id"/>
+                            <field name="coverage_note"/>
                         </group>
+                        <group string="收款与现金">
+                            <field name="receipt_amount"/>
+                            <field name="company_finance_income_amount"/>
+                            <field name="company_finance_expense_amount"/>
+                            <field name="expense_amount"/>
+                            <field name="net_cash_amount"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="发票与税费">
+                            <field name="output_invoice_amount"/>
+                            <field name="output_tax_amount"/>
+                            <field name="input_invoice_amount"/>
+                            <field name="input_tax_amount"/>
+                            <field name="prepaid_tax_amount"/>
+                            <field name="tax_balance_amount"/>
+                        </group>
+                        <group string="抵扣与扣款">
+                            <field name="deduction_amount"/>
+                            <field name="deduction_tax_amount"/>
+                            <field name="deduction_surcharge_amount"/>
+                            <field name="deduction_paid_amount"/>
+                            <field name="deduction_refund_amount"/>
+                        </group>
+                    </group>
+                    <group>
                         <group string="结算与付款">
                             <field name="settlement_amount_total"/>
                             <field name="settlement_amount_paid"/>
                             <field name="settlement_amount_payable"/>
+                        </group>
+                        <group string="来源数量">
+                            <field name="receipt_count"/>
+                            <field name="invoice_count"/>
+                            <field name="tax_deduction_count"/>
+                            <field name="source_line_count"/>
                         </group>
                     </group>
                     <group string="风险">
@@ -67,21 +101,37 @@
         <field name="name">sc.operating.metrics.project.tree</field>
         <field name="model">sc.operating.metrics.project</field>
         <field name="arch" type="xml">
-            <tree string="经营指标（项目）">
+            <tree string="项目经营统计表">
                 <field name="project_id"/>
+                <field name="receipt_amount" sum="本期收款合计"/>
+                <field name="output_invoice_amount" optional="show" sum="销项开票合计"/>
+                <field name="output_tax_amount" optional="show" sum="销项税额合计"/>
+                <field name="input_invoice_amount" optional="show" sum="进项发票合计"/>
+                <field name="input_tax_amount" optional="show" sum="进项税额合计"/>
+                <field name="prepaid_tax_amount" optional="show" sum="预缴税额合计"/>
+                <field name="deduction_amount" optional="show" sum="抵扣金额合计"/>
+                <field name="deduction_tax_amount" optional="show" sum="抵扣税额合计"/>
+                <field name="deduction_paid_amount" optional="show" sum="扣款实缴合计"/>
+                <field name="deduction_refund_amount" optional="show" sum="扣款退回合计"/>
+                <field name="company_finance_income_amount" optional="hide" sum="公司财务收入合计"/>
+                <field name="company_finance_expense_amount" optional="hide" sum="公司财务支出合计"/>
+                <field name="expense_amount" optional="hide" sum="费用支出合计"/>
+                <field name="net_cash_amount" sum="经营现金净额合计"/>
+                <field name="tax_balance_amount" optional="show" sum="税额净额合计"/>
+                <field name="settlement_amount_total" sum="结算合计"/>
+                <field name="settlement_amount_paid" sum="已付合计"/>
+                <field name="settlement_amount_payable" sum="可付合计"/>
                 <button name="%(action_sc_operating_drill_settlements)d"
                         type="action"
                         string="结算单"
                         context="{'default_project_id': project_id}"/>
-                <field name="settlement_amount_total" sum="结算合计"/>
-                <field name="settlement_amount_paid" sum="已付合计"/>
-                <field name="settlement_amount_payable" sum="可付合计"/>
                 <button name="%(action_sc_operating_drill_overpay_risk_pr)d"
                         type="action"
                         string="风险单"
                         context="{'default_project_id': project_id}"/>
                 <field name="overpay_risk_count" sum="超付风险单数"/>
-                <field name="three_way_missing_count" sum="三单缺失项"/>
+                <field name="three_way_missing_count" optional="hide" sum="三单缺失项"/>
+                <field name="coverage_note" optional="show"/>
             </tree>
         </field>
     </record>
@@ -91,8 +141,20 @@
         <field name="name">sc.operating.metrics.project.pivot</field>
         <field name="model">sc.operating.metrics.project</field>
         <field name="arch" type="xml">
-            <pivot string="经营指标（项目）">
+            <pivot string="项目经营统计表">
                 <field name="project_id" type="row"/>
+                <field name="receipt_amount" type="measure"/>
+                <field name="output_invoice_amount" type="measure"/>
+                <field name="output_tax_amount" type="measure"/>
+                <field name="input_invoice_amount" type="measure"/>
+                <field name="input_tax_amount" type="measure"/>
+                <field name="prepaid_tax_amount" type="measure"/>
+                <field name="deduction_amount" type="measure"/>
+                <field name="deduction_tax_amount" type="measure"/>
+                <field name="deduction_paid_amount" type="measure"/>
+                <field name="deduction_refund_amount" type="measure"/>
+                <field name="net_cash_amount" type="measure"/>
+                <field name="tax_balance_amount" type="measure"/>
                 <field name="settlement_amount_total" type="measure"/>
                 <field name="settlement_amount_paid" type="measure"/>
                 <field name="settlement_amount_payable" type="measure"/>

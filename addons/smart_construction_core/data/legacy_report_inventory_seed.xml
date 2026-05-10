@@ -15,9 +15,9 @@
         <field name="parameter_summary">项目、单位名称。</field>
         <field name="metric_summary">合同金额、已开票、应收款、未收款、应付款、已付款、未付款、税额、抵扣、实际可用余额。</field>
         <field name="source_tables">BASE_SYSTEM_PROJECT, T_ProjectContract_Out, T_GYSHT_INFO, C_JFHKLR, C_JFHKLR_TH_ZCDF, C_JXXP_DKDJ_New, C_JXXP_DKDJ_CB, C_JXXP_XXKPDJ, C_JXXP_XXKPDJ_CB, C_JXXP_ZYFPJJD, C_JXXP_ZYFPJJD_CB。</field>
-        <field name="target_model">待建聚合报表；依赖 construction.contract、sc.receipt.income、sc.payment.execution、sc.invoice.registration、legacy invoice/payment facts。</field>
-        <field name="carrier_status">partial</field>
-        <field name="next_action">先按旧过程字段定义新报表契约，再校验新系统付款、收款、开票、进项事实是否覆盖全部口径。</field>
+        <field name="target_model">sc.ar.ap.project.summary；复用收入合同、供应商合同、收款、付款、进销项发票、抵扣、附加税、自筹与项目资金余额事实，按项目和往来单位形成项目级应收应付入口。</field>
+        <field name="carrier_status">ready</field>
+        <field name="next_action">已提供“客户账款”用户入口承载项目级应收应付；后续继续按旧过程常用查询条件做项目、往来单位、日期区间对账。</field>
         <field name="evidence">ts_function_RecordUserClick: 8243 clicks, 18 users, last 2026-04-10。</field>
     </record>
 
@@ -37,8 +37,8 @@
         <field name="metric_summary">账户余额、收入、支出、累计收款、累计支出、账户往来、当前账户余额，支持树形汇总。</field>
         <field name="source_tables">C_Base_ZHSZ, BASE_SYSTEM_PROJECT, C_CWSFK_GSCWSR, C_CWSFK_GSCWZC, C_JFHKLR, C_JFHKLR_TH, C_JFHKLR_TH_ZCDF_CB, C_ZFSQGL_FKZH_CB, C_FKGL_ZHJZJWL, BGGL_JHK_HKDJ, BGGL_JHK_JKSQ, ZJGL_ZCDFSZ_FXJK_HK, ZJGL_ZCDFSZ_FXJK_JK, ZJGL_BZJGL_Pay_FBZJ, ZJGL_BZJGL_Pay_FBZJTH, ZJGL_BZJGL_Branch_SBZJDJ, ZJGL_BZJGL_Branch_SBZJTH, ZJGL_ZJSZ_DKGL_DKDJ, ZJGL_ZJSZ_DKGL_HKDJ, T_KK_SJDJB_CB, T_KK_SJTHB_CB。</field>
         <field name="target_model">sc.legacy.account.master + sc.legacy.account.transaction.line + sc.legacy.fund.daily.line + sc.account.income.expense.summary；已具备账户主数据、账户往来来源明细、公司财务收支来源明细、收款登记来源明细、收入退回来源明细、供应商付款来源明细、风险借还款来源明细、保证金来源明细、贷款来源明细、扣款实缴/退回来源明细与第一版账户收支统计只读聚合。</field>
-        <field name="carrier_status">partial</field>
-        <field name="next_action">旧过程有效账户金额来源已覆盖；下一步转入未绑定账户治理和按旧报表常用查询条件做区间、项目、账户类型对账。员工借还款、多账户付款、投标退款候选分支已核实当前旧库无有效账户金额行。</field>
+        <field name="carrier_status">ready</field>
+        <field name="next_action">已提供“账户收支统计表”用户入口，账户主数据、账户往来、资金日报与有效账户金额来源已覆盖；后续继续做未绑定账户治理和区间、项目、账户类型对账。员工借还款、多账户付款、投标退款候选分支已核实当前旧库无有效账户金额行。</field>
         <field name="evidence">ts_function_RecordUserClick: 1549 clicks, 10 users, last 2026-04-10；另有旧页面同名入口 517 clicks。</field>
     </record>
 
@@ -77,9 +77,9 @@
         <field name="parameter_summary">项目。</field>
         <field name="metric_summary">本期收款、抵扣、税费、管理费、销项、进项、可抵扣金额、经手人等项目经营指标。</field>
         <field name="source_tables">BASE_SYSTEM_PROJECT, C_JXXP_DKDJ_New, C_JXXP_DKDJ_CB, C_JXXP_XXKPDJ, C_JXXP_XXKPDJ_CB, C_JXXP_YJSKDJ, C_JXXP_YJSKDJ_CB, C_JXXP_ZYFPJJD, C_JXXP_ZYFPJJD_CB, T_KK_SJDJB, T_KK_SJDJB_CB, ZJGL_SZQR_DKQRB, ZJGL_SZQR_DKQRB_CB。</field>
-        <field name="target_model">待建项目经营统计聚合；现有 sc.operating.metrics.project 可作为承载候选。</field>
-        <field name="carrier_status">partial</field>
-        <field name="next_action">比对 sc.operating.metrics.project 字段与旧过程输出，缺口字段优先补聚合，不直接复用空成本报表。</field>
+        <field name="target_model">sc.operating.metrics.project；已承载项目维度收款、销项/进项/预缴税、抵扣登记、扣款实缴/退回、公司财务收支、费用支出、结算与付款风险。</field>
+        <field name="carrier_status">ready</field>
+        <field name="next_action">继续按旧过程输出细项补经手人、管理费等展示维度；当前不把贷款登记/还款登记误并入扣款口径。</field>
         <field name="evidence">ts_function_RecordUserClick: 866 clicks, 8 users, last 2026-04-10。</field>
     </record>
 
@@ -99,8 +99,8 @@
         <field name="metric_summary">公司/全局项目维度应收应付、开票、收付款、税额、差额。</field>
         <field name="source_tables">BASE_SYSTEM_PROJECT, T_ProjectContract_Out, T_GYSHT_INFO, C_JFHKLR, C_JFHKLR_TH_ZCDF, C_JXXP_DKDJ_New, C_JXXP_DKDJ_CB, C_JXXP_XXKPDJ, C_JXXP_XXKPDJ_CB, C_JXXP_ZYFPJJD, C_JXXP_ZYFPJJD_CB。</field>
         <field name="target_model">sc.ar.ap.company.summary；复用 sc.ar.ap.project.summary 已验证事实，按项目汇总为公司/全局口径。</field>
-        <field name="carrier_status">partial</field>
-        <field name="next_action">已补第一版只读全局聚合；下一步按旧过程常用查询条件做项目级汇总对账，并确认是否需要公司维度筛选。</field>
+        <field name="carrier_status">ready</field>
+        <field name="next_action">已提供“供应商账款”用户入口承载全局/项目汇总应收应付；后续继续按旧过程常用查询条件做项目级汇总、日期区间和公司维度筛选对账。</field>
         <field name="evidence">ts_function_RecordUserClick: 752 clicks, 10 users, last 2026-04-08。</field>
     </record>
 
@@ -119,10 +119,95 @@
         <field name="parameter_summary">年份、开始日期、结束日期。</field>
         <field name="metric_summary">营收、支出、管理费、企业所得税、增值税附加、工资、手续费、各类公司经营收入/支出。</field>
         <field name="source_tables">C_CWSFK_GSCWSR, C_CWSFK_GSCWZC, C_JFHKLR, C_JFHKLR_CB, CWGL_FYBX, CWGL_FYBX_CB, BGGL_XZ_GZ, BGGL_XZ_GZ_CB, T_ProjectContract_Out, T_ProjectContract_Out_CB, ZJGL_SZQR_DKQRB, ZJGL_SZQR_DKQRB_CB。</field>
-        <field name="target_model">待建公司经营统计聚合。</field>
-        <field name="carrier_status">gap</field>
-        <field name="next_action">先确认工资、公司财务收支、费用报销事实是否已迁移；未迁移前不能承诺完整报表。</field>
+        <field name="target_model">sc.company.operation.summary；已按已迁移事实承载收款、公司财务收支、费用/保证金、工资办理、发票税额。</field>
+        <field name="carrier_status">ready</field>
+        <field name="next_action">已提供“公司经营情况表”用户入口，收款、公司财务收支、费用/保证金、工资办理、发票税额可见；后续继续补旧过程年度/区间过滤对账，并核对管理费、企业所得税、手续费等细项。</field>
         <field name="evidence">ts_function_RecordUserClick: 726 clicks, 7 users, last 2026-04-08。</field>
+    </record>
+
+    <record id="legacy_report_inventory_invoice_category_summary" model="sc.legacy.report.inventory">
+        <field name="priority">p1</field>
+        <field name="name">发票分类汇总表</field>
+        <field name="source_kind">legacy_page</field>
+        <field name="domain_group">invoice</field>
+        <field name="click_count">86</field>
+        <field name="user_count">12</field>
+        <field name="last_click_date">2023-01-05</field>
+        <field name="parameter_summary">项目、方向、业务类型、发票类型、税率等分类条件。</field>
+        <field name="metric_summary">发票数、不含税金额、税额、价税合计，按进项、销项、预缴及发票分类汇总。</field>
+        <field name="source_tables">C_JXXP_DKDJ_New, C_JXXP_DKDJ_CB, C_JXXP_XXKPDJ, C_JXXP_XXKPDJ_CB, C_JXXP_YJSKDJ, C_JXXP_YJSKDJ_CB, C_JXXP_ZYFPJJD, C_JXXP_ZYFPJJD_CB。</field>
+        <field name="target_model">sc.invoice.category.summary；复用 sc.invoice.registration 已迁移发票事实，按项目、方向、业务类型、发票类型、税率、成本类别和开票内容汇总。</field>
+        <field name="carrier_status">ready</field>
+        <field name="next_action">继续核对进项发票明细表、成本发票明细表的明细字段，不把分类汇总入口替代明细入口。</field>
+        <field name="evidence">旧库追加扫描：86 clicks, 12 users, last 2023-01-05；当前开发库 sc.invoice.registration 已有 28010 行。</field>
+    </record>
+
+    <record id="legacy_report_inventory_input_invoice_detail" model="sc.legacy.report.inventory">
+        <field name="priority">p1</field>
+        <field name="name">进项发票明细表</field>
+        <field name="source_kind">legacy_page</field>
+        <field name="domain_group">invoice</field>
+        <field name="click_count">127</field>
+        <field name="user_count">14</field>
+        <field name="last_click_date">2023-05-23</field>
+        <field name="parameter_summary">项目、往来单位、发票号码、发票类型、税率、日期、状态。</field>
+        <field name="metric_summary">进项发票明细，包含不含税金额、税额、价税合计、成本类别、开票内容、经办人、凭证号等。</field>
+        <field name="source_tables">C_JXXP_DKDJ_New, C_JXXP_DKDJ_CB, C_JXXP_ZYFPJJD, C_JXXP_ZYFPJJD_CB。</field>
+        <field name="target_model">sc.invoice.registration；通过进项发票明细表入口限定 direction=input，当前开发库 24003 行进项事实可见。</field>
+        <field name="carrier_status">ready</field>
+        <field name="next_action">继续核对旧进项明细的专用查询条件和附件字段，不把汇总入口替代明细入口。</field>
+        <field name="evidence">旧库追加扫描：127 clicks, 14 users, last 2023-05-23；当前开发库 sc.invoice.registration direction=input 为 24003 行。</field>
+    </record>
+
+    <record id="legacy_report_inventory_cost_invoice_detail" model="sc.legacy.report.inventory">
+        <field name="priority">p1</field>
+        <field name="name">成本发票明细表</field>
+        <field name="source_kind">legacy_page</field>
+        <field name="domain_group">invoice</field>
+        <field name="click_count">112</field>
+        <field name="user_count">12</field>
+        <field name="last_click_date">2023-03-31</field>
+        <field name="parameter_summary">项目、供应商、发票号码、发票类型、税率、日期、核算状态。</field>
+        <field name="metric_summary">成本发票明细，包含不含税金额、税额、价税合计、项目成本金额、成本类别、开票内容、开票单位、经办人、凭证号等。</field>
+        <field name="source_tables">C_JXXP_ZYFPJJD, C_JXXP_ZYFPJJD_CB。</field>
+        <field name="target_model">sc.legacy.invoice.registration.line；当前开发库 24792 行历史成本发票明细可见，列表已补金额合计与成本字段。</field>
+        <field name="carrier_status">ready</field>
+        <field name="next_action">继续核对旧成本发票明细专用过滤和项目成本金额口径。</field>
+        <field name="evidence">旧库追加扫描：112 clicks, 12 users, last 2023-03-31；当前开发库 sc.legacy.invoice.registration.line 为 24792 行。</field>
+    </record>
+
+    <record id="legacy_report_inventory_salary_statistics" model="sc.legacy.report.inventory">
+        <field name="priority">p1</field>
+        <field name="name">工资统计表</field>
+        <field name="source_kind">legacy_page</field>
+        <field name="domain_group">expense</field>
+        <field name="click_count">73</field>
+        <field name="user_count">3</field>
+        <field name="last_click_date">2026-03-30</field>
+        <field name="parameter_summary">年度、月份、部门、人员、发放单位。</field>
+        <field name="metric_summary">工资单数、人员数、薪资基数、应发工资、扣款合计、实发工资。</field>
+        <field name="source_tables">BGGL_XZ_GZ, BGGL_XZ_GZ_CB。</field>
+        <field name="target_model">sc.salary.summary；复用 sc.hr.payroll.document 的工资登记事实，按年度、月份、部门和发放单位汇总。</field>
+        <field name="carrier_status">ready</field>
+        <field name="next_action">继续核对旧工资统计的部门/人员过滤和历史工资明细补录情况。</field>
+        <field name="evidence">旧库追加扫描：73 clicks, 3 users, last 2026-03-30；当前开发库 sc.hr.payroll.document 工资登记 3290 行。</field>
+    </record>
+
+    <record id="legacy_report_inventory_expense_reimbursement_statistics" model="sc.legacy.report.inventory">
+        <field name="priority">p1</field>
+        <field name="name">报销统计</field>
+        <field name="source_kind">legacy_page</field>
+        <field name="domain_group">expense</field>
+        <field name="click_count">68</field>
+        <field name="user_count">4</field>
+        <field name="last_click_date">2026-04-09</field>
+        <field name="parameter_summary">项目、费用类型、申请人、往来单位、状态、日期。</field>
+        <field name="metric_summary">报销单数、申请金额、批准金额，按费用类型、项目、申请人和来源汇总。</field>
+        <field name="source_tables">CWGL_FYBX, CWGL_FYBX_CB。</field>
+        <field name="target_model">sc.expense.reimbursement.summary；复用 sc.expense.claim 费用报销事实，按项目、费用类型、申请人、来源和状态汇总。</field>
+        <field name="carrier_status">ready</field>
+        <field name="next_action">继续核对旧报销统计的日期区间和费用科目过滤口径。</field>
+        <field name="evidence">旧库追加扫描：68 clicks, 4 users, last 2026-04-09；当前开发库 sc.expense.claim 费用报销 22544 行。</field>
     </record>
 
     <record id="legacy_report_inventory_cost_composite" model="sc.legacy.report.inventory">
@@ -139,10 +224,10 @@
         <field name="parameter_summary">项目、项目名称。</field>
         <field name="metric_summary">收入、收款、开票、未收款、物资/劳务/租赁/机械/分包/费用成本、应付款、利润额、利润率。</field>
         <field name="source_tables">BASE_SYSTEM_PROJECT, T_ProjectContract_Out, C_JFHKLR, C_JXXP_ZYFPJJD, C_JXXP_ZYFPJJD_CB, T_RK_RKD, T_RK_RKDCB, T_FK_Supplier, SGGL_FBGL_*, LW_Base_*, T_ZL_*, GLFY_*。</field>
-        <field name="target_model">project.cost.compare / project.profit.compare 需重新评估。</field>
-        <field name="carrier_status">gap</field>
-        <field name="next_action">当前新系统成本/利润承载表存在空表风险，先补事实再启用报表。</field>
-        <field name="evidence">ts_function_RecordUserClick: 51 clicks, 5 users, last 2026-04-08。</field>
+        <field name="target_model">sc.comprehensive.cost.summary；复用收入合同、收款、发票、供应商合同、材料库存、费用报销、工资、付款执行等已迁移事实，按项目汇总收入、成本、应付、利润。</field>
+        <field name="carrier_status">ready</field>
+        <field name="next_action">已提供“成本统计表（综合）”用户入口，收入、收款、发票、供应商合同、材料库存、费用报销、工资、付款执行等已迁移事实可见；后续继续补劳务/分包、租赁/机械事实投影与旧过程利润/价差细项对账。</field>
+        <field name="evidence">ts_function_RecordUserClick: 51 clicks, 5 users, last 2026-04-08；当前开发库已有收款 19894 行、付款 8247 行、发票 28010 行、费用/保证金 36496 行、工资办理 6915 行、材料库存事实 16389 行。</field>
     </record>
 
     <record id="legacy_report_inventory_inventory_new" model="sc.legacy.report.inventory">
@@ -158,9 +243,9 @@
         <field name="parameter_summary">项目、材料名称、开始日期、截止日期。</field>
         <field name="metric_summary">入库数量、入库单价、出库数量、出库单价、库存数量、库存金额、利润/价差。</field>
         <field name="source_tables">T_RK_RKD, T_RK_RKDCB, T_CK_CKD, T_CK_CKDCB。</field>
-        <field name="target_model">stock.move / 旧库材料库存事实待确认。</field>
-        <field name="carrier_status">gap</field>
-        <field name="next_action">旧库库存样本量较小但有近期使用，需确认是否需要补材料出入库事实。</field>
-        <field name="evidence">旧库 T_RK_RKD 37 rows, T_RK_RKDCB 62 rows, T_CK_CKD 4 rows, T_CK_CKDCB 5 rows。</field>
+        <field name="target_model">sc.material.stock.summary；复用 sc.legacy.material.stock.fact 出入库事实，按项目、材料、规格、单位和往来单位汇总入库、出库、库存数量与金额。</field>
+        <field name="carrier_status">ready</field>
+        <field name="next_action">继续核对旧库存统计的利润/价差字段，当前先保证用户可从统计分析入口看到库存数量和金额汇总。</field>
+        <field name="evidence">旧库 T_RK_RKD 37 rows, T_RK_RKDCB 62 rows, T_CK_CKD 4 rows, T_CK_CKDCB 5 rows；当前开发库 sc.legacy.material.stock.fact 16389 行，出入库相关事实 130 行。</field>
     </record>
 </odoo>

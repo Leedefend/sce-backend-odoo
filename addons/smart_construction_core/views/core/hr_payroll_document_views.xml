@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data>
+
+    <record id="view_sc_hr_payroll_document_search" model="ir.ui.view">
+      <field name="name">sc.hr.payroll.document.search</field>
+      <field name="model">sc.hr.payroll.document</field>
+      <field name="arch" type="xml">
+        <search string="人事薪酬办理">
+          <field name="name"/>
+          <field name="document_no"/>
+          <field name="employee_name"/>
+          <field name="employee_user_id"/>
+          <field name="department_id"/>
+          <field name="fact_type"/>
+          <field name="period_year"/>
+          <field name="period_month"/>
+          <field name="legacy_document_no"/>
+          <filter string="社保人员登记" name="social_person_registration" domain="[('fact_type', '=', 'social_person_registration')]"/>
+          <filter string="社保登记" name="social_registration" domain="[('fact_type', '=', 'social_registration')]"/>
+          <filter string="工资登记" name="salary_registration" domain="[('fact_type', '=', 'salary_registration')]"/>
+          <filter string="补助" name="subsidy" domain="[('fact_type', '=', 'subsidy')]"/>
+          <filter string="奖金" name="bonus" domain="[('fact_type', '=', 'bonus')]"/>
+          <filter string="草稿" name="draft" domain="[('state', '=', 'draft')]"/>
+          <filter string="办理中" name="in_progress" domain="[('state', '=', 'in_progress')]"/>
+          <filter string="已完成" name="done" domain="[('state', '=', 'done')]"/>
+          <group expand="0" string="分组">
+            <filter string="按类型" name="group_type" context="{'group_by': 'fact_type'}"/>
+            <filter string="按部门" name="group_department" context="{'group_by': 'department_id'}"/>
+            <filter string="按人员" name="group_employee" context="{'group_by': 'employee_user_id'}"/>
+            <filter string="按年度" name="group_year" context="{'group_by': 'period_year'}"/>
+            <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
+          </group>
+        </search>
+      </field>
+    </record>
+
+    <record id="view_sc_hr_payroll_document_tree" model="ir.ui.view">
+      <field name="name">sc.hr.payroll.document.tree</field>
+      <field name="model">sc.hr.payroll.document</field>
+      <field name="arch" type="xml">
+        <tree string="人事薪酬办理" default_order="period_year desc, period_month desc, business_date desc, id desc">
+          <field name="document_no"/>
+          <field name="business_date"/>
+          <field name="fact_type"/>
+          <field name="name"/>
+          <field name="employee_user_id" optional="show"/>
+          <field name="employee_name" optional="show"/>
+          <field name="department_id"/>
+          <field name="period_year" optional="show"/>
+          <field name="period_month" optional="show"/>
+          <field name="payer_unit" optional="show"/>
+          <field name="social_security_base" optional="show" sum="社保基数合计"/>
+          <field name="company_amount" optional="show" sum="公司承担合计"/>
+          <field name="individual_amount" optional="show" sum="个人承担合计"/>
+          <field name="salary_base" optional="show" sum="薪资基数合计"/>
+          <field name="gross_amount" optional="show" sum="应发工资合计"/>
+          <field name="deduction_amount" optional="show" sum="扣款合计"/>
+          <field name="net_salary" optional="show" sum="实发工资合计"/>
+          <field name="amount" optional="show" sum="金额合计"/>
+          <field name="item_type" optional="show"/>
+          <field name="occurrence_date" optional="show"/>
+          <field name="legacy_document_no" optional="hide"/>
+          <field name="legacy_document_state" optional="hide"/>
+          <field name="state"/>
+        </tree>
+      </field>
+    </record>
+
+    <record id="view_sc_hr_payroll_document_form" model="ir.ui.view">
+      <field name="name">sc.hr.payroll.document.form</field>
+      <field name="model">sc.hr.payroll.document</field>
+      <field name="arch" type="xml">
+        <form string="人事薪酬办理">
+          <header>
+            <button name="action_submit" type="object" string="提交" class="btn-primary" invisible="state != 'draft'"/>
+            <button name="action_done" type="object" string="完成" class="btn-primary" invisible="state not in ['draft', 'in_progress']"/>
+            <button name="action_cancel" type="object" string="取消" invisible="state in ['done', 'cancel']"/>
+            <button name="action_reset_draft" type="object" string="重置草稿" invisible="state == 'draft'"/>
+            <field name="state" widget="statusbar" statusbar_visible="draft,in_progress,done,cancel"/>
+          </header>
+          <sheet>
+            <group>
+              <group string="申请信息">
+                <field name="document_no"/>
+                <field name="name"/>
+                <field name="fact_type"/>
+                <field name="business_date"/>
+                <field name="requester_id"/>
+                <field name="department_id"/>
+              </group>
+              <group string="人员">
+                <field name="employee_user_id"/>
+                <field name="employee_name"/>
+                <field name="id_number"/>
+              </group>
+            </group>
+            <group>
+              <group string="社保" invisible="fact_type not in ['social_person_registration', 'social_registration']">
+                <field name="period_year" required="fact_type in ['social_person_registration', 'social_registration']"/>
+                <field name="period_month" required="fact_type in ['social_person_registration', 'social_registration']"/>
+                <field name="payer_unit" required="fact_type in ['social_person_registration', 'social_registration']"/>
+                <field name="social_security_base" required="fact_type == 'social_person_registration'"/>
+                <field name="company_amount" required="fact_type == 'social_registration'"/>
+                <field name="individual_amount" required="fact_type == 'social_registration'"/>
+              </group>
+              <group string="工资" invisible="fact_type != 'salary_registration'">
+                <field name="period_year" required="fact_type == 'salary_registration'"/>
+                <field name="period_month" required="fact_type == 'salary_registration'"/>
+                <field name="salary_base"/>
+                <field name="gross_amount" required="fact_type == 'salary_registration'"/>
+                <field name="deduction_amount"/>
+                <field name="net_salary" required="fact_type == 'salary_registration'"/>
+              </group>
+              <group string="补助/奖金" invisible="fact_type not in ['subsidy', 'bonus']">
+                <field name="item_type" required="fact_type in ['subsidy', 'bonus']"/>
+                <field name="amount" required="fact_type in ['subsidy', 'bonus']"/>
+                <field name="occurrence_date" required="fact_type in ['subsidy', 'bonus']"/>
+              </group>
+            </group>
+            <group>
+              <group string="办理">
+                <field name="handler_id"/>
+                <field name="due_date"/>
+                <field name="active"/>
+              </group>
+              <group string="历史来源">
+                <field name="legacy_document_no" readonly="1"/>
+                <field name="legacy_document_state" readonly="1"/>
+                <field name="legacy_source_table" readonly="1"/>
+                <field name="legacy_source_id" readonly="1"/>
+              </group>
+            </group>
+            <notebook>
+              <page string="说明">
+                <field name="description"/>
+                <field name="result_note"/>
+              </page>
+            </notebook>
+          </sheet>
+          <chatter/>
+        </form>
+      </field>
+    </record>
+
+    <record id="action_sc_social_person_registration" model="ir.actions.act_window">
+      <field name="name">社保人员登记</field>
+      <field name="res_model">sc.hr.payroll.document</field>
+      <field name="view_mode">tree,form</field>
+      <field name="search_view_id" ref="smart_construction_core.view_sc_hr_payroll_document_search"/>
+      <field name="domain">[('fact_type', '=', 'social_person_registration')]</field>
+      <field name="context">{'default_fact_type': 'social_person_registration', 'search_default_social_person_registration': 1}</field>
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_initiator'), ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
+    </record>
+
+    <record id="action_sc_social_registration" model="ir.actions.act_window">
+      <field name="name">社保登记</field>
+      <field name="res_model">sc.hr.payroll.document</field>
+      <field name="view_mode">tree,form</field>
+      <field name="search_view_id" ref="smart_construction_core.view_sc_hr_payroll_document_search"/>
+      <field name="domain">[('fact_type', '=', 'social_registration')]</field>
+      <field name="context">{'default_fact_type': 'social_registration', 'search_default_social_registration': 1}</field>
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_initiator'), ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
+    </record>
+
+    <record id="action_sc_subsidy" model="ir.actions.act_window">
+      <field name="name">补助</field>
+      <field name="res_model">sc.hr.payroll.document</field>
+      <field name="view_mode">tree,form</field>
+      <field name="search_view_id" ref="smart_construction_core.view_sc_hr_payroll_document_search"/>
+      <field name="domain">[('fact_type', '=', 'subsidy')]</field>
+      <field name="context">{'default_fact_type': 'subsidy', 'search_default_subsidy': 1}</field>
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_initiator'), ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
+    </record>
+
+    <record id="action_sc_salary_registration" model="ir.actions.act_window">
+      <field name="name">工资登记</field>
+      <field name="res_model">sc.hr.payroll.document</field>
+      <field name="view_mode">tree,form</field>
+      <field name="search_view_id" ref="smart_construction_core.view_sc_hr_payroll_document_search"/>
+      <field name="domain">[('fact_type', '=', 'salary_registration')]</field>
+      <field name="context">{'default_fact_type': 'salary_registration', 'search_default_salary_registration': 1}</field>
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_initiator'), ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
+    </record>
+
+    <record id="action_sc_bonus" model="ir.actions.act_window">
+      <field name="name">奖金</field>
+      <field name="res_model">sc.hr.payroll.document</field>
+      <field name="view_mode">tree,form</field>
+      <field name="search_view_id" ref="smart_construction_core.view_sc_hr_payroll_document_search"/>
+      <field name="domain">[('fact_type', '=', 'bonus')]</field>
+      <field name="context">{'default_fact_type': 'bonus', 'search_default_bonus': 1}</field>
+      <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_initiator'), ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
+    </record>
+
+    <menuitem id="menu_sc_social_person_registration"
+              name="社保人员登记"
+              parent="smart_construction_core.menu_sc_hr_admin_center"
+              action="smart_construction_core.action_sc_social_person_registration"
+              sequence="30"
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_business_config_admin"/>
+    <menuitem id="menu_sc_social_registration"
+              name="社保登记"
+              parent="smart_construction_core.menu_sc_hr_admin_center"
+              action="smart_construction_core.action_sc_social_registration"
+              sequence="40"
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_business_config_admin"/>
+    <menuitem id="menu_sc_salary_registration"
+              name="工资登记"
+              parent="smart_construction_core.menu_sc_hr_admin_center"
+              action="smart_construction_core.action_sc_salary_registration"
+              sequence="45"
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_business_config_admin"/>
+    <menuitem id="menu_sc_subsidy"
+              name="补助"
+              parent="smart_construction_core.menu_sc_hr_admin_center"
+              action="smart_construction_core.action_sc_subsidy"
+              sequence="50"
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_business_config_admin"/>
+    <menuitem id="menu_sc_bonus"
+              name="奖金"
+              parent="smart_construction_core.menu_sc_hr_admin_center"
+              action="smart_construction_core.action_sc_bonus"
+              sequence="60"
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_business_config_admin"/>
+
+  </data>
+</odoo>

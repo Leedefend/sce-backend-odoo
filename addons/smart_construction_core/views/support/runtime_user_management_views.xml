@@ -85,7 +85,10 @@
             ]),
         ]"/>
         <field name="context">{'active_test': False, 'sc_runtime_user_management': True, 'sc_default_initial_password': '123456'}</field>
-        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_business_config_admin'),
+            ref('smart_construction_core.group_sc_cap_config_admin'),
+        ])]"/>
     </record>
 
     <menuitem id="menu_sc_runtime_user_management"
@@ -93,9 +96,12 @@
               parent="menu_sc_legacy_user_context"
               action="action_sc_runtime_user_management"
               sequence="5"
-              groups="smart_construction_core.group_sc_cap_business_config_admin"/>
+              groups="smart_construction_core.group_sc_cap_business_config_admin,smart_construction_core.group_sc_cap_config_admin"/>
 
     <record id="menu_sc_runtime_user_management" model="ir.ui.menu">
-        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_business_config_admin'),
+            ref('smart_construction_core.group_sc_cap_config_admin'),
+        ])]"/>
     </record>
 </odoo>

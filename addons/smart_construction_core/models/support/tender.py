@@ -270,11 +270,28 @@ class TenderDocPurchase(models.Model):
     attachment_ids = fields.Many2many("ir.attachment", string="附件")
     state = fields.Selection(
         [("draft", "草稿"), ("submitted", "审批中"), ("approved", "已通过"), ("rejected", "已驳回")],
+        string="状态",
         default="draft",
     )
     currency_id = fields.Many2one(
         "res.currency", related="bid_id.currency_id", store=True, readonly=True
     )
+
+    def action_submit(self):
+        self.write({"state": "submitted"})
+        return True
+
+    def action_approve(self):
+        self.write({"state": "approved"})
+        return True
+
+    def action_reject(self):
+        self.write({"state": "rejected"})
+        return True
+
+    def action_reset_draft(self):
+        self.write({"state": "draft"})
+        return True
 
 
 class TenderSurvey(models.Model):

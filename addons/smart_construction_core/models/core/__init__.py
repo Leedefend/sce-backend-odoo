@@ -23,6 +23,9 @@ from . import funding_baseline
 from . import fund_account
 from . import fund_account_operation
 from . import business_menu_facts
+from . import office_admin_document
+from . import hr_payroll_document
+from . import document_admin_document
 from . import plan_management
 from . import quality_management
 from . import safety_management
@@ -32,6 +35,7 @@ from . import treasury_reconciliation
 from . import receipt_income
 from . import payment_execution
 from . import invoice_registration
+from . import tax_deduction_registration
 from . import financing_loan
 from . import general_contract
 from . import construction_diary

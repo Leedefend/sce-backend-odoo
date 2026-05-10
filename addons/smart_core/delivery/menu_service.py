@@ -54,6 +54,19 @@ class MenuService:
         row["source_authority"] = self.source_authority_contract()
         return row
 
+    def _node_has_target(self, node: dict) -> bool:
+        meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+        return bool(
+            node.get("route")
+            or node.get("scene_key")
+            or node.get("action_id")
+            or node.get("model")
+            or meta.get("route")
+            or meta.get("scene_key")
+            or meta.get("action_id")
+            or meta.get("model")
+        )
+
     def _iter_leaf_nodes(self, nodes, ancestors=None):
         parent_chain = list(ancestors or [])
         for node in nodes or []:
@@ -66,24 +79,29 @@ class MenuService:
             yield parent_chain, node
 
     def _resolve_preview_group_anchor(self, ancestors: list[dict]) -> tuple[str, str]:
-        for ancestor in reversed(ancestors or []):
+        skipped_labels = {"智慧施工管理平台", "系统菜单", "业务菜单", "产品发布面"}
+        for ancestor in ancestors or []:
             if not isinstance(ancestor, dict):
                 continue
             key = str(ancestor.get("key") or "").strip()
             if key.startswith("root:"):
                 continue
             label = str(ancestor.get("label") or ancestor.get("title") or ancestor.get("name") or "").strip()
+            if label in skipped_labels:
+                continue
             menu_id = ancestor.get("menu_id")
             if (isinstance(menu_id, int) and menu_id > 0) and label:
                 return f"menu_{menu_id}", label
-        for ancestor in reversed(ancestors or []):
+        for ancestor in ancestors or []:
             if not isinstance(ancestor, dict):
                 continue
             label = str(ancestor.get("label") or ancestor.get("title") or ancestor.get("name") or "").strip()
+            if label in skipped_labels:
+                continue
             if label:
                 key = str(ancestor.get("key") or "").strip().replace(":", "_") or "ungrouped"
                 return key, label
-        return "ungrouped", "原生菜单"
+        return "ungrouped", "业务菜单"
 
     def _menu_dedupe_key(self, row: dict) -> str:
         menu_id = row.get("menu_id")

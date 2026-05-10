@@ -15,6 +15,7 @@ class ScFundAccountOperation(models.Model):
             ("transfer_out", "资金划拨"),
             ("transfer_between", "资金调拨"),
             ("balance_adjustment", "余额调整"),
+            ("fund_daily_report", "资金日报表"),
         ],
         string="业务类型",
         required=True,
@@ -43,6 +44,13 @@ class ScFundAccountOperation(models.Model):
         ondelete="restrict",
         tracking=True,
     )
+    fund_account_id = fields.Many2one(
+        "sc.fund.account",
+        string="账户",
+        index=True,
+        ondelete="restrict",
+        tracking=True,
+    )
     project_id = fields.Many2one("project.project", string="项目", index=True, ondelete="set null")
     operation_strategy = fields.Selection(
         related="project_id.operation_strategy",
@@ -65,6 +73,10 @@ class ScFundAccountOperation(models.Model):
         default=lambda self: self.env.company.currency_id.id,
     )
     amount = fields.Monetary(string="金额", currency_field="currency_id", tracking=True)
+    daily_income = fields.Monetary(string="当日收入", currency_field="currency_id", tracking=True)
+    daily_expense = fields.Monetary(string="当日支出", currency_field="currency_id", tracking=True)
+    account_balance = fields.Monetary(string="账面余额", currency_field="currency_id", tracking=True)
+    bank_balance = fields.Monetary(string="银行余额", currency_field="currency_id", tracking=True)
     before_balance = fields.Monetary(string="调整前余额", currency_field="currency_id", tracking=True)
     after_balance = fields.Monetary(string="调整后余额", currency_field="currency_id", tracking=True)
     operation_reason = fields.Char(string="操作原因", required=True, tracking=True)
@@ -131,6 +143,8 @@ class ScFundAccountOperation(models.Model):
             if record.operation_type == "balance_adjustment":
                 if record.before_balance == record.after_balance:
                     raise ValidationError(_("余额调整前后金额不能相同。"))
+            if record.operation_type == "fund_daily_report" and not record.fund_account_id:
+                raise ValidationError(_("资金日报表必须填写账户。"))
 
     @api.model_create_multi
     def create(self, vals_list):

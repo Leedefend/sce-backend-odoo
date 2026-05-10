@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sc_company_operation_summary_search" model="ir.ui.view">
+        <field name="name">sc.company.operation.summary.search</field>
+        <field name="model">sc.company.operation.summary</field>
+        <field name="arch" type="xml">
+            <search string="公司经营情况表">
+                <field name="company_id"/>
+                <filter string="有工资事实" name="has_salary" domain="[('salary_line_count', '>', 0)]"/>
+                <filter string="工资事实缺失" name="missing_salary" domain="[('salary_line_count', '=', 0)]"/>
+                <group expand="0" string="分组">
+                    <filter string="公司" name="group_company" context="{'group_by': 'company_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_company_operation_summary_tree" model="ir.ui.view">
+        <field name="name">sc.company.operation.summary.tree</field>
+        <field name="model">sc.company.operation.summary</field>
+        <field name="arch" type="xml">
+            <tree string="公司经营情况表" create="0" edit="0" delete="0">
+                <field name="display_name"/>
+                <field name="income_amount" sum="收入合计"/>
+                <field name="receipt_amount" sum="收款收入"/>
+                <field name="company_finance_income_amount" sum="公司财务收入"/>
+                <field name="claim_inflow_amount" sum="其他流入"/>
+                <field name="expense_amount" sum="支出合计"/>
+                <field name="company_finance_expense_amount" sum="公司财务支出"/>
+                <field name="expense_reimbursement_amount" sum="费用报销"/>
+                <field name="salary_gross_amount" sum="应发工资"/>
+                <field name="salary_net_amount" sum="实发工资"/>
+                <field name="claim_outflow_amount" sum="其他流出"/>
+                <field name="net_operation_amount" sum="经营净额"/>
+                <field name="output_tax_amount" sum="销项税额"/>
+                <field name="input_tax_amount" sum="进项税额"/>
+                <field name="prepaid_tax_amount" sum="预缴税额"/>
+                <field name="receipt_count" sum="收款单数"/>
+                <field name="expense_claim_count" sum="费用/保证金单数"/>
+                <field name="salary_line_count" sum="工资明细数"/>
+                <field name="invoice_count" sum="发票数"/>
+                <field name="coverage_note"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_company_operation_summary_form" model="ir.ui.view">
+        <field name="name">sc.company.operation.summary.form</field>
+        <field name="model">sc.company.operation.summary</field>
+        <field name="arch" type="xml">
+            <form string="公司经营情况表" create="0" edit="0" delete="0">
+                <sheet>
+                    <group>
+                        <field name="display_name"/>
+                        <field name="company_id"/>
+                        <field name="coverage_note"/>
+                    </group>
+                    <group>
+                        <group string="收入">
+                            <field name="receipt_amount"/>
+                            <field name="company_finance_income_amount"/>
+                            <field name="claim_inflow_amount"/>
+                            <field name="income_amount"/>
+                        </group>
+                        <group string="支出">
+                            <field name="company_finance_expense_amount"/>
+                            <field name="expense_reimbursement_amount"/>
+                            <field name="salary_gross_amount"/>
+                            <field name="salary_net_amount"/>
+                            <field name="claim_outflow_amount"/>
+                            <field name="expense_amount"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="税额">
+                            <field name="output_tax_amount"/>
+                            <field name="input_tax_amount"/>
+                            <field name="prepaid_tax_amount"/>
+                        </group>
+                        <group string="来源规模">
+                            <field name="receipt_count"/>
+                            <field name="expense_claim_count"/>
+                            <field name="salary_line_count"/>
+                            <field name="invoice_count"/>
+                            <field name="source_line_count"/>
+                        </group>
+                    </group>
+                    <group string="结果">
+                        <field name="net_operation_amount"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_company_operation_summary_pivot" model="ir.ui.view">
+        <field name="name">sc.company.operation.summary.pivot</field>
+        <field name="model">sc.company.operation.summary</field>
+        <field name="arch" type="xml">
+            <pivot string="公司经营情况表">
+                <field name="company_id" type="row"/>
+                <field name="income_amount" type="measure"/>
+                <field name="expense_amount" type="measure"/>
+                <field name="net_operation_amount" type="measure"/>
+                <field name="output_tax_amount" type="measure"/>
+                <field name="input_tax_amount" type="measure"/>
+                <field name="prepaid_tax_amount" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="view_sc_company_operation_summary_graph" model="ir.ui.view">
+        <field name="name">sc.company.operation.summary.graph</field>
+        <field name="model">sc.company.operation.summary</field>
+        <field name="arch" type="xml">
+            <graph string="公司经营情况表" type="bar">
+                <field name="company_id"/>
+                <field name="income_amount" type="measure"/>
+                <field name="expense_amount" type="measure"/>
+                <field name="net_operation_amount" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="action_sc_company_operation_summary" model="ir.actions.act_window">
+        <field name="name">公司经营情况表</field>
+        <field name="res_model">sc.company.operation.summary</field>
+        <field name="view_mode">tree,form,pivot,graph</field>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_company_operation_summary_search"/>
+        <field name="context">{'create': False, 'edit': False, 'delete': False}</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_finance_read'),
+            ref('smart_construction_core.group_sc_cap_finance_user'),
+            ref('smart_construction_core.group_sc_cap_finance_manager'),
+            ref('smart_construction_core.group_sc_cap_cost_read'),
+            ref('smart_construction_core.group_sc_cap_cost_user'),
+            ref('smart_construction_core.group_sc_cap_cost_manager')
+        ])]"/>
+    </record>
+</odoo>

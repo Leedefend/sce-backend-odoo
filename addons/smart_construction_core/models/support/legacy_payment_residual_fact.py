@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-from odoo import fields, models
+from uuid import uuid4
+
+from odoo import api, fields, models
 
 
 class ScLegacyPaymentResidualFact(models.Model):
@@ -37,6 +39,19 @@ class ScLegacyPaymentResidualFact(models.Model):
     attachment_ref = fields.Char()
     note = fields.Text()
     active = fields.Boolean(default=True, index=True)
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            context = self.env.context or {}
+            payment_family = vals.get("payment_family") or context.get("default_payment_family")
+            if payment_family:
+                vals["payment_family"] = payment_family
+            if not vals.get("source_table"):
+                vals["source_table"] = context.get("default_source_table") or "USER_ENTRY"
+            if not vals.get("legacy_record_id"):
+                vals["legacy_record_id"] = context.get("default_legacy_record_id") or "USER-%s" % uuid4().hex
+        return super().create(vals_list)
 
     _sql_constraints = [
         (

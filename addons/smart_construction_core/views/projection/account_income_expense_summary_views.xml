@@ -125,7 +125,8 @@
             <field name="view_mode">tree,form,pivot,graph</field>
             <field name="search_view_id" ref="view_sc_account_income_expense_summary_search"/>
             <field name="context">{'create': False, 'search_default_group_account_type': 1}</field>
-            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')),
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_business_initiator')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_read')),
                                            (4, ref('smart_construction_core.group_sc_cap_finance_user')),
                                            (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
         </record>
@@ -135,6 +136,6 @@
                   parent="smart_construction_core.menu_sc_finance_center"
                   action="action_sc_account_income_expense_summary"
                   sequence="34"
-                  groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+                  groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
     </data>
 </odoo>

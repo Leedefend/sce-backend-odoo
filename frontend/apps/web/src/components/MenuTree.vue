@@ -55,12 +55,27 @@ const expanded = computed(() => new Set(session.menuExpandedKeys));
 const activeParents = ref<Set<string>>(new Set());
 
 const sorted = computed(() => {
-  return [...props.nodes].sort((a, b) => {
+  const nodes = hideDuplicateLeafBesideGroup(props.nodes);
+  return nodes.sort((a, b) => {
     const seqA = a.meta?.sequence ?? 0;
     const seqB = b.meta?.sequence ?? 0;
     return seqA - seqB;
   });
 });
+
+function hideDuplicateLeafBesideGroup(nodes: NavNode[]) {
+  const groupLabels = new Set(
+    nodes
+      .filter((node) => Boolean(node.children?.length))
+      .map((node) => normalizedNodeLabel(node))
+      .filter(Boolean),
+  );
+  if (!groupLabels.size) return [...nodes];
+  return nodes.filter((node) => {
+    if (node.children?.length) return true;
+    return !groupLabels.has(normalizedNodeLabel(node));
+  });
+}
 
 const level = computed(() => Number(props.level || 0));
 const treeStyle = computed<Record<string, string>>(() => {
@@ -92,6 +107,10 @@ function nodeLabel(node: NavNode) {
     .replace(/^admin$/i, '系统管理员')
     .replace(/^workbench$/i, '诊断页')
     .replace(/^dashboard$/i, '看板');
+}
+
+function normalizedNodeLabel(node: NavNode) {
+  return nodeLabel(node).trim();
 }
 
 function onSelect(node: NavNode) {

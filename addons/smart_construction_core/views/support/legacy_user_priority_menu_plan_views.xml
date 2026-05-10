@@ -91,16 +91,22 @@
     <field name="view_mode">tree,form</field>
     <field name="search_view_id" ref="view_sc_legacy_user_priority_menu_plan_search"/>
     <field name="context">{'search_default_active_only': 1, 'search_default_group_domain': 1}</field>
-    <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    <field name="groups_id" eval="[(6, 0, [
+      ref('smart_construction_core.group_sc_cap_config_admin'),
+      ref('smart_construction_core.group_sc_cap_business_config_admin')
+    ])]"/>
   </record>
 
   <menuitem id="menu_sc_legacy_user_priority_menu_plan"
             name="用户优先入口迭代计划"
-            parent="smart_construction_core.menu_sc_data_center"
+            parent="smart_construction_core.menu_sc_business_config_center"
             action="action_sc_legacy_user_priority_menu_plan"
             sequence="83"
-            groups="smart_construction_core.group_sc_cap_config_admin"/>
+            groups="smart_construction_core.group_sc_cap_config_admin,smart_construction_core.group_sc_cap_business_config_admin"/>
   <record id="menu_sc_legacy_user_priority_menu_plan" model="ir.ui.menu">
-    <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+    <field name="groups_id" eval="[(6, 0, [
+      ref('smart_construction_core.group_sc_cap_config_admin'),
+      ref('smart_construction_core.group_sc_cap_business_config_admin')
+    ])]"/>
   </record>
 </odoo>

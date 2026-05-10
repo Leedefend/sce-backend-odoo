@@ -246,6 +246,79 @@
         </field>
     </record>
 
+    <record id="view_tender_doc_purchase_search" model="ir.ui.view">
+        <field name="name">tender.doc.purchase.search</field>
+        <field name="model">tender.doc.purchase</field>
+        <field name="arch" type="xml">
+            <search string="投标报名费申请">
+                <field name="bid_id"/>
+                <field name="project_id"/>
+                <field name="applicant_id"/>
+                <field name="invoice_no"/>
+                <filter string="草稿" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="审批中" name="submitted" domain="[('state', '=', 'submitted')]"/>
+                <filter string="已通过" name="approved" domain="[('state', '=', 'approved')]"/>
+                <filter string="已驳回" name="rejected" domain="[('state', '=', 'rejected')]"/>
+                <group expand="0" string="分组">
+                    <filter string="按投标" name="group_bid" context="{'group_by': 'bid_id'}"/>
+                    <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="按申请人" name="group_applicant" context="{'group_by': 'applicant_id'}"/>
+                    <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_tender_doc_purchase_tree" model="ir.ui.view">
+        <field name="name">tender.doc.purchase.tree</field>
+        <field name="model">tender.doc.purchase</field>
+        <field name="arch" type="xml">
+            <tree string="投标报名费申请" default_order="apply_date desc, id desc">
+                <field name="apply_date"/>
+                <field name="project_id"/>
+                <field name="bid_id"/>
+                <field name="applicant_id"/>
+                <field name="amount" sum="报名费合计"/>
+                <field name="invoice_no"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_tender_doc_purchase_form" model="ir.ui.view">
+        <field name="name">tender.doc.purchase.form</field>
+        <field name="model">tender.doc.purchase</field>
+        <field name="arch" type="xml">
+            <form string="投标报名费申请">
+                <header>
+                    <button name="action_submit" type="object" string="提交" class="btn-primary" invisible="state != 'draft'"/>
+                    <button name="action_approve" type="object" string="通过" class="btn-primary" invisible="state not in ['draft', 'submitted']"/>
+                    <button name="action_reject" type="object" string="驳回" invisible="state in ['approved', 'rejected']"/>
+                    <button name="action_reset_draft" type="object" string="重置草稿" invisible="state == 'draft'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved,rejected"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group string="申请信息">
+                            <field name="bid_id" required="1"/>
+                            <field name="project_id" readonly="1"/>
+                            <field name="applicant_id"/>
+                            <field name="apply_date" required="1"/>
+                        </group>
+                        <group string="费用">
+                            <field name="amount"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="invoice_no"/>
+                        </group>
+                    </group>
+                    <group string="附件">
+                        <field name="attachment_ids" widget="many2many_binary"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
     <record id="view_tender_guarantee_tree" model="ir.ui.view">
         <field name="name">tender.guarantee.tree</field>
         <field name="model">tender.guarantee</field>
@@ -302,6 +375,22 @@
         <field name="search_view_id" ref="view_tender_bid_search"/>
         <field name="context">{'default_state': 'prepare'}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read'))]"/>
+    </record>
+    <record id="action_sc_tender_registration" model="ir.actions.act_window">
+        <field name="name">投标报名管理</field>
+        <field name="res_model">tender.bid</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_tender_bid_search"/>
+        <field name="context">{'default_state': 'prepare'}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_read'))]"/>
+    </record>
+    <record id="action_sc_tender_registration_fee" model="ir.actions.act_window">
+        <field name="name">投标报名费申请</field>
+        <field name="res_model">tender.doc.purchase</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_tender_doc_purchase_search"/>
+        <field name="context">{'search_default_group_project': 1}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_project_user')), (4, ref('smart_construction_core.group_sc_cap_project_manager'))]"/>
     </record>
 
     <!-- Project form: 投标页签 -->

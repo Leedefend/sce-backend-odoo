@@ -23,6 +23,8 @@ class ScExpenseClaim(models.Model):
             ("deposit_pay", "保证金支付"),
             ("deposit_refund", "保证金退回"),
             ("deposit_receive", "保证金收取"),
+            ("deduction_refund", "扣款退回"),
+            ("project_company_repay", "项目还公司款"),
         ],
         string="业务类型",
         default="expense",
@@ -128,7 +130,11 @@ class ScExpenseClaim(models.Model):
     @api.depends("claim_type")
     def _compute_direction(self):
         for rec in self:
-            rec.direction = "inflow" if rec.claim_type in ("deposit_refund", "deposit_receive") else "outflow"
+            rec.direction = (
+                "inflow"
+                if rec.claim_type in ("deposit_refund", "deposit_receive", "deduction_refund", "project_company_repay")
+                else "outflow"
+            )
 
     @api.onchange("amount")
     def _onchange_amount(self):

@@ -343,6 +343,11 @@ const panelVariant = computed(() => {
 });
 
 const firstReachableMenuId = computed(() => findFirstReachableMenuId(session.menuTree));
+const currentReachableMenuId = computed(() => {
+  if (reason.value !== ErrorCodes.NAV_MENU_NO_ACTION || !menuId.value) return null;
+  const node = findMenuNodeById(session.menuTree, menuId.value);
+  return node && isReachableMenuNode(node) ? menuId.value : null;
+});
 const navNoActionMenuHidden = computed(() => {
   return reason.value === ErrorCodes.NAV_MENU_NO_ACTION
     && !!menuId.value
@@ -355,6 +360,10 @@ onMounted(() => {
   const normalized = normalizeEmbeddedSceneQuery(route.query as LocationQueryRaw);
   if (normalized.changed) {
     router.replace({ path: route.path, query: normalized.query }).catch(() => {});
+    return;
+  }
+  if (currentReachableMenuId.value) {
+    router.replace({ path: `/m/${currentReachableMenuId.value}`, query: workspaceContextQuery.value }).catch(() => {});
     return;
   }
   if (navNoActionMenuHidden.value) {
@@ -578,13 +587,8 @@ function findFirstReachableMenuId(nodes: NavNode[]): number | null {
       continue;
     }
     const menuId = Number(node.menu_id || node.id || 0) || 0;
-    if (menuId) {
-      if (node.meta?.action_id) {
-        return menuId;
-      }
-      if (resolveNodeSceneKey(node)) {
-        return menuId;
-      }
+    if (menuId && isReachableMenuNode(node)) {
+      return menuId;
     }
     const nested = findFirstReachableMenuId(node.children || []);
     if (nested) {
@@ -592,6 +596,10 @@ function findFirstReachableMenuId(nodes: NavNode[]): number | null {
     }
   }
   return null;
+}
+
+function isReachableMenuNode(node: NavNode): boolean {
+  return Boolean(node?.meta?.action_id || resolveNodeSceneKey(node));
 }
 </script>
 

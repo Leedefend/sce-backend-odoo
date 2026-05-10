@@ -5,9 +5,15 @@ const envDb = String(import.meta.env.VITE_ODOO_DB ?? '').trim();
 const isLocalHost = typeof window !== 'undefined'
   ? ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname)
   : false;
-const runtimeDb = typeof window !== 'undefined'
+const isLocalDevPort = typeof window !== 'undefined'
+  ? ['18081', '5174', '8070'].includes(window.location.port)
+  : false;
+const runtimeDbRaw = typeof window !== 'undefined'
   ? String(new URLSearchParams(window.location.search).get('db') || '').trim()
   : '';
+const runtimeDb = isLocalHost && isLocalDevPort && ['sc_delivery_local', 'sc_prod_sim'].includes(runtimeDbRaw.toLowerCase())
+  ? ''
+  : runtimeDbRaw;
 // Do not auto-force a db by APP_ENV. Always prefer explicit VITE_ODOO_DB.
 // Auto-forcing may cause token/db mismatch when frontend host is not localhost.
 const enforcedDb = '';
