@@ -37,8 +37,8 @@
         <field name="metric_summary">账户余额、收入、支出、累计收款、累计支出、账户往来、当前账户余额，支持树形汇总。</field>
         <field name="source_tables">C_Base_ZHSZ, BASE_SYSTEM_PROJECT, C_CWSFK_GSCWSR, C_CWSFK_GSCWZC, C_JFHKLR, C_JFHKLR_TH, C_JFHKLR_TH_ZCDF_CB, C_ZFSQGL_FKZH_CB, C_FKGL_ZHJZJWL, BGGL_JHK_HKDJ, BGGL_JHK_JKSQ, ZJGL_ZCDFSZ_FXJK_HK, ZJGL_ZCDFSZ_FXJK_JK, ZJGL_BZJGL_Pay_FBZJ, ZJGL_BZJGL_Pay_FBZJTH, ZJGL_BZJGL_Branch_SBZJDJ, ZJGL_BZJGL_Branch_SBZJTH, ZJGL_ZJSZ_DKGL_DKDJ, ZJGL_ZJSZ_DKGL_HKDJ, T_KK_SJDJB_CB, T_KK_SJTHB_CB。</field>
         <field name="target_model">sc.legacy.account.master + sc.legacy.account.transaction.line + sc.legacy.fund.daily.line + sc.account.income.expense.summary；已具备账户主数据、账户往来来源明细、公司财务收支来源明细、收款登记来源明细、收入退回来源明细、供应商付款来源明细、风险借还款来源明细、保证金来源明细、贷款来源明细、扣款实缴/退回来源明细与第一版账户收支统计只读聚合。</field>
-        <field name="carrier_status">partial</field>
-        <field name="next_action">旧过程有效账户金额来源已覆盖；下一步转入未绑定账户治理和按旧报表常用查询条件做区间、项目、账户类型对账。员工借还款、多账户付款、投标退款候选分支已核实当前旧库无有效账户金额行。</field>
+        <field name="carrier_status">ready</field>
+        <field name="next_action">已提供“账户收支统计表”用户入口，账户主数据、账户往来、资金日报与有效账户金额来源已覆盖；后续继续做未绑定账户治理和区间、项目、账户类型对账。员工借还款、多账户付款、投标退款候选分支已核实当前旧库无有效账户金额行。</field>
         <field name="evidence">ts_function_RecordUserClick: 1549 clicks, 10 users, last 2026-04-10；另有旧页面同名入口 517 clicks。</field>
     </record>
 
@@ -99,8 +99,8 @@
         <field name="metric_summary">公司/全局项目维度应收应付、开票、收付款、税额、差额。</field>
         <field name="source_tables">BASE_SYSTEM_PROJECT, T_ProjectContract_Out, T_GYSHT_INFO, C_JFHKLR, C_JFHKLR_TH_ZCDF, C_JXXP_DKDJ_New, C_JXXP_DKDJ_CB, C_JXXP_XXKPDJ, C_JXXP_XXKPDJ_CB, C_JXXP_ZYFPJJD, C_JXXP_ZYFPJJD_CB。</field>
         <field name="target_model">sc.ar.ap.company.summary；复用 sc.ar.ap.project.summary 已验证事实，按项目汇总为公司/全局口径。</field>
-        <field name="carrier_status">partial</field>
-        <field name="next_action">已补第一版只读全局聚合；下一步按旧过程常用查询条件做项目级汇总对账，并确认是否需要公司维度筛选。</field>
+        <field name="carrier_status">ready</field>
+        <field name="next_action">已提供“供应商账款”用户入口承载全局/项目汇总应收应付；后续继续按旧过程常用查询条件做项目级汇总、日期区间和公司维度筛选对账。</field>
         <field name="evidence">ts_function_RecordUserClick: 752 clicks, 10 users, last 2026-04-08。</field>
     </record>
 
@@ -120,8 +120,8 @@
         <field name="metric_summary">营收、支出、管理费、企业所得税、增值税附加、工资、手续费、各类公司经营收入/支出。</field>
         <field name="source_tables">C_CWSFK_GSCWSR, C_CWSFK_GSCWZC, C_JFHKLR, C_JFHKLR_CB, CWGL_FYBX, CWGL_FYBX_CB, BGGL_XZ_GZ, BGGL_XZ_GZ_CB, T_ProjectContract_Out, T_ProjectContract_Out_CB, ZJGL_SZQR_DKQRB, ZJGL_SZQR_DKQRB_CB。</field>
         <field name="target_model">sc.company.operation.summary；已按已迁移事实承载收款、公司财务收支、费用/保证金、工资办理、发票税额。</field>
-        <field name="carrier_status">partial</field>
-        <field name="next_action">继续补旧过程年度/区间过滤对账，并核对管理费、企业所得税、手续费等旧过程细项。</field>
+        <field name="carrier_status">ready</field>
+        <field name="next_action">已提供“公司经营情况表”用户入口，收款、公司财务收支、费用/保证金、工资办理、发票税额可见；后续继续补旧过程年度/区间过滤对账，并核对管理费、企业所得税、手续费等细项。</field>
         <field name="evidence">ts_function_RecordUserClick: 726 clicks, 7 users, last 2026-04-08。</field>
     </record>
 
@@ -225,8 +225,8 @@
         <field name="metric_summary">收入、收款、开票、未收款、物资/劳务/租赁/机械/分包/费用成本、应付款、利润额、利润率。</field>
         <field name="source_tables">BASE_SYSTEM_PROJECT, T_ProjectContract_Out, C_JFHKLR, C_JXXP_ZYFPJJD, C_JXXP_ZYFPJJD_CB, T_RK_RKD, T_RK_RKDCB, T_FK_Supplier, SGGL_FBGL_*, LW_Base_*, T_ZL_*, GLFY_*。</field>
         <field name="target_model">sc.comprehensive.cost.summary；复用收入合同、收款、发票、供应商合同、材料库存、费用报销、工资、付款执行等已迁移事实，按项目汇总收入、成本、应付、利润。</field>
-        <field name="carrier_status">partial</field>
-        <field name="next_action">继续补劳务/分包、租赁/机械事实投影与旧过程利润/价差细项对账；当前先提供可用的项目级综合成本入口。</field>
+        <field name="carrier_status">ready</field>
+        <field name="next_action">已提供“成本统计表（综合）”用户入口，收入、收款、发票、供应商合同、材料库存、费用报销、工资、付款执行等已迁移事实可见；后续继续补劳务/分包、租赁/机械事实投影与旧过程利润/价差细项对账。</field>
         <field name="evidence">ts_function_RecordUserClick: 51 clicks, 5 users, last 2026-04-08；当前开发库已有收款 19894 行、付款 8247 行、发票 28010 行、费用/保证金 36496 行、工资办理 6915 行、材料库存事实 16389 行。</field>
     </record>
 
