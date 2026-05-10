@@ -2003,6 +2003,7 @@
         <field name="parent_id" ref="smart_construction_core.menu_sc_business_config_center"/>
         <field name="action" ref="smart_construction_core.action_sc_material_product_template"/>
         <field name="sequence">60</field>
+        <field name="active">False</field>
     </record>
     <record id="menu_sc_approval_policy" model="ir.ui.menu">
         <field name="name">审批配置</field>
