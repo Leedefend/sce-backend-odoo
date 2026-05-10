@@ -405,10 +405,12 @@ class ResPartner(models.Model):
                     source_created_at = row.get(field_name)
                     if source_created_at:
                         break
-                if source_created_by and should_replace_created_fact(data, source_created_at):
-                    data["created_by"] = source_created_by
-                    data["created_at"] = datetime_text(source_created_at)
-                    data["created_sort"] = source_sort_value(source_created_at)
+                if (source_created_by or source_created_at) and should_replace_created_fact(data, source_created_at):
+                    if source_created_by:
+                        data["created_by"] = source_created_by
+                    if source_created_at:
+                        data["created_at"] = datetime_text(source_created_at)
+                        data["created_sort"] = source_sort_value(source_created_at)
 
         add_records(
             "construction.contract",
