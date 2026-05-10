@@ -199,6 +199,25 @@ def is_legacy_income_visible(row: dict[str, str]) -> bool:
     )
 
 
+def contract_has_business_fact(row: dict[str, str]) -> bool:
+    fact_fields = (
+        "DJBH",
+        "HTBH",
+        "HTBT",
+        "f_XMMC",
+        "f_GCXZ",
+        "FBF",
+        "CBF",
+        "f_LRSJ",
+        "LRRQ",
+        "f_LRR",
+        "LRR",
+    )
+    if any(clean(row.get(field)) for field in fact_fields):
+        return True
+    return any(money_present(row.get(field)) for field in ("GCYSZJ", "f_HTJK", "YFK", "ZLBZJ", "D_SCBSJS_QYHTJ", "D_SCBSJS_JSJE"))
+
+
 def enrich_project_master_from_visible_contracts(project_index: dict[str, dict[str, str]]) -> int:
     if not CONTRACT_CSV.exists():
         return 0
@@ -234,7 +253,7 @@ def contract_project_anchor_candidates(project_index: dict[str, dict[str, str]])
     visible_by_project: dict[str, list[dict[str, str]]] = {}
     for row in read_csv(CONTRACT_CSV):
         legacy_project_id = clean(row.get("XMID"))
-        if not legacy_project_id or legacy_project_id in project_index:
+        if not legacy_project_id or legacy_project_id in project_index or not contract_has_business_fact(row):
             continue
         rows_by_project.setdefault(legacy_project_id, []).append(row)
         if is_legacy_income_visible(row):
@@ -249,26 +268,27 @@ def contract_project_anchor_candidates(project_index: dict[str, dict[str, str]])
         fact_rows_for_nature = visible_rows or source_rows
         nature_counts = Counter(clean(row.get("f_GCXZ")) or "__empty__" for row in fact_rows_for_nature)
         selected_nature = next((nature for nature, _count in nature_counts.most_common() if nature != "__empty__"), "")
+        source_lane = "contract_visible_project_anchor" if visible_rows else "contract_project_business_fact_anchor"
+        candidates.append(
+            {
+                "source_file": str(CONTRACT_CSV.relative_to(REPO_ROOT)),
+                "legacy_project_id": legacy_project_id,
+                "name": name,
+                "project_environment": "legacy_contract_project_anchor",
+                "business_nature": selected_nature,
+                "operation_strategy": operation_strategy_from_business_nature(selected_nature),
+                "legacy_state": source_lane,
+                "current_db_project_id": "",
+                "replay_source_lane": source_lane,
+                "replay_evidence_rows": len(visible_rows) if visible_rows else len(source_rows),
+            }
+        )
         if visible_rows:
-            candidates.append(
-                {
-                    "source_file": str(CONTRACT_CSV.relative_to(REPO_ROOT)),
-                    "legacy_project_id": legacy_project_id,
-                    "name": name,
-                    "project_environment": "legacy_contract_visible_project_anchor",
-                    "business_nature": selected_nature,
-                    "operation_strategy": operation_strategy_from_business_nature(selected_nature),
-                    "legacy_state": "contract_visible_project_anchor",
-                    "current_db_project_id": "",
-                    "replay_source_lane": "contract_visible_project_anchor",
-                    "replay_evidence_rows": len(visible_rows),
-                }
-            )
             continue
         gaps.append(
             {
                 "legacy_project_id": legacy_project_id,
-                "source_lane": "contract_project_anchor_gap",
+                "source_lane": "contract_project_business_fact_anchor",
                 "source_rows": len(source_rows),
                 "visible_source_rows": 0,
                 "project_name": name,
@@ -287,8 +307,8 @@ def contract_project_anchor_candidates(project_index: dict[str, dict[str, str]])
                 "missing_counterparty_rows": sum(1 for row in source_rows if not clean(row.get("FBF"))),
                 "amount_gcyszj_sum": f"{sum(parse_amount(row.get('GCYSZJ')) for row in source_rows):.2f}",
                 "business_nature_counts": json.dumps(dict(sorted(nature_counts.items())), ensure_ascii=False, sort_keys=True),
-                "gap_route": "contract_not_visible_project_anchor_deferred",
-                "gap_note": "contract source has project id absent from project.csv but does not pass visible income contract filter",
+                "gap_route": "contract_business_fact_project_anchor_carried",
+                "gap_note": "contract source has project id absent from project.csv and does not pass visible income contract filter, but is carried as a historical project business-fact anchor",
             }
         )
     return candidates, gaps
@@ -362,8 +382,9 @@ execute project write scripts and does not touch a database.
 - project master source rows: `{payload["project_master_source_rows"]}`
 - project master contract-enriched rows: `{payload["project_master_contract_enriched_rows"]}`
 - contract visible project anchor rows: `{payload["contract_visible_project_anchor_rows"]}`
-- deferred contract project gaps: `{payload["deferred_contract_project_gap_count"]}`
-- deferred contract project gap amount: `{payload["deferred_contract_project_gap_amount_sum"]}`
+- contract business-fact project anchor rows: `{payload["contract_project_business_fact_anchor_rows"]}`
+- non-visible contract project anchor observations: `{payload["contract_project_business_fact_anchor_observation_count"]}`
+- non-visible contract project anchor amount: `{payload["contract_project_business_fact_anchor_observation_amount_sum"]}`
 - replay payload rows: `{payload["replay_payload_rows"]}`
 - duplicate replay identities: `{payload["duplicate_replay_identities"]}`
 - raw source misses: `{payload["raw_source_misses"]}`
@@ -475,11 +496,15 @@ def main() -> int:
     asset_ids = {clean(row.get("legacy_project_id")) for row in asset_rows}
     payload_ids = {clean(row.get("legacy_project_id")) for row in payload_rows}
     operation_strategy_counts = Counter(clean(row.get("operation_strategy")) or "unspecified" for row in payload_rows)
+    contract_visible_project_anchor_rows = sum(1 for row in contract_rows if clean(row.get("replay_source_lane")) == "contract_visible_project_anchor")
+    contract_business_fact_project_anchor_rows = sum(
+        1 for row in contract_rows if clean(row.get("replay_source_lane")) == "contract_project_business_fact_anchor"
+    )
     status = "PASS" if not duplicates and not raw_misses else "FAIL"
     payload = {
         "status": status,
         "mode": "fresh_db_project_anchor_replay_adapter",
-        "source_mode": "project_master_plus_visible_contract_facts",
+        "source_mode": "project_master_plus_contract_business_facts",
         "db_writes": 0,
         "database_operations": 0,
         "write_scripts_executed": 0,
@@ -490,10 +515,22 @@ def main() -> int:
         "asset_xml_missing_from_payload_rows": len(asset_ids - payload_ids),
         "project_master_source_rows": len(source_index),
         "project_master_contract_enriched_rows": project_master_contract_enriched_rows,
-        "contract_visible_project_anchor_rows": len(contract_rows),
-        "contract_visible_project_anchor_contract_rows": sum(int(clean(row.get("replay_evidence_rows")) or "0") for row in contract_rows),
-        "deferred_contract_project_gap_count": len(gap_rows),
-        "deferred_contract_project_gap_amount_sum": f"{sum(float(clean(row.get('amount_gcyszj_sum')) or '0') for row in gap_rows):.2f}",
+        "contract_visible_project_anchor_rows": contract_visible_project_anchor_rows,
+        "contract_visible_project_anchor_contract_rows": sum(
+            int(clean(row.get("replay_evidence_rows")) or "0")
+            for row in contract_rows
+            if clean(row.get("replay_source_lane")) == "contract_visible_project_anchor"
+        ),
+        "contract_project_business_fact_anchor_rows": contract_business_fact_project_anchor_rows,
+        "contract_project_business_fact_anchor_contract_rows": sum(
+            int(clean(row.get("replay_evidence_rows")) or "0")
+            for row in contract_rows
+            if clean(row.get("replay_source_lane")) == "contract_project_business_fact_anchor"
+        ),
+        "contract_project_business_fact_anchor_observation_count": len(gap_rows),
+        "contract_project_business_fact_anchor_observation_amount_sum": f"{sum(float(clean(row.get('amount_gcyszj_sum')) or '0') for row in gap_rows):.2f}",
+        "deferred_contract_project_gap_count": 0,
+        "deferred_contract_project_gap_amount_sum": "0.00",
         "created_evidence_rows": len(created_rows),
         "replay_payload_rows": len(payload_rows),
         "duplicate_replay_identities": len(duplicates),

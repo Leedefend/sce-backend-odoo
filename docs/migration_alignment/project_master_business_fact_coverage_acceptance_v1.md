@@ -1,0 +1,90 @@
+# Project Master Business Fact Coverage Acceptance v1
+
+Status: `accepted`
+
+Task: `ITER-2026-05-10-PROJECT-MASTER-FACT-COVERAGE`
+
+## Acceptance Principle
+
+Project master acceptance is based on historical project business facts and
+source anchors. Old project data must not be forced to satisfy new-system
+lifecycle, operation-strategy, visibility, or mandatory-field rules.
+
+The target is:
+
+- carry every legacy project master row as a project anchor;
+- carry contract facts with a legacy project id as project-anchor evidence;
+- preserve source identifiers so downstream facts can keep project continuity;
+- treat old-source blank creator/time fields as coverage observations, not
+  migration blockers;
+- treat Odoo import users and import timestamps as technical metadata only.
+
+## Current Evidence
+
+Acceptance database:
+
+`sc_acceptance_audit_20260510`
+
+Classifier artifact:
+
+`artifacts/business-fact-audit/sc_acceptance_audit_20260510_project_master_fact_coverage/project_master_business_fact_coverage_classifier_v1.json`
+
+Latest result:
+
+| Check | Result |
+| --- | ---: |
+| status | `PASS` |
+| legacy project source rows | `755` |
+| contract project business-fact anchors | `762` |
+| contract anchors without project master source | `63` |
+| all business-fact project anchors | `818` |
+| replay payload project anchors | `818` |
+| target project anchors | `818` |
+| uncovered business-fact project anchors | `0` |
+| contract anchors missing from payload | `0` |
+
+The replay adapter now carries 20 non-visible contract-source project anchors as
+historical business facts. These were previously deferred because they did not
+pass a user-facing visible-income-contract filter, but that filter is not a
+valid reason to drop historical project fact anchors.
+
+## Runtime Write Evidence
+
+Project anchor write on `sc_acceptance_audit_20260510`:
+
+| Check | Result |
+| --- | ---: |
+| input rows | `818` |
+| created rows | `15` |
+| updated rows | `803` |
+| post-write identity count | `818` |
+| status | `PASS` |
+
+Read-only postcheck:
+
+| Check | Result |
+| --- | ---: |
+| payload rows | `818` |
+| expected rows | `818` |
+| matched project rows | `818` |
+| visible contract unlinked rows | `0` |
+| status | `PASS` |
+
+## Residual Interpretation
+
+The project source creator coverage remains an old-source observation:
+
+- `source_creator_present`: `266`
+- `source_creator_blank`: `489`
+- `source_time_present`: `752`
+- `source_time_blank`: `3`
+
+Blank legacy creator/time fields must remain blank evidence, not be replaced by
+`OdooBot`, `admin`, `system`, import operators, or import timestamps.
+
+## Delivery Rule
+
+This round is complete when the project business facts are carried and
+traceable. Later iterations may improve project lifecycle, status, operating
+strategy, or user-facing validation, but those upgrades must not rewrite
+uncertain legacy facts into artificial certainty.
