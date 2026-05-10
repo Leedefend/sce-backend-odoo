@@ -65,7 +65,8 @@ class ScCompanyOperationSummary(models.Model):
                 to_regclass('sc_expense_claim'),
                 to_regclass('sc_legacy_account_transaction_line'),
                 to_regclass('sc_hr_payroll_document'),
-                to_regclass('sc_legacy_expense_reimbursement_line')
+                to_regclass('sc_legacy_expense_reimbursement_line'),
+                to_regclass('sc_legacy_deduction_adjustment_line')
             """
         )
         (
@@ -75,6 +76,7 @@ class ScCompanyOperationSummary(models.Model):
             transaction_table,
             salary_table,
             reimbursement_line_table,
+            deduction_line_table,
         ) = self._cr.fetchone()
         if not (
             company_table
@@ -83,6 +85,7 @@ class ScCompanyOperationSummary(models.Model):
             and transaction_table
             and salary_table
             and reimbursement_line_table
+            and deduction_line_table
         ):
             return
         tools.drop_view_if_exists(self._cr, self._table)
@@ -99,6 +102,10 @@ class ScCompanyOperationSummary(models.Model):
                     SELECT date_trunc('month', t.transaction_date)::date AS month_start
                     FROM sc_legacy_account_transaction_line t
                     WHERE t.active IS TRUE AND t.transaction_date IS NOT NULL
+                    UNION
+                    SELECT date_trunc('month', d.document_date)::date AS month_start
+                    FROM sc_legacy_deduction_adjustment_line d
+                    WHERE d.active IS TRUE AND d.document_date IS NOT NULL
                     UNION
                     SELECT date_trunc('month', r.date_receipt)::date AS month_start
                     FROM sc_receipt_income r
@@ -119,18 +126,22 @@ class ScCompanyOperationSummary(models.Model):
                 ),
                 deduction_paid AS (
                     SELECT
-                        date_trunc('month', t.transaction_date)::date AS month_start,
-                        SUM(CASE WHEN t.category = '管理费' THEN t.amount ELSE 0 END) AS deduction_management_fee_amount,
-                        SUM(CASE WHEN t.category = '企业所得税' THEN t.amount ELSE 0 END) AS deduction_enterprise_income_tax_amount,
-                        SUM(CASE WHEN t.category = '增值税附加' THEN t.amount ELSE 0 END) AS deduction_vat_surcharge_amount,
-                        SUM(CASE WHEN t.category IN ('增值税附加（不可退）', '增值税附加(不可退)') THEN t.amount ELSE 0 END)
+                        date_trunc('month', d.document_date)::date AS month_start,
+                        SUM(CASE
+                            WHEN d.adjustment_item_name = '管理费' AND COALESCE(d.returned_flag, '') = '否'
+                            THEN d.current_actual_amount ELSE 0 END
+                        ) AS deduction_management_fee_amount,
+                        SUM(CASE WHEN d.adjustment_item_name = '企业所得税' THEN d.current_actual_amount ELSE 0 END)
+                            AS deduction_enterprise_income_tax_amount,
+                        SUM(CASE WHEN d.adjustment_item_name = '增值税附加' THEN d.current_actual_amount ELSE 0 END)
+                            AS deduction_vat_surcharge_amount,
+                        SUM(CASE WHEN d.adjustment_item_name IN ('增值税附加（不可退）', '增值税附加(不可退)') THEN d.current_actual_amount ELSE 0 END)
                             AS deduction_vat_surcharge_nonrefundable_amount,
                         COUNT(*)::integer AS source_line_count
-                    FROM sc_legacy_account_transaction_line t
-                    WHERE t.active IS TRUE
-                      AND t.source_table = 'T_KK_SJDJB_CB'
-                      AND t.transaction_date IS NOT NULL
-                    GROUP BY date_trunc('month', t.transaction_date)::date
+                    FROM sc_legacy_deduction_adjustment_line d
+                    WHERE d.active IS TRUE
+                      AND d.document_date IS NOT NULL
+                    GROUP BY date_trunc('month', d.document_date)::date
                 ),
                 company_income AS (
                     SELECT
@@ -164,13 +175,18 @@ class ScCompanyOperationSummary(models.Model):
                 payroll AS (
                     SELECT
                         make_date(s.period_year, s.period_month, 1) AS month_start,
-                        SUM(CASE WHEN s.fact_type = 'salary_registration' THEN COALESCE(s.net_salary, s.amount, 0.0) ELSE 0 END)
+                        SUM(CASE
+                            WHEN s.fact_type = 'salary_registration'
+                             AND COALESCE(dept.name->>'zh_CN', dept.name->>'en_US', dept.name::text, '') IN ('公司', '保盛云南分公司')
+                            THEN COALESCE(s.net_salary, s.amount, 0.0) ELSE 0 END
+                        )
                             AS salary_amount,
                         SUM(CASE WHEN s.fact_type = 'social_registration' THEN COALESCE(s.company_amount, 0.0) + COALESCE(s.individual_amount, 0.0) ELSE 0 END)
                             AS employee_social_security_amount,
                         0.0 AS certificate_social_security_amount,
                         COUNT(*)::integer AS source_line_count
                     FROM sc_hr_payroll_document s
+                    LEFT JOIN hr_department dept ON dept.id = s.department_id
                     WHERE s.active IS TRUE
                       AND s.period_year > 0
                       AND s.period_month BETWEEN 1 AND 12
@@ -192,7 +208,21 @@ class ScCompanyOperationSummary(models.Model):
                         date_trunc('month', t.transaction_date)::date AS month_start,
                         SUM(CASE WHEN t.note ILIKE '%企业所得税%' THEN t.amount ELSE 0 END) AS company_enterprise_income_tax_expense_amount,
                         SUM(CASE WHEN t.note ILIKE '%个人所得税%' THEN t.amount ELSE 0 END) AS company_personal_income_tax_expense_amount,
-                        SUM(CASE WHEN t.note ILIKE '%增值税附加%' OR t.note ILIKE '%教育费附加%' OR t.note ILIKE '%城市维护建设税%' THEN t.amount ELSE 0 END)
+                        SUM(CASE
+                            WHEN (
+                                t.note ILIKE '%增值税附加%'
+                                OR t.note ILIKE '%教育费附加%'
+                                OR t.note ILIKE '%城市维护建设税%'
+                            )
+                            AND NOT (
+                                substring(t.note from '增值税([0-9]+(\\.[0-9]+)?)') IS NOT NULL
+                                AND abs(
+                                    t.amount
+                                    - (substring(t.note from '增值税([0-9]+(\\.[0-9]+)?)'))::float
+                                ) < 0.01
+                            )
+                            THEN t.amount ELSE 0 END
+                        )
                             AS company_vat_surcharge_tax_bureau_amount,
                         SUM(CASE WHEN t.note ILIKE '%投标费%' OR t.note ILIKE '%报名费%' OR t.note ILIKE '%标书费%' THEN t.amount ELSE 0 END)
                             AS tender_fee_expense_amount,
