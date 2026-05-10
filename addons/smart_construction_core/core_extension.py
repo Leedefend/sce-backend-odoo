@@ -129,6 +129,7 @@ API_DATA_WRITE_ALLOWLIST = {
     "project.project": ["name", "description", "date_start"],
     "project.task": ["name", "description", "date_deadline", "project_id"],
     "purchase.order.line": ["name", "order_id"],
+    "res.partner": ["name", "email", "phone", "sc_supplier_type", "sc_supplier_type_ids"],
 }
 API_DATA_MUTATION_POLICIES = {
     "sc.legacy.receipt.income.fact": {

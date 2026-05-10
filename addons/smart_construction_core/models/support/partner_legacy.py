@@ -6,20 +6,51 @@ from collections import defaultdict
 from odoo import api, fields, models
 
 
+SUPPLIER_TYPE_SELECTION = [
+    ("material", "材料供应商"),
+    ("labor", "劳务供应商"),
+    ("subcontract", "分包单位"),
+    ("service", "服务供应商"),
+    ("equipment", "设备供应商"),
+    ("other", "其他"),
+]
+
+
+class ScSupplierType(models.Model):
+    _name = "sc.supplier.type"
+    _description = "供应商类型"
+    _order = "sequence, id"
+
+    name = fields.Char(string="类型名称", required=True, translate=True)
+    code = fields.Char(string="类型编码", required=True, index=True)
+    sequence = fields.Integer(string="排序", default=10)
+    active = fields.Boolean(string="启用", default=True)
+
+    _sql_constraints = [
+        ("code_uniq", "unique(code)", "供应商类型编码必须唯一。"),
+    ]
+
+
 class ResPartner(models.Model):
     _inherit = "res.partner"
 
     sc_supplier_type = fields.Selection(
-        [
-            ("material", "材料供应商"),
-            ("labor", "劳务供应商"),
-            ("subcontract", "分包单位"),
-            ("service", "服务供应商"),
-            ("equipment", "设备供应商"),
-            ("other", "其他"),
-        ],
-        string="供应商类型",
+        SUPPLIER_TYPE_SELECTION,
+        string="主供应商类型",
         index=True,
+    )
+    sc_supplier_type_ids = fields.Many2many(
+        "sc.supplier.type",
+        "sc_res_partner_supplier_type_rel",
+        "partner_id",
+        "supplier_type_id",
+        string="供应商类型",
+    )
+    sc_supplier_type_label = fields.Char(
+        string="供应商类型文本",
+        compute="_compute_sc_supplier_type_label",
+        store=True,
+        readonly=True,
     )
     sc_account_name = fields.Char(string="账户名称")
     sc_bank_name = fields.Char(string="开户银行")
@@ -60,6 +91,68 @@ class ResPartner(models.Model):
     legacy_tax_no = fields.Char(string="历史税号", index=True)
     legacy_deleted_flag = fields.Char(string="历史删除标识")
     legacy_source_evidence = fields.Char(string="历史来源证据")
+
+    @api.depends("sc_supplier_type_ids.name", "sc_supplier_type_ids.sequence", "sc_supplier_type")
+    def _compute_sc_supplier_type_label(self):
+        selection_labels = dict(SUPPLIER_TYPE_SELECTION)
+        for partner in self:
+            types = partner.sc_supplier_type_ids.sorted(lambda item: (item.sequence, item.id))
+            if types:
+                partner.sc_supplier_type_label = "、".join(types.mapped("name"))
+            else:
+                partner.sc_supplier_type_label = selection_labels.get(partner.sc_supplier_type or "", "")
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        if not self.env.context.get("sc_skip_supplier_type_sync"):
+            for record, vals in zip(records, vals_list):
+                record._sc_sync_supplier_type_fields(vals)
+        return records
+
+    def write(self, vals):
+        result = super().write(vals)
+        if vals and not self.env.context.get("sc_skip_supplier_type_sync"):
+            self._sc_sync_supplier_type_fields(vals)
+        return result
+
+    @api.model
+    def _sc_backfill_supplier_type_ids(self):
+        partners = self.sudo().with_context(active_test=False).search([("supplier_rank", ">", 0)])
+        if not partners:
+            return True
+
+        type_by_code = {
+            supplier_type.code: supplier_type
+            for supplier_type in self.env["sc.supplier.type"].sudo().search([])
+            if supplier_type.code
+        }
+        fallback_type = type_by_code.get("other")
+        for partner in partners:
+            supplier_type = type_by_code.get(partner.sc_supplier_type or "") or fallback_type
+            if supplier_type and supplier_type not in partner.sc_supplier_type_ids:
+                partner.with_context(sc_skip_supplier_type_sync=True).write(
+                    {"sc_supplier_type_ids": [(4, supplier_type.id)]}
+                )
+        return True
+
+    def _sc_sync_supplier_type_fields(self, vals):
+        if not vals or self.env.context.get("sc_skip_supplier_type_sync"):
+            return
+        Type = self.env["sc.supplier.type"].sudo()
+        for partner in self:
+            if "sc_supplier_type_ids" in vals:
+                first_type = partner.sc_supplier_type_ids.sorted(lambda item: (item.sequence, item.id))[:1]
+                partner.with_context(sc_skip_supplier_type_sync=True).write(
+                    {"sc_supplier_type": first_type.code if first_type else False}
+                )
+                continue
+            if "sc_supplier_type" in vals and partner.sc_supplier_type:
+                type_rec = Type.search([("code", "=", partner.sc_supplier_type)], limit=1)
+                if type_rec and type_rec not in partner.sc_supplier_type_ids:
+                    partner.with_context(sc_skip_supplier_type_sync=True).write(
+                        {"sc_supplier_type_ids": [(4, type_rec.id)]}
+                    )
 
     @api.depends("customer_rank", "supplier_rank", "legacy_partner_source")
     def _compute_sc_business_display(self):

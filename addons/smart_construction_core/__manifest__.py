@@ -30,6 +30,7 @@
         'data/cron_signup_throttle_gc.xml',
         'data/sc_extension_params.xml',
         'data/sc_subscription_default.xml',
+        'data/supplier_type_data.xml',
         'data/sc_capability_group_seed.xml',
         'data/legacy_report_inventory_seed.xml',
 
