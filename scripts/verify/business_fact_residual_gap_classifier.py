@@ -22,6 +22,14 @@ ROOT = Path(os.getenv("BUSINESS_FACT_RESIDUAL_ROOT") or f"/mnt/artifacts/busines
 RAW_CONTRACT_CSV = Path(os.getenv("CONSTRUCTION_CONTRACT_RAW_CSV", "/mnt/tmp/raw/contract/contract.csv"))
 RAW_AMOUNT_FIELDS = ("GCYSZJ", "D_SCBSJS_QYHTJ", "D_SCBSJS_JSJE", "f_HTJK", "YFK", "ZLBZJ")
 RAW_BALANCE_FIELDS = ("GCLJYSK_1", "GCLJYSK_2", "GCQK", "GCLJKPJE")
+SOURCE_CREATOR_CSVS = [
+    Path(item.strip())
+    for item in os.getenv(
+        "BUSINESS_FACT_SOURCE_CREATOR_CSVS",
+        os.getenv("PARTNER_SOURCE_CREATOR_CSVS", ""),
+    ).split(",")
+    if item.strip()
+]
 
 
 def clean(value) -> str:
@@ -69,6 +77,27 @@ def write_csv(path: Path, csv_rows: list[dict[str, object]]) -> None:
         writer.writerows(csv_rows)
 
 
+def read_source_creator_evidence() -> dict[tuple[str, str], dict[str, str]]:
+    evidence: dict[tuple[str, str], dict[str, str]] = {}
+    for path in SOURCE_CREATOR_CSVS:
+        if not path.is_file():
+            continue
+        with path.open("r", encoding="utf-8-sig", newline="") as handle:
+            for row in csv.DictReader(handle):
+                source_table = clean(row.get("source_table"))
+                legacy_record_id = clean(row.get("legacy_record_id"))
+                if not source_table or not legacy_record_id:
+                    continue
+                evidence[(source_table, legacy_record_id)] = {
+                    "source_table": source_table,
+                    "legacy_record_id": legacy_record_id,
+                    "creator_legacy_user_id": clean(row.get("creator_legacy_user_id")),
+                    "creator_name": clean(row.get("creator_name")),
+                    "created_time": clean(row.get("created_time")),
+                }
+    return evidence
+
+
 def model_exists(model_name: str) -> bool:
     return model_name in env.registry  # noqa: F821
 
@@ -87,8 +116,44 @@ def fact_field_values(record, field_names: tuple[str, ...]) -> list[str]:
     return values
 
 
+def source_identity(record) -> tuple[str, str]:
+    for table_field, record_field in (
+        ("legacy_source_table", "legacy_record_id"),
+        ("source_table", "legacy_record_id"),
+        ("source_table", "legacy_line_id"),
+    ):
+        if table_field in record._fields and record_field in record._fields:
+            source_table = clean(getattr(record, table_field))
+            legacy_record_id = clean(getattr(record, record_field))
+            if source_table and legacy_record_id:
+                return source_table, legacy_record_id
+    return "", ""
+
+
+def source_gap_status(
+    evidence: dict[tuple[str, str], dict[str, str]],
+    key: tuple[str, str],
+    *,
+    missing_creator: bool,
+    missing_time: bool,
+) -> tuple[str, str]:
+    if not key[0] or not key[1]:
+        return "runtime_source_key_missing", "runtime_source_key_missing"
+    row = evidence.get(key)
+    if not row:
+        return "source_evidence_absent_or_all_blank", "source_evidence_absent_or_all_blank"
+    creator_status = "not_missing"
+    time_status = "not_missing"
+    if missing_creator:
+        creator_status = "source_creator_present" if clean(row.get("creator_name")) else "source_creator_blank"
+    if missing_time:
+        time_status = "source_time_present" if clean(row.get("created_time")) else "source_time_blank"
+    return creator_status, time_status
+
+
 def classify_partner_residuals() -> tuple[dict[str, object], list[dict[str, object]]]:
     Partner = env["res.partner"].sudo().with_context(active_test=False)  # noqa: F821
+    source_evidence = read_source_creator_evidence()
     partners = Partner.search(
         [
             ("sc_source_fact_count", ">", 0),
@@ -116,6 +181,8 @@ def classify_partner_residuals() -> tuple[dict[str, object], list[dict[str, obje
     source_counter: Counter[str] = Counter()
     missing_shape_counter: Counter[str] = Counter()
     objective_field_counter: Counter[str] = Counter()
+    residual_evidence_counter: Counter[str] = Counter()
+    residual_source_counter: Counter[str] = Counter()
     detail_rows: list[dict[str, object]] = []
     for partner in partners:
         source_text = clean(partner.sc_source_fact_source)
@@ -151,18 +218,31 @@ def classify_partner_residuals() -> tuple[dict[str, object], list[dict[str, obje
                     fact_summary[f"{model_name}:time_present"] += 1
                 else:
                     fact_summary[f"{model_name}:time_blank"] += 1
+                if not creator_values or not time_values:
+                    key = source_identity(record)
+                    residual_source_counter[f"{model_name}:{key[0] or 'no_source_table'}"] += 1
+                    creator_status, time_status = source_gap_status(
+                        source_evidence,
+                        key,
+                        missing_creator=not bool(creator_values),
+                        missing_time=not bool(time_values),
+                    )
+                    if not creator_values:
+                        residual_evidence_counter[f"{model_name}:creator:{creator_status}"] += 1
+                    if not time_values:
+                        residual_evidence_counter[f"{model_name}:time:{time_status}"] += 1
         for key, count in fact_summary.items():
             objective_field_counter[key] += count
         detail_rows.append(
             {
                 "partner_id": partner.id,
-                "name": partner.name,
+                "name": clean(partner.name),
                 "customer_rank": partner.customer_rank,
                 "supplier_rank": partner.supplier_rank,
                 "source_fact_count": partner.sc_source_fact_count,
-                "source_fact_source": partner.sc_source_fact_source,
-                "source_created_by": partner.sc_source_created_by,
-                "source_created_at": partner.sc_source_created_at,
+                "source_fact_source": clean(partner.sc_source_fact_source),
+                "source_created_by": clean(partner.sc_source_created_by),
+                "source_created_at": clean(partner.sc_source_created_at),
                 "fact_field_summary": json.dumps(dict(sorted(fact_summary.items())), ensure_ascii=False, sort_keys=True),
             }
         )
@@ -172,6 +252,10 @@ def classify_partner_residuals() -> tuple[dict[str, object], list[dict[str, obje
             "missing_shape_counts": dict(sorted(missing_shape_counter.items())),
             "source_label_counts": dict(sorted(source_counter.items())),
             "objective_fact_field_counts": dict(sorted(objective_field_counter.items())),
+            "residual_source_counts": dict(sorted(residual_source_counter.items())),
+            "residual_evidence_counts": dict(sorted(residual_evidence_counter.items())),
+            "source_creator_evidence_csvs": [str(path) for path in SOURCE_CREATOR_CSVS],
+            "source_creator_evidence_keys": len(source_evidence),
             "decision": "do_not_use_odoo_import_metadata_as_business_fact",
         },
         detail_rows,
