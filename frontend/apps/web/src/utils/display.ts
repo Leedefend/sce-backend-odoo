@@ -20,6 +20,15 @@ function normalizeOptions(options?: DisplayFormatOptions): Required<DisplayForma
   };
 }
 
+function numericValue(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value !== 'string') return null;
+  const normalized = value.replace(/,/g, '').trim();
+  if (!normalized) return null;
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 export function formatDisplayValue(
   value: unknown,
   field?: Pick<FieldDescriptor, 'ttype' | 'type' | 'selection'>,
@@ -43,6 +52,16 @@ export function formatDisplayValue(
   if (fieldType === 'selection' && Array.isArray(field?.selection)) {
     const match = field.selection.find((item) => item[0] === value);
     return match ? String(match[1]) : String(value);
+  }
+
+  if (fieldType === 'integer' || fieldType === 'float' || fieldType === 'monetary') {
+    const parsed = numericValue(value);
+    if (parsed !== null) {
+      return parsed.toLocaleString('zh-CN', {
+        maximumFractionDigits: fieldType === 'integer' ? 0 : 2,
+        minimumFractionDigits: fieldType === 'integer' ? 0 : 2,
+      });
+    }
   }
 
   if (fieldType === 'many2one' && Array.isArray(value)) {

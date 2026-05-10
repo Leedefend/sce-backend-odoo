@@ -19,6 +19,7 @@ const ACTION_ID = process.env.ACTION_ID || '821';
 const MENU_ID = process.env.MENU_ID || '626';
 const EXPECTED_COMPANY = process.env.EXPECTED_COMPANY || '四川保盛建设集团有限公司';
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
+const LONG_DECIMAL_CELL_RE = /^-?\d{1,3}(?:,\d{3})*(?:\.\d{3,}|\d*\.\d{3,})$/;
 
 const ts = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15);
 const outDir = path.join(ARTIFACTS_DIR, 'company-operation-summary-browser-acceptance', ts);
@@ -124,6 +125,19 @@ async function main() {
     requireIncludes(action.text, '经营净额', 'net_header', result.errors);
     if (action.text.includes('未匹配公司')) {
       result.errors.push({ label: 'unmatched_company_should_not_show', expected: 'no 未匹配公司' });
+    }
+    const numericCellTexts = await page.evaluate(() => Array.from(
+      document.querySelectorAll('td, th, .summary-value, .footer-number-value'),
+    )
+      .map((el) => String(el.textContent || '').replace(/\s+/g, ' ').trim())
+      .filter(Boolean));
+    const longDecimalCells = numericCellTexts.filter((text) => LONG_DECIMAL_CELL_RE.test(text));
+    if (longDecimalCells.length) {
+      result.errors.push({
+        label: 'amount_decimal_places',
+        expected: 'numeric cells keep at most 2 decimals',
+        actual: longDecimalCells.slice(0, 10),
+      });
     }
     result.console_errors = page.__consoleErrors || [];
     result.pass = result.errors.length === 0 && result.console_errors.length === 0;

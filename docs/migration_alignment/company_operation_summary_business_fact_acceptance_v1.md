@@ -104,11 +104,12 @@ Browser acceptance on daily dev port `http://localhost:18081`:
 | `收入合计` visible | `true` |
 | `支出合计` visible | `true` |
 | `经营净额` visible | `true` |
+| amount cells use at most two decimals | `true` |
 | `未匹配公司` absent | `true` |
 
 Browser evidence:
 
-`artifacts/company-operation-summary-browser-acceptance/20260510T125430/summary.json`
+`artifacts/company-operation-summary-browser-acceptance/20260510T130215/summary.json`
 
 ## Residual Interpretation
 
