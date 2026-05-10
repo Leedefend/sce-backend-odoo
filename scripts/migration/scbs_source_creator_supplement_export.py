@@ -118,9 +118,6 @@ SELECT
   COALESCE(CONVERT(varchar(23), src.{created_col}, 121), '') AS created_time
 FROM required r
 JOIN dbo.{table} src ON CONVERT(varchar(max), src.{id_col}) = r.record_id
-WHERE NULLIF(LTRIM(RTRIM(COALESCE(CONVERT(varchar(max), src.{creator_col}), ''))), '') IS NOT NULL
-   OR NULLIF(LTRIM(RTRIM(COALESCE(CONVERT(varchar(max), src.{creator_id_col}), ''))), '') IS NOT NULL
-   OR src.{created_col} IS NOT NULL
 ORDER BY src.{id_col};
 """
     completed = subprocess.run(sqlcmd(sql), text=True, capture_output=True, check=False)
