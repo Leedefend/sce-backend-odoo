@@ -77,8 +77,8 @@ before = env.cr.fetchone()[0]  # noqa: F821
 env.cr.execute(  # noqa: F821
     """
     DELETE FROM sc_legacy_business_fact_residual
-    WHERE source_database IN (
-      SELECT DISTINCT source_database FROM tmp_legacy_business_fact_residual
+    WHERE (source_database, source_table) IN (
+      SELECT DISTINCT source_database, source_table FROM tmp_legacy_business_fact_residual
     )
     """
 )
