@@ -5,14 +5,13 @@
         <field name="model">sc.comprehensive.cost.summary</field>
         <field name="arch" type="xml">
             <search string="成本统计表（综合）">
-                <field name="project_id"/>
                 <field name="project_name"/>
                 <filter string="有收入" name="has_income" domain="[('receipt_amount', '!=', 0)]"/>
                 <filter string="有成本" name="has_cost" domain="[('total_cost_amount', '!=', 0)]"/>
                 <filter string="有材料成本" name="has_material_cost" domain="[('material_cost_amount', '!=', 0)]"/>
                 <filter string="有费用成本" name="has_expense_cost" domain="[('expense_cost_amount', '!=', 0)]"/>
                 <filter string="有未付款" name="has_payable_unpaid" domain="[('payable_unpaid_amount', '!=', 0)]"/>
-                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_name'}"/>
                 <filter string="按公司" name="group_company" context="{'group_by': 'company_id'}"/>
             </search>
         </field>
@@ -23,8 +22,8 @@
         <field name="model">sc.comprehensive.cost.summary</field>
         <field name="arch" type="xml">
             <tree string="成本统计表（综合）" create="0" edit="0" delete="0">
-                <field name="project_id"/>
-                <field name="project_name" optional="hide"/>
+                <field name="project_name"/>
+                <field name="project_id" optional="hide"/>
                 <field name="income_contract_amount" sum="收入合同金额合计"/>
                 <field name="receipt_amount" sum="已收款合计"/>
                 <field name="output_invoice_amount" sum="已开票合计"/>
@@ -59,8 +58,8 @@
                 <sheet>
                     <group>
                         <group>
-                            <field name="project_id"/>
                             <field name="project_name"/>
+                            <field name="project_id"/>
                             <field name="company_id"/>
                             <field name="currency_id"/>
                         </group>
@@ -107,7 +106,7 @@
         <field name="model">sc.comprehensive.cost.summary</field>
         <field name="arch" type="xml">
             <pivot string="成本统计表（综合）">
-                <field name="project_id" type="row"/>
+                <field name="project_name" type="row"/>
                 <field name="receipt_amount" type="measure"/>
                 <field name="material_cost_amount" type="measure"/>
                 <field name="expense_cost_amount" type="measure"/>

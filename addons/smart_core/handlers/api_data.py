@@ -489,6 +489,26 @@ class ApiDataHandler(BaseIntentHandler):
             return {}
         if getattr(env_model, "_auto", True) is False:
             try:
+                rows = env_model.read_group(
+                    domain or [],
+                    [f"{field_name}:sum" for field_name in aggregate_fields],
+                    [],
+                    lazy=False,
+                )
+            except Exception:
+                _logger.exception("numeric aggregate read_group fallback failed model=%s", env_model._name)
+            else:
+                row = (rows or [{}])[0] or {}
+                out: Dict[str, Dict[str, Any]] = {}
+                for field_name in aggregate_fields:
+                    value = row.get(f"{field_name}_sum")
+                    if not isinstance(value, (int, float)):
+                        value = row.get(field_name)
+                    if isinstance(value, (int, float)):
+                        out[field_name] = {"sum": value}
+                if out:
+                    return out
+            try:
                 total = env_model.search_count(domain or [])
             except Exception:
                 total = None

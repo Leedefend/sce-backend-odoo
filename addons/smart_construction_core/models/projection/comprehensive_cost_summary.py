@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from odoo import fields, models, tools
+from odoo import api, fields, models
+from odoo.exceptions import UserError
 
 
 class ScComprehensiveCostSummary(models.Model):
@@ -41,6 +42,19 @@ class ScComprehensiveCostSummary(models.Model):
     salary_line_count = fields.Integer(string="工资单数", readonly=True)
     coverage_note = fields.Char(string="承载说明", readonly=True)
 
+    def _raise_readonly_projection(self):
+        raise UserError("成本统计表（综合）是历史事实汇总结果，请从来源业务单据维护数据。")
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        self._raise_readonly_projection()
+
+    def write(self, vals):
+        self._raise_readonly_projection()
+
+    def unlink(self):
+        self._raise_readonly_projection()
+
     def init(self):
         self._cr.execute(
             """
@@ -61,10 +75,31 @@ class ScComprehensiveCostSummary(models.Model):
         )
         if not all(self._cr.fetchone()):
             return
-        tools.drop_view_if_exists(self._cr, self._table)
         self._cr.execute(
             f"""
-            CREATE OR REPLACE VIEW {self._table} AS (
+            DO $$
+            BEGIN
+                IF EXISTS (
+                    SELECT 1 FROM pg_class
+                    WHERE oid = to_regclass('{self._table}')
+                      AND relkind = 'v'
+                ) THEN
+                    EXECUTE 'DROP VIEW IF EXISTS {self._table} CASCADE';
+                ELSIF EXISTS (
+                    SELECT 1 FROM pg_class
+                    WHERE oid = to_regclass('{self._table}')
+                      AND relkind = 'm'
+                ) THEN
+                    EXECUTE 'DROP MATERIALIZED VIEW IF EXISTS {self._table} CASCADE';
+                ELSE
+                    EXECUTE 'DROP TABLE IF EXISTS {self._table} CASCADE';
+                END IF;
+            END $$;
+            """
+        )
+        self._cr.execute(
+            f"""
+            CREATE TABLE {self._table} AS (
                 WITH income_contract AS (
                     SELECT project_id, SUM(COALESCE(amount_total, 0.0)) AS income_contract_amount, COUNT(*)::integer AS cnt
                     FROM construction_contract
@@ -198,10 +233,18 @@ class ScComprehensiveCostSummary(models.Model):
                 )
                 SELECT
                     row_number() OVER (ORDER BY k.project_id NULLS LAST)::integer AS id,
-                    COALESCE(p.name->>'zh_CN', p.name->>'en_US', '未匹配项目') AS display_name,
+                    CASE
+                        WHEN COALESCE(p.name->>'zh_CN', p.name->>'en_US', '') ~ '^[0-9a-fA-F]{{32}}$'
+                        THEN CONCAT('历史未归档项目 ', COALESCE(p.name->>'zh_CN', p.name->>'en_US'))
+                        ELSE COALESCE(p.name->>'zh_CN', p.name->>'en_US', '未匹配项目')
+                    END AS display_name,
                     COALESCE(p.company_id, (SELECT id FROM res_company ORDER BY id LIMIT 1)) AS company_id,
                     k.project_id,
-                    COALESCE(p.name->>'zh_CN', p.name->>'en_US', '未匹配项目') AS project_name,
+                    CASE
+                        WHEN COALESCE(p.name->>'zh_CN', p.name->>'en_US', '') ~ '^[0-9a-fA-F]{{32}}$'
+                        THEN CONCAT('历史未归档项目 ', COALESCE(p.name->>'zh_CN', p.name->>'en_US'))
+                        ELSE COALESCE(p.name->>'zh_CN', p.name->>'en_US', '未匹配项目')
+                    END AS project_name,
                     COALESCE(rc.currency_id, (SELECT currency_id FROM res_company ORDER BY id LIMIT 1)) AS currency_id,
                     COALESCE(ic.income_contract_amount, 0.0) AS income_contract_amount,
                     COALESCE(r.receipt_amount, 0.0) AS receipt_amount,
@@ -279,3 +322,6 @@ class ScComprehensiveCostSummary(models.Model):
             )
             """
         )
+        self._cr.execute(f"ALTER TABLE {self._table} ADD PRIMARY KEY (id)")
+        self._cr.execute(f"CREATE INDEX {self._table}_project_id_idx ON {self._table} (project_id)")
+        self._cr.execute(f"CREATE INDEX {self._table}_project_name_idx ON {self._table} (project_name)")
