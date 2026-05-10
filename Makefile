@@ -1851,7 +1851,7 @@ fe.gate:
 	@pnpm -C frontend gate
 
 verify.frontend.build: guard.prod.forbid
-	@pnpm -C frontend/apps/web build
+	@bash scripts/dev/frontend_static_build.sh
 
 verify.frontend.typecheck.strict: guard.prod.forbid
 	@pnpm -C frontend/apps/web typecheck:strict
