@@ -934,6 +934,12 @@ export const useSessionStore = defineStore('session', {
       if (bootstrapIntent !== 'system.init' && bootstrapIntent !== 'session.bootstrap') {
         throw new Error(`unsupported bootstrap intent: ${bootstrapIntent}`);
       }
+      const currentUrl = new URL(window.location.href);
+      const currentSceneKey = String(
+        currentUrl.searchParams.get('scene_key')
+        || currentUrl.searchParams.get('sceneKey')
+        || '',
+      ).trim();
       const debugIntent =
         import.meta.env.DEV ||
         localStorage.getItem('DEBUG_INTENT') === '1' ||
@@ -955,9 +961,10 @@ export const useSessionStore = defineStore('session', {
         params: {
           scene: 'web',
           with_preload: false,
-          scene_ready_mode: 'registry',
+          scene_ready_mode: currentSceneKey ? 'full' : 'registry',
           with: ['workspace_home'],
           root_xmlid: 'smart_construction_core.menu_sc_root',
+          ...(currentSceneKey ? { scene_key: currentSceneKey } : {}),
           ...(this.projectContext?.selected?.id ? { current_project_id: this.projectContext.selected.id } : {}),
         },
       };
