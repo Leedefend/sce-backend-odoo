@@ -31,8 +31,17 @@ export interface SceneTile {
 
 export interface SceneListProfile {
   columns?: string[];
+  fact_columns?: string[];
   hidden_columns?: string[];
   column_labels?: Record<string, string>;
+  preference_policy?: {
+    scope?: 'ui_only' | string;
+    allow_visibility?: boolean;
+    allow_order?: boolean;
+    allow_width?: boolean;
+    locked_columns?: string[];
+    must_request_columns?: string[];
+  };
   row_primary?: string;
   row_secondary?: string;
   status_field?: string;

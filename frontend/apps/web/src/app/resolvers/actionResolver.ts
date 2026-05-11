@@ -112,6 +112,18 @@ export async function resolveAction(
     candidateMeta = mergeMeta(seedMeta, resolveMetaFromContract(legacyContract, actionId));
   }
 
+  const hasUnifiedV2Contract = Boolean(
+    legacyContract
+    && typeof legacyContract === 'object'
+    && !Array.isArray(legacyContract)
+    && (legacyContract as Record<string, unknown>).__unified_page_contract_v2,
+  );
+  if (hasUnifiedV2Contract) {
+    const meta = mergeMeta(seedMeta, resolveMetaFromContract(legacyContract, actionId));
+    if (!meta.action_id) meta.action_id = Number(actionId || 0);
+    return { meta, contract: legacyContract };
+  }
+
   if (isLiteContractPilotCandidate(candidateMeta)) {
     const liteContract = await loadModelLitePreviewContract(String(candidateMeta?.model || ''), { viewType: 'tree' });
     if (liteContract) {

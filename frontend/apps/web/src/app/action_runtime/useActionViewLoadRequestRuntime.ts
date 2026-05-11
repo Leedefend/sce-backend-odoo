@@ -91,8 +91,15 @@ type ExecuteLoadDataRequestResult =
 
 export function useActionViewLoadRequestRuntime() {
   async function executeLoadDataRequest(options: ExecuteLoadDataRequestOptions): Promise<ExecuteLoadDataRequestResult> {
+    const profileColumns = (
+      options.listProfile
+      && typeof options.listProfile === 'object'
+      && Array.isArray((options.listProfile as { columns?: unknown[] }).columns)
+    )
+      ? ((options.listProfile as { columns?: unknown[] }).columns || []).map((item) => String(item || '').trim()).filter(Boolean)
+      : [];
     const contractColumns = options.convergeColumnsForSurface(
-      options.extractColumnsFromContract(options.contract, []),
+      options.extractColumnsFromContract(options.contract, profileColumns),
       options.typedContract.fields || {},
     );
     const kanbanContractFields = options.extractKanbanFields(options.contract);
@@ -213,11 +220,15 @@ export function useActionViewLoadRequestRuntime() {
       };
     }
     const result = await options.listRecordsRaw(requestPayload);
+    const resolvedContractColumns = options.uniqueFields([
+      ...contractColumns,
+      ...requestedFields,
+    ]);
 
     return {
       blocked: false,
       result,
-      contractColumns,
+      contractColumns: resolvedContractColumns,
       requestedFields,
       baseDomain,
       activeDomain,

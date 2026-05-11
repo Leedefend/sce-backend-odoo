@@ -646,6 +646,17 @@ function resolveVisibleActionTarget(target: SceneTarget, sceneKey = '') {
     }
   }
 
+  const actionXmlid = String(target.action_xmlid || '').trim();
+  if (actionXmlid) {
+    const actionNode = findActionNodeByActionXmlid(session.menuTree, actionXmlid);
+    if (actionNode?.meta?.action_id) {
+      return {
+        actionId: actionNode.meta.action_id,
+        menuId: Number(actionNode.menu_id || actionNode.id || target.menu_id || 0) || undefined,
+      };
+    }
+  }
+
   const model = String(target.model || '').trim();
   if (model) {
     const modelNode = findActionNodeByModelRef(session.menuTree, model);
@@ -665,6 +676,14 @@ function resolveVisibleActionTarget(target: SceneTarget, sceneKey = '') {
         menuId: Number(sceneNode.menu_id || sceneNode.id || 0) || undefined,
       };
     }
+  }
+
+  const routeActionId = Number(route.query.action_id || 0);
+  if (routeActionId > 0) {
+    return {
+      actionId: routeActionId,
+      menuId: Number(route.query.menu_id || 0) || undefined,
+    };
   }
 
   return null;
@@ -876,7 +895,8 @@ async function resolveScene() {
       || route.query.action_id
       || route.query.scene_label
     );
-    if (hasForeignSceneQuery && isCanonicalSceneOwnerTarget(target, sceneKey)) {
+    const hasActionRouteContext = Number(route.query.action_id || 0) > 0 || Number(route.query.menu_id || 0) > 0;
+    if (hasForeignSceneQuery && !hasActionRouteContext && isCanonicalSceneOwnerTarget(target, sceneKey)) {
       await router.replace({ path: route.path, query: asRouteQuery(canonicalOwnerQuery) });
       return;
     }
@@ -1171,6 +1191,30 @@ function findActionNodeBySceneKey(nodes: NavNode[], sceneKey: string): NavNode |
           || '',
       ).trim();
       if (nodeSceneKey === wanted && node.meta?.action_id) {
+        return node;
+      }
+      if (node.children?.length) {
+        const found = walk(node.children);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+  return walk(nodes) || null;
+}
+
+function findActionNodeByActionXmlid(nodes: NavNode[], actionXmlid: string): NavNode | null {
+  if (!actionXmlid) return null;
+  const wanted = String(actionXmlid || '').trim();
+  const walk = (items: NavNode[]): NavNode | null => {
+    for (const node of items) {
+      const nodeActionXmlid = String(
+        (node as NavNode & { action_xmlid?: string; actionXmlid?: string }).action_xmlid
+          || (node as NavNode & { action_xmlid?: string; actionXmlid?: string }).actionXmlid
+          || node.meta?.action_xmlid
+          || '',
+      ).trim();
+      if (nodeActionXmlid === wanted && node.meta?.action_id) {
         return node;
       }
       if (node.children?.length) {

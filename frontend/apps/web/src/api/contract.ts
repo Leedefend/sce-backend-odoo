@@ -47,6 +47,16 @@ function stableFieldName(name: string) {
   return String(name || '').trim();
 }
 
+function uniqueFields(fields: string[]) {
+  const seen = new Set<string>();
+  return fields.filter((field) => {
+    const name = String(field || '').trim();
+    if (!name || seen.has(name)) return false;
+    seen.add(name);
+    return true;
+  });
+}
+
 function guessRelationModel(fieldName: string, model: string): string {
   const normalized = stableFieldName(fieldName);
   const relationMap: Record<string, string> = {
@@ -297,6 +307,11 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
   const sourceContext = resolveV2SourceContext(v2Contract);
   const renderProfile = String(sourceContext.renderProfile || sourceContext.render_profile || '').trim();
   const v2Fields = collectUnifiedPageContractV2FieldWidgets(v2Contract);
+  const v2PrimarySource = asDict(asDict(asDict(v2Contract.dataContract).dataSource).primary);
+  const v2PrimaryParams = asDict(v2PrimarySource.params);
+  const v2PrimaryFields = Array.isArray(v2PrimaryParams.fields)
+    ? (v2PrimaryParams.fields as unknown[]).map((item) => String(item || '').trim()).filter(Boolean)
+    : [];
   const mainData = resolveUnifiedPageContractV2MainData(v2Contract);
   const v2SourceContext = resolveUnifiedPageContractV2SourceContext(v2Contract);
   const globalStatus = resolveUnifiedPageContractV2GlobalStatus(v2Contract);
@@ -312,6 +327,23 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
     if (fieldName) acc[fieldName] = widget.label || fieldName;
     return acc;
   }, {});
+  const fallbackListColumns = uniqueFields(v2PrimaryFields.filter((name) => name !== 'id'));
+  if (!v2Fields.length && fallbackListColumns.length && (viewType === 'list' || viewType === 'tree')) {
+    const projectListLabels: Record<string, string> = {
+      name: '名称',
+      project_code: '项目编号',
+      operation_strategy: '经营方式',
+      business_nature: '经营性质',
+      lifecycle_state: '项目状态',
+      manager_id: '项目经理',
+      write_date: '更新时间',
+    };
+    fallbackListColumns.forEach((name) => {
+      if (!fieldLabels[name]) {
+        fieldLabels[name] = projectListLabels[name] || name;
+      }
+    });
+  }
   const fields = v2Fields.reduce<Record<string, Dict>>((acc, widget) => {
     const descriptor = buildLegacyFieldDescriptor(widget, mainData, model);
     if (descriptor.name) {
@@ -319,6 +351,20 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
     }
     return acc;
   }, {});
+  if (!v2Fields.length && fallbackListColumns.length && (viewType === 'list' || viewType === 'tree')) {
+    fallbackListColumns.forEach((name) => {
+      if (fields[name]) return;
+      fields[name] = {
+        name,
+        string: fieldLabels[name] || name,
+        label: fieldLabels[name] || name,
+        type: 'char',
+        ttype: 'char',
+        readonly: false,
+        required: false,
+      };
+    });
+  }
   const fieldNames = Object.keys(fields);
   const context = asDict(sourceContext.context);
   const head: Dict = {
@@ -393,6 +439,31 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
       ...(viewType !== 'form' ? { [viewType]: formView } : {}),
     },
     visible_fields: fieldNames,
+    list_profile: (
+      !v2Fields.length
+      && fallbackListColumns.length
+      && (viewType === 'list' || viewType === 'tree')
+    )
+      ? {
+          columns: fallbackListColumns,
+          fact_columns: fallbackListColumns,
+          hidden_columns: [],
+          column_labels: fallbackListColumns.reduce<Record<string, string>>((acc, name) => {
+            acc[name] = fieldLabels[name] || name;
+            return acc;
+          }, {}),
+          row_primary: fallbackListColumns.includes('name') ? 'name' : fallbackListColumns[0] || '',
+          row_secondary: '',
+          preference_policy: {
+            scope: 'ui_only',
+            allow_visibility: true,
+            allow_order: true,
+            allow_width: true,
+            locked_columns: [],
+            must_request_columns: fallbackListColumns,
+          },
+        }
+      : undefined,
     field_groups: [],
     contract_surface: contractSurface,
     render_mode: renderMode,

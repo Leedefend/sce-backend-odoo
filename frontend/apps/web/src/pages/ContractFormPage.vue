@@ -945,11 +945,7 @@ const intakeMissingRequiredLabels = computed(() => {
       if (Array.isArray(value)) return value.length === 0;
       return false;
     })
-    .map((field) => {
-      const label = String(field.label || '').trim();
-      if (label === '名称') return '项目名称';
-      return label;
-    })
+    .map((field) => String(field.label || '').trim())
     .slice(0, 5);
 });
 

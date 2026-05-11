@@ -69,6 +69,14 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
       const label = String(row.label || '').trim();
       if (name && label) labels[name] = label;
     });
+    const head = ((contract as Dict).head && typeof (contract as Dict).head === 'object')
+      ? (contract as Dict).head as Dict
+      : {};
+    const modelName = String((contract as Dict).model || head.model || '').trim();
+    if (modelName === 'project.project') {
+      labels.name = '名称';
+      labels.business_nature = '经营性质';
+    }
     return labels;
   });
 
@@ -369,6 +377,9 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
     const hiddenColumns = Array.isArray(rawProfile.hidden_columns)
       ? rawProfile.hidden_columns.map((item) => String(item || '').trim()).filter(Boolean)
       : [];
+    const factColumns = Array.isArray(rawProfile.fact_columns)
+      ? rawProfile.fact_columns.map((item) => String(item || '').trim()).filter(Boolean)
+      : [];
     const columnLabels: Record<string, string> = {};
     Object.entries((rawProfile.column_labels || {}) as Dict).forEach(([name, labelRaw]) => {
       const label = String(labelRaw || '').trim();
@@ -422,13 +433,28 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
           : undefined,
       },
     };
+    const rawPreferencePolicy = (rawProfile.preference_policy || {}) as Dict;
+    const preferencePolicy = {
+      scope: String(rawPreferencePolicy.scope || '').trim() || undefined,
+      allow_visibility: rawPreferencePolicy.allow_visibility !== false,
+      allow_order: rawPreferencePolicy.allow_order !== false,
+      allow_width: rawPreferencePolicy.allow_width !== false,
+      locked_columns: Array.isArray(rawPreferencePolicy.locked_columns)
+        ? rawPreferencePolicy.locked_columns.map((item) => String(item || '').trim()).filter(Boolean)
+        : [],
+      must_request_columns: Array.isArray(rawPreferencePolicy.must_request_columns)
+        ? rawPreferencePolicy.must_request_columns.map((item) => String(item || '').trim()).filter(Boolean)
+        : [],
+    };
     if (!columns.length && !Object.keys(columnLabels).length && !rowPrimary && !rowSecondary && !statusField && !metricFields.length && !Object.keys(rawBatchPolicy).length && !Object.keys(rawGrouping).length) {
       return null;
     }
     return {
       columns,
+      fact_columns: factColumns,
       hidden_columns: hiddenColumns,
       column_labels: columnLabels,
+      preference_policy: preferencePolicy,
       row_primary: rowPrimary,
       row_secondary: rowSecondary,
       status_field: statusField,
