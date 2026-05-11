@@ -3,7 +3,14 @@ import { ApiError } from './client';
 import type { ActionContract } from '@sc/schema';
 import { extractLiteContractFromIntentBody } from '../app/runtime/unifiedPageContractLitePilot';
 import type { UnifiedPageContractLite } from '../app/contracts/unifiedPageContractLite';
-import type { UnifiedPageContractV2 } from '../app/contracts/unifiedPageContractV2';
+import {
+  collectUnifiedPageContractV2FieldWidgets,
+  resolveUnifiedPageContractV2GlobalStatus,
+  resolveUnifiedPageContractV2MainData,
+  resolveUnifiedPageContractV2SourceContext,
+  type UnifiedPageContractV2,
+  type UnifiedPageContractV2Widget,
+} from '../app/contracts/unifiedPageContractV2';
 
 type LoadActionContractOptions = {
   recordId?: number | null;
@@ -38,34 +45,259 @@ function resolveV2SourceContext(v2Contract: unknown): Dict {
   return asDict(dataMeta.sourceContext || runtime.sourceContext);
 }
 
-function synthesizeLegacyFromV2(v2Contract: Dict): Dict {
+function stableFieldName(name: string) {
+  return String(name || '').trim();
+}
+
+function guessRelationModel(fieldName: string, model: string): string {
+  const normalized = stableFieldName(fieldName);
+  const relationMap: Record<string, string> = {
+    partner_id: 'res.partner',
+    user_id: 'res.users',
+    manager_id: 'res.users',
+    company_id: 'res.company',
+    country_id: 'res.country',
+    currency_id: 'res.currency',
+    project_id: 'project.project',
+    task_id: 'project.task',
+    parent_id: model,
+  };
+  return relationMap[normalized] || '';
+}
+
+function inferFieldType(widget: UnifiedPageContractV2Widget, mainData: Dict, model: string): string {
+  const widgetType = String(widget.widgetType || '').trim().toLowerCase();
+  const fieldName = stableFieldName(widget.fieldCode);
+  const value = mainData[fieldName];
+  if (widgetType === 'date' || widgetType === 'datetime') return widgetType;
+  if (widgetType === 'textarea') return 'text';
+  if (widgetType === 'select') return 'many2one';
+  if (widgetType === 'table') return fieldName.endsWith('_ids') || Array.isArray(value) ? 'one2many' : 'many2many';
+  if (typeof value === 'boolean') return 'boolean';
+  if (typeof value === 'number') return Number.isInteger(value) ? 'integer' : 'float';
+  if (Array.isArray(value)) return fieldName.endsWith('_ids') ? 'many2many' : 'one2many';
+  if (fieldName.endsWith('_id')) return 'many2one';
+  return 'char';
+}
+
+function buildLegacyFieldDescriptor(widget: UnifiedPageContractV2Widget, mainData: Dict, model: string): Dict {
+  const name = stableFieldName(widget.fieldCode);
+  const type = inferFieldType(widget, mainData, model);
+  const value = mainData[name];
+  const componentConfig = asDict(widget.componentConfig);
+  const readonly = componentConfig.readonly === true;
+  const required = componentConfig.required === true;
+  const relation = type === 'many2one' ? guessRelationModel(name, model) : '';
+  const relationEntry = type === 'many2one'
+    ? {
+        model: relation,
+        create_mode: 'disabled',
+        can_read: true,
+        can_create: false,
+        delete_policy: {},
+        reason_code: '',
+        default_vals: {},
+        inline_create: {
+          enabled: false,
+          create_on_no_match: false,
+          name_field: 'name',
+          match: 'exact_label',
+        },
+        action_id: null,
+        menu_id: null,
+        source: 'ui.contract.v2',
+        ui_labels: {
+          search_more: '搜索更多',
+          create_and_edit: '创建并编辑',
+          quick_create: '快速创建',
+          inline_create: '使用“%s”创建',
+          missing_create_entry: '没有可创建入口',
+        },
+      }
+    : undefined;
+  const descriptor: Dict = {
+    name,
+    string: widget.label || name,
+    label: widget.label || name,
+    type,
+    ttype: type,
+    widget: widget.widgetType || '',
+    readonly,
+    required,
+    optional: componentConfig.optional === true,
+    invisible: componentConfig.invisible === true,
+    column_invisible: componentConfig.column_invisible === true,
+  };
+  if (relation) {
+    descriptor.relation = relation;
+  }
+  if (relationEntry) {
+    descriptor.relation_entry = relationEntry;
+  }
+  if (type === 'selection' && Array.isArray(value)) {
+    descriptor.selection = value;
+  }
+  return descriptor;
+}
+
+function buildLegacyFormLayout(fieldWidgets: UnifiedPageContractV2Widget[], fieldLabels: Record<string, string>): Dict[] {
+  return [{
+    type: 'sheet',
+    string: 'sheet',
+    children: [{
+      type: 'group',
+      string: 'group',
+      children: fieldWidgets.map((widget) => ({
+        type: 'field',
+        name: stableFieldName(widget.fieldCode),
+        string: fieldLabels[stableFieldName(widget.fieldCode)] || widget.label || widget.fieldCode,
+      })),
+    }],
+  }];
+}
+
+function buildLegacySubViews(fieldWidgets: UnifiedPageContractV2Widget[], mainData: Dict, model: string): Dict {
+  const out: Dict = {};
+  fieldWidgets.forEach((widget) => {
+    const fieldName = stableFieldName(widget.fieldCode);
+    const type = inferFieldType(widget, mainData, model);
+    if (type !== 'one2many' && type !== 'many2many') return;
+    out[fieldName] = {
+      tree: { columns: ['display_name'] },
+      policies: {
+        inline_edit: true,
+        can_create: true,
+        can_unlink: true,
+        ui_labels: {
+          add_row: '添加行',
+          remove: '移除',
+          restore: '撤销',
+        },
+      },
+    };
+  });
+  return out;
+}
+
+function buildSurfaceMapping(surface: string, renderMode: string, sourceMode: string) {
+  return {
+    contract_surface: surface,
+    render_mode: renderMode,
+    source_mode: sourceMode,
+    governed_from_native: surface !== 'native',
+    compat_trimmed: true,
+  };
+}
+
+function synthesizeLegacyFromV2(v2Contract: Dict, requestParams: Dict = {}): Dict {
   const pageInfo = asDict(v2Contract.pageInfo);
   const dataContract = asDict(v2Contract.dataContract);
   const sourceContext = resolveV2SourceContext(v2Contract);
   const renderProfile = String(sourceContext.renderProfile || sourceContext.render_profile || '').trim();
+  const v2Fields = collectUnifiedPageContractV2FieldWidgets(v2Contract);
+  const mainData = resolveUnifiedPageContractV2MainData(v2Contract);
+  const v2SourceContext = resolveUnifiedPageContractV2SourceContext(v2Contract);
+  const globalStatus = resolveUnifiedPageContractV2GlobalStatus(v2Contract);
+  const model = String(pageInfo.model || '').trim();
+  const viewType = String(pageInfo.viewType || requestParams.view_type || 'form').trim() || 'form';
+  const contractSurface = String(requestParams.contract_surface || requestParams.surface || 'user').trim().toLowerCase() || 'user';
+  const sourceMode = String(requestParams.source_mode || '').trim() || 'governance_pipeline';
+  const renderMode = contractSurface === 'native' ? 'native' : 'governed';
+  const fieldLabels = v2Fields.reduce<Record<string, string>>((acc, widget) => {
+    const fieldName = stableFieldName(widget.fieldCode);
+    if (fieldName) acc[fieldName] = widget.label || fieldName;
+    return acc;
+  }, {});
+  const fields = v2Fields.reduce<Record<string, Dict>>((acc, widget) => {
+    const descriptor = buildLegacyFieldDescriptor(widget, mainData, model);
+    if (descriptor.name) {
+      acc[descriptor.name as string] = descriptor;
+    }
+    return acc;
+  }, {});
+  const fieldNames = Object.keys(fields);
   const context = asDict(sourceContext.context);
   const head: Dict = {
-    model: pageInfo.model,
-    view_type: pageInfo.viewType,
+    model,
+    view_type: viewType,
     title: pageInfo.pageName,
     ...(renderProfile ? { render_profile: renderProfile } : {}),
     ...(Object.keys(context).length ? { context } : {}),
+    permissions: {
+      rights: {
+        read: true,
+        write: globalStatus?.pageAuth === 'read' ? false : true,
+        create: globalStatus?.pageAuth === 'read' ? false : true,
+        unlink: globalStatus?.pageAuth === 'read' ? false : true,
+      },
+    },
   };
+  const formLayout = buildLegacyFormLayout(v2Fields, fieldLabels);
+  const subviews = buildLegacySubViews(v2Fields, mainData, model);
+  const chatterEnabled = fieldNames.some((name) => ['message_ids', 'message_follower_ids', 'website_message_ids'].includes(name));
+  const attachmentsEnabled = fieldNames.some((name) => ['message_attachment_count', 'doc_count', 'attachment_ids'].includes(name));
+  const formView = viewType === 'form'
+    ? {
+        layout: formLayout,
+        fields: fieldNames,
+        subviews,
+        ui_labels: {
+          reload: '刷新',
+          discard: '放弃',
+          save: '保存',
+          cancel: '取消',
+        },
+        ...(chatterEnabled ? { chatter: { enabled: true, label: '沟通', actions: [] } } : {}),
+        ...(attachmentsEnabled ? {
+          attachments: {
+            enabled: true,
+            upload: { max_bytes: 25 * 1024 * 1024 },
+            ui_labels: {
+              label: '附件',
+              upload: '上传附件',
+              uploading: '上传中...',
+              download: '下载',
+            },
+          },
+        } : {}),
+      }
+    : {
+        layout: formLayout,
+        fields: fieldNames,
+        subviews,
+        ui_labels: {
+          reload: '刷新',
+          discard: '放弃',
+          save: '保存',
+          cancel: '取消',
+        },
+      };
   return {
-    model: pageInfo.model,
-    view_type: pageInfo.viewType,
+    model,
+    view_type: viewType,
     render_profile: renderProfile || undefined,
     head,
-    fields: {},
-    views: {},
-    __v2_main_data: asDict(dataContract.mainData),
+    fields,
+    views: {
+      form: formView,
+      ...(viewType !== 'form' ? { [viewType]: formView } : {}),
+    },
+    visible_fields: fieldNames,
+    field_groups: [],
+    contract_surface: contractSurface,
+    render_mode: renderMode,
+    source_mode: sourceMode,
+    governed_from_native: contractSurface !== 'native',
+    surface_mapping: buildSurfaceMapping(contractSurface, renderMode, sourceMode),
+    __v2_main_data: mainData,
+    __v2_source_context: v2SourceContext,
   };
 }
 
-function adaptUnifiedPageContractV2Raw(result: IntentRawResult<Dict>): LegacyContractRawResult {
+function adaptUnifiedPageContractV2Raw(result: IntentRawResult<Dict>, requestParams: Dict): LegacyContractRawResult {
   const v2Contract = asDict(result.data);
   const source = resolveCompatSource(v2Contract);
-  const legacy = Object.keys(source).length ? asDict(source.ui_contract) : synthesizeLegacyFromV2(v2Contract);
+  const legacy = Object.keys(source).length ? asDict(source.ui_contract) : synthesizeLegacyFromV2(v2Contract, requestParams);
   const sourceMeta = asDict(source.source_meta);
   const sourceContext = resolveV2SourceContext(v2Contract);
   const sourceContextRaw = asDict(sourceContext.context);
@@ -109,7 +341,7 @@ async function requestUnifiedPageContractV2Raw(params: Record<string, unknown>) 
       ...params,
     },
   });
-  const adapted = adaptUnifiedPageContractV2Raw(result);
+  const adapted = adaptUnifiedPageContractV2Raw(result, params);
   if (!Object.keys(adapted.data || {}).length) {
     throw new ApiError('ui.contract.v2 missing legacy compatibility payload', 500, result.traceId, {
       reasonCode: 'UNIFIED_PAGE_CONTRACT_V2_COMPAT_MISSING',
