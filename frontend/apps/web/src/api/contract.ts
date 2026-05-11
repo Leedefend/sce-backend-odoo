@@ -24,17 +24,10 @@ type LoadModelContractOptions = LoadActionContractOptions & {
 };
 
 type Dict = Record<string, unknown>;
-type LegacyContractRawResult = IntentRawResult<ActionContract & Dict>;
+type ProjectionContractRawResult = IntentRawResult<ActionContract & Dict>;
 
 function asDict(value: unknown): Dict {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Dict : {};
-}
-
-function resolveCompatSource(v2Contract: unknown): Dict {
-  const root = asDict(v2Contract);
-  const meta = asDict(root.meta);
-  const compat = asDict(meta.compat);
-  return asDict(compat.ui_contract);
 }
 
 function resolveV2SourceContext(v2Contract: unknown): Dict {
@@ -185,13 +178,11 @@ function buildSurfaceMapping(surface: string, renderMode: string, sourceMode: st
     render_mode: renderMode,
     source_mode: sourceMode,
     governed_from_native: surface !== 'native',
-    compat_trimmed: true,
   };
 }
 
-function synthesizeLegacyFromV2(v2Contract: Dict, requestParams: Dict = {}): Dict {
+function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}): Dict {
   const pageInfo = asDict(v2Contract.pageInfo);
-  const dataContract = asDict(v2Contract.dataContract);
   const sourceContext = resolveV2SourceContext(v2Contract);
   const renderProfile = String(sourceContext.renderProfile || sourceContext.render_profile || '').trim();
   const v2Fields = collectUnifiedPageContractV2FieldWidgets(v2Contract);
@@ -294,24 +285,22 @@ function synthesizeLegacyFromV2(v2Contract: Dict, requestParams: Dict = {}): Dic
   };
 }
 
-function adaptUnifiedPageContractV2Raw(result: IntentRawResult<Dict>, requestParams: Dict): LegacyContractRawResult {
+function adaptUnifiedPageContractV2Raw(result: IntentRawResult<Dict>, requestParams: Dict): ProjectionContractRawResult {
   const v2Contract = asDict(result.data);
-  const source = resolveCompatSource(v2Contract);
-  const legacy = Object.keys(source).length ? asDict(source.ui_contract) : synthesizeLegacyFromV2(v2Contract, requestParams);
-  const sourceMeta = asDict(source.source_meta);
+  const projection = buildRuntimeProjectionFromV2(v2Contract, requestParams);
   const sourceContext = resolveV2SourceContext(v2Contract);
   const sourceContextRaw = asDict(sourceContext.context);
   const v2RenderProfile = String(sourceContext.renderProfile || sourceContext.render_profile || '').trim();
-  const legacyHead = asDict(legacy.head);
+  const projectionHead = asDict(projection.head);
   const adaptedHead: Dict = {
-    ...legacyHead,
-    ...(!legacyHead.context && Object.keys(sourceContextRaw).length ? { context: sourceContextRaw } : {}),
-    ...(!legacyHead.render_profile && v2RenderProfile ? { render_profile: v2RenderProfile } : {}),
+    ...projectionHead,
+    ...(!projectionHead.context && Object.keys(sourceContextRaw).length ? { context: sourceContextRaw } : {}),
+    ...(!projectionHead.render_profile && v2RenderProfile ? { render_profile: v2RenderProfile } : {}),
   };
   const adaptedData = {
-    ...legacy,
+    ...projection,
     ...(Object.keys(adaptedHead).length ? { head: adaptedHead } : {}),
-    ...(!legacy.render_profile && v2RenderProfile ? { render_profile: v2RenderProfile } : {}),
+    ...(!projection.render_profile && v2RenderProfile ? { render_profile: v2RenderProfile } : {}),
     __v2_main_data: asDict(asDict(v2Contract.dataContract).mainData),
     __unified_page_contract_v2: v2Contract,
   } as ActionContract & Dict;
@@ -320,7 +309,6 @@ function adaptUnifiedPageContractV2Raw(result: IntentRawResult<Dict>, requestPar
     data: adaptedData,
     meta: {
       ...result.meta,
-      ...sourceMeta,
       unified_page_contract_version: asDict(v2Contract.pageInfo).contractVersion,
       unified_page_contract_source: 'ui.contract.v2',
     },
@@ -343,8 +331,8 @@ async function requestUnifiedPageContractV2Raw(params: Record<string, unknown>) 
   });
   const adapted = adaptUnifiedPageContractV2Raw(result, params);
   if (!Object.keys(adapted.data || {}).length) {
-    throw new ApiError('ui.contract.v2 missing legacy compatibility payload', 500, result.traceId, {
-      reasonCode: 'UNIFIED_PAGE_CONTRACT_V2_COMPAT_MISSING',
+    throw new ApiError('ui.contract.v2 missing projection payload', 500, result.traceId, {
+      reasonCode: 'UNIFIED_PAGE_CONTRACT_V2_PROJECTION_MISSING',
       kind: 'contract',
       retryable: false,
     });
