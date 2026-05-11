@@ -180,6 +180,15 @@ def field_coverage(model_name: str, field_names: list[str]) -> dict[str, object]
     }
 
 
+ALLOWED_COMPAT_LEGACY_BUSINESS_MENU_XMLIDS = {
+    # These entries are part of the 55 user-confirmed surfaces. They expose
+    # old-system fact carriers directly because there is no lossless new-system
+    # semantic model yet; the acceptance target is faithful fact carrying.
+    "smart_construction_core.menu_sc_supplier_contract_analysis_report",
+    "smart_construction_core.menu_sc_tax_certificate_registration_user",
+}
+
+
 def active_legacy_business_menu_exposures() -> list[dict[str, object]]:
     rows: list[dict[str, object]] = []
     Menu = env["ir.ui.menu"].sudo()  # noqa: F821
@@ -188,9 +197,13 @@ def active_legacy_business_menu_exposures() -> list[dict[str, object]]:
         res_model = str(getattr(action, "res_model", "") or "")
         if not res_model.startswith("sc.legacy."):
             continue
+        xmlid = menu.get_external_id().get(menu.id, "")
+        if xmlid in ALLOWED_COMPAT_LEGACY_BUSINESS_MENU_XMLIDS:
+            continue
         rows.append(
             {
                 "menu_id": int(menu.id),
+                "menu_xmlid": xmlid,
                 "menu_name": menu.complete_name,
                 "action_id": int(action.id),
                 "action_name": action.name,

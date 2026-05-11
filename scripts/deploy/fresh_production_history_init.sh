@@ -73,6 +73,15 @@ DB_NAME="$DB_NAME" COMPOSE_FILES="$COMPOSE_FILES" \
   FORMAL_PROJECTION_ARTIFACT_ROOT="$ARTIFACT_ROOT" \
   bash "$ROOT_DIR/scripts/migration/history_business_usable_init.sh"
 
+echo "[fresh.production.history.init] step=non_demo_data_contamination_guard"
+DB_NAME="$DB_NAME" COMPOSE_FILES="$COMPOSE_FILES" \
+  "$ROOT_DIR/scripts/ops/odoo_shell_exec.sh" <"$ROOT_DIR/scripts/verify/non_demo_data_contamination_guard.py"
+
+echo "[fresh.production.history.init] step=user_visible_business_fact_alignment"
+DB_NAME="$DB_NAME" COMPOSE_FILES="$COMPOSE_FILES" \
+  MIGRATION_ARTIFACT_ROOT="$ARTIFACT_ROOT" \
+  "$ROOT_DIR/scripts/ops/odoo_shell_exec.sh" <"$ROOT_DIR/scripts/migration/user_visible_business_fact_alignment_probe.py"
+
 echo "[fresh.production.history.init] step=business_smoke"
 DB_NAME="$DB_NAME" BASE_URL="${BASE_URL:-http://127.0.0.1:18069}" "$ROOT_DIR/scripts/audit/smoke_business_full.sh"
 

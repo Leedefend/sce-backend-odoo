@@ -752,6 +752,9 @@ history.business.usable.init: guard.prod.forbid check-compose-project check-comp
 history.business.usable.probe: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/history_business_usable_probe.py
 
+verify.user_visible_business_fact_alignment: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/user_visible_business_fact_alignment_probe.py
+
 history.legacy_user_access.projection.write: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/history_legacy_user_access_projection_write.py
 
@@ -1511,7 +1514,7 @@ ops.auth.dev.rollback:
 ops.auth.dev.verify:
 	@./scripts/ops/auth_policy.sh verify -p $(AUTH_PROJECT) -d $(AUTH_DB)
 
-.PHONY: demo.verify demo.load demo.list demo.load.all demo.load.full demo.load.release demo.install demo.rebuild demo.ci demo.repro demo.full seed.run audit.project.actions audit.nav.alignment audit.nav.role_diff
+.PHONY: demo.verify demo.load demo.list demo.load.all demo.load.full demo.load.release demo.install demo.rebuild demo.ci demo.repro demo.full seed.run verify.non_demo_data_contamination audit.project.actions audit.nav.alignment audit.nav.role_diff
 demo.verify: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) SCENARIO=$(SCENARIO) STEP=$(STEP) bash scripts/demo/verify.sh
 
@@ -1551,6 +1554,9 @@ demo.full: guard.prod.forbid check-compose-project check-compose-env
 
 seed.run: check-compose-project check-compose-env
 	@$(RUN_ENV) STEPS=$(STEPS) bash scripts/seed/run.sh
+
+verify.non_demo_data_contamination: check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) scripts/ops/odoo_shell_exec.sh < scripts/verify/non_demo_data_contamination_guard.py
 
 audit.project.actions: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) OUT=$(OUT) bash scripts/ops/audit_project_actions.sh
