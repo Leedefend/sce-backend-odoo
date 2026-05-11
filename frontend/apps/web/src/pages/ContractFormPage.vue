@@ -784,6 +784,7 @@ const chatterError = ref('');
 const chatterTimeline = ref<ChatterTimelineEntry[]>([]);
 const attachmentUploading = ref(false);
 const attachmentError = ref('');
+let activeReloadToken = 0;
 
 const model = computed(() => String(route.params.model || contract.value?.head?.model || contract.value?.model || ''));
 const actionId = computed(() => {
@@ -2515,7 +2516,9 @@ async function loadRelationOptions() {
       next[name] = [];
     }
   }));
-  relationOptions.value = next;
+  Object.entries(next).forEach(([fieldName, options]) => {
+    mergeRelationOptions(fieldName, options);
+  });
 }
 
 function hasGroupAccess(groupsXmlids?: string[]) {
@@ -4634,6 +4637,7 @@ async function loadRecord() {
   Object.keys(relationKeywords).forEach((key) => {
     delete relationKeywords[key];
   });
+  relationOptions.value = {};
   Object.keys(one2manyRows).forEach((key) => {
     delete one2manyRows[key];
   });
@@ -4881,6 +4885,8 @@ async function downloadNativeAttachment(att: { id?: number; name?: string; mimet
 }
 
 async function reload() {
+  const reloadToken = activeReloadToken + 1;
+  activeReloadToken = reloadToken;
   renderErrorMessage.value = '';
   status.value = 'loading';
   errorMessage.value = '';
@@ -4888,12 +4894,13 @@ async function reload() {
   showOne2manyErrors.value = false;
   try {
     await loadContract();
+    if (reloadToken !== activeReloadToken) return;
     await loadRecord();
-    await loadRelationOptions();
-    await hydrateSelectedRelationOptions();
-    await hydrateVisibleOne2manyRows();
+    if (reloadToken !== activeReloadToken) return;
     status.value = 'ok';
+    void preloadFormAuxiliaryData(reloadToken);
   } catch (err) {
+    if (reloadToken !== activeReloadToken) return;
     if (err instanceof ContractAccessPolicyError) {
       await router.push({
         name: 'workbench',
@@ -4908,6 +4915,21 @@ async function reload() {
     }
     errorMessage.value = err instanceof Error ? err.message : 'load failed';
     status.value = 'error';
+  }
+}
+
+async function preloadFormAuxiliaryData(reloadToken: number) {
+  try {
+    await loadRelationOptions();
+    if (reloadToken !== activeReloadToken) return;
+    await hydrateSelectedRelationOptions();
+    if (reloadToken !== activeReloadToken) return;
+    await hydrateVisibleOne2manyRows();
+  } catch (err) {
+    if (showHud.value) {
+      // eslint-disable-next-line no-console
+      console.info('[ContractFormPage] auxiliary form preload skipped', err);
+    }
   }
 }
 
