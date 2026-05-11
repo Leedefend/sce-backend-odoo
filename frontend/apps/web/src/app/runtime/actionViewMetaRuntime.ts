@@ -6,10 +6,6 @@ type ActionContractMetaShape = {
     res_id?: number | string;
     context?: unknown;
   };
-  ui_contract?: {
-    head?: { view_type?: string };
-    view_type?: string;
-  };
   view_type?: string;
 };
 
@@ -29,10 +25,9 @@ export function resolveActionViewType(meta: unknown, contract: unknown): string 
   const v2ViewType = String(v2?.pageInfo?.viewType || '').trim();
   if (v2ViewType) return v2ViewType === 'list' ? 'tree' : v2ViewType;
   const typedContract = contract as ActionContractMetaShape;
-  const nestedContract = (typedContract.ui_contract || {}) as ActionContractMetaShape;
-  const fromHead = String(typedContract.head?.view_type || nestedContract.head?.view_type || '').trim();
+  const fromHead = String(typedContract.head?.view_type || '').trim();
   if (fromHead) return fromHead;
-  const fromContract = String(typedContract.view_type || nestedContract.view_type || '').trim();
+  const fromContract = String(typedContract.view_type || '').trim();
   if (fromContract) return fromContract;
   const metaViewModes = (meta as { view_modes?: unknown } | null)?.view_modes;
   const normalizedMetaViewMode = resolveFirstRenderableViewMode(metaViewModes);

@@ -79,8 +79,7 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
     const typed = (contract || {}) as Dict;
     const v2Fields = collectUnifiedPageContractV2FieldWidgets(typed).map((widget) => widget.fieldCode).filter(Boolean);
     if (v2Fields.length) return v2Fields;
-    const uiContract = ((typed.ui_contract || {}) as Dict);
-    const directViews = (typed.views || uiContract.views) as Dict | undefined;
+    const directViews = typed.views as Dict | undefined;
     if (directViews) {
       const treeBlock = (directViews.tree || directViews.list || {}) as Dict;
       const treeColumns = treeBlock.columns;
@@ -93,17 +92,6 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
           .map((col) => String(((col as Dict).name || '')).trim())
           .filter(Boolean);
       }
-    }
-
-    const columns = uiContract.columns;
-    if (Array.isArray(columns) && columns.length) {
-      return columns.map((item) => String(item || '')).filter(Boolean);
-    }
-    const schema = uiContract.columnsSchema;
-    if (Array.isArray(schema) && schema.length) {
-      return schema
-        .map((col) => String(((col as Dict).name || '')).trim())
-        .filter(Boolean);
     }
     return [];
   }
@@ -121,10 +109,9 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
         ...(widget.componentConfig || {}),
       }));
     }
-    const uiContract = ((typed.ui_contract || {}) as Dict);
-    const directViews = (typed.views || uiContract.views) as Dict | undefined;
+    const directViews = typed.views as Dict | undefined;
     const treeBlock = directViews ? (directViews.tree || directViews.list || {}) as Dict : {};
-    const schema = treeBlock.columnsSchema || treeBlock.columns_schema || uiContract.columnsSchema || uiContract.columns_schema;
+    const schema = treeBlock.columnsSchema || treeBlock.columns_schema;
     return Array.isArray(schema) ? (schema as Dict[]) : [];
   }
 
@@ -212,8 +199,7 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
         .filter(Boolean);
       if (fields.length) return fields;
     }
-    const uiContract = ((typed.ui_contract || {}) as Dict);
-    const directViews = (typed.views || uiContract.views) as Dict | undefined;
+    const directViews = typed.views as Dict | undefined;
     if (directViews) {
       const kanbanBlock = (directViews.kanban || {}) as Dict;
       if (Array.isArray(kanbanBlock.fields) && kanbanBlock.fields.length) {
@@ -225,8 +211,7 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
 
   function extractKanbanProfile(contract: unknown): KanbanProfile {
     const typed = (contract || {}) as Dict;
-    const uiContract = ((typed.ui_contract || {}) as Dict);
-    const directViews = (typed.views || uiContract.views) as Dict | undefined;
+    const directViews = typed.views as Dict | undefined;
     const block = (directViews?.kanban || {}) as Dict;
     const profile = (block.kanban_profile || {}) as Dict;
     const normalize = (rows: unknown) =>
@@ -243,15 +228,13 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
 
   function extractListOrderFromContract(contract: unknown): string {
     const typed = (contract || {}) as Dict;
-    const uiContract = ((typed.ui_contract || {}) as Dict);
-    const directViews = (typed.views || uiContract.views) as Dict | undefined;
+    const directViews = typed.views as Dict | undefined;
     const treeBlock = (directViews?.tree || directViews?.list || {}) as Dict;
     const searchDefaults = ((typed.search || {}) as Dict).defaults as Dict | undefined;
     const candidates = [
       treeBlock.order,
       treeBlock.default_order,
       searchDefaults?.order,
-      uiContract.order,
       typed.order,
     ];
     for (const item of candidates) {
@@ -284,10 +267,8 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
 
   function extractAdvancedViewFields(contract: unknown, mode: string) {
     const typed = (contract || {}) as Dict;
-    const uiContract = ((typed.ui_contract || {}) as Dict);
     const directViews = typed.views as Dict | undefined;
-    const normalizedViews = uiContract.views as Dict | undefined;
-    const viewBlock = (directViews?.[mode] || normalizedViews?.[mode] || {}) as Dict;
+    const viewBlock = (directViews?.[mode] || {}) as Dict;
     const fallbackNames = ['name', 'display_name', 'id'];
     if (mode === 'pivot') {
       const measures = Array.isArray(viewBlock.measures) ? viewBlock.measures : [];
@@ -358,22 +339,13 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
     if (v2Model) {
       return v2Model;
     }
-    const nested = ((typed.ui_contract || {}) as Dict);
     const direct = typed.model;
     if (typeof direct === 'string' && direct.trim()) {
       return direct.trim();
     }
-    const nestedDirect = nested.model;
-    if (typeof nestedDirect === 'string' && nestedDirect.trim()) {
-      return nestedDirect.trim();
-    }
     const headModel = ((typed.head || {}) as Dict).model;
     if (typeof headModel === 'string' && headModel.trim()) {
       return headModel.trim();
-    }
-    const nestedHeadModel = ((nested.head || {}) as Dict).model;
-    if (typeof nestedHeadModel === 'string' && nestedHeadModel.trim()) {
-      return nestedHeadModel.trim();
     }
     const views = (typed.views || {}) as Dict;
     const viewModel = ((views.tree as Dict | undefined)?.model
@@ -381,13 +353,6 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
       || (views.kanban as Dict | undefined)?.model);
     if (typeof viewModel === 'string' && viewModel.trim()) {
       return viewModel.trim();
-    }
-    const nestedViews = (nested.views || {}) as Dict;
-    const nestedViewModel = ((nestedViews.tree as Dict | undefined)?.model
-      || (nestedViews.form as Dict | undefined)?.model
-      || (nestedViews.kanban as Dict | undefined)?.model);
-    if (typeof nestedViewModel === 'string' && nestedViewModel.trim()) {
-      return nestedViewModel.trim();
     }
     return '';
   }

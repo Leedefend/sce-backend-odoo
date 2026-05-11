@@ -135,7 +135,7 @@ export function useActionViewNavigationRuntime(options: UseActionViewNavigationR
       });
       if (rowAction) return rowAction as Dict;
     }
-    const views = ((contract.views || (contract.ui_contract as Dict | undefined)?.views || {}) as Dict);
+    const views = (contract.views || {}) as Dict;
     const view = ((views.kanban || views.tree || views.list || {}) as Dict);
     const rows = Array.isArray(view.row_actions) ? view.row_actions : [];
     return rows.find((row) => {

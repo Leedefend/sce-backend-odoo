@@ -4242,13 +4242,7 @@ function collectWritableValues() {
 
 function formCreateContext() {
   const sourceContext = resolveUnifiedPageContractV2SourceContext(contract.value).context || {};
-  const legacyContext = contract.value?.head?.context;
-  return {
-    ...(legacyContext && typeof legacyContext === 'object' && !Array.isArray(legacyContext)
-      ? legacyContext as Record<string, unknown>
-      : {}),
-    ...sourceContext,
-  };
+  return sourceContext;
 }
 
 function resolveCreateDefaults() {

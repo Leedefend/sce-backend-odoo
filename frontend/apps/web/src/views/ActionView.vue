@@ -959,15 +959,6 @@ type ActionContractLoose = Awaited<ReturnType<typeof loadActionContract>> & {
     kanban?: ContractViewBlock;
     form?: ContractViewBlock;
   };
-  ui_contract?: {
-    views?: {
-      tree?: ContractViewBlock;
-      list?: ContractViewBlock;
-      kanban?: ContractViewBlock;
-    };
-    columns?: string[];
-    columnsSchema?: ContractColumnSchema[];
-  };
   fields?: Record<string, unknown>;
   buttons?: Array<Record<string, unknown>>;
   action_groups?: ContractActionGroupRaw[];
