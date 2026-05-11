@@ -147,6 +147,18 @@ class SystemInitSceneRuntimeSurfaceBuilder:
                 continue
             scene_ready_seen.add(scene_key)
             scene_ready_input.append(scene_row)
+        requested_scene_key = str(params.get("scene_key") or "").strip()
+        if requested_scene_key and requested_scene_key not in scene_ready_seen:
+            scene_catalog = data.get("scenes") if isinstance(data.get("scenes"), list) else []
+            for scene_row in scene_catalog:
+                if not isinstance(scene_row, dict):
+                    continue
+                scene_key = str(scene_row.get("code") or scene_row.get("key") or "").strip()
+                if scene_key != requested_scene_key:
+                    continue
+                scene_ready_seen.add(scene_key)
+                scene_ready_input.append(scene_row)
+                break
 
         nav_contract_input = dict(data)
         nav_contract_input["scenes"] = preload_scenes
