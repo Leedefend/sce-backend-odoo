@@ -69,7 +69,7 @@ def _resolve_source_type(source: dict[str, Any], explicit: str = "") -> str:
         return "scene_contract_v1"
     if _dict(source.get("page_orchestration_v1")):
         return "page_orchestration_v1"
-    if _dict(source.get("ui_contract")) or "meta_fields" in source or source.get("view_type"):
+    if "meta_fields" in source or source.get("view_type"):
         return "ui.contract"
     if source.get("schema_version") == "v1" and ("patch" in source or "modifiers_patch" in source):
         return "api.onchange"
@@ -205,7 +205,6 @@ def _base_contract(
             "snapshotId": f"snapshot.upc.v2.{fp}",
             "traceId": f"trace.upc.v2.{fp}",
             "requestId": _stable_id(request_id, f"request.upc.v2.{fp}"),
-            "compat": {source_type.replace(".", "_"): deepcopy(source_payload)},
         },
     }
 
@@ -267,7 +266,6 @@ def assemble_unified_page_patch_v2(
             "traceId": f"trace.upc.v2.patch.{fp}",
             "requestId": _stable_id(request_id, f"request.upc.v2.patch.{fp}"),
             "actionId": _stable_id(action_id, "api.onchange.patch"),
-            "compat": {"api_onchange": deepcopy(source)},
         },
     }
 
@@ -408,7 +406,7 @@ def _assemble_page_orchestration(source: dict[str, Any], *, client_type: str, re
 
 
 def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_id: str) -> dict[str, Any]:
-    ui = _dict(source.get("ui_contract")) or _dict(source.get("ui_contract_raw"))
+    ui = _dict(source)
     model = _text(source.get("model") or ui.get("model"))
     view_type = _text(source.get("view_type") or ui.get("view_type"), "form")
     record_id = _positive_int(source.get("record_id") or source.get("recordId") or ui.get("record_id") or ui.get("recordId"), 0)

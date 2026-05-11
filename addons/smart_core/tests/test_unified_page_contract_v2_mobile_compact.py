@@ -39,28 +39,23 @@ client = _load_module(
 class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
     def test_mobile_compact_preserves_create_business_context_outside_compat(self):
         source = {
-            "ui_contract": {
-                "model": "project.project",
-                "view_type": "form",
-                "head": {
-                    "render_profile": "create",
-                    "context": {
-                        "default_manager_id": 43,
-                        "default_user_id": 43,
-                        "default_phase_key": "initiation",
-                        "sc_return_to_overview": 1,
-                    },
-                },
-                "fields": {
-                    "name": {"name": "name", "type": "char"},
-                    "manager_id": {"name": "manager_id", "type": "many2one"},
-                    "user_id": {"name": "user_id", "type": "many2one"},
-                    "phase_key": {"name": "phase_key", "type": "selection"},
-                },
-            },
             "model": "project.project",
             "view_type": "form",
-            "render_profile": "create",
+            "head": {
+                "render_profile": "create",
+                "context": {
+                    "default_manager_id": 43,
+                    "default_user_id": 43,
+                    "default_phase_key": "initiation",
+                    "sc_return_to_overview": 1,
+                },
+            },
+            "fields": {
+                "name": {"name": "name", "type": "char"},
+                "manager_id": {"name": "manager_id", "type": "many2one"},
+                "user_id": {"name": "user_id", "type": "many2one"},
+                "phase_key": {"name": "phase_key", "type": "selection"},
+            },
             "context_raw": "{'default_manager_id': uid, 'default_phase_key': 'initiation'}",
         }
 
@@ -87,25 +82,21 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
 
     def test_ui_contract_v2_edit_form_page_auth_follows_write_permission(self):
         source = {
-            "ui_contract": {
-                "model": "project.project",
-                "view_type": "form",
-                "head": {
-                    "render_profile": "edit",
-                    "permissions": {
-                        "read": True,
-                        "write": True,
-                        "create": True,
-                        "unlink": False,
-                    },
-                },
-                "fields": {
-                    "name": {"name": "name", "type": "char", "readonly": False},
-                    "partner_id": {"name": "partner_id", "type": "many2one", "readonly": False},
-                },
-            },
             "model": "project.project",
             "view_type": "form",
+            "head": {
+                "render_profile": "edit",
+                "permissions": {
+                    "read": True,
+                    "write": True,
+                    "create": True,
+                    "unlink": False,
+                },
+            },
+            "fields": {
+                "name": {"name": "name", "type": "char", "readonly": False},
+                "partner_id": {"name": "partner_id", "type": "many2one", "readonly": False},
+            },
             "record_id": 771,
             "render_profile": "edit",
         }
@@ -121,24 +112,20 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
 
     def test_ui_contract_v2_readonly_form_page_auth_stays_read(self):
         source = {
-            "ui_contract": {
-                "model": "project.project",
-                "view_type": "form",
-                "head": {
-                    "render_profile": "readonly",
-                    "permissions": {
-                        "read": True,
-                        "write": True,
-                        "create": True,
-                        "unlink": False,
-                    },
-                },
-                "fields": {
-                    "name": {"name": "name", "type": "char", "readonly": False},
-                },
-            },
             "model": "project.project",
             "view_type": "form",
+            "head": {
+                "render_profile": "readonly",
+                "permissions": {
+                    "read": True,
+                    "write": True,
+                    "create": True,
+                    "unlink": False,
+                },
+            },
+            "fields": {
+                "name": {"name": "name", "type": "char", "readonly": False},
+            },
             "record_id": 771,
             "render_profile": "readonly",
         }
@@ -154,37 +141,33 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
 
     def test_ui_contract_v2_preserves_tree_column_optional_hide(self):
         source = {
-            "ui_contract": {
-                "model": "hr.department",
-                "view_type": "tree",
-                "fields": {
-                    "name": {"name": "name", "type": "char", "string": "部门名称"},
-                    "create_uid": {"name": "create_uid", "type": "many2one", "string": "创建人"},
-                    "create_date": {"name": "create_date", "type": "datetime", "string": "创建日期"},
-                },
-                "views": {
-                    "tree": {
-                        "columns": ["name", "create_uid", "create_date"],
-                        "columns_schema": [
-                            {"name": "name", "string": "部门名称", "type": "char"},
-                            {
-                                "name": "create_uid",
-                                "string": "创建人",
-                                "type": "many2one",
-                                "optional": "hide",
-                            },
-                            {
-                                "name": "create_date",
-                                "string": "创建日期",
-                                "type": "datetime",
-                                "optional": "hide",
-                            },
-                        ],
-                    },
-                },
-            },
             "model": "hr.department",
             "view_type": "tree",
+            "fields": {
+                "name": {"name": "name", "type": "char", "string": "部门名称"},
+                "create_uid": {"name": "create_uid", "type": "many2one", "string": "创建人"},
+                "create_date": {"name": "create_date", "type": "datetime", "string": "创建日期"},
+            },
+            "views": {
+                "tree": {
+                    "columns": ["name", "create_uid", "create_date"],
+                    "columns_schema": [
+                        {"name": "name", "string": "部门名称", "type": "char"},
+                        {
+                            "name": "create_uid",
+                            "string": "创建人",
+                            "type": "many2one",
+                            "optional": "hide",
+                        },
+                        {
+                            "name": "create_date",
+                            "string": "创建日期",
+                            "type": "datetime",
+                            "optional": "hide",
+                        },
+                    ],
+                },
+            },
         }
 
         full = assembler.assemble_unified_page_contract_v2(
@@ -208,15 +191,11 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
 
     def test_web_pc_drops_source_compat_when_not_requested(self):
         source = {
-            "ui_contract": {
-                "model": "project.project",
-                "view_type": "form",
-                "fields": {
-                    "name": {"name": "name", "type": "char", "string": "名称"},
-                },
-            },
             "model": "project.project",
             "view_type": "form",
+            "fields": {
+                "name": {"name": "name", "type": "char", "string": "名称"},
+            },
         }
 
         full = assembler.assemble_unified_page_contract_v2(

@@ -92,9 +92,8 @@ class UiContractV2Handler(BaseIntentHandler):
             or f"ui.contract.v2.{model or 'unknown'}.{view_type or 'form'}"
         )
 
-        ui_nested_data = ui_data.get("data") if isinstance(ui_data.get("data"), dict) else {}
-        source_contract = {
-            "ui_contract": ui_data,
+        source_contract = dict(ui_data) if isinstance(ui_data, dict) else {}
+        source_contract.update({
             "model": model,
             "view_type": view_type,
             "record_id": params.get("record_id") or params.get("recordId") or ui_params.get("record_id") or ui_params.get("recordId"),
@@ -108,13 +107,9 @@ class UiContractV2Handler(BaseIntentHandler):
                 or params.get("context")
                 or {}
             ),
-            "record": (
-                ui_data.get("record")
-                if isinstance(ui_data.get("record"), dict)
-                else (ui_nested_data.get("record") if isinstance(ui_nested_data.get("record"), dict) else {})
-            ),
+            "record": ui_data.get("record") if isinstance(ui_data.get("record"), dict) else {},
             "source_meta": ui_meta,
-        }
+        })
         contract_v2 = assemble_unified_page_contract_v2(
             source_contract,
             source_type="ui.contract",
