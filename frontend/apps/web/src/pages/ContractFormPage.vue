@@ -119,6 +119,11 @@
         <p v-if="visibleFieldNodeCount === 0" class="validation-warn">
           当前页面暂无可显示字段，请检查契约可见字段与角色权限配置。
         </p>
+        <SceneBlocksRenderer
+          v-if="sceneReadyFormSurface.sceneBlocks.length"
+          :blocks="sceneReadyFormSurface.sceneBlocks"
+          @action="handleSceneBlockAction"
+        />
         <section v-if="nativeStatusbar.visible" class="native-statusbar" aria-label="项目状态">
           <button
             v-for="item in nativeStatusbar.states"
@@ -140,6 +145,7 @@
           :nodes="nativeFormLayoutNodes"
           :field-schemas-for-nodes="nativeFieldSchemasForNodes"
           :is-node-visible="isNativeLayoutNodeVisible"
+          :button-label-resolver="resolveNativeButtonLabel"
           :columns="2"
           @field-change="onTemplateFieldChange"
           @native-action="runNativeLayoutAction"
@@ -427,6 +433,7 @@ import DevContextPanel from '../components/DevContextPanel.vue';
 import LayoutShell from '../components/template/LayoutShell.vue';
 import PageHeaderTemplate from '../components/template/PageHeader.vue';
 import NativeFormTreeRenderer, { type NativeFormLayoutNode } from '../components/template/NativeFormTreeRenderer.vue';
+import SceneBlocksRenderer from '../components/scene/SceneBlocksRenderer.vue';
 import PageFooterTemplate from '../components/template/PageFooter.vue';
 import RelationFallbackRenderer from '../components/template/RelationFallbackRenderer.vue';
 import type { FormSectionFieldSchema, FormSectionFieldChange } from '../components/template/formSection.types';
@@ -438,6 +445,7 @@ import { mapDescriptorSelectionOptions, mapRelationOptions } from '../components
 import { createRelationFallbackAdapter } from '../components/template/relationFallback.adapter';
 import { dispatchTemplateFieldChange } from '../components/template/fieldChange.dispatcher';
 import { isHudEnabled } from '../config/debug';
+import { intentRequest } from '../api/intents';
 import { loadActionContractRaw, loadModelContractRaw } from '../api/contract';
 import { createRecord, listRecords, readRecord, writeRecord } from '../api/data';
 import { ApiError } from '../api/client';
@@ -457,6 +465,7 @@ import {
 } from '../app/contractRuntime';
 import { validateContractFormData } from '../app/contractValidation';
 import { resolveActionIdFromContext } from '../app/actionContext';
+import { findActionMeta } from '../app/menu';
 import { pickContractNavQuery } from '../app/navigationContext';
 import { buildEntryTargetRouteTarget } from '../app/routeQuery';
 import { readWorkspaceContext } from '../app/workspaceContext';
@@ -3018,10 +3027,19 @@ const policyRequiredFields = computed(() => {
   });
   return out;
 });
-const sceneReadySceneKey = computed(() => String(route.query.scene_key || route.params.sceneKey || '').trim());
+const sceneReadySceneKey = computed(() => String(
+  route.query.scene_key
+  || route.params.sceneKey
+  || findActionMeta(session.menuTree, actionId.value)?.scene_key
+  || findActionMeta(session.menuTree, actionId.value)?.sceneKey
+  || session.currentAction?.scene_key
+  || session.currentAction?.sceneKey
+  || '',
+).trim());
+const sceneReadyHydrateRequested = ref(false);
 const useSceneFormAugmentations = computed(() => {
   if (isProjectIntakeCreateMode.value) return true;
-  return String(route.name || '').trim().toLowerCase() === 'scene' && Boolean(sceneReadySceneKey.value);
+  return Boolean(sceneReadySceneKey.value);
 });
 const sceneReadyEntry = computed<Record<string, unknown> | null>(() => {
   if (!useSceneFormAugmentations.value) return null;
@@ -3066,6 +3084,34 @@ const sceneReadyFormSurface = computed(() => {
   if (!useSceneFormAugmentations.value) return resolveFormSceneReady(null);
   return resolveFormSceneReady(sceneReadyEntry.value);
 });
+watch(
+  () => [sceneReadySceneKey.value, sceneReadyFormSurface.value.sceneBlocks.length],
+  async ([sceneKey, blockCount]) => {
+    if (!sceneKey || Number(blockCount || 0) > 0 || sceneReadyHydrateRequested.value) return;
+    sceneReadyHydrateRequested.value = true;
+    try {
+      const result = await intentRequest<Record<string, unknown>>({
+        intent: 'system.init',
+        params: {
+          scene: 'web',
+          with_preload: false,
+          scene_ready_mode: 'full',
+          with: ['workspace_home'],
+          root_xmlid: 'smart_construction_core.menu_sc_root',
+          scene_key: sceneKey,
+        },
+        meta: { startup_chain_bypass: true },
+      });
+      const contract = result.scene_ready_contract_v1;
+      if (contract && typeof contract === 'object' && Array.isArray((contract as Record<string, unknown>).scenes)) {
+        session.sceneReadyContractV1 = contract as never;
+      }
+    } catch (err) {
+      void err;
+    }
+  },
+  { immediate: true },
+);
 const validationRequiredFields = computed(() => {
   const out = new Set<string>();
   const rules = Array.isArray(contract.value?.validation_rules) ? contract.value.validation_rules : [];
@@ -3152,6 +3198,8 @@ function isFieldVisible(name: string) {
   if (isProjectQuickIntakeMode.value) {
     return ['name', 'manager_id', 'owner_id'].includes(String(name || '').trim());
   }
+  const statusField = nativeStatusbar.value.field;
+  if (statusField && String(name || '').trim() === statusField) return false;
   const semantic = fieldSemanticMeta(name);
   if ((semantic.technical || semantic.semantic_type === 'technical') && !showHud.value) return false;
   if (semantic.surface_role === 'hidden' && !showHud.value) return false;
@@ -3188,6 +3236,32 @@ const nativeFormLayoutNodes = computed<NativeFormLayoutNode[]>(() => {
   return containers as unknown as NativeFormLayoutNode[];
 });
 
+function resolveNativeButtonLabel(node: NativeFormLayoutNode) {
+  const action = node?.action && typeof node.action === 'object' && !Array.isArray(node.action)
+    ? node.action as Record<string, unknown>
+    : {};
+  const badge = action.badge && typeof action.badge === 'object' && !Array.isArray(action.badge)
+    ? action.badge as Record<string, unknown>
+    : {};
+  const countField = String(badge.count_field || badge.field || '').trim();
+  const sourceField = String(badge.source_field || '').trim();
+  const badgeLabel = String(badge.label || node.displayLabel || node.label || node.string || node.name || '').trim();
+  if (!badgeLabel) {
+    return String(node.displayLabel || action.displayLabel || node.label || node.string || node.name || '操作').trim();
+  }
+  const countValue = countField ? formData[countField] : undefined;
+  const count = Array.isArray(countValue) ? countValue.length : (typeof countValue === 'number' ? countValue : null);
+  if (count !== null) {
+    return `${count}${badgeLabel}`;
+  }
+  const sourceValue = sourceField ? formData[sourceField] : undefined;
+  const sourceCount = Array.isArray(sourceValue) ? sourceValue.length : (typeof sourceValue === 'number' ? sourceValue : null);
+  if (sourceCount === null) {
+    return String(node.displayLabel || action.displayLabel || node.label || node.string || node.name || '操作').trim();
+  }
+  return `${sourceCount}${badgeLabel}`;
+}
+
 const nativeVisibleFieldNames = computed(() => {
   const names = new Set<string>();
   const walk = (nodes: NativeFormLayoutNode[]) => {
@@ -3218,10 +3292,63 @@ function collectNativeLayoutFieldNames(nodes: NativeFormLayoutNode[], out: Set<s
   });
 }
 
+function collectNativeLayoutBadgeCountFieldNames(nodes: NativeFormLayoutNode[], out: Set<string>) {
+  nodes.forEach((node) => {
+    const type = String(node?.type || '').trim().toLowerCase();
+    if (type === 'button') {
+      const action = node?.action && typeof node.action === 'object' && !Array.isArray(node.action)
+        ? node.action as Record<string, unknown>
+        : {};
+      const badge = action.badge && typeof action.badge === 'object' && !Array.isArray(action.badge)
+        ? action.badge as Record<string, unknown>
+        : {};
+      const fieldName = String(badge.count_field || badge.field || '').trim();
+      if (fieldName) out.add(fieldName);
+    }
+    (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+      const children = node?.[key];
+      if (Array.isArray(children)) collectNativeLayoutBadgeCountFieldNames(children as NativeFormLayoutNode[], out);
+    });
+  });
+}
+
+function collectContractActionBadgeCountFieldNames(actions: unknown, out: Set<string>) {
+  if (!Array.isArray(actions)) return;
+  actions.forEach((row) => {
+    if (!row || typeof row !== 'object' || Array.isArray(row)) return;
+    const action = row as Record<string, unknown>;
+    const badge = action.badge && typeof action.badge === 'object' && !Array.isArray(action.badge)
+      ? action.badge as Record<string, unknown>
+      : {};
+    const fieldName = String(badge.count_field || badge.field || '').trim();
+    if (fieldName) out.add(fieldName);
+  });
+}
+
 function formDataFieldNames() {
   const fieldMap = contract.value?.fields || {};
+  const contractRecord = contract.value && typeof contract.value === 'object'
+    ? contract.value as Record<string, unknown>
+    : {};
+  const toolbar = contractRecord.toolbar && typeof contractRecord.toolbar === 'object' && !Array.isArray(contractRecord.toolbar)
+    ? contractRecord.toolbar as Record<string, unknown>
+    : {};
+  const views = contractRecord.views && typeof contractRecord.views === 'object' && !Array.isArray(contractRecord.views)
+    ? contractRecord.views as Record<string, unknown>
+    : {};
+  const formView = views.form && typeof views.form === 'object' && !Array.isArray(views.form)
+    ? views.form as Record<string, unknown>
+    : {};
   const names = new Set<string>();
   collectNativeLayoutFieldNames(nativeFormLayoutNodes.value, names);
+  collectNativeLayoutBadgeCountFieldNames(nativeFormLayoutNodes.value, names);
+  collectContractActionBadgeCountFieldNames(contractRecord.buttons, names);
+  collectContractActionBadgeCountFieldNames(toolbar.header, names);
+  collectContractActionBadgeCountFieldNames(toolbar.sidebar, names);
+  collectContractActionBadgeCountFieldNames(toolbar.footer, names);
+  collectContractActionBadgeCountFieldNames(formView.header_buttons, names);
+  collectContractActionBadgeCountFieldNames(formView.button_box, names);
+  collectContractActionBadgeCountFieldNames(formView.business_actions, names);
   layoutNodes.value.forEach((node) => {
     if (node.kind === 'field' && fieldMap[node.name]) names.add(node.name);
   });
@@ -3400,7 +3527,15 @@ function nativeNodeWidgetSemantics(nodeRaw?: NativeFormLayoutNode) {
 function collectNativeFavoriteFieldNames(nodes: NativeFormLayoutNode[], out: Set<string>) {
   for (const node of nodes) {
     const name = String(node?.name || '').trim();
-    if (name && nativeNodeWidget(node) === 'boolean_favorite') {
+    const label = String(node?.label || node?.string || '').trim();
+    if (
+      name
+      && (
+        nativeNodeWidget(node) === 'boolean_favorite'
+        || name === 'is_favorite'
+        || (nativeNodeWidget(node) === 'checkbox' && label.includes('仪表板'))
+      )
+    ) {
       out.add(name);
     }
     const children: NativeFormLayoutNode[] = [];
@@ -3442,7 +3577,9 @@ function isNativeFieldVisible(name: string, nodeRaw?: NativeFormLayoutNode) {
   const normalized = String(name || '').trim();
   if (!normalized) return false;
   if (nodeRaw && !isNativeLayoutNodeVisible(nodeRaw)) return false;
-  if (nodeRaw && nativeNodeWidget(nodeRaw) === 'statusbar') return false;
+  const statusField = nativeStatusbar.value.field;
+  if (statusField && normalized === statusField) return false;
+  if (normalized === 'message_needaction') return false;
   const semantic = fieldSemanticMeta(normalized);
   if ((semantic.technical || semantic.semantic_type === 'technical') && !showHud.value) return false;
   if (semantic.surface_role === 'hidden' && !showHud.value) return false;
@@ -3501,7 +3638,7 @@ function nativeFieldSchemasForNodes(nodes: NativeFormLayoutNode[]): FormSectionF
   const mappedNodes = nodes
     .map((node, index) => ({ raw: node, field: nativeLayoutNodeToFieldNode(node, index) }))
     .filter((item): item is { raw: NativeFormLayoutNode; field: LayoutNode } => Boolean(item.field));
-  const favoriteNode = mappedNodes.find((item) => item.field.widget === 'boolean_favorite');
+  const favoriteNode = mappedNodes.find((item) => item.field.widget === 'boolean_favorite' || item.field.name === 'is_favorite');
   const fieldNodes = mappedNodes
     .filter((item) => item !== favoriteNode)
     .map((item) => item.field);
@@ -4660,6 +4797,29 @@ async function openNativeChatterAction(action: NativeChatterAction) {
   activeChatterMode.value = '';
   activeChatterLabel.value = action.label;
   chatterError.value = `${action.label} 缺少可执行调度契约`;
+}
+
+function handleSceneBlockAction(payload: { action?: { target?: Record<string, unknown> } }) {
+  const target = payload?.action?.target && typeof payload.action.target === 'object'
+    ? payload.action.target
+    : {};
+  const targetKind = String(target.kind || '').trim();
+  if (targetKind === 'statusbar_value') {
+    const value = String(target.value || '').trim();
+    if (value) {
+      setStatusbarValue(value);
+      return;
+    }
+  }
+  const route = String(target.route || '').trim();
+  if (route) {
+    void router.push(route);
+    return;
+  }
+  const sceneKey = String(target.scene_key || '').trim();
+  if (sceneKey) {
+    void router.push({ name: 'scene', params: { sceneKey } });
+  }
 }
 
 function closeNativeChatterComposer() {
