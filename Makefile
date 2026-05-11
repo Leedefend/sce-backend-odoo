@@ -2869,6 +2869,10 @@ verify.scene.ready.scene_type_consumption_metrics.guard: guard.prod.forbid
 verify.scene.ready.consumption_trend.guard: guard.prod.forbid
 	@python3 scripts/verify/scene_ready_consumption_trend_guard.py
 
+.PHONY: verify.scene.ready.blocks_by_view.guard
+verify.scene.ready.blocks_by_view.guard: guard.prod.forbid
+	@python3 scripts/verify/scene_ready_blocks_by_view_guard.py
+
 .PHONY: verify.scene.governance_history_report.guard
 verify.scene.governance_history_report.guard: guard.prod.forbid
 	@python3 scripts/verify/scene_governance_history_report_guard.py

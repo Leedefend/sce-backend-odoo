@@ -12,7 +12,7 @@ const requireFromRoot = createRequire(requireBase);
 const { chromium } = requireFromRoot('playwright');
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://127.0.0.1:5174';
-const DB_NAME = process.env.DB_NAME || 'sc_prod_sim';
+const DB_NAME = process.env.DB_NAME || 'sc_demo';
 const LOGIN = process.env.E2E_LOGIN || 'wutao';
 const PASSWORD = process.env.E2E_PASSWORD || '123456';
 const MODEL = process.env.MVP_MODEL || 'project.project';
@@ -46,11 +46,17 @@ function attachConsoleCapture(page) {
 }
 
 async function login(page) {
-  await page.goto(`${FRONTEND_URL}/login`, { waitUntil: 'networkidle' });
+  await page.goto(`${FRONTEND_URL}/login?db=${encodeURIComponent(DB_NAME)}`, { waitUntil: 'networkidle' });
   const inputs = page.locator('input');
   await inputs.nth(0).fill(LOGIN);
   await inputs.nth(1).fill(PASSWORD);
-  await inputs.nth(2).fill(DB_NAME);
+  const dbInput = inputs.nth(2);
+  if ((await dbInput.count().catch(() => 0)) > 0) {
+    const disabled = await dbInput.isDisabled().catch(() => false);
+    if (!disabled) {
+      await dbInput.fill(DB_NAME);
+    }
+  }
   await page.getByRole('button', { name: /^登录$/ }).click();
   await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 20000 });
 }

@@ -486,6 +486,13 @@ class TestSystemInitPayloadBuilderSemantics(unittest.TestCase):
                     {
                         "scene": {"key": "projects.list", "title": "项目列表"},
                         "page": {"route": "/s/projects.list"},
+                        "scene_blocks": [
+                            {
+                                "key": "projects.list.toolbar",
+                                "kind": "toolbar",
+                                "title": "工具栏",
+                            }
+                        ],
                         "meta": {
                             "target": {"route": "/s/projects.list"},
                             "ui_base_contract_source": {"kind": "asset", "asset_id": 12},
@@ -509,9 +516,46 @@ class TestSystemInitPayloadBuilderSemantics(unittest.TestCase):
         )
 
         scene = ((payload.get("scenes") or [])[0] or {})
+        self.assertEqual(((scene.get("scene_blocks") or [])[0] or {}).get("kind"), "toolbar")
         self.assertTrue(((scene.get("meta") or {}).get("compile_verdict") or {}).get("base_contract_bound"))
         self.assertEqual(((payload.get("meta") or {}).get("base_contract_bound_scene_count")), 1)
         self.assertEqual(((payload.get("meta") or {}).get("compile_issue_scene_count")), 0)
+
+    def test_minimal_scene_ready_contract_preserves_scene_blocks_by_view(self):
+        payload = target.SystemInitPayloadBuilder._build_minimal_scene_ready_contract(
+            {
+                "scenes": [
+                    {
+                        "scene": {"key": "projects.universal", "title": "项目通用"},
+                        "page": {"route": "/s/projects.universal"},
+                        "scene_blocks_by_view": {
+                            "list": [
+                                {"key": "projects.universal.list", "kind": "list_view", "title": "列表"},
+                            ],
+                            "form": [
+                                {"key": "projects.universal.form", "kind": "body", "title": "表单"},
+                            ],
+                            "kanban": [
+                                {"key": "projects.universal.kanban", "kind": "kanban_board", "title": "看板"},
+                            ],
+                        },
+                        "view_orchestration_contract_v1": {
+                            "schema_version": "view_orchestration_v1",
+                            "scene_key": "projects.universal",
+                            "views": {
+                                "list": {"sections": [{"key": "projects.universal.shell", "kind": "page_shell"}]},
+                            },
+                        },
+                    }
+                ]
+            }
+        )
+        scene = ((payload.get("scenes") or [])[0] or {})
+        blocks_by_view = scene.get("scene_blocks_by_view") or {}
+        self.assertEqual(((((blocks_by_view.get("list") or [])[0]) or {}).get("kind")), "list_view")
+        self.assertEqual(((((blocks_by_view.get("form") or [])[0]) or {}).get("kind")), "body")
+        self.assertEqual(((((blocks_by_view.get("kanban") or [])[0]) or {}).get("kind")), "kanban_board")
+        self.assertEqual(((scene.get("view_orchestration_contract_v1") or {}).get("schema_version")), "view_orchestration_v1")
 
 
 if __name__ == "__main__":
