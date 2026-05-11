@@ -427,16 +427,18 @@ export interface ExecuteButtonResult {
   res_model?: string;
   res_id?: number;
   action_id?: number;
+  entry_target?: Record<string, unknown>;
   raw_action?: Record<string, unknown>;
   message?: string;
 }
 
 export interface ButtonEffectTarget {
-  kind: 'record' | 'action' | 'url';
+  kind: 'record' | 'action' | 'url' | 'entry_target';
   model?: string;
   id?: number;
   action_id?: number;
   url?: string;
+  entry_target?: Record<string, unknown>;
 }
 
 export interface ButtonEffect {

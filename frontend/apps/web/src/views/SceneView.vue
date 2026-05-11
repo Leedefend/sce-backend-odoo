@@ -64,7 +64,7 @@
       :style="pageSectionStyle('status_forbidden')"
     />
     <StatusPanel
-      v-else-if="status === 'idle' && !sceneContractEntryIntent && !shouldRenderDashboardSurface && !productDeliverySurface.visible && embeddedRecordActionId <= 0 && embeddedActionId <= 0"
+      v-else-if="status === 'idle' && !sceneContractEntryIntent && !productDeliverySurface.visible && embeddedRecordActionId <= 0 && embeddedActionId <= 0"
       :title="pageText('status_idle_diag_title', '场景已加载，但没有可渲染目标')"
       :message="idleDiagnosticMessage"
       variant="info"
@@ -74,15 +74,14 @@
       :intent="sceneContractEntryIntent"
       :scene-key="currentSceneKey"
     />
-    <ProjectManagementDashboardView v-else-if="status === 'idle' && shouldRenderDashboardSurface" />
     <StatusPanel
-      v-if="status === 'idle' && !sceneContractEntryIntent && !shouldRenderDashboardSurface && validationHint"
+      v-if="status === 'idle' && !sceneContractEntryIntent && validationHint"
       :title="pageText('validation_surface_title', '表单约束提示')"
       :message="validationHint"
       variant="info"
     />
     <section
-      v-if="status === 'idle' && !sceneContractEntryIntent && !shouldRenderDashboardSurface && productDeliverySurface.visible"
+      v-if="status === 'idle' && !sceneContractEntryIntent && productDeliverySurface.visible"
       class="scene-delivery"
       :class="{ 'scene-delivery--advisory': productDeliverySurface.advisoryOnly }"
     >
@@ -104,13 +103,13 @@
       </button>
     </section>
     <StatusPanel
-      v-if="status === 'idle' && !sceneContractEntryIntent && !shouldRenderDashboardSurface && runtimeDiagnosticMessage"
+      v-if="status === 'idle' && !sceneContractEntryIntent && runtimeDiagnosticMessage"
       :title="runtimeDiagnosticTitle"
       :message="runtimeDiagnosticMessage"
       variant="info"
     />
-    <ContractFormPage v-if="status === 'idle' && !sceneContractEntryIntent && !shouldRenderDashboardSurface && embeddedRecordActionId > 0" />
-    <ActionView v-else-if="status === 'idle' && !sceneContractEntryIntent && !shouldRenderDashboardSurface && embeddedActionId > 0" />
+    <ContractFormPage v-if="status === 'idle' && !sceneContractEntryIntent && embeddedRecordActionId > 0" />
+    <ActionView v-else-if="status === 'idle' && !sceneContractEntryIntent && embeddedActionId > 0" />
   </section>
 </template>
 
@@ -118,7 +117,6 @@
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router';
 import ActionView from './ActionViewShell.vue';
-import ProjectManagementDashboardView from './ProjectManagementDashboardView.vue';
 import SceneContractBlockGridView from './SceneContractBlockGridView.vue';
 import ContractFormPage from '../pages/ContractFormPage.vue';
 import StatusPanel from '../components/StatusPanel.vue';
@@ -129,7 +127,7 @@ import { ErrorCodes } from '../app/error_codes';
 import { resolveErrorCopy, useStatus } from '../composables/useStatus';
 import { trackSceneOpen } from '../api/usage';
 import { readWorkspaceContext } from '../app/workspaceContext';
-import { normalizeLegacyWorkbenchPath } from '../app/routeQuery';
+import { buildCanonicalSceneRouteTarget, normalizeLegacyWorkbenchPath, resolveSceneDefaultOrder } from '../app/routeQuery';
 import { findActionMeta, findActionNodeByModel, findMenuNode } from '../app/menu';
 import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
@@ -153,7 +151,11 @@ const sceneContractEntryIntentMap: Record<string, string> = {
   'workspace.home': 'workspace.home.enter',
   'dashboard.company': 'dashboard.company.enter',
 };
-const sceneContractEntryIntent = computed(() => sceneContractEntryIntentMap[currentSceneKey.value] || '');
+const sceneContractEntryIntent = computed(() => {
+  const routeIntent = String(route.query.entry_intent || route.query.scene_intent || '').trim();
+  if (routeIntent) return routeIntent;
+  return sceneContractEntryIntentMap[currentSceneKey.value] || '';
+});
 const findActionNodeByModelRef = findActionNodeByModel;
 const scene = ref<Scene | null>(null);
 const status = ref<'loading' | 'error' | 'forbidden' | 'idle'>('loading');
@@ -169,17 +171,6 @@ const validationHint = ref('');
 const embeddedActionId = ref(0);
 const embeddedRecordActionId = ref(0);
 const compactSceneControls = computed(() => currentSceneKey.value === 'projects.list');
-const shouldRenderDashboardSurface = computed(() => {
-  const page = scene.value?.page;
-  const pageType = String(page?.page_type || '').trim().toLowerCase();
-  const layoutMode = String(page?.layout_mode || '').trim().toLowerCase();
-  return (
-    status.value === 'idle'
-    && embeddedRecordActionId.value <= 0
-    && embeddedActionId.value <= 0
-    && (pageType === 'dashboard' || layoutMode === 'dashboard')
-  );
-});
 
 const idleDiagnosticMessage = computed(() => {
   const sceneKey = String(route.meta?.sceneKey || route.params.sceneKey || '').trim();
@@ -427,10 +418,12 @@ function hasConsumableDeliveryRoot(scene: Scene | null) {
 
 function openSiblingScene(sceneKey: string) {
   const target = getSceneByKey(sceneKey);
-  router.replace({
-    path: target?.route || `/s/${sceneKey}`,
+  router.replace(buildCanonicalSceneRouteTarget(sceneKey, {
+    scene: target,
     query: asRouteQuery(target ? resolveSceneSwitchQuery(target) : resolveSceneSwitchFallbackQuery()),
-  }).catch(() => {});
+    menuId: target?.target?.menu_id,
+    actionId: target?.target?.action_id,
+  })).catch(() => {});
 }
 
 function openProductDeliveryTarget() {
@@ -439,10 +432,12 @@ function openProductDeliveryTarget() {
     return;
   }
   const target = getSceneByKey(targetSceneKey);
-  router.replace({
-    path: target?.route || `/s/${targetSceneKey}`,
+  router.replace(buildCanonicalSceneRouteTarget(targetSceneKey, {
+    scene: target,
     query: asRouteQuery(target ? resolveSceneSwitchQuery(target) : resolveSceneSwitchFallbackQuery()),
-  }).catch(() => {});
+    menuId: target?.target?.menu_id,
+    actionId: target?.target?.action_id,
+  })).catch(() => {});
 }
 function sanitizeWorkspaceContextForLayout(
   layoutKind: 'workspace' | 'record' | 'list' | 'ledger' | 'kanban' | 'dashboard',
@@ -700,6 +695,12 @@ function resolveCanonicalSceneOwnerQuery(sceneKey: string, workspaceContextQuery
   };
 }
 
+function resolveSceneActionOrder(scene: Scene, target: SceneTarget, sceneKey: string) {
+  const explicit = String(route.query.order || route.query.sort || '').trim();
+  if (explicit) return explicit;
+  return resolveSceneDefaultOrder(sceneKey, { ...scene, target });
+}
+
 function isCanonicalSceneOwnerTarget(target: SceneTarget, sceneKey: string) {
   const normalizedSceneKey = String(sceneKey || '').trim();
   if (!normalizedSceneKey) {
@@ -832,18 +833,21 @@ async function resolveScene() {
       // Workspace scene may still provide action/menu/model targets.
       const resolvedAction = resolveVisibleActionTarget(target, sceneKey);
       if (resolvedAction) {
+        const defaultOrder = resolveSceneActionOrder(resolvedScene, target, sceneKey);
+        const effectiveMenuId = Number(route.query.menu_id || 0) || Number(resolvedAction.menuId || 0) || undefined;
         const nextQuery = {
-          menu_id: resolvedAction.menuId,
+          menu_id: effectiveMenuId,
           action_id: resolvedAction.actionId,
           scene_key: sceneKey || undefined,
           scene_label: sceneLabel || undefined,
+          order: defaultOrder || undefined,
           ...workspaceContextQuery,
         };
         const currentActionId = Number(route.query.action_id || 0);
         const currentMenuId = Number(route.query.menu_id || 0);
         const sameEmbeddedRouteState =
           currentActionId === resolvedAction.actionId
-          && currentMenuId === Number(resolvedAction.menuId || 0)
+          && currentMenuId === Number(effectiveMenuId || 0)
           && String(route.query.scene_key || '') === sceneKey;
         if (!sameEmbeddedRouteState) {
           await router.replace({ path: route.path, query: asRouteQuery(nextQuery) });
@@ -885,18 +889,21 @@ async function resolveScene() {
     if (layout.kind === 'record') {
       const resolvedAction = resolveVisibleActionTarget(target, sceneKey);
       if (resolvedAction) {
+        const defaultOrder = resolveSceneActionOrder(resolvedScene, target, sceneKey);
+        const effectiveMenuId = Number(route.query.menu_id || 0) || Number(resolvedAction.menuId || 0) || undefined;
         const nextQuery = {
-          menu_id: resolvedAction.menuId,
+          menu_id: effectiveMenuId,
           action_id: resolvedAction.actionId,
           scene_key: sceneKey || undefined,
           scene_label: sceneLabel || undefined,
+          order: defaultOrder || undefined,
           ...workspaceContextQuery,
         };
         const currentActionId = Number(route.query.action_id || 0);
         const currentMenuId = Number(route.query.menu_id || 0);
         const sameEmbeddedRouteState =
           currentActionId === resolvedAction.actionId
-          && currentMenuId === Number(resolvedAction.menuId || 0)
+          && currentMenuId === Number(effectiveMenuId || 0)
           && String(route.query.scene_key || '') === sceneKey;
         if (!sameEmbeddedRouteState) {
           await router.replace({ path: route.path, query: asRouteQuery(nextQuery) });
@@ -968,18 +975,21 @@ async function resolveScene() {
     if (layout.kind === 'list' || layout.kind === 'ledger') {
       const resolvedAction = resolveVisibleActionTarget(target, sceneKey);
       if (resolvedAction) {
+        const defaultOrder = resolveSceneActionOrder(resolvedScene, target, sceneKey);
+        const effectiveMenuId = Number(route.query.menu_id || 0) || Number(resolvedAction.menuId || 0) || undefined;
         const nextQuery = {
-          menu_id: resolvedAction.menuId,
+          menu_id: effectiveMenuId,
           action_id: resolvedAction.actionId,
           scene_key: sceneKey || undefined,
           scene_label: sceneLabel || undefined,
+          order: defaultOrder || undefined,
           ...workspaceContextQuery,
         };
         const currentActionId = Number(route.query.action_id || 0);
         const currentMenuId = Number(route.query.menu_id || 0);
         const sameEmbeddedRouteState =
           currentActionId === resolvedAction.actionId
-          && currentMenuId === Number(resolvedAction.menuId || 0)
+          && currentMenuId === Number(effectiveMenuId || 0)
           && String(route.query.scene_key || '') === sceneKey;
         if (!sameEmbeddedRouteState) {
           await router.replace({ path: route.path, query: asRouteQuery(nextQuery) });

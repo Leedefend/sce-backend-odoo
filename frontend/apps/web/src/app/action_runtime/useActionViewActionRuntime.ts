@@ -53,6 +53,11 @@ type ExecuteButtonInput = {
   context?: Dict;
 };
 
+type ContractActionResponseNavigation = {
+  nextActionId: number | null;
+  entryTarget: Dict | null;
+};
+
 type UseActionViewActionRuntimeOptions = {
   selectedIds: Ref<number[]>;
   batchBusy: Ref<boolean>;
@@ -63,7 +68,7 @@ type UseActionViewActionRuntimeOptions = {
   recordIntentTrace: (payload: { intent: string; writeMode: string; latencyMs?: number }) => void;
   resolveActionContextRecordId: () => number | null;
   resolveOpenNavigation: (input: { actionId?: number; url?: string }) => { kind: 'action' | 'url' | 'none'; actionId?: number; url: string };
-  buildRouteTarget: (nextActionId: number) => unknown;
+  buildRouteTarget: (input: number | ContractActionResponseNavigation) => unknown;
   routerPush: (target: unknown) => Promise<unknown>;
   resolveNavigationUrl: (url: string) => string;
   openWindow: (url: string, target: string) => void;
@@ -86,8 +91,8 @@ type UseActionViewActionRuntimeOptions = {
     kind: string;
     context?: Dict;
   }) => ExecuteButtonInput;
-  resolveResponseActionId: (response: unknown) => number | null;
-  shouldNavigate: (input: { nextActionId: number | null }) => boolean;
+  resolveResponseNavigation: (response: unknown) => ContractActionResponseNavigation;
+  shouldNavigate: (input: ContractActionResponseNavigation) => boolean;
 };
 
 function resolveSelectedIdsForAction(selection: ContractActionSelection, selectedIds: number[]) {
@@ -243,9 +248,9 @@ export function useActionViewActionRuntime(options: UseActionViewActionRuntimeOp
             kind,
             context: action.context,
           }));
-          const nextActionId = options.resolveResponseActionId(response);
-          if (options.shouldNavigate({ nextActionId })) {
-            await options.routerPush(options.buildRouteTarget(Number(nextActionId || 0)));
+          const navigation = options.resolveResponseNavigation(response);
+          if (options.shouldNavigate(navigation)) {
+            await options.routerPush(options.buildRouteTarget(navigation));
             return;
           }
           ({ successCount, failureCount } = options.resolveCounters({

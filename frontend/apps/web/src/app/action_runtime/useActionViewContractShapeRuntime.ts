@@ -205,6 +205,13 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
 
   function extractKanbanFields(contract: unknown) {
     const typed = (contract || {}) as Dict;
+    const v2 = resolveUnifiedPageContractV2(typed);
+    if (String(v2?.pageInfo?.viewType || '').trim() === 'kanban') {
+      const fields = collectUnifiedPageContractV2FieldWidgets(typed)
+        .map((widget) => widget.fieldCode)
+        .filter(Boolean);
+      if (fields.length) return fields;
+    }
     const uiContract = ((typed.ui_contract || {}) as Dict);
     const directViews = (typed.views || uiContract.views) as Dict | undefined;
     if (directViews) {

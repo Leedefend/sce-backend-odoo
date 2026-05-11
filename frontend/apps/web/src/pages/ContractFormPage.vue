@@ -483,6 +483,7 @@ import {
 import { validateContractFormData } from '../app/contractValidation';
 import { resolveActionIdFromContext } from '../app/actionContext';
 import { pickContractNavQuery } from '../app/navigationContext';
+import { buildEntryTargetRouteTarget } from '../app/routeQuery';
 import { readWorkspaceContext } from '../app/workspaceContext';
 import { collectPolicyValidationErrors, evaluateActionPolicy, evaluateFieldPolicy } from '../app/contractPolicies';
 import { buildRuntimeFieldStates } from '../app/modifierEngine';
@@ -2920,6 +2921,13 @@ async function runNativeLayoutAction(row: Record<string, unknown>) {
         },
       });
       const result = response?.result;
+      if (result?.entry_target) {
+        await router.push(buildEntryTargetRouteTarget(result.entry_target, {
+          query: pickContractNavQuery(route.query as Record<string, unknown>),
+          actionId: result.action_id,
+        }) as never);
+        return;
+      }
       const nextActionId = toPositiveInt(result?.action_id);
       if (nextActionId) {
         await router.push({
@@ -5005,6 +5013,16 @@ async function runAction(action: ContractAction) {
       const refresh = result?.type;
       if (refresh === 'refresh' && !action.refreshPolicy) {
         await reload();
+        return;
+      }
+      if (result?.entry_target) {
+        await router.push(buildEntryTargetRouteTarget(result.entry_target, {
+          query: pickContractNavQuery(route.query as Record<string, unknown>),
+          actionId: result.action_id,
+        }) as never);
+        if (action.refreshPolicy) {
+          await applyProjectionRefreshPolicy(action.refreshPolicy);
+        }
         return;
       }
       const nextActionId = toPositiveInt(result?.action_id);

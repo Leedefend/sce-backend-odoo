@@ -1,4 +1,29 @@
+import { buildEntryTargetRouteTarget } from '../routeQuery';
+
 export type ContractActionSelection = 'none' | 'single' | 'multi';
+
+export type ContractActionResponseNavigation = {
+  nextActionId: number | null;
+  entryTarget: Record<string, unknown> | null;
+};
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
+
+function toPositiveInt(value: unknown): number {
+  const parsed = Number(value || 0);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+}
+
+function resolveEntryTargetActionId(entryTarget: Record<string, unknown> | null): number {
+  if (!entryTarget) return 0;
+  const refs = asRecord(entryTarget.compatibility_refs);
+  const recordEntry = asRecord(entryTarget.record_entry);
+  return toPositiveInt(refs.action_id || recordEntry.action_id);
+}
 
 export function resolveContractActionOpenNavigation(options: {
   actionId?: number | null;
@@ -86,7 +111,8 @@ export function resolveContractActionDoneMessage(options: {
 }
 
 export function buildContractActionRouteTarget(options: {
-  nextActionId: number;
+  nextActionId?: number | null;
+  entryTarget?: Record<string, unknown> | null;
   carryQuery: Record<string, unknown>;
   menuId: number;
   keepSceneRoute: boolean;
@@ -97,17 +123,33 @@ export function buildContractActionRouteTarget(options: {
   params?: { actionId: number };
   query: Record<string, unknown>;
 } {
+  const entryTarget = options.entryTarget && typeof options.entryTarget === 'object'
+    ? options.entryTarget
+    : null;
+  const entryTargetType = String(entryTarget?.type || '').trim();
+  const sceneKey = String(entryTarget?.scene_key || '').trim();
+  const entryTargetActionId = resolveEntryTargetActionId(entryTarget);
+  const nextActionId = toPositiveInt(options.nextActionId) || entryTargetActionId;
   const query = {
     ...options.carryQuery,
     menu_id: options.menuId || undefined,
-    action_id: options.nextActionId,
+    action_id: nextActionId || undefined,
   };
+  if (entryTargetType && (sceneKey || entryTargetType === 'compatibility')) {
+    return buildEntryTargetRouteTarget(entryTarget, {
+      query,
+      menuId: options.menuId,
+      actionId: nextActionId,
+      keepSceneRoute: options.keepSceneRoute,
+      routePath: options.routePath,
+    });
+  }
   if (options.keepSceneRoute) {
     return { path: options.routePath, query };
   }
   return {
     name: 'action',
-    params: { actionId: options.nextActionId },
+    params: { actionId: nextActionId },
     query,
   };
 }
@@ -127,20 +169,40 @@ export function resolveContractActionSelectionBlockMessage(options: {
     : options.text('batch_msg_select_records_before_run', '请先选择记录后再执行');
 }
 
+export function resolveContractActionResponseNavigation(responseRaw: unknown): ContractActionResponseNavigation {
+  const response = asRecord(responseRaw);
+  const result = asRecord(response.result);
+  const effect = asRecord(response.effect);
+  const effectTarget = asRecord(effect.target);
+  const rawAction = asRecord(result.raw_action);
+  const entryTarget = asRecord(
+    result.entry_target
+      || rawAction.entry_target
+      || effectTarget.entry_target,
+  );
+  const normalizedEntryTarget = String(entryTarget.type || '').trim() ? entryTarget : null;
+  const actionId = toPositiveInt(
+    result.action_id
+      || rawAction.action_id
+      || rawAction.id
+      || effectTarget.action_id
+      || resolveEntryTargetActionId(normalizedEntryTarget),
+  );
+  return {
+    nextActionId: actionId || null,
+    entryTarget: normalizedEntryTarget,
+  };
+}
+
 export function resolveContractActionResponseActionId(responseRaw: unknown): number | null {
-  const response = responseRaw && typeof responseRaw === 'object'
-    ? (responseRaw as Record<string, unknown>)
-    : {};
-  const result = response.result && typeof response.result === 'object'
-    ? (response.result as Record<string, unknown>)
-    : {};
-  const actionId = Number(result.action_id || 0);
-  return actionId > 0 ? actionId : null;
+  return resolveContractActionResponseNavigation(responseRaw).nextActionId;
 }
 
 export function shouldNavigateContractAction(options: {
-  nextActionId: number | null;
+  nextActionId?: number | null;
+  entryTarget?: Record<string, unknown> | null;
 }): boolean {
+  if (options.entryTarget && String(options.entryTarget.type || '').trim()) return true;
   return typeof options.nextActionId === 'number' && options.nextActionId > 0;
 }
 

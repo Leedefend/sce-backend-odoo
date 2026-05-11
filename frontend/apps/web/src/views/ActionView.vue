@@ -554,7 +554,7 @@ import {
   resolveContractViewMode,
 } from '../app/contractActionRuntime';
 import { detectObjectMethodFromActionKey, normalizeActionKind, toPositiveInt } from '../app/contractRuntime';
-import type { Scene, SceneListProfile } from '../app/resolvers/sceneRegistry';
+import { getSceneByKey, type Scene, type SceneListProfile } from '../app/resolvers/sceneRegistry';
 import { findSceneReadyEntry } from '../app/resolvers/sceneReadyResolver';
 import { normalizeSceneActionProtocol, type MutationContract, type ProjectionRefreshPolicy } from '../app/sceneActionProtocol';
 import { executeProjectionRefresh } from '../app/projectionRefreshRuntime';
@@ -687,7 +687,7 @@ import {
   resolveContractActionMissingModelMessage,
   resolveContractActionMissingOpenTargetMessage,
   resolveContractActionOpenNavigation,
-  resolveContractActionResponseActionId,
+  resolveContractActionResponseNavigation,
   resolveContractActionRequiresRecordContextMessage,
   resolveContractActionRunIds,
   resolveContractActionSelectionBlockMessage,
@@ -755,6 +755,7 @@ import {
   buildPathRouteTarget,
   buildWorkbenchRouteTarget,
 } from '../app/runtime/actionViewRouteRuntime';
+import { buildCanonicalSceneRouteTarget, buildEntryTargetRouteTarget } from '../app/routeQuery';
 import {
   hasRoutePresetGroupPageStateChanged,
   resolveRoutePresetActiveFilterValue,
@@ -2072,8 +2073,9 @@ const { runContractAction } = useActionViewActionRuntime({
     return null;
   },
   resolveOpenNavigation: (input) => resolveContractActionOpenNavigation({ actionId: input.actionId, url: input.url }),
-  buildRouteTarget: (nextActionId) => buildContractActionRouteTarget({
-    nextActionId,
+  buildRouteTarget: (navigation) => buildContractActionRouteTarget({
+    nextActionId: typeof navigation === 'number' ? navigation : navigation.nextActionId,
+    entryTarget: typeof navigation === 'number' ? null : navigation.entryTarget,
     carryQuery: resolveCarryQuery(),
     menuId: menuId.value,
     keepSceneRoute: keepSceneRoute.value,
@@ -2104,7 +2106,7 @@ const { runContractAction } = useActionViewActionRuntime({
   executeSceneMutation,
   executeButton,
   buildButtonRequest: buildContractActionButtonRequest,
-  resolveResponseActionId: resolveContractActionResponseActionId,
+  resolveResponseNavigation: resolveContractActionResponseNavigation,
   shouldNavigate: shouldNavigateContractAction,
 });
 
@@ -2835,9 +2837,22 @@ async function redirectMenuOnlyRouteIfNeeded(): Promise<boolean> {
     }
   }
   if (result.kind === 'leaf') {
+    const entryTarget = result.meta?.entry_target && typeof result.meta.entry_target === 'object'
+      ? result.meta.entry_target as Record<string, unknown>
+      : null;
     const targetActionId = Number(result.meta.action_id || 0);
     if (targetActionId <= 0) return false;
     session.setActionMeta(result.meta);
+    if (entryTarget) {
+      await router.replace(buildEntryTargetRouteTarget(entryTarget, {
+        query: resolveCarryQuery(),
+        menuId: currentMenuId,
+        actionId: targetActionId,
+        keepSceneRoute: keepSceneRoute.value,
+        routePath: route.path,
+      }) as never);
+      return true;
+    }
     await router.replace({
       name: 'action',
       params: { actionId: targetActionId },
@@ -2846,11 +2861,24 @@ async function redirectMenuOnlyRouteIfNeeded(): Promise<boolean> {
     return true;
   }
   if (result.kind === 'redirect') {
+    if (result.target.entry_target) {
+      await router.replace(buildEntryTargetRouteTarget(result.target.entry_target, {
+        query: resolveCarryQuery(),
+        menuId: result.target.menu_id || currentMenuId,
+        actionId: result.target.action_id,
+        keepSceneRoute: keepSceneRoute.value,
+        routePath: route.path,
+      }) as never);
+      return true;
+    }
     if (result.target.scene_key) {
-      await router.replace({
-        path: `/s/${result.target.scene_key}`,
-        query: resolveCarryQuery({ menu_id: result.target.menu_id || currentMenuId }),
-      });
+      const sceneKey = String(result.target.scene_key || '').trim();
+      await router.replace(buildCanonicalSceneRouteTarget(sceneKey, {
+        scene: getSceneByKey(sceneKey),
+        query: resolveCarryQuery(),
+        menuId: result.target.menu_id || currentMenuId,
+        actionId: result.target.action_id,
+      }));
       return true;
     }
     const targetActionId = Number(result.target.action_id || 0);
