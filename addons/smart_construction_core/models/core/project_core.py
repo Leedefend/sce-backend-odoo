@@ -561,6 +561,7 @@ class ProjectProject(models.Model):
         [
             ("direct", "公司直营"),
             ("joint", "联营项目"),
+            ("invalid", "无效分类"),
         ],
         string="经营方式",
         default="direct",
