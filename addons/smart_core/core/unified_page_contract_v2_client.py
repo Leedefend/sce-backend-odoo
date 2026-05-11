@@ -70,7 +70,6 @@ def trim_unified_page_contract_v2(
     max_widgets: int | None = None,
     max_actions: int | None = None,
     max_containers: int | None = None,
-    include_source_compat: bool | None = None,
 ) -> dict[str, Any]:
     client = client_type if client_type in STABLE_CLIENT_TYPES else "web_pc"
     profile = delivery_profile if delivery_profile in {"full", "mobile_compact", "mobile_primary"} else resolve_delivery_profile(client)
@@ -79,7 +78,6 @@ def trim_unified_page_contract_v2(
     widget_limit = _positive_int(max_widgets, DEFAULT_MOBILE_WIDGET_LIMIT)
     action_limit = _positive_int(max_actions, DEFAULT_MOBILE_ACTION_LIMIT)
     container_limit = _positive_int(max_containers, DEFAULT_MOBILE_CONTAINER_LIMIT)
-    keep_compat = bool(include_source_compat) if include_source_compat is not None else not compact
     trim_meta: dict[str, Any] = {
         "clientType": client,
         "deliveryProfile": profile,
@@ -145,20 +143,7 @@ def trim_unified_page_contract_v2(
     out["runtimeContract"] = runtime
 
     meta = _dict(out.get("meta"))
-    if not keep_compat:
-        if compact:
-            compat = _dict(meta.get("compat"))
-            meta["compat"] = {
-                key: {
-                    "sourceType": key,
-                    "sourceFingerprint": _fingerprint(value),
-                    "delivery": "omitted_for_mobile_compact",
-                }
-                for key, value in compat.items()
-            }
-        else:
-            meta.pop("compat", None)
-        meta["sourceCompatTrimmed"] = True
+    meta.pop("compat", None)
     meta["deliveryTrim"] = trim_meta
     out["meta"] = meta
     return out

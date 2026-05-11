@@ -18,7 +18,6 @@ from ..core.unified_page_contract_v2_client import (
 )
 from ..core.scene_provider import load_scenes_from_db_or_fallback
 from ..core.request_params import parse_positive_int
-from ..core.request_params import parse_bool
 from .ui_contract import UiContractHandler
 
 _logger = logging.getLogger(__name__)
@@ -56,13 +55,11 @@ class UiContractV2Handler(BaseIntentHandler):
         client_type = resolve_client_type(self._headers(), params)
         delivery_profile = resolve_delivery_profile(client_type, params)
         source_type = str(params.get("source_type") or params.get("sourceType") or "ui.contract").strip()
-        include_source_compat = parse_bool(params.get("include_source_compat"), False)
         if source_type == "scene_contract_v1":
             return self._handle_scene_contract(
                 params,
                 client_type=client_type,
                 delivery_profile=delivery_profile,
-                include_source_compat=include_source_compat,
             )
         if source_type != "ui.contract":
             return self._err(400, f"unsupported v2 source_type: {source_type}")
@@ -129,7 +126,6 @@ class UiContractV2Handler(BaseIntentHandler):
             client_type=client_type,
             delivery_profile=delivery_profile,
             **limit_params,
-            include_source_compat=include_source_compat,
         )
 
         return IntentExecutionResult(
@@ -149,7 +145,7 @@ class UiContractV2Handler(BaseIntentHandler):
             },
         )
 
-    def _handle_scene_contract(self, params: dict[str, Any], *, client_type: str, delivery_profile: str, include_source_compat: bool):
+    def _handle_scene_contract(self, params: dict[str, Any], *, client_type: str, delivery_profile: str):
         scene_key = str(params.get("scene_key") or params.get("sceneKey") or "").strip()
         if not scene_key:
             return self._err(400, "missing scene_key for scene_contract_v1")
@@ -168,7 +164,6 @@ class UiContractV2Handler(BaseIntentHandler):
             client_type=client_type,
             delivery_profile=delivery_profile,
             **limit_params,
-            include_source_compat=include_source_compat,
         )
         return IntentExecutionResult(
             ok=True,

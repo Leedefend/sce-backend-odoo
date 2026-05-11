@@ -74,13 +74,10 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
             full,
             client_type="harmony_h5",
             delivery_profile="mobile_compact",
-            include_source_compat=False,
         )
 
         data_contract = trimmed["dataContract"]
         source_context = data_contract["dataMeta"]["sourceContext"]
-        self.assertTrue(trimmed["meta"]["sourceCompatTrimmed"])
-        self.assertEqual(trimmed["meta"]["compat"]["ui_contract"]["delivery"], "omitted_for_mobile_compact")
         self.assertEqual(source_context["renderProfile"], "create")
         self.assertEqual(source_context["context"]["default_phase_key"], "initiation")
         self.assertEqual(data_contract["mainData"]["manager_id"], 43)
@@ -232,10 +229,7 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
             full,
             client_type="web_pc",
             delivery_profile="full",
-            include_source_compat=False,
         )
-
-        self.assertTrue(trimmed["meta"]["sourceCompatTrimmed"])
         self.assertNotIn("compat", trimmed["meta"])
 
 
