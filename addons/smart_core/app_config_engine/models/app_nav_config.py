@@ -149,6 +149,22 @@ class AppMenuConfig(models.Model):
 
     # ======================= 生成阶段：sudo 全量标准化并持久化 =======================
 
+    def _menu_config_domain(self, model_name=None, scene='web'):
+        return [
+            ('target_model', '=', model_name or '__all__'),
+            ('scene', '=', scene),
+            ('company_id', '=', self.env.company.id),
+            ('lang', '=', self.env.lang or 'zh_CN'),
+        ]
+
+    @api.model
+    def _get_or_generate_from_menus(self, model_name=None, scene='web', force=False):
+        if not force:
+            cfg = self.sudo().search(self._menu_config_domain(model_name=model_name, scene=scene), limit=1)
+            if cfg:
+                return cfg
+        return self._generate_from_menus(model_name=model_name, scene=scene)
+
     @api.model
     def _generate_from_menus(self, model_name=None, scene='web'):
         """
@@ -251,15 +267,9 @@ class AppMenuConfig(models.Model):
             # 3) 版本哈希：仅依赖结构（与 scene/target 组合）
             payload_for_hash = {'tree': tree, 'scene': scene, 'target': model_name or '__all__'}
             new_hash = self._hash(payload_for_hash)
-            target_key = model_name or '__all__'
-
             # 4) upsert 到 app.menu.config（唯一维度键）
-            cfg = self.sudo().search([
-                ('target_model', '=', target_key),
-                ('scene', '=', scene),
-                ('company_id', '=', self.env.company.id),
-                ('lang', '=', self.env.lang or 'zh_CN'),
-            ], limit=1)
+            target_key = model_name or '__all__'
+            cfg = self.sudo().search(self._menu_config_domain(model_name=model_name, scene=scene), limit=1)
 
             vals = {
                 'target_model': target_key,
@@ -316,7 +326,8 @@ class AppMenuConfig(models.Model):
             }
           }
         """
-        cfg = self._generate_from_menus(model_name=model_name, scene=scene)
+        force_generate = bool(self.env.context.get('force_menu_config_generate'))
+        cfg = self._get_or_generate_from_menus(model_name=model_name, scene=scene, force=force_generate)
         tree = cfg.menu_tree or []
         filters = filters or {}
 
