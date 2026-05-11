@@ -400,6 +400,9 @@ class SystemInitPayloadBuilder:
             for key in (
                 "scene",
                 "page",
+                "scene_blocks",
+                "scene_blocks_by_view",
+                "view_orchestration_contract_v1",
                 "parser_semantic_surface",
                 "semantic_view",
                 "semantic_page",
