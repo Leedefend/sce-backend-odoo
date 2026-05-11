@@ -889,7 +889,7 @@ export const useSessionStore = defineStore('session', {
       const configuredDb = config.odooDbPinned
         ? String(config.odooDb || '').trim()
         : resolveActiveDb(String(config.odooDb || '').trim());
-      const db = String(dbOverride || configuredDb).trim();
+      const db = String(config.odooDbPinned ? configuredDb : dbOverride || configuredDb).trim();
       if (db) {
         setActiveDb(db, true);
       }
