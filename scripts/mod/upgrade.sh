@@ -15,6 +15,7 @@ source "$ROOT_DIR/scripts/common/compose.sh"
 : "${DB_NAME:?DB_NAME is required}"
 
 guard_prod_danger
+guard_demo_module_db
 
 printf '[mod.upgrade] module=%s db=%s\n' "$MODULE" "$DB_NAME"
 
