@@ -92,6 +92,170 @@ class UserViewPreferenceGetHandler(BaseIntentHandler):
     def _err(self, code, message):
         return {"ok": False, "error": {"code": code, "message": message}, "code": code, "meta": self._source_meta()}
 
+    def _sanitize_list(self, value, *, max_size=80):
+        if not isinstance(value, list):
+            return []
+        rows = []
+        seen = set()
+        for item in value:
+            name = str(item or "").strip()
+            if not name or name in seen:
+                continue
+            seen.add(name)
+            rows.append(name)
+            if len(rows) >= max_size:
+                break
+        return rows
+
+    def _sanitize_widths(self, value, *, names=None):
+        if not isinstance(value, dict):
+            return {}
+        allowed = set(names or [])
+        rows = {}
+        for key, raw in value.items():
+            name = str(key or "").strip()
+            if not name:
+                continue
+            if allowed and name not in allowed:
+                continue
+            try:
+                width = int(raw)
+            except (TypeError, ValueError):
+                continue
+            if width <= 0:
+                continue
+            rows[name] = min(max(width, 80), 640)
+        return rows
+
+    def _sanitize_preference(self, preference_key, value):
+        data = value if isinstance(value, dict) else {}
+        if preference_key == "list_columns":
+            visible = self._sanitize_list(data.get("visible_columns"))
+            hidden = [name for name in self._sanitize_list(data.get("hidden_columns")) if name not in set(visible)]
+            order = self._sanitize_list(data.get("column_order"))
+            known = set(visible) | set(hidden)
+            if known:
+                order = [name for name in order if name in known]
+            widths = self._sanitize_widths(data.get("column_widths"), names=known)
+            return {
+                "visible_columns": visible,
+                "hidden_columns": hidden,
+                "column_order": order,
+                "column_widths": widths,
+            }
+        return {}
+
+    def _resolve_list_profile_contract(self, *, action_id=0, model_name="", view_type="list"):
+        try:
+            from .ui_contract import UiContractHandler
+            from ..core.intent_execution_result import adapt_handler_result
+
+            ui_payload = {
+                "params": {
+                    "op": "action_open" if int(action_id or 0) > 0 else "model",
+                    "action_id": int(action_id or 0),
+                    "model": str(model_name or "").strip(),
+                    "view_type": str(view_type or "list").strip() or "list",
+                    "source_mode": "backend_internal",
+                    "contract_surface": "user",
+                }
+            }
+            result = adapt_handler_result(UiContractHandler(env=self.env).handle(ui_payload))
+            data = result.get("data") if isinstance(result, dict) else {}
+            if isinstance(data, dict):
+                list_profile = data.get("list_profile")
+                if isinstance(list_profile, dict):
+                    return list_profile
+        except Exception:
+            pass
+
+        svc = self.env.get("app.contract.service") if hasattr(self.env, "get") else None
+        if not svc:
+            return {}
+        try:
+            scoped = svc.with_context(dict(self.env.context or {}))
+            result = scoped.generate_contract(
+                model_name=str(model_name or "").strip(),
+                view_type=str(view_type or "list").strip() or "list",
+                include_parts={"view", "action", "permission", "model"},
+                force_refresh=False,
+                client_version="",
+                menu_id=0,
+                action_id=int(action_id or 0),
+            ) or {}
+            data = result.get("data") if isinstance(result, dict) else {}
+            if not isinstance(data, dict):
+                return {}
+            list_profile = data.get("list_profile")
+            return list_profile if isinstance(list_profile, dict) else {}
+        except Exception:
+            return {}
+
+    def _apply_list_preference_policy(self, payload, *, list_profile):
+        value = payload if isinstance(payload, dict) else {}
+        profile = list_profile if isinstance(list_profile, dict) else {}
+        columns = self._sanitize_list(profile.get("columns"), max_size=200)
+        column_set = set(columns)
+        fact_columns = self._sanitize_list(profile.get("fact_columns"), max_size=200)
+        policy = profile.get("preference_policy") if isinstance(profile.get("preference_policy"), dict) else {}
+        allow_visibility = policy.get("allow_visibility") is not False
+        allow_order = policy.get("allow_order") is not False
+        allow_width = policy.get("allow_width") is not False
+        locked = set(self._sanitize_list(policy.get("locked_columns"), max_size=200))
+        must_request = set(self._sanitize_list(policy.get("must_request_columns"), max_size=200))
+        # Scope boundary:
+        # - fact_columns / must_request_columns: data request contract only
+        # - locked_columns: UI visibility constraint
+        pinned = set(locked)
+
+        visible = self._sanitize_list(value.get("visible_columns"))
+        hidden = self._sanitize_list(value.get("hidden_columns"))
+        order = self._sanitize_list(value.get("column_order"))
+        widths = self._sanitize_widths(value.get("column_widths"), names=(column_set or None))
+
+        if column_set:
+            visible = [name for name in visible if name in column_set]
+            hidden = [name for name in hidden if name in column_set]
+            order = [name for name in order if name in column_set]
+            widths = {name: width for name, width in widths.items() if name in column_set}
+
+        if allow_visibility:
+            visible_set = set(visible)
+            hidden = [name for name in hidden if name not in visible_set and name not in pinned]
+            if visible or hidden:
+                visible = [name for name in visible if name not in hidden]
+        else:
+            visible = []
+            hidden = []
+
+        if not allow_order:
+            order = []
+        if not allow_width:
+            widths = {}
+
+        return {
+            "visible_columns": visible,
+            "hidden_columns": hidden,
+            "column_order": order,
+            "column_widths": widths,
+        }
+
+    def _build_preference_contract_meta(self, *, list_profile):
+        profile = list_profile if isinstance(list_profile, dict) else {}
+        policy = profile.get("preference_policy") if isinstance(profile.get("preference_policy"), dict) else {}
+        return {
+            "columns": self._sanitize_list(profile.get("columns"), max_size=200),
+            "fact_columns": self._sanitize_list(profile.get("fact_columns"), max_size=200),
+            "preference_policy": {
+                "scope": str(policy.get("scope") or "ui_only"),
+                "allow_visibility": policy.get("allow_visibility") is not False,
+                "allow_order": policy.get("allow_order") is not False,
+                "allow_width": policy.get("allow_width") is not False,
+                "locked_columns": self._sanitize_list(policy.get("locked_columns"), max_size=200),
+                "must_request_columns": self._sanitize_list(policy.get("must_request_columns"), max_size=200),
+            },
+        }
+
     def _source_meta(self):
         return {
             "source_kind": self.SOURCE_KIND,
@@ -119,14 +283,30 @@ class UserViewPreferenceGetHandler(BaseIntentHandler):
                 ("user_id", "=", self.env.uid),
                 ("scope_key", "=", legacy_scope_key),
             ], limit=1)
-        value = record.value_json if record else {}
+        preference_key = Preference.normalize_preference_key(params.get("preference_key"))
+        list_profile = {}
+        if preference_key == "list_columns":
+            action_id, _ = self._read_positive_int(params.get("action_id"), "action_id")
+            model_name, _ = self._text_param(params, ("model", "model_name"))
+            view_type, _ = self._text_param(params, "view_type", default="list")
+            list_profile = self._resolve_list_profile_contract(
+                action_id=action_id,
+                model_name=model_name,
+                view_type=view_type,
+            )
+        value = self._sanitize_preference(preference_key, record.value_json if record else {})
         return {
             "ok": True,
             "data": {
                 "scope_key": scope_key,
-                "preference": value if isinstance(value, dict) else {},
+                "preference": value,
             },
-            "meta": {"intent": self.INTENT_TYPE, "version": self.VERSION, **self._source_meta()},
+            "meta": {
+                "intent": self.INTENT_TYPE,
+                "version": self.VERSION,
+                "preference_contract": self._build_preference_contract_meta(list_profile=list_profile),
+                **self._source_meta(),
+            },
         }
 
 
@@ -153,9 +333,15 @@ class UserViewPreferenceSetHandler(UserViewPreferenceGetHandler):
         model_name, model_error = self._text_param(params, ("model", "model_name"))
         if model_error:
             return model_error
-        value = params.get("preference")
-        if not isinstance(value, dict):
-            value = {}
+        value = self._sanitize_preference(preference_key, params.get("preference"))
+        list_profile = {}
+        if preference_key == "list_columns":
+            list_profile = self._resolve_list_profile_contract(
+                action_id=action_id,
+                model_name=model_name,
+                view_type=view_type,
+            )
+            value = self._apply_list_preference_policy(value, list_profile=list_profile)
         Preference = self.env["sc.user.view.preference"]
         record = Preference.search([
             ("user_id", "=", self.env.uid),
@@ -181,5 +367,10 @@ class UserViewPreferenceSetHandler(UserViewPreferenceGetHandler):
                 "scope_key": scope_key,
                 "preference": record.value_json if isinstance(record.value_json, dict) else {},
             },
-            "meta": {"intent": self.INTENT_TYPE, "version": self.VERSION, **self._source_meta()},
+            "meta": {
+                "intent": self.INTENT_TYPE,
+                "version": self.VERSION,
+                "preference_contract": self._build_preference_contract_meta(list_profile=list_profile),
+                **self._source_meta(),
+            },
         }
