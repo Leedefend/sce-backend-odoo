@@ -152,6 +152,7 @@ class MenuService:
                         "model": model,
                         "view_modes": menu.get("view_modes") if isinstance(menu.get("view_modes"), list) else [],
                         "scene_source": "delivery_policy",
+                        "entry_target": menu.get("entry_target") if isinstance(menu.get("entry_target"), dict) else {},
                     }
                 )
         return [row for row in out if row.get("menu_key") and row.get("label")]
@@ -205,6 +206,7 @@ class MenuService:
                     "action_id": meta.get("action_id") or leaf.get("action_id"),
                     "action_xmlid": str(meta.get("action_xmlid") or leaf.get("action_xmlid") or ""),
                     "model": str(meta.get("model") or leaf.get("model") or ""),
+                    "entry_target": meta.get("entry_target") if isinstance(meta.get("entry_target"), dict) else {},
                     "view_modes": (
                         meta.get("view_modes")
                         if isinstance(meta.get("view_modes"), list)

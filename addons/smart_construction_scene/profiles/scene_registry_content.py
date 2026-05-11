@@ -59,7 +59,7 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             "code": "project.management",
             "name": "项目驾驶舱",
             "target": {
-                "menu_xmlid": "smart_construction_core.menu_sc_project_management_scene",
+                "menu_xmlid": "smart_construction_core.menu_sc_project_dashboard",
                 "action_xmlid": "smart_construction_core.action_project_dashboard",
                 "route": "/s/project.management",
             },
@@ -301,11 +301,11 @@ def list_scene_entries() -> List[Dict[str, Any]]:
         },
         {
             "code": "cost.control",
-            "name": "成本控制驾驶舱",
+            "name": "成本驾驶舱",
             "target": {
                 "route": "/s/cost.control",
-                "menu_xmlid": "smart_construction_core.menu_sc_project_cost_ledger",
-                "action_xmlid": "smart_construction_core.action_project_cost_ledger",
+                "menu_xmlid": "smart_construction_core.menu_sc_dashboard_cost_cockpit_fact",
+                "action_xmlid": "smart_construction_core.action_sc_dashboard_cost_cockpit_fact",
             },
         },
         {

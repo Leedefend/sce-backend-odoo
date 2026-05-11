@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Dict, List, Tuple
 
+from odoo.addons.smart_core.core.navigation_entry_target import build_scene_entry_target
 from odoo.addons.smart_core.utils.reason_codes import (
     REASON_OK,
     REASON_PERMISSION_DENIED,
@@ -103,44 +104,6 @@ def _normalize_view_mode(raw: str | None) -> str | None:
     if val in {"form"}:
         return "form"
     return val
-
-
-def _build_entry_target(*, scene_key: str = "", route: str = "", menu_id=None, action_id=None, model: str = "", record_id=None) -> dict:
-    normalized_scene_key = str(scene_key or "").strip()
-    normalized_route = str(route or "").strip()
-    if not normalized_scene_key and normalized_route.startswith("/s/"):
-        normalized_scene_key = normalized_route.replace("/s/", "", 1).strip("/")
-    if not normalized_scene_key:
-        return {}
-    target = {
-        "type": "scene",
-        "scene_key": normalized_scene_key,
-    }
-    if normalized_route:
-        target["route"] = normalized_route
-    compatibility = {}
-    if isinstance(menu_id, int) and menu_id > 0:
-        compatibility["menu_id"] = menu_id
-    if isinstance(action_id, int) and action_id > 0:
-        compatibility["action_id"] = action_id
-    normalized_model = str(model or "").strip()
-    if normalized_model:
-        compatibility["model"] = normalized_model
-    if isinstance(record_id, int) and record_id > 0:
-        compatibility["record_id"] = record_id
-    if normalized_model and isinstance(record_id, int) and record_id > 0:
-        record_entry = {
-            "model": normalized_model,
-            "record_id": record_id,
-        }
-        if isinstance(action_id, int) and action_id > 0:
-            record_entry["action_id"] = action_id
-        if isinstance(menu_id, int) and menu_id > 0:
-            record_entry["menu_id"] = menu_id
-        target["record_entry"] = record_entry
-    if compatibility:
-        target["compatibility_refs"] = compatibility
-    return target
 
 
 def _append_inferred_scene_warnings(nodes, scene_keys: set, warnings: list):
@@ -339,7 +302,7 @@ def _normalize_scene_targets(env, scenes, nav_targets, resolve_errors):
                     message="target missing; semantic fallback route applied",
                 )
         final_target = scene.get("target") if isinstance(scene.get("target"), dict) else {}
-        entry_target = _build_entry_target(
+        entry_target = build_scene_entry_target(
             scene_key=scene_key,
             route=str(final_target.get("route") or "").strip(),
             menu_id=final_target.get("menu_id") if isinstance(final_target.get("menu_id"), int) else None,

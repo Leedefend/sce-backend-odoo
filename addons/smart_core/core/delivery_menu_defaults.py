@@ -4,6 +4,7 @@ from __future__ import annotations
 import zlib
 from typing import Any, Dict
 
+from .navigation_entry_target import normalize_entry_target
 from .source_authority import build_source_authority_contract
 
 SOURCE_KIND = "delivery_menu_default_projection"
@@ -73,6 +74,17 @@ def build_delivery_menu_child(menu: Dict[str, Any]) -> Dict[str, Any] | None:
     delivery_bucket = str(menu.get("delivery_bucket") or "").strip()
     if delivery_bucket:
         meta["delivery_bucket"] = delivery_bucket
+    entry_target = normalize_entry_target(
+        entry_target=menu.get("entry_target"),
+        scene_key=scene_key,
+        route=route,
+        menu_id=menu_id,
+        action_id=action_id,
+        model=model,
+        view_modes=view_modes,
+    )
+    if entry_target:
+        meta["entry_target"] = entry_target
     source_authority = menu.get("source_authority")
     if isinstance(source_authority, dict) and source_authority:
         meta["source_authority"] = source_authority

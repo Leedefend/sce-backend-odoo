@@ -7,6 +7,7 @@ from ..core.project_context import (
     record_in_project_scope,
     selected_project_id_from_context,
 )
+from ..core.navigation_entry_target import normalize_odoo_action_result
 from ..core.request_params import parse_bool
 from odoo.exceptions import AccessError, UserError
 from odoo import fields
@@ -184,37 +185,17 @@ class ExecuteButtonHandler(BaseIntentHandler):
                 },
             }
             if isinstance(result, dict):
-                payload["raw_action"] = result
-                action_type = result.get("type")
-                action_id = result.get("id")
-                action_model = result.get("res_model")
-                action_res_id = result.get("res_id")
-                action_url = result.get("url")
-                if action_model and action_res_id:
-                    effect = {
-                        "type": "navigate",
-                        "target": {
-                            "kind": "record",
-                            "model": action_model,
-                            "id": action_res_id,
-                        },
-                    }
-                elif action_id:
-                    effect = {
-                        "type": "navigate",
-                        "target": {
-                            "kind": "action",
-                            "action_id": action_id,
-                        },
-                    }
-                elif action_type == "ir.actions.act_url" and action_url:
-                    effect = {
-                        "type": "navigate",
-                        "target": {
-                            "kind": "url",
-                            "url": action_url,
-                        },
-                    }
+                normalized_action = normalize_odoo_action_result(
+                    self.env,
+                    result,
+                    source_model=model,
+                    source_record_id=res_ids[0],
+                ) or result
+                payload["raw_action"] = normalized_action
+                entry_target = normalized_action.get("entry_target") if isinstance(normalized_action.get("entry_target"), dict) else {}
+                if entry_target:
+                    payload["entry_target"] = entry_target
+                effect = _effect_from_normalized_action(normalized_action, fallback_effect=effect)
 
             return {
                 "ok": True,
@@ -295,14 +276,17 @@ class ExecuteButtonHandler(BaseIntentHandler):
             "target": {"kind": "record", "model": model, "id": res_ids[0] if res_ids else None},
         }
         if isinstance(result, dict):
-            payload["raw_action"] = result
-            action_id = result.get("id")
-            action_model = result.get("res_model")
-            action_res_id = result.get("res_id")
-            if action_model and action_res_id:
-                effect = {"type": "navigate", "target": {"kind": "record", "model": action_model, "id": action_res_id}}
-            elif action_id:
-                effect = {"type": "navigate", "target": {"kind": "action", "action_id": action_id}}
+            normalized_action = normalize_odoo_action_result(
+                self.env,
+                result,
+                source_model=model,
+                source_record_id=res_ids[0] if res_ids else None,
+            ) or result
+            payload["raw_action"] = normalized_action
+            entry_target = normalized_action.get("entry_target") if isinstance(normalized_action.get("entry_target"), dict) else {}
+            if entry_target:
+                payload["entry_target"] = entry_target
+            effect = _effect_from_normalized_action(normalized_action, fallback_effect=effect)
         return {
             "ok": True,
             "data": {"result": payload, "effect": effect},
@@ -417,6 +401,30 @@ def _positive_int(value) -> int:
     except Exception:
         return 0
     return parsed if parsed > 0 else 0
+
+
+def _effect_from_normalized_action(action: dict, *, fallback_effect: dict) -> dict:
+    entry_target = action.get("entry_target") if isinstance(action.get("entry_target"), dict) else {}
+    action_type = action.get("type")
+    action_id = _positive_int(action.get("id") or action.get("action_id"))
+    action_model = str(action.get("res_model") or "").strip()
+    action_res_id = _positive_int(action.get("res_id"))
+    action_url = str(action.get("url") or "").strip()
+    if entry_target:
+        return {
+            "type": "navigate",
+            "target": {
+                "kind": "entry_target",
+                "entry_target": entry_target,
+            },
+        }
+    if action_model and action_res_id:
+        return {"type": "navigate", "target": {"kind": "record", "model": action_model, "id": action_res_id}}
+    if action_id:
+        return {"type": "navigate", "target": {"kind": "action", "action_id": action_id}}
+    if action_type == "ir.actions.act_url" and action_url:
+        return {"type": "navigate", "target": {"kind": "url", "url": action_url}}
+    return fallback_effect
 
 
 def _failure_result(

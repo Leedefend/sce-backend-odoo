@@ -74,6 +74,10 @@ class TestMenuTargetInterpreterEntryTarget(unittest.TestCase):
                 "type": "scene",
                 "scene_key": "projects.list",
                 "route": "/s/projects.list",
+                "compatibility_refs": {
+                    "menu_id": 11,
+                    "action_id": 484,
+                },
             },
         )
 
@@ -217,6 +221,12 @@ class TestMenuTargetInterpreterEntryTarget(unittest.TestCase):
                 "type": "scene",
                 "scene_key": "enterprise.company",
                 "route": "/s/enterprise.company",
+                "compatibility_refs": {
+                    "menu_id": 31,
+                    "action_id": 246,
+                    "model": "res.company",
+                    "view_modes": ["form"],
+                },
             },
         )
 
@@ -258,6 +268,10 @@ class TestMenuTargetInterpreterEntryTarget(unittest.TestCase):
                 "type": "scene",
                 "scene_key": "contract.center",
                 "route": "/s/contract.center",
+                "compatibility_refs": {
+                    "menu_id": 289,
+                    "action_id": 486,
+                },
             },
         )
 

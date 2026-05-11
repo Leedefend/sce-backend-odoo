@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from odoo.addons.smart_core.core.navigation_entry_target import normalize_entry_target
+
 
 def _text(value) -> str:
     return str(value or "").strip()
@@ -14,52 +16,6 @@ def _to_int(value) -> int | None:
     except Exception:
         return None
     return parsed if parsed > 0 else None
-
-
-def _build_entry_target(
-    *,
-    menu_id=None,
-    action_id=None,
-    target_type: str = "",
-    delivery_mode: str = "",
-    route: str | None = None,
-    target: dict | None = None,
-) -> dict:
-    payload = target if isinstance(target, dict) else {}
-    scene_key = _text(payload.get("scene_key"))
-    normalized_route = _text(route)
-    entry_target: dict = {}
-
-    if scene_key:
-        entry_target = {
-            "type": "scene",
-            "scene_key": scene_key,
-        }
-        if normalized_route:
-            entry_target["route"] = normalized_route
-        return entry_target
-
-    compatibility_refs = {}
-    normalized_menu_id = _to_int(menu_id)
-    normalized_action_id = _to_int(payload.get("action_id")) or _to_int(action_id)
-    if normalized_menu_id:
-        compatibility_refs["menu_id"] = normalized_menu_id
-    if normalized_action_id:
-        compatibility_refs["action_id"] = normalized_action_id
-    if _text(target_type):
-        compatibility_refs["target_type"] = _text(target_type)
-    if _text(delivery_mode):
-        compatibility_refs["delivery_mode"] = _text(delivery_mode)
-
-    if compatibility_refs:
-        entry_target = {
-            "type": "compatibility",
-            "compatibility_refs": compatibility_refs,
-        }
-        if normalized_route:
-            entry_target["route"] = normalized_route
-
-    return entry_target
 
 
 def _native_model_from_action_meta(action_meta: dict) -> str | None:
@@ -559,13 +515,15 @@ class MenuTargetInterpreterService:
             route=route,
             action_id=action_id,
         )
-        entry_target = _build_entry_target(
+        entry_target = normalize_entry_target(
             menu_id=menu_id,
-            action_id=action_id,
+            action_id=_to_int(target.get("action_id")) or action_id,
+            scene_key=_text(target.get("scene_key")),
+            model=_text(target.get("res_model")) or _native_model_from_action_meta(action_meta) or "",
+            view_modes=_text(target.get("view_mode")) or _native_view_mode_from_action_meta(action_meta) or "",
             target_type=target_type,
             delivery_mode=delivery_mode,
             route=route,
-            target=target,
         )
         scene_key = _text(target.get("scene_key")) if isinstance(target, dict) else ""
         native_action_id = _to_int(action_id)
