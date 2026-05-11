@@ -298,7 +298,7 @@ _PROJECT_LIST_COLUMNS = [
     "write_date",
 ]
 _PROJECT_LIST_COLUMN_LABELS = {
-    "name": "项目名称",
+    "name": "名称",
     "project_code": "项目编号",
     "operation_strategy": "经营方式",
     "business_nature": "经营性质",
@@ -1965,6 +1965,7 @@ def _govern_standard_list_for_user(
     list_profile.update(
         {
             "columns": selected,
+            "fact_columns": selected,
             "hidden_columns": [],
             "column_labels": {name: _field_label(name) for name in selected},
             "row_primary": row_primary,
@@ -1972,6 +1973,14 @@ def _govern_standard_list_for_user(
             "primary_field": row_primary,
             "status_field": status_field,
             "metric_fields": metric_fields,
+            "preference_policy": {
+                "scope": "ui_only",
+                "allow_visibility": True,
+                "allow_order": True,
+                "allow_width": True,
+                "locked_columns": [],
+                "must_request_columns": selected,
+            },
             "batch_policy": batch_policy,
             "grouping": {
                 "sample_limits": [3, 5, 8],
