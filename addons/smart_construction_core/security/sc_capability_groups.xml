@@ -267,6 +267,19 @@
             ]"/>
         </record>
 
+        <!-- =========================
+             联系人管理
+             - 映射到 Odoo 联系人管理员
+        ========================== -->
+        <record id="group_sc_cap_contact_manager" model="res.groups">
+            <field name="name">SC 能力 - 联系人管理</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(6, 0, [
+                ref('smart_construction_core.group_sc_internal_user'),
+                ref('base.group_partner_manager')
+            ])]"/>
+        </record>
+
 
         <!-- =========================
              业务配置管理员
@@ -299,19 +312,6 @@
                     ref('base.group_system')
                 ])
             ]"/>
-        </record>
-
-        <!-- =========================
-             联系人管理
-             - 映射到 Odoo 联系人管理员
-        ========================== -->
-        <record id="group_sc_cap_contact_manager" model="res.groups">
-            <field name="name">SC 能力 - 联系人管理</field>
-            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
-            <field name="implied_ids" eval="[(6, 0, [
-                ref('smart_construction_core.group_sc_internal_user'),
-                ref('base.group_partner_manager')
-            ])]"/>
         </record>
 
         <!-- =========================
