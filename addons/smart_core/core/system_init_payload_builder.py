@@ -444,6 +444,29 @@ class SystemInitPayloadBuilder:
                         compact_form_surface[key] = value
                 if compact_form_surface:
                     compact["form_surface"] = compact_form_surface
+            kanban_surface = item.get("kanban_surface") if isinstance(item.get("kanban_surface"), dict) else {}
+            if kanban_surface:
+                compact_kanban_surface = {}
+                for key in (
+                    "title_field",
+                    "subtitle_field",
+                    "status_field",
+                    "primary_fields",
+                    "secondary_fields",
+                    "status_fields",
+                    "metric_fields",
+                    "quick_action_count",
+                    "max_meta",
+                    "fields",
+                    "columns",
+                    "default_sort",
+                    "order",
+                ):
+                    value = kanban_surface.get(key)
+                    if value not in (None, {}, []):
+                        compact_kanban_surface[key] = value
+                if compact_kanban_surface:
+                    compact["kanban_surface"] = compact_kanban_surface
             optimization_composition = item.get("optimization_composition") if isinstance(item.get("optimization_composition"), dict) else {}
             if optimization_composition:
                 compact_optimization_composition = {}

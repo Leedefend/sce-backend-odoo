@@ -334,6 +334,42 @@ def _derive_optimization_composition(payload: Dict[str, Any]) -> Dict[str, Any]:
     return out
 
 
+def _normalize_kanban_surface(payload: Dict[str, Any]) -> Dict[str, Any]:
+    kanban_surface = payload.get("kanban_surface") if isinstance(payload.get("kanban_surface"), dict) else {}
+    return dict(kanban_surface)
+
+
+def _kanban_surface_nonempty(payload: Dict[str, Any]) -> bool:
+    return bool(_as_dict(payload))
+
+
+def _derive_kanban_surface_from_base_contract(ui_base_contract: Dict[str, Any]) -> Dict[str, Any]:
+    contract = _as_dict(ui_base_contract)
+    views = _as_dict(contract.get("views"))
+    kanban_view = _as_dict(views.get("kanban"))
+    profile = _as_dict(kanban_view.get("kanban_profile"))
+    out: Dict[str, Any] = {}
+    for key in (
+        "title_field",
+        "subtitle_field",
+        "status_field",
+        "primary_fields",
+        "secondary_fields",
+        "status_fields",
+        "metric_fields",
+        "quick_action_count",
+        "max_meta",
+    ):
+        value = profile.get(key)
+        if value not in (None, {}, []):
+            out[key] = value
+    for key in ("fields", "columns", "default_sort", "order"):
+        value = kanban_view.get(key)
+        if value not in (None, {}, []):
+            out[key] = value
+    return out
+
+
 def _scene_type_from_compiled(compiled: Dict[str, Any]) -> str:
     meta = _as_dict(compiled.get("meta"))
     surface_profile = _as_dict(meta.get("surface_profile"))
@@ -517,6 +553,7 @@ def _build_scene_blocks(compiled: Dict[str, Any], scene_type_override: str | Non
     search_surface = _as_dict(compiled.get("search_surface"))
     list_surface = _as_dict(compiled.get("list_surface"))
     form_surface = _as_dict(compiled.get("form_surface"))
+    kanban_surface = _as_dict(compiled.get("kanban_surface"))
     action_surface = _as_dict(compiled.get("action_surface"))
     optimization = _as_dict(compiled.get("optimization_composition"))
     projection = _as_dict(compiled.get("projection"))
@@ -747,13 +784,15 @@ def _build_scene_blocks(compiled: Dict[str, Any], scene_type_override: str | Non
                     semantic_role="content",
                     layout={"kind": "kanban", "density": "cozy", "full_width": True},
                     data_deps={
-                        "columns": _as_list(list_surface.get("columns")),
+                        "columns": _as_list(kanban_surface.get("columns")) or _as_list(list_surface.get("columns")),
+                        "fields": _as_list(kanban_surface.get("fields")),
                         "search_fields": _as_list(search_surface.get("fields")),
                     },
                     payload={
                         "available_view_modes": view_modes,
                         "selection_mode": _text(action_surface.get("selection_mode")) or "multi",
                         "actions": primary_actions,
+                        "kanban_surface": kanban_surface,
                     },
                 ),
                 _scene_block(
@@ -1493,6 +1532,16 @@ def _scene_ready_entry(
         compiled["form_surface"] = merged_form_surface
     elif _form_surface_nonempty(seeded_form_surface):
         compiled["form_surface"] = seeded_form_surface
+    compiled_kanban_surface = _normalize_kanban_surface(compiled)
+    seeded_kanban_surface = _normalize_kanban_surface(scene_payload)
+    base_kanban_surface = _derive_kanban_surface_from_base_contract(ui_base_contract)
+    merged_kanban_surface = dict(base_kanban_surface)
+    merged_kanban_surface.update(seeded_kanban_surface)
+    merged_kanban_surface.update(compiled_kanban_surface)
+    if _kanban_surface_nonempty(merged_kanban_surface):
+        compiled["kanban_surface"] = merged_kanban_surface
+    elif _kanban_surface_nonempty(seeded_kanban_surface):
+        compiled["kanban_surface"] = seeded_kanban_surface
     optimization_composition = _normalize_optimization_composition(compiled)
     if not _optimization_composition_nonempty(optimization_composition):
         optimization_composition = _derive_optimization_composition(compiled)

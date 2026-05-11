@@ -351,6 +351,19 @@ class TestSceneReadyContractBuilderSemanticConsumption(unittest.TestCase):
                         "columns": [{"field": "name", "label": "名称"}],
                         "available_view_modes": [{"key": "kanban", "label": "看板"}],
                     },
+                    "ui_base_contract": {
+                        "views": {
+                            "kanban": {
+                                "fields": ["name", "stage_id", "user_id"],
+                                "kanban_profile": {
+                                    "title_field": "name",
+                                    "primary_fields": ["name"],
+                                    "secondary_fields": ["user_id"],
+                                    "status_fields": ["stage_id"],
+                                },
+                            }
+                        }
+                    },
                     "actions": [{"key": "open_my_work", "label": "查看我的工作", "intent": "ui.contract"}],
                 }
             ],
@@ -358,12 +371,19 @@ class TestSceneReadyContractBuilderSemanticConsumption(unittest.TestCase):
         )
         row = (contract.get("scenes") or [])[0]
         blocks = row.get("scene_blocks") or []
+        kanban_surface = row.get("kanban_surface") or {}
+        board_payload = (blocks[4] or {}).get("payload") or {}
+        board_deps = (blocks[4] or {}).get("data_deps") or {}
 
         self.assertEqual(((blocks[0] or {}).get("kind")), "page_shell")
         self.assertEqual(((blocks[1] or {}).get("kind")), "header_bar")
         self.assertEqual(((blocks[2] or {}).get("kind")), "toolbar")
         self.assertEqual(((blocks[3] or {}).get("kind")), "overview_strip")
         self.assertEqual(((blocks[4] or {}).get("kind")), "kanban_board")
+        self.assertEqual(kanban_surface.get("title_field"), "name")
+        self.assertEqual(((kanban_surface.get("primary_fields") or [])[0]), "name")
+        self.assertEqual(((board_deps.get("fields") or [])[0]), "name")
+        self.assertEqual(((board_payload.get("kanban_surface") or {}).get("status_fields") or [])[0], "stage_id")
 
     def test_scene_ready_emits_scene_blocks_by_view_for_common_modes(self):
         contract = target.build_scene_ready_contract_v1(
