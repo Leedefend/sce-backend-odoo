@@ -147,8 +147,45 @@
       </div>
     </div>
   </div>
+  <div v-else-if="field.type === 'many2one'" class="relation-editor">
+    <div class="relation-select-editor">
+      <div class="relation-search-row">
+        <input
+          class="input relation-search"
+          type="text"
+          :value="adapter.relationKeyword(field.name)"
+          :placeholder="field.inputPlaceholder || adapter.inputPlaceholder(field.label)"
+          @input="adapter.setRelationKeyword(field.name, ($event.target as HTMLInputElement).value)"
+        />
+        <button
+          v-if="adapter.canOpenRelationSearch(field.name)"
+          class="chip-btn"
+          type="button"
+          :disabled="adapter.busy"
+          @click="adapter.openRelationSearch(field.name)"
+        >
+          {{ adapter.relationSearchLabel(field.name) || '搜索更多' }}
+        </button>
+      </div>
+      <select
+        class="input"
+        size="6"
+        :value="adapter.relationIds(field.name).map((id) => String(id))[0] || ''"
+        @change="adapter.setRelationIds(field.name, [Number(($event.target as HTMLSelectElement).value) || 0].filter((id) => id > 0))"
+      >
+        <option value="">{{ adapter.selectPlaceholder(field.label) }}</option>
+        <option
+          v-for="option in adapter.filteredRelationOptions(field.name)"
+          :key="`${field.name}-${option.id}`"
+          :value="String(option.id)"
+        >
+          {{ option.label }}
+        </option>
+      </select>
+    </div>
+  </div>
   <input
-    v-else
+  v-else
     :value="adapter.inputFieldValue(field.name)"
     class="input"
     :type="adapter.fieldInputType(field.type)"
@@ -204,6 +241,12 @@ function toggleRelationId(name: string, id: number, checked: boolean) {
 .relation-select-editor {
   display: grid;
   gap: 8px;
+}
+
+.relation-search-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
 .relation-selected-block {

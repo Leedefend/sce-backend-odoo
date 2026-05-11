@@ -177,10 +177,27 @@ const embeddedActionId = ref(0);
 const embeddedRecordActionId = ref(0);
 const sceneReadyHydrateRequested = ref(false);
 const compactSceneControls = computed(() => currentSceneKey.value === 'projects.list');
+type SceneBlockViewMode = 'form' | 'list' | 'kanban';
+function resolveSceneBlockViewMode(): SceneBlockViewMode {
+  const routeMode = String(route.query.view_mode || '').trim().toLowerCase();
+  if (routeMode === 'form') return 'form';
+  if (routeMode === 'kanban') return 'kanban';
+  const layoutKind = String(scene.value?.layout?.kind || '').trim().toLowerCase();
+  if (layoutKind === 'record') return 'form';
+  if (layoutKind === 'kanban') return 'kanban';
+  return 'list';
+}
 const sceneBlocks = computed(() => {
   const currentScene = scene.value;
-  const blocks = currentScene?.scene_ready?.scene_blocks;
-  return Array.isArray(blocks) ? blocks.filter((item) => item && typeof item === 'object') as Array<Record<string, unknown>> : [];
+  const sceneReady = currentScene?.scene_ready;
+  const mode = resolveSceneBlockViewMode();
+  const byView = (sceneReady?.scene_blocks_by_view && typeof sceneReady.scene_blocks_by_view === 'object')
+    ? sceneReady.scene_blocks_by_view
+    : {};
+  const modeBlocks = Array.isArray(byView?.[mode]) ? byView[mode] : [];
+  const fallbackBlocks = Array.isArray(sceneReady?.scene_blocks) ? sceneReady.scene_blocks : [];
+  const blocks = modeBlocks.length ? modeBlocks : fallbackBlocks;
+  return blocks.filter((item) => item && typeof item === 'object') as Array<Record<string, unknown>>;
 });
 
 const idleDiagnosticMessage = computed(() => {

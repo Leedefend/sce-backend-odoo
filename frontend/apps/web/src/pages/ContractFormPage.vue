@@ -3400,7 +3400,31 @@ const nativeStatusbar = computed(() => {
 function setStatusbarValue(value: string) {
   const field = nativeStatusbar.value.field;
   if (!field || nativeStatusbar.value.readonly) return;
-  formData[field] = value || false;
+  const raw = String(value || '').trim();
+  let resolved = raw;
+  const descriptor = contract.value?.fields?.[field];
+  const selection = Array.isArray(descriptor?.selection) ? descriptor.selection : [];
+  if (selection.length) {
+    const byCode = selection.find((item) => String((item as unknown[])[0] ?? '') === raw);
+    const byLabel = selection.find((item) => String((item as unknown[])[1] ?? '') === raw);
+    const matched = byCode || byLabel;
+    if (matched) {
+      resolved = String((matched as unknown[])[0] ?? raw);
+    }
+  }
+  if (field === 'lifecycle_state') {
+    const stateLabelMap: Record<string, string> = {
+      '草稿': 'draft',
+      '在建': 'active',
+      '停工': 'paused',
+      '竣工': 'completed',
+      '结算中': 'settling',
+      '保修期': 'warranty',
+      '关闭': 'closed',
+    };
+    resolved = stateLabelMap[resolved] || stateLabelMap[raw] || resolved;
+  }
+  formData[field] = resolved || false;
   markFieldChanged(field);
 }
 
@@ -3843,6 +3867,16 @@ const relationFallbackAdapter = computed<RelationFallbackAdapter>(() => createRe
   filteredRelationOptions,
   setRelationMultiField,
   setRelationIds,
+  canOpenRelationSearch: (fieldName: string) => fieldType(contract.value?.fields?.[fieldName]) === 'many2one',
+  relationSearchLabel: (fieldName: string) => {
+    const descriptor = contract.value?.fields?.[fieldName];
+    return relationUiLabel(descriptor, 'search_more', '搜索更多');
+  },
+  openRelationSearch: (fieldName: string) => {
+    const descriptor = contract.value?.fields?.[fieldName];
+    if (!descriptor) return;
+    void openRelationSearchDialog(fieldName, descriptor);
+  },
   one2manyCanCreate,
   one2manyCreateLabel,
   addOne2manyRow,
