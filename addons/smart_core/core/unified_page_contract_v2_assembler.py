@@ -205,6 +205,7 @@ def _base_contract(
             "snapshotId": f"snapshot.upc.v2.{fp}",
             "traceId": f"trace.upc.v2.{fp}",
             "requestId": _stable_id(request_id, f"request.upc.v2.{fp}"),
+            "sourceType": source_type,
         },
     }
 
@@ -266,6 +267,7 @@ def assemble_unified_page_patch_v2(
             "traceId": f"trace.upc.v2.patch.{fp}",
             "requestId": _stable_id(request_id, f"request.upc.v2.patch.{fp}"),
             "actionId": _stable_id(action_id, "api.onchange.patch"),
+            "sourceType": "api.onchange",
         },
     }
 

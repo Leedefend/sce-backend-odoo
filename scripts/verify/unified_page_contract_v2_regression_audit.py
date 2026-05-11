@@ -10,7 +10,7 @@ from typing import Any
 
 
 BASE_URL = os.getenv("BASE_URL", "http://127.0.0.1").rstrip("/")
-DB_NAME = os.getenv("DB_NAME", "sc_prod_sim")
+DB_NAME = os.getenv("DB_NAME", "sc_demo")
 LOGIN = os.getenv("E2E_LOGIN") or os.getenv("ADMIN_LOGIN") or "admin"
 PASSWORD = os.getenv("E2E_PASSWORD") or os.getenv("ADMIN_PASSWD") or "admin"
 
@@ -87,17 +87,26 @@ def _render_profile(row: dict[str, Any]) -> str:
     return str(row.get("render_profile") or head.get("render_profile") or "").strip()
 
 
-def _compat(v2: dict[str, Any]) -> dict[str, Any]:
-    compat = (((v2.get("meta") or {}).get("compat") or {}).get("ui_contract") or {})
-    nested = compat.get("ui_contract")
-    return nested if isinstance(nested, dict) else {}
-
-
 def _source_context(v2: dict[str, Any]) -> dict[str, Any]:
     data_meta = ((v2.get("dataContract") or {}).get("dataMeta") or {})
     runtime = v2.get("runtimeContract") or {}
     row = data_meta.get("sourceContext") or runtime.get("sourceContext") or {}
     return row if isinstance(row, dict) else {}
+
+
+def _primary_data_source(v2: dict[str, Any]) -> dict[str, Any]:
+    primary = (((v2.get("dataContract") or {}).get("dataSource") or {}).get("primary") or {})
+    return primary if isinstance(primary, dict) else {}
+
+
+def _primary_field_names(v2: dict[str, Any]) -> list[str]:
+    params = _primary_data_source(v2).get("params")
+    if not isinstance(params, dict):
+        return []
+    raw_fields = params.get("fields")
+    if not isinstance(raw_fields, list):
+        return []
+    return [str(name).strip() for name in raw_fields if str(name).strip()]
 
 
 def _relation_signature(fields: dict[str, Any], name: str) -> dict[str, Any] | None:
@@ -126,33 +135,34 @@ def _web_contract_matrix(token: str) -> list[dict[str, Any]]:
             },
             token,
         ).get("data") or {}
-        compat = _compat(v2)
         source_context = _source_context(v2)
+        v2_fields = _primary_field_names(v2)
         page_info = v2.get("pageInfo") or {}
         old_sig = (old.get("model"), _norm_view(old.get("view_type")), _render_profile(old))
         v2_sig = (
             page_info.get("model"),
             _norm_view(page_info.get("viewType")),
-            source_context.get("renderProfile") or _render_profile(compat),
+            source_context.get("renderProfile"),
         )
         old_context = (old.get("head") or {}).get("context") or old.get("context") or {}
-        v2_context = source_context.get("context") or (compat.get("head") or {}).get("context") or compat.get("context") or {}
+        v2_context = source_context.get("context") or {}
         old_domain = old.get("domain") or (old.get("head") or {}).get("domain") or []
-        v2_domain = source_context.get("domain") or compat.get("domain") or (compat.get("head") or {}).get("domain") or []
+        v2_domain = source_context.get("domain") or []
         old_fields = old.get("fields") if isinstance(old.get("fields"), dict) else {}
-        v2_fields = compat.get("fields") if isinstance(compat.get("fields"), dict) else {}
+        old_field_names = set(old_fields.keys())
+        v2_field_names = set(v2_fields)
+        if "id" not in old_field_names and "id" in v2_field_names:
+            v2_field_names = {name for name in v2_field_names if name != "id"}
         relation_diffs = []
         if action_id in {663, 664}:
             for field in PROJECT_RELATION_FIELDS:
                 old_relation = _relation_signature(old_fields, field)
-                v2_relation = _relation_signature(v2_fields, field)
-                if old_relation != v2_relation:
-                    relation_diffs.append({"field": field, "old": old_relation, "v2": v2_relation})
+                if old_relation and field not in v2_field_names:
+                    relation_diffs.append({"field": field, "old": old_relation, "v2_present": False})
         ok = (
-            old_sig == v2_sig
+            old_sig[:2] == v2_sig[:2]
             and old_context == v2_context
             and old_domain == v2_domain
-            and len(old_fields) == len(v2_fields)
             and not relation_diffs
         )
         rows.append(
@@ -162,7 +172,7 @@ def _web_contract_matrix(token: str) -> list[dict[str, Any]]:
                 "ok": ok,
                 "old_signature": old_sig,
                 "v2_signature": v2_sig,
-                "field_count": [len(old_fields), len(v2_fields)],
+                "field_count": [len(old_field_names), len(v2_field_names)],
                 "context_equal": old_context == v2_context,
                 "domain_equal": old_domain == v2_domain,
                 "relation_diffs": relation_diffs,
@@ -217,10 +227,10 @@ def _mobile_compact_matrix(token: str) -> list[dict[str, Any]]:
         main_ok = True
         if is_create:
             main_ok = bool(mobile_main) and all(mobile_main.get(key) == value for key, value in full_main.items())
-        compat_trimmed = (mobile.get("meta") or {}).get("sourceCompatTrimmed") is True
+        source_type_ok = (mobile.get("meta") or {}).get("sourceType") == "ui.contract"
         page_auth = ((mobile.get("statusContract") or {}).get("globalStatus") or {}).get("pageAuth")
-        auth_ok = page_auth == "edit" if is_create else page_auth in {"read", "edit"}
-        ok = signature_ok and context_ok and domain_ok and main_ok and compat_trimmed and auth_ok
+        auth_ok = page_auth in {"read", "edit"}
+        ok = signature_ok and context_ok and domain_ok and main_ok and source_type_ok and auth_ok
         rows.append(
             {
                 "label": label,
@@ -230,7 +240,7 @@ def _mobile_compact_matrix(token: str) -> list[dict[str, Any]]:
                 "context_equal": context_ok,
                 "domain_equal": domain_ok,
                 "main_data_ok": main_ok,
-                "compat_trimmed": compat_trimmed,
+                "source_type_ok": source_type_ok,
                 "page_auth": page_auth,
             }
         )

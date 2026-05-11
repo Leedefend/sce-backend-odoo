@@ -656,7 +656,7 @@
         "snapshotId",
         "traceId",
         "requestId",
-        "compat"
+        "sourceType"
       ],
       "properties": {
         "etag": {
@@ -671,8 +671,8 @@
         "requestId": {
           "$ref": "#/$defs/id"
         },
-        "compat": {
-          "type": "object"
+        "sourceType": {
+          "type": "string"
         }
       }
     }

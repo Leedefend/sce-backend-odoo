@@ -7,11 +7,13 @@ import argparse
 import importlib.util
 import json
 import sys
+import types
 from pathlib import Path
 from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[2]
+CORE_DIR = ROOT / "addons/smart_core/core"
 CLIENT_PATH = ROOT / "addons/smart_core/core/unified_page_contract_v2_client.py"
 
 
@@ -20,7 +22,16 @@ def load_json(path: Path) -> Any:
 
 
 def load_client_module():
-    spec = importlib.util.spec_from_file_location("unified_page_contract_v2_client_guard_target", CLIENT_PATH)
+    sys.modules.setdefault("odoo", types.ModuleType("odoo"))
+    sys.modules.setdefault("odoo.addons", types.ModuleType("odoo.addons"))
+    smart_core_pkg = sys.modules.setdefault("odoo.addons.smart_core", types.ModuleType("odoo.addons.smart_core"))
+    smart_core_pkg.__path__ = [str(CORE_DIR.parent)]
+    core_pkg = sys.modules.setdefault("odoo.addons.smart_core.core", types.ModuleType("odoo.addons.smart_core.core"))
+    core_pkg.__path__ = [str(CORE_DIR)]
+    spec = importlib.util.spec_from_file_location(
+        "odoo.addons.smart_core.core.unified_page_contract_v2_client_guard_target",
+        CLIENT_PATH,
+    )
     if spec is None or spec.loader is None:
         raise RuntimeError(f"cannot load client module from {CLIENT_PATH}")
     module = importlib.util.module_from_spec(spec)
@@ -85,7 +96,6 @@ def main() -> int:
         delivery_profile="mobile_compact",
         max_widgets=1,
         max_actions=1,
-        include_source_compat=False,
     )
     compact_layout = compact.get("layoutContract") or {}
     compact_widgets = ((compact_layout.get("containerTree") or [{}])[0].get("widgetList") or [])
@@ -96,9 +106,10 @@ def main() -> int:
         fail(errors, "mobile_compact must report delivery profile")
     if compact_trim.get("omitted", {}).get("widgets", 0) < 1:
         fail(errors, "mobile_compact must report omitted widgets")
-    compat = compact.get("meta", {}).get("compat") or {}
-    if any(isinstance(value, dict) and value.get("delivery") != "omitted_for_mobile_compact" for value in compat.values()):
-        fail(errors, "mobile_compact source compat must be fingerprint-only")
+    if compact.get("meta", {}).get("sourceType") != "ui.contract":
+        fail(errors, "mobile_compact sourceType must stay ui.contract")
+    if "compat" in (compact.get("meta") or {}):
+        fail(errors, "mobile_compact meta.compat must be removed")
 
     if errors:
         print("Unified Page Contract v2+ client guard failed:")

@@ -93,6 +93,9 @@ class UiContractV2Handler(BaseIntentHandler):
         )
 
         source_contract = dict(ui_data) if isinstance(ui_data, dict) else {}
+        nested_ui_contract = source_contract.pop("ui_contract", {})
+        if isinstance(nested_ui_contract, dict):
+            source_contract.update(nested_ui_contract)
         source_contract.update({
             "model": model,
             "view_type": view_type,

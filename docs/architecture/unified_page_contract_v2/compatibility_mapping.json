@@ -5,25 +5,21 @@
   "legacySources": [
     {
       "source": "scene_contract_v1",
-      "target": "meta.compat.scene_contract_v1",
       "canonicalOutput": "UnifiedPageContract.v2",
       "notes": "Legacy scene contract is normalized before frontend delivery."
     },
     {
       "source": "page_orchestration_v1",
-      "target": "meta.compat.page_orchestration_v1",
       "canonicalOutput": "UnifiedPageContract.v2",
       "notes": "Legacy orchestration facts are governance inputs only."
     },
     {
       "source": "ui.contract",
-      "target": "meta.compat.ui_contract",
       "canonicalOutput": "UnifiedPageContract.v2",
-      "notes": "Legacy ui contract fields must not appear as top-level frontend payload."
+      "notes": "Legacy ui contract fields must be normalized into the v2 source shape."
     },
     {
       "source": "api.onchange",
-      "target": "meta.compat.api_onchange",
       "canonicalOutput": "UnifiedPagePatch.v2",
       "notes": "Onchange results are converted to patch protocol before delivery."
     }

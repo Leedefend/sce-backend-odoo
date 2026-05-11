@@ -128,7 +128,8 @@ def build_action_partial_update_v2(
             "traceId": f"trace.upc.v2.action.patch.{fp}",
             "requestId": _stable_id(request_id, f"request.upc.v2.action.patch.{fp}"),
             "actionId": _action_id(action_id),
-            "compat": {"action_result": deepcopy(source)},
+            "sourceType": "api.onchange",
+            "sourceKind": SOURCE_KIND,
         },
     }
 

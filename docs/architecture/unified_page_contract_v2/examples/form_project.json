@@ -176,6 +176,6 @@
     "snapshotId": "snapshot.project.form.001",
     "traceId": "trace.project.form.001",
     "requestId": "request.project.form.001",
-    "compat": {}
+    "sourceType": "ui.contract"
   }
 }

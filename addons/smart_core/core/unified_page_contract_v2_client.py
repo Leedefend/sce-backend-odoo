@@ -143,7 +143,6 @@ def trim_unified_page_contract_v2(
     out["runtimeContract"] = runtime
 
     meta = _dict(out.get("meta"))
-    meta.pop("compat", None)
     meta["deliveryTrim"] = trim_meta
     out["meta"] = meta
     return out

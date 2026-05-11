@@ -6,10 +6,12 @@ from __future__ import annotations
 import ast
 import importlib.util
 import sys
+import types
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
+CORE_DIR = ROOT / "addons/smart_core/core"
 HANDLER_PATH = ROOT / "addons/smart_core/handlers/ui_contract_v2.py"
 ONCHANGE_HANDLER_PATH = ROOT / "addons/smart_core/handlers/api_onchange.py"
 ASSEMBLER_PATH = ROOT / "addons/smart_core/core/unified_page_contract_v2_assembler.py"
@@ -19,6 +21,12 @@ FORBIDDEN_INDUSTRY_PATH = ROOT / "addons/smart_construction_core/handlers/mobile
 
 
 def _load(path: Path, name: str):
+    sys.modules.setdefault("odoo", types.ModuleType("odoo"))
+    sys.modules.setdefault("odoo.addons", types.ModuleType("odoo.addons"))
+    smart_core_pkg = sys.modules.setdefault("odoo.addons.smart_core", types.ModuleType("odoo.addons.smart_core"))
+    smart_core_pkg.__path__ = [str(CORE_DIR.parent)]
+    core_pkg = sys.modules.setdefault("odoo.addons.smart_core.core", types.ModuleType("odoo.addons.smart_core.core"))
+    core_pkg.__path__ = [str(CORE_DIR)]
     spec = importlib.util.spec_from_file_location(name, path)
     if spec is None or spec.loader is None:
         raise RuntimeError(f"cannot load module from {path}")
@@ -65,8 +73,6 @@ def main() -> int:
         _fail(errors, "v2 intent must apply terminal client trimming")
     if "resolve_delivery_profile" not in source:
         _fail(errors, "v2 intent must resolve terminal delivery profile")
-    if "include_source_compat=client_type not in MOBILE_CLIENT_TYPES" not in source:
-        _fail(errors, "mobile compact delivery must not expose full source compat payload")
     for forbidden in ("mobile_contract", "mobileContract", "deviceContract", "construction.contract.mobile"):
         if forbidden in source:
             _fail(errors, f"handler must not introduce mobile private schema: {forbidden}")
@@ -209,21 +215,17 @@ def main() -> int:
         if token not in mobile_source:
             _fail(errors, f"mobile terminal renderer must preserve v2 action target/button metadata token: {token}")
 
-    assembler = _load(ASSEMBLER_PATH, "upc_v2_intent_guard_assembler")
-    client = _load(CLIENT_PATH, "upc_v2_intent_guard_client")
+    assembler = _load(ASSEMBLER_PATH, "odoo.addons.smart_core.core.upc_v2_intent_guard_assembler")
+    client = _load(CLIENT_PATH, "odoo.addons.smart_core.core.upc_v2_intent_guard_client")
     sample = {
-        "ui_contract": {
-            "title": "契约运行",
-            "model": "construction.contract",
-            "view_type": "tree",
-            "fields": {
-                "name": {"string": "名称", "type": "char"},
-                "partner_id": {"string": "供应商", "type": "many2one"},
-            },
-            "buttons": [{"name": "action_confirm", "string": "确认", "type": "object"}],
-        },
+        "title": "契约运行",
         "model": "construction.contract",
         "view_type": "tree",
+        "fields": {
+            "name": {"string": "名称", "type": "char"},
+            "partner_id": {"string": "供应商", "type": "many2one"},
+        },
+        "buttons": [{"name": "action_confirm", "string": "确认", "type": "object"}],
         "domain_raw": "[('state','=','draft')]",
         "context_raw": "{'search_default_my': 1}",
     }
@@ -234,7 +236,6 @@ def main() -> int:
         delivery_profile="mobile_compact",
         max_widgets=1,
         max_actions=1,
-        include_source_compat=False,
     )
     expected_keys = {
         "pageInfo",
@@ -273,25 +274,23 @@ def main() -> int:
     widgets = ((contract.get("layoutContract", {}).get("containerTree") or [{}])[0].get("widgetList") or [])
     if len(widgets) != 1:
         _fail(errors, "mobile_compact must trim delivered widgets")
-    compat = contract.get("meta", {}).get("compat") or {}
-    if compat.get("ui_contract", {}).get("delivery") != "omitted_for_mobile_compact":
-        _fail(errors, "mobile_compact must replace full ui_contract compat with source fingerprint")
+    meta = contract.get("meta", {}) if isinstance(contract.get("meta"), dict) else {}
+    if meta.get("sourceType") != "ui.contract":
+        _fail(errors, "mobile_compact must keep sourceType as ui.contract")
+    if "compat" in meta:
+        _fail(errors, "mobile_compact contract meta.compat must be removed")
     delivery_trim = contract.get("meta", {}).get("deliveryTrim") or {}
     if delivery_trim.get("omitted", {}).get("widgets", 0) < 1:
         _fail(errors, "mobile_compact must report omitted widgets")
 
     form_sample = {
-        "ui_contract": {
-            "title": "合同表单",
-            "model": "construction.contract",
-            "view_type": "form",
-            "fields": {
-                "name": {"string": "名称", "type": "char"},
-                "amount_final": {"string": "金额", "type": "monetary"},
-            },
-        },
+        "title": "合同表单",
         "model": "construction.contract",
         "view_type": "form",
+        "fields": {
+            "name": {"string": "名称", "type": "char"},
+            "amount_final": {"string": "金额", "type": "monetary"},
+        },
         "record_id": 42,
     }
     form_contract = assembler.assemble_unified_page_contract_v2(form_sample, source_type="ui.contract", client_type="harmony_h5")
@@ -300,31 +299,27 @@ def main() -> int:
     if form_params.get("op") != "read" or form_params.get("ids") != [42]:
         _fail(errors, "form v2 contracts with record_id must declare primary api.data read dataSource")
     action_sample = {
-        "ui_contract": {
-            "title": "合同表单",
-            "model": "construction.contract",
-            "view_type": "form",
-            "fields": {"name": {"string": "名称", "type": "char"}},
-            "buttons": [
-                {
-                    "key": "module.action_contract",
-                    "kind": "open",
-                    "label": "打开合同",
-                    "intent": "open",
-                    "payload": {"action_id": 99, "view_mode": "tree,form"},
-                    "target_model": "construction.contract",
-                },
-                {
-                    "key": "module.server_action_contract",
-                    "kind": "server",
-                    "label": "服务端动作",
-                    "intent": "execute",
-                    "payload": {"server_action_id": 77, "xml_id": "module.server_action_contract"},
-                },
-            ],
-        },
+        "title": "合同表单",
         "model": "construction.contract",
         "view_type": "form",
+        "fields": {"name": {"string": "名称", "type": "char"}},
+        "buttons": [
+            {
+                "key": "module.action_contract",
+                "kind": "open",
+                "label": "打开合同",
+                "intent": "open",
+                "payload": {"action_id": 99, "view_mode": "tree,form"},
+                "target_model": "construction.contract",
+            },
+            {
+                "key": "module.server_action_contract",
+                "kind": "server",
+                "label": "服务端动作",
+                "intent": "execute",
+                "payload": {"server_action_id": 77, "xml_id": "module.server_action_contract"},
+            },
+        ],
         "record_id": 42,
     }
     action_contract = assembler.assemble_unified_page_contract_v2(action_sample, source_type="ui.contract", client_type="harmony_h5")
