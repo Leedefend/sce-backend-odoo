@@ -294,6 +294,65 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
         self.assertEqual([node["name"] for node in page_group["children"]], ["company_id"])
         self.assertEqual(page_group["children"][0]["fieldInfo"]["label"], "公司")
 
+    def test_ui_contract_v2_uses_button_badge_display_label(self):
+        source = {
+            "model": "project.project",
+            "view_type": "form",
+            "record": {
+                "tender_count": 0,
+            },
+            "views": {
+                "form": {
+                    "layout": [
+                        {
+                            "type": "sheet",
+                            "name": "project_sheet",
+                            "children": [
+                                {
+                                    "type": "button",
+                                    "name": "564",
+                                    "label": "投标管理",
+                                    "buttonType": "action",
+                                    "action": {
+                                        "name": "564",
+                                        "label": "投标管理",
+                                        "kind": "open",
+                                        "level": "smart",
+                                        "selection": "none",
+                                        "intent": "open",
+                                        "payload": {
+                                            "ref": "564",
+                                            "type": "action",
+                                        },
+                                        "badge": {
+                                            "kind": "statinfo",
+                                            "field": "tender_count",
+                                            "label": "投标",
+                                        },
+                                    },
+                                },
+                            ],
+                        },
+                    ]
+                }
+            },
+            "fields": {
+                "tender_count": {"name": "tender_count", "type": "integer", "string": "投标"},
+            },
+        }
+
+        full = assembler.assemble_unified_page_contract_v2(
+            source,
+            source_type="ui.contract",
+            client_type="web_pc",
+            request_id="test.web.button.badge.label",
+        )
+
+        button = full["layoutContract"]["containerTree"][0]["children"][0]
+        self.assertEqual(button["label"], "投标管理")
+        self.assertEqual(button["displayLabel"], "0投标")
+        self.assertEqual(button["action"]["displayLabel"], "0投标")
+
 
 if __name__ == "__main__":
     unittest.main()

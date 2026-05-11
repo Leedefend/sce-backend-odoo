@@ -256,6 +256,23 @@ class _TreeFormParserMixin:
             _logger.debug("failed to resolve action label for %s", name_raw, exc_info=True)
         return ""
 
+    def _button_badge_meta(self, btn_node):
+        try:
+            for field_node in btn_node.xpath(".//field[contains(concat(' ', normalize-space(@widget), ' '), ' statinfo ')]"):
+                field_name = (field_node.get('name') or field_node.get('field') or '').strip()
+                if not field_name:
+                    continue
+                badge_label = (field_node.get('string') or field_node.get('title') or field_node.get('label') or '').strip()
+                return {
+                    "kind": "statinfo",
+                    "field": field_name,
+                    "count_field": field_name,
+                    "label": badge_label or field_name,
+                }
+        except Exception:
+            _logger.debug("failed to resolve button badge meta", exc_info=True)
+        return {}
+
     def _class_list(self, node):
         return [c.strip() for c in (node.get('class') or '').split() if c.strip()]
 
@@ -633,6 +650,7 @@ class _TreeFormParserMixin:
             domain_raw  = btn_node.get('domain')
             context_raw = btn_node.get('context')
             priority    = btn_node.get('priority')
+            badge       = self._button_badge_meta(btn_node)
 
             scope = self._native_button_contract_scope(btn_node, level=level)
             lvl = scope["level"]
@@ -685,6 +703,7 @@ class _TreeFormParserMixin:
                     confirm=confirm,
                     level=level,
                 ),
+                "badge": badge or None,
                 "payload": {
                     "method": None,
                     "ref": None,

@@ -25,6 +25,7 @@
               :nodes="activeNotebookChildren(node)"
               :field-schemas-for-nodes="fieldSchemasForNodes"
               :is-node-visible="isNodeVisible"
+              :button-label-resolver="buttonLabelResolver"
               :columns="columns"
               @field-change="emit('field-change', $event)"
               @native-action="emit('native-action', $event)"
@@ -103,6 +104,7 @@
             :nodes="containerChildren(node)"
             :field-schemas-for-nodes="fieldSchemasForNodes"
             :is-node-visible="isNodeVisible"
+            :button-label-resolver="buttonLabelResolver"
             :columns="columns"
             @field-change="emit('field-change', $event)"
             @native-action="emit('native-action', $event)"
@@ -164,9 +166,11 @@ export type NativeFormLayoutNode = {
   name?: string;
   string?: string;
   label?: string;
+  displayLabel?: string;
   text?: string;
   widget?: string;
   attributes?: Record<string, unknown>;
+  fieldInfo?: Record<string, unknown>;
   buttonType?: string;
   action?: Record<string, unknown> | null;
   children?: NativeFormLayoutNode[];
@@ -180,6 +184,7 @@ const props = withDefaults(defineProps<{
   nodes: NativeFormLayoutNode[];
   fieldSchemasForNodes: (nodes: NativeFormLayoutNode[]) => FormSectionFieldSchema[];
   isNodeVisible?: (node: NativeFormLayoutNode) => boolean;
+  buttonLabelResolver?: (node: NativeFormLayoutNode) => string | undefined;
   columns?: 1 | 2;
 }>(), {
   columns: 2,
@@ -337,7 +342,9 @@ function widgetClass(node: NativeFormLayoutNode) {
 }
 
 function buttonLabel(node: NativeFormLayoutNode) {
-  return String(node.label || node.string || node.name || '操作').trim();
+  const action = node.action && typeof node.action === 'object' ? node.action as Record<string, unknown> : {};
+  const resolved = props.buttonLabelResolver?.(node);
+  return String(resolved || node.displayLabel || action.displayLabel || node.label || node.string || node.name || '操作').trim();
 }
 
 function buttonIcon(node: NativeFormLayoutNode) {
@@ -497,12 +504,12 @@ function closeMore(node: NativeFormLayoutNode) {
 
 .native-actions--smart {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
-  gap: 0;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  overflow: visible;
-  background: #ffffff;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1px;
+  border: 1px solid #dbe3ee;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #dbe3ee;
 }
 
 .native-action-btn {
@@ -516,6 +523,7 @@ function closeMore(node: NativeFormLayoutNode) {
   padding: 6px 10px;
   border-radius: 6px;
   font-size: 13px;
+  letter-spacing: 0;
   cursor: pointer;
   min-width: 0;
   max-width: 100%;
@@ -524,15 +532,14 @@ function closeMore(node: NativeFormLayoutNode) {
 
 .native-action-btn--smart {
   justify-content: flex-start;
-  min-height: 54px;
+  min-height: 60px;
   border: 0;
-  border-right: 1px solid #e5e7eb;
-  border-bottom: 1px solid #e5e7eb;
   border-radius: 0;
-  padding: 8px 10px;
-  color: #334155;
+  padding: 12px 14px;
+  color: #0f172a;
   background: #ffffff;
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 14px;
 }
 
 .native-action-more {
@@ -587,13 +594,14 @@ function closeMore(node: NativeFormLayoutNode) {
   flex: 0 0 auto;
   width: 18px;
   text-align: center;
-  color: #64748b;
+  color: #2563eb;
 }
 
 .native-action-label {
   min-width: 0;
   overflow-wrap: anywhere;
   line-height: 1.25;
+  font-weight: inherit;
 }
 
 .native-action-btn:hover {
@@ -602,8 +610,7 @@ function closeMore(node: NativeFormLayoutNode) {
 }
 
 .native-action-btn--smart:hover {
-  border-color: #e5e7eb;
   background: #f8fafc;
-  color: #111827;
+  color: #0f172a;
 }
 </style>

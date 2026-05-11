@@ -455,9 +455,9 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
             fields_by_name,
             layout_type=layout_type,
             component_keys=component_keys,
-            container_status=contract["statusContract"]["containerStatus"],
-            widget_status=contract["statusContract"]["widgetStatus"],
-        )
+                container_status=contract["statusContract"]["containerStatus"],
+                widget_status=contract["statusContract"]["widgetStatus"],
+            )
     elif layout_type == "form":
         container_id = "main.form"
         sheet_id = f"{container_id}.sheet"
@@ -553,10 +553,15 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
     source_record = _dict(source.get("record"))
     if source_record:
         contract["dataContract"]["mainData"].update(deepcopy(source_record))
+    _decorate_button_display_labels(
+        contract["layoutContract"]["containerTree"],
+        contract["dataContract"]["mainData"],
+        fields_by_name,
+    )
     data_source = _ui_contract_data_source(model=model, view_type=view_type, fields=fields, record_id=record_id, source=source, ui=ui)
     if data_source:
         contract["dataContract"]["dataSource"]["primary"] = data_source
-    _append_ui_contract_actions(contract, ui, source_widget_id="page.root")
+    _append_ui_contract_actions(contract, ui, source_widget_id="page.root", main_data=contract["dataContract"]["mainData"])
     _append_ui_contract_row_actions(contract, ui)
     _append_project_kanban_row_action(contract, model=model, view_type=view_type)
     return contract
@@ -869,6 +874,124 @@ def _normalize_native_layout_nodes(
     return out
 
 
+def _badge_count(value: Any) -> int | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return int(value)
+    if isinstance(value, list):
+        return len(value)
+    if isinstance(value, tuple):
+        return len(value)
+    if isinstance(value, str):
+        text = value.strip()
+        if text.isdigit():
+            return int(text)
+    return None
+
+
+def _button_badge_count_source(
+    badge: dict[str, Any],
+    main_data: dict[str, Any],
+    fields_by_name: dict[str, dict[str, Any]],
+    layout_nodes: list[dict[str, Any]],
+) -> tuple[int | None, str, str]:
+    field_name = _text(badge.get("count_field") or badge.get("field") or badge.get("fieldCode"))
+    badge_label = _text(badge.get("label"))
+    if field_name and field_name in main_data:
+        return _badge_count(main_data.get(field_name)), badge_label, field_name
+    short_label = badge_label or field_name
+    if short_label:
+        short_label = re.sub(r"管理$", "", short_label).strip() or short_label
+    def _matches_candidate(candidate_name: str, candidate_label: str) -> bool:
+        return bool(short_label and (short_label in candidate_label or short_label in candidate_name))
+    def _walk_layout(nodes: list[dict[str, Any]]):
+        for row in nodes:
+            if not isinstance(row, dict):
+                continue
+            row_type = _text(row.get("type") or row.get("kind")).lower()
+            if row_type == "field":
+                candidate_name = _text(row.get("name") or row.get("field"))
+                candidate_meta = _dict(row.get("fieldInfo") or row.get("field_info"))
+                candidate_label = _text(
+                    row.get("label")
+                    or row.get("string")
+                    or candidate_meta.get("label")
+                    or candidate_meta.get("string")
+                    or candidate_name
+                )
+                candidate_type = _text(candidate_meta.get("type") or candidate_meta.get("ttype") or row.get("widget")).lower()
+                if candidate_name in main_data and candidate_type in {"one2many", "many2many"} and _matches_candidate(candidate_name, candidate_label):
+                    return candidate_name
+            for key in ("children", "pages", "tabs", "nodes", "items"):
+                child_rows = row.get(key)
+                if isinstance(child_rows, list):
+                    candidate = _walk_layout(child_rows)
+                    if candidate:
+                        return candidate
+        return ""
+    layout_candidate = _walk_layout(layout_nodes or [])
+    if layout_candidate:
+        return _badge_count(main_data.get(layout_candidate)), short_label, layout_candidate
+    for candidate_name, candidate_meta in fields_by_name.items():
+        candidate_type = _text(candidate_meta.get("type") or candidate_meta.get("ttype")).lower()
+        if candidate_type not in {"one2many", "many2many"}:
+            continue
+        candidate_label = _text(candidate_meta.get("string") or candidate_meta.get("label") or candidate_name)
+        if short_label and (short_label in candidate_label or short_label in candidate_name):
+            return _badge_count(main_data.get(candidate_name)), short_label, candidate_name
+    return None, short_label, ""
+
+
+def _button_display_label(
+    node: dict[str, Any],
+    main_data: dict[str, Any],
+    fields_by_name: dict[str, dict[str, Any]],
+    layout_nodes: list[dict[str, Any]],
+) -> str:
+    action = _dict(node.get("action"))
+    badge = _dict(action.get("badge") or node.get("badge"))
+    field_name = _text(badge.get("field") or badge.get("fieldCode"))
+    badge_label = _text(node.get("displayLabel") or action.get("displayLabel") or badge.get("label"))
+    if not field_name and not badge_label:
+        return ""
+    count, resolved_label, source_field = _button_badge_count_source(badge, main_data, fields_by_name, layout_nodes)
+    if count is None:
+        return ""
+    return f"{count}{resolved_label or badge_label}"
+
+
+def _decorate_button_display_labels(
+    nodes: list[dict[str, Any]],
+    main_data: dict[str, Any],
+    fields_by_name: dict[str, dict[str, Any]],
+    layout_nodes: list[dict[str, Any]] | None = None,
+) -> None:
+    root_nodes = layout_nodes or nodes
+    for node in nodes:
+        if not isinstance(node, dict):
+            continue
+        if _text(node.get("type") or node.get("kind")).lower() == "button":
+            action = _dict(node.get("action"))
+            badge = _dict(action.get("badge") or node.get("badge"))
+            count, resolved_label, source_field = _button_badge_count_source(badge, main_data, fields_by_name, root_nodes)
+            if _text(badge.get("field")) and not _text(badge.get("count_field")):
+                badge["count_field"] = _text(badge.get("field"))
+            if source_field:
+                badge["source_field"] = source_field
+            if count is not None:
+                display_label = f"{count}{resolved_label or _text(node.get('displayLabel') or action.get('displayLabel') or badge.get('label'))}"
+                node["displayLabel"] = display_label
+                action["displayLabel"] = display_label
+            action["badge"] = badge
+            if action:
+                node["action"] = action
+        for key in ("children", "pages", "tabs", "nodes", "items"):
+            child_rows = node.get(key)
+            if isinstance(child_rows, list) and child_rows:
+                _decorate_button_display_labels(child_rows, main_data, fields_by_name, root_nodes)
+
+
 def _ui_contract_data_source(
     *,
     model: str,
@@ -1127,7 +1250,13 @@ def _append_action_schema(contract: dict[str, Any], actions: dict[str, Any], *, 
         contract["statusContract"]["buttonStatus"].append({"btnId": f"btn.{action_key}", "visible": True, "disabled": False})
 
 
-def _append_ui_contract_actions(contract: dict[str, Any], ui: dict[str, Any], *, source_widget_id: str) -> None:
+def _append_ui_contract_actions(
+    contract: dict[str, Any],
+    ui: dict[str, Any],
+    *,
+    source_widget_id: str,
+    main_data: dict[str, Any] | None = None,
+) -> None:
     rows: list[dict[str, Any]] = []
     for key in ("buttons", "business_actions"):
         for row in _list(ui.get(key)):
@@ -1153,6 +1282,14 @@ def _append_ui_contract_actions(contract: dict[str, Any], ui: dict[str, Any], *,
         kind = _text(row.get("kind") or row.get("type"))
         payload = _dict(row.get("payload"))
         intent = _text(row.get("intent"))
+        badge = _dict(row.get("badge"))
+        display_label = _text(row.get("displayLabel") or row.get("display_label"))
+        if badge and not display_label and main_data:
+            badge_field = _text(badge.get("field") or badge.get("fieldCode"))
+            badge_label = _text(badge.get("label"))
+            count = _badge_count(main_data.get(badge_field)) if badge_field else None
+            if count is not None and badge_label:
+                display_label = f"{count}{badge_label}"
         if kind == "open" or intent == "open":
             action_intent = "ui.contract"
             target = {
@@ -1183,9 +1320,11 @@ def _append_ui_contract_actions(contract: dict[str, Any], ui: dict[str, Any], *,
             {
                 "key": key,
                 "label": _text(row.get("label") or row.get("string") or row.get("name"), key),
+                "displayLabel": display_label,
                 "intent": action_intent,
                 "target": target,
                 "button": button,
+                "badge": badge or None,
             }
         )
     _append_actions(contract, normalized, source_widget_id=source_widget_id)

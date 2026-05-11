@@ -8,6 +8,7 @@ import {
   resolveUnifiedPageContractV2GlobalStatus,
   resolveUnifiedPageContractV2MainData,
   resolveUnifiedPageContractV2SourceContext,
+  resolveUnifiedPageContractV2,
   type UnifiedPageContractV2,
   type UnifiedPageContractV2Widget,
 } from '../app/contracts/unifiedPageContractV2';
@@ -28,6 +29,10 @@ type ProjectionContractRawResult = IntentRawResult<ActionContract & Dict>;
 
 function asDict(value: unknown): Dict {
   return value && typeof value === 'object' && !Array.isArray(value) ? value as Dict : {};
+}
+
+function asList(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : [];
 }
 
 function resolveV2SourceContext(v2Contract: unknown): Dict {
@@ -149,6 +154,112 @@ function buildLegacyFormLayout(fieldWidgets: UnifiedPageContractV2Widget[], fiel
   }];
 }
 
+function walkV2LayoutNodes(rows: unknown[], visit: (row: Dict) => void) {
+  (Array.isArray(rows) ? rows : []).forEach((item) => {
+    const row = asDict(item);
+    if (!Object.keys(row).length) return;
+    visit(row);
+    for (const key of ['children', 'pages', 'tabs', 'nodes', 'items'] as const) {
+      walkV2LayoutNodes(asList(row[key]), visit);
+    }
+  });
+}
+
+function collectV2LayoutButtons(v2Contract: Dict): Dict[] {
+  const out: Dict[] = [];
+  const seen = new Set<string>();
+  const root = asDict(v2Contract);
+  const mainData = asDict(asDict(root.dataContract).mainData);
+  const layoutContract = asDict(root.layoutContract);
+  const findCountField = (shortLabel: string): string => {
+    let countField = '';
+    walkV2LayoutNodes(asList(layoutContract.containerTree), (row) => {
+      if (countField) return;
+      if (String(row.type || row.kind || '').trim().toLowerCase() !== 'field') return;
+      const fieldInfo = asDict(row.fieldInfo || row.field_info);
+      const fieldType = String(fieldInfo.type || '').trim().toLowerCase();
+      if (!['one2many', 'many2many'].includes(fieldType)) return;
+      const label = String(row.label || row.string || fieldInfo.label || row.name || '').trim();
+      const name = String(row.name || '').trim();
+      if (label.includes(shortLabel) || name.includes(shortLabel)) {
+        countField = name;
+      }
+    });
+    return countField;
+  };
+  walkV2LayoutNodes(asList(layoutContract.containerTree), (row) => {
+    const nodeType = String(row.type || row.kind || '').trim().toLowerCase();
+    if (nodeType !== 'button') return;
+    const action = asDict(row.action);
+    const payload = asDict(action.payload);
+    const key = stableFieldName(String(action.name || row.key || row.name || row.label || ''));
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    const level = String(action.level || row.level || 'body').trim().toLowerCase();
+    const kind = String(action.kind || row.buttonType || '').trim().toLowerCase();
+    const rawLabel = String(action.label || row.label || row.string || key).trim() || key;
+    let label = rawLabel;
+    if (level === 'smart' && rawLabel.endsWith('管理')) {
+      const shortLabel = rawLabel.replace(/管理$/, '').trim();
+      const countField = findCountField(shortLabel);
+      const count = countField && Array.isArray(mainData[countField]) ? mainData[countField].length : null;
+      if (count !== null) {
+        label = `${count}${shortLabel || rawLabel}`;
+      }
+    }
+    out.push({
+      key,
+      name: key,
+      label,
+      kind: kind === 'server' ? 'server' : kind === 'open' ? 'object' : 'object',
+      level,
+      selection: 'none',
+      actionId: null,
+      methodName: String(payload.method || '').trim() || key,
+      targetModel: '',
+      context: {},
+      domainRaw: String(payload.domain_raw || '').trim(),
+      target: String(payload.target || '').trim(),
+      url: String(payload.url || '').trim(),
+      enabled: true,
+      hint: '',
+      semantic: level === 'smart' ? 'secondary_action' : 'primary_action',
+      visibleProfiles: Array.isArray(action.visible_profiles) ? action.visible_profiles : ['create', 'edit', 'readonly'],
+      requiredParams: [],
+      requiresReason: false,
+      actionSafety: action.action_safety,
+    });
+  });
+  return out;
+}
+
+function collectV2Statusbar(v2Contract: Dict): Dict | null {
+  const root = asDict(v2Contract);
+  const layoutContract = asDict(root.layoutContract);
+  let statusField = '';
+  let states: Array<{ value: string; label: string }> = [];
+  walkV2LayoutNodes(asList(layoutContract.containerTree), (row) => {
+    if (statusField) return;
+    if (String(row.type || row.kind || '').trim().toLowerCase() !== 'field') return;
+    const name = stableFieldName(String(row.name || row.field || ''));
+    if (!['lifecycle_state', 'state', 'stage_id'].includes(name)) return;
+    const fieldInfo = asDict(row.fieldInfo || row.field_info);
+    const selection = Array.isArray(fieldInfo.selection) ? fieldInfo.selection : [];
+    const mapped = selection.map((item) => {
+      const pair = Array.isArray(item) ? item : [];
+      return {
+        value: String(pair[0] ?? '').trim(),
+        label: String(pair[1] ?? pair[0] ?? '').trim(),
+      };
+    }).filter((item) => item.value && item.label);
+    if (!mapped.length) return;
+    statusField = name;
+    states = mapped;
+  });
+  if (!statusField || !states.length) return null;
+  return { field: statusField, states };
+}
+
 function buildLegacySubViews(fieldWidgets: UnifiedPageContractV2Widget[], mainData: Dict, model: string): Dict {
   const out: Dict = {};
   fieldWidgets.forEach((widget) => {
@@ -189,6 +300,8 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
   const mainData = resolveUnifiedPageContractV2MainData(v2Contract);
   const v2SourceContext = resolveUnifiedPageContractV2SourceContext(v2Contract);
   const globalStatus = resolveUnifiedPageContractV2GlobalStatus(v2Contract);
+  const layoutButtons = collectV2LayoutButtons(v2Contract);
+  const statusbar = collectV2Statusbar(v2Contract);
   const model = String(pageInfo.model || '').trim();
   const viewType = String(pageInfo.viewType || requestParams.view_type || 'form').trim() || 'form';
   const contractSurface = String(requestParams.contract_surface || requestParams.surface || 'user').trim().toLowerCase() || 'user';
@@ -232,6 +345,12 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
         layout: formLayout,
         fields: fieldNames,
         subviews,
+        ...(statusbar ? { statusbar } : {}),
+        ...(layoutButtons.length ? {
+          header_buttons: layoutButtons.filter((item) => String(item.level || '').trim().toLowerCase() === 'header'),
+          button_box: layoutButtons.filter((item) => String(item.level || '').trim().toLowerCase() === 'smart'),
+          stat_buttons: layoutButtons.filter((item) => String(item.level || '').trim().toLowerCase() === 'smart'),
+        } : {}),
         ui_labels: {
           reload: '刷新',
           discard: '放弃',
