@@ -1,17 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useSessionStore } from '../stores/session';
 import LoginView from '../views/LoginView.vue';
-import HomeView from '../views/HomeView.vue';
-import MenuView from '../views/MenuView.vue';
-import ActionView from '../views/ActionViewShell.vue';
-import ContractFormPage from '../pages/ContractFormPage.vue';
-import WorkbenchView from '../views/WorkbenchView.vue';
-import SceneView from '../views/SceneView.vue';
-import ProjectsIntakeView from '../views/ProjectsIntakeView.vue';
-import MyWorkView from '../views/MyWorkView.vue';
-import SceneHealthView from '../views/SceneHealthView.vue';
-import ScenePackagesView from '../views/ScenePackagesView.vue';
-import UsageAnalyticsView from '../views/UsageAnalyticsView.vue';
 import { ApiError } from '../api/client';
 import { buildCanonicalSceneRouteTarget, normalizeEmbeddedSceneQuery, normalizeLegacyWorkbenchPath, parseSceneKeyFromQuery } from '../app/routeQuery';
 import { getSceneByKey } from '../app/resolvers/sceneRegistry';
@@ -78,22 +67,22 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/login', name: 'login', component: LoginView },
-    { path: '/', name: 'home', component: HomeView, meta: { layout: 'shell', sceneKey: 'workspace.home' } },
-    { path: '/s/workspace.home', name: 'scene-home', component: HomeView, meta: { layout: 'shell', sceneKey: 'workspace.home' } },
-    { path: '/my-work', name: 'my-work', component: MyWorkView, meta: { layout: 'shell' } },
-    { path: '/s/my_work.workspace', name: 'scene-my-work', component: MyWorkView, meta: { layout: 'shell', sceneKey: 'my_work.workspace' } },
+    { path: '/', name: 'home', component: () => import('../views/HomeView.vue'), meta: { layout: 'shell', sceneKey: 'workspace.home' } },
+    { path: '/s/workspace.home', name: 'scene-home', component: () => import('../views/HomeView.vue'), meta: { layout: 'shell', sceneKey: 'workspace.home' } },
+    { path: '/my-work', name: 'my-work', component: () => import('../views/MyWorkView.vue'), meta: { layout: 'shell' } },
+    { path: '/s/my_work.workspace', name: 'scene-my-work', component: () => import('../views/MyWorkView.vue'), meta: { layout: 'shell', sceneKey: 'my_work.workspace' } },
     { path: '/pm/dashboard', name: 'project-management-dashboard', redirect: '/s/project.management', meta: { layout: 'shell' } },
-    { path: '/s/projects.intake', name: 'projects-intake', component: ProjectsIntakeView, meta: { layout: 'shell', sceneKey: 'projects.intake' } },
-    { path: '/s/:sceneKey', name: 'scene', component: SceneView, meta: { layout: 'shell' } },
-    { path: '/m/:menuId', name: 'menu', component: MenuView, meta: { layout: 'shell' } },
+    { path: '/s/projects.intake', name: 'projects-intake', component: () => import('../views/ProjectsIntakeView.vue'), meta: { layout: 'shell', sceneKey: 'projects.intake' } },
+    { path: '/s/:sceneKey', name: 'scene', component: () => import('../views/SceneView.vue'), meta: { layout: 'shell' } },
+    { path: '/m/:menuId', name: 'menu', component: () => import('../views/MenuView.vue'), meta: { layout: 'shell' } },
     // Diagnostic-only surface; must not be used as product navigation.
-    { path: '/workbench', name: 'workbench', component: WorkbenchView, meta: { layout: 'shell' } },
-    { path: '/admin/scene-health', name: 'scene-health', component: SceneHealthView, meta: { layout: 'shell', adminOnly: true } },
-    { path: '/admin/scene-packages', name: 'scene-packages', component: ScenePackagesView, meta: { layout: 'shell', adminOnly: true } },
-    { path: '/admin/usage-analytics', name: 'usage-analytics', component: UsageAnalyticsView, meta: { layout: 'shell', adminOnly: true } },
-    { path: '/a/:actionId', name: 'action', component: ActionView, meta: { layout: 'shell' } },
-    { path: '/f/:model/:id', name: 'model-form', component: ContractFormPage, meta: { layout: 'shell' } },
-    { path: '/r/:model/:id', name: 'record', component: ContractFormPage, meta: { layout: 'shell' } },
+    { path: '/workbench', name: 'workbench', component: () => import('../views/WorkbenchView.vue'), meta: { layout: 'shell' } },
+    { path: '/admin/scene-health', name: 'scene-health', component: () => import('../views/SceneHealthView.vue'), meta: { layout: 'shell', adminOnly: true } },
+    { path: '/admin/scene-packages', name: 'scene-packages', component: () => import('../views/ScenePackagesView.vue'), meta: { layout: 'shell', adminOnly: true } },
+    { path: '/admin/usage-analytics', name: 'usage-analytics', component: () => import('../views/UsageAnalyticsView.vue'), meta: { layout: 'shell', adminOnly: true } },
+    { path: '/a/:actionId', name: 'action', component: () => import('../views/ActionViewShell.vue'), meta: { layout: 'shell' } },
+    { path: '/f/:model/:id', name: 'model-form', component: () => import('../pages/ContractFormPage.vue'), meta: { layout: 'shell' } },
+    { path: '/r/:model/:id', name: 'record', component: () => import('../pages/ContractFormPage.vue'), meta: { layout: 'shell' } },
   ],
 });
 
