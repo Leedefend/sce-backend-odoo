@@ -86,6 +86,7 @@ def _component_key(widget_type: str) -> str:
         "textarea": "sc.input.textarea",
         "number": "sc.input.number",
         "select": "sc.select.remote",
+        "checkbox": "sc.input.boolean",
         "date": "sc.input.date",
         "datetime": "sc.input.datetime",
         "table": "sc.table.data",
@@ -427,27 +428,112 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
         request_id=request_id,
     )
     fields = _field_rows(source, ui, view_type=view_type)
+    raw_field_map = _dict(ui.get("fields") or source.get("fields"))
+    fields_by_name: dict[str, dict[str, Any]] = {}
+    for key, value in raw_field_map.items():
+        if not isinstance(value, dict):
+            continue
+        name = _text(key or value.get("name"))
+        if not name:
+            continue
+        fields_by_name[name] = deepcopy(value)
+        fields_by_name[name].setdefault("name", name)
+    for row in fields:
+        if not isinstance(row, dict):
+            continue
+        name = _text(row.get("name"))
+        if not name or name in fields_by_name:
+            continue
+        fields_by_name[name] = deepcopy(row)
     widgets = []
     component_keys = set()
-    for field in fields[:60]:
-        widget = _field_widget(field, layout_type=layout_type)
-        widgets.append(widget)
-        component_keys.add(widget["componentKey"])
-        contract["statusContract"]["widgetStatus"].append(_field_status(field, widget["widgetId"]))
-    container_id = "main.form" if layout_type == "form" else "main.table"
-    contract["layoutContract"]["containerTree"] = [
-        {
-            "containerId": container_id,
-            "containerType": "group" if layout_type == "form" else "section",
-            "title": contract["pageInfo"]["pageName"],
-            "span": 12,
-            "styleToken": "defaultGroup" if layout_type == "form" else "tableSection",
-            "children": [],
-            "widgetList": widgets,
-        }
-    ]
+    form_layout = _dict(_dict(ui.get("views")).get("form"))
+    layout_rows = form_layout.get("layout") if isinstance(form_layout.get("layout"), list) else []
+    if layout_type == "form" and layout_rows:
+        container_tree = _normalize_native_layout_nodes(
+            [row for row in layout_rows if isinstance(row, dict)],
+            fields_by_name,
+            layout_type=layout_type,
+            component_keys=component_keys,
+            container_status=contract["statusContract"]["containerStatus"],
+            widget_status=contract["statusContract"]["widgetStatus"],
+        )
+    elif layout_type == "form":
+        container_id = "main.form"
+        sheet_id = f"{container_id}.sheet"
+        group_id = f"{container_id}.group"
+        field_nodes = [
+            _native_field_node(
+                {"type": "field", "name": _text(field.get("name"), "")},
+                _dict(field),
+                layout_type=layout_type,
+            )
+            for field in fields[:60]
+            if _text(field.get("name"))
+        ]
+        container_tree = [
+            {
+                "type": "sheet",
+                "name": sheet_id,
+                "containerId": sheet_id,
+                "containerType": "sheet",
+                "string": contract["pageInfo"]["pageName"],
+                "label": contract["pageInfo"]["pageName"],
+                "span": 12,
+                "children": [
+                    {
+                        "type": "group",
+                        "name": group_id,
+                        "containerId": group_id,
+                        "containerType": "group",
+                        "string": contract["pageInfo"]["pageName"],
+                        "label": contract["pageInfo"]["pageName"],
+                        "children": field_nodes,
+                        "widgetList": [
+                            _field_widget(_dict(field), layout_type=layout_type)
+                            for field in fields[:60]
+                            if _text(field.get("name"))
+                        ],
+                    }
+                ],
+                "widgetList": [],
+            }
+        ]
+        for widget in container_tree[0]["children"][0]["widgetList"]:
+            component_keys.add(widget["componentKey"])
+            contract["statusContract"]["widgetStatus"].append(_field_status(
+                next((row for row in fields if _text(row.get("name")) == _text(widget.get("fieldCode"))), {}),
+                widget["widgetId"],
+            ))
+        contract["statusContract"]["containerStatus"].extend([
+            {"containerId": sheet_id, "visible": True, "disabled": False},
+            {"containerId": group_id, "visible": True, "disabled": False},
+        ])
+    else:
+        container_id = "main.table"
+        widgets = []
+        for field in fields[:60]:
+            widget = _field_widget(field, layout_type=layout_type)
+            widgets.append(widget)
+            component_keys.add(widget["componentKey"])
+            contract["statusContract"]["widgetStatus"].append(_field_status(field, widget["widgetId"]))
+        container_tree = [
+            {
+                "type": "section",
+                "name": container_id,
+                "containerId": container_id,
+                "containerType": "section",
+                "string": contract["pageInfo"]["pageName"],
+                "label": contract["pageInfo"]["pageName"],
+                "span": 12,
+                "styleToken": "tableSection",
+                "children": [],
+                "widgetList": widgets,
+            }
+        ]
+        contract["statusContract"]["containerStatus"].append({"containerId": container_id, "visible": True, "disabled": False})
+    contract["layoutContract"]["containerTree"] = container_tree
     contract["layoutContract"]["componentRegistry"] = _component_registry(component_keys or {"sc.display.text"})
-    contract["statusContract"]["containerStatus"].append({"containerId": container_id, "visible": True, "disabled": False})
     contract["dataContract"]["dataMeta"]["fieldCount"] = len(fields)
     source_context = _ui_source_context(_dict(source), _dict(ui))
     if source_context:
@@ -634,7 +720,8 @@ def _view_column_schema_by_name(ui: dict[str, Any], view_type: str) -> dict[str,
 
 def _field_widget(field: dict[str, Any], *, layout_type: str) -> dict[str, Any]:
     field_name = _stable_id(field.get("name"), "field")
-    widget_type = "table" if layout_type == "table" else _widget_type_from_field(field)
+    explicit_widget = _text(field.get("widget"))
+    widget_type = "table" if layout_type == "table" else explicit_widget or _widget_type_from_field(field)
     component_key = _component_key(widget_type)
     capabilities = ["sortable", "filterable"] if layout_type == "table" else []
     if widget_type == "select":
@@ -653,6 +740,133 @@ def _field_widget(field: dict[str, Any], *, layout_type: str) -> dict[str, Any]:
         "capabilities": capabilities,
         "componentConfig": component_config,
     }
+
+
+def _native_field_node(node: dict[str, Any], field: dict[str, Any], *, layout_type: str) -> dict[str, Any]:
+    field_name = _stable_id(node.get("name") or node.get("field") or field.get("name"), "field")
+    label = _text(
+        node.get("string")
+        or node.get("label")
+        or node.get("title")
+        or _dict(node.get("fieldInfo")).get("label")
+        or _dict(node.get("field_info")).get("label")
+        or field.get("string")
+        or field.get("label"),
+        field_name,
+    )
+    field_source = deepcopy(field)
+    field_source["name"] = field_name
+    field_source.setdefault("string", label)
+    field_source.setdefault("label", label)
+    if _text(node.get("widget")):
+        field_source["widget"] = _text(node.get("widget"))
+    widget = _field_widget(field_source, layout_type=layout_type)
+    component_config = deepcopy(widget.get("componentConfig") or {})
+    field_info = _dict(node.get("fieldInfo") or node.get("field_info"))
+    field_info["name"] = field_name
+    field_info["label"] = label
+    field_info["widget"] = widget["widgetType"]
+    out = deepcopy(node)
+    out["type"] = "field"
+    out["name"] = field_name
+    out["string"] = label
+    out["label"] = label
+    out["fieldInfo"] = field_info
+    out["widget"] = widget["widgetType"]
+    out["componentKey"] = widget["componentKey"]
+    out["componentConfig"] = component_config
+    out["widgetId"] = widget["widgetId"]
+    out.setdefault("field_info", field_info)
+    return out
+
+
+def _direct_field_widgets_from_nodes(
+    nodes: list[dict[str, Any]],
+    fields_by_name: dict[str, dict[str, Any]],
+    *,
+    layout_type: str,
+) -> list[dict[str, Any]]:
+    widgets: list[dict[str, Any]] = []
+    for node in nodes:
+        if not isinstance(node, dict):
+            continue
+        if _text(node.get("type") or node.get("kind")).lower() != "field":
+            continue
+        field_name = _stable_id(node.get("name") or node.get("field"), "field")
+        field = _dict(fields_by_name.get(field_name))
+        if not field:
+            field = {"name": field_name, "string": _text(node.get("string") or node.get("label"), field_name)}
+        field_source = deepcopy(field)
+        field_source["name"] = field_name
+        field_source.setdefault("string", _text(node.get("string") or node.get("label"), field_name))
+        field_source.setdefault("label", field_source.get("string", field_name))
+        if _text(node.get("widget")):
+            field_source["widget"] = _text(node.get("widget"))
+        widgets.append(_field_widget(field_source, layout_type=layout_type))
+    return widgets
+
+
+def _normalize_native_layout_nodes(
+    rows: list[dict[str, Any]],
+    fields_by_name: dict[str, dict[str, Any]],
+    *,
+    layout_type: str,
+    component_keys: set[str],
+    container_status: list[dict[str, Any]],
+    widget_status: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        node = deepcopy(row)
+        node_type = _text(node.get("type") or node.get("kind"), "group").lower()
+        node["type"] = node_type
+        node_name = _text(node.get("name") or node.get("field"))
+        if node_name:
+            node["name"] = node_name
+        label = _text(node.get("string") or node.get("label") or node.get("title"))
+        if label:
+            node["string"] = label
+            node["label"] = label
+        if node_type == "field":
+            field = _dict(fields_by_name.get(node_name)) if node_name else {}
+            normalized = _native_field_node(node, field, layout_type=layout_type)
+            widget = _field_widget({**field, "name": node_name or field.get("name"), "string": normalized.get("string"), "label": normalized.get("label"), "widget": normalized.get("widget")}, layout_type=layout_type)
+            component_keys.add(widget["componentKey"])
+            widget_status.append(_field_status({**field, "name": node_name or field.get("name"), "string": normalized.get("string"), "label": normalized.get("label"), "widget": normalized.get("widget")}, widget["widgetId"]))
+            out.append(normalized)
+            continue
+        container_id = _text(node.get("containerId") or node.get("container_id") or node_name)
+        if not container_id:
+            container_id = _stable_id(node.get("title") or node.get("string") or node.get("label") or node_type, node_type)
+        node["containerId"] = container_id
+        node["containerType"] = node_type
+        node.setdefault("title", _text(node.get("title") or node.get("string") or node.get("label") or container_id, container_id))
+        node.setdefault("label", _text(node.get("label") or node.get("string") or node.get("title") or container_id, container_id))
+        container_status.append({"containerId": container_id, "visible": True, "disabled": False})
+        for key in ("children", "pages", "tabs", "nodes", "items"):
+            child_rows = _list(node.get(key))
+            if child_rows:
+                node[key] = _normalize_native_layout_nodes(
+                    [item for item in child_rows if isinstance(item, dict)],
+                    fields_by_name,
+                    layout_type=layout_type,
+                    component_keys=component_keys,
+                    container_status=container_status,
+                    widget_status=widget_status,
+                )
+        direct_widgets: list[dict[str, Any]] = []
+        for key in ("children", "pages", "tabs", "nodes", "items"):
+            direct_widgets.extend(_direct_field_widgets_from_nodes(_list(node.get(key)), fields_by_name, layout_type=layout_type))
+        if direct_widgets:
+            node["widgetList"] = direct_widgets
+            for widget in direct_widgets:
+                component_keys.add(widget["componentKey"])
+        elif not isinstance(node.get("widgetList"), list):
+            node["widgetList"] = []
+        out.append(node)
+    return out
 
 
 def _ui_contract_data_source(

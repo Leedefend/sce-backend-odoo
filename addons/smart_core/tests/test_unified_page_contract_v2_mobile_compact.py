@@ -211,6 +211,89 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
         )
         self.assertNotIn("compat", trimmed["meta"])
 
+    def test_ui_contract_v2_preserves_native_form_layout_tree(self):
+        source = {
+            "model": "project.project",
+            "view_type": "form",
+            "views": {
+                "form": {
+                    "layout": [
+                        {
+                            "type": "header",
+                            "name": "project_header",
+                            "children": [
+                                {
+                                    "type": "button",
+                                    "name": "action_submit",
+                                    "label": "提交",
+                                    "buttonType": "object",
+                                }
+                            ],
+                        },
+                        {
+                            "type": "sheet",
+                            "name": "project_sheet",
+                            "children": [
+                                {
+                                    "type": "group",
+                                    "name": "project_core",
+                                    "string": "基础信息",
+                                    "children": [
+                                        {"type": "field", "name": "name"},
+                                        {"type": "field", "name": "manager_id", "fieldInfo": {"label": "项目经理"}},
+                                    ],
+                                },
+                                {
+                                    "type": "notebook",
+                                    "name": "project_tabs",
+                                    "tabs": [
+                                        {
+                                            "type": "page",
+                                            "name": "settings_page",
+                                            "string": "设置",
+                                            "children": [
+                                                {
+                                                    "type": "group",
+                                                    "name": "settings_group",
+                                                    "children": [
+                                                        {"type": "field", "name": "company_id"},
+                                                    ],
+                                                }
+                                            ],
+                                        }
+                                    ],
+                                },
+                            ],
+                        },
+                    ]
+                }
+            },
+            "fields": {
+                "name": {"name": "name", "type": "char", "string": "名称"},
+                "manager_id": {"name": "manager_id", "type": "many2one", "string": "项目经理"},
+                "company_id": {"name": "company_id", "type": "many2one", "string": "公司"},
+            },
+        }
+
+        full = assembler.assemble_unified_page_contract_v2(
+            source,
+            source_type="ui.contract",
+            client_type="web_pc",
+            request_id="test.web.native.form.tree",
+        )
+
+        tree = full["layoutContract"]["containerTree"]
+        self.assertEqual([node["type"] for node in tree], ["header", "sheet"])
+        self.assertEqual(tree[1]["children"][0]["type"], "group")
+        self.assertEqual(tree[1]["children"][1]["type"], "notebook")
+        self.assertEqual(tree[1]["children"][1]["tabs"][0]["type"], "page")
+        core_group = tree[1]["children"][0]
+        self.assertEqual([node["name"] for node in core_group["children"]], ["name", "manager_id"])
+        self.assertEqual([widget["fieldCode"] for widget in core_group["widgetList"]], ["name", "manager_id"])
+        page_group = tree[1]["children"][1]["tabs"][0]["children"][0]
+        self.assertEqual([node["name"] for node in page_group["children"]], ["company_id"])
+        self.assertEqual(page_group["children"][0]["fieldInfo"]["label"], "公司")
+
 
 if __name__ == "__main__":
     unittest.main()
