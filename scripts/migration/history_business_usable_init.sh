@@ -28,6 +28,7 @@ echo "[history.business.usable.init] db=${DB_NAME} artifact_root=${ARTIFACT_ROOT
 run_odoo_script real_user_normalize "$ROOT_DIR/scripts/migration/history_real_user_normalize_write.py"
 run_odoo_script wutao_business_config_probe "$ROOT_DIR/scripts/migration/history_wutao_business_config_probe.py"
 run_odoo_script fund_account_projection "$ROOT_DIR/scripts/migration/fresh_db_fund_account_projection_write.py"
+run_odoo_script history_todo_projection "$ROOT_DIR/scripts/migration/fresh_db_history_todo_projection_write.py"
 run_odoo_script workbench_item_projection "$ROOT_DIR/scripts/migration/fresh_db_workbench_item_projection_write.py"
 run_odoo_script organization_department_materialize "$ROOT_DIR/scripts/migration/history_organization_department_materialize_write.py"
 run_odoo_script supplier_contract_pricing_projection "$ROOT_DIR/scripts/migration/fresh_db_supplier_contract_pricing_projection_write.py"
@@ -45,6 +46,7 @@ run_odoo_script partner_semantic_normalize "$ROOT_DIR/scripts/migration/prod_sim
 run_odoo_script construction_diary_projection "$ROOT_DIR/scripts/migration/fresh_db_construction_diary_projection_write.py"
 run_odoo_script material_category_projection "$ROOT_DIR/scripts/migration/fresh_db_material_category_projection_write.py"
 run_odoo_script material_catalog_projection "$ROOT_DIR/scripts/migration/fresh_db_material_catalog_projection_write.py"
+run_odoo_script business_user_priority_menu_plan "$ROOT_DIR/scripts/migration/business_user_priority_menu_plan_write.py"
 run_odoo_script formal_projection_refresh_probe "$ROOT_DIR/scripts/verify/formal_projection_refresh_probe.py"
 run_odoo_script business_usable_probe "$ROOT_DIR/scripts/migration/history_business_usable_probe.py"
 

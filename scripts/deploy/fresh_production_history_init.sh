@@ -60,7 +60,7 @@ echo "[fresh.production.history.init] step=platform_init_preflight"
 DB_NAME="$DB_NAME" COMPOSE_FILES="${COMPOSE_FILES}" "$ROOT_DIR/scripts/verify/platform_init_preflight.sh"
 
 echo "[fresh.production.history.init] step=runtime_language_baseline_probe"
-DB_NAME="$DB_NAME" COMPOSE_FILES="$COMPOSE_FILES" SC_RUNTIME_LANG="${SC_RUNTIME_LANG:-zh_CN}" \
+DB_NAME="$DB_NAME" COMPOSE_FILES="$COMPOSE_FILES" SC_RUNTIME_LANG="${SC_RUNTIME_LANG:-zh_CN}" SC_RUNTIME_CRITICAL_USERS="${SC_RUNTIME_PREFLIGHT_CRITICAL_USERS:-admin}" \
   "$ROOT_DIR/scripts/ops/odoo_shell_exec.sh" <"$ROOT_DIR/scripts/verify/runtime_language_baseline_probe.py"
 
 echo "[fresh.production.history.init] phase=1 step=data_replay"
@@ -72,6 +72,10 @@ DB_NAME="$DB_NAME" COMPOSE_FILES="$COMPOSE_FILES" \
   MIGRATION_REPLAY_DB_ALLOWLIST="$ALLOWLIST" \
   FORMAL_PROJECTION_ARTIFACT_ROOT="$ARTIFACT_ROOT" \
   bash "$ROOT_DIR/scripts/migration/history_business_usable_init.sh"
+
+echo "[fresh.production.history.init] step=runtime_language_baseline_probe_after_replay"
+DB_NAME="$DB_NAME" COMPOSE_FILES="$COMPOSE_FILES" SC_RUNTIME_LANG="${SC_RUNTIME_LANG:-zh_CN}" SC_RUNTIME_CRITICAL_USERS="${SC_RUNTIME_CRITICAL_USERS:-admin,wutao,chenshuai}" \
+  "$ROOT_DIR/scripts/ops/odoo_shell_exec.sh" <"$ROOT_DIR/scripts/verify/runtime_language_baseline_probe.py"
 
 echo "[fresh.production.history.init] step=non_demo_data_contamination_guard"
 DB_NAME="$DB_NAME" COMPOSE_FILES="$COMPOSE_FILES" \
