@@ -221,29 +221,6 @@
             </section>
           </template>
         </NativeFormTreeRenderer>
-        <FormSectionTemplate
-          v-for="section in templateSections"
-          v-else
-          :key="section.key"
-          :title="section.title"
-          :hint="section.hint"
-          :tone="section.tone"
-          :columns="2"
-          :fields="section.fields"
-          @field-change="onTemplateFieldChange"
-        >
-          <template v-if="isProjectIntakeCreateMode && section.isAdvanced" #action>
-            <button class="chip-btn" :disabled="busy" @click="advancedExpanded = !advancedExpanded">
-              {{ advancedExpanded ? '收起' : '展开' }}
-            </button>
-          </template>
-          <template #readonly="{ field }">
-            <FieldValue :value="field.value" :field="field.descriptor" />
-          </template>
-          <template #fallback="{ field }">
-            <RelationFallbackRenderer :field="field" :adapter="relationFallbackAdapter" />
-          </template>
-        </FormSectionTemplate>
         <div v-if="hasAdvancedFields && !isProjectIntakeCreateMode && !useNativeFormTree" class="layout-divider advanced-toggle">
           <button class="chip-btn" :disabled="busy" @click="advancedExpanded = !advancedExpanded">
             {{ advancedExpanded ? '收起高级信息' : '展开高级信息' }}
@@ -449,14 +426,12 @@ import StatusPanel from '../components/StatusPanel.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
 import LayoutShell from '../components/template/LayoutShell.vue';
 import PageHeaderTemplate from '../components/template/PageHeader.vue';
-import FormSectionTemplate from '../components/template/FormSection.vue';
 import NativeFormTreeRenderer, { type NativeFormLayoutNode } from '../components/template/NativeFormTreeRenderer.vue';
 import PageFooterTemplate from '../components/template/PageFooter.vue';
 import RelationFallbackRenderer from '../components/template/RelationFallbackRenderer.vue';
 import type { FormSectionFieldSchema, FormSectionFieldChange } from '../components/template/formSection.types';
 import type { RelationFallbackAdapter } from '../components/template/relationFallback.types';
 import { createFormSectionFieldSchemaBuilder } from '../components/template/formSection.adapter';
-import { resolveTemplateSectionPresentation } from '../components/template/sectionPresentation.mapper';
 import { resolveInputPlaceholder, resolveSelectPlaceholder } from '../components/template/placeholder.mapper';
 import { resolveFieldSpanClass } from '../components/template/fieldSpan.mapper';
 import { mapDescriptorSelectionOptions, mapRelationOptions } from '../components/template/option.mapper';
@@ -631,22 +606,6 @@ type LayoutNode = {
   widget?: string;
   widgetSemantics?: Record<string, unknown>;
   descriptor?: FieldDescriptor;
-};
-
-type LayoutSection = {
-  key: string;
-  title: string;
-  kind: 'default' | 'header' | 'sheet' | 'group' | 'notebook' | 'page';
-  fields: LayoutNode[];
-};
-
-type TemplateSectionView = {
-  key: string;
-  title: string;
-  hint: string;
-  tone: 'core' | 'advanced';
-  isAdvanced: boolean;
-  fields: FormSectionFieldSchema[];
 };
 
 type RelationOption = {
@@ -3220,13 +3179,13 @@ function isWritableFieldVisible(name: string) {
 }
 
 const useNativeFormTree = computed(() => {
-  if (isProjectIntakeCreateMode.value) return false;
   return nativeFormLayoutNodes.value.length > 0;
 });
 
 const nativeFormLayoutNodes = computed<NativeFormLayoutNode[]>(() => {
-  const layout = contract.value?.views?.form?.layout;
-  return Array.isArray(layout) ? (layout as NativeFormLayoutNode[]) : [];
+  const v2 = resolveUnifiedPageContractV2(contract.value);
+  const containers = Array.isArray(v2?.layoutContract?.containerTree) ? v2.layoutContract.containerTree : [];
+  return containers as unknown as NativeFormLayoutNode[];
 });
 
 const nativeVisibleFieldNames = computed(() => {
@@ -3682,55 +3641,6 @@ const layoutNodes = computed<LayoutNode[]>(() => {
   return nodes;
 });
 
-function dividerDefaultLabel(kind: LayoutNode['kind']) {
-  if (kind === 'header') return '头部信息';
-  if (kind === 'sheet') return '主体信息';
-  if (kind === 'notebook') return '分组页签';
-  if (kind === 'page') return '页面分组';
-  if (kind === 'group') return '信息分组';
-  return '基础信息';
-}
-
-const layoutSections = computed<LayoutSection[]>(() => {
-  const sections: LayoutSection[] = [];
-  let index = 0;
-  const createSection = (title: string, kind: LayoutSection['kind']) => ({
-    key: `section_${kind}_${index++}`,
-    title,
-    kind,
-    fields: [],
-  });
-  let current = createSection(coreFieldsLabel.value || '核心信息', 'default');
-
-  for (const node of layoutNodes.value) {
-    if (node.kind === 'field') {
-      current.fields.push(node);
-      continue;
-    }
-    if (current.fields.length) {
-      sections.push(current);
-    }
-    const title = String(node.label || '').trim() || dividerDefaultLabel(node.kind);
-    current = createSection(title, node.kind);
-  }
-
-  if (current.fields.length) {
-    sections.push(current);
-  }
-
-  const visible = sections.filter((section) => section.fields.some((node) => isFieldVisible(node.name)));
-  if (visible.length) return visible;
-  return sections.filter((section) => section.fields.length);
-});
-
-function visibleSectionFields(section: LayoutSection) {
-  return section.fields.filter((node) => isFieldVisible(node.name));
-}
-
-function sectionTemplateFields(section: LayoutSection): FormSectionFieldSchema[] {
-  return buildSectionFieldSchemas(visibleSectionFields(section));
-}
-
 const buildSectionFieldSchemas = createFormSectionFieldSchemaBuilder({
   resolveFieldType: (descriptor) => fieldType(descriptor) || 'char',
   resolveRequired: (field) => shouldShowRequiredMark(field as LayoutNode),
@@ -3772,20 +3682,6 @@ const buildSectionFieldSchemas = createFormSectionFieldSchemaBuilder({
   many2oneCreateToken: MANY2ONE_CREATE_OPTION,
   many2oneSearchToken: MANY2ONE_SEARCH_MORE_OPTION,
 });
-
-const templateSections = computed<TemplateSectionView[]>(() => layoutSections.value.map((section) => {
-  const presentation = resolveTemplateSectionPresentation(section, {
-    projectCreateMode: isProjectIntakeCreateMode.value,
-  });
-  return {
-    key: section.key,
-    title: presentation.title,
-    hint: presentation.hint,
-    tone: presentation.tone,
-    isAdvanced: presentation.isAdvanced,
-    fields: sectionTemplateFields(section),
-  };
-}));
 
 function onTemplateFieldChange(payload: FormSectionFieldChange) {
   if (String(payload.type || '').trim().toLowerCase() === 'many2one' && payload.action === 'query') {
