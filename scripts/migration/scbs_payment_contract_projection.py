@@ -139,6 +139,10 @@ def contract_values(fact):
     }
 
 
+def supported_values(model, values: dict[str, object]) -> dict[str, object]:
+    return {key: value for key, value in values.items() if key in model._fields}
+
+
 def main() -> None:
     apply = os.getenv("APPLY") == "1"
     artifacts = artifact_root()
@@ -167,7 +171,7 @@ def main() -> None:
         if exists:
             skipped_existing += 1
         elif apply:
-            Payment.create(payment_values(fact))
+            Payment.create(supported_values(Payment, payment_values(fact)))
             created_payments += 1
         plan_rows.append(
             {
@@ -189,7 +193,7 @@ def main() -> None:
         if exists:
             skipped_existing += 1
         elif apply:
-            Contract.create(contract_values(fact))
+            Contract.create(supported_values(Contract, contract_values(fact)))
             created_contracts += 1
         plan_rows.append(
             {
