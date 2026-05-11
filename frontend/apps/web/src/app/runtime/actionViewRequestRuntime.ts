@@ -34,6 +34,10 @@ export function resolveDefaultSortFromContract(contractFields: Dict): string {
 
 export type ActionViewListProfileShape = {
   columns?: string[];
+  fact_columns?: string[];
+  preference_policy?: {
+    must_request_columns?: string[];
+  };
   hidden_columns?: string[];
   row_secondary?: string;
 };
@@ -53,9 +57,22 @@ export function resolveRequestedFields(
   profile: ActionViewListProfileShape | null,
 ): string[] {
   const profileColumns = profile?.columns ?? [];
+  const factColumns = profile?.fact_columns ?? [];
+  const mustRequestColumns = profile?.preference_policy?.must_request_columns ?? [];
   const hiddenColumns = profile?.hidden_columns ?? [];
   const secondary = profile?.row_secondary ? [profile.row_secondary] : [];
-  return uniqueFields([...profileColumns, ...hiddenColumns, ...secondary, ...contractFields]);
+  // Scope boundary:
+  // - hidden_columns belongs to UI preference only.
+  // - fact_columns / must_request_columns belong to data request contract.
+  //   UI-hidden fields must still stay requestable when contract requires them.
+  return uniqueFields([
+    ...profileColumns,
+    ...factColumns,
+    ...mustRequestColumns,
+    ...hiddenColumns,
+    ...secondary,
+    ...contractFields,
+  ]);
 }
 
 export function resolveFilterDomain(chips: FilterChip[], key: string): unknown[] {

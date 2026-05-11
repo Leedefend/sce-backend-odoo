@@ -1133,7 +1133,10 @@ const sceneReadyEntry = computed<Record<string, unknown> | null>(() => {
   if (!sceneContextEnabled.value || !sceneKey.value) return null;
   return findSceneReadyEntry(session.sceneReadyContractV1, sceneKey.value);
 });
-const sceneReadyCollectionMode = computed<'list' | 'kanban'>(() => (viewMode.value === 'kanban' ? 'kanban' : 'list'));
+const sceneReadyCollectionMode = computed<'list' | 'kanban'>(() => {
+  const raw = String(route.query.view_mode || '').trim().toLowerCase();
+  return raw === 'kanban' ? 'kanban' : 'list';
+});
 const sceneReadyListSurface = computed(() => resolveCollectionSceneReady(sceneReadyEntry.value, sceneReadyCollectionMode.value));
 const sceneReadyHydrateRequested = ref(false);
 function handleSceneBlockAction(payload: { action?: { target?: Record<string, unknown> } }) {
@@ -1411,7 +1414,9 @@ const availableViewModes = computed(() =>
 );
 const viewMode = computed(() => {
   const modes = availableViewModes.value;
-  const mode = normalizeActionViewMode(preferredViewMode.value) || modes[0] || (resolvedModelRef.value ? 'tree' : '');
+  const routeActionId = Number(route.query.action_id || 0);
+  const fallbackMode = resolvedModelRef.value || routeActionId > 0 ? 'tree' : '';
+  const mode = normalizeActionViewMode(preferredViewMode.value) || modes[0] || fallbackMode;
   if (mode === 'kanban') return 'kanban';
   if (mode === 'list' || mode === 'tree') return 'tree';
   if (mode === 'pivot' || mode === 'graph' || mode === 'calendar' || mode === 'gantt' || mode === 'activity' || mode === 'dashboard') {
@@ -2716,9 +2721,22 @@ async function loadListColumnPreference(): Promise<void> {
       if (normalizedName && normalizedWidth) acc[normalizedName] = normalizedWidth;
       return acc;
     }, {});
+    const preferencePolicy = listProfile.value?.preference_policy || {};
+    const allowVisibility = preferencePolicy.allow_visibility !== false;
+    const lockedColumns = new Set(
+      (Array.isArray(preferencePolicy.locked_columns) ? preferencePolicy.locked_columns : [])
+        .map((item) => String(item || '').trim())
+        .filter(Boolean),
+    );
     const next: Record<string, boolean> = {};
-    visible.forEach((name) => { next[name] = true; });
-    hidden.forEach((name) => { next[name] = false; });
+    if (allowVisibility) {
+      visible.forEach((name) => { next[name] = true; });
+      hidden.forEach((name) => {
+        if (!lockedColumns.has(name)) {
+          next[name] = false;
+        }
+      });
+    }
     listColumnVisibility.value = next;
     listColumnOrder.value = columnOrder;
     listColumnWidths.value = columnWidths;
@@ -2739,14 +2757,18 @@ function normalizeListColumnWidth(value: unknown) {
 }
 
 function buildListColumnPreference(visibility: Record<string, boolean>, columnOrder: string[], columnWidths: Record<string, number>) {
+  const preferencePolicy = listProfile.value?.preference_policy || {};
+  const allowVisibility = preferencePolicy.allow_visibility !== false;
+  const allowOrder = preferencePolicy.allow_order !== false;
+  const allowWidth = preferencePolicy.allow_width !== false;
   const columnNames = listColumnOptions.value.map((column) => column.name);
   const columnNameSet = new Set(columnNames);
-  const visibleColumns = columnNames.filter((name) => visibility[name] === true);
-  const hiddenColumns = columnNames.filter((name) => visibility[name] === false);
-  const orderedColumns = columnOrder
+  const visibleColumns = allowVisibility ? columnNames.filter((name) => visibility[name] === true) : [];
+  const hiddenColumns = allowVisibility ? columnNames.filter((name) => visibility[name] === false) : [];
+  const orderedColumns = (allowOrder ? columnOrder : [])
     .map((name) => String(name || '').trim())
     .filter((name, index, rows) => Boolean(name) && columnNameSet.has(name) && rows.indexOf(name) === index);
-  const normalizedWidths = Object.entries(columnWidths || {}).reduce<Record<string, number>>((acc, [name, width]) => {
+  const normalizedWidths = (allowWidth ? Object.entries(columnWidths || {}) : []).reduce<Record<string, number>>((acc, [name, width]) => {
     const normalizedName = String(name || '').trim();
     const normalizedWidth = normalizeListColumnWidth(width);
     if (normalizedName && columnNameSet.has(normalizedName) && normalizedWidth) acc[normalizedName] = normalizedWidth;
