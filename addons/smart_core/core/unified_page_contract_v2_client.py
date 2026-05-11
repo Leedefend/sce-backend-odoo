@@ -145,16 +145,19 @@ def trim_unified_page_contract_v2(
     out["runtimeContract"] = runtime
 
     meta = _dict(out.get("meta"))
-    if compact and not keep_compat:
-        compat = _dict(meta.get("compat"))
-        meta["compat"] = {
-            key: {
-                "sourceType": key,
-                "sourceFingerprint": _fingerprint(value),
-                "delivery": "omitted_for_mobile_compact",
+    if not keep_compat:
+        if compact:
+            compat = _dict(meta.get("compat"))
+            meta["compat"] = {
+                key: {
+                    "sourceType": key,
+                    "sourceFingerprint": _fingerprint(value),
+                    "delivery": "omitted_for_mobile_compact",
+                }
+                for key, value in compat.items()
             }
-            for key, value in compat.items()
-        }
+        else:
+            meta.pop("compat", None)
         meta["sourceCompatTrimmed"] = True
     meta["deliveryTrim"] = trim_meta
     out["meta"] = meta

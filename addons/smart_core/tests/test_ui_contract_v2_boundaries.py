@@ -128,6 +128,23 @@ class TestUiContractV2Boundaries(unittest.TestCase):
         self.assertEqual(trim_kwargs["max_widgets"], 8)
         self.assertEqual(trim_kwargs["max_actions"], 3)
         self.assertEqual(trim_kwargs["max_containers"], 2)
+        self.assertFalse(trim_kwargs["include_source_compat"])
+
+    def test_allows_explicit_source_compat_opt_in(self):
+        handler = self.module.UiContractV2Handler(env=object())
+
+        result = handler.handle(
+            payload={
+                "params": {
+                    "model": "res.partner",
+                    "include_source_compat": True,
+                }
+            }
+        )
+
+        self.assertTrue(result.ok)
+        trim_kwargs = self.module._captured["trim_kwargs"]
+        self.assertTrue(trim_kwargs["include_source_compat"])
 
     def test_scene_contract_rejects_invalid_trim_limit(self):
         handler = self.module.UiContractV2Handler(env=object())

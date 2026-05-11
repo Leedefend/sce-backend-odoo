@@ -209,6 +209,35 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
         self.assertTrue(status[by_field["create_uid"]["widgetId"]]["visible"])
         self.assertTrue(status[by_field["create_date"]["widgetId"]]["visible"])
 
+    def test_web_pc_drops_source_compat_when_not_requested(self):
+        source = {
+            "ui_contract": {
+                "model": "project.project",
+                "view_type": "form",
+                "fields": {
+                    "name": {"name": "name", "type": "char", "string": "名称"},
+                },
+            },
+            "model": "project.project",
+            "view_type": "form",
+        }
+
+        full = assembler.assemble_unified_page_contract_v2(
+            source,
+            source_type="ui.contract",
+            client_type="web_pc",
+            request_id="test.web.no.compat",
+        )
+        trimmed = client.trim_unified_page_contract_v2(
+            full,
+            client_type="web_pc",
+            delivery_profile="full",
+            include_source_compat=False,
+        )
+
+        self.assertTrue(trimmed["meta"]["sourceCompatTrimmed"])
+        self.assertNotIn("compat", trimmed["meta"])
+
 
 if __name__ == "__main__":
     unittest.main()
