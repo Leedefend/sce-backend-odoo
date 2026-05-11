@@ -289,24 +289,22 @@ _PROJECT_TASK_FIELD_LABELS = {
     "description": "执行说明",
 }
 _PROJECT_LIST_COLUMNS = [
-    "is_favorite",
     "name",
-    "user_id",
-    "partner_id",
-    "stage_id",
+    "project_code",
+    "operation_strategy",
+    "business_nature",
     "lifecycle_state",
-    "date_start",
-    "date",
+    "manager_id",
+    "write_date",
 ]
 _PROJECT_LIST_COLUMN_LABELS = {
-    "is_favorite": "我的收藏",
     "name": "项目名称",
-    "user_id": "项目经理",
-    "partner_id": "业主单位",
-    "stage_id": "当前阶段",
-    "lifecycle_state": "项目执行阶段",
-    "date_start": "开始日期",
-    "date": "结束日期",
+    "project_code": "项目编号",
+    "operation_strategy": "经营方式",
+    "business_nature": "经营性质",
+    "lifecycle_state": "项目状态",
+    "manager_id": "项目经理",
+    "write_date": "更新时间",
 }
 _BUSINESS_FIELD_LABEL_OVERRIDES = {
     "display_name": "名称",
@@ -1429,6 +1427,25 @@ def _govern_project_kanban_contract_for_user(data: dict) -> None:
             merged_fields.append(normalized)
     kanban["fields"] = merged_fields or ["id", "name"]
     kanban["kanban_profile"] = _as_dict(data.get("kanban_profile"))
+    row_actions = kanban.get("row_actions") if isinstance(kanban.get("row_actions"), list) else []
+    if not any(_safe_text(row.get("key")) == "open_project_dashboard" for row in row_actions if isinstance(row, dict)):
+        row_actions.append({
+            "key": "open_project_dashboard",
+            "name": "open_project_dashboard",
+            "label": "进入项目驾驶舱",
+            "intent": "open_scene",
+            "level": "row",
+            "trigger": "row_click",
+            "display_mode": "row_click",
+            "selection": "single",
+            "target": {
+                "route": "/s/project.management",
+                "scene_key": "project.management",
+                "entry_intent": "project.dashboard.enter",
+                "project_id": "${id}",
+            },
+        })
+    kanban["row_actions"] = row_actions
     views["kanban"] = kanban
     data["views"] = views
 
@@ -1968,6 +1985,16 @@ def _govern_standard_list_for_user(
         }
     )
     data["list_profile"] = list_profile
+    views = _as_dict(data.get("views"))
+    tree_view = _as_dict(views.get("tree") or views.get("list"))
+    if tree_view:
+        tree_view.setdefault("order", "write_date desc, id desc")
+        tree_view.setdefault("default_order", "write_date desc, id desc")
+        if "tree" in views:
+            views["tree"] = tree_view
+        else:
+            views["list"] = tree_view
+        data["views"] = views
     surface_policies["batch_policy"] = batch_policy
     surface_policies["delete_mode"] = batch_policy.get("delete_mode") or surface_policies.get("delete_mode") or "none"
     data["surface_policies"] = surface_policies
@@ -4008,7 +4035,7 @@ def apply_project_form_domain_override(data: dict, contract_mode: str) -> None:
             columns_order=_PROJECT_LIST_COLUMNS,
             column_labels=_PROJECT_LIST_COLUMN_LABELS,
             row_primary="name",
-            row_secondary="stage_id",
+            row_secondary="",
             status_field="lifecycle_state",
         )
         _govern_standard_list_for_user(

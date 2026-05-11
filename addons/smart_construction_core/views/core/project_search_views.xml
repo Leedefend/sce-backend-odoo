@@ -54,7 +54,7 @@
                     <filter name="group_owner" string="按业主单位" context="{'group_by': 'owner_id'}"/>
                     <filter name="group_partner" string="按客户" context="{'group_by': 'partner_id'}"/>
                     <filter name="group_operation_strategy" string="按经营策略" context="{'group_by': 'operation_strategy'}"/>
-                    <filter name="group_business_nature" string="按旧经营性质" context="{'group_by': 'business_nature'}"/>
+                    <filter name="group_business_nature" string="按经营性质" context="{'group_by': 'business_nature'}"/>
                     <filter name="group_legacy_company" string="按旧系统公司" context="{'group_by': 'legacy_company_name'}"/>
                     <filter name="group_legacy_stage" string="按旧系统阶段" context="{'group_by': 'legacy_stage_name'}"/>
                     <filter name="group_state" string="按项目状态" context="{'group_by': 'lifecycle_state'}"/>

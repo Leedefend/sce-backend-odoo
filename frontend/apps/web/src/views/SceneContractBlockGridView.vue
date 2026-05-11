@@ -35,6 +35,10 @@ type SceneBlock = Record<string, unknown> & {
 type SceneContract = {
   schema_version?: string;
   scene?: Record<string, unknown>;
+  title?: string;
+  summary?: Record<string, unknown>;
+  summary_rows?: Array<Record<string, unknown>>;
+  blocks?: SceneBlock[];
   page?: {
     layout?: string;
     blocks?: SceneBlock[];
@@ -69,6 +73,14 @@ function parseRouteTarget(rawRoute: string) {
     });
   }
   return { path: path || raw, query };
+}
+
+function positiveRouteInt(...keys: string[]) {
+  for (const key of keys) {
+    const parsed = Number(route.query[key] || 0);
+    if (Number.isFinite(parsed) && parsed > 0) return Math.trunc(parsed);
+  }
+  return 0;
 }
 
 function normalizeBlockType(type: unknown) {
@@ -169,7 +181,18 @@ function normalizeBlock(block: SceneBlock, index: number): PageOrchestrationBloc
 
 const blocks = computed(() => {
   const page = rawContract.value?.page;
-  return Array.isArray(page?.blocks) ? page.blocks : [];
+  const pageBlocks = Array.isArray(page?.blocks) ? page.blocks : [];
+  const rootBlocks = Array.isArray(rawContract.value?.blocks) ? rawContract.value.blocks : [];
+  const summaryRows = Array.isArray(rawContract.value?.summary_rows) ? rawContract.value.summary_rows : [];
+  const summaryBlocks: SceneBlock[] = summaryRows.map((row, index) => ({
+    key: asText(row.key) || `summary_${index + 1}`,
+    type: 'metric_card',
+    title: asText(row.label) || asText(row.key) || `指标 ${index + 1}`,
+    subtitle: asText(row.copy),
+    value: row.value ?? '--',
+    tone: 'neutral',
+  }));
+  return [...summaryBlocks, ...(pageBlocks.length ? pageBlocks : rootBlocks)];
 });
 
 const pageContract = computed<PageOrchestrationContract>(() => ({
@@ -178,7 +201,7 @@ const pageContract = computed<PageOrchestrationContract>(() => ({
   scene_key: props.sceneKey,
   page: {
     key: props.sceneKey,
-    title: asText(rawContract.value?.scene?.title) || props.sceneKey,
+    title: asText(rawContract.value?.title || rawContract.value?.scene?.title) || props.sceneKey,
     subtitle: asText(rawContract.value?.scene?.subtitle),
     page_type: 'dashboard',
     layout_mode: 'block_grid',
@@ -319,9 +342,13 @@ async function loadContract() {
     errorMessage.value = '';
     const data = await intentRequest<SceneContract>({
       intent: props.intent,
-      params: {},
+      params: {
+        project_id: positiveRouteInt('project_id', 'record_id') || undefined,
+        record_id: positiveRouteInt('record_id', 'project_id') || undefined,
+      },
       context: {
         scene_key: props.sceneKey,
+        project_id: positiveRouteInt('project_id', 'record_id') || undefined,
       },
     });
     rawContract.value = (data && typeof data === 'object') ? data : {};

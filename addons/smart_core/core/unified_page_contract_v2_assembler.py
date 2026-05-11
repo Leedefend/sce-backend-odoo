@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import re
 from copy import deepcopy
 from hashlib import sha1
 from typing import Any
@@ -470,6 +471,8 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
     if data_source:
         contract["dataContract"]["dataSource"]["primary"] = data_source
     _append_ui_contract_actions(contract, ui, source_widget_id="page.root")
+    _append_ui_contract_row_actions(contract, ui)
+    _append_project_kanban_row_action(contract, model=model, view_type=view_type)
     return contract
 
 
@@ -477,7 +480,27 @@ def _field_rows(source: dict[str, Any], ui: dict[str, Any], *, view_type: str = 
     rows = source.get("meta_fields")
     if isinstance(rows, list) and rows:
         if view_type in {"tree", "list", "kanban"}:
+            view_fields = _view_field_names(ui, view_type)
             schema_by_name = _view_column_schema_by_name(ui, view_type)
+            row_by_name: dict[str, dict[str, Any]] = {}
+            for row in rows:
+                if not isinstance(row, dict):
+                    continue
+                name = _text(row.get("name") or row.get("field") or row.get("fieldCode"))
+                if name and name not in row_by_name:
+                    row_by_name[name] = row
+            if view_fields:
+                out = []
+                for name in view_fields:
+                    row = row_by_name.get(name)
+                    item = dict(row) if isinstance(row, dict) else {}
+                    item.setdefault("name", name)
+                    schema = schema_by_name.get(name)
+                    if schema:
+                        item.update(schema)
+                        item.setdefault("name", name)
+                    out.append(item)
+                return out
             out = []
             for row in rows:
                 if not isinstance(row, dict):
@@ -575,6 +598,12 @@ def _view_field_names(ui: dict[str, Any], view_type: str) -> list[str]:
             name = _text(row.get("name") or row.get("field") or row.get("fieldCode"))
             if name and name not in out:
                 out.append(name)
+        if key == "kanban":
+            kanban = _dict(view.get("kanban"))
+            template = _text(kanban.get("template_qweb") or view.get("template_qweb") or view.get("arch"))
+            for name in re.findall(r"\brecord\.([A-Za-z_][A-Za-z0-9_]*)\b", template):
+                if name and name not in out:
+                    out.append(name)
         if out:
             return out
     return out
@@ -848,11 +877,11 @@ def _append_actions(contract: dict[str, Any], rows: Any, *, source_widget_id: st
                 "intent": intent,
                 "target": deepcopy(_dict(row.get("target"))),
                 "button": deepcopy(_dict(row.get("button"))),
-                "triggerType": "click",
+                "triggerType": _text(row.get("trigger") or row.get("display_mode"), "click"),
                 "sourceWidgetId": source_widget_id,
                 "targetIds": [],
                 "dispatchMode": "server",
-                "targetScope": "page",
+                "targetScope": _text(row.get("target_scope") or row.get("level"), "page"),
                 "refreshMode": "partial",
             }
         )
@@ -946,6 +975,69 @@ def _append_ui_contract_actions(contract: dict[str, Any], ui: dict[str, Any], *,
             }
         )
     _append_actions(contract, normalized, source_widget_id=source_widget_id)
+
+
+def _append_ui_contract_row_actions(contract: dict[str, Any], ui: dict[str, Any]) -> None:
+    views = _dict(ui.get("views"))
+    rows: list[dict[str, Any]] = []
+    for view_key in ("kanban", "tree", "list"):
+        view = _dict(views.get(view_key))
+        for row in _list(view.get("row_actions")):
+            if isinstance(row, dict):
+                rows.append(row)
+    normalized: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for row in rows:
+        key = _stable_id(row.get("key") or row.get("name") or row.get("intent"), "row_action")
+        if key in seen:
+            continue
+        seen.add(key)
+        target = _dict(row.get("target"))
+        payload = _dict(row.get("payload"))
+        if not target and payload:
+            target = payload
+        normalized.append({
+            "key": key,
+            "name": row.get("name") or key,
+            "label": _text(row.get("label") or row.get("string") or row.get("name"), key),
+            "intent": _text(row.get("intent"), "open"),
+            "target": target,
+            "button": _dict(row.get("button")),
+            "trigger": _text(row.get("trigger") or row.get("display_mode"), "row_click"),
+            "level": _text(row.get("level"), "row"),
+            "target_scope": _text(row.get("target_scope"), "row"),
+        })
+    _append_actions(contract, normalized, source_widget_id="page.row")
+
+
+def _append_project_kanban_row_action(contract: dict[str, Any], *, model: str, view_type: str) -> None:
+    if model != "project.project" or view_type != "kanban":
+        return
+    rows = _list(_dict(contract.get("actionContract")).get("actionRuleList"))
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        if _text(row.get("triggerType")) == "row_click" or _text(row.get("sourceWidgetId")) == "page.row":
+            return
+    _append_actions(
+        contract,
+        [{
+            "key": "open_project_dashboard",
+            "name": "open_project_dashboard",
+            "label": "进入项目驾驶舱",
+            "intent": "open_scene",
+            "target": {
+                "route": "/s/project.management",
+                "scene_key": "project.management",
+                "entry_intent": "project.dashboard.enter",
+                "project_id": "${id}",
+            },
+            "trigger": "row_click",
+            "level": "row",
+            "target_scope": "row",
+        }],
+        source_widget_id="page.row",
+    )
 
 
 def _assemble_unknown(source: dict[str, Any], *, client_type: str, request_id: str) -> dict[str, Any]:

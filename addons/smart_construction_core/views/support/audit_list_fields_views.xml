@@ -1146,6 +1146,7 @@
         <field name="name">project.project.audit.fields.view_project_my_list_tree</field>
         <field name="model">project.project</field>
         <field name="inherit_id" ref="view_project_my_list_tree" />
+        <field name="active">False</field>
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
                 <field name="create_uid" />
