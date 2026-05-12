@@ -66,7 +66,7 @@
             {{ item.label }}
           </button>
         </div>
-        <pre v-else class="scene-block__json">{{ stringifyCompact(block.payload) }}</pre>
+        <p v-else class="scene-block__hint">暂无可切换状态</p>
       </div>
 
       <div v-else-if="block.kind === 'primary_actions' || block.kind === 'smart_actions'" class="scene-block__body scene-block__body--actions">
@@ -82,18 +82,63 @@
       </div>
 
       <div v-else-if="block.kind === 'body' || block.kind === 'list_view' || block.kind === 'kanban_board'" class="scene-block__body">
-        <p class="scene-block__hint">
-          {{ bodyHint(block) }}
-        </p>
-        <pre class="scene-block__json">{{ stringifyCompact(block.data_deps || block.payload) }}</pre>
+        <p class="scene-block__hint">{{ bodyHint(block) }}</p>
+        <div class="scene-block__kv-grid">
+          <p class="scene-block__kv-item">
+            <span class="scene-block__kv-key">字段数</span>
+            <strong class="scene-block__kv-val">{{ blockFieldCount(block) }}</strong>
+          </p>
+          <p class="scene-block__kv-item">
+            <span class="scene-block__kv-key">搜索字段</span>
+            <strong class="scene-block__kv-val">{{ blockSearchFieldCount(block) }}</strong>
+          </p>
+        </div>
+        <div v-if="blockFieldNames(block).length" class="scene-block__chips">
+          <span
+            v-for="name in blockFieldNames(block)"
+            :key="`${block.key}-field-${name}`"
+            class="scene-block__chip scene-block__chip--plain"
+          >
+            {{ name }}
+          </span>
+        </div>
       </div>
 
-      <div v-else-if="block.kind === 'relation_block' || block.kind === 'chatter' || block.kind === 'overview_strip'" class="scene-block__body">
-        <pre class="scene-block__json">{{ stringifyCompact(block.payload) }}</pre>
+      <div v-else-if="block.kind === 'relation_block'" class="scene-block__body">
+        <div v-if="relationFieldRows(block).length" class="scene-block__chips">
+          <span
+            v-for="item in relationFieldRows(block)"
+            :key="`${block.key}-relation-${item.field}`"
+            class="scene-block__chip scene-block__chip--plain"
+          >
+            {{ item.label }}
+          </span>
+        </div>
+        <p v-else class="scene-block__hint">暂无关联字段</p>
+      </div>
+
+      <div v-else-if="block.kind === 'overview_strip'" class="scene-block__body">
+        <div v-if="overviewItems(block).length" class="scene-block__kv-grid">
+          <p
+            v-for="item in overviewItems(block)"
+            :key="`${block.key}-overview-${item.key}`"
+            class="scene-block__kv-item"
+          >
+            <span class="scene-block__kv-key">{{ item.label }}</span>
+            <strong class="scene-block__kv-val">{{ item.value }}</strong>
+          </p>
+        </div>
+        <p v-else class="scene-block__hint">暂无概览数据</p>
+      </div>
+
+      <div v-else-if="block.kind === 'chatter'" class="scene-block__body">
+        <p class="scene-block__hint">
+          {{ chatterHint(block) }}
+        </p>
       </div>
 
       <div v-else class="scene-block__body">
-        <pre class="scene-block__json">{{ stringifyCompact(block.payload || block.data_deps || {}) }}</pre>
+        <p class="scene-block__hint">{{ fallbackHint(block) }}</p>
       </div>
     </article>
   </section>
@@ -137,19 +182,70 @@ const orderedBlocks = computed(() => {
     .sort((a, b) => Number(a.order || 0) - Number(b.order || 0));
 });
 
-function stringifyCompact(value: unknown) {
-  if (!value || typeof value !== 'object') return '';
-  try {
-    return JSON.stringify(value, null, 2);
-  } catch {
-    return '';
-  }
-}
-
 function toolbarItems(block: SceneBlock, key: string) {
   const payload = block.payload && typeof block.payload === 'object' ? block.payload : {};
   const raw = (payload as Record<string, unknown>)[key];
   return Array.isArray(raw) ? raw as Array<Record<string, unknown>> : [];
+}
+
+function asArray(value: unknown): Array<Record<string, unknown>> {
+  return Array.isArray(value)
+    ? value.filter((item) => item && typeof item === 'object') as Array<Record<string, unknown>>
+    : [];
+}
+
+function blockFieldNames(block: SceneBlock) {
+  const deps = block.data_deps && typeof block.data_deps === 'object' ? block.data_deps : {};
+  const columns = asArray((deps as Record<string, unknown>).columns)
+    .map((item) => String(item.field || item.name || item.key || '').trim())
+    .filter(Boolean);
+  const fields = asArray((deps as Record<string, unknown>).fields)
+    .map((item) => String(item.field || item.name || item.key || '').trim())
+    .filter(Boolean);
+  const merged = [...columns, ...fields];
+  return Array.from(new Set(merged)).slice(0, 12);
+}
+
+function blockFieldCount(block: SceneBlock) {
+  return blockFieldNames(block).length;
+}
+
+function blockSearchFieldCount(block: SceneBlock) {
+  const deps = block.data_deps && typeof block.data_deps === 'object' ? block.data_deps : {};
+  return asArray((deps as Record<string, unknown>).search_fields).length;
+}
+
+function relationFieldRows(block: SceneBlock) {
+  const payload = block.payload && typeof block.payload === 'object' ? block.payload : {};
+  return asArray((payload as Record<string, unknown>).relation_fields)
+    .map((item) => ({
+      field: String(item.field || item.name || '').trim(),
+      label: String(item.label || item.field || item.name || '').trim(),
+    }))
+    .filter((item) => item.field);
+}
+
+function overviewItems(block: SceneBlock) {
+  const payload = block.payload && typeof block.payload === 'object' ? block.payload : {};
+  return asArray((payload as Record<string, unknown>).overview_items)
+    .map((item) => ({
+      key: String(item.key || item.label || '').trim(),
+      label: String(item.label || item.key || '').trim(),
+      value: String(item.value ?? item.count ?? '--').trim(),
+    }))
+    .filter((item) => item.key);
+}
+
+function chatterHint(block: SceneBlock) {
+  const payload = block.payload && typeof block.payload === 'object' ? block.payload : {};
+  const hasAttachments = Boolean((payload as Record<string, unknown>).has_attachments);
+  return hasAttachments ? '支持消息与附件协作' : '支持消息协作';
+}
+
+function fallbackHint(block: SceneBlock) {
+  if (block.kind === 'footer') return '流程收口与下一步导航';
+  if (block.kind === 'pagination') return '分页与窗口控制';
+  return '场景块已加载';
 }
 
 function toolbarText(block: SceneBlock, key: string) {
@@ -318,15 +414,31 @@ function emitAction(block: SceneBlock, action: SceneBlockAction) {
   font-size: 13px;
   cursor: pointer;
 }
-.scene-block__json {
+.scene-block__chip--plain {
+  cursor: default;
+  border-color: #d8e0ea;
+}
+.scene-block__kv-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+.scene-block__kv-item {
   margin: 0;
-  padding: 10px;
-  border-radius: 8px;
+  padding: 8px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
   background: #f8fafc;
-  color: #334155;
+}
+.scene-block__kv-key {
+  display: block;
   font-size: 12px;
-  overflow: auto;
-  white-space: pre-wrap;
-  word-break: break-word;
+  color: #64748b;
+}
+.scene-block__kv-val {
+  display: block;
+  margin-top: 2px;
+  font-size: 14px;
+  color: #0f172a;
 }
 </style>
