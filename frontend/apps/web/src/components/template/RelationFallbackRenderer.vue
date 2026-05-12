@@ -78,7 +78,7 @@
         :key="`${field.name}-header-${column.name}`"
         class="o2m-header-cell"
       >
-        {{ column.label }}<span v-if="column.required" class="required">*</span>
+        {{ column.label }}
       </span>
     </div>
     <div class="o2m-list">
@@ -90,7 +90,7 @@
             :key="`${row.key}-${column.name}`"
             class="o2m-field"
           >
-            <span class="meta">{{ column.label }}<span v-if="column.required" class="required">*</span></span>
+            <span class="meta">{{ column.label }}</span>
             <input
               v-if="column.ttype === 'boolean'"
               class="input-checkbox"

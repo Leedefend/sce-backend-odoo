@@ -1387,11 +1387,52 @@ function one2manyRelationFieldDescriptor(fieldName: string, column: string) {
   return descriptor || null;
 }
 
+function nativeFieldSubview(name: string): Record<string, unknown> | null {
+  const target = String(name || '').trim();
+  if (!target) return null;
+  const walk = (nodes: NativeFormLayoutNode[]): Record<string, unknown> | null => {
+    for (const node of nodes) {
+      const nodeName = String(node?.name || '').trim();
+      const nodeType = String(node?.type || '').trim().toLowerCase();
+      if (nodeType === 'field' && nodeName === target) {
+        const fieldInfo = node?.fieldInfo && typeof node.fieldInfo === 'object' && !Array.isArray(node.fieldInfo)
+          ? node.fieldInfo as Record<string, unknown>
+          : null;
+        const subview = fieldInfo?.subview;
+        if (subview && typeof subview === 'object' && !Array.isArray(subview)) {
+          return subview as Record<string, unknown>;
+        }
+      }
+      for (const key of ['children', 'pages', 'tabs', 'nodes', 'items'] as const) {
+        const children = node?.[key];
+        if (!Array.isArray(children)) continue;
+        const found = walk(children as NativeFormLayoutNode[]);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+  return walk(nativeFormLayoutNodes.value);
+}
+
+function subviewColumnCount(subview: unknown): number {
+  if (!subview || typeof subview !== 'object' || Array.isArray(subview)) return 0;
+  const tree = (subview as Record<string, unknown>).tree;
+  if (!tree || typeof tree !== 'object' || Array.isArray(tree)) return 0;
+  const columns = (tree as Record<string, unknown>).columns;
+  if (!Array.isArray(columns)) return 0;
+  return columns.length;
+}
+
 function one2manyColumns(name: string): One2ManyColumn[] {
   const subviews = (contract.value?.views?.form as Record<string, unknown> | undefined)?.subviews;
-  const fieldSubview = subviews && typeof subviews === 'object'
+  const legacySubview = subviews && typeof subviews === 'object'
     ? (subviews as Record<string, unknown>)[name]
     : undefined;
+  const nativeSubview = nativeFieldSubview(name);
+  const legacyColumns = subviewColumnCount(legacySubview);
+  const nativeColumns = subviewColumnCount(nativeSubview);
+  const fieldSubview = nativeColumns > legacyColumns ? nativeSubview : (legacySubview || nativeSubview);
   const tree = fieldSubview && typeof fieldSubview === 'object'
     ? (fieldSubview as Record<string, unknown>).tree
     : undefined;
@@ -2499,6 +2540,15 @@ function detectMethodName(key: string, payloadMethod: string) {
   return detectObjectMethodFromActionKey(key, payloadMethod);
 }
 
+function normalizeActionLabel(raw: unknown, fallback = ''): string {
+  const text = String(raw ?? '').trim();
+  if (!text) return String(fallback || '').trim();
+  if (!text.startsWith('{') || !text.includes('label')) return text;
+  const match = text.match(/['"]label['"]\s*:\s*['"]([^'"]+)['"]/);
+  if (match?.[1]) return String(match[1]).trim();
+  return text;
+}
+
 const contractActions = computed<ContractAction[]>(() => {
   const mapSceneReadyAction = (row: Record<string, unknown>): ContractAction | null => {
     const protocol = normalizeSceneActionProtocol(row);
@@ -2594,7 +2644,7 @@ const contractActions = computed<ContractAction[]>(() => {
       continue;
     }
     const rowName = String(row.name || '').trim();
-    const rowLabel = String(row.label || '').trim();
+    const rowLabel = normalizeActionLabel(row.label);
     const keyBase = String(row.key || rowName || rowLabel || '').trim();
     const key = dedup.has(keyBase) && rowLabel ? `${keyBase}:${rowLabel}` : keyBase;
     if (!key || dedup.has(key)) continue;
@@ -2637,7 +2687,7 @@ const contractActions = computed<ContractAction[]>(() => {
     const enabled = contractAllowed && policy.enabled && byGroup && (!needRecord || Boolean(recordId.value)) && status?.disabled !== true;
     out.push({
       key,
-      label: String(row.label || key),
+      label: normalizeActionLabel(row.label, key),
       kind: effectiveKind,
       level,
       selection,
@@ -3229,7 +3279,13 @@ const useNativeFormTree = computed(() => {
 const nativeFormLayoutNodes = computed<NativeFormLayoutNode[]>(() => {
   const v2 = resolveUnifiedPageContractV2(contract.value);
   const containers = Array.isArray(v2?.layoutContract?.containerTree) ? v2.layoutContract.containerTree : [];
-  return containers as unknown as NativeFormLayoutNode[];
+  if (containers.length > 0) {
+    return containers as unknown as NativeFormLayoutNode[];
+  }
+  const legacyLayout = Array.isArray(contract.value?.views?.form?.layout)
+    ? contract.value?.views?.form?.layout
+    : [];
+  return legacyLayout as unknown as NativeFormLayoutNode[];
 });
 
 function resolveNativeButtonLabel(node: NativeFormLayoutNode) {

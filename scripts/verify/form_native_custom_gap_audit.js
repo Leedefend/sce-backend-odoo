@@ -92,7 +92,7 @@ async function collectFormSurface(page, kind) {
       buttons: text('button', nativeForm),
       tabs: text('.native-tabs .native-tab, [role="tab"]', nativeForm),
       statusbar: text('.native-statusbar button, .native-statusbar [role="button"]', nativeForm),
-      header_actions: text('.native-container--header button', nativeForm),
+      header_actions: text('.template-page-header-actions button, .native-container--header button', nativeForm),
       smart_buttons: text('.native-actions--smart button', nativeForm),
       chatter_actions: text('.native-chatter-block button', nativeForm),
       x2many_actions: text('.native-tab-panel .o2m-toolbar button, .native-tab-panel .chip-btn', nativeForm),
@@ -146,11 +146,16 @@ function missingScoped(surface, key, labels) {
 
 async function exerciseCustomOne2manyPath(page) {
   await page.locator('.native-tabs .native-tab').filter({ hasText: '投标管理' }).first().click().catch(() => {});
-  await page.locator('.native-tab-panel .o2m-toolbar button').filter({ hasText: '添加行' }).first().click();
-  await page.locator('.native-tab-panel .o2m-row').first().waitFor({ timeout: 10000 });
+  const scopedPanel = page.locator('.native-tab-panel').filter({ hasText: '投标管理' }).first();
+  const panelExists = (await scopedPanel.count().catch(() => 0)) > 0;
+  const panel = panelExists ? scopedPanel : page.locator('.native-tab-panel').first();
+  await panel.locator('.o2m-toolbar button').filter({ hasText: '添加行' }).first().click();
+  await panel.locator('.o2m-row').first().waitFor({ timeout: 10000 });
   return page.evaluate((expectedColumns) => {
     const normalize = (value) => String(value || '').replace(/\s+/g, ' ').trim();
-    const activePanel = document.querySelector('.native-tab-panel');
+    const activePanel = Array.from(document.querySelectorAll('.native-tab-panel'))
+      .find((node) => normalize(node.textContent || '').includes('投标管理'))
+      || document.querySelector('.native-tab-panel');
     const row = activePanel && activePanel.querySelector('.o2m-row');
     const labels = Array.from((row || document).querySelectorAll('.o2m-field .meta'))
       .map((el) => normalize(el.textContent))
@@ -180,7 +185,11 @@ async function loginCustom(page) {
   const inputs = page.locator('input');
   await inputs.nth(0).fill(LOGIN);
   await inputs.nth(1).fill(PASSWORD);
-  await inputs.nth(2).fill(DB_NAME);
+  const dbInput = inputs.nth(2);
+  if (await dbInput.count().catch(() => 0)) {
+    const disabled = await dbInput.isDisabled().catch(() => false);
+    if (!disabled) await dbInput.fill(DB_NAME);
+  }
   await page.getByRole('button', { name: /^登录$/ }).click();
   await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 20000 });
 }
@@ -231,7 +240,7 @@ async function main() {
     await loginCustom(customPage);
     await customPage.goto(
       `${FRONTEND_URL}/r/${MODEL}/${RECORD_ID}?menu_id=${MENU_ID}&action_id=${ACTION_ID}`,
-      { waitUntil: 'networkidle' },
+      { waitUntil: 'domcontentloaded', timeout: 45000 },
     );
     await customPage.getByText(/发送消息|记录备注|描述|设置/, { exact: false }).first().waitFor({ timeout: 30000 });
     await customPage.screenshot({ path: path.join(outDir, 'custom_form.png'), fullPage: true });
