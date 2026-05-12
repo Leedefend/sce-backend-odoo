@@ -34,6 +34,14 @@ const EXPECTED = {
   x2manyActions: ['添加行'],
   x2manyColumns: ['投标名称', '投标轮次', '招标人/业主', '投标报价', '清单合计', '状态', '投标截止时间'],
 };
+const FORBIDDEN_CUSTOM_TEXT = [
+  'header_bar',
+  'scene-block',
+  '{"default_sort"',
+  "'kind': 'open'",
+  "'visible_profiles'",
+  '"filters":[{"key"',
+];
 
 function writeJson(name, data) {
   fs.mkdirSync(outDir, { recursive: true });
@@ -88,6 +96,7 @@ async function collectFormSurface(page, kind) {
         field_labels: text('label, .o_form_label', nativeForm),
       };
     }
+    const bodyText = normalize(document.body?.textContent || '');
     return {
       buttons: text('button', nativeForm),
       tabs: text('.native-tabs .native-tab, [role="tab"]', nativeForm),
@@ -98,6 +107,7 @@ async function collectFormSurface(page, kind) {
       x2many_actions: text('.native-tab-panel .o2m-toolbar button, .native-tab-panel .chip-btn', nativeForm),
       x2many_columns: text('.native-tab-panel .o2m-header-cell, .native-tab-panel .o2m-fields .meta, .native-tab-panel th', nativeForm),
       field_labels: text('label, .field-label, .form-label', nativeForm),
+      body_text: bodyText,
     };
   }, kind);
   const allButtons = scoped.buttons || [];
@@ -132,6 +142,9 @@ async function collectFormSurface(page, kind) {
       Object.entries(expectedPresence).map(([key, value]) => [key, missingFrom(value)]),
     ),
     console_errors: consoleErrors,
+    forbidden_text: kind === 'custom'
+      ? FORBIDDEN_CUSTOM_TEXT.filter((item) => String(scoped.body_text || '').includes(item))
+      : [],
   };
 }
 
@@ -286,7 +299,8 @@ async function main() {
     result.pass = Object.values(gap).every((row) => row.custom_missing_but_native_present.length === 0)
       && result.custom_business_paths.one2many_add_row.add_row
       && result.custom_business_paths.one2many_add_row.missing_row_labels.length === 0
-      && result.custom_business_paths.one2many_add_row.readonly_columns_disabled['清单合计'];
+      && result.custom_business_paths.one2many_add_row.readonly_columns_disabled['清单合计']
+      && result.custom.forbidden_text.length === 0;
 
     writeJson('summary.json', result);
     console.log(`[form_native_custom_gap_audit] artifacts=${outDir}`);

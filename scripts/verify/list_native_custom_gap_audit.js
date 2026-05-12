@@ -23,6 +23,14 @@ const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
 
 const ts = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15);
 const outDir = path.join(ARTIFACTS_DIR, 'list-native-custom-gap', ts);
+const FORBIDDEN_CUSTOM_TEXT = [
+  'header_bar',
+  'scene-block',
+  '{"default_sort"',
+  "'kind': 'open'",
+  "'visible_profiles'",
+  '"filters":[{"key"',
+];
 
 function writeJson(name, data) {
   fs.mkdirSync(outDir, { recursive: true });
@@ -200,13 +208,15 @@ async function main() {
       header_coverage: Number(headerCoverage.toFixed(3)),
       custom_row_count: report.custom.rowCount,
       native_row_count: report.native.rowCount,
+      forbidden_text: FORBIDDEN_CUSTOM_TEXT.filter((item) => String(report.custom.bodySample || '').includes(item)),
     };
 
     report.pass = (hasRenderedTable || blockMissing.length === 0)
       && headerCoverage >= 0.6
       && report.custom.rowCount > 0
       && report.custom.consoleErrors.length === 0
-      && report.custom.pageErrors.length === 0;
+      && report.custom.pageErrors.length === 0
+      && report.gap.forbidden_text.length === 0;
     writeJson('summary.json', report);
     console.log(`[list_native_custom_gap_audit] artifacts=${outDir}`);
     console.log(JSON.stringify({
