@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars, no-extra-boolean-cast, vue/attributes-order */
 <template>
   <LayoutShell :flow="isProjectIntakeCreateMode">
     <PageHeaderTemplate :title="pageDisplayTitle" :subtitle="pageDisplaySubtitle || undefined">
@@ -5363,7 +5364,7 @@ onBeforeUnmount(() => {
 }
 
 .header--flow {
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--sc-app-border);
   padding-bottom: 12px;
   margin-bottom: 16px;
 }
@@ -5378,7 +5379,7 @@ onBeforeUnmount(() => {
 .page-subtitle {
   margin: 2px 0 0;
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--sc-app-text-secondary);
 }
 
 .page-status-line {

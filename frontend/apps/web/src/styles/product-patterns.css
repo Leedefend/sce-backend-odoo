@@ -1,0 +1,60 @@
+/* Product-delivery UI patterns built on token system */
+
+.sc-page {
+  background: var(--sc-app-bg);
+  color: var(--sc-app-text-primary);
+}
+
+.sc-panel {
+  background: var(--sc-app-panel);
+  border: 1px solid var(--sc-app-border);
+  border-radius: 12px;
+}
+
+.sc-form {
+  display: grid;
+  gap: 12px;
+}
+
+.sc-field,
+.sc-search,
+.sc-input {
+  border: 1px solid var(--sc-app-border);
+  border-radius: 10px;
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-primary);
+}
+
+.sc-list {
+  border: 1px solid var(--sc-app-border);
+  border-radius: 12px;
+  background: var(--sc-app-panel);
+}
+
+.sc-list-item {
+  border-bottom: 1px solid var(--sc-app-border);
+}
+
+.sc-list-item:last-child {
+  border-bottom: none;
+}
+
+.sc-btn {
+  border: 1px solid var(--sc-app-border);
+  border-radius: 10px;
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-primary);
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.sc-btn-primary {
+  border-color: var(--sc-semantic-surface-interactive);
+  background: var(--sc-semantic-surface-interactive);
+  color: var(--sc-semantic-text-on-interactive);
+}
+
+.sc-btn-ghost {
+  background: transparent;
+  color: var(--sc-app-text-secondary);
+}

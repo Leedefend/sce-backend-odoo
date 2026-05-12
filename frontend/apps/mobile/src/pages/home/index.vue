@@ -309,8 +309,8 @@ onShow(loadSession);
   min-height: 100vh;
   box-sizing: border-box;
   padding: 42rpx 30rpx;
-  background: #f4f6f8;
-  color: #17202a;
+  background: var(--sc-mobile-bg);
+  color: var(--sc-mobile-text-primary);
 }
 
 .header {
@@ -329,7 +329,7 @@ onShow(loadSession);
 
 .title {
   margin-top: 8rpx;
-  color: #17202a;
+  color: var(--sc-mobile-text-primary);
   font-size: 40rpx;
   font-weight: 700;
   line-height: 1.2;
@@ -337,7 +337,7 @@ onShow(loadSession);
 
 .subtitle {
   margin-top: 10rpx;
-  color: #607083;
+  color: var(--sc-mobile-text-secondary);
   font-size: 24rpx;
 }
 
@@ -346,7 +346,7 @@ onShow(loadSession);
   height: 58rpx;
   margin: 0;
   border-radius: 8rpx;
-  background: #ffffff;
+  background: var(--sc-mobile-panel);
   color: #344154;
   font-size: 24rpx;
   line-height: 58rpx;
@@ -354,9 +354,9 @@ onShow(loadSession);
 
 .status,
 .section {
-  border: 1rpx solid #dfe5ec;
+  border: 1rpx solid var(--sc-mobile-border);
   border-radius: 8rpx;
-  background: #ffffff;
+  background: var(--sc-mobile-panel);
 }
 
 .status {
@@ -381,7 +381,7 @@ onShow(loadSession);
 }
 
 .status__value {
-  color: #17202a;
+  color: var(--sc-mobile-text-primary);
   font-size: 26rpx;
   line-height: 1.35;
   word-break: break-all;
@@ -407,24 +407,24 @@ onShow(loadSession);
   padding: 0 18rpx;
   border: 1rpx solid #cbd6e2;
   border-radius: 8rpx;
-  background: #ffffff;
+  background: var(--sc-mobile-panel);
   color: #344154;
   font-size: 23rpx;
   line-height: 58rpx;
 }
 
 .app-tab--active {
-  background: #1f3a5f;
-  color: #ffffff;
-  border-color: #1f3a5f;
+  background: var(--sc-mobile-primary);
+  color: var(--sc-mobile-panel);
+  border-color: var(--sc-mobile-primary);
 }
 
 .entry {
   height: 78rpx;
   margin-top: 14rpx;
   border-radius: 8rpx;
-  background: #1f3a5f;
-  color: #ffffff;
+  background: var(--sc-mobile-primary);
+  color: var(--sc-mobile-panel);
   font-size: 26rpx;
   line-height: 78rpx;
 }

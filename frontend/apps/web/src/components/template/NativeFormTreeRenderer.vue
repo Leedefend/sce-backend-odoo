@@ -1,3 +1,4 @@
+/* eslint-disable vue/no-dupe-keys */
 <template>
   <div class="native-form-tree">
     <template v-for="(node, index) in visibleNodes" :key="nodeKey(node, index)">

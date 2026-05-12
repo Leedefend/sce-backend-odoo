@@ -42,7 +42,7 @@
         <div v-if="projectMenuOpen && projectContextEnabled" class="project-dropdown" @click.stop>
           <input
             v-model="projectSearch"
-            class="project-search"
+            class="project-search sc-search"
             type="search"
             :placeholder="projectSearchPlaceholder"
             @input="queueProjectSearch"
@@ -52,7 +52,7 @@
             <button
               v-for="option in projectOptions"
               :key="`project-${option.id}`"
-              class="project-option"
+              class="project-option sc-list-item"
               :class="{ active: option.id === selectedProject?.id }"
               type="button"
               @click="selectProject(option)"
@@ -98,8 +98,8 @@
       </div>
 
       <div class="footer">
-        <button v-if="showRefresh" class="ghost" @click="refreshInit">刷新</button>
-        <button class="ghost" @click="logout">退出登录</button>
+        <button v-if="showRefresh" class="ghost sc-btn sc-btn-ghost" @click="refreshInit">刷新</button>
+        <button class="ghost sc-btn sc-btn-ghost" @click="logout">退出登录</button>
       </div>
     </aside>
 
@@ -125,6 +125,9 @@
           <p v-if="!useMinimalTopbar && sceneHeaderMinimal && sceneHeaderAnchorLine" class="scene-anchor-line">{{ sceneHeaderAnchorLine }}</p>
           <h1 v-if="!useMinimalTopbar && !sceneHeaderMinimal" class="headline">{{ pageTitle }}</h1>
           <p v-if="!useMinimalTopbar && !sceneHeaderMinimal && topbarSubtitle" class="headline-subtitle">{{ topbarSubtitle }}</p>
+        </div>
+        <div class="topbar-actions">
+          <button class="theme-switch sc-btn" type="button" @click="toggleTheme">主题：{{ themeLabel }}</button>
         </div>
       </header>
 
@@ -182,6 +185,7 @@ import { resolveMenuAction } from '../app/resolvers/menuResolver';
 import { isDeliveryModeEnabled, isHudEnabled } from '../config/debug';
 import { normalizeLegacyWorkbenchPath, parseSceneKeyFromQuery } from '../app/routeQuery';
 import { buildRuntimeNavigationRegistry } from '../app/navigationRegistry';
+import { applyTheme, nextTheme, persistTheme, type ScTheme } from '../styles/theme';
 import type { NavNode, ProjectContextOption } from '@sc/schema';
 import {
   exportSuggestedActionTraces,
@@ -554,6 +558,23 @@ const sceneHeaderAnchorLine = computed(() => {
 
 provide('pageTitle', pageTitle);
 const showHud = computed(() => hudEnabled.value && !isDeliveryMode.value);
+const themeMode = ref<ScTheme>('system');
+const themeLabel = computed(() => (themeMode.value === 'system' ? '跟随系统' : themeMode.value === 'dark' ? '暗色' : '亮色'));
+
+function loadThemeMode(): ScTheme {
+  try {
+    const raw = localStorage.getItem('sc_theme');
+    if (raw === 'light' || raw === 'dark' || raw === 'system') return raw;
+  } catch {
+    // ignore
+  }
+  return 'system';
+}
+
+function toggleTheme(): void {
+  themeMode.value = nextTheme(themeMode.value);
+  persistTheme(themeMode.value);
+}
 const runtimeNavigationRegistry = computed(() =>
   buildRuntimeNavigationRegistry({
     scenes: session.scenes || [],
@@ -783,6 +804,8 @@ function exportSuggestedActionJson(filter: { success?: boolean; kind?: string; s
 }
 
 onMounted(() => {
+  themeMode.value = loadThemeMode();
+  applyTheme(themeMode.value);
   showExtractionStats.value = String(route.query.hud_stats || '').trim() === '1';
   if (typeof window === 'undefined') return;
   window.addEventListener(getTraceUpdateEventName(), handleTraceUpdate as (event: Event) => void);
@@ -954,19 +977,19 @@ async function logout() {
 
 <style scoped>
 .shell {
-  --surface: #f6f3ef;
-  --ink: #161616;
-  --muted: #6b7280;
-  --accent: #2f3a5f;
+  --surface: var(--sc-semantic-surface-page);
+  --ink: var(--sc-semantic-text-primary);
+  --muted: var(--sc-semantic-text-secondary);
+  --accent: var(--sc-semantic-surface-interactive);
   --accent-2: #e07a5f;
-  --panel: #ffffff;
+  --panel: var(--sc-semantic-surface-panel);
   --layout-divider: #e5e7eb;
   min-height: 100vh;
   height: 100vh;
   overflow: hidden;
   display: grid;
   grid-template-columns: 220px minmax(0, 1fr);
-  background: linear-gradient(180deg, #f8fafc 0%, #f3f5f8 100%);
+  background: var(--sc-app-bg);
   color: var(--ink);
   font-family: "Inter", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
 }
@@ -976,7 +999,7 @@ async function logout() {
   display: grid;
   grid-template-rows: auto auto auto auto minmax(0, 1fr) auto;
   gap: 10px;
-  border-right: 1px solid #e5e7eb;
+  border-right: 1px solid var(--sc-app-border);
   background: transparent;
   height: 100vh;
   overflow: hidden;
@@ -1431,3 +1454,17 @@ async function logout() {
 
 }
 </style>
+
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+}
+.theme-switch {
+  border: 1px solid var(--sc-app-border);
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-primary);
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+}

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { computed, type ComputedRef, type Ref } from 'vue';
 import type { RouteLocationNormalizedLoaded } from 'vue-router';
 

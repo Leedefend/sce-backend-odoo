@@ -189,8 +189,8 @@ async function submitLogin() {
   min-height: 100vh;
   box-sizing: border-box;
   padding: 56rpx 32rpx 40rpx;
-  background: #f4f6f8;
-  color: #17202a;
+  background: var(--sc-mobile-bg);
+  color: var(--sc-mobile-text-primary);
 }
 
 .brand {
@@ -208,13 +208,13 @@ async function submitLogin() {
   align-items: center;
   justify-content: center;
   background: #26364a;
-  color: #ffffff;
+  color: var(--sc-mobile-panel);
   font-size: 26rpx;
   font-weight: 700;
 }
 
 .brand__name {
-  color: #17202a;
+  color: var(--sc-mobile-text-primary);
   font-size: 34rpx;
   font-weight: 700;
   line-height: 1.25;
@@ -222,15 +222,15 @@ async function submitLogin() {
 
 .brand__caption {
   margin-top: 8rpx;
-  color: #607083;
+  color: var(--sc-mobile-text-secondary);
   font-size: 24rpx;
   line-height: 1.35;
 }
 
 .panel {
-  border: 1rpx solid #dfe5ec;
+  border: 1rpx solid var(--sc-mobile-border);
   border-radius: 8rpx;
-  background: #ffffff;
+  background: var(--sc-mobile-panel);
   padding: 34rpx 30rpx 32rpx;
 }
 
@@ -239,7 +239,7 @@ async function submitLogin() {
 }
 
 .panel__title {
-  color: #17202a;
+  color: var(--sc-mobile-text-primary);
   font-size: 40rpx;
   font-weight: 700;
   line-height: 1.2;
@@ -279,7 +279,7 @@ async function submitLogin() {
   border-radius: 8rpx;
   padding: 0 22rpx;
   background: #fbfcfd;
-  color: #17202a;
+  color: var(--sc-mobile-text-primary);
   font-size: 28rpx;
   line-height: 82rpx;
 }
@@ -298,8 +298,8 @@ async function submitLogin() {
   height: 86rpx;
   margin-top: 8rpx;
   border-radius: 8rpx;
-  background: #1f3a5f;
-  color: #ffffff;
+  background: var(--sc-mobile-primary);
+  color: var(--sc-mobile-panel);
   font-size: 28rpx;
   font-weight: 700;
   line-height: 86rpx;

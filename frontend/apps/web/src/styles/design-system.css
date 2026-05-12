@@ -1,0 +1,17 @@
+@import '../../../../packages/design-tokens/dist/web/tokens.light.css';
+@import '../../../../packages/design-tokens/dist/web/tokens.dark.css';
+
+:root {
+  --sc-app-bg: var(--sc-semantic-surface-page);
+  --sc-app-panel: var(--sc-semantic-surface-panel);
+  --sc-app-text-primary: var(--sc-semantic-text-primary);
+  --sc-app-text-secondary: var(--sc-semantic-text-secondary);
+  --sc-app-border: #e2e8f0;
+}
+
+html,
+body,
+#app {
+  background: var(--sc-app-bg);
+  color: var(--sc-app-text-primary);
+}
