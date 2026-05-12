@@ -838,6 +838,19 @@ def _native_field_node(node: dict[str, Any], field: dict[str, Any], *, layout_ty
     return out
 
 
+def _field_source_with_node_info(node: dict[str, Any], field: dict[str, Any], *, fallback_name: str = "") -> dict[str, Any]:
+    field_name = _stable_id(node.get("name") or node.get("field") or field.get("name") or fallback_name, "field")
+    field_source = deepcopy(field) if isinstance(field, dict) else {}
+    field_info = _dict(node.get("fieldInfo") or node.get("field_info"))
+    field_source.update({k: deepcopy(v) for k, v in field_info.items() if k not in {"label", "string"}})
+    field_source["name"] = field_name
+    field_source.setdefault("string", _text(node.get("string") or node.get("label") or field_info.get("label"), field_name))
+    field_source.setdefault("label", field_source.get("string", field_name))
+    if _text(node.get("widget")):
+        field_source["widget"] = _text(node.get("widget"))
+    return field_source
+
+
 def _direct_field_widgets_from_nodes(
     nodes: list[dict[str, Any]],
     fields_by_name: dict[str, dict[str, Any]],
@@ -854,12 +867,7 @@ def _direct_field_widgets_from_nodes(
         field = _dict(fields_by_name.get(field_name))
         if not field:
             field = {"name": field_name, "string": _text(node.get("string") or node.get("label"), field_name)}
-        field_source = deepcopy(field)
-        field_source["name"] = field_name
-        field_source.setdefault("string", _text(node.get("string") or node.get("label"), field_name))
-        field_source.setdefault("label", field_source.get("string", field_name))
-        if _text(node.get("widget")):
-            field_source["widget"] = _text(node.get("widget"))
+        field_source = _field_source_with_node_info(node, field, fallback_name=field_name)
         widgets.append(_field_widget(field_source, layout_type=layout_type))
     return widgets
 
@@ -898,9 +906,10 @@ def _normalize_native_layout_nodes(
                     field_info["subview"] = deepcopy(subview)
                     normalized["fieldInfo"] = field_info
                     normalized["field_info"] = deepcopy(field_info)
-            widget = _field_widget({**field, "name": node_name or field.get("name"), "string": normalized.get("string"), "label": normalized.get("label"), "widget": normalized.get("widget")}, layout_type=layout_type)
+            widget_source = _field_source_with_node_info(normalized, field, fallback_name=node_name or _text(field.get("name")))
+            widget = _field_widget(widget_source, layout_type=layout_type)
             component_keys.add(widget["componentKey"])
-            widget_status.append(_field_status({**field, "name": node_name or field.get("name"), "string": normalized.get("string"), "label": normalized.get("label"), "widget": normalized.get("widget")}, widget["widgetId"]))
+            widget_status.append(_field_status(widget_source, widget["widgetId"]))
             out.append(normalized)
             continue
         container_id = _text(node.get("containerId") or node.get("container_id") or node_name)
