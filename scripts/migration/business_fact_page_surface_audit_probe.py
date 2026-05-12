@@ -40,7 +40,7 @@ TECHNICAL_LABEL_PATTERNS = (
     "xmlid",
 )
 ENGLISH_WORD_RE = re.compile(r"[A-Za-z]{3,}")
-DEFAULT_MENU_ROOTS = ("智能施工 2.0", "业务配置")
+DEFAULT_MENU_ROOTS = ("智慧施工管理平台", "项目", "业务配置")
 
 
 def artifact_root() -> Path:
@@ -175,7 +175,7 @@ if user:
                         rows.append(issue("technical_field_label", path, action, view, field_name, label))
 
 payload = {
-    "status": "PASS" if user else "FAIL",
+    "status": "PASS" if user and scoped_menu_count > 0 else "FAIL",
     "decision": "business_page_surface_gap_present" if rows else "business_page_surface_ready",
     "database": env.cr.dbname,  # noqa: F821
     "login": login,
@@ -205,3 +205,12 @@ output.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=Tr
 print("BUSINESS_FACT_PAGE_SURFACE_AUDIT=" + json.dumps(payload, ensure_ascii=False, sort_keys=True))
 if not user:
     raise RuntimeError({"business_fact_page_surface_audit": "missing user", "login": login})
+if scoped_menu_count <= 0:
+    raise RuntimeError(
+        {
+            "business_fact_page_surface_audit": "no scoped visible menus",
+            "login": login,
+            "menu_roots": menu_roots,
+            "visible_menu_count": visible_menu_count,
+        }
+    )
