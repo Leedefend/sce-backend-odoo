@@ -1,29 +1,29 @@
-# Release Checklist - v1.0.0
+# Release Checklist - v2.0.0
 
 ## Preconditions
 
 - Working tree is clean at release cut time.
 - Release commit is merged to `main`.
 - `main` is fast-forwarded and reviewed.
-- Release notes reviewed: `docs/ops/release_notes_v1.0.0.md`.
-- Evidence manifest reviewed: `docs/ops/releases/v1.0.0/evidence_manifest.md`.
+- Release notes reviewed: `docs/ops/release_notes_v2.0.0.md`.
+- Evidence manifest reviewed: `docs/ops/releases/v2.0.0/evidence_manifest.md`.
 - No production command is executed from a dirty worktree.
 
 ## Version And Tag Checks
 
-- Gate tag planned: `gate-release-v1.0`.
-- RC tag planned: `v1.0.0-rc1`.
-- Formal tag planned: `v1.0.0`.
+- Gate tag planned: `gate-release-v2.0`.
+- RC tag planned: `v2.0.0-rc1`.
+- Formal tag planned: `v2.0.0`.
 - Tags are created only after the corresponding gate evidence is attached.
 - A tag name must never be reused.
-- GitHub Release is required for `gate-release-v1.0` and `v1.0.0`.
+- GitHub Release is required for `gate-release-v2.0` and `v2.0.0`.
 
 ## Local / CI Gate
 
 Required before RC:
 
 ```bash
-make verify.release.v1_0_0.preflight
+make verify.release.v2_0_0.preflight
 git diff --check
 ```
 
@@ -33,10 +33,10 @@ The preflight target expands to:
 - `make verify.backend.contract.closure.mainline`
 - `make verify.restricted`
 
-Required before formal `v1.0.0`:
+Required before formal `v2.0.0`:
 
 ```bash
-make verify.release.v1_0_0.product_hardening
+make verify.release.v2_0_0.product_hardening
 ```
 
 This target expands to `make verify.product.release.ready` and must be green
@@ -57,7 +57,7 @@ path and is not the baseline startup payload.
 
 ## Product Hardening Gate
 
-- `make verify.release.v1_0_0.product_hardening` must pass before formal tag.
+- `make verify.release.v2_0_0.product_hardening` must pass before formal tag.
 - If `verify.bundle.installation.ready` fails, update or repair the bundle
   installation baseline in a separate batch with explicit evidence.
 - If `verify.platform.performance.smoke` fails on `system.init` payload size,
@@ -106,9 +106,9 @@ Production release is a separate supervised operation.
 
 ## Post-Release
 
-- Confirm `git rev-parse v1.0.0` equals the intended `main` commit.
-- Publish GitHub Release for `v1.0.0`.
-- Attach or link evidence from `docs/ops/releases/v1.0.0/evidence_manifest.md`.
+- Confirm `git rev-parse v2.0.0` equals the intended `main` commit.
+- Publish GitHub Release for `v2.0.0`.
+- Attach or link evidence from `docs/ops/releases/v2.0.0/evidence_manifest.md`.
 - Record deployment acceptance separately if production deployment follows.
 
 ## Stop Conditions
