@@ -43,6 +43,13 @@ function resolveV2SourceContext(v2Contract: unknown): Dict {
   return asDict(dataMeta.sourceContext || runtime.sourceContext);
 }
 
+function resolveV2SearchContract(v2Contract: unknown): Dict {
+  const root = asDict(v2Contract);
+  const dataContract = asDict(root.dataContract);
+  const dataMeta = asDict(dataContract.dataMeta);
+  return asDict(root.searchContract || root.search || dataContract.search || dataMeta.search);
+}
+
 function stableFieldName(name: string) {
   return String(name || '').trim();
 }
@@ -277,6 +284,7 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
     : [];
   const mainData = resolveUnifiedPageContractV2MainData(v2Contract);
   const v2SourceContext = resolveUnifiedPageContractV2SourceContext(v2Contract);
+  const v2SearchContract = resolveV2SearchContract(v2Contract);
   const globalStatus = resolveUnifiedPageContractV2GlobalStatus(v2Contract);
   const layoutButtons = collectV2LayoutButtons(v2Contract);
   const statusbar = collectV2Statusbar(v2Contract);
@@ -401,6 +409,7 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
       form: formView,
       ...(viewType !== 'form' ? { [viewType]: formView } : {}),
     },
+    ...(Object.keys(v2SearchContract).length ? { search: v2SearchContract } : {}),
     visible_fields: fieldNames,
     list_profile: (
       !v2Fields.length

@@ -442,6 +442,48 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
         self.assertEqual(button["displayLabel"], "0投标")
         self.assertEqual(button["action"]["displayLabel"], "0投标")
 
+    def test_ui_contract_v2_preserves_search_filters_and_group_by(self):
+        source = {
+            "model": "project.project",
+            "view_type": "tree",
+            "views": {
+                "tree": {
+                    "fields": ["name", "manager_id", "lifecycle_state"],
+                },
+            },
+            "fields": {
+                "name": {"name": "name", "type": "char"},
+                "manager_id": {"name": "manager_id", "type": "many2one", "relation": "res.users"},
+                "lifecycle_state": {"name": "lifecycle_state", "type": "selection"},
+            },
+            "search": {
+                "default_sort": "write_date desc",
+                "filters": [
+                    {"key": "filter_my_projects", "label": "我的项目", "domain_raw": "[('manager_id', '=', uid)]"},
+                ],
+                "group_by": [
+                    {
+                        "key": "group_manager",
+                        "label": "按项目经理",
+                        "field": "manager_id",
+                        "context_raw": "{'group_by': 'manager_id'}",
+                    },
+                ],
+                "fields": [{"field": "name", "label": "名称"}],
+            },
+        }
+
+        full = assembler.assemble_unified_page_contract_v2(
+            source,
+            source_type="ui.contract",
+            client_type="web_pc",
+            request_id="test.web.search.contract",
+        )
+
+        self.assertEqual(full["searchContract"]["filters"][0]["key"], "filter_my_projects")
+        self.assertEqual(full["searchContract"]["group_by"][0]["field"], "manager_id")
+        self.assertEqual(full["dataContract"]["search"]["default_sort"], "write_date desc")
+
 
 if __name__ == "__main__":
     unittest.main()
