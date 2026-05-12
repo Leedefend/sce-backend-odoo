@@ -5799,15 +5799,15 @@ onBeforeUnmount(() => {
   width: 100%;
   margin: 0;
   font-size: 12px;
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
   text-align: right;
 }
 
 .card {
-  border: 1px solid #eef0f2;
+  border: 1px solid var(--sc-app-border);
   border-radius: 8px;
   padding: 18px;
-  background: #fff;
+  background: var(--sc-app-panel);
   max-width: 1360px;
   width: 100%;
   min-width: 0;
@@ -5825,28 +5825,28 @@ onBeforeUnmount(() => {
 }
 
 .block {
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--sc-app-border);
   border-radius: 10px;
   padding: 10px;
   margin-bottom: 10px;
-  background: #f8fafc;
+  background: var(--sc-app-muted-bg);
   min-width: 0;
 }
 
 .block.warn {
-  border-color: #fdba74;
-  background: #fff7ed;
+  border-color: var(--sc-app-warning-border);
+  background: var(--sc-app-warning-bg);
 }
 
 .contract-missing-block {
-  border-color: #fca5a5;
-  background: #fff5f5;
+  border-color: var(--sc-app-danger-border);
+  background: var(--sc-app-danger-bg);
 }
 
 .contract-missing-summary,
 .contract-missing-defaults {
   margin: 4px 0 0;
-  color: #7a271a;
+  color: var(--sc-app-danger-text);
   font-size: 12px;
 }
 
@@ -5865,8 +5865,9 @@ onBeforeUnmount(() => {
   font-size: 12px;
   padding: 4px 8px;
   border-radius: 999px;
-  border: 1px solid #cbd5e1;
-  background: #fff;
+  border: 1px solid var(--sc-app-border-strong);
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-primary);
   max-width: 100%;
   white-space: normal;
   overflow-wrap: anywhere;
@@ -5876,8 +5877,9 @@ onBeforeUnmount(() => {
   font-size: 12px;
   padding: 4px 8px;
   border-radius: 999px;
-  border: 1px solid #cbd5e1;
-  background: #fff;
+  border: 1px solid var(--sc-app-border-strong);
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-primary);
   cursor: pointer;
   max-width: 100%;
   white-space: normal;
@@ -5899,19 +5901,19 @@ onBeforeUnmount(() => {
   display: grid;
   gap: 4px;
   font-size: 12px;
-  color: #475569;
+  color: var(--sc-app-text-secondary);
 }
 
 .native-chatter-input {
   min-height: 82px;
   resize: vertical;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--sc-app-border-strong);
   border-radius: 6px;
   padding: 8px 10px;
   font-size: 13px;
   line-height: 1.45;
-  background: #ffffff;
-  color: #111827;
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-primary);
 }
 
 .native-chatter-compose-actions {
@@ -5939,9 +5941,9 @@ onBeforeUnmount(() => {
   align-items: baseline;
   gap: 8px;
   padding: 7px 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--sc-app-border);
   border-radius: 6px;
-  background: #ffffff;
+  background: var(--sc-app-panel);
   font-size: 12px;
 }
 
@@ -5953,12 +5955,12 @@ onBeforeUnmount(() => {
 
 .native-chatter-body {
   min-width: 0;
-  color: #111827;
+  color: var(--sc-app-text-primary);
   overflow-wrap: anywhere;
 }
 
 .native-chatter-meta {
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
   white-space: nowrap;
 }
 
@@ -6036,28 +6038,28 @@ onBeforeUnmount(() => {
 }
 
 .submission-feedback--success {
-  color: #065f46;
-  background: #ecfdf5;
-  border: 1px solid #a7f3d0;
+  color: var(--sc-app-success-text);
+  background: var(--sc-app-success-bg);
+  border: 1px solid var(--sc-app-success-border);
 }
 
 .submission-feedback--warn {
-  color: #92400e;
-  background: #fffbeb;
-  border: 1px solid #fcd34d;
+  color: var(--sc-app-warning-text);
+  background: var(--sc-app-warning-bg);
+  border: 1px solid var(--sc-app-warning-border);
 }
 
 .submission-feedback--error {
-  color: #991b1b;
-  background: #fef2f2;
-  border: 1px solid #fca5a5;
+  color: var(--sc-app-danger-text);
+  background: var(--sc-app-danger-bg);
+  border: 1px solid var(--sc-app-danger-border);
 }
 
 .layout-divider {
   grid-column: 1 / -1;
   font-size: 12px;
-  color: #475569;
-  border-bottom: 1px dashed #cbd5e1;
+  color: var(--sc-app-text-secondary);
+  border-bottom: 1px dashed var(--sc-app-border-strong);
   padding-bottom: 4px;
 }
 
@@ -6103,7 +6105,7 @@ onBeforeUnmount(() => {
 }
 
 .contract-form-native-shell :deep(.template-page-header-main h1) {
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
   font-size: 14px;
   font-weight: 500;
   line-height: 1.25;
@@ -6131,8 +6133,8 @@ onBeforeUnmount(() => {
   grid-column: 1 / -1;
   margin: 0;
   border-radius: 4px;
-  background: #d8f0f5;
-  color: #0f5e6f;
+  background: var(--sc-app-info-bg);
+  color: var(--sc-app-info-text);
   padding: 9px 14px;
   font-size: 14px;
   line-height: 1.45;
@@ -6144,15 +6146,15 @@ onBeforeUnmount(() => {
   flex: 1 0 auto;
   border: 0;
   margin-left: -12px;
-  background: #f1f5f9;
-  color: #475569;
+  background: var(--sc-app-subtle-bg);
+  color: var(--sc-app-text-secondary);
   font-size: 13px;
   font-weight: 600;
   line-height: 1.2;
   padding: 10px 22px 10px 30px;
   cursor: pointer;
   clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 0 100%, 14px 50%);
-  box-shadow: inset 0 0 0 1px #dbe3eb;
+  box-shadow: inset 0 0 0 1px var(--sc-app-border);
   transition: background-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
   white-space: normal;
   overflow-wrap: anywhere;
@@ -6170,21 +6172,21 @@ onBeforeUnmount(() => {
 }
 
 .native-statusbar-step:hover:not(:disabled) {
-  background: #e2e8f0;
-  color: #1f2937;
+  background: var(--sc-app-hover-bg);
+  color: var(--sc-app-text-primary);
 }
 
 .native-statusbar-step--done {
   z-index: 1;
-  background: #d9ece7;
-  color: #0f766e;
+  background: var(--sc-app-success-bg);
+  color: var(--sc-app-success-text);
 }
 
 .native-statusbar-step--active {
   z-index: 2;
-  background: #0f766e;
-  color: #ffffff;
-  box-shadow: inset 0 0 0 1px #0f766e, 0 2px 8px rgba(15, 118, 110, 0.22);
+  background: var(--sc-semantic-surface-interactive);
+  color: var(--sc-semantic-text-on-interactive);
+  box-shadow: inset 0 0 0 1px var(--sc-semantic-surface-interactive), 0 2px 8px var(--sc-app-shadow);
 }
 
 .native-statusbar-step:disabled {
@@ -6208,9 +6210,9 @@ onBeforeUnmount(() => {
   grid-template-rows: auto auto auto minmax(0, 1fr) auto;
   gap: 0;
   border-radius: 8px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.2);
+  background: var(--sc-app-panel);
+  border: 1px solid var(--sc-app-border);
+  box-shadow: 0 18px 50px var(--sc-app-shadow);
   overflow: hidden;
 }
 
@@ -6226,14 +6228,14 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   min-height: 50px;
   padding: 12px 16px;
-  border-bottom: 1px solid #e5e7eb;
-  background: #ffffff;
+  border-bottom: 1px solid var(--sc-app-border);
+  background: var(--sc-app-panel);
 }
 
 .relation-dialog-head h3 {
   margin: 0;
   font-size: 16px;
-  color: #111827;
+  color: var(--sc-app-text-primary);
   font-weight: 600;
 }
 
@@ -6243,23 +6245,23 @@ onBeforeUnmount(() => {
   border: 0;
   border-radius: 6px;
   background: transparent;
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
   font-size: 22px;
   line-height: 1;
   cursor: pointer;
 }
 
 .relation-dialog-close:hover:not(:disabled) {
-  background: #f1f5f9;
-  color: #111827;
+  background: var(--sc-app-hover-bg);
+  color: var(--sc-app-text-primary);
 }
 
 .relation-dialog-search {
   align-items: stretch;
   flex-wrap: wrap;
   padding: 12px 16px;
-  border-bottom: 1px solid #eef2f7;
-  background: #ffffff;
+  border-bottom: 1px solid var(--sc-app-border);
+  background: var(--sc-app-panel);
 }
 
 .relation-dialog-search .input {
@@ -6277,17 +6279,17 @@ onBeforeUnmount(() => {
   width: max(100%, 720px);
   min-width: 720px;
   border-collapse: collapse;
-  background: #ffffff;
+  background: var(--sc-app-panel);
   font-size: 13px;
 }
 
 .relation-dialog-table th,
 .relation-dialog-table td {
-  border-bottom: 1px solid #eef2f7;
+  border-bottom: 1px solid var(--sc-app-border);
   padding: 8px 10px;
   text-align: left;
   vertical-align: middle;
-  color: #111827;
+  color: var(--sc-app-text-primary);
   white-space: normal;
   overflow-wrap: anywhere;
 }
@@ -6296,8 +6298,8 @@ onBeforeUnmount(() => {
   position: sticky;
   top: 0;
   z-index: 1;
-  background: #f8fafc;
-  color: #475569;
+  background: var(--sc-app-muted-bg);
+  color: var(--sc-app-text-secondary);
   font-weight: 600;
 }
 
@@ -6307,7 +6309,7 @@ onBeforeUnmount(() => {
 
 .relation-dialog-table tbody tr:hover,
 .relation-dialog-row--active {
-  background: #f8fafc;
+  background: var(--sc-app-hover-bg);
 }
 
 .relation-dialog-select-col {
@@ -6317,19 +6319,19 @@ onBeforeUnmount(() => {
 
 .relation-dialog-empty {
   margin: 12px;
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
   font-size: 13px;
 }
 
 .relation-dialog-footer {
   min-height: 54px;
   padding: 10px 16px;
-  border-top: 1px solid #e5e7eb;
-  background: #ffffff;
+  border-top: 1px solid var(--sc-app-border);
+  background: var(--sc-app-panel);
 }
 
 .relation-dialog-count {
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
   font-size: 12px;
 }
 
@@ -6370,18 +6372,18 @@ onBeforeUnmount(() => {
 .primary {
   border-radius: 6px;
   padding: 8px 10px;
-  border: 1px solid #e5e7eb;
-  background: #fff;
+  border: 1px solid var(--sc-app-border);
+  background: var(--sc-app-panel);
   font-weight: 500;
 }
 
 .primary {
-  background: #111827;
-  color: #fff;
-  border-color: #111827;
+  background: var(--sc-semantic-surface-interactive);
+  color: var(--sc-semantic-text-on-interactive);
+  border-color: var(--sc-semantic-surface-interactive);
 }
 
 .ghost {
-  color: #6b7280;
+  color: var(--sc-app-text-secondary);
 }
 </style>

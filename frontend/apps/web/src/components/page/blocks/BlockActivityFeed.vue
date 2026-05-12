@@ -64,14 +64,14 @@ function emitAction(actionKey: string, item: Record<string, unknown>) {
 </script>
 
 <style scoped>
-.block { border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; padding: 10px; }
+.block { border: 1px solid var(--sc-app-border); border-radius: 8px; background: var(--sc-app-panel); padding: 10px; }
 .block-header h4 { margin: 0 0 8px; font-size: 14px; }
 .feed-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.feed-item { border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px; background: #f9fafb; }
+.feed-item { border: 1px solid var(--sc-app-border); border-radius: 8px; padding: 8px; background: var(--sc-app-muted-bg); }
 .feed-item.actionable { cursor: pointer; }
-.feed-item.actionable:hover { border-color: #93c5fd; background: #eff6ff; }
-.feed-item.actionable:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
+.feed-item.actionable:hover { border-color: var(--sc-app-info-border); background: var(--sc-app-info-bg); }
+.feed-item.actionable:focus-visible { outline: 2px solid var(--sc-semantic-surface-interactive); outline-offset: 2px; }
 .feed-title { margin: 0; font-size: 13px; font-weight: 600; }
-.feed-desc { margin: 4px 0 0; font-size: 12px; color: #6b7280; }
-.feed-empty { margin: 0; font-size: 12px; color: #6b7280; }
+.feed-desc { margin: 4px 0 0; font-size: 12px; color: var(--sc-app-text-secondary); }
+.feed-empty { margin: 0; font-size: 12px; color: var(--sc-app-text-secondary); }
 </style>

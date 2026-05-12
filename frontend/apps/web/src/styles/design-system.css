@@ -7,6 +7,48 @@
   --sc-app-text-primary: var(--sc-semantic-text-primary);
   --sc-app-text-secondary: var(--sc-semantic-text-secondary);
   --sc-app-border: #e2e8f0;
+  --sc-app-border-strong: #cbd5e1;
+  --sc-app-muted-bg: #f8fafc;
+  --sc-app-subtle-bg: #f1f5f9;
+  --sc-app-input-bg: #ffffff;
+  --sc-app-hover-bg: #f8fafc;
+  --sc-app-shadow: rgba(15, 23, 42, 0.08);
+  --sc-app-focus-ring: rgba(37, 99, 235, 0.16);
+  --sc-app-danger-bg: #fef2f2;
+  --sc-app-danger-border: #fecaca;
+  --sc-app-danger-text: #b91c1c;
+  --sc-app-warning-bg: #fffbeb;
+  --sc-app-warning-border: #fde68a;
+  --sc-app-warning-text: #b45309;
+  --sc-app-success-bg: #ecfdf5;
+  --sc-app-success-border: #a7f3d0;
+  --sc-app-success-text: #047857;
+  --sc-app-info-bg: #eff6ff;
+  --sc-app-info-border: #bfdbfe;
+  --sc-app-info-text: #1d4ed8;
+}
+
+:root[data-sc-theme="dark"] {
+  --sc-app-border: rgba(148, 163, 184, 0.24);
+  --sc-app-border-strong: rgba(148, 163, 184, 0.38);
+  --sc-app-muted-bg: #0f172a;
+  --sc-app-subtle-bg: #172033;
+  --sc-app-input-bg: #0b1220;
+  --sc-app-hover-bg: rgba(148, 163, 184, 0.12);
+  --sc-app-shadow: rgba(0, 0, 0, 0.28);
+  --sc-app-focus-ring: rgba(96, 165, 250, 0.22);
+  --sc-app-danger-bg: rgba(127, 29, 29, 0.24);
+  --sc-app-danger-border: rgba(248, 113, 113, 0.42);
+  --sc-app-danger-text: #fca5a5;
+  --sc-app-warning-bg: rgba(120, 53, 15, 0.28);
+  --sc-app-warning-border: rgba(251, 191, 36, 0.42);
+  --sc-app-warning-text: #fcd34d;
+  --sc-app-success-bg: rgba(20, 83, 45, 0.24);
+  --sc-app-success-border: rgba(74, 222, 128, 0.38);
+  --sc-app-success-text: #86efac;
+  --sc-app-info-bg: rgba(30, 64, 175, 0.24);
+  --sc-app-info-border: rgba(96, 165, 250, 0.42);
+  --sc-app-info-text: #93c5fd;
 }
 
 html,
@@ -14,4 +56,213 @@ body,
 #app {
   background: var(--sc-app-bg);
   color: var(--sc-app-text-primary);
+}
+
+html[data-sc-theme="dark"],
+html[data-sc-theme="dark"] body,
+html[data-sc-theme="dark"] #app {
+  color-scheme: dark;
+}
+
+html[data-sc-theme="dark"] :is(
+  .shell,
+  .content,
+  .router-host,
+  .login-page,
+  .template-layout-shell,
+  .template-main,
+  .native-form-tree,
+  .list-page,
+  .kanban-page,
+  .record-page,
+  .scene-page,
+  .workbench-page
+) {
+  background: var(--sc-app-bg);
+  color: var(--sc-app-text-primary);
+}
+
+html[data-sc-theme="dark"] :is(
+  .login-card,
+  .sc-panel,
+  .card,
+  .block,
+  .panel,
+  .template-page-header,
+  .template-form-section,
+  .template-section,
+  .native-static-text,
+  .native-container,
+  .native-group,
+  .native-sheet,
+  .native-page,
+  .native-tab-panel,
+  .relation-dialog,
+  .relation-dialog-panel,
+  .many2one-option-panel,
+  .many2many-tags-dropdown,
+  .dropdown,
+  .popover,
+  .modal,
+  .search-panel,
+  .toolbar,
+  .summary-card,
+  .ledger-overview-card,
+  .capability-card,
+  .feed-item,
+  .accordion-item,
+  .entry-card,
+  .metric-card
+) {
+  background: var(--sc-app-panel);
+  border-color: var(--sc-app-border);
+  box-shadow: 0 16px 36px var(--sc-app-shadow);
+  color: var(--sc-app-text-primary);
+}
+
+html[data-sc-theme="dark"] :is(
+  h1,
+  h2,
+  h3,
+  h4,
+  .title,
+  .brand-title,
+  .section-title,
+  .template-title,
+  .native-title,
+  .record-title,
+  .field-value,
+  .cell-main,
+  .mini-table th,
+  .mini-table td
+) {
+  color: var(--sc-app-text-primary);
+}
+
+html[data-sc-theme="dark"] :is(
+  p,
+  label,
+  .muted,
+  .subtitle,
+  .brand-subtitle,
+  .brand-slogan,
+  .brand-kicker,
+  .value-list,
+  .field-label,
+  .template-subtitle,
+  .native-subtitle,
+  .empty-text,
+  .feed-desc,
+  .accordion-desc,
+  .accordion-empty,
+  .helper-text,
+  .secondary-text
+) {
+  color: var(--sc-app-text-secondary);
+}
+
+html[data-sc-theme="dark"] :is(
+  input,
+  select,
+  textarea,
+  button,
+  .input,
+  .field-input,
+  .field-control,
+  .native-input,
+  .search-input,
+  .filter-input,
+  .relation-search-input,
+  .many2one-input,
+  .tag-input
+) {
+  background: var(--sc-app-input-bg);
+  border-color: var(--sc-app-border-strong);
+  color: var(--sc-app-text-primary);
+}
+
+html[data-sc-theme="dark"] :is(input, select, textarea)::placeholder {
+  color: rgba(203, 213, 225, 0.68);
+}
+
+html[data-sc-theme="dark"] :is(input, select, textarea, button):focus-visible {
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px var(--sc-app-focus-ring);
+  outline: none;
+}
+
+html[data-sc-theme="dark"] :is(
+  table,
+  th,
+  td,
+  .mini-table th,
+  .mini-table td,
+  .list-table th,
+  .list-table td,
+  .native-list th,
+  .native-list td
+) {
+  border-color: var(--sc-app-border);
+}
+
+html[data-sc-theme="dark"] :is(
+  thead,
+  th,
+  .mini-table th,
+  .list-table thead,
+  .native-list thead,
+  .table-header,
+  .list-footer,
+  .summary-row
+) {
+  background: var(--sc-app-muted-bg);
+  color: var(--sc-app-text-primary);
+}
+
+html[data-sc-theme="dark"] :is(
+  tr:hover td,
+  .row:hover,
+  .option:hover,
+  .dropdown-item:hover,
+  .feed-item.actionable:hover,
+  .sc-btn:hover,
+  .chip-btn:hover
+) {
+  background: var(--sc-app-hover-bg);
+}
+
+html[data-sc-theme="dark"] :is(.ghost, .sc-btn, .chip-btn, .native-tab, .status-badge, .tag, .badge) {
+  background: var(--sc-app-subtle-bg);
+  border-color: var(--sc-app-border);
+  color: var(--sc-app-text-primary);
+}
+
+html[data-sc-theme="dark"] :is(.primary, .submit, .sc-btn.primary) {
+  background: var(--sc-semantic-surface-interactive);
+  border-color: var(--sc-semantic-surface-interactive);
+  color: var(--sc-semantic-text-on-interactive);
+}
+
+html[data-sc-theme="dark"] :is(.error, .tone-danger, .status-badge.tone-danger) {
+  background: var(--sc-app-danger-bg);
+  border-color: var(--sc-app-danger-border);
+  color: var(--sc-app-danger-text);
+}
+
+html[data-sc-theme="dark"] :is(.tone-warning, .status-badge.tone-warning) {
+  background: var(--sc-app-warning-bg);
+  border-color: var(--sc-app-warning-border);
+  color: var(--sc-app-warning-text);
+}
+
+html[data-sc-theme="dark"] :is(.tone-success, .status-badge.tone-success) {
+  background: var(--sc-app-success-bg);
+  border-color: var(--sc-app-success-border);
+  color: var(--sc-app-success-text);
+}
+
+html[data-sc-theme="dark"] :is(.tone-info, .status-badge.tone-info) {
+  background: var(--sc-app-info-bg);
+  border-color: var(--sc-app-info-border);
+  color: var(--sc-app-info-text);
 }

@@ -10,8 +10,10 @@ function resolveSystemTheme(): 'light' | 'dark' {
 export function applyTheme(theme: ScTheme): void {
   const root = document.documentElement;
   const resolved = theme === 'system' ? resolveSystemTheme() : theme;
-  if (resolved === 'dark') root.setAttribute('data-sc-theme', 'dark');
-  else root.removeAttribute('data-sc-theme');
+  root.setAttribute('data-sc-theme-mode', theme);
+  root.setAttribute('data-sc-theme-resolved', resolved);
+  root.setAttribute('data-sc-theme', resolved);
+  root.style.colorScheme = resolved;
 }
 
 export function bootTheme(): void {

@@ -126,21 +126,21 @@ function copyTrace() {
 .panel {
   padding: 24px;
   border-radius: 12px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  color: #0f172a;
+  background: var(--sc-app-muted-bg);
+  border: 1px solid var(--sc-app-border);
+  color: var(--sc-app-text-primary);
   display: grid;
   gap: 8px;
 }
 
 .panel.error {
-  border-color: #fecaca;
-  background: #fff1f2;
+  border-color: var(--sc-app-danger-border);
+  background: var(--sc-app-danger-bg);
 }
 
 .panel.forbidden_capability {
-  border-color: #fde68a;
-  background: #fffbeb;
+  border-color: var(--sc-app-warning-border);
+  background: var(--sc-app-warning-bg);
 }
 
 .error-meta {
@@ -151,12 +151,12 @@ function copyTrace() {
 .error-context {
   margin: 0;
   font-size: 12px;
-  color: #475569;
+  color: var(--sc-app-text-secondary);
 }
 
 .trace {
   font-size: 12px;
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
 }
 
 button {
@@ -164,8 +164,8 @@ button {
   padding: 8px 12px;
   border: none;
   border-radius: 8px;
-  background: #111827;
-  color: white;
+  background: var(--sc-semantic-surface-interactive);
+  color: var(--sc-semantic-text-on-interactive);
   cursor: pointer;
 }
 
@@ -173,13 +173,13 @@ button {
   justify-self: start;
   padding: 4px 8px;
   border-radius: 6px;
-  border: 1px solid rgba(15, 23, 42, 0.12);
+  border: 1px solid var(--sc-app-border);
   background: transparent;
-  color: #111827;
+  color: var(--sc-app-text-primary);
   font-size: 12px;
 }
 
 .action-feedback {
-  color: #334155;
+  color: var(--sc-app-text-primary);
 }
 </style>

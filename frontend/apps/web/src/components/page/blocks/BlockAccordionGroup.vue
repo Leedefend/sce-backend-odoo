@@ -44,11 +44,11 @@ const rows = computed(() => {
 </script>
 
 <style scoped>
-.block { border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; padding: 10px; height: 100%; }
+.block { border: 1px solid var(--sc-app-border); border-radius: 8px; background: var(--sc-app-panel); padding: 10px; height: 100%; }
 summary { cursor: pointer; font-weight: 600; }
 .accordion-content { margin-top: 8px; display: grid; gap: 8px; }
-.accordion-item { border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px; background: #f9fafb; }
+.accordion-item { border: 1px solid var(--sc-app-border); border-radius: 8px; padding: 8px; background: var(--sc-app-muted-bg); }
 .accordion-title { margin: 0; font-size: 13px; font-weight: 600; }
-.accordion-desc { margin: 4px 0 0; font-size: 12px; color: #6b7280; }
-.accordion-empty { margin: 0; font-size: 12px; color: #6b7280; }
+.accordion-desc { margin: 4px 0 0; font-size: 12px; color: var(--sc-app-text-secondary); }
+.accordion-empty { margin: 0; font-size: 12px; color: var(--sc-app-text-secondary); }
 </style>

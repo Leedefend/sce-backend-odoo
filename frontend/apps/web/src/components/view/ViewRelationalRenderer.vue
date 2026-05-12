@@ -219,8 +219,8 @@ onMounted(load);
   gap: 8px;
   padding: 10px;
   border-radius: 10px;
-  border: 1px dashed rgba(148, 163, 184, 0.5);
-  background: #f8fafc;
+  border: 1px dashed var(--sc-app-border-strong);
+  background: var(--sc-app-muted-bg);
 }
 
 .relational-header {
@@ -238,16 +238,16 @@ onMounted(load);
 
 .relational-title {
   font-weight: 600;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
 }
 
 .relational-count {
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
 }
 
 .relational-meta {
   font-size: 12px;
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
 }
 
 .relational-list {
@@ -267,11 +267,11 @@ onMounted(load);
 .relational-link {
   width: 100%;
   text-align: left;
-  background: white;
-  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: var(--sc-app-input-bg);
+  border: 1px solid var(--sc-app-border-strong);
   border-radius: 8px;
   padding: 6px 10px;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
   cursor: pointer;
 }
 
@@ -285,9 +285,9 @@ onMounted(load);
 .relational-delete,
 .relational-save,
 .relational-cancel {
-  border: 1px solid rgba(148, 163, 184, 0.4);
-  background: white;
-  color: #0f172a;
+  border: 1px solid var(--sc-app-border-strong);
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-primary);
   border-radius: 8px;
   padding: 4px 10px;
   font-size: 12px;
@@ -295,14 +295,14 @@ onMounted(load);
 }
 
 .relational-delete {
-  border-color: rgba(248, 113, 113, 0.4);
-  color: #b91c1c;
+  border-color: var(--sc-app-danger-border);
+  color: var(--sc-app-danger-text);
 }
 
 .relational-save {
-  background: #0f172a;
-  color: white;
-  border-color: #0f172a;
+  background: var(--sc-semantic-surface-interactive);
+  color: var(--sc-semantic-text-on-interactive);
+  border-color: var(--sc-semantic-surface-interactive);
 }
 
 .relational-editor {
@@ -310,10 +310,10 @@ onMounted(load);
 }
 
 .editor-card {
-  border: 1px dashed rgba(148, 163, 184, 0.4);
+  border: 1px dashed var(--sc-app-border-strong);
   border-radius: 10px;
   padding: 12px;
-  background: #fff;
+  background: var(--sc-app-panel);
   display: grid;
   gap: 8px;
 }
@@ -324,21 +324,23 @@ onMounted(load);
 
 .editor-label {
   font-size: 12px;
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
 }
 
 .editor-input {
   border-radius: 8px;
-  border: 1px solid rgba(148, 163, 184, 0.4);
+  border: 1px solid var(--sc-app-border-strong);
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-primary);
   padding: 8px;
   font-size: 13px;
 }
 
 .editor-banner {
   font-size: 12px;
-  color: #0f172a;
-  background: #ecfeff;
-  border: 1px solid #a5f3fc;
+  color: var(--sc-app-info-text);
+  background: var(--sc-app-info-bg);
+  border: 1px solid var(--sc-app-info-border);
   padding: 4px 8px;
   border-radius: 8px;
 }

@@ -79,7 +79,7 @@ function emitAction(actionKey: string) {
 </script>
 
 <style scoped>
-.block { border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; padding: 10px; height: 100%; }
+.block { border: 1px solid var(--sc-app-border); border-radius: 8px; background: var(--sc-app-panel); padding: 10px; height: 100%; }
 .block-header h4 { margin: 0 0 8px; font-size: 14px; }
 .block-header {
   display: flex;
@@ -93,32 +93,32 @@ function emitAction(actionKey: string) {
   gap: 6px;
 }
 .summary-action-btn {
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--sc-app-border-strong);
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--sc-app-input-bg);
   padding: 4px 10px;
   font-size: 12px;
-  color: #374151;
+  color: var(--sc-app-text-primary);
   cursor: pointer;
 }
 .summary-action-btn:hover {
-  border-color: #93c5fd;
-  color: #1d4ed8;
+  border-color: var(--sc-semantic-surface-interactive);
+  color: var(--sc-semantic-surface-interactive);
 }
 .summary-grid { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
-.summary-item { border: 1px solid #e5e7eb; border-radius: 8px; padding: 8px; background: #f9fafb; }
-.summary-label { margin: 0; font-size: 12px; color: #6b7280; }
-.summary-value { margin: 4px 0 0; font-size: 14px; font-weight: 600; color: #111827; }
+.summary-item { border: 1px solid var(--sc-app-border); border-radius: 8px; padding: 8px; background: var(--sc-app-muted-bg); }
+.summary-label { margin: 0; font-size: 12px; color: var(--sc-app-text-secondary); }
+.summary-value { margin: 4px 0 0; font-size: 14px; font-weight: 600; color: var(--sc-app-text-primary); }
 
 .summary-zone-header {
-  border-color: #dbeafe;
-  background: #f8fbff;
+  border-color: var(--sc-app-info-border);
+  background: var(--sc-app-info-bg);
 }
 .summary-zone-header .summary-grid {
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
 }
 .summary-zone-header .summary-item {
-  background: #ffffff;
+  background: var(--sc-app-panel);
   min-height: 78px;
 }
 .summary-zone-header .summary-value {
@@ -129,8 +129,8 @@ function emitAction(actionKey: string) {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 .summary-zone-cost .summary-item {
-  background: #fffbeb;
-  border-color: #fde68a;
+  background: var(--sc-app-warning-bg);
+  border-color: var(--sc-app-warning-border);
   min-height: 82px;
 }
 

@@ -79,16 +79,16 @@ const activeGroups = computed(() => {
 .tab {
   padding: 8px 14px;
   border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.4);
-  background: #f1f5f9;
-  color: #0f172a;
+  border: 1px solid var(--sc-app-border-strong);
+  background: var(--sc-app-subtle-bg);
+  color: var(--sc-app-text-primary);
   cursor: pointer;
 }
 
 .tab.active {
-  background: #111827;
-  color: #f8fafc;
-  border-color: #111827;
+  background: var(--sc-semantic-surface-interactive);
+  color: var(--sc-semantic-text-on-interactive);
+  border-color: var(--sc-semantic-surface-interactive);
 }
 
 .tab-panel {
