@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import type { LocationQueryRaw, Router } from 'vue-router';
 import { getSceneByKey } from './resolvers/sceneRegistry';
 import { buildCanonicalSceneRouteTarget } from './routeQuery';

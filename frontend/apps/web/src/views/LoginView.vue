@@ -1,5 +1,5 @@
 <template>
-  <main class="login-page">
+  <main class="login-page sc-page">
     <div class="login-bg-orb login-bg-orb--left" aria-hidden="true"></div>
     <div class="login-bg-orb login-bg-orb--right" aria-hidden="true"></div>
     <div class="login-bg-grid" aria-hidden="true"></div>
@@ -37,7 +37,7 @@
 
         <section
           v-if="pageSectionEnabled('card', true) && pageSectionTagIs('card', 'section')"
-          class="login-card"
+          class="login-card sc-panel"
           :style="pageSectionStyle('card')"
         >
           <header class="brand-header">
@@ -88,7 +88,7 @@
             >
               {{ error }}
             </p>
-            <button class="submit" type="submit" :disabled="loading">{{ loading ? pageText('submit_loading', '系统正在登录，请稍候…') : pageText('submit_idle', '登录') }}</button>
+            <button class="submit sc-btn sc-btn-primary" type="submit" :disabled="loading">{{ loading ? pageText('submit_loading', '系统正在登录，请稍候…') : pageText('submit_idle', '登录') }}</button>
           </form>
         </section>
       </section>
@@ -216,9 +216,9 @@ async function executeHeaderAction(actionKey: string) {
 
 <style scoped>
 .login-page {
-  --ink: #161616;
-  --muted: #6b7280;
-  --accent: #2f3a5f;
+  --ink: var(--sc-app-text-primary);
+  --muted: var(--sc-app-text-secondary);
+  --accent: var(--sc-semantic-surface-interactive);
   min-height: 100vh;
   display: grid;
   place-items: center;
@@ -303,7 +303,7 @@ async function executeHeaderAction(actionKey: string) {
   border: 1px solid rgba(15, 23, 42, 0.12);
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.86);
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
   cursor: pointer;
   transition: border-color 120ms ease, transform 120ms ease;
 }
@@ -340,7 +340,7 @@ async function executeHeaderAction(actionKey: string) {
   border: 1px solid rgba(100, 116, 139, 0.22);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.7);
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
   font-size: 11px;
   letter-spacing: 0.3px;
   font-weight: 500;
@@ -348,7 +348,7 @@ async function executeHeaderAction(actionKey: string) {
 
 .brand-kicker {
   margin: 0;
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
   font-size: 12px;
   letter-spacing: 0.5px;
 }
@@ -415,7 +415,7 @@ input {
   padding: 11px 12px;
   border: 1px solid #d5d9e7;
   border-radius: 10px;
-  background: #fff;
+  background: var(--sc-app-panel);
   transition: border-color 120ms ease, box-shadow 120ms ease;
 }
 

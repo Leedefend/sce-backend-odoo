@@ -1,0 +1,16 @@
+{
+  "color": {
+    "blue_500": "#2563eb",
+    "blue_600": "#1d4ed8",
+    "gray_50": "#f9fafb",
+    "gray_100": "#f3f4f6",
+    "gray_600": "#4b5563",
+    "gray_900": "#111827",
+    "green_500": "#22c55e",
+    "amber_500": "#f59e0b",
+    "red_500": "#ef4444"
+  },
+  "space": { "xs": 4, "sm": 8, "md": 12, "lg": 16, "xl": 24 },
+  "radius": { "sm": 6, "md": 10, "lg": 14 },
+  "font": { "size_sm": 12, "size_md": 14, "size_lg": 16 }
+}

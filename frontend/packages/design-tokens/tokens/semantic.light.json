@@ -1,0 +1,18 @@
+{
+  "surface": {
+    "page": "{color.gray_50}",
+    "panel": "#ffffff",
+    "interactive": "{color.blue_500}"
+  },
+  "text": {
+    "primary": "{color.gray_900}",
+    "secondary": "{color.gray_600}",
+    "on_interactive": "#ffffff"
+  },
+  "state": {
+    "success": "{color.green_500}",
+    "warning": "{color.amber_500}",
+    "danger": "{color.red_500}",
+    "info": "{color.blue_500}"
+  }
+}

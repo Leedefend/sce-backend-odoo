@@ -1,0 +1,17 @@
+{
+  "button": {
+    "height_md": 36,
+    "radius": "{radius.md}",
+    "padding_x": "{space.lg}",
+    "font_size": "{font.size_md}"
+  },
+  "card": {
+    "radius": "{radius.lg}",
+    "padding": "{space.lg}"
+  },
+  "tag": {
+    "radius": "{radius.sm}",
+    "padding_x": "{space.sm}",
+    "padding_y": "{space.xs}"
+  }
+}
