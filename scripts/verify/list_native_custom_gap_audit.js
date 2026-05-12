@@ -30,6 +30,7 @@ const FORBIDDEN_CUSTOM_TEXT = [
   "'kind': 'open'",
   "'visible_profiles'",
   '"filters":[{"key"',
+  'project.project.tree',
 ];
 
 function writeJson(name, data) {

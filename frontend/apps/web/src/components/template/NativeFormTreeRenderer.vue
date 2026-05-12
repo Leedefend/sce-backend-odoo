@@ -214,7 +214,14 @@ function nodeKey(node: NativeFormLayoutNode, index: number) {
 }
 
 function containerTitle(node: NativeFormLayoutNode) {
-  return String(node?.string || node?.label || '').trim();
+  const type = nodeType(node);
+  const raw = String(node?.string || node?.label || '').trim();
+  if (!raw) return '';
+  const structural = new Set(['header', 'sheet', 'container', 'div', 'span', 'h1', 'h2', 'h3']);
+  if (structural.has(type)) return '';
+  const lowered = raw.toLowerCase();
+  if (structural.has(lowered) || lowered === type) return '';
+  return raw;
 }
 
 function nodeText(node: NativeFormLayoutNode) {

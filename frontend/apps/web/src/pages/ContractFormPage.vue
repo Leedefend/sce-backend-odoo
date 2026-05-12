@@ -960,10 +960,17 @@ const intakeMissingSummary = computed(() => {
 
 const one2manyValidation = computed(() => collectOne2manyDraftValidation());
 
+function isTechnicalViewTitle(value: string) {
+  const normalized = String(value || '').trim();
+  return /^[a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*){1,}\.(?:tree|list|form|kanban|search|graph|pivot|calendar|activity|gantt)$/i.test(normalized);
+}
+
 const pageTitle = computed(() => {
   const title = String(contract.value?.head?.title || '').trim();
-  if (title) return title;
-  return model.value ? `业务表单 · ${model.value}` : '业务表单';
+  if (title && !isTechnicalViewTitle(title)) return title;
+  const recordTitle = String(formData.display_name || formData.name || '').trim();
+  if (recordTitle) return recordTitle;
+  return '业务表单';
 });
 
 const pageDisplayTitle = computed(() => {
@@ -1263,6 +1270,12 @@ function relationIds(name: string): number[] {
   return normalizeRelationIds(formData[name]);
 }
 
+function cleanRelationDisplayLabel(value: unknown, id: number) {
+  const label = String(value || '').trim();
+  if (!label || label === 'display_name' || label === 'name') return `#${id}`;
+  return label;
+}
+
 function selectedRelationOptions(name: string): RelationOption[] {
   const options = relationOptionsForField(name);
   const byId = new Map(options.map((option) => [option.id, option]));
@@ -1286,14 +1299,14 @@ function parseMany2oneDisplay(value: unknown): RelationOption | null {
   if (Array.isArray(value)) {
     const id = Number(value[0]);
     if (!Number.isFinite(id) || id <= 0) return null;
-    const label = String(value[1] || `#${id}`).trim() || `#${id}`;
+    const label = cleanRelationDisplayLabel(value[1], id);
     return { id: Math.trunc(id), label };
   }
   if (value && typeof value === 'object') {
     const row = value as Record<string, unknown>;
     const id = Number(row.id);
     if (!Number.isFinite(id) || id <= 0) return null;
-    const label = String(row.display_name || row.name || `#${id}`).trim() || `#${id}`;
+    const label = cleanRelationDisplayLabel(row.display_name || row.name, id);
     return { id: Math.trunc(id), label };
   }
   return null;
@@ -1348,7 +1361,7 @@ async function hydrateSelectedRelationOptions() {
             || (row as Record<string, unknown>).name
             || `#${id}`,
           ).trim();
-          return { id: Math.trunc(id), label };
+          return { id: Math.trunc(id), label: cleanRelationDisplayLabel(label, id) };
         })
         .filter((item): item is RelationOption => Boolean(item));
       if (options.length) mergeRelationOptions(name, options);
@@ -1435,6 +1448,12 @@ function one2manyColumns(name: string): One2ManyColumn[] {
     ? (tree as Record<string, unknown>).columns
     : undefined;
   const out: One2ManyColumn[] = [];
+  const columnLabel = (value: unknown, fallback: string) => {
+    const label = String(value || '').trim();
+    if (label === 'display_name' || label === 'name') return '名称';
+    if (label) return label;
+    return fallback === 'display_name' || fallback === 'name' ? '名称' : fallback;
+  };
   if (Array.isArray(columnsRaw)) {
     columnsRaw.forEach((item) => {
       if (typeof item === 'string') {
@@ -1444,7 +1463,7 @@ function one2manyColumns(name: string): One2ManyColumn[] {
         const ttype = fieldType(descriptor) || 'char';
         out.push({
           name: normalized,
-          label: String(descriptor?.string || normalized),
+          label: columnLabel(descriptor?.string, normalized),
           ttype,
           required: Boolean(descriptor?.required),
           readonly: Boolean(descriptor?.readonly),
@@ -1460,7 +1479,7 @@ function one2manyColumns(name: string): One2ManyColumn[] {
       const ttype = String(row.ttype || fieldType(descriptor) || 'char').trim() || 'char';
       out.push({
         name: colName,
-        label: String(row.label || row.string || descriptor?.string || colName).trim() || colName,
+        label: columnLabel(row.label || row.string || descriptor?.string, colName),
         ttype,
         required: Boolean(row.required || descriptor?.required),
         readonly: Boolean(row.readonly || descriptor?.readonly),
@@ -2067,7 +2086,7 @@ async function queryRelationOptions(name: string, keyword: string): Promise<Rela
           || (row as Record<string, unknown>).name
           || `#${id}`,
         ).trim();
-        return { id: Math.trunc(id), label };
+        return { id: Math.trunc(id), label: cleanRelationDisplayLabel(label, id) };
       })
       .filter((item): item is RelationOption => Boolean(item));
     relationOptions.value = {
@@ -2111,7 +2130,7 @@ async function fetchRelationOptions(name: string, keyword: string, limit = 80): 
         || (row as Record<string, unknown>).name
         || `#${id}`,
       ).trim();
-      return { id: Math.trunc(id), label };
+      return { id: Math.trunc(id), label: cleanRelationDisplayLabel(label, id) };
     })
     .filter((item): item is RelationOption => Boolean(item));
 }
@@ -2202,7 +2221,7 @@ async function fetchRelationSearchRows(name: string, keyword: string, limit = 12
       const id = Number(values.id);
       if (!Number.isFinite(id) || id <= 0) return null;
       const firstColumn = columns[0]?.name || '';
-      const label = String(values.display_name || values.name || values[firstColumn] || `#${id}`).trim();
+      const label = cleanRelationDisplayLabel(values.display_name || values.name || values[firstColumn], id);
       return { id: Math.trunc(id), label, values };
     })
     .filter((item): item is RelationSearchRow => Boolean(item));
@@ -2505,7 +2524,7 @@ async function loadRelationOptions() {
             || (row as Record<string, unknown>).name
             || `#${id}`,
           ).trim();
-          return { id: Math.trunc(id), label };
+          return { id: Math.trunc(id), label: cleanRelationDisplayLabel(label, id) };
         })
         .filter((item): item is RelationOption => Boolean(item));
     } catch (err) {

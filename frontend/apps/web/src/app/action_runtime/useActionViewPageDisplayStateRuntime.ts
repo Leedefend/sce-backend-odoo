@@ -23,11 +23,16 @@ type UseActionViewPageDisplayStateRuntimeOptions = {
   isHudEnabled: (route: RouteLocationNormalizedLoaded) => boolean;
 };
 
+function isTechnicalViewTitle(value: string) {
+  const normalized = String(value || '').trim();
+  return /^[a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*){1,}\.(?:tree|list|form|kanban|search|graph|pivot|calendar|activity|gantt)$/i.test(normalized);
+}
+
 export function useActionViewPageDisplayStateRuntime(options: UseActionViewPageDisplayStateRuntimeOptions) {
   const pageTitle = computed(() => {
     if (options.routeSceneLabel.value) return options.routeSceneLabel.value;
     const contractTitle = String(options.actionContract.value?.head?.title || '').trim();
-    if (contractTitle) return contractTitle;
+    if (contractTitle && !isTechnicalViewTitle(contractTitle)) return contractTitle;
     return options.injectedTitle.value || options.actionMetaName.value || options.t('page_title_fallback', '角色首页');
   });
 

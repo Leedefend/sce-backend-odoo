@@ -41,6 +41,12 @@ const FORBIDDEN_CUSTOM_TEXT = [
   "'kind': 'open'",
   "'visible_profiles'",
   '"filters":[{"key"',
+  ' header sheet container ',
+  'header sheet container',
+  ' sheet container ',
+  ' container h1 ',
+  'project.project.form',
+  'display_name',
 ];
 
 function writeJson(name, data) {
@@ -193,6 +199,19 @@ async function exerciseCustomOne2manyPath(page) {
   }, EXPECTED.x2manyColumns);
 }
 
+async function waitForCustomFormReady(page) {
+  await page.locator('.native-form-tree, .template-layout-shell').first().waitFor({ timeout: 45000 });
+  await page.locator('.native-tabs .native-tab').filter({ hasText: '投标管理' }).first().waitFor({ timeout: 45000 });
+  await page.locator('.native-statusbar').first().waitFor({ timeout: 45000 });
+  await page.waitForFunction(() => {
+    const text = String(document.body?.textContent || '');
+    return !text.includes('正在加载页面')
+      && document.querySelectorAll('.native-tabs .native-tab').length > 0
+      && document.querySelectorAll('.native-statusbar').length > 0
+      && text.includes('投标管理');
+  }, null, { timeout: 45000 });
+}
+
 async function loginCustom(page) {
   await page.goto(`${FRONTEND_URL}/login`, { waitUntil: 'networkidle' });
   const inputs = page.locator('input');
@@ -255,11 +274,11 @@ async function main() {
       `${FRONTEND_URL}/r/${MODEL}/${RECORD_ID}?menu_id=${MENU_ID}&action_id=${ACTION_ID}`,
       { waitUntil: 'domcontentloaded', timeout: 45000 },
     );
-    await customPage.getByText(/发送消息|记录备注|描述|设置/, { exact: false }).first().waitFor({ timeout: 30000 });
-    await customPage.screenshot({ path: path.join(outDir, 'custom_form.png'), fullPage: true });
+    await waitForCustomFormReady(customPage);
     result.custom_business_paths = {
       one2many_add_row: await exerciseCustomOne2manyPath(customPage),
     };
+    await customPage.screenshot({ path: path.join(outDir, 'custom_form.png'), fullPage: true });
     result.custom = await collectFormSurface(customPage, 'custom');
     await customContext.close();
 
