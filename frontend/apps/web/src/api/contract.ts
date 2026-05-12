@@ -18,6 +18,8 @@ type LoadActionContractOptions = {
   renderProfile?: 'create' | 'edit' | 'readonly' | null;
   surface?: 'user' | 'native' | 'hud' | null;
   sourceMode?: string | null;
+  context?: Record<string, unknown> | null;
+  contextRaw?: string | null;
 };
 
 type LoadModelContractOptions = LoadActionContractOptions & {
@@ -617,6 +619,13 @@ function buildActionContractParams(actionId: number, options?: LoadActionContrac
   if (sourceMode) {
     params.source_mode = sourceMode;
   }
+  if (options?.context && typeof options.context === 'object' && !Array.isArray(options.context)) {
+    params.context = options.context;
+  }
+  const contextRaw = String(options?.contextRaw || '').trim();
+  if (contextRaw) {
+    params.context_raw = contextRaw;
+  }
   return params;
 }
 
@@ -662,6 +671,13 @@ function buildModelContractParams(model: string, options?: LoadModelContractOpti
   const sourceMode = String(options?.sourceMode || '').trim();
   if (sourceMode) {
     params.source_mode = sourceMode;
+  }
+  if (options?.context && typeof options.context === 'object' && !Array.isArray(options.context)) {
+    params.context = options.context;
+  }
+  const contextRaw = String(options?.contextRaw || '').trim();
+  if (contextRaw) {
+    params.context_raw = contextRaw;
   }
   return params;
 }
