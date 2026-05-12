@@ -252,6 +252,41 @@ class ProjectProjectStage(models.Model):
 class ProjectProject(models.Model):
     _inherit = 'project.project'
     _description = '项目'
+    _PROJECT_UNLINK_BLOCK_MODELS = (
+        "construction.contract",
+        "project.budget",
+        "project.cost.ledger",
+        "project.cost.period",
+        "project.progress.entry",
+        "project.material.plan",
+        "payment.request",
+        "sc.material.purchase.request",
+        "sc.material.acceptance",
+        "sc.material.inbound",
+        "sc.material.outbound",
+        "sc.material.rfq",
+        "sc.material.settlement",
+        "sc.material.rental.plan",
+        "sc.material.rental.order",
+        "sc.labor.plan",
+        "sc.labor.request",
+        "sc.attendance.checkin",
+        "sc.labor.usage",
+        "sc.labor.settlement",
+        "sc.equipment.plan",
+        "sc.equipment.request",
+        "sc.equipment.usage",
+        "sc.equipment.settlement",
+        "sc.subcontract.plan",
+        "sc.subcontract.request",
+        "sc.subcontract.register",
+        "sc.subcontract.settlement",
+        "sc.settlement.order",
+        "sc.settlement.adjustment",
+        "tender.bid",
+        "sc.project.document",
+        "sc.safety.issue",
+    )
 
     _STAGE_XMLID_BY_KEY = {
         "planning": "smart_construction_core.project_stage_planning",
@@ -569,6 +604,27 @@ class ProjectProject(models.Model):
         index=True,
         help="公司隔离之后的项目级全局经营策略维度，用于直营/联营业务事实切换、筛选和统计。",
     )
+
+    _PROJECT_CATEGORY_CODE_BY_OPERATION_STRATEGY = {
+        "direct": "PROJECT_CATEGORY_DIRECT",
+        "joint": "PROJECT_CATEGORY_JOINT",
+    }
+
+    def _project_category_for_operation_strategy(self, operation_strategy):
+        code = self._PROJECT_CATEGORY_CODE_BY_OPERATION_STRATEGY.get(str(operation_strategy or "").strip())
+        if not code:
+            return self.env["sc.dictionary"].browse()
+        return self.env["sc.dictionary"].search(
+            [("type", "=", "project_category"), ("code", "=", code), ("active", "=", True)],
+            limit=1,
+        )
+
+    @api.onchange("operation_strategy")
+    def _onchange_operation_strategy_project_category(self):
+        for project in self:
+            category = project._project_category_for_operation_strategy(project.operation_strategy)
+            if category:
+                project.project_category_id = category
     stage_id = fields.Many2one(
         'project.project.stage',
         string='阶段',
@@ -1093,8 +1149,13 @@ class ProjectProject(models.Model):
             creation_service = None
         updated_vals = []
         for vals in vals_list:
+            vals = dict(vals)
             if creation_service is not None:
                 vals = creation_service.normalize_create_vals(vals)
+            if not vals.get("project_category_id") and vals.get("operation_strategy"):
+                category = self._project_category_for_operation_strategy(vals.get("operation_strategy"))
+                if category:
+                    vals["project_category_id"] = category.id
             if not vals.get('project_code'):
                 code = sequence.next_by_code('project.project.code')
                 if not code:
@@ -1917,6 +1978,77 @@ class ProjectProject(models.Model):
         """兼容命名：调用标准 WBS 生成逻辑。"""
         return self.action_generate_structure_from_boq()
 
+    @api.model
+    def _project_unlink_blocker_models(self):
+        allowed = set(self._PROJECT_UNLINK_BLOCK_MODELS)
+        rows = self.env["ir.model.fields"].sudo().search(
+            [
+                ("relation", "=", "project.project"),
+                ("store", "=", True),
+                ("ttype", "=", "many2one"),
+            ]
+        )
+        models = []
+        seen = set()
+        for field in rows:
+            on_delete = (field.on_delete or "").strip().lower()
+            if on_delete in {"cascade", "set null"}:
+                continue
+            model_name = str(field.model or "").strip()
+            if not model_name or model_name in seen:
+                continue
+            if allowed and model_name not in allowed:
+                continue
+            seen.add(model_name)
+            models.append(model_name)
+        return models
+
+    @api.model
+    def _project_unlink_dependency_summary(self, project_ids):
+        project_ids = [int(project_id) for project_id in (project_ids or []) if int(project_id or 0) > 0]
+        if not project_ids:
+            return {}
+        summary = defaultdict(list)
+        model_names = self._project_unlink_blocker_models()
+        for model_name in model_names:
+            if model_name not in self.env:
+                continue
+            Model = self.env[model_name].sudo().with_context(active_test=False)
+            label = str(getattr(Model, "_description", "") or model_name).strip() or model_name
+            for project_id in project_ids:
+                count = int(Model.search_count([("project_id", "=", project_id)]) or 0)
+                if project_id <= 0 or count <= 0:
+                    continue
+                summary[project_id].append({
+                    "model": model_name,
+                    "label": label,
+                    "count": count,
+                })
+        return summary
+
+    def _raise_project_unlink_blockers(self):
+        summary = self._project_unlink_dependency_summary(self.ids)
+        if not summary:
+            return
+        messages = []
+        for project in self:
+            blockers = summary.get(project.id) or []
+            if not blockers:
+                continue
+            blockers = sorted(blockers, key=lambda item: (-int(item.get("count") or 0), str(item.get("label") or item.get("model") or "")))
+            preview = [f"{item['label']}({item['count']})" for item in blockers[:8]]
+            extra = len(blockers) - len(preview)
+            if extra > 0:
+                preview.append(f"以及其他 {extra} 类依赖")
+            messages.append(f"项目[{project.display_name}] 仍有关联业务数据：{'、'.join(preview)}")
+        if messages:
+            raise UserError("无法删除项目。\n" + "\n".join(messages))
+
+    def unlink(self):
+        if not self.env.su:
+            self._raise_project_unlink_blockers()
+        return super().unlink()
+
     # ---------- 项目治理 / 流程控制 ----------
     def _ensure_operation_allowed(self, operation_label="该操作", blocked_states=None):
         """在项目层面做统一的流程闸口控制。"""
@@ -2016,6 +2148,11 @@ class ProjectProject(models.Model):
             vals = dict(vals)
             vals.setdefault("sc_draft_autosaved_at", fields.Datetime.now())
             vals.setdefault("sc_draft_autosave_uid", self.env.user.id)
+        if "operation_strategy" in vals and "project_category_id" not in vals:
+            category = self._project_category_for_operation_strategy(vals.get("operation_strategy"))
+            if category:
+                vals = dict(vals)
+                vals["project_category_id"] = category.id
         if "lifecycle_state" in vals:
             self._validate_lifecycle_transition(vals.get("lifecycle_state"))
             if "stage_id" not in vals:

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="dict_project_category_direct" model="sc.dictionary">
+        <field name="name">公司直营</field>
+        <field name="code">PROJECT_CATEGORY_DIRECT</field>
+        <field name="type">project_category</field>
+        <field name="sequence">10</field>
+        <field name="active">1</field>
+    </record>
+
+    <record id="dict_project_category_joint" model="sc.dictionary">
+        <field name="name">联营项目</field>
+        <field name="code">PROJECT_CATEGORY_JOINT</field>
+        <field name="type">project_category</field>
+        <field name="sequence">20</field>
+        <field name="active">1</field>
+    </record>
+</odoo>

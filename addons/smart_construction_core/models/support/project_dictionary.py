@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 from odoo.osv import expression
 
 
 class ProjectDictionary(models.Model):
     _name = "project.dictionary"
     _description = "工程项目数据字典"
+    _inherit = ["sc.delete.guard.mixin"]
     # 先按 type，再按 sequence，再按 code/name 排序，便于字典维护
     _order = "type, sequence, code, name"
     _parent_name = "parent_id"
@@ -244,3 +245,10 @@ class ProjectDictionary(models.Model):
             search_domain = expression.AND([search_domain, td])
 
         return expression.AND([base, search_domain])
+
+    def unlink(self):
+        active_records = self.filtered("active")
+        if active_records:
+            raise UserError("请先停用字典条目后再删除。")
+        self._sc_raise_delete_blockers(action_label="删除字典条目")
+        return super().unlink()

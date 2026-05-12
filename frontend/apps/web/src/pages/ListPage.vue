@@ -1906,7 +1906,7 @@ onBeforeUnmount(() => {
 .table {
   width: 100%;
   max-width: 100%;
-  max-height: max(500px, calc(100vh - 145px));
+  max-height: max(420px, calc(100vh - 210px));
   overflow-x: auto;
   overflow-y: auto;
   background: var(--sc-app-panel);
@@ -2209,7 +2209,11 @@ onBeforeUnmount(() => {
 .pagination-footer {
   display: flex;
   justify-content: flex-end;
-  padding-top: 4px;
+  position: sticky;
+  bottom: 0;
+  z-index: 24;
+  background: var(--sc-app-bg);
+  padding-top: 6px;
 }
 
 .pagination-actions--bottom {

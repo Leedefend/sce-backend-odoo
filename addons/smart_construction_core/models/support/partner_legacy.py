@@ -4,6 +4,7 @@ import re
 from collections import defaultdict
 
 from odoo import api, fields, models
+from odoo.exceptions import UserError
 
 
 SUPPLIER_TYPE_SELECTION = [
@@ -19,6 +20,7 @@ SUPPLIER_TYPE_SELECTION = [
 class ScSupplierType(models.Model):
     _name = "sc.supplier.type"
     _description = "供应商类型"
+    _inherit = ["sc.delete.guard.mixin"]
     _order = "sequence, id"
 
     name = fields.Char(string="类型名称", required=True, translate=True)
@@ -30,9 +32,47 @@ class ScSupplierType(models.Model):
         ("code_uniq", "unique(code)", "供应商类型编码必须唯一。"),
     ]
 
+    def unlink(self):
+        active_types = self.filtered("active")
+        if active_types:
+            raise UserError("请先停用供应商类型后再删除。")
+        self._sc_raise_delete_blockers(action_label="删除供应商类型")
+        return super().unlink()
+
 
 class ResPartner(models.Model):
-    _inherit = "res.partner"
+    _name = "res.partner"
+    _inherit = ["res.partner", "sc.delete.guard.mixin"]
+    _sc_delete_guard_blocker_models = (
+        "construction.contract",
+        "payment.request",
+        "project.project",
+        "sc.contract.event",
+        "sc.expense.claim",
+        "sc.financing.loan",
+        "sc.invoice.registration",
+        "sc.material.acceptance",
+        "sc.material.inbound",
+        "sc.material.outbound",
+        "sc.material.price",
+        "sc.material.purchase.request",
+        "sc.material.rfq",
+        "sc.material.rental.order",
+        "sc.material.rental.plan",
+        "sc.payment.execution",
+        "sc.plan",
+        "sc.quality.issue",
+        "sc.receipt.income",
+        "sc.safety.issue",
+        "sc.settlement.adjustment",
+        "sc.settlement.order",
+        "sc.subcontract.plan",
+        "sc.subcontract.register",
+        "sc.subcontract.request",
+        "sc.subcontract.settlement",
+        "sc.tax.deduction.registration",
+        "tender.bid",
+    )
 
     sc_supplier_type = fields.Selection(
         SUPPLIER_TYPE_SELECTION,
@@ -219,6 +259,10 @@ class ResPartner(models.Model):
         if partner.is_company or partner.vat or partner.legacy_partner_id:
             return True
         return False
+
+    def unlink(self):
+        self._sc_raise_delete_blockers(action_label="删除往来单位")
+        return super().unlink()
 
     @api.model
     def _sc_collect_partner_business_facts(self):

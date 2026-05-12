@@ -143,6 +143,62 @@ API_DATA_MUTATION_POLICIES = {
     },
 }
 API_DATA_UNLINK_POLICIES = {
+    "construction.contract": {
+        "allowed": True,
+        "delete_mode": "unlink",
+        "reason_code": "DELETE_POLICY_ALLOWED",
+        "message": "允许业务配置管理员整理合同记录；仍受模型 ACL 与记录规则约束。",
+        "source": "smart_construction_core",
+    },
+    "construction.contract.income": {
+        "allowed": True,
+        "delete_mode": "unlink",
+        "reason_code": "DELETE_POLICY_ALLOWED",
+        "message": "允许业务配置管理员整理收入合同记录；仍受模型 ACL 与记录规则约束。",
+        "source": "smart_construction_core",
+    },
+    "construction.contract.expense": {
+        "allowed": True,
+        "delete_mode": "unlink",
+        "reason_code": "DELETE_POLICY_ALLOWED",
+        "message": "允许业务配置管理员整理支出合同记录；仍受模型 ACL 与记录规则约束。",
+        "source": "smart_construction_core",
+    },
+    "hr.department": {
+        "allowed": True,
+        "delete_mode": "unlink",
+        "reason_code": "DELETE_POLICY_ALLOWED",
+        "message": "允许业务配置管理员整理组织部门；仍受模型 ACL 与记录规则约束。",
+        "source": "smart_construction_core",
+    },
+    "payment.request": {
+        "allowed": True,
+        "delete_mode": "unlink",
+        "reason_code": "DELETE_POLICY_ALLOWED",
+        "message": "允许业务配置管理员整理付款申请；仍受模型 ACL 与记录规则约束。",
+        "source": "smart_construction_core",
+    },
+    "payment.request.line": {
+        "allowed": True,
+        "delete_mode": "unlink",
+        "reason_code": "DELETE_POLICY_ALLOWED",
+        "message": "允许业务配置管理员整理付款申请明细；仍受模型 ACL 与记录规则约束。",
+        "source": "smart_construction_core",
+    },
+    "project.cost.code": {
+        "allowed": True,
+        "delete_mode": "unlink",
+        "reason_code": "DELETE_POLICY_ALLOWED",
+        "message": "允许业务配置管理员整理成本科目；仍受模型 ACL 与记录规则约束。",
+        "source": "smart_construction_core",
+    },
+    "project.dictionary": {
+        "allowed": True,
+        "delete_mode": "unlink",
+        "reason_code": "DELETE_POLICY_ALLOWED",
+        "message": "允许业务配置管理员整理业务字典；仍受模型 ACL 与记录规则约束。",
+        "source": "smart_construction_core",
+    },
     "project.task": {
         "allowed": True,
         "delete_mode": "unlink",
@@ -155,6 +211,62 @@ API_DATA_UNLINK_POLICIES = {
         "delete_mode": "unlink",
         "reason_code": "RELATION_MAINTENANCE_DELETE_ALLOWED",
         "message": "允许删除项目标签等关系维护数据；仍受模型 ACL 与记录规则约束。",
+        "source": "smart_construction_core",
+    },
+    "res.partner": {
+        "allowed": True,
+        "delete_mode": "unlink",
+        "reason_code": "DELETE_POLICY_ALLOWED",
+        "message": "允许业务配置管理员整理客户/供应商资料；仍受模型 ACL 与记录规则约束。",
+        "source": "smart_construction_core",
+    },
+    "sc.approval.policy": {
+        "allowed": True,
+        "delete_mode": "unlink",
+        "reason_code": "DELETE_POLICY_ALLOWED",
+        "message": "允许业务配置管理员整理审批策略；仍受模型 ACL 与记录规则约束。",
+        "source": "smart_construction_core",
+    },
+    "sc.approval.step": {
+        "allowed": True,
+        "delete_mode": "unlink",
+        "reason_code": "DELETE_POLICY_ALLOWED",
+        "message": "允许业务配置管理员整理审批步骤；仍受模型 ACL 与记录规则约束。",
+        "source": "smart_construction_core",
+    },
+    "sc.document.admin.document": {
+        "allowed": True,
+        "delete_mode": "unlink",
+        "reason_code": "DELETE_POLICY_ALLOWED",
+        "message": "允许业务配置管理员整理行政档案；仍受模型 ACL 与记录规则约束。",
+        "source": "smart_construction_core",
+    },
+    "sc.hr.payroll.document": {
+        "allowed": True,
+        "delete_mode": "unlink",
+        "reason_code": "DELETE_POLICY_ALLOWED",
+        "message": "允许业务配置管理员整理薪酬档案；仍受模型 ACL 与记录规则约束。",
+        "source": "smart_construction_core",
+    },
+    "sc.office.admin.document": {
+        "allowed": True,
+        "delete_mode": "unlink",
+        "reason_code": "DELETE_POLICY_ALLOWED",
+        "message": "允许业务配置管理员整理办公行政资料；仍受模型 ACL 与记录规则约束。",
+        "source": "smart_construction_core",
+    },
+    "sc.project.stage.requirement.item": {
+        "allowed": True,
+        "delete_mode": "unlink",
+        "reason_code": "DELETE_POLICY_ALLOWED",
+        "message": "允许业务配置管理员整理阶段要求；仍受模型 ACL 与记录规则约束。",
+        "source": "smart_construction_core",
+    },
+    "sc.supplier.type": {
+        "allowed": True,
+        "delete_mode": "unlink",
+        "reason_code": "DELETE_POLICY_ALLOWED",
+        "message": "允许业务配置管理员整理供应商类型；仍受模型 ACL 与记录规则约束。",
         "source": "smart_construction_core",
     },
 }
@@ -577,10 +689,19 @@ def get_api_data_mutation_policy_contribution(env, model_name: str, op: str):
 
 
 def get_api_data_unlink_allowed_model_contributions(env):
-    return {
+    policies = {
         str(model_name): dict(policy)
         for model_name, policy in API_DATA_UNLINK_POLICIES.items()
     }
+    if env.user.has_group("smart_construction_core.group_sc_cap_business_config_admin"):
+        policies["project.project"] = {
+            "allowed": True,
+            "delete_mode": "unlink",
+            "reason_code": "DELETE_POLICY_ALLOWED",
+            "message": "允许业务配置管理员删除项目；如存在业务依赖会由项目删除规则阻断。",
+            "source": "smart_construction_core",
+        }
+    return policies
 
 
 def get_model_code_mapping_contributions(env):

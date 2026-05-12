@@ -377,27 +377,16 @@ const activeGroupChip = computed<SearchChip | null>(() =>
 );
 const showFilterColumn = computed(() =>
   props.showFilter
-  || props.showGroup
-  || props.showSavedFilter
   || allFilterChips.value.length > 0
-  || props.customFilterEnabled
-  || allGroupChips.value.length > 0
-  || allSavedFilterChips.value.length > 0,
+  || props.customFilterEnabled,
 );
 const showGroupColumn = computed(() =>
   props.showGroup
-  || props.showFilter
-  || props.showSavedFilter
-  || allFilterChips.value.length > 0
   || allGroupChips.value.length > 0
-  || props.customGroupEnabled
-  || allSavedFilterChips.value.length > 0
-  || props.favoriteSaveEnabled,
+  || props.customGroupEnabled,
 );
 const showSavedFilterColumn = computed(() =>
   props.showSavedFilter
-  || showFilterColumn.value
-  || showGroupColumn.value
   || allSavedFilterChips.value.length > 0
   || props.favoriteSaveEnabled,
 );

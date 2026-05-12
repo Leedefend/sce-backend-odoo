@@ -571,10 +571,35 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
     data_source = _ui_contract_data_source(model=model, view_type=view_type, fields=fields, record_id=record_id, source=source, ui=ui)
     if data_source:
         contract["dataContract"]["dataSource"]["primary"] = data_source
+    search_contract = _ui_search_contract(source, ui)
+    if search_contract:
+        contract["searchContract"] = search_contract
+        contract["dataContract"]["search"] = deepcopy(search_contract)
     _append_ui_contract_actions(contract, ui, source_widget_id="page.root", main_data=contract["dataContract"]["mainData"])
     _append_ui_contract_row_actions(contract, ui)
     _append_project_kanban_row_action(contract, model=model, view_type=view_type)
     return contract
+
+
+def _ui_search_contract(source: dict[str, Any], ui: dict[str, Any]) -> dict[str, Any]:
+    raw = ui.get("search") if isinstance(ui.get("search"), dict) else source.get("search")
+    search = _dict(raw)
+    if not search:
+        return {}
+    out: dict[str, Any] = {}
+    for key in ("default_sort", "default_order", "mode"):
+        value = search.get(key)
+        if _text(value):
+            out[key] = deepcopy(value)
+    for key in ("filters", "group_by", "fields"):
+        value = search.get(key)
+        if isinstance(value, list):
+            out[key] = deepcopy(value)
+    for key in ("search_panel", "searchpanel", "favorites", "custom", "ui_labels", "defaults"):
+        value = search.get(key)
+        if isinstance(value, dict):
+            out[key] = deepcopy(value)
+    return out
 
 
 def _field_rows(source: dict[str, Any], ui: dict[str, Any], *, view_type: str = "") -> list[dict[str, Any]]:
@@ -748,6 +773,9 @@ def _field_widget(field: dict[str, Any], *, layout_type: str) -> dict[str, Any]:
     field_type = _text(field.get("ttype") or field.get("type")).lower()
     if field_type:
         component_config["fieldType"] = field_type
+    selection = field.get("selection")
+    if field_type == "selection" and isinstance(selection, (list, tuple)):
+        component_config["selection"] = deepcopy(list(selection))
     if _text(field.get("relation")):
         component_config["relation"] = _text(field.get("relation"))
     relation_entry = _dict(field.get("relation_entry"))

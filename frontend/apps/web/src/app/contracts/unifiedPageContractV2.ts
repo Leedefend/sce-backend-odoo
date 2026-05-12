@@ -96,8 +96,10 @@ export type UnifiedPageContractV2 = {
     actionRuleList: UnifiedPageContractV2Action[];
     dependencyGraph?: Record<string, string[]>;
   };
+  searchContract?: Record<string, unknown>;
   dataContract: {
     dataSource?: Record<string, unknown>;
+    search?: Record<string, unknown>;
     dataMeta?: Record<string, unknown>;
   };
   runtimeContract: Record<string, unknown>;

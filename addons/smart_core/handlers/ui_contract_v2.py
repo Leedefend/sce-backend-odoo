@@ -126,6 +126,8 @@ class UiContractV2Handler(BaseIntentHandler):
             client_type=client_type,
             request_id=str(request_id),
         )
+        if isinstance(source_contract.get("delete_policy"), dict):
+            contract_v2["delete_policy"] = dict(source_contract.get("delete_policy") or {})
         contract_v2 = trim_unified_page_contract_v2(
             contract_v2,
             client_type=client_type,

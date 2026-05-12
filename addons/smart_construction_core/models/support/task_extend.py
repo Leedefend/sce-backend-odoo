@@ -2,12 +2,14 @@
 import json
 
 from odoo import api, fields, models
+from odoo.exceptions import UserError
 
 from .state_guard import raise_guard
 
 
 class ProjectTask(models.Model):
-    _inherit = "project.task"
+    _name = "project.task"
+    _inherit = ["project.task", "sc.delete.guard.mixin"]
 
     sc_state = fields.Selection(
         [
@@ -183,6 +185,13 @@ class ProjectTask(models.Model):
     def write(self, vals):
         self._ensure_no_direct_state_write(vals)
         return super().write(vals)
+
+    def unlink(self):
+        locked = self.filtered(lambda rec: rec.sc_state not in ("draft", "cancelled"))
+        if locked:
+            raise UserError("仅草稿或已取消的任务允许删除。")
+        self._sc_raise_delete_blockers(action_label="删除任务")
+        return super().unlink()
 
     def action_prepare_task(self):
         for task in self:

@@ -533,7 +533,8 @@
 <script setup lang="ts">
 import { computed, inject, onBeforeUnmount, onErrorCaptured, onMounted, ref, watch, type Ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { batchUpdateRecords, listRecordsRaw, saveSearchFavorite, writeRecord } from '../api/data';
+import { batchUpdateRecords, listRecordsRaw, saveSearchFavorite, unlinkRecord, writeRecord } from '../api/data';
+import { ApiError } from '../api/client';
 import { getUserViewPreference, setUserViewPreference } from '../api/preferences';
 import { executeButton } from '../api/executeButton';
 import { trackUsageEvent } from '../api/usage';
@@ -710,6 +711,7 @@ import {
 } from '../app/runtime/actionViewBatchRuntime';
 import {
   resolveBatchActionGuardDecision,
+  resolveBatchDeleteExecutionSeed,
   resolveBatchStandardExecutionSeed,
 } from '../app/runtime/actionViewBatchActionFlowRuntime';
 import { applyActionViewLoadResetState } from '../app/runtime/actionViewLoadResetRuntime';
@@ -1672,11 +1674,13 @@ const {
 
 const selectionActions = computed(() => {
   return allowedBatchActions.value
-    .filter((action): action is 'archive' | 'activate' => action === 'archive' || action === 'activate')
+    .filter((action): action is 'archive' | 'activate' | 'delete' => action === 'archive' || action === 'activate' || action === 'delete')
     .map((action) => ({
       key: `batch:${action}`,
-      label: toolbarUiLabel(action === 'activate' ? 'batch_label_activate' : 'batch_label_archive', action === 'activate' ? '批量激活' : '批量归档'),
-      enabled: Boolean(activeField.value),
+      label: action === 'delete'
+        ? toolbarUiLabel('batch_label_delete', '批量删除')
+        : toolbarUiLabel(action === 'activate' ? 'batch_label_activate' : 'batch_label_archive', action === 'activate' ? '批量激活' : '批量归档'),
+      enabled: action === 'delete' ? String(batchPolicy.value.delete_mode || 'none') === 'unlink' : Boolean(activeField.value),
       hint: '',
     }));
 });
@@ -1684,7 +1688,7 @@ const selectionActions = computed(() => {
 function handleSelectionAction(key: string) {
   if (key.startsWith('batch:')) {
     const action = key.slice('batch:'.length);
-    if (action === 'archive' || action === 'activate') {
+    if (action === 'archive' || action === 'activate' || action === 'delete') {
       void runBatchPolicyAction(action);
     }
     return;
@@ -1694,7 +1698,15 @@ function handleSelectionAction(key: string) {
   void runContractAction(target as ContractActionButton);
 }
 
-async function runBatchPolicyAction(action: 'archive' | 'activate') {
+function resolveBatchDeleteFailureMessage(err: unknown) {
+  if (err instanceof ApiError) {
+    const message = String(err.message || '').trim();
+    if (message) return message;
+  }
+  return resolveBatchActionFailureMessage({ action: 'delete', text: toolbarUiLabel });
+}
+
+async function runBatchPolicyAction(action: 'archive' | 'activate' | 'delete') {
   const targetModel = String(resolvedModelRef.value || model.value || '').trim();
   const selected = [...selectedIds.value];
   if (!allowedBatchActions.value.includes(action)) {
@@ -1713,6 +1725,42 @@ async function runBatchPolicyAction(action: 'archive' | 'activate') {
       reason: guard.reason as 'missing_target_model' | 'missing_selection' | 'active_field_required' | 'delete_mode_unavailable',
       text: toolbarUiLabel,
     });
+    return;
+  }
+  if (action === 'delete') {
+    if (!confirm(toolbarUiLabel('batch_confirm_delete', `确认删除选中的 ${selected.length} 条记录？`))) {
+      return;
+    }
+    const seed = resolveBatchDeleteExecutionSeed({
+      selectedIds: selected,
+      buildIfMatchMap,
+      buildIdempotencyKey,
+    });
+    batchBusy.value = true;
+    try {
+      const result = await unlinkRecord({
+        model: targetModel,
+        ids: selected,
+        context: resolveEffectiveRequestContext(),
+        idempotencyKey: seed.idempotencyKey,
+      });
+      const resultMessage = resolveBatchActionResultMessage({
+        action,
+        idempotentReplay: result.idempotent_replay === true,
+        succeeded: Array.isArray(result.ids) ? result.ids.length : selected.length,
+        failed: 0,
+        text: toolbarUiLabel,
+      });
+      clearSelection();
+      await requestLoadPage();
+      batchMessage.value = resultMessage;
+    } catch (err) {
+      batchMessage.value = action === 'delete'
+        ? resolveBatchDeleteFailureMessage(err)
+        : resolveBatchActionFailureMessage({ action, text: toolbarUiLabel });
+    } finally {
+      batchBusy.value = false;
+    }
     return;
   }
   const activeValue = action === 'activate'

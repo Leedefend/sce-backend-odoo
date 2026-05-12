@@ -43,6 +43,13 @@ function resolveV2SourceContext(v2Contract: unknown): Dict {
   return asDict(dataMeta.sourceContext || runtime.sourceContext);
 }
 
+function resolveV2SearchContract(v2Contract: unknown): Dict {
+  const root = asDict(v2Contract);
+  const dataContract = asDict(root.dataContract);
+  const dataMeta = asDict(dataContract.dataMeta);
+  return asDict(root.searchContract || root.search || dataContract.search || dataMeta.search);
+}
+
 function stableFieldName(name: string) {
   return String(name || '').trim();
 }
@@ -105,8 +112,13 @@ function buildLegacyFieldDescriptor(widget: UnifiedPageContractV2Widget, mainDat
   if (Object.keys(relationEntry).length) {
     descriptor.relation_entry = relationEntry;
   }
-  if (type === 'selection' && Array.isArray(value)) {
-    descriptor.selection = value;
+  const selection = Array.isArray(componentConfig.selection)
+    ? componentConfig.selection
+    : Array.isArray(value)
+      ? value
+      : [];
+  if (type === 'selection' && selection.length) {
+    descriptor.selection = selection;
   }
   return descriptor;
 }
@@ -265,6 +277,33 @@ function buildSurfaceMapping(surface: string, renderMode: string, sourceMode: st
   };
 }
 
+function collectV2DeletePolicyCandidates(value: unknown, out: Dict[] = []): Dict[] {
+  if (!value) return out;
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectV2DeletePolicyCandidates(item, out));
+    return out;
+  }
+  if (typeof value !== 'object') return out;
+  const node = asDict(value);
+  const candidate = asDict(node.delete_policy);
+  if (candidate.model) {
+    out.push(candidate);
+  }
+  Object.values(node).forEach((child) => collectV2DeletePolicyCandidates(child, out));
+  return out;
+}
+
+function resolveV2DeletePolicy(v2Contract: Dict, model: string): Dict {
+  const targetModel = String(model || '').trim();
+  if (!targetModel) return {};
+  const topLevel = asDict(v2Contract.delete_policy);
+  if (String(topLevel.model || '').trim() === targetModel) {
+    return topLevel;
+  }
+  const candidates = collectV2DeletePolicyCandidates(v2Contract, []);
+  return candidates.find((item) => String(item.model || '').trim() === targetModel) || {};
+}
+
 function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}): Dict {
   const pageInfo = asDict(v2Contract.pageInfo);
   const sourceContext = resolveV2SourceContext(v2Contract);
@@ -277,6 +316,7 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
     : [];
   const mainData = resolveUnifiedPageContractV2MainData(v2Contract);
   const v2SourceContext = resolveUnifiedPageContractV2SourceContext(v2Contract);
+  const v2SearchContract = resolveV2SearchContract(v2Contract);
   const globalStatus = resolveUnifiedPageContractV2GlobalStatus(v2Contract);
   const layoutButtons = collectV2LayoutButtons(v2Contract);
   const statusbar = collectV2Statusbar(v2Contract);
@@ -345,6 +385,26 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
       },
     },
   };
+  const rights = asDict(asDict(head.permissions).rights);
+  const activeField = fieldNames.includes('active') ? 'active' : '';
+  const writeAllowed = rights.write !== false;
+  const deletePolicy = resolveV2DeletePolicy(v2Contract, model);
+  const unlinkAllowed = deletePolicy.allowed === true && String(deletePolicy.delete_mode || '').trim().toLowerCase() === 'unlink';
+  const batchActions: string[] = [];
+  if (writeAllowed && activeField) {
+    batchActions.push('archive', 'activate');
+  }
+  if (writeAllowed && unlinkAllowed) {
+    batchActions.push('delete');
+  }
+  const batchPolicy = {
+    enabled: batchActions.length > 0,
+    active_field: activeField,
+    archive_value: activeField ? false : null,
+    activate_value: activeField ? true : null,
+    delete_mode: unlinkAllowed ? 'unlink' : 'none',
+    available_actions: batchActions,
+  };
   const formLayout = buildLegacyFormLayout(v2Fields, fieldLabels);
   const subviews = buildLegacySubViews(v2Fields, mainData, model);
   const chatterEnabled = fieldNames.some((name) => ['message_ids', 'message_follower_ids', 'website_message_ids'].includes(name));
@@ -401,6 +461,7 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
       form: formView,
       ...(viewType !== 'form' ? { [viewType]: formView } : {}),
     },
+    ...(Object.keys(v2SearchContract).length ? { search: v2SearchContract } : {}),
     visible_fields: fieldNames,
     list_profile: (
       !v2Fields.length
@@ -425,6 +486,7 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
             locked_columns: [],
             must_request_columns: fallbackListColumns,
           },
+          batch_policy: batchPolicy,
         }
       : undefined,
     field_groups: [],
@@ -432,6 +494,10 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
     render_mode: renderMode,
     source_mode: sourceMode,
     governed_from_native: contractSurface !== 'native',
+    surface_policies: {
+      delete_mode: batchPolicy.delete_mode,
+      batch_policy: batchPolicy,
+    },
     surface_mapping: buildSurfaceMapping(contractSurface, renderMode, sourceMode),
     __v2_main_data: mainData,
     __v2_source_context: v2SourceContext,

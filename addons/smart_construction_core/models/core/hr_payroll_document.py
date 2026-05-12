@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
 from odoo import _, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 
 
 class ScHrPayrollDocument(models.Model):
     _name = "sc.hr.payroll.document"
     _description = "人事薪酬办理单"
-    _inherit = ["sc.business.fact.mixin", "mail.thread", "mail.activity.mixin"]
+    _inherit = ["sc.business.fact.mixin", "mail.thread", "mail.activity.mixin", "sc.delete.guard.mixin"]
     _order = "period_year desc, period_month desc, business_date desc, id desc"
 
     def _selection_fact_type(self):
@@ -94,3 +94,10 @@ class ScHrPayrollDocument(models.Model):
 
             if record.period_month and (record.period_month < 1 or record.period_month > 12):
                 raise ValidationError(_("月份必须在 1 到 12 之间。"))
+
+    def unlink(self):
+        locked = self.filtered(lambda rec: rec.state not in ("draft", "cancel"))
+        if locked:
+            raise UserError("仅草稿或已取消的人事薪酬办理单允许删除。")
+        self._sc_raise_delete_blockers(action_label="删除人事薪酬办理单")
+        return super().unlink()
