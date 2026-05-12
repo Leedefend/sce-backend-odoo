@@ -5,6 +5,7 @@ from __future__ import annotations
 import importlib.util
 from pathlib import Path
 import sys
+import types
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -13,7 +14,22 @@ SYSTEM_INIT_PATH = ROOT / "addons" / "smart_core" / "handlers" / "system_init.py
 
 
 def _load_builder():
-    spec = importlib.util.spec_from_file_location("scene_governance_payload_builder_guard", BUILDER_PATH)
+    package_paths = {
+        "odoo": ROOT,
+        "odoo.addons": ROOT / "addons",
+        "odoo.addons.smart_core": ROOT / "addons" / "smart_core",
+        "odoo.addons.smart_core.core": ROOT / "addons" / "smart_core" / "core",
+    }
+    for package_name, package_path in package_paths.items():
+        if package_name in sys.modules:
+            continue
+        package = types.ModuleType(package_name)
+        package.__path__ = [str(package_path)]  # type: ignore[attr-defined]
+        sys.modules[package_name] = package
+    spec = importlib.util.spec_from_file_location(
+        "odoo.addons.smart_core.core.scene_governance_payload_builder",
+        BUILDER_PATH,
+    )
     if spec is None or spec.loader is None:
         raise RuntimeError(f"spec unavailable: {BUILDER_PATH}")
     module = importlib.util.module_from_spec(spec)

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-import importlib.util
+import importlib
 import json
 import sys
 from pathlib import Path
@@ -37,12 +37,10 @@ def _load_json(path: Path) -> Dict[str, Any]:
 
 
 def _load_scene_compile():
-    spec = importlib.util.spec_from_file_location("scene_dsl_compiler_guard", COMPILER_PATH)
-    if spec is None or spec.loader is None:
-        raise RuntimeError(f"spec unavailable: {COMPILER_PATH}")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
+    addons_path = str(ROOT / "addons")
+    if addons_path not in sys.path:
+        sys.path.insert(0, addons_path)
+    module = importlib.import_module("smart_core.core.scene_dsl_compiler")
     fn = getattr(module, "scene_compile", None)
     if not callable(fn):
         raise RuntimeError("scene_compile not found")

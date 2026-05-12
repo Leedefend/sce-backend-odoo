@@ -5,18 +5,18 @@
 - delivery_scope_scene_count: 22
 - assigned_scope_scene_count: 22
 - unassigned_scope_scene_count: 0
-- unknown_scene_ref_count: 22
-- unknown_capability_ref_count: 42
-- error_count: 2
-- warning_count: 0
+- unknown_scene_ref_count: 0
+- unknown_capability_ref_count: 0
+- error_count: 0
+- warning_count: 2
 
 ## Acceptance
 
 - module_count_le_10: PASS
 - each_module_has_scene: PASS
 - scope_scene_unassigned_eq_0: PASS
-- unknown_scene_ref_eq_0: FAIL
-- unknown_capability_ref_eq_0: FAIL
+- unknown_scene_ref_eq_0: PASS
+- unknown_capability_ref_eq_0: PASS
 
 | module_key | module_name | target_roles | entry_scenes | capabilities |
 |---|---|---|---|---|

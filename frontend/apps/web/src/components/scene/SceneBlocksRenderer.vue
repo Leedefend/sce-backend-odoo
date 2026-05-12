@@ -247,13 +247,6 @@ function toolbarText(block: SceneBlock, key: string) {
   return '';
 }
 
-function bodyHint(block: SceneBlock) {
-  if (block.kind === 'list_view') return '列表场景块';
-  if (block.kind === 'kanban_board') return '看板场景块';
-  if (block.kind === 'body') return '表单主体场景块';
-  return '场景内容块';
-}
-
 function statusbarStates(block: SceneBlock) {
   const payload = block.payload && typeof block.payload === 'object' ? block.payload : {};
   const workflow = (payload as Record<string, unknown>).workflow_surface;

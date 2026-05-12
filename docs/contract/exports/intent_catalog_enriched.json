@@ -5,7 +5,9 @@
     {
       "intent_type": "api.data",
       "class_name": "ApiDataHandler",
-      "required_groups": [],
+      "required_groups": [
+        "base.group_user"
+      ],
       "etag_enabled": false,
       "has_test_file": true,
       "has_smoke_make_target": false,
@@ -1468,7 +1470,7 @@
       "is_write": false,
       "acl_mode": "",
       "layer": "domain",
-      "orm_used": false,
+      "orm_used": true,
       "may_trigger_sudo": false,
       "source": "addons/smart_core/handlers/ui_contract_v2.py"
     },

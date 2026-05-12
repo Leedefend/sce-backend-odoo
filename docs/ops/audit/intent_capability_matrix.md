@@ -10,7 +10,7 @@
 
 | intent_type | layer | required_groups | acl_mode | etag_enabled | has_test | has_smoke_target | is_write | orm_used | may_sudo | source |
 |---|---|---:|---|---:|---:|---:|---:|---:|---:|---|
-| api.data | core | 0 | - | N | Y | N | N | Y | Y | addons/smart_core/handlers/api_data.py |
+| api.data | core | 1 | - | N | Y | N | N | Y | Y | addons/smart_core/handlers/api_data.py |
 | api.data.batch | core | 1 | explicit_check | N | Y | N | Y | Y | N | addons/smart_core/handlers/api_data_batch.py |
 | api.data.create | core | 1 | explicit_check | N | Y | N | Y | Y | N | addons/smart_core/handlers/api_data_write.py |
 | api.data.unlink | core | 1 | explicit_check | N | Y | N | Y | Y | N | addons/smart_core/handlers/api_data_unlink.py |
@@ -88,7 +88,7 @@
 | telemetry.track | domain | 1 | explicit_check | N | Y | N | Y | N | N | addons/smart_construction_core/handlers/telemetry_track.py |
 | terminal.shell.v2 | domain | 0 | - | N | Y | N | N | N | N | addons/smart_core/handlers/terminal_shell_v2.py |
 | ui.contract | core | 0 | - | Y | Y | Y | N | Y | Y | addons/smart_core/handlers/ui_contract.py |
-| ui.contract.v2 | domain | 0 | - | N | Y | N | N | N | N | addons/smart_core/handlers/ui_contract_v2.py |
+| ui.contract.v2 | domain | 0 | - | N | Y | N | N | Y | N | addons/smart_core/handlers/ui_contract_v2.py |
 | usage.export.csv | domain | 1 | - | N | Y | N | N | Y | Y | addons/smart_construction_core/handlers/usage_export_csv.py |
 | usage.report | domain | 0 | - | N | Y | N | N | Y | Y | addons/smart_construction_core/handlers/usage_report.py |
 | usage.track | domain | 1 | explicit_check | N | Y | Y | Y | N | Y | addons/smart_construction_core/handlers/usage_track.py |

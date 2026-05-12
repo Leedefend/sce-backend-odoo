@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from intent_smoke_utils import require_ok
@@ -65,13 +65,23 @@ def _fetch_consumption() -> dict:
 
     status, init_resp = http_post_json(
         intent_url,
-        {"intent": "system.init", "params": {"contract_mode": "user"}},
+        {
+            "intent": "system.init",
+            "params": {"contract_mode": "user", "build_mode": "debug"},
+        },
         headers={"Authorization": f"Bearer {token}"},
     )
     require_ok(status, init_resp, "system.init")
 
     data = init_resp.get("data") if isinstance(init_resp.get("data"), dict) else {}
     governance = data.get("scene_governance_v1") if isinstance(data.get("scene_governance_v1"), dict) else {}
+    if not governance:
+        startup_inspect = data.get("startup_inspect") if isinstance(data.get("startup_inspect"), dict) else {}
+        governance = (
+            startup_inspect.get("scene_governance_v1")
+            if isinstance(startup_inspect.get("scene_governance_v1"), dict)
+            else {}
+        )
     consumption = governance.get("scene_ready_consumption") if isinstance(governance.get("scene_ready_consumption"), dict) else {}
     aggregate = consumption.get("aggregate") if isinstance(consumption.get("aggregate"), dict) else {}
     base_rate = aggregate.get("base_fact_consumption_rate") if isinstance(aggregate.get("base_fact_consumption_rate"), dict) else {}
@@ -138,7 +148,7 @@ def main() -> int:
                 "live_fetch_error": fetch_error,
             }
 
-    current["captured_at"] = datetime.utcnow().isoformat(timespec="seconds") + "Z"
+    current["captured_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     live_available = not bool(current.get("live_fetch_skipped", False))
 
     enabled = bool(current.get("enabled", False))
