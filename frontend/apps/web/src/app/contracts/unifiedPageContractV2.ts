@@ -160,11 +160,30 @@ function synthesizeUnifiedPageContractV2Widget(row: Dict): UnifiedPageContractV2
       ...(componentConfig || {}),
       ...(asText(fieldInfo.type || fieldInfo.ttype) ? { fieldType: asText(fieldInfo.type || fieldInfo.ttype) } : {}),
       ...(asText(fieldInfo.relation) ? { relation: asText(fieldInfo.relation) } : {}),
+      ...(Array.isArray(fieldInfo.selection) ? { selection: fieldInfo.selection } : {}),
       ...(Object.keys(relationEntry).length ? { relationEntry } : {}),
-      ...(asDict(fieldInfo.widget_options).color_field ? { widgetOptions: asDict(fieldInfo.widget_options) } : {}),
+      ...(Object.keys(asDict(fieldInfo.widget_options)).length ? { widgetOptions: asDict(fieldInfo.widget_options) } : {}),
     },
     fieldType: asText(fieldInfo.type || fieldInfo.ttype) || undefined,
     relation: asText(fieldInfo.relation) || undefined,
+  };
+}
+
+function mergeUnifiedPageContractV2Widget(existing: UnifiedPageContractV2Widget, candidate: UnifiedPageContractV2Widget): UnifiedPageContractV2Widget {
+  const existingConfig = asDict(existing.componentConfig);
+  const candidateConfig = asDict(candidate.componentConfig);
+  return {
+    ...existing,
+    widgetType: existing.widgetType || candidate.widgetType,
+    fieldCode: existing.fieldCode || candidate.fieldCode,
+    label: existing.label || candidate.label,
+    componentKey: existing.componentKey || candidate.componentKey,
+    componentConfig: {
+      ...existingConfig,
+      ...candidateConfig,
+    },
+    fieldType: existing.fieldType || candidate.fieldType,
+    relation: existing.relation || candidate.relation,
   };
 }
 
@@ -196,19 +215,29 @@ export function collectUnifiedPageContractV2Widgets(contract: unknown): UnifiedP
   const v2 = resolveUnifiedPageContractV2(contract);
   if (!v2) return [];
   const out: UnifiedPageContractV2Widget[] = [];
-  const seen = new Set<string>();
+  const byWidgetId = new Map<string, number>();
   walkUnifiedPageContractV2LayoutNodes(v2.layoutContract.containerTree, (row) => {
     asList(row.widgetList).forEach((widgetRaw) => {
       const widget = asDict(widgetRaw);
       const synthesized = synthesizeUnifiedPageContractV2Widget(widget);
-      if (!synthesized || seen.has(synthesized.widgetId)) return;
-      seen.add(synthesized.widgetId);
+      if (!synthesized) return;
+      const existingIndex = byWidgetId.get(synthesized.widgetId);
+      if (typeof existingIndex === 'number') {
+        out[existingIndex] = mergeUnifiedPageContractV2Widget(out[existingIndex], synthesized);
+        return;
+      }
+      byWidgetId.set(synthesized.widgetId, out.length);
       out.push(synthesized);
     });
     if (asText(row.type || row.kind).toLowerCase() !== 'field') return;
     const synthesized = synthesizeUnifiedPageContractV2Widget(row);
-    if (!synthesized || seen.has(synthesized.widgetId)) return;
-    seen.add(synthesized.widgetId);
+    if (!synthesized) return;
+    const existingIndex = byWidgetId.get(synthesized.widgetId);
+    if (typeof existingIndex === 'number') {
+      out[existingIndex] = mergeUnifiedPageContractV2Widget(out[existingIndex], synthesized);
+      return;
+    }
+    byWidgetId.set(synthesized.widgetId, out.length);
     out.push(synthesized);
   });
   return out;

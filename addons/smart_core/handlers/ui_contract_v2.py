@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+from copy import deepcopy
 from typing import Any, Dict, Optional
 
 from ..core.base_handler import BaseIntentHandler
@@ -97,6 +98,13 @@ class UiContractV2Handler(BaseIntentHandler):
         if isinstance(nested_ui_contract, dict):
             source_contract.update(nested_ui_contract)
         nested_data = ui_data.get("data") if isinstance(ui_data.get("data"), dict) else {}
+        source_record = (
+            ui_data.get("record")
+            if isinstance(ui_data.get("record"), dict)
+            else nested_data.get("record")
+            if isinstance(nested_data.get("record"), dict)
+            else {}
+        )
         source_contract.update({
             "model": model,
             "view_type": view_type,
@@ -111,15 +119,18 @@ class UiContractV2Handler(BaseIntentHandler):
                 or params.get("context")
                 or {}
             ),
-            "record": (
-                ui_data.get("record")
-                if isinstance(ui_data.get("record"), dict)
-                else nested_data.get("record")
-                if isinstance(nested_data.get("record"), dict)
-                else {}
-            ),
+            "record": source_record,
             "source_meta": ui_meta,
         })
+        hydrated_record = self._hydrate_record_snapshot(
+            model=str(model or "").strip(),
+            record_id=params.get("record_id") or params.get("recordId") or ui_params.get("record_id") or ui_params.get("recordId"),
+            source_contract=source_contract,
+            current_record=source_record,
+            view_type=str(view_type or "").strip().lower(),
+        )
+        if hydrated_record:
+            source_contract["record"] = hydrated_record
         contract_v2 = assemble_unified_page_contract_v2(
             source_contract,
             source_type="ui.contract",
@@ -151,6 +162,51 @@ class UiContractV2Handler(BaseIntentHandler):
                 "source_authority": self.source_authority_contract(),
             },
         )
+
+    def _hydrate_record_snapshot(
+        self,
+        *,
+        model: str,
+        record_id: Any,
+        source_contract: dict[str, Any],
+        current_record: dict[str, Any],
+        view_type: str,
+    ) -> dict[str, Any]:
+        if view_type != "form" or not model:
+            return dict(current_record or {}) if isinstance(current_record, dict) else {}
+        record_id_int, _record_id_error = parse_positive_int(record_id, allow_empty=True)
+        record_id_int = int(record_id_int or 0)
+        if record_id_int <= 0:
+            return dict(current_record or {}) if isinstance(current_record, dict) else {}
+        field_map = source_contract.get("fields") if isinstance(source_contract.get("fields"), dict) else {}
+        field_names = [str(name).strip() for name in field_map.keys() if str(name).strip()]
+        if "id" not in field_names:
+            field_names.insert(0, "id")
+        if not field_names:
+            return dict(current_record or {}) if isinstance(current_record, dict) else {}
+        merged = deepcopy(current_record) if isinstance(current_record, dict) else {}
+        try:
+            record = self.env[model].browse(record_id_int).exists()
+            if not record:
+                return merged
+            rows = record.read(field_names)
+            if rows and isinstance(rows[0], dict):
+                merged.update(rows[0])
+        except Exception:
+            _logger.debug("ui.contract.v2 bulk record hydration skipped; falling back to per-field read", exc_info=True)
+            try:
+                record = self.env[model].browse(record_id_int).exists()
+            except Exception:
+                record = None
+            if record:
+                for name in field_names:
+                    try:
+                        rows = record.read([name])
+                        if rows and isinstance(rows[0], dict) and name in rows[0]:
+                            merged[name] = rows[0].get(name)
+                    except Exception:
+                        _logger.debug("ui.contract.v2 field hydration skipped: %s.%s", model, name, exc_info=True)
+        return merged
 
     def _handle_scene_contract(self, params: dict[str, Any], *, client_type: str, delivery_profile: str):
         scene_key = str(params.get("scene_key") or params.get("sceneKey") or "").strip()
