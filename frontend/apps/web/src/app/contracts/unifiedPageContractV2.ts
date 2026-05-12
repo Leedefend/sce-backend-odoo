@@ -7,6 +7,8 @@ export type UnifiedPageContractV2Widget = {
   label: string;
   componentKey: string;
   componentConfig?: Record<string, unknown>;
+  fieldType?: string;
+  relation?: string;
 };
 
 export type UnifiedPageContractV2Container = {
@@ -145,13 +147,22 @@ function synthesizeUnifiedPageContractV2Widget(row: Dict): UnifiedPageContractV2
   const label = asText(row.label || row.string || row.title || fieldInfo.label || fieldCode);
   const componentKey = asText(row.componentKey || fieldInfo.componentKey);
   const componentConfig = asDict(row.componentConfig || fieldInfo.componentConfig || attributes.componentConfig);
+  const relationEntry = asDict(fieldInfo.relation_entry || fieldInfo.relationEntry || componentConfig.relationEntry || componentConfig.relation_entry);
   return {
     widgetId,
     widgetType,
     fieldCode,
     label,
     componentKey: componentKey || 'sc.display.text',
-    componentConfig,
+    componentConfig: {
+      ...(componentConfig || {}),
+      ...(asText(fieldInfo.type || fieldInfo.ttype) ? { fieldType: asText(fieldInfo.type || fieldInfo.ttype) } : {}),
+      ...(asText(fieldInfo.relation) ? { relation: asText(fieldInfo.relation) } : {}),
+      ...(Object.keys(relationEntry).length ? { relationEntry } : {}),
+      ...(asDict(fieldInfo.widget_options).color_field ? { widgetOptions: asDict(fieldInfo.widget_options) } : {}),
+    },
+    fieldType: asText(fieldInfo.type || fieldInfo.ttype) || undefined,
+    relation: asText(fieldInfo.relation) || undefined,
   };
 }
 

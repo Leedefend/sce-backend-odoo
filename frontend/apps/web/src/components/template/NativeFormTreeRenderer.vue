@@ -26,6 +26,7 @@
               :field-schemas-for-nodes="fieldSchemasForNodes"
               :is-node-visible="isNodeVisible"
               :button-label-resolver="buttonLabelResolver"
+              :native-action-handler="nativeActionHandler"
               :columns="columns"
               @field-change="emit('field-change', $event)"
               @native-action="emit('native-action', $event)"
@@ -41,6 +42,54 @@
               </template>
             </NativeFormTreeRenderer>
           </div>
+        </template>
+
+        <template v-else-if="nodeType(node) === 'h1' && titleFieldForNode(node)">
+          <div class="native-title-row">
+            <button
+              v-if="titleFieldForNode(node)?.favoriteToggle"
+              type="button"
+              class="native-title-favorite"
+              :class="{ 'native-title-favorite--active': titleFieldForNode(node)?.favoriteToggle?.active }"
+              :aria-label="titleFieldForNode(node)?.favoriteToggle?.label"
+              :aria-pressed="titleFieldForNode(node)?.favoriteToggle?.active"
+              :title="titleFieldForNode(node)?.favoriteToggle?.label"
+              :disabled="titleFieldForNode(node)?.favoriteToggle?.readonly"
+              @click="emitTitleFavoriteToggle(titleFieldForNode(node))"
+            >
+              <span aria-hidden="true">{{ titleFieldForNode(node)?.favoriteToggle?.active ? '★' : '☆' }}</span>
+            </button>
+            <input
+              v-if="!titleFieldForNode(node)?.readonly"
+              class="native-title-input"
+              type="text"
+              :value="titleFieldValue(titleFieldForNode(node))"
+              :aria-label="titleFieldForNode(node)?.label"
+              @input="emitTitleFieldChange(titleFieldForNode(node), ($event.target as HTMLInputElement).value)"
+            />
+            <h1 v-else class="native-title-text">{{ titleFieldValue(titleFieldForNode(node)) || titleFieldForNode(node)?.label }}</h1>
+          </div>
+          <NativeFormTreeRenderer
+            v-if="containerChildren(node).length"
+            :nodes="containerChildren(node)"
+            :field-schemas-for-nodes="fieldSchemasForNodes"
+            :is-node-visible="isNodeVisible"
+            :button-label-resolver="buttonLabelResolver"
+            :native-action-handler="nativeActionHandler"
+            :columns="columns"
+            @field-change="emit('field-change', $event)"
+            @native-action="emit('native-action', $event)"
+          >
+            <template #readonly="{ field }">
+              <slot name="readonly" :field="field" />
+            </template>
+            <template #fallback="{ field }">
+              <slot name="fallback" :field="field" />
+            </template>
+            <template #chatter="{ node: chatterNode }">
+              <slot name="chatter" :node="chatterNode" />
+            </template>
+          </NativeFormTreeRenderer>
         </template>
 
         <template v-else>
@@ -105,6 +154,7 @@
             :field-schemas-for-nodes="fieldSchemasForNodes"
             :is-node-visible="isNodeVisible"
             :button-label-resolver="buttonLabelResolver"
+            :native-action-handler="nativeActionHandler"
             :columns="columns"
             @field-change="emit('field-change', $event)"
             @native-action="emit('native-action', $event)"
@@ -185,10 +235,12 @@ const props = withDefaults(defineProps<{
   fieldSchemasForNodes: (nodes: NativeFormLayoutNode[]) => FormSectionFieldSchema[];
   isNodeVisible?: (node: NativeFormLayoutNode) => boolean;
   buttonLabelResolver?: (node: NativeFormLayoutNode) => string | undefined;
+  nativeActionHandler?: (payload: Record<string, unknown>) => void | Promise<void>;
   columns?: 1 | 2;
 }>(), {
   columns: 2,
   isNodeVisible: () => true,
+  nativeActionHandler: undefined,
 });
 
 const emit = defineEmits<{
@@ -243,6 +295,37 @@ function rawChildren(node: NativeFormLayoutNode) {
 
 function fieldChildren(node: NativeFormLayoutNode) {
   return rawChildren(node).filter((child) => nodeType(child) === 'field' && isNodeRenderable(child));
+}
+
+function titleFieldForNode(node: NativeFormLayoutNode) {
+  return props.fieldSchemasForNodes(fieldChildren(node))[0];
+}
+
+function titleFieldValue(field?: FormSectionFieldSchema) {
+  if (!field) return '';
+  return String(field.inputValue ?? field.value ?? '').trim();
+}
+
+function emitTitleFieldChange(field: FormSectionFieldSchema | undefined, value: string) {
+  if (!field) return;
+  emit('field-change', {
+    name: field.name,
+    type: field.type,
+    widget: field.widget,
+    value,
+    descriptor: field.descriptor,
+  });
+}
+
+function emitTitleFavoriteToggle(field: FormSectionFieldSchema | undefined) {
+  const favorite = field?.favoriteToggle;
+  if (!favorite || favorite.readonly) return;
+  emit('field-change', {
+    name: favorite.name,
+    type: 'boolean',
+    value: !favorite.active,
+    descriptor: favorite.descriptor,
+  });
 }
 
 function buttonChildren(node: NativeFormLayoutNode) {
@@ -363,20 +446,30 @@ function buttonIcon(node: NativeFormLayoutNode) {
 }
 
 function emitNativeAction(node: NativeFormLayoutNode) {
-  const action = node.action && typeof node.action === 'object'
-    ? node.action
-    : {
-      name: node.name || '',
-      label: buttonLabel(node),
-      kind: String(node.buttonType || 'object') === 'action' ? 'open' : 'object',
-      level: 'body',
-      selection: 'none',
-      payload: {
-        method: String(node.buttonType || 'object') === 'object' ? node.name || '' : '',
-        ref: String(node.buttonType || 'object') === 'action' ? node.name || '' : '',
-        type: node.buttonType || 'object',
-      },
-    };
+  const buttonType = String(node.buttonType || 'object');
+  const rawAction = node.action && typeof node.action === 'object' ? node.action : {};
+  const rawPayload = rawAction.payload && typeof rawAction.payload === 'object' && !Array.isArray(rawAction.payload)
+    ? rawAction.payload as Record<string, unknown>
+    : {};
+  const action = {
+    ...rawAction,
+    name: rawAction.name || node.name || '',
+    label: rawAction.label || buttonLabel(node),
+    kind: rawAction.kind || (buttonType === 'action' ? 'open' : 'object'),
+    buttonType,
+    level: rawAction.level || 'body',
+    selection: rawAction.selection || 'none',
+    payload: {
+      ...rawPayload,
+      method: rawPayload.method || (buttonType === 'object' ? node.name || '' : ''),
+      ref: rawPayload.ref || (buttonType === 'action' ? node.name || '' : ''),
+      type: rawPayload.type || buttonType,
+    },
+  };
+  if (props.nativeActionHandler) {
+    void props.nativeActionHandler(action);
+    return;
+  }
   emit('native-action', action);
 }
 
@@ -511,12 +604,14 @@ function closeMore(node: NativeFormLayoutNode) {
 
 .native-actions--smart {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(104px, max-content));
   gap: 1px;
   border: 1px solid #dbe3ee;
   border-radius: 8px;
   overflow: hidden;
   background: #dbe3ee;
+  width: fit-content;
+  max-width: 100%;
 }
 
 .native-action-btn {
@@ -619,5 +714,58 @@ function closeMore(node: NativeFormLayoutNode) {
 .native-action-btn--smart:hover {
   background: #f8fafc;
   color: #0f172a;
+}
+
+.native-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.native-title-favorite {
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  font-size: 27px;
+  line-height: 1;
+  padding: 0 2px;
+  cursor: pointer;
+}
+
+.native-title-favorite--active {
+  color: #f59e0b;
+}
+
+.native-title-favorite:disabled {
+  cursor: default;
+  opacity: 0.65;
+}
+
+.native-title-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: #111827;
+  font-size: 27px;
+  font-weight: 600;
+  line-height: 1.25;
+  padding: 2px 0;
+  letter-spacing: 0;
+}
+
+.native-title-input:focus {
+  outline: none;
+  box-shadow: inset 0 -2px 0 #2563eb;
+}
+
+.native-title-text {
+  margin: 0;
+  color: #111827;
+  font-size: 27px;
+  font-weight: 600;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 </style>

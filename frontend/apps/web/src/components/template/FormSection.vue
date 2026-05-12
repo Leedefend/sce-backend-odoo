@@ -85,7 +85,6 @@
                     <input
                       class="input"
                       type="text"
-                      :list="many2oneListId(field)"
                       :value="many2oneTextValue(field)"
                       :placeholder="selectPlaceholderText(field)"
                       autocomplete="off"
@@ -94,36 +93,49 @@
                       @keydown.enter.prevent="emitMany2oneCommit(field, ($event.target as HTMLInputElement).value)"
                       @blur="emitMany2oneCommit(field, ($event.target as HTMLInputElement).value)"
                     />
-                    <datalist :id="many2oneListId(field)">
-                      <option v-for="option in field.relationOptions || []" :key="`${field.name}-${option.value}`" :value="option.label" />
-                    </datalist>
-                    <div class="many2one-actions">
-                      <button
-                        v-if="field.many2oneSearchToken"
-                        type="button"
-                        class="many2one-action"
-                        @click="emitFieldChange(field, field.many2oneSearchToken || '')"
-                      >
-                        {{ field.many2oneSearchLabel }}
-                      </button>
-                      <button
-                        v-if="field.relationCreateMode && field.relationCreateMode !== 'none' && field.many2oneCreateToken"
-                        type="button"
-                        class="many2one-action"
-                        @click="emitFieldChange(field, field.many2oneCreateToken || '')"
-                      >
-                        {{ field.many2oneCreateLabel }}
-                      </button>
+                    <div v-if="hasMany2oneDropdown(field)" class="many2one-option-panel">
+                      <div v-if="field.relationOptions?.length" class="many2one-option-list">
+                        <button
+                          v-for="option in field.relationOptions.slice(0, 8)"
+                          :key="`${field.name}-option-${option.value}`"
+                          type="button"
+                          class="many2one-option"
+                          @mousedown.prevent
+                          @click="emitFieldChange(field, option.value)"
+                        >
+                          {{ option.label }}
+                        </button>
+                      </div>
+                      <div class="many2one-actions">
+                        <button
+                          v-if="field.many2oneSearchToken"
+                          type="button"
+                          class="many2one-action"
+                          @mousedown.prevent
+                          @click="emitFieldChange(field, field.many2oneSearchToken || '')"
+                        >
+                          {{ field.many2oneSearchLabel }}
+                        </button>
+                        <button
+                          v-if="field.relationCreateMode && field.relationCreateMode !== 'none' && field.many2oneCreateToken"
+                          type="button"
+                          class="many2one-action"
+                          @mousedown.prevent
+                          @click="emitFieldChange(field, field.many2oneCreateToken || '')"
+                        >
+                          {{ field.many2oneCreateLabel }}
+                        </button>
+                        <button
+                          v-if="showMany2oneInlineCreate(field)"
+                          type="button"
+                          class="many2one-action"
+                          @mousedown.prevent
+                          @click="emitMany2oneCommit(field, many2oneTextValue(field))"
+                        >
+                          {{ field.many2oneInlineCreateLabel }}
+                        </button>
+                      </div>
                     </div>
-                    <button
-                      v-if="showMany2oneInlineCreate(field)"
-                      type="button"
-                      class="many2one-inline-create"
-                      @mousedown.prevent
-                      @click="emitMany2oneCommit(field, many2oneTextValue(field))"
-                    >
-                      {{ field.many2oneInlineCreateLabel }}
-                    </button>
                   </div>
                 </div>
                 <div v-else-if="isDateRangeWidget(field)" class="native-date-range">
@@ -278,10 +290,6 @@ function many2oneTextValue(field: FormSectionFieldSchema) {
   return String(field.many2oneTextValue || selectedRelationLabel(field) || '').trim();
 }
 
-function many2oneListId(field: FormSectionFieldSchema) {
-  return `many2one-list-${field.key.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
-}
-
 function showMany2oneInlineCreate(field: FormSectionFieldSchema) {
   const text = many2oneTextValue(field);
   if (!text || !field.relationInlineCreate?.enabled || !field.relationInlineCreate.createOnNoMatch) return false;
@@ -290,6 +298,15 @@ function showMany2oneInlineCreate(field: FormSectionFieldSchema) {
   const exact = options.some((item) => String(item.label || '').trim().toLowerCase() === normalized);
   if (exact) return false;
   return true;
+}
+
+function hasMany2oneDropdown(field: FormSectionFieldSchema) {
+  return Boolean(
+    field.relationOptions?.length
+    || field.many2oneSearchToken
+    || (field.relationCreateMode && field.relationCreateMode !== 'none' && field.many2oneCreateToken)
+    || showMany2oneInlineCreate(field),
+  );
 }
 
 function avatarText(label: string) {
@@ -590,44 +607,76 @@ select.input {
 }
 
 .many2one-combobox {
+  position: relative;
   display: grid;
   gap: 6px;
   width: 100%;
   min-width: 0;
 }
 
-.many2one-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  min-width: 0;
+.many2one-option-panel {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 2px);
+  left: 0;
+  right: 0;
+  display: none;
+  max-height: 260px;
+  overflow: auto;
+  border: 1px solid #d7deea;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
 }
 
-.many2one-action,
-.many2one-inline-create {
-  min-height: 28px;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
+.many2one-combobox:focus-within .many2one-option-panel {
+  display: grid;
+}
+
+.many2one-option-list {
+  display: grid;
+}
+
+.many2one-option {
+  min-height: 32px;
+  border: 0;
+  border-bottom: 1px solid #eef2f7;
+  background: #fff;
+  color: #0f172a;
+  padding: 6px 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.many2one-option:hover {
+  background: #eef6ff;
+}
+
+.many2one-actions {
+  display: grid;
+  min-width: 0;
+  border-top: 1px solid #e5e7eb;
+}
+
+.many2one-action {
+  min-height: 30px;
+  border: 0;
+  border-bottom: 1px solid #eef2f7;
   background: #ffffff;
-  color: #475569;
-  padding: 4px 8px;
+  color: #0f766e;
+  padding: 6px 10px;
   font-size: 12px;
   line-height: 1.2;
+  text-align: left;
   cursor: pointer;
   max-width: 100%;
-  white-space: normal;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.many2one-action:hover,
-.many2one-inline-create:hover {
-  background: #f8fafc;
-  border-color: #cbd5e1;
-}
-
-.many2one-inline-create {
-  justify-self: start;
-  color: #0f172a;
+.many2one-action:hover {
+  background: #ecfdf5;
 }
 
 .many2one-avatar {

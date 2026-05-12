@@ -57,30 +57,18 @@ function uniqueFields(fields: string[]) {
   });
 }
 
-function guessRelationModel(fieldName: string, model: string): string {
-  const normalized = stableFieldName(fieldName);
-  const relationMap: Record<string, string> = {
-    partner_id: 'res.partner',
-    user_id: 'res.users',
-    manager_id: 'res.users',
-    company_id: 'res.company',
-    country_id: 'res.country',
-    currency_id: 'res.currency',
-    project_id: 'project.project',
-    task_id: 'project.task',
-    parent_id: model,
-  };
-  return relationMap[normalized] || '';
-}
-
 function inferFieldType(widget: UnifiedPageContractV2Widget, mainData: Dict, model: string): string {
   const widgetType = String(widget.widgetType || '').trim().toLowerCase();
+  const componentConfig = asDict(widget.componentConfig);
+  const explicitFieldType = String(widget.fieldType || componentConfig.fieldType || componentConfig.ttype || '').trim().toLowerCase();
+  if (explicitFieldType) return explicitFieldType;
   const fieldName = stableFieldName(widget.fieldCode);
   const value = mainData[fieldName];
   if (widgetType === 'date' || widgetType === 'datetime') return widgetType;
   if (widgetType === 'textarea') return 'text';
   if (widgetType === 'select') return 'many2one';
-  if (widgetType === 'table') return fieldName.endsWith('_ids') || Array.isArray(value) ? 'one2many' : 'many2many';
+  if (widgetType === 'many2many_tags') return 'many2many';
+  if (widgetType === 'table') return Array.isArray(value) ? 'one2many' : 'many2many';
   if (typeof value === 'boolean') return 'boolean';
   if (typeof value === 'number') return Number.isInteger(value) ? 'integer' : 'float';
   if (Array.isArray(value)) return fieldName.endsWith('_ids') ? 'many2many' : 'one2many';
@@ -95,34 +83,9 @@ function buildLegacyFieldDescriptor(widget: UnifiedPageContractV2Widget, mainDat
   const componentConfig = asDict(widget.componentConfig);
   const readonly = componentConfig.readonly === true;
   const required = componentConfig.required === true;
-  const relation = type === 'many2one' ? guessRelationModel(name, model) : '';
-  const relationEntry = type === 'many2one'
-    ? {
-        model: relation,
-        create_mode: 'disabled',
-        can_read: true,
-        can_create: false,
-        delete_policy: {},
-        reason_code: '',
-        default_vals: {},
-        inline_create: {
-          enabled: false,
-          create_on_no_match: false,
-          name_field: 'name',
-          match: 'exact_label',
-        },
-        action_id: null,
-        menu_id: null,
-        source: 'ui.contract.v2',
-        ui_labels: {
-          search_more: '搜索更多',
-          create_and_edit: '创建并编辑',
-          quick_create: '快速创建',
-          inline_create: '使用“%s”创建',
-          missing_create_entry: '没有可创建入口',
-        },
-      }
-    : undefined;
+  const componentRelation = String(componentConfig.relation || widget.relation || '').trim();
+  const relation = ['many2one', 'many2many'].includes(type) ? componentRelation : '';
+  const relationEntry = asDict(componentConfig.relationEntry || componentConfig.relation_entry);
   const descriptor: Dict = {
     name,
     string: widget.label || name,
@@ -139,7 +102,7 @@ function buildLegacyFieldDescriptor(widget: UnifiedPageContractV2Widget, mainDat
   if (relation) {
     descriptor.relation = relation;
   }
-  if (relationEntry) {
+  if (Object.keys(relationEntry).length) {
     descriptor.relation_entry = relationEntry;
   }
   if (type === 'selection' && Array.isArray(value)) {
