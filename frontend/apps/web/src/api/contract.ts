@@ -272,6 +272,33 @@ function buildSurfaceMapping(surface: string, renderMode: string, sourceMode: st
   };
 }
 
+function collectV2DeletePolicyCandidates(value: unknown, out: Dict[] = []): Dict[] {
+  if (!value) return out;
+  if (Array.isArray(value)) {
+    value.forEach((item) => collectV2DeletePolicyCandidates(item, out));
+    return out;
+  }
+  if (typeof value !== 'object') return out;
+  const node = asDict(value);
+  const candidate = asDict(node.delete_policy);
+  if (candidate.model) {
+    out.push(candidate);
+  }
+  Object.values(node).forEach((child) => collectV2DeletePolicyCandidates(child, out));
+  return out;
+}
+
+function resolveV2DeletePolicy(v2Contract: Dict, model: string): Dict {
+  const targetModel = String(model || '').trim();
+  if (!targetModel) return {};
+  const topLevel = asDict(v2Contract.delete_policy);
+  if (String(topLevel.model || '').trim() === targetModel) {
+    return topLevel;
+  }
+  const candidates = collectV2DeletePolicyCandidates(v2Contract, []);
+  return candidates.find((item) => String(item.model || '').trim() === targetModel) || {};
+}
+
 function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}): Dict {
   const pageInfo = asDict(v2Contract.pageInfo);
   const sourceContext = resolveV2SourceContext(v2Contract);
@@ -352,6 +379,26 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
         unlink: globalStatus?.pageAuth === 'read' ? false : true,
       },
     },
+  };
+  const rights = asDict(asDict(head.permissions).rights);
+  const activeField = fieldNames.includes('active') ? 'active' : '';
+  const writeAllowed = rights.write !== false;
+  const deletePolicy = resolveV2DeletePolicy(v2Contract, model);
+  const unlinkAllowed = deletePolicy.allowed === true && String(deletePolicy.delete_mode || '').trim().toLowerCase() === 'unlink';
+  const batchActions: string[] = [];
+  if (writeAllowed && activeField) {
+    batchActions.push('archive', 'activate');
+  }
+  if (writeAllowed && unlinkAllowed) {
+    batchActions.push('delete');
+  }
+  const batchPolicy = {
+    enabled: batchActions.length > 0,
+    active_field: activeField,
+    archive_value: activeField ? false : null,
+    activate_value: activeField ? true : null,
+    delete_mode: unlinkAllowed ? 'unlink' : 'none',
+    available_actions: batchActions,
   };
   const formLayout = buildLegacyFormLayout(v2Fields, fieldLabels);
   const subviews = buildLegacySubViews(v2Fields, mainData, model);
@@ -434,6 +481,7 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
             locked_columns: [],
             must_request_columns: fallbackListColumns,
           },
+          batch_policy: batchPolicy,
         }
       : undefined,
     field_groups: [],
@@ -441,6 +489,10 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
     render_mode: renderMode,
     source_mode: sourceMode,
     governed_from_native: contractSurface !== 'native',
+    surface_policies: {
+      delete_mode: batchPolicy.delete_mode,
+      batch_policy: batchPolicy,
+    },
     surface_mapping: buildSurfaceMapping(contractSurface, renderMode, sourceMode),
     __v2_main_data: mainData,
     __v2_source_context: v2SourceContext,
