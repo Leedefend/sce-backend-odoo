@@ -26,6 +26,8 @@
               :nodes="activeNotebookChildren(node)"
               :field-schemas-for-nodes="fieldSchemasForNodes"
               :is-node-visible="isNodeVisible"
+              :button-label-resolver="buttonLabelResolver"
+              :native-action-handler="nativeActionHandler"
               :columns="columns"
               @field-change="emit('field-change', $event)"
               @native-action="emit('native-action', $event)"
@@ -41,6 +43,54 @@
               </template>
             </NativeFormTreeRenderer>
           </div>
+        </template>
+
+        <template v-else-if="nodeType(node) === 'h1' && titleFieldForNode(node)">
+          <div class="native-title-row">
+            <button
+              v-if="titleFieldForNode(node)?.favoriteToggle"
+              type="button"
+              class="native-title-favorite"
+              :class="{ 'native-title-favorite--active': titleFieldForNode(node)?.favoriteToggle?.active }"
+              :aria-label="titleFieldForNode(node)?.favoriteToggle?.label"
+              :aria-pressed="titleFieldForNode(node)?.favoriteToggle?.active"
+              :title="titleFieldForNode(node)?.favoriteToggle?.label"
+              :disabled="titleFieldForNode(node)?.favoriteToggle?.readonly"
+              @click="emitTitleFavoriteToggle(titleFieldForNode(node))"
+            >
+              <span aria-hidden="true">{{ titleFieldForNode(node)?.favoriteToggle?.active ? '★' : '☆' }}</span>
+            </button>
+            <input
+              v-if="!titleFieldForNode(node)?.readonly"
+              class="native-title-input"
+              type="text"
+              :value="titleFieldValue(titleFieldForNode(node))"
+              :aria-label="titleFieldForNode(node)?.label"
+              @input="emitTitleFieldChange(titleFieldForNode(node), ($event.target as HTMLInputElement).value)"
+            />
+            <h1 v-else class="native-title-text">{{ titleFieldValue(titleFieldForNode(node)) || titleFieldForNode(node)?.label }}</h1>
+          </div>
+          <NativeFormTreeRenderer
+            v-if="containerChildren(node).length"
+            :nodes="containerChildren(node)"
+            :field-schemas-for-nodes="fieldSchemasForNodes"
+            :is-node-visible="isNodeVisible"
+            :button-label-resolver="buttonLabelResolver"
+            :native-action-handler="nativeActionHandler"
+            :columns="columns"
+            @field-change="emit('field-change', $event)"
+            @native-action="emit('native-action', $event)"
+          >
+            <template #readonly="{ field }">
+              <slot name="readonly" :field="field" />
+            </template>
+            <template #fallback="{ field }">
+              <slot name="fallback" :field="field" />
+            </template>
+            <template #chatter="{ node: chatterNode }">
+              <slot name="chatter" :node="chatterNode" />
+            </template>
+          </NativeFormTreeRenderer>
         </template>
 
         <template v-else>
@@ -104,6 +154,8 @@
             :nodes="containerChildren(node)"
             :field-schemas-for-nodes="fieldSchemasForNodes"
             :is-node-visible="isNodeVisible"
+            :button-label-resolver="buttonLabelResolver"
+            :native-action-handler="nativeActionHandler"
             :columns="columns"
             @field-change="emit('field-change', $event)"
             @native-action="emit('native-action', $event)"
@@ -165,9 +217,11 @@ export type NativeFormLayoutNode = {
   name?: string;
   string?: string;
   label?: string;
+  displayLabel?: string;
   text?: string;
   widget?: string;
   attributes?: Record<string, unknown>;
+  fieldInfo?: Record<string, unknown>;
   buttonType?: string;
   action?: Record<string, unknown> | null;
   children?: NativeFormLayoutNode[];
@@ -181,10 +235,13 @@ const props = withDefaults(defineProps<{
   nodes: NativeFormLayoutNode[];
   fieldSchemasForNodes: (nodes: NativeFormLayoutNode[]) => FormSectionFieldSchema[];
   isNodeVisible?: (node: NativeFormLayoutNode) => boolean;
+  buttonLabelResolver?: (node: NativeFormLayoutNode) => string | undefined;
+  nativeActionHandler?: (payload: Record<string, unknown>) => void | Promise<void>;
   columns?: 1 | 2;
 }>(), {
   columns: 2,
   isNodeVisible: () => true,
+  nativeActionHandler: undefined,
 });
 
 const emit = defineEmits<{
@@ -210,7 +267,14 @@ function nodeKey(node: NativeFormLayoutNode, index: number) {
 }
 
 function containerTitle(node: NativeFormLayoutNode) {
-  return String(node?.string || node?.label || '').trim();
+  const type = nodeType(node);
+  const raw = String(node?.string || node?.label || '').trim();
+  if (!raw) return '';
+  const structural = new Set(['header', 'sheet', 'container', 'div', 'span', 'h1', 'h2', 'h3']);
+  if (structural.has(type)) return '';
+  const lowered = raw.toLowerCase();
+  if (structural.has(lowered) || lowered === type) return '';
+  return raw;
 }
 
 function nodeText(node: NativeFormLayoutNode) {
@@ -232,6 +296,37 @@ function rawChildren(node: NativeFormLayoutNode) {
 
 function fieldChildren(node: NativeFormLayoutNode) {
   return rawChildren(node).filter((child) => nodeType(child) === 'field' && isNodeRenderable(child));
+}
+
+function titleFieldForNode(node: NativeFormLayoutNode) {
+  return props.fieldSchemasForNodes(fieldChildren(node))[0];
+}
+
+function titleFieldValue(field?: FormSectionFieldSchema) {
+  if (!field) return '';
+  return String(field.inputValue ?? field.value ?? '').trim();
+}
+
+function emitTitleFieldChange(field: FormSectionFieldSchema | undefined, value: string) {
+  if (!field) return;
+  emit('field-change', {
+    name: field.name,
+    type: field.type,
+    widget: field.widget,
+    value,
+    descriptor: field.descriptor,
+  });
+}
+
+function emitTitleFavoriteToggle(field: FormSectionFieldSchema | undefined) {
+  const favorite = field?.favoriteToggle;
+  if (!favorite || favorite.readonly) return;
+  emit('field-change', {
+    name: favorite.name,
+    type: 'boolean',
+    value: !favorite.active,
+    descriptor: favorite.descriptor,
+  });
 }
 
 function buttonChildren(node: NativeFormLayoutNode) {
@@ -338,7 +433,9 @@ function widgetClass(node: NativeFormLayoutNode) {
 }
 
 function buttonLabel(node: NativeFormLayoutNode) {
-  return String(node.label || node.string || node.name || '操作').trim();
+  const action = node.action && typeof node.action === 'object' ? node.action as Record<string, unknown> : {};
+  const resolved = props.buttonLabelResolver?.(node);
+  return String(resolved || node.displayLabel || action.displayLabel || node.label || node.string || node.name || '操作').trim();
 }
 
 function buttonIcon(node: NativeFormLayoutNode) {
@@ -350,20 +447,30 @@ function buttonIcon(node: NativeFormLayoutNode) {
 }
 
 function emitNativeAction(node: NativeFormLayoutNode) {
-  const action = node.action && typeof node.action === 'object'
-    ? node.action
-    : {
-      name: node.name || '',
-      label: buttonLabel(node),
-      kind: String(node.buttonType || 'object') === 'action' ? 'open' : 'object',
-      level: 'body',
-      selection: 'none',
-      payload: {
-        method: String(node.buttonType || 'object') === 'object' ? node.name || '' : '',
-        ref: String(node.buttonType || 'object') === 'action' ? node.name || '' : '',
-        type: node.buttonType || 'object',
-      },
-    };
+  const buttonType = String(node.buttonType || 'object');
+  const rawAction = node.action && typeof node.action === 'object' ? node.action : {};
+  const rawPayload = rawAction.payload && typeof rawAction.payload === 'object' && !Array.isArray(rawAction.payload)
+    ? rawAction.payload as Record<string, unknown>
+    : {};
+  const action = {
+    ...rawAction,
+    name: rawAction.name || node.name || '',
+    label: rawAction.label || buttonLabel(node),
+    kind: rawAction.kind || (buttonType === 'action' ? 'open' : 'object'),
+    buttonType,
+    level: rawAction.level || 'body',
+    selection: rawAction.selection || 'none',
+    payload: {
+      ...rawPayload,
+      method: rawPayload.method || (buttonType === 'object' ? node.name || '' : ''),
+      ref: rawPayload.ref || (buttonType === 'action' ? node.name || '' : ''),
+      type: rawPayload.type || buttonType,
+    },
+  };
+  if (props.nativeActionHandler) {
+    void props.nativeActionHandler(action);
+    return;
+  }
   emit('native-action', action);
 }
 
@@ -498,12 +605,14 @@ function closeMore(node: NativeFormLayoutNode) {
 
 .native-actions--smart {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
-  gap: 0;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  overflow: visible;
-  background: #ffffff;
+  grid-template-columns: repeat(auto-fit, minmax(104px, max-content));
+  gap: 1px;
+  border: 1px solid #dbe3ee;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #dbe3ee;
+  width: fit-content;
+  max-width: 100%;
 }
 
 .native-action-btn {
@@ -517,6 +626,7 @@ function closeMore(node: NativeFormLayoutNode) {
   padding: 6px 10px;
   border-radius: 6px;
   font-size: 13px;
+  letter-spacing: 0;
   cursor: pointer;
   min-width: 0;
   max-width: 100%;
@@ -525,15 +635,14 @@ function closeMore(node: NativeFormLayoutNode) {
 
 .native-action-btn--smart {
   justify-content: flex-start;
-  min-height: 54px;
+  min-height: 60px;
   border: 0;
-  border-right: 1px solid #e5e7eb;
-  border-bottom: 1px solid #e5e7eb;
   border-radius: 0;
-  padding: 8px 10px;
-  color: #334155;
+  padding: 12px 14px;
+  color: #0f172a;
   background: #ffffff;
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 14px;
 }
 
 .native-action-more {
@@ -588,13 +697,14 @@ function closeMore(node: NativeFormLayoutNode) {
   flex: 0 0 auto;
   width: 18px;
   text-align: center;
-  color: #64748b;
+  color: #2563eb;
 }
 
 .native-action-label {
   min-width: 0;
   overflow-wrap: anywhere;
   line-height: 1.25;
+  font-weight: inherit;
 }
 
 .native-action-btn:hover {
@@ -603,8 +713,60 @@ function closeMore(node: NativeFormLayoutNode) {
 }
 
 .native-action-btn--smart:hover {
-  border-color: #e5e7eb;
   background: #f8fafc;
+  color: #0f172a;
+}
+
+.native-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.native-title-favorite {
+  border: 0;
+  background: transparent;
+  color: #64748b;
+  font-size: 27px;
+  line-height: 1;
+  padding: 0 2px;
+  cursor: pointer;
+}
+
+.native-title-favorite--active {
+  color: #f59e0b;
+}
+
+.native-title-favorite:disabled {
+  cursor: default;
+  opacity: 0.65;
+}
+
+.native-title-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  background: transparent;
   color: #111827;
+  font-size: 27px;
+  font-weight: 600;
+  line-height: 1.25;
+  padding: 2px 0;
+  letter-spacing: 0;
+}
+
+.native-title-input:focus {
+  outline: none;
+  box-shadow: inset 0 -2px 0 #2563eb;
+}
+
+.native-title-text {
+  margin: 0;
+  color: #111827;
+  font-size: 27px;
+  font-weight: 600;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 </style>

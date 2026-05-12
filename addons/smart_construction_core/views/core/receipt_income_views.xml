@@ -55,6 +55,8 @@
                     <field name="deducted_invoice_amount" sum="已抵发票金额"/>
                     <field name="deducted_tax_amount" sum="已抵税额"/>
                     <field name="settlement_amount" sum="结算金额"/>
+                    <field name="creator_name" optional="show"/>
+                    <field name="created_time" optional="show"/>
                     <field name="state"/>
                 </tree>
             </field>
@@ -121,6 +123,14 @@
                             <field name="note"/>
                             <field name="attachment_ids" widget="many2many_binary"/>
                             <field name="active"/>
+                        </group>
+                        <group string="历史来源">
+                            <field name="legacy_source_table" readonly="1"/>
+                            <field name="legacy_record_id" readonly="1"/>
+                            <field name="legacy_document_state" readonly="1"/>
+                            <field name="creator_legacy_user_id" readonly="1"/>
+                            <field name="creator_name" readonly="1"/>
+                            <field name="created_time" readonly="1"/>
                         </group>
                     </sheet>
                 </form>

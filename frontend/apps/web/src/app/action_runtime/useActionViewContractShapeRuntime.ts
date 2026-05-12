@@ -69,6 +69,14 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
       const label = String(row.label || '').trim();
       if (name && label) labels[name] = label;
     });
+    const head = ((contract as Dict).head && typeof (contract as Dict).head === 'object')
+      ? (contract as Dict).head as Dict
+      : {};
+    const modelName = String((contract as Dict).model || head.model || '').trim();
+    if (modelName === 'project.project') {
+      labels.name = '名称';
+      labels.business_nature = '经营性质';
+    }
     return labels;
   });
 
@@ -79,8 +87,7 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
     const typed = (contract || {}) as Dict;
     const v2Fields = collectUnifiedPageContractV2FieldWidgets(typed).map((widget) => widget.fieldCode).filter(Boolean);
     if (v2Fields.length) return v2Fields;
-    const uiContract = ((typed.ui_contract || {}) as Dict);
-    const directViews = (typed.views || uiContract.views) as Dict | undefined;
+    const directViews = typed.views as Dict | undefined;
     if (directViews) {
       const treeBlock = (directViews.tree || directViews.list || {}) as Dict;
       const treeColumns = treeBlock.columns;
@@ -93,17 +100,6 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
           .map((col) => String(((col as Dict).name || '')).trim())
           .filter(Boolean);
       }
-    }
-
-    const columns = uiContract.columns;
-    if (Array.isArray(columns) && columns.length) {
-      return columns.map((item) => String(item || '')).filter(Boolean);
-    }
-    const schema = uiContract.columnsSchema;
-    if (Array.isArray(schema) && schema.length) {
-      return schema
-        .map((col) => String(((col as Dict).name || '')).trim())
-        .filter(Boolean);
     }
     return [];
   }
@@ -121,10 +117,9 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
         ...(widget.componentConfig || {}),
       }));
     }
-    const uiContract = ((typed.ui_contract || {}) as Dict);
-    const directViews = (typed.views || uiContract.views) as Dict | undefined;
+    const directViews = typed.views as Dict | undefined;
     const treeBlock = directViews ? (directViews.tree || directViews.list || {}) as Dict : {};
-    const schema = treeBlock.columnsSchema || treeBlock.columns_schema || uiContract.columnsSchema || uiContract.columns_schema;
+    const schema = treeBlock.columnsSchema || treeBlock.columns_schema;
     return Array.isArray(schema) ? (schema as Dict[]) : [];
   }
 
@@ -205,8 +200,14 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
 
   function extractKanbanFields(contract: unknown) {
     const typed = (contract || {}) as Dict;
-    const uiContract = ((typed.ui_contract || {}) as Dict);
-    const directViews = (typed.views || uiContract.views) as Dict | undefined;
+    const v2 = resolveUnifiedPageContractV2(typed);
+    if (String(v2?.pageInfo?.viewType || '').trim() === 'kanban') {
+      const fields = collectUnifiedPageContractV2FieldWidgets(typed)
+        .map((widget) => widget.fieldCode)
+        .filter(Boolean);
+      if (fields.length) return fields;
+    }
+    const directViews = typed.views as Dict | undefined;
     if (directViews) {
       const kanbanBlock = (directViews.kanban || {}) as Dict;
       if (Array.isArray(kanbanBlock.fields) && kanbanBlock.fields.length) {
@@ -218,8 +219,7 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
 
   function extractKanbanProfile(contract: unknown): KanbanProfile {
     const typed = (contract || {}) as Dict;
-    const uiContract = ((typed.ui_contract || {}) as Dict);
-    const directViews = (typed.views || uiContract.views) as Dict | undefined;
+    const directViews = typed.views as Dict | undefined;
     const block = (directViews?.kanban || {}) as Dict;
     const profile = (block.kanban_profile || {}) as Dict;
     const normalize = (rows: unknown) =>
@@ -236,15 +236,13 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
 
   function extractListOrderFromContract(contract: unknown): string {
     const typed = (contract || {}) as Dict;
-    const uiContract = ((typed.ui_contract || {}) as Dict);
-    const directViews = (typed.views || uiContract.views) as Dict | undefined;
+    const directViews = typed.views as Dict | undefined;
     const treeBlock = (directViews?.tree || directViews?.list || {}) as Dict;
     const searchDefaults = ((typed.search || {}) as Dict).defaults as Dict | undefined;
     const candidates = [
       treeBlock.order,
       treeBlock.default_order,
       searchDefaults?.order,
-      uiContract.order,
       typed.order,
     ];
     for (const item of candidates) {
@@ -277,10 +275,8 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
 
   function extractAdvancedViewFields(contract: unknown, mode: string) {
     const typed = (contract || {}) as Dict;
-    const uiContract = ((typed.ui_contract || {}) as Dict);
     const directViews = typed.views as Dict | undefined;
-    const normalizedViews = uiContract.views as Dict | undefined;
-    const viewBlock = (directViews?.[mode] || normalizedViews?.[mode] || {}) as Dict;
+    const viewBlock = (directViews?.[mode] || {}) as Dict;
     const fallbackNames = ['name', 'display_name', 'id'];
     if (mode === 'pivot') {
       const measures = Array.isArray(viewBlock.measures) ? viewBlock.measures : [];
@@ -351,22 +347,13 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
     if (v2Model) {
       return v2Model;
     }
-    const nested = ((typed.ui_contract || {}) as Dict);
     const direct = typed.model;
     if (typeof direct === 'string' && direct.trim()) {
       return direct.trim();
     }
-    const nestedDirect = nested.model;
-    if (typeof nestedDirect === 'string' && nestedDirect.trim()) {
-      return nestedDirect.trim();
-    }
     const headModel = ((typed.head || {}) as Dict).model;
     if (typeof headModel === 'string' && headModel.trim()) {
       return headModel.trim();
-    }
-    const nestedHeadModel = ((nested.head || {}) as Dict).model;
-    if (typeof nestedHeadModel === 'string' && nestedHeadModel.trim()) {
-      return nestedHeadModel.trim();
     }
     const views = (typed.views || {}) as Dict;
     const viewModel = ((views.tree as Dict | undefined)?.model
@@ -374,13 +361,6 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
       || (views.kanban as Dict | undefined)?.model);
     if (typeof viewModel === 'string' && viewModel.trim()) {
       return viewModel.trim();
-    }
-    const nestedViews = (nested.views || {}) as Dict;
-    const nestedViewModel = ((nestedViews.tree as Dict | undefined)?.model
-      || (nestedViews.form as Dict | undefined)?.model
-      || (nestedViews.kanban as Dict | undefined)?.model);
-    if (typeof nestedViewModel === 'string' && nestedViewModel.trim()) {
-      return nestedViewModel.trim();
     }
     return '';
   }
@@ -396,6 +376,9 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
       : semanticColumns.map((row) => String(row.name || '').trim()).filter(Boolean);
     const hiddenColumns = Array.isArray(rawProfile.hidden_columns)
       ? rawProfile.hidden_columns.map((item) => String(item || '').trim()).filter(Boolean)
+      : [];
+    const factColumns = Array.isArray(rawProfile.fact_columns)
+      ? rawProfile.fact_columns.map((item) => String(item || '').trim()).filter(Boolean)
       : [];
     const columnLabels: Record<string, string> = {};
     Object.entries((rawProfile.column_labels || {}) as Dict).forEach(([name, labelRaw]) => {
@@ -450,13 +433,28 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
           : undefined,
       },
     };
+    const rawPreferencePolicy = (rawProfile.preference_policy || {}) as Dict;
+    const preferencePolicy = {
+      scope: String(rawPreferencePolicy.scope || '').trim() || undefined,
+      allow_visibility: rawPreferencePolicy.allow_visibility !== false,
+      allow_order: rawPreferencePolicy.allow_order !== false,
+      allow_width: rawPreferencePolicy.allow_width !== false,
+      locked_columns: Array.isArray(rawPreferencePolicy.locked_columns)
+        ? rawPreferencePolicy.locked_columns.map((item) => String(item || '').trim()).filter(Boolean)
+        : [],
+      must_request_columns: Array.isArray(rawPreferencePolicy.must_request_columns)
+        ? rawPreferencePolicy.must_request_columns.map((item) => String(item || '').trim()).filter(Boolean)
+        : [],
+    };
     if (!columns.length && !Object.keys(columnLabels).length && !rowPrimary && !rowSecondary && !statusField && !metricFields.length && !Object.keys(rawBatchPolicy).length && !Object.keys(rawGrouping).length) {
       return null;
     }
     return {
       columns,
+      fact_columns: factColumns,
       hidden_columns: hiddenColumns,
       column_labels: columnLabels,
+      preference_policy: preferencePolicy,
       row_primary: rowPrimary,
       row_secondary: rowSecondary,
       status_field: statusField,

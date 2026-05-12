@@ -129,6 +129,6 @@
     "snapshotId": "snapshot.upc.v2.runtime.001",
     "traceId": "trace.upc.v2.runtime.001",
     "requestId": "request.upc.v2.runtime.001",
-    "compat": {}
+    "sourceType": "ui.contract"
   }
 }

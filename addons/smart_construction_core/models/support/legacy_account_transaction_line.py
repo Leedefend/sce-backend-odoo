@@ -39,6 +39,12 @@ class ScLegacyAccountTransactionLine(models.Model):
     category = fields.Char(string="类别", index=True)
     source_summary = fields.Char(string="来源摘要", index=True)
     note = fields.Text(string="备注")
+    creator_legacy_user_id = fields.Char(string="创建人原编号", index=True)
+    creator_name = fields.Char(string="创建人", index=True)
+    created_time = fields.Datetime(string="创建时间", index=True)
+    modifier_legacy_user_id = fields.Char(string="修改人原编号", index=True)
+    modifier_name = fields.Char(string="修改人", index=True)
+    modified_time = fields.Datetime(string="修改时间", index=True)
     import_batch = fields.Char(string="导入批次", default="legacy_account_transaction_v1", required=True, index=True)
     active = fields.Boolean(string="有效", default=True, index=True)
 

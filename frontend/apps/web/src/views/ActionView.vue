@@ -14,6 +14,11 @@
         {{ action.label || action.key }}
       </button>
     </section>
+    <SceneBlocksRenderer
+      v-if="showSceneBlocksDebug && sceneReadyListSurface.sceneBlocks.length"
+      :blocks="sceneReadyListSurface.sceneBlocks"
+      @action="handleSceneBlockAction"
+    />
     <section v-if="isSectionVisible('route_preset', { defaultEnabled: pageSectionEnabled('route_preset', false), tag: 'section', vmVisible: Boolean(vm.filters.routePreset) })" class="route-preset" :style="getSectionStyle('route_preset')">
       <p>
         {{ t('route_preset_applied_prefix', '已应用推荐筛选：') }}{{ vm.filters.routePreset?.label }}
@@ -536,15 +541,17 @@ import { resolveAction } from '../app/resolvers/actionResolver';
 import { resolveMenuAction } from '../app/resolvers/menuResolver';
 import { loadActionContract } from '../api/contract';
 import { config } from '../config';
+import { intentRequest } from '../api/intents';
 import { useSessionStore } from '../stores/session';
 import ListPage from '../pages/ListPage.vue';
 import KanbanPage from '../pages/KanbanPage.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
 import GroupSummaryBar from '../components/GroupSummaryBar.vue';
+import SceneBlocksRenderer from '../components/scene/SceneBlocksRenderer.vue';
 import ActionSurfaceToolbar from '../components/action/ActionSurfaceToolbar.vue';
 import { deriveListStatus } from '../app/view_state';
-import { isHudEnabled } from '../config/debug';
+import { isHudEnabled, isSceneBlocksDebugEnabled } from '../config/debug';
 import { ErrorCodes } from '../app/error_codes';
 import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { useStatus } from '../composables/useStatus';
@@ -555,8 +562,9 @@ import {
   resolveContractViewMode,
 } from '../app/contractActionRuntime';
 import { detectObjectMethodFromActionKey, normalizeActionKind, toPositiveInt } from '../app/contractRuntime';
-import type { Scene, SceneListProfile } from '../app/resolvers/sceneRegistry';
-import { findSceneReadyEntry } from '../app/resolvers/sceneReadyResolver';
+import { findActionMeta } from '../app/menu';
+import { getSceneByKey, type Scene, type SceneListProfile } from '../app/resolvers/sceneRegistry';
+import { findSceneReadyEntry, resolveCollectionSceneReady } from '../app/resolvers/sceneReadyResolver';
 import { normalizeSceneActionProtocol, type MutationContract, type ProjectionRefreshPolicy } from '../app/sceneActionProtocol';
 import { executeProjectionRefresh } from '../app/projectionRefreshRuntime';
 import { executeSceneMutation } from '../app/sceneMutationRuntime';
@@ -688,7 +696,7 @@ import {
   resolveContractActionMissingModelMessage,
   resolveContractActionMissingOpenTargetMessage,
   resolveContractActionOpenNavigation,
-  resolveContractActionResponseActionId,
+  resolveContractActionResponseNavigation,
   resolveContractActionRequiresRecordContextMessage,
   resolveContractActionRunIds,
   resolveContractActionSelectionBlockMessage,
@@ -756,6 +764,7 @@ import {
   buildPathRouteTarget,
   buildWorkbenchRouteTarget,
 } from '../app/runtime/actionViewRouteRuntime';
+import { buildCanonicalSceneRouteTarget, buildEntryTargetRouteTarget } from '../app/routeQuery';
 import {
   hasRoutePresetGroupPageStateChanged,
   resolveRoutePresetActiveFilterValue,
@@ -959,15 +968,6 @@ type ActionContractLoose = Awaited<ReturnType<typeof loadActionContract>> & {
     kanban?: ContractViewBlock;
     form?: ContractViewBlock;
   };
-  ui_contract?: {
-    views?: {
-      tree?: ContractViewBlock;
-      list?: ContractViewBlock;
-      kanban?: ContractViewBlock;
-    };
-    columns?: string[];
-    columnsSchema?: ContractColumnSchema[];
-  };
   fields?: Record<string, unknown>;
   buttons?: Array<Record<string, unknown>>;
   action_groups?: ContractActionGroupRaw[];
@@ -1085,14 +1085,19 @@ const actionMeta = computed(() => session.currentAction);
 const routeSceneLabel = computed(() => String(route.query.scene_label || '').trim());
 const menuId = computed(() => Number(route.query.menu_id ?? 0));
 const keepSceneRoute = computed(() => String(route.name || '').toLowerCase() === 'scene');
-const sceneContextEnabled = computed(() => keepSceneRoute.value);
 const sceneKey = computed(() => {
-  if (!sceneContextEnabled.value) return '';
   const metaKey = route.meta?.sceneKey as string | undefined;
   if (metaKey) return metaKey;
   const queryKey = (route.query.scene_key || route.query.scene) as string | undefined;
-  return queryKey ? String(queryKey) : '';
+  if (queryKey) return String(queryKey);
+  const actionSceneKey =
+    findActionMeta(session.menuTree, actionId.value)?.scene_key
+    || findActionMeta(session.menuTree, actionId.value)?.sceneKey
+    || session.currentAction?.scene_key
+    || session.currentAction?.sceneKey;
+  return actionSceneKey ? String(actionSceneKey) : '';
 });
+const sceneContextEnabled = computed(() => keepSceneRoute.value || Boolean(sceneKey.value));
 const scene = computed<Scene | null>(() => {
   if (!sceneKey.value) return null;
   return session.scenes.find((item: Scene) => item.key === sceneKey.value || resolveSceneCode(item) === sceneKey.value) || null;
@@ -1129,6 +1134,69 @@ const sceneReadyEntry = computed<Record<string, unknown> | null>(() => {
   if (!sceneContextEnabled.value || !sceneKey.value) return null;
   return findSceneReadyEntry(session.sceneReadyContractV1, sceneKey.value);
 });
+const sceneReadyCollectionMode = computed<'list' | 'kanban'>(() => {
+  const raw = String(route.query.view_mode || '').trim().toLowerCase();
+  return raw === 'kanban' ? 'kanban' : 'list';
+});
+const sceneReadyListSurface = computed(() => resolveCollectionSceneReady(sceneReadyEntry.value, sceneReadyCollectionMode.value));
+const sceneReadyHydrateRequested = ref(false);
+function handleSceneBlockAction(payload: { action?: { target?: Record<string, unknown> } }) {
+  const target = payload?.action?.target && typeof payload.action.target === 'object'
+    ? payload.action.target
+    : {};
+  const targetKind = String(target.kind || '').trim();
+  if (targetKind === 'quick_filter') {
+    const filterKey = String(target.filter_key || '').trim();
+    if (filterKey) {
+      applyContractFilter(filterKey);
+      return;
+    }
+  }
+  if (targetKind === 'view_mode') {
+    const mode = String(target.view_mode || '').trim();
+    if (mode) {
+      switchViewMode(mode);
+      return;
+    }
+  }
+  const route = String(target.route || '').trim();
+  if (route) {
+    void router.push(route);
+    return;
+  }
+  const sceneKey = String(target.scene_key || '').trim();
+  if (sceneKey) {
+    void router.push({ name: 'scene', params: { sceneKey } });
+  }
+}
+watch(
+  () => [sceneKey.value, sceneReadyListSurface.value.sceneBlocks.length],
+  async ([sceneKeyValue, blockCount]) => {
+    if (!sceneKeyValue || Number(blockCount || 0) > 0 || sceneReadyHydrateRequested.value) return;
+    sceneReadyHydrateRequested.value = true;
+    try {
+      const result = await intentRequest<Record<string, unknown>>({
+        intent: 'system.init',
+        params: {
+          scene: 'web',
+          with_preload: false,
+          scene_ready_mode: 'full',
+          with: ['workspace_home'],
+          root_xmlid: 'smart_construction_core.menu_sc_root',
+          scene_key: sceneKeyValue,
+        },
+        meta: { startup_chain_bypass: true },
+      });
+      const contract = result.scene_ready_contract_v1;
+      if (contract && typeof contract === 'object' && Array.isArray((contract as Record<string, unknown>).scenes)) {
+        session.sceneReadyContractV1 = contract as never;
+      }
+    } catch (err) {
+      void err;
+    }
+  },
+  { immediate: true },
+);
 const {
   strictContractMode,
   strictSurfaceContract,
@@ -1347,7 +1415,9 @@ const availableViewModes = computed(() =>
 );
 const viewMode = computed(() => {
   const modes = availableViewModes.value;
-  const mode = normalizeActionViewMode(preferredViewMode.value) || modes[0] || '';
+  const routeActionId = Number(route.query.action_id || 0);
+  const fallbackMode = resolvedModelRef.value || routeActionId > 0 ? 'tree' : '';
+  const mode = normalizeActionViewMode(preferredViewMode.value) || modes[0] || fallbackMode;
   if (mode === 'kanban') return 'kanban';
   if (mode === 'list' || mode === 'tree') return 'tree';
   if (mode === 'pivot' || mode === 'graph' || mode === 'calendar' || mode === 'gantt' || mode === 'activity' || mode === 'dashboard') {
@@ -1475,6 +1545,7 @@ const {
   route,
   isHudEnabled,
 });
+const showSceneBlocksDebug = computed(() => isSceneBlocksDebugEnabled(route));
 
 function resolveContractActionCountForHud() {
   const contract = actionContract.value;
@@ -2073,8 +2144,9 @@ const { runContractAction } = useActionViewActionRuntime({
     return null;
   },
   resolveOpenNavigation: (input) => resolveContractActionOpenNavigation({ actionId: input.actionId, url: input.url }),
-  buildRouteTarget: (nextActionId) => buildContractActionRouteTarget({
-    nextActionId,
+  buildRouteTarget: (navigation) => buildContractActionRouteTarget({
+    nextActionId: typeof navigation === 'number' ? navigation : navigation.nextActionId,
+    entryTarget: typeof navigation === 'number' ? null : navigation.entryTarget,
     carryQuery: resolveCarryQuery(),
     menuId: menuId.value,
     keepSceneRoute: keepSceneRoute.value,
@@ -2105,7 +2177,7 @@ const { runContractAction } = useActionViewActionRuntime({
   executeSceneMutation,
   executeButton,
   buildButtonRequest: buildContractActionButtonRequest,
-  resolveResponseActionId: resolveContractActionResponseActionId,
+  resolveResponseNavigation: resolveContractActionResponseNavigation,
   shouldNavigate: shouldNavigateContractAction,
 });
 
@@ -2651,9 +2723,22 @@ async function loadListColumnPreference(): Promise<void> {
       if (normalizedName && normalizedWidth) acc[normalizedName] = normalizedWidth;
       return acc;
     }, {});
+    const preferencePolicy = listProfile.value?.preference_policy || {};
+    const allowVisibility = preferencePolicy.allow_visibility !== false;
+    const lockedColumns = new Set(
+      (Array.isArray(preferencePolicy.locked_columns) ? preferencePolicy.locked_columns : [])
+        .map((item) => String(item || '').trim())
+        .filter(Boolean),
+    );
     const next: Record<string, boolean> = {};
-    visible.forEach((name) => { next[name] = true; });
-    hidden.forEach((name) => { next[name] = false; });
+    if (allowVisibility) {
+      visible.forEach((name) => { next[name] = true; });
+      hidden.forEach((name) => {
+        if (!lockedColumns.has(name)) {
+          next[name] = false;
+        }
+      });
+    }
     listColumnVisibility.value = next;
     listColumnOrder.value = columnOrder;
     listColumnWidths.value = columnWidths;
@@ -2674,14 +2759,18 @@ function normalizeListColumnWidth(value: unknown) {
 }
 
 function buildListColumnPreference(visibility: Record<string, boolean>, columnOrder: string[], columnWidths: Record<string, number>) {
+  const preferencePolicy = listProfile.value?.preference_policy || {};
+  const allowVisibility = preferencePolicy.allow_visibility !== false;
+  const allowOrder = preferencePolicy.allow_order !== false;
+  const allowWidth = preferencePolicy.allow_width !== false;
   const columnNames = listColumnOptions.value.map((column) => column.name);
   const columnNameSet = new Set(columnNames);
-  const visibleColumns = columnNames.filter((name) => visibility[name] === true);
-  const hiddenColumns = columnNames.filter((name) => visibility[name] === false);
-  const orderedColumns = columnOrder
+  const visibleColumns = allowVisibility ? columnNames.filter((name) => visibility[name] === true) : [];
+  const hiddenColumns = allowVisibility ? columnNames.filter((name) => visibility[name] === false) : [];
+  const orderedColumns = (allowOrder ? columnOrder : [])
     .map((name) => String(name || '').trim())
     .filter((name, index, rows) => Boolean(name) && columnNameSet.has(name) && rows.indexOf(name) === index);
-  const normalizedWidths = Object.entries(columnWidths || {}).reduce<Record<string, number>>((acc, [name, width]) => {
+  const normalizedWidths = (allowWidth ? Object.entries(columnWidths || {}) : []).reduce<Record<string, number>>((acc, [name, width]) => {
     const normalizedName = String(name || '').trim();
     const normalizedWidth = normalizeListColumnWidth(width);
     if (normalizedName && columnNameSet.has(normalizedName) && normalizedWidth) acc[normalizedName] = normalizedWidth;
@@ -2836,9 +2925,22 @@ async function redirectMenuOnlyRouteIfNeeded(): Promise<boolean> {
     }
   }
   if (result.kind === 'leaf') {
+    const entryTarget = result.meta?.entry_target && typeof result.meta.entry_target === 'object'
+      ? result.meta.entry_target as Record<string, unknown>
+      : null;
     const targetActionId = Number(result.meta.action_id || 0);
     if (targetActionId <= 0) return false;
     session.setActionMeta(result.meta);
+    if (entryTarget) {
+      await router.replace(buildEntryTargetRouteTarget(entryTarget, {
+        query: resolveCarryQuery(),
+        menuId: currentMenuId,
+        actionId: targetActionId,
+        keepSceneRoute: keepSceneRoute.value,
+        routePath: route.path,
+      }) as never);
+      return true;
+    }
     await router.replace({
       name: 'action',
       params: { actionId: targetActionId },
@@ -2847,11 +2949,24 @@ async function redirectMenuOnlyRouteIfNeeded(): Promise<boolean> {
     return true;
   }
   if (result.kind === 'redirect') {
+    if (result.target.entry_target) {
+      await router.replace(buildEntryTargetRouteTarget(result.target.entry_target, {
+        query: resolveCarryQuery(),
+        menuId: result.target.menu_id || currentMenuId,
+        actionId: result.target.action_id,
+        keepSceneRoute: keepSceneRoute.value,
+        routePath: route.path,
+      }) as never);
+      return true;
+    }
     if (result.target.scene_key) {
-      await router.replace({
-        path: `/s/${result.target.scene_key}`,
-        query: resolveCarryQuery({ menu_id: result.target.menu_id || currentMenuId }),
-      });
+      const sceneKey = String(result.target.scene_key || '').trim();
+      await router.replace(buildCanonicalSceneRouteTarget(sceneKey, {
+        scene: getSceneByKey(sceneKey),
+        query: resolveCarryQuery(),
+        menuId: result.target.menu_id || currentMenuId,
+        actionId: result.target.action_id,
+      }));
       return true;
     }
     const targetActionId = Number(result.target.action_id || 0);

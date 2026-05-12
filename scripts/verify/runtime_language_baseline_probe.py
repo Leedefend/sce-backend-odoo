@@ -13,6 +13,11 @@ from lxml import etree
 
 LANG_CODE = os.getenv("SC_RUNTIME_LANG", "zh_CN").strip() or "zh_CN"
 TZ = os.getenv("SC_RUNTIME_TZ", "Asia/Shanghai").strip() or "Asia/Shanghai"
+CRITICAL_LOGINS = [
+    item.strip()
+    for item in os.getenv("SC_RUNTIME_CRITICAL_USERS", "admin,wutao,chenshuai").split(",")
+    if item.strip()
+]
 
 
 def _fail(errors, message):
@@ -45,7 +50,7 @@ elif not lang.active:
     _fail(errors, "zh_CN language inactive")
 
 Users = env["res.users"].sudo().with_context(active_test=False)
-critical_logins = ["admin", "wutao", "chenshuai"]
+critical_logins = CRITICAL_LOGINS or ["admin"]
 users = Users.search([("login", "in", critical_logins)])
 report["users"] = {user.login: {"lang": user.lang, "tz": user.tz} for user in users}
 missing = sorted(set(critical_logins) - set(users.mapped("login")))

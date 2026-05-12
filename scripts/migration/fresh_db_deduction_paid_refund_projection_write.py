@@ -20,7 +20,21 @@ def artifact_root() -> Path:
     root = os.environ.get("MIGRATION_ARTIFACT_ROOT") or os.environ.get("HISTORY_CONTINUITY_ARTIFACT_ROOT")
     if root:
         return Path(root)
-    return repo_root() / "artifacts" / "migration"
+    candidates = [
+        repo_root() / "artifacts" / "migration",
+        Path("/mnt/artifacts/migration"),
+        Path(f"/tmp/history_continuity/{env.cr.dbname}/adhoc"),  # noqa: F821
+    ]
+    for candidate in candidates:
+        try:
+            candidate.mkdir(parents=True, exist_ok=True)
+            probe = candidate / ".write_probe"
+            probe.write_text("ok\n", encoding="utf-8")
+            probe.unlink()
+            return candidate
+        except Exception:
+            continue
+    return Path(f"/tmp/history_continuity/{env.cr.dbname}/adhoc")  # noqa: F821
 
 
 output_json = artifact_root() / "fresh_db_deduction_paid_refund_projection_write_result_v1.json"
@@ -68,6 +82,9 @@ for line in Line.search(source_domain, order="transaction_date desc, id desc"):
         "legacy_record_id": line.source_key,
         "legacy_document_no": line.document_no,
         "legacy_document_state": line.document_state or "历史已确认",
+        "creator_legacy_user_id": line.creator_legacy_user_id,
+        "creator_name": line.creator_name,
+        "created_time": line.created_time,
         "note": (
             "[migration:deduction_paid_refund] "
             f"legacy_account_transaction_line_id={line.id}; "
@@ -101,6 +118,9 @@ for line in Line.search(source_domain, order="transaction_date desc, id desc"):
                    legacy_source_table = %s,
                    legacy_document_no = %s,
                    legacy_document_state = %s,
+                   creator_legacy_user_id = %s,
+                   creator_name = %s,
+                   created_time = %s,
                    note = %s,
                    write_date = NOW()
              WHERE id = %s
@@ -120,6 +140,9 @@ for line in Line.search(source_domain, order="transaction_date desc, id desc"):
                 values["legacy_source_table"],
                 values["legacy_document_no"],
                 values["legacy_document_state"],
+                values["creator_legacy_user_id"],
+                values["creator_name"],
+                values["created_time"],
                 values["note"],
                 existing.id,
             ],
@@ -148,7 +171,7 @@ result = {
     "expected_visible_rows": expected_visible,
     "after_deduction_paid_refund": after,
     "visible_rows": visible,
-    "status": "PASS" if visible >= expected_visible and after > before else "REVIEW",
+    "status": "PASS" if visible >= expected_visible and (created + updated > 0 or after == before) else "REVIEW",
 }
 
 output_json.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

@@ -34,6 +34,20 @@ const EXPECTED = {
   x2manyActions: ['添加行'],
   x2manyColumns: ['投标名称', '投标轮次', '招标人/业主', '投标报价', '清单合计', '状态', '投标截止时间'],
 };
+const FORBIDDEN_CUSTOM_TEXT = [
+  'header_bar',
+  'scene-block',
+  '{"default_sort"',
+  "'kind': 'open'",
+  "'visible_profiles'",
+  '"filters":[{"key"',
+  ' header sheet container ',
+  'header sheet container',
+  ' sheet container ',
+  ' container h1 ',
+  'project.project.form',
+  'display_name',
+];
 
 function writeJson(name, data) {
   fs.mkdirSync(outDir, { recursive: true });
@@ -88,16 +102,18 @@ async function collectFormSurface(page, kind) {
         field_labels: text('label, .o_form_label', nativeForm),
       };
     }
+    const bodyText = normalize(document.body?.textContent || '');
     return {
       buttons: text('button', nativeForm),
       tabs: text('.native-tabs .native-tab, [role="tab"]', nativeForm),
       statusbar: text('.native-statusbar button, .native-statusbar [role="button"]', nativeForm),
-      header_actions: text('.native-container--header button', nativeForm),
+      header_actions: text('.template-page-header-actions button, .native-container--header button', nativeForm),
       smart_buttons: text('.native-actions--smart button', nativeForm),
       chatter_actions: text('.native-chatter-block button', nativeForm),
       x2many_actions: text('.native-tab-panel .o2m-toolbar button, .native-tab-panel .chip-btn', nativeForm),
       x2many_columns: text('.native-tab-panel .o2m-header-cell, .native-tab-panel .o2m-fields .meta, .native-tab-panel th', nativeForm),
       field_labels: text('label, .field-label, .form-label', nativeForm),
+      body_text: bodyText,
     };
   }, kind);
   const allButtons = scoped.buttons || [];
@@ -132,6 +148,9 @@ async function collectFormSurface(page, kind) {
       Object.entries(expectedPresence).map(([key, value]) => [key, missingFrom(value)]),
     ),
     console_errors: consoleErrors,
+    forbidden_text: kind === 'custom'
+      ? FORBIDDEN_CUSTOM_TEXT.filter((item) => String(scoped.body_text || '').includes(item))
+      : [],
   };
 }
 
@@ -146,11 +165,16 @@ function missingScoped(surface, key, labels) {
 
 async function exerciseCustomOne2manyPath(page) {
   await page.locator('.native-tabs .native-tab').filter({ hasText: '投标管理' }).first().click().catch(() => {});
-  await page.locator('.native-tab-panel .o2m-toolbar button').filter({ hasText: '添加行' }).first().click();
-  await page.locator('.native-tab-panel .o2m-row').first().waitFor({ timeout: 10000 });
+  const scopedPanel = page.locator('.native-tab-panel').filter({ hasText: '投标管理' }).first();
+  const panelExists = (await scopedPanel.count().catch(() => 0)) > 0;
+  const panel = panelExists ? scopedPanel : page.locator('.native-tab-panel').first();
+  await panel.locator('.o2m-toolbar button').filter({ hasText: '添加行' }).first().click();
+  await panel.locator('.o2m-row').first().waitFor({ timeout: 10000 });
   return page.evaluate((expectedColumns) => {
     const normalize = (value) => String(value || '').replace(/\s+/g, ' ').trim();
-    const activePanel = document.querySelector('.native-tab-panel');
+    const activePanel = Array.from(document.querySelectorAll('.native-tab-panel'))
+      .find((node) => normalize(node.textContent || '').includes('投标管理'))
+      || document.querySelector('.native-tab-panel');
     const row = activePanel && activePanel.querySelector('.o2m-row');
     const labels = Array.from((row || document).querySelectorAll('.o2m-field .meta'))
       .map((el) => normalize(el.textContent))
@@ -175,12 +199,29 @@ async function exerciseCustomOne2manyPath(page) {
   }, EXPECTED.x2manyColumns);
 }
 
+async function waitForCustomFormReady(page) {
+  await page.locator('.native-form-tree, .template-layout-shell').first().waitFor({ timeout: 45000 });
+  await page.locator('.native-tabs .native-tab').filter({ hasText: '投标管理' }).first().waitFor({ timeout: 45000 });
+  await page.locator('.native-statusbar').first().waitFor({ timeout: 45000 });
+  await page.waitForFunction(() => {
+    const text = String(document.body?.textContent || '');
+    return !text.includes('正在加载页面')
+      && document.querySelectorAll('.native-tabs .native-tab').length > 0
+      && document.querySelectorAll('.native-statusbar').length > 0
+      && text.includes('投标管理');
+  }, null, { timeout: 45000 });
+}
+
 async function loginCustom(page) {
   await page.goto(`${FRONTEND_URL}/login`, { waitUntil: 'networkidle' });
   const inputs = page.locator('input');
   await inputs.nth(0).fill(LOGIN);
   await inputs.nth(1).fill(PASSWORD);
-  await inputs.nth(2).fill(DB_NAME);
+  const dbInput = inputs.nth(2);
+  if (await dbInput.count().catch(() => 0)) {
+    const disabled = await dbInput.isDisabled().catch(() => false);
+    if (!disabled) await dbInput.fill(DB_NAME);
+  }
   await page.getByRole('button', { name: /^登录$/ }).click();
   await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 20000 });
 }
@@ -231,13 +272,13 @@ async function main() {
     await loginCustom(customPage);
     await customPage.goto(
       `${FRONTEND_URL}/r/${MODEL}/${RECORD_ID}?menu_id=${MENU_ID}&action_id=${ACTION_ID}`,
-      { waitUntil: 'networkidle' },
+      { waitUntil: 'domcontentloaded', timeout: 45000 },
     );
-    await customPage.getByText(/发送消息|记录备注|描述|设置/, { exact: false }).first().waitFor({ timeout: 30000 });
-    await customPage.screenshot({ path: path.join(outDir, 'custom_form.png'), fullPage: true });
+    await waitForCustomFormReady(customPage);
     result.custom_business_paths = {
       one2many_add_row: await exerciseCustomOne2manyPath(customPage),
     };
+    await customPage.screenshot({ path: path.join(outDir, 'custom_form.png'), fullPage: true });
     result.custom = await collectFormSurface(customPage, 'custom');
     await customContext.close();
 
@@ -277,7 +318,8 @@ async function main() {
     result.pass = Object.values(gap).every((row) => row.custom_missing_but_native_present.length === 0)
       && result.custom_business_paths.one2many_add_row.add_row
       && result.custom_business_paths.one2many_add_row.missing_row_labels.length === 0
-      && result.custom_business_paths.one2many_add_row.readonly_columns_disabled['清单合计'];
+      && result.custom_business_paths.one2many_add_row.readonly_columns_disabled['清单合计']
+      && result.custom.forbidden_text.length === 0;
 
     writeJson('summary.json', result);
     console.log(`[form_native_custom_gap_audit] artifacts=${outDir}`);

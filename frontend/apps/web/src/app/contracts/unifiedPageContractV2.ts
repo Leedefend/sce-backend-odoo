@@ -7,6 +7,8 @@ export type UnifiedPageContractV2Widget = {
   label: string;
   componentKey: string;
   componentConfig?: Record<string, unknown>;
+  fieldType?: string;
+  relation?: string;
 };
 
 export type UnifiedPageContractV2Container = {
@@ -124,6 +126,46 @@ function asText(value: unknown): string {
   return String(value || '').trim();
 }
 
+function walkUnifiedPageContractV2LayoutNodes(rows: unknown[], visit: (row: Dict) => void) {
+  asList(rows).forEach((item) => {
+    const row = asDict(item);
+    if (!Object.keys(row).length) return;
+    visit(row);
+    for (const key of ['children', 'pages', 'tabs', 'nodes', 'items'] as const) {
+      walkUnifiedPageContractV2LayoutNodes(asList(row[key]), visit);
+    }
+  });
+}
+
+function synthesizeUnifiedPageContractV2Widget(row: Dict): UnifiedPageContractV2Widget | null {
+  const fieldInfo = asDict(row.fieldInfo || row.field_info);
+  const widgetId = asText(row.widgetId || row.widget_id || (asText(row.fieldCode || row.name || row.field) ? `field.${asText(row.fieldCode || row.name || row.field)}` : ''));
+  const fieldCode = asText(row.fieldCode || row.name || row.field || fieldInfo.name);
+  const widgetType = asText(row.widgetType || row.widget || fieldInfo.widget || row.type);
+  if (!widgetId || !fieldCode) return null;
+  const attributes = asDict(row.attributes);
+  const label = asText(row.label || row.string || row.title || fieldInfo.label || fieldCode);
+  const componentKey = asText(row.componentKey || fieldInfo.componentKey);
+  const componentConfig = asDict(row.componentConfig || fieldInfo.componentConfig || attributes.componentConfig);
+  const relationEntry = asDict(fieldInfo.relation_entry || fieldInfo.relationEntry || componentConfig.relationEntry || componentConfig.relation_entry);
+  return {
+    widgetId,
+    widgetType,
+    fieldCode,
+    label,
+    componentKey: componentKey || 'sc.display.text',
+    componentConfig: {
+      ...(componentConfig || {}),
+      ...(asText(fieldInfo.type || fieldInfo.ttype) ? { fieldType: asText(fieldInfo.type || fieldInfo.ttype) } : {}),
+      ...(asText(fieldInfo.relation) ? { relation: asText(fieldInfo.relation) } : {}),
+      ...(Object.keys(relationEntry).length ? { relationEntry } : {}),
+      ...(asDict(fieldInfo.widget_options).color_field ? { widgetOptions: asDict(fieldInfo.widget_options) } : {}),
+    },
+    fieldType: asText(fieldInfo.type || fieldInfo.ttype) || undefined,
+    relation: asText(fieldInfo.relation) || undefined,
+  };
+}
+
 export function isUnifiedPageContractV2(value: unknown): value is UnifiedPageContractV2 {
   const root = asDict(value);
   const pageInfo = asDict(root.pageInfo);
@@ -152,26 +194,21 @@ export function collectUnifiedPageContractV2Widgets(contract: unknown): UnifiedP
   const v2 = resolveUnifiedPageContractV2(contract);
   if (!v2) return [];
   const out: UnifiedPageContractV2Widget[] = [];
-  const visit = (rows: unknown[]) => {
-    rows.forEach((item) => {
-      const row = asDict(item);
-      asList(row.widgetList).forEach((widgetRaw) => {
-        const widget = asDict(widgetRaw);
-        const widgetId = asText(widget.widgetId);
-        if (!widgetId) return;
-        out.push({
-          widgetId,
-          widgetType: asText(widget.widgetType),
-          fieldCode: asText(widget.fieldCode),
-          label: asText(widget.label),
-          componentKey: asText(widget.componentKey),
-          componentConfig: asDict(widget.componentConfig),
-        });
-      });
-      visit(asList(row.children));
+  const seen = new Set<string>();
+  walkUnifiedPageContractV2LayoutNodes(v2.layoutContract.containerTree, (row) => {
+    asList(row.widgetList).forEach((widgetRaw) => {
+      const widget = asDict(widgetRaw);
+      const synthesized = synthesizeUnifiedPageContractV2Widget(widget);
+      if (!synthesized || seen.has(synthesized.widgetId)) return;
+      seen.add(synthesized.widgetId);
+      out.push(synthesized);
     });
-  };
-  visit(v2.layoutContract.containerTree);
+    if (asText(row.type || row.kind).toLowerCase() !== 'field') return;
+    const synthesized = synthesizeUnifiedPageContractV2Widget(row);
+    if (!synthesized || seen.has(synthesized.widgetId)) return;
+    seen.add(synthesized.widgetId);
+    out.push(synthesized);
+  });
   return out;
 }
 
@@ -333,9 +370,9 @@ export function collectUnifiedPageContractV2FieldContainerStatus(contract: unkno
     rows.forEach((item) => {
       const row = asDict(item);
       const containerId = asText(row.containerId);
-      const current = containerStatus[containerId] || { containerId };
+      const current = containerId ? (containerStatus[containerId] || { containerId }) : inherited;
       const merged: UnifiedPageContractV2ContainerStatus = {
-        containerId,
+        containerId: containerId || inherited.containerId,
         visible: inherited.visible === false || current.visible === false ? false : current.visible,
         disabled: inherited.disabled === true || current.disabled === true ? true : current.disabled,
         reasonCode: current.reasonCode || inherited.reasonCode,
@@ -345,7 +382,14 @@ export function collectUnifiedPageContractV2FieldContainerStatus(contract: unkno
         const fieldCode = asText(widget.fieldCode);
         if (fieldCode) out[fieldCode] = merged;
       });
-      visit(asList(row.children), merged);
+      if (asText(row.type || row.kind).toLowerCase() === 'field') {
+        const fieldInfo = asDict(row.fieldInfo || row.field_info);
+        const fieldCode = asText(row.fieldCode || row.name || row.field || fieldInfo.name);
+        if (fieldCode) out[fieldCode] = merged;
+      }
+      for (const key of ['children', 'pages', 'tabs', 'nodes', 'items'] as const) {
+        visit(asList(row[key]), merged);
+      }
     });
   };
   visit(v2.layoutContract.containerTree, { containerId: '', visible: true, disabled: false });

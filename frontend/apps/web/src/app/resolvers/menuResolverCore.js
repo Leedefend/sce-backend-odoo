@@ -12,7 +12,9 @@ export function resolveMenuActionCore(menuTree, menuId) {
       node,
       target: {
         menu_id: ownMenuId,
+        action_id: ownActionId || undefined,
         scene_key: ownSceneKey,
+        entry_target: resolveEntryTarget(node),
         node,
       },
     };
@@ -47,7 +49,9 @@ function findFirstResolvableTarget(nodes) {
     if (shouldUseSceneRoute(node, actionId) && sceneKey) {
       return {
         menu_id: menuId,
+        action_id: actionId || undefined,
         scene_key: sceneKey,
+        entry_target: resolveEntryTarget(node),
         node,
       };
     }
@@ -75,10 +79,29 @@ function resolveActionId(node) {
 }
 
 function resolveSceneKey(node) {
-  return node?.scene_key || node?.sceneKey || node?.meta?.scene_key || '';
+  return resolveSceneEntryTarget(node)?.scene_key || node?.scene_key || node?.sceneKey || node?.meta?.scene_key || '';
+}
+
+function resolveEntryTarget(node) {
+  const entryTarget = node?.meta?.entry_target || node?.entry_target;
+  if (entryTarget && typeof entryTarget === 'object' && String(entryTarget.type || '').trim()) {
+    return entryTarget;
+  }
+  return null;
+}
+
+function resolveSceneEntryTarget(node) {
+  const entryTarget = resolveEntryTarget(node);
+  if (entryTarget && String(entryTarget.type || '') === 'scene' && entryTarget.scene_key) {
+    return entryTarget;
+  }
+  return null;
 }
 
 function shouldUseSceneRoute(node, actionId) {
+  if (resolveSceneEntryTarget(node)) {
+    return true;
+  }
   const explicitSceneKey = resolveSceneKey(node);
   if (!explicitSceneKey) {
     return false;
@@ -86,9 +109,6 @@ function shouldUseSceneRoute(node, actionId) {
   const sceneSource = String(node?.meta?.scene_source || '').trim().toLowerCase();
   const actionType = String(node?.meta?.action_type || '').trim().toLowerCase();
   if (sceneSource === 'scene_contract' || actionType === 'scene.contract') {
-    return true;
-  }
-  if (explicitSceneKey === 'workspace.home' || explicitSceneKey === 'dashboard.company' || explicitSceneKey === 'my_work.workspace') {
     return true;
   }
   return false;

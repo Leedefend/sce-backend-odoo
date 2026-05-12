@@ -157,6 +157,6 @@
     "snapshotId": "snapshot.project.list.001",
     "traceId": "trace.project.list.001",
     "requestId": "request.project.list.001",
-    "compat": {}
+    "sourceType": "ui.contract"
   }
 }

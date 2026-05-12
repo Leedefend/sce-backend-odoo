@@ -8,6 +8,7 @@ const isLocalHost = typeof window !== 'undefined'
 const isLocalDevPort = typeof window !== 'undefined'
   ? ['18081', '5174', '8070'].includes(window.location.port)
   : false;
+const isLocalDevRuntime = isLocalHost && isLocalDevPort;
 const runtimeDbRaw = typeof window !== 'undefined'
   ? String(new URLSearchParams(window.location.search).get('db') || '').trim()
   : '';
@@ -23,7 +24,8 @@ const localBlockedEnvDb = localBlockedProductionDb ? '' : envDb;
 const allowLocalFallbackDb = isLocalHost || appEnv === 'dev' || appEnv === 'test' || appEnv === 'local';
 // For local dev/test only, fallback to sc_demo when db env is not explicitly set.
 const localDefaultDb = allowLocalFallbackDb && !runtimeDb && !localBlockedEnvDb && isLocalHost ? 'sc_demo' : '';
-const pinnedDb = localBlockedEnvDb || enforcedDb || runtimeDb;
+const localDevPinnedDb = isLocalDevRuntime ? 'sc_demo' : '';
+const pinnedDb = localDevPinnedDb || localBlockedEnvDb || enforcedDb || runtimeDb;
 
 export const config = {
   apiBaseUrl: import.meta.env.VITE_API_BASE_URL ?? '',

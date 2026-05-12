@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars, no-extra-boolean-cast, vue/attributes-order */
 <template>
-  <LayoutShell :flow="isProjectIntakeCreateMode">
+  <LayoutShell :flow="isProjectIntakeCreateMode" :class="{ 'contract-form-native-shell': useNativeFormTree }">
     <PageHeaderTemplate :title="pageDisplayTitle" :subtitle="pageDisplaySubtitle || undefined">
       <template #meta>
         <p v-if="showHud" class="meta">model={{ model }} · id={{ recordIdDisplay }} · action={{ actionId || '-' }}</p>
@@ -11,6 +11,22 @@
           <p class="header-status-item">当前进度：{{ intakeRequiredSummary }}</p>
           <p class="header-status-item" :class="{ 'header-status-item--danger': intakeMissingSummary !== '无' }">缺少：{{ intakeMissingSummary }}</p>
         </template>
+        <section v-else-if="nativeStatusbar.visible" class="native-statusbar native-statusbar--header" aria-label="项目状态">
+          <button
+            v-for="item in nativeStatusbar.states"
+            :key="String(item.value)"
+            type="button"
+            class="native-statusbar-step"
+            :class="{
+              'native-statusbar-step--active': nativeStatusbar.current === String(item.value),
+              'native-statusbar-step--done': nativeStatusbar.reachedValues.includes(String(item.value)),
+            }"
+            :disabled="busy || nativeStatusbar.readonly"
+            @click="setStatusbarValue(String(item.value))"
+          >
+            {{ item.label }}
+          </button>
+        </section>
       </template>
       <template #actions>
         <button
@@ -95,9 +111,6 @@
       </section>
 
       <section class="form-grid">
-        <div v-if="isProjectIntakeCreateMode" class="form-flow-guide">
-          <p class="form-flow-guide-main">只需完成核心信息即可创建项目</p>
-        </div>
         <StatusPanel
           v-if="sceneValidationPanel"
           title="表单校验失败"
@@ -117,30 +130,18 @@
         <p v-if="submissionFeedback" class="submission-feedback" :class="`submission-feedback--${submissionFeedback.kind}`">
           {{ submissionFeedback.message }}
         </p>
-        <p v-if="visibleFieldNodeCount === 0" class="validation-warn">
-          当前页面暂无可显示字段，请检查契约可见字段与角色权限配置。
-        </p>
-        <section v-if="nativeStatusbar.visible" class="native-statusbar" aria-label="项目状态">
-          <button
-            v-for="item in nativeStatusbar.states"
-            :key="String(item.value)"
-            type="button"
-            class="native-statusbar-step"
-            :class="{
-              'native-statusbar-step--active': nativeStatusbar.current === String(item.value),
-              'native-statusbar-step--done': nativeStatusbar.reachedValues.includes(String(item.value)),
-            }"
-            :disabled="busy || nativeStatusbar.readonly"
-            @click="setStatusbarValue(String(item.value))"
-          >
-            {{ item.label }}
-          </button>
-        </section>
+        <SceneBlocksRenderer
+          v-if="showSceneBlocksDebug && sceneReadyFormSurface.sceneBlocks.length"
+          :blocks="sceneReadyFormSurface.sceneBlocks"
+          @action="handleSceneBlockAction"
+        />
         <NativeFormTreeRenderer
           v-if="useNativeFormTree"
           :nodes="nativeFormLayoutNodes"
           :field-schemas-for-nodes="nativeFieldSchemasForNodes"
           :is-node-visible="isNativeLayoutNodeVisible"
+          :button-label-resolver="resolveNativeButtonLabel"
+          :native-action-handler="runNativeLayoutAction"
           :columns="2"
           @field-change="onTemplateFieldChange"
           @native-action="runNativeLayoutAction"
@@ -222,29 +223,6 @@
             </section>
           </template>
         </NativeFormTreeRenderer>
-        <FormSectionTemplate
-          v-for="section in templateSections"
-          v-else
-          :key="section.key"
-          :title="section.title"
-          :hint="section.hint"
-          :tone="section.tone"
-          :columns="2"
-          :fields="section.fields"
-          @field-change="onTemplateFieldChange"
-        >
-          <template v-if="isProjectIntakeCreateMode && section.isAdvanced" #action>
-            <button class="chip-btn" :disabled="busy" @click="advancedExpanded = !advancedExpanded">
-              {{ advancedExpanded ? '收起' : '展开' }}
-            </button>
-          </template>
-          <template #readonly="{ field }">
-            <FieldValue :value="field.value" :field="field.descriptor" />
-          </template>
-          <template #fallback="{ field }">
-            <RelationFallbackRenderer :field="field" :adapter="relationFallbackAdapter" />
-          </template>
-        </FormSectionTemplate>
         <div v-if="hasAdvancedFields && !isProjectIntakeCreateMode && !useNativeFormTree" class="layout-divider advanced-toggle">
           <button class="chip-btn" :disabled="busy" @click="advancedExpanded = !advancedExpanded">
             {{ advancedExpanded ? '收起高级信息' : '展开高级信息' }}
@@ -364,7 +342,7 @@
       <section class="relation-dialog">
         <header class="relation-dialog-head">
           <h3>{{ relationSearchDialog.title }}</h3>
-          <button class="relation-dialog-close" type="button" :disabled="busy" :aria-label="relationSearchDialog.labels.close" @click="closeRelationSearchDialog">×</button>
+          <button class="relation-dialog-close" type="button" :disabled="busy" :aria-label="relationSearchDialog.labels.close || '关闭'" @click="closeRelationSearchDialog">×</button>
         </header>
         <div class="relation-dialog-search">
           <input
@@ -372,11 +350,11 @@
             class="input"
             type="text"
             :value="relationSearchDialog.keyword"
-            :placeholder="relationSearchDialog.labels.search_placeholder"
+            :placeholder="relationSearchDialog.labels.search_placeholder || '输入名称搜索'"
             @input="setRelationSearchKeyword(($event.target as HTMLInputElement).value)"
             @keydown.enter.prevent="runRelationSearch"
           />
-          <button class="chip-btn" type="button" :disabled="relationSearchDialog.loading" @click="runRelationSearch">{{ relationSearchDialog.labels.search }}</button>
+          <button class="chip-btn" type="button" :disabled="relationSearchDialog.loading" @click="runRelationSearch">{{ relationSearchDialog.labels.search || '搜索' }}</button>
         </div>
         <p v-if="relationSearchDialog.error" class="validation-error">{{ relationSearchDialog.error }}</p>
         <div class="relation-dialog-table-wrap">
@@ -412,7 +390,7 @@
             </tbody>
           </table>
           <p v-if="!relationSearchDialog.loading && !relationSearchDialog.rows.length" class="relation-dialog-empty">
-            {{ relationSearchDialog.labels.empty }}
+            {{ relationSearchDialog.labels.empty || '未找到匹配记录' }}
           </p>
         </div>
         <footer class="relation-dialog-footer">
@@ -424,7 +402,7 @@
             :disabled="busy || relationSearchDialog.loading || !relationSearchDialog.selectedId"
             @click="() => confirmRelationSearchSelection()"
           >
-            {{ relationSearchDialog.labels.select }}
+            {{ relationSearchDialog.labels.select || '选择' }}
           </button>
           <button
             v-if="relationSearchDialog.createMode !== 'none'"
@@ -433,9 +411,9 @@
             :disabled="busy || relationSearchDialog.loading"
             @click="createRelationFromSearchDialog"
           >
-            {{ relationSearchDialog.labels.create }}
+            {{ relationSearchDialog.labels.create || '新建' }}
           </button>
-          <button class="ghost" type="button" :disabled="busy" @click="closeRelationSearchDialog">{{ relationSearchDialog.labels.cancel }}</button>
+          <button class="ghost" type="button" :disabled="busy" @click="closeRelationSearchDialog">{{ relationSearchDialog.labels.cancel || '取消' }}</button>
         </footer>
       </section>
     </div>
@@ -450,20 +428,20 @@ import StatusPanel from '../components/StatusPanel.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
 import LayoutShell from '../components/template/LayoutShell.vue';
 import PageHeaderTemplate from '../components/template/PageHeader.vue';
-import FormSectionTemplate from '../components/template/FormSection.vue';
 import NativeFormTreeRenderer, { type NativeFormLayoutNode } from '../components/template/NativeFormTreeRenderer.vue';
+import SceneBlocksRenderer from '../components/scene/SceneBlocksRenderer.vue';
 import PageFooterTemplate from '../components/template/PageFooter.vue';
 import RelationFallbackRenderer from '../components/template/RelationFallbackRenderer.vue';
 import type { FormSectionFieldSchema, FormSectionFieldChange } from '../components/template/formSection.types';
 import type { RelationFallbackAdapter } from '../components/template/relationFallback.types';
 import { createFormSectionFieldSchemaBuilder } from '../components/template/formSection.adapter';
-import { resolveTemplateSectionPresentation } from '../components/template/sectionPresentation.mapper';
 import { resolveInputPlaceholder, resolveSelectPlaceholder } from '../components/template/placeholder.mapper';
 import { resolveFieldSpanClass } from '../components/template/fieldSpan.mapper';
 import { mapDescriptorSelectionOptions, mapRelationOptions } from '../components/template/option.mapper';
 import { createRelationFallbackAdapter } from '../components/template/relationFallback.adapter';
 import { dispatchTemplateFieldChange } from '../components/template/fieldChange.dispatcher';
-import { isHudEnabled } from '../config/debug';
+import { isHudEnabled, isSceneBlocksDebugEnabled } from '../config/debug';
+import { intentRequest } from '../api/intents';
 import { loadActionContractRaw, loadModelContractRaw } from '../api/contract';
 import { createRecord, listRecords, readRecord, writeRecord } from '../api/data';
 import { ApiError } from '../api/client';
@@ -483,7 +461,9 @@ import {
 } from '../app/contractRuntime';
 import { validateContractFormData } from '../app/contractValidation';
 import { resolveActionIdFromContext } from '../app/actionContext';
+import { findActionMeta } from '../app/menu';
 import { pickContractNavQuery } from '../app/navigationContext';
+import { buildEntryTargetRouteTarget } from '../app/routeQuery';
 import { readWorkspaceContext } from '../app/workspaceContext';
 import { collectPolicyValidationErrors, evaluateActionPolicy, evaluateFieldPolicy } from '../app/contractPolicies';
 import { buildRuntimeFieldStates } from '../app/modifierEngine';
@@ -633,25 +613,10 @@ type LayoutNode = {
   descriptor?: FieldDescriptor;
 };
 
-type LayoutSection = {
-  key: string;
-  title: string;
-  kind: 'default' | 'header' | 'sheet' | 'group' | 'notebook' | 'page';
-  fields: LayoutNode[];
-};
-
-type TemplateSectionView = {
-  key: string;
-  title: string;
-  hint: string;
-  tone: 'core' | 'advanced';
-  isAdvanced: boolean;
-  fields: FormSectionFieldSchema[];
-};
-
 type RelationOption = {
   id: number;
   label: string;
+  color?: number | null;
 };
 
 type RelationSearchColumn = {
@@ -784,6 +749,7 @@ const chatterError = ref('');
 const chatterTimeline = ref<ChatterTimelineEntry[]>([]);
 const attachmentUploading = ref(false);
 const attachmentError = ref('');
+let activeReloadToken = 0;
 
 const model = computed(() => String(route.params.model || contract.value?.head?.model || contract.value?.model || ''));
 const actionId = computed(() => {
@@ -802,6 +768,7 @@ const recordId = computed(() => {
 });
 const recordIdDisplay = computed(() => (recordId.value ? String(recordId.value) : 'new'));
 const showHud = computed(() => isHudEnabled(route));
+const showSceneBlocksDebug = computed(() => isSceneBlocksDebugEnabled(route));
 const requestedSurface = computed<'user' | 'native' | 'hud'>(() => {
   const raw = String(route.query.surface || '').trim().toLowerCase();
   if (raw === 'native' || raw === 'hud' || raw === 'user') return raw;
@@ -860,7 +827,7 @@ const rights = computed(() => {
 
 const canSave = computed(() => (recordId.value ? rights.value.write : rights.value.create));
 const relationRecordCountLabel = computed(() => {
-  const template = relationSearchDialog.labels.record_count || '';
+  const template = relationSearchDialog.labels.record_count || '%s 条记录';
   const count = String(relationSearchDialog.rows.length);
   return template.includes('%s') ? template.replace('%s', count) : `${count} ${template}`.trim();
 });
@@ -908,6 +875,18 @@ function hasPendingInlineRelationChange() {
   });
 }
 
+function hasPendingMany2manyTagCreate() {
+  return Object.entries(relationKeywords).some(([name, keyword]) => {
+    if (!String(keyword || '').trim()) return false;
+    if (!isFieldWritable(name)) return false;
+    if (!Array.isArray(formData[name])) return false;
+    const descriptor = contract.value?.fields?.[name];
+    const inline = relationInlineCreate(name, descriptor);
+    if (!inline.enabled || !inline.createOnNoMatch) return false;
+    return Boolean(relationModel(name));
+  });
+}
+
 function hasOne2manyDraftChanges() {
   return layoutNodes.value.some((node) => {
     if (node.kind !== 'field' || node.readonly) return false;
@@ -919,6 +898,7 @@ function hasOne2manyDraftChanges() {
 
 const hasChanges = computed(() => {
   if (hasPendingInlineRelationChange()) return true;
+  if (hasPendingMany2manyTagCreate()) return true;
   if (hasOne2manyDraftChanges()) return true;
   const statusField = nativeStatusbar.value.field;
   if (
@@ -976,11 +956,7 @@ const intakeMissingRequiredLabels = computed(() => {
       if (Array.isArray(value)) return value.length === 0;
       return false;
     })
-    .map((field) => {
-      const label = String(field.label || '').trim();
-      if (label === '名称') return '项目名称';
-      return label;
-    })
+    .map((field) => String(field.label || '').trim())
     .slice(0, 5);
 });
 
@@ -1000,10 +976,17 @@ const intakeMissingSummary = computed(() => {
 
 const one2manyValidation = computed(() => collectOne2manyDraftValidation());
 
+function isTechnicalViewTitle(value: string) {
+  const normalized = String(value || '').trim();
+  return /^[a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*){1,}\.(?:tree|list|form|kanban|search|graph|pivot|calendar|activity|gantt)$/i.test(normalized);
+}
+
 const pageTitle = computed(() => {
   const title = String(contract.value?.head?.title || '').trim();
-  if (title) return title;
-  return model.value ? `业务表单 · ${model.value}` : '业务表单';
+  if (title && !isTechnicalViewTitle(title)) return title;
+  const recordTitle = String(formData.display_name || formData.name || '').trim();
+  if (recordTitle) return recordTitle;
+  return '业务表单';
 });
 
 const pageDisplayTitle = computed(() => {
@@ -1037,7 +1020,7 @@ const showDiscardAction = computed(() => !isProjectIntakeCreateMode.value && Boo
 const headerActionsVisible = computed(() => {
   if (isProjectIntakeCreateMode.value) return [];
   if (useNativeFormTree.value) {
-    return headerActions.value.filter((item) => item.kind === 'mutation' || item.kind === 'object' || item.kind === 'server');
+    return [];
   }
   return headerActions.value;
 });
@@ -1303,6 +1286,43 @@ function relationIds(name: string): number[] {
   return normalizeRelationIds(formData[name]);
 }
 
+function cleanRelationDisplayLabel(value: unknown, id: number) {
+  const label = String(value || '').trim();
+  if (!label || label === 'display_name' || label === 'name') return `#${id}`;
+  return label;
+}
+
+function relationColorField(descriptor?: FieldDescriptor) {
+  const row = descriptor && typeof descriptor === 'object' ? descriptor as Record<string, unknown> : {};
+  const options = row.widget_options && typeof row.widget_options === 'object' && !Array.isArray(row.widget_options)
+    ? row.widget_options as Record<string, unknown>
+    : row.options && typeof row.options === 'object' && !Array.isArray(row.options)
+      ? row.options as Record<string, unknown>
+      : {};
+  const colorField = String(options.color_field || '').trim();
+  return colorField || '';
+}
+
+function relationReadFields(descriptor?: FieldDescriptor) {
+  const fields = new Set(['id', 'name', 'display_name']);
+  const colorField = relationColorField(descriptor);
+  if (colorField) fields.add(colorField);
+  return Array.from(fields);
+}
+
+function relationOptionFromRow(row: Record<string, unknown>, descriptor?: FieldDescriptor): RelationOption | null {
+  const id = Number(row.id);
+  if (!Number.isFinite(id) || id <= 0) return null;
+  const label = String(row.display_name || row.name || `#${id}`).trim();
+  const colorField = relationColorField(descriptor);
+  const colorValue = colorField ? Number(row[colorField]) : NaN;
+  return {
+    id: Math.trunc(id),
+    label: cleanRelationDisplayLabel(label, id),
+    ...(Number.isFinite(colorValue) ? { color: Math.trunc(colorValue) } : {}),
+  };
+}
+
 function selectedRelationOptions(name: string): RelationOption[] {
   const options = relationOptionsForField(name);
   const byId = new Map(options.map((option) => [option.id, option]));
@@ -1326,14 +1346,14 @@ function parseMany2oneDisplay(value: unknown): RelationOption | null {
   if (Array.isArray(value)) {
     const id = Number(value[0]);
     if (!Number.isFinite(id) || id <= 0) return null;
-    const label = String(value[1] || `#${id}`).trim() || `#${id}`;
+    const label = cleanRelationDisplayLabel(value[1], id);
     return { id: Math.trunc(id), label };
   }
   if (value && typeof value === 'object') {
     const row = value as Record<string, unknown>;
     const id = Number(row.id);
     if (!Number.isFinite(id) || id <= 0) return null;
-    const label = String(row.display_name || row.name || `#${id}`).trim() || `#${id}`;
+    const label = cleanRelationDisplayLabel(row.display_name || row.name, id);
     return { id: Math.trunc(id), label };
   }
   return null;
@@ -1376,20 +1396,11 @@ async function hydrateSelectedRelationOptions() {
       const response = await readRecord({
         model: relation,
         ids: missingIds,
-        fields: ['id', 'name', 'display_name'],
+        fields: relationReadFields(descriptor),
       });
       const records = Array.isArray(response.records) ? response.records : [];
       const options = records
-        .map((row) => {
-          const id = Number((row as Record<string, unknown>).id);
-          if (!Number.isFinite(id) || id <= 0) return null;
-          const label = String(
-            (row as Record<string, unknown>).display_name
-            || (row as Record<string, unknown>).name
-            || `#${id}`,
-          ).trim();
-          return { id: Math.trunc(id), label };
-        })
+        .map((row) => relationOptionFromRow(row as Record<string, unknown>, descriptor))
         .filter((item): item is RelationOption => Boolean(item));
       if (options.length) mergeRelationOptions(name, options);
     } catch (err) {
@@ -1422,11 +1433,52 @@ function one2manyRelationFieldDescriptor(fieldName: string, column: string) {
   return descriptor || null;
 }
 
+function nativeFieldSubview(name: string): Record<string, unknown> | null {
+  const target = String(name || '').trim();
+  if (!target) return null;
+  const walk = (nodes: NativeFormLayoutNode[]): Record<string, unknown> | null => {
+    for (const node of nodes) {
+      const nodeName = String(node?.name || '').trim();
+      const nodeType = String(node?.type || '').trim().toLowerCase();
+      if (nodeType === 'field' && nodeName === target) {
+        const fieldInfo = node?.fieldInfo && typeof node.fieldInfo === 'object' && !Array.isArray(node.fieldInfo)
+          ? node.fieldInfo as Record<string, unknown>
+          : null;
+        const subview = fieldInfo?.subview;
+        if (subview && typeof subview === 'object' && !Array.isArray(subview)) {
+          return subview as Record<string, unknown>;
+        }
+      }
+      for (const key of ['children', 'pages', 'tabs', 'nodes', 'items'] as const) {
+        const children = node?.[key];
+        if (!Array.isArray(children)) continue;
+        const found = walk(children as NativeFormLayoutNode[]);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+  return walk(nativeFormLayoutNodes.value);
+}
+
+function subviewColumnCount(subview: unknown): number {
+  if (!subview || typeof subview !== 'object' || Array.isArray(subview)) return 0;
+  const tree = (subview as Record<string, unknown>).tree;
+  if (!tree || typeof tree !== 'object' || Array.isArray(tree)) return 0;
+  const columns = (tree as Record<string, unknown>).columns;
+  if (!Array.isArray(columns)) return 0;
+  return columns.length;
+}
+
 function one2manyColumns(name: string): One2ManyColumn[] {
   const subviews = (contract.value?.views?.form as Record<string, unknown> | undefined)?.subviews;
-  const fieldSubview = subviews && typeof subviews === 'object'
+  const legacySubview = subviews && typeof subviews === 'object'
     ? (subviews as Record<string, unknown>)[name]
     : undefined;
+  const nativeSubview = nativeFieldSubview(name);
+  const legacyColumns = subviewColumnCount(legacySubview);
+  const nativeColumns = subviewColumnCount(nativeSubview);
+  const fieldSubview = nativeColumns > legacyColumns ? nativeSubview : (legacySubview || nativeSubview);
   const tree = fieldSubview && typeof fieldSubview === 'object'
     ? (fieldSubview as Record<string, unknown>).tree
     : undefined;
@@ -1434,6 +1486,12 @@ function one2manyColumns(name: string): One2ManyColumn[] {
     ? (tree as Record<string, unknown>).columns
     : undefined;
   const out: One2ManyColumn[] = [];
+  const columnLabel = (value: unknown, fallback: string) => {
+    const label = String(value || '').trim();
+    if (label === 'display_name' || label === 'name') return '名称';
+    if (label) return label;
+    return fallback === 'display_name' || fallback === 'name' ? '名称' : fallback;
+  };
   if (Array.isArray(columnsRaw)) {
     columnsRaw.forEach((item) => {
       if (typeof item === 'string') {
@@ -1443,7 +1501,7 @@ function one2manyColumns(name: string): One2ManyColumn[] {
         const ttype = fieldType(descriptor) || 'char';
         out.push({
           name: normalized,
-          label: String(descriptor?.string || normalized),
+          label: columnLabel(descriptor?.string, normalized),
           ttype,
           required: Boolean(descriptor?.required),
           readonly: Boolean(descriptor?.readonly),
@@ -1459,7 +1517,7 @@ function one2manyColumns(name: string): One2ManyColumn[] {
       const ttype = String(row.ttype || fieldType(descriptor) || 'char').trim() || 'char';
       out.push({
         name: colName,
-        label: String(row.label || row.string || descriptor?.string || colName).trim() || colName,
+        label: columnLabel(row.label || row.string || descriptor?.string, colName),
         ttype,
         required: Boolean(row.required || descriptor?.required),
         readonly: Boolean(row.readonly || descriptor?.readonly),
@@ -1843,6 +1901,11 @@ function applyOnchangeLinePatches(linePatches: OnchangeLinePatch[]) {
 
 function setRelationKeyword(name: string, keyword: string) {
   relationKeywords[name] = keyword;
+  const descriptor = contract.value?.fields?.[name];
+  const widget = String((descriptor as Record<string, unknown> | undefined)?.widget || '').trim().toLowerCase();
+  if (fieldType(descriptor) === 'many2many' && widget === 'many2many_tags') {
+    markFieldChanged(name);
+  }
   if (relationQueryTimers[name]) {
     clearTimeout(relationQueryTimers[name]);
   }
@@ -1887,7 +1950,10 @@ function filteredRelationOptions(name: string) {
 
 function relationModel(name: string) {
   const descriptor = contract.value?.fields?.[name] as Record<string, unknown> | undefined;
-  return String(descriptor?.relation || '').trim();
+  const entry = descriptor?.relation_entry && typeof descriptor.relation_entry === 'object' && !Array.isArray(descriptor.relation_entry)
+    ? descriptor.relation_entry as Record<string, unknown>
+    : {};
+  return String(descriptor?.relation || entry.model || '').trim();
 }
 
 function sanitizeUiErrorMessage(raw: unknown, fallback: string) {
@@ -1945,6 +2011,15 @@ function relationEntry(descriptor?: FieldDescriptor) {
       match: String(inlineRaw.match || '').trim() || 'exact_label',
     },
   };
+}
+
+function relationSearchDialogContract(name: string): Record<string, unknown> {
+  const descriptor = contract.value?.fields?.[name] as Record<string, unknown> | undefined;
+  const entry = descriptor?.relation_entry;
+  if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return {};
+  const dialog = (entry as Record<string, unknown>).search_dialog;
+  if (!dialog || typeof dialog !== 'object' || Array.isArray(dialog)) return {};
+  return dialog as Record<string, unknown>;
 }
 
 function relationUiLabels(descriptor?: FieldDescriptor): RelationUiLabels {
@@ -2049,7 +2124,7 @@ async function queryRelationOptions(name: string, keyword: string): Promise<Rela
   try {
     const listed = await listRecords({
       model: relation,
-      fields: ['id', 'name', 'display_name'],
+      fields: relationReadFields(descriptor),
       limit: search ? 40 : 80,
       order: 'id desc',
       domain,
@@ -2058,16 +2133,7 @@ async function queryRelationOptions(name: string, keyword: string): Promise<Rela
     });
     const records = Array.isArray(listed?.records) ? listed.records : [];
     const mapped = records
-      .map((row) => {
-        const id = Number((row as Record<string, unknown>).id);
-        if (!Number.isFinite(id) || id <= 0) return null;
-        const label = String(
-          (row as Record<string, unknown>).display_name
-          || (row as Record<string, unknown>).name
-          || `#${id}`,
-        ).trim();
-        return { id: Math.trunc(id), label };
-      })
+      .map((row) => relationOptionFromRow(row as Record<string, unknown>, descriptor))
       .filter((item): item is RelationOption => Boolean(item));
     relationOptions.value = {
       ...relationOptions.value,
@@ -2093,7 +2159,7 @@ async function fetchRelationOptions(name: string, keyword: string, limit = 80): 
   const domain = mergedRelationDomain(name, descriptor);
   const listed = await listRecords({
     model: relation,
-    fields: ['id', 'name', 'display_name'],
+    fields: relationReadFields(descriptor),
     limit,
     order: 'id desc',
     domain,
@@ -2102,16 +2168,7 @@ async function fetchRelationOptions(name: string, keyword: string, limit = 80): 
   });
   const records = Array.isArray(listed?.records) ? listed.records : [];
   return records
-    .map((row) => {
-      const id = Number((row as Record<string, unknown>).id);
-      if (!Number.isFinite(id) || id <= 0) return null;
-      const label = String(
-        (row as Record<string, unknown>).display_name
-        || (row as Record<string, unknown>).name
-        || `#${id}`,
-      ).trim();
-      return { id: Math.trunc(id), label };
-    })
+    .map((row) => relationOptionFromRow(row as Record<string, unknown>, descriptor))
     .filter((item): item is RelationOption => Boolean(item));
 }
 
@@ -2121,6 +2178,21 @@ function fallbackRelationSearchColumns(name: string): RelationSearchColumn[] {
     name: 'display_name',
     label: String(descriptor?.string || '名称'),
   }];
+}
+
+function relationSearchColumnsFromContract(fieldName: string): RelationSearchColumn[] {
+  const dialog = relationSearchDialogContract(fieldName);
+  const columns = Array.isArray(dialog.columns) ? dialog.columns : [];
+  const out: RelationSearchColumn[] = [];
+  for (const item of columns) {
+    const row = item && typeof item === 'object' ? item as Record<string, unknown> : {};
+    const name = String(row.name || row.field || '').trim();
+    if (!name || name === 'id') continue;
+    const label = String(row.label || row.string || name).trim() || name;
+    out.push({ name, label });
+    if (out.length >= 8) break;
+  }
+  return out;
 }
 
 function normalizeRelationSearchColumns(data: Record<string, unknown> | undefined, fieldName: string): RelationSearchColumn[] {
@@ -2153,6 +2225,8 @@ function normalizeRelationSearchColumns(data: Record<string, unknown> | undefine
 }
 
 async function loadRelationSearchColumns(fieldName: string): Promise<RelationSearchColumn[]> {
+  const contractColumns = relationSearchColumnsFromContract(fieldName);
+  if (contractColumns.length) return contractColumns;
   const relation = relationModel(fieldName);
   if (!relation) return fallbackRelationSearchColumns(fieldName);
   try {
@@ -2169,8 +2243,13 @@ async function loadRelationSearchColumns(fieldName: string): Promise<RelationSea
   }
 }
 
-function relationSearchReadFields(columns: RelationSearchColumn[]) {
+function relationSearchReadFields(columns: RelationSearchColumn[], dialog: Record<string, unknown> = {}) {
   const out = new Set<string>(['id', 'display_name', 'name']);
+  const contractFields = Array.isArray(dialog.read_fields) ? dialog.read_fields : [];
+  for (const field of contractFields) {
+    const name = String(field || '').trim();
+    if (name) out.add(name);
+  }
   for (const column of columns) {
     if (column.name) out.add(column.name);
   }
@@ -2184,12 +2263,15 @@ async function fetchRelationSearchRows(name: string, keyword: string, limit = 12
   const entry = relationEntry(descriptor);
   if (entry && entry.canRead === false) return [];
   const domain = mergedRelationDomain(name, descriptor);
-  const columns = relationSearchDialog.columns.length ? relationSearchDialog.columns : fallbackRelationSearchColumns(name);
+  const dialog = relationSearchDialogContract(name);
+  const columns = relationSearchDialog.columns.length ? relationSearchDialog.columns : relationSearchColumnsFromContract(name);
+  const limitValue = Number(dialog.limit || limit || 120);
+  const order = String(dialog.order || 'id desc').trim() || 'id desc';
   const listed = await listRecords({
     model: relation,
-    fields: relationSearchReadFields(columns),
-    limit,
-    order: 'id desc',
+    fields: relationSearchReadFields(columns.length ? columns : fallbackRelationSearchColumns(name), dialog),
+    limit: Number.isFinite(limitValue) && limitValue > 0 ? Math.min(Math.trunc(limitValue), 200) : 120,
+    order,
     domain,
     search_term: String(keyword || '').trim() || undefined,
     silentErrors: true,
@@ -2201,7 +2283,7 @@ async function fetchRelationSearchRows(name: string, keyword: string, limit = 12
       const id = Number(values.id);
       if (!Number.isFinite(id) || id <= 0) return null;
       const firstColumn = columns[0]?.name || '';
-      const label = String(values.display_name || values.name || values[firstColumn] || `#${id}`).trim();
+      const label = cleanRelationDisplayLabel(values.display_name || values.name || values[firstColumn], id);
       return { id: Math.trunc(id), label, values };
     })
     .filter((item): item is RelationSearchRow => Boolean(item));
@@ -2227,12 +2309,15 @@ async function openRelationSearchDialog(fieldName: string, descriptor?: FieldDes
   relationSearchDialog.open = true;
   relationSearchDialog.fieldName = fieldName;
   relationSearchDialog.labels = labels;
-  relationSearchDialog.title = labels.dialog_title || '';
+  const descriptorLabel = descriptor && typeof descriptor === 'object'
+    ? String((descriptor as Record<string, unknown>).string || (descriptor as Record<string, unknown>).label || fieldName).trim()
+    : fieldName;
+  relationSearchDialog.title = labels.dialog_title || `${descriptorLabel}：搜索更多`;
   relationSearchDialog.keyword = relationKeyword(fieldName);
   relationSearchDialog.error = '';
   relationSearchDialog.options = [];
   relationSearchDialog.rows = [];
-  relationSearchDialog.columns = fallbackRelationSearchColumns(fieldName);
+  relationSearchDialog.columns = relationSearchColumnsFromContract(fieldName);
   relationSearchDialog.selectedId = null;
   relationSearchDialog.createMode = relationCreateMode(fieldName, descriptor);
   relationSearchDialog.columns = await loadRelationSearchColumns(fieldName);
@@ -2488,7 +2573,7 @@ async function loadRelationOptions() {
     try {
       const listed = await listRecords({
         model: relation,
-        fields: ['id', 'name', 'display_name'],
+        fields: relationReadFields(descriptor as FieldDescriptor),
         limit: 80,
         order: 'id desc',
         domain,
@@ -2496,16 +2581,7 @@ async function loadRelationOptions() {
       });
       const records = Array.isArray(listed?.records) ? listed.records : [];
       next[name] = records
-        .map((row) => {
-          const id = Number((row as Record<string, unknown>).id);
-          if (!Number.isFinite(id) || id <= 0) return null;
-          const label = String(
-            (row as Record<string, unknown>).display_name
-            || (row as Record<string, unknown>).name
-            || `#${id}`,
-          ).trim();
-          return { id: Math.trunc(id), label };
-        })
+        .map((row) => relationOptionFromRow(row as Record<string, unknown>, descriptor as FieldDescriptor))
         .filter((item): item is RelationOption => Boolean(item));
     } catch (err) {
       if (err instanceof ApiError) {
@@ -2515,7 +2591,9 @@ async function loadRelationOptions() {
       next[name] = [];
     }
   }));
-  relationOptions.value = next;
+  Object.entries(next).forEach(([fieldName, options]) => {
+    mergeRelationOptions(fieldName, options);
+  });
 }
 
 function hasGroupAccess(groupsXmlids?: string[]) {
@@ -2530,6 +2608,15 @@ function toActionId(raw: unknown) {
 
 function detectMethodName(key: string, payloadMethod: string) {
   return detectObjectMethodFromActionKey(key, payloadMethod);
+}
+
+function normalizeActionLabel(raw: unknown, fallback = ''): string {
+  const text = String(raw ?? '').trim();
+  if (!text) return String(fallback || '').trim();
+  if (!text.startsWith('{') || !text.includes('label')) return text;
+  const match = text.match(/['"]label['"]\s*:\s*['"]([^'"]+)['"]/);
+  if (match?.[1]) return String(match[1]).trim();
+  return text;
 }
 
 const contractActions = computed<ContractAction[]>(() => {
@@ -2627,7 +2714,7 @@ const contractActions = computed<ContractAction[]>(() => {
       continue;
     }
     const rowName = String(row.name || '').trim();
-    const rowLabel = String(row.label || '').trim();
+    const rowLabel = normalizeActionLabel(row.label);
     const keyBase = String(row.key || rowName || rowLabel || '').trim();
     const key = dedup.has(keyBase) && rowLabel ? `${keyBase}:${rowLabel}` : keyBase;
     if (!key || dedup.has(key)) continue;
@@ -2670,7 +2757,7 @@ const contractActions = computed<ContractAction[]>(() => {
     const enabled = contractAllowed && policy.enabled && byGroup && (!needRecord || Boolean(recordId.value)) && status?.disabled !== true;
     out.push({
       key,
-      label: String(row.label || key),
+      label: normalizeActionLabel(row.label, key),
       kind: effectiveKind,
       level,
       selection,
@@ -2861,7 +2948,7 @@ function contractActionFromNativeRow(row: Record<string, unknown>): ContractActi
   const key = String(nativeAction.key || row.key || rowName || rowLabel || '').trim();
   if (!key) return null;
   const kind = normalizeActionKind(
-    nativeAction.kind || row.kind || row.type || row.buttonType || payload.type || (rowName ? 'object' : ''),
+    nativeAction.kind || row.kind || row.buttonType || payload.type || row.type || (rowName ? 'object' : ''),
   );
   const level = String(nativeAction.level || row.level || 'body').trim().toLowerCase();
   const actionId = toActionId(payload.action_id) ?? toActionId(payload.ref) ?? toActionId(row.action_id) ?? toActionId(row.ref);
@@ -2869,16 +2956,6 @@ function contractActionFromNativeRow(row: Record<string, unknown>): ContractActi
     key,
     String(payload.method || row.method || (kind === 'object' || kind === 'server' ? rowName : '') || '').trim(),
   );
-  const groups = Array.isArray(nativeAction.groups_xmlids)
-    ? (nativeAction.groups_xmlids as string[])
-    : Array.isArray(nativeAction.groups)
-      ? (nativeAction.groups as string[])
-      : Array.isArray(row.groups_xmlids)
-        ? (row.groups_xmlids as string[])
-    : Array.isArray(payload.groups_xmlids)
-      ? (payload.groups_xmlids as string[])
-      : [];
-  const byGroup = hasGroupAccess(groups);
   const needRecord = kind === 'object' || kind === 'server' || level === 'row' || level === 'smart';
   return {
     key,
@@ -2893,8 +2970,8 @@ function contractActionFromNativeRow(row: Record<string, unknown>): ContractActi
     domainRaw: String(payload.domain_raw || row.domain_raw || '').trim(),
     target: String(payload.target || row.target || '').trim(),
     url: String(payload.url || row.url || '').trim(),
-    enabled: byGroup && (!needRecord || Boolean(recordId.value)),
-    hint: byGroup ? (needRecord && !recordId.value ? 'requires record id' : '') : 'permission denied',
+    enabled: !needRecord || Boolean(recordId.value),
+    hint: needRecord && !recordId.value ? 'requires record id' : '',
     semantic: '',
     visibleProfiles: ['create', 'edit', 'readonly'],
     requiredParams: normalizeRequiredParams(nativeAction.required_params || row.required_params),
@@ -2908,6 +2985,7 @@ async function runNativeLayoutAction(row: Record<string, unknown>) {
   if (!action) return;
   if ((action.kind === 'object' || action.kind === 'server') && action.methodName && recordId.value) {
     if (!action.enabled || !confirmActionSafety(action)) return;
+    if (!await ensureSavedBeforeRecordAction()) return;
     busyKind.value = 'action';
     try {
       const response = await executeButton({
@@ -2921,6 +2999,13 @@ async function runNativeLayoutAction(row: Record<string, unknown>) {
         },
       });
       const result = response?.result;
+      if (result?.entry_target) {
+        await router.push(buildEntryTargetRouteTarget(result.entry_target, {
+          query: pickContractNavQuery(route.query as Record<string, unknown>),
+          actionId: result.action_id,
+        }) as never);
+        return;
+      }
       const nextActionId = toPositiveInt(result?.action_id);
       if (nextActionId) {
         await router.push({
@@ -3049,10 +3134,19 @@ const policyRequiredFields = computed(() => {
   });
   return out;
 });
-const sceneReadySceneKey = computed(() => String(route.query.scene_key || route.params.sceneKey || '').trim());
+const sceneReadySceneKey = computed(() => String(
+  route.query.scene_key
+  || route.params.sceneKey
+  || findActionMeta(session.menuTree, actionId.value)?.scene_key
+  || findActionMeta(session.menuTree, actionId.value)?.sceneKey
+  || session.currentAction?.scene_key
+  || session.currentAction?.sceneKey
+  || '',
+).trim());
+const sceneReadyHydrateRequested = ref(false);
 const useSceneFormAugmentations = computed(() => {
   if (isProjectIntakeCreateMode.value) return true;
-  return String(route.name || '').trim().toLowerCase() === 'scene' && Boolean(sceneReadySceneKey.value);
+  return Boolean(sceneReadySceneKey.value);
 });
 const sceneReadyEntry = computed<Record<string, unknown> | null>(() => {
   if (!useSceneFormAugmentations.value) return null;
@@ -3097,6 +3191,34 @@ const sceneReadyFormSurface = computed(() => {
   if (!useSceneFormAugmentations.value) return resolveFormSceneReady(null);
   return resolveFormSceneReady(sceneReadyEntry.value);
 });
+watch(
+  () => [sceneReadySceneKey.value, sceneReadyFormSurface.value.sceneBlocks.length],
+  async ([sceneKey, blockCount]) => {
+    if (!sceneKey || Number(blockCount || 0) > 0 || sceneReadyHydrateRequested.value) return;
+    sceneReadyHydrateRequested.value = true;
+    try {
+      const result = await intentRequest<Record<string, unknown>>({
+        intent: 'system.init',
+        params: {
+          scene: 'web',
+          with_preload: false,
+          scene_ready_mode: 'full',
+          with: ['workspace_home'],
+          root_xmlid: 'smart_construction_core.menu_sc_root',
+          scene_key: sceneKey,
+        },
+        meta: { startup_chain_bypass: true },
+      });
+      const contract = result.scene_ready_contract_v1;
+      if (contract && typeof contract === 'object' && Array.isArray((contract as Record<string, unknown>).scenes)) {
+        session.sceneReadyContractV1 = contract as never;
+      }
+    } catch (err) {
+      void err;
+    }
+  },
+  { immediate: true },
+);
 const validationRequiredFields = computed(() => {
   const out = new Set<string>();
   const rules = Array.isArray(contract.value?.validation_rules) ? contract.value.validation_rules : [];
@@ -3183,6 +3305,8 @@ function isFieldVisible(name: string) {
   if (isProjectQuickIntakeMode.value) {
     return ['name', 'manager_id', 'owner_id'].includes(String(name || '').trim());
   }
+  const statusField = nativeStatusbar.value.field;
+  if (statusField && String(name || '').trim() === statusField) return false;
   const semantic = fieldSemanticMeta(name);
   if ((semantic.technical || semantic.semantic_type === 'technical') && !showHud.value) return false;
   if (semantic.surface_role === 'hidden' && !showHud.value) return false;
@@ -3210,14 +3334,46 @@ function isWritableFieldVisible(name: string) {
 }
 
 const useNativeFormTree = computed(() => {
-  if (isProjectIntakeCreateMode.value) return false;
   return nativeFormLayoutNodes.value.length > 0;
 });
 
 const nativeFormLayoutNodes = computed<NativeFormLayoutNode[]>(() => {
-  const layout = contract.value?.views?.form?.layout;
-  return Array.isArray(layout) ? (layout as NativeFormLayoutNode[]) : [];
+  const v2 = resolveUnifiedPageContractV2(contract.value);
+  const containers = Array.isArray(v2?.layoutContract?.containerTree) ? v2.layoutContract.containerTree : [];
+  if (containers.length > 0) {
+    return containers as unknown as NativeFormLayoutNode[];
+  }
+  const legacyLayout = Array.isArray(contract.value?.views?.form?.layout)
+    ? contract.value?.views?.form?.layout
+    : [];
+  return legacyLayout as unknown as NativeFormLayoutNode[];
 });
+
+function resolveNativeButtonLabel(node: NativeFormLayoutNode) {
+  const action = node?.action && typeof node.action === 'object' && !Array.isArray(node.action)
+    ? node.action as Record<string, unknown>
+    : {};
+  const badge = action.badge && typeof action.badge === 'object' && !Array.isArray(action.badge)
+    ? action.badge as Record<string, unknown>
+    : {};
+  const countField = String(badge.count_field || badge.field || '').trim();
+  const sourceField = String(badge.source_field || '').trim();
+  const badgeLabel = String(badge.label || node.displayLabel || node.label || node.string || node.name || '').trim();
+  if (!badgeLabel) {
+    return String(node.displayLabel || action.displayLabel || node.label || node.string || node.name || '操作').trim();
+  }
+  const countValue = countField ? formData[countField] : undefined;
+  const count = Array.isArray(countValue) ? countValue.length : (typeof countValue === 'number' ? countValue : null);
+  if (count !== null) {
+    return `${count}${badgeLabel}`;
+  }
+  const sourceValue = sourceField ? formData[sourceField] : undefined;
+  const sourceCount = Array.isArray(sourceValue) ? sourceValue.length : (typeof sourceValue === 'number' ? sourceValue : null);
+  if (sourceCount === null) {
+    return String(node.displayLabel || action.displayLabel || node.label || node.string || node.name || '操作').trim();
+  }
+  return `${sourceCount}${badgeLabel}`;
+}
 
 const nativeVisibleFieldNames = computed(() => {
   const names = new Set<string>();
@@ -3249,10 +3405,63 @@ function collectNativeLayoutFieldNames(nodes: NativeFormLayoutNode[], out: Set<s
   });
 }
 
+function collectNativeLayoutBadgeCountFieldNames(nodes: NativeFormLayoutNode[], out: Set<string>) {
+  nodes.forEach((node) => {
+    const type = String(node?.type || '').trim().toLowerCase();
+    if (type === 'button') {
+      const action = node?.action && typeof node.action === 'object' && !Array.isArray(node.action)
+        ? node.action as Record<string, unknown>
+        : {};
+      const badge = action.badge && typeof action.badge === 'object' && !Array.isArray(action.badge)
+        ? action.badge as Record<string, unknown>
+        : {};
+      const fieldName = String(badge.count_field || badge.field || '').trim();
+      if (fieldName) out.add(fieldName);
+    }
+    (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+      const children = node?.[key];
+      if (Array.isArray(children)) collectNativeLayoutBadgeCountFieldNames(children as NativeFormLayoutNode[], out);
+    });
+  });
+}
+
+function collectContractActionBadgeCountFieldNames(actions: unknown, out: Set<string>) {
+  if (!Array.isArray(actions)) return;
+  actions.forEach((row) => {
+    if (!row || typeof row !== 'object' || Array.isArray(row)) return;
+    const action = row as Record<string, unknown>;
+    const badge = action.badge && typeof action.badge === 'object' && !Array.isArray(action.badge)
+      ? action.badge as Record<string, unknown>
+      : {};
+    const fieldName = String(badge.count_field || badge.field || '').trim();
+    if (fieldName) out.add(fieldName);
+  });
+}
+
 function formDataFieldNames() {
   const fieldMap = contract.value?.fields || {};
+  const contractRecord = contract.value && typeof contract.value === 'object'
+    ? contract.value as Record<string, unknown>
+    : {};
+  const toolbar = contractRecord.toolbar && typeof contractRecord.toolbar === 'object' && !Array.isArray(contractRecord.toolbar)
+    ? contractRecord.toolbar as Record<string, unknown>
+    : {};
+  const views = contractRecord.views && typeof contractRecord.views === 'object' && !Array.isArray(contractRecord.views)
+    ? contractRecord.views as Record<string, unknown>
+    : {};
+  const formView = views.form && typeof views.form === 'object' && !Array.isArray(views.form)
+    ? views.form as Record<string, unknown>
+    : {};
   const names = new Set<string>();
   collectNativeLayoutFieldNames(nativeFormLayoutNodes.value, names);
+  collectNativeLayoutBadgeCountFieldNames(nativeFormLayoutNodes.value, names);
+  collectContractActionBadgeCountFieldNames(contractRecord.buttons, names);
+  collectContractActionBadgeCountFieldNames(toolbar.header, names);
+  collectContractActionBadgeCountFieldNames(toolbar.sidebar, names);
+  collectContractActionBadgeCountFieldNames(toolbar.footer, names);
+  collectContractActionBadgeCountFieldNames(formView.header_buttons, names);
+  collectContractActionBadgeCountFieldNames(formView.button_box, names);
+  collectContractActionBadgeCountFieldNames(formView.business_actions, names);
   layoutNodes.value.forEach((node) => {
     if (node.kind === 'field' && fieldMap[node.name]) names.add(node.name);
   });
@@ -3292,7 +3501,14 @@ const nativeStatusbar = computed(() => {
     ? rawStates.map((item) => ({ value: item.value as string | number, label: String(item.label || item.value || '') }))
     : selectionStates)
     .filter((item) => String(item.value ?? '').trim() && String(item.label || '').trim());
-  const current = String(formData[field] ?? '').trim();
+  const contractMainData = resolveUnifiedPageContractV2MainData(contract.value);
+  const rawFormStatus = formData[field];
+  const formStatusValue = rawFormStatus === false || rawFormStatus == null ? '' : String(rawFormStatus).trim();
+  const current = String(
+    formStatusValue
+      || (Object.prototype.hasOwnProperty.call(contractMainData, field) ? contractMainData[field] : '')
+      || '',
+  ).trim();
   const currentIndex = states.findIndex((item) => String(item.value) === current);
   const state = field ? runtimeState(field) : { readonly: true };
   return {
@@ -3308,7 +3524,31 @@ const nativeStatusbar = computed(() => {
 function setStatusbarValue(value: string) {
   const field = nativeStatusbar.value.field;
   if (!field || nativeStatusbar.value.readonly) return;
-  formData[field] = value || false;
+  const raw = String(value || '').trim();
+  let resolved = raw;
+  const descriptor = contract.value?.fields?.[field];
+  const selection = Array.isArray(descriptor?.selection) ? descriptor.selection : [];
+  if (selection.length) {
+    const byCode = selection.find((item) => String((item as unknown[])[0] ?? '') === raw);
+    const byLabel = selection.find((item) => String((item as unknown[])[1] ?? '') === raw);
+    const matched = byCode || byLabel;
+    if (matched) {
+      resolved = String((matched as unknown[])[0] ?? raw);
+    }
+  }
+  if (field === 'lifecycle_state') {
+    const stateLabelMap: Record<string, string> = {
+      '草稿': 'draft',
+      '在建': 'active',
+      '停工': 'paused',
+      '竣工': 'completed',
+      '结算中': 'settling',
+      '保修期': 'warranty',
+      '关闭': 'closed',
+    };
+    resolved = stateLabelMap[resolved] || stateLabelMap[raw] || resolved;
+  }
+  formData[field] = resolved || false;
   markFieldChanged(field);
 }
 
@@ -3431,7 +3671,15 @@ function nativeNodeWidgetSemantics(nodeRaw?: NativeFormLayoutNode) {
 function collectNativeFavoriteFieldNames(nodes: NativeFormLayoutNode[], out: Set<string>) {
   for (const node of nodes) {
     const name = String(node?.name || '').trim();
-    if (name && nativeNodeWidget(node) === 'boolean_favorite') {
+    const label = String(node?.label || node?.string || '').trim();
+    if (
+      name
+      && (
+        nativeNodeWidget(node) === 'boolean_favorite'
+        || name === 'is_favorite'
+        || (nativeNodeWidget(node) === 'checkbox' && label.includes('仪表板'))
+      )
+    ) {
       out.add(name);
     }
     const children: NativeFormLayoutNode[] = [];
@@ -3473,7 +3721,9 @@ function isNativeFieldVisible(name: string, nodeRaw?: NativeFormLayoutNode) {
   const normalized = String(name || '').trim();
   if (!normalized) return false;
   if (nodeRaw && !isNativeLayoutNodeVisible(nodeRaw)) return false;
-  if (nodeRaw && nativeNodeWidget(nodeRaw) === 'statusbar') return false;
+  const statusField = nativeStatusbar.value.field;
+  if (statusField && normalized === statusField) return false;
+  if (normalized === 'message_needaction') return false;
   const semantic = fieldSemanticMeta(normalized);
   if ((semantic.technical || semantic.semantic_type === 'technical') && !showHud.value) return false;
   if (semantic.surface_role === 'hidden' && !showHud.value) return false;
@@ -3532,7 +3782,7 @@ function nativeFieldSchemasForNodes(nodes: NativeFormLayoutNode[]): FormSectionF
   const mappedNodes = nodes
     .map((node, index) => ({ raw: node, field: nativeLayoutNodeToFieldNode(node, index) }))
     .filter((item): item is { raw: NativeFormLayoutNode; field: LayoutNode } => Boolean(item.field));
-  const favoriteNode = mappedNodes.find((item) => item.field.widget === 'boolean_favorite');
+  const favoriteNode = mappedNodes.find((item) => item.field.widget === 'boolean_favorite' || item.field.name === 'is_favorite');
   const fieldNodes = mappedNodes
     .filter((item) => item !== favoriteNode)
     .map((item) => item.field);
@@ -3672,55 +3922,6 @@ const layoutNodes = computed<LayoutNode[]>(() => {
   return nodes;
 });
 
-function dividerDefaultLabel(kind: LayoutNode['kind']) {
-  if (kind === 'header') return '头部信息';
-  if (kind === 'sheet') return '主体信息';
-  if (kind === 'notebook') return '分组页签';
-  if (kind === 'page') return '页面分组';
-  if (kind === 'group') return '信息分组';
-  return '基础信息';
-}
-
-const layoutSections = computed<LayoutSection[]>(() => {
-  const sections: LayoutSection[] = [];
-  let index = 0;
-  const createSection = (title: string, kind: LayoutSection['kind']) => ({
-    key: `section_${kind}_${index++}`,
-    title,
-    kind,
-    fields: [],
-  });
-  let current = createSection(coreFieldsLabel.value || '核心信息', 'default');
-
-  for (const node of layoutNodes.value) {
-    if (node.kind === 'field') {
-      current.fields.push(node);
-      continue;
-    }
-    if (current.fields.length) {
-      sections.push(current);
-    }
-    const title = String(node.label || '').trim() || dividerDefaultLabel(node.kind);
-    current = createSection(title, node.kind);
-  }
-
-  if (current.fields.length) {
-    sections.push(current);
-  }
-
-  const visible = sections.filter((section) => section.fields.some((node) => isFieldVisible(node.name)));
-  if (visible.length) return visible;
-  return sections.filter((section) => section.fields.length);
-});
-
-function visibleSectionFields(section: LayoutSection) {
-  return section.fields.filter((node) => isFieldVisible(node.name));
-}
-
-function sectionTemplateFields(section: LayoutSection): FormSectionFieldSchema[] {
-  return buildSectionFieldSchemas(visibleSectionFields(section));
-}
-
 const buildSectionFieldSchemas = createFormSectionFieldSchemaBuilder({
   resolveFieldType: (descriptor) => fieldType(descriptor) || 'char',
   resolveRequired: (field) => shouldShowRequiredMark(field as LayoutNode),
@@ -3763,20 +3964,6 @@ const buildSectionFieldSchemas = createFormSectionFieldSchemaBuilder({
   many2oneSearchToken: MANY2ONE_SEARCH_MORE_OPTION,
 });
 
-const templateSections = computed<TemplateSectionView[]>(() => layoutSections.value.map((section) => {
-  const presentation = resolveTemplateSectionPresentation(section, {
-    projectCreateMode: isProjectIntakeCreateMode.value,
-  });
-  return {
-    key: section.key,
-    title: presentation.title,
-    hint: presentation.hint,
-    tone: presentation.tone,
-    isAdvanced: presentation.isAdvanced,
-    fields: sectionTemplateFields(section),
-  };
-}));
-
 function onTemplateFieldChange(payload: FormSectionFieldChange) {
   if (String(payload.type || '').trim().toLowerCase() === 'many2one' && payload.action === 'query') {
     queryMany2oneInline(payload.name, payload.descriptor, String(payload.value ?? ''));
@@ -3804,6 +3991,42 @@ const relationFallbackAdapter = computed<RelationFallbackAdapter>(() => createRe
   filteredRelationOptions,
   setRelationMultiField,
   setRelationIds,
+  canOpenRelationSearch: (fieldName: string) => Boolean(relationModel(fieldName)),
+  relationSearchLabel: (fieldName: string) => {
+    const descriptor = contract.value?.fields?.[fieldName];
+    return relationUiLabel(descriptor, 'search_more', '搜索更多');
+  },
+  openRelationSearch: (fieldName: string) => {
+    const descriptor = contract.value?.fields?.[fieldName];
+    if (!descriptor) return;
+    void openRelationSearchDialog(fieldName, descriptor);
+  },
+  relationCreateMode: (fieldName: string) => relationCreateMode(fieldName, contract.value?.fields?.[fieldName]),
+  relationCreateLabel: (fieldName: string) => {
+    const descriptor = contract.value?.fields?.[fieldName];
+    const mode = relationCreateMode(fieldName, descriptor);
+    if (mode === 'page') return relationUiLabel(descriptor, 'create_and_edit');
+    if (mode === 'quick') return relationUiLabel(descriptor, 'quick_create');
+    return '';
+  },
+  relationInlineCreateLabel: (fieldName: string) => {
+    const descriptor = contract.value?.fields?.[fieldName];
+    const template = relationUiLabel(descriptor, 'inline_create');
+    const label = relationKeyword(fieldName).trim();
+    return template.includes('%s') ? template.replace('%s', label) : template || label;
+  },
+  canInlineCreateRelation: (fieldName: string) => {
+    const descriptor = contract.value?.fields?.[fieldName];
+    const inline = relationInlineCreate(fieldName, descriptor);
+    const keyword = relationKeyword(fieldName).trim();
+    if (!keyword || !inline.enabled || !inline.createOnNoMatch) return false;
+    return !relationOptionsForField(fieldName).some((option) => option.label.trim().toLowerCase() === keyword.toLowerCase());
+  },
+  openRelationCreate: (fieldName: string) => {
+    const descriptor = contract.value?.fields?.[fieldName];
+    if (!descriptor) return;
+    void openRelationCreateForm(fieldName, descriptor);
+  },
   one2manyCanCreate,
   one2manyCreateLabel,
   addOne2manyRow,
@@ -4070,6 +4293,49 @@ async function resolvePendingInlineRelationCreates() {
   return Array.from(new Set(issues)).slice(0, 5);
 }
 
+async function resolvePendingMany2manyTagCreates() {
+  const issues: string[] = [];
+  for (const [name, rawKeyword] of Object.entries(relationKeywords)) {
+    const keyword = String(rawKeyword || '').trim();
+    if (!keyword) continue;
+    if (!isFieldWritable(name)) continue;
+    if (!Array.isArray(formData[name])) continue;
+    const descriptor = contract.value?.fields?.[name];
+    if (!relationModel(name)) continue;
+    const inline = relationInlineCreate(name, descriptor);
+    if (!inline.enabled || !inline.createOnNoMatch) continue;
+    const fieldLabel = layoutNodes.value.find((node) => node.kind === 'field' && node.name === name)?.label
+      || descriptor?.string
+      || name;
+    const localQuickFill = resolveRelationQuickFillOption(relationOptionsForField(name), keyword, inline.match);
+    if (localQuickFill) {
+      addRelationId(name, localQuickFill);
+      continue;
+    }
+    const rows = await queryRelationOptions(name, keyword);
+    const remoteQuickFill = resolveRelationQuickFillOption(rows, keyword, inline.match);
+    if (remoteQuickFill) {
+      addRelationId(name, remoteQuickFill);
+      continue;
+    }
+    if (hasAmbiguousRelationMatches(rows, keyword, inline.match)) {
+      issues.push(`${fieldLabel}存在多个匹配记录，请选择具体记录`);
+      continue;
+    }
+    const beforeErrors = validationErrors.value.slice();
+    await quickCreateMany2manyTag(name);
+    const created = !relationKeyword(name).trim();
+    if (!created) {
+      const createdErrors = validationErrors.value.length
+        ? validationErrors.value.slice()
+        : [relationUiLabel(descriptor, 'inline_create_failed', '保存时创建失败')];
+      issues.push(...createdErrors);
+      validationErrors.value = beforeErrors;
+    }
+  }
+  return Array.from(new Set(issues)).slice(0, 5);
+}
+
 function setSelectionField(name: string, value: string) {
   formData[name] = value || false;
   markFieldChanged(name);
@@ -4090,6 +4356,39 @@ function setRelationIds(name: string, ids: number[]) {
     .filter((id) => Number.isFinite(id) && id > 0)
     .map((id) => Math.trunc(id))));
   markFieldChanged(name);
+}
+
+function addRelationId(name: string, option: RelationOption) {
+  upsertRelationOption(name, option);
+  setRelationIds(name, [...relationIds(name), option.id]);
+  relationKeywords[name] = '';
+}
+
+async function quickCreateMany2manyTag(name: string) {
+  const descriptor = contract.value?.fields?.[name];
+  const relation = relationModel(name);
+  const label = relationKeyword(name).trim();
+  if (!relation || !label) return;
+  const inline = relationInlineCreate(name, descriptor);
+  if (!inline.enabled || !inline.createOnNoMatch) return;
+  const existing = resolveRelationQuickFillOption(relationOptionsForField(name), label, inline.match);
+  if (existing) {
+    addRelationId(name, existing);
+    return;
+  }
+  const nameField = inline.nameField || 'name';
+  try {
+    const created = await createRecord({ model: relation, vals: { [nameField]: label } });
+    const id = Number(created?.id || 0);
+    if (Number.isFinite(id) && id > 0) {
+      addRelationId(name, { id: Math.trunc(id), label });
+      await queryRelationOptions(name, '');
+    }
+  } catch (err) {
+    validationErrors.value = [
+      sanitizeUiErrorMessage(err instanceof Error ? err.message : err, relationUiLabel(descriptor, 'quick_create_failed')),
+    ];
+  }
 }
 
 function setTextField(name: string, value: string) {
@@ -4232,13 +4531,7 @@ function collectWritableValues() {
 
 function formCreateContext() {
   const sourceContext = resolveUnifiedPageContractV2SourceContext(contract.value).context || {};
-  const legacyContext = contract.value?.head?.context;
-  return {
-    ...(legacyContext && typeof legacyContext === 'object' && !Array.isArray(legacyContext)
-      ? legacyContext as Record<string, unknown>
-      : {}),
-    ...sourceContext,
-  };
+  return sourceContext;
 }
 
 function resolveCreateDefaults() {
@@ -4627,6 +4920,7 @@ async function loadRecord() {
   Object.keys(relationKeywords).forEach((key) => {
     delete relationKeywords[key];
   });
+  relationOptions.value = {};
   Object.keys(one2manyRows).forEach((key) => {
     delete one2manyRows[key];
   });
@@ -4685,6 +4979,7 @@ async function loadRecord() {
     fields: fieldNames.length ? fieldNames : '*',
   });
   const row = read.records?.[0] || {};
+  const contractMainData = resolveUnifiedPageContractV2MainData(contract.value);
   if (versionPolicy?.tokenField) {
     recordVersionToken.value = String((row as Record<string, unknown>)[versionPolicy.tokenField] || '').trim();
   }
@@ -4692,7 +4987,9 @@ async function loadRecord() {
     if (name === versionPolicy?.tokenField && !contract.value?.fields?.[name]) return;
     const descriptor = contract.value?.fields?.[name];
     const ttype = fieldType(descriptor);
-    const incoming = (row as Record<string, unknown>)[name] ?? '';
+    const incoming = Object.prototype.hasOwnProperty.call(contractMainData, name)
+      ? contractMainData[name]
+      : (row as Record<string, unknown>)[name] ?? '';
     if (ttype === 'many2many' || ttype === 'one2many') {
       formData[name] = Array.isArray(incoming) ? incoming : [];
       if (ttype === 'one2many') initOne2manyRows(name, formData[name]);
@@ -4759,6 +5056,29 @@ async function openNativeChatterAction(action: NativeChatterAction) {
   activeChatterMode.value = '';
   activeChatterLabel.value = action.label;
   chatterError.value = `${action.label} 缺少可执行调度契约`;
+}
+
+function handleSceneBlockAction(payload: { action?: { target?: Record<string, unknown> } }) {
+  const target = payload?.action?.target && typeof payload.action.target === 'object'
+    ? payload.action.target
+    : {};
+  const targetKind = String(target.kind || '').trim();
+  if (targetKind === 'statusbar_value') {
+    const value = String(target.value || '').trim();
+    if (value) {
+      setStatusbarValue(value);
+      return;
+    }
+  }
+  const route = String(target.route || '').trim();
+  if (route) {
+    void router.push(route);
+    return;
+  }
+  const sceneKey = String(target.scene_key || '').trim();
+  if (sceneKey) {
+    void router.push({ name: 'scene', params: { sceneKey } });
+  }
 }
 
 function closeNativeChatterComposer() {
@@ -4874,6 +5194,8 @@ async function downloadNativeAttachment(att: { id?: number; name?: string; mimet
 }
 
 async function reload() {
+  const reloadToken = activeReloadToken + 1;
+  activeReloadToken = reloadToken;
   renderErrorMessage.value = '';
   status.value = 'loading';
   errorMessage.value = '';
@@ -4881,12 +5203,13 @@ async function reload() {
   showOne2manyErrors.value = false;
   try {
     await loadContract();
+    if (reloadToken !== activeReloadToken) return;
     await loadRecord();
-    await loadRelationOptions();
-    await hydrateSelectedRelationOptions();
-    await hydrateVisibleOne2manyRows();
+    if (reloadToken !== activeReloadToken) return;
     status.value = 'ok';
+    void preloadFormAuxiliaryData(reloadToken);
   } catch (err) {
+    if (reloadToken !== activeReloadToken) return;
     if (err instanceof ContractAccessPolicyError) {
       await router.push({
         name: 'workbench',
@@ -4901,6 +5224,21 @@ async function reload() {
     }
     errorMessage.value = err instanceof Error ? err.message : 'load failed';
     status.value = 'error';
+  }
+}
+
+async function preloadFormAuxiliaryData(reloadToken: number) {
+  try {
+    await loadRelationOptions();
+    if (reloadToken !== activeReloadToken) return;
+    await hydrateSelectedRelationOptions();
+    if (reloadToken !== activeReloadToken) return;
+    await hydrateVisibleOne2manyRows();
+  } catch (err) {
+    if (showHud.value) {
+      // eslint-disable-next-line no-console
+      console.info('[ContractFormPage] auxiliary form preload skipped', err);
+    }
   }
 }
 
@@ -4921,6 +5259,11 @@ function confirmActionSafety(action: ContractAction) {
   if (!safety || safety.classification !== 'danger' || !safety.requiresConfirm) return true;
   const message = safety.confirmMessage || action.hint || action.label;
   return window.confirm(message);
+}
+
+async function ensureSavedBeforeRecordAction() {
+  if (!hasChanges.value) return true;
+  return saveRecord({ on_success: ['scene_projection'] });
 }
 
 async function runAction(action: ContractAction) {
@@ -4990,6 +5333,7 @@ async function runAction(action: ContractAction) {
     }
   }
   if ((action.kind === 'object' || action.kind === 'server') && action.methodName && recordId.value) {
+    if (!await ensureSavedBeforeRecordAction()) return;
     busyKind.value = 'action';
     try {
       const response = await executeButton({
@@ -5006,6 +5350,16 @@ async function runAction(action: ContractAction) {
       const refresh = result?.type;
       if (refresh === 'refresh' && !action.refreshPolicy) {
         await reload();
+        return;
+      }
+      if (result?.entry_target) {
+        await router.push(buildEntryTargetRouteTarget(result.entry_target, {
+          query: pickContractNavQuery(route.query as Record<string, unknown>),
+          actionId: result.action_id,
+        }) as never);
+        if (action.refreshPolicy) {
+          await applyProjectionRefreshPolicy(action.refreshPolicy);
+        }
         return;
       }
       const nextActionId = toPositiveInt(result?.action_id);
@@ -5108,8 +5462,8 @@ async function returnToProjectIntakeList(createdId: number | string) {
   return false;
 }
 
-async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
-  if (!canSave.value || !model.value) return;
+async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']): Promise<boolean> {
+  if (!canSave.value || !model.value) return false;
   submissionFeedback.value = null;
   validationErrors.value = [];
   const standardCreateMode = isProjectStandardIntakeMode.value;
@@ -5122,7 +5476,7 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
     if (draftErrors.length) {
       validationErrors.value = draftErrors;
       submissionFeedback.value = { kind: 'warn', message: '创建失败，请检查填写内容' };
-      return;
+      return false;
     }
   }
   const one2manyIssues = one2manyValidation.value.issues;
@@ -5130,7 +5484,7 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
     showOne2manyErrors.value = true;
     validationErrors.value = one2manyIssues.slice(0, 5);
     submissionFeedback.value = { kind: 'warn', message: '创建失败，请检查填写内容' };
-    return;
+    return false;
   }
   showOne2manyErrors.value = false;
   const labels = layoutNodes.value.reduce<Record<string, string>>((acc, node) => {
@@ -5141,13 +5495,19 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
   if (scenePrecheckIssues.length) {
     validationErrors.value = scenePrecheckIssues;
     submissionFeedback.value = { kind: 'warn', message: '创建失败，请检查填写内容' };
-    return;
+    return false;
   }
   const relationCreateIssues = await resolvePendingInlineRelationCreates();
   if (relationCreateIssues.length) {
     validationErrors.value = relationCreateIssues;
     submissionFeedback.value = { kind: 'warn', message: '创建失败，请检查填写内容' };
-    return;
+    return false;
+  }
+  const tagCreateIssues = await resolvePendingMany2manyTagCreates();
+  if (tagCreateIssues.length) {
+    validationErrors.value = tagCreateIssues;
+    submissionFeedback.value = { kind: 'warn', message: '创建失败，请检查填写内容' };
+    return false;
   }
   const editableMap = collectWritableValues();
   if (!standardCreateMode) {
@@ -5163,12 +5523,12 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
     if (policyIssues.length) {
       validationErrors.value = Array.from(new Set(policyIssues)).slice(0, 5);
       submissionFeedback.value = { kind: 'warn', message: '创建失败，请检查填写内容' };
-      return;
+      return false;
     }
     if (issues.length) {
       validationErrors.value = Array.from(new Set(issues.map((item) => item.message))).slice(0, 5);
       submissionFeedback.value = { kind: 'warn', message: '创建失败，请检查填写内容' };
-      return;
+      return false;
     }
   }
   busyKind.value = 'save';
@@ -5195,7 +5555,8 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
     }, {});
     if (recordId.value && !Object.keys(values).length) {
       busyKind.value = null;
-      return;
+      dirtyFieldSet.clear();
+      return true;
     }
     if (recordId.value) {
       await writeRecord({
@@ -5207,7 +5568,7 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
       submissionFeedback.value = { kind: 'success', message: formUiLabel('save_success') };
       dirtyFieldSet.clear();
       await applyProjectionRefreshPolicy(refreshPolicy || { on_success: ['scene_projection'] });
-      return;
+      return true;
     }
     const created = await createRecord({ model: model.value, vals: values, context: formCreateContext() });
     if (created?.id) {
@@ -5228,11 +5589,11 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
             ...resolveWorkspaceContextQuery(),
           },
         });
-        return;
+        return true;
       }
       if (isProjectStandardIntakeMode.value && resolvedNextRoute) {
         await applyProjectionRefreshPolicy(refreshPolicy || { on_success: ['scene_projection', 'workbench_projection'] });
-        if (await returnToProjectIntakeList(created.id)) return;
+        if (await returnToProjectIntakeList(created.id)) return true;
         await router.replace({
           path: resolvedNextRoute,
           query: {
@@ -5240,27 +5601,29 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']) {
             ...resolveWorkspaceContextQuery(),
           },
         });
-        return;
+        return true;
       }
       if (isProjectStandardIntakeMode.value && model.value === 'project.project') {
         await applyProjectionRefreshPolicy(refreshPolicy || { on_success: ['scene_projection', 'workbench_projection'] });
-        if (await returnToProjectIntakeList(created.id)) return;
+        if (await returnToProjectIntakeList(created.id)) return true;
       }
       await router.replace({
         name: 'model-form',
         params: { model: model.value, id: String(created.id) },
         query: pickContractNavQuery(route.query as Record<string, unknown>),
       });
-      return;
+      return true;
     }
   } catch (err) {
     const fallback = recordId.value ? '保存失败，请检查填写内容' : '创建失败，请检查填写内容';
     const message = sanitizeUiErrorMessage(err instanceof Error ? err.message : err, fallback);
     validationErrors.value = [message];
     submissionFeedback.value = { kind: 'error', message: fallback };
+    return false;
   } finally {
     busyKind.value = null;
   }
+  return false;
 }
 
 async function copyContractJson() {
@@ -5717,6 +6080,62 @@ onBeforeUnmount(() => {
   padding: 2px 0;
   background: transparent;
   scrollbar-width: thin;
+}
+
+.native-statusbar--header {
+  grid-column: auto;
+  justify-content: flex-end;
+  width: auto;
+  max-width: 100%;
+  padding: 0;
+}
+
+.contract-form-native-shell :deep(.template-page-header) {
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+}
+
+.contract-form-native-shell :deep(.template-page-header-main) {
+  min-width: 90px;
+  max-width: 140px;
+}
+
+.contract-form-native-shell :deep(.template-page-header-main h1) {
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.contract-form-native-shell :deep(.template-page-header-status) {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin-left: 0;
+  padding-top: 0;
+}
+
+.contract-form-native-shell :deep(.template-page-header-actions) {
+  flex: 0 0 auto;
+}
+
+.native-statusbar--header .native-statusbar-step {
+  min-width: 78px;
+  min-height: 36px;
+  padding: 0 14px;
+}
+
+.native-form-notice {
+  grid-column: 1 / -1;
+  margin: 0;
+  border-radius: 4px;
+  background: #d8f0f5;
+  color: #0f5e6f;
+  padding: 9px 14px;
+  font-size: 14px;
+  line-height: 1.45;
 }
 
 .native-statusbar-step {

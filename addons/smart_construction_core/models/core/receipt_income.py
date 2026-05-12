@@ -87,6 +87,9 @@ class ScReceiptIncome(models.Model):
     legacy_document_state = fields.Char(string="历史状态", index=True, readonly=True)
     legacy_residual_reason = fields.Char(string="残余原因", index=True, readonly=True)
     legacy_attachment_ref = fields.Char(string="历史附件引用", readonly=True)
+    creator_legacy_user_id = fields.Char(string="历史录入人ID", index=True, readonly=True)
+    creator_name = fields.Char(string="历史录入人", index=True, readonly=True)
+    created_time = fields.Datetime(string="历史录入时间", index=True, readonly=True)
     reject_reason = fields.Char(string="驳回原因", readonly=True, copy=False)
     note = fields.Text(string="备注")
     attachment_ids = fields.Many2many(
@@ -141,6 +144,9 @@ class ScReceiptIncome(models.Model):
                 "treasury_ledger_id",
                 "partner_id",
                 "contract_id",
+                "creator_legacy_user_id",
+                "creator_name",
+                "created_time",
                 "note",
                 "active",
                 "write_uid",

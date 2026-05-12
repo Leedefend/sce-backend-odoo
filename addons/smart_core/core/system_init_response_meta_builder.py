@@ -55,4 +55,6 @@ class SystemInitResponseMetaBuilder:
             contract_version=contract_version,
             api_version=api_version,
         )
+        if isinstance(startup_profile, dict) and startup_profile:
+            meta["startup_profile"] = startup_profile
         return scene_trace_meta, {**meta, "etag": top_etag}

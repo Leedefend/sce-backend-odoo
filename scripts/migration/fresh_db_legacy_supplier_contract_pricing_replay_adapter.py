@@ -29,6 +29,9 @@ FIELDS = [
     "pricing_method_legacy_id",
     "pricing_method_text",
     "amount_total",
+    "creator_legacy_user_id",
+    "creator_name",
+    "created_time",
     "import_batch",
 ]
 
@@ -98,6 +101,9 @@ SELECT
   {clean_sql("g.JJFSID")} AS pricing_method_legacy_id,
   {clean_sql("g.JJFSTEXT")} AS pricing_method_text,
   CAST(ISNULL(g.ZJE, 0) AS varchar(50)) AS amount_total,
+  {clean_sql("g.LRRID")} AS creator_legacy_user_id,
+  {clean_sql("g.f_LRR")} AS creator_name,
+  COALESCE(CONVERT(varchar(23), g.f_LRRQ, 121), '') AS created_time,
   'legacy_supplier_contract_pricing_v1' AS import_batch
 FROM dbo.T_GYSHT_INFO g
 LEFT JOIN dbo.BASE_SYSTEM_PROJECT p ON p.ID = g.XMID

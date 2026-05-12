@@ -128,11 +128,13 @@ def validate_example(path: Path, payload: dict[str, Any], registry: dict[str, An
         fail(errors, f"{path}: pageInfo.pageId and layoutContract.pageId must match")
 
     meta = payload.get("meta", {})
-    for required_meta in ("etag", "snapshotId", "traceId", "requestId", "compat"):
+    for required_meta in ("etag", "snapshotId", "traceId", "requestId", "sourceType"):
         if required_meta not in meta:
             fail(errors, f"{path}: meta.{required_meta} is required")
-        elif required_meta != "compat" and VOLATILE_META_PATTERN.search(str(meta.get(required_meta, ""))):
+        elif VOLATILE_META_PATTERN.search(str(meta.get(required_meta, ""))):
             fail(errors, f"{path}: meta.{required_meta} must use normalized stable sample value")
+    if "compat" in meta:
+        fail(errors, f"{path}: meta.compat must be removed")
 
     forbidden_keys = {str(key).lower() for key in registry.get("forbiddenContractKeys", [])}
     for node_path, node in walk(payload):
@@ -142,8 +144,8 @@ def validate_example(path: Path, payload: dict[str, Any], registry: dict[str, An
             lower_key = str(key).lower()
             if lower_key in forbidden_keys or lower_key.startswith("_fe"):
                 fail(errors, f"{path}: forbidden DSL-like key {key!r} at {node_path}")
-            if key in LEGACY_ROOT_KEYS and not node_path.startswith("$.meta.compat"):
-                fail(errors, f"{path}: legacy key {key!r} must only appear under meta.compat")
+            if key in LEGACY_ROOT_KEYS:
+                fail(errors, f"{path}: legacy key {key!r} must be removed")
             if key in ID_KEYS and isinstance(value, str) and ID_DRIFT_SUFFIX.search(value):
                 fail(errors, f"{path}: unstable semantic/client suffix in {key}={value!r}")
 

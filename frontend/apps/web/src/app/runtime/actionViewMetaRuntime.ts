@@ -6,31 +6,42 @@ type ActionContractMetaShape = {
     res_id?: number | string;
     context?: unknown;
   };
-  ui_contract?: {
-    head?: { view_type?: string };
-    view_type?: string;
-  };
   view_type?: string;
 };
 
+function resolveFirstRenderableViewMode(value: unknown): string {
+  const rawModes = Array.isArray(value)
+    ? value
+    : String(value || '').split(',');
+  const modes = rawModes
+    .map((item) => String(item || '').trim())
+    .filter(Boolean);
+  const supported = new Set(['tree', 'list', 'kanban', 'form']);
+  return modes.find((mode) => supported.has(mode)) || modes[0] || '';
+}
+
 export function resolveActionViewType(meta: unknown, contract: unknown): string {
+  const metaViewModes = (meta as { view_modes?: unknown } | null)?.view_modes;
+  const normalizedMetaViewMode = resolveFirstRenderableViewMode(metaViewModes);
   const v2 = resolveUnifiedPageContractV2(contract);
   const v2ViewType = String(v2?.pageInfo?.viewType || '').trim();
-  if (v2ViewType) return v2ViewType === 'list' ? 'tree' : v2ViewType;
-  const typedContract = contract as ActionContractMetaShape;
-  const nestedContract = (typedContract.ui_contract || {}) as ActionContractMetaShape;
-  const fromHead = String(typedContract.head?.view_type || nestedContract.head?.view_type || '').trim();
-  if (fromHead) return fromHead;
-  const fromContract = String(typedContract.view_type || nestedContract.view_type || '').trim();
-  if (fromContract) return fromContract;
-  const metaViewModes = (meta as { view_modes?: unknown } | null)?.view_modes;
-  if (Array.isArray(metaViewModes) && metaViewModes.length) {
-    const normalized = metaViewModes
-      .map((item) => String(item || '').trim())
-      .filter(Boolean)
-      .join(',');
-    if (normalized) return normalized;
+  if (v2ViewType) {
+    const normalizedV2ViewType = v2ViewType === 'list' ? 'tree' : v2ViewType;
+    if (
+      normalizedV2ViewType === 'form'
+      && normalizedMetaViewMode
+      && normalizedMetaViewMode !== 'form'
+    ) {
+      return normalizedMetaViewMode;
+    }
+    return normalizedV2ViewType;
   }
+  const typedContract = contract as ActionContractMetaShape;
+  const fromHead = String(typedContract.head?.view_type || '').trim();
+  if (fromHead) return fromHead;
+  const fromContract = String(typedContract.view_type || '').trim();
+  if (fromContract) return fromContract;
+  if (normalizedMetaViewMode) return normalizedMetaViewMode;
   return '';
 }
 

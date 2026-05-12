@@ -68,23 +68,18 @@ function collectContractViewModes(contract: Dict | null): string[] {
   addModes(v2?.pageInfo?.viewType);
 
   const head = asDict(contract.head);
-  const uiContract = asDict(contract.ui_contract);
-  const uiHead = asDict(uiContract.head);
   addModes(head.view_type);
   addModes(contract.view_type);
-  addModes(uiHead.view_type);
-  addModes(uiContract.view_type);
 
   const views = asDict(contract.views);
-  const nestedViews = asDict(uiContract.views);
-  if (views.tree || views.list || nestedViews.tree || nestedViews.list) addMode('tree');
-  if (views.kanban || nestedViews.kanban) addMode('kanban');
-  if (views.pivot || nestedViews.pivot) addMode('pivot');
-  if (views.graph || nestedViews.graph) addMode('graph');
-  if (views.calendar || nestedViews.calendar) addMode('calendar');
-  if (views.gantt || nestedViews.gantt) addMode('gantt');
-  if (views.activity || nestedViews.activity) addMode('activity');
-  if (views.dashboard || nestedViews.dashboard) addMode('dashboard');
+  if (views.tree || views.list) addMode('tree');
+  if (views.kanban) addMode('kanban');
+  if (views.pivot) addMode('pivot');
+  if (views.graph) addMode('graph');
+  if (views.calendar) addMode('calendar');
+  if (views.gantt) addMode('gantt');
+  if (views.activity) addMode('activity');
+  if (views.dashboard) addMode('dashboard');
   return out;
 }
 

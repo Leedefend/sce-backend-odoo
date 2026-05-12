@@ -33,6 +33,7 @@ PAYLOAD_FIELDS = [
     "legacy_project_id",
     "legacy_parent_id",
     "name",
+    "legacy_project_code",
     "short_name",
     "project_environment",
     "legacy_company_id",
@@ -40,25 +41,57 @@ PAYLOAD_FIELDS = [
     "legacy_specialty_type_id",
     "specialty_type_name",
     "legacy_price_method",
+    "legacy_contract_status",
+    "legacy_is_complete_project",
     "business_nature",
     "operation_strategy",
+    "legacy_tax_organization_id",
+    "legacy_tax_organization_name",
+    "legacy_account_name",
+    "legacy_account_number",
+    "legacy_account_bank",
     "detail_address",
     "project_profile",
     "project_area",
+    "legacy_cost",
+    "legacy_manage_fee_ratio",
     "legacy_is_shared_base",
     "legacy_sort",
+    "legacy_note",
     "legacy_attachment_ref",
+    "legacy_source_created_by",
+    "legacy_source_created_by_id",
+    "legacy_source_created_at",
+    "legacy_source_updated_by",
+    "legacy_source_updated_by_id",
+    "legacy_source_updated_at",
     "project_overview",
+    "legacy_owner_unit",
+    "legacy_owner_contact",
+    "legacy_owner_contact_phone",
+    "legacy_supervision_unit",
+    "legacy_supervisory_engineer",
+    "legacy_supervision_phone",
+    "legacy_contract_agreement",
+    "legacy_project_file",
+    "legacy_contracting_method",
     "legacy_project_nature",
     "legacy_is_material_library",
+    "legacy_external_contract_id",
     "other_system_id",
     "other_system_code",
+    "legacy_tax_type",
     "legacy_stage_id",
     "legacy_stage_name",
     "legacy_region_id",
     "legacy_region_name",
     "legacy_state",
     "legacy_deleted_flag",
+    "legacy_xqrgz",
+    "legacy_xqrgzr",
+    "legacy_xqrgzrid",
+    "legacy_xqrgzxzrid",
+    "legacy_xqrgzxzr",
     "legacy_project_manager_name",
     "legacy_technical_responsibility_name",
     "current_db_project_id",
@@ -158,6 +191,7 @@ def project_source_index() -> dict[str, dict[str, str]]:
             "legacy_project_id": legacy_project_id,
             "legacy_parent_id": clean(row.get("PID")),
             "name": clean(row.get("XMMC")),
+            "legacy_project_code": clean(row.get("PROJECT_CODE")),
             "short_name": clean(row.get("SHORT_NAME")),
             "project_environment": clean(row.get("PROJECT_ENV")),
             "legacy_company_id": clean(row.get("COMPANYID")),
@@ -165,25 +199,57 @@ def project_source_index() -> dict[str, dict[str, str]]:
             "legacy_specialty_type_id": clean(row.get("SPECIALTY_TYPE_ID")),
             "specialty_type_name": clean(row.get("SPECIALTY_TYPE_NAME")),
             "legacy_price_method": clean(row.get("PRICE_METHOD")),
+            "legacy_contract_status": clean(row.get("CONTRACT_STATUS")),
+            "legacy_is_complete_project": clean(row.get("IS_COMPLETE_PROJECT")),
             "business_nature": clean(row.get("NATURE")),
             "operation_strategy": operation_strategy_from_business_nature(row.get("NATURE")),
+            "legacy_tax_organization_id": clean(row.get("TAX_ORGANIZATION_ID")),
+            "legacy_tax_organization_name": clean(row.get("TAX_ORGANIZATION_NAME")),
+            "legacy_account_name": clean(row.get("ACCOUNT_NAME")),
+            "legacy_account_number": clean(row.get("ACCOUNT_NUMBER")),
+            "legacy_account_bank": clean(row.get("ACCOUNT_BANK")),
             "detail_address": clean(row.get("DETAIL_ADDRESS")),
             "project_profile": clean(row.get("PROFILE")),
             "project_area": clean(row.get("AREA")),
+            "legacy_cost": clean(row.get("COST")),
+            "legacy_manage_fee_ratio": clean(row.get("MANAGE_FEE_RATIO")),
             "legacy_is_shared_base": clean(row.get("IS_SHARED_BASE")),
             "legacy_sort": clean(row.get("SORT")),
+            "legacy_note": clean(row.get("NOTE")),
             "legacy_attachment_ref": clean(row.get("FJ")),
+            "legacy_source_created_by": clean(row.get("LRR")),
+            "legacy_source_created_by_id": clean(row.get("LRRID")),
+            "legacy_source_created_at": clean(row.get("LRSJ")),
+            "legacy_source_updated_by": clean(row.get("XGR")),
+            "legacy_source_updated_by_id": clean(row.get("XGRID")),
+            "legacy_source_updated_at": clean(row.get("XGSJ")),
             "project_overview": clean(row.get("PROJECTOVERVIEW")),
+            "legacy_owner_unit": clean(row.get("OWNERSUNIT")),
+            "legacy_owner_contact": clean(row.get("OWNERSCONTACT")),
+            "legacy_owner_contact_phone": clean(row.get("OWNERSCONTACTPHONE")),
+            "legacy_supervision_unit": clean(row.get("SUPERVISIONUNIT")),
+            "legacy_supervisory_engineer": clean(row.get("SUPERVISORYENGINEER")),
+            "legacy_supervision_phone": clean(row.get("SUPERVISOPHONE")),
+            "legacy_contract_agreement": clean(row.get("CONTRACTAGREEMENT")),
+            "legacy_project_file": clean(row.get("PROJECTFILE")),
+            "legacy_contracting_method": clean(row.get("CONTRACTINGMETHOD")),
             "legacy_project_nature": clean(row.get("PROJECT_NATURE")),
             "legacy_is_material_library": clean(row.get("IS_MACHINTERIAL_LIBRARY")),
+            "legacy_external_contract_id": clean(row.get("WBHTID")),
             "other_system_id": clean(row.get("OTHER_SYSTEM_ID")),
             "other_system_code": clean(row.get("OTHER_SYSTEM_CODE")),
+            "legacy_tax_type": clean(row.get("ZSLX")),
             "legacy_stage_id": clean(row.get("XMJDID")),
             "legacy_stage_name": clean(row.get("XMJD")),
             "legacy_region_id": clean(row.get("SSDQID")),
             "legacy_region_name": clean(row.get("SSDQ")),
             "legacy_state": clean(row.get("STATE")),
             "legacy_deleted_flag": clean(row.get("DEL")),
+            "legacy_xqrgz": clean(row.get("XQRGZ")),
+            "legacy_xqrgzr": clean(row.get("XQRGZR")),
+            "legacy_xqrgzrid": clean(row.get("XQRGZRID")),
+            "legacy_xqrgzxzrid": clean(row.get("XQRGZXZRID")),
+            "legacy_xqrgzxzr": clean(row.get("XQRGZXZR")),
             "legacy_project_manager_name": clean(row.get("PROJECTMANAGER")),
             "legacy_technical_responsibility_name": clean(row.get("TECHNICALRESPONSIBILITY")),
         }
@@ -197,6 +263,25 @@ def is_legacy_income_visible(row: dict[str, str]) -> bool:
         and bool(clean(row.get("HTBT")))
         and bool(clean(row.get("FBF")))
     )
+
+
+def contract_has_business_fact(row: dict[str, str]) -> bool:
+    fact_fields = (
+        "DJBH",
+        "HTBH",
+        "HTBT",
+        "f_XMMC",
+        "f_GCXZ",
+        "FBF",
+        "CBF",
+        "f_LRSJ",
+        "LRRQ",
+        "f_LRR",
+        "LRR",
+    )
+    if any(clean(row.get(field)) for field in fact_fields):
+        return True
+    return any(money_present(row.get(field)) for field in ("GCYSZJ", "f_HTJK", "YFK", "ZLBZJ", "D_SCBSJS_QYHTJ", "D_SCBSJS_JSJE"))
 
 
 def enrich_project_master_from_visible_contracts(project_index: dict[str, dict[str, str]]) -> int:
@@ -234,7 +319,7 @@ def contract_project_anchor_candidates(project_index: dict[str, dict[str, str]])
     visible_by_project: dict[str, list[dict[str, str]]] = {}
     for row in read_csv(CONTRACT_CSV):
         legacy_project_id = clean(row.get("XMID"))
-        if not legacy_project_id or legacy_project_id in project_index:
+        if not legacy_project_id or legacy_project_id in project_index or not contract_has_business_fact(row):
             continue
         rows_by_project.setdefault(legacy_project_id, []).append(row)
         if is_legacy_income_visible(row):
@@ -249,26 +334,27 @@ def contract_project_anchor_candidates(project_index: dict[str, dict[str, str]])
         fact_rows_for_nature = visible_rows or source_rows
         nature_counts = Counter(clean(row.get("f_GCXZ")) or "__empty__" for row in fact_rows_for_nature)
         selected_nature = next((nature for nature, _count in nature_counts.most_common() if nature != "__empty__"), "")
+        source_lane = "contract_visible_project_anchor" if visible_rows else "contract_project_business_fact_anchor"
+        candidates.append(
+            {
+                "source_file": str(CONTRACT_CSV.relative_to(REPO_ROOT)),
+                "legacy_project_id": legacy_project_id,
+                "name": name,
+                "project_environment": "legacy_contract_project_anchor",
+                "business_nature": selected_nature,
+                "operation_strategy": operation_strategy_from_business_nature(selected_nature),
+                "legacy_state": source_lane,
+                "current_db_project_id": "",
+                "replay_source_lane": source_lane,
+                "replay_evidence_rows": len(visible_rows) if visible_rows else len(source_rows),
+            }
+        )
         if visible_rows:
-            candidates.append(
-                {
-                    "source_file": str(CONTRACT_CSV.relative_to(REPO_ROOT)),
-                    "legacy_project_id": legacy_project_id,
-                    "name": name,
-                    "project_environment": "legacy_contract_visible_project_anchor",
-                    "business_nature": selected_nature,
-                    "operation_strategy": operation_strategy_from_business_nature(selected_nature),
-                    "legacy_state": "contract_visible_project_anchor",
-                    "current_db_project_id": "",
-                    "replay_source_lane": "contract_visible_project_anchor",
-                    "replay_evidence_rows": len(visible_rows),
-                }
-            )
             continue
         gaps.append(
             {
                 "legacy_project_id": legacy_project_id,
-                "source_lane": "contract_project_anchor_gap",
+                "source_lane": "contract_project_business_fact_anchor",
                 "source_rows": len(source_rows),
                 "visible_source_rows": 0,
                 "project_name": name,
@@ -287,8 +373,8 @@ def contract_project_anchor_candidates(project_index: dict[str, dict[str, str]])
                 "missing_counterparty_rows": sum(1 for row in source_rows if not clean(row.get("FBF"))),
                 "amount_gcyszj_sum": f"{sum(parse_amount(row.get('GCYSZJ')) for row in source_rows):.2f}",
                 "business_nature_counts": json.dumps(dict(sorted(nature_counts.items())), ensure_ascii=False, sort_keys=True),
-                "gap_route": "contract_not_visible_project_anchor_deferred",
-                "gap_note": "contract source has project id absent from project.csv but does not pass visible income contract filter",
+                "gap_route": "contract_business_fact_project_anchor_carried",
+                "gap_note": "contract source has project id absent from project.csv and does not pass visible income contract filter, but is carried as a historical project business-fact anchor",
             }
         )
     return candidates, gaps
@@ -362,8 +448,9 @@ execute project write scripts and does not touch a database.
 - project master source rows: `{payload["project_master_source_rows"]}`
 - project master contract-enriched rows: `{payload["project_master_contract_enriched_rows"]}`
 - contract visible project anchor rows: `{payload["contract_visible_project_anchor_rows"]}`
-- deferred contract project gaps: `{payload["deferred_contract_project_gap_count"]}`
-- deferred contract project gap amount: `{payload["deferred_contract_project_gap_amount_sum"]}`
+- contract business-fact project anchor rows: `{payload["contract_project_business_fact_anchor_rows"]}`
+- non-visible contract project anchor observations: `{payload["contract_project_business_fact_anchor_observation_count"]}`
+- non-visible contract project anchor amount: `{payload["contract_project_business_fact_anchor_observation_amount_sum"]}`
 - replay payload rows: `{payload["replay_payload_rows"]}`
 - duplicate replay identities: `{payload["duplicate_replay_identities"]}`
 - raw source misses: `{payload["raw_source_misses"]}`
@@ -475,11 +562,15 @@ def main() -> int:
     asset_ids = {clean(row.get("legacy_project_id")) for row in asset_rows}
     payload_ids = {clean(row.get("legacy_project_id")) for row in payload_rows}
     operation_strategy_counts = Counter(clean(row.get("operation_strategy")) or "unspecified" for row in payload_rows)
+    contract_visible_project_anchor_rows = sum(1 for row in contract_rows if clean(row.get("replay_source_lane")) == "contract_visible_project_anchor")
+    contract_business_fact_project_anchor_rows = sum(
+        1 for row in contract_rows if clean(row.get("replay_source_lane")) == "contract_project_business_fact_anchor"
+    )
     status = "PASS" if not duplicates and not raw_misses else "FAIL"
     payload = {
         "status": status,
         "mode": "fresh_db_project_anchor_replay_adapter",
-        "source_mode": "project_master_plus_visible_contract_facts",
+        "source_mode": "project_master_plus_contract_business_facts",
         "db_writes": 0,
         "database_operations": 0,
         "write_scripts_executed": 0,
@@ -490,10 +581,22 @@ def main() -> int:
         "asset_xml_missing_from_payload_rows": len(asset_ids - payload_ids),
         "project_master_source_rows": len(source_index),
         "project_master_contract_enriched_rows": project_master_contract_enriched_rows,
-        "contract_visible_project_anchor_rows": len(contract_rows),
-        "contract_visible_project_anchor_contract_rows": sum(int(clean(row.get("replay_evidence_rows")) or "0") for row in contract_rows),
-        "deferred_contract_project_gap_count": len(gap_rows),
-        "deferred_contract_project_gap_amount_sum": f"{sum(float(clean(row.get('amount_gcyszj_sum')) or '0') for row in gap_rows):.2f}",
+        "contract_visible_project_anchor_rows": contract_visible_project_anchor_rows,
+        "contract_visible_project_anchor_contract_rows": sum(
+            int(clean(row.get("replay_evidence_rows")) or "0")
+            for row in contract_rows
+            if clean(row.get("replay_source_lane")) == "contract_visible_project_anchor"
+        ),
+        "contract_project_business_fact_anchor_rows": contract_business_fact_project_anchor_rows,
+        "contract_project_business_fact_anchor_contract_rows": sum(
+            int(clean(row.get("replay_evidence_rows")) or "0")
+            for row in contract_rows
+            if clean(row.get("replay_source_lane")) == "contract_project_business_fact_anchor"
+        ),
+        "contract_project_business_fact_anchor_observation_count": len(gap_rows),
+        "contract_project_business_fact_anchor_observation_amount_sum": f"{sum(float(clean(row.get('amount_gcyszj_sum')) or '0') for row in gap_rows):.2f}",
+        "deferred_contract_project_gap_count": 0,
+        "deferred_contract_project_gap_amount_sum": "0.00",
         "created_evidence_rows": len(created_rows),
         "replay_payload_rows": len(payload_rows),
         "duplicate_replay_identities": len(duplicates),

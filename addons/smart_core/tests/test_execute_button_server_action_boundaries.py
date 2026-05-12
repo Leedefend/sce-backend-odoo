@@ -17,9 +17,10 @@ class _Action:
     _name = "ir.actions.server"
     id = 7
 
-    def __init__(self, model):
+    def __init__(self, model, result=None):
         self.model_id = types.SimpleNamespace(model=model)
         self.run_calls = 0
+        self.result = result if result is not None else {}
 
     def exists(self):
         return self
@@ -32,7 +33,7 @@ class _Action:
 
     def run(self):
         self.run_calls += 1
-        return {}
+        return self.result
 
 
 class _ActionModel:
@@ -151,6 +152,29 @@ class TestExecuteButtonServerActionBoundaries(unittest.TestCase):
 
         self.assertTrue(result["ok"])
         self.assertEqual(action.run_calls, 1)
+
+    def test_server_action_navigation_result_has_entry_target(self):
+        module = _load_handler()
+        action = _Action(
+            "x.model",
+            result={
+                "type": "ir.actions.act_window",
+                "id": 44,
+                "res_model": "x.model",
+                "view_mode": "tree,form",
+            },
+        )
+        env = _Env({"ir.actions.server": _ActionModel(action)})
+        handler = module.ExecuteButtonHandler(env=env, context={})
+
+        result = handler._run_server_action({"server_action_id": 7}, model="x.model", res_ids=[1])
+
+        self.assertTrue(result["ok"])
+        raw_action = result["data"]["result"]["raw_action"]
+        self.assertEqual(raw_action["entry_target"]["type"], "compatibility")
+        self.assertEqual(raw_action["entry_target"]["route"], "/a/44")
+        self.assertEqual(result["data"]["result"]["entry_target"], raw_action["entry_target"])
+        self.assertEqual(result["data"]["effect"]["target"]["kind"], "entry_target")
 
     def test_invalid_record_id_returns_bad_request(self):
         module = _load_handler()

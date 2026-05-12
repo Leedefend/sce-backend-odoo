@@ -88,6 +88,9 @@ def payment_values(fact):
         "legacy_record_id": fact.legacy_record_id,
         "legacy_document_state": fact.document_state,
         "legacy_residual_reason": "SCBS_PROJECT_FACT_IMPORT",
+        "creator_legacy_user_id": fact.creator_legacy_user_id,
+        "creator_name": fact.creator_name,
+        "created_time": fact.created_time,
         "note": "\n".join(
             item
             for item in [
@@ -119,6 +122,9 @@ def contract_values(fact):
         "legacy_source_table": fact.source_table,
         "legacy_record_id": fact.legacy_record_id,
         "legacy_document_state": fact.document_state,
+        "creator_legacy_user_id": fact.creator_legacy_user_id,
+        "creator_name": fact.creator_name,
+        "created_time": fact.created_time,
         "note": "\n".join(
             item
             for item in [
@@ -131,6 +137,10 @@ def contract_values(fact):
             if item
         ),
     }
+
+
+def supported_values(model, values: dict[str, object]) -> dict[str, object]:
+    return {key: value for key, value in values.items() if key in model._fields}
 
 
 def main() -> None:
@@ -161,7 +171,7 @@ def main() -> None:
         if exists:
             skipped_existing += 1
         elif apply:
-            Payment.create(payment_values(fact))
+            Payment.create(supported_values(Payment, payment_values(fact)))
             created_payments += 1
         plan_rows.append(
             {
@@ -183,7 +193,7 @@ def main() -> None:
         if exists:
             skipped_existing += 1
         elif apply:
-            Contract.create(contract_values(fact))
+            Contract.create(supported_values(Contract, contract_values(fact)))
             created_contracts += 1
         plan_rows.append(
             {

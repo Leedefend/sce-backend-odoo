@@ -68,11 +68,16 @@ class CapabilityMatrixService:
         return None
 
     def _menu_visible(self, menu):
-        if hasattr(menu, "_is_visible"):
-            return bool(menu._is_visible())
-        groups = getattr(menu, "groups_id", None)
-        if groups and not (groups & self.env.user.groups_id):
-            return False
+        current = menu
+        user_groups = getattr(self.env.user, "groups_id", None)
+        while current:
+            groups = getattr(current, "groups_id", None)
+            if groups and user_groups is not None and not (groups & user_groups):
+                return False
+            parent = getattr(current, "parent_id", None)
+            if not parent:
+                break
+            current = parent
         return True
 
     def _ref(self, xmlid):

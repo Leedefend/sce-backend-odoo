@@ -8,11 +8,13 @@ import importlib.util
 import json
 import re
 import sys
+import types
 from pathlib import Path
 from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[2]
+CORE_DIR = ROOT / "addons/smart_core/core"
 ACTION_PATH = ROOT / "addons/smart_core/core/unified_page_contract_v2_action.py"
 FORBIDDEN_KEYS = {"script", "function", "eval", "expression", "jsonlogic", "workflowdsl", "componentcode"}
 DRIFT_SUFFIX = re.compile(r"(\.|:|-)(admin|user|role|web_pc|wx_mini|harmony_h5|mobile_app|readonly|editable)$")
@@ -23,7 +25,16 @@ def load_json(path: Path) -> Any:
 
 
 def load_action_module():
-    spec = importlib.util.spec_from_file_location("unified_page_contract_v2_action_guard_target", ACTION_PATH)
+    sys.modules.setdefault("odoo", types.ModuleType("odoo"))
+    sys.modules.setdefault("odoo.addons", types.ModuleType("odoo.addons"))
+    smart_core_pkg = sys.modules.setdefault("odoo.addons.smart_core", types.ModuleType("odoo.addons.smart_core"))
+    smart_core_pkg.__path__ = [str(CORE_DIR.parent)]
+    core_pkg = sys.modules.setdefault("odoo.addons.smart_core.core", types.ModuleType("odoo.addons.smart_core.core"))
+    core_pkg.__path__ = [str(CORE_DIR)]
+    spec = importlib.util.spec_from_file_location(
+        "odoo.addons.smart_core.core.unified_page_contract_v2_action_guard_target",
+        ACTION_PATH,
+    )
     if spec is None or spec.loader is None:
         raise RuntimeError(f"cannot load action module from {ACTION_PATH}")
     module = importlib.util.module_from_spec(spec)
@@ -103,8 +114,13 @@ def main() -> int:
         fail(errors, "patch dataPatch below baseline")
     if len(patch.get("statusPatch") or {}) < int(expected_patch.get("minStatusPatchKeys") or 0):
         fail(errors, "patch statusPatch below baseline")
-    if "action_result" not in (patch.get("meta", {}).get("compat") or {}):
-        fail(errors, "patch meta.compat.action_result is required")
+    meta = patch.get("meta", {}) if isinstance(patch.get("meta"), dict) else {}
+    if meta.get("sourceType") != "api.onchange":
+        fail(errors, "patch meta.sourceType must be api.onchange")
+    if meta.get("sourceKind") != "unified_page_contract_v2_action_projection":
+        fail(errors, "patch meta.sourceKind must be unified_page_contract_v2_action_projection")
+    if "compat" in meta:
+        fail(errors, "patch meta.compat must be removed")
 
     if errors:
         print("Unified Page Contract v2+ action guard failed:")

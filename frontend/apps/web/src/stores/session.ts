@@ -9,6 +9,8 @@ import { normalizeLegacyWorkbenchPath } from '../app/routeQuery';
 import { applySceneValidationRecoveryStrategyRuntime, setSceneValidationRecoveryStrategy } from '../app/sceneValidationRecoveryStrategy';
 import { resolveActiveDb, setActiveDb } from '../services/dbContext';
 
+let appInitInFlight: Promise<void> | null = null;
+
 export interface RoleSurface {
   role_code: string;
   role_label: string;
@@ -889,7 +891,7 @@ export const useSessionStore = defineStore('session', {
       const configuredDb = config.odooDbPinned
         ? String(config.odooDb || '').trim()
         : resolveActiveDb(String(config.odooDb || '').trim());
-      const db = String(dbOverride || configuredDb).trim();
+      const db = String(config.odooDbPinned ? configuredDb : dbOverride || configuredDb).trim();
       if (db) {
         setActiveDb(db, true);
       }
@@ -918,6 +920,10 @@ export const useSessionStore = defineStore('session', {
       this.clearSession();
     },
     async loadAppInit() {
+      if (appInitInFlight) {
+        return appInitInFlight;
+      }
+      const run = (async () => {
       this.initStatus = 'loading';
       this.initError = null;
       this.initTraceId = null;
@@ -928,6 +934,12 @@ export const useSessionStore = defineStore('session', {
       if (bootstrapIntent !== 'system.init' && bootstrapIntent !== 'session.bootstrap') {
         throw new Error(`unsupported bootstrap intent: ${bootstrapIntent}`);
       }
+      const currentUrl = new URL(window.location.href);
+      const currentSceneKey = String(
+        currentUrl.searchParams.get('scene_key')
+        || currentUrl.searchParams.get('sceneKey')
+        || '',
+      ).trim();
       const debugIntent =
         import.meta.env.DEV ||
         localStorage.getItem('DEBUG_INTENT') === '1' ||
@@ -948,9 +960,11 @@ export const useSessionStore = defineStore('session', {
         intent: 'system.init',
         params: {
           scene: 'web',
-          with_preload: true,
+          with_preload: false,
+          scene_ready_mode: currentSceneKey ? 'full' : 'registry',
           with: ['workspace_home'],
           root_xmlid: 'smart_construction_core.menu_sc_root',
+          ...(currentSceneKey ? { scene_key: currentSceneKey } : {}),
           ...(this.projectContext?.selected?.id ? { current_project_id: this.projectContext.selected.id } : {}),
         },
       };
@@ -1230,6 +1244,15 @@ export const useSessionStore = defineStore('session', {
       this.isReady = true;
       this.initStatus = 'ready';
       this.persist();
+      })();
+      appInitInFlight = run;
+      try {
+        await run;
+      } finally {
+        if (appInitInFlight === run) {
+          appInitInFlight = null;
+        }
+      }
     },
     async loadWorkspaceHomeOnDemand(force = false) {
       if (!force && this.workspaceHome && Object.keys(this.workspaceHome).length > 0) {

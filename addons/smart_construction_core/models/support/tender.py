@@ -26,6 +26,7 @@ class TenderBid(models.Model):
     )
     tender_round = fields.Integer("投标轮次", default=1)
     owner_id = fields.Many2one("res.partner", string="招标人/业主")
+    legacy_owner_name = fields.Char("历史招标人/业主文本", index=True)
     bid_amount = fields.Monetary("投标报价", currency_field="currency_id", tracking=True)
     deadline = fields.Datetime("投标截止时间")
     open_date = fields.Datetime("开标时间")
@@ -87,6 +88,14 @@ class TenderBid(models.Model):
     )
 
     contract_id = fields.Many2one("construction.contract", string="关联合同", readonly=True)
+    legacy_fact_model = fields.Char("来源通用模型", index=True)
+    legacy_fact_id = fields.Integer("来源通用记录ID", index=True)
+    legacy_fact_type = fields.Char("来源业务类型", index=True)
+    legacy_note = fields.Text("历史来源说明")
+
+    _sql_constraints = [
+        ("legacy_tender_bid_unique", "unique(legacy_fact_model, legacy_fact_id)", "来源通用投标事实已迁移为投标记录。"),
+    ]
 
     @api.model
     def _context_project_id(self):
@@ -267,6 +276,16 @@ class TenderDocPurchase(models.Model):
     apply_date = fields.Date("申请日期", default=fields.Date.context_today)
     amount = fields.Monetary("金额", currency_field="currency_id")
     invoice_no = fields.Char("发票号/凭证号")
+    payment_method = fields.Char("缴费方式", index=True)
+    receipt_partner_name = fields.Char("收款单位", index=True)
+    receipt_payee_name = fields.Char("收款人", index=True)
+    receipt_bank_name = fields.Char("开户银行", index=True)
+    receipt_bank_account = fields.Char("收款账户", index=True)
+    remark = fields.Text("备注")
+    legacy_source_created_by = fields.Char("录入人", index=True)
+    legacy_source_created_at = fields.Datetime("录入时间", index=True)
+    legacy_record_id = fields.Char("旧系统记录ID", index=True)
+    legacy_source_table = fields.Char("来源表", index=True)
     attachment_ids = fields.Many2many("ir.attachment", string="附件")
     state = fields.Selection(
         [("draft", "草稿"), ("submitted", "审批中"), ("approved", "已通过"), ("rejected", "已驳回")],

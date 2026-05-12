@@ -3,25 +3,25 @@
   "contractVersion": "2.1.0",
   "sources": {
     "scene_contract_v1": {
-      "compatKey": "scene_contract_v1",
+      "sourceType": "scene_contract_v1",
       "minContainerCount": 1,
       "minWidgetStatusCount": 1,
       "minActionCount": 1
     },
     "page_orchestration_v1": {
-      "compatKey": "page_orchestration_v1",
+      "sourceType": "page_orchestration_v1",
       "minContainerCount": 1,
       "minWidgetStatusCount": 1,
       "minActionCount": 1
     },
     "ui_contract": {
-      "compatKey": "ui_contract",
+      "sourceType": "ui.contract",
       "minContainerCount": 1,
       "minWidgetStatusCount": 2,
       "minActionCount": 0
     },
     "api_onchange": {
-      "compatKey": "api_onchange",
+      "sourceType": "api.onchange",
       "updateType": "partial",
       "minDataPatchKeys": 1,
       "minWidgetStatusCount": 1

@@ -56,6 +56,11 @@ artifact_root = resolve_artifact_root()
 output_json = artifact_root / "fresh_db_expense_claim_projection_write_result_v1.json"
 uid = env.uid  # noqa: F821
 currency_id = env.company.currency_id.id  # noqa: F821
+fallback_project = env["project.project"].sudo().with_context(active_test=False).search(  # noqa: F821
+    [("name", "=", "公司综合平台")],
+    limit=1,
+)
+fallback_project_id = fallback_project.id or None
 
 env.cr.execute("SELECT COUNT(*) FROM sc_expense_claim")  # noqa: F821
 before = env.cr.fetchone()[0]  # noqa: F821
@@ -76,17 +81,17 @@ env.cr.execute(  # noqa: F821
       'expense',
       'outflow',
       CASE WHEN l.document_state = '2' THEN 'legacy_confirmed' ELSE 'draft' END,
-      l.project_id,
+      COALESCE(l.project_id, %s),
       NULL,
       NULLIF(l.applicant_name, ''),
       NULLIF(l.payee, ''),
       NULLIF(l.payee_account, ''),
       NULLIF(l.payee_bank, ''),
-      COALESCE(NULLIF(l.document_date, '')::date, l.created_time::date, CURRENT_DATE),
+      COALESCE(NULLIF(l.document_date, '')::date, NULLIF(l.line_date, '')::date, l.created_time::date),
       COALESCE(NULLIF(l.finance_type, ''), NULLIF(l.reimbursement_type, '')),
       NULLIF(l.summary, ''),
-      ABS(COALESCE(NULLIF(l.approved_amount, 0), l.amount, 0)),
-      ABS(COALESCE(NULLIF(l.approved_amount, 0), l.amount, 0)),
+      ABS(COALESCE(l.amount, 0)),
+      ABS(COALESCE(l.amount, 0)),
       %s,
       'sc.legacy.expense.reimbursement.line',
       l.source_table,
@@ -103,8 +108,8 @@ env.cr.execute(  # noqa: F821
       l.active,
       %s, NOW(), %s, NOW()
     FROM sc_legacy_expense_reimbursement_line l
-    WHERE l.project_id IS NOT NULL
-      AND ABS(COALESCE(NULLIF(l.approved_amount, 0), l.amount, 0)) > 0
+    WHERE COALESCE(l.project_id, %s) IS NOT NULL
+      AND ABS(COALESCE(l.amount, 0)) > 0
     ON CONFLICT (legacy_source_model, legacy_record_id) DO UPDATE SET
       name = EXCLUDED.name,
       state = EXCLUDED.state,
@@ -125,8 +130,24 @@ env.cr.execute(  # noqa: F821
       write_uid = EXCLUDED.write_uid,
       write_date = NOW()
     """,
-    [currency_id, uid, uid],
+    [fallback_project_id, currency_id, uid, uid, fallback_project_id],
 )
+env.cr.execute(  # noqa: F821
+    """
+    UPDATE sc_expense_claim claim
+       SET amount = 0,
+           approved_amount = 0,
+           active = FALSE,
+           write_uid = %s,
+           write_date = NOW()
+      FROM sc_legacy_expense_reimbursement_line line
+     WHERE claim.legacy_source_model = 'sc.legacy.expense.reimbursement.line'
+       AND claim.legacy_record_id = line.legacy_line_id
+       AND ABS(COALESCE(line.amount, 0)) = 0
+    """,
+    [uid],
+)
+zero_amount_reimbursement_deactivated = env.cr.rowcount  # noqa: F821
 
 env.cr.execute(  # noqa: F821
     """
@@ -225,6 +246,8 @@ payload = {
     "delta": after - before,
     "legacy_rows": scalar("SELECT COUNT(*) FROM sc_expense_claim WHERE source_origin = 'legacy'"),
     "legacy_expense_rows": scalar("SELECT COUNT(*) FROM sc_expense_claim WHERE legacy_source_model = 'sc.legacy.expense.reimbursement.line'"),
+    "legacy_expense_active_rows": scalar("SELECT COUNT(*) FROM sc_expense_claim WHERE legacy_source_model = 'sc.legacy.expense.reimbursement.line' AND active"),
+    "zero_amount_reimbursement_deactivated": zero_amount_reimbursement_deactivated,
     "legacy_deposit_rows": scalar("SELECT COUNT(*) FROM sc_expense_claim WHERE legacy_source_model = 'sc.legacy.expense.deposit.fact'"),
     "legacy_confirmed": scalar("SELECT COUNT(*) FROM sc_expense_claim WHERE source_origin = 'legacy' AND state = 'legacy_confirmed'"),
     "legacy_with_project": scalar("SELECT COUNT(*) FROM sc_expense_claim WHERE source_origin = 'legacy' AND project_id IS NOT NULL"),

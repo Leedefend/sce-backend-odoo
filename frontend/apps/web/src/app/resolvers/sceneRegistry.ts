@@ -31,8 +31,17 @@ export interface SceneTile {
 
 export interface SceneListProfile {
   columns?: string[];
+  fact_columns?: string[];
   hidden_columns?: string[];
   column_labels?: Record<string, string>;
+  preference_policy?: {
+    scope?: 'ui_only' | string;
+    allow_visibility?: boolean;
+    allow_order?: boolean;
+    allow_width?: boolean;
+    locked_columns?: string[];
+    must_request_columns?: string[];
+  };
   row_primary?: string;
   row_secondary?: string;
   status_field?: string;
@@ -95,6 +104,8 @@ export interface Scene {
     action_surface?: Record<string, unknown>;
     workflow_surface?: Record<string, unknown>;
     actions?: Array<Record<string, unknown>>;
+    scene_blocks?: Array<Record<string, unknown>>;
+    scene_blocks_by_view?: Record<string, Array<Record<string, unknown>>>;
   };
   layout?: SceneLayout;
 }
@@ -236,6 +247,18 @@ function toSceneFromSceneReadyEntry(entry: unknown): Scene | null {
   const actionsRow = Array.isArray(row.actions)
     ? row.actions as Array<Record<string, unknown>>
     : [];
+  const sceneBlocksRow = Array.isArray(row.scene_blocks)
+    ? row.scene_blocks as Array<Record<string, unknown>>
+    : [];
+  const sceneBlocksByViewRaw = (row.scene_blocks_by_view && typeof row.scene_blocks_by_view === 'object')
+    ? row.scene_blocks_by_view as Record<string, unknown>
+    : {};
+  const sceneBlocksByViewRow: Record<string, Array<Record<string, unknown>>> = {};
+  (['form', 'list', 'kanban'] as const).forEach((mode) => {
+    const blocks = sceneBlocksByViewRaw[mode];
+    if (!Array.isArray(blocks)) return;
+    sceneBlocksByViewRow[mode] = blocks.filter((item) => item && typeof item === 'object') as Array<Record<string, unknown>>;
+  });
   const actionSurfaceRow = (row.action_surface && typeof row.action_surface === 'object')
     ? row.action_surface as Record<string, unknown>
     : {};
@@ -302,6 +325,8 @@ function toSceneFromSceneReadyEntry(entry: unknown): Scene | null {
       action_surface: actionSurfaceRow,
       workflow_surface: workflowRow,
       actions: actionsRow,
+      scene_blocks: sceneBlocksRow,
+      scene_blocks_by_view: sceneBlocksByViewRow,
     },
     layout: normalizeSceneLayout(),
   };

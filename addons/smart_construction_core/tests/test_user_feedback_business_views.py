@@ -167,13 +167,88 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         search = self.env.ref("smart_construction_core.view_sc_supplier_partner_search")
 
         self.assertEqual(supplier.sc_supplier_type, "material")
+        self.assertEqual(supplier.sc_supplier_type_label, "材料供应商")
+        labor_type = self.env.ref("smart_construction_core.sc_supplier_type_labor")
+        equipment_type = self.env.ref("smart_construction_core.sc_supplier_type_equipment")
+        supplier.write({"sc_supplier_type_ids": [(6, 0, [labor_type.id, equipment_type.id])]})
+        self.assertEqual(supplier.sc_supplier_type, "labor")
+        self.assertEqual(supplier.sc_supplier_type_label, "劳务供应商、设备供应商")
         self.assertEqual(supplier.sc_bank_account, "100200300")
         self.assertEqual(supplier._fields["legacy_partner_id"].string, "历史供应商编号")
         self.assertIn("'active_test': False", action.context)
+        self.assertIn('name="sc_supplier_type_label"', tree.arch_db)
+        self.assertIn('name="sc_supplier_type_ids"', form.arch_db)
         self.assertIn('name="legacy_partner_id"', tree.arch_db)
         self.assertIn('name="legacy_partner_source"', tree.arch_db)
         self.assertIn('name="legacy_partner_name"', form.arch_db)
         self.assertIn('name="legacy_deleted_flag"', search.arch_db)
+
+    @tagged("post_install", "-at_install", "user_feedback", "partner_role_alignment")
+    def test_partner_roles_align_from_contract_receipt_and_expenditure_facts(self):
+        tax = self.env["account.tax"].search([("amount", "=", 0), ("amount_type", "=", "percent")], limit=1)
+        if not tax:
+            tax = self.env["account.tax"].create(
+                {
+                    "name": "Feedback 0%",
+                    "amount": 0,
+                    "amount_type": "percent",
+                    "type_tax_use": "sale",
+                }
+            )
+        contract_customer = self.env["res.partner"].create({"name": "Feedback Contract Customer"})
+        receipt_customer = self.env["res.partner"].create({"name": "Feedback Receipt Customer"})
+        supplier = self.env["res.partner"].create({"name": "Feedback Expenditure Supplier"})
+        stale = self.env["res.partner"].create({"name": "Feedback Stale Supplier", "supplier_rank": 1})
+
+        self.env["construction.contract"].create(
+            {
+                "subject": "Feedback Income Contract",
+                "type": "out",
+                "project_id": self.project.id,
+                "partner_id": contract_customer.id,
+                "tax_id": tax.id,
+            }
+        )
+        self.env["sc.receipt.income"].create(
+            {
+                "name": "FB-RCPT-001",
+                "project_id": self.project.id,
+                "partner_id": receipt_customer.id,
+                "amount": 123,
+                "receiving_account_name": "Feedback Receipt Customer",
+                "receiving_bank_name": "Feedback Bank",
+                "receiving_account_no": "62220001",
+            }
+        )
+        self.env["payment.request"].create(
+            {
+                "name": "FB-PAY-001",
+                "type": "pay",
+                "project_id": self.project.id,
+                "partner_id": supplier.id,
+                "amount": 456,
+            }
+        )
+
+        summary = self.env["res.partner"].action_sc_align_partner_roles_from_business_facts(demote_no_fact=True)
+        self.env.invalidate_all()
+        contract_customer = self.env["res.partner"].browse(contract_customer.id)
+        receipt_customer = self.env["res.partner"].browse(receipt_customer.id)
+        supplier = self.env["res.partner"].browse(supplier.id)
+        stale = self.env["res.partner"].browse(stale.id)
+
+        self.assertEqual(summary["status"], "PASS")
+        self.assertEqual(contract_customer.customer_rank, 1)
+        self.assertEqual(contract_customer.supplier_rank, 0)
+        self.assertEqual(receipt_customer.customer_rank, 1)
+        self.assertEqual(receipt_customer.supplier_rank, 0)
+        self.assertEqual(receipt_customer.sc_source_receipt_amount, 123)
+        self.assertEqual(receipt_customer.sc_bank_name, "Feedback Bank")
+        self.assertEqual(receipt_customer.sc_bank_account, "62220001")
+        self.assertEqual(supplier.customer_rank, 0)
+        self.assertEqual(supplier.supplier_rank, 1)
+        self.assertEqual(supplier.sc_source_payment_amount, 456)
+        self.assertEqual(stale.supplier_rank, 0)
 
     def test_material_rfq_exposes_contact_and_supplier_set(self):
         supplier = self.env["res.partner"].create(
@@ -603,6 +678,50 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         for field_name in ("purpose", "rate_label", "extra_ref", "extra_label"):
             self.assertIn('name="%s"' % field_name, financing_tree)
 
+    def test_tender_registration_fee_exposes_receipt_facts(self):
+        bid = self.env["tender.bid"].create(
+            {
+                "tender_name": "Feedback Tender Registration",
+                "project_id": self.project.id,
+            }
+        )
+        purchase = self.env["tender.doc.purchase"].create(
+            {
+                "bid_id": bid.id,
+                "amount": 500,
+                "payment_method": "基本户转账缴纳",
+                "receipt_partner_name": "中国石油天然气第七建设有限公司",
+                "receipt_payee_name": "张三",
+                "receipt_bank_name": "中国建设银行青岛市崂山支行",
+                "receipt_bank_account": "37101986827051021071",
+                "legacy_source_created_by": "段奕俊",
+                "legacy_source_created_at": "2022-03-07 14:28:32",
+            }
+        )
+
+        self.assertEqual(purchase.receipt_partner_name, "中国石油天然气第七建设有限公司")
+        self.assertEqual(purchase.receipt_bank_account, "37101986827051021071")
+
+        tree = self.env.ref("smart_construction_core.view_tender_doc_purchase_tree").arch_db
+        form = self.env.ref("smart_construction_core.view_tender_doc_purchase_form").arch_db
+        search = self.env.ref("smart_construction_core.view_tender_doc_purchase_search").arch_db
+        bid_form = self.env.ref("smart_construction_core.view_tender_bid_form").arch_db
+
+        for field_name in (
+            "payment_method",
+            "receipt_partner_name",
+            "receipt_payee_name",
+            "receipt_bank_name",
+            "receipt_bank_account",
+            "legacy_source_created_by",
+            "legacy_source_created_at",
+        ):
+            self.assertIn('name="%s"' % field_name, tree)
+            self.assertIn('name="%s"' % field_name, form)
+            self.assertIn('name="%s"' % field_name, search)
+        self.assertIn('name="receipt_partner_name"', bid_form)
+        self.assertIn('name="receipt_bank_account"', bid_form)
+
     def test_construction_diary_list_exposes_projected_site_fields(self):
         tree = self.env.ref("smart_construction_core.view_sc_construction_diary_tree").arch_db
 
@@ -1003,3 +1122,23 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         ):
             self.assertIn('name="%s"' % field_name, tree + form)
         self.assertEqual(contract_field.string, "最终合同价")
+
+    def test_repayment_registration_is_inflow_business_entry(self):
+        action = self.env.ref("smart_construction_core.action_sc_expense_claim_repayment_registration")
+        claim = self.env["sc.expense.claim"].create(
+            {
+                "claim_type": "project_company_repay",
+                "expense_type": "还款登记",
+                "summary": "还款登记",
+                "project_id": self.project.id,
+                "amount": 1200,
+            }
+        )
+
+        self.assertEqual(claim.direction, "inflow")
+        self.assertIn("project_company_repay", action.domain)
+        self.assertIn("'search_default_inflow': 1", action.context)
+        self.assertFalse(self.env.ref("smart_construction_core.view_audit_fields_view_sc_expense_claim_tree").active)
+        self.assertFalse(self.env.ref("smart_construction_core.view_audit_fields_view_sc_financing_loan_tree").active)
+        self.assertFalse(self.env.ref("smart_construction_core.view_audit_fields_view_sc_receipt_income_tree").active)
+        self.assertFalse(self.env.ref("smart_construction_core.view_audit_fields_view_sc_payment_execution_tree").active)

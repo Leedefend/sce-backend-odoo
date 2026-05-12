@@ -1,38 +1,63 @@
 <template>
   <div v-if="field.type === 'many2many'" class="relation-editor">
     <div v-if="isMany2manyTags(field)" class="relation-tag-picker">
-      <div class="relation-selected-block">
-        <div class="relation-selected-title">已选{{ field.label }}</div>
+      <div class="relation-tags-control">
         <div v-if="adapter.selectedRelationOptions(field.name).length" class="relation-tag-list">
-          <span
+          <button
             v-for="option in adapter.selectedRelationOptions(field.name)"
             :key="`${field.name}-tag-${option.id}`"
+            type="button"
             class="relation-tag"
+            :style="tagColorStyle(option.color)"
+            :disabled="adapter.busy"
+            :title="`移除${option.label}`"
+            @click="toggleRelationId(field.name, option.id, false)"
           >
             {{ option.label }}
-          </span>
+            <span aria-hidden="true">×</span>
+          </button>
         </div>
-        <div v-else class="relation-empty">未选择</div>
-      </div>
-      <details class="relation-choice-panel">
-        <summary>调整{{ field.label }}</summary>
-        <div class="relation-choice-list">
-          <label
-            v-for="option in adapter.filteredRelationOptions(field.name)"
-            :key="`${field.name}-choice-${option.id}`"
-            class="relation-choice"
+        <input
+          class="relation-tags-input"
+          type="text"
+          :value="adapter.relationKeyword(field.name)"
+          :placeholder="field.inputPlaceholder || adapter.inputPlaceholder(field.label)"
+          autocomplete="off"
+          @input="adapter.setRelationKeyword(field.name, ($event.target as HTMLInputElement).value)"
+          @keydown.enter.prevent="commitTagKeyword(field.name)"
+        />
+        <div v-if="hasTagDropdown(field.name)" class="relation-tag-dropdown">
+          <button
+            v-for="option in adapter.filteredRelationOptions(field.name).slice(0, 8)"
+            :key="`${field.name}-tag-option-${option.id}`"
+            type="button"
+            class="relation-tag-option"
+            @mousedown.prevent
+            @click="toggleRelationId(field.name, option.id, true)"
           >
-            <input
-              class="relation-choice-check"
-              type="checkbox"
-              :checked="relationIdSet(field.name).has(option.id)"
-              :disabled="adapter.busy"
-              @change="toggleRelationId(field.name, option.id, ($event.target as HTMLInputElement).checked)"
-            />
+            <span class="relation-tag-swatch" :style="tagColorStyle(option.color)" aria-hidden="true"></span>
             <span>{{ option.label }}</span>
-          </label>
+          </button>
+          <div v-if="hasTagCreateActions(field.name)" class="relation-tag-actions">
+            <div
+              v-if="adapter.canInlineCreateRelation(field.name)"
+              class="relation-tag-hint"
+              role="note"
+            >
+              {{ adapter.relationInlineCreateLabel(field.name) }}
+            </div>
+            <button
+              v-if="adapter.relationCreateMode(field.name) === 'page'"
+              type="button"
+              class="relation-tag-action"
+              @mousedown.prevent
+              @click="adapter.openRelationCreate(field.name)"
+            >
+              {{ adapter.relationCreateLabel(field.name) }}
+            </button>
+          </div>
         </div>
-      </details>
+      </div>
     </div>
     <div v-else class="relation-select-editor">
       <input
@@ -78,7 +103,7 @@
         :key="`${field.name}-header-${column.name}`"
         class="o2m-header-cell"
       >
-        {{ column.label }}<span v-if="column.required" class="required">*</span>
+        {{ column.label }}
       </span>
     </div>
     <div class="o2m-list">
@@ -90,7 +115,7 @@
             :key="`${row.key}-${column.name}`"
             class="o2m-field"
           >
-            <span class="meta">{{ column.label }}<span v-if="column.required" class="required">*</span></span>
+            <span class="meta">{{ column.label }}</span>
             <input
               v-if="column.ttype === 'boolean'"
               class="input-checkbox"
@@ -147,8 +172,42 @@
       </div>
     </div>
   </div>
+  <div v-else-if="field.type === 'many2one'" class="relation-editor">
+    <div class="relation-select-editor relation-select-editor--compact">
+      <input
+        class="input relation-search"
+        type="text"
+        :value="adapter.relationKeyword(field.name)"
+        :placeholder="field.inputPlaceholder || adapter.inputPlaceholder(field.label)"
+        autocomplete="off"
+        @input="adapter.setRelationKeyword(field.name, ($event.target as HTMLInputElement).value)"
+      />
+      <div v-if="adapter.filteredRelationOptions(field.name).length || adapter.canOpenRelationSearch(field.name)" class="relation-combo-panel">
+        <button
+          v-for="option in adapter.filteredRelationOptions(field.name).slice(0, 8)"
+          :key="`${field.name}-${option.id}`"
+          type="button"
+          class="relation-combo-option"
+          @mousedown.prevent
+          @click="adapter.setRelationIds(field.name, [option.id])"
+        >
+          {{ option.label }}
+        </button>
+        <button
+          v-if="adapter.canOpenRelationSearch(field.name)"
+          class="relation-combo-action"
+          type="button"
+          :disabled="adapter.busy"
+          @mousedown.prevent
+          @click="adapter.openRelationSearch(field.name)"
+        >
+          {{ adapter.relationSearchLabel(field.name) || '搜索更多' }}
+        </button>
+      </div>
+    </div>
+  </div>
   <input
-    v-else
+  v-else
     :value="adapter.inputFieldValue(field.name)"
     class="input"
     :type="adapter.fieldInputType(field.type)"
@@ -179,6 +238,46 @@ function toggleRelationId(name: string, id: number, checked: boolean) {
     current.delete(id);
   }
   props.adapter.setRelationIds(name, Array.from(current));
+  props.adapter.setRelationKeyword(name, '');
+}
+
+function hasTagCreateActions(name: string) {
+  const keyword = props.adapter.relationKeyword(name).trim();
+  return Boolean(keyword) && (
+    props.adapter.canInlineCreateRelation(name) || props.adapter.relationCreateMode(name) === 'page'
+  );
+}
+
+function hasTagDropdown(name: string) {
+  return props.adapter.filteredRelationOptions(name).length > 0 || hasTagCreateActions(name);
+}
+
+function commitTagKeyword(name: string) {
+  const options = props.adapter.filteredRelationOptions(name);
+  if (options.length === 1) {
+    toggleRelationId(name, options[0].id, true);
+  }
+}
+
+function tagColorStyle(color: unknown) {
+  const idx = Number(color);
+  if (!Number.isFinite(idx)) return {};
+  const palette = [
+    '#e2e8f0',
+    '#fca5a5',
+    '#fdba74',
+    '#fde68a',
+    '#bef264',
+    '#86efac',
+    '#5eead4',
+    '#93c5fd',
+    '#c4b5fd',
+    '#f0abfc',
+    '#f9a8d4',
+    '#cbd5e1',
+  ];
+  const bg = palette[Math.abs(Math.trunc(idx)) % palette.length];
+  return { '--tag-bg': bg };
 }
 </script>
 
@@ -206,24 +305,152 @@ function toggleRelationId(name: string, id: number, checked: boolean) {
   gap: 8px;
 }
 
-.relation-selected-block {
-  display: grid;
-  gap: 6px;
-  padding: 8px;
+.relation-select-editor--compact {
+  position: relative;
+  gap: 0;
+}
+
+.relation-combo-panel {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 2px);
+  left: 0;
+  right: 0;
+  display: none;
+  max-height: 260px;
+  overflow: auto;
   border: 1px solid #d7deea;
   border-radius: 6px;
-  background: #f8fafc;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
 }
 
-.relation-selected-title {
-  color: #475569;
-  font-size: 12px;
-  font-weight: 600;
+.relation-select-editor--compact:focus-within .relation-combo-panel {
+  display: grid;
 }
 
-.relation-empty {
-  color: #94a3b8;
+.relation-combo-option,
+.relation-combo-action {
+  min-height: 32px;
+  border: 0;
+  border-bottom: 1px solid #eef2f7;
+  background: #fff;
+  padding: 6px 10px;
+  text-align: left;
+  cursor: pointer;
   font-size: 12px;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.relation-combo-option {
+  color: #0f172a;
+}
+
+.relation-combo-action {
+  color: #0f766e;
+  border-top: 1px solid #e5e7eb;
+}
+
+.relation-combo-option:hover {
+  background: #eef6ff;
+}
+
+.relation-combo-action:hover {
+  background: #ecfdf5;
+}
+
+.relation-tags-control {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 5px 8px;
+  border: 1px solid #d7deea;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.relation-tags-input {
+  flex: 1 1 140px;
+  min-width: 120px;
+  border: 0;
+  outline: none;
+  color: #0f172a;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.relation-tag-dropdown {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 2px);
+  left: 0;
+  right: 0;
+  display: none;
+  max-height: 260px;
+  overflow: auto;
+  border: 1px solid #d7deea;
+  border-radius: 6px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
+}
+
+.relation-tags-control:focus-within .relation-tag-dropdown {
+  display: grid;
+}
+
+.relation-tag-option,
+.relation-tag-action,
+.relation-tag-hint {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 32px;
+  border: 0;
+  border-bottom: 1px solid #eef2f7;
+  background: #fff;
+  padding: 6px 10px;
+  color: #0f172a;
+  text-align: left;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.relation-tag-option:hover {
+  background: #eef6ff;
+}
+
+.relation-tag-actions {
+  display: grid;
+  border-top: 1px solid #e5e7eb;
+}
+
+.relation-tag-action {
+  color: #0f766e;
+}
+
+.relation-tag-hint {
+  color: #64748b;
+  cursor: default;
+}
+
+.relation-tag-action:hover {
+  background: #ecfdf5;
+}
+
+.relation-tag-swatch {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--tag-bg, #e2e8f0);
+  border: 1px solid rgba(15, 23, 42, 0.12);
 }
 
 .relation-choice-panel {
@@ -272,14 +499,21 @@ function toggleRelationId(name: string, id: number, checked: boolean) {
 .relation-tag {
   display: inline-flex;
   align-items: center;
+  gap: 5px;
   max-width: 100%;
   min-height: 24px;
+  border: 0;
   padding: 3px 8px;
   border-radius: 4px;
-  background: #eef2f7;
+  background: var(--tag-bg, #eef2f7);
   color: #334155;
   font-size: 12px;
   line-height: 1.35;
+  cursor: pointer;
+}
+
+.relation-tag:hover {
+  background: #e0e7ff;
 }
 
 .chip-btn {

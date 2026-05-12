@@ -11,11 +11,24 @@ LOGFILE="${FRONTEND_DEV_LOGFILE:-/tmp/sc-frontend-dev.log}"
 READY_URL="${FRONTEND_DEV_READY_URL:-http://${HOST}:${PORT}/}"
 NVM_SH="${NVM_SH:-$HOME/.nvm/nvm.sh}"
 TMUX_SESSION="${FRONTEND_DEV_TMUX_SESSION:-sc-frontend-dev}"
+ENV_NAME="${ENV:-dev}"
+ENV_FILE="${ENV_FILE:-}"
+if [[ -z "${ENV_FILE}" && -f "${ROOT_DIR}/.env.${ENV_NAME}" ]]; then
+  ENV_FILE="${ROOT_DIR}/.env.${ENV_NAME}"
+fi
+if [[ -n "${ENV_FILE}" && -f "${ENV_FILE}" ]]; then
+  _pre_DB_NAME="${DB_NAME:-}"
+  set -a
+  # shellcheck disable=SC1090
+  source "${ENV_FILE}"
+  set +a
+  [[ -n "${_pre_DB_NAME}" ]] && DB_NAME="${_pre_DB_NAME}"
+fi
 
 resolve_profile_defaults() {
   case "${FRONTEND_PROFILE}" in
     daily)
-      PROFILE_DB="sc_demo"
+      PROFILE_DB="${DB_NAME:-sc_demo}"
       PROFILE_PROXY_TARGET="http://localhost:8070"
       ;;
     test)

@@ -28,6 +28,11 @@ ASSET_FILES = [
         "required": True,
     },
     {
+        "name": "scbs_source_creator_supplement_v1.csv",
+        "role": "old-system creator/time evidence for SCBS source facts",
+        "required": True,
+    },
+    {
         "name": "scbs_business_entity_candidates_v1.csv",
         "role": "business entity mapping candidates",
         "required": True,

@@ -251,15 +251,13 @@ export function useActionViewLoadPreflightRuntime() {
         : {};
       const searchDefaults = (typedContract.search as Dict | undefined)?.defaults as Dict | undefined;
       const viewsTree = (typedContract.views as Dict | undefined)?.tree as Dict | undefined;
-      const uiContractViews = (typedContract.ui_contract as Dict | undefined)?.views as Dict | undefined;
-      const uiContractTree = uiContractViews?.tree as Dict | undefined;
       const fallbackSort = options.extractListOrderFromContract(contract) || '';
       sortValue = options.resolveLoadPreflightSortValue({
         currentSortRaw: sortValue,
         sceneReadyDefaultSortRaw: options.sceneReadyDefaultSortRaw,
         sceneDefaultSortRaw: options.sceneDefaultSortRaw,
         searchDefaultOrderRaw: v2PrimaryParams.order || searchDefaults?.order,
-        viewOrderRaw: viewsTree?.order || uiContractTree?.order,
+        viewOrderRaw: viewsTree?.order,
         metaOrderRaw: '',
         fallbackSortRaw: fallbackSort,
       });

@@ -32,7 +32,8 @@ class ScSettlementOrder(models.Model):
         string="合同",
         index=True,
     )
-    partner_id = fields.Many2one("res.partner", string="往来单位", required=True)
+    partner_id = fields.Many2one("res.partner", string="往来单位")
+    legacy_counterparty_name = fields.Char(string="历史往来单位文本", index=True)
     title = fields.Char(string="标题", index=True)
     document_date = fields.Date(string="单据日期", default=fields.Date.context_today, index=True)
     settlement_unit_id = fields.Many2one("res.partner", string="结算单位", index=True)
@@ -119,6 +120,9 @@ class ScSettlementOrder(models.Model):
     entry_user_id = fields.Many2one("res.users", string="录入人", default=lambda self: self.env.user, index=True)
     entry_data = fields.Char(string="录入数据")
     note = fields.Text(string="备注")
+    legacy_fact_model = fields.Char(string="来源通用模型", index=True)
+    legacy_fact_id = fields.Integer(string="来源通用记录ID", index=True)
+    legacy_fact_type = fields.Char(string="来源业务类型", index=True)
 
     line_ids = fields.One2many(
         "sc.settlement.order.line",
@@ -210,17 +214,27 @@ class ScSettlementOrder(models.Model):
         default="draft",
     )
 
+    _sql_constraints = [
+        ("legacy_settlement_order_unique", "unique(legacy_fact_model, legacy_fact_id)", "来源通用结算单已迁移为专业结算单。"),
+    ]
+
+    @api.constrains("partner_id", "legacy_fact_model")
+    def _check_partner_required_for_manual_records(self):
+        for order in self:
+            if not order.partner_id and not order.legacy_fact_model:
+                raise ValidationError(_("结算单必须选择往来单位。"))
+
     @api.depends("line_ids.amount")
     def _compute_amount_total(self):
         for order in self:
             order.amount_total = sum(order.line_ids.mapped("amount"))
 
-    @api.depends("settlement_type", "partner_id", "company_id.partner_id")
+    @api.depends("settlement_type", "partner_id", "legacy_counterparty_name", "company_id.partner_id")
     def _compute_party_names(self):
         for order in self:
             company_partner = order.company_id.partner_id
             company_name = company_partner.display_name if company_partner else (order.company_id.name or "")
-            partner_name = order.partner_id.display_name or ""
+            partner_name = order.partner_id.display_name or order.legacy_counterparty_name or ""
             if order.settlement_type == "in":
                 order.employer_name = partner_name
                 order.contractor_name = company_name
@@ -724,7 +738,8 @@ class ScSettlementOrderLine(models.Model):
                 settlement = self.env["sc.settlement.order"].browse(vals.get("settlement_id"))
                 if settlement.contract_id:
                     vals["contract_id"] = settlement.contract_id.id
-            self._ensure_contract_required(vals.get("contract_id"))
+            if not self.env.context.get("legacy_migration_allow_missing_contract"):
+                self._ensure_contract_required(vals.get("contract_id"))
             if vals.get("settlement_id"):
                 settlement = self.env["sc.settlement.order"].browse(vals.get("settlement_id"))
                 self._ensure_contract_match(vals.get("contract_id"), settlement.project_id.id)

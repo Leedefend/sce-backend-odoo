@@ -204,6 +204,7 @@ import { ErrorCodes } from '../app/error_codes';
 import { parseExecuteResult, semanticButtonLabel } from '../app/action_semantics';
 import { pickContractNavQuery } from '../app/navigationContext';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
+import { buildEntryTargetRouteTarget } from '../app/routeQuery';
 
 const route = useRoute();
 const router = useRouter();
@@ -858,6 +859,11 @@ async function runHeaderButton(btn: ViewButton) {
       await applyButtonEffect(response.effect);
     } else if (response?.result?.type === 'refresh') {
       await load();
+    } else if (response?.result?.entry_target) {
+      await router.push(buildEntryTargetRouteTarget(response.result.entry_target, {
+        query: resolveCarryQuery(),
+        actionId: response.result.action_id,
+      }) as never);
     } else if (response?.result?.action_id) {
       await router.push({ name: 'action', params: { actionId: response.result.action_id } });
     }
@@ -900,6 +906,12 @@ async function applyButtonEffect(effect: ButtonEffect) {
         params: { model: target.model, id: target.id },
         query: resolveCarryQuery(),
       });
+      return;
+    }
+    if (target.kind === 'entry_target' && target.entry_target) {
+      await router.push(buildEntryTargetRouteTarget(target.entry_target, {
+        query: resolveCarryQuery(),
+      }) as never);
       return;
     }
     if (target.kind === 'action' && target.action_id) {

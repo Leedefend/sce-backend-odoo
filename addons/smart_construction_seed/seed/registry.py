@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 from dataclasses import dataclass
 from typing import Callable, Dict, List
 
@@ -11,6 +12,8 @@ class SeedStep:
 
 
 _REGISTRY: Dict[str, SeedStep] = {}
+_DEMO_STEP_MARKERS = ("demo", "showroom")
+_DEMO_DB_NAMES = {"sc_demo", "sc_test"}
 _PROFILES: Dict[str, List[str]] = {
     "base": [
         "sanity",
@@ -76,9 +79,40 @@ def resolve_steps(selected: str) -> List[SeedStep]:
     return _resolve_names(names)
 
 
+def _is_demo_allowed(env) -> bool:
+    if os.getenv("SC_ALLOW_DEMO_DATA") in ("1", "true", "True", "yes", "YES"):
+        return True
+    db_name = str(getattr(getattr(env, "cr", None), "dbname", "") or "").strip()
+    if db_name in _DEMO_DB_NAMES or db_name.startswith("sc_demo_") or db_name.startswith("sc_test_"):
+        return True
+    try:
+        ICP = env["ir.config_parameter"].sudo()
+        return ICP.get_param("sc.login.env") == "demo" or ICP.get_param("sc.bootstrap.mode") == "demo"
+    except Exception:
+        return False
+
+
+def _is_demo_step(step_name: str) -> bool:
+    normalized = str(step_name or "").strip().lower()
+    return any(marker in normalized for marker in _DEMO_STEP_MARKERS)
+
+
+def _guard_demo_steps(env, steps: List[SeedStep]) -> None:
+    demo_steps = [step.name for step in steps if _is_demo_step(step.name)]
+    if demo_steps and not _is_demo_allowed(env):
+        db_name = str(getattr(getattr(env, "cr", None), "dbname", "") or "").strip()
+        raise ValueError(
+            "demo seed steps are forbidden outside demo databases: "
+            f"db={db_name or '-'} steps={demo_steps}. "
+            "Use sc_demo/sc_test or set SC_ALLOW_DEMO_DATA=1 for an intentional demo rebuild."
+        )
+
+
 def run_steps(env, selected: str) -> List[str]:
     executed: List[str] = []
-    for step in resolve_steps(selected):
+    steps = resolve_steps(selected)
+    _guard_demo_steps(env, steps)
+    for step in steps:
         step.run(env)
         executed.append(step.name)
     return executed

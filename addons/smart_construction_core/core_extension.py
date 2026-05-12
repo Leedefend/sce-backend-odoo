@@ -96,6 +96,7 @@ NAV_MENU_SCENE_MAP = {
     "smart_construction_core.menu_sc_project_dashboard": "projects.dashboard",
     "smart_construction_core.menu_sc_history_todo": "workspace.home",
     "smart_construction_core.menu_sc_operating_metrics_project": "dashboard.company",
+    "smart_construction_core.menu_sc_dashboard_cost_cockpit_fact": "cost.control",
     "smart_construction_demo.menu_sc_project_dashboard_showcase": "projects.dashboard_showcase",
     "smart_construction_core.menu_sc_dictionary": "data.dictionary",
     "smart_construction_core.menu_payment_request": "finance.payment_requests",
@@ -108,6 +109,7 @@ NAV_ACTION_SCENE_MAP = {
     "smart_construction_demo.action_project_dashboard_showcase": "projects.dashboard_showcase",
     "smart_construction_core.action_project_dictionary": "data.dictionary",
     "smart_construction_core.action_project_cost_code": "config.project_cost_code",
+    "smart_construction_core.action_sc_dashboard_cost_cockpit_fact": "cost.control",
     "smart_construction_core.action_payment_request": "finance.payment_requests",
     "smart_construction_core.action_payment_request_my": "finance.payment_requests",
 }
@@ -129,6 +131,7 @@ API_DATA_WRITE_ALLOWLIST = {
     "project.project": ["name", "description", "date_start"],
     "project.task": ["name", "description", "date_deadline", "project_id"],
     "purchase.order.line": ["name", "order_id"],
+    "res.partner": ["name", "email", "phone", "sc_supplier_type", "sc_supplier_type_ids"],
 }
 API_DATA_MUTATION_POLICIES = {
     "sc.legacy.receipt.income.fact": {

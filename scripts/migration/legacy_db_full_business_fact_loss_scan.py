@@ -21,6 +21,12 @@ SQL_CONTAINER = os.getenv("LEGACY_MSSQL_CONTAINER", "legacy-mssql-restore")
 SQL_DATABASE = os.getenv("LEGACY_MSSQL_DATABASE", "LegacyDb")
 SQL_PASSWORD = os.getenv("LEGACY_MSSQL_SA_PASSWORD") or os.getenv("LEGACY_MSSQL_PASSWORD") or "LegacyRestore!2026"
 SQLCMD = os.getenv("LEGACY_SQLCMD", "/opt/mssql-tools18/bin/sqlcmd")
+RESIDUAL_WRITE_RESULT = Path(os.getenv("LEGACY_BUSINESS_FACT_RESIDUAL_WRITE_RESULT", "artifacts/migration/fresh_db_legacy_business_fact_residual_replay_write_result_v1.json"))
+EXTRA_COVERED_TABLES = {
+    item.strip()
+    for item in os.getenv("LEGACY_BUSINESS_FACT_COVERED_TABLES", "").split(",")
+    if item.strip()
+}
 
 KNOWN_COVERED_TABLES = {
     "BASE_SYSTEM_FILE",
@@ -29,10 +35,16 @@ KNOWN_COVERED_TABLES = {
     "BASE_SYSTEM_USER",
     "BASE_SYSTEM_USER_ROLE",
     "BASE_ORGANIZATION_DEPARTMENT",
+    "BGGL_HBZJ_XZD_QJXJSPB",
+    "BGGL_ZTBJHT_TBBM_TBBMFSQ",
     "BGGL_JHK_HKDJ",
     "BGGL_JHK_JKSQ",
     "BGGL_XZ_GZ",
     "BGGL_XZ_GZ_CB",
+    "BGGL_XZ_JXDJ",
+    "BGGL_XZ_JXDJ_ZB",
+    "BGGL_XZD_YZSYSPB",
+    "BGGL_QSJRW_GZQS",
     "C_Base_ZHSZ",
     "C_CWSFK_GSCWSR",
     "C_CWSFK_GSCWZC",
@@ -74,21 +86,58 @@ KNOWN_COVERED_TABLES = {
     "C_ZFSQGL_SJ_TP",
     "C_ZJGL_GCKZF",
     "C_ZJGL_XMJS_XMJSD",
+    "CGPT_T_Base_ZBXX",
+    "CGPT_T_Base_ZBXX_CB",
     "CheckInData",
     "CWGL_FYBX",
     "CWGL_FYBX_CB",
     "D_SCBSJS_ZJGL_ZJSZ_ZJRBB",
     "D_SCBSJS_ZJGL_ZJSZ_ZJRBB_CB",
     "GLFY_Bill",
+    "GLFY_Content",
+    "GLFY_Dept",
+    "GLFY_GLFY",
     "GLFY_GLFYJSD",
+    "GLFY_GLFYJSD_CB",
+    "GLFY_GLFY_CB",
+    "GLFY_GLRYGZB",
+    "GLFY_GLRYGZB_CB",
+    "GLFY_Type",
     "GLFY_XMFYBXD",
+    "GLFY_XMFYBXD_CB",
     "HTGL_ZLHT_ZLDW",
+    "HTGL_ZLHT_ZLDW_BlackList",
+    "HTGL_ZLHT_ZLDW_Yhzhxx",
     "HTGL_ZLHT_ZLHT",
+    "HTGL_ZLHT_ZLHT_CB",
+    "HTGL_ZLHT_ZLHT_CB_JX",
     "HTGL_ZLHT_ZLHT_JX",
     "LW_Base_FDGL",
+    "LW_Base_FDGLCB",
+    "LW_Base_FDGL_YLYS",
+    "LW_Base_FBNRSZ_XGJL",
+    "LW_Base_FBNRSZ_XGJL_YW",
+    "LW_Base_GZSZ_XGJL",
+    "LW_Base_GZSZ_XGJL_YW",
+    "LW_Base_LWDWSZ",
+    "LW_Base_LWDWSZ_BlackList",
+    "LW_Base_LWDWSZ_PJ",
     "LW_BZHTGL",
+    "LW_BZHTGL_CB",
+    "LW_LWFD_KQB",
+    "LW_LWFD_KQB_CB",
     "LW_LWHTGL_SP",
+    "LW_LWHTGL_CB_SP",
+    "LW_LWYG_LWYGSQ",
+    "LW_LWYG_LWYGSQ_CB",
+    "LW_RYLWGZJSD",
+    "LW_RY_RYHT",
+    "LW_RY_RyAndLwdw",
+    "LW_RY_RyAndXm",
+    "LW_WPRYGZSPB",
+    "LW_WPRYGZSPB_CB",
     "P_ZTB_GCBMGL",
+    "P_ZTB_GCXXGL",
     "S_Execute_AdminAuditRecord",
     "S_Execute_Approval",
     "S_Execute_BackAuditPassBill",
@@ -105,21 +154,50 @@ KNOWN_COVERED_TABLES = {
     "S_MessageRecord_Read",
     "S_NoticeMessage",
     "SGGL_FBGL_FBHT",
+    "SGGL_FBGL_FBHT_CB",
+    "SGGL_FBGL_FBDW",
+    "SGGL_FBGL_FBDW_BlackList",
+    "SGGL_FBGL_FBDW_PJ",
+    "SGGL_FBGL_FBDW_Yhzhxx",
+    "SGGL_FBGL_JXSYJL",
+    "SGGL_FBGL_MasterPlan",
+    "SGGL_FBGL_MasterPlanContent",
+    "SGGL_FBGL_MonthPlan",
+    "SGGL_FBGL_MonthPlanContent",
     "SGGL_LWGL_LXYG",
     "SGGL_LWGL_LXYG_CB",
     "SGZL_RZRJ",
     "SGZL_RZRJ_CB",
+    "A_SCBS_CLCKD",
+    "A_SCBS_CLCKD_CB",
     "A_SCBS_CLRKD",
+    "A_SCBS_CLRKD_CB",
+    "A_SCBS_FYD",
+    "A_SCBS_FYD_CB",
+    "A_SCBS_JDRB",
+    "A_SCBS_JXD",
+    "A_SCBS_JXD_CB",
+    "A_SCBS_RYGZD",
+    "A_SCBS_RYGZD_CB",
     "T_BILL_FILE",
     "T_CGHT_INFO",
+    "T_CGHT_CGDD",
+    "T_CG_CGDD",
     "T_CK_CKD",
     "T_CK_CKDCB",
+    "T_CollectionPlan_New",
     "T_FK_Supplier",
     "T_FK_Supplier_CB",
+    "T_FK_Supplier_SD",
     "T_GYSHT_INFO",
     "T_GYSHT_INFO_CB",
+    "T_GYSHT_INFO_Ext_XAKW",
+    "T_HTGL_HTBG",
     "T_JS_CLJSD",
+    "T_JS_CLJSD_CB",
+    "T_JH_CGJH",
     "T_JS_LWJSD",
+    "T_JS_LWJSD_CB",
     "T_KK_SJDJB",
     "T_KK_SJDJB_CB",
     "T_KK_SJTHB",
@@ -130,15 +208,26 @@ KNOWN_COVERED_TABLES = {
     "T_RK_RKDCB",
     "T_ZL_HZD",
     "T_ZL_MachineShift",
+    "T_ZL_MachineShift_CB",
+    "T_ZL_ZLJH",
+    "T_ZL_ZLJH_CB",
+    "T_ZL_ZLJH_CB_JX",
+    "T_ZL_ZLJH_JX",
     "T_ZL_ZLJH_ZLSQ",
+    "T_ZL_ZLJH_ZLSQ_CB",
     "T_ZL_ZLJSD",
+    "T_ZL_ZLJSD_CB",
+    "T_ZL_ZLJSD_CB_JX",
     "T_ZL_ZLJSD_JX",
     "T_ZL_ZRD",
+    "T_ZL_ZRDCB",
+    "T_ZL_ZRDCB_JX",
     "T_ZL_ZRD_JX",
     "T_ZL_ZZCLZJTD",
     "T_Base_CooperatCompany",
     "T_Base_MaterialDetail",
     "T_Base_BuildMaterialClass",
+    "T_ZJZC_DB",
     "T_Base_SupplierInfo",
     "T_Base_SupplierInfoAndXMGL",
     "T_BASE_TASKDONE",
@@ -148,15 +237,26 @@ KNOWN_COVERED_TABLES = {
     "tr_user",
     "View_Select_ts_system_loginData",
     "View_Select_XMCKXX_BS",
+    "WS_BDGL_TZEGL",
+    "WS_HTGL_ZBHT",
+    "WS_ZBJGL_BZJ",
+    "WS_ZBJGL_ZBJ",
     "YT_JGZS_NKJCGXB",
     "YT_JGZS_NKKMB",
     "YT_JGZS_NKKMB_QD",
+    "YT_JGZS_SGLKYSZB",
     "YT_JGZS_SGLKYSZB_CB1",
+    "YT_JGZS_SGLKYSZB_CS",
+    "YT_JGZS_SGLKYSZB_CSCB",
+    "YT_JGZS_SGLKYSZB_QD",
     "YT_JGZS_SGLKYSZB_QD_CB1",
     "XMGL_JJSB_ZLD_LXYG",
     "ZYJX_ZY_T_WZJJF_SBHZD",
+    "ZYJX_ZY_T_WZJJF_SBHZD_CB",
     "ZYJX_ZY_T_WZJJF_SBZLD",
+    "ZYJX_ZY_T_WZJJF_SBZLD_CB",
     "ZYJX_ZY_T_WZJJF_ZLHT",
+    "ZYJX_ZY_T_WZJJF_ZLHT_CB",
     "ZJGL_BZJGL_Branch_SBZJDJ",
     "ZJGL_BZJGL_Branch_SBZJTH",
     "ZJGL_BZJGL_Pay_FBZJ",
@@ -182,6 +282,24 @@ KNOWN_ASSETIZED_PREFIXES = (
     "BASE_SYSTEM_",
     "S_Execute_",
 )
+
+
+def _residual_carried_tables() -> set[str]:
+    if not RESIDUAL_WRITE_RESULT.exists():
+        return set()
+    try:
+        payload = json.loads(RESIDUAL_WRITE_RESULT.read_text(encoding="utf-8"))
+    except Exception:
+        return set()
+    tables = set()
+    for key in (payload.get("source_table_counts") or {}):
+        table = str(key).split(":", 1)[-1].strip()
+        if table:
+            tables.add(table)
+    return tables
+
+
+RUNTIME_COVERED_TABLES = KNOWN_COVERED_TABLES | EXTRA_COVERED_TABLES | _residual_carried_tables()
 
 SYSTEM_NAME_PATTERNS = re.compile(
     r"(^BASE_LOWCODE_|^BASE_SYSTEM_(API|LOG|MENU|MOBILE|SHARING|KEYVALUE)|^S_Setup_|^T_System_|^ts_|^tr_|"
@@ -299,7 +417,7 @@ def classify_table(meta: TableMeta) -> dict[str, Any]:
     signal_count = sum(1 for key in ("amount", "date", "project", "partner", "contract", "parent") if signals[key])
     is_system = bool(SYSTEM_NAME_PATTERNS.search(name))
     is_reference = bool(IMPORT_OR_REFERENCE_PATTERNS.search(name))
-    is_covered = name in KNOWN_COVERED_TABLES
+    is_covered = name in RUNTIME_COVERED_TABLES
     if is_covered:
         classification = "known_replayed_or_assetized"
     elif is_system:

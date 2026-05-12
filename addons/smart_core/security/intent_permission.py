@@ -116,6 +116,20 @@ def _action_model_for_type(action_type):
     return aliases.get(action_type, "")
 
 
+def _menu_visible_for_user(menu, user):
+    current = menu
+    user_groups = getattr(user, "groups_id", None)
+    while current:
+        groups = getattr(current, "groups_id", None)
+        if groups and user_groups is not None and not (groups & user_groups):
+            return False
+        parent = getattr(current, "parent_id", None)
+        if not parent:
+            break
+        current = parent
+    return True
+
+
 def _resolve_action(env, action_id, action_type=None):
     action_id = _to_int(action_id)
     if action_id <= 0:
@@ -234,7 +248,7 @@ def check_intent_permission(ctx):
         menu = env["ir.ui.menu"].browse(normalized_menu_id)
         if not menu.exists():
             raise MissingError(f"菜单 {menu_id} 不存在")
-        if not menu._is_visible():
+        if not _menu_visible_for_user(menu, env.user):
             raise AccessError(f"用户无权访问菜单 {menu.name}")
 
     # ✅ 校验动作权限（如果传入 action_id）

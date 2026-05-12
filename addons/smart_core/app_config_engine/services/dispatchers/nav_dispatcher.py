@@ -72,9 +72,7 @@ class NavDispatcher:
                 root_exists = False
 
         # 1) 从配置服务获取菜单树（sudo，避免权限阻塞元数据）
-        # use user env for filtering, generation itself uses sudo internally
         cfg_model = self.env["app.menu.config"]
-        cfg = cfg_model._generate_from_menus(model_name=None, scene=scene)
         # root scoped: relax filters so root can be found even if model whitelist prunes it
         root_filters = None
         if root_xmlid or root_menu_id:
@@ -87,7 +85,7 @@ class NavDispatcher:
                 "max_depth": 0,
                 "prune_single_chain": False,
             }
-        contract = cfg.get_menu_contract(model_name=None, filter_runtime=True, scene=scene, filters=root_filters)
+        contract = cfg_model.get_menu_contract(model_name=None, filter_runtime=True, scene=scene, filters=root_filters)
         tree_raw = contract.get("nav") or []
         fallback_used = False
         # 若过度过滤导致为空，放宽过滤参数（仍保留用户组过滤）
@@ -102,7 +100,7 @@ class NavDispatcher:
                 "max_depth": 0,
                 "prune_single_chain": False,
             }
-            contract = cfg.get_menu_contract(
+            contract = cfg_model.get_menu_contract(
                 model_name=None,
                 filter_runtime=True,
                 scene=scene,
@@ -114,7 +112,7 @@ class NavDispatcher:
                     _logger.warning(
                         "NAV_DEBUG: empty nav after relax filters with root, disable runtime filter for admin"
                     )
-                    contract = cfg.get_menu_contract(
+                    contract = cfg_model.get_menu_contract(
                         model_name=None,
                         filter_runtime=False,
                         scene=scene,
@@ -167,7 +165,7 @@ class NavDispatcher:
                             root_xmlid,
                         )
                         try:
-                            contract = cfg.get_menu_contract(
+                            contract = cfg_model.get_menu_contract(
                                 model_name=None,
                                 filter_runtime=False,
                                 scene=scene,
@@ -223,10 +221,12 @@ class NavDispatcher:
 
         # 10) 指纹（结合 cfg.version + scene + 当前用户 groups_xmlids）
         user_groups_xmlids = self._groups_to_xmlids(self.env.user.groups_id)
+        contract_meta = contract.get("meta") if isinstance(contract.get("meta"), dict) else {}
+        config_version = int(contract_meta.get("version") or 1)
         meta = {
             "source_authority": self.source_authority_contract(),
-            "menu": int(getattr(cfg, "version", 1) or 1),
-            "fingerprint": self._nav_fingerprint(cfg.version, scene, user_groups_xmlids),
+            "menu": config_version,
+            "fingerprint": self._nav_fingerprint(config_version, scene, user_groups_xmlids),
             "root_xmlid": root_xmlid,
             "root_menu_id": root_menu_id,
             "root_resolved_id": resolved_root_id,

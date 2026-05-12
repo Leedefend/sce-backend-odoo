@@ -7,11 +7,13 @@ import argparse
 import importlib.util
 import json
 import sys
+import types
 from pathlib import Path
 from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[2]
+CORE_DIR = ROOT / "addons/smart_core/core"
 ASSEMBLER_PATH = ROOT / "addons/smart_core/core/unified_page_contract_v2_assembler.py"
 
 
@@ -20,7 +22,16 @@ def load_json(path: Path) -> Any:
 
 
 def load_assembler():
-    spec = importlib.util.spec_from_file_location("unified_page_contract_v2_assembler_guard_target", ASSEMBLER_PATH)
+    sys.modules.setdefault("odoo", types.ModuleType("odoo"))
+    sys.modules.setdefault("odoo.addons", types.ModuleType("odoo.addons"))
+    smart_core_pkg = sys.modules.setdefault("odoo.addons.smart_core", types.ModuleType("odoo.addons.smart_core"))
+    smart_core_pkg.__path__ = [str(CORE_DIR.parent)]
+    core_pkg = sys.modules.setdefault("odoo.addons.smart_core.core", types.ModuleType("odoo.addons.smart_core.core"))
+    core_pkg.__path__ = [str(CORE_DIR)]
+    spec = importlib.util.spec_from_file_location(
+        "odoo.addons.smart_core.core.unified_page_contract_v2_assembler_guard_target",
+        ASSEMBLER_PATH,
+    )
     if spec is None or spec.loader is None:
         raise RuntimeError(f"cannot load assembler from {ASSEMBLER_PATH}")
     module = importlib.util.module_from_spec(spec)
@@ -45,7 +56,7 @@ def walk(value: Any, path: str = "$"):
 def validate_contract(
     payload: dict[str, Any],
     *,
-    expected_compat_key: str,
+    expected_source_type: str,
     snapshot: dict[str, Any],
     errors: list[str],
 ) -> None:
@@ -62,20 +73,22 @@ def validate_contract(
         fail(errors, f"contract top-level mismatch: {sorted(payload.keys())}")
     if payload.get("pageInfo", {}).get("contractVersion") != "2.1.0":
         fail(errors, "contractVersion must be 2.1.0")
-    compat = payload.get("meta", {}).get("compat")
-    if not isinstance(compat, dict) or expected_compat_key not in compat:
-        fail(errors, f"meta.compat must contain {expected_compat_key}")
+    meta = payload.get("meta", {}) if isinstance(payload.get("meta"), dict) else {}
+    if meta.get("sourceType") != expected_source_type:
+        fail(errors, f"meta.sourceType must be {expected_source_type}")
+    if "compat" in meta:
+        fail(errors, "meta.compat must be removed")
     container_count = len(payload.get("layoutContract", {}).get("containerTree") or [])
     widget_status_count = len(payload.get("statusContract", {}).get("widgetStatus") or [])
     action_count = len(payload.get("actionContract", {}).get("actionRuleList") or [])
     if container_count < int(snapshot.get("minContainerCount") or 0):
-        fail(errors, f"{expected_compat_key}: container snapshot below baseline")
+        fail(errors, f"{expected_source_type}: container snapshot below baseline")
     if widget_status_count < int(snapshot.get("minWidgetStatusCount") or 0):
-        fail(errors, f"{expected_compat_key}: widget status snapshot below baseline")
+        fail(errors, f"{expected_source_type}: widget status snapshot below baseline")
     if action_count < int(snapshot.get("minActionCount") or 0):
-        fail(errors, f"{expected_compat_key}: action snapshot below baseline")
+        fail(errors, f"{expected_source_type}: action snapshot below baseline")
     for legacy_key in ("scene_contract_v1", "page_orchestration_v1", "ui_contract", "api_onchange"):
-        if legacy_key in payload and legacy_key != expected_compat_key:
+        if legacy_key in payload:
             fail(errors, f"legacy key leaked at top-level: {legacy_key}")
     for node_path, node in walk(payload):
         if isinstance(node, dict):
@@ -95,9 +108,10 @@ def validate_patch(payload: dict[str, Any], snapshot: dict[str, Any], errors: li
     meta = payload.get("meta", {})
     if meta.get("contractVersion") != "2.1.0":
         fail(errors, "patch contractVersion must be 2.1.0")
-    compat = meta.get("compat")
-    if not isinstance(compat, dict) or "api_onchange" not in compat:
-        fail(errors, "patch meta.compat.api_onchange is required")
+    if meta.get("sourceType") != "api.onchange":
+        fail(errors, "patch meta.sourceType must be api.onchange")
+    if "compat" in meta:
+        fail(errors, "patch meta.compat must be removed")
     if "api_onchange" in payload:
         fail(errors, "api_onchange leaked at patch top-level")
     if len(payload.get("dataPatch") or {}) < int(snapshot.get("minDataPatchKeys") or 0):
@@ -129,19 +143,19 @@ def main() -> int:
 
     validate_contract(
         scene_contract,
-        expected_compat_key="scene_contract_v1",
+        expected_source_type="scene_contract_v1",
         snapshot=source_snapshots.get("scene_contract_v1") or {},
         errors=errors,
     )
     validate_contract(
         page_contract,
-        expected_compat_key="page_orchestration_v1",
+        expected_source_type="page_orchestration_v1",
         snapshot=source_snapshots.get("page_orchestration_v1") or {},
         errors=errors,
     )
     validate_contract(
         ui_contract,
-        expected_compat_key="ui_contract",
+        expected_source_type="ui.contract",
         snapshot=source_snapshots.get("ui_contract") or {},
         errors=errors,
     )

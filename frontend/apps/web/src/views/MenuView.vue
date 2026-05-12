@@ -45,6 +45,8 @@ import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { pickContractNavQuery } from '../app/navigationContext';
 import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
+import { buildCanonicalSceneRouteTarget, buildEntryTargetRouteTarget } from '../app/routeQuery';
+import { getSceneByKey } from '../app/resolvers/sceneRegistry';
 
 const route = useRoute();
 const router = useRouter();
@@ -89,6 +91,9 @@ async function resolve() {
     }
     const result = resolveMenuAction(session.menuTree, menuId);
     if (result.kind === 'leaf') {
+      const entryTarget = result.meta?.entry_target && typeof result.meta.entry_target === 'object'
+        ? result.meta.entry_target as Record<string, unknown>
+        : null;
       const policy = evaluateCapabilityPolicy({ source: result.node?.meta, available: session.capabilities });
       if (policy.state !== 'enabled') {
         await router.replace({
@@ -103,6 +108,14 @@ async function resolve() {
         return;
       }
       session.setActionMeta(result.meta);
+      if (entryTarget) {
+        await router.replace(buildEntryTargetRouteTarget(entryTarget, {
+          query: resolveCarryQuery(),
+          menuId,
+          actionId: result.meta.action_id,
+        }) as never);
+        return;
+      }
       await router.replace({
         name: 'action',
         params: { actionId: result.meta.action_id },
@@ -111,11 +124,22 @@ async function resolve() {
       return;
     }
     if (result.kind === 'redirect') {
+      if (result.target.entry_target) {
+        await router.replace(buildEntryTargetRouteTarget(result.target.entry_target, {
+          query: resolveCarryQuery(),
+          menuId: result.target.menu_id,
+          actionId: result.target.action_id,
+        }) as never);
+        return;
+      }
       if (result.target.scene_key) {
-        await router.replace({
-          path: `/s/${result.target.scene_key}`,
-          query: resolveCarryQuery({ menu_id: result.target.menu_id }),
-        });
+        const sceneKey = String(result.target.scene_key || '').trim();
+        await router.replace(buildCanonicalSceneRouteTarget(sceneKey, {
+          scene: getSceneByKey(sceneKey),
+          query: resolveCarryQuery(),
+          menuId: result.target.menu_id,
+          actionId: result.target.action_id,
+        }));
         return;
       }
       if (result.target.action_id) {

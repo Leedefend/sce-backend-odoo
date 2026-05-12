@@ -24,18 +24,10 @@ function splitViewModes(raw: unknown): string[] {
     .filter(Boolean);
 }
 
-function resolveNestedContract(contract: unknown): Record<string, unknown> {
-  if (!contract || typeof contract !== 'object' || Array.isArray(contract)) return {};
-  const row = contract as Record<string, unknown>;
-  const nested = row.ui_contract;
-  if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
-    return nested as Record<string, unknown>;
-  }
-  return row;
-}
-
 function resolveMetaFromContract(contract: unknown, actionId: number): NavMeta {
-  const normalized = resolveNestedContract(contract);
+  const normalized = (contract && typeof contract === 'object' && !Array.isArray(contract))
+    ? contract as Record<string, unknown>
+    : {};
   const head = (normalized.head && typeof normalized.head === 'object' && !Array.isArray(normalized.head))
     ? (normalized.head as Record<string, unknown>)
     : {};
@@ -51,14 +43,7 @@ function resolveMetaFromContract(contract: unknown, actionId: number): NavMeta {
   const kanbanView = (views.kanban && typeof views.kanban === 'object' && !Array.isArray(views.kanban))
     ? (views.kanban as Record<string, unknown>)
     : {};
-  const model = String(
-    head.model
-      || normalized.model
-      || treeView.model
-      || formView.model
-      || kanbanView.model
-      || '',
-  ).trim();
+  const model = String(head.model || normalized.model || treeView.model || formView.model || kanbanView.model || '').trim();
   const viewModes = splitViewModes(head.view_type || normalized.view_type || '');
   const name = String(head.title || normalized.name || '').trim();
   const actionType = String(normalized.action_type || head.action_type || 'ir.actions.act_window').trim();
@@ -93,8 +78,6 @@ function mergeMeta(base: NavMeta | null, fallback: NavMeta): NavMeta {
   const baseHasContext = typeof baseContext === 'string'
     ? baseContext.trim().length > 0
     : Boolean(baseContext && typeof baseContext === 'object' && !Array.isArray(baseContext) && Object.keys(baseContext).length);
-  // Keep stable navigation fields from menu meta, but treat ui.contract as
-  // authoritative for action execution when the backend model has changed.
   if (base?.action_type) merged.action_type = base.action_type;
   if (base?.menu_id) merged.menu_id = base.menu_id;
   if (base?.menu_xmlid) merged.menu_xmlid = base.menu_xmlid;
@@ -127,6 +110,18 @@ export async function resolveAction(
   if (needsLiteContractAllTreeViewPreflight(seedMeta)) {
     legacyContract = await loadActionContract(actionId);
     candidateMeta = mergeMeta(seedMeta, resolveMetaFromContract(legacyContract, actionId));
+  }
+
+  const hasUnifiedV2Contract = Boolean(
+    legacyContract
+    && typeof legacyContract === 'object'
+    && !Array.isArray(legacyContract)
+    && (legacyContract as Record<string, unknown>).__unified_page_contract_v2,
+  );
+  if (hasUnifiedV2Contract) {
+    const meta = mergeMeta(seedMeta, resolveMetaFromContract(legacyContract, actionId));
+    if (!meta.action_id) meta.action_id = Number(actionId || 0);
+    return { meta, contract: legacyContract };
   }
 
   if (isLiteContractPilotCandidate(candidateMeta)) {

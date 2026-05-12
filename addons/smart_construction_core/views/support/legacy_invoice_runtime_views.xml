@@ -25,6 +25,8 @@
           <field name="quantity" optional="hide" sum="数量合计"/>
           <field name="project_cost_amount" optional="show" sum="项目成本金额合计"/>
           <field name="handler_name" optional="hide"/>
+          <field name="creator_name" string="历史录入人"/>
+          <field name="created_time" string="历史录入时间"/>
           <field name="accounting_state"/>
           <field name="voucher_no"/>
           <field name="invoice_source" optional="hide"/>

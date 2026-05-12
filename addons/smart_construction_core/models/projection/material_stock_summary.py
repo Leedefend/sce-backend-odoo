@@ -7,7 +7,7 @@ class ScMaterialStockSummary(models.Model):
     _description = "库存统计表（新）"
     _auto = False
     _rec_name = "display_name"
-    _order = "project_id, material_name, material_spec"
+    _order = "material_name, project_name, material_spec"
 
     display_name = fields.Char(string="汇总项", readonly=True)
     company_id = fields.Many2one("res.company", string="公司", readonly=True, index=True)
@@ -78,21 +78,29 @@ class ScMaterialStockSummary(models.Model):
                 SELECT
                     row_number() OVER (
                         ORDER BY
-                            COALESCE(sf.project_id, 0),
                             COALESCE(NULLIF(sf.material_name, ''), '未填写材料'),
+                            COALESCE(p.name->>'zh_CN', p.name->>'en_US', NULLIF(sf.project_name, ''), '未匹配项目'),
                             COALESCE(NULLIF(sf.material_spec, ''), ''),
                             COALESCE(NULLIF(sf.material_uom, ''), '')
                     )::integer AS id,
                     CONCAT_WS(
                         ' / ',
-                        COALESCE(p.name->>'zh_CN', p.name->>'en_US', NULLIF(sf.project_name, ''), '未匹配项目'),
+                        CASE
+                            WHEN COALESCE(p.name->>'zh_CN', p.name->>'en_US', NULLIF(sf.project_name, ''), '') ~ '^[0-9a-fA-F]{{32}}$'
+                            THEN CONCAT('历史未归档项目 ', COALESCE(p.name->>'zh_CN', p.name->>'en_US', NULLIF(sf.project_name, '')))
+                            ELSE COALESCE(p.name->>'zh_CN', p.name->>'en_US', NULLIF(sf.project_name, ''), '未匹配项目')
+                        END,
                         COALESCE(NULLIF(sf.material_name, ''), '未填写材料'),
                         NULLIF(sf.material_spec, ''),
                         NULLIF(sf.material_uom, '')
                     ) AS display_name,
                     COALESCE(p.company_id, (SELECT id FROM res_company ORDER BY id LIMIT 1)) AS company_id,
                     sf.project_id,
-                    COALESCE(p.name->>'zh_CN', p.name->>'en_US', NULLIF(sf.project_name, ''), '未匹配项目') AS project_name,
+                    CASE
+                        WHEN COALESCE(p.name->>'zh_CN', p.name->>'en_US', NULLIF(sf.project_name, ''), '') ~ '^[0-9a-fA-F]{{32}}$'
+                        THEN CONCAT('历史未归档项目 ', COALESCE(p.name->>'zh_CN', p.name->>'en_US', NULLIF(sf.project_name, '')))
+                        ELSE COALESCE(p.name->>'zh_CN', p.name->>'en_US', NULLIF(sf.project_name, ''), '未匹配项目')
+                    END AS project_name,
                     NULLIF(sf.material_code, '') AS material_code,
                     COALESCE(NULLIF(sf.material_name, ''), '未填写材料') AS material_name,
                     NULLIF(sf.material_spec, '') AS material_spec,

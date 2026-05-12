@@ -277,7 +277,7 @@ class UiContractHandler(BaseIntentHandler):
             "model": model,
             "view_type": _VIEW_INV.get(view_type, view_type),
             "view_id": view_id,
-            "with_data": False,
+            "with_data": bool(record_id and str(view_type or "").strip().lower() == "form"),
         }
         if action_id:
             payload["action_id"] = action_id

@@ -54,3 +54,15 @@ export function isHudEnabled(route: RouteLocationNormalizedLoaded) {
     localStorage.getItem('__HUD__') === '1'
   );
 }
+
+export function isSceneBlocksDebugEnabled(route: RouteLocationNormalizedLoaded) {
+  if (isDeliveryModeEnabled()) return false;
+  const direct = firstQueryValue(route.query.scene_blocks);
+  const raw =
+    typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('scene_blocks') : '';
+  return (
+    isTruthyHudValue(direct) ||
+    isTruthyHudValue(raw) ||
+    localStorage.getItem('__SCENE_BLOCKS__') === '1'
+  );
+}

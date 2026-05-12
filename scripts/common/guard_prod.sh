@@ -54,3 +54,37 @@ guard_seed_db_explicit_prod() {
     fi
   fi
 }
+
+is_demo_db() {
+  local db="${DB_NAME:-${DB:-}}"
+  case "${db}" in
+    sc_demo|sc_test|sc_demo_*|sc_test_*)
+      return 0
+      ;;
+  esac
+  return 1
+}
+
+guard_demo_module_db() {
+  local module="${MODULE:-}"
+  if [[ ",${module}," != *",smart_construction_demo,"* ]]; then
+    return 0
+  fi
+  if is_demo_db || [[ "${SC_ALLOW_DEMO_DATA:-}" =~ ^(1|true|True|yes|YES)$ ]]; then
+    return 0
+  fi
+  echo "❌ demo data guard: smart_construction_demo is forbidden for DB_NAME=${DB_NAME:-}. Use sc_demo/sc_test or set SC_ALLOW_DEMO_DATA=1 intentionally." >&2
+  exit 2
+}
+
+guard_seed_demo_steps_db() {
+  local selected="${PROFILE:-}${STEPS:-}"
+  if [[ ! "${selected}" =~ (demo|showroom) ]]; then
+    return 0
+  fi
+  if is_demo_db || [[ "${SC_ALLOW_DEMO_DATA:-}" =~ ^(1|true|True|yes|YES)$ ]]; then
+    return 0
+  fi
+  echo "❌ demo data guard: demo/showroom seed steps are forbidden for DB_NAME=${DB_NAME:-}. Use sc_demo/sc_test or set SC_ALLOW_DEMO_DATA=1 intentionally." >&2
+  exit 2
+}

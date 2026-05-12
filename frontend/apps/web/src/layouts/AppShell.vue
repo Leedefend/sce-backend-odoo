@@ -183,7 +183,7 @@ import { useSessionStore } from '../stores/session';
 import { getSceneByKey, getSceneRegistryDiagnostics, resolveSceneLayout } from '../app/resolvers/sceneRegistry';
 import { resolveMenuAction } from '../app/resolvers/menuResolver';
 import { isDeliveryModeEnabled, isHudEnabled } from '../config/debug';
-import { normalizeLegacyWorkbenchPath, parseSceneKeyFromQuery } from '../app/routeQuery';
+import { buildCanonicalSceneRouteTarget, buildEntryTargetRouteTarget, parseSceneKeyFromQuery } from '../app/routeQuery';
 import { buildRuntimeNavigationRegistry } from '../app/navigationRegistry';
 import { applyTheme, nextTheme, persistTheme, type ScTheme } from '../styles/theme';
 import type { NavNode, ProjectContextOption } from '@sc/schema';
@@ -941,6 +941,18 @@ function filterNodes(nodes: NavNode[], q: string): NavNode[] {
 
 const filteredMenu = computed(() => filterNodes(menuNodes.value, query.value));
 
+function buildMenuSelectionQuery(): LocationQueryRaw {
+  const next: LocationQueryRaw = {};
+  const passthroughKeys = ['db', 'debug', 'hud_stats'];
+  passthroughKeys.forEach((key) => {
+    const value = route.query[key];
+    if (value !== undefined && value !== null && value !== '') {
+      next[key] = value;
+    }
+  });
+  return next;
+}
+
 function handleSelect(node: NavNode) {
   if (!node.menu_id && node.id) {
     node.menu_id = node.id as number;
@@ -948,13 +960,28 @@ function handleSelect(node: NavNode) {
   const targetMenuId = Number(node.menu_id || node.id || 0);
   if (targetMenuId <= 0) return;
   const resolved = resolveMenuAction(menuTree.value, targetMenuId);
+  const menuQuery = buildMenuSelectionQuery();
+  if (resolved.kind === 'redirect') {
+    const entryTarget = asDict(resolved.target?.entry_target);
+    if (entryTarget) {
+      router.push(buildEntryTargetRouteTarget(entryTarget, {
+        query: menuQuery,
+        menuId: targetMenuId,
+        actionId: resolved.target?.action_id,
+      })).catch(() => {});
+      return;
+    }
+  }
   if (resolved.kind === 'redirect' && resolved.target?.scene_key) {
     const sceneKey = String(resolved.target.scene_key || '').trim();
     const scene = sceneKey ? getSceneByKey(sceneKey) : null;
     if (sceneKey && scene) {
-      const rawPath = String(scene.target?.route || scene.route || `/s/${sceneKey}`).trim();
-      const resolvedPath = normalizeLegacyWorkbenchPath(rawPath) || `/s/${sceneKey}`;
-      router.push({ path: resolvedPath, query: { menu_id: targetMenuId } }).catch(() => {});
+      router.push(buildCanonicalSceneRouteTarget(sceneKey, {
+        scene,
+        query: menuQuery,
+        menuId: targetMenuId,
+        actionId: resolved.target.action_id || scene.target?.action_id,
+      })).catch(() => {});
       return;
     }
   }

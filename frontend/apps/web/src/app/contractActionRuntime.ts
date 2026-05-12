@@ -12,25 +12,22 @@ export interface ContractAccessPolicySnapshot {
   reasonCode: string;
 }
 
-function pickNestedContract(contract: ActionContract | null): ActionContract | null {
-  if (!contract || typeof contract !== 'object') return null;
-  const raw = contract as ActionContract & {
-    ui_contract?: ActionContract;
-  };
-  if (raw.ui_contract && typeof raw.ui_contract === 'object') {
-    return raw.ui_contract;
-  }
-  return contract;
-}
-
 export function resolveContractViewMode(contract: ActionContract | null, fallback = '') {
   const v2 = resolveUnifiedPageContractV2(contract);
   const v2Mode = String(v2?.pageInfo?.viewType || '').trim();
-  if (v2Mode) return v2Mode === 'list' ? 'tree' : v2Mode;
-  const normalized = pickNestedContract(contract);
-  const headMode = String(normalized?.head?.view_type || '').trim();
+  if (v2Mode) {
+    const normalizedV2Mode = v2Mode === 'list' ? 'tree' : v2Mode;
+    if (normalizedV2Mode === 'form') {
+      const normalizedFallback = String(fallback || '').trim();
+      if (normalizedFallback && normalizedFallback !== 'form') {
+        return normalizedFallback;
+      }
+    }
+    return normalizedV2Mode;
+  }
+  const headMode = String(contract?.head?.view_type || '').trim();
   if (headMode) return headMode;
-  const rootMode = String(normalized?.view_type || '').trim();
+  const rootMode = String(contract?.view_type || '').trim();
   if (rootMode) return rootMode;
   return fallback;
 }

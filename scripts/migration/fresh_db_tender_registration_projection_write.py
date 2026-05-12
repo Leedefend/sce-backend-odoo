@@ -101,7 +101,10 @@ def id_from_legacy_record_id(value):
 
 
 def bool_active(row, raw):
-    return str(row.get("active") or "").strip() != "0" and str(raw.get("DEL") or raw.get("del") or "0").strip() != "1"
+    active_value = row.get("active")
+    if active_value is False:
+        return False
+    return str(active_value or "").strip() != "0" and str(raw.get("DEL") or raw.get("del") or "0").strip() != "1"
 
 
 def user_id_by_name(name):
@@ -167,9 +170,36 @@ def load_rows(input_csv):
     return rows
 
 
+def load_rows_from_residual_model(source_tables):
+    Fact = env["sc.legacy.business.fact.residual"].sudo()  # noqa: F821
+    rows = []
+    for fact in Fact.search([("source_table", "in", list(source_tables))], order="id"):
+        def value(field_name):
+            return fact[field_name] if field_name in Fact._fields else None
+
+        row = {
+            "source_table": value("source_table"),
+            "document_no": value("document_no"),
+            "project_name": value("project_name"),
+            "document_date": value("document_date"),
+            "amount_total": value("amount_total"),
+            "legacy_record_id": value("legacy_record_id") or value("source_record_id") or fact.id,
+            "active": value("active"),
+            "raw_payload": value("raw_payload"),
+        }
+        row["_raw"] = parse_json(row.get("raw_payload"))
+        rows.append(row)
+    return rows
+
+
 output_json = resolve_artifact_root() / "fresh_db_tender_registration_projection_write_result_v1.json"
 input_csv = resolve_input_csv()
 rows = load_rows(input_csv)
+source_tables = {row.get("source_table") for row in rows}
+residual_model_rows = []
+if "BGGL_ZTBJHT_TBBM_TBBMFSQ" not in source_tables:
+    residual_model_rows = load_rows_from_residual_model({"BGGL_ZTBJHT_TBBM_TBBMFSQ", "P_ZTB_GCXXGL"})
+    rows.extend(residual_model_rows)
 
 env.cr.execute("SELECT COUNT(*) FROM tender_bid")  # noqa: F821
 before_bid_count = env.cr.fetchone()[0]  # noqa: F821
@@ -178,6 +208,7 @@ before_fee_count = env.cr.fetchone()[0]  # noqa: F821
 
 created_bids = 0
 created_fees = 0
+updated_fees = 0
 active_fee_rows = 0
 bid_samples = []
 fee_samples = []
@@ -202,6 +233,7 @@ for row in rows:
     raw = row["_raw"]
     if not bool_active(row, raw):
         continue
+    active_fee_rows += 1
     document_no = first(raw.get("DJBH"), row.get("document_no"))
     amount = parse_float(first(raw.get("JE"), row.get("amount_total")))
     tender_name = first(raw.get("TBXMMC"), row.get("project_name"), raw.get("BZ"))
@@ -210,20 +242,42 @@ for row in rows:
         created_bids += 1
     Purchase = env["tender.doc.purchase"].sudo()  # noqa: F821
     exists = Purchase.search([("invoice_no", "=", document_no or ""), ("bid_id", "=", bid.id)], limit=1)
+    vals = {
+        "bid_id": bid.id,
+        "applicant_id": user_id_by_name(first(raw.get("SQR"), raw.get("LRR"))),
+        "apply_date": parse_date(first(raw.get("SQRQ"), raw.get("LRSJ"), row.get("document_date"))),
+        "amount": amount,
+        "invoice_no": document_no,
+        "payment_method": first(raw.get("FKFS")),
+        "receipt_partner_name": first(raw.get("SKDW")),
+        "receipt_payee_name": first(raw.get("SKR")),
+        "receipt_bank_name": first(raw.get("KHH")),
+        "receipt_bank_account": first(raw.get("SKZH")),
+        "remark": first(raw.get("BZ")),
+        "legacy_source_created_by": first(raw.get("LRR"), raw.get("SQR")),
+        "legacy_source_created_at": parse_datetime(first(raw.get("LRSJ"), raw.get("SQRQ"))),
+        "legacy_record_id": id_from_legacy_record_id(first(row.get("legacy_record_id"), raw.get("Id"))),
+        "legacy_source_table": row.get("source_table"),
+        "state": "approved" if str(raw.get("DJZT") or "") == "2" else "submitted",
+    }
     if exists:
+        exists.write(vals)
+        updated_fees += 1
+        if len(fee_samples) < 5:
+            fee_samples.append(
+                {
+                    "invoice_no": exists.invoice_no,
+                    "tender_name": bid.tender_name,
+                    "amount": exists.amount,
+                    "apply_date": str(exists.apply_date or ""),
+                    "receipt_partner_name": exists.receipt_partner_name,
+                    "receipt_bank_account": exists.receipt_bank_account,
+                    "updated": True,
+                }
+            )
         continue
-    purchase = Purchase.create(
-        {
-            "bid_id": bid.id,
-            "applicant_id": user_id_by_name(first(raw.get("SQR"), raw.get("LRR"))),
-            "apply_date": parse_date(first(raw.get("SQRQ"), raw.get("LRSJ"), row.get("document_date"))),
-            "amount": amount,
-            "invoice_no": document_no,
-            "state": "approved" if str(raw.get("DJZT") or "") == "2" else "submitted",
-        }
-    )
+    purchase = Purchase.create(vals)
     created_fees += 1
-    active_fee_rows += 1
     if len(fee_samples) < 5:
         fee_samples.append(
             {
@@ -231,6 +285,9 @@ for row in rows:
                 "tender_name": bid.tender_name,
                 "amount": purchase.amount,
                 "apply_date": str(purchase.apply_date or ""),
+                "receipt_partner_name": purchase.receipt_partner_name,
+                "receipt_bank_account": purchase.receipt_bank_account,
+                "updated": False,
             }
         )
 
@@ -244,12 +301,14 @@ after_fee_count = env.cr.fetchone()[0]  # noqa: F821
 result = {
     "mode": "fresh_db_tender_registration_projection_write",
     "source_csv": str(input_csv),
+    "residual_model_rows": len(residual_model_rows),
     "target_models": ["tender.bid", "tender.doc.purchase"],
     "before_bid_count": before_bid_count,
     "created_bids": created_bids,
     "after_bid_count": after_bid_count,
     "before_fee_count": before_fee_count,
     "created_fees": created_fees,
+    "updated_fees": updated_fees,
     "active_fee_rows": active_fee_rows,
     "after_fee_count": after_fee_count,
     "bid_samples": bid_samples,

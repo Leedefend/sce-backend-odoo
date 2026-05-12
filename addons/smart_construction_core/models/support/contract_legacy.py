@@ -42,6 +42,9 @@ class ConstructionContractLegacy(models.Model):
     visible_received_amount = fields.Monetary(string="累计收款", currency_field="currency_id")
     visible_unreceived_amount = fields.Monetary(string="未收款", currency_field="currency_id")
     visible_unreceived_rate = fields.Char(string="未收款比例")
+    visible_invoice_amount_source = fields.Char(string="累计开票来源字段", index=True)
+    visible_received_amount_source = fields.Char(string="累计收款来源字段", index=True)
+    visible_unreceived_amount_source = fields.Char(string="未收款来源字段", index=True)
     contract_unreceived_amount = fields.Monetary(
         string="平台未收款",
         currency_field="currency_id",

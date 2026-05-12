@@ -47,6 +47,8 @@
                     <field name="rate_label"/>
                     <field name="extra_ref"/>
                     <field name="extra_label"/>
+                    <field name="creator_name"/>
+                    <field name="created_time"/>
                     <field name="state"/>
                 </tree>
             </field>
@@ -99,6 +101,9 @@
                         </group>
                         <group>
                             <field name="note"/>
+                            <field name="creator_name" readonly="1"/>
+                            <field name="creator_legacy_user_id" readonly="1"/>
+                            <field name="created_time" readonly="1"/>
                             <field name="attachment_ids" widget="many2many_binary"/>
                             <field name="active"/>
                         </group>

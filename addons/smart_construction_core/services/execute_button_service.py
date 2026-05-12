@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from odoo import api, models
 
+from odoo.addons.smart_core.core.navigation_entry_target import normalize_odoo_action_result
+
 
 class ExecuteButtonService(models.AbstractModel):
     _name = "sc.execute_button.service"
@@ -33,7 +35,7 @@ class ExecuteButtonService(models.AbstractModel):
         result = record.with_context(ctx)
         result = getattr(result, method)()
         ui_effect = _extract_ui_effect(result)
-        next_action = _extract_action(result)
+        next_action = _extract_action(self.env, result, source_model=model, source_record_id=res_id)
         reload_flag = bool(result is None or result is True)
 
         return {
@@ -49,9 +51,14 @@ def _extract_ui_effect(result):
     return None
 
 
-def _extract_action(result):
+def _extract_action(env, result, *, source_model="", source_record_id=None):
     if not isinstance(result, dict):
         return None
     if any(key in result for key in ("type", "res_model", "views", "tag")):
-        return result
+        return normalize_odoo_action_result(
+            env,
+            result,
+            source_model=source_model,
+            source_record_id=source_record_id,
+        ) or result
     return None

@@ -56,9 +56,10 @@ domain = [
     ("direction", "=", "income"),
     ("amount", ">", 0),
 ]
-target_domain = [("claim_type", "=", "expense"), ("expense_type", "=", "还款登记")]
+target_domain = [("claim_type", "=", "project_company_repay"), ("expense_type", "=", "还款登记")]
 before = Claim.search_count(target_domain)
 created = 0
+updated = 0
 samples = []
 
 for line in Line.search(domain, order="transaction_date desc, id desc"):
@@ -68,13 +69,52 @@ for line in Line.search(domain, order="transaction_date desc, id desc"):
         limit=1,
     )
     if exists:
+        env.cr.execute(  # noqa: F821
+            """
+            UPDATE sc_expense_claim
+               SET claim_type = %s,
+                   direction = %s,
+                   expense_type = %s,
+                   summary = COALESCE(NULLIF(summary, ''), %s),
+                   amount = %s,
+                   approved_amount = %s,
+                   date_claim = COALESCE(%s, date_claim),
+                   fill_date = COALESCE(%s, fill_date),
+                   write_uid = %s,
+                   write_date = NOW()
+             WHERE id = %s
+            """,
+            [
+                "project_company_repay",
+                "inflow",
+                "还款登记",
+                clean(line.source_summary) or "还款登记",
+                float(line.amount or 0.0),
+                float(line.amount or 0.0),
+                line.transaction_date or None,
+                line.transaction_date or None,
+                env.uid,  # noqa: F821
+                exists.id,
+            ],
+        )
+        updated += 1
+        if len(samples) < 5:
+            samples.append(
+                {
+                    "name": exists.name,
+                    "project": exists.project_id.display_name,
+                    "amount": float(line.amount or 0.0),
+                    "date": str(line.transaction_date or ""),
+                    "updated": True,
+                }
+            )
         continue
     project = project_for(line)
     claim = Claim.create(
         {
             "name": clean(line.document_no) or "HK-%s" % line.id,
             "source_origin": "legacy",
-            "claim_type": "expense",
+            "claim_type": "project_company_repay",
             "state": state_from_legacy(line.document_state),
             "project_id": project.id,
             "applicant_name": clean(line.counterparty_account_name),
@@ -102,6 +142,7 @@ for line in Line.search(domain, order="transaction_date desc, id desc"):
                 "project": claim.project_id.display_name,
                 "amount": claim.amount,
                 "date": str(claim.date_claim or ""),
+                "updated": False,
             }
         )
 
@@ -115,6 +156,7 @@ result = {
     "source_domain": domain,
     "before": before,
     "created": created,
+    "updated": updated,
     "after": after,
     "samples": samples,
 }

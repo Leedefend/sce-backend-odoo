@@ -8,15 +8,15 @@
         <field name="document_date"/>
         <field name="document_no"/>
         <field name="direction"/>
-        <field name="project_id"/>
+        <field name="project_display_name"/>
         <field name="partner_id"/>
         <field name="source_amount"/>
-        <field name="source_amount_field"/>
-        <field name="legacy_state"/>
-        <field name="source_family"/>
-        <field name="legacy_source_table"/>
-        <field name="legacy_record_id"/>
-        <field name="import_batch"/>
+        <field name="source_family_label"/>
+        <field name="source_amount_field_label" optional="hide"/>
+        <field name="legacy_state" optional="hide"/>
+        <field name="legacy_source_table" optional="hide"/>
+        <field name="legacy_record_id" optional="hide"/>
+        <field name="import_batch" optional="hide"/>
       </tree>
     </field>
   </record>
@@ -28,16 +28,16 @@
       <search string="历史费用/保证金事实">
         <field name="document_no"/>
         <field name="document_date"/>
-        <field name="project_id"/>
+        <field name="project_display_name"/>
         <field name="partner_id"/>
         <field name="legacy_partner_name"/>
-        <field name="source_family"/>
+        <field name="source_family_label"/>
         <filter string="有往来方" name="with_partner" domain="[('partner_id', '!=', False)]"/>
         <filter string="流出" name="direction_out" domain="[('direction', '=', 'outflow')]"/>
         <filter string="流入/退回" name="direction_refund" domain="[('direction', '=', 'inflow_or_refund')]"/>
-        <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+        <filter string="按项目" name="group_project" context="{'group_by': 'project_display_name'}"/>
         <filter string="按往来方" name="group_partner" context="{'group_by': 'partner_id'}"/>
-        <filter string="按类型" name="group_family" context="{'group_by': 'source_family'}"/>
+        <filter string="按类型" name="group_family" context="{'group_by': 'source_family_label'}"/>
       </search>
     </field>
   </record>
@@ -53,14 +53,17 @@
               <field name="document_date"/>
               <field name="document_no"/>
               <field name="direction"/>
+              <field name="project_display_name"/>
               <field name="project_id"/>
               <field name="partner_id"/>
               <field name="source_amount"/>
-              <field name="source_amount_field"/>
+              <field name="source_family_label"/>
+              <field name="source_amount_field_label"/>
             </group>
             <group>
               <field name="legacy_state"/>
               <field name="source_family"/>
+              <field name="source_amount_field"/>
               <field name="legacy_source_table"/>
               <field name="legacy_record_id"/>
               <field name="legacy_pid"/>

@@ -43,6 +43,9 @@ FIELDS = [
     "deleted_flag",
     "document_state",
     "line_count",
+    "creator_legacy_user_id",
+    "creator_name",
+    "created_time",
     "note",
 ]
 
@@ -91,6 +94,9 @@ SELECT
   {clean_sql("h.DEL")} AS deleted_flag,
   {clean_sql("h.DJZT")} AS document_state,
   CONVERT(varchar(20), lp.line_count) AS line_count,
+  {clean_sql("h.LRRID")} AS creator_legacy_user_id,
+  {clean_sql("h.f_LRR")} AS creator_name,
+  COALESCE(CONVERT(varchar(23), h.f_LRSJ, 121), '') AS created_time,
   {clean_sql("'[migration:actual_outflow_core] [migration:actual_outflow_residual] legacy_actual_outflow_id=' + h.Id + '; legacy_project_id=' + COALESCE(NULLIF(LTRIM(RTRIM(h.f_XMID)), ''), NULLIF(LTRIM(RTRIM(h.f_LYXMID)), ''), NULLIF(LTRIM(RTRIM(h.TSXMID)), ''), '') + '; legacy_partner_id=' + COALESCE(h.f_SupplierID, '') + '; legacy_request_id=' + COALESCE(h.f_ZFSQGLId, '') + '; document_no=' + COALESCE(NULLIF(LTRIM(RTRIM(h.DJBH)), ''), h.ZFSQDH, '') + '; deleted_flag=' + COALESCE(CONVERT(varchar(max), h.DEL), '') + '; document_state=' + COALESCE(CONVERT(varchar(max), h.DJZT), '') + '; residual_parent_for_actual_outflow_line=true; source_table=T_FK_Supplier; not_ledger=true; not_settlement=true'")} AS note
 FROM dbo.T_FK_Supplier h
 JOIN line_parent lp ON lp.T_FK_Supplier_ID = h.Id

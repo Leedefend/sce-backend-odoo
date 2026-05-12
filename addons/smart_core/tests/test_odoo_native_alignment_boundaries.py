@@ -627,6 +627,15 @@ class TestOdooNativeAlignmentBoundaries(TransactionCase):
         ):
             self.assertTrue(source.get("no_business_fact_authority"))
 
+    def test_app_menu_config_normalizes_business_scene_keys_to_menu_scene_families(self):
+        cfg = self.env["app.menu.config"]
+
+        source = cfg._source_contract("project.project", "projects.list")
+        domain = cfg._menu_config_domain(model_name="project.project", scene="projects.list")
+
+        self.assertEqual(source.get("scene"), "pm")
+        self.assertIn(("scene", "=", "pm"), domain)
+
     def test_view_config_projection_identity_is_action_scoped(self):
         action = self.env["ir.actions.act_window"].sudo().create({
             "name": "Scoped Partner Tree",

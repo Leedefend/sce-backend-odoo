@@ -62,6 +62,8 @@ LEGACY_AMOUNT_LINE_NOTE = "legacy_contract_amount:T_ProjectContract_Out"
 
 
 def clean(value: object) -> str:
+    if value is None or value is False:
+        return ""
     return "" if value is None else str(value).replace("\r\n", "\n").replace("\r", "\n").strip()
 
 
@@ -304,6 +306,12 @@ def sync_contract_amount_fields(contract, row: dict[str, str]) -> None:
         "legacy_contract_amount": float(amount),
         "legacy_contract_amount_source": source,
     }
+    entry_user_text = clean(row.get("LRR")) or clean(row.get("f_LRR"))
+    entry_time = parse_datetime(row.get("LRRQ")) or parse_datetime(row.get("f_LRSJ"))
+    if entry_user_text and not clean(contract.entry_user_text):
+        updates["entry_user_text"] = entry_user_text
+    if entry_time and not contract.entry_time:
+        updates["entry_time"] = entry_time
     contract.write(updates)
 
 

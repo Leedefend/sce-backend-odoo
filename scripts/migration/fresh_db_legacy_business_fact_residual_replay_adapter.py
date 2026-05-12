@@ -22,6 +22,11 @@ SOURCE_SPEC = os.getenv(
     "LEGACY_BUSINESS_FACT_SOURCES",
     "main:legacy-mssql-restore:LegacyDb,scbs:legacy-mssql-scbs:LegacyScbs20260417",
 )
+SOURCE_TABLE_ALLOWLIST = {
+    item.strip()
+    for item in os.getenv("LEGACY_BUSINESS_FACT_TABLES", "").split(",")
+    if item.strip()
+}
 SQL_PASSWORD = os.getenv("LEGACY_MSSQL_SA_PASSWORD") or os.getenv("LEGACY_MSSQL_PASSWORD") or "LegacyRestore!2026"
 SQLCMD = os.getenv("LEGACY_SQLCMD", "/opt/mssql-tools18/bin/sqlcmd")
 
@@ -151,6 +156,8 @@ def load_candidate_tables(label: str) -> list[dict[str, Any]]:
     seen = set()
     for table in payload.get("tables") or []:
         name = table["table"]
+        if SOURCE_TABLE_ALLOWLIST and name not in SOURCE_TABLE_ALLOWLIST:
+            continue
         if name in seen or table.get("classification") not in BUSINESS_CLASSES or int(table.get("row_count") or 0) <= 0:
             continue
         seen.add(name)

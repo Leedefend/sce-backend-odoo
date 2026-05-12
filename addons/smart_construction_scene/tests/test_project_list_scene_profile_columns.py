@@ -27,19 +27,19 @@ def test_projects_list_profile_keeps_canonical_column_order_and_labels():
 
     assert (list_profile.get("columns") or []) == [
         "name",
-        "user_id",
-        "partner_id",
-        "stage_id",
+        "project_code",
+        "operation_strategy",
+        "business_nature",
         "lifecycle_state",
-        "date_start",
-        "date",
+        "manager_id",
+        "write_date",
     ]
     assert (list_profile.get("column_labels") or {}) == {
         "name": "名称",
-        "user_id": "项目管理员",
-        "partner_id": "客户",
-        "stage_id": "阶段",
+        "project_code": "项目编号",
+        "operation_strategy": "经营方式",
+        "business_nature": "经营性质",
         "lifecycle_state": "项目状态",
-        "date_start": "开始日期",
-        "date": "有效期",
+        "manager_id": "项目经理",
+        "write_date": "更新时间",
     }

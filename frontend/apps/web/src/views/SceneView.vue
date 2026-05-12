@@ -64,7 +64,7 @@
       :style="pageSectionStyle('status_forbidden')"
     />
     <StatusPanel
-      v-else-if="status === 'idle' && !sceneContractEntryIntent && !shouldRenderDashboardSurface && !productDeliverySurface.visible && embeddedRecordActionId <= 0 && embeddedActionId <= 0"
+      v-else-if="status === 'idle' && !sceneContractEntryIntent && !productDeliverySurface.visible && embeddedRecordActionId <= 0 && embeddedActionId <= 0"
       :title="pageText('status_idle_diag_title', '场景已加载，但没有可渲染目标')"
       :message="idleDiagnosticMessage"
       variant="info"
@@ -74,15 +74,19 @@
       :intent="sceneContractEntryIntent"
       :scene-key="currentSceneKey"
     />
-    <ProjectManagementDashboardView v-else-if="status === 'idle' && shouldRenderDashboardSurface" />
+    <SceneBlocksRenderer
+      v-if="status === 'idle' && !sceneContractEntryIntent && showSceneBlocksDebug && sceneBlocks.length"
+      :blocks="sceneBlocks"
+      @action="handleSceneBlockAction"
+    />
     <StatusPanel
-      v-if="status === 'idle' && !sceneContractEntryIntent && !shouldRenderDashboardSurface && validationHint"
+      v-if="status === 'idle' && !sceneContractEntryIntent && validationHint"
       :title="pageText('validation_surface_title', '表单约束提示')"
       :message="validationHint"
       variant="info"
     />
     <section
-      v-if="status === 'idle' && !sceneContractEntryIntent && !shouldRenderDashboardSurface && productDeliverySurface.visible"
+      v-if="status === 'idle' && !sceneContractEntryIntent && productDeliverySurface.visible"
       class="scene-delivery"
       :class="{ 'scene-delivery--advisory': productDeliverySurface.advisoryOnly }"
     >
@@ -104,13 +108,13 @@
       </button>
     </section>
     <StatusPanel
-      v-if="status === 'idle' && !sceneContractEntryIntent && !shouldRenderDashboardSurface && runtimeDiagnosticMessage"
+      v-if="status === 'idle' && !sceneContractEntryIntent && runtimeDiagnosticMessage"
       :title="runtimeDiagnosticTitle"
       :message="runtimeDiagnosticMessage"
       variant="info"
     />
-    <ContractFormPage v-if="status === 'idle' && !sceneContractEntryIntent && !shouldRenderDashboardSurface && embeddedRecordActionId > 0" />
-    <ActionView v-else-if="status === 'idle' && !sceneContractEntryIntent && !shouldRenderDashboardSurface && embeddedActionId > 0" />
+    <ContractFormPage v-if="status === 'idle' && !sceneContractEntryIntent && embeddedRecordActionId > 0" />
+    <ActionView v-else-if="status === 'idle' && !sceneContractEntryIntent && embeddedActionId > 0" />
   </section>
 </template>
 
@@ -118,8 +122,8 @@
 import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router';
 import ActionView from './ActionViewShell.vue';
-import ProjectManagementDashboardView from './ProjectManagementDashboardView.vue';
 import SceneContractBlockGridView from './SceneContractBlockGridView.vue';
+import SceneBlocksRenderer from '../components/scene/SceneBlocksRenderer.vue';
 import ContractFormPage from '../pages/ContractFormPage.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import { getSceneByKey, resolveSceneLayout } from '../app/resolvers/sceneRegistry';
@@ -128,23 +132,24 @@ import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { ErrorCodes } from '../app/error_codes';
 import { resolveErrorCopy, useStatus } from '../composables/useStatus';
 import { trackSceneOpen } from '../api/usage';
+import { intentRequest } from '../api/intents';
 import { readWorkspaceContext } from '../app/workspaceContext';
-import { normalizeLegacyWorkbenchPath } from '../app/routeQuery';
+import { buildCanonicalSceneRouteTarget, normalizeLegacyWorkbenchPath, resolveSceneDefaultOrder } from '../app/routeQuery';
 import { findActionMeta, findActionNodeByModel, findMenuNode } from '../app/menu';
 import { usePageContract } from '../app/pageContract';
-import { executePageContractAction } from '../app/pageContractActionRuntime';
 import type { NavNode } from '@sc/schema';
-import type { Scene, SceneTarget } from '../app/resolvers/sceneRegistry';
+import { setSceneRegistryFromSceneReadyContract, type Scene, type SceneTarget } from '../app/resolvers/sceneRegistry';
+import { isSceneBlocksDebugEnabled } from '../config/debug';
 
 const route = useRoute();
 const router = useRouter();
+const showSceneBlocksDebug = computed(() => isSceneBlocksDebugEnabled(route));
 const session = useSessionStore();
 const pageContract = usePageContract('scene', { allowSceneContractFallback: true });
 const pageText = pageContract.text;
 const pageSectionEnabled = pageContract.sectionEnabled;
 const pageSectionStyle = pageContract.sectionStyle;
 const pageSectionTagIs = pageContract.sectionTagIs;
-const pageActionIntent = pageContract.actionIntent;
 const pageActionTarget = pageContract.actionTarget;
 const pageGlobalActions = pageContract.globalActions;
 const headerActions = computed(() => pageGlobalActions.value);
@@ -153,7 +158,11 @@ const sceneContractEntryIntentMap: Record<string, string> = {
   'workspace.home': 'workspace.home.enter',
   'dashboard.company': 'dashboard.company.enter',
 };
-const sceneContractEntryIntent = computed(() => sceneContractEntryIntentMap[currentSceneKey.value] || '');
+const sceneContractEntryIntent = computed(() => {
+  const routeIntent = String(route.query.entry_intent || route.query.scene_intent || '').trim();
+  if (routeIntent) return routeIntent;
+  return sceneContractEntryIntentMap[currentSceneKey.value] || '';
+});
 const findActionNodeByModelRef = findActionNodeByModel;
 const scene = ref<Scene | null>(null);
 const status = ref<'loading' | 'error' | 'forbidden' | 'idle'>('loading');
@@ -168,17 +177,29 @@ const forbiddenCopy = ref({
 const validationHint = ref('');
 const embeddedActionId = ref(0);
 const embeddedRecordActionId = ref(0);
+const sceneReadyHydrateRequested = ref(false);
 const compactSceneControls = computed(() => currentSceneKey.value === 'projects.list');
-const shouldRenderDashboardSurface = computed(() => {
-  const page = scene.value?.page;
-  const pageType = String(page?.page_type || '').trim().toLowerCase();
-  const layoutMode = String(page?.layout_mode || '').trim().toLowerCase();
-  return (
-    status.value === 'idle'
-    && embeddedRecordActionId.value <= 0
-    && embeddedActionId.value <= 0
-    && (pageType === 'dashboard' || layoutMode === 'dashboard')
-  );
+type SceneBlockViewMode = 'form' | 'list' | 'kanban';
+function resolveSceneBlockViewMode(): SceneBlockViewMode {
+  const routeMode = String(route.query.view_mode || '').trim().toLowerCase();
+  if (routeMode === 'form') return 'form';
+  if (routeMode === 'kanban') return 'kanban';
+  const layoutKind = String(scene.value?.layout?.kind || '').trim().toLowerCase();
+  if (layoutKind === 'record') return 'form';
+  if (layoutKind === 'kanban') return 'kanban';
+  return 'list';
+}
+const sceneBlocks = computed(() => {
+  const currentScene = scene.value;
+  const sceneReady = currentScene?.scene_ready;
+  const mode = resolveSceneBlockViewMode();
+  const byView = (sceneReady?.scene_blocks_by_view && typeof sceneReady.scene_blocks_by_view === 'object')
+    ? sceneReady.scene_blocks_by_view
+    : {};
+  const modeBlocks = Array.isArray(byView?.[mode]) ? byView[mode] : [];
+  const fallbackBlocks = Array.isArray(sceneReady?.scene_blocks) ? sceneReady.scene_blocks : [];
+  const blocks = modeBlocks.length ? modeBlocks : fallbackBlocks;
+  return blocks.filter((item) => item && typeof item === 'object') as Array<Record<string, unknown>>;
 });
 
 const idleDiagnosticMessage = computed(() => {
@@ -341,6 +362,62 @@ function resolveSceneSwitchFallbackQuery() {
   return next;
 }
 
+function handleSceneBlockAction(payload: { block: Record<string, unknown>; action: Record<string, unknown> }) {
+  const action = payload.action || {};
+  const target = (action.target && typeof action.target === 'object' && !Array.isArray(action.target))
+    ? action.target as Record<string, unknown>
+    : {};
+  const route = String(target.route || '').trim();
+  if (route) {
+    void router.push({ path: route, query: asRouteQuery(resolveWorkspaceContextQuery() as Record<string, unknown>) });
+    return;
+  }
+  const sceneKey = String(target.scene_key || '').trim();
+  if (sceneKey) {
+    const sceneNode = getSceneByKey(sceneKey);
+    void router.push(buildCanonicalSceneRouteTarget(sceneKey, {
+      scene: sceneNode,
+      query: asRouteQuery(resolveWorkspaceContextQuery() as Record<string, unknown>),
+      menuId: sceneNode?.target?.menu_id,
+      actionId: sceneNode?.target?.action_id,
+    }));
+  }
+}
+
+async function hydrateSceneReadyForCurrentScene(sceneKey: string) {
+  const key = String(sceneKey || '').trim();
+  if (!key || sceneReadyHydrateRequested.value) {
+    return false;
+  }
+  sceneReadyHydrateRequested.value = true;
+  try {
+    const result = await intentRequest<Record<string, unknown>>({
+      intent: 'system.init',
+      params: {
+        scene: 'web',
+        with_preload: false,
+        scene_ready_mode: 'full',
+        with: ['workspace_home'],
+        root_xmlid: 'smart_construction_core.menu_sc_root',
+        scene_key: key,
+      },
+      meta: { startup_chain_bypass: true },
+    });
+    const contract = result.scene_ready_contract_v1;
+    if (contract && typeof contract === 'object' && Array.isArray((contract as Record<string, unknown>).scenes)) {
+      const readyContract = contract as Record<string, unknown>;
+      session.sceneReadyContractV1 = readyContract as never;
+      setSceneRegistryFromSceneReadyContract(readyContract as never);
+      return true;
+    }
+  } catch (err) {
+    // Ignore hydration failures here; the existing fallback rendering can continue.
+    // eslint-disable-next-line no-console
+    console.warn('[scene-view] scene-ready hydration failed', err);
+  }
+  return false;
+}
+
 
 const sceneViewSwitchOptions = computed(() => {
   const currentScene = scene.value;
@@ -427,10 +504,12 @@ function hasConsumableDeliveryRoot(scene: Scene | null) {
 
 function openSiblingScene(sceneKey: string) {
   const target = getSceneByKey(sceneKey);
-  router.replace({
-    path: target?.route || `/s/${sceneKey}`,
+  router.replace(buildCanonicalSceneRouteTarget(sceneKey, {
+    scene: target,
     query: asRouteQuery(target ? resolveSceneSwitchQuery(target) : resolveSceneSwitchFallbackQuery()),
-  }).catch(() => {});
+    menuId: target?.target?.menu_id,
+    actionId: target?.target?.action_id,
+  })).catch(() => {});
 }
 
 function openProductDeliveryTarget() {
@@ -439,10 +518,12 @@ function openProductDeliveryTarget() {
     return;
   }
   const target = getSceneByKey(targetSceneKey);
-  router.replace({
-    path: target?.route || `/s/${targetSceneKey}`,
+  router.replace(buildCanonicalSceneRouteTarget(targetSceneKey, {
+    scene: target,
     query: asRouteQuery(target ? resolveSceneSwitchQuery(target) : resolveSceneSwitchFallbackQuery()),
-  }).catch(() => {});
+    menuId: target?.target?.menu_id,
+    actionId: target?.target?.action_id,
+  })).catch(() => {});
 }
 function sanitizeWorkspaceContextForLayout(
   layoutKind: 'workspace' | 'record' | 'list' | 'ledger' | 'kanban' | 'dashboard',
@@ -480,28 +561,30 @@ function goUnifiedHome() {
 }
 
 async function executeHeaderAction(actionKey: string) {
-  const handled = await executePageContractAction({
-    actionKey,
-    router,
-    actionIntent: pageActionIntent,
-    actionTarget: pageActionTarget,
-    query: resolveWorkspaceContextQuery(),
-    onRefresh: resolveScene,
-    onFallback: async (key) => {
-      if (key === 'open_workbench') {
-        goWorkbench();
-        return true;
-      }
-      if (key === 'refresh_page' || key === 'refresh') {
-        await resolveScene();
-        return true;
-      }
-      return false;
-    },
-  });
-  if (!handled) {
-    goWorkbench(ErrorCodes.ACT_UNSUPPORTED_TYPE);
+  const key = String(actionKey || '').trim();
+  if (!key) return;
+  if (key === 'refresh_page' || key === 'refresh') {
+    await resolveScene();
+    return;
   }
+  if (key === 'open_workbench') {
+    goWorkbench();
+    return;
+  }
+  const target = pageActionTarget(key);
+  const route = String(target.route || '').trim();
+  if (route) {
+    await router.push({ path: route, query: resolveWorkspaceContextQuery() as LocationQueryRaw });
+    return;
+  }
+  if (String(target.scene_key || '').trim()) {
+    await router.push(buildCanonicalSceneRouteTarget(String(target.scene_key || '').trim(), {
+      query: resolveWorkspaceContextQuery() as LocationQueryRaw,
+      scene: getSceneByKey(String(target.scene_key || '').trim()),
+    }));
+    return;
+  }
+  goWorkbench(ErrorCodes.ACT_UNSUPPORTED_TYPE);
 }
 
 function resolveRecordId(targetRecord: unknown) {
@@ -582,6 +665,17 @@ function resolveVisibleActionTarget(target: SceneTarget, sceneKey = '') {
     }
   }
 
+  const actionXmlid = String(target.action_xmlid || '').trim();
+  if (actionXmlid) {
+    const actionNode = findActionNodeByActionXmlid(session.menuTree, actionXmlid);
+    if (actionNode?.meta?.action_id) {
+      return {
+        actionId: actionNode.meta.action_id,
+        menuId: Number(actionNode.menu_id || actionNode.id || target.menu_id || 0) || undefined,
+      };
+    }
+  }
+
   const model = String(target.model || '').trim();
   if (model) {
     const modelNode = findActionNodeByModelRef(session.menuTree, model);
@@ -601,6 +695,14 @@ function resolveVisibleActionTarget(target: SceneTarget, sceneKey = '') {
         menuId: Number(sceneNode.menu_id || sceneNode.id || 0) || undefined,
       };
     }
+  }
+
+  const routeActionId = Number(route.query.action_id || 0);
+  if (routeActionId > 0) {
+    return {
+      actionId: routeActionId,
+      menuId: Number(route.query.menu_id || 0) || undefined,
+    };
   }
 
   return null;
@@ -700,6 +802,12 @@ function resolveCanonicalSceneOwnerQuery(sceneKey: string, workspaceContextQuery
   };
 }
 
+function resolveSceneActionOrder(scene: Scene, target: SceneTarget, sceneKey: string) {
+  const explicit = String(route.query.order || route.query.sort || '').trim();
+  if (explicit) return explicit;
+  return resolveSceneDefaultOrder(sceneKey, { ...scene, target });
+}
+
 function isCanonicalSceneOwnerTarget(target: SceneTarget, sceneKey: string) {
   const normalizedSceneKey = String(sceneKey || '').trim();
   if (!normalizedSceneKey) {
@@ -744,6 +852,10 @@ async function resolveScene() {
       return;
     }
     scene.value = resolvedScene;
+    if (!sceneBlocks.value.length) {
+      await hydrateSceneReadyForCurrentScene(sceneKey);
+      scene.value = getSceneByKey(sceneKey) || resolvedScene;
+    }
     if (sceneContractEntryIntentMap[sceneKey]) {
       status.value = 'idle';
       return;
@@ -802,7 +914,8 @@ async function resolveScene() {
       || route.query.action_id
       || route.query.scene_label
     );
-    if (hasForeignSceneQuery && isCanonicalSceneOwnerTarget(target, sceneKey)) {
+    const hasActionRouteContext = Number(route.query.action_id || 0) > 0 || Number(route.query.menu_id || 0) > 0;
+    if (hasForeignSceneQuery && !hasActionRouteContext && isCanonicalSceneOwnerTarget(target, sceneKey)) {
       await router.replace({ path: route.path, query: asRouteQuery(canonicalOwnerQuery) });
       return;
     }
@@ -832,18 +945,21 @@ async function resolveScene() {
       // Workspace scene may still provide action/menu/model targets.
       const resolvedAction = resolveVisibleActionTarget(target, sceneKey);
       if (resolvedAction) {
+        const defaultOrder = resolveSceneActionOrder(resolvedScene, target, sceneKey);
+        const effectiveMenuId = Number(route.query.menu_id || 0) || Number(resolvedAction.menuId || 0) || undefined;
         const nextQuery = {
-          menu_id: resolvedAction.menuId,
+          menu_id: effectiveMenuId,
           action_id: resolvedAction.actionId,
           scene_key: sceneKey || undefined,
           scene_label: sceneLabel || undefined,
+          order: defaultOrder || undefined,
           ...workspaceContextQuery,
         };
         const currentActionId = Number(route.query.action_id || 0);
         const currentMenuId = Number(route.query.menu_id || 0);
         const sameEmbeddedRouteState =
           currentActionId === resolvedAction.actionId
-          && currentMenuId === Number(resolvedAction.menuId || 0)
+          && currentMenuId === Number(effectiveMenuId || 0)
           && String(route.query.scene_key || '') === sceneKey;
         if (!sameEmbeddedRouteState) {
           await router.replace({ path: route.path, query: asRouteQuery(nextQuery) });
@@ -885,18 +1001,21 @@ async function resolveScene() {
     if (layout.kind === 'record') {
       const resolvedAction = resolveVisibleActionTarget(target, sceneKey);
       if (resolvedAction) {
+        const defaultOrder = resolveSceneActionOrder(resolvedScene, target, sceneKey);
+        const effectiveMenuId = Number(route.query.menu_id || 0) || Number(resolvedAction.menuId || 0) || undefined;
         const nextQuery = {
-          menu_id: resolvedAction.menuId,
+          menu_id: effectiveMenuId,
           action_id: resolvedAction.actionId,
           scene_key: sceneKey || undefined,
           scene_label: sceneLabel || undefined,
+          order: defaultOrder || undefined,
           ...workspaceContextQuery,
         };
         const currentActionId = Number(route.query.action_id || 0);
         const currentMenuId = Number(route.query.menu_id || 0);
         const sameEmbeddedRouteState =
           currentActionId === resolvedAction.actionId
-          && currentMenuId === Number(resolvedAction.menuId || 0)
+          && currentMenuId === Number(effectiveMenuId || 0)
           && String(route.query.scene_key || '') === sceneKey;
         if (!sameEmbeddedRouteState) {
           await router.replace({ path: route.path, query: asRouteQuery(nextQuery) });
@@ -968,18 +1087,21 @@ async function resolveScene() {
     if (layout.kind === 'list' || layout.kind === 'ledger') {
       const resolvedAction = resolveVisibleActionTarget(target, sceneKey);
       if (resolvedAction) {
+        const defaultOrder = resolveSceneActionOrder(resolvedScene, target, sceneKey);
+        const effectiveMenuId = Number(route.query.menu_id || 0) || Number(resolvedAction.menuId || 0) || undefined;
         const nextQuery = {
-          menu_id: resolvedAction.menuId,
+          menu_id: effectiveMenuId,
           action_id: resolvedAction.actionId,
           scene_key: sceneKey || undefined,
           scene_label: sceneLabel || undefined,
+          order: defaultOrder || undefined,
           ...workspaceContextQuery,
         };
         const currentActionId = Number(route.query.action_id || 0);
         const currentMenuId = Number(route.query.menu_id || 0);
         const sameEmbeddedRouteState =
           currentActionId === resolvedAction.actionId
-          && currentMenuId === Number(resolvedAction.menuId || 0)
+          && currentMenuId === Number(effectiveMenuId || 0)
           && String(route.query.scene_key || '') === sceneKey;
         if (!sameEmbeddedRouteState) {
           await router.replace({ path: route.path, query: asRouteQuery(nextQuery) });
@@ -1088,6 +1210,30 @@ function findActionNodeBySceneKey(nodes: NavNode[], sceneKey: string): NavNode |
           || '',
       ).trim();
       if (nodeSceneKey === wanted && node.meta?.action_id) {
+        return node;
+      }
+      if (node.children?.length) {
+        const found = walk(node.children);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+  return walk(nodes) || null;
+}
+
+function findActionNodeByActionXmlid(nodes: NavNode[], actionXmlid: string): NavNode | null {
+  if (!actionXmlid) return null;
+  const wanted = String(actionXmlid || '').trim();
+  const walk = (items: NavNode[]): NavNode | null => {
+    for (const node of items) {
+      const nodeActionXmlid = String(
+        (node as NavNode & { action_xmlid?: string; actionXmlid?: string }).action_xmlid
+          || (node as NavNode & { action_xmlid?: string; actionXmlid?: string }).actionXmlid
+          || node.meta?.action_xmlid
+          || '',
+      ).trim();
+      if (nodeActionXmlid === wanted && node.meta?.action_id) {
         return node;
       }
       if (node.children?.length) {

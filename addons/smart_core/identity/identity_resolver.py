@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import Dict, List
 
+from odoo.addons.smart_core.core.navigation_entry_target import build_scene_entry_target
 from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
 
 ROLE_SURFACE_MAP = {
@@ -241,43 +242,6 @@ class IdentityResolver:
             _push(scene_key)
         return merged
 
-    def _build_entry_target(self, *, scene_key: str = "", route: str = "", menu_id=None, action_id=None, model: str = "", record_id=None) -> dict:
-        normalized_scene_key = str(scene_key or "").strip()
-        normalized_route = str(route or "").strip()
-        if not normalized_scene_key and normalized_route.startswith("/s/"):
-            normalized_scene_key = normalized_route.replace("/s/", "", 1).strip("/")
-        if not normalized_scene_key:
-            return {}
-        target = {
-            "type": "scene",
-            "scene_key": normalized_scene_key,
-        }
-        if normalized_route:
-            target["route"] = normalized_route
-        compatibility = {}
-        if isinstance(menu_id, int) and menu_id > 0:
-            compatibility["menu_id"] = menu_id
-        if isinstance(action_id, int) and action_id > 0:
-            compatibility["action_id"] = action_id
-        normalized_model = str(model or "").strip()
-        if normalized_model:
-            compatibility["model"] = normalized_model
-        if isinstance(record_id, int) and record_id > 0:
-            compatibility["record_id"] = record_id
-        if normalized_model and isinstance(record_id, int) and record_id > 0:
-            record_entry = {
-                "model": normalized_model,
-                "record_id": record_id,
-            }
-            if isinstance(action_id, int) and action_id > 0:
-                record_entry["action_id"] = action_id
-            if isinstance(menu_id, int) and menu_id > 0:
-                record_entry["menu_id"] = menu_id
-            target["record_entry"] = record_entry
-        if compatibility:
-            target["compatibility_refs"] = compatibility
-        return target
-
     def build_role_surface(
         self,
         user_xmlids: set,
@@ -319,7 +283,7 @@ class IdentityResolver:
             "menu_xmlids": menu_candidates,
             "menu_blocklist_xmlids": menu_blocklist_xmlids,
         }
-        landing_entry_target = self._build_entry_target(
+        landing_entry_target = build_scene_entry_target(
             scene_key=landing_scene_key,
             route=landing_path,
             menu_id=landing_menu_id if isinstance(landing_menu_id, int) else None,
@@ -427,7 +391,7 @@ class IdentityResolver:
                         "route": route,
                         "reason": "menu_fallback",
                     }
-                    entry_target = self._build_entry_target(
+                    entry_target = build_scene_entry_target(
                         scene_key=scene_key,
                         route=route,
                         menu_id=menu_id if isinstance(menu_id, int) else None,

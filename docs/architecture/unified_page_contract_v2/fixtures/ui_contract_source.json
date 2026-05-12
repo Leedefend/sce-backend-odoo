@@ -3,6 +3,7 @@
   "model": "project.project",
   "view_type": "form",
   "contract_version": "v1",
+  "title": "Project Form",
   "meta_fields": [
     {
       "name": "name",
@@ -19,10 +20,14 @@
       "required": true
     }
   ],
-  "ui_contract": {
-    "model": "project.project",
-    "view_type": "form",
-    "titleField": "name",
-    "sheet": []
+  "fields": {
+    "name": {
+      "string": "Name",
+      "type": "char"
+    },
+    "stage_id": {
+      "string": "Stage",
+      "type": "many2one"
+    }
   }
 }

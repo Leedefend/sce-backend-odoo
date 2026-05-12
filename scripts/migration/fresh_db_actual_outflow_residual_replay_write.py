@@ -45,6 +45,26 @@ def as_float(value: str) -> float:
         return 0.0
 
 
+def clean(value: object) -> str:
+    if value is None:
+        return ""
+    text = str(value).strip()
+    return "" if text in {"False", "false", "None", "none", "NULL", "null"} else text
+
+
+def legacy_user_names() -> dict[str, str]:
+    names: dict[str, str] = {}
+    if "sc.legacy.user.profile" not in env.registry:  # noqa: F821
+        return names
+    Profile = env["sc.legacy.user.profile"].sudo().with_context(active_test=False)  # noqa: F821
+    for profile in Profile.search([]):
+        legacy_id = clean(profile.legacy_user_id)
+        name = clean(profile.display_name) or clean(profile.user_id.name)
+        if legacy_id and name:
+            names[legacy_id] = name
+    return names
+
+
 LEGACY_ACTUAL_OUTFLOW_ID_RE = re.compile(r"legacy_actual_outflow_id=([0-9a-fA-F]+)")
 
 REPO_ROOT = repo_root()
@@ -61,6 +81,7 @@ expected_rows = int(adapter["expected_rows"])
 Request = env["payment.request"].sudo()  # noqa: F821
 Project = env["project.project"].sudo()  # noqa: F821
 Partner = env["res.partner"].sudo()  # noqa: F821
+legacy_user_name_by_id = legacy_user_names()
 
 project_ids = sorted({row["legacy_project_id"] for row in rows if row.get("legacy_project_id")})
 project_map = {
@@ -75,13 +96,17 @@ if partner_ids:
         partner_map.setdefault(rec["legacy_partner_id"], rec["id"])
 
 existing_actual_ids: set[str] = set()
+existing_actual_id_to_request = {}
 for rec in Request.search_read([("note", "ilike", "[migration:actual_outflow_core]")], ["note"]):
     note = rec.get("note") or ""
     match = LEGACY_ACTUAL_OUTFLOW_ID_RE.search(note)
     if match:
-        existing_actual_ids.add(match.group(1))
+        legacy_actual_id = match.group(1)
+        existing_actual_ids.add(legacy_actual_id)
+        existing_actual_id_to_request[legacy_actual_id] = rec["id"]
 
 created = 0
+updated_existing = 0
 created_partner_anchors = 0
 created_project_anchors = 0
 skipped = 0
@@ -92,6 +117,24 @@ batch_size = 500
 for index, row in enumerate(rows, start=1):
     legacy_actual_id = row["legacy_actual_outflow_id"]
     if legacy_actual_id in existing_actual_ids:
+        request = Request.browse(existing_actual_id_to_request.get(legacy_actual_id)).exists()
+        if request:
+            creator_legacy_user_id = clean(row.get("creator_legacy_user_id"))
+            creator_name = clean(row.get("creator_name")) or legacy_user_name_by_id.get(creator_legacy_user_id, "")
+            vals = {}
+            if not request.legacy_source_table:
+                vals["legacy_source_table"] = "T_FK_Supplier"
+            if not request.legacy_record_id:
+                vals["legacy_record_id"] = legacy_actual_id
+            if creator_legacy_user_id and not request.creator_legacy_user_id:
+                vals["creator_legacy_user_id"] = creator_legacy_user_id
+            if creator_name and not request.creator_name:
+                vals["creator_name"] = creator_name
+            if clean(row.get("created_time")) and not request.created_time:
+                vals["created_time"] = clean(row.get("created_time"))[:19]
+            if vals:
+                request.write(vals)
+                updated_existing += 1
         skipped += 1
         continue
 
@@ -163,9 +206,19 @@ for index, row in enumerate(rows, start=1):
         "partner_id": partner_id,
         "amount": as_float(row.get("amount", "")),
         "note": row["note"],
+        "legacy_source_table": "T_FK_Supplier",
+        "legacy_record_id": legacy_actual_id,
     }
     if row.get("date_request"):
         vals["date_request"] = row["date_request"]
+    creator_legacy_user_id = clean(row.get("creator_legacy_user_id"))
+    creator_name = clean(row.get("creator_name")) or legacy_user_name_by_id.get(creator_legacy_user_id, "")
+    if creator_legacy_user_id:
+        vals["creator_legacy_user_id"] = creator_legacy_user_id
+    if creator_name:
+        vals["creator_name"] = creator_name
+    if clean(row.get("created_time")):
+        vals["created_time"] = clean(row.get("created_time"))[:19]
     buffer.append(vals)
     existing_actual_ids.add(legacy_actual_id)
     if len(buffer) >= batch_size:
@@ -185,6 +238,7 @@ payload = {
     "database": env.cr.dbname,  # noqa: F821
     "input_rows": len(rows),
     "created_rows": created,
+    "updated_existing": updated_existing,
     "created_partner_anchors": created_partner_anchors,
     "created_project_anchors": created_project_anchors,
     "skipped_existing": skipped,

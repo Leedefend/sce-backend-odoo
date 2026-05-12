@@ -5,10 +5,12 @@
         <field name="model">sc.company.operation.summary</field>
         <field name="arch" type="xml">
             <search string="公司经营情况表">
+                <field name="period_label"/>
                 <field name="company_id"/>
-                <filter string="有工资事实" name="has_salary" domain="[('salary_line_count', '>', 0)]"/>
-                <filter string="工资事实缺失" name="missing_salary" domain="[('salary_line_count', '=', 0)]"/>
+                <field name="period_year"/>
+                <field name="period_month"/>
                 <group expand="0" string="分组">
+                    <filter string="年度" name="group_year" context="{'group_by': 'period_year'}"/>
                     <filter string="公司" name="group_company" context="{'group_by': 'company_id'}"/>
                 </group>
             </search>
@@ -20,25 +22,39 @@
         <field name="model">sc.company.operation.summary</field>
         <field name="arch" type="xml">
             <tree string="公司经营情况表" create="0" edit="0" delete="0">
-                <field name="display_name"/>
+                <field name="period_label"/>
+                <field name="revenue_amount" sum="营收"/>
+                <field name="deduction_management_fee_amount" sum="管理费"/>
+                <field name="deduction_enterprise_income_tax_amount" sum="企业所得税"/>
+                <field name="deduction_vat_surcharge_amount" sum="增值税附加"/>
+                <field name="deduction_vat_surcharge_nonrefundable_amount" sum="增值税附加(不可退)"/>
+                <field name="company_interest_income_amount" sum="利息公司"/>
+                <field name="bid_document_fee_income_amount" sum="标书制作费"/>
+                <field name="appearance_fee_income_amount" sum="出场费"/>
+                <field name="certificate_fee_income_amount" sum="证书费"/>
+                <field name="company_operation_income_amount" sum="公司经营收入"/>
+                <field name="union_fee_income_amount" sum="工会经费"/>
+                <field name="branch_annual_fee_income_amount" sum="分公司年费"/>
+                <field name="disability_fund_income_amount" sum="残保金"/>
+                <field name="personal_income_tax_income_amount" sum="个人所得税"/>
                 <field name="income_amount" sum="收入合计"/>
-                <field name="receipt_amount" sum="收款收入"/>
-                <field name="company_finance_income_amount" sum="公司财务收入"/>
-                <field name="claim_inflow_amount" sum="其他流入"/>
                 <field name="expense_amount" sum="支出合计"/>
-                <field name="company_finance_expense_amount" sum="公司财务支出"/>
-                <field name="expense_reimbursement_amount" sum="费用报销"/>
-                <field name="salary_gross_amount" sum="应发工资"/>
-                <field name="salary_net_amount" sum="实发工资"/>
-                <field name="claim_outflow_amount" sum="其他流出"/>
-                <field name="net_operation_amount" sum="经营净额"/>
-                <field name="output_tax_amount" sum="销项税额"/>
-                <field name="input_tax_amount" sum="进项税额"/>
-                <field name="prepaid_tax_amount" sum="预缴税额"/>
-                <field name="receipt_count" sum="收款单数"/>
-                <field name="expense_claim_count" sum="费用/保证金单数"/>
-                <field name="salary_line_count" sum="工资明细数"/>
-                <field name="invoice_count" sum="发票数"/>
+                <field name="reimbursement_amount" sum="报销"/>
+                <field name="salary_amount" sum="工资"/>
+                <field name="employee_social_security_amount" sum="员工社保"/>
+                <field name="certificate_social_security_amount" sum="证书社保"/>
+                <field name="deduction_refund_surcharge_amount" sum="增值税附加退项目"/>
+                <field name="company_enterprise_income_tax_expense_amount" sum="支出企业所得税"/>
+                <field name="company_personal_income_tax_expense_amount" sum="支出个人所得税"/>
+                <field name="company_vat_surcharge_tax_bureau_amount" sum="增值税附加交税务局"/>
+                <field name="tender_fee_expense_amount" sum="投标费"/>
+                <field name="appearance_fee_expense_amount" sum="支出出场费"/>
+                <field name="company_operation_expense_amount" sum="公司经营支出"/>
+                <field name="company_interest_expense_amount" sum="支出利息公司"/>
+                <field name="disability_fund_expense_amount" sum="支出残保金"/>
+                <field name="union_fee_expense_amount" sum="支出工会经费"/>
+                <field name="service_fee_expense_amount" sum="手续费"/>
+                <field name="source_line_count" sum="来源明细数"/>
                 <field name="coverage_note"/>
             </tree>
         </field>
@@ -51,42 +67,42 @@
             <form string="公司经营情况表" create="0" edit="0" delete="0">
                 <sheet>
                     <group>
-                        <field name="display_name"/>
+                        <field name="period_label"/>
+                        <field name="period_year"/>
+                        <field name="period_month"/>
                         <field name="company_id"/>
                         <field name="coverage_note"/>
                     </group>
                     <group>
                         <group string="收入">
-                            <field name="receipt_amount"/>
-                            <field name="company_finance_income_amount"/>
-                            <field name="claim_inflow_amount"/>
+                            <field name="deduction_management_fee_amount"/>
+                            <field name="deduction_enterprise_income_tax_amount"/>
+                            <field name="deduction_vat_surcharge_amount"/>
+                            <field name="deduction_vat_surcharge_nonrefundable_amount"/>
+                            <field name="company_interest_income_amount"/>
+                            <field name="bid_document_fee_income_amount"/>
+                            <field name="appearance_fee_income_amount"/>
+                            <field name="certificate_fee_income_amount"/>
+                            <field name="company_operation_income_amount"/>
                             <field name="income_amount"/>
                         </group>
                         <group string="支出">
-                            <field name="company_finance_expense_amount"/>
-                            <field name="expense_reimbursement_amount"/>
-                            <field name="salary_gross_amount"/>
-                            <field name="salary_net_amount"/>
-                            <field name="claim_outflow_amount"/>
+                            <field name="reimbursement_amount"/>
+                            <field name="salary_amount"/>
+                            <field name="employee_social_security_amount"/>
+                            <field name="certificate_social_security_amount"/>
+                            <field name="deduction_refund_surcharge_amount"/>
+                            <field name="company_enterprise_income_tax_expense_amount"/>
+                            <field name="company_personal_income_tax_expense_amount"/>
+                            <field name="company_vat_surcharge_tax_bureau_amount"/>
+                            <field name="tender_fee_expense_amount"/>
+                            <field name="service_fee_expense_amount"/>
                             <field name="expense_amount"/>
                         </group>
                     </group>
-                    <group>
-                        <group string="税额">
-                            <field name="output_tax_amount"/>
-                            <field name="input_tax_amount"/>
-                            <field name="prepaid_tax_amount"/>
-                        </group>
-                        <group string="来源规模">
-                            <field name="receipt_count"/>
-                            <field name="expense_claim_count"/>
-                            <field name="salary_line_count"/>
-                            <field name="invoice_count"/>
-                            <field name="source_line_count"/>
-                        </group>
-                    </group>
                     <group string="结果">
-                        <field name="net_operation_amount"/>
+                        <field name="revenue_amount"/>
+                        <field name="source_line_count"/>
                     </group>
                 </sheet>
             </form>
@@ -99,12 +115,10 @@
         <field name="arch" type="xml">
             <pivot string="公司经营情况表">
                 <field name="company_id" type="row"/>
+                <field name="period_month" type="row"/>
+                <field name="revenue_amount" type="measure"/>
                 <field name="income_amount" type="measure"/>
                 <field name="expense_amount" type="measure"/>
-                <field name="net_operation_amount" type="measure"/>
-                <field name="output_tax_amount" type="measure"/>
-                <field name="input_tax_amount" type="measure"/>
-                <field name="prepaid_tax_amount" type="measure"/>
             </pivot>
         </field>
     </record>
@@ -115,9 +129,9 @@
         <field name="arch" type="xml">
             <graph string="公司经营情况表" type="bar">
                 <field name="company_id"/>
+                <field name="revenue_amount" type="measure"/>
                 <field name="income_amount" type="measure"/>
                 <field name="expense_amount" type="measure"/>
-                <field name="net_operation_amount" type="measure"/>
             </graph>
         </field>
     </record>

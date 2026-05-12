@@ -29,6 +29,9 @@ class ScLegacyScbsFactStaging(models.Model):
     document_state = fields.Char(string="旧库状态", index=True)
     deleted_flag = fields.Char(string="旧库删除标识", index=True)
     amount_total = fields.Float(string="金额/余额信号")
+    creator_legacy_user_id = fields.Char(string="历史录入人ID", index=True)
+    creator_name = fields.Char(string="历史录入人", index=True)
+    created_time = fields.Datetime(string="历史录入时间", index=True)
 
     legacy_xmid = fields.Char(string="旧业务主体ID", index=True)
     legacy_xmmc = fields.Char(string="旧业务主体名称", index=True)

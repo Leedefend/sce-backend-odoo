@@ -133,6 +133,6 @@
     "snapshotId": "snapshot.project.tree.001",
     "traceId": "trace.project.tree.001",
     "requestId": "request.project.tree.001",
-    "compat": {}
+    "sourceType": "ui.contract"
   }
 }

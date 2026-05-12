@@ -37,6 +37,16 @@ def write_json(path: Path, payload: dict[str, object]) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def bulk_load(csv_path: Path, temp_table: str, columns: list[str]) -> None:
+    env.cr.execute(f"DROP TABLE IF EXISTS {temp_table}")  # noqa: F821
+    env.cr.execute(f"CREATE TEMP TABLE {temp_table} ({', '.join(f'{col} text' for col in columns)}) ON COMMIT DROP")  # noqa: F821
+    with csv_path.open("r", encoding="utf-8-sig", newline="") as handle:
+        env.cr.copy_expert(  # noqa: F821
+            f"COPY {temp_table} ({', '.join(columns)}) FROM STDIN WITH CSV HEADER",
+            handle,
+        )
+
+
 def resolve_partner(partner_ref: str, partner_model):
     if not partner_ref:
         return None
@@ -68,17 +78,48 @@ ensure_allowed_db()
 adapter = json.loads(INPUT_MANIFEST.read_text(encoding="utf-8"))
 rows = read_csv(INPUT_CSV)
 expected_rows = int(adapter["expected_rows"])
+payload_columns = list(rows[0].keys()) if rows else []
+if rows:
+    bulk_load(INPUT_CSV, "tmp_outflow_request_replay_payload", payload_columns)
 
 Request = env["payment.request"].sudo()  # noqa: F821
 Project = env["project.project"].sudo()  # noqa: F821
 Contract = env["construction.contract"].sudo()  # noqa: F821
 Partner = env["res.partner"].sudo()  # noqa: F821
 
+updated_existing = 0
+if rows:
+    env.cr.execute(  # noqa: F821
+        """
+        UPDATE payment_request pr
+           SET legacy_source_table = COALESCE(NULLIF(pr.legacy_source_table, ''), NULLIF(t.legacy_source_table, '')),
+               legacy_record_id = COALESCE(NULLIF(pr.legacy_record_id, ''), NULLIF(t.legacy_record_id, '')),
+               creator_legacy_user_id = COALESCE(NULLIF(pr.creator_legacy_user_id, ''), NULLIF(t.creator_legacy_user_id, '')),
+               creator_name = COALESCE(NULLIF(pr.creator_name, ''), NULLIF(t.creator_name, '')),
+               created_time = COALESCE(pr.created_time, NULLIF(t.created_time, '')::timestamp),
+               write_uid = %s,
+               write_date = NOW()
+          FROM tmp_outflow_request_replay_payload t
+         WHERE pr.note = t.note
+           AND (
+                (NULLIF(t.legacy_source_table, '') IS NOT NULL AND NULLIF(pr.legacy_source_table, '') IS NULL)
+             OR (NULLIF(t.legacy_record_id, '') IS NOT NULL AND NULLIF(pr.legacy_record_id, '') IS NULL)
+             OR (NULLIF(t.creator_legacy_user_id, '') IS NOT NULL AND NULLIF(pr.creator_legacy_user_id, '') IS NULL)
+             OR (NULLIF(t.creator_name, '') IS NOT NULL AND NULLIF(pr.creator_name, '') IS NULL)
+             OR (NULLIF(t.created_time, '') IS NOT NULL AND pr.created_time IS NULL)
+           )
+        """,
+        [env.uid],  # noqa: F821
+    )
+    updated_existing = env.cr.rowcount  # noqa: F821
+
+existing_note_rows = Request.search_read([("note", "in", [row["note"] for row in rows])], ["note"], order="id")
+existing_notes = {row["note"] for row in existing_note_rows if row.get("note")}
+
 created = 0
 skipped = 0
 for row in rows:
-    existing = Request.search([("note", "=", row["note"])], limit=1)
-    if existing:
+    if row["note"] in existing_notes:
         skipped += 1
         continue
     project = Project.search([("legacy_project_id", "=", row["project_ref"].removeprefix("legacy_project_sc_"))], limit=1)
@@ -99,6 +140,15 @@ for row in rows:
     }
     if row.get("date_request"):
         vals["date_request"] = row["date_request"]
+    for field in [
+        "legacy_source_table",
+        "legacy_record_id",
+        "creator_legacy_user_id",
+        "creator_name",
+        "created_time",
+    ]:
+        if row.get(field):
+            vals[field] = row[field]
     if contract:
         vals["contract_id"] = contract.id
     Request.create(vals)
@@ -113,6 +163,7 @@ payload = {
     "input_rows": len(rows),
     "created_rows": created,
     "skipped_existing": skipped,
+    "updated_existing": updated_existing,
     "db_writes": created,
     "decision": "outflow_request_replay_write_complete" if status == "PASS" else "STOP_REVIEW_REQUIRED",
 }

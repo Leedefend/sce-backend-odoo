@@ -863,12 +863,14 @@ function semanticCell(field: string, value: unknown) {
   const option = columnOption(field);
   const raw = normalizeCellRawValue(value);
   const selectionText = selectionLabel(option, value);
+  const numericText = formatNumericCellValue(field, raw);
+  const fieldType = String(option?.type || '').trim().toLowerCase();
   const text = selectionText
     || (raw === null || raw === undefined || raw === ''
       ? '--'
       : (typeof raw === 'boolean'
-        ? uiLabel(raw ? 'boolean_true' : 'boolean_false', raw ? '是' : '否')
-        : String(raw)));
+        ? (fieldType === 'boolean' ? uiLabel(raw ? 'boolean_true' : 'boolean_false', raw ? '是' : '否') : '--')
+        : numericText || String(raw)));
   const toneKey = String(raw ?? '').trim();
   const tone = option?.cellRole === 'status'
     ? (option.toneByValue?.[toneKey] || 'neutral')
@@ -1651,11 +1653,22 @@ function numericCellValue(value: unknown) {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+function formatNumericCellValue(field: string, value: unknown) {
+  if (!isNumericColumn(field)) return '';
+  const numeric = numericCellValue(value);
+  if (numeric === null) return '';
+  const type = String(columnOption(field)?.type || '').trim();
+  return numeric.toLocaleString('zh-CN', {
+    maximumFractionDigits: type === 'integer' ? 0 : 2,
+    minimumFractionDigits: type === 'integer' ? 0 : 2,
+  });
+}
+
 function formatFooterNumber(value: number, field: string) {
   const type = String(columnOption(field)?.type || '').trim();
   return value.toLocaleString('zh-CN', {
     maximumFractionDigits: type === 'integer' ? 0 : 2,
-    minimumFractionDigits: 0,
+    minimumFractionDigits: type === 'integer' ? 0 : 2,
   });
 }
 

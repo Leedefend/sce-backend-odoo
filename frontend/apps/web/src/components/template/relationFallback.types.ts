@@ -3,6 +3,7 @@ import type { FormSectionFieldSchema } from './formSection.types';
 export type RelationFallbackOption = {
   id: number;
   label: string;
+  color?: number | null;
 };
 
 export type RelationFallbackRow = {
@@ -29,6 +30,14 @@ export type RelationFallbackAdapter = {
   filteredRelationOptions: (name: string) => RelationFallbackOption[];
   setRelationMultiField: (name: string, target: HTMLSelectElement) => void;
   setRelationIds: (name: string, ids: number[]) => void;
+  canOpenRelationSearch: (name: string) => boolean;
+  relationSearchLabel: (name: string) => string;
+  openRelationSearch: (name: string) => void;
+  relationCreateMode: (name: string) => 'none' | 'quick' | 'page';
+  relationCreateLabel: (name: string) => string;
+  relationInlineCreateLabel: (name: string) => string;
+  canInlineCreateRelation: (name: string) => boolean;
+  openRelationCreate: (name: string) => void;
   one2manyCanCreate: (name: string) => boolean;
   one2manyCreateLabel: (name: string) => string;
   addOne2manyRow: (name: string) => void;

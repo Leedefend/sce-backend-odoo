@@ -78,7 +78,7 @@
                 v-model="dbName"
                 autocomplete="off"
                 :placeholder="pageText('db_placeholder', '请输入数据库名（如 sc_minimal）')"
-                :disabled="loading"
+                :disabled="dbInputDisabled"
               />
             </label>
             <p
@@ -133,6 +133,7 @@ const dbName = ref(
 const loading = ref(false);
 const error = ref('');
 const headerActions = computed(() => pageGlobalActions.value);
+const dbInputDisabled = computed(() => loading.value || config.odooDbPinned);
 const capabilityItems = computed(() => [
   { key: 'project', icon: '📊', label: pageText('capability_project', '项目全过程管理') },
   { key: 'contract_cost', icon: '📑', label: pageText('capability_contract_cost', '合同成本联动') },

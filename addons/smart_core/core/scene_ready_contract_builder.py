@@ -334,6 +334,568 @@ def _derive_optimization_composition(payload: Dict[str, Any]) -> Dict[str, Any]:
     return out
 
 
+def _normalize_kanban_surface(payload: Dict[str, Any]) -> Dict[str, Any]:
+    kanban_surface = payload.get("kanban_surface") if isinstance(payload.get("kanban_surface"), dict) else {}
+    return dict(kanban_surface)
+
+
+def _kanban_surface_nonempty(payload: Dict[str, Any]) -> bool:
+    return bool(_as_dict(payload))
+
+
+def _derive_kanban_surface_from_base_contract(ui_base_contract: Dict[str, Any]) -> Dict[str, Any]:
+    contract = _as_dict(ui_base_contract)
+    views = _as_dict(contract.get("views"))
+    kanban_view = _as_dict(views.get("kanban"))
+    profile = _as_dict(kanban_view.get("kanban_profile"))
+    out: Dict[str, Any] = {}
+    for key in (
+        "title_field",
+        "subtitle_field",
+        "status_field",
+        "primary_fields",
+        "secondary_fields",
+        "status_fields",
+        "metric_fields",
+        "quick_action_count",
+        "max_meta",
+    ):
+        value = profile.get(key)
+        if value not in (None, {}, []):
+            out[key] = value
+    for key in ("fields", "columns", "default_sort", "order"):
+        value = kanban_view.get(key)
+        if value not in (None, {}, []):
+            out[key] = value
+    return out
+
+
+def _scene_type_from_compiled(compiled: Dict[str, Any]) -> str:
+    meta = _as_dict(compiled.get("meta"))
+    surface_profile = _as_dict(meta.get("surface_profile"))
+    scene_type = _text(surface_profile.get("scene_type"))
+    if scene_type:
+        return scene_type
+    surface = _as_dict(compiled.get("surface"))
+    kind = _text(surface.get("kind"))
+    if kind in {"workspace", "list", "form", "kanban", "ledger", "record"}:
+        return kind
+    page = _as_dict(compiled.get("page"))
+    mode = _text(page.get("mode"))
+    if mode in {"list", "form", "kanban", "ledger", "record"}:
+        return mode
+    return "list"
+
+
+def _scene_action_rows(actions: List[Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+    rows: Dict[str, Dict[str, Any]] = {}
+    for item in actions or []:
+        if not isinstance(item, dict):
+            continue
+        key = _text(item.get("key") or item.get("intent") or item.get("label"))
+        if not key or key in rows:
+            continue
+        target = _as_dict(item.get("target"))
+        rows[key] = {
+            "key": key,
+            "label": _text(item.get("label") or item.get("title") or key),
+            "intent": _text(item.get("intent")),
+            "target": {
+                "type": _text(target.get("type")),
+                "route": _text(target.get("route")),
+                "scene_key": _text(target.get("scene_key")),
+            },
+        }
+    return rows
+
+
+def _scene_action_refs(keys: List[Any], action_rows: Dict[str, Dict[str, Any]]) -> List[Dict[str, Any]]:
+    refs: List[Dict[str, Any]] = []
+    seen: set[str] = set()
+    for raw in keys or []:
+        key = _text(raw)
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        row = _as_dict(action_rows.get(key))
+        refs.append(
+            {
+                "key": key,
+                "label": _text(row.get("label") or key),
+                "intent": _text(row.get("intent")),
+                "target": _as_dict(row.get("target")),
+            }
+        )
+    return refs
+
+
+def _scene_block(
+    *,
+    key: str,
+    kind: str,
+    title: str,
+    order: int,
+    visible: bool = True,
+    semantic_role: str = "content",
+    layout: Dict[str, Any] | None = None,
+    data_deps: Dict[str, Any] | None = None,
+    actions: List[Dict[str, Any]] | None = None,
+    children: List[Dict[str, Any]] | None = None,
+    payload: Dict[str, Any] | None = None,
+) -> Dict[str, Any]:
+    block: Dict[str, Any] = {
+        "key": _text(key),
+        "kind": _text(kind),
+        "title": _text(title),
+        "order": int(order) if order > 0 else 0,
+        "visible": bool(visible),
+        "semantic_role": _text(semantic_role) or "content",
+    }
+    if layout:
+        block["layout"] = dict(layout)
+    if data_deps:
+        block["data_deps"] = dict(data_deps)
+    if actions:
+        block["actions"] = list(actions)
+    if children:
+        block["children"] = list(children)
+    if payload:
+        block["payload"] = dict(payload)
+    return block
+
+
+def _enforce_native_view_block_structure(
+    *,
+    scene_key: str,
+    scene_type: str,
+    blocks: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    if scene_type not in {"form", "list", "kanban"}:
+        return list(blocks or [])
+
+    blueprint: Dict[str, List[tuple[str, str, str, int]]] = {
+        "form": [
+            ("page_shell", "page_shell", "页面", 10),
+            ("header_bar", "header_bar", "页头", 20),
+            ("statusbar", "statusbar", "状态", 30),
+            ("primary_actions", "primary_actions", "主要操作", 40),
+            ("smart_actions", "smart_actions", "统计操作", 50),
+            ("body", "body", "表单主体", 60),
+            ("relation_block", "relation_block", "关联内容", 70),
+            ("chatter", "chatter", "沟通记录", 80),
+            ("footer", "footer", "流程提示", 90),
+        ],
+        "list": [
+            ("page_shell", "page_shell", "页面", 10),
+            ("header_bar", "header_bar", "页头", 20),
+            ("toolbar", "toolbar", "工具栏", 30),
+            ("list_view", "list_view", "列表", 40),
+            ("pagination", "pagination", "分页", 50),
+            ("footer", "footer", "流程提示", 60),
+        ],
+        "kanban": [
+            ("page_shell", "page_shell", "页面", 10),
+            ("header_bar", "header_bar", "页头", 20),
+            ("toolbar", "toolbar", "工具栏", 30),
+            ("overview_strip", "overview_strip", "概览", 40),
+            ("kanban_board", "kanban_board", "看板", 50),
+            ("pagination", "pagination", "分页", 60),
+            ("footer", "footer", "流程提示", 70),
+        ],
+    }
+    required_kinds = {
+        "form": {"page_shell", "header_bar", "statusbar", "body"},
+        "list": {"page_shell", "header_bar", "toolbar", "list_view"},
+        "kanban": {"page_shell", "header_bar", "toolbar", "kanban_board"},
+    }
+
+    rows = [row for row in (blocks or []) if isinstance(row, dict)]
+    by_kind: Dict[str, Dict[str, Any]] = {}
+    for row in rows:
+        kind = _text(row.get("kind")).lower()
+        if not kind or kind in by_kind:
+            continue
+        by_kind[kind] = dict(row)
+
+    out: List[Dict[str, Any]] = []
+    for suffix, kind, default_title, order in blueprint.get(scene_type, []):
+        current = by_kind.get(kind)
+        if current:
+            row = dict(current)
+            row["order"] = order
+            if not _text(row.get("key")):
+                row["key"] = f"{scene_key}.{suffix}"
+            if not _text(row.get("kind")):
+                row["kind"] = kind
+            if not _text(row.get("title")):
+                row["title"] = default_title
+            out.append(row)
+            continue
+        if kind in required_kinds.get(scene_type, set()):
+            out.append(
+                _scene_block(
+                    key=f"{scene_key}.{suffix}",
+                    kind=kind,
+                    title=default_title,
+                    order=order,
+                    semantic_role="content" if kind in {"body", "list_view", "kanban_board"} else "system",
+                )
+            )
+    return out
+
+
+def _build_scene_blocks(compiled: Dict[str, Any], scene_type_override: str | None = None) -> List[Dict[str, Any]]:
+    scene_type = _text(scene_type_override) or _scene_type_from_compiled(compiled)
+    scene = _as_dict(compiled.get("scene"))
+    page = _as_dict(compiled.get("page"))
+    surface = _as_dict(compiled.get("surface"))
+    intent = _as_dict(surface.get("intent"))
+    search_surface = _as_dict(compiled.get("search_surface"))
+    list_surface = _as_dict(compiled.get("list_surface"))
+    form_surface = _as_dict(compiled.get("form_surface"))
+    kanban_surface = _as_dict(compiled.get("kanban_surface"))
+    action_surface = _as_dict(compiled.get("action_surface"))
+    optimization = _as_dict(compiled.get("optimization_composition"))
+    projection = _as_dict(compiled.get("projection"))
+    view_modes = _as_list(compiled.get("view_modes"))
+    actions = _as_list(compiled.get("actions"))
+    action_rows = _scene_action_rows(actions)
+
+    primary_actions = _scene_action_refs(_as_list(action_surface.get("primary_actions")), action_rows)
+    header_actions = _scene_action_refs(_as_list(form_surface.get("header_actions")), action_rows)
+    stat_actions = _scene_action_refs(_as_list(form_surface.get("stat_actions")), action_rows)
+    toolbar_rows = _as_list(optimization.get("toolbar_sections"))
+    quick_filters = _as_list(optimization.get("high_frequency_filters"))
+    advanced_filters = _as_dict(optimization.get("advanced_filters"))
+    relation_fields = _as_list(form_surface.get("relation_fields"))
+    flags = _as_dict(form_surface.get("flags"))
+    overview_items = _as_list(_as_dict(projection.get("group_summary")).get("items"))
+
+    title = _text(page.get("title") or scene.get("title") or intent.get("title") or scene.get("key") or "场景")
+    summary = _text(intent.get("summary"))
+    scene_key = _text(scene.get("key"))
+    blocks: List[Dict[str, Any]] = [
+        _scene_block(
+            key=f"{scene_key}.shell",
+            kind="page_shell",
+            title=title,
+            order=10,
+            semantic_role="system",
+            layout={"full_width": True},
+            payload={
+                "scene_key": scene_key,
+                "scene_type": scene_type,
+                "summary": summary,
+                "view_modes": view_modes,
+            },
+        ),
+        _scene_block(
+            key=f"{scene_key}.header",
+            kind="header_bar",
+            title=title,
+            order=20,
+            semantic_role="system",
+            actions=header_actions or primary_actions[:3],
+            payload={
+                "scene_key": scene_key,
+                "title": title,
+                "summary": summary,
+                "view_modes": view_modes,
+            },
+        ),
+    ]
+
+    if scene_type in {"form", "record"}:
+        blocks.extend(
+            [
+                _scene_block(
+                    key=f"{scene_key}.statusbar",
+                    kind="statusbar",
+                    title="状态",
+                    order=30,
+                    semantic_role="system",
+                    payload={
+                        "workflow_surface": _as_dict(compiled.get("workflow_surface")),
+                        "validation_surface": _as_dict(compiled.get("validation_surface")),
+                    },
+                ),
+                _scene_block(
+                    key=f"{scene_key}.primary_actions",
+                    kind="primary_actions",
+                    title="主要操作",
+                    order=40,
+                    semantic_role="primary",
+                    actions=primary_actions or header_actions,
+                    payload={"selection_mode": _text(action_surface.get("selection_mode")) or "single"},
+                ),
+                _scene_block(
+                    key=f"{scene_key}.smart_actions",
+                    kind="smart_actions",
+                    title="统计操作",
+                    order=50,
+                    semantic_role="secondary",
+                    actions=stat_actions,
+                    payload={
+                        "button_box": _as_list(form_surface.get("button_box")),
+                        "stat_actions": _as_list(form_surface.get("stat_actions")),
+                    },
+                ),
+                _scene_block(
+                    key=f"{scene_key}.body",
+                    kind="body",
+                    title="表单主体",
+                    order=60,
+                    semantic_role="content",
+                    layout={"kind": "form", "density": "cozy", "full_width": False},
+                    data_deps={
+                        "layout": _as_list(form_surface.get("layout")),
+                        "fields": _as_dict(form_surface.get("field_behavior_map")),
+                    },
+                    payload={
+                        "layout": _as_list(form_surface.get("layout")),
+                        "flags": flags,
+                    },
+                ),
+            ]
+        )
+        if relation_fields:
+            blocks.append(
+                _scene_block(
+                    key=f"{scene_key}.relations",
+                    kind="relation_block",
+                    title="关联内容",
+                    order=70,
+                    semantic_role="support",
+                    payload={"relation_fields": relation_fields},
+                )
+            )
+        if bool(flags.get("has_chatter")) or bool(flags.get("has_attachments")):
+            blocks.append(
+                _scene_block(
+                    key=f"{scene_key}.chatter",
+                    kind="chatter",
+                    title="沟通记录",
+                    order=80,
+                    semantic_role="support",
+                    payload={"has_attachments": bool(flags.get("has_attachments"))},
+                )
+            )
+        blocks.append(
+            _scene_block(
+                key=f"{scene_key}.footer",
+                kind="footer",
+                title="流程提示",
+                order=90,
+                semantic_role="system",
+                payload={
+                    "next_scene_key": _text(compiled.get("next_scene")),
+                    "next_scene_route": _text(compiled.get("next_scene_route")),
+                },
+            )
+        )
+        return _enforce_native_view_block_structure(scene_key=scene_key, scene_type="form", blocks=blocks)
+
+    if scene_type in {"list", "ledger"}:
+        blocks.extend(
+            [
+                _scene_block(
+                    key=f"{scene_key}.toolbar",
+                    kind="toolbar",
+                    title="工具栏",
+                    order=30,
+                    semantic_role="system",
+                    payload={
+                        "search_surface": search_surface,
+                        "list_surface": list_surface,
+                        "toolbar_sections": toolbar_rows,
+                        "quick_filters": quick_filters,
+                        "advanced_filters": advanced_filters,
+                    },
+                ),
+                _scene_block(
+                    key=f"{scene_key}.list_view",
+                    kind="list_view",
+                    title="列表",
+                    order=40,
+                    semantic_role="content",
+                    layout={"kind": "list", "density": "compact", "full_width": True},
+                    data_deps={
+                        "columns": _as_list(list_surface.get("columns")),
+                        "search_fields": _as_list(search_surface.get("fields")),
+                        "group_by": _as_list(search_surface.get("group_by")),
+                    },
+                    payload={
+                        "default_sort": _text(list_surface.get("default_sort") if isinstance(list_surface.get("default_sort"), str) else _as_dict(list_surface.get("default_sort")).get("raw")),
+                        "available_view_modes": view_modes,
+                    },
+                ),
+                _scene_block(
+                    key=f"{scene_key}.pagination",
+                    kind="pagination",
+                    title="分页",
+                    order=50,
+                    semantic_role="system",
+                    payload={"default_limit": _text(list_surface.get("limit")) or _text(list_surface.get("page_size"))},
+                ),
+                _scene_block(
+                    key=f"{scene_key}.footer",
+                    kind="footer",
+                    title="流程提示",
+                    order=60,
+                    semantic_role="system",
+                    payload={
+                        "next_scene_key": _text(compiled.get("next_scene")),
+                        "next_scene_route": _text(compiled.get("next_scene_route")),
+                    },
+                ),
+            ]
+        )
+        return _enforce_native_view_block_structure(scene_key=scene_key, scene_type="list", blocks=blocks)
+
+    if scene_type == "kanban":
+        blocks.extend(
+            [
+                _scene_block(
+                    key=f"{scene_key}.toolbar",
+                    kind="toolbar",
+                    title="工具栏",
+                    order=30,
+                    semantic_role="system",
+                    payload={
+                        "search_surface": search_surface,
+                        "list_surface": list_surface,
+                        "view_modes": view_modes,
+                        "toolbar_sections": toolbar_rows,
+                    },
+                ),
+                _scene_block(
+                    key=f"{scene_key}.overview",
+                    kind="overview_strip",
+                    title="概览",
+                    order=40,
+                    semantic_role="secondary",
+                    payload={"overview_items": overview_items},
+                ),
+                _scene_block(
+                    key=f"{scene_key}.board",
+                    kind="kanban_board",
+                    title="看板",
+                    order=50,
+                    semantic_role="content",
+                    layout={"kind": "kanban", "density": "cozy", "full_width": True},
+                    data_deps={
+                        "columns": _as_list(kanban_surface.get("columns")) or _as_list(list_surface.get("columns")),
+                        "fields": _as_list(kanban_surface.get("fields")),
+                        "search_fields": _as_list(search_surface.get("fields")),
+                    },
+                    payload={
+                        "available_view_modes": view_modes,
+                        "selection_mode": _text(action_surface.get("selection_mode")) or "multi",
+                        "actions": primary_actions,
+                        "kanban_surface": kanban_surface,
+                    },
+                ),
+                _scene_block(
+                    key=f"{scene_key}.pagination",
+                    kind="pagination",
+                    title="分页",
+                    order=60,
+                    semantic_role="system",
+                    payload={"default_limit": _text(list_surface.get("limit")) or _text(list_surface.get("page_size"))},
+                ),
+                _scene_block(
+                    key=f"{scene_key}.footer",
+                    kind="footer",
+                    title="流程提示",
+                    order=70,
+                    semantic_role="system",
+                    payload={
+                        "next_scene_key": _text(compiled.get("next_scene")),
+                        "next_scene_route": _text(compiled.get("next_scene_route")),
+                    },
+                ),
+            ]
+        )
+        return _enforce_native_view_block_structure(scene_key=scene_key, scene_type="kanban", blocks=blocks)
+
+    blocks.extend(
+        [
+            _scene_block(
+                key=f"{scene_key}.toolbar",
+                kind="toolbar",
+                title="工具栏",
+                order=30,
+                semantic_role="system",
+                payload={
+                    "search_surface": search_surface,
+                    "list_surface": list_surface,
+                    "view_modes": view_modes,
+                },
+            ),
+            _scene_block(
+                key=f"{scene_key}.content",
+                kind="content",
+                title="内容",
+                order=40,
+                semantic_role="content",
+                payload={
+                    "projection": projection,
+                    "action_surface": action_surface,
+                },
+            ),
+            _scene_block(
+                key=f"{scene_key}.footer",
+                kind="footer",
+                title="流程提示",
+                order=50,
+                semantic_role="system",
+                payload={
+                    "next_scene_key": _text(compiled.get("next_scene")),
+                    "next_scene_route": _text(compiled.get("next_scene_route")),
+                },
+            ),
+        ]
+    )
+    return blocks
+
+
+def _build_view_orchestration_contract_v1(
+    *,
+    scene_key: str,
+    scene_blocks_by_view: Dict[str, Any],
+) -> Dict[str, Any]:
+    def _section_defs(mode: str) -> List[Dict[str, Any]]:
+        rows = scene_blocks_by_view.get(mode) if isinstance(scene_blocks_by_view, dict) else []
+        blocks = [item for item in rows if isinstance(item, dict)]
+        out: List[Dict[str, Any]] = []
+        for item in blocks:
+            kind = _text(item.get("kind"))
+            key = _text(item.get("key")) or f"{scene_key}.{kind}"
+            if not kind:
+                continue
+            out.append(
+                {
+                    "key": key,
+                    "kind": kind,
+                    "order": int(item.get("order") or 0),
+                    "visible": bool(item.get("visible", True)),
+                    "semantic_role": _text(item.get("semantic_role")) or "content",
+                    "title": _text(item.get("title") or kind),
+                }
+            )
+        return out
+
+    return {
+        "schema_version": "view_orchestration_v1",
+        "scene_key": scene_key,
+        "views": {
+            "form": {"sections": _section_defs("form")},
+            "list": {"sections": _section_defs("list")},
+            "kanban": {"sections": _section_defs("kanban")},
+        },
+    }
+
+
 def apply_scene_ready_search_semantic_bridge(payload: Dict[str, Any] | None) -> Dict[str, Any]:
     """Compatibility bridge: keep payload stable when optional search bridge is absent."""
     return dict(payload or {})
@@ -970,11 +1532,35 @@ def _scene_ready_entry(
         compiled["form_surface"] = merged_form_surface
     elif _form_surface_nonempty(seeded_form_surface):
         compiled["form_surface"] = seeded_form_surface
+    compiled_kanban_surface = _normalize_kanban_surface(compiled)
+    seeded_kanban_surface = _normalize_kanban_surface(scene_payload)
+    base_kanban_surface = _derive_kanban_surface_from_base_contract(ui_base_contract)
+    merged_kanban_surface = dict(base_kanban_surface)
+    merged_kanban_surface.update(seeded_kanban_surface)
+    merged_kanban_surface.update(compiled_kanban_surface)
+    if _kanban_surface_nonempty(merged_kanban_surface):
+        compiled["kanban_surface"] = merged_kanban_surface
+    elif _kanban_surface_nonempty(seeded_kanban_surface):
+        compiled["kanban_surface"] = seeded_kanban_surface
     optimization_composition = _normalize_optimization_composition(compiled)
     if not _optimization_composition_nonempty(optimization_composition):
         optimization_composition = _derive_optimization_composition(compiled)
     if _optimization_composition_nonempty(optimization_composition):
         compiled["optimization_composition"] = optimization_composition
+    scene_blocks = _build_scene_blocks(compiled)
+    if scene_blocks:
+        compiled["scene_blocks"] = scene_blocks
+    scene_blocks_by_view: Dict[str, Any] = {}
+    for mode in ("form", "list", "kanban"):
+        blocks = _build_scene_blocks(compiled, scene_type_override=mode)
+        if blocks:
+            scene_blocks_by_view[mode] = blocks
+    if scene_blocks_by_view:
+        compiled["scene_blocks_by_view"] = scene_blocks_by_view
+        compiled["view_orchestration_contract_v1"] = _build_view_orchestration_contract_v1(
+            scene_key=scene_key,
+            scene_blocks_by_view=scene_blocks_by_view,
+        )
     compiled = _apply_pilot_strict_contract(scene_key, item, compiled)
     return compiled
 

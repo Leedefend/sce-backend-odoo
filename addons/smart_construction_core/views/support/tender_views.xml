@@ -88,6 +88,9 @@
                                     <field name="applicant_id"/>
                                     <field name="apply_date"/>
                                     <field name="amount"/>
+                                    <field name="payment_method"/>
+                                    <field name="receipt_partner_name"/>
+                                    <field name="receipt_bank_account"/>
                                     <field name="invoice_no"/>
                                     <field name="state"/>
                                 </tree>
@@ -255,6 +258,12 @@
                 <field name="project_id"/>
                 <field name="applicant_id"/>
                 <field name="invoice_no"/>
+                <field name="payment_method"/>
+                <field name="receipt_partner_name"/>
+                <field name="receipt_payee_name"/>
+                <field name="receipt_bank_name"/>
+                <field name="receipt_bank_account"/>
+                <field name="legacy_source_created_by"/>
                 <filter string="草稿" name="draft" domain="[('state', '=', 'draft')]"/>
                 <filter string="审批中" name="submitted" domain="[('state', '=', 'submitted')]"/>
                 <filter string="已通过" name="approved" domain="[('state', '=', 'approved')]"/>
@@ -279,7 +288,14 @@
                 <field name="bid_id"/>
                 <field name="applicant_id"/>
                 <field name="amount" sum="报名费合计"/>
+                <field name="payment_method"/>
+                <field name="receipt_partner_name"/>
+                <field name="receipt_payee_name"/>
+                <field name="receipt_bank_name"/>
+                <field name="receipt_bank_account"/>
                 <field name="invoice_no"/>
+                <field name="legacy_source_created_by"/>
+                <field name="legacy_source_created_at"/>
                 <field name="state"/>
             </tree>
         </field>
@@ -308,10 +324,32 @@
                         <group string="费用">
                             <field name="amount"/>
                             <field name="currency_id" invisible="1"/>
+                            <field name="payment_method"/>
                             <field name="invoice_no"/>
                         </group>
                     </group>
-                    <group string="附件">
+                    <group string="收款信息">
+                        <group>
+                            <field name="receipt_partner_name"/>
+                            <field name="receipt_payee_name"/>
+                        </group>
+                        <group>
+                            <field name="receipt_bank_name"/>
+                            <field name="receipt_bank_account"/>
+                        </group>
+                    </group>
+                    <group string="历史来源">
+                        <group>
+                            <field name="legacy_source_created_by"/>
+                            <field name="legacy_source_created_at"/>
+                        </group>
+                        <group>
+                            <field name="legacy_record_id"/>
+                            <field name="legacy_source_table"/>
+                        </group>
+                    </group>
+                    <group string="备注与附件">
+                        <field name="remark"/>
                         <field name="attachment_ids" widget="many2many_binary"/>
                     </group>
                 </sheet>

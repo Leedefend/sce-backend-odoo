@@ -18,11 +18,24 @@ def artifact_root() -> Path:
     root = os.environ.get("MIGRATION_ARTIFACT_ROOT") or os.environ.get("HISTORY_CONTINUITY_ARTIFACT_ROOT")
     if root:
         return Path(root)
-    return repo_root() / "artifacts" / "migration"
+    candidates = [
+        repo_root() / "artifacts" / "migration",
+        Path("/mnt/artifacts/migration"),
+        Path(f"/tmp/history_continuity/{env.cr.dbname}/adhoc"),  # noqa: F821
+    ]
+    for candidate in candidates:
+        try:
+            candidate.mkdir(parents=True, exist_ok=True)
+            probe = candidate / ".write_probe"
+            probe.write_text("ok\n", encoding="utf-8")
+            probe.unlink()
+            return candidate
+        except Exception:
+            continue
+    return Path(f"/tmp/history_continuity/{env.cr.dbname}/adhoc")  # noqa: F821
 
 
 output_json = artifact_root() / "fresh_db_payment_execution_taxonomy_projection_write_result_v1.json"
-output_json.parent.mkdir(parents=True, exist_ok=True)
 
 Payment = env["sc.payment.execution"].sudo()  # noqa: F821
 

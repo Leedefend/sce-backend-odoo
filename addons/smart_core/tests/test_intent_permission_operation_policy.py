@@ -64,24 +64,26 @@ class _FakeActionModel:
 class _FakeMenu:
     name = "Fake Menu"
 
-    def __init__(self, exists=True, visible=True):
+    def __init__(self, exists=True, groups_id=None, parent_id=None):
         self._exists = exists
-        self._visible = visible
+        self.groups_id = groups_id or set()
+        self.parent_id = parent_id
 
     def exists(self):
         return self if self._exists else False
-
-    def _is_visible(self):
-        return self._visible
 
 
 class _FakeMenuModel:
     def __init__(self):
         self.browsed_ids = []
+        self.menu_map = {
+            41: _FakeMenu(exists=True),
+            42: _FakeMenu(exists=True, groups_id={3}),
+        }
 
     def browse(self, menu_id):
         self.browsed_ids.append(menu_id)
-        return _FakeMenu(exists=menu_id == 41, visible=True)
+        return self.menu_map.get(menu_id, _FakeMenu(exists=False))
 
 
 class _FakeCapability:
@@ -354,6 +356,15 @@ class TestIntentPermissionOperationPolicy(unittest.TestCase):
         self.permission.check_intent_permission(ctx)
 
         self.assertEqual(self.env.menu_model.browsed_ids, [41])
+
+    def test_menu_permission_denies_group_mismatch(self):
+        self.env.user.groups_id = {1}
+        ctx = _Ctx({"intent": "ui.contract", "params": {"menu_id": 42}})
+
+        with self.assertRaises(AccessError):
+            self.permission.check_intent_permission(ctx)
+
+        self.assertEqual(self.env.menu_model.browsed_ids, [42])
 
     def test_capability_key_can_be_top_level_or_nested(self):
         self.assertEqual(

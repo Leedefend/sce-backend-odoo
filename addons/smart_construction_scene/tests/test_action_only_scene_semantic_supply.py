@@ -20,7 +20,12 @@ def _load_module(module_name: str, path: Path):
 
 
 sys.modules.setdefault("odoo", types.ModuleType("odoo"))
-sys.modules.setdefault("odoo.addons", types.ModuleType("odoo.addons"))
+addons_pkg = sys.modules.setdefault("odoo.addons", types.ModuleType("odoo.addons"))
+addons_pkg.__path__ = [str(SCENE_DIR.parent)]
+smart_core_pkg = sys.modules.setdefault("odoo.addons.smart_core", types.ModuleType("odoo.addons.smart_core"))
+smart_core_pkg.__path__ = [str(SCENE_DIR.parent / "smart_core")]
+smart_core_core_pkg = sys.modules.setdefault("odoo.addons.smart_core.core", types.ModuleType("odoo.addons.smart_core.core"))
+smart_core_core_pkg.__path__ = [str(SCENE_DIR.parent / "smart_core" / "core")]
 
 scene_pkg = sys.modules.setdefault("odoo.addons.smart_construction_scene", types.ModuleType("odoo.addons.smart_construction_scene"))
 scene_pkg.__path__ = [str(SCENE_DIR)]
@@ -185,9 +190,19 @@ class TestActionOnlySceneSemanticSupply(unittest.TestCase):
         project_management = next((row for row in rows if row.get("code") == "project.management"), {})
         target = project_management.get("target") if isinstance(project_management.get("target"), dict) else {}
 
-        self.assertEqual(target.get("menu_xmlid"), "smart_construction_core.menu_sc_project_management_scene")
+        self.assertEqual(target.get("menu_xmlid"), "smart_construction_core.menu_sc_project_dashboard")
         self.assertEqual(target.get("action_xmlid"), "smart_construction_core.action_project_dashboard")
         self.assertEqual(target.get("route"), "/s/project.management")
+
+    def test_cost_control_scene_declares_cost_cockpit_menu_action_target(self):
+        rows = scene_registry_content.list_scene_entries()
+        cost_control = next((row for row in rows if row.get("code") == "cost.control"), {})
+        target = cost_control.get("target") if isinstance(cost_control.get("target"), dict) else {}
+
+        self.assertEqual(cost_control.get("name"), "成本驾驶舱")
+        self.assertEqual(target.get("menu_xmlid"), "smart_construction_core.menu_sc_dashboard_cost_cockpit_fact")
+        self.assertEqual(target.get("action_xmlid"), "smart_construction_core.action_sc_dashboard_cost_cockpit_fact")
+        self.assertEqual(target.get("route"), "/s/cost.control")
 
     def test_project_intake_scene_is_canonical_registry_owner_for_project_initiation_menu(self):
         rows = scene_registry_content.list_scene_entries()

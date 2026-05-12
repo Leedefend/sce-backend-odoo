@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import re
 from copy import deepcopy
 from hashlib import sha1
 from typing import Any
@@ -68,7 +69,7 @@ def _resolve_source_type(source: dict[str, Any], explicit: str = "") -> str:
         return "scene_contract_v1"
     if _dict(source.get("page_orchestration_v1")):
         return "page_orchestration_v1"
-    if _dict(source.get("ui_contract")) or "meta_fields" in source or source.get("view_type"):
+    if "meta_fields" in source or source.get("view_type"):
         return "ui.contract"
     if source.get("schema_version") == "v1" and ("patch" in source or "modifiers_patch" in source):
         return "api.onchange"
@@ -80,15 +81,20 @@ def _resolve_source_type(source: dict[str, Any], explicit: str = "") -> str:
 
 
 def _component_key(widget_type: str) -> str:
+    normalized = _text(widget_type).lower()
+    if normalized.endswith("many2one"):
+        return "sc.select.remote"
     mapping = {
         "input": "sc.input.text",
         "textarea": "sc.input.textarea",
         "number": "sc.input.number",
         "select": "sc.select.remote",
+        "checkbox": "sc.input.boolean",
         "date": "sc.input.date",
         "datetime": "sc.input.datetime",
         "table": "sc.table.data",
         "tree": "sc.tree.data",
+        "many2many_tags": "sc.select.tags",
         "button": "sc.button.action",
         "display": "sc.display.text",
     }
@@ -104,6 +110,9 @@ def _widget_type_from_field(field: dict[str, Any]) -> str:
     if ttype in {"integer", "float", "monetary"}:
         return "number"
     if ttype in {"one2many", "many2many"}:
+        widget_options = _dict(field.get("widget_options") or field.get("options"))
+        if ttype == "many2many" and widget_options.get("color_field"):
+            return "many2many_tags"
         return "table"
     if ttype in {"text", "html"}:
         return "textarea"
@@ -204,7 +213,7 @@ def _base_contract(
             "snapshotId": f"snapshot.upc.v2.{fp}",
             "traceId": f"trace.upc.v2.{fp}",
             "requestId": _stable_id(request_id, f"request.upc.v2.{fp}"),
-            "compat": {source_type.replace(".", "_"): deepcopy(source_payload)},
+            "sourceType": source_type,
         },
     }
 
@@ -266,7 +275,7 @@ def assemble_unified_page_patch_v2(
             "traceId": f"trace.upc.v2.patch.{fp}",
             "requestId": _stable_id(request_id, f"request.upc.v2.patch.{fp}"),
             "actionId": _stable_id(action_id, "api.onchange.patch"),
-            "compat": {"api_onchange": deepcopy(source)},
+            "sourceType": "api.onchange",
         },
     }
 
@@ -407,7 +416,8 @@ def _assemble_page_orchestration(source: dict[str, Any], *, client_type: str, re
 
 
 def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_id: str) -> dict[str, Any]:
-    ui = _dict(source.get("ui_contract")) or _dict(source.get("ui_contract_raw"))
+    ui = _dict(source)
+    head = _dict(source.get("head") or ui.get("head"))
     model = _text(source.get("model") or ui.get("model"))
     view_type = _text(source.get("view_type") or ui.get("view_type"), "form")
     record_id = _positive_int(source.get("record_id") or source.get("recordId") or ui.get("record_id") or ui.get("recordId"), 0)
@@ -416,7 +426,7 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
     contract = _base_contract(
         page_id=page_id,
         scene_key=page_id,
-        page_name=_text(ui.get("title") or source.get("case"), page_id),
+        page_name=_text(ui.get("title") or source.get("title") or head.get("title") or source.get("case"), page_id),
         model=model,
         view_type="list" if view_type == "tree" else view_type,
         layout_type=layout_type,
@@ -426,27 +436,114 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
         request_id=request_id,
     )
     fields = _field_rows(source, ui, view_type=view_type)
+    raw_field_map = _dict(ui.get("fields") or source.get("fields"))
+    fields_by_name: dict[str, dict[str, Any]] = {}
+    for key, value in raw_field_map.items():
+        if not isinstance(value, dict):
+            continue
+        name = _text(key or value.get("name"))
+        if not name:
+            continue
+        fields_by_name[name] = deepcopy(value)
+        fields_by_name[name].setdefault("name", name)
+    for row in fields:
+        if not isinstance(row, dict):
+            continue
+        name = _text(row.get("name"))
+        if not name or name in fields_by_name:
+            continue
+        fields_by_name[name] = deepcopy(row)
     widgets = []
     component_keys = set()
-    for field in fields[:60]:
-        widget = _field_widget(field, layout_type=layout_type)
-        widgets.append(widget)
-        component_keys.add(widget["componentKey"])
-        contract["statusContract"]["widgetStatus"].append(_field_status(field, widget["widgetId"]))
-    container_id = "main.form" if layout_type == "form" else "main.table"
-    contract["layoutContract"]["containerTree"] = [
-        {
-            "containerId": container_id,
-            "containerType": "group" if layout_type == "form" else "section",
-            "title": contract["pageInfo"]["pageName"],
-            "span": 12,
-            "styleToken": "defaultGroup" if layout_type == "form" else "tableSection",
-            "children": [],
-            "widgetList": widgets,
-        }
-    ]
+    form_layout = _dict(_dict(ui.get("views")).get("form"))
+    layout_rows = form_layout.get("layout") if isinstance(form_layout.get("layout"), list) else []
+    form_subviews = _dict(form_layout.get("subviews"))
+    if layout_type == "form" and layout_rows:
+        container_tree = _normalize_native_layout_nodes(
+            [row for row in layout_rows if isinstance(row, dict)],
+            fields_by_name,
+            layout_type=layout_type,
+            form_subviews=form_subviews,
+            component_keys=component_keys,
+                container_status=contract["statusContract"]["containerStatus"],
+                widget_status=contract["statusContract"]["widgetStatus"],
+            )
+    elif layout_type == "form":
+        container_id = "main.form"
+        sheet_id = f"{container_id}.sheet"
+        group_id = f"{container_id}.group"
+        field_nodes = [
+            _native_field_node(
+                {"type": "field", "name": _text(field.get("name"), "")},
+                _dict(field),
+                layout_type=layout_type,
+            )
+            for field in fields[:60]
+            if _text(field.get("name"))
+        ]
+        container_tree = [
+            {
+                "type": "sheet",
+                "name": sheet_id,
+                "containerId": sheet_id,
+                "containerType": "sheet",
+                "string": contract["pageInfo"]["pageName"],
+                "label": contract["pageInfo"]["pageName"],
+                "span": 12,
+                "children": [
+                    {
+                        "type": "group",
+                        "name": group_id,
+                        "containerId": group_id,
+                        "containerType": "group",
+                        "string": contract["pageInfo"]["pageName"],
+                        "label": contract["pageInfo"]["pageName"],
+                        "children": field_nodes,
+                        "widgetList": [
+                            _field_widget(_dict(field), layout_type=layout_type)
+                            for field in fields[:60]
+                            if _text(field.get("name"))
+                        ],
+                    }
+                ],
+                "widgetList": [],
+            }
+        ]
+        for widget in container_tree[0]["children"][0]["widgetList"]:
+            component_keys.add(widget["componentKey"])
+            contract["statusContract"]["widgetStatus"].append(_field_status(
+                next((row for row in fields if _text(row.get("name")) == _text(widget.get("fieldCode"))), {}),
+                widget["widgetId"],
+            ))
+        contract["statusContract"]["containerStatus"].extend([
+            {"containerId": sheet_id, "visible": True, "disabled": False},
+            {"containerId": group_id, "visible": True, "disabled": False},
+        ])
+    else:
+        container_id = "main.table"
+        widgets = []
+        for field in fields[:60]:
+            widget = _field_widget(field, layout_type=layout_type)
+            widgets.append(widget)
+            component_keys.add(widget["componentKey"])
+            contract["statusContract"]["widgetStatus"].append(_field_status(field, widget["widgetId"]))
+        container_tree = [
+            {
+                "type": "section",
+                "name": container_id,
+                "containerId": container_id,
+                "containerType": "section",
+                "string": contract["pageInfo"]["pageName"],
+                "label": contract["pageInfo"]["pageName"],
+                "span": 12,
+                "styleToken": "tableSection",
+                "children": [],
+                "widgetList": widgets,
+            }
+        ]
+        contract["statusContract"]["containerStatus"].append({"containerId": container_id, "visible": True, "disabled": False})
+    contract["layoutContract"]["containerTree"] = container_tree
     contract["layoutContract"]["componentRegistry"] = _component_registry(component_keys or {"sc.display.text"})
-    contract["statusContract"]["containerStatus"].append({"containerId": container_id, "visible": True, "disabled": False})
     contract["dataContract"]["dataMeta"]["fieldCount"] = len(fields)
     source_context = _ui_source_context(_dict(source), _dict(ui))
     if source_context:
@@ -466,10 +563,17 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
     source_record = _dict(source.get("record"))
     if source_record:
         contract["dataContract"]["mainData"].update(deepcopy(source_record))
+    _decorate_button_display_labels(
+        contract["layoutContract"]["containerTree"],
+        contract["dataContract"]["mainData"],
+        fields_by_name,
+    )
     data_source = _ui_contract_data_source(model=model, view_type=view_type, fields=fields, record_id=record_id, source=source, ui=ui)
     if data_source:
         contract["dataContract"]["dataSource"]["primary"] = data_source
-    _append_ui_contract_actions(contract, ui, source_widget_id="page.root")
+    _append_ui_contract_actions(contract, ui, source_widget_id="page.root", main_data=contract["dataContract"]["mainData"])
+    _append_ui_contract_row_actions(contract, ui)
+    _append_project_kanban_row_action(contract, model=model, view_type=view_type)
     return contract
 
 
@@ -477,7 +581,27 @@ def _field_rows(source: dict[str, Any], ui: dict[str, Any], *, view_type: str = 
     rows = source.get("meta_fields")
     if isinstance(rows, list) and rows:
         if view_type in {"tree", "list", "kanban"}:
+            view_fields = _view_field_names(ui, view_type)
             schema_by_name = _view_column_schema_by_name(ui, view_type)
+            row_by_name: dict[str, dict[str, Any]] = {}
+            for row in rows:
+                if not isinstance(row, dict):
+                    continue
+                name = _text(row.get("name") or row.get("field") or row.get("fieldCode"))
+                if name and name not in row_by_name:
+                    row_by_name[name] = row
+            if view_fields:
+                out = []
+                for name in view_fields:
+                    row = row_by_name.get(name)
+                    item = dict(row) if isinstance(row, dict) else {}
+                    item.setdefault("name", name)
+                    schema = schema_by_name.get(name)
+                    if schema:
+                        item.update(schema)
+                        item.setdefault("name", name)
+                    out.append(item)
+                return out
             out = []
             for row in rows:
                 if not isinstance(row, dict):
@@ -575,6 +699,12 @@ def _view_field_names(ui: dict[str, Any], view_type: str) -> list[str]:
             name = _text(row.get("name") or row.get("field") or row.get("fieldCode"))
             if name and name not in out:
                 out.append(name)
+        if key == "kanban":
+            kanban = _dict(view.get("kanban"))
+            template = _text(kanban.get("template_qweb") or view.get("template_qweb") or view.get("arch"))
+            for name in re.findall(r"\brecord\.([A-Za-z_][A-Za-z0-9_]*)\b", template):
+                if name and name not in out:
+                    out.append(name)
         if out:
             return out
     return out
@@ -605,7 +735,8 @@ def _view_column_schema_by_name(ui: dict[str, Any], view_type: str) -> dict[str,
 
 def _field_widget(field: dict[str, Any], *, layout_type: str) -> dict[str, Any]:
     field_name = _stable_id(field.get("name"), "field")
-    widget_type = "table" if layout_type == "table" else _widget_type_from_field(field)
+    explicit_widget = _text(field.get("widget"))
+    widget_type = "table" if layout_type == "table" else explicit_widget or _widget_type_from_field(field)
     component_key = _component_key(widget_type)
     capabilities = ["sortable", "filterable"] if layout_type == "table" else []
     if widget_type == "select":
@@ -614,6 +745,17 @@ def _field_widget(field: dict[str, Any], *, layout_type: str) -> dict[str, Any]:
     for key in ("optional", "invisible", "column_invisible", "readonly", "required"):
         if key in field:
             component_config[key] = deepcopy(field.get(key))
+    field_type = _text(field.get("ttype") or field.get("type")).lower()
+    if field_type:
+        component_config["fieldType"] = field_type
+    if _text(field.get("relation")):
+        component_config["relation"] = _text(field.get("relation"))
+    relation_entry = _dict(field.get("relation_entry"))
+    if relation_entry:
+        component_config["relationEntry"] = deepcopy(relation_entry)
+    widget_options = _dict(field.get("widget_options") or field.get("options"))
+    if widget_options:
+        component_config["widgetOptions"] = deepcopy(widget_options)
     return {
         "widgetId": f"field.{field_name}",
         "widgetType": widget_type,
@@ -624,6 +766,264 @@ def _field_widget(field: dict[str, Any], *, layout_type: str) -> dict[str, Any]:
         "capabilities": capabilities,
         "componentConfig": component_config,
     }
+
+
+def _native_field_node(node: dict[str, Any], field: dict[str, Any], *, layout_type: str) -> dict[str, Any]:
+    field_name = _stable_id(node.get("name") or node.get("field") or field.get("name"), "field")
+    label = _text(
+        node.get("string")
+        or node.get("label")
+        or node.get("title")
+        or _dict(node.get("fieldInfo")).get("label")
+        or _dict(node.get("field_info")).get("label")
+        or field.get("string")
+        or field.get("label"),
+        field_name,
+    )
+    field_source = deepcopy(field)
+    field_info = _dict(node.get("fieldInfo") or node.get("field_info"))
+    field_source.update({k: deepcopy(v) for k, v in field_info.items() if k not in {"label", "string"}})
+    field_source["name"] = field_name
+    field_source.setdefault("string", label)
+    field_source.setdefault("label", label)
+    if _text(node.get("widget")):
+        field_source["widget"] = _text(node.get("widget"))
+    widget = _field_widget(field_source, layout_type=layout_type)
+    component_config = deepcopy(widget.get("componentConfig") or {})
+    field_info["name"] = field_name
+    field_info["label"] = label
+    field_info["widget"] = widget["widgetType"]
+    for key in ("type", "ttype", "relation", "relation_entry", "widget_options", "options"):
+        if key in field_source and key not in field_info:
+            field_info[key] = deepcopy(field_source.get(key))
+    out = deepcopy(node)
+    out["type"] = "field"
+    out["name"] = field_name
+    out["string"] = label
+    out["label"] = label
+    out["fieldInfo"] = field_info
+    out["widget"] = widget["widgetType"]
+    out["componentKey"] = widget["componentKey"]
+    out["componentConfig"] = component_config
+    out["widgetId"] = widget["widgetId"]
+    out.setdefault("field_info", field_info)
+    return out
+
+
+def _direct_field_widgets_from_nodes(
+    nodes: list[dict[str, Any]],
+    fields_by_name: dict[str, dict[str, Any]],
+    *,
+    layout_type: str,
+) -> list[dict[str, Any]]:
+    widgets: list[dict[str, Any]] = []
+    for node in nodes:
+        if not isinstance(node, dict):
+            continue
+        if _text(node.get("type") or node.get("kind")).lower() != "field":
+            continue
+        field_name = _stable_id(node.get("name") or node.get("field"), "field")
+        field = _dict(fields_by_name.get(field_name))
+        if not field:
+            field = {"name": field_name, "string": _text(node.get("string") or node.get("label"), field_name)}
+        field_source = deepcopy(field)
+        field_source["name"] = field_name
+        field_source.setdefault("string", _text(node.get("string") or node.get("label"), field_name))
+        field_source.setdefault("label", field_source.get("string", field_name))
+        if _text(node.get("widget")):
+            field_source["widget"] = _text(node.get("widget"))
+        widgets.append(_field_widget(field_source, layout_type=layout_type))
+    return widgets
+
+
+def _normalize_native_layout_nodes(
+    rows: list[dict[str, Any]],
+    fields_by_name: dict[str, dict[str, Any]],
+    *,
+    layout_type: str,
+    form_subviews: dict[str, Any] | None = None,
+    component_keys: set[str],
+    container_status: list[dict[str, Any]],
+    widget_status: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        node = deepcopy(row)
+        node_type = _text(node.get("type") or node.get("kind"), "group").lower()
+        node["type"] = node_type
+        node_name = _text(node.get("name") or node.get("field"))
+        if node_name:
+            node["name"] = node_name
+        label = _text(node.get("string") or node.get("label") or node.get("title"))
+        if label:
+            node["string"] = label
+            node["label"] = label
+        if node_type == "field":
+            field = _dict(fields_by_name.get(node_name)) if node_name else {}
+            normalized = _native_field_node(node, field, layout_type=layout_type)
+            if node_name:
+                subview = _dict((form_subviews or {}).get(node_name))
+                if subview:
+                    field_info = _dict(normalized.get("fieldInfo"))
+                    field_info["subview"] = deepcopy(subview)
+                    normalized["fieldInfo"] = field_info
+                    normalized["field_info"] = deepcopy(field_info)
+            widget = _field_widget({**field, "name": node_name or field.get("name"), "string": normalized.get("string"), "label": normalized.get("label"), "widget": normalized.get("widget")}, layout_type=layout_type)
+            component_keys.add(widget["componentKey"])
+            widget_status.append(_field_status({**field, "name": node_name or field.get("name"), "string": normalized.get("string"), "label": normalized.get("label"), "widget": normalized.get("widget")}, widget["widgetId"]))
+            out.append(normalized)
+            continue
+        container_id = _text(node.get("containerId") or node.get("container_id") or node_name)
+        if not container_id:
+            container_id = _stable_id(node.get("title") or node.get("string") or node.get("label") or node_type, node_type)
+        node["containerId"] = container_id
+        node["containerType"] = node_type
+        node.setdefault("title", _text(node.get("title") or node.get("string") or node.get("label") or container_id, container_id))
+        node.setdefault("label", _text(node.get("label") or node.get("string") or node.get("title") or container_id, container_id))
+        container_status.append({"containerId": container_id, "visible": True, "disabled": False})
+        for key in ("children", "pages", "tabs", "nodes", "items"):
+            child_rows = _list(node.get(key))
+            if child_rows:
+                node[key] = _normalize_native_layout_nodes(
+                    [item for item in child_rows if isinstance(item, dict)],
+                    fields_by_name,
+                    layout_type=layout_type,
+                    form_subviews=form_subviews,
+                    component_keys=component_keys,
+                    container_status=container_status,
+                    widget_status=widget_status,
+                )
+        direct_widgets: list[dict[str, Any]] = []
+        for key in ("children", "pages", "tabs", "nodes", "items"):
+            direct_widgets.extend(_direct_field_widgets_from_nodes(_list(node.get(key)), fields_by_name, layout_type=layout_type))
+        if direct_widgets:
+            node["widgetList"] = direct_widgets
+            for widget in direct_widgets:
+                component_keys.add(widget["componentKey"])
+        elif not isinstance(node.get("widgetList"), list):
+            node["widgetList"] = []
+        out.append(node)
+    return out
+
+
+def _badge_count(value: Any) -> int | None:
+    if isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return int(value)
+    if isinstance(value, list):
+        return len(value)
+    if isinstance(value, tuple):
+        return len(value)
+    if isinstance(value, str):
+        text = value.strip()
+        if text.isdigit():
+            return int(text)
+    return None
+
+
+def _button_badge_count_source(
+    badge: dict[str, Any],
+    main_data: dict[str, Any],
+    fields_by_name: dict[str, dict[str, Any]],
+    layout_nodes: list[dict[str, Any]],
+) -> tuple[int | None, str, str]:
+    field_name = _text(badge.get("count_field") or badge.get("field") or badge.get("fieldCode"))
+    badge_label = _text(badge.get("label"))
+    if field_name and field_name in main_data:
+        return _badge_count(main_data.get(field_name)), badge_label, field_name
+    short_label = badge_label or field_name
+    if short_label:
+        short_label = re.sub(r"管理$", "", short_label).strip() or short_label
+    def _matches_candidate(candidate_name: str, candidate_label: str) -> bool:
+        return bool(short_label and (short_label in candidate_label or short_label in candidate_name))
+    def _walk_layout(nodes: list[dict[str, Any]]):
+        for row in nodes:
+            if not isinstance(row, dict):
+                continue
+            row_type = _text(row.get("type") or row.get("kind")).lower()
+            if row_type == "field":
+                candidate_name = _text(row.get("name") or row.get("field"))
+                candidate_meta = _dict(row.get("fieldInfo") or row.get("field_info"))
+                candidate_label = _text(
+                    row.get("label")
+                    or row.get("string")
+                    or candidate_meta.get("label")
+                    or candidate_meta.get("string")
+                    or candidate_name
+                )
+                candidate_type = _text(candidate_meta.get("type") or candidate_meta.get("ttype") or row.get("widget")).lower()
+                if candidate_name in main_data and candidate_type in {"one2many", "many2many"} and _matches_candidate(candidate_name, candidate_label):
+                    return candidate_name
+            for key in ("children", "pages", "tabs", "nodes", "items"):
+                child_rows = row.get(key)
+                if isinstance(child_rows, list):
+                    candidate = _walk_layout(child_rows)
+                    if candidate:
+                        return candidate
+        return ""
+    layout_candidate = _walk_layout(layout_nodes or [])
+    if layout_candidate:
+        return _badge_count(main_data.get(layout_candidate)), short_label, layout_candidate
+    for candidate_name, candidate_meta in fields_by_name.items():
+        candidate_type = _text(candidate_meta.get("type") or candidate_meta.get("ttype")).lower()
+        if candidate_type not in {"one2many", "many2many"}:
+            continue
+        candidate_label = _text(candidate_meta.get("string") or candidate_meta.get("label") or candidate_name)
+        if short_label and (short_label in candidate_label or short_label in candidate_name):
+            return _badge_count(main_data.get(candidate_name)), short_label, candidate_name
+    return None, short_label, ""
+
+
+def _button_display_label(
+    node: dict[str, Any],
+    main_data: dict[str, Any],
+    fields_by_name: dict[str, dict[str, Any]],
+    layout_nodes: list[dict[str, Any]],
+) -> str:
+    action = _dict(node.get("action"))
+    badge = _dict(action.get("badge") or node.get("badge"))
+    field_name = _text(badge.get("field") or badge.get("fieldCode"))
+    badge_label = _text(node.get("displayLabel") or action.get("displayLabel") or badge.get("label"))
+    if not field_name and not badge_label:
+        return ""
+    count, resolved_label, source_field = _button_badge_count_source(badge, main_data, fields_by_name, layout_nodes)
+    if count is None:
+        return ""
+    return f"{count}{resolved_label or badge_label}"
+
+
+def _decorate_button_display_labels(
+    nodes: list[dict[str, Any]],
+    main_data: dict[str, Any],
+    fields_by_name: dict[str, dict[str, Any]],
+    layout_nodes: list[dict[str, Any]] | None = None,
+) -> None:
+    root_nodes = layout_nodes or nodes
+    for node in nodes:
+        if not isinstance(node, dict):
+            continue
+        if _text(node.get("type") or node.get("kind")).lower() == "button":
+            action = _dict(node.get("action"))
+            badge = _dict(action.get("badge") or node.get("badge"))
+            count, resolved_label, source_field = _button_badge_count_source(badge, main_data, fields_by_name, root_nodes)
+            if _text(badge.get("field")) and not _text(badge.get("count_field")):
+                badge["count_field"] = _text(badge.get("field"))
+            if source_field:
+                badge["source_field"] = source_field
+            if count is not None:
+                display_label = f"{count}{resolved_label or _text(node.get('displayLabel') or action.get('displayLabel') or badge.get('label'))}"
+                node["displayLabel"] = display_label
+                action["displayLabel"] = display_label
+            action["badge"] = badge
+            if action:
+                node["action"] = action
+        for key in ("children", "pages", "tabs", "nodes", "items"):
+            child_rows = node.get(key)
+            if isinstance(child_rows, list) and child_rows:
+                _decorate_button_display_labels(child_rows, main_data, fields_by_name, root_nodes)
 
 
 def _ui_contract_data_source(
@@ -848,11 +1248,11 @@ def _append_actions(contract: dict[str, Any], rows: Any, *, source_widget_id: st
                 "intent": intent,
                 "target": deepcopy(_dict(row.get("target"))),
                 "button": deepcopy(_dict(row.get("button"))),
-                "triggerType": "click",
+                "triggerType": _text(row.get("trigger") or row.get("display_mode"), "click"),
                 "sourceWidgetId": source_widget_id,
                 "targetIds": [],
                 "dispatchMode": "server",
-                "targetScope": "page",
+                "targetScope": _text(row.get("target_scope") or row.get("level"), "page"),
                 "refreshMode": "partial",
             }
         )
@@ -884,7 +1284,13 @@ def _append_action_schema(contract: dict[str, Any], actions: dict[str, Any], *, 
         contract["statusContract"]["buttonStatus"].append({"btnId": f"btn.{action_key}", "visible": True, "disabled": False})
 
 
-def _append_ui_contract_actions(contract: dict[str, Any], ui: dict[str, Any], *, source_widget_id: str) -> None:
+def _append_ui_contract_actions(
+    contract: dict[str, Any],
+    ui: dict[str, Any],
+    *,
+    source_widget_id: str,
+    main_data: dict[str, Any] | None = None,
+) -> None:
     rows: list[dict[str, Any]] = []
     for key in ("buttons", "business_actions"):
         for row in _list(ui.get(key)):
@@ -910,6 +1316,14 @@ def _append_ui_contract_actions(contract: dict[str, Any], ui: dict[str, Any], *,
         kind = _text(row.get("kind") or row.get("type"))
         payload = _dict(row.get("payload"))
         intent = _text(row.get("intent"))
+        badge = _dict(row.get("badge"))
+        display_label = _text(row.get("displayLabel") or row.get("display_label"))
+        if badge and not display_label and main_data:
+            badge_field = _text(badge.get("field") or badge.get("fieldCode"))
+            badge_label = _text(badge.get("label"))
+            count = _badge_count(main_data.get(badge_field)) if badge_field else None
+            if count is not None and badge_label:
+                display_label = f"{count}{badge_label}"
         if kind == "open" or intent == "open":
             action_intent = "ui.contract"
             target = {
@@ -940,12 +1354,77 @@ def _append_ui_contract_actions(contract: dict[str, Any], ui: dict[str, Any], *,
             {
                 "key": key,
                 "label": _text(row.get("label") or row.get("string") or row.get("name"), key),
+                "displayLabel": display_label,
                 "intent": action_intent,
                 "target": target,
                 "button": button,
+                "badge": badge or None,
             }
         )
     _append_actions(contract, normalized, source_widget_id=source_widget_id)
+
+
+def _append_ui_contract_row_actions(contract: dict[str, Any], ui: dict[str, Any]) -> None:
+    views = _dict(ui.get("views"))
+    rows: list[dict[str, Any]] = []
+    for view_key in ("kanban", "tree", "list"):
+        view = _dict(views.get(view_key))
+        for row in _list(view.get("row_actions")):
+            if isinstance(row, dict):
+                rows.append(row)
+    normalized: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for row in rows:
+        key = _stable_id(row.get("key") or row.get("name") or row.get("intent"), "row_action")
+        if key in seen:
+            continue
+        seen.add(key)
+        target = _dict(row.get("target"))
+        payload = _dict(row.get("payload"))
+        if not target and payload:
+            target = payload
+        normalized.append({
+            "key": key,
+            "name": row.get("name") or key,
+            "label": _text(row.get("label") or row.get("string") or row.get("name"), key),
+            "intent": _text(row.get("intent"), "open"),
+            "target": target,
+            "button": _dict(row.get("button")),
+            "trigger": _text(row.get("trigger") or row.get("display_mode"), "row_click"),
+            "level": _text(row.get("level"), "row"),
+            "target_scope": _text(row.get("target_scope"), "row"),
+        })
+    _append_actions(contract, normalized, source_widget_id="page.row")
+
+
+def _append_project_kanban_row_action(contract: dict[str, Any], *, model: str, view_type: str) -> None:
+    if model != "project.project" or view_type != "kanban":
+        return
+    rows = _list(_dict(contract.get("actionContract")).get("actionRuleList"))
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        if _text(row.get("triggerType")) == "row_click" or _text(row.get("sourceWidgetId")) == "page.row":
+            return
+    _append_actions(
+        contract,
+        [{
+            "key": "open_project_dashboard",
+            "name": "open_project_dashboard",
+            "label": "进入项目驾驶舱",
+            "intent": "open_scene",
+            "target": {
+                "route": "/s/project.management",
+                "scene_key": "project.management",
+                "entry_intent": "project.dashboard.enter",
+                "project_id": "${id}",
+            },
+            "trigger": "row_click",
+            "level": "row",
+            "target_scope": "row",
+        }],
+        source_widget_id="page.row",
+    )
 
 
 def _assemble_unknown(source: dict[str, Any], *, client_type: str, request_id: str) -> dict[str, Any]:

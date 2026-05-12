@@ -2,12 +2,12 @@
 
 Status: `PASS`
 
-- package_id: `migration_assets_release_20260508T081336Z`
-- package_path: `/tmp/sce_migration_asset_release/migration_assets_release_20260508T081336Z.tar.gz`
-- sha256_path: `/tmp/sce_migration_asset_release/migration_assets_release_20260508T081336Z.tar.gz.sha256`
-- sha256: `918c192974473698bd08654e50958ea09433d3d2a09cbe4cf1388a4c8f0522e8`
-- package_size_mb: `318.18`
-- included_file_count: `1912`
+- package_id: `migration_assets_release_20260511T005829Z`
+- package_path: `/tmp/sce_migration_asset_release/migration_assets_release_20260511T005829Z.tar.gz`
+- sha256_path: `/tmp/sce_migration_asset_release/migration_assets_release_20260511T005829Z.tar.gz.sha256`
+- sha256: `0fe2b36c629c0660ac0f719a7f9d719efeaf53bd9701c49a203ea2146e9578a3`
+- package_size_mb: `327.52`
+- included_file_count: `2452`
 - excluded_file_count: `0`
 - payload_mode: `packaged_artifacts`
 - deployment_entrypoint: `scripts/migration/history_continuity_oneclick.sh`

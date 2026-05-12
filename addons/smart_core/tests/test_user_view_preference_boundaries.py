@@ -38,7 +38,8 @@ class _PreferenceModel:
         return self
 
     def normalize_preference_key(self, value):
-        return str(value or "default").strip() or "default"
+        key = str(value or "list_columns").strip() or "list_columns"
+        return key if key == "list_columns" else "list_columns"
 
     def build_scope_key(self, *, preference_key, view_type, action_id, model_name):
         target = f"action:{action_id}" if action_id else f"model:{model_name or 'unknown'}"
@@ -55,6 +56,29 @@ class _PreferenceModel:
 
 class _Env(dict):
     uid = 42
+    context = {}
+
+
+class _ContractService:
+    def with_context(self, _ctx):
+        return self
+
+    def generate_contract(self, **_kwargs):
+        return {
+            "data": {
+                "list_profile": {
+                    "columns": ["name", "manager_id", "business_nature"],
+                    "fact_columns": ["name", "business_nature"],
+                    "preference_policy": {
+                        "allow_visibility": True,
+                        "allow_order": False,
+                        "allow_width": False,
+                        "locked_columns": ["name"],
+                        "must_request_columns": ["business_nature"],
+                    },
+                }
+            }
+        }
 
 
 def _load_handler():
@@ -113,6 +137,10 @@ class TestUserViewPreferenceBoundaries(unittest.TestCase):
         self.assertTrue(result["ok"])
         self.assertEqual(Preference.sudo_calls, 0)
         self.assertEqual(Preference.created_vals["user_id"], 42)
+        self.assertEqual(
+            Preference.created_vals["value_json"],
+            {"visible_columns": [], "hidden_columns": [], "column_order": [], "column_widths": {}},
+        )
 
     def test_get_rejects_invalid_action_id(self):
         module = _load_handler()
@@ -178,6 +206,70 @@ class TestUserViewPreferenceBoundaries(unittest.TestCase):
         self.assertEqual(result["code"], 400)
         self.assertEqual(result["error"]["message"], "model 无效")
         self.assertIsNone(Preference.created_vals)
+
+    def test_set_sanitizes_list_column_payload(self):
+        module = _load_handler()
+        Preference = _PreferenceModel()
+        env = _Env({"sc.user.view.preference": Preference})
+        handler = module.UserViewPreferenceSetHandler(
+            env=env,
+            payload={
+                "model": "x.model",
+                "preference_key": "list_columns",
+                "preference": {
+                    "visible_columns": ["name", "name", "  ", None, "manager_id"],
+                    "hidden_columns": ["manager_id", "business_nature", "", "business_nature"],
+                    "column_order": ["business_nature", "unknown", "name"],
+                    "column_widths": {"name": 20, "manager_id": 900, "unknown": 300, "business_nature": "320"},
+                    "random_noise": True,
+                },
+            },
+        )
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(
+            Preference.created_vals["value_json"],
+            {
+                "visible_columns": ["name", "manager_id"],
+                "hidden_columns": ["business_nature"],
+                "column_order": ["business_nature", "name"],
+                "column_widths": {"name": 80, "manager_id": 640, "business_nature": 320},
+            },
+        )
+
+    def test_set_enforces_contract_preference_policy(self):
+        module = _load_handler()
+        Preference = _PreferenceModel()
+        env = _Env({"sc.user.view.preference": Preference, "app.contract.service": _ContractService()})
+        handler = module.UserViewPreferenceSetHandler(
+            env=env,
+            payload={
+                "model": "project.project",
+                "action_id": 506,
+                "preference_key": "list_columns",
+                "preference": {
+                    "visible_columns": ["name"],
+                    "hidden_columns": ["name", "business_nature", "manager_id"],
+                    "column_order": ["manager_id", "name"],
+                    "column_widths": {"name": 160, "manager_id": 220},
+                },
+            },
+        )
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(
+            Preference.created_vals["value_json"],
+            {
+                "visible_columns": ["name"],
+                "hidden_columns": ["business_nature", "manager_id"],
+                "column_order": [],
+                "column_widths": {},
+            },
+        )
 
 
 if __name__ == "__main__":

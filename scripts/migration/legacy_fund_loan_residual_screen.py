@@ -39,7 +39,13 @@ WITH src AS (
     CONVERT(nvarchar(max), BZ) AS note,
     CONVERT(nvarchar(max), DEL) AS deleted,
     CONVERT(nvarchar(max), '') AS extra_ref,
-    CONVERT(nvarchar(max), '') AS extra_label
+    CONVERT(nvarchar(max), '') AS extra_label,
+    CONVERT(nvarchar(max), '') AS creator_legacy_user_id,
+    CONVERT(nvarchar(max), '') AS creator_name,
+    CONVERT(nvarchar(max), '') AS created_time,
+    CONVERT(nvarchar(max), '') AS modifier_legacy_user_id,
+    CONVERT(nvarchar(max), '') AS modifier_name,
+    CONVERT(nvarchar(max), '') AS modified_time
   FROM dbo.D_SCBSJS_ZJGL_ZJSZ_ZJRBB
   UNION ALL
   SELECT 'ZJGL_ZJSZ_DKGL_DKDJ',
@@ -61,7 +67,13 @@ WITH src AS (
     CONVERT(nvarchar(max), BZ),
     CONVERT(nvarchar(max), DEL),
     CONVERT(nvarchar(max), LXID),
-    CONVERT(nvarchar(max), COALESCE(NULLIF(LX, ''), NULLIF(DKLL, ''), NULLIF(DKSJ, '')))
+    CONVERT(nvarchar(max), COALESCE(NULLIF(LX, ''), NULLIF(DKLL, ''), NULLIF(DKSJ, ''))),
+    CONVERT(nvarchar(max), LRRID),
+    CONVERT(nvarchar(max), LRR),
+    CONVERT(nvarchar(max), LRSJ, 120),
+    CONVERT(nvarchar(max), XGRID),
+    CONVERT(nvarchar(max), XGR),
+    CONVERT(nvarchar(max), XGSJ, 120)
   FROM dbo.ZJGL_ZJSZ_DKGL_DKDJ
   UNION ALL
   SELECT 'ZJGL_ZCDFSZ_FXJK_JK',
@@ -83,7 +95,13 @@ WITH src AS (
     CONVERT(nvarchar(max), BZ),
     CONVERT(nvarchar(max), DEL),
     CONVERT(nvarchar(max), COALESCE(NULLIF(SKZHID, ''), NULLIF(WSZCZHID, ''))),
-    CONVERT(nvarchar(max), COALESCE(NULLIF(SKZH, ''), NULLIF(WSZCZH, ''), NULLIF(BM, '')))
+    CONVERT(nvarchar(max), COALESCE(NULLIF(SKZH, ''), NULLIF(WSZCZH, ''), NULLIF(BM, ''))),
+    CONVERT(nvarchar(max), LRRID),
+    CONVERT(nvarchar(max), LRR),
+    CONVERT(nvarchar(max), LRSJ, 120),
+    CONVERT(nvarchar(max), XGRID),
+    CONVERT(nvarchar(max), XGR),
+    CONVERT(nvarchar(max), XGSJ, 120)
   FROM dbo.ZJGL_ZCDFSZ_FXJK_JK
 )
 SELECT CONCAT(
@@ -106,7 +124,13 @@ SELECT CONCAT(
   ISNULL(REPLACE(REPLACE(REPLACE(note, @sep, ' '), CHAR(13), ' '), CHAR(10), ' '), ''), @sep,
   ISNULL(REPLACE(REPLACE(REPLACE(deleted, @sep, ' '), CHAR(13), ' '), CHAR(10), ' '), ''), @sep,
   ISNULL(REPLACE(REPLACE(REPLACE(extra_ref, @sep, ' '), CHAR(13), ' '), CHAR(10), ' '), ''), @sep,
-  ISNULL(REPLACE(REPLACE(REPLACE(extra_label, @sep, ' '), CHAR(13), ' '), CHAR(10), ' '), '')
+  ISNULL(REPLACE(REPLACE(REPLACE(extra_label, @sep, ' '), CHAR(13), ' '), CHAR(10), ' '), ''), @sep,
+  ISNULL(REPLACE(REPLACE(REPLACE(creator_legacy_user_id, @sep, ' '), CHAR(13), ' '), CHAR(10), ' '), ''), @sep,
+  ISNULL(REPLACE(REPLACE(REPLACE(creator_name, @sep, ' '), CHAR(13), ' '), CHAR(10), ' '), ''), @sep,
+  ISNULL(REPLACE(REPLACE(REPLACE(created_time, @sep, ' '), CHAR(13), ' '), CHAR(10), ' '), ''), @sep,
+  ISNULL(REPLACE(REPLACE(REPLACE(modifier_legacy_user_id, @sep, ' '), CHAR(13), ' '), CHAR(10), ' '), ''), @sep,
+  ISNULL(REPLACE(REPLACE(REPLACE(modifier_name, @sep, ' '), CHAR(13), ' '), CHAR(10), ' '), ''), @sep,
+  ISNULL(REPLACE(REPLACE(REPLACE(modified_time, @sep, ' '), CHAR(13), ' '), CHAR(10), ' '), '')
 ) AS rowdata
 FROM src
 ORDER BY source_table, legacy_id;
@@ -133,6 +157,12 @@ SQL_COLUMNS = [
     "deleted",
     "extra_ref",
     "extra_label",
+    "creator_legacy_user_id",
+    "creator_name",
+    "created_time",
+    "modifier_legacy_user_id",
+    "modifier_name",
+    "modified_time",
 ]
 
 

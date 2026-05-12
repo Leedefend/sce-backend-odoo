@@ -63,6 +63,8 @@
                     <field name="invoice_holder"/>
                     <field name="accounting_state"/>
                     <field name="voucher_no"/>
+                    <field name="creator_name" optional="show"/>
+                    <field name="created_time" optional="show"/>
                     <field name="state"/>
                 </tree>
             </field>
@@ -130,6 +132,9 @@
                         </group>
                         <group>
                             <field name="note"/>
+                            <field name="creator_name" readonly="1"/>
+                            <field name="creator_legacy_user_id" readonly="1"/>
+                            <field name="created_time" readonly="1"/>
                             <field name="attachment_ids" widget="many2many_binary"/>
                             <field name="active"/>
                         </group>

@@ -4,12 +4,13 @@
         <field name="name">project.project.tree.sc.my.list</field>
         <field name="model">project.project</field>
         <field name="arch" type="xml">
-            <tree string="我的项目">
+            <tree string="项目台账" default_order="write_date desc, id desc">
                 <field name="name"/>
-                <field name="operation_strategy"/>
-                <field name="manager_id"/>
-                <field name="owner_id"/>
-                <field name="lifecycle_state"/>
+                <field name="project_code" string="项目编号"/>
+                <field name="operation_strategy" string="经营方式"/>
+                <field name="business_nature" string="经营性质" optional="show"/>
+                <field name="lifecycle_state" string="项目状态"/>
+                <field name="manager_id" string="项目经理"/>
                 <field name="write_date" string="更新时间"/>
             </tree>
         </field>

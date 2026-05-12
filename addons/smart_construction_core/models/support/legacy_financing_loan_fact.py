@@ -30,6 +30,12 @@ class ScLegacyFinancingLoanFact(models.Model):
     source_extra_ref = fields.Char(string="扩展引用")
     source_extra_label = fields.Char(string="扩展标签")
     due_date = fields.Date(string="到期日", index=True)
+    creator_legacy_user_id = fields.Char(string="创建人原编号", index=True)
+    creator_name = fields.Char(string="创建人", index=True)
+    created_time = fields.Datetime(string="创建时间", index=True)
+    modifier_legacy_user_id = fields.Char(string="修改人原编号", index=True)
+    modifier_name = fields.Char(string="修改人", index=True)
+    modified_time = fields.Datetime(string="修改时间", index=True)
     note = fields.Text(string="备注")
     import_batch = fields.Char(string="导入批次", required=True, index=True)
 

@@ -37,8 +37,8 @@
                     <field name="source_kind"/>
                     <field name="amount" sum="金额合计"/>
                     <field name="currency_id" invisible="1"/>
-                    <field name="legacy_record_id"/>
-                    <field name="legacy_source_ref"/>
+                    <field name="legacy_record_id" optional="hide"/>
+                    <field name="legacy_source_ref" optional="hide"/>
                     <field name="state"/>
                 </tree>
             </field>
@@ -95,12 +95,24 @@
         </record>
 
         <record id="action_sc_treasury_ledger_income" model="ir.actions.act_window">
-            <field name="name">收款台账</field>
+            <field name="name">收款统计表</field>
             <field name="res_model">sc.treasury.ledger</field>
             <field name="view_mode">tree,form</field>
             <field name="search_view_id" ref="view_sc_treasury_ledger_search"/>
             <field name="domain">[('direction', '=', 'in')]</field>
             <field name="context">{'create': False, 'search_default_direction_in': 1, 'search_default_group_project': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+        </record>
+
+        <record id="action_sc_treasury_ledger_payment" model="ir.actions.act_window">
+            <field name="name">付款统计表</field>
+            <field name="res_model">sc.treasury.ledger</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_sc_treasury_ledger_search"/>
+            <field name="domain">[('direction', '=', 'out')]</field>
+            <field name="context">{'create': False, 'search_default_direction_out': 1, 'search_default_group_project': 1}</field>
             <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')),
                                            (4, ref('smart_construction_core.group_sc_cap_finance_user')),
                                            (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
@@ -114,7 +126,7 @@
                   groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
 
         <menuitem id="menu_sc_treasury_ledger_income"
-                  name="收款台账"
+                  name="收款统计表"
                   parent="smart_construction_core.menu_sc_finance_center"
                   action="action_sc_treasury_ledger_income"
                   sequence="33"

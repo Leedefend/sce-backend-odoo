@@ -56,7 +56,8 @@ def _count_containers(rows: Any) -> int:
         if not isinstance(row, dict):
             continue
         total += 1
-        total += _count_containers(row.get("children"))
+        for key in ("children", "pages", "tabs", "nodes", "items"):
+            total += _count_containers(row.get(key))
     return total
 
 
@@ -65,8 +66,19 @@ def _count_widgets(rows: Any) -> int:
     for row in _list(rows):
         if not isinstance(row, dict):
             continue
-        total += len(_list(row.get("widgetList")))
-        total += _count_widgets(row.get("children"))
+        widget_list = _list(row.get("widgetList"))
+        if widget_list:
+            total += len(widget_list)
+        elif _text(row.get("type") or row.get("kind")).lower() == "field":
+            total += 1
+        else:
+            total += len([child for child in _list(row.get("children")) if isinstance(child, dict) and _text(child.get("type") or child.get("kind")).lower() == "field"])
+            total += len([child for child in _list(row.get("pages")) if isinstance(child, dict) and _text(child.get("type") or child.get("kind")).lower() == "field"])
+            total += len([child for child in _list(row.get("tabs")) if isinstance(child, dict) and _text(child.get("type") or child.get("kind")).lower() == "field"])
+            total += len([child for child in _list(row.get("nodes")) if isinstance(child, dict) and _text(child.get("type") or child.get("kind")).lower() == "field"])
+            total += len([child for child in _list(row.get("items")) if isinstance(child, dict) and _text(child.get("type") or child.get("kind")).lower() == "field"])
+        for key in ("children", "pages", "tabs", "nodes", "items"):
+            total += _count_widgets(row.get(key))
     return total
 
 

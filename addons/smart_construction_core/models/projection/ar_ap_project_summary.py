@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from odoo import fields, models, tools
+from odoo import api, fields, models
+from odoo.exceptions import UserError
 
 
 class ScArApProjectSummary(models.Model):
@@ -49,6 +50,19 @@ class ScArApProjectSummary(models.Model):
         "同一项目下多往来单位行会重复展示该余额，导出或透视时不应按行求和。",
     )
 
+    def _raise_readonly_projection(self):
+        raise UserError("应收应付报表（项目）是历史事实汇总结果，请从来源业务单据维护数据。")
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        self._raise_readonly_projection()
+
+    def write(self, vals):
+        self._raise_readonly_projection()
+
+    def unlink(self):
+        self._raise_readonly_projection()
+
     def init(self):
         self._cr.execute(
             """
@@ -66,10 +80,31 @@ class ScArApProjectSummary(models.Model):
         )
         if not all(self._cr.fetchone()):
             return
-        tools.drop_view_if_exists(self._cr, self._table)
         self._cr.execute(
             f"""
-            CREATE OR REPLACE VIEW {self._table} AS (
+            DO $$
+            BEGIN
+                IF EXISTS (
+                    SELECT 1 FROM pg_class
+                    WHERE oid = to_regclass('{self._table}')
+                      AND relkind = 'v'
+                ) THEN
+                    EXECUTE 'DROP VIEW IF EXISTS {self._table} CASCADE';
+                ELSIF EXISTS (
+                    SELECT 1 FROM pg_class
+                    WHERE oid = to_regclass('{self._table}')
+                      AND relkind = 'm'
+                ) THEN
+                    EXECUTE 'DROP MATERIALIZED VIEW IF EXISTS {self._table} CASCADE';
+                ELSE
+                    EXECUTE 'DROP TABLE IF EXISTS {self._table} CASCADE';
+                END IF;
+            END $$;
+            """
+        )
+        self._cr.execute(
+            f"""
+            CREATE TABLE {self._table} AS (
                 WITH income_contract AS (
                     SELECT
                         c.project_id,
@@ -374,10 +409,18 @@ class ScArApProjectSummary(models.Model):
                 )
                 SELECT
                     row_number() OVER (ORDER BY k.project_id, k.partner_name, k.partner_key) AS id,
-                    COALESCE(p.name->>'zh_CN', p.name->>'en_US', '未匹配项目') || ' / ' ||
+                    CASE
+                        WHEN COALESCE(p.name->>'zh_CN', p.name->>'en_US', '') ~ '^[0-9a-fA-F]{{32}}$'
+                        THEN CONCAT('历史未归档项目 ', COALESCE(p.name->>'zh_CN', p.name->>'en_US'))
+                        ELSE COALESCE(p.name->>'zh_CN', p.name->>'en_US', '未匹配项目')
+                    END || ' / ' ||
                         COALESCE(k.partner_name, '未填往来单位') AS display_name,
                     k.project_id,
-                    COALESCE(p.name->>'zh_CN', p.name->>'en_US') AS project_name,
+                    CASE
+                        WHEN COALESCE(p.name->>'zh_CN', p.name->>'en_US', '') ~ '^[0-9a-fA-F]{{32}}$'
+                        THEN CONCAT('历史未归档项目 ', COALESCE(p.name->>'zh_CN', p.name->>'en_US'))
+                        ELSE COALESCE(p.name->>'zh_CN', p.name->>'en_US', '未匹配项目')
+                    END AS project_name,
                     k.partner_id,
                     k.partner_key,
                     k.partner_name,
@@ -439,3 +482,8 @@ class ScArApProjectSummary(models.Model):
             )
             """
         )
+        self._cr.execute(f"ALTER TABLE {self._table} ADD PRIMARY KEY (id)")
+        self._cr.execute(f"CREATE INDEX {self._table}_project_id_idx ON {self._table} (project_id)")
+        self._cr.execute(f"CREATE INDEX {self._table}_project_name_idx ON {self._table} (project_name)")
+        self._cr.execute(f"CREATE INDEX {self._table}_partner_key_idx ON {self._table} (partner_key)")
+        self._cr.execute(f"CREATE INDEX {self._table}_partner_name_idx ON {self._table} (partner_name)")

@@ -2,6 +2,7 @@ import type { NavMeta } from '@sc/schema';
 import type { Router } from 'vue-router';
 import { useSessionStore } from '../stores/session';
 import { recordTrace, digestParams, createTraceId } from './trace';
+import { buildEntryTargetRouteTarget } from '../app/routeQuery';
 
 function normalizeDomain(domain: unknown) {
   return Array.isArray(domain) ? domain : [];
@@ -41,6 +42,18 @@ export function openAction(router: Router, action: NavMeta, menuId?: number) {
     view_mode: viewMode,
     params_digest: digestParams({ domain: normalizeDomain(action.domain), context: normalizeContext(action.context) }),
   });
+
+  const entryTarget = (action.entry_target && typeof action.entry_target === 'object')
+    ? action.entry_target as Record<string, unknown>
+    : null;
+  if (entryTarget) {
+    router.push(buildEntryTargetRouteTarget(entryTarget, {
+      query,
+      menuId,
+      actionId: action.action_id,
+    }) as never);
+    return;
+  }
 
   router.push({ path: `/a/${action.action_id}`, query });
 }

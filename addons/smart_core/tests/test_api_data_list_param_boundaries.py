@@ -222,6 +222,35 @@ class TestApiDataListParamBoundaries(unittest.TestCase):
                 self.assertEqual(result["error"]["code"], 400)
                 self.assertEqual(result["error"]["message"], message)
 
+    def test_search_term_domain_skips_non_searchable_computed_fields(self):
+        field = lambda field_type, store=True, search=None: types.SimpleNamespace(
+            type=field_type,
+            store=store,
+            search=search,
+        )
+        env_model = types.SimpleNamespace(
+            _rec_name="name",
+            _fields={
+                "name": field("char"),
+                "computed_label": field("char", store=False),
+                "computed_searchable": field("char", store=False, search=lambda *args: []),
+                "partner_id": field("many2one"),
+                "amount": field("float"),
+            },
+        )
+
+        domain = self.handler._build_search_term_domain(
+            env_model,
+            "ABC",
+            ["computed_label", "computed_searchable", "partner_id", "amount"],
+        )
+
+        self.assertIn(("name", "ilike", "ABC"), domain)
+        self.assertIn(("computed_searchable", "ilike", "ABC"), domain)
+        self.assertIn(("partner_id", "ilike", "ABC"), domain)
+        self.assertNotIn(("computed_label", "ilike", "ABC"), domain)
+        self.assertNotIn(("amount", "ilike", "ABC"), domain)
+
     def test_read_rejects_invalid_fields(self):
         result = self.handler._op_read("x.model", {"ids": [1], "fields": 7}, {}, False)
 

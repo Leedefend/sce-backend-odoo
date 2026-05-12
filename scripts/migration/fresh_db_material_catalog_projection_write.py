@@ -49,6 +49,7 @@ def scalar(sql: str, params: list[object] | None = None) -> object:
 ensure_allowed_db()
 output_json = artifact_root() / "fresh_db_material_catalog_projection_write_result_v1.json"
 uid = env.uid  # noqa: F821
+company_id = env.company.id  # noqa: F821
 
 before = int(scalar("SELECT COUNT(*) FROM sc_material_catalog") or 0)
 legacy_total = int(scalar("SELECT COUNT(*) FROM sc_legacy_material_detail") or 0)
@@ -56,7 +57,7 @@ legacy_total = int(scalar("SELECT COUNT(*) FROM sc_legacy_material_detail") or 0
 env.cr.execute(  # noqa: F821
     """
     INSERT INTO sc_material_catalog (
-      name, code, category_id, project_id, spec_model,
+      name, code, category_id, company_id, project_id, spec_model,
       uom_text, aux_uom_text, planned_price, internal_price,
       depth, pinyin, short_pinyin, remark, source_origin,
       legacy_material_detail_id, legacy_material_id, legacy_category_id,
@@ -67,6 +68,7 @@ env.cr.execute(  # noqa: F821
       COALESCE(NULLIF(l.name, ''), NULLIF(l.code, ''), l.legacy_material_id),
       NULLIF(l.code, ''),
       pc.id,
+      COALESCE(p.company_id, %s),
       l.project_id,
       NULLIF(l.spec_model, ''),
       NULLIF(l.uom_text, ''),
@@ -87,10 +89,12 @@ env.cr.execute(  # noqa: F821
       %s, NOW(), %s, NOW()
     FROM sc_legacy_material_detail l
     LEFT JOIN product_category pc ON pc.legacy_material_category_id = l.category_id
+    LEFT JOIN project_project p ON p.id = l.project_id
     ON CONFLICT (legacy_material_detail_id) DO UPDATE SET
       name = EXCLUDED.name,
       code = EXCLUDED.code,
       category_id = EXCLUDED.category_id,
+      company_id = EXCLUDED.company_id,
       project_id = EXCLUDED.project_id,
       spec_model = EXCLUDED.spec_model,
       uom_text = EXCLUDED.uom_text,
@@ -110,7 +114,7 @@ env.cr.execute(  # noqa: F821
       write_uid = EXCLUDED.write_uid,
       write_date = NOW()
     """,
-    [uid, uid],
+    [company_id, uid, uid],
 )
 affected = env.cr.rowcount  # noqa: F821
 env.cr.commit()  # noqa: F821

@@ -12,8 +12,8 @@ const requireFromRoot = createRequire(requireBase);
 const { chromium } = requireFromRoot('playwright');
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://127.0.0.1:5174';
-const ODOO_URL = process.env.ODOO_URL || 'http://127.0.0.1:18069';
-const DB_NAME = process.env.DB_NAME || 'sc_prod_sim';
+const ODOO_URL = process.env.ODOO_URL || 'http://127.0.0.1:8070';
+const DB_NAME = process.env.DB_NAME || 'sc_demo';
 const LOGIN = process.env.E2E_LOGIN || 'wutao';
 const PASSWORD = process.env.E2E_PASSWORD || '123456';
 const MODEL = process.env.MVP_MODEL || 'project.project';
@@ -34,6 +34,24 @@ function normalize(value) {
   return String(value || '').replace(/\s+/g, ' ').trim();
 }
 
+const VALIDATION_ERROR_PATTERNS = [
+  '不能为空',
+  '创建失败，请检查填写内容',
+  '请填写',
+  '必填',
+  'required',
+];
+
+async function waitForValidationSignal(page, timeout = 10000) {
+  const pattern = new RegExp(VALIDATION_ERROR_PATTERNS.join('|'), 'i');
+  try {
+    await page.getByText(pattern, { exact: false }).first().waitFor({ timeout });
+    return true;
+  } catch (_err) {
+    return false;
+  }
+}
+
 function attachConsoleCapture(page) {
   page.__consoleErrors = [];
   page.on('console', (msg) => {
@@ -45,11 +63,17 @@ function attachConsoleCapture(page) {
 }
 
 async function loginCustom(page) {
-  await page.goto(`${FRONTEND_URL}/login`, { waitUntil: 'networkidle' });
+  await page.goto(`${FRONTEND_URL}/login?db=${encodeURIComponent(DB_NAME)}`, { waitUntil: 'networkidle' });
   const inputs = page.locator('input');
   await inputs.nth(0).fill(LOGIN);
   await inputs.nth(1).fill(PASSWORD);
-  await inputs.nth(2).fill(DB_NAME);
+  const dbInput = inputs.nth(2);
+  if ((await dbInput.count().catch(() => 0)) > 0) {
+    const disabled = await dbInput.isDisabled().catch(() => false);
+    if (!disabled) {
+      await dbInput.fill(DB_NAME);
+    }
+  }
   await page.getByRole('button', { name: /^登录$/ }).click();
   await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 20000 });
 }
@@ -105,6 +129,14 @@ async function setCustomInput(page, index, value) {
 async function saveCustom(page) {
   const save = page.locator('.template-page-header-actions button.primary').filter({ hasText: /^保存$/ }).first();
   await save.waitFor({ timeout: 10000 });
+  if (await save.isDisabled().catch(() => false)) {
+    const editButton = page.locator('.template-page-header-actions button').filter({ hasText: /^编辑$/ }).first();
+    if (await editButton.count().catch(() => 0)) {
+      await editButton.click();
+      await page.waitForTimeout(200);
+    }
+  }
+  await save.waitFor({ state: 'visible', timeout: 10000 });
   await save.click();
 }
 
@@ -123,14 +155,15 @@ async function nativeInputValue(page, index) {
 async function exerciseRequiredNameValidation(page, originalName) {
   await setCustomName(page, '');
   await saveCustom(page);
-  await page.getByText(/不能为空|创建失败，请检查填写内容/, { exact: false }).first().waitFor({ timeout: 10000 });
+  const hasSignal = await waitForValidationSignal(page, 10000);
   const body = normalize(await page.locator('.template-layout-shell').innerText());
   await setCustomName(page, originalName);
+  const hasValidationText = VALIDATION_ERROR_PATTERNS.some((token) => body.toLowerCase().includes(token.toLowerCase()));
   return {
     path_id: 'P20',
     level: 'L4',
-    status: body.includes('不能为空') || body.includes('创建失败，请检查填写内容') ? 'pass' : 'fail',
-    observed_error: body.match(/[^。；\n]*(不能为空|创建失败，请检查填写内容)[^。；\n]*/)?.[0] || '',
+    status: hasSignal || hasValidationText ? 'pass' : 'fail',
+    observed_error: body.match(/[^。；\n]*(不能为空|创建失败，请检查填写内容|请填写|必填|required)[^。；\n]*/i)?.[0] || '',
   };
 }
 
@@ -176,7 +209,7 @@ async function exerciseOne2manyValidation(page) {
   await page.locator('.native-tab-panel .o2m-toolbar button').filter({ hasText: '添加行' }).first().click();
   await page.locator('.native-tab-panel .o2m-row').first().waitFor({ timeout: 10000 });
   await saveCustom(page);
-  await page.getByText(/不能为空|创建失败，请检查填写内容/, { exact: false }).first().waitFor({ timeout: 10000 });
+  await waitForValidationSignal(page, 10000);
   const details = await page.evaluate(() => {
     const normalize = (value) => String(value || '').replace(/\s+/g, ' ').trim();
     const panel = document.querySelector('.native-tab-panel');

@@ -56,7 +56,11 @@ class UiContractV2Handler(BaseIntentHandler):
         delivery_profile = resolve_delivery_profile(client_type, params)
         source_type = str(params.get("source_type") or params.get("sourceType") or "ui.contract").strip()
         if source_type == "scene_contract_v1":
-            return self._handle_scene_contract(params, client_type=client_type, delivery_profile=delivery_profile)
+            return self._handle_scene_contract(
+                params,
+                client_type=client_type,
+                delivery_profile=delivery_profile,
+            )
         if source_type != "ui.contract":
             return self._err(400, f"unsupported v2 source_type: {source_type}")
         limit_params, limit_error = self._trim_limit_params(params)
@@ -88,9 +92,12 @@ class UiContractV2Handler(BaseIntentHandler):
             or f"ui.contract.v2.{model or 'unknown'}.{view_type or 'form'}"
         )
 
-        ui_nested_data = ui_data.get("data") if isinstance(ui_data.get("data"), dict) else {}
-        source_contract = {
-            "ui_contract": ui_data,
+        source_contract = dict(ui_data) if isinstance(ui_data, dict) else {}
+        nested_ui_contract = source_contract.pop("ui_contract", {})
+        if isinstance(nested_ui_contract, dict):
+            source_contract.update(nested_ui_contract)
+        nested_data = ui_data.get("data") if isinstance(ui_data.get("data"), dict) else {}
+        source_contract.update({
             "model": model,
             "view_type": view_type,
             "record_id": params.get("record_id") or params.get("recordId") or ui_params.get("record_id") or ui_params.get("recordId"),
@@ -107,10 +114,12 @@ class UiContractV2Handler(BaseIntentHandler):
             "record": (
                 ui_data.get("record")
                 if isinstance(ui_data.get("record"), dict)
-                else (ui_nested_data.get("record") if isinstance(ui_nested_data.get("record"), dict) else {})
+                else nested_data.get("record")
+                if isinstance(nested_data.get("record"), dict)
+                else {}
             ),
             "source_meta": ui_meta,
-        }
+        })
         contract_v2 = assemble_unified_page_contract_v2(
             source_contract,
             source_type="ui.contract",
@@ -122,7 +131,6 @@ class UiContractV2Handler(BaseIntentHandler):
             client_type=client_type,
             delivery_profile=delivery_profile,
             **limit_params,
-            include_source_compat=client_type not in MOBILE_CLIENT_TYPES,
         )
 
         return IntentExecutionResult(
@@ -161,7 +169,6 @@ class UiContractV2Handler(BaseIntentHandler):
             client_type=client_type,
             delivery_profile=delivery_profile,
             **limit_params,
-            include_source_compat=client_type not in MOBILE_CLIENT_TYPES,
         )
         return IntentExecutionResult(
             ok=True,
@@ -284,6 +291,11 @@ class UiContractV2Handler(BaseIntentHandler):
                 ui_params["op"] = "action_open"
             elif ui_params.get("model") or ui_params.get("model_code") or ui_params.get("modelCode"):
                 ui_params["op"] = "model"
+        op = str(ui_params.get("op") or ui_params.get("subject") or "").strip().lower()
+        view_type = str(ui_params.get("view_type") or ui_params.get("viewType") or "").strip().lower()
+        record_id = ui_params.get("record_id") or ui_params.get("recordId") or ui_params.get("res_id") or ui_params.get("resId")
+        if op == "model" and view_type in {"form", ""} and record_id and "with_data" not in ui_params:
+            ui_params["with_data"] = True
         return ui_params
 
     def _envelope(self, result: Any) -> dict[str, Any]:

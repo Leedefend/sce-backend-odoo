@@ -201,6 +201,6 @@
     "snapshotId": "snapshot.project.contracting.001",
     "traceId": "trace.project.contracting.001",
     "requestId": "request.project.contracting.001",
-    "compat": {}
+    "sourceType": "ui.contract"
   }
 }

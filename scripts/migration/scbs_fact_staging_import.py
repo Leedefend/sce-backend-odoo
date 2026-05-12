@@ -41,6 +41,15 @@ def as_float(value) -> float:
     return float(text)
 
 
+def as_datetime(value) -> str | bool:
+    text = null_clean(value)
+    if not text:
+        return False
+    if "." in text:
+        text = text.split(".", 1)[0]
+    return text[:19]
+
+
 def repo_root() -> Path:
     env_root = os.getenv("MIGRATION_REPO_ROOT")
     candidates = [Path(env_root)] if env_root else []
@@ -80,6 +89,26 @@ def ensure_allowed_db() -> None:
 def read_rows(path: Path) -> list[dict[str, str]]:
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
         return [dict(row) for row in csv.DictReader(handle)]
+
+
+def source_creator_evidence(root: Path) -> dict[tuple[str, str], dict[str, str]]:
+    candidates = []
+    env_path = os.getenv("SCBS_SOURCE_CREATOR_CSV")
+    if env_path:
+        candidates.append(Path(env_path))
+    candidates.append(root / "artifacts/migration/scbs_source_creator_supplement_v1.csv")
+    evidence: dict[tuple[str, str], dict[str, str]] = {}
+    for path in candidates:
+        if not path.is_file():
+            continue
+        with path.open("r", encoding="utf-8-sig", newline="") as handle:
+            for row in csv.DictReader(handle):
+                source_table = clean(row.get("source_table"))
+                legacy_record_id = clean(row.get("legacy_record_id"))
+                if not source_table or not legacy_record_id:
+                    continue
+                evidence[(source_table, legacy_record_id)] = row
+    return evidence
 
 
 def write_csv(path: Path, fieldnames: list[str], rows: list[dict[str, object]]) -> None:
@@ -150,6 +179,7 @@ def main() -> None:
     preview_csv = artifacts / "scbs_fact_staging_import_preview_v1.csv"
 
     rows = read_rows(input_csv)
+    creator_evidence = source_creator_evidence(root)
     Staging = env["sc.legacy.scbs.fact.staging"]  # noqa: F821
     allowed_families = {"payment", "supplier_contract", "stock_in", "fund_daily"}
 
@@ -162,6 +192,7 @@ def main() -> None:
     for index, row in enumerate(rows, start=2):
         source_table = clean(row.get("source_table"))
         legacy_record_id = clean(row.get("legacy_record_id"))
+        source_creator_row = creator_evidence.get((source_table, legacy_record_id), {})
         fact_family = clean(row.get("fact_family"))
         if not source_table or not legacy_record_id:
             errors.append({"line": index, "error": "missing_source_identity"})
@@ -190,6 +221,10 @@ def main() -> None:
             "document_state": null_clean(row.get("document_state")),
             "deleted_flag": null_clean(row.get("deleted_flag")),
             "amount_total": as_float(row.get("amount_total")),
+            "creator_legacy_user_id": null_clean(row.get("creator_legacy_user_id"))
+            or null_clean(source_creator_row.get("creator_legacy_user_id")),
+            "creator_name": null_clean(row.get("creator_name")) or null_clean(source_creator_row.get("creator_name")),
+            "created_time": as_datetime(row.get("created_time")) or as_datetime(source_creator_row.get("created_time")),
             "legacy_xmid": legacy_xmid,
             "legacy_xmmc": null_clean(row.get("legacy_xmmc")),
             "business_entity_map_id": entity_mapping.id if entity_mapping else False,
@@ -212,6 +247,8 @@ def main() -> None:
                 "project_map_id": project_mapping.id if project_mapping else "",
                 "partner_map_id": partner_mapping.id if partner_mapping else "",
                 "amount_total": vals["amount_total"],
+                "creator_name": vals["creator_name"],
+                "created_time": vals["created_time"] or "",
             }
         )
 
@@ -244,6 +281,8 @@ def main() -> None:
             "project_map_id",
             "partner_map_id",
             "amount_total",
+            "creator_name",
+            "created_time",
         ],
         preview_rows,
     )
@@ -270,6 +309,7 @@ def main() -> None:
         "database": env.cr.dbname,  # noqa: F821
         "input_csv": str(input_csv),
         "source_rows": len(rows),
+        "source_creator_evidence_rows": len(creator_evidence),
         "preview_rows": len(preview_rows),
         "created": created,
         "updated": updated,

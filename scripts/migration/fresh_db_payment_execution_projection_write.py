@@ -53,7 +53,8 @@ env.cr.execute(  # noqa: F821
       handler_name, planned_amount, paid_amount, invoice_amount, currency_id,
       legacy_source_model, legacy_source_table, legacy_record_id,
       legacy_document_state, legacy_residual_reason, legacy_attachment_ref,
-      note, active, create_uid, write_uid, create_date, write_date
+      creator_legacy_user_id, creator_name, created_time, note, active,
+      create_uid, write_uid, create_date, write_date
     )
     SELECT
       COALESCE(NULLIF(r.document_no, ''), 'LEGACY-PAYMENT-' || r.legacy_record_id),
@@ -79,6 +80,9 @@ env.cr.execute(  # noqa: F821
       NULLIF(r.document_state, ''),
       NULLIF(r.residual_reason, ''),
       NULLIF(r.attachment_ref, ''),
+      NULLIF(r.creator_legacy_user_id, ''),
+      NULLIF(r.creator_name, ''),
+      r.created_time,
       CONCAT_WS(E'\n',
         '[migration:payment_execution] legacy_record_id=' || r.legacy_record_id,
         NULLIF(r.residual_reason, ''),
@@ -120,6 +124,9 @@ env.cr.execute(  # noqa: F821
       legacy_document_state = EXCLUDED.legacy_document_state,
       legacy_residual_reason = EXCLUDED.legacy_residual_reason,
       legacy_attachment_ref = EXCLUDED.legacy_attachment_ref,
+      creator_legacy_user_id = EXCLUDED.creator_legacy_user_id,
+      creator_name = EXCLUDED.creator_name,
+      created_time = EXCLUDED.created_time,
       note = EXCLUDED.note,
       active = EXCLUDED.active,
       write_uid = 1,

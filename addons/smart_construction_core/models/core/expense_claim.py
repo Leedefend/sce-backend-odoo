@@ -107,6 +107,9 @@ class ScExpenseClaim(models.Model):
     legacy_record_id = fields.Char(string="历史记录ID", index=True, readonly=True)
     legacy_document_no = fields.Char(string="历史单据号", index=True, readonly=True)
     legacy_document_state = fields.Char(string="历史状态", index=True, readonly=True)
+    creator_legacy_user_id = fields.Char(string="历史录入人ID", index=True, readonly=True)
+    creator_name = fields.Char(string="历史录入人", index=True, readonly=True)
+    created_time = fields.Datetime(string="历史录入时间", index=True, readonly=True)
     reject_reason = fields.Char(string="驳回原因", readonly=True, copy=False)
     note = fields.Text(string="备注")
     attachment_ids = fields.Many2many(
@@ -172,9 +175,23 @@ class ScExpenseClaim(models.Model):
 
     def write(self, vals):
         if any(rec.source_origin == "legacy" and rec.state == "legacy_confirmed" for rec in self):
-            allowed = {"payment_request_id", "partner_id", "note", "active", "write_uid", "write_date"}
-            if set(vals) - allowed:
-                raise UserError(_("历史迁移费用/保证金单据已确认，只允许补充支付锚点、往来单位和备注。"))
+            allowed = {
+                "payment_request_id",
+                "partner_id",
+                "note",
+                "active",
+                "creator_legacy_user_id",
+                "creator_name",
+                "created_time",
+                "write_uid",
+                "write_date",
+            }
+            blocked = set(vals) - allowed
+            for field_name in list(blocked):
+                if all(rec[field_name] == vals[field_name] for rec in self):
+                    blocked.remove(field_name)
+            if blocked:
+                raise UserError(_("历史迁移费用/保证金单据已确认，只允许补充支付锚点、往来单位、备注和历史录入审计事实。"))
         return super().write(vals)
 
     def action_submit(self):

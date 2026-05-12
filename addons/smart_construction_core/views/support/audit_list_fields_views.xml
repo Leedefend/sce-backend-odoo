@@ -279,6 +279,7 @@
         <field name="name">res.partner.audit.fields.view_sc_customer_partner_tree</field>
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="view_sc_customer_partner_tree" />
+        <field name="active" eval="False"/>
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
                 <field name="create_uid" />
@@ -290,6 +291,7 @@
         <field name="name">res.partner.audit.fields.view_sc_supplier_partner_tree</field>
         <field name="model">res.partner</field>
         <field name="inherit_id" ref="view_sc_supplier_partner_tree" />
+        <field name="active" eval="False"/>
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
                 <field name="create_uid" />
@@ -345,6 +347,7 @@
         <field name="name">sc.legacy.expense.deposit.fact.audit.fields.view_sc_legacy_expense_deposit_fact_tree</field>
         <field name="model">sc.legacy.expense.deposit.fact</field>
         <field name="inherit_id" ref="view_sc_legacy_expense_deposit_fact_tree" />
+        <field name="active">False</field>
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
                 <field name="create_uid" string="创建人" />
@@ -466,6 +469,7 @@
         <field name="name">sc.legacy.invoice.registration.line.audit.fields.view_sc_legacy_invoice_registration_line_tree</field>
         <field name="model">sc.legacy.invoice.registration.line</field>
         <field name="inherit_id" ref="view_sc_legacy_invoice_registration_line_tree" />
+        <field name="active">False</field>
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
                 <field name="create_uid" string="创建人" />
@@ -499,6 +503,7 @@
         <field name="name">sc.legacy.supplier.contract.pricing.fact.audit.fields.view_sc_legacy_supplier_contract_pricing_fact_tree</field>
         <field name="model">sc.legacy.supplier.contract.pricing.fact</field>
         <field name="inherit_id" ref="view_sc_legacy_supplier_contract_pricing_fact_tree" />
+        <field name="active">False</field>
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
                 <field name="create_uid" />
@@ -884,6 +889,7 @@
         <field name="name">sc.invoice.registration.audit.fields.view_sc_invoice_registration_tree</field>
         <field name="model">sc.invoice.registration</field>
         <field name="inherit_id" ref="view_sc_invoice_registration_tree" />
+        <field name="active">False</field>
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
                 <field name="create_uid" string="创建人" />
@@ -895,6 +901,7 @@
         <field name="name">sc.receipt.income.audit.fields.view_sc_receipt_income_tree</field>
         <field name="model">sc.receipt.income</field>
         <field name="inherit_id" ref="view_sc_receipt_income_tree" />
+        <field name="active">False</field>
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
                 <field name="create_uid" string="创建人" />
@@ -906,6 +913,7 @@
         <field name="name">payment.request.audit.fields.view_payment_request_tree</field>
         <field name="model">payment.request</field>
         <field name="inherit_id" ref="view_payment_request_tree" />
+        <field name="active">False</field>
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
                 <field name="create_uid" string="创建人" />
@@ -983,6 +991,7 @@
         <field name="name">sc.payment.execution.audit.fields.view_sc_payment_execution_tree</field>
         <field name="model">sc.payment.execution</field>
         <field name="inherit_id" ref="view_sc_payment_execution_tree" />
+        <field name="active">False</field>
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
                 <field name="create_uid" string="创建人" />
@@ -1137,6 +1146,7 @@
         <field name="name">project.project.audit.fields.view_project_my_list_tree</field>
         <field name="model">project.project</field>
         <field name="inherit_id" ref="view_project_my_list_tree" />
+        <field name="active">False</field>
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
                 <field name="create_uid" />
@@ -1159,6 +1169,7 @@
         <field name="name">sc.fund.account.operation.audit.fields.view_sc_fund_account_operation_tree</field>
         <field name="model">sc.fund.account.operation</field>
         <field name="inherit_id" ref="view_sc_fund_account_operation_tree" />
+        <field name="active">False</field>
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
                 <field name="create_uid" string="创建人" />
@@ -1181,6 +1192,7 @@
         <field name="name">sc.financing.loan.audit.fields.view_sc_financing_loan_tree</field>
         <field name="model">sc.financing.loan</field>
         <field name="inherit_id" ref="view_sc_financing_loan_tree" />
+        <field name="active">False</field>
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
                 <field name="create_uid" string="创建人" />
@@ -1357,6 +1369,7 @@
         <field name="name">sc.expense.claim.audit.fields.view_sc_expense_claim_tree</field>
         <field name="model">sc.expense.claim</field>
         <field name="inherit_id" ref="view_sc_expense_claim_tree" />
+        <field name="active">False</field>
         <field name="arch" type="xml">
             <xpath expr="//tree" position="inside">
                 <field name="create_uid" string="创建人" />

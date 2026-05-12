@@ -33,7 +33,7 @@ def write_json(path: Path, payload: dict[str, object]) -> None:
 
 def bulk_load(csv_path: Path, temp_table: str, columns: list[str]) -> None:
     env.cr.execute(f"DROP TABLE IF EXISTS {temp_table}")  # noqa: F821
-    env.cr.execute(f"CREATE TEMP TABLE {temp_table} ({', '.join(f'{col} text' for col in columns)}) ON COMMIT DROP")  # noqa: F821
+    env.cr.execute(f"CREATE TEMP TABLE {temp_table} ({', '.join(f'{col} text' for col in columns)})")  # noqa: F821
     with csv_path.open("r", encoding="utf-8-sig", newline="") as handle:
         env.cr.copy_expert(f"COPY {temp_table} ({', '.join(columns)}) FROM STDIN WITH CSV HEADER", handle)  # noqa: F821
 
@@ -77,8 +77,8 @@ before = env.cr.fetchone()[0]  # noqa: F821
 env.cr.execute(  # noqa: F821
     """
     DELETE FROM sc_legacy_business_fact_residual
-    WHERE source_database IN (
-      SELECT DISTINCT source_database FROM tmp_legacy_business_fact_residual
+    WHERE (source_database, source_table) IN (
+      SELECT DISTINCT source_database, source_table FROM tmp_legacy_business_fact_residual
     )
     """
 )
@@ -153,6 +153,18 @@ env.cr.execute(  # noqa: F821
     """
     SELECT source_database || ':' || source_table, COUNT(*)
     FROM sc_legacy_business_fact_residual
+    WHERE (source_database, source_table) IN (
+      SELECT DISTINCT source_database, source_table FROM tmp_legacy_business_fact_residual
+    )
+    GROUP BY source_database, source_table
+    ORDER BY source_database || ':' || source_table
+    """
+)
+batch_source_table_counts = dict(env.cr.fetchall())  # noqa: F821
+env.cr.execute(  # noqa: F821
+    """
+    SELECT source_database || ':' || source_table, COUNT(*)
+    FROM sc_legacy_business_fact_residual
     GROUP BY source_database, source_table
     ORDER BY source_database || ':' || source_table
     """
@@ -161,9 +173,9 @@ source_table_counts = dict(env.cr.fetchall())  # noqa: F821
 
 manifest_source_table_counts = manifest.get("source_table_counts") or {}
 source_table_count_mismatches = []
-for key in sorted(set(manifest_source_table_counts) | set(source_table_counts)):
+for key in sorted(set(manifest_source_table_counts) | set(batch_source_table_counts)):
     expected_count = int(manifest_source_table_counts.get(key) or 0)
-    actual_count = int(source_table_counts.get(key) or 0)
+    actual_count = int(batch_source_table_counts.get(key) or 0)
     if expected_count != actual_count:
         source_table_count_mismatches.append(
             {"source_table": key, "expected_rows": expected_count, "actual_rows": actual_count}
@@ -183,6 +195,8 @@ payload = {
     "family_counts": family_counts,
     "source_table_count": len(source_table_counts),
     "source_table_counts": source_table_counts,
+    "batch_source_table_count": len(batch_source_table_counts),
+    "batch_source_table_counts": batch_source_table_counts,
     "manifest_source_table_count": len(manifest_source_table_counts),
     "source_table_count_mismatch_count": len(source_table_count_mismatches),
     "source_table_count_mismatches": source_table_count_mismatches[:100],

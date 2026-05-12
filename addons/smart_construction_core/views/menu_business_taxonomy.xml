@@ -288,6 +288,8 @@
                 <field name="planned_amount" string="合同金额" sum="合同金额合计"/>
                 <field name="payment_method" string="经营方式"/>
                 <field name="handler_name" string="经办人"/>
+                <field name="creator_name" string="历史录入人"/>
+                <field name="created_time" string="历史录入时间"/>
                 <field name="attachment_ref" string="附件"/>
                 <field name="note" string="合同名称/外经证地址"/>
             </tree>
@@ -321,8 +323,8 @@
                         </group>
                         <group string="附件">
                             <field name="attachment_ref" string="附件"/>
-                            <field name="created_time" string="创建时间"/>
-                            <field name="creator_name" string="创建人"/>
+                            <field name="creator_name" string="历史录入人"/>
+                            <field name="created_time" string="历史录入时间"/>
                         </group>
                     </group>
                     <group>
@@ -399,8 +401,8 @@
         <field name="res_model">sc.expense.claim</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="smart_construction_core.view_sc_expense_claim_search"/>
-        <field name="domain">[('claim_type', '=', 'expense'), ('expense_type', '=', '还款登记')]</field>
-        <field name="context">{'default_claim_type': 'expense', 'default_expense_type': '还款登记', 'default_summary': '还款登记', 'search_default_active_rows': 1, 'search_default_group_project': 1}</field>
+        <field name="domain">[('claim_type', '=', 'project_company_repay'), ('expense_type', '=', '还款登记')]</field>
+        <field name="context">{'default_claim_type': 'project_company_repay', 'default_expense_type': '还款登记', 'default_summary': '还款登记', 'search_default_active_rows': 1, 'search_default_inflow': 1, 'search_default_group_project': 1}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
             ref('smart_construction_core.group_sc_cap_finance_read'),
@@ -653,7 +655,7 @@
         <field name="view_id" ref="smart_construction_core.view_sc_customer_partner_tree"/>
         <field name="search_view_id" ref="smart_construction_core.view_sc_customer_partner_search"/>
         <field name="domain">[('customer_rank', '&gt;', 0)]</field>
-        <field name="context">{'default_customer_rank': 1, 'default_is_company': True}</field>
+        <field name="context">{'default_customer_rank': 1, 'default_is_company': True, 'active_test': False}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contact_manager'))]"/>
     </record>
     <record id="action_sc_customer_partner_tree_view" model="ir.actions.act_window.view">
@@ -675,7 +677,7 @@
         <field name="view_id" ref="smart_construction_core.view_sc_supplier_partner_tree"/>
         <field name="search_view_id" ref="smart_construction_core.view_sc_supplier_partner_search"/>
         <field name="domain">[('supplier_rank', '&gt;', 0)]</field>
-        <field name="context">{'default_supplier_rank': 1, 'default_is_company': True}</field>
+        <field name="context">{'default_supplier_rank': 1, 'default_is_company': True, 'active_test': False}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contact_manager'))]"/>
     </record>
     <record id="action_sc_supplier_partner_tree_view" model="ir.actions.act_window.view">
@@ -1680,10 +1682,11 @@
               sequence="15"/>
     <record id="action_sc_supplier_contract_analysis_report" model="ir.actions.act_window">
         <field name="name">供货合同分析</field>
-        <field name="res_model">sc.legacy.purchase.contract.fact</field>
-        <field name="view_mode">tree,form</field>
-        <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_purchase_contract_fact_search"/>
-        <field name="context">{'search_default_group_partner_name': 1, 'create': False, 'edit': False, 'delete': False}</field>
+        <field name="res_model">sc.legacy.supplier.contract.pricing.fact</field>
+        <field name="view_mode">tree</field>
+        <field name="views" eval="[(ref('smart_construction_core.view_sc_legacy_supplier_contract_pricing_fact_tree'), 'tree')]"/>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_supplier_contract_pricing_fact_search"/>
+        <field name="context">{'search_default_group_partner': 1, 'create': False, 'edit': False, 'delete': False}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
             ref('smart_construction_core.group_sc_cap_contract_read'),
@@ -1945,6 +1948,7 @@
     <record id="menu_payment_ledger" model="ir.ui.menu">
         <field name="name">付款统计表</field>
         <field name="parent_id" ref="smart_construction_core.menu_sc_finance_analysis_group"/>
+        <field name="action" ref="smart_construction_core.action_sc_treasury_ledger_payment"/>
         <field name="sequence">40</field>
     </record>
     <record id="menu_sc_account_income_expense_summary" model="ir.ui.menu">

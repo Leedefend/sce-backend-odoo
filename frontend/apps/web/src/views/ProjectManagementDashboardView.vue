@@ -69,7 +69,6 @@ const status = ref<'loading' | 'error' | 'idle'>('loading');
 const raw = ref<DashboardResponse | null>(null);
 const errorTitle = ref('项目管理场景加载失败');
 const errorMessage = ref('');
-const autoProjectResolved = ref(false);
 
 function asText(value: unknown) {
   return String(value || '').trim();
@@ -80,44 +79,6 @@ function resolveProjectIdFromQuery() {
   const value = Array.isArray(rawId) ? rawId[0] : rawId;
   const id = Number(value || 0);
   return Number.isFinite(id) && id > 0 ? id : 0;
-}
-
-function parseProjectIdFromActionRow(row: Record<string, unknown>) {
-  const rawId = asText(row.id || '');
-  const route = asText(row.route || '');
-  const fromId = rawId.match(/project-(\d+)/i);
-  if (fromId && fromId[1]) {
-    const parsed = Number(fromId[1]);
-    if (Number.isFinite(parsed) && parsed > 0) return parsed;
-  }
-  const fromRoute = route.match(/[?&]project_id=(\d+)/i);
-  if (fromRoute && fromRoute[1]) {
-    const parsed = Number(fromRoute[1]);
-    if (Number.isFinite(parsed) && parsed > 0) return parsed;
-  }
-  return 0;
-}
-
-async function resolveFallbackProjectIdFromSystemInit() {
-  try {
-    const data = await intentRequest<Record<string, unknown>>({
-      intent: 'system.init',
-      params: {},
-      context: {
-        scene_key: 'project.management',
-        page_key: 'project.management.dashboard',
-      },
-    });
-    const projectActions = Array.isArray(data?.project_actions) ? data.project_actions : [];
-    for (const item of projectActions) {
-      if (!item || typeof item !== 'object') continue;
-      const projectId = parseProjectIdFromActionRow(item as Record<string, unknown>);
-      if (projectId > 0) return projectId;
-    }
-  } catch {
-    return 0;
-  }
-  return 0;
 }
 
 const workspaceContextQuery = computed<LocationQueryRaw>(() => (
@@ -157,6 +118,39 @@ function formatMetricValue(value: unknown, unit: string) {
   if (unit === '元') return formatAmountCN(num);
   if (unit === '%') return `${Math.round(num * 100) / 100}%`;
   return `${num}${unit || ''}`;
+}
+
+function metricStatusLabel(value: unknown) {
+  const status = asText(value || '').toLowerCase();
+  const map: Record<string, string> = {
+    good: '良好',
+    normal: '正常',
+    ready: '就绪',
+    warning: '需关注',
+    danger: '高风险',
+    error: '异常',
+    empty: '暂无数据',
+  };
+  return map[status] || asText(value || '--') || '--';
+}
+
+function metricStatusTone(value: unknown) {
+  const status = asText(value || '').toLowerCase();
+  if (['good', 'normal', 'ready'].includes(status)) return 'success';
+  if (['warning', 'empty'].includes(status)) return 'warning';
+  if (['danger', 'error'].includes(status)) return 'danger';
+  return 'neutral';
+}
+
+function metricItemLabel(value: unknown) {
+  const key = asText(value);
+  const map: Record<string, string> = {
+    progress: '执行进度',
+    cost: '成本状态',
+    payment: '付款状态',
+    risk: '风险状态',
+  };
+  return map[key] || key || '指标';
 }
 
 function normalizeZoneName(zoneKey: string) {
@@ -215,6 +209,20 @@ function cockpitZoneMeta(zoneName: string) {
       zone_type: 'supporting',
       priority: 60,
     },
+    board_summary: {
+      title: '项目总览',
+      description: '先从全局项目看板进入，再查看具体项目驾驶舱。',
+      display_mode: 'grid',
+      zone_type: 'primary',
+      priority: 120,
+    },
+    project_entries: {
+      title: '项目看板',
+      description: '选择一个项目进入该项目的指标、风险与进度视图。',
+      display_mode: 'grid',
+      zone_type: 'secondary',
+      priority: 110,
+    },
   };
   return map[zoneName] || {
     title: '',
@@ -231,6 +239,16 @@ function normalizeDatasetByBlock(block: RawBlock) {
   const data = (block.data && typeof block.data === 'object') ? block.data : {};
   const state = asText(block.state || '');
   if (blockType === 'record_summary') {
+    const summaryRows = Array.isArray(data.summary_rows)
+      ? data.summary_rows as Array<Record<string, unknown>>
+      : [];
+    if (summaryRows.length) {
+      return summaryRows.map((row, index) => ({
+        key: asText(row.key || `summary-${index + 1}`),
+        label: asText(row.label || row.key || `摘要 ${index + 1}`),
+        value: row.value ?? '--',
+      }));
+    }
     const semantic = data.semantic_summary && typeof data.semantic_summary === 'object' && !Array.isArray(data.semantic_summary)
       ? data.semantic_summary as Record<string, unknown>
       : null;
@@ -281,12 +299,27 @@ function normalizeDatasetByBlock(block: RawBlock) {
     const items = Array.isArray((data as Record<string, unknown>).items)
       ? (data as Record<string, unknown>).items as Array<Record<string, unknown>>
       : [];
+    if (items.some((item) => 'status' in item || 'explain' in item)) {
+      return items.map((item, index) => ({
+        key: asText(item.key || `metric-${index + 1}`),
+        label: asText(item.label || metricItemLabel(item.key)),
+        value: 'value' in item ? formatMetricValue(item.value, asText(item.unit || '')) : metricStatusLabel(item.status),
+        tone: asText(item.tone || metricStatusTone(item.status)),
+        hint: asText(item.explain || item.hint || ''),
+        action_key: asText(item.action_key || ''),
+      }));
+    }
     return items.map((item) => ({
       key: asText(item.key || ''),
       label: asText(item.label || item.key || '指标'),
       value: formatMetricValue(item.value, asText(item.unit || '')),
       tone: asNumber(item.value || 0) > 0 ? 'info' : 'neutral',
     }));
+  }
+  if (blockType === 'entry_grid') {
+    return Array.isArray((data as Record<string, unknown>).items)
+      ? (data as Record<string, unknown>).items
+      : [];
   }
   if (blockType === 'progress_summary') {
     const total = asNumber(data.task_total);
@@ -300,7 +333,6 @@ function normalizeDatasetByBlock(block: RawBlock) {
     const delayedTasks = asNumber(data.task_overdue);
     const delayedMilestones = asNumber(data.milestone_delay);
     const upcomingDays = asNumber(data.milestone_upcoming_days);
-    const criticalPathHealth = asText(data.critical_path_health || '--');
     return [
       { key: 'completion_percent', label: '总体完成率', value: completion, unit: '%' },
       { key: 'task_done_rate', label: '任务完成率', value: doneRate, unit: '%' },
@@ -311,7 +343,6 @@ function normalizeDatasetByBlock(block: RawBlock) {
       { key: 'delayed_tasks', label: '延期任务数', value: delayedTasks, unit: '项' },
       { key: 'delayed_milestones', label: '延期里程碑数', value: delayedMilestones, unit: '项' },
       { key: 'milestone_upcoming_days', label: '下一里程碑剩余天数', value: upcomingDays, unit: '天' },
-      { key: 'critical_path_health', label: '关键路径健康度', value: criticalPathHealth, unit: '' },
     ];
   }
   if (blockType === 'alert_panel') {
@@ -458,15 +489,90 @@ function resolveDashboardZones(payload: DashboardResponse | null) {
     });
   }
   const zonesRaw = payload?.zones && typeof payload.zones === 'object'
-    ? Object.values(payload.zones)
+    ? Object.entries(payload.zones).map(([zoneKey, zoneValue]) => normalizeRuntimeZone(zoneKey, zoneValue))
     : [];
   return zonesRaw as RawZone[];
+}
+
+function normalizeRuntimeZone(zoneKey: string, value: unknown): RawZone {
+  const zone = value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+  const normalizedKey = asText(zone.zone_key || zoneKey);
+  const existingBlocks = Array.isArray(zone.blocks)
+    ? zone.blocks.filter((block): block is RawBlock => Boolean(block && typeof block === 'object'))
+    : [];
+  if (existingBlocks.length) {
+    return {
+      zone_key: normalizedKey,
+      title: asText(zone.title || ''),
+      zone_type: asText(zone.zone_type || ''),
+      display_mode: asText(zone.display_mode || ''),
+      blocks: existingBlocks,
+    };
+  }
+
+  const blocks: RawBlock[] = [];
+  const directBlock = zone.block && typeof zone.block === 'object' && !Array.isArray(zone.block)
+    ? zone.block as RawBlock
+    : null;
+  if (directBlock) {
+    blocks.push(directBlock);
+  }
+
+  const project = zone.project && typeof zone.project === 'object' && !Array.isArray(zone.project)
+    ? zone.project as Record<string, unknown>
+    : null;
+  if (!blocks.length && project) {
+    blocks.push({
+      block_key: `block.project.${normalizedKey}`,
+      block_type: 'record_summary',
+      title: '项目概况',
+      state: 'ready',
+      data: { semantic_summary: project },
+    });
+  }
+
+  const items = Array.isArray(zone.items) ? zone.items as Array<Record<string, unknown>> : [];
+  if (!blocks.length && items.length) {
+    blocks.push({
+      block_key: `block.project.${normalizedKey}`,
+      block_type: 'metric_row',
+      title: '核心指标',
+      state: 'ready',
+      data: { items },
+    });
+  }
+
+  const summaryRows = Array.isArray(zone.summary_rows)
+    ? zone.summary_rows as Array<Record<string, unknown>>
+    : [];
+  if (!blocks.length && summaryRows.length) {
+    blocks.push({
+      block_key: `block.project.${normalizedKey}`,
+      block_type: 'record_summary',
+      title: cockpitZoneMeta(normalizeZoneName(normalizedKey)).title || '摘要',
+      state: 'ready',
+      data: { summary_rows: summaryRows },
+    });
+  }
+
+  return {
+    zone_key: normalizedKey,
+    title: asText(zone.title || ''),
+    zone_type: asText(zone.zone_type || ''),
+    display_mode: asText(zone.display_mode || ''),
+    blocks,
+  };
 }
 
 const orchestrationContract = computed<PageOrchestrationContract>(() => {
   const payload = raw.value || {};
   const projectName = asText((payload.project && typeof payload.project === 'object') ? (payload.project as Record<string, unknown>).name : '');
+  const projectId = resolveProjectIdFromQuery() || asNumber((payload.project as Record<string, unknown> | undefined)?.id);
   const projectHint = projectName ? ` · ${projectName}` : '';
+  const pageKey = asText(payload.page?.key || (projectId > 0 ? 'project.management.dashboard' : 'project.management.board'));
+  const isBoard = pageKey === 'project.management.board';
   const zonesRaw = resolveDashboardZones(payload);
   const zones: PageOrchestrationZone[] = zonesRaw.map((zone, idx) => {
     const zoneKey = asText(zone.zone_key || `zone_${idx + 1}`);
@@ -508,15 +614,17 @@ const orchestrationContract = computed<PageOrchestrationContract>(() => {
     contract_version: 'page_orchestration_v1',
     scene_key: asText(payload.scene?.key || 'project.management'),
     page: {
-      key: asText(payload.page?.key || 'project.management.dashboard'),
-      title: '项目驾驶舱',
-      subtitle: `聚焦指标、风险与进度${projectHint} · 项目ID ${resolveProjectIdFromQuery() || '-'}`,
-      page_type: 'dashboard',
-      layout_mode: 'dashboard',
+      key: pageKey,
+      title: isBoard ? '项目看板' : '项目驾驶舱',
+      subtitle: isBoard
+        ? '先选择项目，再进入该项目的指标、风险与进度视图'
+        : `聚焦指标、风险与进度${projectHint} · 项目ID ${projectId || '-'}`,
+      page_type: isBoard ? 'board' : 'dashboard',
+      layout_mode: isBoard ? 'board' : 'dashboard',
       header: {
         badges: [
-          { label: '管理驾驶舱', tone: 'info' },
-          { label: '7-block 合同兼容', tone: 'neutral' },
+          { label: isBoard ? '全局项目入口' : '管理驾驶舱', tone: 'info' },
+          { label: isBoard ? '项目选择' : '7-block 合同兼容', tone: 'neutral' },
         ],
       },
       global_actions: [{ key: 'refresh_page', label: '刷新数据', intent: 'api.data' }],
@@ -554,22 +662,6 @@ async function loadDashboard() {
       },
     });
     raw.value = (data && typeof data === 'object') ? data : {};
-    const resolvedProjectId = asNumber((raw.value?.project as Record<string, unknown> | undefined)?.id);
-    if (projectId <= 0 && resolvedProjectId > 0) {
-      const current = String(route.query.project_id || '');
-      const target = String(resolvedProjectId);
-      if (current !== target) {
-        await router.replace({ query: { ...route.query, project_id: target } });
-      }
-      autoProjectResolved.value = true;
-    }
-    if (projectId <= 0 && resolvedProjectId <= 0 && !autoProjectResolved.value) {
-      const fallbackProjectId = await resolveFallbackProjectIdFromSystemInit();
-      if (fallbackProjectId > 0) {
-        autoProjectResolved.value = true;
-        await router.replace({ query: { ...route.query, project_id: String(fallbackProjectId) } });
-      }
-    }
     status.value = 'idle';
   } catch (err) {
     status.value = 'error';
@@ -579,6 +671,19 @@ async function loadDashboard() {
 }
 
 async function handleBlockAction(event: PageBlockActionEvent) {
+  if (event.actionKey === 'open_project_dashboard') {
+    const projectId = asNumber(event.item?.project_id || event.item?.entry_id);
+    if (projectId > 0) {
+      await router.push({
+        path: '/s/project.management',
+        query: {
+          ...workspaceContextQuery.value,
+          project_id: String(projectId),
+        },
+      });
+      return;
+    }
+  }
   await executePageContractAction({
     actionKey: event.actionKey,
     router,
