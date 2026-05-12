@@ -124,13 +124,13 @@ const windowInfo = computed(() => {
 
 .group-summary-head p {
   margin: 0;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
   font-size: 13px;
   font-weight: 700;
 }
 
 .group-summary-head span {
-  color: #475569;
+  color: var(--sc-app-text-secondary);
   font-size: 12px;
 }
 
@@ -141,10 +141,10 @@ const windowInfo = computed(() => {
 }
 
 .group-summary-item {
-  border: 1px solid #bfdbfe;
+  border: 1px solid var(--sc-app-info-border);
   border-radius: 999px;
-  background: #ffffff;
-  color: #1e3a8a;
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-info-text);
   padding: 4px 10px;
   display: inline-flex;
   align-items: center;
@@ -153,25 +153,25 @@ const windowInfo = computed(() => {
 }
 
 .group-summary-item.active {
-  border-color: #2563eb;
-  background: #eff6ff;
+  border-color: var(--sc-semantic-surface-interactive);
+  background: var(--sc-app-info-bg);
 }
 
 .clear-btn {
-  border: 1px solid #bfdbfe;
+  border: 1px solid var(--sc-app-info-border);
   border-radius: 999px;
-  background: #fff;
-  color: #1d4ed8;
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-info-text);
   padding: 2px 8px;
   font-size: 12px;
   cursor: pointer;
 }
 
 .page-btn {
-  border: 1px solid #bfdbfe;
+  border: 1px solid var(--sc-app-info-border);
   border-radius: 999px;
-  background: #fff;
-  color: #1d4ed8;
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-info-text);
   padding: 2px 8px;
   font-size: 12px;
   cursor: pointer;

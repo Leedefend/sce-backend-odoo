@@ -90,9 +90,9 @@ function emitAction(item: MetricItem) {
 
 <style scoped>
 .block {
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  background: #fff;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  background: var(--sc-app-panel);
   padding: 12px;
   height: 100%;
 }
@@ -108,7 +108,7 @@ function emitAction(item: MetricItem) {
 }
 .metric-item {
   border-radius: 10px;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--sc-app-border);
   padding: 12px;
   min-height: 110px;
   text-align: left;
@@ -116,13 +116,13 @@ function emitAction(item: MetricItem) {
 }
 button.metric-item { cursor: pointer; }
 button.metric-item:hover {
-  border-color: #60a5fa;
-  box-shadow: 0 10px 20px rgba(37, 99, 235, 0.12);
+  border-color: var(--sc-semantic-surface-interactive);
+  box-shadow: 0 10px 20px var(--sc-app-focus-ring);
 }
 .metric-label {
   margin: 0;
   font-size: 13px;
-  color: #6b7280;
+  color: var(--sc-app-text-secondary);
 }
 .metric-value {
   margin: 8px 0 0;
@@ -132,11 +132,11 @@ button.metric-item:hover {
 .metric-meta {
   margin: 8px 0 0;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--sc-app-text-secondary);
 }
-.tone-success { background: #ecfdf5; }
-.tone-warning { background: #fffbeb; }
-.tone-danger { background: #fef2f2; }
-.tone-info { background: #eff6ff; }
-.tone-neutral { background: #f9fafb; }
+.tone-success { background: var(--sc-app-success-bg); }
+.tone-warning { background: var(--sc-app-warning-bg); }
+.tone-danger { background: var(--sc-app-danger-bg); }
+.tone-info { background: var(--sc-app-info-bg); }
+.tone-neutral { background: var(--sc-app-muted-bg); }
 </style>

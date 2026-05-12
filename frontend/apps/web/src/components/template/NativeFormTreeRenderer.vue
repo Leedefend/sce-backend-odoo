@@ -539,8 +539,9 @@ function closeMore(node: NativeFormLayoutNode) {
 .native-static-text {
   margin: 0;
   border-radius: 6px;
-  background: #eef6ff;
-  color: #1e3a5f;
+  border: 1px solid var(--sc-app-info-border);
+  background: var(--sc-app-info-bg);
+  color: var(--sc-app-info-text);
   padding: 10px 12px;
   font-size: 13px;
   line-height: 1.45;

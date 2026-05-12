@@ -319,10 +319,10 @@ function tagColorStyle(color: unknown) {
   display: none;
   max-height: 260px;
   overflow: auto;
-  border: 1px solid #d7deea;
+  border: 1px solid var(--sc-app-border-strong);
   border-radius: 6px;
-  background: #fff;
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
+  background: var(--sc-app-panel);
+  box-shadow: 0 12px 28px var(--sc-app-shadow);
 }
 
 .relation-select-editor--compact:focus-within .relation-combo-panel {
@@ -333,8 +333,8 @@ function tagColorStyle(color: unknown) {
 .relation-combo-action {
   min-height: 32px;
   border: 0;
-  border-bottom: 1px solid #eef2f7;
-  background: #fff;
+  border-bottom: 1px solid var(--sc-app-border);
+  background: var(--sc-app-panel);
   padding: 6px 10px;
   text-align: left;
   cursor: pointer;
@@ -346,20 +346,20 @@ function tagColorStyle(color: unknown) {
 }
 
 .relation-combo-option {
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
 }
 
 .relation-combo-action {
-  color: #0f766e;
-  border-top: 1px solid #e5e7eb;
+  color: var(--sc-semantic-surface-interactive);
+  border-top: 1px solid var(--sc-app-border);
 }
 
 .relation-combo-option:hover {
-  background: #eef6ff;
+  background: var(--sc-app-hover-bg);
 }
 
 .relation-combo-action:hover {
-  background: #ecfdf5;
+  background: var(--sc-app-hover-bg);
 }
 
 .relation-tags-control {
@@ -370,9 +370,9 @@ function tagColorStyle(color: unknown) {
   gap: 6px;
   min-height: 40px;
   padding: 5px 8px;
-  border: 1px solid #d7deea;
+  border: 1px solid var(--sc-app-border-strong);
   border-radius: 6px;
-  background: #fff;
+  background: var(--sc-app-input-bg);
 }
 
 .relation-tags-input {
@@ -380,7 +380,7 @@ function tagColorStyle(color: unknown) {
   min-width: 120px;
   border: 0;
   outline: none;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
   font-size: 14px;
   line-height: 1.4;
 }
@@ -394,10 +394,10 @@ function tagColorStyle(color: unknown) {
   display: none;
   max-height: 260px;
   overflow: auto;
-  border: 1px solid #d7deea;
+  border: 1px solid var(--sc-app-border-strong);
   border-radius: 6px;
-  background: #fff;
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
+  background: var(--sc-app-panel);
+  box-shadow: 0 12px 28px var(--sc-app-shadow);
 }
 
 .relation-tags-control:focus-within .relation-tag-dropdown {
@@ -412,10 +412,10 @@ function tagColorStyle(color: unknown) {
   gap: 7px;
   min-height: 32px;
   border: 0;
-  border-bottom: 1px solid #eef2f7;
-  background: #fff;
+  border-bottom: 1px solid var(--sc-app-border);
+  background: var(--sc-app-panel);
   padding: 6px 10px;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
   text-align: left;
   cursor: pointer;
   font-size: 12px;
@@ -423,25 +423,25 @@ function tagColorStyle(color: unknown) {
 }
 
 .relation-tag-option:hover {
-  background: #eef6ff;
+  background: var(--sc-app-hover-bg);
 }
 
 .relation-tag-actions {
   display: grid;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--sc-app-border);
 }
 
 .relation-tag-action {
-  color: #0f766e;
+  color: var(--sc-semantic-surface-interactive);
 }
 
 .relation-tag-hint {
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
   cursor: default;
 }
 
 .relation-tag-action:hover {
-  background: #ecfdf5;
+  background: var(--sc-app-hover-bg);
 }
 
 .relation-tag-swatch {
@@ -454,15 +454,15 @@ function tagColorStyle(color: unknown) {
 }
 
 .relation-choice-panel {
-  border: 1px solid #d7deea;
+  border: 1px solid var(--sc-app-border-strong);
   border-radius: 6px;
-  background: #fff;
+  background: var(--sc-app-panel);
 }
 
 .relation-choice-panel > summary {
   min-height: 32px;
   padding: 7px 10px;
-  color: #334155;
+  color: var(--sc-app-text-primary);
   cursor: pointer;
   font-size: 12px;
   font-weight: 600;
@@ -483,10 +483,10 @@ function tagColorStyle(color: unknown) {
   gap: 6px;
   min-height: 28px;
   padding: 5px 8px;
-  border: 1px solid #d7deea;
+  border: 1px solid var(--sc-app-border-strong);
   border-radius: 6px;
-  background: #fff;
-  color: #334155;
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-primary);
   font-size: 12px;
   line-height: 1.35;
 }
@@ -506,7 +506,7 @@ function tagColorStyle(color: unknown) {
   padding: 3px 8px;
   border-radius: 4px;
   background: var(--tag-bg, #eef2f7);
-  color: #334155;
+  color: var(--sc-app-text-primary);
   font-size: 12px;
   line-height: 1.35;
   cursor: pointer;
@@ -520,14 +520,15 @@ function tagColorStyle(color: unknown) {
   font-size: 12px;
   padding: 4px 8px;
   border-radius: 999px;
-  border: 1px solid #cbd5e1;
-  background: #fff;
+  border: 1px solid var(--sc-app-border-strong);
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-primary);
   cursor: pointer;
 }
 
 .meta {
   margin: 1px 0;
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
   font-size: 12px;
 }
 
@@ -544,23 +545,23 @@ function tagColorStyle(color: unknown) {
 
 .o2m-summary {
   font-size: 12px;
-  color: #475569;
+  color: var(--sc-app-text-secondary);
 }
 
 .o2m-header {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
   gap: 1px;
-  border: 1px solid #d8dee9;
-  background: #d8dee9;
+  border: 1px solid var(--sc-app-border);
+  background: var(--sc-app-border);
   overflow: hidden;
 }
 
 .o2m-header-cell {
   min-height: 28px;
   padding: 6px 8px;
-  background: #f8fafc;
-  color: #475569;
+  background: var(--sc-app-muted-bg);
+  color: var(--sc-app-text-secondary);
   font-size: 12px;
   line-height: 1.35;
   font-weight: 600;
@@ -577,13 +578,13 @@ function tagColorStyle(color: unknown) {
   gap: 8px;
   align-items: center;
   padding: 4px 0;
-  border-bottom: 1px solid #eef2f7;
+  border-bottom: 1px solid var(--sc-app-border);
 }
 
 .o2m-row-state {
   margin: 0;
   font-size: 12px;
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
   white-space: nowrap;
 }
 
@@ -611,14 +612,14 @@ function tagColorStyle(color: unknown) {
 .o2m-row-error {
   grid-column: 1 / -1;
   margin: 0;
-  color: #b91c1c;
+  color: var(--sc-app-danger-text);
   font-size: 12px;
 }
 
 .o2m-row-hint {
   grid-column: 1 / -1;
   margin: 0;
-  color: #92400e;
+  color: var(--sc-app-warning-text);
   font-size: 12px;
 }
 
@@ -627,7 +628,7 @@ function tagColorStyle(color: unknown) {
 }
 
 .input {
-  border: 1px solid #e9ebef;
+  border: 1px solid var(--sc-app-border-strong);
   border-radius: 8px;
   padding: 8px 12px;
   height: 40px;
@@ -636,25 +637,25 @@ function tagColorStyle(color: unknown) {
   min-width: 0;
   font-size: 14px;
   line-height: 1.35;
-  color: #0f172a;
-  background: #ffffff;
+  color: var(--sc-app-text-primary);
+  background: var(--sc-app-input-bg);
   box-sizing: border-box;
   transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
 }
 
 .input::placeholder {
-  color: #94a3b8;
+  color: var(--sc-app-text-secondary);
 }
 
 .input:focus {
   outline: none;
-  border-color: #94a3b8;
-  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.2);
+  border-color: var(--sc-semantic-surface-interactive);
+  box-shadow: 0 0 0 3px var(--sc-app-focus-ring);
 }
 
 .input:disabled {
-  color: #64748b;
-  background: #f8fafc;
+  color: var(--sc-app-text-secondary);
+  background: var(--sc-app-muted-bg);
   cursor: not-allowed;
 }
 
@@ -697,8 +698,8 @@ select.input {
 .ghost {
   padding: 8px 10px;
   border-radius: 8px;
-  border: 1px solid #e5e7eb;
-  background: #fff;
+  border: 1px solid var(--sc-app-border);
+  background: var(--sc-app-panel);
   font-weight: 500;
   color: #6b7280;
 }

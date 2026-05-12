@@ -71,14 +71,14 @@ const summaryText = computed(() => {
 </script>
 
 <style scoped>
-.block { border: 1px solid #e5e7eb; border-radius: 12px; background: #fff; padding: 12px; height: 100%; }
+.block { border: 1px solid var(--sc-app-border); border-radius: 8px; background: var(--sc-app-panel); padding: 12px; height: 100%; }
 .block-header h4 { margin: 0 0 10px; font-size: 15px; font-weight: 600; }
-.summary-text { margin: 0 0 10px; color: #475569; font-size: 13px; line-height: 1.5; }
+.summary-text { margin: 0 0 10px; color: var(--sc-app-text-secondary); font-size: 13px; line-height: 1.5; }
 .progress-list { display: grid; gap: 10px; }
-.progress-item { border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px; background: #f8fbff; min-height: 66px; }
-.progress-item.kind-count { background: #fff7ed; border-color: #fed7aa; }
+.progress-item { border: 1px solid var(--sc-app-border); border-radius: 8px; padding: 10px; background: var(--sc-app-info-bg); min-height: 66px; }
+.progress-item.kind-count { background: var(--sc-app-warning-bg); border-color: var(--sc-app-warning-border); }
 .progress-line { display: flex; justify-content: space-between; font-size: 13px; }
-.progress-track { margin-top: 8px; width: 100%; height: 9px; background: #dbeafe; border-radius: 999px; overflow: hidden; }
-.progress-fill { height: 100%; background: linear-gradient(90deg, #60a5fa 0%, #2563eb 100%); }
-.empty-text { margin: 6px 0 0; color: #6b7280; font-size: 13px; }
+.progress-track { margin-top: 8px; width: 100%; height: 9px; background: var(--sc-app-muted-bg); border-radius: 999px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--sc-semantic-surface-interactive); }
+.empty-text { margin: 6px 0 0; color: var(--sc-app-text-secondary); font-size: 13px; }
 </style>

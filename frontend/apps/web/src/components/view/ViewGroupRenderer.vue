@@ -59,10 +59,10 @@ const subGroups = computed(() => (Array.isArray(props.group.sub_groups) ? props.
 
 <style scoped>
 .view-group {
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  border-radius: 12px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
   padding: 16px;
-  background: #f8fafc;
+  background: var(--sc-app-muted-bg);
 }
 
 .view-grid {

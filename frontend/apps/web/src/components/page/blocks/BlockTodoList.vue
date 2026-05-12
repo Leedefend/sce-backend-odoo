@@ -123,9 +123,9 @@ function sourceLabel(value: unknown) {
 
 <style scoped>
 .block {
-  border: 1px solid #dbe3ee;
-  border-radius: 14px;
-  background: #fff;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  background: var(--sc-app-panel);
   padding: 14px;
   height: 100%;
 }
@@ -146,18 +146,19 @@ function sourceLabel(value: unknown) {
 }
 .block-action-btn,
 .todo-open-btn {
-  border: 1px solid #d1d5db;
-  border-radius: 10px;
-  background: #fff;
+  border: 1px solid var(--sc-app-border-strong);
+  border-radius: 8px;
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-primary);
   padding: 7px 12px;
   cursor: pointer;
   font-weight: 600;
 }
 
 .todo-open-btn {
-  border-color: #2563eb;
-  background: #2563eb;
-  color: #ffffff;
+  border-color: var(--sc-semantic-surface-interactive);
+  background: var(--sc-semantic-surface-interactive);
+  color: var(--sc-semantic-text-on-interactive);
   font-weight: 600;
 }
 .todo-list {
@@ -168,7 +169,7 @@ function sourceLabel(value: unknown) {
 }
 
 .todo-item {
-  border: 1px solid #dbeafe;
+  border: 1px solid var(--sc-app-info-border);
   border-left-width: 5px;
   border-radius: 12px;
   padding: 12px;
@@ -182,11 +183,11 @@ function sourceLabel(value: unknown) {
   cursor: pointer;
 }
 .todo-item.actionable:hover {
-  border-color: #93c5fd;
-  background: #eff6ff;
+  border-color: var(--sc-app-info-border);
+  background: var(--sc-app-info-bg);
 }
 .todo-item.actionable:focus-visible {
-  outline: 2px solid #2563eb;
+  outline: 2px solid var(--sc-semantic-surface-interactive);
   outline-offset: 2px;
 }
 .todo-title {
@@ -200,19 +201,19 @@ function sourceLabel(value: unknown) {
 .todo-desc {
   margin: 6px 0 0;
   font-size: 13px;
-  color: #6b7280;
+  color: var(--sc-app-text-secondary);
 }
 .todo-meta {
   margin: 6px 0 0;
   font-size: 13px;
-  color: #334155;
+  color: var(--sc-app-text-primary);
   font-weight: 600;
 }
 .todo-urgent {
   font-size: 11px;
-  color: #b91c1c;
-  border: 1px solid #fecaca;
-  background: #fff1f2;
+  color: var(--sc-app-danger-text);
+  border: 1px solid var(--sc-app-danger-border);
+  background: var(--sc-app-danger-bg);
   border-radius: 999px;
   padding: 1px 6px;
 }
@@ -220,28 +221,28 @@ function sourceLabel(value: unknown) {
   font-size: 11px;
   border-radius: 999px;
   padding: 1px 6px;
-  border: 1px solid #cbd5e1;
-  color: #475569;
-  background: #f8fafc;
+  border: 1px solid var(--sc-app-border);
+  color: var(--sc-app-text-secondary);
+  background: var(--sc-app-muted-bg);
 }
 .source-business {
-  border-color: #86efac;
-  color: #166534;
-  background: #f0fdf4;
+  border-color: var(--sc-app-success-border);
+  color: var(--sc-app-success-text);
+  background: var(--sc-app-success-bg);
 }
 .source-capability_fallback {
-  border-color: #fde68a;
-  color: #92400e;
-  background: #fffbeb;
+  border-color: var(--sc-app-warning-border);
+  color: var(--sc-app-warning-text);
+  background: var(--sc-app-warning-bg);
 }
-.tone-warning { background: #fffaf0; border-left-color: #f59e0b; }
-.tone-danger { background: #fff5f5; border-left-color: #ef4444; }
-.tone-info { background: #f4f8ff; border-left-color: #3b82f6; }
-.tone-success { background: #f0fdf4; border-left-color: #16a34a; }
-.tone-neutral { background: #f8fafc; border-left-color: #94a3b8; }
+.tone-warning { background: var(--sc-app-warning-bg); border-left-color: var(--sc-app-warning-text); }
+.tone-danger { background: var(--sc-app-danger-bg); border-left-color: var(--sc-app-danger-text); }
+.tone-info { background: var(--sc-app-info-bg); border-left-color: var(--sc-app-info-text); }
+.tone-success { background: var(--sc-app-success-bg); border-left-color: var(--sc-app-success-text); }
+.tone-neutral { background: var(--sc-app-muted-bg); border-left-color: var(--sc-app-border-strong); }
 .todo-empty {
   margin: 8px 0 0;
-  color: #6b7280;
+  color: var(--sc-app-text-secondary);
   font-size: 13px;
 }
 </style>

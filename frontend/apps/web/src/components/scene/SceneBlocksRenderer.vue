@@ -323,9 +323,9 @@ function emitAction(block: SceneBlock, action: SceneBlockAction) {
   min-width: 0;
 }
 .scene-block {
-  border: 1px solid #d8e0ea;
+  border: 1px solid var(--sc-app-border);
   border-radius: 8px;
-  background: #fff;
+  background: var(--sc-app-panel);
   padding: 12px 14px;
 }
 .scene-block__header {
@@ -337,7 +337,7 @@ function emitAction(block: SceneBlock, action: SceneBlockAction) {
 .scene-block__eyebrow {
   margin: 0;
   font-size: 12px;
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
 }
 .scene-block__title {
   margin: 2px 0 0;
@@ -347,7 +347,7 @@ function emitAction(block: SceneBlock, action: SceneBlockAction) {
 }
 .scene-block__badge {
   font-size: 12px;
-  color: #b45309;
+  color: var(--sc-app-warning-text);
 }
 .scene-block__body {
   margin-top: 10px;
@@ -365,7 +365,7 @@ function emitAction(block: SceneBlock, action: SceneBlockAction) {
 .scene-block__hint {
   margin: 0;
   font-size: 13px;
-  color: #475569;
+  color: var(--sc-app-text-secondary);
 }
 .scene-block__chips {
   display: flex;
@@ -374,32 +374,32 @@ function emitAction(block: SceneBlock, action: SceneBlockAction) {
 }
 .scene-block__chip {
   padding: 4px 10px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--sc-app-border-strong);
   border-radius: 999px;
   font-size: 12px;
-  color: #0f172a;
-  background: #f8fafc;
+  color: var(--sc-app-text-primary);
+  background: var(--sc-app-muted-bg);
   cursor: pointer;
 }
 .scene-block__chip--secondary {
   border-style: dashed;
 }
 .scene-block__chip--status {
-  border-color: #94a3b8;
-  background: #eef2ff;
+  border-color: var(--sc-app-info-border);
+  background: var(--sc-app-info-bg);
 }
 .scene-block__button {
   padding: 6px 12px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--sc-app-border-strong);
   border-radius: 999px;
-  background: #fff;
-  color: #0f172a;
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-primary);
   font-size: 13px;
   cursor: pointer;
 }
 .scene-block__chip--plain {
   cursor: default;
-  border-color: #d8e0ea;
+  border-color: var(--sc-app-border);
 }
 .scene-block__kv-grid {
   display: grid;
@@ -409,19 +409,19 @@ function emitAction(block: SceneBlock, action: SceneBlockAction) {
 .scene-block__kv-item {
   margin: 0;
   padding: 8px 10px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--sc-app-border);
   border-radius: 6px;
-  background: #f8fafc;
+  background: var(--sc-app-muted-bg);
 }
 .scene-block__kv-key {
   display: block;
   font-size: 12px;
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
 }
 .scene-block__kv-val {
   display: block;
   margin-top: 2px;
   font-size: 14px;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
 }
 </style>

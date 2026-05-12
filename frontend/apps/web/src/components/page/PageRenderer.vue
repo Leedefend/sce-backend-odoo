@@ -284,10 +284,10 @@ function onZoneAction(payload: PageBlockActionEvent) {
   flex-wrap: wrap;
   gap: 12px;
   padding: 12px 14px;
-  border: 1px solid #d8e0ea;
+  border: 1px solid var(--sc-app-border);
   border-radius: 8px;
-  background: #ffffff;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+  background: var(--sc-app-panel);
+  box-shadow: 0 1px 2px var(--sc-app-shadow);
 }
 .page-renderer-title {
   min-width: 0;
@@ -302,7 +302,7 @@ function onZoneAction(payload: PageBlockActionEvent) {
 }
 .page-renderer-subtitle {
   margin: 4px 0 0;
-  color: #475569;
+  color: var(--sc-app-text-secondary);
   font-size: 13px;
 }
 .page-renderer-tools {
@@ -322,7 +322,7 @@ function onZoneAction(payload: PageBlockActionEvent) {
 .page-renderer-badge {
   padding: 4px 8px;
   border-radius: 999px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--sc-app-border);
   font-size: 12px;
   font-weight: 600;
   line-height: 1.2;
@@ -333,9 +333,10 @@ function onZoneAction(payload: PageBlockActionEvent) {
   gap: 6px;
 }
 .page-renderer-action {
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--sc-app-border-strong);
   border-radius: 7px;
-  background: #fff;
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-primary);
   padding: 5px 10px;
   font-size: 12px;
   font-weight: 600;
@@ -345,22 +346,22 @@ function onZoneAction(payload: PageBlockActionEvent) {
   overflow-wrap: anywhere;
 }
 .page-renderer-action:hover {
-  border-color: #2563eb;
-  color: #1d4ed8;
-  background: #eff6ff;
+  border-color: var(--sc-semantic-surface-interactive);
+  color: var(--sc-app-info-text);
+  background: var(--sc-app-info-bg);
 }
-.tone-success { background: #ecfdf5; color: #047857; }
-.tone-warning { background: #fffbeb; color: #b45309; }
-.tone-danger { background: #fef2f2; color: #b91c1c; }
-.tone-info { background: #eff6ff; color: #1d4ed8; }
-.tone-neutral { background: #f9fafb; color: #374151; }
+.tone-success { background: var(--sc-app-success-bg); color: var(--sc-app-success-text); }
+.tone-warning { background: var(--sc-app-warning-bg); color: var(--sc-app-warning-text); }
+.tone-danger { background: var(--sc-app-danger-bg); color: var(--sc-app-danger-text); }
+.tone-info { background: var(--sc-app-info-bg); color: var(--sc-app-info-text); }
+.tone-neutral { background: var(--sc-app-subtle-bg); color: var(--sc-app-text-primary); }
 
 .page-renderer--my-work {
   max-width: min(1440px, 100%);
 }
 .page-renderer--my-work .page-renderer-header {
-  border-left: 4px solid #2563eb;
-  background: #fbfdff;
+  border-left: 4px solid var(--sc-semantic-surface-interactive);
+  background: var(--sc-app-panel);
 }
 .page-renderer--my-work :deep(.zone-renderer) {
   border-radius: 8px;
@@ -407,7 +408,7 @@ function onZoneAction(payload: PageBlockActionEvent) {
   min-height: 76px;
   padding: 10px;
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--sc-app-panel);
 }
 .page-renderer--my-work :deep(.metric-value) {
   margin-top: 4px;
@@ -453,7 +454,7 @@ function onZoneAction(payload: PageBlockActionEvent) {
   min-height: 72px;
   border-radius: 8px;
   padding: 10px;
-  background: #ffffff;
+  background: var(--sc-app-panel);
   transform: none;
 }
 .page-renderer--my-work :deep(.entry-title) {
@@ -476,7 +477,7 @@ function onZoneAction(payload: PageBlockActionEvent) {
 .page-renderer--my-work :deep(.accordion-item) {
   border-radius: 8px;
   padding: 8px 10px;
-  background: #ffffff;
+  background: var(--sc-app-panel);
 }
 .page-renderer--my-work :deep(.feed-title),
 .page-renderer--my-work :deep(.accordion-title) {
@@ -498,7 +499,7 @@ function onZoneAction(payload: PageBlockActionEvent) {
 }
 .page-renderer--role-home .page-renderer-header {
   border-left: 4px solid #0f766e;
-  background: #fbfefd;
+  background: var(--sc-app-panel);
   padding: 10px 12px;
 }
 .page-renderer--role-home .page-renderer-header h2 {
@@ -521,15 +522,15 @@ function onZoneAction(payload: PageBlockActionEvent) {
   margin-top: 10px;
 }
 .page-renderer--role-home :deep(.zone-key-hero) {
-  border-color: #99f6e4;
-  background: #f7fffd;
+  border-color: var(--sc-app-success-border);
+  background: var(--sc-app-success-bg);
 }
 .page-renderer--role-home :deep(.zone-key-hero .zone-renderer-body) {
   margin-top: 8px;
 }
 .page-renderer--role-home :deep(.zone-key-hero .block) {
-  border-color: #ccfbf1;
-  background: #ffffff;
+  border-color: var(--sc-app-success-border);
+  background: var(--sc-app-panel);
 }
 .page-renderer--role-home :deep(.summary-grid) {
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -538,14 +539,14 @@ function onZoneAction(payload: PageBlockActionEvent) {
 .page-renderer--role-home :deep(.summary-item) {
   border-radius: 8px;
   min-height: 66px;
-  background: #f8fafc;
+  background: var(--sc-app-muted-bg);
 }
 .page-renderer--role-home :deep(.summary-value) {
   font-size: 15px;
 }
 .page-renderer--role-home :deep(.zone-key-today_focus) {
-  border-color: #bfdbfe;
-  background: #ffffff;
+  border-color: var(--sc-app-info-border);
+  background: var(--sc-app-panel);
   padding: 12px;
 }
 .page-renderer--role-home :deep(.zone-key-today_focus .zone-renderer-header h3) {
@@ -619,7 +620,7 @@ function onZoneAction(payload: PageBlockActionEvent) {
   min-height: 82px;
   border-radius: 8px;
   padding: 10px;
-  background: #ffffff;
+  background: var(--sc-app-panel);
   transform: none;
 }
 .page-renderer--role-home :deep(.entry-meta) {
@@ -639,7 +640,7 @@ function onZoneAction(payload: PageBlockActionEvent) {
 }
 .page-renderer--company-dashboard .page-renderer-header {
   border-left: 4px solid #0f766e;
-  background: #fbfefd;
+  background: var(--sc-app-panel);
 }
 .page-renderer--company-dashboard :deep(.zone-renderer) {
   border: 0;
@@ -659,8 +660,8 @@ function onZoneAction(payload: PageBlockActionEvent) {
 }
 .page-renderer--company-dashboard :deep(.block-type-metric .block) {
   min-height: 112px;
-  border-color: #d8e0ea;
-  background: #ffffff;
+  border-color: var(--sc-app-border);
+  background: var(--sc-app-panel);
   padding: 14px;
 }
 .page-renderer--company-dashboard :deep(.block-type-alert_panel) {
@@ -701,7 +702,7 @@ function onZoneAction(payload: PageBlockActionEvent) {
   min-height: 62px;
   border-radius: 8px;
   padding: 10px;
-  background: #ffffff;
+  background: var(--sc-app-panel);
   transform: none;
 }
 .page-renderer--company-dashboard :deep(.alert-list) {
@@ -726,7 +727,7 @@ function onZoneAction(payload: PageBlockActionEvent) {
 }
 .page-renderer--company-dashboard :deep(.summary-item) {
   border-radius: 8px;
-  background: #ffffff;
+  background: var(--sc-app-panel);
 }
 
 @media (max-width: 1200px) {

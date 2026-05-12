@@ -106,9 +106,9 @@ function emitAction(actionKey: string, item: Record<string, unknown>) {
 
 <style scoped>
 .block {
-  border: 1px solid #dbe3ee;
-  border-radius: 14px;
-  background: #fff;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  background: var(--sc-app-panel);
   padding: 14px;
   height: 100%;
 }
@@ -128,9 +128,10 @@ function emitAction(actionKey: string, item: Record<string, unknown>) {
   gap: 6px;
 }
 .block-action-btn {
-  border: 1px solid #d1d5db;
-  border-radius: 10px;
-  background: #fff;
+  border: 1px solid var(--sc-app-border-strong);
+  border-radius: 8px;
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-primary);
   padding: 6px 10px;
   cursor: pointer;
   font-weight: 600;
@@ -142,9 +143,9 @@ function emitAction(actionKey: string, item: Record<string, unknown>) {
   gap: 12px;
 }
 .entry-item {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--sc-app-border);
   border-radius: 12px;
-  background: linear-gradient(180deg, #f8fbff 0%, #f9fafb 100%);
+  background: var(--sc-app-panel);
   padding: 14px;
   text-align: left;
   cursor: pointer;
@@ -156,15 +157,15 @@ article.entry-item {
 }
 
 .entry-item:hover {
-  border-color: #60a5fa;
-  box-shadow: 0 14px 28px rgba(37, 99, 235, 0.14);
+  border-color: var(--sc-semantic-surface-interactive);
+  box-shadow: 0 14px 28px var(--sc-app-focus-ring);
   transform: translateY(-2px);
 }
 .entry-item--readonly {
   cursor: default;
 }
 .entry-item--readonly:hover {
-  border-color: #e5e7eb;
+  border-color: var(--sc-app-border);
   box-shadow: none;
   transform: none;
 }
@@ -176,7 +177,7 @@ article.entry-item {
 .entry-hint {
   margin: 6px 0 0;
   font-size: 13px;
-  color: #6b7280;
+  color: var(--sc-app-text-secondary);
 }
 .entry-meta {
   margin-top: 10px;
@@ -188,13 +189,13 @@ article.entry-item {
   font-size: 11px;
   border-radius: 999px;
   padding: 2px 8px;
-  border: 1px solid #bfdbfe;
-  color: #1d4ed8;
-  background: #eff6ff;
+  border: 1px solid var(--sc-app-info-border);
+  color: var(--sc-app-info-text);
+  background: var(--sc-app-info-bg);
 }
 .entry-empty {
   margin: 8px 0 0;
-  color: #6b7280;
+  color: var(--sc-app-text-secondary);
   font-size: 13px;
 }
 </style>

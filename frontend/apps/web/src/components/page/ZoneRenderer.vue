@@ -50,11 +50,11 @@ function onBlockAction(payload: PageBlockActionEvent) {
 <style scoped>
 .zone-renderer {
   min-width: 0;
-  border: 1px solid #d9e2ec;
-  border-radius: 16px;
-  background: #fff;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  background: var(--sc-app-panel);
   padding: 20px;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+  box-shadow: 0 10px 24px var(--sc-app-shadow);
 }
 .zone-renderer-header h3 {
   margin: 0;
@@ -64,7 +64,7 @@ function onBlockAction(payload: PageBlockActionEvent) {
 }
 .zone-renderer-header p {
   margin: 8px 0 0;
-  color: #475569;
+  color: var(--sc-app-text-secondary);
   font-size: 14px;
   overflow-wrap: anywhere;
 }
@@ -85,29 +85,29 @@ function onBlockAction(payload: PageBlockActionEvent) {
 }
 
 .zone-critical {
-  border-color: #fecaca;
-  background: #fff7f7;
+  border-color: var(--sc-app-danger-border);
+  background: var(--sc-app-danger-bg);
 }
 
 .zone-primary {
-  border-color: #bfdbfe;
-  background: linear-gradient(180deg, #f8fbff 0%, #ffffff 55%);
+  border-color: var(--sc-app-info-border);
+  background: var(--sc-app-info-bg);
 }
 
 .zone-secondary {
-  border-color: #dbeafe;
-  background: #ffffff;
+  border-color: var(--sc-app-info-border);
+  background: var(--sc-app-panel);
 }
 
 .zone-supporting {
-  border-color: #e5e7eb;
-  background: #ffffff;
+  border-color: var(--sc-app-border);
+  background: var(--sc-app-panel);
 }
 
 .zone-key-today_focus {
-  border-color: #93c5fd;
-  background: linear-gradient(180deg, #eff6ff 0%, #ffffff 68%);
-  box-shadow: 0 18px 36px rgba(37, 99, 235, 0.12);
+  border-color: var(--sc-app-info-border);
+  background: var(--sc-app-info-bg);
+  box-shadow: 0 18px 36px var(--sc-app-focus-ring);
   padding: 22px;
 }
 
@@ -126,18 +126,18 @@ function onBlockAction(payload: PageBlockActionEvent) {
 }
 
 .zone-key-analysis {
-  border-color: #cbd5e1;
-  background: #ffffff;
+  border-color: var(--sc-app-border-strong);
+  background: var(--sc-app-panel);
 }
 
 .zone-key-quick_entries {
-  border-color: #bfdbfe;
-  background: #ffffff;
+  border-color: var(--sc-app-info-border);
+  background: var(--sc-app-panel);
 }
 
 .zone-key-hero {
-  background: #f8fafc;
-  border-color: #dbeafe;
+  background: var(--sc-app-muted-bg);
+  border-color: var(--sc-app-info-border);
   box-shadow: none;
 }
 

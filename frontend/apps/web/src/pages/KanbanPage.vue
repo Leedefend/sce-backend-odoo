@@ -390,11 +390,11 @@ function formatValue(value: unknown) {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--sc-app-border);
   border-radius: 8px;
-  background: #fff;
+  background: var(--sc-app-panel);
   padding: 10px 12px;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 8px 20px var(--sc-app-shadow);
 }
 
 .kanban-title {
@@ -403,7 +403,7 @@ function formatValue(value: unknown) {
 
 .kanban-title h2 {
   margin: 0;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
   font-size: 16px;
   font-weight: 700;
   line-height: 1.25;
@@ -411,39 +411,40 @@ function formatValue(value: unknown) {
 
 .kanban-title p {
   margin: 3px 0 0;
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
   font-size: 12px;
   line-height: 1.35;
 }
 
 .kanban-count {
-  color: #475569;
+  color: var(--sc-app-text-secondary);
   font-size: 13px;
   white-space: nowrap;
 }
 
 .card {
-  background: white;
-  border-radius: 16px;
+  background: var(--sc-app-panel);
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
   padding: 16px;
-  box-shadow: 0 16px 30px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 16px 30px var(--sc-app-shadow);
   cursor: pointer;
   transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 
 .card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 20px 34px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 20px 34px var(--sc-app-shadow);
 }
 
-.card.tone-danger { border: 1px solid #fecaca; background: #fff7f7; }
-.card.tone-warning { border: 1px solid #fde68a; background: #fffcf2; }
-.card.tone-success { border: 1px solid #a7f3d0; background: #f7fffb; }
+.card.tone-danger { border-color: var(--sc-app-danger-border); background: var(--sc-app-danger-bg); }
+.card.tone-warning { border-color: var(--sc-app-warning-border); background: var(--sc-app-warning-bg); }
+.card.tone-success { border-color: var(--sc-app-success-border); background: var(--sc-app-success-bg); }
 
 .card-title {
   margin: 0 0 10px;
   font-size: 16px;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
 }
 
 .status-chips {
@@ -458,9 +459,9 @@ function formatValue(value: unknown) {
   line-height: 1;
   padding: 5px 8px;
   border-radius: 999px;
-  background: #ecfeff;
-  border: 1px solid #99f6e4;
-  color: #0f766e;
+  background: var(--sc-app-info-bg);
+  border: 1px solid var(--sc-app-info-border);
+  color: var(--sc-app-info-text);
 }
 
 .card-meta {
@@ -478,17 +479,17 @@ function formatValue(value: unknown) {
   grid-template-columns: 110px 1fr;
   gap: 6px;
   font-size: 12px;
-  color: #475569;
+  color: var(--sc-app-text-secondary);
 }
 
 .meta-row dt {
   font-weight: 600;
-  color: #334155;
+  color: var(--sc-app-text-primary);
 }
 
 .meta-row dd {
   margin: 0;
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
 }
 
 .pagination-bar {
@@ -496,11 +497,11 @@ function formatValue(value: unknown) {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--sc-app-border);
   border-radius: 10px;
-  background: #fff;
+  background: var(--sc-app-panel);
   padding: 10px 12px;
-  color: #475569;
+  color: var(--sc-app-text-secondary);
   font-size: 13px;
 }
 
@@ -515,10 +516,10 @@ function formatValue(value: unknown) {
 }
 
 .pagination-btn {
-  border: 1px solid #bfdbfe;
+  border: 1px solid var(--sc-app-info-border);
   border-radius: 8px;
-  background: #fff;
-  color: #1d4ed8;
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-info-text);
   padding: 4px 10px;
   font-size: 13px;
   cursor: pointer;
@@ -531,10 +532,10 @@ function formatValue(value: unknown) {
 
 .pagination-input {
   width: 60px;
-  border: 1px solid #bfdbfe;
+  border: 1px solid var(--sc-app-info-border);
   border-radius: 8px;
   padding: 4px 8px;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
   font-size: 13px;
 }
 

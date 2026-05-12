@@ -137,18 +137,20 @@ function onInput(event: Event) {
 
 .view-label {
   font-weight: 600;
-  color: #334155;
+  color: var(--sc-app-text-primary);
 }
 
 .view-value {
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
 }
 
 .view-input {
   width: 100%;
   padding: 8px 10px;
   border-radius: 8px;
-  border: 1px solid #cbd5f5;
+  border: 1px solid var(--sc-app-border-strong);
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-primary);
   font-size: 14px;
 }
 
@@ -156,8 +158,9 @@ function onInput(event: Event) {
   width: 100%;
   padding: 8px 10px;
   border-radius: 8px;
-  border: 1px solid #cbd5f5;
+  border: 1px solid var(--sc-app-border-strong);
   font-size: 14px;
-  background: white;
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-primary);
 }
 </style>
