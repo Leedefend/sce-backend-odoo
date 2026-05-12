@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 from odoo import fields, models
+from odoo.exceptions import UserError
 
 
 class PaymentRequestLine(models.Model):
     _name = "payment.request.line"
     _description = "Payment Request Line"
+    _inherit = ["sc.delete.guard.mixin"]
     _order = "request_id desc, sequence asc, id asc"
 
     request_id = fields.Many2one(
@@ -82,3 +84,10 @@ class PaymentRequestLine(models.Model):
             "context": {"default_res_model": self._name, "default_res_id": self.id, "create": False},
             "target": "current",
         }
+
+    def unlink(self):
+        locked = self.filtered(lambda rec: rec.request_id and rec.request_id.state not in ("draft", "cancel"))
+        if locked:
+            raise UserError("仅草稿或已取消付款申请的明细允许删除。")
+        self._sc_raise_delete_blockers(action_label="删除付款申请明细")
+        return super().unlink()

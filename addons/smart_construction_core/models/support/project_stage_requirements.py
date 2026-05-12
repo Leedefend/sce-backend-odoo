@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models
+from odoo.exceptions import UserError
 
 from .state_machine import ScStateMachine
 
@@ -7,6 +8,7 @@ from .state_machine import ScStateMachine
 class ScProjectStageRequirementItem(models.Model):
     _name = "sc.project.stage.requirement.item"
     _description = "项目阶段要求项"
+    _inherit = ["sc.delete.guard.mixin"]
     _order = "lifecycle_state, sequence, id"
 
     name = fields.Char("要求项", required=True)
@@ -28,6 +30,13 @@ class ScProjectStageRequirementItem(models.Model):
         "关联字段",
         help="用于判断完成度的字段名，如 owner_id/location/manager_or_user",
     )
+
+    def unlink(self):
+        active_items = self.filtered("active")
+        if active_items:
+            raise UserError("请先停用阶段要求项后再删除。")
+        self._sc_raise_delete_blockers(action_label="删除阶段要求项")
+        return super().unlink()
 
 
 class ScProjectStageRequirementWizard(models.TransientModel):

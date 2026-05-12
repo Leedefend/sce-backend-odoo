@@ -5,7 +5,7 @@
 import logging
 from typing import Any, Dict, List
 
-from odoo.exceptions import AccessError
+from odoo.exceptions import AccessError, UserError, ValidationError
 
 from ..core.base_handler import BaseIntentHandler
 from ..core.project_context import (
@@ -23,6 +23,7 @@ from ..utils.idempotency import (
     replay_window_seconds,
 )
 from ..utils.reason_codes import (
+    REASON_BUSINESS_RULE_FAILED,
     REASON_DELETE_POLICY_DENIED,
     REASON_INVALID_ID,
     REASON_MISSING_PARAMS,
@@ -288,6 +289,9 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
             recs.check_access_rule("unlink")
             if not dry_run:
                 recs.unlink()
+        except (UserError, ValidationError) as exc:
+            _logger.warning("api.data.unlink business rule blocked on %s: %s", model, exc)
+            return self._err(400, str(exc) or "业务规则不允许删除", REASON_BUSINESS_RULE_FAILED)
         except AccessError as ae:
             _logger.warning("api.data.unlink AccessError on %s: %s", model, ae)
             return self._err(403, "无删除权限", REASON_PERMISSION_DENIED)

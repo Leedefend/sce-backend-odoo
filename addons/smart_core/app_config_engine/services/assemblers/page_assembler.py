@@ -327,6 +327,7 @@ class PageAssembler:
             effective_permissions["rights"] = effective_rights
             permissions_root["effective"] = effective_permissions
             data["permissions"] = permissions_root
+        data["delete_policy"] = resolve_unlink_policy(env, model)
 
         # 6) 动作按钮 + 工具栏（元数据可 su_env，最终显隐由前端结合 groups/permissions 再次裁剪）
         try:

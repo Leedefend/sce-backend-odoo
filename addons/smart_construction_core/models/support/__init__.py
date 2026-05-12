@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from . import base_dictionary
+from . import delete_guard_mixin
 from . import project_dictionary
 from . import account_extend
 from . import account_move_line_ext

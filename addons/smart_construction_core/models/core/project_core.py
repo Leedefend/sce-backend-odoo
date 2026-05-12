@@ -252,6 +252,41 @@ class ProjectProjectStage(models.Model):
 class ProjectProject(models.Model):
     _inherit = 'project.project'
     _description = '项目'
+    _PROJECT_UNLINK_BLOCK_MODELS = (
+        "construction.contract",
+        "project.budget",
+        "project.cost.ledger",
+        "project.cost.period",
+        "project.progress.entry",
+        "project.material.plan",
+        "payment.request",
+        "sc.material.purchase.request",
+        "sc.material.acceptance",
+        "sc.material.inbound",
+        "sc.material.outbound",
+        "sc.material.rfq",
+        "sc.material.settlement",
+        "sc.material.rental.plan",
+        "sc.material.rental.order",
+        "sc.labor.plan",
+        "sc.labor.request",
+        "sc.attendance.checkin",
+        "sc.labor.usage",
+        "sc.labor.settlement",
+        "sc.equipment.plan",
+        "sc.equipment.request",
+        "sc.equipment.usage",
+        "sc.equipment.settlement",
+        "sc.subcontract.plan",
+        "sc.subcontract.request",
+        "sc.subcontract.register",
+        "sc.subcontract.settlement",
+        "sc.settlement.order",
+        "sc.settlement.adjustment",
+        "tender.bid",
+        "sc.project.document",
+        "sc.safety.issue",
+    )
 
     _STAGE_XMLID_BY_KEY = {
         "planning": "smart_construction_core.project_stage_planning",
@@ -1942,6 +1977,77 @@ class ProjectProject(models.Model):
     def action_generate_wbs_from_boq(self):
         """兼容命名：调用标准 WBS 生成逻辑。"""
         return self.action_generate_structure_from_boq()
+
+    @api.model
+    def _project_unlink_blocker_models(self):
+        allowed = set(self._PROJECT_UNLINK_BLOCK_MODELS)
+        rows = self.env["ir.model.fields"].sudo().search(
+            [
+                ("relation", "=", "project.project"),
+                ("store", "=", True),
+                ("ttype", "=", "many2one"),
+            ]
+        )
+        models = []
+        seen = set()
+        for field in rows:
+            on_delete = (field.on_delete or "").strip().lower()
+            if on_delete in {"cascade", "set null"}:
+                continue
+            model_name = str(field.model or "").strip()
+            if not model_name or model_name in seen:
+                continue
+            if allowed and model_name not in allowed:
+                continue
+            seen.add(model_name)
+            models.append(model_name)
+        return models
+
+    @api.model
+    def _project_unlink_dependency_summary(self, project_ids):
+        project_ids = [int(project_id) for project_id in (project_ids or []) if int(project_id or 0) > 0]
+        if not project_ids:
+            return {}
+        summary = defaultdict(list)
+        model_names = self._project_unlink_blocker_models()
+        for model_name in model_names:
+            if model_name not in self.env:
+                continue
+            Model = self.env[model_name].sudo().with_context(active_test=False)
+            label = str(getattr(Model, "_description", "") or model_name).strip() or model_name
+            for project_id in project_ids:
+                count = int(Model.search_count([("project_id", "=", project_id)]) or 0)
+                if project_id <= 0 or count <= 0:
+                    continue
+                summary[project_id].append({
+                    "model": model_name,
+                    "label": label,
+                    "count": count,
+                })
+        return summary
+
+    def _raise_project_unlink_blockers(self):
+        summary = self._project_unlink_dependency_summary(self.ids)
+        if not summary:
+            return
+        messages = []
+        for project in self:
+            blockers = summary.get(project.id) or []
+            if not blockers:
+                continue
+            blockers = sorted(blockers, key=lambda item: (-int(item.get("count") or 0), str(item.get("label") or item.get("model") or "")))
+            preview = [f"{item['label']}({item['count']})" for item in blockers[:8]]
+            extra = len(blockers) - len(preview)
+            if extra > 0:
+                preview.append(f"以及其他 {extra} 类依赖")
+            messages.append(f"项目[{project.display_name}] 仍有关联业务数据：{'、'.join(preview)}")
+        if messages:
+            raise UserError("无法删除项目。\n" + "\n".join(messages))
+
+    def unlink(self):
+        if not self.env.su:
+            self._raise_project_unlink_blockers()
+        return super().unlink()
 
     # ---------- 项目治理 / 流程控制 ----------
     def _ensure_operation_allowed(self, operation_label="该操作", blocked_states=None):

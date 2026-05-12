@@ -16,8 +16,11 @@ _logger = logging.getLogger(__name__)
 class PaymentRequest(models.Model):
     _name = "payment.request"
     _description = "Payment Request"
-    _inherit = ["mail.thread", "mail.activity.mixin", "tier.validation"]
+    _inherit = ["mail.thread", "mail.activity.mixin", "tier.validation", "sc.delete.guard.mixin"]
     _order = "id desc"
+    _sc_delete_guard_blocker_models = (
+        "sc.material.rental.order",
+    )
 
     name = fields.Char(string="申请单号", required=True, default="New", copy=False, tracking=True)
     type = fields.Selection(
@@ -260,6 +263,13 @@ class PaymentRequest(models.Model):
             "default_currency_id": self.currency_id.id,
         }
         return action
+
+    def unlink(self):
+        locked = self.filtered(lambda rec: rec.state not in ("draft", "cancel"))
+        if locked:
+            raise UserError("仅草稿或已取消的付款申请允许删除。")
+        self._sc_raise_delete_blockers(action_label="删除付款申请")
+        return super().unlink()
 
     def _get_active_funding_baseline(self, project):
         baseline = self.env["project.funding.baseline"].sudo().search(

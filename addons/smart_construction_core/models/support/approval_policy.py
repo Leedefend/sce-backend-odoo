@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 from odoo import _, api, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 
 
 class ScApprovalPolicy(models.Model):
     _name = "sc.approval.policy"
     _description = "业务审批规则"
-    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _inherit = ["mail.thread", "mail.activity.mixin", "sc.delete.guard.mixin"]
     _order = "sequence, id"
     _runtime_authority = "base_tier_validation"
     LEGACY_FACT_MODELS = {"sc.legacy.purchase.contract.fact"}
@@ -480,7 +480,7 @@ class ScApprovalPolicy(models.Model):
             policy.with_context(skip_tier_sync=True).write(policy_vals)
 
             if not already_template:
-                policy.step_ids.with_context(skip_tier_sync=True).unlink()
+                policy.step_ids.with_context(skip_tier_sync=True, skip_delete_guard=True).unlink()
                 sequence = 10
                 for name, scope_key in template["steps"]:
                     group = self._group_for_approval_scope(scope_key)
@@ -520,10 +520,18 @@ class ScApprovalPolicy(models.Model):
             self.sync_tier_definitions()
         return res
 
+    def unlink(self):
+        active_policies = self.filtered("active")
+        if active_policies:
+            raise UserError("请先停用审批规则后再删除。")
+        self._sc_raise_delete_blockers(action_label="删除审批规则")
+        return super().unlink()
+
 
 class ScApprovalStep(models.Model):
     _name = "sc.approval.step"
     _description = "业务审批步骤"
+    _inherit = ["sc.delete.guard.mixin"]
     _order = "policy_id, sequence, id"
 
     policy_id = fields.Many2one("sc.approval.policy", required=True, ondelete="cascade", index=True, string="审批规则")
@@ -603,6 +611,15 @@ class ScApprovalStep(models.Model):
         return res
 
     def unlink(self):
+        if self.env.context.get("skip_delete_guard"):
+            tier_definitions = self.mapped("tier_definition_id").sudo()
+            res = super().unlink()
+            if tier_definitions:
+                tier_definitions.write({"active": False})
+            return res
+        active_steps = self.filtered("active")
+        if active_steps:
+            raise UserError("请先停用审批步骤后再删除。")
         tier_definitions = self.mapped("tier_definition_id").sudo()
         res = super().unlink()
         if tier_definitions:

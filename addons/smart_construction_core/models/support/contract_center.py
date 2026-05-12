@@ -19,11 +19,27 @@ class ConstructionContract(models.Model):
 
     _name = "construction.contract"
     _description = "项目合同"
-    _inherit = ["mail.thread", "mail.activity.mixin", "tier.validation"]
+    _inherit = ["mail.thread", "mail.activity.mixin", "tier.validation", "sc.delete.guard.mixin"]
     _state_from = ["draft"]
     _state_to = ["confirmed"]
     _cancel_state = "cancel"
     _order = "project_id, type, id desc"
+    _sc_delete_guard_blocker_models = (
+        "payment.request",
+        "sc.contract.event",
+        "sc.invoice.registration",
+        "sc.payment.execution",
+        "sc.plan",
+        "sc.receipt.income",
+        "sc.settlement.adjustment",
+        "sc.material.rental.plan",
+        "sc.material.rental.order",
+        "sc.subcontract.plan",
+        "sc.subcontract.request",
+        "sc.subcontract.register",
+        "sc.subcontract.settlement",
+        "tender.bid",
+    )
 
     def _register_hook(self):
         """Ensure model registration finishes cleanly."""
@@ -367,6 +383,13 @@ class ConstructionContract(models.Model):
             contract.payment_request_count = pay_cnt
             contract.settlement_count = settle_cnt
             contract.is_locked = bool(pay_cnt or settle_cnt)
+
+    def unlink(self):
+        locked = self.filtered(lambda rec: rec.state not in ("draft", "cancel"))
+        if locked:
+            raise UserError("仅草稿或已取消的合同允许删除。")
+        self._sc_raise_delete_blockers(action_label="删除合同")
+        return super().unlink()
 
     @api.depends("amount_final")
     def _compute_execution_amounts(self):

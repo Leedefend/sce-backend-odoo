@@ -299,9 +299,16 @@ class ProjectBudgetBoqLine(models.Model):
 class ProjectCostCode(models.Model):
     _name = "project.cost.code"
     _description = "项目成本科目"
+    _inherit = ["sc.delete.guard.mixin"]
     _parent_name = "parent_id"
     _parent_store = True
     _order = "code, id"
+    _sc_delete_guard_blocker_models = (
+        "project.budget.cost.alloc",
+        "project.cost.code",
+        "project.cost.ledger",
+        "sc.contract.event",
+    )
 
     name = fields.Char("名称", required=True)
     code = fields.Char("编码", required=True, index=True)
@@ -338,6 +345,10 @@ class ProjectCostCode(models.Model):
             else:
                 rec.level = 1
                 rec.path_display = f"{rec.code} {rec.name}" if rec.code else rec.name
+
+    def unlink(self):
+        self._sc_raise_delete_blockers(action_label="删除成本科目")
+        return super().unlink()
 
 class ProjectCostLedger(models.Model):
     _name = "project.cost.ledger"

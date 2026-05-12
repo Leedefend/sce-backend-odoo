@@ -1021,7 +1021,8 @@ def _apply_user_surface_policies(data: dict) -> None:
         effective = _as_dict(permissions.get("effective"))
         rights = _as_dict(effective.get("rights"))
         write_allowed = bool(rights.get("write"))
-        unlink_allowed = bool(rights.get("unlink"))
+        delete_policy = _as_dict(data.get("delete_policy"))
+        unlink_allowed = bool(delete_policy.get("allowed")) and _safe_lower(delete_policy.get("delete_mode")) == "unlink"
         if model in LEGACY_RECORD_CONTEXT_CLEAR_MODELS:
             _mark_legacy_user_surface_model_policy(data, f"{model}.record_open_context")
         if model in LEGACY_DELETE_ONLY_MODELS:
@@ -1929,6 +1930,7 @@ def _govern_standard_list_for_user(
     assignee_field = "user_id" if "user_id" in fields_map else ""
     surface_policies = _as_dict(data.get("surface_policies"))
     surface_batch_policy = _as_dict(surface_policies.get("batch_policy"))
+    delete_policy = _as_dict(data.get("delete_policy"))
     permissions = _as_dict(data.get("permissions"))
     effective = _as_dict(permissions.get("effective"))
     rights = _as_dict(effective.get("rights"))
@@ -1957,7 +1959,12 @@ def _govern_standard_list_for_user(
         }
         if assignee_field
         else None,
-        "delete_mode": _safe_text(surface_policies.get("delete_mode") or data.get("delete_mode"), "none"),
+        "delete_mode": _safe_text(
+            surface_policies.get("delete_mode")
+            or delete_policy.get("delete_mode")
+            or data.get("delete_mode"),
+            "none",
+        ),
         "available_actions": available_actions,
     }
 

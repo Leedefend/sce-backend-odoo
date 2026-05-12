@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
 from odoo import _, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 
 
 class ScOfficeAdminDocument(models.Model):
     _name = "sc.office.admin.document"
     _description = "人事行政审批单"
-    _inherit = ["sc.business.fact.mixin", "mail.thread", "mail.activity.mixin"]
+    _inherit = ["sc.business.fact.mixin", "mail.thread", "mail.activity.mixin", "sc.delete.guard.mixin"]
     _order = "business_date desc, id desc"
 
     def _selection_fact_type(self):
@@ -93,3 +93,10 @@ class ScOfficeAdminDocument(models.Model):
                     raise ValidationError(_("请假开始时间不能晚于结束时间。"))
             elif record.fact_type == "seal_use":
                 record._require_fields(["requester_id", "department_id", "seal_type", "use_purpose", "use_date"])
+
+    def unlink(self):
+        locked = self.filtered(lambda rec: rec.state not in ("draft", "cancel"))
+        if locked:
+            raise UserError("仅草稿或已取消的人事行政审批单允许删除。")
+        self._sc_raise_delete_blockers(action_label="删除人事行政审批单")
+        return super().unlink()

@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 
 from odoo import _, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 
 
 class ScDocumentAdminDocument(models.Model):
     _name = "sc.document.admin.document"
     _description = "资料证照办理单"
-    _inherit = ["sc.business.fact.mixin", "mail.thread", "mail.activity.mixin"]
+    _inherit = ["sc.business.fact.mixin", "mail.thread", "mail.activity.mixin", "sc.delete.guard.mixin"]
     _order = "business_date desc, id desc"
 
     def _selection_fact_type(self):
@@ -80,3 +80,10 @@ class ScDocumentAdminDocument(models.Model):
                 record._require_fields(["document_title", "borrow_user_id", "borrow_date", "expected_return_date"])
                 if record.borrow_date and record.expected_return_date and record.borrow_date > record.expected_return_date:
                     raise ValidationError(_("借阅日期不能晚于预计归还日期。"))
+
+    def unlink(self):
+        locked = self.filtered(lambda rec: rec.state not in ("draft", "cancel"))
+        if locked:
+            raise UserError("仅草稿或已取消的资料证照办理单允许删除。")
+        self._sc_raise_delete_blockers(action_label="删除资料证照办理单")
+        return super().unlink()
