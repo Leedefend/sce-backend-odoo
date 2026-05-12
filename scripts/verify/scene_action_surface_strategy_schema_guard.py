@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-import importlib.util
+import importlib
 import json
 from pathlib import Path
 import sys
@@ -27,13 +27,10 @@ def _index_of(text: str, token: str) -> int:
 
 
 def _load_scene_compiler_module():
-    spec = importlib.util.spec_from_file_location("scene_dsl_compiler_action_strategy_schema_guard", COMPILER_PATH)
-    if spec is None or spec.loader is None:
-        raise RuntimeError(f"spec unavailable: {COMPILER_PATH}")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
+    addons_path = str(ROOT / "addons")
+    if addons_path not in sys.path:
+        sys.path.insert(0, addons_path)
+    return importlib.import_module("smart_core.core.scene_dsl_compiler")
 
 
 def main() -> int:
@@ -119,4 +116,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

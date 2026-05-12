@@ -465,7 +465,7 @@ help:
 # ======================================================
 # ==================== Dev =============================
 # ======================================================
-.PHONY: up down restart logs ps odoo-shell prod.restart.safe prod.restart.full deploy.prod.sim.oneclick prod.sim.fresh.replay prod.sim.data.replay prod.sim.business.usable.init prod.sim.replay.then.usable.init prod.sim.replay.then.project frontend.dev frontend.stop frontend.restart frontend.logs
+.PHONY: up down restart logs ps odoo-shell prod.restart.safe prod.restart.full deploy.prod.sim.oneclick prod.sim.fresh.replay prod.sim.data.replay prod.sim.business.usable.init prod.sim.replay.then.usable.init prod.sim.replay.then.project frontend.dev frontend.stop frontend.restart frontend.logs verify.dev.acceptance.release release.dev.acceptance.publish
 up: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/dev/up.sh
 down: check-compose-project check-compose-env
@@ -520,6 +520,17 @@ frontend.restart: guard.prod.forbid
 frontend.logs:
 	@echo "[frontend.logs] $(FRONTEND_DEV_LOG)"
 	@tail -n 120 "$(FRONTEND_DEV_LOG)" || true
+
+ACCEPTANCE_BASE_URL ?= http://127.0.0.1:$(NGINX_PORT)
+ACCEPTANCE_PROBE_OUTPUT ?= artifacts/backend/dev_acceptance_release_probe.json
+ACCEPTANCE_LOGIN ?=
+ACCEPTANCE_PASSWORD ?=
+
+verify.dev.acceptance.release: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) ACCEPTANCE_BACKUP_DIR="$(ACCEPTANCE_BACKUP_DIR)" ACCEPTANCE_BASE_URL="$(ACCEPTANCE_BASE_URL)" ACCEPTANCE_LOGIN="$(ACCEPTANCE_LOGIN)" ACCEPTANCE_PASSWORD="$(ACCEPTANCE_PASSWORD)" ACCEPTANCE_PROBE_OUTPUT="$(ACCEPTANCE_PROBE_OUTPUT)" python3 scripts/ops/dev_acceptance_release_probe.py
+
+release.dev.acceptance.publish: guard.prod.forbid check-compose-project check-compose-env verify.frontend.build verify.dev.acceptance.release
+	@echo "[release.dev.acceptance.publish] PASS base_url=$(ACCEPTANCE_BASE_URL) db=$(DB_NAME) artifact=$(ACCEPTANCE_PROBE_OUTPUT)"
 
 prod.restart.safe: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/dev/restart.sh
@@ -1666,6 +1677,16 @@ codex.snapshot: guard.prod.forbid check-compose-project check-compose-env
 	@echo "[codex.snapshot] db=$(CODEX_DB)"
 	@$(MAKE) contract.export_all DB="$(CODEX_DB)"
 
+.PHONY: codex.snapshot.export verify.backend.guard verify.portal.smoke
+codex.snapshot.export: guard.prod.forbid
+	@$(MAKE) --no-print-directory codex.snapshot
+
+verify.backend.guard: guard.prod.forbid
+	@$(MAKE) --no-print-directory verify.boundary.guard
+
+verify.portal.smoke: guard.prod.forbid check-compose-project check-compose-env
+	@$(MAKE) --no-print-directory verify.portal.fe_smoke.container
+
 .PHONY: codex.pr codex.cleanup codex.sync-main
 
 codex.pr: guard.prod.forbid
@@ -2671,6 +2692,10 @@ verify.business.capability_baseline.report.guard: guard.prod.forbid verify.busin
 verify.business.capability_baseline.guard: guard.prod.forbid verify.scene.catalog.runtime_alignment.guard verify.business.core_journey.guard verify.role.capability_floor.guard verify.business.capability_baseline.report.guard
 	@echo "[OK] verify.business.capability_baseline.guard done"
 
+.PHONY: verify.system.capability_baseline.report
+verify.system.capability_baseline.report: guard.prod.forbid
+	@python3 scripts/verify/system_capability_baseline_report.py
+
 verify.contract.evidence.export: guard.prod.forbid audit.intent.surface verify.scene.contract.shape verify.business.capability_baseline.guard verify.contract.scene_coverage.brief verify.backend.architecture.full.report.schema.guard
 	@python3 scripts/contract/export_evidence.py
 
@@ -2746,7 +2771,7 @@ verify.delivery.journey.role_matrix.guard: guard.prod.forbid
 	@python3 scripts/verify/delivery_journey_role_matrix_guard.py
 
 .PHONY: verify.scene.engine_migration.matrix.guard
-verify.scene.engine_migration.matrix.guard: guard.prod.forbid
+verify.scene.engine_migration.matrix.guard: guard.prod.forbid verify.product.delivery.v1.map
 	@python3 scripts/verify/scene_engine_migration_matrix_guard.py
 
 .PHONY: verify.scene.source_fallback_burndown.guard
@@ -3330,7 +3355,11 @@ verify.backend.contract.closure.mainline.summary.schema.guard: guard.prod.forbid
 verify.product.delivery.ready: guard.prod.forbid verify.product.delivery.gap verify.product.delivery.freshness verify.product.delivery.governance_truth
 	@echo "[OK] verify.product.delivery.ready done"
 
-.PHONY: verify.product.delivery.mainline
+.PHONY: verify.restricted verify.product.delivery.mainline
+verify.restricted: guard.prod.forbid
+	@echo "[verify.restricted] profile=restricted entry=verify.product.delivery.mainline"
+	@CI_SCENE_DELIVERY_PROFILE=restricted $(MAKE) --no-print-directory verify.product.delivery.mainline
+
 verify.product.delivery.mainline: guard.prod.forbid
 	@PROFILE=$${CI_SCENE_DELIVERY_PROFILE:-restricted}; \
 	FRONTEND_STATUS=PASS; SCENE_STATUS=PASS; ACTION_STATUS=PASS; MODULE9_STATUS=PASS; CONTRACT_CLOSURE_STATUS=PASS; GOVERNANCE_STATUS=PASS; \
@@ -3430,6 +3459,17 @@ verify.product.release.ready: guard.prod.forbid \
 	verify.delivery.reproducible \
 	verify.product.sla.baseline
 	@echo "[OK] verify.product.release.ready done"
+
+.PHONY: verify.release.v1_0_0.preflight
+verify.release.v1_0_0.preflight: guard.prod.forbid \
+	verify.system.capability_baseline.report \
+	verify.backend.contract.closure.mainline \
+	verify.restricted
+	@echo "[OK] verify.release.v1_0_0.preflight done"
+
+.PHONY: verify.release.v1_0_0.product_hardening
+verify.release.v1_0_0.product_hardening: guard.prod.forbid verify.product.release.ready
+	@echo "[OK] verify.release.v1_0_0.product_hardening done"
 
 verify.platform.distribution.report: guard.prod.forbid
 	@python3 scripts/verify/platform_distribution_ready_report.py
@@ -3754,7 +3794,7 @@ verify.scene.capability.matrix.report: guard.prod.forbid check-compose-project c
 verify.scene.capability.matrix.schema.guard: guard.prod.forbid verify.scene.capability.matrix.report
 	@python3 scripts/verify/scene_capability_matrix_report_schema_guard.py
 
-verify.release.capability.audit: guard.prod.forbid check-compose-project check-compose-env
+verify.release.capability.audit: guard.prod.forbid check-compose-project check-compose-env verify.role.capability_floor.prod_like.schema.guard
 	@$(RUN_ENV) python3 scripts/verify/release_capability_audit.py
 
 verify.release.capability.audit.schema.guard: guard.prod.forbid verify.release.capability.audit

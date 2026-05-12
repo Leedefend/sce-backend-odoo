@@ -8,6 +8,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 MODULE_SOURCE_PATH = ROOT / "docs" / "product" / "delivery" / "v1" / "module_scene_capability_source_v1.json"
+ROLE_SOURCE_PATH = ROOT / "docs" / "product" / "delivery" / "v1" / "role_package_source_v1.json"
 STATE_PATH = ROOT / "artifacts" / "backend" / "scene_contract_v1_field_schema_state.json"
 REPORT_JSON = ROOT / "artifacts" / "backend" / "product_delivery_module9_smoke_report.json"
 REPORT_MD = ROOT / "docs" / "ops" / "audit" / "product_delivery_module9_smoke_report.md"
@@ -39,6 +40,7 @@ def main() -> int:
     errors: list[str] = []
 
     module_source = _load_json(MODULE_SOURCE_PATH)
+    role_source = _load_json(ROLE_SOURCE_PATH)
     state = _load_json(STATE_PATH)
 
     modules = [m for m in _as_list(module_source.get("modules")) if _as_dict(m).get("in_scope") is True]
@@ -54,6 +56,14 @@ def main() -> int:
         if scene_key:
             scene_keys.add(scene_key)
 
+    role_default_scenes = sorted(
+        {
+            _norm(role.get("default_scene"))
+            for role in _as_list(role_source.get("roles"))
+            if isinstance(role, dict) and _norm(role.get("default_scene"))
+        }
+    )
+
     checks: list[dict] = []
     for module in modules:
         mod = _as_dict(module)
@@ -61,8 +71,22 @@ def main() -> int:
         module_name = _norm(mod.get("module_name"))
         entry_scenes = [_norm(item) for item in _as_list(mod.get("entry_scenes")) if _norm(item)]
 
-        missing = [item for item in entry_scenes if item not in scene_keys]
-        present = [item for item in entry_scenes if item in scene_keys]
+        missing: list[str] = []
+        present: list[str] = []
+        resolved_entry_scenes: dict[str, list[str]] = {}
+        for item in entry_scenes:
+            if item == "default":
+                resolved_entry_scenes[item] = role_default_scenes
+                missing_defaults = [scene for scene in role_default_scenes if scene not in scene_keys]
+                if missing_defaults:
+                    missing.append(f"default({','.join(missing_defaults)})")
+                else:
+                    present.append(item)
+                continue
+            if item in scene_keys:
+                present.append(item)
+            else:
+                missing.append(item)
 
         checks.append(
             {
@@ -72,6 +96,7 @@ def main() -> int:
                 "present_count": len(present),
                 "missing_count": len(missing),
                 "missing_scenes": missing,
+                "resolved_entry_scenes": resolved_entry_scenes,
                 "ok": len(missing) == 0,
             }
         )
@@ -125,4 +150,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

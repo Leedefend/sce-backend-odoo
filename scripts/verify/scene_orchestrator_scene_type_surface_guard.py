@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-import importlib.util
+import importlib
 from pathlib import Path
 import sys
 
@@ -17,12 +17,10 @@ def _assert(condition: bool, message: str, errors: list[str]) -> None:
 
 
 def _load_scene_compile():
-    spec = importlib.util.spec_from_file_location("scene_dsl_compiler_scene_type_guard", COMPILER)
-    if spec is None or spec.loader is None:
-        raise RuntimeError(f"spec unavailable: {COMPILER}")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
+    addons_path = str(ROOT / "addons")
+    if addons_path not in sys.path:
+        sys.path.insert(0, addons_path)
+    module = importlib.import_module("smart_core.core.scene_dsl_compiler")
     fn = getattr(module, "scene_compile", None)
     if not callable(fn):
         raise RuntimeError("scene_compile not found")
@@ -111,4 +109,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

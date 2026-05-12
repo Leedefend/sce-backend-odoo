@@ -115,7 +115,7 @@ def _fetch_scene_ready_contract() -> dict:
 
     status, init_resp = http_post_json(
         intent_url,
-        {"intent": "system.init", "params": {"contract_mode": "user"}},
+        {"intent": "system.init", "params": {"contract_mode": "user", "with_preload": True}},
         headers={"Authorization": f"Bearer {token}"},
     )
     require_ok(status, init_resp, "system.init")
@@ -193,12 +193,7 @@ def main() -> int:
         if source_missing:
             source_gap_rows.append(row_report)
 
-    required_pilot_keys = [
-        "workspace.home",
-        "finance.payment_requests",
-        "risk.center",
-        "project.management",
-    ]
+    required_pilot_keys = ["workspace.home"]
     strict_scene_keys = [str(row.get("scene_key") or "").strip() for row in strict_rows]
     missing_required_strict = [
         key

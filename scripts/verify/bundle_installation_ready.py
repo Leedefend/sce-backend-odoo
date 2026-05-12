@@ -66,6 +66,36 @@ def _keys(d: dict) -> list[str]:
     return sorted(d.keys()) if isinstance(d, dict) else []
 
 
+def _bundle_fact(bundle_name: str, scenes: list, caps: list) -> dict:
+    return {"name": f"smart_{bundle_name}_bundle", "scenes": scenes, "capabilities": caps}
+
+
+def _set_bundle_fact(payload: dict, bundle_name: str, scenes: list, caps: list) -> dict:
+    out = copy.deepcopy(payload)
+    ext_facts = out.get("ext_facts") if isinstance(out.get("ext_facts"), dict) else {}
+    product = ext_facts.get("product") if isinstance(ext_facts.get("product"), dict) else {}
+    product["bundle"] = _bundle_fact(bundle_name, scenes, caps)
+    ext_facts["product"] = product
+    out["ext_facts"] = ext_facts
+    return out
+
+
+def _remove_bundle_fact(payload: dict) -> dict:
+    out = copy.deepcopy(payload)
+    ext_facts = out.get("ext_facts") if isinstance(out.get("ext_facts"), dict) else {}
+    product = ext_facts.get("product") if isinstance(ext_facts.get("product"), dict) else {}
+    product.pop("bundle", None)
+    if product:
+        ext_facts["product"] = product
+    else:
+        ext_facts.pop("product", None)
+    if ext_facts:
+        out["ext_facts"] = ext_facts
+    else:
+        out.pop("ext_facts", None)
+    return out
+
+
 def _extract_bundle(bundle_name: str) -> dict:
     if bundle_name == "construction":
         base = ROOT / "addons" / "smart_construction_bundle" / "services" / "bundle_registry.py"
@@ -102,19 +132,24 @@ def main() -> int:
         if not scenes or not caps:
             errors.append(f"{bundle} bundle registry incomplete")
             continue
-        enabled = copy.deepcopy(baseline)
-        enabled.setdefault("ext_facts", {})
-        enabled["ext_facts"]["bundle"] = {"name": f"smart_{bundle}_bundle", "scenes": scenes, "capabilities": caps}
-        disabled = copy.deepcopy(enabled)
-        if isinstance(disabled.get("ext_facts"), dict):
-            disabled["ext_facts"].pop("bundle", None)
-        if baseline_keys and (_keys(enabled) != baseline_keys or _keys(disabled) != baseline_keys):
-            errors.append(f"{bundle} bundle changed payload top-level shape")
+        enabled = _set_bundle_fact(baseline, bundle, scenes, caps)
+        disabled = _remove_bundle_fact(enabled)
+        enabled_extra_keys = [key for key in _keys(enabled) if key not in baseline_keys]
+        disabled_extra_keys = [key for key in _keys(disabled) if key not in baseline_keys]
+        missing_after_disabled = [key for key in baseline_keys if key not in _keys(disabled)]
+        allowed_extra_keys = {"ext_facts"}
+        if baseline_keys and (set(enabled_extra_keys) - allowed_extra_keys):
+            errors.append(f"{bundle} bundle added unsupported top-level keys: {','.join(enabled_extra_keys)}")
+        if baseline_keys and (disabled_extra_keys or missing_after_disabled):
+            errors.append(f"{bundle} bundle disabled payload does not return to baseline shape")
         bundle_result[bundle] = {
             "scene_count": len(scenes),
             "capability_count": len(caps),
             "enabled_shape_keys": _keys(enabled),
             "disabled_shape_keys": _keys(disabled),
+            "enabled_extra_keys": enabled_extra_keys,
+            "disabled_extra_keys": disabled_extra_keys,
+            "missing_after_disabled": missing_after_disabled,
         }
 
     payload = {

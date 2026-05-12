@@ -1,0 +1,52 @@
+{
+  "version": "v1",
+  "frozen_at": "2026-05-12",
+  "scope": "front_back_integrated_system_capability",
+  "module_count": 9,
+  "delivery_scope_scene_count": 22,
+  "required_layers": [
+    "platform_runtime",
+    "contract_surface",
+    "frontend_consumer",
+    "business_delivery",
+    "ops_release"
+  ],
+  "required_docs": [
+    "docs/product/system_capability_baseline_v1.md",
+    "docs/product/delivery/v1/module_scene_capability_map.md",
+    "docs/product/delivery/v1/delivery_readiness_scoreboard_v1.md",
+    "docs/ops/verify/README.md",
+    "docs/ops/dev_acceptance_release_runbook_v1.md"
+  ],
+  "required_make_targets": [
+    "verify.restricted",
+    "verify.business.capability_baseline.guard",
+    "verify.scene.delivery.readiness.role_company_matrix",
+    "verify.product.delivery.mainline",
+    "verify.frontend.build",
+    "verify.frontend.typecheck.strict",
+    "verify.dev.acceptance.release",
+    "release.dev.acceptance.publish"
+  ],
+  "baseline_artifacts": [
+    "artifacts/backend/delivery_mainline_run_summary.json",
+    "artifacts/backend/delivery_readiness_ci_summary.json",
+    "artifacts/backend/dev_acceptance_release_probe.json",
+    "artifacts/business_capability_baseline_report.json"
+  ],
+  "iteration_rules": {
+    "single_batch_single_goal": true,
+    "contract_first_for_surface_changes": true,
+    "served_frontend_build_required_for_acceptance": true,
+    "real_user_probe_required_for_release": true,
+    "restore_requires_operator_approval": true
+  },
+  "minimum_acceptance": {
+    "module_count_max": 10,
+    "module_count_min": 9,
+    "delivery_scope_scene_count_min": 22,
+    "business_required_intent_count_min": 10,
+    "business_required_role_count_min": 4,
+    "frontend_default_db_for_dev_acceptance": "sc_demo"
+  }
+}
