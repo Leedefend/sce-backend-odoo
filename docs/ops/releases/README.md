@@ -17,13 +17,13 @@ Other release notes under `docs/release/` or GitHub Releases are supporting copi
   - GitHub Release: (not published)
 
 ## Planned Formal Release
-- v1.0.0 (planned tag: `v1.0.0`)
+- v2.0.0 (planned tag: `v2.0.0`)
   - Type: release
   - Status: planned
-  - Notes: `docs/ops/release_notes_v1.0.0.md`
-  - Checklist: `docs/ops/release_checklist_v1.0.0.md`
-  - Evidence: `docs/ops/releases/v1.0.0/evidence_manifest.md`
-  - Verify: `make verify.release.v1_0_0.preflight`
+  - Notes: `docs/ops/release_notes_v2.0.0.md`
+  - Checklist: `docs/ops/release_checklist_v2.0.0.md`
+  - Evidence: `docs/ops/releases/v2.0.0/evidence_manifest.md`
+  - Verify: `make verify.release.v2_0_0.preflight`
   - GitHub Release: required after formal tag
 
 ## Release List (Newest First)

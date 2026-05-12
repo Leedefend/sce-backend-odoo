@@ -3460,16 +3460,16 @@ verify.product.release.ready: guard.prod.forbid \
 	verify.product.sla.baseline
 	@echo "[OK] verify.product.release.ready done"
 
-.PHONY: verify.release.v1_0_0.preflight
-verify.release.v1_0_0.preflight: guard.prod.forbid \
+.PHONY: verify.release.v2_0_0.preflight
+verify.release.v2_0_0.preflight: guard.prod.forbid \
 	verify.system.capability_baseline.report \
 	verify.backend.contract.closure.mainline \
 	verify.restricted
-	@echo "[OK] verify.release.v1_0_0.preflight done"
+	@echo "[OK] verify.release.v2_0_0.preflight done"
 
-.PHONY: verify.release.v1_0_0.product_hardening
-verify.release.v1_0_0.product_hardening: guard.prod.forbid verify.product.release.ready
-	@echo "[OK] verify.release.v1_0_0.product_hardening done"
+.PHONY: verify.release.v2_0_0.product_hardening
+verify.release.v2_0_0.product_hardening: guard.prod.forbid verify.product.release.ready
+	@echo "[OK] verify.release.v2_0_0.product_hardening done"
 
 verify.platform.distribution.report: guard.prod.forbid
 	@python3 scripts/verify/platform_distribution_ready_report.py
