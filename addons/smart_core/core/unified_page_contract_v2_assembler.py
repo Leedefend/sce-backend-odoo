@@ -773,6 +773,9 @@ def _field_widget(field: dict[str, Any], *, layout_type: str) -> dict[str, Any]:
     field_type = _text(field.get("ttype") or field.get("type")).lower()
     if field_type:
         component_config["fieldType"] = field_type
+    selection = field.get("selection")
+    if field_type == "selection" and isinstance(selection, (list, tuple)):
+        component_config["selection"] = deepcopy(list(selection))
     if _text(field.get("relation")):
         component_config["relation"] = _text(field.get("relation"))
     relation_entry = _dict(field.get("relation_entry"))

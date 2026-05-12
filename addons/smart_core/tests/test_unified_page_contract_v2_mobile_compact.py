@@ -208,6 +208,59 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
         self.assertTrue(status[by_field["create_uid"]["widgetId"]]["visible"])
         self.assertTrue(status[by_field["create_date"]["widgetId"]]["visible"])
 
+    def test_ui_contract_v2_preserves_tree_selection_options(self):
+        source = {
+            "model": "project.project",
+            "view_type": "tree",
+            "fields": {
+                "name": {"name": "name", "type": "char", "string": "名称"},
+                "operation_strategy": {
+                    "name": "operation_strategy",
+                    "type": "selection",
+                    "string": "经营方式",
+                    "selection": [["direct", "公司直营"], ["joint", "联营项目"]],
+                },
+                "lifecycle_state": {
+                    "name": "lifecycle_state",
+                    "type": "selection",
+                    "string": "项目状态",
+                    "selection": [["draft", "草稿"], ["in_progress", "在建"]],
+                },
+            },
+            "views": {
+                "tree": {
+                    "columns": ["name", "operation_strategy", "lifecycle_state"],
+                    "columns_schema": [
+                        {"name": "name", "string": "名称", "type": "char"},
+                        {"name": "operation_strategy", "string": "经营方式", "type": "selection"},
+                        {"name": "lifecycle_state", "string": "项目状态", "type": "selection"},
+                    ],
+                },
+            },
+        }
+
+        full = assembler.assemble_unified_page_contract_v2(
+            source,
+            source_type="ui.contract",
+            client_type="web_pc",
+            request_id="test.web.tree.selection.options",
+        )
+
+        widgets = [
+            widget
+            for container in full["layoutContract"]["containerTree"]
+            for widget in container["widgetList"]
+        ]
+        by_field = {widget["fieldCode"]: widget for widget in widgets}
+        self.assertEqual(
+            by_field["operation_strategy"]["componentConfig"]["selection"],
+            [["direct", "公司直营"], ["joint", "联营项目"]],
+        )
+        self.assertEqual(
+            by_field["lifecycle_state"]["componentConfig"]["selection"],
+            [["draft", "草稿"], ["in_progress", "在建"]],
+        )
+
     def test_web_pc_drops_source_compat_when_not_requested(self):
         source = {
             "model": "project.project",

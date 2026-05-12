@@ -112,8 +112,13 @@ function buildLegacyFieldDescriptor(widget: UnifiedPageContractV2Widget, mainDat
   if (Object.keys(relationEntry).length) {
     descriptor.relation_entry = relationEntry;
   }
-  if (type === 'selection' && Array.isArray(value)) {
-    descriptor.selection = value;
+  const selection = Array.isArray(componentConfig.selection)
+    ? componentConfig.selection
+    : Array.isArray(value)
+      ? value
+      : [];
+  if (type === 'selection' && selection.length) {
+    descriptor.selection = selection;
   }
   return descriptor;
 }
