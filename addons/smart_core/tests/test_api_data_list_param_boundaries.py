@@ -207,6 +207,28 @@ class TestApiDataListParamBoundaries(unittest.TestCase):
             {"search_default_project_id": 99},
         )
 
+    def test_request_context_preserves_env_lang_when_client_context_is_sparse(self):
+        module = _load_handler()
+        env = types.SimpleNamespace(uid=7, context={"lang": "zh_CN", "tz": "Asia/Shanghai"}, user=None)
+        handler = module.ApiDataHandler(env=env)
+
+        context = handler._request_context({"context": {"active_test": True}})
+
+        self.assertEqual(context["lang"], "zh_CN")
+        self.assertEqual(context["tz"], "Asia/Shanghai")
+        self.assertIs(context["active_test"], True)
+
+    def test_request_context_allows_explicit_client_lang_override(self):
+        module = _load_handler()
+        env = types.SimpleNamespace(uid=7, context={"lang": "zh_CN", "tz": "Asia/Shanghai"}, user=None)
+        handler = module.ApiDataHandler(env=env)
+
+        context = handler._request_context({"context": {"lang": "en_US", "active_test": False}})
+
+        self.assertEqual(context["lang"], "en_US")
+        self.assertEqual(context["tz"], "Asia/Shanghai")
+        self.assertIs(context["active_test"], False)
+
     def test_list_rejects_invalid_fields_domain_and_group_by(self):
         cases = [
             ({"fields": 7}, "fields 无效"),

@@ -133,6 +133,26 @@ class ApiDataHandler(BaseIntentHandler):
                         merged[k] = v
         return merged
 
+    def _request_context(self, p: Dict[str, Any]) -> Dict[str, Any]:
+        """Merge client context over the authenticated Odoo context.
+
+        ``with_context(dict)`` replaces the existing context in Odoo.  Keeping
+        the server context preserves lang/tz/company defaults for translated
+        fields while still allowing request-level overrides.
+        """
+        context = dict(getattr(self.env, "context", {}) or {})
+        payload_context = self._dig(p, "context") or {}
+        if not isinstance(payload_context, dict):
+            payload_context = {}
+        envelope_context = p.get("context") if isinstance(p.get("context"), dict) else {}
+        if envelope_context:
+            context.update(envelope_context)
+        if payload_context:
+            context.update(payload_context)
+        if "active_test" not in context:
+            context["active_test"] = self._get_bool(p, "active_test", True)
+        return context
+
     def _dig(self, p: Dict[str, Any], key: str, default=None):
         if not isinstance(p, dict):
             return default
@@ -1121,14 +1141,7 @@ class ApiDataHandler(BaseIntentHandler):
         if model not in self.env:
             return self._err(404, f"未知模型: {model}")
 
-        context = self._dig(p, "context") or {}
-        if not isinstance(context, dict):
-            context = {}
-        envelope_context = p.get("context") if isinstance(p.get("context"), dict) else {}
-        if envelope_context:
-            context = {**envelope_context, **context}
-        if "active_test" not in context:
-            context["active_test"] = self._get_bool(p, "active_test", True)
+        context = self._request_context(p)
         if_none_match = self._read_if_none_match(p)
 
         use_sudo = resolve_api_data_sudo(p)
