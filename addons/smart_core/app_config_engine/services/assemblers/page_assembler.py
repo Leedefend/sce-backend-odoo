@@ -932,6 +932,7 @@ class PageAssembler:
                 "can_read": can_read,
                 "reason_code": reason_code,
                 "inline_create": inline_create,
+                "search_dialog": self._build_relation_search_dialog_contract(relation),
                 "ui_labels": {
                     "search_more": _("搜索更多..."),
                     "quick_create": _("快速新建..."),
@@ -960,6 +961,63 @@ class PageAssembler:
             }
         )
         return entry
+
+    def _build_relation_search_dialog_contract(self, relation):
+        relation = str(relation or "").strip()
+        columns = []
+        read_fields = ["id", "display_name", "name"]
+        order = "id desc"
+        search = {"filters": [], "group_by": [], "facets": {"enabled": True}}
+        if not relation:
+            return {
+                "columns": columns,
+                "read_fields": read_fields,
+                "order": order,
+                "limit": 120,
+                "search": search,
+                "source": "relation_target_native_view",
+            }
+        try:
+            view_config_model = self.env["app.view.config"].with_context(contract_projection_readonly=True)
+            view_config = view_config_model._generate_from_fields_view_get(relation, "tree")
+            view_contract = view_config.get_contract_api(filter_runtime=True, check_model_acl=True)
+            schema_rows = view_contract.get("columns_schema") if isinstance(view_contract, dict) else []
+            for row in schema_rows if isinstance(schema_rows, list) else []:
+                if not isinstance(row, dict):
+                    continue
+                name = str(row.get("name") or row.get("field") or "").strip()
+                label = str(row.get("label") or row.get("string") or name).strip()
+                if not name or name == "id":
+                    continue
+                columns.append({
+                    "name": name,
+                    "label": label or name,
+                    "type": row.get("type") or "",
+                    "widget": row.get("widget") or "",
+                    "optional": row.get("optional") or "",
+                })
+                if name not in read_fields:
+                    read_fields.append(name)
+                if len(columns) >= 8:
+                    break
+            order = str(
+                view_contract.get("default_order")
+                or view_contract.get("order")
+                or order
+            ).strip() or order
+            parsed_search = view_contract.get("search") if isinstance(view_contract.get("search"), dict) else {}
+            if parsed_search:
+                search = parsed_search
+        except Exception:
+            _logger.debug("relation search dialog native parse failed relation=%s", relation, exc_info=True)
+        return {
+            "columns": columns,
+            "read_fields": read_fields,
+            "order": order,
+            "limit": 120,
+            "search": search,
+            "source": "relation_target_native_view",
+        }
 
     def _build_relation_inline_create_contract(self, relation, *, can_read, can_create, default_vals=None):
         relation = str(relation or "").strip()
@@ -1171,16 +1229,30 @@ class PageAssembler:
             next_offset = (offset + len(rows)) if len(rows) == limit else None
             out["list"] = {"records": rows, "next_offset": next_offset}
 
-        # 表单数据：当 view_types 包含 form 且传了 record_id 才读取
-        if "form" in (view_types or []) and p.get("record_id"):
+        # 表单数据：表单视图且传了 record_id 才读取，避免列表请求混入记录事实。
+        requested_view_type = str(p.get("view_type") or p.get("viewType") or "").strip().lower()
+        wants_form_record = (
+            p.get("record_id")
+            and (
+                requested_view_type in {"form", ""}
+                or "form" in (view_types or [])
+            )
+        )
+        if wants_form_record:
             rec = Model.browse(int(p["record_id"]))
             if rec.exists():
                 form_fields = []
                 form_layout = {}
+                form_view = assembled.get("views", {}).get("form", {}) if isinstance(assembled.get("views"), dict) else {}
                 try:
-                    vcfg = self.su_env["app.view.config"].sudo().search([("model", "=", model), ("view_type", "=", "form")], limit=1)
-                    form_layout = (vcfg.arch_parsed or {}).get("layout") or {}
-                    form_fields = self._collect_form_fields(form_layout) or list(fields_map.keys())[:20]
+                    form_layout = form_view.get("layout") if isinstance(form_view, dict) else {}
+                    form_fields = self._collect_form_fields(form_layout)
+                    if not form_fields:
+                        vcfg = self.su_env["app.view.config"].sudo().search([("model", "=", model), ("view_type", "=", "form")], limit=1)
+                        form_layout = (vcfg.arch_parsed or {}).get("layout") or {}
+                        form_fields = self._collect_form_fields(form_layout)
+                    if not form_fields:
+                        form_fields = list(fields_map.keys())[:20]
                 except Exception:
                     # 兜底：取前 20 个字段，避免一次性 read 全量大字段
                     form_fields = list(fields_map.keys())[:20]
@@ -1195,6 +1267,10 @@ class PageAssembler:
         names = []
 
         def walk(node):
+            if isinstance(node, list):
+                for child in node:
+                    walk(child)
+                return
             if not node or not isinstance(node, dict):
                 return
             if node.get('type') == 'field':

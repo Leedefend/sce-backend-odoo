@@ -96,6 +96,7 @@ class UiContractV2Handler(BaseIntentHandler):
         nested_ui_contract = source_contract.pop("ui_contract", {})
         if isinstance(nested_ui_contract, dict):
             source_contract.update(nested_ui_contract)
+        nested_data = ui_data.get("data") if isinstance(ui_data.get("data"), dict) else {}
         source_contract.update({
             "model": model,
             "view_type": view_type,
@@ -110,7 +111,13 @@ class UiContractV2Handler(BaseIntentHandler):
                 or params.get("context")
                 or {}
             ),
-            "record": ui_data.get("record") if isinstance(ui_data.get("record"), dict) else {},
+            "record": (
+                ui_data.get("record")
+                if isinstance(ui_data.get("record"), dict)
+                else nested_data.get("record")
+                if isinstance(nested_data.get("record"), dict)
+                else {}
+            ),
             "source_meta": ui_meta,
         })
         contract_v2 = assemble_unified_page_contract_v2(
@@ -284,6 +291,11 @@ class UiContractV2Handler(BaseIntentHandler):
                 ui_params["op"] = "action_open"
             elif ui_params.get("model") or ui_params.get("model_code") or ui_params.get("modelCode"):
                 ui_params["op"] = "model"
+        op = str(ui_params.get("op") or ui_params.get("subject") or "").strip().lower()
+        view_type = str(ui_params.get("view_type") or ui_params.get("viewType") or "").strip().lower()
+        record_id = ui_params.get("record_id") or ui_params.get("recordId") or ui_params.get("res_id") or ui_params.get("resId")
+        if op == "model" and view_type in {"form", ""} and record_id and "with_data" not in ui_params:
+            ui_params["with_data"] = True
         return ui_params
 
     def _envelope(self, result: Any) -> dict[str, Any]:

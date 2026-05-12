@@ -110,6 +110,25 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
 
         self.assertEqual(full["statusContract"]["globalStatus"]["pageAuth"], "edit")
 
+    def test_ui_contract_v2_uses_head_title_as_page_name(self):
+        source = {
+            "model": "project.project",
+            "view_type": "form",
+            "head": {"title": "项目"},
+            "fields": {
+                "name": {"name": "name", "type": "char", "string": "项目名称"},
+            },
+        }
+
+        full = assembler.assemble_unified_page_contract_v2(
+            source,
+            source_type="ui.contract",
+            client_type="web_pc",
+            request_id="test.web.form.head.title",
+        )
+
+        self.assertEqual(full["pageInfo"]["pageName"], "项目")
+
     def test_ui_contract_v2_readonly_form_page_auth_stays_read(self):
         source = {
             "model": "project.project",
@@ -293,6 +312,76 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
         page_group = tree[1]["children"][1]["tabs"][0]["children"][0]
         self.assertEqual([node["name"] for node in page_group["children"]], ["company_id"])
         self.assertEqual(page_group["children"][0]["fieldInfo"]["label"], "公司")
+
+    def test_ui_contract_v2_preserves_relation_entry_search_dialog(self):
+        search_dialog = {
+            "columns": [
+                {"name": "display_name", "label": "名称", "type": "char"},
+                {"name": "phone", "label": "电话", "type": "char"},
+            ],
+            "read_fields": ["id", "display_name", "phone"],
+            "order": "display_name asc",
+            "limit": 120,
+            "source": "relation_target_native_view",
+        }
+        source = {
+            "model": "project.project",
+            "view_type": "form",
+            "views": {
+                "form": {
+                    "layout": [
+                        {
+                            "type": "sheet",
+                            "name": "project_sheet",
+                            "children": [
+                                {
+                                    "type": "group",
+                                    "name": "project_core",
+                                    "children": [{"type": "field", "name": "partner_id"}],
+                                }
+                            ],
+                        }
+                    ]
+                }
+            },
+            "fields": {
+                "partner_id": {
+                    "name": "partner_id",
+                    "type": "many2one",
+                    "string": "客户",
+                    "relation": "res.partner",
+                    "relation_entry": {
+                        "model": "res.partner",
+                        "can_read": True,
+                        "can_create": True,
+                        "create_mode": "page",
+                        "search_dialog": search_dialog,
+                    },
+                },
+            },
+        }
+
+        full = assembler.assemble_unified_page_contract_v2(
+            source,
+            source_type="ui.contract",
+            client_type="web_pc",
+            request_id="test.web.relation.search.dialog",
+        )
+
+        field_node = full["layoutContract"]["containerTree"][0]["children"][0]["children"][0]
+        self.assertEqual(
+            field_node["fieldInfo"]["relation_entry"]["search_dialog"]["source"],
+            "relation_target_native_view",
+        )
+        self.assertEqual(
+            field_node["componentConfig"]["relationEntry"]["search_dialog"]["columns"][1]["name"],
+            "phone",
+        )
+        widget = full["layoutContract"]["containerTree"][0]["children"][0]["widgetList"][0]
+        self.assertEqual(
+            widget["componentConfig"]["relationEntry"]["search_dialog"]["read_fields"],
+            ["id", "display_name", "phone"],
+        )
 
     def test_ui_contract_v2_uses_button_badge_display_label(self):
         source = {

@@ -81,6 +81,9 @@ def _resolve_source_type(source: dict[str, Any], explicit: str = "") -> str:
 
 
 def _component_key(widget_type: str) -> str:
+    normalized = _text(widget_type).lower()
+    if normalized.endswith("many2one"):
+        return "sc.select.remote"
     mapping = {
         "input": "sc.input.text",
         "textarea": "sc.input.textarea",
@@ -91,6 +94,7 @@ def _component_key(widget_type: str) -> str:
         "datetime": "sc.input.datetime",
         "table": "sc.table.data",
         "tree": "sc.tree.data",
+        "many2many_tags": "sc.select.tags",
         "button": "sc.button.action",
         "display": "sc.display.text",
     }
@@ -106,6 +110,9 @@ def _widget_type_from_field(field: dict[str, Any]) -> str:
     if ttype in {"integer", "float", "monetary"}:
         return "number"
     if ttype in {"one2many", "many2many"}:
+        widget_options = _dict(field.get("widget_options") or field.get("options"))
+        if ttype == "many2many" and widget_options.get("color_field"):
+            return "many2many_tags"
         return "table"
     if ttype in {"text", "html"}:
         return "textarea"
@@ -410,6 +417,7 @@ def _assemble_page_orchestration(source: dict[str, Any], *, client_type: str, re
 
 def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_id: str) -> dict[str, Any]:
     ui = _dict(source)
+    head = _dict(source.get("head") or ui.get("head"))
     model = _text(source.get("model") or ui.get("model"))
     view_type = _text(source.get("view_type") or ui.get("view_type"), "form")
     record_id = _positive_int(source.get("record_id") or source.get("recordId") or ui.get("record_id") or ui.get("recordId"), 0)
@@ -418,7 +426,7 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
     contract = _base_contract(
         page_id=page_id,
         scene_key=page_id,
-        page_name=_text(ui.get("title") or source.get("case"), page_id),
+        page_name=_text(ui.get("title") or source.get("title") or head.get("title") or source.get("case"), page_id),
         model=model,
         view_type="list" if view_type == "tree" else view_type,
         layout_type=layout_type,
@@ -737,6 +745,17 @@ def _field_widget(field: dict[str, Any], *, layout_type: str) -> dict[str, Any]:
     for key in ("optional", "invisible", "column_invisible", "readonly", "required"):
         if key in field:
             component_config[key] = deepcopy(field.get(key))
+    field_type = _text(field.get("ttype") or field.get("type")).lower()
+    if field_type:
+        component_config["fieldType"] = field_type
+    if _text(field.get("relation")):
+        component_config["relation"] = _text(field.get("relation"))
+    relation_entry = _dict(field.get("relation_entry"))
+    if relation_entry:
+        component_config["relationEntry"] = deepcopy(relation_entry)
+    widget_options = _dict(field.get("widget_options") or field.get("options"))
+    if widget_options:
+        component_config["widgetOptions"] = deepcopy(widget_options)
     return {
         "widgetId": f"field.{field_name}",
         "widgetType": widget_type,
@@ -762,6 +781,8 @@ def _native_field_node(node: dict[str, Any], field: dict[str, Any], *, layout_ty
         field_name,
     )
     field_source = deepcopy(field)
+    field_info = _dict(node.get("fieldInfo") or node.get("field_info"))
+    field_source.update({k: deepcopy(v) for k, v in field_info.items() if k not in {"label", "string"}})
     field_source["name"] = field_name
     field_source.setdefault("string", label)
     field_source.setdefault("label", label)
@@ -769,10 +790,12 @@ def _native_field_node(node: dict[str, Any], field: dict[str, Any], *, layout_ty
         field_source["widget"] = _text(node.get("widget"))
     widget = _field_widget(field_source, layout_type=layout_type)
     component_config = deepcopy(widget.get("componentConfig") or {})
-    field_info = _dict(node.get("fieldInfo") or node.get("field_info"))
     field_info["name"] = field_name
     field_info["label"] = label
     field_info["widget"] = widget["widgetType"]
+    for key in ("type", "ttype", "relation", "relation_entry", "widget_options", "options"):
+        if key in field_source and key not in field_info:
+            field_info[key] = deepcopy(field_source.get(key))
     out = deepcopy(node)
     out["type"] = "field"
     out["name"] = field_name

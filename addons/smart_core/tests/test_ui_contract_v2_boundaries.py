@@ -42,12 +42,17 @@ def _load_handler():
             "scenes": [{"key": "workspace.home", "title": "Home"}]
         },
     )
+    captured = {}
+
+    def _assemble_unified_page_contract_v2(source, *args, **kwargs):
+        captured["assembler_source"] = dict(source or {})
+        return {"pageInfo": {}, "meta": {}}
+
     _install_module(
         "odoo.addons.smart_core.core.unified_page_contract_v2_assembler",
         CONTRACT_VERSION="2.0",
-        assemble_unified_page_contract_v2=lambda *args, **kwargs: {"pageInfo": {}, "meta": {}},
+        assemble_unified_page_contract_v2=_assemble_unified_page_contract_v2,
     )
-    captured = {}
 
     def _trim_unified_page_contract_v2(contract, **kwargs):
         captured["trim_kwargs"] = kwargs
@@ -73,7 +78,16 @@ def _load_handler():
 
     class _UiContractHandler(_BaseIntentHandler):
         def handle(self, payload=None, ctx=None):
-            return {"ok": True, "data": {"model": "res.partner", "view_type": "form"}, "meta": {}}
+            captured.setdefault("ui_payloads", []).append(dict(payload or {}))
+            return {
+                "ok": True,
+                "data": {
+                    "model": "res.partner",
+                    "view_type": "form",
+                    "data": {"record": {"id": 42, "name": "ACME"}},
+                },
+                "meta": {},
+            }
 
     _install_module("odoo.addons.smart_core.handlers.ui_contract", UiContractHandler=_UiContractHandler)
 
@@ -145,6 +159,66 @@ class TestUiContractV2Boundaries(unittest.TestCase):
         self.assertFalse(result.ok)
         self.assertEqual(result.code, 400)
         self.assertEqual(result.error["message"], "max_containers 无效")
+
+    def test_form_record_contract_requests_record_data(self):
+        handler = self.module.UiContractV2Handler(env=object())
+
+        result = handler.handle(
+            payload={
+                "params": {
+                    "model": "res.partner",
+                    "view_type": "form",
+                    "record_id": 42,
+                    "render_profile": "edit",
+                }
+            }
+        )
+
+        self.assertTrue(result.ok)
+        payloads = self.module._captured["ui_payloads"]
+        self.assertTrue(payloads)
+        model_payloads = [row for row in payloads if row.get("op") == "model" or row.get("subject") == "model"]
+        self.assertTrue(model_payloads)
+        self.assertTrue(model_payloads[-1]["with_data"])
+
+    def test_list_contract_does_not_request_record_data(self):
+        handler = self.module.UiContractV2Handler(env=object())
+
+        result = handler.handle(
+            payload={
+                "params": {
+                    "model": "res.partner",
+                    "view_type": "tree",
+                    "record_id": 42,
+                }
+            }
+        )
+
+        self.assertTrue(result.ok)
+        payloads = self.module._captured["ui_payloads"]
+        self.assertTrue(payloads)
+        model_payloads = [row for row in payloads if row.get("op") == "model" or row.get("subject") == "model"]
+        self.assertTrue(model_payloads)
+        self.assertFalse(model_payloads[-1].get("with_data"))
+
+    def test_nested_source_record_is_promoted_to_v2_main_source(self):
+        handler = self.module.UiContractV2Handler(env=object())
+
+        result = handler.handle(
+            payload={
+                "params": {
+                    "model": "res.partner",
+                    "view_type": "form",
+                    "record_id": 42,
+                }
+            }
+        )
+
+        self.assertTrue(result.ok)
+        self.assertEqual(
+            self.module._captured["assembler_source"]["record"],
+            {"id": 42, "name": "ACME"},
+        )
 
 
 if __name__ == "__main__":
