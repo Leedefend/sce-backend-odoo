@@ -449,11 +449,13 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
     component_keys = set()
     form_layout = _dict(_dict(ui.get("views")).get("form"))
     layout_rows = form_layout.get("layout") if isinstance(form_layout.get("layout"), list) else []
+    form_subviews = _dict(form_layout.get("subviews"))
     if layout_type == "form" and layout_rows:
         container_tree = _normalize_native_layout_nodes(
             [row for row in layout_rows if isinstance(row, dict)],
             fields_by_name,
             layout_type=layout_type,
+            form_subviews=form_subviews,
             component_keys=component_keys,
                 container_status=contract["statusContract"]["containerStatus"],
                 widget_status=contract["statusContract"]["widgetStatus"],
@@ -816,6 +818,7 @@ def _normalize_native_layout_nodes(
     fields_by_name: dict[str, dict[str, Any]],
     *,
     layout_type: str,
+    form_subviews: dict[str, Any] | None = None,
     component_keys: set[str],
     container_status: list[dict[str, Any]],
     widget_status: list[dict[str, Any]],
@@ -837,6 +840,13 @@ def _normalize_native_layout_nodes(
         if node_type == "field":
             field = _dict(fields_by_name.get(node_name)) if node_name else {}
             normalized = _native_field_node(node, field, layout_type=layout_type)
+            if node_name:
+                subview = _dict((form_subviews or {}).get(node_name))
+                if subview:
+                    field_info = _dict(normalized.get("fieldInfo"))
+                    field_info["subview"] = deepcopy(subview)
+                    normalized["fieldInfo"] = field_info
+                    normalized["field_info"] = deepcopy(field_info)
             widget = _field_widget({**field, "name": node_name or field.get("name"), "string": normalized.get("string"), "label": normalized.get("label"), "widget": normalized.get("widget")}, layout_type=layout_type)
             component_keys.add(widget["componentKey"])
             widget_status.append(_field_status({**field, "name": node_name or field.get("name"), "string": normalized.get("string"), "label": normalized.get("label"), "widget": normalized.get("widget")}, widget["widgetId"]))
@@ -857,6 +867,7 @@ def _normalize_native_layout_nodes(
                     [item for item in child_rows if isinstance(item, dict)],
                     fields_by_name,
                     layout_type=layout_type,
+                    form_subviews=form_subviews,
                     component_keys=component_keys,
                     container_status=container_status,
                     widget_status=widget_status,
