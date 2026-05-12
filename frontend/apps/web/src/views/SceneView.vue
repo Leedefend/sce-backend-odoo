@@ -75,7 +75,7 @@
       :scene-key="currentSceneKey"
     />
     <SceneBlocksRenderer
-      v-if="status === 'idle' && !sceneContractEntryIntent && sceneBlocks.length"
+      v-if="status === 'idle' && !sceneContractEntryIntent && showSceneBlocksDebug && sceneBlocks.length"
       :blocks="sceneBlocks"
       @action="handleSceneBlockAction"
     />
@@ -139,9 +139,11 @@ import { findActionMeta, findActionNodeByModel, findMenuNode } from '../app/menu
 import { usePageContract } from '../app/pageContract';
 import type { NavNode } from '@sc/schema';
 import { setSceneRegistryFromSceneReadyContract, type Scene, type SceneTarget } from '../app/resolvers/sceneRegistry';
+import { isSceneBlocksDebugEnabled } from '../config/debug';
 
 const route = useRoute();
 const router = useRouter();
+const showSceneBlocksDebug = computed(() => isSceneBlocksDebugEnabled(route));
 const session = useSessionStore();
 const pageContract = usePageContract('scene', { allowSceneContractFallback: true });
 const pageText = pageContract.text;

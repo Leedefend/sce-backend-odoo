@@ -94,9 +94,6 @@
       </section>
 
       <section class="form-grid">
-        <div v-if="isProjectIntakeCreateMode" class="form-flow-guide">
-          <p class="form-flow-guide-main">只需完成核心信息即可创建项目</p>
-        </div>
         <StatusPanel
           v-if="sceneValidationPanel"
           title="表单校验失败"
@@ -116,11 +113,8 @@
         <p v-if="submissionFeedback" class="submission-feedback" :class="`submission-feedback--${submissionFeedback.kind}`">
           {{ submissionFeedback.message }}
         </p>
-        <p v-if="visibleFieldNodeCount === 0" class="validation-warn">
-          当前页面暂无可显示字段，请检查契约可见字段与角色权限配置。
-        </p>
         <SceneBlocksRenderer
-          v-if="sceneReadyFormSurface.sceneBlocks.length"
+          v-if="showSceneBlocksDebug && sceneReadyFormSurface.sceneBlocks.length"
           :blocks="sceneReadyFormSurface.sceneBlocks"
           @action="handleSceneBlockAction"
         />
@@ -444,7 +438,7 @@ import { resolveFieldSpanClass } from '../components/template/fieldSpan.mapper';
 import { mapDescriptorSelectionOptions, mapRelationOptions } from '../components/template/option.mapper';
 import { createRelationFallbackAdapter } from '../components/template/relationFallback.adapter';
 import { dispatchTemplateFieldChange } from '../components/template/fieldChange.dispatcher';
-import { isHudEnabled } from '../config/debug';
+import { isHudEnabled, isSceneBlocksDebugEnabled } from '../config/debug';
 import { intentRequest } from '../api/intents';
 import { loadActionContractRaw, loadModelContractRaw } from '../api/contract';
 import { createRecord, listRecords, readRecord, writeRecord } from '../api/data';
@@ -771,6 +765,7 @@ const recordId = computed(() => {
 });
 const recordIdDisplay = computed(() => (recordId.value ? String(recordId.value) : 'new'));
 const showHud = computed(() => isHudEnabled(route));
+const showSceneBlocksDebug = computed(() => isSceneBlocksDebugEnabled(route));
 const requestedSurface = computed<'user' | 'native' | 'hud'>(() => {
   const raw = String(route.query.surface || '').trim().toLowerCase();
   if (raw === 'native' || raw === 'hud' || raw === 'user') return raw;

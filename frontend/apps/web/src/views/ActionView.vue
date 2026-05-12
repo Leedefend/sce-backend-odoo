@@ -14,7 +14,7 @@
       </button>
     </section>
     <SceneBlocksRenderer
-      v-if="sceneReadyListSurface.sceneBlocks.length"
+      v-if="showSceneBlocksDebug && sceneReadyListSurface.sceneBlocks.length"
       :blocks="sceneReadyListSurface.sceneBlocks"
       @action="handleSceneBlockAction"
     />
@@ -550,7 +550,7 @@ import GroupSummaryBar from '../components/GroupSummaryBar.vue';
 import SceneBlocksRenderer from '../components/scene/SceneBlocksRenderer.vue';
 import ActionSurfaceToolbar from '../components/action/ActionSurfaceToolbar.vue';
 import { deriveListStatus } from '../app/view_state';
-import { isHudEnabled } from '../config/debug';
+import { isHudEnabled, isSceneBlocksDebugEnabled } from '../config/debug';
 import { ErrorCodes } from '../app/error_codes';
 import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
 import { useStatus } from '../composables/useStatus';
@@ -1544,6 +1544,7 @@ const {
   route,
   isHudEnabled,
 });
+const showSceneBlocksDebug = computed(() => isSceneBlocksDebugEnabled(route));
 
 function resolveContractActionCountForHud() {
   const contract = actionContract.value;

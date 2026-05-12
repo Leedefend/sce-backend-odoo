@@ -22,14 +22,11 @@
           class="scene-block__button"
           @click="emitAction(block, action)"
         >
-          {{ action.label || action.key }}
+          {{ actionDisplayLabel(action) }}
         </button>
       </div>
 
       <div v-else-if="block.kind === 'toolbar'" class="scene-block__body scene-block__body--toolbar">
-        <div v-if="toolbarText(block, 'search_surface')" class="scene-block__hint">{{ toolbarText(block, 'search_surface') }}</div>
-        <div v-if="toolbarText(block, 'list_surface')" class="scene-block__hint">{{ toolbarText(block, 'list_surface') }}</div>
-        <div v-if="toolbarText(block, 'advanced_filters')" class="scene-block__hint">{{ toolbarText(block, 'advanced_filters') }}</div>
         <div v-if="toolbarText(block, 'quick_filters')" class="scene-block__chips">
           <button
             v-for="item in toolbarItems(block, 'quick_filters')"
@@ -38,7 +35,7 @@
             type="button"
             @click="emitToolbarFilterAction(block, item)"
           >
-            {{ String(item.label || item.key || '') }}
+            {{ recordDisplayLabel(item) }}
           </button>
         </div>
         <div v-if="toolbarItems(block, 'view_modes').length" class="scene-block__chips">
@@ -49,7 +46,7 @@
             type="button"
             @click="emitToolbarViewModeAction(block, item)"
           >
-            {{ String(item.label || item.key || '') }}
+            {{ recordDisplayLabel(item) }}
           </button>
         </div>
       </div>
@@ -66,7 +63,6 @@
             {{ item.label }}
           </button>
         </div>
-        <p v-else class="scene-block__hint">暂无可切换状态</p>
       </div>
 
       <div v-else-if="block.kind === 'primary_actions' || block.kind === 'smart_actions'" class="scene-block__body scene-block__body--actions">
@@ -77,12 +73,11 @@
           class="scene-block__button"
           @click="emitAction(block, action)"
         >
-          {{ action.label || action.key }}
+          {{ actionDisplayLabel(action) }}
         </button>
       </div>
 
       <div v-else-if="block.kind === 'body' || block.kind === 'list_view' || block.kind === 'kanban_board'" class="scene-block__body">
-        <p class="scene-block__hint">{{ bodyHint(block) }}</p>
         <div class="scene-block__kv-grid">
           <p class="scene-block__kv-item">
             <span class="scene-block__kv-key">字段数</span>
@@ -114,7 +109,6 @@
             {{ item.label }}
           </span>
         </div>
-        <p v-else class="scene-block__hint">暂无关联字段</p>
       </div>
 
       <div v-else-if="block.kind === 'overview_strip'" class="scene-block__body">
@@ -128,17 +122,10 @@
             <strong class="scene-block__kv-val">{{ item.value }}</strong>
           </p>
         </div>
-        <p v-else class="scene-block__hint">暂无概览数据</p>
-      </div>
-
-      <div v-else-if="block.kind === 'chatter'" class="scene-block__body">
-        <p class="scene-block__hint">
-          {{ chatterHint(block) }}
-        </p>
       </div>
 
       <div v-else class="scene-block__body">
-        <p class="scene-block__hint">{{ fallbackHint(block) }}</p>
+        <div class="scene-block__kv-grid" />
       </div>
     </article>
   </section>
@@ -186,6 +173,21 @@ function toolbarItems(block: SceneBlock, key: string) {
   const payload = block.payload && typeof block.payload === 'object' ? block.payload : {};
   const raw = (payload as Record<string, unknown>)[key];
   return Array.isArray(raw) ? raw as Array<Record<string, unknown>> : [];
+}
+
+function labelFromDictLikeText(value: unknown): string {
+  const source = String(value || '').trim();
+  if (!source.startsWith('{') || !source.includes('label')) return source;
+  const match = source.match(/['"]label['"]\s*:\s*['"]([^'"]+)['"]/);
+  return String(match?.[1] || source).trim();
+}
+
+function recordDisplayLabel(item: Record<string, unknown>): string {
+  return labelFromDictLikeText(item.label || item.key || '');
+}
+
+function actionDisplayLabel(action: SceneBlockAction): string {
+  return labelFromDictLikeText(action.label || action.key || '');
 }
 
 function asArray(value: unknown): Array<Record<string, unknown>> {
@@ -236,32 +238,13 @@ function overviewItems(block: SceneBlock) {
     .filter((item) => item.key);
 }
 
-function chatterHint(block: SceneBlock) {
-  const payload = block.payload && typeof block.payload === 'object' ? block.payload : {};
-  const hasAttachments = Boolean((payload as Record<string, unknown>).has_attachments);
-  return hasAttachments ? '支持消息与附件协作' : '支持消息协作';
-}
-
-function fallbackHint(block: SceneBlock) {
-  if (block.kind === 'footer') return '流程收口与下一步导航';
-  if (block.kind === 'pagination') return '分页与窗口控制';
-  return '场景块已加载';
-}
-
 function toolbarText(block: SceneBlock, key: string) {
   const payload = block.payload && typeof block.payload === 'object' ? block.payload : {};
   const raw = (payload as Record<string, unknown>)[key];
   if (!raw) return '';
   if (Array.isArray(raw)) return '';
   if (typeof raw === 'string') return raw.trim();
-  if (typeof raw === 'object') {
-    try {
-      return JSON.stringify(raw);
-    } catch {
-      return '';
-    }
-  }
-  return String(raw);
+  return '';
 }
 
 function bodyHint(block: SceneBlock) {
