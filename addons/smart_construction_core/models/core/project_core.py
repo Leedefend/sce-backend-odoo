@@ -569,6 +569,27 @@ class ProjectProject(models.Model):
         index=True,
         help="公司隔离之后的项目级全局经营策略维度，用于直营/联营业务事实切换、筛选和统计。",
     )
+
+    _PROJECT_CATEGORY_CODE_BY_OPERATION_STRATEGY = {
+        "direct": "PROJECT_CATEGORY_DIRECT",
+        "joint": "PROJECT_CATEGORY_JOINT",
+    }
+
+    def _project_category_for_operation_strategy(self, operation_strategy):
+        code = self._PROJECT_CATEGORY_CODE_BY_OPERATION_STRATEGY.get(str(operation_strategy or "").strip())
+        if not code:
+            return self.env["sc.dictionary"].browse()
+        return self.env["sc.dictionary"].search(
+            [("type", "=", "project_category"), ("code", "=", code), ("active", "=", True)],
+            limit=1,
+        )
+
+    @api.onchange("operation_strategy")
+    def _onchange_operation_strategy_project_category(self):
+        for project in self:
+            category = project._project_category_for_operation_strategy(project.operation_strategy)
+            if category:
+                project.project_category_id = category
     stage_id = fields.Many2one(
         'project.project.stage',
         string='阶段',
@@ -1093,8 +1114,13 @@ class ProjectProject(models.Model):
             creation_service = None
         updated_vals = []
         for vals in vals_list:
+            vals = dict(vals)
             if creation_service is not None:
                 vals = creation_service.normalize_create_vals(vals)
+            if not vals.get("project_category_id") and vals.get("operation_strategy"):
+                category = self._project_category_for_operation_strategy(vals.get("operation_strategy"))
+                if category:
+                    vals["project_category_id"] = category.id
             if not vals.get('project_code'):
                 code = sequence.next_by_code('project.project.code')
                 if not code:
@@ -2016,6 +2042,11 @@ class ProjectProject(models.Model):
             vals = dict(vals)
             vals.setdefault("sc_draft_autosaved_at", fields.Datetime.now())
             vals.setdefault("sc_draft_autosave_uid", self.env.user.id)
+        if "operation_strategy" in vals and "project_category_id" not in vals:
+            category = self._project_category_for_operation_strategy(vals.get("operation_strategy"))
+            if category:
+                vals = dict(vals)
+                vals["project_category_id"] = category.id
         if "lifecycle_state" in vals:
             self._validate_lifecycle_transition(vals.get("lifecycle_state"))
             if "stage_id" not in vals:
