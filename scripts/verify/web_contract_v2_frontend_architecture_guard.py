@@ -253,6 +253,7 @@ REQUIRED_V2_BOUNDARY_FILES: dict[str, tuple[str, ...]] = {
         "resolveContractV2GlobalStatus",
         "resolveContractV2MainData",
         "resolveContractV2SourceContext",
+        "resolveContractV2ValueSource",
     ),
     "app/contracts/v2/client.ts": (
         "loadActionContractV2",
@@ -281,6 +282,7 @@ REQUIRED_FORM_STORE_SELECTOR_TOKENS: tuple[str, ...] = (
     "resolveContractV2GlobalStatus",
     "resolveContractV2MainData",
     "resolveContractV2SourceContext",
+    "resolveContractV2ValueSource",
 )
 
 FORBIDDEN_FORM_LOCAL_SELECTOR_TOKENS: tuple[str, ...] = (

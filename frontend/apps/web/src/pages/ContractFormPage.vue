@@ -497,6 +497,7 @@ import {
   resolveContractV2GlobalStatus,
   resolveContractV2MainData,
   resolveContractV2SourceContext,
+  resolveContractV2ValueSource,
   type ContractV2ButtonStatus,
   type ContractV2NormalizedStore,
 } from '../app/contracts/v2';
@@ -741,20 +742,7 @@ const v2ShadowLayoutSourceKind = computed(() => {
 const v2ShadowGlobalSourceKind = computed(() => (resolveContractV2GlobalStatus(v2ContractStore.value) ? 'v2_store' : 'legacy_resolver'));
 const v2ShadowSourceContextKind = computed(() => (Object.keys(resolveContractV2SourceContext(v2ContractStore.value)).length ? 'v2_store' : 'legacy_resolver'));
 const v2ShadowStatusFieldCount = computed(() => Object.keys(collectContractV2FieldStatusByCode(v2ContractStore.value)).length);
-const v2ShadowValueSource = computed(() => {
-  const store = v2ContractStore.value;
-  if (!store) return { kind: 'none', values: {} as Record<string, unknown> };
-  const coverage = (values: Record<string, unknown>) => v2ShadowFieldCodes.value.filter((fieldCode) => (
-    Object.prototype.hasOwnProperty.call(values, fieldCode)
-  )).length;
-  const mainData = store.snapshot.dataContract.mainData;
-  if (mainData && coverage(mainData) > 0) return { kind: 'main_data', values: mainData };
-  const primary = store.primaryDataSource;
-  if (primary && coverage(primary) > 0) return { kind: 'primary', values: primary };
-  if (mainData && Object.keys(mainData).length) return { kind: 'main_data', values: mainData };
-  if (primary && Object.keys(primary).length) return { kind: 'primary', values: primary };
-  return { kind: 'none', values: {} as Record<string, unknown> };
-});
+const v2ShadowValueSource = computed(() => resolveContractV2ValueSource(v2ContractStore.value));
 const v2ShadowValueSourceKind = computed(() => v2ShadowValueSource.value.kind);
 const v2ShadowValueFieldCount = computed(() => (
   v2ShadowFieldCodes.value.filter((fieldCode) => (

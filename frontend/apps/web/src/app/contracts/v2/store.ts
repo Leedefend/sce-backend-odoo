@@ -27,6 +27,11 @@ export type ContractV2FieldStatusByCode = Record<string, {
   reasonCode?: string;
 }>;
 
+export type ContractV2ValueSource = {
+  kind: 'none' | 'main_data' | 'primary';
+  values: ContractV2Dictionary;
+};
+
 function walkContainers(containers: ContractV2Container[], visit: (container: ContractV2Container) => void): void {
   containers.forEach((container) => {
     visit(container);
@@ -148,6 +153,21 @@ export function resolveContractV2GlobalStatus(store: ContractV2NormalizedStore |
 export function resolveContractV2MainData(store: ContractV2NormalizedStore | null): ContractV2Dictionary {
   if (!store) return {};
   return asDict(store.snapshot.dataContract.mainData);
+}
+
+export function resolveContractV2ValueSource(store: ContractV2NormalizedStore | null): ContractV2ValueSource {
+  if (!store) return { kind: 'none', values: {} };
+  const fieldCodes = Array.from(store.widgetsByFieldCode.keys());
+  const coverage = (values: ContractV2Dictionary) => fieldCodes.filter((fieldCode) => (
+    Object.prototype.hasOwnProperty.call(values, fieldCode)
+  )).length;
+  const mainData = resolveContractV2MainData(store);
+  if (coverage(mainData) > 0) return { kind: 'main_data', values: mainData };
+  const primary = store.primaryDataSource || {};
+  if (coverage(primary) > 0) return { kind: 'primary', values: primary };
+  if (Object.keys(mainData).length) return { kind: 'main_data', values: mainData };
+  if (Object.keys(primary).length) return { kind: 'primary', values: primary };
+  return { kind: 'none', values: {} };
 }
 
 export function resolveContractV2SourceContext(store: ContractV2NormalizedStore | null): ContractV2SourceContext {
