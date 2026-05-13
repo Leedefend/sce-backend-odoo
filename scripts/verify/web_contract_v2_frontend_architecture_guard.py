@@ -247,6 +247,11 @@ REQUIRED_V2_BOUNDARY_FILES: dict[str, tuple[str, ...]] = {
         "widgetsById",
         "actionsById",
         "primaryDataSource",
+        "collectContractV2FieldStatusByCode",
+        "collectContractV2ButtonStatusById",
+        "resolveContractV2GlobalStatus",
+        "resolveContractV2MainData",
+        "resolveContractV2SourceContext",
     ),
     "app/contracts/v2/client.ts": (
         "loadActionContractV2",
@@ -266,6 +271,22 @@ REQUIRED_FORM_SHADOW_TOKENS: tuple[str, ...] = (
     "v2ContractStore",
     "syncContractV2ShadowStore(response.data)",
     "v2_shadow_store",
+)
+
+REQUIRED_FORM_STORE_SELECTOR_TOKENS: tuple[str, ...] = (
+    "collectContractV2ButtonStatusById",
+    "collectContractV2FieldStatusByCode",
+    "resolveContractV2GlobalStatus",
+    "resolveContractV2MainData",
+    "resolveContractV2SourceContext",
+)
+
+FORBIDDEN_FORM_LOCAL_SELECTOR_TOKENS: tuple[str, ...] = (
+    "function v2ButtonStatusFromStore",
+    "function v2FieldStatusFromStore",
+    "function v2GlobalStatusFromStore",
+    "function v2MainDataFromStore",
+    "function v2SourceContextFromStore",
 )
 
 
@@ -357,6 +378,21 @@ def validate_form_shadow_host() -> list[str]:
     return errors
 
 
+def validate_form_store_selector_boundary() -> list[str]:
+    errors: list[str] = []
+    page = read(WEB_ROOT / "pages/ContractFormPage.vue")
+    store = read(WEB_ROOT / "app/contracts/v2/store.ts")
+    for token in REQUIRED_FORM_STORE_SELECTOR_TOKENS:
+        if token not in store:
+            errors.append(f"v2 store selector boundary missing store token: {token}")
+        if token not in page:
+            errors.append(f"ContractFormPage must consume v2 store selector token: {token}")
+    for token in FORBIDDEN_FORM_LOCAL_SELECTOR_TOKENS:
+        if token in page:
+            errors.append(f"ContractFormPage must not define local v2 selector: {token}")
+    return errors
+
+
 def write_reports(strict: bool, findings: list[dict[str, object]], errors: list[str]) -> None:
     REPORT_JSON.parent.mkdir(parents=True, exist_ok=True)
     REPORT_MD.parent.mkdir(parents=True, exist_ok=True)
@@ -407,6 +443,7 @@ def main() -> int:
     errors.extend(validate_docs())
     errors.extend(validate_v2_boundary())
     errors.extend(validate_form_shadow_host())
+    errors.extend(validate_form_store_selector_boundary())
     write_reports(strict, findings, errors)
 
     if errors:
