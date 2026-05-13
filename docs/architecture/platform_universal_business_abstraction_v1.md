@@ -5,6 +5,7 @@ Status: draft architecture contract
 Binding registry: `platform_universal_business_abstraction_registry_v1.json`
 Rollout plan: `platform_universal_abstraction_rollout_v1.md`
 Scope decision gate: `platform_universal_scope_decision_gate_v1.json`
+Optional scope metadata: `platform_universal_optional_scope_metadata_v1.json`
 
 This note separates the platform-level abstraction from the construction-industry binding.
 
@@ -161,3 +162,8 @@ this order unless evidence proves otherwise:
 The current high-pressure family is income contract and tender business, with
 `tender.bid` as the pressure model. The recommended next implementation is
 optional scope metadata design, not a required platform table.
+
+The optional scope metadata contract records the first candidate on `tender.bid`.
+It keeps `project_id` authoritative for the current construction workflow and
+allows future business/carrier metadata to remain empty until runtime probes
+prove the scope is safe.

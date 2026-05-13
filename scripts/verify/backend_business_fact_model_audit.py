@@ -52,6 +52,7 @@ DEFAULT_UNIVERSAL_ROLLOUT = ROOT / "docs" / "architecture" / "platform_universal
 DEFAULT_CARRIER_FIT_AUDIT = ROOT / "docs" / "architecture" / "platform_universal_carrier_fit_audit_v1.md"
 DEFAULT_CARRIER_FIT_REGISTRY = ROOT / "docs" / "architecture" / "platform_universal_carrier_fit_registry_v1.json"
 DEFAULT_SCOPE_DECISION_GATE = ROOT / "docs" / "architecture" / "platform_universal_scope_decision_gate_v1.json"
+DEFAULT_OPTIONAL_SCOPE_METADATA = ROOT / "docs" / "architecture" / "platform_universal_optional_scope_metadata_v1.json"
 ALLOWED_SOLUTION_LAYERS = {"platform", "industry", "customer"}
 ALLOWED_RESPONSIBILITY_TYPES = {
     "native system-of-record",
@@ -465,6 +466,12 @@ def load_carrier_fit_registry(path: Path) -> dict[str, Any]:
 def load_scope_decision_gate(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {"decision_gates": [], "missing_registry": True}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def load_optional_scope_metadata(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {"model_scope_metadata": [], "missing_registry": True}
     return json.loads(path.read_text(encoding="utf-8"))
 
 
@@ -1027,6 +1034,85 @@ def summarize_scope_decision_gate(scope_decision_gate: dict[str, Any]) -> dict[s
     }
 
 
+def summarize_optional_scope_metadata(
+    rows: list[dict[str, Any]], family_registry: dict[str, Any], optional_scope_metadata: dict[str, Any]
+) -> dict[str, Any]:
+    detected_models = {row["model"] for row in rows if row.get("model")}
+    family_names = {item.get("family") for item in family_registry.get("families", []) if item.get("family")}
+    metadata_rows = optional_scope_metadata.get("model_scope_metadata", [])
+    required_fields = [
+        "target_model",
+        "family",
+        "decision",
+        "current_required_binding",
+        "proposed_optional_fields",
+        "compatibility_rule",
+        "migration_policy",
+        "acceptance_probe",
+    ]
+    required_optional_field_keys = {"name", "type", "required", "purpose"}
+    shape_gaps = []
+    reference_gaps = []
+    decision_counts: Counter[str] = Counter()
+    for item in metadata_rows:
+        target_model = item.get("target_model")
+        family = item.get("family")
+        for field in required_fields:
+            value = item.get(field)
+            if isinstance(value, list):
+                if not value:
+                    shape_gaps.append({"target_model": target_model, "field": field, "reason": "missing_required_list"})
+            elif not str(value or "").strip():
+                shape_gaps.append({"target_model": target_model, "field": field, "reason": "missing_required_field"})
+        if target_model not in detected_models:
+            reference_gaps.append({"target_model": target_model, "field": "target_model", "reason": "model_not_detected"})
+        if family not in family_names:
+            reference_gaps.append({"target_model": target_model, "field": "family", "family": family})
+        decision = item.get("decision")
+        if decision == "optional_scope_fields":
+            decision_counts[decision] += 1
+        else:
+            shape_gaps.append(
+                {
+                    "target_model": target_model,
+                    "field": "decision",
+                    "value": decision,
+                    "allowed_values": ["optional_scope_fields"],
+                }
+            )
+        for proposed_field in item.get("proposed_optional_fields", []):
+            missing_keys = sorted(required_optional_field_keys - set(proposed_field))
+            if missing_keys:
+                shape_gaps.append(
+                    {
+                        "target_model": target_model,
+                        "field": "proposed_optional_fields",
+                        "reason": "missing_field_keys",
+                        "missing_keys": missing_keys,
+                    }
+                )
+            if proposed_field.get("required") is not False:
+                shape_gaps.append(
+                    {
+                        "target_model": target_model,
+                        "field": proposed_field.get("name"),
+                        "reason": "optional_scope_field_must_be_required_false",
+                    }
+                )
+    return {
+        "optional_scope_metadata_count": len(metadata_rows),
+        "optional_scope_decision_counts": dict(sorted(decision_counts.items())),
+        "optional_scope_metadata_shape_gap_count": len(shape_gaps),
+        "optional_scope_metadata_shape_gaps": shape_gaps,
+        "optional_scope_metadata_reference_gap_count": len(reference_gaps),
+        "optional_scope_metadata_reference_gaps": reference_gaps,
+        "has_tender_bid_optional_scope_metadata": any(
+            item.get("target_model") == "tender.bid" and item.get("decision") == "optional_scope_fields"
+            for item in metadata_rows
+        ),
+    }
+
+
 def write_markdown(report: dict[str, Any], path: Path) -> None:
     summary = report["summary"]
     rows = report["models"]
@@ -1337,6 +1423,27 @@ def write_markdown(report: dict[str, Any], path: Path) -> None:
                     verification_gate=item.get("verification_gate", ""),
                 )
             )
+    optional_scope_summary = report.get("optional_scope_summary") or {}
+    optional_scope_metadata = report.get("optional_scope_metadata") or {}
+    lines.extend(["", "## Optional Scope Metadata", ""])
+    lines.append(
+        f"- optional_scope_metadata_count: {optional_scope_summary.get('optional_scope_metadata_count', 0)}"
+    )
+    lines.append(
+        f"- has_tender_bid_optional_scope_metadata: {optional_scope_summary.get('has_tender_bid_optional_scope_metadata', False)}"
+    )
+    if optional_scope_metadata.get("model_scope_metadata"):
+        lines.extend(["", "| target model | family | decision | acceptance |"])
+        lines.append("| --- | --- | --- | --- |")
+        for item in optional_scope_metadata["model_scope_metadata"]:
+            lines.append(
+                "| {target_model} | {family} | {decision} | {acceptance_probe} |".format(
+                    target_model=item.get("target_model", ""),
+                    family=item.get("family", ""),
+                    decision=item.get("decision", ""),
+                    acceptance_probe=item.get("acceptance_probe", ""),
+                )
+            )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -1360,6 +1467,7 @@ def main() -> int:
     parser.add_argument("--carrier-fit-audit", default=str(DEFAULT_CARRIER_FIT_AUDIT.relative_to(ROOT)))
     parser.add_argument("--carrier-fit-registry", default=str(DEFAULT_CARRIER_FIT_REGISTRY.relative_to(ROOT)))
     parser.add_argument("--scope-decision-gate", default=str(DEFAULT_SCOPE_DECISION_GATE.relative_to(ROOT)))
+    parser.add_argument("--optional-scope-metadata", default=str(DEFAULT_OPTIONAL_SCOPE_METADATA.relative_to(ROOT)))
     parser.add_argument(
         "--enforce",
         action="store_true",
@@ -1376,6 +1484,7 @@ def main() -> int:
     universal_registry = load_universal_registry(ROOT / args.universal_registry)
     carrier_fit_registry = load_carrier_fit_registry(ROOT / args.carrier_fit_registry)
     scope_decision_gate = load_scope_decision_gate(ROOT / args.scope_decision_gate)
+    optional_scope_metadata = load_optional_scope_metadata(ROOT / args.optional_scope_metadata)
     report = {
         "summary": summarize(rows, registry),
         "family_summary": summarize_family_registry(rows, family_registry),
@@ -1385,6 +1494,7 @@ def main() -> int:
         "universal_summary": summarize_universal_registry(universal_registry),
         "carrier_fit_registry_summary": summarize_carrier_fit_registry(family_registry, carrier_fit_registry),
         "scope_decision_summary": summarize_scope_decision_gate(scope_decision_gate),
+        "optional_scope_summary": summarize_optional_scope_metadata(rows, family_registry, optional_scope_metadata),
         "registry": registry,
         "family_registry": family_registry,
         "ownership_specs": ownership_specs,
@@ -1393,6 +1503,7 @@ def main() -> int:
         "universal_registry": universal_registry,
         "carrier_fit_registry": carrier_fit_registry,
         "scope_decision_gate": scope_decision_gate,
+        "optional_scope_metadata": optional_scope_metadata,
         "models": rows,
     }
     report_path = ROOT / args.report
@@ -1429,6 +1540,10 @@ def main() -> int:
         "PLATFORM_UNIVERSAL_SCOPE_DECISION_GATE="
         + json.dumps(report["scope_decision_summary"], ensure_ascii=False, sort_keys=True)
     )
+    print(
+        "PLATFORM_UNIVERSAL_OPTIONAL_SCOPE_METADATA="
+        + json.dumps(report["optional_scope_summary"], ensure_ascii=False, sort_keys=True)
+    )
     if args.enforce:
         problem_map_path = ROOT / args.problem_map
         problem_map_text = problem_map_path.read_text(encoding="utf-8") if problem_map_path.exists() else ""
@@ -1455,6 +1570,7 @@ def main() -> int:
         carrier_fit_audit_text = carrier_fit_audit_path.read_text(encoding="utf-8") if carrier_fit_audit_path.exists() else ""
         carrier_fit_registry_path = ROOT / args.carrier_fit_registry
         scope_decision_gate_path = ROOT / args.scope_decision_gate
+        optional_scope_metadata_path = ROOT / args.optional_scope_metadata
         blockers = {
             "unregistered_formal_models": summary["unregistered_formal_models"],
             "unclassified_models": summary["unclassified_models"],
@@ -1631,6 +1747,21 @@ def main() -> int:
                     "path": str(scope_decision_gate_path.relative_to(ROOT)),
                     "missing_scope_decisions": report["scope_decision_summary"]["missing_scope_decisions"],
                     "shape_gaps": report["scope_decision_summary"]["scope_decision_gate_shape_gaps"],
+                }
+            ],
+            "optional_scope_metadata_gaps": []
+            if optional_scope_metadata_path.exists()
+            and not report["optional_scope_summary"]["optional_scope_metadata_shape_gaps"]
+            and not report["optional_scope_summary"]["optional_scope_metadata_reference_gaps"]
+            and report["optional_scope_summary"]["has_tender_bid_optional_scope_metadata"]
+            else [
+                {
+                    "path": str(optional_scope_metadata_path.relative_to(ROOT)),
+                    "shape_gaps": report["optional_scope_summary"]["optional_scope_metadata_shape_gaps"],
+                    "reference_gaps": report["optional_scope_summary"]["optional_scope_metadata_reference_gaps"],
+                    "has_tender_bid_optional_scope_metadata": report["optional_scope_summary"][
+                        "has_tender_bid_optional_scope_metadata"
+                    ],
                 }
             ],
         }

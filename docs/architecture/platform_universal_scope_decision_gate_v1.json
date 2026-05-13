@@ -2,6 +2,7 @@
   "schema": "platform_universal_scope_decision_gate_v1",
   "status": "draft architecture contract",
   "purpose": "Decide how backend scope changes should land after carrier-fit audit, without turning one industry or one customer data shape into platform schema.",
+  "optional_scope_metadata_registry": "platform_universal_optional_scope_metadata_v1.json",
   "kernel": "platform -> company -> business -> carrier -> fact -> projection",
   "decision_order": [
     "registry_metadata_only",
@@ -142,6 +143,7 @@
     "high_pressure_family": "income contract and tender business",
     "pressure_model": "tender.bid",
     "recommended_next_decision": "optional_scope_fields",
-    "reason": "Tender is business-before-carrier pressure, but current construction workflows still rely on project.project; add non-required scope metadata only after design and probes."
+    "reason": "Tender is business-before-carrier pressure, but current construction workflows still rely on project.project; add non-required scope metadata only after design and probes.",
+    "metadata_contract": "platform_universal_optional_scope_metadata_v1.json"
   }
 }
