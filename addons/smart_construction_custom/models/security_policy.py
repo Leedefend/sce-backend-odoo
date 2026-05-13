@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 from odoo import api, models
-from odoo.addons.smart_core.security.platform_admin import platform_admin_groups
+from odoo.addons.smart_core.security.platform_admin import (
+    platform_admin_group_xmlids,
+    platform_admin_groups,
+)
 
 
 class ScSecurityPolicy(models.TransientModel):
@@ -114,13 +117,11 @@ class ScSecurityPolicy(models.TransientModel):
             ],
         }
         forbidden_by_login = {
-            "demo_role_executive": [
+            "demo_role_executive": platform_admin_group_xmlids(include_legacy=True, include_system=False) + [
                 "base.group_erp_manager",
                 "base.group_system",
                 "base.group_no_one",
                 "project.group_project_manager",
-                "smart_construction_core.group_sc_cap_config_admin",
-                "smart_core.group_smart_core_admin",
                 "smart_construction_core.group_sc_cap_business_config_admin",
                 "smart_construction_core.group_sc_super_admin",
                 "smart_construction_core.group_sc_task_entry_access",

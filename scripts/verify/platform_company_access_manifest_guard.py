@@ -216,6 +216,12 @@ for rel_path in (
         'env.get("sc.entitlement")' not in text and 'env.get("sc.usage.counter")' not in text,
         f"{rel_path}: must consume platform company access through smart_core.security.platform_company_access",
     )
+custom_security_policy_text = (ROOT / "addons/smart_construction_custom/models/security_policy.py").read_text(encoding="utf-8")
+assert_true(
+    "platform_admin_group_xmlids" in custom_security_policy_text
+    and '"smart_construction_core.group_sc_cap_config_admin"' not in custom_security_policy_text,
+    "custom security policy must consume platform admin group xmlids from smart_core.security.platform_admin",
+)
 
 for rel_path in sorted(FORBIDDEN_LEGACY_ADMIN_CHECKS):
     text = (ROOT / rel_path).read_text(encoding="utf-8")
