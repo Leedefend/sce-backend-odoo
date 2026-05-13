@@ -59,11 +59,11 @@ env.cr.execute(  # noqa: F821
       l.project_id,
       COALESCE(l.diary_date, l.created_time, NOW()),
       NULLIF(l.document_no, ''),
-      NULLIF(l.title, ''),
-      NULLIF(l.diary_type, ''),
-      NULLIF(l.category, ''),
-      NULLIF(l.construction_unit, ''),
-      NULLIF(l.project_manager, ''),
+      COALESCE(NULLIF(l.title, ''), NULLIF(l.line_quality_name, ''), NULLIF(l.document_no, '')),
+      COALESCE(NULLIF(l.diary_type, ''), '施工日志'),
+      COALESCE(NULLIF(l.category, ''), NULLIF(l.related_quality_type, ''), '施工日志'),
+      COALESCE(NULLIF(l.construction_unit, ''), company.name),
+      COALESCE(NULLIF(l.project_manager, ''), manager_partner.name),
       NULLIF(l.line_quality_name, ''),
       NULLIF(l.handler_name, ''),
       NULLIF(l.line_description, ''),
@@ -91,6 +91,10 @@ env.cr.execute(  # noqa: F821
       NOW(),
       NOW()
     FROM sc_legacy_construction_diary_line l
+    LEFT JOIN project_project project ON project.id = l.project_id
+    LEFT JOIN res_company company ON company.id = project.company_id
+    LEFT JOIN res_users manager_user ON manager_user.id = project.manager_id
+    LEFT JOIN res_partner manager_partner ON manager_partner.id = manager_user.partner_id
     WHERE l.active
       AND l.project_id IS NOT NULL
     ON CONFLICT (legacy_source_model, legacy_record_id)

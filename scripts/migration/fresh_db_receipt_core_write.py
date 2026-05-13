@@ -38,7 +38,18 @@ PRE_SNAPSHOT_CSV = ARTIFACT_ROOT / "fresh_db_receipt_core_pre_write_snapshot_v1.
 POST_SNAPSHOT_CSV = ARTIFACT_ROOT / "fresh_db_receipt_core_post_write_snapshot_v1.csv"
 EXPECTED_ROWS = int(os.getenv("FRESH_DB_RECEIPT_CORE_EXPECTED_ROWS", "5355"))
 MIGRATION_MARKER = "[migration:receipt_core]"
-SAFE_FIELDS = {"type", "project_id", "contract_id", "partner_id", "amount", "date_request", "note"}
+SAFE_FIELDS = {
+    "type",
+    "project_id",
+    "contract_id",
+    "partner_id",
+    "amount",
+    "date_request",
+    "creator_legacy_user_id",
+    "creator_name",
+    "created_time",
+    "note",
+}
 SNAPSHOT_FIELDS = [
     "request_id",
     "name",
@@ -316,6 +327,9 @@ for index, row in enumerate(rows, start=2):
             "partner_id": resolved_partner_id,
             "amount": float(clean(row.get("amount"))),
             "date_request": clean(row.get("date_request")),
+            "creator_legacy_user_id": clean(row.get("creator_legacy_user_id")) or False,
+            "creator_name": clean(row.get("creator_name")) or False,
+            "created_time": clean(row.get("created_time")) or False,
             "note": clean(row.get("note")) or note_with_marker(row),
         }
         create_vals.append(vals)
@@ -339,6 +353,9 @@ for index, row in enumerate(rows, start=2):
         "partner_id": contract.partner_id.id or resolved_partner_id or 0,
         "amount": float(clean(row.get("amount"))),
         "date_request": clean(row.get("date_request")),
+        "creator_legacy_user_id": clean(row.get("creator_legacy_user_id")) or False,
+        "creator_name": clean(row.get("creator_name")) or False,
+        "created_time": clean(row.get("created_time")) or False,
         "note": note_with_marker(row),
     }
     unsafe_fields = sorted(set(vals) - SAFE_FIELDS)

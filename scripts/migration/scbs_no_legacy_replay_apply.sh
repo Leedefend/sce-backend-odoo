@@ -45,6 +45,7 @@ run_shell negative_payment_adjustment_projection scripts/migration/scbs_negative
 run_shell enterprise_no_project_fact_projection scripts/migration/scbs_enterprise_no_project_fact_projection.py -e APPLY=1
 run_shell stock_in_projection scripts/migration/scbs_stock_in_projection.py -e APPLY=1 -e SCBS_STOCK_IN_LINE_CSV="${ASSET_ROOT}/artifacts/migration/scbs_stock_in_legacy_lines_v1.csv"
 run_shell fund_daily_enterprise_projection scripts/migration/scbs_fund_daily_enterprise_projection.py -e APPLY=1 -e SCBS_FUND_DAILY_SOURCE_CSV="${ASSET_ROOT}/artifacts/migration/scbs_fund_daily_source_v1.csv"
+run_shell visible_surface_operation_strategy_sync scripts/migration/visible_surface_operation_strategy_sync_write.py
 run_shell residual_exclusion_final scripts/migration/scbs_residual_fact_exclusion.py -e SCBS_RESIDUAL_FACT_EXCLUSION_APPLY=1
 run_shell closure_reconciliation scripts/migration/scbs_migration_closure_reconciliation.py
 run_shell no_legacy_replay_acceptance scripts/migration/scbs_no_legacy_replay_acceptance.py

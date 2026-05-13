@@ -78,8 +78,8 @@ approval_before = int(
 env.cr.execute(  # noqa: F821
     """
     INSERT INTO sc_workbench_item (
-      name, document_no, fact_type, requester_id, handler_id, business_date,
-      due_date, currency_id, state, description, active, source_model,
+      name, document_no, fact_type, project_id, partner_id, requester_id,
+      handler_id, business_date, due_date, currency_id, state, description, active, source_model,
       source_res_id, priority, todo_deadline, create_uid, write_uid,
       create_date, write_date
     )
@@ -87,8 +87,10 @@ env.cr.execute(  # noqa: F821
       COALESCE(NULLIF(h.name, ''), '历史流程待办'),
       fact.document_prefix || h.id::text,
       fact.fact_type,
-      NULL,
-      NULL,
+      COALESCE(payment.project_id, contract.project_id),
+      COALESCE(payment.partner_id, contract.partner_id),
+      actor_profile.user_id,
+      actor_profile.user_id,
       COALESCE(h.received_at::date, h.approved_at::date, CURRENT_DATE),
       h.received_at::date,
       %s,
@@ -125,10 +127,23 @@ env.cr.execute(  # noqa: F821
         ('my_todo', 'TODO-'),
         ('my_approval', 'APPR-')
     ) AS fact(fact_type, document_prefix)
+    LEFT JOIN sc_legacy_user_profile AS actor_profile
+      ON actor_profile.legacy_user_id = h.actor_legacy_user_id
+     AND actor_profile.user_id IS NOT NULL
+    LEFT JOIN payment_request AS payment
+      ON COALESCE(h.target_model, h.target_res_model) = 'payment.request'
+     AND payment.id = h.target_res_id
+    LEFT JOIN construction_contract AS contract
+      ON COALESCE(h.target_model, h.target_res_model) = 'construction.contract'
+     AND contract.id = h.target_res_id
     ON CONFLICT (fact_type, source_model, source_res_id)
     DO UPDATE SET
       name = EXCLUDED.name,
       document_no = EXCLUDED.document_no,
+      project_id = EXCLUDED.project_id,
+      partner_id = EXCLUDED.partner_id,
+      requester_id = EXCLUDED.requester_id,
+      handler_id = EXCLUDED.handler_id,
       business_date = EXCLUDED.business_date,
       due_date = EXCLUDED.due_date,
       currency_id = EXCLUDED.currency_id,

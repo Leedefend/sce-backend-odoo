@@ -25,6 +25,9 @@ FIELDS = [
     "amount",
     "date_request",
     "type",
+    "creator_legacy_user_id",
+    "creator_name",
+    "created_time",
     "note",
     "source_mode",
 ]
@@ -82,6 +85,9 @@ def main() -> int:
                 "amount": clean(values.get("amount")),
                 "date_request": clean(values.get("date_request")),
                 "type": clean(values.get("type")) or "receive",
+                "creator_legacy_user_id": clean(values.get("creator_legacy_user_id")),
+                "creator_name": clean(values.get("creator_name")),
+                "created_time": clean(values.get("created_time")),
                 "note": note,
                 "source_mode": "asset_xml",
             }
