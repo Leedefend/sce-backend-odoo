@@ -308,6 +308,11 @@ def main() -> int:
     parser.add_argument("--report", default="artifacts/backend/backend_business_fact_model_audit.json")
     parser.add_argument("--markdown", default="artifacts/backend/backend_business_fact_model_audit.md")
     parser.add_argument("--registry", default=str(DEFAULT_REGISTRY.relative_to(ROOT)))
+    parser.add_argument(
+        "--enforce",
+        action="store_true",
+        help="Fail when formal models are unregistered, registered paths are missing, or standard gaps are undeclared.",
+    )
     args = parser.parse_args()
 
     rows = extract_models()
@@ -317,7 +322,18 @@ def main() -> int:
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     write_markdown(report, ROOT / args.markdown)
-    print("BACKEND_BUSINESS_FACT_MODEL_AUDIT=" + json.dumps(report["summary"], ensure_ascii=False, sort_keys=True))
+    summary = report["summary"]
+    print("BACKEND_BUSINESS_FACT_MODEL_AUDIT=" + json.dumps(summary, ensure_ascii=False, sort_keys=True))
+    if args.enforce:
+        blockers = {
+            "unregistered_formal_models": summary["unregistered_formal_models"],
+            "registered_models_not_detected": summary["registered_models_not_detected"],
+            "undeclared_standard_gaps": summary["undeclared_standard_gaps"],
+            "registry_path_gaps": summary["registry_path_gaps"],
+        }
+        if any(blockers.values()):
+            print("BACKEND_BUSINESS_FACT_MODEL_AUDIT_BLOCKERS=" + json.dumps(blockers, ensure_ascii=False, sort_keys=True))
+            return 1
     return 0
 
 

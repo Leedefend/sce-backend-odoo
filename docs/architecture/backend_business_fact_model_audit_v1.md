@@ -128,7 +128,18 @@ The static audit distinguishes two gap types:
 - `raw_standard_gap_count`: physical mismatch against the default formal runtime field set.
 - `undeclared_standard_gap_count`: raw gaps not covered by registry exceptions.
 
-Only undeclared gaps should block future CI once this branch moves from audit baseline into enforcement.
+Only undeclared gaps should block future CI. The enforcement target is:
+
+```bash
+make verify.backend_business_fact.model_standard
+```
+
+It fails when any of these are present:
+
+- formal runtime fact model detected by source scan but missing from the registry
+- registry model not detected in source
+- raw standard gap without a declared exception
+- registry projection/probe path that no longer exists
 
 ## Proposed Unified Model Standard
 
@@ -180,6 +191,7 @@ Run:
 
 ```bash
 make verify.backend_business_fact.model_audit
+make verify.backend_business_fact.model_standard
 ```
 
 Outputs:
