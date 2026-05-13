@@ -16,6 +16,16 @@ Each entry must include:
 
 ## Entries
 
+### 2026-05-13T09:42:06+08:00
+- blocker_key: `history_capability_promotion_c_tax_deduction`
+- layer_target: `Domain Projection / Formal Finance Capability`
+- module: `Makefile + scripts/migration + scripts/verify + docs/ops/iterations`
+- reason: `继续上次用户可见历史数据承载升级任务：历史抵扣税额事实已有 formal model 与投影脚本，但正式业务可用初始化链和 probe 尚未强制覆盖，需把 raw legacy tax deduction 推进到 sc.tax.deduction.registration 正式抵扣登记能力。`
+- completed_step: `新增 fresh_db.tax_deduction_registration.projection.write target；history.business.usable.init 接入 tax_deduction_registration_projection；修复 tax deduction projection 在 Odoo shell 中的 artifact root 解析；formal_projection_refresh_probe 与 history_business_usable_probe 增加 legacy_tax_deduction -> sc.tax.deduction.registration 缺口检查；sc_demo 实际投影创建 4915 条正式抵扣登记行。`
+- verification: `bash -n scripts/migration/history_business_usable_init.sh PASS；python3 -m py_compile scripts/migration/history_business_usable_probe.py scripts/verify/formal_projection_refresh_probe.py scripts/migration/fresh_db_tax_deduction_registration_projection_write.py PASS；make -n fresh_db.tax_deduction_registration.projection.write DB_NAME=sc_demo PASS；git diff --check PASS；DB_NAME=sc_demo make fresh_db.tax_deduction_registration.projection.write PASS visible_rows=4915；DB_NAME=sc_demo make verify.prod.sim.formal.projections PASS gap_count=0；DB_NAME=sc_demo make history.business.usable.probe PASS gap_count=0；make verify.restricted PASS。`
+- active_commit: `257837e1`
+- next_step: `提交本批改动；下一批进入 treasury/tax analysis projection 口径确认。`
+
 ### 2026-05-08T16:11:31+08:00
 - blocker_key: `independent_migration_asset_release_closure_v1`
 - layer_target: `Ops Deploy / Migration Artifact Delivery`

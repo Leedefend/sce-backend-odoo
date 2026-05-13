@@ -9,18 +9,24 @@ from pathlib import Path
 from odoo import fields
 
 
-def repo_root() -> Path:
-    file_name = globals().get("__file__")
-    if file_name:
-        return Path(file_name).resolve().parents[2]
-    return Path.cwd()
-
-
 def artifact_root() -> Path:
     root = os.environ.get("MIGRATION_ARTIFACT_ROOT") or os.environ.get("HISTORY_CONTINUITY_ARTIFACT_ROOT")
     if root:
         return Path(root)
-    return repo_root() / "artifacts" / "migration"
+    candidates = [
+        Path("/mnt/artifacts/migration"),
+        Path(f"/tmp/history_continuity/{env.cr.dbname}/adhoc"),  # noqa: F821
+    ]
+    for candidate in candidates:
+        try:
+            candidate.mkdir(parents=True, exist_ok=True)
+            probe = candidate / ".write_probe"
+            probe.write_text("ok\n", encoding="utf-8")
+            probe.unlink()
+            return candidate
+        except Exception:
+            continue
+    return Path(f"/tmp/history_continuity/{env.cr.dbname}/adhoc")  # noqa: F821
 
 
 output_json = artifact_root() / "fresh_db_tax_deduction_registration_projection_write_result_v1.json"
