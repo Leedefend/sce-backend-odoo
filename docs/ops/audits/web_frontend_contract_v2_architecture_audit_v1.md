@@ -334,6 +334,12 @@ Acceptance:
 - Guard fails on current violations.
 - Guard allowlist includes only explicit compat/diagnostic paths.
 
+Batch A execution note:
+
+- `scripts/verify/web_contract_v2_frontend_architecture_guard.py` now provides the executable guard.
+- `docs/ops/audits/web_frontend_contract_v2_route_runtime_matrix_v1.md` locks the current route/runtime matrix.
+- The guard starts in debt-lock mode because the current product path still has known P1/P2 debt. It fails if counts grow, and `WEB_CONTRACT_V2_ARCH_GUARD_STRICT=1` is reserved for the cleanup-complete state.
+
 ### Batch B: Strict V2 Schema And Store
 
 Deliver:
@@ -431,4 +437,3 @@ This topic is complete only when:
 - Data and action execution happen only through v2 runtime declarations.
 - Permissions come only from backend contract status/action availability.
 - Future contract upgrades are handled through version negotiation and side-by-side runtimes, not page-specific patches.
-
