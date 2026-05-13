@@ -28,15 +28,13 @@
               :is-node-visible="isNodeVisible"
               :button-label-resolver="buttonLabelResolver"
               :native-action-handler="nativeActionHandler"
+              :relation-adapter="relationAdapter"
               :columns="columns"
               @field-change="emit('field-change', $event)"
               @native-action="emit('native-action', $event)"
             >
               <template #readonly="{ field }">
                 <slot name="readonly" :field="field" />
-              </template>
-              <template #fallback="{ field }">
-                <slot name="fallback" :field="field" />
               </template>
               <template #chatter="{ node: chatterNode }">
                 <slot name="chatter" :node="chatterNode" />
@@ -77,15 +75,13 @@
             :is-node-visible="isNodeVisible"
             :button-label-resolver="buttonLabelResolver"
             :native-action-handler="nativeActionHandler"
+            :relation-adapter="relationAdapter"
             :columns="columns"
             @field-change="emit('field-change', $event)"
             @native-action="emit('native-action', $event)"
           >
             <template #readonly="{ field }">
               <slot name="readonly" :field="field" />
-            </template>
-            <template #fallback="{ field }">
-              <slot name="fallback" :field="field" />
             </template>
             <template #chatter="{ node: chatterNode }">
               <slot name="chatter" :node="chatterNode" />
@@ -99,14 +95,12 @@
             :title="fieldSectionTitle()"
             :columns="columns"
             :fields="fieldSchemasForNodes(fieldChildren(node))"
+            :relation-adapter="relationAdapter"
             tone="core"
             @field-change="emit('field-change', $event)"
           >
             <template #readonly="{ field }">
               <slot name="readonly" :field="field" />
-            </template>
-            <template #fallback="{ field }">
-              <slot name="fallback" :field="field" />
             </template>
           </FormSection>
           <div v-if="buttonChildren(node).length" :class="nativeActionsClass(node)">
@@ -156,15 +150,13 @@
             :is-node-visible="isNodeVisible"
             :button-label-resolver="buttonLabelResolver"
             :native-action-handler="nativeActionHandler"
+            :relation-adapter="relationAdapter"
             :columns="columns"
             @field-change="emit('field-change', $event)"
             @native-action="emit('native-action', $event)"
           >
             <template #readonly="{ field }">
               <slot name="readonly" :field="field" />
-            </template>
-            <template #fallback="{ field }">
-              <slot name="fallback" :field="field" />
             </template>
             <template #chatter="{ node: chatterNode }">
               <slot name="chatter" :node="chatterNode" />
@@ -178,14 +170,12 @@
           :title="fieldSectionTitle()"
         :columns="columns"
         :fields="fieldSchemasForNodes([node])"
+        :relation-adapter="relationAdapter"
         tone="core"
         @field-change="emit('field-change', $event)"
       >
         <template #readonly="{ field }">
           <slot name="readonly" :field="field" />
-        </template>
-        <template #fallback="{ field }">
-          <slot name="fallback" :field="field" />
         </template>
       </FormSection>
 
@@ -209,6 +199,7 @@
 import { computed, ref } from 'vue';
 import FormSection from './FormSection.vue';
 import type { FormSectionFieldChange, FormSectionFieldSchema } from './formSection.types';
+import type { RelationFieldAdapter } from './relationField.types';
 
 defineOptions({ name: 'NativeFormTreeRenderer' });
 
@@ -237,11 +228,13 @@ const props = withDefaults(defineProps<{
   isNodeVisible?: (node: NativeFormLayoutNode) => boolean;
   buttonLabelResolver?: (node: NativeFormLayoutNode) => string | undefined;
   nativeActionHandler?: (payload: Record<string, unknown>) => void | Promise<void>;
+  relationAdapter?: RelationFieldAdapter;
   columns?: 1 | 2;
 }>(), {
   columns: 2,
   isNodeVisible: () => true,
   nativeActionHandler: undefined,
+  relationAdapter: undefined,
 });
 
 const emit = defineEmits<{

@@ -39,7 +39,7 @@ export type FormSectionFieldSchema = {
     descriptor?: FieldDescriptor;
   };
 
-  // Raw value for readonly display or fallback usage.
+  // Raw value for readonly display or unsupported-field input usage.
   value?: unknown;
 
   // Value normalized by page layer for direct control binding.
@@ -62,7 +62,9 @@ export type FormSectionFieldSchema = {
   };
   many2oneCreateToken?: string;
   many2oneSearchToken?: string;
+  many2oneOpenToken?: string;
   many2oneTextValue?: string;
+  many2oneOpenLabel?: string;
   many2oneSearchLabel?: string;
   many2oneCreateLabel?: string;
   many2oneInlineCreateLabel?: string;

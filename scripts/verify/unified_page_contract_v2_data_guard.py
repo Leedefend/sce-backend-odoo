@@ -8,11 +8,13 @@ import importlib.util
 import json
 import re
 import sys
+import types
 from pathlib import Path
 from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[2]
+CORE_DIR = ROOT / "addons/smart_core/core"
 DATA_PATH = ROOT / "addons/smart_core/core/unified_page_contract_v2_data.py"
 DRIFT_SUFFIX = re.compile(r"(\.|:|-)(admin|user|role|web_pc|wx_mini|harmony_h5|mobile_app)$")
 
@@ -22,7 +24,16 @@ def load_json(path: Path) -> Any:
 
 
 def load_data_module():
-    spec = importlib.util.spec_from_file_location("unified_page_contract_v2_data_guard_target", DATA_PATH)
+    sys.modules.setdefault("odoo", types.ModuleType("odoo"))
+    sys.modules.setdefault("odoo.addons", types.ModuleType("odoo.addons"))
+    smart_core_pkg = sys.modules.setdefault("odoo.addons.smart_core", types.ModuleType("odoo.addons.smart_core"))
+    smart_core_pkg.__path__ = [str(CORE_DIR.parent)]
+    core_pkg = sys.modules.setdefault("odoo.addons.smart_core.core", types.ModuleType("odoo.addons.smart_core.core"))
+    core_pkg.__path__ = [str(CORE_DIR)]
+    spec = importlib.util.spec_from_file_location(
+        "odoo.addons.smart_core.core.unified_page_contract_v2_data_guard_target",
+        DATA_PATH,
+    )
     if spec is None or spec.loader is None:
         raise RuntimeError(f"cannot load data module from {DATA_PATH}")
     module = importlib.util.module_from_spec(spec)

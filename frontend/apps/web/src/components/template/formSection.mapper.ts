@@ -34,11 +34,14 @@ export type BuildFormSectionFieldSchemasOptions = {
   resolveRelationCreateMode: (fieldName: string, descriptor?: FieldDescriptor) => 'none' | 'quick' | 'page';
   resolveRelationInlineCreate: (fieldName: string, descriptor?: FieldDescriptor) => FormSectionFieldSchema['relationInlineCreate'];
   resolveRelationTextValue: (fieldName: string) => string;
+  resolveCanOpenRelationRecord: (fieldName: string, descriptor?: FieldDescriptor) => boolean;
+  resolveRelationRecordOpenLabel: (fieldName: string, descriptor?: FieldDescriptor) => string;
   resolveRelationSearchLabel: (fieldName: string, descriptor?: FieldDescriptor) => string;
   resolveRelationCreateLabel: (fieldName: string, descriptor?: FieldDescriptor) => string;
   resolveRelationInlineCreateLabel: (fieldName: string, descriptor?: FieldDescriptor, keyword?: string) => string;
   many2oneCreateToken?: string;
   many2oneSearchToken?: string;
+  many2oneOpenToken?: string;
 };
 
 export function buildFormSectionFieldSchemas(
@@ -76,7 +79,11 @@ export function buildFormSectionFieldSchemas(
       relationInlineCreate: type === 'many2one' ? options.resolveRelationInlineCreate(field.name, field.descriptor) : undefined,
       many2oneCreateToken: type === 'many2one' ? options.many2oneCreateToken : undefined,
       many2oneSearchToken: type === 'many2one' ? options.many2oneSearchToken : undefined,
+      many2oneOpenToken: type === 'many2one' && options.resolveCanOpenRelationRecord(field.name, field.descriptor)
+        ? options.many2oneOpenToken
+        : undefined,
       many2oneTextValue: type === 'many2one' ? options.resolveRelationTextValue(field.name) : undefined,
+      many2oneOpenLabel: type === 'many2one' ? options.resolveRelationRecordOpenLabel(field.name, field.descriptor) : undefined,
       many2oneSearchLabel: type === 'many2one' ? options.resolveRelationSearchLabel(field.name, field.descriptor) : undefined,
       many2oneCreateLabel: type === 'many2one' ? options.resolveRelationCreateLabel(field.name, field.descriptor) : undefined,
       many2oneInlineCreateLabel: type === 'many2one'

@@ -166,6 +166,19 @@
             <button type="button" class="grouped-sort-btn" @click="toggleGroupSort">
               {{ groupSortLabel }}
             </button>
+            <label v-if="onGroupSampleLimitChange" class="group-sample-limit">
+              <span>{{ uiLabel('group_sample_limit', '每组') }}</span>
+              <select
+                class="group-sample-limit-select"
+                :value="String(effectiveGroupSampleLimit)"
+                :disabled="loading"
+                @change="onGroupSampleLimitSelectChange"
+              >
+                <option v-for="option in groupSampleLimitOptions" :key="`group-sample-limit-${option}`" :value="String(option)">
+                  {{ option }}
+                </option>
+              </select>
+            </label>
           </div>
         </header>
         <article v-for="group in sortedGroupedRows" :key="group.key" class="group-block">
@@ -919,6 +932,12 @@ function toggleGroupSort() {
   const currentIndex = directions.indexOf(groupSortDirection.value);
   const nextDirection = directions[(currentIndex + 1) % directions.length] || groupSortDefaultDirection.value;
   props.onGroupSortChange(nextDirection);
+}
+
+function onGroupSampleLimitSelectChange(event: Event) {
+  const raw = Number((event.target as HTMLSelectElement).value || 0);
+  if (!Number.isFinite(raw) || raw <= 0) return;
+  props.onGroupSampleLimitChange?.(Math.trunc(raw));
 }
 
 function openGroup(group: { key: string; label: string; count: number; domain?: unknown[] }) {

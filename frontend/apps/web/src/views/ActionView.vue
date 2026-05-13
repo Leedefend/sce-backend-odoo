@@ -533,7 +533,7 @@
 <script setup lang="ts">
 import { computed, inject, onBeforeUnmount, onErrorCaptured, onMounted, ref, watch, type Ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { batchUpdateRecords, listRecordsRaw, saveSearchFavorite, unlinkRecord, writeRecord } from '../api/data';
+import type { ActionContract } from '@sc/schema';
 import { ApiError } from '../api/client';
 import { getUserViewPreference, setUserViewPreference } from '../api/preferences';
 import { executeButton } from '../api/executeButton';
@@ -626,6 +626,13 @@ import { useActionViewLoadSuccessRuntime } from '../app/action_runtime/useAction
 import { useActionViewLoadSuccessPhaseRuntime } from '../app/action_runtime/useActionViewLoadSuccessPhaseRuntime';
 import { useActionViewLoadFacadeRuntime } from '../app/action_runtime/useActionViewLoadFacadeRuntime';
 import { useActionViewActionPresentationRuntime } from '../app/action_runtime/useActionViewActionPresentationRuntime';
+import {
+  batchUpdateActionViewRecords,
+  listActionViewRecordsRaw,
+  saveActionViewSearchFavorite,
+  unlinkActionViewRecord,
+  writeActionViewRecord,
+} from '../app/runtime/actionViewDataRuntime';
 import {
   normalizeGroupPageOffset,
   parseGroupPageOffsets,
@@ -957,7 +964,7 @@ type ContractViewBlock = {
   model?: string;
   order?: string;
 };
-type ActionContractLoose = Awaited<ReturnType<typeof loadActionContract>> & {
+type ActionViewRuntimeContract = ActionContract & {
   head?: {
     model?: string;
     view_type?: string;
@@ -1219,7 +1226,7 @@ const contractViewType = ref('');
 const contractReadAllowed = ref(true);
 const contractWarningCount = ref(0);
 const contractDegraded = ref(false);
-const actionContract = ref<ActionContractLoose | null>(null);
+const actionContract = ref<ActionViewRuntimeContract | null>(null);
 const resolvedModelRef = ref('');
 const activeGroupByField = ref('');
 const {
@@ -1245,7 +1252,7 @@ const {
   showMoreContractActions,
 });
 
-function resolveCreateRight(contract: ActionContractLoose | null): boolean {
+function resolveCreateRight(contract: ActionViewRuntimeContract | null): boolean {
   const globalStatus = resolveUnifiedPageContractV2GlobalStatus(contract?.__unified_page_contract_v2);
   if (String(globalStatus?.pageAuth || '').trim().toLowerCase() === 'read') return false;
   const effective = contract?.permissions?.effective?.rights?.create;
@@ -1644,7 +1651,6 @@ const {
   selectedIds,
   resolvedModelRef,
   modelRef: model,
-  userGroupsXmlids: () => session.user?.groups_xmlids || [],
   pageText,
   isActionViewNumericToken,
   hasActionViewNoiseMarker,
@@ -1738,7 +1744,7 @@ async function runBatchPolicyAction(action: 'archive' | 'activate' | 'delete') {
     });
     batchBusy.value = true;
     try {
-      const result = await unlinkRecord({
+      const result = await unlinkActionViewRecord({
         model: targetModel,
         ids: selected,
         context: resolveEffectiveRequestContext(),
@@ -1776,14 +1782,14 @@ async function runBatchPolicyAction(action: 'archive' | 'activate' | 'delete') {
   });
   batchBusy.value = true;
   try {
-    const result = await batchUpdateRecords(buildBatchUpdateRequest({
+    const result = await batchUpdateActionViewRecords(buildBatchUpdateRequest({
       model: targetModel,
       ids: selected,
       action,
       ifMatchMap: seed.ifMatchMap,
       idempotencyKey: seed.idempotencyKey,
       context: resolveEffectiveRequestContext(),
-    }) as Parameters<typeof batchUpdateRecords>[0]);
+    }) as Parameters<typeof batchUpdateActionViewRecords>[0]);
     const resultMessage = resolveBatchActionResultMessage({
       action,
       idempotentReplay: result.idempotent_replay === true,
@@ -2051,7 +2057,7 @@ async function handleSaveFavorite(payload: { name: string; isDefault?: boolean; 
   const targetModel = String(resolvedModelRef.value || model.value || '').trim();
   const name = String(payload.name || '').trim();
   if (!targetModel || !name) return;
-  await saveSearchFavorite({
+  await saveActionViewSearchFavorite({
     model: targetModel,
     name,
     domain: resolveEffectiveFilterDomain(),
@@ -2061,7 +2067,7 @@ async function handleSaveFavorite(payload: { name: string; isDefault?: boolean; 
     is_default: payload.isDefault === true,
     is_shared: payload.isShared === true,
   });
-  actionContract.value = await loadActionContract(actionId.value) as ActionContractLoose;
+  actionContract.value = await loadActionContract(actionId.value) as ActionViewRuntimeContract;
   await requestLoadPage();
 }
 
@@ -2116,7 +2122,7 @@ const {
   resolveEffectiveRequestContextRaw,
   mergeContext,
   syncRouteListState,
-  listRecordsRaw,
+  listRecordsRaw: listActionViewRecordsRaw,
 });
 
 const {
@@ -2142,7 +2148,7 @@ const {
   fetchScopedTotal,
   fetchProjectScopeMetrics,
 } = useActionViewScopedMetricsRuntime({
-  listRecordsRaw,
+  listRecordsRaw: listActionViewRecordsRaw,
   resolveProjectStateCell,
   isCompletedState,
   resolveProjectAmount,
@@ -2603,7 +2609,7 @@ const {
     resolveLoadDomainStateApply,
     resolveLoadContextStateApply,
     resolveLoadRequestPayloadState,
-    listRecordsRaw,
+    listRecordsRaw: listActionViewRecordsRaw,
     currentErrorMessage: () => error.value?.message || '',
     warn: (message: string, payload: Record<string, unknown>) => {
       console.warn(message, payload);
@@ -2905,7 +2911,7 @@ async function handleToggleRecordFavorite(row: Record<string, unknown>, field: s
   const previousValue = row[field];
   row[field] = nextValue;
   try {
-    await writeRecord({
+    await writeActionViewRecord({
       model: targetModel,
       ids: [recordId],
       vals: { [mutationField]: nextValue },

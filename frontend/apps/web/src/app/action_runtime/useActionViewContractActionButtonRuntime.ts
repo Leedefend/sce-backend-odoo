@@ -39,7 +39,6 @@ type UseActionViewContractActionButtonRuntimeOptions = {
   selectedIds: { value: number[] };
   resolvedModelRef: { value: string };
   modelRef: { value: string };
-  userGroupsXmlids: () => string[];
   pageText: (key: string, fallback: string) => string;
   isActionViewNumericToken: (value: unknown) => boolean;
   hasActionViewNoiseMarker: (key: unknown, label: unknown, name: unknown, xmlId: unknown) => boolean;
@@ -89,20 +88,15 @@ export function useActionViewContractActionButtonRuntime(options: UseActionViewC
         .map((item) => String(item || '').trim().toLowerCase())
         .filter(Boolean)
       : [];
-    const groups = Array.isArray(row.groups_xmlids) ? (row.groups_xmlids as string[]) : [];
-    const userGroups = options.userGroupsXmlids();
-    const allowedByGroup = !groups.length || groups.some((group) => userGroups.includes(group));
     const selectedCount = options.selectedIds.value.length;
     const enabledBySelection =
       selection == 'none' ? true : selection === 'single' ? selectedCount === 1 : selectedCount > 0;
-    const enabled = allowedByGroup && enabledBySelection;
-    const hint = allowedByGroup
-      ? enabledBySelection
-        ? ''
-        : selection === 'single'
-          ? options.pageText('hint_select_single_record', '请选择 1 条记录')
-          : options.pageText('hint_select_record_first', '请先选择记录')
-      : options.pageText('hint_permission_denied', '权限不足');
+    const enabled = enabledBySelection;
+    const hint = enabledBySelection
+      ? ''
+      : selection === 'single'
+        ? options.pageText('hint_select_single_record', '请选择 1 条记录')
+        : options.pageText('hint_select_record_first', '请先选择记录');
     return {
       key,
       label: rawLabel,

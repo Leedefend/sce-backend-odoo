@@ -8,8 +8,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 FORM_PAGE = ROOT / 'frontend/apps/web/src/pages/ContractFormPage.vue'
 ENGINE = ROOT / 'frontend/apps/web/src/app/x2manyCommands.ts'
-RELATION_RENDERER = ROOT / 'frontend/apps/web/src/components/template/RelationFallbackRenderer.vue'
-RELATION_ADAPTER = ROOT / 'frontend/apps/web/src/components/template/relationFallback.adapter.ts'
+RELATION_RENDERER = ROOT / 'frontend/apps/web/src/components/template/X2ManyRelationRenderer.vue'
+RELATION_ADAPTER = ROOT / 'frontend/apps/web/src/components/template/relationField.types.ts'
 
 
 def _read(path: Path) -> str:
@@ -79,12 +79,12 @@ def main() -> int:
             errors.append(f'relation_renderer missing marker: {marker}')
 
     adapter_markers = [
-        "one2manyCanCreate: context.one2manyCanCreate",
-        "one2manyCreateLabel: context.one2manyCreateLabel",
-        "addOne2manyRow: context.addOne2manyRow",
-        "setOne2manyRowField: context.setOne2manyRowField",
-        "removeOne2manyRow: context.removeOne2manyRow",
-        "restoreOne2manyRow: context.restoreOne2manyRow",
+        "one2manyCanCreate: (name: string) => boolean;",
+        "one2manyCreateLabel: (name: string) => string;",
+        "addOne2manyRow: (name: string) => void;",
+        "setOne2manyRowField: (name: string, rowKey: string, column: RelationFieldColumn, value: unknown) => void;",
+        "removeOne2manyRow: (name: string, rowKey: string) => void;",
+        "restoreOne2manyRow: (name: string, rowKey: string) => void;",
     ]
     for marker in adapter_markers:
         if marker not in relation_adapter:

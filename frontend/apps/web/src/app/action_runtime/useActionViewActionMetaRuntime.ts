@@ -1,4 +1,4 @@
-type ActionContractLoose = {
+type ActionUrlContractShape = {
   data?: {
     type?: string;
     url?: string;
@@ -51,7 +51,7 @@ export function useActionViewActionMetaRuntime(options: UseActionViewActionMetaR
     if (actionType.includes('act_url') || actionType.includes('url')) {
       return true;
     }
-    const typed = contract as ActionContractLoose;
+    const typed = contract as ActionUrlContractShape;
     const contractType = String(typed.data?.type || '').toLowerCase();
     return contractType === 'url_redirect';
   }
@@ -104,7 +104,7 @@ export function useActionViewActionMetaRuntime(options: UseActionViewActionMetaR
     if (metaUrl) {
       return metaUrl;
     }
-    const typed = contract as ActionContractLoose;
+    const typed = contract as ActionUrlContractShape;
     const contractUrl = String(typed.data?.url || '').trim();
     if (contractUrl) {
       return contractUrl;
@@ -116,7 +116,7 @@ export function useActionViewActionMetaRuntime(options: UseActionViewActionMetaR
     const url = resolveActionUrl(meta, contract);
     if (!url) {
       const actionType = getActionType(meta);
-      const typed = contract as ActionContractLoose;
+      const typed = contract as ActionUrlContractShape;
       const contractType = String(typed.data?.type || '').toLowerCase();
       const unsupportedState = options.resolveUrlUnsupportedRedirectState({
         actionUnsupportedCode: options.actionUnsupportedCode,
@@ -130,7 +130,7 @@ export function useActionViewActionMetaRuntime(options: UseActionViewActionMetaR
     }
 
     const metaTyped = (meta as { target?: string }) || {};
-    const typed = contract as ActionContractLoose;
+    const typed = contract as ActionUrlContractShape;
     const target = normalizeUrlTarget(metaTyped.target || typed.data?.target);
 
     if (target === 'self' && isPortalPath(url)) {

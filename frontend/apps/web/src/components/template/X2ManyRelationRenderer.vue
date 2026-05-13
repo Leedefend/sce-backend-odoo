@@ -172,40 +172,6 @@
       </div>
     </div>
   </div>
-  <div v-else-if="field.type === 'many2one'" class="relation-editor">
-    <div class="relation-select-editor relation-select-editor--compact">
-      <input
-        class="input relation-search"
-        type="text"
-        :value="adapter.relationKeyword(field.name)"
-        :placeholder="field.inputPlaceholder || adapter.inputPlaceholder(field.label)"
-        autocomplete="off"
-        @input="adapter.setRelationKeyword(field.name, ($event.target as HTMLInputElement).value)"
-      />
-      <div v-if="adapter.filteredRelationOptions(field.name).length || adapter.canOpenRelationSearch(field.name)" class="relation-combo-panel">
-        <button
-          v-for="option in adapter.filteredRelationOptions(field.name).slice(0, 8)"
-          :key="`${field.name}-${option.id}`"
-          type="button"
-          class="relation-combo-option"
-          @mousedown.prevent
-          @click="adapter.setRelationIds(field.name, [option.id])"
-        >
-          {{ option.label }}
-        </button>
-        <button
-          v-if="adapter.canOpenRelationSearch(field.name)"
-          class="relation-combo-action"
-          type="button"
-          :disabled="adapter.busy"
-          @mousedown.prevent
-          @click="adapter.openRelationSearch(field.name)"
-        >
-          {{ adapter.relationSearchLabel(field.name) || '搜索更多' }}
-        </button>
-      </div>
-    </div>
-  </div>
   <input
   v-else
     :value="adapter.inputFieldValue(field.name)"
@@ -218,9 +184,9 @@
 
 <script setup lang="ts">
 import type { FormSectionFieldSchema } from './formSection.types';
-import type { RelationFallbackRendererProps } from './relationFallback.types';
+import type { X2ManyRelationRendererProps } from './relationField.types';
 
-const props = defineProps<RelationFallbackRendererProps>();
+const props = defineProps<X2ManyRelationRendererProps>();
 
 function isMany2manyTags(field: FormSectionFieldSchema) {
   return String(field.widget || '').trim().toLowerCase() === 'many2many_tags';
@@ -303,63 +269,6 @@ function tagColorStyle(color: unknown) {
 .relation-select-editor {
   display: grid;
   gap: 8px;
-}
-
-.relation-select-editor--compact {
-  position: relative;
-  gap: 0;
-}
-
-.relation-combo-panel {
-  position: absolute;
-  z-index: 20;
-  top: calc(100% + 2px);
-  left: 0;
-  right: 0;
-  display: none;
-  max-height: 260px;
-  overflow: auto;
-  border: 1px solid var(--sc-app-border-strong);
-  border-radius: 6px;
-  background: var(--sc-app-panel);
-  box-shadow: 0 12px 28px var(--sc-app-shadow);
-}
-
-.relation-select-editor--compact:focus-within .relation-combo-panel {
-  display: grid;
-}
-
-.relation-combo-option,
-.relation-combo-action {
-  min-height: 32px;
-  border: 0;
-  border-bottom: 1px solid var(--sc-app-border);
-  background: var(--sc-app-panel);
-  padding: 6px 10px;
-  text-align: left;
-  cursor: pointer;
-  font-size: 12px;
-  line-height: 1.25;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.relation-combo-option {
-  color: var(--sc-app-text-primary);
-}
-
-.relation-combo-action {
-  color: var(--sc-semantic-surface-interactive);
-  border-top: 1px solid var(--sc-app-border);
-}
-
-.relation-combo-option:hover {
-  background: var(--sc-app-hover-bg);
-}
-
-.relation-combo-action:hover {
-  background: var(--sc-app-hover-bg);
 }
 
 .relation-tags-control {

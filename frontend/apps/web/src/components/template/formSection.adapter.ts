@@ -20,11 +20,14 @@ export type CreateFormSectionFieldSchemaBuilderContext = {
   resolveRelationCreateMode: (fieldName: string, descriptor?: FieldDescriptor) => 'none' | 'quick' | 'page';
   resolveRelationInlineCreate: (fieldName: string, descriptor?: FieldDescriptor) => ReturnType<typeof buildFormSectionFieldSchemas>[number]['relationInlineCreate'];
   resolveRelationTextValue: (fieldName: string) => string;
+  resolveCanOpenRelationRecord: (fieldName: string, descriptor?: FieldDescriptor) => boolean;
+  resolveRelationRecordOpenLabel: (fieldName: string, descriptor?: FieldDescriptor) => string;
   resolveRelationSearchLabel: (fieldName: string, descriptor?: FieldDescriptor) => string;
   resolveRelationCreateLabel: (fieldName: string, descriptor?: FieldDescriptor) => string;
   resolveRelationInlineCreateLabel: (fieldName: string, descriptor?: FieldDescriptor, keyword?: string) => string;
   many2oneCreateToken?: string;
   many2oneSearchToken?: string;
+  many2oneOpenToken?: string;
 };
 
 export function createFormSectionFieldSchemaBuilder(context: CreateFormSectionFieldSchemaBuilderContext) {
@@ -48,10 +51,13 @@ export function createFormSectionFieldSchemaBuilder(context: CreateFormSectionFi
     resolveRelationCreateMode: context.resolveRelationCreateMode,
     resolveRelationInlineCreate: context.resolveRelationInlineCreate,
     resolveRelationTextValue: context.resolveRelationTextValue,
+    resolveCanOpenRelationRecord: context.resolveCanOpenRelationRecord,
+    resolveRelationRecordOpenLabel: context.resolveRelationRecordOpenLabel,
     resolveRelationSearchLabel: context.resolveRelationSearchLabel,
     resolveRelationCreateLabel: context.resolveRelationCreateLabel,
     resolveRelationInlineCreateLabel: context.resolveRelationInlineCreateLabel,
     many2oneCreateToken: context.many2oneCreateToken,
     many2oneSearchToken: context.many2oneSearchToken,
+    many2oneOpenToken: context.many2oneOpenToken,
   });
 }

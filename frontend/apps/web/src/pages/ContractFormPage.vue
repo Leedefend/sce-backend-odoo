@@ -1,6 +1,25 @@
 /* eslint-disable @typescript-eslint/no-unused-vars, no-extra-boolean-cast, vue/attributes-order */
 <template>
-  <LayoutShell :flow="isProjectIntakeCreateMode" :class="{ 'contract-form-native-shell': useNativeFormTree }">
+  <LayoutShell
+    :flow="isProjectIntakeCreateMode"
+    :class="{ 'contract-form-native-shell': useNativeFormTree }"
+    :data-v2-shadow-store="String(v2ShadowStoreReady)"
+    :data-v2-shadow-widgets="String(v2ShadowWidgetCount)"
+    :data-v2-shadow-actions="String(v2ShadowActionCount)"
+    :data-v2-shadow-button-statuses="String(v2ShadowButtonStatusCount)"
+    :data-v2-shadow-field-codes="String(v2ShadowFieldCodeCount)"
+    :data-v2-shadow-field-overlap="String(v2ShadowLegacyFieldOverlapCount)"
+    :data-v2-shadow-field-missing="v2ShadowLegacyFieldMissingPreview"
+    :data-v2-shadow-layout-source="v2ShadowLayoutSourceKind"
+    :data-v2-shadow-global-source="v2ShadowGlobalSourceKind"
+    :data-v2-shadow-source-context="v2ShadowSourceContextKind"
+    :data-v2-shadow-status-fields="String(v2ShadowStatusFieldCount)"
+    :data-v2-shadow-value-fields="String(v2ShadowValueFieldCount)"
+    :data-v2-shadow-main-data-fields="String(v2ShadowMainDataFieldCount)"
+    :data-v2-shadow-readonly-values="String(v2ShadowReadonlyValueCount)"
+    :data-v2-shadow-value-source="v2ShadowValueSourceKind"
+    :data-v2-shadow-error="v2ContractDecodeError || '-'"
+  >
     <PageHeaderTemplate :title="pageDisplayTitle" :subtitle="pageDisplaySubtitle || undefined">
       <template #meta>
         <p v-if="showHud" class="meta">model={{ model }} · id={{ recordIdDisplay }} · action={{ actionId || '-' }}</p>
@@ -142,15 +161,13 @@
           :is-node-visible="isNativeLayoutNodeVisible"
           :button-label-resolver="resolveNativeButtonLabel"
           :native-action-handler="runNativeLayoutAction"
+          :relation-adapter="relationFieldAdapter"
           :columns="2"
           @field-change="onTemplateFieldChange"
           @native-action="runNativeLayoutAction"
         >
           <template #readonly="{ field }">
             <FieldValue :value="field.value" :field="field.descriptor" />
-          </template>
-          <template #fallback="{ field }">
-            <RelationFallbackRenderer :field="field" :adapter="relationFallbackAdapter" />
           </template>
           <template #chatter>
             <section v-if="(nativeChatterActions.length || nativeAttachments) && !isProjectIntakeCreateMode" class="block native-chatter-block">
@@ -431,19 +448,16 @@ import PageHeaderTemplate from '../components/template/PageHeader.vue';
 import NativeFormTreeRenderer, { type NativeFormLayoutNode } from '../components/template/NativeFormTreeRenderer.vue';
 import SceneBlocksRenderer from '../components/scene/SceneBlocksRenderer.vue';
 import PageFooterTemplate from '../components/template/PageFooter.vue';
-import RelationFallbackRenderer from '../components/template/RelationFallbackRenderer.vue';
 import type { FormSectionFieldSchema, FormSectionFieldChange } from '../components/template/formSection.types';
-import type { RelationFallbackAdapter } from '../components/template/relationFallback.types';
+import type { RelationFieldAdapter } from '../components/template/relationField.types';
 import { createFormSectionFieldSchemaBuilder } from '../components/template/formSection.adapter';
 import { resolveInputPlaceholder, resolveSelectPlaceholder } from '../components/template/placeholder.mapper';
 import { resolveFieldSpanClass } from '../components/template/fieldSpan.mapper';
 import { mapDescriptorSelectionOptions, mapRelationOptions } from '../components/template/option.mapper';
-import { createRelationFallbackAdapter } from '../components/template/relationFallback.adapter';
 import { dispatchTemplateFieldChange } from '../components/template/fieldChange.dispatcher';
 import { isHudEnabled, isSceneBlocksDebugEnabled } from '../config/debug';
 import { intentRequest } from '../api/intents';
 import { loadActionContractRaw, loadModelContractRaw } from '../api/contract';
-import { createRecord, listRecords, readRecord, writeRecord } from '../api/data';
 import { ApiError } from '../api/client';
 import { executeButton } from '../api/executeButton';
 import { fetchChatterTimeline, postChatterMessage, scheduleChatterActivity, type ChatterTimelineEntry } from '../api/chatter';
@@ -472,6 +486,26 @@ import { resolveSceneValidationSuggestedAction } from '../app/sceneValidationRec
 import { findSceneReadyEntry, resolveFormSceneReady } from '../app/resolvers/sceneReadyResolver';
 import { normalizeSceneActionProtocol } from '../app/sceneActionProtocol';
 import { executeProjectionRefresh } from '../app/projectionRefreshRuntime';
+import {
+  createContractFormRecord,
+  listContractFormRecords,
+  readContractFormRecord,
+  writeContractFormRecord,
+} from '../app/runtime/contractFormDataRuntime';
+import {
+  collectContractV2ButtonStatusById,
+  collectContractV2FieldStatusByCode,
+  ContractV2DecodeError,
+  createContractV2Store,
+  decodeContractV2Snapshot,
+  resolveContractV2ContainerTree,
+  resolveContractV2GlobalStatus,
+  resolveContractV2MainData,
+  resolveContractV2SourceContext,
+  resolveContractV2ValueSource,
+  type ContractV2ButtonStatus,
+  type ContractV2NormalizedStore,
+} from '../app/contracts/v2';
 import { executeSceneMutation } from '../app/sceneMutationRuntime';
 import { isCoreSceneStrictMode } from '../app/contractStrictMode';
 import {
@@ -483,13 +517,13 @@ import {
   resolveUnifiedPageContractV2,
   resolveUnifiedPageContractV2GlobalStatus,
   resolveUnifiedPageContractV2SourceContext,
-  type UnifiedPageContractV2ButtonStatus,
 } from '../app/contracts/unifiedPageContractV2';
 
 type UiStatus = 'loading' | 'ok' | 'error';
 type BusyKind = 'save' | 'action' | null;
 const MANY2ONE_CREATE_OPTION = '__create__';
 const MANY2ONE_SEARCH_MORE_OPTION = '__search_more__';
+const MANY2ONE_OPEN_RECORD_OPTION = '__open_record__';
 
 type ContractAction = {
   key: string;
@@ -569,8 +603,8 @@ function stableContractId(value: unknown, fallback: string) {
 
 function resolveV2ButtonStatus(
   key: string,
-  statusById: Record<string, UnifiedPageContractV2ButtonStatus>,
-): UnifiedPageContractV2ButtonStatus | null {
+  statusById: Record<string, ContractV2ButtonStatus>,
+): ContractV2ButtonStatus | null {
   const stableKey = stableContractId(key, 'action');
   const candidates = [`btn.${stableKey}`, key, stableKey].filter(Boolean);
   for (const candidate of candidates) {
@@ -691,6 +725,48 @@ const showOne2manyErrors = ref(false);
 const busyKind = ref<BusyKind>(null);
 const contract = ref<ActionContract | null>(null);
 const contractMeta = ref<Record<string, unknown> | null>(null);
+const v2ContractStore = ref<ContractV2NormalizedStore | null>(null);
+const v2ContractDecodeError = ref('');
+const v2ShadowStoreReady = computed(() => Boolean(v2ContractStore.value));
+const v2ShadowWidgetCount = computed(() => v2ContractStore.value?.widgetsById.size || 0);
+const v2ShadowActionCount = computed(() => v2ContractStore.value?.actionsById.size || 0);
+const v2ShadowButtonStatusCount = computed(() => v2ContractStore.value?.buttonStatusById.size || 0);
+const v2ShadowFieldCodes = computed(() => Array.from(v2ContractStore.value?.widgetsByFieldCode.keys() || []));
+const v2ShadowFieldCodeCount = computed(() => v2ShadowFieldCodes.value.length);
+const v2ShadowLegacyFieldMissing = computed(() => {
+  const legacyFields = contract.value?.fields || {};
+  return v2ShadowFieldCodes.value.filter((fieldCode) => !(fieldCode in legacyFields));
+});
+const v2ShadowLegacyFieldOverlapCount = computed(() => v2ShadowFieldCodeCount.value - v2ShadowLegacyFieldMissing.value.length);
+const v2ShadowLegacyFieldMissingPreview = computed(() => v2ShadowLegacyFieldMissing.value.slice(0, 8).join(',') || '-');
+const v2ShadowLayoutSourceKind = computed(() => {
+  const containers = resolveContractV2ContainerTree(v2ContractStore.value);
+  if (containers.length) return 'v2_store';
+  return nativeFormLayoutNodes.value.length ? 'legacy_layout' : 'none';
+});
+const v2ShadowGlobalSourceKind = computed(() => (resolveContractV2GlobalStatus(v2ContractStore.value) ? 'v2_store' : 'legacy_resolver'));
+const v2ShadowSourceContextKind = computed(() => (Object.keys(resolveContractV2SourceContext(v2ContractStore.value)).length ? 'v2_store' : 'legacy_resolver'));
+const v2ShadowStatusFieldCount = computed(() => Object.keys(collectContractV2FieldStatusByCode(v2ContractStore.value)).length);
+const v2ShadowValueSource = computed(() => resolveContractV2ValueSource(v2ContractStore.value));
+const v2ShadowValueSourceKind = computed(() => v2ShadowValueSource.value.kind);
+const v2ShadowValueFieldCount = computed(() => (
+  v2ShadowFieldCodes.value.filter((fieldCode) => (
+    Object.prototype.hasOwnProperty.call(v2ShadowValueSource.value.values, fieldCode)
+  )).length
+));
+const v2ShadowMainDataFieldCount = computed(() => (
+  v2ShadowFieldCodes.value.filter((fieldCode) => (
+    Object.prototype.hasOwnProperty.call(resolveContractV2MainData(v2ContractStore.value), fieldCode)
+  )).length
+));
+const v2ShadowReadonlyValueCount = computed(() => (
+  layoutNodes.value.filter((node) => (
+    node.kind === 'field'
+    && node.readonly
+    && Boolean(v2ContractStore.value?.widgetsByFieldCode.has(node.name))
+    && Object.prototype.hasOwnProperty.call(v2ShadowValueSource.value.values, node.name)
+  )).length
+));
 const activeFilterKey = ref('');
 const originalValues = ref<Record<string, unknown>>({});
 const recordVersionToken = ref('');
@@ -792,7 +868,10 @@ function recordVersionPolicy() {
 }
 
 const renderProfile = computed<'create' | 'edit' | 'readonly'>(() => {
-  const sourceContext = resolveUnifiedPageContractV2SourceContext(contract.value);
+  const storeSourceContext = resolveContractV2SourceContext(v2ContractStore.value);
+  const sourceContext = Object.keys(storeSourceContext).length
+    ? storeSourceContext
+    : resolveUnifiedPageContractV2SourceContext(contract.value);
   const head = (contract.value?.head || {}) as Record<string, unknown>;
   const profile = String(sourceContext.renderProfile || contract.value?.render_profile || head.render_profile || '').trim().toLowerCase();
   if (profile === 'readonly') return 'readonly';
@@ -803,7 +882,7 @@ const renderProfile = computed<'create' | 'edit' | 'readonly'>(() => {
 });
 
 const rights = computed(() => {
-  const globalStatus = resolveUnifiedPageContractV2GlobalStatus(contract.value);
+  const globalStatus = resolveContractV2GlobalStatus(v2ContractStore.value) || resolveUnifiedPageContractV2GlobalStatus(contract.value);
   const pageAuth = String(globalStatus?.pageAuth || '').trim().toLowerCase();
   if (globalStatus?.pageVisible === false || pageAuth === 'none') {
     return { read: false, write: false, create: false, unlink: false };
@@ -1120,14 +1199,6 @@ const contractMetaLine = computed(() => {
 
 const showDebugActions = computed(() => renderProfile.value !== 'create');
 const showDebugActionsVisible = computed(() => showHud.value && showDebugActions.value);
-const runtimeUserGroups = computed(() => {
-  const out = new Set<string>();
-  (session.user?.groups_xmlids || []).forEach((group) => {
-    const normalized = String(group || '').trim();
-    if (normalized) out.add(normalized);
-  });
-  return out;
-});
 const runtimeRoleCode = computed(() => String(session.roleSurface?.role_code || '').trim().toLowerCase());
 const runtimeCapabilities = computed(() => {
   const out = new Set<string>();
@@ -1150,7 +1221,7 @@ const policyContext = computed(() => ({
   profile: renderProfile.value,
   formData: formData as Record<string, unknown>,
   capabilities: runtimeCapabilities.value,
-  userGroups: runtimeUserGroups.value,
+  userGroups: new Set<string>(),
   roleCode: runtimeRoleCode.value,
 }));
 
@@ -1394,7 +1465,7 @@ async function hydrateSelectedRelationOptions() {
     const missingIds = ids.filter((id) => !existingIds.has(id));
     if (!missingIds.length) return;
     try {
-      const response = await readRecord({
+      const response = await readContractFormRecord({
         model: relation,
         ids: missingIds,
         fields: relationReadFields(descriptor),
@@ -1743,7 +1814,7 @@ async function hydrateOne2manyRows(name: string) {
   if (!columns.length) return;
   const fields = Array.from(new Set(['id', 'display_name', 'name', ...columns.map((column) => column.name)]));
   try {
-    const response = await readRecord({
+    const response = await readContractFormRecord({
       model: relation,
       ids: rows.map((row) => Number(row.id)).filter((id) => Number.isFinite(id) && id > 0),
       fields,
@@ -2123,7 +2194,7 @@ async function queryRelationOptions(name: string, keyword: string): Promise<Rela
   const search = String(keyword || '').trim();
   const domain = mergedRelationDomain(name, descriptor);
   try {
-    const listed = await listRecords({
+    const listed = await listContractFormRecords({
       model: relation,
       fields: relationReadFields(descriptor),
       limit: search ? 40 : 80,
@@ -2158,7 +2229,7 @@ async function fetchRelationOptions(name: string, keyword: string, limit = 80): 
   const entry = relationEntry(descriptor);
   if (entry && entry.canRead === false) return [];
   const domain = mergedRelationDomain(name, descriptor);
-  const listed = await listRecords({
+  const listed = await listContractFormRecords({
     model: relation,
     fields: relationReadFields(descriptor),
     limit,
@@ -2268,7 +2339,7 @@ async function fetchRelationSearchRows(name: string, keyword: string, limit = 12
   const columns = relationSearchDialog.columns.length ? relationSearchDialog.columns : relationSearchColumnsFromContract(name);
   const limitValue = Number(dialog.limit || limit || 120);
   const order = String(dialog.order || 'id desc').trim() || 'id desc';
-  const listed = await listRecords({
+  const listed = await listContractFormRecords({
     model: relation,
     fields: relationSearchReadFields(columns.length ? columns : fallbackRelationSearchColumns(name), dialog),
     limit: Number.isFinite(limitValue) && limitValue > 0 ? Math.min(Math.trunc(limitValue), 200) : 120,
@@ -2502,6 +2573,52 @@ async function openRelationCreateForm(fieldName: string, descriptor?: FieldDescr
   }
 }
 
+function currentRelationRecordId(fieldName: string) {
+  const id = Number(relationIds(fieldName)[0] || 0);
+  return Number.isFinite(id) && id > 0 ? Math.trunc(id) : 0;
+}
+
+function canOpenRelationRecordForm(fieldName: string, descriptor?: FieldDescriptor) {
+  const relation = relationModel(fieldName);
+  const entry = relationEntry(descriptor);
+  return Boolean(relation && currentRelationRecordId(fieldName) > 0 && entry?.canRead !== false);
+}
+
+async function openRelationRecordForm(fieldName: string, descriptor?: FieldDescriptor) {
+  const relation = relationModel(fieldName);
+  const recordId = currentRelationRecordId(fieldName);
+  const entry = relationEntry(descriptor);
+  if (!relation || recordId <= 0) return;
+  if (entry?.canRead === false) {
+    validationErrors.value = [relationUiLabel(descriptor, 'missing_read_entry')];
+    return;
+  }
+  const relationActionId = entry?.actionId || null;
+  const menuId = entry?.menuId || 0;
+  const nextQuery = pickContractNavQuery(route.query as Record<string, unknown>, {
+    action_id: relationActionId || undefined,
+    menu_id: menuId || undefined,
+    view_mode: 'form',
+  });
+  const returnUrl = `${window.location.pathname}${window.location.search}`;
+  try {
+    await router.push({
+      name: 'model-form',
+      params: { model: relation, id: String(recordId) },
+      query: {
+        ...nextQuery,
+        return_url: encodeURIComponent(returnUrl),
+        return_field: fieldName,
+        return_model: model.value,
+        return_action_id: actionId.value || undefined,
+        return_menu_id: Number(route.query.menu_id || 0) || undefined,
+      },
+    });
+  } catch (err) {
+    validationErrors.value = [sanitizeUiErrorMessage(err instanceof Error ? err.message : err, relationUiLabel(descriptor, 'open_record_failed'))];
+  }
+}
+
 async function quickCreateRelation(
   fieldName: string,
   descriptor: FieldDescriptor | undefined,
@@ -2524,7 +2641,7 @@ async function quickCreateRelation(
     if (relation === 'sc.dictionary' && typeof vals.type === 'string' && String(vals.type || '').trim()) {
       vals.code = label.toUpperCase().replace(/\\s+/g, '_').slice(0, 60);
     }
-    const created = await createRecord({ model: relation, vals });
+    const created = await createContractFormRecord({ model: relation, vals });
     const id = Number(created?.id || 0);
     if (Number.isFinite(id) && id > 0) {
       const option = { id: Math.trunc(id), label };
@@ -2572,7 +2689,7 @@ async function loadRelationOptions() {
     }
     const domain = mergedRelationDomain(name, descriptor as FieldDescriptor);
     try {
-      const listed = await listRecords({
+      const listed = await listContractFormRecords({
         model: relation,
         fields: relationReadFields(descriptor as FieldDescriptor),
         limit: 80,
@@ -2595,12 +2712,6 @@ async function loadRelationOptions() {
   Object.entries(next).forEach(([fieldName, options]) => {
     mergeRelationOptions(fieldName, options);
   });
-}
-
-function hasGroupAccess(groupsXmlids?: string[]) {
-  if (!Array.isArray(groupsXmlids) || !groupsXmlids.length) return true;
-  const userGroups = session.user?.groups_xmlids || [];
-  return groupsXmlids.some((group) => userGroups.includes(group));
 }
 
 function toActionId(raw: unknown) {
@@ -2665,7 +2776,10 @@ const contractActions = computed<ContractAction[]>(() => {
   const sceneReadyActions = useSceneFormAugmentations.value && Array.isArray(sceneReadyFormSurface.value.actions)
     ? sceneReadyFormSurface.value.actions as Array<Record<string, unknown>>
     : [];
-  const v2ButtonStatus = collectUnifiedPageContractV2ButtonStatus(contract.value);
+  const storeButtonStatus = collectContractV2ButtonStatusById(v2ContractStore.value);
+  const v2ButtonStatus = Object.keys(storeButtonStatus).length
+    ? storeButtonStatus
+    : collectUnifiedPageContractV2ButtonStatus(contract.value);
   const merged: Array<Record<string, unknown>> = [];
   const nativeFormContract = contract.value?.views?.form as Record<string, unknown> | undefined;
   if (Array.isArray(nativeFormContract?.header_buttons)) {
@@ -2734,11 +2848,6 @@ const contractActions = computed<ContractAction[]>(() => {
     const target = String(payload.target || '').trim();
     const selectionRaw = String(row.selection || 'none').trim().toLowerCase();
     const selection = selectionRaw === 'single' || selectionRaw === 'multi' ? selectionRaw : 'none';
-    const groups = Array.isArray(row.groups_xmlids)
-      ? (row.groups_xmlids as string[])
-      : Array.isArray(payload.groups_xmlids)
-        ? (payload.groups_xmlids as string[])
-        : [];
     const visibleProfiles = (
       Array.isArray(row.visible_profiles) ? row.visible_profiles : ['create', 'edit']
     )
@@ -2750,12 +2859,11 @@ const contractActions = computed<ContractAction[]>(() => {
     if (!evaluateNativeActionVisibility(row)) continue;
     const status = resolveV2ButtonStatus(key, v2ButtonStatus);
     if (status?.visible === false) continue;
-    const byGroup = hasGroupAccess(groups);
     const contractAllowed = typeof row.allowed === 'boolean' ? Boolean(row.allowed) : true;
     const needRecord = effectiveKind === 'object' || effectiveKind === 'server' || effectiveKind === 'mutation' || level === 'row' || level === 'smart';
     const blockedMessage = String(row.blocked_message || row.reason || row.reason_code || '').trim();
     const warningMessage = String(row.warning_message || '').trim();
-    const enabled = contractAllowed && policy.enabled && byGroup && (!needRecord || Boolean(recordId.value)) && status?.disabled !== true;
+    const enabled = contractAllowed && policy.enabled && (!needRecord || Boolean(recordId.value)) && status?.disabled !== true;
     out.push({
       key,
       label: normalizeActionLabel(row.label, key),
@@ -2770,11 +2878,9 @@ const contractActions = computed<ContractAction[]>(() => {
       target,
       url: String(payload.url || '').trim(),
       enabled,
-      hint: byGroup
-        ? (status?.disabled === true
-          ? status.reasonCode || 'disabled_by_status_contract'
-          : (needRecord && !recordId.value ? 'requires record id' : (contractAllowed ? (warningMessage || policy.reason) : blockedMessage)))
-        : 'permission denied',
+      hint: status?.disabled === true
+        ? status.reasonCode || 'disabled_by_status_contract'
+        : (needRecord && !recordId.value ? 'requires record id' : (contractAllowed ? (warningMessage || policy.reason) : blockedMessage)),
       semantic: policy.semantic,
       visibleProfiles,
       requiredParams,
@@ -3273,10 +3379,12 @@ const contractVisibleFields = computed<string[]>(() => {
   const rows = Array.isArray(contract.value?.visible_fields) ? contract.value?.visible_fields : [];
   return rows.map((name) => String(name || '').trim()).filter(Boolean);
 });
+
 const fieldModifierMap = computed<Record<string, Record<string, unknown>>>(() => {
   const formView = (contract.value?.views?.form || {}) as { field_modifiers?: Record<string, Record<string, unknown>> };
   const out: Record<string, Record<string, unknown>> = { ...(formView.field_modifiers || {}) };
-  const v2FieldStatus = collectUnifiedPageContractV2FieldStatus(contract.value);
+  const fromStore = collectContractV2FieldStatusByCode(v2ContractStore.value);
+  const v2FieldStatus = Object.keys(fromStore).length ? fromStore : collectUnifiedPageContractV2FieldStatus(contract.value);
   Object.entries(v2FieldStatus).forEach(([name, status]) => {
     out[name] = {
       ...(out[name] || {}),
@@ -3288,7 +3396,10 @@ const fieldModifierMap = computed<Record<string, Record<string, unknown>>>(() =>
   return out;
 });
 const runtimeFieldStates = computed(() => {
-  const v2FieldNames = collectUnifiedPageContractV2FieldWidgets(contract.value).map((widget) => widget.fieldCode).filter(Boolean);
+  const storeFieldNames = Array.from(v2ContractStore.value?.widgetsByFieldCode.keys() || []);
+  const v2FieldNames = storeFieldNames.length
+    ? storeFieldNames
+    : collectUnifiedPageContractV2FieldWidgets(contract.value).map((widget) => widget.fieldCode).filter(Boolean);
   const names = Array.from(new Set([...Object.keys(contract.value?.fields || {}), ...v2FieldNames]));
   return buildRuntimeFieldStates({
     fieldNames: names,
@@ -3339,8 +3450,11 @@ const useNativeFormTree = computed(() => {
 });
 
 const nativeFormLayoutNodes = computed<NativeFormLayoutNode[]>(() => {
-  const v2 = resolveUnifiedPageContractV2(contract.value);
-  const containers = Array.isArray(v2?.layoutContract?.containerTree) ? v2.layoutContract.containerTree : [];
+  const storeContainers = resolveContractV2ContainerTree(v2ContractStore.value);
+  const v2 = storeContainers.length ? null : resolveUnifiedPageContractV2(contract.value);
+  const containers = storeContainers.length
+    ? storeContainers
+    : (Array.isArray(v2?.layoutContract?.containerTree) ? v2.layoutContract.containerTree : []);
   if (containers.length > 0) {
     return containers as unknown as NativeFormLayoutNode[];
   }
@@ -3502,7 +3616,8 @@ const nativeStatusbar = computed(() => {
     ? rawStates.map((item) => ({ value: item.value as string | number, label: String(item.label || item.value || '') }))
     : selectionStates)
     .filter((item) => String(item.value ?? '').trim() && String(item.label || '').trim());
-  const contractMainData = resolveUnifiedPageContractV2MainData(contract.value);
+  const storeMainData = resolveContractV2MainData(v2ContractStore.value);
+  const contractMainData = Object.keys(storeMainData).length ? storeMainData : resolveUnifiedPageContractV2MainData(contract.value);
   const rawFormStatus = formData[field];
   const formStatusValue = rawFormStatus === false || rawFormStatus == null ? '' : String(rawFormStatus).trim();
   const current = String(
@@ -3536,18 +3651,6 @@ function setStatusbarValue(value: string) {
     if (matched) {
       resolved = String((matched as unknown[])[0] ?? raw);
     }
-  }
-  if (field === 'lifecycle_state') {
-    const stateLabelMap: Record<string, string> = {
-      '草稿': 'draft',
-      '在建': 'active',
-      '停工': 'paused',
-      '竣工': 'completed',
-      '结算中': 'settling',
-      '保修期': 'warranty',
-      '关闭': 'closed',
-    };
-    resolved = stateLabelMap[resolved] || stateLabelMap[raw] || resolved;
   }
   formData[field] = resolved || false;
   markFieldChanged(field);
@@ -3748,9 +3851,6 @@ function isNativeFieldVisible(name: string, nodeRaw?: NativeFormLayoutNode) {
 function nativeLayoutNodeToFieldNode(nodeRaw: NativeFormLayoutNode, index: number): LayoutNode | null {
   const name = String(nodeRaw?.name || '').trim();
   if (!name || !isNativeFieldVisible(name, nodeRaw)) return null;
-  const fieldGroups = contract.value?.permissions?.field_groups || {};
-  const groups = fieldGroups[name]?.groups_xmlids;
-  if (!hasGroupAccess(Array.isArray(groups) ? groups : [])) return null;
   const descriptor = contract.value?.fields?.[name];
   if (!descriptor) return null;
   const resolved = evaluateFieldPolicy(
@@ -3787,7 +3887,7 @@ function nativeFieldSchemasForNodes(nodes: NativeFormLayoutNode[]): FormSectionF
   const fieldNodes = mappedNodes
     .filter((item) => item !== favoriteNode)
     .map((item) => item.field);
-  const schemas = buildSectionFieldSchemas(fieldNodes);
+  const schemas = applyV2ReadonlyFieldValues(buildSectionFieldSchemas(fieldNodes));
   if (!favoriteNode || !schemas.length) return schemas;
   const target = schemas.find((field) => field.name === 'name')
     || schemas.find((field) => ['char', 'text'].includes(String(field.type || '').trim().toLowerCase()))
@@ -3802,6 +3902,44 @@ function nativeFieldSchemasForNodes(nodes: NativeFormLayoutNode[]): FormSectionF
     };
   }
   return schemas;
+}
+
+function v2FieldValue(name: string) {
+  const normalized = String(name || '').trim();
+  if (!normalized || !v2ContractStore.value?.widgetsByFieldCode.has(normalized)) {
+    return { found: false, value: undefined };
+  }
+  const source = v2ShadowValueSource.value.values;
+  if (!Object.prototype.hasOwnProperty.call(source, normalized)) {
+    return { found: false, value: undefined };
+  }
+  return { found: true, value: source[normalized] };
+}
+
+function schemaInputValueFromRaw(fieldName: string, fieldType: string, raw: unknown) {
+  const type = String(fieldType || '').trim().toLowerCase();
+  if (type === 'many2one') {
+    const id = normalizeRelationIds(raw)[0];
+    return id ? String(id) : '';
+  }
+  if (raw === null || raw === undefined || raw === false) return '';
+  if (type === 'date') return toDateInputValue(raw);
+  if (type === 'datetime') return toDatetimeInputValue(raw);
+  if (typeof raw === 'number' || typeof raw === 'boolean') return raw;
+  return String(raw);
+}
+
+function applyV2ReadonlyFieldValues(schemas: FormSectionFieldSchema[]): FormSectionFieldSchema[] {
+  return schemas.map((field) => {
+    if (!field.readonly) return field;
+    const resolved = v2FieldValue(field.name);
+    if (!resolved.found) return field;
+    return {
+      ...field,
+      value: resolved.value,
+      inputValue: schemaInputValueFromRaw(field.name, String(field.type || ''), resolved.value),
+    };
+  });
 }
 
 function shouldShowRequiredMark(node: LayoutNode) {
@@ -3842,7 +3980,6 @@ function collectSceneValidationPrecheckErrors(fieldLabels: Record<string, string
 const layoutNodes = computed<LayoutNode[]>(() => {
   const fieldMap = contract.value?.fields || {};
   const order = contract.value?.views?.form?.layout || [];
-  const fieldGroups = contract.value?.permissions?.field_groups || {};
   const v2FieldContainerStatus = collectUnifiedPageContractV2FieldContainerStatus(contract.value);
   const used = new Set<string>();
   const nodes: LayoutNode[] = [];
@@ -3851,8 +3988,6 @@ const layoutNodes = computed<LayoutNode[]>(() => {
   function pushField(nameRaw: unknown) {
     const name = String(nameRaw || '').trim();
     if (!name || used.has(name)) return;
-    const groups = fieldGroups[name]?.groups_xmlids;
-    if (!hasGroupAccess(Array.isArray(groups) ? groups : [])) return;
     const descriptor = fieldMap[name];
     if (!descriptor) return;
     const containerStatus = v2FieldContainerStatus[name];
@@ -3949,6 +4084,8 @@ const buildSectionFieldSchemas = createFormSectionFieldSchemaBuilder({
     };
   },
   resolveRelationTextValue: relationKeyword,
+  resolveCanOpenRelationRecord: (fieldName, descriptor) => canOpenRelationRecordForm(fieldName, descriptor),
+  resolveRelationRecordOpenLabel: (_fieldName, descriptor) => relationUiLabel(descriptor, 'open_existing', '维护当前项'),
   resolveRelationSearchLabel: (_fieldName, descriptor) => relationUiLabel(descriptor, 'search_more'),
   resolveRelationCreateLabel: (_fieldName, descriptor) => {
     const mode = relationCreateMode(_fieldName, descriptor);
@@ -3963,6 +4100,7 @@ const buildSectionFieldSchemas = createFormSectionFieldSchemaBuilder({
   },
   many2oneCreateToken: MANY2ONE_CREATE_OPTION,
   many2oneSearchToken: MANY2ONE_SEARCH_MORE_OPTION,
+  many2oneOpenToken: MANY2ONE_OPEN_RECORD_OPTION,
 });
 
 function onTemplateFieldChange(payload: FormSectionFieldChange) {
@@ -3982,7 +4120,7 @@ function onTemplateFieldChange(payload: FormSectionFieldChange) {
   });
 }
 
-const relationFallbackAdapter = computed<RelationFallbackAdapter>(() => createRelationFallbackAdapter({
+const relationFieldAdapter = computed<RelationFieldAdapter>(() => ({
   busy: busy.value,
   showOne2manyErrors: showOne2manyErrors.value,
   relationKeyword,
@@ -3992,16 +4130,6 @@ const relationFallbackAdapter = computed<RelationFallbackAdapter>(() => createRe
   filteredRelationOptions,
   setRelationMultiField,
   setRelationIds,
-  canOpenRelationSearch: (fieldName: string) => Boolean(relationModel(fieldName)),
-  relationSearchLabel: (fieldName: string) => {
-    const descriptor = contract.value?.fields?.[fieldName];
-    return relationUiLabel(descriptor, 'search_more', '搜索更多');
-  },
-  openRelationSearch: (fieldName: string) => {
-    const descriptor = contract.value?.fields?.[fieldName];
-    if (!descriptor) return;
-    void openRelationSearchDialog(fieldName, descriptor);
-  },
   relationCreateMode: (fieldName: string) => relationCreateMode(fieldName, contract.value?.fields?.[fieldName]),
   relationCreateLabel: (fieldName: string) => {
     const descriptor = contract.value?.fields?.[fieldName];
@@ -4163,7 +4291,7 @@ function setBooleanField(name: string, checked: boolean) {
 
 async function persistNativeFavoriteField(name: string, checked: boolean, previousValue: unknown) {
   try {
-    await writeRecord({
+    await writeContractFormRecord({
       model: model.value,
       ids: [recordId.value],
       vals: { [name]: checked },
@@ -4195,6 +4323,10 @@ function setMany2oneField(name: string, descriptor: FieldDescriptor | undefined,
   }
   if (normalized === MANY2ONE_SEARCH_MORE_OPTION) {
     void openRelationSearchDialog(name, descriptor);
+    return;
+  }
+  if (normalized === MANY2ONE_OPEN_RECORD_OPTION) {
+    void openRelationRecordForm(name, descriptor);
     return;
   }
   const id = Number(normalized);
@@ -4379,7 +4511,7 @@ async function quickCreateMany2manyTag(name: string) {
   }
   const nameField = inline.nameField || 'name';
   try {
-    const created = await createRecord({ model: relation, vals: { [nameField]: label } });
+    const created = await createContractFormRecord({ model: relation, vals: { [nameField]: label } });
     const id = Number(created?.id || 0);
     if (Number.isFinite(id) && id > 0) {
       addRelationId(name, { id: Math.trunc(id), label });
@@ -4531,13 +4663,15 @@ function collectWritableValues() {
 }
 
 function formCreateContext() {
-  const sourceContext = resolveUnifiedPageContractV2SourceContext(contract.value).context || {};
+  const storeContext = resolveContractV2SourceContext(v2ContractStore.value);
+  const sourceContext = (Object.keys(storeContext).length ? storeContext : resolveUnifiedPageContractV2SourceContext(contract.value)).context || {};
   return sourceContext;
 }
 
 function resolveCreateDefaults() {
+  const storeMainData = resolveContractV2MainData(v2ContractStore.value);
   const defaults: Record<string, unknown> = {
-    ...resolveUnifiedPageContractV2MainData(contract.value),
+    ...(Object.keys(storeMainData).length ? storeMainData : resolveUnifiedPageContractV2MainData(contract.value)),
   };
   Object.entries(route.query as Record<string, unknown>).forEach(([key, value]) => {
     if (key.startsWith('default_')) {
@@ -4620,6 +4754,21 @@ function resolveNavigationUrl(url: string) {
   return raw;
 }
 
+function syncContractV2ShadowStore(rawContract: unknown) {
+  v2ContractStore.value = null;
+  v2ContractDecodeError.value = '';
+  try {
+    const snapshot = decodeContractV2Snapshot(rawContract);
+    v2ContractStore.value = createContractV2Store(snapshot);
+  } catch (err) {
+    if (err instanceof ContractV2DecodeError) {
+      v2ContractDecodeError.value = err.issues.slice(0, 4).map((issue) => `${issue.path} ${issue.message}`).join(' | ');
+      return;
+    }
+    v2ContractDecodeError.value = err instanceof Error ? err.message : 'unknown v2 contract decode error';
+  }
+}
+
 const hudEntries = computed(() => [
   { label: 'model', value: model.value || '-' },
   { label: 'action_id', value: actionId.value || '-' },
@@ -4627,6 +4776,22 @@ const hudEntries = computed(() => [
   { label: 'contract_loaded', value: Boolean(contract.value) },
   { label: 'contract_ready', value: contractReadiness.value.usable },
   { label: 'contract_issues', value: contractReadiness.value.issues.length },
+  { label: 'v2_shadow_store', value: v2ShadowStoreReady.value },
+  { label: 'v2_shadow_widgets', value: v2ShadowWidgetCount.value },
+  { label: 'v2_shadow_actions', value: v2ShadowActionCount.value },
+  { label: 'v2_shadow_button_statuses', value: v2ShadowButtonStatusCount.value },
+  { label: 'v2_shadow_field_codes', value: v2ShadowFieldCodeCount.value },
+  { label: 'v2_shadow_field_overlap', value: v2ShadowLegacyFieldOverlapCount.value },
+  { label: 'v2_shadow_field_missing', value: v2ShadowLegacyFieldMissingPreview.value },
+  { label: 'v2_shadow_layout_source', value: v2ShadowLayoutSourceKind.value },
+  { label: 'v2_shadow_global_source', value: v2ShadowGlobalSourceKind.value },
+  { label: 'v2_shadow_source_context', value: v2ShadowSourceContextKind.value },
+  { label: 'v2_shadow_status_fields', value: v2ShadowStatusFieldCount.value },
+  { label: 'v2_shadow_value_fields', value: v2ShadowValueFieldCount.value },
+  { label: 'v2_shadow_main_data_fields', value: v2ShadowMainDataFieldCount.value },
+  { label: 'v2_shadow_readonly_values', value: v2ShadowReadonlyValueCount.value },
+  { label: 'v2_shadow_value_source', value: v2ShadowValueSourceKind.value },
+  { label: 'v2_shadow_error', value: v2ContractDecodeError.value || '-' },
   { label: 'contract_view_type', value: contract.value?.head?.view_type || contract.value?.view_type || '-' },
   { label: 'render_profile', value: renderProfile.value },
   { label: 'fields_count', value: Object.keys(contract.value?.fields || {}).length },
@@ -4864,6 +5029,8 @@ function routeContractContext() {
 }
 
 async function loadContract() {
+  v2ContractStore.value = null;
+  v2ContractDecodeError.value = '';
   const profile = recordId.value ? 'edit' : 'create';
   const currentModel = String(model.value || '').trim();
   const contractContext = routeContractContext();
@@ -4916,6 +5083,7 @@ async function loadContract() {
   }
   contract.value = response.data as ActionContract;
   contractMeta.value = response.meta || null;
+  syncContractV2ShadowStore(response.data);
   const policy = contractAccessPolicy.value;
   if (policy.mode === 'block') {
     const message = policy.message || 'contract access policy blocked this page';
@@ -4994,13 +5162,14 @@ async function loadRecord() {
     restoreIntakeAutosave();
     return;
   }
-  const read = await readRecord({
+  const read = await readContractFormRecord({
     model: model.value,
     ids: [recordId.value],
     fields: fieldNames.length ? fieldNames : '*',
   });
   const row = read.records?.[0] || {};
-  const contractMainData = resolveUnifiedPageContractV2MainData(contract.value);
+  const storeMainData = resolveContractV2MainData(v2ContractStore.value);
+  const contractMainData = Object.keys(storeMainData).length ? storeMainData : resolveUnifiedPageContractV2MainData(contract.value);
   if (versionPolicy?.tokenField) {
     recordVersionToken.value = String((row as Record<string, unknown>)[versionPolicy.tokenField] || '').trim();
   }
@@ -5580,7 +5749,7 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']): Prom
       return true;
     }
     if (recordId.value) {
-      await writeRecord({
+      await writeContractFormRecord({
         model: model.value,
         ids: [recordId.value],
         vals: values,
@@ -5591,7 +5760,7 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']): Prom
       await applyProjectionRefreshPolicy(refreshPolicy || { on_success: ['scene_projection'] });
       return true;
     }
-    const created = await createRecord({ model: model.value, vals: values, context: formCreateContext() });
+    const created = await createContractFormRecord({ model: model.value, vals: values, context: formCreateContext() });
     if (created?.id) {
       const title = String(contract.value?.head?.title || '').trim();
       submissionFeedback.value = { kind: 'success', message: `${title || '记录'}已创建` };

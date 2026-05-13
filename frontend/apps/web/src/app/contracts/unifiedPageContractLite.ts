@@ -1,3 +1,8 @@
+import {
+  isLitePreviewLegacyFallbackMode,
+  type LitePreviewFallbackMode,
+} from './unifiedPageContractLiteCompat';
+
 export type LiteClientType = 'web_pc' | 'wx_mini' | 'harmony_h5';
 export type LiteViewType = 'form' | 'tree' | 'list' | 'kanban' | 'search' | 'gantt' | 'popup' | 'combine';
 export type LitePatchOperation = 'merge' | 'replace';
@@ -86,7 +91,7 @@ export type LitePreviewEnvelope = {
   contractVersion: '2.0.0';
   entryPoint: 'load_contract' | 'api_onchange';
   payloadType: 'lite_contract' | 'lite_patch';
-  fallbackMode: 'legacy_default';
+  fallbackMode: LitePreviewFallbackMode;
   payload: unknown;
   meta?: Record<string, unknown>;
 };
@@ -162,6 +167,6 @@ export function extractLitePreviewEnvelope(value: unknown): LitePreviewEnvelope 
   if (preview.contractVersion !== '2.0.0') return null;
   if (preview.entryPoint !== 'load_contract' && preview.entryPoint !== 'api_onchange') return null;
   if (preview.payloadType !== 'lite_contract' && preview.payloadType !== 'lite_patch') return null;
-  if (preview.fallbackMode !== 'legacy_default') return null;
+  if (!isLitePreviewLegacyFallbackMode(preview.fallbackMode)) return null;
   return preview as LitePreviewEnvelope;
 }
