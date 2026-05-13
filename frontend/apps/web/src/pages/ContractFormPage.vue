@@ -142,15 +142,13 @@
           :is-node-visible="isNativeLayoutNodeVisible"
           :button-label-resolver="resolveNativeButtonLabel"
           :native-action-handler="runNativeLayoutAction"
+          :relation-adapter="relationFieldAdapter"
           :columns="2"
           @field-change="onTemplateFieldChange"
           @native-action="runNativeLayoutAction"
         >
           <template #readonly="{ field }">
             <FieldValue :value="field.value" :field="field.descriptor" />
-          </template>
-          <template #fallback="{ field }">
-            <RelationFallbackRenderer :field="field" :adapter="relationFallbackAdapter" />
           </template>
           <template #chatter>
             <section v-if="(nativeChatterActions.length || nativeAttachments) && !isProjectIntakeCreateMode" class="block native-chatter-block">
@@ -431,14 +429,12 @@ import PageHeaderTemplate from '../components/template/PageHeader.vue';
 import NativeFormTreeRenderer, { type NativeFormLayoutNode } from '../components/template/NativeFormTreeRenderer.vue';
 import SceneBlocksRenderer from '../components/scene/SceneBlocksRenderer.vue';
 import PageFooterTemplate from '../components/template/PageFooter.vue';
-import RelationFallbackRenderer from '../components/template/RelationFallbackRenderer.vue';
 import type { FormSectionFieldSchema, FormSectionFieldChange } from '../components/template/formSection.types';
-import type { RelationFallbackAdapter } from '../components/template/relationFallback.types';
+import type { RelationFieldAdapter } from '../components/template/relationField.types';
 import { createFormSectionFieldSchemaBuilder } from '../components/template/formSection.adapter';
 import { resolveInputPlaceholder, resolveSelectPlaceholder } from '../components/template/placeholder.mapper';
 import { resolveFieldSpanClass } from '../components/template/fieldSpan.mapper';
 import { mapDescriptorSelectionOptions, mapRelationOptions } from '../components/template/option.mapper';
-import { createRelationFallbackAdapter } from '../components/template/relationFallback.adapter';
 import { dispatchTemplateFieldChange } from '../components/template/fieldChange.dispatcher';
 import { isHudEnabled, isSceneBlocksDebugEnabled } from '../config/debug';
 import { intentRequest } from '../api/intents';
@@ -4032,7 +4028,7 @@ function onTemplateFieldChange(payload: FormSectionFieldChange) {
   });
 }
 
-const relationFallbackAdapter = computed<RelationFallbackAdapter>(() => createRelationFallbackAdapter({
+const relationFieldAdapter = computed<RelationFieldAdapter>(() => ({
   busy: busy.value,
   showOne2manyErrors: showOne2manyErrors.value,
   relationKeyword,
@@ -4042,29 +4038,6 @@ const relationFallbackAdapter = computed<RelationFallbackAdapter>(() => createRe
   filteredRelationOptions,
   setRelationMultiField,
   setRelationIds,
-  canOpenRelationSearch: (fieldName: string) => Boolean(relationModel(fieldName)),
-  relationSearchLabel: (fieldName: string) => {
-    const descriptor = contract.value?.fields?.[fieldName];
-    return relationUiLabel(descriptor, 'search_more', '搜索更多');
-  },
-  openRelationSearch: (fieldName: string) => {
-    const descriptor = contract.value?.fields?.[fieldName];
-    if (!descriptor) return;
-    void openRelationSearchDialog(fieldName, descriptor);
-  },
-  canOpenRelationRecord: (fieldName: string) => {
-    const descriptor = contract.value?.fields?.[fieldName];
-    return canOpenRelationRecordForm(fieldName, descriptor);
-  },
-  relationRecordLabel: (fieldName: string) => {
-    const descriptor = contract.value?.fields?.[fieldName];
-    return relationUiLabel(descriptor, 'open_existing', '维护当前项');
-  },
-  openRelationRecord: (fieldName: string) => {
-    const descriptor = contract.value?.fields?.[fieldName];
-    if (!descriptor) return;
-    void openRelationRecordForm(fieldName, descriptor);
-  },
   relationCreateMode: (fieldName: string) => relationCreateMode(fieldName, contract.value?.fields?.[fieldName]),
   relationCreateLabel: (fieldName: string) => {
     const descriptor = contract.value?.fields?.[fieldName];

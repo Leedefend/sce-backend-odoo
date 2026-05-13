@@ -58,6 +58,9 @@
                   <span class="readonly-value">{{ readonlyText(field.value) }}</span>
                 </slot>
               </template>
+              <template v-else-if="isRelationEditorField(field) && relationAdapter">
+                <X2ManyRelationRenderer :field="field" :adapter="relationAdapter" />
+              </template>
               <template v-else-if="isBaseFieldType(field.type)">
                 <input
                   v-if="field.type === 'boolean'"
@@ -183,15 +186,13 @@
                 />
               </template>
               <template v-else>
-                <slot name="fallback" :field="field">
-                  <input
-                    :value="String(field.inputValue ?? '')"
-                    class="input"
-                    :type="inputType(field.type)"
-                    :placeholder="field.inputPlaceholder || inputPlaceholderText(field)"
-                    @input="emitFieldChange(field, ($event.target as HTMLInputElement).value)"
-                  />
-                </slot>
+                <input
+                  :value="String(field.inputValue ?? '')"
+                  class="input"
+                  :type="inputType(field.type)"
+                  :placeholder="field.inputPlaceholder || inputPlaceholderText(field)"
+                  @input="emitFieldChange(field, ($event.target as HTMLInputElement).value)"
+                />
               </template>
             </div>
           </div>
@@ -204,7 +205,9 @@
 
 <script setup lang="ts">
 import { computed, useSlots } from 'vue';
+import X2ManyRelationRenderer from './X2ManyRelationRenderer.vue';
 import type { FormSectionFieldSchema, FormSectionFieldChange, TemplateFieldType } from './formSection.types';
+import type { RelationFieldAdapter } from './relationField.types';
 import { resolveInputPlaceholder, resolveSelectPlaceholder } from './placeholder.mapper';
 
 const props = withDefaults(defineProps<{
@@ -213,6 +216,7 @@ const props = withDefaults(defineProps<{
   columns?: 1 | 2;
   tone?: 'core' | 'advanced';
   fields?: FormSectionFieldSchema[];
+  relationAdapter?: RelationFieldAdapter;
   selectPlaceholder?: (label: string) => string;
   inputPlaceholder?: (label: string) => string;
 }>(), {
@@ -220,6 +224,7 @@ const props = withDefaults(defineProps<{
   columns: 2,
   tone: 'core',
   fields: () => [],
+  relationAdapter: undefined,
   selectPlaceholder: (label: string) => resolveSelectPlaceholder(label),
   inputPlaceholder: (label: string) => resolveInputPlaceholder(label),
 });
@@ -249,6 +254,10 @@ function isBaseFieldType(type: TemplateFieldType) {
     'float',
     'monetary',
   ].includes(String(type || '').trim().toLowerCase());
+}
+
+function isRelationEditorField(field: FormSectionFieldSchema) {
+  return ['many2many', 'one2many'].includes(String(field.type || '').trim().toLowerCase());
 }
 
 function defaultSpanClass(type: TemplateFieldType) {
