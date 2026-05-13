@@ -39,6 +39,7 @@ AMOUNT_FIELD_RE = re.compile(r"(amount|qty|quantity|price|balance|total|tax|rate
 DEFAULT_REGISTRY = ROOT / "docs" / "architecture" / "backend_business_fact_model_standard_registry_v1.json"
 DEFAULT_PROBLEM_MAP = ROOT / "docs" / "architecture" / "backend_business_model_problem_map_v1.md"
 DEFAULT_RESPONSIBILITY_MATRIX = ROOT / "docs" / "architecture" / "backend_business_model_responsibility_matrix_v1.md"
+DEFAULT_OBJECT_HIERARCHY = ROOT / "docs" / "architecture" / "backend_business_object_hierarchy_v1.md"
 ALLOWED_SOLUTION_LAYERS = {"platform", "industry", "customer"}
 
 
@@ -380,6 +381,7 @@ def main() -> int:
     parser.add_argument("--registry", default=str(DEFAULT_REGISTRY.relative_to(ROOT)))
     parser.add_argument("--problem-map", default=str(DEFAULT_PROBLEM_MAP.relative_to(ROOT)))
     parser.add_argument("--responsibility-matrix", default=str(DEFAULT_RESPONSIBILITY_MATRIX.relative_to(ROOT)))
+    parser.add_argument("--object-hierarchy", default=str(DEFAULT_OBJECT_HIERARCHY.relative_to(ROOT)))
     parser.add_argument(
         "--enforce",
         action="store_true",
@@ -401,6 +403,8 @@ def main() -> int:
         problem_map_text = problem_map_path.read_text(encoding="utf-8") if problem_map_path.exists() else ""
         responsibility_path = ROOT / args.responsibility_matrix
         responsibility_text = responsibility_path.read_text(encoding="utf-8") if responsibility_path.exists() else ""
+        hierarchy_path = ROOT / args.object_hierarchy
+        hierarchy_text = hierarchy_path.read_text(encoding="utf-8") if hierarchy_path.exists() else ""
         blockers = {
             "unregistered_formal_models": summary["unregistered_formal_models"],
             "registered_models_not_detected": summary["registered_models_not_detected"],
@@ -418,6 +422,13 @@ def main() -> int:
                     "reason": "missing_responsibility_matrix_fact_flow_or_boundary_risks",
                 }
             ],
+            "object_hierarchy_gaps": []
+            if hierarchy_path.exists()
+            and "company" in hierarchy_text
+            and "income business" in hierarchy_text
+            and "expense business" in hierarchy_text
+            and "project" in hierarchy_text
+            else [{"path": str(hierarchy_path.relative_to(ROOT)), "reason": "missing_company_business_income_expense_project_hierarchy"}],
         }
         if any(blockers.values()):
             print("BACKEND_BUSINESS_FACT_MODEL_AUDIT_BLOCKERS=" + json.dumps(blockers, ensure_ascii=False, sort_keys=True))

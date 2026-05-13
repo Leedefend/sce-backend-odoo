@@ -6,6 +6,7 @@ Generated evidence: `make verify.backend_business_fact.model_audit`
 Standard registry: `docs/architecture/backend_business_fact_model_standard_registry_v1.json`
 Problem map: `docs/architecture/backend_business_model_problem_map_v1.md`
 Responsibility matrix: `docs/architecture/backend_business_model_responsibility_matrix_v1.md`
+Business object hierarchy: `docs/architecture/backend_business_object_hierarchy_v1.md`
 
 ## Audit Scope
 
@@ -64,6 +65,8 @@ The current formal business fact model layer is not primarily a platform kernel.
 
 The target problems are:
 
+- Treat company as the management subject and business as the management object.
+- Classify business by income and expense, while treating project as the typical construction execution carrier.
 - Preserve old-system business facts without turning raw legacy tables into user workflow tables.
 - Promote reusable construction-enterprise facts into formal runtime documents that users can directly search, open, approve, reconcile, and report on.
 - Keep platform primitives small: accounts, provenance, source identity, states, projection registry, audit/probe framework.

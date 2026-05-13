@@ -4,6 +4,8 @@ Status: draft architecture audit
 
 This matrix answers whether the current model responsibilities are clear enough for further backend iteration. It classifies each major model family by responsibility, source of truth, native dependency, and downstream consumers.
 
+The matrix follows the business-object hierarchy in `backend_business_object_hierarchy_v1.md`: company manages business; business splits into income and expense; project is the typical construction business carrier.
+
 ## Responsibility Types
 
 | responsibility | definition | allowed writes | examples |
@@ -39,6 +41,16 @@ This matrix answers whether the current model responsibilities are clear enough 
 | legacy replay/staging | legacy source carrier | old-system source facts and mapping tables | target anchors only | projection scripts, acceptance probes | clear conceptually; must stay out of user workflow |
 | capability/scene/pack/subscription | governance/config | governance models | user/group/menu/action/runtime contracts | frontend scene/runtime, release packs | clear platform responsibility |
 | approval/dictionary/audit/validation | governance/config | policy, dictionary, audit and validation records | Odoo groups/users, OCA tier | all industry docs and ops gates | clear |
+
+## Company Business Direction Matrix
+
+| direction | company-managed question | source-of-truth families | typical project relationship |
+| --- | --- | --- | --- |
+| income | What business did the company win, invoice, receive, or recognize? | tender chain, income/project contracts, receipt income, invoice registration, tax evidence, AR summaries | project is created or selected once income opportunity becomes execution scope |
+| expense | What business did the company procure, consume, pay, reimburse, settle, or owe? | expense/general contracts, payment request/execution, expense claim, material/labor/equipment/subcontract, AP/cost summaries | project is the usual cost and execution carrier |
+| bilateral/mixed | How do income and expense meet around one business scope? | project cost ledger, contract reconciliation, treasury reconciliation, partner semantic roles | project is the dominant join point |
+| governance | Who can see, approve, execute, or install business capability? | users/groups, approval policy/scope, capability/scene, pack/subscription, dictionary/audit | project may scope access, but company/platform owns policy |
+| projection | What does management need to see now? | dashboard, workbench, ledger, summary/read models | projections aggregate company and project facts |
 
 ## Fact Flow Matrix
 
@@ -76,4 +88,3 @@ The responsibility model is not yet fully governed because several high-value fa
 - projection refresh ownership
 
 The next implementation step should be a registry that records these family-level responsibilities and fails when new model families lack a declared responsibility type.
-

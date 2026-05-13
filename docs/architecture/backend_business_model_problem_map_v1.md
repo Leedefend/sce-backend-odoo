@@ -4,6 +4,8 @@ Status: draft architecture audit
 
 This map answers what each backend model family is for. It intentionally ignores customer-specific data repair and focuses on system design: what problem the model family solves, why native Odoo/OCA is or is not enough, and where the boundary should be.
 
+It follows the business-object hierarchy in `backend_business_object_hierarchy_v1.md`: company is the management subject, business is the management object, income and expense are the primary economic directions, and project is the typical construction business carrier.
+
 ## Design Reading
 
 The backend model set should be read as four cooperating layers:
@@ -80,4 +82,3 @@ The backend model set should be read as four cooperating layers:
 4. Custom models are justified where the construction domain has first-class documents and lifecycles that native Odoo does not own.
 5. The weakest boundary is not native-vs-custom. The weakest boundary is customer-specific migration semantics leaking into industry model shape.
 6. The next audit step should classify every custom model family into platform, industry, customer, projection, or legacy carrier, then fail CI only when a new model lacks that classification.
-
