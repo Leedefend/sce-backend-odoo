@@ -40,7 +40,28 @@ DEFAULT_REGISTRY = ROOT / "docs" / "architecture" / "backend_business_fact_model
 DEFAULT_PROBLEM_MAP = ROOT / "docs" / "architecture" / "backend_business_model_problem_map_v1.md"
 DEFAULT_RESPONSIBILITY_MATRIX = ROOT / "docs" / "architecture" / "backend_business_model_responsibility_matrix_v1.md"
 DEFAULT_OBJECT_HIERARCHY = ROOT / "docs" / "architecture" / "backend_business_object_hierarchy_v1.md"
+DEFAULT_FAMILY_REGISTRY = ROOT / "docs" / "architecture" / "backend_business_model_family_registry_v1.json"
 ALLOWED_SOLUTION_LAYERS = {"platform", "industry", "customer"}
+ALLOWED_RESPONSIBILITY_TYPES = {
+    "native system-of-record",
+    "industry source-of-truth",
+    "projection/read model",
+    "legacy source carrier",
+    "governance/config",
+    "compatibility/bridge",
+}
+ALLOWED_BUSINESS_OBJECTS = {
+    "company",
+    "business",
+    "income",
+    "expense",
+    "bilateral_mixed",
+    "project",
+    "projection",
+    "legacy",
+    "governance",
+    "platform",
+}
 
 
 def literal(node: ast.AST) -> Any:
@@ -178,6 +199,12 @@ def load_registry(path: Path) -> dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def load_family_registry(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {"families": [], "missing_registry": True}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 def registry_maps(registry: dict[str, Any]) -> tuple[dict[str, dict[str, Any]], dict[str, set[str]]]:
     model_map = {item["model"]: item for item in registry.get("models", [])}
     exception_map = {
@@ -276,6 +303,90 @@ def summarize(rows: list[dict[str, Any]], registry: dict[str, Any]) -> dict[str,
     }
 
 
+def summarize_family_registry(rows: list[dict[str, Any]], family_registry: dict[str, Any]) -> dict[str, Any]:
+    families = family_registry.get("families", [])
+    detected_models = {row["model"] for row in rows if row.get("model")}
+    detected_native_inherits: set[str] = set()
+    for row in rows:
+        inherit = row.get("inherit")
+        if isinstance(inherit, str):
+            detected_native_inherits.add(inherit)
+        elif isinstance(inherit, list):
+            detected_native_inherits.update(item for item in inherit if isinstance(item, str))
+    detected_reference_names = detected_models | detected_native_inherits
+
+    required_fields = [
+        "family",
+        "responsibility_type",
+        "solution_layer",
+        "business_object",
+        "source_of_truth",
+        "native_dependency",
+        "target_problem",
+        "boundary_rule",
+        "status",
+    ]
+    shape_gaps = []
+    reference_gaps = []
+    layer_counts: Counter[str] = Counter()
+    responsibility_counts: Counter[str] = Counter()
+    business_object_counts: Counter[str] = Counter()
+    for family in families:
+        family_key = family.get("family")
+        for field in required_fields:
+            if not str(family.get(field) or "").strip():
+                shape_gaps.append({"family": family_key, "field": field, "reason": "missing_required_field"})
+        layer = family.get("solution_layer")
+        if layer in ALLOWED_SOLUTION_LAYERS:
+            layer_counts[layer] += 1
+        else:
+            shape_gaps.append(
+                {
+                    "family": family_key,
+                    "field": "solution_layer",
+                    "value": layer,
+                    "allowed_values": sorted(ALLOWED_SOLUTION_LAYERS),
+                }
+            )
+        responsibility = family.get("responsibility_type")
+        if responsibility in ALLOWED_RESPONSIBILITY_TYPES:
+            responsibility_counts[responsibility] += 1
+        else:
+            shape_gaps.append(
+                {
+                    "family": family_key,
+                    "field": "responsibility_type",
+                    "value": responsibility,
+                    "allowed_values": sorted(ALLOWED_RESPONSIBILITY_TYPES),
+                }
+            )
+        business_object = family.get("business_object")
+        if business_object in ALLOWED_BUSINESS_OBJECTS:
+            business_object_counts[business_object] += 1
+        else:
+            shape_gaps.append(
+                {
+                    "family": family_key,
+                    "field": "business_object",
+                    "value": business_object,
+                    "allowed_values": sorted(ALLOWED_BUSINESS_OBJECTS),
+                }
+            )
+        for model in family.get("representative_models", []):
+            if model not in detected_reference_names:
+                reference_gaps.append({"family": family_key, "model": model})
+    return {
+        "family_registry_count": len(families),
+        "family_solution_layer_counts": dict(sorted(layer_counts.items())),
+        "family_responsibility_counts": dict(sorted(responsibility_counts.items())),
+        "family_business_object_counts": dict(sorted(business_object_counts.items())),
+        "family_registry_shape_gap_count": len(shape_gaps),
+        "family_registry_shape_gaps": shape_gaps,
+        "family_registry_reference_gap_count": len(reference_gaps),
+        "family_registry_reference_gaps": reference_gaps,
+    }
+
+
 def write_markdown(report: dict[str, Any], path: Path) -> None:
     summary = report["summary"]
     rows = report["models"]
@@ -371,6 +482,37 @@ def write_markdown(report: dict[str, Any], path: Path) -> None:
         if "legacy_fact" not in row["buckets"]:
             continue
         lines.append(f"- `{row['model']}`: {row.get('description') or ''} ({row['path']})")
+    family_summary = report.get("family_summary") or {}
+    family_registry = report.get("family_registry") or {}
+    lines.extend(["", "## Family Registry", ""])
+    lines.append(f"- family_registry_count: {family_summary.get('family_registry_count', 0)}")
+    lines.append(
+        "- family_solution_layer_counts: "
+        + json.dumps(family_summary.get("family_solution_layer_counts", {}), ensure_ascii=False, sort_keys=True)
+    )
+    lines.append(
+        "- family_responsibility_counts: "
+        + json.dumps(family_summary.get("family_responsibility_counts", {}), ensure_ascii=False, sort_keys=True)
+    )
+    lines.append(
+        "- family_business_object_counts: "
+        + json.dumps(family_summary.get("family_business_object_counts", {}), ensure_ascii=False, sort_keys=True)
+    )
+    lines.append(f"- family_registry_shape_gap_count: {family_summary.get('family_registry_shape_gap_count', 0)}")
+    lines.append(f"- family_registry_reference_gap_count: {family_summary.get('family_registry_reference_gap_count', 0)}")
+    if family_registry.get("families"):
+        lines.extend(["", "| family | business object | responsibility | solution layer | target problem |"])
+        lines.append("| --- | --- | --- | --- | --- |")
+        for family in family_registry["families"]:
+            lines.append(
+                "| {family} | {business_object} | {responsibility_type} | {solution_layer} | {target_problem} |".format(
+                    family=family.get("family", ""),
+                    business_object=family.get("business_object", ""),
+                    responsibility_type=family.get("responsibility_type", ""),
+                    solution_layer=family.get("solution_layer", ""),
+                    target_problem=family.get("target_problem", ""),
+                )
+            )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -382,6 +524,7 @@ def main() -> int:
     parser.add_argument("--problem-map", default=str(DEFAULT_PROBLEM_MAP.relative_to(ROOT)))
     parser.add_argument("--responsibility-matrix", default=str(DEFAULT_RESPONSIBILITY_MATRIX.relative_to(ROOT)))
     parser.add_argument("--object-hierarchy", default=str(DEFAULT_OBJECT_HIERARCHY.relative_to(ROOT)))
+    parser.add_argument("--family-registry", default=str(DEFAULT_FAMILY_REGISTRY.relative_to(ROOT)))
     parser.add_argument(
         "--enforce",
         action="store_true",
@@ -391,13 +534,24 @@ def main() -> int:
 
     rows = extract_models()
     registry = load_registry(ROOT / args.registry)
-    report = {"summary": summarize(rows, registry), "registry": registry, "models": rows}
+    family_registry = load_family_registry(ROOT / args.family_registry)
+    report = {
+        "summary": summarize(rows, registry),
+        "family_summary": summarize_family_registry(rows, family_registry),
+        "registry": registry,
+        "family_registry": family_registry,
+        "models": rows,
+    }
     report_path = ROOT / args.report
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     write_markdown(report, ROOT / args.markdown)
     summary = report["summary"]
     print("BACKEND_BUSINESS_FACT_MODEL_AUDIT=" + json.dumps(summary, ensure_ascii=False, sort_keys=True))
+    print(
+        "BACKEND_BUSINESS_MODEL_FAMILY_REGISTRY="
+        + json.dumps(report["family_summary"], ensure_ascii=False, sort_keys=True)
+    )
     if args.enforce:
         problem_map_path = ROOT / args.problem_map
         problem_map_text = problem_map_path.read_text(encoding="utf-8") if problem_map_path.exists() else ""
@@ -405,6 +559,7 @@ def main() -> int:
         responsibility_text = responsibility_path.read_text(encoding="utf-8") if responsibility_path.exists() else ""
         hierarchy_path = ROOT / args.object_hierarchy
         hierarchy_text = hierarchy_path.read_text(encoding="utf-8") if hierarchy_path.exists() else ""
+        family_registry_path = ROOT / args.family_registry
         blockers = {
             "unregistered_formal_models": summary["unregistered_formal_models"],
             "registered_models_not_detected": summary["registered_models_not_detected"],
@@ -429,6 +584,17 @@ def main() -> int:
             and "expense business" in hierarchy_text
             and "project" in hierarchy_text
             else [{"path": str(hierarchy_path.relative_to(ROOT)), "reason": "missing_company_business_income_expense_project_hierarchy"}],
+            "family_registry_gaps": []
+            if family_registry_path.exists()
+            and not report["family_summary"]["family_registry_shape_gaps"]
+            and not report["family_summary"]["family_registry_reference_gaps"]
+            else [
+                {
+                    "path": str(family_registry_path.relative_to(ROOT)),
+                    "shape_gaps": report["family_summary"]["family_registry_shape_gaps"],
+                    "reference_gaps": report["family_summary"]["family_registry_reference_gaps"],
+                }
+            ],
         }
         if any(blockers.values()):
             print("BACKEND_BUSINESS_FACT_MODEL_AUDIT_BLOCKERS=" + json.dumps(blockers, ensure_ascii=False, sort_keys=True))

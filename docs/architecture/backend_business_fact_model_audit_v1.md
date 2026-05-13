@@ -7,6 +7,7 @@ Standard registry: `docs/architecture/backend_business_fact_model_standard_regis
 Problem map: `docs/architecture/backend_business_model_problem_map_v1.md`
 Responsibility matrix: `docs/architecture/backend_business_model_responsibility_matrix_v1.md`
 Business object hierarchy: `docs/architecture/backend_business_object_hierarchy_v1.md`
+Family registry: `docs/architecture/backend_business_model_family_registry_v1.json`
 
 ## Audit Scope
 
@@ -43,6 +44,10 @@ The current static inventory reports:
 | platform formal facts | 1 | formal runtime facts currently classified as platform-level |
 | industry formal facts | 9 | formal runtime facts currently classified as construction-industry-level |
 | customer formal facts | 0 | no formal runtime fact is currently classified as customer-specific |
+| registered model families | 19 | family-level responsibilities mapped to company/business/income/expense/project hierarchy |
+| platform model families | 5 | native/platform/governance/compatibility families |
+| industry model families | 13 | reusable construction-industry business families |
+| customer model families | 1 | legacy replay/evidence only; not core runtime ownership |
 
 ## What The Models Carry
 
@@ -129,10 +134,9 @@ The caveat is that the boundary needs stronger governance. The current model set
 - implementation kind audit: native extension vs custom model vs custom model with mixin/inherit.
 - solution layer audit: platform vs industry vs customer.
 - formal fact registry: target problem, business logic, projection scripts, probes, and promotion policy.
+- family registry: company/business/income/expense/project ownership for the major model families.
 
-The next improvement should extend the registry beyond the 10 formal migration carriers to cover all major custom domain model families.
-The companion problem map already gives the target problem definition by model family and should be used as the next registry input.
-The responsibility matrix defines source-of-truth ownership and the highest-risk overlaps that need explicit family specs before broad refactoring.
+The family registry extends the audit beyond the 10 formal migration carriers. It classifies 19 major model families by source-of-truth responsibility, business object, solution layer, target problem, and boundary rule. The companion problem map explains what each family solves, and the responsibility matrix records the highest-risk overlaps that still need explicit ownership specs before broad refactoring.
 
 ## Boundary Rules
 
@@ -273,6 +277,41 @@ It fails when any of these are present:
 - raw standard gap without a declared exception
 - registry projection/probe path that no longer exists
 - registry entry without a valid solution layer, target problem, business logic, business domain, or promotion policy
+- family registry entry with invalid/missing responsibility, business object, solution layer, target problem, source of truth, or representative model references
+
+## Family Registry
+
+The family registry is the binding audit input for the broader 263-class model surface. It follows the hierarchy:
+
+```text
+company -> business -> income/expense -> project as the typical construction carrier
+```
+
+Current family-level classification:
+
+| dimension | count |
+| --- | ---: |
+| total families | 19 |
+| platform families | 5 |
+| industry families | 13 |
+| customer families | 1 |
+| native system-of-record families | 3 |
+| industry source-of-truth families | 10 |
+| projection/read families | 1 |
+| legacy source carrier families | 1 |
+| governance/config families | 3 |
+| compatibility/bridge families | 1 |
+
+The important design decision is that the only `customer` family is `legacy replay and historical evidence`. This is intentional: customer-specific old-data repair can be preserved and replayed, but it must not define the core company/business/income/expense/project hierarchy.
+
+The family registry answers "what does this model family solve?" at the system-design layer:
+
+- company/platform families solve governance, visibility, installability, identity, and compatibility.
+- income families solve tenders, income contracts, receipts, invoices, and tax evidence.
+- expense families solve procurement, payment, reimbursement, material/labor/equipment/subcontract cost, and settlement.
+- project families solve the construction execution carrier: budget, BOQ, progress, quality, safety, risk, diary, and WBS.
+- projection families solve management visibility and must remain rebuildable.
+- legacy families solve historical evidence and replay, not future runtime workflow ownership.
 
 ## Proposed Unified Model Standard
 
@@ -313,17 +352,15 @@ Examples likely needing explicit exceptions: `sc.construction.diary`, `sc.fund.a
 ## Recommended Next Iterations
 
 1. Stop treating specific customer data repair as the main design driver for this branch. Keep customer-specific facts in mapping/projection/pack layers unless promoted by product review.
-2. Expand the model-standard registry from the 10 formal legacy carriers to all major custom industry model families:
-   - project/cost/boq
-   - contract/payment/receipt/invoice/tax/treasury
-   - material/labor/equipment/subcontract
-   - quality/safety/progress/document/admin
-   - scene/capability/approval/governance
-   - legacy replay/staging/residual carriers
-3. Add per-family ownership rules: native extension, industry custom document, projection/read model, or legacy source fact.
-4. Add a small `sc.formal.legacy.fact.mixin` only after the registry shows repeated implementation duplication worth extracting.
-5. Refactor one low-risk formal model first, preferably `sc.tax.deduction.registration` or `sc.financing.loan`, to prove any mixin does not disturb approval-heavy models.
-6. Split `history_business_usable_init.sh` into a projection registry runner while preserving the current shell target for operational compatibility.
+2. Add explicit ownership specs for the risk families already called out by the responsibility matrix:
+   - contract ownership split
+   - treasury account/reconciliation/ledger split
+   - material product/catalog split
+   - payment request/execution split
+   - projection refresh ownership
+3. Add a small `sc.formal.legacy.fact.mixin` only after the registry shows repeated implementation duplication worth extracting.
+4. Refactor one low-risk formal model first, preferably `sc.tax.deduction.registration` or `sc.financing.loan`, to prove any mixin does not disturb approval-heavy models.
+5. Split `history_business_usable_init.sh` into a projection registry runner while preserving the current shell target for operational compatibility.
 
 ## Verification
 
@@ -348,4 +385,8 @@ Current summary:
 - `registry_path_gap_count=0`
 - `registry_shape_gap_count=0`
 - `solution_layer_counts={"industry": 9, "platform": 1}`
+- `family_registry_count=19`
+- `family_solution_layer_counts={"customer": 1, "industry": 13, "platform": 5}`
+- `family_registry_shape_gap_count=0`
+- `family_registry_reference_gap_count=0`
 - `implementation_counts={"custom_model": 150, "custom_model_with_mixin_or_inherit": 88, "native_model_extension": 25}`
