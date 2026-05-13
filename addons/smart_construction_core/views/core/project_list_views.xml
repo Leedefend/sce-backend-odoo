@@ -11,6 +11,8 @@
                 <field name="business_nature" string="经营性质" optional="show"/>
                 <field name="lifecycle_state" string="项目状态"/>
                 <field name="manager_id" string="项目经理"/>
+                <field name="legacy_source_created_by" string="原始录入人"/>
+                <field name="legacy_source_created_at" string="录入时间"/>
                 <field name="write_date" string="更新时间"/>
             </tree>
         </field>
