@@ -384,6 +384,7 @@ Batch C shadow execution note:
 - `scripts/verify/web_contract_v2_form_shadow_browser_smoke.js` verifies the real browser form path with HUD diagnostics and stores screenshot/JSON artifacts.
 - C.2 adds shadow field-code overlap diagnostics between `ContractV2Store.widgetsByFieldCode` and the current legacy `contract.fields` projection, still without changing visible rendering.
 - C.3 routes readonly form field values through the v2 store data source when the field code and data key are both present; writable fields continue to use the current form state until action/data submission is moved to v2 runtime. Browser diagnostics assert v2 field/value coverage independently from the current record's editability profile.
+- C.4 reads form `containerTree` and widget field status from the decoded v2 store first, with legacy resolver fallback retained only as migration protection.
 
 ### Batch D: Action/List/Kanban Renderer Convergence
 

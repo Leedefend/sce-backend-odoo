@@ -9,6 +9,8 @@
     :data-v2-shadow-field-codes="String(v2ShadowFieldCodeCount)"
     :data-v2-shadow-field-overlap="String(v2ShadowLegacyFieldOverlapCount)"
     :data-v2-shadow-field-missing="v2ShadowLegacyFieldMissingPreview"
+    :data-v2-shadow-layout-source="v2ShadowLayoutSourceKind"
+    :data-v2-shadow-status-fields="String(v2ShadowStatusFieldCount)"
     :data-v2-shadow-value-fields="String(v2ShadowValueFieldCount)"
     :data-v2-shadow-readonly-values="String(v2ShadowReadonlyValueCount)"
     :data-v2-shadow-value-source="v2ShadowValueSourceKind"
@@ -715,6 +717,12 @@ const v2ShadowLegacyFieldMissing = computed(() => {
 });
 const v2ShadowLegacyFieldOverlapCount = computed(() => v2ShadowFieldCodeCount.value - v2ShadowLegacyFieldMissing.value.length);
 const v2ShadowLegacyFieldMissingPreview = computed(() => v2ShadowLegacyFieldMissing.value.slice(0, 8).join(',') || '-');
+const v2ShadowLayoutSourceKind = computed(() => {
+  const containers = v2ContractStore.value?.snapshot.layoutContract.containerTree || [];
+  if (containers.length) return 'v2_store';
+  return nativeFormLayoutNodes.value.length ? 'legacy_layout' : 'none';
+});
+const v2ShadowStatusFieldCount = computed(() => Object.keys(v2FieldStatusFromStore()).length);
 const v2ShadowValueSource = computed(() => {
   const store = v2ContractStore.value;
   if (!store) return { kind: 'none', values: {} as Record<string, unknown> };
@@ -3371,10 +3379,32 @@ const contractVisibleFields = computed<string[]>(() => {
   const rows = Array.isArray(contract.value?.visible_fields) ? contract.value?.visible_fields : [];
   return rows.map((name) => String(name || '').trim()).filter(Boolean);
 });
+
+function v2FieldStatusFromStore() {
+  const store = v2ContractStore.value;
+  const out: Record<string, { visible?: boolean; readonly?: boolean; required?: boolean; disabled?: boolean; reasonCode?: string }> = {};
+  if (!store) return out;
+  store.widgetStatusById.forEach((status, widgetId) => {
+    const widget = store.widgetsById.get(widgetId);
+    const fieldCode = String(widget?.fieldCode || '').trim();
+    if (!fieldCode) return;
+    out[fieldCode] = {
+      ...(out[fieldCode] || {}),
+      ...(typeof status.visible === 'boolean' ? { visible: status.visible } : {}),
+      ...(typeof status.readonly === 'boolean' ? { readonly: status.readonly } : {}),
+      ...(typeof status.required === 'boolean' ? { required: status.required } : {}),
+      ...(typeof status.disabled === 'boolean' ? { disabled: status.disabled } : {}),
+      ...(status.reasonCode ? { reasonCode: status.reasonCode } : {}),
+    };
+  });
+  return out;
+}
+
 const fieldModifierMap = computed<Record<string, Record<string, unknown>>>(() => {
   const formView = (contract.value?.views?.form || {}) as { field_modifiers?: Record<string, Record<string, unknown>> };
   const out: Record<string, Record<string, unknown>> = { ...(formView.field_modifiers || {}) };
-  const v2FieldStatus = collectUnifiedPageContractV2FieldStatus(contract.value);
+  const fromStore = v2FieldStatusFromStore();
+  const v2FieldStatus = Object.keys(fromStore).length ? fromStore : collectUnifiedPageContractV2FieldStatus(contract.value);
   Object.entries(v2FieldStatus).forEach(([name, status]) => {
     out[name] = {
       ...(out[name] || {}),
@@ -3386,7 +3416,10 @@ const fieldModifierMap = computed<Record<string, Record<string, unknown>>>(() =>
   return out;
 });
 const runtimeFieldStates = computed(() => {
-  const v2FieldNames = collectUnifiedPageContractV2FieldWidgets(contract.value).map((widget) => widget.fieldCode).filter(Boolean);
+  const storeFieldNames = Array.from(v2ContractStore.value?.widgetsByFieldCode.keys() || []);
+  const v2FieldNames = storeFieldNames.length
+    ? storeFieldNames
+    : collectUnifiedPageContractV2FieldWidgets(contract.value).map((widget) => widget.fieldCode).filter(Boolean);
   const names = Array.from(new Set([...Object.keys(contract.value?.fields || {}), ...v2FieldNames]));
   return buildRuntimeFieldStates({
     fieldNames: names,
@@ -3437,8 +3470,11 @@ const useNativeFormTree = computed(() => {
 });
 
 const nativeFormLayoutNodes = computed<NativeFormLayoutNode[]>(() => {
-  const v2 = resolveUnifiedPageContractV2(contract.value);
-  const containers = Array.isArray(v2?.layoutContract?.containerTree) ? v2.layoutContract.containerTree : [];
+  const storeContainers = v2ContractStore.value?.snapshot.layoutContract.containerTree || [];
+  const v2 = storeContainers.length ? null : resolveUnifiedPageContractV2(contract.value);
+  const containers = storeContainers.length
+    ? storeContainers
+    : (Array.isArray(v2?.layoutContract?.containerTree) ? v2.layoutContract.containerTree : []);
   if (containers.length > 0) {
     return containers as unknown as NativeFormLayoutNode[];
   }
@@ -4781,6 +4817,8 @@ const hudEntries = computed(() => [
   { label: 'v2_shadow_field_codes', value: v2ShadowFieldCodeCount.value },
   { label: 'v2_shadow_field_overlap', value: v2ShadowLegacyFieldOverlapCount.value },
   { label: 'v2_shadow_field_missing', value: v2ShadowLegacyFieldMissingPreview.value },
+  { label: 'v2_shadow_layout_source', value: v2ShadowLayoutSourceKind.value },
+  { label: 'v2_shadow_status_fields', value: v2ShadowStatusFieldCount.value },
   { label: 'v2_shadow_value_fields', value: v2ShadowValueFieldCount.value },
   { label: 'v2_shadow_readonly_values', value: v2ShadowReadonlyValueCount.value },
   { label: 'v2_shadow_value_source', value: v2ShadowValueSourceKind.value },
