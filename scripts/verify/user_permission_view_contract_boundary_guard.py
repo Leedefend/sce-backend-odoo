@@ -157,19 +157,20 @@ def _check_acl():
 
 def _check_action_domain():
     from odoo.tools.safe_eval import safe_eval
+    from odoo.addons.smart_core.security.platform_admin import platform_admin_groups
 
     env = _env()
     action = env.ref("smart_construction_core.action_sc_runtime_user_management")
-    platform_admin_group = env.ref("smart_core.group_smart_core_admin")
-    legacy_platform_admin_group = env.ref("smart_construction_core.group_sc_cap_config_admin")
     system_group = env.ref("base.group_system")
+    platform_group_records = env["res.groups"]
+    for group in platform_admin_groups(env, include_legacy=True):
+        platform_group_records |= group
     domain = safe_eval(action.domain or "[]") if isinstance(action.domain, str) else (action.domain or [])
     users = env["res.users"].sudo().with_context(active_test=False).search(domain)
     errors = []
     if users.filtered(
         lambda user: (
-            platform_admin_group in user.groups_id
-            or legacy_platform_admin_group in user.groups_id
+            bool(user.groups_id & platform_group_records)
             or system_group in user.groups_id
         )
     ):

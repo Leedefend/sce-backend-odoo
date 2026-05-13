@@ -7,6 +7,12 @@ import json
 import os
 from pathlib import Path
 
+from odoo.addons.smart_core.security.platform_admin import (
+    LEGACY_PLATFORM_ADMIN_GROUP,
+    PLATFORM_ADMIN_GROUP,
+    SYSTEM_ADMIN_GROUP,
+)
+
 
 def artifact_root() -> Path:
     candidates = []
@@ -46,9 +52,9 @@ def row_for(login: str) -> dict[str, object]:
         "active": bool(user.active),
         "company": user.company_id.name,
         "xmlids": xmlids_for(user),
-        "is_odoo_system": bool(user.has_group("base.group_system")),
-        "has_platform_config": bool(user.has_group("smart_core.group_smart_core_admin")),
-        "has_legacy_platform_config": bool(user.has_group("smart_construction_core.group_sc_cap_config_admin")),
+        "is_odoo_system": bool(user.has_group(SYSTEM_ADMIN_GROUP)),
+        "has_platform_config": bool(user.has_group(PLATFORM_ADMIN_GROUP)),
+        "has_legacy_platform_config": bool(user.has_group(LEGACY_PLATFORM_ADMIN_GROUP)),
         "has_business_config": bool(user.has_group("smart_construction_core.group_sc_cap_business_config_admin")),
         "has_internal": bool(user.has_group("smart_construction_core.group_sc_internal_user")),
     }

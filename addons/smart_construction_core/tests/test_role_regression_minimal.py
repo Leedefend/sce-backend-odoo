@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo.tests import TransactionCase
 from odoo.tests.common import tagged
+from odoo.addons.smart_core.security.platform_admin import LEGACY_PLATFORM_ADMIN_GROUP
 
 
 @tagged("post_install", "-at_install", "sc_gate", "sc_perm", "role_regression_minimal")
@@ -46,7 +47,7 @@ class TestRoleRegressionMinimal(TransactionCase):
         )
         cls.user_config_admin = _create(
             "role_config_admin",
-            ["smart_construction_core.group_sc_cap_config_admin"],
+            [LEGACY_PLATFORM_ADMIN_GROUP],
         )
         cls.user_contract_user = _create(
             "role_contract_user",

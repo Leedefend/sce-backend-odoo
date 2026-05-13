@@ -5,6 +5,7 @@
 # - groups: 赋予用户的组
 # - menus_allow / menus_deny: 期望可见/不可见的菜单 xmlid
 # - actions_allow / actions_deny: 期望可访问/不可访问的 action xmlid
+from odoo.addons.smart_core.security.platform_admin import LEGACY_PLATFORM_ADMIN_GROUP
 
 PERM_MATRIX = {
     "super_admin": {
@@ -88,7 +89,7 @@ PERM_MATRIX = {
         "actions_deny": ["smart_construction_core.action_payment_request"],
     },
     "config_admin": {
-        "groups": ["smart_construction_core.group_sc_cap_config_admin"],
+        "groups": [LEGACY_PLATFORM_ADMIN_GROUP],
         "menus_allow": ["smart_construction_core.menu_sc_root"],
         "menus_deny": [],
         "actions_allow": ["smart_construction_core.action_sc_workflow_def"],

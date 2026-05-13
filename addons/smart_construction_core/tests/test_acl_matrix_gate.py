@@ -4,6 +4,7 @@ import logging
 import os
 
 from odoo.tests.common import TransactionCase, tagged
+from odoo.addons.smart_core.security.platform_admin import LEGACY_PLATFORM_ADMIN_GROUP
 
 _logger = logging.getLogger(__name__)
 
@@ -21,7 +22,7 @@ ACL_ROLES = {
     "finance_manager": ["smart_construction_core.group_sc_cap_finance_manager"],
     "material_manager": ["smart_construction_core.group_sc_cap_material_manager"],
     "data_read": ["smart_construction_core.group_sc_cap_data_read"],
-    "config_admin": ["smart_construction_core.group_sc_cap_config_admin"],
+    "config_admin": [LEGACY_PLATFORM_ADMIN_GROUP],
     "settlement_read": ["smart_construction_core.group_sc_cap_settlement_read"],
     "settlement_user": ["smart_construction_core.group_sc_cap_settlement_user"],
     "settlement_manager": ["smart_construction_core.group_sc_cap_settlement_manager"],
