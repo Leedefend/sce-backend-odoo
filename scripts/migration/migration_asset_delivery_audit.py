@@ -31,6 +31,20 @@ ONECLICK_SCRIPT_RE = re.compile(r'run_odoo_script\s+"\$ROOT_DIR/scripts/migratio
 EXTRA_REPLAY_SCRIPT_NAMES = [
     "fresh_db_replay_payload_precheck.py",
 ]
+MANDATORY_BUSINESS_SCOPE_ARTIFACTS = {
+    # Tender history is now part of the user-visible delivery scope.  The XML
+    # asset catalog only covers declared asset packages, so keep this replay
+    # payload as an explicit delivery-scope requirement for packaged replay.
+    "tender_history": {
+        "source_tables": ["dbo.P_ZTB_GCBMGL"],
+        "source_model": "sc.legacy.tender.registration.fact",
+        "projection_targets": ["tender.bid", "tender.doc.purchase", "tender.guarantee", "tender.opening"],
+        "artifacts": [
+            "artifacts/migration/fresh_db_legacy_tender_registration_replay_adapter_result_v1.json",
+            "artifacts/migration/fresh_db_legacy_tender_registration_replay_payload_v1.csv",
+        ],
+    },
+}
 BASELINE_EXCLUDED_REQUIRED_ARTIFACTS = {
     # Default-off privacy lanes. These are intentionally not shipped in the
     # baseline package because they may contain sensitive personal data.
@@ -219,7 +233,35 @@ def required_replay_artifacts() -> list[str]:
             if path in BASELINE_EXCLUDED_REQUIRED_ARTIFACTS:
                 continue
             required.add(path)
+    for scope in MANDATORY_BUSINESS_SCOPE_ARTIFACTS.values():
+        required.update(scope["artifacts"])
     return sorted(required)
+
+
+def business_scope_audit() -> dict[str, Any]:
+    scopes: list[dict[str, Any]] = []
+    missing: list[dict[str, str]] = []
+    for scope_id, scope in MANDATORY_BUSINESS_SCOPE_ARTIFACTS.items():
+        artifact_rows = []
+        for artifact in scope["artifacts"]:
+            exists = (REPO_ROOT / artifact).is_file()
+            artifact_rows.append({"path": artifact, "exists": exists})
+            if not exists:
+                missing.append({"scope": scope_id, "path": artifact})
+        scopes.append(
+            {
+                "scope": scope_id,
+                "source_tables": scope["source_tables"],
+                "source_model": scope["source_model"],
+                "projection_targets": scope["projection_targets"],
+                "artifacts": artifact_rows,
+            }
+        )
+    return {
+        "mandatory_scope_count": len(scopes),
+        "scopes": scopes,
+        "missing_scope_artifacts": missing,
+    }
 
 
 def replay_audit() -> dict[str, Any]:
@@ -271,6 +313,7 @@ def decide(payload: dict[str, Any]) -> tuple[str, list[str], list[str]]:
     catalog = payload["catalog"]
     packaging = payload["packaging"]
     replay = payload["replay"]
+    business_scope = payload["business_scope"]
 
     if catalog["missing_files"]:
         blockers.append("catalog references missing files")
@@ -288,6 +331,8 @@ def decide(payload: dict[str, Any]) -> tuple[str, list[str], list[str]]:
         blockers.append("required Makefile replay targets are missing")
     if replay["missing_required_replay_artifacts"]:
         blockers.append("packaged replay frozen artifacts are missing")
+    if business_scope["missing_scope_artifacts"]:
+        blockers.append("mandatory business-scope replay artifacts are missing")
 
     if packaging["duplicate_materialized_parts"]:
         actions.append("remove duplicated materialized XML or parts from the final release package after choosing one canonical form")
@@ -307,6 +352,7 @@ def write_outputs(payload: dict[str, Any]) -> None:
     catalog = payload["catalog"]
     packaging = payload["packaging"]
     replay = payload["replay"]
+    business_scope = payload["business_scope"]
     lines = [
         "# Migration Asset Delivery Audit v1",
         "",
@@ -327,6 +373,8 @@ def write_outputs(payload: dict[str, Any]) -> None:
         f"- replay steps: `{replay['step_count']}`",
         f"- required replay artifacts: `{replay['required_replay_artifact_count']}`",
         f"- missing required replay artifacts: `{len(replay['missing_required_replay_artifacts'])}`",
+        f"- mandatory business scopes: `{business_scope['mandatory_scope_count']}`",
+        f"- missing business-scope artifacts: `{len(business_scope['missing_scope_artifacts'])}`",
         f"- duplicate materialized parts: `{len(packaging['duplicate_materialized_parts'])}`",
         "",
         "## Decision",
@@ -342,6 +390,9 @@ def write_outputs(payload: dict[str, Any]) -> None:
         lines.extend(f"- `{item}`" for item in replay["missing_required_replay_artifacts"][:80])
         if len(replay["missing_required_replay_artifacts"]) > 80:
             lines.append(f"- ... +{len(replay['missing_required_replay_artifacts']) - 80} more")
+    if business_scope["missing_scope_artifacts"]:
+        lines.extend(["", "### Missing Business-Scope Artifacts", ""])
+        lines.extend(f"- `{item['scope']}`: `{item['path']}`" for item in business_scope["missing_scope_artifacts"])
     if payload["packaging_actions"]:
         lines.extend(["", "### Packaging Actions", ""])
         lines.extend(f"- {item}" for item in payload["packaging_actions"])
@@ -394,6 +445,7 @@ def main() -> int:
         "catalog": catalog_audit(asset_root),
         "packaging": packaging_audit(asset_root),
         "replay": replay_audit(),
+        "business_scope": business_scope_audit(),
     }
     status, blockers, actions = decide(payload)
     payload["status"] = status
@@ -412,6 +464,7 @@ def main() -> int:
                 "replay_steps": payload["replay"]["step_count"],
                 "required_replay_artifacts": payload["replay"]["required_replay_artifact_count"],
                 "missing_required_replay_artifacts": len(payload["replay"]["missing_required_replay_artifacts"]),
+                "missing_business_scope_artifacts": len(payload["business_scope"]["missing_scope_artifacts"]),
                 "blockers": len(blockers),
                 "db_writes": 0,
             },
