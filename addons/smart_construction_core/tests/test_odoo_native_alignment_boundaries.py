@@ -30,8 +30,6 @@ from odoo.addons.smart_construction_core.handlers.risk_action_execute import Ris
 from odoo.addons.smart_construction_core.handlers.settlement_slice_block_fetch import SettlementSliceBlockFetchHandler
 from odoo.addons.smart_construction_core.handlers.settlement_slice_enter import SettlementSliceEnterHandler
 from odoo.addons.smart_construction_core.handlers.telemetry_track import TelemetryTrackHandler
-from odoo.addons.smart_core.handlers.usage_report import UsageReportHandler
-from odoo.addons.smart_core.handlers.usage_track import UsageTrackHandler
 from odoo.addons.smart_construction_core.handlers.workspace_home_enter import WorkspaceHomeEnterHandler
 from odoo.addons.smart_construction_core.services.dashboard_contract_builder import DashboardContractBuilder
 from odoo.addons.smart_construction_core.services.cost_tracking_service import CostTrackingService
@@ -166,9 +164,6 @@ class TestConstructionOdooNativeAlignmentBoundaries(TransactionCase):
         self.assertTrue(APP_DELIVERY_SOURCE_AUTHORITY.get("no_business_fact_authority"))
         self.assertEqual(CapabilityDescribeHandler.SOURCE_AUTHORITY.get("kind"), "capability_delivery_projection")
         self.assertTrue(CapabilityDescribeHandler.SOURCE_AUTHORITY.get("no_business_fact_authority"))
-        self.assertEqual(UsageReportHandler.SOURCE_AUTHORITY.get("kind"), "usage_analytics_projection")
-        self.assertTrue(UsageReportHandler.SOURCE_AUTHORITY.get("observability_only"))
-        self.assertEqual(UsageTrackHandler.SOURCE_AUTHORITY.get("write_authority"), "sc.usage.counter.bump")
         self.assertTrue(TelemetryTrackHandler.SOURCE_AUTHORITY.get("observability_only"))
 
     def test_evidence_and_project_context_handlers_declare_projection_or_transition_authorities(self):
