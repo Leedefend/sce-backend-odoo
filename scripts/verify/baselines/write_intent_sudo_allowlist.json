@@ -10,7 +10,7 @@
       "reason": "follow-up activity creation queries framework models and activities under controlled explicit_check path"
     },
     {
-      "source": "addons/smart_construction_core/handlers/usage_track.py",
+      "source": "addons/smart_core/handlers/usage_track.py",
       "intents": [
         "usage.track"
       ],

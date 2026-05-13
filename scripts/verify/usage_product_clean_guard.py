@@ -8,7 +8,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 USAGE_API = ROOT / "frontend/apps/web/src/api/usage.ts"
 TELEMETRY_API = ROOT / "frontend/apps/web/src/api/telemetry.ts"
-USAGE_HANDLER = ROOT / "addons/smart_construction_core/handlers/usage_track.py"
+USAGE_HANDLER = ROOT / "addons/smart_core/handlers/usage_track.py"
 TELEMETRY_HANDLER = ROOT / "addons/smart_construction_core/handlers/telemetry_track.py"
 REPORT_JSON = ROOT / "artifacts/backend/usage_product_clean_report.json"
 REPORT_MD = ROOT / "docs/ops/audit/usage_product_clean_report.md"

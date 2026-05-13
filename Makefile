@@ -2213,6 +2213,10 @@ verify.capability.lint: guard.prod.forbid check-compose-project check-compose-en
 verify.usage.product.clean: guard.prod.forbid
 	@python3 scripts/verify/usage_product_clean_guard.py
 
+.PHONY: verify.platform_usage_handler_ownership.guard
+verify.platform_usage_handler_ownership.guard: guard.prod.forbid
+	@python3 scripts/verify/platform_usage_handler_ownership_guard.py
+
 verify.frontend_api: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) python3 scripts/verify/frontend_api_smoke.py
 

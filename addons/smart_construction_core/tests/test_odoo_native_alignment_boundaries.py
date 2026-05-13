@@ -30,8 +30,8 @@ from odoo.addons.smart_construction_core.handlers.risk_action_execute import Ris
 from odoo.addons.smart_construction_core.handlers.settlement_slice_block_fetch import SettlementSliceBlockFetchHandler
 from odoo.addons.smart_construction_core.handlers.settlement_slice_enter import SettlementSliceEnterHandler
 from odoo.addons.smart_construction_core.handlers.telemetry_track import TelemetryTrackHandler
-from odoo.addons.smart_construction_core.handlers.usage_report import UsageReportHandler
-from odoo.addons.smart_construction_core.handlers.usage_track import UsageTrackHandler
+from odoo.addons.smart_core.handlers.usage_report import UsageReportHandler
+from odoo.addons.smart_core.handlers.usage_track import UsageTrackHandler
 from odoo.addons.smart_construction_core.handlers.workspace_home_enter import WorkspaceHomeEnterHandler
 from odoo.addons.smart_construction_core.services.dashboard_contract_builder import DashboardContractBuilder
 from odoo.addons.smart_construction_core.services.cost_tracking_service import CostTrackingService
