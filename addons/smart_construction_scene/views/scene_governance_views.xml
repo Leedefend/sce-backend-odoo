@@ -44,6 +44,7 @@
     <field name="name">Scene Governance Logs</field>
     <field name="res_model">sc.scene.governance.log</field>
     <field name="view_mode">tree,form</field>
+    <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
   </record>
 
   <record id="view_sc_scene_company_channel_tree" model="ir.ui.view">
@@ -61,6 +62,7 @@
     <field name="name">Scene Company Channels</field>
     <field name="res_model">sc.scene.company.channel</field>
     <field name="view_mode">tree</field>
+    <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
   </record>
 
   <record id="view_sc_scene_governance_wizard_form" model="ir.ui.view">
@@ -87,29 +89,44 @@
     <field name="res_model">sc.scene.governance.wizard</field>
     <field name="view_mode">form</field>
     <field name="target">new</field>
+    <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
   </record>
 
   <menuitem id="menu_sc_scene_governance_root"
             name="Scene Governance"
             parent="smart_construction_core.menu_sc_scene_root"
             sequence="40"
-            groups="smart_construction_core.group_sc_cap_config_admin"/>
+            groups="smart_core.group_smart_core_admin"/>
   <menuitem id="menu_sc_scene_governance_action"
             name="Governance Actions"
             parent="menu_sc_scene_governance_root"
             action="action_sc_scene_governance_wizard"
             sequence="10"
-            groups="smart_construction_core.group_sc_cap_config_admin"/>
+            groups="smart_core.group_smart_core_admin"/>
   <menuitem id="menu_sc_scene_governance_company"
             name="Company Channels"
             parent="menu_sc_scene_governance_root"
             action="action_sc_scene_company_channel"
             sequence="20"
-            groups="smart_construction_core.group_sc_cap_config_admin"/>
+            groups="smart_core.group_smart_core_admin"/>
   <menuitem id="menu_sc_scene_governance_logs"
             name="Governance Logs"
             parent="menu_sc_scene_governance_root"
             action="action_sc_scene_governance_log"
             sequence="30"
-            groups="smart_construction_core.group_sc_cap_config_admin"/>
+            groups="smart_core.group_smart_core_admin"/>
+
+  <!-- Replace legacy menu group links left by older installs. -->
+  <record id="menu_sc_scene_governance_root" model="ir.ui.menu">
+    <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
+  </record>
+  <record id="menu_sc_scene_governance_action" model="ir.ui.menu">
+    <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
+  </record>
+  <record id="menu_sc_scene_governance_company" model="ir.ui.menu">
+    <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
+  </record>
+  <record id="menu_sc_scene_governance_logs" model="ir.ui.menu">
+    <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
+  </record>
 </odoo>

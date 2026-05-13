@@ -77,6 +77,7 @@ LEGACY_PLATFORM_ADMIN_HELPER = "addons/smart_construction_core/services/platform
 PLATFORM_OPS_CONTROLLER = "addons/smart_core/controllers/platform_ops_controller.py"
 CONSTRUCTION_OPS_CONTROLLER = "addons/smart_construction_core/controllers/ops_controller.py"
 SCENE_ORCHESTRATION_VIEW = "addons/smart_construction_core/views/support/scene_orchestration_views.xml"
+SCENE_GOVERNANCE_VIEW = "addons/smart_construction_scene/views/scene_governance_views.xml"
 CANONICAL_PLATFORM_ADMIN_GROUP = "smart_core.group_smart_core_admin"
 LEGACY_PLATFORM_ADMIN_GROUP = "smart_construction_core.group_sc_cap_config_admin"
 SCENE_ORCHESTRATION_ADMIN_ACLS = {
@@ -90,6 +91,12 @@ SCENE_ORCHESTRATION_ADMIN_ACLS = {
     "access_sc_capability_audit_admin",
     "access_sc_pack_registry_admin",
     "access_sc_pack_installation_admin",
+}
+SCENE_GOVERNANCE_ADMIN_ACLS = {
+    "access_sc_scene_governance_log_admin",
+    "access_sc_scene_company_channel_admin",
+    "access_sc_scene_governance_wizard_admin",
+    "access_sc_scene_package_installation_admin",
 }
 FORBIDDEN_LEGACY_ADMIN_CHECKS = {
     "addons/smart_construction_core/controllers/scene_controller.py",
@@ -254,6 +261,29 @@ scene_acl_group_gaps = [
 assert_true(
     not scene_acl_group_gaps,
     f"scene/capability admin ACLs must use {CANONICAL_PLATFORM_ADMIN_GROUP}: {scene_acl_group_gaps}",
+)
+scene_governance_view_text = (ROOT / SCENE_GOVERNANCE_VIEW).read_text(encoding="utf-8")
+assert_true(
+    LEGACY_PLATFORM_ADMIN_GROUP not in scene_governance_view_text,
+    f"{SCENE_GOVERNANCE_VIEW}: scene governance UI must use {CANONICAL_PLATFORM_ADMIN_GROUP}",
+)
+assert_true(
+    CANONICAL_PLATFORM_ADMIN_GROUP in scene_governance_view_text,
+    f"{SCENE_GOVERNANCE_VIEW}: missing canonical platform admin group",
+)
+scene_governance_acl_rows = _csv_rows(ROOT / "addons/smart_construction_scene/security/ir.model.access.csv")
+scene_governance_acl_group_gaps = [
+    {
+        "id": row.get("id"),
+        "group_id:id": row.get("group_id:id"),
+    }
+    for row in scene_governance_acl_rows
+    if row.get("id") in SCENE_GOVERNANCE_ADMIN_ACLS
+    and row.get("group_id:id") != CANONICAL_PLATFORM_ADMIN_GROUP
+]
+assert_true(
+    not scene_governance_acl_group_gaps,
+    f"scene governance admin ACLs must use {CANONICAL_PLATFORM_ADMIN_GROUP}: {scene_governance_acl_group_gaps}",
 )
 for rel_path in (
     "addons/smart_construction_core/controllers/pack_controller.py",
