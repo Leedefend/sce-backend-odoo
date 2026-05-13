@@ -102,6 +102,7 @@ def extract_models() -> list[dict[str, Any]]:
                     )
             if not model_name and not inherit:
                 continue
+            implementation_kind = classify_implementation_kind(model_name, inherit)
             field_names = {field["name"] for field in fields}
             field_types = {field["name"]: field["type"] for field in fields}
             path_text = str(path.relative_to(ROOT))
@@ -114,6 +115,7 @@ def extract_models() -> list[dict[str, Any]]:
                     "model": model_name,
                     "inherit": inherit,
                     "description": description,
+                    "implementation_kind": implementation_kind,
                     "field_count": len(fields),
                     "fields": fields,
                     "buckets": buckets,
@@ -126,6 +128,14 @@ def extract_models() -> list[dict[str, Any]]:
                 }
             )
     return rows
+
+
+def classify_implementation_kind(model_name: str | None, inherit: Any) -> str:
+    if model_name and inherit:
+        return "custom_model_with_mixin_or_inherit"
+    if model_name:
+        return "custom_model"
+    return "native_model_extension"
 
 
 def classify_model(
@@ -176,6 +186,7 @@ def registry_maps(registry: dict[str, Any]) -> tuple[dict[str, dict[str, Any]], 
 
 def summarize(rows: list[dict[str, Any]], registry: dict[str, Any]) -> dict[str, Any]:
     bucket_counts = Counter(bucket for row in rows for bucket in row["buckets"])
+    implementation_counts = Counter(row["implementation_kind"] for row in rows)
     formal_rows = [row for row in rows if "formal_fact" in row["buckets"]]
     legacy_rows = [row for row in rows if "legacy_fact" in row["buckets"]]
     projection_rows = [row for row in rows if "projection" in row["buckets"]]
@@ -240,6 +251,10 @@ def summarize(rows: list[dict[str, Any]], registry: dict[str, Any]) -> dict[str,
     return {
         "model_count": len(rows),
         "bucket_counts": dict(sorted(bucket_counts.items())),
+        "implementation_counts": dict(sorted(implementation_counts.items())),
+        "native_extension_count": implementation_counts.get("native_model_extension", 0),
+        "custom_model_count": implementation_counts.get("custom_model", 0),
+        "custom_model_with_mixin_or_inherit_count": implementation_counts.get("custom_model_with_mixin_or_inherit", 0),
         "legacy_fact_model_count": len(legacy_rows),
         "formal_fact_model_count": len(formal_rows),
         "projection_model_count": len(projection_rows),
@@ -268,6 +283,9 @@ def write_markdown(report: dict[str, Any], path: Path) -> None:
         "## Summary",
         "",
         f"- model_count: {summary['model_count']}",
+        f"- native_extension_count: {summary['native_extension_count']}",
+        f"- custom_model_count: {summary['custom_model_count']}",
+        f"- custom_model_with_mixin_or_inherit_count: {summary['custom_model_with_mixin_or_inherit_count']}",
         f"- legacy_fact_model_count: {summary['legacy_fact_model_count']}",
         f"- formal_fact_model_count: {summary['formal_fact_model_count']}",
         f"- projection_model_count: {summary['projection_model_count']}",
@@ -283,6 +301,14 @@ def write_markdown(report: dict[str, Any], path: Path) -> None:
     ]
     for key, value in summary["bucket_counts"].items():
         lines.append(f"- {key}: {value}")
+    lines.extend(["", "## Implementation Counts", ""])
+    for key, value in summary["implementation_counts"].items():
+        lines.append(f"- {key}: {value}")
+    lines.extend(["", "## Native Model Extensions", ""])
+    for row in rows:
+        if row["implementation_kind"] != "native_model_extension":
+            continue
+        lines.append(f"- `{row['inherit']}` ({row['path']})")
     lines.extend(["", "## Formal Fact Standard Gaps", ""])
     if summary["standard_gaps"]:
         lines.append("| model | missing fields | declared exceptions | legacy unique | legacy write guard | path |")

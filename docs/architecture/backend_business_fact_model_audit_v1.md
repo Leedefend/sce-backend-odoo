@@ -27,6 +27,9 @@ The current static inventory reports:
 | category | count | meaning |
 | --- | ---: | --- |
 | total model classes | 263 | all Python model classes under smart construction core |
+| native model extensions | 25 | models that extend existing Odoo/OCA models through `_inherit` without a new `_name` |
+| custom models | 150 | new models defined by this module without mixin inheritance |
+| custom models with mixin/inherit | 88 | new models that reuse mail, approval, delete guard, business fact, or compatibility mixins |
 | legacy fact models | 50 | `sc.legacy.*` source-fact and mapping carriers |
 | formal fact models | 10 | runtime models with `source_origin`, `legacy_source_model`, and `legacy_record_id` |
 | projection/read models | 18 | summary, ledger, cockpit, and workbench models |
@@ -39,6 +42,19 @@ The current static inventory reports:
 | customer formal facts | 0 | no formal runtime fact is currently classified as customer-specific |
 
 ## What The Models Carry
+
+## Corrected Audit Boundary
+
+The earlier `formal_fact_model_count=10` is not the total backend model count. It is only the narrow count of formal migration/runtime carriers that have `source_origin`, `legacy_source_model`, and `legacy_record_id`.
+
+The broader backend model design surface is:
+
+- 25 native model extensions: reuse Odoo/OCA as the system-of-record where it already has strong semantics.
+- 238 custom model classes: define construction-industry documents, projections, governance, staging, and migration carriers where native Odoo does not provide the right business object.
+- 50 legacy fact models: source-fidelity carriers for historical data and migration evidence.
+- 18 projection/read models: rebuildable reporting and cockpit surfaces.
+
+So the audit answer is not "we only have 10 models." The correct answer is: we have 263 backend model classes, and 10 of them currently qualify as formal legacy-to-runtime fact carriers under the strict provenance standard.
 
 ## What Problem Are We Solving?
 
@@ -62,6 +78,78 @@ The practical boundary is:
 This means future backend model changes should first answer: is the requested field or model a platform primitive, a construction-industry reusable concept, or a customer-specific repair?
 
 If it is customer-specific, the default implementation should be a projection rule, mapping artifact, extension pack, or registry exception, not a new core model field.
+
+## Native Reuse Vs Custom Definition
+
+The system should use native Odoo/OCA when the target concept is already a mature platform primitive:
+
+- partner identity and business role: `res.partner`, `res.partner.bank`
+- project master and tasks: `project.project`, `project.task`
+- accounting integration: `account.move`, `account.move.line`
+- purchasing and inventory hooks: `purchase.order`, `purchase.order.line`, `stock.move`, `stock.picking`
+- products and categories: `product.template`, `product.category`
+- users, groups, settings, company: `res.users`, `res.groups`, `res.config.settings`, `res.company`
+- approval framework hooks: `tier.definition`, `tier.validation`
+
+The system should extend native models, not replace them, when:
+
+- the native model owns identity, access, chatter, accounting, stock, or project lifecycle.
+- the construction-specific semantics are additional fields, entry filters, UI actions, or projection anchors.
+- integration with Odoo modules matters more than owning an independent workflow.
+
+The system should define custom models when:
+
+- the construction domain has a first-class document not represented by native Odoo, such as payment execution, receipt income, construction diary, treasury reconciliation, material acceptance, subcontract plan/register/settlement, safety/quality issue flows.
+- the model is a projection/read surface, not a native transaction.
+- the model is a source-fidelity legacy fact carrier and must preserve old-system identifiers, states, and raw labels.
+- the model is governance infrastructure such as capability, scene, pack, approval scope, or audit logs.
+
+The system should not define core custom models for:
+
+- one customer's label preference.
+- one customer's legacy mapping exception.
+- temporary acceptance repair.
+- fields that can be calculated, projected, or placed in an extension pack.
+
+## Is The Current Shape Reasonable?
+
+Directionally yes, but with a clear caveat.
+
+It is reasonable that the core module has many custom construction models because Odoo's native modules do not directly model construction-enterprise facts such as subcontract lifecycle, material site acceptance, project treasury reconciliation, construction diary, tender chain, and historical replay evidence.
+
+It is also reasonable that we extend native project, partner, product, account, stock, purchase, user/group, and approval models instead of replacing them.
+
+The caveat is that the boundary needs stronger governance. The current model set grew through product work, migration work, visible-surface repair, and acceptance patches. Without classification, customer-specific migration needs can look like product models. This branch now starts closing that gap by adding:
+
+- implementation kind audit: native extension vs custom model vs custom model with mixin/inherit.
+- solution layer audit: platform vs industry vs customer.
+- formal fact registry: target problem, business logic, projection scripts, probes, and promotion policy.
+
+The next improvement should extend the registry beyond the 10 formal migration carriers to cover all major custom domain model families.
+
+## Boundary Rules
+
+Use this decision order before adding or changing a backend model:
+
+1. Native first: if Odoo/OCA has the system-of-record model, extend it.
+2. Industry custom second: if construction semantics require an independent document, define a custom industry model with explicit lifecycle and anchors.
+3. Projection third: if the data is derived, use a projection/read model and make it rebuildable.
+4. Legacy carrier only for replay: if the purpose is preserving old-system facts, use `sc.legacy.*` and do not expose it as the primary user workflow.
+5. Customer-specific last: if the rule exists only for one acceptance dataset or one customer's vocabulary, keep it in mapping/projection/pack/exception until product review promotes it.
+
+Promotion from customer to industry requires:
+
+- at least one reusable target problem beyond the original customer.
+- explicit business domain vocabulary.
+- source/projection/probe coverage.
+- no dependency on one legacy table's accidental labels unless documented as industry evidence.
+
+Promotion from industry to platform requires:
+
+- cross-industry semantics.
+- no construction-only anchors in the required field set.
+- compatibility with native Odoo ownership boundaries.
+- a migration path for existing industry records.
 
 ### Legacy Fact Carriers
 
@@ -217,11 +305,18 @@ Examples likely needing explicit exceptions: `sc.construction.diary`, `sc.fund.a
 
 ## Recommended Next Iterations
 
-1. Add a small `sc.formal.legacy.fact.mixin` for source provenance, unique-source helper, legacy immutable write policy, and common audit metadata.
-2. Add a model-standard registry file that declares each formal runtime fact model, its archetype, required fields, exceptions, projection script, and probe.
-3. Refactor only one low-risk formal model first, preferably `sc.tax.deduction.registration` or `sc.financing.loan`, to prove the mixin does not disturb approval-heavy models.
-4. Split `history_business_usable_init.sh` into a projection registry runner while preserving the current shell target for operational compatibility.
-5. Move `verify.backend_business_fact.model_audit` from reporting-only to CI enforcement by failing on `undeclared_standard_gap_count > 0`, unregistered formal models, or registry path gaps.
+1. Stop treating specific customer data repair as the main design driver for this branch. Keep customer-specific facts in mapping/projection/pack layers unless promoted by product review.
+2. Expand the model-standard registry from the 10 formal legacy carriers to all major custom industry model families:
+   - project/cost/boq
+   - contract/payment/receipt/invoice/tax/treasury
+   - material/labor/equipment/subcontract
+   - quality/safety/progress/document/admin
+   - scene/capability/approval/governance
+   - legacy replay/staging/residual carriers
+3. Add per-family ownership rules: native extension, industry custom document, projection/read model, or legacy source fact.
+4. Add a small `sc.formal.legacy.fact.mixin` only after the registry shows repeated implementation duplication worth extracting.
+5. Refactor one low-risk formal model first, preferably `sc.tax.deduction.registration` or `sc.financing.loan`, to prove any mixin does not disturb approval-heavy models.
+6. Split `history_business_usable_init.sh` into a projection registry runner while preserving the current shell target for operational compatibility.
 
 ## Verification
 
@@ -246,3 +341,4 @@ Current summary:
 - `registry_path_gap_count=0`
 - `registry_shape_gap_count=0`
 - `solution_layer_counts={"industry": 9, "platform": 1}`
+- `implementation_counts={"custom_model": 150, "custom_model_with_mixin_or_inherit": 88, "native_model_extension": 25}`
