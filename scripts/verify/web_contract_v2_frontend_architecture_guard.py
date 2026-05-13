@@ -231,6 +231,35 @@ REQUIRED_ROUTE_MATRIX_TOKENS: tuple[str, ...] = (
     "diagnostics-only",
 )
 
+REQUIRED_V2_BOUNDARY_FILES: dict[str, tuple[str, ...]] = {
+    "app/contracts/v2/types.ts": (
+        "ContractV2Snapshot",
+        "ContractV2NormalizedStore",
+        "ContractV2UnsupportedFeature",
+    ),
+    "app/contracts/v2/schema.ts": (
+        "decodeContractV2Snapshot",
+        "ContractV2DecodeError",
+        "must be semantic version 2.x.y",
+    ),
+    "app/contracts/v2/store.ts": (
+        "createContractV2Store",
+        "widgetsById",
+        "actionsById",
+        "primaryDataSource",
+    ),
+    "app/contracts/v2/client.ts": (
+        "loadActionContractV2",
+        "loadModelContractV2",
+        "accepted_contract_versions",
+        "client_contract_capabilities",
+    ),
+    "app/contracts/v2/runtime.ts": (
+        "resolveContractV2ActionPlan",
+        "resolveContractV2DataSourcePlan",
+    ),
+}
+
 
 def read(path: Path) -> str:
     return path.read_text(encoding="utf-8", errors="ignore") if path.is_file() else ""
@@ -296,6 +325,21 @@ def validate_docs() -> list[str]:
     return errors
 
 
+def validate_v2_boundary() -> list[str]:
+    errors: list[str] = []
+    for relative_path, tokens in REQUIRED_V2_BOUNDARY_FILES.items():
+        text = read(WEB_ROOT / relative_path)
+        if not text:
+            errors.append(f"missing v2 boundary file: frontend/apps/web/src/{relative_path}")
+            continue
+        for token in tokens:
+            if token not in text:
+                errors.append(f"v2 boundary file {relative_path} missing token: {token}")
+        if relative_path.startswith("app/contracts/v2/") and "api/contract" in text:
+            errors.append(f"v2 boundary file {relative_path} must not import legacy api/contract projection")
+    return errors
+
+
 def write_reports(strict: bool, findings: list[dict[str, object]], errors: list[str]) -> None:
     REPORT_JSON.parent.mkdir(parents=True, exist_ok=True)
     REPORT_MD.parent.mkdir(parents=True, exist_ok=True)
@@ -344,6 +388,7 @@ def main() -> int:
     findings, errors = scan_debt(strict)
     errors.extend(validate_router())
     errors.extend(validate_docs())
+    errors.extend(validate_v2_boundary())
     write_reports(strict, findings, errors)
 
     if errors:

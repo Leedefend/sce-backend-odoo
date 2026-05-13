@@ -353,6 +353,15 @@ Acceptance:
 - No default code path consumes v2 through legacy projection.
 - Missing required contract fields produce unsupported-contract state.
 
+Batch B execution note:
+
+- `frontend/apps/web/src/app/contracts/v2/types.ts` defines the typed snapshot/store boundary.
+- `frontend/apps/web/src/app/contracts/v2/schema.ts` provides strict decode without widget/layout synthesis.
+- `frontend/apps/web/src/app/contracts/v2/client.ts` loads `load_contract` directly and advertises accepted v2 versions/capabilities.
+- `frontend/apps/web/src/app/contracts/v2/store.ts` indexes contract state without business inference.
+- `frontend/apps/web/src/app/contracts/v2/runtime.ts` resolves declared action/data-source plans only.
+- The architecture guard now verifies these files exist and do not import the legacy `api/contract` projection.
+
 ### Batch C: Form Renderer Convergence
 
 Deliver:
