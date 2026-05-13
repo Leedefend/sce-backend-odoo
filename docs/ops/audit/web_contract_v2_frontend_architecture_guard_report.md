@@ -2,7 +2,7 @@
 
 - mode: debt_lock
 - status: PASS
-- findings: 7
+- findings: 5
 
 ## Findings
 
@@ -11,5 +11,3 @@
 - [P1] legacy_form_layout_synthesis `frontend/apps/web/src/api/contract.ts` count=2/2
 - [P1] legacy_subview_policy_synthesis `frontend/apps/web/src/api/contract.ts` count=2/2
 - [P1] legacy_layout_button_synthesis `frontend/apps/web/src/api/contract.ts` count=2/2
-- [P1] lite_legacy_default_fallback `frontend/apps/web/src/app/contracts/unifiedPageContractLite.ts` count=2/2
-- [P1] api_contract_lite_legacy_default_fallback `frontend/apps/web/src/api/contract.ts` count=1/1

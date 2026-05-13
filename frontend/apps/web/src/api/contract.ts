@@ -3,6 +3,7 @@ import { ApiError } from './client';
 import type { ActionContract } from '@sc/schema';
 import { extractLiteContractFromIntentBody } from '../app/runtime/unifiedPageContractLitePilot';
 import type { UnifiedPageContractLite } from '../app/contracts/unifiedPageContractLite';
+import { LITE_PREVIEW_LEGACY_FALLBACK_MODE } from '../app/contracts/unifiedPageContractLiteCompat';
 import {
   collectUnifiedPageContractV2FieldWidgets,
   resolveUnifiedPageContractV2GlobalStatus,
@@ -706,7 +707,7 @@ export async function loadModelLitePreviewContract(model: string, options?: Load
       contractVersion: '2.0.0',
       entryPoint: 'load_contract',
       clientType: 'web_pc',
-      fallbackMode: 'legacy_default',
+      fallbackMode: LITE_PREVIEW_LEGACY_FALLBACK_MODE,
       traceId: `lite-frontend-pilot-${String(model || '').trim() || 'model'}-${viewType}`,
     },
   });
