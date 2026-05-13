@@ -4,8 +4,26 @@
   "purpose": "Make the platform-core business-kernel gap explicit and verify the minimum cross-industry scope artifact outside the construction module.",
   "gap_statement": "Without an industry module, smart_core historically provided runtime and UI contract infrastructure but no reusable business/carrier scope vocabulary.",
   "kernel": "platform -> company -> business -> carrier -> fact -> projection",
-  "decision": "Fill the core gap first with an abstract platform scope contract, not a concrete business source-of-truth table.",
+  "decision": "Fill the core gap first with company access and an abstract platform scope contract, not a concrete business source-of-truth table.",
   "minimum_kernel_artifacts": [
+    {
+      "artifact_key": "platform_company_access_models",
+      "module": "smart_core",
+      "models": [
+        "sc.subscription.plan",
+        "sc.subscription",
+        "sc.entitlement",
+        "sc.usage.counter",
+        "sc.ops.job"
+      ],
+      "kind": "platform_access_control",
+      "purpose": "Answer which companies can use the platform, which plan/capabilities apply, and what usage/ops state is attached to that company.",
+      "forbidden_ownership": [
+        "must_not_depend_on_construction_project",
+        "must_not_embed_industry_business_semantics",
+        "must_not_be_owned_by_industry_module"
+      ]
+    },
     {
       "artifact_key": "platform_business_scope_mixin",
       "module": "smart_core",

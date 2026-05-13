@@ -9,9 +9,9 @@
       "name": "Platform",
       "concept_type": "management_subject",
       "layer": "platform_kernel",
-      "definition": "Product/runtime layer that manages tenants, companies, capabilities, policies, integrations, scenes, subscriptions, and audit.",
+      "definition": "Product/runtime layer that manages tenants, company access, capabilities, policies, integrations, scenes, subscriptions, entitlements, usage, operations, and audit.",
       "platform_contract": "Owns governance, extension contracts, and the cross-industry business scope vocabulary; must not embed one industry carrier as mandatory platform truth.",
-      "current_construction_binding": "smart_core provides sc.business.scope.mixin; smart_construction_core binds platform, capability, scene, pack, approval, subscription, audit, and native integration models"
+      "current_construction_binding": "smart_core owns subscription, entitlement, usage, ops jobs, and sc.business.scope.mixin; smart_construction_core binds capability, scene, pack, approval, audit, and native integration models"
     },
     {
       "key": "company",

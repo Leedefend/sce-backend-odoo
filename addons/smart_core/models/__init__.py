@@ -2,6 +2,7 @@
 from . import dashboard
 from . import dashboard_widget
 from . import business_scope
+from . import subscription
 from . import res_users
 from . import app_action_gateway
 from . import ui_base_contract_asset

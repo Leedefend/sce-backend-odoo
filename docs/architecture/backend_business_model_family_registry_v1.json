@@ -212,9 +212,9 @@
       "business_object": "platform",
       "responsibility_type": "governance/config",
       "solution_layer": "platform",
-      "source_of_truth": "scene, capability, pack, and subscription registries",
+      "source_of_truth": "scene, capability, and pack registries; subscription and entitlement authority is platform-core owned in smart_core",
       "native_dependency": "ir.ui.menu, ir.actions, users/groups",
-      "representative_models": ["sc.scene", "sc.scene.version", "sc.capability", "sc.subscription", "sc.pack.registry"],
+      "representative_models": ["sc.scene", "sc.scene.version", "sc.capability", "sc.pack.registry"],
       "target_problem": "Expose backend business capability to the generic frontend renderer through platform contracts.",
       "boundary_rule": "Scene contracts describe entry semantics; they must not embed customer-specific rendering or replay logic.",
       "status": "clear"

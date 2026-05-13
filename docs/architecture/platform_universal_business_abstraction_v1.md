@@ -171,12 +171,16 @@ prove the scope is safe.
 ## Platform Core Gap
 
 The current platform core gap is real: without an industry module, the platform
-previously had technical runtime services but no reusable business/carrier scope
-vocabulary.
+must still answer which companies can use it and what platform capabilities are
+enabled for those companies.
 
-The first core fill is `sc.business.scope.mixin` in `smart_core`. This moves the
-cross-industry scope language into platform core while keeping construction
+The first core fill is company access in `smart_core`: `sc.subscription.plan`,
+`sc.subscription`, `sc.entitlement`, `sc.usage.counter`, and `sc.ops.job`.
+
+The second core fill is `sc.business.scope.mixin` in `smart_core`. This moves
+the cross-industry scope language into platform core while keeping construction
 carrier semantics in the construction module.
 
 This is deliberately smaller than adding `sc.business` as a table. The platform
-now owns the vocabulary; it does not yet own the business lifecycle.
+now owns company usability and the vocabulary; it does not yet own the business
+lifecycle.

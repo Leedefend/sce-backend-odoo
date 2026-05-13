@@ -1,3 +1,13 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_sc_ui_base_contract_asset_admin,access.sc.ui.base.contract.asset.admin,model_sc_ui_base_contract_asset,smart_core.group_smart_core_admin,1,1,1,1
 access_sc_user_view_preference_user,access.sc.user.view.preference.user,model_sc_user_view_preference,base.group_user,1,1,1,1
+access_sc_subscription_plan_user,access.sc.subscription.plan.user,model_sc_subscription_plan,base.group_user,1,0,0,0
+access_sc_subscription_plan_admin,access.sc.subscription.plan.admin,model_sc_subscription_plan,smart_core.group_smart_core_admin,1,1,1,1
+access_sc_subscription_user,access.sc.subscription.user,model_sc_subscription,base.group_user,1,0,0,0
+access_sc_subscription_admin,access.sc.subscription.admin,model_sc_subscription,smart_core.group_smart_core_admin,1,1,1,1
+access_sc_entitlement_user,access.sc.entitlement.user,model_sc_entitlement,base.group_user,1,0,0,0
+access_sc_entitlement_admin,access.sc.entitlement.admin,model_sc_entitlement,smart_core.group_smart_core_admin,1,1,1,1
+access_sc_usage_counter_user,access.sc.usage.counter.user,model_sc_usage_counter,base.group_user,1,0,0,0
+access_sc_usage_counter_admin,access.sc.usage.counter.admin,model_sc_usage_counter,smart_core.group_smart_core_admin,1,1,1,1
+access_sc_ops_job_user,access.sc.ops.job.user,model_sc_ops_job,base.group_user,1,0,0,0
+access_sc_ops_job_admin,access.sc.ops.job.admin,model_sc_ops_job,smart_core.group_smart_core_admin,1,1,1,1

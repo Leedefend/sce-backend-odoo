@@ -127,6 +127,8 @@ class ScEntitlement(models.Model):
         flags = ent.effective_flags_json or {}
         cap_key = (params or {}).get("capability_key") or (params or {}).get("capability") or (params or {}).get("key")
         cap = None
+        if "sc.capability" not in self.env:
+            return True, "", {}
         if cap_key:
             cap = self.env["sc.capability"].sudo().search([("key", "=", cap_key)], limit=1)
         elif intent:

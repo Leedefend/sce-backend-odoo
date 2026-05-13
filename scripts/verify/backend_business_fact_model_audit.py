@@ -62,6 +62,13 @@ PLATFORM_SCOPE_FIELD_NAMES = [
     "carrier_model",
     "carrier_res_id",
 ]
+PLATFORM_COMPANY_ACCESS_MODELS = {
+    "sc.subscription.plan": ["code", "active", "feature_flags_json", "limits_json"],
+    "sc.subscription": ["company_id", "plan_id", "state", "start_date", "end_date"],
+    "sc.entitlement": ["company_id", "plan_id", "effective_flags_json", "effective_limits_json"],
+    "sc.usage.counter": ["company_id", "key", "value"],
+    "sc.ops.job": ["name", "job_type", "status"],
+}
 ALLOWED_SOLUTION_LAYERS = {"platform", "industry", "customer"}
 ALLOWED_RESPONSIBILITY_TYPES = {
     "native system-of-record",
@@ -1116,14 +1123,25 @@ def summarize_scope_decision_gate(scope_decision_gate: dict[str, Any]) -> dict[s
 
 def summarize_platform_core_kernel_gap(platform_core_kernel_gap: dict[str, Any]) -> dict[str, Any]:
     mixin_row = extract_named_model(SMART_CORE_MODEL_ROOT / "business_scope.py", "sc.business.scope.mixin")
+    company_access_rows = {
+        model: extract_named_model(SMART_CORE_MODEL_ROOT / "subscription.py", model)
+        for model in PLATFORM_COMPANY_ACCESS_MODELS
+    }
     artifact_rows = platform_core_kernel_gap.get("minimum_kernel_artifacts", [])
-    required_artifact_keys = {"platform_business_scope_mixin"}
+    required_artifact_keys = {"platform_business_scope_mixin", "platform_company_access_models"}
     artifact_keys = {item.get("artifact_key") for item in artifact_rows}
     shape_gaps = []
     if "platform_business_scope_mixin" not in artifact_keys:
         shape_gaps.append(
             {
                 "artifact_key": "platform_business_scope_mixin",
+                "reason": "missing_minimum_kernel_artifact_registry",
+            }
+        )
+    if "platform_company_access_models" not in artifact_keys:
+        shape_gaps.append(
+            {
+                "artifact_key": "platform_company_access_models",
                 "reason": "missing_minimum_kernel_artifact_registry",
             }
         )
@@ -1157,11 +1175,34 @@ def summarize_platform_core_kernel_gap(platform_core_kernel_gap: dict[str, Any])
                     "reason": "platform_scope_field_must_remain_optional",
                 }
             )
+    for model_name, required_fields in PLATFORM_COMPANY_ACCESS_MODELS.items():
+        model_row = company_access_rows.get(model_name)
+        if not model_row:
+            shape_gaps.append(
+                {
+                    "artifact_key": "platform_company_access_models",
+                    "model": model_name,
+                    "reason": "company_access_model_not_detected_in_smart_core",
+                }
+            )
+            continue
+        for field_name in required_fields:
+            if not field_by_name(model_row.get("fields", []), field_name):
+                shape_gaps.append(
+                    {
+                        "artifact_key": "platform_company_access_models",
+                        "model": model_name,
+                        "field": field_name,
+                        "reason": "required_company_access_field_missing",
+                    }
+                )
     return {
         "minimum_kernel_artifact_count": len(artifact_rows),
         "has_platform_business_scope_mixin": bool(mixin_row),
         "platform_scope_field_count": len([field for field in mixin_fields if field.get("name") in PLATFORM_SCOPE_FIELD_NAMES]),
         "platform_scope_fields": [field.get("name") for field in mixin_fields if field.get("name") in PLATFORM_SCOPE_FIELD_NAMES],
+        "company_access_model_count": len([row for row in company_access_rows.values() if row]),
+        "company_access_models": sorted(model for model, row in company_access_rows.items() if row),
         "missing_required_artifact_keys": sorted(required_artifact_keys - artifact_keys),
         "platform_core_kernel_shape_gap_count": len(shape_gaps),
         "platform_core_kernel_shape_gaps": shape_gaps,
@@ -1559,6 +1600,11 @@ def write_markdown(report: dict[str, Any], path: Path) -> None:
         "- platform_scope_fields: "
         + (", ".join(platform_core_summary.get("platform_scope_fields", [])) or "none")
     )
+    lines.append(f"- company_access_model_count: {platform_core_summary.get('company_access_model_count', 0)}")
+    lines.append(
+        "- company_access_models: "
+        + (", ".join(platform_core_summary.get("company_access_models", [])) or "none")
+    )
     lines.append(
         "- missing_required_artifact_keys: "
         + (", ".join(platform_core_summary.get("missing_required_artifact_keys", [])) or "none")
@@ -1907,6 +1953,7 @@ def main() -> int:
             if platform_core_kernel_gap_path.exists()
             and report["platform_core_summary"]["has_platform_business_scope_mixin"]
             and report["platform_core_summary"]["platform_scope_field_count"] == len(PLATFORM_SCOPE_FIELD_NAMES)
+            and report["platform_core_summary"]["company_access_model_count"] == len(PLATFORM_COMPANY_ACCESS_MODELS)
             and not report["platform_core_summary"]["missing_required_artifact_keys"]
             and not report["platform_core_summary"]["platform_core_kernel_shape_gaps"]
             else [
@@ -1916,6 +1963,7 @@ def main() -> int:
                         "has_platform_business_scope_mixin"
                     ],
                     "platform_scope_fields": report["platform_core_summary"]["platform_scope_fields"],
+                    "company_access_models": report["platform_core_summary"]["company_access_models"],
                     "missing_required_artifact_keys": report["platform_core_summary"][
                         "missing_required_artifact_keys"
                     ],
