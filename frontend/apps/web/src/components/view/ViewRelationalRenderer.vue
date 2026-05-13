@@ -45,9 +45,14 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { createRecord, listRecords, unlinkRecord, writeRecord } from '../../api/data';
 import { useEditTx } from '../../composables/useEditTx';
 import { pickContractNavQuery } from '../../app/navigationContext';
+import {
+  createRelationRendererRecord,
+  listRelationRendererRecords,
+  unlinkRelationRendererRecord,
+  writeRelationRendererRecord,
+} from '../../app/runtime/relationRendererDataRuntime';
 
 const props = defineProps<{
   ids: number[];
@@ -93,7 +98,7 @@ async function load() {
   try {
     const ids = props.ids.slice(0, 50);
     truncated.value = props.ids.length > ids.length;
-    const response = await listRecords({
+    const response = await listRelationRendererRecords({
       model: props.model,
       fields: ['id', 'name'],
       domain: [['id', 'in', ids]],
@@ -157,7 +162,7 @@ async function saveRow() {
   try {
     await editTx.save(async () => {
       if (editorMode.value === 'create') {
-        return createRecord({
+        return createRelationRendererRecord({
           model: props.model,
           vals: {
             name: draftName.value.trim(),
@@ -166,7 +171,7 @@ async function saveRow() {
         });
       }
       if (editorTargetId.value) {
-        return writeRecord({
+        return writeRelationRendererRecord({
           model: props.model,
           ids: [editorTargetId.value],
           vals: { name: draftName.value.trim() },
@@ -192,7 +197,7 @@ async function removeRow(row: { id: number }) {
   if (!confirm('Delete this related record?')) return;
   try {
     await editTx.save(async () => {
-      return unlinkRecord({ model: props.model, ids: [row.id] });
+      return unlinkRelationRendererRecord({ model: props.model, ids: [row.id] });
     });
     editTx.markSaved();
     await load();
