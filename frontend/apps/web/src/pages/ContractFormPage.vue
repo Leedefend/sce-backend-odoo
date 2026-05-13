@@ -487,7 +487,18 @@ import { resolveSceneValidationSuggestedAction } from '../app/sceneValidationRec
 import { findSceneReadyEntry, resolveFormSceneReady } from '../app/resolvers/sceneReadyResolver';
 import { normalizeSceneActionProtocol } from '../app/sceneActionProtocol';
 import { executeProjectionRefresh } from '../app/projectionRefreshRuntime';
-import { ContractV2DecodeError, createContractV2Store, decodeContractV2Snapshot, type ContractV2NormalizedStore } from '../app/contracts/v2';
+import {
+  collectContractV2ButtonStatusById,
+  collectContractV2FieldStatusByCode,
+  ContractV2DecodeError,
+  createContractV2Store,
+  decodeContractV2Snapshot,
+  resolveContractV2GlobalStatus,
+  resolveContractV2MainData,
+  resolveContractV2SourceContext,
+  type ContractV2ButtonStatus,
+  type ContractV2NormalizedStore,
+} from '../app/contracts/v2';
 import { executeSceneMutation } from '../app/sceneMutationRuntime';
 import { isCoreSceneStrictMode } from '../app/contractStrictMode';
 import {
@@ -499,7 +510,6 @@ import {
   resolveUnifiedPageContractV2,
   resolveUnifiedPageContractV2GlobalStatus,
   resolveUnifiedPageContractV2SourceContext,
-  type UnifiedPageContractV2ButtonStatus,
 } from '../app/contracts/unifiedPageContractV2';
 
 type UiStatus = 'loading' | 'ok' | 'error';
@@ -586,82 +596,14 @@ function stableContractId(value: unknown, fallback: string) {
 
 function resolveV2ButtonStatus(
   key: string,
-  statusById: Record<string, UnifiedPageContractV2ButtonStatus>,
-): UnifiedPageContractV2ButtonStatus | null {
+  statusById: Record<string, ContractV2ButtonStatus>,
+): ContractV2ButtonStatus | null {
   const stableKey = stableContractId(key, 'action');
   const candidates = [`btn.${stableKey}`, key, stableKey].filter(Boolean);
   for (const candidate of candidates) {
     if (statusById[candidate]) return statusById[candidate];
   }
   return null;
-}
-
-function v2ButtonStatusFromStore(): Record<string, UnifiedPageContractV2ButtonStatus> {
-  const store = v2ContractStore.value;
-  if (!store) return {};
-  const out: Record<string, UnifiedPageContractV2ButtonStatus> = {};
-  store.buttonStatusById.forEach((status, btnId) => {
-    out[btnId] = {
-      btnId,
-      ...(typeof status.visible === 'boolean' ? { visible: status.visible } : {}),
-      ...(typeof status.disabled === 'boolean' ? { disabled: status.disabled } : {}),
-      ...(status.reasonCode ? { reasonCode: status.reasonCode } : {}),
-    };
-  });
-  return out;
-}
-
-function v2Dict(value: unknown): Record<string, unknown> {
-  return value && typeof value === 'object' && !Array.isArray(value)
-    ? value as Record<string, unknown>
-    : {};
-}
-
-function v2List(value: unknown): unknown[] {
-  return Array.isArray(value) ? value : [];
-}
-
-function v2Text(value: unknown): string {
-  return String(value || '').trim();
-}
-
-function v2GlobalStatusFromStore() {
-  const store = v2ContractStore.value;
-  if (!store) return null;
-  const row = store.snapshot.statusContract.globalStatus || {};
-  if (!Object.keys(row).length) return null;
-  return {
-    ...(typeof row.pageVisible === 'boolean' ? { pageVisible: row.pageVisible } : {}),
-    ...(v2Text(row.pageAuth) ? { pageAuth: v2Text(row.pageAuth) } : {}),
-    ...(v2Text(row.reasonCode) ? { reasonCode: v2Text(row.reasonCode) } : {}),
-  };
-}
-
-function v2MainDataFromStore() {
-  const store = v2ContractStore.value;
-  if (!store) return {};
-  return v2Dict(store.snapshot.dataContract.mainData);
-}
-
-function v2SourceContextFromStore() {
-  const store = v2ContractStore.value;
-  if (!store) return {};
-  const dataMeta = v2Dict(store.snapshot.dataContract.dataMeta);
-  const runtime = v2Dict(store.snapshot.runtimeContract);
-  const source = v2Dict(dataMeta.sourceContext || dataMeta.source_context || runtime.sourceContext || runtime.source_context);
-  if (!Object.keys(source).length) return {};
-  const context = v2Dict(source.context);
-  const domain = v2List(source.domain);
-  const contextRaw = v2Text(source.context_raw || source.contextRaw);
-  const domainRaw = v2Text(source.domain_raw || source.domainRaw);
-  const renderProfile = v2Text(source.renderProfile || source.render_profile).toLowerCase();
-  return {
-    ...(Object.keys(context).length ? { context } : {}),
-    ...(domain.length ? { domain } : {}),
-    ...(contextRaw ? { contextRaw } : {}),
-    ...(domainRaw ? { domainRaw } : {}),
-    ...(renderProfile ? { renderProfile } : {}),
-  };
 }
 
 function collectActionParams(action: ContractAction): Record<string, unknown> | null {
@@ -795,9 +737,9 @@ const v2ShadowLayoutSourceKind = computed(() => {
   if (containers.length) return 'v2_store';
   return nativeFormLayoutNodes.value.length ? 'legacy_layout' : 'none';
 });
-const v2ShadowGlobalSourceKind = computed(() => (v2GlobalStatusFromStore() ? 'v2_store' : 'legacy_resolver'));
-const v2ShadowSourceContextKind = computed(() => (Object.keys(v2SourceContextFromStore()).length ? 'v2_store' : 'legacy_resolver'));
-const v2ShadowStatusFieldCount = computed(() => Object.keys(v2FieldStatusFromStore()).length);
+const v2ShadowGlobalSourceKind = computed(() => (resolveContractV2GlobalStatus(v2ContractStore.value) ? 'v2_store' : 'legacy_resolver'));
+const v2ShadowSourceContextKind = computed(() => (Object.keys(resolveContractV2SourceContext(v2ContractStore.value)).length ? 'v2_store' : 'legacy_resolver'));
+const v2ShadowStatusFieldCount = computed(() => Object.keys(collectContractV2FieldStatusByCode(v2ContractStore.value)).length);
 const v2ShadowValueSource = computed(() => {
   const store = v2ContractStore.value;
   if (!store) return { kind: 'none', values: {} as Record<string, unknown> };
@@ -820,7 +762,7 @@ const v2ShadowValueFieldCount = computed(() => (
 ));
 const v2ShadowMainDataFieldCount = computed(() => (
   v2ShadowFieldCodes.value.filter((fieldCode) => (
-    Object.prototype.hasOwnProperty.call(v2MainDataFromStore(), fieldCode)
+    Object.prototype.hasOwnProperty.call(resolveContractV2MainData(v2ContractStore.value), fieldCode)
   )).length
 ));
 const v2ShadowReadonlyValueCount = computed(() => (
@@ -932,8 +874,9 @@ function recordVersionPolicy() {
 }
 
 const renderProfile = computed<'create' | 'edit' | 'readonly'>(() => {
-  const sourceContext = Object.keys(v2SourceContextFromStore()).length
-    ? v2SourceContextFromStore()
+  const storeSourceContext = resolveContractV2SourceContext(v2ContractStore.value);
+  const sourceContext = Object.keys(storeSourceContext).length
+    ? storeSourceContext
     : resolveUnifiedPageContractV2SourceContext(contract.value);
   const head = (contract.value?.head || {}) as Record<string, unknown>;
   const profile = String(sourceContext.renderProfile || contract.value?.render_profile || head.render_profile || '').trim().toLowerCase();
@@ -945,7 +888,7 @@ const renderProfile = computed<'create' | 'edit' | 'readonly'>(() => {
 });
 
 const rights = computed(() => {
-  const globalStatus = v2GlobalStatusFromStore() || resolveUnifiedPageContractV2GlobalStatus(contract.value);
+  const globalStatus = resolveContractV2GlobalStatus(v2ContractStore.value) || resolveUnifiedPageContractV2GlobalStatus(contract.value);
   const pageAuth = String(globalStatus?.pageAuth || '').trim().toLowerCase();
   if (globalStatus?.pageVisible === false || pageAuth === 'none') {
     return { read: false, write: false, create: false, unlink: false };
@@ -2853,7 +2796,7 @@ const contractActions = computed<ContractAction[]>(() => {
   const sceneReadyActions = useSceneFormAugmentations.value && Array.isArray(sceneReadyFormSurface.value.actions)
     ? sceneReadyFormSurface.value.actions as Array<Record<string, unknown>>
     : [];
-  const storeButtonStatus = v2ButtonStatusFromStore();
+  const storeButtonStatus = collectContractV2ButtonStatusById(v2ContractStore.value);
   const v2ButtonStatus = Object.keys(storeButtonStatus).length
     ? storeButtonStatus
     : collectUnifiedPageContractV2ButtonStatus(contract.value);
@@ -3465,30 +3408,10 @@ const contractVisibleFields = computed<string[]>(() => {
   return rows.map((name) => String(name || '').trim()).filter(Boolean);
 });
 
-function v2FieldStatusFromStore() {
-  const store = v2ContractStore.value;
-  const out: Record<string, { visible?: boolean; readonly?: boolean; required?: boolean; disabled?: boolean; reasonCode?: string }> = {};
-  if (!store) return out;
-  store.widgetStatusById.forEach((status, widgetId) => {
-    const widget = store.widgetsById.get(widgetId);
-    const fieldCode = String(widget?.fieldCode || '').trim();
-    if (!fieldCode) return;
-    out[fieldCode] = {
-      ...(out[fieldCode] || {}),
-      ...(typeof status.visible === 'boolean' ? { visible: status.visible } : {}),
-      ...(typeof status.readonly === 'boolean' ? { readonly: status.readonly } : {}),
-      ...(typeof status.required === 'boolean' ? { required: status.required } : {}),
-      ...(typeof status.disabled === 'boolean' ? { disabled: status.disabled } : {}),
-      ...(status.reasonCode ? { reasonCode: status.reasonCode } : {}),
-    };
-  });
-  return out;
-}
-
 const fieldModifierMap = computed<Record<string, Record<string, unknown>>>(() => {
   const formView = (contract.value?.views?.form || {}) as { field_modifiers?: Record<string, Record<string, unknown>> };
   const out: Record<string, Record<string, unknown>> = { ...(formView.field_modifiers || {}) };
-  const fromStore = v2FieldStatusFromStore();
+  const fromStore = collectContractV2FieldStatusByCode(v2ContractStore.value);
   const v2FieldStatus = Object.keys(fromStore).length ? fromStore : collectUnifiedPageContractV2FieldStatus(contract.value);
   Object.entries(v2FieldStatus).forEach(([name, status]) => {
     out[name] = {
@@ -3721,7 +3644,7 @@ const nativeStatusbar = computed(() => {
     ? rawStates.map((item) => ({ value: item.value as string | number, label: String(item.label || item.value || '') }))
     : selectionStates)
     .filter((item) => String(item.value ?? '').trim() && String(item.label || '').trim());
-  const storeMainData = v2MainDataFromStore();
+  const storeMainData = resolveContractV2MainData(v2ContractStore.value);
   const contractMainData = Object.keys(storeMainData).length ? storeMainData : resolveUnifiedPageContractV2MainData(contract.value);
   const rawFormStatus = formData[field];
   const formStatusValue = rawFormStatus === false || rawFormStatus == null ? '' : String(rawFormStatus).trim();
@@ -4786,13 +4709,13 @@ function collectWritableValues() {
 }
 
 function formCreateContext() {
-  const storeContext = v2SourceContextFromStore();
+  const storeContext = resolveContractV2SourceContext(v2ContractStore.value);
   const sourceContext = (Object.keys(storeContext).length ? storeContext : resolveUnifiedPageContractV2SourceContext(contract.value)).context || {};
   return sourceContext;
 }
 
 function resolveCreateDefaults() {
-  const storeMainData = v2MainDataFromStore();
+  const storeMainData = resolveContractV2MainData(v2ContractStore.value);
   const defaults: Record<string, unknown> = {
     ...(Object.keys(storeMainData).length ? storeMainData : resolveUnifiedPageContractV2MainData(contract.value)),
   };
@@ -5291,7 +5214,7 @@ async function loadRecord() {
     fields: fieldNames.length ? fieldNames : '*',
   });
   const row = read.records?.[0] || {};
-  const storeMainData = v2MainDataFromStore();
+  const storeMainData = resolveContractV2MainData(v2ContractStore.value);
   const contractMainData = Object.keys(storeMainData).length ? storeMainData : resolveUnifiedPageContractV2MainData(contract.value);
   if (versionPolicy?.tokenField) {
     recordVersionToken.value = String((row as Record<string, unknown>)[versionPolicy.tokenField] || '').trim();

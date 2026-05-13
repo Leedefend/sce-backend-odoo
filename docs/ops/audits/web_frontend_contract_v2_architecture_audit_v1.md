@@ -388,6 +388,7 @@ Batch C shadow execution note:
 - C.5 reads button status from the decoded v2 store first for form actions; legacy button-status extraction remains a fallback until action execution moves fully to the v2 runtime.
 - C.6 reads page-level `globalStatus` and `sourceContext` from the decoded v2 store first so rights/profile/default context no longer default to the legacy resolver path.
 - C.7 reads `dataContract.mainData` from the decoded v2 store first for statusbar, create defaults, and record initialization; legacy main-data extraction remains a fallback.
+- C.8 moves v2 store selectors for field status, button status, global status, source context, and main data into `frontend/apps/web/src/app/contracts/v2/store.ts`, keeping page code on store APIs instead of direct snapshot parsing.
 
 ### Batch D: Action/List/Kanban Renderer Convergence
 

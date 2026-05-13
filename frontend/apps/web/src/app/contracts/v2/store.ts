@@ -11,6 +11,22 @@ import type {
   ContractV2WidgetStatus,
 } from './types';
 
+export type ContractV2SourceContext = {
+  context?: ContractV2Dictionary;
+  domain?: unknown[];
+  contextRaw?: string;
+  domainRaw?: string;
+  renderProfile?: string;
+};
+
+export type ContractV2FieldStatusByCode = Record<string, {
+  visible?: boolean;
+  readonly?: boolean;
+  required?: boolean;
+  disabled?: boolean;
+  reasonCode?: string;
+}>;
+
 function walkContainers(containers: ContractV2Container[], visit: (container: ContractV2Container) => void): void {
   containers.forEach((container) => {
     visit(container);
@@ -53,6 +69,18 @@ function primaryDataSource(snapshot: ContractV2Snapshot): ContractV2Dictionary |
   return source && Object.keys(source).length ? source : null;
 }
 
+function asDict(value: unknown): ContractV2Dictionary {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value as ContractV2Dictionary : {};
+}
+
+function asList(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : [];
+}
+
+function asText(value: unknown): string {
+  return String(value || '').trim();
+}
+
 export function createContractV2Store(snapshot: ContractV2Snapshot): ContractV2NormalizedStore {
   const widgets = collectWidgets(snapshot);
   return {
@@ -65,5 +93,74 @@ export function createContractV2Store(snapshot: ContractV2Snapshot): ContractV2N
     containerStatusById: indexBy<ContractV2ContainerStatus>(snapshot.statusContract.containerStatus, (status) => status.containerId),
     primaryDataSource: primaryDataSource(snapshot),
     unsupported: collectUnsupported(snapshot),
+  };
+}
+
+export function collectContractV2FieldStatusByCode(store: ContractV2NormalizedStore | null): ContractV2FieldStatusByCode {
+  const out: ContractV2FieldStatusByCode = {};
+  if (!store) return out;
+  store.widgetStatusById.forEach((status, widgetId) => {
+    const widget = store.widgetsById.get(widgetId);
+    const fieldCode = String(widget?.fieldCode || '').trim();
+    if (!fieldCode) return;
+    out[fieldCode] = {
+      ...(out[fieldCode] || {}),
+      ...(typeof status.visible === 'boolean' ? { visible: status.visible } : {}),
+      ...(typeof status.readonly === 'boolean' ? { readonly: status.readonly } : {}),
+      ...(typeof status.required === 'boolean' ? { required: status.required } : {}),
+      ...(typeof status.disabled === 'boolean' ? { disabled: status.disabled } : {}),
+      ...(status.reasonCode ? { reasonCode: status.reasonCode } : {}),
+    };
+  });
+  return out;
+}
+
+export function collectContractV2ButtonStatusById(store: ContractV2NormalizedStore | null): Record<string, ContractV2ButtonStatus> {
+  const out: Record<string, ContractV2ButtonStatus> = {};
+  if (!store) return out;
+  store.buttonStatusById.forEach((status, btnId) => {
+    out[btnId] = {
+      btnId,
+      ...(typeof status.visible === 'boolean' ? { visible: status.visible } : {}),
+      ...(typeof status.disabled === 'boolean' ? { disabled: status.disabled } : {}),
+      ...(status.reasonCode ? { reasonCode: status.reasonCode } : {}),
+    };
+  });
+  return out;
+}
+
+export function resolveContractV2GlobalStatus(store: ContractV2NormalizedStore | null) {
+  if (!store) return null;
+  const row = store.snapshot.statusContract.globalStatus || {};
+  if (!Object.keys(row).length) return null;
+  return {
+    ...(typeof row.pageVisible === 'boolean' ? { pageVisible: row.pageVisible } : {}),
+    ...(asText(row.pageAuth) ? { pageAuth: asText(row.pageAuth) } : {}),
+    ...(asText(row.reasonCode) ? { reasonCode: asText(row.reasonCode) } : {}),
+  };
+}
+
+export function resolveContractV2MainData(store: ContractV2NormalizedStore | null): ContractV2Dictionary {
+  if (!store) return {};
+  return asDict(store.snapshot.dataContract.mainData);
+}
+
+export function resolveContractV2SourceContext(store: ContractV2NormalizedStore | null): ContractV2SourceContext {
+  if (!store) return {};
+  const dataMeta = asDict(store.snapshot.dataContract.dataMeta);
+  const runtime = asDict(store.snapshot.runtimeContract);
+  const source = asDict(dataMeta.sourceContext || dataMeta.source_context || runtime.sourceContext || runtime.source_context);
+  if (!Object.keys(source).length) return {};
+  const context = asDict(source.context);
+  const domain = asList(source.domain);
+  const contextRaw = asText(source.context_raw || source.contextRaw);
+  const domainRaw = asText(source.domain_raw || source.domainRaw);
+  const renderProfile = asText(source.renderProfile || source.render_profile).toLowerCase();
+  return {
+    ...(Object.keys(context).length ? { context } : {}),
+    ...(domain.length ? { domain } : {}),
+    ...(contextRaw ? { contextRaw } : {}),
+    ...(domainRaw ? { domainRaw } : {}),
+    ...(renderProfile ? { renderProfile } : {}),
   };
 }
