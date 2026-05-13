@@ -1194,14 +1194,6 @@ const contractMetaLine = computed(() => {
 
 const showDebugActions = computed(() => renderProfile.value !== 'create');
 const showDebugActionsVisible = computed(() => showHud.value && showDebugActions.value);
-const runtimeUserGroups = computed(() => {
-  const out = new Set<string>();
-  (session.user?.groups_xmlids || []).forEach((group) => {
-    const normalized = String(group || '').trim();
-    if (normalized) out.add(normalized);
-  });
-  return out;
-});
 const runtimeRoleCode = computed(() => String(session.roleSurface?.role_code || '').trim().toLowerCase());
 const runtimeCapabilities = computed(() => {
   const out = new Set<string>();
@@ -1224,7 +1216,7 @@ const policyContext = computed(() => ({
   profile: renderProfile.value,
   formData: formData as Record<string, unknown>,
   capabilities: runtimeCapabilities.value,
-  userGroups: runtimeUserGroups.value,
+  userGroups: new Set<string>(),
   roleCode: runtimeRoleCode.value,
 }));
 
@@ -2717,12 +2709,6 @@ async function loadRelationOptions() {
   });
 }
 
-function hasGroupAccess(groupsXmlids?: string[]) {
-  if (!Array.isArray(groupsXmlids) || !groupsXmlids.length) return true;
-  const userGroups = session.user?.groups_xmlids || [];
-  return groupsXmlids.some((group) => userGroups.includes(group));
-}
-
 function toActionId(raw: unknown) {
   return toPositiveInt(raw);
 }
@@ -2857,11 +2843,6 @@ const contractActions = computed<ContractAction[]>(() => {
     const target = String(payload.target || '').trim();
     const selectionRaw = String(row.selection || 'none').trim().toLowerCase();
     const selection = selectionRaw === 'single' || selectionRaw === 'multi' ? selectionRaw : 'none';
-    const groups = Array.isArray(row.groups_xmlids)
-      ? (row.groups_xmlids as string[])
-      : Array.isArray(payload.groups_xmlids)
-        ? (payload.groups_xmlids as string[])
-        : [];
     const visibleProfiles = (
       Array.isArray(row.visible_profiles) ? row.visible_profiles : ['create', 'edit']
     )
@@ -2873,12 +2854,11 @@ const contractActions = computed<ContractAction[]>(() => {
     if (!evaluateNativeActionVisibility(row)) continue;
     const status = resolveV2ButtonStatus(key, v2ButtonStatus);
     if (status?.visible === false) continue;
-    const byGroup = hasGroupAccess(groups);
     const contractAllowed = typeof row.allowed === 'boolean' ? Boolean(row.allowed) : true;
     const needRecord = effectiveKind === 'object' || effectiveKind === 'server' || effectiveKind === 'mutation' || level === 'row' || level === 'smart';
     const blockedMessage = String(row.blocked_message || row.reason || row.reason_code || '').trim();
     const warningMessage = String(row.warning_message || '').trim();
-    const enabled = contractAllowed && policy.enabled && byGroup && (!needRecord || Boolean(recordId.value)) && status?.disabled !== true;
+    const enabled = contractAllowed && policy.enabled && (!needRecord || Boolean(recordId.value)) && status?.disabled !== true;
     out.push({
       key,
       label: normalizeActionLabel(row.label, key),
@@ -2893,11 +2873,9 @@ const contractActions = computed<ContractAction[]>(() => {
       target,
       url: String(payload.url || '').trim(),
       enabled,
-      hint: byGroup
-        ? (status?.disabled === true
-          ? status.reasonCode || 'disabled_by_status_contract'
-          : (needRecord && !recordId.value ? 'requires record id' : (contractAllowed ? (warningMessage || policy.reason) : blockedMessage)))
-        : 'permission denied',
+      hint: status?.disabled === true
+        ? status.reasonCode || 'disabled_by_status_contract'
+        : (needRecord && !recordId.value ? 'requires record id' : (contractAllowed ? (warningMessage || policy.reason) : blockedMessage)),
       semantic: policy.semantic,
       visibleProfiles,
       requiredParams,
@@ -3868,9 +3846,6 @@ function isNativeFieldVisible(name: string, nodeRaw?: NativeFormLayoutNode) {
 function nativeLayoutNodeToFieldNode(nodeRaw: NativeFormLayoutNode, index: number): LayoutNode | null {
   const name = String(nodeRaw?.name || '').trim();
   if (!name || !isNativeFieldVisible(name, nodeRaw)) return null;
-  const fieldGroups = contract.value?.permissions?.field_groups || {};
-  const groups = fieldGroups[name]?.groups_xmlids;
-  if (!hasGroupAccess(Array.isArray(groups) ? groups : [])) return null;
   const descriptor = contract.value?.fields?.[name];
   if (!descriptor) return null;
   const resolved = evaluateFieldPolicy(
@@ -4000,7 +3975,6 @@ function collectSceneValidationPrecheckErrors(fieldLabels: Record<string, string
 const layoutNodes = computed<LayoutNode[]>(() => {
   const fieldMap = contract.value?.fields || {};
   const order = contract.value?.views?.form?.layout || [];
-  const fieldGroups = contract.value?.permissions?.field_groups || {};
   const v2FieldContainerStatus = collectUnifiedPageContractV2FieldContainerStatus(contract.value);
   const used = new Set<string>();
   const nodes: LayoutNode[] = [];
@@ -4009,8 +3983,6 @@ const layoutNodes = computed<LayoutNode[]>(() => {
   function pushField(nameRaw: unknown) {
     const name = String(nameRaw || '').trim();
     if (!name || used.has(name)) return;
-    const groups = fieldGroups[name]?.groups_xmlids;
-    if (!hasGroupAccess(Array.isArray(groups) ? groups : [])) return;
     const descriptor = fieldMap[name];
     if (!descriptor) return;
     const containerStatus = v2FieldContainerStatus[name];

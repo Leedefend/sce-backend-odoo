@@ -393,6 +393,7 @@ Batch C shadow execution note:
 - C.10 moves form layout `containerTree` access behind `resolveContractV2ContainerTree`, so `ContractFormPage` no longer reads `snapshot.layoutContract.containerTree` directly.
 - C.11 moves v2 value-source selection behind `resolveContractV2ValueSource`, centralizing the `mainData` versus `primary` coverage decision in the store boundary.
 - C.12 removes the form-only `lifecycle_state` label-to-code fallback; statusbar writes now rely on backend selection/status contract codes instead of frontend business label inference.
+- C.13 removes `groups_xmlids` reads from `ContractFormPage`; form fields/actions now rely on backend policy/status plus role/capability context instead of page-level group filtering.
 
 ### Batch D: Action/List/Kanban Renderer Convergence
 
