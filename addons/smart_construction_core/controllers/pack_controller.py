@@ -5,6 +5,7 @@ from odoo import http, fields
 from odoo.http import request
 from odoo.exceptions import AccessDenied
 from odoo.addons.smart_core.security.auth import get_user_from_token
+from odoo.addons.smart_core.security.platform_company_access import platform_limit_for_company
 from odoo.addons.smart_core.security.platform_admin import user_is_platform_admin
 
 from .api_base import fail, fail_from_exception, ok
@@ -118,8 +119,6 @@ class PackController(http.Controller):
     def _install_pack(self, user, env, pack_id, mode, dry_run, confirm, strict):
         Registry = env["sc.pack.registry"].sudo()
         Installation = env["sc.pack.installation"].sudo()
-        Usage = env.get("sc.usage.counter")
-        Entitlement = env.get("sc.entitlement")
         record = Registry.search([("pack_id", "=", pack_id)], limit=1)
         if not record:
             return {"ok": False, "http_status": 404, "error": {"code": "PACK_NOT_FOUND", "message": "Pack not found"}}
@@ -137,10 +136,8 @@ class PackController(http.Controller):
                 "error": {"code": "DEPENDENCY_MISSING", "message": "Pack dependencies not installed", "details": {"missing": missing}},
             }
 
-        if Entitlement and not dry_run:
-            ent = Entitlement.get_effective(user.company_id)
-            limits = ent.effective_limits_json or {}
-            max_packs = int(limits.get("max_packs_installed") or 0)
+        if not dry_run:
+            max_packs = platform_limit_for_company(env, user.company_id, "max_packs_installed")
             if max_packs:
                 current = Installation.search_count([
                     ("company_id", "=", user.company_id.id),

@@ -207,6 +207,15 @@ assert_true(
     and 'env.get("sc.usage.counter")' not in construction_extension_text,
     "construction extension must not contribute platform entitlement/usage facts",
 )
+for rel_path in (
+    "addons/smart_construction_core/controllers/pack_controller.py",
+    "addons/smart_construction_core/models/support/scene_orchestration.py",
+):
+    text = (ROOT / rel_path).read_text(encoding="utf-8")
+    assert_true(
+        'env.get("sc.entitlement")' not in text and 'env.get("sc.usage.counter")' not in text,
+        f"{rel_path}: must consume platform company access through smart_core.security.platform_company_access",
+    )
 
 for rel_path in sorted(FORBIDDEN_LEGACY_ADMIN_CHECKS):
     text = (ROOT / rel_path).read_text(encoding="utf-8")

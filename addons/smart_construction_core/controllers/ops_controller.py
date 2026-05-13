@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-from odoo import http, fields
+from odoo import http
 from odoo.http import request
 from odoo.exceptions import AccessDenied
 from odoo.addons.smart_core.security.auth import get_user_from_token
+from odoo.addons.smart_core.security.platform_company_access import (
+    finish_platform_ops_job,
+    start_platform_ops_job,
+)
 from odoo.addons.smart_core.security.platform_admin import user_is_platform_admin
 
 from .api_base import fail, fail_from_exception, ok
@@ -24,12 +28,9 @@ class OpsController(http.Controller):
             company_ids = body.get("company_ids") or []
             if not pack_id:
                 return fail("BAD_REQUEST", "pack_id required", http_status=400)
-            Job = env["sc.ops.job"].sudo()
-            job = Job.create({
+            job = start_platform_ops_job(env, {
                 "name": f"batch_upgrade:{pack_id}",
                 "job_type": "batch_upgrade",
-                "status": "running",
-                "started_at": fields.Datetime.now(),
                 "payload_json": body,
                 "trace_id": body.get("trace_id"),
             })
@@ -49,7 +50,7 @@ class OpsController(http.Controller):
                     bool(body.get("strict")),
                 )
                 results.append({"company_id": company.id, "result": res})
-            job.write({"status": "done", "finished_at": fields.Datetime.now(), "result_json": results})
+            finish_platform_ops_job(job, result_json=results)
             return ok({"job_id": job.id, "status": job.status, "results": results}, status=200)
         except AccessDenied as exc:
             return fail("PERMISSION_DENIED", str(exc), http_status=403)
