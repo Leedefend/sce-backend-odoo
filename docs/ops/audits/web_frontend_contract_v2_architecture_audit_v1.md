@@ -398,6 +398,7 @@ Batch C shadow execution note:
 - C.16 removes `groups_xmlids` reads from the parallel `RecordView` diagnostics path; capability checks no longer receive page-level group inputs there.
 - C.17 narrows the action metadata runtime's URL redirect contract type from a loose action contract alias to `ActionUrlContractShape`, removing the local loose-contract debt without changing ActionView's main runtime contract.
 - C.18 replaces ActionView's local `ActionContractLoose` alias with `ActionViewRuntimeContract` based on the schema `ActionContract`, keeping the remaining legacy/v2 projection debt explicit in `api/contract.ts`.
+- C.19 isolates `RecordView` raw read/write access behind `recordDiagnosticsDataRuntime`, keeping the direct `api/data` dependency out of the parallel diagnostics view.
 
 ### Batch D: Action/List/Kanban Renderer Convergence
 

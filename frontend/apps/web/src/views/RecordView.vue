@@ -182,13 +182,13 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { readRecordRaw, writeRecordV6Raw } from '../api/data';
 import { ApiError } from '../api/client';
 import { executeButton } from '../api/executeButton';
 import { fetchChatterTimeline, postChatterMessage, type ChatterTimelineEntry } from '../api/chatter';
 import { downloadFile, fileToBase64, uploadFile } from '../api/files';
 import { loadActionContractRaw } from '../api/contract';
 import { buildRecordRuntimeFromContract } from '../app/contractRecordRuntime';
+import { readRecordDiagnosticsRaw, writeRecordDiagnosticsRaw } from '../app/runtime/recordDiagnosticsDataRuntime';
 import { deriveRecordStatus } from '../app/view_state';
 import type { ButtonEffect, ButtonEffectTarget, ViewButton, ViewContract } from '@sc/schema';
 import ViewLayoutRenderer from '../components/view/ViewLayoutRenderer.vue';
@@ -561,7 +561,7 @@ async function load() {
     if (readFields.length && readFields[0] !== '*' && !readFields.includes('write_date')) {
       readFields.push('write_date');
     }
-    const read = await readRecordRaw({
+    const read = await readRecordDiagnosticsRaw({
       model: model.value,
       ids: [recordId.value],
       fields: readFields,
@@ -993,7 +993,7 @@ async function save() {
       return;
     }
     const result = await editTx.save(async () => {
-      return writeRecordV6Raw({
+      return writeRecordDiagnosticsRaw({
         model: model.value,
         id: recordId.value,
         values: payload,
