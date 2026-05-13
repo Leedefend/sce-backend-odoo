@@ -9,6 +9,9 @@
     :data-v2-shadow-field-codes="String(v2ShadowFieldCodeCount)"
     :data-v2-shadow-field-overlap="String(v2ShadowLegacyFieldOverlapCount)"
     :data-v2-shadow-field-missing="v2ShadowLegacyFieldMissingPreview"
+    :data-v2-shadow-value-fields="String(v2ShadowValueFieldCount)"
+    :data-v2-shadow-readonly-values="String(v2ShadowReadonlyValueCount)"
+    :data-v2-shadow-value-source="v2ShadowValueSourceKind"
     :data-v2-shadow-error="v2ContractDecodeError || '-'"
   >
     <PageHeaderTemplate :title="pageDisplayTitle" :subtitle="pageDisplaySubtitle || undefined">
@@ -712,6 +715,34 @@ const v2ShadowLegacyFieldMissing = computed(() => {
 });
 const v2ShadowLegacyFieldOverlapCount = computed(() => v2ShadowFieldCodeCount.value - v2ShadowLegacyFieldMissing.value.length);
 const v2ShadowLegacyFieldMissingPreview = computed(() => v2ShadowLegacyFieldMissing.value.slice(0, 8).join(',') || '-');
+const v2ShadowValueSource = computed(() => {
+  const store = v2ContractStore.value;
+  if (!store) return { kind: 'none', values: {} as Record<string, unknown> };
+  const coverage = (values: Record<string, unknown>) => v2ShadowFieldCodes.value.filter((fieldCode) => (
+    Object.prototype.hasOwnProperty.call(values, fieldCode)
+  )).length;
+  const mainData = store.snapshot.dataContract.mainData;
+  if (mainData && coverage(mainData) > 0) return { kind: 'main_data', values: mainData };
+  const primary = store.primaryDataSource;
+  if (primary && coverage(primary) > 0) return { kind: 'primary', values: primary };
+  if (mainData && Object.keys(mainData).length) return { kind: 'main_data', values: mainData };
+  if (primary && Object.keys(primary).length) return { kind: 'primary', values: primary };
+  return { kind: 'none', values: {} as Record<string, unknown> };
+});
+const v2ShadowValueSourceKind = computed(() => v2ShadowValueSource.value.kind);
+const v2ShadowValueFieldCount = computed(() => (
+  v2ShadowFieldCodes.value.filter((fieldCode) => (
+    Object.prototype.hasOwnProperty.call(v2ShadowValueSource.value.values, fieldCode)
+  )).length
+));
+const v2ShadowReadonlyValueCount = computed(() => (
+  layoutNodes.value.filter((node) => (
+    node.kind === 'field'
+    && node.readonly
+    && Boolean(v2ContractStore.value?.widgetsByFieldCode.has(node.name))
+    && Object.prototype.hasOwnProperty.call(v2ShadowValueSource.value.values, node.name)
+  )).length
+));
 const activeFilterKey = ref('');
 const originalValues = ref<Record<string, unknown>>({});
 const recordVersionToken = ref('');
@@ -3854,7 +3885,7 @@ function nativeFieldSchemasForNodes(nodes: NativeFormLayoutNode[]): FormSectionF
   const fieldNodes = mappedNodes
     .filter((item) => item !== favoriteNode)
     .map((item) => item.field);
-  const schemas = buildSectionFieldSchemas(fieldNodes);
+  const schemas = applyV2ReadonlyFieldValues(buildSectionFieldSchemas(fieldNodes));
   if (!favoriteNode || !schemas.length) return schemas;
   const target = schemas.find((field) => field.name === 'name')
     || schemas.find((field) => ['char', 'text'].includes(String(field.type || '').trim().toLowerCase()))
@@ -3869,6 +3900,44 @@ function nativeFieldSchemasForNodes(nodes: NativeFormLayoutNode[]): FormSectionF
     };
   }
   return schemas;
+}
+
+function v2FieldValue(name: string) {
+  const normalized = String(name || '').trim();
+  if (!normalized || !v2ContractStore.value?.widgetsByFieldCode.has(normalized)) {
+    return { found: false, value: undefined };
+  }
+  const source = v2ShadowValueSource.value.values;
+  if (!Object.prototype.hasOwnProperty.call(source, normalized)) {
+    return { found: false, value: undefined };
+  }
+  return { found: true, value: source[normalized] };
+}
+
+function schemaInputValueFromRaw(fieldName: string, fieldType: string, raw: unknown) {
+  const type = String(fieldType || '').trim().toLowerCase();
+  if (type === 'many2one') {
+    const id = normalizeRelationIds(raw)[0];
+    return id ? String(id) : '';
+  }
+  if (raw === null || raw === undefined || raw === false) return '';
+  if (type === 'date') return toDateInputValue(raw);
+  if (type === 'datetime') return toDatetimeInputValue(raw);
+  if (typeof raw === 'number' || typeof raw === 'boolean') return raw;
+  return String(raw);
+}
+
+function applyV2ReadonlyFieldValues(schemas: FormSectionFieldSchema[]): FormSectionFieldSchema[] {
+  return schemas.map((field) => {
+    if (!field.readonly) return field;
+    const resolved = v2FieldValue(field.name);
+    if (!resolved.found) return field;
+    return {
+      ...field,
+      value: resolved.value,
+      inputValue: schemaInputValueFromRaw(field.name, String(field.type || ''), resolved.value),
+    };
+  });
 }
 
 function shouldShowRequiredMark(node: LayoutNode) {
@@ -4712,6 +4781,9 @@ const hudEntries = computed(() => [
   { label: 'v2_shadow_field_codes', value: v2ShadowFieldCodeCount.value },
   { label: 'v2_shadow_field_overlap', value: v2ShadowLegacyFieldOverlapCount.value },
   { label: 'v2_shadow_field_missing', value: v2ShadowLegacyFieldMissingPreview.value },
+  { label: 'v2_shadow_value_fields', value: v2ShadowValueFieldCount.value },
+  { label: 'v2_shadow_readonly_values', value: v2ShadowReadonlyValueCount.value },
+  { label: 'v2_shadow_value_source', value: v2ShadowValueSourceKind.value },
   { label: 'v2_shadow_error', value: v2ContractDecodeError.value || '-' },
   { label: 'contract_view_type', value: contract.value?.head?.view_type || contract.value?.view_type || '-' },
   { label: 'render_profile', value: renderProfile.value },

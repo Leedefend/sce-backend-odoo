@@ -98,6 +98,9 @@ async function readShadowAttrs(page) {
       field_codes: String(shell?.getAttribute('data-v2-shadow-field-codes') || ''),
       field_overlap: String(shell?.getAttribute('data-v2-shadow-field-overlap') || ''),
       field_missing: String(shell?.getAttribute('data-v2-shadow-field-missing') || ''),
+      value_fields: String(shell?.getAttribute('data-v2-shadow-value-fields') || ''),
+      readonly_values: String(shell?.getAttribute('data-v2-shadow-readonly-values') || ''),
+      value_source: String(shell?.getAttribute('data-v2-shadow-value-source') || ''),
       error: String(shell?.getAttribute('data-v2-shadow-error') || ''),
     };
   });
@@ -150,6 +153,8 @@ async function main() {
     const shadowWidgets = Number(summary.shadow_attrs.widgets || summary.hud.v2_shadow_widgets || 0);
     const shadowFieldCodes = Number(summary.shadow_attrs.field_codes || summary.hud.v2_shadow_field_codes || 0);
     const shadowFieldOverlap = Number(summary.shadow_attrs.field_overlap || summary.hud.v2_shadow_field_overlap || 0);
+    const shadowValueFields = Number(summary.shadow_attrs.value_fields || summary.hud.v2_shadow_value_fields || 0);
+    const shadowValueSource = String(summary.shadow_attrs.value_source || summary.hud.v2_shadow_value_source || '').trim();
     const shadowError = String(summary.shadow_attrs.error || summary.hud.v2_shadow_error || '').trim();
     const rendered = summary.snapshot.shell_count === 1 && !summary.snapshot.body_text.includes('页面加载失败');
     summary.pass = Boolean(
@@ -158,6 +163,8 @@ async function main() {
       shadowWidgets > 0 &&
       shadowFieldCodes > 0 &&
       shadowFieldOverlap > 0 &&
+      shadowValueFields > 0 &&
+      shadowValueSource !== 'none' &&
       (!shadowError || shadowError === '-') &&
       summary.console_errors.length === 0
     );
@@ -191,6 +198,9 @@ async function main() {
     v2_shadow_field_codes: summary.shadow_attrs?.field_codes || summary.hud.v2_shadow_field_codes,
     v2_shadow_field_overlap: summary.shadow_attrs?.field_overlap || summary.hud.v2_shadow_field_overlap,
     v2_shadow_field_missing: summary.shadow_attrs?.field_missing || summary.hud.v2_shadow_field_missing,
+    v2_shadow_value_fields: summary.shadow_attrs?.value_fields || summary.hud.v2_shadow_value_fields,
+    v2_shadow_readonly_values: summary.shadow_attrs?.readonly_values || summary.hud.v2_shadow_readonly_values,
+    v2_shadow_value_source: summary.shadow_attrs?.value_source || summary.hud.v2_shadow_value_source,
   }, null, 2));
 }
 

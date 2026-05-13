@@ -383,6 +383,7 @@ Batch C shadow execution note:
 - `web_contract_v2_frontend_architecture_guard.py` now verifies the form route host contains this v2 shadow boundary.
 - `scripts/verify/web_contract_v2_form_shadow_browser_smoke.js` verifies the real browser form path with HUD diagnostics and stores screenshot/JSON artifacts.
 - C.2 adds shadow field-code overlap diagnostics between `ContractV2Store.widgetsByFieldCode` and the current legacy `contract.fields` projection, still without changing visible rendering.
+- C.3 routes readonly form field values through the v2 store data source when the field code and data key are both present; writable fields continue to use the current form state until action/data submission is moved to v2 runtime. Browser diagnostics assert v2 field/value coverage independently from the current record's editability profile.
 
 ### Batch D: Action/List/Kanban Renderer Convergence
 
