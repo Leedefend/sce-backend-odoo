@@ -39,6 +39,36 @@ LEGACY_CONSTRUCTION_ACCESS_XMLIDS = [
     "access_sc_ops_job_read",
     "access_sc_ops_job_admin",
 ]
+LEGACY_CONSTRUCTION_UI_XMLIDS = {
+    "ir.ui.menu": [
+        "menu_sc_ops_job",
+        "menu_sc_usage_counter",
+        "menu_sc_entitlement",
+        "menu_sc_subscription",
+        "menu_sc_subscription_plan",
+        "menu_smart_core_company_access_root",
+        "menu_smart_core_platform_root",
+    ],
+    "ir.actions.act_window": [
+        "action_sc_subscription_plan",
+        "action_sc_subscription",
+        "action_sc_entitlement",
+        "action_sc_usage_counter",
+        "action_sc_ops_job",
+    ],
+    "ir.ui.view": [
+        "view_sc_subscription_plan_tree",
+        "view_sc_subscription_plan_form",
+        "view_sc_subscription_tree",
+        "view_sc_subscription_form",
+        "view_sc_entitlement_tree",
+        "view_sc_entitlement_form",
+        "view_sc_usage_counter_tree",
+        "view_sc_usage_counter_form",
+        "view_sc_ops_job_tree",
+        "view_sc_ops_job_form",
+    ],
+}
 
 
 def assert_true(condition, message):
@@ -86,6 +116,16 @@ legacy_access = env["ir.model.data"].sudo().search(
 )
 assert_true(not legacy_access, f"legacy construction ACL ownership remains: {legacy_access.mapped('name')}")
 
+for model_name, xmlids in LEGACY_CONSTRUCTION_UI_XMLIDS.items():
+    legacy_ui = env["ir.model.data"].sudo().search(
+        [
+            ("module", "=", "smart_construction_core"),
+            ("name", "in", xmlids),
+            ("model", "=", model_name),
+        ]
+    )
+    assert_true(not legacy_ui, f"legacy construction UI ownership remains: {model_name} {legacy_ui.mapped('name')}")
+
 plan = env["sc.subscription.plan"].sudo().search([("code", "=", "default"), ("active", "=", True)], limit=1)
 if not plan:
     raise AssertionError("missing active default platform subscription plan")
@@ -116,5 +156,5 @@ print(
     "PLATFORM_COMPANY_ACCESS_KERNEL_PROBE=PASS "
     f"models={len(REQUIRED_MODELS)} actions={len(REQUIRED_PLATFORM_XMLIDS['ir.actions.act_window'])} "
     f"menus={len(REQUIRED_PLATFORM_XMLIDS['ir.ui.menu'])} company_id={company.id} "
-    f"plan={entitlement.plan_id.code} legacy_acl=0"
+    f"plan={entitlement.plan_id.code} legacy_acl=0 legacy_ui=0"
 )
