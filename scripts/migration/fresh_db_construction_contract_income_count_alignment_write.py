@@ -148,6 +148,13 @@ def contract_amount(row: dict[str, str]) -> Decimal:
     return amount
 
 
+def contract_event_date(contract):
+    for value in (contract.date_contract, contract.entry_time, contract.create_date):
+        if value:
+            return value.date() if hasattr(value, "date") else value
+    return None
+
+
 ensure_allowed_db()
 
 Contract = env["construction.contract"].sudo()  # noqa: F821
@@ -341,7 +348,7 @@ def sync_amount_difference_event(contract, row: dict[str, str]) -> str:
         "partner_id": contract.partner_id.id,
         "event_no": contract.legacy_document_no or legacy_id,
         "source_channel": "import",
-        "event_date": contract.date_contract or False,
+        "event_date": contract_event_date(contract),
         "amount_impact": delta,
         "tax_excluded_amount": delta,
         "tax_amount": 0.0,
@@ -373,12 +380,19 @@ try:
             updates["type"] = "out"
             updates["tax_id"] = sale_tax.id
             type_corrected += 1
-        rec.write(updates)
+        rec.with_context(skip_validation_check=True).write(updates)
         if should_show:
             raw_row = raw_by_id.get(identity)
             amount_action = ""
             event_action = ""
             if raw_row:
+                projected_state = legacy_state(raw_row)
+                if rec.state != projected_state:
+                    env.cr.execute(  # noqa: F821
+                        "UPDATE construction_contract SET state = %s, write_date = NOW(), write_uid = 1 WHERE id = %s",
+                        [projected_state, rec.id],
+                    )
+                    rec.invalidate_recordset(["state"])
                 sync_contract_amount_fields(rec, raw_row)
                 amount_action = sync_contract_amount_line(rec, raw_row)
                 rec.flush_recordset()

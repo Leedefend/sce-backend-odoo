@@ -69,10 +69,12 @@ env.cr.execute(  # noqa: F821
     """
     INSERT INTO sc_expense_claim (
       name, source_origin, claim_type, direction, state, project_id, partner_id,
-      applicant_name, payee, payee_account, payee_bank, date_claim,
+      applicant_name, company_name_text, payee, receipt_account_name, payee_account, payee_bank,
+      payment_method, fill_date, date_claim,
       expense_type, summary, amount, approved_amount, currency_id,
       legacy_source_model, legacy_source_table, legacy_record_id,
-      legacy_document_no, legacy_document_state, note, active,
+      legacy_document_no, legacy_document_state, creator_legacy_user_id, creator_name, created_time,
+      note, active,
       create_uid, create_date, write_uid, write_date
     )
     SELECT
@@ -82,11 +84,15 @@ env.cr.execute(  # noqa: F821
       'outflow',
       CASE WHEN l.document_state = '2' THEN 'legacy_confirmed' ELSE 'draft' END,
       COALESCE(l.project_id, %s),
-      NULL,
+      partner_match.id,
       NULLIF(l.applicant_name, ''),
+      NULLIF(l.company_name, ''),
+      NULLIF(l.payee, ''),
       NULLIF(l.payee, ''),
       NULLIF(l.payee_account, ''),
       NULLIF(l.payee_bank, ''),
+      NULLIF(l.payment_method, ''),
+      COALESCE(NULLIF(l.document_date, '')::date, NULLIF(l.line_date, '')::date, l.created_time::date),
       COALESCE(NULLIF(l.document_date, '')::date, NULLIF(l.line_date, '')::date, l.created_time::date),
       COALESCE(NULLIF(l.finance_type, ''), NULLIF(l.reimbursement_type, '')),
       NULLIF(l.summary, ''),
@@ -98,6 +104,9 @@ env.cr.execute(  # noqa: F821
       l.legacy_line_id,
       NULLIF(l.document_no, ''),
       NULLIF(l.document_state, ''),
+      NULLIF(l.creator_legacy_user_id, ''),
+      NULLIF(l.creator_name, ''),
+      l.created_time,
       CONCAT(
         '[migration:expense_claim] legacy_line_id=', l.legacy_line_id,
         '; legacy_header_id=', COALESCE(l.legacy_header_id, ''),
@@ -108,16 +117,30 @@ env.cr.execute(  # noqa: F821
       l.active,
       %s, NOW(), %s, NOW()
     FROM sc_legacy_expense_reimbursement_line l
+    LEFT JOIN LATERAL (
+      SELECT rp.id
+      FROM res_partner rp
+      WHERE rp.active
+        AND NULLIF(l.payee, '') IS NOT NULL
+        AND rp.name = l.payee
+      ORDER BY rp.id
+      LIMIT 1
+    ) partner_match ON TRUE
     WHERE COALESCE(l.project_id, %s) IS NOT NULL
       AND ABS(COALESCE(l.amount, 0)) > 0
     ON CONFLICT (legacy_source_model, legacy_record_id) DO UPDATE SET
       name = EXCLUDED.name,
       state = EXCLUDED.state,
       project_id = EXCLUDED.project_id,
+      partner_id = EXCLUDED.partner_id,
       applicant_name = EXCLUDED.applicant_name,
+      company_name_text = EXCLUDED.company_name_text,
       payee = EXCLUDED.payee,
+      receipt_account_name = EXCLUDED.receipt_account_name,
       payee_account = EXCLUDED.payee_account,
       payee_bank = EXCLUDED.payee_bank,
+      payment_method = EXCLUDED.payment_method,
+      fill_date = EXCLUDED.fill_date,
       date_claim = EXCLUDED.date_claim,
       expense_type = EXCLUDED.expense_type,
       summary = EXCLUDED.summary,
@@ -125,6 +148,9 @@ env.cr.execute(  # noqa: F821
       approved_amount = EXCLUDED.approved_amount,
       legacy_document_no = EXCLUDED.legacy_document_no,
       legacy_document_state = EXCLUDED.legacy_document_state,
+      creator_legacy_user_id = EXCLUDED.creator_legacy_user_id,
+      creator_name = EXCLUDED.creator_name,
+      created_time = EXCLUDED.created_time,
       note = EXCLUDED.note,
       active = EXCLUDED.active,
       write_uid = EXCLUDED.write_uid,

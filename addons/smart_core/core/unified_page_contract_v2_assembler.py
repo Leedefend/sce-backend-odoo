@@ -436,6 +436,8 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
         request_id=request_id,
     )
     fields = _field_rows(source, ui, view_type=view_type)
+    source_context = _ui_source_context(_dict(source), _dict(ui))
+    source_context_context = _dict(source_context.get("context"))
     raw_field_map = _dict(ui.get("fields") or source.get("fields"))
     fields_by_name: dict[str, dict[str, Any]] = {}
     for key, value in raw_field_map.items():
@@ -465,9 +467,10 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
             layout_type=layout_type,
             form_subviews=form_subviews,
             component_keys=component_keys,
-                container_status=contract["statusContract"]["containerStatus"],
-                widget_status=contract["statusContract"]["widgetStatus"],
-            )
+            container_status=contract["statusContract"]["containerStatus"],
+            widget_status=contract["statusContract"]["widgetStatus"],
+            context=source_context_context,
+        )
     elif layout_type == "form":
         container_id = "main.form"
         sheet_id = f"{container_id}.sheet"
@@ -545,7 +548,6 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
     contract["layoutContract"]["containerTree"] = container_tree
     contract["layoutContract"]["componentRegistry"] = _component_registry(component_keys or {"sc.display.text"})
     contract["dataContract"]["dataMeta"]["fieldCount"] = len(fields)
-    source_context = _ui_source_context(_dict(source), _dict(ui))
     if source_context:
         contract["dataContract"]["dataMeta"]["sourceContext"] = deepcopy(source_context)
         contract["runtimeContract"]["sourceContext"] = deepcopy(source_context)
@@ -881,6 +883,7 @@ def _normalize_native_layout_nodes(
     component_keys: set[str],
     container_status: list[dict[str, Any]],
     widget_status: list[dict[str, Any]],
+    context: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     out: list[dict[str, Any]] = []
     for row in rows:
@@ -896,6 +899,9 @@ def _normalize_native_layout_nodes(
         if label:
             node["string"] = label
             node["label"] = label
+        invisible = _apply_contextual_invisible_modifier(node, context or {})
+        if invisible is not None:
+            node["invisible"] = invisible
         if node_type == "field":
             field = _dict(fields_by_name.get(node_name)) if node_name else {}
             normalized = _native_field_node(node, field, layout_type=layout_type)
@@ -909,7 +915,7 @@ def _normalize_native_layout_nodes(
             widget_source = _field_source_with_node_info(normalized, field, fallback_name=node_name or _text(field.get("name")))
             widget = _field_widget(widget_source, layout_type=layout_type)
             component_keys.add(widget["componentKey"])
-            widget_status.append(_field_status(widget_source, widget["widgetId"]))
+            widget_status.append(_field_status(widget_source, widget["widgetId"], context=context))
             out.append(normalized)
             continue
         container_id = _text(node.get("containerId") or node.get("container_id") or node_name)
@@ -919,7 +925,7 @@ def _normalize_native_layout_nodes(
         node["containerType"] = node_type
         node.setdefault("title", _text(node.get("title") or node.get("string") or node.get("label") or container_id, container_id))
         node.setdefault("label", _text(node.get("label") or node.get("string") or node.get("title") or container_id, container_id))
-        container_status.append({"containerId": container_id, "visible": True, "disabled": False})
+        container_status.append({"containerId": container_id, "visible": not bool(invisible), "disabled": False})
         for key in ("children", "pages", "tabs", "nodes", "items"):
             child_rows = _list(node.get(key))
             if child_rows:
@@ -931,6 +937,7 @@ def _normalize_native_layout_nodes(
                     component_keys=component_keys,
                     container_status=container_status,
                     widget_status=widget_status,
+                    context=context,
                 )
         direct_widgets: list[dict[str, Any]] = []
         for key in ("children", "pages", "tabs", "nodes", "items"):
@@ -1080,7 +1087,18 @@ def _ui_contract_data_source(
     extra_params = _ui_data_source_extra_params(_dict(source), _dict(ui))
     if view_type == "form":
         if record_id <= 0:
-            return {}
+            return {
+                "query": "api.data",
+                "intent": "api.data",
+                "cachePolicy": "none",
+                "consistency": "strong",
+                "params": {
+                    "op": "default_get",
+                    "model": model,
+                    "fields": field_names[:40],
+                    **extra_params,
+                },
+            }
         return {
             "query": "api.data",
             "intent": "api.data",
@@ -1256,9 +1274,73 @@ def _modifier_true(value: Any) -> bool:
     return False
 
 
-def _field_status(field: dict[str, Any], widget_id: str) -> dict[str, Any]:
+def _contextual_modifier_true(value: Any, context: dict[str, Any]) -> bool | None:
+    if value is True:
+        return True
+    if value is False or value is None:
+        return False if value is False else None
+    if not isinstance(value, str):
+        return None
+    expr = value.strip()
+    if not expr:
+        return None
+    static = expr.lower()
+    if static in {"1", "true", "yes"}:
+        return True
+    if static in {"0", "false", "no"}:
+        return False
+    match = re.fullmatch(
+        r"context\.get\(\s*['\"]([A-Za-z_][A-Za-z0-9_]*)['\"]\s*\)\s*(==|!=)\s*['\"]([^'\"]*)['\"]",
+        expr,
+    )
+    if not match:
+        return None
+    key, operator, expected = match.groups()
+    actual = context.get(key)
+    if operator == "==":
+        return str(actual or "") == expected
+    return str(actual or "") != expected
+
+
+def _apply_contextual_invisible_modifier(node: dict[str, Any], context: dict[str, Any]) -> bool | None:
+    attributes = _dict(node.get("attributes"))
+    attribute_modifiers = _dict(attributes.get("modifiers"))
+    modifiers = _dict(node.get("modifiers"))
+    candidates = [
+        node.get("invisible"),
+        attributes.get("invisible"),
+        attribute_modifiers.get("invisible"),
+        modifiers.get("invisible"),
+    ]
+    resolved: bool | None = None
+    for candidate in candidates:
+        resolved = _contextual_modifier_true(candidate, context)
+        if resolved is not None:
+            break
+    if resolved is None:
+        return None
+    node["invisible"] = resolved
+    if attributes:
+        attributes["invisible"] = resolved
+        if attribute_modifiers:
+            attribute_modifiers["invisible"] = resolved
+            attributes["modifiers"] = attribute_modifiers
+        node["attributes"] = attributes
+    if modifiers:
+        modifiers["invisible"] = resolved
+        node["modifiers"] = modifiers
+    return resolved
+
+
+def _field_status(field: dict[str, Any], widget_id: str, *, context: dict[str, Any] | None = None) -> dict[str, Any]:
     readonly = bool(field.get("readonly") is True)
-    visible = not (_modifier_true(field.get("invisible")) or _modifier_true(field.get("column_invisible")))
+    invisible = _contextual_modifier_true(field.get("invisible"), context or {})
+    if invisible is None:
+        invisible = _modifier_true(field.get("invisible"))
+    column_invisible = _contextual_modifier_true(field.get("column_invisible"), context or {})
+    if column_invisible is None:
+        column_invisible = _modifier_true(field.get("column_invisible"))
+    visible = not (invisible or column_invisible)
     return {
         "widgetId": widget_id,
         "visible": visible,

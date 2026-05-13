@@ -117,6 +117,17 @@ def user_id_by_name(name):
     return user.id or env.ref("base.user_admin").id  # noqa: F821
 
 
+def partner_by_name(name):
+    text = clean(name)
+    if not text:
+        return False
+    Partner = env["res.partner"].sudo()  # noqa: F821
+    partner = Partner.search([("name", "=", text)], limit=1)
+    if partner:
+        return partner.id
+    return Partner.create({"name": text, "customer_rank": 1, "is_company": True}).id
+
+
 def project_by_name(name):
     project_name = clean(name) or "历史投标项目"
     Project = env["project.project"].sudo()  # noqa: F821
@@ -134,6 +145,19 @@ def tender_state(raw):
         return "lost"
     if status in {"2", "已提交", "submitted"}:
         return "submitted"
+    return "prepare"
+
+
+def tender_state_from_fact(fact):
+    status = first(fact.tender_status, fact.document_state)
+    if status in {"中标", "已中标", "won"}:
+        return "won"
+    if status in {"未中标", "lost"}:
+        return "lost"
+    if status in {"2", "已提交", "submitted", "legacy_confirmed"}:
+        return "submitted"
+    if fact.opening_time:
+        return "waiting"
     return "prepare"
 
 
@@ -159,6 +183,110 @@ def bid_by_key(name, project_name, document_no, raw):
         }
     )
     return bid, True
+
+
+def bid_by_fact(fact):
+    if not fact.project_id:
+        return None, False
+    Bid = env["tender.bid"].sudo()  # noqa: F821
+    bid = Bid.search(
+        [
+            ("legacy_fact_model", "=", fact._name),
+            ("legacy_fact_id", "=", fact.id),
+        ],
+        limit=1,
+    )
+    vals = {
+        "name": fact.document_no or "TENDER-%s" % fact.legacy_record_id,
+        "tender_name": first(fact.project_name, fact.document_no) or "历史投标报名",
+        "project_id": fact.project_id.id,
+        "owner_id": partner_by_name(fact.owner_name),
+        "legacy_owner_name": fact.owner_name,
+        "bid_amount": fact.max_price or 0.0,
+        "deadline": fact.bid_time or fact.guarantee_deadline,
+        "open_date": fact.opening_time,
+        "state": tender_state_from_fact(fact),
+        "legacy_fact_model": fact._name,
+        "legacy_fact_id": fact.id,
+        "legacy_fact_type": "legacy_tender_registration",
+        "legacy_note": fact.note,
+    }
+    if bid:
+        bid.write(vals)
+        return bid, False
+    return Bid.create(vals), True
+
+
+def guarantee_by_fact(fact, bid):
+    if not bid or not fact.guarantee_amount:
+        return None, False
+    Guarantee = env["tender.guarantee"].sudo()  # noqa: F821
+    amount = fact.guarantee_amount or 0.0
+    date_value = fact.guarantee_deadline or fact.opening_time or fact.registration_time or fact.created_time
+    date_value = date_value.date() if hasattr(date_value, "date") else date_value
+    remark = "历史投标保证金：%s" % (fact.document_no or fact.legacy_record_id)
+    exists = Guarantee.search(
+        [
+            ("bid_id", "=", bid.id),
+            ("type", "=", "out"),
+            ("amount", "=", amount),
+            ("date", "=", date_value),
+            ("remark", "=", remark),
+        ],
+        limit=1,
+    )
+    vals = {
+        "bid_id": bid.id,
+        "type": "out",
+        "date": date_value,
+        "amount": amount,
+        "remark": remark,
+    }
+    if exists:
+        exists.write(vals)
+        return exists, False
+    return Guarantee.create(vals), True
+
+
+def opening_result_from_fact(fact):
+    state = tender_state_from_fact(fact)
+    if state == "won":
+        return "won"
+    if state == "lost":
+        return "lost"
+    return "pending"
+
+
+def opening_by_fact(fact, bid):
+    if not bid or not fact.opening_time:
+        return None, False
+    Opening = env["tender.opening"].sudo()  # noqa: F821
+    exists = Opening.search(
+        [
+            ("bid_id", "=", bid.id),
+            ("open_time", "=", fact.opening_time),
+        ],
+        limit=1,
+    )
+    vals = {
+        "bid_id": bid.id,
+        "open_time": fact.opening_time,
+        "result": opening_result_from_fact(fact),
+        "win_price": fact.max_price or 0.0,
+        "remark": "\n".join(
+            item
+            for item in [
+                "历史投标开标记录：%s" % (fact.document_no or fact.legacy_record_id),
+                "来源表：%s" % (fact.source_table or ""),
+                fact.note or "",
+            ]
+            if item
+        ),
+    }
+    if exists:
+        exists.write(vals)
+        return exists, False
+    return Opening.create(vals), True
 
 
 def load_rows(input_csv):
@@ -205,13 +333,24 @@ env.cr.execute("SELECT COUNT(*) FROM tender_bid")  # noqa: F821
 before_bid_count = env.cr.fetchone()[0]  # noqa: F821
 env.cr.execute("SELECT COUNT(*) FROM tender_doc_purchase")  # noqa: F821
 before_fee_count = env.cr.fetchone()[0]  # noqa: F821
+env.cr.execute("SELECT COUNT(*) FROM tender_guarantee")  # noqa: F821
+before_guarantee_count = env.cr.fetchone()[0]  # noqa: F821
+env.cr.execute("SELECT COUNT(*) FROM tender_opening")  # noqa: F821
+before_opening_count = env.cr.fetchone()[0]  # noqa: F821
 
 created_bids = 0
+updated_fact_bids = 0
 created_fees = 0
 updated_fees = 0
+created_guarantees = 0
+updated_guarantees = 0
+created_openings = 0
+updated_openings = 0
 active_fee_rows = 0
 bid_samples = []
 fee_samples = []
+guarantee_samples = []
+opening_samples = []
 
 for row in rows:
     if row.get("source_table") != "P_ZTB_GCXXGL":
@@ -291,28 +430,83 @@ for row in rows:
             }
         )
 
+Fact = env["sc.legacy.tender.registration.fact"].sudo().with_context(active_test=False)  # noqa: F821
+for fact in Fact.search([("active", "=", True)], order="id"):
+    bid, created = bid_by_fact(fact)
+    if not bid:
+        continue
+    if created:
+        created_bids += 1
+        if len(bid_samples) < 5:
+            bid_samples.append({"name": bid.name, "tender_name": bid.tender_name, "state": bid.state})
+    else:
+        updated_fact_bids += 1
+    guarantee, guarantee_created = guarantee_by_fact(fact, bid)
+    if guarantee_created:
+        created_guarantees += 1
+        if len(guarantee_samples) < 5:
+            guarantee_samples.append(
+                {
+                    "bid": bid.name,
+                    "amount": float(guarantee.amount or 0.0),
+                    "date": str(guarantee.date or ""),
+                    "remark": guarantee.remark,
+                }
+            )
+    elif guarantee:
+        updated_guarantees += 1
+    opening, opening_created = opening_by_fact(fact, bid)
+    if opening_created:
+        created_openings += 1
+        if len(opening_samples) < 5:
+            opening_samples.append(
+                {
+                    "bid": bid.name,
+                    "open_time": str(opening.open_time or ""),
+                    "result": opening.result,
+                    "win_price": float(opening.win_price or 0.0),
+                }
+            )
+    elif opening:
+        updated_openings += 1
+
 env.cr.commit()  # noqa: F821
 
 env.cr.execute("SELECT COUNT(*) FROM tender_bid")  # noqa: F821
 after_bid_count = env.cr.fetchone()[0]  # noqa: F821
 env.cr.execute("SELECT COUNT(*) FROM tender_doc_purchase")  # noqa: F821
 after_fee_count = env.cr.fetchone()[0]  # noqa: F821
+env.cr.execute("SELECT COUNT(*) FROM tender_guarantee")  # noqa: F821
+after_guarantee_count = env.cr.fetchone()[0]  # noqa: F821
+env.cr.execute("SELECT COUNT(*) FROM tender_opening")  # noqa: F821
+after_opening_count = env.cr.fetchone()[0]  # noqa: F821
 
 result = {
     "mode": "fresh_db_tender_registration_projection_write",
     "source_csv": str(input_csv),
     "residual_model_rows": len(residual_model_rows),
-    "target_models": ["tender.bid", "tender.doc.purchase"],
+    "target_models": ["tender.bid", "tender.doc.purchase", "tender.guarantee", "tender.opening"],
     "before_bid_count": before_bid_count,
     "created_bids": created_bids,
+    "updated_fact_bids": updated_fact_bids,
     "after_bid_count": after_bid_count,
     "before_fee_count": before_fee_count,
     "created_fees": created_fees,
     "updated_fees": updated_fees,
     "active_fee_rows": active_fee_rows,
     "after_fee_count": after_fee_count,
+    "before_guarantee_count": before_guarantee_count,
+    "created_guarantees": created_guarantees,
+    "updated_guarantees": updated_guarantees,
+    "after_guarantee_count": after_guarantee_count,
+    "before_opening_count": before_opening_count,
+    "created_openings": created_openings,
+    "updated_openings": updated_openings,
+    "after_opening_count": after_opening_count,
     "bid_samples": bid_samples,
     "fee_samples": fee_samples,
+    "guarantee_samples": guarantee_samples,
+    "opening_samples": opening_samples,
 }
 output_json.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 print(json.dumps(result, ensure_ascii=False, indent=2))

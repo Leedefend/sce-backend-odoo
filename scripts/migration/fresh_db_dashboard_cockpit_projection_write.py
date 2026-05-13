@@ -138,8 +138,8 @@ env.cr.execute(  # noqa: F821
 env.cr.execute(  # noqa: F821
     """
     INSERT INTO sc_dashboard_cockpit_fact (
-      name, document_no, fact_type, project_id, partner_id, business_date,
-      quantity, amount, tax_amount, currency_id, state, description, active,
+      name, document_no, fact_type, project_id, partner_id, requester_id,
+      handler_id, business_date, quantity, amount, tax_amount, currency_id, state, description, active,
       cockpit_scope, metric_period, metric_value, source_model, source_res_id,
       create_uid, write_uid, create_date, write_date
     )
@@ -149,6 +149,8 @@ env.cr.execute(  # noqa: F821
       'cost_cockpit',
       c.project_id,
       c.partner_id,
+      c.handler_id,
+      c.handler_id,
       COALESCE(c.date_contract, CURRENT_DATE),
       1,
       COALESCE(NULLIF(c.amount_final, 0), c.amount_total, 0),
@@ -186,6 +188,8 @@ env.cr.execute(  # noqa: F821
       name = EXCLUDED.name,
       project_id = EXCLUDED.project_id,
       partner_id = EXCLUDED.partner_id,
+      requester_id = EXCLUDED.requester_id,
+      handler_id = EXCLUDED.handler_id,
       business_date = EXCLUDED.business_date,
       quantity = EXCLUDED.quantity,
       amount = EXCLUDED.amount,

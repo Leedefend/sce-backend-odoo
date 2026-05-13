@@ -89,7 +89,7 @@ env.cr.execute(  # noqa: F821
       project_id, partner_id, contract_id, payment_request_id,
       date_payment, document_no, payment_family, planned_amount, paid_amount,
       currency_id, legacy_source_model, legacy_source_table, legacy_record_id,
-      legacy_residual_reason, note, active,
+      legacy_residual_reason, creator_legacy_user_id, creator_name, created_time, note, active,
       create_uid, create_date, write_uid, write_date
     )
     SELECT
@@ -111,6 +111,9 @@ env.cr.execute(  # noqa: F821
       'T_FK_Supplier_CB',
       l.legacy_line_id,
       'actual_outflow_line_projected_to_payment_execution',
+      NULLIF(r.creator_legacy_user_id, ''),
+      NULLIF(r.creator_name, ''),
+      r.created_time,
       CONCAT(
         '[migration:actual_outflow_line_payment_execution] legacy_line_id=', l.legacy_line_id,
         '; legacy_parent_id=', COALESCE(l.legacy_parent_id, ''),
@@ -142,6 +145,9 @@ env.cr.execute(  # noqa: F821
       currency_id = EXCLUDED.currency_id,
       legacy_source_table = EXCLUDED.legacy_source_table,
       legacy_residual_reason = EXCLUDED.legacy_residual_reason,
+      creator_legacy_user_id = EXCLUDED.creator_legacy_user_id,
+      creator_name = EXCLUDED.creator_name,
+      created_time = EXCLUDED.created_time,
       note = EXCLUDED.note,
       active = EXCLUDED.active,
       write_uid = EXCLUDED.write_uid,

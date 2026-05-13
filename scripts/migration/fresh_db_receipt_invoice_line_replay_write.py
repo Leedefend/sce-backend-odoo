@@ -39,12 +39,18 @@ def write_json(path: Path, payload: dict[str, object]) -> None:
 
 
 LEGACY_RECEIPT_ID_RE = re.compile(r"legacy_receipt_id=([0-9a-fA-F]+)")
+SOURCE_DOCUMENT_NO_RE = re.compile(r"document_no=([^\n;]+)")
 
 
 def request_legacy_id_from_ref(request_ref: str) -> str:
     if request_ref.startswith("legacy_receipt_sc_"):
         return request_ref.removeprefix("legacy_receipt_sc_")
     return ""
+
+
+def source_document_no_from_note(note: str) -> str:
+    match = SOURCE_DOCUMENT_NO_RE.search(note or "")
+    return match.group(1).strip() if match else ""
 
 
 REPO_ROOT = repo_root()
@@ -66,12 +72,15 @@ existing_line_ids = {
     for rec in Line.search_read([("legacy_invoice_line_id", "!=", False)], ["legacy_invoice_line_id"])
     if rec.get("legacy_invoice_line_id")
 }
-request_anchor_map: dict[str, int] = {}
+request_anchor_map: dict[str, dict[str, object]] = {}
 for rec in Request.search_read([("note", "ilike", "[migration:receipt_core]")], ["note"]):
     note = rec.get("note") or ""
     match = LEGACY_RECEIPT_ID_RE.search(note)
     if match:
-        request_anchor_map[match.group(1)] = rec["id"]
+        request_anchor_map[match.group(1)] = {
+            "id": rec["id"],
+            "source_document_no": source_document_no_from_note(note),
+        }
 
 created = 0
 skipped = 0
@@ -82,8 +91,8 @@ for row in rows:
     if row["legacy_invoice_line_id"] in existing_line_ids:
         skipped += 1
         continue
-    request_id = request_anchor_map.get(request_legacy_id_from_ref(row["request_ref"]))
-    if not request_id:
+    request_anchor = request_anchor_map.get(request_legacy_id_from_ref(row["request_ref"]))
+    if not request_anchor:
         blocked_rows.append(
             {
                 "external_id": row["external_id"],
@@ -94,6 +103,7 @@ for row in rows:
             }
         )
         continue
+    request_id = int(request_anchor["id"])
     vals = {
         "request_id": request_id,
         "sequence": int(row["sequence"] or 10),
@@ -106,7 +116,7 @@ for row in rows:
         "invoice_no": row["invoice_no"] or False,
         "invoice_party_name": row["invoice_party_name"] or False,
         "invoice_issue_company": row["invoice_issue_company"] or False,
-        "source_document_no": row["source_document_no"] or False,
+        "source_document_no": row["source_document_no"] or request_anchor.get("source_document_no") or False,
         "source_table_name": row["source_table_name"] or False,
         "amount_source": row["amount_source"] or False,
         "invoice_amount": row["invoice_amount"],

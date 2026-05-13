@@ -840,6 +840,7 @@ const isProjectStandardIntakeMode = computed(() => {
   if (String(model.value || '').trim() !== 'project.project') return false;
   if (recordId.value) return false;
   if (isProjectQuickIntakeMode.value) return false;
+  if (String(route.query.intake_mode || '').trim().toLowerCase() === 'standard') return true;
   return String(route.query.scene_key || '').trim() === 'projects.intake';
 });
 const isProjectIntakeCreateMode = computed(() => isProjectQuickIntakeMode.value || isProjectStandardIntakeMode.value);
@@ -4848,9 +4849,25 @@ function contractModelName(data: unknown) {
   return String(head.model || row.model || '').trim();
 }
 
+function routeContractContext() {
+  const context: Record<string, unknown> = {};
+  Object.entries(route.query as Record<string, unknown>).forEach(([key, value]) => {
+    if (key.startsWith('default_')) {
+      context[key] = normalizeRouteDefault(value);
+    }
+  });
+  const intakeMode = String(route.query.intake_mode || '').trim().toLowerCase();
+  if (intakeMode === 'quick' || intakeMode === 'standard') {
+    context.intake_mode = intakeMode;
+  }
+  return context;
+}
+
 async function loadContract() {
   const profile = recordId.value ? 'edit' : 'create';
   const currentModel = String(model.value || '').trim();
+  const contractContext = routeContractContext();
+  const contextRaw = String(route.query.context_raw || '').trim();
   let response: Awaited<ReturnType<typeof loadActionContractRaw>> | null = null;
   if (actionId.value) {
     try {
@@ -4859,6 +4876,8 @@ async function loadContract() {
         renderProfile: profile,
         surface: requestedSurface.value,
         sourceMode: requestedSourceMode.value,
+        context: contractContext,
+        contextRaw,
       });
       const actionReadiness = analyzeFormContractReadiness(response?.data, { requirePureFormViewType: true });
       const actionModel = contractModelName(response?.data);
@@ -4876,6 +4895,8 @@ async function loadContract() {
       renderProfile: profile,
       surface: requestedSurface.value,
       sourceMode: requestedSourceMode.value,
+      context: contractContext,
+      contextRaw,
     });
   }
   if (!response?.data || typeof response.data !== 'object') {

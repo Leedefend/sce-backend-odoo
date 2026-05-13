@@ -15,29 +15,25 @@ LOGIN = os.getenv("E2E_LOGIN") or os.getenv("ADMIN_LOGIN") or "admin"
 PASSWORD = os.getenv("E2E_PASSWORD") or os.getenv("ADMIN_PASSWD") or "admin"
 
 WEB_ACTIONS: list[tuple[str, int, dict[str, Any]]] = [
-    ("项目立项", 663, {"render_profile": "create"}),
-    ("快速创建项目", 664, {"render_profile": "create"}),
-    ("我的项目", 554, {}),
+    ("项目立项", 696, {"render_profile": "create"}),
+    ("快速创建项目", 697, {"render_profile": "create"}),
+    ("我的项目", 557, {}),
     ("项目台账", 506, {}),
-    ("项目驾驶舱", 570, {}),
-    ("项目合同汇总", 559, {}),
-    ("成本台账", 512, {}),
-    ("项目资料", 562, {}),
-    ("我的合同", 572, {}),
-    ("收入合同", 573, {}),
-    ("支出合同", 574, {}),
-    ("一般合同", 643, {}),
-    ("待我审批", 607, {}),
+    ("项目看板", 575, {}),
+    ("收入合同台账", 578, {}),
+    ("支出合同台账", 579, {}),
+    ("项目资料", 567, {}),
+    ("我的审批", 641, {}),
 ]
 
 MOBILE_ACTIONS: list[tuple[str, int, dict[str, Any]]] = [
-    ("项目立项", 663, {"render_profile": "create"}),
-    ("快速创建项目", 664, {"render_profile": "create"}),
-    ("我的项目", 554, {}),
+    ("项目立项", 696, {"render_profile": "create"}),
+    ("快速创建项目", 697, {"render_profile": "create"}),
+    ("我的项目", 557, {}),
     ("项目台账", 506, {}),
-    ("收入合同", 573, {}),
-    ("支出合同", 574, {}),
-    ("待我审批", 607, {}),
+    ("收入合同台账", 578, {}),
+    ("支出合同台账", 579, {}),
+    ("我的审批", 641, {}),
 ]
 
 PROJECT_RELATION_FIELDS = [
@@ -109,6 +105,48 @@ def _primary_field_names(v2: dict[str, Any]) -> list[str]:
     return [str(name).strip() for name in raw_fields if str(name).strip()]
 
 
+def _layout_widgets(v2: dict[str, Any]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+
+    def walk(containers: Any) -> None:
+        if not isinstance(containers, list):
+            return
+        for container in containers:
+            if not isinstance(container, dict):
+                continue
+            for widget in container.get("widgetList") or []:
+                if isinstance(widget, dict):
+                    rows.append(widget)
+            walk(container.get("children"))
+
+    walk(((v2.get("layoutContract") or {}).get("containerTree") or []))
+    return rows
+
+
+def _layout_field_names(v2: dict[str, Any]) -> list[str]:
+    out: list[str] = []
+    for widget in _layout_widgets(v2):
+        name = str(widget.get("fieldCode") or "").strip()
+        if name and name not in out:
+            out.append(name)
+    return out
+
+
+def _v2_relation_signature(v2: dict[str, Any], name: str) -> dict[str, Any] | None:
+    for widget in _layout_widgets(v2):
+        if str(widget.get("fieldCode") or "").strip() != name:
+            continue
+        config = widget.get("componentConfig") if isinstance(widget.get("componentConfig"), dict) else {}
+        entry = config.get("relationEntry") if isinstance(config.get("relationEntry"), dict) else {}
+        if not entry:
+            return None
+        return {
+            key: entry.get(key)
+            for key in ("model", "action_id", "menu_id", "can_read", "can_create", "create_mode", "reason_code", "default_vals")
+        }
+    return None
+
+
 def _relation_signature(fields: dict[str, Any], name: str) -> dict[str, Any] | None:
     desc = fields.get(name) if isinstance(fields.get(name), dict) else {}
     entry = desc.get("relation_entry") if isinstance(desc.get("relation_entry"), dict) else {}
@@ -151,14 +189,15 @@ def _web_contract_matrix(token: str) -> list[dict[str, Any]]:
         old_fields = old.get("fields") if isinstance(old.get("fields"), dict) else {}
         old_field_names = set(old_fields.keys())
         v2_field_names = set(v2_fields)
+        v2_layout_field_names = set(_layout_field_names(v2))
         if "id" not in old_field_names and "id" in v2_field_names:
             v2_field_names = {name for name in v2_field_names if name != "id"}
         relation_diffs = []
-        if action_id in {663, 664}:
+        if action_id in {696, 697}:
             for field in PROJECT_RELATION_FIELDS:
                 old_relation = _relation_signature(old_fields, field)
-                if old_relation and field not in v2_field_names:
-                    relation_diffs.append({"field": field, "old": old_relation, "v2_present": False})
+                if old_relation and field in v2_layout_field_names and not _v2_relation_signature(v2, field):
+                    relation_diffs.append({"field": field, "old": old_relation, "v2_present": True, "v2_relation_entry": False})
         ok = (
             old_sig[:2] == v2_sig[:2]
             and old_context == v2_context

@@ -45,7 +45,7 @@ env.cr.execute(  # noqa: F821
     """
     INSERT INTO sc_receipt_income (
       name, source_origin, source_kind, state, project_id, partner_id,
-      date_receipt, document_no, income_category, amount, currency_id,
+      date_receipt, document_no, receipt_type, income_category, amount, currency_id,
       legacy_source_model, legacy_source_table, legacy_record_id,
       legacy_document_state, creator_legacy_user_id, creator_name, created_time,
       note, active, create_uid, write_uid, create_date, write_date
@@ -56,9 +56,15 @@ env.cr.execute(  # noqa: F821
       'receipt_income',
       CASE WHEN COALESCE(f.legacy_state, '') = '2' THEN 'legacy_confirmed' ELSE 'draft' END,
       f.project_id,
-      f.partner_id,
+      COALESCE(f.partner_id, partner_match.id),
       COALESCE(f.document_date, f.created_time::date),
       NULLIF(f.document_no, ''),
+      CASE
+        WHEN f.source_family = 'company_financial_income' THEN '公司财务收入'
+        WHEN f.source_family = 'receipt_confirmation' THEN '到款确认'
+        WHEN f.source_family = 'customer_receipt' THEN '客户收款'
+        ELSE NULLIF(f.source_family, '')
+      END,
       NULLIF(f.income_category, ''),
       COALESCE(f.source_amount, 0),
       %s,
@@ -81,6 +87,15 @@ env.cr.execute(  # noqa: F821
       NOW(),
       NOW()
     FROM sc_legacy_receipt_income_fact f
+    LEFT JOIN LATERAL (
+      SELECT rp.id
+      FROM res_partner rp
+      WHERE rp.active
+        AND NULLIF(f.legacy_partner_name, '') IS NOT NULL
+        AND rp.name = f.legacy_partner_name
+      ORDER BY rp.id
+      LIMIT 1
+    ) partner_match ON TRUE
     WHERE f.project_id IS NOT NULL
       AND COALESCE(f.source_amount, 0) > 0
     ON CONFLICT (legacy_source_model, legacy_record_id)
@@ -90,6 +105,7 @@ env.cr.execute(  # noqa: F821
       partner_id = EXCLUDED.partner_id,
       date_receipt = EXCLUDED.date_receipt,
       document_no = EXCLUDED.document_no,
+      receipt_type = EXCLUDED.receipt_type,
       income_category = EXCLUDED.income_category,
       amount = EXCLUDED.amount,
       legacy_document_state = EXCLUDED.legacy_document_state,
@@ -148,6 +164,12 @@ env.cr.execute(  # noqa: F821
       r.created_time,
       CONCAT_WS(E'\n',
         '[migration:receipt_income] legacy_record_id=' || r.legacy_record_id,
+        CASE
+          WHEN NULLIF(r.contract_legacy_id, '') IS NOT NULL AND LOWER(r.contract_legacy_id) <> 'null'
+          THEN 'legacy_contract_id=' || r.contract_legacy_id
+          ELSE NULL
+        END,
+        CASE WHEN NULLIF(r.invoice_ref, '') IS NOT NULL THEN 'invoice_ref=' || r.invoice_ref ELSE NULL END,
         NULLIF(r.residual_reason, ''),
         NULLIF(r.project_name, ''),
         NULLIF(r.partner_name, ''),

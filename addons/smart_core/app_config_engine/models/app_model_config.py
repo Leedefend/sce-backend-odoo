@@ -57,6 +57,14 @@ class AppModelConfig(models.Model):
         return hashlib.sha1(raw.encode('utf-8')).hexdigest()
 
     @api.model
+    def _lock_generation(self, model_name):
+        """Serialize lazy generation per model to keep the unique model row idempotent."""
+        self.env.cr.execute(
+            "SELECT pg_advisory_xact_lock(hashtext(%s), hashtext(%s))",
+            ("app.model.config", str(model_name or "")),
+        )
+
+    @api.model
     def _generate_from_ir_model(self, model_name):
         """
         扫描 Odoo 模型字段，生成标准化字段清单：
@@ -68,6 +76,8 @@ class AppModelConfig(models.Model):
             raise ValueError('model_name is required')
         if model_name not in self.env:
             raise ValueError(_('模型不存在：%s') % model_name)
+
+        self._lock_generation(model_name)
 
         Model = self.env[model_name].sudo()
         fields_get = Model.fields_get()

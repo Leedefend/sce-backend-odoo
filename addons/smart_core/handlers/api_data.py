@@ -1152,6 +1152,8 @@ class ApiDataHandler(BaseIntentHandler):
             return self._with_etag_if_match(self._op_list(model, p, context, use_sudo), model, op, context, if_none_match)
         elif op == "read":
             return self._with_etag_if_match(self._op_read(model, p, context, use_sudo), model, op, context, if_none_match)
+        elif op in ("default_get", "defaults"):
+            return self._with_etag_if_match(self._op_default_get(model, p, context, use_sudo), model, op, context, if_none_match)
         elif op in ("count", "search_count"):
             return self._with_etag_if_match(self._op_count(model, p, context, use_sudo), model, op, context, if_none_match)
         elif op in ("create",):
@@ -1433,6 +1435,33 @@ class ApiDataHandler(BaseIntentHandler):
             "model": model,
             "source_authority": self._source_authority_contract(model, "read"),
             "count": len(rows),
+            "fields": fields_safe,
+            "project_scope": project_scope_meta,
+            "record_scope": project_scope_meta,
+        }
+        return data, meta
+
+    def _op_default_get(self, model: str, p: Dict[str, Any], ctx: Dict[str, Any], sudo: bool):
+        fields, fields_error = self._read_fields_param(p, ["id", "name"])
+        if fields_error:
+            return fields_error
+
+        env_model = self.env[model].with_context(ctx)
+        if sudo:
+            env_model = env_model.sudo()
+
+        fields_safe = self._filter_readable_fields(env_model, fields)
+        try:
+            defaults = env_model.default_get([name for name in fields_safe if name != "id"]) or {}
+        except AccessError as ae:
+            _logger.warning("default_get() AccessError on %s, fallback. err=%s", model, ae)
+            defaults = {}
+        data = {"record": defaults}
+        _, project_scope_meta = self._apply_project_scope(env_model, [], p, ctx)
+        meta = {
+            "op": "default_get",
+            "model": model,
+            "source_authority": self._source_authority_contract(model, "default_get"),
             "fields": fields_safe,
             "project_scope": project_scope_meta,
             "record_scope": project_scope_meta,

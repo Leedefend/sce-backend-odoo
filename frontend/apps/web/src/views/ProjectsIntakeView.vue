@@ -100,7 +100,6 @@ function openQuickCreate() {
     query: {
       action_id: target?.actionId || undefined,
       menu_id: target?.menuId || undefined,
-      scene_key: 'projects.intake',
       scene_label: '项目立项',
       intake_mode: 'quick',
       ...workspaceContext,
@@ -110,29 +109,29 @@ function openQuickCreate() {
 
 function openFullForm() {
   const fullNode = findNodeByMenuXmlid(session.menuTree, FULL_CREATE_MENU_XMLID);
+  const fallback = resolveIntakeActionTarget();
   if (fullNode?.meta?.action_id) {
     void router.replace({
-      path: `/a/${Number(fullNode.meta.action_id)}`,
+      path: '/f/project.project/new',
       query: {
         menu_id: Number(fullNode.menu_id || fullNode.id || 0) || undefined,
-        scene_key: 'projects.intake',
+        action_id: Number(fullNode.meta.action_id),
         scene_label: '项目立项',
-        intake_mode: undefined,
+        intake_mode: 'standard',
         context_raw: undefined,
         ...resolveWorkspaceContextQuery(),
       },
     });
     return;
   }
-  const fallback = resolveIntakeActionTarget();
   if (!fallback?.actionId) return;
   void router.replace({
-    path: `/a/${fallback.actionId}`,
+    path: '/f/project.project/new',
     query: {
+      action_id: fallback.actionId,
       menu_id: fallback.menuId,
-      scene_key: 'projects.intake',
       scene_label: '项目立项',
-      intake_mode: undefined,
+      intake_mode: 'standard',
       context_raw: undefined,
       ...resolveWorkspaceContextQuery(),
     },

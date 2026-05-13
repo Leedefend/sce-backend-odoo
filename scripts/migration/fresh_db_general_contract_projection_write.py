@@ -49,6 +49,7 @@ env.cr.execute(  # noqa: F821
     """
     INSERT INTO sc_general_contract (
       name, source_origin, state, project_id, partner_name_text, credit_code,
+      handler_id,
       contact_name, contact_phone, bank_name, bank_account, document_no,
       contract_no, contract_name, submitted_time, contract_type, contract_attribute,
       sign_status, signing_place, contract_date, expected_sign_date, completion_date,
@@ -67,6 +68,7 @@ env.cr.execute(  # noqa: F821
       f.project_id,
       NULLIF(f.partner_name, ''),
       NULLIF(f.credit_code, ''),
+      creator_profile.user_id,
       NULLIF(f.contact_name, ''),
       NULLIF(f.contact_phone, ''),
       NULLIF(f.bank_name, ''),
@@ -113,6 +115,9 @@ env.cr.execute(  # noqa: F821
       NOW(),
       NOW()
     FROM sc_legacy_purchase_contract_fact f
+    LEFT JOIN sc_legacy_user_profile AS creator_profile
+      ON creator_profile.legacy_user_id = f.creator_legacy_user_id
+     AND creator_profile.user_id IS NOT NULL
     WHERE f.active
       AND f.project_id IS NOT NULL
       AND GREATEST(COALESCE(f.total_amount, 0), 0) > 0
@@ -123,6 +128,7 @@ env.cr.execute(  # noqa: F821
       project_id = EXCLUDED.project_id,
       partner_name_text = EXCLUDED.partner_name_text,
       credit_code = EXCLUDED.credit_code,
+      handler_id = EXCLUDED.handler_id,
       contact_name = EXCLUDED.contact_name,
       contact_phone = EXCLUDED.contact_phone,
       bank_name = EXCLUDED.bank_name,

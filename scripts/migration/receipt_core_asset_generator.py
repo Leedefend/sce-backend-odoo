@@ -185,6 +185,9 @@ def write_xml(path: Path, records: list[dict[str, str]]) -> None:
         add_ref_field(record, "partner_id", row["partner_external_id"])
         add_text_field(record, "amount", row["amount"], required=True)
         add_text_field(record, "date_request", row["date_request"])
+        add_text_field(record, "creator_legacy_user_id", row["creator_legacy_user_id"])
+        add_text_field(record, "creator_name", row["creator_name"])
+        add_text_field(record, "created_time", row["created_time"])
         add_text_field(record, "note", row["note"], required=True)
     ET.indent(root, space="  ")
     ET.ElementTree(root).write(path, encoding="utf-8", xml_declaration=True)
@@ -245,6 +248,7 @@ def generate(asset_root: Path, runtime_root: Path, source_csv: Path, expected_re
         receipt_ids[legacy_receipt_id] += 1
         document_no = clean(row.get("DJBH"))
         receipt_date = parse_date(first_nonempty(row, ["f_RQ", "LRSJ", "f_LRSJ"]))
+        created_time = parse_date(first_nonempty(row, ["LRSJ", "f_LRSJ"]))
         loadable.append(
             {
                 "external_id": f"legacy_receipt_sc_{safe_external_suffix(legacy_receipt_id)}",
@@ -263,6 +267,9 @@ def generate(asset_root: Path, runtime_root: Path, source_csv: Path, expected_re
                 "amount": str(amount),
                 "date_request": receipt_date,
                 "document_no": document_no,
+                "creator_legacy_user_id": first_nonempty(row, ["LRRID", "f_LRRID"]),
+                "creator_name": first_nonempty(row, ["LRR", "f_LRR"]),
+                "created_time": created_time,
                 "note": (
                     "[migration:receipt_core] "
                     f"legacy_receipt_id={legacy_receipt_id}; "
