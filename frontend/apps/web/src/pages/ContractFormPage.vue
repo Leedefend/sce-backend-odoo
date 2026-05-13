@@ -490,6 +490,7 @@ type UiStatus = 'loading' | 'ok' | 'error';
 type BusyKind = 'save' | 'action' | null;
 const MANY2ONE_CREATE_OPTION = '__create__';
 const MANY2ONE_SEARCH_MORE_OPTION = '__search_more__';
+const MANY2ONE_OPEN_RECORD_OPTION = '__open_record__';
 
 type ContractAction = {
   key: string;
@@ -2502,6 +2503,52 @@ async function openRelationCreateForm(fieldName: string, descriptor?: FieldDescr
   }
 }
 
+function currentRelationRecordId(fieldName: string) {
+  const id = Number(relationIds(fieldName)[0] || 0);
+  return Number.isFinite(id) && id > 0 ? Math.trunc(id) : 0;
+}
+
+function canOpenRelationRecordForm(fieldName: string, descriptor?: FieldDescriptor) {
+  const relation = relationModel(fieldName);
+  const entry = relationEntry(descriptor);
+  return Boolean(relation && currentRelationRecordId(fieldName) > 0 && entry?.canRead !== false);
+}
+
+async function openRelationRecordForm(fieldName: string, descriptor?: FieldDescriptor) {
+  const relation = relationModel(fieldName);
+  const recordId = currentRelationRecordId(fieldName);
+  const entry = relationEntry(descriptor);
+  if (!relation || recordId <= 0) return;
+  if (entry?.canRead === false) {
+    validationErrors.value = [relationUiLabel(descriptor, 'missing_read_entry')];
+    return;
+  }
+  const relationActionId = entry?.actionId || null;
+  const menuId = entry?.menuId || 0;
+  const nextQuery = pickContractNavQuery(route.query as Record<string, unknown>, {
+    action_id: relationActionId || undefined,
+    menu_id: menuId || undefined,
+    view_mode: 'form',
+  });
+  const returnUrl = `${window.location.pathname}${window.location.search}`;
+  try {
+    await router.push({
+      name: 'model-form',
+      params: { model: relation, id: String(recordId) },
+      query: {
+        ...nextQuery,
+        return_url: encodeURIComponent(returnUrl),
+        return_field: fieldName,
+        return_model: model.value,
+        return_action_id: actionId.value || undefined,
+        return_menu_id: Number(route.query.menu_id || 0) || undefined,
+      },
+    });
+  } catch (err) {
+    validationErrors.value = [sanitizeUiErrorMessage(err instanceof Error ? err.message : err, relationUiLabel(descriptor, 'open_record_failed'))];
+  }
+}
+
 async function quickCreateRelation(
   fieldName: string,
   descriptor: FieldDescriptor | undefined,
@@ -3949,6 +3996,8 @@ const buildSectionFieldSchemas = createFormSectionFieldSchemaBuilder({
     };
   },
   resolveRelationTextValue: relationKeyword,
+  resolveCanOpenRelationRecord: (fieldName, descriptor) => canOpenRelationRecordForm(fieldName, descriptor),
+  resolveRelationRecordOpenLabel: (_fieldName, descriptor) => relationUiLabel(descriptor, 'open_existing', '维护当前项'),
   resolveRelationSearchLabel: (_fieldName, descriptor) => relationUiLabel(descriptor, 'search_more'),
   resolveRelationCreateLabel: (_fieldName, descriptor) => {
     const mode = relationCreateMode(_fieldName, descriptor);
@@ -3963,6 +4012,7 @@ const buildSectionFieldSchemas = createFormSectionFieldSchemaBuilder({
   },
   many2oneCreateToken: MANY2ONE_CREATE_OPTION,
   many2oneSearchToken: MANY2ONE_SEARCH_MORE_OPTION,
+  many2oneOpenToken: MANY2ONE_OPEN_RECORD_OPTION,
 });
 
 function onTemplateFieldChange(payload: FormSectionFieldChange) {
@@ -4001,6 +4051,19 @@ const relationFallbackAdapter = computed<RelationFallbackAdapter>(() => createRe
     const descriptor = contract.value?.fields?.[fieldName];
     if (!descriptor) return;
     void openRelationSearchDialog(fieldName, descriptor);
+  },
+  canOpenRelationRecord: (fieldName: string) => {
+    const descriptor = contract.value?.fields?.[fieldName];
+    return canOpenRelationRecordForm(fieldName, descriptor);
+  },
+  relationRecordLabel: (fieldName: string) => {
+    const descriptor = contract.value?.fields?.[fieldName];
+    return relationUiLabel(descriptor, 'open_existing', '维护当前项');
+  },
+  openRelationRecord: (fieldName: string) => {
+    const descriptor = contract.value?.fields?.[fieldName];
+    if (!descriptor) return;
+    void openRelationRecordForm(fieldName, descriptor);
   },
   relationCreateMode: (fieldName: string) => relationCreateMode(fieldName, contract.value?.fields?.[fieldName]),
   relationCreateLabel: (fieldName: string) => {
@@ -4195,6 +4258,10 @@ function setMany2oneField(name: string, descriptor: FieldDescriptor | undefined,
   }
   if (normalized === MANY2ONE_SEARCH_MORE_OPTION) {
     void openRelationSearchDialog(name, descriptor);
+    return;
+  }
+  if (normalized === MANY2ONE_OPEN_RECORD_OPTION) {
+    void openRelationRecordForm(name, descriptor);
     return;
   }
   const id = Number(normalized);

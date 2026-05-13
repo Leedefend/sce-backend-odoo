@@ -108,6 +108,15 @@
                       </div>
                       <div class="many2one-actions">
                         <button
+                          v-if="field.many2oneOpenToken"
+                          type="button"
+                          class="many2one-action many2one-action--record"
+                          @mousedown.prevent
+                          @click="emitFieldChange(field, field.many2oneOpenToken || '')"
+                        >
+                          {{ field.many2oneOpenLabel || '维护当前项' }}
+                        </button>
+                        <button
                           v-if="field.many2oneSearchToken"
                           type="button"
                           class="many2one-action"
@@ -303,6 +312,7 @@ function showMany2oneInlineCreate(field: FormSectionFieldSchema) {
 function hasMany2oneDropdown(field: FormSectionFieldSchema) {
   return Boolean(
     field.relationOptions?.length
+    || field.many2oneOpenToken
     || field.many2oneSearchToken
     || (field.relationCreateMode && field.relationCreateMode !== 'none' && field.many2oneCreateToken)
     || showMany2oneInlineCreate(field),
@@ -673,6 +683,10 @@ select.input {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.many2one-action--record {
+  font-weight: 600;
 }
 
 .many2one-action:hover {

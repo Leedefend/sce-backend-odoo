@@ -184,6 +184,16 @@
       />
       <div v-if="adapter.filteredRelationOptions(field.name).length || adapter.canOpenRelationSearch(field.name)" class="relation-combo-panel">
         <button
+          v-if="adapter.canOpenRelationRecord(field.name)"
+          class="relation-combo-action relation-combo-action--record"
+          type="button"
+          :disabled="adapter.busy"
+          @mousedown.prevent
+          @click="adapter.openRelationRecord(field.name)"
+        >
+          {{ adapter.relationRecordLabel(field.name) }}
+        </button>
+        <button
           v-for="option in adapter.filteredRelationOptions(field.name).slice(0, 8)"
           :key="`${field.name}-${option.id}`"
           type="button"
@@ -352,6 +362,10 @@ function tagColorStyle(color: unknown) {
 .relation-combo-action {
   color: var(--sc-semantic-surface-interactive);
   border-top: 1px solid var(--sc-app-border);
+}
+
+.relation-combo-action--record {
+  font-weight: 600;
 }
 
 .relation-combo-option:hover {

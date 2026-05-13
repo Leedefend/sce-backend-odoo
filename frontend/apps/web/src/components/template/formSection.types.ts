@@ -62,7 +62,9 @@ export type FormSectionFieldSchema = {
   };
   many2oneCreateToken?: string;
   many2oneSearchToken?: string;
+  many2oneOpenToken?: string;
   many2oneTextValue?: string;
+  many2oneOpenLabel?: string;
   many2oneSearchLabel?: string;
   many2oneCreateLabel?: string;
   many2oneInlineCreateLabel?: string;
