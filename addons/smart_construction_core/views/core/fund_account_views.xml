@@ -29,7 +29,7 @@
         <field name="model">sc.fund.account</field>
         <field name="arch" type="xml">
             <tree string="资金账户" default_order="account_type,name,id">
-                <field name="display_name"/>
+                <field name="name"/>
                 <field name="project_id"/>
                 <field name="operation_strategy"/>
                 <field name="account_type"/>
@@ -55,7 +55,6 @@
                 <sheet>
                     <group>
                         <group string="账户信息">
-                            <field name="display_name" readonly="1"/>
                             <field name="name"/>
                             <field name="account_no"/>
                             <field name="account_type"/>

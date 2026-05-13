@@ -6,7 +6,7 @@ class ScFundAccount(models.Model):
     _name = "sc.fund.account"
     _description = "资金账户"
     _order = "account_type, name, id"
-    _rec_name = "display_name"
+    _rec_name = "name"
 
     name = fields.Char(string="账户名称", required=True, index=True)
     display_name = fields.Char(string="显示名称", compute="_compute_display_name", store=True, index=True)

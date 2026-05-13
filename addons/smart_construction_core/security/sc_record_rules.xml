@@ -1782,5 +1782,207 @@
                                        (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
         </record>
 
+        <!-- =========================================================
+             业务配置管理员：历史数据整理可见面
+             - 用于用户整理迁移后的业务数据；不改变普通经办/只读角色的项目边界
+        ========================================================== -->
+        <record id="rule_sc_config_admin_material_outbound_all" model="ir.rule">
+            <field name="name">SC Config Admin - sc.material.outbound ALL</field>
+            <field name="model_id" ref="model_sc_material_outbound"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_business_config_admin'))]"/>
+        </record>
+
+        <record id="rule_sc_config_admin_material_outbound_line_all" model="ir.rule">
+            <field name="name">SC Config Admin - sc.material.outbound.line ALL</field>
+            <field name="model_id" ref="model_sc_material_outbound_line"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_business_config_admin'))]"/>
+        </record>
+
+        <record id="rule_sc_config_admin_project_material_plan_all" model="ir.rule">
+            <field name="name">SC Config Admin - project.material.plan ALL</field>
+            <field name="model_id" ref="model_project_material_plan"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_business_config_admin'))]"/>
+        </record>
+
+        <record id="rule_sc_config_admin_project_material_plan_line_all" model="ir.rule">
+            <field name="name">SC Config Admin - project.material.plan.line ALL</field>
+            <field name="model_id" ref="model_project_material_plan_line"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_business_config_admin'))]"/>
+        </record>
+
+        <record id="rule_sc_config_admin_labor_settlement_all" model="ir.rule">
+            <field name="name">SC Config Admin - sc.labor.settlement ALL</field>
+            <field name="model_id" ref="model_sc_labor_settlement"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_business_config_admin'))]"/>
+        </record>
+
+        <record id="rule_sc_config_admin_labor_settlement_line_all" model="ir.rule">
+            <field name="name">SC Config Admin - sc.labor.settlement.line ALL</field>
+            <field name="model_id" ref="model_sc_labor_settlement_line"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_business_config_admin'))]"/>
+        </record>
+
+        <record id="rule_sc_config_admin_equipment_plan_all" model="ir.rule">
+            <field name="name">SC Config Admin - sc.equipment.plan ALL</field>
+            <field name="model_id" ref="model_sc_equipment_plan"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_business_config_admin'))]"/>
+        </record>
+
+        <record id="rule_sc_config_admin_equipment_plan_line_all" model="ir.rule">
+            <field name="name">SC Config Admin - sc.equipment.plan.line ALL</field>
+            <field name="model_id" ref="model_sc_equipment_plan_line"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_business_config_admin'))]"/>
+        </record>
+
+        <record id="rule_sc_config_admin_equipment_usage_all" model="ir.rule">
+            <field name="name">SC Config Admin - sc.equipment.usage ALL</field>
+            <field name="model_id" ref="model_sc_equipment_usage"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_business_config_admin'))]"/>
+        </record>
+
+        <record id="rule_sc_config_admin_equipment_settlement_all" model="ir.rule">
+            <field name="name">SC Config Admin - sc.equipment.settlement ALL</field>
+            <field name="model_id" ref="model_sc_equipment_settlement"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_business_config_admin'))]"/>
+        </record>
+
+        <record id="rule_sc_config_admin_equipment_settlement_line_all" model="ir.rule">
+            <field name="name">SC Config Admin - sc.equipment.settlement.line ALL</field>
+            <field name="model_id" ref="model_sc_equipment_settlement_line"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_business_config_admin'))]"/>
+        </record>
+
+        <record id="rule_sc_config_admin_material_price_all" model="ir.rule">
+            <field name="name">SC Config Admin - sc.material.price ALL</field>
+            <field name="model_id" ref="model_sc_material_price"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_business_config_admin'))]"/>
+        </record>
+
+        <record id="rule_sc_config_admin_material_rental_order_all" model="ir.rule">
+            <field name="name">SC Config Admin - sc.material.rental.order ALL</field>
+            <field name="model_id" ref="model_sc_material_rental_order"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_business_config_admin'))]"/>
+        </record>
+
+        <record id="rule_sc_config_admin_material_rental_order_line_all" model="ir.rule">
+            <field name="name">SC Config Admin - sc.material.rental.order.line ALL</field>
+            <field name="model_id" ref="model_sc_material_rental_order_line"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_business_config_admin'))]"/>
+        </record>
+
+        <record id="rule_sc_config_admin_material_rental_settlement_all" model="ir.rule">
+            <field name="name">SC Config Admin - sc.material.rental.settlement ALL</field>
+            <field name="model_id" ref="model_sc_material_rental_settlement"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_business_config_admin'))]"/>
+        </record>
+
+        <record id="rule_sc_config_admin_material_rental_settlement_line_all" model="ir.rule">
+            <field name="name">SC Config Admin - sc.material.rental.settlement.line ALL</field>
+            <field name="model_id" ref="model_sc_material_rental_settlement_line"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_business_config_admin'))]"/>
+        </record>
+
+        <record id="rule_sc_config_admin_settlement_order_all" model="ir.rule">
+            <field name="name">SC Config Admin - sc.settlement.order ALL</field>
+            <field name="model_id" ref="model_sc_settlement_order"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_business_config_admin'))]"/>
+        </record>
+
+        <record id="rule_sc_config_admin_settlement_order_line_all" model="ir.rule">
+            <field name="name">SC Config Admin - sc.settlement.order.line ALL</field>
+            <field name="model_id" ref="model_sc_settlement_order_line"/>
+            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_business_config_admin'))]"/>
+        </record>
+
     </data>
 </odoo>
