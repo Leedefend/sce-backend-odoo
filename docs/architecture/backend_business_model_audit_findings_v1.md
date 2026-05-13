@@ -5,6 +5,7 @@ Status: draft architecture finding
 This finding summarizes the backend business model audit after the model inventory, family registry, business-object hierarchy, and ownership specs were added.
 
 Detailed code-level overlap analysis: `backend_business_model_overlap_analysis_v1.md`.
+Projection implementation registry: `backend_business_projection_registry_v1.json`.
 
 ## Core Answer
 
@@ -114,6 +115,8 @@ Start with ownership convergence in the overlap areas:
 Only after those boundaries hold should we extract mixins or merge duplicated implementation patterns.
 
 The overlap analysis adds one important refinement: projection/read models should not be treated as one implementation type. The current codebase uses SQL views, physical refresh tables, and controlled generated ledgers. `sc.treasury.ledger` belongs to the last group because creation is blocked unless the caller passes the controlled `allow_ledger_auto` context.
+
+The projection registry currently covers all 18 detected projection/read surfaces: 9 SQL views, 3 physical refresh tables, 3 controlled generated ledgers, 2 runtime workbench facts, and 1 computed runtime summary.
 
 ## Final Verdict
 

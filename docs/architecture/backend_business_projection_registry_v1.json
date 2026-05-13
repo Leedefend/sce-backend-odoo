@@ -1,0 +1,169 @@
+{
+  "schema": "backend_business_projection_registry_v1",
+  "status": "draft architecture audit",
+  "purpose": "Classify projection/read surfaces by implementation mode so SQL views, physical refresh tables, runtime facts, and controlled ledgers are not conflated.",
+  "projections": [
+    {
+      "model": "sc.dashboard.cockpit.fact",
+      "implementation_mode": "runtime_workbench_fact",
+      "write_policy": "runtime producer writes by source_model/source_res_id uniqueness",
+      "source_models": ["source_model/source_res_id"],
+      "refresh_owner": "cockpit and business menu producers",
+      "idempotency_key": "fact_type, source_model, source_res_id",
+      "acceptance_probe": "model family coverage and dashboard runtime probes"
+    },
+    {
+      "model": "sc.workbench.item",
+      "implementation_mode": "runtime_workbench_fact",
+      "write_policy": "runtime producer writes workbench/task visibility",
+      "source_models": ["source_model/source_res_id"],
+      "refresh_owner": "workbench producers",
+      "idempotency_key": "source_model, source_res_id, entry_key",
+      "acceptance_probe": "model family coverage and workbench runtime probes"
+    },
+    {
+      "model": "sc.contract.recon.summary",
+      "implementation_mode": "computed_runtime_summary",
+      "write_policy": "computed fields read from contract, settlement, and payment facts",
+      "source_models": ["construction.contract", "sc.settlement.order", "payment.request"],
+      "refresh_owner": "Odoo computed fields",
+      "idempotency_key": "contract_id",
+      "acceptance_probe": "model family coverage"
+    },
+    {
+      "model": "project.cost.ledger",
+      "implementation_mode": "controlled_generated_ledger",
+      "write_policy": "controlled writes with period lock and project operation guards",
+      "source_models": ["source_model/source_id/source_line_id"],
+      "refresh_owner": "cost document actions and cost replay/projection writers",
+      "idempotency_key": "source_model, source_id, source_line_id",
+      "acceptance_probe": "model family coverage and cost ledger tests"
+    },
+    {
+      "model": "payment.ledger",
+      "implementation_mode": "controlled_generated_ledger",
+      "write_policy": "create is blocked unless allow_payment_ledger_create context is present",
+      "source_models": ["payment.request"],
+      "refresh_owner": "payment request payment action",
+      "idempotency_key": "payment_request_id",
+      "acceptance_probe": "payment request ledger tests"
+    },
+    {
+      "model": "sc.account.income.expense.summary",
+      "implementation_mode": "sql_view",
+      "write_policy": "read-only SQL view",
+      "source_models": ["sc.treasury.ledger"],
+      "refresh_owner": "model init SQL view",
+      "idempotency_key": "SQL aggregate key",
+      "acceptance_probe": "formal projection refresh probe"
+    },
+    {
+      "model": "sc.ar.ap.company.summary",
+      "implementation_mode": "physical_refresh_table",
+      "write_policy": "create/write/unlink blocked; table rebuilt by init/projection refresh",
+      "source_models": ["sc.ar.ap.project.summary"],
+      "refresh_owner": "model init physical table refresh",
+      "idempotency_key": "project/company aggregate key",
+      "acceptance_probe": "formal projection refresh probe"
+    },
+    {
+      "model": "sc.ar.ap.project.summary",
+      "implementation_mode": "physical_refresh_table",
+      "write_policy": "create/write/unlink blocked; table rebuilt by init/projection refresh",
+      "source_models": ["construction.contract", "sc.receipt.income", "sc.invoice.registration", "sc.treasury.ledger"],
+      "refresh_owner": "model init physical table refresh",
+      "idempotency_key": "project_id, partner_key",
+      "acceptance_probe": "formal projection refresh probe"
+    },
+    {
+      "model": "sc.company.operation.summary",
+      "implementation_mode": "sql_view",
+      "write_policy": "read-only SQL view",
+      "source_models": ["sc.receipt.income", "sc.payment.execution", "sc.treasury.reconciliation"],
+      "refresh_owner": "model init SQL view",
+      "idempotency_key": "period label",
+      "acceptance_probe": "formal projection refresh probe"
+    },
+    {
+      "model": "sc.comprehensive.cost.summary",
+      "implementation_mode": "physical_refresh_table",
+      "write_policy": "create/write/unlink blocked; table rebuilt by init/projection refresh",
+      "source_models": ["sc.expense.claim", "project.cost.ledger", "sc.payment.execution"],
+      "refresh_owner": "model init physical table refresh",
+      "idempotency_key": "project/category aggregate key",
+      "acceptance_probe": "formal projection refresh probe"
+    },
+    {
+      "model": "project.cost.compare",
+      "implementation_mode": "sql_view",
+      "write_policy": "read-only SQL view",
+      "source_models": ["project.budget", "project.cost.ledger"],
+      "refresh_owner": "model init SQL view",
+      "idempotency_key": "project_id",
+      "acceptance_probe": "model family coverage"
+    },
+    {
+      "model": "sc.expense.reimbursement.summary",
+      "implementation_mode": "sql_view",
+      "write_policy": "read-only SQL view",
+      "source_models": ["sc.expense.claim"],
+      "refresh_owner": "model init SQL view",
+      "idempotency_key": "claim summary key",
+      "acceptance_probe": "formal projection refresh probe"
+    },
+    {
+      "model": "sc.fund.daily.summary",
+      "implementation_mode": "sql_view",
+      "write_policy": "read-only SQL view",
+      "source_models": ["sc.fund.account.operation"],
+      "refresh_owner": "model init SQL view",
+      "idempotency_key": "date/account/project aggregate key",
+      "acceptance_probe": "formal projection refresh probe"
+    },
+    {
+      "model": "sc.invoice.category.summary",
+      "implementation_mode": "sql_view",
+      "write_policy": "read-only SQL view",
+      "source_models": ["sc.invoice.registration"],
+      "refresh_owner": "model init SQL view",
+      "idempotency_key": "category/project aggregate key",
+      "acceptance_probe": "formal projection refresh probe"
+    },
+    {
+      "model": "sc.material.stock.summary",
+      "implementation_mode": "sql_view",
+      "write_policy": "read-only SQL view",
+      "source_models": ["sc.material.inbound", "sc.material.outbound", "sc.legacy.material.stock.fact"],
+      "refresh_owner": "model init SQL view",
+      "idempotency_key": "project/material/warehouse aggregate key",
+      "acceptance_probe": "formal projection refresh probe"
+    },
+    {
+      "model": "project.profit.compare",
+      "implementation_mode": "sql_view",
+      "write_policy": "read-only SQL view",
+      "source_models": ["construction.contract", "project.cost.ledger"],
+      "refresh_owner": "model init SQL view",
+      "idempotency_key": "project_id",
+      "acceptance_probe": "model family coverage"
+    },
+    {
+      "model": "sc.salary.summary",
+      "implementation_mode": "sql_view",
+      "write_policy": "read-only SQL view",
+      "source_models": ["sc.hr.payroll.document", "sc.legacy.salary.line"],
+      "refresh_owner": "model init SQL view",
+      "idempotency_key": "salary summary key",
+      "acceptance_probe": "formal projection refresh probe"
+    },
+    {
+      "model": "sc.treasury.ledger",
+      "implementation_mode": "controlled_generated_ledger",
+      "write_policy": "create is blocked unless allow_ledger_auto context is present",
+      "source_models": ["payment.request", "sc.receipt.income", "legacy payment/receipt replay"],
+      "refresh_owner": "payment/receipt actions and treasury ledger projection writer",
+      "idempotency_key": "payment_request_id or legacy source reference",
+      "acceptance_probe": "ledger ACL and formal projection refresh probes"
+    }
+  ]
+}

@@ -11,6 +11,7 @@ Family registry: `docs/architecture/backend_business_model_family_registry_v1.js
 Ownership specs: `docs/architecture/backend_business_model_ownership_specs_v1.json`
 Audit findings: `docs/architecture/backend_business_model_audit_findings_v1.md`
 Overlap analysis: `docs/architecture/backend_business_model_overlap_analysis_v1.md`
+Projection registry: `docs/architecture/backend_business_projection_registry_v1.json`
 
 ## Audit Scope
 
@@ -52,6 +53,7 @@ The current static inventory reports:
 | industry model families | 13 | reusable construction-industry business families |
 | customer model families | 1 | legacy replay/evidence only; not core runtime ownership |
 | ownership specs | 5 | explicit boundary specs for the highest-risk overlapping families |
+| projection registry entries | 18 | projection/read surfaces split by implementation mode |
 | unclassified models | 0 | every detected model class is mapped to one model family |
 
 ## What The Models Carry
@@ -284,6 +286,7 @@ It fails when any of these are present:
 - registry entry without a valid solution layer, target problem, business logic, business domain, or promotion policy
 - family registry entry with invalid/missing responsibility, business object, solution layer, target problem, source of truth, or representative model references
 - detected model class that cannot be mapped to a model family
+- projection/read model that is missing from the projection registry or has no implementation mode/write policy
 
 ## Family Registry
 
@@ -362,6 +365,20 @@ These specs answer the "current state reasonable?" question more concretely:
 - reasonable: the system is not trying to replace native company, project, partner, product, account, stock, purchase, user, or approval roots.
 - reasonable: construction-specific business facts are custom because native Odoo does not own these document lifecycles.
 - not fully clean yet: overlapping families are acceptable only under the declared ownership splits; future changes should fail review if they blur those boundaries.
+
+## Projection Registry
+
+The projection registry splits the 18 projection/read surfaces by implementation mode:
+
+| implementation mode | count | meaning |
+| --- | ---: | --- |
+| `sql_view` | 9 | read-only SQL view rebuilt by model init |
+| `physical_refresh_table` | 3 | read-only Odoo model backed by a rebuilt table |
+| `controlled_generated_ledger` | 3 | physical ledger table with guarded creation/write path |
+| `runtime_workbench_fact` | 2 | runtime-produced cockpit/workbench fact surface |
+| `computed_runtime_summary` | 1 | normal model with computed summary fields |
+
+This is the first consolidation of projection semantics. It prevents a controlled ledger such as `sc.treasury.ledger` from being treated as the same thing as a passive SQL view such as `sc.material.stock.summary`.
 
 ## Proposed Unified Model Standard
 
@@ -442,5 +459,8 @@ Current summary:
 - `ownership_spec_count=5`
 - `ownership_spec_shape_gap_count=0`
 - `ownership_spec_reference_gap_count=0`
+- `projection_registry_count=18`
+- `projection_mode_counts={"computed_runtime_summary": 1, "controlled_generated_ledger": 3, "physical_refresh_table": 3, "runtime_workbench_fact": 2, "sql_view": 9}`
+- `unregistered_projection_models=[]`
 - `unclassified_model_count=0`
 - `implementation_counts={"custom_model": 150, "custom_model_with_mixin_or_inherit": 88, "native_model_extension": 25}`

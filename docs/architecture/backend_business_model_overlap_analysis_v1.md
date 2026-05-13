@@ -4,6 +4,8 @@ Status: draft architecture audit
 
 This note checks the five overlap families against the actual backend model code. It focuses on whether the model surface is reasonable, where boundaries are clear, and where patches should be consolidated before further iteration.
 
+The projection implementation registry is `backend_business_projection_registry_v1.json`.
+
 ## Summary
 
 The current model shape is still reasonable, but not all overlap families have the same maturity.
@@ -150,6 +152,14 @@ Current code shape:
 - Some projections are created as SQL views.
 - Some projections are physical tables refreshed by scripts or `init()` logic.
 - `sc.treasury.ledger` is a controlled physical ledger with business protection, not a pure projection.
+
+Current registry split:
+
+- `sql_view`: 9
+- `physical_refresh_table`: 3
+- `controlled_generated_ledger`: 3
+- `runtime_workbench_fact`: 2
+- `computed_runtime_summary`: 1
 
 Boundary verdict:
 

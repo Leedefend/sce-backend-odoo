@@ -44,6 +44,7 @@ DEFAULT_FAMILY_REGISTRY = ROOT / "docs" / "architecture" / "backend_business_mod
 DEFAULT_OWNERSHIP_SPECS = ROOT / "docs" / "architecture" / "backend_business_model_ownership_specs_v1.json"
 DEFAULT_AUDIT_FINDINGS = ROOT / "docs" / "architecture" / "backend_business_model_audit_findings_v1.md"
 DEFAULT_OVERLAP_ANALYSIS = ROOT / "docs" / "architecture" / "backend_business_model_overlap_analysis_v1.md"
+DEFAULT_PROJECTION_REGISTRY = ROOT / "docs" / "architecture" / "backend_business_projection_registry_v1.json"
 ALLOWED_SOLUTION_LAYERS = {"platform", "industry", "customer"}
 ALLOWED_RESPONSIBILITY_TYPES = {
     "native system-of-record",
@@ -64,6 +65,13 @@ ALLOWED_BUSINESS_OBJECTS = {
     "legacy",
     "governance",
     "platform",
+}
+ALLOWED_PROJECTION_MODES = {
+    "sql_view",
+    "physical_refresh_table",
+    "controlled_generated_ledger",
+    "computed_runtime_summary",
+    "runtime_workbench_fact",
 }
 
 
@@ -299,6 +307,12 @@ def load_family_registry(path: Path) -> dict[str, Any]:
 def load_ownership_specs(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {"ownership_specs": [], "missing_registry": True}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def load_projection_registry(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {"projections": [], "missing_registry": True}
     return json.loads(path.read_text(encoding="utf-8"))
 
 
@@ -556,6 +570,58 @@ def summarize_ownership_specs(rows: list[dict[str, Any]], ownership_specs: dict[
     }
 
 
+def summarize_projection_registry(rows: list[dict[str, Any]], projection_registry: dict[str, Any]) -> dict[str, Any]:
+    projections = projection_registry.get("projections", [])
+    detected_models = {row["model"] for row in rows if row.get("model")}
+    detected_projection_models = {row["model"] for row in rows if row.get("model") and "projection" in row["buckets"]}
+    registry_map = {item.get("model"): item for item in projections if item.get("model")}
+    required_fields = [
+        "model",
+        "implementation_mode",
+        "write_policy",
+        "source_models",
+        "refresh_owner",
+        "idempotency_key",
+        "acceptance_probe",
+    ]
+    shape_gaps = []
+    reference_gaps = []
+    mode_counts: Counter[str] = Counter()
+    for item in projections:
+        model = item.get("model")
+        for field in required_fields:
+            value = item.get(field)
+            if isinstance(value, list):
+                if not value:
+                    shape_gaps.append({"model": model, "field": field, "reason": "missing_required_list"})
+            elif not str(value or "").strip():
+                shape_gaps.append({"model": model, "field": field, "reason": "missing_required_field"})
+        mode = item.get("implementation_mode")
+        if mode in ALLOWED_PROJECTION_MODES:
+            mode_counts[mode] += 1
+        else:
+            shape_gaps.append(
+                {
+                    "model": model,
+                    "field": "implementation_mode",
+                    "value": mode,
+                    "allowed_values": sorted(ALLOWED_PROJECTION_MODES),
+                }
+            )
+        if model and model not in detected_models:
+            reference_gaps.append({"model": model, "field": "model", "reason": "model_not_detected"})
+    return {
+        "projection_registry_count": len(projections),
+        "projection_mode_counts": dict(sorted(mode_counts.items())),
+        "unregistered_projection_models": sorted(detected_projection_models - set(registry_map)),
+        "registered_projection_models_not_detected": sorted(set(registry_map) - detected_models),
+        "projection_registry_shape_gap_count": len(shape_gaps),
+        "projection_registry_shape_gaps": shape_gaps,
+        "projection_registry_reference_gap_count": len(reference_gaps),
+        "projection_registry_reference_gaps": reference_gaps,
+    }
+
+
 def write_markdown(report: dict[str, Any], path: Path) -> None:
     summary = report["summary"]
     rows = report["models"]
@@ -714,6 +780,34 @@ def write_markdown(report: dict[str, Any], path: Path) -> None:
                     decision=spec.get("decision", ""),
                 )
             )
+    projection_summary = report.get("projection_summary") or {}
+    projection_registry = report.get("projection_registry") or {}
+    lines.extend(["", "## Projection Registry", ""])
+    lines.append(f"- projection_registry_count: {projection_summary.get('projection_registry_count', 0)}")
+    lines.append(
+        "- projection_mode_counts: "
+        + json.dumps(projection_summary.get("projection_mode_counts", {}), ensure_ascii=False, sort_keys=True)
+    )
+    lines.append(
+        "- unregistered_projection_models: "
+        + (", ".join(projection_summary.get("unregistered_projection_models", [])) or "none")
+    )
+    lines.append(
+        "- registered_projection_models_not_detected: "
+        + (", ".join(projection_summary.get("registered_projection_models_not_detected", [])) or "none")
+    )
+    if projection_registry.get("projections"):
+        lines.extend(["", "| model | mode | write policy | refresh owner |"])
+        lines.append("| --- | --- | --- | --- |")
+        for item in projection_registry["projections"]:
+            lines.append(
+                "| {model} | {implementation_mode} | {write_policy} | {refresh_owner} |".format(
+                    model=item.get("model", ""),
+                    implementation_mode=item.get("implementation_mode", ""),
+                    write_policy=item.get("write_policy", ""),
+                    refresh_owner=item.get("refresh_owner", ""),
+                )
+            )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -729,6 +823,7 @@ def main() -> int:
     parser.add_argument("--ownership-specs", default=str(DEFAULT_OWNERSHIP_SPECS.relative_to(ROOT)))
     parser.add_argument("--audit-findings", default=str(DEFAULT_AUDIT_FINDINGS.relative_to(ROOT)))
     parser.add_argument("--overlap-analysis", default=str(DEFAULT_OVERLAP_ANALYSIS.relative_to(ROOT)))
+    parser.add_argument("--projection-registry", default=str(DEFAULT_PROJECTION_REGISTRY.relative_to(ROOT)))
     parser.add_argument(
         "--enforce",
         action="store_true",
@@ -740,13 +835,16 @@ def main() -> int:
     registry = load_registry(ROOT / args.registry)
     family_registry = load_family_registry(ROOT / args.family_registry)
     ownership_specs = load_ownership_specs(ROOT / args.ownership_specs)
+    projection_registry = load_projection_registry(ROOT / args.projection_registry)
     report = {
         "summary": summarize(rows, registry),
         "family_summary": summarize_family_registry(rows, family_registry),
         "ownership_summary": summarize_ownership_specs(rows, ownership_specs),
+        "projection_summary": summarize_projection_registry(rows, projection_registry),
         "registry": registry,
         "family_registry": family_registry,
         "ownership_specs": ownership_specs,
+        "projection_registry": projection_registry,
         "models": rows,
     }
     report_path = ROOT / args.report
@@ -763,6 +861,10 @@ def main() -> int:
         "BACKEND_BUSINESS_MODEL_OWNERSHIP_SPECS="
         + json.dumps(report["ownership_summary"], ensure_ascii=False, sort_keys=True)
     )
+    print(
+        "BACKEND_BUSINESS_PROJECTION_REGISTRY="
+        + json.dumps(report["projection_summary"], ensure_ascii=False, sort_keys=True)
+    )
     if args.enforce:
         problem_map_path = ROOT / args.problem_map
         problem_map_text = problem_map_path.read_text(encoding="utf-8") if problem_map_path.exists() else ""
@@ -776,6 +878,7 @@ def main() -> int:
         audit_findings_text = audit_findings_path.read_text(encoding="utf-8") if audit_findings_path.exists() else ""
         overlap_analysis_path = ROOT / args.overlap_analysis
         overlap_analysis_text = overlap_analysis_path.read_text(encoding="utf-8") if overlap_analysis_path.exists() else ""
+        projection_registry_path = ROOT / args.projection_registry
         blockers = {
             "unregistered_formal_models": summary["unregistered_formal_models"],
             "unclassified_models": summary["unclassified_models"],
@@ -839,6 +942,23 @@ def main() -> int:
             and "## Projection Refresh" in overlap_analysis_text
             and "controlled generated ledger" in overlap_analysis_text
             else [{"path": str(overlap_analysis_path.relative_to(ROOT)), "reason": "missing_overlap_family_analysis"}],
+            "projection_registry_gaps": []
+            if projection_registry_path.exists()
+            and not report["projection_summary"]["unregistered_projection_models"]
+            and not report["projection_summary"]["registered_projection_models_not_detected"]
+            and not report["projection_summary"]["projection_registry_shape_gaps"]
+            and not report["projection_summary"]["projection_registry_reference_gaps"]
+            else [
+                {
+                    "path": str(projection_registry_path.relative_to(ROOT)),
+                    "unregistered_projection_models": report["projection_summary"]["unregistered_projection_models"],
+                    "registered_projection_models_not_detected": report["projection_summary"][
+                        "registered_projection_models_not_detected"
+                    ],
+                    "shape_gaps": report["projection_summary"]["projection_registry_shape_gaps"],
+                    "reference_gaps": report["projection_summary"]["projection_registry_reference_gaps"],
+                }
+            ],
         }
         if any(blockers.values()):
             print("BACKEND_BUSINESS_FACT_MODEL_AUDIT_BLOCKERS=" + json.dumps(blockers, ensure_ascii=False, sort_keys=True))
