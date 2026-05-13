@@ -27,6 +27,7 @@
         "data/scenario/s10_contract_payment/25_workbench_actions.xml",
         "data/scenario/s60_project_cockpit/10_cockpit_business_facts.xml",
         "views/ux/project_demo_banner_views.xml",
+        "data/demo/user_acceptance_project_cleanup.xml",
     ],
     "installable": True,
     "application": False,

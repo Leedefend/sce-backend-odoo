@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <function model="project.project" name="sc_demo_user_acceptance_cleanup"/>
+</odoo>
