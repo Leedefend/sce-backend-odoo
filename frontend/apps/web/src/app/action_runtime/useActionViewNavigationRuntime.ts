@@ -125,15 +125,18 @@ export function useActionViewNavigationRuntime(options: UseActionViewNavigationR
     const contract = options.actionContract.value || {};
     const v2 = resolveUnifiedPageContractV2(contract);
     if (v2) {
-      const rows = Array.isArray(v2.actionContract?.actionRuleList) ? v2.actionContract.actionRuleList : [];
-      const rowAction = rows.find((action) => {
-        if (!action || typeof action !== 'object') return false;
-        const typed = action as Dict;
-        return String(typed.triggerType || '').trim() === 'row_click'
-          || String(typed.sourceWidgetId || '').trim() === 'page.row'
-          || String(typed.targetScope || '').trim() === 'row';
-      });
-      if (rowAction) return rowAction as Dict;
+      const v2ViewType = String(v2.pageInfo?.viewType || '').trim().toLowerCase();
+      if (['list', 'tree', 'kanban'].includes(v2ViewType)) {
+        const rows = Array.isArray(v2.actionContract?.actionRuleList) ? v2.actionContract.actionRuleList : [];
+        const rowAction = rows.find((action) => {
+          if (!action || typeof action !== 'object') return false;
+          const typed = action as Dict;
+          return String(typed.triggerType || '').trim() === 'row_click'
+            || String(typed.sourceWidgetId || '').trim() === 'page.row'
+            || String(typed.targetScope || '').trim() === 'row';
+        });
+        if (rowAction) return rowAction as Dict;
+      }
     }
     const views = (contract.views || {}) as Dict;
     const view = ((views.kanban || views.tree || views.list || {}) as Dict);
