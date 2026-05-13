@@ -880,7 +880,8 @@ migration.assets.release_package.verify: guard.prod.forbid
 	  rm -rf /tmp/sce_migration_asset_release_verify; \
 	  mkdir -p /tmp/sce_migration_asset_release_verify; \
 	  tar -xzf "$$package_path" -C /tmp/sce_migration_asset_release_verify; \
-	  cd /tmp/sce_migration_asset_release_verify && python3 scripts/migration/migration_asset_bus.py --asset-root migration_assets --catalog migration_assets/manifest/migration_asset_catalog_v1.json --verify-only --check
+	  cd /tmp/sce_migration_asset_release_verify && python3 scripts/migration/migration_asset_bus.py --asset-root migration_assets --catalog migration_assets/manifest/migration_asset_catalog_v1.json --verify-only --check; \
+	  cd /tmp/sce_migration_asset_release_verify && python3 scripts/migration/migration_asset_delivery_audit.py --asset-root migration_assets
 
 history.contract.core.gap.audit: guard.prod.forbid check-compose-project check-compose-env
 	@python3 scripts/migration/history_contract_core_gap_audit.py

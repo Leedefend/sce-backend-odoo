@@ -36,6 +36,7 @@ DEPLOYMENT_FILES = [
     "Makefile",
     "scripts/common/env.sh",
     "scripts/common/guard_prod.sh",
+    "scripts/deploy/fresh_production_history_init.sh",
     "scripts/ops/odoo_shell_exec.sh",
     "scripts/migration/history_continuity_oneclick.sh",
     "scripts/migration/migration_asset_bus.py",
@@ -50,6 +51,15 @@ ONECLICK_SCRIPT_RE = re.compile(r'run_odoo_script\s+"\$ROOT_DIR/scripts/migratio
 EXTRA_REPLAY_SCRIPT_NAMES = [
     "fresh_db_replay_payload_precheck.py",
 ]
+MANDATORY_BUSINESS_SCOPE_ARTIFACTS = {
+    # Tender history is part of the user-visible delivery scope.  These replay
+    # payloads are not XML catalog packages, so the release package must carry
+    # them explicitly for old-DB-free replay.
+    "tender_history": [
+        "artifacts/migration/fresh_db_legacy_tender_registration_replay_adapter_result_v1.json",
+        "artifacts/migration/fresh_db_legacy_tender_registration_replay_payload_v1.csv",
+    ],
+}
 BASELINE_EXCLUDED_REQUIRED_ARTIFACTS = {
     # Default-off privacy lanes. These are intentionally not shipped in the
     # baseline package because they may contain sensitive personal data.
@@ -129,6 +139,8 @@ def required_replay_artifacts() -> list[str]:
             if path in BASELINE_EXCLUDED_REQUIRED_ARTIFACTS:
                 continue
             required.add(path)
+    for artifacts in MANDATORY_BUSINESS_SCOPE_ARTIFACTS.values():
+        required.update(artifacts)
     return sorted(required)
 
 
@@ -246,9 +258,11 @@ def build_package(asset_root: Path, out_dir: Path, package_id: str) -> dict[str,
         "deployment_entrypoint": "scripts/migration/history_continuity_oneclick.sh",
         "deployment_verification_commands": [
             "python3 scripts/migration/migration_asset_bus.py --asset-root migration_assets --catalog migration_assets/manifest/migration_asset_catalog_v1.json --verify-only --check",
+            "python3 scripts/migration/migration_asset_delivery_audit.py --asset-root migration_assets",
             "HISTORY_CONTINUITY_MODE=rehearse HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS=1 DB_NAME=<target_db> MIGRATION_REPLAY_DB_ALLOWLIST=<target_db> bash scripts/migration/history_continuity_oneclick.sh",
             "HISTORY_CONTINUITY_MODE=replay HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS=1 DB_NAME=<target_db> MIGRATION_REPLAY_DB_ALLOWLIST=<target_db> bash scripts/migration/history_continuity_oneclick.sh",
         ],
+        "mandatory_business_scope_artifacts": MANDATORY_BUSINESS_SCOPE_ARTIFACTS,
         "file_count": len(files),
         "excluded_paths": excluded_paths,
         "files": files,
@@ -315,6 +329,7 @@ def build_package(asset_root: Path, out_dir: Path, package_id: str) -> dict[str,
             "- Replay entrypoint, migration Python scripts, and migration shell scripts are packaged with the assets.",
             "- Verify the package with `MIGRATION_ASSET_RELEASE_PACKAGE=<package_path> make migration.assets.release_package.verify`.",
             "- Verify after extraction with `python3 scripts/migration/migration_asset_bus.py --asset-root migration_assets --catalog migration_assets/manifest/migration_asset_catalog_v1.json --verify-only --check`.",
+            "- Verify packaged replay scope with `python3 scripts/migration/migration_asset_delivery_audit.py --asset-root migration_assets`.",
             "- Rehearse against a fresh target DB with `HISTORY_CONTINUITY_MODE=rehearse HISTORY_CONTINUITY_USE_PACKAGED_PAYLOADS=1 DB_NAME=<target_db> MIGRATION_REPLAY_DB_ALLOWLIST=<target_db> bash scripts/migration/history_continuity_oneclick.sh`.",
         ]
     )
