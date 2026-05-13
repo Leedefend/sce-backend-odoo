@@ -2,7 +2,7 @@
 
 - mode: debt_lock
 - status: PASS
-- findings: 17
+- findings: 16
 
 ## Findings
 
@@ -20,6 +20,5 @@
 - [P1] contract_form_groups_usage `frontend/apps/web/src/pages/ContractFormPage.vue` count=8/8
 - [P1] action_view_groups_usage `frontend/apps/web/src/views/ActionView.vue` count=1/1
 - [P1] record_view_groups_usage `frontend/apps/web/src/views/RecordView.vue` count=1/1
-- [P1] form_lifecycle_label_mapping `frontend/apps/web/src/pages/ContractFormPage.vue` count=1/1
 - [P1] lite_legacy_default_fallback `frontend/apps/web/src/app/contracts/unifiedPageContractLite.ts` count=2/2
 - [P1] api_contract_lite_legacy_default_fallback `frontend/apps/web/src/api/contract.ts` count=1/1

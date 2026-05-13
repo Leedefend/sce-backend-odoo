@@ -3669,18 +3669,6 @@ function setStatusbarValue(value: string) {
       resolved = String((matched as unknown[])[0] ?? raw);
     }
   }
-  if (field === 'lifecycle_state') {
-    const stateLabelMap: Record<string, string> = {
-      '草稿': 'draft',
-      '在建': 'active',
-      '停工': 'paused',
-      '竣工': 'completed',
-      '结算中': 'settling',
-      '保修期': 'warranty',
-      '关闭': 'closed',
-    };
-    resolved = stateLabelMap[resolved] || stateLabelMap[raw] || resolved;
-  }
   formData[field] = resolved || false;
   markFieldChanged(field);
 }

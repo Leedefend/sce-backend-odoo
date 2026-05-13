@@ -392,6 +392,7 @@ Batch C shadow execution note:
 - C.9 locks the form v2 store selector boundary in `web_contract_v2_frontend_architecture_guard.py`: selector APIs must live in the v2 store module and `ContractFormPage` must not redefine local selector functions.
 - C.10 moves form layout `containerTree` access behind `resolveContractV2ContainerTree`, so `ContractFormPage` no longer reads `snapshot.layoutContract.containerTree` directly.
 - C.11 moves v2 value-source selection behind `resolveContractV2ValueSource`, centralizing the `mainData` versus `primary` coverage decision in the store boundary.
+- C.12 removes the form-only `lifecycle_state` label-to-code fallback; statusbar writes now rely on backend selection/status contract codes instead of frontend business label inference.
 
 ### Batch D: Action/List/Kanban Renderer Convergence
 

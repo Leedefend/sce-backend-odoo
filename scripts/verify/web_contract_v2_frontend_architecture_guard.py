@@ -173,7 +173,7 @@ DEBT_RULES: tuple[DebtRule, ...] = (
         severity="P1",
         path="pages/ContractFormPage.vue",
         pattern="'草稿': 'draft'",
-        max_count=1,
+        max_count=0,
         rationale="Frontend maps business lifecycle labels back to status codes.",
         next_action="Backend statusContract must provide canonical status code and label.",
     ),
