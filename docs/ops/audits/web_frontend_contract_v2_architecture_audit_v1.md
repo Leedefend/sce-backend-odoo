@@ -386,6 +386,7 @@ Batch C shadow execution note:
 - C.3 routes readonly form field values through the v2 store data source when the field code and data key are both present; writable fields continue to use the current form state until action/data submission is moved to v2 runtime. Browser diagnostics assert v2 field/value coverage independently from the current record's editability profile.
 - C.4 reads form `containerTree` and widget field status from the decoded v2 store first, with legacy resolver fallback retained only as migration protection.
 - C.5 reads button status from the decoded v2 store first for form actions; legacy button-status extraction remains a fallback until action execution moves fully to the v2 runtime.
+- C.6 reads page-level `globalStatus` and `sourceContext` from the decoded v2 store first so rights/profile/default context no longer default to the legacy resolver path.
 
 ### Batch D: Action/List/Kanban Renderer Convergence
 

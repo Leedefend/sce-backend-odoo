@@ -100,6 +100,8 @@ async function readShadowAttrs(page) {
       field_overlap: String(shell?.getAttribute('data-v2-shadow-field-overlap') || ''),
       field_missing: String(shell?.getAttribute('data-v2-shadow-field-missing') || ''),
       layout_source: String(shell?.getAttribute('data-v2-shadow-layout-source') || ''),
+      global_source: String(shell?.getAttribute('data-v2-shadow-global-source') || ''),
+      source_context: String(shell?.getAttribute('data-v2-shadow-source-context') || ''),
       status_fields: String(shell?.getAttribute('data-v2-shadow-status-fields') || ''),
       value_fields: String(shell?.getAttribute('data-v2-shadow-value-fields') || ''),
       readonly_values: String(shell?.getAttribute('data-v2-shadow-readonly-values') || ''),
@@ -158,6 +160,7 @@ async function main() {
     const shadowFieldCodes = Number(summary.shadow_attrs.field_codes || summary.hud.v2_shadow_field_codes || 0);
     const shadowFieldOverlap = Number(summary.shadow_attrs.field_overlap || summary.hud.v2_shadow_field_overlap || 0);
     const shadowLayoutSource = String(summary.shadow_attrs.layout_source || summary.hud.v2_shadow_layout_source || '').trim();
+    const shadowGlobalSource = String(summary.shadow_attrs.global_source || summary.hud.v2_shadow_global_source || '').trim();
     const shadowStatusFields = Number(summary.shadow_attrs.status_fields || summary.hud.v2_shadow_status_fields || 0);
     const shadowValueFields = Number(summary.shadow_attrs.value_fields || summary.hud.v2_shadow_value_fields || 0);
     const shadowValueSource = String(summary.shadow_attrs.value_source || summary.hud.v2_shadow_value_source || '').trim();
@@ -171,6 +174,7 @@ async function main() {
       shadowFieldCodes > 0 &&
       shadowFieldOverlap > 0 &&
       shadowLayoutSource === 'v2_store' &&
+      shadowGlobalSource === 'v2_store' &&
       shadowStatusFields > 0 &&
       shadowValueFields > 0 &&
       shadowValueSource !== 'none' &&
@@ -209,6 +213,8 @@ async function main() {
     v2_shadow_field_overlap: summary.shadow_attrs?.field_overlap || summary.hud.v2_shadow_field_overlap,
     v2_shadow_field_missing: summary.shadow_attrs?.field_missing || summary.hud.v2_shadow_field_missing,
     v2_shadow_layout_source: summary.shadow_attrs?.layout_source || summary.hud.v2_shadow_layout_source,
+    v2_shadow_global_source: summary.shadow_attrs?.global_source || summary.hud.v2_shadow_global_source,
+    v2_shadow_source_context: summary.shadow_attrs?.source_context || summary.hud.v2_shadow_source_context,
     v2_shadow_status_fields: summary.shadow_attrs?.status_fields || summary.hud.v2_shadow_status_fields,
     v2_shadow_value_fields: summary.shadow_attrs?.value_fields || summary.hud.v2_shadow_value_fields,
     v2_shadow_readonly_values: summary.shadow_attrs?.readonly_values || summary.hud.v2_shadow_readonly_values,

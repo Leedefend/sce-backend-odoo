@@ -11,6 +11,8 @@
     :data-v2-shadow-field-overlap="String(v2ShadowLegacyFieldOverlapCount)"
     :data-v2-shadow-field-missing="v2ShadowLegacyFieldMissingPreview"
     :data-v2-shadow-layout-source="v2ShadowLayoutSourceKind"
+    :data-v2-shadow-global-source="v2ShadowGlobalSourceKind"
+    :data-v2-shadow-source-context="v2ShadowSourceContextKind"
     :data-v2-shadow-status-fields="String(v2ShadowStatusFieldCount)"
     :data-v2-shadow-value-fields="String(v2ShadowValueFieldCount)"
     :data-v2-shadow-readonly-values="String(v2ShadowReadonlyValueCount)"
@@ -608,6 +610,53 @@ function v2ButtonStatusFromStore(): Record<string, UnifiedPageContractV2ButtonSt
   return out;
 }
 
+function v2Dict(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
+
+function v2List(value: unknown): unknown[] {
+  return Array.isArray(value) ? value : [];
+}
+
+function v2Text(value: unknown): string {
+  return String(value || '').trim();
+}
+
+function v2GlobalStatusFromStore() {
+  const store = v2ContractStore.value;
+  if (!store) return null;
+  const row = store.snapshot.statusContract.globalStatus || {};
+  if (!Object.keys(row).length) return null;
+  return {
+    ...(typeof row.pageVisible === 'boolean' ? { pageVisible: row.pageVisible } : {}),
+    ...(v2Text(row.pageAuth) ? { pageAuth: v2Text(row.pageAuth) } : {}),
+    ...(v2Text(row.reasonCode) ? { reasonCode: v2Text(row.reasonCode) } : {}),
+  };
+}
+
+function v2SourceContextFromStore() {
+  const store = v2ContractStore.value;
+  if (!store) return {};
+  const dataMeta = v2Dict(store.snapshot.dataContract.dataMeta);
+  const runtime = v2Dict(store.snapshot.runtimeContract);
+  const source = v2Dict(dataMeta.sourceContext || dataMeta.source_context || runtime.sourceContext || runtime.source_context);
+  if (!Object.keys(source).length) return {};
+  const context = v2Dict(source.context);
+  const domain = v2List(source.domain);
+  const contextRaw = v2Text(source.context_raw || source.contextRaw);
+  const domainRaw = v2Text(source.domain_raw || source.domainRaw);
+  const renderProfile = v2Text(source.renderProfile || source.render_profile).toLowerCase();
+  return {
+    ...(Object.keys(context).length ? { context } : {}),
+    ...(domain.length ? { domain } : {}),
+    ...(contextRaw ? { contextRaw } : {}),
+    ...(domainRaw ? { domainRaw } : {}),
+    ...(renderProfile ? { renderProfile } : {}),
+  };
+}
+
 function collectActionParams(action: ContractAction): Record<string, unknown> | null {
   const requiredParams = new Set((action.requiredParams || []).map((item) => item.toLowerCase()));
   if (!action.requiresReason && !requiredParams.has('reason')) return {};
@@ -739,6 +788,8 @@ const v2ShadowLayoutSourceKind = computed(() => {
   if (containers.length) return 'v2_store';
   return nativeFormLayoutNodes.value.length ? 'legacy_layout' : 'none';
 });
+const v2ShadowGlobalSourceKind = computed(() => (v2GlobalStatusFromStore() ? 'v2_store' : 'legacy_resolver'));
+const v2ShadowSourceContextKind = computed(() => (Object.keys(v2SourceContextFromStore()).length ? 'v2_store' : 'legacy_resolver'));
 const v2ShadowStatusFieldCount = computed(() => Object.keys(v2FieldStatusFromStore()).length);
 const v2ShadowValueSource = computed(() => {
   const store = v2ContractStore.value;
@@ -869,7 +920,9 @@ function recordVersionPolicy() {
 }
 
 const renderProfile = computed<'create' | 'edit' | 'readonly'>(() => {
-  const sourceContext = resolveUnifiedPageContractV2SourceContext(contract.value);
+  const sourceContext = Object.keys(v2SourceContextFromStore()).length
+    ? v2SourceContextFromStore()
+    : resolveUnifiedPageContractV2SourceContext(contract.value);
   const head = (contract.value?.head || {}) as Record<string, unknown>;
   const profile = String(sourceContext.renderProfile || contract.value?.render_profile || head.render_profile || '').trim().toLowerCase();
   if (profile === 'readonly') return 'readonly';
@@ -880,7 +933,7 @@ const renderProfile = computed<'create' | 'edit' | 'readonly'>(() => {
 });
 
 const rights = computed(() => {
-  const globalStatus = resolveUnifiedPageContractV2GlobalStatus(contract.value);
+  const globalStatus = v2GlobalStatusFromStore() || resolveUnifiedPageContractV2GlobalStatus(contract.value);
   const pageAuth = String(globalStatus?.pageAuth || '').trim().toLowerCase();
   if (globalStatus?.pageVisible === false || pageAuth === 'none') {
     return { read: false, write: false, create: false, unlink: false };
@@ -4720,7 +4773,8 @@ function collectWritableValues() {
 }
 
 function formCreateContext() {
-  const sourceContext = resolveUnifiedPageContractV2SourceContext(contract.value).context || {};
+  const storeContext = v2SourceContextFromStore();
+  const sourceContext = (Object.keys(storeContext).length ? storeContext : resolveUnifiedPageContractV2SourceContext(contract.value)).context || {};
   return sourceContext;
 }
 
@@ -4839,6 +4893,8 @@ const hudEntries = computed(() => [
   { label: 'v2_shadow_field_overlap', value: v2ShadowLegacyFieldOverlapCount.value },
   { label: 'v2_shadow_field_missing', value: v2ShadowLegacyFieldMissingPreview.value },
   { label: 'v2_shadow_layout_source', value: v2ShadowLayoutSourceKind.value },
+  { label: 'v2_shadow_global_source', value: v2ShadowGlobalSourceKind.value },
+  { label: 'v2_shadow_source_context', value: v2ShadowSourceContextKind.value },
   { label: 'v2_shadow_status_fields', value: v2ShadowStatusFieldCount.value },
   { label: 'v2_shadow_value_fields', value: v2ShadowValueFieldCount.value },
   { label: 'v2_shadow_readonly_values', value: v2ShadowReadonlyValueCount.value },
