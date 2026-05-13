@@ -11,6 +11,7 @@ App Model Config
 
 from odoo import models, fields, api, _
 import json, hashlib, logging
+from psycopg2 import IntegrityError
 
 _logger = logging.getLogger(__name__)
 
@@ -119,8 +120,20 @@ class AppModelConfig(models.Model):
                 _logger.info('Model config unchanged for %s, keep version %s', model_name, cfg.version)
         else:
             vals['version'] = 1
-            cfg = self.sudo().create(vals)
-            _logger.info('Model config created for %s → version 1', model_name)
+            try:
+                with self.env.cr.savepoint():
+                    cfg = self.sudo().create(vals)
+                _logger.info('Model config created for %s → version 1', model_name)
+            except IntegrityError:
+                cfg = self.sudo().search([('model', '=', model_name)], limit=1)
+                if not cfg:
+                    raise
+                if (cfg.config_hash or '') != new_hash:
+                    vals['version'] = (cfg.version or 0) + 1
+                    cfg.write(vals)
+                    _logger.info('Model config recovered and updated for %s → version %s', model_name, cfg.version)
+                else:
+                    _logger.info('Model config recovered unchanged for %s, keep version %s', model_name, cfg.version)
 
         return cfg
 
