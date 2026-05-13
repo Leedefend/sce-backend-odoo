@@ -50,6 +50,7 @@ DEFAULT_UNIVERSAL_ABSTRACTION = ROOT / "docs" / "architecture" / "platform_unive
 DEFAULT_UNIVERSAL_REGISTRY = ROOT / "docs" / "architecture" / "platform_universal_business_abstraction_registry_v1.json"
 DEFAULT_UNIVERSAL_ROLLOUT = ROOT / "docs" / "architecture" / "platform_universal_abstraction_rollout_v1.md"
 DEFAULT_CARRIER_FIT_AUDIT = ROOT / "docs" / "architecture" / "platform_universal_carrier_fit_audit_v1.md"
+DEFAULT_CARRIER_FIT_REGISTRY = ROOT / "docs" / "architecture" / "platform_universal_carrier_fit_registry_v1.json"
 ALLOWED_SOLUTION_LAYERS = {"platform", "industry", "customer"}
 ALLOWED_RESPONSIBILITY_TYPES = {
     "native system-of-record",
@@ -443,6 +444,12 @@ def load_management_hierarchy(path: Path) -> dict[str, Any]:
 def load_universal_registry(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {"concepts": [], "carrier_bindings": [], "missing_registry": True}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def load_carrier_fit_registry(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {"family_carrier_fits": [], "missing_registry": True}
     return json.loads(path.read_text(encoding="utf-8"))
 
 
@@ -915,6 +922,55 @@ def summarize_universal_registry(universal_registry: dict[str, Any]) -> dict[str
     }
 
 
+def summarize_carrier_fit_registry(
+    family_registry: dict[str, Any], carrier_fit_registry: dict[str, Any]
+) -> dict[str, Any]:
+    family_names = {item.get("family") for item in family_registry.get("families", []) if item.get("family")}
+    fit_rows = carrier_fit_registry.get("family_carrier_fits", [])
+    fit_map = {item.get("family"): item for item in fit_rows if item.get("family")}
+    required_fields = [
+        "family",
+        "carrier_fit",
+        "current_binding",
+        "future_platform_pressure",
+        "decision",
+        "next_action",
+    ]
+    shape_gaps = []
+    fit_counts: Counter[str] = Counter()
+    pressure_counts: Counter[str] = Counter()
+    for item in fit_rows:
+        family = item.get("family")
+        for field in required_fields:
+            if not str(item.get(field) or "").strip():
+                shape_gaps.append({"family": family, "field": field, "reason": "missing_required_field"})
+        carrier_fit = item.get("carrier_fit")
+        if carrier_fit in ALLOWED_UNIVERSAL_CARRIER_FITS:
+            fit_counts[carrier_fit] += 1
+        else:
+            shape_gaps.append(
+                {
+                    "family": family,
+                    "field": "carrier_fit",
+                    "value": carrier_fit,
+                    "allowed_values": sorted(ALLOWED_UNIVERSAL_CARRIER_FITS),
+                }
+            )
+        pressure_counts[str(item.get("future_platform_pressure") or "missing")] += 1
+        pressure_models = item.get("representative_pressure_models", [])
+        if not isinstance(pressure_models, list):
+            shape_gaps.append({"family": family, "field": "representative_pressure_models", "reason": "must_be_list"})
+    return {
+        "carrier_fit_registry_count": len(fit_rows),
+        "carrier_fit_family_counts": dict(sorted(fit_counts.items())),
+        "future_platform_pressure_counts": dict(sorted(pressure_counts.items())),
+        "carrier_fit_registry_families_missing": sorted(family_names - set(fit_map)),
+        "carrier_fit_registry_unknown_families": sorted(set(fit_map) - family_names),
+        "carrier_fit_registry_shape_gap_count": len(shape_gaps),
+        "carrier_fit_registry_shape_gaps": shape_gaps,
+    }
+
+
 def write_markdown(report: dict[str, Any], path: Path) -> None:
     summary = report["summary"]
     rows = report["models"]
@@ -1168,6 +1224,40 @@ def write_markdown(report: dict[str, Any], path: Path) -> None:
                     current_construction_binding=item.get("current_construction_binding", ""),
                 )
             )
+    carrier_fit_registry_summary = report.get("carrier_fit_registry_summary") or {}
+    carrier_fit_registry = report.get("carrier_fit_registry") or {}
+    lines.extend(["", "## Carrier Fit Registry", ""])
+    lines.append(
+        f"- carrier_fit_registry_count: {carrier_fit_registry_summary.get('carrier_fit_registry_count', 0)}"
+    )
+    lines.append(
+        "- carrier_fit_family_counts: "
+        + json.dumps(
+            carrier_fit_registry_summary.get("carrier_fit_family_counts", {}),
+            ensure_ascii=False,
+            sort_keys=True,
+        )
+    )
+    lines.append(
+        "- future_platform_pressure_counts: "
+        + json.dumps(
+            carrier_fit_registry_summary.get("future_platform_pressure_counts", {}),
+            ensure_ascii=False,
+            sort_keys=True,
+        )
+    )
+    if carrier_fit_registry.get("family_carrier_fits"):
+        lines.extend(["", "| family | carrier fit | pressure | decision |"])
+        lines.append("| --- | --- | --- | --- |")
+        for item in carrier_fit_registry["family_carrier_fits"]:
+            lines.append(
+                "| {family} | {carrier_fit} | {future_platform_pressure} | {decision} |".format(
+                    family=item.get("family", ""),
+                    carrier_fit=item.get("carrier_fit", ""),
+                    future_platform_pressure=item.get("future_platform_pressure", ""),
+                    decision=item.get("decision", ""),
+                )
+            )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -1189,6 +1279,7 @@ def main() -> int:
     parser.add_argument("--universal-registry", default=str(DEFAULT_UNIVERSAL_REGISTRY.relative_to(ROOT)))
     parser.add_argument("--universal-rollout", default=str(DEFAULT_UNIVERSAL_ROLLOUT.relative_to(ROOT)))
     parser.add_argument("--carrier-fit-audit", default=str(DEFAULT_CARRIER_FIT_AUDIT.relative_to(ROOT)))
+    parser.add_argument("--carrier-fit-registry", default=str(DEFAULT_CARRIER_FIT_REGISTRY.relative_to(ROOT)))
     parser.add_argument(
         "--enforce",
         action="store_true",
@@ -1203,6 +1294,7 @@ def main() -> int:
     projection_registry = load_projection_registry(ROOT / args.projection_registry)
     management_hierarchy = load_management_hierarchy(ROOT / args.management_hierarchy)
     universal_registry = load_universal_registry(ROOT / args.universal_registry)
+    carrier_fit_registry = load_carrier_fit_registry(ROOT / args.carrier_fit_registry)
     report = {
         "summary": summarize(rows, registry),
         "family_summary": summarize_family_registry(rows, family_registry),
@@ -1210,12 +1302,14 @@ def main() -> int:
         "projection_summary": summarize_projection_registry(rows, projection_registry),
         "management_hierarchy_summary": summarize_management_hierarchy(family_registry, management_hierarchy),
         "universal_summary": summarize_universal_registry(universal_registry),
+        "carrier_fit_registry_summary": summarize_carrier_fit_registry(family_registry, carrier_fit_registry),
         "registry": registry,
         "family_registry": family_registry,
         "ownership_specs": ownership_specs,
         "projection_registry": projection_registry,
         "management_hierarchy": management_hierarchy,
         "universal_registry": universal_registry,
+        "carrier_fit_registry": carrier_fit_registry,
         "models": rows,
     }
     report_path = ROOT / args.report
@@ -1244,6 +1338,10 @@ def main() -> int:
         "PLATFORM_UNIVERSAL_BUSINESS_ABSTRACTION="
         + json.dumps(report["universal_summary"], ensure_ascii=False, sort_keys=True)
     )
+    print(
+        "PLATFORM_UNIVERSAL_CARRIER_FIT_REGISTRY="
+        + json.dumps(report["carrier_fit_registry_summary"], ensure_ascii=False, sort_keys=True)
+    )
     if args.enforce:
         problem_map_path = ROOT / args.problem_map
         problem_map_text = problem_map_path.read_text(encoding="utf-8") if problem_map_path.exists() else ""
@@ -1268,6 +1366,7 @@ def main() -> int:
         universal_rollout_text = universal_rollout_path.read_text(encoding="utf-8") if universal_rollout_path.exists() else ""
         carrier_fit_audit_path = ROOT / args.carrier_fit_audit
         carrier_fit_audit_text = carrier_fit_audit_path.read_text(encoding="utf-8") if carrier_fit_audit_path.exists() else ""
+        carrier_fit_registry_path = ROOT / args.carrier_fit_registry
         blockers = {
             "unregistered_formal_models": summary["unregistered_formal_models"],
             "unclassified_models": summary["unclassified_models"],
@@ -1412,6 +1511,27 @@ def main() -> int:
                 {
                     "path": str(carrier_fit_audit_path.relative_to(ROOT)),
                     "reason": "missing_carrier_fit_audit_or_decision",
+                }
+            ],
+            "carrier_fit_registry_gaps": []
+            if carrier_fit_registry_path.exists()
+            and not report["carrier_fit_registry_summary"]["carrier_fit_registry_families_missing"]
+            and not report["carrier_fit_registry_summary"]["carrier_fit_registry_unknown_families"]
+            and not report["carrier_fit_registry_summary"]["carrier_fit_registry_shape_gaps"]
+            and report["carrier_fit_registry_summary"]["future_platform_pressure_counts"].get("high", 0) >= 1
+            else [
+                {
+                    "path": str(carrier_fit_registry_path.relative_to(ROOT)),
+                    "missing_families": report["carrier_fit_registry_summary"][
+                        "carrier_fit_registry_families_missing"
+                    ],
+                    "unknown_families": report["carrier_fit_registry_summary"][
+                        "carrier_fit_registry_unknown_families"
+                    ],
+                    "shape_gaps": report["carrier_fit_registry_summary"]["carrier_fit_registry_shape_gaps"],
+                    "future_platform_pressure_counts": report["carrier_fit_registry_summary"][
+                        "future_platform_pressure_counts"
+                    ],
                 }
             ],
         }

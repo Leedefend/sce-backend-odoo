@@ -120,11 +120,16 @@ non-invasive:
 
 ## Next Step
 
-Create a carrier-fit registry for model families:
+The carrier-fit registry is maintained at:
+
+```text
+docs/architecture/platform_universal_carrier_fit_registry_v1.json
+```
+
+It records this gate for every model family:
 
 ```text
 family -> carrier_fit -> current_binding -> future_platform_pressure
 ```
 
-That registry should become the gate before any new platform business model is
-introduced.
+That registry is the gate before any new platform business model is introduced.

@@ -93,6 +93,12 @@ The next concrete task should be:
 create a carrier-fit registry for model families
 ```
 
+The registry has been introduced at:
+
+```text
+docs/architecture/platform_universal_carrier_fit_registry_v1.json
+```
+
 Registry categories:
 
 - platform/company-level

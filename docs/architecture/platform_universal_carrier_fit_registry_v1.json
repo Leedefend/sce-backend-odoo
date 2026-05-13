@@ -1,0 +1,180 @@
+{
+  "schema": "platform_universal_carrier_fit_registry_v1",
+  "status": "draft architecture audit",
+  "kernel": "platform -> company -> business -> carrier -> fact -> projection",
+  "construction_binding": "carrier_type=project -> project.project",
+  "policy": "A new platform business/carrier table is allowed only when a family has high pressure that cannot be solved by registry metadata or optional carrier fields.",
+  "family_carrier_fits": [
+    {
+      "family": "company and business governance",
+      "carrier_fit": "platform_company_level",
+      "current_binding": "res.company and platform governance registries",
+      "future_platform_pressure": "low",
+      "representative_pressure_models": ["sc.business.entity"],
+      "decision": "Keep at platform/company level; do not bind to project.",
+      "next_action": "Use as policy and capability context for future business/carrier scopes."
+    },
+    {
+      "family": "partner and counterparty identity",
+      "carrier_fit": "company_identity",
+      "current_binding": "res.partner and res.partner.bank",
+      "future_platform_pressure": "low",
+      "representative_pressure_models": [],
+      "decision": "Keep identity native and reusable across businesses and carriers.",
+      "next_action": "Do not add project-specific ownership to counterparty identity."
+    },
+    {
+      "family": "project identity and execution carrier",
+      "carrier_fit": "carrier_primary_project",
+      "current_binding": "project.project as construction carrier",
+      "future_platform_pressure": "medium",
+      "representative_pressure_models": ["project.project"],
+      "decision": "Keep project as the construction carrier, not the platform kernel.",
+      "next_action": "Expose project through the carrier contract and avoid promoting project-only semantics to platform."
+    },
+    {
+      "family": "product and material identity",
+      "carrier_fit": "company_identity",
+      "current_binding": "product.template plus sc.material.catalog",
+      "future_platform_pressure": "low",
+      "representative_pressure_models": ["sc.material.catalog"],
+      "decision": "Keep product/material identity reusable at company and industry identity level.",
+      "next_action": "Separate identity from material lifecycle facts in later standards."
+    },
+    {
+      "family": "income contract and tender business",
+      "carrier_fit": "business_level_no_carrier",
+      "current_binding": "tender.bid currently requires project_id; income contracts usually bind to project",
+      "future_platform_pressure": "high",
+      "representative_pressure_models": ["tender.bid", "construction.contract", "construction.contract.income"],
+      "decision": "Treat tender as the first explicit business-before-carrier pressure point.",
+      "next_action": "Design optional business/carrier metadata before changing tender or contract schema."
+    },
+    {
+      "family": "expense contract and procurement commitment",
+      "carrier_fit": "carrier_primary_project",
+      "current_binding": "project.project through construction expense contracts and sc.general.contract",
+      "future_platform_pressure": "medium",
+      "representative_pressure_models": ["sc.general.contract", "construction.contract.expense"],
+      "decision": "Keep project-primary for construction expense, but preserve general-contract exception pressure.",
+      "next_action": "Split general company spending from project expense before any platform table decision."
+    },
+    {
+      "family": "payment request and payment execution",
+      "carrier_fit": "carrier_primary_project",
+      "current_binding": "project.project as normal payment and approval carrier",
+      "future_platform_pressure": "medium",
+      "representative_pressure_models": ["payment.request", "sc.payment.execution"],
+      "decision": "Keep payment facts project-carried while the expense business remains construction-specific.",
+      "next_action": "Revisit only if company-level payment workflows appear outside project or contract."
+    },
+    {
+      "family": "receipt income invoice and tax realization",
+      "carrier_fit": "carrier_primary_project",
+      "current_binding": "project.project and income contract anchors",
+      "future_platform_pressure": "medium",
+      "representative_pressure_models": ["sc.receipt.income", "sc.invoice.registration", "sc.tax.deduction.registration"],
+      "decision": "Keep income realization project-carried in construction.",
+      "next_action": "Add business-level aggregation only if income lifecycle must span multiple project carriers."
+    },
+    {
+      "family": "treasury account reconciliation and ledger",
+      "carrier_fit": "carrier_optional_project",
+      "current_binding": "company-level fund account with optional project and project-carried reconciliation",
+      "future_platform_pressure": "medium",
+      "representative_pressure_models": ["sc.fund.account", "sc.treasury.reconciliation", "sc.treasury.ledger"],
+      "decision": "Keep account master company-level and reconciliation carrier-aware.",
+      "next_action": "Do not collapse account, reconciliation, and ledger into one business fact."
+    },
+    {
+      "family": "project budget BOQ and cost control",
+      "carrier_fit": "carrier_primary_project",
+      "current_binding": "project.project",
+      "future_platform_pressure": "low",
+      "representative_pressure_models": ["project.budget", "project.boq.line", "project.cost.period"],
+      "decision": "Keep as construction project control, not platform business core.",
+      "next_action": "Use as project-carrier exemplar for future carrier contract tests."
+    },
+    {
+      "family": "material lifecycle",
+      "carrier_fit": "carrier_primary_project",
+      "current_binding": "project.project with product/purchase/stock native integration",
+      "future_platform_pressure": "low",
+      "representative_pressure_models": ["sc.material.acceptance", "project.material.plan"],
+      "decision": "Keep material lifecycle project-carried in construction.",
+      "next_action": "Preserve product identity boundary and avoid making projections writable."
+    },
+    {
+      "family": "labor equipment and subcontract lifecycle",
+      "carrier_fit": "carrier_primary_project",
+      "current_binding": "project.project",
+      "future_platform_pressure": "low",
+      "representative_pressure_models": ["sc.labor.plan", "sc.equipment.plan", "sc.subcontract.plan"],
+      "decision": "Keep professional resource lifecycles project-carried.",
+      "next_action": "Do not fold professional lifecycle models back into generic contract or payment tables."
+    },
+    {
+      "family": "progress quality safety risk and diary",
+      "carrier_fit": "carrier_primary_project",
+      "current_binding": "project.project",
+      "future_platform_pressure": "low",
+      "representative_pressure_models": ["project.progress.entry", "sc.quality.issue", "sc.safety.plan", "sc.construction.diary"],
+      "decision": "Keep as construction project execution evidence.",
+      "next_action": "Use these facts for visibility but keep projections derived."
+    },
+    {
+      "family": "document admin payroll and office operations",
+      "carrier_fit": "carrier_optional_project",
+      "current_binding": "company workflow with optional project anchors",
+      "future_platform_pressure": "medium",
+      "representative_pressure_models": ["sc.document.admin.document", "sc.office.admin.document", "sc.hr.payroll.document"],
+      "decision": "Keep company-managed and carrier-optional.",
+      "next_action": "Promote to business fact only when documents own income/expense amount semantics."
+    },
+    {
+      "family": "projection summaries and management visibility",
+      "carrier_fit": "derived_projection",
+      "current_binding": "deterministic refresh from upstream facts",
+      "future_platform_pressure": "medium",
+      "representative_pressure_models": ["sc.company.operation.summary", "sc.ar.ap.company.summary", "sc.ar.ap.project.summary"],
+      "decision": "Keep read-side derived; never use projection as source-of-truth.",
+      "next_action": "Add business-level projections only after fact-side business/carrier pressure is proven."
+    },
+    {
+      "family": "legacy replay and historical evidence",
+      "carrier_fit": "legacy_evidence",
+      "current_binding": "source-fidelity replay carriers and target anchors",
+      "future_platform_pressure": "none",
+      "representative_pressure_models": [],
+      "decision": "Keep legacy evidence out of platform model definition.",
+      "next_action": "Use replay evidence to validate target models, not to define the hierarchy."
+    },
+    {
+      "family": "workflow approval dictionary audit and validation",
+      "carrier_fit": "platform_company_level",
+      "current_binding": "platform/company policy and workflow context",
+      "future_platform_pressure": "medium",
+      "representative_pressure_models": ["sc.approval.policy", "sc.workflow.def", "sc.data.validator"],
+      "decision": "Keep as policy over facts, not fact ownership.",
+      "next_action": "Prepare scope vocabulary for company/business/carrier policy application."
+    },
+    {
+      "family": "scene capability subscription and frontend contract runtime",
+      "carrier_fit": "platform_company_level",
+      "current_binding": "platform scene/capability/subscription registries",
+      "future_platform_pressure": "low",
+      "representative_pressure_models": ["sc.scene", "sc.capability", "sc.subscription"],
+      "decision": "Keep as platform runtime contract.",
+      "next_action": "Expose carrier context to frontend contracts without embedding business-specific rendering."
+    },
+    {
+      "family": "compatibility bridges and native extensions",
+      "carrier_fit": "technical_bridge",
+      "current_binding": "native Odoo/OCA models with compatibility hooks",
+      "future_platform_pressure": "none",
+      "representative_pressure_models": [],
+      "decision": "Keep as bridge layer only.",
+      "next_action": "Do not let technical extensions become business source-of-truth."
+    }
+  ]
+}
