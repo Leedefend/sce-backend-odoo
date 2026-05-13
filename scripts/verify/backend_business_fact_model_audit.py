@@ -19,6 +19,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 MODEL_ROOT = ROOT / "addons" / "smart_construction_core" / "models"
+SMART_CORE_MODEL_ROOT = ROOT / "addons" / "smart_core" / "models"
 
 STANDARD_FIELDS = [
     "source_origin",
@@ -53,6 +54,14 @@ DEFAULT_CARRIER_FIT_AUDIT = ROOT / "docs" / "architecture" / "platform_universal
 DEFAULT_CARRIER_FIT_REGISTRY = ROOT / "docs" / "architecture" / "platform_universal_carrier_fit_registry_v1.json"
 DEFAULT_SCOPE_DECISION_GATE = ROOT / "docs" / "architecture" / "platform_universal_scope_decision_gate_v1.json"
 DEFAULT_OPTIONAL_SCOPE_METADATA = ROOT / "docs" / "architecture" / "platform_universal_optional_scope_metadata_v1.json"
+DEFAULT_PLATFORM_CORE_KERNEL_GAP = ROOT / "docs" / "architecture" / "platform_core_business_kernel_gap_v1.json"
+PLATFORM_SCOPE_FIELD_NAMES = [
+    "business_scope_key",
+    "business_direction",
+    "carrier_type",
+    "carrier_model",
+    "carrier_res_id",
+]
 ALLOWED_SOLUTION_LAYERS = {"platform", "industry", "customer"}
 ALLOWED_RESPONSIBILITY_TYPES = {
     "native system-of-record",
@@ -238,6 +247,63 @@ def extract_models() -> list[dict[str, Any]]:
     return rows
 
 
+def extract_named_model(path: Path, target_model: str) -> dict[str, Any] | None:
+    if not path.exists():
+        return None
+    source = path.read_text(encoding="utf-8")
+    tree = ast.parse(source, filename=str(path))
+    for node in tree.body:
+        if not isinstance(node, ast.ClassDef):
+            continue
+        model_name = None
+        inherit = None
+        description = None
+        fields: list[dict[str, Any]] = []
+        for stmt in node.body:
+            if not isinstance(stmt, ast.Assign):
+                continue
+            target_names = [t.id for t in stmt.targets if isinstance(t, ast.Name)]
+            if "_name" in target_names:
+                model_name = literal(stmt.value)
+            if "_inherit" in target_names:
+                inherit = literal(stmt.value)
+            if "_description" in target_names:
+                description = literal(stmt.value)
+            for target in stmt.targets:
+                if not isinstance(target, ast.Name):
+                    continue
+                field_call = call_name(stmt.value)
+                if not field_call.startswith("fields."):
+                    continue
+                comodel = ""
+                if isinstance(stmt.value, ast.Call) and stmt.value.args:
+                    first_arg = literal(stmt.value.args[0])
+                    if isinstance(first_arg, str):
+                        comodel = first_arg
+                kwargs = call_kwargs(stmt.value)
+                fields.append(
+                    {
+                        "name": target.id,
+                        "type": field_call.split(".", 1)[1],
+                        "comodel": comodel,
+                        "required": bool(kwargs.get("required")),
+                        "readonly": bool(kwargs.get("readonly")),
+                        "related": kwargs.get("related") or "",
+                        "store": bool(kwargs.get("store")),
+                    }
+                )
+        if model_name == target_model:
+            return {
+                "path": str(path.relative_to(ROOT)),
+                "class": node.name,
+                "model": model_name,
+                "inherit": inherit,
+                "description": description,
+                "fields": fields,
+            }
+    return None
+
+
 def classify_implementation_kind(model_name: str | None, inherit: Any) -> str:
     if model_name and inherit:
         return "custom_model_with_mixin_or_inherit"
@@ -367,6 +433,14 @@ def field_by_name(fields: list[dict[str, Any]], name: str) -> dict[str, Any] | N
     return next((field for field in fields if field.get("name") == name), None)
 
 
+def inherits_model(inherit: Any, model_name: str) -> bool:
+    if isinstance(inherit, str):
+        return inherit == model_name
+    if isinstance(inherit, (list, tuple, set)):
+        return model_name in inherit
+    return False
+
+
 def classify_universal_carrier_fit(
     path: str,
     model_name: str | None,
@@ -472,6 +546,12 @@ def load_scope_decision_gate(path: Path) -> dict[str, Any]:
 def load_optional_scope_metadata(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {"model_scope_metadata": [], "missing_registry": True}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def load_platform_core_kernel_gap(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {"minimum_kernel_artifacts": [], "missing_registry": True}
     return json.loads(path.read_text(encoding="utf-8"))
 
 
@@ -1034,8 +1114,79 @@ def summarize_scope_decision_gate(scope_decision_gate: dict[str, Any]) -> dict[s
     }
 
 
+def summarize_platform_core_kernel_gap(platform_core_kernel_gap: dict[str, Any]) -> dict[str, Any]:
+    mixin_row = extract_named_model(SMART_CORE_MODEL_ROOT / "business_scope.py", "sc.business.scope.mixin")
+    artifact_rows = platform_core_kernel_gap.get("minimum_kernel_artifacts", [])
+    required_artifact_keys = {"platform_business_scope_mixin"}
+    artifact_keys = {item.get("artifact_key") for item in artifact_rows}
+    shape_gaps = []
+    if "platform_business_scope_mixin" not in artifact_keys:
+        shape_gaps.append(
+            {
+                "artifact_key": "platform_business_scope_mixin",
+                "reason": "missing_minimum_kernel_artifact_registry",
+            }
+        )
+    if not mixin_row:
+        shape_gaps.append(
+            {
+                "artifact_key": "platform_business_scope_mixin",
+                "model": "sc.business.scope.mixin",
+                "reason": "mixin_model_not_detected",
+            }
+        )
+        mixin_fields = []
+    else:
+        mixin_fields = mixin_row.get("fields", [])
+    for field_name in PLATFORM_SCOPE_FIELD_NAMES:
+        field = field_by_name(mixin_fields, field_name)
+        if not field:
+            shape_gaps.append(
+                {
+                    "artifact_key": "platform_business_scope_mixin",
+                    "field": field_name,
+                    "reason": "required_platform_scope_field_missing",
+                }
+            )
+            continue
+        if field.get("required"):
+            shape_gaps.append(
+                {
+                    "artifact_key": "platform_business_scope_mixin",
+                    "field": field_name,
+                    "reason": "platform_scope_field_must_remain_optional",
+                }
+            )
+    return {
+        "minimum_kernel_artifact_count": len(artifact_rows),
+        "has_platform_business_scope_mixin": bool(mixin_row),
+        "platform_scope_field_count": len([field for field in mixin_fields if field.get("name") in PLATFORM_SCOPE_FIELD_NAMES]),
+        "platform_scope_fields": [field.get("name") for field in mixin_fields if field.get("name") in PLATFORM_SCOPE_FIELD_NAMES],
+        "missing_required_artifact_keys": sorted(required_artifact_keys - artifact_keys),
+        "platform_core_kernel_shape_gap_count": len(shape_gaps),
+        "platform_core_kernel_shape_gaps": shape_gaps,
+        "scope_mixin_fields": mixin_fields,
+    }
+
+
+def inherited_optional_scope_field(
+    model_row: dict[str, Any] | None, field_name: str, platform_core_summary: dict[str, Any]
+) -> dict[str, Any] | None:
+    if not model_row:
+        return None
+    direct_field = field_by_name(model_row.get("fields", []), field_name)
+    if direct_field:
+        return direct_field
+    if not inherits_model(model_row.get("inherit"), "sc.business.scope.mixin"):
+        return None
+    return field_by_name(platform_core_summary.get("scope_mixin_fields", []), field_name)
+
+
 def summarize_optional_scope_metadata(
-    rows: list[dict[str, Any]], family_registry: dict[str, Any], optional_scope_metadata: dict[str, Any]
+    rows: list[dict[str, Any]],
+    family_registry: dict[str, Any],
+    optional_scope_metadata: dict[str, Any],
+    platform_core_summary: dict[str, Any],
 ) -> dict[str, Any]:
     detected_models = {row["model"] for row in rows if row.get("model")}
     family_names = {item.get("family") for item in family_registry.get("families", []) if item.get("family")}
@@ -1100,7 +1251,7 @@ def summarize_optional_scope_metadata(
                         "reason": "optional_scope_field_must_be_required_false",
                     }
                 )
-            actual_field = field_by_name(model_row.get("fields", []) if model_row else [], proposed_field.get("name"))
+            actual_field = inherited_optional_scope_field(model_row, proposed_field.get("name"), platform_core_summary)
             if not actual_field:
                 shape_gaps.append(
                     {
@@ -1395,6 +1546,23 @@ def write_markdown(report: dict[str, Any], path: Path) -> None:
                     current_construction_binding=item.get("current_construction_binding", ""),
                 )
             )
+    platform_core_summary = report.get("platform_core_summary") or {}
+    lines.extend(["", "## Platform Core Kernel Gap", ""])
+    lines.append(
+        f"- minimum_kernel_artifact_count: {platform_core_summary.get('minimum_kernel_artifact_count', 0)}"
+    )
+    lines.append(
+        f"- has_platform_business_scope_mixin: {platform_core_summary.get('has_platform_business_scope_mixin', False)}"
+    )
+    lines.append(f"- platform_scope_field_count: {platform_core_summary.get('platform_scope_field_count', 0)}")
+    lines.append(
+        "- platform_scope_fields: "
+        + (", ".join(platform_core_summary.get("platform_scope_fields", [])) or "none")
+    )
+    lines.append(
+        "- missing_required_artifact_keys: "
+        + (", ".join(platform_core_summary.get("missing_required_artifact_keys", [])) or "none")
+    )
     carrier_fit_registry_summary = report.get("carrier_fit_registry_summary") or {}
     carrier_fit_registry = report.get("carrier_fit_registry") or {}
     lines.extend(["", "## Carrier Fit Registry", ""])
@@ -1497,6 +1665,7 @@ def main() -> int:
     parser.add_argument("--carrier-fit-registry", default=str(DEFAULT_CARRIER_FIT_REGISTRY.relative_to(ROOT)))
     parser.add_argument("--scope-decision-gate", default=str(DEFAULT_SCOPE_DECISION_GATE.relative_to(ROOT)))
     parser.add_argument("--optional-scope-metadata", default=str(DEFAULT_OPTIONAL_SCOPE_METADATA.relative_to(ROOT)))
+    parser.add_argument("--platform-core-kernel-gap", default=str(DEFAULT_PLATFORM_CORE_KERNEL_GAP.relative_to(ROOT)))
     parser.add_argument(
         "--enforce",
         action="store_true",
@@ -1514,6 +1683,8 @@ def main() -> int:
     carrier_fit_registry = load_carrier_fit_registry(ROOT / args.carrier_fit_registry)
     scope_decision_gate = load_scope_decision_gate(ROOT / args.scope_decision_gate)
     optional_scope_metadata = load_optional_scope_metadata(ROOT / args.optional_scope_metadata)
+    platform_core_kernel_gap = load_platform_core_kernel_gap(ROOT / args.platform_core_kernel_gap)
+    platform_core_summary = summarize_platform_core_kernel_gap(platform_core_kernel_gap)
     report = {
         "summary": summarize(rows, registry),
         "family_summary": summarize_family_registry(rows, family_registry),
@@ -1521,15 +1692,19 @@ def main() -> int:
         "projection_summary": summarize_projection_registry(rows, projection_registry),
         "management_hierarchy_summary": summarize_management_hierarchy(family_registry, management_hierarchy),
         "universal_summary": summarize_universal_registry(universal_registry),
+        "platform_core_summary": platform_core_summary,
         "carrier_fit_registry_summary": summarize_carrier_fit_registry(family_registry, carrier_fit_registry),
         "scope_decision_summary": summarize_scope_decision_gate(scope_decision_gate),
-        "optional_scope_summary": summarize_optional_scope_metadata(rows, family_registry, optional_scope_metadata),
+        "optional_scope_summary": summarize_optional_scope_metadata(
+            rows, family_registry, optional_scope_metadata, platform_core_summary
+        ),
         "registry": registry,
         "family_registry": family_registry,
         "ownership_specs": ownership_specs,
         "projection_registry": projection_registry,
         "management_hierarchy": management_hierarchy,
         "universal_registry": universal_registry,
+        "platform_core_kernel_gap": platform_core_kernel_gap,
         "carrier_fit_registry": carrier_fit_registry,
         "scope_decision_gate": scope_decision_gate,
         "optional_scope_metadata": optional_scope_metadata,
@@ -1560,6 +1735,10 @@ def main() -> int:
     print(
         "PLATFORM_UNIVERSAL_BUSINESS_ABSTRACTION="
         + json.dumps(report["universal_summary"], ensure_ascii=False, sort_keys=True)
+    )
+    print(
+        "PLATFORM_CORE_BUSINESS_KERNEL_GAP="
+        + json.dumps(report["platform_core_summary"], ensure_ascii=False, sort_keys=True)
     )
     print(
         "PLATFORM_UNIVERSAL_CARRIER_FIT_REGISTRY="
@@ -1600,6 +1779,7 @@ def main() -> int:
         carrier_fit_registry_path = ROOT / args.carrier_fit_registry
         scope_decision_gate_path = ROOT / args.scope_decision_gate
         optional_scope_metadata_path = ROOT / args.optional_scope_metadata
+        platform_core_kernel_gap_path = ROOT / args.platform_core_kernel_gap
         blockers = {
             "unregistered_formal_models": summary["unregistered_formal_models"],
             "unclassified_models": summary["unclassified_models"],
@@ -1721,6 +1901,25 @@ def main() -> int:
                     "concept_shape_gaps": report["universal_summary"]["universal_concept_shape_gaps"],
                     "carrier_binding_shape_gaps": report["universal_summary"]["carrier_binding_shape_gaps"],
                     "has_construction_project_binding": report["universal_summary"]["has_construction_project_binding"],
+                }
+            ],
+            "platform_core_kernel_gaps": []
+            if platform_core_kernel_gap_path.exists()
+            and report["platform_core_summary"]["has_platform_business_scope_mixin"]
+            and report["platform_core_summary"]["platform_scope_field_count"] == len(PLATFORM_SCOPE_FIELD_NAMES)
+            and not report["platform_core_summary"]["missing_required_artifact_keys"]
+            and not report["platform_core_summary"]["platform_core_kernel_shape_gaps"]
+            else [
+                {
+                    "path": str(platform_core_kernel_gap_path.relative_to(ROOT)),
+                    "has_platform_business_scope_mixin": report["platform_core_summary"][
+                        "has_platform_business_scope_mixin"
+                    ],
+                    "platform_scope_fields": report["platform_core_summary"]["platform_scope_fields"],
+                    "missing_required_artifact_keys": report["platform_core_summary"][
+                        "missing_required_artifact_keys"
+                    ],
+                    "shape_gaps": report["platform_core_summary"]["platform_core_kernel_shape_gaps"],
                 }
             ],
             "universal_rollout_gaps": []

@@ -1,9 +1,9 @@
 {
   "schema": "platform_universal_optional_scope_metadata_v1",
   "status": "draft architecture contract",
-  "purpose": "Define non-breaking optional business/carrier scope metadata candidates before any runtime schema change.",
+  "purpose": "Define non-breaking optional business/carrier scope metadata candidates backed by the smart_core platform scope mixin.",
   "kernel": "platform -> company -> business -> carrier -> fact -> projection",
-  "policy": "Optional scope metadata may describe future platform scope, but existing project behavior remains authoritative until probes prove the new scope is safe.",
+  "policy": "Optional scope metadata may describe future platform scope through sc.business.scope.mixin, but existing project behavior remains authoritative until probes prove the new scope is safe.",
   "model_scope_metadata": [
     {
       "target_model": "tender.bid",

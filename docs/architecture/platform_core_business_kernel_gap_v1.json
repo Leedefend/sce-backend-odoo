@@ -1,0 +1,31 @@
+{
+  "schema": "platform_core_business_kernel_gap_v1",
+  "status": "draft architecture contract",
+  "purpose": "Make the platform-core business-kernel gap explicit and verify the minimum cross-industry scope artifact outside the construction module.",
+  "gap_statement": "Without an industry module, smart_core historically provided runtime and UI contract infrastructure but no reusable business/carrier scope vocabulary.",
+  "kernel": "platform -> company -> business -> carrier -> fact -> projection",
+  "decision": "Fill the core gap first with an abstract platform scope contract, not a concrete business source-of-truth table.",
+  "minimum_kernel_artifacts": [
+    {
+      "artifact_key": "platform_business_scope_mixin",
+      "module": "smart_core",
+      "model": "sc.business.scope.mixin",
+      "kind": "abstract_mixin",
+      "purpose": "Provide cross-industry optional business and carrier scope metadata for industry facts and projections.",
+      "scope_fields": [
+        "business_scope_key",
+        "business_direction",
+        "carrier_type",
+        "carrier_model",
+        "carrier_res_id"
+      ],
+      "forbidden_ownership": [
+        "must_not_require_project",
+        "must_not_own_business_lifecycle",
+        "must_not_embed_customer_replay_shape",
+        "must_not_replace_industry_carrier_source_of_truth"
+      ]
+    }
+  ],
+  "next_gate": "Only promote to a concrete business/carrier table after multiple runtime models prove shared lifecycle, ownership, and projection needs."
+}

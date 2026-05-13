@@ -6,7 +6,7 @@ from odoo.exceptions import UserError
 class TenderBid(models.Model):
     _name = "tender.bid"
     _description = "投标管理"
-    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _inherit = ["mail.thread", "mail.activity.mixin", "sc.business.scope.mixin"]
     _order = "project_id, id desc"
 
     name = fields.Char("投标编号", default="新建", copy=False)
@@ -23,38 +23,6 @@ class TenderBid(models.Model):
         string="经营方式",
         store=True,
         readonly=True,
-    )
-    business_scope_key = fields.Char(
-        string="业务范围键",
-        index=True,
-        help="Optional platform scope metadata. It does not replace project_id.",
-    )
-    business_direction = fields.Selection(
-        [
-            ("income", "收入"),
-            ("expense", "支出"),
-            ("bilateral_mixed", "双向/混合"),
-            ("governance", "治理"),
-            ("neutral", "中性"),
-        ],
-        string="业务方向",
-        index=True,
-        help="Optional cross-industry business direction metadata.",
-    )
-    carrier_type = fields.Char(
-        string="载体类型",
-        index=True,
-        help="Optional future carrier discriminator such as project, case, order, or contract.",
-    )
-    carrier_model = fields.Char(
-        string="载体模型",
-        index=True,
-        help="Optional technical model name of the carrier when known.",
-    )
-    carrier_res_id = fields.Integer(
-        string="载体记录ID",
-        index=True,
-        help="Optional technical record id of the carrier when known.",
     )
     tender_round = fields.Integer("投标轮次", default=1)
     owner_id = fields.Many2one("res.partner", string="招标人/业主")

@@ -167,3 +167,16 @@ The optional scope metadata contract records the first candidate on `tender.bid`
 It keeps `project_id` authoritative for the current construction workflow and
 allows future business/carrier metadata to remain empty until runtime probes
 prove the scope is safe.
+
+## Platform Core Gap
+
+The current platform core gap is real: without an industry module, the platform
+previously had technical runtime services but no reusable business/carrier scope
+vocabulary.
+
+The first core fill is `sc.business.scope.mixin` in `smart_core`. This moves the
+cross-industry scope language into platform core while keeping construction
+carrier semantics in the construction module.
+
+This is deliberately smaller than adding `sc.business` as a table. The platform
+now owns the vocabulary; it does not yet own the business lifecycle.
