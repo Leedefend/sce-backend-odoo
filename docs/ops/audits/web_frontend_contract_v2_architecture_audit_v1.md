@@ -396,6 +396,7 @@ Batch C shadow execution note:
 - C.13 removes `groups_xmlids` reads from `ContractFormPage`; form fields/actions now rely on backend policy/status plus role/capability context instead of page-level group filtering.
 - C.14 removes ActionView user-group forwarding into action button runtime; list/kanban action buttons no longer infer entitlement from `groups_xmlids`.
 - C.16 removes `groups_xmlids` reads from the parallel `RecordView` diagnostics path; capability checks no longer receive page-level group inputs there.
+- C.17 narrows the action metadata runtime's URL redirect contract type from a loose action contract alias to `ActionUrlContractShape`, removing the local loose-contract debt without changing ActionView's main runtime contract.
 
 ### Batch D: Action/List/Kanban Renderer Convergence
 

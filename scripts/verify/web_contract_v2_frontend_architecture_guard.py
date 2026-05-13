@@ -97,7 +97,7 @@ DEBT_RULES: tuple[DebtRule, ...] = (
         severity="P2",
         path="app/action_runtime/useActionViewActionMetaRuntime.ts",
         pattern="ActionContractLoose",
-        max_count=5,
+        max_count=0,
         rationale="Action metadata runtime still models a loose legacy-shaped action contract.",
         next_action="Switch action metadata to the normalized v2 store view model.",
     ),
