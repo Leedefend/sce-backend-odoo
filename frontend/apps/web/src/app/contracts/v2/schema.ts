@@ -60,8 +60,26 @@ function requiredString(source: ContractV2Dictionary, key: string, path: string,
   return value;
 }
 
+function requiredAliasedString(
+  source: ContractV2Dictionary,
+  key: string,
+  aliases: string[],
+  path: string,
+  issues: DecodeIssue[],
+): string {
+  const value = asString(source[key]) || aliases.map((alias) => asString(source[alias])).find(Boolean) || '';
+  if (!value) {
+    issues.push({ path: `${path}.${key}`, message: `is required; aliases checked: ${aliases.join(', ')}` });
+  }
+  return value;
+}
+
 function optionalString(source: ContractV2Dictionary, key: string): string | undefined {
   return asString(source[key]) || undefined;
+}
+
+function optionalAliasedString(source: ContractV2Dictionary, key: string, aliases: string[]): string | undefined {
+  return asString(source[key]) || aliases.map((alias) => asString(source[alias])).find(Boolean) || undefined;
 }
 
 function readObject(source: ContractV2Dictionary, key: string, path: string, issues: DecodeIssue[]): ContractV2Dictionary {
@@ -112,20 +130,20 @@ function decodeWidget(raw: unknown, path: string, issues: DecodeIssue[]): Contra
     issues.push({ path, message: 'widget must be an object' });
     return null;
   }
-  const widgetId = requiredString(raw, 'widgetId', path, issues);
-  const fieldCode = requiredString(raw, 'fieldCode', path, issues);
-  const widgetType = requiredString(raw, 'widgetType', path, issues);
-  const componentKey = requiredString(raw, 'componentKey', path, issues);
+  const widgetId = requiredAliasedString(raw, 'widgetId', ['widget_id'], path, issues);
+  const fieldCode = requiredAliasedString(raw, 'fieldCode', ['field_code', 'name', 'field'], path, issues);
+  const widgetType = requiredAliasedString(raw, 'widgetType', ['widget_type', 'type'], path, issues);
+  const componentKey = requiredAliasedString(raw, 'componentKey', ['component_key'], path, issues);
   if (!widgetId || !fieldCode || !widgetType || !componentKey) return null;
   const componentConfig = asRecord(raw.componentConfig);
   return {
     widgetId,
     widgetType,
     fieldCode,
-    label: requiredString(raw, 'label', path, issues),
+    label: requiredAliasedString(raw, 'label', ['string', 'title'], path, issues),
     componentKey,
     ...(Object.keys(componentConfig).length ? { componentConfig } : {}),
-    ...(optionalString(raw, 'fieldType') ? { fieldType: optionalString(raw, 'fieldType') } : {}),
+    ...(optionalAliasedString(raw, 'fieldType', ['field_type', 'ttype']) ? { fieldType: optionalAliasedString(raw, 'fieldType', ['field_type', 'ttype']) } : {}),
     ...(optionalString(raw, 'relation') ? { relation: optionalString(raw, 'relation') } : {}),
   };
 }
@@ -135,8 +153,8 @@ function decodeContainer(raw: unknown, path: string, issues: DecodeIssue[]): Con
     issues.push({ path, message: 'container must be an object' });
     return null;
   }
-  const containerId = requiredString(raw, 'containerId', path, issues);
-  const containerType = requiredString(raw, 'containerType', path, issues);
+  const containerId = requiredAliasedString(raw, 'containerId', ['container_id', 'id', 'name'], path, issues);
+  const containerType = requiredAliasedString(raw, 'containerType', ['container_type', 'type'], path, issues);
   if (!containerId || !containerType) return null;
   const children = (Array.isArray(raw.children) ? raw.children : [])
     .map((item, index) => decodeContainer(item, `${path}.children[${index}]`, issues))
@@ -147,7 +165,7 @@ function decodeContainer(raw: unknown, path: string, issues: DecodeIssue[]): Con
   return {
     containerId,
     containerType,
-    title: asString(raw.title),
+    title: asString(raw.title) || asString(raw.string) || asString(raw.label),
     children,
     widgetList,
   };
@@ -177,8 +195,8 @@ function decodeActionRule(raw: unknown, path: string, issues: DecodeIssue[]): Co
   return {
     actionId,
     triggerType: requiredString(raw, 'triggerType', path, issues),
-    sourceWidgetId: requiredString(raw, 'sourceWidgetId', path, issues),
-    targetIds: asStringArray(raw.targetIds),
+    sourceWidgetId: requiredAliasedString(raw, 'sourceWidgetId', ['source_widget_id'], path, issues),
+    targetIds: asStringArray(raw.targetIds || raw.target_ids),
     dispatchMode: requiredString(raw, 'dispatchMode', path, issues),
     targetScope: requiredString(raw, 'targetScope', path, issues),
     refreshMode: requiredString(raw, 'refreshMode', path, issues),
@@ -249,7 +267,7 @@ function decodeGlobalStatus(source: ContractV2Dictionary): ContractV2GlobalStatu
 
 function decodeWidgetStatus(raw: unknown): ContractV2WidgetStatus | null {
   if (!isRecord(raw)) return null;
-  const widgetId = asString(raw.widgetId);
+  const widgetId = asString(raw.widgetId) || asString(raw.widget_id);
   if (!widgetId) return null;
   return {
     widgetId,
@@ -265,7 +283,7 @@ function decodeWidgetStatus(raw: unknown): ContractV2WidgetStatus | null {
 
 function decodeButtonStatus(raw: unknown): ContractV2ButtonStatus | null {
   if (!isRecord(raw)) return null;
-  const btnId = asString(raw.btnId);
+  const btnId = asString(raw.btnId) || asString(raw.btn_id);
   if (!btnId) return null;
   return {
     btnId,
@@ -279,7 +297,7 @@ function decodeButtonStatus(raw: unknown): ContractV2ButtonStatus | null {
 
 function decodeContainerStatus(raw: unknown): ContractV2ContainerStatus | null {
   if (!isRecord(raw)) return null;
-  const containerId = asString(raw.containerId);
+  const containerId = asString(raw.containerId) || asString(raw.container_id);
   if (!containerId) return null;
   return {
     containerId,

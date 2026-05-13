@@ -1,6 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unused-vars, no-extra-boolean-cast, vue/attributes-order */
 <template>
-  <LayoutShell :flow="isProjectIntakeCreateMode" :class="{ 'contract-form-native-shell': useNativeFormTree }">
+  <LayoutShell
+    :flow="isProjectIntakeCreateMode"
+    :class="{ 'contract-form-native-shell': useNativeFormTree }"
+    :data-v2-shadow-store="String(v2ShadowStoreReady)"
+    :data-v2-shadow-widgets="String(v2ShadowWidgetCount)"
+    :data-v2-shadow-actions="String(v2ShadowActionCount)"
+    :data-v2-shadow-error="v2ContractDecodeError || '-'"
+  >
     <PageHeaderTemplate :title="pageDisplayTitle" :subtitle="pageDisplaySubtitle || undefined">
       <template #meta>
         <p v-if="showHud" class="meta">model={{ model }} · id={{ recordIdDisplay }} · action={{ actionId || '-' }}</p>
@@ -691,6 +698,9 @@ const contract = ref<ActionContract | null>(null);
 const contractMeta = ref<Record<string, unknown> | null>(null);
 const v2ContractStore = ref<ContractV2NormalizedStore | null>(null);
 const v2ContractDecodeError = ref('');
+const v2ShadowStoreReady = computed(() => Boolean(v2ContractStore.value));
+const v2ShadowWidgetCount = computed(() => v2ContractStore.value?.widgetsById.size || 0);
+const v2ShadowActionCount = computed(() => v2ContractStore.value?.actionsById.size || 0);
 const activeFilterKey = ref('');
 const originalValues = ref<Record<string, unknown>>({});
 const recordVersionToken = ref('');
@@ -4685,9 +4695,9 @@ const hudEntries = computed(() => [
   { label: 'contract_loaded', value: Boolean(contract.value) },
   { label: 'contract_ready', value: contractReadiness.value.usable },
   { label: 'contract_issues', value: contractReadiness.value.issues.length },
-  { label: 'v2_shadow_store', value: Boolean(v2ContractStore.value) },
-  { label: 'v2_shadow_widgets', value: v2ContractStore.value?.widgetsById.size || 0 },
-  { label: 'v2_shadow_actions', value: v2ContractStore.value?.actionsById.size || 0 },
+  { label: 'v2_shadow_store', value: v2ShadowStoreReady.value },
+  { label: 'v2_shadow_widgets', value: v2ShadowWidgetCount.value },
+  { label: 'v2_shadow_actions', value: v2ShadowActionCount.value },
   { label: 'v2_shadow_error', value: v2ContractDecodeError.value || '-' },
   { label: 'contract_view_type', value: contract.value?.head?.view_type || contract.value?.view_type || '-' },
   { label: 'render_profile', value: renderProfile.value },

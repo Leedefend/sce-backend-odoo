@@ -4275,6 +4275,10 @@ verify.unified_page_contract.v2.web_architecture: guard.prod.forbid
 verify.unified_page_contract.v2.web_visual_acceptance.host: guard.prod.forbid
 	@node scripts/verify/unified_page_contract_v2_web_visual_acceptance.js
 
+.PHONY: verify.unified_page_contract.v2.web_form_shadow_browser.host
+verify.unified_page_contract.v2.web_form_shadow_browser.host: guard.prod.forbid
+	@node scripts/verify/web_contract_v2_form_shadow_browser_smoke.js
+
 .PHONY: verify.unified_page_contract.v2
 verify.unified_page_contract.v2: verify.unified_page_contract.v2.schema verify.unified_page_contract.v2.assembler verify.unified_page_contract.v2.status verify.unified_page_contract.v2.action verify.unified_page_contract.v2.data verify.unified_page_contract.v2.runtime verify.unified_page_contract.v2.client verify.unified_page_contract.v2.web_architecture
 
