@@ -397,6 +397,7 @@ Batch C shadow execution note:
 - C.14 removes ActionView user-group forwarding into action button runtime; list/kanban action buttons no longer infer entitlement from `groups_xmlids`.
 - C.16 removes `groups_xmlids` reads from the parallel `RecordView` diagnostics path; capability checks no longer receive page-level group inputs there.
 - C.17 narrows the action metadata runtime's URL redirect contract type from a loose action contract alias to `ActionUrlContractShape`, removing the local loose-contract debt without changing ActionView's main runtime contract.
+- C.18 replaces ActionView's local `ActionContractLoose` alias with `ActionViewRuntimeContract` based on the schema `ActionContract`, keeping the remaining legacy/v2 projection debt explicit in `api/contract.ts`.
 
 ### Batch D: Action/List/Kanban Renderer Convergence
 

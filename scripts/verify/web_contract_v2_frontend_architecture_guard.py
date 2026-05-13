@@ -88,7 +88,7 @@ DEBT_RULES: tuple[DebtRule, ...] = (
         severity="P1",
         path="views/ActionView.vue",
         pattern="ActionContractLoose",
-        max_count=4,
+        max_count=0,
         rationale="ActionView still consumes a mixed legacy/v2 action contract type.",
         next_action="Replace with ContractV2ActionSnapshot after the v2 action renderer lands.",
     ),

@@ -2,7 +2,7 @@
 
 - mode: debt_lock
 - status: PASS
-- findings: 12
+- findings: 11
 
 ## Findings
 
@@ -11,7 +11,6 @@
 - [P1] legacy_form_layout_synthesis `frontend/apps/web/src/api/contract.ts` count=2/2
 - [P1] legacy_subview_policy_synthesis `frontend/apps/web/src/api/contract.ts` count=2/2
 - [P1] legacy_layout_button_synthesis `frontend/apps/web/src/api/contract.ts` count=2/2
-- [P1] action_view_loose_contract `frontend/apps/web/src/views/ActionView.vue` count=4/4
 - [P1] product_page_direct_data_imports `frontend/apps/web/src/pages/ContractFormPage.vue` count=1/1
 - [P1] action_view_direct_data_imports `frontend/apps/web/src/views/ActionView.vue` count=1/1
 - [P1] record_view_direct_data_imports `frontend/apps/web/src/views/RecordView.vue` count=1/1
