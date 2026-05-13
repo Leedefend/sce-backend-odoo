@@ -4468,7 +4468,7 @@ verify.unified_page_contract.lite.harmony_h5_device_acceptance_pilot.host: verif
 .PHONY: verify.native.business_fact.static verify.backend_business_fact.model_audit
 verify.backend_business_fact.model_audit: guard.prod.forbid
 	@python3 -m py_compile scripts/verify/backend_business_fact_model_audit.py
-	@python3 scripts/verify/backend_business_fact_model_audit.py --report artifacts/backend/backend_business_fact_model_audit.json --markdown artifacts/backend/backend_business_fact_model_audit.md
+	@python3 scripts/verify/backend_business_fact_model_audit.py --registry docs/architecture/backend_business_fact_model_standard_registry_v1.json --report artifacts/backend/backend_business_fact_model_audit.json --markdown artifacts/backend/backend_business_fact_model_audit.md
 
 verify.native.business_fact.static: guard.prod.forbid
 	@bash -n scripts/migration/business_fact_upgrade_replay_flow.sh

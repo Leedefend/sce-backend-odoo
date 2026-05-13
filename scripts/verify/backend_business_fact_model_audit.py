@@ -36,6 +36,7 @@ STANDARD_FIELDS = [
 
 TRACE_FIELD_RE = re.compile(r"^(legacy_|source_(origin|kind|model|table|res_id)|creator_legacy_user_id)")
 AMOUNT_FIELD_RE = re.compile(r"(amount|qty|quantity|price|balance|total|tax|rate|count)")
+DEFAULT_REGISTRY = ROOT / "docs" / "architecture" / "backend_business_fact_model_standard_registry_v1.json"
 
 
 def literal(node: ast.AST) -> Any:
@@ -157,32 +158,82 @@ def classify_model(
     return sorted(buckets)
 
 
-def summarize(rows: list[dict[str, Any]]) -> dict[str, Any]:
+def load_registry(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {"models": [], "missing_registry": True}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def registry_maps(registry: dict[str, Any]) -> tuple[dict[str, dict[str, Any]], dict[str, set[str]]]:
+    model_map = {item["model"]: item for item in registry.get("models", [])}
+    exception_map = {
+        item["model"]: {exception["field"] for exception in item.get("standard_exceptions", [])}
+        for item in registry.get("models", [])
+    }
+    return model_map, exception_map
+
+
+def summarize(rows: list[dict[str, Any]], registry: dict[str, Any]) -> dict[str, Any]:
     bucket_counts = Counter(bucket for row in rows for bucket in row["buckets"])
     formal_rows = [row for row in rows if "formal_fact" in row["buckets"]]
     legacy_rows = [row for row in rows if "legacy_fact" in row["buckets"]]
     projection_rows = [row for row in rows if "projection" in row["buckets"]]
+    registry_model_map, registry_exception_map = registry_maps(registry)
+    detected_formal_models = {row["model"] for row in formal_rows}
+    registered_formal_models = set(registry_model_map)
     standard_gaps = []
+    undeclared_standard_gaps = []
     for row in formal_rows:
+        exceptions = registry_exception_map.get(row["model"], set())
         missing = [field for field, present in row["standard_fields"].items() if not present]
-        if missing or not row["has_legacy_unique_constraint"] or not row["has_legacy_confirmed_write_guard"]:
-            standard_gaps.append(
+        raw_gap = {
+            "model": row["model"],
+            "path": row["path"],
+            "missing_standard_fields": missing,
+            "has_legacy_unique_constraint": row["has_legacy_unique_constraint"],
+            "has_legacy_confirmed_write_guard": row["has_legacy_confirmed_write_guard"],
+            "declared_exceptions": sorted(exceptions),
+        }
+        has_raw_gap = missing or not row["has_legacy_unique_constraint"] or not row["has_legacy_confirmed_write_guard"]
+        if not has_raw_gap:
+            continue
+        standard_gaps.append(raw_gap)
+        undeclared_missing = [field for field in missing if field not in exceptions]
+        undeclared_policy_gaps = []
+        if not row["has_legacy_unique_constraint"] and "legacy_source_unique_constraint" not in exceptions:
+            undeclared_policy_gaps.append("legacy_source_unique_constraint")
+        if not row["has_legacy_confirmed_write_guard"] and "legacy_confirmed_write_guard" not in exceptions:
+            undeclared_policy_gaps.append("legacy_confirmed_write_guard")
+        if undeclared_missing or undeclared_policy_gaps or row["model"] not in registered_formal_models:
+            undeclared_standard_gaps.append(
                 {
-                    "model": row["model"],
-                    "path": row["path"],
-                    "missing_standard_fields": missing,
-                    "has_legacy_unique_constraint": row["has_legacy_unique_constraint"],
-                    "has_legacy_confirmed_write_guard": row["has_legacy_confirmed_write_guard"],
+                    **raw_gap,
+                    "undeclared_missing_standard_fields": undeclared_missing,
+                    "undeclared_policy_gaps": undeclared_policy_gaps,
+                    "registered": row["model"] in registered_formal_models,
                 }
             )
+    registry_path_gaps = []
+    for model, item in registry_model_map.items():
+        for key in ("projection_scripts", "runtime_probes"):
+            for raw_path in item.get(key, []):
+                if not (ROOT / raw_path).exists():
+                    registry_path_gaps.append({"model": model, "kind": key, "path": raw_path})
     return {
         "model_count": len(rows),
         "bucket_counts": dict(sorted(bucket_counts.items())),
         "legacy_fact_model_count": len(legacy_rows),
         "formal_fact_model_count": len(formal_rows),
         "projection_model_count": len(projection_rows),
-        "standard_gap_count": len(standard_gaps),
+        "registered_formal_model_count": len(registered_formal_models),
+        "unregistered_formal_models": sorted(detected_formal_models - registered_formal_models),
+        "registered_models_not_detected": sorted(registered_formal_models - detected_formal_models),
+        "raw_standard_gap_count": len(standard_gaps),
         "standard_gaps": standard_gaps,
+        "undeclared_standard_gap_count": len(undeclared_standard_gaps),
+        "undeclared_standard_gaps": undeclared_standard_gaps,
+        "registry_path_gap_count": len(registry_path_gaps),
+        "registry_path_gaps": registry_path_gaps,
     }
 
 
@@ -199,7 +250,10 @@ def write_markdown(report: dict[str, Any], path: Path) -> None:
         f"- legacy_fact_model_count: {summary['legacy_fact_model_count']}",
         f"- formal_fact_model_count: {summary['formal_fact_model_count']}",
         f"- projection_model_count: {summary['projection_model_count']}",
-        f"- standard_gap_count: {summary['standard_gap_count']}",
+        f"- registered_formal_model_count: {summary['registered_formal_model_count']}",
+        f"- raw_standard_gap_count: {summary['raw_standard_gap_count']}",
+        f"- undeclared_standard_gap_count: {summary['undeclared_standard_gap_count']}",
+        f"- registry_path_gap_count: {summary['registry_path_gap_count']}",
         "",
         "## Bucket Counts",
         "",
@@ -208,14 +262,16 @@ def write_markdown(report: dict[str, Any], path: Path) -> None:
         lines.append(f"- {key}: {value}")
     lines.extend(["", "## Formal Fact Standard Gaps", ""])
     if summary["standard_gaps"]:
-        lines.append("| model | missing fields | legacy unique | legacy write guard | path |")
-        lines.append("| --- | --- | --- | --- | --- |")
+        lines.append("| model | missing fields | declared exceptions | legacy unique | legacy write guard | path |")
+        lines.append("| --- | --- | --- | --- | --- | --- |")
         for gap in summary["standard_gaps"]:
             missing = ", ".join(gap["missing_standard_fields"]) or "-"
+            exceptions = ", ".join(gap["declared_exceptions"]) or "-"
             lines.append(
-                "| {model} | {missing} | {unique} | {guard} | {path} |".format(
+                "| {model} | {missing} | {exceptions} | {unique} | {guard} | {path} |".format(
                     model=gap["model"],
                     missing=missing,
+                    exceptions=exceptions,
                     unique="yes" if gap["has_legacy_unique_constraint"] else "no",
                     guard="yes" if gap["has_legacy_confirmed_write_guard"] else "no",
                     path=gap["path"],
@@ -223,6 +279,17 @@ def write_markdown(report: dict[str, Any], path: Path) -> None:
             )
     else:
         lines.append("- none")
+    lines.extend(["", "## Registry Coverage", ""])
+    lines.append(f"- unregistered_formal_models: {', '.join(summary['unregistered_formal_models']) or 'none'}")
+    lines.append(f"- registered_models_not_detected: {', '.join(summary['registered_models_not_detected']) or 'none'}")
+    if summary["registry_path_gaps"]:
+        lines.append("")
+        lines.append("| model | kind | missing path |")
+        lines.append("| --- | --- | --- |")
+        for gap in summary["registry_path_gaps"]:
+            lines.append(f"| {gap['model']} | {gap['kind']} | {gap['path']} |")
+    else:
+        lines.append("- registry_path_gaps: none")
     lines.extend(["", "## Formal Fact Models", ""])
     for row in rows:
         if "formal_fact" not in row["buckets"]:
@@ -240,10 +307,12 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--report", default="artifacts/backend/backend_business_fact_model_audit.json")
     parser.add_argument("--markdown", default="artifacts/backend/backend_business_fact_model_audit.md")
+    parser.add_argument("--registry", default=str(DEFAULT_REGISTRY.relative_to(ROOT)))
     args = parser.parse_args()
 
     rows = extract_models()
-    report = {"summary": summarize(rows), "models": rows}
+    registry = load_registry(ROOT / args.registry)
+    report = {"summary": summarize(rows, registry), "registry": registry, "models": rows}
     report_path = ROOT / args.report
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")

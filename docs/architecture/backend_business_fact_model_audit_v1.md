@@ -3,6 +3,7 @@
 Status: draft audit baseline
 Branch: `audit/backend-business-fact-models`
 Generated evidence: `make verify.backend_business_fact.model_audit`
+Standard registry: `docs/architecture/backend_business_fact_model_standard_registry_v1.json`
 
 ## Audit Scope
 
@@ -25,6 +26,8 @@ The current static inventory reports:
 | projection/read models | 18 | summary, ledger, cockpit, and workbench models |
 | traceable models | 132 | models with legacy or source trace fields |
 | stateful models | 77 | models with a `state` field |
+| registered formal models | 10 | formal runtime facts declared in the standard registry |
+| undeclared standard gaps | 0 | standard gaps not covered by a registry exception |
 
 ## What The Models Carry
 
@@ -98,7 +101,7 @@ The integration pain is now visible in three places:
 
 ## Current Standard Gaps
 
-The static audit reports three formal fact standard gaps:
+The static audit reports three raw formal fact standard gaps. All three are currently declared in `backend_business_fact_model_standard_registry_v1.json`; therefore the governance status is `undeclared_standard_gap_count=0`.
 
 | model | gap |
 | --- | --- |
@@ -107,6 +110,25 @@ The static audit reports three formal fact standard gaps:
 | `sc.treasury.reconciliation` | lacks `partner_id`; this may be acceptable if it is account/project centered rather than counterparty centered |
 
 These should be resolved by either adding the fields or registering explicit archetype exceptions.
+
+## Standard Registry
+
+The standard registry is now the binding audit input for formal runtime facts. It declares:
+
+- model name and archetype
+- business domain and business logic carried by the model
+- projection scripts responsible for creating or refreshing the model
+- runtime probes and formal probes that protect the projection
+- standard field exceptions and their reason
+
+The current registry covers all 10 detected formal runtime fact models and has no missing script/probe paths.
+
+The static audit distinguishes two gap types:
+
+- `raw_standard_gap_count`: physical mismatch against the default formal runtime field set.
+- `undeclared_standard_gap_count`: raw gaps not covered by registry exceptions.
+
+Only undeclared gaps should block future CI once this branch moves from audit baseline into enforcement.
 
 ## Proposed Unified Model Standard
 
@@ -150,7 +172,7 @@ Examples likely needing explicit exceptions: `sc.construction.diary`, `sc.fund.a
 2. Add a model-standard registry file that declares each formal runtime fact model, its archetype, required fields, exceptions, projection script, and probe.
 3. Refactor only one low-risk formal model first, preferably `sc.tax.deduction.registration` or `sc.financing.loan`, to prove the mixin does not disturb approval-heavy models.
 4. Split `history_business_usable_init.sh` into a projection registry runner while preserving the current shell target for operational compatibility.
-5. Extend `verify.backend_business_fact.model_audit` so CI fails only on missing standard declarations, not on intentional documented exceptions.
+5. Move `verify.backend_business_fact.model_audit` from reporting-only to CI enforcement by failing on `undeclared_standard_gap_count > 0`, unregistered formal models, or registry path gaps.
 
 ## Verification
 
@@ -165,3 +187,10 @@ Outputs:
 - `artifacts/backend/backend_business_fact_model_audit.json`
 - `artifacts/backend/backend_business_fact_model_audit.md`
 
+Current summary:
+
+- `formal_fact_model_count=10`
+- `registered_formal_model_count=10`
+- `raw_standard_gap_count=3`
+- `undeclared_standard_gap_count=0`
+- `registry_path_gap_count=0`
