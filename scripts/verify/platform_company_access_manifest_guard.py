@@ -76,6 +76,21 @@ PLATFORM_ADMIN_HELPER = "addons/smart_core/security/platform_admin.py"
 LEGACY_PLATFORM_ADMIN_HELPER = "addons/smart_construction_core/services/platform_admin.py"
 PLATFORM_OPS_CONTROLLER = "addons/smart_core/controllers/platform_ops_controller.py"
 CONSTRUCTION_OPS_CONTROLLER = "addons/smart_construction_core/controllers/ops_controller.py"
+SCENE_ORCHESTRATION_VIEW = "addons/smart_construction_core/views/support/scene_orchestration_views.xml"
+CANONICAL_PLATFORM_ADMIN_GROUP = "smart_core.group_smart_core_admin"
+LEGACY_PLATFORM_ADMIN_GROUP = "smart_construction_core.group_sc_cap_config_admin"
+SCENE_ORCHESTRATION_ADMIN_ACLS = {
+    "access_sc_capability_admin",
+    "access_sc_capability_group_admin",
+    "access_sc_scene_admin",
+    "access_sc_scene_tile_admin",
+    "access_sc_scene_version_admin",
+    "access_sc_scene_validation_admin",
+    "access_sc_scene_audit_admin",
+    "access_sc_capability_audit_admin",
+    "access_sc_pack_registry_admin",
+    "access_sc_pack_installation_admin",
+}
 FORBIDDEN_LEGACY_ADMIN_CHECKS = {
     "addons/smart_construction_core/controllers/scene_controller.py",
     "addons/smart_construction_core/controllers/scene_template_controller.py",
@@ -120,6 +135,11 @@ def _xml_model_refs(path: Path) -> set[str]:
 def _csv_model_refs(path: Path) -> set[str]:
     with path.open("r", encoding="utf-8", newline="") as fh:
         return {row.get("model_id:id", "").strip() for row in csv.DictReader(fh) if row.get("model_id:id")}
+
+
+def _csv_rows(path: Path) -> list[dict[str, str]]:
+    with path.open("r", encoding="utf-8", newline="") as fh:
+        return list(csv.DictReader(fh))
 
 
 def assert_true(condition: bool, message: str) -> None:
@@ -211,6 +231,29 @@ assert_true(
 assert_true(
     '"sc.ops.job"' not in formal_entry_metadata_text,
     "construction formal entry metadata extensions must not extend platform sc.ops.job",
+)
+scene_orchestration_view_text = (ROOT / SCENE_ORCHESTRATION_VIEW).read_text(encoding="utf-8")
+assert_true(
+    LEGACY_PLATFORM_ADMIN_GROUP not in scene_orchestration_view_text,
+    f"{SCENE_ORCHESTRATION_VIEW}: scene/capability admin UI must use {CANONICAL_PLATFORM_ADMIN_GROUP}",
+)
+assert_true(
+    CANONICAL_PLATFORM_ADMIN_GROUP in scene_orchestration_view_text,
+    f"{SCENE_ORCHESTRATION_VIEW}: missing canonical platform admin group",
+)
+construction_acl_rows = _csv_rows(construction_acl)
+scene_acl_group_gaps = [
+    {
+        "id": row.get("id"),
+        "group_id:id": row.get("group_id:id"),
+    }
+    for row in construction_acl_rows
+    if row.get("id") in SCENE_ORCHESTRATION_ADMIN_ACLS
+    and row.get("group_id:id") != CANONICAL_PLATFORM_ADMIN_GROUP
+]
+assert_true(
+    not scene_acl_group_gaps,
+    f"scene/capability admin ACLs must use {CANONICAL_PLATFORM_ADMIN_GROUP}: {scene_acl_group_gaps}",
 )
 for rel_path in (
     "addons/smart_construction_core/controllers/pack_controller.py",
