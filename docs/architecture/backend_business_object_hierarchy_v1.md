@@ -4,24 +4,31 @@ Status: draft architecture audit
 
 This note records the business-object interpretation used to judge whether backend models are reasonable.
 
+Binding registry: `backend_business_management_hierarchy_v1.json`
+
 ## Core Thesis
 
-The industry system is organized around company management.
-
-The company manages business. Business splits by economic direction into income and expense. In construction, the typical concrete realization of business is a project.
+The system hierarchy is:
 
 ```text
-company
-  -> business
-      -> income business
-      -> expense business
-      -> project as the typical construction business carrier
-          -> contracts
-          -> payment / receipt / invoice / tax
-          -> cost / BOQ / budget
-          -> material / labor / equipment / subcontract
-          -> progress / safety / quality / document
-          -> treasury / reconciliation / reporting
+platform -> company -> business -> project
+```
+
+The platform manages companies. The company manages business. Business splits by economic direction into income and expense. In construction, the typical concrete realization and main carrier of business is a project.
+
+```text
+platform
+  -> company
+      -> business
+          -> income business
+          -> expense business
+          -> project as the typical construction business carrier
+              -> contracts
+              -> payment / receipt / invoice / tax
+              -> cost / BOQ / budget
+              -> material / labor / equipment / subcontract
+              -> progress / safety / quality / document
+              -> treasury / reconciliation / reporting
 ```
 
 This hierarchy is not a UI menu tree. It is the domain ownership tree used for backend model responsibility.
@@ -30,6 +37,7 @@ This hierarchy is not a UI menu tree. It is the domain ownership tree used for b
 
 | object | meaning | backend ownership |
 | --- | --- | --- |
+| platform | the product/runtime layer that manages tenants, companies, capabilities, policies, scenes, subscriptions, and native integrations | capability, scene, pack, subscription, approval, dictionary, audit, native extension boundaries |
 | company | the management主体 that owns business, permissions, accounting boundaries, and operating responsibility | `res.company` plus business entity and role/capability governance |
 | business | the economic activity the company manages | represented by contracts, projects, finance documents, tenders, and operational documents |
 | income business | activity that creates receivables, receipts, revenue, income contracts, invoices, and tax facts | income contracts, `sc.receipt.income`, invoice/tax models, AR projections |
@@ -51,6 +59,32 @@ Project is central because construction business is usually delivered through pr
 - accounting, users, groups, company settings remain native platform ownership
 
 Therefore, backend models should not force every fact into a project if the business object is truly company-level, pre-project, or platform-level. But when the fact is project execution, project should be the primary anchor.
+
+## Binding Management Hierarchy
+
+The architecture now has a machine-checked family hierarchy registry. Every model family must declare:
+
+- management subject: `platform`, `company`, `business`, `project`, or `source_system`
+- managed object: company, business, project, fact, identity, policy, visibility, evidence, or capability
+- project carrier role: primary, optional, pre-project, company-level, not applicable, or derived
+- hierarchy statement explaining the placement
+
+Current enforced summary:
+
+| dimension | count |
+| --- | ---: |
+| registered family hierarchy rows | 19 |
+| platform-managed families | 4 |
+| company-managed families | 9 |
+| business-managed families | 5 |
+| source-system evidence families | 1 |
+| primary project-carried families | 8 |
+| optional project-carried families | 4 |
+| pre-project families | 1 |
+| derived visibility families | 1 |
+| not-project-applicable families | 5 |
+
+This closes the earlier gap: the hierarchy is no longer only a prose assumption. It is an enforcement input for backend model review.
 
 ## Income And Expense Split
 
@@ -102,4 +136,3 @@ This hierarchy changes the audit conclusion:
 - Income and expense should be first-class classification dimensions.
 - Project should be the typical execution carrier, not a forced universal root.
 - Customer data repair should never define the hierarchy.
-

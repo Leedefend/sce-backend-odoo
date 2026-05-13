@@ -45,6 +45,7 @@ DEFAULT_OWNERSHIP_SPECS = ROOT / "docs" / "architecture" / "backend_business_mod
 DEFAULT_AUDIT_FINDINGS = ROOT / "docs" / "architecture" / "backend_business_model_audit_findings_v1.md"
 DEFAULT_OVERLAP_ANALYSIS = ROOT / "docs" / "architecture" / "backend_business_model_overlap_analysis_v1.md"
 DEFAULT_PROJECTION_REGISTRY = ROOT / "docs" / "architecture" / "backend_business_projection_registry_v1.json"
+DEFAULT_MANAGEMENT_HIERARCHY = ROOT / "docs" / "architecture" / "backend_business_management_hierarchy_v1.json"
 ALLOWED_SOLUTION_LAYERS = {"platform", "industry", "customer"}
 ALLOWED_RESPONSIBILITY_TYPES = {
     "native system-of-record",
@@ -72,6 +73,26 @@ ALLOWED_PROJECTION_MODES = {
     "controlled_generated_ledger",
     "computed_runtime_summary",
     "runtime_workbench_fact",
+}
+ALLOWED_MANAGEMENT_SUBJECTS = {"platform", "company", "business", "project", "source_system"}
+ALLOWED_MANAGED_OBJECTS = {
+    "company",
+    "business",
+    "project",
+    "business_fact",
+    "identity",
+    "policy",
+    "visibility",
+    "evidence",
+    "capability",
+}
+ALLOWED_PROJECT_CARRIER_ROLES = {
+    "primary",
+    "optional",
+    "pre_project",
+    "company_level",
+    "not_applicable",
+    "derived",
 }
 
 
@@ -313,6 +334,12 @@ def load_ownership_specs(path: Path) -> dict[str, Any]:
 def load_projection_registry(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {"projections": [], "missing_registry": True}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def load_management_hierarchy(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {"family_hierarchy": [], "missing_registry": True}
     return json.loads(path.read_text(encoding="utf-8"))
 
 
@@ -622,6 +649,76 @@ def summarize_projection_registry(rows: list[dict[str, Any]], projection_registr
     }
 
 
+def summarize_management_hierarchy(
+    family_registry: dict[str, Any], management_hierarchy: dict[str, Any]
+) -> dict[str, Any]:
+    family_names = {item.get("family") for item in family_registry.get("families", []) if item.get("family")}
+    hierarchy_rows = management_hierarchy.get("family_hierarchy", [])
+    hierarchy_map = {item.get("family"): item for item in hierarchy_rows if item.get("family")}
+    required_fields = [
+        "family",
+        "management_subject",
+        "managed_object",
+        "project_carrier_role",
+        "hierarchy_statement",
+    ]
+    shape_gaps = []
+    subject_counts: Counter[str] = Counter()
+    object_counts: Counter[str] = Counter()
+    carrier_counts: Counter[str] = Counter()
+    for item in hierarchy_rows:
+        family = item.get("family")
+        for field in required_fields:
+            if not str(item.get(field) or "").strip():
+                shape_gaps.append({"family": family, "field": field, "reason": "missing_required_field"})
+        subject = item.get("management_subject")
+        if subject in ALLOWED_MANAGEMENT_SUBJECTS:
+            subject_counts[subject] += 1
+        else:
+            shape_gaps.append(
+                {
+                    "family": family,
+                    "field": "management_subject",
+                    "value": subject,
+                    "allowed_values": sorted(ALLOWED_MANAGEMENT_SUBJECTS),
+                }
+            )
+        managed_object = item.get("managed_object")
+        if managed_object in ALLOWED_MANAGED_OBJECTS:
+            object_counts[managed_object] += 1
+        else:
+            shape_gaps.append(
+                {
+                    "family": family,
+                    "field": "managed_object",
+                    "value": managed_object,
+                    "allowed_values": sorted(ALLOWED_MANAGED_OBJECTS),
+                }
+            )
+        carrier_role = item.get("project_carrier_role")
+        if carrier_role in ALLOWED_PROJECT_CARRIER_ROLES:
+            carrier_counts[carrier_role] += 1
+        else:
+            shape_gaps.append(
+                {
+                    "family": family,
+                    "field": "project_carrier_role",
+                    "value": carrier_role,
+                    "allowed_values": sorted(ALLOWED_PROJECT_CARRIER_ROLES),
+                }
+            )
+    return {
+        "management_hierarchy_count": len(hierarchy_rows),
+        "management_subject_counts": dict(sorted(subject_counts.items())),
+        "managed_object_counts": dict(sorted(object_counts.items())),
+        "project_carrier_role_counts": dict(sorted(carrier_counts.items())),
+        "hierarchy_families_missing": sorted(family_names - set(hierarchy_map)),
+        "hierarchy_unknown_families": sorted(set(hierarchy_map) - family_names),
+        "management_hierarchy_shape_gap_count": len(shape_gaps),
+        "management_hierarchy_shape_gaps": shape_gaps,
+    }
+
+
 def write_markdown(report: dict[str, Any], path: Path) -> None:
     summary = report["summary"]
     rows = report["models"]
@@ -808,6 +905,34 @@ def write_markdown(report: dict[str, Any], path: Path) -> None:
                     refresh_owner=item.get("refresh_owner", ""),
                 )
             )
+    hierarchy_summary = report.get("management_hierarchy_summary") or {}
+    management_hierarchy = report.get("management_hierarchy") or {}
+    lines.extend(["", "## Management Hierarchy", ""])
+    lines.append(f"- management_hierarchy_count: {hierarchy_summary.get('management_hierarchy_count', 0)}")
+    lines.append(
+        "- management_subject_counts: "
+        + json.dumps(hierarchy_summary.get("management_subject_counts", {}), ensure_ascii=False, sort_keys=True)
+    )
+    lines.append(
+        "- project_carrier_role_counts: "
+        + json.dumps(hierarchy_summary.get("project_carrier_role_counts", {}), ensure_ascii=False, sort_keys=True)
+    )
+    lines.append(
+        "- hierarchy_families_missing: "
+        + (", ".join(hierarchy_summary.get("hierarchy_families_missing", [])) or "none")
+    )
+    if management_hierarchy.get("family_hierarchy"):
+        lines.extend(["", "| family | subject | object | project carrier |"])
+        lines.append("| --- | --- | --- | --- |")
+        for item in management_hierarchy["family_hierarchy"]:
+            lines.append(
+                "| {family} | {management_subject} | {managed_object} | {project_carrier_role} |".format(
+                    family=item.get("family", ""),
+                    management_subject=item.get("management_subject", ""),
+                    managed_object=item.get("managed_object", ""),
+                    project_carrier_role=item.get("project_carrier_role", ""),
+                )
+            )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -824,6 +949,7 @@ def main() -> int:
     parser.add_argument("--audit-findings", default=str(DEFAULT_AUDIT_FINDINGS.relative_to(ROOT)))
     parser.add_argument("--overlap-analysis", default=str(DEFAULT_OVERLAP_ANALYSIS.relative_to(ROOT)))
     parser.add_argument("--projection-registry", default=str(DEFAULT_PROJECTION_REGISTRY.relative_to(ROOT)))
+    parser.add_argument("--management-hierarchy", default=str(DEFAULT_MANAGEMENT_HIERARCHY.relative_to(ROOT)))
     parser.add_argument(
         "--enforce",
         action="store_true",
@@ -836,15 +962,18 @@ def main() -> int:
     family_registry = load_family_registry(ROOT / args.family_registry)
     ownership_specs = load_ownership_specs(ROOT / args.ownership_specs)
     projection_registry = load_projection_registry(ROOT / args.projection_registry)
+    management_hierarchy = load_management_hierarchy(ROOT / args.management_hierarchy)
     report = {
         "summary": summarize(rows, registry),
         "family_summary": summarize_family_registry(rows, family_registry),
         "ownership_summary": summarize_ownership_specs(rows, ownership_specs),
         "projection_summary": summarize_projection_registry(rows, projection_registry),
+        "management_hierarchy_summary": summarize_management_hierarchy(family_registry, management_hierarchy),
         "registry": registry,
         "family_registry": family_registry,
         "ownership_specs": ownership_specs,
         "projection_registry": projection_registry,
+        "management_hierarchy": management_hierarchy,
         "models": rows,
     }
     report_path = ROOT / args.report
@@ -865,6 +994,10 @@ def main() -> int:
         "BACKEND_BUSINESS_PROJECTION_REGISTRY="
         + json.dumps(report["projection_summary"], ensure_ascii=False, sort_keys=True)
     )
+    print(
+        "BACKEND_BUSINESS_MANAGEMENT_HIERARCHY="
+        + json.dumps(report["management_hierarchy_summary"], ensure_ascii=False, sort_keys=True)
+    )
     if args.enforce:
         problem_map_path = ROOT / args.problem_map
         problem_map_text = problem_map_path.read_text(encoding="utf-8") if problem_map_path.exists() else ""
@@ -879,6 +1012,7 @@ def main() -> int:
         overlap_analysis_path = ROOT / args.overlap_analysis
         overlap_analysis_text = overlap_analysis_path.read_text(encoding="utf-8") if overlap_analysis_path.exists() else ""
         projection_registry_path = ROOT / args.projection_registry
+        management_hierarchy_path = ROOT / args.management_hierarchy
         blockers = {
             "unregistered_formal_models": summary["unregistered_formal_models"],
             "unclassified_models": summary["unclassified_models"],
@@ -957,6 +1091,19 @@ def main() -> int:
                     ],
                     "shape_gaps": report["projection_summary"]["projection_registry_shape_gaps"],
                     "reference_gaps": report["projection_summary"]["projection_registry_reference_gaps"],
+                }
+            ],
+            "management_hierarchy_gaps": []
+            if management_hierarchy_path.exists()
+            and not report["management_hierarchy_summary"]["hierarchy_families_missing"]
+            and not report["management_hierarchy_summary"]["hierarchy_unknown_families"]
+            and not report["management_hierarchy_summary"]["management_hierarchy_shape_gaps"]
+            else [
+                {
+                    "path": str(management_hierarchy_path.relative_to(ROOT)),
+                    "missing_families": report["management_hierarchy_summary"]["hierarchy_families_missing"],
+                    "unknown_families": report["management_hierarchy_summary"]["hierarchy_unknown_families"],
+                    "shape_gaps": report["management_hierarchy_summary"]["management_hierarchy_shape_gaps"],
                 }
             ],
         }

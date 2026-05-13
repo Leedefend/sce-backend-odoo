@@ -12,6 +12,7 @@ Ownership specs: `docs/architecture/backend_business_model_ownership_specs_v1.js
 Audit findings: `docs/architecture/backend_business_model_audit_findings_v1.md`
 Overlap analysis: `docs/architecture/backend_business_model_overlap_analysis_v1.md`
 Projection registry: `docs/architecture/backend_business_projection_registry_v1.json`
+Management hierarchy registry: `docs/architecture/backend_business_management_hierarchy_v1.json`
 
 ## Audit Scope
 
@@ -54,6 +55,7 @@ The current static inventory reports:
 | customer model families | 1 | legacy replay/evidence only; not core runtime ownership |
 | ownership specs | 5 | explicit boundary specs for the highest-risk overlapping families |
 | projection registry entries | 18 | projection/read surfaces split by implementation mode |
+| management hierarchy rows | 19 | every model family declares who manages what and project carrier role |
 | unclassified models | 0 | every detected model class is mapped to one model family |
 
 ## What The Models Carry
@@ -287,6 +289,7 @@ It fails when any of these are present:
 - family registry entry with invalid/missing responsibility, business object, solution layer, target problem, source of truth, or representative model references
 - detected model class that cannot be mapped to a model family
 - projection/read model that is missing from the projection registry or has no implementation mode/write policy
+- model family that is missing from the management hierarchy registry or lacks subject/object/project-carrier placement
 
 ## Family Registry
 
@@ -347,6 +350,33 @@ The static audit now also assigns every detected model class to one family. Curr
 | workflow approval dictionary audit and validation | 13 |
 
 The enforcement rule is simple: a new backend model may be added only if it can be classified into one of these families or the family registry is deliberately extended.
+
+## Management Hierarchy Registry
+
+The management hierarchy registry makes the model hierarchy explicit:
+
+```text
+platform manages company
+company manages business
+business is mainly carried by project
+```
+
+Current enforced placement:
+
+| dimension | count |
+| --- | ---: |
+| hierarchy rows | 19 |
+| platform-managed families | 4 |
+| company-managed families | 9 |
+| business-managed families | 5 |
+| source-system evidence families | 1 |
+| primary project-carried families | 8 |
+| optional project-carried families | 4 |
+| pre-project families | 1 |
+| derived visibility families | 1 |
+| not-project-applicable families | 5 |
+
+This is the missing layer identified in the audit discussion. The model family registry tells what each family solves; the management hierarchy registry tells where that family sits in the management chain.
 
 ## Ownership Specs For Overlap Risks
 
@@ -462,5 +492,8 @@ Current summary:
 - `projection_registry_count=18`
 - `projection_mode_counts={"computed_runtime_summary": 1, "controlled_generated_ledger": 3, "physical_refresh_table": 3, "runtime_workbench_fact": 2, "sql_view": 9}`
 - `unregistered_projection_models=[]`
+- `management_hierarchy_count=19`
+- `management_subject_counts={"business": 5, "company": 9, "platform": 4, "source_system": 1}`
+- `project_carrier_role_counts={"derived": 1, "not_applicable": 5, "optional": 4, "pre_project": 1, "primary": 8}`
 - `unclassified_model_count=0`
 - `implementation_counts={"custom_model": 150, "custom_model_with_mixin_or_inherit": 88, "native_model_extension": 25}`
