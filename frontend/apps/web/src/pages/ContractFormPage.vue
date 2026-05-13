@@ -6,6 +6,7 @@
     :data-v2-shadow-store="String(v2ShadowStoreReady)"
     :data-v2-shadow-widgets="String(v2ShadowWidgetCount)"
     :data-v2-shadow-actions="String(v2ShadowActionCount)"
+    :data-v2-shadow-button-statuses="String(v2ShadowButtonStatusCount)"
     :data-v2-shadow-field-codes="String(v2ShadowFieldCodeCount)"
     :data-v2-shadow-field-overlap="String(v2ShadowLegacyFieldOverlapCount)"
     :data-v2-shadow-field-missing="v2ShadowLegacyFieldMissingPreview"
@@ -592,6 +593,21 @@ function resolveV2ButtonStatus(
   return null;
 }
 
+function v2ButtonStatusFromStore(): Record<string, UnifiedPageContractV2ButtonStatus> {
+  const store = v2ContractStore.value;
+  if (!store) return {};
+  const out: Record<string, UnifiedPageContractV2ButtonStatus> = {};
+  store.buttonStatusById.forEach((status, btnId) => {
+    out[btnId] = {
+      btnId,
+      ...(typeof status.visible === 'boolean' ? { visible: status.visible } : {}),
+      ...(typeof status.disabled === 'boolean' ? { disabled: status.disabled } : {}),
+      ...(status.reasonCode ? { reasonCode: status.reasonCode } : {}),
+    };
+  });
+  return out;
+}
+
 function collectActionParams(action: ContractAction): Record<string, unknown> | null {
   const requiredParams = new Set((action.requiredParams || []).map((item) => item.toLowerCase()));
   if (!action.requiresReason && !requiredParams.has('reason')) return {};
@@ -709,6 +725,7 @@ const v2ContractDecodeError = ref('');
 const v2ShadowStoreReady = computed(() => Boolean(v2ContractStore.value));
 const v2ShadowWidgetCount = computed(() => v2ContractStore.value?.widgetsById.size || 0);
 const v2ShadowActionCount = computed(() => v2ContractStore.value?.actionsById.size || 0);
+const v2ShadowButtonStatusCount = computed(() => v2ContractStore.value?.buttonStatusById.size || 0);
 const v2ShadowFieldCodes = computed(() => Array.from(v2ContractStore.value?.widgetsByFieldCode.keys() || []));
 const v2ShadowFieldCodeCount = computed(() => v2ShadowFieldCodes.value.length);
 const v2ShadowLegacyFieldMissing = computed(() => {
@@ -2771,7 +2788,10 @@ const contractActions = computed<ContractAction[]>(() => {
   const sceneReadyActions = useSceneFormAugmentations.value && Array.isArray(sceneReadyFormSurface.value.actions)
     ? sceneReadyFormSurface.value.actions as Array<Record<string, unknown>>
     : [];
-  const v2ButtonStatus = collectUnifiedPageContractV2ButtonStatus(contract.value);
+  const storeButtonStatus = v2ButtonStatusFromStore();
+  const v2ButtonStatus = Object.keys(storeButtonStatus).length
+    ? storeButtonStatus
+    : collectUnifiedPageContractV2ButtonStatus(contract.value);
   const merged: Array<Record<string, unknown>> = [];
   const nativeFormContract = contract.value?.views?.form as Record<string, unknown> | undefined;
   if (Array.isArray(nativeFormContract?.header_buttons)) {
@@ -4814,6 +4834,7 @@ const hudEntries = computed(() => [
   { label: 'v2_shadow_store', value: v2ShadowStoreReady.value },
   { label: 'v2_shadow_widgets', value: v2ShadowWidgetCount.value },
   { label: 'v2_shadow_actions', value: v2ShadowActionCount.value },
+  { label: 'v2_shadow_button_statuses', value: v2ShadowButtonStatusCount.value },
   { label: 'v2_shadow_field_codes', value: v2ShadowFieldCodeCount.value },
   { label: 'v2_shadow_field_overlap', value: v2ShadowLegacyFieldOverlapCount.value },
   { label: 'v2_shadow_field_missing', value: v2ShadowLegacyFieldMissingPreview.value },

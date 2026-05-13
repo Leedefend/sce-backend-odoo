@@ -95,6 +95,7 @@ async function readShadowAttrs(page) {
       store: String(shell?.getAttribute('data-v2-shadow-store') || ''),
       widgets: String(shell?.getAttribute('data-v2-shadow-widgets') || ''),
       actions: String(shell?.getAttribute('data-v2-shadow-actions') || ''),
+      button_statuses: String(shell?.getAttribute('data-v2-shadow-button-statuses') || ''),
       field_codes: String(shell?.getAttribute('data-v2-shadow-field-codes') || ''),
       field_overlap: String(shell?.getAttribute('data-v2-shadow-field-overlap') || ''),
       field_missing: String(shell?.getAttribute('data-v2-shadow-field-missing') || ''),
@@ -153,6 +154,7 @@ async function main() {
 
     const shadowStore = String(summary.shadow_attrs.store || summary.hud.v2_shadow_store || '').toLowerCase() === 'true';
     const shadowWidgets = Number(summary.shadow_attrs.widgets || summary.hud.v2_shadow_widgets || 0);
+    const shadowButtonStatuses = Number(summary.shadow_attrs.button_statuses || summary.hud.v2_shadow_button_statuses || 0);
     const shadowFieldCodes = Number(summary.shadow_attrs.field_codes || summary.hud.v2_shadow_field_codes || 0);
     const shadowFieldOverlap = Number(summary.shadow_attrs.field_overlap || summary.hud.v2_shadow_field_overlap || 0);
     const shadowLayoutSource = String(summary.shadow_attrs.layout_source || summary.hud.v2_shadow_layout_source || '').trim();
@@ -165,6 +167,7 @@ async function main() {
       rendered &&
       shadowStore &&
       shadowWidgets > 0 &&
+      shadowButtonStatuses > 0 &&
       shadowFieldCodes > 0 &&
       shadowFieldOverlap > 0 &&
       shadowLayoutSource === 'v2_store' &&
@@ -201,6 +204,7 @@ async function main() {
     url: summary.snapshot.url,
     v2_shadow_widgets: summary.shadow_attrs?.widgets || summary.hud.v2_shadow_widgets,
     v2_shadow_actions: summary.shadow_attrs?.actions || summary.hud.v2_shadow_actions,
+    v2_shadow_button_statuses: summary.shadow_attrs?.button_statuses || summary.hud.v2_shadow_button_statuses,
     v2_shadow_field_codes: summary.shadow_attrs?.field_codes || summary.hud.v2_shadow_field_codes,
     v2_shadow_field_overlap: summary.shadow_attrs?.field_overlap || summary.hud.v2_shadow_field_overlap,
     v2_shadow_field_missing: summary.shadow_attrs?.field_missing || summary.hud.v2_shadow_field_missing,
