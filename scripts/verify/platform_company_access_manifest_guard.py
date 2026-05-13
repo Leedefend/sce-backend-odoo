@@ -198,6 +198,7 @@ for route in ("/api/ops/tenants", "/api/ops/subscription/set", "/api/ops/job/sta
 
 system_init_builder_text = (ROOT / "addons/smart_core/core/system_init_payload_builder.py").read_text(encoding="utf-8")
 construction_extension_text = (ROOT / "addons/smart_construction_core/core_extension.py").read_text(encoding="utf-8")
+formal_entry_metadata_text = (ROOT / "addons/smart_construction_core/models/support/formal_entry_metadata_extensions.py").read_text(encoding="utf-8")
 assert_true(
     "attach_platform_company_access_facts" in system_init_builder_text,
     "smart_core system_init payload builder must attach platform company access facts",
@@ -206,6 +207,10 @@ assert_true(
     'env.get("sc.entitlement")' not in construction_extension_text
     and 'env.get("sc.usage.counter")' not in construction_extension_text,
     "construction extension must not contribute platform entitlement/usage facts",
+)
+assert_true(
+    '"sc.ops.job"' not in formal_entry_metadata_text,
+    "construction formal entry metadata extensions must not extend platform sc.ops.job",
 )
 for rel_path in (
     "addons/smart_construction_core/controllers/pack_controller.py",

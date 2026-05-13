@@ -26,6 +26,7 @@ EXCLUDE_PREFIXES = (
     "sc.subscription",
     "sc.entitlement",
     "sc.usage",
+    "sc.ops.",
     "sc.audit",
     "sc.workflow",
     "sc.dictionary",

@@ -60,7 +60,6 @@ FORMAL_ENTRY_METADATA_MODELS = (
     "sc.material.settlement",
     "sc.material.settlement.line",
     "sc.office.admin.document",
-    "sc.ops.job",
     "sc.plan",
     "sc.plan.report",
     "sc.project.document",
