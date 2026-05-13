@@ -82,6 +82,19 @@
                         <page string="商务标附件">
                             <field name="biz_attachment_ids" widget="many2many_binary"/>
                         </page>
+                        <page string="平台范围元数据" name="platform_scope_metadata">
+                            <group>
+                                <group>
+                                    <field name="business_scope_key"/>
+                                    <field name="business_direction"/>
+                                </group>
+                                <group>
+                                    <field name="carrier_type"/>
+                                    <field name="carrier_model"/>
+                                    <field name="carrier_res_id"/>
+                                </group>
+                            </group>
+                        </page>
                         <page string="标书购买">
                             <field name="doc_purchase_ids" context="{'default_bid_id': context.get('active_id')}">
                                 <tree editable="bottom">

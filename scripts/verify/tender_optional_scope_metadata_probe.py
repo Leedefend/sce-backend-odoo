@@ -61,6 +61,14 @@ def main():
     if missing_columns:
         raise AssertionError("tender_bid missing optional scope columns: %s" % ", ".join(missing_columns))
 
+    view = env.ref("smart_construction_core.view_tender_bid_form")
+    arch = view.arch_db or ""
+    if 'name="platform_scope_metadata"' not in arch:
+        raise AssertionError("tender.bid form missing platform_scope_metadata page")
+    for field_name in expected_columns:
+        if 'name="%s"' % field_name not in arch:
+            raise AssertionError("tender.bid form missing optional scope field %s" % field_name)
+
     project = Project.create({"name": "Tender Optional Scope Probe"})
     bid = Tender.create({"tender_name": "Tender Optional Scope Probe", "project_id": project.id})
     assert bid.project_id == project, bid.project_id
