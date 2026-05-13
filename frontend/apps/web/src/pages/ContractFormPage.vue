@@ -6,6 +6,9 @@
     :data-v2-shadow-store="String(v2ShadowStoreReady)"
     :data-v2-shadow-widgets="String(v2ShadowWidgetCount)"
     :data-v2-shadow-actions="String(v2ShadowActionCount)"
+    :data-v2-shadow-field-codes="String(v2ShadowFieldCodeCount)"
+    :data-v2-shadow-field-overlap="String(v2ShadowLegacyFieldOverlapCount)"
+    :data-v2-shadow-field-missing="v2ShadowLegacyFieldMissingPreview"
     :data-v2-shadow-error="v2ContractDecodeError || '-'"
   >
     <PageHeaderTemplate :title="pageDisplayTitle" :subtitle="pageDisplaySubtitle || undefined">
@@ -701,6 +704,14 @@ const v2ContractDecodeError = ref('');
 const v2ShadowStoreReady = computed(() => Boolean(v2ContractStore.value));
 const v2ShadowWidgetCount = computed(() => v2ContractStore.value?.widgetsById.size || 0);
 const v2ShadowActionCount = computed(() => v2ContractStore.value?.actionsById.size || 0);
+const v2ShadowFieldCodes = computed(() => Array.from(v2ContractStore.value?.widgetsByFieldCode.keys() || []));
+const v2ShadowFieldCodeCount = computed(() => v2ShadowFieldCodes.value.length);
+const v2ShadowLegacyFieldMissing = computed(() => {
+  const legacyFields = contract.value?.fields || {};
+  return v2ShadowFieldCodes.value.filter((fieldCode) => !(fieldCode in legacyFields));
+});
+const v2ShadowLegacyFieldOverlapCount = computed(() => v2ShadowFieldCodeCount.value - v2ShadowLegacyFieldMissing.value.length);
+const v2ShadowLegacyFieldMissingPreview = computed(() => v2ShadowLegacyFieldMissing.value.slice(0, 8).join(',') || '-');
 const activeFilterKey = ref('');
 const originalValues = ref<Record<string, unknown>>({});
 const recordVersionToken = ref('');
@@ -4698,6 +4709,9 @@ const hudEntries = computed(() => [
   { label: 'v2_shadow_store', value: v2ShadowStoreReady.value },
   { label: 'v2_shadow_widgets', value: v2ShadowWidgetCount.value },
   { label: 'v2_shadow_actions', value: v2ShadowActionCount.value },
+  { label: 'v2_shadow_field_codes', value: v2ShadowFieldCodeCount.value },
+  { label: 'v2_shadow_field_overlap', value: v2ShadowLegacyFieldOverlapCount.value },
+  { label: 'v2_shadow_field_missing', value: v2ShadowLegacyFieldMissingPreview.value },
   { label: 'v2_shadow_error', value: v2ContractDecodeError.value || '-' },
   { label: 'contract_view_type', value: contract.value?.head?.view_type || contract.value?.view_type || '-' },
   { label: 'render_profile', value: renderProfile.value },

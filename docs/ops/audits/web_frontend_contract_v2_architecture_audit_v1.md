@@ -382,6 +382,7 @@ Batch C shadow execution note:
 - Decode failures are exposed only as shadow diagnostics so strictness can be measured before the default renderer is replaced.
 - `web_contract_v2_frontend_architecture_guard.py` now verifies the form route host contains this v2 shadow boundary.
 - `scripts/verify/web_contract_v2_form_shadow_browser_smoke.js` verifies the real browser form path with HUD diagnostics and stores screenshot/JSON artifacts.
+- C.2 adds shadow field-code overlap diagnostics between `ContractV2Store.widgetsByFieldCode` and the current legacy `contract.fields` projection, still without changing visible rendering.
 
 ### Batch D: Action/List/Kanban Renderer Convergence
 
