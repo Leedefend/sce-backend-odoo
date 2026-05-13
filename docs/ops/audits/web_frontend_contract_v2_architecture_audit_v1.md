@@ -394,6 +394,7 @@ Batch C shadow execution note:
 - C.11 moves v2 value-source selection behind `resolveContractV2ValueSource`, centralizing the `mainData` versus `primary` coverage decision in the store boundary.
 - C.12 removes the form-only `lifecycle_state` label-to-code fallback; statusbar writes now rely on backend selection/status contract codes instead of frontend business label inference.
 - C.13 removes `groups_xmlids` reads from `ContractFormPage`; form fields/actions now rely on backend policy/status plus role/capability context instead of page-level group filtering.
+- C.14 removes ActionView user-group forwarding into action button runtime; list/kanban action buttons no longer infer entitlement from `groups_xmlids`.
 
 ### Batch D: Action/List/Kanban Renderer Convergence
 

@@ -1644,7 +1644,6 @@ const {
   selectedIds,
   resolvedModelRef,
   modelRef: model,
-  userGroupsXmlids: () => session.user?.groups_xmlids || [],
   pageText,
   isActionViewNumericToken,
   hasActionViewNoiseMarker,
