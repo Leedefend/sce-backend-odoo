@@ -375,6 +375,13 @@ Acceptance:
 - `/f/:model/:id` and `/r/:model/:id` use the same v2 snapshot path.
 - Form page has no direct `api.data` imports.
 
+Batch C shadow execution note:
+
+- `ContractFormPage` now builds a `ContractV2Store` shadow after the current contract readiness check.
+- Shadow mode does not change visible rendering or replace the existing legacy projection path.
+- Decode failures are exposed only as shadow diagnostics so strictness can be measured before the default renderer is replaced.
+- `web_contract_v2_frontend_architecture_guard.py` now verifies the form route host contains this v2 shadow boundary.
+
 ### Batch D: Action/List/Kanban Renderer Convergence
 
 Deliver:

@@ -260,6 +260,14 @@ REQUIRED_V2_BOUNDARY_FILES: dict[str, tuple[str, ...]] = {
     ),
 }
 
+REQUIRED_FORM_SHADOW_TOKENS: tuple[str, ...] = (
+    "decodeContractV2Snapshot",
+    "createContractV2Store",
+    "v2ContractStore",
+    "syncContractV2ShadowStore(response.data)",
+    "v2_shadow_store",
+)
+
 
 def read(path: Path) -> str:
     return path.read_text(encoding="utf-8", errors="ignore") if path.is_file() else ""
@@ -340,6 +348,15 @@ def validate_v2_boundary() -> list[str]:
     return errors
 
 
+def validate_form_shadow_host() -> list[str]:
+    errors: list[str] = []
+    text = read(WEB_ROOT / "pages/ContractFormPage.vue")
+    for token in REQUIRED_FORM_SHADOW_TOKENS:
+        if token not in text:
+            errors.append(f"ContractFormPage v2 shadow host missing token: {token}")
+    return errors
+
+
 def write_reports(strict: bool, findings: list[dict[str, object]], errors: list[str]) -> None:
     REPORT_JSON.parent.mkdir(parents=True, exist_ok=True)
     REPORT_MD.parent.mkdir(parents=True, exist_ok=True)
@@ -389,6 +406,7 @@ def main() -> int:
     errors.extend(validate_router())
     errors.extend(validate_docs())
     errors.extend(validate_v2_boundary())
+    errors.extend(validate_form_shadow_host())
     write_reports(strict, findings, errors)
 
     if errors:

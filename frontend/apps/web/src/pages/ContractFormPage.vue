@@ -468,6 +468,7 @@ import { resolveSceneValidationSuggestedAction } from '../app/sceneValidationRec
 import { findSceneReadyEntry, resolveFormSceneReady } from '../app/resolvers/sceneReadyResolver';
 import { normalizeSceneActionProtocol } from '../app/sceneActionProtocol';
 import { executeProjectionRefresh } from '../app/projectionRefreshRuntime';
+import { ContractV2DecodeError, createContractV2Store, decodeContractV2Snapshot, type ContractV2NormalizedStore } from '../app/contracts/v2';
 import { executeSceneMutation } from '../app/sceneMutationRuntime';
 import { isCoreSceneStrictMode } from '../app/contractStrictMode';
 import {
@@ -688,6 +689,8 @@ const showOne2manyErrors = ref(false);
 const busyKind = ref<BusyKind>(null);
 const contract = ref<ActionContract | null>(null);
 const contractMeta = ref<Record<string, unknown> | null>(null);
+const v2ContractStore = ref<ContractV2NormalizedStore | null>(null);
+const v2ContractDecodeError = ref('');
 const activeFilterKey = ref('');
 const originalValues = ref<Record<string, unknown>>({});
 const recordVersionToken = ref('');
@@ -4660,6 +4663,21 @@ function resolveNavigationUrl(url: string) {
   return raw;
 }
 
+function syncContractV2ShadowStore(rawContract: unknown) {
+  v2ContractStore.value = null;
+  v2ContractDecodeError.value = '';
+  try {
+    const snapshot = decodeContractV2Snapshot(rawContract);
+    v2ContractStore.value = createContractV2Store(snapshot);
+  } catch (err) {
+    if (err instanceof ContractV2DecodeError) {
+      v2ContractDecodeError.value = err.issues.slice(0, 4).map((issue) => `${issue.path} ${issue.message}`).join(' | ');
+      return;
+    }
+    v2ContractDecodeError.value = err instanceof Error ? err.message : 'unknown v2 contract decode error';
+  }
+}
+
 const hudEntries = computed(() => [
   { label: 'model', value: model.value || '-' },
   { label: 'action_id', value: actionId.value || '-' },
@@ -4667,6 +4685,10 @@ const hudEntries = computed(() => [
   { label: 'contract_loaded', value: Boolean(contract.value) },
   { label: 'contract_ready', value: contractReadiness.value.usable },
   { label: 'contract_issues', value: contractReadiness.value.issues.length },
+  { label: 'v2_shadow_store', value: Boolean(v2ContractStore.value) },
+  { label: 'v2_shadow_widgets', value: v2ContractStore.value?.widgetsById.size || 0 },
+  { label: 'v2_shadow_actions', value: v2ContractStore.value?.actionsById.size || 0 },
+  { label: 'v2_shadow_error', value: v2ContractDecodeError.value || '-' },
   { label: 'contract_view_type', value: contract.value?.head?.view_type || contract.value?.view_type || '-' },
   { label: 'render_profile', value: renderProfile.value },
   { label: 'fields_count', value: Object.keys(contract.value?.fields || {}).length },
@@ -4904,6 +4926,8 @@ function routeContractContext() {
 }
 
 async function loadContract() {
+  v2ContractStore.value = null;
+  v2ContractDecodeError.value = '';
   const profile = recordId.value ? 'edit' : 'create';
   const currentModel = String(model.value || '').trim();
   const contractContext = routeContractContext();
@@ -4956,6 +4980,7 @@ async function loadContract() {
   }
   contract.value = response.data as ActionContract;
   contractMeta.value = response.meta || null;
+  syncContractV2ShadowStore(response.data);
   const policy = contractAccessPolicy.value;
   if (policy.mode === 'block') {
     const message = policy.message || 'contract access policy blocked this page';
