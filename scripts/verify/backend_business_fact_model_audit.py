@@ -49,6 +49,7 @@ DEFAULT_MANAGEMENT_HIERARCHY = ROOT / "docs" / "architecture" / "backend_busines
 DEFAULT_UNIVERSAL_ABSTRACTION = ROOT / "docs" / "architecture" / "platform_universal_business_abstraction_v1.md"
 DEFAULT_UNIVERSAL_REGISTRY = ROOT / "docs" / "architecture" / "platform_universal_business_abstraction_registry_v1.json"
 DEFAULT_UNIVERSAL_ROLLOUT = ROOT / "docs" / "architecture" / "platform_universal_abstraction_rollout_v1.md"
+DEFAULT_CARRIER_FIT_AUDIT = ROOT / "docs" / "architecture" / "platform_universal_carrier_fit_audit_v1.md"
 ALLOWED_SOLUTION_LAYERS = {"platform", "industry", "customer"}
 ALLOWED_RESPONSIBILITY_TYPES = {
     "native system-of-record",
@@ -107,6 +108,18 @@ ALLOWED_UNIVERSAL_CONCEPT_TYPES = {
     "derived_visibility",
     "policy",
 }
+ALLOWED_UNIVERSAL_CARRIER_FITS = {
+    "platform_company_level",
+    "company_identity",
+    "business_level_no_carrier",
+    "pre_carrier_pre_project",
+    "carrier_primary_project",
+    "carrier_optional_project",
+    "derived_projection",
+    "legacy_evidence",
+    "technical_bridge",
+    "review_required",
+}
 
 
 def literal(node: ast.AST) -> Any:
@@ -124,6 +137,12 @@ def call_name(node: ast.AST) -> str:
     return ""
 
 
+def call_kwargs(node: ast.AST) -> dict[str, Any]:
+    if not isinstance(node, ast.Call):
+        return {}
+    return {kw.arg: literal(kw.value) for kw in node.keywords if kw.arg}
+
+
 def extract_models() -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     for path in sorted(MODEL_ROOT.rglob("*.py")):
@@ -138,7 +157,7 @@ def extract_models() -> list[dict[str, Any]]:
             inherit = None
             description = None
             constraints: list[Any] = []
-            fields: list[dict[str, str]] = []
+            fields: list[dict[str, Any]] = []
             for stmt in node.body:
                 if not isinstance(stmt, ast.Assign):
                     continue
@@ -162,11 +181,16 @@ def extract_models() -> list[dict[str, Any]]:
                         first_arg = literal(stmt.value.args[0])
                         if isinstance(first_arg, str):
                             comodel = first_arg
+                    kwargs = call_kwargs(stmt.value)
                     fields.append(
                         {
                             "name": target.id,
                             "type": field_call.split(".", 1)[1],
                             "comodel": comodel,
+                            "required": bool(kwargs.get("required")),
+                            "readonly": bool(kwargs.get("readonly")),
+                            "related": kwargs.get("related") or "",
+                            "store": bool(kwargs.get("store")),
                         }
                     )
             if not model_name and not inherit:
@@ -177,6 +201,7 @@ def extract_models() -> list[dict[str, Any]]:
             path_text = str(path.relative_to(ROOT))
             buckets = classify_model(path_text, model_name, inherit, description, field_names, field_types)
             model_family = classify_model_family(path_text, model_name, inherit, buckets)
+            carrier_fit = classify_universal_carrier_fit(path_text, model_name, inherit, fields, buckets, model_family)
             constraint_text = json.dumps(constraints, ensure_ascii=False)
             rows.append(
                 {
@@ -190,6 +215,7 @@ def extract_models() -> list[dict[str, Any]]:
                     "fields": fields,
                     "buckets": buckets,
                     "model_family": model_family,
+                    "universal_carrier_fit": carrier_fit,
                     "standard_fields": {field: field in field_names for field in STANDARD_FIELDS},
                     "has_legacy_unique_constraint": "legacy_source_unique" in constraint_text
                     or "unique(legacy_source_model, legacy_record_id)" in constraint_text,
@@ -326,6 +352,64 @@ def classify_model_family(path: str, model_name: str | None, inherit: Any, bucke
     return "unclassified"
 
 
+def field_by_name(fields: list[dict[str, Any]], name: str) -> dict[str, Any] | None:
+    return next((field for field in fields if field.get("name") == name), None)
+
+
+def classify_universal_carrier_fit(
+    path: str,
+    model_name: str | None,
+    inherit: Any,
+    fields: list[dict[str, Any]],
+    buckets: list[str],
+    model_family: str,
+) -> str:
+    ref = model_ref(model_name, inherit)
+    project_field = field_by_name(fields, "project_id") or {}
+    has_project = bool(project_field)
+    project_required = bool(project_field.get("required"))
+    project_related = bool(project_field.get("related"))
+
+    if "projection" in buckets:
+        return "derived_projection"
+    if "legacy_fact" in buckets or ref.startswith("sc.legacy") or ref == "sc.history.todo":
+        return "legacy_evidence"
+    if model_family == "compatibility bridges and native extensions":
+        return "technical_bridge"
+    if model_family in {
+        "company and business governance",
+        "workflow approval dictionary audit and validation",
+        "scene capability subscription and frontend contract runtime",
+    }:
+        return "platform_company_level"
+    if model_family in {"partner and counterparty identity", "product and material identity"}:
+        return "company_identity"
+    if model_family == "income contract and tender business" and ref.startswith("tender."):
+        return "pre_carrier_pre_project" if not project_required or project_related else "business_level_no_carrier"
+    if model_family == "treasury account reconciliation and ledger" and ref == "sc.fund.account":
+        return "carrier_optional_project"
+    if model_family == "document admin payroll and office operations" and (not has_project or not project_required):
+        return "carrier_optional_project"
+    if has_project and project_required:
+        return "carrier_primary_project"
+    if has_project:
+        return "carrier_optional_project"
+    if model_family in {
+        "income contract and tender business",
+        "expense contract and procurement commitment",
+        "payment request and payment execution",
+        "receipt income invoice and tax realization",
+        "project budget BOQ and cost control",
+        "material lifecycle",
+        "labor equipment and subcontract lifecycle",
+        "progress quality safety risk and diary",
+    }:
+        return "carrier_primary_project"
+    if model_family == "project identity and execution carrier":
+        return "carrier_primary_project"
+    return "review_required"
+
+
 def load_registry(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {"models": [], "missing_registry": True}
@@ -375,6 +459,30 @@ def summarize(rows: list[dict[str, Any]], registry: dict[str, Any]) -> dict[str,
     bucket_counts = Counter(bucket for row in rows for bucket in row["buckets"])
     implementation_counts = Counter(row["implementation_kind"] for row in rows)
     family_counts = Counter(row.get("model_family") or "unclassified" for row in rows)
+    carrier_fit_counts = Counter(row.get("universal_carrier_fit") or "review_required" for row in rows)
+    carrier_fit_unclassified = [
+        {"model": row.get("model"), "inherit": row.get("inherit"), "path": row["path"]}
+        for row in rows
+        if row.get("universal_carrier_fit") not in ALLOWED_UNIVERSAL_CARRIER_FITS
+    ]
+    project_required_rows = []
+    project_optional_rows = []
+    carrier_fit_review_rows = []
+    for row in rows:
+        project_field = field_by_name(row.get("fields", []), "project_id")
+        if project_field and project_field.get("required"):
+            project_required_rows.append({"model": row.get("model"), "inherit": row.get("inherit"), "path": row["path"]})
+        elif project_field:
+            project_optional_rows.append({"model": row.get("model"), "inherit": row.get("inherit"), "path": row["path"]})
+        if row.get("universal_carrier_fit") == "review_required":
+            carrier_fit_review_rows.append(
+                {
+                    "model": row.get("model"),
+                    "inherit": row.get("inherit"),
+                    "model_family": row.get("model_family"),
+                    "path": row["path"],
+                }
+            )
     unclassified_rows = [
         {
             "model": row.get("model"),
@@ -451,6 +559,13 @@ def summarize(rows: list[dict[str, Any]], registry: dict[str, Any]) -> dict[str,
         "bucket_counts": dict(sorted(bucket_counts.items())),
         "implementation_counts": dict(sorted(implementation_counts.items())),
         "model_family_counts": dict(sorted(family_counts.items())),
+        "universal_carrier_fit_counts": dict(sorted(carrier_fit_counts.items())),
+        "universal_carrier_fit_unclassified_count": len(carrier_fit_unclassified),
+        "universal_carrier_fit_unclassified": carrier_fit_unclassified,
+        "project_required_model_count": len(project_required_rows),
+        "project_optional_model_count": len(project_optional_rows),
+        "universal_carrier_fit_review_count": len(carrier_fit_review_rows),
+        "universal_carrier_fit_review_models": carrier_fit_review_rows,
         "unclassified_model_count": len(unclassified_rows),
         "unclassified_models": unclassified_rows,
         "native_extension_count": implementation_counts.get("native_model_extension", 0),
@@ -823,6 +938,10 @@ def write_markdown(report: dict[str, Any], path: Path) -> None:
         f"- registry_path_gap_count: {summary['registry_path_gap_count']}",
         f"- registry_shape_gap_count: {summary['registry_shape_gap_count']}",
         f"- unclassified_model_count: {summary['unclassified_model_count']}",
+        f"- universal_carrier_fit_unclassified_count: {summary['universal_carrier_fit_unclassified_count']}",
+        f"- universal_carrier_fit_review_count: {summary['universal_carrier_fit_review_count']}",
+        f"- project_required_model_count: {summary['project_required_model_count']}",
+        f"- project_optional_model_count: {summary['project_optional_model_count']}",
         "",
         "## Bucket Counts",
         "",
@@ -835,6 +954,19 @@ def write_markdown(report: dict[str, Any], path: Path) -> None:
     lines.extend(["", "## Model Family Counts", ""])
     for key, value in summary["model_family_counts"].items():
         lines.append(f"- {key}: {value}")
+    lines.extend(["", "## Universal Carrier Fit", ""])
+    for key, value in summary["universal_carrier_fit_counts"].items():
+        lines.append(f"- {key}: {value}")
+    lines.extend(["", "## Universal Carrier Fit Review Models", ""])
+    if summary["universal_carrier_fit_review_models"]:
+        lines.append("| model | inherit | family | path |")
+        lines.append("| --- | --- | --- | --- |")
+        for row in summary["universal_carrier_fit_review_models"]:
+            lines.append(
+                f"| {row.get('model') or ''} | {row.get('inherit') or ''} | {row.get('model_family') or ''} | {row['path']} |"
+            )
+    else:
+        lines.append("- none")
     lines.extend(["", "## Unclassified Models", ""])
     if summary["unclassified_models"]:
         lines.append("| model | inherit | implementation | path |")
@@ -1056,6 +1188,7 @@ def main() -> int:
     parser.add_argument("--universal-abstraction", default=str(DEFAULT_UNIVERSAL_ABSTRACTION.relative_to(ROOT)))
     parser.add_argument("--universal-registry", default=str(DEFAULT_UNIVERSAL_REGISTRY.relative_to(ROOT)))
     parser.add_argument("--universal-rollout", default=str(DEFAULT_UNIVERSAL_ROLLOUT.relative_to(ROOT)))
+    parser.add_argument("--carrier-fit-audit", default=str(DEFAULT_CARRIER_FIT_AUDIT.relative_to(ROOT)))
     parser.add_argument(
         "--enforce",
         action="store_true",
@@ -1133,9 +1266,12 @@ def main() -> int:
         universal_registry_path = ROOT / args.universal_registry
         universal_rollout_path = ROOT / args.universal_rollout
         universal_rollout_text = universal_rollout_path.read_text(encoding="utf-8") if universal_rollout_path.exists() else ""
+        carrier_fit_audit_path = ROOT / args.carrier_fit_audit
+        carrier_fit_audit_text = carrier_fit_audit_path.read_text(encoding="utf-8") if carrier_fit_audit_path.exists() else ""
         blockers = {
             "unregistered_formal_models": summary["unregistered_formal_models"],
             "unclassified_models": summary["unclassified_models"],
+            "universal_carrier_fit_unclassified": summary["universal_carrier_fit_unclassified"],
             "registered_models_not_detected": summary["registered_models_not_detected"],
             "undeclared_standard_gaps": summary["undeclared_standard_gaps"],
             "registry_path_gaps": summary["registry_path_gaps"],
@@ -1264,6 +1400,18 @@ def main() -> int:
                 {
                     "path": str(universal_rollout_path.relative_to(ROOT)),
                     "reason": "missing_universal_rollout_or_decision_gate",
+                }
+            ],
+            "carrier_fit_audit_gaps": []
+            if carrier_fit_audit_path.exists()
+            and "## Carrier Fit Counts" in carrier_fit_audit_text
+            and "## Decision" in carrier_fit_audit_text
+            and "Do not introduce `sc.business` or `sc.business.carrier` as tables yet." in carrier_fit_audit_text
+            and "project_required_model_count" in carrier_fit_audit_text
+            else [
+                {
+                    "path": str(carrier_fit_audit_path.relative_to(ROOT)),
+                    "reason": "missing_carrier_fit_audit_or_decision",
                 }
             ],
         }

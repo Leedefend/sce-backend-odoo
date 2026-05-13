@@ -70,19 +70,40 @@ If none are true, keep the framework as registry and carrier metadata first.
 
 ## Immediate Next Audit
 
-The next concrete task should be:
+The carrier-fit audit has been landed as:
+
+```text
+docs/architecture/platform_universal_carrier_fit_audit_v1.md
+```
+
+It classifies the current backend models by universal carrier fit and keeps the
+decision gate conservative: do not introduce `sc.business` or
+`sc.business.carrier` as tables before a family-level carrier-fit registry proves
+which workflows need them.
+
+Completed audit task:
 
 ```text
 classify current backend models by universal carrier fit
 ```
 
-Expected categories:
+The next concrete task should be:
+
+```text
+create a carrier-fit registry for model families
+```
+
+Registry categories:
 
 - platform/company-level
+- company identity
 - business-level, no carrier yet
 - pre-carrier/pre-project
 - carrier-primary through `project.project`
+- carrier-optional through `project.project`
 - derived projection
 - legacy evidence
+- technical bridge
 
-That audit will decide whether the next code change is a new model, a field addition, or only registry metadata.
+That registry will decide whether the next code change is a new model, a field
+addition, or only registry metadata.
