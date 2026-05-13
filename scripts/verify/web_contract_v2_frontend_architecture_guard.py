@@ -249,6 +249,7 @@ REQUIRED_V2_BOUNDARY_FILES: dict[str, tuple[str, ...]] = {
         "primaryDataSource",
         "collectContractV2FieldStatusByCode",
         "collectContractV2ButtonStatusById",
+        "resolveContractV2ContainerTree",
         "resolveContractV2GlobalStatus",
         "resolveContractV2MainData",
         "resolveContractV2SourceContext",
@@ -276,6 +277,7 @@ REQUIRED_FORM_SHADOW_TOKENS: tuple[str, ...] = (
 REQUIRED_FORM_STORE_SELECTOR_TOKENS: tuple[str, ...] = (
     "collectContractV2ButtonStatusById",
     "collectContractV2FieldStatusByCode",
+    "resolveContractV2ContainerTree",
     "resolveContractV2GlobalStatus",
     "resolveContractV2MainData",
     "resolveContractV2SourceContext",

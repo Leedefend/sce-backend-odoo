@@ -129,6 +129,11 @@ export function collectContractV2ButtonStatusById(store: ContractV2NormalizedSto
   return out;
 }
 
+export function resolveContractV2ContainerTree(store: ContractV2NormalizedStore | null): ContractV2Container[] {
+  if (!store) return [];
+  return store.snapshot.layoutContract.containerTree;
+}
+
 export function resolveContractV2GlobalStatus(store: ContractV2NormalizedStore | null) {
   if (!store) return null;
   const row = store.snapshot.statusContract.globalStatus || {};

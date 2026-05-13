@@ -390,6 +390,7 @@ Batch C shadow execution note:
 - C.7 reads `dataContract.mainData` from the decoded v2 store first for statusbar, create defaults, and record initialization; legacy main-data extraction remains a fallback.
 - C.8 moves v2 store selectors for field status, button status, global status, source context, and main data into `frontend/apps/web/src/app/contracts/v2/store.ts`, keeping page code on store APIs instead of direct snapshot parsing.
 - C.9 locks the form v2 store selector boundary in `web_contract_v2_frontend_architecture_guard.py`: selector APIs must live in the v2 store module and `ContractFormPage` must not redefine local selector functions.
+- C.10 moves form layout `containerTree` access behind `resolveContractV2ContainerTree`, so `ContractFormPage` no longer reads `snapshot.layoutContract.containerTree` directly.
 
 ### Batch D: Action/List/Kanban Renderer Convergence
 

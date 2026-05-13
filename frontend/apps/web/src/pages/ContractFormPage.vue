@@ -493,6 +493,7 @@ import {
   ContractV2DecodeError,
   createContractV2Store,
   decodeContractV2Snapshot,
+  resolveContractV2ContainerTree,
   resolveContractV2GlobalStatus,
   resolveContractV2MainData,
   resolveContractV2SourceContext,
@@ -733,7 +734,7 @@ const v2ShadowLegacyFieldMissing = computed(() => {
 const v2ShadowLegacyFieldOverlapCount = computed(() => v2ShadowFieldCodeCount.value - v2ShadowLegacyFieldMissing.value.length);
 const v2ShadowLegacyFieldMissingPreview = computed(() => v2ShadowLegacyFieldMissing.value.slice(0, 8).join(',') || '-');
 const v2ShadowLayoutSourceKind = computed(() => {
-  const containers = v2ContractStore.value?.snapshot.layoutContract.containerTree || [];
+  const containers = resolveContractV2ContainerTree(v2ContractStore.value);
   if (containers.length) return 'v2_store';
   return nativeFormLayoutNodes.value.length ? 'legacy_layout' : 'none';
 });
@@ -3478,7 +3479,7 @@ const useNativeFormTree = computed(() => {
 });
 
 const nativeFormLayoutNodes = computed<NativeFormLayoutNode[]>(() => {
-  const storeContainers = v2ContractStore.value?.snapshot.layoutContract.containerTree || [];
+  const storeContainers = resolveContractV2ContainerTree(v2ContractStore.value);
   const v2 = storeContainers.length ? null : resolveUnifiedPageContractV2(contract.value);
   const containers = storeContainers.length
     ? storeContainers
