@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo.tests import TransactionCase
 from odoo.tests.common import tagged
-from odoo.addons.smart_core.security.platform_admin import LEGACY_PLATFORM_ADMIN_GROUP
+from odoo.addons.smart_core.security.platform_admin import PLATFORM_ADMIN_GROUP
 
 
 @tagged("post_install", "-at_install", "sc_gate", "sc_perm", "role_regression_minimal")
@@ -45,9 +45,13 @@ class TestRoleRegressionMinimal(TransactionCase):
             "role_material_manager",
             ["smart_construction_core.group_sc_cap_material_manager"],
         )
-        cls.user_config_admin = _create(
-            "role_config_admin",
-            [LEGACY_PLATFORM_ADMIN_GROUP],
+        cls.user_platform_admin = _create(
+            "role_platform_admin",
+            [PLATFORM_ADMIN_GROUP],
+        )
+        cls.user_business_config_admin = _create(
+            "role_business_config_admin",
+            ["smart_construction_core.group_sc_cap_business_config_admin"],
         )
         cls.user_contract_user = _create(
             "role_contract_user",
@@ -75,9 +79,11 @@ class TestRoleRegressionMinimal(TransactionCase):
             (self.user_contract_user, "smart_construction_core.action_construction_contract", True),
             (self.user_finance_user, "smart_construction_core.action_construction_contract", False),
             # 配置/工作流
-            (self.user_config_admin, "smart_construction_core.action_sc_workflow_def", True),
+            (self.user_platform_admin, "smart_construction_core.action_sc_workflow_def", True),
+            (self.user_business_config_admin, "smart_construction_core.action_sc_workflow_def", False),
             (self.user_finance_user, "smart_construction_core.action_sc_workflow_def", False),
             # 数据中心（只读组未包含在财务）
+            (self.user_business_config_admin, "smart_construction_core.action_project_dictionary", True),
             (self.user_finance_manager, "smart_construction_core.action_project_dictionary", False),
         ]
 

@@ -111,6 +111,8 @@ CONSTRUCTION_PLATFORM_SURFACE_FILES = {
     "addons/smart_construction_core/views/menu.xml",
     "addons/smart_construction_core/views/core/workflow_views.xml",
     "addons/smart_construction_core/security/action_groups_patch.xml",
+    "addons/smart_construction_core/views/res_groups_menu_views.xml",
+    "addons/smart_construction_core/views/support/runtime_user_management_views.xml",
 }
 CONSTRUCTION_PLATFORM_SURFACE_XMLIDS = {
     "menu_sc_project_manage",
@@ -125,6 +127,10 @@ CONSTRUCTION_PLATFORM_SURFACE_XMLIDS = {
     "action_sc_workflow_instance",
     "action_sc_workflow_workitem",
     "action_sc_workflow_log",
+    "base.menu_action_res_groups",
+    "base.action_res_groups",
+    "action_sc_runtime_user_management",
+    "menu_sc_runtime_user_management",
 }
 FORBIDDEN_LEGACY_ADMIN_CHECKS = {
     "addons/smart_construction_core/controllers/scene_controller.py",
@@ -355,6 +361,13 @@ for rel_path in sorted(CONSTRUCTION_PLATFORM_SURFACE_FILES):
             LEGACY_PLATFORM_ADMIN_GROUP not in group_expr,
             f"{rel_path}: platform governance surface {xmlid} must not use {LEGACY_PLATFORM_ADMIN_GROUP}",
         )
+runtime_user_management_text = (
+    ROOT / "addons/smart_construction_core/views/support/runtime_user_management_views.xml"
+).read_text(encoding="utf-8")
+assert_true(
+    "ref('smart_core.group_smart_core_admin')" in runtime_user_management_text,
+    "runtime user management must explicitly filter canonical platform admins",
+)
 for rel_path in (
     "addons/smart_construction_core/controllers/pack_controller.py",
     "addons/smart_construction_core/models/support/scene_orchestration.py",

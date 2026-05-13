@@ -292,6 +292,22 @@ exact_group_boundaries = {
         "only": {PLATFORM_ADMIN_GROUP},
         "label": "smart core ops job action",
     },
+    "base.menu_action_res_groups": {
+        "only": {PLATFORM_ADMIN_GROUP, "smart_construction_core.group_sc_super_admin"},
+        "label": "native group management menu",
+    },
+    "base.action_res_groups": {
+        "only": {PLATFORM_ADMIN_GROUP, "smart_construction_core.group_sc_super_admin"},
+        "label": "native group management action",
+    },
+    "smart_construction_core.action_sc_runtime_user_management": {
+        "only": {PLATFORM_ADMIN_GROUP, "smart_construction_core.group_sc_cap_business_config_admin"},
+        "label": "runtime user management action",
+    },
+    "smart_construction_core.menu_sc_runtime_user_management": {
+        "only": {PLATFORM_ADMIN_GROUP, "smart_construction_core.group_sc_cap_business_config_admin"},
+        "label": "runtime user management menu",
+    },
     "smart_construction_core.menu_sc_project_cost_code": {
         "only": {"smart_construction_core.group_sc_cap_business_config_admin"},
         "label": "business config cost code menu",

@@ -4,7 +4,7 @@ import logging
 import os
 
 from odoo.tests.common import TransactionCase, tagged
-from odoo.addons.smart_core.security.platform_admin import LEGACY_PLATFORM_ADMIN_GROUP
+from odoo.addons.smart_core.security.platform_admin import PLATFORM_ADMIN_GROUP
 
 _logger = logging.getLogger(__name__)
 
@@ -22,7 +22,8 @@ ACL_ROLES = {
     "finance_manager": ["smart_construction_core.group_sc_cap_finance_manager"],
     "material_manager": ["smart_construction_core.group_sc_cap_material_manager"],
     "data_read": ["smart_construction_core.group_sc_cap_data_read"],
-    "config_admin": [LEGACY_PLATFORM_ADMIN_GROUP],
+    "business_config_admin": ["smart_construction_core.group_sc_cap_business_config_admin"],
+    "platform_admin": [PLATFORM_ADMIN_GROUP],
     "settlement_read": ["smart_construction_core.group_sc_cap_settlement_read"],
     "settlement_user": ["smart_construction_core.group_sc_cap_settlement_user"],
     "settlement_manager": ["smart_construction_core.group_sc_cap_settlement_manager"],
@@ -77,7 +78,7 @@ ACL_EXPECTATIONS = [
     {"role": "material_manager", "model": "project.material.plan", "rights": {"read": True, "create": True, "write": True, "unlink": True}},
     {"role": "material_manager", "model": "project.material.plan.line", "rights": {"read": True, "create": True, "write": True, "unlink": True}},
     {"role": "data_read", "model": "project.dictionary", "rights": {"read": True, "create": False, "write": False, "unlink": False}},
-    {"role": "config_admin", "model": "project.dictionary", "rights": {"read": True, "create": True, "write": True, "unlink": True}},
+    {"role": "business_config_admin", "model": "project.dictionary", "rights": {"read": True, "create": True, "write": True, "unlink": True}},
     {"role": "finance_read", "model": "sc.treasury.ledger", "rights": {"read": True, "create": False, "write": False, "unlink": False}},
     {"role": "finance_user", "model": "sc.treasury.ledger", "rights": {"read": True, "create": False, "write": False, "unlink": False}},
     {"role": "finance_manager", "model": "sc.treasury.ledger", "rights": {"read": True, "create": True, "write": True, "unlink": True}},
