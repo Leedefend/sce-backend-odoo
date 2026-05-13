@@ -2,6 +2,9 @@
 
 Status: draft architecture contract
 
+Binding registry: `platform_universal_business_abstraction_registry_v1.json`
+Rollout plan: `platform_universal_abstraction_rollout_v1.md`
+
 This note separates the platform-level abstraction from the construction-industry binding.
 
 The purpose of the abstraction is cross-industry and cross-company applicability. It is not a repair model for one customer's data and it is not limited to construction projects.
@@ -27,6 +30,15 @@ platform -> company -> business -> carrier -> fact -> projection
 The platform should therefore standardize company, business, direction, carrier, fact, provenance, policy, projection, and capability contracts.
 
 It should not standardize construction project semantics as universal platform truth.
+
+## Binding Registry
+
+The abstraction is now backed by a machine-checked registry:
+
+- platform kernel concepts: platform, company, business, business direction, carrier, fact, projection, policy
+- construction carrier binding: `project.project` as carrier type `project`
+
+The registry intentionally binds construction to project without promoting project into the platform kernel.
 
 ## Project Is Not Platform Kernel
 
@@ -133,3 +145,5 @@ Likely staged path:
 2. map construction `project.project` as carrier type `project`.
 3. identify pre-project and company-level facts that cannot cleanly use `project_id`.
 4. only then introduce a concrete platform model such as `sc.business.case` or `sc.business.carrier` if the evidence shows it is needed.
+
+The first two steps are now in place as architecture contracts. The next step should be an evidence audit for current facts that cannot honestly be scoped by `project.project`.

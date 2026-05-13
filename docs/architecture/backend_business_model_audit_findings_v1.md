@@ -8,6 +8,8 @@ Detailed code-level overlap analysis: `backend_business_model_overlap_analysis_v
 Projection implementation registry: `backend_business_projection_registry_v1.json`.
 Management hierarchy registry: `backend_business_management_hierarchy_v1.json`.
 Platform universal abstraction: `platform_universal_business_abstraction_v1.md`.
+Universal abstraction registry: `platform_universal_business_abstraction_registry_v1.json`.
+Universal abstraction rollout: `platform_universal_abstraction_rollout_v1.md`.
 
 ## Core Answer
 
@@ -33,6 +35,10 @@ Customer-specific historical data is still important, but it belongs in replay, 
 The earlier gap was real: the hierarchy existed as prose, but it was not yet a model-level contract. It is now a checked registry. All 19 model families declare management subject, managed object, and project carrier role.
 
 The important correction is that project is not the platform kernel. Project is a construction-industry carrier. Other industries may bind business to order, case, shipment, loan, policy, production batch, store, asset, or service ticket.
+
+The framework is now grounded as a registry, not only prose. The registered platform kernel concepts are platform, company, business, business direction, carrier, fact, projection, and policy. The current construction binding maps carrier type `project` to `project.project`.
+
+The rollout decision is intentionally conservative: do not add `sc.business` or `sc.business.carrier` immediately. First classify existing backend models by universal carrier fit and prove whether a concrete platform business model is necessary.
 
 ## What The Model Layer Solves
 

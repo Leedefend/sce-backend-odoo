@@ -14,6 +14,8 @@ Overlap analysis: `docs/architecture/backend_business_model_overlap_analysis_v1.
 Projection registry: `docs/architecture/backend_business_projection_registry_v1.json`
 Management hierarchy registry: `docs/architecture/backend_business_management_hierarchy_v1.json`
 Platform universal abstraction: `docs/architecture/platform_universal_business_abstraction_v1.md`
+Universal abstraction registry: `docs/architecture/platform_universal_business_abstraction_registry_v1.json`
+Universal abstraction rollout: `docs/architecture/platform_universal_abstraction_rollout_v1.md`
 
 ## Audit Scope
 
@@ -57,6 +59,8 @@ The current static inventory reports:
 | ownership specs | 5 | explicit boundary specs for the highest-risk overlapping families |
 | projection registry entries | 18 | projection/read surfaces split by implementation mode |
 | management hierarchy rows | 19 | every model family declares who manages what and project carrier role |
+| universal abstraction concepts | 8 | platform kernel concepts registered for cross-industry use |
+| carrier bindings | 1 | construction binds carrier type `project` to `project.project` |
 | unclassified models | 0 | every detected model class is mapped to one model family |
 
 ## What The Models Carry
@@ -306,6 +310,7 @@ It fails when any of these are present:
 - detected model class that cannot be mapped to a model family
 - projection/read model that is missing from the projection registry or has no implementation mode/write policy
 - model family that is missing from the management hierarchy registry or lacks subject/object/project-carrier placement
+- universal platform abstraction missing required kernel concept or construction carrier binding
 
 ## Family Registry
 
@@ -393,6 +398,27 @@ Current enforced placement:
 | not-project-applicable families | 5 |
 
 This is the missing layer identified in the audit discussion. The model family registry tells what each family solves; the management hierarchy registry tells where that family sits in the management chain.
+
+## Universal Abstraction Registry
+
+The universal abstraction registry is the cross-industry contract above the construction binding.
+
+Registered platform kernel concepts:
+
+- platform
+- company
+- business
+- business direction
+- carrier
+- fact
+- projection
+- policy
+
+Registered carrier binding:
+
+| industry | carrier type | model | boundary |
+| --- | --- | --- | --- |
+| construction | project | `project.project` | project is exposed as carrier, not promoted to platform kernel |
 
 ## Ownership Specs For Overlap Risks
 
@@ -511,5 +537,8 @@ Current summary:
 - `management_hierarchy_count=19`
 - `management_subject_counts={"business": 5, "company": 9, "platform": 4, "source_system": 1}`
 - `project_carrier_role_counts={"derived": 1, "not_applicable": 5, "optional": 4, "pre_project": 1, "primary": 8}`
+- `universal_concept_count=8`
+- `carrier_binding_count=1`
+- `has_construction_project_binding=true`
 - `unclassified_model_count=0`
 - `implementation_counts={"custom_model": 150, "custom_model_with_mixin_or_inherit": 88, "native_model_extension": 25}`

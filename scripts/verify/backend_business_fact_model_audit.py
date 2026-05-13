@@ -47,6 +47,8 @@ DEFAULT_OVERLAP_ANALYSIS = ROOT / "docs" / "architecture" / "backend_business_mo
 DEFAULT_PROJECTION_REGISTRY = ROOT / "docs" / "architecture" / "backend_business_projection_registry_v1.json"
 DEFAULT_MANAGEMENT_HIERARCHY = ROOT / "docs" / "architecture" / "backend_business_management_hierarchy_v1.json"
 DEFAULT_UNIVERSAL_ABSTRACTION = ROOT / "docs" / "architecture" / "platform_universal_business_abstraction_v1.md"
+DEFAULT_UNIVERSAL_REGISTRY = ROOT / "docs" / "architecture" / "platform_universal_business_abstraction_registry_v1.json"
+DEFAULT_UNIVERSAL_ROLLOUT = ROOT / "docs" / "architecture" / "platform_universal_abstraction_rollout_v1.md"
 ALLOWED_SOLUTION_LAYERS = {"platform", "industry", "customer"}
 ALLOWED_RESPONSIBILITY_TYPES = {
     "native system-of-record",
@@ -94,6 +96,16 @@ ALLOWED_PROJECT_CARRIER_ROLES = {
     "company_level",
     "not_applicable",
     "derived",
+}
+REQUIRED_UNIVERSAL_CONCEPTS = {"platform", "company", "business", "carrier", "fact", "projection"}
+ALLOWED_UNIVERSAL_LAYERS = {"platform_kernel", "industry_binding", "customer_binding"}
+ALLOWED_UNIVERSAL_CONCEPT_TYPES = {
+    "management_subject",
+    "managed_object",
+    "extension_point",
+    "event_or_state",
+    "derived_visibility",
+    "policy",
 }
 
 
@@ -341,6 +353,12 @@ def load_projection_registry(path: Path) -> dict[str, Any]:
 def load_management_hierarchy(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {"family_hierarchy": [], "missing_registry": True}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def load_universal_registry(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {"concepts": [], "carrier_bindings": [], "missing_registry": True}
     return json.loads(path.read_text(encoding="utf-8"))
 
 
@@ -720,6 +738,68 @@ def summarize_management_hierarchy(
     }
 
 
+def summarize_universal_registry(universal_registry: dict[str, Any]) -> dict[str, Any]:
+    concepts = universal_registry.get("concepts", [])
+    bindings = universal_registry.get("carrier_bindings", [])
+    concept_map = {item.get("key"): item for item in concepts if item.get("key")}
+    required_fields = ["key", "name", "concept_type", "layer", "definition", "platform_contract", "current_construction_binding"]
+    concept_shape_gaps = []
+    layer_counts: Counter[str] = Counter()
+    type_counts: Counter[str] = Counter()
+    for item in concepts:
+        key = item.get("key")
+        for field in required_fields:
+            if not str(item.get(field) or "").strip():
+                concept_shape_gaps.append({"key": key, "field": field, "reason": "missing_required_field"})
+        layer = item.get("layer")
+        if layer in ALLOWED_UNIVERSAL_LAYERS:
+            layer_counts[layer] += 1
+        else:
+            concept_shape_gaps.append(
+                {
+                    "key": key,
+                    "field": "layer",
+                    "value": layer,
+                    "allowed_values": sorted(ALLOWED_UNIVERSAL_LAYERS),
+                }
+            )
+        concept_type = item.get("concept_type")
+        if concept_type in ALLOWED_UNIVERSAL_CONCEPT_TYPES:
+            type_counts[concept_type] += 1
+        else:
+            concept_shape_gaps.append(
+                {
+                    "key": key,
+                    "field": "concept_type",
+                    "value": concept_type,
+                    "allowed_values": sorted(ALLOWED_UNIVERSAL_CONCEPT_TYPES),
+                }
+            )
+    binding_shape_gaps = []
+    for item in bindings:
+        key = item.get("key")
+        for field in ("key", "industry", "carrier_type", "model", "business_binding", "platform_boundary"):
+            if not str(item.get(field) or "").strip():
+                binding_shape_gaps.append({"key": key, "field": field, "reason": "missing_required_field"})
+    return {
+        "universal_concept_count": len(concepts),
+        "universal_concept_layer_counts": dict(sorted(layer_counts.items())),
+        "universal_concept_type_counts": dict(sorted(type_counts.items())),
+        "missing_required_universal_concepts": sorted(REQUIRED_UNIVERSAL_CONCEPTS - set(concept_map)),
+        "universal_concept_shape_gap_count": len(concept_shape_gaps),
+        "universal_concept_shape_gaps": concept_shape_gaps,
+        "carrier_binding_count": len(bindings),
+        "carrier_binding_shape_gap_count": len(binding_shape_gaps),
+        "carrier_binding_shape_gaps": binding_shape_gaps,
+        "has_construction_project_binding": any(
+            item.get("industry") == "construction"
+            and item.get("carrier_type") == "project"
+            and item.get("model") == "project.project"
+            for item in bindings
+        ),
+    }
+
+
 def write_markdown(report: dict[str, Any], path: Path) -> None:
     summary = report["summary"]
     rows = report["models"]
@@ -934,6 +1014,28 @@ def write_markdown(report: dict[str, Any], path: Path) -> None:
                     project_carrier_role=item.get("project_carrier_role", ""),
                 )
             )
+    universal_summary = report.get("universal_summary") or {}
+    universal_registry = report.get("universal_registry") or {}
+    lines.extend(["", "## Universal Abstraction Registry", ""])
+    lines.append(f"- universal_concept_count: {universal_summary.get('universal_concept_count', 0)}")
+    lines.append(
+        "- universal_concept_layer_counts: "
+        + json.dumps(universal_summary.get("universal_concept_layer_counts", {}), ensure_ascii=False, sort_keys=True)
+    )
+    lines.append(f"- carrier_binding_count: {universal_summary.get('carrier_binding_count', 0)}")
+    lines.append(f"- has_construction_project_binding: {universal_summary.get('has_construction_project_binding', False)}")
+    if universal_registry.get("concepts"):
+        lines.extend(["", "| concept | type | layer | construction binding |"])
+        lines.append("| --- | --- | --- | --- |")
+        for item in universal_registry["concepts"]:
+            lines.append(
+                "| {key} | {concept_type} | {layer} | {current_construction_binding} |".format(
+                    key=item.get("key", ""),
+                    concept_type=item.get("concept_type", ""),
+                    layer=item.get("layer", ""),
+                    current_construction_binding=item.get("current_construction_binding", ""),
+                )
+            )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -952,6 +1054,8 @@ def main() -> int:
     parser.add_argument("--projection-registry", default=str(DEFAULT_PROJECTION_REGISTRY.relative_to(ROOT)))
     parser.add_argument("--management-hierarchy", default=str(DEFAULT_MANAGEMENT_HIERARCHY.relative_to(ROOT)))
     parser.add_argument("--universal-abstraction", default=str(DEFAULT_UNIVERSAL_ABSTRACTION.relative_to(ROOT)))
+    parser.add_argument("--universal-registry", default=str(DEFAULT_UNIVERSAL_REGISTRY.relative_to(ROOT)))
+    parser.add_argument("--universal-rollout", default=str(DEFAULT_UNIVERSAL_ROLLOUT.relative_to(ROOT)))
     parser.add_argument(
         "--enforce",
         action="store_true",
@@ -965,17 +1069,20 @@ def main() -> int:
     ownership_specs = load_ownership_specs(ROOT / args.ownership_specs)
     projection_registry = load_projection_registry(ROOT / args.projection_registry)
     management_hierarchy = load_management_hierarchy(ROOT / args.management_hierarchy)
+    universal_registry = load_universal_registry(ROOT / args.universal_registry)
     report = {
         "summary": summarize(rows, registry),
         "family_summary": summarize_family_registry(rows, family_registry),
         "ownership_summary": summarize_ownership_specs(rows, ownership_specs),
         "projection_summary": summarize_projection_registry(rows, projection_registry),
         "management_hierarchy_summary": summarize_management_hierarchy(family_registry, management_hierarchy),
+        "universal_summary": summarize_universal_registry(universal_registry),
         "registry": registry,
         "family_registry": family_registry,
         "ownership_specs": ownership_specs,
         "projection_registry": projection_registry,
         "management_hierarchy": management_hierarchy,
+        "universal_registry": universal_registry,
         "models": rows,
     }
     report_path = ROOT / args.report
@@ -1000,6 +1107,10 @@ def main() -> int:
         "BACKEND_BUSINESS_MANAGEMENT_HIERARCHY="
         + json.dumps(report["management_hierarchy_summary"], ensure_ascii=False, sort_keys=True)
     )
+    print(
+        "PLATFORM_UNIVERSAL_BUSINESS_ABSTRACTION="
+        + json.dumps(report["universal_summary"], ensure_ascii=False, sort_keys=True)
+    )
     if args.enforce:
         problem_map_path = ROOT / args.problem_map
         problem_map_text = problem_map_path.read_text(encoding="utf-8") if problem_map_path.exists() else ""
@@ -1019,6 +1130,9 @@ def main() -> int:
         universal_abstraction_text = (
             universal_abstraction_path.read_text(encoding="utf-8") if universal_abstraction_path.exists() else ""
         )
+        universal_registry_path = ROOT / args.universal_registry
+        universal_rollout_path = ROOT / args.universal_rollout
+        universal_rollout_text = universal_rollout_path.read_text(encoding="utf-8") if universal_rollout_path.exists() else ""
         blockers = {
             "unregistered_formal_models": summary["unregistered_formal_models"],
             "unclassified_models": summary["unclassified_models"],
@@ -1122,6 +1236,34 @@ def main() -> int:
                 {
                     "path": str(universal_abstraction_path.relative_to(ROOT)),
                     "reason": "missing_platform_universal_abstraction_or_project_boundary",
+                }
+            ],
+            "universal_registry_gaps": []
+            if universal_registry_path.exists()
+            and not report["universal_summary"]["missing_required_universal_concepts"]
+            and not report["universal_summary"]["universal_concept_shape_gaps"]
+            and not report["universal_summary"]["carrier_binding_shape_gaps"]
+            and report["universal_summary"]["has_construction_project_binding"]
+            else [
+                {
+                    "path": str(universal_registry_path.relative_to(ROOT)),
+                    "missing_required_universal_concepts": report["universal_summary"][
+                        "missing_required_universal_concepts"
+                    ],
+                    "concept_shape_gaps": report["universal_summary"]["universal_concept_shape_gaps"],
+                    "carrier_binding_shape_gaps": report["universal_summary"]["carrier_binding_shape_gaps"],
+                    "has_construction_project_binding": report["universal_summary"]["has_construction_project_binding"],
+                }
+            ],
+            "universal_rollout_gaps": []
+            if universal_rollout_path.exists()
+            and "Do not add `sc.business` or `sc.business.carrier` immediately." in universal_rollout_text
+            and "classify current backend models by universal carrier fit" in universal_rollout_text
+            and "Decision Gate" in universal_rollout_text
+            else [
+                {
+                    "path": str(universal_rollout_path.relative_to(ROOT)),
+                    "reason": "missing_universal_rollout_or_decision_gate",
                 }
             ],
         }
