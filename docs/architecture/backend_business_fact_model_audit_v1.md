@@ -1,0 +1,167 @@
+# Backend Business Fact Model Audit v1
+
+Status: draft audit baseline
+Branch: `audit/backend-business-fact-models`
+Generated evidence: `make verify.backend_business_fact.model_audit`
+
+## Audit Scope
+
+This audit covers backend business fact models in `addons/smart_construction_core/models`, plus the replay and projection entrypoints that decide how legacy facts become user-usable runtime documents.
+
+The audit separates four layers:
+
+- Legacy fact carriers: immutable or near-immutable source facts replayed from old systems.
+- Formal runtime facts: user-facing operational models that carry business semantics after projection.
+- Projection/read models: summary, cockpit, workbench, ledger, and reporting surfaces derived from facts.
+- Master/support models: partner, project, contract, material, approval, and mapping surfaces that anchor facts.
+
+The current static inventory reports:
+
+| category | count | meaning |
+| --- | ---: | --- |
+| total model classes | 263 | all Python model classes under smart construction core |
+| legacy fact models | 50 | `sc.legacy.*` source-fact and mapping carriers |
+| formal fact models | 10 | runtime models with `source_origin`, `legacy_source_model`, and `legacy_record_id` |
+| projection/read models | 18 | summary, ledger, cockpit, and workbench models |
+| traceable models | 132 | models with legacy or source trace fields |
+| stateful models | 77 | models with a `state` field |
+
+## What The Models Carry
+
+### Legacy Fact Carriers
+
+Legacy fact models preserve historical source semantics, not final user workflow semantics. They should remain replay-safe and source-faithful. Examples include:
+
+- finance and cash-flow facts: `sc.legacy.account.transaction.line`, `sc.legacy.payment.residual.fact`, `sc.legacy.receipt.income.fact`, `sc.legacy.fund.confirmation.line`, `sc.legacy.fund.daily.line`
+- invoice and tax facts: `sc.legacy.invoice.registration.line`, `sc.legacy.invoice.tax.fact`, `sc.legacy.tax.deduction.fact`, `sc.legacy.deduction.adjustment.line`
+- contract and project facts: `sc.legacy.purchase.contract.fact`, `sc.legacy.supplier.contract.pricing.fact`, `sc.legacy.construction.diary.line`, `sc.legacy.tender.registration.fact`
+- master and mapping facts: `sc.legacy.project.map`, `sc.legacy.partner.map`, `sc.legacy.scbs.fact.staging`, `sc.legacy.user.profile`
+
+These models are the replay/input boundary. They should not absorb new-system business workflow unless a source fact has no better target yet and is explicitly marked as residual or staging.
+
+### Formal Runtime Facts
+
+The current formal fact models are:
+
+| model | business logic carried |
+| --- | --- |
+| `sc.expense.claim` | expense, deposit, deduction, repayment, and related inflow/outflow claims |
+| `sc.payment.execution` | payable execution, actual outflow, payment application residuals |
+| `sc.receipt.income` | receipt, income, arrival confirmation, and residual receipt facts |
+| `sc.invoice.registration` | invoice registration and invoice tax runtime surface |
+| `sc.tax.deduction.registration` | tax deduction registration promoted from legacy tax-deduction facts |
+| `sc.financing.loan` | financing and loan facts |
+| `sc.general.contract` | procurement/general/supplier contract facts that are not native `construction.contract` income contracts |
+| `sc.treasury.reconciliation` | treasury reconciliation from fund daily and confirmation lines |
+| `sc.fund.account` | legacy fund account master data |
+| `sc.construction.diary` | construction diary runtime facts |
+
+These models are user-facing business carriers. They should be writable through normal workflows for new records and mostly immutable for `source_origin='legacy'` records after `legacy_confirmed`, except for anchor repair fields such as partner, project, ledger, active flag, and notes.
+
+### Projection And Read Models
+
+Projection/read models are not source-of-truth workflow documents. They should be rebuildable from formal facts or legacy facts. Examples:
+
+- cockpit/workbench: `sc.dashboard.cockpit.fact`, `sc.workbench.item`
+- finance summary: `sc.treasury.ledger`, `sc.fund.daily.summary`, `sc.ar.ap.company.summary`, `sc.ar.ap.project.summary`
+- cost/material/reporting: `sc.comprehensive.cost.summary`, `sc.material.stock.summary`, `sc.account.income.expense.summary`
+
+They need deterministic refresh scripts and probes, but should not become the only place where business facts exist.
+
+## Patch Integration Assessment
+
+The latest iterations moved in the right direction: replay/import is distinct from user-usable initialization, and `history.business.usable.init` now calls formal projections, partner semantic normalization, projection probes, and the formal business backfill audit.
+
+The integration pain is now visible in three places:
+
+- `history_business_usable_init.sh` is a long serial script. It has become the operational truth for projection order but not a typed dependency graph.
+- Multiple formal models duplicate the same migration fields and protections: `source_origin`, `legacy_source_model`, `legacy_record_id`, `legacy_confirmed`, unique source constraint, sequence creation, context project default, and legacy write guards.
+- Some late projection patches are semantically cohesive but implemented as many single-purpose scripts. This is acceptable for migration safety, but the model layer should define the stable contract so future patches do not invent new field names or state policies.
+
+## Redundancy And Drift Risks
+
+### High Priority
+
+- Introduce one formal migration fact mixin for runtime documents. The codebase already has `sc.business.fact.mixin`, but most high-value formal models do not inherit it because they need richer approval and domain-specific fields. A smaller `sc.formal.legacy.fact.mixin` should standardize only migration provenance and immutability.
+- Keep legacy carriers and formal runtime facts separate. Do not turn `sc.legacy.*` models into user workflow models, and do not make projections the only runtime surface.
+- Convert `history_business_usable_init.sh` from an append-only shell sequence into a documented projection registry with stage, source models, target models, idempotency key, and probe.
+
+### Medium Priority
+
+- Normalize naming across `source_kind`, `claim_type`, `receipt_type`, `expense_type`, and ad hoc text categories. Use typed selection fields for stable business taxonomy and text fields only for legacy labels.
+- Standardize immutable legacy write policy. Some models allow anchor repair after `legacy_confirmed`; `sc.fund.account` currently has no static write guard signal in the audit.
+- Standardize monetary fields and required anchors. Some formal models require `project_id`; account/master style models may not. The rule should be explicit by model archetype.
+
+### Lower Priority
+
+- Existing specialized document families such as subcontract, labor, equipment, material, safety, quality, and office documents share a plan/request/register/settlement pattern. They can be converged later with abstract helpers, but this should not block the formal migration fact standard.
+
+## Current Standard Gaps
+
+The static audit reports three formal fact standard gaps:
+
+| model | gap |
+| --- | --- |
+| `sc.construction.diary` | lacks `company_id`, `partner_id`, and `currency_id`; this may be acceptable if classified as non-monetary project diary, but the exception must be explicit |
+| `sc.fund.account` | lacks `partner_id` and `legacy_document_state`; no static legacy-confirmed write guard was detected |
+| `sc.treasury.reconciliation` | lacks `partner_id`; this may be acceptable if it is account/project centered rather than counterparty centered |
+
+These should be resolved by either adding the fields or registering explicit archetype exceptions.
+
+## Proposed Unified Model Standard
+
+### Standard Archetypes
+
+| archetype | purpose | required traits |
+| --- | --- | --- |
+| legacy source fact | source-faithful replay carrier | `legacy_*` identity, source table, source state, raw labels, idempotent replay key, no user workflow mutation |
+| formal runtime fact | user-facing business document | project/company anchor when applicable, partner/contract/account anchors when applicable, typed business category, amount/currency when monetary, state machine, source provenance, legacy immutability |
+| projection/read model | rebuildable derived view | source model/res id or deterministic aggregate key, refresh script, probe, no unique business workflow ownership |
+| master/support model | anchor and governance surface | stable identity, semantic rank/classification, mapping evidence, explicit business acceptance state |
+
+### Required Formal Runtime Fields
+
+Formal runtime facts should default to:
+
+- identity: `name`, `document_no` or equivalent source document number
+- source: `source_origin`, `source_kind` or typed business category, `legacy_source_model`, `legacy_source_table`, `legacy_record_id`, `legacy_document_state`
+- anchors: `project_id`, related stored `company_id`, `partner_id` where counterparty exists, `contract_id` where contract exists
+- people and time: creator/handler fields, `creator_legacy_user_id`, `creator_name`, `created_time`, business date
+- money: amount fields with `currency_id` and non-negative constraints when semantically non-negative
+- state: normal workflow states plus `legacy_confirmed`; legacy records cannot be cancelled by normal new-system actions
+- traceability: SQL uniqueness on legacy source, active flag, note, optional attachment reference
+- verification: projection write script, runtime probe, and formal projection probe coverage
+
+### Exception Policy
+
+If a model intentionally lacks a standard field, the exception should be documented in a registry with:
+
+- model
+- missing standard field
+- reason
+- replacement field or proof that the concept does not apply
+- probe that protects the decision
+
+Examples likely needing explicit exceptions: `sc.construction.diary`, `sc.fund.account`, `sc.treasury.reconciliation`.
+
+## Recommended Next Iterations
+
+1. Add a small `sc.formal.legacy.fact.mixin` for source provenance, unique-source helper, legacy immutable write policy, and common audit metadata.
+2. Add a model-standard registry file that declares each formal runtime fact model, its archetype, required fields, exceptions, projection script, and probe.
+3. Refactor only one low-risk formal model first, preferably `sc.tax.deduction.registration` or `sc.financing.loan`, to prove the mixin does not disturb approval-heavy models.
+4. Split `history_business_usable_init.sh` into a projection registry runner while preserving the current shell target for operational compatibility.
+5. Extend `verify.backend_business_fact.model_audit` so CI fails only on missing standard declarations, not on intentional documented exceptions.
+
+## Verification
+
+Run:
+
+```bash
+make verify.backend_business_fact.model_audit
+```
+
+Outputs:
+
+- `artifacts/backend/backend_business_fact_model_audit.json`
+- `artifacts/backend/backend_business_fact_model_audit.md`
+
