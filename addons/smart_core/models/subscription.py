@@ -10,6 +10,19 @@ from odoo import api, fields, models
 
 _logger = logging.getLogger(__name__)
 
+LEGACY_CONSTRUCTION_PLATFORM_ACCESS_XMLIDS = (
+    "access_sc_subscription_plan_read",
+    "access_sc_subscription_plan_admin",
+    "access_sc_subscription_read",
+    "access_sc_subscription_admin",
+    "access_sc_entitlement_read",
+    "access_sc_entitlement_admin",
+    "access_sc_usage_counter_read",
+    "access_sc_usage_counter_admin",
+    "access_sc_ops_job_read",
+    "access_sc_ops_job_admin",
+)
+
 
 class ScSubscriptionPlan(models.Model):
     _name = "sc.subscription.plan"
@@ -27,6 +40,50 @@ class ScSubscriptionPlan(models.Model):
     _sql_constraints = [
         ("sc_subscription_plan_code_uniq", "unique(code)", "Plan code must be unique."),
     ]
+
+    @api.model
+    def ensure_platform_default_plans(self):
+        defaults = [
+            {
+                "code": "default",
+                "name": "Default",
+                "sequence": 10,
+                "active": True,
+                "feature_flags_json": {},
+                "limits_json": {},
+            },
+            {
+                "code": "pro",
+                "name": "Pro",
+                "sequence": 20,
+                "active": True,
+                "feature_flags_json": {"feature.test": True},
+                "limits_json": {"max_scenes": 999},
+            },
+        ]
+        for vals in defaults:
+            plan = self.sudo().search([("code", "=", vals["code"])], limit=1)
+            if plan:
+                plan.sudo().write({key: vals[key] for key in ("name", "sequence", "active")})
+                continue
+            self.sudo().create(vals)
+        return True
+
+    @api.model
+    def ensure_platform_access_ownership(self):
+        imds = self.env["ir.model.data"].sudo().search(
+            [
+                ("module", "=", "smart_construction_core"),
+                ("name", "in", list(LEGACY_CONSTRUCTION_PLATFORM_ACCESS_XMLIDS)),
+                ("model", "=", "ir.model.access"),
+            ]
+        )
+        access_recs = self.env["ir.model.access"].sudo().browse([res_id for res_id in imds.mapped("res_id") if res_id])
+        if imds:
+            imds.unlink()
+        if access_recs:
+            access_recs.unlink()
+        return True
 
 
 class ScSubscription(models.Model):

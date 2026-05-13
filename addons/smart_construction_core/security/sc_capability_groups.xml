@@ -300,8 +300,8 @@
 
         <!-- =========================
              平台级系统管理员
-             - 管场景编排、订阅、工作流、系统级治理
-             - 兼容历史 group_sc_cap_config_admin 引用
+             - 管施工后台、工作流、系统级治理
+             - 兼容历史 group_sc_cap_config_admin 引用，并桥接 Smart Core 平台管理组
         ========================== -->
         <record id="group_sc_cap_config_admin" model="res.groups">
             <field name="name">SC 能力 - 平台系统管理员</field>
@@ -309,6 +309,7 @@
             <field name="implied_ids" eval="[
                 (6, 0, [
                     ref('smart_construction_core.group_sc_cap_business_config_admin'),
+                    ref('smart_core.group_smart_core_admin'),
                     ref('base.group_system')
                 ])
             ]"/>

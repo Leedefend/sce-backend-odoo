@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import api, models
+from odoo.addons.smart_construction_core.services.platform_admin import platform_admin_groups
 
 
 class ScSecurityPolicy(models.TransientModel):
@@ -64,10 +65,12 @@ class ScSecurityPolicy(models.TransientModel):
                 updated = True
 
         executive = self.env.ref("smart_construction_custom.group_sc_role_executive", raise_if_not_found=False)
-        platform_admin = self.env.ref("smart_construction_core.group_sc_cap_config_admin", raise_if_not_found=False)
-        if executive and platform_admin and platform_admin in executive.implied_ids:
-            executive.write({"implied_ids": [(3, platform_admin.id)]})
-            updated = True
+        if executive:
+            platform_groups = platform_admin_groups(self.env, include_legacy=True)
+            to_remove = [group.id for group in platform_groups if group in executive.implied_ids]
+            if to_remove:
+                executive.write({"implied_ids": [(3, gid) for gid in to_remove]})
+                updated = True
 
         user_map = {
             "demo_role_project_read": [
@@ -117,6 +120,7 @@ class ScSecurityPolicy(models.TransientModel):
                 "base.group_no_one",
                 "project.group_project_manager",
                 "smart_construction_core.group_sc_cap_config_admin",
+                "smart_core.group_smart_core_admin",
                 "smart_construction_core.group_sc_cap_business_config_admin",
                 "smart_construction_core.group_sc_super_admin",
                 "smart_construction_core.group_sc_task_entry_access",

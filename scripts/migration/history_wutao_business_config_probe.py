@@ -44,7 +44,11 @@ business_config_group = env.ref(  # noqa: F821
     "smart_construction_core.group_sc_cap_business_config_admin",
     raise_if_not_found=False,
 )
-platform_config_group = env.ref("smart_construction_core.group_sc_cap_config_admin", raise_if_not_found=False)  # noqa: F821
+platform_config_group = env.ref("smart_core.group_smart_core_admin", raise_if_not_found=False)  # noqa: F821
+legacy_platform_config_group = env.ref(  # noqa: F821
+    "smart_construction_core.group_sc_cap_config_admin",
+    raise_if_not_found=False,
+)
 
 business_config_menus = []
 system_config_menus = []
@@ -75,6 +79,9 @@ payload = {
         "has_internal": bool(user and user.has_group("smart_construction_core.group_sc_internal_user")),
         "has_business_config": bool(user and business_config_group and business_config_group in user.groups_id),
         "has_platform_config": bool(user and platform_config_group and platform_config_group in user.groups_id),
+        "has_legacy_platform_config": bool(
+            user and legacy_platform_config_group and legacy_platform_config_group in user.groups_id
+        ),
         "is_system": bool(user and user.has_group("base.group_system")),
         "business_config_menu_count": len(business_config_menus),
         "business_config_menus": sorted(business_config_menus),
@@ -92,7 +99,11 @@ elif not user.active:
     errors.append("wutao: inactive user")
 elif not payload["user"]["has_business_config"]:
     errors.append("wutao: missing business configuration capability")
-elif payload["user"]["has_platform_config"] or payload["user"]["is_system"]:
+elif (
+    payload["user"]["has_platform_config"]
+    or payload["user"]["has_legacy_platform_config"]
+    or payload["user"]["is_system"]
+):
     errors.append("wutao: must not have platform/system administrator capability")
 elif not business_config_menus and not user_permission_menus:
     errors.append("wutao: business configuration menus are not visible")

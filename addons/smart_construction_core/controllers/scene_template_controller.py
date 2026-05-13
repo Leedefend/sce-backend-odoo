@@ -9,6 +9,7 @@ from odoo.http import request
 
 from odoo.exceptions import AccessDenied, UserError
 from odoo.addons.smart_core.security.auth import get_user_from_token
+from odoo.addons.smart_construction_core.services.platform_admin import user_is_platform_admin
 
 from .api_base import fail, fail_from_exception, ok
 
@@ -16,10 +17,6 @@ from .api_base import fail, fail_from_exception, ok
 def _get_json_body():
     body = request.httprequest.get_json(force=True, silent=True)
     return body if isinstance(body, dict) else {}
-
-
-def _has_admin(user):
-    return user.has_group("smart_construction_core.group_sc_cap_config_admin") or user.has_group("base.group_system")
 
 
 def _parse_bool(val, default=False):
@@ -447,7 +444,7 @@ class SceneTemplateController(http.Controller):
     def export_scenes(self, **params):
         try:
             user = get_user_from_token()
-            if not _has_admin(user):
+            if not user_is_platform_admin(user):
                 raise AccessDenied("insufficient permissions")
             env = request.env(user=user)
             code = (params.get("code") or "").strip()
@@ -608,7 +605,7 @@ class SceneTemplateController(http.Controller):
     def import_scenes(self, **params):
         try:
             user = get_user_from_token()
-            if not _has_admin(user):
+            if not user_is_platform_admin(user):
                 raise AccessDenied("insufficient permissions")
             env = request.env(user=user)
             body = _get_json_body()

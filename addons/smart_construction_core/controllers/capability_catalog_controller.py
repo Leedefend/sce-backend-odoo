@@ -6,6 +6,7 @@ from odoo.http import request
 
 from odoo.exceptions import AccessDenied
 from odoo.addons.smart_core.security.auth import get_user_from_token
+from odoo.addons.smart_construction_core.services.platform_admin import user_is_platform_admin
 
 from .api_base import fail, fail_from_exception, ok
 
@@ -53,10 +54,7 @@ class CapabilityCatalogController(http.Controller):
 
             records = Cap.search(domain, order="sequence, id")
             include_all = (params.get("include_all") or "").strip().lower() in ("1", "true", "yes", "y")
-            allow_all = include_all and (
-                env.user.has_group("smart_construction_core.group_sc_cap_config_admin")
-                or env.user.has_group("base.group_system")
-            )
+            allow_all = include_all and user_is_platform_admin(user)
             tag_filters = [t.strip() for t in (params.get("tags") or "").split(",") if t.strip()]
             tag_set = set(tag_filters)
 
@@ -82,7 +80,7 @@ class CapabilityCatalogController(http.Controller):
         try:
             user = get_user_from_token()
             env = request.env(user=user)
-            if not env.user.has_group("base.group_system"):
+            if not user_is_platform_admin(user):
                 return fail("PERMISSION_DENIED", "Admin required", http_status=403)
 
             ignore_keys = [k.strip() for k in (params.get("ignore_keys") or "").split(",") if k.strip()]
