@@ -6,6 +6,8 @@ This matrix answers whether the current model responsibilities are clear enough 
 
 The matrix follows the business-object hierarchy in `backend_business_object_hierarchy_v1.md`: company manages business; business splits into income and expense; project is the typical construction business carrier.
 
+The binding family-level registry is `backend_business_model_family_registry_v1.json`. The binding overlap-risk ownership specs are `backend_business_model_ownership_specs_v1.json`.
+
 ## Responsibility Types
 
 | responsibility | definition | allowed writes | examples |
@@ -79,7 +81,7 @@ The matrix follows the business-object hierarchy in `backend_business_object_hie
 
 The architecture is directionally sound because native ownership, industry custom documents, projections, and legacy carriers are distinguishable.
 
-The responsibility model is not yet fully governed because several high-value families still need explicit ownership specs:
+The responsibility model is directionally governed by the family registry and the current ownership specs, but it still needs code-level convergence before being called fully clean:
 
 - contract ownership split
 - treasury account/reconciliation/ledger split
@@ -87,4 +89,4 @@ The responsibility model is not yet fully governed because several high-value fa
 - payment request/execution split
 - projection refresh ownership
 
-The next implementation step should be a registry that records these family-level responsibilities and fails when new model families lack a declared responsibility type.
+The next implementation step should use the ownership specs as refactor guards: do not merge field/model changes in the risk families unless the change names the owning fact source and proves it does not turn projections, masters, or compatibility bridges into primary workflow facts.

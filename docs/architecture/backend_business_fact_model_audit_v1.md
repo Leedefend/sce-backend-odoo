@@ -8,6 +8,7 @@ Problem map: `docs/architecture/backend_business_model_problem_map_v1.md`
 Responsibility matrix: `docs/architecture/backend_business_model_responsibility_matrix_v1.md`
 Business object hierarchy: `docs/architecture/backend_business_object_hierarchy_v1.md`
 Family registry: `docs/architecture/backend_business_model_family_registry_v1.json`
+Ownership specs: `docs/architecture/backend_business_model_ownership_specs_v1.json`
 
 ## Audit Scope
 
@@ -48,6 +49,7 @@ The current static inventory reports:
 | platform model families | 5 | native/platform/governance/compatibility families |
 | industry model families | 13 | reusable construction-industry business families |
 | customer model families | 1 | legacy replay/evidence only; not core runtime ownership |
+| ownership specs | 5 | explicit boundary specs for the highest-risk overlapping families |
 
 ## What The Models Carry
 
@@ -313,6 +315,24 @@ The family registry answers "what does this model family solve?" at the system-d
 - projection families solve management visibility and must remain rebuildable.
 - legacy families solve historical evidence and replay, not future runtime workflow ownership.
 
+## Ownership Specs For Overlap Risks
+
+Five overlap areas are now explicit ownership specs:
+
+| spec | decision |
+| --- | --- |
+| `contract_ownership_split` | keep project contracts, professional income/expense contracts, and general contracts, but require new fields to declare the commitment direction they describe |
+| `treasury_account_reconciliation_ledger_split` | keep account master, reconciliation document, and derived ledger separate |
+| `material_product_catalog_split` | `product.template` remains identity root; `sc.material.catalog` is construction-industry surface |
+| `payment_request_execution_split` | payment request owns intent/approval; payment execution owns confirmed payment fact |
+| `projection_refresh_ownership` | projection models stay deterministic read/refresh surfaces, not primary workflow owners |
+
+These specs answer the "current state reasonable?" question more concretely:
+
+- reasonable: the system is not trying to replace native company, project, partner, product, account, stock, purchase, user, or approval roots.
+- reasonable: construction-specific business facts are custom because native Odoo does not own these document lifecycles.
+- not fully clean yet: overlapping families are acceptable only under the declared ownership splits; future changes should fail review if they blur those boundaries.
+
 ## Proposed Unified Model Standard
 
 ### Standard Archetypes
@@ -389,4 +409,7 @@ Current summary:
 - `family_solution_layer_counts={"customer": 1, "industry": 13, "platform": 5}`
 - `family_registry_shape_gap_count=0`
 - `family_registry_reference_gap_count=0`
+- `ownership_spec_count=5`
+- `ownership_spec_shape_gap_count=0`
+- `ownership_spec_reference_gap_count=0`
 - `implementation_counts={"custom_model": 150, "custom_model_with_mixin_or_inherit": 88, "native_model_extension": 25}`

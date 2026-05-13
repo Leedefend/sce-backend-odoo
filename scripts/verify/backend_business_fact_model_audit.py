@@ -41,6 +41,7 @@ DEFAULT_PROBLEM_MAP = ROOT / "docs" / "architecture" / "backend_business_model_p
 DEFAULT_RESPONSIBILITY_MATRIX = ROOT / "docs" / "architecture" / "backend_business_model_responsibility_matrix_v1.md"
 DEFAULT_OBJECT_HIERARCHY = ROOT / "docs" / "architecture" / "backend_business_object_hierarchy_v1.md"
 DEFAULT_FAMILY_REGISTRY = ROOT / "docs" / "architecture" / "backend_business_model_family_registry_v1.json"
+DEFAULT_OWNERSHIP_SPECS = ROOT / "docs" / "architecture" / "backend_business_model_ownership_specs_v1.json"
 ALLOWED_SOLUTION_LAYERS = {"platform", "industry", "customer"}
 ALLOWED_RESPONSIBILITY_TYPES = {
     "native system-of-record",
@@ -202,6 +203,12 @@ def load_registry(path: Path) -> dict[str, Any]:
 def load_family_registry(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {"families": [], "missing_registry": True}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def load_ownership_specs(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {"ownership_specs": [], "missing_registry": True}
     return json.loads(path.read_text(encoding="utf-8"))
 
 
@@ -387,6 +394,64 @@ def summarize_family_registry(rows: list[dict[str, Any]], family_registry: dict[
     }
 
 
+def summarize_ownership_specs(rows: list[dict[str, Any]], ownership_specs: dict[str, Any]) -> dict[str, Any]:
+    specs = ownership_specs.get("ownership_specs", [])
+    detected_models = {row["model"] for row in rows if row.get("model")}
+    detected_native_inherits: set[str] = set()
+    for row in rows:
+        inherit = row.get("inherit")
+        if isinstance(inherit, str):
+            detected_native_inherits.add(inherit)
+        elif isinstance(inherit, list):
+            detected_native_inherits.update(item for item in inherit if isinstance(item, str))
+    detected_reference_names = detected_models | detected_native_inherits
+
+    required_fields = [
+        "spec",
+        "risk_family",
+        "business_object",
+        "fact_source_model",
+        "allowed_support_models",
+        "projection_models",
+        "boundary_rule",
+        "forbidden_drift",
+        "decision",
+    ]
+    shape_gaps = []
+    reference_gaps = []
+    for spec in specs:
+        spec_key = spec.get("spec")
+        for field in required_fields:
+            value = spec.get(field)
+            if isinstance(value, list):
+                if not value:
+                    shape_gaps.append({"spec": spec_key, "field": field, "reason": "missing_required_list"})
+            elif not str(value or "").strip():
+                shape_gaps.append({"spec": spec_key, "field": field, "reason": "missing_required_field"})
+        if spec.get("business_object") not in ALLOWED_BUSINESS_OBJECTS:
+            shape_gaps.append(
+                {
+                    "spec": spec_key,
+                    "field": "business_object",
+                    "value": spec.get("business_object"),
+                    "allowed_values": sorted(ALLOWED_BUSINESS_OBJECTS),
+                }
+            )
+        for key in ("fact_source_model", "allowed_support_models", "projection_models"):
+            raw_models = spec.get(key, [])
+            models = raw_models if isinstance(raw_models, list) else [raw_models]
+            for model in models:
+                if model and model not in detected_reference_names:
+                    reference_gaps.append({"spec": spec_key, "field": key, "model": model})
+    return {
+        "ownership_spec_count": len(specs),
+        "ownership_spec_shape_gap_count": len(shape_gaps),
+        "ownership_spec_shape_gaps": shape_gaps,
+        "ownership_spec_reference_gap_count": len(reference_gaps),
+        "ownership_spec_reference_gaps": reference_gaps,
+    }
+
+
 def write_markdown(report: dict[str, Any], path: Path) -> None:
     summary = report["summary"]
     rows = report["models"]
@@ -513,6 +578,24 @@ def write_markdown(report: dict[str, Any], path: Path) -> None:
                     target_problem=family.get("target_problem", ""),
                 )
             )
+    ownership_summary = report.get("ownership_summary") or {}
+    ownership_specs = report.get("ownership_specs") or {}
+    lines.extend(["", "## Ownership Specs", ""])
+    lines.append(f"- ownership_spec_count: {ownership_summary.get('ownership_spec_count', 0)}")
+    lines.append(f"- ownership_spec_shape_gap_count: {ownership_summary.get('ownership_spec_shape_gap_count', 0)}")
+    lines.append(f"- ownership_spec_reference_gap_count: {ownership_summary.get('ownership_spec_reference_gap_count', 0)}")
+    if ownership_specs.get("ownership_specs"):
+        lines.extend(["", "| spec | risk family | business object | decision |"])
+        lines.append("| --- | --- | --- | --- |")
+        for spec in ownership_specs["ownership_specs"]:
+            lines.append(
+                "| {spec} | {risk_family} | {business_object} | {decision} |".format(
+                    spec=spec.get("spec", ""),
+                    risk_family=spec.get("risk_family", ""),
+                    business_object=spec.get("business_object", ""),
+                    decision=spec.get("decision", ""),
+                )
+            )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -525,6 +608,7 @@ def main() -> int:
     parser.add_argument("--responsibility-matrix", default=str(DEFAULT_RESPONSIBILITY_MATRIX.relative_to(ROOT)))
     parser.add_argument("--object-hierarchy", default=str(DEFAULT_OBJECT_HIERARCHY.relative_to(ROOT)))
     parser.add_argument("--family-registry", default=str(DEFAULT_FAMILY_REGISTRY.relative_to(ROOT)))
+    parser.add_argument("--ownership-specs", default=str(DEFAULT_OWNERSHIP_SPECS.relative_to(ROOT)))
     parser.add_argument(
         "--enforce",
         action="store_true",
@@ -535,11 +619,14 @@ def main() -> int:
     rows = extract_models()
     registry = load_registry(ROOT / args.registry)
     family_registry = load_family_registry(ROOT / args.family_registry)
+    ownership_specs = load_ownership_specs(ROOT / args.ownership_specs)
     report = {
         "summary": summarize(rows, registry),
         "family_summary": summarize_family_registry(rows, family_registry),
+        "ownership_summary": summarize_ownership_specs(rows, ownership_specs),
         "registry": registry,
         "family_registry": family_registry,
+        "ownership_specs": ownership_specs,
         "models": rows,
     }
     report_path = ROOT / args.report
@@ -552,6 +639,10 @@ def main() -> int:
         "BACKEND_BUSINESS_MODEL_FAMILY_REGISTRY="
         + json.dumps(report["family_summary"], ensure_ascii=False, sort_keys=True)
     )
+    print(
+        "BACKEND_BUSINESS_MODEL_OWNERSHIP_SPECS="
+        + json.dumps(report["ownership_summary"], ensure_ascii=False, sort_keys=True)
+    )
     if args.enforce:
         problem_map_path = ROOT / args.problem_map
         problem_map_text = problem_map_path.read_text(encoding="utf-8") if problem_map_path.exists() else ""
@@ -560,6 +651,7 @@ def main() -> int:
         hierarchy_path = ROOT / args.object_hierarchy
         hierarchy_text = hierarchy_path.read_text(encoding="utf-8") if hierarchy_path.exists() else ""
         family_registry_path = ROOT / args.family_registry
+        ownership_specs_path = ROOT / args.ownership_specs
         blockers = {
             "unregistered_formal_models": summary["unregistered_formal_models"],
             "registered_models_not_detected": summary["registered_models_not_detected"],
@@ -593,6 +685,17 @@ def main() -> int:
                     "path": str(family_registry_path.relative_to(ROOT)),
                     "shape_gaps": report["family_summary"]["family_registry_shape_gaps"],
                     "reference_gaps": report["family_summary"]["family_registry_reference_gaps"],
+                }
+            ],
+            "ownership_spec_gaps": []
+            if ownership_specs_path.exists()
+            and not report["ownership_summary"]["ownership_spec_shape_gaps"]
+            and not report["ownership_summary"]["ownership_spec_reference_gaps"]
+            else [
+                {
+                    "path": str(ownership_specs_path.relative_to(ROOT)),
+                    "shape_gaps": report["ownership_summary"]["ownership_spec_shape_gaps"],
+                    "reference_gaps": report["ownership_summary"]["ownership_spec_reference_gaps"],
                 }
             ],
         }
