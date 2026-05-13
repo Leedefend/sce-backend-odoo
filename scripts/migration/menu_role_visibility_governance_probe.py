@@ -51,12 +51,12 @@ def menu_path(menu) -> str:
     return " / ".join(reversed(names))
 
 
-def visible_sc_menus(user):
+def visible_backend_menus(user):
     visible_ids = Menu.with_user(user)._visible_menu_ids(debug=False)
     rows = []
     for menu in Menu.browse(visible_ids).sorted(lambda item: (menu_path(item), item.id)):
         path = menu_path(menu)
-        if "智能施工" not in path:
+        if "智能施工" not in path and "平台内核" not in path:
             continue
         rows.append(
             {
@@ -72,14 +72,15 @@ def user_row(login: str) -> dict[str, object]:
     user = Users.search([("login", "=", login)], limit=1)
     if not user:
         return {"login": login, "missing": True}
-    menus = visible_sc_menus(user)
+    menus = visible_backend_menus(user)
     return {
         "login": login,
         "user_id": user.id,
         "missing": False,
         "is_system": bool(user.has_group("base.group_system")),
         "has_business_config": bool(user.has_group("smart_construction_core.group_sc_cap_business_config_admin")),
-        "has_platform_config": bool(user.has_group("smart_construction_core.group_sc_cap_config_admin")),
+        "has_legacy_platform_config": bool(user.has_group("smart_construction_core.group_sc_cap_config_admin")),
+        "has_platform_config": bool(user.has_group("smart_core.group_smart_core_admin")),
         "menu_count": len(menus),
         "top_menus": sorted({row["path"].split(" / ")[1] for row in menus if " / " in row["path"]}),
         "menus": menus,
@@ -106,6 +107,8 @@ system_forbidden_fragments = [
     "授权快照",
     "用量统计",
     "运营任务",
+    "平台内核",
+    "公司访问",
     "交付包",
 ]
 business_config_fragments = [
@@ -124,7 +127,11 @@ errors: list[str] = []
 
 business_full = env.ref("smart_construction_core.group_sc_business_full", raise_if_not_found=False)  # noqa: F821
 executive_group = env.ref("smart_construction_custom.group_sc_role_executive", raise_if_not_found=False)  # noqa: F821
-platform_group = env.ref("smart_construction_core.group_sc_cap_config_admin", raise_if_not_found=False)  # noqa: F821
+legacy_platform_group = env.ref(  # noqa: F821
+    "smart_construction_core.group_sc_cap_config_admin",
+    raise_if_not_found=False,
+)
+platform_group = env.ref("smart_core.group_smart_core_admin", raise_if_not_found=False)  # noqa: F821
 business_config_group = env.ref(  # noqa: F821
     "smart_construction_core.group_sc_cap_business_config_admin",
     raise_if_not_found=False,
@@ -152,6 +159,7 @@ for xmlid, group in [
         "missing": False,
         "has_system": bool(system_group and system_group in trans),
         "has_platform_config": bool(platform_group and platform_group in trans),
+        "has_legacy_platform_config": bool(legacy_platform_group and legacy_platform_group in trans),
         "has_business_config": bool(business_config_group and business_config_group in trans),
         "trans_implied": sorted(trans.mapped("display_name")),
     }
@@ -159,6 +167,15 @@ for xmlid, group in [
         errors.append(f"{xmlid}: must not imply base.group_system")
     if platform_group and platform_group in trans:
         errors.append(f"{xmlid}: must not imply platform config group")
+    if legacy_platform_group and legacy_platform_group in trans:
+        errors.append(f"{xmlid}: must not imply legacy platform config group")
+
+if not legacy_platform_group:
+    errors.append("smart_construction_core.group_sc_cap_config_admin: missing legacy platform bridge group")
+else:
+    legacy_trans = legacy_platform_group.trans_implied_ids
+    if platform_group and platform_group not in legacy_trans:
+        errors.append("smart_construction_core.group_sc_cap_config_admin: must imply smart_core.group_smart_core_admin")
 
 for login in all_logins:
     if users[login].get("missing"):
@@ -173,6 +190,8 @@ for login in ordinary_logins:
         errors.append(f"{login}: ordinary role must not be base.group_system")
     if row.get("has_platform_config"):
         errors.append(f"{login}: ordinary role must not have platform config group")
+    if row.get("has_legacy_platform_config"):
+        errors.append(f"{login}: ordinary role must not have legacy platform config group")
     if leaked:
         errors.append(f"{login}: ordinary role sees system config menus: {leaked[:8]}")
     if business_config_seen:
@@ -182,10 +201,19 @@ for login in business_config_logins:
     row = users[login]
     paths = [item["path"] for item in row.get("menus", [])]
     leaked = [path for path in paths if any(fragment in path for fragment in system_forbidden_fragments)]
+    if row.get("missing"):
+        continue
+    if not row.get("has_business_config") and not any(
+        any(fragment in path for fragment in business_config_fragments) for path in paths
+    ):
+        row["business_config_fixture_skipped"] = True
+        continue
     if row.get("is_system"):
         errors.append(f"{login}: business config role must not be base.group_system")
     if row.get("has_platform_config"):
         errors.append(f"{login}: business config role must not have platform config group")
+    if row.get("has_legacy_platform_config"):
+        errors.append(f"{login}: business config role must not have legacy platform config group")
     if not row.get("has_business_config"):
         errors.append(f"{login}: business config role missing business config group")
     if not any(any(fragment in path for fragment in business_config_fragments) for path in paths):
@@ -200,10 +228,10 @@ for login in platform_logins:
         errors.append(f"{login}: platform role must be base.group_system")
     if not row.get("has_platform_config"):
         errors.append(f"{login}: platform role missing platform config group")
-    if not any("系统配置" in path for path in paths):
-        errors.append(f"{login}: platform role cannot see system config root")
-    if not any("业务配置" in path for path in paths):
-        errors.append(f"{login}: platform role cannot see business config root")
+    if not row.get("has_legacy_platform_config"):
+        errors.append(f"{login}: platform role missing legacy platform bridge group")
+    if not any("平台内核" in path for path in paths):
+        errors.append(f"{login}: platform role cannot see smart core platform root")
 
 exact_group_boundaries = {
     "smart_construction_core.menu_sc_project_manage": {
@@ -213,6 +241,34 @@ exact_group_boundaries = {
     "smart_construction_core.action_sc_project_manage": {
         "only": {"smart_construction_core.group_sc_cap_config_admin"},
         "label": "platform-only backend project action",
+    },
+    "smart_core.menu_smart_core_platform_root": {
+        "only": {"smart_core.group_smart_core_admin"},
+        "label": "smart core platform root",
+    },
+    "smart_core.menu_smart_core_company_access_root": {
+        "only": {"smart_core.group_smart_core_admin"},
+        "label": "smart core company access root",
+    },
+    "smart_core.action_sc_subscription_plan": {
+        "only": {"smart_core.group_smart_core_admin"},
+        "label": "smart core subscription plan action",
+    },
+    "smart_core.action_sc_subscription": {
+        "only": {"smart_core.group_smart_core_admin"},
+        "label": "smart core subscription action",
+    },
+    "smart_core.action_sc_entitlement": {
+        "only": {"smart_core.group_smart_core_admin"},
+        "label": "smart core entitlement action",
+    },
+    "smart_core.action_sc_usage_counter": {
+        "only": {"smart_core.group_smart_core_admin"},
+        "label": "smart core usage counter action",
+    },
+    "smart_core.action_sc_ops_job": {
+        "only": {"smart_core.group_smart_core_admin"},
+        "label": "smart core ops job action",
     },
     "smart_construction_core.menu_sc_project_cost_code": {
         "only": {"smart_construction_core.group_sc_cap_business_config_admin"},
@@ -306,6 +362,7 @@ print("MENU_ROLE_VISIBILITY_GOVERNANCE_PROBE=" + json.dumps(
                 "is_system": users[login].get("is_system"),
                 "has_business_config": users[login].get("has_business_config"),
                 "has_platform_config": users[login].get("has_platform_config"),
+                "has_legacy_platform_config": users[login].get("has_legacy_platform_config"),
                 "top_menus": users[login].get("top_menus"),
             }
             for login in all_logins

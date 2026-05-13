@@ -160,12 +160,19 @@ def _check_action_domain():
 
     env = _env()
     action = env.ref("smart_construction_core.action_sc_runtime_user_management")
-    platform_admin_group = env.ref("smart_construction_core.group_sc_cap_config_admin")
+    platform_admin_group = env.ref("smart_core.group_smart_core_admin")
+    legacy_platform_admin_group = env.ref("smart_construction_core.group_sc_cap_config_admin")
     system_group = env.ref("base.group_system")
     domain = safe_eval(action.domain or "[]") if isinstance(action.domain, str) else (action.domain or [])
     users = env["res.users"].sudo().with_context(active_test=False).search(domain)
     errors = []
-    if users.filtered(lambda user: platform_admin_group in user.groups_id or system_group in user.groups_id):
+    if users.filtered(
+        lambda user: (
+            platform_admin_group in user.groups_id
+            or legacy_platform_admin_group in user.groups_id
+            or system_group in user.groups_id
+        )
+    ):
         errors.append("runtime user action domain leaked platform/system admin users")
     if env["res.users"].sudo().search([("login", "=", "weihuguanliyuan")], limit=1) not in users:
         errors.append("runtime user action domain should keep business config admin user visible")

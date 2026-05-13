@@ -39,6 +39,7 @@ PLATFORM_MODELS = {
     "sc.usage.counter",
     "sc.ops.job",
 }
+LEGACY_PLATFORM_BRIDGE_FILE = "security/sc_capability_groups.xml"
 
 
 def _manifest_data(module: str) -> list[str]:
@@ -83,6 +84,13 @@ assert_true(not missing, f"smart_core manifest missing platform files: {missing}
 
 forbidden = sorted(FORBIDDEN_CONSTRUCTION_FILES & construction_data)
 assert_true(not forbidden, f"construction manifest still owns platform files: {forbidden}")
+
+construction_security = ROOT / "addons" / "smart_construction_core" / LEGACY_PLATFORM_BRIDGE_FILE
+construction_security_text = construction_security.read_text(encoding="utf-8")
+assert_true(
+    "ref('smart_core.group_smart_core_admin')" in construction_security_text,
+    "legacy construction platform admin group must imply smart_core.group_smart_core_admin",
+)
 
 platform_view = ROOT / "addons" / "smart_core" / "views" / "platform_company_access_views.xml"
 xmlids = _xml_ids(platform_view)

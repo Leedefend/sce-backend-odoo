@@ -47,7 +47,8 @@ def row_for(login: str) -> dict[str, object]:
         "company": user.company_id.name,
         "xmlids": xmlids_for(user),
         "is_odoo_system": bool(user.has_group("base.group_system")),
-        "has_platform_config": bool(user.has_group("smart_construction_core.group_sc_cap_config_admin")),
+        "has_platform_config": bool(user.has_group("smart_core.group_smart_core_admin")),
+        "has_legacy_platform_config": bool(user.has_group("smart_construction_core.group_sc_cap_config_admin")),
         "has_business_config": bool(user.has_group("smart_construction_core.group_sc_cap_business_config_admin")),
         "has_internal": bool(user.has_group("smart_construction_core.group_sc_internal_user")),
     }
@@ -71,7 +72,11 @@ if not history_admin.get("exists"):
     errors.append("history_system_user_10000000: missing renamed historical placeholder")
 elif history_admin.get("active"):
     errors.append("history_system_user_10000000: must be inactive")
-elif history_admin.get("is_odoo_system") or history_admin.get("has_platform_config"):
+elif (
+    history_admin.get("is_odoo_system")
+    or history_admin.get("has_platform_config")
+    or history_admin.get("has_legacy_platform_config")
+):
     errors.append("history_system_user_10000000: must not be platform/system administrator")
 elif "migration_assets.legacy_user_sc_10000000" not in history_admin.get("xmlids", []):
     errors.append("history_system_user_10000000: missing legacy XMLID binding")
