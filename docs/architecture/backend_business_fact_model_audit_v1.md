@@ -13,6 +13,7 @@ Audit findings: `docs/architecture/backend_business_model_audit_findings_v1.md`
 Overlap analysis: `docs/architecture/backend_business_model_overlap_analysis_v1.md`
 Projection registry: `docs/architecture/backend_business_projection_registry_v1.json`
 Management hierarchy registry: `docs/architecture/backend_business_management_hierarchy_v1.json`
+Platform universal abstraction: `docs/architecture/platform_universal_business_abstraction_v1.md`
 
 ## Audit Scope
 
@@ -77,10 +78,25 @@ So the audit answer is not "we only have 10 models." The correct answer is: we h
 
 The current formal business fact model layer is not primarily a platform kernel. It is a construction-industry runtime fact layer built on top of platform primitives.
 
+The platform-level abstraction is:
+
+```text
+platform -> company -> business -> carrier -> fact -> projection
+```
+
+The current construction binding is:
+
+```text
+platform -> company -> business -> project -> construction fact -> projection
+```
+
+Project is therefore not a cross-industry platform requirement. Project is the current construction carrier for business execution.
+
 The target problems are:
 
 - Treat company as the management subject and business as the management object.
-- Classify business by income and expense, while treating project as the typical construction execution carrier.
+- Classify business by income and expense.
+- Treat carrier as the platform extension point, with project as the construction binding.
 - Preserve old-system business facts without turning raw legacy tables into user workflow tables.
 - Promote reusable construction-enterprise facts into formal runtime documents that users can directly search, open, approve, reconcile, and report on.
 - Keep platform primitives small: accounts, provenance, source identity, states, projection registry, audit/probe framework.

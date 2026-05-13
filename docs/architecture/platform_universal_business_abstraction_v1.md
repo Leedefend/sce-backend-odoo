@@ -1,0 +1,135 @@
+# Platform Universal Business Abstraction v1
+
+Status: draft architecture contract
+
+This note separates the platform-level abstraction from the construction-industry binding.
+
+The purpose of the abstraction is cross-industry and cross-company applicability. It is not a repair model for one customer's data and it is not limited to construction projects.
+
+## Platform Kernel
+
+The platform-level kernel is:
+
+```text
+platform -> company -> business -> carrier -> fact -> projection
+```
+
+| concept | platform meaning | should be industry-specific? |
+| --- | --- | --- |
+| platform | product/runtime that manages tenants, companies, capabilities, policies, integrations, scenes, subscriptions, and audit | no |
+| company | managed organization that owns users, permissions, accounting boundary, and operating responsibility | no |
+| business | company-managed economic activity or operating matter | no |
+| business direction | economic direction such as income, expense, bilateral/mixed, governance, or neutral | mostly no |
+| carrier | industry-specific object that carries business execution | yes |
+| fact | dated, attributable occurrence or state change inside a business | no, but fact types are industry-specific |
+| projection | derived management visibility over facts | no, but metrics are industry-specific |
+
+The platform should therefore standardize company, business, direction, carrier, fact, provenance, policy, projection, and capability contracts.
+
+It should not standardize construction project semantics as universal platform truth.
+
+## Project Is Not Platform Kernel
+
+Project is not a platform-level mandatory object.
+
+Project is an industry carrier pattern. It is dominant in construction, common in engineering and services, optional in trading or retail, and may be replaced by order, policy, case, shipment, asset, loan, claim, production batch, store, contract, or service ticket in other industries.
+
+The universal abstraction should say:
+
+```text
+business has one or more carriers
+carrier type is industry-defined
+project is one construction carrier type
+```
+
+This means `project.project` can remain the construction module's main carrier, but platform-level business logic should not require every industry to use project as the carrier.
+
+## Industry Carrier
+
+An industry carrier is the concrete object that lets a company operate, execute, and measure business.
+
+Examples:
+
+| industry | likely carrier |
+| --- | --- |
+| construction | project |
+| professional service | engagement / project / case |
+| retail | store / order / campaign |
+| manufacturing | production order / batch / work order |
+| logistics | shipment / route / warehouse operation |
+| finance | account / loan / policy / claim |
+| healthcare | episode / case / appointment |
+
+The platform can define the carrier contract:
+
+- carrier belongs to company-managed business
+- carrier has lifecycle
+- carrier scopes facts, permissions, tasks, documents, and projections
+- carrier can be absent for company-level or pre-carrier facts
+
+The platform should not define the carrier's industry semantics.
+
+## Construction Binding
+
+For the current construction backend, the binding is:
+
+```text
+platform -> company -> business -> construction project -> construction facts -> projections
+```
+
+Construction-specific facts include:
+
+- tender and income contract
+- expense/general/procurement contract
+- payment request and execution
+- receipt, invoice, and tax evidence
+- treasury reconciliation and ledger
+- material, labor, equipment, and subcontract lifecycle
+- progress, quality, safety, risk, and diary
+- BOQ, budget, cost period, and settlement
+
+These are valid industry concepts, not platform kernel concepts.
+
+## Consequence For Current Models
+
+The current audit should be read in two layers:
+
+1. Platform universal layer:
+   - company
+   - business
+   - direction
+   - carrier
+   - fact
+   - projection
+   - policy/capability/governance
+
+2. Construction industry binding:
+   - project as the primary carrier
+   - construction contracts
+   - construction cost, material, labor, equipment, subcontract, safety, quality, progress, diary, treasury
+
+The existing `platform -> company -> business -> project` hierarchy is therefore a construction binding of the universal form, not the universal form itself.
+
+## Design Rule
+
+Before promoting a model or field to platform level, it must pass this test:
+
+1. Can the concept apply to more than one industry without construction vocabulary?
+2. Can the concept work when the business carrier is not a project?
+3. Does the concept describe company, business, direction, carrier, fact, projection, policy, or capability?
+4. Is the implementation independent from one customer's historical data shape?
+
+If the answer is no, keep it in the industry layer or customer/replay layer.
+
+## Next Backend Implication
+
+The next design question is whether to introduce a platform-level `business` or `business carrier` abstraction.
+
+Do not add it immediately just because the concept exists. First verify whether current construction models only need a declared carrier contract around `project.project`, or whether multiple facts already need to belong to business before a project exists.
+
+Likely staged path:
+
+1. define platform vocabulary and registry first.
+2. map construction `project.project` as carrier type `project`.
+3. identify pre-project and company-level facts that cannot cleanly use `project_id`.
+4. only then introduce a concrete platform model such as `sc.business.case` or `sc.business.carrier` if the evidence shows it is needed.

@@ -46,6 +46,7 @@ DEFAULT_AUDIT_FINDINGS = ROOT / "docs" / "architecture" / "backend_business_mode
 DEFAULT_OVERLAP_ANALYSIS = ROOT / "docs" / "architecture" / "backend_business_model_overlap_analysis_v1.md"
 DEFAULT_PROJECTION_REGISTRY = ROOT / "docs" / "architecture" / "backend_business_projection_registry_v1.json"
 DEFAULT_MANAGEMENT_HIERARCHY = ROOT / "docs" / "architecture" / "backend_business_management_hierarchy_v1.json"
+DEFAULT_UNIVERSAL_ABSTRACTION = ROOT / "docs" / "architecture" / "platform_universal_business_abstraction_v1.md"
 ALLOWED_SOLUTION_LAYERS = {"platform", "industry", "customer"}
 ALLOWED_RESPONSIBILITY_TYPES = {
     "native system-of-record",
@@ -950,6 +951,7 @@ def main() -> int:
     parser.add_argument("--overlap-analysis", default=str(DEFAULT_OVERLAP_ANALYSIS.relative_to(ROOT)))
     parser.add_argument("--projection-registry", default=str(DEFAULT_PROJECTION_REGISTRY.relative_to(ROOT)))
     parser.add_argument("--management-hierarchy", default=str(DEFAULT_MANAGEMENT_HIERARCHY.relative_to(ROOT)))
+    parser.add_argument("--universal-abstraction", default=str(DEFAULT_UNIVERSAL_ABSTRACTION.relative_to(ROOT)))
     parser.add_argument(
         "--enforce",
         action="store_true",
@@ -1013,6 +1015,10 @@ def main() -> int:
         overlap_analysis_text = overlap_analysis_path.read_text(encoding="utf-8") if overlap_analysis_path.exists() else ""
         projection_registry_path = ROOT / args.projection_registry
         management_hierarchy_path = ROOT / args.management_hierarchy
+        universal_abstraction_path = ROOT / args.universal_abstraction
+        universal_abstraction_text = (
+            universal_abstraction_path.read_text(encoding="utf-8") if universal_abstraction_path.exists() else ""
+        )
         blockers = {
             "unregistered_formal_models": summary["unregistered_formal_models"],
             "unclassified_models": summary["unclassified_models"],
@@ -1104,6 +1110,18 @@ def main() -> int:
                     "missing_families": report["management_hierarchy_summary"]["hierarchy_families_missing"],
                     "unknown_families": report["management_hierarchy_summary"]["hierarchy_unknown_families"],
                     "shape_gaps": report["management_hierarchy_summary"]["management_hierarchy_shape_gaps"],
+                }
+            ],
+            "universal_abstraction_gaps": []
+            if universal_abstraction_path.exists()
+            and "platform -> company -> business -> carrier -> fact -> projection" in universal_abstraction_text
+            and "Project Is Not Platform Kernel" in universal_abstraction_text
+            and "Industry Carrier" in universal_abstraction_text
+            and "Construction Binding" in universal_abstraction_text
+            else [
+                {
+                    "path": str(universal_abstraction_path.relative_to(ROOT)),
+                    "reason": "missing_platform_universal_abstraction_or_project_boundary",
                 }
             ],
         }

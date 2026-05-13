@@ -7,12 +7,19 @@ This finding summarizes the backend business model audit after the model invento
 Detailed code-level overlap analysis: `backend_business_model_overlap_analysis_v1.md`.
 Projection implementation registry: `backend_business_projection_registry_v1.json`.
 Management hierarchy registry: `backend_business_management_hierarchy_v1.json`.
+Platform universal abstraction: `platform_universal_business_abstraction_v1.md`.
 
 ## Core Answer
 
 The backend model target is not to process one customer's historical data.
 
-The target is to support construction-enterprise management through this hierarchy:
+The platform target is cross-industry and cross-company. The universal hierarchy is:
+
+```text
+platform -> company -> business -> carrier -> fact -> projection
+```
+
+The construction binding of that hierarchy is:
 
 ```text
 platform manages company
@@ -24,6 +31,8 @@ project is the main construction execution carrier
 Customer-specific historical data is still important, but it belongs in replay, evidence, mapping, and acceptance layers. It must not define the core industry model hierarchy.
 
 The earlier gap was real: the hierarchy existed as prose, but it was not yet a model-level contract. It is now a checked registry. All 19 model families declare management subject, managed object, and project carrier role.
+
+The important correction is that project is not the platform kernel. Project is a construction-industry carrier. Other industries may bind business to order, case, shipment, loan, policy, production batch, store, asset, or service ticket.
 
 ## What The Model Layer Solves
 

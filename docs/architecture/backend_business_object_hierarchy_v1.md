@@ -5,16 +5,23 @@ Status: draft architecture audit
 This note records the business-object interpretation used to judge whether backend models are reasonable.
 
 Binding registry: `backend_business_management_hierarchy_v1.json`
+Universal abstraction: `platform_universal_business_abstraction_v1.md`
 
 ## Core Thesis
 
-The system hierarchy is:
+The universal platform hierarchy is:
+
+```text
+platform -> company -> business -> carrier -> fact -> projection
+```
+
+The construction binding of that hierarchy is:
 
 ```text
 platform -> company -> business -> project
 ```
 
-The platform manages companies. The company manages business. Business splits by economic direction into income and expense. In construction, the typical concrete realization and main carrier of business is a project.
+The platform manages companies. The company manages business. Business splits by economic direction into income and expense. Business then uses an industry-defined carrier. In construction, the typical concrete realization and main carrier of business is a project.
 
 ```text
 platform
@@ -40,6 +47,7 @@ This hierarchy is not a UI menu tree. It is the domain ownership tree used for b
 | platform | the product/runtime layer that manages tenants, companies, capabilities, policies, scenes, subscriptions, and native integrations | capability, scene, pack, subscription, approval, dictionary, audit, native extension boundaries |
 | company | the management主体 that owns business, permissions, accounting boundaries, and operating responsibility | `res.company` plus business entity and role/capability governance |
 | business | the economic activity the company manages | represented by contracts, projects, finance documents, tenders, and operational documents |
+| carrier | the industry-defined object that carries business execution | construction binds this to `project.project`; other industries may bind it to order, case, shipment, loan, policy, batch, store, or asset |
 | income business | activity that creates receivables, receipts, revenue, income contracts, invoices, and tax facts | income contracts, `sc.receipt.income`, invoice/tax models, AR projections |
 | expense business | activity that creates payables, payments, procurement, cost, deposits, subcontract, materials, labor, equipment | expense contracts, `payment.request`, `sc.payment.execution`, `sc.expense.claim`, material/labor/equipment/subcontract docs |
 | project | the most typical construction business carrier; a scoped container where income, expense, cost, progress, quality, safety, and treasury facts meet | native `project.project` extended with construction anchors; most industry docs reference it |
@@ -50,7 +58,7 @@ This hierarchy is not a UI menu tree. It is the domain ownership tree used for b
 
 The root is company, not project.
 
-Project is central because construction business is usually delivered through projects. But some business facts may be company-level or pre-project:
+Project is central in construction because construction business is usually delivered through projects. It is not a universal platform root. Some business facts may be company-level or pre-project:
 
 - tenders can precede a formal project
 - fund accounts are company/project management infrastructure
