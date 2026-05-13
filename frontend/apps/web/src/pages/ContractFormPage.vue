@@ -458,7 +458,6 @@ import { dispatchTemplateFieldChange } from '../components/template/fieldChange.
 import { isHudEnabled, isSceneBlocksDebugEnabled } from '../config/debug';
 import { intentRequest } from '../api/intents';
 import { loadActionContractRaw, loadModelContractRaw } from '../api/contract';
-import { createRecord, listRecords, readRecord, writeRecord } from '../api/data';
 import { ApiError } from '../api/client';
 import { executeButton } from '../api/executeButton';
 import { fetchChatterTimeline, postChatterMessage, scheduleChatterActivity, type ChatterTimelineEntry } from '../api/chatter';
@@ -487,6 +486,12 @@ import { resolveSceneValidationSuggestedAction } from '../app/sceneValidationRec
 import { findSceneReadyEntry, resolveFormSceneReady } from '../app/resolvers/sceneReadyResolver';
 import { normalizeSceneActionProtocol } from '../app/sceneActionProtocol';
 import { executeProjectionRefresh } from '../app/projectionRefreshRuntime';
+import {
+  createContractFormRecord,
+  listContractFormRecords,
+  readContractFormRecord,
+  writeContractFormRecord,
+} from '../app/runtime/contractFormDataRuntime';
 import {
   collectContractV2ButtonStatusById,
   collectContractV2FieldStatusByCode,
@@ -1460,7 +1465,7 @@ async function hydrateSelectedRelationOptions() {
     const missingIds = ids.filter((id) => !existingIds.has(id));
     if (!missingIds.length) return;
     try {
-      const response = await readRecord({
+      const response = await readContractFormRecord({
         model: relation,
         ids: missingIds,
         fields: relationReadFields(descriptor),
@@ -1809,7 +1814,7 @@ async function hydrateOne2manyRows(name: string) {
   if (!columns.length) return;
   const fields = Array.from(new Set(['id', 'display_name', 'name', ...columns.map((column) => column.name)]));
   try {
-    const response = await readRecord({
+    const response = await readContractFormRecord({
       model: relation,
       ids: rows.map((row) => Number(row.id)).filter((id) => Number.isFinite(id) && id > 0),
       fields,
@@ -2189,7 +2194,7 @@ async function queryRelationOptions(name: string, keyword: string): Promise<Rela
   const search = String(keyword || '').trim();
   const domain = mergedRelationDomain(name, descriptor);
   try {
-    const listed = await listRecords({
+    const listed = await listContractFormRecords({
       model: relation,
       fields: relationReadFields(descriptor),
       limit: search ? 40 : 80,
@@ -2224,7 +2229,7 @@ async function fetchRelationOptions(name: string, keyword: string, limit = 80): 
   const entry = relationEntry(descriptor);
   if (entry && entry.canRead === false) return [];
   const domain = mergedRelationDomain(name, descriptor);
-  const listed = await listRecords({
+  const listed = await listContractFormRecords({
     model: relation,
     fields: relationReadFields(descriptor),
     limit,
@@ -2334,7 +2339,7 @@ async function fetchRelationSearchRows(name: string, keyword: string, limit = 12
   const columns = relationSearchDialog.columns.length ? relationSearchDialog.columns : relationSearchColumnsFromContract(name);
   const limitValue = Number(dialog.limit || limit || 120);
   const order = String(dialog.order || 'id desc').trim() || 'id desc';
-  const listed = await listRecords({
+  const listed = await listContractFormRecords({
     model: relation,
     fields: relationSearchReadFields(columns.length ? columns : fallbackRelationSearchColumns(name), dialog),
     limit: Number.isFinite(limitValue) && limitValue > 0 ? Math.min(Math.trunc(limitValue), 200) : 120,
@@ -2636,7 +2641,7 @@ async function quickCreateRelation(
     if (relation === 'sc.dictionary' && typeof vals.type === 'string' && String(vals.type || '').trim()) {
       vals.code = label.toUpperCase().replace(/\\s+/g, '_').slice(0, 60);
     }
-    const created = await createRecord({ model: relation, vals });
+    const created = await createContractFormRecord({ model: relation, vals });
     const id = Number(created?.id || 0);
     if (Number.isFinite(id) && id > 0) {
       const option = { id: Math.trunc(id), label };
@@ -2684,7 +2689,7 @@ async function loadRelationOptions() {
     }
     const domain = mergedRelationDomain(name, descriptor as FieldDescriptor);
     try {
-      const listed = await listRecords({
+      const listed = await listContractFormRecords({
         model: relation,
         fields: relationReadFields(descriptor as FieldDescriptor),
         limit: 80,
@@ -4286,7 +4291,7 @@ function setBooleanField(name: string, checked: boolean) {
 
 async function persistNativeFavoriteField(name: string, checked: boolean, previousValue: unknown) {
   try {
-    await writeRecord({
+    await writeContractFormRecord({
       model: model.value,
       ids: [recordId.value],
       vals: { [name]: checked },
@@ -4506,7 +4511,7 @@ async function quickCreateMany2manyTag(name: string) {
   }
   const nameField = inline.nameField || 'name';
   try {
-    const created = await createRecord({ model: relation, vals: { [nameField]: label } });
+    const created = await createContractFormRecord({ model: relation, vals: { [nameField]: label } });
     const id = Number(created?.id || 0);
     if (Number.isFinite(id) && id > 0) {
       addRelationId(name, { id: Math.trunc(id), label });
@@ -5157,7 +5162,7 @@ async function loadRecord() {
     restoreIntakeAutosave();
     return;
   }
-  const read = await readRecord({
+  const read = await readContractFormRecord({
     model: model.value,
     ids: [recordId.value],
     fields: fieldNames.length ? fieldNames : '*',
@@ -5744,7 +5749,7 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']): Prom
       return true;
     }
     if (recordId.value) {
-      await writeRecord({
+      await writeContractFormRecord({
         model: model.value,
         ids: [recordId.value],
         vals: values,
@@ -5755,7 +5760,7 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']): Prom
       await applyProjectionRefreshPolicy(refreshPolicy || { on_success: ['scene_projection'] });
       return true;
     }
-    const created = await createRecord({ model: model.value, vals: values, context: formCreateContext() });
+    const created = await createContractFormRecord({ model: model.value, vals: values, context: formCreateContext() });
     if (created?.id) {
       const title = String(contract.value?.head?.title || '').trim();
       submissionFeedback.value = { kind: 'success', message: `${title || '记录'}已创建` };
