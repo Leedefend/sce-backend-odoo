@@ -9,6 +9,7 @@ Responsibility matrix: `docs/architecture/backend_business_model_responsibility_
 Business object hierarchy: `docs/architecture/backend_business_object_hierarchy_v1.md`
 Family registry: `docs/architecture/backend_business_model_family_registry_v1.json`
 Ownership specs: `docs/architecture/backend_business_model_ownership_specs_v1.json`
+Audit findings: `docs/architecture/backend_business_model_audit_findings_v1.md`
 
 ## Audit Scope
 

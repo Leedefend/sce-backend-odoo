@@ -42,6 +42,7 @@ DEFAULT_RESPONSIBILITY_MATRIX = ROOT / "docs" / "architecture" / "backend_busine
 DEFAULT_OBJECT_HIERARCHY = ROOT / "docs" / "architecture" / "backend_business_object_hierarchy_v1.md"
 DEFAULT_FAMILY_REGISTRY = ROOT / "docs" / "architecture" / "backend_business_model_family_registry_v1.json"
 DEFAULT_OWNERSHIP_SPECS = ROOT / "docs" / "architecture" / "backend_business_model_ownership_specs_v1.json"
+DEFAULT_AUDIT_FINDINGS = ROOT / "docs" / "architecture" / "backend_business_model_audit_findings_v1.md"
 ALLOWED_SOLUTION_LAYERS = {"platform", "industry", "customer"}
 ALLOWED_RESPONSIBILITY_TYPES = {
     "native system-of-record",
@@ -725,6 +726,7 @@ def main() -> int:
     parser.add_argument("--object-hierarchy", default=str(DEFAULT_OBJECT_HIERARCHY.relative_to(ROOT)))
     parser.add_argument("--family-registry", default=str(DEFAULT_FAMILY_REGISTRY.relative_to(ROOT)))
     parser.add_argument("--ownership-specs", default=str(DEFAULT_OWNERSHIP_SPECS.relative_to(ROOT)))
+    parser.add_argument("--audit-findings", default=str(DEFAULT_AUDIT_FINDINGS.relative_to(ROOT)))
     parser.add_argument(
         "--enforce",
         action="store_true",
@@ -768,6 +770,8 @@ def main() -> int:
         hierarchy_text = hierarchy_path.read_text(encoding="utf-8") if hierarchy_path.exists() else ""
         family_registry_path = ROOT / args.family_registry
         ownership_specs_path = ROOT / args.ownership_specs
+        audit_findings_path = ROOT / args.audit_findings
+        audit_findings_text = audit_findings_path.read_text(encoding="utf-8") if audit_findings_path.exists() else ""
         blockers = {
             "unregistered_formal_models": summary["unregistered_formal_models"],
             "unclassified_models": summary["unclassified_models"],
@@ -815,6 +819,13 @@ def main() -> int:
                     "reference_gaps": report["ownership_summary"]["ownership_spec_reference_gaps"],
                 }
             ],
+            "audit_findings_gaps": []
+            if audit_findings_path.exists()
+            and "## Core Answer" in audit_findings_text
+            and "## Final Verdict" in audit_findings_text
+            and "company manages business" in audit_findings_text
+            and "unclassified models: 0" in audit_findings_text
+            else [{"path": str(audit_findings_path.relative_to(ROOT)), "reason": "missing_audit_findings_core_answer_or_final_verdict"}],
         }
         if any(blockers.values()):
             print("BACKEND_BUSINESS_FACT_MODEL_AUDIT_BLOCKERS=" + json.dumps(blockers, ensure_ascii=False, sort_keys=True))
