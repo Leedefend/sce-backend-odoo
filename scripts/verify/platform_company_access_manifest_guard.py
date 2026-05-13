@@ -33,6 +33,30 @@ REQUIRED_PLATFORM_XMLIDS = {
     "action_sc_usage_counter",
     "action_sc_ops_job",
 }
+LEGACY_PLATFORM_UI_XMLIDS = {
+    "menu_smart_core_platform_root",
+    "menu_smart_core_company_access_root",
+    "menu_sc_subscription_plan",
+    "menu_sc_subscription",
+    "menu_sc_entitlement",
+    "menu_sc_usage_counter",
+    "menu_sc_ops_job",
+    "view_sc_subscription_plan_tree",
+    "view_sc_subscription_plan_form",
+    "view_sc_subscription_tree",
+    "view_sc_subscription_form",
+    "view_sc_entitlement_tree",
+    "view_sc_entitlement_form",
+    "view_sc_usage_counter_tree",
+    "view_sc_usage_counter_form",
+    "view_sc_ops_job_tree",
+    "view_sc_ops_job_form",
+    "action_sc_subscription_plan",
+    "action_sc_subscription",
+    "action_sc_entitlement",
+    "action_sc_usage_counter",
+    "action_sc_ops_job",
+}
 PLATFORM_MODELS = {
     "sc.subscription.plan",
     "sc.subscription",
@@ -144,6 +168,13 @@ platform_seed = (ROOT / "addons" / "smart_core" / "data" / "sc_subscription_defa
 assert_true(
     "ensure_platform_access_ownership" in platform_seed,
     "smart_core platform seed must clean legacy construction ACL ownership",
+)
+
+subscription_model_text = (ROOT / "addons" / "smart_core" / "models" / "subscription.py").read_text(encoding="utf-8")
+missing_cleanup_xmlids = sorted(xmlid for xmlid in LEGACY_PLATFORM_UI_XMLIDS if xmlid not in subscription_model_text)
+assert_true(
+    not missing_cleanup_xmlids,
+    f"smart_core ownership cleanup missing legacy UI XML ids: {missing_cleanup_xmlids}",
 )
 
 helper_text = (ROOT / PLATFORM_ADMIN_HELPER).read_text(encoding="utf-8")

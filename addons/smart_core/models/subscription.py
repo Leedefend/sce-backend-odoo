@@ -22,6 +22,36 @@ LEGACY_CONSTRUCTION_PLATFORM_ACCESS_XMLIDS = (
     "access_sc_ops_job_read",
     "access_sc_ops_job_admin",
 )
+LEGACY_CONSTRUCTION_PLATFORM_UI_XMLIDS = {
+    "ir.ui.menu": (
+        "menu_sc_ops_job",
+        "menu_sc_usage_counter",
+        "menu_sc_entitlement",
+        "menu_sc_subscription",
+        "menu_sc_subscription_plan",
+        "menu_smart_core_company_access_root",
+        "menu_smart_core_platform_root",
+    ),
+    "ir.actions.act_window": (
+        "action_sc_subscription_plan",
+        "action_sc_subscription",
+        "action_sc_entitlement",
+        "action_sc_usage_counter",
+        "action_sc_ops_job",
+    ),
+    "ir.ui.view": (
+        "view_sc_subscription_plan_tree",
+        "view_sc_subscription_plan_form",
+        "view_sc_subscription_tree",
+        "view_sc_subscription_form",
+        "view_sc_entitlement_tree",
+        "view_sc_entitlement_form",
+        "view_sc_usage_counter_tree",
+        "view_sc_usage_counter_form",
+        "view_sc_ops_job_tree",
+        "view_sc_ops_job_form",
+    ),
+}
 
 
 class ScSubscriptionPlan(models.Model):
@@ -71,7 +101,8 @@ class ScSubscriptionPlan(models.Model):
 
     @api.model
     def ensure_platform_access_ownership(self):
-        imds = self.env["ir.model.data"].sudo().search(
+        ModelData = self.env["ir.model.data"].sudo()
+        imds = ModelData.search(
             [
                 ("module", "=", "smart_construction_core"),
                 ("name", "in", list(LEGACY_CONSTRUCTION_PLATFORM_ACCESS_XMLIDS)),
@@ -83,6 +114,21 @@ class ScSubscriptionPlan(models.Model):
             imds.unlink()
         if access_recs:
             access_recs.unlink()
+
+        for model_name in ("ir.ui.menu", "ir.actions.act_window", "ir.ui.view"):
+            legacy_xmlids = LEGACY_CONSTRUCTION_PLATFORM_UI_XMLIDS[model_name]
+            ui_imds = ModelData.search(
+                [
+                    ("module", "=", "smart_construction_core"),
+                    ("name", "in", list(legacy_xmlids)),
+                    ("model", "=", model_name),
+                ]
+            )
+            ui_recs = self.env[model_name].sudo().browse([res_id for res_id in ui_imds.mapped("res_id") if res_id])
+            if ui_imds:
+                ui_imds.unlink()
+            if ui_recs:
+                ui_recs.exists().unlink()
         return True
 
 
