@@ -861,17 +861,8 @@ def get_intent_handler_contributions():
             MyWorkCompleteHandler,
             MyWorkCompleteBatchHandler,
         )
-        from odoo.addons.smart_construction_core.handlers.usage_track import (
-            UsageTrackHandler,
-        )
         from odoo.addons.smart_construction_core.handlers.telemetry_track import (
             TelemetryTrackHandler,
-        )
-        from odoo.addons.smart_construction_core.handlers.usage_report import (
-            UsageReportHandler,
-        )
-        from odoo.addons.smart_construction_core.handlers.usage_export_csv import (
-            UsageExportCsvHandler,
         )
         from odoo.addons.smart_construction_core.handlers.capability_visibility_report import (
             CapabilityVisibilityReportHandler,
@@ -1010,10 +1001,7 @@ def get_intent_handler_contributions():
         ("my.work.summary", MyWorkSummaryHandler),
         ("my.work.complete", MyWorkCompleteHandler),
         ("my.work.complete_batch", MyWorkCompleteBatchHandler),
-        ("usage.track", UsageTrackHandler),
         ("telemetry.track", TelemetryTrackHandler),
-        ("usage.report", UsageReportHandler),
-        ("usage.export.csv", UsageExportCsvHandler),
         ("capability.visibility.report", CapabilityVisibilityReportHandler),
         ("payment.request.submit", PaymentRequestSubmitHandler),
         ("payment.request.approve", PaymentRequestApproveHandler),

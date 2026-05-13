@@ -5,8 +5,8 @@ from uuid import uuid4
 
 from odoo.tests.common import TransactionCase, tagged
 
-from odoo.addons.smart_construction_core.handlers.usage_export_csv import build_usage_csv
-from odoo.addons.smart_construction_core.handlers.usage_report import (
+from odoo.addons.smart_core.handlers.usage_export_csv import build_usage_csv
+from odoo.addons.smart_core.handlers.usage_report import (
     _matches_prefix,
     build_usage_report_data,
 )
