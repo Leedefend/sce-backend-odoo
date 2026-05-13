@@ -143,6 +143,22 @@ FORBIDDEN_LEGACY_ADMIN_CHECKS = {
     "addons/smart_construction_core/models/support/sc_workflow.py",
     "addons/smart_construction_custom/models/security_policy.py",
 }
+FORBIDDEN_DIRECT_SYSTEM_ADMIN_CHECKS = {
+    "addons/smart_core/app_config_engine/services/dispatchers/nav_dispatcher.py",
+    "addons/smart_core/controllers/intent_dispatcher.py",
+    "addons/smart_core/controllers/platform_menu_api.py",
+    "addons/smart_core/core/base_handler.py",
+    "addons/smart_core/core/request_diagnostics.py",
+    "addons/smart_core/handlers/usage_track.py",
+    "addons/smart_construction_core/handlers/app_catalog.py",
+    "addons/smart_construction_core/handlers/app_open.py",
+    "addons/smart_construction_core/handlers/my_work_complete.py",
+    "addons/smart_construction_core/handlers/payment_request_approval.py",
+    "addons/smart_construction_core/handlers/payment_request_execute.py",
+    "addons/smart_construction_core/handlers/risk_action_execute.py",
+    "addons/smart_construction_core/models/support/scene_orchestration.py",
+    "addons/smart_construction_portal/services/portal_contract_service.py",
+}
 
 
 def _manifest_data(module: str) -> list[str]:
@@ -407,6 +423,17 @@ for rel_path in sorted(FORBIDDEN_LEGACY_ADMIN_CHECKS):
     )
     assert_true("_has_admin" not in text, f"{rel_path}: must use named platform_admin helper, not _has_admin")
     assert_true("CONFIG_GROUP" not in text, f"{rel_path}: must use named platform_admin helper, not CONFIG_GROUP")
+
+for rel_path in sorted(FORBIDDEN_DIRECT_SYSTEM_ADMIN_CHECKS):
+    text = (ROOT / rel_path).read_text(encoding="utf-8")
+    assert_true(
+        "user_is_platform_admin" in text,
+        f"{rel_path}: must consume smart_core.security.platform_admin helper",
+    )
+    assert_true(
+        'has_group("base.group_system")' not in text and "has_group('base.group_system')" not in text,
+        f"{rel_path}: must not hardcode base.group_system as platform-admin authority",
+    )
 
 print(
     "PLATFORM_COMPANY_ACCESS_MANIFEST_GUARD=PASS "
