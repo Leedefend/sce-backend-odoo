@@ -1,0 +1,56 @@
+{
+  "schema": "platform_universal_optional_scope_metadata_v1",
+  "status": "draft architecture contract",
+  "purpose": "Define non-breaking optional business/carrier scope metadata candidates backed by the smart_core platform scope mixin.",
+  "kernel": "platform -> company -> business -> carrier -> fact -> projection",
+  "policy": "Optional scope metadata may describe future platform scope through sc.business.scope.mixin, but existing project behavior remains authoritative until probes prove the new scope is safe.",
+  "model_scope_metadata": [
+    {
+      "target_model": "tender.bid",
+      "family": "income contract and tender business",
+      "decision": "optional_scope_fields",
+      "current_required_binding": "project_id is required and remains the construction workflow carrier.",
+      "pressure_reason": "Tender is a company-managed income opportunity that may exist before a construction project should be created.",
+      "proposed_optional_fields": [
+        {
+          "name": "business_scope_key",
+          "type": "Char",
+          "required": false,
+          "purpose": "Stable optional key for grouping tender, later contract, and possible future carrier under one company-managed business matter."
+        },
+        {
+          "name": "business_direction",
+          "type": "Selection",
+          "required": false,
+          "purpose": "Cross-industry direction metadata; tender defaults to income without making income a construction-only platform concept."
+        },
+        {
+          "name": "carrier_type",
+          "type": "Char",
+          "required": false,
+          "purpose": "Future carrier discriminator such as project, case, order, shipment, or contract."
+        },
+        {
+          "name": "carrier_model",
+          "type": "Char",
+          "required": false,
+          "purpose": "Technical model name of the carrier when the carrier is known."
+        },
+        {
+          "name": "carrier_res_id",
+          "type": "Integer",
+          "required": false,
+          "purpose": "Technical record id of the carrier when the carrier is known."
+        }
+      ],
+      "compatibility_rule": "project_id, operation_strategy, currency_id, owner defaults, and won-to-contract behavior must keep working when optional scope fields are empty.",
+      "migration_policy": "Do not require backfill. Existing tenders may derive optional carrier metadata from project_id in a non-authoritative migration only after probes exist.",
+      "acceptance_probe": "make verify.tender_optional_scope_metadata.probe DB_NAME=<dev-db>",
+      "forbidden_promotion": [
+        "Do not replace project_id with generic carrier metadata.",
+        "Do not make business_scope_key required.",
+        "Do not introduce sc.business as source-of-truth from this metadata alone."
+      ]
+    }
+  ]
+}

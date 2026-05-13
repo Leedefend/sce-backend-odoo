@@ -1,0 +1,62 @@
+{
+  "schema": "backend_business_model_ownership_specs_v1",
+  "status": "draft architecture audit",
+  "purpose": "Declare ownership boundaries for model families where current architecture is reasonable but overlap risk remains.",
+  "ownership_specs": [
+    {
+      "spec": "contract_ownership_split",
+      "risk_family": "contract execution",
+      "business_object": "bilateral_mixed",
+      "fact_source_model": ["construction.contract", "construction.contract.income", "construction.contract.expense", "sc.general.contract"],
+      "allowed_support_models": ["construction.contract.professional.mixin", "construction.contract.line", "sc.contract.event", "sc.contract.recon.summary"],
+      "projection_models": ["sc.contract.recon.summary"],
+      "boundary_rule": "Project construction contracts own project commercial commitments; professional income/expense models specialize direction; general contracts own procurement/general commitments outside the project contract center.",
+      "forbidden_drift": "Do not let sc.general.contract, construction.contract, and construction.contract.income/expense independently own the same commitment without a declared direction and source record.",
+      "decision": "Keep all four surfaces for now, but require new contract fields to declare whether they describe income commitment, expense commitment, general procurement, or derived reconciliation."
+    },
+    {
+      "spec": "treasury_account_reconciliation_ledger_split",
+      "risk_family": "treasury account operations",
+      "business_object": "bilateral_mixed",
+      "fact_source_model": ["sc.fund.account", "sc.treasury.reconciliation"],
+      "allowed_support_models": ["sc.fund.account.operation"],
+      "projection_models": ["sc.treasury.ledger", "sc.fund.daily.summary", "sc.account.income.expense.summary"],
+      "boundary_rule": "Fund account is account master data; treasury reconciliation is an auditable reconciliation document; treasury ledger and fund summaries are rebuildable read models.",
+      "forbidden_drift": "Do not write cash movement workflow facts directly into ledger/summary models, and do not use fund account master as a transaction table.",
+      "decision": "Keep account master, reconciliation, and ledger separate; add new treasury behavior only to the layer that owns the fact."
+    },
+    {
+      "spec": "material_product_catalog_split",
+      "risk_family": "product and material identity",
+      "business_object": "expense",
+      "fact_source_model": ["product.template", "sc.material.catalog"],
+      "allowed_support_models": ["sc.material.price", "sc.legacy.material.category", "sc.legacy.material.detail"],
+      "projection_models": ["sc.material.stock.summary"],
+      "boundary_rule": "Native product owns product identity and integration; material catalog owns construction-visible classification, legacy material surface, and industry search semantics.",
+      "forbidden_drift": "Do not create a second independent product identity in sc.material.catalog; catalog records must map or project to native product identity when operational flow requires it.",
+      "decision": "Treat product.template as identity root and material catalog as construction-industry surface."
+    },
+    {
+      "spec": "payment_request_execution_split",
+      "risk_family": "payment request and execution",
+      "business_object": "expense",
+      "fact_source_model": ["payment.request", "sc.payment.execution"],
+      "allowed_support_models": ["payment.request.line", "sc.expense.claim"],
+      "projection_models": ["sc.ar.ap.project.summary", "sc.ar.ap.company.summary", "sc.expense.reimbursement.summary"],
+      "boundary_rule": "Payment request owns business intent and approval; payment execution owns confirmed payment fact; expense claim owns reimbursement/deposit/deduction claims before settlement or execution.",
+      "forbidden_drift": "Do not mark a payment request as the final cash fact unless sc.payment.execution or an accounting integration fact exists.",
+      "decision": "Keep request, claim, and execution separate, with projections aggregating their state instead of replacing them."
+    },
+    {
+      "spec": "projection_refresh_ownership",
+      "risk_family": "projection and management visibility",
+      "business_object": "projection",
+      "fact_source_model": ["sc.company.operation.summary", "sc.ar.ap.project.summary", "sc.ar.ap.company.summary", "sc.comprehensive.cost.summary", "sc.treasury.ledger"],
+      "allowed_support_models": ["sc.dashboard.cockpit.fact", "sc.workbench.item"],
+      "projection_models": ["sc.company.operation.summary", "sc.ar.ap.project.summary", "sc.ar.ap.company.summary", "sc.comprehensive.cost.summary", "sc.treasury.ledger"],
+      "boundary_rule": "Projection models are deterministic management views sourced from native, industry, formal, or legacy facts; refresh code owns their content.",
+      "forbidden_drift": "Do not add primary workflow writes to projection models, and do not make a projection the only place where a business fact exists.",
+      "decision": "Projection models stay read/refresh owned; future iteration should register refresh dependencies rather than append more one-off scripts."
+    }
+  ]
+}

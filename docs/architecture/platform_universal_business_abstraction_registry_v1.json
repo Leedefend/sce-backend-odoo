@@ -1,0 +1,90 @@
+{
+  "schema": "platform_universal_business_abstraction_registry_v1",
+  "status": "draft architecture contract",
+  "kernel": "platform -> company -> business -> carrier -> fact -> projection",
+  "purpose": "Make the cross-industry business abstraction machine-checkable before adding or changing backend models.",
+  "concepts": [
+    {
+      "key": "platform",
+      "name": "Platform",
+      "concept_type": "management_subject",
+      "layer": "platform_kernel",
+      "definition": "Product/runtime layer that manages tenants, company access, capabilities, policies, integrations, scenes, subscriptions, entitlements, usage, operations, and audit.",
+      "platform_contract": "Owns governance, extension contracts, and the cross-industry business scope vocabulary; must not embed one industry carrier as mandatory platform truth.",
+      "current_construction_binding": "smart_core owns subscription, entitlement, usage, ops jobs, and sc.business.scope.mixin; smart_construction_core binds capability, scene, pack, approval, audit, and native integration models"
+    },
+    {
+      "key": "company",
+      "name": "Company",
+      "concept_type": "managed_object",
+      "layer": "platform_kernel",
+      "definition": "Managed organization that owns users, permission boundary, accounting boundary, operating responsibility, and business.",
+      "platform_contract": "Every business, carrier, fact, policy, projection, and capability must be company-aware directly or through a carrier.",
+      "current_construction_binding": "res.company plus sc.business.entity and company-related governance models"
+    },
+    {
+      "key": "business",
+      "name": "Business",
+      "concept_type": "managed_object",
+      "layer": "platform_kernel",
+      "definition": "Company-managed economic activity or operating matter that can create income, expense, bilateral, governance, or neutral facts.",
+      "platform_contract": "Can exist before an industry carrier is created; can use one or more carriers; must not assume project as universal.",
+      "current_construction_binding": "Represented by sc.business.scope.mixin metadata and implicitly through tender, contract, project, finance, treasury, and operational documents"
+    },
+    {
+      "key": "business_direction",
+      "name": "Business Direction",
+      "concept_type": "policy",
+      "layer": "platform_kernel",
+      "definition": "Economic or management direction of business such as income, expense, bilateral/mixed, governance, or neutral.",
+      "platform_contract": "Provides cross-industry classification for facts and projections without imposing industry vocabulary.",
+      "current_construction_binding": "income contracts, expense contracts, receipts, payments, cost, treasury, governance, and projections"
+    },
+    {
+      "key": "carrier",
+      "name": "Carrier",
+      "concept_type": "extension_point",
+      "layer": "platform_kernel",
+      "definition": "Industry-defined object that carries execution, permissions, documents, tasks, facts, and visibility for business.",
+      "platform_contract": "Carrier type is industry-defined; platform only requires optional carrier identity, company/business ownership, lifecycle, and fact scope.",
+      "current_construction_binding": "sc.business.scope.mixin provides optional carrier metadata; project.project remains construction carrier type project"
+    },
+    {
+      "key": "fact",
+      "name": "Fact",
+      "concept_type": "event_or_state",
+      "layer": "platform_kernel",
+      "definition": "Dated, attributable occurrence or state change inside company-managed business.",
+      "platform_contract": "Must declare company/business/carrier scope where applicable, direction, source/provenance, lifecycle/write policy, and projection impact.",
+      "current_construction_binding": "construction formal facts such as contract, payment, receipt, invoice, tax, treasury, material, labor, equipment, subcontract, progress, quality, safety, risk, and diary"
+    },
+    {
+      "key": "projection",
+      "name": "Projection",
+      "concept_type": "derived_visibility",
+      "layer": "platform_kernel",
+      "definition": "Derived management visibility over facts, carriers, and company/business state.",
+      "platform_contract": "Must declare source models, implementation mode, refresh owner, idempotency key, write policy, and acceptance probe.",
+      "current_construction_binding": "18 registered projection/read surfaces in backend_business_projection_registry_v1.json"
+    },
+    {
+      "key": "policy",
+      "name": "Policy",
+      "concept_type": "policy",
+      "layer": "platform_kernel",
+      "definition": "Reusable governance rule for capability, approval, validation, visibility, installation, audit, and lifecycle.",
+      "platform_contract": "Controls company/business/fact behavior without owning the business fact itself.",
+      "current_construction_binding": "approval policy, workflow, dictionary, audit, validation, scene, capability, pack, and subscription models"
+    }
+  ],
+  "carrier_bindings": [
+    {
+      "key": "construction_project",
+      "industry": "construction",
+      "carrier_type": "project",
+      "model": "project.project",
+      "business_binding": "Main construction execution carrier for income, expense, cost, progress, quality, safety, treasury, material, labor, equipment, and subcontract facts.",
+      "platform_boundary": "Do not promote project-specific requirements to platform kernel; expose project through carrier contract."
+    }
+  ]
+}

@@ -1,0 +1,240 @@
+{
+  "version": "v1",
+  "status": "draft",
+  "description": "Standard registry for backend formal business fact models. This registry declares which runtime models are accepted as formal business fact carriers, how they are projected, and which standard-field exceptions are intentional.",
+  "standard_fields": [
+    "source_origin",
+    "state",
+    "project_id",
+    "company_id",
+    "partner_id",
+    "currency_id",
+    "legacy_source_model",
+    "legacy_source_table",
+    "legacy_record_id",
+    "legacy_document_state",
+    "active"
+  ],
+  "models": [
+    {
+      "model": "sc.construction.diary",
+      "archetype": "formal_runtime_fact",
+      "business_domain": "project_execution",
+      "business_logic": "施工日志正式承载，从历史施工日志行投影到项目施工过程记录。",
+      "projection_scripts": [
+        "scripts/migration/fresh_db_construction_diary_projection_write.py"
+      ],
+      "runtime_probes": [
+        "scripts/migration/history_construction_diary_runtime_probe.py",
+        "scripts/verify/formal_projection_refresh_probe.py"
+      ],
+      "standard_exceptions": [
+        {
+          "field": "company_id",
+          "reason": "当前模型以 project_id 为组织锚点，company 可由 project 推导；后续如进入跨公司查询，应补 related company_id。"
+        },
+        {
+          "field": "partner_id",
+          "reason": "施工日志不是往来单位单据，通常无 counterparty。"
+        },
+        {
+          "field": "currency_id",
+          "reason": "施工日志是非金额型事实，不要求币种。"
+        }
+      ],
+      "solution_layer": "industry",
+      "target_problem": "解决施工企业项目现场过程留痕、日志回填和项目执行可见性问题。",
+      "promotion_policy": "仅当日志抽象可跨行业复用时上升到 platform；客户特有字段保留在 extension 或 projection 中。"
+    },
+    {
+      "model": "sc.expense.claim",
+      "archetype": "formal_runtime_fact",
+      "business_domain": "expense_deposit_repayment",
+      "business_logic": "费用、保证金、扣款、还款等项目资金申请/收付类事实的正式单据承载。",
+      "projection_scripts": [
+        "scripts/migration/fresh_db_expense_claim_projection_write.py",
+        "scripts/migration/fresh_db_deposit_claim_projection_write.py",
+        "scripts/migration/fresh_db_deposit_claim_taxonomy_projection_write.py",
+        "scripts/migration/fresh_db_repayment_registration_projection_write.py",
+        "scripts/migration/fresh_db_contractor_project_repay_projection_write.py",
+        "scripts/migration/fresh_db_project_repay_company_projection_write.py",
+        "scripts/migration/fresh_db_deduction_bill_projection_write.py",
+        "scripts/migration/fresh_db_deduction_paid_projection_write.py",
+        "scripts/migration/fresh_db_deduction_paid_refund_projection_write.py"
+      ],
+      "runtime_probes": [
+        "scripts/migration/history_expense_claim_runtime_probe.py",
+        "scripts/migration/history_expense_deposit_runtime_probe.py",
+        "scripts/verify/formal_business_backfill_audit_probe.py",
+        "scripts/verify/formal_projection_refresh_probe.py"
+      ],
+      "standard_exceptions": [],
+      "solution_layer": "industry",
+      "target_problem": "解决施工企业费用、保证金、扣款、还款等项目资金事实统一承载问题。",
+      "promotion_policy": "资金单据底座可沉淀为 platform，但当前 claim_type 和税务/保证金语义属于 construction industry。"
+    },
+    {
+      "model": "sc.financing.loan",
+      "archetype": "formal_runtime_fact",
+      "business_domain": "financing",
+      "business_logic": "融资借款台账事实的正式承载。",
+      "projection_scripts": [
+        "scripts/migration/fresh_db_financing_loan_projection_write.py"
+      ],
+      "runtime_probes": [
+        "scripts/migration/history_financing_loan_runtime_probe.py",
+        "scripts/verify/formal_projection_refresh_probe.py"
+      ],
+      "standard_exceptions": [],
+      "solution_layer": "industry",
+      "target_problem": "解决施工企业融资借款历史事实和后续借款登记的正式承载问题。",
+      "promotion_policy": "融资登记模式可抽象为 platform finance document，行业字段成熟前保持 industry。"
+    },
+    {
+      "model": "sc.fund.account",
+      "archetype": "formal_runtime_fact",
+      "business_domain": "fund_account_master",
+      "business_logic": "历史资金账户主数据的正式账户承载。",
+      "projection_scripts": [
+        "scripts/migration/fresh_db_fund_account_projection_write.py"
+      ],
+      "runtime_probes": [
+        "scripts/verify/formal_projection_refresh_probe.py"
+      ],
+      "standard_exceptions": [
+        {
+          "field": "partner_id",
+          "reason": "资金账户主数据以账户和项目/公司为锚点，不必然对应往来单位。"
+        },
+        {
+          "field": "legacy_document_state",
+          "reason": "账户主数据不是业务审批单据，历史状态不适用；如后续接账户启停流程，应补正式状态来源。"
+        },
+        {
+          "field": "legacy_confirmed_write_guard",
+          "reason": "账户主数据目前作为 master data 承载，不按 legacy_confirmed 单据冻结；后续应补独立 master-data 写保护。"
+        }
+      ],
+      "solution_layer": "platform",
+      "target_problem": "解决系统资金账户主数据承载、账户维度统一和后续资金事实锚定问题。",
+      "promotion_policy": "作为平台资金账户主数据保留 platform；行业只扩展账户用途和展示。"
+    },
+    {
+      "model": "sc.general.contract",
+      "archetype": "formal_runtime_fact",
+      "business_domain": "general_contract",
+      "business_logic": "采购、供应商、一般合同及相关计价事实的正式合同承载。",
+      "projection_scripts": [
+        "scripts/migration/fresh_db_general_contract_projection_write.py",
+        "scripts/migration/fresh_db_supplier_contract_pricing_projection_write.py"
+      ],
+      "runtime_probes": [
+        "scripts/migration/history_general_contract_runtime_probe.py",
+        "scripts/migration/history_purchase_contract_runtime_probe.py",
+        "scripts/verify/formal_projection_refresh_probe.py"
+      ],
+      "standard_exceptions": [],
+      "solution_layer": "industry",
+      "target_problem": "解决施工企业采购、供应商、一般合同与计价事实的正式合同承载问题。",
+      "promotion_policy": "合同基础能力可由 platform 提供，但该模型承载施工行业合同分类和计价语义，保持 industry。"
+    },
+    {
+      "model": "sc.invoice.registration",
+      "archetype": "formal_runtime_fact",
+      "business_domain": "invoice",
+      "business_logic": "发票登记、发票税额、票据相关历史事实的正式承载。",
+      "projection_scripts": [
+        "scripts/migration/fresh_db_invoice_registration_projection_write.py"
+      ],
+      "runtime_probes": [
+        "scripts/migration/history_invoice_registration_runtime_probe.py",
+        "scripts/migration/history_invoice_tax_runtime_probe.py",
+        "scripts/verify/formal_projection_refresh_probe.py"
+      ],
+      "standard_exceptions": [],
+      "solution_layer": "industry",
+      "target_problem": "解决施工企业发票登记、发票税额和票据事实进入正式单据的问题。",
+      "promotion_policy": "发票底座可上升 platform；当前与项目、合同、税额回填强绑定，保持 industry。"
+    },
+    {
+      "model": "sc.payment.execution",
+      "archetype": "formal_runtime_fact",
+      "business_domain": "payment",
+      "business_logic": "付款申请残余、实付残余、实付明细等付款执行事实的正式承载。",
+      "projection_scripts": [
+        "scripts/migration/fresh_db_payment_execution_projection_write.py",
+        "scripts/migration/fresh_db_payment_execution_taxonomy_projection_write.py",
+        "scripts/migration/fresh_db_actual_outflow_line_payment_execution_projection_write.py"
+      ],
+      "runtime_probes": [
+        "scripts/migration/history_payment_execution_runtime_probe.py",
+        "scripts/verify/formal_projection_refresh_probe.py"
+      ],
+      "standard_exceptions": [],
+      "solution_layer": "industry",
+      "target_problem": "解决施工企业付款申请、实付、付款残余和付款明细进入正式付款执行的问题。",
+      "promotion_policy": "付款执行底座可上升 platform；当前来源分类和项目合同锚点属于 industry。"
+    },
+    {
+      "model": "sc.receipt.income",
+      "archetype": "formal_runtime_fact",
+      "business_domain": "receipt_income",
+      "business_logic": "收款、收入、到款确认和残余收款事实的正式承载。",
+      "projection_scripts": [
+        "scripts/migration/fresh_db_receipt_income_projection_write.py",
+        "scripts/migration/fresh_db_arrival_confirmation_projection_write.py"
+      ],
+      "runtime_probes": [
+        "scripts/migration/history_receipt_income_runtime_probe.py",
+        "scripts/verify/formal_projection_refresh_probe.py",
+        "scripts/verify/formal_business_backfill_audit_probe.py"
+      ],
+      "standard_exceptions": [],
+      "solution_layer": "industry",
+      "target_problem": "解决施工企业收款、收入、到款确认和残余收款进入正式收款登记的问题。",
+      "promotion_policy": "收款底座可上升 platform；当前收入/到款确认分类属于 industry。"
+    },
+    {
+      "model": "sc.tax.deduction.registration",
+      "archetype": "formal_runtime_fact",
+      "business_domain": "tax",
+      "business_logic": "抵扣税额历史事实的正式抵扣登记承载。",
+      "projection_scripts": [
+        "scripts/migration/fresh_db_tax_deduction_registration_projection_write.py"
+      ],
+      "runtime_probes": [
+        "scripts/verify/formal_projection_refresh_probe.py"
+      ],
+      "standard_exceptions": [],
+      "solution_layer": "industry",
+      "target_problem": "解决施工企业抵扣税额历史事实进入正式抵扣登记的问题。",
+      "promotion_policy": "税务基础字段可复用，但抵扣口径和历史来源先保持 industry。"
+    },
+    {
+      "model": "sc.treasury.reconciliation",
+      "archetype": "formal_runtime_fact",
+      "business_domain": "treasury",
+      "business_logic": "资金日报、资金确认、账户对账类事实的正式承载。",
+      "projection_scripts": [
+        "scripts/migration/fresh_db_treasury_reconciliation_projection_write.py",
+        "scripts/migration/fresh_db_fund_account_between_projection_write.py",
+        "scripts/migration/fresh_db_fund_daily_report_projection_write.py"
+      ],
+      "runtime_probes": [
+        "scripts/migration/history_treasury_reconciliation_runtime_probe.py",
+        "scripts/migration/history_treasury_reconciliation_probe.py",
+        "scripts/verify/formal_business_backfill_audit_probe.py",
+        "scripts/verify/formal_projection_refresh_probe.py"
+      ],
+      "standard_exceptions": [
+        {
+          "field": "partner_id",
+          "reason": "资金对账以项目、账户和资金确认事项为中心，不必然存在 counterparty；如后续转为往来对账，应补 partner_id。"
+        }
+      ],
+      "solution_layer": "industry",
+      "target_problem": "解决施工企业资金日报、资金确认和账户对账事实进入正式资金对账的问题。",
+      "promotion_policy": "对账底座可上升 platform；资金日报/项目确认语义属于 construction industry。"
+    }
+  ]
+}

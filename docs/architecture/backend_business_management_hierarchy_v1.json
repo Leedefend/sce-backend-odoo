@@ -1,0 +1,140 @@
+{
+  "schema": "backend_business_management_hierarchy_v1",
+  "status": "draft architecture audit",
+  "thesis": "platform manages company; company manages business; business is mainly carried by project in construction execution",
+  "family_hierarchy": [
+    {
+      "family": "company and business governance",
+      "management_subject": "platform",
+      "managed_object": "company",
+      "project_carrier_role": "not_applicable",
+      "hierarchy_statement": "The platform defines company, capability, pack, and approval governance; it does not use project as the management root."
+    },
+    {
+      "family": "partner and counterparty identity",
+      "management_subject": "company",
+      "managed_object": "identity",
+      "project_carrier_role": "optional",
+      "hierarchy_statement": "The company manages counterparties as a business network; projects may scope usage but do not own identity."
+    },
+    {
+      "family": "project identity and execution carrier",
+      "management_subject": "business",
+      "managed_object": "project",
+      "project_carrier_role": "primary",
+      "hierarchy_statement": "Business execution is mainly carried by project; project is the construction execution carrier, not the platform root."
+    },
+    {
+      "family": "product and material identity",
+      "management_subject": "company",
+      "managed_object": "identity",
+      "project_carrier_role": "optional",
+      "hierarchy_statement": "The company manages product and material identity; project uses those identities during expense execution."
+    },
+    {
+      "family": "income contract and tender business",
+      "management_subject": "company",
+      "managed_object": "business",
+      "project_carrier_role": "pre_project",
+      "hierarchy_statement": "The company manages income opportunities and commitments; tender may precede project while income contracts usually bind to project execution."
+    },
+    {
+      "family": "expense contract and procurement commitment",
+      "management_subject": "company",
+      "managed_object": "business",
+      "project_carrier_role": "primary",
+      "hierarchy_statement": "The company manages expense commitments; construction expense is normally carried by project, with general contracts as declared exceptions."
+    },
+    {
+      "family": "payment request and payment execution",
+      "management_subject": "company",
+      "managed_object": "business_fact",
+      "project_carrier_role": "primary",
+      "hierarchy_statement": "The company manages payment intent and execution as expense facts; project is the normal cost and approval carrier."
+    },
+    {
+      "family": "receipt income invoice and tax realization",
+      "management_subject": "company",
+      "managed_object": "business_fact",
+      "project_carrier_role": "primary",
+      "hierarchy_statement": "The company manages income realization and tax evidence; project is the normal carrier for construction income facts."
+    },
+    {
+      "family": "treasury account reconciliation and ledger",
+      "management_subject": "company",
+      "managed_object": "business_fact",
+      "project_carrier_role": "optional",
+      "hierarchy_statement": "The company manages treasury accounts and reconciliation; project may scope cash movement but account master can remain company-level."
+    },
+    {
+      "family": "project budget BOQ and cost control",
+      "management_subject": "business",
+      "managed_object": "project",
+      "project_carrier_role": "primary",
+      "hierarchy_statement": "Business cost control is carried by project through budget, BOQ, cost period, and ledger."
+    },
+    {
+      "family": "material lifecycle",
+      "management_subject": "business",
+      "managed_object": "business_fact",
+      "project_carrier_role": "primary",
+      "hierarchy_statement": "Material procurement, acceptance, movement, rental, and settlement are expense execution facts normally carried by project."
+    },
+    {
+      "family": "labor equipment and subcontract lifecycle",
+      "management_subject": "business",
+      "managed_object": "business_fact",
+      "project_carrier_role": "primary",
+      "hierarchy_statement": "Labor, equipment, and subcontract usage/settlement are expense execution facts normally carried by project."
+    },
+    {
+      "family": "progress quality safety risk and diary",
+      "management_subject": "business",
+      "managed_object": "business_fact",
+      "project_carrier_role": "primary",
+      "hierarchy_statement": "Progress, quality, safety, risk, and diary facts describe project execution control."
+    },
+    {
+      "family": "document admin payroll and office operations",
+      "management_subject": "company",
+      "managed_object": "business_fact",
+      "project_carrier_role": "optional",
+      "hierarchy_statement": "Administrative and payroll evidence is company-managed; project may scope the document when it belongs to execution."
+    },
+    {
+      "family": "projection summaries and management visibility",
+      "management_subject": "company",
+      "managed_object": "visibility",
+      "project_carrier_role": "derived",
+      "hierarchy_statement": "The company consumes visibility over business and projects; projections derive from facts and do not own the carrier."
+    },
+    {
+      "family": "legacy replay and historical evidence",
+      "management_subject": "source_system",
+      "managed_object": "evidence",
+      "project_carrier_role": "not_applicable",
+      "hierarchy_statement": "Source systems provide historical evidence; replay may map to company/business/project but must not define the hierarchy."
+    },
+    {
+      "family": "workflow approval dictionary audit and validation",
+      "management_subject": "platform",
+      "managed_object": "policy",
+      "project_carrier_role": "not_applicable",
+      "hierarchy_statement": "The platform governs approval, dictionary, validation, and audit policies used by company-managed business."
+    },
+    {
+      "family": "scene capability subscription and frontend contract runtime",
+      "management_subject": "platform",
+      "managed_object": "capability",
+      "project_carrier_role": "not_applicable",
+      "hierarchy_statement": "The platform governs capability, scene, subscription, and frontend runtime contracts; project is only one possible entry context."
+    },
+    {
+      "family": "compatibility bridges and native extensions",
+      "management_subject": "platform",
+      "managed_object": "policy",
+      "project_carrier_role": "not_applicable",
+      "hierarchy_statement": "Compatibility bridges keep native/OCA roots usable for company-managed business without changing the hierarchy."
+    }
+  ]
+}

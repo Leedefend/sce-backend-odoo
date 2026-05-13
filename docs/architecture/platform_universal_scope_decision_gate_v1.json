@@ -1,0 +1,149 @@
+{
+  "schema": "platform_universal_scope_decision_gate_v1",
+  "status": "draft architecture contract",
+  "purpose": "Decide how backend scope changes should land after carrier-fit audit, without turning one industry or one customer data shape into platform schema.",
+  "optional_scope_metadata_registry": "platform_universal_optional_scope_metadata_v1.json",
+  "kernel": "platform -> company -> business -> carrier -> fact -> projection",
+  "decision_order": [
+    "registry_metadata_only",
+    "optional_scope_fields",
+    "projection_extension",
+    "policy_scope_extension",
+    "concrete_business_model",
+    "concrete_carrier_model"
+  ],
+  "decision_gates": [
+    {
+      "decision": "registry_metadata_only",
+      "when_to_use": "The family has clear carrier fit and current fields already express the business boundary.",
+      "allowed_changes": [
+        "architecture registry update",
+        "verification rule update",
+        "documentation of family/current_binding/pressure"
+      ],
+      "forbidden_changes": [
+        "new runtime table",
+        "required business_id field",
+        "required generic carrier field"
+      ],
+      "required_evidence": [
+        "family has low or no future platform pressure",
+        "no current workflow needs business before carrier",
+        "no report requires business aggregation independent of carrier"
+      ],
+      "verification_gate": "carrier-fit registry remains complete and model audit has zero unclassified models"
+    },
+    {
+      "decision": "optional_scope_fields",
+      "when_to_use": "A family has medium or high pressure, but current workflows can keep existing project binding while carrying additional business/carrier metadata.",
+      "allowed_changes": [
+        "nullable business reference metadata",
+        "nullable carrier type/model/reference metadata",
+        "backward-compatible projection inputs",
+        "non-required migration population"
+      ],
+      "forbidden_changes": [
+        "breaking required field migration",
+        "removing existing project_id semantics",
+        "using optional metadata as source-of-truth before acceptance probes exist"
+      ],
+      "required_evidence": [
+        "named pressure model in carrier-fit registry",
+        "workflow exists before carrier or may span carriers",
+        "old and new read paths can coexist"
+      ],
+      "verification_gate": "runtime forms keep existing project behavior and reports can ignore empty optional scope"
+    },
+    {
+      "decision": "projection_extension",
+      "when_to_use": "Management visibility needs business-level or carrier-level aggregation, but fact-side ownership is already sufficient.",
+      "allowed_changes": [
+        "new projection registry row",
+        "business-level aggregate view/table",
+        "refresh owner and idempotency key update",
+        "read-only frontend contract extension"
+      ],
+      "forbidden_changes": [
+        "writable projection",
+        "projection becoming fact source",
+        "ad hoc aggregation outside registered refresh path"
+      ],
+      "required_evidence": [
+        "source facts are already classified",
+        "aggregation cannot be expressed by existing company/project projection",
+        "refresh owner and acceptance probe are declared"
+      ],
+      "verification_gate": "projection registry has no unregistered projection models and refresh probe is declared"
+    },
+    {
+      "decision": "policy_scope_extension",
+      "when_to_use": "Approval, validation, capability, or visibility policy must apply at company/business/carrier scope without owning facts.",
+      "allowed_changes": [
+        "policy scope enum",
+        "company/business/carrier applicability metadata",
+        "scene or capability contract scope metadata"
+      ],
+      "forbidden_changes": [
+        "policy table becoming fact table",
+        "policy requiring project for non-project industries",
+        "frontend-specific rendering logic in backend policy"
+      ],
+      "required_evidence": [
+        "policy family is platform/company level",
+        "target fact family remains source-of-truth",
+        "scope can be evaluated without customer-specific data"
+      ],
+      "verification_gate": "policy/capability registries remain platform-scoped and do not introduce business fact ownership"
+    },
+    {
+      "decision": "concrete_business_model",
+      "when_to_use": "A company-managed business must exist before any industry carrier, span multiple carriers, or own lifecycle/reporting independent of carrier.",
+      "allowed_changes": [
+        "new platform business model",
+        "business lifecycle and direction fields",
+        "migration from proven pressure models",
+        "compatibility link from existing industry carrier"
+      ],
+      "forbidden_changes": [
+        "construction-only vocabulary in platform model",
+        "mandatory project dependency",
+        "customer replay table promoted as platform business model"
+      ],
+      "required_evidence": [
+        "at least one high-pressure family",
+        "at least one pressure model that cannot honestly require carrier",
+        "business lifecycle needed before or outside carrier",
+        "migration and acceptance probes are defined"
+      ],
+      "verification_gate": "schema proposal cites carrier-fit registry, source models, migration plan, and user-visible acceptance probes"
+    },
+    {
+      "decision": "concrete_carrier_model",
+      "when_to_use": "A generic carrier registry/table is needed because a business may use multiple industry carriers or the same platform feature must operate across non-project carriers.",
+      "allowed_changes": [
+        "generic carrier registry model",
+        "carrier type binding",
+        "carrier lifecycle metadata",
+        "industry binding adapters"
+      ],
+      "forbidden_changes": [
+        "replacing project.project inside construction workflows without migration",
+        "forcing all industries into project",
+        "using generic carrier table as a duplicate fact table"
+      ],
+      "required_evidence": [
+        "more than one carrier type is needed",
+        "business-to-carrier relationship is not one-to-one project binding",
+        "permission/reporting/scene contracts need generic carrier access"
+      ],
+      "verification_gate": "carrier binding registry names each industry carrier and compatibility adapters keep existing forms working"
+    }
+  ],
+  "current_application": {
+    "high_pressure_family": "income contract and tender business",
+    "pressure_model": "tender.bid",
+    "recommended_next_decision": "optional_scope_fields",
+    "reason": "Tender is business-before-carrier pressure, but current construction workflows still rely on project.project; add non-required scope metadata only after design and probes.",
+    "metadata_contract": "platform_universal_optional_scope_metadata_v1.json"
+  }
+}

@@ -6,7 +6,7 @@ from odoo.exceptions import UserError
 class TenderBid(models.Model):
     _name = "tender.bid"
     _description = "投标管理"
-    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _inherit = ["mail.thread", "mail.activity.mixin", "sc.business.scope.mixin"]
     _order = "project_id, id desc"
 
     name = fields.Char("投标编号", default="新建", copy=False)
