@@ -171,6 +171,7 @@ export interface AppInitResponse {
     id: number;
     name: string;
     groups_xmlids?: string[];
+    is_platform_admin?: boolean;
     lang?: string;
     tz?: string;
     company_id?: number | null;

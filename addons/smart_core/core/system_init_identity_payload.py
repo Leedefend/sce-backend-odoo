@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
+from odoo.addons.smart_core.security.platform_admin import user_is_platform_admin
 
 
 class SystemInitIdentityPayload:
@@ -27,6 +28,7 @@ class SystemInitIdentityPayload:
             "id": user.id,
             "name": user.name,
             "groups_xmlids": list(user_groups_xmlids),
+            "is_platform_admin": user_is_platform_admin(user),
             "lang": user.lang,
             "tz": user.tz,
             "company_id": company_id,

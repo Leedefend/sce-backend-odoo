@@ -124,11 +124,7 @@ router.beforeEach(async (to) => {
     });
   }
   if (to.meta?.adminOnly) {
-    const groups = session.user?.groups_xmlids || [];
-    const isAdmin =
-      groups.includes('base.group_system') ||
-      groups.includes('smart_construction_core.group_sc_cap_config_admin');
-    if (!isAdmin) {
+    if (session.user?.is_platform_admin !== true) {
       return { path: session.resolveLandingPath('/') };
     }
   }
