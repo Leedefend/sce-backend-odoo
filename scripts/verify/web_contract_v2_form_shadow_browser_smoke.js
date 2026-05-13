@@ -104,6 +104,7 @@ async function readShadowAttrs(page) {
       source_context: String(shell?.getAttribute('data-v2-shadow-source-context') || ''),
       status_fields: String(shell?.getAttribute('data-v2-shadow-status-fields') || ''),
       value_fields: String(shell?.getAttribute('data-v2-shadow-value-fields') || ''),
+      main_data_fields: String(shell?.getAttribute('data-v2-shadow-main-data-fields') || ''),
       readonly_values: String(shell?.getAttribute('data-v2-shadow-readonly-values') || ''),
       value_source: String(shell?.getAttribute('data-v2-shadow-value-source') || ''),
       error: String(shell?.getAttribute('data-v2-shadow-error') || ''),
@@ -163,6 +164,7 @@ async function main() {
     const shadowGlobalSource = String(summary.shadow_attrs.global_source || summary.hud.v2_shadow_global_source || '').trim();
     const shadowStatusFields = Number(summary.shadow_attrs.status_fields || summary.hud.v2_shadow_status_fields || 0);
     const shadowValueFields = Number(summary.shadow_attrs.value_fields || summary.hud.v2_shadow_value_fields || 0);
+    const shadowMainDataFields = Number(summary.shadow_attrs.main_data_fields || summary.hud.v2_shadow_main_data_fields || 0);
     const shadowValueSource = String(summary.shadow_attrs.value_source || summary.hud.v2_shadow_value_source || '').trim();
     const shadowError = String(summary.shadow_attrs.error || summary.hud.v2_shadow_error || '').trim();
     const rendered = summary.snapshot.shell_count === 1 && !summary.snapshot.body_text.includes('页面加载失败');
@@ -177,6 +179,7 @@ async function main() {
       shadowGlobalSource === 'v2_store' &&
       shadowStatusFields > 0 &&
       shadowValueFields > 0 &&
+      shadowMainDataFields > 0 &&
       shadowValueSource !== 'none' &&
       (!shadowError || shadowError === '-') &&
       summary.console_errors.length === 0
@@ -217,6 +220,7 @@ async function main() {
     v2_shadow_source_context: summary.shadow_attrs?.source_context || summary.hud.v2_shadow_source_context,
     v2_shadow_status_fields: summary.shadow_attrs?.status_fields || summary.hud.v2_shadow_status_fields,
     v2_shadow_value_fields: summary.shadow_attrs?.value_fields || summary.hud.v2_shadow_value_fields,
+    v2_shadow_main_data_fields: summary.shadow_attrs?.main_data_fields || summary.hud.v2_shadow_main_data_fields,
     v2_shadow_readonly_values: summary.shadow_attrs?.readonly_values || summary.hud.v2_shadow_readonly_values,
     v2_shadow_value_source: summary.shadow_attrs?.value_source || summary.hud.v2_shadow_value_source,
   }, null, 2));

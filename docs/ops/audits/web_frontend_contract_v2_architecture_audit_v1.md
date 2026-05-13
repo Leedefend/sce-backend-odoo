@@ -387,6 +387,7 @@ Batch C shadow execution note:
 - C.4 reads form `containerTree` and widget field status from the decoded v2 store first, with legacy resolver fallback retained only as migration protection.
 - C.5 reads button status from the decoded v2 store first for form actions; legacy button-status extraction remains a fallback until action execution moves fully to the v2 runtime.
 - C.6 reads page-level `globalStatus` and `sourceContext` from the decoded v2 store first so rights/profile/default context no longer default to the legacy resolver path.
+- C.7 reads `dataContract.mainData` from the decoded v2 store first for statusbar, create defaults, and record initialization; legacy main-data extraction remains a fallback.
 
 ### Batch D: Action/List/Kanban Renderer Convergence
 

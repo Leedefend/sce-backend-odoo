@@ -15,6 +15,7 @@
     :data-v2-shadow-source-context="v2ShadowSourceContextKind"
     :data-v2-shadow-status-fields="String(v2ShadowStatusFieldCount)"
     :data-v2-shadow-value-fields="String(v2ShadowValueFieldCount)"
+    :data-v2-shadow-main-data-fields="String(v2ShadowMainDataFieldCount)"
     :data-v2-shadow-readonly-values="String(v2ShadowReadonlyValueCount)"
     :data-v2-shadow-value-source="v2ShadowValueSourceKind"
     :data-v2-shadow-error="v2ContractDecodeError || '-'"
@@ -636,6 +637,12 @@ function v2GlobalStatusFromStore() {
   };
 }
 
+function v2MainDataFromStore() {
+  const store = v2ContractStore.value;
+  if (!store) return {};
+  return v2Dict(store.snapshot.dataContract.mainData);
+}
+
 function v2SourceContextFromStore() {
   const store = v2ContractStore.value;
   if (!store) return {};
@@ -809,6 +816,11 @@ const v2ShadowValueSourceKind = computed(() => v2ShadowValueSource.value.kind);
 const v2ShadowValueFieldCount = computed(() => (
   v2ShadowFieldCodes.value.filter((fieldCode) => (
     Object.prototype.hasOwnProperty.call(v2ShadowValueSource.value.values, fieldCode)
+  )).length
+));
+const v2ShadowMainDataFieldCount = computed(() => (
+  v2ShadowFieldCodes.value.filter((fieldCode) => (
+    Object.prototype.hasOwnProperty.call(v2MainDataFromStore(), fieldCode)
   )).length
 ));
 const v2ShadowReadonlyValueCount = computed(() => (
@@ -3709,7 +3721,8 @@ const nativeStatusbar = computed(() => {
     ? rawStates.map((item) => ({ value: item.value as string | number, label: String(item.label || item.value || '') }))
     : selectionStates)
     .filter((item) => String(item.value ?? '').trim() && String(item.label || '').trim());
-  const contractMainData = resolveUnifiedPageContractV2MainData(contract.value);
+  const storeMainData = v2MainDataFromStore();
+  const contractMainData = Object.keys(storeMainData).length ? storeMainData : resolveUnifiedPageContractV2MainData(contract.value);
   const rawFormStatus = formData[field];
   const formStatusValue = rawFormStatus === false || rawFormStatus == null ? '' : String(rawFormStatus).trim();
   const current = String(
@@ -4779,8 +4792,9 @@ function formCreateContext() {
 }
 
 function resolveCreateDefaults() {
+  const storeMainData = v2MainDataFromStore();
   const defaults: Record<string, unknown> = {
-    ...resolveUnifiedPageContractV2MainData(contract.value),
+    ...(Object.keys(storeMainData).length ? storeMainData : resolveUnifiedPageContractV2MainData(contract.value)),
   };
   Object.entries(route.query as Record<string, unknown>).forEach(([key, value]) => {
     if (key.startsWith('default_')) {
@@ -4897,6 +4911,7 @@ const hudEntries = computed(() => [
   { label: 'v2_shadow_source_context', value: v2ShadowSourceContextKind.value },
   { label: 'v2_shadow_status_fields', value: v2ShadowStatusFieldCount.value },
   { label: 'v2_shadow_value_fields', value: v2ShadowValueFieldCount.value },
+  { label: 'v2_shadow_main_data_fields', value: v2ShadowMainDataFieldCount.value },
   { label: 'v2_shadow_readonly_values', value: v2ShadowReadonlyValueCount.value },
   { label: 'v2_shadow_value_source', value: v2ShadowValueSourceKind.value },
   { label: 'v2_shadow_error', value: v2ContractDecodeError.value || '-' },
@@ -5276,7 +5291,8 @@ async function loadRecord() {
     fields: fieldNames.length ? fieldNames : '*',
   });
   const row = read.records?.[0] || {};
-  const contractMainData = resolveUnifiedPageContractV2MainData(contract.value);
+  const storeMainData = v2MainDataFromStore();
+  const contractMainData = Object.keys(storeMainData).length ? storeMainData : resolveUnifiedPageContractV2MainData(contract.value);
   if (versionPolicy?.tokenField) {
     recordVersionToken.value = String((row as Record<string, unknown>)[versionPolicy.tokenField] || '').trim();
   }
