@@ -117,6 +117,8 @@ counts = {
     "legacy_invoice_registration": count_table("sc_legacy_invoice_registration_line"),
     "legacy_invoice_tax": count_table("sc_legacy_invoice_tax_fact"),
     "invoice_registration": count_table("sc_invoice_registration", "source_origin = 'legacy'"),
+    "legacy_tax_deduction": count_table("sc_legacy_tax_deduction_fact"),
+    "tax_deduction_registration": count_table("sc_tax_deduction_registration", "source_origin = 'legacy'"),
     "legacy_financing_loan": count_table("sc_legacy_financing_loan_fact"),
     "financing_loan": count_table("sc_financing_loan", "source_origin = 'legacy'"),
     "legacy_purchase_contract": count_table("sc_legacy_purchase_contract_fact"),
@@ -244,6 +246,13 @@ add_gap(
     counts["legacy_invoice_registration"] + counts["legacy_invoice_tax"],
     counts["invoice_registration"],
     "发票登记正式模型为空",
+)
+add_gap(
+    gaps,
+    "tax_deduction_registration",
+    counts["legacy_tax_deduction"],
+    counts["tax_deduction_registration"],
+    "抵扣登记正式模型为空",
 )
 add_gap(gaps, "financing_loan", counts["legacy_financing_loan"], counts["financing_loan"], "融资借款正式模型为空")
 add_gap(

@@ -531,6 +531,32 @@ counts = {
         required_fields=["source_origin", "project_id"],
         active_test=False,
     ),
+    "legacy_tax_deduction_facts": count("sc.legacy.tax.deduction.fact", [], active_test=False),
+    "legacy_tax_deduction_project_amount": count(
+        "sc.legacy.tax.deduction.fact",
+        [
+            ("active", "=", True),
+            ("project_id", "!=", False),
+            "|",
+            ("deduction_tax_amount", ">", 0),
+            ("deduction_surcharge_amount", ">", 0),
+        ],
+        required_fields=["active", "project_id", "deduction_tax_amount", "deduction_surcharge_amount"],
+        active_test=False,
+    ),
+    "tax_deduction_registration_runtime_records": count("sc.tax.deduction.registration", [], active_test=False),
+    "tax_deduction_registration_legacy_records": count(
+        "sc.tax.deduction.registration",
+        [("source_origin", "=", "legacy")],
+        required_fields=["source_origin"],
+        active_test=False,
+    ),
+    "tax_deduction_registration_legacy_with_project": count(
+        "sc.tax.deduction.registration",
+        [("source_origin", "=", "legacy"), ("project_id", "!=", False)],
+        required_fields=["source_origin", "project_id"],
+        active_test=False,
+    ),
     "legacy_deduction_adjustment_lines": count("sc.legacy.deduction.adjustment.line", []),
     "legacy_deduction_adjustment_lines_with_project": count(
         "sc.legacy.deduction.adjustment.line",
@@ -730,6 +756,8 @@ sample_runtime_records = {
     "legacy_file_index_id": sample_id("sc.legacy.file.index", [], active_test=False),
     "legacy_invoice_registration_line_id": sample_id("sc.legacy.invoice.registration.line", [], active_test=False),
     "invoice_registration_id": sample_id("sc.invoice.registration", [], active_test=False),
+    "legacy_tax_deduction_fact_id": sample_id("sc.legacy.tax.deduction.fact", [], active_test=False),
+    "tax_deduction_registration_id": sample_id("sc.tax.deduction.registration", [], active_test=False),
     "receipt_income_id": sample_id("sc.receipt.income", [], active_test=False),
     "payment_execution_id": sample_id("sc.payment.execution", [], active_test=False),
     "legacy_expense_deposit_fact_id": sample_id("sc.legacy.expense.deposit.fact", [], active_test=False),
@@ -804,6 +832,10 @@ promotion_gaps = {
     "invoice_tax_runtime_surface_gap": bool(
         ((counts.get("legacy_invoice_registration_lines_project_amount") or 0) + (counts.get("legacy_invoice_tax_project_amount") or 0)) > 0
         and (counts.get("invoice_registration_legacy_with_project") or 0) == 0
+    ),
+    "tax_deduction_runtime_surface_gap": bool(
+        (counts.get("legacy_tax_deduction_project_amount") or 0) > 0
+        and (counts.get("tax_deduction_registration_legacy_with_project") or 0) == 0
     ),
     "receipt_income_runtime_surface_gap": bool(
         ((counts.get("legacy_receipt_income_facts") or 0) + (counts.get("legacy_receipt_residual_with_project") or 0)) > 0
