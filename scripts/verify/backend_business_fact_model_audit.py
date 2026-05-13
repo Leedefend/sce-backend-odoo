@@ -37,6 +37,7 @@ STANDARD_FIELDS = [
 TRACE_FIELD_RE = re.compile(r"^(legacy_|source_(origin|kind|model|table|res_id)|creator_legacy_user_id)")
 AMOUNT_FIELD_RE = re.compile(r"(amount|qty|quantity|price|balance|total|tax|rate|count)")
 DEFAULT_REGISTRY = ROOT / "docs" / "architecture" / "backend_business_fact_model_standard_registry_v1.json"
+ALLOWED_SOLUTION_LAYERS = {"platform", "industry", "customer"}
 
 
 def literal(node: ast.AST) -> Any:
@@ -214,7 +215,24 @@ def summarize(rows: list[dict[str, Any]], registry: dict[str, Any]) -> dict[str,
                 }
             )
     registry_path_gaps = []
+    registry_shape_gaps = []
+    solution_layer_counts: Counter[str] = Counter()
     for model, item in registry_model_map.items():
+        solution_layer = item.get("solution_layer")
+        if solution_layer in ALLOWED_SOLUTION_LAYERS:
+            solution_layer_counts[solution_layer] += 1
+        else:
+            registry_shape_gaps.append(
+                {
+                    "model": model,
+                    "field": "solution_layer",
+                    "value": solution_layer,
+                    "allowed_values": sorted(ALLOWED_SOLUTION_LAYERS),
+                }
+            )
+        for required_field in ("target_problem", "promotion_policy", "business_logic", "business_domain"):
+            if not str(item.get(required_field) or "").strip():
+                registry_shape_gaps.append({"model": model, "field": required_field, "value": item.get(required_field)})
         for key in ("projection_scripts", "runtime_probes"):
             for raw_path in item.get(key, []):
                 if not (ROOT / raw_path).exists():
@@ -226,6 +244,7 @@ def summarize(rows: list[dict[str, Any]], registry: dict[str, Any]) -> dict[str,
         "formal_fact_model_count": len(formal_rows),
         "projection_model_count": len(projection_rows),
         "registered_formal_model_count": len(registered_formal_models),
+        "solution_layer_counts": dict(sorted(solution_layer_counts.items())),
         "unregistered_formal_models": sorted(detected_formal_models - registered_formal_models),
         "registered_models_not_detected": sorted(registered_formal_models - detected_formal_models),
         "raw_standard_gap_count": len(standard_gaps),
@@ -234,6 +253,8 @@ def summarize(rows: list[dict[str, Any]], registry: dict[str, Any]) -> dict[str,
         "undeclared_standard_gaps": undeclared_standard_gaps,
         "registry_path_gap_count": len(registry_path_gaps),
         "registry_path_gaps": registry_path_gaps,
+        "registry_shape_gap_count": len(registry_shape_gaps),
+        "registry_shape_gaps": registry_shape_gaps,
     }
 
 
@@ -251,9 +272,11 @@ def write_markdown(report: dict[str, Any], path: Path) -> None:
         f"- formal_fact_model_count: {summary['formal_fact_model_count']}",
         f"- projection_model_count: {summary['projection_model_count']}",
         f"- registered_formal_model_count: {summary['registered_formal_model_count']}",
+        f"- solution_layer_counts: {json.dumps(summary['solution_layer_counts'], ensure_ascii=False, sort_keys=True)}",
         f"- raw_standard_gap_count: {summary['raw_standard_gap_count']}",
         f"- undeclared_standard_gap_count: {summary['undeclared_standard_gap_count']}",
         f"- registry_path_gap_count: {summary['registry_path_gap_count']}",
+        f"- registry_shape_gap_count: {summary['registry_shape_gap_count']}",
         "",
         "## Bucket Counts",
         "",
@@ -290,6 +313,25 @@ def write_markdown(report: dict[str, Any], path: Path) -> None:
             lines.append(f"| {gap['model']} | {gap['kind']} | {gap['path']} |")
     else:
         lines.append("- registry_path_gaps: none")
+    if summary["registry_shape_gaps"]:
+        lines.append("")
+        lines.append("| model | field | value |")
+        lines.append("| --- | --- | --- |")
+        for gap in summary["registry_shape_gaps"]:
+            lines.append(f"| {gap['model']} | {gap['field']} | {gap.get('value')} |")
+    else:
+        lines.append("- registry_shape_gaps: none")
+    lines.extend(["", "## Solution Layers", ""])
+    model_map, _ = registry_maps(report["registry"])
+    for layer in sorted(ALLOWED_SOLUTION_LAYERS):
+        layer_models = [item for item in model_map.values() if item.get("solution_layer") == layer]
+        if not layer_models:
+            continue
+        lines.append(f"### {layer}")
+        lines.append("")
+        for item in layer_models:
+            lines.append(f"- `{item['model']}`: {item.get('target_problem') or ''}")
+        lines.append("")
     lines.extend(["", "## Formal Fact Models", ""])
     for row in rows:
         if "formal_fact" not in row["buckets"]:
@@ -330,6 +372,7 @@ def main() -> int:
             "registered_models_not_detected": summary["registered_models_not_detected"],
             "undeclared_standard_gaps": summary["undeclared_standard_gaps"],
             "registry_path_gaps": summary["registry_path_gaps"],
+            "registry_shape_gaps": summary["registry_shape_gaps"],
         }
         if any(blockers.values()):
             print("BACKEND_BUSINESS_FACT_MODEL_AUDIT_BLOCKERS=" + json.dumps(blockers, ensure_ascii=False, sort_keys=True))

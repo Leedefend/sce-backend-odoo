@@ -16,6 +16,12 @@ The audit separates four layers:
 - Projection/read models: summary, cockpit, workbench, ledger, and reporting surfaces derived from facts.
 - Master/support models: partner, project, contract, material, approval, and mapping surfaces that anchor facts.
 
+It also classifies model purpose by solution layer:
+
+- `platform`: cross-industry platform primitives and reusable runtime infrastructure.
+- `industry`: construction-enterprise business semantics that should be reusable across customers in this industry.
+- `customer`: customer-specific facts, acceptance patches, or one-off semantics that must not be promoted without product review.
+
 The current static inventory reports:
 
 | category | count | meaning |
@@ -28,8 +34,34 @@ The current static inventory reports:
 | stateful models | 77 | models with a `state` field |
 | registered formal models | 10 | formal runtime facts declared in the standard registry |
 | undeclared standard gaps | 0 | standard gaps not covered by a registry exception |
+| platform formal facts | 1 | formal runtime facts currently classified as platform-level |
+| industry formal facts | 9 | formal runtime facts currently classified as construction-industry-level |
+| customer formal facts | 0 | no formal runtime fact is currently classified as customer-specific |
 
 ## What The Models Carry
+
+## What Problem Are We Solving?
+
+The current formal business fact model layer is not primarily a platform kernel. It is a construction-industry runtime fact layer built on top of platform primitives.
+
+The target problems are:
+
+- Preserve old-system business facts without turning raw legacy tables into user workflow tables.
+- Promote reusable construction-enterprise facts into formal runtime documents that users can directly search, open, approve, reconcile, and report on.
+- Keep platform primitives small: accounts, provenance, source identity, states, projection registry, audit/probe framework.
+- Prevent customer-specific acceptance patches from silently becoming product model definitions.
+
+The practical boundary is:
+
+| layer | model responsibility | example in current registry |
+| --- | --- | --- |
+| platform | reusable primitives, provenance, account/master anchors, projection governance | `sc.fund.account` |
+| industry | construction finance, contract, project execution, tax, treasury semantics | `sc.payment.execution`, `sc.receipt.income`, `sc.general.contract`, `sc.construction.diary` |
+| customer | one-off labels, mapping decisions, acceptance repair, local classification | none in formal model registry; should stay in mapping/projection/extension until reviewed |
+
+This means future backend model changes should first answer: is the requested field or model a platform primitive, a construction-industry reusable concept, or a customer-specific repair?
+
+If it is customer-specific, the default implementation should be a projection rule, mapping artifact, extension pack, or registry exception, not a new core model field.
 
 ### Legacy Fact Carriers
 
@@ -116,17 +148,22 @@ These should be resolved by either adding the fields or registering explicit arc
 The standard registry is now the binding audit input for formal runtime facts. It declares:
 
 - model name and archetype
+- solution layer: `platform`, `industry`, or `customer`
+- target problem solved by the model
+- promotion policy for when the model may move between layers
 - business domain and business logic carried by the model
 - projection scripts responsible for creating or refreshing the model
 - runtime probes and formal probes that protect the projection
 - standard field exceptions and their reason
 
 The current registry covers all 10 detected formal runtime fact models and has no missing script/probe paths.
+It currently classifies `sc.fund.account` as platform-level, and the other 9 formal runtime facts as construction-industry-level. No customer-specific formal fact is accepted into the core registry.
 
 The static audit distinguishes two gap types:
 
 - `raw_standard_gap_count`: physical mismatch against the default formal runtime field set.
 - `undeclared_standard_gap_count`: raw gaps not covered by registry exceptions.
+- `registry_shape_gap_count`: missing or invalid registry metadata such as `solution_layer`, `target_problem`, or `promotion_policy`.
 
 Only undeclared gaps should block future CI. The enforcement target is:
 
@@ -140,6 +177,7 @@ It fails when any of these are present:
 - registry model not detected in source
 - raw standard gap without a declared exception
 - registry projection/probe path that no longer exists
+- registry entry without a valid solution layer, target problem, business logic, business domain, or promotion policy
 
 ## Proposed Unified Model Standard
 
@@ -206,3 +244,5 @@ Current summary:
 - `raw_standard_gap_count=3`
 - `undeclared_standard_gap_count=0`
 - `registry_path_gap_count=0`
+- `registry_shape_gap_count=0`
+- `solution_layer_counts={"industry": 9, "platform": 1}`
