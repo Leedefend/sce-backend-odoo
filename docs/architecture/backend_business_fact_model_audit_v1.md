@@ -10,6 +10,7 @@ Business object hierarchy: `docs/architecture/backend_business_object_hierarchy_
 Family registry: `docs/architecture/backend_business_model_family_registry_v1.json`
 Ownership specs: `docs/architecture/backend_business_model_ownership_specs_v1.json`
 Audit findings: `docs/architecture/backend_business_model_audit_findings_v1.md`
+Overlap analysis: `docs/architecture/backend_business_model_overlap_analysis_v1.md`
 
 ## Audit Scope
 

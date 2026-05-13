@@ -43,6 +43,7 @@ DEFAULT_OBJECT_HIERARCHY = ROOT / "docs" / "architecture" / "backend_business_ob
 DEFAULT_FAMILY_REGISTRY = ROOT / "docs" / "architecture" / "backend_business_model_family_registry_v1.json"
 DEFAULT_OWNERSHIP_SPECS = ROOT / "docs" / "architecture" / "backend_business_model_ownership_specs_v1.json"
 DEFAULT_AUDIT_FINDINGS = ROOT / "docs" / "architecture" / "backend_business_model_audit_findings_v1.md"
+DEFAULT_OVERLAP_ANALYSIS = ROOT / "docs" / "architecture" / "backend_business_model_overlap_analysis_v1.md"
 ALLOWED_SOLUTION_LAYERS = {"platform", "industry", "customer"}
 ALLOWED_RESPONSIBILITY_TYPES = {
     "native system-of-record",
@@ -727,6 +728,7 @@ def main() -> int:
     parser.add_argument("--family-registry", default=str(DEFAULT_FAMILY_REGISTRY.relative_to(ROOT)))
     parser.add_argument("--ownership-specs", default=str(DEFAULT_OWNERSHIP_SPECS.relative_to(ROOT)))
     parser.add_argument("--audit-findings", default=str(DEFAULT_AUDIT_FINDINGS.relative_to(ROOT)))
+    parser.add_argument("--overlap-analysis", default=str(DEFAULT_OVERLAP_ANALYSIS.relative_to(ROOT)))
     parser.add_argument(
         "--enforce",
         action="store_true",
@@ -772,6 +774,8 @@ def main() -> int:
         ownership_specs_path = ROOT / args.ownership_specs
         audit_findings_path = ROOT / args.audit_findings
         audit_findings_text = audit_findings_path.read_text(encoding="utf-8") if audit_findings_path.exists() else ""
+        overlap_analysis_path = ROOT / args.overlap_analysis
+        overlap_analysis_text = overlap_analysis_path.read_text(encoding="utf-8") if overlap_analysis_path.exists() else ""
         blockers = {
             "unregistered_formal_models": summary["unregistered_formal_models"],
             "unclassified_models": summary["unclassified_models"],
@@ -826,6 +830,15 @@ def main() -> int:
             and "company manages business" in audit_findings_text
             and "unclassified models: 0" in audit_findings_text
             else [{"path": str(audit_findings_path.relative_to(ROOT)), "reason": "missing_audit_findings_core_answer_or_final_verdict"}],
+            "overlap_analysis_gaps": []
+            if overlap_analysis_path.exists()
+            and "## Contract Ownership" in overlap_analysis_text
+            and "## Treasury Account Reconciliation Ledger" in overlap_analysis_text
+            and "## Product Material Catalog" in overlap_analysis_text
+            and "## Payment Request Execution" in overlap_analysis_text
+            and "## Projection Refresh" in overlap_analysis_text
+            and "controlled generated ledger" in overlap_analysis_text
+            else [{"path": str(overlap_analysis_path.relative_to(ROOT)), "reason": "missing_overlap_family_analysis"}],
         }
         if any(blockers.values()):
             print("BACKEND_BUSINESS_FACT_MODEL_AUDIT_BLOCKERS=" + json.dumps(blockers, ensure_ascii=False, sort_keys=True))
