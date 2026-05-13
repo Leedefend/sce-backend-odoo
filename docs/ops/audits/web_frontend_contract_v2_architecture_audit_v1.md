@@ -403,6 +403,7 @@ Batch C shadow execution note:
 - C.21 isolates `ActionView` list/write/delete/batch/favorite data access behind `actionViewDataRuntime`, keeping list runtime hook contracts unchanged while removing the page-level direct `api/data` dependency.
 - C.22 isolates `ContractFormPage` form read/write/create and relation option data access behind `contractFormDataRuntime`, removing the remaining product form page direct `api/data` dependency without changing form behavior or backend contract semantics.
 - C.23 moves the Lite preview `legacy_default` fallback token into `unifiedPageContractLiteCompat`, so the API adapter and Lite schema surface reference an explicit compatibility boundary instead of carrying the fallback literal in default files.
+- C.24 moves the remaining v2-to-legacy runtime projection from `api/contract.ts` into `unifiedPageContractV2CompatProjection`, leaving the API adapter as request/error orchestration and reducing the architecture guard findings to zero.
 
 ### Batch D: Action/List/Kanban Renderer Convergence
 
