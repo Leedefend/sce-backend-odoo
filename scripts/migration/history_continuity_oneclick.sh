@@ -215,6 +215,14 @@ case "$MODE" in
     if [[ "$INCLUDE_MATERIAL_CATALOG" == "1" ]]; then
       run_step legacy_material_catalog_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_material_catalog_replay_adapter.py"
       run_step legacy_material_catalog_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_material_catalog_replay_write.py"
+      run_step legacy_tender_registration_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_tender_registration_replay_adapter.py"
+      run_step legacy_tender_registration_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_tender_registration_replay_write.py"
+      run_step legacy_material_stock_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_material_stock_replay_adapter.py"
+      run_step legacy_material_stock_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_material_stock_replay_write.py"
+      run_step legacy_labor_subcontract_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_labor_subcontract_replay_adapter.py"
+      run_step legacy_labor_subcontract_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_labor_subcontract_replay_write.py"
+      run_step legacy_equipment_lease_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_equipment_lease_replay_adapter.py"
+      run_step legacy_equipment_lease_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_equipment_lease_replay_write.py"
     else
       echo "[history.continuity] skip legacy material catalog by HISTORY_CONTINUITY_INCLUDE_MATERIAL_CATALOG=0"
     fi
@@ -286,7 +294,9 @@ case "$MODE" in
       run_step receipt_parent_recovery_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_receipt_parent_recovery_write.py"
     fi
     run_step receipt_invoice_line_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_receipt_invoice_line_replay_adapter.py"
+    run_step receipt_core_creator_visible_surface_normalize run_odoo_script "$ROOT_DIR/scripts/migration/visible_surface_receipt_core_creator_normalize_write.py"
     run_step receipt_invoice_line_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_receipt_invoice_line_replay_write.py"
+    run_step receipt_invoice_line_visible_surface_normalize run_odoo_script "$ROOT_DIR/scripts/migration/visible_surface_receipt_invoice_line_normalize_write.py"
     run_step receipt_invoice_attachment_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_receipt_invoice_attachment_replay_adapter.py"
     run_step receipt_invoice_attachment_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_receipt_invoice_attachment_replay_write.py"
     run_step outflow_request_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_outflow_request_replay_adapter.py"
@@ -307,6 +317,7 @@ case "$MODE" in
     else
       echo "[history.continuity] skip payment request line facts by HISTORY_CONTINUITY_INCLUDE_DETAIL_FACTS=0"
     fi
+    run_step payment_request_contract_visible_surface_normalize run_odoo_script "$ROOT_DIR/scripts/migration/visible_surface_payment_request_contract_normalize_write.py"
     run_step legacy_attachment_backfill_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_attachment_backfill_replay_adapter.py"
     run_step project_member_attachment_targeted_adapter python3 "$ROOT_DIR/scripts/migration/history_project_member_attachment_targeted_replay_adapter.py"
     run_step project_member_attachment_targeted_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_project_member_attachment_targeted_replay_write.py"
@@ -349,6 +360,7 @@ case "$MODE" in
     run_step legacy_workflow_audit_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_workflow_audit_replay_write.py"
     if [[ "$INCLUDE_FORMAL_PROJECTIONS" == "1" ]]; then
       run_step history_todo_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_history_todo_projection_write.py"
+      run_step project_task_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_project_task_projection_write.py"
       run_step treasury_ledger_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_treasury_ledger_projection_write.py"
     else
       echo "[history.continuity] skip formal projections by HISTORY_CONTINUITY_INCLUDE_FORMAL_PROJECTIONS=0"
@@ -381,10 +393,27 @@ case "$MODE" in
       run_step treasury_reconciliation_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_treasury_reconciliation_projection_write.py"
       run_step receipt_income_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_receipt_income_projection_write.py"
       run_step payment_execution_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_payment_execution_projection_write.py"
+      run_step actual_outflow_line_payment_execution_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_actual_outflow_line_payment_execution_projection_write.py"
+      run_step invoice_contract_anchor_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_invoice_contract_anchor_projection_write.py"
       run_step invoice_registration_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_invoice_registration_projection_write.py"
       run_step financing_loan_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_financing_loan_projection_write.py"
+      run_step construction_contract_income_count_alignment run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_construction_contract_income_count_alignment_write.py"
+      run_step project_contract_visible_surface_enrichment run_odoo_script "$ROOT_DIR/scripts/migration/visible_surface_project_contract_enrichment_write.py"
       run_step general_contract_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_general_contract_projection_write.py"
       run_step construction_diary_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_construction_diary_projection_write.py"
+      run_step tender_registration_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_tender_registration_projection_write.py"
+      run_step material_stock_document_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_material_stock_document_projection_write.py"
+      run_step project_budget_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_project_budget_projection_write.py"
+      run_step labor_equipment_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_labor_equipment_projection_write.py"
+      run_step work_breakdown_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_work_breakdown_projection_write.py"
+      run_step office_admin_leave_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_office_admin_leave_projection_write.py"
+      run_step office_admin_seal_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_office_admin_seal_projection_write.py"
+      run_step hr_payroll_salary_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_hr_payroll_salary_projection_write.py"
+      run_step hr_payroll_social_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_hr_payroll_social_projection_write.py"
+      run_step hr_payroll_allowance_bonus_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_hr_payroll_allowance_bonus_projection_write.py"
+      run_step document_certificate_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_document_certificate_projection_write.py"
+      run_step document_borrow_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_document_borrow_projection_write.py"
+      run_step document_admin_archive_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_document_admin_archive_projection_write.py"
     else
       echo "[history.continuity] skip runtime formal projections by HISTORY_CONTINUITY_INCLUDE_FORMAL_PROJECTIONS=0"
     fi

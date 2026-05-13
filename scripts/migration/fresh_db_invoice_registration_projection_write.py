@@ -99,6 +99,12 @@ env.cr.execute(  # noqa: F821
       l.created_time,
       CONCAT_WS(E'\n',
         '[migration:invoice_registration] legacy_line_id=' || l.legacy_line_id,
+        CASE
+          WHEN NULLIF(l.contract_legacy_id, '') IS NOT NULL AND LOWER(l.contract_legacy_id) <> 'null'
+          THEN 'legacy_contract_id=' || l.contract_legacy_id
+          ELSE NULL
+        END,
+        CASE WHEN NULLIF(l.voucher_no, '') IS NOT NULL THEN 'voucher_no=' || l.voucher_no ELSE NULL END,
         NULLIF(l.project_name, ''),
         NULLIF(l.supplier_name, ''),
         NULLIF(l.invoice_source, ''),
@@ -165,7 +171,7 @@ env.cr.execute(  # noqa: F821
 env.cr.execute(  # noqa: F821
     """
     INSERT INTO sc_invoice_registration (
-      name, source_origin, source_kind, direction, state, project_id,
+      name, source_origin, source_kind, direction, state, project_id, partner_id,
       document_no, document_date, invoice_date, invoice_type,
       amount_no_tax, tax_amount, amount_total, currency_id,
       legacy_source_model, legacy_source_table, legacy_record_id,
@@ -188,6 +194,7 @@ env.cr.execute(  # noqa: F821
       END,
       CASE WHEN COALESCE(f.legacy_state, '') = '2' THEN 'legacy_confirmed' ELSE 'draft' END,
       f.project_id,
+      partner_match.id,
       NULLIF(f.document_no, ''),
       f.document_date,
       COALESCE(f.document_date, CURRENT_DATE),
@@ -217,6 +224,19 @@ env.cr.execute(  # noqa: F821
       NOW(),
       NOW()
     FROM sc_legacy_invoice_tax_fact f
+    LEFT JOIN LATERAL (
+      SELECT rp.id
+        FROM res_partner rp
+       WHERE rp.active
+         AND (
+           (f.legacy_partner_name IS NOT NULL AND rp.name = f.legacy_partner_name)
+           OR (f.legacy_partner_tax_no IS NOT NULL AND rp.vat = f.legacy_partner_tax_no)
+         )
+       ORDER BY
+         CASE WHEN f.legacy_partner_tax_no IS NOT NULL AND rp.vat = f.legacy_partner_tax_no THEN 0 ELSE 1 END,
+         rp.id
+       LIMIT 1
+    ) partner_match ON TRUE
     WHERE f.project_id IS NOT NULL
       AND (GREATEST(COALESCE(f.source_amount, 0), 0) > 0 OR GREATEST(COALESCE(f.source_tax_amount, 0), 0) > 0)
     ON CONFLICT (legacy_source_model, legacy_record_id)
@@ -225,6 +245,7 @@ env.cr.execute(  # noqa: F821
       direction = EXCLUDED.direction,
       state = EXCLUDED.state,
       project_id = EXCLUDED.project_id,
+      partner_id = EXCLUDED.partner_id,
       document_no = EXCLUDED.document_no,
       document_date = EXCLUDED.document_date,
       invoice_date = EXCLUDED.invoice_date,
