@@ -37,6 +37,7 @@ STANDARD_FIELDS = [
 TRACE_FIELD_RE = re.compile(r"^(legacy_|source_(origin|kind|model|table|res_id)|creator_legacy_user_id)")
 AMOUNT_FIELD_RE = re.compile(r"(amount|qty|quantity|price|balance|total|tax|rate|count)")
 DEFAULT_REGISTRY = ROOT / "docs" / "architecture" / "backend_business_fact_model_standard_registry_v1.json"
+DEFAULT_PROBLEM_MAP = ROOT / "docs" / "architecture" / "backend_business_model_problem_map_v1.md"
 ALLOWED_SOLUTION_LAYERS = {"platform", "industry", "customer"}
 
 
@@ -376,6 +377,7 @@ def main() -> int:
     parser.add_argument("--report", default="artifacts/backend/backend_business_fact_model_audit.json")
     parser.add_argument("--markdown", default="artifacts/backend/backend_business_fact_model_audit.md")
     parser.add_argument("--registry", default=str(DEFAULT_REGISTRY.relative_to(ROOT)))
+    parser.add_argument("--problem-map", default=str(DEFAULT_PROBLEM_MAP.relative_to(ROOT)))
     parser.add_argument(
         "--enforce",
         action="store_true",
@@ -393,12 +395,17 @@ def main() -> int:
     summary = report["summary"]
     print("BACKEND_BUSINESS_FACT_MODEL_AUDIT=" + json.dumps(summary, ensure_ascii=False, sort_keys=True))
     if args.enforce:
+        problem_map_path = ROOT / args.problem_map
+        problem_map_text = problem_map_path.read_text(encoding="utf-8") if problem_map_path.exists() else ""
         blockers = {
             "unregistered_formal_models": summary["unregistered_formal_models"],
             "registered_models_not_detected": summary["registered_models_not_detected"],
             "undeclared_standard_gaps": summary["undeclared_standard_gaps"],
             "registry_path_gaps": summary["registry_path_gaps"],
             "registry_shape_gaps": summary["registry_shape_gaps"],
+            "problem_map_gaps": []
+            if problem_map_path.exists() and "## Boundary Conclusions" in problem_map_text
+            else [{"path": str(problem_map_path.relative_to(ROOT)), "reason": "missing_problem_map_or_boundary_conclusions"}],
         }
         if any(blockers.values()):
             print("BACKEND_BUSINESS_FACT_MODEL_AUDIT_BLOCKERS=" + json.dumps(blockers, ensure_ascii=False, sort_keys=True))

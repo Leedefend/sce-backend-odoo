@@ -4,6 +4,7 @@ Status: draft audit baseline
 Branch: `audit/backend-business-fact-models`
 Generated evidence: `make verify.backend_business_fact.model_audit`
 Standard registry: `docs/architecture/backend_business_fact_model_standard_registry_v1.json`
+Problem map: `docs/architecture/backend_business_model_problem_map_v1.md`
 
 ## Audit Scope
 
@@ -126,6 +127,7 @@ The caveat is that the boundary needs stronger governance. The current model set
 - formal fact registry: target problem, business logic, projection scripts, probes, and promotion policy.
 
 The next improvement should extend the registry beyond the 10 formal migration carriers to cover all major custom domain model families.
+The companion problem map already gives the target problem definition by model family and should be used as the next registry input.
 
 ## Boundary Rules
 
