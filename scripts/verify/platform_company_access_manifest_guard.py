@@ -72,7 +72,10 @@ PLATFORM_MODEL_XML_REFS = {
     "smart_core.model_sc_ops_job",
 }
 LEGACY_PLATFORM_BRIDGE_FILE = "security/sc_capability_groups.xml"
-PLATFORM_ADMIN_HELPER = "addons/smart_construction_core/services/platform_admin.py"
+PLATFORM_ADMIN_HELPER = "addons/smart_core/security/platform_admin.py"
+LEGACY_PLATFORM_ADMIN_HELPER = "addons/smart_construction_core/services/platform_admin.py"
+PLATFORM_OPS_CONTROLLER = "addons/smart_core/controllers/platform_ops_controller.py"
+CONSTRUCTION_OPS_CONTROLLER = "addons/smart_construction_core/controllers/ops_controller.py"
 FORBIDDEN_LEGACY_ADMIN_CHECKS = {
     "addons/smart_construction_core/controllers/scene_controller.py",
     "addons/smart_construction_core/controllers/scene_template_controller.py",
@@ -182,6 +185,16 @@ assert_true(
     'PLATFORM_ADMIN_GROUP = "smart_core.group_smart_core_admin"' in helper_text,
     "platform admin helper must use smart_core.group_smart_core_admin as canonical platform authority",
 )
+legacy_helper_text = (ROOT / LEGACY_PLATFORM_ADMIN_HELPER).read_text(encoding="utf-8")
+assert_true(
+    "odoo.addons.smart_core.security.platform_admin" in legacy_helper_text,
+    "legacy construction platform_admin helper must delegate to smart_core.security.platform_admin",
+)
+platform_ops_text = (ROOT / PLATFORM_OPS_CONTROLLER).read_text(encoding="utf-8")
+construction_ops_text = (ROOT / CONSTRUCTION_OPS_CONTROLLER).read_text(encoding="utf-8")
+for route in ("/api/ops/tenants", "/api/ops/subscription/set", "/api/ops/job/status"):
+    assert_true(route in platform_ops_text, f"{PLATFORM_OPS_CONTROLLER}: missing platform route {route}")
+    assert_true(route not in construction_ops_text, f"{CONSTRUCTION_OPS_CONTROLLER}: must not own platform route {route}")
 
 for rel_path in sorted(FORBIDDEN_LEGACY_ADMIN_CHECKS):
     text = (ROOT / rel_path).read_text(encoding="utf-8")

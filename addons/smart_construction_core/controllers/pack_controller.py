@@ -5,7 +5,7 @@ from odoo import http, fields
 from odoo.http import request
 from odoo.exceptions import AccessDenied
 from odoo.addons.smart_core.security.auth import get_user_from_token
-from odoo.addons.smart_construction_core.services.platform_admin import user_is_platform_admin
+from odoo.addons.smart_core.security.platform_admin import user_is_platform_admin
 
 from .api_base import fail, fail_from_exception, ok
 from .scene_template_controller import _apply_pack, _pack_hash

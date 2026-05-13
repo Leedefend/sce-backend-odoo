@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import api, models
-from odoo.addons.smart_construction_core.services.platform_admin import platform_admin_groups
+from odoo.addons.smart_core.security.platform_admin import platform_admin_groups
 
 
 class ScSecurityPolicy(models.TransientModel):
