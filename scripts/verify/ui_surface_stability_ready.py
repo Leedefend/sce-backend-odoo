@@ -59,7 +59,16 @@ def main() -> int:
         errors.append("login failed for ui surface stability")
         token = ""
 
-    required = ["user", "nav", "scenes", "capabilities", "intents", "default_route"]
+    required = [
+        "user",
+        "nav",
+        "intents",
+        "default_route",
+        "role_surface",
+        "scene_ready_contract_v1",
+        "delivery_engine_v1",
+        "page_contracts",
+    ]
     modes = {
         "default": {},
         "bundle_construction": {"sc.bundle": "construction"},

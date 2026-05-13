@@ -8,7 +8,6 @@ import {
   resolveUnifiedPageContractV2GlobalStatus,
   resolveUnifiedPageContractV2MainData,
   resolveUnifiedPageContractV2SourceContext,
-  resolveUnifiedPageContractV2,
   type UnifiedPageContractV2,
   type UnifiedPageContractV2Widget,
 } from '../app/contracts/unifiedPageContractV2';
@@ -66,7 +65,7 @@ function uniqueFields(fields: string[]) {
   });
 }
 
-function inferFieldType(widget: UnifiedPageContractV2Widget, mainData: Dict, model: string): string {
+function inferFieldType(widget: UnifiedPageContractV2Widget, mainData: Dict): string {
   const widgetType = String(widget.widgetType || '').trim().toLowerCase();
   const componentConfig = asDict(widget.componentConfig);
   const explicitFieldType = String(widget.fieldType || componentConfig.fieldType || componentConfig.ttype || '').trim().toLowerCase();
@@ -85,9 +84,9 @@ function inferFieldType(widget: UnifiedPageContractV2Widget, mainData: Dict, mod
   return 'char';
 }
 
-function buildLegacyFieldDescriptor(widget: UnifiedPageContractV2Widget, mainData: Dict, model: string): Dict {
+function buildLegacyFieldDescriptor(widget: UnifiedPageContractV2Widget, mainData: Dict): Dict {
   const name = stableFieldName(widget.fieldCode);
-  const type = inferFieldType(widget, mainData, model);
+  const type = inferFieldType(widget, mainData);
   const value = mainData[name];
   const componentConfig = asDict(widget.componentConfig);
   const readonly = componentConfig.readonly === true;
@@ -247,11 +246,11 @@ function collectV2Statusbar(v2Contract: Dict): Dict | null {
   return { field: statusField, states };
 }
 
-function buildLegacySubViews(fieldWidgets: UnifiedPageContractV2Widget[], mainData: Dict, model: string): Dict {
+function buildLegacySubViews(fieldWidgets: UnifiedPageContractV2Widget[], mainData: Dict): Dict {
   const out: Dict = {};
   fieldWidgets.forEach((widget) => {
     const fieldName = stableFieldName(widget.fieldCode);
-    const type = inferFieldType(widget, mainData, model);
+    const type = inferFieldType(widget, mainData);
     if (type !== 'one2many' && type !== 'many2many') return;
     out[fieldName] = {
       tree: { columns: ['display_name'] },
@@ -350,7 +349,7 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
     });
   }
   const fields = v2Fields.reduce<Record<string, Dict>>((acc, widget) => {
-    const descriptor = buildLegacyFieldDescriptor(widget, mainData, model);
+    const descriptor = buildLegacyFieldDescriptor(widget, mainData);
     if (descriptor.name) {
       acc[descriptor.name as string] = descriptor;
     }
@@ -408,7 +407,7 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
     available_actions: batchActions,
   };
   const formLayout = buildLegacyFormLayout(v2Fields, fieldLabels);
-  const subviews = buildLegacySubViews(v2Fields, mainData, model);
+  const subviews = buildLegacySubViews(v2Fields, mainData);
   const chatterEnabled = fieldNames.some((name) => ['message_ids', 'message_follower_ids', 'website_message_ids'].includes(name));
   const attachmentsEnabled = fieldNames.some((name) => ['message_attachment_count', 'doc_count', 'attachment_ids'].includes(name));
   const formView = viewType === 'form'

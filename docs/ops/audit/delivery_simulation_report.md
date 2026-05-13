@@ -10,7 +10,7 @@
 - system.init: status=200 ok=True
 - ui.contract: status=200 ok=True
 - execute_button: status=200 ok=True
-- payment.submit: status=403 ok=True
+- payment.submit: status=400 ok=True
 
 ## Errors
 
@@ -18,4 +18,4 @@
 
 ## Warnings
 
-- payment.submit returned 403
+- payment.submit returned 400

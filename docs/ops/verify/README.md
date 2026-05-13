@@ -30,8 +30,21 @@
   - Fast check before `gate.full`, and can be used as daily team smoke command.
 
 ## Architecture Guard Aliases
+- `make verify.restricted`
+  - Canonical restricted release-readiness entry for daily development and test-tier acceptance.
+  - Delegates to `verify.product.delivery.mainline` with `CI_SCENE_DELIVERY_PROFILE=restricted`, so the restricted gate stays aligned with the current product delivery mainline instead of duplicating verification logic.
+  - Runs frontend gate first, then restricted scene delivery readiness, action closure, module9 smoke, backend contract closure, and governance truth.
+  - Emits the same mainline artifacts:
+    - `artifacts/backend/delivery_mainline_run_summary.json`
+    - `artifacts/backend/delivery_mainline_run_summary.md`
 - `make verify.boundary.guard`
   - Aggregates scene runtime boundary + legacy contract path checks.
+- `make verify.backend.guard`
+  - Compatibility alias for the backend boundary guard chain used by Codex verification workflows.
+- `make codex.snapshot.export`
+  - Compatibility alias for `make codex.snapshot`, preserving the documented snapshot-export command name while reusing the existing contract snapshot implementation.
+- `make verify.portal.smoke`
+  - Compatibility alias for `make verify.portal.fe_smoke.container`.
 - `make verify.scene.delivery.readiness`
   - One-click strict acceptance for product delivery closure: first runs strict live `verify.scene.runtime_boundary.gate`, then executes final readiness threshold guard.
   - Enables strict flags in one command: `SC_SCENE_REGISTRY_ASSET_SNAPSHOT_REQUIRE_LIVE=1`, `SC_SCENE_REGISTRY_ASSET_SNAPSHOT_ALLOW_STATE_FALLBACK_ON_LIVE_FAIL=1`, `SC_SCENE_SAMPLE_REGISTRY_DIFF_REQUIRE_SCENES=1`, `SC_SCENE_ACTION_STRATEGY_LIVE_MATRIX_REQUIRE_LIVE=1`, `SC_SCENE_ACTION_SURFACE_STRATEGY_PAYLOAD_REQUIRE_LIVE=1`, `SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_LIVE=1`, `SC_SCENE_READY_CONSUMPTION_TREND_REQUIRE_ENABLED=1`.

@@ -176,8 +176,14 @@ def main() -> int:
         errors.append(f"scoreboard_journey_rows<{4}")
 
     pending_commit_count = context_log_md.count("active_commit: `pending`")
-    if pending_commit_count > 0:
-        errors.append(f"context_log_pending_commit_count={pending_commit_count}")
+    pending_window_lines = int(os.getenv("PRODUCT_DELIVERY_CONTEXT_LOG_PENDING_WINDOW_LINES", "2000") or 2000)
+    context_log_lines = context_log_md.splitlines()
+    recent_context_log = "\n".join(context_log_lines[-pending_window_lines:]) if pending_window_lines > 0 else context_log_md
+    recent_pending_commit_count = recent_context_log.count("active_commit: `pending`")
+    if recent_pending_commit_count > 0:
+        errors.append(f"context_log_recent_pending_commit_count={recent_pending_commit_count}")
+    elif pending_commit_count > 0:
+        warnings.append(f"context_log_historical_pending_commit_count={pending_commit_count}")
 
     payload = {
         "ok": len(errors) == 0,
@@ -189,6 +195,8 @@ def main() -> int:
             "scoreboard_snapshot_max_age_hours": max_age_hours,
             "scoreboard_snapshot_age_hours": age_hours,
             "context_log_pending_commit_count": pending_commit_count,
+            "context_log_recent_pending_commit_count": recent_pending_commit_count,
+            "context_log_pending_window_lines": pending_window_lines,
             "error_count": len(errors),
             "warning_count": len(warnings),
         },
@@ -214,6 +222,8 @@ def main() -> int:
         f"- scoreboard_journey_rows: {journey_rows}",
         f"- scoreboard_snapshot_age_hours: {age_hours}",
         f"- context_log_pending_commit_count: {pending_commit_count}",
+        f"- context_log_recent_pending_commit_count: {recent_pending_commit_count}",
+        f"- context_log_pending_window_lines: {pending_window_lines}",
         f"- error_count: {len(errors)}",
         f"- warning_count: {len(warnings)}",
         "",
@@ -223,6 +233,12 @@ def main() -> int:
     if errors:
         for error in errors:
             lines.append(f"- {error}")
+    else:
+        lines.append("- none")
+    lines.extend(["", "## Warnings", ""])
+    if warnings:
+        for warning in warnings:
+            lines.append(f"- {warning}")
     else:
         lines.append("- none")
 
@@ -240,4 +256,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

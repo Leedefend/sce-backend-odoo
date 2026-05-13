@@ -1,6 +1,6 @@
 {
   "source": "docs.contract.exports.intent_catalog",
-  "canonical_count": 73,
+  "canonical_count": 80,
   "alias_count": 3,
   "rows": [
     {
@@ -79,6 +79,11 @@
       "canonical": "capability.visibility.report"
     },
     {
+      "name": "chatter.activity.schedule",
+      "status": "canonical",
+      "canonical": "chatter.activity.schedule"
+    },
+    {
       "name": "chatter.post",
       "status": "canonical",
       "canonical": "chatter.post"
@@ -102,6 +107,11 @@
       "name": "cost.tracking.record.create",
       "status": "canonical",
       "canonical": "cost.tracking.record.create"
+    },
+    {
+      "name": "dashboard.company.enter",
+      "status": "canonical",
+      "canonical": "dashboard.company.enter"
     },
     {
       "name": "execute_button",
@@ -219,6 +229,11 @@
       "canonical": "project.connection.transition"
     },
     {
+      "name": "project.context.search",
+      "status": "canonical",
+      "canonical": "project.context.search"
+    },
+    {
       "name": "project.dashboard",
       "status": "canonical",
       "canonical": "project.dashboard"
@@ -334,6 +349,11 @@
       "canonical": "scene.packages.installed"
     },
     {
+      "name": "search.favorite.set",
+      "status": "canonical",
+      "canonical": "search.favorite.set"
+    },
+    {
       "name": "session.bootstrap",
       "status": "canonical",
       "canonical": "session.bootstrap"
@@ -382,6 +402,21 @@
       "name": "usage.track",
       "status": "canonical",
       "canonical": "usage.track"
+    },
+    {
+      "name": "user.view.preference.get",
+      "status": "canonical",
+      "canonical": "user.view.preference.get"
+    },
+    {
+      "name": "user.view.preference.set",
+      "status": "canonical",
+      "canonical": "user.view.preference.set"
+    },
+    {
+      "name": "workspace.home.enter",
+      "status": "canonical",
+      "canonical": "workspace.home.enter"
     }
   ]
 }

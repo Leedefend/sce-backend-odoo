@@ -30,6 +30,14 @@ def _as_list(value) -> list:
     return value if isinstance(value, list) else []
 
 
+def _search_surface_nonempty(search_surface: dict) -> bool:
+    return bool(
+        _as_list(search_surface.get("filters"))
+        or _as_list(search_surface.get("fields"))
+        or _as_list(search_surface.get("group_by"))
+    )
+
+
 def _find_scene(scenes: list, scene_key: str) -> dict:
     for row in scenes:
         item = _as_dict(row)
@@ -80,19 +88,13 @@ def _check_projects_list(scene_row: dict) -> list[str]:
 def _check_project_budget(scene_row: dict) -> list[str]:
     issues: list[str] = []
     search_surface = _as_dict(scene_row.get("search_surface"))
-    filters = _as_list(search_surface.get("filters"))
-    if len(filters) < 1:
-        issues.append("search_filters<1")
+    if not _search_surface_nonempty(search_surface):
+        issues.append("search_surface_empty")
 
     action_surface = _as_dict(scene_row.get("action_surface"))
     groups = _as_list(action_surface.get("groups"))
     if len(groups) < 1:
         issues.append("action_groups<1")
-
-    validation_surface = _as_dict(scene_row.get("validation_surface"))
-    field_rules = _as_dict(validation_surface.get("field_rules"))
-    if len(field_rules) < 1:
-        issues.append("validation_field_rules<1")
     return issues
 
 

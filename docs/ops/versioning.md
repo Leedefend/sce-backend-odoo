@@ -78,3 +78,24 @@ Before creating a new tag, confirm:
 - Validation commands PASS
 - Release index updated (docs/ops/releases/README.md)
 
+## 8) v2.0.0 Formal Release Line
+
+The active formal release line uses the standard release format. The older
+`v1.0.0` tag name already exists remotely and must not be reused, so the current
+release-governance track is `v2.0.0`.
+
+- gate baseline: `gate-release-v2.0`
+- release candidates: `v2.0.0-rc1`, `v2.0.0-rc2` only when blocker fixes require a new candidate
+- formal release: `v2.0.0`
+
+Promotion order:
+
+1. Merge reviewed release-prep work to `main`.
+2. Run `make verify.release.v2_0_0.preflight` on the reviewed release commit.
+3. Create `gate-release-v2.0` only after gate evidence passes.
+4. Run `make verify.release.v2_0_0.product_hardening` and close any blocker.
+5. Create `v2.0.0-rc1` only after RC evidence passes.
+6. Create `v2.0.0` only after prod-sim acceptance and release checklist signoff.
+
+Production deployment is not implied by creating `v2.0.0`; deployment remains a
+separate supervised operation under `docs/ops/production_deployment_runbook_v1.md`.

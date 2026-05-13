@@ -53,6 +53,9 @@ def main() -> int:
         for row in canonical_rows
         if isinstance(row, dict) and _norm(row.get("canonical_scene"))
     }
+    if not canonical_scene_set and scope_scenes:
+        canonical_scene_set = set(scope_scenes)
+        warnings.append("scene_domain_mapping_unavailable_using_delivery_scope")
 
     cap_rows = cap_usage.get("rows") if isinstance(cap_usage.get("rows"), list) else []
     capability_set = {
@@ -60,6 +63,16 @@ def main() -> int:
         for row in cap_rows
         if isinstance(row, dict) and _norm(row.get("capability_key"))
     }
+    if not capability_set:
+        capability_set = {
+            _norm(cap)
+            for item in modules
+            if isinstance(item, dict)
+            for cap in (item.get("capabilities") if isinstance(item.get("capabilities"), list) else [])
+            if _norm(cap)
+        }
+        if capability_set:
+            warnings.append("capability_usage_matrix_unavailable_using_module_source")
 
     scene_owner: dict[str, str] = {}
     module_rows: list[dict] = []
