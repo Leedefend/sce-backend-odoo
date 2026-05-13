@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="1">
+        <function model="sc.subscription.plan" name="ensure_platform_default_plans"/>
+    </data>
+</odoo>

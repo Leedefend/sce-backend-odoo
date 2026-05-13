@@ -28,6 +28,34 @@ class ScSubscriptionPlan(models.Model):
         ("sc_subscription_plan_code_uniq", "unique(code)", "Plan code must be unique."),
     ]
 
+    @api.model
+    def ensure_platform_default_plans(self):
+        defaults = [
+            {
+                "code": "default",
+                "name": "Default",
+                "sequence": 10,
+                "active": True,
+                "feature_flags_json": {},
+                "limits_json": {},
+            },
+            {
+                "code": "pro",
+                "name": "Pro",
+                "sequence": 20,
+                "active": True,
+                "feature_flags_json": {"feature.test": True},
+                "limits_json": {"max_scenes": 999},
+            },
+        ]
+        for vals in defaults:
+            plan = self.sudo().search([("code", "=", vals["code"])], limit=1)
+            if plan:
+                plan.sudo().write({key: vals[key] for key in ("name", "sequence", "active")})
+                continue
+            self.sudo().create(vals)
+        return True
+
 
 class ScSubscription(models.Model):
     _name = "sc.subscription"
