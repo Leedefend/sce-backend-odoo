@@ -64,6 +64,22 @@ The first platform artifacts are therefore:
 The access models answer company usability. The scope mixin is an abstract
 metadata contract, not a business source-of-truth table.
 
+## Runtime Surface Ownership
+
+Company access is now a platform-owned runtime surface, not a construction
+module configuration surface.
+
+`smart_core` owns:
+
+- seed entrypoint: `smart_core/data/sc_subscription_default.xml`
+- admin views and menu: `smart_core/views/platform_company_access_views.xml`
+- access group: `smart_core.group_smart_core_admin`
+- verification: `make verify.platform_company_access_kernel.probe`
+
+Construction modules may consume subscription, entitlement, usage, and ops state,
+but they must not host the canonical seed data, action records, menu records, or
+admin views for these platform models.
+
 ## Why Not Add sc.business Immediately
 
 The audit has proven a concept gap, not yet a lifecycle ownership gap.

@@ -18,6 +18,9 @@
       ],
       "kind": "platform_access_control",
       "purpose": "Answer which companies can use the platform, which plan/capabilities apply, and what usage/ops state is attached to that company.",
+      "seed_entrypoint": "smart_core/data/sc_subscription_default.xml",
+      "runtime_surface": "smart_core/views/platform_company_access_views.xml",
+      "surface_group": "smart_core.group_smart_core_admin",
       "forbidden_ownership": [
         "must_not_depend_on_construction_project",
         "must_not_embed_industry_business_semantics",
@@ -45,5 +48,6 @@
       ]
     }
   ],
+  "landed_responsibility": "Company access seed data, menu/action/view surfaces, ACLs, and runtime probes are now owned by smart_core. Construction modules may reference the platform result but must not host these platform artifacts.",
   "next_gate": "Only promote to a concrete business/carrier table after multiple runtime models prove shared lifecycle, ownership, and projection needs."
 }

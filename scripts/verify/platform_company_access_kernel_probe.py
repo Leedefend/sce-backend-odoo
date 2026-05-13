@@ -9,6 +9,25 @@ REQUIRED_MODELS = {
     "sc.ops.job": ["name", "job_type", "status"],
 }
 
+REQUIRED_PLATFORM_XMLIDS = {
+    "ir.actions.act_window": [
+        "action_sc_subscription_plan",
+        "action_sc_subscription",
+        "action_sc_entitlement",
+        "action_sc_usage_counter",
+        "action_sc_ops_job",
+    ],
+    "ir.ui.menu": [
+        "menu_smart_core_platform_root",
+        "menu_smart_core_company_access_root",
+        "menu_sc_subscription_plan",
+        "menu_sc_subscription",
+        "menu_sc_entitlement",
+        "menu_sc_usage_counter",
+        "menu_sc_ops_job",
+    ],
+}
+
 
 def assert_true(condition, message):
     if not condition:
@@ -27,20 +46,30 @@ for model_name, field_names in REQUIRED_MODELS.items():
     )
     assert_true(platform_model_ref, f"model external id not owned by smart_core: {model_name}")
 
+for model_name, xmlids in REQUIRED_PLATFORM_XMLIDS.items():
+    for xmlid in xmlids:
+        rec = env.ref(f"smart_core.{xmlid}", raise_if_not_found=False)
+        assert_true(rec, f"missing platform XML id: smart_core.{xmlid}")
+        assert_true(rec._name == model_name, f"wrong model for smart_core.{xmlid}: {rec._name}")
+        assert_true(
+            env["ir.model.data"].sudo().search(
+                [("module", "=", "smart_core"), ("name", "=", xmlid), ("model", "=", model_name)],
+                limit=1,
+            ),
+            f"platform XML id not owned by smart_core: {xmlid}",
+        )
+
 company = env.company
 assert_true(company, "missing current company")
 
-plan = env["sc.subscription.plan"].sudo().search([("active", "=", True)], limit=1)
+env["sc.subscription.plan"].sudo().ensure_platform_default_plans()
+
+plan = env["sc.subscription.plan"].sudo().search([("code", "=", "default"), ("active", "=", True)], limit=1)
 if not plan:
-    plan = env["sc.subscription.plan"].sudo().create(
-        {
-            "name": "Probe Default",
-            "code": "probe_default",
-            "active": True,
-            "feature_flags_json": {},
-            "limits_json": {},
-        }
-    )
+    raise AssertionError("missing active default platform subscription plan")
+
+pro_plan = env["sc.subscription.plan"].sudo().search([("code", "=", "pro"), ("active", "=", True)], limit=1)
+assert_true(pro_plan, "missing active pro platform subscription plan")
 
 sub = env["sc.subscription"].sudo().search([("company_id", "=", company.id)], limit=1)
 if not sub:
@@ -63,5 +92,7 @@ assert_true(usage.get("platform_company_access_probe", 0) >= 1, "usage counter d
 
 print(
     "PLATFORM_COMPANY_ACCESS_KERNEL_PROBE=PASS "
-    f"models={len(REQUIRED_MODELS)} company_id={company.id} plan={entitlement.plan_id.code}"
+    f"models={len(REQUIRED_MODELS)} actions={len(REQUIRED_PLATFORM_XMLIDS['ir.actions.act_window'])} "
+    f"menus={len(REQUIRED_PLATFORM_XMLIDS['ir.ui.menu'])} company_id={company.id} "
+    f"plan={entitlement.plan_id.code}"
 )
