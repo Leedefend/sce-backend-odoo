@@ -59,7 +59,7 @@ for line in Legacy.search(source_domain, order="document_date desc, id desc"):
         "partner_name": line.partner_name,
         "invoice_no": line.invoice_no,
         "invoice_code": line.invoice_code,
-        "invoice_date": line.invoice_date,
+        "invoice_date": line.invoice_date or None,
         "invoice_amount_untaxed": line.invoice_amount_untaxed or 0.0,
         "invoice_tax_amount": line.invoice_tax_amount or 0.0,
         "invoice_amount_total": line.invoice_amount_total or 0.0,
