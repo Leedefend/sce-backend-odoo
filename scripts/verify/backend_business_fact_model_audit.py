@@ -51,6 +51,7 @@ DEFAULT_UNIVERSAL_REGISTRY = ROOT / "docs" / "architecture" / "platform_universa
 DEFAULT_UNIVERSAL_ROLLOUT = ROOT / "docs" / "architecture" / "platform_universal_abstraction_rollout_v1.md"
 DEFAULT_CARRIER_FIT_AUDIT = ROOT / "docs" / "architecture" / "platform_universal_carrier_fit_audit_v1.md"
 DEFAULT_CARRIER_FIT_REGISTRY = ROOT / "docs" / "architecture" / "platform_universal_carrier_fit_registry_v1.json"
+DEFAULT_SCOPE_DECISION_GATE = ROOT / "docs" / "architecture" / "platform_universal_scope_decision_gate_v1.json"
 ALLOWED_SOLUTION_LAYERS = {"platform", "industry", "customer"}
 ALLOWED_RESPONSIBILITY_TYPES = {
     "native system-of-record",
@@ -120,6 +121,14 @@ ALLOWED_UNIVERSAL_CARRIER_FITS = {
     "legacy_evidence",
     "technical_bridge",
     "review_required",
+}
+ALLOWED_SCOPE_DECISIONS = {
+    "registry_metadata_only",
+    "optional_scope_fields",
+    "projection_extension",
+    "policy_scope_extension",
+    "concrete_business_model",
+    "concrete_carrier_model",
 }
 
 
@@ -450,6 +459,12 @@ def load_universal_registry(path: Path) -> dict[str, Any]:
 def load_carrier_fit_registry(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {"family_carrier_fits": [], "missing_registry": True}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def load_scope_decision_gate(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {"decision_gates": [], "missing_registry": True}
     return json.loads(path.read_text(encoding="utf-8"))
 
 
@@ -971,6 +986,47 @@ def summarize_carrier_fit_registry(
     }
 
 
+def summarize_scope_decision_gate(scope_decision_gate: dict[str, Any]) -> dict[str, Any]:
+    gate_rows = scope_decision_gate.get("decision_gates", [])
+    required_fields = [
+        "decision",
+        "when_to_use",
+        "allowed_changes",
+        "forbidden_changes",
+        "required_evidence",
+        "verification_gate",
+    ]
+    shape_gaps = []
+    decision_counts: Counter[str] = Counter()
+    for item in gate_rows:
+        decision = item.get("decision")
+        if decision in ALLOWED_SCOPE_DECISIONS:
+            decision_counts[decision] += 1
+        else:
+            shape_gaps.append(
+                {
+                    "decision": decision,
+                    "field": "decision",
+                    "value": decision,
+                    "allowed_values": sorted(ALLOWED_SCOPE_DECISIONS),
+                }
+            )
+        for field in required_fields:
+            value = item.get(field)
+            if isinstance(value, list):
+                if not value:
+                    shape_gaps.append({"decision": decision, "field": field, "reason": "missing_required_list"})
+            elif not str(value or "").strip():
+                shape_gaps.append({"decision": decision, "field": field, "reason": "missing_required_field"})
+    return {
+        "scope_decision_gate_count": len(gate_rows),
+        "scope_decision_counts": dict(sorted(decision_counts.items())),
+        "missing_scope_decisions": sorted(ALLOWED_SCOPE_DECISIONS - set(decision_counts)),
+        "scope_decision_gate_shape_gap_count": len(shape_gaps),
+        "scope_decision_gate_shape_gaps": shape_gaps,
+    }
+
+
 def write_markdown(report: dict[str, Any], path: Path) -> None:
     summary = report["summary"]
     rows = report["models"]
@@ -1258,6 +1314,29 @@ def write_markdown(report: dict[str, Any], path: Path) -> None:
                     decision=item.get("decision", ""),
                 )
             )
+    scope_decision_summary = report.get("scope_decision_summary") or {}
+    scope_decision_gate = report.get("scope_decision_gate") or {}
+    lines.extend(["", "## Scope Decision Gate", ""])
+    lines.append(f"- scope_decision_gate_count: {scope_decision_summary.get('scope_decision_gate_count', 0)}")
+    lines.append(
+        "- scope_decision_counts: "
+        + json.dumps(scope_decision_summary.get("scope_decision_counts", {}), ensure_ascii=False, sort_keys=True)
+    )
+    lines.append(
+        "- missing_scope_decisions: "
+        + (", ".join(scope_decision_summary.get("missing_scope_decisions", [])) or "none")
+    )
+    if scope_decision_gate.get("decision_gates"):
+        lines.extend(["", "| decision | when to use | verification |"])
+        lines.append("| --- | --- | --- |")
+        for item in scope_decision_gate["decision_gates"]:
+            lines.append(
+                "| {decision} | {when_to_use} | {verification_gate} |".format(
+                    decision=item.get("decision", ""),
+                    when_to_use=item.get("when_to_use", ""),
+                    verification_gate=item.get("verification_gate", ""),
+                )
+            )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -1280,6 +1359,7 @@ def main() -> int:
     parser.add_argument("--universal-rollout", default=str(DEFAULT_UNIVERSAL_ROLLOUT.relative_to(ROOT)))
     parser.add_argument("--carrier-fit-audit", default=str(DEFAULT_CARRIER_FIT_AUDIT.relative_to(ROOT)))
     parser.add_argument("--carrier-fit-registry", default=str(DEFAULT_CARRIER_FIT_REGISTRY.relative_to(ROOT)))
+    parser.add_argument("--scope-decision-gate", default=str(DEFAULT_SCOPE_DECISION_GATE.relative_to(ROOT)))
     parser.add_argument(
         "--enforce",
         action="store_true",
@@ -1295,6 +1375,7 @@ def main() -> int:
     management_hierarchy = load_management_hierarchy(ROOT / args.management_hierarchy)
     universal_registry = load_universal_registry(ROOT / args.universal_registry)
     carrier_fit_registry = load_carrier_fit_registry(ROOT / args.carrier_fit_registry)
+    scope_decision_gate = load_scope_decision_gate(ROOT / args.scope_decision_gate)
     report = {
         "summary": summarize(rows, registry),
         "family_summary": summarize_family_registry(rows, family_registry),
@@ -1303,6 +1384,7 @@ def main() -> int:
         "management_hierarchy_summary": summarize_management_hierarchy(family_registry, management_hierarchy),
         "universal_summary": summarize_universal_registry(universal_registry),
         "carrier_fit_registry_summary": summarize_carrier_fit_registry(family_registry, carrier_fit_registry),
+        "scope_decision_summary": summarize_scope_decision_gate(scope_decision_gate),
         "registry": registry,
         "family_registry": family_registry,
         "ownership_specs": ownership_specs,
@@ -1310,6 +1392,7 @@ def main() -> int:
         "management_hierarchy": management_hierarchy,
         "universal_registry": universal_registry,
         "carrier_fit_registry": carrier_fit_registry,
+        "scope_decision_gate": scope_decision_gate,
         "models": rows,
     }
     report_path = ROOT / args.report
@@ -1342,6 +1425,10 @@ def main() -> int:
         "PLATFORM_UNIVERSAL_CARRIER_FIT_REGISTRY="
         + json.dumps(report["carrier_fit_registry_summary"], ensure_ascii=False, sort_keys=True)
     )
+    print(
+        "PLATFORM_UNIVERSAL_SCOPE_DECISION_GATE="
+        + json.dumps(report["scope_decision_summary"], ensure_ascii=False, sort_keys=True)
+    )
     if args.enforce:
         problem_map_path = ROOT / args.problem_map
         problem_map_text = problem_map_path.read_text(encoding="utf-8") if problem_map_path.exists() else ""
@@ -1367,6 +1454,7 @@ def main() -> int:
         carrier_fit_audit_path = ROOT / args.carrier_fit_audit
         carrier_fit_audit_text = carrier_fit_audit_path.read_text(encoding="utf-8") if carrier_fit_audit_path.exists() else ""
         carrier_fit_registry_path = ROOT / args.carrier_fit_registry
+        scope_decision_gate_path = ROOT / args.scope_decision_gate
         blockers = {
             "unregistered_formal_models": summary["unregistered_formal_models"],
             "unclassified_models": summary["unclassified_models"],
@@ -1532,6 +1620,17 @@ def main() -> int:
                     "future_platform_pressure_counts": report["carrier_fit_registry_summary"][
                         "future_platform_pressure_counts"
                     ],
+                }
+            ],
+            "scope_decision_gate_gaps": []
+            if scope_decision_gate_path.exists()
+            and not report["scope_decision_summary"]["missing_scope_decisions"]
+            and not report["scope_decision_summary"]["scope_decision_gate_shape_gaps"]
+            else [
+                {
+                    "path": str(scope_decision_gate_path.relative_to(ROOT)),
+                    "missing_scope_decisions": report["scope_decision_summary"]["missing_scope_decisions"],
+                    "shape_gaps": report["scope_decision_summary"]["scope_decision_gate_shape_gaps"],
                 }
             ],
         }

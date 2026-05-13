@@ -99,6 +99,16 @@ The registry has been introduced at:
 docs/architecture/platform_universal_carrier_fit_registry_v1.json
 ```
 
+The implementation decision gate has been introduced at:
+
+```text
+docs/architecture/platform_universal_scope_decision_gate_v1.json
+```
+
+This gate requires backend scope changes to move through registry metadata,
+optional scope fields, projection extension, or policy scope extension before a
+concrete platform business/carrier model is allowed.
+
 Registry categories:
 
 - platform/company-level

@@ -4,6 +4,7 @@ Status: draft architecture contract
 
 Binding registry: `platform_universal_business_abstraction_registry_v1.json`
 Rollout plan: `platform_universal_abstraction_rollout_v1.md`
+Scope decision gate: `platform_universal_scope_decision_gate_v1.json`
 
 This note separates the platform-level abstraction from the construction-industry binding.
 
@@ -146,4 +147,17 @@ Likely staged path:
 3. identify pre-project and company-level facts that cannot cleanly use `project_id`.
 4. only then introduce a concrete platform model such as `sc.business.case` or `sc.business.carrier` if the evidence shows it is needed.
 
-The first two steps are now in place as architecture contracts. The next step should be an evidence audit for current facts that cannot honestly be scoped by `project.project`.
+The first two steps are now in place as architecture contracts. The carrier-fit
+audit and decision gate now add the next constraint: schema changes must follow
+this order unless evidence proves otherwise:
+
+1. registry metadata only.
+2. optional scope fields.
+3. projection extension.
+4. policy scope extension.
+5. concrete business model.
+6. concrete carrier model.
+
+The current high-pressure family is income contract and tender business, with
+`tender.bid` as the pressure model. The recommended next implementation is
+optional scope metadata design, not a required platform table.
