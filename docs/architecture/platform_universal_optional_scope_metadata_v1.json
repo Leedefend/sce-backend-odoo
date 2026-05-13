@@ -45,7 +45,7 @@
       ],
       "compatibility_rule": "project_id, operation_strategy, currency_id, owner defaults, and won-to-contract behavior must keep working when optional scope fields are empty.",
       "migration_policy": "Do not require backfill. Existing tenders may derive optional carrier metadata from project_id in a non-authoritative migration only after probes exist.",
-      "acceptance_probe": "Create/read tender with existing project-only workflow and verify optional scope fields can remain empty without changing contract creation or report behavior.",
+      "acceptance_probe": "make verify.tender_optional_scope_metadata.probe DB_NAME=<dev-db>",
       "forbidden_promotion": [
         "Do not replace project_id with generic carrier metadata.",
         "Do not make business_scope_key required.",
