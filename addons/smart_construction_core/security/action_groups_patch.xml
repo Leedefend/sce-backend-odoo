@@ -121,7 +121,7 @@
     <!-- Batch-4：字典 / 工作流 / 运营指标 / 文档 / 驾驶舱 / 资金报表 -->
     <!-- 字典/定额属于业务配置，不向普通业务角色开放配置入口 -->
     <record id="action_sc_project_manage" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
     </record>
     <record id="action_project_dictionary" model="ir.actions.act_window">
         <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
@@ -149,7 +149,25 @@
     </record>
     <!-- 菜单记录显式清组：Odoo 升级时 menuitem 的 groups 可能保留历史 M2M。 -->
     <record id="menu_sc_project_manage" model="ir.ui.menu">
-        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
+    </record>
+    <record id="menu_sc_config_center" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
+    </record>
+    <record id="menu_sc_workflow_root" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
+    </record>
+    <record id="menu_sc_workflow_def" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
+    </record>
+    <record id="menu_sc_workflow_instance" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
+    </record>
+    <record id="menu_sc_workflow_workitem" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
+    </record>
+    <record id="menu_sc_workflow_log" model="ir.ui.menu">
+        <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
     </record>
     <record id="menu_sc_project_cost_code" model="ir.ui.menu">
         <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
@@ -194,16 +212,16 @@
 
     <!-- 工作流 -->
     <record id="action_sc_workflow_def" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_config_admin'))]"/>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
     </record>
     <record id="action_sc_workflow_instance" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_config_admin'))]"/>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
     </record>
     <record id="action_sc_workflow_workitem" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_config_admin'))]"/>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
     </record>
     <record id="action_sc_workflow_log" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_config_admin'))]"/>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
     </record>
 
     <!-- 运营指标 / 驾驶舱 / 财务报表 -->

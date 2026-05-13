@@ -100,7 +100,7 @@
               parent="menu_sc_project_center"
               action="action_sc_project_manage"
               sequence="90"
-              groups="smart_construction_core.group_sc_cap_config_admin"/>
+              groups="smart_core.group_smart_core_admin"/>
 
     <!-- 合同中心 -->
     <menuitem id="menu_sc_contract_center"
@@ -318,7 +318,7 @@
               name="系统配置"
               parent="menu_sc_root"
               sequence="95"
-              groups="smart_construction_core.group_sc_cap_config_admin"/>
+              groups="smart_core.group_smart_core_admin"/>
     <menuitem id="menu_sc_project_cost_code"
               name="成本科目"
               parent="menu_sc_business_config_center"
@@ -329,30 +329,30 @@
               name="工作流"
               parent="menu_sc_config_center"
               sequence="50"
-              groups="smart_construction_core.group_sc_cap_config_admin"/>
+              groups="smart_core.group_smart_core_admin"/>
     <menuitem id="menu_sc_workflow_def"
               name="工作流定义"
               parent="menu_sc_workflow_root"
               action="action_sc_workflow_def"
               sequence="10"
-              groups="smart_construction_core.group_sc_cap_config_admin"/>
+              groups="smart_core.group_smart_core_admin"/>
     <menuitem id="menu_sc_workflow_instance"
               name="工作流实例"
               parent="menu_sc_workflow_root"
               action="action_sc_workflow_instance"
               sequence="20"
-              groups="smart_construction_core.group_sc_cap_config_admin"/>
+              groups="smart_core.group_smart_core_admin"/>
     <menuitem id="menu_sc_workflow_workitem"
               name="工作项"
               parent="menu_sc_workflow_root"
               action="action_sc_workflow_workitem"
               sequence="30"
-              groups="smart_construction_core.group_sc_cap_config_admin"/>
+              groups="smart_core.group_smart_core_admin"/>
     <menuitem id="menu_sc_workflow_log"
               name="工作流日志"
               parent="menu_sc_workflow_root"
               action="action_sc_workflow_log"
               sequence="40"
-              groups="smart_construction_core.group_sc_cap_config_admin"/>
+              groups="smart_core.group_smart_core_admin"/>
 
 </odoo>

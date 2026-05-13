@@ -98,6 +98,34 @@ SCENE_GOVERNANCE_ADMIN_ACLS = {
     "access_sc_scene_governance_wizard_admin",
     "access_sc_scene_package_installation_admin",
 }
+CONSTRUCTION_PLATFORM_ADMIN_ACLS = {
+    "access_sc_workflow_def_admin",
+    "access_sc_workflow_node_admin",
+    "access_sc_workflow_instance_admin",
+    "access_sc_workflow_workitem_admin",
+    "access_sc_workflow_log_admin",
+}
+CONSTRUCTION_PLATFORM_SURFACE_FILES = {
+    "addons/smart_construction_core/views/menu_root.xml",
+    "addons/smart_construction_core/views/menu_centers.xml",
+    "addons/smart_construction_core/views/menu.xml",
+    "addons/smart_construction_core/views/core/workflow_views.xml",
+    "addons/smart_construction_core/security/action_groups_patch.xml",
+}
+CONSTRUCTION_PLATFORM_SURFACE_XMLIDS = {
+    "menu_sc_project_manage",
+    "menu_sc_config_center",
+    "menu_sc_workflow_root",
+    "menu_sc_workflow_def",
+    "menu_sc_workflow_instance",
+    "menu_sc_workflow_workitem",
+    "menu_sc_workflow_log",
+    "action_sc_project_manage",
+    "action_sc_workflow_def",
+    "action_sc_workflow_instance",
+    "action_sc_workflow_workitem",
+    "action_sc_workflow_log",
+}
 FORBIDDEN_LEGACY_ADMIN_CHECKS = {
     "addons/smart_construction_core/controllers/scene_controller.py",
     "addons/smart_construction_core/controllers/scene_template_controller.py",
@@ -137,6 +165,24 @@ def _xml_model_refs(path: Path) -> set[str]:
                 if field.tag == "field" and field.attrib.get("name") == "res_model" and field.text:
                     refs.add(field.text.strip())
     return refs
+
+
+def _xml_group_surfaces(path: Path, xmlids: set[str]) -> dict[str, str]:
+    root = ET.parse(path).getroot()
+    surfaces: dict[str, str] = {}
+    for node in root.iter():
+        xmlid = node.attrib.get("id")
+        if xmlid not in xmlids:
+            continue
+        groups = node.attrib.get("groups")
+        if groups:
+            surfaces[xmlid] = groups
+            continue
+        for field in node:
+            if field.tag == "field" and field.attrib.get("name") == "groups_id":
+                surfaces[xmlid] = field.attrib.get("eval") or (field.text or "")
+                break
+    return surfaces
 
 
 def _csv_model_refs(path: Path) -> set[str]:
@@ -285,6 +331,30 @@ assert_true(
     not scene_governance_acl_group_gaps,
     f"scene governance admin ACLs must use {CANONICAL_PLATFORM_ADMIN_GROUP}: {scene_governance_acl_group_gaps}",
 )
+platform_acl_group_gaps = [
+    {
+        "id": row.get("id"),
+        "group_id:id": row.get("group_id:id"),
+    }
+    for row in construction_acl_rows
+    if row.get("id") in CONSTRUCTION_PLATFORM_ADMIN_ACLS
+    and row.get("group_id:id") != CANONICAL_PLATFORM_ADMIN_GROUP
+]
+assert_true(
+    not platform_acl_group_gaps,
+    f"workflow platform ACLs must use {CANONICAL_PLATFORM_ADMIN_GROUP}: {platform_acl_group_gaps}",
+)
+for rel_path in sorted(CONSTRUCTION_PLATFORM_SURFACE_FILES):
+    surfaces = _xml_group_surfaces(ROOT / rel_path, CONSTRUCTION_PLATFORM_SURFACE_XMLIDS)
+    for xmlid, group_expr in sorted(surfaces.items()):
+        assert_true(
+            CANONICAL_PLATFORM_ADMIN_GROUP in group_expr,
+            f"{rel_path}: platform governance surface {xmlid} must use {CANONICAL_PLATFORM_ADMIN_GROUP}",
+        )
+        assert_true(
+            LEGACY_PLATFORM_ADMIN_GROUP not in group_expr,
+            f"{rel_path}: platform governance surface {xmlid} must not use {LEGACY_PLATFORM_ADMIN_GROUP}",
+        )
 for rel_path in (
     "addons/smart_construction_core/controllers/pack_controller.py",
     "addons/smart_construction_core/models/support/scene_orchestration.py",

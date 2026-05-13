@@ -241,12 +241,28 @@ for login in platform_logins:
 
 exact_group_boundaries = {
     "smart_construction_core.menu_sc_project_manage": {
-        "only": {LEGACY_PLATFORM_ADMIN_GROUP},
+        "only": {PLATFORM_ADMIN_GROUP},
         "label": "platform-only backend project menu",
     },
     "smart_construction_core.action_sc_project_manage": {
-        "only": {LEGACY_PLATFORM_ADMIN_GROUP},
+        "only": {PLATFORM_ADMIN_GROUP},
         "label": "platform-only backend project action",
+    },
+    "smart_construction_core.menu_sc_config_center": {
+        "only": {PLATFORM_ADMIN_GROUP},
+        "label": "platform system config root",
+    },
+    "smart_construction_core.menu_sc_workflow_root": {
+        "only": {PLATFORM_ADMIN_GROUP},
+        "label": "platform workflow root",
+    },
+    "smart_construction_core.action_sc_workflow_def": {
+        "only": {PLATFORM_ADMIN_GROUP},
+        "label": "platform workflow definition action",
+    },
+    "smart_construction_core.action_sc_workflow_instance": {
+        "only": {PLATFORM_ADMIN_GROUP},
+        "label": "platform workflow instance action",
     },
     "smart_core.menu_smart_core_platform_root": {
         "only": {PLATFORM_ADMIN_GROUP},
