@@ -13,6 +13,8 @@ MIGRATION_ASSET_LOCK ?= docs/migration_alignment/migration_asset_package_lock_v1
 MIGRATION_FILE_INDEX_CSV ?= /mnt/artifacts/migration/fresh_db_legacy_file_index_replay_payload_v1.csv
 CONSTRUCTION_CONTRACT_VISIBLE_XLSX ?= /mnt/artifacts/migration/source_extracts/construction_contract_visible_surface.xlsx
 CONSTRUCTION_CONTRACT_RAW_CSV ?= /mnt/tmp/raw/contract/contract.csv
+PROJECT_POSITIVE_MIGRATION_EXCEL_PATH ?= /mnt/tmp/001/672施工合同项目名称去重统计.xlsx
+PROJECT_POSITIVE_MIGRATION_RAW_CONTRACT_CSV ?= $(CONSTRUCTION_CONTRACT_RAW_CSV)
 FORMAL_PROJECTION_ARTIFACT_ROOT ?= $(if $(MIGRATION_ARTIFACT_ROOT),$(MIGRATION_ARTIFACT_ROOT),/tmp/history_continuity/$(DB_NAME)/adhoc)
 
 # Snapshot DB knobs from invocation context before .env include so explicit
@@ -711,6 +713,13 @@ fresh_db.construction_contract.attachment.probe: guard.prod.forbid check-compose
 
 fresh_db.construction_contract.replay_manifest.refresh: guard.prod.forbid
 	@python3 scripts/migration/fresh_db_construction_contract_replay_manifest_refresh.py
+
+.PHONY: project.positive_migration.reconcile.probe project.positive_migration.visibility.refresh.write
+project.positive_migration.reconcile.probe: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" PROJECT_POSITIVE_MIGRATION_EXCEL_PATH="$(PROJECT_POSITIVE_MIGRATION_EXCEL_PATH)" PROJECT_POSITIVE_MIGRATION_RAW_CONTRACT_CSV="$(PROJECT_POSITIVE_MIGRATION_RAW_CONTRACT_CSV)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/project_contract_fact_alias_reconciliation.py
+
+project.positive_migration.visibility.refresh.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(or $(MIGRATION_REPLAY_DB_ALLOWLIST),$(DB_NAME))" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" PROJECT_POSITIVE_MIGRATION_EXCEL_PATH="$(PROJECT_POSITIVE_MIGRATION_EXCEL_PATH)" PROJECT_POSITIVE_MIGRATION_RAW_CONTRACT_CSV="$(PROJECT_POSITIVE_MIGRATION_RAW_CONTRACT_CSV)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/project_positive_migration_visibility_refresh_write.py
 
 fresh_db.fund_account.projection.write: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_fund_account_projection_write.py

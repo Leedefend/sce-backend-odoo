@@ -16,6 +16,16 @@ Each entry must include:
 
 ## Entries
 
+### 2026-05-13T16:13:51+08:00
+- blocker_key: `project_positive_migration_visibility_refresh`
+- layer_target: `Data Migration Ops`
+- module: `Makefile + scripts/migration + docs/ops + docs/migration_alignment`
+- reason: `用户拍板项目集合先按肯定式业务事实对齐：合同/收支/付款等事实纳入，已分直营项目保留，其余未纳入在库项目归档不再对用户可见；该效果需要进入主线后可由服务器升级流程复现。`
+- completed_step: `新增项目合同事实名称核对脚本与项目可见性刷新写入脚本；写入脚本仅更新 project.project.active，不改名称、不删除项目、不改业务事实；新增 project.positive_migration.reconcile.probe 与 project.positive_migration.visibility.refresh.write Makefile 入口；补充部署复现 runbook 与迁移决策文档；将用户确认的“周超工程（德阳二重工程项目）”固化映射到 canonical 项目“易静工程（德阳二重工程项目）”。`
+- verification: `python3 -m py_compile scripts/migration/project_contract_fact_alias_reconciliation.py scripts/migration/project_positive_migration_visibility_refresh_write.py PASS；DB_NAME=sc_demo MIGRATION_REPLAY_DB_ALLOWLIST=sc_demo make project.positive_migration.visibility.refresh.write PASS visibility_exact_match=true positive_resolved_name_count=669 positive_unresolved_name_count=0 active_project_count_after=711 archived_project_count=183；DB_NAME=sc_demo make project.positive_migration.reconcile.probe PASS review_state_counts.resolved=50 ignored=3。`
+- active_commit: `f95b9743`
+- next_step: `提交本批迁移复现入口；通过 make pr.push 与 make pr.create 打开 PR。`
+
 ### 2026-05-13T09:42:06+08:00
 - blocker_key: `history_capability_promotion_c_tax_deduction`
 - layer_target: `Domain Projection / Formal Finance Capability`
