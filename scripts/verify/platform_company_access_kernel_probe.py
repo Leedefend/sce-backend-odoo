@@ -27,6 +27,18 @@ REQUIRED_PLATFORM_XMLIDS = {
         "menu_sc_ops_job",
     ],
 }
+LEGACY_CONSTRUCTION_ACCESS_XMLIDS = [
+    "access_sc_subscription_plan_read",
+    "access_sc_subscription_plan_admin",
+    "access_sc_subscription_read",
+    "access_sc_subscription_admin",
+    "access_sc_entitlement_read",
+    "access_sc_entitlement_admin",
+    "access_sc_usage_counter_read",
+    "access_sc_usage_counter_admin",
+    "access_sc_ops_job_read",
+    "access_sc_ops_job_admin",
+]
 
 
 def assert_true(condition, message):
@@ -63,6 +75,16 @@ company = env.company
 assert_true(company, "missing current company")
 
 env["sc.subscription.plan"].sudo().ensure_platform_default_plans()
+env["sc.subscription.plan"].sudo().ensure_platform_access_ownership()
+
+legacy_access = env["ir.model.data"].sudo().search(
+    [
+        ("module", "=", "smart_construction_core"),
+        ("name", "in", LEGACY_CONSTRUCTION_ACCESS_XMLIDS),
+        ("model", "=", "ir.model.access"),
+    ]
+)
+assert_true(not legacy_access, f"legacy construction ACL ownership remains: {legacy_access.mapped('name')}")
 
 plan = env["sc.subscription.plan"].sudo().search([("code", "=", "default"), ("active", "=", True)], limit=1)
 if not plan:
@@ -94,5 +116,5 @@ print(
     "PLATFORM_COMPANY_ACCESS_KERNEL_PROBE=PASS "
     f"models={len(REQUIRED_MODELS)} actions={len(REQUIRED_PLATFORM_XMLIDS['ir.actions.act_window'])} "
     f"menus={len(REQUIRED_PLATFORM_XMLIDS['ir.ui.menu'])} company_id={company.id} "
-    f"plan={entitlement.plan_id.code}"
+    f"plan={entitlement.plan_id.code} legacy_acl=0"
 )

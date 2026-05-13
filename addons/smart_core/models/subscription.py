@@ -10,6 +10,19 @@ from odoo import api, fields, models
 
 _logger = logging.getLogger(__name__)
 
+LEGACY_CONSTRUCTION_PLATFORM_ACCESS_XMLIDS = (
+    "access_sc_subscription_plan_read",
+    "access_sc_subscription_plan_admin",
+    "access_sc_subscription_read",
+    "access_sc_subscription_admin",
+    "access_sc_entitlement_read",
+    "access_sc_entitlement_admin",
+    "access_sc_usage_counter_read",
+    "access_sc_usage_counter_admin",
+    "access_sc_ops_job_read",
+    "access_sc_ops_job_admin",
+)
+
 
 class ScSubscriptionPlan(models.Model):
     _name = "sc.subscription.plan"
@@ -54,6 +67,22 @@ class ScSubscriptionPlan(models.Model):
                 plan.sudo().write({key: vals[key] for key in ("name", "sequence", "active")})
                 continue
             self.sudo().create(vals)
+        return True
+
+    @api.model
+    def ensure_platform_access_ownership(self):
+        imds = self.env["ir.model.data"].sudo().search(
+            [
+                ("module", "=", "smart_construction_core"),
+                ("name", "in", list(LEGACY_CONSTRUCTION_PLATFORM_ACCESS_XMLIDS)),
+                ("model", "=", "ir.model.access"),
+            ]
+        )
+        access_recs = self.env["ir.model.access"].sudo().browse([res_id for res_id in imds.mapped("res_id") if res_id])
+        if imds:
+            imds.unlink()
+        if access_recs:
+            access_recs.unlink()
         return True
 
 

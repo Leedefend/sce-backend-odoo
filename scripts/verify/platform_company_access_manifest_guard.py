@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import ast
+import csv
 from pathlib import Path
 import xml.etree.ElementTree as ET
 
@@ -38,6 +39,13 @@ PLATFORM_MODELS = {
     "sc.entitlement",
     "sc.usage.counter",
     "sc.ops.job",
+}
+PLATFORM_MODEL_XML_REFS = {
+    "smart_core.model_sc_subscription_plan",
+    "smart_core.model_sc_subscription",
+    "smart_core.model_sc_entitlement",
+    "smart_core.model_sc_usage_counter",
+    "smart_core.model_sc_ops_job",
 }
 LEGACY_PLATFORM_BRIDGE_FILE = "security/sc_capability_groups.xml"
 PLATFORM_ADMIN_HELPER = "addons/smart_construction_core/services/platform_admin.py"
@@ -82,6 +90,11 @@ def _xml_model_refs(path: Path) -> set[str]:
     return refs
 
 
+def _csv_model_refs(path: Path) -> set[str]:
+    with path.open("r", encoding="utf-8", newline="") as fh:
+        return {row.get("model_id:id", "").strip() for row in csv.DictReader(fh) if row.get("model_id:id")}
+
+
 def assert_true(condition: bool, message: str) -> None:
     if not condition:
         raise AssertionError(message)
@@ -122,6 +135,16 @@ if legacy_view.exists():
 
 legacy_seed = ROOT / "addons" / "smart_construction_core" / "data" / "sc_subscription_default.xml"
 assert_true(not legacy_seed.exists(), "construction module still carries platform subscription seed file")
+
+construction_acl = ROOT / "addons" / "smart_construction_core" / "security" / "ir.model.access.csv"
+legacy_acl_refs = PLATFORM_MODEL_XML_REFS & _csv_model_refs(construction_acl)
+assert_true(not legacy_acl_refs, f"construction ACL still owns platform model refs: {sorted(legacy_acl_refs)}")
+
+platform_seed = (ROOT / "addons" / "smart_core" / "data" / "sc_subscription_default.xml").read_text(encoding="utf-8")
+assert_true(
+    "ensure_platform_access_ownership" in platform_seed,
+    "smart_core platform seed must clean legacy construction ACL ownership",
+)
 
 helper_text = (ROOT / PLATFORM_ADMIN_HELPER).read_text(encoding="utf-8")
 assert_true(
