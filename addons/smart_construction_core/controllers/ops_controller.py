@@ -5,13 +5,10 @@ from odoo import http, fields
 from odoo.http import request
 from odoo.exceptions import AccessDenied
 from odoo.addons.smart_core.security.auth import get_user_from_token
+from odoo.addons.smart_construction_core.services.platform_admin import user_is_platform_admin
 
 from .api_base import fail, fail_from_exception, ok
 from .pack_controller import PackController
-
-
-def _has_admin(user):
-    return user.has_group("smart_construction_core.group_sc_cap_config_admin") or user.has_group("base.group_system")
 
 
 class OpsController(http.Controller):
@@ -19,7 +16,7 @@ class OpsController(http.Controller):
     def tenants(self, **params):
         try:
             user = get_user_from_token()
-            if not _has_admin(user):
+            if not user_is_platform_admin(user):
                 raise AccessDenied("insufficient permissions")
             env = request.env(user=user)
             Company = env["res.company"].sudo()
@@ -60,7 +57,7 @@ class OpsController(http.Controller):
     def set_subscription(self, **params):
         try:
             user = get_user_from_token()
-            if not _has_admin(user):
+            if not user_is_platform_admin(user):
                 raise AccessDenied("insufficient permissions")
             env = request.env(user=user)
             body = request.httprequest.get_json(force=True, silent=True) or {}
@@ -96,7 +93,7 @@ class OpsController(http.Controller):
     def batch_upgrade(self, **params):
         try:
             user = get_user_from_token()
-            if not _has_admin(user):
+            if not user_is_platform_admin(user):
                 raise AccessDenied("insufficient permissions")
             env = request.env(user=user)
             body = request.httprequest.get_json(force=True, silent=True) or {}
@@ -140,7 +137,7 @@ class OpsController(http.Controller):
     def batch_rollback(self, **params):
         try:
             user = get_user_from_token()
-            if not _has_admin(user):
+            if not user_is_platform_admin(user):
                 raise AccessDenied("insufficient permissions")
             env = request.env(user=user)
             body = request.httprequest.get_json(force=True, silent=True) or {}
@@ -161,7 +158,7 @@ class OpsController(http.Controller):
     def audit_search(self, **params):
         try:
             user = get_user_from_token()
-            if not _has_admin(user):
+            if not user_is_platform_admin(user):
                 raise AccessDenied("insufficient permissions")
             env = request.env(user=user)
             event = (params.get("event") or "").strip()
@@ -190,7 +187,7 @@ class OpsController(http.Controller):
     def job_status(self, **params):
         try:
             user = get_user_from_token()
-            if not _has_admin(user):
+            if not user_is_platform_admin(user):
                 raise AccessDenied("insufficient permissions")
             env = request.env(user=user)
             job_id = params.get("job_id")

@@ -10,6 +10,7 @@ from odoo.http import request
 
 from odoo.exceptions import AccessDenied
 from odoo.addons.smart_core.security.auth import get_user_from_token
+from odoo.addons.smart_construction_core.services.platform_admin import user_is_platform_admin
 
 from .api_base import fail, ok
 
@@ -20,10 +21,6 @@ _LEGACY_SCENES_SUNSET_HTTP = format_datetime(
 )
 _LEGACY_SCENES_SUCCESSOR = "/api/v1/intent"
 _LEGACY_SCENES_ENDPOINT_NAME = "scenes.my"
-
-
-def _has_admin(user):
-    return user.has_group("smart_construction_core.group_sc_cap_config_admin") or user.has_group("base.group_system")
 
 
 def _parse_bool(val, default=False):
@@ -50,7 +47,7 @@ class SceneController(http.Controller):
             user = get_user_from_token()
             env = request.env(user=user)
             Scene = env["sc.scene"].sudo()
-            include_tests = _parse_bool(params.get("include_tests"), False) and _has_admin(user)
+            include_tests = _parse_bool(params.get("include_tests"), False) and user_is_platform_admin(user)
             domain = [("active", "=", True), ("state", "=", "published")]
             if not include_tests:
                 domain.append(("is_test", "=", False))

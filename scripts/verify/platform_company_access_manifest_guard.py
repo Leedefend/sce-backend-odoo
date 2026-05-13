@@ -40,6 +40,17 @@ PLATFORM_MODELS = {
     "sc.ops.job",
 }
 LEGACY_PLATFORM_BRIDGE_FILE = "security/sc_capability_groups.xml"
+PLATFORM_ADMIN_HELPER = "addons/smart_construction_core/services/platform_admin.py"
+FORBIDDEN_LEGACY_ADMIN_CHECKS = {
+    "addons/smart_construction_core/controllers/scene_controller.py",
+    "addons/smart_construction_core/controllers/scene_template_controller.py",
+    "addons/smart_construction_core/controllers/ops_controller.py",
+    "addons/smart_construction_core/controllers/pack_controller.py",
+    "addons/smart_construction_core/controllers/capability_catalog_controller.py",
+    "addons/smart_construction_core/models/support/history_todo.py",
+    "addons/smart_construction_core/models/support/sc_workflow.py",
+    "addons/smart_construction_custom/models/security_policy.py",
+}
 
 
 def _manifest_data(module: str) -> list[str]:
@@ -111,6 +122,22 @@ if legacy_view.exists():
 
 legacy_seed = ROOT / "addons" / "smart_construction_core" / "data" / "sc_subscription_default.xml"
 assert_true(not legacy_seed.exists(), "construction module still carries platform subscription seed file")
+
+helper_text = (ROOT / PLATFORM_ADMIN_HELPER).read_text(encoding="utf-8")
+assert_true(
+    'PLATFORM_ADMIN_GROUP = "smart_core.group_smart_core_admin"' in helper_text,
+    "platform admin helper must use smart_core.group_smart_core_admin as canonical platform authority",
+)
+
+for rel_path in sorted(FORBIDDEN_LEGACY_ADMIN_CHECKS):
+    text = (ROOT / rel_path).read_text(encoding="utf-8")
+    assert_true(
+        'has_group("smart_construction_core.group_sc_cap_config_admin")' not in text
+        and "has_group('smart_construction_core.group_sc_cap_config_admin')" not in text,
+        f"{rel_path}: must use platform_admin helper instead of direct legacy platform group check",
+    )
+    assert_true("_has_admin" not in text, f"{rel_path}: must use named platform_admin helper, not _has_admin")
+    assert_true("CONFIG_GROUP" not in text, f"{rel_path}: must use named platform_admin helper, not CONFIG_GROUP")
 
 print(
     "PLATFORM_COMPANY_ACCESS_MANIFEST_GUARD=PASS "

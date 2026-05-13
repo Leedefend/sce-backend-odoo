@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import _, fields, models
 from odoo.exceptions import UserError
+from odoo.addons.smart_construction_core.services.platform_admin import user_is_platform_admin
 
 
 class ScHistoryTodo(models.Model):
@@ -54,7 +55,7 @@ class ScHistoryTodo(models.Model):
         if not (
             self.env.user.has_group("smart_construction_core.group_sc_cap_finance_user")
             or self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager")
-            or self.env.user.has_group("smart_construction_core.group_sc_cap_config_admin")
+            or user_is_platform_admin(self.env.user)
         ):
             raise UserError(_("You do not have permission to update historical workflow todos."))
 

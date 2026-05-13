@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
+from odoo.addons.smart_construction_core.services.platform_admin import user_is_platform_admin
 
-CONFIG_GROUP = "smart_construction_core.group_sc_cap_config_admin"
 LEGACY_WORKFLOW_RUNTIME_PARAM = "sc.workflow.legacy_runtime_enabled"
 LEGACY_WORKFLOW_RUNTIME_CONTEXT = "allow_legacy_workflow_runtime"
 
@@ -52,7 +52,7 @@ class ScWorkflowDef(models.Model):
 
     # ==== 权限 / 校验 ====
     def _require_admin(self):
-        if not self.env.user.has_group(CONFIG_GROUP):
+        if not user_is_platform_admin(self.env.user):
             raise UserError(_("You do not have permission to manage workflows."))
 
     def _legacy_runtime_enabled(self):
@@ -182,7 +182,7 @@ class ScWorkflowInstance(models.Model):
 
     # ==== 权限 / 校验 ====
     def _require_admin(self):
-        if not self.env.user.has_group(CONFIG_GROUP):
+        if not user_is_platform_admin(self.env.user):
             raise UserError(_("You do not have permission to manage workflow instances."))
 
     def _legacy_runtime_enabled(self):
@@ -204,7 +204,7 @@ class ScWorkflowInstance(models.Model):
     def _require_group(self, group_xmlid):
         if group_xmlid and not self.env.user.has_group(group_xmlid):
             raise UserError(_("You are not allowed to perform this action."))
-        if not group_xmlid and not self.env.user.has_group(CONFIG_GROUP):
+        if not group_xmlid and not user_is_platform_admin(self.env.user):
             raise UserError(_("No approval group configured and you are not config admin."))
 
     @staticmethod
@@ -298,7 +298,7 @@ class ScWorkflowInstance(models.Model):
                 raise UserError(_("No pending workitem."))
             node = workitem.node_id
             # 权限校验：节点审批组或配置管理员
-            if not self.env.user.has_group(CONFIG_GROUP):
+            if not user_is_platform_admin(self.env.user):
                 rec._require_group(self._group_xmlid(node.approve_group_id))
 
             workitem.write({"status": "done", "done_by": self.env.user.id, "done_at": fields.Datetime.now()})
@@ -327,7 +327,7 @@ class ScWorkflowInstance(models.Model):
             if not workitem:
                 raise UserError(_("No pending workitem."))
             node = workitem.node_id
-            if not self.env.user.has_group(CONFIG_GROUP):
+            if not user_is_platform_admin(self.env.user):
                 rec._require_group(self._group_xmlid(node.approve_group_id))
 
             workitem.write({"status": "cancelled", "done_by": self.env.user.id, "done_at": fields.Datetime.now(), "note": note})
