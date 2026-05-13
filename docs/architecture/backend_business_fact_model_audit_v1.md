@@ -50,6 +50,7 @@ The current static inventory reports:
 | industry model families | 13 | reusable construction-industry business families |
 | customer model families | 1 | legacy replay/evidence only; not core runtime ownership |
 | ownership specs | 5 | explicit boundary specs for the highest-risk overlapping families |
+| unclassified models | 0 | every detected model class is mapped to one model family |
 
 ## What The Models Carry
 
@@ -280,6 +281,7 @@ It fails when any of these are present:
 - registry projection/probe path that no longer exists
 - registry entry without a valid solution layer, target problem, business logic, business domain, or promotion policy
 - family registry entry with invalid/missing responsibility, business object, solution layer, target problem, source of truth, or representative model references
+- detected model class that cannot be mapped to a model family
 
 ## Family Registry
 
@@ -314,6 +316,32 @@ The family registry answers "what does this model family solve?" at the system-d
 - project families solve the construction execution carrier: budget, BOQ, progress, quality, safety, risk, diary, and WBS.
 - projection families solve management visibility and must remain rebuildable.
 - legacy families solve historical evidence and replay, not future runtime workflow ownership.
+
+The static audit now also assigns every detected model class to one family. Current coverage is complete:
+
+| family | detected model classes |
+| --- | ---: |
+| company and business governance | 7 |
+| compatibility bridges and native extensions | 9 |
+| document admin payroll and office operations | 5 |
+| expense contract and procurement commitment | 3 |
+| income contract and tender business | 14 |
+| labor equipment and subcontract lifecycle | 26 |
+| legacy replay and historical evidence | 51 |
+| material lifecycle | 25 |
+| partner and counterparty identity | 4 |
+| payment request and payment execution | 4 |
+| product and material identity | 4 |
+| progress quality safety risk and diary | 24 |
+| project budget BOQ and cost control | 15 |
+| project identity and execution carrier | 20 |
+| projection summaries and management visibility | 18 |
+| receipt income invoice and tax realization | 5 |
+| scene capability subscription and frontend contract runtime | 13 |
+| treasury account reconciliation and ledger | 3 |
+| workflow approval dictionary audit and validation | 13 |
+
+The enforcement rule is simple: a new backend model may be added only if it can be classified into one of these families or the family registry is deliberately extended.
 
 ## Ownership Specs For Overlap Risks
 
@@ -412,4 +440,5 @@ Current summary:
 - `ownership_spec_count=5`
 - `ownership_spec_shape_gap_count=0`
 - `ownership_spec_reference_gap_count=0`
+- `unclassified_model_count=0`
 - `implementation_counts={"custom_model": 150, "custom_model_with_mixin_or_inherit": 88, "native_model_extension": 25}`

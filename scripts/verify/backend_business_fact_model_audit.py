@@ -132,6 +132,7 @@ def extract_models() -> list[dict[str, Any]]:
             field_types = {field["name"]: field["type"] for field in fields}
             path_text = str(path.relative_to(ROOT))
             buckets = classify_model(path_text, model_name, inherit, description, field_names, field_types)
+            model_family = classify_model_family(path_text, model_name, inherit, buckets)
             constraint_text = json.dumps(constraints, ensure_ascii=False)
             rows.append(
                 {
@@ -144,6 +145,7 @@ def extract_models() -> list[dict[str, Any]]:
                     "field_count": len(fields),
                     "fields": fields,
                     "buckets": buckets,
+                    "model_family": model_family,
                     "standard_fields": {field: field in field_names for field in STANDARD_FIELDS},
                     "has_legacy_unique_constraint": "legacy_source_unique" in constraint_text
                     or "unique(legacy_source_model, legacy_record_id)" in constraint_text,
@@ -194,6 +196,92 @@ def classify_model(
     return sorted(buckets)
 
 
+def model_ref(model_name: str | None, inherit: Any) -> str:
+    if model_name:
+        return model_name
+    if isinstance(inherit, str):
+        return inherit
+    if isinstance(inherit, list):
+        return " ".join(item for item in inherit if isinstance(item, str))
+    return ""
+
+
+def classify_model_family(path: str, model_name: str | None, inherit: Any, buckets: list[str]) -> str:
+    ref = model_ref(model_name, inherit)
+    text = " ".join([path, ref])
+
+    if "projection" in buckets:
+        return "projection summaries and management visibility"
+    if ref.startswith("sc.legacy") or ref == "sc.history.todo" or "legacy_" in path:
+        return "legacy replay and historical evidence"
+    if any(key in ref for key in ("sc.scene", "sc.capability", "sc.subscription", "sc.entitlement", "sc.usage.counter", "sc.ops.job")):
+        return "scene capability subscription and frontend contract runtime"
+    if any(key in ref for key in ("sc.workflow", "sc.approval", "sc.dictionary", "sc.audit", "sc.data.validator", "tier.definition")):
+        return "workflow approval dictionary audit and validation"
+    if any(key in ref for key in ("res.company", "res.config.settings", "res.users", "res.groups", "sc.business.entity", "sc.pack")):
+        return "company and business governance"
+    if any(key in ref for key in ("res.partner", "res.partner.bank", "sc.supplier.type", "sc.partner.import.review")):
+        return "partner and counterparty identity"
+    if any(key in ref for key in ("product.template", "product.category", "sc.material.catalog", "sc.material.price")):
+        return "product and material identity"
+    if (
+        ref.startswith("project.")
+        and not any(key in ref for key in ("project.budget", "project.boq", "project.cost", "project.material", "project.progress", "project.risk", "project.settlement"))
+    ) or any(key in ref for key in ("project.task", "project.wbs", "construction.work.breakdown", "sc.project.structure", "sc.project.member", "sc.project.next_action", "sc.project.stage")):
+        return "project identity and execution carrier"
+    if "tender." in ref or ref == "construction.contract.income":
+        return "income contract and tender business"
+    if any(key in ref for key in ("sc.general.contract", "construction.contract.expense", "construction.contract.line")):
+        return "expense contract and procurement commitment"
+    if ref == "construction.contract" or any(key in ref for key in ("construction.contract.professional.mixin", "sc.contract.event", "sc.contract.recon")):
+        return "income contract and tender business"
+    if any(key in ref for key in ("payment.request", "payment.ledger", "sc.payment.execution", "sc.expense.claim")):
+        return "payment request and payment execution"
+    if any(key in ref for key in ("sc.receipt", "sc.invoice", "sc.tax.deduction", "sc.financing.loan")):
+        return "receipt income invoice and tax realization"
+    if any(key in ref for key in ("sc.fund", "sc.treasury")):
+        return "treasury account reconciliation and ledger"
+    if any(key in ref for key in ("project.budget", "project.boq", "project.cost", "project.funding", "project.settlement", "sc.settlement")):
+        return "project budget BOQ and cost control"
+    if any(key in ref for key in ("project.material", "sc.material", "purchase.order", "stock.")):
+        return "material lifecycle"
+    if any(key in ref for key in ("sc.labor", "sc.equipment", "sc.subcontract", "sc.attendance")):
+        return "labor equipment and subcontract lifecycle"
+    if any(
+        key in ref
+        for key in (
+            "project.progress",
+            "project.risk",
+            "sc.quality",
+            "sc.safety",
+            "sc.risk",
+            "sc.hazard",
+            "sc.check",
+            "sc.site.photo",
+            "sc.construction.diary",
+            "sc.plan",
+        )
+    ):
+        return "progress quality safety risk and diary"
+    if any(key in ref for key in ("sc.document", "sc.office", "sc.hr.payroll", "hr.department", "sc.project.document")):
+        return "document admin payroll and office operations"
+    if any(
+        key in ref
+        for key in (
+            "account.move",
+            "account.move.line",
+            "sc.business.fact.mixin",
+            "sc.delete.guard.mixin",
+            "sc.system.default.mixin",
+            "sc.material.system.default.mixin",
+        )
+    ):
+        return "compatibility bridges and native extensions"
+    if "support/" in text:
+        return "compatibility bridges and native extensions"
+    return "unclassified"
+
+
 def load_registry(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {"models": [], "missing_registry": True}
@@ -224,6 +312,17 @@ def registry_maps(registry: dict[str, Any]) -> tuple[dict[str, dict[str, Any]], 
 def summarize(rows: list[dict[str, Any]], registry: dict[str, Any]) -> dict[str, Any]:
     bucket_counts = Counter(bucket for row in rows for bucket in row["buckets"])
     implementation_counts = Counter(row["implementation_kind"] for row in rows)
+    family_counts = Counter(row.get("model_family") or "unclassified" for row in rows)
+    unclassified_rows = [
+        {
+            "model": row.get("model"),
+            "inherit": row.get("inherit"),
+            "path": row["path"],
+            "implementation_kind": row["implementation_kind"],
+        }
+        for row in rows
+        if row.get("model_family") == "unclassified"
+    ]
     formal_rows = [row for row in rows if "formal_fact" in row["buckets"]]
     legacy_rows = [row for row in rows if "legacy_fact" in row["buckets"]]
     projection_rows = [row for row in rows if "projection" in row["buckets"]]
@@ -289,6 +388,9 @@ def summarize(rows: list[dict[str, Any]], registry: dict[str, Any]) -> dict[str,
         "model_count": len(rows),
         "bucket_counts": dict(sorted(bucket_counts.items())),
         "implementation_counts": dict(sorted(implementation_counts.items())),
+        "model_family_counts": dict(sorted(family_counts.items())),
+        "unclassified_model_count": len(unclassified_rows),
+        "unclassified_models": unclassified_rows,
         "native_extension_count": implementation_counts.get("native_model_extension", 0),
         "custom_model_count": implementation_counts.get("custom_model", 0),
         "custom_model_with_mixin_or_inherit_count": implementation_counts.get("custom_model_with_mixin_or_inherit", 0),
@@ -474,6 +576,7 @@ def write_markdown(report: dict[str, Any], path: Path) -> None:
         f"- undeclared_standard_gap_count: {summary['undeclared_standard_gap_count']}",
         f"- registry_path_gap_count: {summary['registry_path_gap_count']}",
         f"- registry_shape_gap_count: {summary['registry_shape_gap_count']}",
+        f"- unclassified_model_count: {summary['unclassified_model_count']}",
         "",
         "## Bucket Counts",
         "",
@@ -483,6 +586,19 @@ def write_markdown(report: dict[str, Any], path: Path) -> None:
     lines.extend(["", "## Implementation Counts", ""])
     for key, value in summary["implementation_counts"].items():
         lines.append(f"- {key}: {value}")
+    lines.extend(["", "## Model Family Counts", ""])
+    for key, value in summary["model_family_counts"].items():
+        lines.append(f"- {key}: {value}")
+    lines.extend(["", "## Unclassified Models", ""])
+    if summary["unclassified_models"]:
+        lines.append("| model | inherit | implementation | path |")
+        lines.append("| --- | --- | --- | --- |")
+        for row in summary["unclassified_models"]:
+            lines.append(
+                f"| {row.get('model') or ''} | {row.get('inherit') or ''} | {row['implementation_kind']} | {row['path']} |"
+            )
+    else:
+        lines.append("- none")
     lines.extend(["", "## Native Model Extensions", ""])
     for row in rows:
         if row["implementation_kind"] != "native_model_extension":
@@ -654,6 +770,7 @@ def main() -> int:
         ownership_specs_path = ROOT / args.ownership_specs
         blockers = {
             "unregistered_formal_models": summary["unregistered_formal_models"],
+            "unclassified_models": summary["unclassified_models"],
             "registered_models_not_detected": summary["registered_models_not_detected"],
             "undeclared_standard_gaps": summary["undeclared_standard_gaps"],
             "registry_path_gaps": summary["registry_path_gaps"],
