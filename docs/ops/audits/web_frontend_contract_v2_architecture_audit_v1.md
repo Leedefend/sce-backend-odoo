@@ -395,6 +395,7 @@ Batch C shadow execution note:
 - C.12 removes the form-only `lifecycle_state` label-to-code fallback; statusbar writes now rely on backend selection/status contract codes instead of frontend business label inference.
 - C.13 removes `groups_xmlids` reads from `ContractFormPage`; form fields/actions now rely on backend policy/status plus role/capability context instead of page-level group filtering.
 - C.14 removes ActionView user-group forwarding into action button runtime; list/kanban action buttons no longer infer entitlement from `groups_xmlids`.
+- C.16 removes `groups_xmlids` reads from the parallel `RecordView` diagnostics path; capability checks no longer receive page-level group inputs there.
 
 ### Batch D: Action/List/Kanban Renderer Convergence
 

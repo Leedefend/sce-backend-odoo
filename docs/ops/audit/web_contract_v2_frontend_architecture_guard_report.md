@@ -2,7 +2,7 @@
 
 - mode: debt_lock
 - status: PASS
-- findings: 14
+- findings: 13
 
 ## Findings
 
@@ -17,6 +17,5 @@
 - [P1] action_view_direct_data_imports `frontend/apps/web/src/views/ActionView.vue` count=1/1
 - [P1] record_view_direct_data_imports `frontend/apps/web/src/views/RecordView.vue` count=1/1
 - [P1] relation_renderer_direct_data_imports `frontend/apps/web/src/components/view/ViewRelationalRenderer.vue` count=1/1
-- [P1] record_view_groups_usage `frontend/apps/web/src/views/RecordView.vue` count=1/1
 - [P1] lite_legacy_default_fallback `frontend/apps/web/src/app/contracts/unifiedPageContractLite.ts` count=2/2
 - [P1] api_contract_lite_legacy_default_fallback `frontend/apps/web/src/api/contract.ts` count=1/1

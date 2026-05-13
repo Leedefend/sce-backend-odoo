@@ -337,7 +337,6 @@ const pageSectionTagIs = pageContract.sectionTagIs;
 const pageActionIntent = pageContract.actionIntent;
 const pageActionTarget = pageContract.actionTarget;
 const pageGlobalActions = pageContract.globalActions;
-const userGroups = computed(() => session.user?.groups_xmlids ?? []);
 const statusLabel = computed(() => {
   if (status.value === 'editing') return pageText('status_editing', 'Editing');
   if (status.value === 'saving') return pageText('status_saving', 'Saving');
@@ -436,8 +435,6 @@ function buttonState(btn: ViewButton) {
   return evaluateCapabilityPolicy({
     source: btn,
     available: session.capabilities,
-    groups: Array.isArray(btn.groups) ? btn.groups : [],
-    userGroups: userGroups.value,
   });
 }
 

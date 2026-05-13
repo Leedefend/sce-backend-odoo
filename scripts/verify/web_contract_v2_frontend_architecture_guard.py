@@ -164,7 +164,7 @@ DEBT_RULES: tuple[DebtRule, ...] = (
         severity="P1",
         path="views/RecordView.vue",
         pattern="groups_xmlids",
-        max_count=1,
+        max_count=0,
         rationale="RecordView still reads groups in its parallel runtime.",
         next_action="Remove or diagnostics-isolate RecordView.",
     ),
