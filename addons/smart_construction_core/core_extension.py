@@ -1452,13 +1452,7 @@ def get_system_init_fact_contributions(env, user, context=None):
     """Return construction system.init facts contribution payload."""
     del context
     try:
-        Entitlement = env.get("sc.entitlement")
-        Usage = env.get("sc.usage.counter")
         module_facts = {}
-        if Entitlement:
-            module_facts["entitlements"] = Entitlement.get_payload(user)
-        if Usage:
-            module_facts["usage"] = Usage.get_usage_map(user.company_id)
 
         task_rows = _build_task_action_rows(env, user)
         payment_rows = _build_payment_action_rows(env)

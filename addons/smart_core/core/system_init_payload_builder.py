@@ -14,6 +14,8 @@ class SystemInitPayloadBuilder:
         "delivery_engine_v1",
         "scene_ready_contract_v1",
         "page_contracts",
+        "sc.entitlement",
+        "sc.usage.counter",
     )
     NO_BUSINESS_FACT_AUTHORITY = True
     BUILD_MODE_BOOT = "boot"
@@ -59,6 +61,22 @@ class SystemInitPayloadBuilder:
             "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
             "runtime_carrier": "system_init",
         }
+
+    @classmethod
+    def attach_platform_company_access_facts(cls, data: dict, env, user) -> None:
+        if not isinstance(data, dict):
+            return
+        try:
+            if "entitlements" not in data:
+                data["entitlements"] = env["sc.entitlement"].get_payload(user)
+        except Exception:
+            pass
+        try:
+            company = getattr(user, "company_id", None) if user else None
+            if company and "usage" not in data:
+                data["usage"] = env["sc.usage.counter"].get_usage_map(company)
+        except Exception:
+            pass
 
     @staticmethod
     def _parse_with_tokens(value) -> set[str]:

@@ -669,6 +669,13 @@ class SystemInitHandler(BaseIntentHandler):
             prepare_runtime_context_ts,
         )
 
+        SystemInitPayloadBuilder.attach_platform_company_access_facts(data, env, user)
+        prepare_runtime_context_ts = _mark_substage(
+            "prepare_runtime_context",
+            "attach_platform_company_access_facts",
+            prepare_runtime_context_ts,
+        )
+
         # 扩展模块 facts contribution（平台 merge owner）
         apply_extension_fact_contributions(data, env, user, context=params)
         prepare_runtime_context_ts = _mark_substage(

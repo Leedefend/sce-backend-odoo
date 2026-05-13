@@ -196,6 +196,18 @@ for route in ("/api/ops/tenants", "/api/ops/subscription/set", "/api/ops/job/sta
     assert_true(route in platform_ops_text, f"{PLATFORM_OPS_CONTROLLER}: missing platform route {route}")
     assert_true(route not in construction_ops_text, f"{CONSTRUCTION_OPS_CONTROLLER}: must not own platform route {route}")
 
+system_init_builder_text = (ROOT / "addons/smart_core/core/system_init_payload_builder.py").read_text(encoding="utf-8")
+construction_extension_text = (ROOT / "addons/smart_construction_core/core_extension.py").read_text(encoding="utf-8")
+assert_true(
+    "attach_platform_company_access_facts" in system_init_builder_text,
+    "smart_core system_init payload builder must attach platform company access facts",
+)
+assert_true(
+    'env.get("sc.entitlement")' not in construction_extension_text
+    and 'env.get("sc.usage.counter")' not in construction_extension_text,
+    "construction extension must not contribute platform entitlement/usage facts",
+)
+
 for rel_path in sorted(FORBIDDEN_LEGACY_ADMIN_CHECKS):
     text = (ROOT / rel_path).read_text(encoding="utf-8")
     assert_true(
