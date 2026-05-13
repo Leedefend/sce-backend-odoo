@@ -54,7 +54,7 @@ def main() -> int:
         "function relationUiLabel(descriptor: FieldDescriptor | undefined, key: string, fallback = '')",
         "if (mode === 'page') return relationUiLabel(descriptor, 'create_and_edit');",
         "if (mode === 'quick') return relationUiLabel(descriptor, 'quick_create');",
-        "{{ relationSearchDialog.labels.create }}",
+        "{{ relationSearchDialog.labels.create || '新建' }}",
         "acc[`default_${key}`] = value;",
     ]
     for marker in frontend_required:

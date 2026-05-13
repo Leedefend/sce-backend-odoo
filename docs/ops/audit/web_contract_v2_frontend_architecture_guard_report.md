@@ -1,6 +1,6 @@
 # Web Contract V2 Frontend Architecture Guard Report
 
-- mode: debt_lock
+- mode: strict
 - status: PASS
 - findings: 0
 

@@ -404,6 +404,7 @@ Batch C shadow execution note:
 - C.22 isolates `ContractFormPage` form read/write/create and relation option data access behind `contractFormDataRuntime`, removing the remaining product form page direct `api/data` dependency without changing form behavior or backend contract semantics.
 - C.23 moves the Lite preview `legacy_default` fallback token into `unifiedPageContractLiteCompat`, so the API adapter and Lite schema surface reference an explicit compatibility boundary instead of carrying the fallback literal in default files.
 - C.24 moves the remaining v2-to-legacy runtime projection from `api/contract.ts` into `unifiedPageContractV2CompatProjection`, leaving the API adapter as request/error orchestration and reducing the architecture guard findings to zero.
+- C.25 runs the strict/frontend quick gate closure after the debt count reached zero, aligns stale guard markers with the current renderer/schema paths, and restores the grouped rows sample-limit selector in `ListPage` so the grouped runtime controls remain user-reachable.
 
 ### Batch D: Action/List/Kanban Renderer Convergence
 

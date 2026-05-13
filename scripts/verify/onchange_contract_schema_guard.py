@@ -36,7 +36,7 @@ def main() -> int:
         '"line_patches": line_patches,',
         'def _normalize_modifiers_patch(self, env_model, modifiers_raw: Any) -> Dict[str, Dict[str, Any]]:',
         'for marker in ("invisible", "readonly", "required", "domain"):',
-        '"meta": {"model": model, "intent": self.INTENT_TYPE, "version": self.VERSION},',
+        '"meta": {"model": model, "intent": self.INTENT_TYPE, "version": self.VERSION, "source_authority": self._source_authority_contract(model)},',
     ]
     for marker in backend_markers:
         if marker not in backend:
