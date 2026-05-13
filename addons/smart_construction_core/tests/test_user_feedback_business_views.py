@@ -722,6 +722,33 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         self.assertIn('name="receipt_partner_name"', bid_form)
         self.assertIn('name="receipt_bank_account"', bid_form)
 
+    def test_tender_optional_scope_metadata_is_non_blocking(self):
+        bid = self.env["tender.bid"].create(
+            {
+                "tender_name": "Feedback Tender Optional Scope",
+                "project_id": self.project.id,
+            }
+        )
+
+        self.assertFalse(bid.business_scope_key)
+        self.assertFalse(bid.business_direction)
+        self.assertFalse(bid.carrier_type)
+        self.assertFalse(bid.carrier_model)
+        self.assertEqual(bid.carrier_res_id, 0)
+
+        bid.write(
+            {
+                "business_scope_key": "income:feedback",
+                "business_direction": "income",
+                "carrier_type": "project",
+                "carrier_model": "project.project",
+                "carrier_res_id": self.project.id,
+            }
+        )
+        self.assertEqual(bid.project_id, self.project)
+        self.assertEqual(bid.business_direction, "income")
+        self.assertEqual(bid.carrier_model, "project.project")
+
     def test_construction_diary_list_exposes_projected_site_fields(self):
         tree = self.env.ref("smart_construction_core.view_sc_construction_diary_tree").arch_db
 

@@ -1057,6 +1057,7 @@ def summarize_optional_scope_metadata(
     for item in metadata_rows:
         target_model = item.get("target_model")
         family = item.get("family")
+        model_row = next((row for row in rows if row.get("model") == target_model), None)
         for field in required_fields:
             value = item.get(field)
             if isinstance(value, list):
@@ -1097,6 +1098,34 @@ def summarize_optional_scope_metadata(
                         "target_model": target_model,
                         "field": proposed_field.get("name"),
                         "reason": "optional_scope_field_must_be_required_false",
+                    }
+                )
+            actual_field = field_by_name(model_row.get("fields", []) if model_row else [], proposed_field.get("name"))
+            if not actual_field:
+                shape_gaps.append(
+                    {
+                        "target_model": target_model,
+                        "field": proposed_field.get("name"),
+                        "reason": "proposed_optional_scope_field_not_implemented",
+                    }
+                )
+                continue
+            if actual_field.get("type") != proposed_field.get("type"):
+                shape_gaps.append(
+                    {
+                        "target_model": target_model,
+                        "field": proposed_field.get("name"),
+                        "reason": "implemented_field_type_mismatch",
+                        "expected": proposed_field.get("type"),
+                        "actual": actual_field.get("type"),
+                    }
+                )
+            if actual_field.get("required"):
+                shape_gaps.append(
+                    {
+                        "target_model": target_model,
+                        "field": proposed_field.get("name"),
+                        "reason": "implemented_optional_scope_field_is_required",
                     }
                 )
     return {
