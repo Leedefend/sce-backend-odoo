@@ -76,6 +76,7 @@ PLATFORM_ADMIN_HELPER = "addons/smart_core/security/platform_admin.py"
 LEGACY_PLATFORM_ADMIN_HELPER = "addons/smart_construction_core/services/platform_admin.py"
 PLATFORM_OPS_CONTROLLER = "addons/smart_core/controllers/platform_ops_controller.py"
 CONSTRUCTION_OPS_CONTROLLER = "addons/smart_construction_core/controllers/ops_controller.py"
+RELEASE_APPROVAL_POLICY_SERVICE = "addons/smart_core/delivery/release_approval_policy_service.py"
 SCENE_ORCHESTRATION_VIEW = "addons/smart_construction_core/views/support/scene_orchestration_views.xml"
 SCENE_GOVERNANCE_VIEW = "addons/smart_construction_scene/views/scene_governance_views.xml"
 CANONICAL_PLATFORM_ADMIN_GROUP = "smart_core.group_smart_core_admin"
@@ -382,6 +383,19 @@ assert_true(
     "platform_admin_group_xmlids" in custom_security_policy_text
     and '"smart_construction_core.group_sc_cap_config_admin"' not in custom_security_policy_text,
     "custom security policy must consume platform admin group xmlids from smart_core.security.platform_admin",
+)
+release_approval_policy_text = (ROOT / RELEASE_APPROVAL_POLICY_SERVICE).read_text(encoding="utf-8")
+assert_true(
+    "smart_core.security.platform_admin" in release_approval_policy_text
+    and "user_is_platform_admin" in release_approval_policy_text,
+    f"{RELEASE_APPROVAL_POLICY_SERVICE}: release approval role policy must consume canonical platform admin helper",
+)
+assert_true(
+    'has_group("smart_core.group_smart_core_admin")' not in release_approval_policy_text
+    and "has_group('smart_core.group_smart_core_admin')" not in release_approval_policy_text
+    and 'has_group("base.group_system")' not in release_approval_policy_text
+    and "has_group('base.group_system')" not in release_approval_policy_text,
+    f"{RELEASE_APPROVAL_POLICY_SERVICE}: must not hardcode platform admin group checks",
 )
 
 for rel_path in sorted(FORBIDDEN_LEGACY_ADMIN_CHECKS):

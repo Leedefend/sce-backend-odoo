@@ -5,6 +5,7 @@ from typing import Any
 
 from odoo import SUPERUSER_ID, fields
 from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
+from odoo.addons.smart_core.security.platform_admin import user_is_platform_admin
 
 from .product_identity import resolve_product_identity
 from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
@@ -42,7 +43,7 @@ class ReleaseApprovalPolicyService:
     def legacy_role_source_authority_contract(cls) -> dict[str, Any]:
         return build_source_authority_contract(
             kind=cls.LEGACY_ROLE_SOURCE_KIND,
-            authorities=("smart_construction_core.groups", "base.group_system", "smart_core.group_smart_core_admin"),
+            authorities=("smart_construction_core.groups", "smart_core.security.platform_admin"),
             rebuildable=None,
             no_business_fact_authority=True,
             legacy_compatibility=True,
@@ -102,11 +103,7 @@ class ReleaseApprovalPolicyService:
                 legacy_used = True
         except Exception:
             pass
-        if (
-            int(user.id or 0) == int(SUPERUSER_ID)
-            or user.has_group("base.group_system")
-            or user.has_group("smart_core.group_smart_core_admin")
-        ):
+        if int(user.id or 0) == int(SUPERUSER_ID) or user_is_platform_admin(user):
             roles.add("admin")
             roles.add("executive")
         return {

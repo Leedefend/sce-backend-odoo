@@ -157,7 +157,7 @@ Menu：
 
 - 不依赖 base_tier_validation 的组（它可能无 res.groups）。
 - 入口/动作/ACL 绑定你自己的能力组：
-  - 配置/定义：`group_sc_cap_config_admin`
+  - 配置/定义：`smart_core.group_smart_core_admin`
   - 审批入口：对应域的 `*_manager`
 - 若审批人能看菜单但 403，补一条 ACL 给能力组（对 `tier.review` 读/写/创建）。
 
@@ -184,4 +184,3 @@ Menu：
   - 回调动作：`addons/smart_construction_core/data/material_plan_tier_actions.xml`  
   - 待审入口：`addons/smart_construction_core/views/tier_review_views.xml`  
   - 白名单扩展：`addons/smart_construction_core/models/tier_definition_ext.py`
-
