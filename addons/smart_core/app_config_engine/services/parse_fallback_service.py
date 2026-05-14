@@ -46,9 +46,9 @@ class ParseFallbackService:
     ) -> dict:
         """Choose parser-native result or fallback parse result."""
         parsed_ok = self.owner._parsed_ok(view_type, parsed_json)
-        _logger.info("VIEW_PARSE_DEBUG: force_fallback=%s, parsed_ok=%s", force_fallback, parsed_ok)
+        _logger.debug("VIEW_PARSE_DEBUG: force_fallback=%s, parsed_ok=%s", force_fallback, parsed_ok)
         if force_fallback or not parsed_ok:
-            _logger.info("VIEW_PARSE_DEBUG: 使用 Fallback 解析 → %s.%s", model_name, view_type)
+            _logger.debug("VIEW_PARSE_DEBUG: 使用 Fallback 解析 → %s.%s", model_name, view_type)
             return self.owner._fallback_parse(model_name, view_type, view_data)
-        _logger.info("VIEW_PARSE_DEBUG: using app.view.parser for %s.%s", model_name, view_type)
+        _logger.debug("VIEW_PARSE_DEBUG: using app.view.parser for %s.%s", model_name, view_type)
         return parsed_json if isinstance(parsed_json, dict) else {}

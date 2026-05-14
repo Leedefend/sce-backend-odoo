@@ -85,10 +85,10 @@ class OdooViewParser(_BaseViewParserMixin,
         fields_info = self._enrich_view_fields_info(model, arch, (odoo_view or {}).get('fields') or {})
         toolbar_raw = (odoo_view or {}).get('toolbar') or {}
 
-        _logger.info("VIEW_PARSER_DEBUG: model=%s view_type=%s arch_length=%s fields_count=%s",
+        _logger.debug("VIEW_PARSER_DEBUG: model=%s view_type=%s arch_length=%s fields_count=%s",
                      model_name, view_type, len(arch) if arch else 0, len(fields_info))
         if arch:
-            _logger.info("VIEW_PARSER_DEBUG: arch_preview=%s", arch[:200])
+            _logger.debug("VIEW_PARSER_DEBUG: arch_preview=%s", arch[:200])
 
         parsed_structure = self._lossless_parse_xml(arch)
 
@@ -117,12 +117,12 @@ class OdooViewParser(_BaseViewParserMixin,
             base.update(tree_blk)
         elif vt == 'form':
             form_blk = self._parse_form_view(arch, fields_info, model_name)
-            _logger.info("VIEW_PARSER_DEBUG: form_blk keys=%s", list(form_blk.keys()))
-            _logger.info("VIEW_PARSER_DEBUG: form_blk layout=%s", form_blk.get('layout'))
+            _logger.debug("VIEW_PARSER_DEBUG: form_blk keys=%s", list(form_blk.keys()))
+            _logger.debug("VIEW_PARSER_DEBUG: form_blk layout=%s", form_blk.get('layout'))
             if form_blk.get('layout'):
-                _logger.info("VIEW_PARSER_DEBUG: form_blk layout type=%s length=%s", type(form_blk['layout']), len(form_blk['layout']))
+                _logger.debug("VIEW_PARSER_DEBUG: form_blk layout type=%s length=%s", type(form_blk['layout']), len(form_blk['layout']))
                 if len(form_blk['layout']) > 0:
-                    _logger.info("VIEW_PARSER_DEBUG: form_blk first layout item=%s", form_blk['layout'][0])
+                    _logger.debug("VIEW_PARSER_DEBUG: form_blk first layout item=%s", form_blk['layout'][0])
             base.update(form_blk)
         elif vt == 'kanban':
             base.update({"kanban": self._parse_kanban_view(arch, fields_info)})
@@ -141,7 +141,7 @@ class OdooViewParser(_BaseViewParserMixin,
         else:
             _logger.warning("Unknown view_type %s for %s; return minimal block.", vt, model_name)
 
-        _logger.info("VIEW_PARSER_DEBUG: final result keys=%s", list(base.keys()))
+        _logger.debug("VIEW_PARSER_DEBUG: final result keys=%s", list(base.keys()))
         return {
             "id": f"{model_name}_{view_type}",
             "model": model_name,
@@ -183,7 +183,7 @@ class OdooViewParser(_BaseViewParserMixin,
             meta = (model_fields or {}).get(fname)
             if isinstance(meta, dict):
                 out[fname] = meta
-        _logger.info(
+        _logger.debug(
             "VIEW_PARSER_DEBUG: enriched fields_info with arch fields=%s",
             [name for name in missing if name in out],
         )

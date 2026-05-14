@@ -103,12 +103,12 @@ class ContractService:
         client_etag = (request.httprequest.headers.get('If-None-Match') or "").strip()
         if client_etag.startswith('"') and client_etag.endswith('"'):
             client_etag = client_etag[1:-1]
-        _logger.warning("CONTRACT_REQUEST payload=%s headers=%s", payload, dict(request.httprequest.headers))
+        _logger.debug("CONTRACT_REQUEST payload=%s headers=%s", payload, dict(request.httprequest.headers))
 
         # 2) 解析/规范化 payload（强约束字段、兜底默认值）
         p = parse_payload(payload)
         contract_mode = resolve_contract_mode(payload if isinstance(payload, dict) else p)
-        _logger.warning("CONTRACT_PARSED_PAYLOAD %s", p)
+        _logger.debug("CONTRACT_PARSED_PAYLOAD %s", p)
 
         # 3) 根据 subject 分发
         subject = p.get('subject')
@@ -419,7 +419,7 @@ class ContractService:
                         changed = True
 
             if changed:
-                _logger.info("SANITIZE_PERMS: 永真域已限制到项目经理组并取消 global。")
+                _logger.debug("SANITIZE_PERMS: 永真域已限制到项目经理组并取消 global。")
 
         except Exception:
             _logger.exception("SANITIZE_PERMS: 处理权限时发生异常（已忽略以不中断流程）")

@@ -1165,11 +1165,9 @@ class SystemInitHandler(BaseIntentHandler):
         else:
             data.pop("scene_governance_v1", None)
         data = _strip_ui_base_contract_for_frontend(data)
-        extension_snapshot: dict = {}
-        apply_extension_fact_contributions(extension_snapshot, env, user, context=params)
         snapshot_ext = (
-            extension_snapshot.get("ext_facts")
-            if isinstance(extension_snapshot.get("ext_facts"), dict)
+            data.get("ext_facts")
+            if isinstance(data.get("ext_facts"), dict)
             else {}
         )
         role_entries = []

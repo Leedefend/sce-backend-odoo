@@ -1510,10 +1510,10 @@ class PageAssembler:
             limit = int(p.get("limit") or view_page_size or limit)
 
             # 调试日志：记录列顺序来源与最终列
-            _logger.info("COLUMN_ORDER_DEBUG: model=%s list_vt=%s", model, list_vt)
-            _logger.info("COLUMN_ORDER_DEBUG: XML解析列顺序 view_cols=%s", view_cols_cfg)
-            _logger.info("COLUMN_ORDER_DEBUG: 最终输出列顺序 cols=%s", cols)
-            _logger.info("LIST etl: vt=%s model=%s cols=%s limit=%s order=%s", list_vt, model, cols, limit, order)
+            _logger.debug("COLUMN_ORDER_DEBUG: model=%s list_vt=%s", model, list_vt)
+            _logger.debug("COLUMN_ORDER_DEBUG: XML解析列顺序 view_cols=%s", view_cols_cfg)
+            _logger.debug("COLUMN_ORDER_DEBUG: 最终输出列顺序 cols=%s", cols)
+            _logger.debug("LIST etl: vt=%s model=%s cols=%s limit=%s order=%s", list_vt, model, cols, limit, order)
 
             # 搜索 & 读取：只读所需列，减少 IO/序列化负担（自动应用记录规则）
             recs = Model.search(domain, order=order, limit=limit, offset=offset)
