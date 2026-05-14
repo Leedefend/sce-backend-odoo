@@ -68,6 +68,29 @@ def _load_handler():
     return module
 
 
+def _load_project_context_core():
+    root = Path(__file__).resolve().parents[1]
+    _install_module("odoo")
+    _install_module("odoo.exceptions", AccessError=type("AccessError", (Exception,), {}))
+    _install_module("odoo.addons")
+    smart_core_mod = _install_module("odoo.addons.smart_core")
+    utils_mod = _install_module("odoo.addons.smart_core.utils")
+    smart_core_mod.__path__ = [str(root)]
+    utils_mod.__path__ = [str(root / "utils")]
+    _install_module(
+        "odoo.addons.smart_core.utils.extension_hooks",
+        call_extension_hook_first=lambda *args, **kwargs: None,
+    )
+
+    module_name = "odoo.addons.smart_core.core.project_context"
+    sys.modules.pop(module_name, None)
+    spec = importlib.util.spec_from_file_location(module_name, root / "core" / "project_context.py")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
 class TestProjectContextBoundaries(unittest.TestCase):
     def setUp(self):
         self.module = _load_handler()
@@ -99,6 +122,35 @@ class TestProjectContextBoundaries(unittest.TestCase):
         self.assertEqual(result.data["selector"]["limit"], 7)
         self.assertEqual(self.module._captured["search"], "abc")
         self.assertEqual(self.module._captured["limit"], 7)
+
+    def test_record_context_domain_excludes_unsearchable_display_name(self):
+        core = _load_project_context_core()
+
+        class Field:
+            def __init__(self, *, store=False, search=None):
+                self.store = store
+                self.search = search
+
+        class Model:
+            _fields = {
+                "name": Field(store=True),
+                "display_name": Field(store=False),
+                "code": Field(store=True),
+                "project_code": Field(store=True),
+            }
+
+        domain = core._record_context_domain(Model, "五洲")
+
+        self.assertEqual(
+            domain,
+            [
+                "|",
+                "|",
+                ("name", "ilike", "五洲"),
+                ("code", "ilike", "五洲"),
+                ("project_code", "ilike", "五洲"),
+            ],
+        )
 
 
 if __name__ == "__main__":
