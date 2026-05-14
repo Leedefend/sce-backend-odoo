@@ -75,11 +75,51 @@ class ApiDataWriteHandler(BaseIntentHandler):
                 if normalized:
                     out[model] = normalized
             if out:
+                self._merge_business_config_custom_fields(out)
                 return out
-        return {
+        out = {
             str(model_name): {str(field).strip() for field in (field_names or []) if str(field).strip()}
             for model_name, field_names in self.ALLOWED_MODELS.items()
         }
+        self._merge_business_config_custom_fields(out)
+        return out
+
+    def _merge_business_config_custom_fields(self, out: Dict[str, set[str]]) -> None:
+        if "ui.form.field.policy" not in self.env:
+            return
+        policies = self.env["ui.form.field.policy"].sudo().search([
+            ("active", "=", True),
+            ("visible", "=", True),
+            ("field_name", "=like", "x_%"),
+        ])
+        if not policies:
+            return
+        field_refs = {
+            (str(policy.model or "").strip(), str(policy.field_name or "").strip())
+            for policy in policies
+            if str(policy.model or "").strip() and str(policy.field_name or "").strip()
+        }
+        if not field_refs:
+            return
+        domain = []
+        for model_name, field_name in sorted(field_refs):
+            domain = ["|"] + domain if domain else domain
+            domain.append("&")
+            domain.append(("model", "=", model_name))
+            domain.append(("name", "=", field_name))
+        field_rows = self.env["ir.model.fields"].sudo().search(domain)
+        for field in field_rows:
+            model_name = str(field.model or "").strip()
+            field_name = str(field.name or "").strip()
+            if (
+                not model_name
+                or not field_name.startswith("x_")
+                or field.state != "manual"
+                or getattr(field, "readonly", False)
+                or field.ttype in {"binary", "one2many", "many2many"}
+            ):
+                continue
+            out.setdefault(model_name, set()).add(field_name)
 
     def _err(self, code: int, message: str, reason_code: str):
         return {
