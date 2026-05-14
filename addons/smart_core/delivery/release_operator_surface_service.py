@@ -40,6 +40,7 @@ class ReleaseOperatorSurfaceService:
             "copy": dict(read_model.get("copy") or {}),
             "identity": dict(read_model.get("identity") or {}),
             "products": list(read_model.get("products") or []),
+            "control_scope": dict(read_model.get("control_scope") or {}),
             "release_state": dict(read_model.get("current_release_state") or {}),
             "pending_approval": dict(read_model.get("pending_approval_queue") or {}),
             "candidate_snapshots": list(read_model.get("candidate_snapshots") or []),

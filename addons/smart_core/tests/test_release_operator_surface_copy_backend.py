@@ -178,6 +178,7 @@ class TestReleaseOperatorSurfaceCopyBackend(unittest.TestCase):
         self.assertIn("候选快照", (payload.get("copy") or {}).get("hint_candidate", ""))
         self.assertEqual((((payload.get("read_model_v1") or {}).get("copy") or {}).get("section_pending")), "待审批动作")
         self.assertEqual((((payload.get("read_model_v1") or {}).get("copy") or {}).get("rollback_action_label")), "执行回滚")
+        self.assertEqual((((payload.get("available_actions") or {}).get("freeze") or {}).get("intent")), "release.operator.freeze")
 
     def test_preview_product_copy_mentions_preview_edition(self):
         service = TARGET.ReleaseOperatorSurfaceService(_Env())

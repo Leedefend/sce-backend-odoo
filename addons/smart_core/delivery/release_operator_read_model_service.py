@@ -132,6 +132,7 @@ class ReleaseOperatorReadModelService:
             "action_retry": "重试",
             "action_refresh": "刷新",
             "section_release_state": "当前发布状态",
+            "section_control_scope": "受控内容",
             "section_candidate": "可 Promote 候选",
             "section_pending": "待审批动作",
             "section_rollback": "回滚",
@@ -140,6 +141,10 @@ class ReleaseOperatorReadModelService:
             "hint_pending_count_prefix": "当前数量：",
             "hint_rollback": "仅当当前 active released snapshot 存在 rollback target 时可执行。",
             "hint_history": "最近 action 与 snapshot。",
+            "freeze_action_label": "冻结候选快照",
+            "metric_controlled_menus": "受控菜单",
+            "metric_controlled_scenes": "受控场景",
+            "metric_controlled_capabilities": "受控能力",
             "empty_candidate": "当前没有可 Promote 的候选快照。",
             "empty_pending": "当前没有待审批动作。",
             "metric_current_product": "当前产品",
@@ -151,6 +156,40 @@ class ReleaseOperatorReadModelService:
             "history_actions_title": "Actions",
             "history_snapshots_title": "Snapshots",
             "approve_action_label": "审批并执行",
+        }
+
+    def _build_control_scope(self, *, product_key: str) -> dict[str, Any]:
+        rec = None
+        try:
+            rec = self.env["sc.product.policy"].sudo().search(
+                [("product_key", "=", product_key), ("active", "=", True)],
+                limit=1,
+            )
+        except Exception:
+            rec = None
+        payload = rec.to_runtime_dict() if rec else {}
+        menu_groups = _list(payload.get("menu_groups"))
+        scenes = _list(payload.get("scenes"))
+        capabilities = _list(payload.get("capabilities"))
+        scene_bindings = _dict(payload.get("scene_version_bindings"))
+        menu_count = 0
+        for group in menu_groups:
+            if isinstance(group, dict):
+                menu_count += len(_list(group.get("menus")))
+        return {
+            "product_key": product_key,
+            "policy_id": int(payload.get("id") or 0),
+            "policy_state": _text(payload.get("state")),
+            "access_level": _text(payload.get("access_level")),
+            "version": _text(payload.get("version")) or "v1",
+            "menu_group_count": len(menu_groups),
+            "menu_count": menu_count,
+            "scene_count": len(scenes),
+            "capability_count": len(capabilities),
+            "scene_binding_count": len(scene_bindings),
+            "menu_groups": menu_groups,
+            "scenes": scenes,
+            "capabilities": capabilities,
         }
 
     def _serialize_snapshot(self, row: dict[str, Any]) -> dict[str, Any]:
@@ -279,13 +318,26 @@ class ReleaseOperatorReadModelService:
             "runtime_summary": deepcopy(_dict(_dict(audit.get("runtime")).get("release_audit_trail_summary"))),
             "released_snapshot_lineage": deepcopy(_dict(_dict(audit.get("runtime")).get("released_snapshot_lineage"))),
         }
+        role_context = self.approval_policy_service.resolve_actor_role_context(self.env.user)
         available_operator_actions = {
             "write_model_contract_version": RELEASE_OPERATOR_WRITE_MODEL_CONTRACT_VERSION,
+            "freeze": {
+                "write_model_contract_version": RELEASE_OPERATOR_WRITE_MODEL_CONTRACT_VERSION,
+                "key": f"freeze:{identity['product_key']}",
+                "label": "冻结候选快照",
+                "intent": "release.operator.freeze",
+                "enabled": True,
+                "reason_code": "OK",
+                "role_context": role_context,
+                "params": {
+                    "product_key": identity["product_key"],
+                    "replace_active": False,
+                },
+            },
             "promote": self._build_promote_actions(product_key=identity["product_key"], snapshots=candidate_snapshots),
             "rollback": self._build_rollback_action(product_key=identity["product_key"], active_snapshot=active_snapshot),
         }
         surface_copy = self._build_surface_copy(product_key=identity["product_key"])
-        role_context = self.approval_policy_service.resolve_actor_role_context(self.env.user)
         return {
             "contract_version": RELEASE_OPERATOR_READ_MODEL_CONTRACT_VERSION,
             "contract_registry": build_release_operator_contract_registry(),
@@ -303,6 +355,7 @@ class ReleaseOperatorReadModelService:
             },
             "products": self._products(identity["product_key"]),
             "actor_role_context": role_context,
+            "control_scope": self._build_control_scope(product_key=identity["product_key"]),
             "current_release_state": current_release_state,
             "pending_approval_queue": pending_approval_queue,
             "candidate_snapshots": candidate_snapshots,

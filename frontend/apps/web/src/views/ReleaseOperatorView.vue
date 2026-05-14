@@ -15,6 +15,14 @@
         <button class="sc-btn sc-btn-ghost" type="button" :disabled="loading" @click="loadSurface">
           {{ copy.action_refresh || '刷新' }}
         </button>
+        <button
+          class="sc-btn sc-btn-primary"
+          type="button"
+          :disabled="busyKey === 'freeze' || !freezeAction.enabled"
+          @click="freeze"
+        >
+          {{ copy.freeze_action_label || '冻结候选快照' }}
+        </button>
       </div>
     </section>
 
@@ -49,6 +57,32 @@
           <span>{{ copy.metric_approval_state || 'Approval State' }}</span>
           <strong>{{ runtimeSummary.latest_action_approval_state || '-' }}</strong>
         </article>
+      </section>
+
+      <section class="release-operator__section">
+        <div class="release-operator__section-head">
+          <h2>{{ copy.section_control_scope || '受控内容' }}</h2>
+          <p>{{ controlScope.policy_state || '-' }} / {{ controlScope.access_level || '-' }}</p>
+        </div>
+        <div class="release-operator__scope-grid">
+          <article>
+            <span>{{ copy.metric_controlled_menus || '受控菜单' }}</span>
+            <strong>{{ controlScope.menu_count ?? 0 }}</strong>
+          </article>
+          <article>
+            <span>{{ copy.metric_controlled_scenes || '受控场景' }}</span>
+            <strong>{{ controlScope.scene_count ?? 0 }}</strong>
+          </article>
+          <article>
+            <span>{{ copy.metric_controlled_capabilities || '受控能力' }}</span>
+            <strong>{{ controlScope.capability_count ?? 0 }}</strong>
+          </article>
+        </div>
+        <div v-if="controlledScenes.length" class="release-operator__chips">
+          <span v-for="scene in controlledScenes" :key="sceneChipLabel(scene)">
+            {{ sceneChipLabel(scene) }}
+          </span>
+        </div>
       </section>
 
       <section class="release-operator__section">
@@ -209,6 +243,7 @@ interface ReleaseOperatorSurface {
   copy?: AnyRecord;
   identity?: AnyRecord;
   products?: ProductRow[];
+  control_scope?: AnyRecord;
   release_state?: AnyRecord;
   pending_approval?: { actions?: ReleaseActionRow[] };
   candidate_snapshots?: SnapshotRow[];
@@ -232,6 +267,11 @@ const copy = computed<Record<string, string>>(() => {
 });
 const identity = computed(() => surface.value?.identity || {});
 const products = computed(() => surface.value?.products || []);
+const controlScope = computed(() => surface.value?.control_scope || {});
+const controlledScenes = computed(() => {
+  const scenes = controlScope.value.scenes;
+  return Array.isArray(scenes) ? scenes as AnyRecord[] : [];
+});
 const releaseState = computed(() => surface.value?.release_state || {});
 const activeSnapshot = computed(() => (releaseState.value.active_snapshot || {}) as AnyRecord);
 const runtimeSummary = computed(() => (releaseState.value.runtime_summary || {}) as AnyRecord);
@@ -242,6 +282,14 @@ const historyActions = computed(() => surface.value?.release_history?.actions ||
 const rollbackAction = computed(() => {
   const actions = surface.value?.available_actions || {};
   return (actions.rollback || {}) as { enabled?: boolean; params?: AnyRecord };
+});
+
+function sceneChipLabel(scene: AnyRecord) {
+  return String(scene.label || scene.scene_key || scene.key || '').trim() || '未命名场景';
+}
+const freezeAction = computed(() => {
+  const actions = surface.value?.available_actions || {};
+  return (actions.freeze || {}) as { enabled?: boolean; params?: AnyRecord };
 });
 
 async function loadSurface() {
@@ -300,6 +348,11 @@ function promote(snapshot: SnapshotRow) {
 
 function approve(action: ReleaseActionRow) {
   void runWrite('release.operator.approve', { action_id: action.id }, `approve:${action.id}`);
+}
+
+function freeze() {
+  const params = freezeAction.value.params || { product_key: selectedProduct.value };
+  void runWrite('release.operator.freeze', params, 'freeze');
 }
 
 function rollback() {
@@ -383,6 +436,45 @@ onMounted(() => {
   overflow-wrap: anywhere;
   color: #0f172a;
   font-size: 18px;
+}
+
+.release-operator__scope-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.release-operator__scope-grid article {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.release-operator__scope-grid span {
+  display: block;
+  margin-bottom: 8px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.release-operator__scope-grid strong {
+  color: #0f172a;
+  font-size: 22px;
+}
+
+.release-operator__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.release-operator__chips span {
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  padding: 5px 10px;
+  color: #334155;
+  font-size: 12px;
 }
 
 .release-operator__section {
@@ -498,6 +590,7 @@ onMounted(() => {
   }
 
   .release-operator__metrics,
+  .release-operator__scope-grid,
   .release-operator__history {
     grid-template-columns: 1fr;
   }

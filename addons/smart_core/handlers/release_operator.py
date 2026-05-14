@@ -11,6 +11,7 @@ from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
 from odoo.addons.smart_core.delivery.edition_release_snapshot_promotion_service import (
     EditionReleaseSnapshotPromotionService,
 )
+from odoo.addons.smart_core.delivery.edition_release_snapshot_service import EditionReleaseSnapshotService
 from odoo.addons.smart_core.delivery.release_approval_policy_service import ReleaseApprovalPolicyService
 from odoo.addons.smart_core.delivery.release_operator_surface_service import ReleaseOperatorSurfaceService
 from odoo.addons.smart_core.security.platform_admin import user_is_platform_admin
@@ -20,6 +21,7 @@ SOURCE_KIND = "release_operator_intent_proxy"
 SOURCE_AUTHORITIES = (
     "release_operator_surface_projection",
     "release_approval_policy_projection",
+    "edition_release_snapshot_projection",
     "edition_release_snapshot_state_transition",
     "sc.release.action",
 )
@@ -248,6 +250,35 @@ class ReleaseOperatorPromoteHandler(_ReleaseOperatorBaseHandler):
         else:
             result = action.to_runtime_dict()
         return self._response(ts0, {"action": result, "surface": ReleaseOperatorSurfaceService(self.env).build_surface(product_key=product_key)})
+
+
+class ReleaseOperatorFreezeHandler(_ReleaseOperatorBaseHandler):
+    INTENT_TYPE = "release.operator.freeze"
+    DESCRIPTION = "平台产品发布面冻结候选快照"
+    VERSION = "1.0.0"
+    NON_IDEMPOTENT_ALLOWED = "release freeze mutates platform release snapshot state"
+
+    def handle(self, payload=None, ctx=None):
+        ts0 = time.time()
+        params = self._params(payload)
+        product_key = _text(params.get("product_key"))
+        if not product_key:
+            raise ValueError("PRODUCT_KEY_REQUIRED")
+        version = _text(params.get("version")) or fields.Datetime.now().strftime("v%Y%m%d%H%M%S")
+        snapshot = EditionReleaseSnapshotService(self.env).freeze_release_surface(
+            product_key=product_key,
+            version=version,
+            role_code=_text(params.get("role_code")),
+            note=_text(params.get("note")) or "frozen from release operator",
+            replace_active=False,
+        )
+        return self._response(
+            ts0,
+            {
+                "snapshot": snapshot,
+                "surface": ReleaseOperatorSurfaceService(self.env).build_surface(product_key=product_key),
+            },
+        )
 
 
 class ReleaseOperatorApproveHandler(_ReleaseOperatorBaseHandler):
