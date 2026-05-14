@@ -25,6 +25,7 @@ BUSINESS_FORM_DEFAULT_TAB_MODELS = frozenset({
     "project.progress.entry",
     "project.project.stage",
     "project.tags",
+    "project.task",
     "project.task.type",
     "sc.account.income.expense.summary",
     "sc.approval.scope",
@@ -1044,7 +1045,7 @@ def _walk_native_nodes(nodes: list[dict[str, Any]]):
 
 def _layout_contains_node_type(nodes: list[dict[str, Any]], node_types: set[str]) -> bool:
     for node in _walk_native_nodes(nodes):
-        if _text(node.get("type") or node.get("kind")).lower() in node_types:
+        if _text(node.get("containerType") or node.get("type") or node.get("kind")).lower() in node_types:
             return True
     return False
 
@@ -1111,14 +1112,26 @@ def _node_has_direct_group_child(node: dict[str, Any]) -> bool:
 
 
 def _is_generic_container_label(node: dict[str, Any]) -> bool:
-    node_type = _text(node.get("type") or node.get("kind") or node.get("containerType")).lower()
+    node_type = _text(node.get("containerType") or node.get("type") or node.get("kind")).lower()
     labels = {
         _text(node.get("title")).lower(),
         _text(node.get("label")).lower(),
         _text(node.get("string")).lower(),
     }
-    generic = {"", node_type, _text(node.get("containerId")).lower(), _text(node.get("name")).lower()}
+    generic = {"", node_type}
+    container_id = _text(node.get("containerId")).lower()
+    node_name = _text(node.get("name")).lower()
+    if _is_technical_container_identifier(container_id):
+        generic.add(container_id)
+    if _is_technical_container_identifier(node_name):
+        generic.add(node_name)
     return bool(labels & generic) or all(not label for label in labels)
+
+
+def _is_technical_container_identifier(value: str) -> bool:
+    if not value:
+        return False
+    return bool(re.fullmatch(r"[a-z0-9_.:-]+", value))
 
 
 def _semantic_group_label(node: dict[str, Any], *, level: int, index: int) -> str:
@@ -1147,6 +1160,10 @@ def _apply_semantic_container_label(node: dict[str, Any], label: str) -> None:
     node["title"] = label
     node["label"] = label
     node["string"] = label
+    _apply_semantic_container_annotation(node, label)
+
+
+def _apply_semantic_container_annotation(node: dict[str, Any], label: str) -> None:
     node["semanticTitle"] = label
     node["semanticAnchor"] = _stable_id(label, "semantic.group")
     source = _dict(node.get("sourceAuthority"))
@@ -1168,13 +1185,18 @@ def _standardize_form_container_semantics(nodes: list[dict[str, Any]], *, model:
         for node in rows:
             if not isinstance(node, dict):
                 continue
-            node_type = _text(node.get("type") or node.get("kind") or node.get("containerType")).lower()
+            node_type = _text(node.get("containerType") or node.get("type") or node.get("kind")).lower()
             if node_type == "group":
                 if _is_generic_container_label(node):
                     _apply_semantic_container_label(
                         node,
                         _semantic_group_label(node, level=level, index=group_index),
                     )
+                else:
+                    semantic_title = _text(node.get("semanticTitle"))
+                    visible_label = _text(node.get("title") or node.get("label") or node.get("string"))
+                    if not semantic_title and visible_label:
+                        _apply_semantic_container_annotation(node, visible_label)
                 group_index += 1
             for key in ("children", "pages", "tabs", "nodes", "items"):
                 child_rows = node.get(key)

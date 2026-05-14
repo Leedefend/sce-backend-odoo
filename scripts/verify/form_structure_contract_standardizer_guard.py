@@ -176,6 +176,19 @@ def main() -> int:
         "forms with native tabs must not receive duplicate projected notebooks",
     )
 
+    task_tree = sample_form_tree()
+    task_status: list[dict[str, Any]] = []
+    assembler._standardize_business_form_default_tabs(  # pylint: disable=protected-access
+        task_tree,
+        model="project.task",
+        view_type="form",
+        container_status=task_status,
+    )
+    assert_true(
+        any(node.get("containerType") == "notebook" for node in nested_nodes(task_tree)),
+        "project.task should receive the standard notebook when its runtime contract has no native tabs",
+    )
+
     semantic_tree = sample_form_tree()
     assembler._standardize_form_container_semantics(  # pylint: disable=protected-access
         semantic_tree,
@@ -191,6 +204,68 @@ def main() -> int:
     assert_true(
         any((node.get("sourceAuthority") or {}).get("runtime_carrier") == "business_form_semantic_label_standardizer" for node in groups),
         "semantic group labels should declare projection runtime carrier",
+    )
+
+    native_label_tree = [
+        {
+            "type": "sheet",
+            "containerType": "sheet",
+            "children": [
+                {
+                    "type": "group",
+                    "containerType": "group",
+                    "containerId": "task.core",
+                    "title": "任务基础信息",
+                    "label": "任务基础信息",
+                    "string": "任务基础信息",
+                    "children": [
+                        {"type": "field", "name": "name", "fieldInfo": {"type": "char", "label": "任务名称"}},
+                    ],
+                }
+            ],
+        }
+    ]
+    assembler._standardize_form_container_semantics(  # pylint: disable=protected-access
+        native_label_tree,
+        model="project.task",
+        view_type="form",
+    )
+    native_group = [node for node in nested_nodes(native_label_tree) if node.get("containerType") == "group"][0]
+    assert_true(native_group.get("title") == "任务基础信息", "native group titles should stay visible")
+    assert_true(native_group.get("semanticTitle") == "任务基础信息", "native group titles should also become semantic contract metadata")
+    assert_true(
+        (native_group.get("sourceAuthority") or {}).get("runtime_carrier") == "business_form_semantic_label_standardizer",
+        "native semantic metadata should expose the semantic runtime carrier",
+    )
+
+    chinese_container_tree = [
+        {
+            "type": "sheet",
+            "containerType": "sheet",
+            "children": [
+                {
+                    "type": "group",
+                    "containerType": "group",
+                    "containerId": "来源追溯",
+                    "title": "来源追溯",
+                    "label": "来源追溯",
+                    "string": "来源追溯",
+                    "children": [
+                        {"type": "field", "name": "source_model", "fieldInfo": {"type": "char", "label": "来源模型"}},
+                    ],
+                }
+            ],
+        }
+    ]
+    assembler._standardize_form_container_semantics(  # pylint: disable=protected-access
+        chinese_container_tree,
+        model="sc.material.price",
+        view_type="form",
+    )
+    chinese_group = [node for node in nested_nodes(chinese_container_tree) if node.get("containerType") == "group"][0]
+    assert_true(
+        chinese_group.get("semanticTitle") == "来源追溯",
+        "Chinese business labels that also appear as container ids should not be treated as generic ids",
     )
 
     wrapped_tree = [
