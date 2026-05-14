@@ -43,6 +43,43 @@ class _Record:
         return True
 
 
+class _FakeRecordSet(list):
+    def sudo(self):
+        return self
+
+    def search(self, domain):
+        return self
+
+
+class _FakePolicy:
+    def __init__(self, model, field_name):
+        self.model = model
+        self.field_name = field_name
+
+
+class _FakeField:
+    def __init__(self, model, name, *, state="manual", ttype="char", readonly=False):
+        self.model = model
+        self.name = name
+        self.state = state
+        self.ttype = ttype
+        self.readonly = readonly
+
+
+class _FakeEnv:
+    def __init__(self, policies=None, fields=None):
+        self._models = {
+            "ui.form.field.policy": _FakeRecordSet(policies or []),
+            "ir.model.fields": _FakeRecordSet(fields or []),
+        }
+
+    def __contains__(self, model):
+        return model in self._models
+
+    def __getitem__(self, model):
+        return self._models[model]
+
+
 def _install_module(name, **attrs):
     module = types.ModuleType(name)
     for key, value in attrs.items():
@@ -175,6 +212,28 @@ class TestApiDataWriteIdBoundaries(unittest.TestCase):
         self.assertEqual(result["code"], 400)
         self.assertEqual(result["error"]["reason_code"], "USER_ERROR")
         self.assertEqual(result["error"]["message"], "project_id 无效")
+
+    def test_allowed_models_merges_only_safe_manual_custom_policy_fields(self):
+        self.module.ApiDataWriteHandler.ALLOWED_MODELS = {"res.partner": {"name"}}
+        env = _FakeEnv(
+            policies=[
+                _FakePolicy("res.partner", "x_safe_note"),
+                _FakePolicy("res.partner", "x_not_manual"),
+                _FakePolicy("res.partner", "x_many_tags"),
+                _FakePolicy("res.partner", "phone"),
+            ],
+            fields=[
+                _FakeField("res.partner", "x_safe_note"),
+                _FakeField("res.partner", "x_not_manual", state="base"),
+                _FakeField("res.partner", "x_many_tags", ttype="many2many"),
+                _FakeField("res.partner", "phone"),
+            ],
+        )
+        handler = self.module.ApiDataWriteHandler(env=env)
+
+        allowed = handler._allowed_models()
+
+        self.assertEqual(allowed["res.partner"], {"name", "x_safe_note"})
 
 
 if __name__ == "__main__":
