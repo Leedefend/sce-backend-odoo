@@ -162,18 +162,24 @@
             <field name="arch" type="xml">
                 <form>
                     <sheet>
-                        <group>
-                            <field name="active"/>
-                            <field name="sequence"/>
-                            <field name="login"/>
-                            <field name="target_db"/>
-                            <field name="entry_kind"/>
-                            <field name="product_key"/>
-                            <field name="label"/>
-                        </group>
-                        <group>
-                            <field name="note"/>
-                        </group>
+                        <notebook>
+                            <page string="路由信息" name="route_info">
+                                <group>
+                                    <field name="active"/>
+                                    <field name="sequence"/>
+                                    <field name="login"/>
+                                    <field name="target_db"/>
+                                    <field name="entry_kind"/>
+                                    <field name="product_key"/>
+                                    <field name="label"/>
+                                </group>
+                            </page>
+                            <page string="备注" name="notes">
+                                <group>
+                                    <field name="note"/>
+                                </group>
+                            </page>
+                        </notebook>
                     </sheet>
                 </form>
             </field>

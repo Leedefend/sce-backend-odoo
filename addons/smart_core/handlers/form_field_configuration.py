@@ -15,7 +15,7 @@ from ..utils.reason_codes import REASON_MISSING_PARAMS, REASON_NOT_FOUND, REASON
 class FormFieldPolicySetHandler(BaseIntentHandler):
     INTENT_TYPE = "ui.form_field_policy.set"
     DESCRIPTION = "Set current form field visibility policy from a contract action."
-    REQUIRED_GROUPS = ["smart_construction_core.group_sc_cap_business_config_admin"]
+    REQUIRED_GROUPS = ["smart_core.group_smart_core_admin"]
     SOURCE_KIND = "ui_form_field_policy_contract_action"
     SOURCE_AUTHORITIES = ("ui.form.field.policy", "ir.model.fields", "ir.actions.act_window", "ir.ui.view")
     NON_IDEMPOTENT_ALLOWED = "field policy writes configuration state"
@@ -102,7 +102,7 @@ class FormFieldPolicySetHandler(BaseIntentHandler):
 class FormCustomFieldCreateHandler(BaseIntentHandler):
     INTENT_TYPE = "ui.form_custom_field.create"
     DESCRIPTION = "Create a safe custom form field from a contract action."
-    REQUIRED_GROUPS = ["smart_construction_core.group_sc_cap_business_config_admin"]
+    REQUIRED_GROUPS = ["smart_core.group_smart_core_admin"]
     SOURCE_KIND = "ui_form_custom_field_contract_action"
     SOURCE_AUTHORITIES = ("ui.form.custom.field.wizard", "ir.model.fields", "ui.form.field.policy")
     NON_IDEMPOTENT_ALLOWED = "custom field creation changes configuration metadata"

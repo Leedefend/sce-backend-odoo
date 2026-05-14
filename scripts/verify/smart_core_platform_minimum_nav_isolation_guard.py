@@ -75,7 +75,17 @@ def main() -> int:
         errors.append("login token missing")
 
     if token:
-        status, init_resp = _post(intent_url, token, "system.init", {}, db_name=db_name)
+        status, init_resp = _post(
+            intent_url,
+            token,
+            "system.init",
+            {
+                "delivery_product_key": "platform.standard",
+                "delivery_base_product_key": "platform",
+                "delivery_edition_key": "standard",
+            },
+            db_name=db_name,
+        )
         if status >= 400 or init_resp.get("ok") is not True:
             errors.append(f"system.init failed: status={status}")
         init_data = init_resp.get("data") if isinstance(init_resp.get("data"), dict) else {}

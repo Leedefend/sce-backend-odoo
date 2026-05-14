@@ -1,13 +1,13 @@
 {
   "summary": {
-    "total_models": 115,
+    "total_models": 119,
     "by_classification": {
-      "contract_standardized": 115
+      "contract_standardized": 119
     },
     "projected_notebook_models": 52,
-    "projected_semantic_group_models": 115,
-    "attachment_enabled_models": 115,
-    "timeline_enabled_models": 115
+    "projected_semantic_group_models": 119,
+    "attachment_enabled_models": 119,
+    "timeline_enabled_models": 119
   },
   "rows": [
     {
@@ -1360,6 +1360,25 @@
       "gaps": ""
     },
     {
+      "model": "sc.edition.release.snapshot",
+      "surface_lane": "business_document",
+      "domain_group": "sc_other",
+      "status": "ok",
+      "group_count": 3,
+      "semantic_group_count": 3,
+      "unlabeled_group_count": 0,
+      "notebook_count": 1,
+      "page_count": 3,
+      "projected_notebook_count": 0,
+      "projected_semantic_group_count": 3,
+      "native_chatter": "false",
+      "attachments_enabled": "true",
+      "timeline_enabled": "true",
+      "collaboration_actions": "",
+      "classification": "contract_standardized",
+      "gaps": ""
+    },
+    {
       "model": "sc.expense.claim",
       "surface_lane": "business_document",
       "domain_group": "sc_other",
@@ -1588,6 +1607,25 @@
       "gaps": ""
     },
     {
+      "model": "sc.login.route",
+      "surface_lane": "business_document",
+      "domain_group": "sc_other",
+      "status": "ok",
+      "group_count": 2,
+      "semantic_group_count": 2,
+      "unlabeled_group_count": 0,
+      "notebook_count": 1,
+      "page_count": 2,
+      "projected_notebook_count": 0,
+      "projected_semantic_group_count": 2,
+      "native_chatter": "false",
+      "attachments_enabled": "true",
+      "timeline_enabled": "true",
+      "collaboration_actions": "",
+      "classification": "contract_standardized",
+      "gaps": ""
+    },
+    {
       "model": "sc.office.admin.document",
       "surface_lane": "business_document",
       "domain_group": "sc_other",
@@ -1702,6 +1740,25 @@
       "gaps": ""
     },
     {
+      "model": "sc.product.policy",
+      "surface_lane": "business_document",
+      "domain_group": "sc_other",
+      "status": "ok",
+      "group_count": 3,
+      "semantic_group_count": 3,
+      "unlabeled_group_count": 0,
+      "notebook_count": 1,
+      "page_count": 3,
+      "projected_notebook_count": 0,
+      "projected_semantic_group_count": 3,
+      "native_chatter": "false",
+      "attachments_enabled": "true",
+      "timeline_enabled": "true",
+      "collaboration_actions": "",
+      "classification": "contract_standardized",
+      "gaps": ""
+    },
+    {
       "model": "sc.project.document",
       "surface_lane": "business_document",
       "domain_group": "sc_other",
@@ -1789,6 +1846,25 @@
       "page_count": 3,
       "projected_notebook_count": 1,
       "projected_semantic_group_count": 6,
+      "native_chatter": "false",
+      "attachments_enabled": "true",
+      "timeline_enabled": "true",
+      "collaboration_actions": "",
+      "classification": "contract_standardized",
+      "gaps": ""
+    },
+    {
+      "model": "sc.release.action",
+      "surface_lane": "business_document",
+      "domain_group": "sc_other",
+      "status": "ok",
+      "group_count": 3,
+      "semantic_group_count": 3,
+      "unlabeled_group_count": 0,
+      "notebook_count": 1,
+      "page_count": 4,
+      "projected_notebook_count": 0,
+      "projected_semantic_group_count": 3,
       "native_chatter": "false",
       "attachments_enabled": "true",
       "timeline_enabled": "true",

@@ -182,7 +182,12 @@ def _resolve_startup_delivery_identity(env, params: dict | None) -> dict:
     }
 
 
-def _is_platform_minimum_surface_mode(env) -> bool:
+def _is_platform_minimum_surface_mode(env, delivery_identity: dict | None = None) -> bool:
+    identity = delivery_identity if isinstance(delivery_identity, dict) else {}
+    base_product_key = str(identity.get("base_product_key") or "").strip()
+    product_key = str(identity.get("product_key") or "").strip()
+    if base_product_key == "platform" or product_key.startswith("platform."):
+        return True
     return not _is_any_module_installed(env, _resolve_industry_extension_modules(env))
 
 
@@ -977,7 +982,8 @@ class SystemInitHandler(BaseIntentHandler):
                 data["nav_meta"]["role_surface_code"] = role_surface.get("role_code")
         stage_ts = _mark("prune_nav_for_role", stage_ts)
 
-        platform_minimum_surface_mode = _is_platform_minimum_surface_mode(env)
+        delivery_identity = _resolve_startup_delivery_identity(env, params)
+        platform_minimum_surface_mode = _is_platform_minimum_surface_mode(env, delivery_identity=delivery_identity)
         scene_runtime_surface_ctx = SystemInitSceneRuntimeSurfaceContext(
             env=env,
             params=params,
@@ -1018,7 +1024,6 @@ class SystemInitHandler(BaseIntentHandler):
         data["nav_meta"] = nav_meta
         stage_ts = _mark("build_scene_runtime_surface", stage_ts)
         delivery_engine = DeliveryEngine(env)
-        delivery_identity = _resolve_startup_delivery_identity(env, params)
         delivery_edition_key = str(delivery_identity.get("edition_key") or "standard").strip() or "standard"
         requested_product_key = str(delivery_identity.get("product_key") or "").strip()
         requested_base_product_key = str(delivery_identity.get("base_product_key") or "").strip()
