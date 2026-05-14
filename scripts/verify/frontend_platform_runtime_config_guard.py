@@ -42,6 +42,7 @@ def main() -> int:
         "VITE_BRAND_NAME",
         "VITE_BRAND_SUBTITLE",
         "VITE_PRODUCT_BADGE",
+        "VITE_SHELL_LOGO_TEXT",
         "VITE_CAPABILITY_PROJECT",
         "VITE_VALUE_LINE_1",
     ):
@@ -72,6 +73,13 @@ def main() -> int:
             ):
                 if token in text:
                     errors.append(f"{rel} must not hardcode construction branding token: {token}")
+    shell_text = _read(ROOT / "frontend/apps/web/src/layouts/AppShell.vue")
+    if '<div class="logo">SC</div>' in shell_text:
+        errors.append("AppShell.vue must not hardcode SC logo text")
+    if 'v-if="showRecordContext"' not in shell_text:
+        errors.append("AppShell.vue must hide unavailable record context instead of showing project-model install errors")
+    if "<span>当前项目：</span>" in shell_text:
+        errors.append("AppShell.vue must not hardcode project context label")
 
     if errors:
         print("[frontend_platform_runtime_config_guard] FAIL")

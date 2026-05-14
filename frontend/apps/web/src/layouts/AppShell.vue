@@ -8,7 +8,7 @@
   >
     <aside class="sidebar sidebar-nav" :class="sidebarClass" data-component="SidebarNav">
       <div class="brand">
-        <div class="logo">SC</div>
+        <div class="logo">{{ shellLogoText }}</div>
         <div>
           <p class="title">{{ rootTitle }}</p>
           <p class="subtitle">{{ sidebarSubtitle }}</p>
@@ -17,7 +17,7 @@
 
       <p class="enterprise-line">当前企业：{{ enterpriseLabel }}</p>
 
-      <div class="project-context" :class="{ 'project-context--disabled': !projectContextEnabled }">
+      <div v-if="showRecordContext" class="project-context" :class="{ 'project-context--disabled': !projectContextEnabled }">
         <div class="project-trigger-row">
           <button
             class="project-trigger"
@@ -25,15 +25,15 @@
             :disabled="!projectContextEnabled"
             @click.stop="toggleProjectMenu"
           >
-            <span>当前项目：</span>
+            <span>{{ recordContextLabel }}：</span>
             <strong>{{ currentProjectLabel }}</strong>
           </button>
           <button
             v-if="selectedProject"
             class="project-clear-inline"
             type="button"
-            title="清除当前项目，显示全部项目"
-            aria-label="清除当前项目，显示全部项目"
+            :title="clearRecordContextTitle"
+            :aria-label="clearRecordContextTitle"
             @click.stop="clearProjectSelection"
           >
             ×
@@ -62,7 +62,7 @@
             </button>
             <p v-if="projectSearching" class="project-empty">搜索中...</p>
             <p v-else-if="projectError" class="project-empty">{{ projectError }}</p>
-            <p v-else-if="!projectOptions.length" class="project-empty">无匹配项目</p>
+            <p v-else-if="!projectOptions.length" class="project-empty">{{ recordContextEmptyText }}</p>
           </div>
         </div>
       </div>
@@ -186,6 +186,7 @@ import { isDeliveryModeEnabled, isHudEnabled } from '../config/debug';
 import { buildCanonicalSceneRouteTarget, buildEntryTargetRouteTarget, parseSceneKeyFromQuery } from '../app/routeQuery';
 import { buildRuntimeNavigationRegistry } from '../app/navigationRegistry';
 import { applyTheme, nextTheme, persistTheme, type ScTheme } from '../styles/theme';
+import { config } from '../config';
 import type { NavNode, ProjectContextOption } from '@sc/schema';
 import {
   exportSuggestedActionTraces,
@@ -255,6 +256,7 @@ let projectSearchTimer: ReturnType<typeof setTimeout> | null = null;
 
 const menuTree = computed(() => session.menuTree);
 const roleSurface = computed(() => session.roleSurface);
+const shellLogoText = computed(() => config.appBrand.shellLogoText || 'SC');
 const rootNode = computed(() => (menuTree.value.length === 1 ? menuTree.value[0] : null));
 const menuNodes = computed(() => rootNode.value?.children ?? menuTree.value);
 const menuCount = computed(() => menuNodes.value.length);
@@ -299,14 +301,23 @@ const roleLabel = computed(() => {
 });
 const projectContext = computed(() => session.projectContext);
 const projectContextEnabled = computed(() => Boolean(projectContext.value?.enabled));
+const projectContextReasonCode = computed(() => String(projectContext.value?.reason_code || '').trim());
+const showRecordContext = computed(() =>
+  projectContextEnabled.value || projectContextReasonCode.value !== 'RECORD_CONTEXT_MODEL_NOT_INSTALLED'
+);
 const selectedProject = computed(() => projectContext.value?.selected ?? null);
 const projectOptions = computed(() => projectContext.value?.options ?? []);
+const recordContextLabel = computed(() =>
+  String(projectContext.value?.selector?.label || '当前记录').trim() || '当前记录'
+);
+const recordContextEmptyText = computed(() => `无匹配${recordContextLabel.value.replace(/^当前/, '')}`);
+const clearRecordContextTitle = computed(() => `清除${recordContextLabel.value}，显示全部记录`);
 const currentProjectLabel = computed(() => {
   if (!projectContextEnabled.value) {
     return projectContext.value?.message || '未启用';
   }
   const selected = selectedProject.value;
-  if (!selected) return '全部项目';
+  if (!selected) return '全部记录';
   return projectOptionLabel(selected);
 });
 const projectSearchPlaceholder = computed(() =>
@@ -438,7 +449,7 @@ function resolveDeliveryRoleLabel(roleLabelRaw: string, roleCodeRaw: string) {
 
 function projectOptionLabel(option: ProjectContextOption | null | undefined) {
   if (!option) return '';
-  return String(option.display_name || option.name || `项目 ${option.id}`).trim();
+  return String(option.display_name || option.name || `记录 ${option.id}`).trim();
 }
 
 async function loadProjectOptions() {
@@ -448,7 +459,7 @@ async function loadProjectOptions() {
   try {
     await session.searchProjectContext(projectSearch.value);
   } catch (err) {
-    projectError.value = err instanceof Error ? err.message : '项目搜索失败';
+    projectError.value = err instanceof Error ? err.message : '记录搜索失败';
   } finally {
     projectSearching.value = false;
   }

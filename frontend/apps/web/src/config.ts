@@ -13,6 +13,7 @@ const appBrand = {
   kicker: String(import.meta.env.VITE_BRAND_KICKER ?? '智能建造 · 企业级管理').trim(),
   footerPrimary: String(import.meta.env.VITE_FOOTER_PRIMARY ?? '© 2025 SCEMS Platform').trim(),
   footerSecondary: String(import.meta.env.VITE_FOOTER_SECONDARY ?? 'Smart Construction Enterprise Management System').trim(),
+  shellLogoText: String(import.meta.env.VITE_SHELL_LOGO_TEXT ?? 'SC').trim(),
   capabilities: {
     project: String(import.meta.env.VITE_CAPABILITY_PROJECT ?? '项目全过程管理').trim(),
     contractCost: String(import.meta.env.VITE_CAPABILITY_CONTRACT_COST ?? '合同成本联动').trim(),
