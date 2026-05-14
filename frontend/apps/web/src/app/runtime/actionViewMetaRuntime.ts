@@ -27,13 +27,6 @@ export function resolveActionViewType(meta: unknown, contract: unknown): string 
   const v2ViewType = String(v2?.pageInfo?.viewType || '').trim();
   if (v2ViewType) {
     const normalizedV2ViewType = v2ViewType === 'list' ? 'tree' : v2ViewType;
-    if (
-      normalizedV2ViewType === 'form'
-      && normalizedMetaViewMode
-      && normalizedMetaViewMode !== 'form'
-    ) {
-      return normalizedMetaViewMode;
-    }
     return normalizedV2ViewType;
   }
   const typedContract = contract as ActionContractMetaShape;
