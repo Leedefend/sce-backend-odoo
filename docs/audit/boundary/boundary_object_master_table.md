@@ -16,11 +16,11 @@
 | `/api/meta/describe_model` | `addons/smart_construction_core/controllers/*` | `F` | `smart_construction_core` | `split_pending(screened mixed)` | 其他运行链 | P1 | medium-high |
 | `/api/meta/project_capabilities` | `addons/smart_construction_core/controllers/*` | `A` | `smart_construction_core` | `smart_construction_core(domain)` | 其他运行链 | P1 | medium-high |
 | `/api/ops/audit/search` | `addons/smart_construction_core/controllers/*` | `D` | `smart_construction_core` | `smart_core(governance)` | 治理辅助链 | P2 | medium |
-| `/api/ops/job/status` | `addons/smart_construction_core/controllers/*` | `D` | `smart_construction_core` | `smart_core(governance)` | 治理辅助链 | P2 | medium |
+| `/api/ops/job/status` | `addons/smart_core/controllers/platform_ops_controller.py` | `D` | `smart_core` | `smart_core(governance)` | 治理辅助链 | closed | done |
 | `/api/ops/packs/batch_rollback` | `addons/smart_construction_core/controllers/*` | `D` | `smart_construction_core` | `smart_core(governance)` | 治理辅助链 | P2 | medium |
 | `/api/ops/packs/batch_upgrade` | `addons/smart_construction_core/controllers/*` | `D` | `smart_construction_core` | `smart_core(governance)` | 治理辅助链 | P2 | medium |
-| `/api/ops/subscription/set` | `addons/smart_construction_core/controllers/*` | `D` | `smart_construction_core` | `smart_core(governance)` | 治理辅助链 | P2 | medium |
-| `/api/ops/tenants` | `addons/smart_construction_core/controllers/*` | `D` | `smart_construction_core` | `smart_core(governance)` | 治理辅助链 | P2 | medium |
+| `/api/ops/subscription/set` | `addons/smart_core/controllers/platform_ops_controller.py` | `D` | `smart_core` | `smart_core(governance)` | 治理辅助链 | closed | done |
+| `/api/ops/tenants` | `addons/smart_core/controllers/platform_ops_controller.py` | `D` | `smart_core` | `smart_core(governance)` | 治理辅助链 | closed | done |
 | `/api/packs/catalog` | `addons/smart_construction_core/controllers/*` | `D` | `smart_construction_core` | `smart_core(governance)` | 治理辅助链 | P2 | medium |
 | `/api/packs/install` | `addons/smart_construction_core/controllers/*` | `D` | `smart_construction_core` | `smart_core(governance)` | 治理辅助链 | P2 | medium |
 | `/api/packs/publish` | `addons/smart_construction_core/controllers/*` | `D` | `smart_construction_core` | `smart_core(governance)` | 治理辅助链 | P2 | medium |

@@ -97,18 +97,18 @@ Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/
 
 - definition_count: `6`
 - reference_count: `0`
-- definitions_in_smart_construction_core: `6`
-- definitions_in_smart_core: `0`
+- definitions_in_smart_construction_core: `3`
+- definitions_in_smart_core: `3`
 - definitions_in_smart_construction_scene: `0`
 
 ### Definition Evidence
 
-- `addons/smart_construction_core/controllers/ops_controller.py:18` → `@http.route("/api/ops/tenants", type="http", auth="public", methods=["GET"], csrf=False)`
-- `addons/smart_construction_core/controllers/ops_controller.py:59` → `@http.route("/api/ops/subscription/set", type="http", auth="public", methods=["POST"], csrf=False)`
-- `addons/smart_construction_core/controllers/ops_controller.py:95` → `@http.route("/api/ops/packs/batch_upgrade", type="http", auth="public", methods=["POST"], csrf=False)`
-- `addons/smart_construction_core/controllers/ops_controller.py:139` → `@http.route("/api/ops/packs/batch_rollback", type="http", auth="public", methods=["POST"], csrf=False)`
-- `addons/smart_construction_core/controllers/ops_controller.py:160` → `@http.route("/api/ops/audit/search", type="http", auth="public", methods=["GET"], csrf=False)`
-- `addons/smart_construction_core/controllers/ops_controller.py:189` → `@http.route("/api/ops/job/status", type="http", auth="public", methods=["GET"], csrf=False)`
+- `addons/smart_core/controllers/platform_ops_controller.py:83` → `@http.route("/api/ops/tenants", type="http", auth="public", methods=["GET"], csrf=False)`
+- `addons/smart_core/controllers/platform_ops_controller.py:121` → `@http.route("/api/ops/subscription/set", type="http", auth="public", methods=["POST"], csrf=False)`
+- `addons/smart_core/controllers/platform_ops_controller.py:154` → `@http.route("/api/ops/job/status", type="http", auth="public", methods=["GET"], csrf=False)`
+- `addons/smart_construction_core/controllers/ops_controller.py:19` → `@http.route("/api/ops/packs/batch_upgrade", type="http", auth="public", methods=["POST"], csrf=False)`
+- `addons/smart_construction_core/controllers/ops_controller.py:60` → `@http.route("/api/ops/packs/batch_rollback", type="http", auth="public", methods=["POST"], csrf=False)`
+- `addons/smart_construction_core/controllers/ops_controller.py:81` → `@http.route("/api/ops/audit/search", type="http", auth="public", methods=["GET"], csrf=False)`
 
 ### Reference Evidence
 

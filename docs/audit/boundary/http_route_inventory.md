@@ -2,7 +2,7 @@
 
 - Stage: `scan` (fact-only; no ownership conclusion)
 - Scope: `addons/smart_construction_core/controllers/**/*.py`
-- Route count: `34`
+- Route count: `31`
 
 | File | Method | Route | Auth | Type | Methods | Return Type | Major Calls | Direct Model Access | Tags |
 |---|---|---|---|---|---|---|---|---|---|
@@ -22,11 +22,8 @@
 | `addons/smart_construction_core/controllers/meta_controller.py` | `describe_model` | `/api/meta/describe_model` | `user` | `http` | `GET, POST` | `fail, fail_from_exception, ok` | `_merge_payload, http.route, strip` | `yes` | `app` |
 | `addons/smart_construction_core/controllers/meta_controller.py` | `describe_project_capabilities` | `/api/meta/project_capabilities` | `user` | `http` | `GET, POST` | `fail, fail_from_exception, ok` | `LifecycleCapabilityService, service.describe_project` | `yes` | `capability` |
 | `addons/smart_construction_core/controllers/ops_controller.py` | `audit_search` | `/api/ops/audit/search` | `public` | `http` | `GET` | `fail, fail_from_exception, ok` | `get_user_from_token, http.route, request.env` | `yes` | `app, ops, scene` |
-| `addons/smart_construction_core/controllers/ops_controller.py` | `job_status` | `/api/ops/job/status` | `public` | `http` | `GET` | `fail, fail_from_exception, ok` | `get_user_from_token, http.route, request.env` | `yes` | `ops` |
 | `addons/smart_construction_core/controllers/ops_controller.py` | `batch_rollback` | `/api/ops/packs/batch_rollback` | `public` | `http` | `POST` | `batch_upgrade, fail, fail_from_exception` | `get_user_from_token, http.route, request.env` | `yes` | `app, ops, pack` |
 | `addons/smart_construction_core/controllers/ops_controller.py` | `batch_upgrade` | `/api/ops/packs/batch_upgrade` | `public` | `http` | `POST` | `fail, fail_from_exception, ok` | `PackController, controller._install_pack` | `yes` | `app, ops, pack` |
-| `addons/smart_construction_core/controllers/ops_controller.py` | `set_subscription` | `/api/ops/subscription/set` | `public` | `http` | `POST` | `fail, fail_from_exception, ok` | `get_user_from_token, http.route, request.env` | `yes` | `ops` |
-| `addons/smart_construction_core/controllers/ops_controller.py` | `tenants` | `/api/ops/tenants` | `public` | `http` | `GET` | `fail, fail_from_exception, ok` | `get_user_from_token, http.route, request.env` | `yes` | `app, ops` |
 | `addons/smart_construction_core/controllers/pack_controller.py` | `catalog` | `/api/packs/catalog` | `public` | `http` | `GET` | `fail_from_exception, ok` | `Registry.search` | `yes` | `app, pack` |
 | `addons/smart_construction_core/controllers/pack_controller.py` | `install_pack` | `/api/packs/install` | `public` | `http` | `POST` | `fail, fail_from_exception, ok` | `self._install_pack` | `yes` | `pack` |
 | `addons/smart_construction_core/controllers/pack_controller.py` | `publish_pack` | `/api/packs/publish` | `public` | `http` | `POST` | `fail, fail_from_exception, ok` | `Registry.create, Registry.search, _pack_hash, pack_meta.get` | `yes` | `app, pack, scene` |

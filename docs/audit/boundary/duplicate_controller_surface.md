@@ -21,13 +21,13 @@
 Legacy compliance note: `/api/scenes/my` is deprecated; successor endpoint is `/api/v1/intent` with `intent=app.init`; sunset date `2026-04-30`.
   - `/api/scenes/export` -> `smart_construction_core:addons/smart_construction_core/controllers/scene_template_controller.py:446`
   - `/api/scenes/import` -> `smart_construction_core:addons/smart_construction_core/controllers/scene_template_controller.py:607`
-- `/api/ops/`: routes=`6`, modules=`smart_construction_core`
-  - `/api/ops/tenants` -> `smart_construction_core:addons/smart_construction_core/controllers/ops_controller.py:18`
-  - `/api/ops/subscription/set` -> `smart_construction_core:addons/smart_construction_core/controllers/ops_controller.py:59`
-  - `/api/ops/packs/batch_upgrade` -> `smart_construction_core:addons/smart_construction_core/controllers/ops_controller.py:95`
-  - `/api/ops/packs/batch_rollback` -> `smart_construction_core:addons/smart_construction_core/controllers/ops_controller.py:139`
-  - `/api/ops/audit/search` -> `smart_construction_core:addons/smart_construction_core/controllers/ops_controller.py:160`
-  - `/api/ops/job/status` -> `smart_construction_core:addons/smart_construction_core/controllers/ops_controller.py:189`
+- `/api/ops/`: routes=`6`, modules=`smart_core, smart_construction_core`
+  - `/api/ops/tenants` -> `smart_core:addons/smart_core/controllers/platform_ops_controller.py:83`
+  - `/api/ops/subscription/set` -> `smart_core:addons/smart_core/controllers/platform_ops_controller.py:121`
+  - `/api/ops/job/status` -> `smart_core:addons/smart_core/controllers/platform_ops_controller.py:154`
+  - `/api/ops/packs/batch_upgrade` -> `smart_construction_core:addons/smart_construction_core/controllers/ops_controller.py:19`
+  - `/api/ops/packs/batch_rollback` -> `smart_construction_core:addons/smart_construction_core/controllers/ops_controller.py:60`
+  - `/api/ops/audit/search` -> `smart_construction_core:addons/smart_construction_core/controllers/ops_controller.py:81`
 - `/api/packs/`: routes=`4`, modules=`smart_construction_core`
   - `/api/packs/publish` -> `smart_construction_core:addons/smart_construction_core/controllers/pack_controller.py:18`
   - `/api/packs/catalog` -> `smart_construction_core:addons/smart_construction_core/controllers/pack_controller.py:81`

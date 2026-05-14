@@ -77,6 +77,19 @@ LEGACY_PLATFORM_ADMIN_HELPER = "addons/smart_construction_core/services/platform
 PLATFORM_OPS_CONTROLLER = "addons/smart_core/controllers/platform_ops_controller.py"
 CONSTRUCTION_OPS_CONTROLLER = "addons/smart_construction_core/controllers/ops_controller.py"
 RELEASE_APPROVAL_POLICY_SERVICE = "addons/smart_core/delivery/release_approval_policy_service.py"
+BOUNDARY_ROUTE_DOCS = {
+    "docs/audit/boundary/http_route_inventory.md",
+    "docs/audit/boundary/http_route_classification.md",
+    "docs/audit/boundary/duplicate_controller_surface.md",
+    "docs/audit/boundary/platform_entry_occupation.md",
+    "docs/audit/boundary/boundary_object_master_table.md",
+    "docs/audit/boundary/runtime_priority_matrix.md",
+}
+MIGRATED_PLATFORM_OPS_ROUTES = {
+    "/api/ops/tenants",
+    "/api/ops/subscription/set",
+    "/api/ops/job/status",
+}
 SCENE_ORCHESTRATION_VIEW = "addons/smart_construction_core/views/support/scene_orchestration_views.xml"
 SCENE_GOVERNANCE_VIEW = "addons/smart_construction_scene/views/scene_governance_views.xml"
 CANONICAL_PLATFORM_ADMIN_GROUP = "smart_core.group_smart_core_admin"
@@ -288,9 +301,22 @@ assert_true(
 )
 platform_ops_text = (ROOT / PLATFORM_OPS_CONTROLLER).read_text(encoding="utf-8")
 construction_ops_text = (ROOT / CONSTRUCTION_OPS_CONTROLLER).read_text(encoding="utf-8")
-for route in ("/api/ops/tenants", "/api/ops/subscription/set", "/api/ops/job/status"):
+for route in sorted(MIGRATED_PLATFORM_OPS_ROUTES):
     assert_true(route in platform_ops_text, f"{PLATFORM_OPS_CONTROLLER}: missing platform route {route}")
     assert_true(route not in construction_ops_text, f"{CONSTRUCTION_OPS_CONTROLLER}: must not own platform route {route}")
+for rel_path in sorted(BOUNDARY_ROUTE_DOCS):
+    text = (ROOT / rel_path).read_text(encoding="utf-8")
+    for route in sorted(MIGRATED_PLATFORM_OPS_ROUTES):
+        stale_fragment = f"ops_controller.py` | `{route}"
+        assert_true(
+            stale_fragment not in text,
+            f"{rel_path}: migrated platform ops route still documented under construction ops controller: {route}",
+        )
+        if route in text:
+            assert_true(
+                "platform_ops_controller.py" in text,
+                f"{rel_path}: migrated platform ops route must document smart_core platform_ops_controller ownership: {route}",
+            )
 
 system_init_builder_text = (ROOT / "addons/smart_core/core/system_init_payload_builder.py").read_text(encoding="utf-8")
 construction_extension_text = (ROOT / "addons/smart_construction_core/core_extension.py").read_text(encoding="utf-8")
