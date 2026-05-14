@@ -11,3 +11,7 @@ access_sc_usage_counter_user,access.sc.usage.counter.user,model_sc_usage_counter
 access_sc_usage_counter_admin,access.sc.usage.counter.admin,model_sc_usage_counter,smart_core.group_smart_core_admin,1,1,1,1
 access_sc_ops_job_user,access.sc.ops.job.user,model_sc_ops_job,base.group_user,1,0,0,0
 access_sc_ops_job_admin,access.sc.ops.job.admin,model_sc_ops_job,smart_core.group_smart_core_admin,1,1,1,1
+access_sc_product_policy_admin,access.sc.product.policy.admin,model_sc_product_policy,smart_core.group_smart_core_admin,1,1,1,1
+access_sc_scene_snapshot_admin,access.sc.scene.snapshot.admin,model_sc_scene_snapshot,smart_core.group_smart_core_admin,1,1,1,1
+access_sc_edition_release_snapshot_admin,access.sc.edition.release.snapshot.admin,model_sc_edition_release_snapshot,smart_core.group_smart_core_admin,1,1,1,1
+access_sc_release_action_admin,access.sc.release.action.admin,model_sc_release_action,smart_core.group_smart_core_admin,1,1,1,1

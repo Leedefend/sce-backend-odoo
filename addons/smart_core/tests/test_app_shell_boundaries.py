@@ -29,11 +29,17 @@ def _load_handler():
     smart_core_mod = _install_module("odoo.addons.smart_core")
     handlers_mod = _install_module("odoo.addons.smart_core.handlers")
     core_mod = _install_module("odoo.addons.smart_core.core")
+    security_mod = _install_module("odoo.addons.smart_core.security")
     smart_core_mod.__path__ = [str(root)]
     handlers_mod.__path__ = [str(root / "handlers")]
     core_mod.__path__ = [str(root / "core")]
+    security_mod.__path__ = [str(root / "security")]
 
     _install_module("odoo.addons.smart_core.core.base_handler", BaseIntentHandler=_BaseIntentHandler)
+    _install_module(
+        "odoo.addons.smart_core.security.platform_admin",
+        user_is_platform_admin=lambda user: bool(getattr(user, "is_platform_admin", False)),
+    )
     _install_module(
         "odoo.addons.smart_core.core.scene_provider",
         load_scenes_from_db_or_fallback=lambda *args, **kwargs: {
@@ -74,6 +80,29 @@ def _load_handler():
     sys.modules[module_name] = module
     spec.loader.exec_module(module)
     return module
+
+
+class _FakeAction:
+    def __init__(self, action_id=501, name="Product Policies", res_model="sc.product.policy", view_mode="tree,form"):
+        self.id = action_id
+        self.name = name
+        self.res_model = res_model
+        self.view_mode = view_mode
+
+
+class _FakeEnv:
+    uid = 9
+
+    def __init__(self, *, is_platform_admin=False, has_action=True):
+        self.user = types.SimpleNamespace(is_platform_admin=is_platform_admin)
+        self.has_action = has_action
+
+    def ref(self, xmlid, raise_if_not_found=False):
+        if self.has_action and xmlid == "smart_core.action_sc_product_policy":
+            return _FakeAction()
+        if self.has_action and xmlid == "smart_core.action_sc_subscription_plan":
+            return _FakeAction(action_id=502, name="Subscription Plans", res_model="sc.subscription.plan")
+        return None
 
 
 class TestAppShellBoundaries(unittest.TestCase):
@@ -159,6 +188,41 @@ class TestAppShellBoundaries(unittest.TestCase):
 
         self.assertTrue(result["ok"])
         self.assertEqual(result["data"]["scene_key"], "projects.list")
+
+    def test_catalog_adds_platform_admin_apps_only_for_platform_admin(self):
+        normal_handler = self.module.AppCatalogHandler(env=_FakeEnv(is_platform_admin=False))
+        admin_handler = self.module.AppCatalogHandler(env=_FakeEnv(is_platform_admin=True))
+
+        normal_result = normal_handler.handle(payload={})
+        admin_result = admin_handler.handle(payload={})
+
+        normal_app_ids = [row["meta"]["app_id"] for row in normal_result["data"]["apps"]]
+        admin_app_ids = [row["meta"]["app_id"] for row in admin_result["data"]["apps"]]
+        self.assertNotIn("release_management", normal_app_ids)
+        self.assertIn("release_management", admin_app_ids)
+        self.assertIn("company_access", admin_app_ids)
+        self.assertEqual(admin_result["data"]["apps"][0]["meta"]["app_id"], "release_management")
+
+    def test_open_platform_admin_app_returns_native_action_target(self):
+        handler = self.module.AppOpenHandler(env=_FakeEnv(is_platform_admin=True))
+
+        result = handler.handle(payload={"params": {"app": "release_management"}})
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["data"]["subject"], "action")
+        self.assertEqual(result["data"]["model"], "sc.product.policy")
+        self.assertEqual(result["data"]["action_id"], 501)
+
+    def test_nav_platform_admin_app_returns_management_action(self):
+        handler = self.module.AppNavHandler(env=_FakeEnv(is_platform_admin=True))
+
+        result = handler.handle(payload={"params": {"app": "release_management"}})
+
+        self.assertTrue(result["ok"])
+        child = result["data"]["sections"][0]["children"][0]
+        self.assertEqual(child["meta"]["kind"], "admin")
+        self.assertEqual(child["meta"]["open"]["subject"], "action")
+        self.assertEqual(child["meta"]["open"]["model"], "sc.product.policy")
 
 
 if __name__ == "__main__":

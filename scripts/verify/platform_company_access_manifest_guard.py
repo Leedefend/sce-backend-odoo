@@ -27,11 +27,20 @@ REQUIRED_PLATFORM_XMLIDS = {
     "menu_sc_entitlement",
     "menu_sc_usage_counter",
     "menu_sc_ops_job",
+    "menu_smart_core_release_root",
+    "menu_sc_product_policy",
+    "menu_sc_scene_snapshot",
+    "menu_sc_edition_release_snapshot",
+    "menu_sc_release_action",
     "action_sc_subscription_plan",
     "action_sc_subscription",
     "action_sc_entitlement",
     "action_sc_usage_counter",
     "action_sc_ops_job",
+    "action_sc_product_policy",
+    "action_sc_scene_snapshot",
+    "action_sc_edition_release_snapshot",
+    "action_sc_release_action",
 }
 LEGACY_PLATFORM_UI_XMLIDS = {
     "menu_smart_core_platform_root",
@@ -63,6 +72,10 @@ PLATFORM_MODELS = {
     "sc.entitlement",
     "sc.usage.counter",
     "sc.ops.job",
+    "sc.product.policy",
+    "sc.scene.snapshot",
+    "sc.edition.release.snapshot",
+    "sc.release.action",
 }
 PLATFORM_MODEL_XML_REFS = {
     "smart_core.model_sc_subscription_plan",
@@ -70,6 +83,10 @@ PLATFORM_MODEL_XML_REFS = {
     "smart_core.model_sc_entitlement",
     "smart_core.model_sc_usage_counter",
     "smart_core.model_sc_ops_job",
+    "smart_core.model_sc_product_policy",
+    "smart_core.model_sc_scene_snapshot",
+    "smart_core.model_sc_edition_release_snapshot",
+    "smart_core.model_sc_release_action",
 }
 LEGACY_PLATFORM_BRIDGE_FILE = "security/sc_capability_groups.xml"
 PLATFORM_ADMIN_HELPER = "addons/smart_core/security/platform_admin.py"

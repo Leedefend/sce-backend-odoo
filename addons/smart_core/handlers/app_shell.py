@@ -14,6 +14,11 @@ from odoo.addons.smart_core.core.unified_page_contract_v2_client import (
     resolve_delivery_profile,
     trim_navigation_contract_for_client,
 )
+try:
+    from odoo.addons.smart_core.security.platform_admin import user_is_platform_admin
+except Exception:
+    def user_is_platform_admin(user):
+        return False
 
 
 def _md5(payload: Any) -> str:
@@ -54,6 +59,23 @@ APP_ALIASES = {
 }
 
 HIDDEN_APP_IDS = {"default", "scene_smoke_default"}
+
+ADMIN_APP_DEFS: dict[str, dict[str, Any]] = {
+    "release_management": {
+        "label": "产品发布",
+        "category": "platform_admin",
+        "sequence": -20,
+        "action_xmlid": "smart_core.action_sc_product_policy",
+        "menu_xmlid": "smart_core.menu_smart_core_release_root",
+    },
+    "company_access": {
+        "label": "公司访问",
+        "category": "platform_admin",
+        "sequence": -10,
+        "action_xmlid": "smart_core.action_sc_subscription_plan",
+        "menu_xmlid": "smart_core.menu_smart_core_company_access_root",
+    },
+}
 
 
 def _scene_list(env) -> List[Dict[str, Any]]:
@@ -143,6 +165,62 @@ def _scene_route(scene: Dict[str, Any]) -> str:
         return route
     key = _scene_key(scene)
     return f"/s/{key}" if key else "/"
+
+
+def _xmlid_record(env, xmlid: str):
+    try:
+        return env.ref(xmlid, raise_if_not_found=False)
+    except Exception:
+        return None
+
+
+def _is_platform_admin_user(env) -> bool:
+    try:
+        return bool(user_is_platform_admin(env.user))
+    except Exception:
+        return False
+
+
+def _admin_app_rows(env) -> list[dict[str, Any]]:
+    if not _is_platform_admin_user(env):
+        return []
+    rows: list[dict[str, Any]] = []
+    for app_id, spec in ADMIN_APP_DEFS.items():
+        action = _xmlid_record(env, _text(spec.get("action_xmlid")))
+        if not action:
+            continue
+        rows.append(
+            {
+                "key": f"app:{app_id}",
+                "label": _text(spec.get("label")) or app_id,
+                "icon": None,
+                "badges": {"count": 0},
+                "meta": {
+                    "app_id": app_id,
+                    "category": _text(spec.get("category")) or "platform_admin",
+                    "sequence": int(spec.get("sequence") or 0),
+                    "action_xmlid": _text(spec.get("action_xmlid")),
+                    "menu_xmlid": _text(spec.get("menu_xmlid")),
+                    "admin_only": True,
+                },
+            }
+        )
+    return rows
+
+
+def _admin_app_target(env, app_id: str) -> dict[str, Any]:
+    spec = ADMIN_APP_DEFS.get(_text(app_id)) or {}
+    action = _xmlid_record(env, _text(spec.get("action_xmlid")))
+    if not action:
+        return {}
+    return {
+        "subject": "action",
+        "id": int(action.id),
+        "action_id": int(action.id),
+        "model": _text(getattr(action, "res_model", "")),
+        "view_type": _text(getattr(action, "view_mode", "")).split(",", 1)[0] or "tree",
+        "name": _text(getattr(action, "name", "")),
+    }
 
 
 def _headers(request) -> dict[str, Any]:
@@ -243,7 +321,13 @@ class AppCatalogHandler(_SceneDeliveryAppShellMixin, BaseIntentHandler):
                 str(item.get("label") or ""),
             ),
         )
-        if "workspace" not in app_scenes:
+        apps = _admin_app_rows(self.env) + apps
+        app_ids = {
+            _text((item.get("meta") or {}).get("app_id"))
+            for item in apps
+            if isinstance(item.get("meta"), dict)
+        }
+        if "workspace" not in app_scenes and "workspace" not in app_ids:
             apps.insert(
                 0,
                 {
@@ -294,6 +378,7 @@ class AppNavHandler(_SceneDeliveryAppShellMixin, BaseIntentHandler):
 
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
+        env = self.env
         payload = _params(payload)
         client_type = resolve_client_type(_headers(self.request), payload)
         delivery_profile = resolve_delivery_profile(client_type, payload)
@@ -304,6 +389,32 @@ class AppNavHandler(_SceneDeliveryAppShellMixin, BaseIntentHandler):
         if max_depth_error:
             return self._err(400, "max_depth 无效", ts0=ts0)
         app_id = APP_ALIASES.get(_text(payload.get("app") or "workspace"), _text(payload.get("app") or "workspace"))
+        if app_id in ADMIN_APP_DEFS and _is_platform_admin_user(env):
+            target = _admin_app_target(env, app_id)
+            if target:
+                return {
+                    "status": "success",
+                    "ok": True,
+                    "data": {
+                        "sections": [
+                            {
+                                "key": f"section:{app_id}:admin",
+                                "label": "管理",
+                                "children": [
+                                    {
+                                        "key": f"feature:{app_id}:default",
+                                        "label": _text(target.get("name")) or _text(ADMIN_APP_DEFS[app_id].get("label")),
+                                        "children": [],
+                                        "meta": {"app": app_id, "feature": "default", "kind": "admin", "open": target},
+                                    }
+                                ],
+                                "meta": {"section": "admin"},
+                            }
+                        ],
+                        "meta": {"fingerprint": _md5({"uid": env.uid, "app": app_id, "admin": True})},
+                    },
+                    "meta": self._source_meta(ts0=ts0, extra={"etag": _md5({"uid": env.uid, "app": app_id, "admin": True})}),
+                }
         scenes = [
             scene
             for scene in _scene_list(self.env)
@@ -377,6 +488,15 @@ class AppOpenHandler(_SceneDeliveryAppShellMixin, BaseIntentHandler):
         scene_key = feature_key
         if not scene_key:
             app_id = APP_ALIASES.get(_text(payload.get("app") or "workspace"), _text(payload.get("app") or "workspace"))
+            if app_id in ADMIN_APP_DEFS and _is_platform_admin_user(self.env):
+                target = _admin_app_target(self.env, app_id)
+                if target:
+                    return {
+                        "status": "success",
+                        "ok": True,
+                        "data": target,
+                        "meta": self._source_meta(ts0=ts0),
+                    }
             scenes = [
                 scene
                 for scene in _scene_list(self.env)
