@@ -4,6 +4,7 @@
 - missing_intents: (none)
 - missing_aliases: (none)
 - parse_errors: (none)
+- boundary_errors: (none)
 
 ## Required Intents
 - app.catalog

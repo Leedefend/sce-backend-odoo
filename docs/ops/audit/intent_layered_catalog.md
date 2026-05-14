@@ -18,9 +18,9 @@
 | permission.check | core | N | 0 | addons/smart_core/handlers/permission_check.py |
 | system.init | core | N | 0 | addons/smart_core/handlers/system_init.py |
 | ui.contract | core | N | 0 | addons/smart_core/handlers/ui_contract.py |
-| app.catalog | domain | N | 0 | addons/smart_core/handlers/app_catalog.py |
-| app.nav | domain | N | 0 | addons/smart_core/handlers/app_nav.py |
-| app.open | domain | N | 0 | addons/smart_core/handlers/app_open.py |
+| app.catalog | core | N | 0 | addons/smart_core/handlers/app_shell.py |
+| app.nav | core | N | 0 | addons/smart_core/handlers/app_shell.py |
+| app.open | core | N | 0 | addons/smart_core/handlers/app_shell.py |
 | auth.logout | domain | N | 0 | addons/smart_core/handlers/login.py |
 | capability.describe | domain | N | 0 | addons/smart_construction_core/handlers/capability_describe.py |
 | capability.visibility.report | domain | N | 0 | addons/smart_construction_core/handlers/capability_visibility_report.py |

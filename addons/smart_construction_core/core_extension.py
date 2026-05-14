@@ -976,15 +976,6 @@ def get_intent_handler_contributions():
         except Exception as exc:
             SettlementSliceBlockFetchHandler = None
             _logger.warning("[get_intent_handler_contributions] skip settlement_slice_block_fetch: %s", exc)
-        from odoo.addons.smart_construction_core.handlers.app_catalog import (
-            AppCatalogHandler,
-        )
-        from odoo.addons.smart_construction_core.handlers.app_nav import (
-            AppNavHandler,
-        )
-        from odoo.addons.smart_construction_core.handlers.app_open import (
-            AppOpenHandler,
-        )
         from odoo.addons.smart_construction_core.handlers.workspace_home_enter import (
             WorkspaceHomeEnterHandler,
         )
@@ -1032,9 +1023,6 @@ def get_intent_handler_contributions():
         ("settlement.block.fetch", SettlementSliceBlockFetchHandler),
         ("project.initiation.enter", ProjectInitiationEnterHandler),
         ("risk.action.execute", RiskActionExecuteHandler),
-        ("app.catalog", AppCatalogHandler),
-        ("app.nav", AppNavHandler),
-        ("app.open", AppOpenHandler),
         ("workspace.home.enter", WorkspaceHomeEnterHandler),
         ("dashboard.company.enter", DashboardCompanyEnterHandler),
     ]

@@ -10,6 +10,10 @@ are now owned by `smart_core.handlers.*`; the construction handler files are
 compatibility shims only and are not contributed by
 `smart_construction_core/core_extension.py`.
 
+Current app shell note: `app.catalog`, `app.nav`, and `app.open` are owned by
+`smart_core.handlers.app_shell`; `smart_construction_core/core_extension.py`
+does not contribute these platform shell intents.
+
 ## Core Extension Registry Bindings
 
 | Intent Name | Handler Class | Handler File | Handler INTENT_TYPE |
@@ -50,17 +54,14 @@ compatibility shims only and are not contributed by
 | `settlement.block.fetch` | `SettlementSliceBlockFetchHandler` | `addons/smart_construction_core/handlers/settlement_slice_block_fetch.py` | `settlement.block.fetch` |
 | `project.initiation.enter` | `ProjectInitiationEnterHandler` | `addons/smart_construction_core/handlers/project_initiation_enter.py` | `project.initiation.enter` |
 | `risk.action.execute` | `RiskActionExecuteHandler` | `addons/smart_construction_core/handlers/risk_action_execute.py` | `risk.action.execute` |
-| `app.catalog` | `AppCatalogHandler` | `addons/smart_construction_core/handlers/app_catalog.py` | `app.catalog` |
-| `app.nav` | `AppNavHandler` | `addons/smart_construction_core/handlers/app_nav.py` | `app.nav` |
-| `app.open` | `AppOpenHandler` | `addons/smart_construction_core/handlers/app_open.py` | `app.open` |
 
 ## Handler Class Inventory
 
 | Handler File | Handler Class | INTENT_TYPE | Has Handle | Service Imports | Semantic Signals |
 |---|---|---|---|---|---|
-| `addons/smart_construction_core/handlers/app_catalog.py` | `AppCatalogHandler` | `app.catalog` | `yes` | `none` | `catalog, scene` |
-| `addons/smart_construction_core/handlers/app_nav.py` | `AppNavHandler` | `app.nav` | `yes` | `none` | `app.nav` |
-| `addons/smart_construction_core/handlers/app_open.py` | `AppOpenHandler` | `app.open` | `yes` | `odoo.addons.smart_core.app_config_engine.services.contract_service, odoo.addons.smart_core.app_config_engine.services.dispatchers.action_dispatcher` | `app.open` |
+| `addons/smart_core/handlers/app_shell.py` | `AppCatalogHandler` | `app.catalog` | `yes` | `none` | `catalog, scene` |
+| `addons/smart_core/handlers/app_shell.py` | `AppNavHandler` | `app.nav` | `yes` | `none` | `app.nav` |
+| `addons/smart_core/handlers/app_shell.py` | `AppOpenHandler` | `app.open` | `yes` | `none` | `app.open` |
 | `addons/smart_construction_core/handlers/business_evidence_trace.py` | `BusinessEvidenceTraceHandler` | `business.evidence.trace` | `yes` | `odoo.addons.smart_construction_core.services.evidence_chain_service` | `none` |
 | `addons/smart_construction_core/handlers/capability_describe.py` | `CapabilityDescribeHandler` | `capability.describe` | `yes` | `none` | `capability` |
 | `addons/smart_construction_core/handlers/capability_visibility_report.py` | `CapabilityVisibilityReportHandler` | `capability.visibility.report` | `yes` | `none` | `capability` |

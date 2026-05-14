@@ -13,9 +13,9 @@
 | api.data.batch | core | keep |
 | api.data.create | core | keep |
 | api.data.unlink | core | keep |
-| app.catalog | domain | internal_only |
-| app.nav | domain | internal_only |
-| app.open | domain | internal_only |
+| app.catalog | core | internal_only |
+| app.nav | core | internal_only |
+| app.open | core | internal_only |
 | auth.logout | domain | merge_or_delete |
 | capability.describe | domain | merge_or_delete |
 | capability.visibility.report | domain | merge_or_delete |

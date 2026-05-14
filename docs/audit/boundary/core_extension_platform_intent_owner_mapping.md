@@ -13,9 +13,9 @@
 | `telemetry.track` | `smart_construction_core.handlers.telemetry_track.TelemetryTrackHandler` | `smart_core` platform telemetry lane | L | narrow event-write semantics, low domain coupling |
 | `usage.report` | `smart_core.handlers.usage_report.UsageReportHandler` | `smart_core` platform telemetry/usage lane | done | construction file is compatibility shim only |
 | `usage.export.csv` | `smart_core.handlers.usage_export_csv.UsageExportCsvHandler` | `smart_core` platform telemetry/usage lane | done | construction file is compatibility shim only |
-| `app.catalog` | `smart_construction_core.handlers.app_catalog.AppCatalogHandler` | `smart_core` app shell catalog lane | M | tied to app catalog semantics and sorting policy; moderate contract sensitivity |
-| `app.nav` | `smart_construction_core.handlers.app_nav.AppNavHandler` | `smart_core` app shell navigation lane | M | navigation payload and fallback strategy impact runtime entry behavior |
-| `app.open` | `smart_construction_core.handlers.app_open.AppOpenHandler` | `smart_core` app shell open/orchestration lane | H | contains branching/fallback orchestration with higher behavior coupling |
+| `app.catalog` | `smart_core.handlers.app_shell.AppCatalogHandler` | `smart_core` app shell catalog lane | done | construction extension no longer contributes app shell intent |
+| `app.nav` | `smart_core.handlers.app_shell.AppNavHandler` | `smart_core` app shell navigation lane | done | construction extension no longer contributes app shell intent |
+| `app.open` | `smart_core.handlers.app_shell.AppOpenHandler` | `smart_core` app shell open/orchestration lane | done | construction extension no longer contributes app shell intent |
 
 ## Screening Conclusion
 
@@ -24,12 +24,12 @@
   1. `telemetry.track`
   2. `usage.track` (done)
   3. `usage.report` + `usage.export.csv` (done)
-  4. `app.catalog`
-  5. `app.nav`
-  6. `app.open`
+  4. `app.catalog` (done)
+  5. `app.nav` (done)
+  6. `app.open` (done)
 
 ## Next Suggested Batch
 
-- next open implement batch should start from `telemetry.track` or the `app.*`
-  shell lane; `usage.*` is already owned by smart_core with construction shims
-  kept for import compatibility.
+- next open implement batch should start from `telemetry.track`; `usage.*` and
+  `app.*` are already owned by smart_core, with construction usage shims kept
+  for import compatibility.

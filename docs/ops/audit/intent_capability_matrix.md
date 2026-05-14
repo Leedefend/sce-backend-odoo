@@ -15,12 +15,9 @@
 | api.data.create | core | 1 | explicit_check | N | Y | N | Y | Y | N | addons/smart_core/handlers/api_data_write.py |
 | api.data.unlink | core | 1 | explicit_check | N | Y | N | Y | Y | N | addons/smart_core/handlers/api_data_unlink.py |
 | api.onchange | domain | 1 | explicit_check | N | Y | Y | N | Y | N | addons/smart_core/handlers/api_onchange.py |
-| app.catalog | domain | 0 | - | Y | Y | N | N | N | N | addons/smart_core/handlers/app_shell.py |
-| app.catalog | domain | 0 | - | Y | Y | N | N | Y | N | addons/smart_construction_core/handlers/app_catalog.py |
-| app.nav | domain | 0 | - | Y | Y | N | N | N | N | addons/smart_core/handlers/app_shell.py |
-| app.nav | domain | 0 | - | Y | Y | N | N | N | N | addons/smart_construction_core/handlers/app_nav.py |
-| app.open | domain | 0 | - | N | Y | Y | N | N | N | addons/smart_core/handlers/app_shell.py |
-| app.open | domain | 0 | - | N | Y | Y | N | N | N | addons/smart_construction_core/handlers/app_open.py |
+| app.catalog | core | 0 | - | Y | Y | N | N | N | N | addons/smart_core/handlers/app_shell.py |
+| app.nav | core | 0 | - | Y | Y | N | N | N | N | addons/smart_core/handlers/app_shell.py |
+| app.open | core | 0 | - | N | Y | Y | N | N | N | addons/smart_core/handlers/app_shell.py |
 | auth.logout | domain | 0 | - | N | Y | Y | N | Y | Y | addons/smart_core/handlers/login.py |
 | business.evidence.trace | domain | 1 | - | N | Y | N | N | N | N | addons/smart_construction_core/handlers/business_evidence_trace.py |
 | capability.describe | domain | 0 | - | N | Y | N | N | Y | Y | addons/smart_construction_core/handlers/capability_describe.py |
@@ -107,9 +104,7 @@
 - `api.data.create` (addons/smart_core/handlers/api_data_write.py)
 - `api.data.unlink` (addons/smart_core/handlers/api_data_unlink.py)
 - `app.catalog` (addons/smart_core/handlers/app_shell.py)
-- `app.catalog` (addons/smart_construction_core/handlers/app_catalog.py)
 - `app.nav` (addons/smart_core/handlers/app_shell.py)
-- `app.nav` (addons/smart_construction_core/handlers/app_nav.py)
 - `business.evidence.trace` (addons/smart_construction_core/handlers/business_evidence_trace.py)
 - `capability.describe` (addons/smart_construction_core/handlers/capability_describe.py)
 - `capability.visibility.report` (addons/smart_construction_core/handlers/capability_visibility_report.py)

@@ -889,7 +889,7 @@ class SystemInitHandler(BaseIntentHandler):
             },
         }
         delivery_nav = delivery_payload.get("nav") if isinstance(delivery_payload.get("nav"), list) else []
-        if delivery_nav:
+        if delivery_nav and not platform_minimum_surface_mode:
             data["nav_role_surface"] = data.get("nav") if isinstance(data.get("nav"), list) else []
             data["nav"] = delivery_nav
             nav_meta = data.get("nav_meta") if isinstance(data.get("nav_meta"), dict) else {}
