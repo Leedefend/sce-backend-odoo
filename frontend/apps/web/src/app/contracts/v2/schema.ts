@@ -82,22 +82,28 @@ function optionalAliasedString(source: ContractV2Dictionary, key: string, aliase
   return asString(source[key]) || aliases.map((alias) => asString(source[alias])).find(Boolean) || undefined;
 }
 
-function readObject(source: ContractV2Dictionary, key: string, path: string, issues: DecodeIssue[]): ContractV2Dictionary {
-  const value = source[key];
+function readAliasedObject(
+  source: ContractV2Dictionary,
+  key: string,
+  aliases: string[],
+  path: string,
+  issues: DecodeIssue[],
+): ContractV2Dictionary {
+  const value = source[key] || aliases.map((alias) => source[alias]).find(isRecord);
   if (!isRecord(value)) {
-    issues.push({ path: `${path}.${key}`, message: 'must be an object' });
+    issues.push({ path: `${path}.${key}`, message: `must be an object; aliases checked: ${aliases.join(', ')}` });
     return {};
   }
   return value;
 }
 
-function readArray(source: ContractV2Dictionary, key: string, path: string, issues: DecodeIssue[]): unknown[] {
-  const value = source[key];
-  if (!Array.isArray(value)) {
-    issues.push({ path: `${path}.${key}`, message: 'must be an array' });
-    return [];
-  }
-  return value;
+function aliasedRecord(source: ContractV2Dictionary, key: string, aliases: string[]): ContractV2Dictionary {
+  return asRecord(source[key] || aliases.map((alias) => source[alias]).find(isRecord));
+}
+
+function aliasedArray(source: ContractV2Dictionary, key: string, aliases: string[]): unknown[] {
+  const value = source[key] || aliases.map((alias) => source[alias]).find(Array.isArray);
+  return Array.isArray(value) ? value : [];
 }
 
 function decodeClientType(value: string, issues: DecodeIssue[]): ContractV2ClientType {
@@ -109,19 +115,19 @@ function decodeClientType(value: string, issues: DecodeIssue[]): ContractV2Clien
 }
 
 function decodePageInfo(source: ContractV2Dictionary, issues: DecodeIssue[]): ContractV2PageInfo {
-  const contractVersion = requiredString(source, 'contractVersion', 'pageInfo', issues);
+  const contractVersion = requiredAliasedString(source, 'contractVersion', ['contract_version'], 'pageInfo', issues);
   if (!/^2\.\d+\.\d+(?:[-+].*)?$/.test(contractVersion)) {
     issues.push({ path: 'pageInfo.contractVersion', message: 'must be semantic version 2.x.y' });
   }
   return {
-    pageId: requiredString(source, 'pageId', 'pageInfo', issues),
-    sceneKey: requiredString(source, 'sceneKey', 'pageInfo', issues),
-    pageName: requiredString(source, 'pageName', 'pageInfo', issues),
+    pageId: requiredAliasedString(source, 'pageId', ['page_id'], 'pageInfo', issues),
+    sceneKey: requiredAliasedString(source, 'sceneKey', ['scene_key'], 'pageInfo', issues),
+    pageName: requiredAliasedString(source, 'pageName', ['page_name', 'title'], 'pageInfo', issues),
     model: requiredString(source, 'model', 'pageInfo', issues),
-    viewType: requiredString(source, 'viewType', 'pageInfo', issues),
-    layoutType: requiredString(source, 'layoutType', 'pageInfo', issues),
+    viewType: requiredAliasedString(source, 'viewType', ['view_type'], 'pageInfo', issues),
+    layoutType: requiredAliasedString(source, 'layoutType', ['layout_type'], 'pageInfo', issues),
     contractVersion,
-    clientType: decodeClientType(requiredString(source, 'clientType', 'pageInfo', issues), issues),
+    clientType: decodeClientType(requiredAliasedString(source, 'clientType', ['client_type'], 'pageInfo', issues), issues),
   };
 }
 
@@ -130,21 +136,43 @@ function decodeWidget(raw: unknown, path: string, issues: DecodeIssue[]): Contra
     issues.push({ path, message: 'widget must be an object' });
     return null;
   }
-  const widgetId = requiredAliasedString(raw, 'widgetId', ['widget_id'], path, issues);
-  const fieldCode = requiredAliasedString(raw, 'fieldCode', ['field_code', 'name', 'field'], path, issues);
-  const widgetType = requiredAliasedString(raw, 'widgetType', ['widget_type', 'type'], path, issues);
-  const componentKey = requiredAliasedString(raw, 'componentKey', ['component_key'], path, issues);
-  if (!widgetId || !fieldCode || !widgetType || !componentKey) return null;
-  const componentConfig = asRecord(raw.componentConfig);
+  const fieldInfo = asRecord(raw.fieldInfo || raw.field_info);
+  const componentConfig = asRecord(raw.componentConfig || raw.component_config || fieldInfo.componentConfig || fieldInfo.component_config);
+  const relationEntry = asRecord(fieldInfo.relationEntry || fieldInfo.relation_entry || componentConfig.relationEntry || componentConfig.relation_entry);
+  const widgetOptions = asRecord(fieldInfo.widgetOptions || fieldInfo.widget_options || fieldInfo.options || componentConfig.widgetOptions || componentConfig.widget_options);
+  const fieldCode = optionalAliasedString(raw, 'fieldCode', ['field_code', 'name', 'field']) || asString(fieldInfo.name);
+  const widgetId = optionalAliasedString(raw, 'widgetId', ['widget_id', 'id']) || (fieldCode ? `field.${fieldCode}` : '');
+  const widgetType = (
+    optionalAliasedString(raw, 'widgetType', ['widget_type', 'widget', 'type'])
+    || asString(fieldInfo.widget)
+    || asString(fieldInfo.type)
+    || asString(fieldInfo.ttype)
+    || 'display'
+  );
+  const componentKey = (
+    optionalAliasedString(raw, 'componentKey', ['component_key'])
+    || asString(fieldInfo.componentKey)
+    || asString(fieldInfo.component_key)
+    || 'sc.display.text'
+  );
+  if (!widgetId || !fieldCode) return null;
+  const mergedComponentConfig = {
+    ...componentConfig,
+    ...(Array.isArray(fieldInfo.selection) && !Array.isArray(componentConfig.selection) ? { selection: fieldInfo.selection } : {}),
+    ...(Object.keys(relationEntry).length ? { relationEntry } : {}),
+    ...(Object.keys(widgetOptions).length ? { widgetOptions } : {}),
+  };
   return {
     widgetId,
     widgetType,
     fieldCode,
-    label: requiredAliasedString(raw, 'label', ['string', 'title'], path, issues),
+    label: optionalAliasedString(raw, 'label', ['string', 'title']) || asString(fieldInfo.label) || asString(fieldInfo.string) || fieldCode,
     componentKey,
-    ...(Object.keys(componentConfig).length ? { componentConfig } : {}),
-    ...(optionalAliasedString(raw, 'fieldType', ['field_type', 'ttype']) ? { fieldType: optionalAliasedString(raw, 'fieldType', ['field_type', 'ttype']) } : {}),
-    ...(optionalString(raw, 'relation') ? { relation: optionalString(raw, 'relation') } : {}),
+    ...(Object.keys(mergedComponentConfig).length ? { componentConfig: mergedComponentConfig } : {}),
+    ...(optionalAliasedString(raw, 'fieldType', ['field_type', 'ttype']) || asString(fieldInfo.type) || asString(fieldInfo.ttype)
+      ? { fieldType: optionalAliasedString(raw, 'fieldType', ['field_type', 'ttype']) || asString(fieldInfo.type) || asString(fieldInfo.ttype) }
+      : {}),
+    ...(optionalString(raw, 'relation') || asString(fieldInfo.relation) ? { relation: optionalString(raw, 'relation') || asString(fieldInfo.relation) } : {}),
   };
 }
 
@@ -159,27 +187,68 @@ function decodeContainer(raw: unknown, path: string, issues: DecodeIssue[]): Con
   const children = (Array.isArray(raw.children) ? raw.children : [])
     .map((item, index) => decodeContainer(item, `${path}.children[${index}]`, issues))
     .filter((item): item is ContractV2Container => Boolean(item));
-  const widgetList = (Array.isArray(raw.widgetList) ? raw.widgetList : [])
+  const decodeNodeList = (key: 'pages' | 'tabs' | 'nodes' | 'items'): ContractV2Container[] => (
+    Array.isArray(raw[key]) ? raw[key] : []
+  )
+    .map((item, index) => decodeContainer(item, `${path}.${key}[${index}]`, issues))
+    .filter((item): item is ContractV2Container => Boolean(item));
+  const widgetListRaw = Array.isArray(raw.widgetList)
+    ? raw.widgetList
+    : Array.isArray(raw.widget_list)
+      ? raw.widget_list
+      : Array.isArray(raw.widgets)
+        ? raw.widgets
+        : [];
+  const widgetList = widgetListRaw
     .map((item, index) => decodeWidget(item, `${path}.widgetList[${index}]`, issues))
     .filter((item): item is ContractV2Widget => Boolean(item));
+  const pages = decodeNodeList('pages');
+  const tabs = decodeNodeList('tabs');
+  const nodes = decodeNodeList('nodes');
+  const items = decodeNodeList('items');
+  const attributes = asRecord(raw.attributes);
+  const fieldInfo = asRecord(raw.fieldInfo || raw.field_info);
+  const action = asRecord(raw.action);
+  const modifiers = asRecord(raw.modifiers);
   return {
     containerId,
     containerType,
+    type: asString(raw.type) || containerType,
+    ...(asString(raw.name) ? { name: asString(raw.name) } : {}),
+    ...(asString(raw.string) ? { string: asString(raw.string) } : {}),
+    ...(asString(raw.label) ? { label: asString(raw.label) } : {}),
     title: asString(raw.title) || asString(raw.string) || asString(raw.label),
+    ...(asString(raw.widget) ? { widget: asString(raw.widget) } : {}),
+    ...(Object.keys(attributes).length ? { attributes } : {}),
+    ...(Object.keys(fieldInfo).length ? { fieldInfo, field_info: fieldInfo } : {}),
+    ...(asString(raw.buttonType || raw.button_type) ? { buttonType: asString(raw.buttonType || raw.button_type) } : {}),
+    ...(Object.keys(action).length ? { action } : {}),
+    ...(Object.keys(modifiers).length ? { modifiers } : {}),
+    ...(Object.prototype.hasOwnProperty.call(raw, 'invisible') ? { invisible: raw.invisible } : {}),
+    ...(Object.prototype.hasOwnProperty.call(raw, 'readonly') ? { readonly: raw.readonly } : {}),
+    ...(Object.prototype.hasOwnProperty.call(raw, 'required') ? { required: raw.required } : {}),
     children,
+    ...(pages.length ? { pages } : {}),
+    ...(tabs.length ? { tabs } : {}),
+    ...(nodes.length ? { nodes } : {}),
+    ...(items.length ? { items } : {}),
     widgetList,
   };
 }
 
 function decodeLayoutContract(source: ContractV2Dictionary, issues: DecodeIssue[]): ContractV2LayoutContract {
-  const containerTree = readArray(source, 'containerTree', 'layoutContract', issues)
+  const containerTreeRaw = aliasedArray(source, 'containerTree', ['container_tree', 'containerList', 'container_list']);
+  if (!containerTreeRaw.length && !Array.isArray(source.containerTree) && !Array.isArray(source.container_tree)) {
+    issues.push({ path: 'layoutContract.containerTree', message: 'must be an array; aliases checked: container_tree, containerList, container_list' });
+  }
+  const containerTree = containerTreeRaw
     .map((item, index) => decodeContainer(item, `layoutContract.containerTree[${index}]`, issues))
     .filter((item): item is ContractV2Container => Boolean(item));
   return {
-    layoutType: requiredString(source, 'layoutType', 'layoutContract', issues),
-    adaptMode: requiredString(source, 'adaptMode', 'layoutContract', issues),
+    layoutType: requiredAliasedString(source, 'layoutType', ['layout_type'], 'layoutContract', issues),
+    adaptMode: requiredAliasedString(source, 'adaptMode', ['adapt_mode'], 'layoutContract', issues),
     containerTree,
-    componentRegistry: asRecord(source.componentRegistry),
+    componentRegistry: aliasedRecord(source, 'componentRegistry', ['component_registry']),
   };
 }
 
@@ -188,19 +257,19 @@ function decodeActionRule(raw: unknown, path: string, issues: DecodeIssue[]): Co
     issues.push({ path, message: 'action rule must be an object' });
     return null;
   }
-  const actionId = requiredString(raw, 'actionId', path, issues);
+  const actionId = requiredAliasedString(raw, 'actionId', ['action_id', 'id', 'key'], path, issues);
   if (!actionId) return null;
   const target = asRecord(raw.target);
   const button = asRecord(raw.button);
   return {
     actionId,
-    triggerType: requiredString(raw, 'triggerType', path, issues),
+    triggerType: requiredAliasedString(raw, 'triggerType', ['trigger_type'], path, issues),
     sourceWidgetId: requiredAliasedString(raw, 'sourceWidgetId', ['source_widget_id'], path, issues),
     targetIds: asStringArray(raw.targetIds || raw.target_ids),
-    dispatchMode: requiredString(raw, 'dispatchMode', path, issues),
-    targetScope: requiredString(raw, 'targetScope', path, issues),
-    refreshMode: requiredString(raw, 'refreshMode', path, issues),
-    ...(optionalString(raw, 'actionKey') ? { actionKey: optionalString(raw, 'actionKey') } : {}),
+    dispatchMode: requiredAliasedString(raw, 'dispatchMode', ['dispatch_mode'], path, issues),
+    targetScope: requiredAliasedString(raw, 'targetScope', ['target_scope'], path, issues),
+    refreshMode: requiredAliasedString(raw, 'refreshMode', ['refresh_mode'], path, issues),
+    ...(optionalAliasedString(raw, 'actionKey', ['action_key', 'key']) ? { actionKey: optionalAliasedString(raw, 'actionKey', ['action_key', 'key']) } : {}),
     ...(optionalString(raw, 'label') ? { label: optionalString(raw, 'label') } : {}),
     ...(optionalString(raw, 'intent') ? { intent: optionalString(raw, 'intent') } : {}),
     ...(Object.keys(target).length ? { target } : {}),
@@ -209,10 +278,14 @@ function decodeActionRule(raw: unknown, path: string, issues: DecodeIssue[]): Co
 }
 
 function decodeActionContract(source: ContractV2Dictionary, issues: DecodeIssue[]): ContractV2ActionContract {
-  const actionRuleList = readArray(source, 'actionRuleList', 'actionContract', issues)
+  const actionRuleListRaw = aliasedArray(source, 'actionRuleList', ['action_rule_list', 'actions']);
+  if (!actionRuleListRaw.length && !Array.isArray(source.actionRuleList) && !Array.isArray(source.action_rule_list)) {
+    issues.push({ path: 'actionContract.actionRuleList', message: 'must be an array; aliases checked: action_rule_list, actions' });
+  }
+  const actionRuleList = actionRuleListRaw
     .map((item, index) => decodeActionRule(item, `actionContract.actionRuleList[${index}]`, issues))
     .filter((item): item is ContractV2ActionRule => Boolean(item));
-  const dependencyGraphRaw = asRecord(source.dependencyGraph);
+  const dependencyGraphRaw = aliasedRecord(source, 'dependencyGraph', ['dependency_graph']);
   const dependencyGraph = Object.entries(dependencyGraphRaw).reduce<Record<string, string[]>>((acc, [key, value]) => {
     acc[key] = asStringArray(value);
     return acc;
@@ -240,16 +313,16 @@ function decodeDataSources(value: unknown): Record<string, ContractV2Dictionary>
 }
 
 function decodeDataContract(source: ContractV2Dictionary): ContractV2DataContract {
-  const treeData = decodeRowsMap(source.treeData);
-  const ganttData = decodeRowsMap(source.ganttData);
+  const treeData = decodeRowsMap(source.treeData || source.tree_data);
+  const ganttData = decodeRowsMap(source.ganttData || source.gantt_data);
   return {
-    mainData: asRecord(source.mainData),
-    tableRows: decodeRowsMap(source.tableRows),
-    relationRows: decodeRowsMap(source.relationRows),
-    dictData: asRecord(source.dictData),
+    mainData: aliasedRecord(source, 'mainData', ['main_data']),
+    tableRows: decodeRowsMap(source.tableRows || source.table_rows),
+    relationRows: decodeRowsMap(source.relationRows || source.relation_rows),
+    dictData: aliasedRecord(source, 'dictData', ['dict_data']),
     pagination: asRecord(source.pagination),
-    dataSource: decodeDataSources(source.dataSource),
-    dataMeta: asRecord(source.dataMeta),
+    dataSource: decodeDataSources(source.dataSource || source.data_source),
+    dataMeta: aliasedRecord(source, 'dataMeta', ['data_meta']),
     ...(Object.keys(treeData).length ? { treeData } : {}),
     ...(Object.keys(ganttData).length ? { ganttData } : {}),
   };
@@ -257,8 +330,8 @@ function decodeDataContract(source: ContractV2Dictionary): ContractV2DataContrac
 
 function decodeGlobalStatus(source: ContractV2Dictionary): ContractV2GlobalStatus {
   return {
-    pageVisible: optionalBoolean(source.pageVisible),
-    ...(optionalString(source, 'pageAuth') ? { pageAuth: optionalString(source, 'pageAuth') } : {}),
+    pageVisible: optionalBoolean(source.pageVisible) ?? optionalBoolean(source.page_visible),
+    ...(optionalAliasedString(source, 'pageAuth', ['page_auth']) ? { pageAuth: optionalAliasedString(source, 'pageAuth', ['page_auth']) } : {}),
     ...(optionalString(source, 'reasonCode') || optionalString(source, 'reason_code')
       ? { reasonCode: optionalString(source, 'reasonCode') || optionalString(source, 'reason_code') }
       : {}),
@@ -327,17 +400,17 @@ function decodeSelectorStatus(raw: unknown): ContractV2SelectorStatus | null {
 
 function decodeStatusContract(source: ContractV2Dictionary): ContractV2StatusContract {
   return {
-    globalStatus: decodeGlobalStatus(asRecord(source.globalStatus)),
-    widgetStatus: (Array.isArray(source.widgetStatus) ? source.widgetStatus : [])
+    globalStatus: decodeGlobalStatus(aliasedRecord(source, 'globalStatus', ['global_status'])),
+    widgetStatus: aliasedArray(source, 'widgetStatus', ['widget_status'])
       .map(decodeWidgetStatus)
       .filter((item): item is ContractV2WidgetStatus => Boolean(item)),
-    buttonStatus: (Array.isArray(source.buttonStatus) ? source.buttonStatus : [])
+    buttonStatus: aliasedArray(source, 'buttonStatus', ['button_status'])
       .map(decodeButtonStatus)
       .filter((item): item is ContractV2ButtonStatus => Boolean(item)),
-    containerStatus: (Array.isArray(source.containerStatus) ? source.containerStatus : [])
+    containerStatus: aliasedArray(source, 'containerStatus', ['container_status'])
       .map(decodeContainerStatus)
       .filter((item): item is ContractV2ContainerStatus => Boolean(item)),
-    selectorStatus: (Array.isArray(source.selectorStatus) ? source.selectorStatus : [])
+    selectorStatus: aliasedArray(source, 'selectorStatus', ['selector_status'])
       .map(decodeSelectorStatus)
       .filter((item): item is ContractV2SelectorStatus => Boolean(item)),
   };
@@ -361,11 +434,11 @@ export function extractContractV2Candidate(value: unknown): unknown {
 export function decodeContractV2Snapshot(value: unknown): ContractV2Snapshot {
   const root = asRecord(extractContractV2Candidate(value));
   const issues: DecodeIssue[] = [];
-  const pageInfo = decodePageInfo(readObject(root, 'pageInfo', '$', issues), issues);
-  const layoutContract = decodeLayoutContract(readObject(root, 'layoutContract', '$', issues), issues);
-  const actionContract = decodeActionContract(readObject(root, 'actionContract', '$', issues), issues);
-  const dataContract = decodeDataContract(readObject(root, 'dataContract', '$', issues));
-  const statusContract = decodeStatusContract(asRecord(root.statusContract));
+  const pageInfo = decodePageInfo(readAliasedObject(root, 'pageInfo', ['page_info'], '$', issues), issues);
+  const layoutContract = decodeLayoutContract(readAliasedObject(root, 'layoutContract', ['layout_contract'], '$', issues), issues);
+  const actionContract = decodeActionContract(readAliasedObject(root, 'actionContract', ['action_contract'], '$', issues), issues);
+  const dataContract = decodeDataContract(readAliasedObject(root, 'dataContract', ['data_contract'], '$', issues));
+  const statusContract = decodeStatusContract(aliasedRecord(root, 'statusContract', ['status_contract']));
   if (issues.length) {
     throw new ContractV2DecodeError(issues);
   }
@@ -375,7 +448,7 @@ export function decodeContractV2Snapshot(value: unknown): ContractV2Snapshot {
     statusContract,
     actionContract,
     dataContract,
-    runtimeContract: asRecord(root.runtimeContract),
+    runtimeContract: aliasedRecord(root, 'runtimeContract', ['runtime_contract']),
     meta: asRecord(root.meta),
     ...(isRecord(root.searchContract) ? { searchContract: root.searchContract } : {}),
   };

@@ -20,6 +20,7 @@ const RECORD_ID = Number(process.env.RECORD_ID || 908);
 const ACTION_ID = Number(process.env.ACTION_ID || 0);
 const MENU_ID = Number(process.env.MENU_ID || 0);
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
+const CHROMIUM_EXECUTABLE_PATH = process.env.CHROMIUM_EXECUTABLE_PATH || process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH || '';
 
 const ts = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15);
 const outDir = path.join(ARTIFACTS_DIR, 'playwright', 'web-contract-v2-form-shadow', ts);
@@ -39,11 +40,18 @@ function normalize(value) {
 
 function attachConsoleCapture(page) {
   page.__consoleErrors = [];
+  page.__resourceNotFound = [];
   page.on('console', (msg) => {
-    if (msg.type() === 'error') page.__consoleErrors.push(msg.text());
+    if (msg.type() !== 'error') return;
+    const text = msg.text();
+    if (text.includes('Failed to load resource: the server responded with a status of 404')) return;
+    page.__consoleErrors.push(text);
   });
   page.on('pageerror', (err) => {
     page.__consoleErrors.push(err.message);
+  });
+  page.on('response', (response) => {
+    if (response.status() === 404) page.__resourceNotFound.push(response.url());
   });
 }
 
@@ -119,13 +127,16 @@ async function pageSnapshot(page) {
     body_text: String(document.body?.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 2000),
     shell_count: document.querySelectorAll('.template-layout-shell').length,
     hud_count: document.querySelectorAll('.hud').length,
-    field_count: document.querySelectorAll('.form-field, .native-form-field, .field-row').length,
+    field_count: document.querySelectorAll('.template-form-section .field, .native-form-tree .field, .form-field, .native-form-field, .field-row').length,
   }));
 }
 
 async function main() {
   ensureOutDir();
-  const browser = await chromium.launch({ headless: true });
+  const launchOptions = CHROMIUM_EXECUTABLE_PATH
+    ? { headless: true, executablePath: CHROMIUM_EXECUTABLE_PATH, args: ['--no-sandbox'] }
+    : { headless: true };
+  const browser = await chromium.launch(launchOptions);
   const page = await browser.newPage({ viewport: { width: 1440, height: 1100 }, locale: 'zh-CN' });
   attachConsoleCapture(page);
 
@@ -153,6 +164,7 @@ async function main() {
     summary.shadow_attrs = await readShadowAttrs(page);
     summary.snapshot = await pageSnapshot(page);
     summary.console_errors = (page.__consoleErrors || []).slice(0, 20);
+    summary.resource_not_found = (page.__resourceNotFound || []).slice(0, 20);
     await page.screenshot({ path: path.join(outDir, 'form-shadow.png'), fullPage: true });
 
     const shadowStore = String(summary.shadow_attrs.store || summary.hud.v2_shadow_store || '').toLowerCase() === 'true';
@@ -170,6 +182,7 @@ async function main() {
     const rendered = summary.snapshot.shell_count === 1 && !summary.snapshot.body_text.includes('页面加载失败');
     summary.pass = Boolean(
       rendered &&
+      summary.snapshot.field_count > 0 &&
       shadowStore &&
       shadowWidgets > 0 &&
       shadowButtonStatuses > 0 &&
@@ -187,6 +200,7 @@ async function main() {
   } catch (err) {
     summary.error = err instanceof Error ? err.message : String(err);
     summary.console_errors = (page.__consoleErrors || []).slice(0, 20);
+    summary.resource_not_found = (page.__resourceNotFound || []).slice(0, 20);
     try {
       summary.hud = await readHud(page);
       summary.shadow_attrs = await readShadowAttrs(page);

@@ -1505,6 +1505,17 @@ function one2manyRelationFieldDescriptor(fieldName: string, column: string) {
   return descriptor || null;
 }
 
+function nativeNodeFieldInfo(node?: Record<string, unknown> | NativeFormLayoutNode | null): Record<string, unknown> {
+  const row = node as Record<string, unknown> | undefined;
+  const fieldInfo = row?.fieldInfo && typeof row.fieldInfo === 'object' && !Array.isArray(row.fieldInfo)
+    ? row.fieldInfo as Record<string, unknown>
+    : {};
+  if (Object.keys(fieldInfo).length) return fieldInfo;
+  return row?.field_info && typeof row.field_info === 'object' && !Array.isArray(row.field_info)
+    ? row.field_info as Record<string, unknown>
+    : {};
+}
+
 function nativeFieldSubview(name: string): Record<string, unknown> | null {
   const target = String(name || '').trim();
   if (!target) return null;
@@ -1513,9 +1524,7 @@ function nativeFieldSubview(name: string): Record<string, unknown> | null {
       const nodeName = String(node?.name || '').trim();
       const nodeType = String(node?.type || '').trim().toLowerCase();
       if (nodeType === 'field' && nodeName === target) {
-        const fieldInfo = node?.fieldInfo && typeof node.fieldInfo === 'object' && !Array.isArray(node.fieldInfo)
-          ? node.fieldInfo as Record<string, unknown>
-          : null;
+        const fieldInfo = nativeNodeFieldInfo(node);
         const subview = fieldInfo?.subview;
         if (subview && typeof subview === 'object' && !Array.isArray(subview)) {
           return subview as Record<string, unknown>;
@@ -3670,9 +3679,7 @@ function nativeModifierValue(nodeRaw: NativeFormLayoutNode, key: 'invisible' | '
   const actionVisibleAttrs = actionVisible.attrs && typeof actionVisible.attrs === 'object' && !Array.isArray(actionVisible.attrs)
     ? actionVisible.attrs as Record<string, unknown>
     : {};
-  const fieldInfo = node.fieldInfo && typeof node.fieldInfo === 'object'
-    ? node.fieldInfo as Record<string, unknown>
-    : {};
+  const fieldInfo = nativeNodeFieldInfo(node);
   const attributeModifiers = attributes.modifiers && typeof attributes.modifiers === 'object'
     ? attributes.modifiers as Record<string, unknown>
     : {};
@@ -3755,17 +3762,13 @@ function isNativeLayoutNodeVisible(nodeRaw: NativeFormLayoutNode) {
 
 function nativeNodeWidget(nodeRaw?: NativeFormLayoutNode) {
   const node = nodeRaw as Record<string, unknown> | undefined;
-  const fieldInfo = node?.fieldInfo && typeof node.fieldInfo === 'object'
-    ? node.fieldInfo as Record<string, unknown>
-    : {};
+  const fieldInfo = nativeNodeFieldInfo(node);
   return String(node?.widget || fieldInfo.widget || '').trim().toLowerCase();
 }
 
 function nativeNodeWidgetSemantics(nodeRaw?: NativeFormLayoutNode) {
   const node = nodeRaw as Record<string, unknown> | undefined;
-  const fieldInfo = node?.fieldInfo && typeof node.fieldInfo === 'object'
-    ? node.fieldInfo as Record<string, unknown>
-    : {};
+  const fieldInfo = nativeNodeFieldInfo(node);
   const semantics = fieldInfo.widget_semantics && typeof fieldInfo.widget_semantics === 'object'
     ? fieldInfo.widget_semantics as Record<string, unknown>
     : {};
@@ -3801,9 +3804,7 @@ function isNativeFavoriteField(name: string) {
 
 function nativeFieldLabel(nodeRaw: NativeFormLayoutNode, descriptor?: FieldDescriptor) {
   const node = nodeRaw as Record<string, unknown>;
-  const fieldInfo = node.fieldInfo && typeof node.fieldInfo === 'object'
-    ? node.fieldInfo as Record<string, unknown>
-    : {};
+  const fieldInfo = nativeNodeFieldInfo(node);
   return String(
     node.string
     || node.label

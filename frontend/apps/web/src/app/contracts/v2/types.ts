@@ -26,8 +26,26 @@ export interface ContractV2Widget {
 export interface ContractV2Container {
   containerId: string;
   containerType: string;
+  type?: string;
+  name?: string;
+  string?: string;
+  label?: string;
   title: string;
+  widget?: string;
+  attributes?: ContractV2Dictionary;
+  fieldInfo?: ContractV2Dictionary;
+  field_info?: ContractV2Dictionary;
+  buttonType?: string;
+  action?: ContractV2Dictionary | null;
+  modifiers?: ContractV2Dictionary;
+  invisible?: unknown;
+  readonly?: unknown;
+  required?: unknown;
   children: ContractV2Container[];
+  pages?: ContractV2Container[];
+  tabs?: ContractV2Container[];
+  nodes?: ContractV2Container[];
+  items?: ContractV2Container[];
   widgetList: ContractV2Widget[];
 }
 
