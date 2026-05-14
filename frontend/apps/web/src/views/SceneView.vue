@@ -137,6 +137,7 @@ import { readWorkspaceContext } from '../app/workspaceContext';
 import { buildCanonicalSceneRouteTarget, normalizeLegacyWorkbenchPath, resolveSceneDefaultOrder } from '../app/routeQuery';
 import { findActionMeta, findActionNodeByModel, findMenuNode } from '../app/menu';
 import { usePageContract } from '../app/pageContract';
+import { config } from '../config';
 import type { NavNode } from '@sc/schema';
 import { setSceneRegistryFromSceneReadyContract, type Scene, type SceneTarget } from '../app/resolvers/sceneRegistry';
 import { isSceneBlocksDebugEnabled } from '../config/debug';
@@ -398,7 +399,7 @@ async function hydrateSceneReadyForCurrentScene(sceneKey: string) {
         with_preload: false,
         scene_ready_mode: 'full',
         with: ['workspace_home'],
-        root_xmlid: 'smart_construction_core.menu_sc_root',
+        ...(config.startupRootXmlid ? { root_xmlid: config.startupRootXmlid } : {}),
         scene_key: key,
       },
       meta: { startup_chain_bypass: true },

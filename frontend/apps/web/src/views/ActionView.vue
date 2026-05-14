@@ -1197,7 +1197,7 @@ watch(
           with_preload: false,
           scene_ready_mode: 'full',
           with: ['workspace_home'],
-          root_xmlid: 'smart_construction_core.menu_sc_root',
+          ...(config.startupRootXmlid ? { root_xmlid: config.startupRootXmlid } : {}),
           scene_key: sceneKeyValue,
         },
         meta: { startup_chain_bypass: true },

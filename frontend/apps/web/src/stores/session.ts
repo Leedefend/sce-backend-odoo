@@ -963,7 +963,7 @@ export const useSessionStore = defineStore('session', {
           with_preload: false,
           scene_ready_mode: currentSceneKey ? 'full' : 'registry',
           with: ['workspace_home'],
-          root_xmlid: 'smart_construction_core.menu_sc_root',
+          ...(config.startupRootXmlid ? { root_xmlid: config.startupRootXmlid } : {}),
           ...(currentSceneKey ? { scene_key: currentSceneKey } : {}),
           ...(this.projectContext?.selected?.id ? { current_project_id: this.projectContext.selected.id } : {}),
         },
@@ -1267,7 +1267,7 @@ export const useSessionStore = defineStore('session', {
           scene: 'web',
           with_preload: false,
           with: ['workspace_home'],
-          root_xmlid: 'smart_construction_core.menu_sc_root',
+          ...(config.startupRootXmlid ? { root_xmlid: config.startupRootXmlid } : {}),
           ...(this.projectContext?.selected?.id ? { current_project_id: this.projectContext.selected.id } : {}),
         },
       });
