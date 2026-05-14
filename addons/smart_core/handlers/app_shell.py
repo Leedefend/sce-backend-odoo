@@ -249,7 +249,7 @@ class AppOpenHandler(_SceneDeliveryAppShellMixin, BaseIntentHandler):
 
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
-        payload = payload or {}
+        payload = _params(payload)
         feature_key = _text(payload.get("feature") or payload.get("scene_key"))
         scene_key = feature_key
         if not scene_key:
@@ -259,6 +259,8 @@ class AppOpenHandler(_SceneDeliveryAppShellMixin, BaseIntentHandler):
                 if key and _scene_app_id(key) == app_id:
                     scene_key = key
                     break
+            if not scene_key and app_id == "workspace":
+                scene_key = "workspace.home"
         if not scene_key:
             raise ValueError("missing param: app / feature")
 

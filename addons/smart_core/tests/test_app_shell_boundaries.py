@@ -100,6 +100,29 @@ class TestAppShellBoundaries(unittest.TestCase):
         self.assertEqual(trim_kwargs["max_items"], 3)
         self.assertEqual(trim_kwargs["max_depth"], 2)
 
+    def test_open_reads_nested_app_param(self):
+        handler = self.module.AppOpenHandler(env=types.SimpleNamespace(uid=9))
+
+        result = handler.handle(payload={"params": {"app": "workspace"}})
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["data"]["subject"], "ui.contract")
+        self.assertEqual(result["data"]["scene_key"], "workspace.home")
+
+    def test_open_workspace_has_minimum_fallback(self):
+        original_scene_list = self.module._scene_list
+        self.module._scene_list = lambda env: []
+        try:
+            handler = self.module.AppOpenHandler(env=types.SimpleNamespace(uid=9))
+
+            result = handler.handle(payload={"params": {"app": "workspace"}})
+        finally:
+            self.module._scene_list = original_scene_list
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["data"]["scene_key"], "workspace.home")
+        self.assertEqual(result["data"]["route"], "/s/workspace.home")
+
 
 if __name__ == "__main__":
     unittest.main()

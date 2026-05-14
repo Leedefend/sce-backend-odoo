@@ -389,7 +389,8 @@ class SystemInitPayloadBuilder:
         if minimal_page_contracts:
             minimal["page_contracts"] = minimal_page_contracts
         if isinstance((minimal.get("page_contracts") or {}).get("pages"), dict) and "home" in (minimal.get("page_contracts") or {}).get("pages", {}):
-            minimal["default_route"] = cls._build_workspace_home_default_route()
+            if not (minimal.get("nav_meta") or {}).get("platform_minimum_surface"):
+                minimal["default_route"] = cls._build_workspace_home_default_route()
             minimal["workspace_home_ref"] = cls._build_workspace_home_ref(row)
         else:
             workspace_home_ref = row.get("workspace_home_ref") if isinstance(row.get("workspace_home_ref"), dict) else {}
