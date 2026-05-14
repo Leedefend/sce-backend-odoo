@@ -65,6 +65,9 @@ ADMIN_APP_DEFS: dict[str, dict[str, Any]] = {
         "label": "产品发布",
         "category": "platform_admin",
         "sequence": -20,
+        "route": "/admin/release-operator?product_key=platform.standard",
+        "scene_key": "release.operator",
+        "intent": "release.operator.surface",
         "action_xmlid": "smart_core.action_sc_product_policy",
         "menu_xmlid": "smart_core.menu_smart_core_release_root",
     },
@@ -210,6 +213,15 @@ def _admin_app_rows(env) -> list[dict[str, Any]]:
 
 def _admin_app_target(env, app_id: str) -> dict[str, Any]:
     spec = ADMIN_APP_DEFS.get(_text(app_id)) or {}
+    route = _text(spec.get("route"))
+    if route:
+        return {
+            "subject": "ui.contract",
+            "scene_key": _text(spec.get("scene_key")) or app_id,
+            "route": route,
+            "intent": _text(spec.get("intent")),
+            "name": _text(spec.get("label")) or app_id,
+        }
     action = _xmlid_record(env, _text(spec.get("action_xmlid")))
     if not action:
         return {}

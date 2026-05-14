@@ -546,6 +546,8 @@ function resolvePublishedAppLabel(appId: string, rawLabel: string | undefined, k
     risk: '风险管理',
     safety: '安全管理',
     task: '任务协同',
+    release_management: '产品发布',
+    company_access: '公司访问',
   };
   return labels[normalized] || backendLabel || normalized || key;
 }
@@ -573,6 +575,8 @@ function appMark(app: PublishedApp) {
   const id = String(app.appId || '').trim();
   const label = String(app.label || '').trim();
   if (id === 'workspace') return '首';
+  if (id.includes('release')) return '发';
+  if (id.includes('access')) return '权';
   if (id.includes('project')) return '项';
   if (id.includes('contract')) return '合';
   if (id.includes('finance') || id.includes('payment')) return '财';

@@ -203,15 +203,15 @@ class TestAppShellBoundaries(unittest.TestCase):
         self.assertIn("company_access", admin_app_ids)
         self.assertEqual(admin_result["data"]["apps"][0]["meta"]["app_id"], "release_management")
 
-    def test_open_platform_admin_app_returns_native_action_target(self):
+    def test_open_platform_admin_app_returns_release_operator_target(self):
         handler = self.module.AppOpenHandler(env=_FakeEnv(is_platform_admin=True))
 
         result = handler.handle(payload={"params": {"app": "release_management"}})
 
         self.assertTrue(result["ok"])
-        self.assertEqual(result["data"]["subject"], "action")
-        self.assertEqual(result["data"]["model"], "sc.product.policy")
-        self.assertEqual(result["data"]["action_id"], 501)
+        self.assertEqual(result["data"]["subject"], "ui.contract")
+        self.assertEqual(result["data"]["route"], "/admin/release-operator?product_key=platform.standard")
+        self.assertEqual(result["data"]["intent"], "release.operator.surface")
 
     def test_nav_platform_admin_app_returns_management_action(self):
         handler = self.module.AppNavHandler(env=_FakeEnv(is_platform_admin=True))
@@ -221,8 +221,8 @@ class TestAppShellBoundaries(unittest.TestCase):
         self.assertTrue(result["ok"])
         child = result["data"]["sections"][0]["children"][0]
         self.assertEqual(child["meta"]["kind"], "admin")
-        self.assertEqual(child["meta"]["open"]["subject"], "action")
-        self.assertEqual(child["meta"]["open"]["model"], "sc.product.policy")
+        self.assertEqual(child["meta"]["open"]["subject"], "ui.contract")
+        self.assertEqual(child["meta"]["open"]["route"], "/admin/release-operator?product_key=platform.standard")
 
 
 if __name__ == "__main__":
