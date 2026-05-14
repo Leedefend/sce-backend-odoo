@@ -80,6 +80,8 @@ def main() -> int:
         errors.append("AppShell.vue must hide unavailable record context instead of showing project-model install errors")
     if "<span>当前项目：</span>" in shell_text:
         errors.append("AppShell.vue must not hardcode project context label")
+    if "data-platform-app-catalog" not in shell_text or "app.catalog" not in shell_text or "app.open" not in shell_text:
+        errors.append("AppShell.vue must expose platform-published app catalog and open apps through app.catalog/app.open")
 
     if errors:
         print("[frontend_platform_runtime_config_guard] FAIL")
