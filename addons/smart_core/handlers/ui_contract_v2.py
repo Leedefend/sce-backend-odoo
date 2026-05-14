@@ -122,6 +122,13 @@ class UiContractV2Handler(BaseIntentHandler):
             "record": source_record,
             "source_meta": ui_meta,
         })
+        self._inject_current_form_settings_action(
+            source_contract,
+            params=params,
+            ui_params=ui_params,
+            model=str(model or "").strip(),
+            view_type=str(view_type or "").strip().lower(),
+        )
         hydrated_record = self._hydrate_record_snapshot(
             model=str(model or "").strip(),
             record_id=params.get("record_id") or params.get("recordId") or ui_params.get("record_id") or ui_params.get("recordId"),
@@ -162,6 +169,57 @@ class UiContractV2Handler(BaseIntentHandler):
                 "source_authority": self.source_authority_contract(),
             },
         )
+
+    def _inject_current_form_settings_action(
+        self,
+        source_contract: dict[str, Any],
+        *,
+        params: dict[str, Any],
+        ui_params: dict[str, Any],
+        model: str,
+        view_type: str,
+    ) -> None:
+        if view_type != "form" or not model:
+            return
+        action_id = (
+            params.get("action_id")
+            or params.get("actionId")
+            or ui_params.get("action_id")
+            or ui_params.get("actionId")
+            or source_contract.get("action_id")
+            or source_contract.get("actionId")
+        )
+        view_id = (
+            params.get("view_id")
+            or params.get("viewId")
+            or ui_params.get("view_id")
+            or ui_params.get("viewId")
+        )
+        if not view_id:
+            view_ids = source_contract.get("view_ids_by_type")
+            if isinstance(view_ids, dict):
+                view_id = view_ids.get("form")
+        render_profile = (
+            source_contract.get("render_profile")
+            or params.get("render_profile")
+            or params.get("renderProfile")
+            or ui_params.get("render_profile")
+            or ui_params.get("renderProfile")
+            or "edit"
+        )
+        try:
+            from ..app_config_engine.services.assemblers.page_assembler import PageAssembler
+
+            assembler = PageAssembler(self.env, self.su_env)
+            assembler._inject_current_form_settings_action(
+                source_contract,
+                model_name=model,
+                action_id=action_id,
+                view_id=view_id,
+                render_profile=render_profile,
+            )
+        except Exception:
+            _logger.debug("ui.contract.v2 current form settings action injection skipped", exc_info=True)
 
     def _hydrate_record_snapshot(
         self,

@@ -199,6 +199,47 @@ function collectV2LayoutButtons(v2Contract: Dict): Dict[] {
       actionSafety: action.action_safety,
     });
   });
+  const actionRules = asList(asDict(asDict(root.actionContract).actionRuleList));
+  actionRules.forEach((raw) => {
+    const row = asDict(raw);
+    const sourceWidgetId = String(row.sourceWidgetId || row.source_widget_id || '').trim();
+    if (sourceWidgetId !== 'page.header') return;
+    const triggerType = String(row.triggerType || row.trigger_type || '').trim();
+    if (triggerType && triggerType !== 'click') return;
+    const key = stableFieldName(String(row.actionKey || row.key || row.actionId || ''));
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    const target = asDict(row.target);
+    const clientMode = String(target.mode || target.client_mode || '').trim();
+    const level = 'header';
+    out.push({
+      key,
+      name: key,
+      label: String(row.label || key).trim() || key,
+      kind: clientMode ? 'client' : 'open',
+      intent: String(row.intent || '').trim(),
+      level,
+      selection: 'none',
+      actionId: Number(target.action_id || 0) || null,
+      methodName: '',
+      targetModel: String(target.model || '').trim(),
+      context: {},
+      domainRaw: String(target.domain_raw || '').trim(),
+      target: String(target.target || '').trim(),
+      url: String(target.url || target.route || '').trim(),
+      payload: {
+        mode: clientMode,
+        client_mode: clientMode,
+      },
+      enabled: true,
+      hint: '',
+      semantic: 'secondary_action',
+      sourceWidgetId,
+      visibleProfiles: ['create', 'edit', 'readonly'],
+      requiredParams: [],
+      requiresReason: false,
+    });
+  });
   return out;
 }
 

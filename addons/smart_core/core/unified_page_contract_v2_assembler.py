@@ -1359,6 +1359,7 @@ def _append_actions(contract: dict[str, Any], rows: Any, *, source_widget_id: st
         action_id = f"action.{key}"
         label = _text(row.get("label") or row.get("name") or row.get("title"), key)
         intent = _text(row.get("intent"), "ui.contract")
+        source_id = _text(row.get("sourceWidgetId") or row.get("source_widget_id"), source_widget_id)
         contract["actionContract"]["actionRuleList"].append(
             {
                 "actionId": action_id,
@@ -1368,14 +1369,14 @@ def _append_actions(contract: dict[str, Any], rows: Any, *, source_widget_id: st
                 "target": deepcopy(_dict(row.get("target"))),
                 "button": deepcopy(_dict(row.get("button"))),
                 "triggerType": _text(row.get("trigger") or row.get("display_mode"), "click"),
-                "sourceWidgetId": source_widget_id,
+                "sourceWidgetId": source_id,
                 "targetIds": [],
                 "dispatchMode": "server",
                 "targetScope": _text(row.get("target_scope") or row.get("level"), "page"),
                 "refreshMode": "partial",
             }
         )
-        contract["actionContract"]["dependencyGraph"].setdefault(source_widget_id, []).append(action_id)
+        contract["actionContract"]["dependencyGraph"].setdefault(source_id, []).append(action_id)
         contract["statusContract"]["buttonStatus"].append({"btnId": f"btn.{key}", "visible": True, "disabled": False})
 
 
@@ -1451,6 +1452,9 @@ def _append_ui_contract_actions(
                 "view_type": _text(payload.get("view_mode"), "tree").split(",")[0],
                 "domain_raw": payload.get("domain_raw"),
                 "context_raw": payload.get("context_raw"),
+                "url": payload.get("url"),
+                "route": payload.get("route"),
+                "target": payload.get("target"),
             }
             button = {}
         elif kind == "server" or payload.get("server_action_id"):
@@ -1478,6 +1482,9 @@ def _append_ui_contract_actions(
                 "target": target,
                 "button": button,
                 "badge": badge or None,
+                "sourceWidgetId": _text(row.get("sourceWidgetId") or row.get("source_widget_id")),
+                "target_scope": _text(row.get("target_scope") or row.get("level"), "page"),
+                "trigger": _text(row.get("trigger"), "click"),
             }
         )
     _append_actions(contract, normalized, source_widget_id=source_widget_id)

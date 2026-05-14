@@ -434,6 +434,13 @@ class PageAssembler:
             record_id=requested_record_id,
             render_profile=requested_render_profile,
         )
+        self._inject_current_form_settings_action(
+            data,
+            model_name=model,
+            action_id=action.get("id") if isinstance(action, dict) else None,
+            view_id=requested_view_id,
+            render_profile=requested_render_profile,
+        )
 
         # 8.x) 访问策略（后端唯一决策点）：allow/degrade/block
         self._apply_access_policy(data, model_name=model)
@@ -631,6 +638,282 @@ class PageAssembler:
             form["attachments"] = merged_attachments
         views["form"] = form
         data["views"] = views
+
+    def _business_config_admin_group_xmlids(self):
+        hook_groups = call_extension_hook_first(
+            self.env,
+            "smart_core_business_config_admin_group_xmlids",
+            self.env,
+        )
+        if isinstance(hook_groups, (list, tuple, set)):
+            groups = [str(item or "").strip() for item in hook_groups if str(item or "").strip()]
+            if groups:
+                return groups
+        try:
+            raw = self.env["ir.config_parameter"].sudo().get_param(
+                "smart_core.business_config_admin_group_xmlids",
+                "",
+            )
+        except Exception:
+            raw = ""
+        groups = [item.strip() for item in str(raw or "").split(",") if item.strip()]
+        return groups or ["smart_construction_core.group_sc_cap_business_config_admin"]
+
+    def _is_business_config_admin(self):
+        for group_xmlid in self._business_config_admin_group_xmlids():
+            try:
+                if self.env.user.has_group(group_xmlid):
+                    return True
+            except Exception:
+                continue
+        return False
+
+    def _ref_or_empty(self, xmlid):
+        try:
+            return self.env.ref(xmlid, raise_if_not_found=False)
+        except Exception:
+            return self.env["ir.model"].browse()
+
+    def _inject_current_form_settings_action(self, data, model_name="", action_id=None, view_id=None, render_profile=""):
+        if not isinstance(data, dict):
+            return
+        model = str(model_name or "").strip()
+        if not model or model not in self.env:
+            return
+        if model in {"ui.form.field.policy", "ui.form.custom.field.wizard"}:
+            return
+        if str(render_profile or data.get("render_profile") or "").strip().lower() not in {"create", "edit", "readonly"}:
+            return
+        current_action_id = int(action_id or 0)
+        if current_action_id <= 0:
+            return
+        if not self._is_business_config_admin():
+            return
+        try:
+            if not self.env["ui.form.field.policy"].check_access_rights("create", raise_exception=False):
+                return
+        except Exception:
+            return
+        model_rec = self.su_env["ir.model"].search([("model", "=", model)], limit=1)
+        if not model_rec or model_rec.transient:
+            return
+        settings_action = self._ref_or_empty("smart_construction_core.action_ui_form_field_policy_business_config")
+        settings_menu = self._ref_or_empty("smart_construction_core.menu_ui_form_field_policy_business_config")
+        if not settings_action or not settings_action.exists() or not settings_menu or not settings_menu.exists():
+            return
+        current_view_id = int(view_id or 0)
+        action = {
+            "key": "current_form_field_settings",
+            "label": "设置",
+            "kind": "client",
+            "level": "header",
+            "selection": "none",
+            "allowed": True,
+            "semantic": "secondary_action",
+            "intent": "ui.local_mode",
+            "trigger": "click",
+            "sourceWidgetId": "page.header",
+            "target_scope": "page",
+            "visible_profiles": ["create", "edit", "readonly"],
+            "payload": {
+                "mode": "form_field_configuration",
+                "toggle": True,
+            },
+            "target": {
+                "mode": "form_field_configuration",
+                "toggle": True,
+            },
+            "target_model": "ui.form.field.policy",
+            "context": {
+                "source": "current_form_contract",
+                "source_model": model,
+                "source_action_id": current_action_id,
+            },
+            "source_authority": {
+                "kind": self.SOURCE_KIND,
+                "authorities": ["ui.form.field.policy", "ir.actions.act_window", "ir.ui.menu"],
+                "projection_only": True,
+                "no_business_fact_authority": True,
+            },
+        }
+        buttons = data.get("buttons") if isinstance(data.get("buttons"), list) else []
+        buttons = [row for row in buttons if not (isinstance(row, dict) and row.get("key") == action["key"])]
+        buttons.append(action)
+        data["buttons"] = buttons
+        toolbar = data.get("toolbar") if isinstance(data.get("toolbar"), dict) else {}
+        header = toolbar.get("header") if isinstance(toolbar.get("header"), list) else []
+        header = [row for row in header if not (isinstance(row, dict) and row.get("key") == action["key"])]
+        header.append(action)
+        toolbar["header"] = header
+        toolbar.setdefault("sidebar", [])
+        toolbar.setdefault("footer", [])
+        data["toolbar"] = toolbar
+        self._inject_current_form_settings_action_rules(
+            data,
+            model=model,
+            model_rec=model_rec,
+            action_id=current_action_id,
+            view_id=current_view_id,
+        )
+        governance = data.get("governance") if isinstance(data.get("governance"), dict) else {}
+        governance["current_form_field_settings"] = {
+            "enabled": True,
+            "model": model,
+            "model_id": int(model_rec.id),
+            "action_id": current_action_id,
+            "view_id": current_view_id if current_view_id > 0 else False,
+            "settings_action_id": int(settings_action.id),
+            "settings_menu_id": int(settings_menu.id),
+        }
+        data["governance"] = governance
+
+    def _inject_current_form_settings_action_rules(self, data, *, model, model_rec, action_id, view_id):
+        fields = data.get("fields") if isinstance(data.get("fields"), dict) else {}
+        if not fields:
+            return
+        mode = "form_field_configuration"
+        action_rows = [
+            {
+                "key": "current_form_add_custom_field",
+                "label": "添加字段",
+                "kind": "intent",
+                "intent": "ui.form_custom_field.create",
+                "trigger": "click",
+                "sourceWidgetId": "mode.%s" % mode,
+                "target_scope": "mode",
+                "target": {
+                    "mode": mode,
+                    "success_message": "字段已添加",
+                    "params": {
+                        "model": model,
+                        "action_id": int(action_id or 0),
+                        "view_id": int(view_id or 0) or False,
+                    },
+                    "prompt_schema": {
+                        "fields": [
+                            {"name": "label", "label": "字段标题", "type": "char", "required": True},
+                            {
+                                "name": "ttype",
+                                "label": "字段类型",
+                                "type": "selection",
+                                "required": True,
+                                "default": "char",
+                                "options": [
+                                    {"value": "char", "label": "单行文本"},
+                                    {"value": "text", "label": "多行文本"},
+                                    {"value": "integer", "label": "整数"},
+                                    {"value": "float", "label": "小数"},
+                                    {"value": "boolean", "label": "是/否"},
+                                    {"value": "date", "label": "日期"},
+                                    {"value": "datetime", "label": "日期时间"},
+                                    {"value": "html", "label": "富文本"},
+                                ],
+                            },
+                        ],
+                    },
+                },
+            },
+        ]
+        policy_rows = self.su_env["ui.form.field.policy"]._effective_policies(
+            model,
+            action_id=int(action_id or 0),
+            view_id=int(view_id or 0),
+        )
+        policy_by_field = {
+            str(policy.field_name or "").strip(): policy
+            for policy in policy_rows
+            if str(policy.field_name or "").strip()
+        }
+        views = data.get("views") if isinstance(data.get("views"), dict) else {}
+        form_view = views.get("form") if isinstance(views.get("form"), dict) else {}
+        layout_field_names = set()
+        layout_field_names.update(self._collect_layout_field_names(data.get("layout")))
+        layout_field_names.update(self._collect_layout_field_names(form_view.get("layout")))
+        eligible_names = sorted(set(layout_field_names) | set(policy_by_field.keys()))
+        if not eligible_names:
+            return
+        field_rows = self.su_env["ir.model.fields"].search([
+            ("model", "=", model),
+            ("name", "in", sorted(eligible_names)),
+            ("ttype", "!=", "binary"),
+        ])
+        field_by_name = {field.name: field for field in field_rows}
+        for field_name in sorted(eligible_names):
+            meta = fields.get(field_name) if isinstance(fields.get(field_name), dict) else {}
+            field = field_by_name.get(field_name)
+            if not field:
+                continue
+            label = str((meta or {}).get("string") or (meta or {}).get("label") or field.field_description or field_name).strip()
+            policy = policy_by_field.get(field_name)
+            current_visible = bool(policy.visible) if policy else True
+            base_params = {
+                "model": model,
+                "model_id": int(model_rec.id),
+                "field_name": field_name,
+                "label": label,
+                "action_id": int(action_id or 0),
+                "view_id": int(view_id or 0) or False,
+            }
+            for visible, value, label_text in ((True, "show", "显示"), (False, "hide", "隐藏")):
+                action_rows.append({
+                    "key": "current_form_field_%s_%s" % (field_name, value),
+                    "label": "%s%s" % (label_text, label),
+                    "kind": "intent",
+                    "intent": "ui.form_field_policy.set",
+                    "trigger": "change",
+                    "sourceWidgetId": "field.%s" % field_name,
+                    "target_scope": "widget",
+                    "target": {
+                        "mode": mode,
+                        "success_message": "字段配置已更新",
+                        "control": {
+                            "type": "radio",
+                            "name": "field_visibility",
+                            "value": value,
+                            "label": label_text,
+                            "checked": bool(visible) == current_visible,
+                        },
+                        "params": {
+                            **base_params,
+                            "visible": bool(visible),
+                        },
+                    },
+                })
+        groups = data.get("action_groups") if isinstance(data.get("action_groups"), list) else []
+        groups = [row for row in groups if not (isinstance(row, dict) and row.get("key") == "current_form_field_configuration")]
+        groups.append({
+            "key": "current_form_field_configuration",
+            "label": "字段配置",
+            "sourceWidgetId": "mode.%s" % mode,
+            "actions": action_rows,
+            "source_authority": {
+                "kind": self.SOURCE_KIND,
+                "authorities": ["ui.form.field.policy", "ui.form.custom.field.wizard", "ir.model.fields"],
+                "projection_only": True,
+                "no_business_fact_authority": True,
+            },
+        })
+        data["action_groups"] = groups
+
+    def _collect_layout_field_names(self, raw):
+        names = set()
+
+        def visit(node):
+            if isinstance(node, list):
+                for item in node:
+                    visit(item)
+                return
+            if not isinstance(node, dict):
+                return
+            node_type = str(node.get("type") or node.get("kind") or "").strip().lower()
+            field_name = str(node.get("name") or "").strip()
+            if field_name and (node_type == "field" or node.get("fieldInfo") or node.get("field_info")):
+                names.add(field_name)
+            for child_key in ("children", "pages", "tabs", "nodes", "items", "layout"):
+                visit(node.get(child_key))
+
+        visit(raw)
+        return names
 
     def _safe_model_can_read(self, model_name):
         name = str(model_name or "").strip()

@@ -804,6 +804,78 @@ class TestOdooNativeAlignmentBoundaries(TransactionCase):
         self.assertEqual(policy.model, "res.partner")
         self.assertEqual(policy.model_id.model, "res.partner")
 
+    def test_form_contract_declares_current_page_field_settings_action(self):
+        group = self.env.ref("smart_construction_core.group_sc_cap_business_config_admin")
+        self.env.user.write({"groups_id": [(4, group.id)]})
+        action = self.env["ir.actions.act_window"].sudo().create({
+            "name": "Customer Current Form Settings Probe",
+            "res_model": "res.partner",
+            "view_mode": "tree,form",
+        })
+        assembler = PageAssembler(self.env, self.env["ir.model"].sudo().env)
+        data = {
+            "buttons": [],
+            "toolbar": {"header": [], "sidebar": [], "footer": []},
+            "views": {"form": {}},
+            "fields": {"name": {"string": "名称", "type": "char"}},
+            "render_profile": "edit",
+        }
+
+        assembler._inject_current_form_settings_action(
+            data,
+            model_name="res.partner",
+            action_id=action.id,
+            render_profile="edit",
+        )
+
+        actions = [row for row in data.get("toolbar", {}).get("header", []) if row.get("key") == "current_form_field_settings"]
+        self.assertEqual(len(actions), 1)
+        settings = actions[0]
+        self.assertEqual(settings.get("kind"), "client")
+        self.assertEqual(settings.get("intent"), "ui.local_mode")
+        self.assertEqual(settings.get("label"), "设置")
+        self.assertEqual((settings.get("target") or {}).get("mode"), "form_field_configuration")
+        governance = data.get("governance", {}).get("current_form_field_settings") or {}
+        self.assertEqual(governance.get("action_id"), action.id)
+        self.assertEqual(governance.get("model"), "res.partner")
+        action_groups = data.get("action_groups") or []
+        field_config_group = next((row for row in action_groups if row.get("key") == "current_form_field_configuration"), {})
+        self.assertTrue(field_config_group)
+        self.assertTrue(any(row.get("intent") == "ui.form_custom_field.create" for row in field_config_group.get("actions") or []))
+
+        result = UiContractV2Handler(self.env, su_env=self.env["ir.model"].sudo().env).handle({
+            "model": "res.partner",
+            "view_type": "form",
+            "action_id": action.id,
+            "render_profile": "edit",
+        })
+        envelope = result.to_legacy_dict() if hasattr(result, "to_legacy_dict") else result
+        self.assertTrue(envelope.get("ok", True))
+        action_rows = envelope["data"]["actionContract"]["actionRuleList"]
+        settings_rows = [
+            row for row in action_rows
+            if row.get("actionKey") == "current_form_field_settings"
+        ]
+        self.assertEqual(len(settings_rows), 1)
+        v2_action = settings_rows[0]
+        self.assertEqual(v2_action.get("sourceWidgetId"), "page.header")
+        self.assertEqual(v2_action.get("targetScope"), "page")
+        self.assertEqual(v2_action.get("triggerType"), "click")
+        self.assertEqual(v2_action.get("intent"), "ui.local_mode")
+        self.assertEqual((v2_action.get("target") or {}).get("mode"), "form_field_configuration")
+        dependency_graph = envelope["data"]["actionContract"]["dependencyGraph"]
+        self.assertIn(v2_action.get("actionId"), dependency_graph.get("page.header") or [])
+        self.assertTrue(any(
+            row.get("sourceWidgetId") == "mode.form_field_configuration"
+            and row.get("intent") == "ui.form_custom_field.create"
+            for row in action_rows
+        ))
+        self.assertTrue(any(
+            row.get("sourceWidgetId") == "field.name"
+            and row.get("intent") == "ui.form_field_policy.set"
+            for row in action_rows
+        ))
+
     def test_custom_field_wizard_action_first_flow_autogenerates_field_name(self):
         action = self.env["ir.actions.act_window"].sudo().create({
             "name": "Customer Custom Field Probe",
