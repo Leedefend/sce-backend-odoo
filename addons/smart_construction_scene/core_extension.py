@@ -118,10 +118,19 @@ NAV_MENU_SCENE_MAP = {
     "smart_construction_core.menu_sc_material_center": "material.center",
     "smart_construction_core.menu_sc_material_catalog": "material.catalog",
     "smart_construction_core.menu_sc_material_purchase_request": "material.procurement",
+    "smart_construction_core.menu_sc_material_rfq": "material.rfq",
     "smart_construction_core.menu_sc_material_acceptance": "material.acceptance",
+    "smart_construction_core.menu_sc_material_inbound": "material.inbound",
+    "smart_construction_core.menu_sc_material_outbound": "material.outbound",
+    "smart_construction_core.menu_sc_material_price_library": "material.price_library",
     "smart_construction_core.menu_sc_material_settlement": "material.settlement",
     "smart_construction_core.menu_sc_material_rental_plan": "material.rental",
+    "smart_construction_core.menu_sc_material_rental_order": "material.rental_order",
+    "smart_construction_core.menu_sc_material_rental_settlement": "material.rental_settlement",
     "smart_construction_core.menu_sc_subcontract_plan": "subcontract.management",
+    "smart_construction_core.menu_sc_subcontract_request": "subcontract.request",
+    "smart_construction_core.menu_sc_subcontract_register": "subcontract.register",
+    "smart_construction_core.menu_sc_subcontract_settlement": "subcontract.settlement",
 }
 
 NAV_ACTION_SCENE_MAP = {
@@ -139,10 +148,19 @@ NAV_ACTION_SCENE_MAP = {
     "smart_construction_core.action_payment_request_my": "finance.payment_requests",
     "smart_construction_core.action_sc_material_product_template": "material.catalog",
     "smart_construction_core.action_sc_material_purchase_request": "material.procurement",
+    "smart_construction_core.action_sc_material_rfq": "material.rfq",
     "smart_construction_core.action_sc_material_acceptance": "material.acceptance",
+    "smart_construction_core.action_sc_material_inbound": "material.inbound",
+    "smart_construction_core.action_sc_material_outbound": "material.outbound",
+    "smart_construction_core.action_sc_material_price_library": "material.price_library",
     "smart_construction_core.action_sc_material_settlement": "material.settlement",
     "smart_construction_core.action_sc_material_rental_plan": "material.rental",
+    "smart_construction_core.action_sc_material_rental_order": "material.rental_order",
+    "smart_construction_core.action_sc_material_rental_settlement": "material.rental_settlement",
     "smart_construction_core.action_sc_subcontract_plan": "subcontract.management",
+    "smart_construction_core.action_sc_subcontract_request": "subcontract.request",
+    "smart_construction_core.action_sc_subcontract_register": "subcontract.register",
+    "smart_construction_core.action_sc_subcontract_settlement": "subcontract.settlement",
 }
 
 NAV_MODEL_VIEW_SCENE_MAP = {
@@ -152,10 +170,19 @@ NAV_MODEL_VIEW_SCENE_MAP = {
     ("payment.request", "form"): "finance.payment_requests",
     ("sc.material.catalog", "list"): "material.catalog",
     ("sc.material.purchase.request", "list"): "material.procurement",
+    ("sc.material.rfq", "list"): "material.rfq",
     ("sc.material.acceptance", "list"): "material.acceptance",
+    ("sc.material.inbound", "list"): "material.inbound",
+    ("sc.material.outbound", "list"): "material.outbound",
+    ("sc.material.price", "list"): "material.price_library",
     ("sc.material.settlement", "list"): "material.settlement",
     ("sc.material.rental.plan", "list"): "material.rental",
+    ("sc.material.rental.order", "list"): "material.rental_order",
+    ("sc.material.rental.settlement", "list"): "material.rental_settlement",
     ("sc.subcontract.plan", "list"): "subcontract.management",
+    ("sc.subcontract.request", "list"): "subcontract.request",
+    ("sc.subcontract.register", "list"): "subcontract.register",
+    ("sc.subcontract.settlement", "list"): "subcontract.settlement",
 }
 
 SURFACE_NAV_ALLOWLIST = {
@@ -190,8 +217,14 @@ SURFACE_DEEP_LINK_ALLOWLIST = {
         "material.acceptance",
         "material.catalog",
         "material.center",
+        "material.inbound",
+        "material.outbound",
+        "material.price_library",
         "material.procurement",
         "material.rental",
+        "material.rental_order",
+        "material.rental_settlement",
+        "material.rfq",
         "material.settlement",
         "config.project_cost_code",
         "portal.capability_matrix",
@@ -201,6 +234,9 @@ SURFACE_DEEP_LINK_ALLOWLIST = {
         "projects.execution",
         "risk.monitor",
         "subcontract.management",
+        "subcontract.register",
+        "subcontract.request",
+        "subcontract.settlement",
         "task.center",
     ]
 }
@@ -224,9 +260,18 @@ CRITICAL_SCENE_TARGET_OVERRIDES = {
     "material.catalog",
     "material.procurement",
     "material.acceptance",
+    "material.inbound",
+    "material.outbound",
+    "material.price_library",
     "material.settlement",
     "material.rental",
+    "material.rental_order",
+    "material.rental_settlement",
+    "material.rfq",
     "subcontract.management",
+    "subcontract.request",
+    "subcontract.register",
+    "subcontract.settlement",
 }
 
 CRITICAL_SCENE_TARGET_ROUTE_OVERRIDES = {

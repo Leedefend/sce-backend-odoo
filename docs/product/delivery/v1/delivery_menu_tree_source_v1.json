@@ -35,10 +35,19 @@
         "material.center",
         "material.catalog",
         "material.procurement",
+        "material.rfq",
         "material.acceptance",
+        "material.inbound",
+        "material.outbound",
+        "material.price_library",
         "material.settlement",
         "material.rental",
-        "subcontract.management"
+        "material.rental_order",
+        "material.rental_settlement",
+        "subcontract.management",
+        "subcontract.request",
+        "subcontract.register",
+        "subcontract.settlement"
       ]
     },
     {

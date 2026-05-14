@@ -411,7 +411,12 @@ class TestActionOnlySceneSemanticSupply(unittest.TestCase):
         material_center = next((row for row in rows if row.get("code") == "material.center"), {})
         material_catalog = next((row for row in rows if row.get("code") == "material.catalog"), {})
         material_procurement = next((row for row in rows if row.get("code") == "material.procurement"), {})
+        material_rfq = next((row for row in rows if row.get("code") == "material.rfq"), {})
+        material_inbound = next((row for row in rows if row.get("code") == "material.inbound"), {})
+        material_outbound = next((row for row in rows if row.get("code") == "material.outbound"), {})
+        material_rental_order = next((row for row in rows if row.get("code") == "material.rental_order"), {})
         subcontract = next((row for row in rows if row.get("code") == "subcontract.management"), {})
+        subcontract_register = next((row for row in rows if row.get("code") == "subcontract.register"), {})
 
         self.assertEqual(((material_center.get("target") or {}).get("route")), "/s/material.center")
         self.assertEqual(
@@ -427,8 +432,28 @@ class TestActionOnlySceneSemanticSupply(unittest.TestCase):
             "smart_construction_core.action_sc_material_purchase_request",
         )
         self.assertEqual(
+            ((material_rfq.get("target") or {}).get("action_xmlid")),
+            "smart_construction_core.action_sc_material_rfq",
+        )
+        self.assertEqual(
+            ((material_inbound.get("target") or {}).get("action_xmlid")),
+            "smart_construction_core.action_sc_material_inbound",
+        )
+        self.assertEqual(
+            ((material_outbound.get("target") or {}).get("action_xmlid")),
+            "smart_construction_core.action_sc_material_outbound",
+        )
+        self.assertEqual(
+            ((material_rental_order.get("target") or {}).get("action_xmlid")),
+            "smart_construction_core.action_sc_material_rental_order",
+        )
+        self.assertEqual(
             ((subcontract.get("target") or {}).get("action_xmlid")),
             "smart_construction_core.action_sc_subcontract_plan",
+        )
+        self.assertEqual(
+            ((subcontract_register.get("target") or {}).get("action_xmlid")),
+            "smart_construction_core.action_sc_subcontract_register",
         )
 
     def test_material_capabilities_no_longer_route_through_project_ledger(self):
@@ -464,6 +489,40 @@ class TestActionOnlySceneSemanticSupply(unittest.TestCase):
         )
         self.assertEqual(handoff.get("family"), "subcontract_management")
         self.assertEqual(handoff.get("final_scene"), "subcontract.management")
+
+    def test_material_provider_supports_secondary_workflow_entries(self):
+        rfq = material_center_provider.build(scene_key="material.rfq", runtime={"company_id": 9})
+        inbound = material_center_provider.build(scene_key="material.inbound", runtime={"company_id": 9})
+        rental_settlement = material_center_provider.build(scene_key="material.rental_settlement", runtime={"company_id": 9})
+
+        self.assertEqual(((rfq.get("primary_action") or {}).get("action_xmlid")), "smart_construction_core.action_sc_material_rfq")
+        self.assertEqual(rfq.get("next_scene"), "material.acceptance")
+        self.assertEqual(((inbound.get("primary_action") or {}).get("action_xmlid")), "smart_construction_core.action_sc_material_inbound")
+        self.assertEqual(inbound.get("next_scene"), "material.outbound")
+        self.assertEqual(
+            ((rental_settlement.get("primary_action") or {}).get("action_xmlid")),
+            "smart_construction_core.action_sc_material_rental_settlement",
+        )
+
+    def test_subcontract_provider_supports_application_register_settlement_entries(self):
+        request = material_center_provider.build(scene_key="subcontract.request", runtime={"company_id": 9})
+        register = material_center_provider.build(scene_key="subcontract.register", runtime={"company_id": 9})
+        settlement = material_center_provider.build(scene_key="subcontract.settlement", runtime={"company_id": 9})
+
+        self.assertEqual(
+            ((request.get("primary_action") or {}).get("action_xmlid")),
+            "smart_construction_core.action_sc_subcontract_request",
+        )
+        self.assertEqual(request.get("next_scene"), "subcontract.register")
+        self.assertEqual(
+            ((register.get("primary_action") or {}).get("action_xmlid")),
+            "smart_construction_core.action_sc_subcontract_register",
+        )
+        self.assertEqual(register.get("next_scene"), "subcontract.settlement")
+        self.assertEqual(
+            ((settlement.get("primary_action") or {}).get("action_xmlid")),
+            "smart_construction_core.action_sc_subcontract_settlement",
+        )
 
     def test_contracts_workspace_provider_supplies_delivery_handoff_v1(self):
         payload = contracts_workspace_provider.build(scene_key="contracts.workspace", runtime={"company_id": 9})
@@ -809,6 +868,14 @@ class TestActionOnlySceneSemanticSupply(unittest.TestCase):
             ((specs.get("subcontract.management") or {}).get("provider_key")),
             "construction.material_center_provider.v1",
         )
+        self.assertEqual(
+            ((specs.get("material.rfq") or {}).get("provider_path")).name,
+            "material_center_provider.py",
+        )
+        self.assertEqual(
+            ((specs.get("subcontract.settlement") or {}).get("provider_key")),
+            "construction.material_center_provider.v1",
+        )
 
     def test_smart_core_nav_scene_maps_include_material_resource_targets(self):
         _reset_caches()
@@ -828,8 +895,24 @@ class TestActionOnlySceneSemanticSupply(unittest.TestCase):
             "material.procurement",
         )
         self.assertEqual(
+            maps["action_xmlid_scene_map"]["smart_construction_core.action_sc_material_rfq"],
+            "material.rfq",
+        )
+        self.assertEqual(
+            maps["action_xmlid_scene_map"]["smart_construction_core.action_sc_material_inbound"],
+            "material.inbound",
+        )
+        self.assertEqual(
+            maps["action_xmlid_scene_map"]["smart_construction_core.action_sc_material_rental_settlement"],
+            "material.rental_settlement",
+        )
+        self.assertEqual(
             maps["action_xmlid_scene_map"]["smart_construction_core.action_sc_subcontract_plan"],
             "subcontract.management",
+        )
+        self.assertEqual(
+            maps["action_xmlid_scene_map"]["smart_construction_core.action_sc_subcontract_register"],
+            "subcontract.register",
         )
 
     def test_enterprise_enablement_targets_publish_scene_first_routes(self):

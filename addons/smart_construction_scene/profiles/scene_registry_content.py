@@ -285,12 +285,48 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             },
         },
         {
+            "code": "material.rfq",
+            "name": "询比价",
+            "target": {
+                "route": "/s/material.rfq",
+                "menu_xmlid": "smart_construction_core.menu_sc_material_rfq",
+                "action_xmlid": "smart_construction_core.action_sc_material_rfq",
+            },
+        },
+        {
             "code": "material.acceptance",
             "name": "材料进场验收",
             "target": {
                 "route": "/s/material.acceptance",
                 "menu_xmlid": "smart_construction_core.menu_sc_material_acceptance",
                 "action_xmlid": "smart_construction_core.action_sc_material_acceptance",
+            },
+        },
+        {
+            "code": "material.inbound",
+            "name": "入库单",
+            "target": {
+                "route": "/s/material.inbound",
+                "menu_xmlid": "smart_construction_core.menu_sc_material_inbound",
+                "action_xmlid": "smart_construction_core.action_sc_material_inbound",
+            },
+        },
+        {
+            "code": "material.outbound",
+            "name": "出库单",
+            "target": {
+                "route": "/s/material.outbound",
+                "menu_xmlid": "smart_construction_core.menu_sc_material_outbound",
+                "action_xmlid": "smart_construction_core.action_sc_material_outbound",
+            },
+        },
+        {
+            "code": "material.price_library",
+            "name": "材料价格库",
+            "target": {
+                "route": "/s/material.price_library",
+                "menu_xmlid": "smart_construction_core.menu_sc_material_price_library",
+                "action_xmlid": "smart_construction_core.action_sc_material_price_library",
             },
         },
         {
@@ -312,12 +348,57 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             },
         },
         {
+            "code": "material.rental_order",
+            "name": "租赁单",
+            "target": {
+                "route": "/s/material.rental_order",
+                "menu_xmlid": "smart_construction_core.menu_sc_material_rental_order",
+                "action_xmlid": "smart_construction_core.action_sc_material_rental_order",
+            },
+        },
+        {
+            "code": "material.rental_settlement",
+            "name": "租赁结算",
+            "target": {
+                "route": "/s/material.rental_settlement",
+                "menu_xmlid": "smart_construction_core.menu_sc_material_rental_settlement",
+                "action_xmlid": "smart_construction_core.action_sc_material_rental_settlement",
+            },
+        },
+        {
             "code": "subcontract.management",
             "name": "专业分包",
             "target": {
                 "route": "/s/subcontract.management",
                 "menu_xmlid": "smart_construction_core.menu_sc_subcontract_plan",
                 "action_xmlid": "smart_construction_core.action_sc_subcontract_plan",
+            },
+        },
+        {
+            "code": "subcontract.request",
+            "name": "分包申请",
+            "target": {
+                "route": "/s/subcontract.request",
+                "menu_xmlid": "smart_construction_core.menu_sc_subcontract_request",
+                "action_xmlid": "smart_construction_core.action_sc_subcontract_request",
+            },
+        },
+        {
+            "code": "subcontract.register",
+            "name": "分包登记",
+            "target": {
+                "route": "/s/subcontract.register",
+                "menu_xmlid": "smart_construction_core.menu_sc_subcontract_register",
+                "action_xmlid": "smart_construction_core.action_sc_subcontract_register",
+            },
+        },
+        {
+            "code": "subcontract.settlement",
+            "name": "分包结算",
+            "target": {
+                "route": "/s/subcontract.settlement",
+                "menu_xmlid": "smart_construction_core.menu_sc_subcontract_settlement",
+                "action_xmlid": "smart_construction_core.action_sc_subcontract_settlement",
             },
         },
         {
