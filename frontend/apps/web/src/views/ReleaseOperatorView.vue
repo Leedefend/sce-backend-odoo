@@ -69,6 +69,48 @@
 
       <section class="release-operator__section">
         <div class="release-operator__section-head">
+          <h2>产品配置发布线</h2>
+          <p>草案、检查、候选、发布、生效</p>
+        </div>
+        <div class="release-operator__pipeline">
+          <article v-for="stage in pipelineStages" :key="pipelineKey(stage)">
+            <span :class="['release-operator__stage-dot', `release-operator__stage-dot--${stage.status || 'pending'}`]"></span>
+            <strong>{{ stage.label || stage.key || '-' }}</strong>
+            <small>{{ stage.count ?? 0 }}</small>
+          </article>
+        </div>
+        <div class="release-operator__summary-grid">
+          <article>
+            <span>当前发布页</span>
+            <strong>{{ changeSummary.active_page_count ?? 0 }}</strong>
+          </article>
+          <article>
+            <span>草案发布页</span>
+            <strong>{{ changeSummary.draft_page_count ?? 0 }}</strong>
+          </article>
+          <article>
+            <span>差异</span>
+            <strong>{{ changeSummary.page_count_delta ?? 0 }}</strong>
+          </article>
+          <article>
+            <span>预览/下线</span>
+            <strong>{{ changeSummary.preview_page_count ?? 0 }} / {{ changeSummary.hidden_page_count ?? 0 }}</strong>
+          </article>
+        </div>
+        <div class="release-operator__checks">
+          <article v-for="check in preflightChecks" :key="pipelineKey(check)" :class="`release-operator__check--${check.status || 'pass'}`">
+            <strong>{{ check.label || check.key || '-' }}</strong>
+            <span>{{ check.message || '-' }}</span>
+          </article>
+        </div>
+        <div class="release-operator__audience">
+          <strong>生效试算</strong>
+          <span>公司 {{ audienceSimulation.company_count ?? 0 }} 个，订阅 {{ audienceSimulation.subscription_count ?? 0 }} 个，角色 {{ audienceRoles }}</span>
+        </div>
+      </section>
+
+      <section class="release-operator__section">
+        <div class="release-operator__section-head">
           <h2>{{ copy.section_control_scope || '受控内容' }}</h2>
           <p>{{ controlScope.policy_state || '-' }} / {{ controlScope.access_level || '-' }}</p>
         </div>
@@ -345,6 +387,7 @@ interface ReleaseOperatorSurface {
   identity?: AnyRecord;
   products?: ProductRow[];
   control_scope?: AnyRecord;
+  release_pipeline?: AnyRecord;
   release_state?: AnyRecord;
   pending_approval?: { actions?: ReleaseActionRow[] };
   candidate_snapshots?: SnapshotRow[];
@@ -371,6 +414,21 @@ const copy = computed<Record<string, string>>(() => {
 const identity = computed(() => surface.value?.identity || {});
 const products = computed(() => surface.value?.products || []);
 const controlScope = computed(() => surface.value?.control_scope || {});
+const releasePipeline = computed(() => surface.value?.release_pipeline || {});
+const pipelineStages = computed(() => {
+  const stages = releasePipeline.value.stages;
+  return Array.isArray(stages) ? stages as AnyRecord[] : [];
+});
+const changeSummary = computed(() => (releasePipeline.value.change_summary || {}) as AnyRecord);
+const preflightChecks = computed(() => {
+  const checks = releasePipeline.value.preflight_checks;
+  return Array.isArray(checks) ? checks as AnyRecord[] : [];
+});
+const audienceSimulation = computed(() => (releasePipeline.value.audience_simulation || {}) as AnyRecord);
+const audienceRoles = computed(() => {
+  const roles = audienceSimulation.value.role_scope;
+  return Array.isArray(roles) && roles.length ? roles.join(', ') : '-';
+});
 const controlledPages = computed(() => {
   const pages = controlScope.value.pages;
   return Array.isArray(pages) ? pages as AnyRecord[] : [];
@@ -407,6 +465,9 @@ function pageKey(page: AnyRecord) {
   return String(page.page_key || page.scene_key || page.menu_key || page.capability_key || '').trim();
 }
 function definitionKey(item: AnyRecord) {
+  return String(item.key || item.label || '').trim();
+}
+function pipelineKey(item: AnyRecord) {
   return String(item.key || item.label || '').trim();
 }
 function releaseStateLabel(page: AnyRecord) {
@@ -641,6 +702,104 @@ onMounted(() => {
   gap: 12px;
 }
 
+.release-operator__pipeline,
+.release-operator__summary-grid,
+.release-operator__checks {
+  display: grid;
+  gap: 10px;
+}
+
+.release-operator__pipeline {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.release-operator__pipeline article,
+.release-operator__summary-grid article,
+.release-operator__checks article,
+.release-operator__audience {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.release-operator__pipeline article {
+  display: grid;
+  gap: 6px;
+}
+
+.release-operator__pipeline strong,
+.release-operator__summary-grid strong,
+.release-operator__checks strong,
+.release-operator__audience strong {
+  color: #0f172a;
+  font-size: 13px;
+}
+
+.release-operator__pipeline small,
+.release-operator__summary-grid span,
+.release-operator__checks span,
+.release-operator__audience span {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.release-operator__stage-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #94a3b8;
+}
+
+.release-operator__stage-dot--done,
+.release-operator__stage-dot--active,
+.release-operator__stage-dot--preview {
+  background: #0ea5e9;
+}
+
+.release-operator__stage-dot--warn {
+  background: #f59e0b;
+}
+
+.release-operator__stage-dot--blocked {
+  background: #ef4444;
+}
+
+.release-operator__summary-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 10px;
+}
+
+.release-operator__summary-grid article {
+  display: grid;
+  gap: 6px;
+}
+
+.release-operator__summary-grid strong {
+  font-size: 20px;
+}
+
+.release-operator__checks {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  margin-top: 10px;
+}
+
+.release-operator__check--fail {
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.release-operator__check--warn {
+  border-color: #fde68a;
+  background: #fffbeb;
+}
+
+.release-operator__audience {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+}
+
 .release-operator__policy-control {
   display: flex;
   flex-wrap: wrap;
@@ -842,9 +1001,16 @@ onMounted(() => {
 
   .release-operator__metrics,
   .release-operator__scope-grid,
+  .release-operator__pipeline,
+  .release-operator__summary-grid,
+  .release-operator__checks,
   .release-operator__definition-grid,
   .release-operator__history {
     grid-template-columns: 1fr;
+  }
+
+  .release-operator__audience {
+    flex-direction: column;
   }
 
   .release-operator__actions {

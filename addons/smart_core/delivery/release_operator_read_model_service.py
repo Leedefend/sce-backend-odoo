@@ -246,6 +246,7 @@ class ReleaseOperatorReadModelService:
             "policy_id": int(payload.get("id") or 0),
             "policy_state": _text(payload.get("state")),
             "access_level": _text(payload.get("access_level")),
+            "allowed_role_codes": _list(payload.get("allowed_role_codes")),
             "version": _text(payload.get("version")) or "v1",
             "menu_group_count": len(menu_groups),
             "menu_count": enabled_menu_count,
@@ -368,6 +369,157 @@ class ReleaseOperatorReadModelService:
             },
         }
 
+    def _subscription_audience_summary(self, *, product_key: str, control_scope: dict[str, Any]) -> dict[str, Any]:
+        company_count = 0
+        subscription_count = 0
+        sample_companies: list[dict[str, Any]] = []
+        try:
+            subs = self.env["sc.subscription"].sudo().search(
+                [("state", "in", ("trial", "active"))],
+                order="start_date desc, id desc",
+                limit=20,
+            )
+            subscription_count = len(subs)
+            seen_companies: set[int] = set()
+            for sub in subs:
+                company = sub.company_id
+                company_id = int(company.id or 0)
+                if company_id and company_id not in seen_companies:
+                    seen_companies.add(company_id)
+                    sample_companies.append(
+                        {
+                            "company_id": company_id,
+                            "company_name": _text(company.name),
+                            "subscription_state": _text(sub.state),
+                            "plan": _text(sub.plan_id.name),
+                            "visible_page_count": int(control_scope.get("page_count") or 0),
+                        }
+                    )
+            company_count = len(seen_companies)
+        except Exception:
+            sample_companies = []
+        roles = _list(control_scope.get("allowed_role_codes"))
+        return {
+            "product_key": product_key,
+            "company_count": company_count,
+            "subscription_count": subscription_count,
+            "sample_companies": sample_companies[:5],
+            "role_scope": roles or ["authorized_user"],
+            "visible_page_count": int(control_scope.get("page_count") or 0),
+            "source": "sc.subscription" if subscription_count else "policy_default",
+        }
+
+    def _build_preflight_checks(
+        self,
+        *,
+        control_scope: dict[str, Any],
+        pending_approval_queue: dict[str, Any],
+        active_snapshot: dict[str, Any],
+    ) -> list[dict[str, Any]]:
+        checks: list[dict[str, Any]] = []
+        total_pages = int(control_scope.get("total_page_count") or 0)
+        effective_pages = int(control_scope.get("page_count") or 0)
+        preview_pages = int(control_scope.get("preview_page_count") or 0)
+        hidden_pages = int(control_scope.get("hidden_page_count") or 0)
+        pending_count = int(pending_approval_queue.get("count") or 0)
+        checks.append(
+            {
+                "key": "has_product_pages",
+                "label": "产品页面范围",
+                "status": "pass" if effective_pages > 0 else "fail",
+                "message": f"有效发布页面 {effective_pages}/{total_pages}",
+            }
+        )
+        checks.append(
+            {
+                "key": "preview_pages",
+                "label": "预览页面",
+                "status": "warn" if preview_pages else "pass",
+                "message": f"预览页面 {preview_pages} 个",
+            }
+        )
+        checks.append(
+            {
+                "key": "hidden_pages",
+                "label": "下线页面",
+                "status": "warn" if hidden_pages else "pass",
+                "message": f"未发布/已下线页面 {hidden_pages} 个",
+            }
+        )
+        checks.append(
+            {
+                "key": "pending_approvals",
+                "label": "待审批动作",
+                "status": "warn" if pending_count else "pass",
+                "message": f"待审批动作 {pending_count} 个",
+            }
+        )
+        active_snapshot_id = int(active_snapshot.get("id") or 0)
+        active_snapshot_version = _text(active_snapshot.get("version")) if active_snapshot_id > 0 else ""
+        checks.append(
+            {
+                "key": "active_release",
+                "label": "当前发布版",
+                "status": "pass" if active_snapshot_id > 0 else "warn",
+                "message": f"active snapshot: {active_snapshot_version or 'none'}",
+            }
+        )
+        return checks
+
+    def _build_release_pipeline(
+        self,
+        *,
+        product_key: str,
+        control_scope: dict[str, Any],
+        current_release_state: dict[str, Any],
+        active_snapshot_raw: dict[str, Any],
+        pending_approval_queue: dict[str, Any],
+        candidate_snapshots: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        active_snapshot = _dict(current_release_state.get("active_snapshot"))
+        active_counts = _dict(_dict(_dict(active_snapshot_raw.get("freeze_surface")).get("surface_counts")))
+        active_page_count = int(active_counts.get("nav") or 0)
+        draft_page_count = int(control_scope.get("page_count") or 0)
+        preview_page_count = int(control_scope.get("preview_page_count") or 0)
+        hidden_page_count = int(control_scope.get("hidden_page_count") or 0)
+        candidate_count = len(candidate_snapshots)
+        checks = self._build_preflight_checks(
+            control_scope=control_scope,
+            pending_approval_queue=pending_approval_queue,
+            active_snapshot=active_snapshot,
+        )
+        blocking_count = len([item for item in checks if item.get("status") == "fail"])
+        warn_count = len([item for item in checks if item.get("status") == "warn"])
+        return {
+            "product_key": product_key,
+            "draft": {
+                "page_count": draft_page_count,
+                "released_page_count": int(control_scope.get("released_page_count") or 0),
+                "preview_page_count": preview_page_count,
+                "hidden_page_count": hidden_page_count,
+                "policy_state": _text(control_scope.get("policy_state")),
+                "access_level": _text(control_scope.get("access_level")),
+            },
+            "change_summary": {
+                "active_page_count": active_page_count,
+                "draft_page_count": draft_page_count,
+                "page_count_delta": draft_page_count - active_page_count,
+                "preview_page_count": preview_page_count,
+                "hidden_page_count": hidden_page_count,
+                "candidate_snapshot_count": candidate_count,
+            },
+            "stages": [
+                {"key": "source", "label": "真实菜单源", "status": "done", "count": int(control_scope.get("total_page_count") or 0)},
+                {"key": "draft", "label": "产品配置草案", "status": "active", "count": draft_page_count},
+                {"key": "preflight", "label": "发布前检查", "status": "blocked" if blocking_count else ("warn" if warn_count else "done"), "count": len(checks)},
+                {"key": "candidate", "label": "候选快照", "status": "active" if candidate_count else "pending", "count": candidate_count},
+                {"key": "release", "label": "审批发布", "status": "pending" if candidate_count else "waiting", "count": int(pending_approval_queue.get("count") or 0)},
+                {"key": "audience", "label": "公司/角色生效", "status": "preview", "count": draft_page_count},
+            ],
+            "preflight_checks": checks,
+            "audience_simulation": self._subscription_audience_summary(product_key=product_key, control_scope=control_scope),
+        }
+
     def build_read_model(self, *, product_key: str = "", action_limit: int = 20) -> dict[str, Any]:
         from .release_operator_contract_registry import build_release_operator_contract_registry
 
@@ -391,6 +543,15 @@ class ReleaseOperatorReadModelService:
             "runtime_summary": deepcopy(_dict(_dict(audit.get("runtime")).get("release_audit_trail_summary"))),
             "released_snapshot_lineage": deepcopy(_dict(_dict(audit.get("runtime")).get("released_snapshot_lineage"))),
         }
+        control_scope = self._build_control_scope(product_key=identity["product_key"])
+        release_pipeline = self._build_release_pipeline(
+            product_key=identity["product_key"],
+            control_scope=control_scope,
+            current_release_state=current_release_state,
+            active_snapshot_raw=active_snapshot,
+            pending_approval_queue=pending_approval_queue,
+            candidate_snapshots=candidate_snapshots,
+        )
         role_context = self.approval_policy_service.resolve_actor_role_context(self.env.user)
         available_operator_actions = {
             "write_model_contract_version": RELEASE_OPERATOR_WRITE_MODEL_CONTRACT_VERSION,
@@ -478,7 +639,8 @@ class ReleaseOperatorReadModelService:
             },
             "products": self._products(identity["product_key"]),
             "actor_role_context": role_context,
-            "control_scope": self._build_control_scope(product_key=identity["product_key"]),
+            "control_scope": control_scope,
+            "release_pipeline": release_pipeline,
             "current_release_state": current_release_state,
             "pending_approval_queue": pending_approval_queue,
             "candidate_snapshots": candidate_snapshots,
