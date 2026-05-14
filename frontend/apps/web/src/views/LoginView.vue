@@ -107,7 +107,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useSessionStore } from '../stores/session';
 import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
-import { resolveActiveDb } from '../services/dbContext';
+import { isConfiguredDbPinned, isPlatformAdminEntryRuntime, resolveConfiguredDb } from '../services/dbContext';
 import { config } from '../config';
 import { normalizeLegacyWorkbenchPath } from '../app/routeQuery';
 
@@ -126,15 +126,13 @@ const pageGlobalActions = pageContract.globalActions;
 const username = ref('');
 const password = ref('');
 const dbName = ref(
-  config.odooDbPinned
-    ? String(config.odooDb || '').trim()
-    : resolveActiveDb(String(config.odooDb || '').trim()),
+  resolveConfiguredDb(String(config.odooDb || '').trim()),
 );
 const loading = ref(false);
 const error = ref('');
 const headerActions = computed(() => pageGlobalActions.value);
-const dbInputDisabled = computed(() => loading.value || config.odooDbPinned);
-const loginTitleFallback = computed(() => config.isPlatformAdminEntry ? '平台管理员登录' : '登录');
+const dbInputDisabled = computed(() => loading.value || isConfiguredDbPinned());
+const loginTitleFallback = computed(() => isPlatformAdminEntryRuntime() ? '平台管理员登录' : '登录');
 const capabilityItems = computed(() => [
   { key: 'project', icon: '📊', label: pageText('capability_project', config.appBrand.capabilities.project) },
   { key: 'contract_cost', icon: '📑', label: pageText('capability_contract_cost', config.appBrand.capabilities.contractCost) },
@@ -146,6 +144,15 @@ const valueLines = computed(() => config.appBrand.valueLines.map((line, index) =
 watch([username, password], () => {
   if (error.value) error.value = '';
 });
+
+watch(
+  () => route.fullPath,
+  () => {
+    if (!loading.value) {
+      dbName.value = resolveConfiguredDb(String(config.odooDb || '').trim());
+    }
+  },
+);
 
 function normalizeLoginError(err: unknown): string {
   const fallback = pageText('error_login_failed', '登录失败，请稍后重试');
@@ -175,7 +182,7 @@ async function onSubmit() {
     const normalizedRedirect = normalizeLegacyWorkbenchPath(rawRedirect);
     const redirect = (normalizedRedirect && !isLikelyUnboundActionRoute)
       ? normalizedRedirect
-      : config.isPlatformAdminEntry ? '/?platform_admin=1' : session.resolveLandingPath('/');
+      : isPlatformAdminEntryRuntime() ? '/?platform_admin=1' : session.resolveLandingPath('/');
     await router.push(redirect);
   } catch (err) {
     error.value = normalizeLoginError(err);

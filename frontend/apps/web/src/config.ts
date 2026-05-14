@@ -1,4 +1,4 @@
-import { resolveActiveDb } from './services/dbContext';
+import { isConfiguredDbPinned, isPlatformAdminEntryRuntime, resolveConfiguredDb } from './services/dbContext';
 
 const appEnv = String(import.meta.env.VITE_APP_ENV ?? 'dev').trim();
 const envDb = String(import.meta.env.VITE_ODOO_DB ?? '').trim();
@@ -38,9 +38,7 @@ const isLocalDevRuntime = isLocalHost && isLocalDevPort;
 const runtimeDbRaw = typeof window !== 'undefined'
   ? String(new URLSearchParams(window.location.search).get('db') || '').trim()
   : '';
-const isPlatformAdminEntry = typeof window !== 'undefined'
-  ? window.location.pathname.startsWith('/platform-admin') || new URLSearchParams(window.location.search).get('platform_admin') === '1'
-  : false;
+const isPlatformAdminEntry = isPlatformAdminEntryRuntime();
 const runtimeDb = isLocalHost && isLocalDevPort && ['sc_delivery_local', 'sc_prod_sim'].includes(runtimeDbRaw.toLowerCase())
   ? ''
   : runtimeDbRaw;
@@ -66,8 +64,8 @@ export const config = {
     .split(',')
     .map((flag: string) => flag.trim())
     .filter(Boolean),
-  odooDb: pinnedDb || (localBlockedProductionDb ? localDefaultDb : resolveActiveDb(localDefaultDb)),
-  odooDbPinned: Boolean(pinnedDb),
+  odooDb: pinnedDb || (localBlockedProductionDb ? localDefaultDb : resolveConfiguredDb(localDefaultDb)),
+  odooDbPinned: Boolean(pinnedDb) || isConfiguredDbPinned(),
   platformAdminDb,
   isPlatformAdminEntry,
   startupRootXmlid,

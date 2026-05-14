@@ -6,6 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 CONFIG = ROOT / "frontend/apps/web/src/config.ts"
+DB_CONTEXT = ROOT / "frontend/apps/web/src/services/dbContext.ts"
 INDEX_HTML = ROOT / "frontend/apps/web/index.html"
 FRONTEND_FILES = [
     ROOT / "frontend/apps/web/src/stores/session.ts",
@@ -24,6 +25,7 @@ def _read(path: Path) -> str:
 def main() -> int:
     errors: list[str] = []
     config_text = _read(CONFIG)
+    db_context_text = _read(DB_CONTEXT)
     if "const startupRootXmlid = String(import.meta.env.VITE_STARTUP_ROOT_XMLID ?? 'smart_construction_core.menu_sc_root').trim();" not in config_text:
         errors.append("config.ts must expose VITE_STARTUP_ROOT_XMLID with the construction root only as compatibility default")
     if "const localDevPinnedDb = isLocalDevRuntime && !runtimeDb && !localBlockedEnvDb ? 'sc_demo' : '';" not in config_text:
@@ -32,8 +34,25 @@ def main() -> int:
         errors.append("config.ts must expose VITE_ODOO_DB_LOCKED and lock explicit env db by default")
     if "const platformAdminDb = String(import.meta.env.VITE_PLATFORM_ADMIN_DB ?? '').trim();" not in config_text:
         errors.append("config.ts must expose VITE_PLATFORM_ADMIN_DB for platform-admin entry")
-    if "window.location.pathname.startsWith('/platform-admin')" not in config_text:
-        errors.append("config.ts must recognize the explicit platform-admin entry path")
+    if "isPlatformAdminEntryRuntime()" not in config_text:
+        errors.append("config.ts must consume runtime platform-admin entry detection")
+    if "window.location.pathname.startsWith('/platform-admin')" not in db_context_text:
+        errors.append("dbContext.ts must recognize the explicit platform-admin entry path")
+    if "export function resolveConfiguredDb" not in db_context_text:
+        errors.append("dbContext.ts must expose runtime configured db resolution")
+    if "export function isConfiguredDbPinned" not in db_context_text:
+        errors.append("dbContext.ts must expose runtime db pinned detection")
+    if "isPlatformAdminEntryRuntime() && PLATFORM_ADMIN_DB" not in db_context_text:
+        errors.append("dbContext.ts must let platform-admin db override the locked tenant db at request time")
+    if "resolveConfiguredDb(String(config.odooDb || '').trim())" not in _read(ROOT / "frontend/apps/web/src/api/client.ts"):
+        errors.append("api/client.ts must resolve db at request time, not only config module load time")
+    session_text = _read(ROOT / "frontend/apps/web/src/stores/session.ts")
+    if "isConfiguredDbPinned() ? configuredDb : dbOverride || configuredDb" not in session_text:
+        errors.append("session.ts must use runtime db pinning during login")
+    if "function currentDbScope()" not in session_text or "scopedTokenStorageKey()" not in session_text:
+        errors.append("session.ts must scope session/token storage by runtime resolved db")
+    if "const DB_SCOPE = String(config.odooDb" in session_text:
+        errors.append("session.ts must not freeze db scope from config module load time")
     if "const pinnedDb = isPlatformAdminEntry && platformAdminDb" not in config_text:
         errors.append("config.ts must allow only the explicit platform-admin db to override locked tenant db")
     if ": envDbLocked ? localBlockedEnvDb : runtimeDb || localBlockedEnvDb || enforcedDb || localDevPinnedDb;" not in config_text:
@@ -88,6 +107,10 @@ def main() -> int:
         errors.append("router/index.ts must preserve platform-admin entry when redirecting unauthenticated users")
     if "/?platform_admin=1" not in login_text:
         errors.append("LoginView.vue must preserve platform-admin entry after platform admin login")
+    if "isPlatformAdminEntryRuntime() ? '/?platform_admin=1'" not in login_text:
+        errors.append("LoginView.vue must use runtime platform-admin entry detection after client-side route changes")
+    if "watch(\n  () => route.fullPath" not in login_text or "resolveConfiguredDb(String(config.odooDb || '').trim())" not in login_text:
+        errors.append("LoginView.vue must refresh displayed locked db after route changes")
     if '<div class="logo">SC</div>' in shell_text:
         errors.append("AppShell.vue must not hardcode SC logo text")
     if 'v-if="showRecordContext"' not in shell_text:

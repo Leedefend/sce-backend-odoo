@@ -7,7 +7,7 @@ import { getSceneByKey, setSceneRegistry, setSceneRegistryFromSceneReadyContract
 import type { Scene } from '../app/resolvers/sceneRegistry';
 import { normalizeLegacyWorkbenchPath } from '../app/routeQuery';
 import { applySceneValidationRecoveryStrategyRuntime, setSceneValidationRecoveryStrategy } from '../app/sceneValidationRecoveryStrategy';
-import { resolveActiveDb, setActiveDb } from '../services/dbContext';
+import { isConfiguredDbPinned, resolveConfiguredDb, setActiveDb } from '../services/dbContext';
 
 let appInitInFlight: Promise<void> | null = null;
 
@@ -354,10 +354,19 @@ export interface SessionState {
   bootstrapNextIntent: string;
 }
 
-const DB_SCOPE = String(config.odooDb || 'default').trim() || 'default';
-const STORAGE_KEY = `sc_frontend_session_v0_4:${DB_SCOPE}`;
 const TOKEN_STORAGE_KEY_LEGACY = 'sc_auth_token';
-const TOKEN_STORAGE_KEY_SCOPED = `sc_auth_token:${DB_SCOPE}`;
+
+function currentDbScope(): string {
+  return String(resolveConfiguredDb(String(config.odooDb || '').trim()) || config.odooDb || 'default').trim() || 'default';
+}
+
+function sessionStorageKey(): string {
+  return `sc_frontend_session_v0_4:${currentDbScope()}`;
+}
+
+function scopedTokenStorageKey(): string {
+  return `sc_auth_token:${currentDbScope()}`;
+}
 
 function resolveUserCompanyId(user: unknown): number | null {
   if (!user || typeof user !== 'object') return null;
@@ -702,7 +711,7 @@ export const useSessionStore = defineStore('session', {
   actions: {
     setToken(token: string) {
       this.token = token;
-      sessionStorage.setItem(TOKEN_STORAGE_KEY_SCOPED, token);
+      sessionStorage.setItem(scopedTokenStorageKey(), token);
       // Do not keep cross-db legacy token once db-scoped token is set.
       sessionStorage.removeItem(TOKEN_STORAGE_KEY_LEGACY);
     },
@@ -711,7 +720,7 @@ export const useSessionStore = defineStore('session', {
       this.initStatus = 'idle';
       this.initError = null;
       this.initTraceId = null;
-      const cached = localStorage.getItem(STORAGE_KEY);
+      const cached = localStorage.getItem(sessionStorageKey());
       if (cached) {
         try {
           const parsed = JSON.parse(cached) as Partial<SessionState>;
@@ -753,7 +762,7 @@ export const useSessionStore = defineStore('session', {
           // ignore corrupted cache
         }
       }
-      const token = sessionStorage.getItem(TOKEN_STORAGE_KEY_SCOPED);
+      const token = sessionStorage.getItem(scopedTokenStorageKey());
       if (token) {
         this.token = token;
       }
@@ -789,8 +798,8 @@ export const useSessionStore = defineStore('session', {
       this.defaultRoute = null;
       this.bootstrapNextIntent = 'system.init';
       this.isReady = false;
-      localStorage.removeItem(STORAGE_KEY);
-      sessionStorage.removeItem(TOKEN_STORAGE_KEY_SCOPED);
+      localStorage.removeItem(sessionStorageKey());
+      sessionStorage.removeItem(scopedTokenStorageKey());
       sessionStorage.removeItem(TOKEN_STORAGE_KEY_LEGACY);
     },
     setActionMeta(meta: NavMeta) {
@@ -851,7 +860,7 @@ export const useSessionStore = defineStore('session', {
         bootstrapNextIntent: this.bootstrapNextIntent,
       };
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(snapshot));
+        localStorage.setItem(sessionStorageKey(), JSON.stringify(snapshot));
         return;
       } catch {
         // Persistence is only a reload optimization. A quota or serialization
@@ -873,9 +882,9 @@ export const useSessionStore = defineStore('session', {
           defaultRoute: this.defaultRoute,
           bootstrapNextIntent: this.bootstrapNextIntent,
         };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(minimalSnapshot));
+        localStorage.setItem(sessionStorageKey(), JSON.stringify(minimalSnapshot));
       } catch {
-        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(sessionStorageKey());
       }
     },
     recordIntentTrace(params: { traceId?: string; intent: string; latencyMs?: number | null; writeMode?: string }) {
@@ -888,10 +897,8 @@ export const useSessionStore = defineStore('session', {
       this.persist();
     },
     async login(username: string, password: string, dbOverride?: string) {
-      const configuredDb = config.odooDbPinned
-        ? String(config.odooDb || '').trim()
-        : resolveActiveDb(String(config.odooDb || '').trim());
-      const db = String(config.odooDbPinned ? configuredDb : dbOverride || configuredDb).trim();
+      const configuredDb = resolveConfiguredDb(String(config.odooDb || '').trim());
+      const db = String(isConfiguredDbPinned() ? configuredDb : dbOverride || configuredDb).trim();
       if (db) {
         setActiveDb(db, true);
       }
