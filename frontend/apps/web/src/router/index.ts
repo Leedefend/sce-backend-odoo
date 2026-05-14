@@ -68,6 +68,7 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/login', name: 'login', component: LoginView },
+    { path: '/platform-admin/login', name: 'platform-admin-login', component: LoginView },
     { path: '/', name: 'home', component: () => import('../views/HomeView.vue'), meta: { layout: 'shell', sceneKey: 'workspace.home' } },
     { path: '/s/workspace.home', name: 'scene-home', component: () => import('../views/HomeView.vue'), meta: { layout: 'shell', sceneKey: 'workspace.home' } },
     { path: '/my-work', name: 'my-work', component: () => import('../views/MyWorkView.vue'), meta: { layout: 'shell' } },
@@ -90,10 +91,14 @@ const router = createRouter({
 router.beforeEach(async (to) => {
   applyDocumentTitle(to.name);
   const session = useSessionStore();
-  if (to.name !== 'login' && !session.token) {
-    return { name: 'login', query: { redirect: to.fullPath } };
+  const isLoginRoute = to.name === 'login' || to.name === 'platform-admin-login';
+  const wantsPlatformAdminEntry = to.path.startsWith('/platform-admin') || String(to.query.platform_admin || '') === '1';
+  if (!isLoginRoute && !session.token) {
+    return wantsPlatformAdminEntry
+      ? { name: 'platform-admin-login', query: { redirect: to.fullPath } }
+      : { name: 'login', query: { redirect: to.fullPath } };
   }
-  if (to.name !== 'login' && session.token && !session.isReady) {
+  if (!isLoginRoute && session.token && !session.isReady) {
     try {
       await session.ensureReady();
     } catch (err) {

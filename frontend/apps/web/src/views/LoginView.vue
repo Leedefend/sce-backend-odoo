@@ -43,7 +43,7 @@
           <header class="brand-header">
             <span class="product-badge">{{ config.appBrand.productBadge }}</span>
             <p class="brand-kicker">{{ config.appBrand.kicker }}</p>
-            <h1>{{ pageText('title', '登录') }}</h1>
+            <h1>{{ pageText('title', loginTitleFallback) }}</h1>
           </header>
 
           <form
@@ -134,6 +134,7 @@ const loading = ref(false);
 const error = ref('');
 const headerActions = computed(() => pageGlobalActions.value);
 const dbInputDisabled = computed(() => loading.value || config.odooDbPinned);
+const loginTitleFallback = computed(() => config.isPlatformAdminEntry ? '平台管理员登录' : '登录');
 const capabilityItems = computed(() => [
   { key: 'project', icon: '📊', label: pageText('capability_project', config.appBrand.capabilities.project) },
   { key: 'contract_cost', icon: '📑', label: pageText('capability_contract_cost', config.appBrand.capabilities.contractCost) },
@@ -174,7 +175,7 @@ async function onSubmit() {
     const normalizedRedirect = normalizeLegacyWorkbenchPath(rawRedirect);
     const redirect = (normalizedRedirect && !isLikelyUnboundActionRoute)
       ? normalizedRedirect
-      : session.resolveLandingPath('/');
+      : config.isPlatformAdminEntry ? '/?platform_admin=1' : session.resolveLandingPath('/');
     await router.push(redirect);
   } catch (err) {
     error.value = normalizeLoginError(err);

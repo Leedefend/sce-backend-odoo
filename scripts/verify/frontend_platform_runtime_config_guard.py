@@ -30,7 +30,13 @@ def main() -> int:
         errors.append("config.ts local dev fallback must not override explicit URL or VITE_ODOO_DB database")
     if "const envDbLocked = envDb && String(import.meta.env.VITE_ODOO_DB_LOCKED ?? '1').trim() !== '0';" not in config_text:
         errors.append("config.ts must expose VITE_ODOO_DB_LOCKED and lock explicit env db by default")
-    if "const pinnedDb = envDbLocked ? localBlockedEnvDb : runtimeDb || localBlockedEnvDb || enforcedDb || localDevPinnedDb;" not in config_text:
+    if "const platformAdminDb = String(import.meta.env.VITE_PLATFORM_ADMIN_DB ?? '').trim();" not in config_text:
+        errors.append("config.ts must expose VITE_PLATFORM_ADMIN_DB for platform-admin entry")
+    if "window.location.pathname.startsWith('/platform-admin')" not in config_text:
+        errors.append("config.ts must recognize the explicit platform-admin entry path")
+    if "const pinnedDb = isPlatformAdminEntry && platformAdminDb" not in config_text:
+        errors.append("config.ts must allow only the explicit platform-admin db to override locked tenant db")
+    if ": envDbLocked ? localBlockedEnvDb : runtimeDb || localBlockedEnvDb || enforcedDb || localDevPinnedDb;" not in config_text:
         errors.append("config.ts must prevent URL db from overriding locked VITE_ODOO_DB")
     if "startupRootXmlid," not in config_text:
         errors.append("config.ts must publish startupRootXmlid in runtime config")
@@ -74,6 +80,14 @@ def main() -> int:
                 if token in text:
                     errors.append(f"{rel} must not hardcode construction branding token: {token}")
     shell_text = _read(ROOT / "frontend/apps/web/src/layouts/AppShell.vue")
+    router_text = _read(ROOT / "frontend/apps/web/src/router/index.ts")
+    login_text = _read(ROOT / "frontend/apps/web/src/views/LoginView.vue")
+    if "/platform-admin/login" not in router_text or "platform-admin-login" not in router_text:
+        errors.append("router/index.ts must expose a dedicated platform-admin login route")
+    if "wantsPlatformAdminEntry" not in router_text:
+        errors.append("router/index.ts must preserve platform-admin entry when redirecting unauthenticated users")
+    if "/?platform_admin=1" not in login_text:
+        errors.append("LoginView.vue must preserve platform-admin entry after platform admin login")
     if '<div class="logo">SC</div>' in shell_text:
         errors.append("AppShell.vue must not hardcode SC logo text")
     if 'v-if="showRecordContext"' not in shell_text:
