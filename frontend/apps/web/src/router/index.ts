@@ -5,8 +5,9 @@ import { ApiError } from '../api/client';
 import { buildCanonicalSceneRouteTarget, normalizeEmbeddedSceneQuery, normalizeLegacyWorkbenchPath, parseSceneKeyFromQuery } from '../app/routeQuery';
 import { getSceneByKey } from '../app/resolvers/sceneRegistry';
 import { findMenuNode } from '../app/menu';
+import { config } from '../config';
 
-const APP_TITLE = '智能施工企业管理平台';
+const APP_TITLE = config.appTitle;
 
 function routeTitle(routeName: string | symbol | null | undefined): string {
   const name = typeof routeName === 'string' ? routeName : '';

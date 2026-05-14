@@ -6,9 +6,9 @@
 
     <section class="login-layout">
       <section class="brand-panel" aria-label="平台介绍">
-        <p class="brand-title">{{ pageText('brand_name', '智能施工企业管理平台') }}</p>
-        <p class="brand-subtitle">{{ pageText('brand_subtitle', '工程项目全生命周期管理系统') }}</p>
-        <p class="brand-slogan">{{ pageText('brand_slogan', '让项目透明 · 让合同可控 · 让资金协同 · 让风险可预警') }}</p>
+        <p class="brand-title">{{ pageText('brand_name', config.appBrand.name) }}</p>
+        <p class="brand-subtitle">{{ pageText('brand_subtitle', config.appBrand.subtitle) }}</p>
+        <p class="brand-slogan">{{ pageText('brand_slogan', config.appBrand.slogan) }}</p>
 
         <ul class="value-list" aria-label="价值主张">
           <li v-for="line in valueLines" :key="line">{{ line }}</li>
@@ -41,8 +41,8 @@
           :style="pageSectionStyle('card')"
         >
           <header class="brand-header">
-            <span class="product-badge">SCEMS · v1.0</span>
-            <p class="brand-kicker">智能建造 · 企业级管理</p>
+            <span class="product-badge">{{ config.appBrand.productBadge }}</span>
+            <p class="brand-kicker">{{ config.appBrand.kicker }}</p>
             <h1>{{ pageText('title', '登录') }}</h1>
           </header>
 
@@ -95,8 +95,8 @@
     </section>
 
     <footer class="page-footer">
-      <p>© 2025 SCEMS Platform</p>
-      <p>Smart Construction Enterprise Management System</p>
+      <p>{{ config.appBrand.footerPrimary }}</p>
+      <p>{{ config.appBrand.footerSecondary }}</p>
     </footer>
   </main>
 </template>
@@ -135,17 +135,12 @@ const error = ref('');
 const headerActions = computed(() => pageGlobalActions.value);
 const dbInputDisabled = computed(() => loading.value || config.odooDbPinned);
 const capabilityItems = computed(() => [
-  { key: 'project', icon: '📊', label: pageText('capability_project', '项目全过程管理') },
-  { key: 'contract_cost', icon: '📑', label: pageText('capability_contract_cost', '合同成本联动') },
-  { key: 'fund', icon: '💰', label: pageText('capability_fund', '资金支付协同') },
-  { key: 'risk', icon: '⚠', label: pageText('capability_risk', '风险预警驾驶舱') },
+  { key: 'project', icon: '📊', label: pageText('capability_project', config.appBrand.capabilities.project) },
+  { key: 'contract_cost', icon: '📑', label: pageText('capability_contract_cost', config.appBrand.capabilities.contractCost) },
+  { key: 'fund', icon: '💰', label: pageText('capability_fund', config.appBrand.capabilities.fund) },
+  { key: 'risk', icon: '⚠', label: pageText('capability_risk', config.appBrand.capabilities.risk) },
 ]);
-const valueLines = computed(() => [
-  pageText('value_line_1', '让项目透明'),
-  pageText('value_line_2', '让合同可控'),
-  pageText('value_line_3', '让资金协同'),
-  pageText('value_line_4', '让风险可预警'),
-]);
+const valueLines = computed(() => config.appBrand.valueLines.map((line, index) => pageText(`value_line_${index + 1}`, line)));
 
 watch([username, password], () => {
   if (error.value) error.value = '';
