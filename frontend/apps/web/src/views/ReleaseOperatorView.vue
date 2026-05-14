@@ -99,6 +99,12 @@
             {{ copy.save_policy_action_label || '保存策略' }}
           </button>
         </div>
+        <div v-if="controlDefinitions.length" class="release-operator__definition-grid">
+          <article v-for="item in controlDefinitions" :key="definitionKey(item)">
+            <strong>{{ item.label || item.key || '-' }}</strong>
+            <span>{{ item.meaning || '-' }}</span>
+          </article>
+        </div>
         <div class="release-operator__scope-grid">
           <article>
             <span>{{ copy.metric_controlled_menus || '受控菜单' }}</span>
@@ -120,7 +126,9 @@
                 <th>用户菜单</th>
                 <th>页面</th>
                 <th>路由</th>
-                <th>状态</th>
+                <th>发布阶段</th>
+                <th>可见范围</th>
+                <th>来源</th>
                 <th>操作</th>
               </tr>
             </thead>
@@ -130,19 +138,47 @@
                 <td>{{ page.page_label || page.label || page.page_key || '-' }}</td>
                 <td>{{ page.route || '-' }}</td>
                 <td>
-                  <span :class="['release-operator__pill', page.enabled === false ? 'release-operator__pill--muted' : '']">
-                    {{ page.enabled === false ? '停用' : '启用' }}
+                  <span :class="['release-operator__pill', releaseStateClass(page)]">
+                    {{ releaseStateLabel(page) }}
                   </span>
                 </td>
+                <td>{{ accessLevelLabel(page) }}</td>
+                <td>{{ sourceLabel(page) }}</td>
                 <td>
-                  <button
-                    class="sc-btn sc-btn-ghost release-operator__row-action"
-                    type="button"
-                    :disabled="busyKey === `page:${pageKey(page)}` || !setPageEnabledAction.enabled"
-                    @click="togglePage(page)"
-                  >
-                    {{ page.enabled === false ? (copy.page_control_action_enable || '启用') : (copy.page_control_action_disable || '停用') }}
-                  </button>
+                  <div class="release-operator__row-actions">
+                    <button
+                      class="sc-btn sc-btn-ghost release-operator__row-action"
+                      type="button"
+                      :disabled="busyKey === `page:${pageKey(page)}:released` || !updatePagePolicyAction.enabled"
+                      @click="updatePagePolicy(page, { release_state: 'released', enabled: true })"
+                    >
+                      发布
+                    </button>
+                    <button
+                      class="sc-btn sc-btn-ghost release-operator__row-action"
+                      type="button"
+                      :disabled="busyKey === `page:${pageKey(page)}:preview` || !updatePagePolicyAction.enabled"
+                      @click="updatePagePolicy(page, { release_state: 'preview', enabled: true })"
+                    >
+                      预览
+                    </button>
+                    <button
+                      class="sc-btn sc-btn-ghost release-operator__row-action"
+                      type="button"
+                      :disabled="busyKey === `page:${pageKey(page)}:hidden` || !updatePagePolicyAction.enabled"
+                      @click="updatePagePolicy(page, { release_state: 'hidden', enabled: false })"
+                    >
+                      下线
+                    </button>
+                    <button
+                      class="sc-btn sc-btn-ghost release-operator__row-action"
+                      type="button"
+                      :disabled="busyKey === `page:${pageKey(page)}:internal` || !updatePagePolicyAction.enabled"
+                      @click="updatePagePolicy(page, { access_level: page.access_level === 'internal' ? 'public' : 'internal' })"
+                    >
+                      {{ page.access_level === 'internal' ? '转公开' : '内部' }}
+                    </button>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -339,6 +375,10 @@ const controlledPages = computed(() => {
   const pages = controlScope.value.pages;
   return Array.isArray(pages) ? pages as AnyRecord[] : [];
 });
+const controlDefinitions = computed(() => {
+  const items = controlScope.value.control_definition;
+  return Array.isArray(items) ? items as AnyRecord[] : [];
+});
 const releaseState = computed(() => surface.value?.release_state || {});
 const activeSnapshot = computed(() => (releaseState.value.active_snapshot || {}) as AnyRecord);
 const runtimeSummary = computed(() => (releaseState.value.runtime_summary || {}) as AnyRecord);
@@ -358,13 +398,47 @@ const updatePolicyAction = computed(() => {
   const actions = surface.value?.available_actions || {};
   return (actions.update_policy || {}) as { enabled?: boolean; params?: AnyRecord };
 });
-const setPageEnabledAction = computed(() => {
+const updatePagePolicyAction = computed(() => {
   const actions = surface.value?.available_actions || {};
-  return (actions.set_page_enabled || {}) as { enabled?: boolean; params?: AnyRecord };
+  return (actions.update_page_policy || {}) as { enabled?: boolean; params?: AnyRecord };
 });
 
 function pageKey(page: AnyRecord) {
   return String(page.page_key || page.scene_key || page.menu_key || page.capability_key || '').trim();
+}
+function definitionKey(item: AnyRecord) {
+  return String(item.key || item.label || '').trim();
+}
+function releaseStateLabel(page: AnyRecord) {
+  const state = String(page.release_state || (page.enabled === false ? 'hidden' : 'released'));
+  const labels: Record<string, string> = {
+    released: '正式发布',
+    preview: '预览',
+    hidden: '未发布',
+    retired: '已下线',
+  };
+  return labels[state] || state || '-';
+}
+function releaseStateClass(page: AnyRecord) {
+  const state = String(page.release_state || (page.enabled === false ? 'hidden' : 'released'));
+  if (state === 'preview') return 'release-operator__pill--preview';
+  if (state === 'hidden' || state === 'retired' || page.enabled === false) return 'release-operator__pill--muted';
+  return '';
+}
+function accessLevelLabel(page: AnyRecord) {
+  const level = String(page.access_level || 'public');
+  const labels: Record<string, string> = {
+    public: '授权用户',
+    internal: '内部可见',
+    role_restricted: '按角色',
+  };
+  return labels[level] || level;
+}
+function sourceLabel(page: AnyRecord) {
+  const menu = String(page.menu_xmlid || '').trim();
+  const model = String(page.res_model || '').trim();
+  if (menu && model) return `${menu} / ${model}`;
+  return menu || model || String(page.source_kind || '').trim() || '-';
 }
 const freezeAction = computed(() => {
   const actions = surface.value?.available_actions || {};
@@ -461,19 +535,20 @@ function savePolicy() {
   );
 }
 
-function togglePage(page: AnyRecord) {
+function updatePagePolicy(page: AnyRecord, updates: AnyRecord) {
   const key = pageKey(page);
   if (!key) return;
-  const params = setPageEnabledAction.value.params || { product_key: selectedProduct.value };
+  const params = updatePagePolicyAction.value.params || { product_key: selectedProduct.value };
+  const state = String(updates.release_state || updates.access_level || 'update');
   void runWrite(
-    'release.operator.set_page_enabled',
+    'release.operator.update_page_policy',
     {
       ...params,
       product_key: selectedProduct.value,
       page_key: key,
-      enabled: page.enabled === false,
+      ...updates,
     },
-    `page:${key}`,
+    `page:${key}:${state}`,
   );
 }
 
@@ -584,6 +659,37 @@ onMounted(() => {
   font-size: 12px;
 }
 
+.release-operator__definition-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.release-operator__definition-grid article {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.release-operator__definition-grid strong,
+.release-operator__definition-grid span {
+  display: block;
+}
+
+.release-operator__definition-grid strong {
+  margin-bottom: 5px;
+  color: #0f172a;
+  font-size: 13px;
+}
+
+.release-operator__definition-grid span {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: normal;
+}
+
 .release-operator__scope-grid article {
   border: 1px solid #e2e8f0;
   border-radius: 8px;
@@ -675,8 +781,19 @@ onMounted(() => {
   color: #64748b;
 }
 
+.release-operator__pill--preview {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.release-operator__row-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+}
+
 .release-operator__row-action {
-  min-width: 72px;
+  min-width: 52px;
 }
 
 .release-operator__empty {
@@ -725,6 +842,7 @@ onMounted(() => {
 
   .release-operator__metrics,
   .release-operator__scope-grid,
+  .release-operator__definition-grid,
   .release-operator__history {
     grid-template-columns: 1fr;
   }

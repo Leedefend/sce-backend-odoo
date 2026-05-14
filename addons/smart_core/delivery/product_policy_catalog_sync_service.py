@@ -243,6 +243,10 @@ class ProductPolicyCatalogSyncService:
                     "visible_menu_path": " / ".join(path),
                     "control_granularity": "user_visible_menu_page",
                     "enabled": True,
+                    "release_state": "released",
+                    "access_level": "public",
+                    "control_object": "用户可见菜单页面",
+                    "source_kind": "ir.ui.menu",
                 }
             )
         return rows
@@ -412,6 +416,10 @@ class ProductPolicyCatalogSyncService:
                 "visible_menu_path": _text(page.get("visible_menu_path")) or label,
                 "control_granularity": "user_visible_menu_page",
                 "enabled": bool(page.get("enabled", True)),
+                "release_state": _text(page.get("release_state")) or "released",
+                "access_level": _text(page.get("access_level")) or "public",
+                "control_object": "用户可见菜单页面",
+                "source_kind": "ir.ui.menu",
                 "menu_id": int(page.get("menu_id") or 0),
                 "menu_xmlid": _text(page.get("menu_xmlid")),
                 "action_id": int(page.get("action_id") or 0),
@@ -431,6 +439,10 @@ class ProductPolicyCatalogSyncService:
                     "visible_menu_path": menu["visible_menu_path"],
                     "control_granularity": "user_visible_menu_page",
                     "enabled": bool(page.get("enabled", True)),
+                    "release_state": _text(page.get("release_state")) or "released",
+                    "access_level": _text(page.get("access_level")) or "public",
+                    "control_object": "用户可见菜单页面",
+                    "source_kind": "ir.ui.menu",
                     "menu_xmlid": _text(page.get("menu_xmlid")),
                     "action_id": int(page.get("action_id") or 0),
                     "res_model": _text(page.get("res_model")),
@@ -451,6 +463,10 @@ class ProductPolicyCatalogSyncService:
                     "entry_kind": "user_visible_menu_page",
                     "visible_menu_path": menu["visible_menu_path"],
                     "enabled": bool(page.get("enabled", True)),
+                    "release_state": _text(page.get("release_state")) or "released",
+                    "access_level": _text(page.get("access_level")) or "public",
+                    "control_object": "用户可见菜单页面",
+                    "source_kind": "ir.ui.menu",
                     "menu_xmlid": _text(page.get("menu_xmlid")),
                     "action_id": int(page.get("action_id") or 0),
                     "res_model": _text(page.get("res_model")),
@@ -480,6 +496,12 @@ class ProductPolicyCatalogSyncService:
                 "menu_page_count": len(menu_pages),
                 "no_business_fact_authority": self.NO_BUSINESS_FACT_AUTHORITY,
             },
+            "control_definition": [
+                {"key": "included", "label": "是否纳入产品", "meaning": "决定该用户菜单页面是否进入当前产品发布包。"},
+                {"key": "release_state", "label": "发布阶段", "meaning": "released 面向正式用户；preview 仅预览；hidden/retired 不进入有效发布范围。"},
+                {"key": "access_level", "label": "可见范围", "meaning": "public 全部授权用户；internal 内部；role_restricted 后续按角色策略限制。"},
+                {"key": "source_identity", "label": "来源证据", "meaning": "记录真实 ir.ui.menu、action、res_model 与源数据库，保证平台管控对象与用户入口一致。"},
+            ],
         }
 
     def build_policy_payload(self, *, product_key: str) -> dict[str, Any]:
@@ -494,6 +516,7 @@ class ProductPolicyCatalogSyncService:
         model = self.env["sc.product.policy"].sudo()
         rec = model.search([("product_key", "=", identity["product_key"])], limit=1)
         current = rec.to_runtime_dict() if rec else {}
+        self._merge_existing_page_controls(payload, current)
         values = {
             "active": True,
             "product_key": identity["product_key"],
@@ -515,3 +538,42 @@ class ProductPolicyCatalogSyncService:
         else:
             rec = model.create(values)
         return rec
+
+    def _merge_existing_page_controls(self, payload: dict[str, Any], current: dict[str, Any]) -> None:
+        current_controls: dict[str, dict[str, Any]] = {}
+        for group in current.get("menu_groups") if isinstance(current.get("menu_groups"), list) else []:
+            if not isinstance(group, dict):
+                continue
+            for menu in group.get("menus") if isinstance(group.get("menus"), list) else []:
+                if not isinstance(menu, dict):
+                    continue
+                page_key = _text(menu.get("page_key") or menu.get("scene_key") or menu.get("menu_key"))
+                if page_key:
+                    current_controls[page_key] = menu
+        if not current_controls:
+            return
+
+        def _apply(row: dict[str, Any]) -> dict[str, Any]:
+            page_key = _text(row.get("page_key") or row.get("scene_key") or row.get("target_page_key") or row.get("target_scene_key") or row.get("menu_key"))
+            current_row = current_controls.get(page_key) or {}
+            if not current_row:
+                return row
+            next_row = dict(row)
+            for key in ("enabled", "release_state", "access_level", "policy_note"):
+                if key in current_row:
+                    next_row[key] = current_row.get(key)
+            return next_row
+
+        menu_groups = []
+        for group in payload.get("menu_groups") if isinstance(payload.get("menu_groups"), list) else []:
+            if not isinstance(group, dict):
+                continue
+            next_group = dict(group)
+            menus = group.get("menus") if isinstance(group.get("menus"), list) else []
+            next_group["menus"] = [_apply(menu) for menu in menus if isinstance(menu, dict)]
+            menu_groups.append(next_group)
+        payload["menu_groups"] = menu_groups
+        scenes = payload.get("scenes") if isinstance(payload.get("scenes"), list) else []
+        capabilities = payload.get("capabilities") if isinstance(payload.get("capabilities"), list) else []
+        payload["scenes"] = [_apply(scene) for scene in scenes if isinstance(scene, dict)]
+        payload["capabilities"] = [_apply(capability) for capability in capabilities if isinstance(capability, dict)]

@@ -371,7 +371,20 @@ class ReleaseOperatorSetPageEnabledHandler(_ReleaseOperatorBaseHandler):
         policy = self.env["sc.product.policy"].sudo().search([("product_key", "=", product_key)], limit=1)
         if not policy:
             policy = ProductPolicyCatalogSyncService(self.env).sync_policy(product_key=product_key)
-        enabled = _bool(params.get("enabled"), True)
+        policy = self._write_page_policy(
+            policy,
+            page_key=page_key,
+            updates={"enabled": _bool(params.get("enabled"), True)},
+        )
+        return self._response(
+            ts0,
+            {
+                "policy": policy.to_runtime_dict(),
+                "surface": ReleaseOperatorSurfaceService(self.env).build_surface(product_key=product_key),
+            },
+        )
+
+    def _write_page_policy(self, policy, *, page_key: str, updates: dict[str, Any]):
         payload = policy.to_runtime_dict()
 
         def _match(row: dict[str, Any]) -> bool:
@@ -396,7 +409,7 @@ class ReleaseOperatorSetPageEnabledHandler(_ReleaseOperatorBaseHandler):
                     continue
                 next_menu = dict(menu)
                 if _match(next_menu):
-                    next_menu["enabled"] = enabled
+                    next_menu.update(updates)
                 menus.append(next_menu)
             next_group["menus"] = menus
             menu_groups.append(next_group)
@@ -406,7 +419,7 @@ class ReleaseOperatorSetPageEnabledHandler(_ReleaseOperatorBaseHandler):
                 continue
             next_scene = dict(scene)
             if _match(next_scene):
-                next_scene["enabled"] = enabled
+                next_scene.update(updates)
             scenes.append(next_scene)
         capabilities = []
         for capability in payload.get("capabilities") if isinstance(payload.get("capabilities"), list) else []:
@@ -414,7 +427,7 @@ class ReleaseOperatorSetPageEnabledHandler(_ReleaseOperatorBaseHandler):
                 continue
             next_capability = dict(capability)
             if _match(next_capability):
-                next_capability["enabled"] = enabled
+                next_capability.update(updates)
             capabilities.append(next_capability)
         policy.write(
             {
@@ -424,6 +437,43 @@ class ReleaseOperatorSetPageEnabledHandler(_ReleaseOperatorBaseHandler):
                 "note": "page-level release scope updated from release operator",
             }
         )
+        return policy
+
+
+class ReleaseOperatorUpdatePagePolicyHandler(ReleaseOperatorSetPageEnabledHandler):
+    INTENT_TYPE = "release.operator.update_page_policy"
+    DESCRIPTION = "平台产品用户可见页面管控策略调整"
+    VERSION = "1.0.0"
+    NON_IDEMPOTENT_ALLOWED = "product page policy update mutates platform product policy"
+
+    def handle(self, payload=None, ctx=None):
+        ts0 = time.time()
+        params = self._params(payload)
+        product_key = _text(params.get("product_key"))
+        page_key = _text(params.get("page_key") or params.get("scene_key") or params.get("menu_key"))
+        if not product_key:
+            raise ValueError("PRODUCT_KEY_REQUIRED")
+        if not page_key:
+            raise ValueError("PAGE_KEY_REQUIRED")
+        policy = self.env["sc.product.policy"].sudo().search([("product_key", "=", product_key)], limit=1)
+        if not policy:
+            policy = ProductPolicyCatalogSyncService(self.env).sync_policy(product_key=product_key)
+        updates: dict[str, Any] = {}
+        if "enabled" in params:
+            updates["enabled"] = _bool(params.get("enabled"), True)
+        if "release_state" in params:
+            updates["release_state"] = _selection(params.get("release_state"), {"released", "preview", "hidden", "retired"}, "release_state")
+            if updates["release_state"] in {"hidden", "retired"}:
+                updates.setdefault("enabled", False)
+            else:
+                updates.setdefault("enabled", True)
+        if "access_level" in params:
+            updates["access_level"] = _selection(params.get("access_level"), {"public", "internal", "role_restricted"}, "access_level")
+        if "policy_note" in params:
+            updates["policy_note"] = _text(params.get("policy_note"))
+        if not updates:
+            raise ValueError("PAGE_POLICY_UPDATE_REQUIRED")
+        policy = self._write_page_policy(policy, page_key=page_key, updates=updates)
         return self._response(
             ts0,
             {

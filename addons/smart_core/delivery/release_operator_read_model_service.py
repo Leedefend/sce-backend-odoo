@@ -32,6 +32,14 @@ def _list(value: Any) -> list[Any]:
     return value if isinstance(value, list) else []
 
 
+PAGE_CONTROL_DEFINITION = [
+    {"key": "included", "label": "是否纳入产品", "meaning": "决定该用户菜单页面是否进入当前产品发布包。"},
+    {"key": "release_state", "label": "发布阶段", "meaning": "released 面向正式用户；preview 仅预览；hidden/retired 不进入有效发布范围。"},
+    {"key": "access_level", "label": "可见范围", "meaning": "public 全部授权用户；internal 内部；role_restricted 后续按角色策略限制。"},
+    {"key": "source_identity", "label": "来源证据", "meaning": "记录真实 ir.ui.menu、action、res_model 与源数据库，保证平台管控对象与用户入口一致。"},
+]
+
+
 class ReleaseOperatorReadModelService:
     SOURCE_KIND = "release_operator_read_model_projection"
     SOURCE_AUTHORITIES = ("release_audit_trail_projection", "release_approval_policy_projection", "delivery_product_identity_resolver")
@@ -182,6 +190,9 @@ class ReleaseOperatorReadModelService:
         scene_bindings = _dict(payload.get("scene_version_bindings"))
         menu_count = 0
         enabled_menu_count = 0
+        released_page_count = 0
+        preview_page_count = 0
+        hidden_page_count = 0
         page_rows: list[dict[str, Any]] = []
         for group in menu_groups:
             if isinstance(group, dict):
@@ -191,8 +202,17 @@ class ReleaseOperatorReadModelService:
                 menu_count += len(menus)
                 for menu in menus:
                     enabled = bool(menu.get("enabled", True))
-                    if enabled:
+                    release_state = _text(menu.get("release_state")) or ("released" if enabled else "hidden")
+                    access_level = _text(menu.get("access_level")) or _text(payload.get("access_level")) or "public"
+                    is_effective = bool(enabled and release_state in {"released", "preview"})
+                    if is_effective:
                         enabled_menu_count += 1
+                    if release_state == "released" and enabled:
+                        released_page_count += 1
+                    elif release_state == "preview" and enabled:
+                        preview_page_count += 1
+                    else:
+                        hidden_page_count += 1
                     page_rows.append(
                         {
                             "group_key": group_key,
@@ -207,6 +227,11 @@ class ReleaseOperatorReadModelService:
                             "visible_menu_path": _text(menu.get("visible_menu_path")) or f"{group_label} / {_text(menu.get('label'))}",
                             "control_granularity": _text(menu.get("control_granularity")) or "menu_page",
                             "enabled": enabled,
+                            "release_state": release_state,
+                            "access_level": access_level,
+                            "policy_note": _text(menu.get("policy_note")),
+                            "control_object": _text(menu.get("control_object")) or "用户可见菜单页面",
+                            "source_kind": _text(menu.get("source_kind")) or "ir.ui.menu",
                             "menu_id": int(menu.get("menu_id") or 0),
                             "menu_xmlid": _text(menu.get("menu_xmlid")),
                             "action_id": int(menu.get("action_id") or 0),
@@ -227,11 +252,15 @@ class ReleaseOperatorReadModelService:
             "page_count": enabled_menu_count,
             "total_menu_count": menu_count,
             "total_page_count": menu_count,
+            "released_page_count": released_page_count,
+            "preview_page_count": preview_page_count,
+            "hidden_page_count": hidden_page_count,
             "scene_count": enabled_scene_count,
             "capability_count": enabled_capability_count,
             "scene_binding_count": len(scene_bindings),
             "menu_groups": menu_groups,
             "pages": page_rows,
+            "control_definition": _list(payload.get("control_definition")) or list(PAGE_CONTROL_DEFINITION),
             "scenes": scenes,
             "capabilities": capabilities,
         }
@@ -397,6 +426,18 @@ class ReleaseOperatorReadModelService:
                 "key": f"set_page_enabled:{identity['product_key']}",
                 "label": "调整页面发布范围",
                 "intent": "release.operator.set_page_enabled",
+                "enabled": True,
+                "reason_code": "OK",
+                "role_context": role_context,
+                "params": {
+                    "product_key": identity["product_key"],
+                },
+            },
+            "update_page_policy": {
+                "write_model_contract_version": RELEASE_OPERATOR_WRITE_MODEL_CONTRACT_VERSION,
+                "key": f"update_page_policy:{identity['product_key']}",
+                "label": "调整页面管控策略",
+                "intent": "release.operator.update_page_policy",
                 "enabled": True,
                 "reason_code": "OK",
                 "role_context": role_context,
