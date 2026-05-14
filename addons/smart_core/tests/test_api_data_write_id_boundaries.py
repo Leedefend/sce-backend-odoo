@@ -44,10 +44,13 @@ class _Record:
 
 
 class _FakeRecordSet(list):
+    search_domains = []
+
     def sudo(self):
         return self
 
     def search(self, domain):
+        self.search_domains.append(domain)
         return self
 
 
@@ -214,6 +217,7 @@ class TestApiDataWriteIdBoundaries(unittest.TestCase):
         self.assertEqual(result["error"]["message"], "project_id 无效")
 
     def test_allowed_models_merges_only_safe_manual_custom_policy_fields(self):
+        _FakeRecordSet.search_domains = []
         self.module.ApiDataWriteHandler.ALLOWED_MODELS = {"res.partner": {"name"}}
         env = _FakeEnv(
             policies=[
@@ -234,6 +238,23 @@ class TestApiDataWriteIdBoundaries(unittest.TestCase):
         allowed = handler._allowed_models()
 
         self.assertEqual(allowed["res.partner"], {"name", "x_safe_note"})
+
+    def test_custom_field_policy_search_is_scoped_to_active_company(self):
+        company = types.SimpleNamespace(id=17)
+        env = _FakeEnv(
+            policies=[_FakePolicy("res.partner", "x_safe_note")],
+            fields=[_FakeField("res.partner", "x_safe_note")],
+        )
+        env.company = company
+        env.companies = [company]
+        policy_rows = env["ui.form.field.policy"]
+        policy_rows.search_domains = []
+        handler = self.module.ApiDataWriteHandler(env=env)
+
+        handler._allowed_models()
+
+        self.assertIn(("company_id", "=", False), policy_rows.search_domains[0])
+        self.assertIn(("company_id", "in", [17]), policy_rows.search_domains[0])
 
 
 if __name__ == "__main__":

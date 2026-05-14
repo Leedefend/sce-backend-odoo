@@ -111,7 +111,6 @@
                             <field name="help"/>
                         </group>
                         <group string="属性">
-                            <field name="required"/>
                             <field name="index"/>
                             <field name="active_policy"/>
                             <field name="company_id" groups="base.group_multi_company"/>

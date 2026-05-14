@@ -105,6 +105,8 @@ class UIFormCustomFieldWizard(models.TransientModel):
             raise ValidationError("字段已经存在：%s.%s" % (model_name, field_name))
         if self.ttype not in dict(self.SAFE_TYPES):
             raise ValidationError("不支持的字段类型：%s" % (self.ttype or "-"))
+        if self.required:
+            raise ValidationError("新增自定义字段暂不开放必填属性，请先创建非必填字段，再通过业务流程约束控制必填。")
         if self.action_id and self.action_id.res_model != model_name:
             raise ValidationError("限定动作不属于当前模型：%s" % self.action_id.display_name)
         if self.view_id and (self.view_id.model != model_name or self.view_id.type != "form"):
