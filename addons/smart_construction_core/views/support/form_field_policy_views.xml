@@ -42,7 +42,7 @@
                         </group>
                     </group>
                     <group string="作用范围">
-                        <field name="action_id"/>
+                        <field name="action_id" domain="[('res_model', '=', model)]"/>
                         <field name="view_id" domain="[('model', '=', model), ('type', '=', 'form')]"/>
                     </group>
                     <group string="说明">

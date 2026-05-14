@@ -57,6 +57,10 @@ class UIFormFieldPolicy(models.Model):
                 if rec.field_id and rec.field_id.model_id != rec.model_id:
                     rec.field_id = False
                     rec.field_name = False
+                if rec.action_id and rec.action_id.res_model != rec.model:
+                    rec.action_id = False
+                if rec.view_id and rec.view_id.model != rec.model:
+                    rec.view_id = False
 
     @api.onchange("model")
     def _onchange_model(self):
@@ -89,6 +93,27 @@ class UIFormFieldPolicy(models.Model):
             )
             if field_rec and field_rec.ttype == "binary":
                 raise ValidationError("二进制字段不能作为业务表单字段配置：%s.%s" % (rec.model, rec.field_name))
+            if rec.action_id and rec.action_id.res_model != rec.model:
+                raise ValidationError("动作不属于当前模型：%s" % rec.action_id.display_name)
+            if rec.view_id and (rec.view_id.model != rec.model or rec.view_id.type != "form"):
+                raise ValidationError("视图必须是当前模型的表单视图：%s" % rec.view_id.display_name)
+
+    @api.constrains("active", "model", "field_name", "company_id", "action_id", "view_id")
+    def _check_unique_effective_policy(self):
+        for rec in self:
+            if not rec.active or not rec.model or not rec.field_name:
+                continue
+            domain = [
+                ("id", "!=", rec.id),
+                ("active", "=", True),
+                ("model", "=", rec.model),
+                ("field_name", "=", rec.field_name),
+                ("company_id", "=", rec.company_id.id or False),
+                ("action_id", "=", rec.action_id.id or False),
+                ("view_id", "=", rec.view_id.id or False),
+            ]
+            if self.search_count(domain):
+                raise ValidationError("同一模型/字段/公司/动作/视图范围内只能保留一条启用的字段策略。")
 
     @api.model_create_multi
     def create(self, vals_list):
