@@ -188,7 +188,7 @@ class TestReleaseOperatorSurfaceCopyBackend(unittest.TestCase):
 
         self.assertIn("预览版", (payload.get("copy") or {}).get("description", ""))
 
-    def test_operator_products_follow_requested_base_product(self):
+    def test_operator_products_include_platform_and_construction_portfolio(self):
         service = TARGET.ReleaseOperatorSurfaceService(_Env())
         service.read_model_service.audit_service = _AuditTrailService()
         service.read_model_service.approval_policy_service = _ApprovalPolicyService()
@@ -198,7 +198,11 @@ class TestReleaseOperatorSurfaceCopyBackend(unittest.TestCase):
         products = read_model.get("products") or []
 
         self.assertEqual((read_model.get("identity") or {}).get("product_key"), "platform.preview")
-        self.assertEqual([row.get("product_key") for row in products], ["platform.standard", "platform.preview"])
+        self.assertEqual(
+            [row.get("product_key") for row in products],
+            ["platform.standard", "platform.preview", "construction.standard", "construction.preview"],
+        )
+        self.assertIn("施工管理标准版", [row.get("label") for row in products])
         self.assertEqual((((read_model.get("identity") or {}).get("source_authority") or {}).get("kind")), "delivery_product_identity_resolver")
 
     def test_operator_default_base_product_is_configurable(self):

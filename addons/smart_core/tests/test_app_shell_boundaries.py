@@ -210,7 +210,7 @@ class TestAppShellBoundaries(unittest.TestCase):
 
         self.assertTrue(result["ok"])
         self.assertEqual(result["data"]["subject"], "ui.contract")
-        self.assertEqual(result["data"]["route"], "/admin/release-operator?product_key=platform.standard")
+        self.assertEqual(result["data"]["route"], "/admin/release-operator?product_key=construction.standard")
         self.assertEqual(result["data"]["intent"], "release.operator.surface")
 
     def test_nav_platform_admin_app_returns_management_action(self):
@@ -222,7 +222,7 @@ class TestAppShellBoundaries(unittest.TestCase):
         child = result["data"]["sections"][0]["children"][0]
         self.assertEqual(child["meta"]["kind"], "admin")
         self.assertEqual(child["meta"]["open"]["subject"], "ui.contract")
-        self.assertEqual(child["meta"]["open"]["route"], "/admin/release-operator?product_key=platform.standard")
+        self.assertEqual(child["meta"]["open"]["route"], "/admin/release-operator?product_key=construction.standard")
 
 
 if __name__ == "__main__":

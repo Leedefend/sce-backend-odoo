@@ -65,7 +65,7 @@ ADMIN_APP_DEFS: dict[str, dict[str, Any]] = {
         "label": "产品发布",
         "category": "platform_admin",
         "sequence": -20,
-        "route": "/admin/release-operator?product_key=platform.standard",
+        "route": "/admin/release-operator?product_key=construction.standard",
         "scene_key": "release.operator",
         "intent": "release.operator.surface",
         "action_xmlid": "smart_core.action_sc_product_policy",

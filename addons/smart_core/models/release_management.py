@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from odoo import fields, models
+from odoo import api, fields, models
 
 
 def _text(value: Any) -> str:
@@ -42,6 +42,46 @@ class ScProductPolicy(models.Model):
     _sql_constraints = [
         ("sc_product_policy_product_key_uniq", "unique(product_key)", "Product key must be unique."),
     ]
+
+    @api.model
+    def ensure_platform_default_product_policies(self):
+        from odoo.addons.smart_core.delivery.product_policy_service import ProductPolicyService
+
+        service = ProductPolicyService(self.env)
+        defaults = [
+            ("construction.standard", "施工管理标准版"),
+            ("construction.preview", "施工管理预览版"),
+            ("platform.standard", "平台内核标准版"),
+            ("platform.preview", "平台内核预览版"),
+        ]
+        for product_key, label in defaults:
+            policy = service.get_policy(product_key=product_key)
+            values = {
+                "active": True,
+                "product_key": product_key,
+                "base_product_key": _text(policy.get("base_product_key")) or product_key.split(".", 1)[0],
+                "edition_key": _text(policy.get("edition_key")) or product_key.split(".", 1)[1],
+                "state": "preview" if product_key.endswith(".preview") else (_text(policy.get("state")) or "stable"),
+                "access_level": _text(policy.get("access_level")) or "public",
+                "allowed_role_codes": policy.get("allowed_role_codes") if isinstance(policy.get("allowed_role_codes"), list) else [],
+                "label": label,
+                "version": _text(policy.get("version")) or "v1",
+                "scene_version_bindings": policy.get("scene_version_bindings") if isinstance(policy.get("scene_version_bindings"), dict) else {},
+                "menu_groups": policy.get("menu_groups") if isinstance(policy.get("menu_groups"), list) else [],
+                "scenes": policy.get("scenes") if isinstance(policy.get("scenes"), list) else [],
+                "capabilities": policy.get("capabilities") if isinstance(policy.get("capabilities"), list) else [],
+                "note": "platform seeded product policy",
+            }
+            rec = self.sudo().search([("product_key", "=", product_key)], limit=1)
+            if rec:
+                rec.write(values)
+            else:
+                self.sudo().create(values)
+        self.env["ir.config_parameter"].sudo().set_param(
+            "smart_core.release_operator.product_base_keys",
+            "construction,platform",
+        )
+        return True
 
     def to_runtime_dict(self) -> dict[str, Any]:
         self.ensure_one()

@@ -83,18 +83,42 @@ class ReleaseOperatorReadModelService:
     def _products(self, current_product_key: str) -> list[dict[str, Any]]:
         rows = []
         current_identity = self._resolve_identity(product_key=current_product_key)
-        for item in default_operator_product_keys(base_product_key=current_identity.get("base_product_key")):
+        base_keys: list[str] = []
+        configured_bases = self._configured_product_base_keys()
+        for base_key in [current_identity.get("base_product_key"), *configured_bases]:
+            token = _text(base_key)
+            if token and token not in base_keys:
+                base_keys.append(token)
+        for item in [key for base_key in base_keys for key in default_operator_product_keys(base_product_key=base_key)]:
             identity = resolve_product_identity(product_key=item)
             rows.append(
                 {
                     "product_key": item,
                     "base_product_key": identity["base_product_key"],
                     "edition_key": identity["edition_key"],
-                    "label": "Standard" if identity["edition_key"] == "standard" else "Preview",
+                    "label": self._product_label(identity),
                     "selected": item == current_product_key,
                 }
             )
         return rows
+
+    def _configured_product_base_keys(self) -> list[str]:
+        try:
+            raw = self.env["ir.config_parameter"].sudo().get_param(
+                "smart_core.release_operator.product_base_keys",
+                "construction,platform",
+            )
+        except Exception:
+            raw = "construction,platform"
+        return [_text(item) for item in str(raw or "").split(",") if _text(item)]
+
+    def _product_label(self, identity: dict[str, str]) -> str:
+        base_label = {
+            "construction": "施工管理",
+            "platform": "平台内核",
+        }.get(_text(identity.get("base_product_key")), _text(identity.get("base_product_key")).title())
+        edition_label = "标准版" if _text(identity.get("edition_key")) == "standard" else "预览版"
+        return f"{base_label}{edition_label}"
 
     def _build_surface_copy(self, *, product_key: str) -> dict[str, Any]:
         identity = self._resolve_identity(product_key=product_key)
