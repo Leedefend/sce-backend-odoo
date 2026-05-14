@@ -509,6 +509,8 @@ class ReleaseOperatorReadModelService:
         )
         blocking_count = len([item for item in checks if item.get("status") == "fail"])
         warn_count = len([item for item in checks if item.get("status") == "warn"])
+        runtime_user_probe = self._build_runtime_user_probe(product_key=product_key)
+        runtime_probe_status = _text(runtime_user_probe.get("status"))
         return {
             "product_key": product_key,
             "draft": {
@@ -533,11 +535,34 @@ class ReleaseOperatorReadModelService:
                 {"key": "preflight", "label": "发布前检查", "status": "blocked" if blocking_count else ("warn" if warn_count else "done"), "count": len(checks)},
                 {"key": "candidate", "label": "候选快照", "status": "active" if candidate_count else "pending", "count": candidate_count},
                 {"key": "release", "label": "审批发布", "status": "pending" if candidate_count else "waiting", "count": int(pending_approval_queue.get("count") or 0)},
+                {
+                    "key": "runtime_user_probe",
+                    "label": "真实用户验证",
+                    "status": "done" if runtime_probe_status == "pass" else ("blocked" if runtime_probe_status == "fail" else "warn"),
+                    "count": int(runtime_user_probe.get("kept_leaf_count") or 0),
+                },
                 {"key": "audience", "label": "公司/角色生效", "status": "preview", "count": draft_page_count},
             ],
             "preflight_checks": checks,
+            "runtime_user_probe": runtime_user_probe,
             "audience_simulation": self._subscription_audience_summary(product_key=product_key, control_scope=control_scope),
         }
+
+    def _build_runtime_user_probe(self, *, product_key: str) -> dict[str, Any]:
+        try:
+            from .release_runtime_user_probe_service import ReleaseRuntimeUserProbeService
+
+            return ReleaseRuntimeUserProbeService(self.env).probe(product_key=product_key)
+        except Exception as exc:
+            return {
+                "contract_version": "release_runtime_user_probe_v1",
+                "product_key": product_key,
+                "status": "warn",
+                "reason_code": "RUNTIME_PROBE_UNAVAILABLE",
+                "failure_count": 0,
+                "failures": [],
+                "error": _text(exc),
+            }
 
     def build_read_model(self, *, product_key: str = "", action_limit: int = 20) -> dict[str, Any]:
         from .release_operator_contract_registry import build_release_operator_contract_registry
@@ -630,6 +655,18 @@ class ReleaseOperatorReadModelService:
                 "key": f"update_policy:{identity['product_key']}",
                 "label": "保存策略",
                 "intent": "release.operator.update_policy",
+                "enabled": True,
+                "reason_code": "OK",
+                "role_context": role_context,
+                "params": {
+                    "product_key": identity["product_key"],
+                },
+            },
+            "runtime_probe": {
+                "write_model_contract_version": RELEASE_OPERATOR_WRITE_MODEL_CONTRACT_VERSION,
+                "key": f"runtime_probe:{identity['product_key']}",
+                "label": "验证真实用户",
+                "intent": "release.operator.runtime_probe",
                 "enabled": True,
                 "reason_code": "OK",
                 "role_context": role_context,

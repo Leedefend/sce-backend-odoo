@@ -15,6 +15,7 @@ from odoo.addons.smart_core.delivery.edition_release_snapshot_service import Edi
 from odoo.addons.smart_core.delivery.product_policy_catalog_sync_service import ProductPolicyCatalogSyncService
 from odoo.addons.smart_core.delivery.release_approval_policy_service import ReleaseApprovalPolicyService
 from odoo.addons.smart_core.delivery.release_operator_surface_service import ReleaseOperatorSurfaceService
+from odoo.addons.smart_core.delivery.release_runtime_user_probe_service import ReleaseRuntimeUserProbeService
 from odoo.addons.smart_core.security.platform_admin import user_is_platform_admin
 
 
@@ -25,6 +26,7 @@ SOURCE_AUTHORITIES = (
     "edition_release_snapshot_projection",
     "edition_release_snapshot_state_transition",
     "product_policy_catalog_sync",
+    "release_runtime_user_probe_projection",
     "sc.release.action",
     "sc.product.policy",
 )
@@ -233,6 +235,24 @@ class ReleaseOperatorSurfaceHandler(_ReleaseOperatorBaseHandler):
             action_limit=max(action_limit, 1),
         )
         return self._response(ts0, surface)
+
+
+class ReleaseOperatorRuntimeProbeHandler(_ReleaseOperatorBaseHandler):
+    INTENT_TYPE = "release.operator.runtime_probe"
+    DESCRIPTION = "平台产品发布后真实用户可用性验证"
+    VERSION = "1.0.0"
+
+    def handle(self, payload=None, ctx=None):
+        ts0 = time.time()
+        params = self._params(payload)
+        product_key = _text(params.get("product_key"))
+        if not product_key:
+            raise ValueError("PRODUCT_KEY_REQUIRED")
+        probe = ReleaseRuntimeUserProbeService(self.env).probe(
+            product_key=product_key,
+            login=_text(params.get("login")),
+        )
+        return self._response(ts0, {"runtime_user_probe": probe})
 
 
 class ReleaseOperatorPromoteHandler(_ReleaseOperatorBaseHandler):
