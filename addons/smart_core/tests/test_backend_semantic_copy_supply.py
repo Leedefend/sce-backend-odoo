@@ -20,7 +20,8 @@ def _load_module(module_name: str, relative_path: str):
 
 
 def _ensure_stub_packages():
-    sys.modules.setdefault("odoo", types.ModuleType("odoo"))
+    odoo_module = sys.modules.setdefault("odoo", types.ModuleType("odoo"))
+    odoo_module.fields = SimpleNamespace(Datetime=SimpleNamespace(now=lambda: "2026-01-01 00:00:00"))
     sys.modules.setdefault("odoo.addons", types.ModuleType("odoo.addons"))
     smart_core_pkg = sys.modules.setdefault("odoo.addons.smart_core", types.ModuleType("odoo.addons.smart_core"))
     smart_core_pkg.__path__ = [str(ROOT / "addons/smart_core")]
@@ -77,13 +78,7 @@ class TestBackendSemanticCopySupply(unittest.TestCase):
         self.assertEqual(identity.get("description"), "查看与记录项目付款事实。")
         self.assertEqual(identity.get("scope"), "项目执行 -> 成本 -> 付款记录 -> 付款汇总。")
 
-    def test_default_product_policy_scenes_include_user_facing_copy(self):
-        scenes = PRODUCT_POLICY_SERVICE.DEFAULT_PRODUCT_POLICY.get("scenes") or []
-        payment_scene = next((row for row in scenes if isinstance(row, dict) and row.get("scene_key") == "payment"), {})
-        self.assertTrue(payment_scene.get("description"))
-        self.assertTrue(payment_scene.get("scope"))
-
-    def test_legacy_default_product_policy_nodes_are_marked_as_projection(self):
+    def test_missing_construction_policy_uses_empty_platform_shell(self):
         class _Env:
             registry = SimpleNamespace(models={})
 
@@ -92,17 +87,12 @@ class TestBackendSemanticCopySupply(unittest.TestCase):
 
         service = PRODUCT_POLICY_SERVICE.ProductPolicyService(_Env())
         policy = service.get_policy(product_key="construction.standard")
-        payment_scene = next((row for row in policy.get("scenes") or [] if row.get("scene_key") == "payment"), {})
-        first_menu = ((((policy.get("menu_groups") or [{}])[0]).get("menus") or [{}])[0])
 
-        self.assertEqual(
-            ((payment_scene.get("policy_node_source_authority") or {}).get("kind")),
-            "legacy_default_product_policy_node_projection",
-        )
-        self.assertEqual(
-            ((first_menu.get("policy_node_source_authority") or {}).get("kind")),
-            "legacy_default_product_policy_node_projection",
-        )
+        self.assertEqual(policy.get("product_key"), "construction.standard")
+        self.assertEqual(((policy.get("policy_source_authority") or {}).get("kind")), "minimal_default_product_policy_provider")
+        self.assertEqual(policy.get("menu_groups") or [], [])
+        self.assertEqual(policy.get("scenes") or [], [])
+        self.assertEqual(policy.get("capabilities") or [], [])
 
     def test_default_product_policy_fallback_is_provider_scoped_and_parameterized(self):
         class _Env:

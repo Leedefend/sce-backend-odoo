@@ -390,15 +390,6 @@ class ProductPolicyService:
     def _default_policy_for_identity(self, *, base_product_key: str, edition_key: str) -> dict:
         base_key = str(base_product_key or "").strip() or LEGACY_DEFAULT_BASE_PRODUCT_KEY
         edition = str(edition_key or "").strip() or "standard"
-        if base_key == LEGACY_DEFAULT_BASE_PRODUCT_KEY:
-            payload = self._default_product_policy()
-            payload["product_key"] = f"{base_key}.{edition}"
-            payload["base_product_key"] = base_key
-            payload["edition_key"] = edition
-            if edition == "preview":
-                base_label = base_key.replace("_", " ").replace("-", " ").title()
-                payload["label"] = "%s Preview" % (base_label or "Product")
-            return payload
         return _minimal_default_product_policy(base_product_key=base_key, edition_key=edition)
 
     def _stable_policy_domain(self, *, base_product_key: str):
