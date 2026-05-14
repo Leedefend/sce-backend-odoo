@@ -43,6 +43,7 @@ class SystemInitPayloadBuilder:
         "platform_minimum_reason",
         "role_surface_pruned",
         "role_surface_code",
+        "platform_release_gate",
         "semantic_scene_key",
         "semantic_source_view",
         "semantic_view_type",

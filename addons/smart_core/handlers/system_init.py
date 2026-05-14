@@ -6,6 +6,7 @@ import time
 from typing import List
 
 from odoo import api, SUPERUSER_ID
+from odoo.modules.registry import Registry
 
 from ..core.base_handler import BaseIntentHandler
 from odoo.addons.smart_core.app_config_engine.services.contract_service import ContractService
@@ -409,6 +410,198 @@ def _filter_startup_scenes_for_preload(scenes, allowed_scene_keys: list[str] | N
         if scene_key in allowed:
             filtered.append(row)
     return filtered
+
+
+def _text(value) -> str:
+    return str(value or "").strip()
+
+
+def _release_gate_page_contract_from_snapshot(snapshot: dict) -> dict:
+    meta_json = snapshot.get("meta_json") if isinstance(snapshot.get("meta_json"), dict) else {}
+    release_draft = meta_json.get("release_draft") if isinstance(meta_json.get("release_draft"), dict) else {}
+    pages = release_draft.get("pages") if isinstance(release_draft.get("pages"), list) else []
+    allowed = {
+        "page_keys": set(),
+        "menu_keys": set(),
+        "menu_xmlids": set(),
+        "routes": set(),
+        "models": set(),
+    }
+    effective_count = 0
+    for page in pages:
+        if not isinstance(page, dict):
+            continue
+        enabled = bool(page.get("enabled", True))
+        release_state = _text(page.get("release_state")) or ("released" if enabled else "hidden")
+        if not enabled or release_state not in {"released", "preview"}:
+            continue
+        effective_count += 1
+        for bucket, key in (
+            ("page_keys", "page_key"),
+            ("menu_keys", "menu_key"),
+            ("menu_xmlids", "menu_xmlid"),
+            ("routes", "route"),
+            ("models", "res_model"),
+        ):
+            value = _text(page.get(key))
+            if value:
+                allowed[bucket].add(value)
+    return {
+        "snapshot_id": int(snapshot.get("id") or 0),
+        "version": _text(snapshot.get("version")),
+        "product_key": _text(snapshot.get("product_key")),
+        "page_count": effective_count,
+        "total_page_count": len(pages),
+        "fingerprint": _text(release_draft.get("fingerprint")),
+        "allowed": allowed,
+    }
+
+
+def _load_platform_release_gate(env, *, product_key: str) -> dict:
+    requested_product_key = _text(product_key)
+    if not requested_product_key:
+        return {}
+    try:
+        platform_db = _text(env["ir.config_parameter"].sudo().get_param("smart_core.platform_release_db", ""))
+    except Exception:
+        platform_db = ""
+    platform_db = platform_db or "sc_platform_core"
+    current_db = _text(getattr(getattr(env, "cr", None), "dbname", ""))
+
+    def _read_from(read_env) -> dict:
+        try:
+            model = read_env["sc.edition.release.snapshot"].sudo()
+        except Exception:
+            return {}
+        snapshot = model.search(
+            [
+                ("product_key", "=", requested_product_key),
+                ("state", "=", "released"),
+                ("is_active", "=", True),
+                ("active", "=", True),
+            ],
+            order="released_at desc, activated_at desc, id desc",
+            limit=1,
+        )
+        return snapshot.to_runtime_dict() if snapshot else {}
+
+    if platform_db == current_db:
+        snapshot = _read_from(env)
+    else:
+        snapshot = {}
+        try:
+            registry = Registry(platform_db)
+            with registry.cursor() as cr:
+                read_env = api.Environment(cr, SUPERUSER_ID, dict(env.context or {}))
+                snapshot = _read_from(read_env)
+        except Exception as exc:
+            return {
+                "applied": False,
+                "product_key": requested_product_key,
+                "platform_db": platform_db,
+                "reason": "PLATFORM_RELEASE_DB_UNAVAILABLE",
+                "error": _text(exc),
+            }
+    if not snapshot:
+        return {
+            "applied": False,
+            "product_key": requested_product_key,
+            "platform_db": platform_db,
+            "reason": "ACTIVE_RELEASE_SNAPSHOT_NOT_FOUND",
+        }
+    contract = _release_gate_page_contract_from_snapshot(snapshot)
+    if int(contract.get("page_count") or 0) <= 0:
+        return {
+            "applied": False,
+            "product_key": requested_product_key,
+            "platform_db": platform_db,
+            "reason": "ACTIVE_RELEASE_HAS_NO_PAGES",
+            "snapshot_id": contract.get("snapshot_id"),
+            "version": contract.get("version"),
+        }
+    contract["applied"] = True
+    contract["platform_db"] = platform_db
+    contract["reason"] = "OK"
+    return contract
+
+
+def _node_release_gate_keys(node: dict) -> set[str]:
+    meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+    entry_target = meta.get("entry_target") if isinstance(meta.get("entry_target"), dict) else {}
+    compatibility_refs = entry_target.get("compatibility_refs") if isinstance(entry_target.get("compatibility_refs"), dict) else {}
+    values = {
+        _text(node.get("key")),
+        _text(node.get("route")),
+        _text(node.get("scene_key")),
+        _text(node.get("menu_xmlid")),
+        _text(node.get("model")),
+        _text(meta.get("route")),
+        _text(meta.get("scene_key")),
+        _text(meta.get("menu_key")),
+        _text(meta.get("menu_xmlid")),
+        _text(meta.get("model")),
+        _text(entry_target.get("route")),
+        _text(entry_target.get("scene_key")),
+        _text(compatibility_refs.get("model")),
+    }
+    menu_id = node.get("menu_id") or meta.get("menu_id") or compatibility_refs.get("menu_id")
+    action_id = meta.get("action_id") or compatibility_refs.get("action_id")
+    if menu_id:
+        values.add(f"system.menu_{menu_id}")
+    if action_id:
+        values.add(f"/a/{action_id}")
+    return {item for item in values if item}
+
+
+def _filter_nav_by_release_gate(nav: list[dict], gate: dict) -> tuple[list[dict], dict]:
+    if not isinstance(nav, list) or not gate.get("applied"):
+        return nav if isinstance(nav, list) else [], {"applied": False}
+    allowed = gate.get("allowed") if isinstance(gate.get("allowed"), dict) else {}
+    allowed_values = set()
+    for bucket in ("page_keys", "menu_keys", "menu_xmlids", "routes"):
+        values = allowed.get(bucket)
+        if isinstance(values, set):
+            allowed_values.update(values)
+        elif isinstance(values, list):
+            allowed_values.update(_text(item) for item in values if _text(item))
+    kept_leaf_count = 0
+    removed_leaf_count = 0
+
+    def _filter_node(node: dict):
+        nonlocal kept_leaf_count, removed_leaf_count
+        if not isinstance(node, dict):
+            return None
+        children = node.get("children") if isinstance(node.get("children"), list) else []
+        next_node = dict(node)
+        if children:
+            next_children = []
+            for child in children:
+                filtered = _filter_node(child)
+                if filtered:
+                    next_children.append(filtered)
+            if not next_children:
+                return None
+            next_node["children"] = next_children
+            return next_node
+        if _node_release_gate_keys(node) & allowed_values:
+            kept_leaf_count += 1
+            return next_node
+        removed_leaf_count += 1
+        return None
+
+    filtered = [_filter_node(node) for node in nav]
+    filtered = [node for node in filtered if node]
+    return filtered, {
+        "applied": True,
+        "product_key": _text(gate.get("product_key")),
+        "platform_db": _text(gate.get("platform_db")),
+        "snapshot_id": int(gate.get("snapshot_id") or 0),
+        "snapshot_version": _text(gate.get("version")),
+        "fingerprint": _text(gate.get("fingerprint")),
+        "allowed_page_count": int(gate.get("page_count") or 0),
+        "kept_leaf_count": kept_leaf_count,
+        "removed_leaf_count": removed_leaf_count,
+    }
 
 
 def _build_minimal_intent_surface(intents: list[str], intents_meta: dict) -> list[str]:
@@ -840,9 +1033,37 @@ class SystemInitHandler(BaseIntentHandler):
         effective_base_product_key = str(delivery_payload.get("base_product_key") or requested_base_product_key).strip() or requested_base_product_key
         effective_edition_key = str(delivery_payload.get("edition_key") or "standard").strip() or "standard"
         effective_product_key = str(delivery_payload.get("product_key") or f"{effective_base_product_key}.{effective_edition_key}").strip()
+        release_gate = _load_platform_release_gate(env, product_key=effective_product_key)
+        if release_gate.get("applied"):
+            gated_nav, gate_meta = _filter_nav_by_release_gate(
+                delivery_payload.get("nav") if isinstance(delivery_payload.get("nav"), list) else [],
+                release_gate,
+            )
+            delivery_payload["nav"] = gated_nav
+            meta = delivery_payload.get("meta")
+            if not isinstance(meta, dict):
+                meta = {}
+                delivery_payload["meta"] = meta
+            meta["platform_release_gate"] = gate_meta
+        else:
+            meta = delivery_payload.get("meta")
+            if not isinstance(meta, dict):
+                meta = {}
+                delivery_payload["meta"] = meta
+            meta["platform_release_gate"] = {
+                "applied": False,
+                "product_key": effective_product_key,
+                "platform_db": _text(release_gate.get("platform_db")),
+                "reason": _text(release_gate.get("reason")) or "NOT_APPLIED",
+            }
         released_snapshot_lineage = release_snapshot_service.resolve_active_snapshot_lineage(product_key=effective_product_key)
         release_audit_trail_summary = release_audit_service.build_runtime_summary(product_key=effective_product_key)
         runtime_diagnostics = dict(edition_diagnostics) if isinstance(edition_diagnostics, dict) else {}
+        runtime_diagnostics["platform_release_gate"] = (
+            delivery_payload.get("meta", {}).get("platform_release_gate")
+            if isinstance(delivery_payload.get("meta"), dict)
+            else {}
+        )
         if released_snapshot_lineage:
             runtime_diagnostics["released_snapshot_lineage"] = released_snapshot_lineage
             meta = delivery_payload.get("meta")
@@ -896,6 +1117,11 @@ class SystemInitHandler(BaseIntentHandler):
             nav_meta["nav_source"] = "delivery_engine_v1"
             nav_meta["primary_nav_promoted_from"] = "release_navigation_v1"
             nav_meta["role_surface_nav_preserved"] = True
+            nav_meta["platform_release_gate"] = (
+                delivery_payload.get("meta", {}).get("platform_release_gate")
+                if isinstance(delivery_payload.get("meta"), dict)
+                else {}
+            )
             data["nav_meta"] = nav_meta
 
         default_route_payload = data.get("default_route") if isinstance(data.get("default_route"), dict) else {}
