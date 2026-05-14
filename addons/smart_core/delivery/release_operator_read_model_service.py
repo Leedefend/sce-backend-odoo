@@ -143,13 +143,16 @@ class ReleaseOperatorReadModelService:
             "hint_rollback": "仅当当前 active released snapshot 存在 rollback target 时可执行。",
             "hint_history": "最近 action 与 snapshot。",
             "freeze_action_label": "冻结候选快照",
-            "sync_policy_action_label": "同步已实现能力",
+            "sync_policy_action_label": "同步用户可见菜单",
             "save_policy_action_label": "保存策略",
             "policy_state_label": "发布状态",
             "policy_access_label": "访问级别",
             "metric_controlled_menus": "受控菜单",
-            "metric_controlled_scenes": "受控场景",
+            "metric_controlled_pages": "受控页面",
+            "metric_controlled_scenes": "绑定场景",
             "metric_controlled_capabilities": "受控能力",
+            "page_control_action_enable": "启用",
+            "page_control_action_disable": "停用",
             "empty_candidate": "当前没有可 Promote 的候选快照。",
             "empty_pending": "当前没有待审批动作。",
             "metric_current_product": "当前产品",
@@ -178,9 +181,36 @@ class ReleaseOperatorReadModelService:
         capabilities = _list(payload.get("capabilities"))
         scene_bindings = _dict(payload.get("scene_version_bindings"))
         menu_count = 0
+        enabled_menu_count = 0
+        page_rows: list[dict[str, Any]] = []
         for group in menu_groups:
             if isinstance(group, dict):
-                menu_count += len(_list(group.get("menus")))
+                group_label = _text(group.get("group_label"))
+                group_key = _text(group.get("group_key"))
+                menus = [item for item in _list(group.get("menus")) if isinstance(item, dict)]
+                menu_count += len(menus)
+                for menu in menus:
+                    enabled = bool(menu.get("enabled", True))
+                    if enabled:
+                        enabled_menu_count += 1
+                    page_rows.append(
+                        {
+                            "group_key": group_key,
+                            "group_label": group_label,
+                            "menu_key": _text(menu.get("menu_key")),
+                            "page_key": _text(menu.get("page_key")) or _text(menu.get("scene_key")),
+                            "page_label": _text(menu.get("page_label")) or _text(menu.get("label")),
+                            "label": _text(menu.get("label")),
+                            "route": _text(menu.get("route")),
+                            "scene_key": _text(menu.get("scene_key")),
+                            "capability_key": _text(menu.get("capability_key")),
+                            "visible_menu_path": _text(menu.get("visible_menu_path")) or f"{group_label} / {_text(menu.get('label'))}",
+                            "control_granularity": _text(menu.get("control_granularity")) or "menu_page",
+                            "enabled": enabled,
+                        }
+                    )
+        enabled_scene_count = len([scene for scene in scenes if isinstance(scene, dict) and bool(scene.get("enabled", True))])
+        enabled_capability_count = len([cap for cap in capabilities if isinstance(cap, dict) and bool(cap.get("enabled", True))])
         return {
             "product_key": product_key,
             "policy_id": int(payload.get("id") or 0),
@@ -188,11 +218,15 @@ class ReleaseOperatorReadModelService:
             "access_level": _text(payload.get("access_level")),
             "version": _text(payload.get("version")) or "v1",
             "menu_group_count": len(menu_groups),
-            "menu_count": menu_count,
-            "scene_count": len(scenes),
-            "capability_count": len(capabilities),
+            "menu_count": enabled_menu_count,
+            "page_count": enabled_menu_count,
+            "total_menu_count": menu_count,
+            "total_page_count": menu_count,
+            "scene_count": enabled_scene_count,
+            "capability_count": enabled_capability_count,
             "scene_binding_count": len(scene_bindings),
             "menu_groups": menu_groups,
+            "pages": page_rows,
             "scenes": scenes,
             "capabilities": capabilities,
         }
@@ -351,6 +385,18 @@ class ReleaseOperatorReadModelService:
                     "product_key": identity["product_key"],
                     "preserve_state": True,
                     "preserve_access_level": True,
+                },
+            },
+            "set_page_enabled": {
+                "write_model_contract_version": RELEASE_OPERATOR_WRITE_MODEL_CONTRACT_VERSION,
+                "key": f"set_page_enabled:{identity['product_key']}",
+                "label": "调整页面发布范围",
+                "intent": "release.operator.set_page_enabled",
+                "enabled": True,
+                "reason_code": "OK",
+                "role_context": role_context,
+                "params": {
+                    "product_key": identity["product_key"],
                 },
             },
             "update_policy": {

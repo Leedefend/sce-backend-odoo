@@ -105,18 +105,48 @@
             <strong>{{ controlScope.menu_count ?? 0 }}</strong>
           </article>
           <article>
-            <span>{{ copy.metric_controlled_scenes || '受控场景' }}</span>
-            <strong>{{ controlScope.scene_count ?? 0 }}</strong>
+            <span>{{ copy.metric_controlled_pages || '受控页面' }}</span>
+            <strong>{{ controlScope.page_count ?? controlScope.menu_count ?? 0 }}</strong>
           </article>
           <article>
             <span>{{ copy.metric_controlled_capabilities || '受控能力' }}</span>
             <strong>{{ controlScope.capability_count ?? 0 }}</strong>
           </article>
         </div>
-        <div v-if="controlledScenes.length" class="release-operator__chips">
-          <span v-for="scene in controlledScenes" :key="sceneChipLabel(scene)">
-            {{ sceneChipLabel(scene) }}
-          </span>
+        <div v-if="controlledPages.length" class="release-operator__table-wrap release-operator__page-table">
+          <table class="release-operator__table">
+            <thead>
+              <tr>
+                <th>用户菜单</th>
+                <th>页面</th>
+                <th>路由</th>
+                <th>状态</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="page in controlledPages" :key="pageKey(page)">
+                <td>{{ page.visible_menu_path || page.group_label || '-' }}</td>
+                <td>{{ page.page_label || page.label || page.page_key || '-' }}</td>
+                <td>{{ page.route || '-' }}</td>
+                <td>
+                  <span :class="['release-operator__pill', page.enabled === false ? 'release-operator__pill--muted' : '']">
+                    {{ page.enabled === false ? '停用' : '启用' }}
+                  </span>
+                </td>
+                <td>
+                  <button
+                    class="sc-btn sc-btn-ghost release-operator__row-action"
+                    type="button"
+                    :disabled="busyKey === `page:${pageKey(page)}` || !setPageEnabledAction.enabled"
+                    @click="togglePage(page)"
+                  >
+                    {{ page.enabled === false ? (copy.page_control_action_enable || '启用') : (copy.page_control_action_disable || '停用') }}
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </section>
 
@@ -305,9 +335,9 @@ const copy = computed<Record<string, string>>(() => {
 const identity = computed(() => surface.value?.identity || {});
 const products = computed(() => surface.value?.products || []);
 const controlScope = computed(() => surface.value?.control_scope || {});
-const controlledScenes = computed(() => {
-  const scenes = controlScope.value.scenes;
-  return Array.isArray(scenes) ? scenes as AnyRecord[] : [];
+const controlledPages = computed(() => {
+  const pages = controlScope.value.pages;
+  return Array.isArray(pages) ? pages as AnyRecord[] : [];
 });
 const releaseState = computed(() => surface.value?.release_state || {});
 const activeSnapshot = computed(() => (releaseState.value.active_snapshot || {}) as AnyRecord);
@@ -328,9 +358,13 @@ const updatePolicyAction = computed(() => {
   const actions = surface.value?.available_actions || {};
   return (actions.update_policy || {}) as { enabled?: boolean; params?: AnyRecord };
 });
+const setPageEnabledAction = computed(() => {
+  const actions = surface.value?.available_actions || {};
+  return (actions.set_page_enabled || {}) as { enabled?: boolean; params?: AnyRecord };
+});
 
-function sceneChipLabel(scene: AnyRecord) {
-  return String(scene.label || scene.scene_key || scene.key || '').trim() || '未命名场景';
+function pageKey(page: AnyRecord) {
+  return String(page.page_key || page.scene_key || page.menu_key || page.capability_key || '').trim();
 }
 const freezeAction = computed(() => {
   const actions = surface.value?.available_actions || {};
@@ -424,6 +458,22 @@ function savePolicy() {
       access_level: policyAccessLevel.value,
     },
     'update_policy',
+  );
+}
+
+function togglePage(page: AnyRecord) {
+  const key = pageKey(page);
+  if (!key) return;
+  const params = setPageEnabledAction.value.params || { product_key: selectedProduct.value };
+  void runWrite(
+    'release.operator.set_page_enabled',
+    {
+      ...params,
+      product_key: selectedProduct.value,
+      page_key: key,
+      enabled: page.enabled === false,
+    },
+    `page:${key}`,
   );
 }
 
@@ -552,19 +602,8 @@ onMounted(() => {
   font-size: 22px;
 }
 
-.release-operator__chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+.release-operator__page-table {
   margin-top: 12px;
-}
-
-.release-operator__chips span {
-  border: 1px solid #cbd5e1;
-  border-radius: 999px;
-  padding: 5px 10px;
-  color: #334155;
-  font-size: 12px;
 }
 
 .release-operator__section {
@@ -629,6 +668,11 @@ onMounted(() => {
   color: #075985;
   padding: 0 9px;
   font-size: 12px;
+}
+
+.release-operator__pill--muted {
+  background: #f1f5f9;
+  color: #64748b;
 }
 
 .release-operator__row-action {

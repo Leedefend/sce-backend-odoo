@@ -353,6 +353,86 @@ class ReleaseOperatorUpdatePolicyHandler(_ReleaseOperatorBaseHandler):
         )
 
 
+class ReleaseOperatorSetPageEnabledHandler(_ReleaseOperatorBaseHandler):
+    INTENT_TYPE = "release.operator.set_page_enabled"
+    DESCRIPTION = "平台产品用户可见页面发布范围调整"
+    VERSION = "1.0.0"
+    NON_IDEMPOTENT_ALLOWED = "product menu page control mutates platform product policy"
+
+    def handle(self, payload=None, ctx=None):
+        ts0 = time.time()
+        params = self._params(payload)
+        product_key = _text(params.get("product_key"))
+        page_key = _text(params.get("page_key") or params.get("scene_key") or params.get("menu_key"))
+        if not product_key:
+            raise ValueError("PRODUCT_KEY_REQUIRED")
+        if not page_key:
+            raise ValueError("PAGE_KEY_REQUIRED")
+        policy = self.env["sc.product.policy"].sudo().search([("product_key", "=", product_key)], limit=1)
+        if not policy:
+            policy = ProductPolicyCatalogSyncService(self.env).sync_policy(product_key=product_key)
+        enabled = _bool(params.get("enabled"), True)
+        payload = policy.to_runtime_dict()
+
+        def _match(row: dict[str, Any]) -> bool:
+            keys = {
+                _text(row.get("page_key")),
+                _text(row.get("scene_key")),
+                _text(row.get("target_page_key")),
+                _text(row.get("target_scene_key")),
+                _text(row.get("menu_key")),
+                _text(row.get("capability_key")),
+            }
+            return page_key in keys
+
+        menu_groups = []
+        for group in payload.get("menu_groups") if isinstance(payload.get("menu_groups"), list) else []:
+            if not isinstance(group, dict):
+                continue
+            next_group = dict(group)
+            menus = []
+            for menu in group.get("menus") if isinstance(group.get("menus"), list) else []:
+                if not isinstance(menu, dict):
+                    continue
+                next_menu = dict(menu)
+                if _match(next_menu):
+                    next_menu["enabled"] = enabled
+                menus.append(next_menu)
+            next_group["menus"] = menus
+            menu_groups.append(next_group)
+        scenes = []
+        for scene in payload.get("scenes") if isinstance(payload.get("scenes"), list) else []:
+            if not isinstance(scene, dict):
+                continue
+            next_scene = dict(scene)
+            if _match(next_scene):
+                next_scene["enabled"] = enabled
+            scenes.append(next_scene)
+        capabilities = []
+        for capability in payload.get("capabilities") if isinstance(payload.get("capabilities"), list) else []:
+            if not isinstance(capability, dict):
+                continue
+            next_capability = dict(capability)
+            if _match(next_capability):
+                next_capability["enabled"] = enabled
+            capabilities.append(next_capability)
+        policy.write(
+            {
+                "menu_groups": menu_groups,
+                "scenes": scenes,
+                "capabilities": capabilities,
+                "note": "page-level release scope updated from release operator",
+            }
+        )
+        return self._response(
+            ts0,
+            {
+                "policy": policy.to_runtime_dict(),
+                "surface": ReleaseOperatorSurfaceService(self.env).build_surface(product_key=product_key),
+            },
+        )
+
+
 class ReleaseOperatorApproveHandler(_ReleaseOperatorBaseHandler):
     INTENT_TYPE = "release.operator.approve"
     DESCRIPTION = "平台产品发布动作审批并执行"

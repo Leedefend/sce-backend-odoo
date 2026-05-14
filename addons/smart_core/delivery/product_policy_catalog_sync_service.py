@@ -39,6 +39,44 @@ APP_ALIASES = {
 
 PLATFORM_ONLY_APP_IDS = {"workspace", "data", "config", "enterprise", "portal", "delivery", "default", "scene_smoke_default"}
 
+CONSTRUCTION_PAGE_CATALOG: tuple[dict[str, Any], ...] = (
+    {"app_id": "dashboard", "page_key": "dashboard.company", "label": "经营驾驶舱", "route": "/s/dashboard.company"},
+    {"app_id": "dashboard", "page_key": "dashboard.project", "label": "项目驾驶舱", "route": "/s/dashboard.project"},
+    {"app_id": "projects", "page_key": "projects.list", "label": "项目台账", "route": "/s/projects.list"},
+    {"app_id": "projects", "page_key": "projects.intake", "label": "项目立项", "route": "/s/projects.intake"},
+    {"app_id": "projects", "page_key": "project.management", "label": "项目推进", "route": "/s/project.management"},
+    {"app_id": "contracts", "page_key": "contracts.workspace", "label": "合同工作台", "route": "/s/contracts.workspace"},
+    {"app_id": "contracts", "page_key": "contracts.income", "label": "收入合同", "route": "/s/contracts.income"},
+    {"app_id": "contracts", "page_key": "contracts.expense", "label": "支出合同", "route": "/s/contracts.expense"},
+    {"app_id": "contracts", "page_key": "contracts.supplier_pricing", "label": "供应商合同定价", "route": "/s/contracts.supplier_pricing"},
+    {"app_id": "cost", "page_key": "cost.cost_compare", "label": "成本对比", "route": "/s/cost.cost_compare"},
+    {"app_id": "cost", "page_key": "cost.ledger", "label": "成本台账", "route": "/s/cost.ledger"},
+    {"app_id": "cost", "page_key": "cost.summary", "label": "成本统计表", "route": "/s/cost.summary"},
+    {"app_id": "finance", "page_key": "finance.payment_requests", "label": "付款申请", "route": "/s/finance.payment_requests"},
+    {"app_id": "finance", "page_key": "finance.receipt_income", "label": "收款登记", "route": "/s/finance.receipt_income"},
+    {"app_id": "finance", "page_key": "finance.invoice", "label": "发票管理", "route": "/s/finance.invoice"},
+    {"app_id": "finance", "page_key": "finance.treasury", "label": "资金台账", "route": "/s/finance.treasury"},
+    {"app_id": "payments", "page_key": "payments.approval", "label": "收付款审批", "route": "/s/payments.approval"},
+    {"app_id": "payments", "page_key": "payments.execution", "label": "付款执行", "route": "/s/payments.execution"},
+    {"app_id": "payments", "page_key": "payments.deposit", "label": "保证金办理", "route": "/s/payments.deposit"},
+    {"app_id": "my_work", "page_key": "my_work.workspace", "label": "我的工作", "route": "/my-work"},
+    {"app_id": "my_work", "page_key": "my_work.approvals", "label": "我的审批", "route": "/s/my_work.approvals"},
+    {"app_id": "operation", "page_key": "operation.overview", "label": "运营总览", "route": "/s/operation.overview"},
+    {"app_id": "operation", "page_key": "operation.metrics", "label": "经营指标", "route": "/s/operation.metrics"},
+    {"app_id": "portfolio", "page_key": "portfolio.center", "label": "项目组合", "route": "/s/portfolio.center"},
+    {"app_id": "risk", "page_key": "risk.center", "label": "风险中心", "route": "/s/risk.center"},
+    {"app_id": "risk", "page_key": "risk.warnings", "label": "风险预警", "route": "/s/risk.warnings"},
+    {"app_id": "quality", "page_key": "quality.center", "label": "质量管理", "route": "/s/quality.center"},
+    {"app_id": "quality", "page_key": "quality.inspection", "label": "质量检查", "route": "/s/quality.inspection"},
+    {"app_id": "safety", "page_key": "safety.center", "label": "安全管理", "route": "/s/safety.center"},
+    {"app_id": "safety", "page_key": "safety.inspection", "label": "安全检查", "route": "/s/safety.inspection"},
+    {"app_id": "resource", "page_key": "resource.center", "label": "资源管理", "route": "/s/resource.center"},
+    {"app_id": "resource", "page_key": "resource.material", "label": "材料档案", "route": "/s/resource.material"},
+    {"app_id": "resource", "page_key": "resource.subcontract", "label": "分包资源", "route": "/s/resource.subcontract"},
+    {"app_id": "task", "page_key": "task.center", "label": "任务协同", "route": "/s/task.center"},
+    {"app_id": "task", "page_key": "task.todos", "label": "待办任务", "route": "/s/task.todos"},
+)
+
 
 def _scene_key(scene: dict[str, Any]) -> str:
     return _text(scene.get("code") or scene.get("key"))
@@ -87,16 +125,20 @@ def _is_construction_publishable_scene(scene: dict[str, Any]) -> bool:
 
 def _taxonomy_seed_scenes() -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
-    for app_id, taxonomy in sorted(APP_TAXONOMY.items(), key=lambda item: (_sequence(item[0]), item[0])):
-        scene_key = _text(taxonomy.get("primary_scene"))
-        if not scene_key:
+    for page in CONSTRUCTION_PAGE_CATALOG:
+        app_id = _text(page.get("app_id"))
+        page_key = _text(page.get("page_key"))
+        if not app_id or not page_key:
             continue
+        taxonomy = _taxonomy(app_id)
         rows.append(
             {
-                "code": scene_key,
-                "title": _text(taxonomy.get("label")) or app_id,
-                "description": f"{_text(taxonomy.get('label')) or app_id}产品能力入口",
-                "target": {"route": f"/s/{scene_key}"},
+                "code": page_key,
+                "title": _text(page.get("label")) or page_key,
+                "description": f"{_text(taxonomy.get('label')) or app_id}页面：{_text(page.get('label')) or page_key}",
+                "target": {"route": _text(page.get("route")) or f"/s/{page_key}"},
+                "page_key": page_key,
+                "visible_menu_path": f"{_text(taxonomy.get('label')) or app_id} / {_text(page.get('label')) or page_key}",
             }
         )
     return rows
@@ -136,19 +178,28 @@ class ProductPolicyCatalogSyncService:
             menu = {
                 "menu_key": f"release.{scene_key}",
                 "label": label,
+                "page_key": scene_key,
+                "page_label": label,
                 "route": route,
                 "scene_key": scene_key,
                 "product_key": app_id,
                 "capability_key": capability_key,
+                "visible_menu_path": _text(scene.get("visible_menu_path")) or f"{app_label} / {label}",
+                "control_granularity": "menu_page",
+                "enabled": True,
             }
             groups_by_app[app_id].append(menu)
             scene_rows.append(
                 {
                     "scene_key": scene_key,
+                    "page_key": scene_key,
                     "label": label,
                     "route": route,
                     "product_key": app_id,
                     "capability_key": capability_key,
+                    "visible_menu_path": menu["visible_menu_path"],
+                    "control_granularity": "menu_page",
+                    "enabled": True,
                     "description": _text(scene.get("description")) or f"{app_label}场景：{label}",
                     "scope": app_label,
                 }
@@ -160,9 +211,12 @@ class ProductPolicyCatalogSyncService:
                     "group_key": app_id,
                     "group_label": app_label,
                     "target_scene_key": scene_key,
+                    "target_page_key": scene_key,
                     "product_key": app_id,
                     "delivery_level": "shared" if app_id in {"dashboard", "my_work", "task"} else "exclusive",
-                    "entry_kind": "scene",
+                    "entry_kind": "menu_page",
+                    "visible_menu_path": menu["visible_menu_path"],
+                    "enabled": True,
                 }
             )
             scene_bindings[scene_key] = {"version": "v1", "channel": "stable"}
