@@ -366,6 +366,78 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             },
         },
         {
+            "code": "labor.management",
+            "name": "劳务管理",
+            "target": {
+                "route": "/s/labor.management",
+                "menu_xmlid": "smart_construction_core.menu_sc_labor_plan",
+                "action_xmlid": "smart_construction_core.action_sc_labor_plan",
+            },
+        },
+        {
+            "code": "labor.request",
+            "name": "劳务申请",
+            "target": {
+                "route": "/s/labor.request",
+                "menu_xmlid": "smart_construction_core.menu_sc_labor_request",
+                "action_xmlid": "smart_construction_core.action_sc_labor_request",
+            },
+        },
+        {
+            "code": "labor.attendance",
+            "name": "考勤记录",
+            "target": {
+                "route": "/s/labor.attendance",
+                "menu_xmlid": "smart_construction_core.menu_sc_attendance_checkin",
+                "action_xmlid": "smart_construction_core.action_sc_attendance_checkin",
+            },
+        },
+        {
+            "code": "labor.settlement",
+            "name": "劳务结算",
+            "target": {
+                "route": "/s/labor.settlement",
+                "menu_xmlid": "smart_construction_core.menu_sc_labor_settlement",
+                "action_xmlid": "smart_construction_core.action_sc_labor_settlement",
+            },
+        },
+        {
+            "code": "equipment.management",
+            "name": "机械设备",
+            "target": {
+                "route": "/s/equipment.management",
+                "menu_xmlid": "smart_construction_core.menu_sc_equipment_plan",
+                "action_xmlid": "smart_construction_core.action_sc_equipment_plan",
+            },
+        },
+        {
+            "code": "equipment.request",
+            "name": "设备申请",
+            "target": {
+                "route": "/s/equipment.request",
+                "menu_xmlid": "smart_construction_core.menu_sc_equipment_request",
+                "action_xmlid": "smart_construction_core.action_sc_equipment_request",
+            },
+        },
+        {
+            "code": "equipment.usage",
+            "name": "设备使用登记",
+            "target": {
+                "route": "/s/equipment.usage",
+                "menu_xmlid": "smart_construction_core.menu_sc_equipment_usage",
+                "action_xmlid": "smart_construction_core.action_sc_equipment_usage",
+            },
+        },
+        {
+            "code": "equipment.settlement",
+            "name": "设备结算",
+            "target": {
+                "route": "/s/equipment.settlement",
+                "menu_xmlid": "smart_construction_core.menu_sc_equipment_settlement",
+                "action_xmlid": "smart_construction_core.action_sc_equipment_settlement",
+            },
+        },
+        {
             "code": "subcontract.management",
             "name": "专业分包",
             "target": {

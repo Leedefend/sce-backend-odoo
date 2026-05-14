@@ -118,6 +118,14 @@ _CAPABILITIES: list[dict[str, Any]] = [
 
     _cap("material.catalog.open", "物资目录", "查看物资目录与分类", "material_management", required_roles=["pm", "finance", "executive"]),
     _cap("material.procurement.list", "采购清单", "查看采购与供应入口", "material_management", required_roles=["pm", "finance", "executive"]),
+    _cap("labor.plan.manage", "劳务计划", "维护劳务资源计划", "material_management", required_roles=["pm", "executive"]),
+    _cap("labor.request.list", "劳务申请", "查看和发起劳务申请", "material_management", required_roles=["pm", "executive"]),
+    _cap("labor.attendance.list", "考勤记录", "查看劳务考勤与工时", "material_management", required_roles=["pm", "executive"]),
+    _cap("labor.settlement.list", "劳务结算", "查看劳务结算", "material_management", required_roles=["pm", "finance", "executive"]),
+    _cap("equipment.plan.manage", "设备计划", "维护机械设备计划", "material_management", required_roles=["pm", "executive"]),
+    _cap("equipment.request.list", "设备申请", "查看和发起设备申请", "material_management", required_roles=["pm", "executive"]),
+    _cap("equipment.usage.list", "设备使用登记", "查看设备使用登记", "material_management", required_roles=["pm", "executive"]),
+    _cap("equipment.settlement.list", "设备结算", "查看设备结算", "material_management", required_roles=["pm", "finance", "executive"]),
 
     _cap("construction.plan.manage", "计划管理", "维护施工计划与计划版本", "project_management", required_roles=["pm", "executive"]),
     _cap("construction.plan.report", "计划汇报", "填报施工计划进展与偏差", "project_management", required_roles=["pm", "executive"]),

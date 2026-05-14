@@ -419,6 +419,8 @@ class TestActionOnlySceneSemanticSupply(unittest.TestCase):
         material_inbound = next((row for row in rows if row.get("code") == "material.inbound"), {})
         material_outbound = next((row for row in rows if row.get("code") == "material.outbound"), {})
         material_rental_order = next((row for row in rows if row.get("code") == "material.rental_order"), {})
+        labor = next((row for row in rows if row.get("code") == "labor.management"), {})
+        equipment = next((row for row in rows if row.get("code") == "equipment.management"), {})
         subcontract = next((row for row in rows if row.get("code") == "subcontract.management"), {})
         subcontract_register = next((row for row in rows if row.get("code") == "subcontract.register"), {})
 
@@ -450,6 +452,14 @@ class TestActionOnlySceneSemanticSupply(unittest.TestCase):
         self.assertEqual(
             ((material_rental_order.get("target") or {}).get("action_xmlid")),
             "smart_construction_core.action_sc_material_rental_order",
+        )
+        self.assertEqual(
+            ((labor.get("target") or {}).get("action_xmlid")),
+            "smart_construction_core.action_sc_labor_plan",
+        )
+        self.assertEqual(
+            ((equipment.get("target") or {}).get("action_xmlid")),
+            "smart_construction_core.action_sc_equipment_plan",
         )
         self.assertEqual(
             ((subcontract.get("target") or {}).get("action_xmlid")),
@@ -527,6 +537,48 @@ class TestActionOnlySceneSemanticSupply(unittest.TestCase):
             ((settlement.get("primary_action") or {}).get("action_xmlid")),
             "smart_construction_core.action_sc_subcontract_settlement",
         )
+
+    def test_labor_and_equipment_capabilities_resolve_to_resource_scenes(self):
+        self.assertEqual(
+            target_capability.CAPABILITY_ENTRY_SCENE_MAP["labor.plan.manage"],
+            "labor.management",
+        )
+        self.assertEqual(
+            target_capability.CAPABILITY_ENTRY_SCENE_MAP["labor.attendance.list"],
+            "labor.attendance",
+        )
+        self.assertEqual(
+            target_capability.CAPABILITY_ENTRY_SCENE_MAP["equipment.usage.list"],
+            "equipment.usage",
+        )
+        self.assertEqual(
+            target_capability.CAPABILITY_ENTRY_SCENE_MAP["equipment.settlement.list"],
+            "equipment.settlement",
+        )
+
+    def test_labor_and_equipment_provider_supports_resource_workflow_entries(self):
+        labor = material_center_provider.build(scene_key="labor.management", runtime={"company_id": 9})
+        attendance = material_center_provider.build(scene_key="labor.attendance", runtime={"company_id": 9})
+        equipment = material_center_provider.build(scene_key="equipment.management", runtime={"company_id": 9})
+        usage = material_center_provider.build(scene_key="equipment.usage", runtime={"company_id": 9})
+
+        self.assertEqual(((labor.get("primary_action") or {}).get("action_xmlid")), "smart_construction_core.action_sc_labor_plan")
+        self.assertEqual(labor.get("next_scene"), "labor.request")
+        self.assertEqual(
+            ((attendance.get("primary_action") or {}).get("action_xmlid")),
+            "smart_construction_core.action_sc_attendance_checkin",
+        )
+        self.assertEqual(attendance.get("next_scene"), "labor.settlement")
+        self.assertEqual(
+            ((equipment.get("primary_action") or {}).get("action_xmlid")),
+            "smart_construction_core.action_sc_equipment_plan",
+        )
+        self.assertEqual(equipment.get("next_scene"), "equipment.request")
+        self.assertEqual(
+            ((usage.get("primary_action") or {}).get("action_xmlid")),
+            "smart_construction_core.action_sc_equipment_usage",
+        )
+        self.assertEqual(usage.get("next_scene"), "equipment.settlement")
 
     def test_construction_execution_scenes_supply_native_business_targets(self):
         rows = scene_registry_content.list_scene_entries()
@@ -949,6 +1001,14 @@ class TestActionOnlySceneSemanticSupply(unittest.TestCase):
             "material_center_provider.py",
         )
         self.assertEqual(
+            ((specs.get("labor.management") or {}).get("provider_path")).name,
+            "material_center_provider.py",
+        )
+        self.assertEqual(
+            ((specs.get("equipment.usage") or {}).get("provider_key")),
+            "construction.material_center_provider.v1",
+        )
+        self.assertEqual(
             ((specs.get("subcontract.settlement") or {}).get("provider_key")),
             "construction.material_center_provider.v1",
         )
@@ -989,6 +1049,22 @@ class TestActionOnlySceneSemanticSupply(unittest.TestCase):
         self.assertEqual(
             maps["action_xmlid_scene_map"]["smart_construction_core.action_sc_material_rental_settlement"],
             "material.rental_settlement",
+        )
+        self.assertEqual(
+            maps["action_xmlid_scene_map"]["smart_construction_core.action_sc_labor_plan"],
+            "labor.management",
+        )
+        self.assertEqual(
+            maps["action_xmlid_scene_map"]["smart_construction_core.action_sc_attendance_checkin"],
+            "labor.attendance",
+        )
+        self.assertEqual(
+            maps["action_xmlid_scene_map"]["smart_construction_core.action_sc_equipment_usage"],
+            "equipment.usage",
+        )
+        self.assertEqual(
+            maps["action_xmlid_scene_map"]["smart_construction_core.action_sc_equipment_settlement"],
+            "equipment.settlement",
         )
         self.assertEqual(
             maps["action_xmlid_scene_map"]["smart_construction_core.action_sc_subcontract_plan"],
