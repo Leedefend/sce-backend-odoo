@@ -111,8 +111,17 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
     def _projection_identity(self, model_name, view_type):
         context = dict(self.env.context or {})
         action_id = context.get('contract_action_id')
+        requested_view_id = context.get('contract_view_id') or context.get('requested_view_id')
         action = None
         source_view_id = False
+        try:
+            requested_view_id = int(requested_view_id or 0)
+        except Exception:
+            requested_view_id = 0
+        if requested_view_id:
+            view = self.env['ir.ui.view'].sudo().browse(requested_view_id)
+            if view.exists() and view.model == model_name and view.type == view_type:
+                source_view_id = view.id
         try:
             action_id = int(action_id or 0)
         except Exception:
@@ -120,10 +129,11 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
         if action_id:
             action = self.env['ir.actions.act_window'].sudo().browse(action_id)
             if action.exists() and getattr(action, 'res_model', None) == model_name:
-                for view_spec in (action.views or []):
-                    if view_spec and len(view_spec) >= 2 and view_spec[1] == view_type:
-                        source_view_id = int(view_spec[0] or 0) or False
-                        break
+                if not source_view_id:
+                    for view_spec in (action.views or []):
+                        if view_spec and len(view_spec) >= 2 and view_spec[1] == view_type:
+                            source_view_id = int(view_spec[0] or 0) or False
+                            break
                 return {
                     "action_id": action.id,
                     "source_view_id": source_view_id,
@@ -134,6 +144,16 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
                         source_view_id or 0,
                     ),
                 }
+        if source_view_id:
+            return {
+                "action_id": False,
+                "source_view_id": source_view_id,
+                "projection_scope": "view:%s:%s:%s" % (
+                    source_view_id,
+                    model_name,
+                    view_type,
+                ),
+            }
         return {
             "action_id": False,
             "source_view_id": False,
@@ -453,6 +473,7 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
             'toolbar': vp.get('toolbar', {'header': [], 'sidebar': [], 'footer': []}),
             'search': vp.get('search', {'filters': [], 'group_by': [], 'facets': {'enabled': True}}),
             'order': vp.get('order', None),
+            'governance': vp.get('governance', {}),
         }
         vt = self.view_type
         if vt == 'tree':
@@ -1036,7 +1057,17 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
             for v in sorted(applicable, key=lambda r: (r.priority or 0, r.version or 0)):
                 base = self.deep_merge(base, v.materialize_patch(vt))
 
-        # 4) 运行态裁剪
+        # 4) 业务配置字段策略：只改契约可见面，不改模型与原生 XML。
+        if vt == "form":
+            base = self.env["ui.form.field.policy"].apply_to_view_contract(
+                base,
+                model_name=self.model,
+                view_type=vt,
+                action_id=action_id,
+                view_id=int(self.source_view_id.id or 0) or None,
+            )
+
+        # 5) 运行态裁剪
         final = self._runtime_filter(base, self.model, check_model_acl=check_model_acl)
         return final
 

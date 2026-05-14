@@ -125,6 +125,18 @@ SERVER_ACTION_WINDOW_MAP = {
     "smart_construction_core.action_exec_structure_entry": "smart_construction_core.action_exec_structure_wbs",
 }
 
+FILE_ATTACHMENT_ALLOWED_MODEL_EXACT = {"payment.ledger", "payment.request", "payment.request.line"}
+FILE_ATTACHMENT_ALLOWED_MODEL_PREFIXES = ("construction.", "project.", "quota.", "sc.", "tender.")
+FILE_ATTACHMENT_EXCLUDED_MODEL_PREFIXES = (
+    "sc.legacy.",
+    "sc.ops.",
+    "sc.pack.",
+    "sc.scene.",
+    "sc.subscription.",
+    "sc.usage.",
+    "sc.workbench.",
+    "ui.form.",
+)
 FILE_UPLOAD_ALLOWED_MODELS = ["project.project", "project.task", "payment.request"]
 FILE_DOWNLOAD_ALLOWED_MODELS = ["project.project", "project.task", "payment.request"]
 API_DATA_WRITE_ALLOWLIST = {
@@ -656,11 +668,36 @@ def get_server_action_window_map_contributions(env):
 
 
 def get_file_upload_allowed_model_contributions(env):
-    return list(FILE_UPLOAD_ALLOWED_MODELS)
+    return sorted(set(FILE_UPLOAD_ALLOWED_MODELS) | _business_attachment_allowed_models(env))
 
 
 def get_file_download_allowed_model_contributions(env):
-    return list(FILE_DOWNLOAD_ALLOWED_MODELS)
+    return sorted(set(FILE_DOWNLOAD_ALLOWED_MODELS) | _business_attachment_allowed_models(env))
+
+
+def _business_attachment_allowed_models(env):
+    out = set()
+    try:
+        models = env["ir.model"].sudo().search([])
+    except Exception:
+        return out
+    for row in models:
+        model_name = str(row.model or "").strip()
+        if not model_name:
+            continue
+        if model_name.startswith(FILE_ATTACHMENT_EXCLUDED_MODEL_PREFIXES):
+            continue
+        if model_name not in FILE_ATTACHMENT_ALLOWED_MODEL_EXACT and not model_name.startswith(FILE_ATTACHMENT_ALLOWED_MODEL_PREFIXES):
+            continue
+        if model_name not in env:
+            continue
+        try:
+            if getattr(env[model_name], "_transient", False) or getattr(env[model_name], "_abstract", False):
+                continue
+        except Exception:
+            continue
+        out.add(model_name)
+    return out
 
 
 def get_api_data_write_allowlist_contributions(env):

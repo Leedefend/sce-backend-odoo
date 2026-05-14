@@ -19,6 +19,7 @@ from ..core.unified_page_contract_v2_client import (
 )
 from ..core.scene_provider import load_scenes_from_db_or_fallback
 from ..core.request_params import parse_positive_int
+from ..utils.extension_hooks import call_extension_hook_first
 from .ui_contract import UiContractHandler
 
 _logger = logging.getLogger(__name__)
@@ -122,6 +123,18 @@ class UiContractV2Handler(BaseIntentHandler):
             "record": source_record,
             "source_meta": ui_meta,
         })
+        self._inject_current_form_settings_action(
+            source_contract,
+            params=params,
+            ui_params=ui_params,
+            model=str(model or "").strip(),
+            view_type=str(view_type or "").strip().lower(),
+        )
+        self._inject_collaboration_contract(
+            source_contract,
+            model=str(model or "").strip(),
+            view_type=str(view_type or "").strip().lower(),
+        )
         hydrated_record = self._hydrate_record_snapshot(
             model=str(model or "").strip(),
             record_id=params.get("record_id") or params.get("recordId") or ui_params.get("record_id") or ui_params.get("recordId"),
@@ -162,6 +175,153 @@ class UiContractV2Handler(BaseIntentHandler):
                 "source_authority": self.source_authority_contract(),
             },
         )
+
+    def _inject_current_form_settings_action(
+        self,
+        source_contract: dict[str, Any],
+        *,
+        params: dict[str, Any],
+        ui_params: dict[str, Any],
+        model: str,
+        view_type: str,
+    ) -> None:
+        if view_type != "form" or not model:
+            return
+        action_id = (
+            params.get("action_id")
+            or params.get("actionId")
+            or ui_params.get("action_id")
+            or ui_params.get("actionId")
+            or source_contract.get("action_id")
+            or source_contract.get("actionId")
+        )
+        view_id = (
+            params.get("view_id")
+            or params.get("viewId")
+            or ui_params.get("view_id")
+            or ui_params.get("viewId")
+        )
+        if not view_id:
+            view_ids = source_contract.get("view_ids_by_type")
+            if isinstance(view_ids, dict):
+                view_id = view_ids.get("form")
+        render_profile = (
+            source_contract.get("render_profile")
+            or params.get("render_profile")
+            or params.get("renderProfile")
+            or ui_params.get("render_profile")
+            or ui_params.get("renderProfile")
+            or "edit"
+        )
+        try:
+            from ..app_config_engine.services.assemblers.page_assembler import PageAssembler
+
+            assembler = PageAssembler(self.env, self.su_env)
+            assembler._inject_current_form_settings_action(
+                source_contract,
+                model_name=model,
+                action_id=action_id,
+                view_id=view_id,
+                render_profile=render_profile,
+            )
+        except Exception:
+            _logger.debug("ui.contract.v2 current form settings action injection skipped", exc_info=True)
+
+    def _inject_collaboration_contract(self, source_contract: dict[str, Any], *, model: str, view_type: str) -> None:
+        if view_type != "form" or not model or model not in self.env:
+            return
+        try:
+            model_obj = self.env[model]
+            if getattr(model_obj, "_transient", False):
+                return
+            model_fields = getattr(model_obj, "_fields", {}) or {}
+        except Exception:
+            _logger.debug("ui.contract.v2 collaboration injection skipped: model inspect failed", exc_info=True)
+            return
+
+        form = _ensure_source_form_contract(source_contract)
+        chatter = form.get("chatter") if isinstance(form.get("chatter"), dict) else {}
+        attachments = form.get("attachments") if isinstance(form.get("attachments"), dict) else {}
+        upload_allowed = model in _allowed_models_from_hook(self.env, "smart_core_file_upload_allowed_models")
+        download_allowed = model in _allowed_models_from_hook(self.env, "smart_core_file_download_allowed_models")
+        chatter_fields = [
+            field_name
+            for field_name in ("message_follower_ids", "activity_ids", "message_ids", "website_message_ids")
+            if field_name in model_fields
+        ]
+        message_capable = "message_ids" in model_fields or hasattr(model_obj, "message_post")
+        activity_capable = "activity_ids" in model_fields
+        chatter_enabled = bool(chatter.get("enabled") or message_capable or activity_capable)
+        attachment_enabled = bool(attachments.get("enabled") or upload_allowed or download_allowed)
+        if not chatter_enabled and not attachment_enabled:
+            return
+
+        collaboration = source_contract.get("collaboration") if isinstance(source_contract.get("collaboration"), dict) else {}
+        if chatter_enabled:
+            chatter = {
+                **chatter,
+                "enabled": True,
+                "label": chatter.get("label") or "协作日志",
+                "fields": chatter.get("fields") if isinstance(chatter.get("fields"), list) else chatter_fields,
+                "features": chatter.get("features") if isinstance(chatter.get("features"), dict) else {
+                    "message": bool(message_capable),
+                    "note": bool(message_capable),
+                    "activity": bool(activity_capable),
+                },
+                "actions": chatter.get("actions") if isinstance(chatter.get("actions"), list) else _standard_chatter_actions(
+                    message_capable=bool(message_capable),
+                    activity_capable=bool(activity_capable),
+                ),
+            }
+            form["chatter"] = chatter
+            collaboration["chatter"] = deepcopy(chatter)
+        if attachment_enabled:
+            upload_contract = attachments.get("upload") if isinstance(attachments.get("upload"), dict) else {}
+            download_contract = attachments.get("download") if isinstance(attachments.get("download"), dict) else {}
+            attachments = {
+                **attachments,
+                "enabled": True,
+                "label": attachments.get("label") or "附件",
+                "upload": {
+                    "intent": "file.upload",
+                    "max_bytes": 5 * 1024 * 1024,
+                    "accepted_types": [],
+                    "enabled": bool(upload_allowed),
+                },
+                "download": {
+                    "intent": "file.download",
+                    "enabled": bool(download_allowed),
+                },
+                "ui_labels": attachments.get("ui_labels") if isinstance(attachments.get("ui_labels"), dict) else {
+                    "label": "附件",
+                    "upload": "上传附件",
+                    "uploading": "上传中...",
+                    "download": "下载",
+                    "upload_failed": "附件上传失败",
+                    "download_failed": "附件下载失败",
+                    "size_exceeded": "文件过大",
+                },
+            }
+            attachments["upload"].update(upload_contract)
+            attachments["upload"]["enabled"] = bool(upload_allowed)
+            attachments["download"].update(download_contract)
+            attachments["download"]["enabled"] = bool(download_allowed)
+            form["attachments"] = attachments
+            collaboration["attachments"] = deepcopy(attachments)
+        collaboration["timeline"] = {
+            "enabled": True,
+            "intent": "chatter.timeline",
+            "include_audit": True,
+        }
+        collaboration["sourceAuthority"] = {
+            "kind": "ui_contract_v2_collaboration_projection",
+            "authorities": ["mail.thread", "mail.activity", "ir.attachment", "ir.rule", "extension_hook"],
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": True,
+            "runtime_carrier": "ui.contract.v2.collaboration",
+        }
+        source_contract["collaboration"] = collaboration
 
     def _hydrate_record_snapshot(
         self,
@@ -427,3 +587,70 @@ class UiContractV2Handler(BaseIntentHandler):
             },
             code=code,
         )
+
+
+def _ensure_source_form_contract(source_contract: dict[str, Any]) -> dict[str, Any]:
+    views = source_contract.get("views")
+    if not isinstance(views, dict):
+        views = {}
+        source_contract["views"] = views
+    form = views.get("form")
+    if not isinstance(form, dict):
+        form = {}
+        views["form"] = form
+    return form
+
+
+def _allowed_models_from_hook(env, hook_name: str) -> set[str]:
+    try:
+        payload = call_extension_hook_first(env, hook_name, env)
+    except Exception:
+        payload = None
+    if not isinstance(payload, (list, tuple, set)):
+        return set()
+    return {str(item).strip() for item in payload if str(item).strip()}
+
+
+def _standard_chatter_actions(*, message_capable: bool, activity_capable: bool) -> list[dict[str, Any]]:
+    actions: list[dict[str, Any]] = []
+    if message_capable:
+        actions.extend([
+            {
+                "key": "chatter_send_message",
+                "label": "发送消息",
+                "kind": "chatter",
+                "level": "chatter",
+                "selection": "none",
+                "intent": "message",
+                "payload": {"mode": "message"},
+            },
+            {
+                "key": "chatter_log_note",
+                "label": "记录备注",
+                "kind": "chatter",
+                "level": "chatter",
+                "selection": "none",
+                "intent": "note",
+                "payload": {"mode": "note"},
+            },
+        ])
+    if activity_capable:
+        actions.append({
+            "key": "chatter_schedule_activity",
+            "label": "活动",
+            "kind": "chatter",
+            "level": "chatter",
+            "selection": "none",
+            "intent": "activity",
+            "payload": {
+                "mode": "activity",
+                "execute_intent": "chatter.activity.schedule",
+                "activity_type_xmlid": "mail.mail_activity_data_todo",
+                "fields": [
+                    {"name": "summary", "label": "摘要", "type": "char", "required": True},
+                    {"name": "date_deadline", "label": "截止日期", "type": "date", "required": False},
+                    {"name": "note", "label": "备注", "type": "text", "required": False},
+                ],
+            },
+        })
+    return actions

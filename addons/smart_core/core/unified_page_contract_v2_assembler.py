@@ -12,6 +12,62 @@ CONTRACT_VERSION = "2.1.0"
 SOURCE_KIND = "unified_page_contract_v2_assembler_projection"
 SOURCE_AUTHORITIES = ("ui_contract", "page_orchestration", "scene_contract", "unified_page_contract_v2_schema")
 NO_BUSINESS_FACT_AUTHORITY = True
+BUSINESS_FORM_DEFAULT_TAB_MODELS = frozenset({
+    "payment.ledger",
+    "payment.request",
+    "payment.request.line",
+    "project.budget.cost.alloc",
+    "project.cost.code",
+    "project.cost.ledger",
+    "project.funding.baseline",
+    "project.milestone",
+    "project.profit.compare",
+    "project.progress.entry",
+    "project.project.stage",
+    "project.tags",
+    "project.task",
+    "project.task.type",
+    "sc.account.income.expense.summary",
+    "sc.approval.scope",
+    "sc.check.standard",
+    "sc.check.standard.item",
+    "sc.company.operation.summary",
+    "sc.comprehensive.cost.summary",
+    "sc.construction.diary",
+    "sc.dashboard.cockpit.fact",
+    "sc.dictionary",
+    "sc.expense.claim",
+    "sc.expense.reimbursement.summary",
+    "sc.financing.loan",
+    "sc.fund.daily.summary",
+    "sc.history.todo",
+    "sc.invoice.category.summary",
+    "sc.invoice.registration",
+    "sc.material.catalog",
+    "sc.material.price",
+    "sc.material.stock.summary",
+    "sc.operating.metrics.project",
+    "sc.payment.execution",
+    "sc.plan.report",
+    "sc.project.stage.requirement.item",
+    "sc.project.structure",
+    "sc.receipt.income",
+    "sc.receipt.invoice.line",
+    "sc.risk.item",
+    "sc.risk.library",
+    "sc.safety.patrol.task",
+    "sc.salary.summary",
+    "sc.settlement.adjustment",
+    "sc.tax.deduction.registration",
+    "sc.treasury.ledger",
+    "sc.treasury.reconciliation",
+    "sc.workflow.node",
+    "tender.doc.purchase",
+    "tender.guarantee",
+    "tender.opening",
+})
+TRACE_FIELD_TOKENS = ("legacy", "source", "origin", "external", "import", "migration", "trace", "old_")
+NOTE_FIELD_TOKENS = ("note", "remark", "description", "memo", "comment", "说明", "备注")
 
 
 def source_authority_contract() -> dict[str, Any]:
@@ -545,6 +601,13 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
             }
         ]
         contract["statusContract"]["containerStatus"].append({"containerId": container_id, "visible": True, "disabled": False})
+    _standardize_business_form_default_tabs(
+        container_tree,
+        model=model,
+        view_type=view_type,
+        container_status=contract["statusContract"]["containerStatus"],
+    )
+    _standardize_form_container_semantics(container_tree, model=model, view_type=view_type)
     contract["layoutContract"]["containerTree"] = container_tree
     contract["layoutContract"]["componentRegistry"] = _component_registry(component_keys or {"sc.display.text"})
     contract["dataContract"]["dataMeta"]["fieldCount"] = len(fields)
@@ -562,6 +625,7 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
             defaults = _default_values_from_context(_dict(source_context.get("context")))
             if defaults:
                 contract["dataContract"]["mainData"].update(defaults)
+    _inject_collaboration_runtime_contract(contract, _dict(source.get("collaboration")))
     source_record = _dict(source.get("record"))
     if source_record:
         contract["dataContract"]["mainData"].update(deepcopy(source_record))
@@ -602,6 +666,22 @@ def _ui_search_contract(source: dict[str, Any], ui: dict[str, Any]) -> dict[str,
         if isinstance(value, dict):
             out[key] = deepcopy(value)
     return out
+
+
+def _inject_collaboration_runtime_contract(contract: dict[str, Any], collaboration: dict[str, Any]) -> None:
+    if not collaboration:
+        return
+    runtime = _dict(contract.get("runtimeContract"))
+    if not runtime:
+        runtime = {}
+        contract["runtimeContract"] = runtime
+    normalized: dict[str, Any] = {}
+    for key in ("chatter", "attachments", "timeline", "sourceAuthority"):
+        value = collaboration.get(key)
+        if isinstance(value, dict):
+            normalized[key] = deepcopy(value)
+    if normalized:
+        runtime["collaboration"] = normalized
 
 
 def _field_rows(source: dict[str, Any], ui: dict[str, Any], *, view_type: str = "") -> list[dict[str, Any]]:
@@ -950,6 +1030,300 @@ def _normalize_native_layout_nodes(
             node["widgetList"] = []
         out.append(node)
     return out
+
+
+def _walk_native_nodes(nodes: list[dict[str, Any]]):
+    for node in nodes:
+        if not isinstance(node, dict):
+            continue
+        yield node
+        for key in ("children", "pages", "tabs", "nodes", "items"):
+            child_rows = node.get(key)
+            if isinstance(child_rows, list):
+                yield from _walk_native_nodes([item for item in child_rows if isinstance(item, dict)])
+
+
+def _layout_contains_node_type(nodes: list[dict[str, Any]], node_types: set[str]) -> bool:
+    for node in _walk_native_nodes(nodes):
+        if _text(node.get("containerType") or node.get("type") or node.get("kind")).lower() in node_types:
+            return True
+    return False
+
+
+def _node_field_names(node: dict[str, Any]) -> list[str]:
+    out: list[str] = []
+    for item in _walk_native_nodes([node]):
+        if _text(item.get("type") or item.get("kind")).lower() != "field":
+            continue
+        field_name = _text(item.get("name") or item.get("field"))
+        if field_name and field_name not in out:
+            out.append(field_name)
+    return out
+
+
+def _node_field_types(node: dict[str, Any]) -> list[str]:
+    out: list[str] = []
+    for item in _walk_native_nodes([node]):
+        if _text(item.get("type") or item.get("kind")).lower() != "field":
+            continue
+        field_info = _dict(item.get("fieldInfo") or item.get("field_info"))
+        field_type = _text(field_info.get("type") or field_info.get("ttype") or item.get("widget")).lower()
+        if field_type:
+            out.append(field_type)
+    return out
+
+
+def _node_text_fingerprint(node: dict[str, Any]) -> str:
+    values: list[str] = []
+    for item in _walk_native_nodes([node]):
+        values.extend([
+            _text(item.get("name") or item.get("field")).lower(),
+            _text(item.get("string") or item.get("label") or item.get("title")).lower(),
+        ])
+        field_info = _dict(item.get("fieldInfo") or item.get("field_info"))
+        values.extend([
+            _text(field_info.get("string") or field_info.get("label")).lower(),
+            _text(field_info.get("name")).lower(),
+        ])
+    return " ".join(item for item in values if item)
+
+
+def _node_has_token(node: dict[str, Any], tokens: tuple[str, ...]) -> bool:
+    fingerprint = _node_text_fingerprint(node)
+    return any(token.lower() in fingerprint for token in tokens)
+
+
+def _node_has_x2many(node: dict[str, Any]) -> bool:
+    return any(field_type in {"one2many", "many2many"} for field_type in _node_field_types(node))
+
+
+def _node_has_direct_group_child(node: dict[str, Any]) -> bool:
+    for key in ("children", "pages", "tabs", "nodes", "items"):
+        child_rows = node.get(key)
+        if not isinstance(child_rows, list):
+            continue
+        for child in child_rows:
+            if not isinstance(child, dict):
+                continue
+            child_type = _text(child.get("type") or child.get("kind") or child.get("containerType")).lower()
+            if child_type == "group":
+                return True
+    return False
+
+
+def _is_generic_container_label(node: dict[str, Any]) -> bool:
+    node_type = _text(node.get("containerType") or node.get("type") or node.get("kind")).lower()
+    labels = {
+        _text(node.get("title")).lower(),
+        _text(node.get("label")).lower(),
+        _text(node.get("string")).lower(),
+    }
+    generic = {"", node_type}
+    container_id = _text(node.get("containerId")).lower()
+    node_name = _text(node.get("name")).lower()
+    if _is_technical_container_identifier(container_id):
+        generic.add(container_id)
+    if _is_technical_container_identifier(node_name):
+        generic.add(node_name)
+    return bool(labels & generic) or all(not label for label in labels)
+
+
+def _is_technical_container_identifier(value: str) -> bool:
+    if not value:
+        return False
+    return bool(re.fullmatch(r"[a-z0-9_.:-]+", value))
+
+
+def _semantic_group_label(node: dict[str, Any], *, level: int, index: int) -> str:
+    fingerprint = _node_text_fingerprint(node)
+    field_names = set(_node_field_names(node))
+    if level <= 1 and _node_has_direct_group_child(node):
+        return "主信息"
+    if _node_has_token(node, TRACE_FIELD_TOKENS):
+        return "来源追溯"
+    if _node_has_token(node, NOTE_FIELD_TOKENS):
+        return "备注说明"
+    if _node_has_x2many(node):
+        return "业务明细"
+    if any(token in fingerprint for token in ("amount", "price", "cost", "budget", "fee", "money", "金额", "费用", "成本", "预算")):
+        return "金额信息"
+    if any(token in fingerprint for token in ("date", "time", "deadline", "start", "end", "日期", "时间", "截止")):
+        return "时间信息"
+    if any(token in fingerprint for token in ("partner", "supplier", "owner", "manager", "user", "负责人", "供应", "往来", "经理")):
+        return "责任与往来"
+    if level <= 1 or field_names & {"name", "code", "project_id", "state", "company_id"}:
+        return "主信息" if level == 0 else "基础信息"
+    return f"业务信息 {index + 1}"
+
+
+def _apply_semantic_container_label(node: dict[str, Any], label: str) -> None:
+    node["title"] = label
+    node["label"] = label
+    node["string"] = label
+    _apply_semantic_container_annotation(node, label)
+
+
+def _apply_semantic_container_annotation(node: dict[str, Any], label: str) -> None:
+    node["semanticTitle"] = label
+    node["semanticAnchor"] = _stable_id(label, "semantic.group")
+    source = _dict(node.get("sourceAuthority"))
+    source.update({
+        "kind": SOURCE_KIND,
+        "projection_only": True,
+        "no_business_fact_authority": True,
+        "runtime_carrier": "business_form_semantic_label_standardizer",
+    })
+    node["sourceAuthority"] = source
+
+
+def _standardize_form_container_semantics(nodes: list[dict[str, Any]], *, model: str, view_type: str) -> None:
+    if view_type != "form" or not model:
+        return
+
+    def visit(rows: list[dict[str, Any]], *, level: int) -> None:
+        group_index = 0
+        for node in rows:
+            if not isinstance(node, dict):
+                continue
+            node_type = _text(node.get("containerType") or node.get("type") or node.get("kind")).lower()
+            if node_type == "group":
+                if _is_generic_container_label(node):
+                    _apply_semantic_container_label(
+                        node,
+                        _semantic_group_label(node, level=level, index=group_index),
+                    )
+                else:
+                    semantic_title = _text(node.get("semanticTitle"))
+                    visible_label = _text(node.get("title") or node.get("label") or node.get("string"))
+                    if not semantic_title and visible_label:
+                        _apply_semantic_container_annotation(node, visible_label)
+                group_index += 1
+            for key in ("children", "pages", "tabs", "nodes", "items"):
+                child_rows = node.get(key)
+                if isinstance(child_rows, list):
+                    visit([item for item in child_rows if isinstance(item, dict)], level=level + 1)
+
+    visit(nodes, level=0)
+
+
+def _node_is_button_box(node: dict[str, Any]) -> bool:
+    classes = _text(_dict(node.get("attributes")).get("class") or node.get("class")).split()
+    if "oe_button_box" in classes:
+        return True
+    for item in _walk_native_nodes([node]):
+        if _text(item.get("type") or item.get("kind")).lower() != "button":
+            continue
+        action = _dict(item.get("action"))
+        if _text(action.get("level")).lower() == "smart":
+            return True
+        item_classes = _text(_dict(item.get("attributes")).get("class") or item.get("class")).split()
+        if "oe_stat_button" in item_classes:
+            return True
+    return False
+
+
+def _append_container_status_once(container_status: list[dict[str, Any]], container_id: str) -> None:
+    if not container_id:
+        return
+    if any(_text(row.get("containerId")) == container_id for row in container_status if isinstance(row, dict)):
+        return
+    container_status.append({"containerId": container_id, "visible": True, "disabled": False})
+
+
+def _standard_page_node(name: str, label: str, children: list[dict[str, Any]]) -> dict[str, Any]:
+    return {
+        "type": "page",
+        "name": name,
+        "containerId": f"standard.{name}",
+        "containerType": "page",
+        "string": label,
+        "label": label,
+        "title": label,
+        "children": children,
+        "widgetList": [],
+        "sourceAuthority": {
+            "kind": SOURCE_KIND,
+            "projection_only": True,
+            "no_business_fact_authority": True,
+            "runtime_carrier": "business_form_default_tab_standardizer",
+        },
+    }
+
+
+def _standardize_business_form_default_tabs(
+    container_tree: list[dict[str, Any]],
+    *,
+    model: str,
+    view_type: str,
+    container_status: list[dict[str, Any]],
+) -> None:
+    if view_type != "form" or model not in BUSINESS_FORM_DEFAULT_TAB_MODELS:
+        return
+    if not container_tree or _layout_contains_node_type(container_tree, {"notebook", "page"}):
+        return
+    for root in container_tree:
+        if not isinstance(root, dict):
+            continue
+        if _text(root.get("type") or root.get("kind")).lower() != "sheet":
+            continue
+        children = [child for child in _list(root.get("children")) if isinstance(child, dict)]
+        if not children:
+            continue
+        leading: list[dict[str, Any]] = []
+        candidates: list[dict[str, Any]] = []
+        for child in children:
+            child_type = _text(child.get("type") or child.get("kind")).lower()
+            if child_type in {"header", "footer"} or _node_is_button_box(child):
+                leading.append(child)
+            else:
+                candidates.append(child)
+        buckets: dict[str, list[dict[str, Any]]] = {"main": [], "detail": [], "trace": [], "note": []}
+        for child in candidates:
+            field_names = _node_field_names(child)
+            if not field_names:
+                buckets["main"].append(child)
+            elif _node_has_token(child, NOTE_FIELD_TOKENS):
+                buckets["note"].append(child)
+            elif _node_has_token(child, TRACE_FIELD_TOKENS):
+                buckets["trace"].append(child)
+            elif _node_has_x2many(child):
+                buckets["detail"].append(child)
+            else:
+                buckets["main"].append(child)
+        page_specs = (
+            ("main", "主信息", buckets["main"]),
+            ("detail", "业务明细", buckets["detail"]),
+            ("trace", "来源追溯", buckets["trace"]),
+            ("note", "备注说明", buckets["note"]),
+        )
+        pages = [_standard_page_node(name, label, rows) for name, label, rows in page_specs if rows]
+        if not pages:
+            return
+        notebook_id = "standard.business.tabs"
+        notebook = {
+            "type": "notebook",
+            "name": notebook_id,
+            "containerId": notebook_id,
+            "containerType": "notebook",
+            "string": "",
+            "label": "",
+            "title": "",
+            "children": [],
+            "tabs": pages,
+            "widgetList": [],
+            "sourceAuthority": {
+                "kind": SOURCE_KIND,
+                "projection_only": True,
+                "no_business_fact_authority": True,
+                "runtime_carrier": "business_form_default_tab_standardizer",
+            },
+        }
+        root["children"] = leading + [notebook]
+        root["widgetList"] = _direct_field_widgets_from_nodes(leading, {}, layout_type="form")
+        _append_container_status_once(container_status, notebook_id)
+        for page in pages:
+            _append_container_status_once(container_status, _text(page.get("containerId")))
+        return
 
 
 def _badge_count(value: Any) -> int | None:
@@ -1359,6 +1733,7 @@ def _append_actions(contract: dict[str, Any], rows: Any, *, source_widget_id: st
         action_id = f"action.{key}"
         label = _text(row.get("label") or row.get("name") or row.get("title"), key)
         intent = _text(row.get("intent"), "ui.contract")
+        source_id = _text(row.get("sourceWidgetId") or row.get("source_widget_id"), source_widget_id)
         contract["actionContract"]["actionRuleList"].append(
             {
                 "actionId": action_id,
@@ -1368,14 +1743,14 @@ def _append_actions(contract: dict[str, Any], rows: Any, *, source_widget_id: st
                 "target": deepcopy(_dict(row.get("target"))),
                 "button": deepcopy(_dict(row.get("button"))),
                 "triggerType": _text(row.get("trigger") or row.get("display_mode"), "click"),
-                "sourceWidgetId": source_widget_id,
+                "sourceWidgetId": source_id,
                 "targetIds": [],
                 "dispatchMode": "server",
                 "targetScope": _text(row.get("target_scope") or row.get("level"), "page"),
                 "refreshMode": "partial",
             }
         )
-        contract["actionContract"]["dependencyGraph"].setdefault(source_widget_id, []).append(action_id)
+        contract["actionContract"]["dependencyGraph"].setdefault(source_id, []).append(action_id)
         contract["statusContract"]["buttonStatus"].append({"btnId": f"btn.{key}", "visible": True, "disabled": False})
 
 
@@ -1451,6 +1826,9 @@ def _append_ui_contract_actions(
                 "view_type": _text(payload.get("view_mode"), "tree").split(",")[0],
                 "domain_raw": payload.get("domain_raw"),
                 "context_raw": payload.get("context_raw"),
+                "url": payload.get("url"),
+                "route": payload.get("route"),
+                "target": payload.get("target"),
             }
             button = {}
         elif kind == "server" or payload.get("server_action_id"):
@@ -1478,6 +1856,9 @@ def _append_ui_contract_actions(
                 "target": target,
                 "button": button,
                 "badge": badge or None,
+                "sourceWidgetId": _text(row.get("sourceWidgetId") or row.get("source_widget_id")),
+                "target_scope": _text(row.get("target_scope") or row.get("level"), "page"),
+                "trigger": _text(row.get("trigger"), "click"),
             }
         )
     _append_actions(contract, normalized, source_widget_id=source_widget_id)

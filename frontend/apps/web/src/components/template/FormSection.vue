@@ -14,6 +14,24 @@
         >
           <div class="field-label-row">
             <label class="label">{{ field.label }}<span v-if="field.required" class="required">*</span></label>
+            <div v-if="fieldActionsFor(field).length" class="field-inline-actions" role="radiogroup" :aria-label="`${field.label}字段操作`">
+              <label
+                v-for="action in fieldActionsFor(field)"
+                :key="`${field.key}-${action.key}`"
+                class="field-inline-action"
+                :title="action.title"
+              >
+                <input
+                  type="radio"
+                  :name="`field-action-${field.key}`"
+                  :value="action.value"
+                  :checked="Boolean(action.checked)"
+                  :disabled="Boolean(action.disabled)"
+                  @change="emitFieldAction(field, action)"
+                />
+                <span>{{ action.label }}</span>
+              </label>
+            </div>
           </div>
           <div :class="['field-control-row', { 'field-control-row--favorite': field.favoriteToggle }]">
             <button
@@ -206,7 +224,13 @@
 <script setup lang="ts">
 import { computed, useSlots } from 'vue';
 import X2ManyRelationRenderer from './X2ManyRelationRenderer.vue';
-import type { FormSectionFieldSchema, FormSectionFieldChange, TemplateFieldType } from './formSection.types';
+import type {
+  FormSectionFieldAction,
+  FormSectionFieldActionPayload,
+  FormSectionFieldSchema,
+  FormSectionFieldChange,
+  TemplateFieldType,
+} from './formSection.types';
 import type { RelationFieldAdapter } from './relationField.types';
 import { resolveInputPlaceholder, resolveSelectPlaceholder } from './placeholder.mapper';
 
@@ -217,6 +241,7 @@ const props = withDefaults(defineProps<{
   tone?: 'core' | 'advanced';
   fields?: FormSectionFieldSchema[];
   relationAdapter?: RelationFieldAdapter;
+  fieldActions?: (field: FormSectionFieldSchema) => FormSectionFieldAction[];
   selectPlaceholder?: (label: string) => string;
   inputPlaceholder?: (label: string) => string;
 }>(), {
@@ -225,12 +250,14 @@ const props = withDefaults(defineProps<{
   tone: 'core',
   fields: () => [],
   relationAdapter: undefined,
+  fieldActions: undefined,
   selectPlaceholder: (label: string) => resolveSelectPlaceholder(label),
   inputPlaceholder: (label: string) => resolveInputPlaceholder(label),
 });
 
 const emit = defineEmits<{
   (e: 'field-change', payload: FormSectionFieldChange): void;
+  (e: 'field-action', payload: FormSectionFieldActionPayload): void;
 }>();
 
 const slots = useSlots();
@@ -347,6 +374,10 @@ function readonlyText(value: unknown) {
   return String(value);
 }
 
+function fieldActionsFor(field: FormSectionFieldSchema) {
+  return props.fieldActions?.(field) || [];
+}
+
 function emitFieldChange(field: FormSectionFieldSchema, value: string | number | boolean | null) {
   emit('field-change', {
     name: field.name,
@@ -400,6 +431,11 @@ function emitFavoriteToggle(field: FormSectionFieldSchema) {
     value: !favorite.active,
     descriptor: favorite.descriptor,
   });
+}
+
+function emitFieldAction(field: FormSectionFieldSchema, action: FormSectionFieldAction) {
+  if (action.disabled) return;
+  emit('field-action', { field, action });
 }
 </script>
 
@@ -471,8 +507,11 @@ function emitFavoriteToggle(field: FormSectionFieldSchema) {
 }
 
 .field-label-row {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
   min-width: 0;
   margin-bottom: 4px;
 }
@@ -518,6 +557,26 @@ function emitFavoriteToggle(field: FormSectionFieldSchema) {
 .required {
   color: #b91c1c;
   margin-left: 2px;
+}
+
+.field-inline-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.field-inline-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.field-inline-action input {
+  margin: 0;
 }
 
 .field-control-row {
