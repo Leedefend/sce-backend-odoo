@@ -84,7 +84,7 @@ class ActionDispatcher:
 
         info = self.resolver.as_action_info(self.resolver.resolve_action(aid, axmlid, amid))
         atype = (info.get('type') or info.get('_name') or '').strip()
-        _logger.info("ACTION_RESOLVED action_id=%s action_xmlid=%s menu_id=%s -> %s",
+        _logger.debug("ACTION_RESOLVED action_id=%s action_xmlid=%s menu_id=%s -> %s",
                      aid, axmlid, amid, info)
 
         # act_window：必须有 res_model

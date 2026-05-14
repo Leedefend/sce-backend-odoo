@@ -39,7 +39,7 @@ class NativeParseService:
         """Try parser-native extraction and return raw parsed payload."""
         parsed_json = None
         model_exists = self.owner._model_exists("app.view.parser")
-        _logger.info("VIEW_PARSE_DEBUG: app.view.parser model_exists=%s", model_exists)
+        _logger.debug("VIEW_PARSE_DEBUG: app.view.parser model_exists=%s", model_exists)
         if force_fallback or not model_exists:
             return None
         try:
@@ -48,9 +48,9 @@ class NativeParseService:
             # sudo here can produce a different form from the native client.
             parsed_json = self.owner.env["app.view.parser"].parse_odoo_view(model_name, view_type)
             if self.owner._looks_like_parser_wrapper(parsed_json):
-                _logger.info("VIEW_PARSE_DEBUG: unwrap parser wrapper → %s.%s", model_name, view_type)
+                _logger.debug("VIEW_PARSE_DEBUG: unwrap parser wrapper → %s.%s", model_name, view_type)
                 parsed_json = self.owner._unwrap_contract_shape(view_type, parsed_json)
-            _logger.info(
+            _logger.debug(
                 "VIEW_PARSE_DEBUG: parser_success=%s keys=%s",
                 bool(parsed_json),
                 list((parsed_json or {}).keys()),

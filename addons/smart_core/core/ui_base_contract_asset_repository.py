@@ -90,10 +90,6 @@ def _asset_table_available(env) -> bool:
         return False
 
 
-def _runtime_env() -> str:
-    return _text(os.environ.get("ENV") or "dev").lower() or "dev"
-
-
 def _should_auto_refresh_missing_assets(env) -> bool:
     override = _text(os.environ.get("SC_UI_BASE_ASSET_AUTO_REFRESH_MISSING"))
     if override:
@@ -104,7 +100,7 @@ def _should_auto_refresh_missing_assets(env) -> bool:
         raw = ""
     if _text(raw):
         return _text(raw).lower() in {"1", "true", "yes", "on"}
-    return _runtime_env() in {"dev", "test"}
+    return False
 
 
 def _auto_refresh_missing_assets(
@@ -120,16 +116,17 @@ def _auto_refresh_missing_assets(
     try:
         from odoo.addons.smart_core.core.ui_base_contract_asset_producer import refresh_ui_base_contract_assets
 
-        refresh_ui_base_contract_assets(
-            env,
-            scene_keys=scene_keys,
-            scene_rows=scene_rows,
-            limit=max(len(scene_keys), 1),
-            role_code=role_code,
-            company_id=company_id,
-            source_type="runtime_intent",
-            code_version="auto-refresh-missing-v1",
-        )
+        with env.cr.savepoint():
+            refresh_ui_base_contract_assets(
+                env,
+                scene_keys=scene_keys,
+                scene_rows=scene_rows,
+                limit=max(len(scene_keys), 1),
+                role_code=role_code,
+                company_id=company_id,
+                source_type="runtime_intent",
+                code_version="auto-refresh-missing-v1",
+            )
     except Exception:
         return
 
@@ -228,13 +225,16 @@ def _search_one(env, *, scene_key: str, role_code: str | None, company_id: int |
     model = _asset_model(env)
     if model is None or not _asset_table_available(env):
         return {}
-    with env.cr.savepoint():
-        try:
-            rec = model.search(_scope_domain(scene_key=scene_key, role_code=role_code, company_id=company_id), limit=1)
-        except Exception:
-            return {}
+    try:
+        rec = model.search(_scope_domain(scene_key=scene_key, role_code=role_code, company_id=company_id), limit=1)
+    except Exception:
+        return {}
     if not rec:
         return {}
+    return _serialize_asset_record(rec)
+
+
+def _serialize_asset_record(rec) -> dict:
     return {
         "id": int(rec.id),
         "contract_kind": _text(rec.contract_kind),
@@ -285,14 +285,67 @@ def build_scene_asset_map(
     role_code: str | None = None,
     company_id: int | None = None,
 ) -> dict[str, dict]:
-    out: dict[str, dict] = {}
+    model = _asset_model(env)
+    if model is None or not _asset_table_available(env):
+        return {}
+
+    keys: list[str] = []
+    seen_keys = set()
     for item in scene_keys or []:
         key = _text(item)
-        if not key or key in out:
+        if key and key not in seen_keys:
+            seen_keys.add(key)
+            keys.append(key)
+    if not keys:
+        return {}
+
+    role = _text(role_code)
+    cid = int(company_id or 0) or None
+    domain = [
+        ("contract_kind", "=", CONTRACT_KIND_UI_BASE),
+        ("scene_key", "in", keys),
+        ("status", "=", "active"),
+    ]
+    if role:
+        domain.append(("role_code", "in", [role, False]))
+    else:
+        domain.append(("role_code", "=", False))
+    if cid:
+        domain.append(("company_id", "in", [cid, False]))
+    else:
+        domain.append(("company_id", "=", False))
+    try:
+        records = model.search(domain)
+    except Exception:
+        records = []
+
+    by_scene: dict[str, list[dict]] = {}
+    for rec in records:
+        data = _serialize_asset_record(rec)
+        key = _text(data.get("scene_key"))
+        if key:
+            by_scene.setdefault(key, []).append(data)
+
+    out: dict[str, dict] = {}
+    candidate_scopes = [
+        (role or None, cid),
+        (None, cid),
+        (role or None, None),
+        (None, None),
+    ]
+    for key in keys:
+        candidates = by_scene.get(key) or []
+        if not candidates:
             continue
-        data = get_latest_asset(env, scene_key=key, role_code=role_code, company_id=company_id)
-        if data:
-            out[key] = data
+        for scoped_role, scoped_company in candidate_scopes:
+            for data in candidates:
+                data_role = _text(data.get("role_code")) or None
+                data_company = int(data.get("company_id") or 0) or None
+                if data_role == scoped_role and data_company == scoped_company:
+                    out[key] = data
+                    break
+            if key in out:
+                break
     return out
 
 

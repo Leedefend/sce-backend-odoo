@@ -49,7 +49,7 @@ class ActionResolver:
            若 base 找不到 specific，再穷举常见模型；
         3) menu_id → 从菜单取 action；
         """
-        _logger.info("RESOLVE_ACTION_ENTER action_id=%s action_xmlid=%s menu_id=%s",
+        _logger.debug("RESOLVE_ACTION_ENTER action_id=%s action_xmlid=%s menu_id=%s",
                      action_id, action_xmlid, menu_id)
         # a) xmlid 优先
         if action_xmlid:
@@ -65,18 +65,18 @@ class ActionResolver:
                     try:
                         specific = self.env[a_type].sudo().browse(int(action_id))
                         if specific and specific.exists():
-                            _logger.info("DRILL_DOWN: specific %s #%s name=%s", a_type, action_id, getattr(specific,'name',None))
+                            _logger.debug("DRILL_DOWN: specific %s #%s name=%s", a_type, action_id, getattr(specific,'name',None))
                             return specific
                     except Exception as e:
-                        _logger.info("DRILL_DOWN: specific fail %s #%s: %s", a_type, action_id, e)
-                _logger.info("DRILL_DOWN: fallback base actions #%s", action_id)
+                        _logger.debug("DRILL_DOWN: specific fail %s #%s: %s", a_type, action_id, e)
+                _logger.debug("DRILL_DOWN: fallback base actions #%s", action_id)
                 return base
             # c) 直查常见模型（防越库/脏数据）
             for mdl in ('ir.actions.act_window','ir.actions.server','ir.actions.client','ir.actions.report','ir.actions.act_url'):
                 try:
                     rec = self.env[mdl].sudo().browse(int(action_id))
                     if rec and rec.exists():
-                        _logger.info("DRILL_DOWN: found directly in %s #%s", mdl, action_id)
+                        _logger.debug("DRILL_DOWN: found directly in %s #%s", mdl, action_id)
                         return rec
                 except Exception:
                     pass
@@ -161,7 +161,7 @@ class ActionResolver:
         a_type = d.get('type')
 
         if a_type == 'ir.actions.act_window':
-            _logger.info("FINAL_ACTION: act_window model=%s view_mode=%s", d.get('res_model'), d.get('view_mode'))
+            _logger.debug("FINAL_ACTION: act_window model=%s view_mode=%s", d.get('res_model'), d.get('view_mode'))
             return d
 
         if a_type == 'ir.actions.server':
@@ -169,7 +169,7 @@ class ActionResolver:
             mapped = self.map_server_to_window(d.get('id'), d.get('xml_id'))
             if mapped:
                 dd = self.normalize_action_dict(mapped)
-                _logger.info("FINAL_ACTION: server→mapped act_window model=%s", dd.get('res_model'))
+                _logger.debug("FINAL_ACTION: server→mapped act_window model=%s", dd.get('res_model'))
                 return dd
             # 2) 安全探测运行 server.run()（独立游标/上下文）
             if safe_server_run and d.get('id'):
@@ -179,7 +179,7 @@ class ActionResolver:
                         res = self.safe_probe_server_action(sa)
                         if isinstance(res, dict) and res.get('type') == 'ir.actions.act_window':
                             dd = self.normalize_action_dict(res)
-                            _logger.info("FINAL_ACTION: server→run act_window model=%s", dd.get('res_model'))
+                            _logger.debug("FINAL_ACTION: server→run act_window model=%s", dd.get('res_model'))
                             return dd
                     except Exception as e:
                         _logger.warning("FINAL_ACTION: server run fail #%s: %s", d['id'], e)
@@ -187,7 +187,7 @@ class ActionResolver:
             return d
 
         # client/url/report：交由上层装配
-        _logger.info("FINAL_ACTION: non-window type=%s", a_type)
+        _logger.debug("FINAL_ACTION: non-window type=%s", a_type)
         return d
 
     def materialize_server_action(self, info, payload, *, _depth=0, _max=2):
@@ -249,7 +249,7 @@ class ActionResolver:
             res = sa.sudo().with_env(env2).run()
             if isinstance(res, dict):
                 t = res.get("type")
-                _logger.info("SERVER_PROBE_OK: type=%s id=%s res_model=%s view_mode=%s",
+                _logger.debug("SERVER_PROBE_OK: type=%s id=%s res_model=%s view_mode=%s",
                              t, res.get("id"), res.get("res_model"), res.get("view_mode"))
                 # 若只有 id，无 res_model，则再补齐一次
                 if t == "ir.actions.act_window" and res.get("id") and not res.get("res_model"):

@@ -38,6 +38,78 @@ target = _load_module(
 
 
 class TestUiBaseContractAssetRepository(unittest.TestCase):
+    def test_build_scene_asset_map_batches_lookup_and_preserves_scope_priority(self):
+        class _Company:
+            def __init__(self, record_id):
+                self.id = record_id
+
+        class _Record:
+            def __init__(self, *, record_id, scene_key, role_code=False, company_id=None, payload=None):
+                self.id = record_id
+                self.contract_kind = "ui_base"
+                self.scene_key = scene_key
+                self.role_code = role_code
+                self.company_id = _Company(company_id) if company_id else None
+                self.scope_hash = ""
+                self.source_type = "precompile"
+                self.asset_version = "v1"
+                self.asset_hash = f"h{record_id}"
+                self.source_ref = f"scene:{scene_key}"
+                self.code_version = ""
+                self.generated_at = ""
+                self.payload_json = "{}"
+                self.write_date = str(record_id)
+
+        class _Model:
+            def __init__(self, records):
+                self.records = records
+                self.search_calls = []
+
+            def sudo(self):
+                return self
+
+            def search(self, domain):
+                self.search_calls.append(domain)
+                return self.records
+
+        class _Env:
+            def __init__(self, model):
+                self.model = model
+                self.cr = object()
+
+            def __contains__(self, item):
+                return item == target.ASSET_MODEL
+
+            def __getitem__(self, item):
+                if item != target.ASSET_MODEL:
+                    raise KeyError(item)
+                return self.model
+
+        model = _Model(
+            [
+                _Record(record_id=4, scene_key="projects.list", role_code="pm", company_id=7),
+                _Record(record_id=3, scene_key="projects.list", company_id=7),
+                _Record(record_id=2, scene_key="finance.center", company_id=7),
+                _Record(record_id=1, scene_key="finance.center"),
+            ]
+        )
+        env = _Env(model)
+        original_table_available = target._asset_table_available
+        target._asset_table_available = lambda _env: True
+        try:
+            result = target.build_scene_asset_map(
+                env,
+                scene_keys=["projects.list", "finance.center", "projects.list"],
+                role_code="pm",
+                company_id=7,
+            )
+        finally:
+            target._asset_table_available = original_table_available
+
+        self.assertEqual(len(model.search_calls), 1)
+        self.assertEqual(result["projects.list"]["id"], 4)
+        self.assertEqual(result["finance.center"]["id"], 2)
+
     def test_rejects_action_asset_for_canonical_scene_root(self):
         scene = {
             "code": "contract.center",

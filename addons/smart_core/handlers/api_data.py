@@ -1127,7 +1127,7 @@ class ApiDataHandler(BaseIntentHandler):
         p = self._collect_params(kwargs)
 
         try:
-            _logger.info("[api.data] keys=%s payload.keys=%s params.keys=%s",
+            _logger.debug("[api.data] keys=%s payload.keys=%s params.keys=%s",
                          list(p.keys()),
                          list((p.get("payload") or {}).keys()) if isinstance(p.get("payload"), dict) else None,
                          list((p.get("params") or {}).keys()) if isinstance(p.get("params"), dict) else None)

@@ -91,7 +91,7 @@ class NavDispatcher:
         fallback_used = False
         # 若过度过滤导致为空，放宽过滤参数（仍保留用户组过滤）
         if not tree_raw:
-            _logger.warning("NAV_DEBUG: empty nav after runtime filters, relax filters for scene=%s", scene)
+            _logger.debug("NAV_DEBUG: empty nav after runtime filters, relax filters for scene=%s", scene)
             fallback_filters = {
                 "leaf_only": False,
                 "hide_without_action": False,
@@ -122,22 +122,22 @@ class NavDispatcher:
                     tree_raw = contract.get("nav") or []
                     fallback_used = bool(tree_raw)
                 else:
-                    _logger.warning("NAV_DEBUG: empty nav after relax filters (no admin fallback)")
+                    _logger.debug("NAV_DEBUG: empty nav after relax filters (no admin fallback)")
 
         # 2) 归一根集合
         roots = self._flatten_roots(tree_raw)
-        _logger.info("NAV_DEBUG: raw_from_config count=%s type=%s", len(roots), type(tree_raw))
+        _logger.debug("NAV_DEBUG: raw_from_config count=%s type=%s", len(roots), type(tree_raw))
 
         # 3) 节点统一为 dict
         tree: List[Dict[str, Any]] = [self._node_to_dict(n) for n in roots if n is not None]
 
         # 4) 可选：限定根菜单（在过滤前裁剪，避免 root 被过滤导致丢失）
         root_found = None
-        _logger.info("[NavDispatcher][debug] resolved_root_id: %s (from root_xmlid=%s, root_menu_id=%s)", 
+        _logger.debug("[NavDispatcher][debug] resolved_root_id: %s (from root_xmlid=%s, root_menu_id=%s)",
                     resolved_root_id, root_xmlid, root_menu_id)
         if resolved_root_id:
             tree, root_found = self._slice_raw_tree_by_root(tree, resolved_root_id)
-            _logger.info("[NavDispatcher][debug] root_found: %s", root_found)
+            _logger.debug("[NavDispatcher][debug] root_found: %s", root_found)
             if not root_found:
                 # retry with user.lang context to ensure correct cache (e.g., en_US)
                 try:
@@ -156,7 +156,7 @@ class NavDispatcher:
                         roots = self._flatten_roots(tree_raw)
                         tree = [self._node_to_dict(n) for n in roots if n is not None]
                         tree, root_found = self._slice_raw_tree_by_root(tree, resolved_root_id)
-                        _logger.info("[NavDispatcher][debug] root_found after lang retry: %s", root_found)
+                        _logger.debug("[NavDispatcher][debug] root_found after lang retry: %s", root_found)
                 except Exception as e:
                     _logger.warning("NavDispatcher: lang retry failed: %s", e)
                 if not root_found and root_exists and (root_xmlid or root_menu_id):
@@ -176,7 +176,7 @@ class NavDispatcher:
                             roots = self._flatten_roots(tree_raw)
                             tree = [self._node_to_dict(n) for n in roots if n is not None]
                             tree, root_found = self._slice_raw_tree_by_root(tree, resolved_root_id)
-                            _logger.info("[NavDispatcher][debug] root_found after admin fallback: %s", root_found)
+                            _logger.debug("[NavDispatcher][debug] root_found after admin fallback: %s", root_found)
                             fallback_used = bool(root_found) or fallback_used
                         except Exception as e:
                             _logger.warning("NavDispatcher: admin fallback failed: %s", e)
@@ -191,7 +191,7 @@ class NavDispatcher:
                 self._enrich_nav_models(tree, mode=enrich_mode)
             except Exception as e:
                 _logger.warning("NavDispatcher enrich_nav failed: %s", e)
-        _logger.info("NAV_DEBUG: after_enrich count=%s", len(tree))
+        _logger.debug("NAV_DEBUG: after_enrich count=%s", len(tree))
 
         # 6) 过滤 + scene 继承（管理员短路）
         filtered = self._filter_and_normalize_nav(tree, scene=scene)
@@ -200,12 +200,12 @@ class NavDispatcher:
         if not filtered and tree:
             if resolved_root_id and root_found:
                 if user_is_platform_admin(self.env.user):
-                    _logger.warning("NAV_DEBUG: filtered empty for admin -> fallback to unfiltered")
+                    _logger.debug("NAV_DEBUG: filtered empty for admin -> fallback to unfiltered")
                     filtered = self._mark_all_visible(self._inherit_scene(tree, parent_scene="web"))
                 else:
                     raise AccessError(f"Root menu not accessible: {root_xmlid or resolved_root_id}")
             else:
-                _logger.warning("NAV_DEBUG: filtered empty without explicit root, no fallback")
+                _logger.debug("NAV_DEBUG: filtered empty without explicit root, no fallback")
 
         # 7) 子树稳定排序（sequence → label）
         filtered = self._sort_subtrees(filtered)
@@ -244,7 +244,7 @@ class NavDispatcher:
                 "login": self.env.user.login if hasattr(self.env, "user") else "unknown",
             }
 
-        _logger.info("NAV_DEBUG: final_count=%s (scene=%s, uid=%s)", len(nav), scene, self.env.user.id)
+        _logger.debug("NAV_DEBUG: final_count=%s (scene=%s, uid=%s)", len(nav), scene, self.env.user.id)
         data = {"nav": nav, "defaultRoute": default_route}
         return data, meta
 
@@ -540,7 +540,7 @@ class NavDispatcher:
 
         # 管理员短路（直接 scene 继承 + 标记可见）
         if user_is_platform_admin(user):
-            _logger.info("NAV_DEBUG: admin bypass filtering (uid=%s)", user.id)
+            _logger.debug("NAV_DEBUG: admin bypass filtering (uid=%s)", user.id)
             return self._mark_all_visible(self._inherit_scene(tree, parent_scene="web"))
 
         # 非管理员：先继承 scene

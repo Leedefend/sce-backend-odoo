@@ -220,30 +220,30 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
         解析结果成功判定（严格版）
         """
         if not isinstance(data, dict) or not data:
-            _logger.info("VIEW_PARSE_DEBUG: _parsed_ok failed - data is not dict or empty")
+            _logger.debug("VIEW_PARSE_DEBUG: _parsed_ok failed - data is not dict or empty")
             return False
 
         if vt == 'tree':
             result = isinstance(data.get('columns'), list) and len(data['columns']) > 0
-            _logger.info("VIEW_PARSE_DEBUG: _parsed_ok tree check result=%s, columns=%s", result, data.get('columns'))
+            _logger.debug("VIEW_PARSE_DEBUG: _parsed_ok tree check result=%s, columns=%s", result, data.get('columns'))
             return result
 
         if vt == 'form':
             ly = data.get('layout')
-            _logger.info("VIEW_PARSE_DEBUG: _parsed_ok form layout check - layout=%s, type=%s", ly, type(ly))
+            _logger.debug("VIEW_PARSE_DEBUG: _parsed_ok form layout check - layout=%s, type=%s", ly, type(ly))
             if not (isinstance(ly, list) and ly):
-                _logger.info("VIEW_PARSE_DEBUG: _parsed_ok form failed - layout is not list or empty")
+                _logger.debug("VIEW_PARSE_DEBUG: _parsed_ok form failed - layout is not list or empty")
                 return False
             has_sheet = any(isinstance(n, dict) and n.get('type') == 'sheet' for n in ly)
-            _logger.info("VIEW_PARSE_DEBUG: _parsed_ok form sheet check - has_sheet=%s, layout=%s", has_sheet, ly)
+            _logger.debug("VIEW_PARSE_DEBUG: _parsed_ok form sheet check - has_sheet=%s, layout=%s", has_sheet, ly)
             if not has_sheet:
-                _logger.info("VIEW_PARSE_DEBUG: _parsed_ok form failed - no sheet found")
+                _logger.debug("VIEW_PARSE_DEBUG: _parsed_ok form failed - no sheet found")
                 return False
             has_extras = any(k in data for k in ('header_buttons', 'button_box', 'statusbar', 'subviews', 'chatter'))
-            _logger.info("VIEW_PARSE_DEBUG: _parsed_ok form extras check - has_extras=%s, data keys=%s", has_extras, list(data.keys()))
+            _logger.debug("VIEW_PARSE_DEBUG: _parsed_ok form extras check - has_extras=%s, data keys=%s", has_extras, list(data.keys()))
             result = bool(has_extras)
             if not result:
-                _logger.info("VIEW_PARSE_DEBUG: _parsed_ok form failed - no extras found")
+                _logger.debug("VIEW_PARSE_DEBUG: _parsed_ok form failed - no extras found")
             return result
 
         if vt == 'kanban':
@@ -253,53 +253,53 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
                 isinstance(k.get('stages_field'), str) or
                 bool(k.get('template_qweb'))
             )
-            _logger.info("VIEW_PARSE_DEBUG: _parsed_ok kanban check result=%s", result)
+            _logger.debug("VIEW_PARSE_DEBUG: _parsed_ok kanban check result=%s", result)
             return result
 
         if vt == 'pivot':
             p = data.get('pivot')
             result = isinstance(p, dict) and isinstance(p.get('measures'), list) and isinstance(p.get('dimensions'), list)
-            _logger.info("VIEW_PARSE_DEBUG: _parsed_ok pivot check result=%s", result)
+            _logger.debug("VIEW_PARSE_DEBUG: _parsed_ok pivot check result=%s", result)
             return result
 
         if vt == 'graph':
             g = data.get('graph')
             result = isinstance(g, dict) and isinstance(g.get('measures'), list) and isinstance(g.get('dimensions'), list)
-            _logger.info("VIEW_PARSE_DEBUG: _parsed_ok graph check result=%s", result)
+            _logger.debug("VIEW_PARSE_DEBUG: _parsed_ok graph check result=%s", result)
             return result
 
         if vt == 'calendar':
             c = data.get('calendar')
             result = isinstance(c, dict) and isinstance(c.get('date_start'), str)
-            _logger.info("VIEW_PARSE_DEBUG: _parsed_ok calendar check result=%s", result)
+            _logger.debug("VIEW_PARSE_DEBUG: _parsed_ok calendar check result=%s", result)
             return result
 
         if vt == 'gantt':
             gg = data.get('gantt')
             result = isinstance(gg, dict) and isinstance(gg.get('date_start'), str)
-            _logger.info("VIEW_PARSE_DEBUG: _parsed_ok gantt check result=%s", result)
+            _logger.debug("VIEW_PARSE_DEBUG: _parsed_ok gantt check result=%s", result)
             return result
 
         if vt == 'search':
             s = data.get('search')
             result = isinstance(s, dict) and isinstance(s.get('filters'), list) and isinstance(s.get('group_by'), list) and isinstance(s.get('facets'), dict)
-            _logger.info("VIEW_PARSE_DEBUG: _parsed_ok search check result=%s", result)
+            _logger.debug("VIEW_PARSE_DEBUG: _parsed_ok search check result=%s", result)
             return result
 
         if vt == 'activity':
             a = data.get('activity')
             result = isinstance(a, dict)
-            _logger.info("VIEW_PARSE_DEBUG: _parsed_ok activity check result=%s", result)
+            _logger.debug("VIEW_PARSE_DEBUG: _parsed_ok activity check result=%s", result)
             return result
 
         if vt == 'dashboard':
             d = data.get('dashboard')
             result = isinstance(d, dict)
-            _logger.info("VIEW_PARSE_DEBUG: _parsed_ok dashboard check result=%s", result)
+            _logger.debug("VIEW_PARSE_DEBUG: _parsed_ok dashboard check result=%s", result)
             return result
 
         # 未知视图类型一律认为未通过
-        _logger.info("VIEW_PARSE_DEBUG: _parsed_ok failed - unknown view type %s", vt)
+        _logger.debug("VIEW_PARSE_DEBUG: _parsed_ok failed - unknown view type %s", vt)
         return False
 
     # ====================== 生成契约（解析 + 降级） ======================
@@ -319,12 +319,12 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
             if not view_data:
                 raise ValueError(_("无法解析视图：%s.%s") % (model_name, view_type))
 
-            _logger.info(
+            _logger.debug(
                 "VIEW_PARSE_DEBUG: model=%s view_type=%s view_data_keys=%s",
                 model_name, view_type, list(view_data.keys()) if isinstance(view_data, dict) else None,
             )
             if isinstance(view_data, dict) and view_data.get('arch'):
-                _logger.info("VIEW_PARSE_DEBUG: arch_preview=%s", (view_data['arch'] or '')[:200])
+                _logger.debug("VIEW_PARSE_DEBUG: arch_preview=%s", (view_data['arch'] or '')[:200])
 
             # 2) 调用解析器（如存在）
             ctx_flags = dict(self.env.context or {})
@@ -354,7 +354,7 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
                     tag_ok = (root.tag in ('tree', 'list'))
                     if tag_ok and root.get('default_order'):
                         parsed_json['order'] = root.get('default_order')
-                        _logger.info("VIEW_PARSE_DEBUG: default_order merged → %s", parsed_json['order'])
+                        _logger.debug("VIEW_PARSE_DEBUG: default_order merged → %s", parsed_json['order'])
                 except Exception as e:
                     _logger.warning("default_order 读取失败: %s", e)
 
@@ -370,15 +370,15 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
                         if fname and is_invisible not in ('True', '1'):
                             visible_fields.append(fname)
                     if visible_fields:
-                        _logger.info("从原始视图提取可见字段用于回填: %s", visible_fields)
+                        _logger.debug("从原始视图提取可见字段用于回填: %s", visible_fields)
                         parsed_json['columns'] = visible_fields
                 except Exception as e:
                     _logger.warning("从原始视图提取字段失败: %s", e)
 
             # 4) 清理不可序列化的对象
-            _logger.info("VIEW_PARSE_DEBUG: cleaning unserializable objects")
+            _logger.debug("VIEW_PARSE_DEBUG: cleaning unserializable objects")
             parsed_json = self._clean_unserializable_objects(parsed_json)
-            _logger.info("VIEW_PARSE_DEBUG: cleaned parsed_json keys=%s", list((parsed_json or {}).keys()))
+            _logger.debug("VIEW_PARSE_DEBUG: cleaned parsed_json keys=%s", list((parsed_json or {}).keys()))
 
             # 5) 计算稳定哈希
             new_hash = self._stable_hash(parsed_json)
@@ -533,7 +533,7 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
             identity = self._projection_identity(model_name, view_type)
             view_id = identity.get('source_view_id') or False
             if view_id:
-                _logger.info("使用指定视图ID %s 加载 %s.%s 视图", view_id, model_name, view_type)
+                _logger.debug("使用指定视图ID %s 加载 %s.%s 视图", view_id, model_name, view_type)
                 data = Model.with_context(load_all_views=True).get_view(view_id=view_id, view_type=view_type)
                 if isinstance(data, dict) and data.get('arch'):
                     return {
@@ -603,7 +603,7 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
                         is_invisible = field.get('column_invisible')
                         if fname and is_invisible not in ('True', '1'):
                             view_fields.append(fname)
-                    _logger.info("从原始视图提取到字段: %s", view_fields)
+                    _logger.debug("从原始视图提取到字段: %s", view_fields)
                 except Exception as e:
                     _logger.warning("从原始视图解析字段失败: %s", e)
 

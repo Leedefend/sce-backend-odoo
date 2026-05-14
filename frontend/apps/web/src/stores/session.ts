@@ -992,7 +992,7 @@ export const useSessionStore = defineStore('session', {
         params: {
           scene: 'web',
           with_preload: false,
-          scene_ready_mode: currentSceneKey ? 'full' : 'registry',
+          scene_ready_mode: 'registry',
           with: ['workspace_home'],
           ...(config.startupRootXmlid ? { root_xmlid: config.startupRootXmlid } : {}),
           ...(currentSceneKey ? { scene_key: currentSceneKey } : {}),
@@ -1297,6 +1297,7 @@ export const useSessionStore = defineStore('session', {
         params: {
           scene: 'web',
           with_preload: false,
+          scene_ready_mode: 'registry',
           with: ['workspace_home'],
           ...(config.startupRootXmlid ? { root_xmlid: config.startupRootXmlid } : {}),
           ...(this.projectContext?.selected?.id ? { current_project_id: this.projectContext.selected.id } : {}),

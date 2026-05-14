@@ -93,7 +93,17 @@ def main() -> int:
 
     rows: list[dict] = []
     targets = [
-        ("system.init", {"contract_mode": "user"}),
+        (
+            "system.init",
+            {
+                "contract_mode": "user",
+                "scene": "web",
+                "with_preload": False,
+                "scene_ready_mode": "registry",
+                "with": ["workspace_home"],
+                "root_xmlid": "smart_construction_core.menu_sc_root",
+            },
+        ),
         ("ui.contract", {"op": "model", "model": "project.project", "view_type": "form"}),
         (
             "execute_button",

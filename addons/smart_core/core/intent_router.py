@@ -60,9 +60,9 @@ def _build_envs(params: Dict[str, Any], add_ctx: Dict[str, Any]) -> Tuple[api.En
     cur_db = request.env.cr.dbname
     
     # 调试：打印数据库信息
-    _logger.info("[intent_router][debug] _build_envs target_db: %s", target_db)
-    _logger.info("[intent_router][debug] _build_envs cur_db: %s", cur_db)
-    _logger.info("[intent_router][debug] _build_envs request.env.cr.dbname: %s", request.env.cr.dbname)
+    _logger.debug("[intent_router][debug] _build_envs target_db: %s", target_db)
+    _logger.debug("[intent_router][debug] _build_envs cur_db: %s", cur_db)
+    _logger.debug("[intent_router][debug] _build_envs request.env.cr.dbname: %s", request.env.cr.dbname)
 
     # 合并上下文：以传入的 add_ctx 覆盖 request.env.context
     base_ctx = dict(request.env.context or {})
@@ -102,9 +102,9 @@ def _dispatch(intent: str, params: dict, context: dict):
     _logger = logging.getLogger(__name__)
     
     # 调试：打印参数
-    _logger.info("[intent_router][debug] _dispatch called with intent: %s", intent)
-    _logger.info("[intent_router][debug] params: %s", params)
-    _logger.info("[intent_router][debug] params.get('db'): %s", params.get('db'))
+    _logger.debug("[intent_router][debug] _dispatch called with intent: %s", intent)
+    _logger.debug("[intent_router][debug] params: %s", params)
+    _logger.debug("[intent_router][debug] params.get('db'): %s", params.get('db'))
     
     handler_cls = resolve_handler(intent)
     if not handler_cls:

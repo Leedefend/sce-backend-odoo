@@ -140,7 +140,18 @@ def main() -> int:
         token = ""
 
     targets = [
-        ("system.init", count_system_init, {"contract_mode": "user"}),
+        (
+            "system.init",
+            count_system_init,
+            {
+                "contract_mode": "user",
+                "scene": "web",
+                "with_preload": False,
+                "scene_ready_mode": "registry",
+                "with": ["workspace_home"],
+                "root_xmlid": "smart_construction_core.menu_sc_root",
+            },
+        ),
         ("ui.contract", count_ui_contract, {"op": "model", "model": "project.project", "view_type": "form"}),
         (
             "execute_button",

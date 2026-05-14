@@ -463,7 +463,7 @@ class _TreeFormParserMixin:
                     if el.get('sum'):
                         mods['sum'] = el.get('sum')
 
-                _logger.info("TREE_PARSER_DEBUG: parsed_columns=%s", columns)
+                _logger.debug("TREE_PARSER_DEBUG: parsed_columns=%s", columns)
 
                 # 2) 行级按钮（tree 内所有 <button>）
                 for btn in root.xpath('.//button'):
@@ -505,7 +505,7 @@ class _TreeFormParserMixin:
             for c in columns
         ]
 
-        _logger.info("TREE_PARSER_DEBUG: final_columns=%s fields_info_keys=%s", columns, list((fields_info or {}).keys())[:10])
+        _logger.debug("TREE_PARSER_DEBUG: final_columns=%s fields_info_keys=%s", columns, list((fields_info or {}).keys())[:10])
 
         return {
             "columns": columns,
@@ -577,20 +577,20 @@ class _TreeFormParserMixin:
 
         # 1) DOM 优先解析真实布局（避免 lossless 未还原导致空表单）
         layout_dom = self._extract_form_layout_dom(root, fields_info) if root is not None else []
-        _logger.info("FORM_PARSER_DEBUG: layout_dom=%s", layout_dom)
+        _logger.debug("FORM_PARSER_DEBUG: layout_dom=%s", layout_dom)
 
         # 2) lossless 结果作为兜底/补充
         layout_ll = self._convert_parsed_structure_to_layout(self._lossless_parse_xml(arch), fields_info)
         layout = self._merge_layout(layout_dom, layout_ll)
-        _logger.info("FORM_PARSER_DEBUG: merged layout=%s", layout)
+        _logger.debug("FORM_PARSER_DEBUG: merged layout=%s", layout)
 
         # 3) statusbar 智能识别 + 状态集
         statusbar = self._build_statusbar(root, fields_info, model_name)
-        _logger.info("FORM_PARSER_DEBUG: statusbar=%s", statusbar)
+        _logger.debug("FORM_PARSER_DEBUG: statusbar=%s", statusbar)
 
         # 4) header 按钮
         header_buttons = self._extract_header_buttons(root) if root is not None else []
-        _logger.info("FORM_PARSER_DEBUG: header_buttons=%s", header_buttons)
+        _logger.debug("FORM_PARSER_DEBUG: header_buttons=%s", header_buttons)
 
         # 5) Smart Buttons（oe_button_box/oe_stat_button）
         stat_buttons = self._extract_button_box(root) if root is not None else []
@@ -601,21 +601,21 @@ class _TreeFormParserMixin:
                 if norm:
                     stat_buttons.append(norm)
         button_box = list(stat_buttons)
-        _logger.info("FORM_PARSER_DEBUG: button_box=%s", button_box)
+        _logger.debug("FORM_PARSER_DEBUG: button_box=%s", button_box)
 
         # 6) 字段修饰（字段级 + arch 覆盖）
         field_modifiers = self._collect_field_modifiers(fields_info, root)
-        _logger.info("FORM_PARSER_DEBUG: field_modifiers keys=%s", list(field_modifiers.keys()))
+        _logger.debug("FORM_PARSER_DEBUG: field_modifiers keys=%s", list(field_modifiers.keys()))
 
         # 7) 子视图（inline + 引用式）
         subviews = self._collect_x2many_subviews_from_dom(root, fields_info)
         if not subviews:
             subviews = self._infer_x2many_subviews(fields_info)
-        _logger.info("FORM_PARSER_DEBUG: subviews keys=%s", list(subviews.keys()))
+        _logger.debug("FORM_PARSER_DEBUG: subviews keys=%s", list(subviews.keys()))
 
         # 8) 协作能力（优先模型字段判定，其次 DOM 探测）
         chatter, attachments = self._detect_chatter_and_attachments_model_first(model_name, fields_info, root)
-        _logger.info("FORM_PARSER_DEBUG: chatter=%s, attachments=%s", chatter, attachments)
+        _logger.debug("FORM_PARSER_DEBUG: chatter=%s, attachments=%s", chatter, attachments)
 
         # 9) 最小 search（表单内置搜索占位）
         search = {"filters": [], "group_by": [], "facets": {"enabled": True}}
@@ -633,7 +633,7 @@ class _TreeFormParserMixin:
             "attachments": attachments,
             "search": search,
         }
-        _logger.info("FORM_PARSER_DEBUG: final result keys=%s", list(result.keys()))
+        _logger.debug("FORM_PARSER_DEBUG: final result keys=%s", list(result.keys()))
         return result
 
     # ---------------- 按钮归一 ----------------
@@ -827,7 +827,7 @@ class _TreeFormParserMixin:
             for node in out:
                 self._ensure_complete_layout_structure(node)
         
-        _logger.info("FORM_PARSER_DEBUG: _extract_form_layout_dom result=%s", out)
+        _logger.debug("FORM_PARSER_DEBUG: _extract_form_layout_dom result=%s", out)
         return out
 
     def _ensure_complete_layout_structure(self, node):

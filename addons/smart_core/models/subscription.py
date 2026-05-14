@@ -195,15 +195,22 @@ class ScEntitlement(models.Model):
         flags = dict(plan.feature_flags_json or {}) if plan else {}
         limits = dict(plan.limits_json or {}) if plan else {}
         ent = self.search([("company_id", "=", company.id)], limit=1)
+        plan_id = plan.id if plan else False
         vals = {
             "company_id": company.id,
-            "plan_id": plan.id if plan else False,
+            "plan_id": plan_id,
             "effective_flags_json": flags,
             "effective_limits_json": limits,
             "updated_at": fields.Datetime.now(),
         }
         if ent:
-            ent.write(vals)
+            needs_update = (
+                ent.plan_id.id != plan_id
+                or (ent.effective_flags_json or {}) != flags
+                or (ent.effective_limits_json or {}) != limits
+            )
+            if needs_update:
+                ent.write(vals)
         else:
             ent = self.create(vals)
         return ent
