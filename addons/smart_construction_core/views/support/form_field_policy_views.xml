@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_ui_form_field_policy_tree" model="ir.ui.view">
+        <field name="name">ui.form.field.policy.tree</field>
+        <field name="model">ui.form.field.policy</field>
+        <field name="arch" type="xml">
+            <tree string="表单字段配置" decoration-muted="not active">
+                <field name="sequence" widget="handle"/>
+                <field name="active"/>
+                <field name="model"/>
+                <field name="field_name"/>
+                <field name="label"/>
+                <field name="visible"/>
+                <field name="action_id"/>
+                <field name="view_id"/>
+                <field name="company_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_ui_form_field_policy_form" model="ir.ui.view">
+        <field name="name">ui.form.field.policy.form</field>
+        <field name="model">ui.form.field.policy</field>
+        <field name="arch" type="xml">
+            <form string="表单字段配置">
+                <sheet>
+                    <group>
+                        <group string="字段">
+                            <field name="active"/>
+                            <field name="model" placeholder="如 project.project"/>
+                            <field name="field_id" domain="[('model', '=', model)]"/>
+                            <field name="field_name"/>
+                            <field name="label" placeholder="为空时使用字段原始标题"/>
+                        </group>
+                        <group string="显示策略">
+                            <field name="visible"/>
+                            <field name="sequence"/>
+                            <field name="group_title"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <group string="作用范围">
+                        <field name="action_id"/>
+                        <field name="view_id"/>
+                    </group>
+                    <group string="说明">
+                        <field name="note" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_ui_form_field_policy_search" model="ir.ui.view">
+        <field name="name">ui.form.field.policy.search</field>
+        <field name="model">ui.form.field.policy</field>
+        <field name="arch" type="xml">
+            <search string="表单字段配置">
+                <field name="model"/>
+                <field name="field_name"/>
+                <field name="label"/>
+                <filter name="active_rows" string="启用" domain="[('active', '=', True)]"/>
+                <filter name="visible_rows" string="显示字段" domain="[('visible', '=', True)]"/>
+                <filter name="hidden_rows" string="隐藏字段" domain="[('visible', '=', False)]"/>
+                <group expand="0" string="分组">
+                    <filter name="group_model" string="模型" context="{'group_by': 'model'}"/>
+                    <filter name="group_visible" string="显示状态" context="{'group_by': 'visible'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_ui_form_field_policy_business_config" model="ir.actions.act_window">
+        <field name="name">表单字段配置</field>
+        <field name="res_model">ui.form.field.policy</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="smart_construction_core.view_ui_form_field_policy_search"/>
+        <field name="context">{'search_default_active_rows': 1}</field>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
+    </record>
+
+    <menuitem id="menu_ui_form_field_policy_business_config"
+              name="表单字段配置"
+              parent="smart_construction_core.menu_sc_business_config_center"
+              action="smart_construction_core.action_ui_form_field_policy_business_config"
+              sequence="15"
+              groups="smart_construction_core.group_sc_cap_business_config_admin"/>
+</odoo>
