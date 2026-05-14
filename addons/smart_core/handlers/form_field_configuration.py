@@ -9,7 +9,20 @@ import time
 from odoo.exceptions import ValidationError
 
 from ..core.base_handler import BaseIntentHandler
+from ..core.request_params import parse_non_negative_int
 from ..utils.reason_codes import REASON_MISSING_PARAMS, REASON_NOT_FOUND, REASON_OK, REASON_USER_ERROR
+
+
+def _optional_non_negative_int(params: dict, *keys: str):
+    raw = None
+    for key in keys:
+        if key in params:
+            raw = params.get(key)
+            break
+    value, error = parse_non_negative_int(raw, allow_empty=True)
+    if error:
+        return None, keys[0]
+    return int(value or 0), None
 
 
 class FormFieldPolicySetHandler(BaseIntentHandler):
@@ -42,6 +55,12 @@ class FormFieldPolicySetHandler(BaseIntentHandler):
         field_name = str(params.get("field_name") or params.get("fieldName") or "").strip()
         if not model or not field_name:
             return self._err(400, "缺少 model 或 field_name", REASON_MISSING_PARAMS)
+        action_id, invalid_field = _optional_non_negative_int(params, "action_id", "actionId")
+        if invalid_field:
+            return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
+        view_id, invalid_field = _optional_non_negative_int(params, "view_id", "viewId")
+        if invalid_field:
+            return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
         if model not in self.env:
             return self._err(404, "模型不存在：%s" % model, REASON_NOT_FOUND)
         if field_name not in self.env[model]._fields:
@@ -53,8 +72,6 @@ class FormFieldPolicySetHandler(BaseIntentHandler):
         if field_rec and field_rec.ttype == "binary":
             return self._err(400, "二进制字段不能作为业务表单字段配置：%s.%s" % (model, field_name), REASON_USER_ERROR)
 
-        action_id = int(params.get("action_id") or params.get("actionId") or 0)
-        view_id = int(params.get("view_id") or params.get("viewId") or 0)
         visible = params.get("visible")
         visible = str(visible).strip().lower() not in {"0", "false", "no", "hide", "hidden"}
         label = str(params.get("label") or (field_rec.field_description if field_rec else field_name) or field_name).strip()
@@ -150,14 +167,20 @@ class FormCustomFieldCreateHandler(BaseIntentHandler):
         label = str(params.get("label") or "").strip()
         if not model or not label:
             return self._err(400, "缺少 model 或 label", REASON_MISSING_PARAMS)
+        action_id, invalid_field = _optional_non_negative_int(params, "action_id", "actionId")
+        if invalid_field:
+            return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
+        view_id, invalid_field = _optional_non_negative_int(params, "view_id", "viewId")
+        if invalid_field:
+            return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
+        sequence, invalid_field = _optional_non_negative_int(params, "sequence")
+        if invalid_field:
+            return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
         model_rec = self.env["ir.model"].search([("model", "=", model)], limit=1)
         if not model_rec or model not in self.env:
             return self._err(404, "模型不存在：%s" % model, REASON_NOT_FOUND)
         if model_rec.transient:
             return self._err(400, "临时模型不能新增业务字段：%s" % model, REASON_USER_ERROR)
-
-        action_id = int(params.get("action_id") or params.get("actionId") or 0)
-        view_id = int(params.get("view_id") or params.get("viewId") or 0)
         field_name = str(params.get("field_name") or params.get("fieldName") or "").strip()
         if not field_name or field_name in {"x_", "x_custom_field"}:
             field_name = self._suggest_field_name(model, label)
@@ -171,7 +194,7 @@ class FormCustomFieldCreateHandler(BaseIntentHandler):
             "action_id": action_id or False,
             "view_id": view_id or False,
             "group_title": str(params.get("group_title") or "业务配置字段").strip() or "业务配置字段",
-            "sequence": int(params.get("sequence") or 100),
+            "sequence": sequence if sequence > 0 else 100,
             "active_policy": True,
             "company_id": self.env.company.id,
         })

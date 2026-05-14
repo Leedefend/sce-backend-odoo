@@ -241,12 +241,13 @@ class TestApiDataWriteIdBoundaries(unittest.TestCase):
 
     def test_custom_field_policy_search_is_scoped_to_active_company(self):
         company = types.SimpleNamespace(id=17)
+        other_company = types.SimpleNamespace(id=23)
         env = _FakeEnv(
             policies=[_FakePolicy("res.partner", "x_safe_note")],
             fields=[_FakeField("res.partner", "x_safe_note")],
         )
         env.company = company
-        env.companies = [company]
+        env.companies = [company, other_company]
         policy_rows = env["ui.form.field.policy"]
         policy_rows.search_domains = []
         handler = self.module.ApiDataWriteHandler(env=env)
@@ -254,7 +255,8 @@ class TestApiDataWriteIdBoundaries(unittest.TestCase):
         handler._allowed_models()
 
         self.assertIn(("company_id", "=", False), policy_rows.search_domains[0])
-        self.assertIn(("company_id", "in", [17]), policy_rows.search_domains[0])
+        self.assertIn(("company_id", "=", 17), policy_rows.search_domains[0])
+        self.assertNotIn(("company_id", "in", [17, 23]), policy_rows.search_domains[0])
 
 
 if __name__ == "__main__":

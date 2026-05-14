@@ -691,15 +691,20 @@ async function toggleProjectMenu() {
 }
 
 async function selectProject(option: ProjectContextOption) {
+  const previousProjectId = Number(selectedProject.value?.id || 0) || 0;
+  const nextProjectId = Number(option?.id || 0) || 0;
   projectMenuOpen.value = false;
+  if (previousProjectId === nextProjectId) return;
   await session.selectProjectContext(option);
-  emitProjectContextChanged();
+  emitProjectContextChanged(previousProjectId);
 }
 
 async function clearProjectSelection() {
+  const previousProjectId = Number(selectedProject.value?.id || 0) || 0;
   projectMenuOpen.value = false;
+  if (!previousProjectId) return;
   await session.selectProjectContext(null);
-  emitProjectContextChanged();
+  emitProjectContextChanged(previousProjectId);
 }
 
 function resolveActionBusinessTitle(action: unknown) {
@@ -969,10 +974,11 @@ function closeProjectMenu() {
   projectMenuOpen.value = false;
 }
 
-function emitProjectContextChanged() {
+function emitProjectContextChanged(previousProjectId = 0) {
   if (typeof window === 'undefined') return;
   window.dispatchEvent(new CustomEvent(PROJECT_CONTEXT_CHANGED_EVENT, {
     detail: {
+      previous_project_id: previousProjectId || null,
       selected_project_id: selectedProject.value?.id || null,
     },
   }));

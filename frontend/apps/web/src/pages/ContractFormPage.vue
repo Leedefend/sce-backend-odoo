@@ -6287,8 +6287,18 @@ function projectContextChangedProjectId(event: Event): number {
   return Number(detail.selected_project_id || session.projectContext?.selected?.id || 0) || 0;
 }
 
+function projectContextChangedPreviousProjectId(event: Event): number {
+  const detail = event instanceof CustomEvent && event.detail && typeof event.detail === 'object'
+    ? event.detail as Record<string, unknown>
+    : {};
+  return Number(detail.previous_project_id || 0) || 0;
+}
+
 function handleProjectContextChanged(event: Event): void {
   const selectedProjectId = projectContextChangedProjectId(event);
+  const previousProjectId = projectContextChangedPreviousProjectId(event);
+  if (selectedProjectId > 0 && previousProjectId === selectedProjectId) return;
+  if (model.value === 'project.project' && recordId.value === selectedProjectId) return;
   if (model.value === 'project.project' && selectedProjectId > 0) {
     void router.replace({
       name: 'record',

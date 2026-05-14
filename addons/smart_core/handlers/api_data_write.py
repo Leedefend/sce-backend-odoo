@@ -123,17 +123,11 @@ class ApiDataWriteHandler(BaseIntentHandler):
             out.setdefault(model_name, set()).add(field_name)
 
     def _business_config_policy_company_domain(self) -> List[Any]:
-        company_ids = []
-        companies = getattr(self.env, "companies", None)
-        if companies:
-            company_ids = [int(company.id) for company in companies if getattr(company, "id", None)]
-        if not company_ids:
-            company = getattr(self.env, "company", None)
-            company_id = int(getattr(company, "id", 0) or 0)
-            company_ids = [company_id] if company_id else []
-        if not company_ids:
+        company = getattr(self.env, "company", None)
+        company_id = int(getattr(company, "id", 0) or 0)
+        if not company_id:
             return [("company_id", "=", False)]
-        return ["|", ("company_id", "=", False), ("company_id", "in", company_ids)]
+        return ["|", ("company_id", "=", False), ("company_id", "=", company_id)]
 
     def _err(self, code: int, message: str, reason_code: str):
         return {
