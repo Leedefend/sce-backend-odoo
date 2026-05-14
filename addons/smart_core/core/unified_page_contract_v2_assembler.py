@@ -606,6 +606,7 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
         view_type=view_type,
         container_status=contract["statusContract"]["containerStatus"],
     )
+    _standardize_form_container_semantics(container_tree, model=model, view_type=view_type)
     contract["layoutContract"]["containerTree"] = container_tree
     contract["layoutContract"]["componentRegistry"] = _component_registry(component_keys or {"sc.display.text"})
     contract["dataContract"]["dataMeta"]["fieldCount"] = len(fields)
@@ -1093,6 +1094,94 @@ def _node_has_token(node: dict[str, Any], tokens: tuple[str, ...]) -> bool:
 
 def _node_has_x2many(node: dict[str, Any]) -> bool:
     return any(field_type in {"one2many", "many2many"} for field_type in _node_field_types(node))
+
+
+def _node_has_direct_group_child(node: dict[str, Any]) -> bool:
+    for key in ("children", "pages", "tabs", "nodes", "items"):
+        child_rows = node.get(key)
+        if not isinstance(child_rows, list):
+            continue
+        for child in child_rows:
+            if not isinstance(child, dict):
+                continue
+            child_type = _text(child.get("type") or child.get("kind") or child.get("containerType")).lower()
+            if child_type == "group":
+                return True
+    return False
+
+
+def _is_generic_container_label(node: dict[str, Any]) -> bool:
+    node_type = _text(node.get("type") or node.get("kind") or node.get("containerType")).lower()
+    labels = {
+        _text(node.get("title")).lower(),
+        _text(node.get("label")).lower(),
+        _text(node.get("string")).lower(),
+    }
+    generic = {"", node_type, _text(node.get("containerId")).lower(), _text(node.get("name")).lower()}
+    return bool(labels & generic) or all(not label for label in labels)
+
+
+def _semantic_group_label(node: dict[str, Any], *, level: int, index: int) -> str:
+    fingerprint = _node_text_fingerprint(node)
+    field_names = set(_node_field_names(node))
+    if level <= 1 and _node_has_direct_group_child(node):
+        return "主信息"
+    if _node_has_token(node, TRACE_FIELD_TOKENS):
+        return "来源追溯"
+    if _node_has_token(node, NOTE_FIELD_TOKENS):
+        return "备注说明"
+    if _node_has_x2many(node):
+        return "业务明细"
+    if any(token in fingerprint for token in ("amount", "price", "cost", "budget", "fee", "money", "金额", "费用", "成本", "预算")):
+        return "金额信息"
+    if any(token in fingerprint for token in ("date", "time", "deadline", "start", "end", "日期", "时间", "截止")):
+        return "时间信息"
+    if any(token in fingerprint for token in ("partner", "supplier", "owner", "manager", "user", "负责人", "供应", "往来", "经理")):
+        return "责任与往来"
+    if level <= 1 or field_names & {"name", "code", "project_id", "state", "company_id"}:
+        return "主信息" if level == 0 else "基础信息"
+    return f"业务信息 {index + 1}"
+
+
+def _apply_semantic_container_label(node: dict[str, Any], label: str) -> None:
+    node["title"] = label
+    node["label"] = label
+    node["string"] = label
+    node["semanticTitle"] = label
+    node["semanticAnchor"] = _stable_id(label, "semantic.group")
+    source = _dict(node.get("sourceAuthority"))
+    source.update({
+        "kind": SOURCE_KIND,
+        "projection_only": True,
+        "no_business_fact_authority": True,
+        "runtime_carrier": "business_form_semantic_label_standardizer",
+    })
+    node["sourceAuthority"] = source
+
+
+def _standardize_form_container_semantics(nodes: list[dict[str, Any]], *, model: str, view_type: str) -> None:
+    if view_type != "form" or not model:
+        return
+
+    def visit(rows: list[dict[str, Any]], *, level: int) -> None:
+        group_index = 0
+        for node in rows:
+            if not isinstance(node, dict):
+                continue
+            node_type = _text(node.get("type") or node.get("kind") or node.get("containerType")).lower()
+            if node_type == "group":
+                if _is_generic_container_label(node):
+                    _apply_semantic_container_label(
+                        node,
+                        _semantic_group_label(node, level=level, index=group_index),
+                    )
+                group_index += 1
+            for key in ("children", "pages", "tabs", "nodes", "items"):
+                child_rows = node.get(key)
+                if isinstance(child_rows, list):
+                    visit([item for item in child_rows if isinstance(item, dict)], level=level + 1)
+
+    visit(nodes, level=0)
 
 
 def _node_is_button_box(node: dict[str, Any]) -> bool:

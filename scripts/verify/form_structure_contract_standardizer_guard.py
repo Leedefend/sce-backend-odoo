@@ -176,6 +176,58 @@ def main() -> int:
         "forms with native tabs must not receive duplicate projected notebooks",
     )
 
+    semantic_tree = sample_form_tree()
+    assembler._standardize_form_container_semantics(  # pylint: disable=protected-access
+        semantic_tree,
+        model="sc.equipment.plan",
+        view_type="form",
+    )
+    groups = [node for node in nested_nodes(semantic_tree) if node.get("containerType") == "group"]
+    assert_true(groups, "semantic guard fixture should contain group nodes")
+    assert_true(
+        all(str(node.get("title") or "").strip() not in {"", "group"} for node in groups),
+        "unlabelled form groups should receive semantic contract titles",
+    )
+    assert_true(
+        any((node.get("sourceAuthority") or {}).get("runtime_carrier") == "business_form_semantic_label_standardizer" for node in groups),
+        "semantic group labels should declare projection runtime carrier",
+    )
+
+    wrapped_tree = [
+        {
+            "type": "sheet",
+            "containerType": "sheet",
+            "children": [
+                {
+                    "type": "group",
+                    "containerType": "group",
+                    "containerId": "top.wrapper",
+                    "children": [
+                        {
+                            "type": "group",
+                            "containerType": "group",
+                            "containerId": "schedule.info",
+                            "children": [
+                                {"type": "field", "name": "start_date", "fieldInfo": {"type": "date", "label": "开始日期"}},
+                                {"type": "field", "name": "end_date", "fieldInfo": {"type": "date", "label": "结束日期"}},
+                            ],
+                        }
+                    ],
+                }
+            ],
+        }
+    ]
+    assembler._standardize_form_container_semantics(  # pylint: disable=protected-access
+        wrapped_tree,
+        model="sc.equipment.plan",
+        view_type="form",
+    )
+    wrapped_groups = [node for node in nested_nodes(wrapped_tree) if node.get("containerType") == "group"]
+    assert_true(
+        [node.get("title") for node in wrapped_groups] == ["主信息", "时间信息"],
+        "top-level structural group should keep a main-info title while nested groups carry field semantics",
+    )
+
     print("PASS form_structure_contract_standardizer_guard")
     return 0
 
