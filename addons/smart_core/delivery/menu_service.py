@@ -134,7 +134,7 @@ class MenuService:
                 sanitized_anchor = raw_anchor.replace(":", "_").replace("/", "_").replace(".", "_")
                 route = str(menu.get("route") or "").strip()
                 action_id = menu.get("action_id")
-                model = str(menu.get("model") or "").strip()
+                model = str(menu.get("model") or menu.get("res_model") or "").strip()
                 if not action_id and not model and route != "/my-work":
                     continue
                 out.append(
@@ -152,6 +152,8 @@ class MenuService:
                         "model": model,
                         "view_modes": menu.get("view_modes") if isinstance(menu.get("view_modes"), list) else [],
                         "scene_source": "delivery_policy",
+                        "policy_group_key": str(group.get("group_key") or "").strip(),
+                        "policy_group_label": str(group.get("group_label") or "").strip(),
                         "entry_target": menu.get("entry_target") if isinstance(menu.get("entry_target"), dict) else {},
                     }
                 )
@@ -287,7 +289,14 @@ class MenuService:
                 dedupe_routes.add(route)
             if menu_xmlid:
                 dedupe_xmlids.add(menu_xmlid)
-            target_group_key = scene_group_map.get(scene_key) or group_order[0]
+            target_group_key = scene_group_map.get(scene_key) or str(menu.get("policy_group_key") or "").strip() or group_order[0]
+            if target_group_key not in groups_by_key:
+                groups_by_key[target_group_key] = {
+                    "group_key": target_group_key,
+                    "group_label": str(menu.get("policy_group_label") or "").strip() or "产品发布面",
+                    "menus": [],
+                }
+                group_order.append(target_group_key)
             groups_by_key[target_group_key]["menus"].append(converged_menu)
 
         group_nodes = []

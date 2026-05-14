@@ -3,6 +3,14 @@ from __future__ import annotations
 
 import copy
 
+try:
+    from odoo import SUPERUSER_ID, api
+    from odoo.modules.registry import Registry
+except Exception:
+    SUPERUSER_ID = 1
+    api = None
+    Registry = None
+
 from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
 
 try:
@@ -280,7 +288,12 @@ def _mark_legacy_default_policy_nodes(payload: dict) -> dict:
 
 class ProductPolicyService:
     SOURCE_KIND = "delivery_product_policy_projection"
-    SOURCE_AUTHORITIES = ("sc.product.policy", "sc.scene.snapshot", "default_product_policy_provider")
+    SOURCE_AUTHORITIES = (
+        "sc.product.policy",
+        "platform_db.sc.product.policy",
+        "sc.scene.snapshot",
+        "default_product_policy_provider",
+    )
     NO_BUSINESS_FACT_AUTHORITY = True
     DEFAULT_POLICY_SOURCE_KIND = LEGACY_DEFAULT_POLICY_SOURCE_KIND
     RELEASEABLE_STATES = {"preview", "stable"}
@@ -307,6 +320,51 @@ class ProductPolicyService:
             legacy_default=True,
             legacy_policy_node_source=LEGACY_DEFAULT_POLICY_NODE_SOURCE_KIND,
         )
+
+    @classmethod
+    def platform_policy_source_authority_contract(cls, *, platform_db: str = "") -> dict:
+        return build_source_authority_contract(
+            kind="platform_product_policy_projection",
+            authorities=("sc.product.policy", "ir.config_parameter:smart_core.platform_release_db"),
+            no_business_fact_authority=cls.NO_BUSINESS_FACT_AUTHORITY,
+            platform_db=str(platform_db or "").strip(),
+            runtime_carrier="delivery_engine_v1.product_policy",
+        )
+
+    def _platform_policy_db(self) -> str:
+        try:
+            configured = self.env["ir.config_parameter"].sudo().get_param("smart_core.platform_release_db", "")
+        except Exception:
+            configured = ""
+        return str(configured or "").strip() or "sc_platform_core"
+
+    def _load_platform_policy(self, *, product_key: str) -> dict | None:
+        if api is None or Registry is None:
+            return None
+        platform_db = self._platform_policy_db()
+        current_db = str(getattr(getattr(self.env, "cr", None), "dbname", "") or "").strip()
+        if not platform_db or platform_db == current_db:
+            return None
+        try:
+            registry = Registry(platform_db)
+            with registry.cursor() as cr:
+                read_env = api.Environment(cr, SUPERUSER_ID, dict(getattr(self.env, "context", {}) or {}))
+                rec = read_env["sc.product.policy"].sudo().search(
+                    [("product_key", "=", str(product_key or "").strip()), ("active", "=", True)],
+                    limit=1,
+                )
+                if not rec:
+                    return None
+                payload = rec.to_runtime_dict()
+                if not isinstance(payload, dict) or not payload.get("product_key"):
+                    return None
+                payload["policy_source_authority"] = self.platform_policy_source_authority_contract(
+                    platform_db=platform_db,
+                )
+                payload["platform_policy_db"] = platform_db
+                return payload
+        except Exception:
+            return None
 
     def _default_product_policy(self) -> dict:
         if callable(call_extension_hook_first):
@@ -548,6 +606,33 @@ class ProductPolicyService:
                     fallback_reason=fallback_reason,
                     access_allowed=access_allowed,
                 )
+        platform_payload = self._load_platform_policy(product_key=key)
+        if platform_payload:
+            payload = self._sanitize_scene_version_bindings(platform_payload)
+            access_allowed = self._access_allowed(payload, role_code=resolved_role_code) if enforce_access else True
+            release_allowed = self._policy_releaseable(payload) if enforce_release else True
+            if access_allowed and release_allowed:
+                return self._attach_edition_diagnostics(
+                    payload,
+                    requested_product_key=key,
+                    requested_base_product_key=resolved_base_product_key,
+                    requested_edition_key=resolved_edition_key,
+                    role_code=resolved_role_code,
+                    access_allowed=access_allowed,
+                )
+            fallback_reason = "PLATFORM_EDITION_ACCESS_DENIED" if not access_allowed else "PLATFORM_EDITION_STATE_NOT_RELEASEABLE"
+            fallback = self._sanitize_scene_version_bindings(
+                self._fallback_stable_policy(base_product_key=resolved_base_product_key)
+            )
+            return self._attach_edition_diagnostics(
+                fallback,
+                requested_product_key=key,
+                requested_base_product_key=resolved_base_product_key,
+                requested_edition_key=resolved_edition_key,
+                role_code=resolved_role_code,
+                fallback_reason=fallback_reason,
+                access_allowed=access_allowed,
+            )
         fallback = self._default_policy_for_identity(
             base_product_key=resolved_base_product_key,
             edition_key=resolved_edition_key,

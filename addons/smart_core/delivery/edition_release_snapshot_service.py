@@ -252,6 +252,8 @@ class EditionReleaseSnapshotService:
                         "release_state": release_state,
                         "enabled": enabled,
                         "access_level": _text(menu.get("access_level")) or _text(policy.get("access_level")) or "public",
+                        "menu_id": int(menu.get("menu_id") or 0),
+                        "action_id": int(menu.get("action_id") or 0),
                         "menu_xmlid": _text(menu.get("menu_xmlid")),
                         "res_model": _text(menu.get("res_model")),
                     }
@@ -266,6 +268,8 @@ class EditionReleaseSnapshotService:
                 "enabled": bool(row.get("enabled")),
                 "access_level": _text(row.get("access_level")),
                 "route": _text(row.get("route")),
+                "menu_id": int(row.get("menu_id") or 0),
+                "action_id": int(row.get("action_id") or 0),
                 "menu_xmlid": _text(row.get("menu_xmlid")),
                 "res_model": _text(row.get("res_model")),
             }

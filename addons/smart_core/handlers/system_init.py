@@ -426,6 +426,8 @@ def _release_gate_page_contract_from_snapshot(snapshot: dict) -> dict:
         "menu_xmlids": set(),
         "routes": set(),
         "models": set(),
+        "menu_ids": set(),
+        "action_ids": set(),
     }
     effective_count = 0
     for page in pages:
@@ -446,6 +448,12 @@ def _release_gate_page_contract_from_snapshot(snapshot: dict) -> dict:
             value = _text(page.get(key))
             if value:
                 allowed[bucket].add(value)
+        menu_id = int(page.get("menu_id") or 0)
+        action_id = int(page.get("action_id") or 0)
+        if menu_id:
+            allowed["menu_ids"].add(f"system.menu_{menu_id}")
+        if action_id:
+            allowed["action_ids"].add(f"/a/{action_id}")
     return {
         "snapshot_id": int(snapshot.get("id") or 0),
         "version": _text(snapshot.get("version")),
@@ -558,7 +566,7 @@ def _filter_nav_by_release_gate(nav: list[dict], gate: dict) -> tuple[list[dict]
         return nav if isinstance(nav, list) else [], {"applied": False}
     allowed = gate.get("allowed") if isinstance(gate.get("allowed"), dict) else {}
     allowed_values = set()
-    for bucket in ("page_keys", "menu_keys", "menu_xmlids", "routes"):
+    for bucket in ("page_keys", "menu_keys", "menu_xmlids", "routes", "menu_ids", "action_ids"):
         values = allowed.get(bucket)
         if isinstance(values, set):
             allowed_values.update(values)
