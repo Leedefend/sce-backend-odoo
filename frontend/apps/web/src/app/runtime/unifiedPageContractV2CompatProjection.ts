@@ -34,6 +34,12 @@ function resolveV2SearchContract(v2Contract: unknown): Dict {
   return asDict(root.searchContract || root.search || dataContract.search || dataMeta.search);
 }
 
+function resolveV2CollaborationContract(v2Contract: unknown): Dict {
+  const root = asDict(v2Contract);
+  const runtime = asDict(root.runtimeContract);
+  return asDict(runtime.collaboration);
+}
+
 function stableFieldName(name: string) {
   return String(name || '').trim();
 }
@@ -342,6 +348,7 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
   const mainData = resolveUnifiedPageContractV2MainData(v2Contract);
   const v2SourceContext = resolveUnifiedPageContractV2SourceContext(v2Contract);
   const v2SearchContract = resolveV2SearchContract(v2Contract);
+  const v2Collaboration = resolveV2CollaborationContract(v2Contract);
   const globalStatus = resolveUnifiedPageContractV2GlobalStatus(v2Contract);
   const layoutButtons = collectV2LayoutButtons(v2Contract);
   const statusbar = collectV2Statusbar(v2Contract);
@@ -432,8 +439,12 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
   };
   const formLayout = buildLegacyFormLayout(v2Fields, fieldLabels);
   const subviews = buildLegacySubViews(v2Fields, mainData);
-  const chatterEnabled = fieldNames.some((name) => ['message_ids', 'message_follower_ids', 'website_message_ids'].includes(name));
-  const attachmentsEnabled = fieldNames.some((name) => ['message_attachment_count', 'doc_count', 'attachment_ids'].includes(name));
+  const v2Chatter = asDict(v2Collaboration.chatter);
+  const v2Attachments = asDict(v2Collaboration.attachments);
+  const chatterEnabled = Boolean(v2Chatter.enabled)
+    || fieldNames.some((name) => ['message_ids', 'message_follower_ids', 'website_message_ids'].includes(name));
+  const attachmentsEnabled = Boolean(v2Attachments.enabled)
+    || fieldNames.some((name) => ['message_attachment_count', 'doc_count', 'attachment_ids'].includes(name));
   const formView = viewType === 'form'
     ? {
         layout: formLayout,
@@ -451,16 +462,24 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
           save: '保存',
           cancel: '取消',
         },
-        ...(chatterEnabled ? { chatter: { enabled: true, label: '沟通', actions: [] } } : {}),
+        ...(chatterEnabled ? {
+          chatter: Object.keys(v2Chatter).length
+            ? { ...v2Chatter, enabled: true }
+            : { enabled: true, label: '沟通', actions: [] },
+        } : {}),
         ...(attachmentsEnabled ? {
           attachments: {
+            ...v2Attachments,
             enabled: true,
-            upload: { max_bytes: 25 * 1024 * 1024 },
+            upload: Object.keys(asDict(v2Attachments.upload)).length
+              ? asDict(v2Attachments.upload)
+              : { max_bytes: 25 * 1024 * 1024 },
             ui_labels: {
               label: '附件',
               upload: '上传附件',
               uploading: '上传中...',
               download: '下载',
+              ...asDict(v2Attachments.ui_labels),
             },
           },
         } : {}),

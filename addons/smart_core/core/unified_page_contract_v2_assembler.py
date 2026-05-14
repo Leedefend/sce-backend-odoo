@@ -623,6 +623,7 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
             defaults = _default_values_from_context(_dict(source_context.get("context")))
             if defaults:
                 contract["dataContract"]["mainData"].update(defaults)
+    _inject_collaboration_runtime_contract(contract, _dict(source.get("collaboration")))
     source_record = _dict(source.get("record"))
     if source_record:
         contract["dataContract"]["mainData"].update(deepcopy(source_record))
@@ -663,6 +664,22 @@ def _ui_search_contract(source: dict[str, Any], ui: dict[str, Any]) -> dict[str,
         if isinstance(value, dict):
             out[key] = deepcopy(value)
     return out
+
+
+def _inject_collaboration_runtime_contract(contract: dict[str, Any], collaboration: dict[str, Any]) -> None:
+    if not collaboration:
+        return
+    runtime = _dict(contract.get("runtimeContract"))
+    if not runtime:
+        runtime = {}
+        contract["runtimeContract"] = runtime
+    normalized: dict[str, Any] = {}
+    for key in ("chatter", "attachments", "timeline", "sourceAuthority"):
+        value = collaboration.get(key)
+        if isinstance(value, dict):
+            normalized[key] = deepcopy(value)
+    if normalized:
+        runtime["collaboration"] = normalized
 
 
 def _field_rows(source: dict[str, Any], ui: dict[str, Any], *, view_type: str = "") -> list[dict[str, Any]]:

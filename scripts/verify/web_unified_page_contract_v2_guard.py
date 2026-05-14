@@ -52,7 +52,6 @@ def main() -> int:
     for token in (
         "adaptUnifiedPageContractV2Raw",
         "__unified_page_contract_v2",
-        "resolveCompatSource",
         "delivery_profile: 'full'",
         "client_type: 'web_pc'",
         "loadActionUnifiedPageContractV2",
@@ -92,6 +91,8 @@ def main() -> int:
         errors.append("web contract action runtime must honor v2 globalStatus for page access/read guards")
     if "collectUnifiedPageContractV2FieldWidgets" not in record_runtime_source or "collectUnifiedPageContractV2FieldStatus" not in record_runtime_source or "mapV2ActionButton" not in record_runtime_source:
         errors.append("web record runtime must build form fields, states, and actions from v2 before legacy fallback")
+    if "resolveV2CollaborationContract" not in ((ROOT / "frontend/apps/web/src/app/runtime/unifiedPageContractV2CompatProjection.ts").read_text(encoding="utf-8")):
+        errors.append("web v2 compatibility projection must consume runtimeContract.collaboration for chatter/attachments")
     if "resolveUnifiedPageContractV2GlobalStatus" not in record_runtime_source or "pageAuth === 'read'" not in record_runtime_source:
         errors.append("web record runtime must merge v2 globalStatus into form rights")
     if "collectUnifiedPageContractV2FieldContainerStatus" not in record_runtime_source or "container?.visible === false" not in record_runtime_source:
