@@ -17,12 +17,6 @@ export function resolveContractViewMode(contract: ActionContract | null, fallbac
   const v2Mode = String(v2?.pageInfo?.viewType || '').trim();
   if (v2Mode) {
     const normalizedV2Mode = v2Mode === 'list' ? 'tree' : v2Mode;
-    if (normalizedV2Mode === 'form') {
-      const normalizedFallback = String(fallback || '').trim();
-      if (normalizedFallback && normalizedFallback !== 'form') {
-        return normalizedFallback;
-      }
-    }
     return normalizedV2Mode;
   }
   const headMode = String(contract?.head?.view_type || '').trim();

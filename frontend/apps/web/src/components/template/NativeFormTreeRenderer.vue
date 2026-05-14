@@ -29,8 +29,10 @@
               :button-label-resolver="buttonLabelResolver"
               :native-action-handler="nativeActionHandler"
               :relation-adapter="relationAdapter"
+              :field-actions="fieldActions"
               :columns="columns"
               @field-change="emit('field-change', $event)"
+              @field-action="emit('field-action', $event)"
               @native-action="emit('native-action', $event)"
             >
               <template #readonly="{ field }">
@@ -76,8 +78,10 @@
             :button-label-resolver="buttonLabelResolver"
             :native-action-handler="nativeActionHandler"
             :relation-adapter="relationAdapter"
+            :field-actions="fieldActions"
             :columns="columns"
             @field-change="emit('field-change', $event)"
+            @field-action="emit('field-action', $event)"
             @native-action="emit('native-action', $event)"
           >
             <template #readonly="{ field }">
@@ -96,8 +100,10 @@
             :columns="columns"
             :fields="fieldSchemasForNodes(fieldChildren(node))"
             :relation-adapter="relationAdapter"
+            :field-actions="fieldActions"
             tone="core"
             @field-change="emit('field-change', $event)"
+            @field-action="emit('field-action', $event)"
           >
             <template #readonly="{ field }">
               <slot name="readonly" :field="field" />
@@ -151,8 +157,10 @@
             :button-label-resolver="buttonLabelResolver"
             :native-action-handler="nativeActionHandler"
             :relation-adapter="relationAdapter"
+            :field-actions="fieldActions"
             :columns="columns"
             @field-change="emit('field-change', $event)"
+            @field-action="emit('field-action', $event)"
             @native-action="emit('native-action', $event)"
           >
             <template #readonly="{ field }">
@@ -171,8 +179,10 @@
         :columns="columns"
         :fields="fieldSchemasForNodes([node])"
         :relation-adapter="relationAdapter"
+        :field-actions="fieldActions"
         tone="core"
         @field-change="emit('field-change', $event)"
+        @field-action="emit('field-action', $event)"
       >
         <template #readonly="{ field }">
           <slot name="readonly" :field="field" />
@@ -198,7 +208,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import FormSection from './FormSection.vue';
-import type { FormSectionFieldChange, FormSectionFieldSchema } from './formSection.types';
+import type {
+  FormSectionFieldAction,
+  FormSectionFieldActionPayload,
+  FormSectionFieldChange,
+  FormSectionFieldSchema,
+} from './formSection.types';
 import type { RelationFieldAdapter } from './relationField.types';
 
 defineOptions({ name: 'NativeFormTreeRenderer' });
@@ -235,16 +250,19 @@ const props = withDefaults(defineProps<{
   buttonLabelResolver?: (node: NativeFormLayoutNode) => string | undefined;
   nativeActionHandler?: (payload: Record<string, unknown>) => void | Promise<void>;
   relationAdapter?: RelationFieldAdapter;
+  fieldActions?: (field: FormSectionFieldSchema) => FormSectionFieldAction[];
   columns?: 1 | 2;
 }>(), {
   columns: 2,
   isNodeVisible: () => true,
   nativeActionHandler: undefined,
   relationAdapter: undefined,
+  fieldActions: undefined,
 });
 
 const emit = defineEmits<{
   (event: 'field-change', payload: FormSectionFieldChange): void;
+  (event: 'field-action', payload: FormSectionFieldActionPayload): void;
   (event: 'native-action', payload: Record<string, unknown>): void;
 }>();
 

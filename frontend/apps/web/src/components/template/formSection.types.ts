@@ -79,3 +79,18 @@ export type FormSectionFieldChange = {
   action?: 'change' | 'query' | 'commit';
   descriptor?: FieldDescriptor;
 };
+
+export type FormSectionFieldAction = {
+  key: string;
+  label: string;
+  value: string;
+  checked?: boolean;
+  disabled?: boolean;
+  title?: string;
+  raw?: Record<string, unknown>;
+};
+
+export type FormSectionFieldActionPayload = {
+  field: FormSectionFieldSchema;
+  action: FormSectionFieldAction;
+};

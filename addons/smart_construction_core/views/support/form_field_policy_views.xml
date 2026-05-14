@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_ui_form_field_policy_tree" model="ir.ui.view">
+        <field name="name">ui.form.field.policy.tree</field>
+        <field name="model">ui.form.field.policy</field>
+        <field name="arch" type="xml">
+            <tree string="表单字段配置" decoration-muted="not active">
+                <field name="sequence" widget="handle"/>
+                <field name="active"/>
+                <field name="action_id" string="业务页面"/>
+                <field name="model_id" string="业务对象" optional="hide"/>
+                <field name="model" optional="hide"/>
+                <field name="field_name" optional="hide"/>
+                <field name="field_label" string="字段"/>
+                <field name="field_type" optional="hide"/>
+                <field name="visible"/>
+                <field name="effect_summary"/>
+                <field name="scope_summary"/>
+                <field name="view_id" optional="hide"/>
+                <field name="company_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_ui_form_field_policy_form" model="ir.ui.view">
+        <field name="name">ui.form.field.policy.form</field>
+        <field name="model">ui.form.field.policy</field>
+        <field name="arch" type="xml">
+            <form string="表单字段配置">
+                <header>
+                    <button name="action_probe_contract_effect"
+                            type="object"
+                            string="验证生效"
+                            class="oe_highlight"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group string="业务页面">
+                            <field name="active"/>
+                            <field name="action_id" string="选择要配置的页面" domain="[('type', '=', 'ir.actions.act_window')]" options="{'no_create': True, 'no_open': True}"/>
+                            <field name="model_id" string="业务对象" domain="[('transient', '=', False)]" options="{'no_create': True, 'no_open': True}" readonly="action_id"/>
+                            <field name="model" invisible="1"/>
+                        </group>
+                        <group string="显示规则">
+                            <field name="field_id" string="选择字段" domain="[('model_id', '=', model_id), ('ttype', '!=', 'binary')]" options="{'no_create': True, 'no_open': True}"/>
+                            <field name="label" string="显示名称" placeholder="为空时使用字段原始标题"/>
+                            <field name="visible"/>
+                            <field name="sequence"/>
+                            <field name="group_title" string="显示分组"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <group string="生效摘要">
+                        <field name="effect_summary" readonly="1"/>
+                        <field name="scope_summary" readonly="1"/>
+                    </group>
+                    <group string="高级设置" invisible="1">
+                        <field name="field_name" string="技术字段名" readonly="field_id"/>
+                        <field name="field_type" readonly="1"/>
+                        <field name="view_id" string="限定表单视图" domain="[('model', '=', model), ('type', '=', 'form')]"/>
+                    </group>
+                    <group string="说明">
+                        <field name="note" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_ui_form_field_policy_search" model="ir.ui.view">
+        <field name="name">ui.form.field.policy.search</field>
+        <field name="model">ui.form.field.policy</field>
+        <field name="arch" type="xml">
+            <search string="表单字段配置">
+                <field name="model_id"/>
+                <field name="field_name"/>
+                <field name="label"/>
+                <filter name="active_rows" string="启用" domain="[('active', '=', True)]"/>
+                <filter name="visible_rows" string="显示字段" domain="[('visible', '=', True)]"/>
+                <filter name="hidden_rows" string="隐藏字段" domain="[('visible', '=', False)]"/>
+                <group expand="0" string="分组">
+                    <filter name="group_model" string="模型" context="{'group_by': 'model_id'}"/>
+                    <filter name="group_visible" string="显示状态" context="{'group_by': 'visible'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_ui_form_field_policy_business_config" model="ir.actions.act_window">
+        <field name="name">表单字段配置</field>
+        <field name="res_model">ui.form.field.policy</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="smart_construction_core.view_ui_form_field_policy_search"/>
+        <field name="context">{'search_default_active_rows': 1}</field>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
+    </record>
+
+    <record id="view_ui_form_custom_field_wizard_form" model="ir.ui.view">
+        <field name="name">ui.form.custom.field.wizard.form</field>
+        <field name="model">ui.form.custom.field.wizard</field>
+        <field name="arch" type="xml">
+            <form string="新增表单字段">
+                <sheet>
+                    <group>
+                        <group string="业务页面">
+                            <field name="action_id" string="选择要加字段的页面" domain="[('type', '=', 'ir.actions.act_window')]" options="{'no_create': True, 'no_open': True}" required="1"/>
+                            <field name="model_id" string="业务对象" options="{'no_create': True, 'no_open': True}" readonly="action_id"/>
+                            <field name="model" invisible="1"/>
+                        </group>
+                        <group string="字段内容">
+                            <field name="label" string="字段标题" placeholder="例如：项目联系人、合同补充说明"/>
+                            <field name="ttype" string="字段类型"/>
+                            <field name="help" string="填写提示"/>
+                            <field name="index" invisible="1"/>
+                            <field name="active_policy"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <group string="显示位置">
+                        <field name="group_title" string="显示分组"/>
+                        <field name="sequence" string="显示顺序"/>
+                    </group>
+                    <group string="高级设置" invisible="1">
+                        <field name="field_name" string="技术字段名" placeholder="系统自动生成，必要时可调整为 x_ 开头"/>
+                        <field name="view_id" string="限定表单视图" domain="[('model', '=', model), ('type', '=', 'form')]"/>
+                    </group>
+                    <group string="说明">
+                        <field name="note" nolabel="1"/>
+                    </group>
+                </sheet>
+                <footer>
+                    <button name="action_create_field_policy"
+                            type="object"
+                            string="创建字段并配置显示"
+                            class="oe_highlight"/>
+                    <button string="取消" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_ui_form_custom_field_wizard_business_config" model="ir.actions.act_window">
+        <field name="name">新增表单字段</field>
+        <field name="res_model">ui.form.custom.field.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="smart_construction_core.view_ui_form_custom_field_wizard_form"/>
+        <field name="target">current</field>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_business_config_admin')])]"/>
+    </record>
+
+    <menuitem id="menu_ui_form_field_policy_business_config"
+              name="表单字段配置"
+              parent="smart_construction_core.menu_sc_business_config_center"
+              action="smart_construction_core.action_ui_form_field_policy_business_config"
+              sequence="15"
+              groups="smart_construction_core.group_sc_cap_business_config_admin"/>
+
+    <menuitem id="menu_ui_form_custom_field_wizard_business_config"
+              name="新增表单字段"
+              parent="smart_construction_core.menu_sc_business_config_center"
+              action="smart_construction_core.action_ui_form_custom_field_wizard_business_config"
+              sequence="16"
+              groups="smart_construction_core.group_sc_cap_business_config_admin"/>
+</odoo>

@@ -34,6 +34,12 @@ function resolveV2SearchContract(v2Contract: unknown): Dict {
   return asDict(root.searchContract || root.search || dataContract.search || dataMeta.search);
 }
 
+function resolveV2CollaborationContract(v2Contract: unknown): Dict {
+  const root = asDict(v2Contract);
+  const runtime = asDict(root.runtimeContract);
+  return asDict(runtime.collaboration);
+}
+
 function stableFieldName(name: string) {
   return String(name || '').trim();
 }
@@ -199,6 +205,47 @@ function collectV2LayoutButtons(v2Contract: Dict): Dict[] {
       actionSafety: action.action_safety,
     });
   });
+  const actionRules = asList(asDict(asDict(root.actionContract).actionRuleList));
+  actionRules.forEach((raw) => {
+    const row = asDict(raw);
+    const sourceWidgetId = String(row.sourceWidgetId || row.source_widget_id || '').trim();
+    if (sourceWidgetId !== 'page.header') return;
+    const triggerType = String(row.triggerType || row.trigger_type || '').trim();
+    if (triggerType && triggerType !== 'click') return;
+    const key = stableFieldName(String(row.actionKey || row.key || row.actionId || ''));
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    const target = asDict(row.target);
+    const clientMode = String(target.mode || target.client_mode || '').trim();
+    const level = 'header';
+    out.push({
+      key,
+      name: key,
+      label: String(row.label || key).trim() || key,
+      kind: clientMode ? 'client' : 'open',
+      intent: String(row.intent || '').trim(),
+      level,
+      selection: 'none',
+      actionId: Number(target.action_id || 0) || null,
+      methodName: '',
+      targetModel: String(target.model || '').trim(),
+      context: {},
+      domainRaw: String(target.domain_raw || '').trim(),
+      target: String(target.target || '').trim(),
+      url: String(target.url || target.route || '').trim(),
+      payload: {
+        mode: clientMode,
+        client_mode: clientMode,
+      },
+      enabled: true,
+      hint: '',
+      semantic: 'secondary_action',
+      sourceWidgetId,
+      visibleProfiles: ['create', 'edit', 'readonly'],
+      requiredParams: [],
+      requiresReason: false,
+    });
+  });
   return out;
 }
 
@@ -301,6 +348,7 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
   const mainData = resolveUnifiedPageContractV2MainData(v2Contract);
   const v2SourceContext = resolveUnifiedPageContractV2SourceContext(v2Contract);
   const v2SearchContract = resolveV2SearchContract(v2Contract);
+  const v2Collaboration = resolveV2CollaborationContract(v2Contract);
   const globalStatus = resolveUnifiedPageContractV2GlobalStatus(v2Contract);
   const layoutButtons = collectV2LayoutButtons(v2Contract);
   const statusbar = collectV2Statusbar(v2Contract);
@@ -391,8 +439,12 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
   };
   const formLayout = buildLegacyFormLayout(v2Fields, fieldLabels);
   const subviews = buildLegacySubViews(v2Fields, mainData);
-  const chatterEnabled = fieldNames.some((name) => ['message_ids', 'message_follower_ids', 'website_message_ids'].includes(name));
-  const attachmentsEnabled = fieldNames.some((name) => ['message_attachment_count', 'doc_count', 'attachment_ids'].includes(name));
+  const v2Chatter = asDict(v2Collaboration.chatter);
+  const v2Attachments = asDict(v2Collaboration.attachments);
+  const chatterEnabled = Boolean(v2Chatter.enabled)
+    || fieldNames.some((name) => ['message_ids', 'message_follower_ids', 'website_message_ids'].includes(name));
+  const attachmentsEnabled = Boolean(v2Attachments.enabled)
+    || fieldNames.some((name) => ['message_attachment_count', 'doc_count', 'attachment_ids'].includes(name));
   const formView = viewType === 'form'
     ? {
         layout: formLayout,
@@ -410,16 +462,24 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
           save: '保存',
           cancel: '取消',
         },
-        ...(chatterEnabled ? { chatter: { enabled: true, label: '沟通', actions: [] } } : {}),
+        ...(chatterEnabled ? {
+          chatter: Object.keys(v2Chatter).length
+            ? { ...v2Chatter, enabled: true }
+            : { enabled: true, label: '沟通', actions: [] },
+        } : {}),
         ...(attachmentsEnabled ? {
           attachments: {
+            ...v2Attachments,
             enabled: true,
-            upload: { max_bytes: 25 * 1024 * 1024 },
+            upload: Object.keys(asDict(v2Attachments.upload)).length
+              ? asDict(v2Attachments.upload)
+              : { max_bytes: 25 * 1024 * 1024 },
             ui_labels: {
               label: '附件',
               upload: '上传附件',
               uploading: '上传中...',
               download: '下载',
+              ...asDict(v2Attachments.ui_labels),
             },
           },
         } : {}),

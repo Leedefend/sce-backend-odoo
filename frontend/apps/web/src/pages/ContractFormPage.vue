@@ -162,8 +162,10 @@
           :button-label-resolver="resolveNativeButtonLabel"
           :native-action-handler="runNativeLayoutAction"
           :relation-adapter="relationFieldAdapter"
+          :field-actions="contractFieldActions"
           :columns="2"
           @field-change="onTemplateFieldChange"
+          @field-action="onContractFieldAction"
           @native-action="runNativeLayoutAction"
         >
           <template #readonly="{ field }">
@@ -240,6 +242,76 @@
             </section>
           </template>
         </NativeFormTreeRenderer>
+        <section v-if="activeContractModeActions.length" class="contract-mode-actions">
+          <button
+            v-for="action in activeContractModeActions"
+            :key="`mode-${action.key}`"
+            type="button"
+            class="chip-btn"
+            :disabled="busy"
+            @click="openContractModeAction(action.raw)"
+          >
+            {{ action.label }}
+          </button>
+          <p v-if="contractModeFeedback" class="contract-mode-feedback">{{ contractModeFeedback }}</p>
+        </section>
+        <form
+          v-if="contractPromptRule"
+          class="contract-mode-prompt"
+          @submit.prevent="submitContractPromptAction"
+        >
+          <label
+            v-for="field in contractPromptFields"
+            :key="`contract-prompt-${field.name}`"
+            class="contract-mode-prompt-field"
+          >
+            <span>{{ field.label }}</span>
+            <select
+              v-if="field.options.length"
+              v-model="contractPromptValues[field.name]"
+              :required="field.required"
+              :disabled="busy"
+            >
+              <option value=""></option>
+              <option v-for="option in field.options" :key="option.value" :value="option.value">{{ option.label }}</option>
+            </select>
+            <input
+              v-else
+              v-model="contractPromptValues[field.name]"
+              :required="field.required"
+              :disabled="busy"
+            />
+          </label>
+          <button type="submit" class="chip-btn" :disabled="busy">确定</button>
+          <button type="button" class="ghost" :disabled="busy" @click="closeContractPromptAction">取消</button>
+        </form>
+        <section v-if="activeContractModeFieldRows.length" class="contract-field-governance">
+          <div
+            v-for="row in activeContractModeFieldRows"
+            :key="`field-governance-${row.fieldKey}`"
+            class="contract-field-governance-row"
+          >
+            <span class="contract-field-governance-label">{{ row.label }}</span>
+            <div class="contract-field-governance-actions" role="radiogroup" :aria-label="`${row.label}字段显示`">
+              <label
+                v-for="action in row.actions"
+                :key="`${row.fieldKey}-${action.key}`"
+                class="contract-field-governance-action"
+                :title="action.title"
+              >
+                <input
+                  type="radio"
+                  :name="`contract-field-governance-${row.fieldKey}`"
+                  :value="action.value"
+                  :checked="Boolean(action.checked)"
+                  :disabled="Boolean(action.disabled)"
+                  @change="runContractRuleAction(action.raw)"
+                />
+                <span>{{ action.label }}</span>
+              </label>
+            </div>
+          </div>
+        </section>
         <div v-if="hasAdvancedFields && !isProjectIntakeCreateMode && !useNativeFormTree" class="layout-divider advanced-toggle">
           <button class="chip-btn" :disabled="busy" @click="advancedExpanded = !advancedExpanded">
             {{ advancedExpanded ? '收起高级信息' : '展开高级信息' }}
@@ -438,7 +510,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onErrorCaptured, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onErrorCaptured, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import FieldValue from '../components/FieldValue.vue';
 import StatusPanel from '../components/StatusPanel.vue';
@@ -448,7 +520,11 @@ import PageHeaderTemplate from '../components/template/PageHeader.vue';
 import NativeFormTreeRenderer, { type NativeFormLayoutNode } from '../components/template/NativeFormTreeRenderer.vue';
 import SceneBlocksRenderer from '../components/scene/SceneBlocksRenderer.vue';
 import PageFooterTemplate from '../components/template/PageFooter.vue';
-import type { FormSectionFieldSchema, FormSectionFieldChange } from '../components/template/formSection.types';
+import type {
+  FormSectionFieldActionPayload,
+  FormSectionFieldSchema,
+  FormSectionFieldChange,
+} from '../components/template/formSection.types';
 import type { RelationFieldAdapter } from '../components/template/relationField.types';
 import { createFormSectionFieldSchemaBuilder } from '../components/template/formSection.adapter';
 import { resolveInputPlaceholder, resolveSelectPlaceholder } from '../components/template/placeholder.mapper';
@@ -541,7 +617,10 @@ type ContractAction = {
   url: string;
   enabled: boolean;
   hint: string;
+  intent: string;
   semantic: string;
+  sourceWidgetId: string;
+  clientMode: string;
   visibleProfiles: Array<'create' | 'edit' | 'readonly'>;
   requiredParams: string[];
   requiresReason: boolean;
@@ -699,6 +778,30 @@ type ContractAccessPolicy = {
   degradedFields: Array<{ field: string; model: string; reasonCode: string }>;
 };
 
+type ContractPromptField = {
+  name: string;
+  label: string;
+  required: boolean;
+  defaultValue: string;
+  options: Array<{ value: string; label: string }>;
+};
+
+type ContractFieldGovernanceAction = {
+  key: string;
+  label: string;
+  value: string;
+  checked: boolean;
+  disabled: boolean;
+  title: string;
+  raw: Record<string, unknown>;
+};
+
+type ContractFieldGovernanceRow = {
+  fieldKey: string;
+  label: string;
+  actions: ContractFieldGovernanceAction[];
+};
+
 class ContractAccessPolicyError extends Error {
   reasonCode: string;
 
@@ -712,6 +815,7 @@ class ContractAccessPolicyError extends Error {
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
+const PROJECT_CONTEXT_CHANGED_EVENT = 'sc:project-context-changed';
 
 function resolveWorkspaceContextQuery() {
   return readWorkspaceContext(route.query as Record<string, unknown>);
@@ -724,6 +828,10 @@ const validationErrors = ref<string[]>([]);
 const submissionFeedback = ref<{ kind: 'success' | 'warn' | 'error'; message: string } | null>(null);
 const showOne2manyErrors = ref(false);
 const busyKind = ref<BusyKind>(null);
+const activeContractMode = ref('');
+const contractModeFeedback = ref('');
+const contractPromptRule = ref<Record<string, unknown> | null>(null);
+const contractPromptValues = reactive<Record<string, string>>({});
 const contract = ref<ActionContract | null>(null);
 const contractMeta = ref<Record<string, unknown> | null>(null);
 const v2ContractStore = ref<ContractV2NormalizedStore | null>(null);
@@ -1101,9 +1209,150 @@ const showDiscardAction = computed(() => !isProjectIntakeCreateMode.value && Boo
 const headerActionsVisible = computed(() => {
   if (isProjectIntakeCreateMode.value) return [];
   if (useNativeFormTree.value) {
-    return [];
+    return headerActions.value.filter((action) => action.sourceWidgetId === 'page.header');
   }
   return headerActions.value;
+});
+
+function contractV2ActionRules() {
+  const contractRecord = contract.value as Record<string, unknown> | null;
+  const v2ActionRules = parseMaybeJsonRecord(contractRecord?.__unified_page_contract_v2).actionContract;
+  const v2ActionRuleList = parseMaybeJsonRecord(v2ActionRules).actionRuleList;
+  return Array.isArray(v2ActionRuleList)
+    ? v2ActionRuleList.filter((row): row is Record<string, unknown> => Boolean(row && typeof row === 'object' && !Array.isArray(row)))
+    : [];
+}
+
+function ruleClientMode(rule: Record<string, unknown>) {
+  const target = parseMaybeJsonRecord(rule.target);
+  return String(target.mode || target.client_mode || rule.mode || rule.client_mode || '').trim();
+}
+
+function ruleKey(rule: Record<string, unknown>) {
+  return String(rule.actionKey || rule.key || rule.actionId || '').trim();
+}
+
+function ruleControl(rule: Record<string, unknown>) {
+  const target = parseMaybeJsonRecord(rule.target);
+  return parseMaybeJsonRecord(target.control || target.ui_control || rule.control || rule.ui_control);
+}
+
+function rulePromptFields(rule: Record<string, unknown>): ContractPromptField[] {
+  const target = parseMaybeJsonRecord(rule.target);
+  const promptSchema = parseMaybeJsonRecord(target.prompt_schema || target.promptSchema || rule.prompt_schema || rule.promptSchema);
+  const fields = Array.isArray(promptSchema.fields) ? promptSchema.fields : [];
+  return fields
+    .map((raw) => {
+      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+      const field = raw as Record<string, unknown>;
+      const name = String(field.name || '').trim();
+      if (!name) return null;
+      const options = Array.isArray(field.options)
+        ? field.options
+          .map((item) => parseMaybeJsonRecord(item))
+          .map((row) => ({
+            value: String(row.value || '').trim(),
+            label: String(row.label || row.value || '').trim(),
+          }))
+          .filter((row) => row.value)
+        : [];
+      return {
+        name,
+        label: String(field.label || name).trim(),
+        required: field.required !== false,
+        defaultValue: String(field.default || '').trim(),
+        options,
+      };
+    })
+    .filter((field): field is ContractPromptField => Boolean(field));
+}
+
+function contractFieldActions(field: FormSectionFieldSchema) {
+  const mode = activeContractMode.value;
+  if (!mode) return [];
+  const fieldWidgetId = `field.${String(field.name || '').trim()}`;
+  return contractV2ActionRules()
+    .filter((rule) => {
+      const triggerType = String(rule.triggerType || rule.trigger_type || '').trim();
+      if (triggerType && !['change', 'select', 'click'].includes(triggerType)) return false;
+      const sourceWidgetId = String(rule.sourceWidgetId || rule.source_widget_id || '').trim();
+      const targetIds = Array.isArray(rule.targetIds || rule.target_ids) ? (rule.targetIds || rule.target_ids) as unknown[] : [];
+      if (sourceWidgetId !== fieldWidgetId && !targetIds.map((item) => String(item)).includes(fieldWidgetId)) return false;
+      const expectedMode = ruleClientMode(rule);
+      return !expectedMode || expectedMode === mode;
+    })
+    .map((rule) => {
+      const control = ruleControl(rule);
+      return {
+        key: ruleKey(rule),
+        label: String(control.label || rule.label || ruleKey(rule)).trim(),
+        value: String(control.value || ruleKey(rule)).trim(),
+        checked: control.checked === true,
+        disabled: control.disabled === true || busy.value,
+        title: String(control.title || '').trim(),
+        raw: rule,
+      };
+    });
+}
+
+const contractPromptFields = computed(() => (contractPromptRule.value ? rulePromptFields(contractPromptRule.value) : []));
+
+const activeContractModeActions = computed(() => {
+  const mode = activeContractMode.value;
+  if (!mode) return [];
+  const source = `mode.${mode}`;
+  return contractV2ActionRules()
+    .filter((rule) => {
+      const sourceWidgetId = String(rule.sourceWidgetId || rule.source_widget_id || '').trim();
+      if (sourceWidgetId !== source) return false;
+      const expectedMode = ruleClientMode(rule);
+      return !expectedMode || expectedMode === mode;
+    })
+    .map((rule) => ({
+      key: ruleKey(rule),
+      label: String(rule.label || ruleKey(rule)).trim(),
+      raw: rule,
+    }));
+});
+
+const activeContractModeFieldRows = computed<ContractFieldGovernanceRow[]>(() => {
+  const mode = activeContractMode.value;
+  if (!mode) return [];
+  const rows = new Map<string, ContractFieldGovernanceRow>();
+  contractV2ActionRules().forEach((rule) => {
+    const sourceWidgetId = String(rule.sourceWidgetId || rule.source_widget_id || '').trim();
+    if (!sourceWidgetId.startsWith('field.')) return;
+    const expectedMode = ruleClientMode(rule);
+    if (expectedMode && expectedMode !== mode) return;
+    const fieldKey = sourceWidgetId.slice('field.'.length);
+    if (!fieldKey) return;
+    const control = ruleControl(rule);
+    const target = parseMaybeJsonRecord(rule.target);
+    const params = parseMaybeJsonRecord(target.params || rule.params);
+    const fieldLabel = String(params.label || fieldKey).trim();
+    const action: ContractFieldGovernanceAction = {
+      key: ruleKey(rule),
+      label: String(control.label || rule.label || ruleKey(rule)).trim(),
+      value: String(control.value || ruleKey(rule)).trim(),
+      checked: control.checked === true,
+      disabled: control.disabled === true || busy.value,
+      title: String(control.title || '').trim(),
+      raw: rule,
+    };
+    if (!rows.has(fieldKey)) {
+      rows.set(fieldKey, { fieldKey, label: fieldLabel, actions: [] });
+    }
+    rows.get(fieldKey)?.actions.push(action);
+  });
+  return Array.from(rows.values())
+    .map((row) => ({
+      ...row,
+      actions: row.actions.sort((left, right) => {
+        const order = (value: string) => (value === 'show' ? 0 : value === 'hide' ? 1 : 2);
+        return order(left.value) - order(right.value) || left.label.localeCompare(right.label);
+      }),
+    }))
+    .sort((left, right) => left.label.localeCompare(right.label));
 });
 
 const isQuickSubmitDisabled = computed(() => {
@@ -2773,7 +3022,10 @@ const contractActions = computed<ContractAction[]>(() => {
       url: String(target.url || target.route || '').trim(),
       enabled: true,
       hint: '',
+      intent,
       semantic,
+      sourceWidgetId: String(row.sourceWidgetId || row.source_widget_id || '').trim(),
+      clientMode: String(target.mode || target.client_mode || row.clientMode || row.client_mode || '').trim(),
       visibleProfiles: ['create', 'edit', 'readonly'],
       requiredParams: normalizeRequiredParams(row.required_params),
       requiresReason: row.requires_reason === true,
@@ -2805,6 +3057,45 @@ const contractActions = computed<ContractAction[]>(() => {
   if (Array.isArray(contract.value?.toolbar?.header)) merged.push(...(contract.value?.toolbar?.header as Array<Record<string, unknown>>));
   if (Array.isArray(contract.value?.toolbar?.sidebar)) merged.push(...(contract.value?.toolbar?.sidebar as Array<Record<string, unknown>>));
   if (Array.isArray(contract.value?.toolbar?.footer)) merged.push(...(contract.value?.toolbar?.footer as Array<Record<string, unknown>>));
+  const contractRecord = contract.value as Record<string, unknown> | null;
+  const v2ActionRules = parseMaybeJsonRecord(contractRecord?.__unified_page_contract_v2).actionContract;
+  const v2ActionRuleList = parseMaybeJsonRecord(v2ActionRules).actionRuleList;
+  if (Array.isArray(v2ActionRuleList)) {
+    v2ActionRuleList.forEach((raw) => {
+      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return;
+      const row = raw as Record<string, unknown>;
+      const sourceWidgetId = String(row.sourceWidgetId || row.source_widget_id || '').trim();
+      if (sourceWidgetId !== 'page.header') return;
+      const triggerType = String(row.triggerType || row.trigger_type || '').trim();
+      if (triggerType && triggerType !== 'click') return;
+      const key = String(row.actionKey || row.key || row.actionId || '').trim();
+      if (!key) return;
+      const target = parseMaybeJsonRecord(row.target);
+      const clientMode = String(target.mode || target.client_mode || '').trim();
+      merged.push({
+        key,
+        label: String(row.label || key).trim() || key,
+        kind: clientMode ? 'client' : 'open',
+        intent: String(row.intent || '').trim(),
+        level: 'header',
+        selection: 'none',
+        sourceWidgetId,
+        target,
+        target_model: String(target.model || '').trim(),
+        payload: {
+          action_id: target.action_id,
+          ref: target.ref,
+          url: target.url || target.route,
+          target: target.target,
+          mode: clientMode,
+          client_mode: clientMode,
+          domain_raw: target.domain_raw,
+          context_raw: target.context_raw,
+        },
+        visible_profiles: ['create', 'edit', 'readonly'],
+      });
+    });
+  }
   if (sceneReadyActions.length) {
     merged.push(...sceneReadyActions);
   }
@@ -2847,9 +3138,11 @@ const contractActions = computed<ContractAction[]>(() => {
     const payload = parseMaybeJsonRecord(row.payload);
     const kind = normalizeActionKind(row.kind);
     const protocol = normalizeSceneActionProtocol(row);
+    const targetRaw = parseMaybeJsonRecord(row.target);
+    const rowIntent = String(row.intent || '').trim();
     const effectiveKind = protocol?.mutation ? 'mutation' : kind;
     const level = String(row.level || 'body').trim().toLowerCase();
-    const actionId = toActionId(payload.action_id) ?? toActionId(payload.ref);
+    const actionId = toActionId(payload.action_id) ?? toActionId(payload.ref) ?? toActionId(row.actionId) ?? toActionId(row.action_id);
     const methodName = detectMethodName(key, String(payload.method || '').trim());
     if (isTierValidationActionHidden(methodName)) continue;
     const targetModel = String(row.target_model || row.model || model.value || '').trim();
@@ -2886,12 +3179,15 @@ const contractActions = computed<ContractAction[]>(() => {
       context,
       domainRaw,
       target,
-      url: String(payload.url || '').trim(),
+      url: String(payload.url || row.url || '').trim(),
       enabled,
       hint: status?.disabled === true
         ? status.reasonCode || 'disabled_by_status_contract'
         : (needRecord && !recordId.value ? 'requires record id' : (contractAllowed ? (warningMessage || policy.reason) : blockedMessage)),
+      intent: rowIntent,
       semantic: policy.semantic,
+      sourceWidgetId: String(row.sourceWidgetId || row.source_widget_id || '').trim(),
+      clientMode: String(targetRaw.mode || targetRaw.client_mode || row.clientMode || row.client_mode || '').trim(),
       visibleProfiles,
       requiredParams,
       requiresReason: row.requires_reason === true || requiredParams.includes('reason'),
@@ -2921,7 +3217,10 @@ const contractActions = computed<ContractAction[]>(() => {
       url: '',
       enabled: true,
       hint: '',
+      intent: '',
       semantic: 'secondary_action',
+      sourceWidgetId: '',
+      clientMode: '',
       visibleProfiles: ['edit', 'readonly'],
       requiredParams: [],
       requiresReason: false,
@@ -3089,7 +3388,10 @@ function contractActionFromNativeRow(row: Record<string, unknown>): ContractActi
     url: String(payload.url || row.url || '').trim(),
     enabled: !needRecord || Boolean(recordId.value),
     hint: needRecord && !recordId.value ? 'requires record id' : '',
+    intent: String(nativeAction.intent || row.intent || '').trim(),
     semantic: '',
+    sourceWidgetId: String(row.sourceWidgetId || row.source_widget_id || '').trim(),
+    clientMode: '',
     visibleProfiles: ['create', 'edit', 'readonly'],
     requiredParams: normalizeRequiredParams(nativeAction.required_params || row.required_params),
     requiresReason: nativeAction.requires_reason === true || row.requires_reason === true,
@@ -5458,9 +5760,121 @@ async function ensureSavedBeforeRecordAction() {
   return saveRecord({ on_success: ['scene_projection'] });
 }
 
+function applyClientMode(mode: string, toggle = true) {
+  const next = String(mode || '').trim();
+  if (!next) return false;
+  activeContractMode.value = toggle && activeContractMode.value === next ? '' : next;
+  contractModeFeedback.value = '';
+  if (!activeContractMode.value) closeContractPromptAction();
+  return true;
+}
+
+function promptContractActionParams(rule: Record<string, unknown>, providedValues?: Record<string, string>) {
+  const target = parseMaybeJsonRecord(rule.target);
+  const params = { ...parseMaybeJsonRecord(target.params || rule.params) };
+  const promptSchema = parseMaybeJsonRecord(target.prompt_schema || target.promptSchema || rule.prompt_schema || rule.promptSchema);
+  const fields = Array.isArray(promptSchema.fields) ? promptSchema.fields : [];
+  for (const raw of fields) {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
+    const field = raw as Record<string, unknown>;
+    const name = String(field.name || '').trim();
+    if (!name) continue;
+    const label = String(field.label || name).trim();
+    const required = field.required !== false;
+    const optionRows = Array.isArray(field.options)
+      ? field.options.map((item) => parseMaybeJsonRecord(item)).filter((row) => String(row.value || '').trim())
+      : [];
+    const options = optionRows
+      .map((row) => `${String(row.value || '').trim()}=${String(row.label || row.value || '').trim()}`)
+      .filter(Boolean);
+    const suffix = options.length ? ` (${options.join(', ')})` : '';
+    const rawValue = providedValues
+      ? String(providedValues[name] || '').trim()
+      : window.prompt(`${label}${suffix}`, String(field.default || ''))?.trim() || '';
+    const optionMatch = optionRows.find((row) => (
+      String(row.value || '').trim() === rawValue
+      || String(row.label || '').trim() === rawValue
+    ));
+    const value = optionMatch ? String(optionMatch.value || '').trim() : rawValue;
+    if (required && !value) return null;
+    if (value) params[name] = value;
+  }
+  return params;
+}
+
+function openContractModeAction(rule: Record<string, unknown>) {
+  const promptFields = rulePromptFields(rule);
+  if (!promptFields.length) {
+    void runContractRuleAction(rule);
+    return;
+  }
+  Object.keys(contractPromptValues).forEach((key) => {
+    delete contractPromptValues[key];
+  });
+  promptFields.forEach((field) => {
+    contractPromptValues[field.name] = field.defaultValue;
+  });
+  contractPromptRule.value = rule;
+  contractModeFeedback.value = '';
+}
+
+function closeContractPromptAction() {
+  contractPromptRule.value = null;
+  Object.keys(contractPromptValues).forEach((key) => {
+    delete contractPromptValues[key];
+  });
+}
+
+async function submitContractPromptAction() {
+  const rule = contractPromptRule.value;
+  if (!rule) return;
+  const params = promptContractActionParams(rule, contractPromptValues);
+  if (params === null) return;
+  await runContractRuleAction(rule, params);
+  closeContractPromptAction();
+}
+
+async function runContractRuleAction(rule: Record<string, unknown>, providedParams?: Record<string, unknown>) {
+  const target = parseMaybeJsonRecord(rule.target);
+  const mode = ruleClientMode(rule);
+  const intent = String(rule.intent || target.intent || '').trim();
+  if (intent === 'ui.local_mode' || intent === 'ui.mode' || (!intent && mode)) {
+    applyClientMode(mode, target.toggle !== false);
+    return;
+  }
+  if (!intent) return;
+  const params = providedParams || promptContractActionParams(rule);
+  if (params === null) return;
+  busyKind.value = 'action';
+  try {
+    await intentRequest({
+      intent,
+      params,
+      context: parseMaybeJsonRecord(target.context),
+    });
+    contractModeFeedback.value = String(target.success_message || '已更新').trim();
+    await reload();
+  } catch (err) {
+    errorMessage.value = err instanceof Error ? err.message : 'contract action failed';
+    status.value = 'error';
+  } finally {
+    busyKind.value = null;
+  }
+}
+
+async function onContractFieldAction(payload: FormSectionFieldActionPayload) {
+  const raw = payload.action.raw;
+  if (!raw) return;
+  await runContractRuleAction(raw);
+}
+
 async function runAction(action: ContractAction) {
   if (!action.enabled) return;
   if (!confirmActionSafety(action)) return;
+  if (action.intent === 'ui.local_mode' || action.intent === 'ui.mode' || action.clientMode) {
+    applyClientMode(action.clientMode, true);
+    return;
+  }
   const actionKey = String(action.key || '').trim().toLowerCase();
   if (actionKey === 'submit_intake' || actionKey === 'save_draft') {
     await saveRecord(action.refreshPolicy);
@@ -5866,6 +6280,32 @@ watch(
   { immediate: true },
 );
 
+function projectContextChangedProjectId(event: Event): number {
+  const detail = event instanceof CustomEvent && event.detail && typeof event.detail === 'object'
+    ? event.detail as Record<string, unknown>
+    : {};
+  return Number(detail.selected_project_id || session.projectContext?.selected?.id || 0) || 0;
+}
+
+function handleProjectContextChanged(event: Event): void {
+  const selectedProjectId = projectContextChangedProjectId(event);
+  if (model.value === 'project.project' && selectedProjectId > 0) {
+    void router.replace({
+      name: 'record',
+      params: { model: 'project.project', id: String(selectedProjectId) },
+      query: resolveWorkspaceContextQuery(),
+    });
+    return;
+  }
+  void router.replace({
+    path: '/s/projects.list',
+    query: {
+      ...resolveWorkspaceContextQuery(),
+      ...(selectedProjectId > 0 ? { project_id: String(selectedProjectId) } : {}),
+    },
+  });
+}
+
 watch(
   () => [
     intakeAutosaveKey.value,
@@ -5883,11 +6323,19 @@ watch(
   },
 );
 
-if (typeof document !== 'undefined') {
-  document.addEventListener('keydown', onRelationDialogDocumentKeydown);
-}
+onMounted(() => {
+  if (typeof window !== 'undefined') {
+    window.addEventListener(PROJECT_CONTEXT_CHANGED_EVENT, handleProjectContextChanged);
+  }
+  if (typeof document !== 'undefined') {
+    document.addEventListener('keydown', onRelationDialogDocumentKeydown);
+  }
+});
 
 onBeforeUnmount(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener(PROJECT_CONTEXT_CHANGED_EVENT, handleProjectContextChanged);
+  }
   if (typeof document !== 'undefined') {
     document.removeEventListener('keydown', onRelationDialogDocumentKeydown);
   }
@@ -6330,6 +6778,99 @@ onBeforeUnmount(() => {
   padding: 9px 14px;
   font-size: 14px;
   line-height: 1.45;
+}
+
+.contract-mode-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 0 0;
+  border-top: 1px solid var(--sc-app-border);
+}
+
+.contract-mode-feedback {
+  margin: 0;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.contract-mode-prompt,
+.contract-field-governance {
+  grid-column: 1 / -1;
+  border-top: 1px solid var(--sc-app-border);
+}
+
+.contract-mode-prompt {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 12px 0 0;
+}
+
+.contract-mode-prompt-field {
+  display: grid;
+  gap: 5px;
+  min-width: 180px;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.contract-mode-prompt-field input,
+.contract-mode-prompt-field select {
+  height: 34px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-primary);
+  padding: 0 10px;
+  font-size: 13px;
+}
+
+.contract-field-governance {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 8px 14px;
+  padding: 12px 0 0;
+}
+
+.contract-field-governance-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 34px;
+}
+
+.contract-field-governance-label {
+  min-width: 0;
+  color: var(--sc-app-text-primary);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.contract-field-governance-actions,
+.contract-field-governance-action {
+  display: inline-flex;
+  align-items: center;
+}
+
+.contract-field-governance-actions {
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.contract-field-governance-action {
+  gap: 4px;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.contract-field-governance-action input {
+  margin: 0;
 }
 
 .native-statusbar-step {

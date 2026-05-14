@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import importlib
 
+from odoo.exceptions import ValidationError
 from odoo.tests.common import TransactionCase, tagged
 
 from odoo.addons.smart_core.handlers.chatter_activity_schedule import ChatterActivityScheduleHandler
@@ -688,6 +689,227 @@ class TestOdooNativeAlignmentBoundaries(TransactionCase):
         self.assertEqual(transient.projection_scope, scope)
         self.assertEqual(transient.version, 0)
 
+    def test_view_config_projection_identity_accepts_explicit_view_id(self):
+        view = self.env.ref("base.view_partner_form")
+        ViewConfig = self.env["app.view.config"].sudo()
+
+        identity = ViewConfig.with_context(contract_view_id=view.id)._projection_identity("res.partner", "form")
+
+        self.assertEqual(identity.get("action_id"), False)
+        self.assertEqual(identity.get("source_view_id"), view.id)
+        self.assertEqual(identity.get("projection_scope"), f"view:{view.id}:res.partner:form")
+
+    def test_form_field_policy_view_scope_only_applies_to_matching_view(self):
+        view = self.env.ref("base.view_partner_form")
+        Policy = self.env["ui.form.field.policy"].sudo()
+        policy = Policy.create({
+            "model": "res.partner",
+            "field_name": "phone",
+            "visible": False,
+            "view_id": view.id,
+        })
+        base_contract = {
+            "layout": [
+                {
+                    "type": "sheet",
+                    "children": [
+                        {
+                            "type": "group",
+                            "children": [
+                                {"type": "field", "name": "name"},
+                                {"type": "field", "name": "phone"},
+                            ],
+                        }
+                    ],
+                }
+            ],
+            "field_modifiers": {"phone": {"readonly": False}},
+        }
+
+        generic = Policy.apply_to_view_contract(
+            dict(base_contract),
+            model_name="res.partner",
+            view_type="form",
+        )
+        scoped = Policy.apply_to_view_contract(
+            dict(base_contract),
+            model_name="res.partner",
+            view_type="form",
+            view_id=view.id,
+        )
+
+        self.assertFalse((generic.get("governance") or {}).get("form_field_policy"))
+        scoped_fields = policy._collect_contract_field_nodes(scoped.get("layout") or [])
+        self.assertNotIn("phone", scoped_fields)
+        governance = (scoped.get("governance") or {}).get("form_field_policy") or {}
+        self.assertEqual(governance.get("hidden_fields"), ["phone"])
+
+    def test_form_field_policy_appends_missing_visible_fields_by_group_title(self):
+        Policy = self.env["ui.form.field.policy"].sudo()
+        Policy.create({
+            "model": "res.partner",
+            "field_name": "phone",
+            "visible": True,
+            "group_title": "联系字段",
+            "sequence": 10,
+        })
+        Policy.create({
+            "model": "res.partner",
+            "field_name": "email",
+            "visible": True,
+            "group_title": "扩展字段",
+            "sequence": 20,
+        })
+        contract = {
+            "layout": [
+                {
+                    "type": "sheet",
+                    "children": [
+                        {
+                            "type": "group",
+                            "children": [{"type": "field", "name": "name"}],
+                        }
+                    ],
+                }
+            ],
+        }
+
+        result = Policy.apply_to_view_contract(contract, model_name="res.partner", view_type="form")
+
+        sheet = result["layout"][0]
+        appended = [
+            node for node in sheet.get("children", [])
+            if str(node.get("name") or "").startswith("business_config_field_policy_group_")
+        ]
+        self.assertEqual([node.get("string") for node in appended], ["联系字段", "扩展字段"])
+        self.assertEqual([[child.get("name") for child in node.get("children", [])] for node in appended], [["phone"], ["email"]])
+
+    def test_form_field_policy_revalidates_action_and_view_scope_on_write(self):
+        Policy = self.env["ui.form.field.policy"].sudo()
+        policy = Policy.create({
+            "model": "res.partner",
+            "field_name": "phone",
+            "visible": False,
+        })
+        other_action = self.env["ir.actions.act_window"].sudo().create({
+            "name": "Project Action Scope Probe",
+            "res_model": "project.project",
+            "view_mode": "tree,form",
+        })
+        other_view = self.env["ir.ui.view"].sudo().search([
+            ("model", "!=", "res.partner"),
+            ("type", "=", "form"),
+        ], limit=1)
+
+        with self.assertRaises(ValidationError):
+            policy.write({"action_id": other_action.id})
+        if other_view:
+            with self.assertRaises(ValidationError):
+                policy.write({"view_id": other_view.id})
+
+    def test_form_field_policy_onchange_action_sets_business_object(self):
+        action = self.env["ir.actions.act_window"].sudo().create({
+            "name": "Customer Field Config Probe",
+            "res_model": "res.partner",
+            "view_mode": "tree,form",
+        })
+
+        policy = self.env["ui.form.field.policy"].new({"action_id": action.id})
+        policy._onchange_action_id()
+
+        self.assertEqual(policy.model, "res.partner")
+        self.assertEqual(policy.model_id.model, "res.partner")
+
+    def test_form_contract_declares_current_page_field_settings_action(self):
+        group = self.env.ref("smart_construction_core.group_sc_cap_business_config_admin")
+        self.env.user.write({"groups_id": [(4, group.id)]})
+        action = self.env["ir.actions.act_window"].sudo().create({
+            "name": "Customer Current Form Settings Probe",
+            "res_model": "res.partner",
+            "view_mode": "tree,form",
+        })
+        assembler = PageAssembler(self.env, self.env["ir.model"].sudo().env)
+        data = {
+            "buttons": [],
+            "toolbar": {"header": [], "sidebar": [], "footer": []},
+            "views": {"form": {}},
+            "fields": {"name": {"string": "名称", "type": "char"}},
+            "render_profile": "edit",
+        }
+
+        assembler._inject_current_form_settings_action(
+            data,
+            model_name="res.partner",
+            action_id=action.id,
+            render_profile="edit",
+        )
+
+        actions = [row for row in data.get("toolbar", {}).get("header", []) if row.get("key") == "current_form_field_settings"]
+        self.assertEqual(len(actions), 1)
+        settings = actions[0]
+        self.assertEqual(settings.get("kind"), "client")
+        self.assertEqual(settings.get("intent"), "ui.local_mode")
+        self.assertEqual(settings.get("label"), "设置")
+        self.assertEqual((settings.get("target") or {}).get("mode"), "form_field_configuration")
+        governance = data.get("governance", {}).get("current_form_field_settings") or {}
+        self.assertEqual(governance.get("action_id"), action.id)
+        self.assertEqual(governance.get("model"), "res.partner")
+        action_groups = data.get("action_groups") or []
+        field_config_group = next((row for row in action_groups if row.get("key") == "current_form_field_configuration"), {})
+        self.assertTrue(field_config_group)
+        self.assertTrue(any(row.get("intent") == "ui.form_custom_field.create" for row in field_config_group.get("actions") or []))
+
+        result = UiContractV2Handler(self.env, su_env=self.env["ir.model"].sudo().env).handle({
+            "model": "res.partner",
+            "view_type": "form",
+            "action_id": action.id,
+            "render_profile": "edit",
+        })
+        envelope = result.to_legacy_dict() if hasattr(result, "to_legacy_dict") else result
+        self.assertTrue(envelope.get("ok", True))
+        action_rows = envelope["data"]["actionContract"]["actionRuleList"]
+        settings_rows = [
+            row for row in action_rows
+            if row.get("actionKey") == "current_form_field_settings"
+        ]
+        self.assertEqual(len(settings_rows), 1)
+        v2_action = settings_rows[0]
+        self.assertEqual(v2_action.get("sourceWidgetId"), "page.header")
+        self.assertEqual(v2_action.get("targetScope"), "page")
+        self.assertEqual(v2_action.get("triggerType"), "click")
+        self.assertEqual(v2_action.get("intent"), "ui.local_mode")
+        self.assertEqual((v2_action.get("target") or {}).get("mode"), "form_field_configuration")
+        dependency_graph = envelope["data"]["actionContract"]["dependencyGraph"]
+        self.assertIn(v2_action.get("actionId"), dependency_graph.get("page.header") or [])
+        self.assertTrue(any(
+            row.get("sourceWidgetId") == "mode.form_field_configuration"
+            and row.get("intent") == "ui.form_custom_field.create"
+            for row in action_rows
+        ))
+        self.assertTrue(any(
+            row.get("sourceWidgetId") == "field.name"
+            and row.get("intent") == "ui.form_field_policy.set"
+            for row in action_rows
+        ))
+
+    def test_custom_field_wizard_action_first_flow_autogenerates_field_name(self):
+        action = self.env["ir.actions.act_window"].sudo().create({
+            "name": "Customer Custom Field Probe",
+            "res_model": "res.partner",
+            "view_mode": "tree,form",
+        })
+
+        wizard = self.env["ui.form.custom.field.wizard"].new({
+            "action_id": action.id,
+            "label": "项目联系人",
+            "ttype": "char",
+        })
+        wizard._onchange_action_id()
+        wizard._onchange_label()
+
+        self.assertEqual(wizard.model_id.model, "res.partner")
+        self.assertTrue(str(wizard.field_name or "").startswith("x_custom_field"))
+
     def test_ui_overlay_and_asset_models_do_not_claim_business_fact_authority(self):
         self.assertEqual(AppViewFragment.SOURCE_KIND, "ui_contract_fragment_overlay")
         self.assertEqual(AppViewVariant.SOURCE_KIND, "ui_contract_variant_overlay")
@@ -746,6 +968,12 @@ class TestOdooNativeAlignmentBoundaries(TransactionCase):
         self.assertEqual(menu_source.get("kind"), "platform_menu_delivery_projection")
         self.assertTrue(menu_source.get("no_business_fact_authority"))
         self.assertIn("extension_business_config_role_resolver", menu_source.get("authorities") or [])
+
+    def test_menu_runtime_default_whitelist_includes_form_field_governance_models(self):
+        patterns = set(self.env["app.menu.config"].DEFAULT_MODEL_WHITELIST_PATTERNS)
+
+        self.assertIn(r"^ui\.form\.field\.policy$", patterns)
+        self.assertIn(r"^ui\.form\.custom\.field\.wizard$", patterns)
 
     def test_workspace_home_startup_surface_does_not_claim_business_fact_authority(self):
         source = workspace_home_contract_builder.source_authority_contract()

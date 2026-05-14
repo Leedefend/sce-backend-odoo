@@ -46,7 +46,7 @@
             type="search"
             :placeholder="projectSearchPlaceholder"
             @input="queueProjectSearch"
-            @keydown.enter.prevent="selectFirstProject"
+            @keydown.enter.prevent="submitProjectSearch"
           />
           <div class="project-options">
             <button
@@ -663,8 +663,22 @@ function queueProjectSearch() {
     clearTimeout(projectSearchTimer);
   }
   projectSearchTimer = setTimeout(() => {
+    projectSearchTimer = null;
     void loadProjectOptions();
   }, 260);
+}
+
+async function submitProjectSearch(event: KeyboardEvent) {
+  if (event.isComposing) return;
+  const target = event.currentTarget;
+  if (target instanceof HTMLInputElement) {
+    projectSearch.value = target.value;
+  }
+  if (projectSearchTimer) {
+    clearTimeout(projectSearchTimer);
+    projectSearchTimer = null;
+  }
+  await loadProjectOptions();
 }
 
 async function toggleProjectMenu() {
@@ -686,13 +700,6 @@ async function clearProjectSelection() {
   projectMenuOpen.value = false;
   await session.selectProjectContext(null);
   emitProjectContextChanged();
-}
-
-async function selectFirstProject() {
-  const first = projectOptions.value[0];
-  if (first) {
-    await selectProject(first);
-  }
 }
 
 function resolveActionBusinessTitle(action: unknown) {

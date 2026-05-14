@@ -362,7 +362,7 @@ function currentDbScope(): string {
 }
 
 function sessionStorageKey(): string {
-  return `sc_frontend_session_v0_4:${currentDbScope()}`;
+  return `sc_frontend_session_v0_5:${currentDbScope()}`;
 }
 
 function scopedTokenStorageKey(): string {
@@ -455,6 +455,18 @@ function normalizeProjectContext(raw: unknown): ProjectContextContract | null {
       scope: asText(persistence.scope),
       server_preference: Boolean(persistence.server_preference),
     } : undefined,
+  };
+}
+
+function projectContextStorageSnapshot(raw: ProjectContextContract | null): ProjectContextContract | null {
+  if (!raw) return null;
+  return {
+    ...raw,
+    // Selector options are a live backend contract. Persisting them makes the
+    // sidebar dropdown look stale after contract/schema upgrades.
+    options: [],
+    total: raw.selected ? 1 : 0,
+    query: '',
   };
 }
 
@@ -739,7 +751,7 @@ export const useSessionStore = defineStore('session', {
           this.sceneVersion = parsed.sceneVersion ?? null;
           this.roleSurface = parsed.roleSurface ?? null;
           this.roleSurfaceMap = parsed.roleSurfaceMap ?? {};
-          this.projectContext = normalizeProjectContext(parsed.projectContext) ?? null;
+          this.projectContext = projectContextStorageSnapshot(normalizeProjectContext(parsed.projectContext));
           this.capabilityCatalog = parsed.capabilityCatalog ?? {};
           this.sceneActionHints = parsed.sceneActionHints ?? {};
           this.capabilityGroups = parsed.capabilityGroups ?? [];
@@ -846,7 +858,7 @@ export const useSessionStore = defineStore('session', {
         sceneVersion: this.sceneVersion,
         roleSurface: this.roleSurface,
         roleSurfaceMap: this.roleSurfaceMap,
-        projectContext: this.projectContext,
+        projectContext: projectContextStorageSnapshot(this.projectContext),
         capabilityCatalog: this.capabilityCatalog,
         sceneActionHints: this.sceneActionHints,
         capabilityGroups: this.capabilityGroups,

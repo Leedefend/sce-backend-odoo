@@ -189,6 +189,7 @@
         'views/support/sc_dictionary_views.xml',
         'views/support/dictionary_views.xml',
         'views/support/quota_import_views.xml',
+        'views/support/form_field_policy_views.xml',
         'views/support/project_stage_requirements_views.xml',
         'views/support/project_stage_requirement_item_views.xml',
         'views/support/scene_orchestration_views.xml',
