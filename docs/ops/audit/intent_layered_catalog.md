@@ -18,9 +18,9 @@
 | permission.check | core | N | 0 | addons/smart_core/handlers/permission_check.py |
 | system.init | core | N | 0 | addons/smart_core/handlers/system_init.py |
 | ui.contract | core | N | 0 | addons/smart_core/handlers/ui_contract.py |
-| app.catalog | domain | N | 0 | addons/smart_core/handlers/app_catalog.py |
-| app.nav | domain | N | 0 | addons/smart_core/handlers/app_nav.py |
-| app.open | domain | N | 0 | addons/smart_core/handlers/app_open.py |
+| app.catalog | core | N | 0 | addons/smart_core/handlers/app_shell.py |
+| app.nav | core | N | 0 | addons/smart_core/handlers/app_shell.py |
+| app.open | core | N | 0 | addons/smart_core/handlers/app_shell.py |
 | auth.logout | domain | N | 0 | addons/smart_core/handlers/login.py |
 | capability.describe | domain | N | 0 | addons/smart_construction_core/handlers/capability_describe.py |
 | capability.visibility.report | domain | N | 0 | addons/smart_construction_core/handlers/capability_visibility_report.py |
@@ -44,9 +44,9 @@
 | scene.packages.installed | domain | N | 1 | addons/smart_core/handlers/scene_packages_installed.py |
 | session.bootstrap | domain | N | 0 | addons/smart_core/handlers/session_bootstrap.py |
 | system.ping.construction | domain | Y | 1 | addons/smart_construction_core/handlers/system_ping_construction.py |
-| usage.export.csv | domain | N | 1 | addons/smart_construction_core/handlers/usage_export_csv.py |
-| usage.report | domain | N | 0 | addons/smart_construction_core/handlers/usage_report.py |
-| usage.track | domain | Y | 1 | addons/smart_construction_core/handlers/usage_track.py |
+| usage.export.csv | core | N | 1 | addons/smart_core/handlers/usage_export_csv.py |
+| usage.report | core | N | 0 | addons/smart_core/handlers/usage_report.py |
+| usage.track | core | Y | 1 | addons/smart_core/handlers/usage_track.py |
 | scene.governance.export_contract | governance | N | 0 | addons/smart_core/handlers/scene_governance.py |
 | scene.governance.pin_stable | governance | Y | 0 | addons/smart_core/handlers/scene_governance.py |
 | scene.governance.rollback | governance | Y | 0 | addons/smart_core/handlers/scene_governance.py |

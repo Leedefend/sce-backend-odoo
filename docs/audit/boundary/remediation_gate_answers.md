@@ -41,4 +41,4 @@
 - `| 双注册 | `surface:capability_registry` | `3` | `7` | `smart_construction_core, smart_construction_scene, smart_core` |`
 - `| 双注册 | `surface:CAPABILITY_GROUPS` | `2` | `12` | `smart_construction_core, smart_core` |`
 - `| 双注册 | `surface:list_capabilities_for_user` | `2` | `7` | `smart_construction_core, smart_core` |`
-- `| 双注册 | `surface:app.nav` | `2` | `4` | `smart_construction_core, smart_core` |`
+- `surface:app.nav` 已从双注册清单移除；`app.catalog` / `app.nav` / `app.open` 由 `smart_core.handlers.app_shell` 统一拥有。

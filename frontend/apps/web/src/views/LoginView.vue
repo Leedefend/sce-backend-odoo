@@ -6,9 +6,9 @@
 
     <section class="login-layout">
       <section class="brand-panel" aria-label="平台介绍">
-        <p class="brand-title">{{ pageText('brand_name', '智能施工企业管理平台') }}</p>
-        <p class="brand-subtitle">{{ pageText('brand_subtitle', '工程项目全生命周期管理系统') }}</p>
-        <p class="brand-slogan">{{ pageText('brand_slogan', '让项目透明 · 让合同可控 · 让资金协同 · 让风险可预警') }}</p>
+        <p class="brand-title">{{ pageText('brand_name', config.appBrand.name) }}</p>
+        <p class="brand-subtitle">{{ pageText('brand_subtitle', config.appBrand.subtitle) }}</p>
+        <p class="brand-slogan">{{ pageText('brand_slogan', config.appBrand.slogan) }}</p>
 
         <ul class="value-list" aria-label="价值主张">
           <li v-for="line in valueLines" :key="line">{{ line }}</li>
@@ -41,9 +41,9 @@
           :style="pageSectionStyle('card')"
         >
           <header class="brand-header">
-            <span class="product-badge">SCEMS · v1.0</span>
-            <p class="brand-kicker">智能建造 · 企业级管理</p>
-            <h1>{{ pageText('title', '登录') }}</h1>
+            <span class="product-badge">{{ config.appBrand.productBadge }}</span>
+            <p class="brand-kicker">{{ config.appBrand.kicker }}</p>
+            <h1>{{ pageText('title', loginTitleFallback) }}</h1>
           </header>
 
           <form
@@ -95,8 +95,8 @@
     </section>
 
     <footer class="page-footer">
-      <p>© 2025 SCEMS Platform</p>
-      <p>Smart Construction Enterprise Management System</p>
+      <p>{{ config.appBrand.footerPrimary }}</p>
+      <p>{{ config.appBrand.footerSecondary }}</p>
     </footer>
   </main>
 </template>
@@ -107,7 +107,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useSessionStore } from '../stores/session';
 import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
-import { resolveActiveDb } from '../services/dbContext';
+import { isConfiguredDbPinned, isPlatformAdminEntryRuntime, resolveConfiguredDb } from '../services/dbContext';
 import { config } from '../config';
 import { normalizeLegacyWorkbenchPath } from '../app/routeQuery';
 
@@ -126,30 +126,33 @@ const pageGlobalActions = pageContract.globalActions;
 const username = ref('');
 const password = ref('');
 const dbName = ref(
-  config.odooDbPinned
-    ? String(config.odooDb || '').trim()
-    : resolveActiveDb(String(config.odooDb || '').trim()),
+  resolveConfiguredDb(String(config.odooDb || '').trim()),
 );
 const loading = ref(false);
 const error = ref('');
 const headerActions = computed(() => pageGlobalActions.value);
-const dbInputDisabled = computed(() => loading.value || config.odooDbPinned);
+const dbInputDisabled = computed(() => loading.value || isConfiguredDbPinned());
+const loginTitleFallback = computed(() => isPlatformAdminEntryRuntime() ? '平台管理员登录' : '登录');
 const capabilityItems = computed(() => [
-  { key: 'project', icon: '📊', label: pageText('capability_project', '项目全过程管理') },
-  { key: 'contract_cost', icon: '📑', label: pageText('capability_contract_cost', '合同成本联动') },
-  { key: 'fund', icon: '💰', label: pageText('capability_fund', '资金支付协同') },
-  { key: 'risk', icon: '⚠', label: pageText('capability_risk', '风险预警驾驶舱') },
+  { key: 'project', icon: '📊', label: pageText('capability_project', config.appBrand.capabilities.project) },
+  { key: 'contract_cost', icon: '📑', label: pageText('capability_contract_cost', config.appBrand.capabilities.contractCost) },
+  { key: 'fund', icon: '💰', label: pageText('capability_fund', config.appBrand.capabilities.fund) },
+  { key: 'risk', icon: '⚠', label: pageText('capability_risk', config.appBrand.capabilities.risk) },
 ]);
-const valueLines = computed(() => [
-  pageText('value_line_1', '让项目透明'),
-  pageText('value_line_2', '让合同可控'),
-  pageText('value_line_3', '让资金协同'),
-  pageText('value_line_4', '让风险可预警'),
-]);
+const valueLines = computed(() => config.appBrand.valueLines.map((line, index) => pageText(`value_line_${index + 1}`, line)));
 
 watch([username, password], () => {
   if (error.value) error.value = '';
 });
+
+watch(
+  () => route.fullPath,
+  () => {
+    if (!loading.value) {
+      dbName.value = resolveConfiguredDb(String(config.odooDb || '').trim());
+    }
+  },
+);
 
 function normalizeLoginError(err: unknown): string {
   const fallback = pageText('error_login_failed', '登录失败，请稍后重试');
@@ -179,7 +182,7 @@ async function onSubmit() {
     const normalizedRedirect = normalizeLegacyWorkbenchPath(rawRedirect);
     const redirect = (normalizedRedirect && !isLikelyUnboundActionRoute)
       ? normalizedRedirect
-      : session.resolveLandingPath('/');
+      : isPlatformAdminEntryRuntime() ? '/?platform_admin=1' : session.resolveLandingPath('/');
     await router.push(redirect);
   } catch (err) {
     error.value = normalizeLoginError(err);

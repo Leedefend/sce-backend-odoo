@@ -48,14 +48,14 @@
 | `capability.describe` | `CapabilityDescribeHandler` | `addons/smart_construction_core/handlers/capability_describe.py` | 场景运行时意图 | `capability` |
 | `capability.visibility.report` | `CapabilityVisibilityReportHandler` | `addons/smart_construction_core/handlers/capability_visibility_report.py` | 场景运行时意图 | `capability` |
 | `my.work.summary` | `MyWorkSummaryHandler` | `addons/smart_construction_core/handlers/my_work_summary.py` | 场景运行时意图 | `scene` |
-| `app.catalog` | `AppCatalogHandler` | `addons/smart_construction_core/handlers/app_catalog.py` | 平台意图 | `catalog, scene` |
-| `app.nav` | `AppNavHandler` | `addons/smart_construction_core/handlers/app_nav.py` | 平台意图 | `app.nav` |
-| `app.open` | `AppOpenHandler` | `addons/smart_construction_core/handlers/app_open.py` | 平台意图 | `app.open` |
+| `app.catalog` | `AppCatalogHandler` | `addons/smart_core/handlers/app_shell.py` | 平台壳意图 | `catalog, scene` |
+| `app.nav` | `AppNavHandler` | `addons/smart_core/handlers/app_shell.py` | 平台壳意图 | `app.nav` |
+| `app.open` | `AppOpenHandler` | `addons/smart_core/handlers/app_shell.py` | 平台壳意图 | `app.open` |
 | `system.ping.construction` | `SystemPingConstructionHandler` | `addons/smart_construction_core/handlers/system_ping_construction.py` | 平台意图 | `none` |
 | `telemetry.track` | `TelemetryTrackHandler` | `addons/smart_construction_core/handlers/telemetry_track.py` | 观测意图 | `telemetry` |
-| `usage.export.csv` | `UsageExportCsvHandler` | `addons/smart_construction_core/handlers/usage_export_csv.py` | 观测意图 | `capability, usage` |
-| `usage.report` | `UsageReportHandler` | `addons/smart_construction_core/handlers/usage_report.py` | 观测意图 | `capability, scene, usage` |
-| `usage.track` | `UsageTrackHandler` | `addons/smart_construction_core/handlers/usage_track.py` | 观测意图 | `capability, scene, usage` |
+| `usage.export.csv` | `UsageExportCsvHandler` | `addons/smart_core/handlers/usage_export_csv.py` | 平台观测意图 | `capability, usage` |
+| `usage.report` | `UsageReportHandler` | `addons/smart_core/handlers/usage_report.py` | 平台观测意图 | `capability, scene, usage` |
+| `usage.track` | `UsageTrackHandler` | `addons/smart_core/handlers/usage_track.py` | 平台观测意图 | `capability, scene, usage` |
 
 ## Screening Notes
 

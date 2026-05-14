@@ -31,7 +31,47 @@
         "cost.project_cost_ledger",
         "cost.cost_compare",
         "cost.profit_compare",
-        "cost.project_progress"
+        "cost.project_progress",
+        "material.center",
+        "material.catalog",
+        "material.procurement",
+        "material.rfq",
+        "material.acceptance",
+        "material.inbound",
+        "material.outbound",
+        "material.price_library",
+        "material.settlement",
+        "material.rental",
+        "material.rental_order",
+        "material.rental_settlement",
+        "labor.management",
+        "labor.request",
+        "labor.attendance",
+        "labor.settlement",
+        "equipment.management",
+        "equipment.request",
+        "equipment.usage",
+        "equipment.settlement",
+        "subcontract.management",
+        "subcontract.request",
+        "subcontract.register",
+        "subcontract.settlement"
+      ]
+    },
+    {
+      "menu_key": "site_execution",
+      "menu_name": "现场执行",
+      "entries": [
+        "construction.execution",
+        "construction.plan",
+        "construction.plan_report",
+        "construction.diary",
+        "quality.center",
+        "quality.rectification",
+        "quality.recheck",
+        "safety.center",
+        "safety.rectification",
+        "safety.recheck"
       ]
     },
     {

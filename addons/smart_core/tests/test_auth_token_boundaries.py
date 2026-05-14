@@ -21,8 +21,25 @@ class _FakeEnv:
 
 
 class _FakeRequest:
-    def __init__(self, dbname="db_a"):
+    def __init__(self, dbname="db_a", *, header_db=None, query_db=None, session_db=None):
         self.env = _FakeEnv(dbname)
+        self.session = types.SimpleNamespace(db=session_db)
+        self.httprequest = types.SimpleNamespace(
+            headers={
+                key: value
+                for key, value in {
+                    "X-Odoo-DB": header_db,
+                }.items()
+                if value is not None
+            },
+            args={
+                key: value
+                for key, value in {
+                    "db": query_db,
+                }.items()
+                if value is not None
+            },
+        )
 
 
 def _load_auth(fake_request):
@@ -98,6 +115,16 @@ class TestAuthTokenBoundaries(unittest.TestCase):
         self.auth._ensure_token_db_matches_request("db_a")
         with self.assertRaises(_AccessDenied):
             self.auth._ensure_token_db_matches_request("db_b")
+
+    def test_request_db_prefers_explicit_target_db(self):
+        auth = _load_auth(_FakeRequest("default_db", header_db="target_from_header"))
+        self.assertEqual(auth._request_db_name(), "target_from_header")
+
+        auth = _load_auth(_FakeRequest("default_db", query_db="target_from_query"))
+        self.assertEqual(auth._request_db_name(), "target_from_query")
+
+        auth = _load_auth(_FakeRequest("default_db", session_db="target_from_session"))
+        self.assertEqual(auth._request_db_name(), "target_from_session")
 
 
 if __name__ == "__main__":

@@ -21,12 +21,12 @@
   - read implied `group_sc_internal_user`（必要时再 implied 原生字段组，如项目 read implied `project.group_project_user` 以读阶段）。
   - user implied read。
   - manager implied user（不要在 manager 重拼链路，除非有硬性理由）。
-- **横切能力组**：例如 `group_sc_cap_contact_manager`（implied `base.group_partner_manager`）、`group_sc_cap_config_admin`、`group_sc_cap_data_read`。
+- **横切能力组**：例如 `group_sc_cap_contact_manager`（implied `base.group_partner_manager`）、`group_sc_cap_business_config_admin`、`group_sc_cap_data_read`。平台管理员归口 `smart_core.group_smart_core_admin`，不作为业务能力包下发。
 - **超级管理员**：`group_sc_super_admin`，仅测试/运维，implied 全部 SC manager 能力组 + 必要原生管理组。
 
 ## 4. 命名规范
 - XML ID：`group_sc_cap_<domain>_<level>`，基础：`group_sc_internal_user`，超管：`group_sc_super_admin`。
-- 展示名：`SC 能力 - <中心/域><级别>`；横切示例：`SC 能力 - 联系人管理`、`SC 能力 - 配置管理员`；基础：`SC 基础 - 内部用户`；超管：`SC 超级管理员（全能力）`。
+- 展示名：`SC 能力 - <中心/域><级别>`；横切示例：`SC 能力 - 联系人管理`、`SC 能力 - 业务配置管理员`；基础：`SC 基础 - 内部用户`；超管：`SC 超级管理员（全能力）`。
 - 分类：所有 SC 能力组放 “Smart Construction / 业务能力”；原生/技术组放 Hidden。
 
 ## 5. 权限实现分工

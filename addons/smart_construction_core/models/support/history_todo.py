@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import _, fields, models
 from odoo.exceptions import UserError
-from odoo.addons.smart_construction_core.services.platform_admin import user_is_platform_admin
+from odoo.addons.smart_core.security.platform_admin import user_is_platform_admin
 
 
 class ScHistoryTodo(models.Model):

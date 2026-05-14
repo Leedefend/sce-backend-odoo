@@ -33,5 +33,5 @@
               name="系统配置"
               parent="menu_sc_root"
               sequence="95"
-              groups="smart_construction_core.group_sc_cap_config_admin"/>
+              groups="smart_core.group_smart_core_admin"/>
 </odoo>

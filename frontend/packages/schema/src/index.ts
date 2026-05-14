@@ -29,6 +29,8 @@ export interface LoginResponse {
     token?: string;
     token_type?: string;
     expires_at?: number;
+    db?: string;
+    entry_kind?: string;
   };
   user: {
     id: number;
@@ -69,6 +71,15 @@ export interface LoginResponse {
   debug?: {
     groups?: string[];
     intents?: Array<{ name: string; description?: string }>;
+  };
+  login_route?: {
+    contract_version?: string;
+    mode?: string;
+    target_db?: string;
+    entry_kind?: string;
+    product_key?: string;
+    source?: string;
+    db_authority?: string;
   };
 }
 
@@ -171,6 +182,7 @@ export interface AppInitResponse {
     id: number;
     name: string;
     groups_xmlids?: string[];
+    is_platform_admin?: boolean;
     lang?: string;
     tz?: string;
     company_id?: number | null;

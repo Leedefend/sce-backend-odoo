@@ -5,6 +5,15 @@
 - handler_class_count: `43`
 - core_extension_registry_bindings: `42`
 
+Current ownership note: `usage.track`, `usage.report`, and `usage.export.csv`
+are now owned by `smart_core.handlers.*`; the construction handler files are
+compatibility shims only and are not contributed by
+`smart_construction_core/core_extension.py`.
+
+Current app shell note: `app.catalog`, `app.nav`, and `app.open` are owned by
+`smart_core.handlers.app_shell`; `smart_construction_core/core_extension.py`
+does not contribute these platform shell intents.
+
 ## Core Extension Registry Bindings
 
 | Intent Name | Handler Class | Handler File | Handler INTENT_TYPE |
@@ -14,10 +23,7 @@
 | `my.work.summary` | `MyWorkSummaryHandler` | `addons/smart_construction_core/handlers/my_work_summary.py` | `my.work.summary` |
 | `my.work.complete` | `MyWorkCompleteHandler` | `addons/smart_construction_core/handlers/my_work_complete.py` | `my.work.complete` |
 | `my.work.complete_batch` | `MyWorkCompleteBatchHandler` | `addons/smart_construction_core/handlers/my_work_complete.py` | `my.work.complete_batch` |
-| `usage.track` | `UsageTrackHandler` | `addons/smart_construction_core/handlers/usage_track.py` | `usage.track` |
 | `telemetry.track` | `TelemetryTrackHandler` | `addons/smart_construction_core/handlers/telemetry_track.py` | `telemetry.track` |
-| `usage.report` | `UsageReportHandler` | `addons/smart_construction_core/handlers/usage_report.py` | `usage.report` |
-| `usage.export.csv` | `UsageExportCsvHandler` | `addons/smart_construction_core/handlers/usage_export_csv.py` | `usage.export.csv` |
 | `capability.visibility.report` | `CapabilityVisibilityReportHandler` | `addons/smart_construction_core/handlers/capability_visibility_report.py` | `capability.visibility.report` |
 | `payment.request.submit` | `PaymentRequestSubmitHandler` | `addons/smart_construction_core/handlers/payment_request_approval.py` | `payment.request.submit` |
 | `payment.request.approve` | `PaymentRequestApproveHandler` | `addons/smart_construction_core/handlers/payment_request_approval.py` | `payment.request.approve` |
@@ -48,17 +54,14 @@
 | `settlement.block.fetch` | `SettlementSliceBlockFetchHandler` | `addons/smart_construction_core/handlers/settlement_slice_block_fetch.py` | `settlement.block.fetch` |
 | `project.initiation.enter` | `ProjectInitiationEnterHandler` | `addons/smart_construction_core/handlers/project_initiation_enter.py` | `project.initiation.enter` |
 | `risk.action.execute` | `RiskActionExecuteHandler` | `addons/smart_construction_core/handlers/risk_action_execute.py` | `risk.action.execute` |
-| `app.catalog` | `AppCatalogHandler` | `addons/smart_construction_core/handlers/app_catalog.py` | `app.catalog` |
-| `app.nav` | `AppNavHandler` | `addons/smart_construction_core/handlers/app_nav.py` | `app.nav` |
-| `app.open` | `AppOpenHandler` | `addons/smart_construction_core/handlers/app_open.py` | `app.open` |
 
 ## Handler Class Inventory
 
 | Handler File | Handler Class | INTENT_TYPE | Has Handle | Service Imports | Semantic Signals |
 |---|---|---|---|---|---|
-| `addons/smart_construction_core/handlers/app_catalog.py` | `AppCatalogHandler` | `app.catalog` | `yes` | `none` | `catalog, scene` |
-| `addons/smart_construction_core/handlers/app_nav.py` | `AppNavHandler` | `app.nav` | `yes` | `none` | `app.nav` |
-| `addons/smart_construction_core/handlers/app_open.py` | `AppOpenHandler` | `app.open` | `yes` | `odoo.addons.smart_core.app_config_engine.services.contract_service, odoo.addons.smart_core.app_config_engine.services.dispatchers.action_dispatcher` | `app.open` |
+| `addons/smart_core/handlers/app_shell.py` | `AppCatalogHandler` | `app.catalog` | `yes` | `none` | `catalog, scene` |
+| `addons/smart_core/handlers/app_shell.py` | `AppNavHandler` | `app.nav` | `yes` | `none` | `app.nav` |
+| `addons/smart_core/handlers/app_shell.py` | `AppOpenHandler` | `app.open` | `yes` | `none` | `app.open` |
 | `addons/smart_construction_core/handlers/business_evidence_trace.py` | `BusinessEvidenceTraceHandler` | `business.evidence.trace` | `yes` | `odoo.addons.smart_construction_core.services.evidence_chain_service` | `none` |
 | `addons/smart_construction_core/handlers/capability_describe.py` | `CapabilityDescribeHandler` | `capability.describe` | `yes` | `none` | `capability` |
 | `addons/smart_construction_core/handlers/capability_visibility_report.py` | `CapabilityVisibilityReportHandler` | `capability.visibility.report` | `yes` | `none` | `capability` |
@@ -96,9 +99,9 @@
 | `addons/smart_construction_core/handlers/settlement_slice_enter.py` | `SettlementSliceEnterHandler` | `settlement.enter` | `yes` | `odoo.addons.smart_construction_core.services.project_context_contract, odoo.addons.smart_construction_scene.services.project_management_entry_target` | `capability, scene` |
 | `addons/smart_construction_core/handlers/system_ping_construction.py` | `SystemPingConstructionHandler` | `system.ping.construction` | `yes` | `none` | `none` |
 | `addons/smart_construction_core/handlers/telemetry_track.py` | `TelemetryTrackHandler` | `telemetry.track` | `yes` | `none` | `telemetry` |
-| `addons/smart_construction_core/handlers/usage_export_csv.py` | `UsageExportCsvHandler` | `usage.export.csv` | `yes` | `none` | `capability, usage` |
-| `addons/smart_construction_core/handlers/usage_report.py` | `UsageReportHandler` | `usage.report` | `yes` | `none` | `capability, scene, usage` |
-| `addons/smart_construction_core/handlers/usage_track.py` | `UsageTrackHandler` | `usage.track` | `yes` | `none` | `capability, scene, usage` |
+| `addons/smart_core/handlers/usage_export_csv.py` | `UsageExportCsvHandler` | `usage.export.csv` | `yes` | `none` | `capability, usage` |
+| `addons/smart_core/handlers/usage_report.py` | `UsageReportHandler` | `usage.report` | `yes` | `none` | `capability, scene, usage` |
+| `addons/smart_core/handlers/usage_track.py` | `UsageTrackHandler` | `usage.track` | `yes` | `none` | `capability, scene, usage` |
 
 ## Core Extension Cross-Module Hooks (Evidence)
 

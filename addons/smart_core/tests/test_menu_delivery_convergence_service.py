@@ -31,6 +31,15 @@ class TestMenuDeliveryConvergenceService(TransactionCase):
             "delivery_business_config",
         )
 
+    def test_basic_setup_group_is_not_ordinary_user_product_surface(self):
+        path = ["智能施工 2.0", "基础设置", "客户"]
+
+        self.assertEqual(self._classify("客户", path), "hidden_business_config")
+        self.assertEqual(
+            self._classify("客户", path, is_business_config_admin=True),
+            "delivery_business_config",
+        )
+
     def test_form_field_configuration_is_business_config_surface(self):
         path = ["智慧施工管理平台", "基础设置", "表单字段配置"]
 

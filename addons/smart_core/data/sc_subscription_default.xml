@@ -2,8 +2,10 @@
 <odoo>
     <data noupdate="1">
         <function model="sc.subscription.plan" name="ensure_platform_default_plans"/>
+        <function model="sc.login.route" name="ensure_platform_default_login_routes"/>
     </data>
     <data>
+        <function model="sc.product.policy" name="ensure_platform_default_product_policies"/>
         <function model="sc.subscription.plan" name="ensure_platform_access_ownership"/>
     </data>
 </odoo>

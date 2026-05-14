@@ -100,10 +100,11 @@ Observed with Odoo runtime menu visibility on `sc_prod_sim`.
    through a child menu even though they do not have the top-level platform
    configuration menu. This is a system-configuration leak.
 
-2. `demo_role_executive` currently has `base.group_system=true` because the
-   executive role implies `group_sc_cap_config_admin`, and that group implies
-   Odoo system administrator. This makes management a platform administrator,
-   which is not acceptable for production.
+2. `demo_role_executive` previously had `base.group_system=true` because the
+   executive role implied the legacy platform admin bridge
+   `group_sc_cap_config_admin`, and that bridge implied Odoo system
+   administrator. This made management a platform administrator, which is not
+   acceptable for production.
 
 3. The current `基础资料` menu mixes business configuration and platform
    configuration:
@@ -118,9 +119,9 @@ Observed with Odoo runtime menu visibility on `sc_prod_sim`.
    for implementers, but it is not a daily business processing entry and should
    move to business configuration.
 
-5. `Business Full` currently includes platform configuration through
-   `group_sc_cap_config_admin`. A business-full test role should represent full
-   business operation, not system administration.
+5. `Business Full` previously included platform configuration through the
+   legacy platform admin bridge. A business-full test role should represent
+   full business operation, not system administration.
 
 ## Proposed Role Boundary
 
@@ -128,15 +129,17 @@ Observed with Odoo runtime menu visibility on `sc_prod_sim`.
 | --- | --- | --- | --- |
 | Business processing | existing center read/user/manager groups | No | ordinary users and approvers |
 | Business configuration | `group_sc_cap_business_config_admin` | No | business system administrators, implementation key users |
-| Platform/system configuration | `group_sc_cap_config_admin` renamed as platform system admin | Yes | platform administrators only |
+| Platform/system configuration | `smart_core.group_smart_core_admin` | Yes | platform administrators only |
 
 Compatibility note:
 
-- Keep the XML id `group_sc_cap_config_admin` for platform system admin to avoid
-  breaking existing references.
+- Keep the legacy XML id `group_sc_cap_config_admin` only as a compatibility
+  bridge for older references; new platform surfaces bind to
+  `smart_core.group_smart_core_admin`.
 - Add a new XML id `group_sc_cap_business_config_admin` for business
   configuration.
-- Remove `group_sc_cap_config_admin` from business-full and executive roles.
+- Remove the legacy platform admin bridge from business-full and executive
+  roles.
 
 ## Proposed Menu Structure
 
@@ -178,7 +181,7 @@ Suggested children:
 Visibility:
 
 - `group_sc_cap_business_config_admin`
-- platform system admin through implication
+- platform system admin through implication or explicit assignment
 
 ### System Configuration Menus
 
@@ -198,14 +201,14 @@ Suggested children:
 
 Visibility:
 
-- `group_sc_cap_config_admin` only
+- `smart_core.group_smart_core_admin` only
 
 ## Implementation Plan
 
 1. Security groups
    - Add `group_sc_cap_business_config_admin`.
-   - Rename the display name of `group_sc_cap_config_admin` to platform system
-     admin while keeping its XML id.
+   - Keep `group_sc_cap_config_admin` as a compatibility bridge only; stop
+     binding new platform surfaces to it.
    - Remove platform admin from `Business Full`.
    - Remove platform admin from executive role; if needed, give executive
      business configuration only.
@@ -250,4 +253,3 @@ Visibility:
   administrator.
 - Executive role is management/business visibility, not platform
   administration.
-

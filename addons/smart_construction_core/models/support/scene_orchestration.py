@@ -5,6 +5,12 @@ import re
 
 from odoo import api, models, fields, _
 from odoo.exceptions import UserError
+from odoo.addons.smart_core.security.platform_company_access import (
+    platform_feature_flags_for_user,
+    platform_limit_for_company,
+    platform_usage_value,
+)
+from odoo.addons.smart_core.security.platform_admin import user_is_platform_admin
 
 CAPABILITY_KEY_RE = re.compile(r"^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$")
 
@@ -92,7 +98,7 @@ class ScCapability(models.Model):
         for xmlid in group_xmlids:
             if isinstance(xmlid, str) and xmlid.startswith(prefix):
                 role_codes.add(xmlid[len(prefix):])
-        if user.has_group("base.group_system"):
+        if user_is_platform_admin(user):
             role_codes.add("admin")
         return role_codes
 
@@ -181,14 +187,7 @@ class ScCapability(models.Model):
 
         # Entitlement mismatch: visible but locked.
         if self.required_flag:
-            flags = {}
-            Entitlement = self.env.get("sc.entitlement")
-            if Entitlement and user:
-                try:
-                    payload = Entitlement.get_payload(user) or {}
-                    flags = payload.get("flags") or {}
-                except Exception:
-                    flags = {}
+            flags = platform_feature_flags_for_user(self.env, user) if user else {}
             if not self._flag_enabled(flags, self.required_flag):
                 allowed = False
                 reason_code = "FEATURE_DISABLED"
@@ -653,26 +652,20 @@ class ScScene(models.Model):
 
     def action_publish(self):
         for scene in self:
-            Entitlement = scene.env.get("sc.entitlement")
-            Usage = scene.env.get("sc.usage.counter")
-            if Entitlement:
-                ent = Entitlement.get_effective(scene.env.user.company_id)
-                limits = ent.effective_limits_json or {}
-                max_scenes = int(limits.get("max_scenes") or 0)
-                if max_scenes:
-                    current = None
-                    if Usage:
-                        current = Usage.get_usage_map(scene.env.user.company_id).get("scenes_published")
-                    if current is None:
-                        current = scene.env["sc.scene"].search_count([
-                            ("active", "=", True),
-                            ("state", "=", "published"),
-                            ("is_test", "=", False),
-                        ])
-                    if current >= max_scenes:
-                        raise UserError(
-                            _("LIMIT_EXCEEDED: max_scenes=%s current=%s") % (max_scenes, current)
-                        )
+            company = scene.env.user.company_id
+            max_scenes = platform_limit_for_company(scene.env, company, "max_scenes")
+            if max_scenes:
+                current = platform_usage_value(scene.env, company, "scenes_published")
+                if current is None:
+                    current = scene.env["sc.scene"].search_count([
+                        ("active", "=", True),
+                        ("state", "=", "published"),
+                        ("is_test", "=", False),
+                    ])
+                if current >= max_scenes:
+                    raise UserError(
+                        _("LIMIT_EXCEEDED: max_scenes=%s current=%s") % (max_scenes, current)
+                    )
             status, issues, validation = scene._validate_scene()
             if status != "pass":
                 raise UserError(

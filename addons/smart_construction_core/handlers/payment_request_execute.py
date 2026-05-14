@@ -9,6 +9,7 @@ from odoo.addons.smart_core.handlers.reason_codes import (
     REASON_UNSUPPORTED_BUTTON_TYPE,
     failure_meta_for_reason,
 )
+from odoo.addons.smart_core.security.platform_admin import user_is_platform_admin
 from odoo.exceptions import AccessError
 
 from .payment_request_approval import (
@@ -46,7 +47,7 @@ class PaymentRequestExecuteHandler(BaseIntentHandler):
         user = self.env.user
         if not user:
             raise AccessError("PERMISSION_DENIED: missing required group")
-        if user.has_group("base.group_system"):
+        if user_is_platform_admin(user):
             return
         required = [str(x).strip() for x in (getattr(self, "ACCESS_GROUPS", []) or []) if str(x).strip()]
         for xmlid in required:

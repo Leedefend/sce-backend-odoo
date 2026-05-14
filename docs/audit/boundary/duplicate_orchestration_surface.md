@@ -4,7 +4,11 @@
 - Scope: handlers/services/orchestration + smart_core + smart_construction_scene
 
 - candidate_keys_scanned: `305`
-- duplicate_keys_across_modules: `55`
+- duplicate_keys_across_modules: `52`
+
+App shell orchestration surfaces are closed: `app.catalog`, `app.nav`, and
+`app.open` are owned by `smart_core.handlers.app_shell`, and construction no
+longer contributes runtime app shell handlers.
 
 | Surface Key | Module Count | Evidence Count | Modules |
 |---|---|---|---|
@@ -16,14 +20,11 @@
 | `project.dashboard.enter` | `2` | `13` | `smart_construction_core, smart_construction_scene` |
 | `risk_center` | `2` | `12` | `smart_construction_scene, smart_core` |
 | `project.execution.enter` | `2` | `10` | `smart_construction_core, smart_construction_scene` |
-| `app.open` | `2` | `8` | `smart_construction_core, smart_core` |
-| `app.nav` | `2` | `7` | `smart_construction_core, smart_core` |
 | `build_runtime_block` | `2` | `7` | `smart_construction_core, smart_core` |
 | `risk.center` | `2` | `7` | `smart_construction_scene, smart_core` |
 | `sc.scene.rollback` | `2` | `6` | `smart_construction_scene, smart_core` |
 | `sc.scene.use_pinned` | `2` | `6` | `smart_construction_scene, smart_core` |
 | `task_center` | `2` | `6` | `smart_construction_scene, smart_core` |
-| `app.catalog` | `2` | `5` | `smart_construction_core, smart_core` |
 | `cost_center` | `2` | `5` | `smart_construction_scene, smart_core` |
 | `project.execution.block.fetch` | `2` | `5` | `smart_construction_core, smart_core` |
 | `menu_sc_project_center` | `2` | `4` | `smart_construction_scene, smart_core` |
@@ -106,14 +107,6 @@
   - `smart_construction_scene` `addons/smart_construction_scene/services/capability_scene_targets.py:16` → `"project.execution.enter": "project.execution",`
   - `smart_construction_core` `addons/smart_construction_core/handlers/project_execution_enter.py:21` → `INTENT_TYPE = "project.execution.enter"`
   - `smart_construction_core` `addons/smart_construction_core/handlers/project_execution_block_fetch.py:53` → `"suggested_action_intent": "project.execution.enter",`
-- `app.open`
-  - `smart_core` `addons/smart_core/handlers/system_init.py:343` → `"app.open",`
-  - `smart_core` `addons/smart_core/handlers/app_shell.py:132` → `INTENT_TYPE = "app.open"`
-  - `smart_construction_core` `addons/smart_construction_core/handlers/app_open.py:43` → `_logger.info("[app.open] feature not openable app=%s feature=%s", app_id, feature.get("key"))`
-- `app.nav`
-  - `smart_core` `addons/smart_core/handlers/system_init.py:342` → `"app.nav",`
-  - `smart_core` `addons/smart_core/handlers/app_shell.py:90` → `INTENT_TYPE = "app.nav"`
-  - `smart_construction_core` `addons/smart_construction_core/handlers/app_nav.py:33` → `意图：app.nav`
 - `build_runtime_block`
   - `smart_construction_core` `addons/smart_construction_core/handlers/settlement_slice_block_fetch.py:71` → `data = orchestrator.build_runtime_block(block_key=block_key, project_id=project_id, context=ctx)`
   - `smart_construction_core` `addons/smart_construction_core/handlers/project_plan_bootstrap_block_fetch.py:89` → `data = orchestrator.build_runtime_block(block_key=block_key, project_id=project_id, context=ctx)`
@@ -136,9 +129,6 @@
   - `smart_core` `addons/smart_core/core/workspace_home_shell_helper.py:15` → `"task_center": "workspace.tasks",`
   - `smart_core` `addons/smart_core/tests/test_workspace_home_source_routing_helper.py:41` → `"task_center": "workspace.tasks",`
   - `smart_construction_scene` `addons/smart_construction_scene/profiles/workspace_home_scene_content.py:16` → `"task_center": "task.center",`
-- `app.catalog`
-  - `smart_core` `addons/smart_core/handlers/app_shell.py:53` → `INTENT_TYPE = "app.catalog"`
-  - `smart_construction_core` `addons/smart_construction_core/handlers/app_catalog.py:145` → `意图：app.catalog`
 - `cost_center`
   - `smart_core` `addons/smart_core/core/workspace_home_source_routing_helper.py:120` → `return workspace_scene_resolver("cost_center")`
   - `smart_core` `addons/smart_core/core/workspace_home_shell_helper.py:16` → `"cost_center": "workspace.cost",`

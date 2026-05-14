@@ -56,7 +56,7 @@
             <field name="name">能力目录</field>
             <field name="res_model">sc.capability</field>
             <field name="view_mode">tree,form</field>
-            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+            <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
         </record>
 
         <record id="view_sc_capability_group_tree" model="ir.ui.view">
@@ -106,7 +106,7 @@
             <field name="name">能力分组</field>
             <field name="res_model">sc.capability.group</field>
             <field name="view_mode">tree,form</field>
-            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+            <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
         </record>
 
         <!-- Scene -->
@@ -181,7 +181,7 @@
             <field name="name">场景编排</field>
             <field name="res_model">sc.scene</field>
             <field name="view_mode">tree,form</field>
-            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+            <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
         </record>
 
         <record id="view_sc_scene_version_tree" model="ir.ui.view">
@@ -219,7 +219,7 @@
             <field name="name">场景版本</field>
             <field name="res_model">sc.scene.version</field>
             <field name="view_mode">tree,form</field>
-            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+            <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
         </record>
 
         <!-- Pack Registry -->
@@ -276,7 +276,7 @@
             <field name="name">交付包注册表</field>
             <field name="res_model">sc.pack.registry</field>
             <field name="view_mode">tree,form</field>
-            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+            <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
         </record>
 
         <!-- Pack Installation -->
@@ -321,7 +321,7 @@
             <field name="name">交付包安装记录</field>
             <field name="res_model">sc.pack.installation</field>
             <field name="view_mode">tree,form</field>
-            <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
+            <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
         </record>
 
         <!-- Menu -->
@@ -329,42 +329,65 @@
                   name="场景与能力"
                   parent="menu_sc_config_center"
                   sequence="70"
-                  groups="smart_construction_core.group_sc_cap_config_admin"/>
+                  groups="smart_core.group_smart_core_admin"/>
         <menuitem id="menu_sc_capability"
                   name="能力目录"
                   parent="menu_sc_scene_root"
                   action="action_sc_capability"
                   sequence="10"
-                  groups="smart_construction_core.group_sc_cap_config_admin"/>
+                  groups="smart_core.group_smart_core_admin"/>
         <menuitem id="menu_sc_scene"
                   name="场景编排"
                   parent="menu_sc_scene_root"
                   action="action_sc_scene"
                   sequence="20"
-                  groups="smart_construction_core.group_sc_cap_config_admin"/>
+                  groups="smart_core.group_smart_core_admin"/>
         <menuitem id="menu_sc_capability_group"
                   name="能力分组"
                   parent="menu_sc_scene_root"
                   action="action_sc_capability_group"
                   sequence="30"
-                  groups="smart_construction_core.group_sc_cap_config_admin"/>
+                  groups="smart_core.group_smart_core_admin"/>
         <menuitem id="menu_sc_scene_version"
                   name="场景版本"
                   parent="menu_sc_scene_root"
                   action="action_sc_scene_version"
                   sequence="40"
-                  groups="smart_construction_core.group_sc_cap_config_admin"/>
+                  groups="smart_core.group_smart_core_admin"/>
         <menuitem id="menu_sc_pack_registry"
                   name="交付包注册表"
                   parent="menu_sc_scene_root"
                   action="action_sc_pack_registry"
                   sequence="50"
-                  groups="smart_construction_core.group_sc_cap_config_admin"/>
+                  groups="smart_core.group_smart_core_admin"/>
         <menuitem id="menu_sc_pack_installation"
                   name="交付包安装记录"
                   parent="menu_sc_scene_root"
                   action="action_sc_pack_installation"
                   sequence="60"
-                  groups="smart_construction_core.group_sc_cap_config_admin"/>
+                  groups="smart_core.group_smart_core_admin"/>
+
+        <!-- Replace legacy menu group links left by older installs. -->
+        <record id="menu_sc_scene_root" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
+        </record>
+        <record id="menu_sc_capability" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
+        </record>
+        <record id="menu_sc_scene" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
+        </record>
+        <record id="menu_sc_capability_group" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
+        </record>
+        <record id="menu_sc_scene_version" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
+        </record>
+        <record id="menu_sc_pack_registry" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
+        </record>
+        <record id="menu_sc_pack_installation" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
+        </record>
     </data>
 </odoo>

@@ -24,8 +24,36 @@ class _Config:
 
 
 class _Env(dict):
-    def __init__(self):
-        super().__init__({"ir.config_parameter": _Config()})
+    cr = types.SimpleNamespace(dbname="sc_platform_core")
+
+    def __init__(self, route=None):
+        data = {"ir.config_parameter": _Config()}
+        if route is not None:
+            data["sc.login.route"] = route
+        super().__init__(data)
+
+
+class _RouteRecord:
+    def __init__(self, target_db="sc_demo", entry_kind="tenant"):
+        self.target_db = target_db
+        self.entry_kind = entry_kind
+
+    def to_runtime_dict(self):
+        return {
+            "login": "demo",
+            "target_db": self.target_db,
+            "entry_kind": self.entry_kind,
+            "product_key": "construction",
+            "label": "Demo Tenant",
+        }
+
+
+class _RouteModel:
+    def sudo(self):
+        return self
+
+    def search(self, domain, limit=1):
+        return _RouteRecord()
 
 
 def _install_module(name, **attrs):
@@ -141,6 +169,24 @@ class TestLoginCompanyBoundary(unittest.TestCase):
         data, _meta = handler.handle()
 
         self.assertEqual(data["user"]["company_id"], 2)
+
+    def test_login_without_db_uses_backend_route_contract(self):
+        module = _load_handler()
+        seen = {}
+
+        def _auth(login, password, db=None):
+            seen["db"] = db
+            return {"id": 5, "db": db or "missing"}
+
+        module.authenticate_user = _auth
+        handler = module.LoginHandler(env=_Env(route=_RouteModel()), params={"login": "demo", "password": "pw"})
+
+        data, _meta = handler.handle()
+
+        self.assertEqual(seen["db"], "sc_demo")
+        self.assertEqual(data["session"]["db"], "sc_demo")
+        self.assertEqual(data["login_route"]["source"], "sc.login.route")
+        self.assertEqual(data["login_route"]["entry_kind"], "tenant")
 
 
 if __name__ == "__main__":

@@ -112,6 +112,91 @@ def _resolve_requested_company_id(raw_value, allowed_company_ids):
     return company_id, None
 
 
+def _current_db_name(env) -> str:
+    try:
+        return str(env.cr.dbname or "").strip()
+    except Exception:
+        return ""
+
+
+def _config_param(env, key: str, default: str = "") -> str:
+    try:
+        return str(env["ir.config_parameter"].sudo().get_param(key, default) or "").strip()
+    except Exception:
+        return default
+
+
+def _route_record_for_login(env, login: str):
+    try:
+        return env["sc.login.route"].sudo().search([("login", "=", login), ("active", "=", True)], limit=1)
+    except Exception:
+        return None
+
+
+def _route_payload_from_db(db_name: str, login: str) -> dict[str, Any] | None:
+    if not db_name:
+        return None
+    try:
+        registry = Registry(db_name)
+        with registry.cursor() as cr:
+            env = api.Environment(cr, SUPERUSER_ID, {})
+            route = env["sc.login.route"].sudo().search([("login", "=", login), ("active", "=", True)], limit=1)
+            return route.to_runtime_dict() if route else None
+    except Exception:
+        return None
+
+
+def _resolve_login_route(env, *, login: str, explicit_db: str = "", routing_db: str = "") -> dict[str, Any]:
+    current_db = _current_db_name(env)
+    if explicit_db:
+        return {
+            "contract_version": "1.0.0",
+            "mode": "explicit_db",
+            "target_db": explicit_db,
+            "entry_kind": "explicit",
+            "source": "request",
+            "db_authority": "request_explicit_db",
+        }
+    payload = _route_payload_from_db(routing_db, login) if routing_db and routing_db != current_db else None
+    route_source = "sc.login.route"
+    if not payload:
+        route = _route_record_for_login(env, login)
+        payload = route.to_runtime_dict() if route else None
+    else:
+        route_source = f"sc.login.route:{routing_db}"
+    if payload:
+        return {
+            "contract_version": "1.0.0",
+            "mode": "unified",
+            "target_db": payload.get("target_db") or current_db,
+            "entry_kind": payload.get("entry_kind") or "tenant",
+            "product_key": payload.get("product_key") or "",
+            "label": payload.get("label") or "",
+            "source": route_source,
+            "db_authority": "platform_login_route",
+        }
+    default_tenant_db = _config_param(env, "sc.login.default_tenant_db", "")
+    if default_tenant_db:
+        return {
+            "contract_version": "1.0.0",
+            "mode": "unified",
+            "target_db": default_tenant_db,
+            "entry_kind": "tenant",
+            "product_key": _config_param(env, "sc.login.default_product_key", "construction"),
+            "source": "ir.config_parameter",
+            "db_authority": "platform_default_tenant_db",
+        }
+    return {
+        "contract_version": "1.0.0",
+        "mode": "unified",
+        "target_db": current_db,
+        "entry_kind": "platform_admin",
+        "product_key": "platform",
+        "source": "current_db",
+        "db_authority": "platform_current_db",
+    }
+
+
 class LoginHandler(BaseIntentHandler):
     """
     用户登录处理器
@@ -151,6 +236,9 @@ class LoginHandler(BaseIntentHandler):
         db, db_error = self._text_param(params, db_key, allow_empty=True)
         if db_error:
             return db_error
+        routing_db, routing_db_error = self._text_param(params, "_login_routing_db", allow_empty=True)
+        if routing_db_error:
+            return routing_db_error
         want_company_id = params.get("company_id")
         contract_mode = _resolve_contract_mode(params)
         compat_requested = contract_mode == "compat"
@@ -161,17 +249,20 @@ class LoginHandler(BaseIntentHandler):
         if not login or not password:
             return self.err(400, "缺少登录信息")
 
+        route_contract = _resolve_login_route(self.env, login=login, explicit_db=db, routing_db=routing_db)
+        target_db = (route_contract.get("target_db") or db or "").strip()
+
         # 2) 鉴权（自定义逻辑，建议内部做 active 检查 / 锁定策略 / 审计）
         try:
             # authenticate_user 可自行支持 db 选择（若你有多库登录）
-            user_dict = authenticate_user(login, password, db=db)
+            user_dict = authenticate_user(login, password, db=target_db)
         except Exception as e:
             # 避免回显敏感信息
             _logger.info("Login failed for %s: %s", login, e)
             return self.err(401, "用户名或密码错误")
 
         user_id = int(user_dict["id"])
-        auth_db = (user_dict.get("db") or db or "").strip()
+        auth_db = (user_dict.get("db") or target_db or db or "").strip()
         if not auth_db:
             return self.err(400, "缺少数据库参数")
         try:
@@ -212,6 +303,8 @@ class LoginHandler(BaseIntentHandler):
                 "token": token,
                 "token_type": token_type,
                 "expires_at": expires_at,
+                "db": auth_db,
+                "entry_kind": route_contract.get("entry_kind") or "",
             },
             # Backward-compatible alias for existing smoke/guard scripts.
             "token": token,
@@ -237,6 +330,10 @@ class LoginHandler(BaseIntentHandler):
                 "compat_enabled": compat_enabled,
                 "compat_deprecated": True,
                 "compat_sunset_phase": "next_iteration",
+            },
+            "login_route": {
+                **route_contract,
+                "target_db": auth_db,
             },
         }
 

@@ -14,6 +14,8 @@ class SystemInitPayloadBuilder:
         "delivery_engine_v1",
         "scene_ready_contract_v1",
         "page_contracts",
+        "sc.entitlement",
+        "sc.usage.counter",
     )
     NO_BUSINESS_FACT_AUTHORITY = True
     BUILD_MODE_BOOT = "boot"
@@ -41,6 +43,7 @@ class SystemInitPayloadBuilder:
         "platform_minimum_reason",
         "role_surface_pruned",
         "role_surface_code",
+        "platform_release_gate",
         "semantic_scene_key",
         "semantic_source_view",
         "semantic_view_type",
@@ -59,6 +62,22 @@ class SystemInitPayloadBuilder:
             "no_business_fact_authority": cls.NO_BUSINESS_FACT_AUTHORITY,
             "runtime_carrier": "system_init",
         }
+
+    @classmethod
+    def attach_platform_company_access_facts(cls, data: dict, env, user) -> None:
+        if not isinstance(data, dict):
+            return
+        try:
+            if "entitlements" not in data:
+                data["entitlements"] = env["sc.entitlement"].get_payload(user)
+        except Exception:
+            pass
+        try:
+            company = getattr(user, "company_id", None) if user else None
+            if company and "usage" not in data:
+                data["usage"] = env["sc.usage.counter"].get_usage_map(company)
+        except Exception:
+            pass
 
     @staticmethod
     def _parse_with_tokens(value) -> set[str]:
@@ -371,7 +390,8 @@ class SystemInitPayloadBuilder:
         if minimal_page_contracts:
             minimal["page_contracts"] = minimal_page_contracts
         if isinstance((minimal.get("page_contracts") or {}).get("pages"), dict) and "home" in (minimal.get("page_contracts") or {}).get("pages", {}):
-            minimal["default_route"] = cls._build_workspace_home_default_route()
+            if not (minimal.get("nav_meta") or {}).get("platform_minimum_surface"):
+                minimal["default_route"] = cls._build_workspace_home_default_route()
             minimal["workspace_home_ref"] = cls._build_workspace_home_ref(row)
         else:
             workspace_home_ref = row.get("workspace_home_ref") if isinstance(row.get("workspace_home_ref"), dict) else {}

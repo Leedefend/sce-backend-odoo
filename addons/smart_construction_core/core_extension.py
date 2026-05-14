@@ -1013,15 +1013,6 @@ def get_intent_handler_contributions():
         except Exception as exc:
             SettlementSliceBlockFetchHandler = None
             _logger.warning("[get_intent_handler_contributions] skip settlement_slice_block_fetch: %s", exc)
-        from odoo.addons.smart_construction_core.handlers.app_catalog import (
-            AppCatalogHandler,
-        )
-        from odoo.addons.smart_construction_core.handlers.app_nav import (
-            AppNavHandler,
-        )
-        from odoo.addons.smart_construction_core.handlers.app_open import (
-            AppOpenHandler,
-        )
         from odoo.addons.smart_construction_core.handlers.workspace_home_enter import (
             WorkspaceHomeEnterHandler,
         )
@@ -1069,9 +1060,6 @@ def get_intent_handler_contributions():
         ("settlement.block.fetch", SettlementSliceBlockFetchHandler),
         ("project.initiation.enter", ProjectInitiationEnterHandler),
         ("risk.action.execute", RiskActionExecuteHandler),
-        ("app.catalog", AppCatalogHandler),
-        ("app.nav", AppNavHandler),
-        ("app.open", AppOpenHandler),
         ("workspace.home.enter", WorkspaceHomeEnterHandler),
         ("dashboard.company.enter", DashboardCompanyEnterHandler),
     ]
@@ -1489,13 +1477,7 @@ def get_system_init_fact_contributions(env, user, context=None):
     """Return construction system.init facts contribution payload."""
     del context
     try:
-        Entitlement = env.get("sc.entitlement")
-        Usage = env.get("sc.usage.counter")
         module_facts = {}
-        if Entitlement:
-            module_facts["entitlements"] = Entitlement.get_payload(user)
-        if Usage:
-            module_facts["usage"] = Usage.get_usage_map(user.company_id)
 
         task_rows = _build_task_action_rows(env, user)
         payment_rows = _build_payment_action_rows(env)

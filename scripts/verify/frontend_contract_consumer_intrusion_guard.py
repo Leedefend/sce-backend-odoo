@@ -147,6 +147,16 @@ RULES: tuple[Rule, ...] = (
         suggestion="改为消费后端显式 role/capability surface，而不是前端扫 groups。",
     ),
     Rule(
+        key="home_role_inference_from_canonical_platform_group",
+        scope="home_inference",
+        kind="literal",
+        severity="medium",
+        path="frontend/apps/web/src/views/HomeView.vue",
+        pattern="groups.includes('smart_core.group_smart_core_admin')",
+        rationale="首页不应通过 canonical platform group 推导管理态能力，前端仍会越过 role/permission 契约边界。",
+        suggestion="改为消费 session.user.is_platform_admin 或后端显式 role/capability surface，而不是前端扫 groups。",
+    ),
+    Rule(
         key="home_internal_tag_keyword_fallback",
         scope="home_inference",
         kind="literal",

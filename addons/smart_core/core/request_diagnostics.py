@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import os
 
+from odoo.addons.smart_core.security.platform_admin import user_is_platform_admin
+
 
 class RequestDiagnosticsCollector:
     SOURCE_KIND = "request_diagnostics_projection"
@@ -26,7 +28,7 @@ class RequestDiagnosticsCollector:
         if env_flag in {"dev", "test", "local"}:
             return True
         try:
-            return env.user.has_group("base.group_system")
+            return user_is_platform_admin(env.user)
         except Exception:
             return False
 

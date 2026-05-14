@@ -14,6 +14,11 @@ from odoo.addons.smart_core.core.unified_page_contract_v2_client import (
     resolve_delivery_profile,
     trim_navigation_contract_for_client,
 )
+try:
+    from odoo.addons.smart_core.security.platform_admin import user_is_platform_admin
+except Exception:
+    def user_is_platform_admin(user):
+        return False
 
 
 def _md5(payload: Any) -> str:
@@ -22,6 +27,59 @@ def _md5(payload: Any) -> str:
 
 def _text(value: Any) -> str:
     return str(value or "").strip()
+
+
+APP_TAXONOMY: dict[str, dict[str, Any]] = {
+    "workspace": {"label": "角色首页", "category": "platform", "sequence": 0, "primary_scene": "workspace.home"},
+    "dashboard": {"label": "经营驾驶舱", "category": "management", "sequence": 10, "primary_scene": "dashboard.company"},
+    "projects": {"label": "项目管理", "category": "construction", "sequence": 20, "primary_scene": "projects.list"},
+    "contracts": {"label": "合同管理", "category": "construction", "sequence": 30, "primary_scene": "contracts.workspace"},
+    "cost": {"label": "成本管理", "category": "construction", "sequence": 40, "primary_scene": "cost.cost_compare"},
+    "finance": {"label": "资金财务", "category": "construction", "sequence": 50, "primary_scene": "finance.payment_requests"},
+    "payments": {"label": "收付款", "category": "construction", "sequence": 60, "primary_scene": "payments.approval"},
+    "my_work": {"label": "我的工作", "category": "productivity", "sequence": 70, "primary_scene": "my_work.workspace"},
+    "operation": {"label": "运营管理", "category": "construction", "sequence": 80, "primary_scene": "operation.overview"},
+    "portfolio": {"label": "项目组合", "category": "management", "sequence": 90, "primary_scene": "portfolio.center"},
+    "risk": {"label": "风险管理", "category": "governance", "sequence": 100, "primary_scene": "risk.center"},
+    "quality": {"label": "质量管理", "category": "construction", "sequence": 110, "primary_scene": "quality.center"},
+    "safety": {"label": "安全管理", "category": "construction", "sequence": 120, "primary_scene": "safety.center"},
+    "resource": {"label": "资源管理", "category": "construction", "sequence": 130, "primary_scene": "resource.center"},
+    "task": {"label": "任务协同", "category": "productivity", "sequence": 140, "primary_scene": "task.center"},
+    "data": {"label": "数据中心", "category": "platform", "sequence": 200, "primary_scene": "data.dictionary"},
+    "config": {"label": "业务配置", "category": "platform", "sequence": 210, "primary_scene": "config.project_cost_code"},
+    "enterprise": {"label": "企业组织", "category": "platform", "sequence": 220, "primary_scene": "enterprise.company"},
+    "portal": {"label": "门户工作台", "category": "platform", "sequence": 230, "primary_scene": "portal.dashboard"},
+    "delivery": {"label": "交付控制", "category": "platform", "sequence": 240, "primary_scene": "delivery.command"},
+}
+
+APP_ALIASES = {
+    "project": "projects",
+    "contract": "contracts",
+    "payment": "payments",
+}
+
+HIDDEN_APP_IDS = {"default", "scene_smoke_default"}
+PLATFORM_ADMIN_SCENE_APP_IDS = {"delivery"}
+
+ADMIN_APP_DEFS: dict[str, dict[str, Any]] = {
+    "release_management": {
+        "label": "产品发布",
+        "category": "platform_admin",
+        "sequence": -20,
+        "route": "/admin/release-operator?product_key=construction.standard",
+        "scene_key": "release.operator",
+        "intent": "release.operator.surface",
+        "action_xmlid": "smart_core.action_sc_product_policy",
+        "menu_xmlid": "smart_core.menu_smart_core_release_root",
+    },
+    "company_access": {
+        "label": "公司访问",
+        "category": "platform_admin",
+        "sequence": -10,
+        "action_xmlid": "smart_core.action_sc_subscription_plan",
+        "menu_xmlid": "smart_core.menu_smart_core_company_access_root",
+    },
+}
 
 
 def _scene_list(env) -> List[Dict[str, Any]]:
@@ -43,7 +101,65 @@ def _scene_app_id(scene_key: str) -> str:
     if not key:
         return "workspace"
     head = key.split(".", 1)[0]
-    return head or "workspace"
+    return APP_ALIASES.get(head, head) or "workspace"
+
+
+def _is_publishable_scene(scene: Dict[str, Any]) -> bool:
+    key = _scene_key(scene)
+    if not key:
+        return False
+    app_id = _scene_app_id(key)
+    if app_id in HIDDEN_APP_IDS:
+        return False
+    return True
+
+
+def _app_taxonomy(app_id: str) -> dict[str, Any]:
+    app_key = _text(app_id)
+    return APP_TAXONOMY.get(app_key) or {
+        "label": app_key,
+        "category": "industry",
+        "sequence": 900,
+        "primary_scene": "",
+    }
+
+
+def _app_label(app_id: str) -> str:
+    return _text(_app_taxonomy(app_id).get("label")) or app_id
+
+
+def _app_category(app_id: str) -> str:
+    return _text(_app_taxonomy(app_id).get("category")) or "industry"
+
+
+def _app_sequence(app_id: str) -> int:
+    try:
+        value = _app_taxonomy(app_id).get("sequence")
+        return int(value) if value is not None else 900
+    except Exception:
+        return 900
+
+
+def _scene_sequence(scene: dict[str, Any]) -> tuple[int, str]:
+    key = _scene_key(scene)
+    app_id = _scene_app_id(key)
+    primary = _text(_app_taxonomy(app_id).get("primary_scene"))
+    if key == primary:
+        return (0, key)
+    return (100, key)
+
+
+def _scene_sort_key(scene: dict[str, Any]) -> tuple[int, str]:
+    return _scene_sequence(scene)
+
+
+def _primary_scene_for_app(app_id: str, scenes: list[dict[str, Any]]) -> str:
+    primary = _text(_app_taxonomy(app_id).get("primary_scene"))
+    scene_keys = {_scene_key(scene) for scene in scenes}
+    if primary and primary in scene_keys:
+        return primary
+    ordered = sorted([scene for scene in scenes if _scene_key(scene)], key=_scene_sort_key)
+    return _scene_key(ordered[0]) if ordered else ""
 
 
 def _scene_route(scene: Dict[str, Any]) -> str:
@@ -53,6 +169,78 @@ def _scene_route(scene: Dict[str, Any]) -> str:
         return route
     key = _scene_key(scene)
     return f"/s/{key}" if key else "/"
+
+
+def _xmlid_record(env, xmlid: str):
+    try:
+        return env.ref(xmlid, raise_if_not_found=False)
+    except Exception:
+        return None
+
+
+def _is_platform_admin_user(env) -> bool:
+    try:
+        return bool(user_is_platform_admin(env.user))
+    except Exception:
+        return False
+
+
+def _is_scene_app_visible_for_user(env, app_id: str) -> bool:
+    token = _text(app_id)
+    if token in PLATFORM_ADMIN_SCENE_APP_IDS:
+        return _is_platform_admin_user(env)
+    return True
+
+
+def _admin_app_rows(env) -> list[dict[str, Any]]:
+    if not _is_platform_admin_user(env):
+        return []
+    rows: list[dict[str, Any]] = []
+    for app_id, spec in ADMIN_APP_DEFS.items():
+        action = _xmlid_record(env, _text(spec.get("action_xmlid")))
+        if not action:
+            continue
+        rows.append(
+            {
+                "key": f"app:{app_id}",
+                "label": _text(spec.get("label")) or app_id,
+                "icon": None,
+                "badges": {"count": 0},
+                "meta": {
+                    "app_id": app_id,
+                    "category": _text(spec.get("category")) or "platform_admin",
+                    "sequence": int(spec.get("sequence") or 0),
+                    "action_xmlid": _text(spec.get("action_xmlid")),
+                    "menu_xmlid": _text(spec.get("menu_xmlid")),
+                    "admin_only": True,
+                },
+            }
+        )
+    return rows
+
+
+def _admin_app_target(env, app_id: str) -> dict[str, Any]:
+    spec = ADMIN_APP_DEFS.get(_text(app_id)) or {}
+    route = _text(spec.get("route"))
+    if route:
+        return {
+            "subject": "ui.contract",
+            "scene_key": _text(spec.get("scene_key")) or app_id,
+            "route": route,
+            "intent": _text(spec.get("intent")),
+            "name": _text(spec.get("label")) or app_id,
+        }
+    action = _xmlid_record(env, _text(spec.get("action_xmlid")))
+    if not action:
+        return {}
+    return {
+        "subject": "action",
+        "id": int(action.id),
+        "action_id": int(action.id),
+        "model": _text(getattr(action, "res_model", "")),
+        "view_type": _text(getattr(action, "view_mode", "")).split(",", 1)[0] or "tree",
+        "name": _text(getattr(action, "name", "")),
+    }
 
 
 def _headers(request) -> dict[str, Any]:
@@ -125,35 +313,75 @@ class AppCatalogHandler(_SceneDeliveryAppShellMixin, BaseIntentHandler):
 
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
-        scenes = _scene_list(self.env)
-        app_counts: Dict[str, int] = {}
+        scenes = [
+            scene
+            for scene in _scene_list(self.env)
+            if _is_publishable_scene(scene)
+            and _is_scene_app_visible_for_user(self.env, _scene_app_id(_scene_key(scene)))
+        ]
+        app_scenes: Dict[str, list[dict[str, Any]]] = {}
         for scene in scenes:
             app_id = _scene_app_id(_scene_key(scene))
-            app_counts[app_id] = int(app_counts.get(app_id) or 0) + 1
+            app_scenes.setdefault(app_id, []).append(scene)
 
         apps = [
             {
                 "key": f"app:{app_id}",
-                "label": app_id,
+                "label": _app_label(app_id),
                 "icon": None,
-                "badges": {"count": count},
-                "meta": {"app_id": app_id},
+                "badges": {"count": len(items)},
+                "meta": {
+                    "app_id": app_id,
+                    "category": _app_category(app_id),
+                    "sequence": _app_sequence(app_id),
+                    "primary_scene": _primary_scene_for_app(app_id, items),
+                },
             }
-            for app_id, count in sorted(app_counts.items())
+            for app_id, items in app_scenes.items()
         ]
-        if "workspace" not in app_counts:
+        apps = sorted(
+            apps,
+            key=lambda item: (
+                int((item.get("meta") or {}).get("sequence") if (item.get("meta") or {}).get("sequence") is not None else 900),
+                str(item.get("label") or ""),
+            ),
+        )
+        apps = _admin_app_rows(self.env) + apps
+        app_ids = {
+            _text((item.get("meta") or {}).get("app_id"))
+            for item in apps
+            if isinstance(item.get("meta"), dict)
+        }
+        if "workspace" not in app_scenes and "workspace" not in app_ids:
             apps.insert(
                 0,
                 {
                     "key": "app:workspace",
-                    "label": "workspace",
+                    "label": _app_label("workspace"),
                     "icon": None,
                     "badges": {"count": 0},
-                    "meta": {"app_id": "workspace", "fallback": True},
+                    "meta": {
+                        "app_id": "workspace",
+                        "category": _app_category("workspace"),
+                        "sequence": _app_sequence("workspace"),
+                        "primary_scene": "workspace.home",
+                        "fallback": True,
+                    },
                 },
             )
         if not apps:
-            apps = [{"key": "app:workspace", "label": "workspace", "icon": None, "badges": {"count": 0}, "meta": {"app_id": "workspace"}}]
+            apps = [{
+                "key": "app:workspace",
+                "label": _app_label("workspace"),
+                "icon": None,
+                "badges": {"count": 0},
+                "meta": {
+                    "app_id": "workspace",
+                    "category": _app_category("workspace"),
+                    "sequence": _app_sequence("workspace"),
+                    "primary_scene": "workspace.home",
+                },
+            }]
 
         fp = _md5({"uid": self.env.uid, "apps": [item.get("key") for item in apps]})
         return {
@@ -175,6 +403,7 @@ class AppNavHandler(_SceneDeliveryAppShellMixin, BaseIntentHandler):
 
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
+        env = self.env
         payload = _params(payload)
         client_type = resolve_client_type(_headers(self.request), payload)
         delivery_profile = resolve_delivery_profile(client_type, payload)
@@ -184,8 +413,40 @@ class AppNavHandler(_SceneDeliveryAppShellMixin, BaseIntentHandler):
         max_depth, max_depth_error = _read_optional_positive(payload, "max_depth", "maxDepth")
         if max_depth_error:
             return self._err(400, "max_depth 无效", ts0=ts0)
-        app_id = _text(payload.get("app") or "workspace")
-        scenes = [scene for scene in _scene_list(self.env) if _scene_app_id(_scene_key(scene)) == app_id]
+        app_id = APP_ALIASES.get(_text(payload.get("app") or "workspace"), _text(payload.get("app") or "workspace"))
+        if app_id in ADMIN_APP_DEFS and _is_platform_admin_user(env):
+            target = _admin_app_target(env, app_id)
+            if target:
+                return {
+                    "status": "success",
+                    "ok": True,
+                    "data": {
+                        "sections": [
+                            {
+                                "key": f"section:{app_id}:admin",
+                                "label": "管理",
+                                "children": [
+                                    {
+                                        "key": f"feature:{app_id}:default",
+                                        "label": _text(target.get("name")) or _text(ADMIN_APP_DEFS[app_id].get("label")),
+                                        "children": [],
+                                        "meta": {"app": app_id, "feature": "default", "kind": "admin", "open": target},
+                                    }
+                                ],
+                                "meta": {"section": "admin"},
+                            }
+                        ],
+                        "meta": {"fingerprint": _md5({"uid": env.uid, "app": app_id, "admin": True})},
+                    },
+                    "meta": self._source_meta(ts0=ts0, extra={"etag": _md5({"uid": env.uid, "app": app_id, "admin": True})}),
+                }
+        scenes = [
+            scene
+            for scene in _scene_list(self.env)
+            if _is_publishable_scene(scene)
+            and _scene_app_id(_scene_key(scene)) == app_id
+            and _is_scene_app_visible_for_user(env, app_id)
+        ]
 
         children = [
             {
@@ -199,7 +460,7 @@ class AppNavHandler(_SceneDeliveryAppShellMixin, BaseIntentHandler):
                     "open": {"internal_route": _scene_route(scene), "scene_key": _scene_key(scene)},
                 },
             }
-            for scene in scenes
+            for scene in sorted(scenes, key=_scene_sort_key)
             if _scene_key(scene)
         ]
 
@@ -249,16 +510,39 @@ class AppOpenHandler(_SceneDeliveryAppShellMixin, BaseIntentHandler):
 
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
-        payload = payload or {}
+        payload = _params(payload)
         feature_key = _text(payload.get("feature") or payload.get("scene_key"))
         scene_key = feature_key
         if not scene_key:
-            app_id = _text(payload.get("app") or "workspace")
-            for scene in _scene_list(self.env):
+            app_id = APP_ALIASES.get(_text(payload.get("app") or "workspace"), _text(payload.get("app") or "workspace"))
+            if app_id in ADMIN_APP_DEFS and _is_platform_admin_user(self.env):
+                target = _admin_app_target(self.env, app_id)
+                if target:
+                    return {
+                        "status": "success",
+                        "ok": True,
+                        "data": target,
+                        "meta": self._source_meta(ts0=ts0),
+                    }
+            scenes = [
+                scene
+                for scene in _scene_list(self.env)
+                if _is_publishable_scene(scene)
+                and _scene_app_id(_scene_key(scene)) == app_id
+                and _is_scene_app_visible_for_user(self.env, app_id)
+            ]
+            primary_scene = _primary_scene_for_app(app_id, scenes)
+            if primary_scene:
+                scene_key = primary_scene
+            for scene in sorted(scenes, key=_scene_sort_key):
+                if scene_key:
+                    break
                 key = _scene_key(scene)
                 if key and _scene_app_id(key) == app_id:
                     scene_key = key
                     break
+            if not scene_key and app_id == "workspace":
+                scene_key = "workspace.home"
         if not scene_key:
             raise ValueError("missing param: app / feature")
 

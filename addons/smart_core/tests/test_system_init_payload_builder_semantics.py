@@ -202,6 +202,33 @@ class TestSystemInitPayloadBuilderSemantics(unittest.TestCase):
         workspace_home_ref = payload.get("workspace_home_ref") or {}
         self.assertEqual(workspace_home_ref.get("scene_key"), "workspace.home")
 
+    def test_build_startup_surface_keeps_platform_minimum_default_route_reason(self):
+        payload = target.SystemInitPayloadBuilder.build_startup_surface(
+            {
+                "user": {"id": 1},
+                "nav": [{"scene_key": "workspace.home"}],
+                "nav_meta": {"platform_minimum_surface": True, "nav_source": "platform_minimum_surface"},
+                "default_route": {
+                    "scene_key": "workspace.home",
+                    "route": "/",
+                    "reason": "platform_minimum_surface",
+                },
+                "intents": [],
+                "feature_flags": {},
+                "role_surface": {"landing_scene_key": "workspace.home"},
+                "page_contracts": {
+                    "pages": {
+                        "home": {"schema_version": "v1", "texts": {"title": "工作台"}},
+                    },
+                },
+            }
+        )
+
+        default_route = payload.get("default_route") or {}
+        self.assertEqual(default_route.get("scene_key"), "workspace.home")
+        self.assertEqual(default_route.get("reason"), "platform_minimum_surface")
+        self.assertEqual(((default_route.get("entry_target") or {}).get("scene_key")), "workspace.home")
+
     def test_build_startup_surface_includes_workspace_home_when_requested_via_with(self):
         payload = target.SystemInitPayloadBuilder.build_startup_surface(
             {

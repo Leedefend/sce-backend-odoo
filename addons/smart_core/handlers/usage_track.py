@@ -5,6 +5,7 @@ import logging
 
 from odoo import fields
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
+from odoo.addons.smart_core.security.platform_admin import user_is_platform_admin
 
 
 _logger = logging.getLogger(__name__)
@@ -47,7 +48,7 @@ class UsageTrackHandler(BaseIntentHandler):
         for xmlid in group_xmlids:
             if isinstance(xmlid, str) and xmlid.startswith(prefix):
                 role_codes.add(xmlid[len(prefix):])
-        if user.has_group("base.group_system"):
+        if user_is_platform_admin(user):
             role_codes.add("admin")
         return sorted(role_codes)
 

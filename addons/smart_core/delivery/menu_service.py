@@ -33,7 +33,15 @@ class MenuService:
         normalized = str(role_code or "").strip().lower()
         return normalized in {"executive", "business_config_admin", "business_admin", "implementation_admin"}
 
-    def _converged_menu(self, *, menu: dict, group_label: str, role_code: str):
+    def _converged_menu(
+        self,
+        *,
+        menu: dict,
+        group_label: str,
+        role_code: str,
+        is_admin: bool = False,
+        is_business_config_admin: bool = False,
+    ):
         row = dict(menu or {})
         label = str(row.get("label") or "").strip()
         if not label:
@@ -42,8 +50,8 @@ class MenuService:
         category = service._classify_leaf(
             label,
             [group_label, label],
-            is_admin=self._is_admin_role(role_code),
-            is_business_config_admin=self._is_business_config_role(role_code),
+            is_admin=bool(is_admin) or self._is_admin_role(role_code),
+            is_business_config_admin=bool(is_business_config_admin) or self._is_business_config_role(role_code),
         )
         if category.startswith("hidden_"):
             return None
@@ -130,11 +138,14 @@ class MenuService:
                 index += 1
                 scene_key = str(menu.get("scene_key") or "").strip()
                 menu_id = menu.get("menu_id")
-                raw_anchor = scene_key or (str(menu_id) if isinstance(menu_id, int) and menu_id > 0 else str(menu.get("menu_key") or "").strip() or str(index))
-                sanitized_anchor = raw_anchor.replace(":", "_").replace("/", "_").replace(".", "_")
                 route = str(menu.get("route") or "").strip()
                 action_id = menu.get("action_id")
-                model = str(menu.get("model") or "").strip()
+                menu_xmlid = str(menu.get("menu_xmlid") or "").strip()
+                if route.startswith("/a/") and scene_key == menu_xmlid:
+                    scene_key = ""
+                raw_anchor = scene_key or (str(menu_id) if isinstance(menu_id, int) and menu_id > 0 else str(menu.get("menu_key") or "").strip() or str(index))
+                sanitized_anchor = raw_anchor.replace(":", "_").replace("/", "_").replace(".", "_")
+                model = str(menu.get("model") or menu.get("res_model") or "").strip()
                 if not action_id and not model and route != "/my-work":
                     continue
                 out.append(
@@ -146,12 +157,14 @@ class MenuService:
                         "scene_key": scene_key,
                         "product_key": str(menu.get("product_key") or "").strip(),
                         "capability_key": str(menu.get("capability_key") or "").strip(),
-                        "menu_xmlid": str(menu.get("menu_xmlid") or "").strip(),
+                        "menu_xmlid": menu_xmlid,
                         "action_id": action_id,
                         "action_xmlid": str(menu.get("action_xmlid") or "").strip(),
                         "model": model,
                         "view_modes": menu.get("view_modes") if isinstance(menu.get("view_modes"), list) else [],
                         "scene_source": "delivery_policy",
+                        "policy_group_key": str(group.get("group_key") or "").strip(),
+                        "policy_group_label": str(group.get("group_label") or "").strip(),
                         "entry_target": menu.get("entry_target") if isinstance(menu.get("entry_target"), dict) else {},
                     }
                 )
@@ -218,6 +231,8 @@ class MenuService:
 
     def build_nav(self, *, policy: dict, role_surface: dict | None = None, native_nav: list[dict] | None = None) -> list[dict]:
         role_code = str((role_surface or {}).get("role_code") or "").strip().lower()
+        is_admin = bool((role_surface or {}).get("is_platform_admin"))
+        is_business_config_admin = bool((role_surface or {}).get("is_business_config_admin"))
         grouped_native = self._native_preview_menus(native_nav=native_nav or [], policy=policy)
         groups_by_key = {}
         group_order = []
@@ -241,7 +256,13 @@ class MenuService:
             for menu in group.get("menus") or []:
                 if not isinstance(menu, dict):
                     continue
-                converged_menu = self._converged_menu(menu=menu, group_label=group_label, role_code=role_code)
+                converged_menu = self._converged_menu(
+                    menu=menu,
+                    group_label=group_label,
+                    role_code=role_code,
+                    is_admin=is_admin,
+                    is_business_config_admin=is_business_config_admin,
+                )
                 if not converged_menu:
                     continue
                 menu_id = menu.get("menu_id")
@@ -270,7 +291,15 @@ class MenuService:
             group_order.append(fallback_key)
 
         for menu in self._flatten_policy_menus(policy):
-            converged_menu = self._converged_menu(menu=menu, group_label=str(groups_by_key.get(group_order[0], {}).get("group_label") or "系统菜单"), role_code=role_code)
+            policy_group_label = str(menu.get("policy_group_label") or "").strip()
+            fallback_group_label = str(groups_by_key.get(group_order[0], {}).get("group_label") or "系统菜单")
+            converged_menu = self._converged_menu(
+                menu=menu,
+                group_label=policy_group_label or fallback_group_label,
+                role_code=role_code,
+                is_admin=is_admin,
+                is_business_config_admin=is_business_config_admin,
+            )
             if not converged_menu:
                 continue
             menu_id = menu.get("menu_id")
@@ -287,7 +316,14 @@ class MenuService:
                 dedupe_routes.add(route)
             if menu_xmlid:
                 dedupe_xmlids.add(menu_xmlid)
-            target_group_key = scene_group_map.get(scene_key) or group_order[0]
+            target_group_key = scene_group_map.get(scene_key) or str(menu.get("policy_group_key") or "").strip() or group_order[0]
+            if target_group_key not in groups_by_key:
+                groups_by_key[target_group_key] = {
+                    "group_key": target_group_key,
+                    "group_label": str(menu.get("policy_group_label") or "").strip() or "产品发布面",
+                    "menus": [],
+                }
+                group_order.append(target_group_key)
             groups_by_key[target_group_key]["menus"].append(converged_menu)
 
         group_nodes = []

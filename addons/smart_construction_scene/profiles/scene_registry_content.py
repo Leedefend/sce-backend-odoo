@@ -259,6 +259,221 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             },
         },
         {
+            "code": "material.center",
+            "name": "物资与分包",
+            "target": {
+                "route": "/s/material.center",
+                "menu_xmlid": "smart_construction_core.menu_sc_material_center",
+            },
+        },
+        {
+            "code": "material.catalog",
+            "name": "材料档案",
+            "target": {
+                "route": "/s/material.catalog",
+                "menu_xmlid": "smart_construction_core.menu_sc_material_catalog",
+                "action_xmlid": "smart_construction_core.action_sc_material_product_template",
+            },
+        },
+        {
+            "code": "material.procurement",
+            "name": "采购协同",
+            "target": {
+                "route": "/s/material.procurement",
+                "menu_xmlid": "smart_construction_core.menu_sc_material_purchase_request",
+                "action_xmlid": "smart_construction_core.action_sc_material_purchase_request",
+            },
+        },
+        {
+            "code": "material.rfq",
+            "name": "询比价",
+            "target": {
+                "route": "/s/material.rfq",
+                "menu_xmlid": "smart_construction_core.menu_sc_material_rfq",
+                "action_xmlid": "smart_construction_core.action_sc_material_rfq",
+            },
+        },
+        {
+            "code": "material.acceptance",
+            "name": "材料进场验收",
+            "target": {
+                "route": "/s/material.acceptance",
+                "menu_xmlid": "smart_construction_core.menu_sc_material_acceptance",
+                "action_xmlid": "smart_construction_core.action_sc_material_acceptance",
+            },
+        },
+        {
+            "code": "material.inbound",
+            "name": "入库单",
+            "target": {
+                "route": "/s/material.inbound",
+                "menu_xmlid": "smart_construction_core.menu_sc_material_inbound",
+                "action_xmlid": "smart_construction_core.action_sc_material_inbound",
+            },
+        },
+        {
+            "code": "material.outbound",
+            "name": "出库单",
+            "target": {
+                "route": "/s/material.outbound",
+                "menu_xmlid": "smart_construction_core.menu_sc_material_outbound",
+                "action_xmlid": "smart_construction_core.action_sc_material_outbound",
+            },
+        },
+        {
+            "code": "material.price_library",
+            "name": "材料价格库",
+            "target": {
+                "route": "/s/material.price_library",
+                "menu_xmlid": "smart_construction_core.menu_sc_material_price_library",
+                "action_xmlid": "smart_construction_core.action_sc_material_price_library",
+            },
+        },
+        {
+            "code": "material.settlement",
+            "name": "材料结算",
+            "target": {
+                "route": "/s/material.settlement",
+                "menu_xmlid": "smart_construction_core.menu_sc_material_settlement",
+                "action_xmlid": "smart_construction_core.action_sc_material_settlement",
+            },
+        },
+        {
+            "code": "material.rental",
+            "name": "周转材料租赁",
+            "target": {
+                "route": "/s/material.rental",
+                "menu_xmlid": "smart_construction_core.menu_sc_material_rental_plan",
+                "action_xmlid": "smart_construction_core.action_sc_material_rental_plan",
+            },
+        },
+        {
+            "code": "material.rental_order",
+            "name": "租赁单",
+            "target": {
+                "route": "/s/material.rental_order",
+                "menu_xmlid": "smart_construction_core.menu_sc_material_rental_order",
+                "action_xmlid": "smart_construction_core.action_sc_material_rental_order",
+            },
+        },
+        {
+            "code": "material.rental_settlement",
+            "name": "租赁结算",
+            "target": {
+                "route": "/s/material.rental_settlement",
+                "menu_xmlid": "smart_construction_core.menu_sc_material_rental_settlement",
+                "action_xmlid": "smart_construction_core.action_sc_material_rental_settlement",
+            },
+        },
+        {
+            "code": "labor.management",
+            "name": "劳务管理",
+            "target": {
+                "route": "/s/labor.management",
+                "menu_xmlid": "smart_construction_core.menu_sc_labor_plan",
+                "action_xmlid": "smart_construction_core.action_sc_labor_plan",
+            },
+        },
+        {
+            "code": "labor.request",
+            "name": "劳务申请",
+            "target": {
+                "route": "/s/labor.request",
+                "menu_xmlid": "smart_construction_core.menu_sc_labor_request",
+                "action_xmlid": "smart_construction_core.action_sc_labor_request",
+            },
+        },
+        {
+            "code": "labor.attendance",
+            "name": "考勤记录",
+            "target": {
+                "route": "/s/labor.attendance",
+                "menu_xmlid": "smart_construction_core.menu_sc_attendance_checkin",
+                "action_xmlid": "smart_construction_core.action_sc_attendance_checkin",
+            },
+        },
+        {
+            "code": "labor.settlement",
+            "name": "劳务结算",
+            "target": {
+                "route": "/s/labor.settlement",
+                "menu_xmlid": "smart_construction_core.menu_sc_labor_settlement",
+                "action_xmlid": "smart_construction_core.action_sc_labor_settlement",
+            },
+        },
+        {
+            "code": "equipment.management",
+            "name": "机械设备",
+            "target": {
+                "route": "/s/equipment.management",
+                "menu_xmlid": "smart_construction_core.menu_sc_equipment_plan",
+                "action_xmlid": "smart_construction_core.action_sc_equipment_plan",
+            },
+        },
+        {
+            "code": "equipment.request",
+            "name": "设备申请",
+            "target": {
+                "route": "/s/equipment.request",
+                "menu_xmlid": "smart_construction_core.menu_sc_equipment_request",
+                "action_xmlid": "smart_construction_core.action_sc_equipment_request",
+            },
+        },
+        {
+            "code": "equipment.usage",
+            "name": "设备使用登记",
+            "target": {
+                "route": "/s/equipment.usage",
+                "menu_xmlid": "smart_construction_core.menu_sc_equipment_usage",
+                "action_xmlid": "smart_construction_core.action_sc_equipment_usage",
+            },
+        },
+        {
+            "code": "equipment.settlement",
+            "name": "设备结算",
+            "target": {
+                "route": "/s/equipment.settlement",
+                "menu_xmlid": "smart_construction_core.menu_sc_equipment_settlement",
+                "action_xmlid": "smart_construction_core.action_sc_equipment_settlement",
+            },
+        },
+        {
+            "code": "subcontract.management",
+            "name": "专业分包",
+            "target": {
+                "route": "/s/subcontract.management",
+                "menu_xmlid": "smart_construction_core.menu_sc_subcontract_plan",
+                "action_xmlid": "smart_construction_core.action_sc_subcontract_plan",
+            },
+        },
+        {
+            "code": "subcontract.request",
+            "name": "分包申请",
+            "target": {
+                "route": "/s/subcontract.request",
+                "menu_xmlid": "smart_construction_core.menu_sc_subcontract_request",
+                "action_xmlid": "smart_construction_core.action_sc_subcontract_request",
+            },
+        },
+        {
+            "code": "subcontract.register",
+            "name": "分包登记",
+            "target": {
+                "route": "/s/subcontract.register",
+                "menu_xmlid": "smart_construction_core.menu_sc_subcontract_register",
+                "action_xmlid": "smart_construction_core.action_sc_subcontract_register",
+            },
+        },
+        {
+            "code": "subcontract.settlement",
+            "name": "分包结算",
+            "target": {
+                "route": "/s/subcontract.settlement",
+                "menu_xmlid": "smart_construction_core.menu_sc_subcontract_settlement",
+                "action_xmlid": "smart_construction_core.action_sc_subcontract_settlement",
+            },
+        },
+        {
             "code": "cost.cost_compare",
             "name": "成本中心",
             "target": {
@@ -332,6 +547,95 @@ def list_scene_entries() -> List[Dict[str, Any]]:
                 "route": "/s/cost.profit_compare",
                 "menu_xmlid": "smart_construction_core.menu_sc_profit_reports",
                 "action_xmlid": "smart_construction_core.action_project_profit_compare",
+            },
+        },
+        {
+            "code": "construction.execution",
+            "name": "施工管理",
+            "target": {
+                "route": "/s/construction.execution",
+                "menu_xmlid": "smart_construction_core.menu_sc_construction_management_center",
+            },
+        },
+        {
+            "code": "construction.plan",
+            "name": "计划管理",
+            "target": {
+                "route": "/s/construction.plan",
+                "menu_xmlid": "smart_construction_core.menu_sc_plan",
+                "action_xmlid": "smart_construction_core.action_sc_plan",
+            },
+        },
+        {
+            "code": "construction.plan_report",
+            "name": "计划汇报",
+            "target": {
+                "route": "/s/construction.plan_report",
+                "menu_xmlid": "smart_construction_core.menu_sc_plan_report",
+                "action_xmlid": "smart_construction_core.action_sc_plan_report",
+            },
+        },
+        {
+            "code": "construction.diary",
+            "name": "施工日志",
+            "target": {
+                "route": "/s/construction.diary",
+                "menu_xmlid": "smart_construction_core.menu_sc_construction_diary",
+                "action_xmlid": "smart_construction_core.action_sc_construction_diary",
+            },
+        },
+        {
+            "code": "quality.center",
+            "name": "质量检查",
+            "target": {
+                "route": "/s/quality.center",
+                "menu_xmlid": "smart_construction_core.menu_sc_quality_issue",
+                "action_xmlid": "smart_construction_core.action_sc_quality_issue",
+            },
+        },
+        {
+            "code": "quality.rectification",
+            "name": "质量整改",
+            "target": {
+                "route": "/s/quality.rectification",
+                "menu_xmlid": "smart_construction_core.menu_sc_quality_rectification",
+                "action_xmlid": "smart_construction_core.action_sc_quality_rectification",
+            },
+        },
+        {
+            "code": "quality.recheck",
+            "name": "质量复验",
+            "target": {
+                "route": "/s/quality.recheck",
+                "menu_xmlid": "smart_construction_core.menu_sc_quality_recheck",
+                "action_xmlid": "smart_construction_core.action_sc_quality_recheck",
+            },
+        },
+        {
+            "code": "safety.center",
+            "name": "安全检查",
+            "target": {
+                "route": "/s/safety.center",
+                "menu_xmlid": "smart_construction_core.menu_sc_safety_issue",
+                "action_xmlid": "smart_construction_core.action_sc_safety_issue",
+            },
+        },
+        {
+            "code": "safety.rectification",
+            "name": "安全整改",
+            "target": {
+                "route": "/s/safety.rectification",
+                "menu_xmlid": "smart_construction_core.menu_sc_safety_rectification",
+                "action_xmlid": "smart_construction_core.action_sc_safety_rectification",
+            },
+        },
+        {
+            "code": "safety.recheck",
+            "name": "安全复验",
+            "target": {
+                "route": "/s/safety.recheck",
+                "menu_xmlid": "smart_construction_core.menu_sc_safety_recheck",
+                "action_xmlid": "smart_construction_core.action_sc_safety_recheck",
             },
         },
         {
@@ -414,16 +718,6 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             "code": "payments.risk.control",
             "name": "付款风险控制",
             "target": {"route": "/s/payments.risk.control"},
-        },
-        {
-            "code": "quality.center",
-            "name": "质量管理中心",
-            "target": {"route": "/s/quality.center"},
-        },
-        {
-            "code": "safety.center",
-            "name": "安全管理中心",
-            "target": {"route": "/s/safety.center"},
         },
         {
             "code": "resource.center",

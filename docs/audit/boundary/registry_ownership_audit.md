@@ -54,9 +54,7 @@
 - `addons/smart_construction_core/core_extension.py:416` → `registry["settlement.block.fetch"] = SettlementSliceBlockFetchHandler`
 - `addons/smart_construction_core/core_extension.py:417` → `registry["project.initiation.enter"] = ProjectInitiationEnterHandler`
 - `addons/smart_construction_core/core_extension.py:418` → `registry["risk.action.execute"] = RiskActionExecuteHandler`
-- `addons/smart_construction_core/core_extension.py:419` → `registry["app.catalog"] = AppCatalogHandler`
-- `addons/smart_construction_core/core_extension.py:420` → `registry["app.nav"] = AppNavHandler`
-- `addons/smart_construction_core/core_extension.py:421` → `registry["app.open"] = AppOpenHandler`
+- `app.catalog` / `app.nav` / `app.open` are owned by `smart_core.handlers.app_shell`; construction core no longer contributes these registry entries.
 
 ## core_extension Cross-Module Hook Evidence
 

@@ -12,6 +12,7 @@ from odoo.addons.smart_core.delivery.menu_fact_service import MenuFactService
 from odoo.addons.smart_core.delivery.menu_delivery_convergence_service import MenuDeliveryConvergenceService
 from odoo.addons.smart_core.delivery.menu_target_interpreter_service import MenuTargetInterpreterService
 from odoo.addons.smart_core.security.auth import get_user_from_token
+from odoo.addons.smart_core.security.platform_admin import user_is_platform_admin
 from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
 from odoo.addons.smart_core.core.exceptions import (
     AUTH_REQUIRED,
@@ -210,7 +211,7 @@ def _flat_fact_node(node: dict) -> dict:
 
 def _is_admin_user(env) -> bool:
     try:
-        return bool(env.user.has_group('base.group_system'))
+        return bool(user_is_platform_admin(env.user))
     except Exception:
         return False
 

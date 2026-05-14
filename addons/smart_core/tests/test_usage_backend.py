@@ -7,13 +7,20 @@ from odoo.tests.common import TransactionCase, tagged
 
 from odoo.addons.smart_core.handlers.usage_export_csv import build_usage_csv
 from odoo.addons.smart_core.handlers.usage_report import (
+    UsageReportHandler,
     _matches_prefix,
     build_usage_report_data,
 )
+from odoo.addons.smart_core.handlers.usage_track import UsageTrackHandler
 
 
 @tagged("sc_smoke", "usage_backend")
 class TestUsageBackend(TransactionCase):
+    def test_usage_handlers_are_platform_observability_handlers(self):
+        self.assertEqual(UsageReportHandler.SOURCE_AUTHORITY.get("kind"), "usage_analytics_projection")
+        self.assertTrue(UsageReportHandler.SOURCE_AUTHORITY.get("observability_only"))
+        self.assertEqual(UsageTrackHandler.SOURCE_AUTHORITY.get("write_authority"), "sc.usage.counter.bump")
+
     def test_usage_report_supports_days_and_prefix_filter(self):
         Usage = self.env["sc.usage.counter"].sudo()
         company = self.env.user.company_id

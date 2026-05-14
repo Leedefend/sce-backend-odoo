@@ -8,7 +8,7 @@
   >
     <aside class="sidebar sidebar-nav" :class="sidebarClass" data-component="SidebarNav">
       <div class="brand">
-        <div class="logo">SC</div>
+        <div class="logo">{{ shellLogoText }}</div>
         <div>
           <p class="title">{{ rootTitle }}</p>
           <p class="subtitle">{{ sidebarSubtitle }}</p>
@@ -17,7 +17,7 @@
 
       <p class="enterprise-line">当前企业：{{ enterpriseLabel }}</p>
 
-      <div class="project-context" :class="{ 'project-context--disabled': !projectContextEnabled }">
+      <div v-if="showRecordContext" class="project-context" :class="{ 'project-context--disabled': !projectContextEnabled }">
         <div class="project-trigger-row">
           <button
             class="project-trigger"
@@ -25,15 +25,15 @@
             :disabled="!projectContextEnabled"
             @click.stop="toggleProjectMenu"
           >
-            <span>当前项目：</span>
+            <span>{{ recordContextLabel }}：</span>
             <strong>{{ currentProjectLabel }}</strong>
           </button>
           <button
             v-if="selectedProject"
             class="project-clear-inline"
             type="button"
-            title="清除当前项目，显示全部项目"
-            aria-label="清除当前项目，显示全部项目"
+            :title="clearRecordContextTitle"
+            :aria-label="clearRecordContextTitle"
             @click.stop="clearProjectSelection"
           >
             ×
@@ -62,7 +62,7 @@
             </button>
             <p v-if="projectSearching" class="project-empty">搜索中...</p>
             <p v-else-if="projectError" class="project-empty">{{ projectError }}</p>
-            <p v-else-if="!projectOptions.length" class="project-empty">无匹配项目</p>
+            <p v-else-if="!projectOptions.length" class="project-empty">{{ recordContextEmptyText }}</p>
           </div>
         </div>
       </div>
@@ -79,6 +79,28 @@
             {{ roleLandingActionLabel }}
           </button>
           <button class="ghost mini" @click="router.push('/my-work')">我的工作</button>
+        </div>
+      </div>
+
+      <div v-if="showPublishedApps" class="published-apps" data-platform-app-catalog="true">
+        <div class="published-apps__header">
+          <span>平台发布</span>
+          <small v-if="appCatalogLoading">同步中</small>
+        </div>
+        <div class="published-apps__list">
+          <button
+            v-for="app in visiblePublishedApps"
+            :key="app.key"
+            class="published-app"
+            :class="{ active: app.appId === activeAppId, 'published-app--loading': app.appId === openingAppId }"
+            type="button"
+            :disabled="Boolean(openingAppId)"
+            @click="openPublishedApp(app)"
+          >
+            <span class="published-app__mark">{{ appMark(app) }}</span>
+            <span class="published-app__label">{{ app.label }}</span>
+            <small v-if="appBadge(app)">{{ appBadge(app) }}</small>
+          </button>
         </div>
       </div>
 
@@ -151,7 +173,7 @@
         variant="error"
       />
       <StatusPanel
-        v-else-if="initStatus === 'ready' && !menuCount"
+        v-else-if="initStatus === 'ready' && !menuCount && !routeAllowsEmptyMenu"
         title="暂无导航数据"
         message="菜单树为空，请尝试刷新初始化。"
         variant="error"
@@ -174,18 +196,21 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, provide, ref } from 'vue';
+import { computed, onMounted, onUnmounted, provide, ref, watch } from 'vue';
 import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router';
 import MenuTree from '../components/MenuTree.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
 import { useSessionStore } from '../stores/session';
+import { intentRequest } from '../api/intents';
 import { getSceneByKey, getSceneRegistryDiagnostics, resolveSceneLayout } from '../app/resolvers/sceneRegistry';
 import { resolveMenuAction } from '../app/resolvers/menuResolver';
 import { isDeliveryModeEnabled, isHudEnabled } from '../config/debug';
 import { buildCanonicalSceneRouteTarget, buildEntryTargetRouteTarget, parseSceneKeyFromQuery } from '../app/routeQuery';
 import { buildRuntimeNavigationRegistry } from '../app/navigationRegistry';
 import { applyTheme, nextTheme, persistTheme, type ScTheme } from '../styles/theme';
+import { config } from '../config';
+import { openAction } from '../services/action_service';
 import type { NavNode, ProjectContextOption } from '@sc/schema';
 import {
   exportSuggestedActionTraces,
@@ -199,6 +224,13 @@ type UnknownDict = Record<string, unknown>;
 type SceneAwareNavNode = NavNode & {
   scene_key?: string;
   sceneKey?: string;
+};
+type PublishedApp = {
+  key: string;
+  label: string;
+  appId: string;
+  category: string;
+  badges: Record<string, unknown>;
 };
 const PROJECT_CONTEXT_CHANGED_EVENT = 'sc:project-context-changed';
 
@@ -251,13 +283,19 @@ const projectMenuOpen = ref(false);
 const projectSearch = ref('');
 const projectSearching = ref(false);
 const projectError = ref('');
+const appCatalog = ref<PublishedApp[]>([]);
+const appCatalogLoading = ref(false);
+const appCatalogError = ref('');
+const openingAppId = ref('');
 let projectSearchTimer: ReturnType<typeof setTimeout> | null = null;
 
 const menuTree = computed(() => session.menuTree);
 const roleSurface = computed(() => session.roleSurface);
+const shellLogoText = computed(() => config.appBrand.shellLogoText || 'SC');
 const rootNode = computed(() => (menuTree.value.length === 1 ? menuTree.value[0] : null));
 const menuNodes = computed(() => rootNode.value?.children ?? menuTree.value);
 const menuCount = computed(() => menuNodes.value.length);
+const routeAllowsEmptyMenu = computed(() => route.meta?.adminOnly === true || route.path.startsWith('/admin/'));
 const rootTitle = computed(() => {
   const root = rootNode.value;
   return normalizeDeliveryText(root?.title || root?.name || root?.label || '智能工程协作平台');
@@ -299,14 +337,23 @@ const roleLabel = computed(() => {
 });
 const projectContext = computed(() => session.projectContext);
 const projectContextEnabled = computed(() => Boolean(projectContext.value?.enabled));
+const projectContextReasonCode = computed(() => String(projectContext.value?.reason_code || '').trim());
+const showRecordContext = computed(() =>
+  projectContextEnabled.value || projectContextReasonCode.value !== 'RECORD_CONTEXT_MODEL_NOT_INSTALLED'
+);
 const selectedProject = computed(() => projectContext.value?.selected ?? null);
 const projectOptions = computed(() => projectContext.value?.options ?? []);
+const recordContextLabel = computed(() =>
+  String(projectContext.value?.selector?.label || '当前记录').trim() || '当前记录'
+);
+const recordContextEmptyText = computed(() => `无匹配${recordContextLabel.value.replace(/^当前/, '')}`);
+const clearRecordContextTitle = computed(() => `清除${recordContextLabel.value}，显示全部记录`);
 const currentProjectLabel = computed(() => {
   if (!projectContextEnabled.value) {
     return projectContext.value?.message || '未启用';
   }
   const selected = selectedProject.value;
-  if (!selected) return '全部项目';
+  if (!selected) return '全部记录';
   return projectOptionLabel(selected);
 });
 const projectSearchPlaceholder = computed(() =>
@@ -330,6 +377,16 @@ const roleLandingTitle = computed(() => `打开当前角色默认入口：${role
 const showRoleLandingAction = computed(() => roleLandingActionLabel.value !== '角色首页');
 const capabilities = computed(() => session.capabilities);
 const initMeta = computed(() => asDict(session.initMeta));
+const isPlatformAdmin = computed(() => session.user?.is_platform_admin === true);
+const visiblePublishedApps = computed(() => (isPlatformAdmin.value ? appCatalog.value : []));
+const showPublishedApps = computed(() => isPlatformAdmin.value && (visiblePublishedApps.value.length > 0 || appCatalogLoading.value));
+const activeAppId = computed(() => {
+  const sceneKey = String(routeSceneKey.value || '').trim();
+  if (sceneKey.startsWith('project') || sceneKey.startsWith('projects')) return 'projects';
+  if (sceneKey.includes('contract')) return 'contract_management';
+  if (route.name === 'home' || route.name === 'scene-home') return 'workspace';
+  return '';
+});
 const effectiveDb = computed(() => asText(initMeta.value?.effective_db) ?? 'N/A');
 const navVersion = computed(() => {
   const meta = initMeta.value;
@@ -438,7 +495,154 @@ function resolveDeliveryRoleLabel(roleLabelRaw: string, roleCodeRaw: string) {
 
 function projectOptionLabel(option: ProjectContextOption | null | undefined) {
   if (!option) return '';
-  return String(option.display_name || option.name || `项目 ${option.id}`).trim();
+  return String(option.display_name || option.name || `记录 ${option.id}`).trim();
+}
+
+function normalizePublishedApps(raw: unknown): PublishedApp[] {
+  const row = asDict(raw);
+  const source = Array.isArray(row?.apps) ? row.apps : [];
+  return source
+    .map((item, index) => {
+      const app = asDict(item) || {};
+      const meta = asDict(app.meta) || {};
+      const appId = asText(meta.app_id) || String(app.key || '').replace(/^app:/, '').trim();
+      const key = asText(app.key) || `app:${appId || index + 1}`;
+      const label = resolvePublishedAppLabel(appId, asText(app.label), key);
+      return {
+        key,
+        label,
+        appId,
+        category: asText(meta.category) || '',
+        badges: asDict(app.badges) || {},
+      };
+    })
+    .filter((app) => app.appId && app.label);
+}
+
+function resolvePublishedAppLabel(appId: string, rawLabel: string | undefined, key: string) {
+  const normalized = String(appId || '').trim().toLowerCase();
+  const backendLabel = String(rawLabel || '').trim();
+  if (backendLabel && backendLabel !== normalized && backendLabel !== key) {
+    return backendLabel;
+  }
+  const labels: Record<string, string> = {
+    workspace: '角色首页',
+    projects: '项目管理',
+    project: '项目立项',
+    contract: '合同管理',
+    contracts: '合同中心',
+    cost: '成本管理',
+    finance: '资金财务',
+    payments: '收付款',
+    dashboard: '经营驾驶舱',
+    data: '数据中心',
+    config: '业务配置',
+    my_work: '我的工作',
+    delivery: '交付控制',
+    enterprise: '企业组织',
+    operation: '运营管理',
+    portal: '门户工作台',
+    portfolio: '项目组合',
+    quality: '质量管理',
+    resource: '资源管理',
+    risk: '风险管理',
+    safety: '安全管理',
+    task: '任务协同',
+    release_management: '产品发布',
+    company_access: '公司访问',
+  };
+  return labels[normalized] || backendLabel || normalized || key;
+}
+
+async function loadPublishedApps() {
+  if (!session.token || session.initStatus !== 'ready' || session.user?.is_platform_admin !== true) {
+    appCatalog.value = [];
+    appCatalogLoading.value = false;
+    return;
+  }
+  appCatalogLoading.value = true;
+  appCatalogError.value = '';
+  try {
+    const result = await intentRequest<unknown>({
+      intent: 'app.catalog',
+      params: { scene: 'web' },
+      silentErrors: true,
+    });
+    appCatalog.value = normalizePublishedApps(result);
+  } catch (err) {
+    appCatalog.value = [];
+    appCatalogError.value = err instanceof Error ? err.message : '平台应用目录不可用';
+  } finally {
+    appCatalogLoading.value = false;
+  }
+}
+
+function appMark(app: PublishedApp) {
+  const id = String(app.appId || '').trim();
+  const label = String(app.label || '').trim();
+  if (id === 'workspace') return '首';
+  if (id.includes('release')) return '发';
+  if (id.includes('access')) return '权';
+  if (id.includes('project')) return '项';
+  if (id.includes('contract')) return '合';
+  if (id.includes('finance') || id.includes('payment')) return '财';
+  if (id.includes('cost')) return '成';
+  return label.slice(0, 1) || '应';
+}
+
+function appBadge(app: PublishedApp) {
+  const todo = Number(app.badges.todo || 0);
+  if (Number.isFinite(todo) && todo > 0) return String(Math.trunc(todo));
+  return '';
+}
+
+function pushRoute(path: string) {
+  if (!path) return;
+  router.push(path).catch(() => {});
+}
+
+function openAppTarget(target: unknown, fallbackAppId: string) {
+  const data = asDict(target);
+  if (!data) return;
+  const subject = String(data.subject || '').trim();
+  const routePath = asText(data.route);
+  if (subject === 'ui.contract' && routePath) {
+    pushRoute(routePath);
+    return;
+  }
+  if (subject === 'menu') {
+    const menuId = asInteger(data.id) || asInteger(data.menu_id);
+    if (menuId) pushRoute(`/m/${menuId}`);
+    return;
+  }
+  const actionId = asInteger(data.action_id) || asInteger(data.id);
+  if (subject === 'action' || actionId) {
+    openAction(router, data as never, undefined);
+    return;
+  }
+  if (fallbackAppId === 'workspace') {
+    pushRoute('/');
+  }
+}
+
+async function openPublishedApp(app: PublishedApp) {
+  const appId = String(app.appId || '').trim();
+  if (!appId || openingAppId.value) return;
+  openingAppId.value = appId;
+  try {
+    const result = await intentRequest<unknown>({
+      intent: 'app.open',
+      params: {
+        app: appId,
+        client_type: 'web',
+      },
+    });
+    openAppTarget(result, appId);
+  } catch (err) {
+    appCatalogError.value = err instanceof Error ? err.message : '应用打开失败';
+  } finally {
+    openingAppId.value = '';
+  }
 }
 
 async function loadProjectOptions() {
@@ -448,7 +652,7 @@ async function loadProjectOptions() {
   try {
     await session.searchProjectContext(projectSearch.value);
   } catch (err) {
-    projectError.value = err instanceof Error ? err.message : '项目搜索失败';
+    projectError.value = err instanceof Error ? err.message : '记录搜索失败';
   } finally {
     projectSearching.value = false;
   }
@@ -814,11 +1018,19 @@ onMounted(() => {
   themeMode.value = loadThemeMode();
   applyTheme(themeMode.value);
   showExtractionStats.value = String(route.query.hud_stats || '').trim() === '1';
+  void loadPublishedApps();
   if (typeof window === 'undefined') return;
   window.addEventListener(getTraceUpdateEventName(), handleTraceUpdate as (event: Event) => void);
   window.addEventListener('click', closeProjectMenu);
   handleTraceUpdate();
 });
+
+watch(
+  () => [session.initStatus, session.token, session.projectContext?.selected?.id],
+  () => {
+    void loadPublishedApps();
+  },
+);
 
 onUnmounted(() => {
   if (typeof window === 'undefined') return;
@@ -1281,6 +1493,111 @@ async function logout() {
 .role-actions {
   display: flex;
   gap: 4px;
+}
+
+.published-apps {
+  display: grid;
+  gap: 6px;
+  padding: 0 0 8px;
+  border-bottom: 1px solid #e5e7eb;
+  min-width: 0;
+}
+
+.published-apps__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 2px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.published-apps__header small {
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.published-apps__list {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  max-height: 180px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.published-app {
+  width: 100%;
+  min-width: 0;
+  height: 30px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #334155;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 7px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.published-app:hover,
+.published-app.active {
+  border-color: #c7d2fe;
+  background: #eef2ff;
+  color: #1e3a8a;
+}
+
+.published-app:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.published-app__mark {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  color: #334155;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.published-app.active .published-app__mark,
+.published-app:hover .published-app__mark {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.published-app__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.published-app small {
+  min-width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: #fee2e2;
+  color: #b91c1c;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  font-size: 10px;
+  font-weight: 700;
 }
 
 .menu {

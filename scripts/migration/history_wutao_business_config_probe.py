@@ -7,6 +7,12 @@ import json
 import os
 from pathlib import Path
 
+from odoo.addons.smart_core.security.platform_admin import (
+    LEGACY_PLATFORM_ADMIN_GROUP,
+    PLATFORM_ADMIN_GROUP,
+    SYSTEM_ADMIN_GROUP,
+)
+
 
 def artifact_root() -> Path:
     candidates = []
@@ -44,9 +50,9 @@ business_config_group = env.ref(  # noqa: F821
     "smart_construction_core.group_sc_cap_business_config_admin",
     raise_if_not_found=False,
 )
-platform_config_group = env.ref("smart_core.group_smart_core_admin", raise_if_not_found=False)  # noqa: F821
+platform_config_group = env.ref(PLATFORM_ADMIN_GROUP, raise_if_not_found=False)  # noqa: F821
 legacy_platform_config_group = env.ref(  # noqa: F821
-    "smart_construction_core.group_sc_cap_config_admin",
+    LEGACY_PLATFORM_ADMIN_GROUP,
     raise_if_not_found=False,
 )
 
@@ -82,7 +88,7 @@ payload = {
         "has_legacy_platform_config": bool(
             user and legacy_platform_config_group and legacy_platform_config_group in user.groups_id
         ),
-        "is_system": bool(user and user.has_group("base.group_system")),
+        "is_system": bool(user and user.has_group(SYSTEM_ADMIN_GROUP)),
         "business_config_menu_count": len(business_config_menus),
         "business_config_menus": sorted(business_config_menus),
         "user_permission_menu_count": len(user_permission_menus),

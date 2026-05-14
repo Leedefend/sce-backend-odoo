@@ -178,6 +178,13 @@ class TestReleaseOperatorSurfaceCopyBackend(unittest.TestCase):
         self.assertIn("候选快照", (payload.get("copy") or {}).get("hint_candidate", ""))
         self.assertEqual((((payload.get("read_model_v1") or {}).get("copy") or {}).get("section_pending")), "待审批动作")
         self.assertEqual((((payload.get("read_model_v1") or {}).get("copy") or {}).get("rollback_action_label")), "执行回滚")
+        self.assertEqual((((payload.get("available_actions") or {}).get("freeze") or {}).get("intent")), "release.operator.freeze")
+        self.assertEqual((((payload.get("available_actions") or {}).get("sync_policy") or {}).get("intent")), "release.operator.sync_policy")
+        self.assertEqual((((payload.get("available_actions") or {}).get("update_policy") or {}).get("intent")), "release.operator.update_policy")
+        self.assertEqual((((payload.get("available_actions") or {}).get("set_page_enabled") or {}).get("intent")), "release.operator.set_page_enabled")
+        self.assertEqual((((payload.get("available_actions") or {}).get("update_page_policy") or {}).get("intent")), "release.operator.update_page_policy")
+        self.assertEqual((((payload.get("available_actions") or {}).get("runtime_probe") or {}).get("intent")), "release.operator.runtime_probe")
+        self.assertIn("runtime_user_probe", (payload.get("release_pipeline") or {}))
 
     def test_preview_product_copy_mentions_preview_edition(self):
         service = TARGET.ReleaseOperatorSurfaceService(_Env())
@@ -188,7 +195,7 @@ class TestReleaseOperatorSurfaceCopyBackend(unittest.TestCase):
 
         self.assertIn("预览版", (payload.get("copy") or {}).get("description", ""))
 
-    def test_operator_products_follow_requested_base_product(self):
+    def test_operator_products_include_platform_and_construction_portfolio(self):
         service = TARGET.ReleaseOperatorSurfaceService(_Env())
         service.read_model_service.audit_service = _AuditTrailService()
         service.read_model_service.approval_policy_service = _ApprovalPolicyService()
@@ -198,7 +205,11 @@ class TestReleaseOperatorSurfaceCopyBackend(unittest.TestCase):
         products = read_model.get("products") or []
 
         self.assertEqual((read_model.get("identity") or {}).get("product_key"), "platform.preview")
-        self.assertEqual([row.get("product_key") for row in products], ["platform.standard", "platform.preview"])
+        self.assertEqual(
+            [row.get("product_key") for row in products],
+            ["platform.standard", "platform.preview", "construction.standard", "construction.preview"],
+        )
+        self.assertIn("施工管理标准版", [row.get("label") for row in products])
         self.assertEqual((((read_model.get("identity") or {}).get("source_authority") or {}).get("kind")), "delivery_product_identity_resolver")
 
     def test_operator_default_base_product_is_configurable(self):

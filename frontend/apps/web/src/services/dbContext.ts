@@ -2,6 +2,9 @@ const DB_SCOPE = String(import.meta.env.VITE_APP_ENV || 'default').trim() || 'de
 const ACTIVE_DB_STORAGE_KEY = `sc_active_db:${DB_SCOPE}`;
 const LOCAL_DEV_PORTS = new Set(['18081', '5174', '8070']);
 const LOCAL_DEV_BLOCKED_DBS = new Set(['sc_prod_sim', 'sc_delivery_local']);
+const ENV_DB = String(import.meta.env.VITE_ODOO_DB ?? '').trim();
+const PLATFORM_ADMIN_DB = String(import.meta.env.VITE_PLATFORM_ADMIN_DB ?? '').trim();
+const ENV_DB_LOCKED = Boolean(ENV_DB) && String(import.meta.env.VITE_ODOO_DB_LOCKED ?? '1').trim() !== '0';
 
 function normalizeDb(value: unknown): string {
   const db = String(value || '').trim();
@@ -15,6 +18,12 @@ function isLocalDevRuntime(): boolean {
     (host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0')
     && LOCAL_DEV_PORTS.has(window.location.port)
   );
+}
+
+export function isPlatformAdminEntryRuntime(): boolean {
+  if (typeof window === 'undefined') return false;
+  const params = new URLSearchParams(window.location.search);
+  return window.location.pathname.startsWith('/platform-admin') || params.get('platform_admin') === '1';
 }
 
 function isBlockedLocalDevDb(db: string): boolean {
@@ -58,6 +67,25 @@ function readDbFromStorage(): string {
 
 export function resolveActiveDb(fallbackDb = ''): string {
   return readDbFromQuery() || readDbFromStorage() || normalizeDb(fallbackDb);
+}
+
+export function resolveConfiguredDb(fallbackDb = ''): string {
+  const envDb = sanitizeDb(ENV_DB);
+  if (isPlatformAdminEntryRuntime() && PLATFORM_ADMIN_DB) {
+    return sanitizeDb(PLATFORM_ADMIN_DB);
+  }
+  if (ENV_DB_LOCKED) {
+    return envDb;
+  }
+  return resolveActiveDb(envDb || fallbackDb);
+}
+
+export function resolveLoginRoutingDb(): string {
+  return sanitizeDb(PLATFORM_ADMIN_DB);
+}
+
+export function isConfiguredDbPinned(): boolean {
+  return Boolean((isPlatformAdminEntryRuntime() && PLATFORM_ADMIN_DB) || ENV_DB_LOCKED);
 }
 
 export function setActiveDb(db: string, syncUrl = false): void {

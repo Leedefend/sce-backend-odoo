@@ -9,9 +9,9 @@
 | api.data.batch | Y | smart_core.group_smart_core_data_operator | explicit_check | N | Y | addons/smart_core/handlers/api_data_batch.py |
 | api.data.create | Y | smart_core.group_smart_core_data_operator | explicit_check | N | Y | addons/smart_core/handlers/api_data_write.py |
 | api.data.unlink | Y | smart_core.group_smart_core_data_operator | explicit_check | N | Y | addons/smart_core/handlers/api_data_unlink.py |
-| app.catalog | N | - | - | N | Y | addons/smart_core/handlers/app_catalog.py |
-| app.nav | N | - | - | N | Y | addons/smart_core/handlers/app_nav.py |
-| app.open | N | - | - | N | Y | addons/smart_core/handlers/app_open.py |
+| app.catalog | N | - | - | N | Y | addons/smart_core/handlers/app_shell.py |
+| app.nav | N | - | - | N | Y | addons/smart_core/handlers/app_shell.py |
+| app.open | N | - | - | N | Y | addons/smart_core/handlers/app_shell.py |
 | auth.logout | N | - | - | N | N | addons/smart_core/handlers/login.py |
 | capability.describe | N | - | - | N | Y | addons/smart_construction_core/handlers/capability_describe.py |
 | capability.visibility.report | N | - | - | N | N | addons/smart_construction_core/handlers/capability_visibility_report.py |
@@ -50,6 +50,6 @@
 | system.ping.construction | Y | smart_core.group_smart_core_data_operator | record_rule | N | Y | addons/smart_construction_core/handlers/system_ping_construction.py |
 | telemetry.track | Y | base.group_user | explicit_check | N | Y | addons/smart_construction_core/handlers/telemetry_track.py |
 | ui.contract | N | - | - | N | Y | addons/smart_core/handlers/ui_contract.py |
-| usage.export.csv | N | base.group_user | - | N | Y | addons/smart_construction_core/handlers/usage_export_csv.py |
-| usage.report | N | - | - | N | Y | addons/smart_construction_core/handlers/usage_report.py |
-| usage.track | Y | base.group_user | explicit_check | N | Y | addons/smart_construction_core/handlers/usage_track.py |
+| usage.export.csv | N | base.group_user | - | N | Y | addons/smart_core/handlers/usage_export_csv.py |
+| usage.report | N | - | - | N | Y | addons/smart_core/handlers/usage_report.py |
+| usage.track | Y | base.group_user | explicit_check | N | Y | addons/smart_core/handlers/usage_track.py |

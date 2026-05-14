@@ -15,7 +15,8 @@ Branch: `feat/fix-my-work-scene-target`
   - `psycopg2.errors.SerializationFailure`
   - `could not serialize access due to concurrent update`
 - Conflict target: `sc_usage_counter` (telemetry usage counter table).
-- Trigger chain: `intent=usage.track` -> `smart_construction_core.handlers.usage_track` -> `sc.usage.counter.bump`.
+- Trigger chain: `intent=usage.track` -> `smart_core.handlers.usage_track` -> `sc.usage.counter.bump`.
+  The construction side keeps only the usage import compatibility shim.
 
 ## Mitigation Implemented In This Iteration
 
@@ -41,4 +42,3 @@ Branch: `feat/fix-my-work-scene-target`
   - degraded/skipped count
   - optional lost-count estimate
 - Run concurrency smoke in CI/nightly as a regression gate.
-

@@ -456,6 +456,22 @@ class TestOdooNativeAlignmentBoundaries(TransactionCase):
             "delivery_capability_projection",
         )
 
+    def test_construction_missing_product_policy_uses_minimal_default(self):
+        policy = ProductPolicyService(self.env).get_policy(product_key="construction.standard")
+        delivery = DeliveryEngine(self.env).build(
+            data={"role_surface": {"role_code": "operator"}},
+            product_key="construction.standard",
+        )
+
+        self.assertEqual(policy.get("product_key"), "construction.standard")
+        self.assertEqual(policy.get("base_product_key"), "construction")
+        self.assertEqual(((policy.get("policy_source_authority") or {}).get("kind")), "minimal_default_product_policy_provider")
+        self.assertEqual(policy.get("menu_groups") or [], [])
+        self.assertEqual(policy.get("scenes") or [], [])
+        self.assertEqual(policy.get("capabilities") or [], [])
+        self.assertEqual(((delivery.get("product_policy") or {}).get("policy_source_kind")), "minimal_default_product_policy_provider")
+        self.assertTrue((delivery.get("product_policy") or {}).get("policy_empty"))
+
     def test_release_delivery_services_declare_projection_boundaries(self):
         services = (
             (DeliveryEngine, "delivery_engine_projection"),

@@ -40,15 +40,15 @@
 ### D1 Settings/Config
 | Type | XML ID | Target Model | Notes |
 |---|---|---|---|
-| Menu | `menu_sc_config_center` | `n/a` | 配置中心根入口（groups：`group_sc_cap_config_admin`） |
-| Menu | `menu_project_quota_root` | `project.dictionary` | 定额库入口（配置子树，groups：`group_sc_cap_data_read`） |
+| Menu | `menu_sc_config_center` | `n/a` | 平台系统配置根入口（groups：`smart_core.group_smart_core_admin`） |
+| Menu | `menu_project_quota_root` | `project.dictionary` | 定额库入口（业务配置子树，groups：`group_sc_cap_business_config_admin`） |
 | Action | `base_setup.action_general_configuration` | `res.config.settings` | 原生通用设置 |
 | Action | `account.action_account_config` | `res.config.settings` | 财务设置 |
 | Action | `stock.action_stock_config_settings` | `res.config.settings` | 库存设置 |
 | Action | `project.project_config_settings_action` | `res.config.settings` | 项目设置 |
 | Action | `purchase.action_purchase_configuration` | `res.config.settings` | 采购设置 |
-| Action | `action_project_cost_code` | `project.cost.code` | 成本科目维护（仅 `group_sc_cap_config_admin`） |
-| Action | `action_quota_import_wizard` | `quota.import.wizard` | 定额导入向导（仅 `group_sc_cap_config_admin`） |
+| Action | `action_project_cost_code` | `project.cost.code` | 成本科目维护（仅 `group_sc_cap_business_config_admin`） |
+| Action | `action_quota_import_wizard` | `quota.import.wizard` | 定额导入向导（仅 `group_sc_cap_business_config_admin`） |
 | Action | `base.action_module_upgrade` | `ir.actions.server` | 模块升级（仅 `group_sc_super_admin`） |
 
 ### D2 Master Data
@@ -167,8 +167,8 @@
 | Settings/Config | `stock.action_stock_config_settings` | act_window | `res.config.settings` | 修改库存配置 | `group_sc_super_admin` |
 | Settings/Config | `project.project_config_settings_action` | act_window | `res.config.settings` | 修改项目配置 | `group_sc_super_admin` |
 | Settings/Config | `purchase.action_purchase_configuration` | act_window | `res.config.settings` | 修改采购配置 | `group_sc_super_admin` |
-| Settings/Config | `action_project_cost_code` | act_window | `project.cost.code` | 成本科目主数据 | `group_sc_cap_config_admin` |
-| Settings/Config | `action_sc_workflow_def` | act_window | `sc.workflow.def` | 工作流定义变更 | `group_sc_cap_config_admin` |
+| Settings/Config | `action_project_cost_code` | act_window | `project.cost.code` | 成本科目主数据 | `group_sc_cap_business_config_admin` |
+| Settings/Config | `action_sc_workflow_def` | act_window | `sc.workflow.def` | 工作流定义变更 | `smart_core.group_smart_core_admin` |
 | Settings/Config | `digest.digest_digest_action` | act_window | `digest.digest` | 摘要邮件/调度配置 | `group_sc_super_admin` |
 | Settings/Config | `digest.digest_tip_action` | act_window | `digest.digest` | 摘要提示配置 | `group_sc_super_admin` |
 | Master Data | `account.action_account_journal_form` | act_window | `account.journal` | 会计科目主数据 | `group_sc_cap_finance_manager` |
@@ -177,7 +177,7 @@
 | Import/Export/Mass | `base_import.action_import_data` | client_action | `base_import.import` | 任意模型导入（仅当 base_import 安装时有效；未安装则不加载） | `group_sc_super_admin` |
 | Import/Export/Mass | `action_project_boq_import_wizard` | act_window | `project.boq.import.wizard` | BOQ 批量导入 | `group_sc_cap_cost_manager` |
 | Import/Export/Mass | `action_project_task_from_boq_wizard` | act_window | `project.task.from.boq.wizard` | BOQ 转任务批量生成 | `group_sc_cap_cost_manager` |
-| Import/Export/Mass | `action_quota_import_wizard` | act_window | `quota.import.wizard` | 定额库导入 | `group_sc_cap_config_admin` |
+| Import/Export/Mass | `action_quota_import_wizard` | act_window | `quota.import.wizard` | 定额库导入 | `group_sc_cap_business_config_admin` |
 | Import/Export/Mass | `action_material_plan_to_rfq_wizard` | act_window | `project.material.plan` | 物资计划批量转询价/采购 | `group_sc_cap_material_user` / `manager` |
 | Server Action / Automation | `base.action_module_upgrade` | server_action | `ir.actions.server` | 模块升级（如本环境未定义该 xmlid，则无需补丁） | `group_sc_super_admin` |
 | Server Action / Automation | `server_action_material_plan_tier_approved` | server_action | `project.material.plan` | 审批回调自动写入 | `group_sc_cap_material_manager` |
@@ -270,9 +270,19 @@
     "actions_allow": ["smart_construction_core.action_project_material_plan"],
     "actions_deny": ["smart_construction_core.action_payment_request"]
   },
-  "config_admin": {
-    "groups": ["smart_construction_core.group_sc_cap_config_admin"],
-    "menus_allow": ["smart_construction_core.menu_sc_root"],
+  "business_config_admin": {
+    "groups": ["smart_construction_core.group_sc_cap_business_config_admin"],
+    "menus_allow": ["smart_construction_core.menu_sc_business_config_center"],
+    "menus_deny": ["smart_construction_core.menu_sc_config_center"],
+    "actions_allow": ["smart_construction_core.action_project_dictionary"],
+    "actions_deny": ["smart_construction_core.action_sc_workflow_def"]
+  },
+  "platform_admin": {
+    "groups": ["smart_core.group_smart_core_admin"],
+    "menus_allow": [
+      "smart_construction_core.menu_sc_config_center",
+      "smart_construction_core.menu_sc_workflow_root"
+    ],
     "menus_deny": [],
     "actions_allow": ["smart_construction_core.action_sc_workflow_def"],
     "actions_deny": []

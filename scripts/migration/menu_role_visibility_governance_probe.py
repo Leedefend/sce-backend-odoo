@@ -7,6 +7,12 @@ import json
 import os
 from pathlib import Path
 
+from odoo.addons.smart_core.security.platform_admin import (
+    LEGACY_PLATFORM_ADMIN_GROUP,
+    PLATFORM_ADMIN_GROUP,
+    SYSTEM_ADMIN_GROUP,
+)
+
 
 def resolve_artifact_root() -> Path:
     env_root = os.getenv("MIGRATION_ARTIFACT_ROOT")
@@ -77,10 +83,10 @@ def user_row(login: str) -> dict[str, object]:
         "login": login,
         "user_id": user.id,
         "missing": False,
-        "is_system": bool(user.has_group("base.group_system")),
+        "is_system": bool(user.has_group(SYSTEM_ADMIN_GROUP)),
         "has_business_config": bool(user.has_group("smart_construction_core.group_sc_cap_business_config_admin")),
-        "has_legacy_platform_config": bool(user.has_group("smart_construction_core.group_sc_cap_config_admin")),
-        "has_platform_config": bool(user.has_group("smart_core.group_smart_core_admin")),
+        "has_legacy_platform_config": bool(user.has_group(LEGACY_PLATFORM_ADMIN_GROUP)),
+        "has_platform_config": bool(user.has_group(PLATFORM_ADMIN_GROUP)),
         "menu_count": len(menus),
         "top_menus": sorted({row["path"].split(" / ")[1] for row in menus if " / " in row["path"]}),
         "menus": menus,
@@ -128,15 +134,15 @@ errors: list[str] = []
 business_full = env.ref("smart_construction_core.group_sc_business_full", raise_if_not_found=False)  # noqa: F821
 executive_group = env.ref("smart_construction_custom.group_sc_role_executive", raise_if_not_found=False)  # noqa: F821
 legacy_platform_group = env.ref(  # noqa: F821
-    "smart_construction_core.group_sc_cap_config_admin",
+    LEGACY_PLATFORM_ADMIN_GROUP,
     raise_if_not_found=False,
 )
-platform_group = env.ref("smart_core.group_smart_core_admin", raise_if_not_found=False)  # noqa: F821
+platform_group = env.ref(PLATFORM_ADMIN_GROUP, raise_if_not_found=False)  # noqa: F821
 business_config_group = env.ref(  # noqa: F821
     "smart_construction_core.group_sc_cap_business_config_admin",
     raise_if_not_found=False,
 )
-system_group = env.ref("base.group_system", raise_if_not_found=False)  # noqa: F821
+system_group = env.ref(SYSTEM_ADMIN_GROUP, raise_if_not_found=False)  # noqa: F821
 
 
 def group_xmlids(record) -> set[str]:
@@ -171,11 +177,11 @@ for xmlid, group in [
         errors.append(f"{xmlid}: must not imply legacy platform config group")
 
 if not legacy_platform_group:
-    errors.append("smart_construction_core.group_sc_cap_config_admin: missing legacy platform bridge group")
+    errors.append(f"{LEGACY_PLATFORM_ADMIN_GROUP}: missing legacy platform bridge group")
 else:
     legacy_trans = legacy_platform_group.trans_implied_ids
     if platform_group and platform_group not in legacy_trans:
-        errors.append("smart_construction_core.group_sc_cap_config_admin: must imply smart_core.group_smart_core_admin")
+        errors.append(f"{LEGACY_PLATFORM_ADMIN_GROUP}: must imply {PLATFORM_ADMIN_GROUP}")
 
 for login in all_logins:
     if users[login].get("missing"):
@@ -235,40 +241,72 @@ for login in platform_logins:
 
 exact_group_boundaries = {
     "smart_construction_core.menu_sc_project_manage": {
-        "only": {"smart_construction_core.group_sc_cap_config_admin"},
+        "only": {PLATFORM_ADMIN_GROUP},
         "label": "platform-only backend project menu",
     },
     "smart_construction_core.action_sc_project_manage": {
-        "only": {"smart_construction_core.group_sc_cap_config_admin"},
+        "only": {PLATFORM_ADMIN_GROUP},
         "label": "platform-only backend project action",
     },
+    "smart_construction_core.menu_sc_config_center": {
+        "only": {PLATFORM_ADMIN_GROUP},
+        "label": "platform system config root",
+    },
+    "smart_construction_core.menu_sc_workflow_root": {
+        "only": {PLATFORM_ADMIN_GROUP},
+        "label": "platform workflow root",
+    },
+    "smart_construction_core.action_sc_workflow_def": {
+        "only": {PLATFORM_ADMIN_GROUP},
+        "label": "platform workflow definition action",
+    },
+    "smart_construction_core.action_sc_workflow_instance": {
+        "only": {PLATFORM_ADMIN_GROUP},
+        "label": "platform workflow instance action",
+    },
     "smart_core.menu_smart_core_platform_root": {
-        "only": {"smart_core.group_smart_core_admin"},
+        "only": {PLATFORM_ADMIN_GROUP},
         "label": "smart core platform root",
     },
     "smart_core.menu_smart_core_company_access_root": {
-        "only": {"smart_core.group_smart_core_admin"},
+        "only": {PLATFORM_ADMIN_GROUP},
         "label": "smart core company access root",
     },
     "smart_core.action_sc_subscription_plan": {
-        "only": {"smart_core.group_smart_core_admin"},
+        "only": {PLATFORM_ADMIN_GROUP},
         "label": "smart core subscription plan action",
     },
     "smart_core.action_sc_subscription": {
-        "only": {"smart_core.group_smart_core_admin"},
+        "only": {PLATFORM_ADMIN_GROUP},
         "label": "smart core subscription action",
     },
     "smart_core.action_sc_entitlement": {
-        "only": {"smart_core.group_smart_core_admin"},
+        "only": {PLATFORM_ADMIN_GROUP},
         "label": "smart core entitlement action",
     },
     "smart_core.action_sc_usage_counter": {
-        "only": {"smart_core.group_smart_core_admin"},
+        "only": {PLATFORM_ADMIN_GROUP},
         "label": "smart core usage counter action",
     },
     "smart_core.action_sc_ops_job": {
-        "only": {"smart_core.group_smart_core_admin"},
+        "only": {PLATFORM_ADMIN_GROUP},
         "label": "smart core ops job action",
+    },
+    "base.menu_action_res_groups": {
+        "only": {PLATFORM_ADMIN_GROUP, "smart_construction_core.group_sc_super_admin"},
+        "label": "native group management menu",
+    },
+    "base.action_res_groups": {
+        "only": {PLATFORM_ADMIN_GROUP, "smart_construction_core.group_sc_super_admin"},
+        "label": "native group management action",
+    },
+    "smart_construction_core.action_sc_runtime_user_management": {
+        "only": {PLATFORM_ADMIN_GROUP, "smart_construction_core.group_sc_cap_business_config_admin"},
+        "label": "runtime user management action",
+    },
+    "smart_construction_core.menu_sc_runtime_user_management": {
+        "only": {PLATFORM_ADMIN_GROUP, "smart_construction_core.group_sc_cap_business_config_admin"},
+        "label": "runtime user management menu",
     },
     "smart_construction_core.menu_sc_project_cost_code": {
         "only": {"smart_construction_core.group_sc_cap_business_config_admin"},

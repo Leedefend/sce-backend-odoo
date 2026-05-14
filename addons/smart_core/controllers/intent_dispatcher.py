@@ -23,6 +23,7 @@ from ..core.intent_access_policy import ANONYMOUS_INTENTS, is_anonymous_allowed_
 from ..core.intent_operation_policy import is_write_intent, nested_params, normalize_intent_operation
 from ..core.request_transaction import rollback_request_env
 from ..security.intent_permission import check_intent_permission
+from ..security.platform_admin import user_is_platform_admin
 from ..core.trace import get_trace_id
 from ..core.exceptions import (
     BAD_REQUEST,
@@ -299,6 +300,7 @@ class IntentDispatcher(http.Controller):
             params = params if isinstance(params, dict) else {}
             if not params and isinstance(body.get("payload"), dict):
                 params = body.get("payload")
+            request_explicit_db_param = "db" in params or "database" in params
 
             # 仅接收 dict 的 context
             context_in: Dict[str, Any] = body.get("context") if isinstance(body.get("context"), dict) else {}
@@ -334,7 +336,7 @@ class IntentDispatcher(http.Controller):
 
             def _user_is_admin() -> bool:
                 try:
-                    return request.env.user.has_group("base.group_system")
+                    return user_is_platform_admin(request.env.user)
                 except Exception:
                     return False
 
@@ -376,7 +378,15 @@ class IntentDispatcher(http.Controller):
                 db_source = "session" if request.session.db else "env_default"
 
             if effective_db:
-                params["db"] = params.get("db") or effective_db
+                db_is_login_routing_context = (
+                    intent_name in {"login", "auth.login"}
+                    and not request_explicit_db_param
+                    and db_source in {"locked_header", "query", "header", "session", "env_default"}
+                )
+                if not db_is_login_routing_context:
+                    params["db"] = params.get("db") or effective_db
+                elif intent_name in {"login", "auth.login"}:
+                    params["_login_routing_db"] = effective_db
                 if request.session.db != effective_db:
                     request.session.db = effective_db
 

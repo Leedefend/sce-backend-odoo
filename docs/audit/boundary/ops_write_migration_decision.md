@@ -14,7 +14,8 @@
 ## Hard Constraints
 
 1. No write semantic change (payload/side effects/status flow unchanged).
-2. No auth escalation change (`_has_admin` checks preserved through delegation).
+2. No auth escalation change (platform authorization remains centralized through
+   the `user_is_platform_admin` helper).
 3. No ACL/security/manifest/financial domain changes.
 
 ## Stop Signals

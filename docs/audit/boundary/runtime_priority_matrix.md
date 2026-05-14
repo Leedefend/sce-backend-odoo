@@ -20,11 +20,11 @@
 | `/api/meta/describe_model` | `addons/smart_construction_core/controllers/meta_controller.py` | 其他运行链 | P1 | 核心交互/契约/高频能力链 |
 | `/api/meta/project_capabilities` | `addons/smart_construction_core/controllers/meta_controller.py` | 其他运行链 | P1 | 核心交互/契约/高频能力链 |
 | `/api/ops/audit/search` | `addons/smart_construction_core/controllers/ops_controller.py` | 治理辅助链 | P2 | 治理/运维/模板导入导出低频链 |
-| `/api/ops/job/status` | `addons/smart_construction_core/controllers/ops_controller.py` | 治理辅助链 | P2 | 治理/运维/模板导入导出低频链 |
+| `/api/ops/job/status` | `addons/smart_core/controllers/platform_ops_controller.py` | 治理辅助链 | closed | 已迁至 smart_core platform ops route shell |
 | `/api/ops/packs/batch_rollback` | `addons/smart_construction_core/controllers/ops_controller.py` | 治理辅助链 | P2 | 治理/运维/模板导入导出低频链 |
 | `/api/ops/packs/batch_upgrade` | `addons/smart_construction_core/controllers/ops_controller.py` | 治理辅助链 | P2 | 治理/运维/模板导入导出低频链 |
-| `/api/ops/subscription/set` | `addons/smart_construction_core/controllers/ops_controller.py` | 治理辅助链 | P2 | 治理/运维/模板导入导出低频链 |
-| `/api/ops/tenants` | `addons/smart_construction_core/controllers/ops_controller.py` | 治理辅助链 | P2 | 治理/运维/模板导入导出低频链 |
+| `/api/ops/subscription/set` | `addons/smart_core/controllers/platform_ops_controller.py` | 治理辅助链 | closed | 已迁至 smart_core platform ops route shell |
+| `/api/ops/tenants` | `addons/smart_core/controllers/platform_ops_controller.py` | 治理辅助链 | closed | 已迁至 smart_core platform ops route shell |
 | `/api/packs/catalog` | `addons/smart_construction_core/controllers/pack_controller.py` | 治理辅助链 | P2 | 治理/运维/模板导入导出低频链 |
 | `/api/packs/install` | `addons/smart_construction_core/controllers/pack_controller.py` | 治理辅助链 | P2 | 治理/运维/模板导入导出低频链 |
 | `/api/packs/publish` | `addons/smart_construction_core/controllers/pack_controller.py` | 治理辅助链 | P2 | 治理/运维/模板导入导出低频链 |

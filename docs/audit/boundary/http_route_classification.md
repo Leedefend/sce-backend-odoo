@@ -9,7 +9,7 @@
 - `A`: `2`
 - `B`: `12`
 - `C`: `3`
-- `D`: `13`
+- `D`: `10`
 - `E`: `0`
 - `F`: `4`
 
@@ -31,11 +31,8 @@
 | `addons/smart_construction_core/controllers/meta_controller.py` | `describe_model` | `/api/meta/describe_model` | `F` | mixed meta/runtime/action surface | 疑似越界 |
 | `addons/smart_construction_core/controllers/meta_controller.py` | `describe_project_capabilities` | `/api/meta/project_capabilities` | `A` | industry business fact entry | 待后续核验 |
 | `addons/smart_construction_core/controllers/ops_controller.py` | `audit_search` | `/api/ops/audit/search` | `D` | ops/pack governance entry | 疑似越界 |
-| `addons/smart_construction_core/controllers/ops_controller.py` | `job_status` | `/api/ops/job/status` | `D` | ops/pack governance entry | 疑似越界 |
 | `addons/smart_construction_core/controllers/ops_controller.py` | `batch_rollback` | `/api/ops/packs/batch_rollback` | `D` | ops/pack governance entry | 疑似越界 |
 | `addons/smart_construction_core/controllers/ops_controller.py` | `batch_upgrade` | `/api/ops/packs/batch_upgrade` | `D` | ops/pack governance entry | 疑似越界 |
-| `addons/smart_construction_core/controllers/ops_controller.py` | `set_subscription` | `/api/ops/subscription/set` | `D` | ops/pack governance entry | 疑似越界 |
-| `addons/smart_construction_core/controllers/ops_controller.py` | `tenants` | `/api/ops/tenants` | `D` | ops/pack governance entry | 疑似越界 |
 | `addons/smart_construction_core/controllers/pack_controller.py` | `catalog` | `/api/packs/catalog` | `D` | ops/pack governance entry | 疑似越界 |
 | `addons/smart_construction_core/controllers/pack_controller.py` | `install_pack` | `/api/packs/install` | `D` | ops/pack governance entry | 疑似越界 |
 | `addons/smart_construction_core/controllers/pack_controller.py` | `publish_pack` | `/api/packs/publish` | `D` | ops/pack governance entry | 疑似越界 |

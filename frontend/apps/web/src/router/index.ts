@@ -5,8 +5,9 @@ import { ApiError } from '../api/client';
 import { buildCanonicalSceneRouteTarget, normalizeEmbeddedSceneQuery, normalizeLegacyWorkbenchPath, parseSceneKeyFromQuery } from '../app/routeQuery';
 import { getSceneByKey } from '../app/resolvers/sceneRegistry';
 import { findMenuNode } from '../app/menu';
+import { config } from '../config';
 
-const APP_TITLE = '智能施工企业管理平台';
+const APP_TITLE = config.appTitle;
 
 function routeTitle(routeName: string | symbol | null | undefined): string {
   const name = typeof routeName === 'string' ? routeName : '';
@@ -24,6 +25,7 @@ function routeTitle(routeName: string | symbol | null | undefined): string {
     'scene-health': '场景健康',
     'scene-packages': '场景发布包',
     'usage-analytics': '使用分析',
+    'release-operator': '产品发布',
     'model-form': '业务表单',
     record: '业务记录',
   };
@@ -67,6 +69,7 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/login', name: 'login', component: LoginView },
+    { path: '/platform-admin/login', name: 'platform-admin-login', component: LoginView },
     { path: '/', name: 'home', component: () => import('../views/HomeView.vue'), meta: { layout: 'shell', sceneKey: 'workspace.home' } },
     { path: '/s/workspace.home', name: 'scene-home', component: () => import('../views/HomeView.vue'), meta: { layout: 'shell', sceneKey: 'workspace.home' } },
     { path: '/my-work', name: 'my-work', component: () => import('../views/MyWorkView.vue'), meta: { layout: 'shell' } },
@@ -80,6 +83,7 @@ const router = createRouter({
     { path: '/admin/scene-health', name: 'scene-health', component: () => import('../views/SceneHealthView.vue'), meta: { layout: 'shell', adminOnly: true } },
     { path: '/admin/scene-packages', name: 'scene-packages', component: () => import('../views/ScenePackagesView.vue'), meta: { layout: 'shell', adminOnly: true } },
     { path: '/admin/usage-analytics', name: 'usage-analytics', component: () => import('../views/UsageAnalyticsView.vue'), meta: { layout: 'shell', adminOnly: true } },
+    { path: '/admin/release-operator', name: 'release-operator', component: () => import('../views/ReleaseOperatorView.vue'), meta: { layout: 'shell', adminOnly: true } },
     { path: '/a/:actionId', name: 'action', component: () => import('../views/ActionViewShell.vue'), meta: { layout: 'shell' } },
     { path: '/f/:model/:id', name: 'model-form', component: () => import('../pages/ContractFormPage.vue'), meta: { layout: 'shell' } },
     { path: '/r/:model/:id', name: 'record', component: () => import('../pages/ContractFormPage.vue'), meta: { layout: 'shell' } },
@@ -89,10 +93,14 @@ const router = createRouter({
 router.beforeEach(async (to) => {
   applyDocumentTitle(to.name);
   const session = useSessionStore();
-  if (to.name !== 'login' && !session.token) {
-    return { name: 'login', query: { redirect: to.fullPath } };
+  const isLoginRoute = to.name === 'login' || to.name === 'platform-admin-login';
+  const wantsPlatformAdminEntry = to.path.startsWith('/platform-admin') || String(to.query.platform_admin || '') === '1';
+  if (!isLoginRoute && !session.token) {
+    return wantsPlatformAdminEntry
+      ? { name: 'platform-admin-login', query: { redirect: to.fullPath } }
+      : { name: 'login', query: { redirect: to.fullPath } };
   }
-  if (to.name !== 'login' && session.token && !session.isReady) {
+  if (!isLoginRoute && session.token && !session.isReady) {
     try {
       await session.ensureReady();
     } catch (err) {
@@ -124,11 +132,7 @@ router.beforeEach(async (to) => {
     });
   }
   if (to.meta?.adminOnly) {
-    const groups = session.user?.groups_xmlids || [];
-    const isAdmin =
-      groups.includes('base.group_system') ||
-      groups.includes('smart_construction_core.group_sc_cap_config_admin');
-    if (!isAdmin) {
+    if (session.user?.is_platform_admin !== true) {
       return { path: session.resolveLandingPath('/') };
     }
   }

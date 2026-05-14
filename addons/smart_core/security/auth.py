@@ -106,6 +106,23 @@ def _extract_bearer_token(auth_header):
 
 
 def _request_db_name():
+    httprequest = getattr(request, "httprequest", None)
+    if httprequest is not None:
+        try:
+            header_db = httprequest.headers.get("X-Odoo-DB") or httprequest.headers.get("X-DB")
+        except Exception:
+            header_db = None
+        if str(header_db or "").strip():
+            return str(header_db).strip()
+        try:
+            query_db = httprequest.args.get("db")
+        except Exception:
+            query_db = None
+        if str(query_db or "").strip():
+            return str(query_db).strip()
+    session_db = getattr(getattr(request, "session", None), "db", None)
+    if str(session_db or "").strip():
+        return str(session_db).strip()
     try:
         return str(getattr(getattr(request.env, "cr", None), "dbname", "") or "").strip()
     except Exception:

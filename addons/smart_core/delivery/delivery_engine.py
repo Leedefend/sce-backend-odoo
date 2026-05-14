@@ -21,6 +21,23 @@ class DeliveryEngine:
         self.capability_service = CapabilityService()
         self.product_policy_service = ProductPolicyService(env)
 
+    def _has_group(self, xmlid: str) -> bool:
+        try:
+            return bool(self.env.user.has_group(xmlid))
+        except Exception:
+            return False
+
+    def _runtime_role_surface(self, runtime: dict) -> dict:
+        role_surface = runtime.get("role_surface") if isinstance(runtime.get("role_surface"), dict) else {}
+        resolved = dict(role_surface)
+        if "is_platform_admin" not in resolved:
+            resolved["is_platform_admin"] = self._has_group("smart_core.group_smart_core_admin")
+        if "is_business_config_admin" not in resolved:
+            resolved["is_business_config_admin"] = self._has_group(
+                "smart_construction_core.group_sc_cap_business_config_admin"
+            ) or self._has_group("smart_construction_core.group_sc_role_business_admin")
+        return resolved
+
     @classmethod
     def source_authority_contract(cls) -> dict:
         return build_source_authority_contract(
@@ -40,7 +57,7 @@ class DeliveryEngine:
         native_nav: list[dict] | None = None,
     ) -> dict:
         runtime = data if isinstance(data, dict) else {}
-        role_surface = runtime.get("role_surface") if isinstance(runtime.get("role_surface"), dict) else {}
+        role_surface = self._runtime_role_surface(runtime)
         policy = self.product_policy_service.get_policy(
             product_key=product_key,
             edition_key=edition_key,
