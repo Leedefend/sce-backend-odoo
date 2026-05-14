@@ -672,6 +672,61 @@ class TestOdooNativeAlignmentBoundaries(TransactionCase):
         self.assertEqual(transient.projection_scope, scope)
         self.assertEqual(transient.version, 0)
 
+    def test_view_config_projection_identity_accepts_explicit_view_id(self):
+        view = self.env.ref("base.view_partner_form")
+        ViewConfig = self.env["app.view.config"].sudo()
+
+        identity = ViewConfig.with_context(contract_view_id=view.id)._projection_identity("res.partner", "form")
+
+        self.assertEqual(identity.get("action_id"), False)
+        self.assertEqual(identity.get("source_view_id"), view.id)
+        self.assertEqual(identity.get("projection_scope"), f"view:{view.id}:res.partner:form")
+
+    def test_form_field_policy_view_scope_only_applies_to_matching_view(self):
+        view = self.env.ref("base.view_partner_form")
+        Policy = self.env["ui.form.field.policy"].sudo()
+        policy = Policy.create({
+            "model": "res.partner",
+            "field_name": "phone",
+            "visible": False,
+            "view_id": view.id,
+        })
+        base_contract = {
+            "layout": [
+                {
+                    "type": "sheet",
+                    "children": [
+                        {
+                            "type": "group",
+                            "children": [
+                                {"type": "field", "name": "name"},
+                                {"type": "field", "name": "phone"},
+                            ],
+                        }
+                    ],
+                }
+            ],
+            "field_modifiers": {"phone": {"readonly": False}},
+        }
+
+        generic = Policy.apply_to_view_contract(
+            dict(base_contract),
+            model_name="res.partner",
+            view_type="form",
+        )
+        scoped = Policy.apply_to_view_contract(
+            dict(base_contract),
+            model_name="res.partner",
+            view_type="form",
+            view_id=view.id,
+        )
+
+        self.assertFalse((generic.get("governance") or {}).get("form_field_policy"))
+        scoped_fields = policy._collect_contract_field_nodes(scoped.get("layout") or [])
+        self.assertNotIn("phone", scoped_fields)
+        governance = (scoped.get("governance") or {}).get("form_field_policy") or {}
+        self.assertEqual(governance.get("hidden_fields"), ["phone"])
+
     def test_ui_overlay_and_asset_models_do_not_claim_business_fact_authority(self):
         self.assertEqual(AppViewFragment.SOURCE_KIND, "ui_contract_fragment_overlay")
         self.assertEqual(AppViewVariant.SOURCE_KIND, "ui_contract_variant_overlay")

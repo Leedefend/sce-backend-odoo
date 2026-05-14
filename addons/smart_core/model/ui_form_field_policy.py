@@ -189,6 +189,8 @@ class UIFormFieldPolicy(models.Model):
         context = {"contract_projection_readonly": True}
         if self.action_id:
             context["contract_action_id"] = self.action_id.id
+        if self.view_id:
+            context["contract_view_id"] = self.view_id.id
         view_config = self.env["app.view.config"].with_context(**context)._generate_from_fields_view_get(self.model, "form")
         contract = view_config.get_contract_api(filter_runtime=True, check_model_acl=True)
         nodes = self._collect_contract_field_nodes(contract.get("layout") or [])

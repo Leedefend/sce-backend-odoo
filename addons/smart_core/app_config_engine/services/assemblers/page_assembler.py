@@ -248,16 +248,24 @@ class PageAssembler:
         view_context = {}
         if isinstance(action, dict) and action.get("id"):
             view_context["contract_action_id"] = action.get("id")
+        requested_view_id = p.get("view_id") or p.get("viewId")
+        try:
+            requested_view_id = int(requested_view_id or 0)
+        except Exception:
+            requested_view_id = 0
         view_context["contract_projection_readonly"] = True
         for vt in view_types:
             try:
-                view_config_model = env['app.view.config'].with_context(**view_context) if view_context else env['app.view.config']
+                scoped_view_context = dict(view_context)
+                if requested_view_id and len(view_types) == 1:
+                    scoped_view_context["contract_view_id"] = requested_view_id
+                view_config_model = env['app.view.config'].with_context(**scoped_view_context) if scoped_view_context else env['app.view.config']
                 vcfg = view_config_model._generate_from_fields_view_get(model, vt)
                 # app.view.config is platform metadata and ordinary business
                 # users do not read it directly. Keep metadata access elevated,
                 # but bind the environment user to the real requester so
                 # runtime group/ACL filtering still matches native Odoo.
-                vcfg_runtime = vcfg.with_user(env.user).sudo().with_context(**view_context)
+                vcfg_runtime = vcfg.with_user(env.user).sudo().with_context(**scoped_view_context)
                 v_contract = vcfg_runtime.get_contract_api(filter_runtime=True, check_model_acl=True)
                 v_versions.append(str(vcfg.version))
             except KeyError:

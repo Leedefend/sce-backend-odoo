@@ -111,8 +111,17 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
     def _projection_identity(self, model_name, view_type):
         context = dict(self.env.context or {})
         action_id = context.get('contract_action_id')
+        requested_view_id = context.get('contract_view_id') or context.get('requested_view_id')
         action = None
         source_view_id = False
+        try:
+            requested_view_id = int(requested_view_id or 0)
+        except Exception:
+            requested_view_id = 0
+        if requested_view_id:
+            view = self.env['ir.ui.view'].sudo().browse(requested_view_id)
+            if view.exists() and view.model == model_name and view.type == view_type:
+                source_view_id = view.id
         try:
             action_id = int(action_id or 0)
         except Exception:
@@ -120,10 +129,11 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
         if action_id:
             action = self.env['ir.actions.act_window'].sudo().browse(action_id)
             if action.exists() and getattr(action, 'res_model', None) == model_name:
-                for view_spec in (action.views or []):
-                    if view_spec and len(view_spec) >= 2 and view_spec[1] == view_type:
-                        source_view_id = int(view_spec[0] or 0) or False
-                        break
+                if not source_view_id:
+                    for view_spec in (action.views or []):
+                        if view_spec and len(view_spec) >= 2 and view_spec[1] == view_type:
+                            source_view_id = int(view_spec[0] or 0) or False
+                            break
                 return {
                     "action_id": action.id,
                     "source_view_id": source_view_id,
@@ -134,6 +144,16 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
                         source_view_id or 0,
                     ),
                 }
+        if source_view_id:
+            return {
+                "action_id": False,
+                "source_view_id": source_view_id,
+                "projection_scope": "view:%s:%s:%s" % (
+                    source_view_id,
+                    model_name,
+                    view_type,
+                ),
+            }
         return {
             "action_id": False,
             "source_view_id": False,
