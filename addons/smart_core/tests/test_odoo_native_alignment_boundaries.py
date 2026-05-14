@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import importlib
 
+from odoo.exceptions import ValidationError
 from odoo.tests.common import TransactionCase, tagged
 
 from odoo.addons.smart_core.handlers.chatter_activity_schedule import ChatterActivityScheduleHandler
@@ -726,6 +727,29 @@ class TestOdooNativeAlignmentBoundaries(TransactionCase):
         self.assertNotIn("phone", scoped_fields)
         governance = (scoped.get("governance") or {}).get("form_field_policy") or {}
         self.assertEqual(governance.get("hidden_fields"), ["phone"])
+
+    def test_form_field_policy_revalidates_action_and_view_scope_on_write(self):
+        Policy = self.env["ui.form.field.policy"].sudo()
+        policy = Policy.create({
+            "model": "res.partner",
+            "field_name": "phone",
+            "visible": False,
+        })
+        other_action = self.env["ir.actions.act_window"].sudo().create({
+            "name": "Project Action Scope Probe",
+            "res_model": "project.project",
+            "view_mode": "tree,form",
+        })
+        other_view = self.env["ir.ui.view"].sudo().search([
+            ("model", "!=", "res.partner"),
+            ("type", "=", "form"),
+        ], limit=1)
+
+        with self.assertRaises(ValidationError):
+            policy.write({"action_id": other_action.id})
+        if other_view:
+            with self.assertRaises(ValidationError):
+                policy.write({"view_id": other_view.id})
 
     def test_ui_overlay_and_asset_models_do_not_claim_business_fact_authority(self):
         self.assertEqual(AppViewFragment.SOURCE_KIND, "ui_contract_fragment_overlay")

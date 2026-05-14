@@ -101,7 +101,7 @@ class UIFormFieldPolicy(models.Model):
             if model_rec:
                 rec.model_id = model_rec
 
-    @api.constrains("model", "field_name", "field_id")
+    @api.constrains("model_id", "model", "field_name", "field_id", "action_id", "view_id")
     def _check_field_exists(self):
         for rec in self:
             if not rec.model or not rec.field_name:
