@@ -13,3 +13,4 @@ access_sc_ops_job_user,access.sc.ops.job.user,model_sc_ops_job,base.group_user,1
 access_sc_ops_job_admin,access.sc.ops.job.admin,model_sc_ops_job,smart_core.group_smart_core_admin,1,1,1,1
 access_ui_dynamic_config_admin,access.ui.dynamic.config.admin,model_ui_dynamic_config,smart_core.group_smart_core_admin,1,1,1,1
 access_ui_form_field_policy_admin,access.ui.form.field.policy.admin,model_ui_form_field_policy,smart_core.group_smart_core_admin,1,1,1,1
+access_ui_form_custom_field_wizard_admin,access.ui.form.custom.field.wizard.admin,model_ui_form_custom_field_wizard,smart_core.group_smart_core_admin,1,1,1,1
