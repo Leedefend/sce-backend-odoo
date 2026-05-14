@@ -438,7 +438,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onErrorCaptured, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onErrorCaptured, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import FieldValue from '../components/FieldValue.vue';
 import StatusPanel from '../components/StatusPanel.vue';
@@ -711,6 +711,7 @@ class ContractAccessPolicyError extends Error {
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
+const PROJECT_CONTEXT_CHANGED_EVENT = 'sc:project-context-changed';
 
 function resolveWorkspaceContextQuery() {
   return readWorkspaceContext(route.query as Record<string, unknown>);
@@ -5865,6 +5866,32 @@ watch(
   { immediate: true },
 );
 
+function projectContextChangedProjectId(event: Event): number {
+  const detail = event instanceof CustomEvent && event.detail && typeof event.detail === 'object'
+    ? event.detail as Record<string, unknown>
+    : {};
+  return Number(detail.selected_project_id || session.projectContext?.selected?.id || 0) || 0;
+}
+
+function handleProjectContextChanged(event: Event): void {
+  const selectedProjectId = projectContextChangedProjectId(event);
+  if (model.value === 'project.project' && selectedProjectId > 0) {
+    void router.replace({
+      name: 'record',
+      params: { model: 'project.project', id: String(selectedProjectId) },
+      query: resolveWorkspaceContextQuery(),
+    });
+    return;
+  }
+  void router.replace({
+    path: '/s/projects.list',
+    query: {
+      ...resolveWorkspaceContextQuery(),
+      ...(selectedProjectId > 0 ? { project_id: String(selectedProjectId) } : {}),
+    },
+  });
+}
+
 watch(
   () => [
     intakeAutosaveKey.value,
@@ -5882,11 +5909,19 @@ watch(
   },
 );
 
-if (typeof document !== 'undefined') {
-  document.addEventListener('keydown', onRelationDialogDocumentKeydown);
-}
+onMounted(() => {
+  if (typeof window !== 'undefined') {
+    window.addEventListener(PROJECT_CONTEXT_CHANGED_EVENT, handleProjectContextChanged);
+  }
+  if (typeof document !== 'undefined') {
+    document.addEventListener('keydown', onRelationDialogDocumentKeydown);
+  }
+});
 
 onBeforeUnmount(() => {
+  if (typeof window !== 'undefined') {
+    window.removeEventListener(PROJECT_CONTEXT_CHANGED_EVENT, handleProjectContextChanged);
+  }
   if (typeof document !== 'undefined') {
     document.removeEventListener('keydown', onRelationDialogDocumentKeydown);
   }

@@ -135,16 +135,23 @@ def _record_context_domain(Model, search: str) -> list:
     term = str(search or "").strip()
     if not term:
         return []
+    fields = getattr(Model, "_fields", {}) or {}
     conditions = [
         (field_name, "ilike", term)
         for field_name in ("name", "display_name", "code", "project_code", "x_code")
-        if field_name in Model._fields
+        if _field_searchable(fields.get(field_name))
     ]
     if not conditions:
         return [("id", "=", 0)]
     if len(conditions) == 1:
         return [conditions[0]]
     return ["|"] * (len(conditions) - 1) + conditions
+
+
+def _field_searchable(field) -> bool:
+    if not field:
+        return False
+    return bool(getattr(field, "store", False) or getattr(field, "search", None))
 
 
 def _project_domain(Project, search: str) -> list:

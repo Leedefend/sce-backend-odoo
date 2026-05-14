@@ -355,7 +355,7 @@ export interface SessionState {
 }
 
 const DB_SCOPE = String(config.odooDb || 'default').trim() || 'default';
-const STORAGE_KEY = `sc_frontend_session_v0_4:${DB_SCOPE}`;
+const STORAGE_KEY = `sc_frontend_session_v0_5:${DB_SCOPE}`;
 const TOKEN_STORAGE_KEY_LEGACY = 'sc_auth_token';
 const TOKEN_STORAGE_KEY_SCOPED = `sc_auth_token:${DB_SCOPE}`;
 
@@ -445,6 +445,18 @@ function normalizeProjectContext(raw: unknown): ProjectContextContract | null {
       scope: asText(persistence.scope),
       server_preference: Boolean(persistence.server_preference),
     } : undefined,
+  };
+}
+
+function projectContextStorageSnapshot(raw: ProjectContextContract | null): ProjectContextContract | null {
+  if (!raw) return null;
+  return {
+    ...raw,
+    // Selector options are a live backend contract. Persisting them makes the
+    // sidebar dropdown look stale after contract/schema upgrades.
+    options: [],
+    total: raw.selected ? 1 : 0,
+    query: '',
   };
 }
 
@@ -727,7 +739,7 @@ export const useSessionStore = defineStore('session', {
           this.sceneVersion = parsed.sceneVersion ?? null;
           this.roleSurface = parsed.roleSurface ?? null;
           this.roleSurfaceMap = parsed.roleSurfaceMap ?? {};
-          this.projectContext = normalizeProjectContext(parsed.projectContext) ?? null;
+          this.projectContext = projectContextStorageSnapshot(normalizeProjectContext(parsed.projectContext));
           this.capabilityCatalog = parsed.capabilityCatalog ?? {};
           this.sceneActionHints = parsed.sceneActionHints ?? {};
           this.capabilityGroups = parsed.capabilityGroups ?? [];
@@ -832,7 +844,7 @@ export const useSessionStore = defineStore('session', {
         sceneVersion: this.sceneVersion,
         roleSurface: this.roleSurface,
         roleSurfaceMap: this.roleSurfaceMap,
-        projectContext: this.projectContext,
+        projectContext: projectContextStorageSnapshot(this.projectContext),
         capabilityCatalog: this.capabilityCatalog,
         sceneActionHints: this.sceneActionHints,
         capabilityGroups: this.capabilityGroups,
