@@ -7,7 +7,7 @@ import { getSceneByKey, setSceneRegistry, setSceneRegistryFromSceneReadyContract
 import type { Scene } from '../app/resolvers/sceneRegistry';
 import { normalizeLegacyWorkbenchPath } from '../app/routeQuery';
 import { applySceneValidationRecoveryStrategyRuntime, setSceneValidationRecoveryStrategy } from '../app/sceneValidationRecoveryStrategy';
-import { isConfiguredDbPinned, resolveConfiguredDb, setActiveDb } from '../services/dbContext';
+import { isConfiguredDbPinned, resolveActiveDb, resolveConfiguredDb, resolveLoginRoutingDb, setActiveDb } from '../services/dbContext';
 
 let appInitInFlight: Promise<void> | null = null;
 
@@ -313,6 +313,7 @@ export interface SceneGovernancePayload {
 
 export interface SessionState {
   token: string | null;
+  sessionDb: string;
   user: AppInitResponse['user'] | null;
   menuTree: NavNode[];
   menuExpandedKeys: string[];
@@ -357,7 +358,7 @@ export interface SessionState {
 const TOKEN_STORAGE_KEY_LEGACY = 'sc_auth_token';
 
 function currentDbScope(): string {
-  return String(resolveConfiguredDb(String(config.odooDb || '').trim()) || config.odooDb || 'default').trim() || 'default';
+  return String(resolveActiveDb('') || resolveConfiguredDb(String(config.odooDb || '').trim()) || config.odooDb || 'default').trim() || 'default';
 }
 
 function sessionStorageKey(): string {
@@ -460,6 +461,7 @@ function normalizeProjectContext(raw: unknown): ProjectContextContract | null {
 export const useSessionStore = defineStore('session', {
   state: (): SessionState => ({
     token: null,
+    sessionDb: '',
     user: null,
     menuTree: [],
     menuExpandedKeys: [],
@@ -725,6 +727,7 @@ export const useSessionStore = defineStore('session', {
         try {
           const parsed = JSON.parse(cached) as Partial<SessionState>;
           this.user = parsed.user ?? null;
+          this.sessionDb = asText(parsed.sessionDb);
           // Navigation is a live backend contract. Do not hydrate it from
           // localStorage, otherwise menu/model changes can look stale until a
           // manual cache clear.
@@ -771,6 +774,7 @@ export const useSessionStore = defineStore('session', {
     },
     clearSession() {
       this.token = null;
+      this.sessionDb = '';
       this.user = null;
       this.menuTree = [];
       this.menuExpandedKeys = [];
@@ -832,6 +836,7 @@ export const useSessionStore = defineStore('session', {
     },
     persist() {
       const snapshot: Partial<SessionState> = {
+        sessionDb: this.sessionDb,
         user: this.user,
         menuTree: this.menuTree,
         menuExpandedKeys: this.menuExpandedKeys,
@@ -868,6 +873,7 @@ export const useSessionStore = defineStore('session', {
       }
       try {
         const minimalSnapshot: Partial<SessionState> = {
+          sessionDb: this.sessionDb,
           user: this.user,
           menuExpandedKeys: this.menuExpandedKeys,
           currentAction: this.currentAction,
@@ -897,8 +903,9 @@ export const useSessionStore = defineStore('session', {
       this.persist();
     },
     async login(username: string, password: string, dbOverride?: string) {
+      const loginRoutingDb = resolveLoginRoutingDb();
       const configuredDb = resolveConfiguredDb(String(config.odooDb || '').trim());
-      const db = String(isConfiguredDbPinned() ? configuredDb : dbOverride || configuredDb).trim();
+      const db = String(loginRoutingDb ? '' : isConfiguredDbPinned() ? configuredDb : dbOverride || configuredDb).trim();
       if (db) {
         setActiveDb(db, true);
       }
@@ -916,6 +923,11 @@ export const useSessionStore = defineStore('session', {
         throw new Error(`login bootstrap next_intent unsupported: ${nextIntent}`);
       }
       this.bootstrapNextIntent = nextIntent;
+      const sessionDb = String(result.session?.db || (result as LoginResponse & { login_route?: { target_db?: string } }).login_route?.target_db || db || '').trim();
+      this.sessionDb = sessionDb;
+      if (sessionDb) {
+        setActiveDb(sessionDb, true);
+      }
       this.setToken(token);
     },
     async logout() {

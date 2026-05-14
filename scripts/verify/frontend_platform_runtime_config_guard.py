@@ -40,17 +40,23 @@ def main() -> int:
         errors.append("dbContext.ts must recognize the explicit platform-admin entry path")
     if "export function resolveConfiguredDb" not in db_context_text:
         errors.append("dbContext.ts must expose runtime configured db resolution")
+    if "export function resolveLoginRoutingDb" not in db_context_text:
+        errors.append("dbContext.ts must expose backend login routing db resolution")
     if "export function isConfiguredDbPinned" not in db_context_text:
         errors.append("dbContext.ts must expose runtime db pinned detection")
     if "isPlatformAdminEntryRuntime() && PLATFORM_ADMIN_DB" not in db_context_text:
         errors.append("dbContext.ts must let platform-admin db override the locked tenant db at request time")
     if "resolveConfiguredDb(String(config.odooDb || '').trim())" not in _read(ROOT / "frontend/apps/web/src/api/client.ts"):
         errors.append("api/client.ts must resolve db at request time, not only config module load time")
+    if "resolveLoginRoutingDb()" not in _read(ROOT / "frontend/apps/web/src/api/client.ts"):
+        errors.append("api/client.ts must route login through backend platform login contract db")
     session_text = _read(ROOT / "frontend/apps/web/src/stores/session.ts")
     if "isConfiguredDbPinned() ? configuredDb : dbOverride || configuredDb" not in session_text:
         errors.append("session.ts must use runtime db pinning during login")
     if "function currentDbScope()" not in session_text or "scopedTokenStorageKey()" not in session_text:
         errors.append("session.ts must scope session/token storage by runtime resolved db")
+    if "sessionDb" not in session_text or "result.session?.db" not in session_text:
+        errors.append("session.ts must consume backend-returned session db")
     if "const DB_SCOPE = String(config.odooDb" in session_text:
         errors.append("session.ts must not freeze db scope from config module load time")
     if "const pinnedDb = isPlatformAdminEntry && platformAdminDb" not in config_text:

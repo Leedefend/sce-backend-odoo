@@ -1,6 +1,6 @@
 import { config } from '../config';
 import { useSessionStore } from '../stores/session';
-import { resolveConfiguredDb } from '../services/dbContext';
+import { resolveConfiguredDb, resolveLoginRoutingDb } from '../services/dbContext';
 
 type UnknownObject = Record<string, unknown>;
 
@@ -110,22 +110,22 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
   headers.set('x-trace-id', traceId);
   headers.set('x-tenant', config.tenant);
 
-  // Delivery hardening: never fallback to sc_demo implicitly.
-  const dbHeader = resolveConfiguredDb(String(config.odooDb || '').trim());
-  if (dbHeader) {
-    headers.set('X-Odoo-DB', dbHeader);
-  }
-
   const isIntentEndpoint = String(path || '').trim().startsWith('/api/v1/intent');
-  let isAnonymousIntent = false;
+  let intentName = '';
   if (isIntentEndpoint && options.body && typeof options.body === 'string') {
     try {
       const parsed = JSON.parse(options.body) as { intent?: string };
-      const intent = String(parsed?.intent || '').trim();
-      isAnonymousIntent = intent === 'login' || intent === 'auth.login' || intent === 'session.bootstrap' || intent === 'sys.intents';
+      intentName = String(parsed?.intent || '').trim();
     } catch {
-      isAnonymousIntent = false;
+      intentName = '';
     }
+  }
+  const isAnonymousIntent = intentName === 'login' || intentName === 'auth.login' || intentName === 'session.bootstrap' || intentName === 'sys.intents';
+  const loginRoutingDb = intentName === 'login' || intentName === 'auth.login' ? resolveLoginRoutingDb() : '';
+  const sessionDb = String(session.sessionDb || '').trim();
+  const dbHeader = loginRoutingDb || (session.token && sessionDb ? sessionDb : resolveConfiguredDb(String(config.odooDb || '').trim()));
+  if (dbHeader) {
+    headers.set('X-Odoo-DB', dbHeader);
   }
   if (isAnonymousIntent) {
     headers.set('X-Anonymous-Intent', '1');

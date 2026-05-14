@@ -80,6 +80,10 @@ export function resolveConfiguredDb(fallbackDb = ''): string {
   return resolveActiveDb(envDb || fallbackDb);
 }
 
+export function resolveLoginRoutingDb(): string {
+  return sanitizeDb(PLATFORM_ADMIN_DB);
+}
+
 export function isConfiguredDbPinned(): boolean {
   return Boolean((isPlatformAdminEntryRuntime() && PLATFORM_ADMIN_DB) || ENV_DB_LOCKED);
 }

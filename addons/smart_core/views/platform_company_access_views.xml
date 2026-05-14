@@ -141,6 +141,51 @@
             <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
         </record>
 
+        <record id="view_sc_login_route_tree" model="ir.ui.view">
+            <field name="name">sc.login.route.tree</field>
+            <field name="model">sc.login.route</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="sequence"/>
+                    <field name="login"/>
+                    <field name="target_db"/>
+                    <field name="entry_kind"/>
+                    <field name="product_key"/>
+                    <field name="active"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_login_route_form" model="ir.ui.view">
+            <field name="name">sc.login.route.form</field>
+            <field name="model">sc.login.route</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="active"/>
+                            <field name="sequence"/>
+                            <field name="login"/>
+                            <field name="target_db"/>
+                            <field name="entry_kind"/>
+                            <field name="product_key"/>
+                            <field name="label"/>
+                        </group>
+                        <group>
+                            <field name="note"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_sc_login_route" model="ir.actions.act_window">
+            <field name="name">统一登录路由</field>
+            <field name="res_model">sc.login.route</field>
+            <field name="view_mode">tree,form</field>
+            <field name="groups_id" eval="[(6, 0, [ref('smart_core.group_smart_core_admin')])]"/>
+        </record>
+
         <record id="view_sc_usage_counter_tree" model="ir.ui.view">
             <field name="name">sc.usage.counter.tree</field>
             <field name="model">sc.usage.counter</field>
@@ -515,6 +560,12 @@
                   parent="menu_smart_core_company_access_root"
                   action="action_sc_entitlement"
                   sequence="30"
+                  groups="smart_core.group_smart_core_admin"/>
+        <menuitem id="menu_sc_login_route"
+                  name="统一登录路由"
+                  parent="menu_smart_core_company_access_root"
+                  action="action_sc_login_route"
+                  sequence="35"
                   groups="smart_core.group_smart_core_admin"/>
         <menuitem id="menu_sc_usage_counter"
                   name="用量统计"

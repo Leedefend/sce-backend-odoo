@@ -56,7 +56,7 @@ def _build_envs(params: Dict[str, Any], add_ctx: Dict[str, Any]) -> Tuple[api.En
     import logging
     _logger = logging.getLogger(__name__)
     
-    target_db = (params or {}).get("db") or request.env.cr.dbname
+    target_db = (params or {}).get("db") or (params or {}).get("_login_routing_db") or request.env.cr.dbname
     cur_db = request.env.cr.dbname
     
     # 调试：打印数据库信息
