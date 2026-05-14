@@ -179,6 +179,8 @@ class TestReleaseOperatorSurfaceCopyBackend(unittest.TestCase):
         self.assertEqual((((payload.get("read_model_v1") or {}).get("copy") or {}).get("section_pending")), "待审批动作")
         self.assertEqual((((payload.get("read_model_v1") or {}).get("copy") or {}).get("rollback_action_label")), "执行回滚")
         self.assertEqual((((payload.get("available_actions") or {}).get("freeze") or {}).get("intent")), "release.operator.freeze")
+        self.assertEqual((((payload.get("available_actions") or {}).get("sync_policy") or {}).get("intent")), "release.operator.sync_policy")
+        self.assertEqual((((payload.get("available_actions") or {}).get("update_policy") or {}).get("intent")), "release.operator.update_policy")
 
     def test_preview_product_copy_mentions_preview_edition(self):
         service = TARGET.ReleaseOperatorSurfaceService(_Env())

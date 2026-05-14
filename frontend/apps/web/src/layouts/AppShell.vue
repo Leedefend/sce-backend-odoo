@@ -173,7 +173,7 @@
         variant="error"
       />
       <StatusPanel
-        v-else-if="initStatus === 'ready' && !menuCount"
+        v-else-if="initStatus === 'ready' && !menuCount && !routeAllowsEmptyMenu"
         title="暂无导航数据"
         message="菜单树为空，请尝试刷新初始化。"
         variant="error"
@@ -295,6 +295,7 @@ const shellLogoText = computed(() => config.appBrand.shellLogoText || 'SC');
 const rootNode = computed(() => (menuTree.value.length === 1 ? menuTree.value[0] : null));
 const menuNodes = computed(() => rootNode.value?.children ?? menuTree.value);
 const menuCount = computed(() => menuNodes.value.length);
+const routeAllowsEmptyMenu = computed(() => route.meta?.adminOnly === true || route.path.startsWith('/admin/'));
 const rootTitle = computed(() => {
   const root = rootNode.value;
   return normalizeDeliveryText(root?.title || root?.name || root?.label || '智能工程协作平台');

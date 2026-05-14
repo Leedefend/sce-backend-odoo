@@ -16,6 +16,14 @@
           {{ copy.action_refresh || '刷新' }}
         </button>
         <button
+          class="sc-btn sc-btn-ghost"
+          type="button"
+          :disabled="busyKey === 'sync_policy' || !syncPolicyAction.enabled"
+          @click="syncPolicy"
+        >
+          {{ copy.sync_policy_action_label || '同步已实现能力' }}
+        </button>
+        <button
           class="sc-btn sc-btn-primary"
           type="button"
           :disabled="busyKey === 'freeze' || !freezeAction.enabled"
@@ -63,6 +71,33 @@
         <div class="release-operator__section-head">
           <h2>{{ copy.section_control_scope || '受控内容' }}</h2>
           <p>{{ controlScope.policy_state || '-' }} / {{ controlScope.access_level || '-' }}</p>
+        </div>
+        <div class="release-operator__policy-control">
+          <label>
+            <span>{{ copy.policy_state_label || '发布状态' }}</span>
+            <select v-model="policyState" class="release-operator__select">
+              <option value="draft">draft</option>
+              <option value="preview">preview</option>
+              <option value="stable">stable</option>
+              <option value="archived">archived</option>
+            </select>
+          </label>
+          <label>
+            <span>{{ copy.policy_access_label || '访问级别' }}</span>
+            <select v-model="policyAccessLevel" class="release-operator__select">
+              <option value="public">public</option>
+              <option value="internal">internal</option>
+              <option value="role_restricted">role_restricted</option>
+            </select>
+          </label>
+          <button
+            class="sc-btn sc-btn-ghost"
+            type="button"
+            :disabled="busyKey === 'update_policy' || !updatePolicyAction.enabled"
+            @click="savePolicy"
+          >
+            {{ copy.save_policy_action_label || '保存策略' }}
+          </button>
         </div>
         <div class="release-operator__scope-grid">
           <article>
@@ -258,6 +293,8 @@ const selectedProduct = ref(initialProduct);
 const loading = ref(false);
 const error = ref('');
 const busyKey = ref('');
+const policyState = ref('stable');
+const policyAccessLevel = ref('public');
 
 const copy = computed<Record<string, string>>(() => {
   const raw = surface.value?.copy || {};
@@ -283,6 +320,14 @@ const rollbackAction = computed(() => {
   const actions = surface.value?.available_actions || {};
   return (actions.rollback || {}) as { enabled?: boolean; params?: AnyRecord };
 });
+const syncPolicyAction = computed(() => {
+  const actions = surface.value?.available_actions || {};
+  return (actions.sync_policy || {}) as { enabled?: boolean; params?: AnyRecord };
+});
+const updatePolicyAction = computed(() => {
+  const actions = surface.value?.available_actions || {};
+  return (actions.update_policy || {}) as { enabled?: boolean; params?: AnyRecord };
+});
 
 function sceneChipLabel(scene: AnyRecord) {
   return String(scene.label || scene.scene_key || scene.key || '').trim() || '未命名场景';
@@ -291,6 +336,12 @@ const freezeAction = computed(() => {
   const actions = surface.value?.available_actions || {};
   return (actions.freeze || {}) as { enabled?: boolean; params?: AnyRecord };
 });
+
+function hydratePolicyControls(payload: ReleaseOperatorSurface) {
+  const scope = payload.control_scope || {};
+  policyState.value = String(scope.policy_state || 'stable');
+  policyAccessLevel.value = String(scope.access_level || 'public');
+}
 
 async function loadSurface() {
   loading.value = true;
@@ -304,6 +355,7 @@ async function loadSurface() {
       },
     });
     surface.value = payload;
+    hydratePolicyControls(payload);
     const resolvedProduct = String(payload.identity?.product_key || '').trim();
     if (resolvedProduct) {
       selectedProduct.value = resolvedProduct;
@@ -322,6 +374,7 @@ async function runWrite(intent: string, params: AnyRecord, key: string) {
     const result = await intentRequest<{ surface?: ReleaseOperatorSurface }>({ intent, params });
     if (result.surface) {
       surface.value = result.surface;
+      hydratePolicyControls(result.surface);
       const resolvedProduct = String(result.surface.identity?.product_key || '').trim();
       if (resolvedProduct) selectedProduct.value = resolvedProduct;
     } else {
@@ -353,6 +406,25 @@ function approve(action: ReleaseActionRow) {
 function freeze() {
   const params = freezeAction.value.params || { product_key: selectedProduct.value };
   void runWrite('release.operator.freeze', params, 'freeze');
+}
+
+function syncPolicy() {
+  const params = syncPolicyAction.value.params || { product_key: selectedProduct.value };
+  void runWrite('release.operator.sync_policy', params, 'sync_policy');
+}
+
+function savePolicy() {
+  const params = updatePolicyAction.value.params || { product_key: selectedProduct.value };
+  void runWrite(
+    'release.operator.update_policy',
+    {
+      ...params,
+      product_key: selectedProduct.value,
+      state: policyState.value,
+      access_level: policyAccessLevel.value,
+    },
+    'update_policy',
+  );
 }
 
 function rollback() {
@@ -442,6 +514,24 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
+}
+
+.release-operator__policy-control {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.release-operator__policy-control label {
+  display: grid;
+  gap: 6px;
+}
+
+.release-operator__policy-control span {
+  color: #64748b;
+  font-size: 12px;
 }
 
 .release-operator__scope-grid article {

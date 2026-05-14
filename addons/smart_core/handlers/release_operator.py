@@ -12,6 +12,7 @@ from odoo.addons.smart_core.delivery.edition_release_snapshot_promotion_service 
     EditionReleaseSnapshotPromotionService,
 )
 from odoo.addons.smart_core.delivery.edition_release_snapshot_service import EditionReleaseSnapshotService
+from odoo.addons.smart_core.delivery.product_policy_catalog_sync_service import ProductPolicyCatalogSyncService
 from odoo.addons.smart_core.delivery.release_approval_policy_service import ReleaseApprovalPolicyService
 from odoo.addons.smart_core.delivery.release_operator_surface_service import ReleaseOperatorSurfaceService
 from odoo.addons.smart_core.security.platform_admin import user_is_platform_admin
@@ -23,7 +24,9 @@ SOURCE_AUTHORITIES = (
     "release_approval_policy_projection",
     "edition_release_snapshot_projection",
     "edition_release_snapshot_state_transition",
+    "product_policy_catalog_sync",
     "sc.release.action",
+    "sc.product.policy",
 )
 NO_BUSINESS_FACT_AUTHORITY = True
 
@@ -50,6 +53,13 @@ def _positive_int(value: Any, field_name: str) -> int:
     except Exception as exc:
         raise ValueError(f"{field_name.upper()}_INVALID") from exc
     if parsed <= 0:
+        raise ValueError(f"{field_name.upper()}_INVALID")
+    return parsed
+
+
+def _selection(value: Any, allowed: set[str], field_name: str) -> str:
+    parsed = _text(value)
+    if parsed not in allowed:
         raise ValueError(f"{field_name.upper()}_INVALID")
     return parsed
 
@@ -276,6 +286,68 @@ class ReleaseOperatorFreezeHandler(_ReleaseOperatorBaseHandler):
             ts0,
             {
                 "snapshot": snapshot,
+                "surface": ReleaseOperatorSurfaceService(self.env).build_surface(product_key=product_key),
+            },
+        )
+
+
+class ReleaseOperatorSyncPolicyHandler(_ReleaseOperatorBaseHandler):
+    INTENT_TYPE = "release.operator.sync_policy"
+    DESCRIPTION = "平台产品策略从已实现能力目录同步"
+    VERSION = "1.0.0"
+    NON_IDEMPOTENT_ALLOWED = "product policy sync mutates platform product policy"
+
+    def handle(self, payload=None, ctx=None):
+        ts0 = time.time()
+        params = self._params(payload)
+        product_key = _text(params.get("product_key"))
+        if not product_key:
+            raise ValueError("PRODUCT_KEY_REQUIRED")
+        policy = ProductPolicyCatalogSyncService(self.env).sync_policy(
+            product_key=product_key,
+            preserve_state=_bool(params.get("preserve_state"), True),
+            preserve_access_level=_bool(params.get("preserve_access_level"), True),
+        )
+        return self._response(
+            ts0,
+            {
+                "policy": policy.to_runtime_dict(),
+                "surface": ReleaseOperatorSurfaceService(self.env).build_surface(product_key=product_key),
+            },
+        )
+
+
+class ReleaseOperatorUpdatePolicyHandler(_ReleaseOperatorBaseHandler):
+    INTENT_TYPE = "release.operator.update_policy"
+    DESCRIPTION = "平台产品发布策略更新"
+    VERSION = "1.0.0"
+    NON_IDEMPOTENT_ALLOWED = "product policy update mutates platform product policy"
+
+    def handle(self, payload=None, ctx=None):
+        ts0 = time.time()
+        params = self._params(payload)
+        product_key = _text(params.get("product_key"))
+        if not product_key:
+            raise ValueError("PRODUCT_KEY_REQUIRED")
+        policy = self.env["sc.product.policy"].sudo().search([("product_key", "=", product_key)], limit=1)
+        if not policy:
+            policy = ProductPolicyCatalogSyncService(self.env).sync_policy(product_key=product_key)
+        values: dict[str, Any] = {}
+        if "state" in params:
+            values["state"] = _selection(params.get("state"), {"draft", "preview", "stable", "archived"}, "state")
+        if "access_level" in params:
+            values["access_level"] = _selection(params.get("access_level"), {"public", "internal", "role_restricted"}, "access_level")
+        if "active" in params:
+            values["active"] = _bool(params.get("active"), True)
+        if "allowed_role_codes" in params:
+            allowed_roles = params.get("allowed_role_codes")
+            values["allowed_role_codes"] = [str(item).strip() for item in allowed_roles if str(item).strip()] if isinstance(allowed_roles, list) else []
+        if values:
+            policy.write(values)
+        return self._response(
+            ts0,
+            {
+                "policy": policy.to_runtime_dict(),
                 "surface": ReleaseOperatorSurfaceService(self.env).build_surface(product_key=product_key),
             },
         )

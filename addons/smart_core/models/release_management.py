@@ -45,9 +45,9 @@ class ScProductPolicy(models.Model):
 
     @api.model
     def ensure_platform_default_product_policies(self):
-        from odoo.addons.smart_core.delivery.product_policy_service import ProductPolicyService
+        from odoo.addons.smart_core.delivery.product_policy_catalog_sync_service import ProductPolicyCatalogSyncService
 
-        service = ProductPolicyService(self.env)
+        service = ProductPolicyCatalogSyncService(self.env)
         defaults = [
             ("construction.standard", "施工管理标准版"),
             ("construction.preview", "施工管理预览版"),
