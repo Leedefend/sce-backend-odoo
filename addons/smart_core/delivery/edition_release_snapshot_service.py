@@ -6,7 +6,8 @@ import json
 from copy import deepcopy
 from typing import Any
 
-from odoo import fields
+from odoo import SUPERUSER_ID, api, fields
+from odoo.modules.registry import Registry
 from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
 
 from .delivery_engine import DeliveryEngine
@@ -35,6 +36,14 @@ def _dict(value: Any) -> dict[str, Any]:
 
 def _list(value: Any) -> list[Any]:
     return value if isinstance(value, list) else []
+
+
+def _to_int(value: Any) -> int:
+    try:
+        parsed = int(value or 0)
+    except Exception:
+        return 0
+    return parsed if parsed > 0 else 0
 
 
 def _stable_json(value: Any) -> str:
@@ -288,7 +297,7 @@ class EditionReleaseSnapshotService:
         effective_pages = [row for row in pages if bool(row.get("enabled")) and _text(row.get("release_state")) in {"released", "preview"}]
         preview_pages = [row for row in effective_pages if _text(row.get("release_state")) == "preview"]
         hidden_pages = [row for row in pages if not bool(row.get("enabled")) or _text(row.get("release_state")) in {"hidden", "retired"}]
-        return [
+        checks = [
             {
                 "key": "has_product_pages",
                 "label": "产品页面范围",
@@ -318,6 +327,160 @@ class EditionReleaseSnapshotService:
                 "blocking": False,
             },
         ]
+        checks.append(self._target_integrity_check(effective_pages))
+        checks.append(self._source_target_check(effective_pages))
+        return checks
+
+    def _page_ref(self, page: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "page_key": _text(page.get("page_key")),
+            "label": _text(page.get("label")) or _text(page.get("page_key")),
+            "visible_menu_path": _text(page.get("visible_menu_path")),
+            "route": _text(page.get("route")),
+            "menu_id": _to_int(page.get("menu_id")),
+            "action_id": _to_int(page.get("action_id")),
+            "menu_xmlid": _text(page.get("menu_xmlid")),
+            "res_model": _text(page.get("res_model")),
+        }
+
+    def _issue(self, code: str, page: dict[str, Any], message: str) -> dict[str, Any]:
+        return {
+            "code": code,
+            "blocking": True,
+            "message": message,
+            **self._page_ref(page),
+        }
+
+    def _target_integrity_check(self, pages: list[dict[str, Any]]) -> dict[str, Any]:
+        issues: list[dict[str, Any]] = []
+        for page in pages:
+            if not isinstance(page, dict):
+                continue
+            page_key = _text(page.get("page_key"))
+            route = _text(page.get("route"))
+            scene_key = _text(page.get("scene_key"))
+            menu_xmlid = _text(page.get("menu_xmlid"))
+            menu_id = _to_int(page.get("menu_id"))
+            action_id = _to_int(page.get("action_id"))
+            res_model = _text(page.get("res_model"))
+            if not page_key:
+                issues.append(self._issue("PAGE_KEY_MISSING", page, "发布页缺少 page_key"))
+            if not (route or scene_key or menu_id or action_id):
+                issues.append(self._issue("TARGET_MISSING", page, "发布页缺少可打开目标"))
+                continue
+            if route.startswith("/a/"):
+                if scene_key:
+                    issues.append(self._issue("ACTION_MENU_HAS_SCENE_KEY", page, "Odoo action 菜单不能带 scene_key"))
+                if not action_id:
+                    issues.append(self._issue("ACTION_ID_MISSING", page, "Odoo action 菜单缺少 action_id"))
+                if not menu_id:
+                    issues.append(self._issue("MENU_ID_MISSING", page, "Odoo action 菜单缺少 menu_id"))
+                if not res_model:
+                    issues.append(self._issue("RES_MODEL_MISSING", page, "Odoo action 菜单缺少 res_model"))
+                if not menu_xmlid:
+                    issues.append(self._issue("MENU_XMLID_MISSING", page, "Odoo action 菜单缺少 menu_xmlid"))
+            elif route.startswith("/s/"):
+                if not scene_key:
+                    issues.append(self._issue("SCENE_KEY_MISSING", page, "scene 路由缺少 scene_key"))
+                elif route.strip("/") != f"s/{scene_key}".strip("/"):
+                    issues.append(self._issue("SCENE_ROUTE_MISMATCH", page, "scene_key 与 /s 路由不一致"))
+            elif route and not (menu_id or action_id or scene_key):
+                issues.append(self._issue("UNKNOWN_ROUTE_TARGET", page, "发布页路由缺少可校验目标引用"))
+        status = "fail" if issues else "pass"
+        return {
+            "key": "page_target_integrity",
+            "label": "页面目标完整性",
+            "status": status,
+            "message": f"目标结构问题 {len(issues)} 个",
+            "blocking": bool(issues),
+            "issue_count": len(issues),
+            "issues": issues[:20],
+        }
+
+    def _source_db_name(self) -> str:
+        try:
+            configured = self.env["ir.config_parameter"].sudo().get_param(
+                "smart_core.release_operator.construction_source_db",
+                "",
+            )
+        except Exception:
+            configured = ""
+        return _text(configured) or "sc_demo"
+
+    def _source_target_check(self, pages: list[dict[str, Any]]) -> dict[str, Any]:
+        action_pages = [
+            page
+            for page in pages
+            if isinstance(page, dict) and (_text(page.get("route")).startswith("/a/") or _to_int(page.get("action_id")) or _to_int(page.get("menu_id")))
+        ]
+        if not action_pages:
+            return {
+                "key": "source_action_targets",
+                "label": "源库动作目标",
+                "status": "pass",
+                "message": "无需校验 Odoo action 目标",
+                "blocking": False,
+                "issue_count": 0,
+                "issues": [],
+            }
+        source_db = self._source_db_name()
+        current_db = _text(getattr(getattr(self.env, "cr", None), "dbname", ""))
+        try:
+            if source_db == current_db:
+                issues = self._source_target_issues(self.env, action_pages)
+            else:
+                registry = Registry(source_db)
+                with registry.cursor() as cr:
+                    source_env = api.Environment(cr, SUPERUSER_ID, {})
+                    issues = self._source_target_issues(source_env, action_pages)
+        except Exception as exc:
+            return {
+                "key": "source_action_targets",
+                "label": "源库动作目标",
+                "status": "warn",
+                "message": f"源库 {source_db} 不可用，已跳过真实目标校验: {_text(exc)}",
+                "blocking": False,
+                "source_db": source_db,
+                "issue_count": 0,
+                "issues": [],
+            }
+        return {
+            "key": "source_action_targets",
+            "label": "源库动作目标",
+            "status": "fail" if issues else "pass",
+            "message": f"源库动作目标问题 {len(issues)} 个",
+            "blocking": bool(issues),
+            "source_db": source_db,
+            "issue_count": len(issues),
+            "issues": issues[:20],
+        }
+
+    def _source_target_issues(self, source_env, pages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        issues: list[dict[str, Any]] = []
+        for page in pages:
+            menu_id = _to_int(page.get("menu_id"))
+            action_id = _to_int(page.get("action_id"))
+            res_model = _text(page.get("res_model"))
+            if menu_id:
+                menu = source_env["ir.ui.menu"].sudo().browse(menu_id)
+                if not menu.exists():
+                    issues.append(self._issue("SOURCE_MENU_NOT_FOUND", page, "源库菜单不存在"))
+                    continue
+                menu_action_id = 0
+                try:
+                    menu_action_id = _to_int(menu.action.id)
+                except Exception:
+                    menu_action_id = 0
+                if action_id and menu_action_id and action_id != menu_action_id:
+                    issues.append(self._issue("SOURCE_MENU_ACTION_MISMATCH", page, "源库菜单 action 与发布页不一致"))
+            if action_id:
+                action = source_env["ir.actions.actions"].sudo().browse(action_id)
+                if not action.exists():
+                    issues.append(self._issue("SOURCE_ACTION_NOT_FOUND", page, "源库 action 不存在"))
+                    continue
+            if res_model and res_model not in getattr(source_env.registry, "models", {}):
+                issues.append(self._issue("SOURCE_MODEL_NOT_FOUND", page, "源库模型不存在"))
+        return issues
 
     def _draft_delta(self, *, current_active, draft_pages: list[dict[str, Any]]) -> dict[str, Any]:
         active_meta = current_active.meta_json if current_active and isinstance(current_active.meta_json, dict) else {}
