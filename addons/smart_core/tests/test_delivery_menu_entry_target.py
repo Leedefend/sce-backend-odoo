@@ -29,6 +29,18 @@ delivery_menu_defaults = _load_module(
     "odoo.addons.smart_core.core.delivery_menu_defaults",
     SMART_CORE_DIR / "core" / "delivery_menu_defaults.py",
 )
+_load_module(
+    "odoo.addons.smart_core.core.source_authority",
+    SMART_CORE_DIR / "core" / "source_authority.py",
+)
+_load_module(
+    "odoo.addons.smart_core.delivery.menu_delivery_convergence_service",
+    SMART_CORE_DIR / "delivery" / "menu_delivery_convergence_service.py",
+)
+menu_service = _load_module(
+    "odoo.addons.smart_core.delivery.menu_service",
+    SMART_CORE_DIR / "delivery" / "menu_service.py",
+)
 
 
 class TestDeliveryMenuEntryTarget(unittest.TestCase):
@@ -104,6 +116,47 @@ class TestDeliveryMenuEntryTarget(unittest.TestCase):
                 },
             },
         )
+
+    def test_policy_menu_convergence_uses_each_policy_group_label(self):
+        nav = menu_service.MenuService().build_nav(
+            policy={
+                "menu_groups": [
+                    {
+                        "group_key": "construction.basic_setup",
+                        "group_label": "基础设置",
+                        "menus": [
+                            {
+                                "menu_key": "customer",
+                                "label": "客户",
+                                "menu_id": 598,
+                                "route": "/a/786?menu_id=598",
+                                "action_id": 786,
+                                "res_model": "res.partner",
+                            }
+                        ],
+                    },
+                    {
+                        "group_key": "construction.project_center",
+                        "group_label": "项目中心",
+                        "menus": [
+                            {
+                                "menu_key": "project",
+                                "label": "项目台账",
+                                "menu_id": 379,
+                                "route": "/a/506?menu_id=379",
+                                "action_id": 506,
+                                "res_model": "project.project",
+                            }
+                        ],
+                    },
+                ]
+            },
+            role_surface={"role_code": "employee"},
+        )
+
+        groups = (nav[0].get("children") or []) if nav else []
+        self.assertEqual([group.get("label") for group in groups], ["项目中心"])
+        self.assertEqual(groups[0]["children"][0]["label"], "项目台账")
 
 
 if __name__ == "__main__":

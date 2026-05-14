@@ -24,6 +24,7 @@ class MenuDeliveryConvergenceService:
         "业务配置",
         "业务管理员配置中心",
         "数据字典",
+        "基础设置",
         "定额库",
         "业务字典",
         "成本科目",

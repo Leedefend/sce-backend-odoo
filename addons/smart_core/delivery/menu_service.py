@@ -275,7 +275,13 @@ class MenuService:
             group_order.append(fallback_key)
 
         for menu in self._flatten_policy_menus(policy):
-            converged_menu = self._converged_menu(menu=menu, group_label=str(groups_by_key.get(group_order[0], {}).get("group_label") or "系统菜单"), role_code=role_code)
+            policy_group_label = str(menu.get("policy_group_label") or "").strip()
+            fallback_group_label = str(groups_by_key.get(group_order[0], {}).get("group_label") or "系统菜单")
+            converged_menu = self._converged_menu(
+                menu=menu,
+                group_label=policy_group_label or fallback_group_label,
+                role_code=role_code,
+            )
             if not converged_menu:
                 continue
             menu_id = menu.get("menu_id")

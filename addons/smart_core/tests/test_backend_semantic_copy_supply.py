@@ -21,8 +21,13 @@ def _load_module(module_name: str, relative_path: str):
 
 def _ensure_stub_packages():
     odoo_module = sys.modules.setdefault("odoo", types.ModuleType("odoo"))
+    odoo_module.api = SimpleNamespace(Environment=lambda *args, **kwargs: None)
     odoo_module.fields = SimpleNamespace(Datetime=SimpleNamespace(now=lambda: "2026-01-01 00:00:00"))
+    odoo_module.SUPERUSER_ID = 1
     sys.modules.setdefault("odoo.addons", types.ModuleType("odoo.addons"))
+    sys.modules.setdefault("odoo.modules", types.ModuleType("odoo.modules"))
+    registry_module = sys.modules.setdefault("odoo.modules.registry", types.ModuleType("odoo.modules.registry"))
+    registry_module.Registry = lambda *args, **kwargs: None
     smart_core_pkg = sys.modules.setdefault("odoo.addons.smart_core", types.ModuleType("odoo.addons.smart_core"))
     smart_core_pkg.__path__ = [str(ROOT / "addons/smart_core")]
     core_pkg = sys.modules.setdefault("odoo.addons.smart_core.core", types.ModuleType("odoo.addons.smart_core.core"))
@@ -54,10 +59,101 @@ PRODUCT_POLICY_SERVICE = _load_module(
     "smart_core_product_policy_service_test",
     "addons/smart_core/delivery/product_policy_service.py",
 )
+PRODUCT_POLICY_CATALOG_SYNC_SERVICE = _load_module(
+    "odoo.addons.smart_core.delivery.product_policy_catalog_sync_service",
+    "addons/smart_core/delivery/product_policy_catalog_sync_service.py",
+)
 CORE_EXTENSION = _load_module(
     "smart_construction_core_extension_test",
     "addons/smart_construction_core/core_extension.py",
 )
+
+
+class _FakeAction:
+    def __init__(self, action_id: int, res_model: str):
+        self.id = action_id
+        self.res_model = res_model
+        self._name = "ir.actions.act_window"
+
+
+class _FakeMenu:
+    def __init__(
+        self,
+        menu_id: int,
+        name: str,
+        *,
+        xmlid: str,
+        parent=None,
+        action=None,
+        sequence=10,
+        active=True,
+    ):
+        self.id = menu_id
+        self.name = name
+        self.parent_id = parent
+        self.action = action
+        self.sequence = sequence
+        self.active = active
+        self._xmlid = xmlid
+
+    def get_external_id(self):
+        return {self.id: self._xmlid}
+
+
+class _FakeMenuModel:
+    def __init__(self, records):
+        self.records = records
+        self.last_domain = None
+        self.browsed_ids = []
+
+    def sudo(self):
+        return self
+
+    def search(self, domain, order=None):
+        self.last_domain = list(domain or [])
+        if domain == [("action", "!=", False)]:
+            return []
+        return list(self.records)
+
+    def browse(self, ids):
+        self.browsed_ids = list(ids or [])
+        return _FakeRecordset([record for record in self.records if record.id in self.browsed_ids])
+
+
+class _FakeRecordset(list):
+    def exists(self):
+        return self
+
+
+class _FakeModelDataRow:
+    def __init__(self, res_id: int):
+        self.res_id = res_id
+
+
+class _FakeModelDataModel:
+    def __init__(self, menu_ids):
+        self.menu_ids = menu_ids
+        self.last_domain = None
+
+    def sudo(self):
+        return self
+
+    def search(self, domain):
+        self.last_domain = list(domain or [])
+        return [_FakeModelDataRow(menu_id) for menu_id in self.menu_ids]
+
+
+class _FakeSourceEnv:
+    def __init__(self, menu_model, model_data_model):
+        self.menu_model = menu_model
+        self.model_data_model = model_data_model
+
+    def __getitem__(self, key):
+        if key == "ir.ui.menu":
+            return self.menu_model
+        if key == "ir.model.data":
+            return self.model_data_model
+        raise KeyError(key)
 
 
 class TestBackendSemanticCopySupply(unittest.TestCase):
@@ -120,6 +216,40 @@ class TestBackendSemanticCopySupply(unittest.TestCase):
         steps = (((payload or {}).get("mainline") or {}).get("steps")) or []
         self.assertTrue(steps)
         self.assertTrue(all(isinstance(row, dict) and row.get("status_label") for row in steps))
+
+    def test_catalog_sync_extracts_project_center_when_action_domain_is_stale(self):
+        root = _FakeMenu(1, "智慧施工管理平台", xmlid="smart_construction_core.menu_sc_root")
+        project_center = _FakeMenu(
+            2,
+            "项目中心",
+            xmlid="smart_construction_core.menu_sc_project_center",
+            parent=root,
+        )
+        project_group = _FakeMenu(
+            3,
+            "项目管理",
+            xmlid="smart_construction_core.menu_sc_project_management_group",
+            parent=project_center,
+        )
+        project_ledger = _FakeMenu(
+            4,
+            "项目台账",
+            xmlid="smart_construction_core.menu_sc_project_project",
+            parent=project_group,
+            action=_FakeAction(506, "project.project"),
+        )
+        menu_model = _FakeMenuModel([root, project_center, project_group, project_ledger])
+        model_data_model = _FakeModelDataModel([root.id, project_center.id, project_group.id, project_ledger.id])
+        service = PRODUCT_POLICY_CATALOG_SYNC_SERVICE.ProductPolicyCatalogSyncService(env=None)
+
+        pages = service._extract_user_menu_pages(_FakeSourceEnv(menu_model, model_data_model))
+
+        self.assertEqual(menu_model.last_domain, None)
+        self.assertEqual(menu_model.browsed_ids, [1, 2, 3, 4])
+        self.assertEqual(len(pages), 1)
+        self.assertEqual(pages[0]["group_label"], "项目中心")
+        self.assertEqual(pages[0]["visible_menu_path"], "智慧施工管理平台 / 项目中心 / 项目管理 / 项目台账")
+        self.assertEqual(pages[0]["menu_xmlid"], "smart_construction_core.menu_sc_project_project")
 
 
 if __name__ == "__main__":

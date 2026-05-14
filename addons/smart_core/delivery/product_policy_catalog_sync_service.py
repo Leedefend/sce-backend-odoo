@@ -68,11 +68,35 @@ class ProductPolicyCatalogSyncService:
             configured = ""
         return _text(configured) or "sc_demo"
 
+    def _candidate_user_menus(self, source_env):
+        try:
+            rows = source_env["ir.model.data"].sudo().search(
+                [
+                    ("module", "=", "smart_construction_core"),
+                    ("model", "=", "ir.ui.menu"),
+                ]
+            )
+            menu_ids = [int(row.res_id or 0) for row in rows if int(row.res_id or 0) > 0]
+            if menu_ids:
+                menus = source_env["ir.ui.menu"].sudo().browse(menu_ids).exists()
+                return sorted(menus, key=lambda menu: (int(getattr(menu, "sequence", 0) or 0), int(menu.id or 0)))
+        except Exception:
+            pass
+
+        return source_env["ir.ui.menu"].sudo().search([], order="sequence,id")
+
     def _extract_user_menu_pages(self, source_env) -> list[dict[str, Any]]:
-        menus = source_env["ir.ui.menu"].sudo().search([("action", "!=", False)], order="sequence,id")
+        # ir.ui.menu.search() applies menu visibility rules, and action is a
+        # reference field whose domains may miss menus that still expose a
+        # valid Python action.  The product policy is a platform catalog of the
+        # real industry menu surface, so resolve Smart Construction menu XMLIDs
+        # through ir.model.data and browse the records directly.
+        menus = self._candidate_user_menus(source_env)
         rows: list[dict[str, Any]] = []
         seen: set[str] = set()
         for menu in menus:
+            if hasattr(menu, "active") and not bool(getattr(menu, "active")):
+                continue
             xmlid = _menu_xmlid(menu)
             if not xmlid.startswith("smart_construction_core."):
                 continue
