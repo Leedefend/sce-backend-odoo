@@ -850,6 +850,12 @@ class TestOdooNativeAlignmentBoundaries(TransactionCase):
         self.assertTrue(menu_source.get("no_business_fact_authority"))
         self.assertIn("extension_business_config_role_resolver", menu_source.get("authorities") or [])
 
+    def test_menu_runtime_default_whitelist_includes_form_field_governance_models(self):
+        patterns = set(self.env["app.menu.config"].DEFAULT_MODEL_WHITELIST_PATTERNS)
+
+        self.assertIn(r"^ui\.form\.field\.policy$", patterns)
+        self.assertIn(r"^ui\.form\.custom\.field\.wizard$", patterns)
+
     def test_workspace_home_startup_surface_does_not_claim_business_fact_authority(self):
         source = workspace_home_contract_builder.source_authority_contract()
         provider_source = workspace_home_data_provider.source_authority_contract()

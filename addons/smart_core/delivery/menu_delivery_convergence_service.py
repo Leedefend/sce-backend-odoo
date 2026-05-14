@@ -23,6 +23,10 @@ class MenuDeliveryConvergenceService:
     BUSINESS_CONFIG_TOKENS = (
         "业务配置",
         "业务管理员配置中心",
+        "表单字段配置",
+        "新增表单字段",
+        "表单字段",
+        "字段配置",
         "数据字典",
         "定额库",
         "业务字典",

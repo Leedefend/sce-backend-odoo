@@ -31,6 +31,19 @@ class TestMenuDeliveryConvergenceService(TransactionCase):
             "delivery_business_config",
         )
 
+    def test_form_field_configuration_is_business_config_surface(self):
+        path = ["智慧施工管理平台", "基础设置", "表单字段配置"]
+
+        self.assertEqual(self._classify("表单字段配置", path), "hidden_business_config")
+        self.assertEqual(
+            self._classify("表单字段配置", path, is_business_config_admin=True),
+            "delivery_business_config",
+        )
+        self.assertEqual(
+            self._classify("新增表单字段", ["智慧施工管理平台", "基础设置", "新增表单字段"], is_admin=True),
+            "delivery_business_config",
+        )
+
     def test_menu_convergence_declares_legacy_token_policy_boundary(self):
         source = self.service.source_authority_contract()
         legacy_source = self.service.legacy_token_policy_source_authority_contract()

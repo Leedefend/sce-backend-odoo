@@ -28,6 +28,13 @@ class AppMenuConfig(models.Model):
     _order = 'scene, target_model, id'
     SOURCE_KIND = "odoo_native_menu_projection"
     SOURCE_AUTHORITIES = ("ir.ui.menu", "ir.actions", "res.groups")
+    DEFAULT_MODEL_WHITELIST_PATTERNS = (
+        r'^project\.',
+        r'^smart_',
+        r'^oa\.',
+        r'^ui\.form\.field\.policy$',
+        r'^ui\.form\.custom\.field\.wizard$',
+    )
 
     # —— 维度键：用于切分缓存与唯一性 —— #
     # target_model: '__all__' 表示全量导航；也可指定某模型，仅保留关联该模型的分支（精简生成量）
@@ -177,9 +184,32 @@ class AppMenuConfig(models.Model):
         scene = self._normalize_scene(scene)
         if not force:
             cfg = self.sudo().search(self._menu_config_domain(model_name=model_name, scene=scene), limit=1)
-            if cfg:
+            if cfg and not self._menu_metadata_changed_since(cfg):
                 return cfg
+            if cfg:
+                _logger.info(
+                    "Menu config stale, regenerating: %s/%s v%s",
+                    model_name or "__all__",
+                    scene,
+                    cfg.version,
+                )
         return self._generate_from_menus(model_name=model_name, scene=scene)
+
+    def _menu_metadata_changed_since(self, cfg) -> bool:
+        """Detect stale menu projection after module upgrades add or update menus/actions."""
+        last_generated = cfg.last_generated
+        if not last_generated:
+            return True
+        changed_domain = [
+            "|",
+            ("write_date", ">", last_generated),
+            ("create_date", ">", last_generated),
+        ]
+        if self.env["ir.ui.menu"].sudo().search(changed_domain, limit=1):
+            return True
+        if self.env["ir.actions.actions"].sudo().search(changed_domain, limit=1):
+            return True
+        return False
 
     @api.model
     def _generate_from_menus(self, model_name=None, scene='web'):
@@ -387,7 +417,7 @@ class AppMenuConfig(models.Model):
         hide_without_action = bool(filters.get('hide_without_action', True))
         only_act_window = bool(filters.get('only_act_window', True))
         hide_unreadable_model = bool(filters.get('hide_unreadable_model', True))
-        model_whitelist = [re.compile(x) for x in filters.get('model_whitelist', [r'^project\.', r'^smart_', r'^oa\.'])]
+        model_whitelist = [re.compile(x) for x in filters.get('model_whitelist', list(self.DEFAULT_MODEL_WHITELIST_PATTERNS))]
         exclude_modules = set(filters.get('exclude_modules', []))
         max_depth = int(filters.get('max_depth', 3)) if filters.get('max_depth', 3) else 0
         prune_single_chain = bool(filters.get('prune_single_chain', True))
