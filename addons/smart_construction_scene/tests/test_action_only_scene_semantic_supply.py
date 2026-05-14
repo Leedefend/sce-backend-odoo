@@ -19,7 +19,8 @@ def _load_module(module_name: str, path: Path):
     return module
 
 
-sys.modules.setdefault("odoo", types.ModuleType("odoo"))
+odoo_mod = sys.modules.setdefault("odoo", types.ModuleType("odoo"))
+odoo_mod._ = lambda value, *args, **kwargs: value
 addons_pkg = sys.modules.setdefault("odoo.addons", types.ModuleType("odoo.addons"))
 addons_pkg.__path__ = [str(SCENE_DIR.parent)]
 smart_core_pkg = sys.modules.setdefault("odoo.addons.smart_core", types.ModuleType("odoo.addons.smart_core"))
@@ -115,6 +116,10 @@ target_capability = _load_module(
     "odoo.addons.smart_construction_scene.services.capability_scene_targets",
     SCENE_DIR / "services" / "capability_scene_targets.py",
 )
+capability_registry = _load_module(
+    "odoo.addons.smart_construction_core.services.capability_registry",
+    SCENE_DIR.parent / "smart_construction_core" / "services" / "capability_registry.py",
+)
 scene_ready_bridge = _load_module(
     "odoo.addons.smart_core.core.scene_ready_semantic_orchestration_bridge",
     SCENE_DIR.parent / "smart_core" / "core" / "scene_ready_semantic_orchestration_bridge.py",
@@ -183,6 +188,12 @@ def _reset_caches():
 
 
 class TestActionOnlySceneSemanticSupply(unittest.TestCase):
+    def test_all_registered_capabilities_have_scene_targets(self):
+        registered = {str(row.get("key") or "") for row in capability_registry.capability_definitions() if row.get("key")}
+        mapped = set(target_capability.CAPABILITY_ENTRY_SCENE_MAP)
+
+        self.assertFalse(sorted(registered - mapped))
+
     def test_project_dashboard_entry_capability_converges_to_project_management_scene(self):
         self.assertEqual(
             target_capability.CAPABILITY_ENTRY_SCENE_MAP["project.dashboard.enter"],
