@@ -20,7 +20,8 @@ class UIFormFieldPolicy(models.Model):
 
     name = fields.Char(compute="_compute_name", store=True)
     active = fields.Boolean(default=True)
-    model = fields.Char(required=True, index=True)
+    model_id = fields.Many2one("ir.model", string="Model", ondelete="cascade", index=True)
+    model = fields.Char(string="Technical Model", required=True, index=True)
     field_name = fields.Char(required=True, index=True)
     field_id = fields.Many2one("ir.model.fields", string="Field", ondelete="cascade")
     action_id = fields.Many2one("ir.actions.act_window", string="Action", ondelete="cascade")
@@ -42,10 +43,31 @@ class UIFormFieldPolicy(models.Model):
     def _onchange_field_id(self):
         for rec in self:
             if rec.field_id:
+                rec.model_id = rec.field_id.model_id
                 rec.model = rec.field_id.model
                 rec.field_name = rec.field_id.name
                 if not rec.label:
                     rec.label = rec.field_id.field_description
+
+    @api.onchange("model_id")
+    def _onchange_model_id(self):
+        for rec in self:
+            if rec.model_id:
+                rec.model = rec.model_id.model
+                if rec.field_id and rec.field_id.model_id != rec.model_id:
+                    rec.field_id = False
+                    rec.field_name = False
+
+    @api.onchange("model")
+    def _onchange_model(self):
+        for rec in self:
+            model_name = str(rec.model or "").strip()
+            if not model_name:
+                rec.model_id = False
+                continue
+            model_rec = self.env["ir.model"].search([("model", "=", model_name)], limit=1)
+            if model_rec:
+                rec.model_id = model_rec
 
     @api.constrains("model", "field_name", "field_id")
     def _check_field_exists(self):
@@ -58,6 +80,31 @@ class UIFormFieldPolicy(models.Model):
                 raise ValidationError("字段不存在：%s.%s" % (rec.model, rec.field_name))
             if rec.field_id and (rec.field_id.model != rec.model or rec.field_id.name != rec.field_name):
                 raise ValidationError("字段记录与模型/字段名不一致")
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            self._normalize_field_policy_vals(vals)
+        return super().create(vals_list)
+
+    def write(self, vals):
+        vals = dict(vals or {})
+        self._normalize_field_policy_vals(vals)
+        return super().write(vals)
+
+    def _normalize_field_policy_vals(self, vals: dict) -> None:
+        field_id = vals.get("field_id")
+        if field_id:
+            field = self.env["ir.model.fields"].browse(int(field_id))
+            vals.setdefault("model_id", field.model_id.id)
+            vals.setdefault("model", field.model)
+            vals.setdefault("field_name", field.name)
+            if not vals.get("label"):
+                vals["label"] = field.field_description
+            return
+        model_id = vals.get("model_id")
+        if model_id and not vals.get("model"):
+            vals["model"] = self.env["ir.model"].browse(int(model_id)).model
 
     @api.model
     def source_authority_contract(self) -> dict[str, Any]:
