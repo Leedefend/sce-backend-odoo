@@ -125,6 +125,12 @@ def main() -> int:
         errors.append("AppShell.vue must not hardcode project context label")
     if "data-platform-app-catalog" not in shell_text or "app.catalog" not in shell_text or "app.open" not in shell_text:
         errors.append("AppShell.vue must expose platform-published app catalog and open apps through app.catalog/app.open")
+    if "const isPlatformAdmin = computed(() => session.user?.is_platform_admin === true)" not in shell_text:
+        errors.append("AppShell.vue must derive platform-published app visibility from session.user.is_platform_admin")
+    if "isPlatformAdmin.value && (visiblePublishedApps.value.length > 0 || appCatalogLoading.value)" not in shell_text:
+        errors.append("AppShell.vue must not render the platform-published app shell for regular users")
+    if "session.user?.is_platform_admin !== true" not in shell_text:
+        errors.append("AppShell.vue must not request app.catalog for regular users")
 
     if errors:
         print("[frontend_platform_runtime_config_guard] FAIL")
