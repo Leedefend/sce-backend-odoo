@@ -236,7 +236,7 @@ class ProductPolicyCatalogSyncService:
                     "page_label": page_label,
                     "label": page_label,
                     "route": f"/a/{action_id}?menu_id={menu_id}",
-                    "scene_key": page_key,
+                    "scene_key": "",
                     "action_id": action_id,
                     "action_model": _text(getattr(action, "_name", "")),
                     "res_model": _action_model(action),
@@ -410,7 +410,7 @@ class ProductPolicyCatalogSyncService:
                 "page_key": page_key,
                 "page_label": label,
                 "route": _text(page.get("route")),
-                "scene_key": page_key,
+                "scene_key": _text(page.get("scene_key")),
                 "product_key": _text(page.get("app_id")),
                 "capability_key": capability_key,
                 "visible_menu_path": _text(page.get("visible_menu_path")) or label,
@@ -428,35 +428,13 @@ class ProductPolicyCatalogSyncService:
                 "sequence": index,
             }
             group["menus"].append(menu)
-            scene_rows.append(
-                {
-                    "scene_key": page_key,
-                    "page_key": page_key,
-                    "label": label,
-                    "route": _text(page.get("route")),
-                    "product_key": _text(page.get("app_id")),
-                    "capability_key": capability_key,
-                    "visible_menu_path": menu["visible_menu_path"],
-                    "control_granularity": "user_visible_menu_page",
-                    "enabled": bool(page.get("enabled", True)),
-                    "release_state": _text(page.get("release_state")) or "released",
-                    "access_level": _text(page.get("access_level")) or "public",
-                    "control_object": "用户可见菜单页面",
-                    "source_kind": "ir.ui.menu",
-                    "menu_xmlid": _text(page.get("menu_xmlid")),
-                    "action_id": int(page.get("action_id") or 0),
-                    "res_model": _text(page.get("res_model")),
-                    "description": f"用户菜单页面：{menu['visible_menu_path']}",
-                    "scope": _text(page.get("group_label")) or "施工管理",
-                }
-            )
             capability_rows.append(
                 {
                     "capability_key": capability_key,
                     "label": label,
                     "group_key": group_key,
                     "group_label": _text(page.get("group_label")) or "施工管理",
-                    "target_scene_key": page_key,
+                    "target_scene_key": _text(page.get("scene_key")),
                     "target_page_key": page_key,
                     "product_key": _text(page.get("app_id")),
                     "delivery_level": "exclusive",
@@ -472,7 +450,6 @@ class ProductPolicyCatalogSyncService:
                     "res_model": _text(page.get("res_model")),
                 }
             )
-            scene_bindings[page_key] = {"version": "v1", "channel": "stable"}
         menu_groups = [groups_by_key[key] for key in groups_by_key]
         label = "施工管理预览版" if identity["edition_key"] == "preview" else "施工管理标准版"
         return {

@@ -130,10 +130,13 @@ class MenuService:
                 index += 1
                 scene_key = str(menu.get("scene_key") or "").strip()
                 menu_id = menu.get("menu_id")
-                raw_anchor = scene_key or (str(menu_id) if isinstance(menu_id, int) and menu_id > 0 else str(menu.get("menu_key") or "").strip() or str(index))
-                sanitized_anchor = raw_anchor.replace(":", "_").replace("/", "_").replace(".", "_")
                 route = str(menu.get("route") or "").strip()
                 action_id = menu.get("action_id")
+                menu_xmlid = str(menu.get("menu_xmlid") or "").strip()
+                if route.startswith("/a/") and scene_key == menu_xmlid:
+                    scene_key = ""
+                raw_anchor = scene_key or (str(menu_id) if isinstance(menu_id, int) and menu_id > 0 else str(menu.get("menu_key") or "").strip() or str(index))
+                sanitized_anchor = raw_anchor.replace(":", "_").replace("/", "_").replace(".", "_")
                 model = str(menu.get("model") or menu.get("res_model") or "").strip()
                 if not action_id and not model and route != "/my-work":
                     continue
@@ -146,7 +149,7 @@ class MenuService:
                         "scene_key": scene_key,
                         "product_key": str(menu.get("product_key") or "").strip(),
                         "capability_key": str(menu.get("capability_key") or "").strip(),
-                        "menu_xmlid": str(menu.get("menu_xmlid") or "").strip(),
+                        "menu_xmlid": menu_xmlid,
                         "action_id": action_id,
                         "action_xmlid": str(menu.get("action_xmlid") or "").strip(),
                         "model": model,

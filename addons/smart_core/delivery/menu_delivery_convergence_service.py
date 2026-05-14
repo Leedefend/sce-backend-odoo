@@ -154,6 +154,9 @@ class MenuDeliveryConvergenceService:
         "历史角色",
         "项目授权范围",
         "系统配置",
+        "首页",
+        "我的待办",
+        "我的审批",
     )
     ADMIN_ALLOWED_PATH_TOKENS = (
         "智能施工 2.0",
@@ -249,6 +252,9 @@ class MenuDeliveryConvergenceService:
         "历史角色",
         "项目授权范围",
         "系统管理",
+        "首页",
+        "我的待办",
+        "我的审批",
     )
     HIDE_EXACT_LABELS = {
         "快速创建项目",
