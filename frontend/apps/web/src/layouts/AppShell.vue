@@ -377,8 +377,9 @@ const roleLandingTitle = computed(() => `打开当前角色默认入口：${role
 const showRoleLandingAction = computed(() => roleLandingActionLabel.value !== '角色首页');
 const capabilities = computed(() => session.capabilities);
 const initMeta = computed(() => asDict(session.initMeta));
-const visiblePublishedApps = computed(() => appCatalog.value);
-const showPublishedApps = computed(() => visiblePublishedApps.value.length > 0 || appCatalogLoading.value);
+const isPlatformAdmin = computed(() => session.user?.is_platform_admin === true);
+const visiblePublishedApps = computed(() => (isPlatformAdmin.value ? appCatalog.value : []));
+const showPublishedApps = computed(() => isPlatformAdmin.value && (visiblePublishedApps.value.length > 0 || appCatalogLoading.value));
 const activeAppId = computed(() => {
   const sceneKey = String(routeSceneKey.value || '').trim();
   if (sceneKey.startsWith('project') || sceneKey.startsWith('projects')) return 'projects';
@@ -554,7 +555,11 @@ function resolvePublishedAppLabel(appId: string, rawLabel: string | undefined, k
 }
 
 async function loadPublishedApps() {
-  if (!session.token || session.initStatus !== 'ready') return;
+  if (!session.token || session.initStatus !== 'ready' || session.user?.is_platform_admin !== true) {
+    appCatalog.value = [];
+    appCatalogLoading.value = false;
+    return;
+  }
   appCatalogLoading.value = true;
   appCatalogError.value = '';
   try {
