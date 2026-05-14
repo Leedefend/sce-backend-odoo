@@ -158,6 +158,33 @@ class TestDeliveryMenuEntryTarget(unittest.TestCase):
         self.assertEqual([group.get("label") for group in groups], ["项目中心"])
         self.assertEqual(groups[0]["children"][0]["label"], "项目台账")
 
+    def test_policy_menu_convergence_honors_business_config_admin_flag(self):
+        nav = menu_service.MenuService().build_nav(
+            policy={
+                "menu_groups": [
+                    {
+                        "group_key": "construction.basic_setup",
+                        "group_label": "基础设置",
+                        "menus": [
+                            {
+                                "menu_key": "customer",
+                                "label": "客户",
+                                "menu_id": 598,
+                                "route": "/a/786?menu_id=598",
+                                "action_id": 786,
+                                "res_model": "res.partner",
+                            }
+                        ],
+                    }
+                ]
+            },
+            role_surface={"role_code": "employee", "is_business_config_admin": True},
+        )
+
+        groups = (nav[0].get("children") or []) if nav else []
+        self.assertEqual([group.get("label") for group in groups], ["基础设置"])
+        self.assertEqual(groups[0]["children"][0]["label"], "客户")
+
 
 if __name__ == "__main__":
     unittest.main()

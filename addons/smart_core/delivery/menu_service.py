@@ -33,7 +33,15 @@ class MenuService:
         normalized = str(role_code or "").strip().lower()
         return normalized in {"executive", "business_config_admin", "business_admin", "implementation_admin"}
 
-    def _converged_menu(self, *, menu: dict, group_label: str, role_code: str):
+    def _converged_menu(
+        self,
+        *,
+        menu: dict,
+        group_label: str,
+        role_code: str,
+        is_admin: bool = False,
+        is_business_config_admin: bool = False,
+    ):
         row = dict(menu or {})
         label = str(row.get("label") or "").strip()
         if not label:
@@ -42,8 +50,8 @@ class MenuService:
         category = service._classify_leaf(
             label,
             [group_label, label],
-            is_admin=self._is_admin_role(role_code),
-            is_business_config_admin=self._is_business_config_role(role_code),
+            is_admin=bool(is_admin) or self._is_admin_role(role_code),
+            is_business_config_admin=bool(is_business_config_admin) or self._is_business_config_role(role_code),
         )
         if category.startswith("hidden_"):
             return None
@@ -223,6 +231,8 @@ class MenuService:
 
     def build_nav(self, *, policy: dict, role_surface: dict | None = None, native_nav: list[dict] | None = None) -> list[dict]:
         role_code = str((role_surface or {}).get("role_code") or "").strip().lower()
+        is_admin = bool((role_surface or {}).get("is_platform_admin"))
+        is_business_config_admin = bool((role_surface or {}).get("is_business_config_admin"))
         grouped_native = self._native_preview_menus(native_nav=native_nav or [], policy=policy)
         groups_by_key = {}
         group_order = []
@@ -246,7 +256,13 @@ class MenuService:
             for menu in group.get("menus") or []:
                 if not isinstance(menu, dict):
                     continue
-                converged_menu = self._converged_menu(menu=menu, group_label=group_label, role_code=role_code)
+                converged_menu = self._converged_menu(
+                    menu=menu,
+                    group_label=group_label,
+                    role_code=role_code,
+                    is_admin=is_admin,
+                    is_business_config_admin=is_business_config_admin,
+                )
                 if not converged_menu:
                     continue
                 menu_id = menu.get("menu_id")
@@ -281,6 +297,8 @@ class MenuService:
                 menu=menu,
                 group_label=policy_group_label or fallback_group_label,
                 role_code=role_code,
+                is_admin=is_admin,
+                is_business_config_admin=is_business_config_admin,
             )
             if not converged_menu:
                 continue
