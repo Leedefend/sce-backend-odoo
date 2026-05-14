@@ -59,6 +59,7 @@ APP_ALIASES = {
 }
 
 HIDDEN_APP_IDS = {"default", "scene_smoke_default"}
+PLATFORM_ADMIN_SCENE_APP_IDS = {"delivery"}
 
 ADMIN_APP_DEFS: dict[str, dict[str, Any]] = {
     "release_management": {
@@ -184,6 +185,13 @@ def _is_platform_admin_user(env) -> bool:
         return False
 
 
+def _is_scene_app_visible_for_user(env, app_id: str) -> bool:
+    token = _text(app_id)
+    if token in PLATFORM_ADMIN_SCENE_APP_IDS:
+        return _is_platform_admin_user(env)
+    return True
+
+
 def _admin_app_rows(env) -> list[dict[str, Any]]:
     if not _is_platform_admin_user(env):
         return []
@@ -305,7 +313,12 @@ class AppCatalogHandler(_SceneDeliveryAppShellMixin, BaseIntentHandler):
 
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
-        scenes = [scene for scene in _scene_list(self.env) if _is_publishable_scene(scene)]
+        scenes = [
+            scene
+            for scene in _scene_list(self.env)
+            if _is_publishable_scene(scene)
+            and _is_scene_app_visible_for_user(self.env, _scene_app_id(_scene_key(scene)))
+        ]
         app_scenes: Dict[str, list[dict[str, Any]]] = {}
         for scene in scenes:
             app_id = _scene_app_id(_scene_key(scene))
@@ -430,7 +443,9 @@ class AppNavHandler(_SceneDeliveryAppShellMixin, BaseIntentHandler):
         scenes = [
             scene
             for scene in _scene_list(self.env)
-            if _is_publishable_scene(scene) and _scene_app_id(_scene_key(scene)) == app_id
+            if _is_publishable_scene(scene)
+            and _scene_app_id(_scene_key(scene)) == app_id
+            and _is_scene_app_visible_for_user(env, app_id)
         ]
 
         children = [
@@ -512,7 +527,9 @@ class AppOpenHandler(_SceneDeliveryAppShellMixin, BaseIntentHandler):
             scenes = [
                 scene
                 for scene in _scene_list(self.env)
-                if _is_publishable_scene(scene) and _scene_app_id(_scene_key(scene)) == app_id
+                if _is_publishable_scene(scene)
+                and _scene_app_id(_scene_key(scene)) == app_id
+                and _is_scene_app_visible_for_user(self.env, app_id)
             ]
             primary_scene = _primary_scene_for_app(app_id, scenes)
             if primary_scene:

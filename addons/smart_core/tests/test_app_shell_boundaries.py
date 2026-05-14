@@ -49,6 +49,7 @@ def _load_handler():
                 {"key": "projects.list", "label": "Projects", "target": {"route": "/s/projects.list"}},
                 {"key": "contract.center", "label": "Contract", "target": {"route": "/s/contract.center"}},
                 {"key": "contracts.workspace", "label": "Contracts", "target": {"route": "/s/contracts.workspace"}},
+                {"key": "delivery.command", "label": "Delivery", "target": {"route": "/s/delivery.command"}},
                 {"key": "scene_smoke_default", "label": "Smoke", "target": {"route": "/s/scene_smoke_default"}},
                 {"key": "default", "label": "Default", "target": {"route": "/s/default"}},
             ]
@@ -177,9 +178,22 @@ class TestAppShellBoundaries(unittest.TestCase):
         self.assertNotIn("contract", app_ids)
         self.assertNotIn("default", app_ids)
         self.assertNotIn("scene_smoke_default", app_ids)
+        self.assertNotIn("delivery", app_ids)
         self.assertEqual(labels["projects"], "项目管理")
         self.assertEqual(labels["contracts"], "合同管理")
         self.assertEqual(sequences["workspace"], 0)
+
+    def test_catalog_keeps_delivery_app_platform_admin_only(self):
+        normal_handler = self.module.AppCatalogHandler(env=_FakeEnv(is_platform_admin=False))
+        admin_handler = self.module.AppCatalogHandler(env=_FakeEnv(is_platform_admin=True))
+
+        normal_result = normal_handler.handle(payload={})
+        admin_result = admin_handler.handle(payload={})
+
+        normal_app_ids = [row["meta"]["app_id"] for row in normal_result["data"]["apps"]]
+        admin_app_ids = [row["meta"]["app_id"] for row in admin_result["data"]["apps"]]
+        self.assertNotIn("delivery", normal_app_ids)
+        self.assertIn("delivery", admin_app_ids)
 
     def test_open_alias_app_uses_stable_primary_scene(self):
         handler = self.module.AppOpenHandler(env=types.SimpleNamespace(uid=9))
