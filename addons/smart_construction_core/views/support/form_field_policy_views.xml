@@ -28,9 +28,9 @@
                     <group>
                         <group string="字段">
                             <field name="active"/>
-                            <field name="model_id" options="{'no_create': True, 'no_open': True}"/>
+                            <field name="model_id" domain="[('transient', '=', False)]" options="{'no_create': True, 'no_open': True}"/>
                             <field name="model" invisible="1"/>
-                            <field name="field_id" domain="[('model_id', '=', model_id)]" options="{'no_create': True, 'no_open': True}"/>
+                            <field name="field_id" domain="[('model_id', '=', model_id), ('ttype', '!=', 'binary')]" options="{'no_create': True, 'no_open': True}"/>
                             <field name="field_name" readonly="field_id"/>
                             <field name="label" placeholder="为空时使用字段原始标题"/>
                         </group>
@@ -43,7 +43,7 @@
                     </group>
                     <group string="作用范围">
                         <field name="action_id"/>
-                        <field name="view_id"/>
+                        <field name="view_id" domain="[('model', '=', model), ('type', '=', 'form')]"/>
                     </group>
                     <group string="说明">
                         <field name="note" nolabel="1"/>

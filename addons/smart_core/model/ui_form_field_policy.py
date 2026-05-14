@@ -76,10 +76,19 @@ class UIFormFieldPolicy(models.Model):
                 continue
             if rec.model not in self.env:
                 raise ValidationError("模型不存在：%s" % rec.model)
+            model_rec = rec.model_id or self.env["ir.model"].search([("model", "=", rec.model)], limit=1)
+            if model_rec and model_rec.transient:
+                raise ValidationError("临时向导模型不能配置表单字段：%s" % rec.model)
             if rec.field_name not in self.env[rec.model]._fields:
                 raise ValidationError("字段不存在：%s.%s" % (rec.model, rec.field_name))
             if rec.field_id and (rec.field_id.model != rec.model or rec.field_id.name != rec.field_name):
                 raise ValidationError("字段记录与模型/字段名不一致")
+            field_rec = rec.field_id or self.env["ir.model.fields"].search(
+                [("model", "=", rec.model), ("name", "=", rec.field_name)],
+                limit=1,
+            )
+            if field_rec and field_rec.ttype == "binary":
+                raise ValidationError("二进制字段不能作为业务表单字段配置：%s.%s" % (rec.model, rec.field_name))
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -96,6 +105,10 @@ class UIFormFieldPolicy(models.Model):
         field_id = vals.get("field_id")
         if field_id:
             field = self.env["ir.model.fields"].browse(int(field_id))
+            if field.ttype == "binary":
+                raise ValidationError("二进制字段不能作为业务表单字段配置：%s.%s" % (field.model, field.name))
+            if field.model_id.transient:
+                raise ValidationError("临时向导模型不能配置表单字段：%s" % field.model)
             vals.setdefault("model_id", field.model_id.id)
             vals.setdefault("model", field.model)
             vals.setdefault("field_name", field.name)
@@ -103,8 +116,18 @@ class UIFormFieldPolicy(models.Model):
                 vals["label"] = field.field_description
             return
         model_id = vals.get("model_id")
-        if model_id and not vals.get("model"):
-            vals["model"] = self.env["ir.model"].browse(int(model_id)).model
+        model_rec = self.env["ir.model"].browse(int(model_id)) if model_id else self.env["ir.model"]
+        if model_rec:
+            if model_rec.transient:
+                raise ValidationError("临时向导模型不能配置表单字段：%s" % model_rec.model)
+            if not vals.get("model"):
+                vals["model"] = model_rec.model
+        model_name = str(vals.get("model") or "").strip()
+        field_name = str(vals.get("field_name") or "").strip()
+        if model_name and field_name:
+            field = self.env["ir.model.fields"].search([("model", "=", model_name), ("name", "=", field_name)], limit=1)
+            if field.ttype == "binary":
+                raise ValidationError("二进制字段不能作为业务表单字段配置：%s.%s" % (model_name, field_name))
 
     @api.model
     def source_authority_contract(self) -> dict[str, Any]:
