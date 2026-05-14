@@ -119,6 +119,16 @@ _CAPABILITIES: list[dict[str, Any]] = [
     _cap("material.catalog.open", "物资目录", "查看物资目录与分类", "material_management", required_roles=["pm", "finance", "executive"]),
     _cap("material.procurement.list", "采购清单", "查看采购与供应入口", "material_management", required_roles=["pm", "finance", "executive"]),
 
+    _cap("construction.plan.manage", "计划管理", "维护施工计划与计划版本", "project_management", required_roles=["pm", "executive"]),
+    _cap("construction.plan.report", "计划汇报", "填报施工计划进展与偏差", "project_management", required_roles=["pm", "executive"]),
+    _cap("construction.diary.open", "施工日志", "记录现场施工日志", "project_management", required_roles=["pm", "executive"]),
+    _cap("quality.issue.list", "质量检查", "登记质量问题并发起闭环", "project_management", required_roles=["pm", "executive"]),
+    _cap("quality.rectification.list", "质量整改", "跟踪质量整改执行", "project_management", required_roles=["pm", "executive"]),
+    _cap("quality.recheck.list", "质量复验", "确认质量整改复验结果", "project_management", required_roles=["pm", "executive"]),
+    _cap("safety.issue.list", "安全检查", "登记安全问题并发起闭环", "project_management", required_roles=["pm", "executive"]),
+    _cap("safety.rectification.list", "安全整改", "跟踪安全整改执行", "project_management", required_roles=["pm", "executive"]),
+    _cap("safety.recheck.list", "安全复验", "确认安全整改复验结果", "project_management", required_roles=["pm", "executive"]),
+
     _cap("workspace.today.focus", "今日关键动作", "角色首页今日关键动作", "others", required_roles=["owner", "pm", "finance", "executive"]),
     _cap("workspace.project.watch", "我关注的项目", "从角色首页进入关注项目", "others", required_roles=["owner", "pm", "finance", "executive"]),
 ]

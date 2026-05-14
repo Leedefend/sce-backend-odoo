@@ -174,6 +174,26 @@ def register_scene_content_providers(registry, addons_root: Path) -> None:
             priority=300,
             source="industry_registration",
         )
+    for scene_key in (
+        "construction.execution",
+        "construction.plan",
+        "construction.plan_report",
+        "construction.diary",
+        "quality.center",
+        "quality.rectification",
+        "quality.recheck",
+        "safety.center",
+        "safety.rectification",
+        "safety.recheck",
+    ):
+        registry.register_spec(
+            scene_key=scene_key,
+            provider_key="construction.execution_provider.v1",
+            module_name=scene_module,
+            provider_path=addons_root / scene_module / "providers" / "construction_execution_provider.py",
+            priority=300,
+            source="industry_registration",
+        )
     registry.register_spec(
         scene_key="enterprise.company",
         provider_key="construction.enterprise_bootstrap_provider.company.v1",

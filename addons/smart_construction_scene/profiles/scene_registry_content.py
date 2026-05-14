@@ -478,6 +478,95 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             },
         },
         {
+            "code": "construction.execution",
+            "name": "施工管理",
+            "target": {
+                "route": "/s/construction.execution",
+                "menu_xmlid": "smart_construction_core.menu_sc_construction_management_center",
+            },
+        },
+        {
+            "code": "construction.plan",
+            "name": "计划管理",
+            "target": {
+                "route": "/s/construction.plan",
+                "menu_xmlid": "smart_construction_core.menu_sc_plan",
+                "action_xmlid": "smart_construction_core.action_sc_plan",
+            },
+        },
+        {
+            "code": "construction.plan_report",
+            "name": "计划汇报",
+            "target": {
+                "route": "/s/construction.plan_report",
+                "menu_xmlid": "smart_construction_core.menu_sc_plan_report",
+                "action_xmlid": "smart_construction_core.action_sc_plan_report",
+            },
+        },
+        {
+            "code": "construction.diary",
+            "name": "施工日志",
+            "target": {
+                "route": "/s/construction.diary",
+                "menu_xmlid": "smart_construction_core.menu_sc_construction_diary",
+                "action_xmlid": "smart_construction_core.action_sc_construction_diary",
+            },
+        },
+        {
+            "code": "quality.center",
+            "name": "质量检查",
+            "target": {
+                "route": "/s/quality.center",
+                "menu_xmlid": "smart_construction_core.menu_sc_quality_issue",
+                "action_xmlid": "smart_construction_core.action_sc_quality_issue",
+            },
+        },
+        {
+            "code": "quality.rectification",
+            "name": "质量整改",
+            "target": {
+                "route": "/s/quality.rectification",
+                "menu_xmlid": "smart_construction_core.menu_sc_quality_rectification",
+                "action_xmlid": "smart_construction_core.action_sc_quality_rectification",
+            },
+        },
+        {
+            "code": "quality.recheck",
+            "name": "质量复验",
+            "target": {
+                "route": "/s/quality.recheck",
+                "menu_xmlid": "smart_construction_core.menu_sc_quality_recheck",
+                "action_xmlid": "smart_construction_core.action_sc_quality_recheck",
+            },
+        },
+        {
+            "code": "safety.center",
+            "name": "安全检查",
+            "target": {
+                "route": "/s/safety.center",
+                "menu_xmlid": "smart_construction_core.menu_sc_safety_issue",
+                "action_xmlid": "smart_construction_core.action_sc_safety_issue",
+            },
+        },
+        {
+            "code": "safety.rectification",
+            "name": "安全整改",
+            "target": {
+                "route": "/s/safety.rectification",
+                "menu_xmlid": "smart_construction_core.menu_sc_safety_rectification",
+                "action_xmlid": "smart_construction_core.action_sc_safety_rectification",
+            },
+        },
+        {
+            "code": "safety.recheck",
+            "name": "安全复验",
+            "target": {
+                "route": "/s/safety.recheck",
+                "menu_xmlid": "smart_construction_core.menu_sc_safety_recheck",
+                "action_xmlid": "smart_construction_core.action_sc_safety_recheck",
+            },
+        },
+        {
             "code": "portal.lifecycle",
             "name": "生命周期驾驶舱",
             "target": {"route": "/s/projects.dashboard"},
@@ -557,16 +646,6 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             "code": "payments.risk.control",
             "name": "付款风险控制",
             "target": {"route": "/s/payments.risk.control"},
-        },
-        {
-            "code": "quality.center",
-            "name": "质量管理中心",
-            "target": {"route": "/s/quality.center"},
-        },
-        {
-            "code": "safety.center",
-            "name": "安全管理中心",
-            "target": {"route": "/s/safety.center"},
         },
         {
             "code": "resource.center",

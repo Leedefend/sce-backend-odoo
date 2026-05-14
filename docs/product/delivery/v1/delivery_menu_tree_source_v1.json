@@ -51,6 +51,22 @@
       ]
     },
     {
+      "menu_key": "site_execution",
+      "menu_name": "现场执行",
+      "entries": [
+        "construction.execution",
+        "construction.plan",
+        "construction.plan_report",
+        "construction.diary",
+        "quality.center",
+        "quality.rectification",
+        "quality.recheck",
+        "safety.center",
+        "safety.rectification",
+        "safety.recheck"
+      ]
+    },
+    {
       "menu_key": "exec_insight",
       "menu_name": "经营洞察",
       "entries": [

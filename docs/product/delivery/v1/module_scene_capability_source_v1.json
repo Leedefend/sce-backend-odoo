@@ -34,6 +34,16 @@
       "subcontract.register",
       "subcontract.request",
       "subcontract.settlement",
+      "construction.diary",
+      "construction.execution",
+      "construction.plan",
+      "construction.plan_report",
+      "quality.center",
+      "quality.recheck",
+      "quality.rectification",
+      "safety.center",
+      "safety.recheck",
+      "safety.rectification",
       "cost.cost_compare",
       "cost.profit_compare",
       "cost.project_boq",
@@ -134,6 +144,55 @@
         "material.procurement.list",
         "cost.boq.manage",
         "project.document.open"
+      ],
+      "in_scope": true
+    },
+    {
+      "module_key": "site_execution_quality_safety",
+      "module_name": "现场执行与质量安全",
+      "target_roles": ["pm", "executive"],
+      "core_value": "覆盖施工计划、计划汇报、施工日志、质量问题闭环和安全问题闭环。",
+      "entry_scenes": [
+        "construction.execution",
+        "construction.plan",
+        "construction.plan_report",
+        "construction.diary",
+        "quality.center",
+        "safety.center"
+      ],
+      "menu_hints": [
+        "construction.execution",
+        "construction.plan",
+        "construction.plan_report",
+        "construction.diary",
+        "quality.center",
+        "quality.rectification",
+        "quality.recheck",
+        "safety.center",
+        "safety.rectification",
+        "safety.recheck"
+      ],
+      "models": [
+        "sc.plan",
+        "sc.plan.report",
+        "sc.construction.diary",
+        "sc.quality.issue",
+        "sc.quality.rectification",
+        "sc.quality.recheck",
+        "sc.safety.issue",
+        "sc.safety.rectification",
+        "sc.safety.recheck"
+      ],
+      "capabilities": [
+        "construction.plan.manage",
+        "construction.plan.report",
+        "construction.diary.open",
+        "quality.issue.list",
+        "quality.rectification.list",
+        "quality.recheck.list",
+        "safety.issue.list",
+        "safety.rectification.list",
+        "safety.recheck.list"
       ],
       "in_scope": true
     },
