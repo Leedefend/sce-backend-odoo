@@ -128,6 +128,19 @@ function asText(value: unknown): string {
   return String(value || '').trim();
 }
 
+function readDictAlias(source: Dict, key: string, alias: string): Dict {
+  return asDict(source[key] || source[alias]);
+}
+
+function readListAlias(source: Dict, key: string, alias: string): unknown[] {
+  return asList(source[key] || source[alias]);
+}
+
+function readBooleanAlias(source: Dict, key: string, alias: string): boolean | undefined {
+  const value = source[key] ?? source[alias];
+  return typeof value === 'boolean' ? value : undefined;
+}
+
 function walkUnifiedPageContractV2LayoutNodes(rows: unknown[], visit: (row: Dict) => void) {
   asList(rows).forEach((item) => {
     const row = asDict(item);
@@ -147,9 +160,10 @@ function synthesizeUnifiedPageContractV2Widget(row: Dict): UnifiedPageContractV2
   if (!widgetId || !fieldCode) return null;
   const attributes = asDict(row.attributes);
   const label = asText(row.label || row.string || row.title || fieldInfo.label || fieldCode);
-  const componentKey = asText(row.componentKey || fieldInfo.componentKey);
-  const componentConfig = asDict(row.componentConfig || fieldInfo.componentConfig || attributes.componentConfig);
+  const componentKey = asText(row.componentKey || row.component_key || fieldInfo.componentKey || fieldInfo.component_key);
+  const componentConfig = asDict(row.componentConfig || row.component_config || fieldInfo.componentConfig || fieldInfo.component_config || attributes.componentConfig || attributes.component_config);
   const relationEntry = asDict(fieldInfo.relation_entry || fieldInfo.relationEntry || componentConfig.relationEntry || componentConfig.relation_entry);
+  const widgetOptions = asDict(fieldInfo.widgetOptions || fieldInfo.widget_options || fieldInfo.options || componentConfig.widgetOptions || componentConfig.widget_options);
   return {
     widgetId,
     widgetType,
@@ -162,7 +176,7 @@ function synthesizeUnifiedPageContractV2Widget(row: Dict): UnifiedPageContractV2
       ...(asText(fieldInfo.relation) ? { relation: asText(fieldInfo.relation) } : {}),
       ...(Array.isArray(fieldInfo.selection) ? { selection: fieldInfo.selection } : {}),
       ...(Object.keys(relationEntry).length ? { relationEntry } : {}),
-      ...(Object.keys(asDict(fieldInfo.widget_options)).length ? { widgetOptions: asDict(fieldInfo.widget_options) } : {}),
+      ...(Object.keys(widgetOptions).length ? { widgetOptions } : {}),
     },
     fieldType: asText(fieldInfo.type || fieldInfo.ttype) || undefined,
     relation: asText(fieldInfo.relation) || undefined,
@@ -189,15 +203,15 @@ function mergeUnifiedPageContractV2Widget(existing: UnifiedPageContractV2Widget,
 
 export function isUnifiedPageContractV2(value: unknown): value is UnifiedPageContractV2 {
   const root = asDict(value);
-  const pageInfo = asDict(root.pageInfo);
-  const layout = asDict(root.layoutContract);
-  const action = asDict(root.actionContract);
+  const pageInfo = readDictAlias(root, 'pageInfo', 'page_info');
+  const layout = readDictAlias(root, 'layoutContract', 'layout_contract');
+  const action = readDictAlias(root, 'actionContract', 'action_contract');
   return (
-    asText(pageInfo.contractVersion).startsWith('2.')
-    && asText(pageInfo.pageId).length > 0
-    && asText(pageInfo.clientType).length > 0
-    && Array.isArray(layout.containerTree)
-    && Array.isArray(action.actionRuleList)
+    (asText(pageInfo.contractVersion).startsWith('2.') || asText(pageInfo.contract_version).startsWith('2.'))
+    && (asText(pageInfo.pageId).length > 0 || asText(pageInfo.page_id).length > 0)
+    && (asText(pageInfo.clientType).length > 0 || asText(pageInfo.client_type).length > 0)
+    && Array.isArray(layout.containerTree || layout.container_tree)
+    && Array.isArray(action.actionRuleList || action.action_rule_list)
   );
 }
 
@@ -216,8 +230,9 @@ export function collectUnifiedPageContractV2Widgets(contract: unknown): UnifiedP
   if (!v2) return [];
   const out: UnifiedPageContractV2Widget[] = [];
   const byWidgetId = new Map<string, number>();
-  walkUnifiedPageContractV2LayoutNodes(v2.layoutContract.containerTree, (row) => {
-    asList(row.widgetList).forEach((widgetRaw) => {
+  const layout = readDictAlias(asDict(v2), 'layoutContract', 'layout_contract');
+  walkUnifiedPageContractV2LayoutNodes(readListAlias(layout, 'containerTree', 'container_tree'), (row) => {
+    readListAlias(row, 'widgetList', 'widget_list').forEach((widgetRaw) => {
       const widget = asDict(widgetRaw);
       const synthesized = synthesizeUnifiedPageContractV2Widget(widget);
       if (!synthesized) return;
@@ -257,10 +272,10 @@ export function collectUnifiedPageContractV2FieldWidgets(contract: unknown): Uni
 export function collectUnifiedPageContractV2WidgetStatus(contract: unknown): Record<string, UnifiedPageContractV2WidgetStatus> {
   const v2 = resolveUnifiedPageContractV2(contract);
   if (!v2) return {};
-  const status = asDict(v2.statusContract);
-  return asList(status.widgetStatus).reduce<Record<string, UnifiedPageContractV2WidgetStatus>>((acc, item) => {
+  const status = readDictAlias(asDict(v2), 'statusContract', 'status_contract');
+  return readListAlias(status, 'widgetStatus', 'widget_status').reduce<Record<string, UnifiedPageContractV2WidgetStatus>>((acc, item) => {
     const row = asDict(item);
-    const widgetId = asText(row.widgetId);
+    const widgetId = asText(row.widgetId || row.widget_id);
     if (!widgetId) return acc;
     acc[widgetId] = {
       widgetId,
@@ -276,10 +291,10 @@ export function collectUnifiedPageContractV2WidgetStatus(contract: unknown): Rec
 export function collectUnifiedPageContractV2ButtonStatus(contract: unknown): Record<string, UnifiedPageContractV2ButtonStatus> {
   const v2 = resolveUnifiedPageContractV2(contract);
   if (!v2) return {};
-  const status = asDict(v2.statusContract);
-  return asList(status.buttonStatus).reduce<Record<string, UnifiedPageContractV2ButtonStatus>>((acc, item) => {
+  const status = readDictAlias(asDict(v2), 'statusContract', 'status_contract');
+  return readListAlias(status, 'buttonStatus', 'button_status').reduce<Record<string, UnifiedPageContractV2ButtonStatus>>((acc, item) => {
     const row = asDict(item);
-    const btnId = asText(row.btnId);
+    const btnId = asText(row.btnId || row.btn_id);
     if (!btnId) return acc;
     acc[btnId] = {
       btnId,
@@ -294,8 +309,8 @@ export function collectUnifiedPageContractV2ButtonStatus(contract: unknown): Rec
 export function collectUnifiedPageContractV2SelectorStatus(contract: unknown): UnifiedPageContractV2SelectorStatus[] {
   const v2 = resolveUnifiedPageContractV2(contract);
   if (!v2) return [];
-  const status = asDict(v2.statusContract);
-  return asList(status.selectorStatus).reduce<UnifiedPageContractV2SelectorStatus[]>((acc, item) => {
+  const status = readDictAlias(asDict(v2), 'statusContract', 'status_contract');
+  return readListAlias(status, 'selectorStatus', 'selector_status').reduce<UnifiedPageContractV2SelectorStatus[]>((acc, item) => {
     const row = asDict(item);
     const selector = asText(row.selector);
     if (!selector) return acc;
@@ -338,11 +353,12 @@ export function resolveUnifiedPageContractV2SelectorStatus(
 export function resolveUnifiedPageContractV2GlobalStatus(contract: unknown): UnifiedPageContractV2GlobalStatus | null {
   const v2 = resolveUnifiedPageContractV2(contract);
   if (!v2) return null;
-  const row = asDict(asDict(v2.statusContract).globalStatus);
+  const status = readDictAlias(asDict(v2), 'statusContract', 'status_contract');
+  const row = readDictAlias(status, 'globalStatus', 'global_status');
   if (!Object.keys(row).length) return null;
   return {
-    pageVisible: typeof row.pageVisible === 'boolean' ? row.pageVisible : undefined,
-    pageAuth: asText(row.pageAuth) || undefined,
+    pageVisible: readBooleanAlias(row, 'pageVisible', 'page_visible'),
+    pageAuth: asText(row.pageAuth || row.page_auth) || undefined,
     reasonCode: asText(row.reasonCode || row.reason_code) || undefined,
   };
 }
@@ -350,9 +366,10 @@ export function resolveUnifiedPageContractV2GlobalStatus(contract: unknown): Uni
 export function resolveUnifiedPageContractV2SourceContext(contract: unknown): UnifiedPageContractV2SourceContext {
   const v2 = resolveUnifiedPageContractV2(contract);
   if (!v2) return {};
-  const dataMeta = asDict(v2.dataContract.dataMeta);
-  const runtime = asDict(v2.runtimeContract);
-  const source = asDict(dataMeta.sourceContext || runtime.sourceContext);
+  const data = readDictAlias(asDict(v2), 'dataContract', 'data_contract');
+  const dataMeta = readDictAlias(data, 'dataMeta', 'data_meta');
+  const runtime = readDictAlias(asDict(v2), 'runtimeContract', 'runtime_contract');
+  const source = asDict(dataMeta.sourceContext || dataMeta.source_context || runtime.sourceContext || runtime.source_context);
   if (!Object.keys(source).length) return {};
   const context = asDict(source.context);
   const domain = asList(source.domain);
@@ -371,16 +388,17 @@ export function resolveUnifiedPageContractV2SourceContext(contract: unknown): Un
 export function resolveUnifiedPageContractV2MainData(contract: unknown): Dict {
   const v2 = resolveUnifiedPageContractV2(contract);
   if (!v2) return {};
-  return asDict(asDict(v2.dataContract).mainData);
+  const data = readDictAlias(asDict(v2), 'dataContract', 'data_contract');
+  return readDictAlias(data, 'mainData', 'main_data');
 }
 
 export function collectUnifiedPageContractV2ContainerStatus(contract: unknown): Record<string, UnifiedPageContractV2ContainerStatus> {
   const v2 = resolveUnifiedPageContractV2(contract);
   if (!v2) return {};
-  const status = asDict(v2.statusContract);
-  return asList(status.containerStatus).reduce<Record<string, UnifiedPageContractV2ContainerStatus>>((acc, item) => {
+  const status = readDictAlias(asDict(v2), 'statusContract', 'status_contract');
+  return readListAlias(status, 'containerStatus', 'container_status').reduce<Record<string, UnifiedPageContractV2ContainerStatus>>((acc, item) => {
     const row = asDict(item);
-    const containerId = asText(row.containerId);
+    const containerId = asText(row.containerId || row.container_id);
     if (!containerId) return acc;
     acc[containerId] = {
       containerId,
@@ -408,7 +426,7 @@ export function collectUnifiedPageContractV2FieldContainerStatus(contract: unkno
         disabled: inherited.disabled === true || current.disabled === true ? true : current.disabled,
         reasonCode: current.reasonCode || inherited.reasonCode,
       };
-      asList(row.widgetList).forEach((widgetRaw) => {
+      readListAlias(row, 'widgetList', 'widget_list').forEach((widgetRaw) => {
         const widget = asDict(widgetRaw);
         const fieldCode = asText(widget.fieldCode);
         if (fieldCode) out[fieldCode] = merged;
@@ -423,7 +441,8 @@ export function collectUnifiedPageContractV2FieldContainerStatus(contract: unkno
       }
     });
   };
-  visit(v2.layoutContract.containerTree, { containerId: '', visible: true, disabled: false });
+  const layout = readDictAlias(asDict(v2), 'layoutContract', 'layout_contract');
+  visit(readListAlias(layout, 'containerTree', 'container_tree'), { containerId: '', visible: true, disabled: false });
   return out;
 }
 
@@ -439,5 +458,7 @@ export function collectUnifiedPageContractV2FieldStatus(contract: unknown): Reco
 export function resolveUnifiedPageContractV2PrimaryDataSource(contract: unknown): Record<string, unknown> {
   const v2 = resolveUnifiedPageContractV2(contract);
   if (!v2) return {};
-  return asDict(asDict(v2.dataContract.dataSource).primary);
+  const data = readDictAlias(asDict(v2), 'dataContract', 'data_contract');
+  const dataSource = readDictAlias(data, 'dataSource', 'data_source');
+  return asDict(dataSource.primary);
 }

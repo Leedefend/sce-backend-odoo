@@ -970,6 +970,12 @@ type ActionViewRuntimeContract = ActionContract & {
     view_type?: string;
     context?: unknown;
     res_id?: number | string;
+    permissions?: {
+      read?: boolean;
+      write?: boolean;
+      create?: boolean;
+      unlink?: boolean;
+    };
   };
   views?: {
     tree?: ContractViewBlock;
@@ -1255,9 +1261,11 @@ const {
 function resolveCreateRight(contract: ActionViewRuntimeContract | null): boolean {
   const globalStatus = resolveUnifiedPageContractV2GlobalStatus(contract?.__unified_page_contract_v2);
   if (String(globalStatus?.pageAuth || '').trim().toLowerCase() === 'read') return false;
+  const head = contract?.head?.permissions?.create;
+  if (typeof head === 'boolean') return head;
   const effective = contract?.permissions?.effective?.rights?.create;
   if (typeof effective === 'boolean') return effective;
-  return false;
+  return true;
 }
 
 const canCreateRecord = computed(() => {

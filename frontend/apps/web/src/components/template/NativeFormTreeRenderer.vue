@@ -205,6 +205,7 @@ defineOptions({ name: 'NativeFormTreeRenderer' });
 
 export type NativeFormLayoutNode = {
   type?: string;
+  containerType?: string;
   name?: string;
   string?: string;
   label?: string;
@@ -213,8 +214,13 @@ export type NativeFormLayoutNode = {
   widget?: string;
   attributes?: Record<string, unknown>;
   fieldInfo?: Record<string, unknown>;
+  field_info?: Record<string, unknown>;
   buttonType?: string;
   action?: Record<string, unknown> | null;
+  modifiers?: Record<string, unknown>;
+  invisible?: unknown;
+  readonly?: unknown;
+  required?: unknown;
   children?: NativeFormLayoutNode[];
   pages?: NativeFormLayoutNode[];
   tabs?: NativeFormLayoutNode[];
@@ -252,7 +258,7 @@ function isNodeRenderable(node: NativeFormLayoutNode) {
 }
 
 function nodeType(node: NativeFormLayoutNode) {
-  return String(node?.type || '').trim().toLowerCase();
+  return String(node?.type || (node as { containerType?: string })?.containerType || '').trim().toLowerCase();
 }
 
 function nodeKey(node: NativeFormLayoutNode, index: number) {

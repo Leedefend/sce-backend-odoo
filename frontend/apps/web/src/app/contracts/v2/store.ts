@@ -36,6 +36,10 @@ function walkContainers(containers: ContractV2Container[], visit: (container: Co
   containers.forEach((container) => {
     visit(container);
     walkContainers(container.children, visit);
+    walkContainers(container.pages || [], visit);
+    walkContainers(container.tabs || [], visit);
+    walkContainers(container.nodes || [], visit);
+    walkContainers(container.items || [], visit);
   });
 }
 
@@ -44,14 +48,6 @@ function indexBy<T>(rows: T[], readKey: (row: T) => string): Map<string, T> {
   rows.forEach((row) => {
     const key = readKey(row);
     if (key) out.set(key, row);
-  });
-  return out;
-}
-
-function collectWidgets(snapshot: ContractV2Snapshot): ContractV2Widget[] {
-  const out: ContractV2Widget[] = [];
-  walkContainers(snapshot.layoutContract.containerTree, (container) => {
-    out.push(...container.widgetList);
   });
   return out;
 }
@@ -84,6 +80,55 @@ function asList(value: unknown): unknown[] {
 
 function asText(value: unknown): string {
   return String(value || '').trim();
+}
+
+function synthesizeWidgetFromContainer(container: ContractV2Container): ContractV2Widget | null {
+  const type = asText(container.type || container.containerType).toLowerCase();
+  if (type !== 'field') return null;
+  const fieldInfo = asDict(container.fieldInfo || container.field_info);
+  const attributes = asDict(container.attributes);
+  const fieldCode = asText(container.name || fieldInfo.name || attributes.name);
+  if (!fieldCode) return null;
+  const componentConfig = asDict(fieldInfo.componentConfig || fieldInfo.component_config || attributes.componentConfig || attributes.component_config);
+  const fieldType = asText(fieldInfo.type || fieldInfo.ttype);
+  const relation = asText(fieldInfo.relation);
+  const relationEntry = asDict(fieldInfo.relationEntry || fieldInfo.relation_entry || componentConfig.relationEntry || componentConfig.relation_entry);
+  const widgetOptions = asDict(fieldInfo.widgetOptions || fieldInfo.widget_options || fieldInfo.options || componentConfig.widgetOptions || componentConfig.widget_options);
+  const mergedComponentConfig = {
+    ...componentConfig,
+    ...(fieldType && !asText(componentConfig.fieldType || componentConfig.field_type || componentConfig.ttype)
+      ? { fieldType }
+      : {}),
+    ...(relation && !asText(componentConfig.relation) ? { relation } : {}),
+    ...(Array.isArray(fieldInfo.selection) && !Array.isArray(componentConfig.selection) ? { selection: fieldInfo.selection } : {}),
+    ...(Object.keys(relationEntry).length ? { relationEntry } : {}),
+    ...(Object.keys(widgetOptions).length ? { widgetOptions } : {}),
+  };
+  return {
+    widgetId: asText(attributes.widgetId || attributes.widget_id) || `field.${fieldCode}`,
+    widgetType: asText(container.widget || fieldInfo.widget || fieldType || container.containerType) || 'display',
+    fieldCode,
+    label: asText(container.label || container.string || fieldInfo.label || fieldInfo.string) || fieldCode,
+    componentKey: asText(fieldInfo.componentKey || fieldInfo.component_key || attributes.componentKey || attributes.component_key) || 'sc.display.text',
+    ...(Object.keys(mergedComponentConfig).length ? { componentConfig: mergedComponentConfig } : {}),
+    ...(fieldType ? { fieldType } : {}),
+    ...(relation ? { relation } : {}),
+  };
+}
+
+function collectWidgets(snapshot: ContractV2Snapshot): ContractV2Widget[] {
+  const out: ContractV2Widget[] = [];
+  const seen = new Set<string>();
+  const pushWidget = (widget: ContractV2Widget | null) => {
+    if (!widget || !widget.widgetId || seen.has(widget.widgetId)) return;
+    seen.add(widget.widgetId);
+    out.push(widget);
+  };
+  walkContainers(snapshot.layoutContract.containerTree, (container) => {
+    container.widgetList.forEach(pushWidget);
+    pushWidget(synthesizeWidgetFromContainer(container));
+  });
+  return out;
 }
 
 export function createContractV2Store(snapshot: ContractV2Snapshot): ContractV2NormalizedStore {
