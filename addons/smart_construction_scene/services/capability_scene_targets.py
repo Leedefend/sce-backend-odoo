@@ -55,8 +55,8 @@ CAPABILITY_ENTRY_SCENE_MAP: dict[str, str] = {
     "governance.capability.matrix": "portal.capability_matrix",
     "governance.scene.openability": "portal.capability_matrix",
     "governance.runtime.audit": "portal.dashboard",
-    "material.catalog.open": "projects.ledger",
-    "material.procurement.list": "projects.ledger",
+    "material.catalog.open": "material.catalog",
+    "material.procurement.list": "material.procurement",
     "workspace.today.focus": "portal.dashboard",
     "workspace.project.watch": "projects.list",
 }

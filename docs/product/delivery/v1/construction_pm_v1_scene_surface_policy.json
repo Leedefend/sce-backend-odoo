@@ -38,7 +38,14 @@
         "finance.payment_requests",
         "finance.settlement_orders",
         "finance.treasury_ledger",
+        "material.acceptance",
+        "material.catalog",
+        "material.center",
+        "material.procurement",
+        "material.rental",
+        "material.settlement",
         "risk.monitor",
+        "subcontract.management",
         "task.center"
       ]
     },
@@ -70,6 +77,13 @@
         "finance.payment_requests",
         "finance.settlement_orders",
         "finance.treasury_ledger",
+        "material.acceptance",
+        "material.catalog",
+        "material.center",
+        "material.procurement",
+        "material.rental",
+        "material.settlement",
+        "subcontract.management",
         "task.center"
       ]
     }

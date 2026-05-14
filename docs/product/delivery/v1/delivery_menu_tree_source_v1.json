@@ -31,7 +31,14 @@
         "cost.project_cost_ledger",
         "cost.cost_compare",
         "cost.profit_compare",
-        "cost.project_progress"
+        "cost.project_progress",
+        "material.center",
+        "material.catalog",
+        "material.procurement",
+        "material.acceptance",
+        "material.settlement",
+        "material.rental",
+        "subcontract.management"
       ]
     },
     {

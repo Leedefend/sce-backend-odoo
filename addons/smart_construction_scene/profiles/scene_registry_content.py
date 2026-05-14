@@ -259,6 +259,68 @@ def list_scene_entries() -> List[Dict[str, Any]]:
             },
         },
         {
+            "code": "material.center",
+            "name": "物资与分包",
+            "target": {
+                "route": "/s/material.center",
+                "menu_xmlid": "smart_construction_core.menu_sc_material_center",
+            },
+        },
+        {
+            "code": "material.catalog",
+            "name": "材料档案",
+            "target": {
+                "route": "/s/material.catalog",
+                "menu_xmlid": "smart_construction_core.menu_sc_material_catalog",
+                "action_xmlid": "smart_construction_core.action_sc_material_product_template",
+            },
+        },
+        {
+            "code": "material.procurement",
+            "name": "采购协同",
+            "target": {
+                "route": "/s/material.procurement",
+                "menu_xmlid": "smart_construction_core.menu_sc_material_purchase_request",
+                "action_xmlid": "smart_construction_core.action_sc_material_purchase_request",
+            },
+        },
+        {
+            "code": "material.acceptance",
+            "name": "材料进场验收",
+            "target": {
+                "route": "/s/material.acceptance",
+                "menu_xmlid": "smart_construction_core.menu_sc_material_acceptance",
+                "action_xmlid": "smart_construction_core.action_sc_material_acceptance",
+            },
+        },
+        {
+            "code": "material.settlement",
+            "name": "材料结算",
+            "target": {
+                "route": "/s/material.settlement",
+                "menu_xmlid": "smart_construction_core.menu_sc_material_settlement",
+                "action_xmlid": "smart_construction_core.action_sc_material_settlement",
+            },
+        },
+        {
+            "code": "material.rental",
+            "name": "周转材料租赁",
+            "target": {
+                "route": "/s/material.rental",
+                "menu_xmlid": "smart_construction_core.menu_sc_material_rental_plan",
+                "action_xmlid": "smart_construction_core.action_sc_material_rental_plan",
+            },
+        },
+        {
+            "code": "subcontract.management",
+            "name": "专业分包",
+            "target": {
+                "route": "/s/subcontract.management",
+                "menu_xmlid": "smart_construction_core.menu_sc_subcontract_plan",
+                "action_xmlid": "smart_construction_core.action_sc_subcontract_plan",
+            },
+        },
+        {
             "code": "cost.cost_compare",
             "name": "成本中心",
             "target": {
