@@ -24,7 +24,18 @@ def _action_id(action: Any) -> int:
 
 def _action_model(action: Any) -> str:
     try:
-        return _text(getattr(action, "res_model", ""))
+        model = _text(getattr(action, "res_model", ""))
+        if model:
+            return model
+        model = _text(getattr(action, "model_name", ""))
+        if model:
+            return model
+        model_id = getattr(action, "model_id", None)
+        model = _text(getattr(model_id, "model", ""))
+        if model:
+            return model
+        binding_model_id = getattr(action, "binding_model_id", None)
+        return _text(getattr(binding_model_id, "model", ""))
     except Exception:
         return ""
 
@@ -107,11 +118,16 @@ class ProductPolicyCatalogSyncService:
             path = _menu_path(menu)
             if not path:
                 continue
+            root_label = path[0] if path else "施工管理"
+            if root_label != "智慧施工管理平台":
+                continue
+            children = getattr(menu, "child_id", None)
+            if children and any(bool(getattr(child, "active", True)) for child in children):
+                continue
             page_key = xmlid
             if page_key in seen:
                 continue
             seen.add(page_key)
-            root_label = path[0] if path else "施工管理"
             group_label = path[1] if len(path) > 1 else root_label
             page_label = path[-1]
             menu_id = int(menu.id or 0)
@@ -207,6 +223,7 @@ class ProductPolicyCatalogSyncService:
         scene_rows: list[dict[str, Any]] = []
         capability_rows: list[dict[str, Any]] = []
         scene_bindings: dict[str, dict[str, str]] = {}
+        emitted_page_signatures: set[tuple[str, str, str]] = set()
         for index, page in enumerate(menu_pages, start=1):
             group_key = _text(page.get("group_key")) or "construction.menu"
             group = groups_by_key.setdefault(
@@ -220,6 +237,12 @@ class ProductPolicyCatalogSyncService:
             )
             page_key = _text(page.get("page_key"))
             label = _text(page.get("page_label") or page.get("label")) or page_key
+            res_model = _text(page.get("res_model"))
+            page_signature = (group_key, label, res_model)
+            if res_model and page_signature in emitted_page_signatures:
+                continue
+            if res_model:
+                emitted_page_signatures.add(page_signature)
             capability_key = f"construction.menu.{_slug(page_key)}"
             menu = {
                 "menu_key": _text(page.get("menu_key")) or page_key,
@@ -241,7 +264,7 @@ class ProductPolicyCatalogSyncService:
                 "menu_xmlid": _text(page.get("menu_xmlid")),
                 "action_id": int(page.get("action_id") or 0),
                 "action_model": _text(page.get("action_model")),
-                "res_model": _text(page.get("res_model")),
+                "res_model": res_model,
                 "sequence": index,
             }
             group["menus"].append(menu)

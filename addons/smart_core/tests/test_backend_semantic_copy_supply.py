@@ -70,9 +70,11 @@ CORE_EXTENSION = _load_module(
 
 
 class _FakeAction:
-    def __init__(self, action_id: int, res_model: str):
+    def __init__(self, action_id: int, res_model: str = "", *, model_name: str = "", model_id=None):
         self.id = action_id
         self.res_model = res_model
+        self.model_name = model_name
+        self.model_id = model_id
         self._name = "ir.actions.act_window"
 
 
@@ -95,6 +97,9 @@ class _FakeMenu:
         self.sequence = sequence
         self.active = active
         self._xmlid = xmlid
+        self.child_id = []
+        if parent is not None and hasattr(parent, "child_id"):
+            parent.child_id.append(self)
 
     def get_external_id(self):
         return {self.id: self._xmlid}
@@ -250,6 +255,113 @@ class TestBackendSemanticCopySupply(unittest.TestCase):
         self.assertEqual(pages[0]["group_label"], "项目中心")
         self.assertEqual(pages[0]["visible_menu_path"], "智慧施工管理平台 / 项目中心 / 项目管理 / 项目台账")
         self.assertEqual(pages[0]["menu_xmlid"], "smart_construction_core.menu_sc_project_project")
+
+    def test_catalog_sync_extracts_server_action_model_target(self):
+        root = _FakeMenu(1, "智慧施工管理平台", xmlid="smart_construction_core.menu_sc_root")
+        project_center = _FakeMenu(
+            2,
+            "项目中心",
+            xmlid="smart_construction_core.menu_sc_project_center",
+            parent=root,
+        )
+        project_group = _FakeMenu(
+            3,
+            "项目管理",
+            xmlid="smart_construction_core.menu_sc_project_management_group",
+            parent=project_center,
+        )
+        execution_structure = _FakeMenu(
+            4,
+            "执行结构",
+            xmlid="smart_construction_core.menu_sc_project_wbs",
+            parent=project_group,
+            action=_FakeAction(519, model_name="project.project"),
+        )
+        menu_model = _FakeMenuModel([root, project_center, project_group, execution_structure])
+        model_data_model = _FakeModelDataModel([root.id, project_center.id, project_group.id, execution_structure.id])
+        service = PRODUCT_POLICY_CATALOG_SYNC_SERVICE.ProductPolicyCatalogSyncService(env=None)
+
+        pages = service._extract_user_menu_pages(_FakeSourceEnv(menu_model, model_data_model))
+
+        self.assertEqual(len(pages), 1)
+        self.assertEqual(pages[0]["menu_xmlid"], "smart_construction_core.menu_sc_project_wbs")
+        self.assertEqual(pages[0]["res_model"], "project.project")
+
+    def test_catalog_sync_skips_action_directories_and_non_product_roots(self):
+        root = _FakeMenu(1, "智慧施工管理平台", xmlid="smart_construction_core.menu_sc_root")
+        contract_center = _FakeMenu(
+            2,
+            "合同中心",
+            xmlid="smart_construction_core.menu_sc_contract_center",
+            parent=root,
+            action=_FakeAction(578, "construction.contract.income"),
+        )
+        income_ledger = _FakeMenu(
+            3,
+            "收入合同台账",
+            xmlid="smart_construction_core.menu_sc_contract_income",
+            parent=contract_center,
+            action=_FakeAction(578, "construction.contract.income"),
+        )
+        native_root = _FakeMenu(10, "项目", xmlid="project.menu_main_pm")
+        native_budget = _FakeMenu(
+            11,
+            "项目预算",
+            xmlid="smart_construction_core.menu_project_budget",
+            parent=native_root,
+            action=_FakeAction(507, "project.budget"),
+        )
+        menu_model = _FakeMenuModel([root, contract_center, income_ledger, native_root, native_budget])
+        model_data_model = _FakeModelDataModel([1, 2, 3, 10, 11])
+        service = PRODUCT_POLICY_CATALOG_SYNC_SERVICE.ProductPolicyCatalogSyncService(env=None)
+
+        pages = service._extract_user_menu_pages(_FakeSourceEnv(menu_model, model_data_model))
+
+        self.assertEqual([page["menu_xmlid"] for page in pages], ["smart_construction_core.menu_sc_contract_income"])
+
+    def test_policy_payload_dedupes_same_label_and_model_within_group(self):
+        service = PRODUCT_POLICY_CATALOG_SYNC_SERVICE.ProductPolicyCatalogSyncService(env=None)
+
+        payload = service._build_construction_policy_payload_from_menu_pages(
+            identity={
+                "product_key": "construction.standard",
+                "base_product_key": "construction",
+                "edition_key": "standard",
+            },
+            menu_pages=[
+                {
+                    "group_key": "construction.contract",
+                    "group_label": "合同中心",
+                    "page_key": "smart_construction_core.menu_a",
+                    "page_label": "历史采购/一般合同事实",
+                    "menu_key": "smart_construction_core.menu_a",
+                    "route": "/a/714?menu_id=1",
+                    "app_id": "contract",
+                    "menu_id": 1,
+                    "menu_xmlid": "smart_construction_core.menu_a",
+                    "action_id": 714,
+                    "res_model": "sc.legacy.purchase.contract.fact",
+                },
+                {
+                    "group_key": "construction.contract",
+                    "group_label": "合同中心",
+                    "page_key": "smart_construction_core.menu_b",
+                    "page_label": "历史采购/一般合同事实",
+                    "menu_key": "smart_construction_core.menu_b",
+                    "route": "/a/798?menu_id=2",
+                    "app_id": "contract",
+                    "menu_id": 2,
+                    "menu_xmlid": "smart_construction_core.menu_b",
+                    "action_id": 798,
+                    "res_model": "sc.legacy.purchase.contract.fact",
+                },
+            ],
+            menu_source={"source_db": "sc_demo", "source": "test"},
+        )
+
+        menus = payload["menu_groups"][0]["menus"]
+        self.assertEqual(len(menus), 1)
+        self.assertEqual(menus[0]["menu_xmlid"], "smart_construction_core.menu_a")
 
 
 if __name__ == "__main__":
