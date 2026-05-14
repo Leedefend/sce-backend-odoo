@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import importlib.util
+import json
 import sys
 import types
 import unittest
@@ -193,6 +194,29 @@ class TestActionOnlySceneSemanticSupply(unittest.TestCase):
         mapped = set(target_capability.CAPABILITY_ENTRY_SCENE_MAP)
 
         self.assertFalse(sorted(registered - mapped))
+
+    def test_delivery_scene_source_files_reference_registered_scenes(self):
+        rows = scene_registry_content.list_scene_entries()
+        registry = {str(row.get("code") or "") for row in rows if row.get("code")}
+        allowed_external = {"default", "scene_smoke_default"}
+        docs_dir = SCENE_DIR.parents[1] / "docs" / "product" / "delivery" / "v1"
+
+        surface = json.loads((docs_dir / "construction_pm_v1_scene_surface_policy.json").read_text())
+        menu_tree = json.loads((docs_dir / "delivery_menu_tree_source_v1.json").read_text())
+        modules = json.loads((docs_dir / "module_scene_capability_source_v1.json").read_text())
+
+        refs = set()
+        for surface_payload in (surface.get("surfaces") or {}).values():
+            refs.update(surface_payload.get("nav_allowlist") or [])
+            refs.update(surface_payload.get("deep_link_allowlist") or [])
+        for menu_group in menu_tree.get("menu_tree") or []:
+            refs.update(menu_group.get("entries") or [])
+        refs.update(((modules.get("delivery_scope") or {}).get("scene_keys")) or [])
+        for module in modules.get("modules") or []:
+            refs.update(module.get("entry_scenes") or [])
+            refs.update(module.get("menu_hints") or [])
+
+        self.assertFalse(sorted({str(ref) for ref in refs} - registry - allowed_external))
 
     def test_project_dashboard_entry_capability_converges_to_project_management_scene(self):
         self.assertEqual(
