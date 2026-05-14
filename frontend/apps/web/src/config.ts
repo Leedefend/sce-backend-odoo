@@ -2,6 +2,7 @@ import { resolveActiveDb } from './services/dbContext';
 
 const appEnv = String(import.meta.env.VITE_APP_ENV ?? 'dev').trim();
 const envDb = String(import.meta.env.VITE_ODOO_DB ?? '').trim();
+const envDbLocked = envDb && String(import.meta.env.VITE_ODOO_DB_LOCKED ?? '1').trim() !== '0';
 const startupRootXmlid = String(import.meta.env.VITE_STARTUP_ROOT_XMLID ?? 'smart_construction_core.menu_sc_root').trim();
 const appTitle = String(import.meta.env.VITE_APP_TITLE ?? '智能施工企业管理平台').trim();
 const appBrand = {
@@ -48,7 +49,7 @@ const allowLocalFallbackDb = isLocalHost || appEnv === 'dev' || appEnv === 'test
 // For local dev/test only, fallback to sc_demo when db env is not explicitly set.
 const localDefaultDb = allowLocalFallbackDb && !runtimeDb && !localBlockedEnvDb && isLocalHost ? 'sc_demo' : '';
 const localDevPinnedDb = isLocalDevRuntime && !runtimeDb && !localBlockedEnvDb ? 'sc_demo' : '';
-const pinnedDb = runtimeDb || localBlockedEnvDb || enforcedDb || localDevPinnedDb;
+const pinnedDb = envDbLocked ? localBlockedEnvDb : runtimeDb || localBlockedEnvDb || enforcedDb || localDevPinnedDb;
 
 export const config = {
   apiBaseUrl: import.meta.env.VITE_API_BASE_URL ?? '',
@@ -70,6 +71,7 @@ if (import.meta.env.DEV) {
   console.group('[C1] 环境变量配置');
   console.log('VITE_API_BASE_URL:', import.meta.env.VITE_API_BASE_URL);
   console.log('VITE_ODOO_DB:', import.meta.env.VITE_ODOO_DB);
+  console.log('VITE_ODOO_DB_LOCKED:', import.meta.env.VITE_ODOO_DB_LOCKED);
   console.log('VITE_STARTUP_ROOT_XMLID:', import.meta.env.VITE_STARTUP_ROOT_XMLID);
   console.log('VITE_APP_TITLE:', import.meta.env.VITE_APP_TITLE);
   console.log('URL db override:', runtimeDb);

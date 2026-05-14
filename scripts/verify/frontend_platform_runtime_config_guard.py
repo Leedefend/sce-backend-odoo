@@ -28,8 +28,10 @@ def main() -> int:
         errors.append("config.ts must expose VITE_STARTUP_ROOT_XMLID with the construction root only as compatibility default")
     if "const localDevPinnedDb = isLocalDevRuntime && !runtimeDb && !localBlockedEnvDb ? 'sc_demo' : '';" not in config_text:
         errors.append("config.ts local dev fallback must not override explicit URL or VITE_ODOO_DB database")
-    if "const pinnedDb = runtimeDb || localBlockedEnvDb || enforcedDb || localDevPinnedDb;" not in config_text:
-        errors.append("config.ts must prefer URL db, then VITE_ODOO_DB, before local sc_demo fallback")
+    if "const envDbLocked = envDb && String(import.meta.env.VITE_ODOO_DB_LOCKED ?? '1').trim() !== '0';" not in config_text:
+        errors.append("config.ts must expose VITE_ODOO_DB_LOCKED and lock explicit env db by default")
+    if "const pinnedDb = envDbLocked ? localBlockedEnvDb : runtimeDb || localBlockedEnvDb || enforcedDb || localDevPinnedDb;" not in config_text:
+        errors.append("config.ts must prevent URL db from overriding locked VITE_ODOO_DB")
     if "startupRootXmlid," not in config_text:
         errors.append("config.ts must publish startupRootXmlid in runtime config")
     if "const appTitle = String(import.meta.env.VITE_APP_TITLE ?? '智能施工企业管理平台').trim();" not in config_text:
