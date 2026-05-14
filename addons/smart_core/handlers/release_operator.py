@@ -181,6 +181,8 @@ class _ReleaseOperatorBaseHandler(BaseIntentHandler):
             snapshot_id = int(action.target_snapshot_id.id or action.source_snapshot_id.id or 0)
             if snapshot_id <= 0:
                 raise ValueError("TARGET_SNAPSHOT_NOT_FOUND")
+            snapshot = self._load_snapshot(snapshot_id)
+            EditionReleaseSnapshotService(self.env).assert_candidate_matches_current_draft(snapshot)
             result = promotion.promote_to_released(
                 snapshot_id,
                 replace_active=True,
@@ -244,6 +246,7 @@ class ReleaseOperatorPromoteHandler(_ReleaseOperatorBaseHandler):
         params = self._params(payload)
         snapshot = self._load_snapshot(_positive_int(params.get("snapshot_id"), "snapshot_id"))
         product_key = _text(params.get("product_key")) or _text(snapshot.product_key)
+        EditionReleaseSnapshotService(self.env).assert_candidate_matches_current_draft(snapshot)
         action = self._action_model().create(
             self._build_action_values(
                 action_type="promote_snapshot",

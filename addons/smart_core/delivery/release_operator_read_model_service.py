@@ -269,6 +269,10 @@ class ReleaseOperatorReadModelService:
     def _serialize_snapshot(self, row: dict[str, Any]) -> dict[str, Any]:
         freeze_surface = _dict(row.get("freeze_surface"))
         identity = _dict(freeze_surface.get("identity"))
+        meta = _dict(row.get("meta"))
+        release_draft = _dict(meta.get("release_draft"))
+        release_diff = _dict(meta.get("release_diff"))
+        preflight_checks = _list(meta.get("preflight_checks"))
         return {
             "id": int(row.get("id") or 0),
             "product_key": _text(row.get("product_key")),
@@ -283,6 +287,21 @@ class ReleaseOperatorReadModelService:
             "label": _text(row.get("label")) or _text(identity.get("label")) or _text(row.get("product_key")),
             "channel": _text(row.get("channel")) or "stable",
             "state_reason": _text(row.get("state_reason")),
+            "release_draft": {
+                "fingerprint": _text(release_draft.get("fingerprint")),
+                "page_count": int(release_draft.get("page_count") or 0),
+                "total_page_count": int(release_draft.get("total_page_count") or 0),
+                "preview_page_count": int(release_draft.get("preview_page_count") or 0),
+                "hidden_page_count": int(release_draft.get("hidden_page_count") or 0),
+                "blocking_issue_count": int(release_draft.get("blocking_issue_count") or 0),
+            },
+            "release_diff": {
+                "base_snapshot_id": int(release_diff.get("base_snapshot_id") or 0),
+                "added_page_count": int(release_diff.get("added_page_count") or 0),
+                "removed_page_count": int(release_diff.get("removed_page_count") or 0),
+                "changed_page_count": int(release_diff.get("changed_page_count") or 0),
+            },
+            "preflight_checks": preflight_checks,
         }
 
     def _build_promote_actions(self, *, product_key: str, snapshots: list[dict[str, Any]]) -> list[dict[str, Any]]:

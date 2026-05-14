@@ -240,6 +240,9 @@
                 <th>版本</th>
                 <th>状态</th>
                 <th>通道</th>
+                <th>草案范围</th>
+                <th>差异</th>
+                <th>门禁</th>
                 <th>冻结时间</th>
                 <th>操作</th>
               </tr>
@@ -249,12 +252,19 @@
                 <td>{{ snapshot.version || '-' }}</td>
                 <td><span class="release-operator__pill">{{ snapshot.state || '-' }}</span></td>
                 <td>{{ snapshot.channel || '-' }}</td>
+                <td>{{ snapshotDraftLabel(snapshot) }}</td>
+                <td>{{ snapshotDiffLabel(snapshot) }}</td>
+                <td>
+                  <span :class="['release-operator__pill', candidateReady(snapshot) ? '' : 'release-operator__pill--muted']">
+                    {{ candidateReady(snapshot) ? '可发布' : '需重新冻结' }}
+                  </span>
+                </td>
                 <td>{{ snapshot.frozen_at || '-' }}</td>
                 <td>
                   <button
                     class="sc-btn sc-btn-primary release-operator__row-action"
                     type="button"
-                    :disabled="busyKey === `promote:${snapshot.id}`"
+                    :disabled="busyKey === `promote:${snapshot.id}` || !candidateReady(snapshot)"
                     @click="promote(snapshot)"
                   >
                     发布
@@ -370,6 +380,9 @@ interface SnapshotRow {
   state?: string;
   channel?: string;
   frozen_at?: string;
+  release_draft?: AnyRecord;
+  release_diff?: AnyRecord;
+  preflight_checks?: AnyRecord[];
 }
 
 interface ReleaseActionRow {
@@ -500,6 +513,21 @@ function sourceLabel(page: AnyRecord) {
   const model = String(page.res_model || '').trim();
   if (menu && model) return `${menu} / ${model}`;
   return menu || model || String(page.source_kind || '').trim() || '-';
+}
+function snapshotDraftLabel(snapshot: SnapshotRow) {
+  const draft = (snapshot.release_draft || {}) as AnyRecord;
+  const pageCount = Number(draft.page_count || 0);
+  const totalCount = Number(draft.total_page_count || 0);
+  if (!draft.fingerprint) return '无草案指纹';
+  return `${pageCount}/${totalCount} 页`;
+}
+function snapshotDiffLabel(snapshot: SnapshotRow) {
+  const diff = (snapshot.release_diff || {}) as AnyRecord;
+  return `新增 ${Number(diff.added_page_count || 0)} / 变更 ${Number(diff.changed_page_count || 0)} / 移除 ${Number(diff.removed_page_count || 0)}`;
+}
+function candidateReady(snapshot: SnapshotRow) {
+  const draft = (snapshot.release_draft || {}) as AnyRecord;
+  return Boolean(draft.fingerprint) && Number(draft.blocking_issue_count || 0) === 0;
 }
 const freezeAction = computed(() => {
   const actions = surface.value?.available_actions || {};

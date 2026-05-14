@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import hashlib
+import json
 from copy import deepcopy
 from typing import Any
 
@@ -33,6 +35,10 @@ def _dict(value: Any) -> dict[str, Any]:
 
 def _list(value: Any) -> list[Any]:
     return value if isinstance(value, list) else []
+
+
+def _stable_json(value: Any) -> str:
+    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
 
 class EditionReleaseSnapshotService:
@@ -223,6 +229,165 @@ class EditionReleaseSnapshotService:
         }
         return snapshot
 
+    def _draft_pages_from_policy(self, policy: dict[str, Any]) -> list[dict[str, Any]]:
+        rows: list[dict[str, Any]] = []
+        for group in _list(policy.get("menu_groups")):
+            if not isinstance(group, dict):
+                continue
+            for menu in _list(group.get("menus")):
+                if not isinstance(menu, dict):
+                    continue
+                page_key = _text(menu.get("page_key") or menu.get("scene_key") or menu.get("menu_key"))
+                if not page_key:
+                    continue
+                enabled = bool(menu.get("enabled", True))
+                release_state = _text(menu.get("release_state")) or ("released" if enabled else "hidden")
+                rows.append(
+                    {
+                        "page_key": page_key,
+                        "menu_key": _text(menu.get("menu_key")),
+                        "label": _text(menu.get("page_label") or menu.get("label") or page_key),
+                        "visible_menu_path": _text(menu.get("visible_menu_path")),
+                        "route": _text(menu.get("route")),
+                        "release_state": release_state,
+                        "enabled": enabled,
+                        "access_level": _text(menu.get("access_level")) or _text(policy.get("access_level")) or "public",
+                        "menu_xmlid": _text(menu.get("menu_xmlid")),
+                        "res_model": _text(menu.get("res_model")),
+                    }
+                )
+        return rows
+
+    def _draft_fingerprint(self, *, policy: dict[str, Any], pages: list[dict[str, Any]]) -> str:
+        normalized_pages = [
+            {
+                "page_key": _text(row.get("page_key")),
+                "release_state": _text(row.get("release_state")),
+                "enabled": bool(row.get("enabled")),
+                "access_level": _text(row.get("access_level")),
+                "route": _text(row.get("route")),
+                "menu_xmlid": _text(row.get("menu_xmlid")),
+                "res_model": _text(row.get("res_model")),
+            }
+            for row in sorted(pages, key=lambda item: _text(item.get("page_key")))
+        ]
+        payload = {
+            "product_key": _text(policy.get("product_key")),
+            "state": _text(policy.get("state")),
+            "access_level": _text(policy.get("access_level")),
+            "allowed_role_codes": sorted(_text(item) for item in _list(policy.get("allowed_role_codes")) if _text(item)),
+            "pages": normalized_pages,
+        }
+        return hashlib.sha256(_stable_json(payload).encode("utf-8")).hexdigest()
+
+    def _preflight_checks_from_pages(self, *, pages: list[dict[str, Any]], active_snapshot_id: int) -> list[dict[str, Any]]:
+        effective_pages = [row for row in pages if bool(row.get("enabled")) and _text(row.get("release_state")) in {"released", "preview"}]
+        preview_pages = [row for row in effective_pages if _text(row.get("release_state")) == "preview"]
+        hidden_pages = [row for row in pages if not bool(row.get("enabled")) or _text(row.get("release_state")) in {"hidden", "retired"}]
+        return [
+            {
+                "key": "has_product_pages",
+                "label": "产品页面范围",
+                "status": "pass" if effective_pages else "fail",
+                "message": f"有效发布页面 {len(effective_pages)}/{len(pages)}",
+                "blocking": not bool(effective_pages),
+            },
+            {
+                "key": "preview_pages",
+                "label": "预览页面",
+                "status": "warn" if preview_pages else "pass",
+                "message": f"预览页面 {len(preview_pages)} 个",
+                "blocking": False,
+            },
+            {
+                "key": "hidden_pages",
+                "label": "下线页面",
+                "status": "warn" if hidden_pages else "pass",
+                "message": f"未发布/已下线页面 {len(hidden_pages)} 个",
+                "blocking": False,
+            },
+            {
+                "key": "active_release",
+                "label": "当前发布版",
+                "status": "pass" if active_snapshot_id > 0 else "warn",
+                "message": f"active snapshot: {active_snapshot_id or 'none'}",
+                "blocking": False,
+            },
+        ]
+
+    def _draft_delta(self, *, current_active, draft_pages: list[dict[str, Any]]) -> dict[str, Any]:
+        active_meta = current_active.meta_json if current_active and isinstance(current_active.meta_json, dict) else {}
+        active_draft = _dict(active_meta.get("release_draft"))
+        active_pages = _list(active_draft.get("pages"))
+        active_by_key = {_text(row.get("page_key")): row for row in active_pages if isinstance(row, dict) and _text(row.get("page_key"))}
+        draft_by_key = {_text(row.get("page_key")): row for row in draft_pages if _text(row.get("page_key"))}
+        added = [key for key in draft_by_key if key not in active_by_key]
+        removed = [key for key in active_by_key if key not in draft_by_key]
+        changed: list[str] = []
+        for key, row in draft_by_key.items():
+            old = active_by_key.get(key)
+            if not old:
+                continue
+            for field in ("enabled", "release_state", "access_level", "route"):
+                if row.get(field) != old.get(field):
+                    changed.append(key)
+                    break
+        return {
+            "base_snapshot_id": int(current_active.id) if current_active else 0,
+            "added_page_count": len(added),
+            "removed_page_count": len(removed),
+            "changed_page_count": len(changed),
+            "sample_added_pages": added[:5],
+            "sample_removed_pages": removed[:5],
+            "sample_changed_pages": changed[:5],
+        }
+
+    def build_policy_draft_contract(self, *, product_key: str) -> dict[str, Any]:
+        policy_rec = None
+        if self._model_registered("sc.product.policy"):
+            policy_rec = self.env["sc.product.policy"].sudo().search([("product_key", "=", _text(product_key)), ("active", "=", True)], limit=1)
+        policy = policy_rec.to_runtime_dict() if policy_rec else {}
+        pages = self._draft_pages_from_policy(policy)
+        effective_pages = [row for row in pages if bool(row.get("enabled")) and _text(row.get("release_state")) in {"released", "preview"}]
+        active = None
+        model = self._model()
+        if model is not None:
+            active = model.search(
+                [
+                    ("product_key", "=", _text(product_key)),
+                    ("state", "=", "released"),
+                    ("is_active", "=", True),
+                    ("active", "=", True),
+                ],
+                order="released_at desc, activated_at desc, id desc",
+                limit=1,
+            )
+        preflight = self._preflight_checks_from_pages(pages=pages, active_snapshot_id=int(active.id) if active else 0)
+        return {
+            "policy_id": int(policy_rec.id) if policy_rec else 0,
+            "policy_write_date": policy_rec.write_date.isoformat() if policy_rec and policy_rec.write_date else "",
+            "fingerprint": self._draft_fingerprint(policy=policy, pages=pages),
+            "page_count": len(effective_pages),
+            "total_page_count": len(pages),
+            "preview_page_count": len([row for row in effective_pages if _text(row.get("release_state")) == "preview"]),
+            "hidden_page_count": len([row for row in pages if not bool(row.get("enabled")) or _text(row.get("release_state")) in {"hidden", "retired"}]),
+            "pages": pages,
+            "preflight_checks": preflight,
+            "blocking_issue_count": len([item for item in preflight if bool(item.get("blocking"))]),
+            "diff_from_active": self._draft_delta(current_active=active, draft_pages=pages),
+        }
+
+    def assert_candidate_matches_current_draft(self, snapshot) -> None:
+        meta = snapshot.meta_json if snapshot and isinstance(snapshot.meta_json, dict) else {}
+        frozen_draft = _dict(meta.get("release_draft"))
+        frozen_fingerprint = _text(frozen_draft.get("fingerprint"))
+        current = self.build_policy_draft_contract(product_key=_text(snapshot.product_key))
+        current_fingerprint = _text(current.get("fingerprint"))
+        if not frozen_fingerprint or frozen_fingerprint != current_fingerprint:
+            raise ValueError("CANDIDATE_DRAFT_OUTDATED")
+        if int(frozen_draft.get("blocking_issue_count") or 0) > 0:
+            raise ValueError("CANDIDATE_PREFLIGHT_BLOCKED")
+
     def _lineage_meta(self, rec) -> dict[str, Any]:
         runtime = rec.snapshot_json if isinstance(rec.snapshot_json, dict) else {}
         runtime_meta = _dict(runtime.get("runtime_meta"))
@@ -287,6 +452,16 @@ class EditionReleaseSnapshotService:
         policy_rec = None
         if self._model_registered("sc.product.policy"):
             policy_rec = self.env["sc.product.policy"].sudo().search([("product_key", "=", resolved_product_key), ("active", "=", True)], limit=1)
+        draft_contract = self.build_policy_draft_contract(product_key=resolved_product_key)
+        if int(draft_contract.get("blocking_issue_count") or 0) > 0:
+            raise ValueError("RELEASE_PREFLIGHT_BLOCKED")
+        payload["release_draft"] = {
+            "fingerprint": _text(draft_contract.get("fingerprint")),
+            "page_count": int(draft_contract.get("page_count") or 0),
+            "total_page_count": int(draft_contract.get("total_page_count") or 0),
+            "preview_page_count": int(draft_contract.get("preview_page_count") or 0),
+            "hidden_page_count": int(draft_contract.get("hidden_page_count") or 0),
+        }
         values = {
             "state": "candidate",
             "product_key": resolved_product_key,
@@ -313,6 +488,9 @@ class EditionReleaseSnapshotService:
                     "effective_edition_key": _text(_dict(_dict(payload.get("runtime_meta")).get("effective")).get("edition_key")),
                     "role_code": _text(_dict(_dict(payload.get("runtime_meta")).get("requested")).get("role_code")),
                 },
+                "release_draft": draft_contract,
+                "release_diff": _dict(draft_contract.get("diff_from_active")),
+                "preflight_checks": _list(draft_contract.get("preflight_checks")),
                 "rollback_basis_available": bool(rollback_target_id),
             },
             "state_reason": "frozen_release_surface_candidate",
