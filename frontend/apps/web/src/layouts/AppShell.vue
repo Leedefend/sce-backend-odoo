@@ -505,7 +505,7 @@ function normalizePublishedApps(raw: unknown): PublishedApp[] {
       const meta = asDict(app.meta) || {};
       const appId = asText(meta.app_id) || String(app.key || '').replace(/^app:/, '').trim();
       const key = asText(app.key) || `app:${appId || index + 1}`;
-      const label = resolvePublishedAppLabel(appId, asText(app.label) || appId || key);
+      const label = resolvePublishedAppLabel(appId, asText(app.label), key);
       return {
         key,
         label,
@@ -517,8 +517,12 @@ function normalizePublishedApps(raw: unknown): PublishedApp[] {
     .filter((app) => app.appId && app.label);
 }
 
-function resolvePublishedAppLabel(appId: string, fallback: string) {
+function resolvePublishedAppLabel(appId: string, rawLabel: string | undefined, key: string) {
   const normalized = String(appId || '').trim().toLowerCase();
+  const backendLabel = String(rawLabel || '').trim();
+  if (backendLabel && backendLabel !== normalized && backendLabel !== key) {
+    return backendLabel;
+  }
   const labels: Record<string, string> = {
     workspace: '角色首页',
     projects: '项目管理',
@@ -543,7 +547,7 @@ function resolvePublishedAppLabel(appId: string, fallback: string) {
     safety: '安全管理',
     task: '任务协同',
   };
-  return labels[normalized] || String(fallback || '').trim();
+  return labels[normalized] || backendLabel || normalized || key;
 }
 
 async function loadPublishedApps() {

@@ -37,7 +37,15 @@ def _load_handler():
     _install_module(
         "odoo.addons.smart_core.core.scene_provider",
         load_scenes_from_db_or_fallback=lambda *args, **kwargs: {
-            "scenes": [{"key": "workspace.home", "label": "Home", "target": {"route": "/s/workspace.home"}}]
+            "scenes": [
+                {"key": "workspace.home", "label": "Home", "target": {"route": "/s/workspace.home"}},
+                {"key": "project.initiation", "label": "Project Initiation", "target": {"route": "/s/project.initiation"}},
+                {"key": "projects.list", "label": "Projects", "target": {"route": "/s/projects.list"}},
+                {"key": "contract.center", "label": "Contract", "target": {"route": "/s/contract.center"}},
+                {"key": "contracts.workspace", "label": "Contracts", "target": {"route": "/s/contracts.workspace"}},
+                {"key": "scene_smoke_default", "label": "Smoke", "target": {"route": "/s/scene_smoke_default"}},
+                {"key": "default", "label": "Default", "target": {"route": "/s/default"}},
+            ]
         },
     )
     _install_module(
@@ -122,6 +130,35 @@ class TestAppShellBoundaries(unittest.TestCase):
         self.assertTrue(result["ok"])
         self.assertEqual(result["data"]["scene_key"], "workspace.home")
         self.assertEqual(result["data"]["route"], "/s/workspace.home")
+
+    def test_catalog_projects_published_label_and_alias_merge(self):
+        handler = self.module.AppCatalogHandler(env=types.SimpleNamespace(uid=9))
+
+        result = handler.handle(payload={})
+
+        self.assertTrue(result["ok"])
+        apps = result["data"]["apps"]
+        app_ids = [row["meta"]["app_id"] for row in apps]
+        labels = {row["meta"]["app_id"]: row["label"] for row in apps}
+        sequences = {row["meta"]["app_id"]: row["meta"]["sequence"] for row in apps}
+        self.assertEqual(apps[0]["meta"]["app_id"], "workspace")
+        self.assertIn("projects", app_ids)
+        self.assertNotIn("project", app_ids)
+        self.assertIn("contracts", app_ids)
+        self.assertNotIn("contract", app_ids)
+        self.assertNotIn("default", app_ids)
+        self.assertNotIn("scene_smoke_default", app_ids)
+        self.assertEqual(labels["projects"], "项目管理")
+        self.assertEqual(labels["contracts"], "合同管理")
+        self.assertEqual(sequences["workspace"], 0)
+
+    def test_open_alias_app_uses_stable_primary_scene(self):
+        handler = self.module.AppOpenHandler(env=types.SimpleNamespace(uid=9))
+
+        result = handler.handle(payload={"params": {"app": "project"}})
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["data"]["scene_key"], "projects.list")
 
 
 if __name__ == "__main__":
