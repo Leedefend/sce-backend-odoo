@@ -4,6 +4,9 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Any
 
+from odoo import api
+from odoo import SUPERUSER_ID
+from odoo.modules.registry import Registry
 from odoo.addons.smart_core.core.scene_provider import load_scenes_from_db_or_fallback
 
 from .product_identity import resolve_product_identity
@@ -144,6 +147,42 @@ def _taxonomy_seed_scenes() -> list[dict[str, Any]]:
     return rows
 
 
+def _action_id(action: Any) -> int:
+    try:
+        return int(action.id or 0) if action else 0
+    except Exception:
+        return 0
+
+
+def _action_model(action: Any) -> str:
+    try:
+        return _text(getattr(action, "res_model", ""))
+    except Exception:
+        return ""
+
+
+def _menu_xmlid(menu: Any) -> str:
+    try:
+        return _text(menu.get_external_id().get(menu.id, ""))
+    except Exception:
+        return ""
+
+
+def _menu_path(menu: Any) -> list[str]:
+    path: list[str] = []
+    current = menu
+    while current:
+        name = _text(getattr(current, "name", ""))
+        if name:
+            path.append(name)
+        current = getattr(current, "parent_id", None)
+    return list(reversed(path))
+
+
+def _slug(value: str) -> str:
+    return _text(value).replace(".", "_").replace("-", "_").replace(" ", "_").lower() or "menu"
+
+
 class ProductPolicyCatalogSyncService:
     SOURCE_KIND = "product_policy_catalog_sync"
     NO_BUSINESS_FACT_AUTHORITY = True
@@ -151,8 +190,92 @@ class ProductPolicyCatalogSyncService:
     def __init__(self, env):
         self.env = env
 
+    def _construction_source_db(self) -> str:
+        try:
+            configured = self.env["ir.config_parameter"].sudo().get_param(
+                "smart_core.release_operator.construction_source_db",
+                "",
+            )
+        except Exception:
+            configured = ""
+        return _text(configured) or "sc_demo"
+
+    def _extract_user_menu_pages(self, source_env) -> list[dict[str, Any]]:
+        menus = source_env["ir.ui.menu"].sudo().search([("action", "!=", False)], order="sequence,id")
+        rows: list[dict[str, Any]] = []
+        seen: set[str] = set()
+        for menu in menus:
+            xmlid = _menu_xmlid(menu)
+            if not xmlid.startswith("smart_construction_core."):
+                continue
+            action = menu.action
+            action_id = _action_id(action)
+            if action_id <= 0:
+                continue
+            path = _menu_path(menu)
+            if not path:
+                continue
+            page_key = xmlid
+            if page_key in seen:
+                continue
+            seen.add(page_key)
+            root_label = path[0] if path else "施工管理"
+            group_label = path[1] if len(path) > 1 else root_label
+            page_label = path[-1]
+            menu_id = int(menu.id or 0)
+            rows.append(
+                {
+                    "app_id": _slug(group_label),
+                    "group_key": f"construction.{_slug(group_label)}",
+                    "group_label": group_label,
+                    "root_label": root_label,
+                    "menu_id": menu_id,
+                    "menu_xmlid": xmlid,
+                    "menu_key": xmlid,
+                    "page_key": page_key,
+                    "page_label": page_label,
+                    "label": page_label,
+                    "route": f"/a/{action_id}?menu_id={menu_id}",
+                    "scene_key": page_key,
+                    "action_id": action_id,
+                    "action_model": _text(getattr(action, "_name", "")),
+                    "res_model": _action_model(action),
+                    "visible_menu_path": " / ".join(path),
+                    "control_granularity": "user_visible_menu_page",
+                    "enabled": True,
+                }
+            )
+        return rows
+
+    def _load_source_user_menu_pages(self) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+        source_db = self._construction_source_db()
+        current_db = _text(getattr(getattr(self.env, "cr", None), "dbname", ""))
+        if source_db == current_db:
+            return self._extract_user_menu_pages(self.env), {"source_db": current_db, "source": "current_db_ir_ui_menu"}
+        try:
+            registry = Registry(source_db)
+            with registry.cursor() as cr:
+                source_env = api.Environment(cr, SUPERUSER_ID, {})
+                return self._extract_user_menu_pages(source_env), {
+                    "source_db": source_db,
+                    "source": "external_db_ir_ui_menu",
+                }
+        except Exception as exc:
+            return [], {
+                "source_db": source_db,
+                "source": "external_db_ir_ui_menu_failed",
+                "error": str(exc),
+            }
+
     def build_construction_policy_payload(self, *, product_key: str) -> dict[str, Any]:
         identity = resolve_product_identity(product_key=product_key)
+        menu_pages, menu_source = self._load_source_user_menu_pages()
+        if menu_pages:
+            return self._build_construction_policy_payload_from_menu_pages(
+                identity=identity,
+                menu_pages=menu_pages,
+                menu_source=menu_source,
+            )
         scenes_payload = load_scenes_from_db_or_fallback(self.env, drift=None, logger=None) or {}
         raw_scenes = scenes_payload.get("scenes") if isinstance(scenes_payload.get("scenes"), list) else []
         source_by_key: dict[str, dict[str, Any]] = {}
@@ -248,6 +371,113 @@ class ProductPolicyCatalogSyncService:
                 "kind": self.SOURCE_KIND,
                 "authorities": ["scene_runtime_provider_projection", "delivery_product_identity_resolver"],
                 "loaded_from": _text(scenes_payload.get("loaded_from")) or "unknown",
+                "no_business_fact_authority": self.NO_BUSINESS_FACT_AUTHORITY,
+            },
+        }
+
+    def _build_construction_policy_payload_from_menu_pages(
+        self,
+        *,
+        identity: dict[str, str],
+        menu_pages: list[dict[str, Any]],
+        menu_source: dict[str, Any],
+    ) -> dict[str, Any]:
+        groups_by_key: dict[str, dict[str, Any]] = {}
+        scene_rows: list[dict[str, Any]] = []
+        capability_rows: list[dict[str, Any]] = []
+        scene_bindings: dict[str, dict[str, str]] = {}
+        for index, page in enumerate(menu_pages, start=1):
+            group_key = _text(page.get("group_key")) or "construction.menu"
+            group = groups_by_key.setdefault(
+                group_key,
+                {
+                    "group_key": group_key,
+                    "group_label": _text(page.get("group_label")) or "施工管理",
+                    "category": "user_visible_menu",
+                    "menus": [],
+                },
+            )
+            page_key = _text(page.get("page_key"))
+            label = _text(page.get("page_label") or page.get("label")) or page_key
+            capability_key = f"construction.menu.{_slug(page_key)}"
+            menu = {
+                "menu_key": _text(page.get("menu_key")) or page_key,
+                "label": label,
+                "page_key": page_key,
+                "page_label": label,
+                "route": _text(page.get("route")),
+                "scene_key": page_key,
+                "product_key": _text(page.get("app_id")),
+                "capability_key": capability_key,
+                "visible_menu_path": _text(page.get("visible_menu_path")) or label,
+                "control_granularity": "user_visible_menu_page",
+                "enabled": bool(page.get("enabled", True)),
+                "menu_id": int(page.get("menu_id") or 0),
+                "menu_xmlid": _text(page.get("menu_xmlid")),
+                "action_id": int(page.get("action_id") or 0),
+                "action_model": _text(page.get("action_model")),
+                "res_model": _text(page.get("res_model")),
+                "sequence": index,
+            }
+            group["menus"].append(menu)
+            scene_rows.append(
+                {
+                    "scene_key": page_key,
+                    "page_key": page_key,
+                    "label": label,
+                    "route": _text(page.get("route")),
+                    "product_key": _text(page.get("app_id")),
+                    "capability_key": capability_key,
+                    "visible_menu_path": menu["visible_menu_path"],
+                    "control_granularity": "user_visible_menu_page",
+                    "enabled": bool(page.get("enabled", True)),
+                    "menu_xmlid": _text(page.get("menu_xmlid")),
+                    "action_id": int(page.get("action_id") or 0),
+                    "res_model": _text(page.get("res_model")),
+                    "description": f"用户菜单页面：{menu['visible_menu_path']}",
+                    "scope": _text(page.get("group_label")) or "施工管理",
+                }
+            )
+            capability_rows.append(
+                {
+                    "capability_key": capability_key,
+                    "label": label,
+                    "group_key": group_key,
+                    "group_label": _text(page.get("group_label")) or "施工管理",
+                    "target_scene_key": page_key,
+                    "target_page_key": page_key,
+                    "product_key": _text(page.get("app_id")),
+                    "delivery_level": "exclusive",
+                    "entry_kind": "user_visible_menu_page",
+                    "visible_menu_path": menu["visible_menu_path"],
+                    "enabled": bool(page.get("enabled", True)),
+                    "menu_xmlid": _text(page.get("menu_xmlid")),
+                    "action_id": int(page.get("action_id") or 0),
+                    "res_model": _text(page.get("res_model")),
+                }
+            )
+            scene_bindings[page_key] = {"version": "v1", "channel": "stable"}
+        menu_groups = [groups_by_key[key] for key in groups_by_key]
+        label = "施工管理预览版" if identity["edition_key"] == "preview" else "施工管理标准版"
+        return {
+            "product_key": identity["product_key"],
+            "base_product_key": identity["base_product_key"],
+            "edition_key": identity["edition_key"],
+            "state": "preview" if identity["edition_key"] == "preview" else "stable",
+            "access_level": "public",
+            "allowed_role_codes": [],
+            "label": label,
+            "version": "v1",
+            "scene_version_bindings": scene_bindings,
+            "menu_groups": menu_groups,
+            "scenes": scene_rows,
+            "capabilities": capability_rows,
+            "policy_source_authority": {
+                "kind": self.SOURCE_KIND,
+                "authorities": ["ir.ui.menu", "ir.actions", "ir.model.data", "delivery_product_identity_resolver"],
+                "source_db": _text(menu_source.get("source_db")),
+                "source": _text(menu_source.get("source")),
+                "menu_page_count": len(menu_pages),
                 "no_business_fact_authority": self.NO_BUSINESS_FACT_AUTHORITY,
             },
         }

@@ -207,6 +207,11 @@ class ReleaseOperatorReadModelService:
                             "visible_menu_path": _text(menu.get("visible_menu_path")) or f"{group_label} / {_text(menu.get('label'))}",
                             "control_granularity": _text(menu.get("control_granularity")) or "menu_page",
                             "enabled": enabled,
+                            "menu_id": int(menu.get("menu_id") or 0),
+                            "menu_xmlid": _text(menu.get("menu_xmlid")),
+                            "action_id": int(menu.get("action_id") or 0),
+                            "action_model": _text(menu.get("action_model")),
+                            "res_model": _text(menu.get("res_model")),
                         }
                     )
         enabled_scene_count = len([scene for scene in scenes if isinstance(scene, dict) and bool(scene.get("enabled", True))])
