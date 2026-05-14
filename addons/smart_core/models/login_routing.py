@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-from odoo import fields, models
+from odoo import api, fields, models
 
 
 class ScLoginRoute(models.Model):
@@ -27,6 +27,7 @@ class ScLoginRoute(models.Model):
         ("sc_login_route_login_uniq", "unique(login)", "Login route must be unique per login."),
     ]
 
+    @api.model
     def ensure_platform_default_login_routes(self):
         current_db = ""
         try:
