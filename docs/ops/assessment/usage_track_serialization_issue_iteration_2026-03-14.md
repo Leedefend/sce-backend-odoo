@@ -15,7 +15,8 @@
   - `psycopg2.errors.SerializationFailure`
   - `could not serialize access due to concurrent update`
 - 冲突位置：`sc_usage_counter`（埋点计数表）并发更新。
-- 触发链路：`intent=usage.track` -> `smart_construction_core.handlers.usage_track` -> `sc.usage.counter.bump`。
+- 触发链路：`intent=usage.track` -> `smart_core.handlers.usage_track` -> `sc.usage.counter.bump`。
+  construction 侧仅保留 usage import 兼容 shim。
 
 ## 本迭代已做处理（止血）
 
@@ -41,4 +42,3 @@
   - 降级次数
   - 丢计数估算（可选）
 - 在 CI 或 nightly 中固定运行并发 smoke，作为回归门禁之一。
-

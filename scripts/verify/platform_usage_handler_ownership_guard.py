@@ -18,6 +18,17 @@ CONSTRUCTION_SHIMS = {
 }
 CONSTRUCTION_EXTENSION = ROOT / "addons/smart_construction_core/core_extension.py"
 SUDO_ALLOWLIST = ROOT / "scripts/verify/baselines/write_intent_sudo_allowlist.json"
+USAGE_OWNERSHIP_DOCS = {
+    "docs/audit/boundary/handler_inventory.md",
+    "docs/audit/boundary/intent_semantic_classification.md",
+    "docs/audit/boundary/module_dependency_graph.md",
+    "docs/audit/boundary/core_extension_platform_intent_owner_mapping.md",
+    "docs/ops/audit/intent_layered_catalog.md",
+    "docs/ops/audit/intent_permission_matrix.md",
+    "docs/ops/audit/intent_capability_matrix.md",
+    "docs/ops/assessment/usage_track_serialization_issue_iteration_2026-03-14.md",
+    "docs/ops/assessment/usage_track_serialization_issue_iteration_2026-03-14.en.md",
+}
 
 
 def _read(path: Path) -> str:
@@ -66,6 +77,19 @@ def main() -> int:
         errors.append(f"{_rel(SUDO_ALLOWLIST)} must allowlist platform usage_track.py")
     if "addons/smart_construction_core/handlers/usage_track.py" in allowlist:
         errors.append(f"{_rel(SUDO_ALLOWLIST)} still allowlists construction usage_track.py")
+
+    for rel_path in sorted(USAGE_OWNERSHIP_DOCS):
+        path = ROOT / rel_path
+        text = _read(path)
+        if not text:
+            errors.append(f"missing usage ownership doc: {rel_path}")
+            continue
+        if "smart_construction_core.handlers.usage_" in text:
+            errors.append(f"{rel_path} still documents usage handler as construction implementation")
+        for file_name in ("usage_track.py", "usage_report.py", "usage_export_csv.py"):
+            stale_path = f"addons/smart_construction_core/handlers/{file_name}"
+            if stale_path in text and "compatibility shim" not in text:
+                errors.append(f"{rel_path} still references {stale_path} without compatibility-shim context")
 
     if errors:
         print("[platform_usage_handler_ownership_guard] FAIL")

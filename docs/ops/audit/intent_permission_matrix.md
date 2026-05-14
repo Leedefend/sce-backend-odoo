@@ -50,6 +50,6 @@
 | system.ping.construction | Y | smart_core.group_smart_core_data_operator | record_rule | N | Y | addons/smart_construction_core/handlers/system_ping_construction.py |
 | telemetry.track | Y | base.group_user | explicit_check | N | Y | addons/smart_construction_core/handlers/telemetry_track.py |
 | ui.contract | N | - | - | N | Y | addons/smart_core/handlers/ui_contract.py |
-| usage.export.csv | N | base.group_user | - | N | Y | addons/smart_construction_core/handlers/usage_export_csv.py |
-| usage.report | N | - | - | N | Y | addons/smart_construction_core/handlers/usage_report.py |
-| usage.track | Y | base.group_user | explicit_check | N | Y | addons/smart_construction_core/handlers/usage_track.py |
+| usage.export.csv | N | base.group_user | - | N | Y | addons/smart_core/handlers/usage_export_csv.py |
+| usage.report | N | - | - | N | Y | addons/smart_core/handlers/usage_report.py |
+| usage.track | Y | base.group_user | explicit_check | N | Y | addons/smart_core/handlers/usage_track.py |

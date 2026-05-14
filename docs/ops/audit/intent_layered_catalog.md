@@ -44,9 +44,9 @@
 | scene.packages.installed | domain | N | 1 | addons/smart_core/handlers/scene_packages_installed.py |
 | session.bootstrap | domain | N | 0 | addons/smart_core/handlers/session_bootstrap.py |
 | system.ping.construction | domain | Y | 1 | addons/smart_construction_core/handlers/system_ping_construction.py |
-| usage.export.csv | domain | N | 1 | addons/smart_construction_core/handlers/usage_export_csv.py |
-| usage.report | domain | N | 0 | addons/smart_construction_core/handlers/usage_report.py |
-| usage.track | domain | Y | 1 | addons/smart_construction_core/handlers/usage_track.py |
+| usage.export.csv | core | N | 1 | addons/smart_core/handlers/usage_export_csv.py |
+| usage.report | core | N | 0 | addons/smart_core/handlers/usage_report.py |
+| usage.track | core | Y | 1 | addons/smart_core/handlers/usage_track.py |
 | scene.governance.export_contract | governance | N | 0 | addons/smart_core/handlers/scene_governance.py |
 | scene.governance.pin_stable | governance | Y | 0 | addons/smart_core/handlers/scene_governance.py |
 | scene.governance.rollback | governance | Y | 0 | addons/smart_core/handlers/scene_governance.py |

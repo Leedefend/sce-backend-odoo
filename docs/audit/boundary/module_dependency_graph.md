@@ -3,6 +3,11 @@
 - Stage: `scan` (fact-only; import-direction evidence)
 - Scope: `addons/smart_construction_core/**`, `addons/smart_core/**`, `addons/smart_construction_scene/**`
 
+Current ownership note: `usage.track`, `usage.report`, and `usage.export.csv`
+are now implemented in `smart_core.handlers.*`; construction-side usage files
+are import compatibility shims and are no longer registered from
+`smart_construction_core/core_extension.py`.
+
 ## Directed Edge Counts
 
 | Source Module | Target Module | Import Evidence Count |
@@ -24,10 +29,7 @@
   - `addons/smart_construction_core/core_extension.py:261` → `from odoo.addons.smart_construction_core.handlers.capability_describe import ...`
   - `addons/smart_construction_core/core_extension.py:264` → `from odoo.addons.smart_construction_core.handlers.my_work_summary import ...`
   - `addons/smart_construction_core/core_extension.py:267` → `from odoo.addons.smart_construction_core.handlers.my_work_complete import ...`
-  - `addons/smart_construction_core/core_extension.py:271` → `from odoo.addons.smart_construction_core.handlers.usage_track import ...`
   - `addons/smart_construction_core/core_extension.py:274` → `from odoo.addons.smart_construction_core.handlers.telemetry_track import ...`
-  - `addons/smart_construction_core/core_extension.py:277` → `from odoo.addons.smart_construction_core.handlers.usage_report import ...`
-  - `addons/smart_construction_core/core_extension.py:280` → `from odoo.addons.smart_construction_core.handlers.usage_export_csv import ...`
 - `smart_construction_core -> smart_construction_scene`
   - `addons/smart_construction_core/core_extension.py:490` → `from odoo.addons.smart_construction_scene.services.scene_package_service import ...`
   - `addons/smart_construction_core/core_extension.py:499` → `from odoo.addons.smart_construction_scene.services.scene_governance_service import ...`

@@ -89,9 +89,9 @@
 | terminal.shell.v2 | domain | 0 | - | N | Y | N | N | N | N | addons/smart_core/handlers/terminal_shell_v2.py |
 | ui.contract | core | 0 | - | Y | Y | Y | N | Y | Y | addons/smart_core/handlers/ui_contract.py |
 | ui.contract.v2 | domain | 0 | - | N | Y | N | N | Y | N | addons/smart_core/handlers/ui_contract_v2.py |
-| usage.export.csv | domain | 1 | - | N | Y | N | N | Y | Y | addons/smart_construction_core/handlers/usage_export_csv.py |
-| usage.report | domain | 0 | - | N | Y | N | N | Y | Y | addons/smart_construction_core/handlers/usage_report.py |
-| usage.track | domain | 1 | explicit_check | N | Y | Y | Y | N | Y | addons/smart_construction_core/handlers/usage_track.py |
+| usage.export.csv | core | 1 | - | N | Y | N | N | Y | Y | addons/smart_core/handlers/usage_export_csv.py |
+| usage.report | core | 0 | - | N | Y | N | N | Y | Y | addons/smart_core/handlers/usage_report.py |
+| usage.track | core | 1 | explicit_check | N | Y | Y | Y | N | Y | addons/smart_core/handlers/usage_track.py |
 | user.view.preference.get | domain | 0 | - | N | Y | N | N | Y | N | addons/smart_core/handlers/user_view_preference.py |
 | user.view.preference.set | domain | 1 | - | N | Y | N | Y | Y | N | addons/smart_core/handlers/user_view_preference.py |
 | workspace.home.enter | domain | 1 | - | N | Y | N | N | N | N | addons/smart_construction_core/handlers/workspace_home_enter.py |
@@ -156,8 +156,8 @@
 - `telemetry.track` (addons/smart_construction_core/handlers/telemetry_track.py)
 - `terminal.shell.v2` (addons/smart_core/handlers/terminal_shell_v2.py)
 - `ui.contract.v2` (addons/smart_core/handlers/ui_contract_v2.py)
-- `usage.export.csv` (addons/smart_construction_core/handlers/usage_export_csv.py)
-- `usage.report` (addons/smart_construction_core/handlers/usage_report.py)
+- `usage.export.csv` (addons/smart_core/handlers/usage_export_csv.py)
+- `usage.report` (addons/smart_core/handlers/usage_report.py)
 - `user.view.preference.get` (addons/smart_core/handlers/user_view_preference.py)
 - `user.view.preference.set` (addons/smart_core/handlers/user_view_preference.py)
 - `workspace.home.enter` (addons/smart_construction_core/handlers/workspace_home_enter.py)
@@ -194,5 +194,5 @@
 - `settlement.enter` (addons/smart_construction_core/handlers/settlement_slice_enter.py)
 - `system.ping.construction` (addons/smart_construction_core/handlers/system_ping_construction.py)
 - `telemetry.track` (addons/smart_construction_core/handlers/telemetry_track.py)
-- `usage.track` (addons/smart_construction_core/handlers/usage_track.py)
+- `usage.track` (addons/smart_core/handlers/usage_track.py)
 - `user.view.preference.set` (addons/smart_core/handlers/user_view_preference.py)

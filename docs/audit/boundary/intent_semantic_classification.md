@@ -53,9 +53,9 @@
 | `app.open` | `AppOpenHandler` | `addons/smart_construction_core/handlers/app_open.py` | 平台意图 | `app.open` |
 | `system.ping.construction` | `SystemPingConstructionHandler` | `addons/smart_construction_core/handlers/system_ping_construction.py` | 平台意图 | `none` |
 | `telemetry.track` | `TelemetryTrackHandler` | `addons/smart_construction_core/handlers/telemetry_track.py` | 观测意图 | `telemetry` |
-| `usage.export.csv` | `UsageExportCsvHandler` | `addons/smart_construction_core/handlers/usage_export_csv.py` | 观测意图 | `capability, usage` |
-| `usage.report` | `UsageReportHandler` | `addons/smart_construction_core/handlers/usage_report.py` | 观测意图 | `capability, scene, usage` |
-| `usage.track` | `UsageTrackHandler` | `addons/smart_construction_core/handlers/usage_track.py` | 观测意图 | `capability, scene, usage` |
+| `usage.export.csv` | `UsageExportCsvHandler` | `addons/smart_core/handlers/usage_export_csv.py` | 平台观测意图 | `capability, usage` |
+| `usage.report` | `UsageReportHandler` | `addons/smart_core/handlers/usage_report.py` | 平台观测意图 | `capability, scene, usage` |
+| `usage.track` | `UsageTrackHandler` | `addons/smart_core/handlers/usage_track.py` | 平台观测意图 | `capability, scene, usage` |
 
 ## Screening Notes
 
