@@ -31,13 +31,41 @@ class UIFormFieldPolicy(models.Model):
     label = fields.Char()
     sequence = fields.Integer(default=100)
     group_title = fields.Char(default="业务配置字段")
+    field_type = fields.Char(compute="_compute_policy_summary")
+    field_label = fields.Char(compute="_compute_policy_summary")
+    scope_summary = fields.Char(compute="_compute_policy_summary")
+    effect_summary = fields.Char(compute="_compute_policy_summary")
     note = fields.Text()
 
-    @api.depends("model", "field_name", "visible")
+    @api.depends("model", "field_name", "visible", "label")
     def _compute_name(self):
         for rec in self:
             state = "显示" if rec.visible else "隐藏"
-            rec.name = "%s.%s %s" % (rec.model or "-", rec.field_name or "-", state)
+            title = rec.label or rec.field_label or rec.field_name or "-"
+            rec.name = "%s.%s %s" % (rec.model or "-", title, state)
+
+    @api.depends("model", "field_name", "field_id", "label", "visible", "company_id", "action_id", "view_id")
+    def _compute_policy_summary(self):
+        for rec in self:
+            field = rec.field_id
+            if not field and rec.model and rec.field_name:
+                field = self.env["ir.model.fields"].search(
+                    [("model", "=", rec.model), ("name", "=", rec.field_name)],
+                    limit=1,
+                )
+            rec.field_type = field.ttype if field else ""
+            rec.field_label = rec.label or (field.field_description if field else "")
+            scope = []
+            scope.append(rec.company_id.display_name if rec.company_id else "所有公司")
+            if rec.action_id:
+                scope.append("动作：%s" % rec.action_id.display_name)
+            if rec.view_id:
+                scope.append("视图：%s" % rec.view_id.display_name)
+            if not rec.action_id and not rec.view_id:
+                scope.append("全部表单")
+            rec.scope_summary = " / ".join(scope)
+            verb = "显示" if rec.visible else "隐藏"
+            rec.effect_summary = "%s字段：%s" % (verb, rec.field_label or rec.field_name or "-")
 
     @api.onchange("field_id")
     def _onchange_field_id(self):
@@ -153,6 +181,77 @@ class UIFormFieldPolicy(models.Model):
             field = self.env["ir.model.fields"].search([("model", "=", model_name), ("name", "=", field_name)], limit=1)
             if field.ttype == "binary":
                 raise ValidationError("二进制字段不能作为业务表单字段配置：%s.%s" % (model_name, field_name))
+
+    def action_probe_contract_effect(self):
+        self.ensure_one()
+        if not self.model or not self.field_name:
+            raise ValidationError("请先选择模型和字段。")
+        context = {"contract_projection_readonly": True}
+        if self.action_id:
+            context["contract_action_id"] = self.action_id.id
+        view_config = self.env["app.view.config"].with_context(**context)._generate_from_fields_view_get(self.model, "form")
+        contract = view_config.get_contract_api(filter_runtime=True, check_model_acl=True)
+        nodes = self._collect_contract_field_nodes(contract.get("layout") or [])
+        field_node = nodes.get(self.field_name)
+        hidden = field_node is None
+        invisible = bool(field_node and self._contract_node_has_invisible(field_node))
+        expected_ok = (not hidden and not invisible) if self.visible else hidden
+        if self.visible:
+            detail = "已显示" if expected_ok else "未显示或仍有隐藏条件"
+        else:
+            detail = "已隐藏" if expected_ok else "仍然出现在表单契约中"
+        governance = (contract.get("governance") or {}).get("form_field_policy") or {}
+        if expected_ok:
+            notif_type = "success"
+            title = "字段策略已生效"
+        else:
+            notif_type = "warning"
+            title = "字段策略未完全生效"
+        message = "%s：%s；范围：%s；治理标记：%s" % (
+            self.field_label or self.field_name,
+            detail,
+            self.scope_summary or "-",
+            "已命中" if governance.get("applied") else "未命中",
+        )
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": title,
+                "message": message,
+                "type": notif_type,
+                "sticky": not expected_ok,
+            },
+        }
+
+    def _collect_contract_field_nodes(self, nodes: list) -> dict[str, dict]:
+        result = {}
+        for node in nodes or []:
+            if not isinstance(node, dict):
+                continue
+            if str(node.get("type") or "").strip().lower() == "field":
+                name = str(node.get("name") or "").strip()
+                if name:
+                    result[name] = node
+            for key in ("children", "pages", "tabs", "nodes", "items"):
+                children = node.get(key)
+                if isinstance(children, list):
+                    result.update(self._collect_contract_field_nodes(children))
+        return result
+
+    def _contract_node_has_invisible(self, node: dict) -> bool:
+        candidates = [node]
+        for key in ("attributes", "fieldInfo"):
+            value = node.get(key)
+            if isinstance(value, dict):
+                candidates.append(value)
+        for candidate in candidates:
+            if candidate.get("invisible"):
+                return True
+            modifiers = candidate.get("modifiers")
+            if isinstance(modifiers, dict) and "invisible" in modifiers:
+                return True
+        return False
 
     @api.model
     def source_authority_contract(self) -> dict[str, Any]:
