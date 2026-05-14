@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import re
+import time
 
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
@@ -32,7 +33,7 @@ class UIFormCustomFieldWizard(models.TransientModel):
         domain=[("transient", "=", False)],
     )
     model = fields.Char(related="model_id.model", string="技术模型")
-    field_name = fields.Char(string="技术字段名", required=True, default="x_")
+    field_name = fields.Char(string="技术字段名", default="x_custom_field")
     label = fields.Char(string="字段标题", required=True)
     ttype = fields.Selection(SAFE_TYPES, string="字段类型", required=True, default="char")
     help = fields.Char(string="帮助说明")
@@ -40,11 +41,21 @@ class UIFormCustomFieldWizard(models.TransientModel):
     index = fields.Boolean(string="建立索引")
     active_policy = fields.Boolean(string="创建后立即显示", default=True)
     company_id = fields.Many2one("res.company", string="公司", default=lambda self: self.env.company)
-    action_id = fields.Many2one("ir.actions.act_window", string="限定动作", ondelete="cascade")
-    view_id = fields.Many2one("ir.ui.view", string="限定表单视图", ondelete="cascade")
+    action_id = fields.Many2one("ir.actions.act_window", string="业务页面", ondelete="cascade")
+    view_id = fields.Many2one("ir.ui.view", string="表单视图", ondelete="cascade")
     group_title = fields.Char(string="显示分组", default="业务配置字段")
     sequence = fields.Integer(string="显示顺序", default=100)
     note = fields.Text(string="说明")
+
+    @api.onchange("action_id")
+    def _onchange_action_id(self):
+        for rec in self:
+            if rec.action_id and rec.action_id.res_model:
+                model_rec = self.env["ir.model"].search([("model", "=", rec.action_id.res_model)], limit=1)
+                if model_rec:
+                    rec.model_id = model_rec
+                    if rec.view_id and rec.view_id.model != model_rec.model:
+                        rec.view_id = False
 
     @api.onchange("model_id")
     def _onchange_model_id(self):
@@ -55,6 +66,12 @@ class UIFormCustomFieldWizard(models.TransientModel):
                 if rec.view_id and rec.view_id.model != rec.model_id.model:
                     rec.view_id = False
 
+    @api.onchange("label")
+    def _onchange_label(self):
+        for rec in self:
+            if not rec.field_name or str(rec.field_name).strip() in {"x_", "x_custom_field"}:
+                rec.field_name = rec._suggest_field_name()
+
     @api.constrains("model_id", "field_name", "ttype", "action_id", "view_id")
     def _check_custom_field_spec(self):
         for rec in self:
@@ -62,12 +79,15 @@ class UIFormCustomFieldWizard(models.TransientModel):
 
     def action_create_field_policy(self):
         self.ensure_one()
+        if not self.field_name or str(self.field_name).strip() in {"x_", "x_custom_field"}:
+            self.field_name = self._suggest_field_name()
         self._validate_custom_field_spec()
+        model_rec = self._business_model()
         field = self._create_manual_field()
         policy = self.env["ui.form.field.policy"].create({
             "active": bool(self.active_policy),
-            "model_id": self.model_id.id,
-            "model": self.model_id.model,
+            "model_id": model_rec.id,
+            "model": model_rec.model,
             "field_id": field.id,
             "field_name": field.name,
             "label": self.label,
@@ -90,11 +110,11 @@ class UIFormCustomFieldWizard(models.TransientModel):
 
     def _validate_custom_field_spec(self):
         self.ensure_one()
-        model = self.model_id
+        model = self._business_model()
         model_name = model.model if model else ""
         field_name = str(self.field_name or "").strip()
         if not model or not model_name:
-            raise ValidationError("请先选择模型。")
+            raise ValidationError("请先选择要配置的业务页面。")
         if model.transient:
             raise ValidationError("临时向导模型不能新增业务字段：%s" % model_name)
         if model_name not in self.env:
@@ -105,6 +125,8 @@ class UIFormCustomFieldWizard(models.TransientModel):
             raise ValidationError("字段已经存在：%s.%s" % (model_name, field_name))
         if self.ttype not in dict(self.SAFE_TYPES):
             raise ValidationError("不支持的字段类型：%s" % (self.ttype or "-"))
+        if not self.action_id:
+            raise ValidationError("请先选择要配置的业务页面。")
         if self.required:
             raise ValidationError("新增自定义字段暂不开放必填属性，请先创建非必填字段，再通过业务流程约束控制必填。")
         if self.action_id and self.action_id.res_model != model_name:
@@ -114,10 +136,11 @@ class UIFormCustomFieldWizard(models.TransientModel):
 
     def _create_manual_field(self):
         self.ensure_one()
+        model_rec = self._business_model()
         vals = {
             "name": str(self.field_name or "").strip(),
             "field_description": str(self.label or "").strip(),
-            "model_id": self.model_id.id,
+            "model_id": model_rec.id,
             "ttype": self.ttype,
             "state": "manual",
             "required": bool(self.required),
@@ -126,3 +149,36 @@ class UIFormCustomFieldWizard(models.TransientModel):
             "copied": True,
         }
         return self.env["ir.model.fields"].sudo().create(vals)
+
+    def _business_model(self):
+        self.ensure_one()
+        model = self.model_id
+        if model and model.exists():
+            return model
+        action_model = str(self.action_id.res_model or "").strip() if self.action_id else ""
+        if action_model:
+            model = self.env["ir.model"].search([("model", "=", action_model)], limit=1)
+            if model:
+                return model
+        return self.env["ir.model"]
+
+    def _suggest_field_name(self):
+        self.ensure_one()
+        label = str(self.label or "").strip()
+        ascii_slug = re.sub(r"[^a-z0-9_]+", "_", label.lower()).strip("_")
+        if not ascii_slug or not re.match(r"^[a-z]", ascii_slug):
+            ascii_slug = "custom_field"
+        ascii_slug = re.sub(r"_+", "_", ascii_slug)[:40].strip("_") or "custom_field"
+        base = "x_%s" % ascii_slug
+        model = self._business_model()
+        model_name = model.model if model else ""
+        candidate = base
+        index = 2
+        while model_name and candidate in self.env[model_name]._fields:
+            candidate = "%s_%s" % (base[:50], index)
+            index += 1
+        if candidate == base and model_name:
+            exists = self.env["ir.model.fields"].sudo().search_count([("model", "=", model_name), ("name", "=", candidate)])
+            if exists:
+                candidate = "%s_%s" % (base[:45], int(time.time()) % 100000)
+        return candidate[:56]

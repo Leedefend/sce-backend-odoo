@@ -77,6 +77,20 @@ class UIFormFieldPolicy(models.Model):
                 if not rec.label:
                     rec.label = rec.field_id.field_description
 
+    @api.onchange("action_id")
+    def _onchange_action_id(self):
+        for rec in self:
+            if rec.action_id and rec.action_id.res_model:
+                model_rec = self.env["ir.model"].search([("model", "=", rec.action_id.res_model)], limit=1)
+                if model_rec:
+                    rec.model_id = model_rec
+                    rec.model = model_rec.model
+                    if rec.field_id and rec.field_id.model_id != model_rec:
+                        rec.field_id = False
+                        rec.field_name = False
+                    if rec.view_id and rec.view_id.model != model_rec.model:
+                        rec.view_id = False
+
     @api.onchange("model_id")
     def _onchange_model_id(self):
         for rec in self:

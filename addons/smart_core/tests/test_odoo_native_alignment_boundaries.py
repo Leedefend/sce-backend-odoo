@@ -791,6 +791,37 @@ class TestOdooNativeAlignmentBoundaries(TransactionCase):
             with self.assertRaises(ValidationError):
                 policy.write({"view_id": other_view.id})
 
+    def test_form_field_policy_onchange_action_sets_business_object(self):
+        action = self.env["ir.actions.act_window"].sudo().create({
+            "name": "Customer Field Config Probe",
+            "res_model": "res.partner",
+            "view_mode": "tree,form",
+        })
+
+        policy = self.env["ui.form.field.policy"].new({"action_id": action.id})
+        policy._onchange_action_id()
+
+        self.assertEqual(policy.model, "res.partner")
+        self.assertEqual(policy.model_id.model, "res.partner")
+
+    def test_custom_field_wizard_action_first_flow_autogenerates_field_name(self):
+        action = self.env["ir.actions.act_window"].sudo().create({
+            "name": "Customer Custom Field Probe",
+            "res_model": "res.partner",
+            "view_mode": "tree,form",
+        })
+
+        wizard = self.env["ui.form.custom.field.wizard"].new({
+            "action_id": action.id,
+            "label": "项目联系人",
+            "ttype": "char",
+        })
+        wizard._onchange_action_id()
+        wizard._onchange_label()
+
+        self.assertEqual(wizard.model_id.model, "res.partner")
+        self.assertTrue(str(wizard.field_name or "").startswith("x_custom_field"))
+
     def test_ui_overlay_and_asset_models_do_not_claim_business_fact_authority(self):
         self.assertEqual(AppViewFragment.SOURCE_KIND, "ui_contract_fragment_overlay")
         self.assertEqual(AppViewVariant.SOURCE_KIND, "ui_contract_variant_overlay")
