@@ -409,26 +409,31 @@ class UIFormFieldPolicy(models.Model):
         missing.sort(key=lambda name: (effective[name].get("sequence") or 100, name))
         if not missing:
             return
-        group_title = str(effective[missing[0]].get("group_title") or "业务配置字段").strip() or "业务配置字段"
-        group = {
-            "type": "group",
-            "name": "business_config_field_policy_group",
-            "string": group_title,
-            "children": [
-                {
-                    "type": "field",
-                    "name": name,
-                    "fieldInfo": effective[name].get("field_info") or {"name": name, "label": name, "type": "char"},
-                    **({"string": effective[name]["label"], "label": effective[name]["label"]} if effective[name].get("label") else {}),
-                }
-                for name in missing
-            ],
-        }
         target = self._find_sheet(layout)
-        if target is not None:
-            target.setdefault("children", []).append(group)
-        else:
-            layout.append(group)
+        parent = target.setdefault("children", []) if target is not None else layout
+        grouped: dict[str, list[str]] = {}
+        for name in missing:
+            group_title = str(effective[name].get("group_title") or "业务配置字段").strip() or "业务配置字段"
+            grouped.setdefault(group_title, []).append(name)
+        sorted_groups = sorted(
+            grouped.items(),
+            key=lambda item: (min(effective[name].get("sequence") or 100 for name in item[1]), item[0]),
+        )
+        for index, (group_title, field_names) in enumerate(sorted_groups, start=1):
+            parent.append({
+                "type": "group",
+                "name": "business_config_field_policy_group_%s" % index,
+                "string": group_title,
+                "children": [
+                    {
+                        "type": "field",
+                        "name": name,
+                        "fieldInfo": effective[name].get("field_info") or {"name": name, "label": name, "type": "char"},
+                        **({"string": effective[name]["label"], "label": effective[name]["label"]} if effective[name].get("label") else {}),
+                    }
+                    for name in field_names
+                ],
+            })
 
     def _find_sheet(self, nodes: list) -> dict | None:
         for node in nodes:

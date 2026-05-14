@@ -728,6 +728,46 @@ class TestOdooNativeAlignmentBoundaries(TransactionCase):
         governance = (scoped.get("governance") or {}).get("form_field_policy") or {}
         self.assertEqual(governance.get("hidden_fields"), ["phone"])
 
+    def test_form_field_policy_appends_missing_visible_fields_by_group_title(self):
+        Policy = self.env["ui.form.field.policy"].sudo()
+        Policy.create({
+            "model": "res.partner",
+            "field_name": "phone",
+            "visible": True,
+            "group_title": "联系字段",
+            "sequence": 10,
+        })
+        Policy.create({
+            "model": "res.partner",
+            "field_name": "email",
+            "visible": True,
+            "group_title": "扩展字段",
+            "sequence": 20,
+        })
+        contract = {
+            "layout": [
+                {
+                    "type": "sheet",
+                    "children": [
+                        {
+                            "type": "group",
+                            "children": [{"type": "field", "name": "name"}],
+                        }
+                    ],
+                }
+            ],
+        }
+
+        result = Policy.apply_to_view_contract(contract, model_name="res.partner", view_type="form")
+
+        sheet = result["layout"][0]
+        appended = [
+            node for node in sheet.get("children", [])
+            if str(node.get("name") or "").startswith("business_config_field_policy_group_")
+        ]
+        self.assertEqual([node.get("string") for node in appended], ["联系字段", "扩展字段"])
+        self.assertEqual([[child.get("name") for child in node.get("children", [])] for node in appended], [["phone"], ["email"]])
+
     def test_form_field_policy_revalidates_action_and_view_scope_on_write(self):
         Policy = self.env["ui.form.field.policy"].sudo()
         policy = Policy.create({
