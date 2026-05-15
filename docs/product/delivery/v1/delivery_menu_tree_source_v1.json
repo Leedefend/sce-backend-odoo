@@ -15,7 +15,6 @@
       "menu_key": "finance_control",
       "menu_name": "财务管控",
       "entries": [
-        "finance.center",
         "finance.payment_requests",
         "finance.payment_ledger",
         "finance.treasury_ledger",
@@ -29,33 +28,14 @@
         "cost.project_boq",
         "cost.project_budget",
         "cost.project_cost_ledger",
-        "cost.cost_compare",
-        "cost.profit_compare",
-        "cost.project_progress",
         "material.center",
-        "material.catalog",
         "material.procurement",
-        "material.rfq",
-        "material.acceptance",
         "material.inbound",
-        "material.outbound",
-        "material.price_library",
         "material.settlement",
         "material.rental",
-        "material.rental_order",
-        "material.rental_settlement",
         "labor.management",
-        "labor.request",
-        "labor.attendance",
-        "labor.settlement",
         "equipment.management",
-        "equipment.request",
-        "equipment.usage",
-        "equipment.settlement",
-        "subcontract.management",
-        "subcontract.request",
-        "subcontract.register",
-        "subcontract.settlement"
+        "subcontract.management"
       ]
     },
     {
@@ -67,11 +47,7 @@
         "construction.plan_report",
         "construction.diary",
         "quality.center",
-        "quality.rectification",
-        "quality.recheck",
-        "safety.center",
-        "safety.rectification",
-        "safety.recheck"
+        "safety.center"
       ]
     },
     {
@@ -79,8 +55,7 @@
       "menu_name": "经营洞察",
       "entries": [
         "portal.dashboard",
-        "finance.operating_metrics",
-        "projects.dashboard_showcase"
+        "finance.operating_metrics"
       ]
     },
     {
@@ -89,8 +64,7 @@
       "entries": [
         "portal.lifecycle",
         "portal.capability_matrix",
-        "data.dictionary",
-        "default"
+        "data.dictionary"
       ]
     }
   ],
