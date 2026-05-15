@@ -2017,7 +2017,7 @@ onBeforeUnmount(() => {
 }
 
 .grouped-toolbar-title .group-window-info {
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
   font-size: 12px;
   font-weight: 600;
 }
@@ -2282,10 +2282,10 @@ onBeforeUnmount(() => {
 .column-save-badge {
   display: inline-flex;
   margin-left: 4px;
-  border: 1px solid #bbf7d0;
+  border: 1px solid var(--sc-app-success-border);
   border-radius: 6px;
-  background: #f0fdf4;
-  color: #15803d;
+  background: var(--sc-app-success-bg);
+  color: var(--sc-app-success-text);
   padding: 2px 6px;
   font-size: 12px;
   line-height: 16px;
@@ -2294,16 +2294,16 @@ onBeforeUnmount(() => {
 
 .column-save-badge.is-saving,
 .column-save-message.is-saving {
-  border-color: #bfdbfe;
-  background: #eff6ff;
-  color: #1d4ed8;
+  border-color: var(--sc-app-info-border);
+  background: var(--sc-app-info-bg);
+  color: var(--sc-app-info-text);
 }
 
 .column-save-badge.is-error,
 .column-save-message.is-error {
-  border-color: #fecaca;
-  background: #fef2f2;
-  color: #b91c1c;
+  border-color: var(--sc-app-danger-border);
+  background: var(--sc-app-danger-bg);
+  color: var(--sc-app-danger-text);
 }
 
 .column-picker-menu {
@@ -2469,7 +2469,7 @@ table {
 th,
 td {
   padding: 8px 10px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--sc-app-border);
   text-align: left;
   font-size: 13px;
   vertical-align: top;
@@ -2494,7 +2494,7 @@ tbody td {
   min-width: 52px;
   padding-right: 4px;
   padding-left: 4px;
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
   font-variant-numeric: tabular-nums;
   text-align: center;
   white-space: nowrap;

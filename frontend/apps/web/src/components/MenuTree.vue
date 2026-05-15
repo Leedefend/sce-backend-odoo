@@ -83,7 +83,7 @@ const treeStyle = computed<Record<string, string>>(() => {
   return {
     marginLeft: '12px',
     paddingLeft: '12px',
-    borderLeft: '1px dashed #dbe3ee',
+    borderLeft: '1px dashed var(--sc-app-border)',
   };
 });
 
@@ -196,22 +196,22 @@ onMounted(() => {
   border: none;
   text-align: left;
   cursor: pointer;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
 }
 
 .node.active .label {
   font-weight: 600;
-  color: #1f3b77;
-  background: #f1f5f9;
+  color: var(--sc-app-info-text);
+  background: var(--sc-app-info-bg);
 }
 
 .node.ancestor .label {
-  color: #475569;
+  color: var(--sc-app-text-secondary);
 }
 
 .node.disabled .label {
   cursor: not-allowed;
-  color: #94a3b8;
+  color: var(--sc-semantic-text-muted);
 }
 
 .node.disabled .label:hover {
@@ -223,7 +223,7 @@ onMounted(() => {
   border: none;
   background: transparent;
   cursor: pointer;
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
   font-size: 12px;
 }
 
@@ -243,7 +243,7 @@ onMounted(() => {
 }
 
 .label:hover {
-  background-color: #f3f4f6;
+  background-color: var(--sc-app-hover-bg);
 }
 
 .expand-enter-active,

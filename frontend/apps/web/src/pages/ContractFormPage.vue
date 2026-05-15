@@ -6398,7 +6398,7 @@ onBeforeUnmount(() => {
 .page-status-line {
   margin: 2px 0 0;
   font-size: 12px;
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
 }
 
 .header-main h1 {
@@ -6410,7 +6410,7 @@ onBeforeUnmount(() => {
 
 .meta {
   margin: 1px 0;
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
   font-size: 12px;
 }
 
@@ -6437,12 +6437,12 @@ onBeforeUnmount(() => {
 .header-status-item {
   margin: 0;
   font-size: 12px;
-  color: #737b87;
+  color: var(--sc-semantic-text-muted);
   line-height: 1.3;
 }
 
 .header-status-item--danger {
-  color: #9a7a3e;
+  color: var(--sc-app-warning-text);
 }
 
 .action-hint {
@@ -6537,8 +6537,8 @@ onBeforeUnmount(() => {
 }
 
 .chip-btn.active {
-  border-color: #0f766e;
-  box-shadow: inset 0 0 0 1px #0f766e;
+  border-color: var(--sc-semantic-surface-interactive);
+  box-shadow: inset 0 0 0 1px var(--sc-semantic-surface-interactive);
 }
 
 .native-chatter-compose {
@@ -6598,7 +6598,7 @@ onBeforeUnmount(() => {
 }
 
 .native-chatter-type {
-  color: #0f766e;
+  color: var(--sc-app-success-text);
   font-weight: 600;
   white-space: nowrap;
 }
@@ -6662,20 +6662,20 @@ onBeforeUnmount(() => {
 .form-flow-guide-main {
   margin: 0;
   font-size: 12px;
-  color: #334155;
+  color: var(--sc-app-text-secondary);
 }
 
 .validation-error {
   grid-column: 1 / -1;
   margin: 0;
-  color: #b91c1c;
+  color: var(--sc-app-danger-text);
   font-size: 12px;
 }
 
 .validation-warn {
   grid-column: 1 / -1;
   margin: 0;
-  color: #92400e;
+  color: var(--sc-app-warning-text);
   font-size: 12px;
 }
 
@@ -6943,7 +6943,7 @@ onBeforeUnmount(() => {
   display: grid;
   place-items: center;
   padding: 24px;
-  background: rgba(15, 23, 42, 0.38);
+  background: var(--sc-semantic-backdrop);
 }
 
 .relation-dialog {

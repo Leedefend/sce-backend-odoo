@@ -533,7 +533,7 @@ function closeMore(node: NativeFormLayoutNode) {
 }
 
 .native-container--header {
-  border-bottom: 1px solid #eef2f7;
+  border-bottom: 1px solid var(--sc-app-border);
   padding-bottom: 12px;
 }
 
@@ -542,14 +542,14 @@ function closeMore(node: NativeFormLayoutNode) {
 }
 
 .native-container--group {
-  border-top: 1px solid #f1f3f6;
+  border-top: 1px solid var(--sc-app-border);
   padding-top: 12px;
 }
 
 .native-container-head h3 {
   margin: 0;
   font-size: 14px;
-  color: #374151;
+  color: var(--sc-app-text-primary);
   font-weight: 600;
 }
 
@@ -569,8 +569,8 @@ function closeMore(node: NativeFormLayoutNode) {
   justify-self: end;
   max-width: 100%;
   border-radius: 4px;
-  background: #991b1b;
-  color: #fff;
+  background: var(--sc-app-danger-text);
+  color: var(--sc-semantic-text-on-interactive);
   padding: 4px 10px;
   font-size: 12px;
   font-weight: 600;
@@ -578,7 +578,7 @@ function closeMore(node: NativeFormLayoutNode) {
 }
 
 .native-ribbon.text-bg-danger {
-  background: #991b1b;
+  background: var(--sc-app-danger-text);
 }
 
 .native-tabs {
@@ -586,14 +586,14 @@ function closeMore(node: NativeFormLayoutNode) {
   gap: 6px;
   overflow-x: auto;
   max-width: 100%;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--sc-app-border);
 }
 
 .native-tab {
   border: 0;
   border-bottom: 2px solid transparent;
   background: transparent;
-  color: #475569;
+  color: var(--sc-app-text-secondary);
   padding: 8px 10px;
   font-size: 13px;
   cursor: pointer;
@@ -601,8 +601,8 @@ function closeMore(node: NativeFormLayoutNode) {
 }
 
 .native-tab--active {
-  color: #111827;
-  border-bottom-color: #111827;
+  color: var(--sc-app-text-primary);
+  border-bottom-color: var(--sc-app-text-primary);
   font-weight: 600;
 }
 
@@ -625,10 +625,10 @@ function closeMore(node: NativeFormLayoutNode) {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(104px, max-content));
   gap: 1px;
-  border: 1px solid #dbe3ee;
+  border: 1px solid var(--sc-app-border);
   border-radius: 8px;
   overflow: hidden;
-  background: #dbe3ee;
+  background: var(--sc-app-border);
   width: fit-content;
   max-width: 100%;
 }
@@ -638,9 +638,9 @@ function closeMore(node: NativeFormLayoutNode) {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  border: 1px solid #cbd5e1;
-  background: #fff;
-  color: #1f2937;
+  border: 1px solid var(--sc-app-border-strong);
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-primary);
   padding: 6px 10px;
   border-radius: 6px;
   font-size: 13px;
@@ -657,8 +657,8 @@ function closeMore(node: NativeFormLayoutNode) {
   border: 0;
   border-radius: 0;
   padding: 12px 14px;
-  color: #0f172a;
-  background: #ffffff;
+  color: var(--sc-app-text-primary);
+  background: var(--sc-app-panel);
   font-weight: 600;
   font-size: 14px;
 }
@@ -685,10 +685,10 @@ function closeMore(node: NativeFormLayoutNode) {
   display: grid;
   gap: 2px;
   padding: 6px;
-  background: #fff;
-  border: 1px solid #d8dee8;
+  background: var(--sc-app-panel);
+  border: 1px solid var(--sc-app-border-strong);
   border-radius: 6px;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.14);
+  box-shadow: var(--sc-semantic-shadow-modal);
 }
 
 .native-action-more-item {
@@ -698,7 +698,7 @@ function closeMore(node: NativeFormLayoutNode) {
   width: 100%;
   border: 0;
   background: transparent;
-  color: #1f2937;
+  color: var(--sc-app-text-primary);
   padding: 8px 10px;
   border-radius: 5px;
   font: inherit;
@@ -708,14 +708,14 @@ function closeMore(node: NativeFormLayoutNode) {
 }
 
 .native-action-more-item:hover {
-  background: #f1f5f9;
+  background: var(--sc-app-hover-bg);
 }
 
 .native-action-icon {
   flex: 0 0 auto;
   width: 18px;
   text-align: center;
-  color: #2563eb;
+  color: var(--sc-semantic-surface-interactive);
 }
 
 .native-action-label {
@@ -726,13 +726,13 @@ function closeMore(node: NativeFormLayoutNode) {
 }
 
 .native-action-btn:hover {
-  border-color: #64748b;
-  background: #f8fafc;
+  border-color: var(--sc-app-border-strong);
+  background: var(--sc-app-hover-bg);
 }
 
 .native-action-btn--smart:hover {
-  background: #f8fafc;
-  color: #0f172a;
+  background: var(--sc-app-hover-bg);
+  color: var(--sc-app-text-primary);
 }
 
 .native-title-row {
@@ -745,7 +745,7 @@ function closeMore(node: NativeFormLayoutNode) {
 .native-title-favorite {
   border: 0;
   background: transparent;
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
   font-size: 27px;
   line-height: 1;
   padding: 0 2px;
@@ -753,7 +753,7 @@ function closeMore(node: NativeFormLayoutNode) {
 }
 
 .native-title-favorite--active {
-  color: #f59e0b;
+  color: var(--sc-app-warning-text);
 }
 
 .native-title-favorite:disabled {
@@ -766,7 +766,7 @@ function closeMore(node: NativeFormLayoutNode) {
   min-width: 0;
   border: 0;
   background: transparent;
-  color: #111827;
+  color: var(--sc-app-text-primary);
   font-size: 27px;
   font-weight: 600;
   line-height: 1.25;
@@ -776,12 +776,12 @@ function closeMore(node: NativeFormLayoutNode) {
 
 .native-title-input:focus {
   outline: none;
-  box-shadow: inset 0 -2px 0 #2563eb;
+  box-shadow: inset 0 -2px 0 var(--sc-semantic-surface-interactive);
 }
 
 .native-title-text {
   margin: 0;
-  color: #111827;
+  color: var(--sc-app-text-primary);
   font-size: 27px;
   font-weight: 600;
   line-height: 1.25;

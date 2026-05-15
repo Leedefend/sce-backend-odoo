@@ -409,9 +409,9 @@ onMounted(async () => {
   gap: 16px;
   flex-wrap: wrap;
   padding: 16px;
-  border-radius: 12px;
-  background: #ffffff;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: var(--sc-component-panel-radius);
+  background: var(--sc-app-panel);
+  border: 1px solid var(--sc-app-border);
 }
 
 .header h2 {
@@ -420,7 +420,7 @@ onMounted(async () => {
 
 .header p {
   margin: 4px 0 0;
-  color: #6b7280;
+  color: var(--sc-semantic-text-muted);
 }
 
 .actions {
@@ -433,7 +433,7 @@ onMounted(async () => {
   display: grid;
   gap: 6px;
   font-size: 12px;
-  color: #4b5563;
+  color: var(--sc-app-text-secondary);
 }
 
 .actions select {
@@ -452,16 +452,16 @@ onMounted(async () => {
 }
 
 .pill {
-  background: #eef2ff;
-  color: #1f2937;
+  background: var(--sc-app-info-bg);
+  color: var(--sc-app-info-text);
   border-radius: 999px;
   padding: 6px 10px;
   font-size: 12px;
 }
 
 .pill.warn {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--sc-app-danger-bg);
+  color: var(--sc-app-danger-text);
 }
 
 .cards {
@@ -471,14 +471,14 @@ onMounted(async () => {
 }
 
 .card {
-  border-radius: 12px;
+  border-radius: var(--sc-component-panel-radius);
   padding: 16px;
-  background: #ffffff;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: var(--sc-app-panel);
+  border: 1px solid var(--sc-app-border);
 }
 
 .card.danger {
-  border-color: rgba(185, 28, 28, 0.25);
+  border-color: var(--sc-app-danger-border);
 }
 
 .card h3 {
@@ -493,9 +493,9 @@ onMounted(async () => {
 }
 
 .meta {
-  background: #ffffff;
-  border-radius: 12px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: var(--sc-app-panel);
+  border-radius: var(--sc-component-panel-radius);
+  border: 1px solid var(--sc-app-border);
   padding: 12px 14px;
 }
 
@@ -504,9 +504,9 @@ onMounted(async () => {
 }
 
 .governance {
-  background: #ffffff;
-  border-radius: 12px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: var(--sc-app-panel);
+  border-radius: var(--sc-component-panel-radius);
+  border: 1px solid var(--sc-app-border);
   padding: 12px 14px;
   display: grid;
   gap: 12px;
@@ -527,7 +527,7 @@ onMounted(async () => {
   display: grid;
   gap: 6px;
   font-size: 12px;
-  color: #4b5563;
+  color: var(--sc-app-text-secondary);
 }
 
 .governance-actions {
@@ -537,18 +537,18 @@ onMounted(async () => {
 }
 
 .danger {
-  border: 1px solid rgba(185, 28, 28, 0.4);
-  background: #fee2e2;
-  color: #991b1b;
-  border-radius: 8px;
+  border: 1px solid var(--sc-app-danger-border);
+  background: var(--sc-app-danger-bg);
+  color: var(--sc-app-danger-text);
+  border-radius: var(--sc-component-button-radius);
   padding: 8px 10px;
   cursor: pointer;
 }
 
 details {
-  background: #ffffff;
-  border-radius: 12px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: var(--sc-app-panel);
+  border-radius: var(--sc-component-panel-radius);
+  border: 1px solid var(--sc-app-border);
   padding: 10px 12px;
 }
 
@@ -559,17 +559,18 @@ summary {
 
 pre {
   overflow: auto;
-  background: #0f172a;
-  color: #e2e8f0;
-  border-radius: 8px;
+  background: var(--sc-app-text-primary);
+  color: var(--sc-app-panel);
+  border-radius: var(--sc-component-panel-radius);
   padding: 10px;
   font-size: 12px;
 }
 
 .secondary {
-  border: 1px solid rgba(15, 23, 42, 0.2);
-  background: white;
-  border-radius: 8px;
+  border: 1px solid var(--sc-app-border-strong);
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-primary);
+  border-radius: var(--sc-component-button-radius);
   padding: 8px 10px;
   cursor: pointer;
 }

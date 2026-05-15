@@ -444,7 +444,7 @@ function emitFieldAction(field: FormSectionFieldSchema, action: FormSectionField
   grid-column: 1 / -1;
   min-width: 0;
   border: 0;
-  border-top: 1px solid #f1f3f6;
+  border-top: 1px solid var(--sc-app-border);
   border-radius: 0;
   background: transparent;
   padding: 14px 0 0;
@@ -456,7 +456,7 @@ function emitFieldAction(field: FormSectionFieldSchema, action: FormSectionField
 }
 
 .template-form-section--advanced {
-  border-top: 1px solid #f2f4f7;
+  border-top: 1px solid var(--sc-app-border);
   margin-top: 2px;
 }
 
@@ -473,7 +473,7 @@ function emitFieldAction(field: FormSectionFieldSchema, action: FormSectionField
 .template-form-section-title {
   margin: 0;
   font-size: 14px;
-  color: #374151;
+  color: var(--sc-app-text-primary);
   font-weight: 500;
   overflow-wrap: anywhere;
 }
@@ -481,7 +481,7 @@ function emitFieldAction(field: FormSectionFieldSchema, action: FormSectionField
 .template-form-section-hint {
   margin: -4px 0 10px;
   font-size: 12px;
-  color: #9ca3af;
+  color: var(--sc-semantic-text-muted);
 }
 
 .template-form-section-grid {
@@ -518,7 +518,7 @@ function emitFieldAction(field: FormSectionFieldSchema, action: FormSectionField
 
 .label {
   font-size: 13px;
-  color: #111827;
+  color: var(--sc-app-text-primary);
   font-weight: 600;
   margin: 0;
   min-width: 0;
@@ -534,19 +534,19 @@ function emitFieldAction(field: FormSectionFieldSchema, action: FormSectionField
   border: 0;
   border-radius: 4px;
   background: transparent;
-  color: #94a3b8;
+  color: var(--sc-semantic-text-muted);
   font-size: 20px;
   line-height: 1;
   cursor: pointer;
 }
 
 .field-favorite-toggle:hover:not(:disabled) {
-  background: #f8fafc;
-  color: #64748b;
+  background: var(--sc-app-hover-bg);
+  color: var(--sc-app-text-secondary);
 }
 
 .field-favorite-toggle--active {
-  color: #f59e0b;
+  color: var(--sc-app-warning-text);
 }
 
 .field-favorite-toggle:disabled {
@@ -555,7 +555,7 @@ function emitFieldAction(field: FormSectionFieldSchema, action: FormSectionField
 }
 
 .required {
-  color: #b91c1c;
+  color: var(--sc-app-danger-text);
   margin-left: 2px;
 }
 
@@ -563,7 +563,7 @@ function emitFieldAction(field: FormSectionFieldSchema, action: FormSectionField
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
   font-size: 12px;
   line-height: 1;
 }
@@ -595,7 +595,7 @@ function emitFieldAction(field: FormSectionFieldSchema, action: FormSectionField
 
 .readonly-value {
   font-size: 13px;
-  color: #475569;
+  color: var(--sc-app-text-secondary);
   min-height: 40px;
   display: inline-flex;
   align-items: center;
@@ -604,8 +604,8 @@ function emitFieldAction(field: FormSectionFieldSchema, action: FormSectionField
 }
 
 .input {
-  border: 1px solid #e9ebef;
-  border-radius: 8px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: var(--sc-component-input-radius);
   padding: 8px 12px;
   height: 40px;
   min-height: 40px;
@@ -613,20 +613,20 @@ function emitFieldAction(field: FormSectionFieldSchema, action: FormSectionField
   min-width: 0;
   font-size: 14px;
   line-height: 1.35;
-  color: #0f172a;
-  background: #ffffff;
+  color: var(--sc-app-text-primary);
+  background: var(--sc-app-input-bg);
   box-sizing: border-box;
   transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
 }
 
 .input::placeholder {
-  color: #94a3b8;
+  color: var(--sc-semantic-text-muted);
 }
 
 .input:focus {
   outline: none;
-  border-color: #94a3b8;
-  box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.2);
+  border-color: var(--sc-semantic-surface-interactive);
+  box-shadow: 0 0 0 3px var(--sc-app-focus-ring);
 }
 
 textarea.input {
@@ -637,7 +637,7 @@ textarea.input {
 
 select.input {
   appearance: none;
-  background-image: linear-gradient(45deg, transparent 50%, #64748b 50%), linear-gradient(135deg, #64748b 50%, transparent 50%);
+  background-image: linear-gradient(45deg, transparent 50%, var(--sc-app-text-secondary) 50%), linear-gradient(135deg, var(--sc-app-text-secondary) 50%, transparent 50%);
   background-position: calc(100% - 16px) calc(50% - 2px), calc(100% - 11px) calc(50% - 2px);
   background-size: 5px 5px, 5px 5px;
   background-repeat: no-repeat;
@@ -655,14 +655,14 @@ select.input {
   align-items: flex-start;
   gap: 8px;
   min-width: 0;
-  color: #334155;
+  color: var(--sc-app-text-secondary);
   font-size: 13px;
   line-height: 1.35;
 }
 
 .native-radio-input {
   margin-top: 2px;
-  accent-color: #374151;
+  accent-color: var(--sc-semantic-surface-interactive);
 }
 
 .native-radio-input:disabled {
@@ -670,7 +670,7 @@ select.input {
 }
 
 .native-radio-input:disabled + span {
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
 }
 
 .many2one-widget-shell {
@@ -701,10 +701,10 @@ select.input {
   display: none;
   max-height: 260px;
   overflow: auto;
-  border: 1px solid #d7deea;
-  border-radius: 6px;
-  background: #fff;
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
+  border: 1px solid var(--sc-app-border-strong);
+  border-radius: var(--sc-component-panel-radius);
+  background: var(--sc-app-panel);
+  box-shadow: var(--sc-semantic-shadow-modal);
 }
 
 .many2one-combobox:focus-within .many2one-option-panel {
@@ -718,30 +718,30 @@ select.input {
 .many2one-option {
   min-height: 32px;
   border: 0;
-  border-bottom: 1px solid #eef2f7;
-  background: #fff;
-  color: #0f172a;
+  border-bottom: 1px solid var(--sc-app-border);
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-primary);
   padding: 6px 10px;
   text-align: left;
   cursor: pointer;
 }
 
 .many2one-option:hover {
-  background: #eef6ff;
+  background: var(--sc-app-info-bg);
 }
 
 .many2one-actions {
   display: grid;
   min-width: 0;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--sc-app-border);
 }
 
 .many2one-action {
   min-height: 30px;
   border: 0;
-  border-bottom: 1px solid #eef2f7;
-  background: #ffffff;
-  color: #0f766e;
+  border-bottom: 1px solid var(--sc-app-border);
+  background: var(--sc-app-panel);
+  color: var(--sc-app-success-text);
   padding: 6px 10px;
   font-size: 12px;
   line-height: 1.2;
@@ -758,7 +758,7 @@ select.input {
 }
 
 .many2one-action:hover {
-  background: #ecfdf5;
+  background: var(--sc-app-success-bg);
 }
 
 .many2one-avatar {
@@ -771,8 +771,8 @@ select.input {
   width: 22px;
   height: 22px;
   border-radius: 999px;
-  background: #e5e7eb;
-  color: #475569;
+  background: var(--sc-app-muted-bg);
+  color: var(--sc-app-text-secondary);
   font-size: 11px;
   font-weight: 700;
   pointer-events: none;
@@ -787,7 +787,7 @@ select.input {
 }
 
 .native-date-range-separator {
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
   font-size: 13px;
 }
 

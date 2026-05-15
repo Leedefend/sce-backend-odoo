@@ -1313,7 +1313,7 @@ watch(
   margin: 0;
   font-size: 12px;
   font-weight: 700;
-  color: #475569;
+  color: var(--sc-app-text-secondary);
 }
 
 .scene-view-switch__chips {
@@ -1331,9 +1331,9 @@ watch(
 .scene-view-switch__chip {
   padding: 6px 12px;
   border-radius: 999px;
-  border: 1px solid #cbd5e1;
-  background: #fff;
-  color: #0f172a;
+  border: 1px solid var(--sc-app-border-strong);
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-primary);
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
@@ -1343,9 +1343,9 @@ watch(
 }
 
 .scene-view-switch__chip.active {
-  background: #0f172a;
-  color: #fff;
-  border-color: #0f172a;
+  background: var(--sc-semantic-surface-interactive);
+  color: var(--sc-semantic-text-on-interactive);
+  border-color: var(--sc-semantic-surface-interactive);
 }
 
 .scene-view-switch__chip:disabled {
@@ -1360,14 +1360,14 @@ watch(
   gap: 16px;
   margin-bottom: 12px;
   padding: 14px 16px;
-  border: 1px solid #cbd5e1;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #f8fafc 0%, #eef6ff 100%);
+  border: 1px solid var(--sc-app-info-border);
+  border-radius: var(--sc-component-panel-radius);
+  background: var(--sc-app-info-bg);
 }
 
 .scene-delivery--advisory {
-  background: linear-gradient(135deg, #fff7ed 0%, #fef3c7 100%);
-  border-color: #fdba74;
+  background: var(--sc-app-warning-bg);
+  border-color: var(--sc-app-warning-border);
 }
 
 .scene-delivery__copy {
@@ -1380,13 +1380,13 @@ watch(
   margin: 0;
   font-size: 12px;
   font-weight: 700;
-  color: #475569;
+  color: var(--sc-app-text-secondary);
 }
 
 .scene-delivery__title {
   margin: 0;
   font-size: 16px;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
   overflow-wrap: anywhere;
 }
 
@@ -1394,7 +1394,7 @@ watch(
   margin: 0;
   font-size: 13px;
   line-height: 1.5;
-  color: #334155;
+  color: var(--sc-app-text-secondary);
   overflow-wrap: anywhere;
 }
 

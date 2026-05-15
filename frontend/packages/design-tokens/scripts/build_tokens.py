@@ -96,8 +96,13 @@ def to_css_vars(mapping: dict[str, Any], selector: str = ":root") -> str:
 def validate_flat_tokens(flat: dict[str, Any]) -> None:
     required_keys = (
         "semantic.surface.page",
+        "semantic.border.default",
+        "semantic.focus.ring",
+        "semantic.state.danger_bg",
         "semantic.text.primary",
         "component.button.height_md",
+        "component.input.height_md",
+        "component.toolbar.gap",
     )
     for key in required_keys:
         if key not in flat:

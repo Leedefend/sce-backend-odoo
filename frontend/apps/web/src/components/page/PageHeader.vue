@@ -19,10 +19,10 @@ defineProps<{
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: white;
+  background: var(--sc-app-panel);
   border-radius: 12px;
   padding: 16px 20px;
-  box-shadow: 0 16px 28px rgba(15, 23, 42, 0.08);
+  box-shadow: var(--sc-app-shadow);
 }
 
 .title {
@@ -32,7 +32,7 @@ defineProps<{
 
 .subtitle {
   margin: 6px 0 0;
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
   font-size: 13px;
 }
 </style>

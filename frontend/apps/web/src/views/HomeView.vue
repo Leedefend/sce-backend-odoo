@@ -2326,9 +2326,9 @@ function highlightParts(raw: string) {
 }
 
 .minimum-workspace-fallback {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--sc-app-border);
   border-radius: 12px;
-  background: #ffffff;
+  background: var(--sc-app-panel);
   padding: 16px;
   display: grid;
   gap: 10px;
@@ -2337,12 +2337,12 @@ function highlightParts(raw: string) {
 .minimum-workspace-fallback h2 {
   margin: 0;
   font-size: 20px;
-  color: #111827;
+  color: var(--sc-app-text-primary);
 }
 
 .minimum-workspace-fallback p {
   margin: 0;
-  color: #4b5563;
+  color: var(--sc-app-text-secondary);
   font-size: 13px;
 }
 
@@ -2365,9 +2365,9 @@ function highlightParts(raw: string) {
 }
 
 .value-card {
-  border: 1px solid #dbeafe;
+  border: 1px solid var(--sc-app-info-border);
   border-radius: 12px;
-  background: #ffffff;
+  background: var(--sc-app-panel);
   padding: 12px;
   display: grid;
   gap: 6px;
@@ -2376,21 +2376,21 @@ function highlightParts(raw: string) {
 .value-label {
   margin: 0;
   font-size: 12px;
-  color: #475569;
+  color: var(--sc-app-text-secondary);
 }
 
 .value-number {
   margin: 0;
   font-size: 26px;
   font-weight: 800;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
   line-height: 1.1;
 }
 
 .value-meta {
   margin: 0;
   font-size: 12px;
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -2399,7 +2399,7 @@ function highlightParts(raw: string) {
 .value-judge {
   margin: 0;
   font-size: 12px;
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
 }
 
 .value-state {
@@ -2410,18 +2410,18 @@ function highlightParts(raw: string) {
 }
 
 .value-state.state-green {
-  color: #166534;
-  background: #dcfce7;
+  color: var(--sc-app-success-text);
+  background: var(--sc-app-success-bg);
 }
 
 .value-state.state-amber {
-  color: #92400e;
-  background: #fef3c7;
+  color: var(--sc-app-warning-text);
+  background: var(--sc-app-warning-bg);
 }
 
 .value-state.state-red {
-  color: #b91c1c;
-  background: #fee2e2;
+  color: var(--sc-app-danger-text);
+  background: var(--sc-app-danger-bg);
 }
 
 .hero {
@@ -2429,23 +2429,21 @@ function highlightParts(raw: string) {
   gap: 12px;
   padding: 14px 16px;
   border-radius: 14px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid var(--sc-app-border);
   position: relative;
-  background:
-    radial-gradient(120% 180% at 0% 0%, rgba(14, 116, 144, 0.05), rgba(255, 255, 255, 0) 60%),
-    linear-gradient(135deg, rgba(21, 128, 61, 0.04), rgba(2, 132, 199, 0.06));
+  background: var(--sc-app-panel);
 }
 
 .contract-missing-alert {
-  border: 1px solid #fca5a5;
+  border: 1px solid var(--sc-app-danger-border);
   border-radius: 12px;
-  background: #fff5f5;
+  background: var(--sc-app-danger-bg);
   padding: 10px 12px;
 }
 
 .contract-missing-title {
   margin: 0;
-  color: #b42318;
+  color: var(--sc-app-danger-text);
   font-size: 13px;
   font-weight: 700;
 }
@@ -2453,7 +2451,7 @@ function highlightParts(raw: string) {
 .contract-missing-summary,
 .contract-missing-defaults {
   margin: 4px 0 0;
-  color: #7a271a;
+  color: var(--sc-app-warning-text);
   font-size: 12px;
 }
 
@@ -2469,7 +2467,7 @@ function highlightParts(raw: string) {
 
 .lead {
   margin: 0;
-  color: #334155;
+  color: var(--sc-app-text-primary);
   font-weight: 500;
 }
 
@@ -2484,7 +2482,7 @@ function highlightParts(raw: string) {
 
 .role-line {
   margin: 0;
-  color: #334155;
+  color: var(--sc-app-text-primary);
   font-size: 13px;
   display: flex;
   align-items: center;
@@ -2502,17 +2500,17 @@ function highlightParts(raw: string) {
 
 .product-pill {
   font-size: 10px;
-  color: #334155;
-  border: 1px solid #dbe4ef;
+  color: var(--sc-app-text-primary);
+  border: 1px solid var(--sc-app-border);
   border-radius: 999px;
-  background: #f8fafc;
+  background: var(--sc-app-muted-bg);
   padding: 1px 7px;
 }
 
 .bundle-line {
   margin: 2px 0 0;
   font-size: 11px;
-  color: #475569;
+  color: var(--sc-app-text-secondary);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -2521,30 +2519,30 @@ function highlightParts(raw: string) {
 }
 
 .partial-data {
-  color: #b45309;
+  color: var(--sc-app-warning-text);
   font-weight: 600;
 }
 
 .steady-data {
-  color: #166534;
+  color: var(--sc-app-success-text);
   font-weight: 600;
 }
 
 .partial-data-detail {
-  color: #92400e;
+  color: var(--sc-app-warning-text);
   font-size: 10px;
 }
 
 .hud-line {
   margin: 6px 0 0;
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
   font-size: 12px;
 }
 
 .inline-link {
   border: 0;
   background: transparent;
-  color: #1d4ed8;
+  color: var(--sc-app-info-text);
   text-decoration: underline;
   padding: 0;
   cursor: pointer;
@@ -2553,51 +2551,51 @@ function highlightParts(raw: string) {
 .view-toggle {
   display: inline-flex;
   flex-wrap: wrap;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--sc-app-border-strong);
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  box-shadow: var(--sc-app-shadow);
 }
 
 .view-toggle button {
   border: 0;
-  background: #f8fafc;
-  color: #334155;
+  background: var(--sc-app-muted-bg);
+  color: var(--sc-app-text-primary);
   padding: 6px 10px;
   font-size: 11px;
   cursor: pointer;
 }
 
 .view-toggle button.active {
-  background: #1d4ed8;
-  color: white;
+  background: var(--sc-semantic-surface-interactive);
+  color: var(--sc-semantic-text-on-interactive);
 }
 
 .my-work-btn {
-  border-right: 1px solid #d1d5db !important;
-  background: #0f766e !important;
-  color: #ffffff !important;
+  border-right: 1px solid var(--sc-app-border-strong) !important;
+  background: var(--sc-semantic-surface-interactive) !important;
+  color: var(--sc-semantic-text-on-interactive) !important;
   font-weight: 500;
 }
 
 .my-work-btn:hover {
-  background: #0d9488 !important;
+  background: var(--sc-semantic-surface-interactive-hover) !important;
 }
 
 .dot {
-  color: #94a3b8;
+  color: var(--sc-semantic-text-muted);
 }
 
 .secondary-panel {
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--sc-app-border);
   border-radius: 12px;
-  background: #fff;
+  background: var(--sc-app-panel);
   padding: 10px 12px;
 }
 
 .secondary-panel > summary {
   cursor: pointer;
-  color: #334155;
+  color: var(--sc-app-text-primary);
   font-size: 13px;
   font-weight: 600;
 }
@@ -2625,16 +2623,16 @@ function highlightParts(raw: string) {
 
 .empty {
   padding: 24px;
-  border: 1px dashed #cbd5e1;
+  border: 1px dashed var(--sc-app-border-strong);
   border-radius: 12px;
-  background: #f8fafc;
+  background: var(--sc-app-muted-bg);
   display: grid;
   gap: 10px;
 }
 
 .empty p {
   margin: 0;
-  color: #334155;
+  color: var(--sc-app-text-primary);
 }
 
 .empty-actions {
@@ -2644,23 +2642,23 @@ function highlightParts(raw: string) {
 }
 
 .empty-btn {
-  border: 1px solid #93c5fd;
+  border: 1px solid var(--sc-app-info-border);
   border-radius: 8px;
-  background: #eff6ff;
-  color: #1d4ed8;
+  background: var(--sc-app-info-bg);
+  color: var(--sc-app-info-text);
   padding: 6px 10px;
   cursor: pointer;
 }
 
 .empty-btn.secondary {
-  border-color: #cbd5e1;
-  background: #fff;
-  color: #475569;
+  border-color: var(--sc-app-border-strong);
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-secondary);
 }
 
 .empty-help {
   font-size: 12px;
-  color: #475569;
+  color: var(--sc-app-text-secondary);
 }
 
 .filters {
@@ -2669,8 +2667,8 @@ function highlightParts(raw: string) {
 }
 
 .status-panel {
-  border: 1px solid #fecaca;
-  background: #fff1f2;
+  border: 1px solid var(--sc-app-danger-border);
+  background: var(--sc-app-danger-bg);
   border-radius: 10px;
   padding: 10px 12px;
   display: grid;
@@ -2679,20 +2677,20 @@ function highlightParts(raw: string) {
 
 .status-title {
   margin: 0;
-  color: #9f1239;
+  color: var(--sc-app-danger-text);
   font-size: 13px;
   font-weight: 700;
 }
 
 .status-detail {
   margin: 0;
-  color: #7f1d1d;
+  color: var(--sc-app-danger-text);
   font-size: 12px;
 }
 
 .status-meta {
   margin: 0;
-  color: #9f1239;
+  color: var(--sc-app-danger-text);
   font-size: 11px;
 }
 
@@ -2702,26 +2700,26 @@ function highlightParts(raw: string) {
 }
 
 .status-actions button {
-  border: 1px solid #fda4af;
+  border: 1px solid var(--sc-app-danger-border);
   border-radius: 8px;
-  background: #fff;
-  color: #9f1239;
+  background: var(--sc-app-panel);
+  color: var(--sc-app-danger-text);
   padding: 4px 8px;
   cursor: pointer;
 }
 
 .today-actions {
-  border: 1px solid #bfdbfe;
+  border: 1px solid var(--sc-app-info-border);
   border-radius: 12px;
-  background: linear-gradient(135deg, #e0f2fe, #f8fafc);
+  background: var(--sc-app-info-bg);
   padding: 14px;
 }
 
 .risk-section,
 .ops-section {
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--sc-app-border);
   border-radius: 12px;
-  background: #fff;
+  background: var(--sc-app-panel);
   padding: 14px;
 }
 
@@ -2729,19 +2727,19 @@ function highlightParts(raw: string) {
 .ops-header h3 {
   margin: 0;
   font-size: 16px;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
 }
 
 .risk-header p,
 .ops-header p {
   margin: 4px 0 10px;
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
   font-size: 12px;
 }
 
 .risk-summary {
   margin: 4px 0 0;
-  color: #7f1d1d;
+  color: var(--sc-app-danger-text);
   font-size: 12px;
   font-weight: 600;
 }
@@ -2758,7 +2756,7 @@ function highlightParts(raw: string) {
 }
 
 .risk-card.glow {
-  box-shadow: 0 0 0 2px rgba(185, 28, 28, 0.18);
+  box-shadow: 0 0 0 2px var(--sc-app-danger-border);
 }
 
 .risk-card p {
@@ -2772,18 +2770,18 @@ function highlightParts(raw: string) {
 }
 
 .risk-red {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--sc-app-danger-bg);
+  color: var(--sc-app-danger-text);
 }
 
 .risk-amber {
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--sc-app-warning-bg);
+  color: var(--sc-app-warning-text);
 }
 
 .risk-green {
-  background: #dcfce7;
-  color: #166534;
+  background: var(--sc-app-success-bg);
+  color: var(--sc-app-success-text);
 }
 
 .risk-trend,
@@ -2794,7 +2792,7 @@ function highlightParts(raw: string) {
 .risk-subtitle {
   margin: 0 0 6px;
   font-size: 12px;
-  color: #475569;
+  color: var(--sc-app-text-secondary);
   font-weight: 600;
 }
 
@@ -2813,19 +2811,19 @@ function highlightParts(raw: string) {
 .trend-label,
 .trend-value {
   font-size: 12px;
-  color: #334155;
+  color: var(--sc-app-text-primary);
 }
 
 .trend-track {
   height: 8px;
   border-radius: 999px;
-  background: #e2e8f0;
+  background: var(--sc-app-border);
   overflow: hidden;
 }
 
 .trend-fill {
   height: 100%;
-  background: linear-gradient(90deg, #0ea5e9, #2563eb);
+  background: linear-gradient(90deg, var(--sc-semantic-surface-interactive), var(--sc-semantic-surface-interactive-hover));
 }
 
 .source-tags {
@@ -2837,10 +2835,10 @@ function highlightParts(raw: string) {
 .source-tag {
   font-size: 12px;
   border-radius: 999px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--sc-app-border-strong);
   padding: 3px 8px;
-  color: #334155;
-  background: #f8fafc;
+  color: var(--sc-app-text-primary);
+  background: var(--sc-app-muted-bg);
 }
 
 .risk-actions {
@@ -2859,21 +2857,21 @@ function highlightParts(raw: string) {
 
 .risk-details {
   margin-top: 10px;
-  border-top: 1px dashed #fecaca;
+  border-top: 1px dashed var(--sc-app-danger-border);
   padding-top: 8px;
 }
 
 .risk-details > summary {
   cursor: pointer;
-  color: #7c2d12;
+  color: var(--sc-app-warning-text);
   font-size: 12px;
   font-weight: 600;
 }
 
 .risk-action-item {
-  border: 1px solid #fecaca;
+  border: 1px solid var(--sc-app-danger-border);
   border-radius: 10px;
-  background: #fff7f7;
+  background: var(--sc-app-danger-bg);
   padding: 10px;
 }
 
@@ -2881,13 +2879,13 @@ function highlightParts(raw: string) {
   margin: 0;
   font-size: 13px;
   font-weight: 700;
-  color: #7f1d1d;
+  color: var(--sc-app-danger-text);
 }
 
 .risk-action-desc {
   margin: 4px 0 0;
   font-size: 12px;
-  color: #7c2d12;
+  color: var(--sc-app-warning-text);
 }
 
 .risk-action-buttons {
@@ -2898,10 +2896,10 @@ function highlightParts(raw: string) {
 }
 
 .risk-action-buttons button {
-  border: 1px solid #fca5a5;
+  border: 1px solid var(--sc-app-danger-border);
   border-radius: 8px;
-  background: #fff;
-  color: #991b1b;
+  background: var(--sc-app-panel);
+  color: var(--sc-app-danger-text);
   padding: 5px 8px;
   cursor: pointer;
 }
@@ -2913,9 +2911,9 @@ function highlightParts(raw: string) {
 }
 
 .advice-section {
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--sc-app-border);
   border-radius: 12px;
-  background: #ffffff;
+  background: var(--sc-app-panel);
   padding: 14px;
 }
 
@@ -2926,17 +2924,17 @@ function highlightParts(raw: string) {
 
 .advice-btn {
   margin-top: 8px;
-  border: 1px solid #93c5fd;
+  border: 1px solid var(--sc-app-info-border);
   border-radius: 8px;
-  background: #eff6ff;
-  color: #1e3a8a;
+  background: var(--sc-app-info-bg);
+  color: var(--sc-app-info-text);
   padding: 6px 10px;
   cursor: pointer;
 }
 
 .advice-item {
   border-radius: 10px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--sc-app-border);
   padding: 10px;
 }
 
@@ -2949,40 +2947,40 @@ function highlightParts(raw: string) {
 .advice-desc {
   margin: 4px 0 0;
   font-size: 12px;
-  color: #475569;
+  color: var(--sc-app-text-secondary);
 }
 
 .advice-red {
-  border-color: #fecaca;
-  background: #fff1f2;
+  border-color: var(--sc-app-danger-border);
+  background: var(--sc-app-danger-bg);
 }
 
 .advice-red .advice-title {
-  color: #b91c1c;
+  color: var(--sc-app-danger-text);
 }
 
 .advice-amber {
-  border-color: #fde68a;
-  background: #fffbeb;
+  border-color: var(--sc-app-warning-border);
+  background: var(--sc-app-warning-bg);
 }
 
 .advice-amber .advice-title {
-  color: #92400e;
+  color: var(--sc-app-warning-text);
 }
 
 .advice-green {
-  border-color: #bbf7d0;
-  background: #f0fdf4;
+  border-color: var(--sc-app-success-border);
+  background: var(--sc-app-success-bg);
 }
 
 .advice-green .advice-title {
-  color: #166534;
+  color: var(--sc-app-success-text);
 }
 
 .ops-card {
-  border: 1px solid #dbeafe;
+  border: 1px solid var(--sc-app-info-border);
   border-radius: 10px;
-  background: #f8fafc;
+  background: var(--sc-app-muted-bg);
   padding: 10px;
   display: grid;
   gap: 8px;
@@ -2991,18 +2989,18 @@ function highlightParts(raw: string) {
 .ops-card p {
   margin: 0;
   font-size: 12px;
-  color: #475569;
+  color: var(--sc-app-text-secondary);
 }
 
 .ops-card h4 {
   margin: 0;
   font-size: 28px;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
   line-height: 1;
 }
 
 .ops-card small {
-  color: #334155;
+  color: var(--sc-app-text-primary);
   font-size: 12px;
 }
 
@@ -3017,7 +3015,7 @@ function highlightParts(raw: string) {
 .compare-track {
   height: 8px;
   border-radius: 999px;
-  background: #e2e8f0;
+  background: var(--sc-app-border);
   overflow: hidden;
 }
 
@@ -3026,17 +3024,17 @@ function highlightParts(raw: string) {
 }
 
 .compare-fill.contract {
-  background: linear-gradient(90deg, #16a34a, #22c55e);
+  background: linear-gradient(90deg, var(--sc-app-success-text), var(--sc-semantic-state-success));
 }
 
 .compare-fill.output {
-  background: linear-gradient(90deg, #0284c7, #2563eb);
+  background: linear-gradient(90deg, var(--sc-semantic-surface-interactive), var(--sc-semantic-surface-interactive-hover));
 }
 
 .today-actions-header h3 {
   margin: 0;
   font-size: 16px;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
 }
 
 .today-actions-header {
@@ -3047,10 +3045,10 @@ function highlightParts(raw: string) {
 }
 
 .today-view-all {
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--sc-app-border-strong);
   border-radius: 8px;
-  background: #ffffff;
-  color: #334155;
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-primary);
   font-size: 12px;
   padding: 4px 8px;
   cursor: pointer;
@@ -3059,7 +3057,7 @@ function highlightParts(raw: string) {
 .today-actions-header p {
   margin: 4px 0 0;
   font-size: 12px;
-  color: #475569;
+  color: var(--sc-app-text-secondary);
 }
 
 .today-actions-grid {
@@ -3074,22 +3072,22 @@ function highlightParts(raw: string) {
 }
 
 .group-overview {
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--sc-app-border);
   border-radius: 12px;
-  background: #f8fafc;
+  background: var(--sc-app-muted-bg);
   padding: 14px;
 }
 
 .group-overview-header h3 {
   margin: 0;
   font-size: 16px;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
 }
 
 .group-overview-header p {
   margin: 4px 0 0;
   font-size: 12px;
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
 }
 
 .group-overview-grid {
@@ -3100,9 +3098,9 @@ function highlightParts(raw: string) {
 }
 
 .group-card {
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--sc-app-border-strong);
   border-radius: 10px;
-  background: #fff;
+  background: var(--sc-app-panel);
   padding: 10px 12px;
 }
 
@@ -3113,31 +3111,31 @@ function highlightParts(raw: string) {
 
 .group-card.module:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(30, 64, 175, 0.08);
+  box-shadow: var(--sc-app-shadow);
 }
 
 .group-title {
   margin: 0;
   font-size: 13px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
 }
 
 .group-meta {
   margin: 6px 0 0;
   font-size: 12px;
-  color: #475569;
+  color: var(--sc-app-text-secondary);
 }
 
 .group-meta.module-action {
-  color: #1d4ed8;
+  color: var(--sc-app-info-text);
   font-weight: 600;
 }
 
 .today-card {
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--sc-app-border-strong);
   border-radius: 10px;
-  background: #fff;
+  background: var(--sc-app-panel);
   padding: 12px;
   display: grid;
   gap: 8px;
@@ -3147,7 +3145,7 @@ function highlightParts(raw: string) {
   margin: 0;
   font-size: 14px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -3161,26 +3159,26 @@ function highlightParts(raw: string) {
 }
 
 .today-status-urgent {
-  background: #fee2e2;
-  color: #b91c1c;
+  background: var(--sc-app-danger-bg);
+  color: var(--sc-app-danger-text);
 }
 
 .today-status-normal {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: var(--sc-app-info-border);
+  color: var(--sc-app-info-text);
 }
 
 .today-desc {
   margin: 0;
   font-size: 12px;
-  color: #475569;
+  color: var(--sc-app-text-secondary);
   min-height: 34px;
 }
 
 .today-count {
   margin: 0;
   font-size: 12px;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
   font-weight: 600;
 }
 
@@ -3188,24 +3186,24 @@ function highlightParts(raw: string) {
   justify-self: start;
   border: 0;
   border-radius: 8px;
-  background: #0ea5e9;
-  color: #fff;
+  background: var(--sc-semantic-surface-interactive);
+  color: var(--sc-app-panel);
   padding: 6px 10px;
   cursor: pointer;
 }
 
 .today-btn:disabled {
-  background: #cbd5e1;
-  color: #475569;
+  background: var(--sc-app-border-strong);
+  color: var(--sc-app-text-secondary);
   cursor: not-allowed;
 }
 
 .search-input {
   width: 100%;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--sc-app-border-strong);
   border-radius: 10px;
   padding: 10px 12px;
-  background: #fff;
+  background: var(--sc-app-panel);
 }
 
 .search-row {
@@ -3214,10 +3212,10 @@ function highlightParts(raw: string) {
 }
 
 .search-clear-btn {
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--sc-app-border-strong);
   border-radius: 8px;
-  background: #fff;
-  color: #334155;
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-primary);
   padding: 0 10px;
   cursor: pointer;
   white-space: nowrap;
@@ -3225,7 +3223,7 @@ function highlightParts(raw: string) {
 
 .result-summary {
   margin: -2px 0 0;
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
   font-size: 12px;
 }
 
@@ -3239,29 +3237,29 @@ function highlightParts(raw: string) {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #334155;
+  color: var(--sc-app-text-primary);
   font-size: 13px;
 }
 
 .filter-tip {
   margin: -2px 0 0;
-  color: #475569;
+  color: var(--sc-app-text-secondary);
   font-size: 12px;
 }
 
 .state-filters button {
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--sc-app-border-strong);
   border-radius: 999px;
-  background: #fff;
-  color: #334155;
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-primary);
   padding: 6px 10px;
   cursor: pointer;
 }
 
 .state-filters button.active {
-  border-color: #1d4ed8;
-  background: #eff6ff;
-  color: #1e40af;
+  border-color: var(--sc-app-info-text);
+  background: var(--sc-app-info-bg);
+  color: var(--sc-app-info-text);
 }
 
 .state-filters button:disabled {
@@ -3276,18 +3274,18 @@ function highlightParts(raw: string) {
 }
 
 .reason-filters button {
-  border: 1px dashed #cbd5e1;
+  border: 1px dashed var(--sc-app-border-strong);
   border-radius: 999px;
-  background: #fff;
-  color: #334155;
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-primary);
   padding: 6px 10px;
   cursor: pointer;
 }
 
 .reason-filters button.active {
-  border-color: #b91c1c;
-  color: #b91c1c;
-  background: #fff1f2;
+  border-color: var(--sc-app-danger-text);
+  color: var(--sc-app-danger-text);
+  background: var(--sc-app-danger-bg);
 }
 
 .active-filters {
@@ -3297,19 +3295,19 @@ function highlightParts(raw: string) {
 }
 
 .filter-chip {
-  border: 1px solid #bfdbfe;
+  border: 1px solid var(--sc-app-info-border);
   border-radius: 999px;
   padding: 4px 10px;
   font-size: 12px;
-  color: #1e40af;
-  background: #eff6ff;
+  color: var(--sc-app-info-text);
+  background: var(--sc-app-info-bg);
   cursor: pointer;
 }
 
 .filter-chip-clear {
   border-style: dashed;
-  color: #475569;
-  background: #fff;
+  color: var(--sc-app-text-secondary);
+  background: var(--sc-app-panel);
 }
 
 .group-actions {
@@ -3318,10 +3316,10 @@ function highlightParts(raw: string) {
 }
 
 .group-actions button {
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--sc-app-border-strong);
   border-radius: 8px;
-  background: #fff;
-  color: #334155;
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-primary);
   padding: 6px 10px;
   cursor: pointer;
 }
@@ -3332,9 +3330,9 @@ function highlightParts(raw: string) {
 }
 
 .scene-group {
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--sc-app-border);
   border-radius: 12px;
-  background: #fff;
+  background: var(--sc-app-panel);
   padding: 10px;
 }
 
@@ -3350,7 +3348,7 @@ function highlightParts(raw: string) {
 .scene-toggle {
   border: 0;
   background: transparent;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -3360,8 +3358,8 @@ function highlightParts(raw: string) {
 
 .scene-count {
   border-radius: 999px;
-  background: #eff6ff;
-  color: #1d4ed8;
+  background: var(--sc-app-info-bg);
+  color: var(--sc-app-info-text);
   padding: 2px 8px;
   font-size: 12px;
 }
@@ -3369,7 +3367,7 @@ function highlightParts(raw: string) {
 .scene-summary {
   margin: 0;
   font-size: 12px;
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
 }
 
 .cards {
@@ -3387,8 +3385,8 @@ function highlightParts(raw: string) {
   display: flex;
   justify-content: space-between;
   gap: 10px;
-  border: 1px solid #e2e8f0;
-  background: #fff;
+  border: 1px solid var(--sc-app-border);
+  background: var(--sc-app-panel);
   border-radius: 12px;
   padding: 14px;
 }
@@ -3416,14 +3414,14 @@ function highlightParts(raw: string) {
 }
 
 .capability-state {
-  color: #1d4ed8;
-  border-color: #93c5fd;
-  background: #eff6ff;
+  color: var(--sc-app-info-text);
+  border-color: var(--sc-app-info-border);
+  background: var(--sc-app-info-bg);
 }
 
 .subtitle {
   margin: 0;
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
   font-size: 13px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3431,27 +3429,27 @@ function highlightParts(raw: string) {
 }
 
 .hit {
-  background: #fef08a;
+  background: var(--sc-app-warning-bg);
 }
 
 .hud-meta {
   margin: 6px 0 0;
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
   font-size: 11px;
   overflow-wrap: anywhere;
 }
 
 .lock-reason {
   margin: 6px 0 0;
-  color: #b91c1c;
+  color: var(--sc-app-danger-text);
   font-size: 12px;
 }
 
 .open-btn {
   align-self: center;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--sc-app-border-strong);
   border-radius: 8px;
-  background: #fff;
+  background: var(--sc-app-panel);
   padding: 6px 10px;
   cursor: pointer;
 }
@@ -3462,19 +3460,19 @@ function highlightParts(raw: string) {
 }
 
 .state-ready .state {
-  color: #166534;
+  color: var(--sc-app-success-text);
 }
 
 .state-preview .state {
-  color: #92400e;
+  color: var(--sc-app-warning-text);
 }
 
 .state-locked .state {
-  color: #b91c1c;
+  color: var(--sc-app-danger-text);
 }
 
 .is-focus {
-  box-shadow: 0 0 0 2px rgba(42, 146, 255, 0.28);
+  box-shadow: 0 0 0 2px var(--sc-app-info-border);
 }
 
 .is-secondary {
@@ -3482,14 +3480,14 @@ function highlightParts(raw: string) {
 }
 
 .zone-primary {
-  border-left: 3px solid #2a92ff;
+  border-left: 3px solid var(--sc-semantic-surface-interactive);
 }
 
 .zone-analysis {
-  border-left: 3px solid #6b7b8c;
+  border-left: 3px solid var(--sc-app-text-secondary);
 }
 
 .zone-support {
-  border-left: 3px solid #93a1b0;
+  border-left: 3px solid var(--sc-semantic-text-muted);
 }
 </style>

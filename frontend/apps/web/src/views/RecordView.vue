@@ -1085,7 +1085,7 @@ function handleProjectContextChanged(): void {
 .page {
   display: grid;
   gap: 16px;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
 }
 
 .header {
@@ -1100,30 +1100,30 @@ function handleProjectContextChanged(): void {
 }
 
 .meta {
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
   font-size: 14px;
 }
 
 .readonly-hint {
   margin-top: 6px;
-  color: #92400e;
-  background: #fffbeb;
-  border: 1px solid #fcd34d;
-  border-radius: 8px;
+  color: var(--sc-app-warning-text);
+  background: var(--sc-app-warning-bg);
+  border: 1px solid var(--sc-app-warning-border);
+  border-radius: var(--sc-component-panel-radius);
   padding: 6px 10px;
 }
 
 .action-feedback {
   margin-top: 6px;
-  color: #166534;
+  color: var(--sc-app-success-text);
 }
 
 .action-feedback.error {
-  color: #b91c1c;
+  color: var(--sc-app-danger-text);
 }
 
 .action-feedback .code {
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
 }
 
 .pill {
@@ -1132,37 +1132,37 @@ function handleProjectContextChanged(): void {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  background: #e2e8f0;
-  color: #1e293b;
+  background: var(--sc-app-subtle-bg);
+  color: var(--sc-app-text-secondary);
 }
 
 .pill.ok {
-  background: #dcfce7;
-  color: #14532d;
+  background: var(--sc-app-success-bg);
+  color: var(--sc-app-success-text);
 }
 
 .pill.warn {
-  background: #fef9c3;
-  color: #713f12;
+  background: var(--sc-app-warning-bg);
+  color: var(--sc-app-warning-text);
 }
 
 .pill.danger {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--sc-app-danger-bg);
+  color: var(--sc-app-danger-text);
 }
 
 .card {
-  background: white;
-  border-radius: 12px;
+  background: var(--sc-app-panel);
+  border-radius: var(--sc-component-panel-radius);
   padding: 24px;
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+  box-shadow: var(--sc-app-shadow);
   display: grid;
   gap: 12px;
 }
 
 .card.editing {
-  border: 1px dashed #94a3b8;
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
+  border: 1px dashed var(--sc-app-border-strong);
+  box-shadow: var(--sc-semantic-shadow-modal);
 }
 
 .record-l1 {
@@ -1172,36 +1172,36 @@ function handleProjectContextChanged(): void {
 }
 
 .l1-card {
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: var(--sc-component-panel-radius);
   padding: 10px;
-  background: #f8fafc;
+  background: var(--sc-app-muted-bg);
 }
 
 .l1-label {
   margin: 0;
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
   font-size: 12px;
 }
 
 .l1-value {
   margin: 6px 0 0;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
   font-size: 13px;
   font-weight: 600;
 }
 
 .record-next {
-  border: 1px dashed #cbd5e1;
-  border-radius: 10px;
+  border: 1px dashed var(--sc-app-border-strong);
+  border-radius: var(--sc-component-panel-radius);
   padding: 10px;
-  background: #fff;
+  background: var(--sc-app-panel);
 }
 
 .next-label {
   margin: 0;
   font-size: 12px;
-  color: #334155;
+  color: var(--sc-app-text-secondary);
   font-weight: 700;
 }
 
@@ -1217,24 +1217,26 @@ function handleProjectContextChanged(): void {
   justify-content: space-between;
   gap: 24px;
   padding-bottom: 8px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--sc-app-border);
 }
 
 .label {
   font-weight: 600;
-  color: #334155;
+  color: var(--sc-app-text-secondary);
 }
 
 .value {
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
 }
 
 .input {
   width: 100%;
   padding: 8px 10px;
-  border-radius: 8px;
-  border: 1px solid #cbd5f5;
+  border-radius: var(--sc-component-input-radius);
+  border: 1px solid var(--sc-app-border-strong);
   font-size: 14px;
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-primary);
 }
 
 .banner {
@@ -1244,17 +1246,17 @@ function handleProjectContextChanged(): void {
 }
 
 .banner.success {
-  background: #ecfeff;
-  border: 1px solid #a5f3fc;
-  color: #155e75;
+  background: var(--sc-app-info-bg);
+  border: 1px solid var(--sc-app-info-border);
+  color: var(--sc-app-info-text);
 }
 
 .ribbon {
   align-self: start;
   padding: 6px 12px;
   border-radius: 999px;
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--sc-app-danger-bg);
+  color: var(--sc-app-danger-text);
   font-size: 12px;
   font-weight: 600;
   width: fit-content;
@@ -1271,10 +1273,10 @@ function handleProjectContextChanged(): void {
   flex-direction: column;
   gap: 6px;
   padding: 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(148, 163, 184, 0.4);
-  background: #f8fafc;
-  color: #0f172a;
+  border-radius: var(--sc-component-panel-radius);
+  border: 1px solid var(--sc-app-border);
+  background: var(--sc-app-muted-bg);
+  color: var(--sc-app-text-primary);
   cursor: pointer;
 }
 
@@ -1287,10 +1289,10 @@ function handleProjectContextChanged(): void {
 }
 
 .fallback-fields {
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: var(--sc-component-panel-radius);
   padding: 12px;
-  background: #f8fafc;
+  background: var(--sc-app-muted-bg);
 }
 
 .fallback-fields ul {
@@ -1308,21 +1310,21 @@ function handleProjectContextChanged(): void {
 }
 
 .fallback-label {
-  color: #334155;
+  color: var(--sc-app-text-secondary);
   font-weight: 600;
 }
 
 .fallback-value {
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
   text-align: right;
 }
 
 .chatter {
   margin-top: 16px;
   padding: 16px;
-  border-radius: 12px;
-  border: 1px dashed rgba(148, 163, 184, 0.5);
-  background: #f8fafc;
+  border-radius: var(--sc-component-panel-radius);
+  border: 1px dashed var(--sc-app-border-strong);
+  background: var(--sc-app-muted-bg);
 }
 
 .chatter-grid {
@@ -1346,9 +1348,9 @@ function handleProjectContextChanged(): void {
 
 .chatter-item {
   padding: 10px;
-  border-radius: 10px;
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  background: #fff;
+  border-radius: var(--sc-component-panel-radius);
+  border: 1px solid var(--sc-app-border);
+  background: var(--sc-app-panel);
   display: grid;
   gap: 4px;
 }
@@ -1359,12 +1361,12 @@ function handleProjectContextChanged(): void {
 
 .chatter-meta {
   font-size: 12px;
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
 }
 
 .chatter-body {
   font-size: 13px;
-  color: #1f2937;
+  color: var(--sc-app-text-primary);
 }
 
 .chatter-compose {
@@ -1381,10 +1383,12 @@ function handleProjectContextChanged(): void {
 
 .chatter-compose textarea {
   min-height: 80px;
-  border-radius: 10px;
-  border: 1px solid rgba(148, 163, 184, 0.4);
+  border-radius: var(--sc-component-input-radius);
+  border: 1px solid var(--sc-app-border-strong);
   padding: 10px;
   font-size: 13px;
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-primary);
 }
 .chatter-upload {
   display: grid;
@@ -1404,14 +1408,14 @@ function handleProjectContextChanged(): void {
   display: grid;
   grid-template-columns: 56px 1fr;
   gap: 10px;
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  border-radius: 10px;
-  background: #fff;
+  border: 1px solid var(--sc-app-border);
+  border-radius: var(--sc-component-panel-radius);
+  background: var(--sc-app-panel);
   padding: 10px;
 }
 
 .timeline-type {
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--sc-app-border-strong);
   border-radius: 999px;
   text-align: center;
   font-size: 12px;
@@ -1421,21 +1425,21 @@ function handleProjectContextChanged(): void {
 }
 
 .timeline-type.type-message {
-  color: #1d4ed8;
-  background: #eff6ff;
-  border-color: #bfdbfe;
+  color: var(--sc-app-info-text);
+  background: var(--sc-app-info-bg);
+  border-color: var(--sc-app-info-border);
 }
 
 .timeline-type.type-attachment {
-  color: #166534;
-  background: #f0fdf4;
-  border-color: #bbf7d0;
+  color: var(--sc-app-success-text);
+  background: var(--sc-app-success-bg);
+  border-color: var(--sc-app-success-border);
 }
 
 .timeline-type.type-audit {
-  color: #7c2d12;
-  background: #fff7ed;
-  border-color: #fdba74;
+  color: var(--sc-app-warning-text);
+  background: var(--sc-app-warning-bg);
+  border-color: var(--sc-app-warning-border);
 }
 
 .timeline-main {
@@ -1444,16 +1448,16 @@ function handleProjectContextChanged(): void {
 button {
   padding: 10px 14px;
   border: none;
-  border-radius: 10px;
-  background: #111827;
-  color: white;
+  border-radius: var(--sc-component-button-radius);
+  background: var(--sc-semantic-surface-interactive);
+  color: var(--sc-semantic-text-on-interactive);
   cursor: pointer;
 }
 
 .ghost {
   background: transparent;
-  color: #111827;
-  border: 1px solid rgba(15, 23, 42, 0.12);
+  color: var(--sc-app-text-primary);
+  border: 1px solid var(--sc-app-border);
 }
 
 button:disabled {

@@ -40,10 +40,10 @@ defineProps<{
   width: 300px;
   padding: 14px 16px;
   border-radius: 12px;
-  background: rgba(15, 23, 42, 0.92);
-  color: #e2e8f0;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.4);
+  background: var(--sc-app-text-primary);
+  color: var(--sc-app-panel);
+  border: 1px solid var(--sc-app-border-strong);
+  box-shadow: var(--sc-semantic-shadow-modal);
   z-index: 10;
 }
 
@@ -52,7 +52,7 @@ defineProps<{
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: #f8fafc;
+  color: var(--sc-app-panel);
 }
 
 .grid {
@@ -68,9 +68,9 @@ defineProps<{
 }
 
 .action-btn {
-  border: 1px solid rgba(148, 163, 184, 0.4);
-  background: rgba(15, 23, 42, 0.45);
-  color: #e2e8f0;
+  border: 1px solid var(--sc-app-border-strong);
+  background: var(--sc-app-text-secondary);
+  color: var(--sc-app-panel);
   border-radius: 8px;
   padding: 4px 8px;
   font-size: 11px;
@@ -80,7 +80,7 @@ defineProps<{
 .message {
   margin: 0 0 8px;
   font-size: 11px;
-  color: #cbd5e1;
+  color: var(--sc-app-muted-bg);
 }
 
 .row {
@@ -92,7 +92,7 @@ defineProps<{
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #94a3b8;
+  color: var(--sc-app-border-strong);
 }
 
 .value {

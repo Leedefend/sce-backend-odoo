@@ -1,18 +1,52 @@
 {
   "surface": {
     "page": "{color.gray_50}",
-    "panel": "#ffffff",
-    "interactive": "{color.blue_500}"
+    "panel": "{color.white}",
+    "panel_muted": "{color.slate_100}",
+    "subtle": "{color.slate_100}",
+    "input": "{color.white}",
+    "hover": "{color.gray_50}",
+    "overlay": "rgba(15, 23, 42, 0.38)",
+    "interactive": "{color.blue_500}",
+    "interactive_hover": "{color.blue_600}"
+  },
+  "border": {
+    "default": "{color.slate_200}",
+    "strong": "{color.slate_300}",
+    "subtle": "{color.gray_200}",
+    "interactive": "{color.blue_200}"
   },
   "text": {
     "primary": "{color.gray_900}",
     "secondary": "{color.gray_600}",
-    "on_interactive": "#ffffff"
+    "muted": "{color.slate_400}",
+    "inverse": "{color.white}",
+    "on_interactive": "{color.white}"
+  },
+  "focus": {
+    "ring": "rgba(37, 99, 235, 0.16)"
+  },
+  "shadow": {
+    "panel": "{shadow.panel}",
+    "popover": "{shadow.popover}",
+    "modal": "{shadow.modal}"
   },
   "state": {
     "success": "{color.green_500}",
+    "success_bg": "{color.green_50}",
+    "success_border": "{color.green_100}",
+    "success_text": "{color.green_700}",
     "warning": "{color.amber_500}",
+    "warning_bg": "{color.amber_50}",
+    "warning_border": "{color.amber_100}",
+    "warning_text": "{color.amber_700}",
     "danger": "{color.red_500}",
-    "info": "{color.blue_500}"
+    "danger_bg": "{color.red_50}",
+    "danger_border": "{color.red_100}",
+    "danger_text": "{color.red_700}",
+    "info": "{color.blue_500}",
+    "info_bg": "{color.blue_50}",
+    "info_border": "{color.blue_200}",
+    "info_text": "{color.blue_600}"
   }
 }

@@ -1993,6 +1993,10 @@ verify.frontend.typecheck.strict: guard.prod.forbid
 verify.frontend.lint.src: guard.prod.forbid
 	@pnpm -C frontend/apps/web lint:src
 
+.PHONY: verify.frontend.style_system.guard
+verify.frontend.style_system.guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_style_system_guard.py
+
 verify.frontend.relation_entry.contract_guard: guard.prod.forbid
 	@python3 scripts/verify/relation_entry_contract_guard.py
 

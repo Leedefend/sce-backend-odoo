@@ -68,7 +68,7 @@ async function executeHeaderAction(actionKey: string) {
   display: grid;
   gap: 12px;
   place-items: center;
-  background: #f8fafc;
+  background: var(--sc-app-muted-bg);
   font-family: "IBM Plex Sans", system-ui, sans-serif;
 }
 
@@ -81,18 +81,18 @@ async function executeHeaderAction(actionKey: string) {
 
 .ghost {
   padding: 8px 10px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--sc-app-border-strong);
   border-radius: 8px;
-  background: #fff;
-  color: #111827;
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-primary);
   cursor: pointer;
 }
 
 .card {
   width: min(520px, 92vw);
-  background: white;
+  background: var(--sc-app-panel);
   padding: 32px;
   border-radius: 16px;
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
+  box-shadow: var(--sc-semantic-shadow-modal);
 }
 </style>
