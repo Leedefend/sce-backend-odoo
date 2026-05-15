@@ -148,6 +148,52 @@ TARGETS = [
         "target_model": "sc.receipt.income",
         "target_domain": [("source_kind", "=", "receipt_income"), ("receipt_type", "=", "到款确认表")],
     },
+    {
+        "key": "payment_execution_cost_ledger",
+        "source_model": "sc.payment.execution",
+        "source_domain": [
+            ("project_id", "!=", False),
+            ("paid_amount", ">", 0),
+            ("state", "not in", ["draft", "cancel"]),
+        ],
+        "target_model": "project.cost.ledger",
+        "target_domain": [("source_model", "=", "sc.payment.execution")],
+    },
+    {
+        "key": "expense_claim_cost_ledger",
+        "source_model": "sc.expense.claim",
+        "source_domain": [
+            ("project_id", "!=", False),
+            ("direction", "=", "outflow"),
+            ("amount", ">", 0),
+            ("state", "not in", ["draft", "cancel"]),
+        ],
+        "target_model": "project.cost.ledger",
+        "target_domain": [("source_model", "=", "sc.expense.claim")],
+    },
+    {
+        "key": "subcontract_settlement_cost_ledger",
+        "source_model": "sc.subcontract.settlement",
+        "source_domain": [
+            ("project_id", "!=", False),
+            ("amount_total", ">", 0),
+            ("state", "not in", ["draft", "cancel"]),
+        ],
+        "target_model": "project.cost.ledger",
+        "target_domain": [("source_model", "=", "sc.subcontract.settlement")],
+    },
+    {
+        "key": "settlement_order_cost_ledger",
+        "source_model": "sc.settlement.order",
+        "source_domain": [
+            ("project_id", "!=", False),
+            ("settlement_type", "=", "out"),
+            ("amount_total", ">", 0),
+            ("state", "not in", ["draft", "cancel"]),
+        ],
+        "target_model": "project.cost.ledger",
+        "target_domain": [("source_model", "=", "sc.settlement.order")],
+    },
 ]
 
 items = []
