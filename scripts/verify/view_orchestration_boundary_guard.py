@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""Guard business form-view orchestration boundaries."""
+"""Guard business view orchestration boundaries."""
 
 from __future__ import annotations
 
@@ -8,14 +8,14 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-CONTRACT = ROOT / "addons/smart_core/core/form_view_orchestration_contract.py"
+CONTRACT = ROOT / "addons/smart_core/core/view_orchestration_contract.py"
 NATIVE_PARSE = ROOT / "addons/smart_core/app_config_engine/services/native_parse_service.py"
 FALLBACK_PARSE = ROOT / "addons/smart_core/app_config_engine/services/parse_fallback_service.py"
 ODOO_PARSER = ROOT / "addons/smart_core/app_config_engine/services/view_Parser/contract_Parser.py"
 V2_ASSEMBLER = ROOT / "addons/smart_core/core/unified_page_contract_v2_assembler.py"
 FIELD_HANDLER = ROOT / "addons/smart_core/handlers/form_field_configuration.py"
 FIELD_POLICY = ROOT / "addons/smart_core/model/ui_form_field_policy.py"
-DOC = ROOT / "docs/audit/native/form_view_orchestration_boundary_20260515.md"
+DOC = ROOT / "docs/audit/native/view_orchestration_boundary_20260515.md"
 
 
 def _read(path: Path) -> str:
@@ -62,17 +62,33 @@ def main() -> int:
         )
 
     _assert(
-        "business_form_orchestration" in contract
+        "business_view_orchestration" in contract
         and "PARSER_FORBIDDEN_RESPONSIBILITIES" in contract
-        and "FORM_VIEW_ORCHESTRATOR_INPUTS" in contract,
-        "form view orchestration boundary contract must name inputs and forbidden parser responsibilities",
+        and "VIEW_ORCHESTRATOR_INPUTS" in contract
+        and "VIEW_TYPE_OUTPUT_SURFACES" in contract,
+        "view orchestration boundary contract must name inputs, outputs, and forbidden parser responsibilities",
         errors,
     )
     _assert(
-        "industry_form_view_template" in contract and "customer_form_view_profile" in contract,
+        "industry_view_template" in contract and "customer_view_profile" in contract,
         "orchestration boundary must include industry template and customer profile authorities",
         errors,
     )
+    for view_type in (
+        "form",
+        "tree",
+        "list",
+        "kanban",
+        "search",
+        "pivot",
+        "graph",
+        "calendar",
+        "gantt",
+        "activity",
+        "dashboard",
+    ):
+        _assert(f'"{view_type}"' in contract, f"contract missing view type: {view_type}", errors)
+        _assert(view_type in doc, f"boundary audit doc missing view type: {view_type}", errors)
 
     semantic_body = _function_body(v2, "_apply_semantic_container_annotation")
     _assert(
@@ -102,22 +118,29 @@ def main() -> int:
     )
 
     for phrase in (
-        "缺失的是一个独立的表单业务编排层",
+        "缺失的是一个独立的业务视图编排层",
+        "表单只是最容易暴露问题的视图类型，不是边界本身",
         "原生视图解析层",
-        "表单业务编排层",
+        "业务视图编排层",
         "契约投影层",
-        "ui.form.view.template",
-        "ui.form.view.profile",
-        "FormViewOrchestrator.compose",
+        "ui.view.template",
+        "ui.view.profile",
+        "ViewOrchestrator.compose",
+        "business_view_orchestration",
     ):
         _assert(phrase in doc, f"boundary audit doc missing phrase: {phrase}", errors)
 
+    legacy_form_doc = ROOT / "docs/audit/native/form_view_orchestration_boundary_20260515.md"
+    legacy_form_contract = ROOT / "addons/smart_core/core/form_view_orchestration_contract.py"
+    _assert(not legacy_form_doc.exists(), "legacy form-only orchestration audit doc must not remain authoritative", errors)
+    _assert(not legacy_form_contract.exists(), "legacy form-only orchestration contract must not remain authoritative", errors)
+
     if errors:
-        print("[form_view_orchestration_boundary_guard] FAIL")
+        print("[view_orchestration_boundary_guard] FAIL")
         for error in errors:
             print(f" - {error}")
         return 1
-    print("[form_view_orchestration_boundary_guard] PASS")
+    print("[view_orchestration_boundary_guard] PASS")
     return 0
 
 
