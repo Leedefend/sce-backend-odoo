@@ -100,7 +100,13 @@ def _should_auto_refresh_missing_assets(env) -> bool:
         raw = ""
     if _text(raw):
         return _text(raw).lower() in {"1", "true", "yes", "on"}
-    return False
+    runtime_env = _text(
+        os.environ.get("ENV")
+        or os.environ.get("APP_ENV")
+        or os.environ.get("ODOO_ENV")
+        or os.environ.get("SC_ENV")
+    ).lower()
+    return runtime_env in {"dev", "test", "local", "ci"}
 
 
 def _auto_refresh_missing_assets(

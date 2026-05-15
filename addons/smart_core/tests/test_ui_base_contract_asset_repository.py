@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 import importlib.util
+import os
 import sys
 import types
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 
@@ -38,6 +40,34 @@ target = _load_module(
 
 
 class TestUiBaseContractAssetRepository(unittest.TestCase):
+    def test_auto_refresh_missing_assets_defaults_on_for_dev_and_off_for_prod(self):
+        class _Config:
+            def sudo(self):
+                return self
+
+            def get_param(self, key):
+                return ""
+
+        class _Env:
+            def __getitem__(self, item):
+                if item != "ir.config_parameter":
+                    raise KeyError(item)
+                return _Config()
+
+        env = _Env()
+        with patch.dict(os.environ, {"ENV": "dev"}, clear=True):
+            self.assertTrue(target._should_auto_refresh_missing_assets(env))
+        with patch.dict(os.environ, {"ENV": "test"}, clear=True):
+            self.assertTrue(target._should_auto_refresh_missing_assets(env))
+        with patch.dict(os.environ, {"ENV": "prod"}, clear=True):
+            self.assertFalse(target._should_auto_refresh_missing_assets(env))
+
+    def test_auto_refresh_missing_assets_explicit_override_wins(self):
+        with patch.dict(os.environ, {"ENV": "prod", "SC_UI_BASE_ASSET_AUTO_REFRESH_MISSING": "1"}, clear=True):
+            self.assertTrue(target._should_auto_refresh_missing_assets(None))
+        with patch.dict(os.environ, {"ENV": "dev", "SC_UI_BASE_ASSET_AUTO_REFRESH_MISSING": "0"}, clear=True):
+            self.assertFalse(target._should_auto_refresh_missing_assets(None))
+
     def test_build_scene_asset_map_batches_lookup_and_preserves_scope_priority(self):
         class _Company:
             def __init__(self, record_id):
