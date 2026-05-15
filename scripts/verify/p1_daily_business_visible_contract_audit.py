@@ -441,9 +441,30 @@ def _extract_form_signals(data: dict[str, Any]) -> dict[str, Any]:
             label = _norm(name)
         if label and label not in labels:
             labels.append(label)
+    section_labels: list[str] = []
+
+    def collect_section_labels(node: Any) -> None:
+        if isinstance(node, dict):
+            for key in ("label", "string", "title"):
+                value = _norm(node.get(key))
+                if value and value not in section_labels:
+                    section_labels.append(value)
+            attrs = node.get("attributes")
+            if isinstance(attrs, dict):
+                value = _norm(attrs.get("string") or attrs.get("label") or attrs.get("title"))
+                if value and value not in section_labels:
+                    section_labels.append(value)
+            for value in node.values():
+                collect_section_labels(value)
+        elif isinstance(node, list):
+            for item in node:
+                collect_section_labels(item)
+
+    collect_section_labels(form.get("layout"))
     form_json = json.dumps(form, ensure_ascii=False, sort_keys=True)
     return {
         "field_labels": labels,
+        "section_labels": section_labels,
         "has_attachment_signal": any(token in form_json for token in ("attachment", "附件", "message_main_attachment_id")),
         "has_chatter_signal": any(token in form_json for token in ("chatter", "日志", "message_ids", "activity_ids")),
     }
@@ -480,11 +501,21 @@ def _audit_entry(intent_url: str, token: str, entry: dict[str, Any]) -> dict[str
     columns = _extract_columns(tree_data) if selected else []
     current_labels = [row["label"] for row in columns]
     search_labels = _extract_search_labels(tree_data) if selected else []
-    form_signals = _extract_form_signals(form_data) if selected else {"field_labels": [], "has_attachment_signal": False, "has_chatter_signal": False}
+    form_signals = _extract_form_signals(form_data) if selected else {
+        "field_labels": [],
+        "section_labels": [],
+        "has_attachment_signal": False,
+        "has_chatter_signal": False,
+    }
     missing_list = _missing(expected_list, current_labels)
     missing_filters = _missing(expected_filters, search_labels)
     missing_form_fields = _missing(expected_form_fields, form_signals["field_labels"])
-    missing_sections = _missing(expected_form_sections, form_signals["field_labels"])
+    form_visible_labels = list(form_signals["section_labels"])
+    for label in form_signals["field_labels"]:
+        if label not in form_visible_labels:
+            form_visible_labels.append(label)
+    missing_sections = _missing(expected_form_sections, form_visible_labels)
+    has_gap = bool(missing_list or missing_filters or missing_form_fields or missing_sections)
     return {
         "id": entry["id"],
         "name": entry["name"],
@@ -506,7 +537,7 @@ def _audit_entry(intent_url: str, token: str, entry: dict[str, Any]) -> dict[str
         "missing_form_sections": missing_sections,
         "has_attachment_signal": bool(form_signals["has_attachment_signal"]),
         "has_chatter_signal": bool(form_signals["has_chatter_signal"]),
-        "status": "no_contract" if not selected else "aligned" if not missing_list and not missing_filters else "gap",
+        "status": "no_contract" if not selected else "aligned" if not has_gap else "gap",
     }
 
 
@@ -523,13 +554,16 @@ def _write_reports(payload: dict[str, Any]) -> None:
         f"- aligned_count: {payload['summary']['aligned_count']}",
         f"- gap_count: {payload['summary']['gap_count']}",
         f"- missing_list_field_count: {payload['summary']['missing_list_field_count']}",
+        f"- missing_filter_count: {payload['summary']['missing_filter_count']}",
+        f"- missing_form_field_count: {payload['summary']['missing_form_field_count']}",
+        f"- missing_form_section_count: {payload['summary']['missing_form_section_count']}",
         "",
-        "| id | old entry | domain | selected model | status | missing list fields | missing filters | attachment | chatter |",
-        "|---|---|---|---|---|---:|---:|---|---|",
+        "| id | old entry | domain | selected model | status | missing list fields | missing filters | missing form fields | missing form sections | attachment | chatter |",
+        "|---|---|---|---|---|---:|---:|---:|---:|---|---|",
     ]
     for row in payload["rows"]:
         lines.append(
-            "| {id} | {name} | {domain} | {model} | {status} | {missing_list} | {missing_filters} | {attach} | {chatter} |".format(
+            "| {id} | {name} | {domain} | {model} | {status} | {missing_list} | {missing_filters} | {missing_form_fields} | {missing_form_sections} | {attach} | {chatter} |".format(
                 id=row["id"],
                 name=row["name"],
                 domain=row["domain"],
@@ -537,6 +571,8 @@ def _write_reports(payload: dict[str, Any]) -> None:
                 status=row["status"],
                 missing_list=len(row["missing_list_fields"]),
                 missing_filters=len(row["missing_filters"]),
+                missing_form_fields=len(row["missing_form_fields"]),
+                missing_form_sections=len(row["missing_form_sections"]),
                 attach="Y" if row["has_attachment_signal"] else "N",
                 chatter="Y" if row["has_chatter_signal"] else "N",
             )
@@ -552,6 +588,10 @@ def _write_reports(payload: dict[str, Any]) -> None:
             lines.append(f"- missing_list_fields: {', '.join(missing)}")
         if row["missing_filters"]:
             lines.append(f"- missing_filters: {', '.join(row['missing_filters'])}")
+        if row["missing_form_fields"]:
+            lines.append(f"- missing_form_fields: {', '.join(row['missing_form_fields'])}")
+        if row["missing_form_sections"]:
+            lines.append(f"- missing_form_sections: {', '.join(row['missing_form_sections'])}")
         if row["status"] == "no_contract":
             errors = [f"{item['model']}({item['status']} {item['error']})" for item in row["attempts"]]
             lines.append(f"- attempts: {', '.join(errors)}")
@@ -572,6 +612,8 @@ def main() -> int:
         "gap_count": len([row for row in rows if row["status"] == "gap"]),
         "missing_list_field_count": sum(len(row["missing_list_fields"]) for row in rows),
         "missing_filter_count": sum(len(row["missing_filters"]) for row in rows),
+        "missing_form_field_count": sum(len(row["missing_form_fields"]) for row in rows),
+        "missing_form_section_count": sum(len(row["missing_form_sections"]) for row in rows),
     }
     payload = {
         "ok": True,
@@ -584,6 +626,9 @@ def main() -> int:
     _write_reports(payload)
     print(str(REPORT_MD))
     print(str(REPORT_JSON))
+    if summary["no_contract_count"] or summary["gap_count"]:
+        print("[p1_daily_business_visible_contract_audit] FAIL")
+        return 1
     print("[p1_daily_business_visible_contract_audit] PASS")
     return 0
 

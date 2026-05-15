@@ -290,6 +290,23 @@
         </field>
     </record>
 
+    <record id="view_p1_daily_business_visible_sc_fund_account_form" model="ir.ui.view">
+        <field name="name">sc.fund.account.p1.daily.business.visible.form</field>
+        <field name="model">sc.fund.account</field>
+        <field name="inherit_id" ref="view_sc_fund_account_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet" position="inside">
+                <group string="P1 账户可见字段">
+                    <field name="p1_visible_f63da5b6950e" string="账号类型" readonly="1"/>
+                    <field name="p1_visible_0b959af0bd69" string="开户账号" readonly="1"/>
+                    <field name="p1_visible_256ffb1df96a" string="是否默认账号" readonly="1"/>
+                    <field name="p1_visible_f462c3c4fc87" string="是否过渡账户" readonly="1"/>
+                    <field name="p1_visible_c9bb0821eed9" string="排序号" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
     <record id="view_p1_daily_business_visible_sc_material_purchase_request_tree" model="ir.ui.view">
         <field name="name">sc.material.purchase.request.p1.daily.business.visible.tree</field>
         <field name="model">sc.material.purchase.request</field>
@@ -678,6 +695,346 @@
                 <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
                 <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
                 <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_construction_diary_form" model="ir.ui.view">
+        <field name="name">sc.construction.diary.p1.daily.business.visible.form</field>
+        <field name="model">sc.construction.diary</field>
+        <field name="inherit_id" ref="view_sc_construction_diary_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet" position="inside">
+                <group string="P1 施工日志可见字段">
+                    <field name="p1_visible_d3bea9efb1b9" string="温度" readonly="1"/>
+                    <field name="p1_visible_364d38fc2b37" string="上午气候" readonly="1"/>
+                    <field name="p1_visible_853e6ba25fc5" string="下午气候" readonly="1"/>
+                    <field name="p1_visible_bd3c202b3612" string="当日施工内容" readonly="1"/>
+                    <field name="p1_visible_b18125817eb9" string="操作负责人" readonly="1"/>
+                    <field name="p1_visible_df39195d3c5c" string="质量情况" readonly="1"/>
+                    <field name="p1_visible_f11e4f6f4dbe" string="施工员" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_financing_loan_form_sections" model="ir.ui.view">
+        <field name="name">sc.financing.loan.p1.daily.business.visible.form.sections</field>
+        <field name="model">sc.financing.loan</field>
+        <field name="inherit_id" ref="view_sc_financing_loan_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet" position="inside">
+                <group string="P1 旧系统表单分区">
+                    <separator string="基本信息"/>
+                    <separator string="收支账户信息"/>
+                    <separator string="其它信息"/>
+                    <separator string="还款信息"/>
+                    <separator string="银行"/>
+                    <separator string="利率"/>
+                    <separator string="期限"/>
+                    <separator string="贷款信息"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_payment_request_form_sections" model="ir.ui.view">
+        <field name="name">payment.request.p1.daily.business.visible.form.sections</field>
+        <field name="model">payment.request</field>
+        <field name="inherit_id" ref="view_payment_request_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet" position="inside">
+                <group string="P1 旧系统表单分区">
+                    <separator string="申请信息"/>
+                    <separator string="关联单据"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_tax_deduction_registration_form_sections" model="ir.ui.view">
+        <field name="name">sc.tax.deduction.registration.p1.daily.business.visible.form.sections</field>
+        <field name="model">sc.tax.deduction.registration</field>
+        <field name="inherit_id" ref="view_sc_tax_deduction_registration_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet" position="inside">
+                <group string="P1 旧系统表单分区">
+                    <separator string="基本信息"/>
+                    <separator string="扣款信息"/>
+                    <separator string="扣款实缴信息"/>
+                    <separator string="扣款退回信息"/>
+                    <separator string="开票详情"/>
+                    <separator string="预缴税款详情"/>
+                    <separator string="抵扣登记信息"/>
+                    <separator string="抵扣详情"/>
+                    <separator string="发票信息"/>
+                    <separator string="材料信息"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_payment_execution_form_sections" model="ir.ui.view">
+        <field name="name">sc.payment.execution.p1.daily.business.visible.form.sections</field>
+        <field name="model">sc.payment.execution</field>
+        <field name="inherit_id" ref="view_sc_payment_execution_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet" position="inside">
+                <group string="P1 旧系统表单分区">
+                    <separator string="基本信息"/>
+                    <separator string="付款信息"/>
+                    <separator string="关联单据"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_fund_account_operation_form_sections" model="ir.ui.view">
+        <field name="name">sc.fund.account.operation.p1.daily.business.visible.form.sections</field>
+        <field name="model">sc.fund.account.operation</field>
+        <field name="inherit_id" ref="view_sc_fund_account_operation_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet" position="inside">
+                <group string="P1 旧系统表单分区">
+                    <separator string="基本信息"/>
+                    <separator string="详情"/>
+                    <separator string="项目间借贷"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_receipt_income_form_sections" model="ir.ui.view">
+        <field name="name">sc.receipt.income.p1.daily.business.visible.form.sections</field>
+        <field name="model">sc.receipt.income</field>
+        <field name="inherit_id" ref="view_sc_receipt_income_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet" position="inside">
+                <group string="P1 旧系统表单分区">
+                    <separator string="工程款确认"/>
+                    <separator string="代扣代缴明细"/>
+                    <separator string="施工队明细"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_legacy_fund_daily_snapshot_fact_form_sections" model="ir.ui.view">
+        <field name="name">sc.legacy.fund.daily.snapshot.fact.p1.daily.business.visible.form.sections</field>
+        <field name="model">sc.legacy.fund.daily.snapshot.fact</field>
+        <field name="inherit_id" ref="view_sc_legacy_fund_daily_snapshot_fact_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet" position="inside">
+                <group string="P1 旧系统表单分区">
+                    <separator string="日报时段"/>
+                    <separator string="账户余额合计"/>
+                    <separator string="资金详情"/>
+                    <separator string="附件"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_invoice_registration_form_sections" model="ir.ui.view">
+        <field name="name">sc.invoice.registration.p1.daily.business.visible.form.sections</field>
+        <field name="model">sc.invoice.registration</field>
+        <field name="inherit_id" ref="view_sc_invoice_registration_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet" position="inside">
+                <group string="P1 旧系统表单分区">
+                    <separator string="发票标题"/>
+                    <separator string="基本信息"/>
+                    <separator string="受票方信息"/>
+                    <separator string="开票方信息"/>
+                    <separator string="本次开票信息"/>
+                    <separator string="相关数据"/>
+                    <separator string="开票详情"/>
+                    <separator string="发票实开详情"/>
+                    <separator string="发票金额"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_material_purchase_request_form_sections" model="ir.ui.view">
+        <field name="name">sc.material.purchase.request.p1.daily.business.visible.form.sections</field>
+        <field name="model">sc.material.purchase.request</field>
+        <field name="inherit_id" ref="view_sc_material_purchase_request_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet" position="inside">
+                <group string="P1 旧系统表单分区">
+                    <separator string="基本信息"/>
+                    <separator string="材料信息"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_material_inbound_form_sections" model="ir.ui.view">
+        <field name="name">sc.material.inbound.p1.daily.business.visible.form.sections</field>
+        <field name="model">sc.material.inbound</field>
+        <field name="inherit_id" ref="view_sc_material_inbound_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet" position="inside">
+                <group string="P1 旧系统表单分区">
+                    <separator string="基本信息"/>
+                    <separator string="材料信息"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_labor_request_form_sections" model="ir.ui.view">
+        <field name="name">sc.labor.request.p1.daily.business.visible.form.sections</field>
+        <field name="model">sc.labor.request</field>
+        <field name="inherit_id" ref="view_sc_labor_request_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet" position="inside">
+                <group string="P1 旧系统表单分区">
+                    <separator string="施工单位"/>
+                    <separator string="合同信息"/>
+                    <separator string="工种信息"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_labor_usage_form_sections" model="ir.ui.view">
+        <field name="name">sc.labor.usage.p1.daily.business.visible.form.sections</field>
+        <field name="model">sc.labor.usage</field>
+        <field name="inherit_id" ref="view_sc_labor_usage_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet" position="inside">
+                <group string="P1 旧系统表单分区">
+                    <separator string="基本信息"/>
+                    <separator string="工种/表单信息"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_labor_settlement_form_sections" model="ir.ui.view">
+        <field name="name">sc.labor.settlement.p1.daily.business.visible.form.sections</field>
+        <field name="model">sc.labor.settlement</field>
+        <field name="inherit_id" ref="view_sc_labor_settlement_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet" position="inside">
+                <group string="P1 旧系统表单分区">
+                    <separator string="基本信息"/>
+                    <separator string="汇总信息"/>
+                    <separator string="方单详情"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_subcontract_register_form_sections" model="ir.ui.view">
+        <field name="name">sc.subcontract.register.p1.daily.business.visible.form.sections</field>
+        <field name="model">sc.subcontract.register</field>
+        <field name="inherit_id" ref="view_sc_subcontract_register_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet" position="inside">
+                <group string="P1 旧系统表单分区">
+                    <separator string="基本信息"/>
+                    <separator string="合同清单"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_subcontract_request_form_sections" model="ir.ui.view">
+        <field name="name">sc.subcontract.request.p1.daily.business.visible.form.sections</field>
+        <field name="model">sc.subcontract.request</field>
+        <field name="inherit_id" ref="view_sc_subcontract_request_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet" position="inside">
+                <group string="P1 旧系统表单分区">
+                    <separator string="基本信息"/>
+                    <separator string="方单详情"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_subcontract_settlement_form_sections" model="ir.ui.view">
+        <field name="name">sc.subcontract.settlement.p1.daily.business.visible.form.sections</field>
+        <field name="model">sc.subcontract.settlement</field>
+        <field name="inherit_id" ref="view_sc_subcontract_settlement_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet" position="inside">
+                <group string="P1 旧系统表单分区">
+                    <separator string="基本信息"/>
+                    <separator string="汇总信息"/>
+                    <separator string="方单详情"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_equipment_request_form_sections" model="ir.ui.view">
+        <field name="name">sc.equipment.request.p1.daily.business.visible.form.sections</field>
+        <field name="model">sc.equipment.request</field>
+        <field name="inherit_id" ref="view_sc_equipment_request_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet" position="inside">
+                <group string="P1 旧系统表单分区">
+                    <separator string="机械设备明细"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_equipment_usage_form_sections" model="ir.ui.view">
+        <field name="name">sc.equipment.usage.p1.daily.business.visible.form.sections</field>
+        <field name="model">sc.equipment.usage</field>
+        <field name="inherit_id" ref="view_sc_equipment_usage_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet" position="inside">
+                <group string="P1 旧系统表单分区">
+                    <separator string="基本信息"/>
+                    <separator string="表单信息"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_equipment_settlement_form_sections" model="ir.ui.view">
+        <field name="name">sc.equipment.settlement.p1.daily.business.visible.form.sections</field>
+        <field name="model">sc.equipment.settlement</field>
+        <field name="inherit_id" ref="view_sc_equipment_settlement_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet" position="inside">
+                <group string="P1 旧系统表单分区">
+                    <separator string="机械设备租赁清单"/>
+                    <separator string="结算费用清单"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_material_rental_order_form_sections" model="ir.ui.view">
+        <field name="name">sc.material.rental.order.p1.daily.business.visible.form.sections</field>
+        <field name="model">sc.material.rental.order</field>
+        <field name="inherit_id" ref="view_sc_material_rental_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet" position="inside">
+                <group string="P1 旧系统表单分区">
+                    <separator string="租赁材料清单"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_material_rental_settlement_form_sections" model="ir.ui.view">
+        <field name="name">sc.material.rental.settlement.p1.daily.business.visible.form.sections</field>
+        <field name="model">sc.material.rental.settlement</field>
+        <field name="inherit_id" ref="view_sc_material_rental_settlement_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet" position="inside">
+                <group string="P1 旧系统表单分区">
+                    <separator string="结算材料租赁清单"/>
+                    <separator string="结算费用清单"/>
+                </group>
             </xpath>
         </field>
     </record>

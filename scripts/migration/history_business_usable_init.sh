@@ -95,6 +95,7 @@ run_odoo_script document_borrow_projection "$ROOT_DIR/scripts/migration/fresh_db
 run_odoo_script document_admin_archive_projection "$ROOT_DIR/scripts/migration/fresh_db_document_admin_archive_projection_write.py"
 run_odoo_script business_user_priority_menu_plan "$ROOT_DIR/scripts/migration/business_user_priority_menu_plan_write.py"
 run_partner_role_alignment
+run_odoo_script formal_entry_metadata_surface "$ROOT_DIR/scripts/ops/formal_entry_metadata_surface_write.py"
 run_odoo_script formal_projection_refresh_probe "$ROOT_DIR/scripts/verify/formal_projection_refresh_probe.py"
 run_odoo_script formal_business_backfill_audit_probe "$ROOT_DIR/scripts/verify/formal_business_backfill_audit_probe.py"
 run_odoo_script business_usable_probe "$ROOT_DIR/scripts/migration/history_business_usable_probe.py"
