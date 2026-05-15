@@ -1,7 +1,7 @@
 # Product Delivery Module-9 Smoke
 
-- module_count: 9
-- pass_count: 9
+- module_count: 10
+- pass_count: 10
 - failed_count: 0
 - error_count: 0
 
@@ -10,6 +10,7 @@
 | 项目立项与台账 (project_initiation_ledger) | PASS | - |
 | 项目执行与任务协同 (project_execution_collab) | PASS | - |
 | 采购与物资协同 (purchase_material_collab) | PASS | - |
+| 现场执行与质量安全 (site_execution_quality_safety) | PASS | - |
 | 付款申请与审批 (payment_request_approval) | PASS | - |
 | 资金与结算台账 (funding_settlement_ledger) | PASS | - |
 | 成本预算与利润分析 (cost_budget_profit) | PASS | - |
