@@ -1,13 +1,47 @@
 {
   "button": {
+    "height_sm": 30,
     "height_md": 36,
     "radius": "{radius.md}",
     "padding_x": "{space.lg}",
+    "padding_y": "{space.sm}",
     "font_size": "{font.size_md}"
   },
+  "panel": {
+    "radius": "{radius.md}",
+    "padding": "{space.lg}",
+    "border_width": 1
+  },
   "card": {
-    "radius": "{radius.lg}",
+    "radius": "{radius.md}",
     "padding": "{space.lg}"
+  },
+  "toolbar": {
+    "radius": "{radius.md}",
+    "padding_x": "{space.sm}",
+    "padding_y": "{space.xs}",
+    "gap": "{space.sm}"
+  },
+  "input": {
+    "height_md": 32,
+    "radius": "{radius.md}",
+    "padding_x": "{space.sm}",
+    "font_size": "{font.size_sm}"
+  },
+  "table": {
+    "radius": "{radius.md}",
+    "cell_padding_x": "{space.md}",
+    "cell_padding_y": "{space.sm}"
+  },
+  "dialog": {
+    "radius": "{radius.md}",
+    "padding": "{space.lg}"
+  },
+  "badge": {
+    "radius": "{radius.pill}",
+    "padding_x": "{space.sm}",
+    "padding_y": "{space.xs}",
+    "font_size": "{font.size_sm}"
   },
   "tag": {
     "radius": "{radius.sm}",

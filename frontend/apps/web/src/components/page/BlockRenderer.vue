@@ -51,19 +51,19 @@ function onAction(payload: PageBlockActionEvent) {
   height: 100%;
 }
 .block-fallback {
-  border: 1px dashed #d1d5db;
+  border: 1px dashed var(--sc-app-border-strong);
   border-radius: 10px;
-  background: #f9fafb;
+  background: var(--sc-app-muted-bg);
   padding: 10px;
 }
 .block-fallback-title {
   margin: 0;
   font-size: 13px;
-  color: #374151;
+  color: var(--sc-app-text-secondary);
 }
 .block-fallback-meta {
   margin: 4px 0 0;
-  color: #6b7280;
+  color: var(--sc-semantic-text-muted);
   font-size: 12px;
 }
 </style>

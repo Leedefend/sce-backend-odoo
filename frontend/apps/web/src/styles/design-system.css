@@ -6,49 +6,49 @@
   --sc-app-panel: var(--sc-semantic-surface-panel);
   --sc-app-text-primary: var(--sc-semantic-text-primary);
   --sc-app-text-secondary: var(--sc-semantic-text-secondary);
-  --sc-app-border: #e2e8f0;
-  --sc-app-border-strong: #cbd5e1;
-  --sc-app-muted-bg: #f8fafc;
-  --sc-app-subtle-bg: #f1f5f9;
-  --sc-app-input-bg: #ffffff;
-  --sc-app-hover-bg: #f8fafc;
-  --sc-app-shadow: rgba(15, 23, 42, 0.08);
-  --sc-app-focus-ring: rgba(37, 99, 235, 0.16);
-  --sc-app-danger-bg: #fef2f2;
-  --sc-app-danger-border: #fecaca;
-  --sc-app-danger-text: #b91c1c;
-  --sc-app-warning-bg: #fffbeb;
-  --sc-app-warning-border: #fde68a;
-  --sc-app-warning-text: #b45309;
-  --sc-app-success-bg: #ecfdf5;
-  --sc-app-success-border: #a7f3d0;
-  --sc-app-success-text: #047857;
-  --sc-app-info-bg: #eff6ff;
-  --sc-app-info-border: #bfdbfe;
-  --sc-app-info-text: #1d4ed8;
+  --sc-app-border: var(--sc-semantic-border-default);
+  --sc-app-border-strong: var(--sc-semantic-border-strong);
+  --sc-app-muted-bg: var(--sc-semantic-surface-panel-muted);
+  --sc-app-subtle-bg: var(--sc-semantic-surface-subtle);
+  --sc-app-input-bg: var(--sc-semantic-surface-input);
+  --sc-app-hover-bg: var(--sc-semantic-surface-hover);
+  --sc-app-shadow: var(--sc-semantic-shadow-panel);
+  --sc-app-focus-ring: var(--sc-semantic-focus-ring);
+  --sc-app-danger-bg: var(--sc-semantic-state-danger-bg);
+  --sc-app-danger-border: var(--sc-semantic-state-danger-border);
+  --sc-app-danger-text: var(--sc-semantic-state-danger-text);
+  --sc-app-warning-bg: var(--sc-semantic-state-warning-bg);
+  --sc-app-warning-border: var(--sc-semantic-state-warning-border);
+  --sc-app-warning-text: var(--sc-semantic-state-warning-text);
+  --sc-app-success-bg: var(--sc-semantic-state-success-bg);
+  --sc-app-success-border: var(--sc-semantic-state-success-border);
+  --sc-app-success-text: var(--sc-semantic-state-success-text);
+  --sc-app-info-bg: var(--sc-semantic-state-info-bg);
+  --sc-app-info-border: var(--sc-semantic-state-info-border);
+  --sc-app-info-text: var(--sc-semantic-state-info-text);
 }
 
 :root[data-sc-theme="dark"] {
-  --sc-app-border: rgba(148, 163, 184, 0.24);
-  --sc-app-border-strong: rgba(148, 163, 184, 0.38);
-  --sc-app-muted-bg: #0f172a;
-  --sc-app-subtle-bg: #172033;
-  --sc-app-input-bg: #0b1220;
-  --sc-app-hover-bg: rgba(148, 163, 184, 0.12);
-  --sc-app-shadow: rgba(0, 0, 0, 0.28);
-  --sc-app-focus-ring: rgba(96, 165, 250, 0.22);
-  --sc-app-danger-bg: rgba(127, 29, 29, 0.24);
-  --sc-app-danger-border: rgba(248, 113, 113, 0.42);
-  --sc-app-danger-text: #fca5a5;
-  --sc-app-warning-bg: rgba(120, 53, 15, 0.28);
-  --sc-app-warning-border: rgba(251, 191, 36, 0.42);
-  --sc-app-warning-text: #fcd34d;
-  --sc-app-success-bg: rgba(20, 83, 45, 0.24);
-  --sc-app-success-border: rgba(74, 222, 128, 0.38);
-  --sc-app-success-text: #86efac;
-  --sc-app-info-bg: rgba(30, 64, 175, 0.24);
-  --sc-app-info-border: rgba(96, 165, 250, 0.42);
-  --sc-app-info-text: #93c5fd;
+  --sc-app-border: var(--sc-semantic-border-default);
+  --sc-app-border-strong: var(--sc-semantic-border-strong);
+  --sc-app-muted-bg: var(--sc-semantic-surface-panel-muted);
+  --sc-app-subtle-bg: var(--sc-semantic-surface-subtle);
+  --sc-app-input-bg: var(--sc-semantic-surface-input);
+  --sc-app-hover-bg: var(--sc-semantic-surface-hover);
+  --sc-app-shadow: var(--sc-semantic-shadow-panel);
+  --sc-app-focus-ring: var(--sc-semantic-focus-ring);
+  --sc-app-danger-bg: var(--sc-semantic-state-danger-bg);
+  --sc-app-danger-border: var(--sc-semantic-state-danger-border);
+  --sc-app-danger-text: var(--sc-semantic-state-danger-text);
+  --sc-app-warning-bg: var(--sc-semantic-state-warning-bg);
+  --sc-app-warning-border: var(--sc-semantic-state-warning-border);
+  --sc-app-warning-text: var(--sc-semantic-state-warning-text);
+  --sc-app-success-bg: var(--sc-semantic-state-success-bg);
+  --sc-app-success-border: var(--sc-semantic-state-success-border);
+  --sc-app-success-text: var(--sc-semantic-state-success-text);
+  --sc-app-info-bg: var(--sc-semantic-state-info-bg);
+  --sc-app-info-border: var(--sc-semantic-state-info-border);
+  --sc-app-info-text: var(--sc-semantic-state-info-text);
 }
 
 html,
@@ -182,11 +182,11 @@ html[data-sc-theme="dark"] :is(
 }
 
 html[data-sc-theme="dark"] :is(input, select, textarea)::placeholder {
-  color: rgba(203, 213, 225, 0.68);
+  color: var(--sc-semantic-text-muted);
 }
 
 html[data-sc-theme="dark"] :is(input, select, textarea, button):focus-visible {
-  border-color: #60a5fa;
+  border-color: var(--sc-semantic-surface-interactive);
   box-shadow: 0 0 0 3px var(--sc-app-focus-ring);
   outline: none;
 }

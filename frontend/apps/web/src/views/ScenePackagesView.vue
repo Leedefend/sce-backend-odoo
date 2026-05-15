@@ -292,16 +292,16 @@ async function executeHeaderAction(actionKey: string) {
 }
 
 .card {
-  background: #fff;
+  background: var(--sc-app-panel);
   border-radius: 12px;
   padding: 16px;
-  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+  box-shadow: var(--sc-app-shadow);
   display: grid;
   gap: 10px;
 }
 
 .hint {
-  color: #6b7280;
+  color: var(--sc-semantic-text-muted);
 }
 
 label {
@@ -312,7 +312,7 @@ label {
 input,
 select,
 textarea {
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--sc-app-border-strong);
   border-radius: 8px;
   padding: 8px 10px;
 }
@@ -330,16 +330,16 @@ button {
 }
 
 button.secondary {
-  background: #e2e8f0;
+  background: var(--sc-app-muted-bg);
 }
 
 button.danger {
-  background: #dc2626;
-  color: #fff;
+  background: var(--sc-app-danger-text);
+  color: var(--sc-semantic-text-on-interactive);
 }
 
 pre {
-  background: #f8fafc;
+  background: var(--sc-app-muted-bg);
   border-radius: 8px;
   padding: 10px;
   overflow: auto;

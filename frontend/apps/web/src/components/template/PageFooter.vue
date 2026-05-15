@@ -19,11 +19,11 @@ withDefaults(defineProps<{
 .template-page-footer {
   grid-column: 1 / -1;
   border: 0;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--sc-app-border);
   border-radius: 0;
   margin-top: 8px;
   padding: 10px 0;
-  background: #fafafa;
+  background: var(--sc-app-muted-bg);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -38,7 +38,7 @@ withDefaults(defineProps<{
 .template-page-footer-hint {
   margin: 0;
   font-size: 12px;
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
   flex: 1 1 360px;
   min-width: 240px;
 }
