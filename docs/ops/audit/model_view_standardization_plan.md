@@ -3,8 +3,8 @@
 - source: `artifacts/backend/model_view_fact_layer_audit.json`
 - model_count: 116
 - P0: 0
-- P1: 4
-- OK: 112
+- P1: 1
+- OK: 115
 
 ## Frameworks
 
@@ -47,7 +47,4 @@
 
 | lane | domain | model | records | missing |
 |---|---|---|---:|---|
-| business_document | other | `sc.project.structure` | 0 | state, attachment, chatter |
-| business_document | project | `project.progress.entry` | 0 | attachment, chatter |
-| business_document | tender | `tender.doc.purchase` | 0 | chatter |
 | report_summary | project | `project.cost.ledger` | 0 | data |

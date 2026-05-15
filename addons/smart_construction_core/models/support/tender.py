@@ -269,8 +269,9 @@ class TenderBidLine(models.Model):
 class TenderDocPurchase(models.Model):
     _name = "tender.doc.purchase"
     _description = "投标文件购买申请"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
 
-    bid_id = fields.Many2one("tender.bid", string="投标", required=True, ondelete="cascade")
+    bid_id = fields.Many2one("tender.bid", string="投标", required=True, ondelete="cascade", tracking=True)
     project_id = fields.Many2one(related="bid_id.project_id", store=True, readonly=True)
     applicant_id = fields.Many2one("res.users", string="申请人", default=lambda self: self.env.user)
     apply_date = fields.Date("申请日期", default=fields.Date.context_today)
@@ -291,6 +292,7 @@ class TenderDocPurchase(models.Model):
         [("draft", "草稿"), ("submitted", "审批中"), ("approved", "已通过"), ("rejected", "已驳回")],
         string="状态",
         default="draft",
+        tracking=True,
     )
     currency_id = fields.Many2one(
         "res.currency", related="bid_id.currency_id", store=True, readonly=True
