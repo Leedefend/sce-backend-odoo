@@ -68,6 +68,23 @@ def target_values(model_name: str, field_name: str, domain: list[tuple] | None =
     return {clean(value) for value in values if clean(value)}
 
 
+def record_keys(model_name: str, domain: list[tuple] | None = None) -> set[str]:
+    if model_name not in env:  # noqa: F821
+        return set()
+    Model = env[model_name].sudo().with_context(active_test=False)  # noqa: F821
+    return {f"{model_name}:{record.id}" for record in Model.search(domain or [])}
+
+
+def cost_ledger_source_keys(source_models: Iterable[str]) -> set[str]:
+    if "project.cost.ledger" not in env:  # noqa: F821
+        return set()
+    Ledger = env["project.cost.ledger"].sudo().with_context(active_test=False)  # noqa: F821
+    keys: set[str] = set()
+    for record in Ledger.search([("source_model", "in", list(source_models)), ("source_line_id", "!=", False)]):
+        keys.add(f"{record.source_model}:{record.source_line_id}")
+    return keys
+
+
 def note_marker_values(model_name: str, token: str) -> set[str]:
     if model_name not in env:  # noqa: F821
         return set()
@@ -187,6 +204,40 @@ OUTPUT_REPORT = ARTIFACT_ROOT / "user_visible_business_fact_alignment_probe_repo
 
 payment_target_ids = target_values("payment.request", "legacy_record_id")
 receipt_note_ids = note_marker_values("payment.request", "legacy_receipt_id=")
+cost_ledger_source_models = [
+    "sc.payment.execution",
+    "sc.expense.claim",
+    "sc.subcontract.settlement",
+    "sc.settlement.order",
+]
+cost_ledger_source_ids = (
+    record_keys(
+        "sc.payment.execution",
+        [("project_id", "!=", False), ("paid_amount", ">", 0), ("state", "not in", ["draft", "cancel"])],
+    )
+    | record_keys(
+        "sc.expense.claim",
+        [
+            ("project_id", "!=", False),
+            ("direction", "=", "outflow"),
+            ("amount", ">", 0),
+            ("state", "not in", ["draft", "cancel"]),
+        ],
+    )
+    | record_keys(
+        "sc.subcontract.settlement",
+        [("project_id", "!=", False), ("amount_total", ">", 0), ("state", "not in", ["draft", "cancel"])],
+    )
+    | record_keys(
+        "sc.settlement.order",
+        [
+            ("project_id", "!=", False),
+            ("settlement_type", "=", "out"),
+            ("amount_total", ">", 0),
+            ("state", "not in", ["draft", "cancel"]),
+        ],
+    )
+)
 
 lanes = [
     lane(
@@ -255,6 +306,14 @@ lanes = [
         target_values("sc.legacy.fund.daily.line", "legacy_line_id"),
         target_model="sc.legacy.fund.daily.line",
         target_domain=[("legacy_line_id", "!=", False)],
+    ),
+    lane(
+        "project_cost_ledger",
+        "成本台账运行事实",
+        cost_ledger_source_ids,
+        cost_ledger_source_keys(cost_ledger_source_models),
+        target_model="project.cost.ledger",
+        target_domain=[("source_model", "in", cost_ledger_source_models)],
     ),
 ]
 
