@@ -57,15 +57,6 @@
                   @click.stop="emitFieldAddAfter(field)"
                 >+</button>
               </div>
-              <select
-                v-if="fieldConfigEditable && groupOptions.length"
-                class="field-group-select"
-                :value="fieldGroupTitle || ''"
-                :aria-label="`${field.label}所属分组`"
-                @change="emitFieldGroupChange(field, ($event.target as HTMLSelectElement).value)"
-              >
-                <option v-for="option in groupOptions" :key="option" :value="option">{{ option }}</option>
-              </select>
               <div
                 v-if="fieldActionsFor(field).length"
                 class="field-inline-actions"
@@ -307,7 +298,6 @@ const props = withDefaults(defineProps<{
   fieldOrderDropTargetKey?: string;
   fieldConfigEditable?: boolean;
   fieldGroupTitle?: string;
-  groupOptions?: string[];
   selectPlaceholder?: (label: string) => string;
   inputPlaceholder?: (label: string) => string;
 }>(), {
@@ -324,7 +314,6 @@ const props = withDefaults(defineProps<{
   fieldOrderDropTargetKey: '',
   fieldConfigEditable: false,
   fieldGroupTitle: '',
-  groupOptions: () => [],
   selectPlaceholder: (label: string) => resolveSelectPlaceholder(label),
   inputPlaceholder: (label: string) => resolveInputPlaceholder(label),
 });
@@ -339,7 +328,6 @@ const emit = defineEmits<{
   (e: 'field-order-drop', payload: { field: FormSectionFieldSchema }): void;
   (e: 'field-order-drag-end', payload: { field: FormSectionFieldSchema }): void;
   (e: 'field-label-change', payload: { field: FormSectionFieldSchema; label: string }): void;
-  (e: 'field-group-change', payload: { field: FormSectionFieldSchema; groupTitle: string }): void;
   (e: 'field-add-after', payload: { field: FormSectionFieldSchema; groupTitle: string }): void;
 }>();
 
@@ -585,13 +573,6 @@ function emitFieldLabelChange(field: FormSectionFieldSchema, label: string) {
   emit('field-label-change', { field, label: normalized });
 }
 
-function emitFieldGroupChange(field: FormSectionFieldSchema, groupTitle: string) {
-  if (!props.fieldConfigEditable) return;
-  const normalized = String(groupTitle || '').trim();
-  if (!normalized || normalized === props.fieldGroupTitle) return;
-  emit('field-group-change', { field, groupTitle: normalized });
-}
-
 function emitFieldAddAfter(field: FormSectionFieldSchema) {
   if (!props.fieldConfigEditable) return;
   emit('field-add-after', { field, groupTitle: props.fieldGroupTitle || '' });
@@ -803,18 +784,6 @@ function emitFieldAddAfter(field: FormSectionFieldSchema) {
 .field-order-btn:disabled {
   cursor: default;
   opacity: 0.42;
-}
-
-.field-group-select {
-  max-width: 130px;
-  min-width: 92px;
-  height: 26px;
-  border: 1px solid var(--sc-app-border);
-  border-radius: 5px;
-  background: var(--sc-app-input-bg);
-  color: var(--sc-app-text-secondary);
-  font-size: 12px;
-  padding: 0 6px;
 }
 
 .field-inline-actions {

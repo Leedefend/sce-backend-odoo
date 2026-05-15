@@ -169,7 +169,6 @@
           :field-order-dragging-key="draggingFieldKey"
           :field-order-drop-target-key="dropTargetFieldKey"
           :field-config-editable="isContractFieldOrderEditable"
-          :group-options="contractFormGroupOptions"
           :columns="2"
           @field-change="onTemplateFieldChange"
           @field-action="onContractFieldAction"
@@ -180,7 +179,6 @@
           @field-order-drop="onContractInlineFieldOrderDrop"
           @field-order-drag-end="onContractInlineFieldOrderDragEnd"
           @field-label-change="onContractInlineFieldLabelChange"
-          @field-group-change="onContractInlineFieldGroupChange"
           @field-add-after="onContractInlineFieldAddAfter"
           @group-rename="onContractInlineGroupRename"
           @group-add-field="onContractInlineGroupAddField"
@@ -324,10 +322,6 @@
               <option value="datetime">日期时间</option>
               <option value="html">富文本</option>
             </select>
-          </label>
-          <label class="contract-mode-prompt-field">
-            <span>显示分组</span>
-            <input v-model="lowCodeFieldCreateDialog.groupTitle" required :disabled="busy" />
           </label>
           <button type="submit" class="chip-btn" :disabled="busy">创建字段</button>
           <button type="button" class="ghost" :disabled="busy" @click="closeInlineCustomFieldCreate">取消</button>
@@ -1573,31 +1567,6 @@ const activeContractModeFieldRows = computed<ContractFieldGovernanceRow[]>(() =>
   if (!isContractFieldOrderEditable.value || !fieldOrderDraft.value.length) return computedRows;
   const rank = new Map(fieldOrderDraft.value.map((key, index) => [key, index]));
   return [...computedRows].sort((left, right) => (rank.get(left.fieldKey) ?? 9999) - (rank.get(right.fieldKey) ?? 9999));
-});
-
-function collectNativeGroupTitles(nodes: NativeFormLayoutNode[], out: Set<string>) {
-  nodes.forEach((node) => {
-    const type = String(node?.type || (node as { containerType?: string })?.containerType || '').trim().toLowerCase();
-    const title = String(node?.string || node?.label || '').trim();
-    if (title && ['group', 'page'].includes(type)) out.add(title);
-    (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
-      const children = node?.[key];
-      if (Array.isArray(children)) collectNativeGroupTitles(children as NativeFormLayoutNode[], out);
-    });
-  });
-}
-
-const contractFormGroupOptions = computed(() => {
-  const titles = new Set<string>();
-  collectNativeGroupTitles(nativeFormLayoutNodes.value, titles);
-  lowCodeObjectsDraft.value.forEach((obj) => {
-    (obj.fields || []).forEach((field) => {
-      const groupTitle = String((field as { groupTitle?: string; group_title?: string }).groupTitle || (field as { group_title?: string }).group_title || '').trim();
-      if (groupTitle) titles.add(groupTitle);
-    });
-  });
-  if (!titles.size) titles.add('业务配置字段');
-  return Array.from(titles).sort((left, right) => left.localeCompare(right));
 });
 
 watch(contractModeBaseFieldRows, (rows) => {
@@ -6576,13 +6545,6 @@ async function onContractInlineFieldLabelChange(payload: { field: FormSectionFie
   await setInlineFieldPolicy(fieldKey, { label });
 }
 
-async function onContractInlineFieldGroupChange(payload: { field: FormSectionFieldSchema; groupTitle: string }) {
-  const fieldKey = String(payload.field.name || '').trim();
-  const groupTitle = String(payload.groupTitle || '').trim();
-  if (!fieldKey || !groupTitle) return;
-  await setInlineFieldPolicy(fieldKey, { label: payload.field.label || fieldKey, group_title: groupTitle });
-}
-
 function fieldsInNativeGroup(groupTitle: string) {
   const out = new Map<string, string>();
   const targetTitle = String(groupTitle || '').trim();
@@ -6628,7 +6590,7 @@ async function onContractInlineGroupRename(payload: { oldTitle: string; newTitle
         context: { view: 'form' },
       });
     }
-    contractModeFeedback.value = '分组名称已更新';
+    contractModeFeedback.value = '区域名称已更新';
     await reload();
   } catch (err) {
     errorMessage.value = err instanceof Error ? err.message : 'group rename failed';

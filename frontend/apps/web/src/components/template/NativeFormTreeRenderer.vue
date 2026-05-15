@@ -9,7 +9,7 @@
             class="native-container-title-editor"
             type="text"
             :value="containerTitle(node)"
-            :aria-label="`${containerTitle(node)}分组名称`"
+            :aria-label="`${containerTitle(node)}区域名称`"
             @change="emitGroupRename(node, ($event.target as HTMLInputElement).value)"
             @keydown.enter.prevent="emitGroupRename(node, ($event.target as HTMLInputElement).value)"
           />
@@ -51,10 +51,9 @@
               :field-order-index="fieldOrderIndex"
               :field-order-count="fieldOrderCount"
               :field-order-dragging-key="fieldOrderDraggingKey"
-              :field-order-drop-target-key="fieldOrderDropTargetKey"
-              :field-config-editable="fieldConfigEditable"
-              :group-options="groupOptions"
-              :columns="columns"
+            :field-order-drop-target-key="fieldOrderDropTargetKey"
+            :field-config-editable="fieldConfigEditable"
+            :columns="columns"
               @field-change="emit('field-change', $event)"
               @field-action="emit('field-action', $event)"
               @field-order-move="emit('field-order-move', $event)"
@@ -64,7 +63,6 @@
               @field-order-drop="emit('field-order-drop', $event)"
               @field-order-drag-end="emit('field-order-drag-end', $event)"
               @field-label-change="emit('field-label-change', $event)"
-              @field-group-change="emit('field-group-change', $event)"
               @field-add-after="emit('field-add-after', $event)"
               @group-rename="emit('group-rename', $event)"
               @group-add-field="emit('group-add-field', $event)"
@@ -120,7 +118,6 @@
             :field-order-dragging-key="fieldOrderDraggingKey"
             :field-order-drop-target-key="fieldOrderDropTargetKey"
             :field-config-editable="fieldConfigEditable"
-            :group-options="groupOptions"
             :columns="columns"
             @field-change="emit('field-change', $event)"
             @field-action="emit('field-action', $event)"
@@ -131,7 +128,6 @@
             @field-order-drop="emit('field-order-drop', $event)"
             @field-order-drag-end="emit('field-order-drag-end', $event)"
             @field-label-change="emit('field-label-change', $event)"
-            @field-group-change="emit('field-group-change', $event)"
             @field-add-after="emit('field-add-after', $event)"
             @group-rename="emit('group-rename', $event)"
             @group-add-field="emit('group-add-field', $event)"
@@ -161,7 +157,6 @@
             :field-order-drop-target-key="fieldOrderDropTargetKey"
             :field-config-editable="fieldConfigEditable"
             :field-group-title="containerTitle(node)"
-            :group-options="groupOptions"
             tone="core"
             @field-change="emit('field-change', $event)"
             @field-action="emit('field-action', $event)"
@@ -172,7 +167,6 @@
             @field-order-drop="emit('field-order-drop', $event)"
             @field-order-drag-end="emit('field-order-drag-end', $event)"
             @field-label-change="emit('field-label-change', $event)"
-            @field-group-change="emit('field-group-change', $event)"
             @field-add-after="emit('field-add-after', $event)"
           >
             <template #readonly="{ field }">
@@ -234,7 +228,6 @@
             :field-order-dragging-key="fieldOrderDraggingKey"
             :field-order-drop-target-key="fieldOrderDropTargetKey"
             :field-config-editable="fieldConfigEditable"
-            :group-options="groupOptions"
             :columns="columns"
             @field-change="emit('field-change', $event)"
             @field-action="emit('field-action', $event)"
@@ -245,7 +238,6 @@
             @field-order-drop="emit('field-order-drop', $event)"
             @field-order-drag-end="emit('field-order-drag-end', $event)"
             @field-label-change="emit('field-label-change', $event)"
-            @field-group-change="emit('field-group-change', $event)"
             @field-add-after="emit('field-add-after', $event)"
             @group-rename="emit('group-rename', $event)"
             @group-add-field="emit('group-add-field', $event)"
@@ -274,7 +266,6 @@
         :field-order-dragging-key="fieldOrderDraggingKey"
         :field-order-drop-target-key="fieldOrderDropTargetKey"
         :field-config-editable="fieldConfigEditable"
-        :group-options="groupOptions"
         tone="core"
         @field-change="emit('field-change', $event)"
         @field-action="emit('field-action', $event)"
@@ -285,7 +276,6 @@
         @field-order-drop="emit('field-order-drop', $event)"
         @field-order-drag-end="emit('field-order-drag-end', $event)"
         @field-label-change="emit('field-label-change', $event)"
-        @field-group-change="emit('field-group-change', $event)"
         @field-add-after="emit('field-add-after', $event)"
       >
         <template #readonly="{ field }">
@@ -361,7 +351,6 @@ const props = withDefaults(defineProps<{
   fieldOrderDraggingKey?: string;
   fieldOrderDropTargetKey?: string;
   fieldConfigEditable?: boolean;
-  groupOptions?: string[];
   columns?: 1 | 2;
 }>(), {
   columns: 2,
@@ -375,7 +364,6 @@ const props = withDefaults(defineProps<{
   fieldOrderDraggingKey: '',
   fieldOrderDropTargetKey: '',
   fieldConfigEditable: false,
-  groupOptions: () => [],
 });
 
 const emit = defineEmits<{
@@ -388,7 +376,6 @@ const emit = defineEmits<{
   (event: 'field-order-drop', payload: { field: FormSectionFieldSchema }): void;
   (event: 'field-order-drag-end', payload: { field: FormSectionFieldSchema }): void;
   (event: 'field-label-change', payload: { field: FormSectionFieldSchema; label: string }): void;
-  (event: 'field-group-change', payload: { field: FormSectionFieldSchema; groupTitle: string }): void;
   (event: 'field-add-after', payload: { field: FormSectionFieldSchema; groupTitle: string }): void;
   (event: 'group-rename', payload: { oldTitle: string; newTitle: string }): void;
   (event: 'group-add-field', payload: { groupTitle: string }): void;
