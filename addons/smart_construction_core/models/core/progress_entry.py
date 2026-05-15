@@ -7,6 +7,7 @@ from ..support.state_guard import raise_guard
 class ProjectProgressEntry(models.Model):
     _name = "project.progress.entry"
     _description = "项目进度计量记录"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
     _order = "date desc, id desc"
 
     state = fields.Selection(
@@ -18,6 +19,7 @@ class ProjectProgressEntry(models.Model):
         default="draft",
         required=True,
         index=True,
+        tracking=True,
     )
 
     project_id = fields.Many2one(
@@ -40,6 +42,13 @@ class ProjectProgressEntry(models.Model):
 
     progress_rate = fields.Float("累计完成比例(%)")
     note = fields.Char("备注")
+    attachment_ids = fields.Many2many(
+        "ir.attachment",
+        "project_progress_entry_attachment_rel",
+        "progress_entry_id",
+        "attachment_id",
+        string="附件",
+    )
 
     def _ensure_manager_role(self):
         if not self.env.user.has_group("smart_construction_core.group_sc_cap_project_manager"):

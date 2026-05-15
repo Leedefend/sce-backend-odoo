@@ -6,6 +6,7 @@ from odoo.exceptions import UserError
 class ScConstructionDiary(models.Model):
     _name = "sc.construction.diary"
     _description = "施工日志"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
     _order = "date_diary desc, id desc"
 
     name = fields.Char(string="日志编号", required=True, default="新建", copy=False)
@@ -65,6 +66,13 @@ class ScConstructionDiary(models.Model):
     legacy_line_attachment_ref = fields.Char(string="历史明细附件引用", readonly=True)
     legacy_attachment_name = fields.Char(string="历史附件名", readonly=True)
     legacy_attachment_path = fields.Char(string="历史附件路径", readonly=True)
+    attachment_ids = fields.Many2many(
+        "ir.attachment",
+        "sc_construction_diary_attachment_rel",
+        "diary_id",
+        "attachment_id",
+        string="附件",
+    )
     active = fields.Boolean(string="有效", default=True, index=True)
 
     _sql_constraints = [
@@ -85,7 +93,7 @@ class ScConstructionDiary(models.Model):
 
     def write(self, vals):
         if any(rec.source_origin == "legacy" and rec.state == "legacy_confirmed" for rec in self):
-            allowed = {"note", "active", "write_uid", "write_date"}
+            allowed = {"note", "active", "attachment_ids", "write_uid", "write_date"}
             if set(vals) - allowed:
                 raise UserError(_("历史迁移施工日志已确认，只允许补充备注。"))
         return super().write(vals)

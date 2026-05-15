@@ -6,10 +6,11 @@ from odoo.exceptions import ValidationError
 class ScMaterialCatalog(models.Model):
     _name = "sc.material.catalog"
     _description = "材料档案"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
     _order = "code, id"
 
-    name = fields.Char(string="材料名称", required=True, index=True)
-    code = fields.Char(string="材料编码", index=True)
+    name = fields.Char(string="材料名称", required=True, index=True, tracking=True)
+    code = fields.Char(string="材料编码", index=True, tracking=True)
     category_id = fields.Many2one("product.category", string="材料分类", index=True, ondelete="set null")
     company_id = fields.Many2one(
         "res.company",
@@ -45,6 +46,13 @@ class ScMaterialCatalog(models.Model):
     )
     legacy_material_id = fields.Char(string="历史物料ID", index=True, readonly=True)
     legacy_category_id = fields.Char(string="历史分类ID", index=True, readonly=True)
+    attachment_ids = fields.Many2many(
+        "ir.attachment",
+        "sc_material_catalog_attachment_rel",
+        "material_catalog_id",
+        "attachment_id",
+        string="附件",
+    )
     promoted_product_tmpl_id = fields.Many2one(
         "product.template",
         string="历史技术产品模板",

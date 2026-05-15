@@ -216,6 +216,9 @@
         <field name="model">tender.opening</field>
         <field name="arch" type="xml">
             <form string="开标记录">
+                <header>
+                    <field name="result" widget="statusbar" statusbar_visible="pending,won,lost,backup"/>
+                </header>
                 <sheet>
                     <group>
                         <group>
@@ -224,7 +227,6 @@
                             <field name="open_time"/>
                         </group>
                         <group>
-                            <field name="result"/>
                             <field name="win_price"/>
                             <field name="currency_id" invisible="1"/>
                         </group>
@@ -241,8 +243,10 @@
                     </group>
                     <group>
                         <field name="remark"/>
+                        <field name="attachment_ids" widget="many2many_binary"/>
                     </group>
                 </sheet>
+                <chatter/>
             </form>
         </field>
     </record>
@@ -255,10 +259,15 @@
                 <field name="bid_id"/>
                 <field name="project_id"/>
                 <field name="type"/>
+                <field name="state"/>
                 <filter string="缴纳" name="type_out" domain="[('type', '=', 'out')]"/>
                 <filter string="退回" name="type_return" domain="[('type', '=', 'return')]"/>
+                <filter string="草稿" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="已确认" name="confirmed" domain="[('state', '=', 'confirmed')]"/>
+                <filter string="已取消" name="cancel" domain="[('state', '=', 'cancel')]"/>
                 <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
                 <filter string="按类型" name="group_type" context="{'group_by': 'type'}"/>
+                <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
             </search>
         </field>
     </record>
@@ -367,6 +376,7 @@
                         <field name="attachment_ids" widget="many2many_binary"/>
                     </group>
                 </sheet>
+                <chatter/>
             </form>
         </field>
     </record>
@@ -380,6 +390,7 @@
                 <field name="project_id"/>
                 <field name="bid_id"/>
                 <field name="type"/>
+                <field name="state"/>
                 <field name="amount" sum="保证金合计"/>
                 <field name="receipt_bank_account_id"/>
                 <field name="bank_account_id"/>
@@ -393,6 +404,12 @@
         <field name="model">tender.guarantee</field>
         <field name="arch" type="xml">
             <form string="投标保证金">
+                <header>
+                    <button name="action_confirm" type="object" string="确认" class="btn-primary" invisible="state == 'confirmed'"/>
+                    <button name="action_cancel" type="object" string="取消" invisible="state == 'cancel'"/>
+                    <button name="action_reset_draft" type="object" string="重置草稿" invisible="state == 'draft'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,cancel"/>
+                </header>
                 <sheet>
                     <group>
                         <group>
@@ -415,6 +432,7 @@
                         <field name="attachment_ids" widget="many2many_binary"/>
                     </group>
                 </sheet>
+                <chatter/>
             </form>
         </field>
     </record>

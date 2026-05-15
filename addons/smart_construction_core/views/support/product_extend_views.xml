@@ -196,8 +196,10 @@
                     </group>
                     <group>
                         <field name="remark"/>
+                        <field name="attachment_ids" widget="many2many_binary"/>
                     </group>
                 </sheet>
+                <chatter/>
             </form>
         </field>
     </record>

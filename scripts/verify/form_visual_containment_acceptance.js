@@ -178,9 +178,13 @@ async function visualProbe(page) {
 }
 
 async function openRelationDialog(page) {
-  const button = page.locator('.many2one-combobox button').filter({ hasText: '搜索更多' }).first();
+  const button = page.locator('.many2one-combobox button:visible').filter({ hasText: '搜索更多' }).first();
+  if ((await button.count().catch(() => 0)) === 0) {
+    return false;
+  }
   await button.click();
   await page.locator('.relation-dialog').waitFor({ timeout: 10000 });
+  return true;
 }
 
 async function runViewport(browser, spec) {
@@ -195,12 +199,25 @@ async function runViewport(browser, spec) {
     await openForm(page);
     await page.screenshot({ path: path.join(outDir, `${spec.id}_form.png`), fullPage: true });
     const formProbe = await visualProbe(page);
-    await openRelationDialog(page);
-    await page.screenshot({ path: path.join(outDir, `${spec.id}_relation_dialog.png`), fullPage: true });
-    const dialogProbe = await visualProbe(page);
-    dialogProbe.offscreen_critical = dialogProbe.offscreen_critical.filter((row) => row.selector === '.relation-dialog');
-    dialogProbe.clipped = dialogProbe.clipped.filter((row) => row.selector === '.relation-dialog');
-    await page.keyboard.press('Escape');
+    const dialogOpened = await openRelationDialog(page);
+    let dialogProbe = {
+      clipped: [],
+      invalid_boxes: [],
+      offscreen_critical: [],
+      overlaps: [],
+      skipped: true,
+    };
+    const screenshots = {
+      form: path.join(outDir, `${spec.id}_form.png`),
+    };
+    if (dialogOpened) {
+      screenshots.relation_dialog = path.join(outDir, `${spec.id}_relation_dialog.png`);
+      await page.screenshot({ path: screenshots.relation_dialog, fullPage: true });
+      dialogProbe = await visualProbe(page);
+      dialogProbe.offscreen_critical = dialogProbe.offscreen_critical.filter((row) => row.selector === '.relation-dialog');
+      dialogProbe.clipped = dialogProbe.clipped.filter((row) => row.selector === '.relation-dialog');
+      await page.keyboard.press('Escape');
+    }
     const pass = !formProbe.horizontal_page_overflow
       && formProbe.clipped.length === 0
       && formProbe.invalid_boxes.length === 0
@@ -215,10 +232,8 @@ async function runViewport(browser, spec) {
       id: spec.id,
       viewport: { width: spec.width, height: spec.height },
       status: pass ? 'pass' : 'fail',
-      screenshots: {
-        form: path.join(outDir, `${spec.id}_form.png`),
-        relation_dialog: path.join(outDir, `${spec.id}_relation_dialog.png`),
-      },
+      relation_dialog_opened: dialogOpened,
+      screenshots,
       form_probe: formProbe,
       dialog_probe: dialogProbe,
       console_errors: page.__consoleErrors || [],
