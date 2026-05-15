@@ -401,6 +401,7 @@ function nodeKey(node: NativeFormLayoutNode, index: number) {
 
 function containerTitle(node: NativeFormLayoutNode) {
   const type = nodeType(node);
+  if (type === 'group') return '';
   const raw = String(node?.string || node?.label || '').trim();
   if (!raw) return '';
   const structural = new Set(['header', 'sheet', 'container', 'div', 'span', 'h1', 'h2', 'h3']);
