@@ -2275,6 +2275,10 @@ verify.user.entry.delivery.browser_acceptance: guard.prod.forbid
 verify.model_view.fact_layer.audit: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MODEL_VIEW_AUDIT_LOGIN="$(or $(MODEL_VIEW_AUDIT_LOGIN),wutao)" bash scripts/ops/odoo_shell_exec.sh < scripts/verify/model_view_fact_layer_audit.py
 
+.PHONY: verify.model_view.standardization.plan
+verify.model_view.standardization.plan: guard.prod.forbid verify.model_view.fact_layer.audit
+	@python3 scripts/verify/model_view_standardization_plan.py
+
 .PHONY: verify.project.dashboard.snapshot
 verify.project.dashboard.snapshot: guard.prod.forbid
 	@python3 scripts/verify/project_dashboard_contract_snapshot_export.py

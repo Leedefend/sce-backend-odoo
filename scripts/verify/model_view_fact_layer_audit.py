@@ -178,10 +178,17 @@ def fields_from_runtime_view(view: dict) -> list[str]:
 
 def model_foundation_signals(Model) -> dict[str, bool]:
     names = set(Model._fields)
-    return {
+    signals = {
         key: any(candidate in names for candidate in candidates)
         for key, candidates in FOUNDATION_FIELD_CANDIDATES.items()
     }
+    signals["legacy_trace"] = signals["legacy_trace"] or any(
+        name.startswith(("legacy_", "source_"))
+        or name.endswith("_legacy_id")
+        or name in {"legacy_record_id", "legacy_pid", "source_table", "source_dataset"}
+        for name in names
+    )
+    return signals
 
 
 def count_records(Model) -> tuple[int | None, str]:
