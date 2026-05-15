@@ -1,0 +1,696 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_p1_daily_business_visible_tender_bid_tree" model="ir.ui.view">
+        <field name="name">tender.bid.p1.daily.business.visible.tree</field>
+        <field name="model">tender.bid</field>
+        <field name="inherit_id" ref="view_tender_bid_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="p1_visible_06fa8c6f628f" string="单据状态" optional="show" readonly="1"/>
+                <field name="p1_visible_f22832ce4781" string="推送结果" optional="show" readonly="1"/>
+                <field name="p1_visible_8fa8662ad38f" string="单据编号" optional="show" readonly="1"/>
+                <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
+                <field name="p1_visible_3f2c92346bec" string="登记时间" optional="show" readonly="1"/>
+                <field name="p1_visible_880ab989a872" string="申请人" optional="show" readonly="1"/>
+                <field name="p1_visible_2c346345746e" string="申请日期" optional="show" readonly="1"/>
+                <field name="p1_visible_3e5fd432c9df" string="收款账号" optional="show" readonly="1"/>
+                <field name="p1_visible_48a64eb40c71" string="开户行" optional="show" readonly="1"/>
+                <field name="p1_visible_34943c40c9af" string="金额" optional="show" readonly="1"/>
+                <field name="p1_visible_e0361480e3a5" string="备注" optional="show" readonly="1"/>
+                <field name="p1_visible_bb7c7aeff3e4" string="收款人" optional="show" readonly="1"/>
+                <field name="p1_visible_c6b9a8cfdb21" string="付款方式" optional="show" readonly="1"/>
+                <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_financing_loan_tree" model="ir.ui.view">
+        <field name="name">sc.financing.loan.p1.daily.business.visible.tree</field>
+        <field name="model">sc.financing.loan</field>
+        <field name="inherit_id" ref="view_sc_financing_loan_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="p1_visible_06fa8c6f628f" string="单据状态" optional="show" readonly="1"/>
+                <field name="p1_visible_8fa8662ad38f" string="单据编号" optional="show" readonly="1"/>
+                <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
+                <field name="p1_visible_f65ab1a8427f" string="借款人" optional="show" readonly="1"/>
+                <field name="p1_visible_f75550069cae" string="借款金额" optional="show" readonly="1"/>
+                <field name="p1_visible_7c49c8f25a7a" string="用途" optional="show" readonly="1"/>
+                <field name="p1_visible_0f6aab17d203" string="约定期限" optional="show" readonly="1"/>
+                <field name="p1_visible_547c71732ac4" string="借款利息" optional="show" readonly="1"/>
+                <field name="p1_visible_e0361480e3a5" string="备注" optional="show" readonly="1"/>
+                <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
+                <field name="p1_visible_9c075c710f62" string="还款金额" optional="show" readonly="1"/>
+                <field name="p1_visible_f13b158f80f7" string="借款利率" optional="show" readonly="1"/>
+                <field name="p1_visible_a5b7f233fadc" string="利息" optional="show" readonly="1"/>
+                <field name="p1_visible_dca067f698a7" string="还款时间" optional="show" readonly="1"/>
+                <field name="p1_visible_8ab2d41e7757" string="贷款金额" optional="show" readonly="1"/>
+                <field name="p1_visible_3bee2141cdb1" string="到期利息" optional="show" readonly="1"/>
+                <field name="p1_visible_701ce5416c52" string="未还款金额" optional="show" readonly="1"/>
+                <field name="p1_visible_e242a03dd5b6" string="贷款日期" optional="show" readonly="1"/>
+                <field name="p1_visible_982d68c74aeb" string="还款日期" optional="show" readonly="1"/>
+                <field name="p1_visible_ed43f478ec3d" string="贷款天数" optional="show" readonly="1"/>
+                <field name="p1_visible_a12b85cb38e6" string="年利率" optional="show" readonly="1"/>
+                <field name="p1_visible_099f8b5c680a" string="贷款账户" optional="show" readonly="1"/>
+                <field name="p1_visible_628f2a7878b3" string="贷款银行" optional="show" readonly="1"/>
+                <field name="p1_visible_b3620ea08897" string="实际还款天数" optional="show" readonly="1"/>
+                <field name="p1_visible_a97833656ba0" string="实际年利率" optional="show" readonly="1"/>
+                <field name="p1_visible_393c1d188de6" string="贷款利息" optional="show" readonly="1"/>
+                <field name="p1_visible_94f294dac442" string="还款账户" optional="show" readonly="1"/>
+                <field name="p1_visible_71e47f617269" string="填写人" optional="show" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_payment_request_tree" model="ir.ui.view">
+        <field name="name">payment.request.p1.daily.business.visible.tree</field>
+        <field name="model">payment.request</field>
+        <field name="inherit_id" ref="view_payment_request_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="p1_visible_06fa8c6f628f" string="单据状态" optional="show" readonly="1"/>
+                <field name="p1_visible_8fa8662ad38f" string="单据编号" optional="show" readonly="1"/>
+                <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
+                <field name="p1_visible_ccfa1326c88f" string="收款单位" optional="show" readonly="1"/>
+                <field name="p1_visible_c00fc55a25b8" string="申请付款金额" optional="show" readonly="1"/>
+                <field name="p1_visible_9469a2ad32f8" string="实际付款金额" optional="show" readonly="1"/>
+                <field name="p1_visible_ae1abe750af6" string="可用余额" optional="show" readonly="1"/>
+                <field name="p1_visible_63c5facb9f66" string="成本分类名称" optional="show" readonly="1"/>
+                <field name="p1_visible_e0361480e3a5" string="备注" optional="show" readonly="1"/>
+                <field name="p1_visible_1874b0ce5103" string="是否关联单据" optional="show" readonly="1"/>
+                <field name="p1_visible_3759fcfc297a" string="付款账号" optional="show" readonly="1"/>
+                <field name="p1_visible_6cf6e39bece9" string="金额大写" optional="show" readonly="1"/>
+                <field name="p1_visible_a103d7cee046" string="户名" optional="show" readonly="1"/>
+                <field name="p1_visible_48a64eb40c71" string="开户行" optional="show" readonly="1"/>
+                <field name="p1_visible_901384917949" string="账号" optional="show" readonly="1"/>
+                <field name="p1_visible_71e47f617269" string="填写人" optional="show" readonly="1"/>
+                <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_tax_deduction_registration_tree" model="ir.ui.view">
+        <field name="name">sc.tax.deduction.registration.p1.daily.business.visible.tree</field>
+        <field name="model">sc.tax.deduction.registration</field>
+        <field name="inherit_id" ref="view_sc_tax_deduction_registration_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="p1_visible_06fa8c6f628f" string="单据状态" optional="show" readonly="1"/>
+                <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
+                <field name="p1_visible_ea75d3bba41c" string="扣款单位" optional="show" readonly="1"/>
+                <field name="p1_visible_9b5c1b5cbd69" string="扣款金额" optional="show" readonly="1"/>
+                <field name="p1_visible_16e91e3d2738" string="扣款事由" optional="show" readonly="1"/>
+                <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+                <field name="p1_visible_748d7dc7e321" string="标题" optional="show" readonly="1"/>
+                <field name="p1_visible_62e5cf441092" string="本次实缴数" optional="show" readonly="1"/>
+                <field name="p1_visible_1da8ed2551df" string="是否退回" optional="show" readonly="1"/>
+                <field name="p1_visible_dbbcd74271cd" string="上缴内容" optional="show" readonly="1"/>
+                <field name="p1_visible_b0bff5c45de7" string="本次计划已缴数" optional="show" readonly="1"/>
+                <field name="p1_visible_3ade9df90bf8" string="本次退回数" optional="show" readonly="1"/>
+                <field name="p1_visible_e0361480e3a5" string="备注" optional="show" readonly="1"/>
+                <field name="p1_visible_f9cc22d53aff" string="受票方名称" optional="show" readonly="1"/>
+                <field name="p1_visible_61b3896f8414" string="交税类型" optional="show" readonly="1"/>
+                <field name="p1_visible_34943c40c9af" string="金额" optional="show" readonly="1"/>
+                <field name="p1_visible_a3c1a28bd34c" string="发票开具日期" optional="show" readonly="1"/>
+                <field name="p1_visible_62319711f425" string="预缴税款日期" optional="show" readonly="1"/>
+                <field name="p1_visible_6514c1bee4d7" string="完税凭证号码" optional="show" readonly="1"/>
+                <field name="p1_visible_3540b47897be" string="是否转出" optional="show" readonly="1"/>
+                <field name="p1_visible_be5462bd6a62" string="开票单位" optional="show" readonly="1"/>
+                <field name="p1_visible_ada9a85eab00" string="发票号" optional="show" readonly="1"/>
+                <field name="p1_visible_ee19dd75350c" string="抵扣总额" optional="show" readonly="1"/>
+                <field name="p1_visible_6bb76c93367b" string="受票单位" optional="show" readonly="1"/>
+                <field name="p1_visible_f286b41bd7f0" string="实际开票单位" optional="show" readonly="1"/>
+                <field name="p1_visible_d09b05103331" string="价税合计" optional="show" readonly="1"/>
+                <field name="p1_visible_99f753ed6262" string="税额" optional="show" readonly="1"/>
+                <field name="p1_visible_007363f27191" string="不含税金额" optional="show" readonly="1"/>
+                <field name="p1_visible_b9ae89319036" string="数量" optional="show" readonly="1"/>
+                <field name="p1_visible_37d56ad493cf" string="税率" optional="show" readonly="1"/>
+                <field name="p1_visible_3d0afdf3736d" string="发票类型" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_payment_execution_tree" model="ir.ui.view">
+        <field name="name">sc.payment.execution.p1.daily.business.visible.tree</field>
+        <field name="model">sc.payment.execution</field>
+        <field name="inherit_id" ref="view_sc_payment_execution_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="p1_visible_f22832ce4781" string="推送结果" optional="show" readonly="1"/>
+                <field name="p1_visible_7f5da566c14e" string="金蝶单据编号" optional="show" readonly="1"/>
+                <field name="p1_visible_8fa8662ad38f" string="单据编号" optional="show" readonly="1"/>
+                <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
+                <field name="p1_visible_cf44ec3f55f9" string="供应商名称" optional="show" readonly="1"/>
+                <field name="p1_visible_058f511c98cf" string="付款日期" optional="show" readonly="1"/>
+                <field name="p1_visible_d890d302f7f7" string="付款金额" optional="show" readonly="1"/>
+                <field name="p1_visible_e0361480e3a5" string="备注" optional="show" readonly="1"/>
+                <field name="p1_visible_e560f90bd049" string="其它备注" optional="show" readonly="1"/>
+                <field name="p1_visible_f35ba3fab897" string="付款方式名称" optional="show" readonly="1"/>
+                <field name="p1_visible_71e47f617269" string="填写人" optional="show" readonly="1"/>
+                <field name="p1_visible_48a64eb40c71" string="开户行" optional="show" readonly="1"/>
+                <field name="p1_visible_c3d92b20c8a3" string="账户" optional="show" readonly="1"/>
+                <field name="p1_visible_a4aa6578aa87" string="支付申请单号" optional="show" readonly="1"/>
+                <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_fund_account_operation_tree" model="ir.ui.view">
+        <field name="name">sc.fund.account.operation.p1.daily.business.visible.tree</field>
+        <field name="model">sc.fund.account.operation</field>
+        <field name="inherit_id" ref="view_sc_fund_account_operation_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="p1_visible_06fa8c6f628f" string="单据状态" optional="show" readonly="1"/>
+                <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
+                <field name="p1_visible_51f85a78cac4" string="发生时间" optional="show" readonly="1"/>
+                <field name="p1_visible_43f67c096554" string="账户号码" optional="show" readonly="1"/>
+                <field name="p1_visible_df6e7b1e9eac" string="转账类别" optional="show" readonly="1"/>
+                <field name="p1_visible_0675851fc19e" string="事由" optional="show" readonly="1"/>
+                <field name="p1_visible_e0361480e3a5" string="备注" optional="show" readonly="1"/>
+                <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_receipt_income_tree" model="ir.ui.view">
+        <field name="name">sc.receipt.income.p1.daily.business.visible.tree</field>
+        <field name="model">sc.receipt.income</field>
+        <field name="inherit_id" ref="view_sc_receipt_income_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="p1_visible_06fa8c6f628f" string="单据状态" optional="show" readonly="1"/>
+                <field name="p1_visible_8fa8662ad38f" string="单据编号" optional="show" readonly="1"/>
+                <field name="p1_visible_89b4aa6364ce" string="时间" optional="show" readonly="1"/>
+                <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
+                <field name="p1_visible_389372a58a16" string="期数" optional="show" readonly="1"/>
+                <field name="p1_visible_fc06f3f3d307" string="本期收款" optional="show" readonly="1"/>
+                <field name="p1_visible_99219180c1b9" string="本期代扣代缴合计" optional="show" readonly="1"/>
+                <field name="p1_visible_50f529884746" string="本期拨付金额合计" optional="show" readonly="1"/>
+                <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+                <field name="p1_visible_17d0f48c07fb" string="施工单位" optional="show" readonly="1"/>
+                <field name="p1_visible_75e856a13c7c" string="合同金额" optional="show" readonly="1"/>
+                <field name="p1_visible_689407e406ab" string="目前形象进度" optional="show" readonly="1"/>
+                <field name="p1_visible_0d8979d08c09" string="累计开票金额" optional="show" readonly="1"/>
+                <field name="p1_visible_aa6152009ab0" string="上期留存余额" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_legacy_fund_daily_snapshot_fact_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.fund.daily.snapshot.fact.p1.daily.business.visible.tree</field>
+        <field name="model">sc.legacy.fund.daily.snapshot.fact</field>
+        <field name="inherit_id" ref="view_sc_legacy_fund_daily_snapshot_fact_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="p1_visible_06fa8c6f628f" string="单据状态" optional="show" readonly="1"/>
+                <field name="p1_visible_8fa8662ad38f" string="单据编号" optional="show" readonly="1"/>
+                <field name="p1_visible_1e62803e196c" string="单据日期" optional="show" readonly="1"/>
+                <field name="p1_visible_3f2da24264f0" string="账号名称" optional="show" readonly="1"/>
+                <field name="p1_visible_ecaf440fd399" string="银行账号" optional="show" readonly="1"/>
+                <field name="p1_visible_bed51835debf" string="当前账户余额" optional="show" readonly="1"/>
+                <field name="p1_visible_5b112952b526" string="当前账户银行余额" optional="show" readonly="1"/>
+                <field name="p1_visible_834c5de2f288" string="银行系统差额" optional="show" readonly="1"/>
+                <field name="p1_visible_e5bf37733141" string="当日累计收入" optional="show" readonly="1"/>
+                <field name="p1_visible_af4cdd8ce788" string="当日累计支出" optional="show" readonly="1"/>
+                <field name="p1_visible_0027be5d5d7e" string="账户往来" optional="show" readonly="1"/>
+                <field name="p1_visible_e0361480e3a5" string="备注" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_invoice_registration_tree" model="ir.ui.view">
+        <field name="name">sc.invoice.registration.p1.daily.business.visible.tree</field>
+        <field name="model">sc.invoice.registration</field>
+        <field name="inherit_id" ref="view_sc_invoice_registration_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="p1_visible_3b66293fbe70" string="开票状态" optional="show" readonly="1"/>
+                <field name="p1_visible_17b341733b7b" string="合同编号" optional="show" readonly="1"/>
+                <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
+                <field name="p1_visible_8fa8662ad38f" string="单据编号" optional="show" readonly="1"/>
+                <field name="p1_visible_880ab989a872" string="申请人" optional="show" readonly="1"/>
+                <field name="p1_visible_ed9ce3e5ab3c" string="预计回款日期" optional="show" readonly="1"/>
+                <field name="p1_visible_2c346345746e" string="申请日期" optional="show" readonly="1"/>
+                <field name="p1_visible_f9cc22d53aff" string="受票方名称" optional="show" readonly="1"/>
+                <field name="p1_visible_0d8979d08c09" string="累计开票金额" optional="show" readonly="1"/>
+                <field name="p1_visible_83e1d169c7a2" string="合同额" optional="show" readonly="1"/>
+                <field name="p1_visible_4f43764bd23d" string="本次开票张数" optional="show" readonly="1"/>
+                <field name="p1_visible_c5e161f03e08" string="本次开票金额" optional="show" readonly="1"/>
+                <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+                <field name="p1_visible_e0361480e3a5" string="备注" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
+                <field name="p1_visible_06fa8c6f628f" string="单据状态" optional="show" readonly="1"/>
+                <field name="p1_visible_f22832ce4781" string="推送结果" optional="show" readonly="1"/>
+                <field name="p1_visible_7f5da566c14e" string="金蝶单据编号" optional="show" readonly="1"/>
+                <field name="p1_visible_c73a8eab0d57" string="含税金额" optional="show" readonly="1"/>
+                <field name="p1_visible_c1b95b8ca332" string="附加税" optional="show" readonly="1"/>
+                <field name="p1_visible_0e2126d6cf82" string="开票张数" optional="show" readonly="1"/>
+                <field name="p1_visible_964a2edc6942" string="关联回款金额" optional="show" readonly="1"/>
+                <field name="p1_visible_ada9a85eab00" string="发票号" optional="show" readonly="1"/>
+                <field name="p1_visible_bbe7bbee241e" string="发票种类" optional="show" readonly="1"/>
+                <field name="p1_visible_be5462bd6a62" string="开票单位" optional="show" readonly="1"/>
+                <field name="p1_visible_d42c2d26610f" string="开票日期" optional="show" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_fund_account_tree" model="ir.ui.view">
+        <field name="name">sc.fund.account.p1.daily.business.visible.tree</field>
+        <field name="model">sc.fund.account</field>
+        <field name="inherit_id" ref="view_sc_fund_account_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="p1_visible_f22832ce4781" string="推送结果" optional="show" readonly="1"/>
+                <field name="p1_visible_0fb499e9ebc9" string="账户状态" optional="show" readonly="1"/>
+                <field name="p1_visible_ef38c6c5245f" string="账户操作" optional="show" readonly="1"/>
+                <field name="p1_visible_bd1bb9040d11" string="录入来源" optional="show" readonly="1"/>
+                <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
+                <field name="p1_visible_8fa8662ad38f" string="单据编号" optional="show" readonly="1"/>
+                <field name="p1_visible_3f2da24264f0" string="账号名称" optional="show" readonly="1"/>
+                <field name="p1_visible_d8347d8e9fac" string="账号户名" optional="show" readonly="1"/>
+                <field name="p1_visible_a82dee991619" string="初期余额" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_material_purchase_request_tree" model="ir.ui.view">
+        <field name="name">sc.material.purchase.request.p1.daily.business.visible.tree</field>
+        <field name="model">sc.material.purchase.request</field>
+        <field name="inherit_id" ref="view_sc_material_purchase_request_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="p1_visible_06fa8c6f628f" string="单据状态" optional="show" readonly="1"/>
+                <field name="p1_visible_17b341733b7b" string="合同编号" optional="show" readonly="1"/>
+                <field name="p1_visible_748d7dc7e321" string="标题" optional="show" readonly="1"/>
+                <field name="p1_visible_703c9eb0f092" string="供应商" optional="show" readonly="1"/>
+                <field name="p1_visible_fb3fb348357f" string="购货单位" optional="show" readonly="1"/>
+                <field name="p1_visible_824168a11b21" string="总金额" optional="show" readonly="1"/>
+                <field name="p1_visible_3b652b9864d4" string="已开票金额" optional="show" readonly="1"/>
+                <field name="p1_visible_d3ebd50d724b" string="已付款金额" optional="show" readonly="1"/>
+                <field name="p1_visible_a22ecb7fab2f" string="未付款金额" optional="show" readonly="1"/>
+                <field name="p1_visible_462c614de6c7" string="未开票金额" optional="show" readonly="1"/>
+                <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
+                <field name="p1_visible_37d56ad493cf" string="税率" optional="show" readonly="1"/>
+                <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_material_inbound_tree" model="ir.ui.view">
+        <field name="name">sc.material.inbound.p1.daily.business.visible.tree</field>
+        <field name="model">sc.material.inbound</field>
+        <field name="inherit_id" ref="view_sc_material_inbound_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="p1_visible_06fa8c6f628f" string="单据状态" optional="show" readonly="1"/>
+                <field name="p1_visible_1e62803e196c" string="单据日期" optional="show" readonly="1"/>
+                <field name="p1_visible_cf44ec3f55f9" string="供应商名称" optional="show" readonly="1"/>
+                <field name="p1_visible_b9ae89319036" string="数量" optional="show" readonly="1"/>
+                <field name="p1_visible_37d56ad493cf" string="税率" optional="show" readonly="1"/>
+                <field name="p1_visible_c73a8eab0d57" string="含税金额" optional="show" readonly="1"/>
+                <field name="p1_visible_7037fe48a39a" string="入库总数量" optional="show" readonly="1"/>
+                <field name="p1_visible_b6959bb111d9" string="付款状态" optional="show" readonly="1"/>
+                <field name="p1_visible_d3ebd50d724b" string="已付款金额" optional="show" readonly="1"/>
+                <field name="p1_visible_a22ecb7fab2f" string="未付款金额" optional="show" readonly="1"/>
+                <field name="p1_visible_523a114e3f97" string="结算状态" optional="show" readonly="1"/>
+                <field name="p1_visible_ae142ac27fe4" string="已结算金额" optional="show" readonly="1"/>
+                <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
+                <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+                <field name="p1_visible_7588602fb22d" string="采购人" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_material_settlement_tree" model="ir.ui.view">
+        <field name="name">sc.material.settlement.p1.daily.business.visible.tree</field>
+        <field name="model">sc.material.settlement</field>
+        <field name="inherit_id" ref="view_sc_material_settlement_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="p1_visible_06fa8c6f628f" string="单据状态" optional="show" readonly="1"/>
+                <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
+                <field name="p1_visible_8fa8662ad38f" string="单据编号" optional="show" readonly="1"/>
+                <field name="p1_visible_748d7dc7e321" string="标题" optional="show" readonly="1"/>
+                <field name="p1_visible_36cae65ab40a" string="结算单位" optional="show" readonly="1"/>
+                <field name="p1_visible_b6959bb111d9" string="付款状态" optional="show" readonly="1"/>
+                <field name="p1_visible_d3ebd50d724b" string="已付款金额" optional="show" readonly="1"/>
+                <field name="p1_visible_a22ecb7fab2f" string="未付款金额" optional="show" readonly="1"/>
+                <field name="p1_visible_ec15903ded76" string="支付申请状态" optional="show" readonly="1"/>
+                <field name="p1_visible_72cf58c14fc0" string="已申请金额" optional="show" readonly="1"/>
+                <field name="p1_visible_825a06905b09" string="未申请金额" optional="show" readonly="1"/>
+                <field name="p1_visible_816dc9f7b786" string="结算说明" optional="show" readonly="1"/>
+                <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_labor_request_tree" model="ir.ui.view">
+        <field name="name">sc.labor.request.p1.daily.business.visible.tree</field>
+        <field name="model">sc.labor.request</field>
+        <field name="inherit_id" ref="view_sc_labor_request_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="p1_visible_06fa8c6f628f" string="单据状态" optional="show" readonly="1"/>
+                <field name="p1_visible_8fa8662ad38f" string="单据编号" optional="show" readonly="1"/>
+                <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
+                <field name="p1_visible_4f451f1752ff" string="签订日期" optional="show" readonly="1"/>
+                <field name="p1_visible_748d7dc7e321" string="标题" optional="show" readonly="1"/>
+                <field name="p1_visible_5c9cf136f91e" string="劳务单位" optional="show" readonly="1"/>
+                <field name="p1_visible_a4772564ef48" string="施工队负责人" optional="show" readonly="1"/>
+                <field name="p1_visible_fbc9dd74a2e6" string="总含税金额" optional="show" readonly="1"/>
+                <field name="p1_visible_d4f294757227" string="结算比例" optional="show" readonly="1"/>
+                <field name="p1_visible_3b652b9864d4" string="已开票金额" optional="show" readonly="1"/>
+                <field name="p1_visible_d3ebd50d724b" string="已付款金额" optional="show" readonly="1"/>
+                <field name="p1_visible_a22ecb7fab2f" string="未付款金额" optional="show" readonly="1"/>
+                <field name="p1_visible_462c614de6c7" string="未开票金额" optional="show" readonly="1"/>
+                <field name="p1_visible_c501b294a595" string="计价方式" optional="show" readonly="1"/>
+                <field name="p1_visible_ae8c5d45f392" string="施工部位" optional="show" readonly="1"/>
+                <field name="p1_visible_17b341733b7b" string="合同编号" optional="show" readonly="1"/>
+                <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+                <field name="p1_visible_1546ed5e57bd" string="支付条款" optional="show" readonly="1"/>
+                <field name="p1_visible_98de2397eba2" string="推送项目名称" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_labor_usage_tree" model="ir.ui.view">
+        <field name="name">sc.labor.usage.p1.daily.business.visible.tree</field>
+        <field name="model">sc.labor.usage</field>
+        <field name="inherit_id" ref="view_sc_labor_usage_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="p1_visible_06fa8c6f628f" string="单据状态" optional="show" readonly="1"/>
+                <field name="p1_visible_8fa8662ad38f" string="单据编号" optional="show" readonly="1"/>
+                <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
+                <field name="p1_visible_1e62803e196c" string="单据日期" optional="show" readonly="1"/>
+                <field name="p1_visible_748d7dc7e321" string="标题" optional="show" readonly="1"/>
+                <field name="p1_visible_ae8c5d45f392" string="施工部位" optional="show" readonly="1"/>
+                <field name="p1_visible_523a114e3f97" string="结算状态" optional="show" readonly="1"/>
+                <field name="p1_visible_824168a11b21" string="总金额" optional="show" readonly="1"/>
+                <field name="p1_visible_e0361480e3a5" string="备注" optional="show" readonly="1"/>
+                <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_labor_settlement_tree" model="ir.ui.view">
+        <field name="name">sc.labor.settlement.p1.daily.business.visible.tree</field>
+        <field name="model">sc.labor.settlement</field>
+        <field name="inherit_id" ref="view_sc_labor_settlement_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="p1_visible_8fa8662ad38f" string="单据编号" optional="show" readonly="1"/>
+                <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
+                <field name="p1_visible_1e62803e196c" string="单据日期" optional="show" readonly="1"/>
+                <field name="p1_visible_748d7dc7e321" string="标题" optional="show" readonly="1"/>
+                <field name="p1_visible_36cae65ab40a" string="结算单位" optional="show" readonly="1"/>
+                <field name="p1_visible_b6959bb111d9" string="付款状态" optional="show" readonly="1"/>
+                <field name="p1_visible_d3ebd50d724b" string="已付款金额" optional="show" readonly="1"/>
+                <field name="p1_visible_a22ecb7fab2f" string="未付款金额" optional="show" readonly="1"/>
+                <field name="p1_visible_ec15903ded76" string="支付申请状态" optional="show" readonly="1"/>
+                <field name="p1_visible_72cf58c14fc0" string="已申请金额" optional="show" readonly="1"/>
+                <field name="p1_visible_825a06905b09" string="未申请金额" optional="show" readonly="1"/>
+                <field name="p1_visible_816dc9f7b786" string="结算说明" optional="show" readonly="1"/>
+                <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+                <field name="p1_visible_17b341733b7b" string="合同编号" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_subcontract_register_tree" model="ir.ui.view">
+        <field name="name">sc.subcontract.register.p1.daily.business.visible.tree</field>
+        <field name="model">sc.subcontract.register</field>
+        <field name="inherit_id" ref="view_sc_subcontract_register_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="p1_visible_8fa8662ad38f" string="单据编号" optional="show" readonly="1"/>
+                <field name="p1_visible_c88947435308" string="签订时间" optional="show" readonly="1"/>
+                <field name="p1_visible_748d7dc7e321" string="标题" optional="show" readonly="1"/>
+                <field name="p1_visible_6b40af3eee21" string="分包内容" optional="show" readonly="1"/>
+                <field name="p1_visible_c2bdcf08e8a5" string="总数量" optional="show" readonly="1"/>
+                <field name="p1_visible_34943c40c9af" string="金额" optional="show" readonly="1"/>
+                <field name="p1_visible_17b341733b7b" string="合同编号" optional="show" readonly="1"/>
+                <field name="p1_visible_3b652b9864d4" string="已开票金额" optional="show" readonly="1"/>
+                <field name="p1_visible_d3ebd50d724b" string="已付款金额" optional="show" readonly="1"/>
+                <field name="p1_visible_a22ecb7fab2f" string="未付款金额" optional="show" readonly="1"/>
+                <field name="p1_visible_462c614de6c7" string="未开票金额" optional="show" readonly="1"/>
+                <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
+                <field name="p1_visible_e0361480e3a5" string="备注" optional="show" readonly="1"/>
+                <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_subcontract_request_tree" model="ir.ui.view">
+        <field name="name">sc.subcontract.request.p1.daily.business.visible.tree</field>
+        <field name="model">sc.subcontract.request</field>
+        <field name="inherit_id" ref="view_sc_subcontract_request_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="p1_visible_06fa8c6f628f" string="单据状态" optional="show" readonly="1"/>
+                <field name="p1_visible_8fa8662ad38f" string="单据编号" optional="show" readonly="1"/>
+                <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
+                <field name="p1_visible_748d7dc7e321" string="标题" optional="show" readonly="1"/>
+                <field name="p1_visible_c2183068c097" string="分包商" optional="show" readonly="1"/>
+                <field name="p1_visible_cd47577e8847" string="分包类型" optional="show" readonly="1"/>
+                <field name="p1_visible_6b40af3eee21" string="分包内容" optional="show" readonly="1"/>
+                <field name="p1_visible_b9ae89319036" string="数量" optional="show" readonly="1"/>
+                <field name="p1_visible_0b370511a765" string="单价" optional="show" readonly="1"/>
+                <field name="p1_visible_34943c40c9af" string="金额" optional="show" readonly="1"/>
+                <field name="p1_visible_ac666c1a3967" string="本月合价" optional="show" readonly="1"/>
+                <field name="p1_visible_e0361480e3a5" string="备注" optional="show" readonly="1"/>
+                <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_subcontract_settlement_tree" model="ir.ui.view">
+        <field name="name">sc.subcontract.settlement.p1.daily.business.visible.tree</field>
+        <field name="model">sc.subcontract.settlement</field>
+        <field name="inherit_id" ref="view_sc_subcontract_settlement_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
+                <field name="p1_visible_8fa8662ad38f" string="单据编号" optional="show" readonly="1"/>
+                <field name="p1_visible_748d7dc7e321" string="标题" optional="show" readonly="1"/>
+                <field name="p1_visible_36cae65ab40a" string="结算单位" optional="show" readonly="1"/>
+                <field name="p1_visible_b6959bb111d9" string="付款状态" optional="show" readonly="1"/>
+                <field name="p1_visible_d3ebd50d724b" string="已付款金额" optional="show" readonly="1"/>
+                <field name="p1_visible_a22ecb7fab2f" string="未付款金额" optional="show" readonly="1"/>
+                <field name="p1_visible_ec15903ded76" string="支付申请状态" optional="show" readonly="1"/>
+                <field name="p1_visible_72cf58c14fc0" string="已申请金额" optional="show" readonly="1"/>
+                <field name="p1_visible_825a06905b09" string="未申请金额" optional="show" readonly="1"/>
+                <field name="p1_visible_17b341733b7b" string="合同编号" optional="show" readonly="1"/>
+                <field name="p1_visible_3684e69e670b" string="起始结算日期" optional="show" readonly="1"/>
+                <field name="p1_visible_2e2adb177c13" string="终止结算日期" optional="show" readonly="1"/>
+                <field name="p1_visible_816dc9f7b786" string="结算说明" optional="show" readonly="1"/>
+                <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_equipment_request_tree" model="ir.ui.view">
+        <field name="name">sc.equipment.request.p1.daily.business.visible.tree</field>
+        <field name="model">sc.equipment.request</field>
+        <field name="inherit_id" ref="view_sc_equipment_request_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="p1_visible_06fa8c6f628f" string="单据状态" optional="show" readonly="1"/>
+                <field name="p1_visible_8fa8662ad38f" string="单据编号" optional="show" readonly="1"/>
+                <field name="p1_visible_17b341733b7b" string="合同编号" optional="show" readonly="1"/>
+                <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
+                <field name="p1_visible_3ec01dd569e2" string="合同标题" optional="show" readonly="1"/>
+                <field name="p1_visible_a2cf2d1a84c3" string="租赁单位" optional="show" readonly="1"/>
+                <field name="p1_visible_d1d932d7d9f5" string="租赁内容" optional="show" readonly="1"/>
+                <field name="p1_visible_c2bdcf08e8a5" string="总数量" optional="show" readonly="1"/>
+                <field name="p1_visible_3b652b9864d4" string="已开票金额" optional="show" readonly="1"/>
+                <field name="p1_visible_d3ebd50d724b" string="已付款金额" optional="show" readonly="1"/>
+                <field name="p1_visible_a22ecb7fab2f" string="未付款金额" optional="show" readonly="1"/>
+                <field name="p1_visible_462c614de6c7" string="未开票金额" optional="show" readonly="1"/>
+                <field name="p1_visible_824168a11b21" string="总金额" optional="show" readonly="1"/>
+                <field name="p1_visible_c88947435308" string="签订时间" optional="show" readonly="1"/>
+                <field name="p1_visible_8818fa7c0bc6" string="经办人及电话" optional="show" readonly="1"/>
+                <field name="p1_visible_37d56ad493cf" string="税率" optional="show" readonly="1"/>
+                <field name="p1_visible_294e7015ec01" string="增值税类型" optional="show" readonly="1"/>
+                <field name="p1_visible_e0361480e3a5" string="备注" optional="show" readonly="1"/>
+                <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_equipment_usage_tree" model="ir.ui.view">
+        <field name="name">sc.equipment.usage.p1.daily.business.visible.tree</field>
+        <field name="model">sc.equipment.usage</field>
+        <field name="inherit_id" ref="view_sc_equipment_usage_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="p1_visible_06fa8c6f628f" string="单据状态" optional="show" readonly="1"/>
+                <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
+                <field name="p1_visible_8fa8662ad38f" string="单据编号" optional="show" readonly="1"/>
+                <field name="p1_visible_1e62803e196c" string="单据日期" optional="show" readonly="1"/>
+                <field name="p1_visible_a2cf2d1a84c3" string="租赁单位" optional="show" readonly="1"/>
+                <field name="p1_visible_0e3888031cb3" string="曾用名单" optional="show" readonly="1"/>
+                <field name="p1_visible_2c6b2e0dc811" string="机械名称" optional="show" readonly="1"/>
+                <field name="p1_visible_6a92ad6d5d73" string="规格型号" optional="show" readonly="1"/>
+                <field name="p1_visible_8ec8c8c712be" string="单位" optional="show" readonly="1"/>
+                <field name="p1_visible_e6412d7d7f6a" string="工作时间" optional="show" readonly="1"/>
+                <field name="p1_visible_0b370511a765" string="单价" optional="show" readonly="1"/>
+                <field name="p1_visible_34943c40c9af" string="金额" optional="show" readonly="1"/>
+                <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+                <field name="p1_visible_e0361480e3a5" string="备注" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_equipment_settlement_tree" model="ir.ui.view">
+        <field name="name">sc.equipment.settlement.p1.daily.business.visible.tree</field>
+        <field name="model">sc.equipment.settlement</field>
+        <field name="inherit_id" ref="view_sc_equipment_settlement_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="p1_visible_06fa8c6f628f" string="单据状态" optional="show" readonly="1"/>
+                <field name="p1_visible_8fa8662ad38f" string="单据编号" optional="show" readonly="1"/>
+                <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
+                <field name="p1_visible_1e62803e196c" string="单据日期" optional="show" readonly="1"/>
+                <field name="p1_visible_36cae65ab40a" string="结算单位" optional="show" readonly="1"/>
+                <field name="p1_visible_d5c7314894ba" string="结算内容" optional="show" readonly="1"/>
+                <field name="p1_visible_824168a11b21" string="总金额" optional="show" readonly="1"/>
+                <field name="p1_visible_b6959bb111d9" string="付款状态" optional="show" readonly="1"/>
+                <field name="p1_visible_d3ebd50d724b" string="已付款金额" optional="show" readonly="1"/>
+                <field name="p1_visible_a22ecb7fab2f" string="未付款金额" optional="show" readonly="1"/>
+                <field name="p1_visible_ec15903ded76" string="支付申请状态" optional="show" readonly="1"/>
+                <field name="p1_visible_72cf58c14fc0" string="已申请金额" optional="show" readonly="1"/>
+                <field name="p1_visible_825a06905b09" string="未申请金额" optional="show" readonly="1"/>
+                <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_material_rental_order_tree" model="ir.ui.view">
+        <field name="name">sc.material.rental.order.p1.daily.business.visible.tree</field>
+        <field name="model">sc.material.rental.order</field>
+        <field name="inherit_id" ref="view_sc_material_rental_order_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="p1_visible_8fa8662ad38f" string="单据编号" optional="show" readonly="1"/>
+                <field name="p1_visible_17b341733b7b" string="合同编号" optional="show" readonly="1"/>
+                <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
+                <field name="p1_visible_3ec01dd569e2" string="合同标题" optional="show" readonly="1"/>
+                <field name="p1_visible_a2cf2d1a84c3" string="租赁单位" optional="show" readonly="1"/>
+                <field name="p1_visible_7c5dccd62b11" string="单据金额" optional="show" readonly="1"/>
+                <field name="p1_visible_d1d932d7d9f5" string="租赁内容" optional="show" readonly="1"/>
+                <field name="p1_visible_824168a11b21" string="总金额" optional="show" readonly="1"/>
+                <field name="p1_visible_3b652b9864d4" string="已开票金额" optional="show" readonly="1"/>
+                <field name="p1_visible_d3ebd50d724b" string="已付款金额" optional="show" readonly="1"/>
+                <field name="p1_visible_a22ecb7fab2f" string="未付款金额" optional="show" readonly="1"/>
+                <field name="p1_visible_462c614de6c7" string="未开票金额" optional="show" readonly="1"/>
+                <field name="p1_visible_48a64eb40c71" string="开户行" optional="show" readonly="1"/>
+                <field name="p1_visible_ecaf440fd399" string="银行账号" optional="show" readonly="1"/>
+                <field name="p1_visible_139909c2662e" string="开户人姓名" optional="show" readonly="1"/>
+                <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+                <field name="p1_visible_c88947435308" string="签订时间" optional="show" readonly="1"/>
+                <field name="p1_visible_06fa8c6f628f" string="单据状态" optional="show" readonly="1"/>
+                <field name="p1_visible_1e62803e196c" string="单据日期" optional="show" readonly="1"/>
+                <field name="p1_visible_43f2759419f3" string="使用单位名称" optional="show" readonly="1"/>
+                <field name="p1_visible_567b97eff5bc" string="材料名称" optional="show" readonly="1"/>
+                <field name="p1_visible_6a92ad6d5d73" string="规格型号" optional="show" readonly="1"/>
+                <field name="p1_visible_b9ae89319036" string="数量" optional="show" readonly="1"/>
+                <field name="p1_visible_0b370511a765" string="单价" optional="show" readonly="1"/>
+                <field name="p1_visible_3c6524d108d5" string="租赁押金" optional="show" readonly="1"/>
+                <field name="p1_visible_e0361480e3a5" string="备注" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_material_rental_settlement_tree" model="ir.ui.view">
+        <field name="name">sc.material.rental.settlement.p1.daily.business.visible.tree</field>
+        <field name="model">sc.material.rental.settlement</field>
+        <field name="inherit_id" ref="view_sc_material_rental_settlement_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="p1_visible_06fa8c6f628f" string="单据状态" optional="show" readonly="1"/>
+                <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
+                <field name="p1_visible_8fa8662ad38f" string="单据编号" optional="show" readonly="1"/>
+                <field name="p1_visible_36cae65ab40a" string="结算单位" optional="show" readonly="1"/>
+                <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_sc_construction_diary_tree" model="ir.ui.view">
+        <field name="name">sc.construction.diary.p1.daily.business.visible.tree</field>
+        <field name="model">sc.construction.diary</field>
+        <field name="inherit_id" ref="view_sc_construction_diary_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="inside">
+                <field name="p1_visible_06fa8c6f628f" string="单据状态" optional="show" readonly="1"/>
+                <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
+                <field name="p1_visible_8fa8662ad38f" string="单据编号" optional="show" readonly="1"/>
+                <field name="p1_visible_b6fed9af8313" string="日期" optional="show" readonly="1"/>
+                <field name="p1_visible_ae8c5d45f392" string="施工部位" optional="show" readonly="1"/>
+                <field name="p1_visible_c27cdbf90458" string="出勤人数" optional="show" readonly="1"/>
+                <field name="p1_visible_73bf794d61b3" string="出勤机械" optional="show" readonly="1"/>
+                <field name="p1_visible_e0361480e3a5" string="备注" optional="show" readonly="1"/>
+                <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_p1_daily_business_visible_tender_bid_search" model="ir.ui.view">
+        <field name="name">tender.bid.p1.daily.business.visible.search</field>
+        <field name="model">tender.bid</field>
+        <field name="inherit_id" ref="view_tender_bid_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <field name="project_id" string="投标项目名称"/>
+                <filter string="投标项目名称" name="p1_filter_tender_project_name" context="{'group_by': 'project_id'}"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

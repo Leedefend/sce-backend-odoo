@@ -172,6 +172,7 @@
                 <field name="owner_id"/>
                 <filter string="中标" name="won" domain="[('state','=','won')]"/>
                 <group expand="1" string="分组">
+                    <filter string="投标项目名称" name="group_tender_project_name" context="{'group_by':'project_id'}"/>
                     <filter string="按项目" name="group_project" context="{'group_by':'project_id'}"/>
                     <filter string="按状态" name="group_state" context="{'group_by':'state'}"/>
                 </group>

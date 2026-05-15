@@ -13,6 +13,30 @@ class ScLegacyUserPriorityMenuPlan(models.Model):
     legacy_menu_group = fields.Char(string="老系统菜单分组", required=True, index=True)
     legacy_menu_name = fields.Char(string="老系统入口", required=True, index=True)
     business_domain = fields.Char(string="业务域", index=True)
+    target_model = fields.Char(string="主承载模型", index=True)
+    target_model_id = fields.Many2one("ir.model", string="主承载模型记录", ondelete="set null", index=True)
+    target_action_id = fields.Many2one("ir.actions.act_window", string="承载动作", ondelete="set null", index=True)
+    target_view_id = fields.Many2one("ir.ui.view", string="承载视图", ondelete="set null", index=True)
+    candidate_models_json = fields.Json(string="候选承载模型", default=list)
+    list_field_contract = fields.Json(string="列表字段契约", default=list)
+    search_contract = fields.Json(string="搜索/排序契约", default=dict)
+    form_section_contract = fields.Json(string="表单分区契约", default=list)
+    default_order = fields.Char(string="默认排序")
+    attachment_required = fields.Boolean(string="要求附件区", default=True)
+    chatter_required = fields.Boolean(string="要求日志区", default=True)
+    surface_contract_status = fields.Selection(
+        [
+            ("pending", "待结构化"),
+            ("runtime_spec_landed", "运行态规格已落地"),
+            ("view_gap_audit_required", "待视图差异审计"),
+            ("view_aligned", "视图已对齐"),
+        ],
+        string="可见面契约状态",
+        default="pending",
+        required=True,
+        index=True,
+    )
+    runtime_gap_summary = fields.Text(string="运行态差异摘要")
     current_round_action = fields.Selection(
         [
             ("plan_fact_landed", "本轮计划事实落库"),

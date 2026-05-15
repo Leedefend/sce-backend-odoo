@@ -656,6 +656,21 @@ project.legacy_entry.backfill: guard.prod.forbid check-compose-project check-com
 history.legacy_user_visible_surface.overlay.write: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" LEGACY_USER_VISIBLE_SURFACE_FILES="$(LEGACY_USER_VISIBLE_SURFACE_FILES)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/legacy_user_visible_surface_overlay_write.py
 
+history.daily_business_visible_surface.p0.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/daily_business_visible_surface_p0_plan_write.py
+
+history.daily_business_visible_surface.p0.probe: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/daily_business_visible_surface_p0_plan_probe.py
+
+history.daily_business_visible_surface.p0.runtime_gap.probe: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/daily_business_visible_surface_p0_runtime_gap_probe.py
+
+history.daily_business_visible_surface.p0.runtime_gap.write: guard.prod.forbid check-compose-project check-compose-env history.daily_business_visible_surface.p0.runtime_gap.probe
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/daily_business_visible_surface_p0_runtime_gap_write.py
+
+history.daily_business_visible_surface.p0: history.daily_business_visible_surface.p0.write history.daily_business_visible_surface.p0.probe history.daily_business_visible_surface.p0.runtime_gap.write
+	@echo "[OK] history.daily_business_visible_surface.p0 done"
+
 history.user_profile_runtime_projection.write: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/history_user_profile_runtime_projection_write.py
 
@@ -3203,6 +3218,9 @@ verify.capability.scale.stress: guard.prod.forbid
 
 verify.intent.concurrent.smoke: guard.prod.forbid
 	@python3 scripts/verify/intent_concurrent_smoke_report.py
+
+verify.p1.daily_business_visible_contract.audit: guard.prod.forbid
+	@python3 scripts/verify/p1_daily_business_visible_contract_audit.py
 
 verify.kernel.immutable.guard: guard.prod.forbid
 	@python3 scripts/verify/kernel_immutable_guard.py
