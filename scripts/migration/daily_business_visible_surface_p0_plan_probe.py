@@ -49,13 +49,13 @@ def write_report(path: Path, payload: dict[str, object]) -> None:
         "",
         "## Entries",
         "",
-        "| priority | group | legacy entry | domain | screenshots | field count |",
-        "| ---: | --- | --- | --- | --- | ---: |",
+        "| priority | group | legacy entry | domain | target model | screenshots | field count | contract fields |",
+        "| ---: | --- | --- | --- | --- | --- | ---: | ---: |",
     ]
     for row in payload["entries"]:
         lines.append(
             "| {priority_sequence} | {legacy_menu_group} | {legacy_menu_name} | {business_domain} | "
-            "{screenshot_ref} | {field_count} |".format(**row)
+            "{target_model} | {screenshot_ref} | {field_count} | {contract_field_count} |".format(**row)
         )
     lines.extend(["", f"Decision: `{payload['decision']}`", ""])
     path.write_text("\n".join(lines), encoding="utf-8")
@@ -71,8 +71,13 @@ records = Model.with_context(active_test=False).search(domain, order="priority_s
 row_count = len(records)
 verified_count = len(records.filtered(lambda rec: rec.replay_status == "verified"))
 p0_count = len(records.filtered(lambda rec: rec.target_iteration == "p0_daily_business_visible_surface"))
+runtime_spec_count = len(records.filtered(lambda rec: rec.surface_contract_status == "runtime_spec_landed"))
 missing_field_list = records.filtered(lambda rec: not (rec.legacy_field_list or "").strip()).mapped("legacy_menu_name")
 missing_scope = records.filtered(lambda rec: not (rec.next_scope or "").strip()).mapped("legacy_menu_name")
+missing_target_model = records.filtered(lambda rec: not (rec.target_model or "").strip()).mapped("legacy_menu_name")
+missing_list_contract = records.filtered(lambda rec: not rec.list_field_contract).mapped("legacy_menu_name")
+missing_form_contract = records.filtered(lambda rec: not rec.form_section_contract).mapped("legacy_menu_name")
+missing_search_contract = records.filtered(lambda rec: not rec.search_contract).mapped("legacy_menu_name")
 group_counts = {
     row.get("legacy_menu_group") or "": row.get("legacy_menu_group_count") or row.get("__count") or 0
     for row in Model.read_group(domain, ["legacy_menu_group"], ["legacy_menu_group"], lazy=False)
@@ -86,8 +91,10 @@ for record in records:
             "legacy_menu_group": record.legacy_menu_group,
             "legacy_menu_name": record.legacy_menu_name,
             "business_domain": record.business_domain,
+            "target_model": record.target_model,
             "screenshot_ref": record.screenshot_ref,
             "field_count": len(field_items),
+            "contract_field_count": len(record.list_field_contract or []),
         }
     )
 status = (
@@ -95,8 +102,13 @@ status = (
     if row_count == EXPECTED_ROWS
     and verified_count == EXPECTED_ROWS
     and p0_count == EXPECTED_ROWS
+    and runtime_spec_count == EXPECTED_ROWS
     and not missing_field_list
     and not missing_scope
+    and not missing_target_model
+    and not missing_list_contract
+    and not missing_form_contract
+    and not missing_search_contract
     else "FAIL"
 )
 payload = {
@@ -108,10 +120,15 @@ payload = {
     "row_count": row_count,
     "verified_count": verified_count,
     "p0_count": p0_count,
+    "runtime_spec_count": runtime_spec_count,
     "coverage": {
         "group_counts": group_counts,
         "missing_field_list": missing_field_list,
         "missing_scope": missing_scope,
+        "missing_target_model": missing_target_model,
+        "missing_list_contract": missing_list_contract,
+        "missing_form_contract": missing_form_contract,
+        "missing_search_contract": missing_search_contract,
     },
     "entries": entries,
     "db_writes": 0,

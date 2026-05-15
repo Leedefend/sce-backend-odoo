@@ -78,6 +78,98 @@ def write_report(path: Path, payload: dict[str, object]) -> None:
     path.write_text("\n".join(lines), encoding="utf-8")
 
 
+def split_values(raw: str) -> list[str]:
+    return [item.strip() for item in str(raw or "").split(";") if item.strip()]
+
+
+def list_field_contract(raw: str) -> list[dict[str, object]]:
+    return [
+        {
+            "sequence": (index + 1) * 10,
+            "legacy_label": label,
+            "source": "old_system_screenshot",
+            "required_for_alignment": True,
+        }
+        for index, label in enumerate(split_values(raw))
+    ]
+
+
+def default_order_for(group: str, name: str) -> str:
+    if name == "施工合同":
+        return "合同订立日期 desc"
+    if name in {"工资登记", "补助"}:
+        return "年度 desc, 月份 desc"
+    if name in {"社保登记"}:
+        return "年度 desc, 月份 desc"
+    if name in {"自筹垫付收入"}:
+        return "日期 desc"
+    if name in {"自筹垫付退回"}:
+        return "单据日期 desc"
+    if name == "收入":
+        return "收款时间 desc"
+    if name == "公司财务支出":
+        return "付款时间 desc"
+    if group in {"保证金"}:
+        return "录入时间 desc"
+    if name == "借款/还款登记":
+        return "申请时间 desc"
+    return "录入时间 desc"
+
+
+def search_contract_for(group: str, name: str) -> dict[str, object]:
+    default_order = default_order_for(group, name)
+    filters_by_name = {
+        "供应商/合作单位": ["单据状态", "项目名称", "单位名称", "合作类型"],
+        "往来单位": ["项目名称", "单位名称"],
+        "施工合同": ["发包人", "项目名称", "签订时间", "合同编号", "承包人", "工程类别", "合同标题"],
+        "公司资料存档": ["项目名称", "资料类型"],
+        "请假/休假审批单": ["项目名称", "申请人姓名", "请假类型"],
+        "社保人员登记": ["姓名", "社保购买单位", "人员类型"],
+        "社保登记": ["年度"],
+        "工资登记": ["姓名", "年度", "月份"],
+        "补助": ["项目名称", "补助人", "年度", "月份"],
+        "自筹垫付收入": ["项目名称", "对方单位/付款", "收入类别", "是否需要退回"],
+        "自筹垫付退回": ["项目名称", "往来单位/付款单位"],
+        "自筹保证金": ["投标项目名称", "项目名称", "保证金类型"],
+        "自筹保证金退回": ["项目名称", "收保证金单号"],
+        "付保证金": ["投标项目", "工程项目", "保证金类型"],
+        "付保证金退回": ["投标项目名称", "收款单位"],
+        "借款/还款登记": ["项目名称", "申请人", "单据状态"],
+        "收入": ["项目名称", "收入类别", "收款账户"],
+        "公司财务支出": ["成本类别", "收款单位名称", "付款账户名称"],
+    }
+    return {
+        "default_order": default_order,
+        "filter_labels": filters_by_name.get(name, []),
+        "source": "old_system_screenshot",
+    }
+
+
+def form_section_contract_for(fields: str, scope: str) -> list[dict[str, object]]:
+    labels = split_values(fields)
+    return [
+        {
+            "sequence": 10,
+            "title": "业务信息",
+            "legacy_labels": labels,
+            "alignment_scope": scope,
+            "source": "old_system_screenshot",
+        },
+        {
+            "sequence": 90,
+            "title": "附件",
+            "required": True,
+            "source": "unified_daily_business_form_structure",
+        },
+        {
+            "sequence": 100,
+            "title": "日志",
+            "required": True,
+            "source": "unified_daily_business_form_structure",
+        },
+    ]
+
+
 def entry(
     priority: int,
     group: str,
@@ -88,6 +180,9 @@ def entry(
     fields: str,
     scope: str,
 ) -> dict[str, object]:
+    candidate_models = split_values(carrier.replace(",", ";"))
+    target_model = candidate_models[0] if candidate_models else ""
+    default_order = default_order_for(group, name)
     return {
         "priority_sequence": priority,
         "source_document": SOURCE_DOCUMENT,
@@ -95,6 +190,16 @@ def entry(
         "legacy_menu_group": group,
         "legacy_menu_name": name,
         "business_domain": domain,
+        "target_model": target_model,
+        "candidate_models_json": candidate_models,
+        "list_field_contract": list_field_contract(fields),
+        "search_contract": search_contract_for(group, name),
+        "form_section_contract": form_section_contract_for(fields, scope),
+        "default_order": default_order,
+        "attachment_required": True,
+        "chatter_required": True,
+        "surface_contract_status": "runtime_spec_landed",
+        "runtime_gap_summary": "P0 old-system visible-surface spec landed; native view/contract gap audit remains per carrier model.",
         "current_round_action": "plan_fact_landed",
         "target_iteration": "p0_daily_business_visible_surface",
         "old_system_path": f"{group}/{name}",
@@ -140,6 +245,14 @@ before = Model.with_context(active_test=False).search_count([])
 created = 0
 updated = 0
 for vals in ENTRIES:
+    target_model = str(vals.get("target_model") or "").strip()
+    if target_model:
+        target_model_rec = env["ir.model"].sudo().search([("model", "=", target_model)], limit=1)  # noqa: F821
+        if target_model_rec:
+            vals["target_model_id"] = target_model_rec.id
+            target_action = env["ir.actions.act_window"].sudo().search([("res_model", "=", target_model)], limit=1)  # noqa: F821
+            if target_action:
+                vals["target_action_id"] = target_action.id
     domain = [
         ("source_document", "=", vals["source_document"]),
         ("legacy_menu_group", "=", vals["legacy_menu_group"]),
@@ -157,12 +270,17 @@ env.cr.commit()  # noqa: F821
 domain = [("source_document", "=", SOURCE_DOCUMENT)]
 row_count = Model.with_context(active_test=False).search_count(domain)
 verified_count = Model.with_context(active_test=False).search_count(domain + [("replay_status", "=", "verified")])
+runtime_spec_count = Model.with_context(active_test=False).search_count(
+    domain + [("surface_contract_status", "=", "runtime_spec_landed")]
+)
 domain_counts = {
     row.get("business_domain") or "": row.get("business_domain_count") or row.get("__count") or 0
     for row in Model.read_group(domain, ["business_domain"], ["business_domain"], lazy=False)
 }
 payload = {
-    "status": "PASS" if row_count == len(ENTRIES) and verified_count == len(ENTRIES) else "FAIL",
+    "status": "PASS"
+    if row_count == len(ENTRIES) and verified_count == len(ENTRIES) and runtime_spec_count == len(ENTRIES)
+    else "FAIL",
     "mode": "daily_business_visible_surface_p0_plan_write",
     "database": env.cr.dbname,  # noqa: F821
     "source_document": SOURCE_DOCUMENT,
@@ -173,11 +291,13 @@ payload = {
     "updated": updated,
     "row_count": row_count,
     "verified_count": verified_count,
+    "runtime_spec_count": runtime_spec_count,
     "domain_counts": domain_counts,
     "entries": ENTRIES,
     "summary": {
         "p0_entry_count": len(ENTRIES),
         "verified_count": verified_count,
+        "runtime_spec_count": runtime_spec_count,
         "screenshots": "image1-image36",
         "boundary": "backend_contract_driven_visible_surface_alignment",
     },
@@ -197,6 +317,7 @@ print(
             "updated": updated,
             "row_count": row_count,
             "verified_count": verified_count,
+            "runtime_spec_count": runtime_spec_count,
             "artifact_root": str(artifact_root),
         },
         ensure_ascii=False,
