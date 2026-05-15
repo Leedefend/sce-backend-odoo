@@ -5942,10 +5942,12 @@ async function loadContract() {
   const currentModel = String(model.value || '').trim();
   const contractContext = routeContractContext();
   const contextRaw = String(route.query.context_raw || '').trim();
+  const requestedViewId = toPositiveInt(route.query.view_id) || toPositiveInt(route.query.viewId) || 0;
   let response: Awaited<ReturnType<typeof loadActionContractRaw>> | null = null;
   if (actionId.value) {
     try {
       response = await loadActionContractRaw(actionId.value, {
+        viewId: requestedViewId || undefined,
         recordId: recordId.value,
         renderProfile: profile,
         surface: requestedSurface.value,
@@ -5965,6 +5967,7 @@ async function loadContract() {
   if (!response && currentModel) {
     response = await loadModelContractRaw(currentModel, {
       viewType: 'form',
+      viewId: requestedViewId || undefined,
       recordId: recordId.value,
       renderProfile: profile,
       surface: requestedSurface.value,

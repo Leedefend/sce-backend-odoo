@@ -7,6 +7,7 @@ import type { UnifiedPageContractV2 } from '../app/contracts/unifiedPageContract
 import { adaptUnifiedPageContractV2Raw } from '../app/runtime/unifiedPageContractV2CompatProjection';
 
 type LoadActionContractOptions = {
+  viewId?: number | null;
   recordId?: number | null;
   renderProfile?: 'create' | 'edit' | 'readonly' | null;
   surface?: 'user' | 'native' | 'hud' | null;
@@ -83,6 +84,10 @@ function rethrowContractError(err: unknown, context: { op: 'action_open' | 'mode
 
 function buildActionContractParams(actionId: number, options?: LoadActionContractOptions) {
   const params: Record<string, unknown> = { op: 'action_open', action_id: actionId };
+  const viewId = Number(options?.viewId || 0);
+  if (Number.isFinite(viewId) && viewId > 0) {
+    params.view_id = viewId;
+  }
   const recordId = Number(options?.recordId || 0);
   if (Number.isFinite(recordId) && recordId > 0) {
     params.record_id = recordId;
@@ -136,6 +141,10 @@ function buildModelContractParams(model: string, options?: LoadModelContractOpti
     model: String(model || '').trim(),
     view_type: options?.viewType || 'form',
   };
+  const viewId = Number(options?.viewId || 0);
+  if (Number.isFinite(viewId) && viewId > 0) {
+    params.view_id = viewId;
+  }
   const recordId = Number(options?.recordId || 0);
   if (Number.isFinite(recordId) && recordId > 0) {
     params.record_id = recordId;
