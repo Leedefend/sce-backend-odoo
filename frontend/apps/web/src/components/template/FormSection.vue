@@ -10,27 +10,59 @@
         <div
           v-for="field in fields"
           :key="field.key"
-          :class="['field', field.spanClass || defaultSpanClass(field.type), fieldWidgetClass(field)]"
+          :class="fieldClass(field)"
+          :draggable="fieldOrderEditable"
+          @dragstart="emitFieldOrderDragStart(field, $event)"
+          @dragover.prevent="emitFieldOrderDragOver(field)"
+          @dragleave="emitFieldOrderDragLeave(field)"
+          @drop.prevent="emitFieldOrderDrop(field)"
+          @dragend="emitFieldOrderDragEnd(field)"
         >
           <div class="field-label-row">
             <label class="label">{{ field.label }}<span v-if="field.required" class="required">*</span></label>
-            <div v-if="fieldActionsFor(field).length" class="field-inline-actions" role="radiogroup" :aria-label="`${field.label}字段操作`">
-              <label
-                v-for="action in fieldActionsFor(field)"
-                :key="`${field.key}-${action.key}`"
-                class="field-inline-action"
-                :title="action.title"
+            <div v-if="fieldOrderEditable || fieldActionsFor(field).length" class="field-inline-config">
+              <div v-if="fieldOrderEditable" class="field-order-inline-tools" :aria-label="`${field.label}字段排序`">
+                <span class="field-order-handle" aria-hidden="true" title="按住字段拖动调整顺序">⋮⋮</span>
+                <button
+                  class="field-order-btn"
+                  type="button"
+                  :disabled="!canMoveFieldOrder(field, -1)"
+                  :aria-label="`上移${field.label}`"
+                  title="上移"
+                  @click.stop="emitFieldOrderMove(field, -1)"
+                >↑</button>
+                <button
+                  class="field-order-btn"
+                  type="button"
+                  :disabled="!canMoveFieldOrder(field, 1)"
+                  :aria-label="`下移${field.label}`"
+                  title="下移"
+                  @click.stop="emitFieldOrderMove(field, 1)"
+                >↓</button>
+              </div>
+              <div
+                v-if="fieldActionsFor(field).length"
+                class="field-inline-actions"
+                role="radiogroup"
+                :aria-label="`${field.label}字段操作`"
               >
-                <input
-                  type="radio"
-                  :name="`field-action-${field.key}`"
-                  :value="action.value"
-                  :checked="Boolean(action.checked)"
-                  :disabled="Boolean(action.disabled)"
-                  @change="emitFieldAction(field, action)"
-                />
-                <span>{{ action.label }}</span>
-              </label>
+                <label
+                  v-for="action in fieldActionsFor(field)"
+                  :key="`${field.key}-${action.key}`"
+                  class="field-inline-action"
+                  :title="action.title"
+                >
+                  <input
+                    type="radio"
+                    :name="`field-action-${field.key}`"
+                    :value="action.value"
+                    :checked="Boolean(action.checked)"
+                    :disabled="Boolean(action.disabled)"
+                    @change="emitFieldAction(field, action)"
+                  />
+                  <span>{{ action.label }}</span>
+                </label>
+              </div>
             </div>
           </div>
           <div :class="['field-control-row', { 'field-control-row--favorite': field.favoriteToggle }]">
@@ -242,6 +274,11 @@ const props = withDefaults(defineProps<{
   fields?: FormSectionFieldSchema[];
   relationAdapter?: RelationFieldAdapter;
   fieldActions?: (field: FormSectionFieldSchema) => FormSectionFieldAction[];
+  fieldOrderEditable?: boolean;
+  fieldOrderIndex?: (field: FormSectionFieldSchema) => number;
+  fieldOrderCount?: number;
+  fieldOrderDraggingKey?: string;
+  fieldOrderDropTargetKey?: string;
   selectPlaceholder?: (label: string) => string;
   inputPlaceholder?: (label: string) => string;
 }>(), {
@@ -251,6 +288,11 @@ const props = withDefaults(defineProps<{
   fields: () => [],
   relationAdapter: undefined,
   fieldActions: undefined,
+  fieldOrderEditable: false,
+  fieldOrderIndex: undefined,
+  fieldOrderCount: 0,
+  fieldOrderDraggingKey: '',
+  fieldOrderDropTargetKey: '',
   selectPlaceholder: (label: string) => resolveSelectPlaceholder(label),
   inputPlaceholder: (label: string) => resolveInputPlaceholder(label),
 });
@@ -258,6 +300,12 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{
   (e: 'field-change', payload: FormSectionFieldChange): void;
   (e: 'field-action', payload: FormSectionFieldActionPayload): void;
+  (e: 'field-order-move', payload: { field: FormSectionFieldSchema; delta: number }): void;
+  (e: 'field-order-drag-start', payload: { field: FormSectionFieldSchema; event: DragEvent }): void;
+  (e: 'field-order-drag-over', payload: { field: FormSectionFieldSchema }): void;
+  (e: 'field-order-drag-leave', payload: { field: FormSectionFieldSchema }): void;
+  (e: 'field-order-drop', payload: { field: FormSectionFieldSchema }): void;
+  (e: 'field-order-drag-end', payload: { field: FormSectionFieldSchema }): void;
 }>();
 
 const slots = useSlots();
@@ -310,6 +358,20 @@ function fieldWidget(field: FormSectionFieldSchema) {
 function fieldWidgetClass(field: FormSectionFieldSchema) {
   const widget = fieldWidget(field);
   return widget ? `field--widget-${widget.replace(/[^a-z0-9_-]/g, '-')}` : '';
+}
+
+function fieldClass(field: FormSectionFieldSchema) {
+  const fieldKey = String(field.name || field.key || '').trim();
+  return [
+    'field',
+    field.spanClass || defaultSpanClass(field.type),
+    fieldWidgetClass(field),
+    {
+      'field--order-editable': props.fieldOrderEditable,
+      'field--order-dragging': props.fieldOrderDraggingKey === fieldKey,
+      'field--order-drop-target': props.fieldOrderDropTargetKey === fieldKey && props.fieldOrderDraggingKey !== fieldKey,
+    },
+  ];
 }
 
 function isRadioWidget(field: FormSectionFieldSchema) {
@@ -378,6 +440,19 @@ function fieldActionsFor(field: FormSectionFieldSchema) {
   return props.fieldActions?.(field) || [];
 }
 
+function fieldOrderIndex(field: FormSectionFieldSchema) {
+  return props.fieldOrderIndex?.(field) ?? -1;
+}
+
+function canMoveFieldOrder(field: FormSectionFieldSchema, delta: number) {
+  if (!props.fieldOrderEditable) return false;
+  const index = fieldOrderIndex(field);
+  const count = Number(props.fieldOrderCount || 0);
+  if (index < 0 || count <= 0) return false;
+  const nextIndex = index + delta;
+  return nextIndex >= 0 && nextIndex < count;
+}
+
 function emitFieldChange(field: FormSectionFieldSchema, value: string | number | boolean | null) {
   emit('field-change', {
     name: field.name,
@@ -436,6 +511,36 @@ function emitFavoriteToggle(field: FormSectionFieldSchema) {
 function emitFieldAction(field: FormSectionFieldSchema, action: FormSectionFieldAction) {
   if (action.disabled) return;
   emit('field-action', { field, action });
+}
+
+function emitFieldOrderMove(field: FormSectionFieldSchema, delta: number) {
+  if (!canMoveFieldOrder(field, delta)) return;
+  emit('field-order-move', { field, delta });
+}
+
+function emitFieldOrderDragStart(field: FormSectionFieldSchema, event: DragEvent) {
+  if (!props.fieldOrderEditable) return;
+  emit('field-order-drag-start', { field, event });
+}
+
+function emitFieldOrderDragOver(field: FormSectionFieldSchema) {
+  if (!props.fieldOrderEditable) return;
+  emit('field-order-drag-over', { field });
+}
+
+function emitFieldOrderDragLeave(field: FormSectionFieldSchema) {
+  if (!props.fieldOrderEditable) return;
+  emit('field-order-drag-leave', { field });
+}
+
+function emitFieldOrderDrop(field: FormSectionFieldSchema) {
+  if (!props.fieldOrderEditable) return;
+  emit('field-order-drop', { field });
+}
+
+function emitFieldOrderDragEnd(field: FormSectionFieldSchema) {
+  if (!props.fieldOrderEditable) return;
+  emit('field-order-drag-end', { field });
 }
 </script>
 
@@ -496,6 +601,29 @@ function emitFieldAction(field: FormSectionFieldSchema, action: FormSectionField
   gap: 0;
   min-width: 0;
   align-content: start;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  transition: border-color 120ms ease, box-shadow 120ms ease, background-color 120ms ease, opacity 120ms ease;
+}
+
+.field--order-editable {
+  padding: 6px;
+  margin: -6px;
+  cursor: grab;
+}
+
+.field--order-editable:active {
+  cursor: grabbing;
+}
+
+.field--order-dragging {
+  opacity: 0.56;
+}
+
+.field--order-drop-target {
+  border-color: var(--sc-semantic-surface-interactive);
+  background: var(--sc-app-info-bg);
+  box-shadow: inset 3px 0 0 var(--sc-semantic-surface-interactive);
 }
 
 .field--half {
@@ -557,6 +685,56 @@ function emitFieldAction(field: FormSectionFieldSchema, action: FormSectionField
 .required {
   color: var(--sc-app-danger-text);
   margin-left: 2px;
+}
+
+.field-inline-config {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.field-order-inline-tools {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.field-order-handle,
+.field-order-btn {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 26px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 5px;
+  background: var(--sc-app-bg);
+  color: var(--sc-app-text-secondary);
+  font-size: 13px;
+  line-height: 1;
+}
+
+.field-order-handle {
+  font-size: 15px;
+}
+
+.field-order-btn {
+  cursor: pointer;
+}
+
+.field-order-btn:hover:not(:disabled) {
+  border-color: var(--sc-app-border-strong);
+  background: var(--sc-app-hover-bg);
+  color: var(--sc-app-text-primary);
+}
+
+.field-order-btn:disabled {
+  cursor: default;
+  opacity: 0.42;
 }
 
 .field-inline-actions {

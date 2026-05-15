@@ -163,9 +163,20 @@
           :native-action-handler="runNativeLayoutAction"
           :relation-adapter="relationFieldAdapter"
           :field-actions="contractFieldActions"
+          :field-order-editable="isContractFieldOrderEditable"
+          :field-order-index="contractInlineFieldOrderIndex"
+          :field-order-count="fieldOrderDraft.length"
+          :field-order-dragging-key="draggingFieldKey"
+          :field-order-drop-target-key="dropTargetFieldKey"
           :columns="2"
           @field-change="onTemplateFieldChange"
           @field-action="onContractFieldAction"
+          @field-order-move="onContractInlineFieldOrderMove"
+          @field-order-drag-start="onContractInlineFieldOrderDragStart"
+          @field-order-drag-over="onContractInlineFieldOrderDragOver"
+          @field-order-drag-leave="onContractInlineFieldOrderDragLeave"
+          @field-order-drop="onContractInlineFieldOrderDrop"
+          @field-order-drag-end="onContractInlineFieldOrderDragEnd"
           @native-action="runNativeLayoutAction"
         >
           <template #readonly="{ field }">
@@ -285,7 +296,7 @@
           <button type="submit" class="chip-btn" :disabled="busy">确定</button>
           <button type="button" class="ghost" :disabled="busy" @click="closeContractPromptAction">取消</button>
         </form>
-        <section v-if="activeContractModeFieldRows.length" class="contract-field-governance">
+        <section v-if="activeContractModeFieldRows.length && !useNativeFormTree" class="contract-field-governance">
           <div
             v-for="row in activeContractModeFieldRows"
             :key="`field-governance-${row.fieldKey}`"
@@ -359,7 +370,7 @@
         <ul v-if="lowCodePrecheckWarnings.length" class="contract-lowcode-warnings">
           <li v-for="(warning, index) in lowCodePrecheckWarnings" :key="`lowcode-warning-${index}`">{{ warning }}</li>
         </ul>
-        <section v-if="isContractFieldOrderEditable" class="contract-lowcode-objects">
+        <section v-if="isContractFieldOrderEditable && !useNativeFormTree" class="contract-lowcode-objects">
           <header class="contract-lowcode-objects-head">
             <h4>业务对象配置</h4>
             <div class="contract-lowcode-contract-switch">
@@ -398,7 +409,7 @@
             </div>
           </div>
         </section>
-        <section v-if="isContractFieldOrderEditable" class="contract-lowcode-objects">
+        <section v-if="isContractFieldOrderEditable && !useNativeFormTree" class="contract-lowcode-objects">
           <header class="contract-lowcode-objects-head">
             <h4>布局配置</h4>
             <div class="chips">
@@ -418,7 +429,7 @@
             <button type="button" class="ghost" :disabled="busy" @click="removeLowCodeLayoutNode(nodeIndex)">删除</button>
           </div>
         </section>
-        <section v-if="isContractFieldOrderEditable" class="contract-lowcode-objects">
+        <section v-if="isContractFieldOrderEditable && !useNativeFormTree" class="contract-lowcode-objects">
           <header class="contract-lowcode-objects-head">
             <h4>规则配置</h4>
             <button type="button" class="ghost" :disabled="busy" @click="addLowCodeRule">新增规则</button>
@@ -4720,6 +4731,14 @@ function nativeFieldSchemasForNodes(nodes: NativeFormLayoutNode[]): FormSectionF
   const fieldNodes = mappedNodes
     .filter((item) => item !== favoriteNode)
     .map((item) => item.field);
+  if (isContractFieldOrderEditable.value && fieldOrderDraft.value.length) {
+    const rank = new Map(fieldOrderDraft.value.map((fieldName, order) => [fieldName, order]));
+    fieldNodes.sort((left, right) => {
+      const leftRank = rank.get(left.name) ?? Number.MAX_SAFE_INTEGER;
+      const rightRank = rank.get(right.name) ?? Number.MAX_SAFE_INTEGER;
+      return leftRank - rightRank;
+    });
+  }
   const schemas = applyV2ReadonlyFieldValues(buildSectionFieldSchemas(fieldNodes));
   if (!favoriteNode || !schemas.length) return schemas;
   const target = schemas.find((field) => field.name === 'name')
@@ -6402,6 +6421,45 @@ async function onFieldVisibilityDraftChange(fieldKey: string, value: string, raw
   await runContractRuleAction(raw);
 }
 
+function contractInlineFieldOrderIndex(field: FormSectionFieldSchema) {
+  const fieldKey = String(field.name || '').trim();
+  if (!fieldKey) return -1;
+  return fieldOrderDraft.value.indexOf(fieldKey);
+}
+
+function onContractInlineFieldOrderMove(payload: { field: FormSectionFieldSchema; delta: number }) {
+  const fieldKey = String(payload.field.name || '').trim();
+  if (!fieldKey) return;
+  moveFieldOrder(fieldKey, payload.delta);
+}
+
+function onContractInlineFieldOrderDragStart(payload: { field: FormSectionFieldSchema; event: DragEvent }) {
+  const fieldKey = String(payload.field.name || '').trim();
+  if (!fieldKey) return;
+  onFieldOrderDragStart(fieldKey, payload.event);
+}
+
+function onContractInlineFieldOrderDragOver(payload: { field: FormSectionFieldSchema }) {
+  const fieldKey = String(payload.field.name || '').trim();
+  if (!fieldKey) return;
+  onFieldOrderDragOver(fieldKey);
+}
+
+function onContractInlineFieldOrderDragLeave(payload: { field: FormSectionFieldSchema }) {
+  const fieldKey = String(payload.field.name || '').trim();
+  if (!fieldKey) return;
+  onFieldOrderDragLeave(fieldKey);
+}
+
+function onContractInlineFieldOrderDrop(payload: { field: FormSectionFieldSchema }) {
+  const fieldKey = String(payload.field.name || '').trim();
+  if (!fieldKey) return;
+  onFieldOrderDrop(fieldKey);
+}
+
+function onContractInlineFieldOrderDragEnd() {
+  onFieldOrderDragEnd();
+}
 
 function onFieldOrderDragStart(fieldKey: string, event?: DragEvent) {
   if (!isContractFieldOrderEditable.value) return;

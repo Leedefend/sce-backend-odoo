@@ -30,9 +30,20 @@
               :native-action-handler="nativeActionHandler"
               :relation-adapter="relationAdapter"
               :field-actions="fieldActions"
+              :field-order-editable="fieldOrderEditable"
+              :field-order-index="fieldOrderIndex"
+              :field-order-count="fieldOrderCount"
+              :field-order-dragging-key="fieldOrderDraggingKey"
+              :field-order-drop-target-key="fieldOrderDropTargetKey"
               :columns="columns"
               @field-change="emit('field-change', $event)"
               @field-action="emit('field-action', $event)"
+              @field-order-move="emit('field-order-move', $event)"
+              @field-order-drag-start="emit('field-order-drag-start', $event)"
+              @field-order-drag-over="emit('field-order-drag-over', $event)"
+              @field-order-drag-leave="emit('field-order-drag-leave', $event)"
+              @field-order-drop="emit('field-order-drop', $event)"
+              @field-order-drag-end="emit('field-order-drag-end', $event)"
               @native-action="emit('native-action', $event)"
             >
               <template #readonly="{ field }">
@@ -79,9 +90,20 @@
             :native-action-handler="nativeActionHandler"
             :relation-adapter="relationAdapter"
             :field-actions="fieldActions"
+            :field-order-editable="fieldOrderEditable"
+            :field-order-index="fieldOrderIndex"
+            :field-order-count="fieldOrderCount"
+            :field-order-dragging-key="fieldOrderDraggingKey"
+            :field-order-drop-target-key="fieldOrderDropTargetKey"
             :columns="columns"
             @field-change="emit('field-change', $event)"
             @field-action="emit('field-action', $event)"
+            @field-order-move="emit('field-order-move', $event)"
+            @field-order-drag-start="emit('field-order-drag-start', $event)"
+            @field-order-drag-over="emit('field-order-drag-over', $event)"
+            @field-order-drag-leave="emit('field-order-drag-leave', $event)"
+            @field-order-drop="emit('field-order-drop', $event)"
+            @field-order-drag-end="emit('field-order-drag-end', $event)"
             @native-action="emit('native-action', $event)"
           >
             <template #readonly="{ field }">
@@ -101,9 +123,20 @@
             :fields="fieldSchemasForNodes(fieldChildren(node))"
             :relation-adapter="relationAdapter"
             :field-actions="fieldActions"
+            :field-order-editable="fieldOrderEditable"
+            :field-order-index="fieldOrderIndex"
+            :field-order-count="fieldOrderCount"
+            :field-order-dragging-key="fieldOrderDraggingKey"
+            :field-order-drop-target-key="fieldOrderDropTargetKey"
             tone="core"
             @field-change="emit('field-change', $event)"
             @field-action="emit('field-action', $event)"
+            @field-order-move="emit('field-order-move', $event)"
+            @field-order-drag-start="emit('field-order-drag-start', $event)"
+            @field-order-drag-over="emit('field-order-drag-over', $event)"
+            @field-order-drag-leave="emit('field-order-drag-leave', $event)"
+            @field-order-drop="emit('field-order-drop', $event)"
+            @field-order-drag-end="emit('field-order-drag-end', $event)"
           >
             <template #readonly="{ field }">
               <slot name="readonly" :field="field" />
@@ -158,9 +191,20 @@
             :native-action-handler="nativeActionHandler"
             :relation-adapter="relationAdapter"
             :field-actions="fieldActions"
+            :field-order-editable="fieldOrderEditable"
+            :field-order-index="fieldOrderIndex"
+            :field-order-count="fieldOrderCount"
+            :field-order-dragging-key="fieldOrderDraggingKey"
+            :field-order-drop-target-key="fieldOrderDropTargetKey"
             :columns="columns"
             @field-change="emit('field-change', $event)"
             @field-action="emit('field-action', $event)"
+            @field-order-move="emit('field-order-move', $event)"
+            @field-order-drag-start="emit('field-order-drag-start', $event)"
+            @field-order-drag-over="emit('field-order-drag-over', $event)"
+            @field-order-drag-leave="emit('field-order-drag-leave', $event)"
+            @field-order-drop="emit('field-order-drop', $event)"
+            @field-order-drag-end="emit('field-order-drag-end', $event)"
             @native-action="emit('native-action', $event)"
           >
             <template #readonly="{ field }">
@@ -180,9 +224,20 @@
         :fields="fieldSchemasForNodes([node])"
         :relation-adapter="relationAdapter"
         :field-actions="fieldActions"
+        :field-order-editable="fieldOrderEditable"
+        :field-order-index="fieldOrderIndex"
+        :field-order-count="fieldOrderCount"
+        :field-order-dragging-key="fieldOrderDraggingKey"
+        :field-order-drop-target-key="fieldOrderDropTargetKey"
         tone="core"
         @field-change="emit('field-change', $event)"
         @field-action="emit('field-action', $event)"
+        @field-order-move="emit('field-order-move', $event)"
+        @field-order-drag-start="emit('field-order-drag-start', $event)"
+        @field-order-drag-over="emit('field-order-drag-over', $event)"
+        @field-order-drag-leave="emit('field-order-drag-leave', $event)"
+        @field-order-drop="emit('field-order-drop', $event)"
+        @field-order-drag-end="emit('field-order-drag-end', $event)"
       >
         <template #readonly="{ field }">
           <slot name="readonly" :field="field" />
@@ -251,6 +306,11 @@ const props = withDefaults(defineProps<{
   nativeActionHandler?: (payload: Record<string, unknown>) => void | Promise<void>;
   relationAdapter?: RelationFieldAdapter;
   fieldActions?: (field: FormSectionFieldSchema) => FormSectionFieldAction[];
+  fieldOrderEditable?: boolean;
+  fieldOrderIndex?: (field: FormSectionFieldSchema) => number;
+  fieldOrderCount?: number;
+  fieldOrderDraggingKey?: string;
+  fieldOrderDropTargetKey?: string;
   columns?: 1 | 2;
 }>(), {
   columns: 2,
@@ -258,11 +318,22 @@ const props = withDefaults(defineProps<{
   nativeActionHandler: undefined,
   relationAdapter: undefined,
   fieldActions: undefined,
+  fieldOrderEditable: false,
+  fieldOrderIndex: undefined,
+  fieldOrderCount: 0,
+  fieldOrderDraggingKey: '',
+  fieldOrderDropTargetKey: '',
 });
 
 const emit = defineEmits<{
   (event: 'field-change', payload: FormSectionFieldChange): void;
   (event: 'field-action', payload: FormSectionFieldActionPayload): void;
+  (event: 'field-order-move', payload: { field: FormSectionFieldSchema; delta: number }): void;
+  (event: 'field-order-drag-start', payload: { field: FormSectionFieldSchema; event: DragEvent }): void;
+  (event: 'field-order-drag-over', payload: { field: FormSectionFieldSchema }): void;
+  (event: 'field-order-drag-leave', payload: { field: FormSectionFieldSchema }): void;
+  (event: 'field-order-drop', payload: { field: FormSectionFieldSchema }): void;
+  (event: 'field-order-drag-end', payload: { field: FormSectionFieldSchema }): void;
   (event: 'native-action', payload: Record<string, unknown>): void;
 }>();
 
