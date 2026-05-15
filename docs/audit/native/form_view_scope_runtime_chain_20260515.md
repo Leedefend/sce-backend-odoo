@@ -11,7 +11,7 @@
    - `view_id` / `viewId`
    - `menu_id`
    - `record_id`
-2. `ContractFormPage` 优先调用 `loadActionContractRaw(action_id, ...)`。
+2. `ContractFormPage` 和 `RecordView` 优先调用 `loadActionContractRaw(action_id, ...)`。
 3. 若动作契约不可用或动作模型与当前模型不一致，才退回 `loadModelContractRaw(model, ...)`。
 4. `loadActionContractRaw` 与 `loadModelContractRaw` 都必须把显式 `view_id` 传给 `ui.contract.v2`。
 5. `ui.contract.v2` 调用 `ui.contract`，并保留 `action_id/view_id`。
@@ -35,4 +35,5 @@
 
 - 前端 `LoadActionContractOptions` / `LoadModelContractOptions` 增加 `viewId`。
 - `ContractFormPage.loadContract()` 从路由读取 `view_id/viewId` 并传给 action/model 契约加载。
+- `RecordView` 从路由读取 `view_id/viewId`，传给 action 契约加载，并在 action/view 路由上下文变化时重新加载。
 - 新增运行链路 guard，确保显式 view 不会在前端 API 层丢失。

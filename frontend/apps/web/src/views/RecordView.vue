@@ -180,7 +180,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ApiError } from '../api/client';
 import { executeButton } from '../api/executeButton';
@@ -317,6 +317,13 @@ const actionContext = computed(() => {
   return { id: null, source: 'none' as const };
 });
 const actionId = computed(() => actionContext.value.id);
+function toPositiveInt(value: unknown): number {
+  const parsed = Number(value || 0);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+}
+const requestedViewId = computed(() => (
+  toPositiveInt(route.query.view_id) || toPositiveInt(route.query.viewId) || 0
+));
 const showHud = computed(() => isHudEnabled(route));
 const requestedSurface = computed<'user' | 'native' | 'hud'>(() => {
   const raw = String(route.query.surface || '').trim().toLowerCase();
@@ -521,6 +528,7 @@ async function load() {
       throw new Error('missing action_id for contract-driven record view');
     }
     const actionContract = await loadActionContractRaw(actionId.value, {
+      viewId: requestedViewId.value || undefined,
       recordId: recordId.value,
       renderProfile: canEdit.value ? 'edit' : 'readonly',
       surface: requestedSurface.value,
@@ -1069,6 +1077,13 @@ onMounted(() => {
     window.addEventListener(PROJECT_CONTEXT_CHANGED_EVENT, handleProjectContextChanged);
   }
 });
+
+watch(
+  () => `${String(route.params.model || '')}|${String(route.params.id || '')}|${String(route.query.action_id || '')}|${String(route.query.view_id || '')}|${String(route.query.viewId || '')}`,
+  () => {
+    void load();
+  },
+);
 
 onBeforeUnmount(() => {
   if (typeof window !== 'undefined') {
