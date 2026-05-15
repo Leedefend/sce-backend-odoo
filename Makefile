@@ -2271,6 +2271,10 @@ verify.workbench.extraction_hit_rate.report: guard.prod.forbid
 verify.user.entry.delivery.browser_acceptance: guard.prod.forbid
 	@pnpm -C frontend/apps/web exec node ../../../scripts/verify/user_entry_delivery_browser_acceptance.js
 
+.PHONY: verify.model_view.fact_layer.audit
+verify.model_view.fact_layer.audit: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MODEL_VIEW_AUDIT_LOGIN="$(or $(MODEL_VIEW_AUDIT_LOGIN),wutao)" bash scripts/ops/odoo_shell_exec.sh < scripts/verify/model_view_fact_layer_audit.py
+
 .PHONY: verify.project.dashboard.snapshot
 verify.project.dashboard.snapshot: guard.prod.forbid
 	@python3 scripts/verify/project_dashboard_contract_snapshot_export.py
