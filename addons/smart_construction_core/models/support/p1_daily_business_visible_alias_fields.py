@@ -22,6 +22,8 @@ P1_ALIAS_LABELS = {
         '收款人',
         '付款方式',
         '附件',
+        '录入人',
+        '录入时间',
     ],
     'sc.financing.loan': [
         '单据状态',
@@ -107,6 +109,8 @@ P1_ALIAS_LABELS = {
         '数量',
         '税率',
         '发票类型',
+        '录入人',
+        '录入时间',
     ],
     'sc.payment.execution': [
         '推送结果',
@@ -210,6 +214,8 @@ P1_ALIAS_LABELS = {
         '账号名称',
         '账号户名',
         '初期余额',
+        '录入人',
+        '录入时间',
     ],
     'sc.material.purchase.request': [
         '单据状态',
@@ -225,6 +231,8 @@ P1_ALIAS_LABELS = {
         '项目名称',
         '税率',
         '附件',
+        '录入人',
+        '录入时间',
     ],
     'sc.material.inbound': [
         '单据状态',
@@ -242,6 +250,8 @@ P1_ALIAS_LABELS = {
         '项目名称',
         '附件',
         '采购人',
+        '录入人',
+        '录入时间',
     ],
     'sc.material.settlement': [
         '单据状态',
@@ -257,6 +267,8 @@ P1_ALIAS_LABELS = {
         '未申请金额',
         '结算说明',
         '附件',
+        '录入人',
+        '录入时间',
     ],
     'sc.labor.request': [
         '单据状态',
@@ -278,6 +290,7 @@ P1_ALIAS_LABELS = {
         '附件',
         '支付条款',
         '推送项目名称',
+        '录入人',
     ],
     'sc.labor.usage': [
         '单据状态',
@@ -290,6 +303,8 @@ P1_ALIAS_LABELS = {
         '总金额',
         '备注',
         '附件',
+        '录入人',
+        '录入时间',
     ],
     'sc.labor.settlement': [
         '单据编号',
@@ -306,6 +321,8 @@ P1_ALIAS_LABELS = {
         '结算说明',
         '附件',
         '合同编号',
+        '录入人',
+        '录入时间',
     ],
     'sc.subcontract.register': [
         '单据编号',
@@ -322,6 +339,8 @@ P1_ALIAS_LABELS = {
         '项目名称',
         '备注',
         '附件',
+        '录入人',
+        '录入时间',
     ],
     'sc.subcontract.request': [
         '单据状态',
@@ -337,6 +356,8 @@ P1_ALIAS_LABELS = {
         '本月合价',
         '备注',
         '附件',
+        '录入人',
+        '录入时间',
     ],
     'sc.subcontract.settlement': [
         '项目名称',
@@ -354,6 +375,8 @@ P1_ALIAS_LABELS = {
         '终止结算日期',
         '结算说明',
         '附件',
+        '录入人',
+        '录入时间',
     ],
     'sc.equipment.request': [
         '单据状态',
@@ -375,6 +398,8 @@ P1_ALIAS_LABELS = {
         '增值税类型',
         '备注',
         '附件',
+        '录入人',
+        '录入时间',
     ],
     'sc.equipment.usage': [
         '单据状态',
@@ -391,6 +416,8 @@ P1_ALIAS_LABELS = {
         '金额',
         '附件',
         '备注',
+        '录入人',
+        '录入时间',
     ],
     'sc.equipment.settlement': [
         '单据状态',
@@ -407,6 +434,8 @@ P1_ALIAS_LABELS = {
         '已申请金额',
         '未申请金额',
         '附件',
+        '录入人',
+        '录入时间',
     ],
     'sc.material.rental.order': [
         '单据编号',
@@ -435,6 +464,8 @@ P1_ALIAS_LABELS = {
         '单价',
         '租赁押金',
         '备注',
+        '录入人',
+        '录入时间',
     ],
     'sc.material.rental.settlement': [
         '单据状态',
@@ -442,6 +473,8 @@ P1_ALIAS_LABELS = {
         '单据编号',
         '结算单位',
         '附件',
+        '录入人',
+        '录入时间',
     ],
     'sc.construction.diary': [
         '单据状态',
@@ -453,6 +486,8 @@ P1_ALIAS_LABELS = {
         '出勤机械',
         '备注',
         '附件',
+        '录入人',
+        '录入时间',
     ],
 }
 

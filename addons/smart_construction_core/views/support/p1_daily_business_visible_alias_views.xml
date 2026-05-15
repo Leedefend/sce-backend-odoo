@@ -20,6 +20,8 @@
                 <field name="p1_visible_bb7c7aeff3e4" string="收款人" optional="show" readonly="1"/>
                 <field name="p1_visible_c6b9a8cfdb21" string="付款方式" optional="show" readonly="1"/>
                 <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
             </xpath>
         </field>
     </record>
@@ -129,6 +131,8 @@
                 <field name="p1_visible_b9ae89319036" string="数量" optional="show" readonly="1"/>
                 <field name="p1_visible_37d56ad493cf" string="税率" optional="show" readonly="1"/>
                 <field name="p1_visible_3d0afdf3736d" string="发票类型" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
             </xpath>
         </field>
     </record>
@@ -280,6 +284,8 @@
                 <field name="p1_visible_3f2da24264f0" string="账号名称" optional="show" readonly="1"/>
                 <field name="p1_visible_d8347d8e9fac" string="账号户名" optional="show" readonly="1"/>
                 <field name="p1_visible_a82dee991619" string="初期余额" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
             </xpath>
         </field>
     </record>
@@ -303,6 +309,8 @@
                 <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
                 <field name="p1_visible_37d56ad493cf" string="税率" optional="show" readonly="1"/>
                 <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
             </xpath>
         </field>
     </record>
@@ -328,6 +336,8 @@
                 <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
                 <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
                 <field name="p1_visible_7588602fb22d" string="采购人" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
             </xpath>
         </field>
     </record>
@@ -351,6 +361,8 @@
                 <field name="p1_visible_825a06905b09" string="未申请金额" optional="show" readonly="1"/>
                 <field name="p1_visible_816dc9f7b786" string="结算说明" optional="show" readonly="1"/>
                 <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
             </xpath>
         </field>
     </record>
@@ -380,6 +392,7 @@
                 <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
                 <field name="p1_visible_1546ed5e57bd" string="支付条款" optional="show" readonly="1"/>
                 <field name="p1_visible_98de2397eba2" string="推送项目名称" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
             </xpath>
         </field>
     </record>
@@ -400,6 +413,8 @@
                 <field name="p1_visible_824168a11b21" string="总金额" optional="show" readonly="1"/>
                 <field name="p1_visible_e0361480e3a5" string="备注" optional="show" readonly="1"/>
                 <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
             </xpath>
         </field>
     </record>
@@ -424,6 +439,8 @@
                 <field name="p1_visible_816dc9f7b786" string="结算说明" optional="show" readonly="1"/>
                 <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
                 <field name="p1_visible_17b341733b7b" string="合同编号" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
             </xpath>
         </field>
     </record>
@@ -448,6 +465,8 @@
                 <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
                 <field name="p1_visible_e0361480e3a5" string="备注" optional="show" readonly="1"/>
                 <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
             </xpath>
         </field>
     </record>
@@ -471,6 +490,8 @@
                 <field name="p1_visible_ac666c1a3967" string="本月合价" optional="show" readonly="1"/>
                 <field name="p1_visible_e0361480e3a5" string="备注" optional="show" readonly="1"/>
                 <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
             </xpath>
         </field>
     </record>
@@ -496,6 +517,8 @@
                 <field name="p1_visible_2e2adb177c13" string="终止结算日期" optional="show" readonly="1"/>
                 <field name="p1_visible_816dc9f7b786" string="结算说明" optional="show" readonly="1"/>
                 <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
             </xpath>
         </field>
     </record>
@@ -525,6 +548,8 @@
                 <field name="p1_visible_294e7015ec01" string="增值税类型" optional="show" readonly="1"/>
                 <field name="p1_visible_e0361480e3a5" string="备注" optional="show" readonly="1"/>
                 <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
             </xpath>
         </field>
     </record>
@@ -549,6 +574,8 @@
                 <field name="p1_visible_34943c40c9af" string="金额" optional="show" readonly="1"/>
                 <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
                 <field name="p1_visible_e0361480e3a5" string="备注" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
             </xpath>
         </field>
     </record>
@@ -573,6 +600,8 @@
                 <field name="p1_visible_72cf58c14fc0" string="已申请金额" optional="show" readonly="1"/>
                 <field name="p1_visible_825a06905b09" string="未申请金额" optional="show" readonly="1"/>
                 <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
             </xpath>
         </field>
     </record>
@@ -609,6 +638,8 @@
                 <field name="p1_visible_0b370511a765" string="单价" optional="show" readonly="1"/>
                 <field name="p1_visible_3c6524d108d5" string="租赁押金" optional="show" readonly="1"/>
                 <field name="p1_visible_e0361480e3a5" string="备注" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
             </xpath>
         </field>
     </record>
@@ -624,6 +655,8 @@
                 <field name="p1_visible_8fa8662ad38f" string="单据编号" optional="show" readonly="1"/>
                 <field name="p1_visible_36cae65ab40a" string="结算单位" optional="show" readonly="1"/>
                 <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
             </xpath>
         </field>
     </record>
@@ -643,6 +676,8 @@
                 <field name="p1_visible_73bf794d61b3" string="出勤机械" optional="show" readonly="1"/>
                 <field name="p1_visible_e0361480e3a5" string="备注" optional="show" readonly="1"/>
                 <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
             </xpath>
         </field>
     </record>
