@@ -556,6 +556,10 @@
         <field name="model">project.progress.entry</field>
         <field name="arch" type="xml">
             <form string="进度计量">
+                <header>
+                    <button name="action_submit_progress" type="object" string="提交" class="btn-primary" invisible="state == 'submitted'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted"/>
+                </header>
                 <sheet>
                     <group>
                         <field name="project_id" required="1"/>
@@ -581,8 +585,10 @@
                     </group>
                     <group>
                         <field name="note"/>
+                        <field name="attachment_ids" widget="many2many_binary"/>
                     </group>
                 </sheet>
+                <chatter/>
             </form>
         </field>
     </record>

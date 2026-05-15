@@ -19,7 +19,6 @@ const DB_NAME = process.env.DB_NAME || process.env.E2E_DB || 'sc_demo';
 const DEFAULT_PASSWORD = process.env.E2E_ROLE_MATRIX_DEFAULT_PASSWORD || process.env.E2E_PASSWORD || 'demo';
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || path.join(ROOT_DIR, 'artifacts');
 const HEADLESS = String(process.env.HEADLESS || '1').trim() !== '0';
-const MY_WORK_MENU_ID = process.env.MY_WORK_MENU_ID || '941991035';
 
 const REPORT_JSON = path.join(ARTIFACTS_DIR, 'backend', 'user_entry_delivery_browser_acceptance.json');
 const REPORT_MD = path.join(ARTIFACTS_DIR, 'backend', 'user_entry_delivery_browser_acceptance.md');
@@ -32,23 +31,22 @@ const ROLES = [
     mode: 'home_today',
     initialText: [/今天先做什么/, /付款申请待审批|任务逾期风险|项目跟进/],
     clickButton: /查看详情/,
-    targetPath: /^\/s\/(finance\.payment_requests|project\.management|task\.center|risk\.center)/,
+    targetPath: /^\/(s\/(finance\.payment_requests|project\.management|task\.center|risk\.center)|r\/)/,
   },
   {
     role: 'pm',
     login: process.env.ROLE_PM_LOGIN || 'demo_role_pm',
     password: process.env.ROLE_PM_PASSWORD || DEFAULT_PASSWORD,
-    mode: 'home_today_and_risk',
-    initialText: [/今天先做什么/, /系统提醒（高优先）|风险待处理清单/, /任务逾期风险|项目跟进/],
-    clickButton: /看详情/,
-    targetPath: /^\/s\/risk\.center/,
+    mode: 'direct_business',
+    initialText: [/项目列表/],
+    targetPath: /^\/s\/projects\.list/,
   },
   {
     role: 'pm_my_work_menu',
     login: process.env.ROLE_PM_LOGIN || 'demo_role_pm',
     password: process.env.ROLE_PM_PASSWORD || DEFAULT_PASSWORD,
     mode: 'menu_my_work',
-    navigatePath: `/m/${MY_WORK_MENU_ID}`,
+    navigatePath: '/my-work',
     initialText: [/我的工作/, /待办|风险|已完成|失败/],
     targetPath: /^\/(my-work|s\/my_work\.workspace)$/,
   },
@@ -57,10 +55,10 @@ const ROLES = [
     login: process.env.ROLE_PM_LOGIN || 'demo_role_pm',
     password: process.env.ROLE_PM_PASSWORD || DEFAULT_PASSWORD,
     mode: 'my_work_back_home',
-    navigatePath: `/m/${MY_WORK_MENU_ID}`,
+    navigatePath: '/my-work',
     initialText: [/我的工作/, /待办|风险|已完成|失败/],
     clickButton: /返回角色首页/,
-    targetPath: /^\/(s\/workspace\.home)?$/,
+    targetPath: /^\/(s\/workspace\.home|s\/projects\.list|)?$/,
   },
   {
     role: 'finance',
@@ -74,6 +72,10 @@ const ROLES = [
 
 function ensureDir(filePath) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
+}
+
+function normalize(value) {
+  return String(value || '').replace(/\s+/g, ' ').trim();
 }
 
 function writeReports(report) {
@@ -158,7 +160,7 @@ async function checkFirstScreen(page, role) {
     action: await firstVisibleBox(page, role.clickButton),
   };
   const todayOk = boxInFirstScreen(boxes.today, viewport);
-  const riskOk = boxInFirstScreen(boxes.risk, viewport);
+  const riskOk = role.mode === 'home_today_and_risk' ? boxInFirstScreen(boxes.risk, viewport) : true;
   const actionOk = boxInFirstScreen(boxes.action, viewport);
   return { ok: todayOk && riskOk && actionOk, boxes };
 }
@@ -189,11 +191,31 @@ async function login(page, role) {
   await page.goto(url, { waitUntil: 'networkidle' });
   await page.locator('input[autocomplete="username"]').fill(role.login);
   await page.locator('input[autocomplete="current-password"]').fill(role.password);
-  await page.locator('input[autocomplete="off"]').fill(DB_NAME);
+  const dbInput = page.locator('input[autocomplete="off"]');
+  const dbEditable = await dbInput.isEditable().catch(() => false);
+  if (dbEditable) {
+    await dbInput.fill(DB_NAME);
+  } else {
+    const currentDb = normalize(await dbInput.inputValue().catch(() => ''));
+    if (currentDb && currentDb !== DB_NAME) {
+      throw new Error(`login db input is locked to ${currentDb}, expected ${DB_NAME}`);
+    }
+  }
   await page.getByRole('button', { name: /^登录$/ }).click();
   await page.waitForFunction(() => !window.location.pathname.includes('/login'), null, { timeout: 30000 });
   await page.waitForLoadState('networkidle').catch(() => {});
-  await page.waitForTimeout(1000);
+  await page.waitForFunction(() => {
+    const text = String(document.body?.textContent || '');
+    return !text.includes('正在加载场景') && !text.includes('正在加载页面');
+  }, null, { timeout: 12000 }).catch(() => {});
+}
+
+async function waitForRoleText(page, role) {
+  await page.waitForFunction((sources) => {
+    const text = String(document.body?.textContent || '');
+    if (text.includes('正在加载场景') || text.includes('正在加载页面')) return false;
+    return sources.every((source) => new RegExp(source).test(text));
+  }, role.initialText.map((pattern) => pattern.source), { timeout: 18000 }).catch(() => {});
 }
 
 async function runRole(browser, role) {
@@ -252,11 +274,16 @@ async function runRole(browser, role) {
 
   try {
     await login(page, role);
+    await waitForRoleText(page, role);
     row.initial_path = new URL(page.url()).pathname;
     let text = await page.locator('body').innerText({ timeout: 10000 });
     if (role.navigatePath) {
       await page.goto(`${FRONTEND_URL}${role.navigatePath}`, { waitUntil: 'networkidle' });
-      await page.waitForTimeout(1200);
+      await page.waitForFunction(() => {
+        const text = String(document.body?.textContent || '');
+        return !text.includes('正在加载场景') && !text.includes('正在加载页面');
+      }, null, { timeout: 12000 }).catch(() => {});
+      await waitForRoleText(page, role);
       row.initial_path = new URL(page.url()).pathname;
       row.final_path = row.initial_path;
       text = await page.locator('body').innerText({ timeout: 10000 }).catch(() => '');

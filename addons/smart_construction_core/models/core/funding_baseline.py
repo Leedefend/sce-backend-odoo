@@ -6,6 +6,7 @@ from odoo.exceptions import UserError
 class ProjectFundingBaseline(models.Model):
     _name = "project.funding.baseline"
     _description = "Project Funding Baseline"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
     _order = "id desc"
 
     project_id = fields.Many2one(
@@ -14,6 +15,7 @@ class ProjectFundingBaseline(models.Model):
         required=True,
         index=True,
         ondelete="cascade",
+        tracking=True,
     )
     currency_id = fields.Many2one(
         "res.currency",
@@ -26,6 +28,7 @@ class ProjectFundingBaseline(models.Model):
         string="资金上限",
         currency_field="currency_id",
         required=True,
+        tracking=True,
     )
     state = fields.Selection(
         [
@@ -37,6 +40,14 @@ class ProjectFundingBaseline(models.Model):
         default="draft",
         index=True,
         required=True,
+        tracking=True,
+    )
+    attachment_ids = fields.Many2many(
+        "ir.attachment",
+        "project_funding_baseline_attachment_rel",
+        "baseline_id",
+        "attachment_id",
+        string="附件",
     )
 
     def _check_funding_ready(self, project):

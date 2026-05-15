@@ -13,12 +13,13 @@ class ConstructionWorkBreakdown(models.Model):
 
     _name = "construction.work.breakdown"
     _description = "工程结构"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
     _parent_name = "parent_id"
     _parent_store = True
     _order = "project_id, parent_path, sequence, id"
 
-    name = fields.Char("名称", required=True)
-    code = fields.Char("编码")
+    name = fields.Char("名称", required=True, tracking=True)
+    code = fields.Char("编码", tracking=True)
     active = fields.Boolean("有效", default=True)
     project_id = fields.Many2one(
         "project.project",
@@ -49,7 +50,6 @@ class ConstructionWorkBreakdown(models.Model):
         "parent_id",
         string="下级节点",
     )
-
     sequence = fields.Integer("序号", default=10)
     # 便于调试/报表的层级深度，根=0
     level = fields.Integer("层级", compute="_compute_level", store=True, recursive=True)

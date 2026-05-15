@@ -269,8 +269,9 @@ class TenderBidLine(models.Model):
 class TenderDocPurchase(models.Model):
     _name = "tender.doc.purchase"
     _description = "投标文件购买申请"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
 
-    bid_id = fields.Many2one("tender.bid", string="投标", required=True, ondelete="cascade")
+    bid_id = fields.Many2one("tender.bid", string="投标", required=True, ondelete="cascade", tracking=True)
     project_id = fields.Many2one(related="bid_id.project_id", store=True, readonly=True)
     applicant_id = fields.Many2one("res.users", string="申请人", default=lambda self: self.env.user)
     apply_date = fields.Date("申请日期", default=fields.Date.context_today)
@@ -291,6 +292,7 @@ class TenderDocPurchase(models.Model):
         [("draft", "草稿"), ("submitted", "审批中"), ("approved", "已通过"), ("rejected", "已驳回")],
         string="状态",
         default="draft",
+        tracking=True,
     )
     currency_id = fields.Many2one(
         "res.currency", related="bid_id.currency_id", store=True, readonly=True
@@ -345,19 +347,28 @@ class TenderDocReview(models.Model):
 class TenderOpening(models.Model):
     _name = "tender.opening"
     _description = "开标登记"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
 
-    bid_id = fields.Many2one("tender.bid", string="投标", required=True, ondelete="cascade")
+    bid_id = fields.Many2one("tender.bid", string="投标", required=True, ondelete="cascade", tracking=True)
     project_id = fields.Many2one(related="bid_id.project_id", store=True, readonly=True)
     open_time = fields.Datetime("开标时间")
     result = fields.Selection(
         [("pending", "未决"), ("won", "中标"), ("lost", "未中标"), ("backup", "候补")],
         default="pending",
+        tracking=True,
     )
     win_price = fields.Monetary("中标价", currency_field="currency_id")
     competitor_ids = fields.One2many(
         "tender.opening.competitor", "opening_id", string="竞争对手"
     )
     remark = fields.Text("备注")
+    attachment_ids = fields.Many2many(
+        "ir.attachment",
+        "tender_opening_attachment_rel",
+        "opening_id",
+        "attachment_id",
+        string="附件",
+    )
     currency_id = fields.Many2one(
         "res.currency", related="bid_id.currency_id", store=True, readonly=True
     )
@@ -380,12 +391,24 @@ class TenderOpeningCompetitor(models.Model):
 class TenderGuarantee(models.Model):
     _name = "tender.guarantee"
     _description = "投标保证金"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
 
-    bid_id = fields.Many2one("tender.bid", string="投标", required=True, ondelete="cascade")
+    bid_id = fields.Many2one("tender.bid", string="投标", required=True, ondelete="cascade", tracking=True)
     project_id = fields.Many2one(related="bid_id.project_id", store=True, readonly=True)
     type = fields.Selection([("out", "支出"), ("return", "退回")], string="类型", required=True, default="out")
     date = fields.Date("单据日期", default=fields.Date.context_today)
-    amount = fields.Monetary("金额", currency_field="currency_id")
+    amount = fields.Monetary("金额", currency_field="currency_id", tracking=True)
+    state = fields.Selection(
+        [
+            ("draft", "草稿"),
+            ("confirmed", "已确认"),
+            ("cancel", "已取消"),
+        ],
+        string="状态",
+        default="draft",
+        index=True,
+        tracking=True,
+    )
     receipt_bank_account_id = fields.Many2one("res.partner.bank", string="收款账户")
     bank_account_id = fields.Many2one("res.partner.bank", string="付款账户")
     remark = fields.Char("备注")
@@ -414,3 +437,15 @@ class TenderGuarantee(models.Model):
                 if bid:
                     res["bid_id"] = bid.id
         return res
+
+    def action_confirm(self):
+        self.write({"state": "confirmed"})
+        return True
+
+    def action_cancel(self):
+        self.write({"state": "cancel"})
+        return True
+
+    def action_reset_draft(self):
+        self.write({"state": "draft"})
+        return True
