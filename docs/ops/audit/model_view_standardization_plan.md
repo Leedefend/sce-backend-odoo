@@ -3,8 +3,8 @@
 - source: `artifacts/backend/model_view_fact_layer_audit.json`
 - model_count: 116
 - P0: 0
-- P1: 1
-- OK: 115
+- P1: 0
+- OK: 116
 
 ## Frameworks
 
@@ -47,4 +47,3 @@
 
 | lane | domain | model | records | missing |
 |---|---|---|---:|---|
-| report_summary | project | `project.cost.ledger` | 0 | data |
