@@ -1157,9 +1157,6 @@ def _semantic_group_label(node: dict[str, Any], *, level: int, index: int) -> st
 
 
 def _apply_semantic_container_label(node: dict[str, Any], label: str) -> None:
-    node["title"] = label
-    node["label"] = label
-    node["string"] = label
     _apply_semantic_container_annotation(node, label)
 
 
@@ -1230,26 +1227,6 @@ def _append_container_status_once(container_status: list[dict[str, Any]], contai
     container_status.append({"containerId": container_id, "visible": True, "disabled": False})
 
 
-def _standard_page_node(name: str, label: str, children: list[dict[str, Any]]) -> dict[str, Any]:
-    return {
-        "type": "page",
-        "name": name,
-        "containerId": f"standard.{name}",
-        "containerType": "page",
-        "string": label,
-        "label": label,
-        "title": label,
-        "children": children,
-        "widgetList": [],
-        "sourceAuthority": {
-            "kind": SOURCE_KIND,
-            "projection_only": True,
-            "no_business_fact_authority": True,
-            "runtime_carrier": "business_form_default_tab_standardizer",
-        },
-    }
-
-
 def _standardize_business_form_default_tabs(
     container_tree: list[dict[str, Any]],
     *,
@@ -1257,73 +1234,10 @@ def _standardize_business_form_default_tabs(
     view_type: str,
     container_status: list[dict[str, Any]],
 ) -> None:
-    if view_type != "form" or model not in BUSINESS_FORM_DEFAULT_TAB_MODELS:
-        return
-    if not container_tree or _layout_contains_node_type(container_tree, {"notebook", "page"}):
-        return
-    for root in container_tree:
-        if not isinstance(root, dict):
-            continue
-        if _text(root.get("type") or root.get("kind")).lower() != "sheet":
-            continue
-        children = [child for child in _list(root.get("children")) if isinstance(child, dict)]
-        if not children:
-            continue
-        leading: list[dict[str, Any]] = []
-        candidates: list[dict[str, Any]] = []
-        for child in children:
-            child_type = _text(child.get("type") or child.get("kind")).lower()
-            if child_type in {"header", "footer"} or _node_is_button_box(child):
-                leading.append(child)
-            else:
-                candidates.append(child)
-        buckets: dict[str, list[dict[str, Any]]] = {"main": [], "detail": [], "trace": [], "note": []}
-        for child in candidates:
-            field_names = _node_field_names(child)
-            if not field_names:
-                buckets["main"].append(child)
-            elif _node_has_token(child, NOTE_FIELD_TOKENS):
-                buckets["note"].append(child)
-            elif _node_has_token(child, TRACE_FIELD_TOKENS):
-                buckets["trace"].append(child)
-            elif _node_has_x2many(child):
-                buckets["detail"].append(child)
-            else:
-                buckets["main"].append(child)
-        page_specs = (
-            ("main", "主信息", buckets["main"]),
-            ("detail", "业务明细", buckets["detail"]),
-            ("trace", "来源追溯", buckets["trace"]),
-            ("note", "备注说明", buckets["note"]),
-        )
-        pages = [_standard_page_node(name, label, rows) for name, label, rows in page_specs if rows]
-        if not pages:
-            return
-        notebook_id = "standard.business.tabs"
-        notebook = {
-            "type": "notebook",
-            "name": notebook_id,
-            "containerId": notebook_id,
-            "containerType": "notebook",
-            "string": "",
-            "label": "",
-            "title": "",
-            "children": [],
-            "tabs": pages,
-            "widgetList": [],
-            "sourceAuthority": {
-                "kind": SOURCE_KIND,
-                "projection_only": True,
-                "no_business_fact_authority": True,
-                "runtime_carrier": "business_form_default_tab_standardizer",
-            },
-        }
-        root["children"] = leading + [notebook]
-        root["widgetList"] = _direct_field_widgets_from_nodes(leading, {}, layout_type="form")
-        _append_container_status_once(container_status, notebook_id)
-        for page in pages:
-            _append_container_status_once(container_status, _text(page.get("containerId")))
-        return
+    # Odoo native form views only expose notebook/page captions as visible
+    # structure.  Generic tabs such as "主信息" or "业务明细" are semantic
+    # guesses, so they must not be projected as user-visible page titles.
+    return
 
 
 def _badge_count(value: Any) -> int | None:
