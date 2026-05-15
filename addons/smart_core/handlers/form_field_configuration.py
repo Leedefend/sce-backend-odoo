@@ -410,12 +410,15 @@ class BusinessConfigContractSaveHandler(BaseIntentHandler):
             "contract_json": contract_json,
             "status": "published" if publish else "draft",
         }
-        if rec:
-            rec.write(vals)
-        else:
-            rec = Contract.create(vals)
-        if publish:
-            rec.action_publish()
+        try:
+            if rec:
+                rec.write(vals)
+            else:
+                rec = Contract.create(vals)
+            if publish:
+                rec.action_publish()
+        except ValidationError as exc:
+            return self._err(400, str(exc), REASON_USER_ERROR)
         return {
             "ok": True,
             "data": {

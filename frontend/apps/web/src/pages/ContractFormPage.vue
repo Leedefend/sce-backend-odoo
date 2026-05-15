@@ -1447,7 +1447,7 @@ function parseSelectionOptions(raw: string): Array<{ value: string; label: strin
     });
 }
 
-const activeContractModeFieldRows = computed<ContractFieldGovernanceRow[]>(() => {
+const contractModeBaseFieldRows = computed<ContractFieldGovernanceRow[]>(() => {
   const mode = activeContractMode.value;
   if (!mode) return [];
   const rows = new Map<string, ContractFieldGovernanceRow>();
@@ -1476,7 +1476,7 @@ const activeContractModeFieldRows = computed<ContractFieldGovernanceRow[]>(() =>
     }
     rows.get(fieldKey)?.actions.push(action);
   });
-  const computedRows = Array.from(rows.values())
+  return Array.from(rows.values())
     .map((row) => ({
       ...row,
       actions: row.actions.sort((left, right) => {
@@ -1485,12 +1485,16 @@ const activeContractModeFieldRows = computed<ContractFieldGovernanceRow[]>(() =>
       }),
     }))
     .sort((left, right) => left.label.localeCompare(right.label));
+});
+
+const activeContractModeFieldRows = computed<ContractFieldGovernanceRow[]>(() => {
+  const computedRows = contractModeBaseFieldRows.value;
   if (!isContractFieldOrderEditable.value || !fieldOrderDraft.value.length) return computedRows;
   const rank = new Map(fieldOrderDraft.value.map((key, index) => [key, index]));
   return [...computedRows].sort((left, right) => (rank.get(left.fieldKey) ?? 9999) - (rank.get(right.fieldKey) ?? 9999));
 });
 
-watch(activeContractModeFieldRows, (rows) => {
+watch(contractModeBaseFieldRows, (rows) => {
   const keys = rows.map((row) => row.fieldKey);
   if (!isContractFieldOrderEditable.value || !keys.length) {
     fieldOrderDraft.value = [];
@@ -1520,7 +1524,7 @@ watch(isContractFieldOrderEditable, (enabled) => {
 }, { immediate: true });
 
 const hasFieldOrderChanges = computed(() => {
-  const rows = activeContractModeFieldRows.value.map((row) => row.fieldKey);
+  const rows = contractModeBaseFieldRows.value.map((row) => row.fieldKey);
   if (!rows.length || !fieldOrderDraft.value.length) return false;
   return rows.some((key, index) => fieldOrderDraft.value[index] !== key);
 });
@@ -1760,6 +1764,90 @@ function removeLowCodeField(objectIndex: number, fieldIndex: number) {
   const target = lowCodeObjectsDraft.value[objectIndex];
   if (!target) return;
   target.fields.splice(fieldIndex, 1);
+}
+
+function normalizedLowCodeDefault(field: { type?: string; default?: string }): unknown {
+  const raw = String(field.default ?? '').trim();
+  if (!raw) return undefined;
+  if (field.type === 'integer') {
+    const parsed = Number.parseInt(raw, 10);
+    return Number.isNaN(parsed) ? raw : parsed;
+  }
+  if (field.type === 'float') {
+    const parsed = Number.parseFloat(raw);
+    return Number.isNaN(parsed) ? raw : parsed;
+  }
+  if (field.type === 'boolean') {
+    if (['1', 'true', 'yes', '是'].includes(raw.toLowerCase())) return true;
+    if (['0', 'false', 'no', '否'].includes(raw.toLowerCase())) return false;
+    return raw;
+  }
+  return raw;
+}
+
+function normalizeLowCodeFieldDraft(field: {
+  name?: string;
+  type?: string;
+  readonly?: boolean;
+  required?: boolean;
+  default?: string;
+  options?: string;
+}, index: number): Record<string, unknown> {
+  const fieldName = String(field.name || '').trim();
+  const row: Record<string, unknown> = {
+    name: fieldName,
+    type: String(field.type || 'string').trim() || 'string',
+    readonly: field.readonly === true,
+    required: field.required === true,
+    visible: fieldVisibilityDraft[fieldName] !== false,
+    order: index + 1,
+  };
+  const defaultValue = normalizedLowCodeDefault(field);
+  if (defaultValue !== undefined) row.default = defaultValue;
+  if (row.type === 'selection') row.options = parseSelectionOptions(String(field.options || ''));
+  return row;
+}
+
+function currentFormContractFieldRows(): Array<Record<string, unknown>> {
+  const baseByKey = new Map(contractModeBaseFieldRows.value.map((row) => [row.fieldKey, row]));
+  const orderedKeys = fieldOrderDraft.value.length
+    ? fieldOrderDraft.value
+    : contractModeBaseFieldRows.value.map((row) => row.fieldKey);
+  return orderedKeys
+    .filter((key) => baseByKey.has(key))
+    .map((key, index) => ({
+      name: key,
+      label: baseByKey.get(key)?.label || key,
+      type: 'string',
+      visible: fieldVisibilityDraft[key] !== false,
+      order: index + 1,
+    }));
+}
+
+function buildLowCodeContractObjects(): Array<Record<string, unknown>> {
+  const modelName = String(model.value || '').trim();
+  const formFields = currentFormContractFieldRows();
+  const objects = lowCodeObjectsDraft.value
+    .map((obj) => ({
+      name: String(obj.name || '').trim(),
+      fields: (obj.fields || [])
+        .map((field, index) => normalizeLowCodeFieldDraft(field, index))
+        .filter((field) => String(field.name || '').trim()),
+    }))
+    .filter((obj) => obj.name);
+  if (!modelName) return objects;
+  const existing = objects.find((obj) => obj.name === modelName);
+  if (!existing) {
+    objects.unshift({ name: modelName, fields: formFields });
+    return objects;
+  }
+  const formNames = new Set(formFields.map((field) => String(field.name || '').trim()));
+  const existingFields = Array.isArray(existing.fields) ? existing.fields : [];
+  existing.fields = [
+    ...formFields,
+    ...existingFields.filter((field) => !formNames.has(String(field.name || '').trim())),
+  ];
+  return objects;
 }
 
 const isQuickSubmitDisabled = computed(() => {
@@ -6301,7 +6389,7 @@ function onFieldOrderDragEnd() {
 }
 
 function resetContractFieldOrder() {
-  fieldOrderDraft.value = activeContractModeFieldRows.value.map((row) => row.fieldKey);
+  fieldOrderDraft.value = contractModeBaseFieldRows.value.map((row) => row.fieldKey);
 }
 
 async function saveContractFieldOrder() {
@@ -6329,26 +6417,7 @@ async function saveContractFieldOrder() {
         model: String(model.value || ''),
         publish: false,
         contract_json: {
-          objects: (lowCodeObjectsDraft.value.length
-            ? lowCodeObjectsDraft.value
-            : [{
-              name: String(model.value || ''),
-              fields: [],
-            }]).map((obj) => ({
-            name: obj.name,
-            fields: (obj.fields || []).map((field, index) => ({
-              name: field.name,
-              type: field.type || 'string',
-              readonly: field.readonly === true,
-              required: field.required === true,
-              default: field.default || '',
-              options: field.type === 'selection'
-                ? parseSelectionOptions(String(field.options || ''))
-                : [],
-              visible: fieldVisibilityDraft[field.name] !== false,
-              order: index + 1,
-            })),
-          })),
+          objects: buildLowCodeContractObjects(),
           layout: {
             form: lowCodeLayoutDraft.value.filter((row) => row.section === 'form').map((row) => ({ object: row.object, field: row.field })),
             list: lowCodeLayoutDraft.value.filter((row) => row.section === 'list').map((row) => ({ object: row.object, field: row.field })),
