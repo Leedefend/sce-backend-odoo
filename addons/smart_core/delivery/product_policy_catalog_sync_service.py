@@ -7,6 +7,8 @@ from odoo import api
 from odoo import SUPERUSER_ID
 from odoo.modules.registry import Registry
 
+from odoo.addons.smart_core.core.navigation_entry_target import resolve_scene_key
+
 from .product_identity import resolve_product_identity
 from .product_policy_service import ProductPolicyService
 
@@ -38,6 +40,14 @@ def _action_model(action: Any) -> str:
         return _text(getattr(binding_model_id, "model", ""))
     except Exception:
         return ""
+
+
+def _action_view_modes(action: Any) -> list[str]:
+    try:
+        value = _text(getattr(action, "view_mode", ""))
+    except Exception:
+        value = ""
+    return [_text(item) for item in value.split(",") if _text(item)]
 
 
 def _menu_xmlid(menu: Any) -> str:
@@ -131,6 +141,15 @@ class ProductPolicyCatalogSyncService:
             group_label = path[1] if len(path) > 1 else root_label
             page_label = path[-1]
             menu_id = int(menu.id or 0)
+            res_model = _action_model(action)
+            view_modes = _action_view_modes(action)
+            resolved_scene_key = resolve_scene_key(
+                source_env,
+                menu_id=menu_id,
+                action_id=action_id,
+                model=res_model,
+                view_modes=view_modes,
+            )
             rows.append(
                 {
                     "app_id": _slug(group_label),
@@ -145,9 +164,11 @@ class ProductPolicyCatalogSyncService:
                     "label": page_label,
                     "route": f"/a/{action_id}?menu_id={menu_id}",
                     "scene_key": "",
+                    "target_scene_key": resolved_scene_key,
                     "action_id": action_id,
                     "action_model": _text(getattr(action, "_name", "")),
-                    "res_model": _action_model(action),
+                    "res_model": res_model,
+                    "view_modes": view_modes,
                     "visible_menu_path": " / ".join(path),
                     "control_granularity": "user_visible_menu_page",
                     "enabled": True,
@@ -244,6 +265,7 @@ class ProductPolicyCatalogSyncService:
             if res_model:
                 emitted_page_signatures.add(page_signature)
             capability_key = f"construction.menu.{_slug(page_key)}"
+            target_scene_key = _text(page.get("target_scene_key"))
             menu = {
                 "menu_key": _text(page.get("menu_key")) or page_key,
                 "label": label,
@@ -253,6 +275,7 @@ class ProductPolicyCatalogSyncService:
                 "scene_key": _text(page.get("scene_key")),
                 "product_key": _text(page.get("app_id")),
                 "capability_key": capability_key,
+                "target_scene_key": target_scene_key,
                 "visible_menu_path": _text(page.get("visible_menu_path")) or label,
                 "control_granularity": "user_visible_menu_page",
                 "enabled": bool(page.get("enabled", True)),
@@ -265,16 +288,34 @@ class ProductPolicyCatalogSyncService:
                 "action_id": int(page.get("action_id") or 0),
                 "action_model": _text(page.get("action_model")),
                 "res_model": res_model,
+                "view_modes": page.get("view_modes") if isinstance(page.get("view_modes"), list) else [],
                 "sequence": index,
             }
             group["menus"].append(menu)
+            if target_scene_key and target_scene_key not in scene_bindings:
+                scene_rows.append(
+                    {
+                        "scene_key": target_scene_key,
+                        "label": label,
+                        "route": f"/s/{target_scene_key}",
+                        "product_key": _text(page.get("app_id")),
+                        "capability_key": capability_key,
+                        "description": "Platform release projection for an industry menu/action page.",
+                        "scope": menu["visible_menu_path"],
+                        "source_kind": "ir.ui.menu",
+                        "menu_xmlid": _text(page.get("menu_xmlid")),
+                        "action_id": int(page.get("action_id") or 0),
+                        "res_model": res_model,
+                    }
+                )
+                scene_bindings[target_scene_key] = {"version": "v1", "channel": "stable"}
             capability_rows.append(
                 {
                     "capability_key": capability_key,
                     "label": label,
                     "group_key": group_key,
                     "group_label": _text(page.get("group_label")) or "施工管理",
-                    "target_scene_key": _text(page.get("scene_key")),
+                    "target_scene_key": target_scene_key,
                     "target_page_key": page_key,
                     "product_key": _text(page.get("app_id")),
                     "delivery_level": "exclusive",

@@ -2,8 +2,8 @@
 
 - version: v1
 - module_count: 10
-- delivery_scope_scene_count: 67
-- assigned_scope_scene_count: 67
+- delivery_scope_scene_count: 66
+- assigned_scope_scene_count: 66
 - unassigned_scope_scene_count: 0
 - declared_model_count: 44
 - declared_capability_count: 63
@@ -31,7 +31,7 @@
 | cost_budget_profit | 成本预算与利润分析 | 覆盖预算、成本、利润与进度关联分析。 | pm,finance | cost.analysis,cost.budget_alloc,cost.cost_compare,cost.profit_compare,cost.project_budget,cost.project_cost_ledger,cost.project_progress | project.budget,project.cost.ledger | cost.budget.manage,cost.ledger.open,cost.profit.compare,cost.progress.report |
 | executive_dashboard | 经营指标与领导看板 | 为管理层提供经营指标、项目全局与异常洞察。 | executive | finance.operating_metrics,portal.dashboard | operating.metrics | analytics.dashboard.executive,analytics.exception.list,analytics.project.focus,finance.metrics.operating |
 | lifecycle_governance | 生命周期与治理审计 | 保障能力矩阵、生命周期治理与审计可追溯。 | admin,executive | portal.capability_matrix,portal.lifecycle | capability.registry,scene.registry | analytics.lifecycle.monitor,contract.settlement.audit,governance.capability.matrix,governance.runtime.audit,governance.scene.openability |
-| masterdata_workspace | 主数据与工作台 | 统一字典配置、默认工作台入口与基础数据管理。 | pm,finance,purchase_manager,executive | contract.center,contracts.workspace,data.dictionary,default,my_work.workspace,workspace.home | ir.model.data,res.users | contract.center.open,contract.expense.track,contract.income.track,project.lifecycle.transition |
+| masterdata_workspace | 主数据与工作台 | 统一字典配置、默认工作台入口与基础数据管理。 | pm,finance,purchase_manager,executive | contract.center,contracts.workspace,data.dictionary,my_work.workspace,workspace.home | ir.model.data,res.users | contract.center.open,contract.expense.track,contract.income.track,project.lifecycle.transition |
 
 ## Diagnostics
 

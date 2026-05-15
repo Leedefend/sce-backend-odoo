@@ -2,7 +2,6 @@
   "version": "v1",
   "delivery_scope": {
     "scene_keys": [
-      "default",
       "workspace.home",
       "my_work.workspace",
       "data.dictionary",
@@ -370,7 +369,6 @@
         "workspace.home",
         "my_work.workspace",
         "data.dictionary",
-        "default",
         "contract.center",
         "contracts.workspace"
       ],
@@ -378,7 +376,6 @@
         "workspace.home",
         "my_work.workspace",
         "data.dictionary",
-        "default",
         "contract.center",
         "contracts.workspace"
       ],

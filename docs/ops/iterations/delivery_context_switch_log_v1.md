@@ -16,6 +16,36 @@ Each entry must include:
 
 ## Entries
 
+### 2026-05-15T11:53:57+08:00
+- blocker_key: `platform_release_main_sync_delivery_scope_alignment`
+- layer_target: `Platform Delivery / Release Verification`
+- module: `Makefile + scripts/verify + docs/product/delivery + docs/product/scene_domain_taxonomy_v1.json`
+- reason: `用户要求先同步最新远端 main 后再整理错位；最新 main 已把 P1 日常业务可见面扩到 66 个 runtime scenes，需避免旧分支的 56/65 入口生成产物和 artifact 读取路径继续误导门禁。`
+- completed_step: `通过 make main.sync 将本地 main 快进到 079aebc4，并合入当前分支；保留平台发布策略 runtime 探针与授权交集逻辑；修复 scene_compression_model_report 优先读取 /mnt/artifacts/backend/scene_capability_matrix_report.json；补齐 scene_domain_taxonomy_v1 对 contract/material/labor/equipment/subcontract/construction/quality/safety/workspace/task/risk 的域映射；移除 module_scene_capability_source_v1 中已不在运行态 scene 矩阵内的 default 过期声明。`
+- verification: `ENV=dev ENV_FILE=.env.dev DB_NAME=sc_demo make verify.scene.capability.matrix.report PASS scene_count=66 capability_count=63；make verify.scene.compression.model PASS；make verify.product.delivery.v1.map PASS；make verify.product.delivery.menu PASS；ENV=dev ENV_FILE=.env.dev DB_NAME=sc_demo make verify.release.v2_0_0.preflight PASS。`
+- active_commit: `079aebc4`
+- next_step: `可进入最终 diff 审阅、git diff --check 与提交/PR 收口；如继续深挖，下一批单独处理 product_policy_catalog_sync 只能从 raw ir.ui.menu 反解 2 个 scene 的覆盖率问题。`
+
+### 2026-05-15T11:19:29+08:00
+- blocker_key: `platform_release_policy_runtime_effectiveness_gate`
+- layer_target: `Platform Delivery / Release Policy Verification`
+- module: `Makefile + scripts/verify + docs/product/delivery + docs/ops/iterations`
+- reason: `继续推进上一批平台发布与行业能力关系整理，必须用运行态证据证明平台发布策略已进入 delivery_engine_v1，并纳入正式发布预检，而不是只停留在文档/单元测试。`
+- completed_step: `新增 verify.platform.release_policy.runtime，经 Odoo shell 在 sc_demo 中验证 construction.standard 与 construction.preview 均由 product_policy_catalog_sync 生成 257 个菜单/能力策略节点；wutao 原生授权叶子 287，运行时交付 201 个发布策略菜单；platform admin 交付 257 个；非管理员无 native 授权时交付 0 个，证明发布策略未绕过授权交集；该探针已接入 verify.release.v2_0_0.preflight。`
+- verification: `ENV=dev ENV_FILE=.env.dev DB_NAME=sc_demo make verify.platform.release_policy.runtime PASS；ENV=dev ENV_FILE=.env.dev DB_NAME=sc_demo make verify.release.v2_0_0.preflight PASS；python3 addons/smart_core/tests/test_delivery_menu_entry_target.py PASS；python3 addons/smart_core/tests/test_backend_semantic_copy_supply.py PASS；python3 -m py_compile addons/smart_core/delivery/menu_service.py addons/smart_core/delivery/product_policy_service.py addons/smart_core/delivery/product_policy_catalog_sync_service.py addons/smart_core/models/release_management.py scripts/verify/platform_release_policy_runtime_probe.py PASS；git diff --check PASS。`
+- active_commit: `00205d15`
+- next_step: `若继续推进，可进入提交/PR 收口；若要升级到 product_hardening，再运行 verify.release.v2_0_0.product_hardening 并记录真实 blocker。`
+
+### 2026-05-15T11:08:55+08:00
+- blocker_key: `platform_release_industry_capability_alignment`
+- layer_target: `Platform Delivery / Release Policy`
+- module: `addons/smart_core + ARCHITECTURE_GUARD.md + docs/architecture + docs/ops/iterations`
+- reason: `继续整理平台化产品发布与行业模块能力关系：平台发布层负责产品身份、版本/状态、策略投影、授权交集和门禁；行业模块负责业务模型、菜单/action 事实、场景 Profile/Policy/Provider 与领域能力语义，避免 smart_core 反向承载施工业务规则。`
+- completed_step: `冻结关系口径：construction.* 产品策略可由行业菜单/action 事实投影生成，但运行时菜单必须再与当前用户原生授权菜单事实取交集；新增架构说明文档、挂入 ARCHITECTURE_GUARD.md，并补充 MenuService 单元测试口径。`
+- verification: `python3 addons/smart_core/tests/test_delivery_menu_entry_target.py PASS；python3 addons/smart_core/tests/test_backend_semantic_copy_supply.py PASS；python3 -m py_compile addons/smart_core/delivery/menu_service.py addons/smart_core/delivery/product_policy_service.py addons/smart_core/delivery/product_policy_catalog_sync_service.py addons/smart_core/models/release_management.py PASS；git diff --check PASS。`
+- active_commit: `00205d15`
+- next_step: `如继续推进发布治理门禁，运行对应 Makefile 验证入口并将 runtime 证据补入本日志。`
+
 ### 2026-05-13T16:13:51+08:00
 - blocker_key: `project_positive_migration_visibility_refresh`
 - layer_target: `Data Migration Ops`
