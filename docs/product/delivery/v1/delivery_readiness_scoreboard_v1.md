@@ -26,14 +26,15 @@
 | CI strict profile readiness | UNKNOWN | `CI_SCENE_DELIVERY_PROFILE=strict make ci.scene.delivery.readiness` |
 | Mainline one-command summary | PASS | `artifacts/backend/delivery_mainline_run_summary.json` |
 | Product delivery action closure smoke | PASS | `artifacts/backend/product_delivery_action_closure_report.json` |
-| Product delivery module-9 smoke | PASS | `artifacts/backend/product_delivery_module9_smoke_report.json` |
-## 9-Module Readiness Board
+| Product delivery module capability smoke | PASS | `artifacts/backend/product_delivery_module9_smoke_report.json` |
+## 10-Module Readiness Board
 
 | Module | Entry Scenes | Key Roles | Data Prerequisites | Smoke/Gate Status | Known Limits |
 |---|---|---|---|---|---|
 | 项目立项与台账 | `projects.intake`, `projects.list`, `projects.ledger` | PM, 采购经理 | 项目类型、组织字典、用户 | Covered by strict scene gate (`PASS`) | 需补旅程级 trace 固化 |
 | 项目执行与任务协同 | `projects.dashboard`, `projects.execution` | PM | 项目、任务、周报样例 | Covered by strict scene gate (`PASS`) | 需补任务动作 system-bound 脚本 |
-| 采购与物资协同 | `cost.project_boq`, `projects.ledger` | 采购经理, PM | BOQ、供应商主数据 | Covered by strict scene gate (`PASS`) | 需补采购动作回放证据 |
+| 采购与物资协同 | `material.center`, `material.procurement`, `material.inbound`, `labor.request`, `equipment.request`, `subcontract.request` | 采购经理, PM | BOQ、供应商主数据、物资目录 | Covered by strict scene gate (`PASS`) | 需补采购/材料/租赁动作回放证据 |
+| 现场执行与质量安全 | `construction.plan`, `construction.plan_report`, `construction.diary`, `quality.center`, `safety.center` | PM, 领导/老板 | 项目、现场执行角色、质量安全基础字典 | Covered by strict scene gate (`PASS`) | 需补质量安全闭环动作证据 |
 | 付款申请与审批 | `finance.payment_requests`, `finance.center` | 财务, PM | 付款申请、审批角色 | Strict scene gate (`PASS`), payment approval smoke chain available | 需把审批 smoke 结果纳入统一看板 |
 | 资金与结算台账 | `finance.payment_ledger`, `finance.treasury_ledger`, `finance.settlement_orders` | 财务 | 账户、结算基础数据 | Covered by strict scene gate (`PASS`) | 需补台账对账快照证据 |
 | 成本预算与利润分析 | `cost.project_budget`, `cost.project_cost_ledger`, `cost.profit_compare` | PM, 财务 | 预算、成本流水、BOQ | Covered by strict scene gate (`PASS`) | 需补搜索/分页动作证据 |
@@ -52,7 +53,7 @@
 
 ## Release Blocking Gaps (Current)
 
-1. Frontend/action closure/module-9/journey evidence are all script-bound and green in current mainline run.
+1. Frontend/action closure/module capability/journey evidence are all script-bound and green in current mainline run.
 2. Remaining blocking posture is strict live-fetch dependency in network-restricted runners; use strict on live-enabled runners, restricted for local restricted verification.
 5. CI profile posture: strict=UNKNOWN, restricted=PASS (2026-05-15T01:41:59Z); release execution should use strict in live-enabled runners and restricted only for network-restricted evidence runs.
 

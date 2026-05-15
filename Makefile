@@ -3423,9 +3423,11 @@ verify.product.delivery.governance_truth: guard.prod.forbid
 verify.product.delivery.action_closure.smoke: guard.prod.forbid
 	@python3 scripts/verify/product_delivery_action_closure_smoke.py
 
-.PHONY: verify.product.delivery.module9.smoke
-verify.product.delivery.module9.smoke: guard.prod.forbid
+.PHONY: verify.product.delivery.module_capability.smoke verify.product.delivery.module9.smoke
+verify.product.delivery.module_capability.smoke: guard.prod.forbid
 	@python3 scripts/verify/product_delivery_module9_smoke.py
+
+verify.product.delivery.module9.smoke: verify.product.delivery.module_capability.smoke
 
 .PHONY: verify.backend.contract.closure.guard
 verify.backend.contract.closure.guard: guard.prod.forbid
@@ -3491,9 +3493,9 @@ verify.product.delivery.mainline: guard.prod.forbid
 	else \
 	  ACTION_STATUS=SKIP; \
 	fi; \
-	echo "[verify.product.delivery.mainline] step=module9_smoke"; \
+	echo "[verify.product.delivery.mainline] step=module_capability_smoke"; \
 	if [ "$$ACTION_STATUS" = "PASS" ]; then \
-	  if ! $(MAKE) --no-print-directory verify.product.delivery.module9.smoke; then MODULE9_STATUS=FAIL; fi; \
+	  if ! $(MAKE) --no-print-directory verify.product.delivery.module_capability.smoke; then MODULE9_STATUS=FAIL; fi; \
 	else \
 	  MODULE9_STATUS=SKIP; \
 	fi; \
@@ -3511,7 +3513,7 @@ verify.product.delivery.mainline: guard.prod.forbid
 	  --frontend $$FRONTEND_STATUS \
 	  --scene $$SCENE_STATUS \
 	  --action-closure $$ACTION_STATUS \
-	  --module9 $$MODULE9_STATUS \
+	  --module-capability $$MODULE9_STATUS \
 	  --governance $$GOVERNANCE_STATUS; \
 		$(MAKE) --no-print-directory refresh.delivery.readiness.scoreboard >/dev/null; \
 		python3 -c "import json, pathlib; p=pathlib.Path('artifacts/backend/delivery_readiness_ci_summary.json'); d=json.loads(p.read_text(encoding='utf-8')) if p.is_file() else {}; o=d.get('overall') if isinstance(d.get('overall'), dict) else {}; print(f\"[verify.product.delivery.mainline] overall_ok={o.get('ok')} policy={o.get('policy')}\")"; \

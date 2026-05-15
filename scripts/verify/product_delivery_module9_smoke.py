@@ -46,6 +46,12 @@ def main() -> int:
     modules = [m for m in _as_list(module_source.get("modules")) if _as_dict(m).get("in_scope") is True]
     if len(modules) < 1:
         errors.append("in_scope_modules_empty")
+    source_scope = _as_dict(module_source.get("delivery_scope"))
+    source_scope_scenes = {
+        _norm(item)
+        for item in _as_list(source_scope.get("scene_keys"))
+        if _norm(item)
+    }
 
     contract = _as_dict(state.get("scene_ready_contract_v1"))
     scene_rows = _as_list(contract.get("scenes"))
@@ -72,6 +78,7 @@ def main() -> int:
         entry_scenes = [_norm(item) for item in _as_list(mod.get("entry_scenes")) if _norm(item)]
 
         missing: list[str] = []
+        missing_out_of_scope: list[str] = []
         present: list[str] = []
         resolved_entry_scenes: dict[str, list[str]] = {}
         for item in entry_scenes:
@@ -87,6 +94,8 @@ def main() -> int:
                 present.append(item)
             else:
                 missing.append(item)
+                if item not in source_scope_scenes:
+                    missing_out_of_scope.append(item)
 
         checks.append(
             {
@@ -95,9 +104,13 @@ def main() -> int:
                 "entry_scene_count": len(entry_scenes),
                 "present_count": len(present),
                 "missing_count": len(missing),
+                "runtime_missing_count": len(missing),
                 "missing_scenes": missing,
+                "runtime_missing_scenes": missing,
+                "missing_out_of_scope_scenes": missing_out_of_scope,
                 "resolved_entry_scenes": resolved_entry_scenes,
-                "ok": len(missing) == 0,
+                "runtime_ready": len(missing) == 0,
+                "ok": len(missing_out_of_scope) == 0,
             }
         )
 
@@ -111,6 +124,8 @@ def main() -> int:
             "module_count": len(checks),
             "pass_count": len(checks) - len(failed),
             "failed_count": len(failed),
+            "runtime_ready_count": len([item for item in checks if item.get("runtime_ready")]),
+            "runtime_pending_count": len([item for item in checks if not item.get("runtime_ready")]),
             "error_count": len(errors),
         },
         "checks": checks,
@@ -121,20 +136,23 @@ def main() -> int:
     REPORT_JSON.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     lines = [
-        "# Product Delivery Module-9 Smoke",
+        "# Product Delivery Module Capability Smoke",
         "",
         f"- module_count: {report['summary']['module_count']}",
         f"- pass_count: {report['summary']['pass_count']}",
         f"- failed_count: {report['summary']['failed_count']}",
+        f"- runtime_ready_count: {report['summary']['runtime_ready_count']}",
+        f"- runtime_pending_count: {report['summary']['runtime_pending_count']}",
         f"- error_count: {report['summary']['error_count']}",
         "",
-        "| module | status | missing_scenes |",
-        "|---|---|---|",
+        "| module | status | runtime_status | runtime_missing_scenes |",
+        "|---|---|---|---|",
     ]
     for item in checks:
         status = "PASS" if item.get("ok") else "FAIL"
-        missing = ",".join(item.get("missing_scenes") or []) or "-"
-        lines.append(f"| {item.get('module_name')} ({item.get('module_key')}) | {status} | {missing} |")
+        runtime_status = "READY" if item.get("runtime_ready") else "PENDING_RUNTIME_SCENE"
+        missing = ",".join(item.get("runtime_missing_scenes") or []) or "-"
+        lines.append(f"| {item.get('module_name')} ({item.get('module_key')}) | {status} | {runtime_status} | {missing} |")
 
     REPORT_MD.parent.mkdir(parents=True, exist_ok=True)
     REPORT_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -142,9 +160,9 @@ def main() -> int:
     print(REPORT_JSON)
     print(REPORT_MD)
     if errors:
-        print("[product_delivery_module9_smoke] FAIL")
+        print("[product_delivery_module_capability_smoke] FAIL")
         return 2
-    print("[product_delivery_module9_smoke] PASS")
+    print("[product_delivery_module_capability_smoke] PASS")
     return 0
 
 

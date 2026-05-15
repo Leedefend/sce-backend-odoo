@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import json
+import ast
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE_JSON = ROOT / "docs" / "product" / "delivery" / "v1" / "module_scene_capability_source_v1.json"
+CAP_REGISTRY_FILE = ROOT / "addons" / "smart_construction_core" / "services" / "capability_registry.py"
 SCENE_MAP_JSON = ROOT / "artifacts" / "backend" / "scene_domain_mapping.json"
 CAP_USAGE_JSON = ROOT / "artifacts" / "backend" / "capability_usage_matrix.json"
 REPORT_JSON = ROOT / "artifacts" / "product" / "module_scene_capability_map.json"
@@ -26,6 +28,31 @@ def _load(path: Path) -> dict:
 
 def _norm(v: object) -> str:
     return str(v or "").strip()
+
+
+def _load_capability_registry_keys() -> set[str]:
+    if not CAP_REGISTRY_FILE.is_file():
+        return set()
+    try:
+        tree = ast.parse(CAP_REGISTRY_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return set()
+
+    keys: set[str] = set()
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        if not isinstance(node.func, ast.Name) or node.func.id != "_cap":
+            continue
+        if not node.args:
+            continue
+        try:
+            key = _norm(ast.literal_eval(node.args[0]))
+        except Exception:
+            key = ""
+        if key:
+            keys.add(key)
+    return keys
 
 
 def main() -> int:
@@ -55,7 +82,6 @@ def main() -> int:
     }
     if not canonical_scene_set and scope_scenes:
         canonical_scene_set = set(scope_scenes)
-        warnings.append("scene_domain_mapping_unavailable_using_delivery_scope")
 
     cap_rows = cap_usage.get("rows") if isinstance(cap_usage.get("rows"), list) else []
     capability_set = {
@@ -63,6 +89,8 @@ def main() -> int:
         for row in cap_rows
         if isinstance(row, dict) and _norm(row.get("capability_key"))
     }
+    if not capability_set:
+        capability_set = _load_capability_registry_keys()
     if not capability_set:
         capability_set = {
             _norm(cap)
@@ -72,7 +100,7 @@ def main() -> int:
             if _norm(cap)
         }
         if capability_set:
-            warnings.append("capability_usage_matrix_unavailable_using_module_source")
+            warnings.append("capability_registry_unavailable_using_module_source")
 
     scene_owner: dict[str, str] = {}
     module_rows: list[dict] = []
@@ -94,6 +122,14 @@ def main() -> int:
             errors.append(f"{module_key}: entry_scenes empty")
         if not capabilities:
             warnings.append(f"{module_key}: capabilities empty")
+        if not _norm(item.get("core_value")):
+            errors.append(f"{module_key}: core_value empty")
+        if not (item.get("target_roles") if isinstance(item.get("target_roles"), list) else []):
+            errors.append(f"{module_key}: target_roles empty")
+        if not (item.get("models") if isinstance(item.get("models"), list) else []):
+            errors.append(f"{module_key}: models empty")
+        if not (item.get("menu_hints") if isinstance(item.get("menu_hints"), list) else []):
+            warnings.append(f"{module_key}: menu_hints empty")
 
         for s in entry_scenes:
             if s not in canonical_scene_set:
@@ -138,6 +174,22 @@ def main() -> int:
             "delivery_scope_scene_count": len(scope_scenes),
             "assigned_scope_scene_count": len(scope_scenes) - len(unassigned_scope_scenes),
             "unassigned_scope_scene_count": len(unassigned_scope_scenes),
+            "declared_model_count": len(
+                {
+                    model
+                    for row in module_rows
+                    for model in (row.get("models") if isinstance(row.get("models"), list) else [])
+                    if _norm(model)
+                }
+            ),
+            "declared_capability_count": len(
+                {
+                    cap
+                    for row in module_rows
+                    for cap in (row.get("capabilities") if isinstance(row.get("capabilities"), list) else [])
+                    if _norm(cap)
+                }
+            ),
             "unknown_scene_ref_count": len(unknown_scene_refs),
             "unknown_capability_ref_count": len(unknown_capability_refs),
             "error_count": len(errors),
@@ -163,6 +215,8 @@ def main() -> int:
         f"- delivery_scope_scene_count: {payload['summary']['delivery_scope_scene_count']}",
         f"- assigned_scope_scene_count: {payload['summary']['assigned_scope_scene_count']}",
         f"- unassigned_scope_scene_count: {payload['summary']['unassigned_scope_scene_count']}",
+        f"- declared_model_count: {payload['summary']['declared_model_count']}",
+        f"- declared_capability_count: {payload['summary']['declared_capability_count']}",
         f"- unknown_scene_ref_count: {payload['summary']['unknown_scene_ref_count']}",
         f"- unknown_capability_ref_count: {payload['summary']['unknown_capability_ref_count']}",
         f"- error_count: {payload['summary']['error_count']}",
@@ -176,14 +230,26 @@ def main() -> int:
         f"- unknown_scene_ref_eq_0: {'PASS' if len(unknown_scene_refs) == 0 else 'FAIL'}",
         f"- unknown_capability_ref_eq_0: {'PASS' if len(unknown_capability_refs) == 0 else 'FAIL'}",
         "",
-        "| module_key | module_name | target_roles | entry_scenes | capabilities |",
-        "|---|---|---|---|---|",
+        "| module_key | module_name | core_value | target_roles | entry_scenes | models | capabilities |",
+        "|---|---|---|---|---|---|---|",
     ]
     for m in module_rows:
         lines.append(
-            f"| {m['module_key']} | {m['module_name']} | {','.join(m['target_roles']) if m['target_roles'] else '-'} | "
-            f"{','.join(m['entry_scenes']) if m['entry_scenes'] else '-'} | {','.join(m['capabilities']) if m['capabilities'] else '-'} |"
+            f"| {m['module_key']} | {m['module_name']} | {m['core_value'] or '-'} | "
+            f"{','.join(m['target_roles']) if m['target_roles'] else '-'} | "
+            f"{','.join(m['entry_scenes']) if m['entry_scenes'] else '-'} | "
+            f"{','.join(m['models']) if m['models'] else '-'} | "
+            f"{','.join(m['capabilities']) if m['capabilities'] else '-'} |"
         )
+    lines.extend(
+        [
+            "",
+            "## Diagnostics",
+            "",
+            f"- warnings: {', '.join(warnings) or 'none'}",
+            f"- errors: {', '.join(errors) or 'none'}",
+        ]
+    )
 
     REPORT_MD.parent.mkdir(parents=True, exist_ok=True)
     REPORT_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")

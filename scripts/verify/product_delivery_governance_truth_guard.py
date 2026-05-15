@@ -168,10 +168,12 @@ def main() -> int:
         age_hours = None
         max_age_hours = int(os.getenv("PRODUCT_DELIVERY_SCOREBOARD_MAX_AGE_HOURS", "168") or 168)
 
-    module_rows = _parse_scoreboard_rows(scoreboard_md, "9-Module Readiness Board")
+    module_rows = _parse_scoreboard_rows(scoreboard_md, "10-Module Readiness Board")
+    if module_rows == 0:
+        module_rows = _parse_scoreboard_rows(scoreboard_md, "9-Module Readiness Board")
     journey_rows = _parse_scoreboard_rows(scoreboard_md, "4 Key Journey Status")
-    if module_rows < 9:
-        errors.append(f"scoreboard_module_rows<{9}")
+    if module_rows < 10:
+        errors.append(f"scoreboard_module_rows<{10}")
     if journey_rows < 4:
         errors.append(f"scoreboard_journey_rows<{4}")
 
