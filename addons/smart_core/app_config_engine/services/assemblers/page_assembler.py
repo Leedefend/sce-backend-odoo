@@ -858,7 +858,14 @@ class PageAssembler:
             ("ttype", "!=", "binary"),
         ])
         field_by_name = {field.name: field for field in field_rows}
-        for field_name in sorted(eligible_names):
+        ordered_names = sorted(
+            eligible_names,
+            key=lambda name: (
+                int((policy_by_field.get(name).sequence if policy_by_field.get(name) else 100) or 100),
+                name,
+            ),
+        )
+        for field_name in ordered_names:
             meta = fields.get(field_name) if isinstance(fields.get(field_name), dict) else {}
             field = field_by_name.get(field_name)
             if not field:

@@ -12,6 +12,8 @@ from ..core.base_handler import BaseIntentHandler
 from ..core.request_params import parse_non_negative_int
 from ..utils.reason_codes import REASON_MISSING_PARAMS, REASON_NOT_FOUND, REASON_OK, REASON_USER_ERROR
 
+BUSINESS_CONFIG_ADMIN_GROUP = "smart_core.group_smart_core_business_config_admin"
+
 
 def _optional_non_negative_int(params: dict, *keys: str):
     raw = None
@@ -28,7 +30,7 @@ def _optional_non_negative_int(params: dict, *keys: str):
 class FormFieldPolicySetHandler(BaseIntentHandler):
     INTENT_TYPE = "ui.form_field_policy.set"
     DESCRIPTION = "Set current form field visibility policy from a contract action."
-    REQUIRED_GROUPS = ["smart_core.group_smart_core_admin"]
+    REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     SOURCE_KIND = "ui_form_field_policy_contract_action"
     SOURCE_AUTHORITIES = ("ui.form.field.policy", "ir.model.fields", "ir.actions.act_window", "ir.ui.view")
     NON_IDEMPOTENT_ALLOWED = "field policy writes configuration state"
@@ -119,7 +121,7 @@ class FormFieldPolicySetHandler(BaseIntentHandler):
 class FormCustomFieldCreateHandler(BaseIntentHandler):
     INTENT_TYPE = "ui.form_custom_field.create"
     DESCRIPTION = "Create a safe custom form field from a contract action."
-    REQUIRED_GROUPS = ["smart_core.group_smart_core_admin"]
+    REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     SOURCE_KIND = "ui_form_custom_field_contract_action"
     SOURCE_AUTHORITIES = ("ui.form.custom.field.wizard", "ir.model.fields", "ui.form.field.policy")
     NON_IDEMPOTENT_ALLOWED = "custom field creation changes configuration metadata"
@@ -222,7 +224,7 @@ class FormCustomFieldCreateHandler(BaseIntentHandler):
 class FormFieldOrderSetHandler(BaseIntentHandler):
     INTENT_TYPE = "ui.form_field_order.set"
     DESCRIPTION = "Set form field order for current form scope from contract action."
-    REQUIRED_GROUPS = ["smart_core.group_smart_core_admin"]
+    REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     SOURCE_KIND = "ui_form_field_order_contract_action"
     SOURCE_AUTHORITIES = ("ui.form.field.policy", "ir.model.fields", "ir.actions.act_window", "ir.ui.view")
     NON_IDEMPOTENT_ALLOWED = "field order writes configuration state"
@@ -370,7 +372,7 @@ class BusinessConfigLowCodeApplyHandler(FormFieldConfigBatchSetHandler):
 class BusinessConfigContractSaveHandler(BaseIntentHandler):
     INTENT_TYPE = "ui.business_config.contract.save"
     DESCRIPTION = "Save low-code business config contract payload into contract model."
-    REQUIRED_GROUPS = ["smart_core.group_smart_core_admin"]
+    REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     SOURCE_KIND = "ui_business_config_contract_save"
     SOURCE_AUTHORITIES = ("ui.business.config.contract", "ui.business.config.contract.version")
     NON_IDEMPOTENT_ALLOWED = "business config contract is mutable authoring state"
@@ -463,7 +465,7 @@ class BusinessConfigContractSaveHandler(BaseIntentHandler):
 class BusinessConfigContractGetHandler(BaseIntentHandler):
     INTENT_TYPE = "ui.business_config.contract.get"
     DESCRIPTION = "Get low-code business config contract payload by name/model."
-    REQUIRED_GROUPS = ["smart_core.group_smart_core_admin"]
+    REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     SOURCE_KIND = "ui_business_config_contract_get"
     SOURCE_AUTHORITIES = ("ui.business.config.contract", "ui.business.config.contract.version")
 
@@ -510,7 +512,7 @@ class BusinessConfigContractGetHandler(BaseIntentHandler):
 class BusinessConfigContractListHandler(BaseIntentHandler):
     INTENT_TYPE = "ui.business_config.contract.list"
     DESCRIPTION = "List low-code business config contracts in current company."
-    REQUIRED_GROUPS = ["smart_core.group_smart_core_admin"]
+    REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     SOURCE_KIND = "ui_business_config_contract_list"
     SOURCE_AUTHORITIES = ("ui.business.config.contract",)
 
@@ -547,7 +549,7 @@ class BusinessConfigContractListHandler(BaseIntentHandler):
 class BusinessConfigContractPublishHandler(BaseIntentHandler):
     INTENT_TYPE = "ui.business_config.contract.publish"
     DESCRIPTION = "Publish a low-code business config contract by name/model."
-    REQUIRED_GROUPS = ["smart_core.group_smart_core_admin"]
+    REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
 
     def _err(self, code: int, message: str, reason_code: str):
         return {"ok": False, "error": {"code": reason_code, "message": message, "reason_code": reason_code}, "code": code}
@@ -583,7 +585,7 @@ class BusinessConfigContractPublishHandler(BaseIntentHandler):
 class BusinessConfigContractRollbackHandler(BaseIntentHandler):
     INTENT_TYPE = "ui.business_config.contract.rollback"
     DESCRIPTION = "Rollback a low-code business config contract to previous snapshot."
-    REQUIRED_GROUPS = ["smart_core.group_smart_core_admin"]
+    REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
 
     def _err(self, code: int, message: str, reason_code: str):
         return {"ok": False, "error": {"code": reason_code, "message": message, "reason_code": reason_code}, "code": code}

@@ -1309,8 +1309,7 @@ const headerActionsVisible = computed(() => {
 });
 
 function contractV2ActionRules() {
-  const contractRecord = contract.value as Record<string, unknown> | null;
-  const v2ActionRules = parseMaybeJsonRecord(contractRecord?.__unified_page_contract_v2).actionContract;
+  const v2ActionRules = resolveUnifiedPageContractV2(contract.value)?.actionContract;
   const v2ActionRuleList = parseMaybeJsonRecord(v2ActionRules).actionRuleList;
   return Array.isArray(v2ActionRuleList)
     ? v2ActionRuleList.filter((row): row is Record<string, unknown> => Boolean(row && typeof row === 'object' && !Array.isArray(row)))
@@ -1483,8 +1482,7 @@ const contractModeBaseFieldRows = computed<ContractFieldGovernanceRow[]>(() => {
         const order = (value: string) => (value === 'show' ? 0 : value === 'hide' ? 1 : 2);
         return order(left.value) - order(right.value) || left.label.localeCompare(right.label);
       }),
-    }))
-    .sort((left, right) => left.label.localeCompare(right.label));
+    }));
 });
 
 const activeContractModeFieldRows = computed<ContractFieldGovernanceRow[]>(() => {
@@ -1848,6 +1846,16 @@ function buildLowCodeContractObjects(): Array<Record<string, unknown>> {
     ...existingFields.filter((field) => !formNames.has(String(field.name || '').trim())),
   ];
   return objects;
+}
+
+function normalizeLowCodeApplyParams(raw: Record<string, unknown>): Record<string, unknown> {
+  const params = { ...raw };
+  for (const key of ['action_id', 'actionId', 'view_id', 'viewId']) {
+    if (!(key in params)) continue;
+    const numeric = Number(params[key] || 0);
+    params[key] = Number.isFinite(numeric) && numeric >= 0 ? Math.trunc(numeric) : 0;
+  }
+  return params;
 }
 
 const isQuickSubmitDisabled = computed(() => {
@@ -3552,8 +3560,7 @@ const contractActions = computed<ContractAction[]>(() => {
   if (Array.isArray(contract.value?.toolbar?.header)) merged.push(...(contract.value?.toolbar?.header as Array<Record<string, unknown>>));
   if (Array.isArray(contract.value?.toolbar?.sidebar)) merged.push(...(contract.value?.toolbar?.sidebar as Array<Record<string, unknown>>));
   if (Array.isArray(contract.value?.toolbar?.footer)) merged.push(...(contract.value?.toolbar?.footer as Array<Record<string, unknown>>));
-  const contractRecord = contract.value as Record<string, unknown> | null;
-  const v2ActionRules = parseMaybeJsonRecord(contractRecord?.__unified_page_contract_v2).actionContract;
+  const v2ActionRules = resolveUnifiedPageContractV2(contract.value)?.actionContract;
   const v2ActionRuleList = parseMaybeJsonRecord(v2ActionRules).actionRuleList;
   if (Array.isArray(v2ActionRuleList)) {
     v2ActionRuleList.forEach((raw) => {
@@ -6396,7 +6403,7 @@ async function saveContractFieldOrder() {
   if (!hasLowCodeDraftChanges.value) return;
   const configAction = activeContractModeActions.value.find((row) => String(row.key || '').trim() === 'current_form_field_order_save');
   const target = parseMaybeJsonRecord(configAction?.raw?.target);
-  const baseParams = parseMaybeJsonRecord(target.params);
+  const baseParams = normalizeLowCodeApplyParams(parseMaybeJsonRecord(target.params));
   busyKind.value = 'action';
   try {
     await intentRequest({
