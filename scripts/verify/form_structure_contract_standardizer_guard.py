@@ -131,22 +131,11 @@ def main() -> int:
     nodes = nested_nodes(tree)
     notebooks = [node for node in nodes if node.get("containerType") == "notebook"]
     pages = [node for node in nodes if node.get("containerType") == "page"]
-    assert_true(len(notebooks) == 1, "P0 business form should receive one projected notebook")
-    assert_true(
-        [page.get("title") for page in pages] == ["主信息", "业务明细", "来源追溯", "备注说明"],
-        "projected notebook pages should follow the standard business form order",
-    )
-    assert_true(
-        (notebooks[0].get("sourceAuthority") or {}).get("no_business_fact_authority") is True,
-        "projected notebook must declare no business fact authority",
-    )
-    assert_true(
-        (notebooks[0].get("sourceAuthority") or {}).get("runtime_carrier") == "business_form_default_tab_standardizer",
-        "projected notebook should expose its runtime carrier",
-    )
+    assert_true(len(notebooks) == 0, "contract projection must not invent visible generic notebook tabs")
+    assert_true(len(pages) == 0, "contract projection must not invent visible generic notebook pages")
     assert_true(
         tree[0]["children"][0].get("containerId") == "button_box",
-        "smart button box should stay before the projected notebook",
+        "smart button box should stay in its native position",
     )
 
     untouched = sample_form_tree()
@@ -185,8 +174,8 @@ def main() -> int:
         container_status=task_status,
     )
     assert_true(
-        any(node.get("containerType") == "notebook" for node in nested_nodes(task_tree)),
-        "project.task should receive the standard notebook when its runtime contract has no native tabs",
+        not any(node.get("containerType") == "notebook" for node in nested_nodes(task_tree)),
+        "project.task should not receive generic tabs when its runtime contract has no native notebook",
     )
 
     semantic_tree = sample_form_tree()
@@ -198,8 +187,12 @@ def main() -> int:
     groups = [node for node in nested_nodes(semantic_tree) if node.get("containerType") == "group"]
     assert_true(groups, "semantic guard fixture should contain group nodes")
     assert_true(
-        all(str(node.get("title") or "").strip() not in {"", "group"} for node in groups),
-        "unlabelled form groups should receive semantic contract titles",
+        all(str(node.get("semanticTitle") or "").strip() not in {"", "group"} for node in groups),
+        "unlabelled form groups should receive semantic metadata titles",
+    )
+    assert_true(
+        all(not str(node.get("title") or node.get("label") or node.get("string") or "").strip() for node in groups),
+        "generated semantic group names must not become user-visible group titles",
     )
     assert_true(
         any((node.get("sourceAuthority") or {}).get("runtime_carrier") == "business_form_semantic_label_standardizer" for node in groups),
@@ -299,8 +292,12 @@ def main() -> int:
     )
     wrapped_groups = [node for node in nested_nodes(wrapped_tree) if node.get("containerType") == "group"]
     assert_true(
-        [node.get("title") for node in wrapped_groups] == ["主信息", "时间信息"],
-        "top-level structural group should keep a main-info title while nested groups carry field semantics",
+        [node.get("semanticTitle") for node in wrapped_groups] == ["主信息", "时间信息"],
+        "top-level structural group should carry semantic metadata while nested groups carry field semantics",
+    )
+    assert_true(
+        all(not str(node.get("title") or node.get("label") or node.get("string") or "").strip() for node in wrapped_groups),
+        "generated wrapped group semantics must not become visible titles",
     )
 
     print("PASS form_structure_contract_standardizer_guard")
