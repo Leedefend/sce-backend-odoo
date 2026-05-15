@@ -289,23 +289,49 @@
           <div
             v-for="row in activeContractModeFieldRows"
             :key="`field-governance-${row.fieldKey}`"
-            class="contract-field-governance-row"
+            :class="[
+              'contract-field-governance-row',
+              {
+                'contract-field-governance-row--draggable': isContractFieldOrderEditable,
+                'contract-field-governance-row--dragging': draggingFieldKey === row.fieldKey,
+                'contract-field-governance-row--drop-target': dropTargetFieldKey === row.fieldKey && draggingFieldKey !== row.fieldKey,
+              },
+            ]"
+            :draggable="isContractFieldOrderEditable"
+            @dragstart="onFieldOrderDragStart(row.fieldKey, $event)"
+            @dragover.prevent="onFieldOrderDragOver(row.fieldKey)"
+            @dragleave="onFieldOrderDragLeave(row.fieldKey)"
+            @drop.prevent="onFieldOrderDrop(row.fieldKey)"
+            @dragend="onFieldOrderDragEnd"
           >
-            <span class="contract-field-governance-label">{{ row.label }}</span>
-            <div class="contract-field-governance-actions" role="radiogroup" :aria-label="`${row.label}字段显示`">
-              <button
+            <div class="contract-field-governance-main">
+              <span
                 v-if="isContractFieldOrderEditable"
-                class="ghost contract-field-governance-drag"
-                type="button"
-                draggable="true"
-                :aria-label="`拖动${row.label}调整顺序`"
-                @dragstart="onFieldOrderDragStart(row.fieldKey)"
-                @dragover.prevent
-                @drop.prevent="onFieldOrderDrop(row.fieldKey)"
-                @dragend="onFieldOrderDragEnd"
-              >
-                拖动
-              </button>
+                class="contract-field-governance-handle"
+                aria-hidden="true"
+                title="按住整行拖动调整顺序"
+              >⋮⋮</span>
+              <span class="contract-field-governance-label">{{ row.label }}</span>
+            </div>
+            <div class="contract-field-governance-actions" role="radiogroup" :aria-label="`${row.label}字段显示`">
+              <div v-if="isContractFieldOrderEditable" class="contract-field-governance-order-tools">
+                <button
+                  class="ghost contract-field-governance-order-btn"
+                  type="button"
+                  :disabled="busy || activeContractModeFieldRows[0]?.fieldKey === row.fieldKey"
+                  :aria-label="`上移${row.label}`"
+                  title="上移"
+                  @click.stop="moveFieldOrder(row.fieldKey, -1)"
+                >↑</button>
+                <button
+                  class="ghost contract-field-governance-order-btn"
+                  type="button"
+                  :disabled="busy || activeContractModeFieldRows[activeContractModeFieldRows.length - 1]?.fieldKey === row.fieldKey"
+                  :aria-label="`下移${row.label}`"
+                  title="下移"
+                  @click.stop="moveFieldOrder(row.fieldKey, 1)"
+                >↓</button>
+              </div>
               <label
                 v-for="action in row.actions"
                 :key="`${row.fieldKey}-${action.key}`"
@@ -326,6 +352,7 @@
           </div>
         </section>
         <div v-if="isContractFieldOrderEditable && activeContractModeFieldRows.length" class="contract-field-governance-footer">
+          <span v-if="hasLowCodeDraftChanges" class="contract-field-governance-dirty">顺序已调整，保存后生效</span>
           <button class="chip-btn" type="button" :disabled="busy || !hasLowCodeDraftChanges" @click="saveContractFieldOrder">保存字段顺序</button>
           <button class="ghost" type="button" :disabled="busy || !hasLowCodeDraftChanges" @click="resetContractFieldOrder">重置</button>
         </div>
@@ -1411,6 +1438,7 @@ const activeContractModeActions = computed(() => {
 
 const fieldOrderDraft = ref<string[]>([]);
 const draggingFieldKey = ref('');
+const dropTargetFieldKey = ref('');
 const isContractFieldOrderEditable = computed(() => (
   activeContractMode.value === 'form_field_configuration'
   || activeContractMode.value === 'business_config_lowcode'
@@ -6375,15 +6403,34 @@ async function onFieldVisibilityDraftChange(fieldKey: string, value: string, raw
 }
 
 
-function onFieldOrderDragStart(fieldKey: string) {
+function onFieldOrderDragStart(fieldKey: string, event?: DragEvent) {
   if (!isContractFieldOrderEditable.value) return;
   draggingFieldKey.value = fieldKey;
+  dropTargetFieldKey.value = '';
+  if (event?.dataTransfer) {
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', fieldKey);
+  }
+}
+
+function onFieldOrderDragOver(fieldKey: string) {
+  if (!isContractFieldOrderEditable.value || !draggingFieldKey.value || draggingFieldKey.value === fieldKey) return;
+  dropTargetFieldKey.value = fieldKey;
+}
+
+function onFieldOrderDragLeave(fieldKey: string) {
+  if (dropTargetFieldKey.value === fieldKey) dropTargetFieldKey.value = '';
 }
 
 function onFieldOrderDrop(targetFieldKey: string) {
   if (!isContractFieldOrderEditable.value || !draggingFieldKey.value || draggingFieldKey.value === targetFieldKey) return;
+  moveFieldOrderTo(draggingFieldKey.value, targetFieldKey);
+  dropTargetFieldKey.value = '';
+}
+
+function moveFieldOrderTo(sourceFieldKey: string, targetFieldKey: string) {
   const draft = [...fieldOrderDraft.value];
-  const from = draft.indexOf(draggingFieldKey.value);
+  const from = draft.indexOf(sourceFieldKey);
   const to = draft.indexOf(targetFieldKey);
   if (from < 0 || to < 0) return;
   const [moved] = draft.splice(from, 1);
@@ -6391,8 +6438,20 @@ function onFieldOrderDrop(targetFieldKey: string) {
   fieldOrderDraft.value = draft;
 }
 
+function moveFieldOrder(fieldKey: string, delta: number) {
+  if (!isContractFieldOrderEditable.value) return;
+  const draft = [...fieldOrderDraft.value];
+  const from = draft.indexOf(fieldKey);
+  const to = from + delta;
+  if (from < 0 || to < 0 || to >= draft.length) return;
+  const [moved] = draft.splice(from, 1);
+  draft.splice(to, 0, moved);
+  fieldOrderDraft.value = draft;
+}
+
 function onFieldOrderDragEnd() {
   draggingFieldKey.value = '';
+  dropTargetFieldKey.value = '';
 }
 
 function resetContractFieldOrder() {
@@ -7424,7 +7483,7 @@ onBeforeUnmount(() => {
 
 .contract-field-governance {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 8px 14px;
   padding: 12px 0 0;
 }
@@ -7434,7 +7493,50 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  min-height: 34px;
+  min-height: 44px;
+  padding: 6px 8px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-panel);
+  transition: border-color 120ms ease, box-shadow 120ms ease, opacity 120ms ease, transform 120ms ease;
+}
+
+.contract-field-governance-row--draggable {
+  cursor: grab;
+}
+
+.contract-field-governance-row--draggable:active {
+  cursor: grabbing;
+}
+
+.contract-field-governance-row--dragging {
+  opacity: 0.55;
+}
+
+.contract-field-governance-row--drop-target {
+  border-color: var(--sc-semantic-surface-interactive);
+  box-shadow: inset 3px 0 0 var(--sc-semantic-surface-interactive);
+}
+
+.contract-field-governance-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.contract-field-governance-handle {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  color: var(--sc-app-text-secondary);
+  background: var(--sc-app-bg);
+  font-size: 16px;
+  line-height: 1;
 }
 
 .contract-field-governance-label {
@@ -7455,6 +7557,22 @@ onBeforeUnmount(() => {
   flex: 0 0 auto;
 }
 
+.contract-field-governance-order-tools {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.contract-field-governance-order-btn {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  font-size: 13px;
+  line-height: 1;
+}
+
 .contract-field-governance-action {
   gap: 4px;
   color: var(--sc-app-text-secondary);
@@ -7464,6 +7582,21 @@ onBeforeUnmount(() => {
 
 .contract-field-governance-action input {
   margin: 0;
+}
+
+.contract-field-governance-footer {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.contract-field-governance-dirty {
+  margin-right: auto;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
 }
 
 .contract-lowcode-warnings {
