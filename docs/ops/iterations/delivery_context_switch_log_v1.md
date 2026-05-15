@@ -16,6 +16,16 @@ Each entry must include:
 
 ## Entries
 
+### 2026-05-15T12:28:38+08:00
+- blocker_key: `daily_dev_wutao_login_wrong_db`
+- layer_target: `Frontend Runtime / Login Startup Chain`
+- module: `frontend/apps/web/src/services/dbContext.ts`
+- reason: `用户反馈日常开发环境 wutao / 123456 无法登录；后端认证 sc_demo 成功，但浏览器日志显示普通登录 intent 被路由到 sc_platform_core，导致 wutao 在平台库中用户名不存在。`
+- completed_step: `修复 resolveLoginRoutingDb 仅在 /platform-admin 或 platform_admin=1 入口使用 VITE_PLATFORM_ADMIN_DB；普通登录返回空路由库，让 login intent 使用 configured db/sc_demo。重建前端静态资源并重启 frontend dev。`
+- verification: `pnpm -C frontend/apps/web typecheck:strict PASS；ENV=dev ENV_FILE=.env.dev DB_NAME=sc_demo make verify.frontend.build PASS；Playwright 18081 使用 wutao / 123456 登录进入 /s/projects.list，login 与 system.init 均请求 db=sc_demo 且 200；Playwright 5174 登录请求已改为 db=sc_demo；ACCEPTANCE_BASE_URL=http://127.0.0.1:18081 ACCEPTANCE_LOGIN=wutao ACCEPTANCE_PASSWORD=123456 ENV=dev ENV_FILE=.env.dev DB_NAME=sc_demo make verify.dev.acceptance.release PASS，system_init_ok=true。`
+- active_commit: `77808d35`
+- next_step: `推 PR 并合并该登录路由修复，避免后续用 .env.dev 重建前端时再次把普通登录导向 sc_platform_core。`
+
 ### 2026-05-15T11:53:57+08:00
 - blocker_key: `platform_release_main_sync_delivery_scope_alignment`
 - layer_target: `Platform Delivery / Release Verification`
