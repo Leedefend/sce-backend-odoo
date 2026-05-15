@@ -2,9 +2,9 @@
 
 - source: `artifacts/backend/model_view_fact_layer_audit.json`
 - model_count: 116
-- P0: 9
-- P1: 8
-- OK: 99
+- P0: 0
+- P1: 4
+- OK: 112
 
 ## Frameworks
 
@@ -42,15 +42,6 @@
 
 | lane | domain | model | records | missing | first action |
 |---|---|---|---:|---|---|
-| business_document | contract | `construction.work.breakdown` | 57 | state, attachment, chatter | 智慧施工管理平台/项目中心/项目管理/工程结构 / 563 |
-| business_document | material | `sc.material.catalog` | 2288638 | state, attachment, chatter | 智慧施工管理平台/物资与分包/物资管理/材料档案 / 583 |
-| business_document | material | `sc.material.price` | 512 | state | 智慧施工管理平台/物资与分包/物资管理/材料价格库 / 584 |
-| business_document | other | `sc.construction.diary` | 5665 | attachment, chatter | 智慧施工管理平台/施工管理/施工日志 / 701 |
-| business_document | project | `project.budget` | 16 | state | 项目/项目预算 / 507 |
-| business_document | project | `project.funding.baseline` | 1 | attachment, chatter | 智慧施工管理平台/财务中心/资金计划/资金计划申报 / 632 |
-| business_document | project | `project.project` | 714 | state | 项目/项目 / 334 |
-| business_document | tender | `tender.guarantee` | 189 | state, chatter | 智慧施工管理平台/项目中心/投标管理/投标保证金 / 750 |
-| business_document | tender | `tender.opening` | 2834 | state, attachment, chatter | 智慧施工管理平台/项目中心/投标管理/开标记录 / 748 |
 
 ## P1 Queue
 
@@ -58,9 +49,5 @@
 |---|---|---|---:|---|
 | business_document | other | `sc.project.structure` | 0 | state, attachment, chatter |
 | business_document | project | `project.progress.entry` | 0 | attachment, chatter |
-| business_document | quality | `sc.quality.recheck` | 0 | state |
-| business_document | quality | `sc.quality.rectification` | 0 | state |
-| business_document | safety | `sc.safety.recheck` | 0 | state |
-| business_document | safety | `sc.safety.rectification` | 0 | state |
 | business_document | tender | `tender.doc.purchase` | 0 | chatter |
 | report_summary | project | `project.cost.ledger` | 0 | data |
