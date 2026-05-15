@@ -93,6 +93,11 @@
                         </group>
                         <group string="日志内容">
                             <field name="description" readonly="state == 'legacy_confirmed'"/>
+                            <field name="material_inspection_note" readonly="state == 'legacy_confirmed'"/>
+                            <field name="design_change_note" readonly="state == 'legacy_confirmed'"/>
+                            <field name="test_block_note" readonly="state == 'legacy_confirmed'"/>
+                            <field name="safety_note" readonly="state == 'legacy_confirmed'"/>
+                            <field name="hidden_acceptance_note" readonly="state == 'legacy_confirmed'"/>
                             <field name="next_plan" readonly="state == 'legacy_confirmed'"/>
                             <field name="header_description" readonly="state == 'legacy_confirmed'"/>
                         </group>
