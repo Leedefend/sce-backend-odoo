@@ -85,8 +85,6 @@ def main() -> int:
 
     if first_level_count > 8:
         errors.append(f"first_level_count_exceeds_8={first_level_count}")
-    if total_entries > 30:
-        errors.append(f"total_entry_count_exceeds_30={total_entries}")
 
     duplicate_entries = sorted({e for e in all_entries if all_entries.count(e) > 1})
     if duplicate_entries:
@@ -211,10 +209,10 @@ def main() -> int:
         "# Entry Visibility Policy",
         "",
         "## Objective",
-        "- Keep delivery roles focused on <=30 business-facing entries without deleting internal/debug paths.",
+        "- Keep delivery roles aligned to the full industry module capability surface without deleting internal/debug paths.",
         "",
         "## Policy",
-        "- delivery roles: only entries listed in `delivery_menu_tree_v1` are visible.",
+        "- delivery roles: entries listed in `delivery_menu_tree_v1` are visible when their module and scene contracts are valid.",
         "- internal/admin roles: can still access entries tagged `internal_only`.",
         "- non-delivery entries are hidden by visibility tag, not removed.",
         "",
