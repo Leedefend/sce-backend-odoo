@@ -3219,6 +3219,9 @@ verify.capability.scale.stress: guard.prod.forbid
 verify.intent.concurrent.smoke: guard.prod.forbid
 	@python3 scripts/verify/intent_concurrent_smoke_report.py
 
+verify.p1.daily_business_visible_contract.audit: guard.prod.forbid
+	@python3 scripts/verify/p1_daily_business_visible_contract_audit.py
+
 verify.kernel.immutable.guard: guard.prod.forbid
 	@python3 scripts/verify/kernel_immutable_guard.py
 
