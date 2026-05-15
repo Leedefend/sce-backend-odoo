@@ -12,9 +12,12 @@ CONTRACT = ROOT / "addons/smart_core/core/view_orchestration_contract.py"
 NATIVE_PARSE = ROOT / "addons/smart_core/app_config_engine/services/native_parse_service.py"
 FALLBACK_PARSE = ROOT / "addons/smart_core/app_config_engine/services/parse_fallback_service.py"
 ODOO_PARSER = ROOT / "addons/smart_core/app_config_engine/services/view_Parser/contract_Parser.py"
+APP_VIEW_CONFIG = ROOT / "addons/smart_core/app_config_engine/models/app_view_config.py"
 V2_ASSEMBLER = ROOT / "addons/smart_core/core/unified_page_contract_v2_assembler.py"
+VIEW_ORCHESTRATOR = ROOT / "addons/smart_core/core/view_orchestrator.py"
 FIELD_HANDLER = ROOT / "addons/smart_core/handlers/form_field_configuration.py"
 FIELD_POLICY = ROOT / "addons/smart_core/model/ui_form_field_policy.py"
+BUSINESS_CONFIG = ROOT / "addons/smart_core/model/ui_business_config_contract.py"
 DOC = ROOT / "docs/audit/native/view_orchestration_boundary_20260515.md"
 
 
@@ -45,9 +48,12 @@ def main() -> int:
     native_parse = _read(NATIVE_PARSE)
     fallback_parse = _read(FALLBACK_PARSE)
     odoo_parser = _read(ODOO_PARSER)
+    app_view_config = _read(APP_VIEW_CONFIG)
     v2 = _read(V2_ASSEMBLER)
+    orchestrator = _read(VIEW_ORCHESTRATOR) if VIEW_ORCHESTRATOR.exists() else ""
     field_handler = _read(FIELD_HANDLER)
     field_policy = _read(FIELD_POLICY)
+    business_config = _read(BUSINESS_CONFIG)
     doc = _read(DOC)
 
     for label, source in (
@@ -70,8 +76,18 @@ def main() -> int:
         errors,
     )
     _assert(
-        "industry_view_template" in contract and "customer_view_profile" in contract,
-        "orchestration boundary must include industry template and customer profile authorities",
+        '"ui.business.config.contract"' in contract
+        and '"ui.business.config.contract.version"' in contract
+        and "business_config_contract" in contract,
+        "orchestration boundary must use business config contract authorities",
+        errors,
+    )
+    _assert(
+        "industry_view_template" not in contract
+        and "customer_view_profile" not in contract
+        and "ui.view.profile" not in doc
+        and "ui.view.template" not in doc,
+        "view orchestration boundary must not introduce parallel template/profile concepts",
         errors,
     )
     for view_type in (
@@ -116,6 +132,28 @@ def main() -> int:
         "ui.form.field.policy must not introduce user-specific structural scope",
         errors,
     )
+    _assert(
+        "view_type" in business_config
+        and "action_id" in business_config
+        and "view_id" in business_config
+        and "_effective_view_orchestration_contracts" in business_config,
+        "ui.business.config.contract must expose view orchestration runtime scope",
+        errors,
+    )
+    _assert(
+        "class ViewOrchestrator" in orchestrator
+        and "def compose" in orchestrator
+        and "ui.business.config.contract" in orchestrator
+        and "business_view_orchestration" in orchestrator,
+        "ViewOrchestrator must consume business config contracts",
+        errors,
+    )
+    _assert(
+        "ViewOrchestrator(self.env).compose" in app_view_config
+        and 'self.env["ui.form.field.policy"].apply_to_view_contract' not in app_view_config,
+        "app.view.config must route final view composition through ViewOrchestrator",
+        errors,
+    )
 
     for phrase in (
         "缺失的是一个独立的业务视图编排层",
@@ -123,8 +161,8 @@ def main() -> int:
         "原生视图解析层",
         "业务视图编排层",
         "契约投影层",
-        "ui.view.template",
-        "ui.view.profile",
+        "ui.business.config.contract",
+        "配置合同",
         "ViewOrchestrator.compose",
         "business_view_orchestration",
     ):

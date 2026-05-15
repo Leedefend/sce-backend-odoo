@@ -413,10 +413,18 @@ class BusinessConfigContractSaveHandler(BaseIntentHandler):
         params = self.params if isinstance(self.params, dict) else {}
         name = str(params.get("name") or "").strip()
         model = str(params.get("model") or "").strip()
+        view_type = str(params.get("view_type") or params.get("viewType") or "").strip()
+        role_key = str(params.get("role_key") or params.get("roleKey") or "").strip()
         contract_json = params.get("contract_json") or params.get("contractJson")
         publish = bool(params.get("publish") is True)
         if not name or not model:
             return self._err(400, "缺少 name 或 model", REASON_MISSING_PARAMS)
+        action_id, invalid_field = _optional_non_negative_int(params, "action_id", "actionId")
+        if invalid_field:
+            return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
+        view_id, invalid_field = _optional_non_negative_int(params, "view_id", "viewId")
+        if invalid_field:
+            return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
         if not isinstance(contract_json, dict):
             return self._err(400, "contract_json 必须是对象", REASON_USER_ERROR)
         precheck = self._precheck_contract_payload(contract_json)
@@ -428,6 +436,10 @@ class BusinessConfigContractSaveHandler(BaseIntentHandler):
         vals = {
             "name": name,
             "model": model,
+            "view_type": view_type or False,
+            "action_id": action_id or False,
+            "view_id": view_id or False,
+            "role_key": role_key,
             "contract_json": contract_json,
             "status": "published" if publish else "draft",
         }
@@ -446,6 +458,10 @@ class BusinessConfigContractSaveHandler(BaseIntentHandler):
                 "id": int(rec.id),
                 "name": str(rec.name or ""),
                 "model": str(rec.model or ""),
+                "view_type": str(rec.view_type or ""),
+                "action_id": int(rec.action_id.id or 0),
+                "view_id": int(rec.view_id.id or 0),
+                "role_key": str(rec.role_key or ""),
                 "status": str(rec.status or "draft"),
                 "version_no": int(rec.version_no or 1),
                 "precheck": precheck,
@@ -504,6 +520,7 @@ class BusinessConfigContractGetHandler(BaseIntentHandler):
         params = self.params if isinstance(self.params, dict) else {}
         name = str(params.get("name") or "").strip()
         model = str(params.get("model") or "").strip()
+        view_type = str(params.get("view_type") or params.get("viewType") or "").strip()
         if not name and not model:
             return self._err(400, "name 或 model 至少提供一个", REASON_MISSING_PARAMS)
         domain = [("company_id", "=", self.env.company.id)]
@@ -511,6 +528,8 @@ class BusinessConfigContractGetHandler(BaseIntentHandler):
             domain.append(("name", "=", name))
         if model:
             domain.append(("model", "=", model))
+        if view_type:
+            domain.append(("view_type", "in", [False, view_type]))
         rec = self.env["ui.business.config.contract"].search(domain, limit=1)
         if not rec:
             return self._err(404, "未找到业务配置契约", REASON_NOT_FOUND)
@@ -520,6 +539,10 @@ class BusinessConfigContractGetHandler(BaseIntentHandler):
                 "id": int(rec.id),
                 "name": str(rec.name or ""),
                 "model": str(rec.model or ""),
+                "view_type": str(rec.view_type or ""),
+                "action_id": int(rec.action_id.id or 0),
+                "view_id": int(rec.view_id.id or 0),
+                "role_key": str(rec.role_key or ""),
                 "status": str(rec.status or "draft"),
                 "version_no": int(rec.version_no or 1),
                 "contract_json": rec.contract_json or {},
@@ -547,14 +570,21 @@ class BusinessConfigContractListHandler(BaseIntentHandler):
     def handle(self, payload=None, ctx=None):
         params = self.params if isinstance(self.params, dict) else {}
         model = str(params.get("model") or "").strip()
+        view_type = str(params.get("view_type") or params.get("viewType") or "").strip()
         domain = [("company_id", "=", self.env.company.id)]
         if model:
             domain.append(("model", "=", model))
+        if view_type:
+            domain.append(("view_type", "in", [False, view_type]))
         rows = self.env["ui.business.config.contract"].search(domain, limit=100, order="write_date desc, id desc")
         data = [{
             "id": int(rec.id),
             "name": str(rec.name or ""),
             "model": str(rec.model or ""),
+            "view_type": str(rec.view_type or ""),
+            "action_id": int(rec.action_id.id or 0),
+            "view_id": int(rec.view_id.id or 0),
+            "role_key": str(rec.role_key or ""),
             "status": str(rec.status or "draft"),
             "version_no": int(rec.version_no or 1),
         } for rec in rows]

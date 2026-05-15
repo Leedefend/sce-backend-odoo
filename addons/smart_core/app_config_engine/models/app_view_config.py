@@ -21,6 +21,7 @@ from odoo.addons.smart_core.app_config_engine.services.parse_fallback_service im
 from odoo.addons.smart_core.app_config_engine.services.contract_governance_filter import (
     ContractGovernanceFilterService,
 )
+from odoo.addons.smart_core.core.view_orchestrator import ViewOrchestrator
 
 _logger = logging.getLogger(__name__)
 
@@ -1057,15 +1058,15 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
             for v in sorted(applicable, key=lambda r: (r.priority or 0, r.version or 0)):
                 base = self.deep_merge(base, v.materialize_patch(vt))
 
-        # 4) 业务配置字段策略：只改契约可见面，不改模型与原生 XML。
-        if vt == "form":
-            base = self.env["ui.form.field.policy"].apply_to_view_contract(
-                base,
-                model_name=self.model,
-                view_type=vt,
-                action_id=action_id,
-                view_id=int(self.source_view_id.id or 0) or None,
-            )
+        # 4) 业务视图编排：配置即编排输入。兼容的表单字段策略由编排器消费。
+        base = ViewOrchestrator(self.env).compose(
+            base,
+            model_name=self.model,
+            view_type=vt,
+            action_id=action_id,
+            view_id=int(self.source_view_id.id or 0) or None,
+            ctx=ctx or {},
+        )
 
         # 5) 运行态裁剪
         final = self._runtime_filter(base, self.model, check_model_acl=check_model_acl)

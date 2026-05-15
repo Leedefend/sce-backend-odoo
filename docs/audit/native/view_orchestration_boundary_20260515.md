@@ -15,7 +15,8 @@
 | 投影缓存层 | `_generate_from_fields_view_get()` 直接把 parser/fallback 结果写入 `arch_parsed` | `app_view_config.py` | 这里混入了“解析即契约”的旧路径 |
 | 页面装配层 | `PageAssembler` 直接读取 `app.view.config.get_contract_api()` 填入 `views[vt]` | `page_assembler.py` | 编排层没有独立出现 |
 | V2 契约层 | `unified_page_contract_v2_assembler` 把 layout/sections 归一化并补语义注解 | `unified_page_contract_v2_assembler.py` | 应只做契约投影，不应成为业务布局决策层 |
-| 低代码字段策略 | 当前只写 `model/action_id/view_id/company_id` 的字段级 overlay | `form_field_configuration.py`, `ui_form_field_policy.py` | 只能作为视图编排输入的兼容层，不能代表完整视图定义 |
+| 业务配置合同 | `ui.business.config.contract` 已经具备保存、发布、版本能力 | `ui_business_config_contract.py`, `form_field_configuration.py` | 应升级为视图编排配置入口，而不是另建 profile 概念 |
+| 低代码字段策略 | 当前只写 `model/action_id/view_id/company_id` 的字段级 overlay | `form_field_configuration.py`, `ui_form_field_policy.py` | 只能作为视图编排输入的兼容层，最终被业务配置合同吸收 |
 | 现有编排能力 | `page_orchestration_v1` 存在，但主要服务页面/场景，不是模型视图编排 | `page_contracts_builder.py`, `page_contract_semantic_orchestration_bridge.py` | 能借鉴机制，不能直接等同视图编排 |
 
 ## 新边界
@@ -27,11 +28,11 @@
 2. **原生视图解析层**
    - 负责保真解析 Odoo 原生结构：form 的 sheet/group/notebook，list/tree 的 columns，kanban 的 card template，search 的 filters/group_by，pivot/graph 的 measures/dimensions，calendar/gantt/activity 的原生槽位。
    - 只能产出 `native_view_parse_snapshot`。
-   - 不负责行业模板选择、客户 view profile、业务分区命名、字段/列/筛选/指标重排。
+   - 不负责业务配置选择、配置规则解释、业务分区命名、字段/列/筛选/指标重排。
 
 3. **业务视图编排层**
    - 唯一负责最终业务视图结构。
-   - 输入包括：模型能力、原生解析快照、view_type、action/view scope、行业模板、客户 profile、公司 overlay、角色 profile、视图策略 overlay。
+   - 输入包括：模型能力、原生解析快照、view_type、action/view scope、业务配置合同、配置版本、配置规则、兼容字段策略 overlay。
    - 输出包括：layout slots、字段/列顺序、显隐策略、业务动作槽位、关系入口槽位、聚合槽位、筛选槽位、分组槽位、协作槽位、来源追踪。
 
 4. **契约投影层**
@@ -58,9 +59,9 @@
 ## 当前主要缺口
 
 1. 缺少 `ViewOrchestrator` 运行时服务。
-2. 缺少通用行业模板与客户视图 profile 的持久模型：`ui.view.template`、`ui.view.profile`、`ui.view.profile.line`。
+2. `ui.business.config.contract` 尚未明确升级为“视图编排配置”入口，缺少 view_type/action/view 的运行时 scope。
 3. `app.view.config.arch_parsed` 当前命名和职责偏旧，实际上混合了 native parse 与最终契约输入。
-4. 低代码入口当前编辑字段策略，未来应编辑“视图编排 profile 输入”；字段策略只能作为兼容 overlay。
+4. 低代码入口当前编辑字段策略，未来应编辑“业务配置合同中的视图编排规则”；字段策略只能作为兼容 overlay。
 5. V2 assembler 里仍有语义猜测逻辑，只能保留为内部 annotation，不能上升为业务结构事实。
 
 ## 调整改进方向
@@ -72,22 +73,23 @@
 - 低代码字段策略保持兼容 overlay，不扩展成 form/list/search/pivot 等结构决策。
 - V2 assembler 的语义补充只能写内部 annotation，不能写用户可见结构事实。
 
-### P1：建立通用视图编排输入模型
+### P1：改造现有配置为视图编排配置
 
-- `ui.view.template`：行业视图模板，按 `view_type` 定义默认结构、槽位、字段/列/筛选/指标区域。
-- `ui.view.profile`：客户/公司/角色/动作/视图 profile，绑定 `model/view_type/action_id/view_id/company_id/role_key`。
-- `ui.view.profile.line`：字段、列、筛选、指标、动作、分组、容器槽位的落位、顺序、显示名、显隐、默认态。
+- `ui.business.config.contract`：作为统一业务配置合同，承载视图编排配置。
+- 配置合同按 `model/view_type/action_id/view_id/company_id/role_key` 生效。
+- `contract_json.view_orchestration`：定义字段、列、筛选、指标、动作、分组、容器槽位的落位、顺序、显示名、显隐、默认态。
+- 直接复用保存、发布、版本能力，不再新增平行的 template/profile 模型。
 
 ### P2：建立通用视图编排服务
 
-- `ViewOrchestrator.compose(...)` 接收模型能力、native parse snapshot、template/profile/policy。
+- `ViewOrchestrator.compose(...)` 接收模型能力、native parse snapshot、业务配置合同、兼容字段策略。
 - 输出 orchestrated view contract，并保留每个节点的 `source_trace`。
 - `app.view.config` 存储编排后的 projection，同时保留 native parse snapshot 指纹。
 
 ### P3：迁移低代码入口
 
-- 当前“字段顺序/显示名称/新增字段/分组改名”只是 form 视图的 profile 编辑特例。
-- list 的列配置、search 的筛选配置、pivot/graph 的指标维度配置，都必须进入同一套 view profile。
+- 当前“字段顺序/显示名称/新增字段/分组改名”只是 form 视图的配置编辑特例。
+- list 的列配置、search 的筛选配置、pivot/graph 的指标维度配置，都必须进入同一套业务配置合同。
 - 前端继续无脑渲染契约，不理解 Odoo 原生视图、不理解行业模板。
 
 ## 门禁
@@ -100,5 +102,5 @@ make verify.view.orchestration_boundary_guard
 
 - parser/fallback 必须声明无业务事实权威。
 - 新边界必须覆盖所有主要 Odoo 视图类型。
-- 新增结构决策必须指向 `business_view_orchestration` 边界。
+- 新增结构决策必须指向 `business_view_orchestration` 边界，并由 `ui.business.config.contract` 承载配置事实。
 - 不允许再把架构边界命名为 form 专用边界。

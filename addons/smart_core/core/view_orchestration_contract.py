@@ -18,11 +18,9 @@ SOURCE_AUTHORITIES = (
     "ir.model.fields",
     "ir.actions.act_window",
     "ir.ui.view",
-    "industry_view_template",
-    "customer_view_profile",
-    "company_view_overlay",
-    "role_view_profile",
-    "view_policy_overlay",
+    "ui.business.config.contract",
+    "ui.business.config.contract.version",
+    "ui.form.field.policy",
 )
 NO_BUSINESS_FACT_AUTHORITY = True
 
@@ -54,11 +52,10 @@ VIEW_ORCHESTRATOR_INPUTS = (
     "view_type",
     "action_scope",
     "source_view_scope",
-    "industry_template",
-    "customer_profile",
-    "company_overlay",
-    "role_profile",
-    "view_policy_overlay",
+    "business_config_contract",
+    "business_config_version",
+    "business_config_rules",
+    "legacy_field_policy_overlay",
 )
 
 VIEW_ORCHESTRATOR_OUTPUTS = (
@@ -106,8 +103,8 @@ PARSER_ALLOWED_OUTPUTS = (
 )
 
 PARSER_FORBIDDEN_RESPONSIBILITIES = (
-    "industry_template_selection",
-    "customer_profile_selection",
+    "business_config_selection",
+    "business_config_rule_evaluation",
     "business_section_naming",
     "business_field_reordering",
     "business_column_reordering",

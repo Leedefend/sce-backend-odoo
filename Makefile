@@ -648,7 +648,7 @@ verify.form_view.native_structure.boundary_guard: guard.prod.forbid
 	@python3 scripts/verify/form_view_native_structure_boundary_guard.py
 
 verify.view.orchestration_boundary_guard: guard.prod.forbid
-	@python3 -m py_compile addons/smart_core/core/view_orchestration_contract.py scripts/verify/view_orchestration_boundary_guard.py
+	@python3 -m py_compile addons/smart_core/core/view_orchestration_contract.py addons/smart_core/core/view_orchestrator.py addons/smart_core/model/ui_business_config_contract.py scripts/verify/view_orchestration_boundary_guard.py
 	@python3 scripts/verify/view_orchestration_boundary_guard.py
 
 verify.form_view.orchestration_boundary_guard: verify.view.orchestration_boundary_guard

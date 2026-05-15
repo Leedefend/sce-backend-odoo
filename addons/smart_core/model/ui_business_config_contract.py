@@ -12,6 +12,23 @@ class UIBusinessConfigContract(models.Model):
 
     name = fields.Char(required=True)
     model = fields.Char(required=True, index=True)
+    view_type = fields.Selection([
+        ("form", "Form"),
+        ("tree", "Tree/List"),
+        ("list", "List"),
+        ("kanban", "Kanban"),
+        ("search", "Search"),
+        ("pivot", "Pivot"),
+        ("graph", "Graph"),
+        ("calendar", "Calendar"),
+        ("gantt", "Gantt"),
+        ("activity", "Activity"),
+        ("dashboard", "Dashboard"),
+    ], index=True)
+    action_id = fields.Many2one("ir.actions.act_window", string="Action", ondelete="cascade", index=True)
+    view_id = fields.Many2one("ir.ui.view", string="View", ondelete="cascade", index=True)
+    role_key = fields.Char(index=True)
+    priority = fields.Integer(default=100, index=True)
     company_id = fields.Many2one("res.company", default=lambda self: self.env.company, index=True)
     active = fields.Boolean(default=True)
     status = fields.Selection([("draft", "Draft"), ("published", "Published")], default="draft", required=True)
@@ -28,6 +45,7 @@ class UIBusinessConfigContract(models.Model):
     def _check_contract_json(self):
         for rec in self:
             payload = rec.contract_json if isinstance(rec.contract_json, dict) else {}
+            rec._check_view_orchestration_payload(payload)
             objects = payload.get("objects") if isinstance(payload.get("objects"), list) else []
             object_fields_map: dict[str, set[str]] = {}
             for obj in objects:
@@ -90,6 +108,93 @@ class UIBusinessConfigContract(models.Model):
                 target_field = str(action.get("field") or "").strip()
                 if target_obj and target_field and target_obj in object_fields_map and target_field not in object_fields_map[target_obj]:
                     raise ValidationError("规则动作引用不存在字段：%s.%s" % (target_obj, target_field))
+
+    @api.constrains("model", "action_id", "view_id")
+    def _check_view_scope(self):
+        for rec in self:
+            if rec.model and rec.model not in self.env:
+                raise ValidationError("模型不存在：%s" % rec.model)
+            if rec.action_id and rec.action_id.res_model != rec.model:
+                raise ValidationError("动作不属于当前模型：%s" % rec.action_id.display_name)
+            if rec.view_id and rec.view_id.model != rec.model:
+                raise ValidationError("视图不属于当前模型：%s" % rec.view_id.display_name)
+            if rec.view_id and rec.view_type and rec.view_id.type not in {rec.view_type, "tree", "list"}:
+                raise ValidationError("视图类型与配置范围不一致：%s" % rec.view_id.display_name)
+
+    def _check_view_orchestration_payload(self, payload: dict) -> None:
+        orchestration = payload.get("view_orchestration")
+        if orchestration is None:
+            return
+        if not isinstance(orchestration, dict):
+            raise ValidationError("view_orchestration 必须是对象。")
+        views = orchestration.get("views") if isinstance(orchestration.get("views"), dict) else {}
+        allowed = {"form", "tree", "list", "kanban", "search", "pivot", "graph", "calendar", "gantt", "activity", "dashboard"}
+        for view_type, spec in views.items():
+            if view_type not in allowed:
+                raise ValidationError("view_orchestration.views 不支持视图类型：%s" % view_type)
+            if not isinstance(spec, dict):
+                raise ValidationError("view_orchestration.views.%s 必须是对象。" % view_type)
+            for key in ("fields", "columns", "filters", "measures", "actions", "slots"):
+                rows = spec.get(key)
+                if rows is None:
+                    continue
+                if not isinstance(rows, list):
+                    raise ValidationError("view_orchestration.views.%s.%s 必须是数组。" % (view_type, key))
+                for row in rows:
+                    if not isinstance(row, dict):
+                        raise ValidationError("view_orchestration.views.%s.%s 必须是对象数组。" % (view_type, key))
+
+    @api.model
+    def _effective_view_orchestration_contracts(
+        self,
+        model_name: str,
+        *,
+        view_type: str | None = None,
+        action_id: int | None = None,
+        view_id: int | None = None,
+        role_key: str | None = None,
+    ):
+        if not model_name:
+            return self.browse()
+        normalized_view_type = "tree" if view_type == "list" else str(view_type or "").strip()
+        domain = [
+            ("active", "=", True),
+            ("status", "=", "published"),
+            ("model", "=", model_name),
+            "|",
+            ("company_id", "=", False),
+            ("company_id", "=", self.env.company.id),
+        ]
+        records = self.sudo().search(domain, order="priority, version_no, id")
+        role_key = str(role_key or "").strip()
+
+        def applies(contract) -> bool:
+            contract_view_type = str(contract.view_type or "").strip()
+            if contract_view_type and contract_view_type != normalized_view_type:
+                return False
+            contract_action = int(contract.action_id.id or 0)
+            contract_view = int(contract.view_id.id or 0)
+            contract_role = str(contract.role_key or "").strip()
+            if contract_action and contract_action != int(action_id or 0):
+                return False
+            if contract_view and contract_view != int(view_id or 0):
+                return False
+            if contract_role and contract_role != role_key:
+                return False
+            return True
+
+        return self.browse([contract.id for contract in records if applies(contract)])
+
+    @api.model
+    def source_authority_contract(self) -> dict:
+        return {
+            "kind": "ui_business_config_contract_orchestration_config",
+            "authorities": ["ui.business.config.contract", "ui.business.config.contract.version"],
+            "projection_only": True,
+            "rebuildable": True,
+            "no_business_fact_authority": True,
+            "runtime_carrier": "ui.business.config.contract",
+        }
 
     def action_publish(self):
         for rec in self:
