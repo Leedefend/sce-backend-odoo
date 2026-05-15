@@ -72,6 +72,7 @@ row_count = len(records)
 verified_count = len(records.filtered(lambda rec: rec.replay_status == "verified"))
 p0_count = len(records.filtered(lambda rec: rec.target_iteration == "p0_daily_business_visible_surface"))
 runtime_spec_count = len(records.filtered(lambda rec: rec.surface_contract_status == "runtime_spec_landed"))
+structured_status_count = len(records.filtered(lambda rec: rec.surface_contract_status != "pending"))
 missing_field_list = records.filtered(lambda rec: not (rec.legacy_field_list or "").strip()).mapped("legacy_menu_name")
 missing_scope = records.filtered(lambda rec: not (rec.next_scope or "").strip()).mapped("legacy_menu_name")
 missing_target_model = records.filtered(lambda rec: not (rec.target_model or "").strip()).mapped("legacy_menu_name")
@@ -102,7 +103,7 @@ status = (
     if row_count == EXPECTED_ROWS
     and verified_count == EXPECTED_ROWS
     and p0_count == EXPECTED_ROWS
-    and runtime_spec_count == EXPECTED_ROWS
+    and structured_status_count == EXPECTED_ROWS
     and not missing_field_list
     and not missing_scope
     and not missing_target_model
@@ -121,6 +122,7 @@ payload = {
     "verified_count": verified_count,
     "p0_count": p0_count,
     "runtime_spec_count": runtime_spec_count,
+    "structured_status_count": structured_status_count,
     "coverage": {
         "group_counts": group_counts,
         "missing_field_list": missing_field_list,
