@@ -31,12 +31,42 @@
       "key": "data_foundation",
       "label": "Data Foundation",
       "description": "Dictionary and base metadata surfaces."
+    },
+    {
+      "key": "contract_workspace",
+      "label": "Contract Workspace",
+      "description": "Contract center and contract workspace surfaces."
+    },
+    {
+      "key": "procurement_supply",
+      "label": "Procurement and Supply",
+      "description": "Material, labor, equipment, and subcontract collaboration surfaces."
+    },
+    {
+      "key": "site_quality_safety",
+      "label": "Site Quality and Safety",
+      "description": "Construction execution, quality issue, and safety issue surfaces."
     }
   ],
   "rules": [
     {
+      "match_type": "exact",
+      "pattern": "project.management",
+      "domain": "project_execution"
+    },
+    {
       "match_type": "prefix",
       "pattern": "projects.",
+      "domain": "project_execution"
+    },
+    {
+      "match_type": "prefix",
+      "pattern": "task.",
+      "domain": "project_execution"
+    },
+    {
+      "match_type": "prefix",
+      "pattern": "risk.",
       "domain": "project_execution"
     },
     {
@@ -58,6 +88,61 @@
       "match_type": "prefix",
       "pattern": "data.",
       "domain": "data_foundation"
+    },
+    {
+      "match_type": "prefix",
+      "pattern": "contract.",
+      "domain": "contract_workspace"
+    },
+    {
+      "match_type": "prefix",
+      "pattern": "contracts.",
+      "domain": "contract_workspace"
+    },
+    {
+      "match_type": "prefix",
+      "pattern": "material.",
+      "domain": "procurement_supply"
+    },
+    {
+      "match_type": "prefix",
+      "pattern": "labor.",
+      "domain": "procurement_supply"
+    },
+    {
+      "match_type": "prefix",
+      "pattern": "equipment.",
+      "domain": "procurement_supply"
+    },
+    {
+      "match_type": "prefix",
+      "pattern": "subcontract.",
+      "domain": "procurement_supply"
+    },
+    {
+      "match_type": "prefix",
+      "pattern": "construction.",
+      "domain": "site_quality_safety"
+    },
+    {
+      "match_type": "prefix",
+      "pattern": "quality.",
+      "domain": "site_quality_safety"
+    },
+    {
+      "match_type": "prefix",
+      "pattern": "safety.",
+      "domain": "site_quality_safety"
+    },
+    {
+      "match_type": "prefix",
+      "pattern": "workspace.",
+      "domain": "workspace_shell"
+    },
+    {
+      "match_type": "prefix",
+      "pattern": "my_work.",
+      "domain": "workspace_shell"
     },
     {
       "match_type": "exact",

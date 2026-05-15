@@ -392,6 +392,36 @@ class ProductPolicyService:
         edition = str(edition_key or "").strip() or "standard"
         return _minimal_default_product_policy(base_product_key=base_key, edition_key=edition)
 
+    def _construction_catalog_policy(self, *, product_key: str) -> dict | None:
+        if not self._model_registered("ir.ui.menu"):
+            return None
+        try:
+            from odoo.addons.smart_core.delivery.product_policy_catalog_sync_service import (
+                ProductPolicyCatalogSyncService,
+            )
+
+            payload = ProductPolicyCatalogSyncService(self.env).build_construction_policy_payload(
+                product_key=product_key,
+            )
+        except Exception:
+            return None
+        if not isinstance(payload, dict) or not payload.get("product_key"):
+            return None
+        if not (payload.get("menu_groups") or payload.get("scenes") or payload.get("capabilities")):
+            return None
+        return payload
+
+    def _policy_has_surface(self, payload: dict) -> bool:
+        return bool(
+            isinstance(payload, dict)
+            and (payload.get("menu_groups") or payload.get("scenes") or payload.get("capabilities"))
+        )
+
+    def _construction_policy_needs_catalog_refresh(self, payload: dict) -> bool:
+        if not isinstance(payload, dict):
+            return True
+        return not (payload.get("menu_groups") and payload.get("scenes") and payload.get("capabilities"))
+
     def _stable_policy_domain(self, *, base_product_key: str):
         return [
             ("base_product_key", "=", str(base_product_key or "").strip() or LEGACY_DEFAULT_BASE_PRODUCT_KEY),
@@ -572,6 +602,10 @@ class ProductPolicyService:
         if rec:
             payload = rec.to_runtime_dict()
             if isinstance(payload, dict) and payload.get("product_key"):
+                if resolved_base_product_key == "construction" and self._construction_policy_needs_catalog_refresh(payload):
+                    catalog_payload = self._construction_catalog_policy(product_key=key)
+                    if catalog_payload:
+                        payload = catalog_payload
                 payload = self._sanitize_scene_version_bindings(payload)
                 access_allowed = self._access_allowed(payload, role_code=resolved_role_code) if enforce_access else True
                 release_allowed = self._policy_releaseable(payload) if enforce_release else True
@@ -599,6 +633,10 @@ class ProductPolicyService:
                 )
         platform_payload = self._load_platform_policy(product_key=key)
         if platform_payload:
+            if resolved_base_product_key == "construction" and self._construction_policy_needs_catalog_refresh(platform_payload):
+                catalog_payload = self._construction_catalog_policy(product_key=key)
+                if catalog_payload:
+                    platform_payload = catalog_payload
             payload = self._sanitize_scene_version_bindings(platform_payload)
             access_allowed = self._access_allowed(payload, role_code=resolved_role_code) if enforce_access else True
             release_allowed = self._policy_releaseable(payload) if enforce_release else True
@@ -631,7 +669,13 @@ class ProductPolicyService:
         fallback["product_key"] = key
         fallback["base_product_key"] = resolved_base_product_key
         fallback["edition_key"] = resolved_edition_key
-        if enforce_release or enforce_access:
+        catalog_fallback_applied = False
+        if resolved_base_product_key == "construction":
+            catalog_payload = self._construction_catalog_policy(product_key=key)
+            if catalog_payload:
+                fallback = catalog_payload
+                catalog_fallback_applied = True
+        if (enforce_release or enforce_access) and not catalog_fallback_applied:
             fallback = self._sanitize_scene_version_bindings(
                 self._fallback_stable_policy(base_product_key=resolved_base_product_key)
             )

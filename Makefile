@@ -3574,9 +3574,14 @@ verify.product.release.ready: guard.prod.forbid \
 	verify.product.sla.baseline
 	@echo "[OK] verify.product.release.ready done"
 
+.PHONY: verify.platform.release_policy.runtime
+verify.platform.release_policy.runtime: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/platform_release_policy_runtime_probe.py
+
 .PHONY: verify.release.v2_0_0.preflight
 verify.release.v2_0_0.preflight: guard.prod.forbid \
 	verify.system.capability_baseline.report \
+	verify.platform.release_policy.runtime \
 	verify.backend.contract.closure.mainline \
 	verify.restricted
 	@echo "[OK] verify.release.v2_0_0.preflight done"

@@ -126,6 +126,68 @@ class MenuService:
             return f"xmlid:{menu_xmlid}"
         return f"label:{str(row.get('label') or '').strip()}"
 
+    def _policy_has_menu_surface(self, policy: dict) -> bool:
+        for group in policy.get("menu_groups") or []:
+            if not isinstance(group, dict):
+                continue
+            for menu in group.get("menus") or []:
+                if isinstance(menu, dict) and str(menu.get("label") or "").strip():
+                    return True
+        return False
+
+    def _release_menu_enabled(self, menu: dict) -> bool:
+        if not isinstance(menu, dict):
+            return False
+        if menu.get("enabled") is False:
+            return False
+        release_state = str(menu.get("release_state") or "released").strip().lower() or "released"
+        return release_state in {"released", "preview", "stable", "public"}
+
+    def _native_authorized_menu_index(self, native_nav: list[dict]) -> dict[str, set]:
+        index = {"ids": set(), "xmlids": set(), "scenes": set(), "routes": set()}
+        for _ancestors, leaf in self._iter_leaf_nodes(native_nav or []):
+            if not isinstance(leaf, dict):
+                continue
+            meta = leaf.get("meta") if isinstance(leaf.get("meta"), dict) else {}
+            menu_id = leaf.get("menu_id") or meta.get("menu_id")
+            try:
+                menu_id_int = int(menu_id or 0)
+            except Exception:
+                menu_id_int = 0
+            if menu_id_int > 0:
+                index["ids"].add(menu_id_int)
+            menu_xmlid = str(meta.get("menu_xmlid") or leaf.get("menu_xmlid") or "").strip()
+            if menu_xmlid:
+                index["xmlids"].add(menu_xmlid)
+            scene_key = str(leaf.get("scene_key") or meta.get("scene_key") or "").strip()
+            if scene_key:
+                index["scenes"].add(scene_key)
+            route = str(leaf.get("route") or meta.get("route") or "").strip()
+            if route:
+                index["routes"].add(route)
+        return index
+
+    def _policy_menu_user_authorized(self, menu: dict, native_index: dict[str, set], *, is_admin: bool = False) -> bool:
+        if is_admin:
+            return True
+        menu_xmlid = str(menu.get("menu_xmlid") or "").strip()
+        if menu_xmlid and menu_xmlid in native_index.get("xmlids", set()):
+            return True
+        menu_id = menu.get("menu_id")
+        try:
+            menu_id_int = int(menu_id or 0)
+        except Exception:
+            menu_id_int = 0
+        if menu_id_int > 0 and menu_id_int in native_index.get("ids", set()):
+            return True
+        scene_key = str(menu.get("scene_key") or "").strip()
+        if scene_key and scene_key in native_index.get("scenes", set()):
+            return True
+        route = str(menu.get("route") or "").strip()
+        if route and route in native_index.get("routes", set()):
+            return True
+        return False
+
     def _flatten_policy_menus(self, policy: dict) -> list[dict]:
         out = []
         index = 0
@@ -134,6 +196,8 @@ class MenuService:
                 continue
             for menu in group.get("menus") or []:
                 if not isinstance(menu, dict):
+                    continue
+                if not self._release_menu_enabled(menu):
                     continue
                 index += 1
                 scene_key = str(menu.get("scene_key") or "").strip()
@@ -233,7 +297,9 @@ class MenuService:
         role_code = str((role_surface or {}).get("role_code") or "").strip().lower()
         is_admin = bool((role_surface or {}).get("is_platform_admin"))
         is_business_config_admin = bool((role_surface or {}).get("is_business_config_admin"))
-        grouped_native = self._native_preview_menus(native_nav=native_nav or [], policy=policy)
+        policy_has_menu_surface = self._policy_has_menu_surface(policy)
+        native_index = self._native_authorized_menu_index(native_nav or [])
+        grouped_native = [] if policy_has_menu_surface else self._native_preview_menus(native_nav=native_nav or [], policy=policy)
         groups_by_key = {}
         group_order = []
         scene_group_map = {}
@@ -291,17 +357,11 @@ class MenuService:
             group_order.append(fallback_key)
 
         for menu in self._flatten_policy_menus(policy):
-            policy_group_label = str(menu.get("policy_group_label") or "").strip()
-            fallback_group_label = str(groups_by_key.get(group_order[0], {}).get("group_label") or "系统菜单")
-            converged_menu = self._converged_menu(
-                menu=menu,
-                group_label=policy_group_label or fallback_group_label,
-                role_code=role_code,
-                is_admin=is_admin,
-                is_business_config_admin=is_business_config_admin,
-            )
-            if not converged_menu:
+            if not self._policy_menu_user_authorized(menu, native_index, is_admin=is_admin):
                 continue
+            converged_menu = dict(menu)
+            converged_menu["delivery_bucket"] = "released_product_policy"
+            converged_menu["source_authority"] = self.source_authority_contract()
             menu_id = menu.get("menu_id")
             scene_key = str(menu.get("scene_key") or "").strip()
             route = str(menu.get("route") or "").strip()

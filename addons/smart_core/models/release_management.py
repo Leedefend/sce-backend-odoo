@@ -46,8 +46,10 @@ class ScProductPolicy(models.Model):
     @api.model
     def ensure_platform_default_product_policies(self):
         from odoo.addons.smart_core.delivery.product_policy_service import ProductPolicyService
+        from odoo.addons.smart_core.delivery.product_policy_catalog_sync_service import ProductPolicyCatalogSyncService
 
         service = ProductPolicyService(self.env)
+        catalog_sync = ProductPolicyCatalogSyncService(self.env)
         defaults = [
             ("construction.standard", "施工管理标准版"),
             ("construction.preview", "施工管理预览版"),
@@ -55,7 +57,10 @@ class ScProductPolicy(models.Model):
             ("platform.preview", "平台内核预览版"),
         ]
         for product_key, label in defaults:
-            policy = service.get_policy(product_key=product_key)
+            if product_key.startswith("construction."):
+                policy = catalog_sync.build_construction_policy_payload(product_key=product_key)
+            else:
+                policy = service.get_policy(product_key=product_key)
             values = {
                 "active": True,
                 "product_key": product_key,

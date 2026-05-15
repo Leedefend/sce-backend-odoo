@@ -44,6 +44,23 @@ menu_service = _load_module(
 
 
 class TestDeliveryMenuEntryTarget(unittest.TestCase):
+    def _native_leaf(self, **overrides):
+        row = {
+            "label": overrides.get("label", "项目台账"),
+            "menu_id": overrides.get("menu_id", 379),
+            "route": overrides.get("route", "/a/506?menu_id=379"),
+            "scene_key": overrides.get("scene_key", ""),
+            "meta": {
+                "menu_id": overrides.get("menu_id", 379),
+                "menu_xmlid": overrides.get("menu_xmlid", ""),
+                "route": overrides.get("route", "/a/506?menu_id=379"),
+                "scene_key": overrides.get("scene_key", ""),
+                "action_id": overrides.get("action_id", 506),
+                "model": overrides.get("model", "project.project"),
+            },
+        }
+        return row
+
     def test_scene_menu_child_exposes_formal_entry_target_with_native_refs(self):
         node = delivery_menu_defaults.build_delivery_menu_child(
             {
@@ -152,6 +169,20 @@ class TestDeliveryMenuEntryTarget(unittest.TestCase):
                 ]
             },
             role_surface={"role_code": "employee"},
+            native_nav=[
+                {
+                    "label": "项目中心",
+                    "children": [
+                        self._native_leaf(
+                            label="项目台账",
+                            menu_id=379,
+                            route="/a/506?menu_id=379",
+                            action_id=506,
+                            model="project.project",
+                        )
+                    ],
+                }
+            ],
         )
 
         groups = (nav[0].get("children") or []) if nav else []
@@ -179,11 +210,74 @@ class TestDeliveryMenuEntryTarget(unittest.TestCase):
                 ]
             },
             role_surface={"role_code": "employee", "is_business_config_admin": True},
+            native_nav=[
+                {
+                    "label": "基础设置",
+                    "children": [
+                        self._native_leaf(
+                            label="客户",
+                            menu_id=598,
+                            route="/a/786?menu_id=598",
+                            action_id=786,
+                            model="res.partner",
+                        )
+                    ],
+                }
+            ],
         )
 
         groups = (nav[0].get("children") or []) if nav else []
         self.assertEqual([group.get("label") for group in groups], ["基础设置"])
         self.assertEqual(groups[0]["children"][0]["label"], "客户")
+
+    def test_policy_menu_surface_is_filtered_by_native_authorized_menu_fact(self):
+        nav = menu_service.MenuService().build_nav(
+            policy={
+                "menu_groups": [
+                    {
+                        "group_key": "construction.project_center",
+                        "group_label": "项目中心",
+                        "menus": [
+                            {
+                                "menu_key": "project",
+                                "label": "项目台账",
+                                "menu_id": 379,
+                                "route": "/a/506?menu_id=379",
+                                "action_id": 506,
+                                "res_model": "project.project",
+                            },
+                            {
+                                "menu_key": "finance",
+                                "label": "付款申请",
+                                "menu_id": 600,
+                                "route": "/a/700?menu_id=600",
+                                "action_id": 700,
+                                "res_model": "payment.request",
+                            },
+                        ],
+                    }
+                ]
+            },
+            role_surface={"role_code": "employee"},
+            native_nav=[
+                {
+                    "label": "项目中心",
+                    "children": [
+                        self._native_leaf(
+                            label="项目台账",
+                            menu_id=379,
+                            route="/a/506?menu_id=379",
+                            action_id=506,
+                            model="project.project",
+                        )
+                    ],
+                }
+            ],
+        )
+
+        groups = (nav[0].get("children") or []) if nav else []
+        labels = [child.get("label") for group in groups for child in group.get("children") or []]
+        self.assertEqual(labels, ["项目台账"])
 
 
 if __name__ == "__main__":

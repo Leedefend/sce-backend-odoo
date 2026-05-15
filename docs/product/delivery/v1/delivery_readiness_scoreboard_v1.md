@@ -2,9 +2,9 @@
 
 ## Snapshot
 
-- generated_at_utc: 2026-05-15T01:42:00Z
-- branch: `codex/daily-business-visible-surface-audit`
-- commit_ref: `83107562`
+- generated_at_utc: 2026-05-15T04:11:41Z
+- branch: `codex/platform-release-industry-capability-alignment`
+- commit_ref: `079aebc4`
 - primary_gate: `make verify.scene.delivery.readiness.role_company_matrix`
 - gate_result: `PASS`
 
@@ -22,7 +22,7 @@
 | Company access preflight | PASS (strict) | `artifacts/backend/scene_company_access_preflight_report.json` |
 | Multi-company evidence accumulation | PASS (strict) | `artifacts/backend/scene_multi_company_evidence_report.json` |
 | No-action regression guard | PASS | `make verify.scene.no_action_scene.guard` |
-| CI restricted profile readiness | PASS (2026-05-15T01:41:59Z) | `CI_SCENE_DELIVERY_PROFILE=restricted make ci.scene.delivery.readiness` |
+| CI restricted profile readiness | PASS (2026-05-15T04:11:41Z) | `CI_SCENE_DELIVERY_PROFILE=restricted make ci.scene.delivery.readiness` |
 | CI strict profile readiness | UNKNOWN | `CI_SCENE_DELIVERY_PROFILE=strict make ci.scene.delivery.readiness` |
 | Mainline one-command summary | PASS | `artifacts/backend/delivery_mainline_run_summary.json` |
 | Product delivery action closure smoke | PASS | `artifacts/backend/product_delivery_action_closure_report.json` |
@@ -55,7 +55,7 @@
 
 1. Frontend/action closure/module capability/journey evidence are all script-bound and green in current mainline run.
 2. Remaining blocking posture is strict live-fetch dependency in network-restricted runners; use strict on live-enabled runners, restricted for local restricted verification.
-5. CI profile posture: strict=UNKNOWN, restricted=PASS (2026-05-15T01:41:59Z); release execution should use strict in live-enabled runners and restricted only for network-restricted evidence runs.
+5. CI profile posture: strict=UNKNOWN, restricted=PASS (2026-05-15T04:11:41Z); release execution should use strict in live-enabled runners and restricted only for network-restricted evidence runs.
 
 ## Repro Command Set (Default)
 

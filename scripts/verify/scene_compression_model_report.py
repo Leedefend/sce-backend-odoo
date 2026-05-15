@@ -9,6 +9,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 SCENE_CAPABILITY_MATRIX_JSON = ROOT / "artifacts" / "backend" / "scene_capability_matrix_report.json"
+SCENE_CAPABILITY_MATRIX_CANDIDATES = (
+    Path("/mnt/artifacts/backend/scene_capability_matrix_report.json"),
+    SCENE_CAPABILITY_MATRIX_JSON,
+)
 TAXONOMY_JSON = ROOT / "docs" / "product" / "scene_domain_taxonomy_v1.json"
 REPORT_JSON = ROOT / "artifacts" / "backend" / "scene_domain_mapping.json"
 REPORT_JSON_ALIAS = ROOT / "artifacts" / "backend" / "scene_domain_map.json"
@@ -25,6 +29,14 @@ def _load_json(path: Path) -> dict:
     except Exception:
         return {}
     return payload if isinstance(payload, dict) else {}
+
+
+def _load_scene_capability_matrix() -> dict:
+    for path in SCENE_CAPABILITY_MATRIX_CANDIDATES:
+        payload = _load_json(path)
+        if payload:
+            return payload
+    return {}
 
 
 def _normalize_scene(scene_key: str) -> str:
@@ -72,7 +84,7 @@ def main() -> int:
     errors: list[str] = []
     warnings: list[str] = []
 
-    payload = _load_json(SCENE_CAPABILITY_MATRIX_JSON)
+    payload = _load_scene_capability_matrix()
     scene_keys = payload.get("scene_keys") if isinstance(payload.get("scene_keys"), list) else []
     scene_keys = sorted({str(x or "").strip() for x in scene_keys if str(x or "").strip()})
     if not scene_keys:
