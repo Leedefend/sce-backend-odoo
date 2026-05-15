@@ -74,9 +74,13 @@ class FormFieldPolicySetHandler(BaseIntentHandler):
         if field_rec and field_rec.ttype == "binary":
             return self._err(400, "二进制字段不能作为业务表单字段配置：%s.%s" % (model, field_name), REASON_USER_ERROR)
 
-        visible = params.get("visible")
-        visible = str(visible).strip().lower() not in {"0", "false", "no", "hide", "hidden"}
+        raw_visible = params.get("visible")
+        has_visible = "visible" in params
         label = str(params.get("label") or (field_rec.field_description if field_rec else field_name) or field_name).strip()
+        group_title = str(params.get("group_title") or params.get("groupTitle") or "").strip()
+        sequence, invalid_field = _optional_non_negative_int(params, "sequence")
+        if invalid_field:
+            return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
 
         Policy = self.env["ui.form.field.policy"]
         Policy.check_access_rights("create")
@@ -89,6 +93,11 @@ class FormFieldPolicySetHandler(BaseIntentHandler):
             ("view_id", "=", view_id or False),
         ]
         policy = Policy.search(domain, limit=1)
+        visible = (
+            str(raw_visible).strip().lower() not in {"0", "false", "no", "hide", "hidden"}
+            if has_visible
+            else (bool(policy.visible) if policy else True)
+        )
         vals = {
             "active": True,
             "model_id": model_rec.id,
@@ -101,6 +110,10 @@ class FormFieldPolicySetHandler(BaseIntentHandler):
             "action_id": action_id or False,
             "view_id": view_id or False,
         }
+        if group_title:
+            vals["group_title"] = group_title
+        if sequence > 0:
+            vals["sequence"] = sequence
         if policy:
             policy.check_access_rights("write")
             policy.write(vals)
@@ -113,6 +126,9 @@ class FormFieldPolicySetHandler(BaseIntentHandler):
                 "model": model,
                 "field_name": field_name,
                 "visible": bool(policy.visible),
+                "label": str(policy.label or ""),
+                "group_title": str(policy.group_title or ""),
+                "sequence": int(policy.sequence or 0),
             },
             "meta": {"intent": self.INTENT_TYPE, "reason_code": REASON_OK, "source_authority": self._source_authority_contract()},
         }
@@ -193,6 +209,9 @@ class FormCustomFieldCreateHandler(BaseIntentHandler):
             "field_name": field_name,
             "label": label,
             "ttype": str(params.get("ttype") or "char").strip() or "char",
+            "help": str(params.get("help") or "").strip(),
+            "required": bool(params.get("required") is True),
+            "index": bool(params.get("index") is True),
             "action_id": action_id or False,
             "view_id": view_id or False,
             "group_title": str(params.get("group_title") or "业务配置字段").strip() or "业务配置字段",

@@ -168,6 +168,8 @@
           :field-order-count="fieldOrderDraft.length"
           :field-order-dragging-key="draggingFieldKey"
           :field-order-drop-target-key="dropTargetFieldKey"
+          :field-config-editable="isContractFieldOrderEditable"
+          :group-options="contractFormGroupOptions"
           :columns="2"
           @field-change="onTemplateFieldChange"
           @field-action="onContractFieldAction"
@@ -177,6 +179,11 @@
           @field-order-drag-leave="onContractInlineFieldOrderDragLeave"
           @field-order-drop="onContractInlineFieldOrderDrop"
           @field-order-drag-end="onContractInlineFieldOrderDragEnd"
+          @field-label-change="onContractInlineFieldLabelChange"
+          @field-group-change="onContractInlineFieldGroupChange"
+          @field-add-after="onContractInlineFieldAddAfter"
+          @group-rename="onContractInlineGroupRename"
+          @group-add-field="onContractInlineGroupAddField"
           @native-action="runNativeLayoutAction"
         >
           <template #readonly="{ field }">
@@ -295,6 +302,35 @@
           </label>
           <button type="submit" class="chip-btn" :disabled="busy">确定</button>
           <button type="button" class="ghost" :disabled="busy" @click="closeContractPromptAction">取消</button>
+        </form>
+        <form
+          v-if="lowCodeFieldCreateDialog.open"
+          class="contract-mode-prompt contract-field-create-prompt"
+          @submit.prevent="submitInlineCustomFieldCreate"
+        >
+          <label class="contract-mode-prompt-field">
+            <span>字段标题</span>
+            <input v-model="lowCodeFieldCreateDialog.label" required :disabled="busy" />
+          </label>
+          <label class="contract-mode-prompt-field">
+            <span>字段类型</span>
+            <select v-model="lowCodeFieldCreateDialog.ttype" required :disabled="busy">
+              <option value="char">单行文本</option>
+              <option value="text">多行文本</option>
+              <option value="integer">整数</option>
+              <option value="float">小数</option>
+              <option value="boolean">是/否</option>
+              <option value="date">日期</option>
+              <option value="datetime">日期时间</option>
+              <option value="html">富文本</option>
+            </select>
+          </label>
+          <label class="contract-mode-prompt-field">
+            <span>显示分组</span>
+            <input v-model="lowCodeFieldCreateDialog.groupTitle" required :disabled="busy" />
+          </label>
+          <button type="submit" class="chip-btn" :disabled="busy">创建字段</button>
+          <button type="button" class="ghost" :disabled="busy" @click="closeInlineCustomFieldCreate">取消</button>
         </form>
         <section v-if="activeContractModeFieldRows.length && !useNativeFormTree" class="contract-field-governance">
           <div
@@ -1455,6 +1491,14 @@ const isContractFieldOrderEditable = computed(() => (
   || activeContractMode.value === 'business_config_lowcode'
 ));
 const fieldVisibilityDraft = reactive<Record<string, boolean>>({});
+const lowCodeFieldCreateDialog = reactive({
+  open: false,
+  afterFieldKey: '',
+  groupTitle: '',
+  sequence: 100,
+  label: '',
+  ttype: 'char',
+});
 const lowCodeContractLoaded = ref(false);
 const lowCodePrecheckWarnings = ref<string[]>([]);
 const lowCodeContractList = ref<Array<{ id: number; name: string; model: string; status: string; version_no: number }>>([]);
@@ -1529,6 +1573,31 @@ const activeContractModeFieldRows = computed<ContractFieldGovernanceRow[]>(() =>
   if (!isContractFieldOrderEditable.value || !fieldOrderDraft.value.length) return computedRows;
   const rank = new Map(fieldOrderDraft.value.map((key, index) => [key, index]));
   return [...computedRows].sort((left, right) => (rank.get(left.fieldKey) ?? 9999) - (rank.get(right.fieldKey) ?? 9999));
+});
+
+function collectNativeGroupTitles(nodes: NativeFormLayoutNode[], out: Set<string>) {
+  nodes.forEach((node) => {
+    const type = String(node?.type || (node as { containerType?: string })?.containerType || '').trim().toLowerCase();
+    const title = String(node?.string || node?.label || '').trim();
+    if (title && ['group', 'page'].includes(type)) out.add(title);
+    (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+      const children = node?.[key];
+      if (Array.isArray(children)) collectNativeGroupTitles(children as NativeFormLayoutNode[], out);
+    });
+  });
+}
+
+const contractFormGroupOptions = computed(() => {
+  const titles = new Set<string>();
+  collectNativeGroupTitles(nativeFormLayoutNodes.value, titles);
+  lowCodeObjectsDraft.value.forEach((obj) => {
+    (obj.fields || []).forEach((field) => {
+      const groupTitle = String((field as { groupTitle?: string; group_title?: string }).groupTitle || (field as { group_title?: string }).group_title || '').trim();
+      if (groupTitle) titles.add(groupTitle);
+    });
+  });
+  if (!titles.size) titles.add('业务配置字段');
+  return Array.from(titles).sort((left, right) => left.localeCompare(right));
 });
 
 watch(contractModeBaseFieldRows, (rows) => {
@@ -6459,6 +6528,162 @@ function onContractInlineFieldOrderDrop(payload: { field: FormSectionFieldSchema
 
 function onContractInlineFieldOrderDragEnd() {
   onFieldOrderDragEnd();
+}
+
+function lowCodeApplyBaseParams() {
+  const configAction = activeContractModeActions.value.find((row) => String(row.key || '').trim() === 'current_form_field_order_save');
+  const target = parseMaybeJsonRecord(configAction?.raw?.target);
+  return normalizeLowCodeApplyParams({
+    model: String(model.value || ''),
+    ...parseMaybeJsonRecord(target.params),
+  });
+}
+
+function contractFieldSequence(fieldKey: string, fallback = 100) {
+  const index = fieldOrderDraft.value.indexOf(fieldKey);
+  return index >= 0 ? (index + 1) * 10 : fallback;
+}
+
+async function setInlineFieldPolicy(fieldKey: string, params: Record<string, unknown>) {
+  const base = lowCodeApplyBaseParams();
+  if (!fieldKey || busy.value) return;
+  busyKind.value = 'action';
+  try {
+    await intentRequest({
+      intent: 'ui.form_field_policy.set',
+      params: {
+        ...base,
+        field_name: fieldKey,
+        sequence: contractFieldSequence(fieldKey),
+        ...params,
+      },
+      context: { view: 'form' },
+    });
+    contractModeFeedback.value = '字段配置已更新';
+    await reload();
+  } catch (err) {
+    errorMessage.value = err instanceof Error ? err.message : 'field policy update failed';
+    status.value = 'error';
+  } finally {
+    busyKind.value = null;
+  }
+}
+
+async function onContractInlineFieldLabelChange(payload: { field: FormSectionFieldSchema; label: string }) {
+  const fieldKey = String(payload.field.name || '').trim();
+  const label = String(payload.label || '').trim();
+  if (!fieldKey || !label) return;
+  await setInlineFieldPolicy(fieldKey, { label });
+}
+
+async function onContractInlineFieldGroupChange(payload: { field: FormSectionFieldSchema; groupTitle: string }) {
+  const fieldKey = String(payload.field.name || '').trim();
+  const groupTitle = String(payload.groupTitle || '').trim();
+  if (!fieldKey || !groupTitle) return;
+  await setInlineFieldPolicy(fieldKey, { label: payload.field.label || fieldKey, group_title: groupTitle });
+}
+
+function fieldsInNativeGroup(groupTitle: string) {
+  const out = new Map<string, string>();
+  const targetTitle = String(groupTitle || '').trim();
+  const walk = (nodes: NativeFormLayoutNode[], activeGroup = '') => {
+    nodes.forEach((node) => {
+      const type = String(node?.type || (node as { containerType?: string })?.containerType || '').trim().toLowerCase();
+      const title = String(node?.string || node?.label || '').trim();
+      const nextGroup = title && ['group', 'page'].includes(type) ? title : activeGroup;
+      const name = String(node?.name || '').trim();
+      if (type === 'field' && name && nextGroup === targetTitle) {
+        const descriptor = contract.value?.fields?.[name];
+        out.set(name, nativeFieldLabel(node, descriptor));
+      }
+      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+        const children = node?.[key];
+        if (Array.isArray(children)) walk(children as NativeFormLayoutNode[], nextGroup);
+      });
+    });
+  };
+  walk(nativeFormLayoutNodes.value);
+  return Array.from(out.entries()).map(([fieldKey, label]) => ({ fieldKey, label }));
+}
+
+async function onContractInlineGroupRename(payload: { oldTitle: string; newTitle: string }) {
+  const oldTitle = String(payload.oldTitle || '').trim();
+  const newTitle = String(payload.newTitle || '').trim();
+  if (!oldTitle || !newTitle || oldTitle === newTitle || busy.value) return;
+  const fields = fieldsInNativeGroup(oldTitle);
+  if (!fields.length) return;
+  busyKind.value = 'action';
+  try {
+    const base = lowCodeApplyBaseParams();
+    for (const row of fields) {
+      await intentRequest({
+        intent: 'ui.form_field_policy.set',
+        params: {
+          ...base,
+          field_name: row.fieldKey,
+          label: row.label || row.fieldKey,
+          group_title: newTitle,
+          sequence: contractFieldSequence(row.fieldKey),
+        },
+        context: { view: 'form' },
+      });
+    }
+    contractModeFeedback.value = '分组名称已更新';
+    await reload();
+  } catch (err) {
+    errorMessage.value = err instanceof Error ? err.message : 'group rename failed';
+    status.value = 'error';
+  } finally {
+    busyKind.value = null;
+  }
+}
+
+function openInlineCustomFieldCreate(groupTitle: string, afterFieldKey = '') {
+  lowCodeFieldCreateDialog.open = true;
+  lowCodeFieldCreateDialog.afterFieldKey = afterFieldKey;
+  lowCodeFieldCreateDialog.groupTitle = String(groupTitle || '').trim() || '业务配置字段';
+  lowCodeFieldCreateDialog.sequence = contractFieldSequence(afterFieldKey, fieldOrderDraft.value.length ? (fieldOrderDraft.value.length + 1) * 10 : 100) + 5;
+  lowCodeFieldCreateDialog.label = '';
+  lowCodeFieldCreateDialog.ttype = 'char';
+}
+
+function onContractInlineFieldAddAfter(payload: { field: FormSectionFieldSchema; groupTitle: string }) {
+  openInlineCustomFieldCreate(payload.groupTitle || '业务配置字段', String(payload.field.name || '').trim());
+}
+
+function onContractInlineGroupAddField(payload: { groupTitle: string }) {
+  openInlineCustomFieldCreate(payload.groupTitle || '业务配置字段');
+}
+
+function closeInlineCustomFieldCreate() {
+  lowCodeFieldCreateDialog.open = false;
+}
+
+async function submitInlineCustomFieldCreate() {
+  const label = String(lowCodeFieldCreateDialog.label || '').trim();
+  if (!label || busy.value) return;
+  busyKind.value = 'action';
+  try {
+    await intentRequest({
+      intent: 'ui.form_custom_field.create',
+      params: {
+        ...lowCodeApplyBaseParams(),
+        label,
+        ttype: lowCodeFieldCreateDialog.ttype || 'char',
+        group_title: lowCodeFieldCreateDialog.groupTitle || '业务配置字段',
+        sequence: lowCodeFieldCreateDialog.sequence || 100,
+      },
+      context: { view: 'form' },
+    });
+    contractModeFeedback.value = '字段已添加';
+    closeInlineCustomFieldCreate();
+    await reload();
+  } catch (err) {
+    errorMessage.value = err instanceof Error ? err.message : 'custom field create failed';
+    status.value = 'error';
+  } finally {
+    busyKind.value = null;
+  }
 }
 
 function onFieldOrderDragStart(fieldKey: string, event?: DragEvent) {
