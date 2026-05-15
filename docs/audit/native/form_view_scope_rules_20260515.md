@@ -76,6 +76,7 @@
 
 ```bash
 make verify.form_view.scope.boundary_guard
+make verify.form_view.scope.action_projection_audit DB_NAME=sc_demo
 ```
 
 门禁要求：
@@ -86,3 +87,4 @@ make verify.form_view.scope.boundary_guard
 - 字段策略 source authority 不声明 `res.users`。
 - 自定义字段创建只写 `action_id/view_id/company_id`，不写用户 scope。
 - 旧 `ui.dynamic.config.user_id` 只能作为偏好 overlay 存在，不能接入结构主链路。
+- 动作入口、动作选中的 form view、`app.view.config` 投影 identity、只读投影生成结果必须保持同一个 action/view scope。
