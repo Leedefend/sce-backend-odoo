@@ -36,6 +36,7 @@
 
 ```bash
 make verify.form_view.native_structure.boundary_guard
+make verify.form_view.scope.boundary_guard
 ```
 
 并已挂入：
@@ -48,6 +49,7 @@ make verify.form_structure.contract
 
 - 后端不得投影通用可见 notebook/page。
 - 后端自动语义不得写入 group 的 `title/label/string`。
+- 视图事实身份只能是模型默认、显式原生 view、动作绑定 view；用户个性化不得进入结构 scope。
 - 前端必须隐藏 Odoo group 标题。
 - 前端必须保留隐藏 group 上下文用于低代码落位。
 - 新增字段弹窗不得暴露“分组”配置项。
