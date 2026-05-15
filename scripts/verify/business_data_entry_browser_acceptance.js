@@ -47,7 +47,16 @@ async function login(page) {
   const inputs = page.locator('input');
   await inputs.nth(0).fill(LOGIN);
   await inputs.nth(1).fill(PASSWORD);
-  await inputs.nth(2).fill(DB_NAME);
+  const dbInput = inputs.nth(2);
+  const dbEditable = await dbInput.isEditable().catch(() => false);
+  if (dbEditable) {
+    await dbInput.fill(DB_NAME);
+  } else {
+    const currentDb = normalize(await dbInput.inputValue().catch(() => ''));
+    if (currentDb && currentDb !== DB_NAME) {
+      throw new Error(`login db input is locked to ${currentDb}, expected ${DB_NAME}`);
+    }
+  }
   await page.getByRole('button', { name: /^登录$/ }).click();
   await page.waitForFunction(() => !window.location.pathname.includes('/login'), null, { timeout: 30000 });
 }

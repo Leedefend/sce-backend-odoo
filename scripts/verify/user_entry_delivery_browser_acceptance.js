@@ -76,6 +76,10 @@ function ensureDir(filePath) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
 }
 
+function normalize(value) {
+  return String(value || '').replace(/\s+/g, ' ').trim();
+}
+
 function writeReports(report) {
   ensureDir(REPORT_JSON);
   fs.writeFileSync(REPORT_JSON, JSON.stringify(report, null, 2) + '\n', 'utf8');
@@ -189,7 +193,16 @@ async function login(page, role) {
   await page.goto(url, { waitUntil: 'networkidle' });
   await page.locator('input[autocomplete="username"]').fill(role.login);
   await page.locator('input[autocomplete="current-password"]').fill(role.password);
-  await page.locator('input[autocomplete="off"]').fill(DB_NAME);
+  const dbInput = page.locator('input[autocomplete="off"]');
+  const dbEditable = await dbInput.isEditable().catch(() => false);
+  if (dbEditable) {
+    await dbInput.fill(DB_NAME);
+  } else {
+    const currentDb = normalize(await dbInput.inputValue().catch(() => ''));
+    if (currentDb && currentDb !== DB_NAME) {
+      throw new Error(`login db input is locked to ${currentDb}, expected ${DB_NAME}`);
+    }
+  }
   await page.getByRole('button', { name: /^登录$/ }).click();
   await page.waitForFunction(() => !window.location.pathname.includes('/login'), null, { timeout: 30000 });
   await page.waitForLoadState('networkidle').catch(() => {});
