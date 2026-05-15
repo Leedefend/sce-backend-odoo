@@ -301,31 +301,47 @@
           <button type="submit" class="chip-btn" :disabled="busy">确定</button>
           <button type="button" class="ghost" :disabled="busy" @click="closeContractPromptAction">取消</button>
         </form>
-        <form
+        <div
           v-if="lowCodeFieldCreateDialog.open"
-          class="contract-mode-prompt contract-field-create-prompt"
-          @submit.prevent="submitInlineCustomFieldCreate"
+          class="contract-field-create-backdrop"
+          role="presentation"
+          @click.self="closeInlineCustomFieldCreate"
+          @keydown.esc="closeInlineCustomFieldCreate"
         >
-          <label class="contract-mode-prompt-field">
-            <span>字段标题</span>
-            <input v-model="lowCodeFieldCreateDialog.label" required :disabled="busy" />
-          </label>
-          <label class="contract-mode-prompt-field">
-            <span>字段类型</span>
-            <select v-model="lowCodeFieldCreateDialog.ttype" required :disabled="busy">
-              <option value="char">单行文本</option>
-              <option value="text">多行文本</option>
-              <option value="integer">整数</option>
-              <option value="float">小数</option>
-              <option value="boolean">是/否</option>
-              <option value="date">日期</option>
-              <option value="datetime">日期时间</option>
-              <option value="html">富文本</option>
-            </select>
-          </label>
-          <button type="submit" class="chip-btn" :disabled="busy">创建字段</button>
-          <button type="button" class="ghost" :disabled="busy" @click="closeInlineCustomFieldCreate">取消</button>
-        </form>
+          <form
+            class="contract-field-create-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="contract-field-create-title"
+            @submit.prevent="submitInlineCustomFieldCreate"
+          >
+            <header class="contract-field-create-head">
+              <h3 id="contract-field-create-title">新增字段</h3>
+              <button type="button" class="contract-field-create-close" :disabled="busy" aria-label="关闭" @click="closeInlineCustomFieldCreate">x</button>
+            </header>
+            <label class="contract-mode-prompt-field">
+              <span>字段标题</span>
+              <input ref="lowCodeFieldCreateLabelRef" v-model="lowCodeFieldCreateDialog.label" required :disabled="busy" />
+            </label>
+            <label class="contract-mode-prompt-field">
+              <span>字段类型</span>
+              <select v-model="lowCodeFieldCreateDialog.ttype" required :disabled="busy">
+                <option value="char">单行文本</option>
+                <option value="text">多行文本</option>
+                <option value="integer">整数</option>
+                <option value="float">小数</option>
+                <option value="boolean">是/否</option>
+                <option value="date">日期</option>
+                <option value="datetime">日期时间</option>
+                <option value="html">富文本</option>
+              </select>
+            </label>
+            <footer class="contract-field-create-actions">
+              <button type="submit" class="chip-btn" :disabled="busy">创建字段</button>
+              <button type="button" class="ghost" :disabled="busy" @click="closeInlineCustomFieldCreate">取消</button>
+            </footer>
+          </form>
+        </div>
         <section v-if="activeContractModeFieldRows.length && !useNativeFormTree" class="contract-field-governance">
           <div
             v-for="row in activeContractModeFieldRows"
@@ -1493,6 +1509,7 @@ const lowCodeFieldCreateDialog = reactive({
   label: '',
   ttype: 'char',
 });
+const lowCodeFieldCreateLabelRef = ref<HTMLInputElement | null>(null);
 const lowCodeContractLoaded = ref(false);
 const lowCodePrecheckWarnings = ref<string[]>([]);
 const lowCodeContractList = ref<Array<{ id: number; name: string; model: string; status: string; version_no: number }>>([]);
@@ -6607,6 +6624,7 @@ function openInlineCustomFieldCreate(groupTitle: string, afterFieldKey = '') {
   lowCodeFieldCreateDialog.sequence = contractFieldSequence(afterFieldKey, fieldOrderDraft.value.length ? (fieldOrderDraft.value.length + 1) * 10 : 100) + 5;
   lowCodeFieldCreateDialog.label = '';
   lowCodeFieldCreateDialog.ttype = 'char';
+  void nextTick(() => lowCodeFieldCreateLabelRef.value?.focus());
 }
 
 function onContractInlineFieldAddAfter(payload: { field: FormSectionFieldSchema; groupTitle: string }) {
@@ -7724,6 +7742,63 @@ onBeforeUnmount(() => {
   color: var(--sc-app-text-primary);
   padding: 0 10px;
   font-size: 13px;
+}
+
+.contract-field-create-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgb(15 23 42 / 32%);
+}
+
+.contract-field-create-dialog {
+  display: grid;
+  gap: 14px;
+  width: min(420px, 100%);
+  padding: 18px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-primary);
+  box-shadow: 0 18px 44px rgb(15 23 42 / 18%);
+}
+
+.contract-field-create-head,
+.contract-field-create-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.contract-field-create-head h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.contract-field-create-close {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-panel-muted);
+  color: var(--sc-app-text-secondary);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.contract-field-create-close:hover {
+  color: var(--sc-app-text-primary);
+}
+
+.contract-field-create-actions {
+  justify-content: flex-end;
 }
 
 .contract-field-governance {

@@ -156,7 +156,7 @@
             :field-order-dragging-key="fieldOrderDraggingKey"
             :field-order-drop-target-key="fieldOrderDropTargetKey"
             :field-config-editable="fieldConfigEditable"
-            :field-group-title="containerTitle(node)"
+            :field-group-title="containerPolicyTitle(node)"
             tone="core"
             @field-change="emit('field-change', $event)"
             @field-action="emit('field-action', $event)"
@@ -411,6 +411,10 @@ function containerTitle(node: NativeFormLayoutNode) {
   return raw;
 }
 
+function containerPolicyTitle(node: NativeFormLayoutNode) {
+  return String(node?.string || node?.label || '').trim();
+}
+
 function nodeText(node: NativeFormLayoutNode) {
   return String(node?.text || '').trim();
 }
@@ -522,7 +526,7 @@ function emitGroupRename(node: NativeFormLayoutNode, rawTitle: string) {
 }
 
 function emitGroupAddField(node: NativeFormLayoutNode) {
-  const groupTitle = containerTitle(node);
+  const groupTitle = containerPolicyTitle(node);
   if (!props.fieldConfigEditable || !groupTitle) return;
   emit('group-add-field', { groupTitle });
 }
