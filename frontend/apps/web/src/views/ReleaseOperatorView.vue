@@ -674,7 +674,7 @@ onMounted(() => {
 
 .release-operator__header p {
   margin: 0;
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
 }
 
 .release-operator__actions {
@@ -686,10 +686,10 @@ onMounted(() => {
 .release-operator__select {
   min-width: 190px;
   height: 38px;
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  background: #fff;
-  color: #0f172a;
+  border: 1px solid var(--sc-app-border-strong);
+  border-radius: var(--sc-component-input-radius);
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-primary);
   padding: 0 10px;
 }
 
@@ -701,9 +701,9 @@ onMounted(() => {
 
 .release-operator__metric,
 .release-operator__section {
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background: #fff;
+  border: 1px solid var(--sc-app-border);
+  border-radius: var(--sc-component-panel-radius);
+  background: var(--sc-app-panel);
 }
 
 .release-operator__metric {
@@ -713,14 +713,14 @@ onMounted(() => {
 .release-operator__metric span {
   display: block;
   margin-bottom: 8px;
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
   font-size: 12px;
 }
 
 .release-operator__metric strong {
   display: block;
   overflow-wrap: anywhere;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
   font-size: 18px;
 }
 
@@ -745,8 +745,8 @@ onMounted(() => {
 .release-operator__summary-grid article,
 .release-operator__checks article,
 .release-operator__audience {
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: var(--sc-component-panel-radius);
   padding: 10px;
 }
 
@@ -759,7 +759,7 @@ onMounted(() => {
 .release-operator__summary-grid strong,
 .release-operator__checks strong,
 .release-operator__audience strong {
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
   font-size: 13px;
 }
 
@@ -767,7 +767,7 @@ onMounted(() => {
 .release-operator__summary-grid span,
 .release-operator__checks span,
 .release-operator__audience span {
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
   font-size: 12px;
 }
 
@@ -775,21 +775,21 @@ onMounted(() => {
   width: 10px;
   height: 10px;
   border-radius: 999px;
-  background: #94a3b8;
+  background: var(--sc-app-border-strong);
 }
 
 .release-operator__stage-dot--done,
 .release-operator__stage-dot--active,
 .release-operator__stage-dot--preview {
-  background: #0ea5e9;
+  background: var(--sc-semantic-surface-interactive);
 }
 
 .release-operator__stage-dot--warn {
-  background: #f59e0b;
+  background: var(--sc-app-warning-text);
 }
 
 .release-operator__stage-dot--blocked {
-  background: #ef4444;
+  background: var(--sc-app-danger-text);
 }
 
 .release-operator__summary-grid {
@@ -812,13 +812,13 @@ onMounted(() => {
 }
 
 .release-operator__check--fail {
-  border-color: #fecaca;
-  background: #fef2f2;
+  border-color: var(--sc-app-danger-border);
+  background: var(--sc-app-danger-bg);
 }
 
 .release-operator__check--warn {
-  border-color: #fde68a;
-  background: #fffbeb;
+  border-color: var(--sc-app-warning-border);
+  background: var(--sc-app-warning-bg);
 }
 
 .release-operator__audience {
@@ -842,7 +842,7 @@ onMounted(() => {
 }
 
 .release-operator__policy-control span {
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
   font-size: 12px;
 }
 
@@ -854,8 +854,8 @@ onMounted(() => {
 }
 
 .release-operator__definition-grid article {
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: var(--sc-component-panel-radius);
   padding: 10px;
 }
 
@@ -866,32 +866,32 @@ onMounted(() => {
 
 .release-operator__definition-grid strong {
   margin-bottom: 5px;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
   font-size: 13px;
 }
 
 .release-operator__definition-grid span {
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
   font-size: 12px;
   line-height: 1.5;
   white-space: normal;
 }
 
 .release-operator__scope-grid article {
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: var(--sc-component-panel-radius);
   padding: 12px;
 }
 
 .release-operator__scope-grid span {
   display: block;
   margin-bottom: 8px;
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
   font-size: 12px;
 }
 
 .release-operator__scope-grid strong {
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
   font-size: 22px;
 }
 
@@ -913,7 +913,7 @@ onMounted(() => {
 .release-operator__section h2,
 .release-operator__section h3 {
   margin: 0;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
 }
 
 .release-operator__section-head {
@@ -926,7 +926,7 @@ onMounted(() => {
 
 .release-operator__section p {
   margin: 6px 0 0;
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
 }
 
 .release-operator__table-wrap {
@@ -940,14 +940,14 @@ onMounted(() => {
 
 .release-operator__table th,
 .release-operator__table td {
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--sc-app-border);
   padding: 10px 8px;
   text-align: left;
   white-space: nowrap;
 }
 
 .release-operator__table th {
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
   font-size: 12px;
   font-weight: 600;
 }
@@ -957,20 +957,20 @@ onMounted(() => {
   align-items: center;
   min-height: 24px;
   border-radius: 999px;
-  background: #e0f2fe;
-  color: #075985;
+  background: var(--sc-app-info-bg);
+  color: var(--sc-app-info-text);
   padding: 0 9px;
   font-size: 12px;
 }
 
 .release-operator__pill--muted {
-  background: #f1f5f9;
-  color: #64748b;
+  background: var(--sc-app-muted-bg);
+  color: var(--sc-semantic-text-muted);
 }
 
 .release-operator__pill--preview {
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--sc-app-warning-bg);
+  color: var(--sc-app-warning-text);
 }
 
 .release-operator__row-actions {
@@ -984,7 +984,7 @@ onMounted(() => {
 }
 
 .release-operator__empty {
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--sc-app-border);
   padding-top: 12px;
 }
 
@@ -1007,12 +1007,12 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--sc-app-border);
   padding-top: 8px;
 }
 
 .release-operator__history span {
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
 }
 
 @media (max-width: 900px) {

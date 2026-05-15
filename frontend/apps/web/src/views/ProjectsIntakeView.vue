@@ -145,21 +145,21 @@ function openFullForm() {
   gap: 14px;
 }
 .intake-hero {
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: #ffffff;
+  border: 1px solid var(--sc-app-border);
+  border-radius: var(--sc-component-panel-radius);
+  background: var(--sc-app-panel);
   padding: 16px;
 }
 .intake-hero h1 {
   margin: 0;
   font-size: 28px;
   font-weight: 700;
-  color: #111827;
+  color: var(--sc-app-text-primary);
 }
 .intake-hero p {
   margin: 8px 0 0;
   font-size: 14px;
-  color: #4b5563;
+  color: var(--sc-app-text-secondary);
 }
 .intake-grid {
   display: grid;
@@ -167,44 +167,44 @@ function openFullForm() {
   gap: 12px;
 }
 .intake-card {
-  border: 1px solid #dbe4f0;
-  border-radius: 12px;
-  background: #ffffff;
+  border: 1px solid var(--sc-app-border);
+  border-radius: var(--sc-component-panel-radius);
+  background: var(--sc-app-panel);
   padding: 14px;
 }
 .intake-card-primary {
-  border-color: #bfdbfe;
-  background: #f8fbff;
+  border-color: var(--sc-app-info-border);
+  background: var(--sc-app-info-bg);
 }
 .intake-card h2 {
   margin: 0;
   font-size: 18px;
-  color: #1f2937;
+  color: var(--sc-app-text-primary);
 }
 .intake-card p {
   margin: 8px 0;
   font-size: 13px;
-  color: #6b7280;
+  color: var(--sc-semantic-text-muted);
 }
 .intake-card ul {
   margin: 0 0 12px;
   padding-left: 16px;
-  color: #374151;
+  color: var(--sc-app-text-secondary);
   font-size: 13px;
 }
 .intake-btn {
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  background: #ffffff;
-  color: #1f2937;
+  border: 1px solid var(--sc-app-border-strong);
+  border-radius: var(--sc-component-button-radius);
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-primary);
   padding: 8px 14px;
   font-size: 13px;
   cursor: pointer;
 }
 .intake-btn-primary {
-  background: #1d4ed8;
-  border-color: #1d4ed8;
-  color: #ffffff;
+  background: var(--sc-semantic-surface-interactive);
+  border-color: var(--sc-semantic-surface-interactive);
+  color: var(--sc-semantic-text-on-interactive);
 }
 @media (max-width: 1080px) {
   .intake-grid {

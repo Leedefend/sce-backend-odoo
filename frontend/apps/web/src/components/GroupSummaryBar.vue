@@ -104,9 +104,9 @@ const windowInfo = computed(() => {
   display: grid;
   gap: 8px;
   padding: 10px 12px;
-  border: 1px solid #dbeafe;
+  border: 1px solid var(--sc-app-info-border);
   border-radius: 10px;
-  background: #f8fbff;
+  background: var(--sc-app-info-bg);
 }
 
 .group-summary-head {

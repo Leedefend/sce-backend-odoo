@@ -356,6 +356,6 @@ onMounted(load);
 }
 
 .relational-link:hover {
-  border-color: #94a3b8;
+  border-color: var(--sc-app-border-strong);
 }
 </style>

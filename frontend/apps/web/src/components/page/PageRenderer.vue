@@ -498,7 +498,7 @@ function onZoneAction(payload: PageBlockActionEvent) {
   gap: 12px;
 }
 .page-renderer--role-home .page-renderer-header {
-  border-left: 4px solid #0f766e;
+  border-left: 4px solid var(--sc-app-success-text);
   background: var(--sc-app-panel);
   padding: 10px 12px;
 }
@@ -639,7 +639,7 @@ function onZoneAction(payload: PageBlockActionEvent) {
   max-width: min(1500px, 100%);
 }
 .page-renderer--company-dashboard .page-renderer-header {
-  border-left: 4px solid #0f766e;
+  border-left: 4px solid var(--sc-app-success-text);
   background: var(--sc-app-panel);
 }
 .page-renderer--company-dashboard :deep(.zone-renderer) {

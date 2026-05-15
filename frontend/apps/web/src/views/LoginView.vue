@@ -1,9 +1,5 @@
 <template>
   <main class="login-page sc-page">
-    <div class="login-bg-orb login-bg-orb--left" aria-hidden="true"></div>
-    <div class="login-bg-orb login-bg-orb--right" aria-hidden="true"></div>
-    <div class="login-bg-grid" aria-hidden="true"></div>
-
     <section class="login-layout">
       <section class="brand-panel" aria-label="平台介绍">
         <p class="brand-title">{{ pageText('brand_name', config.appBrand.name) }}</p>
@@ -27,7 +23,7 @@
           <button
             v-for="action in headerActions"
             :key="`login-header-${action.key}`"
-            class="ghost"
+            class="ghost sc-btn sc-btn-ghost sc-btn-sm"
             :disabled="loading"
             @click="executeHeaderAction(action.key)"
           >
@@ -48,23 +44,26 @@
 
           <form
             v-if="pageSectionEnabled('form', true) && pageSectionTagIs('form', 'section')"
+            class="sc-form"
             :style="pageSectionStyle('form')"
             @submit.prevent="onSubmit"
           >
-            <label>
+            <label class="sc-form-label">
               {{ pageText('username_label', '账号') }}
               <input
                 v-model="username"
+                class="sc-input"
                 autocomplete="username"
                 :placeholder="pageText('username_placeholder', '请输入账号')"
                 :disabled="loading"
                 required
               />
             </label>
-            <label>
+            <label class="sc-form-label">
               {{ pageText('password_label', '密码') }}
               <input
                 v-model="password"
+                class="sc-input"
                 type="password"
                 autocomplete="current-password"
                 :placeholder="pageText('password_placeholder', '请输入密码')"
@@ -72,10 +71,11 @@
                 required
               />
             </label>
-            <label>
+            <label class="sc-form-label">
               {{ pageText('db_label', '数据库') }}
               <input
                 v-model="dbName"
+                class="sc-input"
                 autocomplete="off"
                 :placeholder="pageText('db_placeholder', '请输入数据库名（如 sc_minimal）')"
                 :disabled="dbInputDisabled"
@@ -83,7 +83,7 @@
             </label>
             <p
               v-if="pageSectionEnabled('error', true) && pageSectionTagIs('error', 'section') && error"
-              class="error"
+              class="error sc-alert sc-alert-danger"
               :style="pageSectionStyle('error')"
             >
               {{ error }}
@@ -226,7 +226,7 @@ async function executeHeaderAction(actionKey: string) {
   display: grid;
   place-items: center;
   gap: 18px;
-  background: radial-gradient(circle at 12% 12%, #f7e9dc 0%, #f6f3ef 42%, #eef1f7 100%);
+  background: var(--sc-app-bg);
   color: var(--ink);
   font-family: "Space Grotesk", "IBM Plex Sans", system-ui, sans-serif;
   padding: 30px 16px;
@@ -251,42 +251,6 @@ async function executeHeaderAction(actionKey: string) {
   padding-left: clamp(20px, 4.5vw, 60px);
 }
 
-.login-bg-grid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(to right, rgba(47, 58, 95, 0.035) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(47, 58, 95, 0.03) 1px, transparent 1px);
-  background-size: 54px 54px;
-  opacity: 0.7;
-  mask-image: radial-gradient(circle at 36% 50%, rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.1) 70%, rgba(0, 0, 0, 0));
-  pointer-events: none;
-}
-
-.login-bg-orb {
-  position: absolute;
-  border-radius: 999px;
-  filter: blur(2px);
-  opacity: 0.32;
-  pointer-events: none;
-}
-
-.login-bg-orb--left {
-  width: 420px;
-  height: 420px;
-  background: radial-gradient(circle, rgba(224, 122, 95, 0.3) 0%, rgba(224, 122, 95, 0) 72%);
-  top: -130px;
-  left: -130px;
-}
-
-.login-bg-orb--right {
-  width: 460px;
-  height: 460px;
-  background: radial-gradient(circle, rgba(47, 58, 95, 0.2) 0%, rgba(47, 58, 95, 0) 72%);
-  right: -180px;
-  bottom: -180px;
-}
-
 .auth-panel {
   width: 100%;
   display: grid;
@@ -302,32 +266,17 @@ async function executeHeaderAction(actionKey: string) {
 }
 
 .ghost {
-  padding: 8px 12px;
-  border: 1px solid rgba(15, 23, 42, 0.12);
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.86);
-  color: var(--sc-app-text-primary);
-  cursor: pointer;
   transition: border-color 120ms ease, transform 120ms ease;
 }
 
 .ghost:hover:not(:disabled) {
-  border-color: rgba(47, 58, 95, 0.4);
+  border-color: var(--sc-app-border-strong);
   transform: translateY(-1px);
-}
-
-.ghost:disabled {
-  opacity: 0.56;
-  cursor: not-allowed;
 }
 
 .login-card {
   width: 100%;
-  background: rgba(255, 255, 255, 0.94);
   padding: 32px;
-  border-radius: 18px;
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
-  border: 1px solid rgba(15, 23, 42, 0.06);
   display: grid;
   gap: 18px;
 }
@@ -339,13 +288,13 @@ async function executeHeaderAction(actionKey: string) {
 
 .product-badge {
   width: fit-content;
-  padding: 4px 8px;
-  border: 1px solid rgba(100, 116, 139, 0.22);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.7);
+  padding: calc(var(--sc-component-badge-padding-y) * 1px) calc(var(--sc-component-badge-padding-x) * 1px);
+  border: 1px solid var(--sc-app-border);
+  border-radius: var(--sc-component-badge-radius);
+  background: var(--sc-app-subtle-bg);
   color: var(--sc-app-text-secondary);
   font-size: 11px;
-  letter-spacing: 0.3px;
+  letter-spacing: 0;
   font-weight: 500;
 }
 
@@ -359,7 +308,7 @@ async function executeHeaderAction(actionKey: string) {
 h1 {
   margin: 0;
   font-size: 20px;
-  color: #475569;
+  color: var(--sc-app-text-secondary);
   font-weight: 500;
 }
 
@@ -391,13 +340,13 @@ h1 {
   list-style: none;
   display: grid;
   gap: 6px;
-  color: #475569;
+  color: var(--sc-app-text-secondary);
   font-size: 14px;
 }
 
 .value-list li::before {
   content: '▣';
-  color: rgba(47, 58, 95, 0.7);
+  color: var(--sc-semantic-surface-interactive);
   margin-right: 8px;
 }
 
@@ -410,32 +359,28 @@ label {
   display: grid;
   gap: 6px;
   font-size: 12px;
-  color: #334155;
+  color: var(--sc-app-text-secondary);
   font-weight: 500;
 }
 
 input {
   padding: 11px 12px;
-  border: 1px solid #d5d9e7;
-  border-radius: 10px;
-  background: var(--sc-app-panel);
+  border: 1px solid var(--sc-app-border-strong);
+  border-radius: var(--sc-component-input-radius);
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-primary);
   transition: border-color 120ms ease, box-shadow 120ms ease;
 }
 
 input:focus-visible {
-  border-color: rgba(47, 58, 95, 0.54);
-  box-shadow: 0 0 0 3px rgba(47, 58, 95, 0.14);
+  border-color: var(--sc-semantic-surface-interactive);
+  box-shadow: 0 0 0 3px var(--sc-app-focus-ring);
   outline: none;
 }
 
 .submit {
   min-height: 44px;
   padding: 11px 14px;
-  border: none;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #2f3a5f, #1f2b48);
-  color: white;
-  cursor: pointer;
   font-weight: 600;
   font-size: 16px;
   transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
@@ -443,20 +388,10 @@ input:focus-visible {
 
 .submit:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 10px 20px rgba(47, 58, 95, 0.2);
-}
-
-.submit:disabled {
-  opacity: 0.68;
-  cursor: not-allowed;
+  box-shadow: var(--sc-semantic-shadow-popover);
 }
 
 .error {
-  color: #b91c1c;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 10px;
-  padding: 9px 10px;
   font-size: 13px;
 }
 
@@ -468,11 +403,11 @@ input:focus-visible {
 }
 
 .capability-card {
-  border-radius: 14px;
-  border: 1px solid rgba(47, 58, 95, 0.14);
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
-  color: #334155;
+  border-radius: var(--sc-component-card-radius);
+  border: 1px solid var(--sc-app-border);
+  background: var(--sc-app-panel);
+  box-shadow: var(--sc-app-shadow);
+  color: var(--sc-app-text-primary);
   font-size: 14px;
   font-weight: 600;
   padding: 11px 13px;
@@ -487,12 +422,12 @@ input:focus-visible {
   display: inline-grid;
   place-items: center;
   flex: 0 0 auto;
-  color: rgba(47, 58, 95, 0.86);
+  color: var(--sc-semantic-surface-interactive);
 }
 
 .page-footer {
   text-align: center;
-  color: rgba(71, 85, 105, 0.9);
+  color: var(--sc-app-text-secondary);
   font-size: 12px;
   line-height: 1.45;
   position: relative;

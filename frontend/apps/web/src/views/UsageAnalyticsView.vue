@@ -510,29 +510,29 @@ onMounted(load);
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  color: #334155;
+  color: var(--sc-app-text-secondary);
   font-size: 13px;
 }
 
 .slice-bar span {
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--sc-app-border);
   border-radius: 999px;
   padding: 4px 10px;
-  background: #fff;
+  background: var(--sc-app-panel);
 }
 
 .export-scope {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #334155;
+  color: var(--sc-app-text-secondary);
 }
 
 .secondary {
-  border: 1px solid #93c5fd;
-  border-radius: 8px;
-  background: #eff6ff;
-  color: #1e3a8a;
+  border: 1px solid var(--sc-app-info-border);
+  border-radius: var(--sc-component-button-radius);
+  background: var(--sc-app-info-bg);
+  color: var(--sc-app-info-text);
   padding: 8px 10px;
   cursor: pointer;
 }
@@ -544,22 +544,22 @@ onMounted(load);
 }
 
 .summary-card {
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: var(--sc-component-panel-radius);
   padding: 12px;
-  background: #fff;
+  background: var(--sc-app-panel);
 }
 
 .summary-card .label {
   margin: 0;
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
 }
 
 .summary-card .count {
   margin: 8px 0 0;
   font-size: 24px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
 }
 
 .summary-card .count.small {
@@ -573,17 +573,17 @@ onMounted(load);
 }
 
 .table-card {
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: #fff;
+  border: 1px solid var(--sc-app-border);
+  border-radius: var(--sc-component-panel-radius);
+  background: var(--sc-app-panel);
   overflow: hidden;
 }
 
 .table-card h3 {
   margin: 0;
   padding: 12px;
-  border-bottom: 1px solid #f1f5f9;
-  color: #0f172a;
+  border-bottom: 1px solid var(--sc-app-border);
+  color: var(--sc-app-text-primary);
 }
 
 table {
@@ -593,12 +593,12 @@ table {
 
 th, td {
   padding: 10px 12px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--sc-app-border);
   text-align: left;
 }
 
 .empty {
   text-align: center;
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
 }
 </style>

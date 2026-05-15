@@ -81,7 +81,7 @@ export function resolveConfiguredDb(fallbackDb = ''): string {
 }
 
 export function resolveLoginRoutingDb(): string {
-  return sanitizeDb(PLATFORM_ADMIN_DB);
+  return isPlatformAdminEntryRuntime() ? sanitizeDb(PLATFORM_ADMIN_DB) : '';
 }
 
 export function isConfiguredDbPinned(): boolean {

@@ -842,15 +842,15 @@ onBeforeUnmount(() => {
 }
 
 .contract-chip.active {
-  border-color: #2563eb;
-  color: #1d4ed8;
-  background: #eff6ff;
+  border-color: var(--sc-semantic-surface-interactive);
+  color: var(--sc-app-info-text);
+  background: var(--sc-app-info-bg);
 }
 
 .contract-chip.primary {
-  border-color: #2563eb;
-  background: #2563eb;
-  color: #fff;
+  border-color: var(--sc-semantic-surface-interactive);
+  background: var(--sc-semantic-surface-interactive);
+  color: var(--sc-semantic-text-on-interactive);
 }
 
 .contract-chip.ghost {
@@ -906,7 +906,7 @@ onBeforeUnmount(() => {
 
   .search-dropdown-section + .search-dropdown-section {
     border-left: 0;
-    border-top: 1px solid #e2e8f0;
+    border-top: 1px solid var(--sc-app-border);
   }
 }
 </style>

@@ -16,6 +16,146 @@ Each entry must include:
 
 ## Entries
 
+### 2026-05-15T15:30:39+08:00
+- blocker_key: `frontend_style_system_productization_batch_m_zero_baseline_closeout`
+- layer_target: `Frontend Layer`
+- module: `frontend/apps/web/src views/pages/components residual files + scripts/verify`
+- reason: `用户要求直接收口；本批清理剩余硬编码颜色引用并修正 frontend_style_system_guard 对 Vue slot #default 的误报，不触达页面数据加载、表单/列表行为、契约消费或路由语义。`
+- completed_step: `剩余 Workbench/ListPage/ContractFormPage/DevContextPanel/ScenePackages/Menu/Placeholder/PageRenderer/PageHeader/PageFooter 等硬编码颜色迁移到 sc semantic/app token；frontend_style_system_guard 将硬编码颜色上限从 97 下调到 0，并用 word-boundary 避免 #default 误计。`
+- verification: `python3 -m py_compile scripts/verify/frontend_style_system_guard.py frontend/packages/design-tokens/scripts/build_tokens.py frontend/packages/design-tokens/scripts/verify_tokens.py PASS；python3 -m json.tool token source files PASS；python3 -m unittest frontend/packages/design-tokens/tests_build_tokens.py PASS；make verify.frontend.style_system.guard PASS hardcoded_color_refs_max=0；make verify.frontend.typecheck.strict PASS；make verify.frontend.build PASS；make verify.restricted PASS；git diff --check PASS。`
+- active_commit: `daab6b45`
+- next_step: `分支已达到提交/PR 收口条件；进入提交与 PR 创建。`
+
+### 2026-05-15T15:22:54+08:00
+- blocker_key: `frontend_style_system_productization_batch_l_analytics_intake_scene`
+- layer_target: `Frontend Layer`
+- module: `frontend/apps/web/src/views/UsageAnalyticsView.vue + frontend/apps/web/src/views/ProjectsIntakeView.vue + frontend/apps/web/src/views/SceneView.vue + scripts/verify`
+- reason: `用户确认代码不会丢并要求继续加快；本批合并三个剩余高计数页面，只迁移 scoped style 的硬编码颜色到既有 token，不触达分析数据加载、项目立项入口、场景视图切换或契约消费语义。`
+- completed_step: `UsageAnalyticsView.vue、ProjectsIntakeView.vue、SceneView.vue 裸色/rgba/渐变归零；分析页切片/摘要/表格、项目立项 hero/card/button、场景视图切换 chip 与交付提示样式改为 sc semantic/app token；frontend_style_system_guard 将硬编码颜色上限从 147 下调到 97。`
+- verification: `python3 -m py_compile scripts/verify/frontend_style_system_guard.py PASS；make verify.frontend.style_system.guard PASS hardcoded_color_refs_max=97；make verify.frontend.typecheck.strict PASS；make verify.frontend.build PASS；make verify.restricted PASS；git diff --check PASS。`
+- active_commit: `daab6b45`
+- next_step: `继续后续批次：按剩余高计数文件 WorkbenchView、ListPage、ContractFormPage、DevContextPanel 顺序迁移硬编码样式。`
+
+### 2026-05-15T15:16:22+08:00
+- blocker_key: `frontend_style_system_productization_batch_k_scene_health_x2many`
+- layer_target: `Frontend Layer`
+- module: `frontend/apps/web/src/views/SceneHealthView.vue + frontend/apps/web/src/components/template/X2ManyRelationRenderer.vue + scripts/verify`
+- reason: `用户要求加快推进；本批合并两个相邻剩余高计数文件，只迁移 scoped style 与标签色板硬编码颜色到既有 token，不触达场景健康加载、relation 选择/提交、x2many 行编辑或契约消费语义。`
+- completed_step: `SceneHealthView.vue 与 X2ManyRelationRenderer.vue 裸色/rgba 归零；场景健康 header/card/governance/details/pre 样式、relation tag 色板/swatch/tag hover/required/select arrow/ghost 样式改为 sc semantic/app token；frontend_style_system_guard 将硬编码颜色上限从 191 下调到 147。`
+- verification: `python3 -m py_compile scripts/verify/frontend_style_system_guard.py PASS；make verify.frontend.style_system.guard PASS hardcoded_color_refs_max=147；make verify.frontend.typecheck.strict PASS；make verify.frontend.build PASS；make verify.restricted PASS；git diff --check PASS。`
+- active_commit: `daab6b45`
+- next_step: `继续后续批次：按剩余高计数文件 UsageAnalyticsView、ProjectsIntakeView、SceneView 顺序迁移硬编码样式。`
+
+### 2026-05-15T15:08:13+08:00
+- blocker_key: `frontend_style_system_productization_batch_j_native_form_tree`
+- layer_target: `Frontend Layer`
+- module: `frontend/apps/web/src/components/template/NativeFormTreeRenderer.vue + scripts/verify`
+- reason: `继续推进自定义前端样式系统产品化；本批只迁移 NativeFormTreeRenderer scoped style 的硬编码颜色到既有 token，不触达 native form/tree 结构、字段语义、smart button 行为或事件派发。`
+- completed_step: `NativeFormTreeRenderer.vue 裸色/rgba 归零；container 分隔线、标题、ribbon、notebook tab、smart action group、more menu、action icon、title favorite/title input 样式改为 sc semantic/app token；frontend_style_system_guard 将硬编码颜色上限从 223 下调到 191。`
+- verification: `python3 -m py_compile scripts/verify/frontend_style_system_guard.py PASS；make verify.frontend.style_system.guard PASS hardcoded_color_refs_max=191；make verify.frontend.typecheck.strict PASS；make verify.frontend.build PASS；make verify.restricted PASS；git diff --check PASS。`
+- active_commit: `daab6b45`
+- next_step: `继续后续批次：按剩余高计数文件 SceneHealthView、X2ManyRelationRenderer、UsageAnalyticsView 顺序迁移硬编码样式。`
+
+### 2026-05-15T14:59:14+08:00
+- blocker_key: `frontend_style_system_productization_batch_i_form_section`
+- layer_target: `Frontend Layer`
+- module: `frontend/apps/web/src/components/template/FormSection.vue + scripts/verify`
+- reason: `继续推进自定义前端样式系统产品化；本批只迁移共享表单 FormSection scoped style 的硬编码颜色到既有 token，不触达字段类型、事件派发、many2one 提交语义或契约渲染逻辑。`
+- completed_step: `FormSection.vue 裸色/rgba 归零；section 分隔线、标题/提示、label、favorite、required、inline action、input/focus、radio、many2one dropdown/action/avatar 和日期范围样式改为 sc semantic/app token；frontend_style_system_guard 将硬编码颜色上限从 261 下调到 223。`
+- verification: `python3 -m py_compile scripts/verify/frontend_style_system_guard.py PASS；make verify.frontend.style_system.guard PASS hardcoded_color_refs_max=223；make verify.frontend.typecheck.strict PASS；make verify.frontend.build PASS；make verify.restricted PASS；git diff --check PASS。`
+- active_commit: `daab6b45`
+- next_step: `继续后续批次：按剩余高计数文件 NativeFormTreeRenderer、SceneHealthView、X2ManyRelationRenderer 顺序迁移硬编码样式。`
+
+### 2026-05-15T14:54:34+08:00
+- blocker_key: `frontend_style_system_productization_batch_h_release_operator`
+- layer_target: `Frontend Layer`
+- module: `frontend/apps/web/src/views/ReleaseOperatorView.vue + scripts/verify`
+- reason: `继续推进自定义前端样式系统产品化；本批只迁移 ReleaseOperatorView scoped style 的硬编码颜色到既有 token，不触达发布动作、审批、回滚 intent 或路由语义。`
+- completed_step: `ReleaseOperatorView.vue 裸色/rgba 归零；发布控制台标题、select、指标卡、发布流水线、检查状态、策略说明、范围卡、表格、pill 和历史列表样式改为 sc semantic/app token；frontend_style_system_guard 将硬编码颜色上限从 300 下调到 261。`
+- verification: `python3 -m py_compile scripts/verify/frontend_style_system_guard.py PASS；make verify.frontend.style_system.guard PASS hardcoded_color_refs_max=261；make verify.frontend.typecheck.strict PASS；make verify.frontend.build PASS；make verify.restricted PASS；git diff --check PASS。`
+- active_commit: `daab6b45`
+- next_step: `继续后续批次：按剩余高计数文件 FormSection、NativeFormTreeRenderer、SceneHealthView 顺序迁移硬编码样式。`
+
+### 2026-05-15T14:42:54+08:00
+- blocker_key: `frontend_style_system_productization_batch_g_action`
+- layer_target: `Frontend Layer`
+- module: `frontend/apps/web/src/views/ActionView.vue + scripts/verify`
+- reason: `继续推进自定义前端样式系统产品化；本批只迁移 ActionView 当前样式区块的硬编码颜色到既有 token，不触达 action 加载、筛选、契约消费或路由语义。`
+- completed_step: `ActionView.vue 裸色/rgba 归零；路由推荐条、焦点条、契约缺失提示、空态、契约 chips、高级视图和 ledger overview tone 样式改为 sc semantic/app token；frontend_style_system_guard 将硬编码颜色上限从 356 下调到 300。`
+- verification: `python3 -m py_compile scripts/verify/frontend_style_system_guard.py PASS；make verify.frontend.style_system.guard PASS hardcoded_color_refs_max=300；make verify.frontend.typecheck.strict PASS；make verify.frontend.build PASS；make verify.restricted PASS；git diff --check PASS。`
+- active_commit: `daab6b45`
+- next_step: `继续后续批次：按剩余高计数文件 ReleaseOperatorView、FormSection、NativeFormTreeRenderer 顺序迁移硬编码样式。`
+
+### 2026-05-15T14:37:57+08:00
+- blocker_key: `frontend_style_system_productization_batch_f_record`
+- layer_target: `Frontend Layer`
+- module: `frontend/apps/web/src/views/RecordView.vue + scripts/verify`
+- reason: `继续推进自定义前端样式系统产品化；本批只迁移 RecordView 局部硬编码样式到既有 token，不触达记录加载、保存动作、契约消费或路由语义。`
+- completed_step: `RecordView.vue 裸色/rgba 归零；记录卡片、只读提示、状态 pill、字段、banner、统计按钮、fallback、chatter、timeline 和按钮样式改为 sc semantic/app token；frontend_style_system_guard 将硬编码颜色上限从 420 下调到 356。`
+- verification: `python3 -m py_compile scripts/verify/frontend_style_system_guard.py PASS；make verify.frontend.style_system.guard PASS hardcoded_color_refs_max=356；make verify.frontend.typecheck.strict PASS；make verify.frontend.build PASS；make verify.restricted PASS；git diff --check PASS。`
+- active_commit: `daab6b45`
+- next_step: `继续 Batch-G：迁移 ActionView.vue 局部硬编码样式到产品模式库/token。`
+
+### 2026-05-15T14:32:50+08:00
+- blocker_key: `frontend_style_system_productization_batch_e_my_work`
+- layer_target: `Frontend Layer`
+- module: `frontend/apps/web/src/views/MyWorkView.vue + scripts/verify`
+- reason: `继续推进自定义前端样式系统产品化；本批只迁移 MyWorkView 局部硬编码样式到既有 token，不触达数据加载、契约消费、路由或业务交互。`
+- completed_step: `MyWorkView.vue 裸色/rgba/渐变归零；英雄区、筛选、标签、表格、空态、重试面板、反馈条和按钮样式改为 sc semantic/app token；frontend_style_system_guard 将硬编码颜色上限从 512 下调到 420。`
+- verification: `python3 -m py_compile scripts/verify/frontend_style_system_guard.py PASS；make verify.frontend.style_system.guard PASS hardcoded_color_refs_max=420；make verify.frontend.typecheck.strict PASS；make verify.frontend.build PASS；make verify.restricted PASS；git diff --check PASS。`
+- active_commit: `daab6b45`
+- next_step: `继续 Batch-F：迁移 RecordView.vue 局部硬编码样式到产品模式库/token。`
+
+### 2026-05-15T14:21:55+08:00
+- blocker_key: `frontend_style_system_productization_batch_d_home`
+- layer_target: `Frontend Layer`
+- module: `frontend/apps/web/src/views/HomeView.vue + scripts/verify + docs/architecture/design_system`
+- reason: `继续推进自定义前端样式系统产品化；本批只迁移最高频首页 HomeView 的局部硬编码样式到 token，不触达页面数据、契约消费或路由语义。`
+- completed_step: `HomeView.vue 裸色/rgba 归零；常见面板、文本、状态、按钮、风险、筛选和分组样式改为 sc semantic/app token；frontend_style_system_guard 将硬编码颜色上限从 717 下调到 512。`
+- verification: `make verify.frontend.style_system.guard PASS hardcoded_color_refs_max=512；python3 -m py_compile scripts/verify/frontend_style_system_guard.py PASS；make verify.frontend.typecheck.strict PASS；make verify.frontend.build PASS；make verify.restricted PASS；git diff --check PASS。`
+- active_commit: `daab6b45`
+- next_step: `继续 Batch-D 后续页：按 MyWorkView -> RecordView -> ActionView 顺序逐页迁移局部硬编码样式。`
+
+### 2026-05-15T14:14:12+08:00
+- blocker_key: `frontend_style_system_productization_batch_c`
+- layer_target: `Frontend Layer`
+- module: `frontend/apps/web/src/styles/product-patterns.css + frontend/apps/web/src/views/LoginView.vue + frontend/apps/web/src/layouts/AppShell.vue + scripts/verify`
+- reason: `继续推进自定义前端样式系统产品化；本批把 product-patterns.css 从少量工具类扩展为 Web 产品模式库，并迁移登录页与应用壳层的公共控件样式。`
+- completed_step: `新增 toolbar/action group/form/input/button/badge/alert/empty/table/dialog 等产品模式类；LoginView 接入 sc-form/sc-form-label/sc-input/sc-alert 并移除装饰性背景元素；AppShell 顶栏接入 sc-toolbar/sc-btn-sm，壳层颜色/边框/阴影改为 token；frontend_style_system_guard 将硬编码颜色上限从 815 下调到 717。`
+- verification: `make verify.frontend.style_system.guard PASS hardcoded_color_refs_max=717；make verify.frontend.typecheck.strict PASS；make verify.frontend.build PASS；make verify.restricted PASS；git diff --check PASS。`
+- active_commit: `daab6b45`
+- next_step: `进入 Batch-D：按高频页面逐步迁移 HomeView/MyWorkView/RecordView/ActionView 的局部硬编码样式到产品模式库。`
+
+### 2026-05-15T14:05:12+08:00
+- blocker_key: `frontend_style_system_productization_batch_b`
+- layer_target: `Frontend Layer`
+- module: `frontend/packages/design-tokens + frontend/apps/web/src/styles + scripts/verify`
+- reason: `继续推进自定义前端样式系统产品化；本批扩展 semantic/component tokens，并让 Web 全局样式桥接消费 token，降低页面裸色基线。`
+- completed_step: `扩展 base/semantic/component token 源，重新生成 dist/web 与 dist/shared token 产物；design-system.css 改为从 semantic token 映射 app 级变量；frontend_style_system_guard 增加新 token 桥接检查，并将硬编码颜色上限从 855 下调到 815。`
+- verification: `python3 -m json.tool token source files PASS；python3 -m unittest frontend/packages/design-tokens/tests_build_tokens.py PASS；python3 frontend/packages/design-tokens/scripts/build_tokens.py PASS；python3 frontend/packages/design-tokens/scripts/verify_tokens.py PASS；python3 -m py_compile scripts/verify/frontend_style_system_guard.py frontend/packages/design-tokens/scripts/build_tokens.py frontend/packages/design-tokens/scripts/verify_tokens.py PASS；make verify.frontend.style_system.guard PASS hardcoded_color_refs_max=815；make verify.frontend.typecheck.strict PASS；make verify.frontend.build PASS；make verify.restricted PASS。`
+- active_commit: `daab6b45`
+- next_step: `进入 Batch-C：扩展 product-patterns.css 为正式 Web 产品模式库，并开始迁移高频页面公共控件。`
+
+### 2026-05-15T13:54:42+08:00
+- blocker_key: `frontend_style_system_productization_batch_a`
+- layer_target: `Frontend Layer`
+- module: `frontend/apps/web + scripts/verify + Makefile`
+- reason: `用户同意执行自定义前端样式系统产品化 Batch-A；本批只建立样式基线和守卫，不触达后端契约、启动链或业务语义。`
+- completed_step: `修复 AppShell scoped style 结构，新增 frontend_style_system_guard 样式系统基线守卫，并接入 Makefile 前端验证入口；restricted 验证刷新 delivery_readiness_scoreboard_v1 当前分支证据。`
+- verification: `python3 -m py_compile scripts/verify/frontend_style_system_guard.py PASS；make verify.frontend.style_system.guard PASS hardcoded_color_refs_max=855；python3 frontend/packages/design-tokens/scripts/verify_tokens.py PASS；make verify.frontend.typecheck.strict PASS；make verify.frontend.build PASS；make verify.restricted PASS；git diff --check PASS。`
+- active_commit: `daab6b45`
+- next_step: `进入 Batch-B：扩展 design-tokens 语义层与组件令牌，逐步降低硬编码颜色基线。`
+
+### 2026-05-15T12:28:38+08:00
+- blocker_key: `daily_dev_wutao_login_wrong_db`
+- layer_target: `Frontend Runtime / Login Startup Chain`
+- module: `frontend/apps/web/src/services/dbContext.ts`
+- reason: `用户反馈日常开发环境 wutao / 123456 无法登录；后端认证 sc_demo 成功，但浏览器日志显示普通登录 intent 被路由到 sc_platform_core，导致 wutao 在平台库中用户名不存在。`
+- completed_step: `修复 resolveLoginRoutingDb 仅在 /platform-admin 或 platform_admin=1 入口使用 VITE_PLATFORM_ADMIN_DB；普通登录返回空路由库，让 login intent 使用 configured db/sc_demo。重建前端静态资源并重启 frontend dev。`
+- verification: `pnpm -C frontend/apps/web typecheck:strict PASS；ENV=dev ENV_FILE=.env.dev DB_NAME=sc_demo make verify.frontend.build PASS；Playwright 18081 使用 wutao / 123456 登录进入 /s/projects.list，login 与 system.init 均请求 db=sc_demo 且 200；Playwright 5174 登录请求已改为 db=sc_demo；ACCEPTANCE_BASE_URL=http://127.0.0.1:18081 ACCEPTANCE_LOGIN=wutao ACCEPTANCE_PASSWORD=123456 ENV=dev ENV_FILE=.env.dev DB_NAME=sc_demo make verify.dev.acceptance.release PASS，system_init_ok=true。`
+- active_commit: `77808d35`
+- next_step: `推 PR 并合并该登录路由修复，避免后续用 .env.dev 重建前端时再次把普通登录导向 sc_platform_core。`
+
 ### 2026-05-15T11:53:57+08:00
 - blocker_key: `platform_release_main_sync_delivery_scope_alignment`
 - layer_target: `Platform Delivery / Release Verification`

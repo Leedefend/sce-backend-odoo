@@ -27,7 +27,7 @@ defineProps<{
   justify-content: space-between;
   gap: 12px;
   align-items: flex-start;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--sc-app-border);
   padding-bottom: 12px;
   margin-bottom: 16px;
 }
@@ -46,7 +46,7 @@ defineProps<{
 .template-page-subtitle {
   margin: 2px 0 0;
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--sc-semantic-text-muted);
 }
 
 .template-page-header-status {

@@ -19,6 +19,7 @@ _logger = logging.getLogger(__name__)
 class ScProjectStructure(models.Model):
     _name = 'sc.project.structure'
     _description = '项目工程结构'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _parent_name = 'parent_id'
     _parent_store = True
     _order = 'project_id, parent_path, sequence, id'
@@ -26,8 +27,19 @@ class ScProjectStructure(models.Model):
     _rec_name = 'name'
     _parent_name = 'parent_id'
     _parent_store = True
-    name = fields.Char('名称', required=True)
-    code = fields.Char('编码', index=True)
+    name = fields.Char('名称', required=True, tracking=True)
+    code = fields.Char('编码', index=True, tracking=True)
+    state = fields.Selection(
+        [
+            ('draft', '草稿'),
+            ('active', '生效'),
+            ('archived', '归档'),
+        ],
+        string='状态',
+        default='active',
+        index=True,
+        tracking=True,
+    )
     display_label = fields.Char(
         '显示名称',
         compute='_compute_display_label',
@@ -85,6 +97,13 @@ class ScProjectStructure(models.Model):
         string='关联清单行（含子节点）',
         compute='_compute_boq_line_all_ids',
         store=False,
+    )
+    attachment_ids = fields.Many2many(
+        'ir.attachment',
+        'sc_project_structure_attachment_rel',
+        'structure_id',
+        'attachment_id',
+        string='附件',
     )
 
     qty_total = fields.Float(

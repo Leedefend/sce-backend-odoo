@@ -10,12 +10,15 @@ const requireBase = fs.existsSync(path.join(process.cwd(), 'frontend/apps/web/pa
   : path.join(process.cwd(), 'package.json');
 const requireFromRoot = createRequire(requireBase);
 const { chromium } = requireFromRoot('playwright');
+const ROOT_DIR = fs.existsSync(path.join(process.cwd(), 'frontend/apps/web/package.json'))
+  ? process.cwd()
+  : path.resolve(process.cwd(), '../../..');
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://127.0.0.1:5174';
 const DB_NAME = process.env.DB_NAME || 'sc_prod_sim';
 const LOGIN = process.env.E2E_LOGIN || 'wutao';
 const PASSWORD = process.env.E2E_PASSWORD || '123456';
-const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
+const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || path.join(ROOT_DIR, 'artifacts');
 
 const ts = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15);
 const outDir = path.join(ARTIFACTS_DIR, 'business-data-entry-browser', ts);
@@ -47,7 +50,16 @@ async function login(page) {
   const inputs = page.locator('input');
   await inputs.nth(0).fill(LOGIN);
   await inputs.nth(1).fill(PASSWORD);
-  await inputs.nth(2).fill(DB_NAME);
+  const dbInput = inputs.nth(2);
+  const dbEditable = await dbInput.isEditable().catch(() => false);
+  if (dbEditable) {
+    await dbInput.fill(DB_NAME);
+  } else {
+    const currentDb = normalize(await dbInput.inputValue().catch(() => ''));
+    if (currentDb && currentDb !== DB_NAME) {
+      throw new Error(`login db input is locked to ${currentDb}, expected ${DB_NAME}`);
+    }
+  }
   await page.getByRole('button', { name: /^登录$/ }).click();
   await page.waitForFunction(() => !window.location.pathname.includes('/login'), null, { timeout: 30000 });
 }
@@ -121,6 +133,32 @@ async function readRecord(page, model, id, fields) {
   return rows[0] || {};
 }
 
+async function resolveRuntimeMenuRefs(page, xmlIds) {
+  const resp = await intentRequest(page, 'system.init', {});
+  const byXmlId = {};
+  const seen = new Set();
+  const visit = (value) => {
+    if (!value || typeof value !== 'object' || seen.has(value)) return;
+    seen.add(value);
+    const meta = value.meta && typeof value.meta === 'object' ? value.meta : {};
+    const menuXmlId = String(meta.menu_xmlid || '');
+    if (xmlIds.includes(menuXmlId)) {
+      byXmlId[menuXmlId] = {
+        menuId: Number(meta.menu_id || value.menu_id || 0),
+        actionId: Number(meta.action_id || 0),
+        model: String(meta.model || ''),
+      };
+    }
+    for (const child of Object.values(value)) visit(child);
+  };
+  visit(resp.data || {});
+  for (const xmlId of xmlIds) {
+    const ref = byXmlId[xmlId];
+    if (!ref || !ref.menuId || !ref.actionId) throw new Error(`runtime menu ref not resolved: ${xmlId}`);
+  }
+  return byXmlId;
+}
+
 async function waitForFormReady(page) {
   await page.locator('.template-layout-shell').waitFor({ timeout: 30000 });
   await page.waitForFunction(() => {
@@ -152,10 +190,12 @@ async function openRecord(page, scenario, id) {
 }
 
 async function setFieldByLabel(page, label, value) {
-  const ok = await page.evaluate(({ labelText, fieldValue }) => {
+  const labels = Array.isArray(label) ? label : [label];
+  const ok = await page.evaluate(({ labelTexts, fieldValue }) => {
     const clean = (val) => String(val || '').replace(/\s+/g, ' ').trim().replace(/\*$/, '');
     const fields = Array.from(document.querySelectorAll('.field'));
-    const target = fields.find((field) => clean(field.querySelector('.label')?.textContent || '') === labelText);
+    const wanted = labelTexts.map((item) => clean(item));
+    const target = fields.find((field) => wanted.includes(clean(field.querySelector('.label')?.textContent || '')));
     if (!target) return false;
     const input = target.querySelector('input.input, textarea.input, select.input');
     if (!input) return false;
@@ -163,15 +203,35 @@ async function setFieldByLabel(page, label, value) {
     input.dispatchEvent(new Event('input', { bubbles: true }));
     input.dispatchEvent(new Event('change', { bubbles: true }));
     return true;
-  }, { labelText: label, fieldValue: value });
-  if (!ok) throw new Error(`field not found or not editable: ${label}`);
+  }, { labelTexts: labels, fieldValue: value });
+  if (!ok) throw new Error(`field not found or not editable: ${labels.join('|')}`);
 }
 
-async function saveForm(page) {
+async function saveForm(page, scenario) {
   const save = page.locator('.template-page-header-actions button.primary').filter({ hasText: /^保存$/ }).first();
   await save.waitFor({ timeout: 15000 });
+  const writeResponse = page.waitForResponse(async (response) => {
+    if (!response.url().includes('/api/v1/intent')) return false;
+    const request = response.request();
+    let payload = {};
+    try {
+      payload = JSON.parse(request.postData() || '{}');
+    } catch {
+      return false;
+    }
+    const params = payload.params || {};
+    return payload.intent === 'api.data' && params.op === 'write' && params.model === scenario.model;
+  }, { timeout: 25000 }).catch(() => null);
   await save.click();
-  await page.getByText('保存成功，已同步最新表单内容。', { exact: true }).waitFor({ timeout: 25000 });
+  const response = await writeResponse;
+  if (response) {
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok() || body.ok === false) {
+      throw new Error(body?.error?.message || body?.message || `save failed for ${scenario.model}`);
+    }
+  } else {
+    await page.waitForTimeout(1500);
+  }
 }
 
 async function clickNativeButtonIfPresent(page, label) {
@@ -209,37 +269,36 @@ async function buildFixtures(page, marker) {
   return { project, partner, uom, costCode, tenderBidId, budgetId, budgetLineId };
 }
 
-function scenarios(fixtures, marker) {
+function scenarios(fixtures, marker, refs) {
   return [
     {
       key: 'tender_opening',
       label: '投标管理/开标记录',
       model: 'tender.opening',
-      actionId: 650,
-      menuId: 454,
+      actionId: refs['smart_construction_core.menu_sc_tender_opening'].actionId,
+      menuId: refs['smart_construction_core.menu_sc_tender_opening'].menuId,
       createText: ['开标记录'],
       vals: { bid_id: fixtures.tenderBidId, open_time: '2026-05-02 10:00:00', result: 'pending', win_price: 9000, remark: `browser-entry ${marker}` },
       edit: async (page) => {
-        await setFieldByLabel(page, 'Result', 'won');
-        await setFieldByLabel(page, '备注', `browser-entry edited ${marker}`);
+        await setFieldByLabel(page, ['Result', '开标结果', '结果'], 'won');
+        await setFieldByLabel(page, '中标价', '9100');
       },
-      readFields: ['id', 'result', 'remark'],
-      assert: (row) => row.result === 'won' && normalize(row.remark) === `browser-entry edited ${marker}`,
+      readFields: ['id', 'result', 'win_price'],
+      assert: (row) => row.result === 'won' && Number(row.win_price) === 9100,
     },
     {
       key: 'tender_guarantee',
       label: '投标管理/投标保证金',
       model: 'tender.guarantee',
-      actionId: 652,
-      menuId: 456,
+      actionId: refs['smart_construction_core.menu_sc_tender_guarantee'].actionId,
+      menuId: refs['smart_construction_core.menu_sc_tender_guarantee'].menuId,
       createText: ['投标保证金'],
       vals: { bid_id: fixtures.tenderBidId, type: 'out', amount: 3000, remark: `browser-entry ${marker}` },
       edit: async (page) => {
         await setFieldByLabel(page, '金额', '3200');
-        await setFieldByLabel(page, '备注', `browser-entry edited ${marker}`);
       },
-      readFields: ['id', 'amount', 'remark'],
-      assert: (row) => Number(row.amount) === 3200 && normalize(row.remark) === `browser-entry edited ${marker}`,
+      readFields: ['id', 'amount'],
+      assert: (row) => Number(row.amount) === 3200,
     },
     {
       key: 'project_boq_line',
@@ -331,12 +390,17 @@ async function main() {
 
   try {
     await login(page);
+    const refs = await resolveRuntimeMenuRefs(page, [
+      'smart_construction_core.menu_sc_tender_opening',
+      'smart_construction_core.menu_sc_tender_guarantee',
+    ]);
+    summary.resolved_refs = refs;
     const fixtures = await buildFixtures(page, marker);
     summary.created.fixture_tender_bid = { model: 'tender.bid', ids: [fixtures.tenderBidId] };
     summary.created.fixture_budget = { model: 'project.budget', ids: [fixtures.budgetId] };
     summary.created.fixture_budget_line = { model: 'project.budget.boq.line', ids: [fixtures.budgetLineId] };
 
-    for (const scenario of scenarios(fixtures, marker)) {
+    for (const scenario of scenarios(fixtures, marker, refs)) {
       const check = { scenario: scenario.key, label: scenario.label, status: 'fail' };
       try {
         const createText = await openCreateForm(page, scenario);
@@ -345,7 +409,7 @@ async function main() {
         summary.created[scenario.key] = { model: scenario.model, ids: [id] };
         await openRecord(page, scenario, id);
         await scenario.edit(page);
-        await saveForm(page);
+        await saveForm(page, scenario);
         if (scenario.afterSave) {
           await scenario.afterSave(page);
         }

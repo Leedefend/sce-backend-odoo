@@ -230,10 +230,10 @@ watch(
 
 .ghost {
   padding: 8px 10px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--sc-app-border-strong);
   border-radius: 8px;
-  background: #fff;
-  color: #111827;
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-primary);
   cursor: pointer;
 }
 </style>

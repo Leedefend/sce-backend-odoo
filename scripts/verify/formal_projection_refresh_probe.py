@@ -68,10 +68,31 @@ def count_legacy_or_all(table_name: str) -> int:
     return count_table(table_name)
 
 
+def partner_business_role_counts() -> dict[str, int]:
+    Partner = env["res.partner"].sudo().with_context(active_test=False)  # noqa: F821
+    facts = Partner._sc_collect_partner_business_facts()
+    customer_ids = {partner_id for partner_id, data in facts.items() if data and data["customer"]}
+    supplier_ids = {
+        partner_id
+        for partner_id, data in facts.items()
+        if data and data["supplier"] and Partner._sc_is_supplier_business_counterparty(Partner.browse(partner_id))
+    }
+    customer_rank_ids = set(Partner.search([("customer_rank", ">", 0)]).ids)
+    supplier_rank_ids = set(Partner.search([("supplier_rank", ">", 0)]).ids)
+    return {
+        "partner_semantic_customer_target": len(customer_ids),
+        "partner_semantic_supplier_target": len(supplier_ids),
+        "partner_semantic_customer_rank_mismatch": len(customer_ids ^ customer_rank_ids),
+        "partner_semantic_supplier_rank_mismatch": len(supplier_ids ^ supplier_rank_ids),
+    }
+
+
 def add_gap(gaps: list[dict[str, object]], key: str, source: int, target: int, detail: str) -> None:
     if source > 0 and target <= 0:
         gaps.append({"key": key, "source": source, "target": target, "detail": detail})
 
+
+partner_role_counts = partner_business_role_counts()
 
 counts = {
     "legacy_account_master": count_table("sc_legacy_account_master"),
@@ -133,94 +154,7 @@ counts = {
     "treasury_reconciliation": count_table("sc_treasury_reconciliation", "source_origin = 'legacy'"),
     "account_transaction_line": count_table("sc_legacy_account_transaction_line"),
     "treasury_ledger": count_legacy_or_all("sc_treasury_ledger"),
-    "partner_semantic_customer_target": count_query(
-        """
-        SELECT DISTINCT partner_id
-          FROM construction_contract
-         WHERE type = 'out'
-           AND partner_id IS NOT NULL
-        UNION
-        SELECT DISTINCT partner_id
-          FROM sc_receipt_income
-         WHERE partner_id IS NOT NULL
-           AND state IN ('received', 'legacy_confirmed')
-           AND COALESCE(amount, 0) > 0
-        UNION
-        SELECT DISTINCT partner_id
-          FROM sc_legacy_receipt_income_fact
-         WHERE partner_id IS NOT NULL
-           AND COALESCE(source_amount, 0) > 0
-        """
-    ),
-    "partner_semantic_supplier_target": count_query(
-        """
-        SELECT DISTINCT partner_id
-          FROM construction_contract
-         WHERE type = 'in'
-           AND partner_id IS NOT NULL
-        UNION
-        SELECT DISTINCT partner_id
-          FROM sc_general_contract
-         WHERE partner_id IS NOT NULL
-        UNION
-        SELECT DISTINCT partner_id
-          FROM sc_payment_execution
-         WHERE partner_id IS NOT NULL
-           AND source_kind = 'actual_outflow'
-           AND state IN ('paid', 'legacy_confirmed')
-           AND COALESCE(paid_amount, 0) > 0
-        """
-    ),
-    "partner_semantic_customer_rank_mismatch": count_query(
-        """
-        WITH customer_target AS (
-            SELECT DISTINCT partner_id
-              FROM construction_contract
-             WHERE type = 'out'
-               AND partner_id IS NOT NULL
-            UNION
-            SELECT DISTINCT partner_id
-              FROM sc_receipt_income
-             WHERE partner_id IS NOT NULL
-               AND state IN ('received', 'legacy_confirmed')
-               AND COALESCE(amount, 0) > 0
-            UNION
-            SELECT DISTINCT partner_id
-              FROM sc_legacy_receipt_income_fact
-             WHERE partner_id IS NOT NULL
-               AND COALESCE(source_amount, 0) > 0
-        )
-        SELECT p.id
-          FROM res_partner p
-          LEFT JOIN customer_target t ON t.partner_id = p.id
-         WHERE (t.partner_id IS NOT NULL) IS DISTINCT FROM (COALESCE(p.customer_rank, 0) > 0)
-        """
-    ),
-    "partner_semantic_supplier_rank_mismatch": count_query(
-        """
-        WITH supplier_target AS (
-            SELECT DISTINCT partner_id
-              FROM construction_contract
-             WHERE type = 'in'
-               AND partner_id IS NOT NULL
-            UNION
-            SELECT DISTINCT partner_id
-              FROM sc_general_contract
-             WHERE partner_id IS NOT NULL
-            UNION
-            SELECT DISTINCT partner_id
-              FROM sc_payment_execution
-             WHERE partner_id IS NOT NULL
-               AND source_kind = 'actual_outflow'
-               AND state IN ('paid', 'legacy_confirmed')
-               AND COALESCE(paid_amount, 0) > 0
-        )
-        SELECT p.id
-          FROM res_partner p
-          LEFT JOIN supplier_target t ON t.partner_id = p.id
-         WHERE (t.partner_id IS NOT NULL) IS DISTINCT FROM (COALESCE(p.supplier_rank, 0) > 0)
-        """
-    ),
+    **partner_role_counts,
 }
 
 gaps: list[dict[str, object]] = []

@@ -34,14 +34,18 @@
             <field name="model">project.funding.baseline</field>
             <field name="arch" type="xml">
                 <form string="资金计划申报">
+                    <header>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,active,closed"/>
+                    </header>
                     <sheet>
                         <group>
                             <field name="project_id"/>
                             <field name="total_amount"/>
                             <field name="currency_id" readonly="1" invisible="1"/>
-                            <field name="state"/>
+                            <field name="attachment_ids" widget="many2many_binary"/>
                         </group>
                     </sheet>
+                    <chatter/>
                 </form>
             </field>
         </record>

@@ -3135,22 +3135,22 @@ function refreshForProjectContextChange(): void {
   align-items: center;
   gap: 8px;
   padding: 10px 12px;
-  border: 1px solid #bfdbfe;
-  border-radius: 10px;
-  background: #eff6ff;
+  border: 1px solid var(--sc-app-info-border);
+  border-radius: var(--sc-component-panel-radius);
+  background: var(--sc-app-info-bg);
 }
 
 .route-preset p {
   margin: 0;
-  color: #1e3a8a;
+  color: var(--sc-app-info-text);
   font-size: 13px;
 }
 
 .clear-btn {
-  border: 1px solid #93c5fd;
-  border-radius: 8px;
-  background: #fff;
-  color: #1d4ed8;
+  border: 1px solid var(--sc-app-info-border);
+  border-radius: var(--sc-component-button-radius);
+  background: var(--sc-app-panel);
+  color: var(--sc-app-info-text);
   padding: 4px 8px;
   cursor: pointer;
 }
@@ -3165,22 +3165,22 @@ function refreshForProjectContextChange(): void {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  border: 1px solid #dbeafe;
-  border-radius: 10px;
-  background: #f8fbff;
+  border: 1px solid var(--sc-app-info-border);
+  border-radius: var(--sc-component-panel-radius);
+  background: var(--sc-app-info-bg);
   padding: 10px 12px;
 }
 
 .focus-intent {
   margin: 0;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
   font-size: 14px;
   font-weight: 700;
 }
 
 .focus-summary {
   margin: 4px 0 0;
-  color: #475569;
+  color: var(--sc-app-text-secondary);
   font-size: 12px;
 }
 
@@ -3191,15 +3191,15 @@ function refreshForProjectContextChange(): void {
 }
 
 .contract-missing-alert {
-  border: 1px solid #f8d7da;
-  border-radius: 10px;
-  background: #fff5f5;
+  border: 1px solid var(--sc-app-danger-border);
+  border-radius: var(--sc-component-panel-radius);
+  background: var(--sc-app-danger-bg);
   padding: 10px 12px;
 }
 
 .contract-missing-title {
   margin: 0;
-  color: #b42318;
+  color: var(--sc-app-danger-text);
   font-size: 13px;
   font-weight: 700;
 }
@@ -3207,14 +3207,14 @@ function refreshForProjectContextChange(): void {
 .contract-missing-summary,
 .contract-missing-defaults {
   margin: 4px 0 0;
-  color: #7a271a;
+  color: var(--sc-app-danger-text);
   font-size: 12px;
 }
 
 .empty-next {
-  border: 1px dashed #cbd5e1;
-  border-radius: 10px;
-  background: #f8fafc;
+  border: 1px dashed var(--sc-app-border-strong);
+  border-radius: var(--sc-component-panel-radius);
+  background: var(--sc-app-muted-bg);
   padding: 12px;
   display: grid;
   gap: 8px;
@@ -3222,28 +3222,28 @@ function refreshForProjectContextChange(): void {
 
 .empty-next p {
   margin: 0;
-  color: #334155;
+  color: var(--sc-app-text-secondary);
   font-size: 13px;
 }
 
 .empty-next-title {
-  color: #0f172a !important;
+  color: var(--sc-app-text-primary) !important;
   font-weight: 700;
 }
 
 .empty-next-hint {
-  color: #334155 !important;
+  color: var(--sc-app-text-secondary) !important;
 }
 
 .empty-next-reason {
-  color: #64748b !important;
+  color: var(--sc-semantic-text-muted) !important;
   font-size: 12px !important;
 }
 
 .contract-label {
   margin: 0;
   font-size: 13px;
-  color: #334155;
+  color: var(--sc-app-text-secondary);
   white-space: nowrap;
 }
 
@@ -3266,29 +3266,29 @@ function refreshForProjectContextChange(): void {
 .contract-group-label {
   margin: 0;
   font-size: 12px;
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
 }
 
 .contract-chip {
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--sc-app-border-strong);
   border-radius: 999px;
-  background: #fff;
-  color: #0f172a;
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-primary);
   padding: 5px 11px;
   font-size: 12px;
   cursor: pointer;
 }
 
 .contract-chip.active {
-  border-color: #2563eb;
-  color: #1d4ed8;
-  background: #eff6ff;
+  border-color: var(--sc-semantic-surface-interactive);
+  color: var(--sc-app-info-text);
+  background: var(--sc-app-info-bg);
 }
 
 .contract-chip.primary {
-  border-color: #2563eb;
-  background: #2563eb;
-  color: #fff;
+  border-color: var(--sc-semantic-surface-interactive);
+  background: var(--sc-semantic-surface-interactive);
+  color: var(--sc-semantic-text-on-interactive);
 }
 
 .contract-chip.ghost {
@@ -3296,9 +3296,9 @@ function refreshForProjectContextChange(): void {
 }
 
 .advanced-view {
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  background: #fff;
+  border: 1px solid var(--sc-app-border);
+  border-radius: var(--sc-component-panel-radius);
+  background: var(--sc-app-panel);
   padding: 12px;
   display: grid;
   gap: 10px;
@@ -3307,20 +3307,20 @@ function refreshForProjectContextChange(): void {
 .advanced-view-head h3 {
   margin: 0;
   font-size: 15px;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
 }
 
 .advanced-view-head p {
   margin: 4px 0 0;
   font-size: 12px;
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
 }
 
 .advanced-contract {
-  border: 1px dashed #cbd5e1;
-  border-radius: 8px;
+  border: 1px dashed var(--sc-app-border-strong);
+  border-radius: var(--sc-component-panel-radius);
   padding: 8px 10px;
-  background: #f8fafc;
+  background: var(--sc-app-muted-bg);
   display: grid;
   gap: 4px;
 }
@@ -3328,7 +3328,7 @@ function refreshForProjectContextChange(): void {
 .advanced-contract p {
   margin: 0;
   font-size: 12px;
-  color: #334155;
+  color: var(--sc-app-text-secondary);
 }
 
 .advanced-list {
@@ -3337,8 +3337,8 @@ function refreshForProjectContextChange(): void {
 }
 
 .advanced-item {
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: var(--sc-component-panel-radius);
   padding: 8px 10px;
   display: grid;
   gap: 4px;
@@ -3347,14 +3347,14 @@ function refreshForProjectContextChange(): void {
 .advanced-item-title {
   margin: 0;
   font-size: 13px;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
   font-weight: 600;
 }
 
 .advanced-item-meta {
   margin: 0;
   font-size: 12px;
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
 }
 
 .ledger-overview-strip {
@@ -3364,16 +3364,16 @@ function refreshForProjectContextChange(): void {
 }
 
 .ledger-overview-card {
-  border-radius: 10px;
-  border: 1px solid #e2e8f0;
+  border-radius: var(--sc-component-panel-radius);
+  border: 1px solid var(--sc-app-border);
   padding: 10px;
-  background: #fff;
+  background: var(--sc-app-panel);
 }
 
 .ledger-overview-label {
   margin: 0;
   font-size: 12px;
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
 }
 
 .ledger-overview-value {
@@ -3382,10 +3382,10 @@ function refreshForProjectContextChange(): void {
   font-weight: 700;
 }
 
-.ledger-overview-card.tone-danger { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
-.ledger-overview-card.tone-success { background: #ecfdf5; border-color: #a7f3d0; color: #047857; }
-.ledger-overview-card.tone-info { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
-.ledger-overview-card.tone-neutral { background: #f9fafb; border-color: #d1d5db; color: #374151; }
+.ledger-overview-card.tone-danger { background: var(--sc-app-danger-bg); border-color: var(--sc-app-danger-border); color: var(--sc-app-danger-text); }
+.ledger-overview-card.tone-success { background: var(--sc-app-success-bg); border-color: var(--sc-app-success-border); color: var(--sc-app-success-text); }
+.ledger-overview-card.tone-info { background: var(--sc-app-info-bg); border-color: var(--sc-app-info-border); color: var(--sc-app-info-text); }
+.ledger-overview-card.tone-neutral { background: var(--sc-app-muted-bg); border-color: var(--sc-app-border); color: var(--sc-app-text-secondary); }
 
 @media (max-width: 760px) {
   .focus-strip {

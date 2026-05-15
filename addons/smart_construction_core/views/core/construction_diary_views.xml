@@ -103,9 +103,11 @@
                         </group>
                         <group>
                             <field name="note"/>
+                            <field name="attachment_ids" widget="many2many_binary"/>
                             <field name="active"/>
                         </group>
                     </sheet>
+                    <chatter/>
                 </form>
             </field>
         </record>

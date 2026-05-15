@@ -127,7 +127,7 @@
 
     <section class="content" :class="{ 'content--scene-compact': sceneHeaderMinimal }">
       <header
-        class="topbar"
+        class="topbar sc-toolbar"
         :class="{ 'topbar--compact': activeLayout.header === 'compact', 'topbar--minimal': useMinimalTopbar, 'topbar--scene-minimal': sceneHeaderMinimal }"
       >
         <div class="topbar-main">
@@ -149,7 +149,7 @@
           <p v-if="!useMinimalTopbar && !sceneHeaderMinimal && topbarSubtitle" class="headline-subtitle">{{ topbarSubtitle }}</p>
         </div>
         <div class="topbar-actions">
-          <button class="theme-switch sc-btn" type="button" @click="toggleTheme">主题：{{ themeLabel }}</button>
+          <button class="theme-switch sc-btn sc-btn-sm" type="button" @click="toggleTheme">主题：{{ themeLabel }}</button>
         </div>
       </header>
 
@@ -1233,9 +1233,8 @@ async function logout() {
   --ink: var(--sc-semantic-text-primary);
   --muted: var(--sc-semantic-text-secondary);
   --accent: var(--sc-semantic-surface-interactive);
-  --accent-2: #e07a5f;
   --panel: var(--sc-semantic-surface-panel);
-  --layout-divider: #e5e7eb;
+  --layout-divider: var(--sc-app-border);
   min-height: 100vh;
   height: 100vh;
   overflow: hidden;
@@ -1276,15 +1275,15 @@ async function logout() {
   padding: 0 2px;
   font-size: 12px;
   font-weight: 500;
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
 }
 
 .logo {
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: linear-gradient(135deg, #2f3a5f, #1b263b);
-  color: white;
+  background: var(--sc-semantic-surface-interactive);
+  color: var(--sc-semantic-text-on-interactive);
   display: grid;
   place-items: center;
   font-size: 12px;
@@ -1297,13 +1296,13 @@ async function logout() {
   font-size: 16px;
   line-height: 1.1;
   margin: 0;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
 }
 
 .subtitle {
   margin: 0;
   font-size: 11px;
-  color: #9ca3af;
+  color: var(--sc-semantic-text-muted);
 }
 
 .nav-shell {
@@ -1322,15 +1321,15 @@ async function logout() {
   width: 100%;
   padding: 8px 10px;
   border-radius: 6px;
-  border: 1px solid #e5e7eb;
-  background: #ffffff;
+  border: 1px solid var(--sc-app-border);
+  background: var(--sc-app-input-bg);
   font-size: 13px;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
 }
 
 .role-surface {
   padding: 8px 4px 10px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--layout-divider);
   border-radius: 0;
   border-left: 0;
   border-right: 0;
@@ -1343,7 +1342,7 @@ async function logout() {
 .project-context {
   position: relative;
   padding: 0 0 6px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--layout-divider);
 }
 
 .project-trigger-row {
@@ -1367,7 +1366,7 @@ async function logout() {
   align-items: center;
   justify-content: flex-start;
   text-align: left;
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
   cursor: pointer;
   font-size: 12px;
   font-weight: 500;
@@ -1384,7 +1383,7 @@ async function logout() {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #334155;
+  color: var(--sc-app-text-primary);
   font-size: 12px;
   font-weight: 600;
 }
@@ -1398,10 +1397,10 @@ async function logout() {
   width: 18px;
   height: 18px;
   min-width: 18px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--sc-app-border-strong);
   border-radius: 50%;
-  background: #ffffff;
-  color: #64748b;
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-secondary);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1412,9 +1411,9 @@ async function logout() {
 }
 
 .project-clear-inline:hover {
-  border-color: #94a3b8;
-  color: #0f172a;
-  background: #f8fafc;
+  border-color: var(--sc-app-border-strong);
+  color: var(--sc-app-text-primary);
+  background: var(--sc-app-hover-bg);
 }
 
 .project-dropdown {
@@ -1426,19 +1425,19 @@ async function logout() {
   display: grid;
   gap: 6px;
   padding: 8px;
-  border: 1px solid #dbe3ef;
+  border: 1px solid var(--sc-app-border);
   border-radius: 8px;
-  background: #ffffff;
-  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.16);
+  background: var(--sc-app-panel);
+  box-shadow: var(--sc-semantic-shadow-popover);
 }
 
 .project-search {
   width: 100%;
-  border: 1px solid #dbe3ef;
+  border: 1px solid var(--sc-app-border);
   border-radius: 6px;
   padding: 7px 8px;
   font-size: 12px;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
 }
 
 .project-options {
@@ -1457,13 +1456,13 @@ async function logout() {
   gap: 2px;
   text-align: left;
   cursor: pointer;
-  color: #334155;
+  color: var(--sc-app-text-primary);
 }
 
 .project-option:hover,
 .project-option.active {
-  background: #eef2ff;
-  color: #1e3a8a;
+  background: var(--sc-app-info-bg);
+  color: var(--sc-app-info-text);
 }
 
 .project-option span {
@@ -1479,13 +1478,13 @@ async function logout() {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 11px;
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
 }
 
 .project-empty {
   margin: 0;
   padding: 8px;
-  color: #94a3b8;
+  color: var(--sc-semantic-text-muted);
   font-size: 12px;
 }
 
@@ -1493,7 +1492,7 @@ async function logout() {
   margin: 0;
   font-size: 12px;
   font-weight: 500;
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
 }
 
 .role-actions {
@@ -1505,7 +1504,7 @@ async function logout() {
   display: grid;
   gap: 6px;
   padding: 0 0 8px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--layout-divider);
   min-width: 0;
 }
 
@@ -1515,13 +1514,13 @@ async function logout() {
   justify-content: space-between;
   gap: 8px;
   padding: 0 2px;
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
   font-size: 12px;
   font-weight: 600;
 }
 
 .published-apps__header small {
-  color: #94a3b8;
+  color: var(--sc-semantic-text-muted);
   font-size: 11px;
   font-weight: 500;
 }
@@ -1542,7 +1541,7 @@ async function logout() {
   border: 1px solid transparent;
   border-radius: 6px;
   background: transparent;
-  color: #334155;
+  color: var(--sc-app-text-primary);
   display: grid;
   grid-template-columns: 22px minmax(0, 1fr) auto;
   align-items: center;
@@ -1554,9 +1553,9 @@ async function logout() {
 
 .published-app:hover,
 .published-app.active {
-  border-color: #c7d2fe;
-  background: #eef2ff;
-  color: #1e3a8a;
+  border-color: var(--sc-app-info-border);
+  background: var(--sc-app-info-bg);
+  color: var(--sc-app-info-text);
 }
 
 .published-app:disabled {
@@ -1568,8 +1567,8 @@ async function logout() {
   width: 22px;
   height: 22px;
   border-radius: 6px;
-  background: #f1f5f9;
-  color: #334155;
+  background: var(--sc-app-subtle-bg);
+  color: var(--sc-app-text-primary);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1579,8 +1578,8 @@ async function logout() {
 
 .published-app.active .published-app__mark,
 .published-app:hover .published-app__mark {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: var(--sc-app-info-bg);
+  color: var(--sc-app-info-text);
 }
 
 .published-app__label {
@@ -1596,8 +1595,8 @@ async function logout() {
   min-width: 18px;
   height: 18px;
   border-radius: 999px;
-  background: #fee2e2;
-  color: #b91c1c;
+  background: var(--sc-app-danger-bg);
+  color: var(--sc-app-danger-text);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1620,7 +1619,7 @@ async function logout() {
 .footer {
   display: grid;
   gap: 6px;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid var(--layout-divider);
   padding-top: 8px;
   padding-bottom: calc(8px + env(safe-area-inset-bottom));
   background: transparent;
@@ -1629,12 +1628,12 @@ async function logout() {
 .ghost {
   padding: 7px 9px;
   border-radius: 6px;
-  border: 1px solid rgba(15, 23, 42, 0.06);
+  border: 1px solid var(--sc-app-border);
   background: transparent;
   cursor: pointer;
   font-size: 12px;
   font-weight: 500;
-  color: #475569;
+  color: var(--sc-app-text-secondary);
 }
 
 .content {
@@ -1646,7 +1645,7 @@ async function logout() {
   height: 100vh;
   overflow: auto;
   overscroll-behavior: contain;
-  background: #f8fafc;
+  background: var(--sc-app-bg);
 }
 
 .content--scene-compact {
@@ -1663,8 +1662,8 @@ async function logout() {
   background: var(--panel);
   border-radius: 10px;
   padding: 6px 10px;
-  border: 1px solid rgba(15, 23, 42, 0.06);
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+  border: 1px solid var(--sc-app-border);
+  box-shadow: var(--sc-app-shadow);
 }
 
 .topbar-main {
@@ -1687,7 +1686,7 @@ async function logout() {
 .scene-anchor-line {
   margin: 0;
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--sc-semantic-text-muted);
 }
 
 .topbar--compact .breadcrumb {
@@ -1717,12 +1716,12 @@ async function logout() {
   font-weight: 500;
   text-transform: none;
   letter-spacing: 0;
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
 }
 
 .topbar--minimal .crumb.active {
   background: transparent;
-  color: #334155;
+  color: var(--sc-app-text-primary);
   font-weight: 600;
 }
 
@@ -1746,7 +1745,7 @@ async function logout() {
 .headline-subtitle {
   margin: 2px 0 0;
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--sc-semantic-text-muted);
 }
 
 .breadcrumb {
@@ -1766,16 +1765,16 @@ async function logout() {
   font-weight: 500;
   letter-spacing: 0;
   text-transform: uppercase;
-  color: #64748b;
+  color: var(--sc-app-text-secondary);
   cursor: pointer;
   max-width: 100%;
   overflow-wrap: anywhere;
 }
 
 .crumb.active {
-  border-color: #bfdbfe;
-  background: #eff6ff;
-  color: #1d4ed8;
+  border-color: var(--sc-app-info-border);
+  background: var(--sc-app-info-bg);
+  color: var(--sc-app-info-text);
   font-weight: 700;
 }
 
@@ -1790,6 +1789,20 @@ async function logout() {
   overflow: visible;
 }
 
+.topbar-actions {
+  display: flex;
+  align-items: center;
+}
+
+.theme-switch {
+  border: 1px solid var(--sc-app-border);
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-primary);
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
 @media (max-width: 960px) {
   .shell {
     grid-template-columns: 1fr;
@@ -1800,7 +1813,7 @@ async function logout() {
   .sidebar {
     grid-row: 2;
     border-right: none;
-    border-top: 1px solid rgba(15, 23, 42, 0.08);
+    border-top: 1px solid var(--sc-app-border);
     height: auto;
     position: static;
   }
@@ -1811,17 +1824,3 @@ async function logout() {
 
 }
 </style>
-
-
-.topbar-actions {
-  display: flex;
-  align-items: center;
-}
-.theme-switch {
-  border: 1px solid var(--sc-app-border);
-  background: var(--sc-app-panel);
-  color: var(--sc-app-text-primary);
-  border-radius: 8px;
-  padding: 6px 10px;
-  cursor: pointer;
-}

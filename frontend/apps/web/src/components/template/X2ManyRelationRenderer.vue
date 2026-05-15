@@ -229,18 +229,18 @@ function tagColorStyle(color: unknown) {
   const idx = Number(color);
   if (!Number.isFinite(idx)) return {};
   const palette = [
-    '#e2e8f0',
-    '#fca5a5',
-    '#fdba74',
-    '#fde68a',
-    '#bef264',
-    '#86efac',
-    '#5eead4',
-    '#93c5fd',
-    '#c4b5fd',
-    '#f0abfc',
-    '#f9a8d4',
-    '#cbd5e1',
+    'var(--sc-app-muted-bg)',
+    'var(--sc-app-danger-bg)',
+    'var(--sc-app-warning-bg)',
+    'var(--sc-app-info-bg)',
+    'var(--sc-app-success-bg)',
+    'var(--sc-app-subtle-bg)',
+    'var(--sc-app-hover-bg)',
+    'var(--sc-app-info-bg)',
+    'var(--sc-app-muted-bg)',
+    'var(--sc-app-warning-bg)',
+    'var(--sc-app-danger-bg)',
+    'var(--sc-app-border)',
   ];
   const bg = palette[Math.abs(Math.trunc(idx)) % palette.length];
   return { '--tag-bg': bg };
@@ -358,8 +358,8 @@ function tagColorStyle(color: unknown) {
   width: 10px;
   height: 10px;
   border-radius: 999px;
-  background: var(--tag-bg, #e2e8f0);
-  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: var(--tag-bg, var(--sc-app-muted-bg));
+  border: 1px solid var(--sc-app-border);
 }
 
 .relation-choice-panel {
@@ -414,7 +414,7 @@ function tagColorStyle(color: unknown) {
   border: 0;
   padding: 3px 8px;
   border-radius: 4px;
-  background: var(--tag-bg, #eef2f7);
+  background: var(--tag-bg, var(--sc-app-muted-bg));
   color: var(--sc-app-text-primary);
   font-size: 12px;
   line-height: 1.35;
@@ -422,7 +422,7 @@ function tagColorStyle(color: unknown) {
 }
 
 .relation-tag:hover {
-  background: #e0e7ff;
+  background: var(--sc-app-info-bg);
 }
 
 .chip-btn {
@@ -442,7 +442,7 @@ function tagColorStyle(color: unknown) {
 }
 
 .required {
-  color: #b91c1c;
+  color: var(--sc-app-danger-text);
   margin-left: 2px;
 }
 
@@ -570,7 +570,7 @@ function tagColorStyle(color: unknown) {
 
 select.input {
   appearance: none;
-  background-image: linear-gradient(45deg, transparent 50%, #64748b 50%), linear-gradient(135deg, #64748b 50%, transparent 50%);
+  background-image: linear-gradient(45deg, transparent 50%, var(--sc-app-text-secondary) 50%), linear-gradient(135deg, var(--sc-app-text-secondary) 50%, transparent 50%);
   background-position: calc(100% - 16px) calc(50% - 2px), calc(100% - 11px) calc(50% - 2px);
   background-size: 5px 5px, 5px 5px;
   background-repeat: no-repeat;
@@ -610,6 +610,6 @@ select.input {
   border: 1px solid var(--sc-app-border);
   background: var(--sc-app-panel);
   font-weight: 500;
-  color: #6b7280;
+  color: var(--sc-semantic-text-muted);
 }
 </style>

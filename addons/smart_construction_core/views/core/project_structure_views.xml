@@ -8,6 +8,7 @@
             <tree string="工程结构"
                   default_order="project_id, parent_path, sequence, id">
                 <field name="project_id" optional="hide"/>
+                <field name="state"/>
                 <field name="structure_type" optional="hide"/>
                 <field name="biz_scope" optional="hide"/>
                 <field name="code" optional="hide"/>
@@ -26,6 +27,9 @@
         <field name="model">sc.project.structure</field>
         <field name="arch" type="xml">
             <form string="工程结构节点">
+                <header>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,active,archived"/>
+                </header>
                 <sheet>
                     <group>
                         <field name="structure_type" readonly="1"/>
@@ -50,7 +54,11 @@
                             </tree>
                         </field>
                     </group>
+                    <group string="附件">
+                        <field name="attachment_ids" widget="many2many_binary"/>
+                    </group>
                 </sheet>
+                <chatter/>
             </form>
         </field>
     </record>
@@ -69,10 +77,12 @@
             <search string="工程结构">
                 <field name="project_id"/>
                 <field name="structure_type"/>
+                <field name="state"/>
                 <field name="code"/>
                 <field name="name"/>
                 <field name="biz_scope" invisible="1"/>
                 <filter string="按项目" name="group_by_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按状态" name="group_by_state" context="{'group_by': 'state'}"/>
                 <filter string="按结构类型" name="group_by_structure_type" context="{'group_by': 'structure_type'}"/>
                 <filter string="分部分项" name="scope_work" domain="[('biz_scope','=','work')]"/>
                 <filter string="措施项目" name="scope_measure" domain="[('biz_scope','in',('measure_unit','measure_total'))]"/>

@@ -621,7 +621,7 @@ function isReachableMenuNode(node: NavNode): boolean {
 }
 
 .meta {
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
   font-size: 14px;
 }
 
@@ -631,12 +631,12 @@ function isReachableMenuNode(node: NavNode): boolean {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #b45309;
+  color: var(--sc-app-warning-text);
 }
 
 .context-line {
   margin: 8px 0 0;
-  color: #334155;
+  color: var(--sc-app-text-secondary);
   font-size: 12px;
   display: inline-flex;
   align-items: center;
@@ -661,9 +661,9 @@ function isReachableMenuNode(node: NavNode): boolean {
   gap: 12px;
   padding: 14px;
   border-radius: 14px;
-  background: white;
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  box-shadow: 0 12px 20px rgba(15, 23, 42, 0.08);
+  background: var(--sc-app-panel);
+  border: 1px solid var(--sc-app-border);
+  box-shadow: var(--sc-app-shadow);
   text-align: left;
   cursor: pointer;
 }
@@ -677,28 +677,28 @@ function isReachableMenuNode(node: NavNode): boolean {
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: rgba(15, 23, 42, 0.08);
+  background: var(--sc-app-muted-bg);
   display: grid;
   place-items: center;
   font-weight: 700;
-  color: #334155;
+  color: var(--sc-app-text-secondary);
 }
 
 .tile-title {
   font-weight: 600;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
 }
 
 .tile-subtitle {
   font-size: 12px;
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
 }
 
 .detail {
   padding: 12px;
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: var(--sc-app-panel);
+  border: 1px solid var(--sc-app-border);
   display: grid;
   gap: 4px;
 }
@@ -713,7 +713,7 @@ function isReachableMenuNode(node: NavNode): boolean {
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: #94a3b8;
+  color: var(--sc-semantic-text-muted);
 }
 
 .value {
@@ -722,8 +722,8 @@ function isReachableMenuNode(node: NavNode): boolean {
 
 .ghost {
   background: transparent;
-  color: #111827;
-  border: 1px solid rgba(15, 23, 42, 0.12);
+  color: var(--sc-app-text-primary);
+  border: 1px solid var(--sc-app-border);
   padding: 10px 14px;
   border-radius: 10px;
   cursor: pointer;

@@ -1954,9 +1954,9 @@ watch(
   display: grid;
   gap: 10px;
   padding: 16px;
-  border: 1px solid #dbeafe;
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(14, 116, 144, 0.06), rgba(37, 99, 235, 0.05));
+  border: 1px solid var(--sc-app-info-border);
+  border-radius: var(--sc-component-panel-radius);
+  background: var(--sc-app-info-bg);
 }
 
 .hero-main {
@@ -1981,38 +1981,38 @@ watch(
   align-items: center;
   padding: 2px 8px;
   border-radius: 999px;
-  border: 1px solid #cbd5e1;
-  background: #f8fafc;
-  color: #334155;
+  border: 1px solid var(--sc-app-border-strong);
+  background: var(--sc-app-muted-bg);
+  color: var(--sc-app-text-secondary);
   font-size: 12px;
 }
 
 .meta-chip.replay {
-  border-color: #93c5fd;
-  background: #eff6ff;
-  color: #1d4ed8;
+  border-color: var(--sc-app-info-border);
+  background: var(--sc-app-info-bg);
+  color: var(--sc-app-info-text);
 }
 
 .reason-chip {
   margin: 0 6px 6px 0;
   padding: 2px 8px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--sc-app-border-strong);
   border-radius: 999px;
-  background: #f8fafc;
-  color: #334155;
+  background: var(--sc-app-muted-bg);
+  color: var(--sc-app-text-secondary);
   font-size: 12px;
   cursor: pointer;
 }
 
 .reason-chip.active {
-  border-color: #3b82f6;
-  background: #dbeafe;
-  color: #1d4ed8;
+  border-color: var(--sc-semantic-surface-interactive);
+  background: var(--sc-app-info-bg);
+  color: var(--sc-app-info-text);
 }
 
 .hero p {
   margin: 0;
-  color: #334155;
+  color: var(--sc-app-text-secondary);
 }
 
 .hero-context {
@@ -2023,31 +2023,31 @@ watch(
 }
 
 .context-chip {
-  border: 1px solid #dbeafe;
+  border: 1px solid var(--sc-app-info-border);
   border-radius: 999px;
-  background: #f8fafc;
-  color: #334155;
+  background: var(--sc-app-muted-bg);
+  color: var(--sc-app-text-secondary);
   font-size: 12px;
   line-height: 1.2;
   padding: 4px 10px;
 }
 
 .context-chip.warn {
-  border-color: #fde68a;
-  background: #fffbeb;
-  color: #92400e;
+  border-color: var(--sc-app-warning-border);
+  background: var(--sc-app-warning-bg);
+  color: var(--sc-app-warning-text);
 }
 
 .context-chip.subtle {
-  border-color: #e2e8f0;
-  color: #64748b;
+  border-color: var(--sc-app-border);
+  color: var(--sc-semantic-text-muted);
 }
 
 .secondary {
-  border: 1px solid #93c5fd;
-  border-radius: 8px;
-  background: #eff6ff;
-  color: #1e3a8a;
+  border: 1px solid var(--sc-app-info-border);
+  border-radius: var(--sc-component-button-radius);
+  background: var(--sc-app-info-bg);
+  color: var(--sc-app-info-text);
   padding: 8px 10px;
   cursor: pointer;
 }
@@ -2070,21 +2070,21 @@ watch(
 }
 
 .summary-card {
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: var(--sc-component-panel-radius);
   padding: 12px;
-  background: #fff;
+  background: var(--sc-app-panel);
   cursor: pointer;
 }
 
 .summary-card.active {
-  border-color: #2563eb;
-  box-shadow: inset 0 0 0 1px #2563eb;
+  border-color: var(--sc-semantic-surface-interactive);
+  box-shadow: inset 0 0 0 1px var(--sc-semantic-surface-interactive);
 }
 
 .summary-card .label {
   margin: 0;
-  color: #475569;
+  color: var(--sc-app-text-secondary);
   font-size: 13px;
 }
 
@@ -2092,7 +2092,7 @@ watch(
   margin: 6px 0 0;
   font-size: 24px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
 }
 
 .tabs {
@@ -2120,10 +2120,11 @@ watch(
 
 .search-input,
 .filter-select {
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
+  border: 1px solid var(--sc-app-border-strong);
+  border-radius: var(--sc-component-input-radius);
   padding: 8px 10px;
-  background: #fff;
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-primary);
 }
 
 .preset-actions {
@@ -2134,42 +2135,42 @@ watch(
 }
 
 .tab {
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--sc-app-border-strong);
   border-radius: 999px;
-  background: #fff;
-  color: #334155;
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-secondary);
   padding: 6px 10px;
   cursor: pointer;
 }
 
 .tab.active {
-  background: #eff6ff;
-  border-color: #3b82f6;
-  color: #1d4ed8;
+  background: var(--sc-app-info-bg);
+  border-color: var(--sc-semantic-surface-interactive);
+  color: var(--sc-app-info-text);
 }
 
 .table-wrap {
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: var(--sc-component-table-radius);
   overflow: hidden;
-  background: #fff;
+  background: var(--sc-app-panel);
 }
 
 .empty-guide {
   padding: 12px;
-  border-bottom: 1px solid #f1f5f9;
-  background: #f8fafc;
+  border-bottom: 1px solid var(--sc-app-border);
+  background: var(--sc-app-muted-bg);
 }
 
 .empty-title {
   margin: 0;
-  color: #0f172a;
+  color: var(--sc-app-text-primary);
   font-weight: 700;
 }
 
 .empty-desc {
   margin: 6px 0 0;
-  color: #475569;
+  color: var(--sc-app-text-secondary);
   font-size: 13px;
 }
 
@@ -2181,25 +2182,25 @@ watch(
 
 .status-hint {
   margin: 0;
-  color: #475569;
+  color: var(--sc-app-text-secondary);
 }
 
 .filter-empty-guide {
-  border: 1px solid #fcd34d;
-  border-radius: 10px;
-  background: #fff7ed;
+  border: 1px solid var(--sc-app-warning-border);
+  border-radius: var(--sc-component-panel-radius);
+  background: var(--sc-app-warning-bg);
   padding: 12px;
 }
 
 .guide-title {
   margin: 0;
-  color: #9a3412;
+  color: var(--sc-app-warning-text);
   font-weight: 700;
 }
 
 .guide-text {
   margin: 6px 0 0;
-  color: #7c2d12;
+  color: var(--sc-app-warning-text);
 }
 
 .guide-actions {
@@ -2209,18 +2210,18 @@ watch(
 }
 
 .guide-btn {
-  border: 1px solid #fed7aa;
-  border-radius: 8px;
-  background: #fff;
-  color: #7c2d12;
+  border: 1px solid var(--sc-app-warning-border);
+  border-radius: var(--sc-component-button-radius);
+  background: var(--sc-app-panel);
+  color: var(--sc-app-warning-text);
   padding: 6px 10px;
   cursor: pointer;
 }
 
 .guide-btn.primary {
-  border-color: #fb923c;
-  background: #fed7aa;
-  color: #7c2d12;
+  border-color: var(--sc-app-warning-border);
+  background: var(--sc-app-warning-bg);
+  color: var(--sc-app-warning-text);
 }
 
 .pager {
@@ -2237,9 +2238,9 @@ watch(
 }
 
 .retry-panel {
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  background: #fff1f2;
+  border: 1px solid var(--sc-app-danger-border);
+  border-radius: var(--sc-component-panel-radius);
+  background: var(--sc-app-danger-bg);
 }
 
 .retry-panel > summary {
@@ -2253,7 +2254,7 @@ watch(
 
 .retry-expand-hint {
   margin-left: auto;
-  color: #7f1d1d;
+  color: var(--sc-app-danger-text);
   font-size: 12px;
 }
 
@@ -2265,7 +2266,7 @@ watch(
 }
 
 .retry-details {
-  border-top: 1px solid #fecaca;
+  border-top: 1px solid var(--sc-app-danger-border);
   padding: 10px 12px 12px;
 }
 
@@ -2276,10 +2277,10 @@ watch(
 .retry-request-preview pre {
   margin: 6px 0 0;
   padding: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--sc-app-border);
   border-radius: 6px;
-  background: #fff;
-  color: #334155;
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-secondary);
   font-size: 12px;
   overflow-x: auto;
 }
@@ -2289,7 +2290,7 @@ watch(
   display: grid;
   gap: 4px;
   font-size: 12px;
-  color: #475569;
+  color: var(--sc-app-text-secondary);
 }
 
 .retry-note-presets {
@@ -2300,12 +2301,13 @@ watch(
 }
 
 .retry-note-editor textarea {
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--sc-app-border-strong);
   border-radius: 6px;
   padding: 6px 8px;
   font-family: inherit;
   font-size: 12px;
-  background: #fff;
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-primary);
 }
 
 .retry-details ul {
@@ -2320,21 +2322,21 @@ watch(
 }
 
 .retry-group-block {
-  border: 1px dashed #fecaca;
+  border: 1px dashed var(--sc-app-danger-border);
   border-radius: 6px;
   padding: 6px 8px;
 }
 
 .retry-group-title {
   margin: 0;
-  color: #9f1239;
+  color: var(--sc-app-danger-text);
   font-size: 12px;
   font-weight: 700;
 }
 
 .retry-title {
   margin: 0;
-  color: #b91c1c;
+  color: var(--sc-app-danger-text);
   font-weight: 600;
 }
 
@@ -2351,7 +2353,7 @@ watch(
 
 .retry-summary {
   margin: 8px 0 0;
-  color: #9f1239;
+  color: var(--sc-app-danger-text);
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
@@ -2369,22 +2371,22 @@ watch(
 
 .failed-code {
   margin-left: 8px;
-  color: #9f1239;
+  color: var(--sc-app-danger-text);
 }
 
 .failed-msg {
   margin-left: 8px;
-  color: #7f1d1d;
+  color: var(--sc-app-danger-text);
 }
 
 .failed-hint {
   margin-left: 8px;
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
   font-size: 12px;
 }
 
 .item-meta {
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
   font-size: 12px;
 }
 
@@ -2402,7 +2404,7 @@ th,
 td {
   text-align: left;
   padding: 10px 12px;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--sc-app-border);
 }
 
 .cell-select {
@@ -2414,12 +2416,12 @@ th {
   font-size: 12px;
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
 }
 
 .empty {
   text-align: center;
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
   padding: 20px 0;
 }
 
@@ -2428,13 +2430,14 @@ th {
 }
 
 .clickable-row:hover {
-  background: #f8fafc;
+  background: var(--sc-app-hover-bg);
 }
 
 .link-btn {
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  background: #fff;
+  border: 1px solid var(--sc-app-border-strong);
+  border-radius: var(--sc-component-button-radius);
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-primary);
   padding: 6px 10px;
   cursor: pointer;
 }
@@ -2444,30 +2447,30 @@ th {
 }
 
 .done-btn {
-  border-color: #86efac;
-  background: #f0fdf4;
-  color: #166534;
+  border-color: var(--sc-app-success-border);
+  background: var(--sc-app-success-bg);
+  color: var(--sc-app-success-text);
   margin-right: 8px;
 }
 
 .action-feedback {
   margin: 0;
   padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid #bbf7d0;
-  background: #f0fdf4;
-  color: #166534;
+  border-radius: var(--sc-component-panel-radius);
+  border: 1px solid var(--sc-app-success-border);
+  background: var(--sc-app-success-bg);
+  color: var(--sc-app-success-text);
 }
 
 .action-feedback.error {
-  border-color: #fecaca;
-  background: #fff1f2;
-  color: #b91c1c;
+  border-color: var(--sc-app-danger-border);
+  background: var(--sc-app-danger-bg);
+  color: var(--sc-app-danger-text);
 }
 
 .batch-evidence {
   margin: -6px 0 0;
-  color: #64748b;
+  color: var(--sc-semantic-text-muted);
   font-size: 12px;
 }
 </style>
