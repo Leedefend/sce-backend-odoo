@@ -283,6 +283,8 @@ def _write_reports(payload: dict[str, Any]) -> None:
         f"- edit_allowed_count: {payload['summary']['edit_allowed_count']}",
         f"- attachment_signal_count: {payload['summary']['attachment_signal_count']}",
         f"- chatter_signal_count: {payload['summary']['chatter_signal_count']}",
+        f"- role_authorization_gap_count: {payload['summary']['role_authorization_gap_count']}",
+        f"- form_field_gap_count: {payload['summary']['form_field_gap_count']}",
         "",
         "| id | old entry | model | status | create | edit | attachment | chatter | missing sections | missing fields | required fields | gaps |",
         "|---|---|---|---|---|---|---|---|---:|---:|---:|---|",
@@ -317,6 +319,8 @@ def _write_reports(payload: dict[str, Any]) -> None:
                 lines.append(f"- missing_form_fields: {', '.join(row['missing_form_fields'])}")
             if row.get("gaps"):
                 lines.append(f"- gaps: {', '.join(row['gaps'])}")
+            if _has_role_authorization_gap(row):
+                lines.append("- permission_note: audit user can read this contract but lacks create/write rights for this role profile")
             if row.get("required_create_fields"):
                 labels = [item["label"] for item in row["required_create_fields"][:12]]
                 lines.append(f"- required_create_fields: {', '.join(labels)}")
@@ -324,6 +328,11 @@ def _write_reports(payload: dict[str, Any]) -> None:
 
     REPORT_MD.parent.mkdir(parents=True, exist_ok=True)
     REPORT_MD.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
+
+
+def _has_role_authorization_gap(row: dict[str, Any]) -> bool:
+    gaps = set(row.get("gaps") or [])
+    return bool({"create_not_allowed_for_audit_user", "edit_not_allowed_for_audit_user"} & gaps)
 
 
 def main() -> int:
@@ -341,6 +350,10 @@ def main() -> int:
         "edit_allowed_count": len([row for row in rows if row.get("edit_allowed")]),
         "attachment_signal_count": len([row for row in rows if row.get("has_attachment_signal")]),
         "chatter_signal_count": len([row for row in rows if row.get("has_chatter_signal")]),
+        "role_authorization_gap_count": len([row for row in rows if _has_role_authorization_gap(row)]),
+        "form_field_gap_count": len(
+            [row for row in rows if "missing_expected_form_fields" in set(row.get("gaps") or [])]
+        ),
     }
     payload = {
         "ok": True,

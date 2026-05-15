@@ -5,9 +5,10 @@ from odoo import api, fields, models
 class ScFundAccount(models.Model):
     _name = "sc.fund.account"
     _description = "资金账户"
-    _order = "account_type, name, id"
+    _order = "sequence, account_type, name, id"
     _rec_name = "name"
 
+    sequence = fields.Integer(string="排序号", default=10, index=True)
     name = fields.Char(string="账户名称", required=True, index=True)
     display_name = fields.Char(string="显示名称", compute="_compute_display_name", store=True, index=True)
     account_no = fields.Char(string="账号", index=True)

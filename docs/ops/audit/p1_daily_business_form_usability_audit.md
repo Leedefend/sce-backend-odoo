@@ -2,8 +2,8 @@
 
 - audit_login: wutao
 - entry_count: 36
-- usable_contract_ready_count: 30
-- needs_usability_attention_count: 6
+- usable_contract_ready_count: 31
+- needs_usability_attention_count: 5
 - no_contract_count: 0
 - create_contract_ok_count: 36
 - create_allowed_count: 31
@@ -11,6 +11,8 @@
 - edit_allowed_count: 31
 - attachment_signal_count: 36
 - chatter_signal_count: 36
+- role_authorization_gap_count: 5
+- form_field_gap_count: 0
 
 | id | old entry | model | status | create | edit | attachment | chatter | missing sections | missing fields | required fields | gaps |
 |---|---|---|---|---|---|---|---|---:|---:|---:|---|
@@ -32,7 +34,7 @@
 | DBS-034 | 开票登记 | sc.invoice.registration | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 7 |  |
 | DBS-035 | 预缴税款 | sc.tax.deduction.registration | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 5 |  |
 | DBS-036 | 抵扣登记 | sc.tax.deduction.registration | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 5 |  |
-| DBS-037 | 账户 | sc.fund.account | needs_usability_attention | N | N | Y | Y | 0 | 1 | 4 | create_not_allowed_for_audit_user, edit_not_allowed_for_audit_user, missing_expected_form_fields |
+| DBS-037 | 账户 | sc.fund.account | needs_usability_attention | N | N | Y | Y | 0 | 0 | 4 | create_not_allowed_for_audit_user, edit_not_allowed_for_audit_user |
 | DBS-038 | 进项上报 | sc.tax.deduction.registration | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 5 |  |
 | DBS-039 | 供货合同 | sc.material.purchase.request | needs_usability_attention | N | N | Y | Y | 0 | 0 | 2 | create_not_allowed_for_audit_user, edit_not_allowed_for_audit_user |
 | DBS-040 | 入库 | sc.material.inbound | needs_usability_attention | N | N | Y | Y | 0 | 0 | 4 | create_not_allowed_for_audit_user, edit_not_allowed_for_audit_user |
@@ -49,38 +51,36 @@
 | DBS-051 | 租赁合同 | sc.material.rental.order | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 6 |  |
 | DBS-052 | 租赁结算单 | sc.material.rental.settlement | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 6 |  |
 | DBS-053 | 租入 | sc.material.rental.order | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 6 |  |
-| DBS-054 | 施工日志（新） | sc.construction.diary | needs_usability_attention | Y | Y | Y | Y | 0 | 5 | 4 | missing_expected_form_fields |
+| DBS-054 | 施工日志（新） | sc.construction.diary | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 4 |  |
 
 ## Attention Details
 
 ### DBS-030 资金日报表
 - selected_model: `sc.legacy.fund.daily.snapshot.fact`
 - gaps: create_not_allowed_for_audit_user, edit_not_allowed_for_audit_user
+- permission_note: audit user can read this contract but lacks create/write rights for this role profile
 - required_create_fields: 隔离公司, 单据口径, 导入批次, 来源记录, 来源表, 日期
 
 ### DBS-037 账户
 - selected_model: `sc.fund.account`
-- missing_form_fields: 排序号
-- gaps: create_not_allowed_for_audit_user, edit_not_allowed_for_audit_user, missing_expected_form_fields
+- gaps: create_not_allowed_for_audit_user, edit_not_allowed_for_audit_user
+- permission_note: audit user can read this contract but lacks create/write rights for this role profile
 - required_create_fields: 公司, 币种, 账户名称, 状态
 
 ### DBS-039 供货合同
 - selected_model: `sc.material.purchase.request`
 - gaps: create_not_allowed_for_audit_user, edit_not_allowed_for_audit_user
+- permission_note: audit user can read this contract but lacks create/write rights for this role profile
 - required_create_fields: 申请单号, 项目
 
 ### DBS-040 入库
 - selected_model: `sc.material.inbound`
 - gaps: create_not_allowed_for_audit_user, edit_not_allowed_for_audit_user
+- permission_note: audit user can read this contract but lacks create/write rights for this role profile
 - required_create_fields: 入库库位, 入库单号, 项目, 入库仓库
 
 ### DBS-041 材料结算单
 - selected_model: `sc.material.settlement`
 - gaps: create_not_allowed_for_audit_user, edit_not_allowed_for_audit_user
+- permission_note: audit user can read this contract but lacks create/write rights for this role profile
 - required_create_fields: 币种, 结算单号, 项目, 供应商
-
-### DBS-054 施工日志（新）
-- selected_model: `sc.construction.diary`
-- missing_form_fields: 材料进场/送检情况, 设计变更或技术核定, 试块制作, 安全情况, 隐蔽工程验收
-- gaps: missing_expected_form_fields
-- required_create_fields: 日志编号, 项目, 来源, 状态
