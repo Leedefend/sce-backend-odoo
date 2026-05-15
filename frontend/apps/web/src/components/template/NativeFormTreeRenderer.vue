@@ -4,7 +4,24 @@
     <template v-for="(node, index) in visibleNodes" :key="nodeKey(node, index)">
       <section v-if="isContainerNode(node)" :class="containerClass(node)">
         <header v-if="containerTitle(node)" class="native-container-head">
-          <h3>{{ containerTitle(node) }}</h3>
+          <input
+            v-if="fieldConfigEditable && isEditableGroupNode(node)"
+            class="native-container-title-editor"
+            type="text"
+            :value="containerTitle(node)"
+            :aria-label="`${containerTitle(node)}区域名称`"
+            @change="emitGroupRename(node, ($event.target as HTMLInputElement).value)"
+            @keydown.enter.prevent="emitGroupRename(node, ($event.target as HTMLInputElement).value)"
+          />
+          <h3 v-else>{{ containerTitle(node) }}</h3>
+          <button
+            v-if="fieldConfigEditable && isEditableGroupNode(node)"
+            class="native-container-add-field"
+            type="button"
+            :aria-label="`在${containerTitle(node)}新增字段`"
+            title="新增字段"
+            @click="emitGroupAddField(node)"
+          >+</button>
         </header>
         <p v-if="nodeText(node)" class="native-static-text">{{ nodeText(node) }}</p>
 
@@ -30,9 +47,25 @@
               :native-action-handler="nativeActionHandler"
               :relation-adapter="relationAdapter"
               :field-actions="fieldActions"
-              :columns="columns"
+              :field-order-editable="fieldOrderEditable"
+              :field-order-index="fieldOrderIndex"
+              :field-order-count="fieldOrderCount"
+              :field-order-dragging-key="fieldOrderDraggingKey"
+            :field-order-drop-target-key="fieldOrderDropTargetKey"
+            :field-config-editable="fieldConfigEditable"
+            :columns="columns"
               @field-change="emit('field-change', $event)"
               @field-action="emit('field-action', $event)"
+              @field-order-move="emit('field-order-move', $event)"
+              @field-order-drag-start="emit('field-order-drag-start', $event)"
+              @field-order-drag-over="emit('field-order-drag-over', $event)"
+              @field-order-drag-leave="emit('field-order-drag-leave', $event)"
+              @field-order-drop="emit('field-order-drop', $event)"
+              @field-order-drag-end="emit('field-order-drag-end', $event)"
+              @field-label-change="emit('field-label-change', $event)"
+              @field-add-after="emit('field-add-after', $event)"
+              @group-rename="emit('group-rename', $event)"
+              @group-add-field="emit('group-add-field', $event)"
               @native-action="emit('native-action', $event)"
             >
               <template #readonly="{ field }">
@@ -79,9 +112,25 @@
             :native-action-handler="nativeActionHandler"
             :relation-adapter="relationAdapter"
             :field-actions="fieldActions"
+            :field-order-editable="fieldOrderEditable"
+            :field-order-index="fieldOrderIndex"
+            :field-order-count="fieldOrderCount"
+            :field-order-dragging-key="fieldOrderDraggingKey"
+            :field-order-drop-target-key="fieldOrderDropTargetKey"
+            :field-config-editable="fieldConfigEditable"
             :columns="columns"
             @field-change="emit('field-change', $event)"
             @field-action="emit('field-action', $event)"
+            @field-order-move="emit('field-order-move', $event)"
+            @field-order-drag-start="emit('field-order-drag-start', $event)"
+            @field-order-drag-over="emit('field-order-drag-over', $event)"
+            @field-order-drag-leave="emit('field-order-drag-leave', $event)"
+            @field-order-drop="emit('field-order-drop', $event)"
+            @field-order-drag-end="emit('field-order-drag-end', $event)"
+            @field-label-change="emit('field-label-change', $event)"
+            @field-add-after="emit('field-add-after', $event)"
+            @group-rename="emit('group-rename', $event)"
+            @group-add-field="emit('group-add-field', $event)"
             @native-action="emit('native-action', $event)"
           >
             <template #readonly="{ field }">
@@ -101,9 +150,24 @@
             :fields="fieldSchemasForNodes(fieldChildren(node))"
             :relation-adapter="relationAdapter"
             :field-actions="fieldActions"
+            :field-order-editable="fieldOrderEditable"
+            :field-order-index="fieldOrderIndex"
+            :field-order-count="fieldOrderCount"
+            :field-order-dragging-key="fieldOrderDraggingKey"
+            :field-order-drop-target-key="fieldOrderDropTargetKey"
+            :field-config-editable="fieldConfigEditable"
+            :field-group-title="containerPolicyTitle(node)"
             tone="core"
             @field-change="emit('field-change', $event)"
             @field-action="emit('field-action', $event)"
+            @field-order-move="emit('field-order-move', $event)"
+            @field-order-drag-start="emit('field-order-drag-start', $event)"
+            @field-order-drag-over="emit('field-order-drag-over', $event)"
+            @field-order-drag-leave="emit('field-order-drag-leave', $event)"
+            @field-order-drop="emit('field-order-drop', $event)"
+            @field-order-drag-end="emit('field-order-drag-end', $event)"
+            @field-label-change="emit('field-label-change', $event)"
+            @field-add-after="emit('field-add-after', $event)"
           >
             <template #readonly="{ field }">
               <slot name="readonly" :field="field" />
@@ -158,9 +222,25 @@
             :native-action-handler="nativeActionHandler"
             :relation-adapter="relationAdapter"
             :field-actions="fieldActions"
+            :field-order-editable="fieldOrderEditable"
+            :field-order-index="fieldOrderIndex"
+            :field-order-count="fieldOrderCount"
+            :field-order-dragging-key="fieldOrderDraggingKey"
+            :field-order-drop-target-key="fieldOrderDropTargetKey"
+            :field-config-editable="fieldConfigEditable"
             :columns="columns"
             @field-change="emit('field-change', $event)"
             @field-action="emit('field-action', $event)"
+            @field-order-move="emit('field-order-move', $event)"
+            @field-order-drag-start="emit('field-order-drag-start', $event)"
+            @field-order-drag-over="emit('field-order-drag-over', $event)"
+            @field-order-drag-leave="emit('field-order-drag-leave', $event)"
+            @field-order-drop="emit('field-order-drop', $event)"
+            @field-order-drag-end="emit('field-order-drag-end', $event)"
+            @field-label-change="emit('field-label-change', $event)"
+            @field-add-after="emit('field-add-after', $event)"
+            @group-rename="emit('group-rename', $event)"
+            @group-add-field="emit('group-add-field', $event)"
             @native-action="emit('native-action', $event)"
           >
             <template #readonly="{ field }">
@@ -180,9 +260,23 @@
         :fields="fieldSchemasForNodes([node])"
         :relation-adapter="relationAdapter"
         :field-actions="fieldActions"
+        :field-order-editable="fieldOrderEditable"
+        :field-order-index="fieldOrderIndex"
+        :field-order-count="fieldOrderCount"
+        :field-order-dragging-key="fieldOrderDraggingKey"
+        :field-order-drop-target-key="fieldOrderDropTargetKey"
+        :field-config-editable="fieldConfigEditable"
         tone="core"
         @field-change="emit('field-change', $event)"
         @field-action="emit('field-action', $event)"
+        @field-order-move="emit('field-order-move', $event)"
+        @field-order-drag-start="emit('field-order-drag-start', $event)"
+        @field-order-drag-over="emit('field-order-drag-over', $event)"
+        @field-order-drag-leave="emit('field-order-drag-leave', $event)"
+        @field-order-drop="emit('field-order-drop', $event)"
+        @field-order-drag-end="emit('field-order-drag-end', $event)"
+        @field-label-change="emit('field-label-change', $event)"
+        @field-add-after="emit('field-add-after', $event)"
       >
         <template #readonly="{ field }">
           <slot name="readonly" :field="field" />
@@ -251,6 +345,12 @@ const props = withDefaults(defineProps<{
   nativeActionHandler?: (payload: Record<string, unknown>) => void | Promise<void>;
   relationAdapter?: RelationFieldAdapter;
   fieldActions?: (field: FormSectionFieldSchema) => FormSectionFieldAction[];
+  fieldOrderEditable?: boolean;
+  fieldOrderIndex?: (field: FormSectionFieldSchema) => number;
+  fieldOrderCount?: number;
+  fieldOrderDraggingKey?: string;
+  fieldOrderDropTargetKey?: string;
+  fieldConfigEditable?: boolean;
   columns?: 1 | 2;
 }>(), {
   columns: 2,
@@ -258,11 +358,27 @@ const props = withDefaults(defineProps<{
   nativeActionHandler: undefined,
   relationAdapter: undefined,
   fieldActions: undefined,
+  fieldOrderEditable: false,
+  fieldOrderIndex: undefined,
+  fieldOrderCount: 0,
+  fieldOrderDraggingKey: '',
+  fieldOrderDropTargetKey: '',
+  fieldConfigEditable: false,
 });
 
 const emit = defineEmits<{
   (event: 'field-change', payload: FormSectionFieldChange): void;
   (event: 'field-action', payload: FormSectionFieldActionPayload): void;
+  (event: 'field-order-move', payload: { field: FormSectionFieldSchema; delta: number }): void;
+  (event: 'field-order-drag-start', payload: { field: FormSectionFieldSchema; event: DragEvent }): void;
+  (event: 'field-order-drag-over', payload: { field: FormSectionFieldSchema }): void;
+  (event: 'field-order-drag-leave', payload: { field: FormSectionFieldSchema }): void;
+  (event: 'field-order-drop', payload: { field: FormSectionFieldSchema }): void;
+  (event: 'field-order-drag-end', payload: { field: FormSectionFieldSchema }): void;
+  (event: 'field-label-change', payload: { field: FormSectionFieldSchema; label: string }): void;
+  (event: 'field-add-after', payload: { field: FormSectionFieldSchema; groupTitle: string }): void;
+  (event: 'group-rename', payload: { oldTitle: string; newTitle: string }): void;
+  (event: 'group-add-field', payload: { groupTitle: string }): void;
   (event: 'native-action', payload: Record<string, unknown>): void;
 }>();
 
@@ -285,6 +401,7 @@ function nodeKey(node: NativeFormLayoutNode, index: number) {
 
 function containerTitle(node: NativeFormLayoutNode) {
   const type = nodeType(node);
+  if (type === 'group') return '';
   const raw = String(node?.string || node?.label || '').trim();
   if (!raw) return '';
   const structural = new Set(['header', 'sheet', 'container', 'div', 'span', 'h1', 'h2', 'h3']);
@@ -292,6 +409,10 @@ function containerTitle(node: NativeFormLayoutNode) {
   const lowered = raw.toLowerCase();
   if (structural.has(lowered) || lowered === type) return '';
   return raw;
+}
+
+function containerPolicyTitle(node: NativeFormLayoutNode) {
+  return String(node?.string || node?.label || '').trim();
 }
 
 function nodeText(node: NativeFormLayoutNode) {
@@ -391,6 +512,23 @@ function activeNotebookChildren(node: NativeFormLayoutNode) {
 
 function fieldSectionTitle() {
   return '';
+}
+
+function isEditableGroupNode(node: NativeFormLayoutNode) {
+  return ['group', 'page'].includes(nodeType(node));
+}
+
+function emitGroupRename(node: NativeFormLayoutNode, rawTitle: string) {
+  const oldTitle = containerTitle(node);
+  const newTitle = String(rawTitle || '').trim();
+  if (!props.fieldConfigEditable || !oldTitle || !newTitle || oldTitle === newTitle) return;
+  emit('group-rename', { oldTitle, newTitle });
+}
+
+function emitGroupAddField(node: NativeFormLayoutNode) {
+  const groupTitle = containerPolicyTitle(node);
+  if (!props.fieldConfigEditable || !groupTitle) return;
+  emit('group-add-field', { groupTitle });
 }
 
 function containerClass(node: NativeFormLayoutNode) {
@@ -551,6 +689,43 @@ function closeMore(node: NativeFormLayoutNode) {
   font-size: 14px;
   color: var(--sc-app-text-primary);
   font-weight: 600;
+}
+
+.native-container-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.native-container-title-editor {
+  min-width: 140px;
+  max-width: 260px;
+  height: 30px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 5px;
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-primary);
+  padding: 4px 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.native-container-add-field {
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 5px;
+  background: var(--sc-app-bg);
+  color: var(--sc-app-text-secondary);
+  cursor: pointer;
+}
+
+.native-container-add-field:hover {
+  background: var(--sc-app-hover-bg);
+  color: var(--sc-app-text-primary);
 }
 
 .native-static-text {

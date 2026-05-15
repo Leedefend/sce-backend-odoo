@@ -83,6 +83,68 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertEqual(result["error"]["reason_code"], "USER_ERROR")
         self.assertIn("view_id", result["error"]["message"])
 
+    def test_field_order_set_rejects_invalid_field_order_payload(self):
+        handler = self.module.FormFieldOrderSetHandler(
+            env={},
+            params={"model": "x.model", "field_order": "name,code"},
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["reason_code"], "USER_ERROR")
+        self.assertIn("field_order", result["error"]["message"])
+
+    def test_business_config_contract_save_rejects_invalid_contract_json(self):
+        handler = self.module.BusinessConfigContractSaveHandler(
+            env={},
+            params={"name": "demo", "model": "x.model", "contract_json": "invalid"},
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["reason_code"], "USER_ERROR")
+        self.assertIn("contract_json", result["error"]["message"])
+
+    def test_business_config_contract_get_requires_name_or_model(self):
+        handler = self.module.BusinessConfigContractGetHandler(
+            env={},
+            params={},
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["reason_code"], "MISSING_PARAMS")
+
+    def test_business_config_contract_publish_requires_name_or_model(self):
+        handler = self.module.BusinessConfigContractPublishHandler(
+            env={},
+            params={},
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["reason_code"], "MISSING_PARAMS")
+
+    def test_business_config_contract_rollback_requires_name_or_model(self):
+        handler = self.module.BusinessConfigContractRollbackHandler(
+            env={},
+            params={},
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["reason_code"], "MISSING_PARAMS")
+
 
 if __name__ == "__main__":
     unittest.main()
