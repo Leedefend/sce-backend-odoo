@@ -19,3 +19,5 @@ access_sc_login_route_admin,access.sc.login.route.admin,model_sc_login_route,sma
 access_ui_dynamic_config_admin,access.ui.dynamic.config.admin,model_ui_dynamic_config,smart_core.group_smart_core_admin,1,1,1,1
 access_ui_form_field_policy_admin,access.ui.form.field.policy.admin,model_ui_form_field_policy,smart_core.group_smart_core_admin,1,1,1,1
 access_ui_form_custom_field_wizard_admin,access.ui.form.custom.field.wizard.admin,model_ui_form_custom_field_wizard,smart_core.group_smart_core_admin,1,1,1,1
+access_ui_business_config_contract_admin,access.ui.business.config.contract.admin,model_ui_business_config_contract,smart_core.group_smart_core_admin,1,1,1,1
+access_ui_business_config_contract_version_admin,access.ui.business.config.contract.version.admin,model_ui_business_config_contract_version,smart_core.group_smart_core_admin,1,1,1,1

@@ -772,6 +772,7 @@ class PageAssembler:
         if not fields:
             return
         mode = "form_field_configuration"
+        low_code_mode = "business_config_lowcode"
         action_rows = [
             {
                 "key": "current_form_add_custom_field",
@@ -810,6 +811,25 @@ class PageAssembler:
                                 ],
                             },
                         ],
+                    },
+                },
+            },
+            {
+                "key": "current_form_field_order_save",
+                "label": "保存字段顺序",
+                "kind": "intent",
+                "intent": "ui.business_config.lowcode.apply",
+                "trigger": "submit",
+                "sourceWidgetId": "mode.%s" % mode,
+                "target_scope": "mode",
+                "target": {
+                    "mode": mode,
+                    "low_code_mode": low_code_mode,
+                    "success_message": "字段顺序已更新",
+                    "params": {
+                        "model": model,
+                        "action_id": int(action_id or 0),
+                        "view_id": int(view_id or 0) or False,
                     },
                 },
             },
@@ -883,8 +903,14 @@ class PageAssembler:
         groups = [row for row in groups if not (isinstance(row, dict) and row.get("key") == "current_form_field_configuration")]
         groups.append({
             "key": "current_form_field_configuration",
-            "label": "字段配置",
+            "label": "业务配置（低代码）",
             "sourceWidgetId": "mode.%s" % mode,
+            "mode_aliases": [mode, low_code_mode],
+            "low_code_config": {
+                "enabled": True,
+                "scope": "current_form",
+                "capabilities": ["field_order", "field_visibility", "custom_field_create"],
+            },
             "actions": action_rows,
             "source_authority": {
                 "kind": self.SOURCE_KIND,

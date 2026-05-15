@@ -293,6 +293,19 @@
           >
             <span class="contract-field-governance-label">{{ row.label }}</span>
             <div class="contract-field-governance-actions" role="radiogroup" :aria-label="`${row.label}字段显示`">
+              <button
+                v-if="isContractFieldOrderEditable"
+                class="ghost contract-field-governance-drag"
+                type="button"
+                draggable="true"
+                :aria-label="`拖动${row.label}调整顺序`"
+                @dragstart="onFieldOrderDragStart(row.fieldKey)"
+                @dragover.prevent
+                @drop.prevent="onFieldOrderDrop(row.fieldKey)"
+                @dragend="onFieldOrderDragEnd"
+              >
+                拖动
+              </button>
               <label
                 v-for="action in row.actions"
                 :key="`${row.fieldKey}-${action.key}`"
@@ -305,11 +318,95 @@
                   :value="action.value"
                   :checked="Boolean(action.checked)"
                   :disabled="Boolean(action.disabled)"
-                  @change="runContractRuleAction(action.raw)"
+                  @change="onFieldVisibilityDraftChange(row.fieldKey, action.value, action.raw)"
                 />
                 <span>{{ action.label }}</span>
               </label>
             </div>
+          </div>
+        </section>
+        <div v-if="isContractFieldOrderEditable && activeContractModeFieldRows.length" class="contract-field-governance-footer">
+          <button class="chip-btn" type="button" :disabled="busy || !hasLowCodeDraftChanges" @click="saveContractFieldOrder">保存字段顺序</button>
+          <button class="ghost" type="button" :disabled="busy || !hasLowCodeDraftChanges" @click="resetContractFieldOrder">重置</button>
+        </div>
+        <ul v-if="lowCodePrecheckWarnings.length" class="contract-lowcode-warnings">
+          <li v-for="(warning, index) in lowCodePrecheckWarnings" :key="`lowcode-warning-${index}`">{{ warning }}</li>
+        </ul>
+        <section v-if="isContractFieldOrderEditable" class="contract-lowcode-objects">
+          <header class="contract-lowcode-objects-head">
+            <h4>业务对象配置</h4>
+            <div class="contract-lowcode-contract-switch">
+              <select v-model="lowCodeSelectedContractName" class="input" @change="switchLowCodeContractByName">
+                <option value="">当前草稿</option>
+                <option v-for="item in lowCodeContractList" :key="`contract-${item.id}`" :value="item.name">
+                  {{ item.name }} (v{{ item.version_no }} · {{ item.status }})
+                </option>
+              </select>
+            </div>
+            <button type="button" class="chip-btn" :disabled="busy || !lowCodeSelectedContractName" @click="publishSelectedLowCodeContract">发布契约</button>
+            <button type="button" class="ghost" :disabled="busy || !lowCodeSelectedContractName" @click="rollbackSelectedLowCodeContract">回滚版本</button>
+            <button type="button" class="ghost" :disabled="busy" @click="addLowCodeObject">新增对象</button>
+          </header>
+          <div v-for="(obj, objIndex) in lowCodeObjectsDraft" :key="`lc-obj-${objIndex}`" class="contract-lowcode-object">
+            <div class="contract-lowcode-object-head">
+              <input v-model="obj.name" class="input" placeholder="对象名称" />
+              <button type="button" class="ghost" :disabled="busy" @click="removeLowCodeObject(objIndex)">删除对象</button>
+              <button type="button" class="ghost" :disabled="busy" @click="addLowCodeField(objIndex)">新增字段</button>
+            </div>
+            <div v-for="(field, fieldIndex) in obj.fields" :key="`lc-field-${objIndex}-${fieldIndex}`" class="contract-lowcode-field">
+              <input v-model="field.name" class="input" placeholder="字段名" />
+              <select v-model="field.type" class="input">
+                <option value="string">string</option>
+                <option value="float">float</option>
+                <option value="date">date</option>
+                <option value="selection">selection</option>
+                <option value="integer">integer</option>
+                <option value="boolean">boolean</option>
+              </select>
+              <label class="contract-lowcode-flag"><input v-model="field.required" type="checkbox" />必填</label>
+              <label class="contract-lowcode-flag"><input v-model="field.readonly" type="checkbox" />只读</label>
+              <input v-model="field.default" class="input" placeholder="默认值" />
+              <input v-if="field.type === 'selection'" v-model="field.options" class="input" placeholder="选项（value:label,逗号分隔）" />
+              <button type="button" class="ghost" :disabled="busy" @click="removeLowCodeField(objIndex, fieldIndex)">删除字段</button>
+            </div>
+          </div>
+        </section>
+        <section v-if="isContractFieldOrderEditable" class="contract-lowcode-objects">
+          <header class="contract-lowcode-objects-head">
+            <h4>布局配置</h4>
+            <div class="chips">
+              <button type="button" class="ghost" :disabled="busy" @click="addLowCodeLayoutNode('form')">新增 Form</button>
+              <button type="button" class="ghost" :disabled="busy" @click="addLowCodeLayoutNode('list')">新增 List</button>
+              <button type="button" class="ghost" :disabled="busy" @click="addLowCodeLayoutNode('kanban')">新增 Kanban</button>
+            </div>
+          </header>
+          <div v-for="(node, nodeIndex) in lowCodeLayoutDraft" :key="`lc-layout-${nodeIndex}`" class="contract-lowcode-field">
+            <select v-model="node.section" class="input">
+              <option value="form">form</option>
+              <option value="list">list</option>
+              <option value="kanban">kanban</option>
+            </select>
+            <input v-model="node.object" class="input" placeholder="对象名" />
+            <input v-model="node.field" class="input" placeholder="字段名" />
+            <button type="button" class="ghost" :disabled="busy" @click="removeLowCodeLayoutNode(nodeIndex)">删除</button>
+          </div>
+        </section>
+        <section v-if="isContractFieldOrderEditable" class="contract-lowcode-objects">
+          <header class="contract-lowcode-objects-head">
+            <h4>规则配置</h4>
+            <button type="button" class="ghost" :disabled="busy" @click="addLowCodeRule">新增规则</button>
+          </header>
+          <div v-for="(rule, ruleIndex) in lowCodeRulesDraft" :key="`lc-rule-${ruleIndex}`" class="contract-lowcode-field">
+            <input v-model="rule.name" class="input" placeholder="规则名称" />
+            <select v-model="rule.trigger" class="input">
+              <option value="on_create">on_create</option>
+              <option value="on_update">on_update</option>
+              <option value="scheduled">scheduled</option>
+            </select>
+            <input v-model="rule.object" class="input" placeholder="动作对象" />
+            <input v-model="rule.field" class="input" placeholder="动作字段" />
+            <input v-if="rule.trigger === 'scheduled'" v-model="rule.cron" class="input" placeholder="cron" />
+            <button type="button" class="ghost" :disabled="busy" @click="removeLowCodeRule(ruleIndex)">删除</button>
           </div>
         </section>
         <div v-if="hasAdvancedFields && !isProjectIntakeCreateMode && !useNativeFormTree" class="layout-divider advanced-toggle">
@@ -1106,9 +1203,6 @@ const hasChanges = computed(() => {
 const writableFieldCount = computed(() =>
   layoutNodes.value.filter((node) => node.kind === 'field' && !node.readonly).length,
 );
-const visibleFieldNodeCount = computed(() =>
-  layoutNodes.value.filter((node) => node.kind === 'field' && isFieldVisible(node.name)).length,
-);
 const changedFieldCount = computed(() =>
   Object.keys(formData).filter((key) => isFieldWritable(key) && comparableFieldValue(key, formData[key]) !== comparableFieldValue(key, originalValues.value[key])).length
     + (hasOne2manyDraftChanges() ? 1 : 0),
@@ -1315,6 +1409,44 @@ const activeContractModeActions = computed(() => {
     }));
 });
 
+
+const fieldOrderDraft = ref<string[]>([]);
+const draggingFieldKey = ref('');
+const isContractFieldOrderEditable = computed(() => (
+  activeContractMode.value === 'form_field_configuration'
+  || activeContractMode.value === 'business_config_lowcode'
+));
+const fieldVisibilityDraft = reactive<Record<string, boolean>>({});
+const lowCodeContractLoaded = ref(false);
+const lowCodePrecheckWarnings = ref<string[]>([]);
+const lowCodeContractList = ref<Array<{ id: number; name: string; model: string; status: string; version_no: number }>>([]);
+const lowCodeSelectedContractName = ref('');
+const lowCodeObjectsDraft = ref<Array<{
+  name: string;
+  fields: Array<{
+    name: string;
+    type: string;
+    required?: boolean;
+    readonly?: boolean;
+    default?: string;
+    options?: string;
+  }>
+}>>([]);
+const lowCodeLayoutDraft = ref<Array<{ section: 'form' | 'list' | 'kanban'; object: string; field: string }>>([]);
+const lowCodeRulesDraft = ref<Array<{ name: string; trigger: 'on_create' | 'on_update' | 'scheduled'; object: string; field: string; cron?: string }>>([]);
+
+function parseSelectionOptions(raw: string): Array<{ value: string; label: string }> {
+  return String(raw || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .map((item) => {
+      const parts = item.split(':').map((part) => part.trim()).filter(Boolean);
+      if (parts.length >= 2) return { value: parts[0], label: parts.slice(1).join(':') };
+      return { value: item, label: item };
+    });
+}
+
 const activeContractModeFieldRows = computed<ContractFieldGovernanceRow[]>(() => {
   const mode = activeContractMode.value;
   if (!mode) return [];
@@ -1344,7 +1476,7 @@ const activeContractModeFieldRows = computed<ContractFieldGovernanceRow[]>(() =>
     }
     rows.get(fieldKey)?.actions.push(action);
   });
-  return Array.from(rows.values())
+  const computedRows = Array.from(rows.values())
     .map((row) => ({
       ...row,
       actions: row.actions.sort((left, right) => {
@@ -1353,7 +1485,282 @@ const activeContractModeFieldRows = computed<ContractFieldGovernanceRow[]>(() =>
       }),
     }))
     .sort((left, right) => left.label.localeCompare(right.label));
+  if (!isContractFieldOrderEditable.value || !fieldOrderDraft.value.length) return computedRows;
+  const rank = new Map(fieldOrderDraft.value.map((key, index) => [key, index]));
+  return [...computedRows].sort((left, right) => (rank.get(left.fieldKey) ?? 9999) - (rank.get(right.fieldKey) ?? 9999));
 });
+
+watch(activeContractModeFieldRows, (rows) => {
+  const keys = rows.map((row) => row.fieldKey);
+  if (!isContractFieldOrderEditable.value || !keys.length) {
+    fieldOrderDraft.value = [];
+    return;
+  }
+  if (!fieldOrderDraft.value.length) {
+    fieldOrderDraft.value = [...keys];
+    return;
+  }
+  const inRows = new Set(keys);
+  const kept = fieldOrderDraft.value.filter((key) => inRows.has(key));
+  const missing = keys.filter((key) => !kept.includes(key));
+  fieldOrderDraft.value = [...kept, ...missing];
+  rows.forEach((row) => {
+    const selected = row.actions.find((action) => Boolean(action.checked));
+    if (selected) fieldVisibilityDraft[row.fieldKey] = selected.value === 'show';
+  });
+}, { immediate: true });
+
+watch(isContractFieldOrderEditable, (enabled) => {
+  if (!enabled) {
+    lowCodeContractLoaded.value = false;
+    return;
+  }
+  void loadLowCodeContractList();
+  void hydrateLowCodeDraftFromContract();
+}, { immediate: true });
+
+const hasFieldOrderChanges = computed(() => {
+  const rows = activeContractModeFieldRows.value.map((row) => row.fieldKey);
+  if (!rows.length || !fieldOrderDraft.value.length) return false;
+  return rows.some((key, index) => fieldOrderDraft.value[index] !== key);
+});
+
+const hasLowCodeDraftChanges = computed(() => {
+  if (hasFieldOrderChanges.value) return true;
+  if (lowCodeObjectsDraft.value.length > 0) return true;
+  if (lowCodeLayoutDraft.value.length > 0) return true;
+  if (lowCodeRulesDraft.value.length > 0) return true;
+  return false;
+});
+
+async function hydrateLowCodeDraftFromContract() {
+  if (!isContractFieldOrderEditable.value || lowCodeContractLoaded.value) return;
+  const modelName = String(model.value || '').trim();
+  if (!modelName) return;
+  try {
+    const res = await intentRequest<{
+      contract_json?: {
+        objects?: Array<{ name?: string; fields?: Array<{ name?: string; visible?: boolean; order?: number }> }>;
+      }
+    }>({
+      intent: 'ui.business_config.contract.get',
+      params: { model: modelName, name: `lowcode.${modelName}` },
+    });
+    const objects = Array.isArray(res?.contract_json?.objects) ? res.contract_json?.objects || [] : [];
+    const matched = objects.find((row) => String(row?.name || '').trim() === modelName) || objects[0];
+    const fields = Array.isArray(matched?.fields) ? matched?.fields || [] : [];
+    if (fields.length) {
+      const orderNames = fields
+        .map((row) => ({ name: String(row?.name || '').trim(), order: Number(row?.order || 0) }))
+        .filter((row) => row.name)
+        .sort((a, b) => a.order - b.order)
+        .map((row) => row.name);
+      if (orderNames.length) fieldOrderDraft.value = orderNames;
+      fields.forEach((row) => {
+        const key = String(row?.name || '').trim();
+        if (!key) return;
+        fieldVisibilityDraft[key] = row?.visible !== false;
+      });
+    }
+    lowCodeObjectsDraft.value = objects.map((obj) => ({
+      name: String(obj?.name || '').trim(),
+      fields: Array.isArray(obj?.fields)
+        ? (obj?.fields || []).map((row) => ({
+          name: String(row?.name || '').trim(),
+          type: String((row as { type?: unknown })?.type || 'string').trim() || 'string',
+          required: Boolean((row as { required?: unknown })?.required === true),
+          readonly: Boolean((row as { readonly?: unknown })?.readonly === true),
+          default: String((row as { default?: unknown })?.default || '').trim(),
+          options: Array.isArray((row as { options?: unknown })?.options)
+            ? ((row as { options?: unknown[] })?.options || []).map((item) => String(item || '').trim()).filter(Boolean).join(',')
+            : '',
+        }))
+        : [],
+    })).filter((obj) => obj.name);
+    const layout = res?.contract_json && typeof res.contract_json === 'object' && !Array.isArray(res.contract_json)
+      ? (res.contract_json as { layout?: Record<string, unknown> }).layout || {}
+      : {};
+    const collectLayout = (section: 'form' | 'list' | 'kanban') => (
+      Array.isArray((layout as Record<string, unknown>)[section])
+        ? ((layout as Record<string, unknown>)[section] as unknown[])
+          .filter((node) => node && typeof node === 'object')
+          .map((node) => node as Record<string, unknown>)
+          .map((node) => ({
+            section,
+            object: String(node.object || '').trim(),
+            field: String(node.field || '').trim(),
+          }))
+          .filter((node) => node.object && node.field)
+        : []
+    );
+    lowCodeLayoutDraft.value = [...collectLayout('form'), ...collectLayout('list'), ...collectLayout('kanban')];
+    const rules = Array.isArray((res?.contract_json as { rules?: unknown[] } | undefined)?.rules)
+      ? ((res?.contract_json as { rules?: unknown[] }).rules || [])
+      : [];
+    lowCodeRulesDraft.value = rules
+      .filter((row) => row && typeof row === 'object')
+      .map((row) => row as Record<string, unknown>)
+      .map((row) => ({
+        name: String(row.name || '').trim(),
+        trigger: (['on_create', 'on_update', 'scheduled'].includes(String(row.trigger || ''))
+          ? String(row.trigger || 'on_update')
+          : 'on_update') as 'on_create' | 'on_update' | 'scheduled',
+        object: String((row.action as Record<string, unknown> | undefined)?.object || '').trim(),
+        field: String((row.action as Record<string, unknown> | undefined)?.field || '').trim(),
+        cron: String(row.cron || '').trim(),
+      }));
+  } catch {
+    // ignore low-code contract hydrate failure in form runtime
+  } finally {
+    lowCodeContractLoaded.value = true;
+  }
+}
+
+async function loadLowCodeContractList() {
+  if (!isContractFieldOrderEditable.value) return;
+  const modelName = String(model.value || '').trim();
+  if (!modelName) return;
+  try {
+    const result = await intentRequest<{
+      items?: Array<{ id?: number; name?: string; model?: string; status?: string; version_no?: number }>;
+    }>({
+      intent: 'ui.business_config.contract.list',
+      params: { model: modelName },
+    });
+    const items = Array.isArray(result?.items) ? result.items || [] : [];
+    lowCodeContractList.value = items.map((row) => ({
+      id: Number(row?.id || 0),
+      name: String(row?.name || '').trim(),
+      model: String(row?.model || '').trim(),
+      status: String(row?.status || 'draft').trim() || 'draft',
+      version_no: Number(row?.version_no || 1),
+    })).filter((row) => row.name);
+    if (!lowCodeSelectedContractName.value && lowCodeContractList.value.length) {
+      lowCodeSelectedContractName.value = lowCodeContractList.value[0].name;
+    }
+  } catch {
+    lowCodeContractList.value = [];
+  }
+}
+
+async function switchLowCodeContractByName() {
+  const name = String(lowCodeSelectedContractName.value || '').trim();
+  const modelName = String(model.value || '').trim();
+  if (!name || !modelName) return;
+  try {
+    const res = await intentRequest<{
+      contract_json?: {
+        objects?: Array<{ name?: string; fields?: Array<{ name?: string; visible?: boolean; order?: number; type?: string; required?: boolean; readonly?: boolean; default?: string; options?: unknown[] }> }>;
+        layout?: Record<string, unknown>;
+        rules?: unknown[];
+      }
+    }>({
+      intent: 'ui.business_config.contract.get',
+      params: { model: modelName, name },
+    });
+    lowCodeContractLoaded.value = false;
+    const json = res?.contract_json;
+    if (!json || typeof json !== 'object' || Array.isArray(json)) return;
+    const objects = Array.isArray(json.objects) ? json.objects : [];
+    lowCodeObjectsDraft.value = objects
+      .filter((obj) => obj && typeof obj === 'object')
+      .map((obj) => ({
+        name: String(obj?.name || '').trim(),
+        fields: Array.isArray(obj?.fields)
+          ? (obj?.fields || []).map((row) => ({
+            name: String(row?.name || '').trim(),
+            type: String(row?.type || 'string').trim() || 'string',
+            required: Boolean(row?.required === true),
+            readonly: Boolean(row?.readonly === true),
+            default: String(row?.default || '').trim(),
+            options: Array.isArray(row?.options) ? row.options.map((item) => {
+              const rec = item as Record<string, unknown>;
+              const value = String(rec?.value || '').trim();
+              const label = String(rec?.label || '').trim();
+              return value && label ? `${value}:${label}` : value || label;
+            }).filter(Boolean).join(',') : '',
+          }))
+          : [],
+      }))
+      .filter((obj) => obj.name);
+  } catch {
+    // ignore
+  }
+}
+
+async function publishSelectedLowCodeContract() {
+  const name = String(lowCodeSelectedContractName.value || '').trim();
+  const modelName = String(model.value || '').trim();
+  if (!name || !modelName || busy.value) return;
+  busyKind.value = 'action';
+  try {
+    await intentRequest({
+      intent: 'ui.business_config.contract.publish',
+      params: { name, model: modelName },
+    });
+    contractModeFeedback.value = '低代码契约已发布';
+    await loadLowCodeContractList();
+  } catch (err) {
+    errorMessage.value = err instanceof Error ? err.message : 'contract publish failed';
+    status.value = 'error';
+  } finally {
+    busyKind.value = null;
+  }
+}
+
+async function rollbackSelectedLowCodeContract() {
+  const name = String(lowCodeSelectedContractName.value || '').trim();
+  const modelName = String(model.value || '').trim();
+  if (!name || !modelName || busy.value) return;
+  busyKind.value = 'action';
+  try {
+    await intentRequest({
+      intent: 'ui.business_config.contract.rollback',
+      params: { name, model: modelName },
+    });
+    contractModeFeedback.value = '低代码契约已回滚到上一版本';
+    await loadLowCodeContractList();
+    await switchLowCodeContractByName();
+  } catch (err) {
+    errorMessage.value = err instanceof Error ? err.message : 'contract rollback failed';
+    status.value = 'error';
+  } finally {
+    busyKind.value = null;
+  }
+}
+
+function addLowCodeLayoutNode(section: 'form' | 'list' | 'kanban') {
+  lowCodeLayoutDraft.value.push({ section, object: '', field: '' });
+}
+function removeLowCodeLayoutNode(index: number) {
+  lowCodeLayoutDraft.value.splice(index, 1);
+}
+function addLowCodeRule() {
+  lowCodeRulesDraft.value.push({ name: `rule_${lowCodeRulesDraft.value.length + 1}`, trigger: 'on_update', object: '', field: '', cron: '' });
+}
+function removeLowCodeRule(index: number) {
+  lowCodeRulesDraft.value.splice(index, 1);
+}
+
+function addLowCodeObject() {
+  lowCodeObjectsDraft.value.push({ name: `object_${lowCodeObjectsDraft.value.length + 1}`, fields: [] });
+}
+
+function removeLowCodeObject(index: number) {
+  lowCodeObjectsDraft.value.splice(index, 1);
+}
+
+function addLowCodeField(objectIndex: number) {
+  const target = lowCodeObjectsDraft.value[objectIndex];
+  if (!target) return;
+  target.fields.push({ name: `field_${target.fields.length + 1}`, type: 'string', required: false, readonly: false, default: '', options: '' });
+}
+
+function removeLowCodeField(objectIndex: number, fieldIndex: number) {
+  const target = lowCodeObjectsDraft.value[objectIndex];
+  if (!target) return;
+  target.fields.splice(fieldIndex, 1);
+}
 
 const isQuickSubmitDisabled = computed(() => {
   if (busy.value) return true;
@@ -3535,7 +3942,6 @@ const advancedFieldNames = computed<string[]>(() => {
   if (fromSemantic.length) return fromSemantic;
   return semanticFieldGroups.value.advanced?.fields || [];
 });
-const coreFieldsLabel = computed(() => semanticFieldGroups.value.core?.label || '');
 const hasAdvancedFields = computed(() => advancedFieldNames.value.length > 0);
 const policyRequiredFields = computed(() => {
   const out = new Set<string>();
@@ -5868,6 +6274,107 @@ async function onContractFieldAction(payload: FormSectionFieldActionPayload) {
   await runContractRuleAction(raw);
 }
 
+async function onFieldVisibilityDraftChange(fieldKey: string, value: string, raw: Record<string, unknown>) {
+  fieldVisibilityDraft[fieldKey] = value === 'show';
+  await runContractRuleAction(raw);
+}
+
+
+function onFieldOrderDragStart(fieldKey: string) {
+  if (!isContractFieldOrderEditable.value) return;
+  draggingFieldKey.value = fieldKey;
+}
+
+function onFieldOrderDrop(targetFieldKey: string) {
+  if (!isContractFieldOrderEditable.value || !draggingFieldKey.value || draggingFieldKey.value === targetFieldKey) return;
+  const draft = [...fieldOrderDraft.value];
+  const from = draft.indexOf(draggingFieldKey.value);
+  const to = draft.indexOf(targetFieldKey);
+  if (from < 0 || to < 0) return;
+  const [moved] = draft.splice(from, 1);
+  draft.splice(to, 0, moved);
+  fieldOrderDraft.value = draft;
+}
+
+function onFieldOrderDragEnd() {
+  draggingFieldKey.value = '';
+}
+
+function resetContractFieldOrder() {
+  fieldOrderDraft.value = activeContractModeFieldRows.value.map((row) => row.fieldKey);
+}
+
+async function saveContractFieldOrder() {
+  if (!hasLowCodeDraftChanges.value) return;
+  const configAction = activeContractModeActions.value.find((row) => String(row.key || '').trim() === 'current_form_field_order_save');
+  const target = parseMaybeJsonRecord(configAction?.raw?.target);
+  const baseParams = parseMaybeJsonRecord(target.params);
+  busyKind.value = 'action';
+  try {
+    await intentRequest({
+      intent: 'ui.business_config.lowcode.apply',
+      params: {
+        ...baseParams,
+        field_order: [...fieldOrderDraft.value],
+        field_visibility: { ...fieldVisibilityDraft },
+      },
+      context: { view: 'form' },
+    });
+    const saveResult = await intentRequest<{
+      precheck?: { warnings?: string[]; errors?: string[] }
+    }>({
+      intent: 'ui.business_config.contract.save',
+      params: {
+        name: `lowcode.${String(model.value || 'unknown')}`,
+        model: String(model.value || ''),
+        publish: false,
+        contract_json: {
+          objects: (lowCodeObjectsDraft.value.length
+            ? lowCodeObjectsDraft.value
+            : [{
+              name: String(model.value || ''),
+              fields: [],
+            }]).map((obj) => ({
+            name: obj.name,
+            fields: (obj.fields || []).map((field, index) => ({
+              name: field.name,
+              type: field.type || 'string',
+              readonly: field.readonly === true,
+              required: field.required === true,
+              default: field.default || '',
+              options: field.type === 'selection'
+                ? parseSelectionOptions(String(field.options || ''))
+                : [],
+              visible: fieldVisibilityDraft[field.name] !== false,
+              order: index + 1,
+            })),
+          })),
+          layout: {
+            form: lowCodeLayoutDraft.value.filter((row) => row.section === 'form').map((row) => ({ object: row.object, field: row.field })),
+            list: lowCodeLayoutDraft.value.filter((row) => row.section === 'list').map((row) => ({ object: row.object, field: row.field })),
+            kanban: lowCodeLayoutDraft.value.filter((row) => row.section === 'kanban').map((row) => ({ object: row.object, field: row.field })),
+          },
+          rules: lowCodeRulesDraft.value.map((rule) => ({
+            name: rule.name,
+            trigger: rule.trigger,
+            cron: rule.trigger === 'scheduled' ? (rule.cron || '') : '',
+            action: { object: rule.object, field: rule.field },
+          })),
+        },
+      },
+    });
+    const warnings = Array.isArray(saveResult?.precheck?.warnings) ? saveResult.precheck?.warnings || [] : [];
+    lowCodePrecheckWarnings.value = warnings.map((item) => String(item || '').trim()).filter(Boolean);
+    contractModeFeedback.value = '字段顺序已更新';
+    await reload();
+  } catch (err) {
+    errorMessage.value = err instanceof Error ? err.message : 'field order update failed';
+    status.value = 'error';
+  } finally {
+    busyKind.value = null;
+  }
+}
+
 async function runAction(action: ContractAction) {
   if (!action.enabled) return;
   if (!confirmActionSafety(action)) return;
@@ -6881,6 +7388,52 @@ onBeforeUnmount(() => {
 
 .contract-field-governance-action input {
   margin: 0;
+}
+
+.contract-lowcode-warnings {
+  grid-column: 1 / -1;
+  margin: 8px 0 0;
+  padding: 8px 12px;
+  border: 1px solid var(--sc-app-warning-border);
+  background: var(--sc-app-warning-bg);
+  color: var(--sc-app-warning-text);
+  border-radius: 6px;
+}
+
+.contract-lowcode-objects {
+  grid-column: 1 / -1;
+  margin-top: 10px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.contract-lowcode-objects-head,
+.contract-lowcode-object-head,
+.contract-lowcode-field {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.contract-lowcode-contract-switch {
+  min-width: 260px;
+}
+
+.contract-lowcode-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--sc-app-text-secondary);
+}
+
+.contract-lowcode-object {
+  padding: 8px;
+  border: 1px dashed var(--sc-app-border);
+  border-radius: 6px;
+  margin-top: 8px;
 }
 
 .native-statusbar-step {
