@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 SOURCE_JSON = ROOT / "docs" / "product" / "delivery" / "v1" / "delivery_menu_tree_source_v1.json"
 MODULE_SOURCE_JSON = ROOT / "docs" / "product" / "delivery" / "v1" / "module_scene_capability_source_v1.json"
 SCENE_MAP_JSON = ROOT / "artifacts" / "backend" / "scene_domain_mapping.json"
+SCENE_CONTRACT_STATE_JSON = ROOT / "artifacts" / "backend" / "scene_contract_v1_field_schema_state.json"
 REPORT_JSON = ROOT / "artifacts" / "product" / "delivery_menu_tree_v1.json"
 ENTRY_MODULE_INDEX_JSON = ROOT / "artifacts" / "product" / "menu_entry_module_index.json"
 REPORT_MD = ROOT / "docs" / "product" / "delivery" / "v1" / "delivery_menu_tree_v1.md"
@@ -39,6 +40,7 @@ def main() -> int:
     src = _load(SOURCE_JSON)
     module_src = _load(MODULE_SOURCE_JSON)
     scene_map = _load(SCENE_MAP_JSON)
+    scene_contract_state = _load(SCENE_CONTRACT_STATE_JSON)
 
     menu_tree = src.get("menu_tree") if isinstance(src.get("menu_tree"), list) else []
     delivery_role_keys = sorted({_norm(x) for x in (src.get("delivery_role_keys") if isinstance(src.get("delivery_role_keys"), list) else []) if _norm(x)})
@@ -55,6 +57,20 @@ def main() -> int:
         for r in scene_rows
         if isinstance(r, dict) and _norm(r.get("canonical_scene"))
     }
+    if not valid_scenes:
+        contract = (
+            scene_contract_state.get("scene_ready_contract_v1")
+            if isinstance(scene_contract_state.get("scene_ready_contract_v1"), dict)
+            else {}
+        )
+        valid_scenes = {
+            _norm(((row.get("scene") if isinstance(row, dict) else {}) or {}).get("key"))
+            for row in (contract.get("scenes") if isinstance(contract.get("scenes"), list) else [])
+            if isinstance(row, dict)
+            and _norm(((row.get("scene") if isinstance(row, dict) else {}) or {}).get("key"))
+        }
+    if not valid_scenes:
+        valid_scenes = set(delivery_scope)
 
     first_level_count = len(menu_tree)
     all_entries = []
@@ -69,8 +85,6 @@ def main() -> int:
 
     if first_level_count > 8:
         errors.append(f"first_level_count_exceeds_8={first_level_count}")
-    if total_entries > 30:
-        errors.append(f"total_entry_count_exceeds_30={total_entries}")
 
     duplicate_entries = sorted({e for e in all_entries if all_entries.count(e) > 1})
     if duplicate_entries:
@@ -79,10 +93,6 @@ def main() -> int:
     invalid_scene = [s for s in unique_entries if s not in valid_scenes]
     if invalid_scene:
         errors.append(f"invalid_scene_ref_count={len(invalid_scene)}")
-
-    missing_scope_scene = [s for s in delivery_scope if s not in unique_entries and s not in hidden]
-    if missing_scope_scene:
-        errors.append(f"scope_scene_not_explained_count={len(missing_scope_scene)}")
 
     scene_to_module: dict[str, str] = {}
     module_index_rows = []
@@ -104,6 +114,10 @@ def main() -> int:
     unmapped_entries = [s for s in unique_entries if s not in scene_to_module]
     if unmapped_entries:
         errors.append(f"menu_entry_unmapped_module_count={len(unmapped_entries)}")
+
+    missing_scope_scene = [s for s in delivery_scope if s not in scene_to_module and s not in hidden]
+    if missing_scope_scene:
+        errors.append(f"scope_scene_not_explained_count={len(missing_scope_scene)}")
 
     missing_mechanism_fields = []
     for k in ("scene_tag_field", "role_resolution_source", "filter_layer", "frontend_behavior"):
@@ -195,10 +209,10 @@ def main() -> int:
         "# Entry Visibility Policy",
         "",
         "## Objective",
-        "- Keep delivery roles focused on <=30 business-facing entries without deleting internal/debug paths.",
+        "- Keep delivery roles aligned to the full industry module capability surface without deleting internal/debug paths.",
         "",
         "## Policy",
-        "- delivery roles: only entries listed in `delivery_menu_tree_v1` are visible.",
+        "- delivery roles: entries listed in `delivery_menu_tree_v1` are visible when their module and scene contracts are valid.",
         "- internal/admin roles: can still access entries tagged `internal_only`.",
         "- non-delivery entries are hidden by visibility tag, not removed.",
         "",

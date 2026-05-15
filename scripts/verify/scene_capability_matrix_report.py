@@ -15,6 +15,7 @@ ARTIFACT_JSON = ROOT / "artifacts" / "backend" / "scene_capability_matrix_report
 ARTIFACT_MD = ROOT / "artifacts" / "backend" / "scene_capability_matrix_report.md"
 BASELINE_JSON = ROOT / "scripts" / "verify" / "baselines" / "scene_capability_matrix_report.json"
 PROD_LIKE_BASELINE_JSON = ROOT / "scripts" / "verify" / "baselines" / "role_capability_floor_prod_like.json"
+MODULE_SCENE_SOURCE_JSON = ROOT / "docs" / "product" / "delivery" / "v1" / "module_scene_capability_source_v1.json"
 
 
 def _to_str_list(value) -> list[str]:
@@ -84,19 +85,62 @@ def _login(intent_url: str, db_name: str, login: str, password: str) -> str:
     return str(data.get("token") or "").strip()
 
 
-def _system_init_hud(intent_url: str, token: str) -> tuple[list[dict], list[dict]]:
+def _scene_key(scene: dict) -> str:
+    if not isinstance(scene, dict):
+        return ""
+    nested_scene = scene.get("scene") if isinstance(scene.get("scene"), dict) else {}
+    page = scene.get("page") if isinstance(scene.get("page"), dict) else {}
+    return str(
+        scene.get("code")
+        or scene.get("key")
+        or nested_scene.get("key")
+        or page.get("scene_key")
+        or scene.get("scene_key")
+        or ""
+    ).strip()
+
+
+def _system_init_user(intent_url: str, token: str) -> tuple[list[dict], list[dict]]:
     status, resp = http_post_json(
         intent_url,
-        {"intent": "system.init", "params": {"contract_mode": "hud"}},
+        {"intent": "system.init", "params": {"contract_mode": "user", "with": "capabilities"}},
         headers={"Authorization": f"Bearer {token}"},
     )
-    require_ok(status, resp, "system.init hud")
+    require_ok(status, resp, "system.init user")
     data = resp.get("data") if isinstance(resp.get("data"), dict) else {}
     if isinstance(data.get("data"), dict):
         data = data.get("data") or data
-    scenes = data.get("scenes") if isinstance(data.get("scenes"), list) else []
+    ready_contract = data.get("scene_ready_contract_v1") if isinstance(data.get("scene_ready_contract_v1"), dict) else {}
+    scenes = ready_contract.get("scenes") if isinstance(ready_contract.get("scenes"), list) else []
+    if not scenes:
+        scenes = data.get("scenes") if isinstance(data.get("scenes"), list) else []
     capabilities = data.get("capabilities") if isinstance(data.get("capabilities"), list) else []
     return scenes, capabilities
+
+
+def _module_scene_capability_map(capability_key_set: set[str]) -> dict[str, set[str]]:
+    payload = _load_json(MODULE_SCENE_SOURCE_JSON)
+    modules = payload.get("modules") if isinstance(payload.get("modules"), list) else []
+    out: dict[str, set[str]] = {}
+    for module in modules:
+        if not isinstance(module, dict):
+            continue
+        capabilities = {
+            str(item or "").strip()
+            for item in (module.get("capabilities") if isinstance(module.get("capabilities"), list) else [])
+            if str(item or "").strip() in capability_key_set
+        }
+        if not capabilities:
+            continue
+        scenes = []
+        for key in ("entry_scenes", "menu_hints"):
+            scenes.extend(module.get(key) if isinstance(module.get(key), list) else [])
+        for scene_key in scenes:
+            scene_key = str(scene_key or "").strip()
+            if not scene_key:
+                continue
+            out.setdefault(scene_key, set()).update(capabilities)
+    return out
 
 
 def _collect_scene_caps(scene: dict) -> tuple[set[str], set[str]]:
@@ -163,7 +207,7 @@ def main() -> int:
             login_failures.append(login)
             continue
         try:
-            scenes, capabilities = _system_init_hud(intent_url, token)
+            scenes, capabilities = _system_init_user(intent_url, token)
             role_samples[login] = {
                 "scene_count": len(scenes),
                 "capability_count": len(capabilities),
@@ -196,6 +240,7 @@ def main() -> int:
         }
     )
     capability_key_set = set(capability_keys)
+    module_scene_caps = _module_scene_capability_map(capability_key_set)
 
     matrix: list[dict] = []
     used_capabilities: set[str] = set()
@@ -207,11 +252,12 @@ def main() -> int:
     for scene in scenes:
         if not isinstance(scene, dict):
             continue
-        scene_key = str(scene.get("code") or scene.get("key") or "").strip()
+        scene_key = _scene_key(scene)
         if not scene_key:
             errors.append("scene missing code/key")
             continue
         declared, required = _collect_scene_caps(scene)
+        declared.update(module_scene_caps.get(scene_key, set()))
         all_refs = declared | required
         used_capabilities.update(all_refs)
         if not all_refs:
@@ -272,9 +318,9 @@ def main() -> int:
         "capability_keys": capability_keys,
         "scene_keys": sorted(
             {
-                str(item.get("code") or item.get("key") or "").strip()
+                _scene_key(item)
                 for item in scenes
-                if isinstance(item, dict) and str(item.get("code") or item.get("key") or "").strip()
+                if isinstance(item, dict) and _scene_key(item)
             }
         ),
         "scene_without_binding": sorted(scene_without_binding),

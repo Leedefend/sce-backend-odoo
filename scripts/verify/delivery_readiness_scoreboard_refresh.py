@@ -207,7 +207,7 @@ def _to_summary_markdown(payload: dict) -> str:
                 f"| frontend_gate | {steps.get('frontend_gate', '')} |",
                 f"| scene_delivery_readiness | {steps.get('scene_delivery_readiness', '')} |",
                 f"| action_closure_smoke | {steps.get('action_closure_smoke', '')} |",
-                f"| module9_smoke | {steps.get('module9_smoke', '')} |",
+                f"| module_capability_smoke | {steps.get('module_capability_smoke') or steps.get('module9_smoke', '')} |",
                 f"| governance_truth | {steps.get('governance_truth', '')} |",
             ]
         )
@@ -269,7 +269,7 @@ def _upsert_evidence_row(lines: list[str], evidence: str, status: str, source: s
 
     insert_at = -1
     for index, line in enumerate(lines):
-        if line.startswith("## 9-Module Readiness Board"):
+        if line.startswith("## 10-Module Readiness Board") or line.startswith("## 9-Module Readiness Board"):
             insert_at = index
             break
     if insert_at < 0:
@@ -436,7 +436,7 @@ def main() -> int:
     )
     lines = _upsert_evidence_row(
         lines,
-        "Product delivery module-9 smoke",
+        "Product delivery module capability smoke",
         module9_smoke_label,
         str(MODULE9_SMOKE_REPORT_PATH.relative_to(ROOT)),
     )

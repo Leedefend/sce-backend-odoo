@@ -18,7 +18,7 @@ This manifest supersedes the planned `v1.0.0` release line because the remote
 |---|---|---|---|
 | Release preflight | `make verify.release.v2_0_0.preflight` | PASS | aggregate terminal output |
 | Action closure smoke | `make verify.product.delivery.action_closure.smoke` | PASS | `artifacts/backend/product_delivery_action_closure_report.json` |
-| Module-9 smoke | `make verify.product.delivery.module9.smoke` | PASS | `artifacts/backend/product_delivery_module9_smoke_report.json` |
+| Module capability smoke | `make verify.product.delivery.module_capability.smoke` | PASS | `artifacts/backend/product_delivery_module9_smoke_report.json` |
 | Intent alias snapshot | `make verify.intent.canonical_alias.snapshot.guard` | PASS | `artifacts/backend/intent_canonical_alias_snapshot.json` |
 
 ## Required Product Hardening Before Formal `v2.0.0`

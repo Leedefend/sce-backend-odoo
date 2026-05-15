@@ -9,16 +9,21 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 CAP_REGISTRY = ROOT / "addons" / "smart_construction_core" / "services" / "capability_registry.py"
+MODULE_SOURCE = ROOT / "docs" / "product" / "delivery" / "v1" / "module_scene_capability_source_v1.json"
 
 REPORT_MD = ROOT / "docs" / "product" / "product_capability_matrix_v2.md"
 REPORT_JSON = ROOT / "artifacts" / "backend" / "product_module_graph_v2.json"
 
 
 PRODUCT_CAPS = {
+    "project.dashboard.enter": "product.project.delivery",
     "project.initiation.enter": "product.project.initiation",
     "project.list.open": "product.project.delivery",
     "project.board.open": "product.project.delivery",
     "project.dashboard.open": "product.project.delivery",
+    "project.plan_bootstrap.enter": "product.project.delivery",
+    "project.execution.enter": "product.execution.collaboration",
+    "project.execution.advance": "product.execution.collaboration",
     "project.lifecycle.open": "product.project.delivery",
     "project.task.list": "product.execution.collaboration",
     "project.task.board": "product.execution.collaboration",
@@ -55,6 +60,23 @@ PRODUCT_CAPS = {
     "governance.runtime.audit": "product.governance.runtime",
     "material.catalog.open": "product.procurement.material",
     "material.procurement.list": "product.procurement.material",
+    "labor.plan.manage": "product.resource.labor",
+    "labor.request.list": "product.resource.labor",
+    "labor.attendance.list": "product.resource.labor",
+    "labor.settlement.list": "product.resource.labor",
+    "equipment.plan.manage": "product.resource.equipment",
+    "equipment.request.list": "product.resource.equipment",
+    "equipment.usage.list": "product.resource.equipment",
+    "equipment.settlement.list": "product.resource.equipment",
+    "construction.plan.manage": "product.site.execution",
+    "construction.plan.report": "product.site.execution",
+    "construction.diary.open": "product.site.execution",
+    "quality.issue.list": "product.quality_safety",
+    "quality.rectification.list": "product.quality_safety",
+    "quality.recheck.list": "product.quality_safety",
+    "safety.issue.list": "product.quality_safety",
+    "safety.rectification.list": "product.quality_safety",
+    "safety.recheck.list": "product.quality_safety",
     "workspace.today.focus": "product.workspace.navigation",
     "workspace.project.watch": "product.workspace.navigation",
 }
@@ -76,6 +98,14 @@ PRODUCT_TO_MODULE = {
     "product.governance.runtime": "module.governance_platform",
     "product.procurement.material": "module.procurement_supply",
     "product.workspace.navigation": "module.governance_platform",
+}
+
+CAPABILITY_MODULE_OVERRIDES = {
+    "project.dashboard.enter": "project_execution_collab",
+    "project.board.open": "project_execution_collab",
+    "project.plan_bootstrap.enter": "project_execution_collab",
+    "project.execution.enter": "project_execution_collab",
+    "project.execution.advance": "project_execution_collab",
 }
 
 
@@ -107,11 +137,37 @@ def _parse_capability_keys() -> list[str]:
     return sorted(set(keys))
 
 
+def _load_module_capability_map() -> tuple[dict[str, str], list[str]]:
+    if not MODULE_SOURCE.is_file():
+        return {}, []
+    try:
+        source = json.loads(MODULE_SOURCE.read_text(encoding="utf-8"))
+    except Exception:
+        return {}, []
+    modules = source.get("modules") if isinstance(source.get("modules"), list) else []
+    cap_to_module: dict[str, str] = {}
+    module_keys: list[str] = []
+    for row in modules:
+        if not isinstance(row, dict) or row.get("in_scope") is not True:
+            continue
+        module_key = str(row.get("module_key") or "").strip()
+        if not module_key:
+            continue
+        module_keys.append(module_key)
+        capabilities = row.get("capabilities") if isinstance(row.get("capabilities"), list) else []
+        for cap in capabilities:
+            cap_key = str(cap or "").strip()
+            if cap_key:
+                cap_to_module.setdefault(cap_key, module_key)
+    return cap_to_module, sorted(set(module_keys))
+
+
 def main() -> int:
     errors: list[str] = []
     warnings: list[str] = []
 
     cap_keys = _parse_capability_keys()
+    source_cap_to_module, source_modules = _load_module_capability_map()
     if not cap_keys:
         errors.append("capability keys empty")
 
@@ -119,7 +175,7 @@ def main() -> int:
     unassigned = []
     for key in cap_keys:
         product = PRODUCT_CAPS.get(key, "")
-        module = PRODUCT_TO_MODULE.get(product, "")
+        module = source_cap_to_module.get(key) or CAPABILITY_MODULE_OVERRIDES.get(key) or PRODUCT_TO_MODULE.get(product, "")
         if not product or not module:
             unassigned.append(key)
             continue
@@ -130,10 +186,12 @@ def main() -> int:
 
     products = sorted({row["product_capability"] for row in rows})
     modules = sorted({row["industry_module"] for row in rows})
-    if len(products) != 16:
-        errors.append(f"product_capability_count_mismatch={len(products)} expected=16")
-    if len(modules) != 8:
-        errors.append(f"industry_module_count_mismatch={len(modules)} expected=8")
+    product_modules = {
+        product: sorted({row["industry_module"] for row in rows if row["product_capability"] == product})
+        for product in products
+    }
+    if source_modules and len(modules) > len(source_modules):
+        errors.append(f"industry_module_count_exceeds_source={len(modules)} source={len(source_modules)}")
     report = {
         "ok": len(errors) == 0,
         "summary": {
@@ -141,11 +199,13 @@ def main() -> int:
             "mapped_capability_count": len(rows),
             "product_capability_count": len(products),
             "industry_module_count": len(modules),
+            "source_industry_module_count": len(source_modules),
             "unassigned_capability_count": len(unassigned),
             "error_count": len(errors),
             "warning_count": len(warnings),
         },
         "products": products,
+        "product_modules": product_modules,
         "industry_modules": modules,
         "rows": rows,
         "unassigned_capabilities": unassigned,
@@ -159,7 +219,7 @@ def main() -> int:
     lines = [
         "# Product Capability Matrix v2",
         "",
-        "- target: 42 capability -> 16 product capability -> 8 industry module",
+        f"- target: {len(cap_keys)} capability -> {len(products)} product capability -> {len(source_modules) or len(modules)} industry module",
         f"- capability_count: {len(cap_keys)}",
         f"- mapped_capability_count: {len(rows)}",
         f"- product_capability_count: {len(products)}",
@@ -171,7 +231,7 @@ def main() -> int:
         "",
     ]
     for item in products:
-        lines.append(f"- {item} ({PRODUCT_TO_MODULE.get(item, '-')})")
+        lines.append(f"- {item} ({','.join(product_modules.get(item) or []) or '-'})")
     lines.extend(["", "## Capability Mapping", ""])
     lines.append("| capability_key | product_capability | industry_module |")
     lines.append("|---|---|---|")

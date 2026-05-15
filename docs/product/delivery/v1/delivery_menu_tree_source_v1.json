@@ -5,10 +5,17 @@
       "menu_key": "project_delivery",
       "menu_name": "项目交付",
       "entries": [
+        "workspace.home",
+        "my_work.workspace",
+        "project.management",
         "projects.intake",
         "projects.list",
         "projects.dashboard",
-        "projects.ledger"
+        "projects.ledger",
+        "projects.execution",
+        "task.center",
+        "risk.center",
+        "risk.monitor"
       ]
     },
     {
@@ -16,6 +23,7 @@
       "menu_name": "财务管控",
       "entries": [
         "finance.center",
+        "finance.workspace",
         "finance.payment_requests",
         "finance.payment_ledger",
         "finance.treasury_ledger",
@@ -26,6 +34,7 @@
       "menu_key": "cost_purchase",
       "menu_name": "成本与采购",
       "entries": [
+        "cost.analysis",
         "cost.project_boq",
         "cost.project_budget",
         "cost.project_cost_ledger",
@@ -80,7 +89,8 @@
       "entries": [
         "portal.dashboard",
         "finance.operating_metrics",
-        "projects.dashboard_showcase"
+        "contract.center",
+        "contracts.workspace"
       ]
     },
     {
@@ -89,8 +99,7 @@
       "entries": [
         "portal.lifecycle",
         "portal.capability_matrix",
-        "data.dictionary",
-        "default"
+        "data.dictionary"
       ]
     }
   ],

@@ -341,5 +341,281 @@
             <field name="state">published</field>
             <field name="version">v2</field>
         </record>
+
+        <!-- Purchase, material, labor, equipment, subcontract runtime scenes -->
+        <record id="sc_scene_material_center" model="sc.scene">
+            <field name="sequence">90</field>
+            <field name="name">物资与分包</field>
+            <field name="code">material.center</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+        <record id="sc_scene_material_catalog" model="sc.scene">
+            <field name="sequence">91</field>
+            <field name="name">材料档案</field>
+            <field name="code">material.catalog</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+        <record id="sc_scene_material_procurement" model="sc.scene">
+            <field name="sequence">92</field>
+            <field name="name">采购协同</field>
+            <field name="code">material.procurement</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+        <record id="sc_scene_material_rfq" model="sc.scene">
+            <field name="sequence">93</field>
+            <field name="name">询比价</field>
+            <field name="code">material.rfq</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+        <record id="sc_scene_material_acceptance" model="sc.scene">
+            <field name="sequence">94</field>
+            <field name="name">材料进场验收</field>
+            <field name="code">material.acceptance</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+        <record id="sc_scene_material_inbound" model="sc.scene">
+            <field name="sequence">95</field>
+            <field name="name">入库单</field>
+            <field name="code">material.inbound</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+        <record id="sc_scene_material_outbound" model="sc.scene">
+            <field name="sequence">96</field>
+            <field name="name">出库单</field>
+            <field name="code">material.outbound</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+        <record id="sc_scene_material_price_library" model="sc.scene">
+            <field name="sequence">97</field>
+            <field name="name">材料价格库</field>
+            <field name="code">material.price_library</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+        <record id="sc_scene_material_settlement" model="sc.scene">
+            <field name="sequence">98</field>
+            <field name="name">材料结算</field>
+            <field name="code">material.settlement</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+        <record id="sc_scene_material_rental" model="sc.scene">
+            <field name="sequence">99</field>
+            <field name="name">周转材料租赁</field>
+            <field name="code">material.rental</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+        <record id="sc_scene_material_rental_order" model="sc.scene">
+            <field name="sequence">100</field>
+            <field name="name">租赁单</field>
+            <field name="code">material.rental_order</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+        <record id="sc_scene_material_rental_settlement" model="sc.scene">
+            <field name="sequence">101</field>
+            <field name="name">租赁结算</field>
+            <field name="code">material.rental_settlement</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+        <record id="sc_scene_labor_management" model="sc.scene">
+            <field name="sequence">102</field>
+            <field name="name">劳务管理</field>
+            <field name="code">labor.management</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+        <record id="sc_scene_labor_request" model="sc.scene">
+            <field name="sequence">103</field>
+            <field name="name">劳务申请</field>
+            <field name="code">labor.request</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+        <record id="sc_scene_labor_attendance" model="sc.scene">
+            <field name="sequence">104</field>
+            <field name="name">考勤记录</field>
+            <field name="code">labor.attendance</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+        <record id="sc_scene_labor_settlement" model="sc.scene">
+            <field name="sequence">105</field>
+            <field name="name">劳务结算</field>
+            <field name="code">labor.settlement</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+        <record id="sc_scene_equipment_management" model="sc.scene">
+            <field name="sequence">106</field>
+            <field name="name">机械设备</field>
+            <field name="code">equipment.management</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+        <record id="sc_scene_equipment_request" model="sc.scene">
+            <field name="sequence">107</field>
+            <field name="name">设备申请</field>
+            <field name="code">equipment.request</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+        <record id="sc_scene_equipment_usage" model="sc.scene">
+            <field name="sequence">108</field>
+            <field name="name">设备使用登记</field>
+            <field name="code">equipment.usage</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+        <record id="sc_scene_equipment_settlement" model="sc.scene">
+            <field name="sequence">109</field>
+            <field name="name">设备结算</field>
+            <field name="code">equipment.settlement</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+        <record id="sc_scene_subcontract_management" model="sc.scene">
+            <field name="sequence">110</field>
+            <field name="name">专业分包</field>
+            <field name="code">subcontract.management</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+        <record id="sc_scene_subcontract_request" model="sc.scene">
+            <field name="sequence">111</field>
+            <field name="name">分包申请</field>
+            <field name="code">subcontract.request</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+        <record id="sc_scene_subcontract_register" model="sc.scene">
+            <field name="sequence">112</field>
+            <field name="name">分包登记</field>
+            <field name="code">subcontract.register</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+        <record id="sc_scene_subcontract_settlement" model="sc.scene">
+            <field name="sequence">113</field>
+            <field name="name">分包结算</field>
+            <field name="code">subcontract.settlement</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+
+        <!-- Site execution, quality and safety runtime scenes -->
+        <record id="sc_scene_construction_execution" model="sc.scene">
+            <field name="sequence">120</field>
+            <field name="name">施工管理</field>
+            <field name="code">construction.execution</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+        <record id="sc_scene_construction_plan" model="sc.scene">
+            <field name="sequence">121</field>
+            <field name="name">计划管理</field>
+            <field name="code">construction.plan</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+        <record id="sc_scene_construction_plan_report" model="sc.scene">
+            <field name="sequence">122</field>
+            <field name="name">计划汇报</field>
+            <field name="code">construction.plan_report</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+        <record id="sc_scene_construction_diary" model="sc.scene">
+            <field name="sequence">123</field>
+            <field name="name">施工日志</field>
+            <field name="code">construction.diary</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+        <record id="sc_scene_quality_center" model="sc.scene">
+            <field name="sequence">124</field>
+            <field name="name">质量检查</field>
+            <field name="code">quality.center</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+        <record id="sc_scene_quality_rectification" model="sc.scene">
+            <field name="sequence">125</field>
+            <field name="name">质量整改</field>
+            <field name="code">quality.rectification</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+        <record id="sc_scene_quality_recheck" model="sc.scene">
+            <field name="sequence">126</field>
+            <field name="name">质量复验</field>
+            <field name="code">quality.recheck</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+        <record id="sc_scene_safety_center" model="sc.scene">
+            <field name="sequence">127</field>
+            <field name="name">安全检查</field>
+            <field name="code">safety.center</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+        <record id="sc_scene_safety_rectification" model="sc.scene">
+            <field name="sequence">128</field>
+            <field name="name">安全整改</field>
+            <field name="code">safety.rectification</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
+        <record id="sc_scene_safety_recheck" model="sc.scene">
+            <field name="sequence">129</field>
+            <field name="name">安全复验</field>
+            <field name="code">safety.recheck</field>
+            <field name="layout">grid</field>
+            <field name="state">published</field>
+            <field name="version">v2</field>
+        </record>
     </data>
 </odoo>

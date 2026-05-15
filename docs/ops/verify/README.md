@@ -33,7 +33,7 @@
 - `make verify.restricted`
   - Canonical restricted release-readiness entry for daily development and test-tier acceptance.
   - Delegates to `verify.product.delivery.mainline` with `CI_SCENE_DELIVERY_PROFILE=restricted`, so the restricted gate stays aligned with the current product delivery mainline instead of duplicating verification logic.
-  - Runs frontend gate first, then restricted scene delivery readiness, action closure, module9 smoke, backend contract closure, and governance truth.
+  - Runs frontend gate first, then restricted scene delivery readiness, action closure, module capability smoke, backend contract closure, and governance truth.
   - Emits the same mainline artifacts:
     - `artifacts/backend/delivery_mainline_run_summary.json`
     - `artifacts/backend/delivery_mainline_run_summary.md`
@@ -97,7 +97,7 @@
     - `pnpm -C frontend gate`
     - `CI_SCENE_DELIVERY_PROFILE=${CI_SCENE_DELIVERY_PROFILE:-restricted} SC_MULTI_COMPANY_EVIDENCE_STRICT=1 make ci.scene.delivery.readiness`
     - `make verify.product.delivery.action_closure.smoke`
-    - `make verify.product.delivery.module9.smoke`
+    - `make verify.product.delivery.module_capability.smoke`
     - `make verify.product.delivery.governance_truth`
   - Default profile is `restricted`; set `CI_SCENE_DELIVERY_PROFILE=strict` in live-enabled runners.
   - Prints final summary line from unified readiness payload:
@@ -114,8 +114,9 @@
   - Emits reports:
     - `artifacts/backend/product_delivery_action_closure_report.json`
     - `docs/ops/audit/product_delivery_action_closure_report.md`
-- `make verify.product.delivery.module9.smoke`
-  - Verifies in-scope 9 delivery modules have all declared entry scenes present in `scene_ready_contract_v1`.
+- `make verify.product.delivery.module_capability.smoke`
+  - Verifies in-scope 10 delivery modules are declared in the module capability source and classifies runtime scene readiness separately.
+  - Backward-compatible alias: `make verify.product.delivery.module9.smoke`.
   - Emits reports:
     - `artifacts/backend/product_delivery_module9_smoke_report.json`
     - `docs/ops/audit/product_delivery_module9_smoke_report.md`
@@ -136,7 +137,7 @@
 - `make verify.product.delivery.governance_truth`
   - Verifies delivery governance truthfulness closure for seal-mode execution.
   - Checks `docs/product/capability_gap_backlog_v1.md` has actionable rows, mandatory hard-gap keys, and non-empty evidence.
-  - Checks `docs/product/delivery/v1/delivery_readiness_scoreboard_v1.md` has valid snapshot metadata, 9-module table rows, and 4-journey rows.
+  - Checks `docs/product/delivery/v1/delivery_readiness_scoreboard_v1.md` has valid snapshot metadata, 10-module table rows, and 4-journey rows.
   - Checks `docs/ops/iterations/delivery_context_switch_log_v1.md` has no `active_commit: pending` drift points.
   - Writes reports:
     - `artifacts/backend/product_delivery_governance_truth_guard_report.json`
