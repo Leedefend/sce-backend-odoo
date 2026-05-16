@@ -873,6 +873,8 @@ class LoadContractHandler(BaseIntentHandler):
             "fields": fields,
             "permissions": permissions,
             "permission_verdicts": permission_verdicts,
+            "governance": data.get("governance") if isinstance(data.get("governance"), dict) else {},
+            "source_trace": data.get("source_trace") if isinstance(data.get("source_trace"), dict) else {},
             "action_gating": action_gating,
             "search_semantics": search_semantics,
             "kanban_semantics": kanban_semantics,

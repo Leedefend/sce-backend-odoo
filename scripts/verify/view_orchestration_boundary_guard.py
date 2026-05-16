@@ -14,6 +14,7 @@ FALLBACK_PARSE = ROOT / "addons/smart_core/app_config_engine/services/parse_fall
 ODOO_PARSER = ROOT / "addons/smart_core/app_config_engine/services/view_Parser/contract_Parser.py"
 APP_VIEW_CONFIG = ROOT / "addons/smart_core/app_config_engine/models/app_view_config.py"
 PAGE_ASSEMBLER = ROOT / "addons/smart_core/app_config_engine/services/assemblers/page_assembler.py"
+LOAD_CONTRACT = ROOT / "addons/smart_core/handlers/load_contract.py"
 V2_ASSEMBLER = ROOT / "addons/smart_core/core/unified_page_contract_v2_assembler.py"
 VIEW_ORCHESTRATOR = ROOT / "addons/smart_core/core/view_orchestrator.py"
 FIELD_HANDLER = ROOT / "addons/smart_core/handlers/form_field_configuration.py"
@@ -53,6 +54,7 @@ def main() -> int:
     odoo_parser = _read(ODOO_PARSER)
     app_view_config = _read(APP_VIEW_CONFIG)
     page_assembler = _read(PAGE_ASSEMBLER)
+    load_contract = _read(LOAD_CONTRACT)
     v2 = _read(V2_ASSEMBLER)
     orchestrator = _read(VIEW_ORCHESTRATOR) if VIEW_ORCHESTRATOR.exists() else ""
     field_handler = _read(FIELD_HANDLER)
@@ -274,6 +276,12 @@ def main() -> int:
         and '"source_trace": source_trace' in relation_dialog_body
         and 'view_contract.get("source_trace")' in relation_dialog_body,
         "relation search dialogs must expose target view orchestration trace",
+        errors,
+    )
+    _assert(
+        '"governance": data.get("governance")' in load_contract
+        and '"source_trace": data.get("source_trace")' in load_contract,
+        "semantic_page must expose page governance and source_trace",
         errors,
     )
 
