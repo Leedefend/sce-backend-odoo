@@ -148,6 +148,14 @@ def main() -> int:
         errors,
     )
     _assert(
+        "_append_business_config_scope_domain" in field_handler
+        and "_normalize_view_type_scope" in field_handler
+        and "test_business_config_contract_list_uses_full_view_scope_domain" in field_handler_test
+        and "test_business_config_contract_publish_rejects_invalid_scope_id" in field_handler_test,
+        "business config contract handlers must share view/action/view/role/status scope rules",
+        errors,
+    )
+    _assert(
         field_handler.count("_upsert_view_orchestration_field_rows(") >= 4,
         "field visibility, order, batch, and custom-field handlers must all mirror to business config",
         errors,

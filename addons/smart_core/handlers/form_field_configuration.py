@@ -13,6 +13,7 @@ from ..core.request_params import parse_non_negative_int
 from ..utils.reason_codes import REASON_MISSING_PARAMS, REASON_NOT_FOUND, REASON_OK, REASON_USER_ERROR
 
 BUSINESS_CONFIG_ADMIN_GROUP = "smart_core.group_smart_core_business_config_admin"
+BUSINESS_CONFIG_CONTRACT_AUTHORITIES = ("ui.business.config.contract", "ui.business.config.contract.version")
 
 
 def _optional_non_negative_int(params: dict, *keys: str):
@@ -25,6 +26,39 @@ def _optional_non_negative_int(params: dict, *keys: str):
     if error:
         return None, keys[0]
     return int(value or 0), None
+
+
+def _has_param(params: dict, *keys: str) -> bool:
+    return any(key in params for key in keys)
+
+
+def _normalize_view_type_scope(view_type: str | None) -> str:
+    normalized = str(view_type or "").strip()
+    return "tree" if normalized == "list" else normalized
+
+
+def _append_business_config_scope_domain(params: dict, domain: list, *, include_status: bool = False):
+    view_type = _normalize_view_type_scope(params.get("view_type") or params.get("viewType"))
+    role_key = str(params.get("role_key") or params.get("roleKey") or "").strip()
+    if view_type:
+        domain.append(("view_type", "in", [False, view_type]))
+    if _has_param(params, "action_id", "actionId"):
+        action_id, invalid_field = _optional_non_negative_int(params, "action_id", "actionId")
+        if invalid_field:
+            return invalid_field
+        domain.append(("action_id", "=", action_id or False))
+    if _has_param(params, "view_id", "viewId"):
+        view_id, invalid_field = _optional_non_negative_int(params, "view_id", "viewId")
+        if invalid_field:
+            return invalid_field
+        domain.append(("view_id", "=", view_id or False))
+    if role_key:
+        domain.append(("role_key", "=", role_key))
+    if include_status:
+        status = str(params.get("status") or "").strip()
+        if status:
+            domain.append(("status", "=", status))
+    return None
 
 
 def _business_config_contract_name(model: str, view_type: str, action_id: int | None, view_id: int | None) -> str:
@@ -539,7 +573,7 @@ class BusinessConfigContractSaveHandler(BaseIntentHandler):
     DESCRIPTION = "Save low-code business config contract payload into contract model."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     SOURCE_KIND = "ui_business_config_contract_save"
-    SOURCE_AUTHORITIES = ("ui.business.config.contract", "ui.business.config.contract.version")
+    SOURCE_AUTHORITIES = BUSINESS_CONFIG_CONTRACT_AUTHORITIES
     NON_IDEMPOTENT_ALLOWED = "business config contract is mutable authoring state"
 
     def _source_authority_contract(self):
@@ -648,7 +682,7 @@ class BusinessConfigContractGetHandler(BaseIntentHandler):
     DESCRIPTION = "Get low-code business config contract payload by name/model."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     SOURCE_KIND = "ui_business_config_contract_get"
-    SOURCE_AUTHORITIES = ("ui.business.config.contract", "ui.business.config.contract.version")
+    SOURCE_AUTHORITIES = BUSINESS_CONFIG_CONTRACT_AUTHORITIES
 
     def _source_authority_contract(self):
         return {
@@ -666,7 +700,6 @@ class BusinessConfigContractGetHandler(BaseIntentHandler):
         params = self.params if isinstance(self.params, dict) else {}
         name = str(params.get("name") or "").strip()
         model = str(params.get("model") or "").strip()
-        view_type = str(params.get("view_type") or params.get("viewType") or "").strip()
         if not name and not model:
             return self._err(400, "name 或 model 至少提供一个", REASON_MISSING_PARAMS)
         domain = [("company_id", "=", self.env.company.id)]
@@ -674,8 +707,9 @@ class BusinessConfigContractGetHandler(BaseIntentHandler):
             domain.append(("name", "=", name))
         if model:
             domain.append(("model", "=", model))
-        if view_type:
-            domain.append(("view_type", "in", [False, view_type]))
+        invalid_field = _append_business_config_scope_domain(params, domain, include_status=True)
+        if invalid_field:
+            return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
         rec = self.env["ui.business.config.contract"].search(domain, limit=1)
         if not rec:
             return self._err(404, "未找到业务配置契约", REASON_NOT_FOUND)
@@ -702,7 +736,10 @@ class BusinessConfigContractListHandler(BaseIntentHandler):
     DESCRIPTION = "List low-code business config contracts in current company."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     SOURCE_KIND = "ui_business_config_contract_list"
-    SOURCE_AUTHORITIES = ("ui.business.config.contract",)
+    SOURCE_AUTHORITIES = BUSINESS_CONFIG_CONTRACT_AUTHORITIES
+
+    def _err(self, code: int, message: str, reason_code: str):
+        return {"ok": False, "error": {"code": reason_code, "message": message, "reason_code": reason_code}, "code": code}
 
     def _source_authority_contract(self):
         return {
@@ -716,12 +753,12 @@ class BusinessConfigContractListHandler(BaseIntentHandler):
     def handle(self, payload=None, ctx=None):
         params = self.params if isinstance(self.params, dict) else {}
         model = str(params.get("model") or "").strip()
-        view_type = str(params.get("view_type") or params.get("viewType") or "").strip()
         domain = [("company_id", "=", self.env.company.id)]
         if model:
             domain.append(("model", "=", model))
-        if view_type:
-            domain.append(("view_type", "in", [False, view_type]))
+        invalid_field = _append_business_config_scope_domain(params, domain, include_status=True)
+        if invalid_field:
+            return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
         rows = self.env["ui.business.config.contract"].search(domain, limit=100, order="write_date desc, id desc")
         data = [{
             "id": int(rec.id),
@@ -745,6 +782,18 @@ class BusinessConfigContractPublishHandler(BaseIntentHandler):
     INTENT_TYPE = "ui.business_config.contract.publish"
     DESCRIPTION = "Publish a low-code business config contract by name/model."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
+    SOURCE_KIND = "ui_business_config_contract_publish"
+    SOURCE_AUTHORITIES = BUSINESS_CONFIG_CONTRACT_AUTHORITIES
+
+    def _source_authority_contract(self):
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "write_proxy": True,
+            "no_business_fact_authority": True,
+            "runtime_carrier": self.INTENT_TYPE,
+        }
 
     def _err(self, code: int, message: str, reason_code: str):
         return {"ok": False, "error": {"code": reason_code, "message": message, "reason_code": reason_code}, "code": code}
@@ -760,6 +809,9 @@ class BusinessConfigContractPublishHandler(BaseIntentHandler):
             domain.append(("name", "=", name))
         if model:
             domain.append(("model", "=", model))
+        invalid_field = _append_business_config_scope_domain(params, domain)
+        if invalid_field:
+            return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
         rec = self.env["ui.business.config.contract"].search(domain, limit=1)
         if not rec:
             return self._err(404, "未找到业务配置契约", REASON_NOT_FOUND)
@@ -773,7 +825,7 @@ class BusinessConfigContractPublishHandler(BaseIntentHandler):
                 "status": str(rec.status or "draft"),
                 "version_no": int(rec.version_no or 1),
             },
-            "meta": {"intent": self.INTENT_TYPE, "reason_code": REASON_OK},
+            "meta": {"intent": self.INTENT_TYPE, "source_authority": self._source_authority_contract(), "reason_code": REASON_OK},
         }
 
 
@@ -781,6 +833,18 @@ class BusinessConfigContractRollbackHandler(BaseIntentHandler):
     INTENT_TYPE = "ui.business_config.contract.rollback"
     DESCRIPTION = "Rollback a low-code business config contract to previous snapshot."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
+    SOURCE_KIND = "ui_business_config_contract_rollback"
+    SOURCE_AUTHORITIES = BUSINESS_CONFIG_CONTRACT_AUTHORITIES
+
+    def _source_authority_contract(self):
+        return {
+            "kind": self.SOURCE_KIND,
+            "authorities": list(self.SOURCE_AUTHORITIES),
+            "projection_only": True,
+            "write_proxy": True,
+            "no_business_fact_authority": True,
+            "runtime_carrier": self.INTENT_TYPE,
+        }
 
     def _err(self, code: int, message: str, reason_code: str):
         return {"ok": False, "error": {"code": reason_code, "message": message, "reason_code": reason_code}, "code": code}
@@ -796,6 +860,9 @@ class BusinessConfigContractRollbackHandler(BaseIntentHandler):
             domain.append(("name", "=", name))
         if model:
             domain.append(("model", "=", model))
+        invalid_field = _append_business_config_scope_domain(params, domain)
+        if invalid_field:
+            return self._err(400, "%s 必须是非负整数" % invalid_field, REASON_USER_ERROR)
         rec = self.env["ui.business.config.contract"].search(domain, limit=1)
         if not rec:
             return self._err(404, "未找到业务配置契约", REASON_NOT_FOUND)
@@ -820,5 +887,5 @@ class BusinessConfigContractRollbackHandler(BaseIntentHandler):
                 "version_no": int(rec.version_no or 1),
                 "rolled_back_to_version": int(target.version_no or 1),
             },
-            "meta": {"intent": self.INTENT_TYPE, "reason_code": REASON_OK},
+            "meta": {"intent": self.INTENT_TYPE, "source_authority": self._source_authority_contract(), "reason_code": REASON_OK},
         }

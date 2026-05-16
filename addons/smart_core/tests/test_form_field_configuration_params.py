@@ -280,6 +280,62 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
             self.assertIn("ui.business.config.contract.version", contract["authorities"])
             self.assertIn("ui.form.field.policy", contract["authorities"])
 
+    def test_business_config_contract_list_uses_full_view_scope_domain(self):
+        class Company:
+            id = 7
+
+        class ContractModel:
+            def search(self, domain, limit=None, order=None):
+                self.domain = domain
+                self.limit = limit
+                self.order = order
+                return []
+
+        class Env(dict):
+            company = Company()
+
+        contract_model = ContractModel()
+        env = Env({"ui.business.config.contract": contract_model})
+        handler = self.module.BusinessConfigContractListHandler(
+            env=env,
+            params={
+                "model": "res.partner",
+                "view_type": "list",
+                "action_id": 11,
+                "view_id": 22,
+                "role_key": "sales",
+                "status": "published",
+            },
+        )
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        self.assertIn(("view_type", "in", [False, "tree"]), contract_model.domain)
+        self.assertIn(("action_id", "=", 11), contract_model.domain)
+        self.assertIn(("view_id", "=", 22), contract_model.domain)
+        self.assertIn(("role_key", "=", "sales"), contract_model.domain)
+        self.assertIn(("status", "=", "published"), contract_model.domain)
+
+    def test_business_config_contract_publish_rejects_invalid_scope_id(self):
+        class Company:
+            id = 7
+
+        class Env(dict):
+            company = Company()
+
+        handler = self.module.BusinessConfigContractPublishHandler(
+            env=Env({"ui.business.config.contract": object()}),
+            params={"model": "res.partner", "action_id": "bad"},
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["reason_code"], "USER_ERROR")
+        self.assertIn("action_id", result["error"]["message"])
+
 
 if __name__ == "__main__":
     unittest.main()
