@@ -94,6 +94,12 @@ class TestViewOrchestrator(unittest.TestCase):
         self.assertEqual(result["search"]["group_by"][0]["field"], "company_id")
         self.assertEqual(calls[0][1]["view_type"], "search")
         self.assertEqual((result["governance"]["view_orchestration"])["owner_layer"], "business_view_orchestration")
+        trace = result["source_trace"]["view_orchestration"]
+        self.assertEqual(trace["owner_layer"], "business_view_orchestration")
+        self.assertEqual(trace["view_type"], "search")
+        self.assertEqual(trace["action_id"], 11)
+        self.assertEqual(trace["view_id"], 22)
+        self.assertEqual(trace["business_config_contracts"][0]["id"], 9)
 
     def test_pivot_view_uses_business_config_measures_dimensions_and_defaults(self):
         payload = {

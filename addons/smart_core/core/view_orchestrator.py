@@ -78,6 +78,17 @@ class ViewOrchestrator:
             "legacy_field_policy_overlay": bool(legacy_policy_applied),
         }
         out["governance"] = governance
+        source_trace = out.get("source_trace") if isinstance(out.get("source_trace"), dict) else {}
+        source_trace["view_orchestration"] = {
+            "owner_layer": self.SOURCE_KIND,
+            "model": model_name,
+            "view_type": normalized_view_type,
+            "action_id": int(action_id or 0),
+            "view_id": int(view_id or 0),
+            "business_config_contracts": applied_contracts,
+            "legacy_field_policy_overlay": bool(legacy_policy_applied),
+        }
+        out["source_trace"] = source_trace
         return out
 
     def _apply_business_config_contract(self, contract: dict, config, view_type: str, model_name: str) -> dict:

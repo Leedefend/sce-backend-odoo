@@ -183,6 +183,20 @@ def main() -> int:
         "ViewOrchestrator must consume business config contracts",
         errors,
     )
+    _assert(
+        "source_trace" in orchestrator
+        and '"view_orchestration"' in orchestrator
+        and '"business_config_contracts"' in orchestrator,
+        "ViewOrchestrator must expose source_trace for orchestration results",
+        errors,
+    )
+    _assert(
+        'result["source_trace"]["view_orchestration"]' in orchestrator_test
+        and 'trace["action_id"]' in orchestrator_test
+        and 'trace["view_id"]' in orchestrator_test,
+        "ViewOrchestrator tests must cover source_trace orchestration scope",
+        errors,
+    )
     for required in (
         "test_search_view_uses_business_config_filters_and_group_by",
         "test_pivot_view_uses_business_config_measures_dimensions_and_defaults",
