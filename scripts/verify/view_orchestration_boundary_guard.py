@@ -12,6 +12,7 @@ CONTRACT = ROOT / "addons/smart_core/core/view_orchestration_contract.py"
 NATIVE_PARSE = ROOT / "addons/smart_core/app_config_engine/services/native_parse_service.py"
 FALLBACK_PARSE = ROOT / "addons/smart_core/app_config_engine/services/parse_fallback_service.py"
 ODOO_PARSER = ROOT / "addons/smart_core/app_config_engine/services/view_Parser/contract_Parser.py"
+CALENDAR_GANTT_ACTIVITY_PARSER = ROOT / "addons/smart_core/app_config_engine/services/view_Parser/parsers_Calendar_Gantt Activity.py"
 APP_VIEW_CONFIG = ROOT / "addons/smart_core/app_config_engine/models/app_view_config.py"
 PAGE_ASSEMBLER = ROOT / "addons/smart_core/app_config_engine/services/assemblers/page_assembler.py"
 LOAD_CONTRACT = ROOT / "addons/smart_core/handlers/load_contract.py"
@@ -23,6 +24,7 @@ BUSINESS_CONFIG = ROOT / "addons/smart_core/model/ui_business_config_contract.py
 DOC = ROOT / "docs/audit/native/view_orchestration_boundary_20260515.md"
 ORCHESTRATOR_TEST = ROOT / "addons/smart_core/tests/test_view_orchestrator.py"
 FIELD_HANDLER_TEST = ROOT / "addons/smart_core/tests/test_form_field_configuration_params.py"
+NATIVE_PARSER_TEST = ROOT / "addons/smart_core/tests/test_native_view_parser_surfaces.py"
 
 
 def _read(path: Path) -> str:
@@ -52,6 +54,7 @@ def main() -> int:
     native_parse = _read(NATIVE_PARSE)
     fallback_parse = _read(FALLBACK_PARSE)
     odoo_parser = _read(ODOO_PARSER)
+    calendar_parser = _read(CALENDAR_GANTT_ACTIVITY_PARSER)
     app_view_config = _read(APP_VIEW_CONFIG)
     page_assembler = _read(PAGE_ASSEMBLER)
     load_contract = _read(LOAD_CONTRACT)
@@ -63,6 +66,7 @@ def main() -> int:
     doc = _read(DOC)
     orchestrator_test = _read(ORCHESTRATOR_TEST)
     field_handler_test = _read(FIELD_HANDLER_TEST)
+    native_parser_test = _read(NATIVE_PARSER_TEST)
 
     for label, source in (
         ("NativeParseService", native_parse),
@@ -83,6 +87,22 @@ def main() -> int:
         "view orchestration boundary contract must name inputs, outputs, and forbidden parser responsibilities",
         errors,
     )
+    for parser_token in (
+        '"date_slots"',
+        '"resource_slots"',
+        '"dependency_slots"',
+        '"activity_type_slots"',
+        '"group_by_fields"',
+        '"search_fields"',
+        "_parse_view_field_nodes",
+    ):
+        _assert(parser_token in calendar_parser, f"native parser surface missing: {parser_token}", errors)
+    for parser_test in (
+        "test_calendar_parser_preserves_native_slots_and_fields",
+        "test_gantt_parser_preserves_dependency_and_resource_slots",
+        "test_search_parser_preserves_search_fields_and_group_by_metadata",
+    ):
+        _assert(parser_test in native_parser_test, f"native parser surface test missing: {parser_test}", errors)
     _assert(
         '"ui.business.config.contract"' in contract
         and '"ui.business.config.contract.version"' in contract
