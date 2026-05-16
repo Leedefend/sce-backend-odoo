@@ -21,6 +21,7 @@ FIELD_POLICY = ROOT / "addons/smart_core/model/ui_form_field_policy.py"
 BUSINESS_CONFIG = ROOT / "addons/smart_core/model/ui_business_config_contract.py"
 DOC = ROOT / "docs/audit/native/view_orchestration_boundary_20260515.md"
 ORCHESTRATOR_TEST = ROOT / "addons/smart_core/tests/test_view_orchestrator.py"
+FIELD_HANDLER_TEST = ROOT / "addons/smart_core/tests/test_form_field_configuration_params.py"
 
 
 def _read(path: Path) -> str:
@@ -59,6 +60,7 @@ def main() -> int:
     business_config = _read(BUSINESS_CONFIG)
     doc = _read(DOC)
     orchestrator_test = _read(ORCHESTRATOR_TEST)
+    field_handler_test = _read(FIELD_HANDLER_TEST)
 
     for label, source in (
         ("NativeParseService", native_parse),
@@ -136,6 +138,13 @@ def main() -> int:
         and "view_orchestration" in field_handler
         and "business_config_mirrored_count" in field_handler,
         "low-code field handlers must mirror edits into business config orchestration contracts",
+        errors,
+    )
+    _assert(
+        field_handler.count('"ui.business.config.contract"') >= 4
+        and field_handler.count('"ui.business.config.contract.version"') >= 4
+        and "test_low_code_write_intents_declare_business_config_authority" in field_handler_test,
+        "low-code write intents must declare business config contract authority",
         errors,
     )
     _assert(

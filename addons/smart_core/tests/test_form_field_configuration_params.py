@@ -269,6 +269,17 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertEqual(fields[0]["sequence"], 10)
         self.assertTrue(contract_model.record.published)
 
+    def test_low_code_write_intents_declare_business_config_authority(self):
+        for handler_class in (
+            self.module.FormFieldPolicySetHandler,
+            self.module.FormCustomFieldCreateHandler,
+            self.module.FormFieldOrderSetHandler,
+        ):
+            contract = handler_class(env={}, params={})._source_authority_contract()
+            self.assertIn("ui.business.config.contract", contract["authorities"])
+            self.assertIn("ui.business.config.contract.version", contract["authorities"])
+            self.assertIn("ui.form.field.policy", contract["authorities"])
+
 
 if __name__ == "__main__":
     unittest.main()

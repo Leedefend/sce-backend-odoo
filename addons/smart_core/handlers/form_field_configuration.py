@@ -97,7 +97,14 @@ class FormFieldPolicySetHandler(BaseIntentHandler):
     DESCRIPTION = "Set current form field visibility policy from a contract action."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     SOURCE_KIND = "ui_form_field_policy_contract_action"
-    SOURCE_AUTHORITIES = ("ui.form.field.policy", "ir.model.fields", "ir.actions.act_window", "ir.ui.view")
+    SOURCE_AUTHORITIES = (
+        "ui.business.config.contract",
+        "ui.business.config.contract.version",
+        "ui.form.field.policy",
+        "ir.model.fields",
+        "ir.actions.act_window",
+        "ir.ui.view",
+    )
     NON_IDEMPOTENT_ALLOWED = "field policy writes configuration state"
 
     def _err(self, code: int, message: str, reason_code: str):
@@ -218,7 +225,13 @@ class FormCustomFieldCreateHandler(BaseIntentHandler):
     DESCRIPTION = "Create a safe custom form field from a contract action."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     SOURCE_KIND = "ui_form_custom_field_contract_action"
-    SOURCE_AUTHORITIES = ("ui.form.custom.field.wizard", "ir.model.fields", "ui.form.field.policy")
+    SOURCE_AUTHORITIES = (
+        "ui.business.config.contract",
+        "ui.business.config.contract.version",
+        "ui.form.custom.field.wizard",
+        "ir.model.fields",
+        "ui.form.field.policy",
+    )
     NON_IDEMPOTENT_ALLOWED = "custom field creation changes configuration metadata"
 
     def _err(self, code: int, message: str, reason_code: str):
@@ -339,7 +352,14 @@ class FormFieldOrderSetHandler(BaseIntentHandler):
     DESCRIPTION = "Set form field order for current form scope from contract action."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
     SOURCE_KIND = "ui_form_field_order_contract_action"
-    SOURCE_AUTHORITIES = ("ui.form.field.policy", "ir.model.fields", "ir.actions.act_window", "ir.ui.view")
+    SOURCE_AUTHORITIES = (
+        "ui.business.config.contract",
+        "ui.business.config.contract.version",
+        "ui.form.field.policy",
+        "ir.model.fields",
+        "ir.actions.act_window",
+        "ir.ui.view",
+    )
     NON_IDEMPOTENT_ALLOWED = "field order writes configuration state"
 
     def _err(self, code: int, message: str, reason_code: str):
