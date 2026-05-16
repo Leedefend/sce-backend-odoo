@@ -731,9 +731,16 @@ class PageAssembler:
             },
             "source_authority": {
                 "kind": self.SOURCE_KIND,
-                "authorities": ["ui.form.field.policy", "ir.actions.act_window", "ir.ui.menu"],
+                "authorities": [
+                    "ui.business.config.contract",
+                    "ui.business.config.contract.version",
+                    "ui.form.field.policy",
+                    "ir.actions.act_window",
+                    "ir.ui.menu",
+                ],
                 "projection_only": True,
                 "no_business_fact_authority": True,
+                "owner_layer": "business_view_orchestration",
             },
         }
         buttons = data.get("buttons") if isinstance(data.get("buttons"), list) else []
@@ -764,6 +771,8 @@ class PageAssembler:
             "view_id": current_view_id if current_view_id > 0 else False,
             "settings_action_id": int(settings_action.id),
             "settings_menu_id": int(settings_menu.id),
+            "config_source": "ui.business.config.contract",
+            "owner_layer": "business_view_orchestration",
         }
         data["governance"] = governance
 
@@ -773,6 +782,12 @@ class PageAssembler:
             return
         mode = "form_field_configuration"
         low_code_mode = "business_config_lowcode"
+        config_summary = self._current_view_orchestration_config_summary(
+            model=model,
+            view_type="form",
+            action_id=action_id,
+            view_id=view_id,
+        )
         action_rows = [
             {
                 "key": "current_form_add_custom_field",
@@ -789,6 +804,7 @@ class PageAssembler:
                         "model": model,
                         "action_id": int(action_id or 0),
                         "view_id": int(view_id or 0) or False,
+                        "view_type": "form",
                     },
                     "prompt_schema": {
                         "fields": [
@@ -830,6 +846,7 @@ class PageAssembler:
                         "model": model,
                         "action_id": int(action_id or 0),
                         "view_id": int(view_id or 0) or False,
+                        "view_type": "form",
                     },
                 },
             },
@@ -880,6 +897,7 @@ class PageAssembler:
                 "label": label,
                 "action_id": int(action_id or 0),
                 "view_id": int(view_id or 0) or False,
+                "view_type": "form",
             }
             for visible, value, label_text in ((True, "show", "显示"), (False, "hide", "隐藏")):
                 action_rows.append({
@@ -917,16 +935,57 @@ class PageAssembler:
                 "enabled": True,
                 "scope": "current_form",
                 "capabilities": ["field_order", "field_visibility", "custom_field_create"],
+                "config_source": "ui.business.config.contract",
+                "config_contract": config_summary,
+                "legacy_overlay": "ui.form.field.policy",
             },
             "actions": action_rows,
             "source_authority": {
                 "kind": self.SOURCE_KIND,
-                "authorities": ["ui.form.field.policy", "ui.form.custom.field.wizard", "ir.model.fields"],
+                "authorities": [
+                    "ui.business.config.contract",
+                    "ui.business.config.contract.version",
+                    "ui.form.field.policy",
+                    "ui.form.custom.field.wizard",
+                    "ir.model.fields",
+                ],
                 "projection_only": True,
                 "no_business_fact_authority": True,
+                "owner_layer": "business_view_orchestration",
             },
         })
         data["action_groups"] = groups
+
+    def _current_view_orchestration_config_summary(self, *, model, view_type, action_id, view_id):
+        if "ui.business.config.contract" not in self.su_env:
+            return {"available": False, "reason": "model_missing"}
+        try:
+            contracts = self.su_env["ui.business.config.contract"]._effective_view_orchestration_contracts(
+                model,
+                view_type=view_type,
+                action_id=int(action_id or 0),
+                view_id=int(view_id or 0),
+            )
+        except Exception:
+            _logger.exception("Failed to resolve view orchestration config summary for model=%s view_type=%s", model, view_type)
+            return {"available": False, "reason": "resolve_failed"}
+        items = []
+        for rec in contracts[:5]:
+            items.append({
+                "id": int(rec.id),
+                "name": str(rec.name or ""),
+                "status": str(rec.status or ""),
+                "version_no": int(rec.version_no or 1),
+                "view_type": str(rec.view_type or ""),
+                "action_id": int(rec.action_id.id or 0),
+                "view_id": int(rec.view_id.id or 0),
+            })
+        return {
+            "available": True,
+            "source_model": "ui.business.config.contract",
+            "owner_layer": "business_view_orchestration",
+            "items": items,
+        }
 
     def _collect_layout_field_names(self, raw):
         names = set()

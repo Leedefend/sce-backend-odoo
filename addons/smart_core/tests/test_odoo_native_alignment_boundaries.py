@@ -940,6 +940,12 @@ class TestOdooNativeAlignmentBoundaries(TransactionCase):
         field_config_group = next((row for row in action_groups if row.get("key") == "current_form_field_configuration"), {})
         self.assertTrue(field_config_group)
         self.assertTrue(any(row.get("intent") == "ui.form_custom_field.create" for row in field_config_group.get("actions") or []))
+        low_code_config = field_config_group.get("low_code_config") or {}
+        self.assertEqual(low_code_config.get("config_source"), "ui.business.config.contract")
+        self.assertEqual(low_code_config.get("legacy_overlay"), "ui.form.field.policy")
+        source_authority = field_config_group.get("source_authority") or {}
+        self.assertEqual(source_authority.get("owner_layer"), "business_view_orchestration")
+        self.assertIn("ui.business.config.contract", source_authority.get("authorities") or [])
 
         result = UiContractV2Handler(self.env, su_env=self.env["ir.model"].sudo().env).handle({
             "model": "res.partner",

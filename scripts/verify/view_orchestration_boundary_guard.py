@@ -13,6 +13,7 @@ NATIVE_PARSE = ROOT / "addons/smart_core/app_config_engine/services/native_parse
 FALLBACK_PARSE = ROOT / "addons/smart_core/app_config_engine/services/parse_fallback_service.py"
 ODOO_PARSER = ROOT / "addons/smart_core/app_config_engine/services/view_Parser/contract_Parser.py"
 APP_VIEW_CONFIG = ROOT / "addons/smart_core/app_config_engine/models/app_view_config.py"
+PAGE_ASSEMBLER = ROOT / "addons/smart_core/app_config_engine/services/assemblers/page_assembler.py"
 V2_ASSEMBLER = ROOT / "addons/smart_core/core/unified_page_contract_v2_assembler.py"
 VIEW_ORCHESTRATOR = ROOT / "addons/smart_core/core/view_orchestrator.py"
 FIELD_HANDLER = ROOT / "addons/smart_core/handlers/form_field_configuration.py"
@@ -49,6 +50,7 @@ def main() -> int:
     fallback_parse = _read(FALLBACK_PARSE)
     odoo_parser = _read(ODOO_PARSER)
     app_view_config = _read(APP_VIEW_CONFIG)
+    page_assembler = _read(PAGE_ASSEMBLER)
     v2 = _read(V2_ASSEMBLER)
     orchestrator = _read(VIEW_ORCHESTRATOR) if VIEW_ORCHESTRATOR.exists() else ""
     field_handler = _read(FIELD_HANDLER)
@@ -164,6 +166,14 @@ def main() -> int:
         "ViewOrchestrator(self.env).compose" in app_view_config
         and 'self.env["ui.form.field.policy"].apply_to_view_contract' not in app_view_config,
         "app.view.config must route final view composition through ViewOrchestrator",
+        errors,
+    )
+    _assert(
+        "_current_view_orchestration_config_summary" in page_assembler
+        and '"config_source": "ui.business.config.contract"' in page_assembler
+        and '"owner_layer": "business_view_orchestration"' in page_assembler
+        and '"ui.business.config.contract"' in page_assembler,
+        "low-code contract surface must expose business config orchestration ownership",
         errors,
     )
 
