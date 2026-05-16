@@ -139,6 +139,44 @@ class TestViewOrchestrator(unittest.TestCase):
         self.assertEqual(result["kanban"]["slots"]["primary"], ["name", "email"])
         self.assertEqual(result["kanban"]["actions"][0]["intent"], "form.open")
 
+    def test_calendar_view_uses_business_config_date_resource_and_color_slots(self):
+        payload = {
+            "view_orchestration": {
+                "views": {
+                    "calendar": {
+                        "date_slots": {"start": "start_date", "stop": "end_date"},
+                        "resource_slots": {"owner": "user_id"},
+                        "color_slots": {"state": "state"},
+                    }
+                }
+            }
+        }
+
+        result, _calls = self._compose(payload, {"calendar": {}}, "calendar")
+
+        self.assertEqual(result["calendar"]["date_slots"]["start"], "start_date")
+        self.assertEqual(result["calendar"]["resource_slots"]["owner"], "user_id")
+        self.assertEqual(result["calendar"]["color_slots"]["state"], "state")
+
+    def test_dashboard_view_uses_business_config_metric_chart_and_navigation_slots(self):
+        payload = {
+            "view_orchestration": {
+                "views": {
+                    "dashboard": {
+                        "metric_slots": {"primary": ["amount_total"]},
+                        "chart_slots": {"trend": {"type": "line"}},
+                        "navigation_slots": {"next": "project.dashboard.enter"},
+                    }
+                }
+            }
+        }
+
+        result, _calls = self._compose(payload, {"dashboard": {}}, "dashboard")
+
+        self.assertEqual(result["dashboard"]["metric_slots"]["primary"], ["amount_total"])
+        self.assertEqual(result["dashboard"]["chart_slots"]["trend"]["type"], "line")
+        self.assertEqual(result["dashboard"]["navigation_slots"]["next"], "project.dashboard.enter")
+
 
 if __name__ == "__main__":
     unittest.main()

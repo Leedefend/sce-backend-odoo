@@ -197,12 +197,26 @@ class ViewOrchestrator:
 
     def _apply_generic_spec(self, contract: dict, spec: dict, view_type: str) -> dict:
         node = contract.get(view_type) if isinstance(contract.get(view_type), dict) else {}
-        slots = spec.get("slots")
-        if isinstance(slots, dict):
-            node["slots"] = deepcopy(slots)
-        actions = spec.get("actions")
-        if isinstance(actions, list):
-            node["actions"] = [dict(row) for row in actions if isinstance(row, dict)]
+        for key in (
+            "slots",
+            "date_slots",
+            "resource_slots",
+            "color_slots",
+            "dependency_slots",
+            "activity_type_slots",
+            "deadline_slots",
+            "assignee_slots",
+            "metric_slots",
+            "chart_slots",
+            "navigation_slots",
+        ):
+            value = spec.get(key)
+            if isinstance(value, dict):
+                node[key] = deepcopy(value)
+        for key in ("actions", "quick_actions"):
+            value = spec.get(key)
+            if isinstance(value, list):
+                node[key] = [dict(row) for row in value if isinstance(row, dict)]
         if node:
             contract[view_type] = node
         return contract

@@ -188,6 +188,10 @@ def main() -> int:
         '"defaults"',
         '"slots"',
         '"chart_policy"',
+        '"dependency_slots"',
+        '"metric_slots"',
+        '"navigation_slots"',
+        '"quick_actions"',
         "list_keys",
         "dict_keys",
     ):
@@ -218,8 +222,19 @@ def main() -> int:
         "test_search_view_uses_business_config_filters_and_group_by",
         "test_pivot_view_uses_business_config_measures_dimensions_and_defaults",
         "test_generic_view_uses_business_config_slots_and_actions",
+        "test_calendar_view_uses_business_config_date_resource_and_color_slots",
+        "test_dashboard_view_uses_business_config_metric_chart_and_navigation_slots",
     ):
         _assert(required in orchestrator_test, f"ViewOrchestrator non-form runtime test missing: {required}", errors)
+    for orchestration_token in (
+        '"date_slots"',
+        '"resource_slots"',
+        '"dependency_slots"',
+        '"metric_slots"',
+        '"navigation_slots"',
+        '"quick_actions"',
+    ):
+        _assert(orchestration_token in orchestrator, f"ViewOrchestrator generic surface missing: {orchestration_token}", errors)
     _assert(
         "ViewOrchestrator(self.env).compose" in app_view_config
         and 'self.env["ui.form.field.policy"].apply_to_view_contract' not in app_view_config,

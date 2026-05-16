@@ -147,8 +147,23 @@ class UIBusinessConfigContract(models.Model):
             "measures",
             "dimensions",
             "actions",
+            "quick_actions",
         }
-        dict_keys = {"defaults", "slots", "chart_policy", "date_slots", "resource_slots", "color_slots"}
+        dict_keys = {
+            "defaults",
+            "slots",
+            "chart_policy",
+            "date_slots",
+            "resource_slots",
+            "color_slots",
+            "dependency_slots",
+            "activity_type_slots",
+            "deadline_slots",
+            "assignee_slots",
+            "metric_slots",
+            "chart_slots",
+            "navigation_slots",
+        }
         for view_type, spec in views.items():
             if view_type not in allowed:
                 raise ValidationError("view_orchestration.views 不支持视图类型：%s" % view_type)
