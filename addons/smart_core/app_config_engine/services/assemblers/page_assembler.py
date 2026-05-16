@@ -297,6 +297,7 @@ class PageAssembler:
                 # 禁用对 columns 的二次“脏覆盖”
 
             data["views"][vt] = v_contract
+        self._inject_view_orchestration_summary(data)
         versions["view"] = ",".join(v_versions) if v_versions else "1"
 
         # 4) 搜索条件（运行时需要当前用户上下文，因此用 env）
@@ -1196,6 +1197,40 @@ class PageAssembler:
             cfg["kpis"] = kpis if isinstance(kpis, list) else []
             return cfg
         return cfg
+
+    def _inject_view_orchestration_summary(self, data):
+        views = data.get("views") if isinstance(data, dict) else {}
+        if not isinstance(views, dict) or not views:
+            return
+        view_rows = {}
+        any_applied = False
+        for view_type, contract in views.items():
+            if not isinstance(contract, dict):
+                continue
+            governance = contract.get("governance") if isinstance(contract.get("governance"), dict) else {}
+            orchestration = governance.get("view_orchestration") if isinstance(governance.get("view_orchestration"), dict) else {}
+            source_trace = contract.get("source_trace") if isinstance(contract.get("source_trace"), dict) else {}
+            trace = source_trace.get("view_orchestration") if isinstance(source_trace.get("view_orchestration"), dict) else {}
+            business_contracts = trace.get("business_config_contracts") or orchestration.get("business_config_contracts") or []
+            legacy_overlay = bool(trace.get("legacy_field_policy_overlay") or orchestration.get("legacy_field_policy_overlay"))
+            applied = bool(orchestration.get("applied") or business_contracts or legacy_overlay)
+            if applied:
+                any_applied = True
+            view_rows[str(view_type or "")] = {
+                "applied": applied,
+                "owner_layer": str(trace.get("owner_layer") or orchestration.get("owner_layer") or "business_view_orchestration"),
+                "business_config_contracts": business_contracts if isinstance(business_contracts, list) else [],
+                "legacy_field_policy_overlay": legacy_overlay,
+            }
+        if not view_rows:
+            return
+        governance = data.get("governance") if isinstance(data.get("governance"), dict) else {}
+        governance["view_orchestration"] = {
+            "applied": any_applied,
+            "owner_layer": "business_view_orchestration",
+            "views": view_rows,
+        }
+        data["governance"] = governance
 
     def _inject_relation_entry_contract(self, data, model_name=""):
         fields = data.get("fields") if isinstance(data, dict) else None

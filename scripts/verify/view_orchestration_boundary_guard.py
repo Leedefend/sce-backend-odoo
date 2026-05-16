@@ -254,6 +254,13 @@ def main() -> int:
         "low-code contract surface must expose business config orchestration ownership",
         errors,
     )
+    _assert(
+        "_inject_view_orchestration_summary" in page_assembler
+        and 'governance["view_orchestration"]' in page_assembler
+        and '"views": view_rows' in page_assembler,
+        "page assembler must summarize per-view orchestration governance",
+        errors,
+    )
 
     for phrase in (
         "缺失的是一个独立的业务视图编排层",
