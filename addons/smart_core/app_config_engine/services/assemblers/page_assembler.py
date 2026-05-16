@@ -297,7 +297,6 @@ class PageAssembler:
                 # 禁用对 columns 的二次“脏覆盖”
 
             data["views"][vt] = v_contract
-        self._inject_view_orchestration_summary(data)
         versions["view"] = ",".join(v_versions) if v_versions else "1"
 
         # 4) 搜索条件（运行时需要当前用户上下文，因此用 env）
@@ -310,6 +309,8 @@ class PageAssembler:
             _logger.warning("app.search.config missing; fallback search contract for model=%s", model)
             data["search"] = {}
             versions["search"] = 0
+        self._inject_search_view_orchestration(data, env=env, model=model, view_context=view_context)
+        self._inject_view_orchestration_summary(data)
 
         # 4.x) 关系字段维护入口（many2one/many2many/one2many）
         # 由后端契约提供 relation_entry，前端禁止自行猜测 action/menu。
@@ -1231,6 +1232,32 @@ class PageAssembler:
             "views": view_rows,
         }
         data["governance"] = governance
+
+    def _inject_search_view_orchestration(self, data, *, env, model, view_context):
+        if not model or "app.view.config" not in env:
+            return
+        context = dict(view_context or {})
+        context["contract_projection_readonly"] = True
+        try:
+            view_config = env["app.view.config"].with_context(**context)._generate_from_fields_view_get(model, "search")
+            runtime_view_config = view_config.with_user(env.user).sudo().with_context(**context)
+            search_contract = runtime_view_config.get_contract_api(filter_runtime=True, check_model_acl=True)
+        except Exception:
+            _logger.exception("Failed to apply search view orchestration for model=%s", model)
+            return
+        if not isinstance(search_contract, dict):
+            return
+        data["views"]["search"] = self._coerce_view_contract_semantics("search", search_contract)
+        orchestrated_search = search_contract.get("search") if isinstance(search_contract.get("search"), dict) else {}
+        if not orchestrated_search:
+            return
+        base_search = data.get("search") if isinstance(data.get("search"), dict) else {}
+        merged = dict(base_search)
+        for key in ("filters", "group_by", "facets"):
+            value = orchestrated_search.get(key)
+            if value:
+                merged[key] = value
+        data["search"] = merged
 
     def _inject_relation_entry_contract(self, data, model_name=""):
         fields = data.get("fields") if isinstance(data, dict) else None

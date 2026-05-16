@@ -261,6 +261,13 @@ def main() -> int:
         "page assembler must summarize per-view orchestration governance",
         errors,
     )
+    _assert(
+        "_inject_search_view_orchestration" in page_assembler
+        and 'data["views"]["search"]' in page_assembler
+        and 'data["search"] = merged' in page_assembler,
+        "page assembler must route top-level search through view orchestration",
+        errors,
+    )
 
     for phrase in (
         "缺失的是一个独立的业务视图编排层",
