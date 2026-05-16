@@ -41,6 +41,10 @@ class UIBusinessConfigContract(models.Model):
         ("name_company_unique", "unique(name, company_id)", "同公司下业务配置名称必须唯一。"),
     ]
 
+    def _normalize_view_orchestration_view_type(self, view_type: str | None) -> str:
+        normalized = str(view_type or "").strip()
+        return "tree" if normalized == "list" else normalized
+
     @api.constrains("contract_json", "model")
     def _check_contract_json(self):
         for rec in self:
@@ -118,7 +122,12 @@ class UIBusinessConfigContract(models.Model):
                 raise ValidationError("动作不属于当前模型：%s" % rec.action_id.display_name)
             if rec.view_id and rec.view_id.model != rec.model:
                 raise ValidationError("视图不属于当前模型：%s" % rec.view_id.display_name)
-            if rec.view_id and rec.view_type and rec.view_id.type not in {rec.view_type, "tree", "list"}:
+            if (
+                rec.view_id
+                and rec.view_type
+                and self._normalize_view_orchestration_view_type(rec.view_id.type)
+                != self._normalize_view_orchestration_view_type(rec.view_type)
+            ):
                 raise ValidationError("视图类型与配置范围不一致：%s" % rec.view_id.display_name)
 
     def _check_view_orchestration_payload(self, payload: dict) -> None:
@@ -176,7 +185,7 @@ class UIBusinessConfigContract(models.Model):
     ):
         if not model_name:
             return self.browse()
-        normalized_view_type = "tree" if view_type == "list" else str(view_type or "").strip()
+        normalized_view_type = self._normalize_view_orchestration_view_type(view_type)
         domain = [
             ("active", "=", True),
             ("status", "=", "published"),
@@ -189,7 +198,7 @@ class UIBusinessConfigContract(models.Model):
         role_key = str(role_key or "").strip()
 
         def applies(contract) -> bool:
-            contract_view_type = str(contract.view_type or "").strip()
+            contract_view_type = self._normalize_view_orchestration_view_type(contract.view_type)
             if contract_view_type and contract_view_type != normalized_view_type:
                 return False
             contract_action = int(contract.action_id.id or 0)

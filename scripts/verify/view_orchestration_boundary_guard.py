@@ -152,8 +152,16 @@ def main() -> int:
         "view_type" in business_config
         and "action_id" in business_config
         and "view_id" in business_config
+        and "_normalize_view_orchestration_view_type" in business_config
         and "_effective_view_orchestration_contracts" in business_config,
         "ui.business.config.contract must expose view orchestration runtime scope",
+        errors,
+    )
+    _assert(
+        'return "tree" if normalized == "list" else normalized' in business_config
+        and "rec.view_id.type" in business_config
+        and "contract.view_type" in business_config,
+        "ui.business.config.contract must normalize tree/list consistently for scope checks",
         errors,
     )
     for schema_token in (
