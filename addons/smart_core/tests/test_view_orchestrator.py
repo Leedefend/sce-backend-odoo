@@ -82,7 +82,7 @@ class TestViewOrchestrator(unittest.TestCase):
                 "views": {
                     "search": {
                         "filters": [{"name": "active_customers", "domain": [["active", "=", True]]}],
-                        "group_by": [{"name": "by_company", "field": "company_id"}],
+                        "groupBys": [{"name": "by_company", "field": "company_id"}],
                     }
                 }
             }
@@ -103,6 +103,7 @@ class TestViewOrchestrator(unittest.TestCase):
                         "measures": ["amount_total"],
                         "dimensions": ["company_id"],
                         "defaults": {"measure": "amount_total"},
+                        "chart_policy": {"type": "bar"},
                     }
                 }
             }
@@ -113,6 +114,7 @@ class TestViewOrchestrator(unittest.TestCase):
         self.assertEqual(result["pivot"]["measures"], ["amount_total"])
         self.assertEqual(result["pivot"]["dimensions"], ["company_id"])
         self.assertEqual(result["pivot"]["defaults"]["measure"], "amount_total")
+        self.assertEqual(result["pivot"]["chart_policy"]["type"], "bar")
 
     def test_generic_view_uses_business_config_slots_and_actions(self):
         payload = {

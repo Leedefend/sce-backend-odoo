@@ -177,7 +177,7 @@ class ViewOrchestrator:
     def _apply_analysis_spec(self, contract: dict, spec: dict, view_type: str) -> dict:
         key = "pivot" if view_type == "pivot" else "graph"
         node = contract.get(key) if isinstance(contract.get(key), dict) else {}
-        for target_key in ("measures", "dimensions", "defaults"):
+        for target_key in ("measures", "dimensions", "defaults", "chart_policy"):
             value = spec.get(target_key)
             if isinstance(value, (list, dict)):
                 node[target_key] = deepcopy(value)

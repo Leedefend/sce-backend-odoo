@@ -129,20 +129,40 @@ class UIBusinessConfigContract(models.Model):
             raise ValidationError("view_orchestration 必须是对象。")
         views = orchestration.get("views") if isinstance(orchestration.get("views"), dict) else {}
         allowed = {"form", "tree", "list", "kanban", "search", "pivot", "graph", "calendar", "gantt", "activity", "dashboard"}
+        list_keys = {
+            "fields",
+            "columns",
+            "filters",
+            "group_by",
+            "groupBys",
+            "measures",
+            "dimensions",
+            "actions",
+        }
+        dict_keys = {"defaults", "slots", "chart_policy", "date_slots", "resource_slots", "color_slots"}
         for view_type, spec in views.items():
             if view_type not in allowed:
                 raise ValidationError("view_orchestration.views 不支持视图类型：%s" % view_type)
             if not isinstance(spec, dict):
                 raise ValidationError("view_orchestration.views.%s 必须是对象。" % view_type)
-            for key in ("fields", "columns", "filters", "measures", "actions", "slots"):
+            for key in list_keys:
                 rows = spec.get(key)
                 if rows is None:
                     continue
                 if not isinstance(rows, list):
                     raise ValidationError("view_orchestration.views.%s.%s 必须是数组。" % (view_type, key))
+                if key in {"measures", "dimensions"}:
+                    invalid = [row for row in rows if not isinstance(row, (str, dict))]
+                    if invalid:
+                        raise ValidationError("view_orchestration.views.%s.%s 必须是字符串或对象数组。" % (view_type, key))
+                    continue
                 for row in rows:
                     if not isinstance(row, dict):
                         raise ValidationError("view_orchestration.views.%s.%s 必须是对象数组。" % (view_type, key))
+            for key in dict_keys:
+                value = spec.get(key)
+                if value is not None and not isinstance(value, dict):
+                    raise ValidationError("view_orchestration.views.%s.%s 必须是对象。" % (view_type, key))
 
     @api.model
     def _effective_view_orchestration_contracts(

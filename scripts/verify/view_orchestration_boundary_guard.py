@@ -156,6 +156,17 @@ def main() -> int:
         "ui.business.config.contract must expose view orchestration runtime scope",
         errors,
     )
+    for schema_token in (
+        '"group_by"',
+        '"groupBys"',
+        '"dimensions"',
+        '"defaults"',
+        '"slots"',
+        '"chart_policy"',
+        "list_keys",
+        "dict_keys",
+    ):
+        _assert(schema_token in business_config, f"business config view orchestration schema missing: {schema_token}", errors)
     _assert(
         "class ViewOrchestrator" in orchestrator
         and "def compose" in orchestrator
