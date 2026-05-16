@@ -694,6 +694,135 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
             base.update({'kanban': kb})
             return base
 
+        if view_type == 'search':
+            search = {'filters': [], 'group_by': [], 'group_by_fields': [], 'search_fields': [], 'facets': {'enabled': True}}
+            if arch:
+                try:
+                    root = ET.fromstring(arch)
+                    search_nodes = [root] if root.tag == 'search' else list(root.findall('.//search'))
+                    seen_group_by = set()
+                    for search_node in search_nodes:
+                        for field_node in search_node.findall('.//field'):
+                            fname = (field_node.get('name') or '').strip()
+                            if not fname:
+                                continue
+                            search['search_fields'].append({
+                                'name': fname,
+                                'label': field_node.get('string') or fname,
+                                'operator': field_node.get('operator') or '',
+                                'filter_domain_raw': field_node.get('filter_domain') or '',
+                                'context_raw': field_node.get('context') or '',
+                            })
+                        for filter_node in search_node.findall('.//filter'):
+                            name = filter_node.get('name') or filter_node.get('string') or ''
+                            context_raw = filter_node.get('context') or ''
+                            search['filters'].append({
+                                'name': name,
+                                'label': filter_node.get('string') or name,
+                                'domain_raw': filter_node.get('domain') or '',
+                                'context_raw': context_raw,
+                            })
+                            if 'group_by' in context_raw:
+                                group_field = context_raw.split('group_by', 1)[1].split(':', 1)[-1].strip(" {}'\"")
+                                if group_field and group_field not in seen_group_by:
+                                    seen_group_by.add(group_field)
+                                    search['group_by'].append(group_field)
+                                    search['group_by_fields'].append({
+                                        'name': name,
+                                        'label': filter_node.get('string') or name,
+                                        'field': group_field,
+                                        'context_raw': context_raw,
+                                    })
+                except Exception as e:
+                    _logger.warning('SEARCH fallback: 解析属性失败: %s', e)
+            base['search'] = search
+            return base
+
+        if view_type == 'calendar':
+            cal = {
+                'date_start': 'date_start',
+                'date_stop': 'date_end',
+                'color': 'user_id',
+                'date_slots': {'start': 'date_start', 'stop': 'date_end'},
+                'color_slots': {'color': 'user_id'},
+                'fields': [],
+                'native_attrs': {},
+            }
+            if arch:
+                try:
+                    root = ET.fromstring(arch)
+                    if root.tag != 'calendar':
+                        root = root.find('.//calendar') or root
+                    cal['native_attrs'] = dict(root.attrib or {})
+                    for key in ('date_start', 'date_stop', 'color', 'default_scale', 'event_open_popup'):
+                        if root.get(key) is not None:
+                            cal[key] = root.get(key)
+                    cal['date_slots'] = {'start': cal['date_start'], 'stop': cal['date_stop']}
+                    cal['color_slots'] = {'color': cal['color']}
+                    cal['fields'] = self._fallback_view_field_nodes(root)
+                except Exception as e:
+                    _logger.warning('CALENDAR fallback: 解析属性失败: %s', e)
+            base['calendar'] = cal
+            return base
+
+        if view_type == 'gantt':
+            gantt = {
+                'date_start': 'date_start',
+                'date_stop': 'date_end',
+                'progress': 'progress',
+                'date_slots': {'start': 'date_start', 'stop': 'date_end'},
+                'resource_slots': {},
+                'dependency_slots': {},
+                'fields': [],
+                'native_attrs': {},
+            }
+            if arch:
+                try:
+                    root = ET.fromstring(arch)
+                    if root.tag != 'gantt':
+                        root = root.find('.//gantt') or root
+                    gantt['native_attrs'] = dict(root.attrib or {})
+                    for key in ('date_start', 'date_stop', 'progress', 'default_scale'):
+                        if root.get(key) is not None:
+                            gantt[key] = root.get(key)
+                    gantt['date_slots'] = {'start': gantt['date_start'], 'stop': gantt['date_stop']}
+                    if root.get('default_group_by'):
+                        gantt['resource_slots']['group_by'] = root.get('default_group_by')
+                    if root.get('dependency_field'):
+                        gantt['dependency_slots']['dependency_field'] = root.get('dependency_field')
+                    gantt['fields'] = self._fallback_view_field_nodes(root)
+                except Exception as e:
+                    _logger.warning('GANTT fallback: 解析属性失败: %s', e)
+            base['gantt'] = gantt
+            return base
+
+        if view_type == 'activity':
+            activity = {
+                'template_qweb': None,
+                'activity_type_slots': {},
+                'deadline_slots': {},
+                'assignee_slots': {},
+                'fields': [],
+                'native_attrs': {},
+            }
+            if arch:
+                try:
+                    root = ET.fromstring(arch)
+                    if root.tag != 'activity':
+                        root = root.find('.//activity') or root
+                    activity['native_attrs'] = dict(root.attrib or {})
+                    if root.get('activity_type'):
+                        activity['activity_type_slots']['type'] = root.get('activity_type')
+                    if root.get('date_deadline'):
+                        activity['deadline_slots']['deadline'] = root.get('date_deadline')
+                    if root.get('user_id'):
+                        activity['assignee_slots']['assignee'] = root.get('user_id')
+                    activity['fields'] = self._fallback_view_field_nodes(root)
+                except Exception as e:
+                    _logger.warning('ACTIVITY fallback: 解析属性失败: %s', e)
+            base['activity'] = activity
+            return base
+
         # ======== FORM：新增强逻辑 ========
         # 小工具：抽取 header 按钮
         def _extract_header_buttons(root):
@@ -914,6 +1043,23 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
             'attachments': ca['attachments'],
         })
         return base
+
+    def _fallback_view_field_nodes(self, root):
+        rows = []
+        seen = set()
+        for field_node in root.findall('.//field') if root is not None else []:
+            name = (field_node.get('name') or '').strip()
+            if not name or name in seen:
+                continue
+            seen.add(name)
+            rows.append({
+                'name': name,
+                'label': field_node.get('string') or name,
+                'widget': field_node.get('widget') or '',
+                'invisible': field_node.get('invisible') or '',
+                'modifiers': field_node.get('modifiers') or '',
+            })
+        return rows
 
     # ====================== 内部：稳定哈希 ======================
 

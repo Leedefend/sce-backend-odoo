@@ -104,6 +104,16 @@ def main() -> int:
     ):
         _assert(parser_test in native_parser_test, f"native parser surface test missing: {parser_test}", errors)
     _assert(
+        "_fallback_view_field_nodes" in app_view_config
+        and "view_type == 'search'" in app_view_config
+        and "view_type == 'calendar'" in app_view_config
+        and "view_type == 'gantt'" in app_view_config
+        and "view_type == 'activity'" in app_view_config
+        and "'group_by_fields'" in app_view_config,
+        "app.view.config fallback parser must preserve non-form native view surfaces",
+        errors,
+    )
+    _assert(
         '"ui.business.config.contract"' in contract
         and '"ui.business.config.contract.version"' in contract
         and "business_config_contract" in contract,
