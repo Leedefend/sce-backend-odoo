@@ -20,6 +20,7 @@ FIELD_HANDLER = ROOT / "addons/smart_core/handlers/form_field_configuration.py"
 FIELD_POLICY = ROOT / "addons/smart_core/model/ui_form_field_policy.py"
 BUSINESS_CONFIG = ROOT / "addons/smart_core/model/ui_business_config_contract.py"
 DOC = ROOT / "docs/audit/native/view_orchestration_boundary_20260515.md"
+ORCHESTRATOR_TEST = ROOT / "addons/smart_core/tests/test_view_orchestrator.py"
 
 
 def _read(path: Path) -> str:
@@ -57,6 +58,7 @@ def main() -> int:
     field_policy = _read(FIELD_POLICY)
     business_config = _read(BUSINESS_CONFIG)
     doc = _read(DOC)
+    orchestrator_test = _read(ORCHESTRATOR_TEST)
 
     for label, source in (
         ("NativeParseService", native_parse),
@@ -162,6 +164,12 @@ def main() -> int:
         "ViewOrchestrator must consume business config contracts",
         errors,
     )
+    for required in (
+        "test_search_view_uses_business_config_filters_and_group_by",
+        "test_pivot_view_uses_business_config_measures_dimensions_and_defaults",
+        "test_generic_view_uses_business_config_slots_and_actions",
+    ):
+        _assert(required in orchestrator_test, f"ViewOrchestrator non-form runtime test missing: {required}", errors)
     _assert(
         "ViewOrchestrator(self.env).compose" in app_view_config
         and 'self.env["ui.form.field.policy"].apply_to_view_contract' not in app_view_config,
