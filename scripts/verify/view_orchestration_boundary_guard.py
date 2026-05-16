@@ -135,6 +135,11 @@ def main() -> int:
         errors,
     )
     _assert(
+        field_handler.count("_upsert_view_orchestration_field_rows(") >= 4,
+        "field visibility, order, batch, and custom-field handlers must all mirror to business config",
+        errors,
+    )
+    _assert(
         "user_id" not in field_policy,
         "ui.form.field.policy must not introduce user-specific structural scope",
         errors,

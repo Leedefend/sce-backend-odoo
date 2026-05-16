@@ -308,12 +308,27 @@ class FormCustomFieldCreateHandler(BaseIntentHandler):
             pass
         policy_id = int(result.get("res_id") or 0) if isinstance(result, dict) else 0
         policy = self.env["ui.form.field.policy"].browse(policy_id).exists() if policy_id else self.env["ui.form.field.policy"]
+        effective_field_name = str(policy.field_name or wizard.field_name or field_name or "").strip()
+        mirrored_count = _upsert_view_orchestration_field_rows(
+            self.env,
+            model=model,
+            view_type="form",
+            action_id=action_id,
+            view_id=view_id,
+            rows=[{
+                "name": effective_field_name,
+                "label": str(policy.label or label),
+                "visible": True,
+                "sequence": int(policy.sequence or sequence or 100),
+            }],
+        )
         return {
             "ok": True,
             "data": {
                 "policy_id": int(policy.id or 0),
-                "field_name": str(policy.field_name or wizard.field_name or ""),
+                "field_name": effective_field_name,
                 "model": model,
+                "business_config_mirrored_count": mirrored_count,
             },
             "meta": {"intent": self.INTENT_TYPE, "reason_code": REASON_OK, "source_authority": self._source_authority_contract()},
         }

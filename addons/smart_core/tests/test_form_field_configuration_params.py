@@ -205,6 +205,70 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertEqual(contract_model.created_vals["view_id"], 22)
         self.assertTrue(contract_model.record.published)
 
+    def test_low_code_field_rows_update_existing_business_config_contract(self):
+        class Company:
+            id = 7
+
+        class Record:
+            id = 1
+
+            def __init__(self):
+                self.contract_json = {
+                    "view_orchestration": {
+                        "views": {
+                            "form": {
+                                "fields": [
+                                    {"name": "email", "label": "Old", "sequence": 100},
+                                ],
+                            }
+                        }
+                    }
+                }
+
+            def write(self, vals):
+                self.contract_json = vals["contract_json"]
+                self.written = vals
+
+            def action_publish(self):
+                self.published = True
+
+        class ContractModel:
+            def __init__(self):
+                self.record = Record()
+
+            def sudo(self):
+                return self
+
+            def search(self, domain, limit=None):
+                return self.record
+
+            def create(self, vals):
+                raise AssertionError("existing contract should be updated")
+
+        class Env(dict):
+            company = Company()
+
+        contract_model = ContractModel()
+        env = Env({"ui.business.config.contract": contract_model})
+
+        count = self.module._upsert_view_orchestration_field_rows(
+            env,
+            model="res.partner",
+            view_type="form",
+            rows=[
+                {"name": "email", "label": "New", "visible": False, "sequence": 10},
+                {"name": "phone", "label": "Phone", "sequence": 20},
+            ],
+        )
+
+        self.assertEqual(count, 2)
+        fields = contract_model.record.contract_json["view_orchestration"]["views"]["form"]["fields"]
+        self.assertEqual([row["name"] for row in fields], ["email", "phone"])
+        self.assertEqual(fields[0]["label"], "New")
+        self.assertFalse(fields[0]["visible"])
+        self.assertEqual(fields[0]["sequence"], 10)
+        self.assertTrue(contract_model.record.published)
+
 
 if __name__ == "__main__":
     unittest.main()
