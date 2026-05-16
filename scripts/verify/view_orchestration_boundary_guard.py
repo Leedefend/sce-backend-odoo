@@ -268,6 +268,14 @@ def main() -> int:
         "page assembler must route top-level search through view orchestration",
         errors,
     )
+    relation_dialog_body = _function_body(page_assembler, "_build_relation_search_dialog_contract")
+    _assert(
+        '"governance": governance' in relation_dialog_body
+        and '"source_trace": source_trace' in relation_dialog_body
+        and 'view_contract.get("source_trace")' in relation_dialog_body,
+        "relation search dialogs must expose target view orchestration trace",
+        errors,
+    )
 
     for phrase in (
         "缺失的是一个独立的业务视图编排层",

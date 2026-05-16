@@ -1414,6 +1414,8 @@ class PageAssembler:
         read_fields = ["id", "display_name", "name"]
         order = "id desc"
         search = {"filters": [], "group_by": [], "facets": {"enabled": True}}
+        governance = {}
+        source_trace = {}
         if not relation:
             return {
                 "columns": columns,
@@ -1421,6 +1423,8 @@ class PageAssembler:
                 "order": order,
                 "limit": 120,
                 "search": search,
+                "governance": governance,
+                "source_trace": source_trace,
                 "source": "relation_target_native_view",
             }
         try:
@@ -1454,6 +1458,8 @@ class PageAssembler:
             parsed_search = view_contract.get("search") if isinstance(view_contract.get("search"), dict) else {}
             if parsed_search:
                 search = parsed_search
+            governance = view_contract.get("governance") if isinstance(view_contract.get("governance"), dict) else {}
+            source_trace = view_contract.get("source_trace") if isinstance(view_contract.get("source_trace"), dict) else {}
         except Exception:
             _logger.debug("relation search dialog native parse failed relation=%s", relation, exc_info=True)
         return {
@@ -1462,6 +1468,8 @@ class PageAssembler:
             "order": order,
             "limit": 120,
             "search": search,
+            "governance": governance,
+            "source_trace": source_trace,
             "source": "relation_target_native_view",
         }
 
