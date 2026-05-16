@@ -160,9 +160,7 @@ class ViewOrchestrator:
                 if row.get("visible") is False:
                     continue
                 col = by_name.get(row["name"], {"name": row["name"]})
-                if row.get("label"):
-                    col["label"] = row["label"]
-                    col["string"] = row["label"]
+                self._apply_column_display_policy(col, row)
                 ordered.append(col)
             used = {self._column_name(row) for row in ordered}
             ordered.extend(
@@ -251,8 +249,60 @@ class ViewOrchestrator:
                 "label": str(row.get("label") or row.get("string") or row.get("display_label") or "").strip(),
                 "visible": visible if isinstance(visible, bool) else None,
                 "sequence": int(row.get("sequence") or row.get("order") or 100),
+                "readonly": self._optional_bool(row.get("readonly")),
+                "required": self._optional_bool(row.get("required")),
+                "help": str(row.get("help") or "").strip(),
+                "widget": str(row.get("widget") or "").strip(),
+                "width": str(row.get("width") or "").strip(),
+                "class": str(row.get("class") or row.get("className") or "").strip(),
             })
         return sorted(normalized, key=lambda item: (item["sequence"], item["name"]))
+
+    def _optional_bool(self, raw: Any):
+        if isinstance(raw, bool):
+            return raw
+        if isinstance(raw, str):
+            value = raw.strip().lower()
+            if value in {"1", "true", "yes", "on", "required", "readonly"}:
+                return True
+            if value in {"0", "false", "no", "off"}:
+                return False
+        return None
+
+    def _apply_field_display_policy(self, node: dict, policy: dict) -> None:
+        label = policy.get("label")
+        if label:
+            node["string"] = label
+            node["label"] = label
+        for key in ("readonly", "required"):
+            if isinstance(policy.get(key), bool):
+                node[key] = bool(policy[key])
+        for key in ("help", "widget", "class"):
+            if policy.get(key):
+                node[key] = policy[key]
+        field_info = node.get("fieldInfo")
+        if isinstance(field_info, dict):
+            if label:
+                field_info["label"] = label
+                field_info["string"] = label
+            for key in ("readonly", "required"):
+                if isinstance(policy.get(key), bool):
+                    field_info[key] = bool(policy[key])
+            for key in ("help", "widget"):
+                if policy.get(key):
+                    field_info[key] = policy[key]
+
+    def _apply_column_display_policy(self, col: dict, policy: dict) -> None:
+        label = policy.get("label")
+        if label:
+            col["label"] = label
+            col["string"] = label
+        for key in ("readonly", "required"):
+            if isinstance(policy.get(key), bool):
+                col[key] = bool(policy[key])
+        for key in ("help", "widget", "width", "class"):
+            if policy.get(key):
+                col[key] = policy[key]
 
     def _apply_node_field_rules(self, nodes: list, effective: dict[str, dict[str, Any]], hidden: set[str]) -> list:
         result = []
@@ -265,13 +315,7 @@ class ViewOrchestrator:
                 if name in hidden:
                     continue
                 if name in effective:
-                    label = effective[name].get("label")
-                    if label:
-                        node["string"] = label
-                        node["label"] = label
-                        field_info = node.get("fieldInfo")
-                        if isinstance(field_info, dict):
-                            field_info["label"] = label
+                    self._apply_field_display_policy(node, effective[name])
             for child_key in ("children", "pages", "tabs", "nodes", "items"):
                 children = node.get(child_key)
                 if isinstance(children, list):
@@ -315,6 +359,11 @@ class ViewOrchestrator:
                         "type": fields_meta.get(name, {}).get("type") or "char",
                     },
                     **({"string": effective[name]["label"], "label": effective[name]["label"]} if effective[name].get("label") else {}),
+                    **({"readonly": bool(effective[name]["readonly"])} if isinstance(effective[name].get("readonly"), bool) else {}),
+                    **({"required": bool(effective[name]["required"])} if isinstance(effective[name].get("required"), bool) else {}),
+                    **({"help": effective[name]["help"]} if effective[name].get("help") else {}),
+                    **({"widget": effective[name]["widget"]} if effective[name].get("widget") else {}),
+                    **({"class": effective[name]["class"]} if effective[name].get("class") else {}),
                 }
                 for name in sorted(missing, key=lambda value: (effective[value].get("sequence") or 100, value))
             ],

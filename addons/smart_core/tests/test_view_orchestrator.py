@@ -61,12 +61,20 @@ class _Env(dict):
     pass
 
 
+class _Model:
+    def fields_get(self):
+        return {
+            "name": {"string": "Name", "type": "char"},
+            "email": {"string": "Email", "type": "char"},
+        }
+
+
 class TestViewOrchestrator(unittest.TestCase):
     def setUp(self):
         self.ViewOrchestrator = _load_orchestrator()
 
     def _compose(self, payload, contract, view_type):
-        env = _Env({"ui.business.config.contract": _ConfigModel(payload)})
+        env = _Env({"ui.business.config.contract": _ConfigModel(payload), "res.partner": _Model()})
         result = self.ViewOrchestrator(env).compose(
             contract,
             model_name="res.partner",
@@ -211,6 +219,83 @@ class TestViewOrchestrator(unittest.TestCase):
 
         self.assertEqual(result["header_buttons"][0]["intent"], "record.approve")
         self.assertEqual(result["stat_buttons"][0]["intent"], "analytics.open")
+
+    def test_form_view_uses_business_config_field_display_policy(self):
+        payload = {
+            "view_orchestration": {
+                "views": {
+                    "form": {
+                        "fields": [
+                            {
+                                "name": "email",
+                                "label": "Contact Email",
+                                "readonly": True,
+                                "required": "true",
+                                "help": "Shown to the customer",
+                                "widget": "email",
+                                "class": "important",
+                                "sequence": 10,
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+        contract = {
+            "layout": [
+                {
+                    "type": "sheet",
+                    "children": [
+                        {
+                            "type": "field",
+                            "name": "email",
+                            "fieldInfo": {"name": "email", "label": "Email"},
+                        }
+                    ],
+                }
+            ]
+        }
+
+        result, _calls = self._compose(payload, contract, "form")
+        field = result["layout"][0]["children"][0]
+
+        self.assertEqual(field["label"], "Contact Email")
+        self.assertTrue(field["readonly"])
+        self.assertTrue(field["required"])
+        self.assertEqual(field["help"], "Shown to the customer")
+        self.assertEqual(field["widget"], "email")
+        self.assertEqual(field["fieldInfo"]["label"], "Contact Email")
+
+    def test_list_view_uses_business_config_column_display_policy(self):
+        payload = {
+            "view_orchestration": {
+                "views": {
+                    "tree": {
+                        "columns": [
+                            {
+                                "name": "email",
+                                "label": "Contact Email",
+                                "readonly": True,
+                                "help": "Shown to the customer",
+                                "widget": "email",
+                                "width": "180px",
+                                "sequence": 10,
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+        contract = {"columns": ["email"], "columns_schema": [{"name": "email", "label": "Email"}]}
+
+        result, _calls = self._compose(payload, contract, "tree")
+        column = result["columns_schema"][0]
+
+        self.assertEqual(column["label"], "Contact Email")
+        self.assertTrue(column["readonly"])
+        self.assertEqual(column["help"], "Shown to the customer")
+        self.assertEqual(column["widget"], "email")
+        self.assertEqual(column["width"], "180px")
 
 
 if __name__ == "__main__":
