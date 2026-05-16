@@ -227,6 +227,7 @@ def main() -> int:
         '"dimensions"',
         '"defaults"',
         '"slots"',
+        '"action_slots"',
         '"chart_policy"',
         '"dependency_slots"',
         '"metric_slots"',
@@ -264,6 +265,8 @@ def main() -> int:
         "test_generic_view_uses_business_config_slots_and_actions",
         "test_calendar_view_uses_business_config_date_resource_and_color_slots",
         "test_dashboard_view_uses_business_config_metric_chart_and_navigation_slots",
+        "test_list_view_uses_business_config_row_actions",
+        "test_form_view_uses_business_config_action_slots_without_field_rows",
     ):
         _assert(required in orchestrator_test, f"ViewOrchestrator non-form runtime test missing: {required}", errors)
     for orchestration_token in (
@@ -279,6 +282,14 @@ def main() -> int:
         "ViewOrchestrator(self.env).compose" in app_view_config
         and 'self.env["ui.form.field.policy"].apply_to_view_contract' not in app_view_config,
         "app.view.config must route final view composition through ViewOrchestrator",
+        errors,
+    )
+    _assert(
+        "_apply_action_slots" in orchestrator
+        and '"row_actions"' in orchestrator
+        and '"header_buttons"' in orchestrator
+        and '"action_slots"' in orchestrator,
+        "ViewOrchestrator must apply business action slots across view types",
         errors,
     )
     _assert(

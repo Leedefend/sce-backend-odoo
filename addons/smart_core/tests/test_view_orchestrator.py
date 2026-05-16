@@ -177,6 +177,41 @@ class TestViewOrchestrator(unittest.TestCase):
         self.assertEqual(result["dashboard"]["chart_slots"]["trend"]["type"], "line")
         self.assertEqual(result["dashboard"]["navigation_slots"]["next"], "project.dashboard.enter")
 
+    def test_list_view_uses_business_config_row_actions(self):
+        payload = {
+            "view_orchestration": {
+                "views": {
+                    "tree": {
+                        "columns": [{"name": "name", "sequence": 10}],
+                        "actions": [{"name": "open_dashboard", "intent": "project.dashboard.enter"}],
+                    }
+                }
+            }
+        }
+
+        result, _calls = self._compose(payload, {"columns": ["name"], "row_actions": []}, "tree")
+
+        self.assertEqual(result["row_actions"][0]["intent"], "project.dashboard.enter")
+
+    def test_form_view_uses_business_config_action_slots_without_field_rows(self):
+        payload = {
+            "view_orchestration": {
+                "views": {
+                    "form": {
+                        "action_slots": {
+                            "header_buttons": [{"name": "approve", "intent": "record.approve"}],
+                            "stat_buttons": [{"name": "analytics", "intent": "analytics.open"}],
+                        }
+                    }
+                }
+            }
+        }
+
+        result, _calls = self._compose(payload, {"layout": [], "header_buttons": []}, "form")
+
+        self.assertEqual(result["header_buttons"][0]["intent"], "record.approve")
+        self.assertEqual(result["stat_buttons"][0]["intent"], "analytics.open")
+
 
 if __name__ == "__main__":
     unittest.main()

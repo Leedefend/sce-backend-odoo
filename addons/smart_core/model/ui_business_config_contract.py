@@ -152,6 +152,7 @@ class UIBusinessConfigContract(models.Model):
         dict_keys = {
             "defaults",
             "slots",
+            "action_slots",
             "chart_policy",
             "date_slots",
             "resource_slots",

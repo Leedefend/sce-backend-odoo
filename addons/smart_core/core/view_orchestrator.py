@@ -121,22 +121,21 @@ class ViewOrchestrator:
 
     def _apply_form_spec(self, contract: dict, spec: dict, model_name: str) -> dict:
         rows = self._normalized_rows(spec.get("fields") or spec.get("field_slots"))
-        if not rows:
-            return contract
-        fields_meta = self.env[model_name].fields_get() if model_name in self.env else {}
-        effective = {row["name"]: row for row in rows if row.get("name") in fields_meta}
-        if not effective:
-            return contract
-        hidden = {name for name, row in effective.items() if row.get("visible") is False}
-        layout = contract.get("layout")
-        if isinstance(layout, list):
-            contract["layout"] = self._apply_node_field_rules(layout, effective, hidden)
-            self._append_missing_form_fields(contract["layout"], effective, fields_meta)
-        field_modifiers = contract.get("field_modifiers")
-        if isinstance(field_modifiers, dict):
-            for name in hidden:
-                field_modifiers.pop(name, None)
-            contract["field_modifiers"] = field_modifiers
+        if rows:
+            fields_meta = self.env[model_name].fields_get() if model_name in self.env else {}
+            effective = {row["name"]: row for row in rows if row.get("name") in fields_meta}
+            if effective:
+                hidden = {name for name, row in effective.items() if row.get("visible") is False}
+                layout = contract.get("layout")
+                if isinstance(layout, list):
+                    contract["layout"] = self._apply_node_field_rules(layout, effective, hidden)
+                    self._append_missing_form_fields(contract["layout"], effective, fields_meta)
+                field_modifiers = contract.get("field_modifiers")
+                if isinstance(field_modifiers, dict):
+                    for name in hidden:
+                        field_modifiers.pop(name, None)
+                    contract["field_modifiers"] = field_modifiers
+        self._apply_action_slots(contract, spec, default_key="header_buttons")
         return contract
 
     def _apply_list_spec(self, contract: dict, spec: dict) -> dict:
@@ -172,6 +171,7 @@ class ViewOrchestrator:
                 if self._column_name(row) not in used and self._column_name(row) not in hidden_names
             )
             contract["columns_schema"] = ordered
+        self._apply_action_slots(contract, spec, default_key="row_actions")
         return contract
 
     def _apply_search_spec(self, contract: dict, spec: dict) -> dict:
@@ -182,6 +182,7 @@ class ViewOrchestrator:
             search["filters"] = [dict(row) for row in filters if isinstance(row, dict)]
         if isinstance(group_by, list):
             search["group_by"] = [dict(row) for row in group_by if isinstance(row, dict)]
+        self._apply_action_slots(search, spec, default_key="actions")
         contract["search"] = search
         return contract
 
@@ -192,6 +193,7 @@ class ViewOrchestrator:
             value = spec.get(target_key)
             if isinstance(value, (list, dict)):
                 node[target_key] = deepcopy(value)
+        self._apply_action_slots(node, spec, default_key="actions")
         contract[key] = node
         return contract
 
@@ -220,6 +222,16 @@ class ViewOrchestrator:
         if node:
             contract[view_type] = node
         return contract
+
+    def _apply_action_slots(self, node: dict, spec: dict, *, default_key: str) -> None:
+        actions = spec.get("actions")
+        if isinstance(actions, list):
+            node[default_key] = [dict(row) for row in actions if isinstance(row, dict)]
+        action_slots = spec.get("action_slots")
+        if isinstance(action_slots, dict):
+            for key, value in action_slots.items():
+                if isinstance(value, list):
+                    node[str(key)] = [dict(row) for row in value if isinstance(row, dict)]
 
     def _normalized_rows(self, rows: Any) -> list[dict[str, Any]]:
         if not isinstance(rows, list):
