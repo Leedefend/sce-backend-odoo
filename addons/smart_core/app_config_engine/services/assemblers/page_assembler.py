@@ -267,7 +267,7 @@ class PageAssembler:
                 # runtime group/ACL filtering still matches native Odoo.
                 vcfg_runtime = vcfg.with_user(env.user).sudo().with_context(**scoped_view_context)
                 v_contract = vcfg_runtime.get_contract_api(filter_runtime=True, check_model_acl=True)
-                v_versions.append(str(vcfg.version))
+                v_versions.append(str(v_contract.get("effective_version") or vcfg.version))
             except KeyError:
                 mark_missing("app.view.config")
                 _logger.warning("app.view.config missing; fallback view contract for model=%s vt=%s", model, vt)

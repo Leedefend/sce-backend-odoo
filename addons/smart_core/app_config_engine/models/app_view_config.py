@@ -464,11 +464,14 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
             subject=subject, action_id=action_id, menu_id=menu_id,
             ctx=ctx, check_model_acl=check_model_acl,
         )
+        orchestration_version = self._view_orchestration_version_token(vp)
 
         block = {
             'model': self.model,
             'view_type': self.view_type,
             'version': self.version,
+            'orchestration_version': orchestration_version,
+            'effective_version': "%s:%s" % (self.version, orchestration_version),
             'meta': self.meta_info or {},
             'modifiers': vp.get('modifiers', {}),
             'toolbar': vp.get('toolbar', {'header': [], 'sidebar': [], 'footer': []}),
@@ -513,6 +516,24 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
         elif vt == 'dashboard':
             block['dashboard'] = vp.get('dashboard', {'cards': []})
         return block
+
+    def _view_orchestration_version_token(self, contract):
+        trace = {}
+        if isinstance(contract, dict):
+            source_trace = contract.get('source_trace') if isinstance(contract.get('source_trace'), dict) else {}
+            trace = source_trace.get('view_orchestration') if isinstance(source_trace.get('view_orchestration'), dict) else {}
+        contracts = trace.get('business_config_contracts') if isinstance(trace.get('business_config_contracts'), list) else []
+        tokens = []
+        for row in contracts:
+            if not isinstance(row, dict):
+                continue
+            row_id = int(row.get('id') or 0)
+            version_no = int(row.get('version_no') or 0)
+            if row_id or version_no:
+                tokens.append("%s.%s" % (row_id, version_no))
+        if trace.get('legacy_field_policy_overlay'):
+            tokens.append("legacy_policy")
+        return ",".join(tokens) if tokens else "native"
 
     # ====================== 内部：获取视图数据（版本兼容） ======================
 
