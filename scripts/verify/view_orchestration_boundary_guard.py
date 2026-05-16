@@ -227,6 +227,11 @@ def main() -> int:
         errors,
     )
     _assert(
+        "'source_trace': vp.get('source_trace', {})" in app_view_config,
+        "app.view.config get_contract_api must expose orchestrator source_trace",
+        errors,
+    )
+    _assert(
         "_current_view_orchestration_config_summary" in page_assembler
         and '"config_source": "ui.business.config.contract"' in page_assembler
         and '"owner_layer": "business_view_orchestration"' in page_assembler

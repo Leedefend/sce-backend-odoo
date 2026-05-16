@@ -475,6 +475,7 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
             'search': vp.get('search', {'filters': [], 'group_by': [], 'facets': {'enabled': True}}),
             'order': vp.get('order', None),
             'governance': vp.get('governance', {}),
+            'source_trace': vp.get('source_trace', {}),
         }
         vt = self.view_type
         if vt == 'tree':
