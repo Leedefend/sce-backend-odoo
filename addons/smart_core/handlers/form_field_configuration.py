@@ -70,6 +70,30 @@ def _business_config_contract_name(model: str, view_type: str, action_id: int | 
     )
 
 
+def _contract_reload_hint(*, model: str = "", view_type: str = "", action_id: int | None = None, view_id: int | None = None, role_key: str = "", version_no: int | None = None) -> dict:
+    return {
+        "required": True,
+        "reason": "view_orchestration_config_changed",
+        "model": str(model or ""),
+        "view_type": _normalize_view_type_scope(view_type) or "form",
+        "action_id": int(action_id or 0),
+        "view_id": int(view_id or 0),
+        "role_key": str(role_key or ""),
+        "orchestration_version": str(version_no or ""),
+    }
+
+
+def _contract_reload_hint_for_record(rec) -> dict:
+    return _contract_reload_hint(
+        model=str(rec.model or ""),
+        view_type=str(rec.view_type or ""),
+        action_id=int(rec.action_id.id or 0),
+        view_id=int(rec.view_id.id or 0),
+        role_key=str(rec.role_key or ""),
+        version_no=int(rec.version_no or 1),
+    )
+
+
 def _upsert_view_orchestration_field_rows(
     env,
     *,
@@ -249,6 +273,12 @@ class FormFieldPolicySetHandler(BaseIntentHandler):
                 "group_title": str(policy.group_title or ""),
                 "sequence": int(policy.sequence or 0),
                 "business_config_mirrored_count": mirrored_count,
+                "contract_reload": _contract_reload_hint(
+                    model=model,
+                    view_type="form",
+                    action_id=action_id,
+                    view_id=view_id,
+                ),
             },
             "meta": {"intent": self.INTENT_TYPE, "reason_code": REASON_OK, "source_authority": self._source_authority_contract()},
         }
@@ -376,6 +406,12 @@ class FormCustomFieldCreateHandler(BaseIntentHandler):
                 "field_name": effective_field_name,
                 "model": model,
                 "business_config_mirrored_count": mirrored_count,
+                "contract_reload": _contract_reload_hint(
+                    model=model,
+                    view_type="form",
+                    action_id=action_id,
+                    view_id=view_id,
+                ),
             },
             "meta": {"intent": self.INTENT_TYPE, "reason_code": REASON_OK, "source_authority": self._source_authority_contract()},
         }
@@ -495,6 +531,12 @@ class FormFieldOrderSetHandler(BaseIntentHandler):
                 "field_order": field_order,
                 "updated_count": len(field_order),
                 "business_config_mirrored_count": mirrored_count,
+                "contract_reload": _contract_reload_hint(
+                    model=model,
+                    view_type="form",
+                    action_id=action_id,
+                    view_id=view_id,
+                ),
             },
             "meta": {"intent": self.INTENT_TYPE, "reason_code": REASON_OK, "source_authority": self._source_authority_contract()},
         }
@@ -645,6 +687,7 @@ class BusinessConfigContractSaveHandler(BaseIntentHandler):
                 "status": str(rec.status or "draft"),
                 "version_no": int(rec.version_no or 1),
                 "precheck": precheck,
+                "contract_reload": _contract_reload_hint_for_record(rec),
             },
             "meta": {"intent": self.INTENT_TYPE, "source_authority": self._source_authority_contract(), "reason_code": REASON_OK},
         }
@@ -824,6 +867,7 @@ class BusinessConfigContractPublishHandler(BaseIntentHandler):
                 "model": str(rec.model or ""),
                 "status": str(rec.status or "draft"),
                 "version_no": int(rec.version_no or 1),
+                "contract_reload": _contract_reload_hint_for_record(rec),
             },
             "meta": {"intent": self.INTENT_TYPE, "source_authority": self._source_authority_contract(), "reason_code": REASON_OK},
         }
@@ -886,6 +930,7 @@ class BusinessConfigContractRollbackHandler(BaseIntentHandler):
                 "status": str(rec.status or "draft"),
                 "version_no": int(rec.version_no or 1),
                 "rolled_back_to_version": int(target.version_no or 1),
+                "contract_reload": _contract_reload_hint_for_record(rec),
             },
             "meta": {"intent": self.INTENT_TYPE, "source_authority": self._source_authority_contract(), "reason_code": REASON_OK},
         }

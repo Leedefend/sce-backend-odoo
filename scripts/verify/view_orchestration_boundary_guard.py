@@ -158,6 +158,14 @@ def main() -> int:
         errors,
     )
     _assert(
+        "_contract_reload_hint" in field_handler
+        and '"view_orchestration_config_changed"' in field_handler
+        and '"contract_reload":' in field_handler
+        and "test_contract_reload_hint_normalizes_scope" in field_handler_test,
+        "business config writes must return contract reload hints",
+        errors,
+    )
+    _assert(
         field_handler.count("_upsert_view_orchestration_field_rows(") >= 4,
         "field visibility, order, batch, and custom-field handlers must all mirror to business config",
         errors,

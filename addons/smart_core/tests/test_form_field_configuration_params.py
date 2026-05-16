@@ -336,6 +336,24 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertEqual(result["error"]["reason_code"], "USER_ERROR")
         self.assertIn("action_id", result["error"]["message"])
 
+    def test_contract_reload_hint_normalizes_scope(self):
+        hint = self.module._contract_reload_hint(
+            model="res.partner",
+            view_type="list",
+            action_id=11,
+            view_id=22,
+            role_key="sales",
+            version_no=5,
+        )
+
+        self.assertTrue(hint["required"])
+        self.assertEqual(hint["reason"], "view_orchestration_config_changed")
+        self.assertEqual(hint["view_type"], "tree")
+        self.assertEqual(hint["action_id"], 11)
+        self.assertEqual(hint["view_id"], 22)
+        self.assertEqual(hint["role_key"], "sales")
+        self.assertEqual(hint["orchestration_version"], "5")
+
 
 if __name__ == "__main__":
     unittest.main()
