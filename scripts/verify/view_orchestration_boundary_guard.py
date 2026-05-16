@@ -128,6 +128,13 @@ def main() -> int:
         errors,
     )
     _assert(
+        "_upsert_view_orchestration_field_rows" in field_handler
+        and "view_orchestration" in field_handler
+        and "business_config_mirrored_count" in field_handler,
+        "low-code field handlers must mirror edits into business config orchestration contracts",
+        errors,
+    )
+    _assert(
         "user_id" not in field_policy,
         "ui.form.field.policy must not introduce user-specific structural scope",
         errors,

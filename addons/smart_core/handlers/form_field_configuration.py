@@ -27,6 +27,71 @@ def _optional_non_negative_int(params: dict, *keys: str):
     return int(value or 0), None
 
 
+def _business_config_contract_name(model: str, view_type: str, action_id: int | None, view_id: int | None) -> str:
+    return "view_orchestration:%s:%s:action:%s:view:%s" % (
+        model,
+        view_type or "all",
+        int(action_id or 0),
+        int(view_id or 0),
+    )
+
+
+def _upsert_view_orchestration_field_rows(
+    env,
+    *,
+    model: str,
+    view_type: str = "form",
+    action_id: int | None = None,
+    view_id: int | None = None,
+    rows: list[dict] | None = None,
+) -> int:
+    if not rows or "ui.business.config.contract" not in env:
+        return 0
+    Contract = env["ui.business.config.contract"].sudo()
+    name = _business_config_contract_name(model, view_type, action_id, view_id)
+    domain = [("name", "=", name), ("company_id", "=", env.company.id)]
+    rec = Contract.search(domain, limit=1)
+    payload = dict(rec.contract_json or {}) if rec else {}
+    orchestration = payload.get("view_orchestration") if isinstance(payload.get("view_orchestration"), dict) else {}
+    views = orchestration.get("views") if isinstance(orchestration.get("views"), dict) else {}
+    spec = views.get(view_type) if isinstance(views.get(view_type), dict) else {}
+    fields_rows = spec.get("fields") if isinstance(spec.get("fields"), list) else []
+    by_name = {
+        str(row.get("name") or row.get("field") or row.get("field_name") or "").strip(): dict(row)
+        for row in fields_rows
+        if isinstance(row, dict) and str(row.get("name") or row.get("field") or row.get("field_name") or "").strip()
+    }
+    for row in rows:
+        field_name = str((row or {}).get("name") or "").strip()
+        if not field_name:
+            continue
+        current = by_name.get(field_name, {"name": field_name})
+        for key in ("label", "visible", "sequence"):
+            if key in row and row.get(key) is not None:
+                current[key] = row.get(key)
+        by_name[field_name] = current
+    spec["fields"] = sorted(by_name.values(), key=lambda item: (int(item.get("sequence") or 100), str(item.get("name") or "")))
+    views[view_type] = spec
+    orchestration["views"] = views
+    payload["view_orchestration"] = orchestration
+    vals = {
+        "name": name,
+        "model": model,
+        "view_type": view_type,
+        "action_id": int(action_id or 0) or False,
+        "view_id": int(view_id or 0) or False,
+        "company_id": env.company.id,
+        "contract_json": payload,
+        "status": "published",
+    }
+    if rec:
+        rec.write(vals)
+    else:
+        rec = Contract.create(vals)
+    rec.action_publish()
+    return len(rows)
+
+
 class FormFieldPolicySetHandler(BaseIntentHandler):
     INTENT_TYPE = "ui.form_field_policy.set"
     DESCRIPTION = "Set current form field visibility policy from a contract action."
@@ -119,6 +184,19 @@ class FormFieldPolicySetHandler(BaseIntentHandler):
             policy.write(vals)
         else:
             policy = Policy.create(vals)
+        mirrored_count = _upsert_view_orchestration_field_rows(
+            self.env,
+            model=model,
+            view_type="form",
+            action_id=action_id,
+            view_id=view_id,
+            rows=[{
+                "name": field_name,
+                "label": label,
+                "visible": bool(visible),
+                "sequence": int(policy.sequence or sequence or 100),
+            }],
+        )
         return {
             "ok": True,
             "data": {
@@ -129,6 +207,7 @@ class FormFieldPolicySetHandler(BaseIntentHandler):
                 "label": str(policy.label or ""),
                 "group_title": str(policy.group_title or ""),
                 "sequence": int(policy.sequence or 0),
+                "business_config_mirrored_count": mirrored_count,
             },
             "meta": {"intent": self.INTENT_TYPE, "reason_code": REASON_OK, "source_authority": self._source_authority_contract()},
         }
@@ -324,9 +403,30 @@ class FormFieldOrderSetHandler(BaseIntentHandler):
                 "action_id": action_id or False,
                 "view_id": view_id or False,
             })
+        mirrored_count = _upsert_view_orchestration_field_rows(
+            self.env,
+            model=model,
+            view_type="form",
+            action_id=action_id,
+            view_id=view_id,
+            rows=[
+                {
+                    "name": field_name,
+                    "label": str((field_map.get(field_name).field_description if field_map.get(field_name) else field_name) or field_name),
+                    "visible": True,
+                    "sequence": (index + 1) * 10,
+                }
+                for index, field_name in enumerate(field_order)
+            ],
+        )
         return {
             "ok": True,
-            "data": {"model": model, "field_order": field_order, "updated_count": len(field_order)},
+            "data": {
+                "model": model,
+                "field_order": field_order,
+                "updated_count": len(field_order),
+                "business_config_mirrored_count": mirrored_count,
+            },
             "meta": {"intent": self.INTENT_TYPE, "reason_code": REASON_OK, "source_authority": self._source_authority_contract()},
         }
 
@@ -347,6 +447,7 @@ class FormFieldConfigBatchSetHandler(FormFieldOrderSetHandler):
             action_id, _ = _optional_non_negative_int(params, "action_id", "actionId")
             view_id, _ = _optional_non_negative_int(params, "view_id", "viewId")
             updates = 0
+            mirror_rows = []
             for field_name, raw_visible in visibility.items():
                 name = str(field_name or "").strip()
                 if not name:
@@ -363,7 +464,17 @@ class FormFieldConfigBatchSetHandler(FormFieldOrderSetHandler):
                 if policy:
                     policy.write({"visible": bool(visible)})
                     updates += 1
+                mirror_rows.append({"name": name, "visible": bool(visible)})
+            mirrored_count = _upsert_view_orchestration_field_rows(
+                self.env,
+                model=model,
+                view_type="form",
+                action_id=action_id,
+                view_id=view_id,
+                rows=mirror_rows,
+            )
             order_result["data"]["visibility_updated_count"] = updates
+            order_result["data"]["business_config_visibility_mirrored_count"] = mirrored_count
         order_result["meta"]["intent"] = self.INTENT_TYPE
         order_result["meta"]["low_code_config"] = {
             "enabled": True,

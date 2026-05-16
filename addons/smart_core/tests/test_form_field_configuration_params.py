@@ -145,6 +145,66 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertEqual(result["code"], 400)
         self.assertEqual(result["error"]["reason_code"], "MISSING_PARAMS")
 
+    def test_low_code_field_rows_mirror_into_business_config_contract(self):
+        class Company:
+            id = 7
+
+        class Record:
+            id = 1
+            contract_json = {}
+
+            def write(self, vals):
+                self.contract_json = vals["contract_json"]
+                self.written = vals
+
+            def action_publish(self):
+                self.published = True
+
+        class ContractModel:
+            def __init__(self):
+                self.record = None
+                self.created_vals = None
+
+            def sudo(self):
+                return self
+
+            def search(self, domain, limit=None):
+                return self.record
+
+            def create(self, vals):
+                self.created_vals = vals
+                self.record = Record()
+                self.record.write(vals)
+                return self.record
+
+        class Env(dict):
+            company = Company()
+
+        contract_model = ContractModel()
+        env = Env({"ui.business.config.contract": contract_model})
+
+        count = self.module._upsert_view_orchestration_field_rows(
+            env,
+            model="res.partner",
+            view_type="form",
+            action_id=11,
+            view_id=22,
+            rows=[
+                {"name": "email", "label": "Email Alias", "sequence": 10},
+                {"name": "phone", "visible": False, "sequence": 20},
+            ],
+        )
+
+        self.assertEqual(count, 2)
+        payload = contract_model.record.contract_json
+        fields = payload["view_orchestration"]["views"]["form"]["fields"]
+        self.assertEqual([row["name"] for row in fields], ["email", "phone"])
+        self.assertEqual(fields[0]["label"], "Email Alias")
+        self.assertFalse(fields[1]["visible"])
+        self.assertEqual(contract_model.created_vals["action_id"], 11)
+        self.assertEqual(contract_model.created_vals["view_id"], 22)
+        self.assertTrue(contract_model.record.published)
+
 
 if __name__ == "__main__":
     unittest.main()
