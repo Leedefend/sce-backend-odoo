@@ -547,14 +547,22 @@ class FormFieldConfigBatchSetHandler(FormFieldOrderSetHandler):
     DESCRIPTION = "Batch set form field order and visibility for current form scope."
 
     def handle(self, payload=None, ctx=None):
+        params = self.params if isinstance(self.params, dict) else {}
+        model = str(params.get("model") or "").strip()
+        visibility = params.get("field_visibility") or params.get("fieldVisibility")
+        if model and isinstance(visibility, dict) and model in self.env:
+            unknown = [
+                str(field_name or "").strip()
+                for field_name in visibility
+                if str(field_name or "").strip() and str(field_name or "").strip() not in self.env[model]._fields
+            ]
+            if unknown:
+                return self._err(404, "字段不存在：%s.%s" % (model, unknown[0]), REASON_NOT_FOUND)
         order_result = super().handle(payload=payload, ctx=ctx)
         if not order_result.get("ok"):
             return order_result
-        params = self.params if isinstance(self.params, dict) else {}
-        visibility = params.get("field_visibility") or params.get("fieldVisibility")
         if visibility and isinstance(visibility, dict):
             Policy = self.env["ui.form.field.policy"]
-            model = str(params.get("model") or "").strip()
             action_id, _ = _optional_non_negative_int(params, "action_id", "actionId")
             view_id, _ = _optional_non_negative_int(params, "view_id", "viewId")
             updates = 0

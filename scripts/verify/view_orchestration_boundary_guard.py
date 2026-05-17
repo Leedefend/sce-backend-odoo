@@ -203,6 +203,13 @@ def main() -> int:
         errors,
     )
     _assert(
+        "test_batch_config_rejects_unknown_visibility_field_before_order_write" in field_handler_test
+        and "field_visibility" in field_handler
+        and "字段不存在：%s.%s" in field_handler,
+        "batch low-code form configuration must reject unknown visibility fields before writing orchestration config",
+        errors,
+    )
+    _assert(
         "user_id" not in field_policy,
         "ui.form.field.policy must not introduce user-specific structural scope",
         errors,

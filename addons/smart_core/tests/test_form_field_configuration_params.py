@@ -96,6 +96,26 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertEqual(result["error"]["reason_code"], "USER_ERROR")
         self.assertIn("field_order", result["error"]["message"])
 
+    def test_batch_config_rejects_unknown_visibility_field_before_order_write(self):
+        class Model:
+            _fields = {"name": object()}
+
+        handler = self.module.FormFieldConfigBatchSetHandler(
+            env={"res.partner": Model()},
+            params={
+                "model": "res.partner",
+                "field_order": ["name"],
+                "field_visibility": {"missing": False},
+            },
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 404)
+        self.assertEqual(result["error"]["reason_code"], "NOT_FOUND")
+        self.assertIn("res.partner.missing", result["error"]["message"])
+
     def test_business_config_contract_save_rejects_invalid_contract_json(self):
         handler = self.module.BusinessConfigContractSaveHandler(
             env={},
