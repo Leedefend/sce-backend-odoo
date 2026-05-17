@@ -892,6 +892,49 @@ class TestProjectFormGovernance(unittest.TestCase):
         self.assertIn("name", fields)
         self.assertNotIn("message_ids", fields)
 
+    def test_project_kanban_preserves_orchestrated_field_rows_and_slots(self):
+        data = _sample_kanban_payload()
+        data["view_type"] = "list"
+        data["head"]["view_type"] = "tree,kanban"
+        data["views"]["kanban"]["fields"] = [
+            {"name": "manager_id", "label": "CODEX_MANAGER_CARD"},
+            {"name": "name", "label": "CODEX_NAME_CARD"},
+        ]
+        data["views"]["kanban"]["slots"] = {"primary": ["manager_id", "name"]}
+
+        out = apply_contract_governance(data, "user")
+
+        kanban_view = ((out.get("views") or {}).get("kanban")) or {}
+        fields = kanban_view.get("fields") or []
+        self.assertIsInstance(fields[0], dict)
+        self.assertEqual(fields[0].get("name"), "manager_id")
+        self.assertEqual(fields[0].get("label"), "CODEX_MANAGER_CARD")
+        self.assertEqual(fields[1].get("name"), "name")
+        self.assertEqual(fields[1].get("label"), "CODEX_NAME_CARD")
+        profile = kanban_view.get("kanban_profile") or {}
+        self.assertEqual(profile.get("primary_fields"), ["manager_id", "name"])
+
+    def test_project_list_governance_respects_orchestrated_tree_order_and_labels(self):
+        data = _sample_payload()
+        data["head"]["view_type"] = "tree,kanban"
+        data["views"] = {
+            "tree": {
+                "columns": ["manager_id", "name"],
+                "columns_schema": [
+                    {"name": "manager_id", "label": "CODEX_MANAGER_COLUMN"},
+                    {"name": "name", "label": "CODEX_NAME_COLUMN"},
+                ],
+                "governance": {"view_orchestration": {"applied": True}},
+            }
+        }
+
+        out = apply_contract_governance(data, "user")
+
+        list_profile = out.get("list_profile") or {}
+        self.assertEqual((list_profile.get("columns") or [])[:2], ["manager_id", "name"])
+        self.assertEqual((list_profile.get("column_labels") or {}).get("manager_id"), "CODEX_MANAGER_COLUMN")
+        self.assertEqual((list_profile.get("column_labels") or {}).get("name"), "CODEX_NAME_COLUMN")
+
     def test_action_open_form_surface_is_not_overwritten_by_multi_view_head(self):
         data = _sample_payload()
         data["head"]["view_type"] = "kanban,tree,form"

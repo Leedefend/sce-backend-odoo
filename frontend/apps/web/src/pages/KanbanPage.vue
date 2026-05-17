@@ -200,13 +200,13 @@ const emptyCopy = computed(() => resolveEmptyCopy('card'));
 
 const fallbackMetaFields = computed(() => props.fields.filter((field) => field !== props.titleField));
 const statusMetaFields = computed(() => {
-  const preferred = (props.statusFields || []).filter((field) => field && field !== props.titleField);
+  const preferred = (props.statusFields || []).filter((field) => field);
   if (preferred.length) return preferred.slice(0, 2);
   return [];
 });
 const primaryMetaFields = computed(() => {
   const preferred = (props.primaryFields || []).filter(
-    (field) => field && field !== props.titleField && !statusMetaFields.value.includes(field),
+    (field) => field && !statusMetaFields.value.includes(field),
   );
   if (preferred.length) return preferred.slice(0, 2);
   return fallbackMetaFields.value.filter((field) => !statusMetaFields.value.includes(field)).slice(0, 2);
@@ -215,7 +215,6 @@ const secondaryMetaFields = computed(() => {
   const preferred = (props.secondaryFields || []).filter(
     (field) =>
       field
-      && field !== props.titleField
       && !statusMetaFields.value.includes(field)
       && !primaryMetaFields.value.includes(field),
   );

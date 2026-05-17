@@ -271,7 +271,7 @@
       :primary-fields="kanbanPrimaryFields"
       :secondary-fields="kanbanSecondaryFields"
       :status-fields="kanbanStatusFields"
-      :field-labels="contractColumnLabels"
+      :field-labels="kanbanFieldLabels"
       :title-field="kanbanTitleField"
       :subtitle="vm.page.subtitle"
       :status-label="vm.page.statusLabel"
@@ -1467,6 +1467,7 @@ const {
   extractKanbanFields,
   extractKanbanProfile,
   extractAdvancedViewFields,
+  extractViewFieldLabels,
   advancedRowTitle,
   advancedRowMeta,
   buildGroupKey,
@@ -1477,6 +1478,10 @@ const {
   advancedFields,
   activeGroupByField,
 });
+const kanbanFieldLabels = computed<Record<string, string>>(() => ({
+  ...contractColumnLabels.value,
+  ...extractViewFieldLabels(actionContract.value, 'kanban'),
+}));
 const {
   sortLabel,
 } = useActionViewSurfaceDisplayRuntime({

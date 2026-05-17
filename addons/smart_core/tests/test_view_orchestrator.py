@@ -116,6 +116,7 @@ class TestViewOrchestrator(unittest.TestCase):
         result, calls = self._compose(payload, {"search": {"filters": [], "group_by": []}}, "search")
 
         self.assertEqual(result["search"]["filters"][0]["name"], "active_customers")
+        self.assertEqual(result["search"]["filters"][0]["key"], "active_customers")
         self.assertEqual(result["search"]["filters"][0]["label"], "Active")
         self.assertEqual(result["search"]["group_by"][0]["field"], "company_id")
         self.assertEqual(result["search"]["group_by"][0]["label"], "Company")

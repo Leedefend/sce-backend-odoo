@@ -294,7 +294,7 @@ class ViewOrchestrator:
         filters = spec.get("filters")
         group_by = spec.get("group_by") or spec.get("groupBys")
         if isinstance(filters, list):
-            search["filters"] = self._ordered_display_rows(filters, field_key="field")
+            search["filters"] = self._ordered_search_filters(filters)
         if isinstance(group_by, list):
             search["group_by"] = self._ordered_display_rows(group_by, field_key="field")
         self._apply_action_slots(search, spec, default_key="actions")
@@ -376,6 +376,27 @@ class ViewOrchestrator:
                 node[key] = self._ordered_display_rows(value, field_key="field")
         if node:
             contract[view_type] = node
+            for key in (
+                "fields",
+                "slots",
+                "actions",
+                "quick_actions",
+                "cards",
+                "kpis",
+                "kanban_profile",
+                "date_slots",
+                "resource_slots",
+                "color_slots",
+                "dependency_slots",
+                "activity_type_slots",
+                "deadline_slots",
+                "assignee_slots",
+                "metric_slots",
+                "chart_slots",
+                "navigation_slots",
+            ):
+                if key in node:
+                    contract[key] = deepcopy(node[key])
         return contract
 
     def _apply_view_options(
@@ -478,6 +499,19 @@ class ViewOrchestrator:
             normalized.append(out)
         normalized.sort(key=lambda item: (int(item.get("sequence") or 100), str(item.get("name") or item.get(field_key) or "")))
         return [self._display_row(row) for row in normalized if row.get("visible") is not False]
+
+    def _ordered_search_filters(self, rows: Any) -> list:
+        filters = self._ordered_display_rows(rows, field_key="field")
+        out = []
+        for row in filters:
+            if not isinstance(row, dict):
+                continue
+            key = str(row.get("key") or row.get("name") or row.get("field") or "").strip()
+            if key:
+                row["key"] = key
+                row.setdefault("name", key)
+            out.append(row)
+        return out
 
     def _display_row(self, row: dict) -> dict | str:
         name = str(row.get("name") or row.get("field") or row.get("field_name") or "").strip()

@@ -138,6 +138,37 @@ function main() {
     throw new Error(`advanced display row labels: expected compiled labels, got ${meta}`);
   }
 
+  const projectShapeRuntime = runtime.useActionViewContractShapeRuntime({
+    pageText: (_key, fallback) => fallback,
+    actionContract: {
+      value: {
+        head: { model: 'project.project' },
+        views: {
+          kanban: {
+            fields: [
+              { name: 'partner_id', label: 'CODEX_PARTNER_CARD' },
+              { name: 'name', label: 'CODEX_NAME_CARD' },
+            ],
+          },
+        },
+      },
+    },
+    advancedFields: { value: [] },
+    activeGroupByField: { value: '' },
+  });
+  if (projectShapeRuntime.contractColumnLabels.value.name !== 'CODEX_NAME_CARD') {
+    throw new Error('project fallback labels must not overwrite orchestrated kanban labels');
+  }
+  const viewLabels = runtime.extractViewFieldLabelsFromContract({
+    views: {
+      tree: { columns_schema: [{ name: 'partner_id', label: 'CODEX_PARTNER_COLUMN' }] },
+      kanban: { fields: [{ name: 'partner_id', label: 'CODEX_PARTNER_CARD' }] },
+    },
+  }, 'kanban');
+  if (viewLabels.partner_id !== 'CODEX_PARTNER_CARD') {
+    throw new Error('view-specific labels must prefer the current view block');
+  }
+
   console.log('[action_view_orchestration_contract_shape_smoke] PASS');
 }
 

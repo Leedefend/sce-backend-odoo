@@ -124,10 +124,15 @@ class PageAssembler:
             _logger.warning("Action %s has no res_model, returning diagnostic contract", action.get('id') if action else 'unknown')
             return ClientUrlReportAssembler(self.env).assemble_diagnostic_contract(p, action, issue="动作未配置模型 (res_model)")
 
-        view_types = p["view_types"]
         env = self.env
         su = self.su_env
         action = action or self._resolve_action_from_payload(p, model)
+        view_types = self._include_configured_orchestrated_view_types(
+            p.get("view_types"),
+            model_name=model,
+            action_id=action.get("id") if isinstance(action, dict) else p.get("action_id") or p.get("actionId"),
+        )
+        p["view_types"] = view_types
         action_eval_context = {
             "uid": env.uid,
             "user": env.user,
@@ -460,6 +465,35 @@ class PageAssembler:
             data["warnings"] = warnings
         data["source_authority"] = self.source_authority_contract()
         return data, versions
+
+    def _include_configured_orchestrated_view_types(self, view_types, *, model_name="", action_id=None):
+        normalized = self.normalize_view_types(view_types)
+        model = str(model_name or "").strip()
+        if not model or "ui.business.config.contract" not in self.env:
+            return normalized
+        try:
+            action_id_int = int(action_id or 0)
+        except Exception:
+            action_id_int = 0
+        domain = [("model", "=", model), ("status", "=", "published")]
+        if action_id_int > 0:
+            domain.append(("action_id", "in", [False, action_id_int]))
+        else:
+            domain.append(("action_id", "=", False))
+        try:
+            rows = self.env["ui.business.config.contract"].sudo().search(domain)
+        except Exception:
+            _logger.exception("include configured orchestrated view types failed for model=%s action_id=%s", model, action_id_int)
+            return normalized
+        allowed = {"tree", "form", "kanban", "search", "pivot", "graph", "calendar", "gantt", "activity", "dashboard"}
+        out = list(normalized)
+        for row in rows:
+            view_type = str(getattr(row, "view_type", "") or "").strip()
+            if view_type == "list":
+                view_type = "tree"
+            if view_type in allowed and view_type not in out:
+                out.append(view_type)
+        return out
 
     def _inject_create_defaults(self, data, model_name="", render_profile=""):
         if str(render_profile or "").strip().lower() != "create":
@@ -1215,6 +1249,12 @@ class PageAssembler:
             for key in ("metric_slots", "chart_slots", "navigation_slots"):
                 value = cfg.get(key, nested.get(key))
                 if isinstance(value, dict):
+                    cfg[key] = value
+            return cfg
+        if vt == "kanban":
+            for key in ("fields", "slots", "kanban_profile", "row_actions", "quick_actions", "actions"):
+                value = cfg.get(key, nested.get(key))
+                if isinstance(value, (list, dict)):
                     cfg[key] = value
             return cfg
         return cfg

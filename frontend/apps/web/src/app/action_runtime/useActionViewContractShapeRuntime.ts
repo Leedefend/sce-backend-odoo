@@ -159,6 +159,29 @@ export function extractAdvancedViewFieldsFromContract(contract: unknown, mode: s
   return fallbackNames;
 }
 
+export function extractViewFieldLabelsFromContract(contract: unknown, mode: string): Record<string, string> {
+  const typed = (contract || {}) as Dict;
+  const directViews = typed.views as Dict | undefined;
+  const viewBlock = (directViews?.[mode] || {}) as Dict;
+  const nested = (viewBlock[mode] || {}) as Dict;
+  const labels: Record<string, string> = {};
+  collectDisplayRowLabels(viewBlock.fields, labels);
+  collectDisplayRowLabels(viewBlock.columns, labels);
+  collectDisplayRowLabels(viewBlock.columns_schema || viewBlock.columnsSchema, labels);
+  collectDisplayRowLabels(viewBlock.measures, labels);
+  collectDisplayRowLabels(viewBlock.dimensions, labels);
+  collectDisplayRowLabels(viewBlock.cards, labels);
+  collectDisplayRowLabels(viewBlock.kpis, labels);
+  collectDisplayRowLabels(nested.fields, labels);
+  collectDisplayRowLabels(nested.columns, labels);
+  collectDisplayRowLabels(nested.columns_schema || nested.columnsSchema, labels);
+  collectDisplayRowLabels(nested.measures, labels);
+  collectDisplayRowLabels(nested.dimensions, labels);
+  collectDisplayRowLabels(nested.cards, labels);
+  collectDisplayRowLabels(nested.kpis, labels);
+  return labels;
+}
+
 export function useActionViewContractShapeRuntime(options: UseActionViewContractShapeRuntimeOptions) {
   const contractColumnLabels = computed<Record<string, string>>(() => {
     const contract = options.actionContract.value || {};
@@ -202,8 +225,8 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
       : {};
     const modelName = String((contract as Dict).model || head.model || '').trim();
     if (modelName === 'project.project') {
-      labels.name = '名称';
-      labels.business_nature = '经营性质';
+      labels.name = labels.name || '名称';
+      labels.business_nature = labels.business_nature || '经营性质';
     }
     return labels;
   });
@@ -390,6 +413,10 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
     return extractAdvancedViewFieldsFromContract(contract, mode);
   }
 
+  function extractViewFieldLabels(contract: unknown, mode: string) {
+    return extractViewFieldLabelsFromContract(contract, mode);
+  }
+
   function advancedRowTitle(row: Record<string, unknown>) {
     return String(row.display_name || row.name || row.id || options.pageText('advanced_row_title_fallback', '记录')).trim();
   }
@@ -553,6 +580,7 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
     extractKanbanFields,
     extractKanbanProfile,
     extractAdvancedViewFields,
+    extractViewFieldLabels,
     advancedRowTitle,
     advancedFieldLabel,
     advancedRowMeta,
