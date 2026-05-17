@@ -29,6 +29,8 @@ NATIVE_PARSER_TEST = ROOT / "addons/smart_core/tests/test_native_view_parser_sur
 BUSINESS_CONFIG_TEST = ROOT / "addons/smart_core/tests/test_business_config_contract_schema.py"
 PAGE_ASSEMBLER_TEST = ROOT / "addons/smart_core/tests/test_page_assembler_view_orchestration_versions.py"
 CONTRACT_MIXIN_TEST = ROOT / "addons/smart_core/tests/test_contract_mixin_view_surfaces.py"
+ACTION_VIEW_RUNTIME = ROOT / "frontend/apps/web/src/app/action_runtime/useActionViewContractShapeRuntime.ts"
+ACTION_VIEW_SHAPE_SMOKE = ROOT / "scripts/verify/action_view_orchestration_contract_shape_smoke.js"
 
 
 def _read(path: Path) -> str:
@@ -75,6 +77,8 @@ def main() -> int:
     business_config_test = _read(BUSINESS_CONFIG_TEST)
     page_assembler_test = _read(PAGE_ASSEMBLER_TEST)
     contract_mixin_test = _read(CONTRACT_MIXIN_TEST)
+    action_view_runtime = _read(ACTION_VIEW_RUNTIME)
+    action_view_shape_smoke = _read(ACTION_VIEW_SHAPE_SMOKE)
 
     for label, source in (
         ("NativeParseService", native_parse),
@@ -410,6 +414,16 @@ def main() -> int:
         and '"metric_slots"' in page_assembler
         and '"navigation_slots"' in page_assembler,
         "page assembler must expose orchestrated advanced-view slots on user-facing view contracts",
+        errors,
+    )
+    _assert(
+        "extractKanbanFieldsFromContract" in action_view_runtime
+        and "extractAdvancedViewFieldsFromContract" in action_view_runtime
+        and "collectSlotFieldNames" in action_view_runtime
+        and "kanban nested fields and slots" in action_view_shape_smoke
+        and "calendar advanced fields" in action_view_shape_smoke
+        and "dashboard advanced fields" in action_view_shape_smoke,
+        "frontend action view runtime must consume orchestrated kanban and advanced-view slots",
         errors,
     )
     relation_dialog_body = _function_body(page_assembler, "_build_relation_search_dialog_contract")

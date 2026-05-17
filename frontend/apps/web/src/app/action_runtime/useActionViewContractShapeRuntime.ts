@@ -43,6 +43,111 @@ type ListColumnOption = {
   toneByValue?: Record<string, string>;
 };
 
+function normalizeFieldNames(rows: unknown): string[] {
+  if (!Array.isArray(rows)) return [];
+  return rows
+    .map((item) => {
+      if (typeof item === 'string' || typeof item === 'number') return String(item || '').trim();
+      const row = (item || {}) as Dict;
+      return String(row.field || row.name || row.field_name || '').trim();
+    })
+    .filter(Boolean);
+}
+
+function collectSlotFieldNames(value: unknown): string[] {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return [];
+  return Object.values(value as Dict).flatMap((slotValue) => {
+    if (typeof slotValue === 'string' || typeof slotValue === 'number') {
+      return [String(slotValue || '').trim()].filter(Boolean);
+    }
+    if (Array.isArray(slotValue)) {
+      return normalizeFieldNames(slotValue);
+    }
+    if (slotValue && typeof slotValue === 'object') {
+      return normalizeFieldNames([slotValue]);
+    }
+    return [];
+  });
+}
+
+export function extractKanbanFieldsFromContract(contract: unknown): string[] {
+  const typed = (contract || {}) as Dict;
+  const v2 = resolveUnifiedPageContractV2(typed);
+  if (String(v2?.pageInfo?.viewType || '').trim() === 'kanban') {
+    const fields = collectUnifiedPageContractV2FieldWidgets(typed)
+      .map((widget) => widget.fieldCode)
+      .filter(Boolean);
+    if (fields.length) return fields;
+  }
+  const directViews = typed.views as Dict | undefined;
+  if (!directViews) return [];
+  const kanbanBlock = (directViews.kanban || {}) as Dict;
+  const nestedKanban = (kanbanBlock.kanban || {}) as Dict;
+  const fields = [
+    ...normalizeFieldNames(kanbanBlock.fields),
+    ...normalizeFieldNames(nestedKanban.fields),
+    ...collectSlotFieldNames(kanbanBlock.slots),
+    ...collectSlotFieldNames(nestedKanban.slots),
+  ];
+  return uniqueFields(fields);
+}
+
+export function extractAdvancedViewFieldsFromContract(contract: unknown, mode: string): string[] {
+  const typed = (contract || {}) as Dict;
+  const directViews = typed.views as Dict | undefined;
+  const viewBlock = (directViews?.[mode] || {}) as Dict;
+  const nested = (viewBlock[mode] || {}) as Dict;
+  const fallbackNames = ['name', 'display_name', 'id'];
+  const blockValue = (key: string) => viewBlock[key] ?? nested[key];
+  if (mode === 'pivot') {
+    const measures = normalizeFieldNames(blockValue('measures'));
+    const dims = normalizeFieldNames(blockValue('dimensions'));
+    return uniqueFields([...dims, ...measures, ...fallbackNames]);
+  }
+  if (mode === 'graph') {
+    const measure = String(blockValue('measure') || '').trim();
+    const dim = String(blockValue('dimension') || '').trim();
+    const measures = normalizeFieldNames(blockValue('measures'));
+    const dims = normalizeFieldNames(blockValue('dimensions'));
+    return uniqueFields([dim, measure, ...dims, ...measures, ...fallbackNames].filter(Boolean));
+  }
+  if (mode === 'calendar' || mode === 'gantt') {
+    const dateStart = String(blockValue('date_start') || '').trim();
+    const dateStop = String(blockValue('date_stop') || '').trim();
+    const slotFields = [
+      ...collectSlotFieldNames(blockValue('date_slots')),
+      ...collectSlotFieldNames(blockValue('resource_slots')),
+      ...collectSlotFieldNames(blockValue('color_slots')),
+      ...collectSlotFieldNames(blockValue('dependency_slots')),
+      ...normalizeFieldNames(blockValue('fields')),
+    ];
+    return uniqueFields([dateStart, dateStop, ...slotFields, ...fallbackNames].filter(Boolean));
+  }
+  if (mode === 'activity') {
+    const activityField = String(blockValue('field') || '').trim();
+    const slotFields = [
+      ...collectSlotFieldNames(blockValue('activity_type_slots')),
+      ...collectSlotFieldNames(blockValue('deadline_slots')),
+      ...collectSlotFieldNames(blockValue('assignee_slots')),
+      ...normalizeFieldNames(blockValue('fields')),
+    ];
+    return uniqueFields([activityField, ...slotFields, ...fallbackNames].filter(Boolean));
+  }
+  if (mode === 'dashboard') {
+    const kpis = Array.isArray(blockValue('kpis')) ? blockValue('kpis') as unknown[] : [];
+    const cards = Array.isArray(blockValue('cards')) ? blockValue('cards') as unknown[] : [];
+    const guessed = [...kpis, ...cards]
+      .map((item) => String(((item as Dict).field || '')).trim())
+      .filter(Boolean);
+    const slotFields = [
+      ...collectSlotFieldNames(blockValue('metric_slots')),
+      ...collectSlotFieldNames(blockValue('chart_slots')),
+    ];
+    return uniqueFields([...guessed, ...slotFields, ...fallbackNames]);
+  }
+  return fallbackNames;
+}
+
 export function useActionViewContractShapeRuntime(options: UseActionViewContractShapeRuntimeOptions) {
   const contractColumnLabels = computed<Record<string, string>>(() => {
     const contract = options.actionContract.value || {};
@@ -199,22 +304,7 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
   }
 
   function extractKanbanFields(contract: unknown) {
-    const typed = (contract || {}) as Dict;
-    const v2 = resolveUnifiedPageContractV2(typed);
-    if (String(v2?.pageInfo?.viewType || '').trim() === 'kanban') {
-      const fields = collectUnifiedPageContractV2FieldWidgets(typed)
-        .map((widget) => widget.fieldCode)
-        .filter(Boolean);
-      if (fields.length) return fields;
-    }
-    const directViews = typed.views as Dict | undefined;
-    if (directViews) {
-      const kanbanBlock = (directViews.kanban || {}) as Dict;
-      if (Array.isArray(kanbanBlock.fields) && kanbanBlock.fields.length) {
-        return kanbanBlock.fields.map((item) => String(item || '')).filter(Boolean);
-      }
-    }
-    return [];
+    return extractKanbanFieldsFromContract(contract);
   }
 
   function extractKanbanProfile(contract: unknown): KanbanProfile {
@@ -274,42 +364,7 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
   }
 
   function extractAdvancedViewFields(contract: unknown, mode: string) {
-    const typed = (contract || {}) as Dict;
-    const directViews = typed.views as Dict | undefined;
-    const viewBlock = (directViews?.[mode] || {}) as Dict;
-    const fallbackNames = ['name', 'display_name', 'id'];
-    if (mode === 'pivot') {
-      const measures = Array.isArray(viewBlock.measures) ? viewBlock.measures : [];
-      const dims = Array.isArray(viewBlock.dimensions) ? viewBlock.dimensions : [];
-      const fields = [...dims, ...measures, ...fallbackNames]
-        .map((item) => String(item || '').trim())
-        .filter(Boolean);
-      return uniqueFields(fields);
-    }
-    if (mode === 'graph') {
-      const measure = String(viewBlock.measure || '').trim();
-      const dim = String(viewBlock.dimension || '').trim();
-      return uniqueFields([dim, measure, ...fallbackNames].filter(Boolean));
-    }
-    if (mode === 'calendar' || mode === 'gantt') {
-      const dateStart = String(viewBlock.date_start || '').trim();
-      const dateStop = String(viewBlock.date_stop || '').trim();
-      const fields = [dateStart, dateStop, ...fallbackNames];
-      return uniqueFields(fields.map((item) => String(item || '').trim()).filter(Boolean));
-    }
-    if (mode === 'activity') {
-      const activityField = String(viewBlock.field || '').trim();
-      return uniqueFields([activityField, ...fallbackNames].filter(Boolean));
-    }
-    if (mode === 'dashboard') {
-      const kpis = Array.isArray(viewBlock.kpis) ? viewBlock.kpis : [];
-      const cards = Array.isArray(viewBlock.cards) ? viewBlock.cards : [];
-      const guessed = [...kpis, ...cards]
-        .map((item) => String(((item as Dict).field || '')).trim())
-        .filter(Boolean);
-      return uniqueFields([...guessed, ...fallbackNames]);
-    }
-    return fallbackNames;
+    return extractAdvancedViewFieldsFromContract(contract, mode);
   }
 
   function advancedRowTitle(row: Record<string, unknown>) {
