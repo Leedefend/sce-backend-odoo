@@ -70,6 +70,17 @@ function collectSlotFieldNames(value: unknown): string[] {
   });
 }
 
+function collectDisplayRowLabels(rows: unknown, labels: Record<string, string>) {
+  if (!Array.isArray(rows)) return;
+  rows.forEach((item) => {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) return;
+    const row = item as Dict;
+    const name = String(row.name || row.field || row.field_name || '').trim();
+    const label = String(row.label || row.string || row.display_label || '').trim();
+    if (name && label) labels[name] = label;
+  });
+}
+
 export function extractKanbanFieldsFromContract(contract: unknown): string[] {
   const typed = (contract || {}) as Dict;
   const v2 = resolveUnifiedPageContractV2(typed);
@@ -173,6 +184,18 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
       const name = String(row.name || '').trim();
       const label = String(row.label || '').trim();
       if (name && label) labels[name] = label;
+    });
+    const directViews = ((contract as Dict).views || {}) as Dict;
+    Object.values(directViews).forEach((viewBlock) => {
+      if (!viewBlock || typeof viewBlock !== 'object' || Array.isArray(viewBlock)) return;
+      const block = viewBlock as Dict;
+      collectDisplayRowLabels(block.fields, labels);
+      collectDisplayRowLabels(block.columns, labels);
+      collectDisplayRowLabels(block.columns_schema || block.columnsSchema, labels);
+      collectDisplayRowLabels(block.measures, labels);
+      collectDisplayRowLabels(block.dimensions, labels);
+      collectDisplayRowLabels(block.cards, labels);
+      collectDisplayRowLabels(block.kpis, labels);
     });
     const head = ((contract as Dict).head && typeof (contract as Dict).head === 'object')
       ? (contract as Dict).head as Dict

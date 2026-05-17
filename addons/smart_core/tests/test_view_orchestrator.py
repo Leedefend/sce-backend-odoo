@@ -100,8 +100,14 @@ class TestViewOrchestrator(unittest.TestCase):
             "view_orchestration": {
                 "views": {
                     "search": {
-                        "filters": [{"name": "active_customers", "domain": [["active", "=", True]]}],
-                        "groupBys": [{"name": "by_company", "field": "company_id"}],
+                        "filters": [
+                            {"name": "late", "label": "Late", "domain": [["active", "=", False]], "sequence": 20},
+                            {"name": "active_customers", "label": "Active", "domain": [["active", "=", True]], "sequence": 10},
+                        ],
+                        "groupBys": [
+                            {"name": "by_state", "field": "state", "label": "State", "sequence": 20},
+                            {"name": "by_company", "field": "company_id", "label": "Company", "sequence": 10},
+                        ],
                     }
                 }
             }
@@ -110,7 +116,9 @@ class TestViewOrchestrator(unittest.TestCase):
         result, calls = self._compose(payload, {"search": {"filters": [], "group_by": []}}, "search")
 
         self.assertEqual(result["search"]["filters"][0]["name"], "active_customers")
+        self.assertEqual(result["search"]["filters"][0]["label"], "Active")
         self.assertEqual(result["search"]["group_by"][0]["field"], "company_id")
+        self.assertEqual(result["search"]["group_by"][0]["label"], "Company")
         self.assertEqual(calls[0][1]["view_type"], "search")
         self.assertEqual((result["governance"]["view_orchestration"])["owner_layer"], "business_view_orchestration")
         trace = result["source_trace"]["view_orchestration"]
@@ -125,8 +133,8 @@ class TestViewOrchestrator(unittest.TestCase):
             "view_orchestration": {
                 "views": {
                     "pivot": {
-                        "measures": ["amount_total"],
-                        "dimensions": ["company_id"],
+                        "measures": [{"name": "amount_total", "label": "Amount", "sequence": 20}],
+                        "dimensions": [{"name": "company_id", "label": "Company", "sequence": 10}],
                         "defaults": {"measure": "amount_total"},
                         "chart_policy": {"type": "bar"},
                     }
@@ -136,8 +144,10 @@ class TestViewOrchestrator(unittest.TestCase):
 
         result, _calls = self._compose(payload, {"pivot": {"measures": ["legacy"]}}, "pivot")
 
-        self.assertEqual(result["pivot"]["measures"], ["amount_total"])
-        self.assertEqual(result["pivot"]["dimensions"], ["company_id"])
+        self.assertEqual(result["pivot"]["measures"][0]["name"], "amount_total")
+        self.assertEqual(result["pivot"]["measures"][0]["label"], "Amount")
+        self.assertEqual(result["pivot"]["dimensions"][0]["name"], "company_id")
+        self.assertEqual(result["pivot"]["dimensions"][0]["label"], "Company")
         self.assertEqual(result["pivot"]["defaults"]["measure"], "amount_total")
         self.assertEqual(result["pivot"]["chart_policy"]["type"], "bar")
 
@@ -146,7 +156,12 @@ class TestViewOrchestrator(unittest.TestCase):
             "view_orchestration": {
                 "views": {
                     "kanban": {
-                        "slots": {"primary": ["name", "email"]},
+                        "fields": [
+                            {"name": "email", "label": "Email", "sequence": 10},
+                            {"name": "name", "label": "Name", "sequence": 20},
+                            {"name": "state", "visible": False, "sequence": 30},
+                        ],
+                        "slots": {"primary": ["name", "state", "email"]},
                         "actions": [{"name": "open", "intent": "form.open"}],
                     }
                 }
@@ -155,8 +170,32 @@ class TestViewOrchestrator(unittest.TestCase):
 
         result, _calls = self._compose(payload, {"kanban": {}}, "kanban")
 
-        self.assertEqual(result["kanban"]["slots"]["primary"], ["name", "email"])
+        self.assertEqual([row["name"] for row in result["kanban"]["fields"]], ["email", "name"])
+        self.assertEqual(result["kanban"]["fields"][0]["label"], "Email")
+        self.assertEqual(result["kanban"]["slots"]["primary"], ["email", "name"])
         self.assertEqual(result["kanban"]["actions"][0]["intent"], "form.open")
+
+    def test_graph_view_uses_business_config_scalar_and_display_rows(self):
+        payload = {
+            "view_orchestration": {
+                "views": {
+                    "graph": {
+                        "type": "line",
+                        "measure": "amount_total",
+                        "dimension": "company_id",
+                        "measures": [{"name": "amount_total", "label": "Amount", "sequence": 20}],
+                        "dimensions": [{"name": "company_id", "label": "Company", "sequence": 10}],
+                    }
+                }
+            }
+        }
+
+        result, _calls = self._compose(payload, {"graph": {}}, "graph")
+
+        self.assertEqual(result["graph"]["type"], "line")
+        self.assertEqual(result["graph"]["measure"], "amount_total")
+        self.assertEqual(result["graph"]["dimension"], "company_id")
+        self.assertEqual(result["graph"]["dimensions"][0]["label"], "Company")
 
     def test_calendar_view_uses_business_config_date_resource_and_color_slots(self):
         payload = {

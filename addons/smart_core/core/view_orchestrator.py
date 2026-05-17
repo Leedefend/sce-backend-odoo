@@ -294,9 +294,9 @@ class ViewOrchestrator:
         filters = spec.get("filters")
         group_by = spec.get("group_by") or spec.get("groupBys")
         if isinstance(filters, list):
-            search["filters"] = [dict(row) for row in filters if isinstance(row, dict)]
+            search["filters"] = self._ordered_display_rows(filters, field_key="field")
         if isinstance(group_by, list):
-            search["group_by"] = [dict(row) for row in group_by if isinstance(row, dict)]
+            search["group_by"] = self._ordered_display_rows(group_by, field_key="field")
         self._apply_action_slots(search, spec, default_key="actions")
         contract["search"] = search
         return contract
@@ -304,10 +304,19 @@ class ViewOrchestrator:
     def _apply_analysis_spec(self, contract: dict, spec: dict, view_type: str) -> dict:
         key = "pivot" if view_type == "pivot" else "graph"
         node = contract.get(key) if isinstance(contract.get(key), dict) else {}
-        self._apply_view_options(node, spec, scalar_keys=("order",), dict_keys=("context", "domain"))
-        for target_key in ("measures", "dimensions", "defaults", "chart_policy"):
+        self._apply_view_options(
+            node,
+            spec,
+            scalar_keys=("order", "type", "measure", "dimension"),
+            dict_keys=("context", "domain"),
+        )
+        for target_key in ("measures", "dimensions"):
             value = spec.get(target_key)
-            if isinstance(value, (list, dict)):
+            if isinstance(value, list):
+                node[target_key] = self._ordered_display_rows(value)
+        for target_key in ("defaults", "chart_policy"):
+            value = spec.get(target_key)
+            if isinstance(value, dict):
                 node[target_key] = deepcopy(value)
         self._apply_action_slots(node, spec, default_key="actions")
         contract[key] = node
@@ -338,10 +347,33 @@ class ViewOrchestrator:
             value = spec.get(key)
             if isinstance(value, dict):
                 node[key] = deepcopy(value)
+        rows = self._normalized_rows(spec.get("fields"))
+        if rows:
+            effective = {row["name"]: row for row in rows}
+            hidden = {name for name, row in effective.items() if row.get("visible") is False}
+            node["fields"] = [self._display_row(row) for row in rows if row.get("visible") is not False]
+            for key in (
+                "slots",
+                "date_slots",
+                "resource_slots",
+                "color_slots",
+                "dependency_slots",
+                "activity_type_slots",
+                "deadline_slots",
+                "assignee_slots",
+                "metric_slots",
+                "chart_slots",
+            ):
+                if isinstance(node.get(key), dict):
+                    node[key] = self._order_slot_fields(node[key], effective, hidden)
         for key in ("actions", "quick_actions"):
             value = spec.get(key)
             if isinstance(value, list):
-                node[key] = [dict(row) for row in value if isinstance(row, dict)]
+                node[key] = self._ordered_display_rows(value, field_key="field")
+        for key in ("cards", "kpis"):
+            value = node.get(key)
+            if isinstance(value, list):
+                node[key] = self._ordered_display_rows(value, field_key="field")
         if node:
             contract[view_type] = node
         return contract
@@ -415,6 +447,83 @@ class ViewOrchestrator:
             if value in {"0", "false", "no", "off"}:
                 return False
         return None
+
+    def _ordered_display_rows(self, rows: Any, *, field_key: str = "name") -> list:
+        if not isinstance(rows, list):
+            return []
+        normalized = []
+        for index, row in enumerate(rows):
+            if isinstance(row, str):
+                name = row.strip()
+                if name:
+                    normalized.append({
+                        "_raw_string": True,
+                        "name": name,
+                        field_key: name,
+                        "sequence": 100 + index,
+                    })
+                continue
+            if not isinstance(row, dict):
+                continue
+            name = str(row.get("name") or row.get("field") or row.get("field_name") or "").strip()
+            if not name and field_key != "name":
+                name = str(row.get(field_key) or "").strip()
+            if not name and not row.get("label") and not row.get("string"):
+                continue
+            out = dict(row)
+            if name:
+                out["name"] = str(out.get("name") or name).strip()
+                out[field_key] = str(out.get(field_key) or name).strip()
+            out["sequence"] = int(out.get("sequence") or out.get("order") or 100 + index)
+            normalized.append(out)
+        normalized.sort(key=lambda item: (int(item.get("sequence") or 100), str(item.get("name") or item.get(field_key) or "")))
+        return [self._display_row(row) for row in normalized if row.get("visible") is not False]
+
+    def _display_row(self, row: dict) -> dict | str:
+        name = str(row.get("name") or row.get("field") or row.get("field_name") or "").strip()
+        if row.get("_raw_string"):
+            return name
+        out = {
+            key: value
+            for key, value in row.items()
+            if key not in {"_raw_string"} and value not in (None, "")
+        }
+        label = str(out.get("label") or out.get("string") or out.get("display_label") or "").strip()
+        if label:
+            out["label"] = label
+            out.setdefault("string", label)
+        if name:
+            out["name"] = name
+        return out
+
+    def _order_slot_fields(self, slots: dict, effective: dict[str, dict[str, Any]], hidden: set[str]) -> dict:
+        ordered = {}
+
+        def field_name(value) -> str:
+            if isinstance(value, str):
+                return value.strip()
+            if isinstance(value, dict):
+                return str(value.get("name") or value.get("field") or value.get("field_name") or "").strip()
+            return ""
+
+        def sort_key(value) -> tuple[int, str]:
+            name = field_name(value)
+            if name in effective:
+                return int(effective[name].get("sequence") or 100), name
+            return 10000, name
+
+        for key, value in slots.items():
+            if isinstance(value, str):
+                if value.strip() not in hidden:
+                    ordered[key] = value
+            elif isinstance(value, list):
+                clean = [item for item in value if field_name(item) not in hidden]
+                ordered[key] = sorted(clean, key=sort_key)
+            elif isinstance(value, dict):
+                name = field_name(value)
+                if not name or name not in hidden:
+                    ordered[key] = value
+        return ordered
 
     def _apply_field_display_policy(self, node: dict, policy: dict) -> None:
         label = policy.get("label")

@@ -329,6 +329,7 @@ def main() -> int:
         "test_search_view_uses_business_config_filters_and_group_by",
         "test_pivot_view_uses_business_config_measures_dimensions_and_defaults",
         "test_generic_view_uses_business_config_slots_and_actions",
+        "test_graph_view_uses_business_config_scalar_and_display_rows",
         "test_calendar_view_uses_business_config_date_resource_and_color_slots",
         "test_dashboard_view_uses_business_config_metric_chart_and_navigation_slots",
         "test_list_view_uses_business_config_row_actions",
@@ -367,10 +368,12 @@ def main() -> int:
         "_apply_field_display_policy" in orchestrator
         and "_apply_column_display_policy" in orchestrator
         and "_sort_form_field_nodes" in orchestrator
+        and "_ordered_display_rows" in orchestrator
+        and "_order_slot_fields" in orchestrator
         and '"readonly"' in orchestrator
         and '"widget"' in orchestrator
         and '"width"' in orchestrator,
-        "ViewOrchestrator must apply field order plus field and column display policies",
+        "ViewOrchestrator must apply field order plus field and column display policies across view types",
         errors,
     )
     _assert(
@@ -451,6 +454,9 @@ def main() -> int:
     _assert(
         "extractKanbanFieldsFromContract" in action_view_runtime
         and "extractAdvancedViewFieldsFromContract" in action_view_runtime
+        and "collectDisplayRowLabels" in action_view_runtime
+        and "collectDisplayRowLabels(block.measures" in action_view_runtime
+        and "collectDisplayRowLabels(block.cards" in action_view_runtime
         and "collectSlotFieldNames" in action_view_runtime
         and "kanban nested fields and slots" in action_view_shape_smoke
         and "calendar advanced fields" in action_view_shape_smoke

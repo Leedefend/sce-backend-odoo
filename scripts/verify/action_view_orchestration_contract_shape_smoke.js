@@ -113,6 +113,31 @@ function main() {
     'dashboard advanced fields',
   );
 
+  const shapeRuntime = runtime.useActionViewContractShapeRuntime({
+    pageText: (_key, fallback) => fallback,
+    actionContract: {
+      value: {
+        views: {
+          graph: {
+            measures: [{ name: 'amount_total', label: '合同额' }],
+            dimensions: [{ name: 'company_id', label: '公司' }],
+          },
+        },
+      },
+    },
+    advancedFields: { value: ['company_id', 'amount_total'] },
+    activeGroupByField: { value: '' },
+  });
+  const meta = shapeRuntime.advancedRowMeta({
+    id: 1,
+    display_name: 'row',
+    company_id: '四川保盛',
+    amount_total: 1200,
+  });
+  if (meta !== '公司: 四川保盛 · 合同额: 1200') {
+    throw new Error(`advanced display row labels: expected compiled labels, got ${meta}`);
+  }
+
   console.log('[action_view_orchestration_contract_shape_smoke] PASS');
 }
 
