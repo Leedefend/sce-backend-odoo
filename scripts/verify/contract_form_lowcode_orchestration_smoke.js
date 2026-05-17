@@ -15,7 +15,10 @@ function assertContains(token, message) {
 }
 
 assertContains('function buildLowCodeViewOrchestration()', 'missing low-code view orchestration builder');
+assertContains('function lowCodeScopedContractName(', 'missing scoped low-code contract name builder');
+assertContains('view_orchestration:${modelName}:form:action:', 'low-code contract name must include action/view scope');
 assertContains('view_orchestration: buildLowCodeViewOrchestration()', 'low-code save must persist view_orchestration');
+assertContains("view_type: 'form'", 'low-code save must persist form view_type scope');
 assertContains('collectLowCodeLayoutFromViewOrchestration', 'low-code load must hydrate from view_orchestration');
 assertContains("views.form = {", 'low-code orchestration must build form view spec');
 assertContains("views.tree = {", 'low-code orchestration must build tree view spec');

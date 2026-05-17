@@ -1634,14 +1634,28 @@ async function hydrateLowCodeDraftFromContract() {
   const modelName = String(model.value || '').trim();
   if (!modelName) return;
   try {
-    const res = await intentRequest<{
+    const base = lowCodeApplyBaseParams();
+    const scopedName = lowCodeScopedContractName(modelName, base);
+    const legacyName = legacyLowCodeContractName(modelName);
+    let res = await intentRequest<{
       contract_json?: {
         objects?: Array<{ name?: string; fields?: Array<{ name?: string; visible?: boolean; order?: number }> }>;
       }
     }>({
       intent: 'ui.business_config.contract.get',
-      params: { model: modelName, name: `lowcode.${modelName}` },
-    });
+      params: { ...base, model: modelName, name: scopedName, view_type: 'form' },
+    }).catch(() => null);
+    if (!res && scopedName !== legacyName) {
+      res = await intentRequest<{
+        contract_json?: {
+          objects?: Array<{ name?: string; fields?: Array<{ name?: string; visible?: boolean; order?: number }> }>;
+        }
+      }>({
+        intent: 'ui.business_config.contract.get',
+        params: { model: modelName, name: legacyName },
+      }).catch(() => null);
+    }
+    if (!res) return;
     const objects = Array.isArray(res?.contract_json?.objects) ? res.contract_json?.objects || [] : [];
     const viewOrchestration = res?.contract_json && typeof res.contract_json === 'object' && !Array.isArray(res.contract_json)
       ? (res.contract_json as { view_orchestration?: Record<string, unknown> }).view_orchestration || {}
@@ -1768,6 +1782,7 @@ async function switchLowCodeContractByName() {
   const modelName = String(model.value || '').trim();
   if (!name || !modelName) return;
   try {
+    const base = lowCodeApplyBaseParams();
     const res = await intentRequest<{
       contract_json?: {
         objects?: Array<{ name?: string; fields?: Array<{ name?: string; visible?: boolean; order?: number; type?: string; required?: boolean; readonly?: boolean; default?: string; options?: unknown[] }> }>;
@@ -1776,7 +1791,7 @@ async function switchLowCodeContractByName() {
       }
     }>({
       intent: 'ui.business_config.contract.get',
-      params: { model: modelName, name },
+      params: { ...base, model: modelName, name },
     });
     lowCodeContractLoaded.value = false;
     const json = res?.contract_json;
@@ -1819,9 +1834,10 @@ async function publishSelectedLowCodeContract() {
   if (!name || !modelName || busy.value) return;
   busyKind.value = 'action';
   try {
+    const base = lowCodeApplyBaseParams();
     await intentRequest({
       intent: 'ui.business_config.contract.publish',
-      params: { name, model: modelName },
+      params: { ...base, name, model: modelName },
     });
     contractModeFeedback.value = '低代码契约已发布';
     await loadLowCodeContractList();
@@ -1839,9 +1855,10 @@ async function rollbackSelectedLowCodeContract() {
   if (!name || !modelName || busy.value) return;
   busyKind.value = 'action';
   try {
+    const base = lowCodeApplyBaseParams();
     await intentRequest({
       intent: 'ui.business_config.contract.rollback',
-      params: { name, model: modelName },
+      params: { ...base, name, model: modelName },
     });
     contractModeFeedback.value = '低代码契约已回滚到上一版本';
     await loadLowCodeContractList();
@@ -2047,6 +2064,16 @@ function normalizeLowCodeApplyParams(raw: Record<string, unknown>): Record<strin
     params[key] = Number.isFinite(numeric) && numeric >= 0 ? Math.trunc(numeric) : 0;
   }
   return params;
+}
+
+function lowCodeScopedContractName(modelName: string, params: Record<string, unknown>) {
+  const actionId = Number(params.action_id || params.actionId || 0);
+  const viewId = Number(params.view_id || params.viewId || 0);
+  return `view_orchestration:${modelName}:form:action:${Number.isFinite(actionId) ? Math.trunc(actionId) : 0}:view:${Number.isFinite(viewId) ? Math.trunc(viewId) : 0}`;
+}
+
+function legacyLowCodeContractName(modelName: string) {
+  return `lowcode.${modelName}`;
 }
 
 const isQuickSubmitDisabled = computed(() => {
@@ -6842,8 +6869,10 @@ async function saveContractFieldOrder() {
     }>({
       intent: 'ui.business_config.contract.save',
       params: {
-        name: `lowcode.${String(model.value || 'unknown')}`,
+        ...baseParams,
+        name: lowCodeScopedContractName(String(model.value || 'unknown'), baseParams),
         model: String(model.value || ''),
+        view_type: 'form',
         publish: false,
         contract_json: {
           objects: buildLowCodeContractObjects(),

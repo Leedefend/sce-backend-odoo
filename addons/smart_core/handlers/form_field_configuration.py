@@ -661,7 +661,14 @@ class BusinessConfigContractSaveHandler(BaseIntentHandler):
         if precheck["errors"]:
             return self._err(400, "contract_json 预检失败", REASON_USER_ERROR)
         Contract = self.env["ui.business.config.contract"]
-        domain = [("name", "=", name), ("company_id", "=", self.env.company.id)]
+        domain = [
+            ("name", "=", name),
+            ("company_id", "=", self.env.company.id),
+            ("view_type", "=", view_type or False),
+            ("action_id", "=", action_id or False),
+            ("view_id", "=", view_id or False),
+            ("role_key", "=", role_key),
+        ]
         rec = Contract.search(domain, limit=1)
         vals = {
             "name": name,

@@ -215,6 +215,15 @@ def main() -> int:
         errors,
     )
     _assert(
+        "test_business_config_contract_save_uses_full_scope_domain" in field_handler_test
+        and '("view_type", "=", view_type or False)' in field_handler
+        and '("action_id", "=", action_id or False)' in field_handler
+        and '("view_id", "=", view_id or False)' in field_handler
+        and '("role_key", "=", role_key)' in field_handler,
+        "business config contract save must search existing records by full orchestration scope",
+        errors,
+    )
+    _assert(
         "_contract_reload_hint" in field_handler
         and '"view_orchestration_config_changed"' in field_handler
         and '"contract_reload":' in field_handler

@@ -129,6 +129,65 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertEqual(result["error"]["reason_code"], "USER_ERROR")
         self.assertIn("contract_json", result["error"]["message"])
 
+    def test_business_config_contract_save_uses_full_scope_domain(self):
+        class Company:
+            id = 7
+
+        class Record:
+            id = 3
+            name = "demo"
+            model = "res.partner"
+            view_type = "form"
+            status = "draft"
+            version_no = 1
+            role_key = "sales"
+
+            class Ref:
+                id = 0
+
+            action_id = Ref()
+            view_id = Ref()
+
+            def write(self, vals):
+                self.vals = vals
+
+        class ContractModel:
+            def __init__(self):
+                self.record = Record()
+
+            def search(self, domain, limit=None):
+                self.domain = domain
+                self.limit = limit
+                return self.record
+
+            def create(self, vals):
+                raise AssertionError("expected existing scoped contract")
+
+        class Env(dict):
+            company = Company()
+
+        contract_model = ContractModel()
+        handler = self.module.BusinessConfigContractSaveHandler(
+            env=Env({"ui.business.config.contract": contract_model}),
+            params={
+                "name": "demo",
+                "model": "res.partner",
+                "view_type": "form",
+                "action_id": 11,
+                "view_id": 22,
+                "role_key": "sales",
+                "contract_json": {"objects": [{"name": "res.partner", "fields": []}]},
+            },
+        )
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        self.assertIn(("view_type", "=", "form"), contract_model.domain)
+        self.assertIn(("action_id", "=", 11), contract_model.domain)
+        self.assertIn(("view_id", "=", 22), contract_model.domain)
+        self.assertIn(("role_key", "=", "sales"), contract_model.domain)
+
     def test_business_config_contract_get_requires_name_or_model(self):
         handler = self.module.BusinessConfigContractGetHandler(
             env={},
