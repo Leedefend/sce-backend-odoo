@@ -120,6 +120,7 @@ class ViewOrchestrator:
         return {"fields": legacy_spec} if isinstance(legacy_spec, list) else {}
 
     def _apply_form_spec(self, contract: dict, spec: dict, model_name: str) -> dict:
+        self._apply_view_options(contract, spec, scalar_keys=("title",), dict_keys=("defaults", "context", "domain"))
         rows = self._normalized_rows(spec.get("fields") or spec.get("field_slots"))
         if rows:
             fields_meta = self.env[model_name].fields_get() if model_name in self.env else {}
@@ -139,6 +140,13 @@ class ViewOrchestrator:
         return contract
 
     def _apply_list_spec(self, contract: dict, spec: dict) -> dict:
+        self._apply_view_options(
+            contract,
+            spec,
+            scalar_keys=("order", "default_order", "page_size"),
+            list_keys=("row_classes",),
+            dict_keys=("defaults", "context", "domain"),
+        )
         rows = self._normalized_rows(spec.get("columns") or spec.get("fields"))
         if not rows:
             return contract
@@ -174,6 +182,7 @@ class ViewOrchestrator:
 
     def _apply_search_spec(self, contract: dict, spec: dict) -> dict:
         search = contract.get("search") if isinstance(contract.get("search"), dict) else {}
+        self._apply_view_options(search, spec, dict_keys=("defaults", "context", "domain"))
         filters = spec.get("filters")
         group_by = spec.get("group_by") or spec.get("groupBys")
         if isinstance(filters, list):
@@ -187,6 +196,7 @@ class ViewOrchestrator:
     def _apply_analysis_spec(self, contract: dict, spec: dict, view_type: str) -> dict:
         key = "pivot" if view_type == "pivot" else "graph"
         node = contract.get(key) if isinstance(contract.get(key), dict) else {}
+        self._apply_view_options(node, spec, scalar_keys=("order",), dict_keys=("context", "domain"))
         for target_key in ("measures", "dimensions", "defaults", "chart_policy"):
             value = spec.get(target_key)
             if isinstance(value, (list, dict)):
@@ -197,6 +207,13 @@ class ViewOrchestrator:
 
     def _apply_generic_spec(self, contract: dict, spec: dict, view_type: str) -> dict:
         node = contract.get(view_type) if isinstance(contract.get(view_type), dict) else {}
+        self._apply_view_options(
+            node,
+            spec,
+            scalar_keys=("title", "default_group_by", "page_size", "quick_create"),
+            list_keys=("cards", "kpis", "row_classes"),
+            dict_keys=("defaults", "context", "domain"),
+        )
         for key in (
             "slots",
             "date_slots",
@@ -220,6 +237,28 @@ class ViewOrchestrator:
         if node:
             contract[view_type] = node
         return contract
+
+    def _apply_view_options(
+        self,
+        node: dict,
+        spec: dict,
+        *,
+        scalar_keys: tuple[str, ...] = (),
+        list_keys: tuple[str, ...] = (),
+        dict_keys: tuple[str, ...] = (),
+    ) -> None:
+        for key in scalar_keys:
+            value = spec.get(key)
+            if isinstance(value, (str, int, float, bool)) and value != "":
+                node[key] = value
+        for key in list_keys:
+            value = spec.get(key)
+            if isinstance(value, list):
+                node[key] = deepcopy(value)
+        for key in dict_keys:
+            value = spec.get(key)
+            if isinstance(value, dict):
+                node[key] = deepcopy(value)
 
     def _apply_action_slots(self, node: dict, spec: dict, *, default_key: str) -> None:
         actions = spec.get("actions")

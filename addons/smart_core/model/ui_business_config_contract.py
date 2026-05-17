@@ -148,11 +148,16 @@ class UIBusinessConfigContract(models.Model):
             "dimensions",
             "actions",
             "quick_actions",
+            "row_classes",
+            "cards",
+            "kpis",
         }
         dict_keys = {
             "defaults",
             "slots",
             "action_slots",
+            "context",
+            "domain",
             "chart_policy",
             "date_slots",
             "resource_slots",
@@ -182,6 +187,8 @@ class UIBusinessConfigContract(models.Model):
                         raise ValidationError("view_orchestration.views.%s.%s 必须是字符串或对象数组。" % (view_type, key))
                     continue
                 for row in rows:
+                    if key == "row_classes" and isinstance(row, str):
+                        continue
                     if not isinstance(row, dict):
                         raise ValidationError("view_orchestration.views.%s.%s 必须是对象数组。" % (view_type, key))
             for key in dict_keys:

@@ -297,6 +297,50 @@ class TestViewOrchestrator(unittest.TestCase):
         self.assertEqual(column["widget"], "email")
         self.assertEqual(column["width"], "180px")
 
+    def test_list_view_uses_business_config_view_options(self):
+        payload = {
+            "view_orchestration": {
+                "views": {
+                    "tree": {
+                        "columns": [{"name": "email", "sequence": 10}],
+                        "order": "write_date desc",
+                        "page_size": 80,
+                        "row_classes": [{"class": "late", "expr": "date_deadline < today"}],
+                        "domain": {"base": [["active", "=", True]]},
+                        "context": {"default_active": True},
+                    }
+                }
+            }
+        }
+        contract = {"columns": ["email"], "columns_schema": [{"name": "email"}], "page_size": 20}
+
+        result, _calls = self._compose(payload, contract, "tree")
+
+        self.assertEqual(result["order"], "write_date desc")
+        self.assertEqual(result["page_size"], 80)
+        self.assertEqual(result["row_classes"][0]["class"], "late")
+        self.assertEqual(result["domain"]["base"][0][0], "active")
+        self.assertTrue(result["context"]["default_active"])
+
+    def test_dashboard_view_uses_business_config_cards_and_kpis(self):
+        payload = {
+            "view_orchestration": {
+                "views": {
+                    "dashboard": {
+                        "title": "Executive Overview",
+                        "cards": [{"name": "revenue", "label": "Revenue"}],
+                        "kpis": [{"name": "win_rate", "label": "Win Rate"}],
+                    }
+                }
+            }
+        }
+
+        result, _calls = self._compose(payload, {"dashboard": {}}, "dashboard")
+
+        self.assertEqual(result["dashboard"]["title"], "Executive Overview")
+        self.assertEqual(result["dashboard"]["cards"][0]["name"], "revenue")
+        self.assertEqual(result["dashboard"]["kpis"][0]["name"], "win_rate")
+
 
 if __name__ == "__main__":
     unittest.main()

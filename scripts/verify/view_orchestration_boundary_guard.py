@@ -228,6 +228,11 @@ def main() -> int:
         '"defaults"',
         '"slots"',
         '"action_slots"',
+        '"context"',
+        '"domain"',
+        '"row_classes"',
+        '"cards"',
+        '"kpis"',
         '"chart_policy"',
         '"dependency_slots"',
         '"metric_slots"',
@@ -269,6 +274,8 @@ def main() -> int:
         "test_form_view_uses_business_config_action_slots_without_field_rows",
         "test_form_view_uses_business_config_field_display_policy",
         "test_list_view_uses_business_config_column_display_policy",
+        "test_list_view_uses_business_config_view_options",
+        "test_dashboard_view_uses_business_config_cards_and_kpis",
     ):
         _assert(required in orchestrator_test, f"ViewOrchestrator non-form runtime test missing: {required}", errors)
     for orchestration_token in (
@@ -301,6 +308,15 @@ def main() -> int:
         and '"widget"' in orchestrator
         and '"width"' in orchestrator,
         "ViewOrchestrator must apply field and column display policies",
+        errors,
+    )
+    _assert(
+        "_apply_view_options" in orchestrator
+        and '"page_size"' in orchestrator
+        and '"row_classes"' in orchestrator
+        and '"cards"' in orchestrator
+        and '"kpis"' in orchestrator,
+        "ViewOrchestrator must apply view-level display and content options",
         errors,
     )
     _assert(
