@@ -981,6 +981,7 @@ class PageAssembler:
                 "view_type": str(rec.view_type or ""),
                 "action_id": int(rec.action_id.id or 0),
                 "view_id": int(rec.view_id.id or 0),
+                "role_key": str(rec.role_key or ""),
             })
         return {
             "available": True,

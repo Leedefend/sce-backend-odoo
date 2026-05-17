@@ -33,6 +33,7 @@ ACTION_VIEW_RUNTIME = ROOT / "frontend/apps/web/src/app/action_runtime/useAction
 ACTION_VIEW_SHAPE_SMOKE = ROOT / "scripts/verify/action_view_orchestration_contract_shape_smoke.js"
 CONTRACT_FORM_PAGE = ROOT / "frontend/apps/web/src/pages/ContractFormPage.vue"
 CONTRACT_FORM_LOWCODING_SMOKE = ROOT / "scripts/verify/contract_form_lowcode_orchestration_smoke.js"
+CONTRACT_FORM_ORCHESTRATION_HUD_SMOKE = ROOT / "scripts/verify/contract_form_view_orchestration_hud_smoke.js"
 
 
 def _read(path: Path) -> str:
@@ -83,6 +84,7 @@ def main() -> int:
     action_view_shape_smoke = _read(ACTION_VIEW_SHAPE_SMOKE)
     contract_form_page = _read(CONTRACT_FORM_PAGE)
     contract_form_lowcode_smoke = _read(CONTRACT_FORM_LOWCODING_SMOKE)
+    contract_form_hud_smoke = _read(CONTRACT_FORM_ORCHESTRATION_HUD_SMOKE)
 
     for label, source in (
         ("NativeParseService", native_parse),
@@ -403,6 +405,14 @@ def main() -> int:
         and '"owner_layer": "business_view_orchestration"' in page_assembler
         and '"ui.business.config.contract"' in page_assembler,
         "low-code contract surface must expose business config orchestration ownership",
+        errors,
+    )
+    _assert(
+        '"role_key": str(rec.role_key or "")' in page_assembler
+        and "viewOrchestrationHudSummary" in contract_form_page
+        and "view_orchestration_contracts" in contract_form_page
+        and "contract_form_view_orchestration_hud_smoke" in contract_form_hud_smoke,
+        "form UI diagnostics must expose applied view orchestration contract summary",
         errors,
     )
     _assert(

@@ -5804,6 +5804,32 @@ function syncContractV2ShadowStore(rawContract: unknown) {
   }
 }
 
+const viewOrchestrationHudSummary = computed(() => {
+  const rootGovernance = contract.value && typeof contract.value === 'object'
+    ? (contract.value as Record<string, unknown>).governance
+    : undefined;
+  const governance = rootGovernance && typeof rootGovernance === 'object' && !Array.isArray(rootGovernance)
+    ? rootGovernance as Record<string, unknown>
+    : {};
+  const orchestration = governance.view_orchestration && typeof governance.view_orchestration === 'object' && !Array.isArray(governance.view_orchestration)
+    ? governance.view_orchestration as Record<string, unknown>
+    : {};
+  const views = orchestration.views && typeof orchestration.views === 'object' && !Array.isArray(orchestration.views)
+    ? orchestration.views as Record<string, unknown>
+    : {};
+  const current = (views.form || {}) as Record<string, unknown>;
+  const contracts = Array.isArray(current.business_config_contracts)
+    ? current.business_config_contracts as Array<Record<string, unknown>>
+    : [];
+  return {
+    applied: Boolean(orchestration.applied || current.applied || contracts.length),
+    owner: String(orchestration.owner_layer || current.owner_layer || '-'),
+    contractCount: contracts.length,
+    contractNames: contracts.map((row) => String(row.name || row.id || '').trim()).filter(Boolean).join(',') || '-',
+    legacyOverlay: Boolean(current.legacy_field_policy_overlay),
+  };
+});
+
 const hudEntries = computed(() => [
   { label: 'model', value: model.value || '-' },
   { label: 'action_id', value: actionId.value || '-' },
@@ -5828,6 +5854,11 @@ const hudEntries = computed(() => [
   { label: 'v2_shadow_value_source', value: v2ShadowValueSourceKind.value },
   { label: 'v2_shadow_error', value: v2ContractDecodeError.value || '-' },
   { label: 'contract_view_type', value: contract.value?.head?.view_type || contract.value?.view_type || '-' },
+  { label: 'view_orchestration_applied', value: viewOrchestrationHudSummary.value.applied },
+  { label: 'view_orchestration_owner', value: viewOrchestrationHudSummary.value.owner },
+  { label: 'view_orchestration_contracts', value: viewOrchestrationHudSummary.value.contractCount },
+  { label: 'view_orchestration_names', value: viewOrchestrationHudSummary.value.contractNames },
+  { label: 'legacy_policy_overlay', value: viewOrchestrationHudSummary.value.legacyOverlay },
   { label: 'render_profile', value: renderProfile.value },
   { label: 'fields_count', value: Object.keys(contract.value?.fields || {}).length },
   { label: 'layout_nodes', value: layoutNodes.value.length },
