@@ -42,7 +42,9 @@ class ContractSchemaMixin(models.AbstractModel):
             'graph': {'graph'},
             'calendar': {'calendar'},
             'gantt': {'gantt'},
-            'search': set(), 'activity': set(), 'dashboard': set(),
+            'search': {'search'},
+            'activity': {'activity'},
+            'dashboard': {'dashboard'},
         }
         return table.get(vt, set())
 

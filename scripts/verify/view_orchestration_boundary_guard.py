@@ -14,6 +14,7 @@ FALLBACK_PARSE = ROOT / "addons/smart_core/app_config_engine/services/parse_fall
 ODOO_PARSER = ROOT / "addons/smart_core/app_config_engine/services/view_Parser/contract_Parser.py"
 CALENDAR_GANTT_ACTIVITY_PARSER = ROOT / "addons/smart_core/app_config_engine/services/view_Parser/parsers_Calendar_Gantt Activity.py"
 APP_VIEW_CONFIG = ROOT / "addons/smart_core/app_config_engine/models/app_view_config.py"
+CONTRACT_MIXIN = ROOT / "addons/smart_core/app_config_engine/models/contract_mixin.py"
 PAGE_ASSEMBLER = ROOT / "addons/smart_core/app_config_engine/services/assemblers/page_assembler.py"
 LOAD_CONTRACT = ROOT / "addons/smart_core/handlers/load_contract.py"
 V2_ASSEMBLER = ROOT / "addons/smart_core/core/unified_page_contract_v2_assembler.py"
@@ -27,6 +28,7 @@ FIELD_HANDLER_TEST = ROOT / "addons/smart_core/tests/test_form_field_configurati
 NATIVE_PARSER_TEST = ROOT / "addons/smart_core/tests/test_native_view_parser_surfaces.py"
 BUSINESS_CONFIG_TEST = ROOT / "addons/smart_core/tests/test_business_config_contract_schema.py"
 PAGE_ASSEMBLER_TEST = ROOT / "addons/smart_core/tests/test_page_assembler_view_orchestration_versions.py"
+CONTRACT_MIXIN_TEST = ROOT / "addons/smart_core/tests/test_contract_mixin_view_surfaces.py"
 
 
 def _read(path: Path) -> str:
@@ -58,6 +60,7 @@ def main() -> int:
     odoo_parser = _read(ODOO_PARSER)
     calendar_parser = _read(CALENDAR_GANTT_ACTIVITY_PARSER)
     app_view_config = _read(APP_VIEW_CONFIG)
+    contract_mixin = _read(CONTRACT_MIXIN)
     page_assembler = _read(PAGE_ASSEMBLER)
     load_contract = _read(LOAD_CONTRACT)
     v2 = _read(V2_ASSEMBLER)
@@ -71,6 +74,7 @@ def main() -> int:
     native_parser_test = _read(NATIVE_PARSER_TEST)
     business_config_test = _read(BUSINESS_CONFIG_TEST)
     page_assembler_test = _read(PAGE_ASSEMBLER_TEST)
+    contract_mixin_test = _read(CONTRACT_MIXIN_TEST)
 
     for label, source in (
         ("NativeParseService", native_parse),
@@ -115,6 +119,17 @@ def main() -> int:
         and "view_type == 'activity'" in app_view_config
         and "'group_by_fields'" in app_view_config,
         "app.view.config fallback parser must preserve non-form native view surfaces",
+        errors,
+    )
+    _assert(
+        "'search': {'search'}" in contract_mixin
+        and "'activity': {'activity'}" in contract_mixin
+        and "'dashboard': {'dashboard'}" in contract_mixin
+        and '"search": {"search"}' in app_view_config
+        and '"activity": {"activity"}' in app_view_config
+        and '"dashboard": {"dashboard"}' in app_view_config
+        and "test_governed_sanitize_keeps_non_form_view_surface_blocks" in contract_mixin_test,
+        "contract sanitizer must preserve native search/activity/dashboard view surface blocks",
         errors,
     )
     _assert(

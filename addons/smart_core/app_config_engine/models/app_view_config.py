@@ -177,6 +177,9 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
         "graph": {"graph"},
         "calendar": {"calendar"},
         "gantt": {"gantt"},
+        "search": {"search"},
+        "activity": {"activity"},
+        "dashboard": {"dashboard"},
     }
 
     # ====================== 小工具（类方法，避免局部作用域问题） ======================
