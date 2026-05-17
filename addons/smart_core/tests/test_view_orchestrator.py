@@ -361,6 +361,7 @@ class TestViewOrchestrator(unittest.TestCase):
                             {"name": "email", "sequence": 10},
                             {"name": "missing_column", "sequence": 20},
                         ],
+                        "default_group_by": "missing_group",
                         "actions": [{"name": "open_dashboard", "intent": "project.dashboard.enter"}],
                     }
                 }
@@ -376,6 +377,7 @@ class TestViewOrchestrator(unittest.TestCase):
         self.assertEqual(result["columns"], ["email", "name"])
         self.assertEqual([row["name"] for row in result["columns_schema"]], ["email", "name"])
         self.assertEqual(result["row_actions"][0]["intent"], "project.dashboard.enter")
+        self.assertNotIn("default_group_by", result)
 
 
 if __name__ == "__main__":

@@ -221,6 +221,9 @@ class ViewOrchestrator:
             "chart_slots",
         ):
             sanitize_slot_dict(key)
+        default_group_by = simple_field(out.get("default_group_by"))
+        if default_group_by and default_group_by not in model_fields:
+            out.pop("default_group_by", None)
         return out
 
     def _apply_form_spec(self, contract: dict, spec: dict, model_name: str) -> dict:

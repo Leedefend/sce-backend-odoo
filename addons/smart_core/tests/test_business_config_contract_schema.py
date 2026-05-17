@@ -90,6 +90,9 @@ class BusinessConfigContractSchemaTests(unittest.TestCase):
                         "columns": [{"name": "name"}, {"name": "missing_column"}],
                         "default_group_by": "missing_group",
                     },
+                    "kanban": {
+                        "slots": {"primary": ["name", "missing_slot"]},
+                    },
                     "calendar": {
                         "date_slots": {"start": "date_start", "stop": "missing_stop"},
                     },
@@ -110,6 +113,7 @@ class BusinessConfigContractSchemaTests(unittest.TestCase):
             unknown,
             [
                 "calendar.date_slots.stop:missing_stop",
+                "kanban.slots.primary:missing_slot",
                 "pivot.dimensions:missing_dimension",
                 "pivot.measures:missing_measure",
                 "tree.columns:missing_column",

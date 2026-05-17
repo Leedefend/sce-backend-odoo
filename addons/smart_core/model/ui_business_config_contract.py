@@ -116,6 +116,7 @@ class UIBusinessConfigContract(models.Model):
                     elif isinstance(row, dict) and row.get("field"):
                         add_ref(view_type, key, row.get("field"))
             for key in (
+                "slots",
                 "date_slots",
                 "resource_slots",
                 "color_slots",
