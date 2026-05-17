@@ -277,6 +277,35 @@ class TestViewOrchestrator(unittest.TestCase):
         self.assertEqual(field["widget"], "email")
         self.assertEqual(field["fieldInfo"]["label"], "Contact Email")
 
+    def test_form_view_uses_business_config_field_order_in_native_layout(self):
+        payload = {
+            "view_orchestration": {
+                "views": {
+                    "form": {
+                        "fields": [
+                            {"name": "email", "sequence": 10},
+                            {"name": "name", "sequence": 20},
+                        ]
+                    }
+                }
+            }
+        }
+        contract = {
+            "layout": [
+                {
+                    "type": "sheet",
+                    "children": [
+                        {"type": "field", "name": "name"},
+                        {"type": "field", "name": "email"},
+                    ],
+                }
+            ]
+        }
+
+        result, _calls = self._compose(payload, contract, "form")
+
+        self.assertEqual([node["name"] for node in result["layout"][0]["children"]], ["email", "name"])
+
     def test_list_view_uses_business_config_column_display_policy(self):
         payload = {
             "view_orchestration": {

@@ -237,6 +237,7 @@ class ViewOrchestrator:
                 layout = contract.get("layout")
                 if isinstance(layout, list):
                     contract["layout"] = self._apply_node_field_rules(layout, effective, hidden)
+                    self._sort_form_field_nodes(contract["layout"], effective)
                     self._append_missing_form_fields(contract["layout"], effective, fields_meta)
                 field_modifiers = contract.get("field_modifiers")
                 if isinstance(field_modifiers, dict):
@@ -466,9 +467,18 @@ class ViewOrchestrator:
                 children = node.get(child_key)
                 if isinstance(children, list):
                     node[child_key] = self._apply_node_field_rules(children, effective, hidden)
-                    node[child_key].sort(key=lambda child: self._node_sort_key(child, effective))
             result.append(node)
         return result
+
+    def _sort_form_field_nodes(self, nodes: list, effective: dict[str, dict[str, Any]]) -> None:
+        for node in nodes:
+            if not isinstance(node, dict):
+                continue
+            for child_key in ("children", "pages", "tabs", "nodes", "items"):
+                children = node.get(child_key)
+                if isinstance(children, list):
+                    self._sort_form_field_nodes(children, effective)
+        nodes.sort(key=lambda node: self._node_sort_key(node, effective))
 
     def _append_missing_form_fields(self, layout: list, effective: dict[str, dict[str, Any]], fields_meta: dict) -> None:
         existing = set()

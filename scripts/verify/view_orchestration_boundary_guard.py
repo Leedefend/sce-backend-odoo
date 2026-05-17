@@ -334,6 +334,7 @@ def main() -> int:
         "test_list_view_uses_business_config_row_actions",
         "test_form_view_uses_business_config_action_slots_without_field_rows",
         "test_form_view_uses_business_config_field_display_policy",
+        "test_form_view_uses_business_config_field_order_in_native_layout",
         "test_list_view_uses_business_config_column_display_policy",
         "test_list_view_uses_business_config_view_options",
         "test_dashboard_view_uses_business_config_cards_and_kpis",
@@ -365,10 +366,11 @@ def main() -> int:
     _assert(
         "_apply_field_display_policy" in orchestrator
         and "_apply_column_display_policy" in orchestrator
+        and "_sort_form_field_nodes" in orchestrator
         and '"readonly"' in orchestrator
         and '"widget"' in orchestrator
         and '"width"' in orchestrator,
-        "ViewOrchestrator must apply field and column display policies",
+        "ViewOrchestrator must apply field order plus field and column display policies",
         errors,
     )
     _assert(
