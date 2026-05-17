@@ -1174,28 +1174,47 @@ class PageAssembler:
             dimensions = cfg.get("dimensions", nested.get("dimensions", []))
             cfg["measures"] = measures if isinstance(measures, list) else []
             cfg["dimensions"] = dimensions if isinstance(dimensions, list) else []
+            defaults = cfg.get("defaults", nested.get("defaults", {}))
+            if isinstance(defaults, dict):
+                cfg["defaults"] = defaults
             return cfg
         if vt == "graph":
             gtype = cfg.get("type", nested.get("type", nested.get("type_default", "bar")))
             cfg["type"] = str(gtype or "bar")
             cfg["measure"] = str(cfg.get("measure", nested.get("measure", "")) or "")
             cfg["dimension"] = str(cfg.get("dimension", nested.get("dimension", "")) or "")
+            for key in ("measures", "dimensions", "chart_policy"):
+                value = cfg.get(key, nested.get(key))
+                if isinstance(value, (list, dict)):
+                    cfg[key] = value
             return cfg
         if vt in ("calendar", "gantt"):
             date_start = cfg.get("date_start", nested.get("date_start", "date_start"))
             date_stop = cfg.get("date_stop", nested.get("date_stop", "date_end"))
             cfg["date_start"] = str(date_start or "date_start")
             cfg["date_stop"] = str(date_stop or "date_end")
+            for key in ("date_slots", "resource_slots", "color_slots", "dependency_slots", "fields", "native_attrs"):
+                value = cfg.get(key, nested.get(key))
+                if isinstance(value, (list, dict)):
+                    cfg[key] = value
             return cfg
         if vt == "activity":
             field = cfg.get("field", nested.get("field", "res_id"))
             cfg["field"] = str(field or "res_id")
+            for key in ("activity_type_slots", "deadline_slots", "assignee_slots", "fields", "native_attrs"):
+                value = cfg.get(key, nested.get(key))
+                if isinstance(value, (list, dict)):
+                    cfg[key] = value
             return cfg
         if vt == "dashboard":
             cards = cfg.get("cards", nested.get("cards", []))
             kpis = cfg.get("kpis", nested.get("kpis", []))
             cfg["cards"] = cards if isinstance(cards, list) else []
             cfg["kpis"] = kpis if isinstance(kpis, list) else []
+            for key in ("metric_slots", "chart_slots", "navigation_slots"):
+                value = cfg.get(key, nested.get(key))
+                if isinstance(value, dict):
+                    cfg[key] = value
             return cfg
         return cfg
 

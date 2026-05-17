@@ -86,6 +86,43 @@ class PageAssemblerViewOrchestrationVersionTests(unittest.TestCase):
 
         self.assertEqual(versions["view"], "12:native,7:9.3")
 
+    def test_coerce_calendar_preserves_orchestrated_slot_semantics(self):
+        result = self.assembler._coerce_view_contract_semantics(
+            "calendar",
+            {
+                "calendar": {
+                    "date_start": "planned_start",
+                    "date_stop": "planned_stop",
+                    "date_slots": {"start": "planned_start", "stop": "planned_stop"},
+                    "color_slots": {"color": "user_id"},
+                    "fields": [{"name": "planned_start"}],
+                }
+            },
+        )
+
+        self.assertEqual(result["date_start"], "planned_start")
+        self.assertEqual(result["date_slots"]["start"], "planned_start")
+        self.assertEqual(result["color_slots"]["color"], "user_id")
+        self.assertEqual(result["fields"][0]["name"], "planned_start")
+
+    def test_coerce_dashboard_preserves_orchestrated_slots(self):
+        result = self.assembler._coerce_view_contract_semantics(
+            "dashboard",
+            {
+                "dashboard": {
+                    "cards": [{"name": "revenue"}],
+                    "kpis": [{"name": "margin"}],
+                    "metric_slots": {"primary": ["amount_total"]},
+                    "navigation_slots": {"next": "project.dashboard.enter"},
+                }
+            },
+        )
+
+        self.assertEqual(result["cards"][0]["name"], "revenue")
+        self.assertEqual(result["kpis"][0]["name"], "margin")
+        self.assertEqual(result["metric_slots"]["primary"], ["amount_total"])
+        self.assertEqual(result["navigation_slots"]["next"], "project.dashboard.enter")
+
 
 if __name__ == "__main__":
     unittest.main()

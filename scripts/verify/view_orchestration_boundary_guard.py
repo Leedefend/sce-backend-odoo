@@ -403,6 +403,15 @@ def main() -> int:
         "page assembler must include search view orchestration effective_version in page view versions",
         errors,
     )
+    _assert(
+        "test_coerce_calendar_preserves_orchestrated_slot_semantics" in page_assembler_test
+        and "test_coerce_dashboard_preserves_orchestrated_slots" in page_assembler_test
+        and '"date_slots"' in page_assembler
+        and '"metric_slots"' in page_assembler
+        and '"navigation_slots"' in page_assembler,
+        "page assembler must expose orchestrated advanced-view slots on user-facing view contracts",
+        errors,
+    )
     relation_dialog_body = _function_body(page_assembler, "_build_relation_search_dialog_contract")
     _assert(
         '"governance": governance' in relation_dialog_body
