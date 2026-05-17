@@ -31,6 +31,8 @@ PAGE_ASSEMBLER_TEST = ROOT / "addons/smart_core/tests/test_page_assembler_view_o
 CONTRACT_MIXIN_TEST = ROOT / "addons/smart_core/tests/test_contract_mixin_view_surfaces.py"
 ACTION_VIEW_RUNTIME = ROOT / "frontend/apps/web/src/app/action_runtime/useActionViewContractShapeRuntime.ts"
 ACTION_VIEW_SHAPE_SMOKE = ROOT / "scripts/verify/action_view_orchestration_contract_shape_smoke.js"
+CONTRACT_FORM_PAGE = ROOT / "frontend/apps/web/src/pages/ContractFormPage.vue"
+CONTRACT_FORM_LOWCODING_SMOKE = ROOT / "scripts/verify/contract_form_lowcode_orchestration_smoke.js"
 
 
 def _read(path: Path) -> str:
@@ -79,6 +81,8 @@ def main() -> int:
     contract_mixin_test = _read(CONTRACT_MIXIN_TEST)
     action_view_runtime = _read(ACTION_VIEW_RUNTIME)
     action_view_shape_smoke = _read(ACTION_VIEW_SHAPE_SMOKE)
+    contract_form_page = _read(CONTRACT_FORM_PAGE)
+    contract_form_lowcode_smoke = _read(CONTRACT_FORM_LOWCODING_SMOKE)
 
     for label, source in (
         ("NativeParseService", native_parse),
@@ -424,6 +428,14 @@ def main() -> int:
         and "calendar advanced fields" in action_view_shape_smoke
         and "dashboard advanced fields" in action_view_shape_smoke,
         "frontend action view runtime must consume orchestrated kanban and advanced-view slots",
+        errors,
+    )
+    _assert(
+        "buildLowCodeViewOrchestration" in contract_form_page
+        and "view_orchestration: buildLowCodeViewOrchestration()" in contract_form_page
+        and "collectLowCodeLayoutFromViewOrchestration" in contract_form_page
+        and "contract_form_lowcode_orchestration_smoke" in contract_form_lowcode_smoke,
+        "frontend low-code form authoring must persist and hydrate view_orchestration contracts",
         errors,
     )
     relation_dialog_body = _function_body(page_assembler, "_build_relation_search_dialog_contract")
