@@ -1755,11 +1755,12 @@ async function loadLowCodeContractList() {
   const modelName = String(model.value || '').trim();
   if (!modelName) return;
   try {
+    const base = lowCodeApplyBaseParams();
     const result = await intentRequest<{
       items?: Array<{ id?: number; name?: string; model?: string; status?: string; version_no?: number }>;
     }>({
       intent: 'ui.business_config.contract.list',
-      params: { model: modelName },
+      params: { ...base, model: modelName, view_type: 'form' },
     });
     const items = Array.isArray(result?.items) ? result.items || [] : [];
     lowCodeContractList.value = items.map((row) => ({
@@ -1769,6 +1770,9 @@ async function loadLowCodeContractList() {
       status: String(row?.status || 'draft').trim() || 'draft',
       version_no: Number(row?.version_no || 1),
     })).filter((row) => row.name);
+    if (lowCodeSelectedContractName.value && !lowCodeContractList.value.some((row) => row.name === lowCodeSelectedContractName.value)) {
+      lowCodeSelectedContractName.value = '';
+    }
     if (!lowCodeSelectedContractName.value && lowCodeContractList.value.length) {
       lowCodeSelectedContractName.value = lowCodeContractList.value[0].name;
     }
@@ -1791,7 +1795,7 @@ async function switchLowCodeContractByName() {
       }
     }>({
       intent: 'ui.business_config.contract.get',
-      params: { ...base, model: modelName, name },
+      params: { ...base, model: modelName, name, view_type: 'form' },
     });
     lowCodeContractLoaded.value = false;
     const json = res?.contract_json;
@@ -1837,7 +1841,7 @@ async function publishSelectedLowCodeContract() {
     const base = lowCodeApplyBaseParams();
     await intentRequest({
       intent: 'ui.business_config.contract.publish',
-      params: { ...base, name, model: modelName },
+      params: { ...base, name, model: modelName, view_type: 'form' },
     });
     contractModeFeedback.value = '低代码契约已发布';
     await loadLowCodeContractList();
@@ -1858,7 +1862,7 @@ async function rollbackSelectedLowCodeContract() {
     const base = lowCodeApplyBaseParams();
     await intentRequest({
       intent: 'ui.business_config.contract.rollback',
-      params: { ...base, name, model: modelName },
+      params: { ...base, name, model: modelName, view_type: 'form' },
     });
     contractModeFeedback.value = '低代码契约已回滚到上一版本';
     await loadLowCodeContractList();
