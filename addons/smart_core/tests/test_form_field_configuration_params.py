@@ -188,6 +188,55 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertIn(("view_id", "=", 22), contract_model.domain)
         self.assertIn(("role_key", "=", "sales"), contract_model.domain)
 
+    def test_business_config_contract_save_normalizes_empty_role_scope(self):
+        class Company:
+            id = 7
+
+        class ContractModel:
+            def search(self, domain, limit=None):
+                self.domain = domain
+                return None
+
+            def create(self, vals):
+                self.vals = vals
+
+                class Record:
+                    id = 4
+                    name = vals["name"]
+                    model = vals["model"]
+                    view_type = vals.get("view_type") or ""
+                    status = vals.get("status") or "draft"
+                    version_no = 1
+                    role_key = vals.get("role_key") or ""
+
+                    class Ref:
+                        id = 0
+
+                    action_id = Ref()
+                    view_id = Ref()
+
+                return Record()
+
+        class Env(dict):
+            company = Company()
+
+        contract_model = ContractModel()
+        handler = self.module.BusinessConfigContractSaveHandler(
+            env=Env({"ui.business.config.contract": contract_model}),
+            params={
+                "name": "demo",
+                "model": "res.partner",
+                "view_type": "form",
+                "contract_json": {"objects": [{"name": "res.partner", "fields": []}]},
+            },
+        )
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        self.assertIn(("role_key", "=", False), contract_model.domain)
+        self.assertFalse(contract_model.vals["role_key"])
+
     def test_business_config_contract_get_requires_name_or_model(self):
         handler = self.module.BusinessConfigContractGetHandler(
             env={},

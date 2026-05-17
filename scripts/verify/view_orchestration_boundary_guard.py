@@ -224,6 +224,13 @@ def main() -> int:
         errors,
     )
     _assert(
+        "test_business_config_contract_save_normalizes_empty_role_scope" in field_handler_test
+        and '("role_key", "=", role_key or False)' in field_handler
+        and '"role_key": role_key or False' in field_handler,
+        "business config contract save must normalize empty role scope to False",
+        errors,
+    )
+    _assert(
         "_contract_reload_hint" in field_handler
         and '"view_orchestration_config_changed"' in field_handler
         and '"contract_reload":' in field_handler

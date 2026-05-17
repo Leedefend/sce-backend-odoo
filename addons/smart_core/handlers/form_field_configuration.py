@@ -667,7 +667,7 @@ class BusinessConfigContractSaveHandler(BaseIntentHandler):
             ("view_type", "=", view_type or False),
             ("action_id", "=", action_id or False),
             ("view_id", "=", view_id or False),
-            ("role_key", "=", role_key),
+            ("role_key", "=", role_key or False),
         ]
         rec = Contract.search(domain, limit=1)
         vals = {
@@ -676,7 +676,7 @@ class BusinessConfigContractSaveHandler(BaseIntentHandler):
             "view_type": view_type or False,
             "action_id": action_id or False,
             "view_id": view_id or False,
-            "role_key": role_key,
+            "role_key": role_key or False,
             "contract_json": contract_json,
             "status": "published" if publish else "draft",
         }
