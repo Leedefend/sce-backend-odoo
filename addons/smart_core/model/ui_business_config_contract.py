@@ -45,11 +45,101 @@ class UIBusinessConfigContract(models.Model):
         normalized = str(view_type or "").strip()
         return "tree" if normalized == "list" else normalized
 
+    @staticmethod
+    def _simple_view_orchestration_field_name(value) -> str:
+        if not isinstance(value, str):
+            return ""
+        candidate = value.strip()
+        if not candidate:
+            return ""
+        if "." in candidate or "(" in candidate or ")" in candidate or " " in candidate:
+            return ""
+        if not candidate.replace("_", "").isalnum():
+            return ""
+        return candidate
+
+    @classmethod
+    def _unknown_view_orchestration_fields(cls, payload: dict, model_fields) -> list[str]:
+        if not isinstance(payload, dict):
+            return []
+        orchestration = payload.get("view_orchestration")
+        if not isinstance(orchestration, dict):
+            return []
+        views = orchestration.get("views") if isinstance(orchestration.get("views"), dict) else {}
+        known_fields = set(model_fields or [])
+        unknown: list[str] = []
+
+        def add_ref(view_type: str, key: str, value) -> None:
+            field_name = cls._simple_view_orchestration_field_name(value)
+            if field_name and field_name not in known_fields:
+                unknown.append("%s.%s:%s" % (view_type, key, field_name))
+
+        def add_row_ref(view_type: str, key: str, row) -> None:
+            if isinstance(row, str):
+                add_ref(view_type, key, row)
+                return
+            if not isinstance(row, dict):
+                return
+            for ref_key in ("field", "name", "field_name"):
+                if row.get(ref_key):
+                    add_ref(view_type, key, row.get(ref_key))
+                    return
+
+        def add_slot_refs(view_type: str, key: str, value) -> None:
+            if not isinstance(value, dict):
+                return
+            for slot_key, slot_value in value.items():
+                if isinstance(slot_value, str):
+                    add_ref(view_type, "%s.%s" % (key, slot_key), slot_value)
+                elif isinstance(slot_value, list):
+                    for item in slot_value:
+                        if isinstance(item, str):
+                            add_ref(view_type, "%s.%s" % (key, slot_key), item)
+                        elif isinstance(item, dict):
+                            for nested_key in ("field", "name", "field_name"):
+                                if item.get(nested_key):
+                                    add_ref(view_type, "%s.%s" % (key, slot_key), item.get(nested_key))
+                                    break
+
+        for view_type, spec in views.items():
+            if not isinstance(spec, dict):
+                continue
+            for key in ("fields", "columns", "measures", "dimensions"):
+                rows = spec.get(key) if isinstance(spec.get(key), list) else []
+                for row in rows:
+                    add_row_ref(view_type, key, row)
+            for key in ("filters", "group_by", "groupBys"):
+                rows = spec.get(key) if isinstance(spec.get(key), list) else []
+                for row in rows:
+                    if isinstance(row, str):
+                        add_ref(view_type, key, row)
+                    elif isinstance(row, dict) and row.get("field"):
+                        add_ref(view_type, key, row.get("field"))
+            for key in (
+                "date_slots",
+                "resource_slots",
+                "color_slots",
+                "dependency_slots",
+                "activity_type_slots",
+                "deadline_slots",
+                "assignee_slots",
+                "metric_slots",
+                "chart_slots",
+            ):
+                add_slot_refs(view_type, key, spec.get(key))
+            for key in ("default_group_by", "order", "default_order"):
+                add_ref(view_type, key, spec.get(key))
+        return sorted(set(unknown))
+
     @api.constrains("contract_json", "model")
     def _check_contract_json(self):
         for rec in self:
             payload = rec.contract_json if isinstance(rec.contract_json, dict) else {}
             rec._check_view_orchestration_payload(payload)
+            if rec.model and rec.model in self.env:
+                unknown_fields = rec._unknown_view_orchestration_fields(payload, self.env[rec.model]._fields)
+                if unknown_fields:
+                    raise ValidationError("view_orchestration 引用了不存在字段：%s" % ", ".join(unknown_fields))
             objects = payload.get("objects") if isinstance(payload.get("objects"), list) else []
             object_fields_map: dict[str, set[str]] = {}
             for obj in objects:

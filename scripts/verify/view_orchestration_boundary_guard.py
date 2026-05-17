@@ -25,6 +25,7 @@ DOC = ROOT / "docs/audit/native/view_orchestration_boundary_20260515.md"
 ORCHESTRATOR_TEST = ROOT / "addons/smart_core/tests/test_view_orchestrator.py"
 FIELD_HANDLER_TEST = ROOT / "addons/smart_core/tests/test_form_field_configuration_params.py"
 NATIVE_PARSER_TEST = ROOT / "addons/smart_core/tests/test_native_view_parser_surfaces.py"
+BUSINESS_CONFIG_TEST = ROOT / "addons/smart_core/tests/test_business_config_contract_schema.py"
 
 
 def _read(path: Path) -> str:
@@ -67,6 +68,7 @@ def main() -> int:
     orchestrator_test = _read(ORCHESTRATOR_TEST)
     field_handler_test = _read(FIELD_HANDLER_TEST)
     native_parser_test = _read(NATIVE_PARSER_TEST)
+    business_config_test = _read(BUSINESS_CONFIG_TEST)
 
     for label, source in (
         ("NativeParseService", native_parse),
@@ -242,6 +244,15 @@ def main() -> int:
         "dict_keys",
     ):
         _assert(schema_token in business_config, f"business config view orchestration schema missing: {schema_token}", errors)
+    _assert(
+        "_unknown_view_orchestration_fields" in business_config
+        and "rec.model in self.env" in business_config
+        and "view_orchestration 引用了不存在字段" in business_config
+        and "test_unknown_view_orchestration_fields_are_reported" in business_config_test
+        and "test_business_semantic_ids_are_not_treated_as_model_fields" in business_config_test,
+        "business config view orchestration schema must reject unknown model fields without blocking semantic ids",
+        errors,
+    )
     _assert(
         "class ViewOrchestrator" in orchestrator
         and "def compose" in orchestrator
