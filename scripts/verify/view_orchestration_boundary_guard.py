@@ -26,6 +26,7 @@ ORCHESTRATOR_TEST = ROOT / "addons/smart_core/tests/test_view_orchestrator.py"
 FIELD_HANDLER_TEST = ROOT / "addons/smart_core/tests/test_form_field_configuration_params.py"
 NATIVE_PARSER_TEST = ROOT / "addons/smart_core/tests/test_native_view_parser_surfaces.py"
 BUSINESS_CONFIG_TEST = ROOT / "addons/smart_core/tests/test_business_config_contract_schema.py"
+PAGE_ASSEMBLER_TEST = ROOT / "addons/smart_core/tests/test_page_assembler_view_orchestration_versions.py"
 
 
 def _read(path: Path) -> str:
@@ -69,6 +70,7 @@ def main() -> int:
     field_handler_test = _read(FIELD_HANDLER_TEST)
     native_parser_test = _read(NATIVE_PARSER_TEST)
     business_config_test = _read(BUSINESS_CONFIG_TEST)
+    page_assembler_test = _read(PAGE_ASSEMBLER_TEST)
 
     for label, source in (
         ("NativeParseService", native_parse),
@@ -376,6 +378,14 @@ def main() -> int:
         and 'data["views"]["search"]' in page_assembler
         and 'data["search"] = merged' in page_assembler,
         "page assembler must route top-level search through view orchestration",
+        errors,
+    )
+    _assert(
+        "_append_view_version_token" in page_assembler
+        and "versions=versions" in page_assembler
+        and 'search_contract.get("effective_version")' in page_assembler
+        and "test_append_view_version_token_adds_search_orchestration_version" in page_assembler_test,
+        "page assembler must include search view orchestration effective_version in page view versions",
         errors,
     )
     relation_dialog_body = _function_body(page_assembler, "_build_relation_search_dialog_contract")

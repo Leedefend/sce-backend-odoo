@@ -309,7 +309,7 @@ class PageAssembler:
             _logger.warning("app.search.config missing; fallback search contract for model=%s", model)
             data["search"] = {}
             versions["search"] = 0
-        self._inject_search_view_orchestration(data, env=env, model=model, view_context=view_context)
+        self._inject_search_view_orchestration(data, env=env, model=model, view_context=view_context, versions=versions)
         self._inject_view_orchestration_summary(data)
 
         # 4.x) 关系字段维护入口（many2one/many2many/one2many）
@@ -1233,7 +1233,19 @@ class PageAssembler:
         }
         data["governance"] = governance
 
-    def _inject_search_view_orchestration(self, data, *, env, model, view_context):
+    def _append_view_version_token(self, versions, token):
+        if not isinstance(versions, dict):
+            return
+        value = str(token or "").strip()
+        if not value:
+            return
+        current = str(versions.get("view") or "").strip()
+        parts = [part for part in current.split(",") if part]
+        if value not in parts:
+            parts.append(value)
+        versions["view"] = ",".join(parts) if parts else value
+
+    def _inject_search_view_orchestration(self, data, *, env, model, view_context, versions=None):
         if not model or "app.view.config" not in env:
             return
         context = dict(view_context or {})
@@ -1247,6 +1259,7 @@ class PageAssembler:
             return
         if not isinstance(search_contract, dict):
             return
+        self._append_view_version_token(versions, search_contract.get("effective_version"))
         data["views"]["search"] = self._coerce_view_contract_semantics("search", search_contract)
         orchestrated_search = search_contract.get("search") if isinstance(search_contract.get("search"), dict) else {}
         if not orchestrated_search:
