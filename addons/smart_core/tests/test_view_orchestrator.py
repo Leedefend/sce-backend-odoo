@@ -62,6 +62,17 @@ class _Env(dict):
 
 
 class _Model:
+    _fields = {
+        "name": object(),
+        "email": object(),
+        "company_id": object(),
+        "amount_total": object(),
+        "start_date": object(),
+        "end_date": object(),
+        "user_id": object(),
+        "state": object(),
+    }
+
     def fields_get(self):
         return {
             "name": {"string": "Name", "type": "char"},
@@ -340,6 +351,31 @@ class TestViewOrchestrator(unittest.TestCase):
         self.assertEqual(result["dashboard"]["title"], "Executive Overview")
         self.assertEqual(result["dashboard"]["cards"][0]["name"], "revenue")
         self.assertEqual(result["dashboard"]["kpis"][0]["name"], "win_rate")
+
+    def test_runtime_orchestration_drops_unknown_field_refs_from_existing_configs(self):
+        payload = {
+            "view_orchestration": {
+                "views": {
+                    "tree": {
+                        "columns": [
+                            {"name": "email", "sequence": 10},
+                            {"name": "missing_column", "sequence": 20},
+                        ],
+                        "actions": [{"name": "open_dashboard", "intent": "project.dashboard.enter"}],
+                    }
+                }
+            }
+        }
+        contract = {
+            "columns": ["name", "email"],
+            "columns_schema": [{"name": "name"}, {"name": "email"}],
+        }
+
+        result, _calls = self._compose(payload, contract, "tree")
+
+        self.assertEqual(result["columns"], ["email", "name"])
+        self.assertEqual([row["name"] for row in result["columns_schema"]], ["email", "name"])
+        self.assertEqual(result["row_actions"][0]["intent"], "project.dashboard.enter")
 
 
 if __name__ == "__main__":

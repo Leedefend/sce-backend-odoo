@@ -96,6 +96,9 @@ class ViewOrchestrator:
         spec = self._view_spec(payload, view_type)
         if not spec:
             return contract
+        spec = self._sanitize_spec_field_refs(spec, model_name)
+        if not spec:
+            return contract
         out = deepcopy(contract or {})
         if view_type == "form":
             return self._apply_form_spec(out, spec, model_name)
@@ -118,6 +121,107 @@ class ViewOrchestrator:
         legacy_layout = payload.get("layout") if isinstance(payload.get("layout"), dict) else {}
         legacy_spec = legacy_layout.get(view_type)
         return {"fields": legacy_spec} if isinstance(legacy_spec, list) else {}
+
+    def _sanitize_spec_field_refs(self, spec: dict, model_name: str) -> dict:
+        if model_name not in self.env:
+            return spec
+        model_fields = set(getattr(self.env[model_name], "_fields", {}) or {})
+        if not model_fields:
+            return spec
+        out = deepcopy(spec)
+
+        def simple_field(value) -> str:
+            if not isinstance(value, str):
+                return ""
+            candidate = value.strip()
+            if not candidate or "." in candidate or "(" in candidate or ")" in candidate or " " in candidate:
+                return ""
+            if not candidate.replace("_", "").isalnum():
+                return ""
+            return candidate
+
+        def row_field(row) -> str:
+            if isinstance(row, str):
+                return simple_field(row)
+            if not isinstance(row, dict):
+                return ""
+            for key in ("field", "name", "field_name"):
+                if row.get(key):
+                    return simple_field(row.get(key))
+            return ""
+
+        def row_known(row) -> bool:
+            name = row_field(row)
+            return bool(name and name in model_fields)
+
+        def filter_field_rows(key: str) -> None:
+            rows = out.get(key)
+            if isinstance(rows, list):
+                out[key] = [row for row in rows if row_known(row)]
+
+        def filter_optional_field_rows(key: str) -> None:
+            rows = out.get(key)
+            if not isinstance(rows, list):
+                return
+            filtered = []
+            for row in rows:
+                if isinstance(row, str):
+                    if row_known(row):
+                        filtered.append(row)
+                elif isinstance(row, dict):
+                    field_name = simple_field(row.get("field"))
+                    if field_name and field_name not in model_fields:
+                        continue
+                    filtered.append(row)
+            out[key] = filtered
+
+        def sanitize_slot_dict(key: str) -> None:
+            value = out.get(key)
+            if not isinstance(value, dict):
+                return
+            clean = {}
+            for slot_key, slot_value in value.items():
+                if isinstance(slot_value, str):
+                    field_name = simple_field(slot_value)
+                    if field_name and field_name in model_fields:
+                        clean[slot_key] = slot_value
+                elif isinstance(slot_value, list):
+                    items = []
+                    for item in slot_value:
+                        if isinstance(item, str):
+                            field_name = simple_field(item)
+                            if field_name and field_name in model_fields:
+                                items.append(item)
+                        elif isinstance(item, dict):
+                            field_name = row_field(item)
+                            if not field_name or field_name in model_fields:
+                                items.append(item)
+                    if items:
+                        clean[slot_key] = items
+                elif isinstance(slot_value, dict):
+                    field_name = row_field(slot_value)
+                    if not field_name or field_name in model_fields:
+                        clean[slot_key] = slot_value
+            out[key] = clean
+
+        for key in ("fields", "columns", "measures", "dimensions"):
+            filter_field_rows(key)
+        for key in ("filters", "group_by", "groupBys"):
+            filter_optional_field_rows(key)
+        for key in (
+            "slots",
+            "date_slots",
+            "resource_slots",
+            "color_slots",
+            "dependency_slots",
+            "activity_type_slots",
+            "deadline_slots",
+            "assignee_slots",
+            "metric_slots",
+            "chart_slots",
+        ):
+            sanitize_slot_dict(key)
+        return out
 
     def _apply_form_spec(self, contract: dict, spec: dict, model_name: str) -> dict:
         self._apply_view_options(contract, spec, scalar_keys=("title",), dict_keys=("defaults", "context", "domain"))

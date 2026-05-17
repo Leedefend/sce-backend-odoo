@@ -338,6 +338,12 @@ def main() -> int:
         errors,
     )
     _assert(
+        "_sanitize_spec_field_refs" in orchestrator
+        and "test_runtime_orchestration_drops_unknown_field_refs_from_existing_configs" in orchestrator_test,
+        "ViewOrchestrator must defensively drop unknown field references from existing orchestration configs",
+        errors,
+    )
+    _assert(
         "'source_trace': vp.get('source_trace', {})" in app_view_config,
         "app.view.config get_contract_api must expose orchestrator source_trace",
         errors,
