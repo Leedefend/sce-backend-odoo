@@ -23,6 +23,7 @@ class UiMenuConfigPolicy(models.Model):
     )
     menu_id = fields.Many2one("ir.ui.menu", string="菜单", required=True, index=True, ondelete="cascade")
     menu_complete_name = fields.Char(string="菜单路径", related="menu_id.complete_name", readonly=True)
+    original_label = fields.Char(string="原菜单名称", related="menu_id.name", readonly=True)
     custom_label = fields.Char(string="显示名称")
     sequence_override = fields.Integer(string="显示顺序")
     visible = fields.Boolean(string="显示菜单", default=True, index=True)
@@ -36,6 +37,8 @@ class UiMenuConfigPolicy(models.Model):
     )
     note = fields.Text(string="说明")
     active = fields.Boolean(string="启用", default=True, index=True)
+    effect_summary = fields.Char(string="配置结果", compute="_compute_user_summaries")
+    scope_summary = fields.Char(string="适用范围", compute="_compute_user_summaries")
 
     @api.depends("menu_id", "custom_label", "visible")
     def _compute_name(self):
@@ -43,6 +46,21 @@ class UiMenuConfigPolicy(models.Model):
             label = record.custom_label or record.menu_id.display_name or "菜单配置"
             state = "显示" if record.visible else "隐藏"
             record.name = "%s - %s" % (label, state)
+
+    @api.depends("menu_id", "custom_label", "sequence_override", "visible", "role_group_ids")
+    def _compute_user_summaries(self):
+        for record in self:
+            if not record.visible:
+                record.effect_summary = "隐藏菜单"
+            else:
+                parts = []
+                if record.custom_label:
+                    parts.append("显示为：%s" % record.custom_label)
+                if record.sequence_override:
+                    parts.append("排序：%s" % record.sequence_override)
+                record.effect_summary = "；".join(parts) if parts else "保持原样显示"
+            groups = record.role_group_ids.mapped("display_name")
+            record.scope_summary = "、".join(groups) if groups else "当前公司所有用户"
 
     @api.model
     def _source_contract(self) -> dict:
@@ -110,6 +128,7 @@ class UiMenuConfigPolicy(models.Model):
                     return None
                 if policy.custom_label:
                     node["name"] = policy.custom_label
+                    node["label"] = policy.custom_label
                     node["title"] = policy.custom_label
                     stats["renamed_count"] += 1
                 if policy.sequence_override:

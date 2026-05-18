@@ -636,6 +636,18 @@ def _filter_nav_by_release_gate(nav: list[dict], gate: dict) -> tuple[list[dict]
     }
 
 
+def _apply_user_menu_config_to_delivery_nav(env, nav: list[dict]) -> tuple[list[dict], dict]:
+    if not isinstance(nav, list):
+        return [], {"applied_count": 0, "hidden_count": 0, "renamed_count": 0, "reordered_count": 0}
+    try:
+        policy_model = env["ui.menu.config.policy"]
+    except Exception:
+        return nav, {"applied_count": 0, "hidden_count": 0, "renamed_count": 0, "reordered_count": 0}
+    overlaid, stats = policy_model.apply_runtime_overlay({"tree": nav, "flat": []}, user=env.user)
+    next_nav = overlaid.get("tree") if isinstance(overlaid, dict) and isinstance(overlaid.get("tree"), list) else nav
+    return next_nav, stats if isinstance(stats, dict) else {}
+
+
 def _build_minimal_intent_surface(intents: list[str], intents_meta: dict) -> list[str]:
     minimal_order = [
         "system.init",
@@ -1071,13 +1083,20 @@ class SystemInitHandler(BaseIntentHandler):
                 delivery_payload.get("nav") if isinstance(delivery_payload.get("nav"), list) else [],
                 release_gate,
             )
+            gated_nav, user_menu_config_meta = _apply_user_menu_config_to_delivery_nav(env, gated_nav)
             delivery_payload["nav"] = gated_nav
             meta = delivery_payload.get("meta")
             if not isinstance(meta, dict):
                 meta = {}
                 delivery_payload["meta"] = meta
             meta["platform_release_gate"] = gate_meta
+            meta["user_menu_config"] = user_menu_config_meta
         else:
+            delivery_nav, user_menu_config_meta = _apply_user_menu_config_to_delivery_nav(
+                env,
+                delivery_payload.get("nav") if isinstance(delivery_payload.get("nav"), list) else [],
+            )
+            delivery_payload["nav"] = delivery_nav
             meta = delivery_payload.get("meta")
             if not isinstance(meta, dict):
                 meta = {}
@@ -1088,6 +1107,7 @@ class SystemInitHandler(BaseIntentHandler):
                 "platform_db": _text(release_gate.get("platform_db")),
                 "reason": _text(release_gate.get("reason")) or "NOT_APPLIED",
             }
+            meta["user_menu_config"] = user_menu_config_meta
         released_snapshot_lineage = release_snapshot_service.resolve_active_snapshot_lineage(product_key=effective_product_key)
         release_audit_trail_summary = release_audit_service.build_runtime_summary(product_key=effective_product_key)
         runtime_diagnostics = dict(edition_diagnostics) if isinstance(edition_diagnostics, dict) else {}
