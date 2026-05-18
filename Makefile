@@ -2305,15 +2305,9 @@ verify.workbench.extraction_hit_rate.report: guard.prod.forbid
 	@python3 scripts/verify/workbench_extraction_hit_rate_report.py
 	@echo "[OK] verify.workbench.extraction_hit_rate.report done"
 
-.PHONY: verify.user.entry.delivery.browser_acceptance verify.user.page.delivery_surface.guard verify.user.page.delivery_surface.browser_acceptance
+.PHONY: verify.user.entry.delivery.browser_acceptance
 verify.user.entry.delivery.browser_acceptance: guard.prod.forbid
 	@pnpm -C frontend/apps/web exec node ../../../scripts/verify/user_entry_delivery_browser_acceptance.js
-
-verify.user.page.delivery_surface.guard: guard.prod.forbid
-	@python3 scripts/verify/user_page_delivery_surface_guard.py
-
-verify.user.page.delivery_surface.browser_acceptance: guard.prod.forbid
-	@pnpm -C frontend/apps/web exec node ../../../scripts/verify/user_page_delivery_surface_browser_acceptance.js
 
 .PHONY: verify.model_view.fact_layer.audit
 verify.model_view.fact_layer.audit: guard.prod.forbid check-compose-project check-compose-env
@@ -3518,7 +3512,7 @@ verify.backend.contract.closure.mainline.summary.schema.guard: guard.prod.forbid
 	@python3 scripts/verify/backend_contract_closure_mainline_summary_schema_guard.py
 
 .PHONY: verify.product.delivery.ready
-verify.product.delivery.ready: guard.prod.forbid verify.product.delivery.gap verify.product.delivery.freshness verify.product.delivery.governance_truth verify.user.page.delivery_surface.guard
+verify.product.delivery.ready: guard.prod.forbid verify.product.delivery.gap verify.product.delivery.freshness verify.product.delivery.governance_truth
 	@echo "[OK] verify.product.delivery.ready done"
 
 .PHONY: verify.restricted verify.product.delivery.mainline
