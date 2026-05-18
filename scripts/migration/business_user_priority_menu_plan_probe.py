@@ -54,7 +54,14 @@ group_counts = {
     row["legacy_menu_group"] or "": row.get("legacy_menu_group_count") or row.get("__count") or 0
     for row in Model.read_group(domain, ["legacy_menu_group"], ["legacy_menu_group"], lazy=False)
 }
-status = "PASS" if row_count == EXPECTED_ROWS and verified_count == EXPECTED_ROWS else "FAIL"
+status = (
+    "PASS"
+    if row_count == EXPECTED_ROWS
+    and verified_count == EXPECTED_ROWS
+    and next_topic_count == 0
+    and specialized_count == EXPECTED_ROWS
+    else "FAIL"
+)
 payload = {
     "status": status,
     "mode": "business_user_priority_menu_plan_probe",
@@ -65,10 +72,11 @@ payload = {
     "verified_count": verified_count,
     "next_topic_count": next_topic_count,
     "specialized_count": specialized_count,
+    "alignment_closed": next_topic_count == 0 and specialized_count == EXPECTED_ROWS,
     "group_counts": group_counts,
     "sample_names": sample_names,
     "db_writes": 0,
-    "decision": "business_user_priority_menu_plan_verified" if status == "PASS" else "STOP_REVIEW_REQUIRED",
+    "decision": "business_user_priority_menu_plan_user_page_aligned" if status == "PASS" else "STOP_REVIEW_REQUIRED",
 }
 write_json(output_json, payload)
 print("BUSINESS_USER_PRIORITY_MENU_PLAN_PROBE=" + json.dumps(payload, ensure_ascii=False, sort_keys=True))
