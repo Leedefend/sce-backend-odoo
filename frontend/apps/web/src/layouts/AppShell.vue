@@ -79,6 +79,7 @@
             {{ roleLandingActionLabel }}
           </button>
           <button class="ghost mini" @click="router.push('/my-work')">我的工作</button>
+          <button class="ghost mini" @click="router.push('/delivery')">交付看板</button>
         </div>
       </div>
 

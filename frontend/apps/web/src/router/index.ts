@@ -73,6 +73,7 @@ const router = createRouter({
     { path: '/', name: 'home', component: () => import('../views/HomeView.vue'), meta: { layout: 'shell', sceneKey: 'workspace.home' } },
     { path: '/s/workspace.home', name: 'scene-home', component: () => import('../views/HomeView.vue'), meta: { layout: 'shell', sceneKey: 'workspace.home' } },
     { path: '/my-work', name: 'my-work', component: () => import('../views/MyWorkView.vue'), meta: { layout: 'shell' } },
+    { path: '/delivery', name: 'delivery', component: () => import('../views/DeliveryView.vue'), meta: { layout: 'shell' } },
     { path: '/s/my_work.workspace', name: 'scene-my-work', component: () => import('../views/MyWorkView.vue'), meta: { layout: 'shell', sceneKey: 'my_work.workspace' } },
     { path: '/pm/dashboard', name: 'project-management-dashboard', redirect: '/s/project.management', meta: { layout: 'shell' } },
     { path: '/s/projects.intake', name: 'projects-intake', component: () => import('../views/ProjectsIntakeView.vue'), meta: { layout: 'shell', sceneKey: 'projects.intake' } },
