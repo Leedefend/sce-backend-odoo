@@ -23,17 +23,17 @@ class UiMenuConfigPolicy(models.Model):
         required=True,
     )
     menu_id = fields.Many2one("ir.ui.menu", string="菜单", required=True, index=True, ondelete="cascade")
-    menu_complete_name = fields.Char(string="菜单路径", related="menu_id.complete_name", readonly=True)
-    original_label = fields.Char(string="原菜单名称", related="menu_id.name", readonly=True)
+    menu_complete_name = fields.Char(string="菜单路径", compute="_compute_menu_preview_fields", readonly=True)
+    original_label = fields.Char(string="原菜单名称", compute="_compute_menu_preview_fields", readonly=True)
     current_parent_menu_id = fields.Many2one(
         "ir.ui.menu",
         string="当前所属分组",
-        related="menu_id.parent_id",
+        compute="_compute_menu_preview_fields",
         readonly=True,
     )
     current_parent_menu_complete_name = fields.Char(
         string="当前分组路径",
-        related="current_parent_menu_id.complete_name",
+        compute="_compute_menu_preview_fields",
         readonly=True,
     )
     target_parent_menu_id = fields.Many2one(
@@ -43,7 +43,7 @@ class UiMenuConfigPolicy(models.Model):
     )
     target_parent_menu_complete_name = fields.Char(
         string="目标分组路径",
-        related="target_parent_menu_id.complete_name",
+        compute="_compute_menu_preview_fields",
         readonly=True,
     )
     custom_label = fields.Char(string="显示名称")
@@ -69,6 +69,18 @@ class UiMenuConfigPolicy(models.Model):
             label = record.custom_label or record.menu_id.display_name or "菜单配置"
             state = "显示" if record.visible else "隐藏"
             record.name = "%s - %s" % (label, state)
+
+    @api.depends("menu_id", "target_parent_menu_id")
+    def _compute_menu_preview_fields(self):
+        for record in self:
+            menu = record.menu_id
+            parent = menu.parent_id if menu else self.env["ir.ui.menu"]
+            target_parent = record.target_parent_menu_id
+            record.menu_complete_name = menu.complete_name if menu else False
+            record.original_label = menu.name if menu else False
+            record.current_parent_menu_id = parent
+            record.current_parent_menu_complete_name = parent.complete_name if parent else False
+            record.target_parent_menu_complete_name = target_parent.complete_name if target_parent else False
 
     @api.depends(
         "menu_id",
@@ -111,6 +123,14 @@ class UiMenuConfigPolicy(models.Model):
         for record in self:
             if record.menu_id and record.target_parent_menu_id == record.menu_id:
                 record.target_parent_menu_id = False
+            record._compute_menu_preview_fields()
+            record._compute_user_summaries()
+
+    @api.onchange("target_parent_menu_id", "custom_label", "sequence_override", "visible", "role_group_ids")
+    def _onchange_preview_inputs(self):
+        for record in self:
+            record._compute_menu_preview_fields()
+            record._compute_user_summaries()
 
     @api.constrains("menu_id", "target_parent_menu_id")
     def _check_target_parent_menu(self):
