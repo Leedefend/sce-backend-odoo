@@ -96,6 +96,26 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertEqual(result["error"]["reason_code"], "USER_ERROR")
         self.assertIn("field_order", result["error"]["message"])
 
+    def test_batch_config_rejects_unknown_visibility_field_before_order_write(self):
+        class Model:
+            _fields = {"name": object()}
+
+        handler = self.module.FormFieldConfigBatchSetHandler(
+            env={"res.partner": Model()},
+            params={
+                "model": "res.partner",
+                "field_order": ["name"],
+                "field_visibility": {"missing": False},
+            },
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 404)
+        self.assertEqual(result["error"]["reason_code"], "NOT_FOUND")
+        self.assertIn("res.partner.missing", result["error"]["message"])
+
     def test_business_config_contract_save_rejects_invalid_contract_json(self):
         handler = self.module.BusinessConfigContractSaveHandler(
             env={},
@@ -108,6 +128,114 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertEqual(result["code"], 400)
         self.assertEqual(result["error"]["reason_code"], "USER_ERROR")
         self.assertIn("contract_json", result["error"]["message"])
+
+    def test_business_config_contract_save_uses_full_scope_domain(self):
+        class Company:
+            id = 7
+
+        class Record:
+            id = 3
+            name = "demo"
+            model = "res.partner"
+            view_type = "form"
+            status = "draft"
+            version_no = 1
+            role_key = "sales"
+
+            class Ref:
+                id = 0
+
+            action_id = Ref()
+            view_id = Ref()
+
+            def write(self, vals):
+                self.vals = vals
+
+        class ContractModel:
+            def __init__(self):
+                self.record = Record()
+
+            def search(self, domain, limit=None):
+                self.domain = domain
+                self.limit = limit
+                return self.record
+
+            def create(self, vals):
+                raise AssertionError("expected existing scoped contract")
+
+        class Env(dict):
+            company = Company()
+
+        contract_model = ContractModel()
+        handler = self.module.BusinessConfigContractSaveHandler(
+            env=Env({"ui.business.config.contract": contract_model}),
+            params={
+                "name": "demo",
+                "model": "res.partner",
+                "view_type": "form",
+                "action_id": 11,
+                "view_id": 22,
+                "role_key": "sales",
+                "contract_json": {"objects": [{"name": "res.partner", "fields": []}]},
+            },
+        )
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        self.assertIn(("view_type", "=", "form"), contract_model.domain)
+        self.assertIn(("action_id", "=", 11), contract_model.domain)
+        self.assertIn(("view_id", "=", 22), contract_model.domain)
+        self.assertIn(("role_key", "=", "sales"), contract_model.domain)
+
+    def test_business_config_contract_save_normalizes_empty_role_scope(self):
+        class Company:
+            id = 7
+
+        class ContractModel:
+            def search(self, domain, limit=None):
+                self.domain = domain
+                return None
+
+            def create(self, vals):
+                self.vals = vals
+
+                class Record:
+                    id = 4
+                    name = vals["name"]
+                    model = vals["model"]
+                    view_type = vals.get("view_type") or ""
+                    status = vals.get("status") or "draft"
+                    version_no = 1
+                    role_key = vals.get("role_key") or ""
+
+                    class Ref:
+                        id = 0
+
+                    action_id = Ref()
+                    view_id = Ref()
+
+                return Record()
+
+        class Env(dict):
+            company = Company()
+
+        contract_model = ContractModel()
+        handler = self.module.BusinessConfigContractSaveHandler(
+            env=Env({"ui.business.config.contract": contract_model}),
+            params={
+                "name": "demo",
+                "model": "res.partner",
+                "view_type": "form",
+                "contract_json": {"objects": [{"name": "res.partner", "fields": []}]},
+            },
+        )
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        self.assertIn(("role_key", "=", False), contract_model.domain)
+        self.assertFalse(contract_model.vals["role_key"])
 
     def test_business_config_contract_get_requires_name_or_model(self):
         handler = self.module.BusinessConfigContractGetHandler(
@@ -144,6 +272,215 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertFalse(result["ok"])
         self.assertEqual(result["code"], 400)
         self.assertEqual(result["error"]["reason_code"], "MISSING_PARAMS")
+
+    def test_low_code_field_rows_mirror_into_business_config_contract(self):
+        class Company:
+            id = 7
+
+        class Record:
+            id = 1
+            contract_json = {}
+
+            def write(self, vals):
+                self.contract_json = vals["contract_json"]
+                self.written = vals
+
+            def action_publish(self):
+                self.published = True
+
+        class ContractModel:
+            def __init__(self):
+                self.record = None
+                self.created_vals = None
+
+            def sudo(self):
+                return self
+
+            def search(self, domain, limit=None):
+                return self.record
+
+            def create(self, vals):
+                self.created_vals = vals
+                self.record = Record()
+                self.record.write(vals)
+                return self.record
+
+        class Env(dict):
+            company = Company()
+
+        contract_model = ContractModel()
+        env = Env({"ui.business.config.contract": contract_model})
+
+        count = self.module._upsert_view_orchestration_field_rows(
+            env,
+            model="res.partner",
+            view_type="form",
+            action_id=11,
+            view_id=22,
+            rows=[
+                {"name": "email", "label": "Email Alias", "sequence": 10},
+                {"name": "phone", "visible": False, "sequence": 20},
+            ],
+        )
+
+        self.assertEqual(count, 2)
+        payload = contract_model.record.contract_json
+        fields = payload["view_orchestration"]["views"]["form"]["fields"]
+        self.assertEqual([row["name"] for row in fields], ["email", "phone"])
+        self.assertEqual(fields[0]["label"], "Email Alias")
+        self.assertFalse(fields[1]["visible"])
+        self.assertEqual(contract_model.created_vals["action_id"], 11)
+        self.assertEqual(contract_model.created_vals["view_id"], 22)
+        self.assertTrue(contract_model.record.published)
+
+    def test_low_code_field_rows_update_existing_business_config_contract(self):
+        class Company:
+            id = 7
+
+        class Record:
+            id = 1
+
+            def __init__(self):
+                self.contract_json = {
+                    "view_orchestration": {
+                        "views": {
+                            "form": {
+                                "fields": [
+                                    {"name": "email", "label": "Old", "sequence": 100},
+                                ],
+                            }
+                        }
+                    }
+                }
+
+            def write(self, vals):
+                self.contract_json = vals["contract_json"]
+                self.written = vals
+
+            def action_publish(self):
+                self.published = True
+
+        class ContractModel:
+            def __init__(self):
+                self.record = Record()
+
+            def sudo(self):
+                return self
+
+            def search(self, domain, limit=None):
+                return self.record
+
+            def create(self, vals):
+                raise AssertionError("existing contract should be updated")
+
+        class Env(dict):
+            company = Company()
+
+        contract_model = ContractModel()
+        env = Env({"ui.business.config.contract": contract_model})
+
+        count = self.module._upsert_view_orchestration_field_rows(
+            env,
+            model="res.partner",
+            view_type="form",
+            rows=[
+                {"name": "email", "label": "New", "visible": False, "sequence": 10},
+                {"name": "phone", "label": "Phone", "sequence": 20},
+            ],
+        )
+
+        self.assertEqual(count, 2)
+        fields = contract_model.record.contract_json["view_orchestration"]["views"]["form"]["fields"]
+        self.assertEqual([row["name"] for row in fields], ["email", "phone"])
+        self.assertEqual(fields[0]["label"], "New")
+        self.assertFalse(fields[0]["visible"])
+        self.assertEqual(fields[0]["sequence"], 10)
+        self.assertTrue(contract_model.record.published)
+
+    def test_low_code_write_intents_declare_business_config_authority(self):
+        for handler_class in (
+            self.module.FormFieldPolicySetHandler,
+            self.module.FormCustomFieldCreateHandler,
+            self.module.FormFieldOrderSetHandler,
+        ):
+            contract = handler_class(env={}, params={})._source_authority_contract()
+            self.assertIn("ui.business.config.contract", contract["authorities"])
+            self.assertIn("ui.business.config.contract.version", contract["authorities"])
+            self.assertIn("ui.form.field.policy", contract["authorities"])
+
+    def test_business_config_contract_list_uses_full_view_scope_domain(self):
+        class Company:
+            id = 7
+
+        class ContractModel:
+            def search(self, domain, limit=None, order=None):
+                self.domain = domain
+                self.limit = limit
+                self.order = order
+                return []
+
+        class Env(dict):
+            company = Company()
+
+        contract_model = ContractModel()
+        env = Env({"ui.business.config.contract": contract_model})
+        handler = self.module.BusinessConfigContractListHandler(
+            env=env,
+            params={
+                "model": "res.partner",
+                "view_type": "list",
+                "action_id": 11,
+                "view_id": 22,
+                "role_key": "sales",
+                "status": "published",
+            },
+        )
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        self.assertIn(("view_type", "in", [False, "tree"]), contract_model.domain)
+        self.assertIn(("action_id", "=", 11), contract_model.domain)
+        self.assertIn(("view_id", "=", 22), contract_model.domain)
+        self.assertIn(("role_key", "=", "sales"), contract_model.domain)
+        self.assertIn(("status", "=", "published"), contract_model.domain)
+
+    def test_business_config_contract_publish_rejects_invalid_scope_id(self):
+        class Company:
+            id = 7
+
+        class Env(dict):
+            company = Company()
+
+        handler = self.module.BusinessConfigContractPublishHandler(
+            env=Env({"ui.business.config.contract": object()}),
+            params={"model": "res.partner", "action_id": "bad"},
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["reason_code"], "USER_ERROR")
+        self.assertIn("action_id", result["error"]["message"])
+
+    def test_contract_reload_hint_normalizes_scope(self):
+        hint = self.module._contract_reload_hint(
+            model="res.partner",
+            view_type="list",
+            action_id=11,
+            view_id=22,
+            role_key="sales",
+            version_no=5,
+        )
+
+        self.assertTrue(hint["required"])
+        self.assertEqual(hint["reason"], "view_orchestration_config_changed")
+        self.assertEqual(hint["view_type"], "tree")
+        self.assertEqual(hint["action_id"], 11)
+        self.assertEqual(hint["view_id"], 22)
+        self.assertEqual(hint["role_key"], "sales")
+        self.assertEqual(hint["orchestration_version"], "5")
 
 
 if __name__ == "__main__":

@@ -1634,15 +1634,35 @@ async function hydrateLowCodeDraftFromContract() {
   const modelName = String(model.value || '').trim();
   if (!modelName) return;
   try {
-    const res = await intentRequest<{
+    const base = lowCodeApplyBaseParams();
+    const scopedName = lowCodeScopedContractName(modelName, base);
+    const legacyName = legacyLowCodeContractName(modelName);
+    let res = await intentRequest<{
       contract_json?: {
         objects?: Array<{ name?: string; fields?: Array<{ name?: string; visible?: boolean; order?: number }> }>;
       }
     }>({
       intent: 'ui.business_config.contract.get',
-      params: { model: modelName, name: `lowcode.${modelName}` },
-    });
+      params: { ...base, model: modelName, name: scopedName, view_type: 'form' },
+    }).catch(() => null);
+    if (!res && scopedName !== legacyName) {
+      res = await intentRequest<{
+        contract_json?: {
+          objects?: Array<{ name?: string; fields?: Array<{ name?: string; visible?: boolean; order?: number }> }>;
+        }
+      }>({
+        intent: 'ui.business_config.contract.get',
+        params: { model: modelName, name: legacyName },
+      }).catch(() => null);
+    }
+    if (!res) return;
     const objects = Array.isArray(res?.contract_json?.objects) ? res.contract_json?.objects || [] : [];
+    const viewOrchestration = res?.contract_json && typeof res.contract_json === 'object' && !Array.isArray(res.contract_json)
+      ? (res.contract_json as { view_orchestration?: Record<string, unknown> }).view_orchestration || {}
+      : {};
+    const orchestrationViews = viewOrchestration && typeof viewOrchestration === 'object' && !Array.isArray(viewOrchestration)
+      ? ((viewOrchestration as Record<string, unknown>).views || {}) as Record<string, unknown>
+      : {};
     const matched = objects.find((row) => String(row?.name || '').trim() === modelName) || objects[0];
     const fields = Array.isArray(matched?.fields) ? matched?.fields || [] : [];
     if (fields.length) {
@@ -1654,6 +1674,23 @@ async function hydrateLowCodeDraftFromContract() {
       if (orderNames.length) fieldOrderDraft.value = orderNames;
       fields.forEach((row) => {
         const key = String(row?.name || '').trim();
+        if (!key) return;
+        fieldVisibilityDraft[key] = row?.visible !== false;
+      });
+    }
+    if (!fields.length) {
+      const formSpec = orchestrationViews.form && typeof orchestrationViews.form === 'object' && !Array.isArray(orchestrationViews.form)
+        ? orchestrationViews.form as Record<string, unknown>
+        : {};
+      const formFields = Array.isArray(formSpec.fields) ? formSpec.fields as Array<Record<string, unknown>> : [];
+      const orderNames = formFields
+        .map((row) => ({ name: String(row?.name || row?.field || '').trim(), sequence: Number(row?.sequence || row?.order || 0) }))
+        .filter((row) => row.name)
+        .sort((a, b) => a.sequence - b.sequence)
+        .map((row) => row.name);
+      if (orderNames.length) fieldOrderDraft.value = orderNames;
+      formFields.forEach((row) => {
+        const key = String(row?.name || row?.field || '').trim();
         if (!key) return;
         fieldVisibilityDraft[key] = row?.visible !== false;
       });
@@ -1689,7 +1726,8 @@ async function hydrateLowCodeDraftFromContract() {
           .filter((node) => node.object && node.field)
         : []
     );
-    lowCodeLayoutDraft.value = [...collectLayout('form'), ...collectLayout('list'), ...collectLayout('kanban')];
+    const legacyLayoutDraft = [...collectLayout('form'), ...collectLayout('list'), ...collectLayout('kanban')];
+    lowCodeLayoutDraft.value = legacyLayoutDraft.length ? legacyLayoutDraft : collectLowCodeLayoutFromViewOrchestration(orchestrationViews, modelName);
     const rules = Array.isArray((res?.contract_json as { rules?: unknown[] } | undefined)?.rules)
       ? ((res?.contract_json as { rules?: unknown[] }).rules || [])
       : [];
@@ -1717,11 +1755,12 @@ async function loadLowCodeContractList() {
   const modelName = String(model.value || '').trim();
   if (!modelName) return;
   try {
+    const base = lowCodeApplyBaseParams();
     const result = await intentRequest<{
       items?: Array<{ id?: number; name?: string; model?: string; status?: string; version_no?: number }>;
     }>({
       intent: 'ui.business_config.contract.list',
-      params: { model: modelName },
+      params: { ...base, model: modelName, view_type: 'form' },
     });
     const items = Array.isArray(result?.items) ? result.items || [] : [];
     lowCodeContractList.value = items.map((row) => ({
@@ -1731,6 +1770,9 @@ async function loadLowCodeContractList() {
       status: String(row?.status || 'draft').trim() || 'draft',
       version_no: Number(row?.version_no || 1),
     })).filter((row) => row.name);
+    if (lowCodeSelectedContractName.value && !lowCodeContractList.value.some((row) => row.name === lowCodeSelectedContractName.value)) {
+      lowCodeSelectedContractName.value = '';
+    }
     if (!lowCodeSelectedContractName.value && lowCodeContractList.value.length) {
       lowCodeSelectedContractName.value = lowCodeContractList.value[0].name;
     }
@@ -1744,6 +1786,7 @@ async function switchLowCodeContractByName() {
   const modelName = String(model.value || '').trim();
   if (!name || !modelName) return;
   try {
+    const base = lowCodeApplyBaseParams();
     const res = await intentRequest<{
       contract_json?: {
         objects?: Array<{ name?: string; fields?: Array<{ name?: string; visible?: boolean; order?: number; type?: string; required?: boolean; readonly?: boolean; default?: string; options?: unknown[] }> }>;
@@ -1752,11 +1795,15 @@ async function switchLowCodeContractByName() {
       }
     }>({
       intent: 'ui.business_config.contract.get',
-      params: { model: modelName, name },
+      params: { ...base, model: modelName, name, view_type: 'form' },
     });
     lowCodeContractLoaded.value = false;
     const json = res?.contract_json;
     if (!json || typeof json !== 'object' || Array.isArray(json)) return;
+    const viewOrchestration = (json as { view_orchestration?: Record<string, unknown> }).view_orchestration || {};
+    const orchestrationViews = viewOrchestration && typeof viewOrchestration === 'object' && !Array.isArray(viewOrchestration)
+      ? ((viewOrchestration as Record<string, unknown>).views || {}) as Record<string, unknown>
+      : {};
     const objects = Array.isArray(json.objects) ? json.objects : [];
     lowCodeObjectsDraft.value = objects
       .filter((obj) => obj && typeof obj === 'object')
@@ -1779,6 +1826,7 @@ async function switchLowCodeContractByName() {
           : [],
       }))
       .filter((obj) => obj.name);
+    lowCodeLayoutDraft.value = collectLowCodeLayoutFromViewOrchestration(orchestrationViews, modelName);
   } catch {
     // ignore
   }
@@ -1790,9 +1838,10 @@ async function publishSelectedLowCodeContract() {
   if (!name || !modelName || busy.value) return;
   busyKind.value = 'action';
   try {
+    const base = lowCodeApplyBaseParams();
     await intentRequest({
       intent: 'ui.business_config.contract.publish',
-      params: { name, model: modelName },
+      params: { ...base, name, model: modelName, view_type: 'form' },
     });
     contractModeFeedback.value = '低代码契约已发布';
     await loadLowCodeContractList();
@@ -1810,9 +1859,10 @@ async function rollbackSelectedLowCodeContract() {
   if (!name || !modelName || busy.value) return;
   busyKind.value = 'action';
   try {
+    const base = lowCodeApplyBaseParams();
     await intentRequest({
       intent: 'ui.business_config.contract.rollback',
-      params: { name, model: modelName },
+      params: { ...base, name, model: modelName, view_type: 'form' },
     });
     contractModeFeedback.value = '低代码契约已回滚到上一版本';
     await loadLowCodeContractList();
@@ -1858,6 +1908,26 @@ function removeLowCodeField(objectIndex: number, fieldIndex: number) {
   target.fields.splice(fieldIndex, 1);
 }
 
+function collectLowCodeLayoutFromViewOrchestration(views: Record<string, unknown>, modelName: string) {
+  const out: Array<{ section: 'form' | 'list' | 'kanban'; object: string; field: string }> = [];
+  const collect = (section: 'form' | 'list' | 'kanban', viewKey: string, rowKey: string) => {
+    const spec = views[viewKey] && typeof views[viewKey] === 'object' && !Array.isArray(views[viewKey])
+      ? views[viewKey] as Record<string, unknown>
+      : {};
+    const rows = Array.isArray(spec[rowKey]) ? spec[rowKey] as unknown[] : [];
+    rows.forEach((row) => {
+      const item = row && typeof row === 'object' ? row as Record<string, unknown> : {};
+      const field = String(item.name || item.field || '').trim();
+      if (field) out.push({ section, object: modelName, field });
+    });
+  };
+  collect('form', 'form', 'fields');
+  collect('list', 'tree', 'columns');
+  collect('list', 'list', 'columns');
+  collect('kanban', 'kanban', 'fields');
+  return out;
+}
+
 function normalizedLowCodeDefault(field: { type?: string; default?: string }): unknown {
   const raw = String(field.default ?? '').trim();
   if (!raw) return undefined;
@@ -1875,6 +1945,54 @@ function normalizedLowCodeDefault(field: { type?: string; default?: string }): u
     return raw;
   }
   return raw;
+}
+
+function buildLowCodeViewOrchestration() {
+  const availableFields = contract.value?.fields || {};
+  const fieldLabel = (name: string) => {
+    const descriptor = availableFields[name];
+    return String(descriptor?.string || name).trim() || name;
+  };
+  const sectionFields = (section: 'form' | 'list' | 'kanban') => lowCodeLayoutDraft.value
+    .filter((row) => row.section === section)
+    .map((row) => String(row.field || '').trim())
+    .filter((name) => name && availableFields[name]);
+  const formNames = sectionFields('form').length ? sectionFields('form') : fieldOrderDraft.value.filter((name) => availableFields[name]);
+  const listNames = sectionFields('list');
+  const kanbanNames = sectionFields('kanban');
+  const views: Record<string, unknown> = {};
+  if (formNames.length) {
+    views.form = {
+      fields: formNames.map((name, index) => ({
+        name,
+        label: fieldLabel(name),
+        visible: fieldVisibilityDraft[name] !== false,
+        sequence: (index + 1) * 10,
+      })),
+    };
+  }
+  if (listNames.length) {
+    views.tree = {
+      columns: listNames.map((name, index) => ({
+        name,
+        label: fieldLabel(name),
+        visible: true,
+        sequence: (index + 1) * 10,
+      })),
+    };
+  }
+  if (kanbanNames.length) {
+    views.kanban = {
+      fields: kanbanNames.map((name, index) => ({
+        name,
+        label: fieldLabel(name),
+        visible: true,
+        sequence: (index + 1) * 10,
+      })),
+      slots: { primary: kanbanNames.slice(0, 3) },
+    };
+  }
+  return Object.keys(views).length ? { views } : undefined;
 }
 
 function normalizeLowCodeFieldDraft(field: {
@@ -1950,6 +2068,16 @@ function normalizeLowCodeApplyParams(raw: Record<string, unknown>): Record<strin
     params[key] = Number.isFinite(numeric) && numeric >= 0 ? Math.trunc(numeric) : 0;
   }
   return params;
+}
+
+function lowCodeScopedContractName(modelName: string, params: Record<string, unknown>) {
+  const actionId = Number(params.action_id || params.actionId || 0);
+  const viewId = Number(params.view_id || params.viewId || 0);
+  return `view_orchestration:${modelName}:form:action:${Number.isFinite(actionId) ? Math.trunc(actionId) : 0}:view:${Number.isFinite(viewId) ? Math.trunc(viewId) : 0}`;
+}
+
+function legacyLowCodeContractName(modelName: string) {
+  return `lowcode.${modelName}`;
 }
 
 const isQuickSubmitDisabled = computed(() => {
@@ -5676,6 +5804,32 @@ function syncContractV2ShadowStore(rawContract: unknown) {
   }
 }
 
+const viewOrchestrationHudSummary = computed(() => {
+  const rootGovernance = contract.value && typeof contract.value === 'object'
+    ? (contract.value as Record<string, unknown>).governance
+    : undefined;
+  const governance = rootGovernance && typeof rootGovernance === 'object' && !Array.isArray(rootGovernance)
+    ? rootGovernance as Record<string, unknown>
+    : {};
+  const orchestration = governance.view_orchestration && typeof governance.view_orchestration === 'object' && !Array.isArray(governance.view_orchestration)
+    ? governance.view_orchestration as Record<string, unknown>
+    : {};
+  const views = orchestration.views && typeof orchestration.views === 'object' && !Array.isArray(orchestration.views)
+    ? orchestration.views as Record<string, unknown>
+    : {};
+  const current = (views.form || {}) as Record<string, unknown>;
+  const contracts = Array.isArray(current.business_config_contracts)
+    ? current.business_config_contracts as Array<Record<string, unknown>>
+    : [];
+  return {
+    applied: Boolean(orchestration.applied || current.applied || contracts.length),
+    owner: String(orchestration.owner_layer || current.owner_layer || '-'),
+    contractCount: contracts.length,
+    contractNames: contracts.map((row) => String(row.name || row.id || '').trim()).filter(Boolean).join(',') || '-',
+    legacyOverlay: Boolean(current.legacy_field_policy_overlay),
+  };
+});
+
 const hudEntries = computed(() => [
   { label: 'model', value: model.value || '-' },
   { label: 'action_id', value: actionId.value || '-' },
@@ -5700,6 +5854,11 @@ const hudEntries = computed(() => [
   { label: 'v2_shadow_value_source', value: v2ShadowValueSourceKind.value },
   { label: 'v2_shadow_error', value: v2ContractDecodeError.value || '-' },
   { label: 'contract_view_type', value: contract.value?.head?.view_type || contract.value?.view_type || '-' },
+  { label: 'view_orchestration_applied', value: viewOrchestrationHudSummary.value.applied },
+  { label: 'view_orchestration_owner', value: viewOrchestrationHudSummary.value.owner },
+  { label: 'view_orchestration_contracts', value: viewOrchestrationHudSummary.value.contractCount },
+  { label: 'view_orchestration_names', value: viewOrchestrationHudSummary.value.contractNames },
+  { label: 'legacy_policy_overlay', value: viewOrchestrationHudSummary.value.legacyOverlay },
   { label: 'render_profile', value: renderProfile.value },
   { label: 'fields_count', value: Object.keys(contract.value?.fields || {}).length },
   { label: 'layout_nodes', value: layoutNodes.value.length },
@@ -6745,8 +6904,10 @@ async function saveContractFieldOrder() {
     }>({
       intent: 'ui.business_config.contract.save',
       params: {
-        name: `lowcode.${String(model.value || 'unknown')}`,
+        ...baseParams,
+        name: lowCodeScopedContractName(String(model.value || 'unknown'), baseParams),
         model: String(model.value || ''),
+        view_type: 'form',
         publish: false,
         contract_json: {
           objects: buildLowCodeContractObjects(),
@@ -6755,6 +6916,7 @@ async function saveContractFieldOrder() {
             list: lowCodeLayoutDraft.value.filter((row) => row.section === 'list').map((row) => ({ object: row.object, field: row.field })),
             kanban: lowCodeLayoutDraft.value.filter((row) => row.section === 'kanban').map((row) => ({ object: row.object, field: row.field })),
           },
+          view_orchestration: buildLowCodeViewOrchestration(),
           rules: lowCodeRulesDraft.value.map((rule) => ({
             name: rule.name,
             trigger: rule.trigger,

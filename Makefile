@@ -630,7 +630,7 @@ verify.user_role_approval_matrix.guard: check-compose-project check-compose-env
 verify.user_permission_view_contract_boundary.guard: check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/user_permission_view_contract_boundary_guard.py
 
-.PHONY: verify.form_structure.contract.guard verify.form_structure.contract_runtime.audit verify.form_structure.contract verify.form_view.native_structure.boundary_guard verify.form_view.orchestration_boundary_guard verify.form_view.scope.boundary_guard verify.form_view.scope.runtime_chain_guard verify.form_view.scope.action_projection_audit
+.PHONY: verify.form_structure.contract.guard verify.form_structure.contract_runtime.audit verify.form_structure.contract verify.form_view.native_structure.boundary_guard verify.view.orchestration_boundary_guard verify.view.orchestration_user_surface.browser verify.form_view.orchestration_boundary_guard verify.form_view.scope.boundary_guard verify.form_view.scope.runtime_chain_guard verify.form_view.scope.action_projection_audit
 verify.form_view.scope.boundary_guard: guard.prod.forbid
 	@python3 -m py_compile scripts/verify/form_view_scope_boundary_guard.py
 	@python3 scripts/verify/form_view_scope_boundary_guard.py
@@ -647,18 +647,23 @@ verify.form_view.native_structure.boundary_guard: guard.prod.forbid
 	@python3 -m py_compile scripts/verify/form_view_native_structure_boundary_guard.py
 	@python3 scripts/verify/form_view_native_structure_boundary_guard.py
 
-verify.form_view.orchestration_boundary_guard: guard.prod.forbid
-	@python3 -m py_compile addons/smart_core/core/form_view_orchestration_contract.py scripts/verify/form_view_orchestration_boundary_guard.py
-	@python3 scripts/verify/form_view_orchestration_boundary_guard.py
+verify.view.orchestration_boundary_guard: guard.prod.forbid
+	@python3 -m py_compile addons/smart_core/core/view_orchestration_contract.py addons/smart_core/core/view_orchestrator.py addons/smart_core/model/ui_business_config_contract.py scripts/verify/view_orchestration_boundary_guard.py
+	@python3 scripts/verify/view_orchestration_boundary_guard.py
+
+verify.view.orchestration_user_surface.browser: guard.prod.forbid check-compose-project check-compose-env
+	@FRONTEND_URL=$${FRONTEND_URL:-http://127.0.0.1:5174} DB_NAME=$(DB_NAME) E2E_LOGIN=$(E2E_LOGIN) E2E_PASSWORD=$(E2E_PASSWORD) node scripts/verify/view_orchestration_user_surface_browser_acceptance.js
+
+verify.form_view.orchestration_boundary_guard: verify.view.orchestration_boundary_guard
 
 verify.form_structure.contract.guard: guard.prod.forbid
 	@python3 -m py_compile addons/smart_core/core/unified_page_contract_v2_assembler.py scripts/verify/form_structure_contract_standardizer_guard.py scripts/verify/form_structure_contract_runtime_audit.py
 	@python3 scripts/verify/form_structure_contract_standardizer_guard.py
 
-verify.form_structure.contract_runtime.audit: guard.prod.forbid check-compose-project check-compose-env verify.form_structure.contract.guard verify.form_view.native_structure.boundary_guard verify.form_view.orchestration_boundary_guard verify.form_view.scope.boundary_guard verify.form_view.scope.runtime_chain_guard verify.form_view.scope.action_projection_audit
+verify.form_structure.contract_runtime.audit: guard.prod.forbid check-compose-project check-compose-env verify.form_structure.contract.guard verify.form_view.native_structure.boundary_guard verify.view.orchestration_boundary_guard verify.form_view.scope.boundary_guard verify.form_view.scope.runtime_chain_guard verify.form_view.scope.action_projection_audit
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/form_structure_contract_runtime_audit.sh
 
-verify.form_structure.contract: verify.form_view.scope.boundary_guard verify.form_view.scope.runtime_chain_guard verify.form_view.scope.action_projection_audit verify.form_view.native_structure.boundary_guard verify.form_view.orchestration_boundary_guard verify.form_structure.contract_runtime.audit
+verify.form_structure.contract: verify.form_view.scope.boundary_guard verify.form_view.scope.runtime_chain_guard verify.form_view.scope.action_projection_audit verify.form_view.native_structure.boundary_guard verify.view.orchestration_boundary_guard verify.form_structure.contract_runtime.audit
 	@echo "[OK] verify.form_structure.contract done"
 
 history.users.verify: guard.prod.forbid check-compose-project check-compose-env

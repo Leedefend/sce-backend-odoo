@@ -1199,7 +1199,7 @@ def _is_project_kanban_contract(data: dict) -> bool:
         or permissions.get("model")
     )
     current_view_type = _safe_text(data.get("view_type")).lower()
-    if current_view_type and current_view_type != "kanban":
+    if current_view_type and current_view_type not in {"kanban", "tree", "list"}:
         return False
     render_profile = _safe_text(data.get("render_profile")).lower()
     if render_profile in {_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY}:
@@ -1210,7 +1210,7 @@ def _is_project_kanban_contract(data: dict) -> bool:
     if not view_type and isinstance(views.get("kanban"), dict):
         view_type = "kanban"
     primary_model = _governance_primary_model(data)
-    return bool(primary_model and model == primary_model and "kanban" in view_type)
+    return bool(primary_model and model == primary_model and ("kanban" in view_type or isinstance(views.get("kanban"), dict)))
 
 
 def _is_project_task_form_contract(data: dict) -> bool:
@@ -1410,7 +1410,7 @@ def _govern_project_kanban_contract_for_user(data: dict) -> None:
     selected = [name for name in primary + secondary if name]
     selected = selected[:8]
     data["visible_fields"] = selected
-    data["kanban_profile"] = {
+    default_profile = {
         "title_field": primary[0] if primary else "name",
         "primary_fields": primary[:3],
         "secondary_fields": secondary[:4],
@@ -1421,13 +1421,75 @@ def _govern_project_kanban_contract_for_user(data: dict) -> None:
     views = _as_dict(data.get("views"))
     kanban = _as_dict(views.get("kanban"))
     existing = kanban.get("fields") if isinstance(kanban.get("fields"), list) else []
-    merged_fields: list[str] = []
-    for name in existing + selected:
+    merged_fields: list[Any] = []
+    merged_names: set[str] = set()
+    orchestrated_names: list[str] = []
+
+    def _field_row_name(row: Any) -> str:
+        if isinstance(row, dict):
+            return _safe_text(row.get("name") or row.get("field") or row.get("field_name"))
+        return _safe_text(row)
+
+    for row in existing:
+        normalized = _field_row_name(row)
+        descriptor = _as_dict(fields_map.get(normalized))
+        if (
+            normalized
+            and normalized in fields_map
+            and not _is_technical_field(normalized, descriptor)
+            and normalized not in merged_names
+        ):
+            merged_fields.append(dict(row) if isinstance(row, dict) else normalized)
+            merged_names.add(normalized)
+            orchestrated_names.append(normalized)
+    for name in selected:
         normalized = _safe_text(name)
-        if normalized and normalized in fields_map and normalized not in merged_fields:
+        descriptor = _as_dict(fields_map.get(normalized))
+        if (
+            normalized
+            and normalized in fields_map
+            and not _is_technical_field(normalized, descriptor)
+            and normalized not in merged_names
+        ):
             merged_fields.append(normalized)
+            merged_names.add(normalized)
     kanban["fields"] = merged_fields or ["id", "name"]
-    kanban["kanban_profile"] = _as_dict(data.get("kanban_profile"))
+
+    existing_profile = _as_dict(kanban.get("kanban_profile") or data.get("kanban_profile"))
+    slots = _as_dict(kanban.get("slots"))
+
+    def _slot_names(key: str) -> list[str]:
+        raw = slots.get(key)
+        if not isinstance(raw, list):
+            return []
+        out: list[str] = []
+        for item in raw:
+            name = _field_row_name(item)
+            if name and name in fields_map and name not in out:
+                out.append(name)
+        return out
+
+    primary_override = _slot_names("primary")
+    secondary_override = _slot_names("secondary")
+    status_override = _slot_names("status")
+    has_orchestrated_kanban = bool(orchestrated_names or primary_override or secondary_override or status_override)
+    profile = dict(default_profile)
+    profile.update(existing_profile)
+    if has_orchestrated_kanban:
+        if primary_override:
+            profile["primary_fields"] = primary_override
+        elif orchestrated_names:
+            profile["primary_fields"] = orchestrated_names[:3]
+        if secondary_override:
+            profile["secondary_fields"] = secondary_override
+        elif orchestrated_names:
+            profile["secondary_fields"] = orchestrated_names[3:7]
+        if status_override:
+            profile["status_fields"] = status_override[:2]
+        if not _safe_text(profile.get("title_field")):
+            profile["title_field"] = "name" if "name" in fields_map else (orchestrated_names[0] if orchestrated_names else default_profile["title_field"])
+    data["kanban_profile"] = profile
+    kanban["kanban_profile"] = dict(profile)
     row_actions = kanban.get("row_actions") if isinstance(kanban.get("row_actions"), list) else []
     if not any(_safe_text(row.get("key")) == "open_project_dashboard" for row in row_actions if isinstance(row, dict)):
         row_actions.append({
@@ -1844,6 +1906,14 @@ def _govern_standard_list_for_user(
 
     views = _as_dict(data.get("views"))
     tree = _as_dict(views.get("tree") or views.get("list"))
+    tree_governance = _as_dict(tree.get("governance"))
+    tree_view_orchestration = _as_dict(tree_governance.get("view_orchestration"))
+    tree_source_trace = _as_dict(tree.get("source_trace"))
+    tree_trace_orchestration = _as_dict(tree_source_trace.get("view_orchestration"))
+    has_orchestrated_tree = bool(
+        tree_view_orchestration.get("applied")
+        or tree_trace_orchestration.get("business_config_contracts")
+    )
     native_schema_rows = tree.get("columns_schema") if isinstance(tree.get("columns_schema"), list) else []
     native_schema_by_name = {
         _safe_text(row.get("name")): dict(row)
@@ -1861,15 +1931,25 @@ def _govern_standard_list_for_user(
     for name in native_schema_by_name:
         if name not in native_columns:
             native_columns.append(name)
-    # Governance may order and enrich standard business columns, but it must
-    # not drop columns that came from the native view fact source.
-    for name in native_columns:
-        if name in fields_map and name not in selected:
-            selected.append(name)
+    # Governance may order and enrich standard business columns. Once a
+    # business orchestration was applied to the native tree block, that
+    # orchestrated order is the user-facing order and standard governance only
+    # appends its defaults.
+    if has_orchestrated_tree and native_columns:
+        selected = [name for name in native_columns if name in fields_map]
+        for name in columns_order:
+            if name in fields_map and name not in selected:
+                selected.append(name)
+    else:
+        for name in native_columns:
+            if name in fields_map and name not in selected:
+                selected.append(name)
 
     def _field_label(name: str) -> str:
         schema_label = _safe_text(native_schema_by_name.get(name, {}).get("label") or native_schema_by_name.get(name, {}).get("string"))
         field_label = _safe_text(_as_dict(fields_map.get(name)).get("string"))
+        if has_orchestrated_tree and schema_label:
+            return schema_label
         return column_labels.get(name) or schema_label or field_label or name
 
     def _column_schema(name: str) -> dict:

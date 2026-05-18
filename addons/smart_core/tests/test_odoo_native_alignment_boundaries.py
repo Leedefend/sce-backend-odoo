@@ -131,6 +131,7 @@ from odoo.addons.smart_core.core import unified_page_contract_v2_status
 from odoo.addons.smart_core.core.contract_assembler import ContractAssembler
 from odoo.addons.smart_core.core.scene_diagnostics_builder import SceneDiagnosticsBuilder
 from odoo.addons.smart_core.core.scene_runtime_orchestrator import SceneRuntimeOrchestrator
+from odoo.addons.smart_core.core.view_orchestrator import ViewOrchestrator
 from odoo.addons.smart_core.core import workspace_home_contract_builder
 from odoo.addons.smart_core.core import workspace_home_data_provider
 from odoo.addons.smart_core.core import scene_delivery_policy
@@ -784,6 +785,87 @@ class TestOdooNativeAlignmentBoundaries(TransactionCase):
         self.assertEqual([node.get("string") for node in appended], ["联系字段", "扩展字段"])
         self.assertEqual([[child.get("name") for child in node.get("children", [])] for node in appended], [["phone"], ["email"]])
 
+    def test_view_orchestrator_consumes_business_config_contract_for_form(self):
+        self.env["ui.business.config.contract"].sudo().create({
+            "name": "Partner Form Orchestration",
+            "model": "res.partner",
+            "view_type": "form",
+            "status": "published",
+            "contract_json": {
+                "view_orchestration": {
+                    "views": {
+                        "form": {
+                            "fields": [
+                                {"name": "email", "label": "Email Alias", "sequence": 5},
+                                {"name": "phone", "visible": False, "sequence": 10},
+                            ],
+                        }
+                    }
+                }
+            },
+        })
+        contract = {
+            "layout": [
+                {
+                    "type": "sheet",
+                    "children": [
+                        {
+                            "type": "group",
+                            "children": [
+                                {"type": "field", "name": "name"},
+                                {"type": "field", "name": "phone"},
+                            ],
+                        }
+                    ],
+                }
+            ],
+        }
+
+        result = ViewOrchestrator(self.env).compose(contract, model_name="res.partner", view_type="form")
+
+        fields = self.env["ui.form.field.policy"]._collect_contract_field_nodes(result.get("layout") or [])
+        self.assertNotIn("phone", fields)
+        self.assertIn("email", fields)
+        self.assertEqual(fields["email"].get("label"), "Email Alias")
+        governance = (result.get("governance") or {}).get("view_orchestration") or {}
+        self.assertEqual(governance.get("owner_layer"), "business_view_orchestration")
+        self.assertTrue(governance.get("business_config_contracts"))
+
+    def test_view_orchestrator_consumes_business_config_contract_for_list_columns(self):
+        self.env["ui.business.config.contract"].sudo().create({
+            "name": "Partner List Orchestration",
+            "model": "res.partner",
+            "view_type": "tree",
+            "status": "published",
+            "contract_json": {
+                "view_orchestration": {
+                    "views": {
+                        "tree": {
+                            "columns": [
+                                {"name": "email", "label": "Email Alias", "sequence": 5},
+                                {"name": "name", "sequence": 10},
+                                {"name": "phone", "visible": False, "sequence": 20},
+                            ],
+                        }
+                    }
+                }
+            },
+        })
+        contract = {
+            "columns": ["name", "phone", "email"],
+            "columns_schema": [
+                {"name": "name", "label": "Name"},
+                {"name": "phone", "label": "Phone"},
+                {"name": "email", "label": "Email"},
+            ],
+        }
+
+        result = ViewOrchestrator(self.env).compose(contract, model_name="res.partner", view_type="tree")
+
+        self.assertEqual(result.get("columns"), ["email", "name"])
+        self.assertEqual([row.get("name") for row in result.get("columns_schema") or []], ["email", "name"])
+        self.assertEqual((result.get("columns_schema") or [])[0].get("label"), "Email Alias")
+
     def test_form_field_policy_revalidates_action_and_view_scope_on_write(self):
         Policy = self.env["ui.form.field.policy"].sudo()
         policy = Policy.create({
@@ -858,6 +940,12 @@ class TestOdooNativeAlignmentBoundaries(TransactionCase):
         field_config_group = next((row for row in action_groups if row.get("key") == "current_form_field_configuration"), {})
         self.assertTrue(field_config_group)
         self.assertTrue(any(row.get("intent") == "ui.form_custom_field.create" for row in field_config_group.get("actions") or []))
+        low_code_config = field_config_group.get("low_code_config") or {}
+        self.assertEqual(low_code_config.get("config_source"), "ui.business.config.contract")
+        self.assertEqual(low_code_config.get("legacy_overlay"), "ui.form.field.policy")
+        source_authority = field_config_group.get("source_authority") or {}
+        self.assertEqual(source_authority.get("owner_layer"), "business_view_orchestration")
+        self.assertIn("ui.business.config.contract", source_authority.get("authorities") or [])
 
         result = UiContractV2Handler(self.env, su_env=self.env["ir.model"].sudo().env).handle({
             "model": "res.partner",

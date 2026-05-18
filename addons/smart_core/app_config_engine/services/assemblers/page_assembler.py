@@ -124,10 +124,15 @@ class PageAssembler:
             _logger.warning("Action %s has no res_model, returning diagnostic contract", action.get('id') if action else 'unknown')
             return ClientUrlReportAssembler(self.env).assemble_diagnostic_contract(p, action, issue="动作未配置模型 (res_model)")
 
-        view_types = p["view_types"]
         env = self.env
         su = self.su_env
         action = action or self._resolve_action_from_payload(p, model)
+        view_types = self._include_configured_orchestrated_view_types(
+            p.get("view_types"),
+            model_name=model,
+            action_id=action.get("id") if isinstance(action, dict) else p.get("action_id") or p.get("actionId"),
+        )
+        p["view_types"] = view_types
         action_eval_context = {
             "uid": env.uid,
             "user": env.user,
@@ -267,7 +272,7 @@ class PageAssembler:
                 # runtime group/ACL filtering still matches native Odoo.
                 vcfg_runtime = vcfg.with_user(env.user).sudo().with_context(**scoped_view_context)
                 v_contract = vcfg_runtime.get_contract_api(filter_runtime=True, check_model_acl=True)
-                v_versions.append(str(vcfg.version))
+                v_versions.append(str(v_contract.get("effective_version") or vcfg.version))
             except KeyError:
                 mark_missing("app.view.config")
                 _logger.warning("app.view.config missing; fallback view contract for model=%s vt=%s", model, vt)
@@ -309,6 +314,8 @@ class PageAssembler:
             _logger.warning("app.search.config missing; fallback search contract for model=%s", model)
             data["search"] = {}
             versions["search"] = 0
+        self._inject_search_view_orchestration(data, env=env, model=model, view_context=view_context, versions=versions)
+        self._inject_view_orchestration_summary(data)
 
         # 4.x) 关系字段维护入口（many2one/many2many/one2many）
         # 由后端契约提供 relation_entry，前端禁止自行猜测 action/menu。
@@ -458,6 +465,35 @@ class PageAssembler:
             data["warnings"] = warnings
         data["source_authority"] = self.source_authority_contract()
         return data, versions
+
+    def _include_configured_orchestrated_view_types(self, view_types, *, model_name="", action_id=None):
+        normalized = self.normalize_view_types(view_types)
+        model = str(model_name or "").strip()
+        if not model or "ui.business.config.contract" not in self.env:
+            return normalized
+        try:
+            action_id_int = int(action_id or 0)
+        except Exception:
+            action_id_int = 0
+        domain = [("model", "=", model), ("status", "=", "published")]
+        if action_id_int > 0:
+            domain.append(("action_id", "in", [False, action_id_int]))
+        else:
+            domain.append(("action_id", "=", False))
+        try:
+            rows = self.env["ui.business.config.contract"].sudo().search(domain)
+        except Exception:
+            _logger.exception("include configured orchestrated view types failed for model=%s action_id=%s", model, action_id_int)
+            return normalized
+        allowed = {"tree", "form", "kanban", "search", "pivot", "graph", "calendar", "gantt", "activity", "dashboard"}
+        out = list(normalized)
+        for row in rows:
+            view_type = str(getattr(row, "view_type", "") or "").strip()
+            if view_type == "list":
+                view_type = "tree"
+            if view_type in allowed and view_type not in out:
+                out.append(view_type)
+        return out
 
     def _inject_create_defaults(self, data, model_name="", render_profile=""):
         if str(render_profile or "").strip().lower() != "create":
@@ -731,9 +767,16 @@ class PageAssembler:
             },
             "source_authority": {
                 "kind": self.SOURCE_KIND,
-                "authorities": ["ui.form.field.policy", "ir.actions.act_window", "ir.ui.menu"],
+                "authorities": [
+                    "ui.business.config.contract",
+                    "ui.business.config.contract.version",
+                    "ui.form.field.policy",
+                    "ir.actions.act_window",
+                    "ir.ui.menu",
+                ],
                 "projection_only": True,
                 "no_business_fact_authority": True,
+                "owner_layer": "business_view_orchestration",
             },
         }
         buttons = data.get("buttons") if isinstance(data.get("buttons"), list) else []
@@ -764,6 +807,8 @@ class PageAssembler:
             "view_id": current_view_id if current_view_id > 0 else False,
             "settings_action_id": int(settings_action.id),
             "settings_menu_id": int(settings_menu.id),
+            "config_source": "ui.business.config.contract",
+            "owner_layer": "business_view_orchestration",
         }
         data["governance"] = governance
 
@@ -773,6 +818,12 @@ class PageAssembler:
             return
         mode = "form_field_configuration"
         low_code_mode = "business_config_lowcode"
+        config_summary = self._current_view_orchestration_config_summary(
+            model=model,
+            view_type="form",
+            action_id=action_id,
+            view_id=view_id,
+        )
         action_rows = [
             {
                 "key": "current_form_add_custom_field",
@@ -789,6 +840,7 @@ class PageAssembler:
                         "model": model,
                         "action_id": int(action_id or 0),
                         "view_id": int(view_id or 0) or False,
+                        "view_type": "form",
                     },
                     "prompt_schema": {
                         "fields": [
@@ -830,6 +882,7 @@ class PageAssembler:
                         "model": model,
                         "action_id": int(action_id or 0),
                         "view_id": int(view_id or 0) or False,
+                        "view_type": "form",
                     },
                 },
             },
@@ -880,6 +933,7 @@ class PageAssembler:
                 "label": label,
                 "action_id": int(action_id or 0),
                 "view_id": int(view_id or 0) or False,
+                "view_type": "form",
             }
             for visible, value, label_text in ((True, "show", "显示"), (False, "hide", "隐藏")):
                 action_rows.append({
@@ -917,16 +971,58 @@ class PageAssembler:
                 "enabled": True,
                 "scope": "current_form",
                 "capabilities": ["field_order", "field_visibility", "custom_field_create"],
+                "config_source": "ui.business.config.contract",
+                "config_contract": config_summary,
+                "legacy_overlay": "ui.form.field.policy",
             },
             "actions": action_rows,
             "source_authority": {
                 "kind": self.SOURCE_KIND,
-                "authorities": ["ui.form.field.policy", "ui.form.custom.field.wizard", "ir.model.fields"],
+                "authorities": [
+                    "ui.business.config.contract",
+                    "ui.business.config.contract.version",
+                    "ui.form.field.policy",
+                    "ui.form.custom.field.wizard",
+                    "ir.model.fields",
+                ],
                 "projection_only": True,
                 "no_business_fact_authority": True,
+                "owner_layer": "business_view_orchestration",
             },
         })
         data["action_groups"] = groups
+
+    def _current_view_orchestration_config_summary(self, *, model, view_type, action_id, view_id):
+        if "ui.business.config.contract" not in self.su_env:
+            return {"available": False, "reason": "model_missing"}
+        try:
+            contracts = self.su_env["ui.business.config.contract"]._effective_view_orchestration_contracts(
+                model,
+                view_type=view_type,
+                action_id=int(action_id or 0),
+                view_id=int(view_id or 0),
+            )
+        except Exception:
+            _logger.exception("Failed to resolve view orchestration config summary for model=%s view_type=%s", model, view_type)
+            return {"available": False, "reason": "resolve_failed"}
+        items = []
+        for rec in contracts[:5]:
+            items.append({
+                "id": int(rec.id),
+                "name": str(rec.name or ""),
+                "status": str(rec.status or ""),
+                "version_no": int(rec.version_no or 1),
+                "view_type": str(rec.view_type or ""),
+                "action_id": int(rec.action_id.id or 0),
+                "view_id": int(rec.view_id.id or 0),
+                "role_key": str(rec.role_key or ""),
+            })
+        return {
+            "available": True,
+            "source_model": "ui.business.config.contract",
+            "owner_layer": "business_view_orchestration",
+            "items": items,
+        }
 
     def _collect_layout_field_names(self, raw):
         names = set()
@@ -1113,30 +1209,128 @@ class PageAssembler:
             dimensions = cfg.get("dimensions", nested.get("dimensions", []))
             cfg["measures"] = measures if isinstance(measures, list) else []
             cfg["dimensions"] = dimensions if isinstance(dimensions, list) else []
+            defaults = cfg.get("defaults", nested.get("defaults", {}))
+            if isinstance(defaults, dict):
+                cfg["defaults"] = defaults
             return cfg
         if vt == "graph":
             gtype = cfg.get("type", nested.get("type", nested.get("type_default", "bar")))
             cfg["type"] = str(gtype or "bar")
             cfg["measure"] = str(cfg.get("measure", nested.get("measure", "")) or "")
             cfg["dimension"] = str(cfg.get("dimension", nested.get("dimension", "")) or "")
+            for key in ("measures", "dimensions", "chart_policy"):
+                value = cfg.get(key, nested.get(key))
+                if isinstance(value, (list, dict)):
+                    cfg[key] = value
             return cfg
         if vt in ("calendar", "gantt"):
             date_start = cfg.get("date_start", nested.get("date_start", "date_start"))
             date_stop = cfg.get("date_stop", nested.get("date_stop", "date_end"))
             cfg["date_start"] = str(date_start or "date_start")
             cfg["date_stop"] = str(date_stop or "date_end")
+            for key in ("date_slots", "resource_slots", "color_slots", "dependency_slots", "fields", "native_attrs"):
+                value = cfg.get(key, nested.get(key))
+                if isinstance(value, (list, dict)):
+                    cfg[key] = value
             return cfg
         if vt == "activity":
             field = cfg.get("field", nested.get("field", "res_id"))
             cfg["field"] = str(field or "res_id")
+            for key in ("activity_type_slots", "deadline_slots", "assignee_slots", "fields", "native_attrs"):
+                value = cfg.get(key, nested.get(key))
+                if isinstance(value, (list, dict)):
+                    cfg[key] = value
             return cfg
         if vt == "dashboard":
             cards = cfg.get("cards", nested.get("cards", []))
             kpis = cfg.get("kpis", nested.get("kpis", []))
             cfg["cards"] = cards if isinstance(cards, list) else []
             cfg["kpis"] = kpis if isinstance(kpis, list) else []
+            for key in ("metric_slots", "chart_slots", "navigation_slots"):
+                value = cfg.get(key, nested.get(key))
+                if isinstance(value, dict):
+                    cfg[key] = value
+            return cfg
+        if vt == "kanban":
+            for key in ("fields", "slots", "kanban_profile", "row_actions", "quick_actions", "actions"):
+                value = cfg.get(key, nested.get(key))
+                if isinstance(value, (list, dict)):
+                    cfg[key] = value
             return cfg
         return cfg
+
+    def _inject_view_orchestration_summary(self, data):
+        views = data.get("views") if isinstance(data, dict) else {}
+        if not isinstance(views, dict) or not views:
+            return
+        view_rows = {}
+        any_applied = False
+        for view_type, contract in views.items():
+            if not isinstance(contract, dict):
+                continue
+            governance = contract.get("governance") if isinstance(contract.get("governance"), dict) else {}
+            orchestration = governance.get("view_orchestration") if isinstance(governance.get("view_orchestration"), dict) else {}
+            source_trace = contract.get("source_trace") if isinstance(contract.get("source_trace"), dict) else {}
+            trace = source_trace.get("view_orchestration") if isinstance(source_trace.get("view_orchestration"), dict) else {}
+            business_contracts = trace.get("business_config_contracts") or orchestration.get("business_config_contracts") or []
+            legacy_overlay = bool(trace.get("legacy_field_policy_overlay") or orchestration.get("legacy_field_policy_overlay"))
+            applied = bool(orchestration.get("applied") or business_contracts or legacy_overlay)
+            if applied:
+                any_applied = True
+            view_rows[str(view_type or "")] = {
+                "applied": applied,
+                "owner_layer": str(trace.get("owner_layer") or orchestration.get("owner_layer") or "business_view_orchestration"),
+                "business_config_contracts": business_contracts if isinstance(business_contracts, list) else [],
+                "legacy_field_policy_overlay": legacy_overlay,
+            }
+        if not view_rows:
+            return
+        governance = data.get("governance") if isinstance(data.get("governance"), dict) else {}
+        governance["view_orchestration"] = {
+            "applied": any_applied,
+            "owner_layer": "business_view_orchestration",
+            "views": view_rows,
+        }
+        data["governance"] = governance
+
+    def _append_view_version_token(self, versions, token):
+        if not isinstance(versions, dict):
+            return
+        value = str(token or "").strip()
+        if not value:
+            return
+        current = str(versions.get("view") or "").strip()
+        parts = [part for part in current.split(",") if part]
+        if value not in parts:
+            parts.append(value)
+        versions["view"] = ",".join(parts) if parts else value
+
+    def _inject_search_view_orchestration(self, data, *, env, model, view_context, versions=None):
+        if not model or "app.view.config" not in env:
+            return
+        context = dict(view_context or {})
+        context["contract_projection_readonly"] = True
+        try:
+            view_config = env["app.view.config"].with_context(**context)._generate_from_fields_view_get(model, "search")
+            runtime_view_config = view_config.with_user(env.user).sudo().with_context(**context)
+            search_contract = runtime_view_config.get_contract_api(filter_runtime=True, check_model_acl=True)
+        except Exception:
+            _logger.exception("Failed to apply search view orchestration for model=%s", model)
+            return
+        if not isinstance(search_contract, dict):
+            return
+        self._append_view_version_token(versions, search_contract.get("effective_version"))
+        data["views"]["search"] = self._coerce_view_contract_semantics("search", search_contract)
+        orchestrated_search = search_contract.get("search") if isinstance(search_contract.get("search"), dict) else {}
+        if not orchestrated_search:
+            return
+        base_search = data.get("search") if isinstance(data.get("search"), dict) else {}
+        merged = dict(base_search)
+        for key in ("filters", "group_by", "facets"):
+            value = orchestrated_search.get(key)
+            if value:
+                merged[key] = value
+        data["search"] = merged
 
     def _inject_relation_entry_contract(self, data, model_name=""):
         fields = data.get("fields") if isinstance(data, dict) else None
@@ -1293,6 +1487,8 @@ class PageAssembler:
         read_fields = ["id", "display_name", "name"]
         order = "id desc"
         search = {"filters": [], "group_by": [], "facets": {"enabled": True}}
+        governance = {}
+        source_trace = {}
         if not relation:
             return {
                 "columns": columns,
@@ -1300,6 +1496,8 @@ class PageAssembler:
                 "order": order,
                 "limit": 120,
                 "search": search,
+                "governance": governance,
+                "source_trace": source_trace,
                 "source": "relation_target_native_view",
             }
         try:
@@ -1333,6 +1531,8 @@ class PageAssembler:
             parsed_search = view_contract.get("search") if isinstance(view_contract.get("search"), dict) else {}
             if parsed_search:
                 search = parsed_search
+            governance = view_contract.get("governance") if isinstance(view_contract.get("governance"), dict) else {}
+            source_trace = view_contract.get("source_trace") if isinstance(view_contract.get("source_trace"), dict) else {}
         except Exception:
             _logger.debug("relation search dialog native parse failed relation=%s", relation, exc_info=True)
         return {
@@ -1341,6 +1541,8 @@ class PageAssembler:
             "order": order,
             "limit": 120,
             "search": search,
+            "governance": governance,
+            "source_trace": source_trace,
             "source": "relation_target_native_view",
         }
 
