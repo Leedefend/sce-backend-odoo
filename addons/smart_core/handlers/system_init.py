@@ -566,6 +566,19 @@ def _node_release_gate_keys(node: dict) -> set[str]:
     return {item for item in values if item}
 
 
+def _node_is_runtime_business_config_entry(node: dict) -> bool:
+    """Keep already-authorized runtime configuration entries available."""
+    meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+    if _text(node.get("delivery_bucket")) == "delivery_business_config":
+        return True
+    if _text(meta.get("delivery_bucket")) == "delivery_business_config":
+        return True
+    model = _text(node.get("model") or meta.get("model"))
+    if model in {"ui.menu.config.policy"}:
+        return True
+    return False
+
+
 def _filter_nav_by_release_gate(nav: list[dict], gate: dict) -> tuple[list[dict], dict]:
     if not isinstance(nav, list) or not gate.get("applied"):
         return nav if isinstance(nav, list) else [], {"applied": False}
@@ -579,9 +592,10 @@ def _filter_nav_by_release_gate(nav: list[dict], gate: dict) -> tuple[list[dict]
             allowed_values.update(_text(item) for item in values if _text(item))
     kept_leaf_count = 0
     removed_leaf_count = 0
+    runtime_business_config_count = 0
 
     def _filter_node(node: dict):
-        nonlocal kept_leaf_count, removed_leaf_count
+        nonlocal kept_leaf_count, removed_leaf_count, runtime_business_config_count
         if not isinstance(node, dict):
             return None
         children = node.get("children") if isinstance(node.get("children"), list) else []
@@ -595,6 +609,10 @@ def _filter_nav_by_release_gate(nav: list[dict], gate: dict) -> tuple[list[dict]
             if not next_children:
                 return None
             next_node["children"] = next_children
+            return next_node
+        if _node_is_runtime_business_config_entry(node):
+            kept_leaf_count += 1
+            runtime_business_config_count += 1
             return next_node
         if _node_release_gate_keys(node) & allowed_values:
             kept_leaf_count += 1
@@ -614,6 +632,7 @@ def _filter_nav_by_release_gate(nav: list[dict], gate: dict) -> tuple[list[dict]
         "allowed_page_count": int(gate.get("page_count") or 0),
         "kept_leaf_count": kept_leaf_count,
         "removed_leaf_count": removed_leaf_count,
+        "runtime_business_config_passthrough_count": runtime_business_config_count,
     }
 
 

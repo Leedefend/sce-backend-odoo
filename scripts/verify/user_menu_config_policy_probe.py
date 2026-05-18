@@ -5,6 +5,13 @@ from __future__ import annotations
 
 import json
 
+from odoo import SUPERUSER_ID, api
+from odoo.addons.smart_core.adapters.nav_tree_cleaner import NavTreeCleaner
+from odoo.addons.smart_core.adapters.odoo_nav_adapter import OdooNavAdapter
+from odoo.addons.smart_core.app_config_engine.services.dispatchers.nav_dispatcher import NavDispatcher
+from odoo.addons.smart_core.delivery.delivery_engine import DeliveryEngine
+from odoo.addons.smart_core.handlers.system_init import _filter_nav_by_release_gate, _load_platform_release_gate
+
 
 errors = []
 
@@ -92,6 +99,51 @@ finally:
     if created:
         created.unlink()
     env.cr.rollback()  # noqa: F821
+
+wutao = env["res.users"].sudo().search([("login", "=", "wutao")], limit=1)  # noqa: F821
+if not wutao:
+    errors.append({"missing_user": "wutao"})
+elif menu:
+    wutao_env = env(user=wutao.id)  # noqa: F821
+    su_env = api.Environment(env.cr, SUPERUSER_ID, dict(wutao_env.context or {}))  # noqa: F821
+    nav_data, _nav_versions = NavDispatcher(wutao_env, su_env).build_nav(
+        {"subject": "nav", "scene": "web", "root_xmlid": "smart_construction_core.menu_sc_root"}
+    )
+    native_nav = NavTreeCleaner().clean(nav_data.get("nav") or [])
+    OdooNavAdapter().enrich(wutao_env, native_nav)
+    delivery_payload = DeliveryEngine(wutao_env).build(
+        data={},
+        product_key="",
+        edition_key="standard",
+        base_product_key="",
+        native_nav=native_nav,
+    )
+    release_gate = _load_platform_release_gate(
+        wutao_env,
+        product_key=str(delivery_payload.get("product_key") or "construction.standard"),
+    )
+    gated_nav, gate_meta = _filter_nav_by_release_gate(
+        delivery_payload.get("nav") if isinstance(delivery_payload.get("nav"), list) else [],
+        release_gate,
+    )
+
+    def flatten(nodes):
+        out = []
+        for node in nodes or []:
+            if not isinstance(node, dict):
+                continue
+            out.append(node)
+            out.extend(flatten(node.get("children") if isinstance(node.get("children"), list) else []))
+        return out
+
+    rows = [
+        node
+        for node in flatten(gated_nav)
+        if node.get("menu_id") == menu.id
+        or (isinstance(node.get("meta"), dict) and node["meta"].get("menu_id") == menu.id)
+    ]
+    if not rows:
+        errors.append({"system_init_release_gate_missing_menu": menu.id, "gate_meta": gate_meta})
 
 payload = {
     "status": "FAIL" if errors else "PASS",
