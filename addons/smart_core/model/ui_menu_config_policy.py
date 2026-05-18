@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from odoo import api, fields, models
+from odoo.exceptions import ValidationError
 
 
 class UiMenuConfigPolicy(models.Model):
@@ -24,9 +25,20 @@ class UiMenuConfigPolicy(models.Model):
     menu_id = fields.Many2one("ir.ui.menu", string="菜单", required=True, index=True, ondelete="cascade")
     menu_complete_name = fields.Char(string="菜单路径", related="menu_id.complete_name", readonly=True)
     original_label = fields.Char(string="原菜单名称", related="menu_id.name", readonly=True)
+    current_parent_menu_id = fields.Many2one(
+        "ir.ui.menu",
+        string="当前所属分组",
+        related="menu_id.parent_id",
+        readonly=True,
+    )
+    current_parent_menu_complete_name = fields.Char(
+        string="当前分组路径",
+        related="current_parent_menu_id.complete_name",
+        readonly=True,
+    )
     target_parent_menu_id = fields.Many2one(
         "ir.ui.menu",
-        string="所属菜单分组",
+        string="调整到菜单分组",
         help="留空表示保留原分组；选择后，该菜单会显示到所选分组下面。",
     )
     target_parent_menu_complete_name = fields.Char(
@@ -49,6 +61,7 @@ class UiMenuConfigPolicy(models.Model):
     active = fields.Boolean(string="启用", default=True, index=True)
     effect_summary = fields.Char(string="配置结果", compute="_compute_user_summaries")
     scope_summary = fields.Char(string="适用范围", compute="_compute_user_summaries")
+    preview_summary = fields.Char(string="生效说明", compute="_compute_user_summaries")
 
     @api.depends("menu_id", "custom_label", "visible")
     def _compute_name(self):
@@ -64,15 +77,19 @@ class UiMenuConfigPolicy(models.Model):
         "visible",
         "role_group_ids",
         "target_parent_menu_id",
+        "current_parent_menu_id",
     )
     def _compute_user_summaries(self):
         for record in self:
+            menu_label = record.custom_label or record.original_label or record.menu_id.display_name or "未选择菜单"
+            current_group = record.current_parent_menu_id.display_name or "顶层菜单"
+            target_group = record.target_parent_menu_id.display_name or current_group
             if not record.visible:
                 record.effect_summary = "隐藏菜单"
             else:
                 parts = []
                 if record.target_parent_menu_id:
-                    parts.append("放到：%s" % record.target_parent_menu_id.display_name)
+                    parts.append("放到：%s" % target_group)
                 if record.custom_label:
                     parts.append("显示为：%s" % record.custom_label)
                 if record.sequence_override:
@@ -80,6 +97,31 @@ class UiMenuConfigPolicy(models.Model):
                 record.effect_summary = "；".join(parts) if parts else "保持原样显示"
             groups = record.role_group_ids.mapped("display_name")
             record.scope_summary = "、".join(groups) if groups else "当前公司所有用户"
+            if not record.visible:
+                record.preview_summary = "对%s隐藏菜单“%s”。" % (record.scope_summary, record.original_label or menu_label)
+            else:
+                record.preview_summary = "对%s显示菜单“%s”，位置：%s。保存后刷新页面生效。" % (
+                    record.scope_summary,
+                    menu_label,
+                    target_group,
+                )
+
+    @api.onchange("menu_id")
+    def _onchange_menu_id(self):
+        for record in self:
+            if record.menu_id and record.target_parent_menu_id == record.menu_id:
+                record.target_parent_menu_id = False
+
+    @api.constrains("menu_id", "target_parent_menu_id")
+    def _check_target_parent_menu(self):
+        for record in self:
+            if record.menu_id and record.target_parent_menu_id and record.menu_id == record.target_parent_menu_id:
+                raise ValidationError("菜单不能移动到自己下面。")
+            parent = record.target_parent_menu_id
+            while parent:
+                if parent == record.menu_id:
+                    raise ValidationError("菜单不能移动到自己的下级菜单下面。")
+                parent = parent.parent_id
 
     @api.model
     def _source_contract(self) -> dict:
