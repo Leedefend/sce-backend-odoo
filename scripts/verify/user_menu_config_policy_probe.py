@@ -50,6 +50,7 @@ if "ui.menu.config.policy" not in (source.get("authorities") or []):
 
 target_menu = ref("smart_construction_core.menu_sc_business_config_center")
 hidden_menu = ref("smart_construction_core.menu_sc_config_center")
+destination_menu = ref("smart_construction_core.menu_sc_contract_center")
 
 created = Policy.browse()
 try:
@@ -60,6 +61,7 @@ try:
                 "company_id": env.company.id,  # noqa: F821
                 "custom_label": "业务配置中心",
                 "sequence_override": 7,
+                "target_parent_menu_id": destination_menu.id if destination_menu else False,
                 "visible": True,
             }
         )
@@ -83,6 +85,13 @@ try:
                 "title": "root",
                 "sequence": 1,
                 "children": [
+                    {
+                        "menu_id": destination_menu.id,
+                        "name": destination_menu.name,
+                        "title": destination_menu.name,
+                        "sequence": 1,
+                        "children": [],
+                    },
                     {"menu_id": target_menu.id, "name": target_menu.name, "title": target_menu.name, "sequence": 85, "children": []},
                     {"menu_id": hidden_menu.id, "name": hidden_menu.name, "title": hidden_menu.name, "sequence": 95, "children": []},
                 ],
@@ -99,6 +108,17 @@ try:
         errors.append({"overlay_hide_failed": flat_by_id.get(hidden_menu.id)})
     if (stats or {}).get("hidden_count", 0) < 1:
         errors.append({"overlay_hidden_count": stats})
+    if (stats or {}).get("moved_count", 0) < 1:
+        errors.append({"overlay_moved_count": stats})
+    destination_rows = [
+        row
+        for root in overlaid.get("tree", [])
+        for row in (root.get("children") if isinstance(root.get("children"), list) else [])
+        if destination_menu and row.get("menu_id") == destination_menu.id
+    ]
+    destination_children = destination_rows[0].get("children", []) if destination_rows else []
+    if target_menu and target_menu.id not in {row.get("menu_id") for row in destination_children if isinstance(row, dict)}:
+        errors.append({"overlay_move_failed": destination_children})
 finally:
     if created:
         created.unlink()
@@ -115,6 +135,7 @@ elif menu:
                 "menu_id": menu.id,
                 "company_id": env.company.id,  # noqa: F821
                 "custom_label": "菜单显示设置",
+                "target_parent_menu_id": destination_menu.id if destination_menu else False,
                 "role_group_ids": [(6, 0, [business_config_group.id])] if business_config_group else False,
                 "visible": True,
             }
@@ -164,6 +185,10 @@ elif menu:
             errors.append({"system_init_user_menu_config_rename_failed": rows[0]})
         if (user_menu_config_meta or {}).get("renamed_count", 0) < 1:
             errors.append({"system_init_user_menu_config_meta": user_menu_config_meta})
+        if (user_menu_config_meta or {}).get("moved_count", 0) < 1:
+            errors.append({"system_init_user_menu_config_move_meta": user_menu_config_meta})
+        if rows and destination_menu and (rows[0].get("meta") or {}).get("parent_menu_label") != destination_menu.name:
+            errors.append({"system_init_user_menu_config_move_failed": rows[0]})
     finally:
         if runtime_policy:
             runtime_policy.unlink()

@@ -24,6 +24,16 @@ class UiMenuConfigPolicy(models.Model):
     menu_id = fields.Many2one("ir.ui.menu", string="菜单", required=True, index=True, ondelete="cascade")
     menu_complete_name = fields.Char(string="菜单路径", related="menu_id.complete_name", readonly=True)
     original_label = fields.Char(string="原菜单名称", related="menu_id.name", readonly=True)
+    target_parent_menu_id = fields.Many2one(
+        "ir.ui.menu",
+        string="所属菜单分组",
+        help="留空表示保留原分组；选择后，该菜单会显示到所选分组下面。",
+    )
+    target_parent_menu_complete_name = fields.Char(
+        string="目标分组路径",
+        related="target_parent_menu_id.complete_name",
+        readonly=True,
+    )
     custom_label = fields.Char(string="显示名称")
     sequence_override = fields.Integer(string="显示顺序")
     visible = fields.Boolean(string="显示菜单", default=True, index=True)
@@ -32,8 +42,8 @@ class UiMenuConfigPolicy(models.Model):
         "ui_menu_config_policy_group_rel",
         "policy_id",
         "group_id",
-        string="适用角色组",
-        help="留空表示对当前公司所有用户生效；填写后仅对命中这些角色组的用户生效。",
+        string="适用用户组",
+        help="留空表示对当前公司所有用户生效；填写后仅对这些用户组中的用户生效。",
     )
     note = fields.Text(string="说明")
     active = fields.Boolean(string="启用", default=True, index=True)
@@ -47,13 +57,22 @@ class UiMenuConfigPolicy(models.Model):
             state = "显示" if record.visible else "隐藏"
             record.name = "%s - %s" % (label, state)
 
-    @api.depends("menu_id", "custom_label", "sequence_override", "visible", "role_group_ids")
+    @api.depends(
+        "menu_id",
+        "custom_label",
+        "sequence_override",
+        "visible",
+        "role_group_ids",
+        "target_parent_menu_id",
+    )
     def _compute_user_summaries(self):
         for record in self:
             if not record.visible:
                 record.effect_summary = "隐藏菜单"
             else:
                 parts = []
+                if record.target_parent_menu_id:
+                    parts.append("放到：%s" % record.target_parent_menu_id.display_name)
                 if record.custom_label:
                     parts.append("显示为：%s" % record.custom_label)
                 if record.sequence_override:
@@ -101,10 +120,10 @@ class UiMenuConfigPolicy(models.Model):
     @api.model
     def apply_runtime_overlay(self, nav_fact: dict, user=None) -> tuple[dict, dict]:
         if not isinstance(nav_fact, dict):
-            return nav_fact, {"applied_count": 0, "hidden_count": 0, "renamed_count": 0, "reordered_count": 0}
+            return nav_fact, {"applied_count": 0, "hidden_count": 0, "renamed_count": 0, "reordered_count": 0, "moved_count": 0}
         policies_by_menu = self._runtime_policies_for_user(user=user)
         if not policies_by_menu:
-            return nav_fact, {"applied_count": 0, "hidden_count": 0, "renamed_count": 0, "reordered_count": 0}
+            return nav_fact, {"applied_count": 0, "hidden_count": 0, "renamed_count": 0, "reordered_count": 0, "moved_count": 0}
 
         stats = {
             "source_authority": self._source_contract(),
@@ -112,6 +131,12 @@ class UiMenuConfigPolicy(models.Model):
             "hidden_count": 0,
             "renamed_count": 0,
             "reordered_count": 0,
+            "moved_count": 0,
+        }
+        move_targets = {
+            menu_id: policy.target_parent_menu_id
+            for menu_id, policy in policies_by_menu.items()
+            if policy.visible and policy.target_parent_menu_id and int(policy.target_parent_menu_id.id) != int(menu_id)
         }
 
         def apply_node(node: dict) -> dict | None:
@@ -147,6 +172,88 @@ class UiMenuConfigPolicy(models.Model):
                 node["children"] = next_children
             return node
 
+        def sort_children(nodes: list[dict]) -> list[dict]:
+            nodes.sort(key=lambda row: (int(row.get("sequence") or 0), int(row.get("menu_id") or 0)))
+            return nodes
+
+        def node_matches_menu(node: dict, menu) -> bool:
+            if not menu:
+                return False
+            menu_id = int(menu.id)
+            meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+            for candidate in (node.get("menu_id"), meta.get("menu_id")):
+                try:
+                    if int(candidate or 0) == menu_id:
+                        return True
+                except Exception:
+                    continue
+            labels = {
+                str(node.get("name") or "").strip(),
+                str(node.get("label") or "").strip(),
+                str(node.get("title") or "").strip(),
+            }
+            return bool(str(menu.name or "").strip() in labels)
+
+        def remove_node(nodes: list[dict], menu_id: int) -> tuple[list[dict], dict | None]:
+            removed = None
+            next_nodes = []
+            for node in nodes:
+                if not isinstance(node, dict):
+                    continue
+                try:
+                    current_id = int(node.get("menu_id") or 0)
+                except Exception:
+                    current_id = 0
+                if current_id == menu_id and removed is None:
+                    removed = node
+                    continue
+                children = node.get("children") if isinstance(node.get("children"), list) else []
+                if children:
+                    next_children, child_removed = remove_node(children, menu_id)
+                    if child_removed is not None and removed is None:
+                        removed = child_removed
+                    node = dict(node)
+                    node["children"] = sort_children(next_children)
+                next_nodes.append(node)
+            return next_nodes, removed
+
+        def insert_node(nodes: list[dict], target_menu, moved_node: dict) -> tuple[list[dict], bool]:
+            next_nodes = []
+            inserted = False
+            for node in nodes:
+                if not isinstance(node, dict):
+                    continue
+                node = dict(node)
+                children = node.get("children") if isinstance(node.get("children"), list) else []
+                if node_matches_menu(node, target_menu):
+                    moved = dict(moved_node)
+                    moved["parent_id"] = int(target_menu.id)
+                    moved_meta = dict(moved.get("meta") if isinstance(moved.get("meta"), dict) else {})
+                    moved_meta["parent_menu_id"] = int(target_menu.id)
+                    moved_meta["parent_menu_label"] = str(target_menu.name or "")
+                    moved["meta"] = moved_meta
+                    node["children"] = sort_children(children + [moved])
+                    inserted = True
+                elif children:
+                    next_children, child_inserted = insert_node(children, target_menu, moved_node)
+                    node["children"] = next_children
+                    inserted = inserted or child_inserted
+                next_nodes.append(node)
+            return next_nodes, inserted
+
+        def apply_moves(nodes: list[dict]) -> list[dict]:
+            next_nodes = nodes
+            for menu_id, target_menu in move_targets.items():
+                next_nodes, moved_node = remove_node(next_nodes, int(menu_id))
+                if moved_node is None:
+                    continue
+                next_nodes, inserted = insert_node(next_nodes, target_menu, moved_node)
+                if inserted:
+                    stats["moved_count"] += 1
+                else:
+                    next_nodes.append(moved_node)
+            return sort_children(next_nodes)
+
         out = dict(nav_fact)
         out["flat"] = [
             applied
@@ -156,12 +263,11 @@ class UiMenuConfigPolicy(models.Model):
             if applied is not None
         ]
         out["flat"].sort(key=lambda row: (int(row.get("sequence") or 0), int(row.get("menu_id") or 0)))
-        out["tree"] = [
+        out["tree"] = apply_moves([
             applied
             for node in out.get("tree", [])
             if isinstance(node, dict)
             for applied in [apply_node(dict(node))]
             if applied is not None
-        ]
-        out["tree"].sort(key=lambda row: (int(row.get("sequence") or 0), int(row.get("menu_id") or 0)))
+        ])
         return out, stats

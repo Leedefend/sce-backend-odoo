@@ -6,13 +6,16 @@
     <field name="arch" type="xml">
       <search string="菜单配置">
         <field name="menu_id"/>
+        <field name="target_parent_menu_id"/>
         <field name="custom_label"/>
         <field name="role_group_ids"/>
         <filter string="显示" name="visible" domain="[('visible', '=', True)]"/>
         <filter string="隐藏" name="hidden" domain="[('visible', '=', False)]"/>
         <filter string="已改名" name="renamed" domain="[('custom_label', '!=', False)]"/>
         <filter string="已排序" name="reordered" domain="[('sequence_override', '!=', 0)]"/>
+        <filter string="已调整分组" name="moved" domain="[('target_parent_menu_id', '!=', False)]"/>
         <filter string="按菜单" name="group_menu" context="{'group_by': 'menu_id'}"/>
+        <filter string="按目标分组" name="group_target_parent" context="{'group_by': 'target_parent_menu_id'}"/>
       </search>
     </field>
   </record>
@@ -24,6 +27,7 @@
       <tree string="菜单配置" create="1" edit="1" delete="1" default_order="menu_id, id desc">
         <field name="menu_id"/>
         <field name="menu_complete_name"/>
+        <field name="target_parent_menu_id"/>
         <field name="effect_summary"/>
         <field name="scope_summary"/>
         <field name="visible"/>
@@ -39,7 +43,7 @@
       <form string="菜单配置" create="1" edit="1" delete="1">
         <sheet>
           <div class="alert alert-info" role="alert">
-            选择一个菜单，然后设置显示名称、显示顺序或隐藏。适用角色组留空时，对当前公司所有用户生效；保存后刷新页面即可看到结果。
+            选择一个菜单，然后设置所属菜单分组、显示名称、显示顺序或隐藏。适用用户组留空时，对当前公司所有用户生效；填写后仅对这些用户组中的用户生效；保存后刷新页面即可看到结果。
           </div>
           <group>
             <group string="菜单">
@@ -51,12 +55,14 @@
             </group>
             <group string="显示策略">
               <field name="visible"/>
+              <field name="target_parent_menu_id" placeholder="留空则保留原分组"/>
+              <field name="target_parent_menu_complete_name" readonly="1"/>
               <field name="custom_label" placeholder="留空则使用原菜单名称"/>
               <field name="sequence_override" placeholder="留空或 0 则使用原顺序"/>
               <field name="effect_summary" readonly="1"/>
             </group>
           </group>
-          <group string="适用范围">
+          <group string="适用用户组">
             <field name="role_group_ids" widget="many2many_tags" options="{'no_create': True}"/>
             <field name="scope_summary" readonly="1"/>
           </group>
