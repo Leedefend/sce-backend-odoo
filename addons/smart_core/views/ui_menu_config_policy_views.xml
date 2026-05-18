@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="view_ui_menu_config_policy_search" model="ir.ui.view">
+    <field name="name">ui.menu.config.policy.search</field>
+    <field name="model">ui.menu.config.policy</field>
+    <field name="arch" type="xml">
+      <search string="菜单配置">
+        <field name="menu_id"/>
+        <field name="custom_label"/>
+        <field name="role_group_ids"/>
+        <filter string="显示" name="visible" domain="[('visible', '=', True)]"/>
+        <filter string="隐藏" name="hidden" domain="[('visible', '=', False)]"/>
+        <filter string="按菜单" name="group_menu" context="{'group_by': 'menu_id'}"/>
+      </search>
+    </field>
+  </record>
+
+  <record id="view_ui_menu_config_policy_tree" model="ir.ui.view">
+    <field name="name">ui.menu.config.policy.tree</field>
+    <field name="model">ui.menu.config.policy</field>
+    <field name="arch" type="xml">
+      <tree string="菜单配置" create="1" edit="1" delete="1" default_order="menu_id, id desc">
+        <field name="menu_id"/>
+        <field name="custom_label"/>
+        <field name="sequence_override"/>
+        <field name="visible"/>
+        <field name="role_group_ids" widget="many2many_tags"/>
+        <field name="company_id"/>
+        <field name="active"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_ui_menu_config_policy_form" model="ir.ui.view">
+    <field name="name">ui.menu.config.policy.form</field>
+    <field name="model">ui.menu.config.policy</field>
+    <field name="arch" type="xml">
+      <form string="菜单配置" create="1" edit="1" delete="1">
+        <sheet>
+          <group>
+            <group string="菜单">
+              <field name="company_id" readonly="1"/>
+              <field name="menu_id" required="1"/>
+              <field name="menu_complete_name" readonly="1"/>
+              <field name="active"/>
+            </group>
+            <group string="显示策略">
+              <field name="visible"/>
+              <field name="custom_label" placeholder="留空则使用原菜单名称"/>
+              <field name="sequence_override" placeholder="留空或 0 则使用原顺序"/>
+            </group>
+          </group>
+          <group string="适用范围">
+            <field name="role_group_ids" widget="many2many_tags" options="{'no_create': True}"/>
+          </group>
+          <group string="说明">
+            <field name="note" nolabel="1"/>
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <record id="action_ui_menu_config_policy" model="ir.actions.act_window">
+    <field name="name">菜单配置</field>
+    <field name="res_model">ui.menu.config.policy</field>
+    <field name="view_mode">tree,form</field>
+    <field name="search_view_id" ref="smart_core.view_ui_menu_config_policy_search"/>
+    <field name="context">{'search_default_visible': 1}</field>
+    <field name="groups_id" eval="[(6, 0, [
+      ref('smart_core.group_smart_core_business_config_admin'),
+      ref('smart_core.group_smart_core_admin')
+    ])]"/>
+  </record>
+</odoo>
