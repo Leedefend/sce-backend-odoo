@@ -862,6 +862,14 @@ verify.user_visible_business_fact_alignment: guard.prod.forbid check-compose-pro
 verify.business_user_priority_menu_plan.alignment: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/business_user_priority_menu_plan_probe.py
 
+.PHONY: verify.user_priority.browser_evidence.coverage
+verify.user_priority.browser_evidence.coverage: guard.prod.forbid
+	@python3 scripts/verify/user_priority_browser_evidence_coverage.py
+
+.PHONY: verify.user_priority.page_alignment.complete
+verify.user_priority.page_alignment.complete: guard.prod.forbid verify.business_user_priority_menu_plan.alignment verify.user_visible_business_fact_alignment verify.user_priority.browser_evidence.coverage verify.p1.daily_business_visible_contract.audit verify.p1.daily_business_form.usability.audit
+	@echo "[OK] verify.user_priority.page_alignment.complete done"
+
 history.legacy_user_access.projection.write: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/history_legacy_user_access_projection_write.py
 
