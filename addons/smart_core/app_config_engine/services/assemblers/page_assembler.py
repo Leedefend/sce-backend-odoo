@@ -839,7 +839,7 @@ class PageAssembler:
                     "params": {
                         "model": model,
                         "action_id": int(action_id or 0),
-                        "view_id": int(view_id or 0) or False,
+                        "view_id": int(view_id or 0),
                         "view_type": "form",
                     },
                     "prompt_schema": {
@@ -881,7 +881,7 @@ class PageAssembler:
                     "params": {
                         "model": model,
                         "action_id": int(action_id or 0),
-                        "view_id": int(view_id or 0) or False,
+                        "view_id": int(view_id or 0),
                         "view_type": "form",
                     },
                 },
@@ -932,7 +932,7 @@ class PageAssembler:
                 "field_name": field_name,
                 "label": label,
                 "action_id": int(action_id or 0),
-                "view_id": int(view_id or 0) or False,
+                "view_id": int(view_id or 0),
                 "view_type": "form",
             }
             for visible, value, label_text in ((True, "show", "显示"), (False, "hide", "隐藏")):

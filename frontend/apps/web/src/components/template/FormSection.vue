@@ -463,13 +463,13 @@ function fieldActionsFor(field: FormSectionFieldSchema) {
   return props.fieldActions?.(field) || [];
 }
 
-function fieldOrderIndex(field: FormSectionFieldSchema) {
+function resolveFieldOrderIndex(field: FormSectionFieldSchema) {
   return props.fieldOrderIndex?.(field) ?? -1;
 }
 
 function canMoveFieldOrder(field: FormSectionFieldSchema, delta: number) {
   if (!props.fieldOrderEditable) return false;
-  const index = fieldOrderIndex(field);
+  const index = resolveFieldOrderIndex(field);
   const count = Number(props.fieldOrderCount || 0);
   if (index < 0 || count <= 0) return false;
   const nextIndex = index + delta;

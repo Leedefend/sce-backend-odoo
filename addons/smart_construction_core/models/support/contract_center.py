@@ -98,6 +98,7 @@ class ConstructionContract(models.Model):
         domain=[("type", "=", "contract_type")],
     )
     name_short = fields.Char(string="简称")
+    active = fields.Boolean(string="有效", default=True, index=True)
 
     company_id = fields.Many2one(
         "res.company",

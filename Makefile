@@ -2285,6 +2285,10 @@ verify.e2e.subscription_smoke: guard.prod.forbid check-compose-project check-com
 verify.e2e.ops_batch_smoke: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/verify/ops_batch_smoke.sh
 
+.PHONY: verify.list_batch_action.closure_guard
+verify.list_batch_action.closure_guard: guard.prod.forbid
+	@python3 scripts/verify/list_batch_action_closure_guard.py
+
 verify.capability.lint: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/verify/capability_lint.sh
 

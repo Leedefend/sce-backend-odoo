@@ -9,7 +9,7 @@
 | execute_button | Y | 1 | Y | 5 | 0 | low | addons/smart_core/handlers/execute_button.py |
 - matched: `execute_button`
 - note: `execute_button` execute_button: permission posture looks acceptable
-| api.data(write) | Y | 1 | Y | 0 | 0 | low | addons/smart_core/handlers/api_data_batch.py, addons/smart_core/handlers/api_data_unlink.py, addons/smart_core/handlers/api_data_write.py |
+| api.data(write) | Y | 1 | Y | 2 | 0 | low | addons/smart_core/handlers/api_data_batch.py, addons/smart_core/handlers/api_data_unlink.py, addons/smart_core/handlers/api_data_write.py |
 - matched: `api.data.create, api.data.unlink, api.data.batch`
 - note: `api.data(write)` api.data.create: permission posture looks acceptable
 - note: `api.data(write)` api.data.unlink: permission posture looks acceptable

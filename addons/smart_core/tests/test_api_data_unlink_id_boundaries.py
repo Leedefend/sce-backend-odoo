@@ -24,7 +24,12 @@ def _install_module(name, **attrs):
 
 def _load_handler():
     root = Path(__file__).resolve().parents[1]
-    exc_mod = _install_module("odoo.exceptions", AccessError=type("AccessError", (Exception,), {}))
+    exc_mod = _install_module(
+        "odoo.exceptions",
+        AccessError=type("AccessError", (Exception,), {}),
+        UserError=type("UserError", (Exception,), {}),
+        ValidationError=type("ValidationError", (Exception,), {}),
+    )
     _install_module("odoo", exceptions=exc_mod)
 
     _install_module("odoo.addons")
