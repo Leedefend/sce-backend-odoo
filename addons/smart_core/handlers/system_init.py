@@ -566,6 +566,19 @@ def _node_release_gate_keys(node: dict) -> set[str]:
     return {item for item in values if item}
 
 
+def _node_is_runtime_business_config_entry(node: dict) -> bool:
+    """Keep already-authorized runtime configuration entries available."""
+    meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+    if _text(node.get("delivery_bucket")) == "delivery_business_config":
+        return True
+    if _text(meta.get("delivery_bucket")) == "delivery_business_config":
+        return True
+    model = _text(node.get("model") or meta.get("model"))
+    if model in {"ui.menu.config.policy"}:
+        return True
+    return False
+
+
 def _filter_nav_by_release_gate(nav: list[dict], gate: dict) -> tuple[list[dict], dict]:
     if not isinstance(nav, list) or not gate.get("applied"):
         return nav if isinstance(nav, list) else [], {"applied": False}
@@ -579,9 +592,10 @@ def _filter_nav_by_release_gate(nav: list[dict], gate: dict) -> tuple[list[dict]
             allowed_values.update(_text(item) for item in values if _text(item))
     kept_leaf_count = 0
     removed_leaf_count = 0
+    runtime_business_config_count = 0
 
     def _filter_node(node: dict):
-        nonlocal kept_leaf_count, removed_leaf_count
+        nonlocal kept_leaf_count, removed_leaf_count, runtime_business_config_count
         if not isinstance(node, dict):
             return None
         children = node.get("children") if isinstance(node.get("children"), list) else []
@@ -595,6 +609,10 @@ def _filter_nav_by_release_gate(nav: list[dict], gate: dict) -> tuple[list[dict]
             if not next_children:
                 return None
             next_node["children"] = next_children
+            return next_node
+        if _node_is_runtime_business_config_entry(node):
+            kept_leaf_count += 1
+            runtime_business_config_count += 1
             return next_node
         if _node_release_gate_keys(node) & allowed_values:
             kept_leaf_count += 1
@@ -614,7 +632,20 @@ def _filter_nav_by_release_gate(nav: list[dict], gate: dict) -> tuple[list[dict]
         "allowed_page_count": int(gate.get("page_count") or 0),
         "kept_leaf_count": kept_leaf_count,
         "removed_leaf_count": removed_leaf_count,
+        "runtime_business_config_passthrough_count": runtime_business_config_count,
     }
+
+
+def _apply_user_menu_config_to_delivery_nav(env, nav: list[dict]) -> tuple[list[dict], dict]:
+    if not isinstance(nav, list):
+        return [], {"applied_count": 0, "hidden_count": 0, "renamed_count": 0, "reordered_count": 0}
+    try:
+        policy_model = env["ui.menu.config.policy"]
+    except Exception:
+        return nav, {"applied_count": 0, "hidden_count": 0, "renamed_count": 0, "reordered_count": 0}
+    overlaid, stats = policy_model.apply_runtime_overlay({"tree": nav, "flat": []}, user=env.user)
+    next_nav = overlaid.get("tree") if isinstance(overlaid, dict) and isinstance(overlaid.get("tree"), list) else nav
+    return next_nav, stats if isinstance(stats, dict) else {}
 
 
 def _build_minimal_intent_surface(intents: list[str], intents_meta: dict) -> list[str]:
@@ -1052,13 +1083,20 @@ class SystemInitHandler(BaseIntentHandler):
                 delivery_payload.get("nav") if isinstance(delivery_payload.get("nav"), list) else [],
                 release_gate,
             )
+            gated_nav, user_menu_config_meta = _apply_user_menu_config_to_delivery_nav(env, gated_nav)
             delivery_payload["nav"] = gated_nav
             meta = delivery_payload.get("meta")
             if not isinstance(meta, dict):
                 meta = {}
                 delivery_payload["meta"] = meta
             meta["platform_release_gate"] = gate_meta
+            meta["user_menu_config"] = user_menu_config_meta
         else:
+            delivery_nav, user_menu_config_meta = _apply_user_menu_config_to_delivery_nav(
+                env,
+                delivery_payload.get("nav") if isinstance(delivery_payload.get("nav"), list) else [],
+            )
+            delivery_payload["nav"] = delivery_nav
             meta = delivery_payload.get("meta")
             if not isinstance(meta, dict):
                 meta = {}
@@ -1069,6 +1107,7 @@ class SystemInitHandler(BaseIntentHandler):
                 "platform_db": _text(release_gate.get("platform_db")),
                 "reason": _text(release_gate.get("reason")) or "NOT_APPLIED",
             }
+            meta["user_menu_config"] = user_menu_config_meta
         released_snapshot_lineage = release_snapshot_service.resolve_active_snapshot_lineage(product_key=effective_product_key)
         release_audit_trail_summary = release_audit_service.build_runtime_summary(product_key=effective_product_key)
         runtime_diagnostics = dict(edition_diagnostics) if isinstance(edition_diagnostics, dict) else {}

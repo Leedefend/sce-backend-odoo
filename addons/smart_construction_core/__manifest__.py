@@ -185,6 +185,7 @@
         'views/support/legacy_income_invoice_views.xml',
         'views/support/legacy_user_context_views.xml',
         'views/support/runtime_user_management_views.xml',
+        'views/support/menu_config_policy_views.xml',
         'views/project_workbench_action.xml',
         'views/support/sc_dictionary_views.xml',
         'views/support/dictionary_views.xml',

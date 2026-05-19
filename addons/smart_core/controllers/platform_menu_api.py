@@ -28,6 +28,7 @@ SOURCE_AUTHORITIES = (
     "ir.ui.menu",
     "ir.actions.act_window",
     "res.groups",
+    "ui.menu.config.policy",
     "extension_business_config_role_resolver",
     "legacy_construction_business_config_group",
 )
@@ -244,6 +245,12 @@ def _is_business_config_user(env) -> bool:
     return False
 
 
+def _apply_user_menu_config(env, nav_fact: dict) -> tuple[dict, dict]:
+    if "ui.menu.config.policy" not in env:
+        return nav_fact, {"applied_count": 0, "hidden_count": 0, "renamed_count": 0, "reordered_count": 0}
+    return env["ui.menu.config.policy"].apply_runtime_overlay(nav_fact, user=env.user)
+
+
 class PlatformMenuAPI(http.Controller):
     @http.route('/api/menu/tree', type='http', auth='public', csrf=False, cors='*', methods=['POST'])
     def api_menu_tree(self, **kwargs):
@@ -270,6 +277,7 @@ class PlatformMenuAPI(http.Controller):
                 is_admin=_is_admin_user(env),
                 is_business_config_admin=_is_business_config_user(env),
             )
+            nav_fact_filtered, user_menu_config = _apply_user_menu_config(env, nav_fact_filtered)
             return _json_response({
                 'ok': True,
                 'nav_fact': nav_fact_filtered,
@@ -278,6 +286,7 @@ class PlatformMenuAPI(http.Controller):
                     'source_authority': source_authority_contract(),
                     'menu_fact_source_authority': facts.source_authority,
                     'delivery_convergence': convergence,
+                    'user_menu_config': user_menu_config,
                 },
             })
         except AccessDenied as exc:
@@ -328,6 +337,8 @@ class PlatformMenuAPI(http.Controller):
                 is_admin=_is_admin_user(env),
                 is_business_config_admin=_is_business_config_user(env),
             )
+            nav_fact_filtered, user_menu_config = _apply_user_menu_config(env, nav_fact_filtered)
+            nav_explained_filtered, explained_user_menu_config = _apply_user_menu_config(env, nav_explained_filtered)
             return _json_response(
                 {
                     'ok': True,
@@ -338,6 +349,10 @@ class PlatformMenuAPI(http.Controller):
                         'source_authority': source_authority_contract(),
                         'menu_fact_source_authority': facts.source_authority,
                         'delivery_convergence': convergence,
+                        'user_menu_config': {
+                            "nav_fact": user_menu_config,
+                            "nav_explained": explained_user_menu_config,
+                        },
                     },
                 }
             )

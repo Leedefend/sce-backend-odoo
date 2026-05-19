@@ -26,6 +26,7 @@
         "data/sc_subscription_default.xml",
         "data/ui_base_contract_asset_cron.xml",
         "views/platform_company_access_views.xml",
+        "views/ui_menu_config_policy_views.xml",
         # 可选：默认参数/开关
         # "data/smart_core_params.xml",
     ],

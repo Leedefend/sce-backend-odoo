@@ -5367,10 +5367,16 @@ function setMany2oneField(name: string, descriptor: FieldDescriptor | undefined,
   const id = Number(normalized);
   if (!Number.isFinite(id) || id <= 0) {
     formData[name] = false;
+    relationKeywords[name] = '';
     markFieldChanged(name);
     return;
   }
-  formData[name] = Math.trunc(id);
+  const normalizedId = Math.trunc(id);
+  formData[name] = normalizedId;
+  const selected = relationOptionsForField(name).find((option) => option.id === normalizedId);
+  if (selected) {
+    relationKeywords[name] = selected.label;
+  }
   markFieldChanged(name);
 }
 
@@ -5646,8 +5652,14 @@ async function runOnchangeRoundtrip() {
           formData[name] = Array.isArray(value) ? value : [];
           if (ttype === 'one2many') initOne2manyRows(name, formData[name]);
         } else if (ttype === 'many2one') {
+          const option = parseMany2oneDisplay(value);
+          upsertRelationOption(name, option);
           const ids = normalizeRelationIds(value);
-          formData[name] = ids.length ? ids[0] : false;
+          const nextId = ids.length ? ids[0] : false;
+          const node = layoutNodes.value.find((item) => item.kind === 'field' && item.name === name);
+          const readonly = Boolean(node?.readonly || contract.value?.fields?.[name]?.readonly);
+          formData[name] = readonly && option ? [option.id, option.label] : nextId;
+          relationKeywords[name] = option?.label || (nextId ? relationKeywords[name] || `#${nextId}` : '');
         } else if (ttype === 'date') {
           formData[name] = toDateInputValue(value);
         } else if (ttype === 'datetime') {

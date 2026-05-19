@@ -304,6 +304,53 @@ class ApiOnchangeHandler(BaseIntentHandler):
             return [2, 3]
         return [4, 6]
 
+    def _manual_onchange_result(self, env_model, values: Dict[str, Any], changed_fields: List[str]) -> Dict[str, Any]:
+        methods = getattr(env_model, "_onchange_methods", {}) or {}
+        if not isinstance(methods, dict):
+            return {}
+        try:
+            record = env_model.new(values)
+        except Exception:
+            return {}
+        merged: Dict[str, Any] = {"value": {}, "domain": {}, "warning": [], "modifiers_patch": {}, "line_patches": []}
+        called = set()
+        for field_name in changed_fields:
+            for method in methods.get(field_name, []) or []:
+                if not callable(method) or method in called:
+                    continue
+                called.add(method)
+                try:
+                    result = method(record)
+                except TypeError:
+                    result = method()
+                except Exception:
+                    continue
+                if not isinstance(result, dict):
+                    continue
+                value = result.get("value")
+                if isinstance(value, dict):
+                    merged["value"].update(value)
+                domain = result.get("domain")
+                if isinstance(domain, dict):
+                    merged["domain"].update(domain)
+                modifiers = result.get("modifiers_patch")
+                if isinstance(modifiers, dict):
+                    merged["modifiers_patch"].update(modifiers)
+                lines = result.get("line_patches")
+                if isinstance(lines, list):
+                    merged["line_patches"].extend(lines)
+                warning = result.get("warning")
+                if warning:
+                    if isinstance(warning, list):
+                        merged["warning"].extend(warning)
+                    else:
+                        merged["warning"].append(warning)
+        if not merged["value"] and not merged["domain"] and not merged["warning"] and not merged["modifiers_patch"] and not merged["line_patches"]:
+            return {}
+        if len(merged["warning"]) == 1:
+            merged["warning"] = merged["warning"][0]
+        return merged
+
     def handle(self, payload=None, ctx=None):
         payload = payload or {}
         params = self._collect_params(payload)
@@ -357,6 +404,10 @@ class ApiOnchangeHandler(BaseIntentHandler):
 
         if not isinstance(onchange_result, dict):
             onchange_result = {}
+        if not any(onchange_result.get(key) for key in ("value", "domain", "warning", "modifiers_patch", "line_patches")):
+            manual_result = self._manual_onchange_result(env_model, values, changed_fields)
+            if manual_result:
+                onchange_result = manual_result
 
         patch = self._normalize_patch(env_model, onchange_result.get("value"))
         domain_patch = self._normalize_domain_patch(env_model, onchange_result.get("domain"))

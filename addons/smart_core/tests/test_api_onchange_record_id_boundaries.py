@@ -50,6 +50,21 @@ class _LineModel(_Model):
     _fields = {"name": _Field("char")}
 
 
+def _manual_menu_onchange(record):
+    return {"value": {"original_label": "基础设置", "preview_summary": "保存后刷新页面生效"}}
+
+
+class _ManualOnchangeModel(_Model):
+    _fields = {"menu_id": _Field("many2one", "ir.ui.menu"), "original_label": _Field("char"), "preview_summary": _Field("char")}
+    _onchange_methods = {"menu_id": [_manual_menu_onchange]}
+
+    def onchange(self, values, changed_fields, field_onchange):
+        return {"value": {}}
+
+    def new(self, values):
+        return types.SimpleNamespace(**(values or {}))
+
+
 class _Env(dict):
     pass
 
@@ -154,6 +169,19 @@ class TestApiOnchangeRecordIdBoundaries(unittest.TestCase):
         self.assertEqual(line_patch["row_id"], 0)
         self.assertEqual(line_patch["row_state"], "create")
         self.assertEqual(line_patch["command_hint"], [0])
+
+    def test_empty_odoo_onchange_falls_back_to_registered_methods(self):
+        env = _Env({"x.manual": _ManualOnchangeModel()})
+        handler = self.module.ApiOnchangeHandler(
+            env=env,
+            params={"model": "x.manual", "values": {"menu_id": 1}, "changed_fields": ["menu_id"]},
+        )
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["data"]["patch"]["original_label"], "基础设置")
+        self.assertEqual(result["data"]["patch"]["preview_summary"], "保存后刷新页面生效")
 
 
 if __name__ == "__main__":
