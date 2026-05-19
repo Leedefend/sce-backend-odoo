@@ -23,17 +23,15 @@ class UiMenuConfigPolicy(models.Model):
         required=True,
     )
     menu_id = fields.Many2one("ir.ui.menu", string="菜单", required=True, index=True, ondelete="cascade")
-    menu_complete_name = fields.Char(string="菜单路径", compute="_compute_menu_preview_fields", readonly=True)
-    original_label = fields.Char(string="原菜单名称", compute="_compute_menu_preview_fields", readonly=True)
+    menu_complete_name = fields.Char(string="菜单路径", readonly=True)
+    original_label = fields.Char(string="原菜单名称", readonly=True)
     current_parent_menu_id = fields.Many2one(
         "ir.ui.menu",
         string="当前所属分组",
-        compute="_compute_menu_preview_fields",
         readonly=True,
     )
     current_parent_menu_complete_name = fields.Char(
         string="当前分组路径",
-        compute="_compute_menu_preview_fields",
         readonly=True,
     )
     target_parent_menu_id = fields.Many2one(
@@ -43,7 +41,6 @@ class UiMenuConfigPolicy(models.Model):
     )
     target_parent_menu_complete_name = fields.Char(
         string="目标分组路径",
-        compute="_compute_menu_preview_fields",
         readonly=True,
     )
     custom_label = fields.Char(string="显示名称")
@@ -70,17 +67,41 @@ class UiMenuConfigPolicy(models.Model):
             state = "显示" if record.visible else "隐藏"
             record.name = "%s - %s" % (label, state)
 
-    @api.depends("menu_id", "target_parent_menu_id")
-    def _compute_menu_preview_fields(self):
+    @api.model
+    def _menu_preview_values(self, menu=None, target_parent=None) -> dict:
+        menu = menu or self.env["ir.ui.menu"]
+        parent = menu.parent_id if menu else self.env["ir.ui.menu"]
+        target_parent = target_parent or self.env["ir.ui.menu"]
+        return {
+            "menu_complete_name": menu.complete_name if menu else False,
+            "original_label": menu.name if menu else False,
+            "current_parent_menu_id": parent.id if parent else False,
+            "current_parent_menu_complete_name": parent.complete_name if parent else False,
+            "target_parent_menu_complete_name": target_parent.complete_name if target_parent else False,
+        }
+
+    def _apply_menu_preview_values(self):
         for record in self:
-            menu = record.menu_id
-            parent = menu.parent_id if menu else self.env["ir.ui.menu"]
-            target_parent = record.target_parent_menu_id
-            record.menu_complete_name = menu.complete_name if menu else False
-            record.original_label = menu.name if menu else False
-            record.current_parent_menu_id = parent
-            record.current_parent_menu_complete_name = parent.complete_name if parent else False
-            record.target_parent_menu_complete_name = target_parent.complete_name if target_parent else False
+            for field_name, value in record._menu_preview_values(record.menu_id, record.target_parent_menu_id).items():
+                record[field_name] = value
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        Menu = self.env["ir.ui.menu"]
+        for vals in vals_list:
+            menu = Menu.browse(vals.get("menu_id")) if vals.get("menu_id") else Menu
+            target_parent = Menu.browse(vals.get("target_parent_menu_id")) if vals.get("target_parent_menu_id") else Menu
+            vals.update(self._menu_preview_values(menu, target_parent))
+        return super().create(vals_list)
+
+    def write(self, vals):
+        result = super().write(vals)
+        if {"menu_id", "target_parent_menu_id"} & set(vals):
+            for record in self:
+                super(UiMenuConfigPolicy, record).write(
+                    record._menu_preview_values(record.menu_id, record.target_parent_menu_id)
+                )
+        return result
 
     @api.depends(
         "menu_id",
@@ -123,14 +144,28 @@ class UiMenuConfigPolicy(models.Model):
         for record in self:
             if record.menu_id and record.target_parent_menu_id == record.menu_id:
                 record.target_parent_menu_id = False
-            record._compute_menu_preview_fields()
+            record._apply_menu_preview_values()
             record._compute_user_summaries()
+            return {"value": record._onchange_preview_values()}
 
     @api.onchange("target_parent_menu_id", "custom_label", "sequence_override", "visible", "role_group_ids")
     def _onchange_preview_inputs(self):
         for record in self:
-            record._compute_menu_preview_fields()
+            record._apply_menu_preview_values()
             record._compute_user_summaries()
+            return {"value": record._onchange_preview_values()}
+
+    def _onchange_preview_values(self) -> dict:
+        self.ensure_one()
+        values = self._menu_preview_values(self.menu_id, self.target_parent_menu_id)
+        values.update(
+            {
+                "effect_summary": self.effect_summary,
+                "scope_summary": self.scope_summary,
+                "preview_summary": self.preview_summary,
+            }
+        )
+        return values
 
     @api.constrains("menu_id", "target_parent_menu_id")
     def _check_target_parent_menu(self):
