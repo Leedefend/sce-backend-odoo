@@ -158,6 +158,9 @@ class UiMenuConfigPolicy(models.Model):
     def _onchange_preview_values(self) -> dict:
         self.ensure_one()
         values = self._menu_preview_values(self.menu_id, self.target_parent_menu_id)
+        current_parent = self.current_parent_menu_id or self.menu_id.parent_id
+        if current_parent:
+            values["current_parent_menu_id"] = [current_parent.id, current_parent.display_name]
         values.update(
             {
                 "effect_summary": self.effect_summary,

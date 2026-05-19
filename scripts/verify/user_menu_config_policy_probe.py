@@ -10,6 +10,7 @@ from odoo.addons.smart_core.adapters.nav_tree_cleaner import NavTreeCleaner
 from odoo.addons.smart_core.adapters.odoo_nav_adapter import OdooNavAdapter
 from odoo.addons.smart_core.app_config_engine.services.dispatchers.nav_dispatcher import NavDispatcher
 from odoo.addons.smart_core.delivery.delivery_engine import DeliveryEngine
+from odoo.addons.smart_core.handlers.api_onchange import ApiOnchangeHandler
 from odoo.addons.smart_core.handlers.system_init import (
     _apply_user_menu_config_to_delivery_nav,
     _filter_nav_by_release_gate,
@@ -65,6 +66,36 @@ try:
                 "visible": True,
             }
         )
+        preview = created[:1]._onchange_preview_values()
+        current_parent_preview = preview.get("current_parent_menu_id")
+        if not (
+            isinstance(current_parent_preview, list)
+            and len(current_parent_preview) >= 2
+            and current_parent_preview[0] == target_menu.parent_id.id
+            and current_parent_preview[1]
+        ):
+            errors.append({"menu_config_current_parent_preview": current_parent_preview})
+        if not preview.get("menu_complete_name") or not preview.get("preview_summary"):
+            errors.append({"menu_config_preview_missing_details": preview})
+        handler_payload = {
+            "params": {
+                "model": "ui.menu.config.policy",
+                "values": {"company_id": env.company.id, "menu_id": target_menu.id, "visible": True},  # noqa: F821
+                "changed_fields": ["menu_id"],
+                "context": {},
+            }
+        }
+        onchange_result = ApiOnchangeHandler(env, payload=handler_payload).handle()  # noqa: F821
+        onchange_patch = (onchange_result.get("data") or {}).get("patch") if isinstance(onchange_result, dict) else {}
+        if not onchange_patch.get("original_label") or not onchange_patch.get("preview_summary"):
+            errors.append({"menu_config_handler_onchange_missing_details": onchange_patch})
+        handler_current_parent = onchange_patch.get("current_parent_menu_id")
+        if not (
+            isinstance(handler_current_parent, list)
+            and len(handler_current_parent) >= 2
+            and handler_current_parent[1]
+        ):
+            errors.append({"menu_config_handler_current_parent_preview": handler_current_parent})
     if hidden_menu:
         created |= Policy.create(
             {
