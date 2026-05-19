@@ -293,13 +293,59 @@ class MenuService:
             )
         return [preview_menus_by_group[group_key] for group_key in group_order]
 
+    def _native_runtime_config_menus(
+        self,
+        *,
+        native_nav: list[dict],
+        policy: dict,
+        role_code: str,
+        is_admin: bool,
+        is_business_config_admin: bool,
+    ) -> list[dict]:
+        groups = self._native_preview_menus(native_nav=native_nav, policy=policy)
+        out = []
+        service = MenuDeliveryConvergenceService()
+        for group in groups:
+            if not isinstance(group, dict):
+                continue
+            group_label = str(group.get("group_label") or "").strip() or "系统菜单"
+            menus = []
+            for menu in group.get("menus") or []:
+                if not isinstance(menu, dict):
+                    continue
+                label = str(menu.get("label") or "").strip()
+                model = str(menu.get("model") or "").strip()
+                category = service._classify_leaf(
+                    label,
+                    [group_label, label],
+                    is_admin=bool(is_admin) or self._is_admin_role(role_code),
+                    is_business_config_admin=bool(is_business_config_admin) or self._is_business_config_role(role_code),
+                )
+                if category == "delivery_business_config" or model in {"ui.menu.config.policy"}:
+                    menus.append(menu)
+            if menus:
+                next_group = dict(group)
+                next_group["menus"] = menus
+                out.append(next_group)
+        return out
+
     def build_nav(self, *, policy: dict, role_surface: dict | None = None, native_nav: list[dict] | None = None) -> list[dict]:
         role_code = str((role_surface or {}).get("role_code") or "").strip().lower()
         is_admin = bool((role_surface or {}).get("is_platform_admin"))
         is_business_config_admin = bool((role_surface or {}).get("is_business_config_admin"))
         policy_has_menu_surface = self._policy_has_menu_surface(policy)
         native_index = self._native_authorized_menu_index(native_nav or [])
-        grouped_native = [] if policy_has_menu_surface else self._native_preview_menus(native_nav=native_nav or [], policy=policy)
+        grouped_native = (
+            self._native_runtime_config_menus(
+                native_nav=native_nav or [],
+                policy=policy,
+                role_code=role_code,
+                is_admin=is_admin,
+                is_business_config_admin=is_business_config_admin,
+            )
+            if policy_has_menu_surface
+            else self._native_preview_menus(native_nav=native_nav or [], policy=policy)
+        )
         groups_by_key = {}
         group_order = []
         scene_group_map = {}
