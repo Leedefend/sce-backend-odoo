@@ -151,7 +151,7 @@
         <template v-else>
           <FormSection
             v-if="fieldSchemasForNodes(fieldChildren(node)).length"
-            :title="fieldSectionTitle()"
+            :title="fieldSectionTitle(node)"
             :columns="columns"
             :fields="fieldSchemasForNodes(fieldChildren(node))"
             :relation-adapter="relationAdapter"
@@ -267,7 +267,7 @@
 
       <FormSection
         v-else-if="nodeType(node) === 'field' && fieldSchemasForNodes([node]).length"
-          :title="fieldSectionTitle()"
+          :title="fieldSectionTitle(node)"
         :columns="columns"
         :fields="fieldSchemasForNodes([node])"
         :relation-adapter="relationAdapter"
@@ -530,8 +530,9 @@ function activeNotebookChildren(node: NativeFormLayoutNode) {
   return page ? rawChildren(page) : [];
 }
 
-function fieldSectionTitle() {
-  return '';
+function fieldSectionTitle(node?: NativeFormLayoutNode) {
+  const title = node ? containerTitle(node) : '';
+  return title;
 }
 
 function isEditableGroupNode(node: NativeFormLayoutNode) {
@@ -782,6 +783,9 @@ function closeMore(node: NativeFormLayoutNode) {
   overflow-x: auto;
   max-width: 100%;
   border-bottom: 1px solid var(--sc-app-border);
+  background: var(--sc-app-muted-bg);
+  border-radius: 8px 8px 0 0;
+  padding: 6px 6px 0;
 }
 
 .native-tab {
@@ -797,7 +801,8 @@ function closeMore(node: NativeFormLayoutNode) {
 
 .native-tab--active {
   color: var(--sc-app-text-primary);
-  border-bottom-color: var(--sc-app-text-primary);
+  border-bottom-color: var(--sc-semantic-surface-interactive);
+  background: var(--sc-app-panel);
   font-weight: 600;
 }
 
