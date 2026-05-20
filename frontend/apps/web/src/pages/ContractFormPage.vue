@@ -1537,6 +1537,7 @@ const fieldOrderPreviewActive = ref(false);
 const draggingFieldKey = ref('');
 const dropTargetFieldKey = ref('');
 const selectedFormSettingsFieldKey = ref('');
+const selectedFormSettingsFieldLabel = ref('');
 const selectedFormSettingsFieldGroupTitleDraft = ref('');
 const isContractFieldOrderEditable = computed(() => (
   activeContractMode.value === 'form_field_configuration'
@@ -1671,6 +1672,7 @@ watch(isContractFieldOrderEditable, (enabled) => {
   if (!enabled) {
     lowCodeContractLoaded.value = false;
     selectedFormSettingsFieldKey.value = '';
+    selectedFormSettingsFieldLabel.value = '';
     selectedFormSettingsFieldGroupTitleDraft.value = '';
     fieldVisibilityDirty.value = false;
     return;
@@ -1736,7 +1738,12 @@ const formSettingsTabs = computed(() => [
 const selectedFormSettingsFieldRow = computed(() => {
   const fieldKey = selectedFormSettingsFieldKey.value;
   if (!fieldKey) return undefined;
-  return activeContractModeFieldRows.value.find((row) => row.fieldKey === fieldKey);
+  const row = activeContractModeFieldRows.value.find((item) => item.fieldKey === fieldKey);
+  if (!row) return undefined;
+  return {
+    ...row,
+    label: selectedFormSettingsFieldLabel.value || row.label || fieldKey,
+  };
 });
 
 function fieldStructureTitle(pageTitle: string, groupTitle: string) {
@@ -6878,6 +6885,7 @@ function onFormSettingsFieldSelect(payload: { field: FormSectionFieldSchema; gro
     }
   }
   selectedFormSettingsFieldKey.value = fieldKey;
+  selectedFormSettingsFieldLabel.value = String(payload.field.label || fieldKey).trim();
   selectedFormSettingsFieldGroupTitleDraft.value = String(payload.groupTitle || '').trim();
   formSettingsActiveTab.value = 'fields';
 }
