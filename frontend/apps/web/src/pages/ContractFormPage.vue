@@ -154,6 +154,30 @@
           :blocks="sceneReadyFormSurface.sceneBlocks"
           @action="handleSceneBlockAction"
         />
+        <section v-if="showCurrentFormFieldConfigScope" class="contract-field-config-scope">
+          <div>
+            <h4>当前表单字段配置</h4>
+            <p>{{ formFieldConfigScope.summary }}</p>
+          </div>
+          <dl>
+            <div>
+              <dt>页面</dt>
+              <dd>{{ formFieldConfigScope.page }}</dd>
+            </div>
+            <div>
+              <dt>业务对象</dt>
+              <dd>{{ formFieldConfigScope.model }}</dd>
+            </div>
+            <div>
+              <dt>动作</dt>
+              <dd>{{ formFieldConfigScope.action }}</dd>
+            </div>
+            <div>
+              <dt>来源</dt>
+              <dd>{{ formFieldConfigScope.source }}</dd>
+            </div>
+          </dl>
+        </section>
         <NativeFormTreeRenderer
           v-if="useNativeFormTree"
           :nodes="nativeFormLayoutNodes"
@@ -1648,6 +1672,36 @@ const hasLowCodeDraftChanges = computed(() => {
   if (lowCodeLayoutDraft.value.length > 0) return true;
   if (lowCodeRulesDraft.value.length > 0) return true;
   return false;
+});
+
+const formFieldSettingsGovernance = computed(() => {
+  const root = contract.value && typeof contract.value === 'object'
+    ? (contract.value as Record<string, unknown>).governance
+    : undefined;
+  const governance = root && typeof root === 'object' && !Array.isArray(root)
+    ? root as Record<string, unknown>
+    : {};
+  const settings = governance.current_form_field_settings;
+  return settings && typeof settings === 'object' && !Array.isArray(settings)
+    ? settings as Record<string, unknown>
+    : {};
+});
+
+const showCurrentFormFieldConfigScope = computed(() => (
+  isContractFieldOrderEditable.value && activeContractModeFieldRows.value.length > 0
+));
+
+const formFieldConfigScope = computed(() => {
+  const settings = formFieldSettingsGovernance.value;
+  const action = Number(settings.action_id || actionId.value || 0) || 0;
+  const view = Number(settings.view_id || 0) || 0;
+  return {
+    page: pageDisplayTitle.value || '当前表单',
+    model: String(settings.model || model.value || '-'),
+    action: action > 0 ? `action_id=${action}` : '当前动作',
+    source: view > 0 ? `当前表单契约 + 字段策略台账，view_id=${view}` : '当前表单契约 + 字段策略台账',
+    summary: `本页只配置当前表单的 ${activeContractModeFieldRows.value.length} 个字段，保存后作用于当前页面范围。`,
+  };
 });
 
 async function hydrateLowCodeDraftFromContract() {
@@ -6719,8 +6773,8 @@ function onContractInlineFieldOrderDragEnd() {
 }
 
 function lowCodeApplyBaseParams() {
-  const configAction = activeContractModeActions.value.find((row) => String(row.key || '').trim() === 'current_form_field_order_save');
-  const target = parseMaybeJsonRecord(configAction?.raw?.target);
+  const configAction = contractV2ActionRules().find((rule) => ruleKey(rule) === 'current_form_field_order_save');
+  const target = parseMaybeJsonRecord(configAction?.target);
   return normalizeLowCodeApplyParams({
     model: String(model.value || ''),
     ...parseMaybeJsonRecord(target.params),
@@ -7922,9 +7976,62 @@ onBeforeUnmount(() => {
 }
 
 .contract-mode-prompt,
+.contract-field-config-scope,
 .contract-field-governance {
   grid-column: 1 / -1;
   border-top: 1px solid var(--sc-app-border);
+}
+
+.contract-field-config-scope {
+  display: grid;
+  gap: 10px;
+  padding: 12px 0 0;
+}
+
+.contract-field-config-scope h4,
+.contract-field-config-scope p {
+  margin: 0;
+}
+
+.contract-field-config-scope h4 {
+  color: var(--sc-app-text-primary);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.contract-field-config-scope p {
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.contract-field-config-scope dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.contract-field-config-scope dl > div {
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-panel-muted);
+}
+
+.contract-field-config-scope dt {
+  margin: 0 0 3px;
+  color: var(--sc-app-text-secondary);
+  font-size: 11px;
+}
+
+.contract-field-config-scope dd {
+  margin: 0;
+  color: var(--sc-app-text-primary);
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
 }
 
 .contract-mode-prompt {

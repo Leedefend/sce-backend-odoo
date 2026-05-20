@@ -4,7 +4,7 @@
         <field name="name">ui.form.field.policy.tree</field>
         <field name="model">ui.form.field.policy</field>
         <field name="arch" type="xml">
-            <tree string="表单字段配置" decoration-muted="not active">
+            <tree string="字段策略台账" decoration-muted="not active">
                 <field name="sequence" widget="handle"/>
                 <field name="active"/>
                 <field name="action_id" string="业务页面"/>
@@ -13,9 +13,9 @@
                 <field name="field_name" optional="hide"/>
                 <field name="field_label" string="字段"/>
                 <field name="field_type" optional="hide"/>
-                <field name="visible"/>
-                <field name="effect_summary"/>
-                <field name="scope_summary"/>
+                <field name="visible" string="显示"/>
+                <field name="effect_summary" string="效果"/>
+                <field name="scope_summary" string="生效范围"/>
                 <field name="view_id" optional="hide"/>
                 <field name="company_id"/>
             </tree>
@@ -26,7 +26,7 @@
         <field name="name">ui.form.field.policy.form</field>
         <field name="model">ui.form.field.policy</field>
         <field name="arch" type="xml">
-            <form string="表单字段配置">
+            <form string="字段策略台账">
                 <header>
                     <button name="action_probe_contract_effect"
                             type="object"
@@ -71,7 +71,7 @@
         <field name="name">ui.form.field.policy.search</field>
         <field name="model">ui.form.field.policy</field>
         <field name="arch" type="xml">
-            <search string="表单字段配置">
+            <search string="字段策略台账">
                 <field name="model_id"/>
                 <field name="field_name"/>
                 <field name="label"/>
@@ -87,7 +87,7 @@
     </record>
 
     <record id="action_ui_form_field_policy_business_config" model="ir.actions.act_window">
-        <field name="name">表单字段配置</field>
+        <field name="name">字段策略台账</field>
         <field name="res_model">ui.form.field.policy</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="smart_construction_core.view_ui_form_field_policy_search"/>
@@ -149,7 +149,7 @@
     </record>
 
     <menuitem id="menu_ui_form_field_policy_business_config"
-              name="表单字段配置"
+              name="字段策略台账"
               parent="smart_construction_core.menu_sc_business_config_center"
               action="smart_construction_core.action_ui_form_field_policy_business_config"
               sequence="15"

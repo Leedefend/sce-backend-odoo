@@ -24,6 +24,7 @@ class MenuDeliveryConvergenceService:
         "业务配置",
         "业务管理员配置中心",
         "表单字段配置",
+        "字段策略台账",
         "新增表单字段",
         "表单字段",
         "字段配置",

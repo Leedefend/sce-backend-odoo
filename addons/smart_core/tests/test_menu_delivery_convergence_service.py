@@ -41,11 +41,11 @@ class TestMenuDeliveryConvergenceService(TransactionCase):
         )
 
     def test_form_field_configuration_is_business_config_surface(self):
-        path = ["智慧施工管理平台", "基础设置", "表单字段配置"]
+        path = ["智慧施工管理平台", "基础设置", "字段策略台账"]
 
-        self.assertEqual(self._classify("表单字段配置", path), "hidden_business_config")
+        self.assertEqual(self._classify("字段策略台账", path), "hidden_business_config")
         self.assertEqual(
-            self._classify("表单字段配置", path, is_business_config_admin=True),
+            self._classify("字段策略台账", path, is_business_config_admin=True),
             "delivery_business_config",
         )
         self.assertEqual(
