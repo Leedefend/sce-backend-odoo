@@ -287,7 +287,11 @@ class UiContractV2Handler(BaseIntentHandler):
             _logger.debug("ui.contract.v2 current form settings action injection skipped", exc_info=True)
 
     def _inject_business_operation_contract(self, source_contract: dict[str, Any], *, model: str, view_type: str) -> None:
-        if not model or model not in self.env:
+        try:
+            has_model = bool(model and model in self.env)
+        except Exception:
+            return
+        if not has_model:
             return
         try:
             model_obj = self.env[model]
@@ -432,6 +436,7 @@ class UiContractV2Handler(BaseIntentHandler):
         self._merge_business_list_profile(
             source_contract,
             common_fields=common_fields,
+            amount_fields=amount_fields,
             note_field=note_field,
             status_field=status_field,
             label_for=field_label,
@@ -463,6 +468,7 @@ class UiContractV2Handler(BaseIntentHandler):
         source_contract: dict[str, Any],
         *,
         common_fields: list[str],
+        amount_fields: list[str],
         note_field: str,
         status_field: str,
         label_for,
@@ -488,8 +494,14 @@ class UiContractV2Handler(BaseIntentHandler):
             columns.append(note_field)
         if len(columns) > 18:
             selected = columns[:18]
-            if note_field and note_field in columns and note_field not in selected:
-                selected[-1] = note_field
+            protected = [name for name in amount_fields + [note_field] if name and name in columns and name not in selected]
+            for name in protected:
+                replace_index = len(selected) - 1
+                while replace_index >= 0 and selected[replace_index] in amount_fields:
+                    replace_index -= 1
+                if replace_index < 0:
+                    break
+                selected[replace_index] = name
             columns = selected
         if not columns:
             return
@@ -542,7 +554,11 @@ class UiContractV2Handler(BaseIntentHandler):
             source_contract["views"] = views
 
     def _inject_collaboration_contract(self, source_contract: dict[str, Any], *, model: str, view_type: str) -> None:
-        if view_type != "form" or not model or model not in self.env:
+        try:
+            has_model = bool(model and model in self.env)
+        except Exception:
+            return
+        if view_type != "form" or not has_model:
             return
         try:
             model_obj = self.env[model]
