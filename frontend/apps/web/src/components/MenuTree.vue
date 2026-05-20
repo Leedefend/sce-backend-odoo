@@ -56,10 +56,12 @@ const activeParents = ref<Set<string>>(new Set());
 
 const sorted = computed(() => {
   const nodes = hideDuplicateLeafBesideGroup(props.nodes);
-  return nodes.sort((a, b) => {
-    const seqA = a.meta?.sequence ?? 0;
-    const seqB = b.meta?.sequence ?? 0;
-    return seqA - seqB;
+  return [...nodes].sort((a, b) => {
+    const seqA = Number(a.sequence ?? a.meta?.sequence ?? 0);
+    const seqB = Number(b.sequence ?? b.meta?.sequence ?? 0);
+    const idA = Number(a.menu_id ?? a.id ?? 0);
+    const idB = Number(b.menu_id ?? b.id ?? 0);
+    return seqA - seqB || idA - idB;
   });
 });
 

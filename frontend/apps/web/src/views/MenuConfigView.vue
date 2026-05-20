@@ -594,12 +594,59 @@ function clearTreeDrag() {
   dragDropPosition.value = 'after';
 }
 
+function navMenuId(node: NavNode) {
+  return Number(node.menu_id || node.meta?.menu_id || node.id || 0);
+}
+
+function navMenuLabel(node: NavNode) {
+  return String(node.title || node.name || node.label || '').trim();
+}
+
+function normalizedMenuLabel(value: string) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function buildTreeFromNavigation(
+  navNodes: NavNode[],
+  menuById: Map<number, MenuConfigMenu>,
+  menuByLabel: Map<string, MenuConfigMenu[]>,
+  usedMenuIds = new Set<number>(),
+): MenuConfigMenu[] {
+  return navNodes.flatMap((node) => {
+    const menuId = navMenuId(node);
+    const label = navMenuLabel(node);
+    let menu = menuById.get(menuId);
+    if (menu && usedMenuIds.has(menu.id)) {
+      menu = undefined;
+    }
+    if (!menu) {
+      const candidates = menuByLabel.get(normalizedMenuLabel(label)) || [];
+      menu = candidates.find((candidate) => !usedMenuIds.has(candidate.id));
+    }
+    if (!menu) {
+      return Array.isArray(node.children)
+        ? buildTreeFromNavigation(node.children as NavNode[], menuById, menuByLabel, usedMenuIds)
+        : [];
+    }
+    usedMenuIds.add(menu.id);
+    return [{
+      ...menu,
+      name: label || menu.name,
+      display_name: label || menu.display_name,
+      sequence: Number(node.sequence ?? node.meta?.sequence ?? menu.sequence ?? 0),
+      children: Array.isArray(node.children)
+        ? buildTreeFromNavigation(node.children as NavNode[], menuById, menuByLabel, usedMenuIds)
+        : [],
+    }];
+  });
+}
+
 function collectNavigationMenuIds() {
   const ids: number[] = [];
   const seen = new Set<number>();
   const walk = (items: Array<{ menu_id?: number; id?: number; children?: unknown[] }>) => {
     items.forEach((item) => {
-      const menuId = Number(item.menu_id || item.id || 0);
+      const menuId = navMenuId(item as NavNode);
       if (Number.isFinite(menuId) && menuId > 0 && !seen.has(menuId)) {
         seen.add(menuId);
         ids.push(menuId);
@@ -640,7 +687,18 @@ async function loadPanel() {
     const payload = await loadMenuConfigurationPanel({ menu_ids: collectNavigationMenuIds() });
     company.value = payload.company || null;
     menus.value = payload.menus || [];
-    tree.value = payload.tree || [];
+    const menuById = new Map((payload.menus || []).map((menu) => [menu.id, menu]));
+    const menuByLabel = new Map<string, MenuConfigMenu[]>();
+    (payload.menus || []).forEach((menu) => {
+      const labels = [menu.name, menu.display_name].map(normalizedMenuLabel).filter(Boolean);
+      labels.forEach((label) => {
+        const list = menuByLabel.get(label) || [];
+        list.push(menu);
+        menuByLabel.set(label, list);
+      });
+    });
+    const navOrderedTree = buildTreeFromNavigation(session.menuTree as NavNode[], menuById, menuByLabel);
+    tree.value = navOrderedTree;
     groups.value = payload.groups || [];
     Object.keys(drafts).forEach((key) => delete drafts[Number(key)]);
     const nextOriginal: Record<number, DraftPolicy> = {};
@@ -682,11 +740,9 @@ async function saveChanges() {
   try {
     await saveMenuConfigurationPanel({ rows });
     applySavedVisibilityToNavigation(rows);
+    await session.loadAppInit();
     await loadPanel();
     message.value = `已保存 ${rows.length} 项菜单配置`;
-    void session.loadAppInit().catch((err) => {
-      error.value = err instanceof Error ? `菜单已保存，但导航刷新失败：${err.message}` : '菜单已保存，但导航刷新失败';
-    });
   } catch (err) {
     error.value = err instanceof Error ? err.message : '菜单配置保存失败';
   } finally {

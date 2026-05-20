@@ -136,6 +136,26 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
             "children": [],
         }
 
+    def _effective_menu_rows(self, rows: list[dict], policy_by_menu: dict[int, dict]) -> list[dict]:
+        by_id = {int(row["id"]): dict(row) for row in rows}
+        for menu_id, policy in policy_by_menu.items():
+            row = by_id.get(int(menu_id or 0))
+            if not row:
+                continue
+            target_parent_id = _to_int(policy.get("target_parent_menu_id"))
+            if target_parent_id and target_parent_id != int(row.get("id") or 0):
+                target_parent = by_id.get(target_parent_id)
+                row["parent_id"] = target_parent_id
+                row["parent_name"] = _to_text(target_parent.get("complete_name") or target_parent.get("name")) if target_parent else ""
+            custom_label = _to_text(policy.get("custom_label"))
+            if custom_label:
+                row["name"] = custom_label
+                row["display_name"] = custom_label
+            sequence = _to_int(policy.get("sequence_override"))
+            if sequence:
+                row["sequence"] = sequence
+        return list(by_id.values())
+
     def _build_tree(self, rows: list[dict]) -> list[dict]:
         by_id = {int(row["id"]): dict(row, children=[]) for row in rows}
         roots: list[dict] = []
@@ -197,12 +217,14 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
         MenuAll = Menu.with_context(active_test=False)
         requested_menu_ids = self._requested_menu_ids(params)
         if requested_menu_ids:
-            policy_menu_ids = self.env["ui.menu.config.policy"].sudo().with_context(active_test=False).search([
+            policy_records = self.env["ui.menu.config.policy"].sudo().with_context(active_test=False).search([
                 ("company_id", "=", company_id),
                 ("active", "=", True),
                 ("menu_id", "!=", False),
-            ]).mapped("menu_id").ids
-            requested_menus = MenuAll.browse(sorted(set(requested_menu_ids + policy_menu_ids))).exists()
+            ])
+            policy_menu_ids = policy_records.mapped("menu_id").ids
+            target_parent_ids = policy_records.mapped("target_parent_menu_id").ids
+            requested_menus = MenuAll.browse(sorted(set(requested_menu_ids + policy_menu_ids + target_parent_ids))).exists()
             menu_ids_with_parents = self._expand_with_parent_ids(requested_menus)
             menus = MenuAll.search([("id", "in", menu_ids_with_parents)], order="parent_id, sequence, id")
         else:
@@ -221,6 +243,8 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
         for policy in policies:
             policy_by_menu.setdefault(int(policy.menu_id.id), self._serialize_policy(policy))
 
+        effective_menu_rows = self._effective_menu_rows(menu_rows, policy_by_menu)
+
         groups = self._group_option_records(menus, policies)
         group_rows = [
             {
@@ -235,8 +259,8 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
         return {
             "data": {
                 "company": _m2o_payload(self.env["res.company"].sudo().browse(company_id)),
-                "menus": menu_rows,
-                "tree": self._build_tree(menu_rows),
+                "menus": effective_menu_rows,
+                "tree": self._build_tree(effective_menu_rows),
                 "policies": policy_by_menu,
                 "groups": group_rows,
             },
