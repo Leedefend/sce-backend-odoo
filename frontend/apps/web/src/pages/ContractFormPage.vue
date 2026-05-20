@@ -433,9 +433,9 @@
           </div>
         </section>
         <div v-if="isContractFieldOrderEditable && activeContractModeFieldRows.length" class="contract-field-governance-footer">
-          <span v-if="hasLowCodeDraftChanges" class="contract-field-governance-dirty">字段配置已调整，保存后生效</span>
-          <button class="chip-btn" type="button" :disabled="busy || !hasLowCodeDraftChanges" @click="saveContractFieldOrder">保存字段配置</button>
-          <button class="ghost" type="button" :disabled="busy || !hasLowCodeDraftChanges" @click="resetContractFieldOrder">重置</button>
+          <span v-if="hasCurrentFormFieldDraftChanges" class="contract-field-governance-dirty">字段配置已调整，保存后生效</span>
+          <button class="chip-btn" type="button" :disabled="busy || !hasCurrentFormFieldDraftChanges" @click="saveContractFieldOrder">保存字段配置</button>
+          <button class="ghost" type="button" :disabled="busy || !hasCurrentFormFieldDraftChanges" @click="resetContractFieldOrder">重置</button>
         </div>
         <ul v-if="lowCodePrecheckWarnings.length" class="contract-lowcode-warnings">
           <li v-for="(warning, index) in lowCodePrecheckWarnings" :key="`lowcode-warning-${index}`">{{ warning }}</li>
@@ -1654,6 +1654,7 @@ watch(isContractFieldOrderEditable, (enabled) => {
 }, { immediate: true });
 
 const hasFieldOrderChanges = computed(() => {
+  if (!fieldOrderPreviewActive.value) return false;
   const rows = contractModeBaseFieldRows.value.map((row) => row.fieldKey);
   if (!rows.length || !fieldOrderDraft.value.length) return false;
   return rows.some((key, index) => fieldOrderDraft.value[index] !== key);
@@ -1666,14 +1667,9 @@ const hasFieldVisibilityChanges = computed(() => contractModeBaseFieldRows.value
   return fieldVisibilityDraft[row.fieldKey] !== (selected.value === 'show');
 }));
 
-const hasLowCodeDraftChanges = computed(() => {
-  if (hasFieldOrderChanges.value) return true;
-  if (hasFieldVisibilityChanges.value) return true;
-  if (lowCodeObjectsDraft.value.length > 0) return true;
-  if (lowCodeLayoutDraft.value.length > 0) return true;
-  if (lowCodeRulesDraft.value.length > 0) return true;
-  return false;
-});
+const hasCurrentFormFieldDraftChanges = computed(() => (
+  hasFieldOrderChanges.value || hasFieldVisibilityChanges.value
+));
 
 const formFieldSettingsGovernance = computed(() => {
   const root = contract.value && typeof contract.value === 'object'
@@ -7021,7 +7017,7 @@ function resetContractFieldOrder() {
 }
 
 async function saveContractFieldOrder() {
-  if (!hasLowCodeDraftChanges.value) return;
+  if (!hasCurrentFormFieldDraftChanges.value) return;
   const configAction = contractV2ActionRules().find((rule) => ruleKey(rule) === 'current_form_field_order_save');
   const target = parseMaybeJsonRecord(configAction?.target);
   const baseParams = normalizeLowCodeApplyParams(parseMaybeJsonRecord(target.params));
