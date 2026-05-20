@@ -1522,6 +1522,7 @@ const activeContractModeActions = computed(() => {
 
 
 const fieldOrderDraft = ref<string[]>([]);
+const fieldOrderPreviewActive = ref(false);
 const draggingFieldKey = ref('');
 const dropTargetFieldKey = ref('');
 const isContractFieldOrderEditable = computed(() => (
@@ -4952,6 +4953,36 @@ function isNativeFieldVisible(name: string, nodeRaw?: NativeFormLayoutNode) {
   return renderProfile.value === 'create' && semantic.surface_role === 'advanced';
 }
 
+function currentNativeFieldOrder() {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  const walk = (nodes: NativeFormLayoutNode[]) => {
+    nodes.forEach((node) => {
+      const type = String(node?.type || (node as { containerType?: string })?.containerType || '').trim().toLowerCase();
+      const name = String(node?.name || '').trim();
+      if (type === 'field' && name && !seen.has(name) && isNativeFieldVisible(name, node)) {
+        seen.add(name);
+        out.push(name);
+      }
+      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+        const children = node?.[key];
+        if (Array.isArray(children)) walk(children as NativeFormLayoutNode[]);
+      });
+    });
+  };
+  walk(nativeFormLayoutNodes.value);
+  return out;
+}
+
+function ensureFieldOrderDraftStartsFromCurrentLayout() {
+  if (!useNativeFormTree.value || fieldOrderPreviewActive.value) return;
+  const current = currentNativeFieldOrder();
+  if (!current.length) return;
+  const known = new Set(current);
+  const extra = fieldOrderDraft.value.filter((name) => name && !known.has(name));
+  fieldOrderDraft.value = [...current, ...extra];
+}
+
 function nativeLayoutNodeToFieldNode(nodeRaw: NativeFormLayoutNode, index: number): LayoutNode | null {
   const name = String(nodeRaw?.name || '').trim();
   if (!name || !isNativeFieldVisible(name, nodeRaw)) return null;
@@ -4991,7 +5022,7 @@ function nativeFieldSchemasForNodes(nodes: NativeFormLayoutNode[]): FormSectionF
   const fieldNodes = mappedNodes
     .filter((item) => item !== favoriteNode)
     .map((item) => item.field);
-  if (isContractFieldOrderEditable.value && fieldOrderDraft.value.length) {
+  if (isContractFieldOrderEditable.value && fieldOrderPreviewActive.value && fieldOrderDraft.value.length) {
     const rank = new Map(fieldOrderDraft.value.map((fieldName, order) => [fieldName, order]));
     fieldNodes.sort((left, right) => {
       const leftRank = rank.get(left.name) ?? Number.MAX_SAFE_INTEGER;
@@ -6950,6 +6981,7 @@ function onFieldOrderDrop(targetFieldKey: string) {
 }
 
 function moveFieldOrderTo(sourceFieldKey: string, targetFieldKey: string) {
+  ensureFieldOrderDraftStartsFromCurrentLayout();
   const draft = [...fieldOrderDraft.value];
   const from = draft.indexOf(sourceFieldKey);
   const to = draft.indexOf(targetFieldKey);
@@ -6957,10 +6989,12 @@ function moveFieldOrderTo(sourceFieldKey: string, targetFieldKey: string) {
   const [moved] = draft.splice(from, 1);
   draft.splice(to, 0, moved);
   fieldOrderDraft.value = draft;
+  fieldOrderPreviewActive.value = true;
 }
 
 function moveFieldOrder(fieldKey: string, delta: number) {
   if (!isContractFieldOrderEditable.value) return;
+  ensureFieldOrderDraftStartsFromCurrentLayout();
   const draft = [...fieldOrderDraft.value];
   const from = draft.indexOf(fieldKey);
   const to = from + delta;
@@ -6968,6 +7002,7 @@ function moveFieldOrder(fieldKey: string, delta: number) {
   const [moved] = draft.splice(from, 1);
   draft.splice(to, 0, moved);
   fieldOrderDraft.value = draft;
+  fieldOrderPreviewActive.value = true;
 }
 
 function onFieldOrderDragEnd() {
@@ -6977,6 +7012,7 @@ function onFieldOrderDragEnd() {
 
 function resetContractFieldOrder() {
   fieldOrderDraft.value = contractModeBaseFieldRows.value.map((row) => row.fieldKey);
+  fieldOrderPreviewActive.value = false;
   contractModeBaseFieldRows.value.forEach((row) => {
     const selected = row.actions.find((action) => Boolean(action.checked));
     if (selected) fieldVisibilityDraft[row.fieldKey] = selected.value === 'show';
