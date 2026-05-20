@@ -740,7 +740,7 @@ class PageAssembler:
         current_view_id = int(view_id or 0)
         action = {
             "key": "current_form_field_settings",
-            "label": "设置",
+            "label": "表单设置",
             "kind": "client",
             "level": "header",
             "selection": "none",
@@ -802,6 +802,7 @@ class PageAssembler:
         governance["current_form_field_settings"] = {
             "enabled": True,
             "model": model,
+            "model_label": model_rec.name,
             "model_id": int(model_rec.id),
             "action_id": current_action_id,
             "view_id": current_view_id if current_view_id > 0 else False,
@@ -839,7 +840,7 @@ class PageAssembler:
                     "params": {
                         "model": model,
                         "action_id": int(action_id or 0),
-                        "view_id": int(view_id or 0) or False,
+                        "view_id": int(view_id or 0),
                         "view_type": "form",
                     },
                     "prompt_schema": {
@@ -868,7 +869,7 @@ class PageAssembler:
             },
             {
                 "key": "current_form_field_order_save",
-                "label": "保存字段顺序",
+                "label": "保存表单设置",
                 "kind": "intent",
                 "intent": "ui.business_config.lowcode.apply",
                 "trigger": "submit",
@@ -881,7 +882,7 @@ class PageAssembler:
                     "params": {
                         "model": model,
                         "action_id": int(action_id or 0),
-                        "view_id": int(view_id or 0) or False,
+                        "view_id": int(view_id or 0),
                         "view_type": "form",
                     },
                 },
@@ -932,7 +933,7 @@ class PageAssembler:
                 "field_name": field_name,
                 "label": label,
                 "action_id": int(action_id or 0),
-                "view_id": int(view_id or 0) or False,
+                "view_id": int(view_id or 0),
                 "view_type": "form",
             }
             for visible, value, label_text in ((True, "show", "显示"), (False, "hide", "隐藏")):

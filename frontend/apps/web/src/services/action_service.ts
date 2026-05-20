@@ -15,6 +15,11 @@ function normalizeContext(context: unknown) {
   return {} as Record<string, unknown>;
 }
 
+export function isMenuConfigurationAction(action: NavMeta | null | undefined) {
+  const model = String(action?.model || action?.res_model || '').trim();
+  return model === 'ui.menu.config.policy';
+}
+
 export function openAction(router: Router, action: NavMeta, menuId?: number) {
   const model = action.model ?? '';
   const viewMode = Array.isArray(action.view_modes) && action.view_modes.length
@@ -30,6 +35,11 @@ export function openAction(router: Router, action: NavMeta, menuId?: number) {
 
   const session = useSessionStore();
   session.setActionMeta(action);
+
+  if (isMenuConfigurationAction(action)) {
+    router.push({ path: '/admin/menu-config', query });
+    return;
+  }
 
   recordTrace({
     ts: Date.now(),

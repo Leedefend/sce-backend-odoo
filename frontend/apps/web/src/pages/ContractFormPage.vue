@@ -154,6 +154,108 @@
           :blocks="sceneReadyFormSurface.sceneBlocks"
           @action="handleSceneBlockAction"
         />
+        <section v-if="showCurrentFormFieldConfigScope" class="contract-form-settings">
+          <header class="contract-form-settings-head">
+            <div>
+              <h4>当前表单设置</h4>
+              <p>{{ formFieldConfigScope.summary }}</p>
+            </div>
+            <nav class="contract-form-settings-tabs" aria-label="表单设置范围">
+              <button
+                v-for="tab in formSettingsTabs"
+                :key="tab.key"
+                type="button"
+                class="contract-form-settings-tab"
+                :class="{ 'contract-form-settings-tab--active': formSettingsActiveTab === tab.key }"
+                @click="formSettingsActiveTab = tab.key"
+              >
+                {{ tab.label }}
+              </button>
+            </nav>
+          </header>
+          <dl class="contract-form-settings-scope">
+            <div>
+              <dt>配置范围</dt>
+              <dd>{{ formFieldConfigScope.scope }}</dd>
+            </div>
+            <div>
+              <dt>字段来源</dt>
+              <dd>{{ formFieldConfigScope.fieldSource }}</dd>
+            </div>
+            <div>
+              <dt>保存位置</dt>
+              <dd>{{ formFieldConfigScope.saveTarget }}</dd>
+            </div>
+            <div>
+              <dt>系统标识</dt>
+              <dd>{{ formFieldConfigScope.systemKey }}</dd>
+            </div>
+          </dl>
+          <section v-if="formSettingsActiveTab === 'fields'" class="contract-form-settings-fields">
+            <header class="contract-form-settings-section-head">
+              <strong>字段</strong>
+              <span>在下方表单里点选字段，然后调整这个字段。</span>
+            </header>
+            <section class="contract-field-selection-panel">
+              <div v-if="selectedFormSettingsFieldRow" class="contract-field-selection-card">
+                <div class="contract-field-selection-main">
+                  <span>已选字段</span>
+                  <strong>{{ selectedFormSettingsFieldRow.label }}</strong>
+                  <small>{{ selectedFormSettingsFieldGroupTitle }}</small>
+                </div>
+                <div class="contract-field-selection-tools">
+                  <button
+                    class="ghost contract-field-selection-order-btn"
+                    type="button"
+                    :disabled="busy || !canMoveSelectedFormSettingsField(-1)"
+                    title="上移"
+                    @click="moveSelectedFormSettingsField(-1)"
+                  >↑</button>
+                  <button
+                    class="ghost contract-field-selection-order-btn"
+                    type="button"
+                    :disabled="busy || !canMoveSelectedFormSettingsField(1)"
+                    title="下移"
+                    @click="moveSelectedFormSettingsField(1)"
+                  >↓</button>
+                  <button
+                    class="ghost"
+                    type="button"
+                    :disabled="busy"
+                    @click="addFieldAfterSelectedFormSettingsField"
+                  >新增字段</button>
+                  <div class="contract-field-governance-actions" role="radiogroup" :aria-label="`${selectedFormSettingsFieldRow.label}字段显示`">
+                    <label
+                      v-for="action in selectedFormSettingsFieldRow.actions"
+                      :key="`${selectedFormSettingsFieldRow.fieldKey}-${action.key}`"
+                      class="contract-field-governance-action"
+                      :title="action.title"
+                    >
+                      <input
+                        type="radio"
+                        :name="`contract-field-governance-selected-${selectedFormSettingsFieldRow.fieldKey}`"
+                        :value="action.value"
+                        :checked="Boolean(action.checked)"
+                        :disabled="Boolean(action.disabled)"
+                        @change="onSelectedFormSettingsFieldVisibilityChange(action.value)"
+                      />
+                      <span>{{ action.label }}</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div v-else class="contract-field-selection-empty">
+                <strong>先在表单中选择一个字段</strong>
+                <span>被选中的字段会高亮显示，再调整显示、隐藏、顺序或新增字段。</span>
+              </div>
+            </section>
+          </section>
+          <div class="contract-field-governance-footer">
+            <span v-if="hasCurrentFormFieldDraftChanges" class="contract-field-governance-dirty">表单设置已调整，保存后生效</span>
+            <button class="chip-btn" type="button" :disabled="busy || !hasCurrentFormFieldDraftChanges" @click="saveContractFieldOrder">保存表单设置</button>
+            <button class="ghost" type="button" :disabled="busy || !hasCurrentFormFieldDraftChanges" @click="resetContractFieldOrder">重置</button>
+          </div>
+        </section>
         <NativeFormTreeRenderer
           v-if="useNativeFormTree"
           :nodes="nativeFormLayoutNodes"
@@ -162,13 +264,15 @@
           :button-label-resolver="resolveNativeButtonLabel"
           :native-action-handler="runNativeLayoutAction"
           :relation-adapter="relationFieldAdapter"
-          :field-actions="contractFieldActions"
-          :field-order-editable="isContractFieldOrderEditable"
+          :field-actions="isContractFieldOrderEditable ? undefined : contractFieldActions"
+          :field-order-editable="false"
           :field-order-index="contractInlineFieldOrderIndex"
           :field-order-count="fieldOrderDraft.length"
           :field-order-dragging-key="draggingFieldKey"
           :field-order-drop-target-key="dropTargetFieldKey"
-          :field-config-editable="isContractFieldOrderEditable"
+          :field-config-editable="false"
+          :field-selection-mode="isContractFieldOrderEditable"
+          :selected-field-key="selectedFormSettingsFieldKey"
           :columns="2"
           @field-change="onTemplateFieldChange"
           @field-action="onContractFieldAction"
@@ -180,6 +284,7 @@
           @field-order-drag-end="onContractInlineFieldOrderDragEnd"
           @field-label-change="onContractInlineFieldLabelChange"
           @field-add-after="onContractInlineFieldAddAfter"
+          @field-select="onFormSettingsFieldSelect"
           @group-rename="onContractInlineGroupRename"
           @group-add-field="onContractInlineGroupAddField"
           @native-action="runNativeLayoutAction"
@@ -341,77 +446,6 @@
               <button type="button" class="ghost" :disabled="busy" @click="closeInlineCustomFieldCreate">取消</button>
             </footer>
           </form>
-        </div>
-        <section v-if="activeContractModeFieldRows.length && !useNativeFormTree" class="contract-field-governance">
-          <div
-            v-for="row in activeContractModeFieldRows"
-            :key="`field-governance-${row.fieldKey}`"
-            :class="[
-              'contract-field-governance-row',
-              {
-                'contract-field-governance-row--draggable': isContractFieldOrderEditable,
-                'contract-field-governance-row--dragging': draggingFieldKey === row.fieldKey,
-                'contract-field-governance-row--drop-target': dropTargetFieldKey === row.fieldKey && draggingFieldKey !== row.fieldKey,
-              },
-            ]"
-            :draggable="isContractFieldOrderEditable"
-            @dragstart="onFieldOrderDragStart(row.fieldKey, $event)"
-            @dragover.prevent="onFieldOrderDragOver(row.fieldKey)"
-            @dragleave="onFieldOrderDragLeave(row.fieldKey)"
-            @drop.prevent="onFieldOrderDrop(row.fieldKey)"
-            @dragend="onFieldOrderDragEnd"
-          >
-            <div class="contract-field-governance-main">
-              <span
-                v-if="isContractFieldOrderEditable"
-                class="contract-field-governance-handle"
-                aria-hidden="true"
-                title="按住整行拖动调整顺序"
-              >⋮⋮</span>
-              <span class="contract-field-governance-label">{{ row.label }}</span>
-            </div>
-            <div class="contract-field-governance-actions" role="radiogroup" :aria-label="`${row.label}字段显示`">
-              <div v-if="isContractFieldOrderEditable" class="contract-field-governance-order-tools">
-                <button
-                  class="ghost contract-field-governance-order-btn"
-                  type="button"
-                  :disabled="busy || activeContractModeFieldRows[0]?.fieldKey === row.fieldKey"
-                  :aria-label="`上移${row.label}`"
-                  title="上移"
-                  @click.stop="moveFieldOrder(row.fieldKey, -1)"
-                >↑</button>
-                <button
-                  class="ghost contract-field-governance-order-btn"
-                  type="button"
-                  :disabled="busy || activeContractModeFieldRows[activeContractModeFieldRows.length - 1]?.fieldKey === row.fieldKey"
-                  :aria-label="`下移${row.label}`"
-                  title="下移"
-                  @click.stop="moveFieldOrder(row.fieldKey, 1)"
-                >↓</button>
-              </div>
-              <label
-                v-for="action in row.actions"
-                :key="`${row.fieldKey}-${action.key}`"
-                class="contract-field-governance-action"
-                :title="action.title"
-              >
-                <input
-                  type="radio"
-                  :name="`contract-field-governance-${row.fieldKey}`"
-                  :value="action.value"
-                  :checked="Boolean(action.checked)"
-                  :disabled="Boolean(action.disabled)"
-                  @change="onFieldVisibilityDraftChange(row.fieldKey, action.value, action.raw)"
-                />
-                <span>{{ action.label }}</span>
-              </label>
-            </div>
-          </div>
-        </section>
-        <div v-if="isContractFieldOrderEditable && activeContractModeFieldRows.length" class="contract-field-governance-footer">
-          <span v-if="hasLowCodeDraftChanges" class="contract-field-governance-dirty">顺序已调整，保存后生效</span>
-          <button class="chip-btn" type="button" :disabled="busy || !hasLowCodeDraftChanges" @click="saveContractFieldOrder">保存字段顺序</button>
-          <button class="ghost" type="button" :disabled="busy || !hasLowCodeDraftChanges" @click="resetContractFieldOrder">重置</button>
         </div>
         <ul v-if="lowCodePrecheckWarnings.length" class="contract-lowcode-warnings">
           <li v-for="(warning, index) in lowCodePrecheckWarnings" :key="`lowcode-warning-${index}`">{{ warning }}</li>
@@ -1010,6 +1044,7 @@ const submissionFeedback = ref<{ kind: 'success' | 'warn' | 'error'; message: st
 const showOne2manyErrors = ref(false);
 const busyKind = ref<BusyKind>(null);
 const activeContractMode = ref('');
+const formSettingsActiveTab = ref<'structure' | 'fields' | 'details' | 'actions'>('fields');
 const contractModeFeedback = ref('');
 const contractPromptRule = ref<Record<string, unknown> | null>(null);
 const contractPromptValues = reactive<Record<string, string>>({});
@@ -1448,6 +1483,7 @@ function contractFieldActions(field: FormSectionFieldSchema) {
   const mode = activeContractMode.value;
   if (!mode) return [];
   const fieldWidgetId = `field.${String(field.name || '').trim()}`;
+  const fieldKey = String(field.name || '').trim();
   return contractV2ActionRules()
     .filter((rule) => {
       const triggerType = String(rule.triggerType || rule.trigger_type || '').trim();
@@ -1464,7 +1500,9 @@ function contractFieldActions(field: FormSectionFieldSchema) {
         key: ruleKey(rule),
         label: String(control.label || rule.label || ruleKey(rule)).trim(),
         value: String(control.value || ruleKey(rule)).trim(),
-        checked: control.checked === true,
+        checked: fieldKey && Object.prototype.hasOwnProperty.call(fieldVisibilityDraft, fieldKey)
+          ? fieldVisibilityDraft[fieldKey] === (String(control.value || ruleKey(rule)).trim() === 'show')
+          : control.checked === true,
         disabled: control.disabled === true || busy.value,
         title: String(control.title || '').trim(),
         raw: rule,
@@ -1480,6 +1518,7 @@ const activeContractModeActions = computed(() => {
   const source = `mode.${mode}`;
   return contractV2ActionRules()
     .filter((rule) => {
+      if (ruleKey(rule) === 'current_form_field_order_save') return false;
       const sourceWidgetId = String(rule.sourceWidgetId || rule.source_widget_id || '').trim();
       if (sourceWidgetId !== source) return false;
       const expectedMode = ruleClientMode(rule);
@@ -1494,12 +1533,18 @@ const activeContractModeActions = computed(() => {
 
 
 const fieldOrderDraft = ref<string[]>([]);
+const fieldOrderPreviewActive = ref(false);
 const draggingFieldKey = ref('');
 const dropTargetFieldKey = ref('');
+const selectedFormSettingsFieldKey = ref('');
+const selectedFormSettingsFieldLabel = ref('');
+const selectedFormSettingsFieldGroupTitleDraft = ref('');
 const isContractFieldOrderEditable = computed(() => (
   activeContractMode.value === 'form_field_configuration'
   || activeContractMode.value === 'business_config_lowcode'
 ));
+const fieldVisibilityBase = ref<Record<string, boolean>>({});
+const fieldVisibilityDirty = ref(false);
 const fieldVisibilityDraft = reactive<Record<string, boolean>>({});
 const lowCodeFieldCreateDialog = reactive({
   open: false,
@@ -1581,15 +1626,25 @@ const contractModeBaseFieldRows = computed<ContractFieldGovernanceRow[]>(() => {
 
 const activeContractModeFieldRows = computed<ContractFieldGovernanceRow[]>(() => {
   const computedRows = contractModeBaseFieldRows.value;
-  if (!isContractFieldOrderEditable.value || !fieldOrderDraft.value.length) return computedRows;
+  const rowsWithDraftVisibility = computedRows.map((row) => ({
+    ...row,
+    actions: row.actions.map((action) => ({
+      ...action,
+      checked: Object.prototype.hasOwnProperty.call(fieldVisibilityDraft, row.fieldKey)
+        ? fieldVisibilityDraft[row.fieldKey] === (action.value === 'show')
+        : action.checked,
+    })),
+  }));
+  if (!isContractFieldOrderEditable.value || !fieldOrderDraft.value.length) return rowsWithDraftVisibility;
   const rank = new Map(fieldOrderDraft.value.map((key, index) => [key, index]));
-  return [...computedRows].sort((left, right) => (rank.get(left.fieldKey) ?? 9999) - (rank.get(right.fieldKey) ?? 9999));
+  return rowsWithDraftVisibility.sort((left, right) => (rank.get(left.fieldKey) ?? 9999) - (rank.get(right.fieldKey) ?? 9999));
 });
 
 watch(contractModeBaseFieldRows, (rows) => {
   const keys = rows.map((row) => row.fieldKey);
   if (!isContractFieldOrderEditable.value || !keys.length) {
     fieldOrderDraft.value = [];
+    fieldVisibilityBase.value = {};
     return;
   }
   if (!fieldOrderDraft.value.length) {
@@ -1600,33 +1655,139 @@ watch(contractModeBaseFieldRows, (rows) => {
   const kept = fieldOrderDraft.value.filter((key) => inRows.has(key));
   const missing = keys.filter((key) => !kept.includes(key));
   fieldOrderDraft.value = [...kept, ...missing];
+  const nextVisibilityBase = { ...fieldVisibilityBase.value };
   rows.forEach((row) => {
     const selected = row.actions.find((action) => Boolean(action.checked));
-    if (selected) fieldVisibilityDraft[row.fieldKey] = selected.value === 'show';
+    if (!selected) return;
+    const visible = selected.value === 'show';
+    nextVisibilityBase[row.fieldKey] = visible;
+    if (!Object.prototype.hasOwnProperty.call(fieldVisibilityDraft, row.fieldKey)) {
+      fieldVisibilityDraft[row.fieldKey] = visible;
+    }
   });
+  fieldVisibilityBase.value = nextVisibilityBase;
 }, { immediate: true });
 
 watch(isContractFieldOrderEditable, (enabled) => {
   if (!enabled) {
     lowCodeContractLoaded.value = false;
+    selectedFormSettingsFieldKey.value = '';
+    selectedFormSettingsFieldLabel.value = '';
+    selectedFormSettingsFieldGroupTitleDraft.value = '';
+    fieldVisibilityDirty.value = false;
     return;
   }
+  formSettingsActiveTab.value = 'fields';
   void loadLowCodeContractList();
   void hydrateLowCodeDraftFromContract();
 }, { immediate: true });
 
 const hasFieldOrderChanges = computed(() => {
+  if (!fieldOrderPreviewActive.value) return false;
   const rows = contractModeBaseFieldRows.value.map((row) => row.fieldKey);
   if (!rows.length || !fieldOrderDraft.value.length) return false;
   return rows.some((key, index) => fieldOrderDraft.value[index] !== key);
 });
 
-const hasLowCodeDraftChanges = computed(() => {
-  if (hasFieldOrderChanges.value) return true;
-  if (lowCodeObjectsDraft.value.length > 0) return true;
-  if (lowCodeLayoutDraft.value.length > 0) return true;
-  if (lowCodeRulesDraft.value.length > 0) return true;
-  return false;
+const hasFieldVisibilityChanges = computed(() => contractModeBaseFieldRows.value.some((row) => {
+  if (!Object.prototype.hasOwnProperty.call(fieldVisibilityDraft, row.fieldKey)) return false;
+  if (!Object.prototype.hasOwnProperty.call(fieldVisibilityBase.value, row.fieldKey)) return false;
+  return fieldVisibilityDraft[row.fieldKey] !== fieldVisibilityBase.value[row.fieldKey];
+}));
+
+const hasCurrentFormFieldDraftChanges = computed(() => (
+  hasFieldOrderChanges.value || hasFieldVisibilityChanges.value || fieldVisibilityDirty.value
+));
+
+const formFieldSettingsGovernance = computed(() => {
+  const root = contract.value && typeof contract.value === 'object'
+    ? (contract.value as Record<string, unknown>).governance
+    : undefined;
+  const governance = root && typeof root === 'object' && !Array.isArray(root)
+    ? root as Record<string, unknown>
+    : {};
+  const settings = governance.current_form_field_settings;
+  return settings && typeof settings === 'object' && !Array.isArray(settings)
+    ? settings as Record<string, unknown>
+    : {};
+});
+
+const showCurrentFormFieldConfigScope = computed(() => (
+  isContractFieldOrderEditable.value && activeContractModeFieldRows.value.length > 0
+));
+
+const formFieldConfigScope = computed(() => {
+  const settings = formFieldSettingsGovernance.value;
+  const action = Number(settings.action_id || actionId.value || 0) || 0;
+  const page = pageDisplayTitle.value || '当前表单';
+  const objectLabel = String(settings.model_label || '').trim();
+  const modelName = String(settings.model || model.value || '-');
+  return {
+    scope: `${page}这个页面`,
+    fieldSource: '当前页面已有字段和管理员新增字段',
+    saveTarget: '当前页面的表单设置',
+    systemKey: action > 0 ? `${objectLabel || modelName} / action_id=${action}` : (objectLabel || modelName),
+    summary: `本页只调整${page}的字段显示、顺序和新增字段，保存后只影响这个页面。`,
+  };
+});
+
+const formSettingsTabs = computed(() => [
+  { key: 'fields' as const, label: `字段 ${activeContractModeFieldRows.value.length}` },
+]);
+
+const selectedFormSettingsFieldRow = computed(() => {
+  const fieldKey = selectedFormSettingsFieldKey.value;
+  if (!fieldKey) return undefined;
+  const row = activeContractModeFieldRows.value.find((item) => item.fieldKey === fieldKey);
+  if (!row) return undefined;
+  return {
+    ...row,
+    label: selectedFormSettingsFieldLabel.value || row.label || fieldKey,
+  };
+});
+
+function fieldStructureTitle(pageTitle: string, groupTitle: string) {
+  const page = String(pageTitle || '').trim();
+  const group = String(groupTitle || '').trim();
+  if (page && group && page !== group) return `${page} / ${group}`;
+  return page || group || '主表区域';
+}
+
+const nativeFieldStructureGroups = computed<Array<{ key: string; title: string; fieldKeys: string[] }>>(() => {
+  const groups = new Map<string, { key: string; title: string; fieldKeys: string[] }>();
+  const fieldSeen = new Set<string>();
+  const addField = (title: string, fieldKey: string) => {
+    const normalizedField = String(fieldKey || '').trim();
+    if (!normalizedField || fieldSeen.has(normalizedField)) return;
+    fieldSeen.add(normalizedField);
+    const groupTitle = title || '主表区域';
+    const groupKey = groupTitle;
+    if (!groups.has(groupKey)) groups.set(groupKey, { key: groupKey, title: groupTitle, fieldKeys: [] });
+    groups.get(groupKey)?.fieldKeys.push(normalizedField);
+  };
+  const walk = (nodes: NativeFormLayoutNode[], pageTitle = '', groupTitle = '') => {
+    nodes.forEach((node) => {
+      const type = String(node?.type || (node as { containerType?: string })?.containerType || '').trim().toLowerCase();
+      const title = String(node?.string || node?.label || '').trim();
+      const nextPage = type === 'page' && title ? title : pageTitle;
+      const nextGroup = type === 'group' && title ? title : groupTitle;
+      const name = String(node?.name || '').trim();
+      if (type === 'field' && name) addField(fieldStructureTitle(nextPage, nextGroup), name);
+      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+        const children = node?.[key];
+        if (Array.isArray(children)) walk(children as NativeFormLayoutNode[], nextPage, nextGroup);
+      });
+    });
+  };
+  walk(nativeFormLayoutNodes.value);
+  return Array.from(groups.values());
+});
+
+const selectedFormSettingsFieldGroupTitle = computed(() => {
+  const fieldKey = selectedFormSettingsFieldKey.value;
+  if (!fieldKey) return '';
+  const nativeGroup = nativeFieldStructureGroups.value.find((group) => group.fieldKeys.includes(fieldKey));
+  return nativeGroup?.title || selectedFormSettingsFieldGroupTitleDraft.value || '业务配置字段';
 });
 
 async function hydrateLowCodeDraftFromContract() {
@@ -1675,7 +1836,9 @@ async function hydrateLowCodeDraftFromContract() {
       fields.forEach((row) => {
         const key = String(row?.name || '').trim();
         if (!key) return;
-        fieldVisibilityDraft[key] = row?.visible !== false;
+        const visible = row?.visible !== false;
+        fieldVisibilityBase.value = { ...fieldVisibilityBase.value, [key]: visible };
+        fieldVisibilityDraft[key] = visible;
       });
     }
     if (!fields.length) {
@@ -1692,7 +1855,9 @@ async function hydrateLowCodeDraftFromContract() {
       formFields.forEach((row) => {
         const key = String(row?.name || row?.field || '').trim();
         if (!key) return;
-        fieldVisibilityDraft[key] = row?.visible !== false;
+        const visible = row?.visible !== false;
+        fieldVisibilityBase.value = { ...fieldVisibilityBase.value, [key]: visible };
+        fieldVisibilityDraft[key] = visible;
       });
     }
     lowCodeObjectsDraft.value = objects.map((obj) => ({
@@ -4499,6 +4664,23 @@ const nativeFormLayoutNodes = computed<NativeFormLayoutNode[]>(() => {
   return legacyLayout as unknown as NativeFormLayoutNode[];
 });
 
+function countNativeNodesByType(nodes: NativeFormLayoutNode[], targetType: string): number {
+  const target = String(targetType || '').trim().toLowerCase();
+  let count = 0;
+  nodes.forEach((node) => {
+    const type = String(node?.type || (node as { containerType?: string })?.containerType || '').trim().toLowerCase();
+    if (type === target) count += 1;
+    (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+      const children = node?.[key];
+      if (Array.isArray(children)) count += countNativeNodesByType(children as NativeFormLayoutNode[], target);
+    });
+  });
+  return count;
+}
+
+const nativeNotebookPageCount = computed(() => countNativeNodesByType(nativeFormLayoutNodes.value, 'page'));
+const nativeGroupCount = computed(() => countNativeNodesByType(nativeFormLayoutNodes.value, 'group'));
+
 function resolveNativeButtonLabel(node: NativeFormLayoutNode) {
   const action = node?.action && typeof node.action === 'object' && !Array.isArray(node.action)
     ? node.action as Record<string, unknown>
@@ -4875,6 +5057,36 @@ function isNativeFieldVisible(name: string, nodeRaw?: NativeFormLayoutNode) {
   return renderProfile.value === 'create' && semantic.surface_role === 'advanced';
 }
 
+function currentNativeFieldOrder() {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  const walk = (nodes: NativeFormLayoutNode[]) => {
+    nodes.forEach((node) => {
+      const type = String(node?.type || (node as { containerType?: string })?.containerType || '').trim().toLowerCase();
+      const name = String(node?.name || '').trim();
+      if (type === 'field' && name && !seen.has(name) && isNativeFieldVisible(name, node)) {
+        seen.add(name);
+        out.push(name);
+      }
+      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+        const children = node?.[key];
+        if (Array.isArray(children)) walk(children as NativeFormLayoutNode[]);
+      });
+    });
+  };
+  walk(nativeFormLayoutNodes.value);
+  return out;
+}
+
+function ensureFieldOrderDraftStartsFromCurrentLayout() {
+  if (!useNativeFormTree.value || fieldOrderPreviewActive.value) return;
+  const current = currentNativeFieldOrder();
+  if (!current.length) return;
+  const known = new Set(current);
+  const extra = fieldOrderDraft.value.filter((name) => name && !known.has(name));
+  fieldOrderDraft.value = [...current, ...extra];
+}
+
 function nativeLayoutNodeToFieldNode(nodeRaw: NativeFormLayoutNode, index: number): LayoutNode | null {
   const name = String(nodeRaw?.name || '').trim();
   if (!name || !isNativeFieldVisible(name, nodeRaw)) return null;
@@ -4914,7 +5126,7 @@ function nativeFieldSchemasForNodes(nodes: NativeFormLayoutNode[]): FormSectionF
   const fieldNodes = mappedNodes
     .filter((item) => item !== favoriteNode)
     .map((item) => item.field);
-  if (isContractFieldOrderEditable.value && fieldOrderDraft.value.length) {
+  if (isContractFieldOrderEditable.value && fieldOrderPreviewActive.value && fieldOrderDraft.value.length) {
     const rank = new Map(fieldOrderDraft.value.map((fieldName, order) => [fieldName, order]));
     fieldNodes.sort((left, right) => {
       const leftRank = rank.get(left.name) ?? Number.MAX_SAFE_INTEGER;
@@ -6640,14 +6852,69 @@ async function runContractRuleAction(rule: Record<string, unknown>, providedPara
 }
 
 async function onContractFieldAction(payload: FormSectionFieldActionPayload) {
+  const fieldKey = String(payload.field.name || '').trim();
+  const actionValue = String(payload.action.value || '').trim();
+  if (isContractFieldOrderEditable.value && fieldKey && ['show', 'hide'].includes(actionValue)) {
+    fieldVisibilityDraft[fieldKey] = actionValue === 'show';
+    contractModeFeedback.value = '字段显示设置已调整，保存后生效';
+    return;
+  }
   const raw = payload.action.raw;
   if (!raw) return;
   await runContractRuleAction(raw);
 }
 
-async function onFieldVisibilityDraftChange(fieldKey: string, value: string, raw: Record<string, unknown>) {
+function onFieldVisibilityDraftChange(fieldKey: string, value: string) {
   fieldVisibilityDraft[fieldKey] = value === 'show';
-  await runContractRuleAction(raw);
+  fieldVisibilityDirty.value = true;
+  contractModeFeedback.value = '字段显示设置已调整，保存后生效';
+}
+
+function onFormSettingsFieldSelect(payload: { field: FormSectionFieldSchema; groupTitle: string }) {
+  if (!isContractFieldOrderEditable.value) return;
+  const fieldKey = String(payload.field.name || payload.field.key || '').trim();
+  if (!fieldKey) return;
+  if (!Object.prototype.hasOwnProperty.call(fieldVisibilityBase.value, fieldKey)) {
+    const row = activeContractModeFieldRows.value.find((item) => item.fieldKey === fieldKey);
+    const checkedAction = row?.actions.find((action) => Boolean(action.checked));
+    if (checkedAction) {
+      fieldVisibilityBase.value = {
+        ...fieldVisibilityBase.value,
+        [fieldKey]: checkedAction.value === 'show',
+      };
+    }
+  }
+  selectedFormSettingsFieldKey.value = fieldKey;
+  selectedFormSettingsFieldLabel.value = String(payload.field.label || fieldKey).trim();
+  selectedFormSettingsFieldGroupTitleDraft.value = String(payload.groupTitle || '').trim();
+  formSettingsActiveTab.value = 'fields';
+}
+
+function canMoveSelectedFormSettingsField(delta: number) {
+  const fieldKey = selectedFormSettingsFieldKey.value;
+  if (!fieldKey) return false;
+  const index = fieldOrderDraft.value.indexOf(fieldKey);
+  if (index < 0) return false;
+  const nextIndex = index + delta;
+  return nextIndex >= 0 && nextIndex < fieldOrderDraft.value.length;
+}
+
+function moveSelectedFormSettingsField(delta: number) {
+  const fieldKey = selectedFormSettingsFieldKey.value;
+  if (!fieldKey || !canMoveSelectedFormSettingsField(delta)) return;
+  moveFieldOrder(fieldKey, delta);
+}
+
+function addFieldAfterSelectedFormSettingsField() {
+  const fieldKey = selectedFormSettingsFieldKey.value;
+  if (!fieldKey) return;
+  openInlineCustomFieldCreate(selectedFormSettingsFieldGroupTitle.value || '业务配置字段', fieldKey);
+}
+
+function onSelectedFormSettingsFieldVisibilityChange(value: string) {
+  const fieldKey = selectedFormSettingsFieldKey.value;
+  if (!fieldKey) return;
+  onFieldVisibilityDraftChange(fieldKey, value);
 }
 
 function contractInlineFieldOrderIndex(field: FormSectionFieldSchema) {
@@ -6691,8 +6958,8 @@ function onContractInlineFieldOrderDragEnd() {
 }
 
 function lowCodeApplyBaseParams() {
-  const configAction = activeContractModeActions.value.find((row) => String(row.key || '').trim() === 'current_form_field_order_save');
-  const target = parseMaybeJsonRecord(configAction?.raw?.target);
+  const configAction = contractV2ActionRules().find((rule) => ruleKey(rule) === 'current_form_field_order_save');
+  const target = parseMaybeJsonRecord(configAction?.target);
   return normalizeLowCodeApplyParams({
     model: String(model.value || ''),
     ...parseMaybeJsonRecord(target.params),
@@ -6866,6 +7133,7 @@ function onFieldOrderDrop(targetFieldKey: string) {
 }
 
 function moveFieldOrderTo(sourceFieldKey: string, targetFieldKey: string) {
+  ensureFieldOrderDraftStartsFromCurrentLayout();
   const draft = [...fieldOrderDraft.value];
   const from = draft.indexOf(sourceFieldKey);
   const to = draft.indexOf(targetFieldKey);
@@ -6873,10 +7141,12 @@ function moveFieldOrderTo(sourceFieldKey: string, targetFieldKey: string) {
   const [moved] = draft.splice(from, 1);
   draft.splice(to, 0, moved);
   fieldOrderDraft.value = draft;
+  fieldOrderPreviewActive.value = true;
 }
 
 function moveFieldOrder(fieldKey: string, delta: number) {
   if (!isContractFieldOrderEditable.value) return;
+  ensureFieldOrderDraftStartsFromCurrentLayout();
   const draft = [...fieldOrderDraft.value];
   const from = draft.indexOf(fieldKey);
   const to = from + delta;
@@ -6884,6 +7154,7 @@ function moveFieldOrder(fieldKey: string, delta: number) {
   const [moved] = draft.splice(from, 1);
   draft.splice(to, 0, moved);
   fieldOrderDraft.value = draft;
+  fieldOrderPreviewActive.value = true;
 }
 
 function onFieldOrderDragEnd() {
@@ -6893,12 +7164,23 @@ function onFieldOrderDragEnd() {
 
 function resetContractFieldOrder() {
   fieldOrderDraft.value = contractModeBaseFieldRows.value.map((row) => row.fieldKey);
+  fieldOrderPreviewActive.value = false;
+  contractModeBaseFieldRows.value.forEach((row) => {
+    if (Object.prototype.hasOwnProperty.call(fieldVisibilityBase.value, row.fieldKey)) {
+      fieldVisibilityDraft[row.fieldKey] = fieldVisibilityBase.value[row.fieldKey];
+      return;
+    }
+    const selected = row.actions.find((action) => Boolean(action.checked));
+    if (selected) fieldVisibilityDraft[row.fieldKey] = selected.value === 'show';
+  });
+  fieldVisibilityDirty.value = false;
+  contractModeFeedback.value = '';
 }
 
 async function saveContractFieldOrder() {
-  if (!hasLowCodeDraftChanges.value) return;
-  const configAction = activeContractModeActions.value.find((row) => String(row.key || '').trim() === 'current_form_field_order_save');
-  const target = parseMaybeJsonRecord(configAction?.raw?.target);
+  if (!hasCurrentFormFieldDraftChanges.value) return;
+  const configAction = contractV2ActionRules().find((rule) => ruleKey(rule) === 'current_form_field_order_save');
+  const target = parseMaybeJsonRecord(configAction?.target);
   const baseParams = normalizeLowCodeApplyParams(parseMaybeJsonRecord(target.params));
   busyKind.value = 'action';
   try {
@@ -6940,7 +7222,8 @@ async function saveContractFieldOrder() {
     });
     const warnings = Array.isArray(saveResult?.precheck?.warnings) ? saveResult.precheck?.warnings || [] : [];
     lowCodePrecheckWarnings.value = warnings.map((item) => String(item || '').trim()).filter(Boolean);
-    contractModeFeedback.value = '字段顺序已更新';
+    fieldVisibilityDirty.value = false;
+    contractModeFeedback.value = '表单设置已保存';
     await reload();
   } catch (err) {
     errorMessage.value = err instanceof Error ? err.message : 'field order update failed';
@@ -7889,9 +8172,184 @@ onBeforeUnmount(() => {
 }
 
 .contract-mode-prompt,
+.contract-form-settings,
 .contract-field-governance {
   grid-column: 1 / -1;
   border-top: 1px solid var(--sc-app-border);
+}
+
+.contract-form-settings {
+  display: grid;
+  gap: 12px;
+  padding: 12px 0 0;
+}
+
+.contract-form-settings-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.contract-form-settings-head h4,
+.contract-form-settings-head p {
+  margin: 0;
+}
+
+.contract-form-settings-head h4 {
+  color: var(--sc-app-text-primary);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.contract-form-settings-head p {
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.contract-form-settings-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-panel-muted);
+}
+
+.contract-form-settings-tab {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.contract-form-settings-tab--active {
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-primary);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 8%);
+}
+
+.contract-form-settings-scope {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.contract-form-settings-scope > div {
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-panel-muted);
+}
+
+.contract-form-settings-scope dt {
+  margin: 0 0 3px;
+  color: var(--sc-app-text-secondary);
+  font-size: 11px;
+}
+
+.contract-form-settings-scope dd {
+  margin: 0;
+  color: var(--sc-app-text-primary);
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.contract-form-settings-section-head,
+.contract-form-settings-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-panel-muted);
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.contract-form-settings-section-head strong,
+.contract-form-settings-placeholder strong {
+  color: var(--sc-app-text-primary);
+  font-size: 13px;
+}
+
+.contract-form-settings-fields {
+  display: grid;
+  gap: 8px;
+}
+
+.contract-field-selection-panel {
+  display: grid;
+  gap: 8px;
+}
+
+.contract-field-selection-card,
+.contract-field-selection-empty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-bg);
+}
+
+.contract-field-selection-main,
+.contract-field-selection-empty {
+  min-width: 0;
+}
+
+.contract-field-selection-main {
+  display: grid;
+  gap: 2px;
+}
+
+.contract-field-selection-main span,
+.contract-field-selection-main small,
+.contract-field-selection-empty span {
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.contract-field-selection-main strong,
+.contract-field-selection-empty strong {
+  color: var(--sc-app-text-primary);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.contract-field-selection-tools {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.contract-field-selection-order-btn {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  line-height: 1;
 }
 
 .contract-mode-prompt {
@@ -7980,9 +8438,38 @@ onBeforeUnmount(() => {
 
 .contract-field-governance {
   display: grid;
+  gap: 12px;
+  padding: 12px 0 0;
+}
+
+.contract-field-governance-group {
+  display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 8px 14px;
-  padding: 12px 0 0;
+  padding: 10px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-bg);
+}
+
+.contract-field-governance-group-head {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--sc-app-border);
+}
+
+.contract-field-governance-group-head strong {
+  color: var(--sc-app-text-primary);
+  font-size: 13px;
+}
+
+.contract-field-governance-group-head span {
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
 }
 
 .contract-field-governance-row {
@@ -8024,8 +8511,9 @@ onBeforeUnmount(() => {
 
 .contract-field-governance-handle {
   flex: 0 0 auto;
-  width: 22px;
+  min-width: 38px;
   height: 28px;
+  padding: 0 6px;
   display: inline-grid;
   place-items: center;
   border: 1px solid var(--sc-app-border);

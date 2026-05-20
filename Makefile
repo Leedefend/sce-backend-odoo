@@ -874,6 +874,10 @@ verify.user_priority.page_alignment.complete: guard.prod.forbid verify.business_
 verify.user_menu.config_policy: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/user_menu_config_policy_probe.py
 
+.PHONY: verify.user_menu.config_panel
+verify.user_menu.config_panel: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/user_menu_config_panel_probe.py
+
 history.legacy_user_access.projection.write: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/history_legacy_user_access_projection_write.py
 
@@ -2284,6 +2288,10 @@ verify.e2e.subscription_smoke: guard.prod.forbid check-compose-project check-com
 	@$(RUN_ENV) bash scripts/verify/subscription_smoke.sh
 verify.e2e.ops_batch_smoke: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/verify/ops_batch_smoke.sh
+
+.PHONY: verify.list_batch_action.closure_guard
+verify.list_batch_action.closure_guard: guard.prod.forbid
+	@python3 scripts/verify/list_batch_action_closure_guard.py
 
 verify.capability.lint: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/verify/capability_lint.sh

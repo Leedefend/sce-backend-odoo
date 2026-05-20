@@ -29,6 +29,8 @@ def parse_positive_int(value: Any, *, allow_empty: bool = False):
         if allow_empty:
             return None, None
         return None, "missing"
+    if value is False and allow_empty:
+        return None, None
     if isinstance(value, bool):
         return None, "invalid"
     try:
@@ -49,6 +51,8 @@ def parse_non_negative_int(value: Any, *, allow_empty: bool = False):
         if allow_empty:
             return None, None
         return None, "missing"
+    if value is False and allow_empty:
+        return None, None
     if isinstance(value, bool):
         return None, "invalid"
     try:

@@ -47,6 +47,7 @@ import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
 import { buildCanonicalSceneRouteTarget, buildEntryTargetRouteTarget } from '../app/routeQuery';
 import { getSceneByKey } from '../app/resolvers/sceneRegistry';
+import { isMenuConfigurationAction } from '../services/action_service';
 
 const route = useRoute();
 const router = useRouter();
@@ -108,6 +109,13 @@ async function resolve() {
         return;
       }
       session.setActionMeta(result.meta);
+      if (isMenuConfigurationAction(result.meta)) {
+        await router.replace({
+          path: '/admin/menu-config',
+          query: resolveCarryQuery({ menu_id: menuId, action_id: result.meta.action_id }),
+        });
+        return;
+      }
       if (entryTarget) {
         await router.replace(buildEntryTargetRouteTarget(entryTarget, {
           query: resolveCarryQuery(),
@@ -143,6 +151,13 @@ async function resolve() {
         return;
       }
       if (result.target.action_id) {
+        if (isMenuConfigurationAction(result.target.meta)) {
+          await router.replace({
+            path: '/admin/menu-config',
+            query: resolveCarryQuery({ menu_id: result.target.menu_id, action_id: result.target.action_id }),
+          });
+          return;
+        }
         const policy = evaluateCapabilityPolicy({ source: result.target.meta, available: session.capabilities });
         if (policy.state !== 'enabled') {
           await router.replace({

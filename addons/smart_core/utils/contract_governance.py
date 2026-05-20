@@ -1002,6 +1002,8 @@ def _apply_user_surface_policies(data: dict) -> None:
     head = _as_dict(data.get("head"))
     view_type = _safe_lower(head.get("view_type") or data.get("view_type"))
     model = _safe_text(head.get("model") or data.get("model"))
+    fields_map = _as_dict(data.get("fields"))
+    active_field = "active" if "active" in fields_map else ""
     filters_primary_max = _USER_SURFACE_PRIMARY_FILTER_MAX
     actions_primary_max = _USER_SURFACE_PRIMARY_ACTION_MAX
     record_open_policy = {
@@ -1009,8 +1011,12 @@ def _apply_user_surface_policies(data: dict) -> None:
     }
     batch_policy = {
         "enabled": False,
+        "active_field": "",
+        "archive_value": None,
+        "activate_value": None,
         "delete_allowed": False,
         "delete_only_mode": False,
+        "delete_mode": "none",
         "available_actions": [],
     }
     if view_type in {"form"}:
@@ -1031,19 +1037,28 @@ def _apply_user_surface_policies(data: dict) -> None:
         delete_only_mode = bool(delete_allowed and model in LEGACY_DELETE_ONLY_MODELS)
         available_actions = []
         if write_allowed:
-            available_actions = ["delete"] if delete_only_mode else ["archive", "activate", "delete"]
+            if active_field and not delete_only_mode:
+                available_actions.extend(["archive", "activate"])
+            if delete_allowed:
+                available_actions.append("delete")
         if model in LEGACY_RECORD_CONTEXT_CLEAR_MODELS:
             record_open_policy = {
                 "carry_query_mode": "clear_scene_context",
             }
         batch_policy = {
             "enabled": bool(available_actions),
+            "active_field": active_field,
+            "archive_value": False if active_field else None,
+            "activate_value": True if active_field else None,
             "delete_allowed": delete_allowed,
             "delete_only_mode": delete_only_mode,
-            "available_actions": available_actions if delete_allowed else ["archive", "activate"],
+            "delete_mode": "unlink" if delete_allowed and "delete" in available_actions else "none",
+            "available_actions": available_actions,
         }
         if not write_allowed:
             batch_policy["available_actions"] = []
+            batch_policy["enabled"] = False
+            batch_policy["delete_mode"] = "none"
     primary_model = _governance_primary_model(data)
     if model and primary_model and model == primary_model:
         filters_primary_max = min(filters_primary_max, 4)
@@ -1053,7 +1068,7 @@ def _apply_user_surface_policies(data: dict) -> None:
         "actions_primary_max": actions_primary_max,
         "filters_max": _USER_SURFACE_FILTER_MAX,
         "actions_max": _USER_SURFACE_ACTION_MAX,
-        "delete_mode": "unlink" if bool(batch_policy.get("delete_allowed")) else "none",
+        "delete_mode": batch_policy.get("delete_mode") or "none",
         "batch_policy": batch_policy,
         "record_open_policy": record_open_policy,
     }
@@ -2015,17 +2030,33 @@ def _govern_standard_list_for_user(
     effective = _as_dict(permissions.get("effective"))
     rights = _as_dict(effective.get("rights"))
     write_allowed = bool(rights.get("write"))
-    available_actions = (
+    raw_available_actions = (
         surface_batch_policy.get("available_actions")
         if isinstance(surface_batch_policy.get("available_actions"), list)
         else []
     )
-    if active_field and write_allowed and not available_actions:
-        available_actions = ["archive", "activate"]
     if rights and not write_allowed:
-        available_actions = []
+        raw_available_actions = []
+    delete_mode = _safe_text(
+        surface_policies.get("delete_mode")
+        or delete_policy.get("delete_mode")
+        or data.get("delete_mode"),
+        "none",
+    )
+    available_actions = []
+    if active_field and write_allowed and not raw_available_actions:
+        raw_available_actions = ["archive", "activate"]
+    for raw_action in raw_available_actions:
+        action = _safe_lower(raw_action)
+        if action in {"archive", "activate"}:
+            if active_field and write_allowed and action not in available_actions:
+                available_actions.append(action)
+            continue
+        if action == "delete":
+            if write_allowed and delete_mode == "unlink" and action not in available_actions:
+                available_actions.append(action)
     batch_policy = {
-        "enabled": bool(surface_batch_policy.get("enabled") or available_actions),
+        "enabled": bool(available_actions),
         "active_field": active_field,
         "assignee_field": assignee_field,
         "archive_value": False if active_field else None,
@@ -2039,12 +2070,7 @@ def _govern_standard_list_for_user(
         }
         if assignee_field
         else None,
-        "delete_mode": _safe_text(
-            surface_policies.get("delete_mode")
-            or delete_policy.get("delete_mode")
-            or data.get("delete_mode"),
-            "none",
-        ),
+        "delete_mode": delete_mode if "delete" in available_actions else "none",
         "available_actions": available_actions,
     }
 

@@ -12,6 +12,12 @@
           :key="field.key"
           :class="fieldClass(field)"
           :draggable="fieldOrderEditable"
+          :tabindex="fieldSelectionMode ? 0 : undefined"
+          :role="fieldSelectionMode ? 'button' : undefined"
+          :aria-pressed="fieldSelectionMode ? selectedFieldKey === fieldIdentity(field) : undefined"
+          @click.capture="emitFieldSelect(field, $event)"
+          @keydown.enter="emitFieldSelect(field, $event)"
+          @keydown.space="emitFieldSelect(field, $event)"
           @dragstart="emitFieldOrderDragStart(field, $event)"
           @dragover.prevent="emitFieldOrderDragOver(field)"
           @dragleave="emitFieldOrderDragLeave(field)"
@@ -31,7 +37,7 @@
             />
             <div v-if="fieldOrderEditable || fieldActionsFor(field).length" class="field-inline-config">
               <div v-if="fieldOrderEditable" class="field-order-inline-tools" :aria-label="`${field.label}字段排序`">
-                <span class="field-order-handle" aria-hidden="true" title="按住字段拖动调整顺序">⋮⋮</span>
+                <span class="field-order-handle" aria-hidden="true" title="按住字段拖动调整顺序">拖动</span>
                 <button
                   class="field-order-btn"
                   type="button"
@@ -55,7 +61,7 @@
                   :aria-label="`在${field.label}后新增字段`"
                   title="新增字段"
                   @click.stop="emitFieldAddAfter(field)"
-                >+</button>
+                >新增</button>
               </div>
               <div
                 v-if="fieldActionsFor(field).length"
@@ -298,6 +304,8 @@ const props = withDefaults(defineProps<{
   fieldOrderDropTargetKey?: string;
   fieldConfigEditable?: boolean;
   fieldGroupTitle?: string;
+  fieldSelectionMode?: boolean;
+  selectedFieldKey?: string;
   selectPlaceholder?: (label: string) => string;
   inputPlaceholder?: (label: string) => string;
 }>(), {
@@ -314,6 +322,8 @@ const props = withDefaults(defineProps<{
   fieldOrderDropTargetKey: '',
   fieldConfigEditable: false,
   fieldGroupTitle: '',
+  fieldSelectionMode: false,
+  selectedFieldKey: '',
   selectPlaceholder: (label: string) => resolveSelectPlaceholder(label),
   inputPlaceholder: (label: string) => resolveInputPlaceholder(label),
 });
@@ -329,6 +339,7 @@ const emit = defineEmits<{
   (e: 'field-order-drag-end', payload: { field: FormSectionFieldSchema }): void;
   (e: 'field-label-change', payload: { field: FormSectionFieldSchema; label: string }): void;
   (e: 'field-add-after', payload: { field: FormSectionFieldSchema; groupTitle: string }): void;
+  (e: 'field-select', payload: { field: FormSectionFieldSchema; groupTitle: string }): void;
 }>();
 
 const slots = useSlots();
@@ -383,8 +394,12 @@ function fieldWidgetClass(field: FormSectionFieldSchema) {
   return widget ? `field--widget-${widget.replace(/[^a-z0-9_-]/g, '-')}` : '';
 }
 
+function fieldIdentity(field: FormSectionFieldSchema) {
+  return String(field.name || field.key || '').trim();
+}
+
 function fieldClass(field: FormSectionFieldSchema) {
-  const fieldKey = String(field.name || field.key || '').trim();
+  const fieldKey = fieldIdentity(field);
   return [
     'field',
     field.spanClass || defaultSpanClass(field.type),
@@ -393,6 +408,8 @@ function fieldClass(field: FormSectionFieldSchema) {
       'field--order-editable': props.fieldOrderEditable,
       'field--order-dragging': props.fieldOrderDraggingKey === fieldKey,
       'field--order-drop-target': props.fieldOrderDropTargetKey === fieldKey && props.fieldOrderDraggingKey !== fieldKey,
+      'field--selectable': props.fieldSelectionMode,
+      'field--selected': props.fieldSelectionMode && props.selectedFieldKey === fieldKey,
     },
   ];
 }
@@ -463,13 +480,13 @@ function fieldActionsFor(field: FormSectionFieldSchema) {
   return props.fieldActions?.(field) || [];
 }
 
-function fieldOrderIndex(field: FormSectionFieldSchema) {
+function resolveFieldOrderIndex(field: FormSectionFieldSchema) {
   return props.fieldOrderIndex?.(field) ?? -1;
 }
 
 function canMoveFieldOrder(field: FormSectionFieldSchema, delta: number) {
   if (!props.fieldOrderEditable) return false;
-  const index = fieldOrderIndex(field);
+  const index = resolveFieldOrderIndex(field);
   const count = Number(props.fieldOrderCount || 0);
   if (index < 0 || count <= 0) return false;
   const nextIndex = index + delta;
@@ -577,6 +594,13 @@ function emitFieldAddAfter(field: FormSectionFieldSchema) {
   if (!props.fieldConfigEditable) return;
   emit('field-add-after', { field, groupTitle: props.fieldGroupTitle || '' });
 }
+
+function emitFieldSelect(field: FormSectionFieldSchema, event?: Event) {
+  if (!props.fieldSelectionMode) return;
+  event?.preventDefault();
+  event?.stopPropagation();
+  emit('field-select', { field, groupTitle: props.fieldGroupTitle || '' });
+}
 </script>
 
 <style scoped>
@@ -659,6 +683,25 @@ function emitFieldAddAfter(field: FormSectionFieldSchema) {
   border-color: var(--sc-semantic-surface-interactive);
   background: var(--sc-app-info-bg);
   box-shadow: inset 3px 0 0 var(--sc-semantic-surface-interactive);
+}
+
+.field--selectable {
+  padding: 6px;
+  margin: -6px;
+  cursor: pointer;
+}
+
+.field--selectable:hover,
+.field--selectable:focus-visible {
+  border-color: var(--sc-app-border-strong);
+  background: var(--sc-app-hover-bg);
+  outline: none;
+}
+
+.field--selected {
+  border-color: var(--sc-semantic-surface-interactive);
+  background: var(--sc-app-info-bg);
+  box-shadow: 0 0 0 3px var(--sc-app-focus-ring);
 }
 
 .field--half {
@@ -755,8 +798,9 @@ function emitFieldAddAfter(field: FormSectionFieldSchema) {
 .field-order-handle,
 .field-order-btn {
   flex: 0 0 auto;
-  width: 26px;
+  min-width: 26px;
   height: 26px;
+  padding: 0 6px;
   display: inline-grid;
   place-items: center;
   border: 1px solid var(--sc-app-border);
@@ -768,7 +812,7 @@ function emitFieldAddAfter(field: FormSectionFieldSchema) {
 }
 
 .field-order-handle {
-  font-size: 15px;
+  font-size: 12px;
 }
 
 .field-order-btn {

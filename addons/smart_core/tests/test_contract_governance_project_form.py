@@ -874,6 +874,56 @@ class TestProjectFormGovernance(unittest.TestCase):
             "legacy_industry_governance_profile",
         )
 
+    def test_list_batch_policy_drops_archive_when_active_field_missing(self):
+        data = {
+            "head": {"model": "payment.request", "view_type": "tree"},
+            "views": {"tree": {"columns": ["name"]}},
+            "fields": {"name": {"string": "名称", "type": "char"}},
+            "permissions": {"effective": {"rights": {"write": True}}},
+            "surface_policies": {
+                "delete_mode": "none",
+                "batch_policy": {
+                    "enabled": True,
+                    "available_actions": ["archive", "activate"],
+                },
+            },
+        }
+
+        out = apply_contract_governance(data, "user")
+
+        batch_policy = (out.get("list_profile") or {}).get("batch_policy") or {}
+        self.assertFalse(batch_policy.get("enabled"))
+        self.assertEqual(batch_policy.get("active_field"), "")
+        self.assertEqual(batch_policy.get("delete_mode"), "none")
+        self.assertEqual(batch_policy.get("available_actions"), [])
+
+    def test_list_batch_policy_keeps_executable_archive_and_delete(self):
+        data = {
+            "head": {"model": "payment.request", "view_type": "tree"},
+            "views": {"tree": {"columns": ["name", "active"]}},
+            "fields": {
+                "name": {"string": "名称", "type": "char"},
+                "active": {"string": "启用", "type": "boolean"},
+            },
+            "permissions": {"effective": {"rights": {"write": True}}},
+            "delete_policy": {"allowed": True, "delete_mode": "unlink"},
+            "surface_policies": {
+                "delete_mode": "unlink",
+                "batch_policy": {
+                    "enabled": True,
+                    "available_actions": ["archive", "activate", "delete"],
+                },
+            },
+        }
+
+        out = apply_contract_governance(data, "user")
+
+        batch_policy = (out.get("list_profile") or {}).get("batch_policy") or {}
+        self.assertTrue(batch_policy.get("enabled"))
+        self.assertEqual(batch_policy.get("active_field"), "active")
+        self.assertEqual(batch_policy.get("delete_mode"), "unlink")
+        self.assertEqual(batch_policy.get("available_actions"), ["archive", "activate", "delete"])
+
     def test_project_kanban_adds_profile_and_filters_fields(self):
         data = _sample_kanban_payload()
         out = apply_contract_governance(data, "user")

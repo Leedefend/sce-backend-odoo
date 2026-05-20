@@ -51,9 +51,11 @@
               :field-order-index="fieldOrderIndex"
               :field-order-count="fieldOrderCount"
               :field-order-dragging-key="fieldOrderDraggingKey"
-            :field-order-drop-target-key="fieldOrderDropTargetKey"
-            :field-config-editable="fieldConfigEditable"
-            :columns="columns"
+              :field-order-drop-target-key="fieldOrderDropTargetKey"
+              :field-config-editable="fieldConfigEditable"
+              :field-selection-mode="fieldSelectionMode"
+              :selected-field-key="selectedFieldKey"
+              :columns="columns"
               @field-change="emit('field-change', $event)"
               @field-action="emit('field-action', $event)"
               @field-order-move="emit('field-order-move', $event)"
@@ -64,6 +66,7 @@
               @field-order-drag-end="emit('field-order-drag-end', $event)"
               @field-label-change="emit('field-label-change', $event)"
               @field-add-after="emit('field-add-after', $event)"
+              @field-select="emit('field-select', $event)"
               @group-rename="emit('group-rename', $event)"
               @group-add-field="emit('group-add-field', $event)"
               @native-action="emit('native-action', $event)"
@@ -118,6 +121,8 @@
             :field-order-dragging-key="fieldOrderDraggingKey"
             :field-order-drop-target-key="fieldOrderDropTargetKey"
             :field-config-editable="fieldConfigEditable"
+            :field-selection-mode="fieldSelectionMode"
+            :selected-field-key="selectedFieldKey"
             :columns="columns"
             @field-change="emit('field-change', $event)"
             @field-action="emit('field-action', $event)"
@@ -129,6 +134,7 @@
             @field-order-drag-end="emit('field-order-drag-end', $event)"
             @field-label-change="emit('field-label-change', $event)"
             @field-add-after="emit('field-add-after', $event)"
+            @field-select="emit('field-select', $event)"
             @group-rename="emit('group-rename', $event)"
             @group-add-field="emit('group-add-field', $event)"
             @native-action="emit('native-action', $event)"
@@ -156,6 +162,8 @@
             :field-order-dragging-key="fieldOrderDraggingKey"
             :field-order-drop-target-key="fieldOrderDropTargetKey"
             :field-config-editable="fieldConfigEditable"
+            :field-selection-mode="fieldSelectionMode"
+            :selected-field-key="selectedFieldKey"
             :field-group-title="containerPolicyTitle(node)"
             tone="core"
             @field-change="emit('field-change', $event)"
@@ -168,6 +176,7 @@
             @field-order-drag-end="emit('field-order-drag-end', $event)"
             @field-label-change="emit('field-label-change', $event)"
             @field-add-after="emit('field-add-after', $event)"
+            @field-select="emit('field-select', $event)"
           >
             <template #readonly="{ field }">
               <slot name="readonly" :field="field" />
@@ -228,6 +237,8 @@
             :field-order-dragging-key="fieldOrderDraggingKey"
             :field-order-drop-target-key="fieldOrderDropTargetKey"
             :field-config-editable="fieldConfigEditable"
+            :field-selection-mode="fieldSelectionMode"
+            :selected-field-key="selectedFieldKey"
             :columns="columns"
             @field-change="emit('field-change', $event)"
             @field-action="emit('field-action', $event)"
@@ -239,6 +250,7 @@
             @field-order-drag-end="emit('field-order-drag-end', $event)"
             @field-label-change="emit('field-label-change', $event)"
             @field-add-after="emit('field-add-after', $event)"
+            @field-select="emit('field-select', $event)"
             @group-rename="emit('group-rename', $event)"
             @group-add-field="emit('group-add-field', $event)"
             @native-action="emit('native-action', $event)"
@@ -266,6 +278,8 @@
         :field-order-dragging-key="fieldOrderDraggingKey"
         :field-order-drop-target-key="fieldOrderDropTargetKey"
         :field-config-editable="fieldConfigEditable"
+        :field-selection-mode="fieldSelectionMode"
+        :selected-field-key="selectedFieldKey"
         tone="core"
         @field-change="emit('field-change', $event)"
         @field-action="emit('field-action', $event)"
@@ -277,6 +291,7 @@
         @field-order-drag-end="emit('field-order-drag-end', $event)"
         @field-label-change="emit('field-label-change', $event)"
         @field-add-after="emit('field-add-after', $event)"
+        @field-select="emit('field-select', $event)"
       >
         <template #readonly="{ field }">
           <slot name="readonly" :field="field" />
@@ -351,6 +366,8 @@ const props = withDefaults(defineProps<{
   fieldOrderDraggingKey?: string;
   fieldOrderDropTargetKey?: string;
   fieldConfigEditable?: boolean;
+  fieldSelectionMode?: boolean;
+  selectedFieldKey?: string;
   columns?: 1 | 2;
 }>(), {
   columns: 2,
@@ -364,6 +381,8 @@ const props = withDefaults(defineProps<{
   fieldOrderDraggingKey: '',
   fieldOrderDropTargetKey: '',
   fieldConfigEditable: false,
+  fieldSelectionMode: false,
+  selectedFieldKey: '',
 });
 
 const emit = defineEmits<{
@@ -377,6 +396,7 @@ const emit = defineEmits<{
   (event: 'field-order-drag-end', payload: { field: FormSectionFieldSchema }): void;
   (event: 'field-label-change', payload: { field: FormSectionFieldSchema; label: string }): void;
   (event: 'field-add-after', payload: { field: FormSectionFieldSchema; groupTitle: string }): void;
+  (event: 'field-select', payload: { field: FormSectionFieldSchema; groupTitle: string }): void;
   (event: 'group-rename', payload: { oldTitle: string; newTitle: string }): void;
   (event: 'group-add-field', payload: { groupTitle: string }): void;
   (event: 'native-action', payload: Record<string, unknown>): void;

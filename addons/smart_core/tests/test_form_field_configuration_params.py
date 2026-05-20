@@ -70,6 +70,18 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertEqual(result["error"]["reason_code"], "USER_ERROR")
         self.assertIn("action_id", result["error"]["message"])
 
+    def test_optional_scope_ids_accept_false_as_empty_scope(self):
+        value, invalid_field = self.module._optional_non_negative_int({"view_id": False}, "view_id", "viewId")
+
+        self.assertEqual(value, 0)
+        self.assertIsNone(invalid_field)
+
+    def test_optional_scope_ids_still_reject_true(self):
+        value, invalid_field = self.module._optional_non_negative_int({"view_id": True}, "view_id", "viewId")
+
+        self.assertIsNone(value)
+        self.assertEqual(invalid_field, "view_id")
+
     def test_custom_field_create_rejects_invalid_numeric_params(self):
         handler = self.module.FormCustomFieldCreateHandler(
             env={},
