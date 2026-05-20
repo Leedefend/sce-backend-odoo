@@ -250,14 +250,6 @@
               </div>
             </section>
           </section>
-          <section v-else-if="formSettingsActiveTab === 'details'" class="contract-form-settings-placeholder">
-            <strong>明细表</strong>
-            <span>下一步在这里调整明细表列显示、列顺序和是否允许添加行。</span>
-          </section>
-          <section v-else class="contract-form-settings-placeholder">
-            <strong>按钮</strong>
-            <span>下一步在这里调整业务按钮显示、顺序和更多菜单。</span>
-          </section>
           <div class="contract-field-governance-footer">
             <span v-if="hasCurrentFormFieldDraftChanges" class="contract-field-governance-dirty">表单设置已调整，保存后生效</span>
             <button class="chip-btn" type="button" :disabled="busy || !hasCurrentFormFieldDraftChanges" @click="saveContractFieldOrder">保存表单设置</button>
@@ -1739,8 +1731,6 @@ const formFieldConfigScope = computed(() => {
 
 const formSettingsTabs = computed(() => [
   { key: 'fields' as const, label: `字段 ${activeContractModeFieldRows.value.length}` },
-  { key: 'details' as const, label: '明细表' },
-  { key: 'actions' as const, label: '按钮' },
 ]);
 
 const selectedFormSettingsFieldRow = computed(() => {
