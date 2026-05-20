@@ -90,6 +90,18 @@
         <div v-if="loading" class="loading-state">正在加载菜单配置...</div>
         <div v-else class="table-wrap">
           <table>
+            <colgroup>
+              <col class="index-col" />
+              <col class="name-col" />
+              <col class="default-col" />
+              <col class="parent-col" />
+              <col class="level-col" />
+              <col class="sequence-col" />
+              <col class="move-col" />
+              <col class="check-col" />
+              <col class="groups-col" />
+              <col class="note-col" />
+            </colgroup>
             <thead>
               <tr>
                 <th class="index-col">#</th>
@@ -777,17 +789,20 @@ h1 {
 
 table {
   width: 100%;
-  min-width: 1320px;
+  min-width: 1180px;
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: 13px;
 }
 
 th,
 td {
+  min-width: 0;
   border-bottom: 1px solid var(--sc-app-border);
   border-right: 1px solid var(--sc-app-border);
-  padding: 7px 8px;
+  padding: 6px;
   vertical-align: middle;
+  overflow: hidden;
 }
 
 th {
@@ -832,12 +847,43 @@ tr.dirty td:first-child {
   width: 62px;
 }
 
+.name-col {
+  width: 150px;
+}
+
+.default-col {
+  width: 140px;
+}
+
+.parent-col {
+  width: 150px;
+}
+
+.move-col {
+  width: 190px;
+}
+
+.groups-col {
+  width: 210px;
+}
+
+.note-col {
+  width: 150px;
+}
+
 .muted {
+  display: block;
+  overflow: hidden;
   color: var(--sc-app-text-secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .cell-input {
+  box-sizing: border-box;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   min-height: 30px;
   border: 1px solid var(--sc-app-border);
   border-radius: 4px;
@@ -846,22 +892,18 @@ tr.dirty td:first-child {
   padding: 0 8px;
 }
 
-.name-input {
-  min-width: 128px;
-}
-
 .number-input {
   text-align: center;
 }
 
 .group-select {
-  min-width: 220px;
+  min-width: 0;
   min-height: 54px;
   padding: 4px 6px;
 }
 
 .note-input {
-  min-width: 150px;
+  min-width: 0;
 }
 
 @media (max-width: 900px) {
