@@ -32,8 +32,8 @@
           <span>填写后覆盖默认排序；留空或 0 时保留原顺序。</span>
         </article>
         <article>
-          <strong>调整到分组</strong>
-          <span>把菜单移动到导航内其他分组；不能移动到自己或自己的下级。</span>
+          <strong>移动到上级</strong>
+          <span>选择新的上级菜单；不移动表示保留当前父级，不能移动到自己或自己的下级。</span>
         </article>
         <article>
           <strong>显示</strong>
@@ -105,12 +105,12 @@
             <thead>
               <tr>
                 <th class="index-col">#</th>
-                <th>菜单名称</th>
+                <th>显示名称</th>
                 <th>默认名称</th>
-                <th>父级</th>
+                <th>当前父级</th>
                 <th class="level-col">级别</th>
                 <th class="sequence-col">排序号</th>
-                <th>调整到分组</th>
+                <th>移动到上级</th>
                 <th class="check-col">显示</th>
                 <th>适用用户组</th>
                 <th>备注</th>
@@ -131,8 +131,8 @@
                     @input="updateDraft(row.menu.id, { custom_label: inputValue($event) })"
                   />
                 </td>
-                <td class="muted">{{ row.menu.name }}</td>
-                <td class="muted">{{ row.menu.parent_name || '顶层菜单' }}</td>
+                <td><span class="muted">{{ row.menu.name }}</span></td>
+                <td><span class="muted">{{ row.menu.parent_name || '顶层菜单' }}</span></td>
                 <td class="level-col">{{ row.level }}</td>
                 <td class="sequence-col">
                   <input
@@ -149,7 +149,7 @@
                     :value="draftFor(row.menu.id).target_parent_menu_id || 0"
                     @change="updateDraft(row.menu.id, { target_parent_menu_id: numericValue($event) })"
                   >
-                    <option :value="0">保留当前分组</option>
+                    <option :value="0">不移动</option>
                     <option
                       v-for="target in parentOptions(row.menu.id)"
                       :key="target.id"
@@ -167,16 +167,19 @@
                   />
                 </td>
                 <td>
-                  <select
-                    class="cell-input group-select"
-                    multiple
-                    :value="draftFor(row.menu.id).role_group_ids.map(String)"
-                    @change="updateDraft(row.menu.id, { role_group_ids: selectedValues($event) })"
-                  >
-                    <option v-for="group in groupOptions" :key="group.id" :value="group.id">
-                      {{ group.display_name }}
-                    </option>
-                  </select>
+                  <div class="group-cell">
+                    <select
+                      class="cell-input group-select"
+                      multiple
+                      :value="draftFor(row.menu.id).role_group_ids.map(String)"
+                      @change="updateDraft(row.menu.id, { role_group_ids: selectedValues($event) })"
+                    >
+                      <option v-for="group in groupOptions" :key="group.id" :value="group.id">
+                        {{ group.display_name }}
+                      </option>
+                    </select>
+                    <small>{{ roleScopeSummary(row.menu.id) }}</small>
+                  </div>
                 </td>
                 <td>
                   <input
@@ -411,6 +414,11 @@ function hasConfiguration(menuId: number) {
     || draft.role_group_ids.length
     || draft.note.trim(),
   );
+}
+
+function roleScopeSummary(menuId: number) {
+  const count = draftFor(menuId)?.role_group_ids.length || 0;
+  return count ? `限 ${count} 个用户组` : '所有用户组';
 }
 
 function updateDraft(menuId: number, patch: Partial<DraftPolicy>) {
@@ -685,7 +693,7 @@ h1 {
 
 .menu-config-workspace {
   display: grid;
-  grid-template-columns: 280px minmax(0, 1fr);
+  grid-template-columns: 240px minmax(0, 1fr);
   min-height: 0;
   padding: 0 18px 18px;
 }
@@ -735,6 +743,20 @@ h1 {
   cursor: pointer;
 }
 
+:deep(.tree-node) {
+  width: 100%;
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--sc-app-text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+
 .tree-node.all {
   padding: 8px 12px;
   border-bottom: 1px solid var(--sc-app-border);
@@ -747,7 +769,19 @@ h1 {
   font-weight: 600;
 }
 
+:deep(.tree-node.active) {
+  background: var(--sc-app-info-bg);
+  color: var(--sc-app-info-text);
+  font-weight: 600;
+}
+
 .branch-marker {
+  width: 12px;
+  flex: 0 0 12px;
+  color: var(--sc-app-text-secondary);
+}
+
+:deep(.branch-marker) {
   width: 12px;
   flex: 0 0 12px;
   color: var(--sc-app-text-secondary);
@@ -789,7 +823,7 @@ h1 {
 
 table {
   width: 100%;
-  min-width: 1180px;
+  min-width: 920px;
   table-layout: fixed;
   border-collapse: collapse;
   font-size: 13px;
@@ -832,47 +866,48 @@ tr.dirty td:first-child {
 }
 
 .index-col {
-  width: 52px;
+  width: 42px;
 }
 
 .level-col {
-  width: 64px;
+  width: 48px;
 }
 
 .sequence-col {
-  width: 86px;
+  width: 70px;
 }
 
 .check-col {
-  width: 62px;
+  width: 48px;
 }
 
 .name-col {
-  width: 150px;
+  width: 130px;
 }
 
 .default-col {
-  width: 140px;
+  width: 120px;
 }
 
 .parent-col {
-  width: 150px;
+  width: 120px;
 }
 
 .move-col {
-  width: 190px;
-}
-
-.groups-col {
-  width: 210px;
-}
-
-.note-col {
   width: 150px;
 }
 
+.groups-col {
+  width: 132px;
+}
+
+.note-col {
+  width: 120px;
+}
+
 .muted {
-  display: block;
+  display: inline-block;
+  max-width: 100%;
   overflow: hidden;
   color: var(--sc-app-text-secondary);
   text-overflow: ellipsis;
@@ -898,8 +933,23 @@ tr.dirty td:first-child {
 
 .group-select {
   min-width: 0;
-  min-height: 54px;
+  height: 54px;
   padding: 4px 6px;
+}
+
+.group-cell {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.group-cell small {
+  overflow: hidden;
+  color: var(--sc-app-text-secondary);
+  font-size: 11px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .note-input {
