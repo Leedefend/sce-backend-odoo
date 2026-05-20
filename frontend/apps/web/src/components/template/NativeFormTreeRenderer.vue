@@ -334,6 +334,7 @@ export type NativeFormLayoutNode = {
   string?: string;
   label?: string;
   displayLabel?: string;
+  semanticTitle?: string;
   text?: string;
   widget?: string;
   attributes?: Record<string, unknown>;
@@ -531,8 +532,9 @@ function activeNotebookChildren(node: NativeFormLayoutNode) {
 }
 
 function fieldSectionTitle(node?: NativeFormLayoutNode) {
-  const title = node ? containerTitle(node) : '';
-  return title;
+  const semanticTitle = String(node?.semanticTitle || '').trim();
+  if (semanticTitle) return semanticTitle;
+  return node ? containerTitle(node) : '';
 }
 
 function isEditableGroupNode(node: NativeFormLayoutNode) {

@@ -24,6 +24,60 @@ from .ui_contract import UiContractHandler
 
 _logger = logging.getLogger(__name__)
 
+BUSINESS_OPERATION_FIELD_PRIORITY = (
+    "name",
+    "document_no",
+    "legacy_document_no",
+    "invoice_no",
+    "invoice_code",
+    "subject",
+    "type",
+    "source_kind",
+    "direction",
+    "project_id",
+    "operation_strategy",
+    "partner_id",
+    "contract_id",
+    "settlement_id",
+    "payment_request_id",
+    "date_request",
+    "date_receipt",
+    "document_date",
+    "invoice_date",
+    "date_contract",
+    "amount",
+    "amount_no_tax",
+    "tax_amount",
+    "amount_total",
+    "visible_contract_amount",
+    "settlement_amount",
+    "settlement_amount_payable",
+    "paid_amount",
+    "unpaid_amount",
+    "state",
+    "document_status",
+    "handler_id",
+    "handler_name",
+    "creator_name",
+    "created_time",
+    "note",
+)
+BUSINESS_OPERATION_TECHNICAL_PREFIXES = (
+    "message_",
+    "activity_",
+    "website_",
+    "rating_",
+)
+BUSINESS_OPERATION_TECHNICAL_FIELDS = {
+    "id",
+    "display_name",
+    "create_uid",
+    "create_date",
+    "write_uid",
+    "write_date",
+    "__last_update",
+}
+
 
 class UiContractV2Handler(BaseIntentHandler):
     INTENT_TYPE = "ui.contract.v2"
@@ -130,6 +184,11 @@ class UiContractV2Handler(BaseIntentHandler):
             model=str(model or "").strip(),
             view_type=str(view_type or "").strip().lower(),
         )
+        self._inject_business_operation_contract(
+            source_contract,
+            model=str(model or "").strip(),
+            view_type=str(view_type or "").strip().lower(),
+        )
         self._inject_collaboration_contract(
             source_contract,
             model=str(model or "").strip(),
@@ -226,6 +285,261 @@ class UiContractV2Handler(BaseIntentHandler):
             )
         except Exception:
             _logger.debug("ui.contract.v2 current form settings action injection skipped", exc_info=True)
+
+    def _inject_business_operation_contract(self, source_contract: dict[str, Any], *, model: str, view_type: str) -> None:
+        if not model or model not in self.env:
+            return
+        try:
+            model_obj = self.env[model]
+            model_fields = getattr(model_obj, "_fields", {}) or {}
+            if not model_fields:
+                return
+        except Exception:
+            _logger.debug("ui.contract.v2 business operation projection skipped: model inspect failed", exc_info=True)
+            return
+
+        fields_contract = source_contract.get("fields") if isinstance(source_contract.get("fields"), dict) else {}
+        descriptor_cache: dict[str, dict[str, Any]] = {}
+
+        def descriptor(name: str) -> dict[str, Any]:
+            if name in descriptor_cache:
+                return descriptor_cache[name]
+            current = fields_contract.get(name) if isinstance(fields_contract.get(name), dict) else {}
+            if current:
+                descriptor_cache[name] = dict(current)
+                return descriptor_cache[name]
+            try:
+                fetched = self.env[model].fields_get([name]).get(name) or {}
+            except Exception:
+                fetched = {}
+            descriptor_cache[name] = dict(fetched)
+            if fetched:
+                fields_contract[name] = dict(fetched)
+                source_contract["fields"] = fields_contract
+            return descriptor_cache[name]
+
+        def has_field(name: str) -> bool:
+            return bool(name and name in model_fields)
+
+        def field_type(name: str) -> str:
+            meta = descriptor(name)
+            return str(meta.get("type") or getattr(model_fields.get(name), "type", "") or "").strip()
+
+        def field_relation(name: str) -> str:
+            meta = descriptor(name)
+            return str(meta.get("relation") or getattr(model_fields.get(name), "comodel_name", "") or "").strip()
+
+        def field_label(name: str) -> str:
+            meta = descriptor(name)
+            return str(meta.get("string") or getattr(model_fields.get(name), "string", "") or name).strip()
+
+        def is_technical(name: str) -> bool:
+            return (
+                name in BUSINESS_OPERATION_TECHNICAL_FIELDS
+                or any(name.startswith(prefix) for prefix in BUSINESS_OPERATION_TECHNICAL_PREFIXES)
+            )
+
+        def unique(items: list[str]) -> list[str]:
+            out: list[str] = []
+            seen: set[str] = set()
+            for item in items:
+                value = str(item or "").strip()
+                if value and value not in seen and has_field(value):
+                    seen.add(value)
+                    out.append(value)
+            return out
+
+        note_field = next((name for name in ("note", "remark", "remarks", "description", "memo") if has_field(name)), "")
+        attachment_field = next(
+            (
+                name
+                for name in model_fields
+                if (
+                    name == "attachment_ids"
+                    or (field_type(name) == "many2many" and field_relation(name) == "ir.attachment")
+                )
+            ),
+            "",
+        )
+        detail_fields = unique([
+            name
+            for name in model_fields
+            if field_type(name) == "one2many" and not is_technical(name)
+        ])
+        common_fields = unique([
+            name
+            for name in BUSINESS_OPERATION_FIELD_PRIORITY
+            if has_field(name) and field_type(name) not in {"one2many", "many2many"}
+        ])
+        if note_field and note_field not in common_fields:
+            common_fields.append(note_field)
+
+        amount_fields = [
+            name
+            for name in common_fields
+            if field_type(name) in {"float", "integer", "monetary"} or "amount" in name
+        ]
+        date_fields = [
+            name
+            for name in common_fields
+            if field_type(name) in {"date", "datetime"} or name.startswith("date_") or name.endswith("_time")
+        ]
+        status_field = next((name for name in ("state", "document_status", "status", "lifecycle_state") if has_field(name)), "")
+
+        profile = source_contract.get("business_operation_profile") if isinstance(source_contract.get("business_operation_profile"), dict) else {}
+        profile.update({
+            "source": "ui.contract.v2.business_operation_projection",
+            "model": model,
+            "view_type": view_type,
+            "common_fields": common_fields,
+            "amount_fields": amount_fields,
+            "date_fields": date_fields,
+            "status_field": status_field,
+            "note_field": note_field,
+            "attachment_field": attachment_field,
+            "detail_fields": detail_fields,
+            "field_labels": {name: field_label(name) for name in unique(common_fields + detail_fields + [attachment_field])},
+            "capabilities": {
+                "remarks": bool(note_field),
+                "attachments": bool(attachment_field),
+                "details": bool(detail_fields),
+                "collaboration": any(has_field(name) for name in ("message_ids", "activity_ids")),
+            },
+        })
+        source_contract["business_operation_profile"] = profile
+
+        visible_fields = source_contract.get("visible_fields") if isinstance(source_contract.get("visible_fields"), list) else []
+        source_contract["visible_fields"] = unique([str(item or "") for item in visible_fields] + common_fields + detail_fields + [attachment_field])
+
+        field_groups = source_contract.get("field_groups") if isinstance(source_contract.get("field_groups"), list) else []
+        normalized_groups = [dict(item) for item in field_groups if isinstance(item, dict)]
+        existing_group_names = {str(item.get("name") or "").strip() for item in normalized_groups}
+
+        def append_group(name: str, title: str, fields: list[str]) -> None:
+            selected = unique(fields)
+            if not selected or name in existing_group_names:
+                return
+            normalized_groups.append({"name": name, "title": title, "label": title, "fields": selected})
+            existing_group_names.add(name)
+
+        append_group("business_core", "基本信息", common_fields[:18])
+        append_group("business_amount", "金额信息", amount_fields)
+        append_group("business_details", "明细", detail_fields)
+        append_group("business_collaboration", "备注与附件", [note_field, attachment_field])
+        if normalized_groups:
+            source_contract["field_groups"] = normalized_groups
+
+        self._merge_business_list_profile(
+            source_contract,
+            common_fields=common_fields,
+            note_field=note_field,
+            status_field=status_field,
+            label_for=field_label,
+            type_for=field_type,
+        )
+
+        if view_type == "form":
+            form = _ensure_source_form_contract(source_contract)
+            if attachment_field:
+                attachments = form.get("attachments") if isinstance(form.get("attachments"), dict) else {}
+                attachments.update({
+                    "enabled": True,
+                    "field": attachment_field,
+                    "label": attachments.get("label") or "附件",
+                    "ui_labels": attachments.get("ui_labels") if isinstance(attachments.get("ui_labels"), dict) else {
+                        "label": "附件",
+                        "upload": "上传附件",
+                        "uploading": "上传中...",
+                        "download": "下载",
+                        "upload_failed": "附件上传失败",
+                        "download_failed": "附件下载失败",
+                        "size_exceeded": "文件过大",
+                    },
+                })
+                form["attachments"] = attachments
+
+    def _merge_business_list_profile(
+        self,
+        source_contract: dict[str, Any],
+        *,
+        common_fields: list[str],
+        note_field: str,
+        status_field: str,
+        label_for,
+        type_for,
+    ) -> None:
+        views = source_contract.get("views") if isinstance(source_contract.get("views"), dict) else {}
+        tree = views.get("tree") if isinstance(views.get("tree"), dict) else views.get("list") if isinstance(views.get("list"), dict) else {}
+        raw_columns = tree.get("columns") if isinstance(tree.get("columns"), list) else []
+        columns: list[str] = []
+        for row in raw_columns:
+            name = str(row.get("name") if isinstance(row, dict) else row or "").strip()
+            if name and name not in columns:
+                columns.append(name)
+        profile = source_contract.get("list_profile") if isinstance(source_contract.get("list_profile"), dict) else {}
+        for name in profile.get("columns") if isinstance(profile.get("columns"), list) else []:
+            normalized = str(name or "").strip()
+            if normalized and normalized not in columns:
+                columns.append(normalized)
+        for name in common_fields:
+            if name and name not in columns:
+                columns.append(name)
+        if note_field and note_field not in columns:
+            columns.append(note_field)
+        if len(columns) > 18:
+            selected = columns[:18]
+            if note_field and note_field in columns and note_field not in selected:
+                selected[-1] = note_field
+            columns = selected
+        if not columns:
+            return
+
+        labels = profile.get("column_labels") if isinstance(profile.get("column_labels"), dict) else {}
+        labels = {**labels, **{name: label_for(name) for name in columns}}
+        profile.update({
+            "source": "ui.contract.v2.business_operation_projection",
+            "columns": columns,
+            "fact_columns": columns,
+            "hidden_columns": [name for name in (profile.get("hidden_columns") if isinstance(profile.get("hidden_columns"), list) else []) if name in columns],
+            "column_labels": labels,
+            "row_primary": profile.get("row_primary") or ("name" if "name" in columns else columns[0]),
+            "row_secondary": profile.get("row_secondary") or ("project_id" if "project_id" in columns else ""),
+            "status_field": profile.get("status_field") or status_field,
+            "preference_policy": {
+                **(profile.get("preference_policy") if isinstance(profile.get("preference_policy"), dict) else {}),
+                "scope": "ui_only",
+                "allow_visibility": True,
+                "allow_order": True,
+                "allow_width": True,
+                "must_request_columns": columns,
+            },
+        })
+        source_contract["list_profile"] = profile
+
+        if tree:
+            schema_rows = tree.get("columns_schema") if isinstance(tree.get("columns_schema"), list) else []
+            schema_by_name = {
+                str(row.get("name") or "").strip(): dict(row)
+                for row in schema_rows
+                if isinstance(row, dict) and str(row.get("name") or "").strip()
+            }
+            tree["columns"] = columns
+            tree["columns_schema"] = [
+                {
+                    **schema_by_name.get(name, {}),
+                    "name": name,
+                    "label": labels.get(name) or label_for(name),
+                    "string": schema_by_name.get(name, {}).get("string") or label_for(name),
+                    "type": schema_by_name.get(name, {}).get("type") or type_for(name) or "char",
+                    "widget": schema_by_name.get(name, {}).get("widget") or type_for(name) or "char",
+                }
+                for name in columns
+            ]
+            if "tree" in views:
+                views["tree"] = tree
+            elif "list" in views:
+                views["list"] = tree
+            source_contract["views"] = views
 
     def _inject_collaboration_contract(self, source_contract: dict[str, Any], *, model: str, view_type: str) -> None:
         if view_type != "form" or not model or model not in self.env:

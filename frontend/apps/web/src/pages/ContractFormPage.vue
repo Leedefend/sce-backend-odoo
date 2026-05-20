@@ -259,6 +259,12 @@
         <section v-if="showNativeDefaultSectionTitle" class="native-default-section-head">
           <h3>基本信息</h3>
         </section>
+        <section v-if="businessFormSections.length && useNativeFormTree" class="native-business-outline" aria-label="页面结构">
+          <span class="native-business-outline-label">页面结构</span>
+          <span v-for="section in businessFormSections" :key="section.name" class="native-business-outline-item">
+            {{ section.label }}
+          </span>
+        </section>
         <NativeFormTreeRenderer
           v-if="useNativeFormTree"
           :nodes="nativeFormLayoutNodes"
@@ -4437,6 +4443,12 @@ const advancedFieldNames = computed<string[]>(() => {
   return semanticFieldGroups.value.advanced?.fields || [];
 });
 const hasAdvancedFields = computed(() => advancedFieldNames.value.length > 0);
+const businessFormSections = computed(() => {
+  const order = ['business_core', 'business_amount', 'business_details', 'business_collaboration'];
+  return order
+    .map((key) => semanticFieldGroups.value[key])
+    .filter((item): item is SemanticFieldGroup => Boolean(item?.fields?.length));
+});
 const policyRequiredFields = computed(() => {
   const out = new Set<string>();
   const map = (contract.value?.action_policies || {}) as Record<string, { semantic?: string; enabled_when?: { required_fields?: string[] } }>;
@@ -8199,6 +8211,38 @@ onBeforeUnmount(() => {
   color: var(--sc-app-text-primary);
   font-size: 14px;
   font-weight: 700;
+}
+
+.native-business-outline {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-muted-bg);
+}
+
+.native-business-outline-label {
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.native-business-outline-item {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--sc-app-panel);
+  border: 1px solid var(--sc-app-border);
+  color: var(--sc-app-text-primary);
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .contract-mode-actions {
