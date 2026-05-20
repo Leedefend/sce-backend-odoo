@@ -197,7 +197,12 @@ class MenuConfigurationLoadHandler(BaseIntentHandler):
         MenuAll = Menu.with_context(active_test=False)
         requested_menu_ids = self._requested_menu_ids(params)
         if requested_menu_ids:
-            requested_menus = MenuAll.browse(requested_menu_ids).exists()
+            policy_menu_ids = self.env["ui.menu.config.policy"].sudo().with_context(active_test=False).search([
+                ("company_id", "=", company_id),
+                ("active", "=", True),
+                ("menu_id", "!=", False),
+            ]).mapped("menu_id").ids
+            requested_menus = MenuAll.browse(sorted(set(requested_menu_ids + policy_menu_ids))).exists()
             menu_ids_with_parents = self._expand_with_parent_ids(requested_menus)
             menus = MenuAll.search([("id", "in", menu_ids_with_parents)], order="parent_id, sequence, id")
         else:

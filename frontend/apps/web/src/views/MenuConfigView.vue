@@ -209,6 +209,7 @@
 
 <script setup lang="ts">
 import { computed, defineComponent, h, onMounted, reactive, ref, type PropType } from 'vue';
+import type { NavNode } from '@sc/schema';
 import {
   loadMenuConfigurationPanel,
   saveMenuConfigurationPanel,
@@ -612,6 +613,25 @@ function collectNavigationMenuIds() {
   return ids;
 }
 
+function removeMenuIdsFromNavigation(nodes: NavNode[], hiddenMenuIds: Set<number>): NavNode[] {
+  return nodes
+    .filter((node) => !hiddenMenuIds.has(Number(node.menu_id || node.id || 0)))
+    .map((node) => ({
+      ...node,
+      children: Array.isArray(node.children)
+        ? removeMenuIdsFromNavigation(node.children as NavNode[], hiddenMenuIds)
+        : node.children,
+    }));
+}
+
+function applySavedVisibilityToNavigation(rows: MenuConfigSaveRow[]) {
+  const hiddenMenuIds = new Set(rows.filter((row) => row.visible === false).map((row) => Number(row.menu_id || 0)).filter(Boolean));
+  if (!hiddenMenuIds.size) return;
+  session.menuTree = removeMenuIdsFromNavigation(session.menuTree as NavNode[], hiddenMenuIds);
+  session.menuExpandedKeys = session.menuExpandedKeys.filter((key) => !hiddenMenuIds.has(Number(String(key).replace(/^menu:/, ''))));
+  session.persist();
+}
+
 async function loadPanel() {
   loading.value = true;
   error.value = '';
@@ -661,8 +681,12 @@ async function saveChanges() {
   message.value = '';
   try {
     await saveMenuConfigurationPanel({ rows });
+    applySavedVisibilityToNavigation(rows);
     await loadPanel();
     message.value = `已保存 ${rows.length} 项菜单配置`;
+    void session.loadAppInit().catch((err) => {
+      error.value = err instanceof Error ? `菜单已保存，但导航刷新失败：${err.message}` : '菜单已保存，但导航刷新失败';
+    });
   } catch (err) {
     error.value = err instanceof Error ? err.message : '菜单配置保存失败';
   } finally {
