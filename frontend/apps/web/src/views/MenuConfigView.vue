@@ -68,7 +68,7 @@
         </button>
         <div class="tree-scroll">
           <MenuConfigTree
-            :nodes="tree"
+            :nodes="visibleTree"
             :selected-menu-id="selectedMenuId"
             @select="selectMenu"
           />
@@ -276,6 +276,46 @@ const flatRows = computed<FlatRow[]>(() => {
   return out;
 });
 
+const normalizedSearchText = computed(() => searchText.value.trim().toLowerCase());
+
+function menuSearchText(menu: MenuConfigMenu) {
+  const draft = drafts[menu.id];
+  return [
+    menu.name,
+    menu.display_name,
+    menu.complete_name,
+    menu.parent_name,
+    menu.xmlid,
+    menu.action,
+    ...(menu.group_names || []),
+    draft?.custom_label || '',
+    draft?.note || '',
+  ].join(' ').toLowerCase();
+}
+
+function menuMatchesSearch(menu: MenuConfigMenu) {
+  const term = normalizedSearchText.value;
+  if (!term) return true;
+  return menuSearchText(menu).includes(term);
+}
+
+const visibleTree = computed<MenuConfigMenu[]>(() => {
+  const term = normalizedSearchText.value;
+  if (!term) return tree.value;
+
+  const filterBranch = (items: MenuConfigMenu[]): MenuConfigMenu[] => {
+    return items.flatMap((item) => {
+      const children = filterBranch(item.children || []);
+      if (children.length || menuMatchesSearch(item)) {
+        return [{ ...item, children }];
+      }
+      return [];
+    });
+  };
+
+  return filterBranch(tree.value);
+});
+
 const selectedIds = computed(() => {
   if (!selectedMenuId.value) return new Set<number>();
   const out = new Set<number>();
@@ -292,13 +332,12 @@ const selectedIds = computed(() => {
 });
 
 const filteredRows = computed(() => {
-  const term = searchText.value.trim().toLowerCase();
+  const term = normalizedSearchText.value;
   return flatRows.value.filter((row) => {
-    if (selectedMenuId.value && !selectedIds.value.has(row.menu.id)) return false;
+    if (!term && selectedMenuId.value && !selectedIds.value.has(row.menu.id)) return false;
     if (onlyConfigured.value && !hasConfiguration(row.menu.id)) return false;
     if (!term) return true;
-    const haystack = `${row.menu.name} ${row.menu.display_name} ${row.menu.complete_name} ${row.menu.xmlid}`.toLowerCase();
-    return haystack.includes(term);
+    return menuMatchesSearch(row.menu);
   });
 });
 
