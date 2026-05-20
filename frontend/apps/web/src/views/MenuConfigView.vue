@@ -29,7 +29,7 @@
         </article>
         <article>
           <strong>排序号</strong>
-          <span>填写后覆盖默认排序；留空或 0 时保留原顺序。</span>
+          <span>优先在左侧树拖动同级菜单排序；需要精确控制时再填写数字。</span>
         </article>
         <article>
           <strong>移动到上级</strong>
@@ -70,7 +70,15 @@
           <MenuConfigTree
             :nodes="visibleTree"
             :selected-menu-id="selectedMenuId"
+            :drag-source-menu-id="dragSourceMenuId"
+            :drag-target-menu-id="dragTargetMenuId"
+            :drag-drop-position="dragDropPosition"
+            :drag-enabled="treeDragEnabled"
             @select="selectMenu"
+            @drag-start="startTreeDrag"
+            @drag-over="updateTreeDragTarget"
+            @drop="applyTreeDrop"
+            @drag-end="clearTreeDrag"
           />
         </div>
       </aside>
@@ -109,7 +117,7 @@
                 <th>默认名称</th>
                 <th>当前父级</th>
                 <th class="level-col">级别</th>
-                <th class="sequence-col">排序号</th>
+                <th class="sequence-col">顺序</th>
                 <th>移动到上级</th>
                 <th class="check-col">显示</th>
                 <th>适用用户组</th>
@@ -140,6 +148,7 @@
                     type="number"
                     :value="draftFor(row.menu.id).sequence_override || ''"
                     :placeholder="String(row.menu.sequence || 0)"
+                    title="可直接在左侧树拖动同级菜单排序，也可在这里输入精确顺序"
                     @input="updateDraft(row.menu.id, { sequence_override: numericValue($event) })"
                   />
                 </td>
@@ -226,12 +235,17 @@ type FlatRow = {
   level: number;
 };
 
+type DropPosition = 'before' | 'after';
+
 const loading = ref(false);
 const saving = ref(false);
 const error = ref('');
 const message = ref('');
 const selectedMenuId = ref(0);
 const searchText = ref('');
+const dragSourceMenuId = ref(0);
+const dragTargetMenuId = ref(0);
+const dragDropPosition = ref<DropPosition>('after');
 const onlyConfigured = ref(false);
 const showGuide = ref(false);
 const company = ref<{ id: number; name: string } | null>(null);
@@ -247,16 +261,50 @@ const MenuConfigTree = defineComponent({
   props: {
     nodes: { type: Array as PropType<MenuConfigMenu[]>, required: true },
     selectedMenuId: { type: Number, required: true },
+    dragSourceMenuId: { type: Number, default: 0 },
+    dragTargetMenuId: { type: Number, default: 0 },
+    dragDropPosition: { type: String as PropType<DropPosition>, default: 'after' },
+    dragEnabled: { type: Boolean, default: true },
     level: { type: Number, default: 0 },
   },
-  emits: ['select'],
+  emits: ['select', 'drag-start', 'drag-over', 'drop', 'drag-end'],
   setup(props, { emit }) {
     return () => h('ul', { class: ['config-tree-list', `depth-${props.level}`] }, props.nodes.map((node) => h('li', { key: node.id }, [
       h('button', {
         type: 'button',
-        class: ['tree-node', { active: node.id === props.selectedMenuId }],
+        draggable: props.dragEnabled,
+        class: [
+          'tree-node',
+          {
+            active: node.id === props.selectedMenuId,
+            draggable: props.dragEnabled,
+            dragging: node.id === props.dragSourceMenuId,
+            'drop-before': node.id === props.dragTargetMenuId && props.dragDropPosition === 'before',
+            'drop-after': node.id === props.dragTargetMenuId && props.dragDropPosition === 'after',
+          },
+        ],
         style: { paddingLeft: `${8 + props.level * 14}px` },
+        title: props.dragEnabled ? '拖动调整同级菜单顺序' : '搜索时不可拖动排序',
         onClick: () => emit('select', node.id),
+        onDragstart: (event: DragEvent) => {
+          if (!props.dragEnabled) return;
+          event.dataTransfer?.setData('text/plain', String(node.id));
+          event.dataTransfer?.setDragImage(event.currentTarget as Element, 12, 12);
+          emit('drag-start', node.id);
+        },
+        onDragover: (event: DragEvent) => {
+          if (!props.dragEnabled) return;
+          event.preventDefault();
+          const rect = (event.currentTarget as Element).getBoundingClientRect();
+          const position: DropPosition = event.clientY < rect.top + rect.height / 2 ? 'before' : 'after';
+          emit('drag-over', { menuId: node.id, position });
+        },
+        onDrop: (event: DragEvent) => {
+          if (!props.dragEnabled) return;
+          event.preventDefault();
+          emit('drop', node.id);
+        },
+        onDragend: () => emit('drag-end'),
       }, [
         node.children?.length ? h('span', { class: 'branch-marker' }, '▸') : h('span', { class: 'branch-marker' }, ''),
         h('span', node.name),
@@ -265,8 +313,16 @@ const MenuConfigTree = defineComponent({
         ? h(MenuConfigTree, {
           nodes: node.children,
           selectedMenuId: props.selectedMenuId,
+          dragSourceMenuId: props.dragSourceMenuId,
+          dragTargetMenuId: props.dragTargetMenuId,
+          dragDropPosition: props.dragDropPosition,
+          dragEnabled: props.dragEnabled,
           level: props.level + 1,
           onSelect: (id: number) => emit('select', id),
+          onDragStart: (id: number) => emit('drag-start', id),
+          onDragOver: (payload: { menuId: number; position: DropPosition }) => emit('drag-over', payload),
+          onDrop: (id: number) => emit('drop', id),
+          onDragEnd: () => emit('drag-end'),
         })
         : null,
     ])));
@@ -292,6 +348,7 @@ const flatRows = computed<FlatRow[]>(() => {
 });
 
 const normalizedSearchText = computed(() => searchText.value.trim().toLowerCase());
+const treeDragEnabled = computed(() => !normalizedSearchText.value);
 
 function menuSearchText(menu: MenuConfigMenu) {
   const draft = drafts[menu.id];
@@ -474,6 +531,66 @@ function descendantsFor(menuId: number) {
 
 function selectMenu(menuId: number) {
   selectedMenuId.value = menuId;
+}
+
+function startTreeDrag(menuId: number) {
+  if (!treeDragEnabled.value) return;
+  dragSourceMenuId.value = menuId;
+  dragTargetMenuId.value = 0;
+  dragDropPosition.value = 'after';
+}
+
+function updateTreeDragTarget(payload: { menuId: number; position: DropPosition }) {
+  if (!dragSourceMenuId.value || payload.menuId === dragSourceMenuId.value) return;
+  const source = menus.value.find((menu) => menu.id === dragSourceMenuId.value);
+  const target = menus.value.find((menu) => menu.id === payload.menuId);
+  if (!source || !target || source.parent_id !== target.parent_id) {
+    dragTargetMenuId.value = 0;
+    return;
+  }
+  dragTargetMenuId.value = payload.menuId;
+  dragDropPosition.value = payload.position;
+}
+
+function reorderSiblingBranch(items: MenuConfigMenu[], sourceId: number, targetId: number, position: DropPosition): MenuConfigMenu[] {
+  const ids = items.map((item) => item.id);
+  if (ids.includes(sourceId) && ids.includes(targetId)) {
+    const source = items.find((item) => item.id === sourceId);
+    if (!source) return items;
+    const next = items.filter((item) => item.id !== sourceId);
+    const targetIndex = next.findIndex((item) => item.id === targetId);
+    if (targetIndex < 0) return items;
+    next.splice(position === 'before' ? targetIndex : targetIndex + 1, 0, source);
+    return next.map((item, index) => {
+      const draft = draftFor(item.id);
+      if (draft) {
+        draft.sequence_override = (index + 1) * 10;
+      }
+      return item;
+    });
+  }
+
+  return items.map((item) => {
+    if (!item.children?.length) return item;
+    return { ...item, children: reorderSiblingBranch(item.children, sourceId, targetId, position) };
+  });
+}
+
+function applyTreeDrop(targetId: number) {
+  const sourceId = dragSourceMenuId.value;
+  if (!sourceId || !targetId || sourceId === targetId || !dragTargetMenuId.value) {
+    clearTreeDrag();
+    return;
+  }
+  tree.value = reorderSiblingBranch(tree.value, sourceId, targetId, dragDropPosition.value);
+  message.value = '';
+  clearTreeDrag();
+}
+
+function clearTreeDrag() {
+  dragSourceMenuId.value = 0;
+  dragTargetMenuId.value = 0;
+  dragDropPosition.value = 'after';
 }
 
 function collectNavigationMenuIds() {
@@ -775,6 +892,28 @@ h1 {
   font-weight: 600;
 }
 
+:deep(.tree-node.draggable) {
+  cursor: grab;
+  user-select: none;
+}
+
+:deep(.tree-node.draggable:hover) {
+  background: var(--sc-app-muted-bg);
+}
+
+:deep(.tree-node.dragging) {
+  cursor: grabbing;
+  opacity: 0.45;
+}
+
+:deep(.tree-node.drop-before) {
+  box-shadow: inset 0 2px 0 var(--sc-semantic-surface-interactive);
+}
+
+:deep(.tree-node.drop-after) {
+  box-shadow: inset 0 -2px 0 var(--sc-semantic-surface-interactive);
+}
+
 .branch-marker {
   width: 12px;
   flex: 0 0 12px;
@@ -823,7 +962,7 @@ h1 {
 
 table {
   width: 100%;
-  min-width: 920px;
+  min-width: 840px;
   table-layout: fixed;
   border-collapse: collapse;
   font-size: 13px;
@@ -866,43 +1005,43 @@ tr.dirty td:first-child {
 }
 
 .index-col {
-  width: 42px;
+  width: 36px;
 }
 
 .level-col {
-  width: 48px;
+  width: 42px;
 }
 
 .sequence-col {
-  width: 70px;
+  width: 54px;
 }
 
 .check-col {
-  width: 48px;
+  width: 42px;
 }
 
 .name-col {
-  width: 130px;
+  width: 108px;
 }
 
 .default-col {
-  width: 120px;
+  width: 104px;
 }
 
 .parent-col {
-  width: 120px;
+  width: 106px;
 }
 
 .move-col {
-  width: 150px;
+  width: 120px;
 }
 
 .groups-col {
-  width: 132px;
+  width: 124px;
 }
 
 .note-col {
-  width: 120px;
+  width: 104px;
 }
 
 .muted {
