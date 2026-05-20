@@ -740,7 +740,7 @@ class PageAssembler:
         current_view_id = int(view_id or 0)
         action = {
             "key": "current_form_field_settings",
-            "label": "字段设置",
+            "label": "表单设置",
             "kind": "client",
             "level": "header",
             "selection": "none",
@@ -869,7 +869,7 @@ class PageAssembler:
             },
             {
                 "key": "current_form_field_order_save",
-                "label": "保存字段配置",
+                "label": "保存表单设置",
                 "kind": "intent",
                 "intent": "ui.business_config.lowcode.apply",
                 "trigger": "submit",

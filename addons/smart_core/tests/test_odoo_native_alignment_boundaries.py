@@ -931,7 +931,7 @@ class TestOdooNativeAlignmentBoundaries(TransactionCase):
         settings = actions[0]
         self.assertEqual(settings.get("kind"), "client")
         self.assertEqual(settings.get("intent"), "ui.local_mode")
-        self.assertEqual(settings.get("label"), "字段设置")
+        self.assertEqual(settings.get("label"), "表单设置")
         self.assertEqual((settings.get("target") or {}).get("mode"), "form_field_configuration")
         governance = data.get("governance", {}).get("current_form_field_settings") or {}
         self.assertEqual(governance.get("action_id"), action.id)

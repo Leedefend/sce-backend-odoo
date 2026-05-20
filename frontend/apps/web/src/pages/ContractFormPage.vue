@@ -154,12 +154,26 @@
           :blocks="sceneReadyFormSurface.sceneBlocks"
           @action="handleSceneBlockAction"
         />
-        <section v-if="showCurrentFormFieldConfigScope" class="contract-field-config-scope">
-          <div>
-            <h4>当前表单字段配置</h4>
-            <p>{{ formFieldConfigScope.summary }}</p>
-          </div>
-          <dl>
+        <section v-if="showCurrentFormFieldConfigScope" class="contract-form-settings">
+          <header class="contract-form-settings-head">
+            <div>
+              <h4>当前表单设置</h4>
+              <p>{{ formFieldConfigScope.summary }}</p>
+            </div>
+            <nav class="contract-form-settings-tabs" aria-label="表单设置范围">
+              <button
+                v-for="tab in formSettingsTabs"
+                :key="tab.key"
+                type="button"
+                class="contract-form-settings-tab"
+                :class="{ 'contract-form-settings-tab--active': formSettingsActiveTab === tab.key }"
+                @click="formSettingsActiveTab = tab.key"
+              >
+                {{ tab.label }}
+              </button>
+            </nav>
+          </header>
+          <dl class="contract-form-settings-scope">
             <div>
               <dt>配置范围</dt>
               <dd>{{ formFieldConfigScope.scope }}</dd>
@@ -177,6 +191,95 @@
               <dd>{{ formFieldConfigScope.systemKey }}</dd>
             </div>
           </dl>
+          <section v-if="formSettingsActiveTab === 'structure'" class="contract-form-settings-placeholder">
+            <strong>页面结构</strong>
+            <span>{{ formSettingsStructureSummary }}</span>
+          </section>
+          <section v-else-if="formSettingsActiveTab === 'fields'" class="contract-form-settings-fields">
+            <header class="contract-form-settings-section-head">
+              <strong>字段</strong>
+              <span>在这里调整字段显示、隐藏和顺序；右侧表单只是预览。</span>
+            </header>
+            <section v-if="activeContractModeFieldRows.length" class="contract-field-governance">
+              <div
+                v-for="row in activeContractModeFieldRows"
+                :key="`field-governance-${row.fieldKey}`"
+                :class="[
+                  'contract-field-governance-row',
+                  {
+                    'contract-field-governance-row--draggable': isContractFieldOrderEditable,
+                    'contract-field-governance-row--dragging': draggingFieldKey === row.fieldKey,
+                    'contract-field-governance-row--drop-target': dropTargetFieldKey === row.fieldKey && draggingFieldKey !== row.fieldKey,
+                  },
+                ]"
+                :draggable="isContractFieldOrderEditable"
+                @dragstart="onFieldOrderDragStart(row.fieldKey, $event)"
+                @dragover.prevent="onFieldOrderDragOver(row.fieldKey)"
+                @dragleave="onFieldOrderDragLeave(row.fieldKey)"
+                @drop.prevent="onFieldOrderDrop(row.fieldKey)"
+                @dragend="onFieldOrderDragEnd"
+              >
+                <div class="contract-field-governance-main">
+                  <span
+                    v-if="isContractFieldOrderEditable"
+                    class="contract-field-governance-handle"
+                    aria-hidden="true"
+                    title="按住整行拖动调整顺序"
+                  >拖动</span>
+                  <span class="contract-field-governance-label">{{ row.label }}</span>
+                </div>
+                <div class="contract-field-governance-actions" role="radiogroup" :aria-label="`${row.label}字段显示`">
+                  <div v-if="isContractFieldOrderEditable" class="contract-field-governance-order-tools">
+                    <button
+                      class="ghost contract-field-governance-order-btn"
+                      type="button"
+                      :disabled="busy || activeContractModeFieldRows[0]?.fieldKey === row.fieldKey"
+                      :aria-label="`上移${row.label}`"
+                      title="上移"
+                      @click.stop="moveFieldOrder(row.fieldKey, -1)"
+                    >↑</button>
+                    <button
+                      class="ghost contract-field-governance-order-btn"
+                      type="button"
+                      :disabled="busy || activeContractModeFieldRows[activeContractModeFieldRows.length - 1]?.fieldKey === row.fieldKey"
+                      :aria-label="`下移${row.label}`"
+                      title="下移"
+                      @click.stop="moveFieldOrder(row.fieldKey, 1)"
+                    >↓</button>
+                  </div>
+                  <label
+                    v-for="action in row.actions"
+                    :key="`${row.fieldKey}-${action.key}`"
+                    class="contract-field-governance-action"
+                    :title="action.title"
+                  >
+                    <input
+                      type="radio"
+                      :name="`contract-field-governance-${row.fieldKey}`"
+                      :value="action.value"
+                      :checked="Boolean(action.checked)"
+                      :disabled="Boolean(action.disabled)"
+                      @change="onFieldVisibilityDraftChange(row.fieldKey, action.value)"
+                    />
+                    <span>{{ action.label }}</span>
+                  </label>
+                </div>
+              </div>
+            </section>
+          </section>
+          <section v-else-if="formSettingsActiveTab === 'details'" class="contract-form-settings-placeholder">
+            <strong>明细表</strong>
+            <span>下一步在这里调整明细表列显示、列顺序和是否允许添加行。</span>
+          </section>
+          <section v-else class="contract-form-settings-placeholder">
+            <strong>按钮</strong>
+            <span>下一步在这里调整业务按钮显示、顺序和更多菜单。</span>
+          </section>
+          <div class="contract-field-governance-footer">
+            <span v-if="hasCurrentFormFieldDraftChanges" class="contract-field-governance-dirty">表单设置已调整，保存后生效</span>
+            <button class="chip-btn" type="button" :disabled="busy || !hasCurrentFormFieldDraftChanges" @click="saveContractFieldOrder">保存表单设置</button>
+            <button class="ghost" type="button" :disabled="busy || !hasCurrentFormFieldDraftChanges" @click="resetContractFieldOrder">重置</button>
+          </div>
         </section>
         <NativeFormTreeRenderer
           v-if="useNativeFormTree"
@@ -186,13 +289,13 @@
           :button-label-resolver="resolveNativeButtonLabel"
           :native-action-handler="runNativeLayoutAction"
           :relation-adapter="relationFieldAdapter"
-          :field-actions="contractFieldActions"
-          :field-order-editable="isContractFieldOrderEditable"
+          :field-actions="isContractFieldOrderEditable ? undefined : contractFieldActions"
+          :field-order-editable="false"
           :field-order-index="contractInlineFieldOrderIndex"
           :field-order-count="fieldOrderDraft.length"
           :field-order-dragging-key="draggingFieldKey"
           :field-order-drop-target-key="dropTargetFieldKey"
-          :field-config-editable="isContractFieldOrderEditable"
+          :field-config-editable="false"
           :columns="2"
           @field-change="onTemplateFieldChange"
           @field-action="onContractFieldAction"
@@ -365,77 +468,6 @@
               <button type="button" class="ghost" :disabled="busy" @click="closeInlineCustomFieldCreate">取消</button>
             </footer>
           </form>
-        </div>
-        <section v-if="activeContractModeFieldRows.length && !useNativeFormTree" class="contract-field-governance">
-          <div
-            v-for="row in activeContractModeFieldRows"
-            :key="`field-governance-${row.fieldKey}`"
-            :class="[
-              'contract-field-governance-row',
-              {
-                'contract-field-governance-row--draggable': isContractFieldOrderEditable,
-                'contract-field-governance-row--dragging': draggingFieldKey === row.fieldKey,
-                'contract-field-governance-row--drop-target': dropTargetFieldKey === row.fieldKey && draggingFieldKey !== row.fieldKey,
-              },
-            ]"
-            :draggable="isContractFieldOrderEditable"
-            @dragstart="onFieldOrderDragStart(row.fieldKey, $event)"
-            @dragover.prevent="onFieldOrderDragOver(row.fieldKey)"
-            @dragleave="onFieldOrderDragLeave(row.fieldKey)"
-            @drop.prevent="onFieldOrderDrop(row.fieldKey)"
-            @dragend="onFieldOrderDragEnd"
-          >
-            <div class="contract-field-governance-main">
-              <span
-                v-if="isContractFieldOrderEditable"
-                class="contract-field-governance-handle"
-                aria-hidden="true"
-                title="按住整行拖动调整顺序"
-              >⋮⋮</span>
-              <span class="contract-field-governance-label">{{ row.label }}</span>
-            </div>
-            <div class="contract-field-governance-actions" role="radiogroup" :aria-label="`${row.label}字段显示`">
-              <div v-if="isContractFieldOrderEditable" class="contract-field-governance-order-tools">
-                <button
-                  class="ghost contract-field-governance-order-btn"
-                  type="button"
-                  :disabled="busy || activeContractModeFieldRows[0]?.fieldKey === row.fieldKey"
-                  :aria-label="`上移${row.label}`"
-                  title="上移"
-                  @click.stop="moveFieldOrder(row.fieldKey, -1)"
-                >↑</button>
-                <button
-                  class="ghost contract-field-governance-order-btn"
-                  type="button"
-                  :disabled="busy || activeContractModeFieldRows[activeContractModeFieldRows.length - 1]?.fieldKey === row.fieldKey"
-                  :aria-label="`下移${row.label}`"
-                  title="下移"
-                  @click.stop="moveFieldOrder(row.fieldKey, 1)"
-                >↓</button>
-              </div>
-              <label
-                v-for="action in row.actions"
-                :key="`${row.fieldKey}-${action.key}`"
-                class="contract-field-governance-action"
-                :title="action.title"
-              >
-                <input
-                  type="radio"
-                  :name="`contract-field-governance-${row.fieldKey}`"
-                  :value="action.value"
-                  :checked="Boolean(action.checked)"
-                  :disabled="Boolean(action.disabled)"
-                  @change="onFieldVisibilityDraftChange(row.fieldKey, action.value)"
-                />
-                <span>{{ action.label }}</span>
-              </label>
-            </div>
-          </div>
-        </section>
-        <div v-if="isContractFieldOrderEditable && activeContractModeFieldRows.length" class="contract-field-governance-footer">
-          <span v-if="hasCurrentFormFieldDraftChanges" class="contract-field-governance-dirty">字段配置已调整，保存后生效</span>
-          <button class="chip-btn" type="button" :disabled="busy || !hasCurrentFormFieldDraftChanges" @click="saveContractFieldOrder">保存字段配置</button>
-          <button class="ghost" type="button" :disabled="busy || !hasCurrentFormFieldDraftChanges" @click="resetContractFieldOrder">重置</button>
         </div>
         <ul v-if="lowCodePrecheckWarnings.length" class="contract-lowcode-warnings">
           <li v-for="(warning, index) in lowCodePrecheckWarnings" :key="`lowcode-warning-${index}`">{{ warning }}</li>
@@ -1034,6 +1066,7 @@ const submissionFeedback = ref<{ kind: 'success' | 'warn' | 'error'; message: st
 const showOne2manyErrors = ref(false);
 const busyKind = ref<BusyKind>(null);
 const activeContractMode = ref('');
+const formSettingsActiveTab = ref<'structure' | 'fields' | 'details' | 'actions'>('fields');
 const contractModeFeedback = ref('');
 const contractPromptRule = ref<Record<string, unknown> | null>(null);
 const contractPromptValues = reactive<Record<string, string>>({});
@@ -1649,6 +1682,7 @@ watch(isContractFieldOrderEditable, (enabled) => {
     lowCodeContractLoaded.value = false;
     return;
   }
+  formSettingsActiveTab.value = 'fields';
   void loadLowCodeContractList();
   void hydrateLowCodeDraftFromContract();
 }, { immediate: true });
@@ -1697,10 +1731,27 @@ const formFieldConfigScope = computed(() => {
   return {
     scope: `${page}这个页面`,
     fieldSource: '当前页面已有字段和管理员新增字段',
-    saveTarget: '当前页面的字段设置',
+    saveTarget: '当前页面的表单设置',
     systemKey: action > 0 ? `${objectLabel || modelName} / action_id=${action}` : (objectLabel || modelName),
     summary: `本页只调整${page}的字段显示、顺序和新增字段，保存后只影响这个页面。`,
   };
+});
+
+const formSettingsTabs = computed(() => [
+  { key: 'structure' as const, label: '结构' },
+  { key: 'fields' as const, label: `字段 ${activeContractModeFieldRows.value.length}` },
+  { key: 'details' as const, label: '明细表' },
+  { key: 'actions' as const, label: '按钮' },
+]);
+
+const formSettingsStructureSummary = computed(() => {
+  const tabCount = nativeNotebookPageCount.value;
+  const groupCount = nativeGroupCount.value;
+  if (!tabCount && !groupCount) return '当前表单未识别到可配置的页签或分组，先在字段页调整字段。';
+  const parts = [];
+  if (tabCount) parts.push(`${tabCount} 个页签`);
+  if (groupCount) parts.push(`${groupCount} 个分组`);
+  return `当前表单包含 ${parts.join('、')}。本次先把结构作为设置入口展示，后续支持直接排序和改名。`;
 });
 
 async function hydrateLowCodeDraftFromContract() {
@@ -4573,6 +4624,23 @@ const nativeFormLayoutNodes = computed<NativeFormLayoutNode[]>(() => {
   return legacyLayout as unknown as NativeFormLayoutNode[];
 });
 
+function countNativeNodesByType(nodes: NativeFormLayoutNode[], targetType: string): number {
+  const target = String(targetType || '').trim().toLowerCase();
+  let count = 0;
+  nodes.forEach((node) => {
+    const type = String(node?.type || (node as { containerType?: string })?.containerType || '').trim().toLowerCase();
+    if (type === target) count += 1;
+    (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+      const children = node?.[key];
+      if (Array.isArray(children)) count += countNativeNodesByType(children as NativeFormLayoutNode[], target);
+    });
+  });
+  return count;
+}
+
+const nativeNotebookPageCount = computed(() => countNativeNodesByType(nativeFormLayoutNodes.value, 'page'));
+const nativeGroupCount = computed(() => countNativeNodesByType(nativeFormLayoutNodes.value, 'group'));
+
 function resolveNativeButtonLabel(node: NativeFormLayoutNode) {
   const action = node?.action && typeof node.action === 'object' && !Array.isArray(node.action)
     ? node.action as Record<string, unknown>
@@ -7061,7 +7129,7 @@ async function saveContractFieldOrder() {
     });
     const warnings = Array.isArray(saveResult?.precheck?.warnings) ? saveResult.precheck?.warnings || [] : [];
     lowCodePrecheckWarnings.value = warnings.map((item) => String(item || '').trim()).filter(Boolean);
-    contractModeFeedback.value = '字段配置已保存';
+    contractModeFeedback.value = '表单设置已保存';
     await reload();
   } catch (err) {
     errorMessage.value = err instanceof Error ? err.message : 'field order update failed';
@@ -8010,43 +8078,78 @@ onBeforeUnmount(() => {
 }
 
 .contract-mode-prompt,
-.contract-field-config-scope,
+.contract-form-settings,
 .contract-field-governance {
   grid-column: 1 / -1;
   border-top: 1px solid var(--sc-app-border);
 }
 
-.contract-field-config-scope {
+.contract-form-settings {
   display: grid;
-  gap: 10px;
+  gap: 12px;
   padding: 12px 0 0;
 }
 
-.contract-field-config-scope h4,
-.contract-field-config-scope p {
+.contract-form-settings-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.contract-form-settings-head h4,
+.contract-form-settings-head p {
   margin: 0;
 }
 
-.contract-field-config-scope h4 {
+.contract-form-settings-head h4 {
   color: var(--sc-app-text-primary);
   font-size: 14px;
   font-weight: 700;
 }
 
-.contract-field-config-scope p {
+.contract-form-settings-head p {
   color: var(--sc-app-text-secondary);
   font-size: 12px;
   line-height: 1.45;
 }
 
-.contract-field-config-scope dl {
+.contract-form-settings-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-panel-muted);
+}
+
+.contract-form-settings-tab {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.contract-form-settings-tab--active {
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-primary);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 8%);
+}
+
+.contract-form-settings-scope {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: 8px;
   margin: 0;
 }
 
-.contract-field-config-scope dl > div {
+.contract-form-settings-scope > div {
   min-width: 0;
   padding: 8px 10px;
   border: 1px solid var(--sc-app-border);
@@ -8054,18 +8157,43 @@ onBeforeUnmount(() => {
   background: var(--sc-app-panel-muted);
 }
 
-.contract-field-config-scope dt {
+.contract-form-settings-scope dt {
   margin: 0 0 3px;
   color: var(--sc-app-text-secondary);
   font-size: 11px;
 }
 
-.contract-field-config-scope dd {
+.contract-form-settings-scope dd {
   margin: 0;
   color: var(--sc-app-text-primary);
   font-size: 12px;
   line-height: 1.4;
   overflow-wrap: anywhere;
+}
+
+.contract-form-settings-section-head,
+.contract-form-settings-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-panel-muted);
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.contract-form-settings-section-head strong,
+.contract-form-settings-placeholder strong {
+  color: var(--sc-app-text-primary);
+  font-size: 13px;
+}
+
+.contract-form-settings-fields {
+  display: grid;
+  gap: 8px;
 }
 
 .contract-mode-prompt {
@@ -8198,8 +8326,9 @@ onBeforeUnmount(() => {
 
 .contract-field-governance-handle {
   flex: 0 0 auto;
-  width: 22px;
+  min-width: 38px;
   height: 28px;
+  padding: 0 6px;
   display: inline-grid;
   place-items: center;
   border: 1px solid var(--sc-app-border);
