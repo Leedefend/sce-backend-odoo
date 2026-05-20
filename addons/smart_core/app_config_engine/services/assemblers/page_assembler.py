@@ -868,7 +868,7 @@ class PageAssembler:
             },
             {
                 "key": "current_form_field_order_save",
-                "label": "保存字段顺序",
+                "label": "保存字段配置",
                 "kind": "intent",
                 "intent": "ui.business_config.lowcode.apply",
                 "trigger": "submit",

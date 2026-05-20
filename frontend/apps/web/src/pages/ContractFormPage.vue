@@ -401,7 +401,7 @@
                   :value="action.value"
                   :checked="Boolean(action.checked)"
                   :disabled="Boolean(action.disabled)"
-                  @change="onFieldVisibilityDraftChange(row.fieldKey, action.value, action.raw)"
+                  @change="onFieldVisibilityDraftChange(row.fieldKey, action.value)"
                 />
                 <span>{{ action.label }}</span>
               </label>
@@ -409,8 +409,8 @@
           </div>
         </section>
         <div v-if="isContractFieldOrderEditable && activeContractModeFieldRows.length" class="contract-field-governance-footer">
-          <span v-if="hasLowCodeDraftChanges" class="contract-field-governance-dirty">顺序已调整，保存后生效</span>
-          <button class="chip-btn" type="button" :disabled="busy || !hasLowCodeDraftChanges" @click="saveContractFieldOrder">保存字段顺序</button>
+          <span v-if="hasLowCodeDraftChanges" class="contract-field-governance-dirty">字段配置已调整，保存后生效</span>
+          <button class="chip-btn" type="button" :disabled="busy || !hasLowCodeDraftChanges" @click="saveContractFieldOrder">保存字段配置</button>
           <button class="ghost" type="button" :disabled="busy || !hasLowCodeDraftChanges" @click="resetContractFieldOrder">重置</button>
         </div>
         <ul v-if="lowCodePrecheckWarnings.length" class="contract-lowcode-warnings">
@@ -1448,6 +1448,7 @@ function contractFieldActions(field: FormSectionFieldSchema) {
   const mode = activeContractMode.value;
   if (!mode) return [];
   const fieldWidgetId = `field.${String(field.name || '').trim()}`;
+  const fieldKey = String(field.name || '').trim();
   return contractV2ActionRules()
     .filter((rule) => {
       const triggerType = String(rule.triggerType || rule.trigger_type || '').trim();
@@ -1464,7 +1465,9 @@ function contractFieldActions(field: FormSectionFieldSchema) {
         key: ruleKey(rule),
         label: String(control.label || rule.label || ruleKey(rule)).trim(),
         value: String(control.value || ruleKey(rule)).trim(),
-        checked: control.checked === true,
+        checked: fieldKey && Object.prototype.hasOwnProperty.call(fieldVisibilityDraft, fieldKey)
+          ? fieldVisibilityDraft[fieldKey] === (String(control.value || ruleKey(rule)).trim() === 'show')
+          : control.checked === true,
         disabled: control.disabled === true || busy.value,
         title: String(control.title || '').trim(),
         raw: rule,
@@ -1480,6 +1483,7 @@ const activeContractModeActions = computed(() => {
   const source = `mode.${mode}`;
   return contractV2ActionRules()
     .filter((rule) => {
+      if (ruleKey(rule) === 'current_form_field_order_save') return false;
       const sourceWidgetId = String(rule.sourceWidgetId || rule.source_widget_id || '').trim();
       if (sourceWidgetId !== source) return false;
       const expectedMode = ruleClientMode(rule);
@@ -1581,9 +1585,18 @@ const contractModeBaseFieldRows = computed<ContractFieldGovernanceRow[]>(() => {
 
 const activeContractModeFieldRows = computed<ContractFieldGovernanceRow[]>(() => {
   const computedRows = contractModeBaseFieldRows.value;
-  if (!isContractFieldOrderEditable.value || !fieldOrderDraft.value.length) return computedRows;
+  const rowsWithDraftVisibility = computedRows.map((row) => ({
+    ...row,
+    actions: row.actions.map((action) => ({
+      ...action,
+      checked: Object.prototype.hasOwnProperty.call(fieldVisibilityDraft, row.fieldKey)
+        ? fieldVisibilityDraft[row.fieldKey] === (action.value === 'show')
+        : action.checked,
+    })),
+  }));
+  if (!isContractFieldOrderEditable.value || !fieldOrderDraft.value.length) return rowsWithDraftVisibility;
   const rank = new Map(fieldOrderDraft.value.map((key, index) => [key, index]));
-  return [...computedRows].sort((left, right) => (rank.get(left.fieldKey) ?? 9999) - (rank.get(right.fieldKey) ?? 9999));
+  return rowsWithDraftVisibility.sort((left, right) => (rank.get(left.fieldKey) ?? 9999) - (rank.get(right.fieldKey) ?? 9999));
 });
 
 watch(contractModeBaseFieldRows, (rows) => {
@@ -1621,8 +1634,16 @@ const hasFieldOrderChanges = computed(() => {
   return rows.some((key, index) => fieldOrderDraft.value[index] !== key);
 });
 
+const hasFieldVisibilityChanges = computed(() => contractModeBaseFieldRows.value.some((row) => {
+  if (!Object.prototype.hasOwnProperty.call(fieldVisibilityDraft, row.fieldKey)) return false;
+  const selected = row.actions.find((action) => Boolean(action.checked));
+  if (!selected) return false;
+  return fieldVisibilityDraft[row.fieldKey] !== (selected.value === 'show');
+}));
+
 const hasLowCodeDraftChanges = computed(() => {
   if (hasFieldOrderChanges.value) return true;
+  if (hasFieldVisibilityChanges.value) return true;
   if (lowCodeObjectsDraft.value.length > 0) return true;
   if (lowCodeLayoutDraft.value.length > 0) return true;
   if (lowCodeRulesDraft.value.length > 0) return true;
@@ -6640,14 +6661,21 @@ async function runContractRuleAction(rule: Record<string, unknown>, providedPara
 }
 
 async function onContractFieldAction(payload: FormSectionFieldActionPayload) {
+  const fieldKey = String(payload.field.name || '').trim();
+  const actionValue = String(payload.action.value || '').trim();
+  if (isContractFieldOrderEditable.value && fieldKey && ['show', 'hide'].includes(actionValue)) {
+    fieldVisibilityDraft[fieldKey] = actionValue === 'show';
+    contractModeFeedback.value = '字段显示设置已调整，保存后生效';
+    return;
+  }
   const raw = payload.action.raw;
   if (!raw) return;
   await runContractRuleAction(raw);
 }
 
-async function onFieldVisibilityDraftChange(fieldKey: string, value: string, raw: Record<string, unknown>) {
+function onFieldVisibilityDraftChange(fieldKey: string, value: string) {
   fieldVisibilityDraft[fieldKey] = value === 'show';
-  await runContractRuleAction(raw);
+  contractModeFeedback.value = '字段显示设置已调整，保存后生效';
 }
 
 function contractInlineFieldOrderIndex(field: FormSectionFieldSchema) {
@@ -6893,12 +6921,17 @@ function onFieldOrderDragEnd() {
 
 function resetContractFieldOrder() {
   fieldOrderDraft.value = contractModeBaseFieldRows.value.map((row) => row.fieldKey);
+  contractModeBaseFieldRows.value.forEach((row) => {
+    const selected = row.actions.find((action) => Boolean(action.checked));
+    if (selected) fieldVisibilityDraft[row.fieldKey] = selected.value === 'show';
+  });
+  contractModeFeedback.value = '';
 }
 
 async function saveContractFieldOrder() {
   if (!hasLowCodeDraftChanges.value) return;
-  const configAction = activeContractModeActions.value.find((row) => String(row.key || '').trim() === 'current_form_field_order_save');
-  const target = parseMaybeJsonRecord(configAction?.raw?.target);
+  const configAction = contractV2ActionRules().find((rule) => ruleKey(rule) === 'current_form_field_order_save');
+  const target = parseMaybeJsonRecord(configAction?.target);
   const baseParams = normalizeLowCodeApplyParams(parseMaybeJsonRecord(target.params));
   busyKind.value = 'action';
   try {
@@ -6940,7 +6973,7 @@ async function saveContractFieldOrder() {
     });
     const warnings = Array.isArray(saveResult?.precheck?.warnings) ? saveResult.precheck?.warnings || [] : [];
     lowCodePrecheckWarnings.value = warnings.map((item) => String(item || '').trim()).filter(Boolean);
-    contractModeFeedback.value = '字段顺序已更新';
+    contractModeFeedback.value = '字段配置已保存';
     await reload();
   } catch (err) {
     errorMessage.value = err instanceof Error ? err.message : 'field order update failed';
