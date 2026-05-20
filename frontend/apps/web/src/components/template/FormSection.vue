@@ -31,7 +31,7 @@
             />
             <div v-if="fieldOrderEditable || fieldActionsFor(field).length" class="field-inline-config">
               <div v-if="fieldOrderEditable" class="field-order-inline-tools" :aria-label="`${field.label}字段排序`">
-                <span class="field-order-handle" aria-hidden="true" title="按住字段拖动调整顺序">⋮⋮</span>
+                <span class="field-order-handle" aria-hidden="true" title="按住字段拖动调整顺序">拖动</span>
                 <button
                   class="field-order-btn"
                   type="button"
@@ -55,7 +55,7 @@
                   :aria-label="`在${field.label}后新增字段`"
                   title="新增字段"
                   @click.stop="emitFieldAddAfter(field)"
-                >+</button>
+                >新增</button>
               </div>
               <div
                 v-if="fieldActionsFor(field).length"
@@ -755,8 +755,9 @@ function emitFieldAddAfter(field: FormSectionFieldSchema) {
 .field-order-handle,
 .field-order-btn {
   flex: 0 0 auto;
-  width: 26px;
+  min-width: 26px;
   height: 26px;
+  padding: 0 6px;
   display: inline-grid;
   place-items: center;
   border: 1px solid var(--sc-app-border);
@@ -768,7 +769,7 @@ function emitFieldAddAfter(field: FormSectionFieldSchema) {
 }
 
 .field-order-handle {
-  font-size: 15px;
+  font-size: 12px;
 }
 
 .field-order-btn {

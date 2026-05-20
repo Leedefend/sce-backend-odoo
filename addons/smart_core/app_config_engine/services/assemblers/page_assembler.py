@@ -740,7 +740,7 @@ class PageAssembler:
         current_view_id = int(view_id or 0)
         action = {
             "key": "current_form_field_settings",
-            "label": "设置",
+            "label": "字段设置",
             "kind": "client",
             "level": "header",
             "selection": "none",
@@ -802,6 +802,7 @@ class PageAssembler:
         governance["current_form_field_settings"] = {
             "enabled": True,
             "model": model,
+            "model_label": model_rec.name,
             "model_id": int(model_rec.id),
             "action_id": current_action_id,
             "view_id": current_view_id if current_view_id > 0 else False,

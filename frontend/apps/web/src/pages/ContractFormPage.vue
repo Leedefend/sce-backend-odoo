@@ -161,20 +161,20 @@
           </div>
           <dl>
             <div>
-              <dt>页面</dt>
-              <dd>{{ formFieldConfigScope.page }}</dd>
+              <dt>配置范围</dt>
+              <dd>{{ formFieldConfigScope.scope }}</dd>
             </div>
             <div>
-              <dt>业务对象</dt>
-              <dd>{{ formFieldConfigScope.model }}</dd>
+              <dt>字段来源</dt>
+              <dd>{{ formFieldConfigScope.fieldSource }}</dd>
             </div>
             <div>
-              <dt>动作</dt>
-              <dd>{{ formFieldConfigScope.action }}</dd>
+              <dt>保存位置</dt>
+              <dd>{{ formFieldConfigScope.saveTarget }}</dd>
             </div>
             <div>
-              <dt>来源</dt>
-              <dd>{{ formFieldConfigScope.source }}</dd>
+              <dt>系统标识</dt>
+              <dd>{{ formFieldConfigScope.systemKey }}</dd>
             </div>
           </dl>
         </section>
@@ -1694,13 +1694,15 @@ const showCurrentFormFieldConfigScope = computed(() => (
 const formFieldConfigScope = computed(() => {
   const settings = formFieldSettingsGovernance.value;
   const action = Number(settings.action_id || actionId.value || 0) || 0;
-  const view = Number(settings.view_id || 0) || 0;
+  const page = pageDisplayTitle.value || '当前表单';
+  const objectLabel = String(settings.model_label || '').trim();
+  const modelName = String(settings.model || model.value || '-');
   return {
-    page: pageDisplayTitle.value || '当前表单',
-    model: String(settings.model || model.value || '-'),
-    action: action > 0 ? `action_id=${action}` : '当前动作',
-    source: view > 0 ? `当前表单契约 + 字段策略台账，view_id=${view}` : '当前表单契约 + 字段策略台账',
-    summary: `本页只配置当前表单的 ${activeContractModeFieldRows.value.length} 个字段，保存后作用于当前页面范围。`,
+    scope: `${page}这个页面`,
+    fieldSource: '当前页面已有字段和管理员新增字段',
+    saveTarget: '当前页面的字段设置',
+    systemKey: action > 0 ? `${objectLabel || modelName} / action_id=${action}` : (objectLabel || modelName),
+    summary: `本页只调整${page}的字段显示、顺序和新增字段，保存后只影响这个页面。`,
   };
 });
 
