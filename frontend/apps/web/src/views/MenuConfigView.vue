@@ -74,11 +74,16 @@
             :drag-target-menu-id="dragTargetMenuId"
             :drag-drop-position="dragDropPosition"
             :drag-enabled="treeDragEnabled"
+            :search-active="Boolean(normalizedSearchText)"
+            :collapsed-menu-ids="collapsedMenuIds"
             @select="selectMenu"
             @drag-start="startTreeDrag"
             @drag-over="updateTreeDragTarget"
             @drop="applyTreeDrop"
+            @reorder="applyTreeReorder"
             @drag-end="clearTreeDrag"
+            @order-move="moveTreeNodeOrder"
+            @toggle-collapse="toggleTreeNodeCollapse"
           />
         </div>
       </aside>
@@ -252,6 +257,7 @@ const showGuide = ref(false);
 const company = ref<{ id: number; name: string } | null>(null);
 const menus = ref<MenuConfigMenu[]>([]);
 const tree = ref<MenuConfigMenu[]>([]);
+const collapsedMenuIds = ref<Set<number>>(new Set());
 const groups = ref<MenuConfigGroup[]>([]);
 const originalPolicies = ref<Record<number, DraftPolicy>>({});
 const drafts = reactive<Record<number, DraftPolicy>>({});
@@ -266,14 +272,20 @@ const MenuConfigTree = defineComponent({
     dragTargetMenuId: { type: Number, default: 0 },
     dragDropPosition: { type: String as PropType<DropPosition>, default: 'after' },
     dragEnabled: { type: Boolean, default: true },
+    searchActive: { type: Boolean, default: false },
+    collapsedMenuIds: { type: Object as PropType<Set<number>>, required: true },
     level: { type: Number, default: 0 },
   },
-  emits: ['select', 'drag-start', 'drag-over', 'drop', 'drag-end'],
+  emits: ['select', 'drag-start', 'drag-over', 'drop', 'drag-end', 'reorder', 'order-move', 'toggle-collapse'],
   setup(props, { emit }) {
-    return () => h('ul', { class: ['config-tree-list', `depth-${props.level}`] }, props.nodes.map((node) => h('li', { key: node.id }, [
+    return () => h('ul', { class: ['config-tree-list', `depth-${props.level}`] }, props.nodes.map((node) => {
+      const hasChildren = Boolean(node.children?.length);
+      const collapsed = hasChildren && !props.searchActive && props.collapsedMenuIds.has(node.id);
+      return h('li', { key: node.id }, [
       h('button', {
         type: 'button',
-        draggable: props.dragEnabled,
+        draggable: false,
+        'data-menu-id': String(node.id),
         class: [
           'tree-node',
           {
@@ -287,6 +299,38 @@ const MenuConfigTree = defineComponent({
         style: { paddingLeft: `${8 + props.level * 14}px` },
         title: props.dragEnabled ? '拖动调整同级菜单顺序' : '搜索时不可拖动排序',
         onClick: () => emit('select', node.id),
+        onMousedown: (event: MouseEvent) => {
+          if (!props.dragEnabled || event.button !== 0) return;
+          event.preventDefault();
+          emit('drag-start', node.id);
+          const resolveTarget = (rawEvent: MouseEvent) => {
+            const element = document.elementFromPoint(rawEvent.clientX, rawEvent.clientY)?.closest('.tree-node') as HTMLElement | null;
+            const menuId = Number(element?.dataset?.menuId || 0);
+            if (!element || !menuId) return null;
+            const rect = element.getBoundingClientRect();
+            const position: DropPosition = rawEvent.clientY < rect.top + rect.height / 2 ? 'before' : 'after';
+            return { menuId, position };
+          };
+          const cleanup = () => {
+            window.removeEventListener('mousemove', handleMove);
+            window.removeEventListener('mouseup', handleUp);
+          };
+          const handleMove = (moveEvent: MouseEvent) => {
+            const target = resolveTarget(moveEvent);
+            if (target) emit('drag-over', target);
+          };
+          const handleUp = (upEvent: MouseEvent) => {
+            const target = resolveTarget(upEvent);
+            cleanup();
+            if (target && target.menuId !== node.id) {
+              emit('reorder', { sourceId: node.id, targetId: target.menuId, position: target.position });
+              return;
+            }
+            emit('drop', target?.menuId || node.id);
+          };
+          window.addEventListener('mousemove', handleMove);
+          window.addEventListener('mouseup', handleUp, { once: true });
+        },
         onDragstart: (event: DragEvent) => {
           if (!props.dragEnabled) return;
           event.dataTransfer?.setData('text/plain', String(node.id));
@@ -300,17 +344,48 @@ const MenuConfigTree = defineComponent({
           const position: DropPosition = event.clientY < rect.top + rect.height / 2 ? 'before' : 'after';
           emit('drag-over', { menuId: node.id, position });
         },
-        onDrop: (event: DragEvent) => {
-          if (!props.dragEnabled) return;
-          event.preventDefault();
-          emit('drop', node.id);
+          onDrop: (event: DragEvent) => {
+            if (!props.dragEnabled) return;
+            event.preventDefault();
+            emit('drop', node.id);
         },
         onDragend: () => emit('drag-end'),
       }, [
-        node.children?.length ? h('span', { class: 'branch-marker' }, '▸') : h('span', { class: 'branch-marker' }, ''),
+        hasChildren
+          ? h('span', {
+            class: ['branch-marker', 'toggleable', { collapsed }],
+            role: 'button',
+            title: collapsed ? '展开分组' : '收起分组',
+            onMousedown: (event: MouseEvent) => event.stopPropagation(),
+            onClick: (event: MouseEvent) => {
+              event.stopPropagation();
+              emit('toggle-collapse', node.id);
+            },
+          }, collapsed ? '▸' : '▾')
+          : h('span', { class: 'branch-marker' }, ''),
         h('span', node.name),
+        props.dragEnabled ? h('span', { class: 'tree-node-order-tools' }, [
+          h('span', {
+            class: 'tree-node-order-btn',
+            title: '上移',
+            onMousedown: (event: MouseEvent) => event.stopPropagation(),
+            onClick: (event: MouseEvent) => {
+              event.stopPropagation();
+              emit('order-move', { menuId: node.id, delta: -1 });
+            },
+          }, '↑'),
+          h('span', {
+            class: 'tree-node-order-btn',
+            title: '下移',
+            onMousedown: (event: MouseEvent) => event.stopPropagation(),
+            onClick: (event: MouseEvent) => {
+              event.stopPropagation();
+              emit('order-move', { menuId: node.id, delta: 1 });
+            },
+          }, '↓'),
+        ]) : null,
       ]),
-      node.children?.length
+      hasChildren && !collapsed
         ? h(MenuConfigTree, {
           nodes: node.children,
           selectedMenuId: props.selectedMenuId,
@@ -318,15 +393,21 @@ const MenuConfigTree = defineComponent({
           dragTargetMenuId: props.dragTargetMenuId,
           dragDropPosition: props.dragDropPosition,
           dragEnabled: props.dragEnabled,
+          searchActive: props.searchActive,
+          collapsedMenuIds: props.collapsedMenuIds,
           level: props.level + 1,
           onSelect: (id: number) => emit('select', id),
           onDragStart: (id: number) => emit('drag-start', id),
           onDragOver: (payload: { menuId: number; position: DropPosition }) => emit('drag-over', payload),
           onDrop: (id: number) => emit('drop', id),
           onDragEnd: () => emit('drag-end'),
+          onReorder: (payload: { sourceId: number; targetId: number; position: DropPosition }) => emit('reorder', payload),
+          onOrderMove: (payload: { menuId: number; delta: number }) => emit('order-move', payload),
+          onToggleCollapse: (id: number) => emit('toggle-collapse', id),
         })
         : null,
-    ])));
+      ]);
+    }));
   },
 });
 
@@ -534,6 +615,41 @@ function selectMenu(menuId: number) {
   selectedMenuId.value = menuId;
 }
 
+function selectedMenuPath(items: MenuConfigMenu[], menuId: number): Set<number> {
+  if (!menuId) return new Set();
+  const path: number[] = [];
+  const walk = (rows: MenuConfigMenu[]): boolean => rows.some((item) => {
+    path.push(item.id);
+    if (item.id === menuId || walk(item.children || [])) return true;
+    path.pop();
+    return false;
+  });
+  walk(items);
+  return new Set(path);
+}
+
+function initializeTreeCollapse(items: MenuConfigMenu[]) {
+  const selectedPath = selectedMenuPath(items, selectedMenuId.value);
+  const next = new Set<number>();
+  const walk = (rows: MenuConfigMenu[]) => {
+    rows.forEach((item) => {
+      if (item.children?.length) {
+        if (!selectedPath.has(item.id)) next.add(item.id);
+        walk(item.children);
+      }
+    });
+  };
+  walk(items);
+  collapsedMenuIds.value = next;
+}
+
+function toggleTreeNodeCollapse(menuId: number) {
+  const next = new Set(collapsedMenuIds.value);
+  if (next.has(menuId)) next.delete(menuId);
+  else next.add(menuId);
+  collapsedMenuIds.value = next;
+}
+
 function startTreeDrag(menuId: number) {
   if (!treeDragEnabled.value) return;
   dragSourceMenuId.value = menuId;
@@ -543,9 +659,7 @@ function startTreeDrag(menuId: number) {
 
 function updateTreeDragTarget(payload: { menuId: number; position: DropPosition }) {
   if (!dragSourceMenuId.value || payload.menuId === dragSourceMenuId.value) return;
-  const source = menus.value.find((menu) => menu.id === dragSourceMenuId.value);
-  const target = menus.value.find((menu) => menu.id === payload.menuId);
-  if (!source || !target || source.parent_id !== target.parent_id) {
+  if (!areVisualSiblings(tree.value, dragSourceMenuId.value, payload.menuId)) {
     dragTargetMenuId.value = 0;
     return;
   }
@@ -577,6 +691,50 @@ function reorderSiblingBranch(items: MenuConfigMenu[], sourceId: number, targetI
   });
 }
 
+function moveTreeNodeOrder(payload: { menuId: number; delta: number }) {
+  const moveInBranch = (items: MenuConfigMenu[]): { rows: MenuConfigMenu[]; moved: boolean } => {
+    const index = items.findIndex((item) => item.id === payload.menuId);
+    if (index >= 0) {
+      const targetIndex = index + payload.delta;
+      if (targetIndex < 0 || targetIndex >= items.length) return { rows: items, moved: false };
+      const next = [...items];
+      const [moved] = next.splice(index, 1);
+      next.splice(targetIndex, 0, moved);
+      next.forEach((item, itemIndex) => {
+        const draft = draftFor(item.id);
+        if (draft) draft.sequence_override = (itemIndex + 1) * 10;
+      });
+      return { rows: next, moved: true };
+    }
+    let moved = false;
+    const rows = items.map((item) => {
+      if (!item.children?.length || moved) return item;
+      const result = moveInBranch(item.children);
+      moved = result.moved;
+      return result.moved ? { ...item, children: result.rows } : item;
+    });
+    return { rows, moved };
+  };
+  const result = moveInBranch(tree.value);
+  if (!result.moved) return;
+  tree.value = result.rows;
+  message.value = '';
+}
+
+function applyTreeReorder(payload: { sourceId: number; targetId: number; position: DropPosition }) {
+  if (!payload.sourceId || !payload.targetId || payload.sourceId === payload.targetId) {
+    clearTreeDrag();
+    return;
+  }
+  if (!areVisualSiblings(tree.value, payload.sourceId, payload.targetId)) {
+    clearTreeDrag();
+    return;
+  }
+  tree.value = reorderSiblingBranch(tree.value, payload.sourceId, payload.targetId, payload.position);
+  message.value = '';
+  clearTreeDrag();
+}
+
 function applyTreeDrop(targetId: number) {
   const sourceId = dragSourceMenuId.value;
   if (!sourceId || !targetId || sourceId === targetId || !dragTargetMenuId.value) {
@@ -592,6 +750,12 @@ function clearTreeDrag() {
   dragSourceMenuId.value = 0;
   dragTargetMenuId.value = 0;
   dragDropPosition.value = 'after';
+}
+
+function areVisualSiblings(items: MenuConfigMenu[], sourceId: number, targetId: number): boolean {
+  const ids = items.map((item) => item.id);
+  if (ids.includes(sourceId) && ids.includes(targetId)) return true;
+  return items.some((item) => item.children?.length && areVisualSiblings(item.children, sourceId, targetId));
 }
 
 function navMenuId(node: NavNode) {
@@ -699,6 +863,7 @@ async function loadPanel() {
     });
     const navOrderedTree = buildTreeFromNavigation(session.menuTree as NavNode[], menuById, menuByLabel);
     tree.value = navOrderedTree;
+    initializeTreeCollapse(navOrderedTree);
     groups.value = payload.groups || [];
     Object.keys(drafts).forEach((key) => delete drafts[Number(key)]);
     const nextOriginal: Record<number, DraftPolicy> = {};
@@ -1004,6 +1169,46 @@ h1 {
   width: 12px;
   flex: 0 0 12px;
   color: var(--sc-app-text-secondary);
+}
+
+:deep(.branch-marker.toggleable) {
+  cursor: pointer;
+}
+
+:deep(.branch-marker.toggleable:hover) {
+  color: var(--sc-app-text-primary);
+}
+
+:deep(.tree-node-order-tools) {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+}
+
+:deep(.tree-node:hover .tree-node-order-tools),
+:deep(.tree-node.active .tree-node-order-tools) {
+  opacity: 1;
+}
+
+:deep(.tree-node-order-btn) {
+  width: 22px;
+  height: 22px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 4px;
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+:deep(.tree-node-order-btn:hover) {
+  border-color: var(--sc-app-border-strong);
+  color: var(--sc-app-text-primary);
 }
 
 .menu-config-table-panel {

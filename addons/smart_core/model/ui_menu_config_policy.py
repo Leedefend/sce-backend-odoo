@@ -238,6 +238,11 @@ class UiMenuConfigPolicy(models.Model):
             for menu_id, policy in policies_by_menu.items()
             if policy.visible and policy.target_parent_menu_id and int(policy.target_parent_menu_id.id) != int(menu_id)
         }
+        policies_by_label = {}
+        for policy in policies_by_menu.values():
+            label = str(policy.menu_id.name or "").strip()
+            if label:
+                policies_by_label.setdefault(label, policy)
 
         def apply_node(node: dict) -> dict | None:
             menu_id = node.get("menu_id")
@@ -246,6 +251,13 @@ class UiMenuConfigPolicy(models.Model):
             except Exception:
                 normalized_menu_id = 0
             policy = policies_by_menu.get(normalized_menu_id)
+            if not policy:
+                labels = [
+                    str(node.get("name") or "").strip(),
+                    str(node.get("label") or "").strip(),
+                    str(node.get("title") or "").strip(),
+                ]
+                policy = next((policies_by_label.get(label) for label in labels if label in policies_by_label), None)
             if policy:
                 stats["applied_count"] += 1
                 if not policy.visible:
