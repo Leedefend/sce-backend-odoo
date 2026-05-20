@@ -91,3 +91,33 @@ cannot be treated as business-linked projects without another identifier or
 manual alias decision. The one missing name with text evidence is backed only
 by a legacy tender-registration project-name field, not by a resolved
 `project.project` id.
+
+## Replayable Reconciliation Package
+
+Use the package builder after the evidence probe when product/business users
+need a closed review queue:
+
+```bash
+docker exec -i sc-backend-odoo-dev-odoo-1 \
+  odoo shell -d sc_demo -c /var/lib/odoo/odoo.conf \
+  < scripts/migration/user_project_master_reconciliation_package.py
+```
+
+The package is read-only and emits:
+
+- full package: `/tmp/project_master_stabilization/user_project_master_reconciliation_20260520_package.csv`
+- missing-name review: `/tmp/project_master_stabilization/user_project_master_reconciliation_20260520_missing_review.csv`
+- duplicate canonical review: `/tmp/project_master_stabilization/user_project_master_reconciliation_20260520_duplicate_canonical_review.csv`
+- no-business-evidence review: `/tmp/project_master_stabilization/user_project_master_reconciliation_20260520_no_evidence_review.csv`
+- summary: `/tmp/project_master_stabilization/user_project_master_reconciliation_20260520_result.json`
+
+Current local package on `sc_demo`:
+
+- `exact_with_business_evidence`: 705, proposed action `keep_confirmed`
+- `duplicate_with_canonical_candidate`: 10, proposed action `confirm_canonical_project_before_write`
+- `missing_no_business_evidence`: 13, proposed action `manual_alias_or_create_review`
+- `missing_with_text_evidence`: 1, proposed action `manual_alias_or_create_review`
+- `exact_without_business_evidence`: 5, proposed action `manual_business_evidence_review`
+
+The package remains a review artifact. It must not be used to automatically
+merge duplicate projects or relink business facts by name.
