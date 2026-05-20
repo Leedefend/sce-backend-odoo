@@ -191,9 +191,22 @@
               <dd>{{ formFieldConfigScope.systemKey }}</dd>
             </div>
           </dl>
-          <section v-if="formSettingsActiveTab === 'structure'" class="contract-form-settings-placeholder">
-            <strong>页面结构</strong>
-            <span>{{ formSettingsStructureSummary }}</span>
+          <section v-if="formSettingsActiveTab === 'structure'" class="contract-form-settings-areas">
+            <header class="contract-form-settings-section-head">
+              <strong>区域/页签</strong>
+              <span>{{ formSettingsStructureSummary }}</span>
+            </header>
+            <div class="contract-form-settings-area-list">
+              <div
+                v-for="area in formSettingsStructureAreas"
+                :key="`form-area-${area.key}`"
+                class="contract-form-settings-area"
+              >
+                <span>{{ area.kind }}</span>
+                <strong>{{ area.title }}</strong>
+                <small>{{ area.hint }}</small>
+              </div>
+            </div>
           </section>
           <section v-else-if="formSettingsActiveTab === 'fields'" class="contract-form-settings-fields">
             <header class="contract-form-settings-section-head">
@@ -1742,7 +1755,7 @@ const formFieldConfigScope = computed(() => {
 });
 
 const formSettingsTabs = computed(() => [
-  { key: 'structure' as const, label: '结构' },
+  { key: 'structure' as const, label: '区域/页签' },
   { key: 'fields' as const, label: `字段 ${activeContractModeFieldRows.value.length}` },
   { key: 'details' as const, label: '明细表' },
   { key: 'actions' as const, label: '按钮' },
@@ -1751,11 +1764,11 @@ const formSettingsTabs = computed(() => [
 const formSettingsStructureSummary = computed(() => {
   const tabCount = nativeNotebookPageCount.value;
   const groupCount = nativeGroupCount.value;
-  if (!tabCount && !groupCount) return '当前表单未识别到可配置的页签或分组，先在字段页调整字段。';
+  if (!tabCount && !groupCount) return '当前表单未识别到独立区域，先直接点选字段调整。';
   const parts = [];
   if (tabCount) parts.push(`${tabCount} 个页签`);
-  if (groupCount) parts.push(`${groupCount} 个分组`);
-  return `当前表单包含 ${parts.join('、')}。本次先把结构作为设置入口展示，后续支持直接排序和改名。`;
+  if (groupCount) parts.push(`${groupCount} 个字段区域`);
+  return `当前表单包含 ${parts.join('、')}。区域/页签对应页面上能看到的表单块。`;
 });
 
 const selectedFormSettingsFieldRow = computed(() => {
@@ -1807,6 +1820,13 @@ const selectedFormSettingsFieldGroupTitle = computed(() => {
   const nativeGroup = nativeFieldStructureGroups.value.find((group) => group.fieldKeys.includes(fieldKey));
   return nativeGroup?.title || selectedFormSettingsFieldGroupTitleDraft.value || '业务配置字段';
 });
+
+const formSettingsStructureAreas = computed(() => nativeFieldStructureGroups.value.map((group, index) => ({
+  key: `${group.key}-${index}`,
+  kind: group.title.includes('/') ? '页签/区域' : '区域',
+  title: group.title,
+  hint: `${group.fieldKeys.length} 个字段`,
+})));
 
 async function hydrateLowCodeDraftFromContract() {
   if (!isContractFieldOrderEditable.value || lowCodeContractLoaded.value) return;
@@ -8305,6 +8325,40 @@ onBeforeUnmount(() => {
 .contract-form-settings-fields {
   display: grid;
   gap: 8px;
+}
+
+.contract-form-settings-areas {
+  display: grid;
+  gap: 8px;
+}
+
+.contract-form-settings-area-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+.contract-form-settings-area {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-bg);
+}
+
+.contract-form-settings-area span,
+.contract-form-settings-area small {
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.contract-form-settings-area strong {
+  color: var(--sc-app-text-primary);
+  font-size: 13px;
+  overflow-wrap: anywhere;
 }
 
 .contract-field-selection-panel {
