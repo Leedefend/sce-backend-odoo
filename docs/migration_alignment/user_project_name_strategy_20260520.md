@@ -58,3 +58,36 @@ Project counts after apply:
 - active: 714
 - direct: 47
 - joint: 850
+
+## Business Evidence Probe
+
+Use the read-only probe to verify whether the user-confirmed names have
+business-fact backing:
+
+```bash
+docker exec -i sc-backend-odoo-dev-odoo-1 \
+  odoo shell -d sc_demo -c /var/lib/odoo/odoo.conf \
+  < scripts/migration/user_project_business_evidence_probe.py
+```
+
+The probe checks project ids against strong business-fact tables, including
+contract, payment, receipt, treasury, material, settlement, tender, and SCBS
+staging tables. It also searches common legacy project-name fields for source
+names that do not match `project.project`.
+
+Current local evidence on `sc_demo`:
+
+- matched source names: 720
+- source names with business evidence: 715
+- source names matched but without strong business evidence: 5
+- source names missing from `project.project`: 14
+- missing source names with exact legacy text evidence: 1
+- missing source names without exact legacy text evidence: 13
+- duplicate source names requiring canonical-project review: 10
+
+This means the workbook is mostly backed by business facts after joining
+through existing `project.project` records, but the missing 14 names still
+cannot be treated as business-linked projects without another identifier or
+manual alias decision. The one missing name with text evidence is backed only
+by a legacy tender-registration project-name field, not by a resolved
+`project.project` id.
