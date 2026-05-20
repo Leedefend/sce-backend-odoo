@@ -200,71 +200,81 @@
               <strong>字段</strong>
               <span>在这里调整字段显示、隐藏和顺序；右侧表单只是预览。</span>
             </header>
-            <section v-if="activeContractModeFieldRows.length" class="contract-field-governance">
-              <div
-                v-for="row in activeContractModeFieldRows"
-                :key="`field-governance-${row.fieldKey}`"
-                :class="[
-                  'contract-field-governance-row',
-                  {
-                    'contract-field-governance-row--draggable': isContractFieldOrderEditable,
-                    'contract-field-governance-row--dragging': draggingFieldKey === row.fieldKey,
-                    'contract-field-governance-row--drop-target': dropTargetFieldKey === row.fieldKey && draggingFieldKey !== row.fieldKey,
-                  },
-                ]"
-                :draggable="isContractFieldOrderEditable"
-                @dragstart="onFieldOrderDragStart(row.fieldKey, $event)"
-                @dragover.prevent="onFieldOrderDragOver(row.fieldKey)"
-                @dragleave="onFieldOrderDragLeave(row.fieldKey)"
-                @drop.prevent="onFieldOrderDrop(row.fieldKey)"
-                @dragend="onFieldOrderDragEnd"
+            <section v-if="formSettingsFieldGroups.length" class="contract-field-governance">
+              <section
+                v-for="group in formSettingsFieldGroups"
+                :key="`field-group-${group.key}`"
+                class="contract-field-governance-group"
               >
-                <div class="contract-field-governance-main">
-                  <span
-                    v-if="isContractFieldOrderEditable"
-                    class="contract-field-governance-handle"
-                    aria-hidden="true"
-                    title="按住整行拖动调整顺序"
-                  >拖动</span>
-                  <span class="contract-field-governance-label">{{ row.label }}</span>
-                </div>
-                <div class="contract-field-governance-actions" role="radiogroup" :aria-label="`${row.label}字段显示`">
-                  <div v-if="isContractFieldOrderEditable" class="contract-field-governance-order-tools">
-                    <button
-                      class="ghost contract-field-governance-order-btn"
-                      type="button"
-                      :disabled="busy || activeContractModeFieldRows[0]?.fieldKey === row.fieldKey"
-                      :aria-label="`上移${row.label}`"
-                      title="上移"
-                      @click.stop="moveFieldOrder(row.fieldKey, -1)"
-                    >↑</button>
-                    <button
-                      class="ghost contract-field-governance-order-btn"
-                      type="button"
-                      :disabled="busy || activeContractModeFieldRows[activeContractModeFieldRows.length - 1]?.fieldKey === row.fieldKey"
-                      :aria-label="`下移${row.label}`"
-                      title="下移"
-                      @click.stop="moveFieldOrder(row.fieldKey, 1)"
-                    >↓</button>
+                <header class="contract-field-governance-group-head">
+                  <strong>{{ group.title }}</strong>
+                  <span>{{ group.rows.length }} 个字段</span>
+                </header>
+                <div
+                  v-for="row in group.rows"
+                  :key="`field-governance-${row.fieldKey}`"
+                  :class="[
+                    'contract-field-governance-row',
+                    {
+                      'contract-field-governance-row--draggable': isContractFieldOrderEditable,
+                      'contract-field-governance-row--dragging': draggingFieldKey === row.fieldKey,
+                      'contract-field-governance-row--drop-target': dropTargetFieldKey === row.fieldKey && draggingFieldKey !== row.fieldKey,
+                    },
+                  ]"
+                  :draggable="isContractFieldOrderEditable"
+                  @dragstart="onFieldOrderDragStart(row.fieldKey, $event)"
+                  @dragover.prevent="onFieldOrderDragOver(row.fieldKey)"
+                  @dragleave="onFieldOrderDragLeave(row.fieldKey)"
+                  @drop.prevent="onFieldOrderDrop(row.fieldKey)"
+                  @dragend="onFieldOrderDragEnd"
+                >
+                  <div class="contract-field-governance-main">
+                    <span
+                      v-if="isContractFieldOrderEditable"
+                      class="contract-field-governance-handle"
+                      aria-hidden="true"
+                      title="按住整行拖动调整顺序"
+                    >拖动</span>
+                    <span class="contract-field-governance-label">{{ row.label }}</span>
                   </div>
-                  <label
-                    v-for="action in row.actions"
-                    :key="`${row.fieldKey}-${action.key}`"
-                    class="contract-field-governance-action"
-                    :title="action.title"
-                  >
-                    <input
-                      type="radio"
-                      :name="`contract-field-governance-${row.fieldKey}`"
-                      :value="action.value"
-                      :checked="Boolean(action.checked)"
-                      :disabled="Boolean(action.disabled)"
-                      @change="onFieldVisibilityDraftChange(row.fieldKey, action.value)"
-                    />
-                    <span>{{ action.label }}</span>
-                  </label>
+                  <div class="contract-field-governance-actions" role="radiogroup" :aria-label="`${row.label}字段显示`">
+                    <div v-if="isContractFieldOrderEditable" class="contract-field-governance-order-tools">
+                      <button
+                        class="ghost contract-field-governance-order-btn"
+                        type="button"
+                        :disabled="busy || activeContractModeFieldRows[0]?.fieldKey === row.fieldKey"
+                        :aria-label="`上移${row.label}`"
+                        title="上移"
+                        @click.stop="moveFieldOrder(row.fieldKey, -1)"
+                      >↑</button>
+                      <button
+                        class="ghost contract-field-governance-order-btn"
+                        type="button"
+                        :disabled="busy || activeContractModeFieldRows[activeContractModeFieldRows.length - 1]?.fieldKey === row.fieldKey"
+                        :aria-label="`下移${row.label}`"
+                        title="下移"
+                        @click.stop="moveFieldOrder(row.fieldKey, 1)"
+                      >↓</button>
+                    </div>
+                    <label
+                      v-for="action in row.actions"
+                      :key="`${row.fieldKey}-${action.key}`"
+                      class="contract-field-governance-action"
+                      :title="action.title"
+                    >
+                      <input
+                        type="radio"
+                        :name="`contract-field-governance-${row.fieldKey}`"
+                        :value="action.value"
+                        :checked="Boolean(action.checked)"
+                        :disabled="Boolean(action.disabled)"
+                        @change="onFieldVisibilityDraftChange(row.fieldKey, action.value)"
+                      />
+                      <span>{{ action.label }}</span>
+                    </label>
+                  </div>
                 </div>
-              </div>
+              </section>
             </section>
           </section>
           <section v-else-if="formSettingsActiveTab === 'details'" class="contract-form-settings-placeholder">
@@ -1039,6 +1049,12 @@ type ContractFieldGovernanceRow = {
   actions: ContractFieldGovernanceAction[];
 };
 
+type ContractFieldGovernanceGroup = {
+  key: string;
+  title: string;
+  rows: ContractFieldGovernanceRow[];
+};
+
 class ContractAccessPolicyError extends Error {
   reasonCode: string;
 
@@ -1752,6 +1768,62 @@ const formSettingsStructureSummary = computed(() => {
   if (tabCount) parts.push(`${tabCount} 个页签`);
   if (groupCount) parts.push(`${groupCount} 个分组`);
   return `当前表单包含 ${parts.join('、')}。本次先把结构作为设置入口展示，后续支持直接排序和改名。`;
+});
+
+function fieldStructureTitle(pageTitle: string, groupTitle: string) {
+  const page = String(pageTitle || '').trim();
+  const group = String(groupTitle || '').trim();
+  if (page && group && page !== group) return `${page} / ${group}`;
+  return page || group || '主表区域';
+}
+
+const nativeFieldStructureGroups = computed<Array<{ key: string; title: string; fieldKeys: string[] }>>(() => {
+  const groups = new Map<string, { key: string; title: string; fieldKeys: string[] }>();
+  const fieldSeen = new Set<string>();
+  const addField = (title: string, fieldKey: string) => {
+    const normalizedField = String(fieldKey || '').trim();
+    if (!normalizedField || fieldSeen.has(normalizedField)) return;
+    fieldSeen.add(normalizedField);
+    const groupTitle = title || '主表区域';
+    const groupKey = groupTitle;
+    if (!groups.has(groupKey)) groups.set(groupKey, { key: groupKey, title: groupTitle, fieldKeys: [] });
+    groups.get(groupKey)?.fieldKeys.push(normalizedField);
+  };
+  const walk = (nodes: NativeFormLayoutNode[], pageTitle = '', groupTitle = '') => {
+    nodes.forEach((node) => {
+      const type = String(node?.type || (node as { containerType?: string })?.containerType || '').trim().toLowerCase();
+      const title = String(node?.string || node?.label || '').trim();
+      const nextPage = type === 'page' && title ? title : pageTitle;
+      const nextGroup = type === 'group' && title ? title : groupTitle;
+      const name = String(node?.name || '').trim();
+      if (type === 'field' && name) addField(fieldStructureTitle(nextPage, nextGroup), name);
+      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+        const children = node?.[key];
+        if (Array.isArray(children)) walk(children as NativeFormLayoutNode[], nextPage, nextGroup);
+      });
+    });
+  };
+  walk(nativeFormLayoutNodes.value);
+  return Array.from(groups.values());
+});
+
+const formSettingsFieldGroups = computed<ContractFieldGovernanceGroup[]>(() => {
+  const rowByKey = new Map(activeContractModeFieldRows.value.map((row) => [row.fieldKey, row]));
+  const used = new Set<string>();
+  const groups: ContractFieldGovernanceGroup[] = [];
+  nativeFieldStructureGroups.value.forEach((group) => {
+    const rows = group.fieldKeys
+      .map((fieldKey) => rowByKey.get(fieldKey))
+      .filter((row): row is ContractFieldGovernanceRow => Boolean(row));
+    if (!rows.length) return;
+    rows.forEach((row) => used.add(row.fieldKey));
+    groups.push({ key: group.key, title: group.title, rows });
+  });
+  const ungrouped = activeContractModeFieldRows.value.filter((row) => !used.has(row.fieldKey));
+  if (ungrouped.length) {
+    groups.push({ key: 'ungrouped', title: '未分组字段', rows: ungrouped });
+  }
+  return groups;
 });
 
 async function hydrateLowCodeDraftFromContract() {
@@ -8282,9 +8354,38 @@ onBeforeUnmount(() => {
 
 .contract-field-governance {
   display: grid;
+  gap: 12px;
+  padding: 12px 0 0;
+}
+
+.contract-field-governance-group {
+  display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 8px 14px;
-  padding: 12px 0 0;
+  padding: 10px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-bg);
+}
+
+.contract-field-governance-group-head {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--sc-app-border);
+}
+
+.contract-field-governance-group-head strong {
+  color: var(--sc-app-text-primary);
+  font-size: 13px;
+}
+
+.contract-field-governance-group-head span {
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
 }
 
 .contract-field-governance-row {
