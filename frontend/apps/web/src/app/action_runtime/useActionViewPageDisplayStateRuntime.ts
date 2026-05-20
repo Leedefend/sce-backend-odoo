@@ -13,6 +13,7 @@ type ActionContractLike = {
 
 type UseActionViewPageDisplayStateRuntimeOptions = {
   routeSceneLabel: Ref<string>;
+  menuTitle?: ComputedRef<string>;
   actionContract: Ref<ActionContractLike | null>;
   injectedTitle: ComputedRef<string>;
   actionMetaName: ComputedRef<string>;
@@ -32,6 +33,8 @@ function isTechnicalViewTitle(value: string) {
 export function useActionViewPageDisplayStateRuntime(options: UseActionViewPageDisplayStateRuntimeOptions) {
   const pageTitle = computed(() => {
     if (options.routeSceneLabel.value) return options.routeSceneLabel.value;
+    const menuTitle = String(options.menuTitle?.value || '').trim();
+    if (menuTitle) return menuTitle;
     const contractTitle = String(options.actionContract.value?.head?.title || '').trim();
     if (contractTitle && !isTechnicalViewTitle(contractTitle)) return contractTitle;
     return options.injectedTitle.value || options.actionMetaName.value || options.t('page_title_fallback', '角色首页');

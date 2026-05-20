@@ -563,7 +563,7 @@ import {
   resolveContractViewMode,
 } from '../app/contractActionRuntime';
 import { detectObjectMethodFromActionKey, normalizeActionKind, toPositiveInt } from '../app/contractRuntime';
-import { findActionMeta } from '../app/menu';
+import { findActionMeta, findMenuNode } from '../app/menu';
 import { getSceneByKey, type Scene, type SceneListProfile } from '../app/resolvers/sceneRegistry';
 import { findSceneReadyEntry, resolveCollectionSceneReady } from '../app/resolvers/sceneReadyResolver';
 import { normalizeSceneActionProtocol, type MutationContract, type ProjectionRefreshPolicy } from '../app/sceneActionProtocol';
@@ -1228,6 +1228,10 @@ const {
 
 const model = computed(() => actionMeta.value?.model ?? '');
 const injectedTitle = inject('pageTitle', computed(() => ''));
+const currentMenuTitle = computed(() => {
+  const node = findMenuNode(session.menuTree, Number(menuId.value || 0));
+  return String(node?.label || node?.name || node?.title || '').trim();
+});
 const contractViewType = ref('');
 const contractReadAllowed = ref(true);
 const contractWarningCount = ref(0);
@@ -1557,6 +1561,7 @@ const {
   errorMessage,
 } = useActionViewPageDisplayStateRuntime({
   routeSceneLabel,
+  menuTitle: currentMenuTitle,
   actionContract,
   injectedTitle,
   actionMetaName,
