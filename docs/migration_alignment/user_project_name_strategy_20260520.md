@@ -152,3 +152,29 @@ The validator is read-only. It checks decision values, required reviewer/time
 metadata, and duplicate-candidate target IDs. Passing validation still does not
 write projects, aliases, or business-fact links; it only establishes a bounded
 input contract for a later explicit write script.
+
+## 2026-05-21 User Decisions
+
+The reviewed decision CSV is:
+
+```text
+migration_assets/10_master/project/user_project_master_review_decisions_20260521.csv
+```
+
+This file is an ignored migration asset and should be treated as the local
+user-reviewed input for the next explicit write step. The validated decision
+counts are:
+
+- duplicate exact names: 10 rows, use the recommended canonical project;
+- exact matches without business evidence: 5 rows, exclude from the user
+  baseline;
+- missing names: 14 rows total, 13 rows excluded from the user baseline and
+  one row aliased to an existing project.
+
+For `周超工程（德阳二重工程项目）`, the business-fact carrier is
+`project.project(360)`, `易静工程（德阳二重工程项目）`. The competing inactive
+`周超零星工程` record, `project.project(694)`, has only three legacy invoice
+registration lines and no contract, payment, receipt, treasury, material,
+tender, or SCBS fact chain in the current `sc_demo` audit. Therefore the
+approved decision is to retain the row as an alias/rename target of project
+360, not to create a new project and not to use project 694 as the carrier.
