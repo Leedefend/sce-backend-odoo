@@ -772,7 +772,7 @@ import { validateContractFormData } from '../app/contractValidation';
 import { resolveActionIdFromContext } from '../app/actionContext';
 import { findActionMeta, findMenuNode } from '../app/menu';
 import { pickContractNavQuery } from '../app/navigationContext';
-import { buildEntryTargetRouteTarget } from '../app/routeQuery';
+import { buildCanonicalSceneRouteTarget, buildEntryTargetRouteTarget } from '../app/routeQuery';
 import { readWorkspaceContext } from '../app/workspaceContext';
 import { collectPolicyValidationErrors, evaluateActionPolicy, evaluateFieldPolicy } from '../app/contractPolicies';
 import { buildRuntimeFieldStates } from '../app/modifierEngine';
@@ -3290,7 +3290,14 @@ function formUiLabels(): Record<string, string> {
 }
 
 function formUiLabel(key: string) {
-  return formUiLabels()[key] || key;
+  const fallbackLabels: Record<string, string> = {
+    save: '保存',
+    saving: '保存中...',
+    discard: '放弃',
+    reload: '刷新',
+    save_success: '保存成功，已同步最新表单内容。',
+  };
+  return formUiLabels()[key] || fallbackLabels[key] || key;
 }
 
 function relationCreateMode(_fieldName: string, descriptor?: FieldDescriptor): 'page' | 'quick' | 'none' {
@@ -7714,13 +7721,12 @@ function handleProjectContextChanged(event: Event): void {
     });
     return;
   }
-  void router.replace({
-    path: '/s/projects.list',
+  void router.replace(buildCanonicalSceneRouteTarget('projects.list', {
     query: {
       ...resolveWorkspaceContextQuery(),
       ...(selectedProjectId > 0 ? { project_id: String(selectedProjectId) } : {}),
     },
-  });
+  }));
 }
 
 watch(

@@ -210,7 +210,11 @@ export function useActionViewRoutePresetRuntime(options: UseActionViewRoutePrese
 
   function applyRoutePatchAndReload(patch: Record<string, unknown>) {
     const query = options.buildActionViewPatchedRouteQuery(options.routeQueryMap.value, patch);
-    void Promise.resolve(options.replaceCurrentRouteQuery(query)).then(() => options.load());
+    void Promise.resolve(options.replaceCurrentRouteQuery(query))
+      .then(() => new Promise((resolve) => {
+        setTimeout(resolve, 0);
+      }))
+      .then(() => options.load());
   }
 
   function syncRouteListState(extra?: Record<string, unknown>) {

@@ -1966,8 +1966,12 @@ const routePresetRuntime = useActionViewRoutePresetRuntime({
 const {
   applyRoutePreset,
   clearRoutePreset,
-  applyRoutePatchAndReload,
 } = routePresetRuntime;
+
+function applyRoutePatchAndReload(patch: Record<string, unknown>): void {
+  suppressNextRouteReload.value = true;
+  routePresetRuntime.applyRoutePatchAndReload(patch);
+}
 
 function syncRouteListState(extra?: Record<string, unknown>): void {
   suppressNextRouteReload.value = true;

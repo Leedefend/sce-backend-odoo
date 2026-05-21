@@ -133,6 +133,7 @@ import { ErrorCodes } from '../app/error_codes';
 import { resolveErrorCopy, useStatus } from '../composables/useStatus';
 import { trackSceneOpen } from '../api/usage';
 import { intentRequest } from '../api/intents';
+import { executePageContractAction } from '../app/pageContractActionRuntime';
 import { readWorkspaceContext } from '../app/workspaceContext';
 import { buildCanonicalSceneRouteTarget, normalizeLegacyWorkbenchPath, resolveSceneDefaultOrder } from '../app/routeQuery';
 import { findActionMeta, findActionNodeByModel, findMenuNode } from '../app/menu';
@@ -151,6 +152,7 @@ const pageText = pageContract.text;
 const pageSectionEnabled = pageContract.sectionEnabled;
 const pageSectionStyle = pageContract.sectionStyle;
 const pageSectionTagIs = pageContract.sectionTagIs;
+const pageActionIntent = pageContract.actionIntent;
 const pageActionTarget = pageContract.actionTarget;
 const pageGlobalActions = pageContract.globalActions;
 const headerActions = computed(() => pageGlobalActions.value);
@@ -564,28 +566,19 @@ function goUnifiedHome() {
 async function executeHeaderAction(actionKey: string) {
   const key = String(actionKey || '').trim();
   if (!key) return;
-  if (key === 'refresh_page' || key === 'refresh') {
-    await resolveScene();
-    return;
-  }
-  if (key === 'open_workbench') {
-    goWorkbench();
-    return;
-  }
-  const target = pageActionTarget(key);
-  const route = String(target.route || '').trim();
-  if (route) {
-    await router.push({ path: route, query: resolveWorkspaceContextQuery() as LocationQueryRaw });
-    return;
-  }
-  if (String(target.scene_key || '').trim()) {
-    await router.push(buildCanonicalSceneRouteTarget(String(target.scene_key || '').trim(), {
-      query: resolveWorkspaceContextQuery() as LocationQueryRaw,
-      scene: getSceneByKey(String(target.scene_key || '').trim()),
-    }));
-    return;
-  }
-  goWorkbench(ErrorCodes.ACT_UNSUPPORTED_TYPE);
+  const handled = await executePageContractAction({
+    actionKey: key,
+    router,
+    actionIntent: pageActionIntent,
+    actionTarget: pageActionTarget,
+    query: resolveWorkspaceContextQuery() as LocationQueryRaw,
+    onRefresh: resolveScene,
+    onFallback: () => {
+      goWorkbench(ErrorCodes.ACT_UNSUPPORTED_TYPE);
+      return true;
+    },
+  });
+  if (!handled) goWorkbench(ErrorCodes.ACT_UNSUPPORTED_TYPE);
 }
 
 function resolveRecordId(targetRecord: unknown) {

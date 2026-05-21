@@ -77,10 +77,7 @@ export function resolveRouteSelectionState(options: {
     if (defaultSaved) activeSavedFilterKey = defaultSaved.key;
   }
 
-  let activeGroupByField = String(options.activeGroupByField || '').trim();
-  if (!activeGroupByField && routeGroupBy) {
-    activeGroupByField = routeGroupBy;
-  }
+  let activeGroupByField = routeGroupBy;
   if (activeGroupByField) {
     const hasGroupBy = options.groupByChips.some((item) => item.field === activeGroupByField);
     if (!hasGroupBy) activeGroupByField = '';
