@@ -124,6 +124,59 @@
       ]
     }
   },
+  "formStructureContract": {
+    "source": "ui.contract.v2.form_structure_contract",
+    "structureVersion": "1.0",
+    "model": "project.project",
+    "viewType": "form",
+    "mode": "business_task_form",
+    "layoutPolicy": "overview_then_task_slots",
+    "objectProfile": {
+      "model": "project.project",
+      "kind": "business_form",
+      "factAuthority": "business_object_model_and_view"
+    },
+    "navigation": {
+      "title": "业务办理"
+    },
+    "slots": [
+      {
+        "slot": "overview",
+        "title": "办理总览",
+        "role": "overview",
+        "readonly": true,
+        "fieldRefs": [
+          "name"
+        ]
+      }
+    ],
+    "fieldRoles": {
+      "name": {
+        "role": "identity",
+        "slot": "overview",
+        "group": "overview"
+      }
+    },
+    "sourceAuthority": {
+      "kind": "unified_page_contract_v2",
+      "runtime_carrier": "ui.contract.v2.form_structure_contract",
+      "projection_only": true,
+      "no_business_fact_authority": true,
+      "governed_form_structure": true,
+      "governance_source": {
+        "source": "business_view_orchestration",
+        "owner_layer": "business_view_orchestration",
+        "business_config_contracts": [
+          {
+            "id": 1,
+            "name": "fixture-form-structure",
+            "version_no": 1
+          }
+        ],
+        "legacy_field_policy_overlay": false
+      }
+    }
+  },
   "meta": {
     "etag": "upc-v2-runtime-001",
     "snapshotId": "snapshot.upc.v2.runtime.001",

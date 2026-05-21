@@ -184,6 +184,11 @@ export function resolveContractV2ContainerTree(store: ContractV2NormalizedStore 
   return store.snapshot.layoutContract.containerTree;
 }
 
+export function resolveContractV2FormStructureContract(store: ContractV2NormalizedStore | null): ContractV2Dictionary {
+  if (!store) return {};
+  return asDict(store.snapshot.formStructureContract);
+}
+
 export function resolveContractV2GlobalStatus(store: ContractV2NormalizedStore | null) {
   if (!store) return null;
   const row = store.snapshot.statusContract.globalStatus || {};

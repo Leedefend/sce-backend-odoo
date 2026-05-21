@@ -29,5 +29,65 @@
       "string": "Stage",
       "type": "many2one"
     }
+  },
+  "form_structure_contract": {
+    "source": "ui.contract.v2.form_structure_contract",
+    "structureVersion": "1.0",
+    "model": "project.project",
+    "viewType": "form",
+    "mode": "business_task_form",
+    "layoutPolicy": "overview_then_task_slots",
+    "objectProfile": {
+      "model": "project.project",
+      "kind": "business_form",
+      "factAuthority": "business_object_model_and_view"
+    },
+    "navigation": {
+      "title": "业务办理"
+    },
+    "slots": [
+      {
+        "slot": "overview",
+        "title": "办理总览",
+        "role": "overview",
+        "readonly": true,
+        "fieldRefs": [
+          "name"
+        ]
+      },
+      {
+        "slot": "primary_facts",
+        "title": "主业务事实",
+        "role": "facts",
+        "groups": [
+          {
+            "name": "identity",
+            "title": "业务识别",
+            "role": "identity",
+            "fieldRefs": [
+              "stage_id"
+            ]
+          }
+        ]
+      }
+    ],
+    "fieldRoles": {
+      "name": {
+        "role": "identity",
+        "slot": "overview",
+        "group": "overview"
+      },
+      "stage_id": {
+        "role": "relation",
+        "slot": "primary_facts",
+        "group": "identity"
+      }
+    },
+    "sourceAuthority": {
+      "kind": "unified_page_contract_v2",
+      "runtime_carrier": "ui.contract.v2.form_structure_contract",
+      "projection_only": true,
+      "no_business_fact_authority": true
+    }
   }
 }

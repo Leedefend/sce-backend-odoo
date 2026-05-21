@@ -236,11 +236,16 @@ REQUIRED_V2_BOUNDARY_FILES: dict[str, tuple[str, ...]] = {
         "ContractV2Snapshot",
         "ContractV2NormalizedStore",
         "ContractV2UnsupportedFeature",
+        "formStructureContract?: ContractV2Dictionary",
+        "formStructure?: ContractV2Dictionary",
+        "formStructureRole?: ContractV2Dictionary",
     ),
     "app/contracts/v2/schema.ts": (
         "decodeContractV2Snapshot",
         "ContractV2DecodeError",
         "must be semantic version 2.x.y",
+        "formStructureContract",
+        "formStructureRole",
     ),
     "app/contracts/v2/store.ts": (
         "createContractV2Store",
@@ -254,6 +259,7 @@ REQUIRED_V2_BOUNDARY_FILES: dict[str, tuple[str, ...]] = {
         "resolveContractV2MainData",
         "resolveContractV2SourceContext",
         "resolveContractV2ValueSource",
+        "resolveContractV2FormStructureContract",
     ),
     "app/contracts/v2/client.ts": (
         "loadActionContractV2",
@@ -283,6 +289,7 @@ REQUIRED_FORM_STORE_SELECTOR_TOKENS: tuple[str, ...] = (
     "resolveContractV2MainData",
     "resolveContractV2SourceContext",
     "resolveContractV2ValueSource",
+    "resolveContractV2FormStructureContract",
 )
 
 FORBIDDEN_FORM_LOCAL_SELECTOR_TOKENS: tuple[str, ...] = (

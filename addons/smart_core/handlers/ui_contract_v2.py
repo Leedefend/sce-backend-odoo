@@ -77,6 +77,62 @@ BUSINESS_OPERATION_TECHNICAL_FIELDS = {
     "write_date",
     "__last_update",
 }
+BUSINESS_FORM_STRUCTURE_ALLOWED_LEGACY_FIELDS = {
+    "legacy_document_no",
+    "legacy_contract_no",
+    "legacy_status",
+}
+BUSINESS_FORM_STRUCTURE_INTERNAL_FIELDS = {
+    "active",
+    "archived",
+    "color",
+    "can_review",
+    "entry_data",
+    "has_comment",
+    "has_message",
+    "hide_reviews",
+    "is_favorite",
+    "is_locked",
+    "my_activity_date_deadline",
+    "name_short",
+    "need_validation",
+    "next_review",
+    "sequence",
+    "source_origin",
+    "task_properties",
+    "reject_reason",
+    "rejected",
+    "rejected_message",
+    "review_ids",
+    "reviewer_ids",
+    "to_validate_message",
+    "validated",
+    "validated_message",
+    "validation_status",
+}
+BUSINESS_FORM_STRUCTURE_INTERNAL_PREFIXES = (
+    "access_",
+    "alias_",
+    "allow_",
+    "dashboard_",
+    "favorite_",
+    "last_update_",
+    "privacy_",
+)
+BUSINESS_FORM_STRUCTURE_INTERNAL_TOKENS = (
+    "_delta",
+    "_source",
+    "_source_",
+    "_visible",
+    "legacy_deleted",
+    "legacy_",
+    "source_created",
+    "validation",
+)
+BUSINESS_FORM_STRUCTURE_INTERNAL_SUFFIXES = (
+    "_count",
+    "_rate",
+)
 
 
 class UiContractV2Handler(BaseIntentHandler):
@@ -343,6 +399,17 @@ class UiContractV2Handler(BaseIntentHandler):
                 or any(name.startswith(prefix) for prefix in BUSINESS_OPERATION_TECHNICAL_PREFIXES)
             )
 
+        def is_form_structure_internal(name: str) -> bool:
+            if not name or name in BUSINESS_FORM_STRUCTURE_ALLOWED_LEGACY_FIELDS:
+                return False
+            return (
+                is_technical(name)
+                or name in BUSINESS_FORM_STRUCTURE_INTERNAL_FIELDS
+                or any(name.startswith(prefix) for prefix in BUSINESS_FORM_STRUCTURE_INTERNAL_PREFIXES)
+                or any(token in name for token in BUSINESS_FORM_STRUCTURE_INTERNAL_TOKENS)
+                or any(name.endswith(suffix) for suffix in BUSINESS_FORM_STRUCTURE_INTERNAL_SUFFIXES)
+            )
+
         def unique(items: list[str]) -> list[str]:
             out: list[str] = []
             seen: set[str] = set()
@@ -353,6 +420,50 @@ class UiContractV2Handler(BaseIntentHandler):
                     out.append(value)
             return out
 
+        def field_names_from_layout(rows: Any) -> list[str]:
+            out: list[str] = []
+
+            def visit(node: Any) -> None:
+                if isinstance(node, list):
+                    for child in node:
+                        visit(child)
+                    return
+                if not isinstance(node, dict):
+                    return
+                node_type = str(node.get("type") or node.get("kind") or "").strip().lower()
+                node_name = str(node.get("name") or node.get("field") or "").strip()
+                if node_type == "field" and node_name:
+                    out.append(node_name)
+                for key in ("children", "tabs", "pages", "groups", "fields", "widgetList"):
+                    visit(node.get(key))
+
+            visit(rows)
+            return out
+
+        def source_form_field_candidates() -> list[str]:
+            governed_field_names = form_structure_governance.get("field_names")
+            if isinstance(governed_field_names, list) and governed_field_names:
+                return unique([str(item or "").strip() for item in governed_field_names])
+            field_groups = source_contract.get("field_groups") if isinstance(source_contract.get("field_groups"), list) else []
+            group_fields: list[str] = []
+            for group in field_groups:
+                if isinstance(group, dict) and isinstance(group.get("fields"), list):
+                    group_fields.extend(str(item or "").strip() for item in group.get("fields") or [])
+            views = source_contract.get("views") if isinstance(source_contract.get("views"), dict) else {}
+            form_view = views.get("form") if isinstance(views.get("form"), dict) else {}
+            layout_fields = field_names_from_layout(form_view.get("layout"))
+            explicit_fields = source_contract.get("visible_fields") if isinstance(source_contract.get("visible_fields"), list) else []
+            governed_fields = layout_fields + group_fields
+            if governed_fields:
+                return unique(governed_fields)
+            return unique([str(item or "").strip() for item in explicit_fields])
+
+        form_structure_governance = self._form_structure_governance(
+            source_contract,
+            model=model,
+            view_type=view_type,
+        )
+        form_field_candidates = source_form_field_candidates() if form_structure_governance else []
         note_field = next((name for name in ("note", "remark", "remarks", "description", "memo") if has_field(name)), "")
         attachment_field = next(
             (
@@ -370,11 +481,30 @@ class UiContractV2Handler(BaseIntentHandler):
             for name in model_fields
             if field_type(name) == "one2many" and not is_technical(name)
         ])
-        common_fields = unique([
+        priority_fields = unique([
             name
             for name in BUSINESS_OPERATION_FIELD_PRIORITY
             if has_field(name) and field_type(name) not in {"one2many", "many2many"}
         ])
+        source_common_fields = (
+            [
+                name
+                for name in form_field_candidates
+                if not is_form_structure_internal(name) and field_type(name) not in {"one2many", "many2many"}
+            ]
+            if view_type == "form"
+            else []
+        )
+        source_detail_fields = (
+            [
+                name
+                for name in form_field_candidates
+                if not is_form_structure_internal(name) and field_type(name) in {"one2many", "many2many"}
+            ]
+            if view_type == "form"
+            else []
+        )
+        common_fields = unique(priority_fields + source_common_fields)
         if note_field and note_field not in common_fields:
             common_fields.append(note_field)
 
@@ -402,6 +532,8 @@ class UiContractV2Handler(BaseIntentHandler):
             "note_field": note_field,
             "attachment_field": attachment_field,
             "detail_fields": detail_fields,
+            "form_structure_common_fields": source_common_fields,
+            "form_structure_detail_fields": source_detail_fields,
             "field_labels": {name: field_label(name) for name in unique(common_fields + detail_fields + [attachment_field])},
             "capabilities": {
                 "remarks": bool(note_field),
@@ -410,40 +542,29 @@ class UiContractV2Handler(BaseIntentHandler):
                 "collaboration": any(has_field(name) for name in ("message_ids", "activity_ids")),
             },
         })
+        if form_structure_governance:
+            profile["form_structure_governance"] = form_structure_governance
         source_contract["business_operation_profile"] = profile
 
-        visible_fields = source_contract.get("visible_fields") if isinstance(source_contract.get("visible_fields"), list) else []
-        source_contract["visible_fields"] = unique([str(item or "") for item in visible_fields] + common_fields + detail_fields + [attachment_field])
+        if view_type in {"tree", "list"}:
+            self._merge_business_list_profile(
+                source_contract,
+                common_fields=common_fields,
+                amount_fields=amount_fields,
+                note_field=note_field,
+                status_field=status_field,
+                label_for=field_label,
+                type_for=field_type,
+            )
 
-        field_groups = source_contract.get("field_groups") if isinstance(source_contract.get("field_groups"), list) else []
-        normalized_groups = [dict(item) for item in field_groups if isinstance(item, dict)]
-        existing_group_names = {str(item.get("name") or "").strip() for item in normalized_groups}
-
-        def append_group(name: str, title: str, fields: list[str]) -> None:
-            selected = unique(fields)
-            if not selected or name in existing_group_names:
-                return
-            normalized_groups.append({"name": name, "title": title, "label": title, "fields": selected})
-            existing_group_names.add(name)
-
-        append_group("business_core", "基本信息", common_fields[:18])
-        append_group("business_amount", "金额信息", amount_fields)
-        append_group("business_details", "明细", detail_fields)
-        append_group("business_collaboration", "备注与附件", [note_field, attachment_field])
-        if normalized_groups:
-            source_contract["field_groups"] = normalized_groups
-
-        self._merge_business_list_profile(
-            source_contract,
-            common_fields=common_fields,
-            amount_fields=amount_fields,
-            note_field=note_field,
-            status_field=status_field,
-            label_for=field_label,
-            type_for=field_type,
-        )
-
-        if view_type == "form":
+        if form_structure_governance:
+            source_contract["form_structure_contract"] = self._build_form_structure_contract(
+                model=model,
+                profile=profile,
+                field_type=field_type,
+                unique=unique,
+                governance=form_structure_governance,
+            )
             form = _ensure_source_form_contract(source_contract)
             if attachment_field:
                 attachments = form.get("attachments") if isinstance(form.get("attachments"), dict) else {}
@@ -462,6 +583,274 @@ class UiContractV2Handler(BaseIntentHandler):
                     },
                 })
                 form["attachments"] = attachments
+
+    def _form_structure_governance(self, source_contract: dict[str, Any], *, model: str, view_type: str) -> dict[str, Any]:
+        if view_type != "form":
+            return {}
+        governance = source_contract.get("governance") if isinstance(source_contract.get("governance"), dict) else {}
+        view_governance = governance.get("view_orchestration") if isinstance(governance.get("view_orchestration"), dict) else {}
+        source_trace = source_contract.get("source_trace") if isinstance(source_contract.get("source_trace"), dict) else {}
+        view_trace = source_trace.get("view_orchestration") if isinstance(source_trace.get("view_orchestration"), dict) else {}
+        business_contracts = view_trace.get("business_config_contracts")
+        if not isinstance(business_contracts, list):
+            business_contracts = view_governance.get("business_config_contracts")
+        if not isinstance(business_contracts, list):
+            business_contracts = []
+        legacy_overlay = bool(view_trace.get("legacy_field_policy_overlay") or view_governance.get("legacy_field_policy_overlay"))
+        field_names: list[str] = []
+        config_summaries: list[dict[str, Any]] = []
+        try:
+            view_ids = source_contract.get("view_ids_by_type") if isinstance(source_contract.get("view_ids_by_type"), dict) else {}
+            configs = self.env["ui.business.config.contract"]._effective_view_orchestration_contracts(
+                model,
+                view_type="form",
+                action_id=source_contract.get("action_id") or source_contract.get("actionId"),
+                view_id=view_ids.get("form"),
+            )
+        except Exception:
+            configs = []
+        for config in configs:
+            config_summaries.append({
+                "id": int(config.id or 0),
+                "name": str(config.name or ""),
+                "priority": int(config.priority or 0),
+                "view_type": str(config.view_type or ""),
+            })
+            payload = config.contract_json if isinstance(config.contract_json, dict) else {}
+            orchestration = payload.get("view_orchestration") if isinstance(payload.get("view_orchestration"), dict) else {}
+            views = orchestration.get("views") if isinstance(orchestration.get("views"), dict) else {}
+            form_spec = views.get("form") if isinstance(views.get("form"), dict) else {}
+            rows = form_spec.get("fields") if isinstance(form_spec.get("fields"), list) else []
+            for row in rows:
+                if isinstance(row, dict):
+                    name = str(row.get("name") or row.get("field") or row.get("field_name") or "").strip()
+                else:
+                    name = str(row or "").strip()
+                if name and name not in field_names:
+                    field_names.append(name)
+        applied = bool(view_governance.get("applied") or business_contracts or legacy_overlay or field_names)
+        if not applied:
+            return {}
+        return {
+            "source": "business_view_orchestration",
+            "owner_layer": str(view_trace.get("owner_layer") or view_governance.get("owner_layer") or "business_view_orchestration"),
+            "business_config_contracts": [dict(item) for item in business_contracts if isinstance(item, dict)] or config_summaries,
+            "legacy_field_policy_overlay": legacy_overlay,
+            "field_names": field_names,
+        }
+
+    def _build_form_structure_contract(
+        self,
+        *,
+        model: str,
+        profile: dict[str, Any],
+        field_type,
+        unique,
+        governance: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        common_source = (
+            profile.get("form_structure_common_fields")
+            if "form_structure_common_fields" in profile
+            else profile.get("common_fields")
+        )
+        detail_source = (
+            profile.get("form_structure_detail_fields")
+            if "form_structure_detail_fields" in profile
+            else profile.get("detail_fields")
+        )
+        common_fields = [
+            str(item or "").strip()
+            for item in (common_source or [])
+        ]
+        amount_fields = [str(item or "").strip() for item in profile.get("amount_fields") or []]
+        date_fields = [str(item or "").strip() for item in profile.get("date_fields") or []]
+        detail_fields = [
+            str(item or "").strip()
+            for item in (detail_source or [])
+        ]
+        status_field = str(profile.get("status_field") or "").strip()
+        note_field = str(profile.get("note_field") or "").strip()
+        attachment_field = str(profile.get("attachment_field") or "").strip()
+        allowed_fields = {
+            name
+            for name in common_fields + detail_fields
+            if name
+        }
+        if attachment_field:
+            detail_fields = [name for name in detail_fields if name != attachment_field]
+
+        def fields_for(items: list[str]) -> list[str]:
+            selected = unique(items)
+            if not allowed_fields:
+                return []
+            return [name for name in selected if name in allowed_fields]
+
+        slot_assigned_fields: set[str] = set()
+
+        def claim_slot_fields(items: list[str]) -> list[str]:
+            out: list[str] = []
+            for name in fields_for(items):
+                if name in slot_assigned_fields:
+                    continue
+                slot_assigned_fields.add(name)
+                out.append(name)
+            return out
+
+        def first_existing(items: list[str]) -> list[str]:
+            return fields_for(items)[:1]
+
+        identity_fields = claim_slot_fields([
+            "name", "document_no", "legacy_document_no", "invoice_no", "invoice_code",
+            "subject", "type", "source_kind", "direction", "category_id", "contract_type_id",
+        ])
+        source_fields_candidates = fields_for([
+            "entry_user_id", "entry_user_text", "entry_time", "handler_name",
+            "creator_name", "created_time", "archived", "legacy_status",
+        ])
+        relation_candidates = fields_for([
+            "project_id", "partner_id", "contract_id", "settlement_id", "payment_request_id",
+            "operation_strategy", "handler_id", "company_id", "budget_id", "analytic_id",
+        ] + [
+            name
+            for name in common_fields
+            if field_type(name) == "many2one"
+        ])
+        relation_fields = claim_slot_fields([
+            name
+            for name in relation_candidates
+            if name not in identity_fields and name not in source_fields_candidates
+        ])
+        term_fields = claim_slot_fields([
+            "date_start", "date_end", "engineering_category_text", "engineering_address",
+            "engineering_content", "affiliated_person", "contract_duration_text",
+            "contract_payment_method_text",
+        ])
+        attachment_fields = fields_for(["attachment_text", attachment_field])
+        amount_fields = claim_slot_fields(amount_fields)
+        status_fields = claim_slot_fields([
+            name
+            for name in fields_for([status_field, "document_status"] + date_fields)
+            if name not in source_fields_candidates
+        ])
+        collaboration_fields = claim_slot_fields(["approval_info", note_field] + attachment_fields)
+        detail_fields = claim_slot_fields(detail_fields)
+        source_fields = claim_slot_fields(source_fields_candidates)
+        field_roles: dict[str, dict[str, Any]] = {}
+
+        def assign_role(fields: list[str], *, role: str, slot: str, group: str) -> None:
+            for name in fields_for(fields):
+                if name not in field_roles:
+                    field_roles[name] = {"role": role, "slot": slot, "group": group}
+
+        assigned = set(
+            identity_fields
+            + relation_fields
+            + term_fields
+            + amount_fields
+            + status_fields
+            + collaboration_fields
+            + source_fields
+            + detail_fields
+        )
+        other_fact_fields = fields_for([
+            name
+            for name in common_fields
+            if name not in assigned and field_type(name) not in {"one2many", "many2many"}
+        ])
+        assign_role(identity_fields, role="identity", slot="primary_facts", group="identity")
+        assign_role(relation_fields, role="relation", slot="primary_facts", group="relations")
+        assign_role(term_fields, role="term", slot="primary_facts", group="terms")
+        assign_role(other_fact_fields, role="fact", slot="primary_facts", group="other_facts")
+        assign_role(amount_fields, role="amount", slot="amount_progress", group="amounts")
+        assign_role(status_fields, role="status_or_date", slot="amount_progress", group="status_dates")
+        assign_role(collaboration_fields, role="collaboration", slot="collaboration", group="approval_remarks")
+        assign_role(detail_fields, role="detail", slot="details_source", group="details")
+        assign_role(source_fields, role="provenance", slot="details_source", group="provenance")
+
+        summary_fields = fields_for(
+            [status_field]
+            + first_existing(["subject", "name", "document_no", "legacy_document_no", "invoice_no"])
+            + first_existing(["project_id", "partner_id", "contract_id", "settlement_id"])
+            + first_existing(["date_contract", "document_date", "invoice_date", "date_request", "date_receipt"])
+            + first_existing([
+                "visible_contract_amount", "amount_total", "amount", "settlement_amount",
+                "invoice_amount", "received_amount", "paid_amount",
+            ])
+            + attachment_fields
+        )
+
+        def group(name: str, title: str, fields: list[str], *, role: str = "") -> dict[str, Any]:
+            return {
+                "name": name,
+                "title": title,
+                "role": role or name,
+                "fieldRefs": fields_for(fields),
+            }
+
+        def slot(name: str, title: str, groups: list[dict[str, Any]], *, role: str = "") -> dict[str, Any]:
+            return {
+                "slot": name,
+                "title": title,
+                "role": role or name,
+                "groups": [item for item in groups if item.get("fieldRefs")],
+            }
+
+        slots = [
+            {
+                "slot": "overview",
+                "title": "办理总览",
+                "role": "overview",
+                "readonly": True,
+                "fieldRefs": summary_fields or fields_for(common_fields[:6]),
+            },
+            slot("primary_facts", "主业务事实", [
+                group("identity", "业务识别", identity_fields, role="identity"),
+                group("relations", "业务关系", relation_fields, role="relations"),
+                group("terms", "业务约定", term_fields, role="terms"),
+                group("other_facts", "其他事实", other_fact_fields, role="facts"),
+            ], role="facts"),
+            slot("amount_progress", "金额与进度", [
+                group("amounts", "金额信息", amount_fields, role="amounts"),
+                group("status_dates", "状态与日期", status_fields, role="status_dates"),
+            ], role="progress"),
+            slot("collaboration", "办理协作", [
+                group("approval_remarks", "审批与备注", collaboration_fields, role="collaboration"),
+            ], role="collaboration"),
+            slot("details_source", "明细与来源", [
+                group("details", "业务明细", detail_fields, role="details"),
+                group("provenance", "录入与归档", source_fields, role="provenance"),
+            ], role="provenance"),
+        ]
+        slots = [
+            item
+            for item in slots
+            if item.get("fieldRefs") or item.get("groups")
+        ]
+
+        return {
+            "source": "ui.contract.v2.form_structure_contract",
+            "structureVersion": "1.0",
+            "model": model,
+            "viewType": "form",
+            "mode": "business_task_form",
+            "layoutPolicy": "overview_then_task_slots",
+            "objectProfile": {
+                "model": model,
+                "kind": "business_form",
+                "factAuthority": "business_object_model_and_view",
+            },
+            "navigation": {"title": "业务办理"},
+            "slots": slots,
+            "fieldRoles": field_roles,
+            "sourceAuthority": {
+                "kind": self.SOURCE_KIND,
+                "runtime_carrier": "ui.contract.v2.form_structure_contract",
+                "projection_only": True,
+                "no_business_fact_authority": True,
+                "governed_form_structure": True,
+                "governance_source": dict(governance or {}),
+            },
+        }
 
     def _merge_business_list_profile(
         self,

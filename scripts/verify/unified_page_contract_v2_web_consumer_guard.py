@@ -9,6 +9,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 WEB_ROOT = ROOT / "frontend/apps/web/src"
+FORBIDDEN_FRONTEND_STRUCTURE_TITLE_TOKENS = (
+    "合同事实",
+    "工程与合同约定",
+    "合同识别",
+    "金额事实",
+)
 
 
 def read(path: str) -> str:
@@ -40,6 +46,7 @@ def main() -> int:
     meta_runtime_source = read("app/runtime/actionViewMetaRuntime.ts")
     navigation_runtime_source = read("app/action_runtime/useActionViewNavigationRuntime.ts")
     shape_runtime_source = read("app/action_runtime/useActionViewContractShapeRuntime.ts")
+    contract_form_source = read("pages/ContractFormPage.vue")
 
     require_tokens(errors, contract_source, "web v2 contract resolver", (
         "export type UnifiedPageContractV2ClientType = 'web_pc' | 'wx_mini' | 'harmony_h5'",
@@ -54,6 +61,7 @@ def main() -> int:
         "resolveUnifiedPageContractV2GlobalStatus",
         "collectUnifiedPageContractV2FieldContainerStatus",
         "resolveUnifiedPageContractV2PrimaryDataSource",
+        "formStructureContract?: Record<string, unknown>",
     ))
     require_tokens(errors, record_runtime_source, "web v2 record runtime", (
         "resolveUnifiedPageContractV2(contract)",
@@ -128,6 +136,14 @@ def main() -> int:
         "resolveUnifiedPageContractV2",
         "v2?.pageInfo?.model",
     ))
+    require_tokens(errors, contract_form_source, "web v2 form structure store selector", (
+        "resolveContractV2FormStructureContract",
+        "v2ShadowFormStructureContract",
+        "v2ShadowFormStructureSlotCount",
+    ))
+    for token in FORBIDDEN_FRONTEND_STRUCTURE_TITLE_TOKENS:
+        if token in contract_form_source or token in contract_source:
+            fail(errors, f"web v2 form structure must not hard-code business title: {token}")
 
     if errors:
         print("Unified Page Contract v2 web consumer guard failed:")

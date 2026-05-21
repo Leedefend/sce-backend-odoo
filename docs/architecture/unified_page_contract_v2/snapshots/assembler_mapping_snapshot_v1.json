@@ -18,7 +18,8 @@
       "sourceType": "ui.contract",
       "minContainerCount": 1,
       "minWidgetStatusCount": 2,
-      "minActionCount": 0
+      "minActionCount": 0,
+      "requiresFormStructureContract": true
     },
     "api_onchange": {
       "sourceType": "api.onchange",

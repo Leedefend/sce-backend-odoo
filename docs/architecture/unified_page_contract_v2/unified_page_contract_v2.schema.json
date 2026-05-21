@@ -32,6 +32,9 @@
     "runtimeContract": {
       "$ref": "#/$defs/runtimeContract"
     },
+    "formStructureContract": {
+      "$ref": "#/$defs/formStructureContract"
+    },
     "meta": {
       "$ref": "#/$defs/meta"
     }
@@ -268,6 +271,152 @@
         },
         "componentConfig": {
           "type": "object"
+        },
+        "formStructureRole": {
+          "$ref": "#/$defs/formStructureRole"
+        }
+      }
+    },
+    "formStructureContract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source",
+        "structureVersion",
+        "model",
+        "viewType",
+        "mode",
+        "layoutPolicy",
+        "objectProfile",
+        "navigation",
+        "slots",
+        "fieldRoles",
+        "sourceAuthority"
+      ],
+      "properties": {
+        "source": {
+          "const": "ui.contract.v2.form_structure_contract"
+        },
+        "structureVersion": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "viewType": {
+          "const": "form"
+        },
+        "mode": {
+          "type": "string"
+        },
+        "layoutPolicy": {
+          "type": "string"
+        },
+        "objectProfile": {
+          "type": "object"
+        },
+        "navigation": {
+          "type": "object"
+        },
+        "slots": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/formStructureSlot"
+          }
+        },
+        "fieldRoles": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/formStructureRole"
+          }
+        },
+        "sourceAuthority": {
+          "type": "object"
+        }
+      }
+    },
+    "formStructureSlot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "slot",
+        "title",
+        "role"
+      ],
+      "properties": {
+        "slot": {
+          "$ref": "#/$defs/id"
+        },
+        "title": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "readonly": {
+          "type": "boolean"
+        },
+        "fieldRefs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        },
+        "groups": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/formStructureGroup"
+          }
+        }
+      }
+    },
+    "formStructureGroup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "title",
+        "role",
+        "fieldRefs"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/id"
+        },
+        "title": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "fieldRefs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/id"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "formStructureRole": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "role",
+        "slot",
+        "group"
+      ],
+      "properties": {
+        "role": {
+          "type": "string"
+        },
+        "slot": {
+          "$ref": "#/$defs/id"
+        },
+        "group": {
+          "$ref": "#/$defs/id"
         }
       }
     },

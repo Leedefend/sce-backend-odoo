@@ -45,6 +45,8 @@
         'security/sc_scene_rules.xml',
         'data/sc_cap_config_admin_user.xml',
         'data/sc_scene_seed.xml',
+        'data/view_orchestration_contract_data.xml',
+        'data/view_orchestration_contract_generated_data.xml',
         'views/res_groups_menu_views.xml',
         'data/material_plan_tier_actions.xml',
         'data/payment_request_tier_actions.xml',

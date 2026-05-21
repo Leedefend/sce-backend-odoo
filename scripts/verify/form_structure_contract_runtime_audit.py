@@ -77,6 +77,14 @@ class ContractFormAuditRow:
     surface_lane: str
     domain_group: str
     status: str
+    boundary_status: str
+    has_form_structure_contract: str
+    governance_field_count: int
+    structure_field_count: int
+    layout_field_count: int
+    boundary_issue_count: int
+    boundary_issues: str
+    layout_outside_structure: str
     group_count: int
     semantic_group_count: int
     unlabeled_group_count: int
@@ -163,6 +171,64 @@ def iter_nodes(nodes: list[dict[str, Any]]):
                 stack.extend(item for item in value if isinstance(item, dict))
 
 
+def collect_layout_field_names(nodes: list[dict[str, Any]]) -> list[str]:
+    out: list[str] = []
+    seen: set[str] = set()
+    for node in iter_nodes(nodes):
+        if node_type(node) == "field":
+            name = _text(node.get("name") or node.get("fieldCode") or node.get("field_code"))
+            if name and name not in seen:
+                seen.add(name)
+                out.append(name)
+        widgets = node.get("widgetList") or node.get("widget_list")
+        if isinstance(widgets, list):
+            for widget in widgets:
+                if not isinstance(widget, dict):
+                    continue
+                name = _text(widget.get("fieldCode") or widget.get("field_code"))
+                if name and name not in seen:
+                    seen.add(name)
+                    out.append(name)
+    return out
+
+
+def collect_structure_field_refs(structure: dict[str, Any]) -> list[str]:
+    out: list[str] = []
+    seen: set[str] = set()
+
+    def add(name_raw: Any) -> None:
+        name = _text(name_raw)
+        if name and name not in seen:
+            seen.add(name)
+            out.append(name)
+
+    def visit(row: dict[str, Any]) -> None:
+        for item in row.get("fieldRefs") or row.get("field_refs") or row.get("fields") or []:
+            add(item)
+        groups = row.get("groups")
+        if isinstance(groups, list):
+            for group in groups:
+                if isinstance(group, dict):
+                    visit(group)
+
+    for slot in structure.get("slots") or []:
+        if isinstance(slot, dict):
+            visit(slot)
+    return out
+
+
+def runtime_boundary_issues(contract: dict[str, Any]) -> list[str]:
+    from odoo.addons.smart_core.core.unified_page_contract_v2_runtime import find_form_structure_contract_issues
+
+    return find_form_structure_contract_issues(contract)
+
+
+def is_runtime_control_field(name: str) -> bool:
+    from odoo.addons.smart_core.core.unified_page_contract_v2_runtime import _is_form_structure_runtime_control_field
+
+    return _is_form_structure_runtime_control_field(name)
+
+
 def node_type(node: dict[str, Any]) -> str:
     return _text(node.get("containerType") or node.get("type") or node.get("kind")).lower()
 
@@ -237,6 +303,14 @@ def audit_model(env, model: str) -> ContractFormAuditRow:
             surface_lane=surface_lane(model),
             domain_group=domain_group(model),
             status=f"error:{exc}",
+            boundary_status="contract_error",
+            has_form_structure_contract="false",
+            governance_field_count=0,
+            structure_field_count=0,
+            layout_field_count=0,
+            boundary_issue_count=1,
+            boundary_issues="contract_error",
+            layout_outside_structure="",
             group_count=0,
             semantic_group_count=0,
             unlabeled_group_count=0,
@@ -254,6 +328,25 @@ def audit_model(env, model: str) -> ContractFormAuditRow:
 
     layout = contract.get("layoutContract") if isinstance(contract.get("layoutContract"), dict) else {}
     tree = layout.get("containerTree") if isinstance(layout.get("containerTree"), list) else []
+    structure = contract.get("formStructureContract") if isinstance(contract.get("formStructureContract"), dict) else {}
+    structure_refs = collect_structure_field_refs(structure)
+    layout_fields = collect_layout_field_names(tree)
+    governance_source = (
+        structure.get("sourceAuthority", {}).get("governance_source", {})
+        if isinstance(structure.get("sourceAuthority"), dict)
+        else {}
+    )
+    governance_fields = (
+        governance_source.get("field_names") or governance_source.get("fieldNames") or []
+        if isinstance(governance_source, dict)
+        else []
+    )
+    boundary_issues = runtime_boundary_issues(contract)
+    layout_outside_structure = [
+        name
+        for name in layout_fields
+        if structure_refs and name not in structure_refs and not is_runtime_control_field(name)
+    ]
     nodes = list(iter_nodes(tree))
     groups = [node for node in nodes if node_type(node) == "group"]
     notebooks = [node for node in nodes if node_type(node) == "notebook"]
@@ -287,12 +380,27 @@ def audit_model(env, model: str) -> ContractFormAuditRow:
     if not timeline.get("enabled"):
         gaps.append("missing_timeline_contract")
 
+    if boundary_issues:
+        boundary_status = "boundary_violation"
+    elif structure:
+        boundary_status = "boundary_ok"
+    else:
+        boundary_status = "native_form_no_structure_contract"
+
     classification = "contract_standardized" if not gaps else "contract_needs_attention"
     return ContractFormAuditRow(
         model=model,
         surface_lane=surface_lane(model),
         domain_group=domain_group(model),
         status="ok",
+        boundary_status=boundary_status,
+        has_form_structure_contract=bool_text(bool(structure)),
+        governance_field_count=len([_text(item) for item in governance_fields if _text(item)]),
+        structure_field_count=len(structure_refs),
+        layout_field_count=len(layout_fields),
+        boundary_issue_count=len(boundary_issues),
+        boundary_issues=";".join(boundary_issues),
+        layout_outside_structure=";".join(layout_outside_structure),
         group_count=len(groups),
         semantic_group_count=len(semantic_groups),
         unlabeled_group_count=max(len(groups) - len(semantic_groups), 0),
@@ -349,8 +457,11 @@ def md_table(rows: list[dict[str, Any]], fields: list[str]) -> str:
 
 def write_markdown(path: Path, rows: list[ContractFormAuditRow], summary: dict[str, Any]) -> None:
     needs_attention = [asdict(row) for row in rows if row.classification != "contract_standardized"][:60]
+    boundary_violations = [asdict(row) for row in rows if row.boundary_status == "boundary_violation"][:80]
+    structured = [asdict(row) for row in rows if row.has_form_structure_contract == "true"][:80]
     projected = [asdict(row) for row in rows if row.projected_notebook_count or row.projected_semantic_group_count][:40]
     fields = ["domain_group", "model", "classification", "notebook_count", "page_count", "semantic_group_count", "gaps"]
+    boundary_fields = ["domain_group", "model", "boundary_status", "governance_field_count", "structure_field_count", "layout_field_count", "boundary_issues", "layout_outside_structure"]
     text = f"""# v2 表单结构运行态契约审计
 
 ## 摘要
@@ -359,6 +470,9 @@ def write_markdown(path: Path, rows: list[ContractFormAuditRow], summary: dict[s
 - 已满足 contract 结构标准：{summary["by_classification"].get("contract_standardized", 0)}
 - 仍需关注：{summary["by_classification"].get("contract_needs_attention", 0)}
 - 契约错误：{summary["by_classification"].get("contract_error", 0)}
+- 边界违规：{summary["by_boundary_status"].get("boundary_violation", 0)}
+- 已启用结构合同且边界通过：{summary["by_boundary_status"].get("boundary_ok", 0)}
+- 未启用结构合同，保留原生表单：{summary["by_boundary_status"].get("native_form_no_structure_contract", 0)}
 - 契约默认页签投影覆盖：{summary["projected_notebook_models"]}
 - 契约分组语义投影覆盖：{summary["projected_semantic_group_models"]}
 - 附件契约覆盖：{summary["attachment_enabled_models"]}
@@ -369,6 +483,14 @@ def write_markdown(path: Path, rows: list[ContractFormAuditRow], summary: dict[s
 ## 仍需关注
 
 {md_table(needs_attention, fields)}
+
+## 边界违规
+
+{md_table(boundary_violations, boundary_fields)}
+
+## 已启用结构合同样本
+
+{md_table(structured, boundary_fields)}
 
 ## 契约投影覆盖样本
 
@@ -392,9 +514,11 @@ def main(argv: list[str] | None = None) -> int:
     rows = [audit_model(runtime_env, model) for model in models]
     rows.sort(key=lambda row: (row.classification, row.domain_group, row.model))
     by_classification = Counter(row.classification for row in rows)
+    by_boundary_status = Counter(row.boundary_status for row in rows)
     summary = {
         "total_models": len(rows),
         "by_classification": dict(by_classification),
+        "by_boundary_status": dict(by_boundary_status),
         "projected_notebook_models": sum(1 for row in rows if row.projected_notebook_count > 0),
         "projected_semantic_group_models": sum(1 for row in rows if row.projected_semantic_group_count > 0),
         "attachment_enabled_models": sum(1 for row in rows if row.attachments_enabled == "true"),

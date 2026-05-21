@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="business_config_contract_income_contract_form_structure" model="ui.business.config.contract">
+        <field name="name">income_contract_form_structure_v1</field>
+        <field name="model">construction.contract.income</field>
+        <field name="view_type">form</field>
+        <field name="priority">20</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval="{
+            'view_orchestration': {
+                'views': {
+                    'form': {
+                        'fields': [
+                            {'name': 'state', 'sequence': 10},
+                            {'name': 'subject', 'sequence': 20},
+                            {'name': 'project_id', 'sequence': 30},
+                            {'name': 'date_contract', 'sequence': 40},
+                            {'name': 'visible_contract_amount', 'sequence': 50},
+                            {'name': 'attachment_text', 'sequence': 60},
+
+                            {'name': 'name', 'sequence': 110},
+                            {'name': 'legacy_contract_no', 'sequence': 120},
+                            {'name': 'legacy_document_no', 'sequence': 130},
+                            {'name': 'document_status', 'sequence': 140},
+                            {'name': 'partner_id', 'sequence': 210},
+                            {'name': 'operation_strategy', 'sequence': 220},
+                            {'name': 'category_id', 'sequence': 230},
+                            {'name': 'contract_type_id', 'sequence': 240},
+                            {'name': 'engineering_category_text', 'sequence': 310},
+                            {'name': 'engineering_address', 'sequence': 320},
+                            {'name': 'engineering_content', 'sequence': 330},
+                            {'name': 'affiliated_person', 'sequence': 340},
+                            {'name': 'contract_duration_text', 'sequence': 350},
+                            {'name': 'contract_payment_method_text', 'sequence': 360},
+
+                            {'name': 'tax_id', 'sequence': 410},
+                            {'name': 'legacy_contract_amount', 'sequence': 420},
+                            {'name': 'amount_untaxed', 'sequence': 430},
+                            {'name': 'amount_tax', 'sequence': 440},
+                            {'name': 'amount_total', 'sequence': 450},
+                            {'name': 'amount_final', 'sequence': 460},
+                            {'name': 'settlement_amount', 'sequence': 470},
+                            {'name': 'invoice_amount', 'sequence': 480},
+                            {'name': 'uninvoiced_amount', 'sequence': 490},
+                            {'name': 'received_amount', 'sequence': 500},
+                            {'name': 'unreceived_amount', 'sequence': 510},
+                            {'name': 'visible_invoice_amount', 'sequence': 520},
+                            {'name': 'visible_received_amount', 'sequence': 530},
+                            {'name': 'visible_unreceived_amount', 'sequence': 540},
+
+                            {'name': 'approval_info', 'sequence': 610},
+                            {'name': 'note', 'sequence': 620},
+                            {'name': 'line_ids', 'sequence': 710},
+                            {'name': 'entry_user_id', 'sequence': 810},
+                            {'name': 'entry_user_text', 'sequence': 820},
+                            {'name': 'entry_time', 'sequence': 830},
+                            {'name': 'legacy_status', 'sequence': 840}
+                        ]
+                    }
+                }
+            }
+        }"/>
+    </record>
+</odoo>

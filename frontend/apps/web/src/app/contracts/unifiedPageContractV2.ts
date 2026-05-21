@@ -103,6 +103,7 @@ export type UnifiedPageContractV2 = {
     dataMeta?: Record<string, unknown>;
   };
   runtimeContract: Record<string, unknown>;
+  formStructureContract?: Record<string, unknown>;
   meta: Record<string, unknown>;
 };
 

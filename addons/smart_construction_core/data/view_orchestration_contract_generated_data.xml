@@ -1,0 +1,1301 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="business_config_contract_construction_contract_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">construction_contract_form_structure_generated_v1</field>
+        <field name="model">construction.contract</field>
+        <field name="view_type">form</field>
+        <field name="priority">60</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "tax_id", "sequence": 20}, {"name": "visible_contract_amount", "sequence": 30}, {"name": "amount_untaxed", "sequence": 40}, {"name": "amount_tax", "sequence": 50}, {"name": "amount_total", "sequence": 60}, {"name": "line_amount_total", "sequence": 70}, {"name": "amount_change", "sequence": 80}, {"name": "amount_final", "sequence": 90}, {"name": "settlement_amount", "sequence": 100}, {"name": "invoice_amount", "sequence": 110}, {"name": "uninvoiced_amount", "sequence": 120}, {"name": "received_amount", "sequence": 130}, {"name": "unreceived_amount", "sequence": 140}, {"name": "visible_invoice_amount", "sequence": 150}, {"name": "visible_received_amount", "sequence": 160}, {"name": "visible_unreceived_amount", "sequence": 170}, {"name": "contract_unreceived_amount", "sequence": 180}, {"name": "paid_amount", "sequence": 190}, {"name": "unpaid_amount", "sequence": 200}, {"name": "approval_info", "sequence": 210}, {"name": "attachment_text", "sequence": 220}, {"name": "name", "sequence": 230}, {"name": "legacy_contract_no", "sequence": 240}, {"name": "legacy_document_no", "sequence": 250}, {"name": "document_status", "sequence": 260}, {"name": "subject", "sequence": 270}, {"name": "type", "sequence": 280}, {"name": "project_id", "sequence": 290}, {"name": "operation_strategy", "sequence": 300}, {"name": "partner_id", "sequence": 310}, {"name": "category_id", "sequence": 320}, {"name": "contract_type_id", "sequence": 330}, {"name": "engineering_address", "sequence": 340}, {"name": "engineering_category_text", "sequence": 350}, {"name": "affiliated_person", "sequence": 360}, {"name": "engineering_content", "sequence": 370}, {"name": "contract_duration_text", "sequence": 380}, {"name": "contract_payment_method_text", "sequence": 390}, {"name": "company_id", "sequence": 400}, {"name": "currency_id", "sequence": 410}, {"name": "date_contract", "sequence": 420}, {"name": "date_start", "sequence": 430}, {"name": "date_end", "sequence": 440}, {"name": "budget_id", "sequence": 450}, {"name": "analytic_id", "sequence": 460}, {"name": "handler_id", "sequence": 470}, {"name": "entry_user_id", "sequence": 480}, {"name": "entry_user_text", "sequence": 490}, {"name": "entry_time", "sequence": 500}, {"name": "legacy_status", "sequence": 510}, {"name": "line_ids", "sequence": 520}, {"name": "note", "sequence": 530}]}}}}'/>
+    </record>
+    <record id="business_config_contract_construction_contract_expense_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">construction_contract_expense_form_structure_generated_v1</field>
+        <field name="model">construction.contract.expense</field>
+        <field name="view_type">form</field>
+        <field name="priority">61</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "contract_id", "sequence": 20}, {"name": "tax_id", "sequence": 30}, {"name": "visible_contract_amount", "sequence": 40}, {"name": "amount_untaxed", "sequence": 50}, {"name": "amount_tax", "sequence": 60}, {"name": "amount_total", "sequence": 70}, {"name": "amount_final", "sequence": 80}, {"name": "settlement_amount", "sequence": 90}, {"name": "paid_amount", "sequence": 100}, {"name": "unpaid_amount", "sequence": 110}, {"name": "name", "sequence": 120}, {"name": "legacy_contract_no", "sequence": 130}, {"name": "legacy_document_no", "sequence": 140}, {"name": "document_status", "sequence": 150}, {"name": "subject", "sequence": 160}, {"name": "type", "sequence": 170}, {"name": "project_id", "sequence": 180}, {"name": "operation_strategy", "sequence": 190}, {"name": "partner_id", "sequence": 200}, {"name": "category_id", "sequence": 210}, {"name": "contract_type_id", "sequence": 220}, {"name": "engineering_address", "sequence": 230}, {"name": "engineering_category_text", "sequence": 240}, {"name": "engineering_content", "sequence": 250}, {"name": "company_id", "sequence": 260}, {"name": "currency_id", "sequence": 270}, {"name": "date_contract", "sequence": 280}, {"name": "date_start", "sequence": 290}, {"name": "date_end", "sequence": 300}, {"name": "budget_id", "sequence": 310}, {"name": "analytic_id", "sequence": 320}, {"name": "handler_id", "sequence": 330}, {"name": "entry_user_id", "sequence": 340}, {"name": "entry_user_text", "sequence": 350}, {"name": "entry_time", "sequence": 360}, {"name": "legacy_status", "sequence": 370}, {"name": "line_ids", "sequence": 380}, {"name": "approval_info", "sequence": 390}, {"name": "attachment_text", "sequence": 400}, {"name": "note", "sequence": 410}]}}}}'/>
+    </record>
+    <record id="business_config_contract_construction_work_breakdown_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">construction_work_breakdown_form_structure_generated_v1</field>
+        <field name="model">construction.work.breakdown</field>
+        <field name="view_type">form</field>
+        <field name="priority">62</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "project_id", "sequence": 10}, {"name": "company_id", "sequence": 20}, {"name": "level_type", "sequence": 30}, {"name": "parent_id", "sequence": 40}, {"name": "code", "sequence": 50}, {"name": "name", "sequence": 60}, {"name": "boq_quantity_total", "sequence": 70}, {"name": "boq_amount_total", "sequence": 80}, {"name": "currency_id", "sequence": 90}, {"name": "child_ids", "sequence": 100}, {"name": "boq_line_ids", "sequence": 110}, {"name": "task_ids", "sequence": 120}]}}}}'/>
+    </record>
+    <record id="business_config_contract_payment_ledger_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">payment_ledger_form_structure_generated_v1</field>
+        <field name="model">payment.ledger</field>
+        <field name="view_type">form</field>
+        <field name="priority">63</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "note", "sequence": 10}, {"name": "payment_request_id", "sequence": 20}, {"name": "project_id", "sequence": 30}, {"name": "operation_strategy", "sequence": 40}, {"name": "partner_id", "sequence": 50}, {"name": "amount", "sequence": 60}, {"name": "currency_id", "sequence": 70}, {"name": "paid_at", "sequence": 80}, {"name": "ref", "sequence": 90}]}}}}'/>
+    </record>
+    <record id="business_config_contract_payment_request_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">payment_request_form_structure_generated_v1</field>
+        <field name="model">payment.request</field>
+        <field name="view_type">form</field>
+        <field name="priority">64</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "settlement_id", "sequence": 20}, {"name": "settlement_amount_total", "sequence": 30}, {"name": "settlement_paid_amount", "sequence": 40}, {"name": "settlement_amount_payable", "sequence": 50}, {"name": "is_overpay_risk", "sequence": 60}, {"name": "settlement_remaining_amount", "sequence": 70}, {"name": "settlement_amount_insufficient", "sequence": 80}, {"name": "settlement_match_blocked", "sequence": 90}, {"name": "settlement_match_warn", "sequence": 100}, {"name": "settlement_compliance_message", "sequence": 110}, {"name": "note", "sequence": 120}, {"name": "attachment_ids", "sequence": 130}, {"name": "creator_name", "sequence": 140}, {"name": "created_time", "sequence": 150}, {"name": "outflow_line_ids", "sequence": 160}, {"name": "receipt_invoice_line_ids", "sequence": 170}, {"name": "ledger_line_ids", "sequence": 180}, {"name": "name", "sequence": 190}, {"name": "type", "sequence": 200}, {"name": "project_id", "sequence": 210}, {"name": "operation_strategy", "sequence": 220}, {"name": "contract_id", "sequence": 230}, {"name": "partner_id", "sequence": 240}, {"name": "amount", "sequence": 250}, {"name": "currency_id", "sequence": 260}, {"name": "date_request", "sequence": 270}, {"name": "paid_amount_total", "sequence": 280}, {"name": "unpaid_amount", "sequence": 290}, {"name": "is_fully_paid", "sequence": 300}]}}}}'/>
+    </record>
+    <record id="business_config_contract_payment_request_line_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">payment_request_line_form_structure_generated_v1</field>
+        <field name="model">payment.request.line</field>
+        <field name="view_type">form</field>
+        <field name="priority">65</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "import_batch", "sequence": 10}, {"name": "amount", "sequence": 20}, {"name": "paid_before_amount", "sequence": 30}, {"name": "remaining_amount", "sequence": 40}, {"name": "current_pay_amount", "sequence": 50}, {"name": "note", "sequence": 60}, {"name": "request_id", "sequence": 70}, {"name": "project_id", "sequence": 80}, {"name": "partner_id", "sequence": 90}, {"name": "contract_id", "sequence": 100}, {"name": "source_document_no", "sequence": 110}, {"name": "source_line_type", "sequence": 120}, {"name": "source_counterparty_text", "sequence": 130}, {"name": "source_contract_no", "sequence": 140}]}}}}'/>
+    </record>
+    <record id="business_config_contract_project_boq_line_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">project_boq_line_form_structure_generated_v1</field>
+        <field name="model">project.boq.line</field>
+        <field name="view_type">form</field>
+        <field name="priority">66</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "project_id", "sequence": 10}, {"name": "section_type", "sequence": 20}, {"name": "category", "sequence": 30}, {"name": "is_provisional", "sequence": 40}, {"name": "code", "sequence": 50}, {"name": "name", "sequence": 60}, {"name": "spec", "sequence": 70}, {"name": "parent_id", "sequence": 80}, {"name": "line_type", "sequence": 90}, {"name": "level", "sequence": 100}, {"name": "hierarchy_code", "sequence": 110}, {"name": "display_order", "sequence": 120}, {"name": "is_group", "sequence": 130}, {"name": "single_name", "sequence": 140}, {"name": "unit_name", "sequence": 150}, {"name": "major_name", "sequence": 160}, {"name": "code_division", "sequence": 170}, {"name": "code_subdivision", "sequence": 180}, {"name": "source_type", "sequence": 190}, {"name": "version", "sequence": 200}, {"name": "structure_id", "sequence": 210}, {"name": "task_id", "sequence": 220}, {"name": "uom_id", "sequence": 230}, {"name": "quantity", "sequence": 240}, {"name": "price", "sequence": 250}, {"name": "amount", "sequence": 260}, {"name": "amount_leaf", "sequence": 270}, {"name": "cost_item_id", "sequence": 280}, {"name": "remark", "sequence": 290}, {"name": "child_ids", "sequence": 300}, {"name": "has_warning", "sequence": 310}, {"name": "warning_message", "sequence": 320}]}}}}'/>
+    </record>
+    <record id="business_config_contract_project_budget_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">project_budget_form_structure_generated_v1</field>
+        <field name="model">project.budget</field>
+        <field name="view_type">form</field>
+        <field name="priority">67</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "is_active", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "target_type", "sequence": 30}, {"name": "budget_kind", "sequence": 40}, {"name": "project_id", "sequence": 50}, {"name": "version", "sequence": 60}, {"name": "version_no", "sequence": 70}, {"name": "version_date", "sequence": 80}, {"name": "is_baseline", "sequence": 90}, {"name": "source_channel", "sequence": 100}, {"name": "amount_cost_target", "sequence": 110}, {"name": "amount_revenue_target", "sequence": 120}, {"name": "measurement_note", "sequence": 130}, {"name": "line_ids", "sequence": 140}]}}}}'/>
+    </record>
+    <record id="business_config_contract_project_budget_cost_alloc_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">project_budget_cost_alloc_form_structure_generated_v1</field>
+        <field name="model">project.budget.cost.alloc</field>
+        <field name="view_type">form</field>
+        <field name="priority">68</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "project_id", "sequence": 10}, {"name": "budget_boq_line_id", "sequence": 20}, {"name": "cost_code_id", "sequence": 30}, {"name": "ratio", "sequence": 40}, {"name": "amount_budget", "sequence": 50}, {"name": "note", "sequence": 60}]}}}}'/>
+    </record>
+    <record id="business_config_contract_project_cost_code_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">project_cost_code_form_structure_generated_v1</field>
+        <field name="model">project.cost.code</field>
+        <field name="view_type">form</field>
+        <field name="priority">69</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "name", "sequence": 10}, {"name": "code", "sequence": 20}, {"name": "parent_id", "sequence": 30}, {"name": "type", "sequence": 40}, {"name": "level", "sequence": 50}, {"name": "note", "sequence": 60}]}}}}'/>
+    </record>
+    <record id="business_config_contract_project_cost_ledger_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">project_cost_ledger_form_structure_generated_v1</field>
+        <field name="model">project.cost.ledger</field>
+        <field name="view_type">form</field>
+        <field name="priority">70</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "note", "sequence": 10}, {"name": "project_id", "sequence": 20}, {"name": "date", "sequence": 30}, {"name": "period", "sequence": 40}, {"name": "wbs_id", "sequence": 50}, {"name": "cost_code_id", "sequence": 60}, {"name": "qty", "sequence": 70}, {"name": "uom_id", "sequence": 80}, {"name": "amount", "sequence": 90}, {"name": "partner_id", "sequence": 100}]}}}}'/>
+    </record>
+    <record id="business_config_contract_project_dictionary_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">project_dictionary_form_structure_generated_v1</field>
+        <field name="model">project.dictionary</field>
+        <field name="view_type">form</field>
+        <field name="priority">71</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "code", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "parent_id", "sequence": 30}, {"name": "uom_id", "sequence": 40}, {"name": "price_total", "sequence": 50}, {"name": "price_direct", "sequence": 60}, {"name": "price_labor", "sequence": 70}, {"name": "price_material", "sequence": 80}, {"name": "price_machine", "sequence": 90}, {"name": "amount_misc", "sequence": 100}, {"name": "rate_misc", "sequence": 110}, {"name": "work_content", "sequence": 120}]}}}}'/>
+    </record>
+    <record id="business_config_contract_project_funding_baseline_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">project_funding_baseline_form_structure_generated_v1</field>
+        <field name="model">project.funding.baseline</field>
+        <field name="view_type">form</field>
+        <field name="priority">72</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "project_id", "sequence": 20}, {"name": "total_amount", "sequence": 30}, {"name": "currency_id", "sequence": 40}, {"name": "attachment_ids", "sequence": 50}]}}}}'/>
+    </record>
+    <record id="business_config_contract_project_material_plan_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">project_material_plan_form_structure_generated_v1</field>
+        <field name="model">project.material.plan</field>
+        <field name="view_type">form</field>
+        <field name="priority">73</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "project_id", "sequence": 30}, {"name": "date_plan", "sequence": 40}, {"name": "submitted_by", "sequence": 50}, {"name": "submitted_at", "sequence": 60}, {"name": "approved_by", "sequence": 70}, {"name": "approved_at", "sequence": 80}, {"name": "line_ids", "sequence": 90}, {"name": "attachment_ids", "sequence": 100}]}}}}'/>
+    </record>
+    <record id="business_config_contract_project_milestone_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">project_milestone_form_structure_generated_v1</field>
+        <field name="model">project.milestone</field>
+        <field name="view_type">form</field>
+        <field name="priority">74</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "project_id", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "deadline", "sequence": 30}, {"name": "is_reached", "sequence": 40}]}}}}'/>
+    </record>
+    <record id="business_config_contract_project_profit_compare_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">project_profit_compare_form_structure_generated_v1</field>
+        <field name="model">project.profit.compare</field>
+        <field name="view_type">form</field>
+        <field name="priority">75</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "project_id", "sequence": 10}, {"name": "period", "sequence": 20}, {"name": "wbs_id", "sequence": 30}, {"name": "currency_id", "sequence": 40}, {"name": "revenue_budget_amount", "sequence": 50}, {"name": "revenue_actual_amount", "sequence": 60}, {"name": "gross_profit_budget", "sequence": 70}, {"name": "cost_budget_amount", "sequence": 80}, {"name": "cost_actual_amount", "sequence": 90}, {"name": "gross_profit_actual", "sequence": 100}]}}}}'/>
+    </record>
+    <record id="business_config_contract_project_progress_entry_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">project_progress_entry_form_structure_generated_v1</field>
+        <field name="model">project.progress.entry</field>
+        <field name="view_type">form</field>
+        <field name="priority">76</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "project_id", "sequence": 20}, {"name": "wbs_id", "sequence": 30}, {"name": "date", "sequence": 40}, {"name": "qty_done", "sequence": 50}, {"name": "qty_cum", "sequence": 60}, {"name": "note", "sequence": 70}, {"name": "attachment_ids", "sequence": 80}]}}}}'/>
+    </record>
+    <record id="business_config_contract_project_project_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">project_project_form_structure_generated_v1</field>
+        <field name="model">project.project</field>
+        <field name="view_type">form</field>
+        <field name="priority">77</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "company_id", "sequence": 10}, {"name": "analytic_account_id", "sequence": 20}, {"name": "lifecycle_state", "sequence": 30}, {"name": "message_needaction", "sequence": 40}, {"name": "display_name", "sequence": 50}, {"name": "name", "sequence": 60}, {"name": "label_tasks", "sequence": 70}, {"name": "partner_id", "sequence": 80}, {"name": "tag_ids", "sequence": 90}, {"name": "user_id", "sequence": 100}, {"name": "date_start", "sequence": 110}, {"name": "date", "sequence": 120}, {"name": "description", "sequence": 130}, {"name": "task_ids", "sequence": 140}, {"name": "collaborator_ids", "sequence": 150}]}}}}'/>
+    </record>
+    <record id="business_config_contract_project_project_stage_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">project_project_stage_form_structure_generated_v1</field>
+        <field name="model">project.project.stage</field>
+        <field name="view_type">form</field>
+        <field name="priority">78</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "name", "sequence": 10}, {"name": "mail_template_id", "sequence": 20}, {"name": "sms_template_id", "sequence": 30}, {"name": "fold", "sequence": 40}, {"name": "company_id", "sequence": 50}]}}}}'/>
+    </record>
+    <record id="business_config_contract_project_tags_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">project_tags_form_structure_generated_v1</field>
+        <field name="model">project.tags</field>
+        <field name="view_type">form</field>
+        <field name="priority">79</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "name", "sequence": 10}]}}}}'/>
+    </record>
+    <record id="business_config_contract_project_task_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">project_task_form_structure_generated_v1</field>
+        <field name="model">project.task</field>
+        <field name="view_type">form</field>
+        <field name="priority">80</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "name", "sequence": 10}, {"name": "project_id", "sequence": 20}, {"name": "stage_id", "sequence": 30}, {"name": "sc_state", "sequence": 40}, {"name": "user_ids", "sequence": 50}, {"name": "date_deadline", "sequence": 60}, {"name": "priority", "sequence": 70}, {"name": "description", "sequence": 80}]}}}}'/>
+    </record>
+    <record id="business_config_contract_project_task_type_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">project_task_type_form_structure_generated_v1</field>
+        <field name="model">project.task.type</field>
+        <field name="view_type">form</field>
+        <field name="priority">81</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "name", "sequence": 10}, {"name": "user_id", "sequence": 20}, {"name": "sms_template_id", "sequence": 30}, {"name": "mail_template_id", "sequence": 40}, {"name": "fold", "sequence": 50}, {"name": "project_ids", "sequence": 60}]}}}}'/>
+    </record>
+    <record id="business_config_contract_project_update_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">project_update_form_structure_generated_v1</field>
+        <field name="model">project.update</field>
+        <field name="view_type">form</field>
+        <field name="priority">82</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "name", "sequence": 10}, {"name": "project_id", "sequence": 20}, {"name": "status", "sequence": 30}, {"name": "progress", "sequence": 40}, {"name": "user_id", "sequence": 50}, {"name": "date", "sequence": 60}, {"name": "description", "sequence": 70}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_account_income_expense_summary_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_account_income_expense_summary_form_structure_generated_v1</field>
+        <field name="model">sc.account.income.expense.summary</field>
+        <field name="view_type">form</field>
+        <field name="priority">83</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "income_amount", "sequence": 10}, {"name": "expense_amount", "sequence": 20}, {"name": "cumulative_receipt_amount", "sequence": 30}, {"name": "cumulative_expense_amount", "sequence": 40}, {"name": "account_transfer_amount", "sequence": 50}, {"name": "coverage_note", "sequence": 60}, {"name": "row_level", "sequence": 70}, {"name": "account_type", "sequence": 80}, {"name": "account_name", "sequence": 90}, {"name": "account_no", "sequence": 100}, {"name": "bank_name", "sequence": 110}, {"name": "project_id", "sequence": 120}, {"name": "opening_balance", "sequence": 130}, {"name": "current_account_balance", "sequence": 140}, {"name": "current_bank_balance", "sequence": 150}, {"name": "bank_system_difference", "sequence": 160}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_approval_policy_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_approval_policy_form_structure_generated_v1</field>
+        <field name="model">sc.approval.policy</field>
+        <field name="view_type">form</field>
+        <field name="priority">84</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "name", "sequence": 10}, {"name": "target_model", "sequence": 20}, {"name": "approval_required", "sequence": 30}, {"name": "trigger", "sequence": 40}, {"name": "mode", "sequence": 50}, {"name": "manager_scope_key", "sequence": 60}, {"name": "runtime_state", "sequence": 70}, {"name": "company_id", "sequence": 80}, {"name": "manager_group_id", "sequence": 90}, {"name": "step_ids", "sequence": 100}, {"name": "note", "sequence": 110}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_approval_scope_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_approval_scope_form_structure_generated_v1</field>
+        <field name="model">sc.approval.scope</field>
+        <field name="view_type">form</field>
+        <field name="priority">85</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "user_ids", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "scope_key", "sequence": 30}, {"name": "group_id", "sequence": 40}, {"name": "note", "sequence": 50}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_ar_ap_company_summary_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_ar_ap_company_summary_form_structure_generated_v1</field>
+        <field name="model">sc.ar.ap.company.summary</field>
+        <field name="view_type">form</field>
+        <field name="priority">86</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "project_name", "sequence": 10}, {"name": "project_id", "sequence": 20}, {"name": "payable_pricing_method_text", "sequence": 30}, {"name": "actual_available_balance", "sequence": 40}, {"name": "income_contract_amount", "sequence": 50}, {"name": "output_invoice_amount", "sequence": 60}, {"name": "receipt_amount", "sequence": 70}, {"name": "receivable_unpaid_amount", "sequence": 80}, {"name": "invoiced_unreceived_amount", "sequence": 90}, {"name": "received_uninvoiced_amount", "sequence": 100}, {"name": "payable_contract_amount", "sequence": 110}, {"name": "input_invoice_amount", "sequence": 120}, {"name": "paid_amount", "sequence": 130}, {"name": "payable_unpaid_amount", "sequence": 140}, {"name": "paid_uninvoiced_amount", "sequence": 150}, {"name": "output_tax_amount", "sequence": 160}, {"name": "input_tax_amount", "sequence": 170}, {"name": "deduction_tax_amount", "sequence": 180}, {"name": "output_surcharge_amount", "sequence": 190}, {"name": "input_surcharge_amount", "sequence": 200}, {"name": "deduction_surcharge_amount", "sequence": 210}, {"name": "self_funding_income_amount", "sequence": 220}, {"name": "self_funding_refund_amount", "sequence": 230}, {"name": "self_funding_unreturned_amount", "sequence": 240}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_ar_ap_project_summary_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_ar_ap_project_summary_form_structure_generated_v1</field>
+        <field name="model">sc.ar.ap.project.summary</field>
+        <field name="view_type">form</field>
+        <field name="priority">87</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "project_name", "sequence": 10}, {"name": "project_id", "sequence": 20}, {"name": "partner_name", "sequence": 30}, {"name": "payable_pricing_method_text", "sequence": 40}, {"name": "actual_available_balance", "sequence": 50}, {"name": "income_contract_amount", "sequence": 60}, {"name": "output_invoice_amount", "sequence": 70}, {"name": "receipt_amount", "sequence": 80}, {"name": "receivable_unpaid_amount", "sequence": 90}, {"name": "invoiced_unreceived_amount", "sequence": 100}, {"name": "received_uninvoiced_amount", "sequence": 110}, {"name": "payable_contract_amount", "sequence": 120}, {"name": "input_invoice_amount", "sequence": 130}, {"name": "paid_amount", "sequence": 140}, {"name": "payable_unpaid_amount", "sequence": 150}, {"name": "paid_uninvoiced_amount", "sequence": 160}, {"name": "output_tax_amount", "sequence": 170}, {"name": "input_tax_amount", "sequence": 180}, {"name": "deduction_tax_amount", "sequence": 190}, {"name": "output_surcharge_amount", "sequence": 200}, {"name": "input_surcharge_amount", "sequence": 210}, {"name": "deduction_surcharge_amount", "sequence": 220}, {"name": "self_funding_income_amount", "sequence": 230}, {"name": "self_funding_refund_amount", "sequence": 240}, {"name": "self_funding_unreturned_amount", "sequence": 250}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_attendance_checkin_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_attendance_checkin_form_structure_generated_v1</field>
+        <field name="model">sc.attendance.checkin</field>
+        <field name="view_type">form</field>
+        <field name="priority">88</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "project_id", "sequence": 30}, {"name": "attendance_date", "sequence": 40}, {"name": "labor_team", "sequence": 50}, {"name": "contractor_id", "sequence": 60}, {"name": "recorder_id", "sequence": 70}, {"name": "attendance_qty", "sequence": 80}, {"name": "work_hours", "sequence": 90}, {"name": "work_content", "sequence": 100}, {"name": "note", "sequence": 110}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_business_entity_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_business_entity_form_structure_generated_v1</field>
+        <field name="model">sc.business.entity</field>
+        <field name="view_type">form</field>
+        <field name="priority">89</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "name", "sequence": 10}, {"name": "company_id", "sequence": 20}, {"name": "partner_id", "sequence": 30}, {"name": "entity_type", "sequence": 40}, {"name": "mapping_state", "sequence": 50}, {"name": "map_ids", "sequence": 60}, {"name": "note", "sequence": 70}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_check_standard_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_check_standard_form_structure_generated_v1</field>
+        <field name="model">sc.check.standard</field>
+        <field name="view_type">form</field>
+        <field name="priority">90</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "item_ids", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "standard_type", "sequence": 30}, {"name": "scope", "sequence": 40}, {"name": "company_id", "sequence": 50}, {"name": "project_id", "sequence": 60}, {"name": "parent_id", "sequence": 70}, {"name": "default_rechecker_id", "sequence": 80}, {"name": "cc_user_ids", "sequence": 90}, {"name": "effective_from", "sequence": 100}, {"name": "effective_to", "sequence": 110}, {"name": "applies_building_room", "sequence": 120}, {"name": "applies_road_coordinate", "sequence": 130}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_check_standard_item_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_check_standard_item_form_structure_generated_v1</field>
+        <field name="model">sc.check.standard.item</field>
+        <field name="view_type">form</field>
+        <field name="priority">91</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "standard_id", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "requirement", "sequence": 30}, {"name": "control_type", "sequence": 40}, {"name": "bottom_line", "sequence": 50}, {"name": "default_pass", "sequence": 60}, {"name": "photo_required", "sequence": 70}, {"name": "measurement_method", "sequence": 80}, {"name": "acceptance_flow", "sequence": 90}, {"name": "score_weight", "sequence": 100}, {"name": "tag", "sequence": 110}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_company_operation_summary_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_company_operation_summary_form_structure_generated_v1</field>
+        <field name="model">sc.company.operation.summary</field>
+        <field name="view_type">form</field>
+        <field name="priority">92</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "period_label", "sequence": 10}, {"name": "period_year", "sequence": 20}, {"name": "period_month", "sequence": 30}, {"name": "company_id", "sequence": 40}, {"name": "coverage_note", "sequence": 50}, {"name": "revenue_amount", "sequence": 60}, {"name": "deduction_management_fee_amount", "sequence": 70}, {"name": "deduction_enterprise_income_tax_amount", "sequence": 80}, {"name": "deduction_vat_surcharge_amount", "sequence": 90}, {"name": "deduction_vat_surcharge_nonrefundable_amount", "sequence": 100}, {"name": "company_interest_income_amount", "sequence": 110}, {"name": "bid_document_fee_income_amount", "sequence": 120}, {"name": "appearance_fee_income_amount", "sequence": 130}, {"name": "certificate_fee_income_amount", "sequence": 140}, {"name": "company_operation_income_amount", "sequence": 150}, {"name": "income_amount", "sequence": 160}, {"name": "reimbursement_amount", "sequence": 170}, {"name": "salary_amount", "sequence": 180}, {"name": "employee_social_security_amount", "sequence": 190}, {"name": "certificate_social_security_amount", "sequence": 200}, {"name": "deduction_refund_surcharge_amount", "sequence": 210}, {"name": "company_enterprise_income_tax_expense_amount", "sequence": 220}, {"name": "company_personal_income_tax_expense_amount", "sequence": 230}, {"name": "company_vat_surcharge_tax_bureau_amount", "sequence": 240}, {"name": "tender_fee_expense_amount", "sequence": 250}, {"name": "service_fee_expense_amount", "sequence": 260}, {"name": "expense_amount", "sequence": 270}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_comprehensive_cost_summary_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_comprehensive_cost_summary_form_structure_generated_v1</field>
+        <field name="model">sc.comprehensive.cost.summary</field>
+        <field name="view_type">form</field>
+        <field name="priority">93</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "income_contract_amount", "sequence": 10}, {"name": "receipt_amount", "sequence": 20}, {"name": "output_invoice_amount", "sequence": 30}, {"name": "receivable_unpaid_amount", "sequence": 40}, {"name": "payable_contract_amount", "sequence": 50}, {"name": "supplier_contract_amount", "sequence": 60}, {"name": "material_cost_amount", "sequence": 70}, {"name": "labor_cost_amount", "sequence": 80}, {"name": "lease_cost_amount", "sequence": 90}, {"name": "expense_cost_amount", "sequence": 100}, {"name": "salary_cost_amount", "sequence": 110}, {"name": "total_cost_amount", "sequence": 120}, {"name": "input_invoice_amount", "sequence": 130}, {"name": "paid_amount", "sequence": 140}, {"name": "payable_unpaid_amount", "sequence": 150}, {"name": "project_name", "sequence": 160}, {"name": "project_id", "sequence": 170}, {"name": "company_id", "sequence": 180}, {"name": "currency_id", "sequence": 190}, {"name": "profit_amount", "sequence": 200}, {"name": "coverage_note", "sequence": 210}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_construction_diary_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_construction_diary_form_structure_generated_v1</field>
+        <field name="model">sc.construction.diary</field>
+        <field name="view_type">form</field>
+        <field name="priority">94</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "construction_unit", "sequence": 20}, {"name": "project_manager", "sequence": 30}, {"name": "weather", "sequence": 40}, {"name": "quality_name", "sequence": 50}, {"name": "description", "sequence": 60}, {"name": "material_inspection_note", "sequence": 70}, {"name": "design_change_note", "sequence": 80}, {"name": "test_block_note", "sequence": 90}, {"name": "safety_note", "sequence": 100}, {"name": "hidden_acceptance_note", "sequence": 110}, {"name": "next_plan", "sequence": 120}, {"name": "header_description", "sequence": 130}, {"name": "note", "sequence": 140}, {"name": "attachment_ids", "sequence": 150}, {"name": "name", "sequence": 160}, {"name": "date_diary", "sequence": 170}, {"name": "report_period_start", "sequence": 180}, {"name": "report_period_end", "sequence": 190}, {"name": "document_no", "sequence": 200}, {"name": "title", "sequence": 210}, {"name": "project_id", "sequence": 220}, {"name": "diary_type", "sequence": 230}, {"name": "category", "sequence": 240}, {"name": "handler_name", "sequence": 250}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_contract_event_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_contract_event_form_structure_generated_v1</field>
+        <field name="model">sc.contract.event</field>
+        <field name="view_type">form</field>
+        <field name="priority">95</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "event_no", "sequence": 30}, {"name": "event_type", "sequence": 40}, {"name": "source_channel", "sequence": 50}, {"name": "project_id", "sequence": 60}, {"name": "contract_id", "sequence": 70}, {"name": "partner_id", "sequence": 80}, {"name": "event_date", "sequence": 90}, {"name": "applicant_id", "sequence": 100}, {"name": "department_id", "sequence": 110}, {"name": "cost_code_id", "sequence": 120}, {"name": "currency_id", "sequence": 130}, {"name": "amount_impact", "sequence": 140}, {"name": "tax_excluded_amount", "sequence": 150}, {"name": "tax_amount", "sequence": 160}, {"name": "change_limit_amount", "sequence": 170}, {"name": "limit_control_result", "sequence": 180}, {"name": "settlement_included", "sequence": 190}, {"name": "description", "sequence": 200}, {"name": "basis", "sequence": 210}, {"name": "attachment_ids", "sequence": 220}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_dashboard_cockpit_fact_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_dashboard_cockpit_fact_form_structure_generated_v1</field>
+        <field name="model">sc.dashboard.cockpit.fact</field>
+        <field name="view_type">form</field>
+        <field name="priority">96</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "description", "sequence": 20}, {"name": "result_note", "sequence": 30}, {"name": "document_no", "sequence": 40}, {"name": "name", "sequence": 50}, {"name": "fact_type", "sequence": 60}, {"name": "business_date", "sequence": 70}, {"name": "project_id", "sequence": 80}, {"name": "partner_id", "sequence": 90}, {"name": "cockpit_scope", "sequence": 100}, {"name": "metric_period", "sequence": 110}, {"name": "metric_value", "sequence": 120}, {"name": "amount", "sequence": 130}, {"name": "currency_id", "sequence": 140}, {"name": "source_model", "sequence": 150}, {"name": "source_res_id", "sequence": 160}, {"name": "requester_id", "sequence": 170}, {"name": "handler_id", "sequence": 180}, {"name": "due_date", "sequence": 190}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_dictionary_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_dictionary_form_structure_generated_v1</field>
+        <field name="model">sc.dictionary</field>
+        <field name="view_type">form</field>
+        <field name="priority">97</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "type", "sequence": 10}, {"name": "code", "sequence": 20}, {"name": "name", "sequence": 30}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_document_admin_document_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_document_admin_document_form_structure_generated_v1</field>
+        <field name="model">sc.document.admin.document</field>
+        <field name="view_type">form</field>
+        <field name="priority">98</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "document_no", "sequence": 20}, {"name": "name", "sequence": 30}, {"name": "fact_type", "sequence": 40}, {"name": "business_date", "sequence": 50}, {"name": "requester_id", "sequence": 60}, {"name": "department_id", "sequence": 70}, {"name": "document_title", "sequence": 80}, {"name": "holder_name", "sequence": 90}, {"name": "certificate_name", "sequence": 100}, {"name": "certificate_no", "sequence": 110}, {"name": "issue_authority", "sequence": 120}, {"name": "issue_date", "sequence": 130}, {"name": "valid_until", "sequence": 140}, {"name": "borrow_user_id", "sequence": 150}, {"name": "borrow_date", "sequence": 160}, {"name": "expected_return_date", "sequence": 170}, {"name": "actual_return_date", "sequence": 180}, {"name": "handler_id", "sequence": 190}, {"name": "due_date", "sequence": 200}, {"name": "legacy_document_no", "sequence": 210}, {"name": "description", "sequence": 220}, {"name": "result_note", "sequence": 230}, {"name": "attachment_ids", "sequence": 240}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_edition_release_snapshot_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_edition_release_snapshot_form_structure_generated_v1</field>
+        <field name="model">sc.edition.release.snapshot</field>
+        <field name="view_type">form</field>
+        <field name="priority">99</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "product_key", "sequence": 20}, {"name": "label", "sequence": 30}, {"name": "base_product_key", "sequence": 40}, {"name": "edition_key", "sequence": 50}, {"name": "version", "sequence": 60}, {"name": "channel", "sequence": 70}, {"name": "is_active", "sequence": 80}, {"name": "source_policy_id", "sequence": 90}, {"name": "frozen_at", "sequence": 100}, {"name": "approved_at", "sequence": 110}, {"name": "released_at", "sequence": 120}, {"name": "activated_at", "sequence": 130}, {"name": "superseded_at", "sequence": 140}, {"name": "rollback_target_snapshot_id", "sequence": 150}, {"name": "replaced_by_snapshot_id", "sequence": 160}, {"name": "snapshot_json", "sequence": 170}, {"name": "meta_json", "sequence": 180}, {"name": "state_reason", "sequence": 190}, {"name": "promotion_note", "sequence": 200}, {"name": "note", "sequence": 210}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_equipment_plan_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_equipment_plan_form_structure_generated_v1</field>
+        <field name="model">sc.equipment.plan</field>
+        <field name="view_type">form</field>
+        <field name="priority">100</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "project_id", "sequence": 30}, {"name": "plan_date", "sequence": 40}, {"name": "start_date", "sequence": 50}, {"name": "end_date", "sequence": 60}, {"name": "usage_location", "sequence": 70}, {"name": "owner_id", "sequence": 80}, {"name": "supplier_id", "sequence": 90}, {"name": "line_ids", "sequence": 100}, {"name": "note", "sequence": 110}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_equipment_price_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_equipment_price_form_structure_generated_v1</field>
+        <field name="model">sc.equipment.price</field>
+        <field name="view_type">form</field>
+        <field name="priority">101</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "project_id", "sequence": 30}, {"name": "supplier_id", "sequence": 40}, {"name": "equipment_name", "sequence": 50}, {"name": "equipment_code", "sequence": 60}, {"name": "unit_name", "sequence": 70}, {"name": "currency_id", "sequence": 80}, {"name": "unit_price", "sequence": 90}, {"name": "effective_date", "sequence": 100}, {"name": "expire_date", "sequence": 110}, {"name": "note", "sequence": 120}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_equipment_request_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_equipment_request_form_structure_generated_v1</field>
+        <field name="model">sc.equipment.request</field>
+        <field name="view_type">form</field>
+        <field name="priority">102</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "project_id", "sequence": 30}, {"name": "plan_id", "sequence": 40}, {"name": "request_date", "sequence": 50}, {"name": "required_date", "sequence": 60}, {"name": "usage_location", "sequence": 70}, {"name": "requester_id", "sequence": 80}, {"name": "supplier_id", "sequence": 90}, {"name": "line_ids", "sequence": 100}, {"name": "note", "sequence": 110}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_equipment_settlement_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_equipment_settlement_form_structure_generated_v1</field>
+        <field name="model">sc.equipment.settlement</field>
+        <field name="view_type">form</field>
+        <field name="priority">103</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "project_id", "sequence": 30}, {"name": "supplier_id", "sequence": 40}, {"name": "settlement_date", "sequence": 50}, {"name": "owner_id", "sequence": 60}, {"name": "currency_id", "sequence": 70}, {"name": "amount_untaxed", "sequence": 80}, {"name": "tax_amount", "sequence": 90}, {"name": "amount_total", "sequence": 100}, {"name": "line_ids", "sequence": 110}, {"name": "note", "sequence": 120}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_equipment_usage_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_equipment_usage_form_structure_generated_v1</field>
+        <field name="model">sc.equipment.usage</field>
+        <field name="view_type">form</field>
+        <field name="priority">104</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "project_id", "sequence": 30}, {"name": "request_id", "sequence": 40}, {"name": "usage_date", "sequence": 50}, {"name": "equipment_name", "sequence": 60}, {"name": "equipment_code", "sequence": 70}, {"name": "usage_location", "sequence": 80}, {"name": "operator_name", "sequence": 90}, {"name": "usage_qty", "sequence": 100}, {"name": "usage_hours", "sequence": 110}, {"name": "supplier_id", "sequence": 120}, {"name": "recorder_id", "sequence": 130}, {"name": "note", "sequence": 140}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_expense_claim_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_expense_claim_form_structure_generated_v1</field>
+        <field name="model">sc.expense.claim</field>
+        <field name="view_type">form</field>
+        <field name="priority">105</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "payment_method", "sequence": 20}, {"name": "clearing_method", "sequence": 30}, {"name": "is_returned", "sequence": 40}, {"name": "return_reason", "sequence": 50}, {"name": "expense_type", "sequence": 60}, {"name": "summary", "sequence": 70}, {"name": "note", "sequence": 80}, {"name": "creator_name", "sequence": 90}, {"name": "created_time", "sequence": 100}, {"name": "attachment_ids", "sequence": 110}, {"name": "name", "sequence": 120}, {"name": "claim_type", "sequence": 130}, {"name": "direction", "sequence": 140}, {"name": "date_claim", "sequence": 150}, {"name": "fill_date", "sequence": 160}, {"name": "amount", "sequence": 170}, {"name": "approved_amount", "sequence": 180}, {"name": "currency_id", "sequence": 190}, {"name": "project_id", "sequence": 200}, {"name": "operation_strategy", "sequence": 210}, {"name": "partner_id", "sequence": 220}, {"name": "payment_request_id", "sequence": 230}, {"name": "company_name_text", "sequence": 240}, {"name": "guarantee_project_name", "sequence": 250}, {"name": "guarantee_type", "sequence": 260}, {"name": "applicant_name", "sequence": 270}, {"name": "payee", "sequence": 280}, {"name": "receipt_account_name", "sequence": 290}, {"name": "payee_account", "sequence": 300}, {"name": "payee_bank", "sequence": 310}, {"name": "payment_account_name", "sequence": 320}, {"name": "payer_account", "sequence": 330}, {"name": "payer_bank", "sequence": 340}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_expense_reimbursement_summary_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_expense_reimbursement_summary_form_structure_generated_v1</field>
+        <field name="model">sc.expense.reimbursement.summary</field>
+        <field name="view_type">form</field>
+        <field name="priority">106</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "first_date", "sequence": 10}, {"name": "last_date", "sequence": 20}, {"name": "coverage_note", "sequence": 30}, {"name": "display_name", "sequence": 40}, {"name": "project_id", "sequence": 50}, {"name": "partner_id", "sequence": 60}, {"name": "expense_type", "sequence": 70}, {"name": "applicant_name", "sequence": 80}, {"name": "state", "sequence": 90}, {"name": "amount", "sequence": 100}, {"name": "approved_amount", "sequence": 110}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_financing_loan_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_financing_loan_form_structure_generated_v1</field>
+        <field name="model">sc.financing.loan</field>
+        <field name="view_type">form</field>
+        <field name="priority">107</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "purpose", "sequence": 20}, {"name": "rate_label", "sequence": 30}, {"name": "extra_ref", "sequence": 40}, {"name": "extra_label", "sequence": 50}, {"name": "note", "sequence": 60}, {"name": "creator_name", "sequence": 70}, {"name": "created_time", "sequence": 80}, {"name": "attachment_ids", "sequence": 90}, {"name": "name", "sequence": 100}, {"name": "loan_type", "sequence": 110}, {"name": "direction", "sequence": 120}, {"name": "document_no", "sequence": 130}, {"name": "document_date", "sequence": 140}, {"name": "due_date", "sequence": 150}, {"name": "project_id", "sequence": 160}, {"name": "operation_strategy", "sequence": 170}, {"name": "partner_id", "sequence": 180}, {"name": "amount", "sequence": 190}, {"name": "currency_id", "sequence": 200}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_fund_account_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_fund_account_form_structure_generated_v1</field>
+        <field name="model">sc.fund.account</field>
+        <field name="view_type">form</field>
+        <field name="priority">108</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "account_no", "sequence": 30}, {"name": "account_type", "sequence": 40}, {"name": "bank_name", "sequence": 50}, {"name": "project_id", "sequence": 60}, {"name": "operation_strategy", "sequence": 70}, {"name": "company_id", "sequence": 80}, {"name": "currency_id", "sequence": 90}, {"name": "opening_balance", "sequence": 100}, {"name": "is_default", "sequence": 110}, {"name": "fixed_account", "sequence": 120}, {"name": "note", "sequence": 130}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_fund_account_operation_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_fund_account_operation_form_structure_generated_v1</field>
+        <field name="model">sc.fund.account.operation</field>
+        <field name="view_type">form</field>
+        <field name="priority">109</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "operation_reason", "sequence": 20}, {"name": "note", "sequence": 30}, {"name": "attachment_ids", "sequence": 40}, {"name": "name", "sequence": 50}, {"name": "operation_type", "sequence": 60}, {"name": "operation_date", "sequence": 70}, {"name": "project_id", "sequence": 80}, {"name": "operation_strategy", "sequence": 90}, {"name": "company_id", "sequence": 100}, {"name": "currency_id", "sequence": 110}, {"name": "fund_account_id", "sequence": 120}, {"name": "source_account_id", "sequence": 130}, {"name": "target_account_id", "sequence": 140}, {"name": "amount", "sequence": 150}, {"name": "daily_income", "sequence": 160}, {"name": "daily_expense", "sequence": 170}, {"name": "account_balance", "sequence": 180}, {"name": "bank_balance", "sequence": 190}, {"name": "before_balance", "sequence": 200}, {"name": "after_balance", "sequence": 210}, {"name": "creator_name", "sequence": 220}, {"name": "created_time", "sequence": 230}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_fund_daily_summary_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_fund_daily_summary_form_structure_generated_v1</field>
+        <field name="model">sc.fund.daily.summary</field>
+        <field name="view_type">form</field>
+        <field name="priority">110</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "document_date", "sequence": 10}, {"name": "business_entity_id", "sequence": 20}, {"name": "company_id", "sequence": 30}, {"name": "current_account_balance", "sequence": 40}, {"name": "current_bank_balance", "sequence": 50}, {"name": "bank_system_difference", "sequence": 60}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_general_contract_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_general_contract_form_structure_generated_v1</field>
+        <field name="model">sc.general.contract</field>
+        <field name="view_type">form</field>
+        <field name="priority">111</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "amount_total", "sequence": 20}, {"name": "amount_untaxed", "sequence": 30}, {"name": "settlement_amount", "sequence": 40}, {"name": "invoice_amount", "sequence": 50}, {"name": "uninvoiced_amount", "sequence": 60}, {"name": "received_amount", "sequence": 70}, {"name": "unreceived_amount", "sequence": 80}, {"name": "paid_amount", "sequence": 90}, {"name": "unpaid_amount", "sequence": 100}, {"name": "prepayment_amount", "sequence": 110}, {"name": "install_commissioning_payment", "sequence": 120}, {"name": "warranty_deposit", "sequence": 130}, {"name": "change_amount_total", "sequence": 140}, {"name": "currency_id", "sequence": 150}, {"name": "payment_terms", "sequence": 160}, {"name": "special_condition", "sequence": 170}, {"name": "partner_id", "sequence": 180}, {"name": "partner_name_text", "sequence": 190}, {"name": "credit_code", "sequence": 200}, {"name": "contact_name", "sequence": 210}, {"name": "contact_phone", "sequence": 220}, {"name": "engineering_address", "sequence": 230}, {"name": "bank_name", "sequence": 240}, {"name": "bank_account", "sequence": 250}, {"name": "applicant_name", "sequence": 260}, {"name": "applicant_department", "sequence": 270}, {"name": "purchase_engineer", "sequence": 280}, {"name": "handler_id", "sequence": 290}, {"name": "entry_user_id", "sequence": 300}, {"name": "note", "sequence": 310}, {"name": "name", "sequence": 320}, {"name": "project_id", "sequence": 330}, {"name": "operation_strategy", "sequence": 340}, {"name": "document_no", "sequence": 350}, {"name": "contract_no", "sequence": 360}, {"name": "contract_name", "sequence": 370}, {"name": "submitted_time", "sequence": 380}, {"name": "contract_type", "sequence": 390}, {"name": "sign_status", "sequence": 400}, {"name": "contract_attribute", "sequence": 410}, {"name": "template_name", "sequence": 420}, {"name": "union_mode", "sequence": 430}, {"name": "pricing_mode", "sequence": 440}, {"name": "subcontract_mode", "sequence": 450}, {"name": "company_id", "sequence": 460}, {"name": "contract_date", "sequence": 470}, {"name": "expected_sign_date", "sequence": 480}, {"name": "completion_date", "sequence": 490}, {"name": "signing_place", "sequence": 500}, {"name": "is_supplement_contract", "sequence": 510}, {"name": "related_contract_no", "sequence": 520}, {"name": "attachment_ids", "sequence": 530}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_hazard_source_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_hazard_source_form_structure_generated_v1</field>
+        <field name="model">sc.hazard.source</field>
+        <field name="view_type">form</field>
+        <field name="priority">112</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "name", "sequence": 10}, {"name": "project_id", "sequence": 20}, {"name": "risk_item_id", "sequence": 30}, {"name": "location", "sequence": 40}, {"name": "coordinate", "sequence": 50}, {"name": "valid_from", "sequence": 60}, {"name": "valid_to", "sequence": 70}, {"name": "owner_id", "sequence": 80}, {"name": "reporter_id", "sequence": 90}, {"name": "control_status", "sequence": 100}, {"name": "state", "sequence": 110}, {"name": "description", "sequence": 120}, {"name": "attachment_ids", "sequence": 130}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_history_todo_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_history_todo_form_structure_generated_v1</field>
+        <field name="model">sc.history.todo</field>
+        <field name="view_type">form</field>
+        <field name="priority">113</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "approval_note", "sequence": 20}, {"name": "resolution_note", "sequence": 30}, {"name": "workflow_audit_id", "sequence": 40}, {"name": "source_table", "sequence": 50}, {"name": "name", "sequence": 60}, {"name": "priority", "sequence": 70}, {"name": "target_lane", "sequence": 80}, {"name": "target_model", "sequence": 90}, {"name": "target_external_id", "sequence": 100}, {"name": "target_res_model", "sequence": 110}, {"name": "target_res_id", "sequence": 120}, {"name": "action_classification", "sequence": 130}, {"name": "legacy_status", "sequence": 140}, {"name": "actor_name", "sequence": 150}, {"name": "received_at", "sequence": 160}, {"name": "approved_at", "sequence": 170}, {"name": "acknowledged_by_id", "sequence": 180}, {"name": "acknowledged_at", "sequence": 190}, {"name": "resolved_by_id", "sequence": 200}, {"name": "resolved_at", "sequence": 210}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_hr_payroll_document_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_hr_payroll_document_form_structure_generated_v1</field>
+        <field name="model">sc.hr.payroll.document</field>
+        <field name="view_type">form</field>
+        <field name="priority">114</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "document_no", "sequence": 20}, {"name": "name", "sequence": 30}, {"name": "fact_type", "sequence": 40}, {"name": "business_date", "sequence": 50}, {"name": "requester_id", "sequence": 60}, {"name": "department_id", "sequence": 70}, {"name": "employee_user_id", "sequence": 80}, {"name": "employee_name", "sequence": 90}, {"name": "id_number", "sequence": 100}, {"name": "period_year", "sequence": 110}, {"name": "period_month", "sequence": 120}, {"name": "payer_unit", "sequence": 130}, {"name": "social_security_base", "sequence": 140}, {"name": "company_amount", "sequence": 150}, {"name": "individual_amount", "sequence": 160}, {"name": "salary_base", "sequence": 170}, {"name": "gross_amount", "sequence": 180}, {"name": "deduction_amount", "sequence": 190}, {"name": "net_salary", "sequence": 200}, {"name": "item_type", "sequence": 210}, {"name": "amount", "sequence": 220}, {"name": "occurrence_date", "sequence": 230}, {"name": "handler_id", "sequence": 240}, {"name": "due_date", "sequence": 250}, {"name": "legacy_document_no", "sequence": 260}, {"name": "description", "sequence": 270}, {"name": "result_note", "sequence": 280}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_invoice_category_summary_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_invoice_category_summary_form_structure_generated_v1</field>
+        <field name="model">sc.invoice.category.summary</field>
+        <field name="view_type">form</field>
+        <field name="priority">115</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "coverage_note", "sequence": 10}, {"name": "display_name", "sequence": 20}, {"name": "company_id", "sequence": 30}, {"name": "project_id", "sequence": 40}, {"name": "partner_id", "sequence": 50}, {"name": "direction", "sequence": 60}, {"name": "source_kind", "sequence": 70}, {"name": "state", "sequence": 80}, {"name": "invoice_type", "sequence": 90}, {"name": "cost_category_name", "sequence": 100}, {"name": "invoice_content", "sequence": 110}, {"name": "first_invoice_date", "sequence": 120}, {"name": "last_invoice_date", "sequence": 130}, {"name": "amount_no_tax", "sequence": 140}, {"name": "tax_amount", "sequence": 150}, {"name": "amount_total", "sequence": 160}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_invoice_registration_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_invoice_registration_form_structure_generated_v1</field>
+        <field name="model">sc.invoice.registration</field>
+        <field name="view_type">form</field>
+        <field name="priority">116</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "invoice_date", "sequence": 20}, {"name": "recognition_date", "sequence": 30}, {"name": "invoice_no", "sequence": 40}, {"name": "invoice_code", "sequence": 50}, {"name": "invoice_type", "sequence": 60}, {"name": "invoice_content", "sequence": 70}, {"name": "cost_category_name", "sequence": 80}, {"name": "amount_no_tax", "sequence": 90}, {"name": "tax_amount", "sequence": 100}, {"name": "amount_total", "sequence": 110}, {"name": "currency_id", "sequence": 120}, {"name": "handler_name", "sequence": 130}, {"name": "invoice_holder", "sequence": 140}, {"name": "accounting_state", "sequence": 150}, {"name": "voucher_no", "sequence": 160}, {"name": "note", "sequence": 170}, {"name": "creator_name", "sequence": 180}, {"name": "created_time", "sequence": 190}, {"name": "attachment_ids", "sequence": 200}, {"name": "name", "sequence": 210}, {"name": "source_kind", "sequence": 220}, {"name": "direction", "sequence": 230}, {"name": "document_no", "sequence": 240}, {"name": "document_date", "sequence": 250}, {"name": "project_id", "sequence": 260}, {"name": "operation_strategy", "sequence": 270}, {"name": "partner_id", "sequence": 280}, {"name": "contract_id", "sequence": 290}, {"name": "settlement_id", "sequence": 300}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_labor_plan_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_labor_plan_form_structure_generated_v1</field>
+        <field name="model">sc.labor.plan</field>
+        <field name="view_type">form</field>
+        <field name="priority">117</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "project_id", "sequence": 30}, {"name": "plan_date", "sequence": 40}, {"name": "start_date", "sequence": 50}, {"name": "end_date", "sequence": 60}, {"name": "owner_id", "sequence": 70}, {"name": "contractor_id", "sequence": 80}, {"name": "line_ids", "sequence": 90}, {"name": "note", "sequence": 100}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_labor_price_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_labor_price_form_structure_generated_v1</field>
+        <field name="model">sc.labor.price</field>
+        <field name="view_type">form</field>
+        <field name="priority">118</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "project_id", "sequence": 30}, {"name": "contractor_id", "sequence": 40}, {"name": "labor_team", "sequence": 50}, {"name": "work_content", "sequence": 60}, {"name": "unit_name", "sequence": 70}, {"name": "currency_id", "sequence": 80}, {"name": "unit_price", "sequence": 90}, {"name": "effective_date", "sequence": 100}, {"name": "expire_date", "sequence": 110}, {"name": "note", "sequence": 120}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_labor_request_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_labor_request_form_structure_generated_v1</field>
+        <field name="model">sc.labor.request</field>
+        <field name="view_type">form</field>
+        <field name="priority">119</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "project_id", "sequence": 30}, {"name": "request_date", "sequence": 40}, {"name": "required_date", "sequence": 50}, {"name": "requester_id", "sequence": 60}, {"name": "contractor_id", "sequence": 70}, {"name": "line_ids", "sequence": 80}, {"name": "note", "sequence": 90}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_labor_settlement_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_labor_settlement_form_structure_generated_v1</field>
+        <field name="model">sc.labor.settlement</field>
+        <field name="view_type">form</field>
+        <field name="priority">120</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "project_id", "sequence": 30}, {"name": "contractor_id", "sequence": 40}, {"name": "settlement_date", "sequence": 50}, {"name": "owner_id", "sequence": 60}, {"name": "currency_id", "sequence": 70}, {"name": "amount_untaxed", "sequence": 80}, {"name": "tax_amount", "sequence": 90}, {"name": "amount_total", "sequence": 100}, {"name": "line_ids", "sequence": 110}, {"name": "note", "sequence": 120}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_labor_usage_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_labor_usage_form_structure_generated_v1</field>
+        <field name="model">sc.labor.usage</field>
+        <field name="view_type">form</field>
+        <field name="priority">121</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "project_id", "sequence": 30}, {"name": "usage_date", "sequence": 40}, {"name": "labor_team", "sequence": 50}, {"name": "contractor_id", "sequence": 60}, {"name": "foreman_name", "sequence": 70}, {"name": "recorder_id", "sequence": 80}, {"name": "worker_qty", "sequence": 90}, {"name": "work_hours", "sequence": 100}, {"name": "work_content", "sequence": 110}, {"name": "note", "sequence": 120}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_login_route_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_login_route_form_structure_generated_v1</field>
+        <field name="model">sc.login.route</field>
+        <field name="view_type">form</field>
+        <field name="priority">122</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "login", "sequence": 10}, {"name": "target_db", "sequence": 20}, {"name": "entry_kind", "sequence": 30}, {"name": "product_key", "sequence": 40}, {"name": "label", "sequence": 50}, {"name": "note", "sequence": 60}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_material_acceptance_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_material_acceptance_form_structure_generated_v1</field>
+        <field name="model">sc.material.acceptance</field>
+        <field name="view_type">form</field>
+        <field name="priority">123</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "sc_has_system_default", "sequence": 20}, {"name": "sc_system_default_fields", "sequence": 30}, {"name": "sc_system_default_note", "sequence": 40}, {"name": "name", "sequence": 50}, {"name": "project_id", "sequence": 60}, {"name": "acceptance_date", "sequence": 70}, {"name": "supplier_id", "sequence": 80}, {"name": "purchase_request_id", "sequence": 90}, {"name": "acceptance_flow", "sequence": 100}, {"name": "source_channel", "sequence": 110}, {"name": "purchase_order_id", "sequence": 120}, {"name": "inspector_id", "sequence": 130}, {"name": "supervisor_inspector_id", "sequence": 140}, {"name": "owner_inspector_id", "sequence": 150}, {"name": "sampling_required", "sequence": 160}, {"name": "sampling_report_ref", "sequence": 170}, {"name": "line_ids", "sequence": 180}, {"name": "attachment_ids", "sequence": 190}, {"name": "note", "sequence": 200}, {"name": "rejection_reason", "sequence": 210}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_material_catalog_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_material_catalog_form_structure_generated_v1</field>
+        <field name="model">sc.material.catalog</field>
+        <field name="view_type">form</field>
+        <field name="priority">124</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "remark", "sequence": 10}, {"name": "attachment_ids", "sequence": 20}, {"name": "code", "sequence": 30}, {"name": "name", "sequence": 40}, {"name": "spec_model", "sequence": 50}, {"name": "category_id", "sequence": 60}, {"name": "company_id", "sequence": 70}, {"name": "project_id", "sequence": 80}, {"name": "depth", "sequence": 90}, {"name": "uom_text", "sequence": 100}, {"name": "aux_uom_text", "sequence": 110}, {"name": "planned_price", "sequence": 120}, {"name": "internal_price", "sequence": 130}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_material_inbound_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_material_inbound_form_structure_generated_v1</field>
+        <field name="model">sc.material.inbound</field>
+        <field name="view_type">form</field>
+        <field name="priority">125</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "sc_has_system_default", "sequence": 20}, {"name": "sc_system_default_fields", "sequence": 30}, {"name": "sc_system_default_note", "sequence": 40}, {"name": "name", "sequence": 50}, {"name": "project_id", "sequence": 60}, {"name": "operation_strategy", "sequence": 70}, {"name": "inbound_date", "sequence": 80}, {"name": "acceptance_id", "sequence": 90}, {"name": "supplier_id", "sequence": 100}, {"name": "warehouse_id", "sequence": 110}, {"name": "dest_location_id", "sequence": 120}, {"name": "keeper_id", "sequence": 130}, {"name": "stock_picking_id", "sequence": 140}, {"name": "amount_total", "sequence": 150}, {"name": "line_ids", "sequence": 160}, {"name": "note", "sequence": 170}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_material_outbound_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_material_outbound_form_structure_generated_v1</field>
+        <field name="model">sc.material.outbound</field>
+        <field name="view_type">form</field>
+        <field name="priority">126</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "sc_has_system_default", "sequence": 20}, {"name": "sc_system_default_fields", "sequence": 30}, {"name": "sc_system_default_note", "sequence": 40}, {"name": "name", "sequence": 50}, {"name": "project_id", "sequence": 60}, {"name": "outbound_date", "sequence": 70}, {"name": "purpose", "sequence": 80}, {"name": "warehouse_id", "sequence": 90}, {"name": "source_location_id", "sequence": 100}, {"name": "receiver_id", "sequence": 110}, {"name": "receiver_user_id", "sequence": 120}, {"name": "keeper_id", "sequence": 130}, {"name": "stock_picking_id", "sequence": 140}, {"name": "line_ids", "sequence": 150}, {"name": "note", "sequence": 160}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_material_price_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_material_price_form_structure_generated_v1</field>
+        <field name="model">sc.material.price</field>
+        <field name="view_type">form</field>
+        <field name="priority">127</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "note", "sequence": 10}, {"name": "material_catalog_id", "sequence": 20}, {"name": "company_id", "sequence": 30}, {"name": "supplier_id", "sequence": 40}, {"name": "project_id", "sequence": 50}, {"name": "price_type", "sequence": 60}, {"name": "unit_price", "sequence": 70}, {"name": "currency_id", "sequence": 80}, {"name": "tax_included", "sequence": 90}, {"name": "effective_date", "sequence": 100}, {"name": "expiry_date", "sequence": 110}, {"name": "spec_model", "sequence": 120}, {"name": "uom_text", "sequence": 130}, {"name": "source_model", "sequence": 140}, {"name": "source_res_id", "sequence": 150}, {"name": "source_type", "sequence": 160}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_material_purchase_request_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_material_purchase_request_form_structure_generated_v1</field>
+        <field name="model">sc.material.purchase.request</field>
+        <field name="view_type">form</field>
+        <field name="priority">128</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "sc_has_system_default", "sequence": 20}, {"name": "sc_system_default_fields", "sequence": 30}, {"name": "sc_system_default_note", "sequence": 40}, {"name": "name", "sequence": 50}, {"name": "project_id", "sequence": 60}, {"name": "request_date", "sequence": 70}, {"name": "required_date", "sequence": 80}, {"name": "requester_id", "sequence": 90}, {"name": "department_id", "sequence": 100}, {"name": "purpose", "sequence": 110}, {"name": "line_ids", "sequence": 120}, {"name": "note", "sequence": 130}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_material_rental_order_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_material_rental_order_form_structure_generated_v1</field>
+        <field name="model">sc.material.rental.order</field>
+        <field name="view_type">form</field>
+        <field name="priority">129</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "project_id", "sequence": 30}, {"name": "plan_id", "sequence": 40}, {"name": "rental_date", "sequence": 50}, {"name": "planned_return_date", "sequence": 60}, {"name": "supplier_id", "sequence": 70}, {"name": "contract_id", "sequence": 80}, {"name": "owner_id", "sequence": 90}, {"name": "amount_total", "sequence": 100}, {"name": "currency_id", "sequence": 110}, {"name": "line_ids", "sequence": 120}, {"name": "note", "sequence": 130}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_material_rental_plan_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_material_rental_plan_form_structure_generated_v1</field>
+        <field name="model">sc.material.rental.plan</field>
+        <field name="view_type">form</field>
+        <field name="priority">130</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "project_id", "sequence": 30}, {"name": "plan_date", "sequence": 40}, {"name": "planned_start", "sequence": 50}, {"name": "planned_end", "sequence": 60}, {"name": "rent_purpose", "sequence": 70}, {"name": "supplier_id", "sequence": 80}, {"name": "contract_id", "sequence": 90}, {"name": "owner_id", "sequence": 100}, {"name": "estimated_amount", "sequence": 110}, {"name": "currency_id", "sequence": 120}, {"name": "line_ids", "sequence": 130}, {"name": "note", "sequence": 140}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_material_rental_settlement_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_material_rental_settlement_form_structure_generated_v1</field>
+        <field name="model">sc.material.rental.settlement</field>
+        <field name="view_type">form</field>
+        <field name="priority">131</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "project_id", "sequence": 30}, {"name": "rental_order_id", "sequence": 40}, {"name": "settlement_date", "sequence": 50}, {"name": "payment_request_id", "sequence": 60}, {"name": "supplier_id", "sequence": 70}, {"name": "contract_id", "sequence": 80}, {"name": "owner_id", "sequence": 90}, {"name": "rent_amount", "sequence": 100}, {"name": "damage_amount", "sequence": 110}, {"name": "amount_total", "sequence": 120}, {"name": "currency_id", "sequence": 130}, {"name": "line_ids", "sequence": 140}, {"name": "note", "sequence": 150}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_material_rfq_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_material_rfq_form_structure_generated_v1</field>
+        <field name="model">sc.material.rfq</field>
+        <field name="view_type">form</field>
+        <field name="priority">132</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "sc_has_system_default", "sequence": 20}, {"name": "sc_system_default_fields", "sequence": 30}, {"name": "sc_system_default_note", "sequence": 40}, {"name": "name", "sequence": 50}, {"name": "project_id", "sequence": 60}, {"name": "purchase_request_id", "sequence": 70}, {"name": "source_material_plan_id", "sequence": 80}, {"name": "rfq_date", "sequence": 90}, {"name": "due_date", "sequence": 100}, {"name": "owner_id", "sequence": 110}, {"name": "contact_name", "sequence": 120}, {"name": "contact_phone", "sequence": 130}, {"name": "supplier_ids", "sequence": 140}, {"name": "selected_supplier_id", "sequence": 150}, {"name": "line_ids", "sequence": 160}, {"name": "note", "sequence": 170}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_material_settlement_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_material_settlement_form_structure_generated_v1</field>
+        <field name="model">sc.material.settlement</field>
+        <field name="view_type">form</field>
+        <field name="priority">133</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "amount_untaxed", "sequence": 20}, {"name": "tax_amount", "sequence": 30}, {"name": "amount_total", "sequence": 40}, {"name": "sc_has_system_default", "sequence": 50}, {"name": "sc_system_default_fields", "sequence": 60}, {"name": "sc_system_default_note", "sequence": 70}, {"name": "name", "sequence": 80}, {"name": "project_id", "sequence": 90}, {"name": "supplier_id", "sequence": 100}, {"name": "purchase_order_id", "sequence": 110}, {"name": "settlement_date", "sequence": 120}, {"name": "owner_id", "sequence": 130}, {"name": "currency_id", "sequence": 140}, {"name": "line_ids", "sequence": 150}, {"name": "note", "sequence": 160}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_material_stock_summary_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_material_stock_summary_form_structure_generated_v1</field>
+        <field name="model">sc.material.stock.summary</field>
+        <field name="view_type">form</field>
+        <field name="priority">134</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "in_qty", "sequence": 10}, {"name": "in_avg_price", "sequence": 20}, {"name": "in_amount", "sequence": 30}, {"name": "out_qty", "sequence": 40}, {"name": "out_avg_price", "sequence": 50}, {"name": "out_amount", "sequence": 60}, {"name": "stock_qty", "sequence": 70}, {"name": "stock_avg_price", "sequence": 80}, {"name": "stock_amount", "sequence": 90}, {"name": "project_id", "sequence": 100}, {"name": "project_name", "sequence": 110}, {"name": "company_id", "sequence": 120}, {"name": "currency_id", "sequence": 130}, {"name": "material_code", "sequence": 140}, {"name": "material_name", "sequence": 150}, {"name": "material_spec", "sequence": 160}, {"name": "material_uom", "sequence": 170}, {"name": "partner_name", "sequence": 180}, {"name": "contract_no", "sequence": 190}, {"name": "warehouse_name", "sequence": 200}, {"name": "first_date", "sequence": 210}, {"name": "last_date", "sequence": 220}, {"name": "coverage_note", "sequence": 230}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_office_admin_document_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_office_admin_document_form_structure_generated_v1</field>
+        <field name="model">sc.office.admin.document</field>
+        <field name="view_type">form</field>
+        <field name="priority">135</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "document_no", "sequence": 20}, {"name": "name", "sequence": 30}, {"name": "fact_type", "sequence": 40}, {"name": "business_date", "sequence": 50}, {"name": "requester_id", "sequence": 60}, {"name": "department_id", "sequence": 70}, {"name": "leave_type", "sequence": 80}, {"name": "start_datetime", "sequence": 90}, {"name": "end_datetime", "sequence": 100}, {"name": "duration_days", "sequence": 110}, {"name": "seal_type", "sequence": 120}, {"name": "use_purpose", "sequence": 130}, {"name": "use_date", "sequence": 140}, {"name": "return_date", "sequence": 150}, {"name": "handler_id", "sequence": 160}, {"name": "due_date", "sequence": 170}, {"name": "legacy_document_no", "sequence": 180}, {"name": "description", "sequence": 190}, {"name": "result_note", "sequence": 200}, {"name": "attachment_ids", "sequence": 210}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_operating_metrics_project_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_operating_metrics_project_form_structure_generated_v1</field>
+        <field name="model">sc.operating.metrics.project</field>
+        <field name="view_type">form</field>
+        <field name="priority">136</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "project_id", "sequence": 10}, {"name": "company_id", "sequence": 20}, {"name": "coverage_note", "sequence": 30}, {"name": "receipt_amount", "sequence": 40}, {"name": "company_finance_income_amount", "sequence": 50}, {"name": "company_finance_expense_amount", "sequence": 60}, {"name": "expense_amount", "sequence": 70}, {"name": "net_cash_amount", "sequence": 80}, {"name": "output_invoice_amount", "sequence": 90}, {"name": "output_tax_amount", "sequence": 100}, {"name": "input_invoice_amount", "sequence": 110}, {"name": "input_tax_amount", "sequence": 120}, {"name": "prepaid_tax_amount", "sequence": 130}, {"name": "tax_balance_amount", "sequence": 140}, {"name": "deduction_amount", "sequence": 150}, {"name": "deduction_tax_amount", "sequence": 160}, {"name": "deduction_surcharge_amount", "sequence": 170}, {"name": "deduction_paid_amount", "sequence": 180}, {"name": "deduction_refund_amount", "sequence": 190}, {"name": "settlement_amount_total", "sequence": 200}, {"name": "settlement_amount_paid", "sequence": 210}, {"name": "settlement_amount_payable", "sequence": 220}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_partner_import_review_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_partner_import_review_form_structure_generated_v1</field>
+        <field name="model">sc.partner.import.review</field>
+        <field name="view_type">form</field>
+        <field name="priority">137</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "review_state", "sequence": 10}, {"name": "partner_name", "sequence": 20}, {"name": "company_type", "sequence": 30}, {"name": "review_reason", "sequence": 40}, {"name": "gate_reason", "sequence": 50}, {"name": "suggested_customer_rank", "sequence": 60}, {"name": "suggested_supplier_rank", "sequence": 70}, {"name": "confirmed_customer_rank", "sequence": 80}, {"name": "confirmed_supplier_rank", "sequence": 90}, {"name": "target_partner_id", "sequence": 100}, {"name": "vat", "sequence": 110}, {"name": "sc_supplier_type", "sequence": 120}, {"name": "sc_region", "sequence": 130}, {"name": "street", "sequence": 140}, {"name": "sc_registered_capital", "sequence": 150}, {"name": "sc_default_tax_rate_text", "sequence": 160}, {"name": "sc_account_name", "sequence": 170}, {"name": "sc_bank_name", "sequence": 180}, {"name": "sc_bank_account", "sequence": 190}, {"name": "import_batch", "sequence": 200}, {"name": "source_project_name", "sequence": 210}, {"name": "source_files", "sequence": 220}, {"name": "review_flags", "sequence": 230}, {"name": "evidence", "sequence": 240}, {"name": "sc_business_scope", "sequence": 250}, {"name": "note", "sequence": 260}, {"name": "source_document_state", "sequence": 270}, {"name": "source_push_result", "sequence": 280}, {"name": "reviewer_id", "sequence": 290}, {"name": "reviewed_at", "sequence": 300}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_payment_execution_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_payment_execution_form_structure_generated_v1</field>
+        <field name="model">sc.payment.execution</field>
+        <field name="view_type">form</field>
+        <field name="priority">138</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "payment_family", "sequence": 20}, {"name": "payment_method", "sequence": 30}, {"name": "bank_account", "sequence": 40}, {"name": "handler_name", "sequence": 50}, {"name": "payment_account_name", "sequence": 60}, {"name": "payment_account_no", "sequence": 70}, {"name": "payment_bank_name", "sequence": 80}, {"name": "receipt_account_name", "sequence": 90}, {"name": "receipt_account_no", "sequence": 100}, {"name": "receipt_bank_name", "sequence": 110}, {"name": "planned_amount", "sequence": 120}, {"name": "paid_amount", "sequence": 130}, {"name": "invoice_amount", "sequence": 140}, {"name": "currency_id", "sequence": 150}, {"name": "note", "sequence": 160}, {"name": "attachment_ids", "sequence": 170}, {"name": "creator_name", "sequence": 180}, {"name": "created_time", "sequence": 190}, {"name": "name", "sequence": 200}, {"name": "source_kind", "sequence": 210}, {"name": "date_payment", "sequence": 220}, {"name": "document_no", "sequence": 230}, {"name": "project_id", "sequence": 240}, {"name": "operation_strategy", "sequence": 250}, {"name": "partner_id", "sequence": 260}, {"name": "contract_id", "sequence": 270}, {"name": "payment_request_id", "sequence": 280}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_plan_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_plan_form_structure_generated_v1</field>
+        <field name="model">sc.plan</field>
+        <field name="view_type">form</field>
+        <field name="priority">139</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "plan_type", "sequence": 30}, {"name": "project_id", "sequence": 40}, {"name": "phase_name", "sequence": 50}, {"name": "company_id", "sequence": 60}, {"name": "owner_id", "sequence": 70}, {"name": "department_id", "sequence": 80}, {"name": "template_name", "sequence": 90}, {"name": "creation_method", "sequence": 100}, {"name": "version_stage", "sequence": 110}, {"name": "report_cycle", "sequence": 120}, {"name": "planned_start", "sequence": 130}, {"name": "planned_finish", "sequence": 140}, {"name": "attainment_state", "sequence": 150}, {"name": "line_ids", "sequence": 160}, {"name": "report_ids", "sequence": 170}, {"name": "version_ids", "sequence": 180}, {"name": "attachment_ids", "sequence": 190}, {"name": "note", "sequence": 200}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_plan_report_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_plan_report_form_structure_generated_v1</field>
+        <field name="model">sc.plan.report</field>
+        <field name="view_type">form</field>
+        <field name="priority">140</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "summary", "sequence": 10}, {"name": "risk_note", "sequence": 20}, {"name": "attachment_ids", "sequence": 30}, {"name": "name", "sequence": 40}, {"name": "plan_id", "sequence": 50}, {"name": "line_id", "sequence": 60}, {"name": "report_type", "sequence": 70}, {"name": "source_channel", "sequence": 80}, {"name": "report_date", "sequence": 90}, {"name": "reporter_id", "sequence": 100}, {"name": "approver_id", "sequence": 110}, {"name": "approved_date", "sequence": 120}, {"name": "state", "sequence": 130}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_product_policy_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_product_policy_form_structure_generated_v1</field>
+        <field name="model">sc.product.policy</field>
+        <field name="view_type">form</field>
+        <field name="priority">141</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "product_key", "sequence": 20}, {"name": "label", "sequence": 30}, {"name": "base_product_key", "sequence": 40}, {"name": "edition_key", "sequence": 50}, {"name": "version", "sequence": 60}, {"name": "note", "sequence": 70}, {"name": "allowed_role_codes", "sequence": 80}, {"name": "scene_version_bindings", "sequence": 90}, {"name": "menu_groups", "sequence": 100}, {"name": "scenes", "sequence": 110}, {"name": "capabilities", "sequence": 120}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_project_document_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_project_document_form_structure_generated_v1</field>
+        <field name="model">sc.project.document</field>
+        <field name="view_type">form</field>
+        <field name="priority">142</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "document_kind", "sequence": 30}, {"name": "project_id", "sequence": 40}, {"name": "wbs_id", "sequence": 50}, {"name": "task_id", "sequence": 60}, {"name": "contract_id", "sequence": 70}, {"name": "doc_type_id", "sequence": 80}, {"name": "doc_subtype_id", "sequence": 90}, {"name": "is_mandatory", "sequence": 100}, {"name": "date_doc", "sequence": 110}, {"name": "version", "sequence": 120}, {"name": "responsible_id", "sequence": 130}, {"name": "company_id", "sequence": 140}, {"name": "note", "sequence": 150}, {"name": "attachment_ids", "sequence": 160}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_project_stage_requirement_item_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_project_stage_requirement_item_form_structure_generated_v1</field>
+        <field name="model">sc.project.stage.requirement.item</field>
+        <field name="view_type">form</field>
+        <field name="priority">143</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "name", "sequence": 10}, {"name": "lifecycle_state", "sequence": 20}, {"name": "required", "sequence": 30}, {"name": "target_field", "sequence": 40}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_project_structure_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_project_structure_form_structure_generated_v1</field>
+        <field name="model">sc.project.structure</field>
+        <field name="view_type">form</field>
+        <field name="priority">144</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "structure_type", "sequence": 20}, {"name": "code", "sequence": 30}, {"name": "name", "sequence": 40}, {"name": "project_id", "sequence": 50}, {"name": "parent_id", "sequence": 60}, {"name": "level", "sequence": 70}, {"name": "boq_line_all_ids", "sequence": 80}, {"name": "attachment_ids", "sequence": 90}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_quality_issue_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_quality_issue_form_structure_generated_v1</field>
+        <field name="model">sc.quality.issue</field>
+        <field name="view_type">form</field>
+        <field name="priority">145</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "project_id", "sequence": 30}, {"name": "issue_category", "sequence": 40}, {"name": "source_channel", "sequence": 50}, {"name": "issue_level", "sequence": 60}, {"name": "issue_date", "sequence": 70}, {"name": "location", "sequence": 80}, {"name": "coordinate", "sequence": 90}, {"name": "responsible_party_id", "sequence": 100}, {"name": "owner_id", "sequence": 110}, {"name": "rechecker_id", "sequence": 120}, {"name": "cc_user_ids", "sequence": 130}, {"name": "rectification_deadline", "sequence": 140}, {"name": "reminder_before_days", "sequence": 150}, {"name": "closed_date", "sequence": 160}, {"name": "overdue_days", "sequence": 170}, {"name": "is_overdue", "sequence": 180}, {"name": "description", "sequence": 190}, {"name": "voice_text", "sequence": 200}, {"name": "attachment_ids", "sequence": 210}, {"name": "photo_batch_ids", "sequence": 220}, {"name": "standard_id", "sequence": 230}, {"name": "standard_item_id", "sequence": 240}, {"name": "building", "sequence": 250}, {"name": "room", "sequence": 260}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_quality_recheck_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_quality_recheck_form_structure_generated_v1</field>
+        <field name="model">sc.quality.recheck</field>
+        <field name="view_type">form</field>
+        <field name="priority">146</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "issue_id", "sequence": 10}, {"name": "project_id", "sequence": 20}, {"name": "issue_level", "sequence": 30}, {"name": "issue_state", "sequence": 40}, {"name": "responsible_party_id", "sequence": 50}, {"name": "recheck_date", "sequence": 60}, {"name": "source_channel", "sequence": 70}, {"name": "recheck_user_id", "sequence": 80}, {"name": "result", "sequence": 90}, {"name": "comment", "sequence": 100}, {"name": "attachment_ids", "sequence": 110}, {"name": "photo_batch_ids", "sequence": 120}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_quality_rectification_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_quality_rectification_form_structure_generated_v1</field>
+        <field name="model">sc.quality.rectification</field>
+        <field name="view_type">form</field>
+        <field name="priority">147</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "issue_id", "sequence": 10}, {"name": "project_id", "sequence": 20}, {"name": "issue_level", "sequence": 30}, {"name": "issue_state", "sequence": 40}, {"name": "responsible_party_id", "sequence": 50}, {"name": "rectification_deadline", "sequence": 60}, {"name": "rectification_date", "sequence": 70}, {"name": "source_channel", "sequence": 80}, {"name": "handler_id", "sequence": 90}, {"name": "result", "sequence": 100}, {"name": "attachment_ids", "sequence": 110}, {"name": "photo_batch_ids", "sequence": 120}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_receipt_income_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_receipt_income_form_structure_generated_v1</field>
+        <field name="model">sc.receipt.income</field>
+        <field name="view_type">form</field>
+        <field name="priority">148</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "receipt_type", "sequence": 20}, {"name": "income_category", "sequence": 30}, {"name": "payment_method", "sequence": 40}, {"name": "receiving_account", "sequence": 50}, {"name": "bill_no", "sequence": 60}, {"name": "invoice_ref", "sequence": 70}, {"name": "receiving_account_name", "sequence": 80}, {"name": "receiving_account_no", "sequence": 90}, {"name": "receiving_bank_name", "sequence": 100}, {"name": "amount", "sequence": 110}, {"name": "deducted_invoice_amount", "sequence": 120}, {"name": "deducted_tax_amount", "sequence": 130}, {"name": "settlement_amount", "sequence": 140}, {"name": "currency_id", "sequence": 150}, {"name": "note", "sequence": 160}, {"name": "attachment_ids", "sequence": 170}, {"name": "creator_name", "sequence": 180}, {"name": "created_time", "sequence": 190}, {"name": "name", "sequence": 200}, {"name": "date_receipt", "sequence": 210}, {"name": "document_no", "sequence": 220}, {"name": "project_id", "sequence": 230}, {"name": "operation_strategy", "sequence": 240}, {"name": "partner_id", "sequence": 250}, {"name": "contract_id", "sequence": 260}, {"name": "payment_request_id", "sequence": 270}, {"name": "treasury_ledger_id", "sequence": 280}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_receipt_invoice_line_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_receipt_invoice_line_form_structure_generated_v1</field>
+        <field name="model">sc.receipt.invoice.line</field>
+        <field name="view_type">form</field>
+        <field name="priority">149</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "import_batch", "sequence": 10}, {"name": "invoice_no", "sequence": 20}, {"name": "invoice_party_name", "sequence": 30}, {"name": "invoice_issue_company", "sequence": 40}, {"name": "invoice_amount", "sequence": 50}, {"name": "current_receipt_amount", "sequence": 60}, {"name": "note", "sequence": 70}, {"name": "request_id", "sequence": 80}, {"name": "project_id", "sequence": 90}, {"name": "operation_strategy", "sequence": 100}, {"name": "partner_id", "sequence": 110}, {"name": "contract_id", "sequence": 120}, {"name": "source_document_no", "sequence": 130}, {"name": "source_table_name", "sequence": 140}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_release_action_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_release_action_form_structure_generated_v1</field>
+        <field name="model">sc.release.action</field>
+        <field name="view_type">form</field>
+        <field name="priority">150</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "name", "sequence": 10}, {"name": "action_type", "sequence": 20}, {"name": "state", "sequence": 30}, {"name": "product_key", "sequence": 40}, {"name": "base_product_key", "sequence": 50}, {"name": "edition_key", "sequence": 60}, {"name": "requested_by_user_id", "sequence": 70}, {"name": "requested_at", "sequence": 80}, {"name": "approval_required", "sequence": 90}, {"name": "approval_state", "sequence": 100}, {"name": "approved_by_user_id", "sequence": 110}, {"name": "approved_at", "sequence": 120}, {"name": "policy_key", "sequence": 130}, {"name": "reason_code", "sequence": 140}, {"name": "source_snapshot_id", "sequence": 150}, {"name": "target_snapshot_id", "sequence": 160}, {"name": "result_snapshot_id", "sequence": 170}, {"name": "request_payload_json", "sequence": 180}, {"name": "result_payload_json", "sequence": 190}, {"name": "policy_snapshot_json", "sequence": 200}, {"name": "allowed_executor_role_codes_json", "sequence": 210}, {"name": "required_approver_role_codes_json", "sequence": 220}, {"name": "diagnostics_json", "sequence": 230}, {"name": "execution_trace_json", "sequence": 240}, {"name": "note", "sequence": 250}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_risk_item_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_risk_item_form_structure_generated_v1</field>
+        <field name="model">sc.risk.item</field>
+        <field name="view_type">form</field>
+        <field name="priority">151</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "control_measure", "sequence": 10}, {"name": "library_id", "sequence": 20}, {"name": "name", "sequence": 30}, {"name": "category", "sequence": 40}, {"name": "subcategory", "sequence": 50}, {"name": "risk_level", "sequence": 60}, {"name": "group_attention", "sequence": 70}, {"name": "bottom_line", "sequence": 80}, {"name": "qualification_required", "sequence": 90}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_risk_library_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_risk_library_form_structure_generated_v1</field>
+        <field name="model">sc.risk.library</field>
+        <field name="view_type">form</field>
+        <field name="priority">152</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "item_ids", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "library_level", "sequence": 30}, {"name": "company_id", "sequence": 40}, {"name": "version_no", "sequence": 50}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_safety_disclosure_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_safety_disclosure_form_structure_generated_v1</field>
+        <field name="model">sc.safety.disclosure</field>
+        <field name="view_type">form</field>
+        <field name="priority">153</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "name", "sequence": 10}, {"name": "project_id", "sequence": 20}, {"name": "safety_plan_id", "sequence": 30}, {"name": "disclosure_date", "sequence": 40}, {"name": "approval_deadline", "sequence": 50}, {"name": "owner_id", "sequence": 60}, {"name": "copied_user_ids", "sequence": 70}, {"name": "state", "sequence": 80}, {"name": "participant_note", "sequence": 90}, {"name": "content", "sequence": 100}, {"name": "attachment_ids", "sequence": 110}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_safety_issue_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_safety_issue_form_structure_generated_v1</field>
+        <field name="model">sc.safety.issue</field>
+        <field name="view_type">form</field>
+        <field name="priority">154</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "project_id", "sequence": 30}, {"name": "issue_category", "sequence": 40}, {"name": "source_channel", "sequence": 50}, {"name": "issue_level", "sequence": 60}, {"name": "issue_date", "sequence": 70}, {"name": "location", "sequence": 80}, {"name": "coordinate", "sequence": 90}, {"name": "responsible_party_id", "sequence": 100}, {"name": "owner_id", "sequence": 110}, {"name": "rechecker_id", "sequence": 120}, {"name": "cc_user_ids", "sequence": 130}, {"name": "rectification_deadline", "sequence": 140}, {"name": "reminder_before_days", "sequence": 150}, {"name": "closed_date", "sequence": 160}, {"name": "overdue_days", "sequence": 170}, {"name": "is_overdue", "sequence": 180}, {"name": "description", "sequence": 190}, {"name": "voice_text", "sequence": 200}, {"name": "attachment_ids", "sequence": 210}, {"name": "photo_batch_ids", "sequence": 220}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_safety_patrol_task_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_safety_patrol_task_form_structure_generated_v1</field>
+        <field name="model">sc.safety.patrol.task</field>
+        <field name="view_type">form</field>
+        <field name="priority">155</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "note", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "project_id", "sequence": 30}, {"name": "patrol_type", "sequence": 40}, {"name": "check_standard_id", "sequence": 50}, {"name": "planned_date", "sequence": 60}, {"name": "owner_id", "sequence": 70}, {"name": "member_ids", "sequence": 80}, {"name": "planned_scope", "sequence": 90}, {"name": "score", "sequence": 100}, {"name": "state", "sequence": 110}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_safety_plan_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_safety_plan_form_structure_generated_v1</field>
+        <field name="model">sc.safety.plan</field>
+        <field name="view_type">form</field>
+        <field name="priority">156</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "plan_type", "sequence": 30}, {"name": "project_id", "sequence": 40}, {"name": "owner_id", "sequence": 50}, {"name": "plan_date", "sequence": 60}, {"name": "approval_deadline", "sequence": 70}, {"name": "copied_user_ids", "sequence": 80}, {"name": "description", "sequence": 90}, {"name": "attachment_ids", "sequence": 100}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_safety_recheck_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_safety_recheck_form_structure_generated_v1</field>
+        <field name="model">sc.safety.recheck</field>
+        <field name="view_type">form</field>
+        <field name="priority">157</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "issue_id", "sequence": 10}, {"name": "project_id", "sequence": 20}, {"name": "issue_level", "sequence": 30}, {"name": "issue_state", "sequence": 40}, {"name": "responsible_party_id", "sequence": 50}, {"name": "recheck_date", "sequence": 60}, {"name": "source_channel", "sequence": 70}, {"name": "recheck_user_id", "sequence": 80}, {"name": "result", "sequence": 90}, {"name": "comment", "sequence": 100}, {"name": "attachment_ids", "sequence": 110}, {"name": "photo_batch_ids", "sequence": 120}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_safety_rectification_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_safety_rectification_form_structure_generated_v1</field>
+        <field name="model">sc.safety.rectification</field>
+        <field name="view_type">form</field>
+        <field name="priority">158</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "issue_id", "sequence": 10}, {"name": "project_id", "sequence": 20}, {"name": "issue_level", "sequence": 30}, {"name": "issue_state", "sequence": 40}, {"name": "responsible_party_id", "sequence": 50}, {"name": "rectification_deadline", "sequence": 60}, {"name": "rectification_date", "sequence": 70}, {"name": "source_channel", "sequence": 80}, {"name": "handler_id", "sequence": 90}, {"name": "result", "sequence": 100}, {"name": "attachment_ids", "sequence": 110}, {"name": "photo_batch_ids", "sequence": 120}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_salary_summary_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_salary_summary_form_structure_generated_v1</field>
+        <field name="model">sc.salary.summary</field>
+        <field name="view_type">form</field>
+        <field name="priority">159</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "coverage_note", "sequence": 10}, {"name": "display_name", "sequence": 20}, {"name": "period_year", "sequence": 30}, {"name": "period_month", "sequence": 40}, {"name": "department_id", "sequence": 50}, {"name": "payer_unit", "sequence": 60}, {"name": "salary_base", "sequence": 70}, {"name": "gross_amount", "sequence": 80}, {"name": "deduction_amount", "sequence": 90}, {"name": "net_salary", "sequence": 100}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_settlement_adjustment_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_settlement_adjustment_form_structure_generated_v1</field>
+        <field name="model">sc.settlement.adjustment</field>
+        <field name="view_type">form</field>
+        <field name="priority">160</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "note", "sequence": 20}, {"name": "name", "sequence": 30}, {"name": "adjustment_type", "sequence": 40}, {"name": "date_adjustment", "sequence": 50}, {"name": "amount", "sequence": 60}, {"name": "signed_amount", "sequence": 70}, {"name": "currency_id", "sequence": 80}, {"name": "project_id", "sequence": 90}, {"name": "settlement_id", "sequence": 100}, {"name": "contract_id", "sequence": 110}, {"name": "partner_id", "sequence": 120}, {"name": "item_name", "sequence": 130}, {"name": "account_name", "sequence": 140}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_settlement_order_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_settlement_order_form_structure_generated_v1</field>
+        <field name="model">sc.settlement.order</field>
+        <field name="view_type">form</field>
+        <field name="priority">161</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "amount_total", "sequence": 20}, {"name": "submitted_amount", "sequence": 30}, {"name": "approved_amount", "sequence": 40}, {"name": "deduction_amount", "sequence": 50}, {"name": "adjustment_total", "sequence": 60}, {"name": "amount_after_adjustment", "sequence": 70}, {"name": "amount_paid", "sequence": 80}, {"name": "unpaid_amount", "sequence": 90}, {"name": "amount_payable", "sequence": 100}, {"name": "compliance_message", "sequence": 110}, {"name": "requested_fund_amount", "sequence": 120}, {"name": "engineering_address", "sequence": 130}, {"name": "entry_user_id", "sequence": 140}, {"name": "settlement_description", "sequence": 150}, {"name": "note", "sequence": 160}, {"name": "invoice_ref", "sequence": 170}, {"name": "invoice_date", "sequence": 180}, {"name": "invoice_amount", "sequence": 190}, {"name": "name", "sequence": 200}, {"name": "title", "sequence": 210}, {"name": "project_id", "sequence": 220}, {"name": "operation_strategy", "sequence": 230}, {"name": "settlement_type", "sequence": 240}, {"name": "settlement_stage", "sequence": 250}, {"name": "contract_id", "sequence": 260}, {"name": "contract_subject", "sequence": 270}, {"name": "contract_total_amount", "sequence": 280}, {"name": "partner_id", "sequence": 290}, {"name": "settlement_unit_id", "sequence": 300}, {"name": "employer_name", "sequence": 310}, {"name": "contractor_name", "sequence": 320}, {"name": "document_date", "sequence": 330}, {"name": "date_settlement", "sequence": 340}, {"name": "planned_settlement_date", "sequence": 350}, {"name": "declared_date", "sequence": 360}, {"name": "final_approved_date", "sequence": 370}, {"name": "approved_date", "sequence": 380}, {"name": "currency_id", "sequence": 390}, {"name": "company_id", "sequence": 400}, {"name": "line_ids", "sequence": 410}, {"name": "payment_request_ids", "sequence": 420}, {"name": "adjustment_ids", "sequence": 430}, {"name": "purchase_order_ids", "sequence": 440}, {"name": "attachment_ids", "sequence": 450}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_site_photo_batch_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_site_photo_batch_form_structure_generated_v1</field>
+        <field name="model">sc.site.photo.batch</field>
+        <field name="view_type">form</field>
+        <field name="priority">162</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "name", "sequence": 10}, {"name": "project_id", "sequence": 20}, {"name": "evidence_stage", "sequence": 30}, {"name": "source_channel", "sequence": 40}, {"name": "album_category", "sequence": 50}, {"name": "batch_date", "sequence": 60}, {"name": "owner_id", "sequence": 70}, {"name": "location", "sequence": 80}, {"name": "quality_issue_id", "sequence": 90}, {"name": "quality_rectification_id", "sequence": 100}, {"name": "quality_recheck_id", "sequence": 110}, {"name": "safety_issue_id", "sequence": 120}, {"name": "safety_rectification_id", "sequence": 130}, {"name": "safety_recheck_id", "sequence": 140}, {"name": "attachment_ids", "sequence": 150}, {"name": "note", "sequence": 160}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_subcontract_plan_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_subcontract_plan_form_structure_generated_v1</field>
+        <field name="model">sc.subcontract.plan</field>
+        <field name="view_type">form</field>
+        <field name="priority">163</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "project_id", "sequence": 30}, {"name": "contract_id", "sequence": 40}, {"name": "plan_date", "sequence": 50}, {"name": "start_date", "sequence": 60}, {"name": "end_date", "sequence": 70}, {"name": "subcontract_scope", "sequence": 80}, {"name": "subcontractor_id", "sequence": 90}, {"name": "owner_id", "sequence": 100}, {"name": "currency_id", "sequence": 110}, {"name": "estimated_amount", "sequence": 120}, {"name": "line_ids", "sequence": 130}, {"name": "note", "sequence": 140}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_subcontract_price_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_subcontract_price_form_structure_generated_v1</field>
+        <field name="model">sc.subcontract.price</field>
+        <field name="view_type">form</field>
+        <field name="priority">164</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "project_id", "sequence": 30}, {"name": "subcontractor_id", "sequence": 40}, {"name": "work_scope", "sequence": 50}, {"name": "work_content", "sequence": 60}, {"name": "unit_name", "sequence": 70}, {"name": "currency_id", "sequence": 80}, {"name": "unit_price", "sequence": 90}, {"name": "effective_date", "sequence": 100}, {"name": "expire_date", "sequence": 110}, {"name": "note", "sequence": 120}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_subcontract_register_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_subcontract_register_form_structure_generated_v1</field>
+        <field name="model">sc.subcontract.register</field>
+        <field name="view_type">form</field>
+        <field name="priority">165</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "project_id", "sequence": 30}, {"name": "request_id", "sequence": 40}, {"name": "contract_id", "sequence": 50}, {"name": "register_date", "sequence": 60}, {"name": "start_date", "sequence": 70}, {"name": "end_date", "sequence": 80}, {"name": "subcontract_scope", "sequence": 90}, {"name": "subcontractor_id", "sequence": 100}, {"name": "responsible_id", "sequence": 110}, {"name": "currency_id", "sequence": 120}, {"name": "registered_amount", "sequence": 130}, {"name": "line_ids", "sequence": 140}, {"name": "management_note", "sequence": 150}, {"name": "note", "sequence": 160}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_subcontract_request_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_subcontract_request_form_structure_generated_v1</field>
+        <field name="model">sc.subcontract.request</field>
+        <field name="view_type">form</field>
+        <field name="priority">166</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "project_id", "sequence": 30}, {"name": "plan_id", "sequence": 40}, {"name": "contract_id", "sequence": 50}, {"name": "request_date", "sequence": 60}, {"name": "need_start_date", "sequence": 70}, {"name": "need_end_date", "sequence": 80}, {"name": "subcontract_scope", "sequence": 90}, {"name": "suggested_subcontractor_id", "sequence": 100}, {"name": "applicant_id", "sequence": 110}, {"name": "department_id", "sequence": 120}, {"name": "priority", "sequence": 130}, {"name": "currency_id", "sequence": 140}, {"name": "estimated_amount", "sequence": 150}, {"name": "line_ids", "sequence": 160}, {"name": "request_reason", "sequence": 170}, {"name": "note", "sequence": 180}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_subcontract_settlement_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_subcontract_settlement_form_structure_generated_v1</field>
+        <field name="model">sc.subcontract.settlement</field>
+        <field name="view_type">form</field>
+        <field name="priority">167</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "project_id", "sequence": 30}, {"name": "register_id", "sequence": 40}, {"name": "contract_id", "sequence": 50}, {"name": "subcontractor_id", "sequence": 60}, {"name": "settlement_date", "sequence": 70}, {"name": "owner_id", "sequence": 80}, {"name": "currency_id", "sequence": 90}, {"name": "amount_untaxed", "sequence": 100}, {"name": "tax_amount", "sequence": 110}, {"name": "amount_total", "sequence": 120}, {"name": "line_ids", "sequence": 130}, {"name": "note", "sequence": 140}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_tax_deduction_registration_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_tax_deduction_registration_form_structure_generated_v1</field>
+        <field name="model">sc.tax.deduction.registration</field>
+        <field name="view_type">form</field>
+        <field name="priority">168</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "invoice_no", "sequence": 20}, {"name": "invoice_code", "sequence": 30}, {"name": "invoice_date", "sequence": 40}, {"name": "invoice_amount_untaxed", "sequence": 50}, {"name": "invoice_tax_amount", "sequence": 60}, {"name": "invoice_amount_total", "sequence": 70}, {"name": "deduction_amount", "sequence": 80}, {"name": "deduction_tax_amount", "sequence": 90}, {"name": "deduction_surcharge_amount", "sequence": 100}, {"name": "currency_id", "sequence": 110}, {"name": "note", "sequence": 120}, {"name": "name", "sequence": 130}, {"name": "document_no", "sequence": 140}, {"name": "document_date", "sequence": 150}, {"name": "deduction_confirm_date", "sequence": 160}, {"name": "project_id", "sequence": 170}, {"name": "operation_strategy", "sequence": 180}, {"name": "partner_id", "sequence": 190}, {"name": "partner_name", "sequence": 200}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_treasury_ledger_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_treasury_ledger_form_structure_generated_v1</field>
+        <field name="model">sc.treasury.ledger</field>
+        <field name="view_type">form</field>
+        <field name="priority">169</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "settlement_id", "sequence": 10}, {"name": "payment_request_id", "sequence": 20}, {"name": "amount", "sequence": 30}, {"name": "currency_id", "sequence": 40}, {"name": "source_kind", "sequence": 50}, {"name": "note", "sequence": 60}, {"name": "name", "sequence": 70}, {"name": "date", "sequence": 80}, {"name": "state", "sequence": 90}, {"name": "project_id", "sequence": 100}, {"name": "partner_id", "sequence": 110}, {"name": "direction", "sequence": 120}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_treasury_reconciliation_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_treasury_reconciliation_form_structure_generated_v1</field>
+        <field name="model">sc.treasury.reconciliation</field>
+        <field name="view_type">form</field>
+        <field name="priority">170</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "account_balance", "sequence": 20}, {"name": "bank_balance", "sequence": 30}, {"name": "system_difference", "sequence": 40}, {"name": "daily_income", "sequence": 50}, {"name": "daily_expense", "sequence": 60}, {"name": "currency_id", "sequence": 70}, {"name": "confirmation_amount", "sequence": 80}, {"name": "treasury_ledger_id", "sequence": 90}, {"name": "note", "sequence": 100}, {"name": "attachment_ids", "sequence": 110}, {"name": "name", "sequence": 120}, {"name": "date_document", "sequence": 130}, {"name": "document_no", "sequence": 140}, {"name": "project_id", "sequence": 150}, {"name": "operation_strategy", "sequence": 160}, {"name": "account_name", "sequence": 170}, {"name": "bank_account_no", "sequence": 180}, {"name": "confirmation_item_name", "sequence": 190}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_workflow_def_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_workflow_def_form_structure_generated_v1</field>
+        <field name="model">sc.workflow.def</field>
+        <field name="view_type">form</field>
+        <field name="priority">171</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "code", "sequence": 30}, {"name": "model_name", "sequence": 40}, {"name": "trigger", "sequence": 50}, {"name": "start_node_id", "sequence": 60}, {"name": "node_ids", "sequence": 70}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_workflow_instance_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_workflow_instance_form_structure_generated_v1</field>
+        <field name="model">sc.workflow.instance</field>
+        <field name="view_type">form</field>
+        <field name="priority">172</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "workflow_def_id", "sequence": 20}, {"name": "name", "sequence": 30}, {"name": "model_name", "sequence": 40}, {"name": "res_id", "sequence": 50}, {"name": "current_node_id", "sequence": 60}, {"name": "submitter_id", "sequence": 70}, {"name": "submitted_at", "sequence": 80}, {"name": "finished_at", "sequence": 90}, {"name": "workitem_ids", "sequence": 100}, {"name": "log_ids", "sequence": 110}]}}}}'/>
+    </record>
+    <record id="business_config_contract_sc_workflow_node_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">sc_workflow_node_form_structure_generated_v1</field>
+        <field name="model">sc.workflow.node</field>
+        <field name="view_type">form</field>
+        <field name="priority">173</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "workflow_def_id", "sequence": 10}, {"name": "name", "sequence": 20}, {"name": "code", "sequence": 30}, {"name": "node_type", "sequence": 40}, {"name": "approve_group_id", "sequence": 50}, {"name": "next_node_id", "sequence": 60}, {"name": "reject_node_id", "sequence": 70}]}}}}'/>
+    </record>
+    <record id="business_config_contract_tender_bid_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">tender_bid_form_structure_generated_v1</field>
+        <field name="model">tender.bid</field>
+        <field name="view_type">form</field>
+        <field name="priority">174</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "project_id", "sequence": 20}, {"name": "operation_strategy", "sequence": 30}, {"name": "tender_name", "sequence": 40}, {"name": "tender_round", "sequence": 50}, {"name": "owner_id", "sequence": 60}, {"name": "bid_amount", "sequence": 70}, {"name": "amount_total", "sequence": 80}, {"name": "deadline", "sequence": 90}, {"name": "open_date", "sequence": 100}, {"name": "contract_id", "sequence": 110}, {"name": "currency_id", "sequence": 120}, {"name": "line_ids", "sequence": 130}, {"name": "tech_attachment_ids", "sequence": 140}, {"name": "biz_attachment_ids", "sequence": 150}, {"name": "doc_purchase_ids", "sequence": 160}, {"name": "survey_ids", "sequence": 170}, {"name": "opening_ids", "sequence": 180}, {"name": "guarantee_ids", "sequence": 190}, {"name": "guarantee_total", "sequence": 200}, {"name": "guarantee_outstanding", "sequence": 210}, {"name": "business_scope_key", "sequence": 220}, {"name": "business_direction", "sequence": 230}, {"name": "carrier_type", "sequence": 240}, {"name": "carrier_model", "sequence": 250}, {"name": "carrier_res_id", "sequence": 260}]}}}}'/>
+    </record>
+    <record id="business_config_contract_tender_doc_purchase_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">tender_doc_purchase_form_structure_generated_v1</field>
+        <field name="model">tender.doc.purchase</field>
+        <field name="view_type">form</field>
+        <field name="priority">175</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "remark", "sequence": 20}, {"name": "attachment_ids", "sequence": 30}, {"name": "bid_id", "sequence": 40}, {"name": "project_id", "sequence": 50}, {"name": "applicant_id", "sequence": 60}, {"name": "apply_date", "sequence": 70}, {"name": "amount", "sequence": 80}, {"name": "currency_id", "sequence": 90}, {"name": "payment_method", "sequence": 100}, {"name": "invoice_no", "sequence": 110}, {"name": "receipt_partner_name", "sequence": 120}, {"name": "receipt_payee_name", "sequence": 130}, {"name": "receipt_bank_name", "sequence": 140}, {"name": "receipt_bank_account", "sequence": 150}]}}}}'/>
+    </record>
+    <record id="business_config_contract_tender_guarantee_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">tender_guarantee_form_structure_generated_v1</field>
+        <field name="model">tender.guarantee</field>
+        <field name="view_type">form</field>
+        <field name="priority">176</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "state", "sequence": 10}, {"name": "receipt_bank_account_id", "sequence": 20}, {"name": "bank_account_id", "sequence": 30}, {"name": "remark", "sequence": 40}, {"name": "attachment_ids", "sequence": 50}, {"name": "bid_id", "sequence": 60}, {"name": "project_id", "sequence": 70}, {"name": "type", "sequence": 80}, {"name": "date", "sequence": 90}, {"name": "amount", "sequence": 100}, {"name": "currency_id", "sequence": 110}]}}}}'/>
+    </record>
+    <record id="business_config_contract_tender_opening_form_structure_generated" model="ui.business.config.contract">
+        <field name="name">tender_opening_form_structure_generated_v1</field>
+        <field name="model">tender.opening</field>
+        <field name="view_type">form</field>
+        <field name="priority">177</field>
+        <field name="company_id" eval="False"/>
+        <field name="active" eval="True"/>
+        <field name="status">published</field>
+        <field name="version_no">1</field>
+        <field name="contract_json" eval='{"view_orchestration": {"views": {"form": {"fields": [{"name": "result", "sequence": 10}, {"name": "competitor_ids", "sequence": 20}, {"name": "remark", "sequence": 30}, {"name": "attachment_ids", "sequence": 40}, {"name": "bid_id", "sequence": 50}, {"name": "project_id", "sequence": 60}, {"name": "open_time", "sequence": 70}, {"name": "win_price", "sequence": 80}, {"name": "currency_id", "sequence": 90}]}}}}'/>
+    </record>
+</odoo>

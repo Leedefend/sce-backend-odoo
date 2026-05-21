@@ -259,12 +259,6 @@
         <section v-if="showNativeDefaultSectionTitle" class="native-default-section-head">
           <h3>基本信息</h3>
         </section>
-        <section v-if="businessFormSections.length && useNativeFormTree" class="native-business-outline" aria-label="页面结构">
-          <span class="native-business-outline-label">页面结构</span>
-          <span v-for="section in businessFormSections" :key="section.name" class="native-business-outline-item">
-            {{ section.label }}
-          </span>
-        </section>
         <NativeFormTreeRenderer
           v-if="useNativeFormTree"
           :nodes="nativeFormLayoutNodes"
@@ -800,6 +794,7 @@ import {
   createContractV2Store,
   decodeContractV2Snapshot,
   resolveContractV2ContainerTree,
+  resolveContractV2FormStructureContract,
   resolveContractV2GlobalStatus,
   resolveContractV2MainData,
   resolveContractV2SourceContext,
@@ -1073,6 +1068,11 @@ const v2ShadowLegacyFieldMissing = computed(() => {
 });
 const v2ShadowLegacyFieldOverlapCount = computed(() => v2ShadowFieldCodeCount.value - v2ShadowLegacyFieldMissing.value.length);
 const v2ShadowLegacyFieldMissingPreview = computed(() => v2ShadowLegacyFieldMissing.value.slice(0, 8).join(',') || '-');
+const v2ShadowFormStructureContract = computed(() => resolveContractV2FormStructureContract(v2ContractStore.value));
+const v2ShadowFormStructureSlotCount = computed(() => {
+  const slots = v2ShadowFormStructureContract.value.slots;
+  return Array.isArray(slots) ? slots.length : 0;
+});
 const v2ShadowLayoutSourceKind = computed(() => {
   const containers = resolveContractV2ContainerTree(v2ContractStore.value);
   if (containers.length) return 'v2_store';
@@ -4443,12 +4443,6 @@ const advancedFieldNames = computed<string[]>(() => {
   return semanticFieldGroups.value.advanced?.fields || [];
 });
 const hasAdvancedFields = computed(() => advancedFieldNames.value.length > 0);
-const businessFormSections = computed(() => {
-  const order = ['business_core', 'business_amount', 'business_details', 'business_collaboration'];
-  return order
-    .map((key) => semanticFieldGroups.value[key])
-    .filter((item): item is SemanticFieldGroup => Boolean(item?.fields?.length));
-});
 const policyRequiredFields = computed(() => {
   const out = new Set<string>();
   const map = (contract.value?.action_policies || {}) as Record<string, { semantic?: string; enabled_when?: { required_fields?: string[] } }>;
@@ -4706,12 +4700,12 @@ const nativeNotebookPageCount = computed(() => countNativeNodesByType(nativeForm
 const nativeGroupCount = computed(() => countNativeNodesByType(nativeFormLayoutNodes.value, 'group'));
 const nativeVisibleSectionTitles = computed(() => {
   const titles: string[] = [];
-  const structural = new Set(['header', 'sheet', 'container', 'div', 'span', 'h1', 'h2', 'h3']);
+  const titledContainerTypes = new Set(['group', 'page']);
   const walk = (nodes: NativeFormLayoutNode[]) => {
     nodes.forEach((node) => {
       const type = String(node?.type || (node as { containerType?: string })?.containerType || '').trim().toLowerCase();
       const raw = String(node?.string || node?.label || '').trim();
-      if (raw && !structural.has(type) && raw.toLowerCase() !== type) {
+      if (raw && titledContainerTypes.has(type) && raw.toLowerCase() !== type) {
         titles.push(raw);
       }
       (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
@@ -8211,38 +8205,6 @@ onBeforeUnmount(() => {
   color: var(--sc-app-text-primary);
   font-size: 14px;
   font-weight: 700;
-}
-
-.native-business-outline {
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  min-width: 0;
-  padding: 8px 10px;
-  border: 1px solid var(--sc-app-border);
-  border-radius: 6px;
-  background: var(--sc-app-muted-bg);
-}
-
-.native-business-outline-label {
-  color: var(--sc-app-text-secondary);
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.native-business-outline-item {
-  display: inline-flex;
-  align-items: center;
-  min-height: 24px;
-  padding: 3px 8px;
-  border-radius: 4px;
-  background: var(--sc-app-panel);
-  border: 1px solid var(--sc-app-border);
-  color: var(--sc-app-text-primary);
-  font-size: 12px;
-  font-weight: 600;
 }
 
 .contract-mode-actions {
