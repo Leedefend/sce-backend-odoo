@@ -444,14 +444,14 @@
               >
                 <span class="favorite-star" aria-hidden="true">{{ isFavoriteValue(row[col]) ? '★' : '☆' }}</span>
               </button>
-              <div v-else-if="col === rowPrimary" class="cell-primary">
-                <div class="primary">{{ semanticCell(col, row[col]).text }}</div>
-                <div v-if="rowSecondary" class="secondary">{{ semanticCell(rowSecondary, row[rowSecondary]).text }}</div>
-              </div>
               <div v-else-if="isStatusColumn(col)">
                 <span class="status-badge" :class="`tone-${semanticCell(col, row[col]).tone}`">
                   {{ semanticCell(col, row[col]).text }}
                 </span>
+              </div>
+              <div v-else-if="col === rowPrimary" class="cell-primary">
+                <div class="primary">{{ semanticCell(col, row[col]).text }}</div>
+                <div v-if="rowSecondary" class="secondary">{{ semanticCell(rowSecondary, row[rowSecondary]).text }}</div>
               </div>
               <div v-else>
                 {{ semanticCell(col, row[col]).text }}
@@ -893,7 +893,10 @@ function semanticCell(field: string, value: unknown) {
 
 function isStatusColumn(field: string) {
   const option = columnOption(field);
-  return option?.cellRole === 'status' || props.listProfile?.status_field === field;
+  const normalized = String(field || '').trim();
+  return option?.cellRole === 'status'
+    || props.listProfile?.status_field === normalized
+    || ['document_status', 'state', 'status', 'lifecycle_state'].includes(normalized);
 }
 
 function isFavoriteColumn(field: string) {
@@ -1180,9 +1183,8 @@ const selectedCount = computed(() => (props.selectedIds || []).length);
 const selectionActions = computed(() =>
   Array.isArray(props.selectionActions) ? props.selectionActions : [],
 );
-const hasSelectionActions = computed(() => selectionActions.value.length > 0);
 const selectableRows = computed(() => props.records.map((row) => rowId(row)).filter((id): id is number => typeof id === 'number'));
-const showSelectionColumn = computed(() => hasSelectionActions.value && !!props.onToggleSelection && !!props.onToggleSelectionAll);
+const showSelectionColumn = computed(() => !!props.onToggleSelection && !!props.onToggleSelectionAll);
 const showBatchBar = computed(() => showSelectionColumn.value && (selectedCount.value > 0 || Boolean(props.batchMessage)));
 const allSelected = computed(() => {
   const rows = selectableRows.value;
