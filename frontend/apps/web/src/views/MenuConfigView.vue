@@ -62,7 +62,7 @@
           type="button"
           class="tree-node all"
           :class="{ active: selectedMenuId === 0 }"
-          @click="selectedMenuId = 0"
+          @click="selectMenu(0)"
         >
           全部菜单
         </button>
