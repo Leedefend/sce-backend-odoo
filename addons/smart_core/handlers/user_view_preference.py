@@ -315,6 +315,7 @@ class UserViewPreferenceSetHandler(UserViewPreferenceGetHandler):
     DESCRIPTION = "保存当前用户视图偏好"
     VERSION = "1.0.0"
     REQUIRED_GROUPS = ["base.group_user"]
+    ACL_MODE = "explicit_check"
 
     def handle(self, payload=None, ctx=None):
         params = self._params(payload or self.payload)

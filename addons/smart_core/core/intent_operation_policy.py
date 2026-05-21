@@ -3,10 +3,33 @@ import re
 from typing import Any, Dict
 
 
-WRITE_INTENT_RE = re.compile(
-    r"(create|write|unlink|delete|batch|execute|upload|cancel|approve|reject|submit|done|import|rollback|pin|set)",
-    re.IGNORECASE,
-)
+WRITE_INTENT_TOKENS = {
+    "approve",
+    "batch",
+    "cancel",
+    "complete",
+    "create",
+    "delete",
+    "done",
+    "execute",
+    "freeze",
+    "import",
+    "pin",
+    "promote",
+    "publish",
+    "reject",
+    "rollback",
+    "save",
+    "schedule",
+    "set",
+    "submit",
+    "sync",
+    "track",
+    "unlink",
+    "update",
+    "upload",
+    "write",
+}
 
 WRITE_MODES = {"create", "write", "unlink"}
 
@@ -41,11 +64,12 @@ def normalize_intent_operation(intent_name: str, params: Dict[str, Any] | None =
         return suffix or op or "read"
     if op:
         return op
-    if "create" in intent:
+    tokens = [token for token in re.split(r"[._:-]+", intent) if token]
+    if "create" in tokens:
         return "create"
-    if "unlink" in intent or "delete" in intent:
+    if "unlink" in tokens or "delete" in tokens:
         return "unlink"
-    if WRITE_INTENT_RE.search(intent):
+    if any(token in WRITE_INTENT_TOKENS for token in tokens):
         return "write"
     return "read"
 

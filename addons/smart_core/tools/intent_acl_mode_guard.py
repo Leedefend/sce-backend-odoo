@@ -30,13 +30,20 @@ def _handler_dirs():
         return []
     return [path for path in sorted(addons_root.glob("*/handlers")) if path.is_dir()]
 ALLOWED_ACL_MODES = {"record_rule", "explicit_check"}
-WRITE_HINT_PATTERN = re.compile(
-    r"(create|write|unlink|delete|batch|execute|upload|cancel|approve|reject|submit|done|import|rollback|pin|set)",
-    re.IGNORECASE,
-)
+WRITE_INTENT_TOKENS = {
+    "approve", "batch", "cancel", "complete", "create", "delete", "done",
+    "execute", "freeze", "import", "pin", "promote", "publish", "reject",
+    "rollback", "save", "schedule", "set", "submit", "sync", "track",
+    "unlink", "update", "upload", "write",
+}
 
 
-def _literal(node):
+def _literal(node, module_constants: dict[str, object] | None = None):
+    module_constants = module_constants or {}
+    if isinstance(node, ast.Name):
+        return module_constants.get(node.id)
+    if isinstance(node, ast.List):
+        return [_literal(item, module_constants) for item in node.elts]
     try:
         return ast.literal_eval(node)
     except Exception:
@@ -49,46 +56,74 @@ def _iter_handler_classes():
             continue
         for path in sorted(handler_dir.glob("*.py")):
             tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+            module_constants = _module_constants(tree)
             classes = [node for node in tree.body if isinstance(node, ast.ClassDef)]
             if classes:
-                yield path, classes
+                yield path, classes, module_constants
 
 
-def _class_attr_literal(cls: ast.ClassDef, attr_name: str):
+def _module_constants(tree: ast.Module) -> dict[str, object]:
+    out: dict[str, object] = {}
+    for stmt in tree.body:
+        if not isinstance(stmt, ast.Assign):
+            continue
+        value = _literal(stmt.value, out)
+        if value is None:
+            continue
+        for target in stmt.targets:
+            if isinstance(target, ast.Name):
+                out[target.id] = value
+    return out
+
+
+def _class_attr_literal(cls: ast.ClassDef, attr_name: str, module_constants: dict[str, object]):
     for stmt in cls.body:
         if not isinstance(stmt, ast.Assign):
             continue
         for target in stmt.targets:
             if isinstance(target, ast.Name) and target.id == attr_name:
-                return _literal(stmt.value)
+                return _literal(stmt.value, module_constants)
     return None
 
 
-def _resolve_attr(class_map: dict[str, ast.ClassDef], cls: ast.ClassDef, attr_name: str, visited: set[str] | None = None):
+def _resolve_attr(
+    class_map: dict[str, ast.ClassDef],
+    cls: ast.ClassDef,
+    attr_name: str,
+    module_constants: dict[str, object],
+    visited: set[str] | None = None,
+):
     visited = visited or set()
     if cls.name in visited:
         return None
     visited.add(cls.name)
-    value = _class_attr_literal(cls, attr_name)
+    value = _class_attr_literal(cls, attr_name, module_constants)
     if value is not None:
         return value
     for base in cls.bases:
         if isinstance(base, ast.Name):
             base_cls = class_map.get(base.id)
             if base_cls is not None:
-                inherited = _resolve_attr(class_map, base_cls, attr_name, visited=visited)
+                inherited = _resolve_attr(class_map, base_cls, attr_name, module_constants, visited=visited)
                 if inherited is not None:
                     return inherited
     return None
 
 
-def _meta(path: Path, cls: ast.ClassDef, class_map: dict[str, ast.ClassDef]):
-    intent_type = _resolve_attr(class_map, cls, "INTENT_TYPE")
+def _is_write_intent(intent_type: str, *, non_idempotent: bool = False) -> bool:
+    if non_idempotent:
+        return True
+    tokens = [token for token in re.split(r"[._:-]+", str(intent_type or "").strip().lower()) if token]
+    return any(token in WRITE_INTENT_TOKENS for token in tokens)
+
+
+def _meta(path: Path, cls: ast.ClassDef, class_map: dict[str, ast.ClassDef], module_constants: dict[str, object]):
+    intent_type = _resolve_attr(class_map, cls, "INTENT_TYPE", module_constants)
     if not isinstance(intent_type, str) or not intent_type.strip():
         return None
-    non_idempotent_allowed = bool(str(_resolve_attr(class_map, cls, "NON_IDEMPOTENT_ALLOWED") or "").strip())
-    is_write = bool(WRITE_HINT_PATTERN.search(intent_type)) or non_idempotent_allowed
-    acl_mode = _resolve_attr(class_map, cls, "ACL_MODE")
+    non_idempotent_allowed = bool(str(_resolve_attr(class_map, cls, "NON_IDEMPOTENT_ALLOWED", module_constants) or "").strip())
+    is_write = _is_write_intent(intent_type, non_idempotent=non_idempotent_allowed)
+    acl_mode = _resolve_attr(class_map, cls, "ACL_MODE", module_constants)
     if isinstance(acl_mode, str):
         acl_mode = acl_mode.strip()
     else:
@@ -106,10 +141,10 @@ def main() -> int:
     scanned = 0
     write_count = 0
     violations = []
-    for path, classes in _iter_handler_classes():
+    for path, classes, module_constants in _iter_handler_classes():
         class_map = {cls.name: cls for cls in classes}
         for cls in classes:
-            meta = _meta(path, cls, class_map)
+            meta = _meta(path, cls, class_map, module_constants)
             if not meta:
                 continue
             scanned += 1

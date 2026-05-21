@@ -154,6 +154,7 @@ class FormFieldPolicySetHandler(BaseIntentHandler):
     INTENT_TYPE = "ui.form_field_policy.set"
     DESCRIPTION = "Set current form field visibility policy from a contract action."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
+    ACL_MODE = "explicit_check"
     SOURCE_KIND = "ui_form_field_policy_contract_action"
     SOURCE_AUTHORITIES = (
         "ui.business.config.contract",
@@ -288,6 +289,7 @@ class FormCustomFieldCreateHandler(BaseIntentHandler):
     INTENT_TYPE = "ui.form_custom_field.create"
     DESCRIPTION = "Create a safe custom form field from a contract action."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
+    ACL_MODE = "explicit_check"
     SOURCE_KIND = "ui_form_custom_field_contract_action"
     SOURCE_AUTHORITIES = (
         "ui.business.config.contract",
@@ -421,6 +423,7 @@ class FormFieldOrderSetHandler(BaseIntentHandler):
     INTENT_TYPE = "ui.form_field_order.set"
     DESCRIPTION = "Set form field order for current form scope from contract action."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
+    ACL_MODE = "explicit_check"
     SOURCE_KIND = "ui_form_field_order_contract_action"
     SOURCE_AUTHORITIES = (
         "ui.business.config.contract",
@@ -622,6 +625,7 @@ class BusinessConfigContractSaveHandler(BaseIntentHandler):
     INTENT_TYPE = "ui.business_config.contract.save"
     DESCRIPTION = "Save low-code business config contract payload into contract model."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
+    ACL_MODE = "explicit_check"
     SOURCE_KIND = "ui_business_config_contract_save"
     SOURCE_AUTHORITIES = BUSINESS_CONFIG_CONTRACT_AUTHORITIES
     NON_IDEMPOTENT_ALLOWED = "business config contract is mutable authoring state"
@@ -840,8 +844,10 @@ class BusinessConfigContractPublishHandler(BaseIntentHandler):
     INTENT_TYPE = "ui.business_config.contract.publish"
     DESCRIPTION = "Publish a low-code business config contract by name/model."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
+    ACL_MODE = "explicit_check"
     SOURCE_KIND = "ui_business_config_contract_publish"
     SOURCE_AUTHORITIES = BUSINESS_CONFIG_CONTRACT_AUTHORITIES
+    NON_IDEMPOTENT_ALLOWED = "business config contract publish mutates active runtime configuration"
 
     def _source_authority_contract(self):
         return {
@@ -892,8 +898,10 @@ class BusinessConfigContractRollbackHandler(BaseIntentHandler):
     INTENT_TYPE = "ui.business_config.contract.rollback"
     DESCRIPTION = "Rollback a low-code business config contract to previous snapshot."
     REQUIRED_GROUPS = [BUSINESS_CONFIG_ADMIN_GROUP]
+    ACL_MODE = "explicit_check"
     SOURCE_KIND = "ui_business_config_contract_rollback"
     SOURCE_AUTHORITIES = BUSINESS_CONFIG_CONTRACT_AUTHORITIES
+    NON_IDEMPOTENT_ALLOWED = "business config contract rollback mutates active runtime configuration"
 
     def _source_authority_contract(self):
         return {
