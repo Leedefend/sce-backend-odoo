@@ -495,6 +495,8 @@ class UiContractV2Handler(BaseIntentHandler):
         if len(columns) > 18:
             selected = columns[:18]
             list_visibility_fields = [
+                "entry_user_text",
+                "entry_time",
                 "contract_duration_text",
                 "contract_payment_method_text",
             ]
