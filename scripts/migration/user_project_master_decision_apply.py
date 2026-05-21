@@ -245,6 +245,7 @@ def plan_record(
 def main() -> None:
     apply = os.getenv("APPLY") == "1"
     archive_excluded = os.getenv("ARCHIVE_EXCLUDED", "1") != "0"
+    archive_out_of_baseline = os.getenv("ARCHIVE_OUT_OF_BASELINE") == "1"
     source = source_path()
     decisions = decision_path()
     source_rows, source_by_key = load_source_rows(source)
@@ -351,6 +352,26 @@ def main() -> None:
         if apply and project.active and archive_excluded:
             project.with_context(tracking_disable=True).write({"active": False})
 
+    if archive_out_of_baseline:
+        protected_project_ids = accepted_project_ids | excluded_project_ids
+        for project in all_projects:
+            if project.id in protected_project_ids or not project.active:
+                continue
+            action = "archive_out_of_user_baseline"
+            plan_rows.append(
+                plan_record(
+                    source_name="",
+                    source_strategy="",
+                    project=project,
+                    outcome="out_of_user_baseline_active_project",
+                    action=action,
+                    reason="active_project_not_in_user_confirmed_baseline",
+                    target_name=project_name(project),
+                )
+            )
+            if apply:
+                project.with_context(tracking_disable=True).write({"active": False})
+
     if errors:
         raise RuntimeError({"planning_errors": errors[:100], "error_count": len(errors)})
 
@@ -386,6 +407,7 @@ def main() -> None:
         "outcome_counts": dict(Counter(row["outcome"] for row in plan_rows)),
         "action_counts": dict(Counter(row["action"] for row in plan_rows)),
         "archive_excluded": archive_excluded,
+        "archive_out_of_baseline": archive_out_of_baseline,
         "plan_csv": str(plan_csv),
         "result_json": str(result_json),
         "boundary": "project.project master data only; no project_id, legacy_project_id, contract, payment, SCBS, or other business fact relink",

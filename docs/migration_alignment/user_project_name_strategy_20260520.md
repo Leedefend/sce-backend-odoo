@@ -194,3 +194,19 @@ the accepted carrier's name, operation strategy, active state, and derived
 project category; it can archive rejected duplicate/no-evidence project
 candidates. It must not rewrite `project_id`, `legacy_project_id`, contract,
 payment, SCBS, or other business-fact links.
+
+When closing the user-visible project master baseline, also enforce that active
+`project.project` rows are limited to the 716 accepted carriers:
+
+```bash
+ARCHIVE_OUT_OF_BASELINE=1 \
+PROJECT_MASTER_REVIEW_DECISION_CSV=migration_assets/10_master/project/user_project_master_review_decisions_20260521.csv \
+make project.master.user_review.decision_apply.dry_run
+
+ARCHIVE_OUT_OF_BASELINE=1 \
+PROJECT_MASTER_REVIEW_DECISION_CSV=migration_assets/10_master/project/user_project_master_review_decisions_20260521.csv \
+make project.master.user_review.decision_apply
+```
+
+This archives active projects that are not in the confirmed user baseline. It
+still does not delete projects or relink business facts.
