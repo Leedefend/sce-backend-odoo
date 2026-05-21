@@ -26,21 +26,26 @@ defineProps<{
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  align-items: flex-start;
+  align-items: center;
   border-bottom: 1px solid var(--sc-app-border);
-  padding-bottom: 12px;
-  margin-bottom: 16px;
+  padding: 8px 0 10px;
+  margin-bottom: 10px;
+  min-width: 0;
 }
 
 .template-page-header-main {
   display: grid;
   gap: 0;
+  min-width: 0;
 }
 
 .template-page-header-main h1 {
   margin: 0;
-  font-size: 36px;
-  line-height: 1.12;
+  color: var(--sc-app-text-primary);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 .template-page-subtitle {
@@ -86,7 +91,7 @@ defineProps<{
   }
 
   .template-page-header-main h1 {
-    font-size: 30px;
+    font-size: 20px;
   }
 }
 </style>

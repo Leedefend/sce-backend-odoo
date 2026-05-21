@@ -11,31 +11,31 @@ from odoo.exceptions import ValidationError
 
 class UIFormFieldPolicy(models.Model):
     _name = "ui.form.field.policy"
-    _description = "UI Form Field Policy"
+    _description = "表单字段配置"
     _order = "model, sequence, id"
 
     SOURCE_KIND = "ui_form_field_policy_overlay"
     SOURCE_AUTHORITIES = ("ui.form.field.policy", "ir.model.fields", "app.view.config")
     NO_BUSINESS_FACT_AUTHORITY = True
 
-    name = fields.Char(compute="_compute_name", store=True)
-    active = fields.Boolean(default=True)
-    model_id = fields.Many2one("ir.model", string="Model", ondelete="cascade", index=True)
-    model = fields.Char(string="Technical Model", required=True, index=True)
-    field_name = fields.Char(required=True, index=True)
-    field_id = fields.Many2one("ir.model.fields", string="Field", ondelete="cascade")
-    action_id = fields.Many2one("ir.actions.act_window", string="Action", ondelete="cascade")
-    view_id = fields.Many2one("ir.ui.view", string="View", ondelete="cascade")
-    company_id = fields.Many2one("res.company", string="Company", default=lambda self: self.env.company)
-    visible = fields.Boolean(default=True)
-    label = fields.Char()
-    sequence = fields.Integer(default=100)
+    name = fields.Char(string="配置名称", compute="_compute_name", store=True)
+    active = fields.Boolean(string="启用", default=True)
+    model_id = fields.Many2one("ir.model", string="业务对象", ondelete="cascade", index=True)
+    model = fields.Char(string="技术模型", required=True, index=True)
+    field_name = fields.Char(string="技术字段名", required=True, index=True)
+    field_id = fields.Many2one("ir.model.fields", string="选择字段", ondelete="cascade")
+    action_id = fields.Many2one("ir.actions.act_window", string="业务页面", ondelete="cascade")
+    view_id = fields.Many2one("ir.ui.view", string="限定表单视图", ondelete="cascade")
+    company_id = fields.Many2one("res.company", string="公司", default=lambda self: self.env.company)
+    visible = fields.Boolean(string="显示", default=True)
+    label = fields.Char(string="显示名称")
+    sequence = fields.Integer(string="显示顺序", default=100)
     group_title = fields.Char(default="业务配置字段")
-    field_type = fields.Char(compute="_compute_policy_summary")
-    field_label = fields.Char(compute="_compute_policy_summary")
-    scope_summary = fields.Char(compute="_compute_policy_summary")
-    effect_summary = fields.Char(compute="_compute_policy_summary")
-    note = fields.Text()
+    field_type = fields.Char(string="字段类型", compute="_compute_policy_summary")
+    field_label = fields.Char(string="字段名称", compute="_compute_policy_summary")
+    scope_summary = fields.Char(string="生效范围", compute="_compute_policy_summary")
+    effect_summary = fields.Char(string="显示效果", compute="_compute_policy_summary")
+    note = fields.Text(string="说明")
 
     @api.depends("model", "field_name", "visible", "label")
     def _compute_name(self):

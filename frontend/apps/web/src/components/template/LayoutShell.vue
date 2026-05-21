@@ -15,7 +15,7 @@ withDefaults(defineProps<{
 <style scoped>
 .template-layout-shell {
   display: grid;
-  gap: 6px;
+  gap: 8px;
   width: 100%;
   min-width: 0;
   padding-bottom: 24px;

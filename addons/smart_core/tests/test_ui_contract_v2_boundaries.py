@@ -31,11 +31,14 @@ def _load_handler():
     smart_core_mod = _install_module("odoo.addons.smart_core")
     handlers_mod = _install_module("odoo.addons.smart_core.handlers")
     core_mod = _install_module("odoo.addons.smart_core.core")
+    utils_mod = _install_module("odoo.addons.smart_core.utils")
     smart_core_mod.__path__ = [str(root)]
     handlers_mod.__path__ = [str(root / "handlers")]
     core_mod.__path__ = [str(root / "core")]
+    utils_mod.__path__ = [str(root / "utils")]
 
     _install_module("odoo.addons.smart_core.core.base_handler", BaseIntentHandler=_BaseIntentHandler)
+    _install_module("odoo.addons.smart_core.utils.extension_hooks", call_extension_hook_first=lambda *args, **kwargs: None)
     _install_module(
         "odoo.addons.smart_core.core.scene_provider",
         load_scenes_from_db_or_fallback=lambda *args, **kwargs: {

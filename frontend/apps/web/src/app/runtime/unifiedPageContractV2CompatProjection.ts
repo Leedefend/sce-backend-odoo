@@ -40,6 +40,13 @@ function resolveV2CollaborationContract(v2Contract: unknown): Dict {
   return asDict(runtime.collaboration);
 }
 
+function resolveV2LegacyContractProjection(v2Contract: unknown): Dict {
+  const root = asDict(v2Contract);
+  const dataContract = asDict(root.dataContract);
+  const dataMeta = asDict(dataContract.dataMeta);
+  return asDict(dataMeta.legacyContractProjection || dataMeta.legacy_contract_projection);
+}
+
 function stableFieldName(name: string) {
   return String(name || '').trim();
 }
@@ -349,6 +356,13 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
   const v2SourceContext = resolveUnifiedPageContractV2SourceContext(v2Contract);
   const v2SearchContract = resolveV2SearchContract(v2Contract);
   const v2Collaboration = resolveV2CollaborationContract(v2Contract);
+  const legacyProjection = resolveV2LegacyContractProjection(v2Contract);
+  const legacyListProfile = asDict(legacyProjection.list_profile);
+  const legacyFieldGroups = Array.isArray(legacyProjection.field_groups) ? legacyProjection.field_groups : [];
+  const legacyVisibleFields = Array.isArray(legacyProjection.visible_fields)
+    ? legacyProjection.visible_fields.map((name) => String(name || '').trim()).filter(Boolean)
+    : [];
+  const legacyBusinessProfile = asDict(legacyProjection.business_operation_profile);
   const globalStatus = resolveUnifiedPageContractV2GlobalStatus(v2Contract);
   const layoutButtons = collectV2LayoutButtons(v2Contract);
   const statusbar = collectV2Statusbar(v2Contract);
@@ -506,13 +520,15 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
       ...(viewType !== 'form' ? { [viewType]: formView } : {}),
     },
     ...(Object.keys(v2SearchContract).length ? { search: v2SearchContract } : {}),
-    visible_fields: fieldNames,
-    list_profile: (
-      !v2Fields.length
-      && fallbackListColumns.length
-      && (viewType === 'list' || viewType === 'tree')
-    )
-      ? {
+    visible_fields: legacyVisibleFields.length ? legacyVisibleFields : fieldNames,
+    list_profile: Object.keys(legacyListProfile).length
+      ? legacyListProfile
+      : (
+        !v2Fields.length
+        && fallbackListColumns.length
+        && (viewType === 'list' || viewType === 'tree')
+      )
+        ? {
           columns: fallbackListColumns,
           fact_columns: fallbackListColumns,
           hidden_columns: [],
@@ -532,8 +548,9 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
           },
           batch_policy: batchPolicy,
         }
-      : undefined,
-    field_groups: [],
+        : undefined,
+    field_groups: legacyFieldGroups,
+    ...(Object.keys(legacyBusinessProfile).length ? { business_operation_profile: legacyBusinessProfile } : {}),
     contract_surface: contractSurface,
     render_mode: renderMode,
     source_mode: sourceMode,

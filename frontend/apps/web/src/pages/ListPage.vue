@@ -1795,14 +1795,15 @@ onBeforeUnmount(() => {
   position: relative;
   z-index: 35;
   display: grid;
-  grid-template-columns: minmax(132px, 180px) minmax(0, 1fr) max-content;
+  grid-template-columns: minmax(180px, 240px) minmax(0, 1fr) max-content;
   align-items: center;
-  gap: 6px;
+  gap: 10px;
   border: 1px solid var(--sc-app-border);
   border-radius: 8px;
   background: var(--sc-app-panel);
-  padding: 4px 6px;
-  box-shadow: 0 4px 12px var(--sc-app-shadow);
+  padding: 8px 10px;
+  min-height: 52px;
+  box-shadow: 0 8px 18px var(--sc-app-shadow);
 }
 
 .list-title {
@@ -1813,7 +1814,7 @@ onBeforeUnmount(() => {
 .list-title h2 {
   margin: 0;
   color: var(--sc-app-text-primary);
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 700;
   line-height: 1.25;
   overflow: hidden;
@@ -1822,9 +1823,9 @@ onBeforeUnmount(() => {
 }
 
 .list-title p {
-  margin: 1px 0 0;
+  margin: 2px 0 0;
   color: var(--sc-app-text-secondary);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.25;
   overflow: hidden;
   text-overflow: ellipsis;

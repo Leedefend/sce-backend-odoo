@@ -607,7 +607,7 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
         view_type=view_type,
         container_status=contract["statusContract"]["containerStatus"],
     )
-    _standardize_form_container_semantics(container_tree, model=model, view_type=view_type)
+    _standardize_form_container_semantics(container_tree, model=model, view_type=view_type, source=source)
     contract["layoutContract"]["containerTree"] = container_tree
     contract["layoutContract"]["componentRegistry"] = _component_registry(component_keys or {"sc.display.text"})
     contract["dataContract"]["dataMeta"]["fieldCount"] = len(fields)
@@ -641,6 +641,18 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
     if search_contract:
         contract["searchContract"] = search_contract
         contract["dataContract"]["search"] = deepcopy(search_contract)
+    compat_projection = {
+        key: deepcopy(source.get(key))
+        for key in (
+            "business_operation_profile",
+            "field_groups",
+            "list_profile",
+            "visible_fields",
+        )
+        if source.get(key) is not None
+    }
+    if compat_projection:
+        contract["dataContract"]["dataMeta"]["legacyContractProjection"] = compat_projection
     _append_ui_contract_actions(contract, ui, source_widget_id="page.root", main_data=contract["dataContract"]["mainData"])
     _append_ui_contract_row_actions(contract, ui)
     _append_project_kanban_row_action(contract, model=model, view_type=view_type)
@@ -1173,7 +1185,42 @@ def _apply_semantic_container_annotation(node: dict[str, Any], label: str) -> No
     node["sourceAuthority"] = source
 
 
-def _standardize_form_container_semantics(nodes: list[dict[str, Any]], *, model: str, view_type: str) -> None:
+def _business_group_label_for_node(source: dict[str, Any], node: dict[str, Any]) -> str:
+    groups = _list(source.get("field_groups"))
+    business_groups: list[tuple[str, str, set[str]]] = []
+    for group in groups:
+        if not isinstance(group, dict):
+            continue
+        name = _text(group.get("name")).lower()
+        if not name.startswith("business_"):
+            continue
+        fields = {_text(item) for item in _list(group.get("fields")) if _text(item)}
+        if not fields:
+            continue
+        label = _text(group.get("label") or group.get("title") or group.get("string"))
+        if label:
+            business_groups.append((name, label, fields))
+    if not business_groups:
+        return ""
+    node_fields = set(_node_field_names(node))
+    if not node_fields:
+        return ""
+    ranked = sorted(
+        (
+            (len(node_fields & fields), name, label)
+            for name, label, fields in business_groups
+            if node_fields & fields
+        ),
+        key=lambda item: (
+            item[0],
+            4 if item[1] == "business_collaboration" else 3 if item[1] == "business_details" else 2 if item[1] == "business_amount" else 1,
+        ),
+        reverse=True,
+    )
+    return ranked[0][2] if ranked else ""
+
+
+def _standardize_form_container_semantics(nodes: list[dict[str, Any]], *, model: str, view_type: str, source: dict[str, Any] | None = None) -> None:
     if view_type != "form" or not model:
         return
 
@@ -1185,9 +1232,10 @@ def _standardize_form_container_semantics(nodes: list[dict[str, Any]], *, model:
             node_type = _text(node.get("containerType") or node.get("type") or node.get("kind")).lower()
             if node_type == "group":
                 if _is_generic_container_label(node):
+                    business_label = _business_group_label_for_node(_dict(source), node)
                     _apply_semantic_container_label(
                         node,
-                        _semantic_group_label(node, level=level, index=group_index),
+                        business_label or _semantic_group_label(node, level=level, index=group_index),
                     )
                 else:
                     semantic_title = _text(node.get("semanticTitle"))

@@ -256,6 +256,15 @@
             <button class="ghost" type="button" :disabled="busy || !hasCurrentFormFieldDraftChanges" @click="resetContractFieldOrder">重置</button>
           </div>
         </section>
+        <section v-if="showNativeDefaultSectionTitle" class="native-default-section-head">
+          <h3>基本信息</h3>
+        </section>
+        <section v-if="businessFormSections.length && useNativeFormTree" class="native-business-outline" aria-label="页面结构">
+          <span class="native-business-outline-label">页面结构</span>
+          <span v-for="section in businessFormSections" :key="section.name" class="native-business-outline-item">
+            {{ section.label }}
+          </span>
+        </section>
         <NativeFormTreeRenderer
           v-if="useNativeFormTree"
           :nodes="nativeFormLayoutNodes"
@@ -767,7 +776,7 @@ import {
 } from '../app/contractRuntime';
 import { validateContractFormData } from '../app/contractValidation';
 import { resolveActionIdFromContext } from '../app/actionContext';
-import { findActionMeta } from '../app/menu';
+import { findActionMeta, findMenuNode } from '../app/menu';
 import { pickContractNavQuery } from '../app/navigationContext';
 import { buildEntryTargetRouteTarget } from '../app/routeQuery';
 import { readWorkspaceContext } from '../app/workspaceContext';
@@ -1161,6 +1170,11 @@ const actionId = computed(() => {
     model: model.value,
   });
 });
+const menuId = computed(() => Number(route.query.menu_id || 0) || 0);
+const currentMenuTitle = computed(() => {
+  const node = findMenuNode(session.menuTree, menuId.value);
+  return String(node?.label || node?.name || node?.title || '').trim();
+});
 const recordId = computed(() => {
   const raw = String(route.params.id || '').trim();
   if (!raw || raw === 'new') return null;
@@ -1384,6 +1398,8 @@ function isTechnicalViewTitle(value: string) {
 }
 
 const pageTitle = computed(() => {
+  const menuTitle = currentMenuTitle.value;
+  if (menuTitle) return menuTitle;
   const title = String(contract.value?.head?.title || '').trim();
   if (title && !isTechnicalViewTitle(title)) return title;
   const recordTitle = String(formData.display_name || formData.name || '').trim();
@@ -1400,7 +1416,9 @@ const pageDisplaySubtitle = computed(() => {
   if (isProjectIntakeCreateMode.value) {
     return '填写核心信息即可完成项目立项';
   }
-  return '';
+  const recordTitle = String(formData.display_name || formData.name || '').trim();
+  if (recordTitle && recordTitle !== pageDisplayTitle.value) return recordTitle;
+  return recordId.value ? `记录 #${recordId.value}` : '';
 });
 
 const intakeCreateButtonLabel = computed(() => {
@@ -4425,6 +4443,12 @@ const advancedFieldNames = computed<string[]>(() => {
   return semanticFieldGroups.value.advanced?.fields || [];
 });
 const hasAdvancedFields = computed(() => advancedFieldNames.value.length > 0);
+const businessFormSections = computed(() => {
+  const order = ['business_core', 'business_amount', 'business_details', 'business_collaboration'];
+  return order
+    .map((key) => semanticFieldGroups.value[key])
+    .filter((item): item is SemanticFieldGroup => Boolean(item?.fields?.length));
+});
 const policyRequiredFields = computed(() => {
   const out = new Set<string>();
   const map = (contract.value?.action_policies || {}) as Record<string, { semantic?: string; enabled_when?: { required_fields?: string[] } }>;
@@ -4680,6 +4704,30 @@ function countNativeNodesByType(nodes: NativeFormLayoutNode[], targetType: strin
 
 const nativeNotebookPageCount = computed(() => countNativeNodesByType(nativeFormLayoutNodes.value, 'page'));
 const nativeGroupCount = computed(() => countNativeNodesByType(nativeFormLayoutNodes.value, 'group'));
+const nativeVisibleSectionTitles = computed(() => {
+  const titles: string[] = [];
+  const structural = new Set(['header', 'sheet', 'container', 'div', 'span', 'h1', 'h2', 'h3']);
+  const walk = (nodes: NativeFormLayoutNode[]) => {
+    nodes.forEach((node) => {
+      const type = String(node?.type || (node as { containerType?: string })?.containerType || '').trim().toLowerCase();
+      const raw = String(node?.string || node?.label || '').trim();
+      if (raw && !structural.has(type) && raw.toLowerCase() !== type) {
+        titles.push(raw);
+      }
+      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+        const children = node?.[key];
+        if (Array.isArray(children)) walk(children as NativeFormLayoutNode[]);
+      });
+    });
+  };
+  walk(nativeFormLayoutNodes.value);
+  return Array.from(new Set(titles));
+});
+const showNativeDefaultSectionTitle = computed(() => (
+  useNativeFormTree.value
+  && nativeVisibleFieldNames.value.size > 0
+  && nativeVisibleSectionTitles.value.length === 0
+));
 
 function resolveNativeButtonLabel(node: NativeFormLayoutNode) {
   const action = node?.action && typeof node.action === 'object' && !Array.isArray(node.action)
@@ -7821,7 +7869,7 @@ onBeforeUnmount(() => {
 .card {
   border: 1px solid var(--sc-app-border);
   border-radius: 8px;
-  padding: 18px;
+  padding: 14px;
   background: var(--sc-app-panel);
   max-width: 1360px;
   width: 100%;
@@ -7841,7 +7889,7 @@ onBeforeUnmount(() => {
 
 .block {
   border: 1px solid var(--sc-app-border);
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 10px;
   margin-bottom: 10px;
   background: var(--sc-app-muted-bg);
@@ -8109,22 +8157,19 @@ onBeforeUnmount(() => {
 
 .contract-form-native-shell :deep(.template-page-header) {
   align-items: center;
-  gap: 10px;
-  margin-bottom: 10px;
-  padding-bottom: 10px;
+  gap: 12px;
 }
 
 .contract-form-native-shell :deep(.template-page-header-main) {
-  min-width: 90px;
-  max-width: 140px;
+  min-width: 180px;
+  max-width: 280px;
 }
 
 .contract-form-native-shell :deep(.template-page-header-main h1) {
-  color: var(--sc-app-text-secondary);
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.25;
-  overflow-wrap: anywhere;
+  color: var(--sc-app-text-primary);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 .contract-form-native-shell :deep(.template-page-header-status) {
@@ -8153,6 +8198,51 @@ onBeforeUnmount(() => {
   padding: 9px 14px;
   font-size: 14px;
   line-height: 1.45;
+}
+
+.native-default-section-head {
+  grid-column: 1 / -1;
+  border-bottom: 1px solid var(--sc-app-border);
+  padding: 0 0 6px;
+}
+
+.native-default-section-head h3 {
+  margin: 0;
+  color: var(--sc-app-text-primary);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.native-business-outline {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-muted-bg);
+}
+
+.native-business-outline-label {
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.native-business-outline-item {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: var(--sc-app-panel);
+  border: 1px solid var(--sc-app-border);
+  color: var(--sc-app-text-primary);
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .contract-mode-actions {
