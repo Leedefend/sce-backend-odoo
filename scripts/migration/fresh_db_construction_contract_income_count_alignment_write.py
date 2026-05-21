@@ -229,6 +229,14 @@ def resolve_partner(row: dict[str, str]):
     return Partner.create(vals)
 
 
+def source_date_contract(row: dict[str, str]) -> str | None:
+    return parse_date(row.get("f_HTDLRQ"))
+
+
+def source_entry_time(row: dict[str, str]) -> str | None:
+    return parse_datetime(row.get("f_LRSJ")) or parse_datetime(row.get("LRRQ"))
+
+
 def visible_vals(row: dict[str, str]) -> dict[str, object]:
     project = resolve_project(row)
     partner = resolve_partner(row)
@@ -248,12 +256,12 @@ def visible_vals(row: dict[str, str]) -> dict[str, object]:
         "state": legacy_state(row),
         "project_id": project.id,
         "partner_id": partner.id,
-        "date_contract": parse_date(row.get("f_HTDLRQ")),
+        "date_contract": source_date_contract(row),
         "engineering_address": clean(row.get("f_GCDZ")),
         "engineering_category_text": clean(row.get("HTLX")),
         "engineering_content": clean(row.get("f_GCNR")),
         "entry_user_text": clean(row.get("LRR")) or clean(row.get("f_LRR")),
-        "entry_time": parse_datetime(row.get("LRRQ")) or parse_datetime(row.get("f_LRSJ")),
+        "entry_time": source_entry_time(row),
         "legacy_contract_amount": float(amount),
         "legacy_contract_amount_source": amount_source,
     }
@@ -281,6 +289,7 @@ sale_tax = Contract._get_default_tax("out")
 details: list[dict[str, object]] = []
 created = updated_visible = hidden = type_corrected = amount_line_created = amount_line_updated = 0
 amount_event_created = amount_event_updated = 0
+date_contract_updated = entry_time_updated = 0
 
 
 def sync_contract_amount_line(contract, row: dict[str, str]) -> str:
@@ -308,17 +317,25 @@ def sync_contract_amount_line(contract, row: dict[str, str]) -> str:
 
 
 def sync_contract_amount_fields(contract, row: dict[str, str]) -> None:
+    global date_contract_updated, entry_time_updated
     amount, source = contract_amount_with_source(row)
     updates = {
         "legacy_contract_amount": float(amount),
         "legacy_contract_amount_source": source,
     }
     entry_user_text = clean(row.get("LRR")) or clean(row.get("f_LRR"))
-    entry_time = parse_datetime(row.get("LRRQ")) or parse_datetime(row.get("f_LRSJ"))
+    date_contract = source_date_contract(row)
+    entry_time = source_entry_time(row)
+    if date_contract and str(contract.date_contract or "") != date_contract:
+        updates["date_contract"] = date_contract
     if entry_user_text and not clean(contract.entry_user_text):
         updates["entry_user_text"] = entry_user_text
-    if entry_time and not contract.entry_time:
+    if entry_time and str(contract.entry_time or "")[:19] != entry_time:
         updates["entry_time"] = entry_time
+    if "date_contract" in updates:
+        date_contract_updated += 1
+    if "entry_time" in updates:
+        entry_time_updated += 1
     contract.write(updates)
 
 
@@ -500,6 +517,18 @@ amount_delta_count = len(legacy_visible_records.filtered(lambda rec: round(rec.l
 positive_amount_without_line_count = sum(
     1 for rec in legacy_visible_records if not rec.line_ids and contract_amount(raw_by_id.get(rec.legacy_contract_id or "", {})) > 0
 )
+date_contract_source_mismatch_count = sum(
+    1
+    for rec in legacy_visible_records
+    if source_date_contract(raw_by_id.get(rec.legacy_contract_id or "", {}))
+    and str(rec.date_contract or "") != source_date_contract(raw_by_id.get(rec.legacy_contract_id or "", {}))
+)
+entry_time_source_mismatch_count = sum(
+    1
+    for rec in legacy_visible_records
+    if source_entry_time(raw_by_id.get(rec.legacy_contract_id or "", {}))
+    and str(rec.entry_time or "")[:19] != source_entry_time(raw_by_id.get(rec.legacy_contract_id or "", {}))
+)
 
 post_errors = []
 if legacy_visible_count != EXPECTED_TARGET_ROWS:
@@ -538,6 +567,22 @@ if amount_difference_event_count != amount_delta_count:
             "expected": amount_delta_count,
         }
     )
+if date_contract_source_mismatch_count:
+    post_errors.append(
+        {
+            "error": "date_contract_source_mismatch",
+            "actual": date_contract_source_mismatch_count,
+            "expected": 0,
+        }
+    )
+if entry_time_source_mismatch_count:
+    post_errors.append(
+        {
+            "error": "entry_time_source_mismatch",
+            "actual": entry_time_source_mismatch_count,
+            "expected": 0,
+        }
+    )
 
 status = "PASS" if not post_errors else "FAIL"
 result = {
@@ -556,8 +601,12 @@ result = {
     "amount_line_updated_rows": amount_line_updated,
     "amount_difference_event_created_rows": amount_event_created,
     "amount_difference_event_updated_rows": amount_event_updated,
+    "date_contract_updated_rows": date_contract_updated,
+    "entry_time_updated_rows": entry_time_updated,
     "amount_difference_event_count": amount_difference_event_count,
     "amount_delta_contract_count": amount_delta_count,
+    "date_contract_source_mismatch_count": date_contract_source_mismatch_count,
+    "entry_time_source_mismatch_count": entry_time_source_mismatch_count,
     "legacy_wbhtgl_rows_after": legacy_all_count,
     "legacy_income_visible_rows_after": legacy_visible_count,
     "income_action_visible_rows_after": visible_count,

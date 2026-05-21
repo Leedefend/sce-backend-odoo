@@ -91,7 +91,7 @@ def read_raw(path: Path) -> dict[str, dict[str, str]]:
             rows[legacy_id] = {
                 "entry_user_text": normalize_user(row.get("LRR"), entry_legacy_user_id)
                 or normalize_user(row.get("f_LRR"), fallback_legacy_user_id),
-                "entry_time": parse_datetime(row.get("LRRQ")) or parse_datetime(row.get("f_LRSJ")),
+                "entry_time": parse_datetime(row.get("f_LRSJ")) or parse_datetime(row.get("LRRQ")),
                 "entry_legacy_user_id": entry_legacy_user_id or fallback_legacy_user_id,
             }
     return rows
@@ -104,9 +104,6 @@ contracts = Contract.search(
     [
         ("legacy_contract_id", "in", sorted(raw_rows)),
         ("type", "in", sorted(CONTRACT_TYPES)),
-        "|",
-        ("entry_user_text", "=", False),
-        ("entry_time", "=", False),
     ]
 )
 
@@ -119,7 +116,7 @@ for contract in contracts:
     values: dict[str, object] = {}
     if source["entry_user_text"] and not clean(contract.entry_user_text):
         values["entry_user_text"] = source["entry_user_text"]
-    if source["entry_time"] and not contract.entry_time:
+    if source["entry_time"] and str(contract.entry_time or "")[:19] != source["entry_time"]:
         values["entry_time"] = source["entry_time"]
     if not values:
         continue
