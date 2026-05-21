@@ -34,6 +34,8 @@ class ConstructionContractLegacy(models.Model):
     engineering_category_text = fields.Char(string="工程类别")
     affiliated_person = fields.Char(string="挂靠人")
     engineering_content = fields.Text(string="工程内容")
+    contract_duration_text = fields.Text(string="合同工期")
+    contract_payment_method_text = fields.Text(string="合同约定付款方式")
     entry_user_text = fields.Char(string="录入人")
     entry_time = fields.Datetime(string="录入时间")
     approval_info = fields.Text(string="审批信息")

@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import csv
+import html
 import json
 import os
+import re
 from collections import Counter
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
@@ -40,6 +42,7 @@ def ensure_allowed_db() -> None:
 REPO_ROOT = repo_root()
 ARTIFACT_ROOT = Path(os.getenv("MIGRATION_ARTIFACT_ROOT", str(REPO_ROOT / "artifacts/migration")))
 RAW_CSV = Path(os.getenv("CONSTRUCTION_CONTRACT_RAW_CSV", str(REPO_ROOT / "tmp/raw/contract/contract.csv")))
+FILE_INDEX_CSV = Path(os.getenv("MIGRATION_FILE_INDEX_CSV", str(ARTIFACT_ROOT / "fresh_db_legacy_file_index_replay_payload_v1.csv")))
 OUTPUT_JSON = ARTIFACT_ROOT / "fresh_db_construction_contract_income_count_alignment_write_result_v1.json"
 DETAIL_CSV = ARTIFACT_ROOT / "fresh_db_construction_contract_income_count_alignment_detail_v1.csv"
 EXPECTED_TARGET_ROWS = int(os.getenv("CONSTRUCTION_CONTRACT_INCOME_VISIBLE_EXPECTED_ROWS", "1532"))
@@ -67,6 +70,18 @@ def clean(value: object) -> str:
     return "" if value is None else str(value).replace("\r\n", "\n").replace("\r", "\n").strip()
 
 
+def clean_rich_text(value: object) -> str:
+    text = clean(value)
+    if not text:
+        return ""
+    text = re.sub(r"(?i)<br\s*/?>", "\n", text)
+    text = re.sub(r"(?i)</p\s*>", "\n", text)
+    text = re.sub(r"<[^>]+>", "", text)
+    text = html.unescape(text)
+    lines = [line.strip() for line in text.splitlines()]
+    return "\n".join(line for line in lines if line)
+
+
 def read_csv(path: Path) -> list[dict[str, str]]:
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
         return [dict(row) for row in csv.DictReader(handle)]
@@ -83,6 +98,13 @@ def write_csv(path: Path, fieldnames: list[str], rows: list[dict[str, object]]) 
 def write_json(path: Path, payload: dict[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def legacy_file_url(row: dict[str, str]) -> str:
+    path = clean(row.get("file_path")) or clean(row.get("preview_path"))
+    if path:
+        return "legacy-file://" + path.lstrip("/")
+    return "legacy-file-id://" + clean(row.get("legacy_file_id"))
 
 
 def is_legacy_income_visible(row: dict[str, str]) -> bool:
@@ -168,6 +190,13 @@ if "legacy_income_surface_visible" not in Contract._fields:
 
 raw_rows = read_csv(RAW_CSV)
 raw_by_id = {clean(row.get("Id")): row for row in raw_rows if clean(row.get("Id"))}
+file_rows = read_csv(FILE_INDEX_CSV) if FILE_INDEX_CSV.exists() else []
+active_files_by_bill: dict[str, list[dict[str, str]]] = {}
+for file_row in file_rows:
+    bill_id = clean(file_row.get("bill_id"))
+    if not bill_id or clean(file_row.get("active")) != "1" or not clean(file_row.get("file_name")):
+        continue
+    active_files_by_bill.setdefault(bill_id, []).append(file_row)
 target_rows = [row for row in raw_rows if is_legacy_income_visible(row)]
 target_ids = {clean(row.get("Id")) for row in target_rows}
 duplicate_target_ids = sorted(
@@ -229,6 +258,42 @@ def resolve_partner(row: dict[str, str]):
     return Partner.create(vals)
 
 
+def source_date_contract(row: dict[str, str]) -> str | None:
+    return parse_date(row.get("f_HTDLRQ"))
+
+
+def source_entry_time(row: dict[str, str]) -> str | None:
+    return parse_datetime(row.get("f_LRSJ")) or parse_datetime(row.get("LRRQ"))
+
+
+def source_contract_duration(row: dict[str, str]) -> str:
+    return clean_rich_text(row.get("GQSM")) or clean(row.get("f_HTGQ")) or clean(row.get("f_THGQTS"))
+
+
+def source_contract_payment_method(row: dict[str, str]) -> str:
+    return clean_rich_text(row.get("HTYDFKFS")) or clean_rich_text(row.get("f_FKFS"))
+
+
+def source_attachment_text(row: dict[str, str]) -> str:
+    bill_id = clean(row.get("f_FJ"))
+    if not bill_id:
+        return ""
+    files = active_files_by_bill.get(bill_id, [])
+    if not files:
+        return f"附件索引: legacy-file-bill://{bill_id}"
+    lines: list[str] = []
+    seen: set[str] = set()
+    for file_row in files:
+        legacy_key = clean(file_row.get("legacy_file_key")) or clean(file_row.get("legacy_file_id"))
+        if legacy_key and legacy_key in seen:
+            continue
+        if legacy_key:
+            seen.add(legacy_key)
+        name = clean(file_row.get("file_name")) or legacy_key or "历史附件"
+        lines.append(f"{name} | {legacy_file_url(file_row)}")
+    return "\n".join(lines)
+
+
 def visible_vals(row: dict[str, str]) -> dict[str, object]:
     project = resolve_project(row)
     partner = resolve_partner(row)
@@ -248,12 +313,16 @@ def visible_vals(row: dict[str, str]) -> dict[str, object]:
         "state": legacy_state(row),
         "project_id": project.id,
         "partner_id": partner.id,
-        "date_contract": parse_date(row.get("f_HTDLRQ")),
+        "date_contract": source_date_contract(row),
         "engineering_address": clean(row.get("f_GCDZ")),
         "engineering_category_text": clean(row.get("HTLX")),
         "engineering_content": clean(row.get("f_GCNR")),
+        "affiliated_person": clean(row.get("GKR")),
+        "contract_duration_text": source_contract_duration(row),
+        "contract_payment_method_text": source_contract_payment_method(row),
         "entry_user_text": clean(row.get("LRR")) or clean(row.get("f_LRR")),
-        "entry_time": parse_datetime(row.get("LRRQ")) or parse_datetime(row.get("f_LRSJ")),
+        "entry_time": source_entry_time(row),
+        "attachment_text": source_attachment_text(row),
         "legacy_contract_amount": float(amount),
         "legacy_contract_amount_source": amount_source,
     }
@@ -281,6 +350,7 @@ sale_tax = Contract._get_default_tax("out")
 details: list[dict[str, object]] = []
 created = updated_visible = hidden = type_corrected = amount_line_created = amount_line_updated = 0
 amount_event_created = amount_event_updated = 0
+date_contract_updated = entry_time_updated = 0
 
 
 def sync_contract_amount_line(contract, row: dict[str, str]) -> str:
@@ -308,17 +378,37 @@ def sync_contract_amount_line(contract, row: dict[str, str]) -> str:
 
 
 def sync_contract_amount_fields(contract, row: dict[str, str]) -> None:
+    global date_contract_updated, entry_time_updated
     amount, source = contract_amount_with_source(row)
     updates = {
         "legacy_contract_amount": float(amount),
         "legacy_contract_amount_source": source,
     }
     entry_user_text = clean(row.get("LRR")) or clean(row.get("f_LRR"))
-    entry_time = parse_datetime(row.get("LRRQ")) or parse_datetime(row.get("f_LRSJ"))
+    date_contract = source_date_contract(row)
+    entry_time = source_entry_time(row)
+    if date_contract and str(contract.date_contract or "") != date_contract:
+        updates["date_contract"] = date_contract
     if entry_user_text and not clean(contract.entry_user_text):
         updates["entry_user_text"] = entry_user_text
-    if entry_time and not contract.entry_time:
+    if entry_time and str(contract.entry_time or "")[:19] != entry_time:
         updates["entry_time"] = entry_time
+    field_sources = {
+        "engineering_address": clean(row.get("f_GCDZ")),
+        "engineering_category_text": clean(row.get("HTLX")),
+        "engineering_content": clean(row.get("f_GCNR")),
+        "affiliated_person": clean(row.get("GKR")),
+        "contract_duration_text": source_contract_duration(row),
+        "contract_payment_method_text": source_contract_payment_method(row),
+        "attachment_text": source_attachment_text(row),
+    }
+    for field, value in field_sources.items():
+        if value and clean(getattr(contract, field, "")) != value:
+            updates[field] = value
+    if "date_contract" in updates:
+        date_contract_updated += 1
+    if "entry_time" in updates:
+        entry_time_updated += 1
     contract.write(updates)
 
 
@@ -500,6 +590,18 @@ amount_delta_count = len(legacy_visible_records.filtered(lambda rec: round(rec.l
 positive_amount_without_line_count = sum(
     1 for rec in legacy_visible_records if not rec.line_ids and contract_amount(raw_by_id.get(rec.legacy_contract_id or "", {})) > 0
 )
+date_contract_source_mismatch_count = sum(
+    1
+    for rec in legacy_visible_records
+    if source_date_contract(raw_by_id.get(rec.legacy_contract_id or "", {}))
+    and str(rec.date_contract or "") != source_date_contract(raw_by_id.get(rec.legacy_contract_id or "", {}))
+)
+entry_time_source_mismatch_count = sum(
+    1
+    for rec in legacy_visible_records
+    if source_entry_time(raw_by_id.get(rec.legacy_contract_id or "", {}))
+    and str(rec.entry_time or "")[:19] != source_entry_time(raw_by_id.get(rec.legacy_contract_id or "", {}))
+)
 
 post_errors = []
 if legacy_visible_count != EXPECTED_TARGET_ROWS:
@@ -538,6 +640,22 @@ if amount_difference_event_count != amount_delta_count:
             "expected": amount_delta_count,
         }
     )
+if date_contract_source_mismatch_count:
+    post_errors.append(
+        {
+            "error": "date_contract_source_mismatch",
+            "actual": date_contract_source_mismatch_count,
+            "expected": 0,
+        }
+    )
+if entry_time_source_mismatch_count:
+    post_errors.append(
+        {
+            "error": "entry_time_source_mismatch",
+            "actual": entry_time_source_mismatch_count,
+            "expected": 0,
+        }
+    )
 
 status = "PASS" if not post_errors else "FAIL"
 result = {
@@ -556,8 +674,12 @@ result = {
     "amount_line_updated_rows": amount_line_updated,
     "amount_difference_event_created_rows": amount_event_created,
     "amount_difference_event_updated_rows": amount_event_updated,
+    "date_contract_updated_rows": date_contract_updated,
+    "entry_time_updated_rows": entry_time_updated,
     "amount_difference_event_count": amount_difference_event_count,
     "amount_delta_contract_count": amount_delta_count,
+    "date_contract_source_mismatch_count": date_contract_source_mismatch_count,
+    "entry_time_source_mismatch_count": entry_time_source_mismatch_count,
     "legacy_wbhtgl_rows_after": legacy_all_count,
     "legacy_income_visible_rows_after": legacy_visible_count,
     "income_action_visible_rows_after": visible_count,

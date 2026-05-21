@@ -23,6 +23,8 @@
                 <field name="affiliated_person"/>
                 <field name="engineering_address"/>
                 <field name="engineering_content"/>
+                <field name="contract_duration_text"/>
+                <field name="contract_payment_method_text"/>
                 <field name="entry_user_text"/>
                 <field name="entry_time"/>
                 <field name="approval_info"/>
@@ -56,14 +58,23 @@
                 <field name="date_contract"/>
                 <field name="partner_id" string="发包人"/>
                 <field name="project_id"/>
+                <field name="operation_strategy"/>
                 <field name="subject"/>
                 <field name="legacy_contract_no"/>
+                <field name="engineering_category_text"/>
+                <field name="engineering_address"/>
+                <field name="engineering_content"/>
+                <field name="affiliated_person"/>
+                <field name="contract_duration_text"/>
+                <field name="contract_payment_method_text"/>
+                <field name="entry_user_text"/>
+                <field name="entry_time"/>
+                <field name="attachment_text"/>
                 <field name="visible_contract_amount" sum="收入合同金额合计"/>
                 <field name="visible_invoice_amount" sum="累计开票合计"/>
                 <field name="visible_received_amount" sum="累计收款合计"/>
                 <field name="visible_unreceived_amount" sum="未收款合计"/>
                 <field name="visible_unreceived_rate"/>
-                <field name="operation_strategy"/>
                 <field name="state"/>
                 <field name="handler_id"/>
             </tree>
@@ -164,6 +175,9 @@
                             <field name="engineering_category_text"/>
                             <field name="affiliated_person"/>
                             <field name="engineering_content"/>
+                            <field name="contract_duration_text"/>
+                            <field name="contract_payment_method_text"/>
+                            <field name="attachment_text"/>
                         </group>
                         <group>
                             <field name="company_id" readonly="1"/>
@@ -284,6 +298,9 @@
                             <field name="engineering_category_text"/>
                             <field name="affiliated_person"/>
                             <field name="engineering_content"/>
+                            <field name="contract_duration_text"/>
+                            <field name="contract_payment_method_text"/>
+                            <field name="attachment_text"/>
                         </group>
                         <group>
                             <field name="company_id" readonly="1"/>
