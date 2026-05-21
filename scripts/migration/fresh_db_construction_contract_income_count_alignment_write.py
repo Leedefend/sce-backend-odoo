@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import csv
+import html
 import json
 import os
+import re
 from collections import Counter
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
@@ -65,6 +67,18 @@ def clean(value: object) -> str:
     if value is None or value is False:
         return ""
     return "" if value is None else str(value).replace("\r\n", "\n").replace("\r", "\n").strip()
+
+
+def clean_rich_text(value: object) -> str:
+    text = clean(value)
+    if not text:
+        return ""
+    text = re.sub(r"(?i)<br\s*/?>", "\n", text)
+    text = re.sub(r"(?i)</p\s*>", "\n", text)
+    text = re.sub(r"<[^>]+>", "", text)
+    text = html.unescape(text)
+    lines = [line.strip() for line in text.splitlines()]
+    return "\n".join(line for line in lines if line)
 
 
 def read_csv(path: Path) -> list[dict[str, str]]:
@@ -237,6 +251,14 @@ def source_entry_time(row: dict[str, str]) -> str | None:
     return parse_datetime(row.get("f_LRSJ")) or parse_datetime(row.get("LRRQ"))
 
 
+def source_contract_duration(row: dict[str, str]) -> str:
+    return clean_rich_text(row.get("GQSM")) or clean(row.get("f_HTGQ")) or clean(row.get("f_THGQTS"))
+
+
+def source_contract_payment_method(row: dict[str, str]) -> str:
+    return clean_rich_text(row.get("HTYDFKFS")) or clean_rich_text(row.get("f_FKFS"))
+
+
 def visible_vals(row: dict[str, str]) -> dict[str, object]:
     project = resolve_project(row)
     partner = resolve_partner(row)
@@ -260,6 +282,9 @@ def visible_vals(row: dict[str, str]) -> dict[str, object]:
         "engineering_address": clean(row.get("f_GCDZ")),
         "engineering_category_text": clean(row.get("HTLX")),
         "engineering_content": clean(row.get("f_GCNR")),
+        "affiliated_person": clean(row.get("GKR")),
+        "contract_duration_text": source_contract_duration(row),
+        "contract_payment_method_text": source_contract_payment_method(row),
         "entry_user_text": clean(row.get("LRR")) or clean(row.get("f_LRR")),
         "entry_time": source_entry_time(row),
         "legacy_contract_amount": float(amount),
@@ -332,6 +357,17 @@ def sync_contract_amount_fields(contract, row: dict[str, str]) -> None:
         updates["entry_user_text"] = entry_user_text
     if entry_time and str(contract.entry_time or "")[:19] != entry_time:
         updates["entry_time"] = entry_time
+    field_sources = {
+        "engineering_address": clean(row.get("f_GCDZ")),
+        "engineering_category_text": clean(row.get("HTLX")),
+        "engineering_content": clean(row.get("f_GCNR")),
+        "affiliated_person": clean(row.get("GKR")),
+        "contract_duration_text": source_contract_duration(row),
+        "contract_payment_method_text": source_contract_payment_method(row),
+    }
+    for field, value in field_sources.items():
+        if value and clean(getattr(contract, field, "")) != value:
+            updates[field] = value
     if "date_contract" in updates:
         date_contract_updated += 1
     if "entry_time" in updates:
