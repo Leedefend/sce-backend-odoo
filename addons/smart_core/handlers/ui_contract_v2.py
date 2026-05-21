@@ -492,13 +492,15 @@ class UiContractV2Handler(BaseIntentHandler):
                 columns.append(name)
         if note_field and note_field not in columns:
             columns.append(note_field)
-        if len(columns) > 18:
-            selected = columns[:18]
+        max_visible_columns = 24
+        if len(columns) > max_visible_columns:
+            selected = columns[:max_visible_columns]
             list_visibility_fields = [
                 "entry_user_text",
                 "entry_time",
                 "contract_duration_text",
                 "contract_payment_method_text",
+                "attachment_text",
             ]
             protected = [
                 name

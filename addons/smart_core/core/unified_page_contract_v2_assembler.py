@@ -1458,7 +1458,7 @@ def _ui_contract_data_source(
         "params": {
             "op": "list",
             "model": model,
-            "fields": field_names[:20],
+            "fields": field_names[:40],
             "limit": 20,
             "offset": 0,
             "need_total": True,

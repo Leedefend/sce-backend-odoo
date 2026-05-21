@@ -225,12 +225,13 @@ class TestUiContractV2Boundaries(unittest.TestCase):
 
     def test_business_list_profile_keeps_contract_ledger_fields_visible(self):
         handler = self.module.UiContractV2Handler(env=object())
-        columns = [{"name": f"field_{index}"} for index in range(18)]
+        columns = [{"name": f"field_{index}"} for index in range(24)]
         columns.extend([
             {"name": "entry_user_text"},
             {"name": "entry_time"},
             {"name": "contract_duration_text"},
             {"name": "contract_payment_method_text"},
+            {"name": "attachment_text"},
             {"name": "visible_contract_amount"},
         ])
         source_contract = {
@@ -249,11 +250,12 @@ class TestUiContractV2Boundaries(unittest.TestCase):
         )
 
         profile_columns = source_contract["list_profile"]["columns"]
-        self.assertEqual(len(profile_columns), 18)
+        self.assertEqual(len(profile_columns), 24)
         self.assertIn("entry_user_text", profile_columns)
         self.assertIn("entry_time", profile_columns)
         self.assertIn("contract_duration_text", profile_columns)
         self.assertIn("contract_payment_method_text", profile_columns)
+        self.assertIn("attachment_text", profile_columns)
         self.assertIn("visible_contract_amount", profile_columns)
         self.assertEqual(
             source_contract["list_profile"]["preference_policy"]["must_request_columns"],

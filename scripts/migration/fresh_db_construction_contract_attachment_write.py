@@ -68,6 +68,13 @@ def write_csv(path: Path, rows: list[dict[str, object]]) -> None:
         writer.writerows(rows)
 
 
+def legacy_file_url(row: dict[str, str]) -> str:
+    path = clean(row.get("file_path")) or clean(row.get("preview_path"))
+    if path:
+        return "legacy-file://" + path.lstrip("/")
+    return "legacy-file-id://" + clean(row.get("legacy_file_id"))
+
+
 def is_legacy_income_visible(row: dict[str, str]) -> bool:
     return (
         clean(row.get("DEL")) != "1"
@@ -133,6 +140,7 @@ for row in visible_rows:
         continue
     matched_contracts += 1
     names: list[str] = []
+    attachment_lines: list[str] = []
     seen_keys: set[str] = set()
     for file_row in files:
         legacy_file_key = clean(file_row.get("legacy_file_key")) or clean(file_row.get("legacy_file_id"))
@@ -140,12 +148,14 @@ for row in visible_rows:
             continue
         seen_keys.add(legacy_file_key)
         name = clean(file_row.get("file_name"))
+        url = legacy_file_url(file_row)
         names.append(name)
+        attachment_lines.append(f"{name} | {url}")
         Attachment.create(
             {
                 "name": name,
                 "type": "url",
-                "url": clean(file_row.get("file_path")) or clean(file_row.get("preview_path")) or name,
+                "url": url,
                 "res_model": "construction.contract",
                 "res_id": contract.id,
                 "description": (
@@ -157,6 +167,8 @@ for row in visible_rows:
             }
         )
         created += 1
+    if attachment_lines:
+        contract.write({"attachment_text": "\n".join(attachment_lines)})
     detail_rows.append(
         {
             "legacy_contract_id": legacy_id,

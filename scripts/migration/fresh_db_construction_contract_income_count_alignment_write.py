@@ -42,6 +42,7 @@ def ensure_allowed_db() -> None:
 REPO_ROOT = repo_root()
 ARTIFACT_ROOT = Path(os.getenv("MIGRATION_ARTIFACT_ROOT", str(REPO_ROOT / "artifacts/migration")))
 RAW_CSV = Path(os.getenv("CONSTRUCTION_CONTRACT_RAW_CSV", str(REPO_ROOT / "tmp/raw/contract/contract.csv")))
+FILE_INDEX_CSV = Path(os.getenv("MIGRATION_FILE_INDEX_CSV", str(ARTIFACT_ROOT / "fresh_db_legacy_file_index_replay_payload_v1.csv")))
 OUTPUT_JSON = ARTIFACT_ROOT / "fresh_db_construction_contract_income_count_alignment_write_result_v1.json"
 DETAIL_CSV = ARTIFACT_ROOT / "fresh_db_construction_contract_income_count_alignment_detail_v1.csv"
 EXPECTED_TARGET_ROWS = int(os.getenv("CONSTRUCTION_CONTRACT_INCOME_VISIBLE_EXPECTED_ROWS", "1532"))
@@ -97,6 +98,13 @@ def write_csv(path: Path, fieldnames: list[str], rows: list[dict[str, object]]) 
 def write_json(path: Path, payload: dict[str, object]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def legacy_file_url(row: dict[str, str]) -> str:
+    path = clean(row.get("file_path")) or clean(row.get("preview_path"))
+    if path:
+        return "legacy-file://" + path.lstrip("/")
+    return "legacy-file-id://" + clean(row.get("legacy_file_id"))
 
 
 def is_legacy_income_visible(row: dict[str, str]) -> bool:
@@ -182,6 +190,13 @@ if "legacy_income_surface_visible" not in Contract._fields:
 
 raw_rows = read_csv(RAW_CSV)
 raw_by_id = {clean(row.get("Id")): row for row in raw_rows if clean(row.get("Id"))}
+file_rows = read_csv(FILE_INDEX_CSV) if FILE_INDEX_CSV.exists() else []
+active_files_by_bill: dict[str, list[dict[str, str]]] = {}
+for file_row in file_rows:
+    bill_id = clean(file_row.get("bill_id"))
+    if not bill_id or clean(file_row.get("active")) != "1" or not clean(file_row.get("file_name")):
+        continue
+    active_files_by_bill.setdefault(bill_id, []).append(file_row)
 target_rows = [row for row in raw_rows if is_legacy_income_visible(row)]
 target_ids = {clean(row.get("Id")) for row in target_rows}
 duplicate_target_ids = sorted(
@@ -259,6 +274,26 @@ def source_contract_payment_method(row: dict[str, str]) -> str:
     return clean_rich_text(row.get("HTYDFKFS")) or clean_rich_text(row.get("f_FKFS"))
 
 
+def source_attachment_text(row: dict[str, str]) -> str:
+    bill_id = clean(row.get("f_FJ"))
+    if not bill_id:
+        return ""
+    files = active_files_by_bill.get(bill_id, [])
+    if not files:
+        return f"附件索引: legacy-file-bill://{bill_id}"
+    lines: list[str] = []
+    seen: set[str] = set()
+    for file_row in files:
+        legacy_key = clean(file_row.get("legacy_file_key")) or clean(file_row.get("legacy_file_id"))
+        if legacy_key and legacy_key in seen:
+            continue
+        if legacy_key:
+            seen.add(legacy_key)
+        name = clean(file_row.get("file_name")) or legacy_key or "历史附件"
+        lines.append(f"{name} | {legacy_file_url(file_row)}")
+    return "\n".join(lines)
+
+
 def visible_vals(row: dict[str, str]) -> dict[str, object]:
     project = resolve_project(row)
     partner = resolve_partner(row)
@@ -287,6 +322,7 @@ def visible_vals(row: dict[str, str]) -> dict[str, object]:
         "contract_payment_method_text": source_contract_payment_method(row),
         "entry_user_text": clean(row.get("LRR")) or clean(row.get("f_LRR")),
         "entry_time": source_entry_time(row),
+        "attachment_text": source_attachment_text(row),
         "legacy_contract_amount": float(amount),
         "legacy_contract_amount_source": amount_source,
     }
@@ -364,6 +400,7 @@ def sync_contract_amount_fields(contract, row: dict[str, str]) -> None:
         "affiliated_person": clean(row.get("GKR")),
         "contract_duration_text": source_contract_duration(row),
         "contract_payment_method_text": source_contract_payment_method(row),
+        "attachment_text": source_attachment_text(row),
     }
     for field, value in field_sources.items():
         if value and clean(getattr(contract, field, "")) != value:
