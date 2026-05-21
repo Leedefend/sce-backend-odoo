@@ -121,3 +121,76 @@ Current local package on `sc_demo`:
 
 The package remains a review artifact. It must not be used to automatically
 merge duplicate projects or relink business facts by name.
+
+## Decision Template
+
+After generating the review package, copy or mount the package directory to the
+host and generate a fillable decision CSV:
+
+```bash
+PROJECT_MASTER_REVIEW_INPUT_DIR=/tmp/project_master_stabilization_host \
+PROJECT_MASTER_REVIEW_DECISION_CSV=artifacts/project_master_stabilization/user_project_master_review_decisions_20260520.csv \
+make project.master.user_review.decision_template
+```
+
+The decision template contains only unresolved rows:
+
+- duplicate exact names: choose the canonical `project.project` carrier;
+- missing names: decide whether to alias an existing project, create a project,
+  exclude the row from the user baseline, or request more evidence;
+- exact matches without strong business evidence: keep, exclude, or request more
+  evidence.
+
+Validate a filled decision CSV before any future write step consumes it:
+
+```bash
+PROJECT_MASTER_REVIEW_DECISION_CSV=artifacts/project_master_stabilization/user_project_master_review_decisions_20260520.csv \
+make project.master.user_review.decision_validate
+```
+
+The validator is read-only. It checks decision values, required reviewer/time
+metadata, and duplicate-candidate target IDs. Passing validation still does not
+write projects, aliases, or business-fact links; it only establishes a bounded
+input contract for a later explicit write script.
+
+## 2026-05-21 User Decisions
+
+The reviewed decision CSV is:
+
+```text
+migration_assets/10_master/project/user_project_master_review_decisions_20260521.csv
+```
+
+This file is an ignored migration asset and should be treated as the local
+user-reviewed input for the next explicit write step. The validated decision
+counts are:
+
+- duplicate exact names: 10 rows, use the recommended canonical project;
+- exact matches without business evidence: 5 rows, exclude from the user
+  baseline;
+- missing names: 14 rows total, 13 rows excluded from the user baseline and
+  one row aliased to an existing project.
+
+For `周超工程（德阳二重工程项目）`, the business-fact carrier is
+`project.project(360)`, `易静工程（德阳二重工程项目）`. The competing inactive
+`周超零星工程` record, `project.project(694)`, has only three legacy invoice
+registration lines and no contract, payment, receipt, treasury, material,
+tender, or SCBS fact chain in the current `sc_demo` audit. Therefore the
+approved decision is to retain the row as an alias/rename target of project
+360, not to create a new project and not to use project 694 as the carrier.
+
+Apply the reviewed decisions through the guarded write entrypoint:
+
+```bash
+PROJECT_MASTER_REVIEW_DECISION_CSV=migration_assets/10_master/project/user_project_master_review_decisions_20260521.csv \
+make project.master.user_review.decision_apply.dry_run
+
+PROJECT_MASTER_REVIEW_DECISION_CSV=migration_assets/10_master/project/user_project_master_review_decisions_20260521.csv \
+make project.master.user_review.decision_apply
+```
+
+The write entrypoint updates only `project.project` master data. It can write
+the accepted carrier's name, operation strategy, active state, and derived
+project category; it can archive rejected duplicate/no-evidence project
+candidates. It must not rewrite `project_id`, `legacy_project_id`, contract,
+payment, SCBS, or other business-fact links.
