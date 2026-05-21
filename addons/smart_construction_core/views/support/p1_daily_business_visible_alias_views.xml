@@ -297,8 +297,11 @@
         <field name="arch" type="xml">
             <xpath expr="//form/sheet" position="inside">
                 <group string="P1 账户可见字段">
+                    <field name="p1_visible_3e7255522b33" string="项目名称" readonly="1"/>
+                    <field name="p1_visible_8fa8662ad38f" string="单据编号" readonly="1"/>
                     <field name="p1_visible_f63da5b6950e" string="账号类型" readonly="1"/>
                     <field name="p1_visible_0b959af0bd69" string="开户账号" readonly="1"/>
+                    <field name="p1_visible_a82dee991619" string="初期余额" readonly="1"/>
                     <field name="p1_visible_256ffb1df96a" string="是否默认账号" readonly="1"/>
                     <field name="p1_visible_f462c3c4fc87" string="是否过渡账户" readonly="1"/>
                     <field name="p1_visible_c9bb0821eed9" string="排序号" readonly="1"/>
@@ -706,6 +709,11 @@
         <field name="arch" type="xml">
             <xpath expr="//form/sheet" position="inside">
                 <group string="P1 施工日志可见字段">
+                    <field name="p1_visible_8fa8662ad38f" string="单据编号" readonly="1"/>
+                    <field name="p1_visible_3e7255522b33" string="项目名称" readonly="1"/>
+                    <field name="p1_visible_ae8c5d45f392" string="施工部位" readonly="1"/>
+                    <field name="p1_visible_c27cdbf90458" string="出勤人数" readonly="1"/>
+                    <field name="p1_visible_73bf794d61b3" string="出勤机械" readonly="1"/>
                     <field name="p1_visible_d3bea9efb1b9" string="温度" readonly="1"/>
                     <field name="p1_visible_364d38fc2b37" string="上午气候" readonly="1"/>
                     <field name="p1_visible_853e6ba25fc5" string="下午气候" readonly="1"/>
