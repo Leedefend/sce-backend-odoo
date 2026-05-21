@@ -300,6 +300,7 @@
                             <field name="engineering_content"/>
                             <field name="contract_duration_text"/>
                             <field name="contract_payment_method_text"/>
+                            <field name="attachment_text"/>
                         </group>
                         <group>
                             <field name="company_id" readonly="1"/>
