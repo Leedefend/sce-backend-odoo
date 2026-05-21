@@ -447,7 +447,15 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
             return cfg
 
         except Exception:
-            _logger.exception("Failed to generate view config for %s.%s", model_name, view_type)
+            if self.env.context.get('contract_projection_readonly'):
+                _logger.debug(
+                    "runtime readonly view config unavailable for %s.%s",
+                    model_name,
+                    view_type,
+                    exc_info=True,
+                )
+            else:
+                _logger.exception("Failed to generate view config for %s.%s", model_name, view_type)
             raise
 
     # ====================== 标准化输出（契约直用） ======================
@@ -568,7 +576,10 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
                         'toolbar': data.get('toolbar', {}),
                     }
         except Exception as e:
-            _logger.warning("加载指定视图ID失败: %s", e)
+            if self.env.context.get('contract_projection_readonly'):
+                _logger.debug("加载指定视图ID失败: %s", e)
+            else:
+                _logger.warning("加载指定视图ID失败: %s", e)
 
         # b) 标准方式（按类型）
         try:
@@ -589,14 +600,20 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
                     'toolbar': data.get('toolbar', {}),
                 }
         except Exception as e:
-            _logger.warning("get_view 失败: %s", e)
+            if self.env.context.get('contract_projection_readonly'):
+                _logger.debug("get_view 失败: %s", e)
+            else:
+                _logger.warning("get_view 失败: %s", e)
 
         # c) 回退 fields_view_get（低版本 Odoo 有；若没有则捕获异常返回 None）
         try:
             fv = Model.fields_view_get(view_type=view_type, toolbar=True)
             return {'arch': fv.get('arch'), 'fields': fv.get('fields', {}), 'toolbar': fv.get('toolbar', {})}
         except Exception as e:
-            _logger.warning("fields_view_get 失败: %s", e)
+            if self.env.context.get('contract_projection_readonly'):
+                _logger.debug("fields_view_get 失败: %s", e)
+            else:
+                _logger.warning("fields_view_get 失败: %s", e)
             return None
 
     # ====================== 内部：降级解析（无 parser 也可用） ======================

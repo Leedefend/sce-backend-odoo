@@ -302,6 +302,7 @@ class TestUiContractV2Boundaries(unittest.TestCase):
                 "note_field": "",
                 "attachment_field": "",
                 "detail_fields": ["line_ids"],
+                "source_section_titles": ["Source Section"],
             },
             field_type=lambda name: field_types.get(name, "char"),
             unique=unique,
@@ -313,12 +314,18 @@ class TestUiContractV2Boundaries(unittest.TestCase):
         self.assertNotIn("工程与合同约定", slot_titles)
         self.assertEqual(structure["layoutPolicy"], "overview_then_task_slots")
         self.assertEqual(structure["source"], "ui.contract.v2.form_structure_contract")
+        self.assertNotIn("businessSectionAliases", structure)
+        self.assertEqual(structure["sourceSectionTitles"], ["Source Section"])
         self.assertEqual(structure["fieldRoles"]["engineering_address"]["role"], "term")
         self.assertEqual(structure["fieldRoles"]["visible_contract_amount"]["slot"], "amount_progress")
         self.assertEqual(structure["fieldRoles"]["line_ids"]["group"], "details")
         self.assertIn("engineering_address", structure["slots"][1]["groups"][2]["fieldRefs"])
         self.assertEqual(structure["slots"][2]["groups"][0]["title"], "金额信息")
         self.assertIn("line_ids", structure["slots"][4]["groups"][0]["fieldRefs"])
+
+    def test_platform_contract_has_no_model_specific_business_section_registry(self):
+        self.assertFalse(hasattr(self.module, "BUSINESS_FORM_SECTION_ALIASES_BY_MODEL"))
+        self.assertFalse(hasattr(self.module, "BUSINESS_FORM_STRUCTURE_P1_VISIBLE_FIELD_MODELS"))
 
     def test_form_structure_contract_does_not_fallback_to_wide_profile_fields(self):
         handler = self.module.UiContractV2Handler(env=object())

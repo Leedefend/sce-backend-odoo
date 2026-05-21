@@ -229,6 +229,11 @@ def find_form_structure_contract_issues(contract: dict[str, Any]) -> list[str]:
             field_slot_counts[(field_name, slot_name)] = field_slot_counts.get((field_name, slot_name), 0) + 1
 
     field_roles = _dict(structure.get("fieldRoles") or structure.get("field_roles"))
+    governance_field_names = {
+        _text(item)
+        for item in _list(governance_source.get("field_names") or governance_source.get("fieldNames"))
+        if _text(item)
+    }
     for field_name, role in field_roles.items():
         name = _text(field_name)
         role_dict = _dict(role)
@@ -246,7 +251,7 @@ def find_form_structure_contract_issues(contract: dict[str, Any]) -> list[str]:
     for name in referenced_fields:
         if known_fields and name not in known_fields:
             issues.append(f"formStructureContract references unknown field: {name}")
-        if _is_form_structure_internal_field(name):
+        if name not in governance_field_names and _is_form_structure_internal_field(name):
             issues.append(f"formStructureContract references internal field: {name}")
         duplicate_allowed_as_overview_summary = (
             "overview" in field_slots.get(name, set())
@@ -263,11 +268,6 @@ def find_form_structure_contract_issues(contract: dict[str, Any]) -> list[str]:
     for name in referenced_fields:
         if layout_fields and name not in layout_fields:
             issues.append(f"formStructureContract field not projected to layout: {name}")
-    governance_field_names = {
-        _text(item)
-        for item in _list(governance_source.get("field_names") or governance_source.get("fieldNames"))
-        if _text(item)
-    }
     if governance_field_names:
         for name in sorted(set(referenced_fields) - governance_field_names):
             issues.append(f"formStructureContract references field outside governance: {name}")

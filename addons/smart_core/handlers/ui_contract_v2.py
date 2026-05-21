@@ -180,9 +180,18 @@ class UiContractV2Handler(BaseIntentHandler):
             return self._err(400, f"{limit_error} 无效")
 
         ui_params = self._ui_contract_params(params)
+        projection_context = dict(getattr(self.env, "context", {}) or {})
+        projection_context["contract_projection_readonly"] = True
+        try:
+            from odoo import api
+            projection_env = api.Environment(self.env.cr, self.env.uid, projection_context)
+            projection_su_env = api.Environment(self.su_env.cr, self.su_env.uid, projection_context)
+        except Exception:
+            projection_env = self.env
+            projection_su_env = self.su_env
         source_result = UiContractHandler(
-            self.env,
-            su_env=self.su_env,
+            projection_env,
+            su_env=projection_su_env,
             request=self.request,
             context=ctx or self.context,
             payload=ui_params,
@@ -399,8 +408,12 @@ class UiContractV2Handler(BaseIntentHandler):
                 or any(name.startswith(prefix) for prefix in BUSINESS_OPERATION_TECHNICAL_PREFIXES)
             )
 
+        form_structure_governed_field_names: set[str] = set()
+
         def is_form_structure_internal(name: str) -> bool:
             if not name or name in BUSINESS_FORM_STRUCTURE_ALLOWED_LEGACY_FIELDS:
+                return False
+            if name in form_structure_governed_field_names:
                 return False
             return (
                 is_technical(name)
@@ -440,6 +453,32 @@ class UiContractV2Handler(BaseIntentHandler):
             visit(rows)
             return out
 
+        def section_titles_from_layout(rows: Any) -> list[str]:
+            out: list[str] = []
+            seen: set[str] = set()
+
+            def add(raw: Any) -> None:
+                title = str(raw or "").strip()
+                if title and title not in seen:
+                    seen.add(title)
+                    out.append(title)
+
+            def visit(node: Any) -> None:
+                if isinstance(node, list):
+                    for child in node:
+                        visit(child)
+                    return
+                if not isinstance(node, dict):
+                    return
+                node_type = str(node.get("type") or node.get("kind") or "").strip().lower()
+                if node_type != "field":
+                    add(node.get("title") or node.get("string") or node.get("label"))
+                for key in ("children", "tabs", "pages", "groups", "fields", "widgetList"):
+                    visit(node.get(key))
+
+            visit(rows)
+            return out
+
         def source_form_field_candidates() -> list[str]:
             governed_field_names = form_structure_governance.get("field_names")
             if isinstance(governed_field_names, list) and governed_field_names:
@@ -463,7 +502,21 @@ class UiContractV2Handler(BaseIntentHandler):
             model=model,
             view_type=view_type,
         )
+        form_structure_governed_field_names.update(
+            str(item or "").strip()
+            for item in (form_structure_governance.get("field_names") or [])
+            if str(item or "").strip()
+        )
         form_field_candidates = source_form_field_candidates() if form_structure_governance else []
+        source_section_titles: list[str] = []
+        if form_structure_governance:
+            views = source_contract.get("views") if isinstance(source_contract.get("views"), dict) else {}
+            form_view = views.get("form") if isinstance(views.get("form"), dict) else {}
+            source_section_titles = section_titles_from_layout(form_view.get("layout"))
+            for title in form_structure_governance.get("section_titles") or []:
+                value = str(title or "").strip()
+                if value and value not in source_section_titles:
+                    source_section_titles.append(value)
         note_field = next((name for name in ("note", "remark", "remarks", "description", "memo") if has_field(name)), "")
         attachment_field = next(
             (
@@ -544,6 +597,7 @@ class UiContractV2Handler(BaseIntentHandler):
         })
         if form_structure_governance:
             profile["form_structure_governance"] = form_structure_governance
+            profile["source_section_titles"] = source_section_titles
         source_contract["business_operation_profile"] = profile
 
         if view_type in {"tree", "list"}:
@@ -598,6 +652,7 @@ class UiContractV2Handler(BaseIntentHandler):
             business_contracts = []
         legacy_overlay = bool(view_trace.get("legacy_field_policy_overlay") or view_governance.get("legacy_field_policy_overlay"))
         field_names: list[str] = []
+        section_titles: list[str] = []
         config_summaries: list[dict[str, Any]] = []
         try:
             view_ids = source_contract.get("view_ids_by_type") if isinstance(source_contract.get("view_ids_by_type"), dict) else {}
@@ -628,6 +683,14 @@ class UiContractV2Handler(BaseIntentHandler):
                     name = str(row or "").strip()
                 if name and name not in field_names:
                     field_names.append(name)
+            sections = form_spec.get("sections") if isinstance(form_spec.get("sections"), list) else []
+            for row in sections:
+                if isinstance(row, dict):
+                    title = str(row.get("title") or row.get("label") or row.get("name") or "").strip()
+                else:
+                    title = str(row or "").strip()
+                if title and title not in section_titles:
+                    section_titles.append(title)
         applied = bool(view_governance.get("applied") or business_contracts or legacy_overlay or field_names)
         if not applied:
             return {}
@@ -637,6 +700,7 @@ class UiContractV2Handler(BaseIntentHandler):
             "business_config_contracts": [dict(item) for item in business_contracts if isinstance(item, dict)] or config_summaries,
             "legacy_field_policy_overlay": legacy_overlay,
             "field_names": field_names,
+            "section_titles": section_titles,
         }
 
     def _build_form_structure_contract(
@@ -671,6 +735,11 @@ class UiContractV2Handler(BaseIntentHandler):
         status_field = str(profile.get("status_field") or "").strip()
         note_field = str(profile.get("note_field") or "").strip()
         attachment_field = str(profile.get("attachment_field") or "").strip()
+        source_section_titles = [
+            str(item or "").strip()
+            for item in (profile.get("source_section_titles") or [])
+            if str(item or "").strip()
+        ]
         allowed_fields = {
             name
             for name in common_fields + detail_fields
@@ -736,6 +805,13 @@ class UiContractV2Handler(BaseIntentHandler):
         detail_fields = claim_slot_fields(detail_fields)
         source_fields = claim_slot_fields(source_fields_candidates)
         field_roles: dict[str, dict[str, Any]] = {}
+        field_labels = profile.get("field_labels") if isinstance(profile.get("field_labels"), dict) else {}
+
+        def labels_for(items: list[str]) -> dict[str, str]:
+            return {
+                name: str(field_labels.get(name) or name).strip()
+                for name in fields_for(items)
+            }
 
         def assign_role(fields: list[str], *, role: str, slot: str, group: str) -> None:
             for name in fields_for(fields):
@@ -780,11 +856,18 @@ class UiContractV2Handler(BaseIntentHandler):
         )
 
         def group(name: str, title: str, fields: list[str], *, role: str = "") -> dict[str, Any]:
+            group_fields = fields_for(fields)
+            effective_title = title
+            if name == "details" and len(group_fields) == 1:
+                label = str(field_labels.get(group_fields[0]) or "").strip()
+                if label and label not in {"明细", "行", "Lines"}:
+                    effective_title = label
             return {
                 "name": name,
-                "title": title,
+                "title": effective_title,
                 "role": role or name,
-                "fieldRefs": fields_for(fields),
+                "fieldRefs": group_fields,
+                "fieldLabels": labels_for(group_fields),
             }
 
         def slot(name: str, title: str, groups: list[dict[str, Any]], *, role: str = "") -> dict[str, Any]:
@@ -840,6 +923,7 @@ class UiContractV2Handler(BaseIntentHandler):
                 "factAuthority": "business_object_model_and_view",
             },
             "navigation": {"title": "业务办理"},
+            "sourceSectionTitles": source_section_titles,
             "slots": slots,
             "fieldRoles": field_roles,
             "sourceAuthority": {
@@ -1290,9 +1374,18 @@ class UiContractV2Handler(BaseIntentHandler):
         if requested_view_id and not next_params.get("view_id"):
             next_params["view_id"] = requested_view_id
 
+        projection_context = dict(getattr(self.env, "context", {}) or {})
+        projection_context["contract_projection_readonly"] = True
+        try:
+            from odoo import api
+            projection_env = api.Environment(self.env.cr, self.env.uid, projection_context)
+            projection_su_env = api.Environment(self.su_env.cr, self.su_env.uid, projection_context)
+        except Exception:
+            projection_env = self.env
+            projection_su_env = self.su_env
         resolved = UiContractHandler(
-            self.env,
-            su_env=self.su_env,
+            projection_env,
+            su_env=projection_su_env,
             request=self.request,
             context=ctx or self.context,
             payload=next_params,

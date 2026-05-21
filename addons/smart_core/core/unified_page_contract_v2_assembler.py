@@ -691,7 +691,7 @@ def _ui_search_contract(source: dict[str, Any], ui: dict[str, Any]) -> dict[str,
         value = search.get(key)
         if _text(value):
             out[key] = deepcopy(value)
-    for key in ("filters", "group_by", "fields"):
+    for key in ("filters", "saved_filters", "group_by", "fields"):
         value = search.get(key)
         if isinstance(value, list):
             out[key] = deepcopy(value)

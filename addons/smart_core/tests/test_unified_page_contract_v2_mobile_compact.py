@@ -651,6 +651,16 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
                 "filters": [
                     {"key": "filter_my_projects", "label": "我的项目", "domain_raw": "[('manager_id', '=', uid)]"},
                 ],
+                "saved_filters": [
+                    {
+                        "id": 7,
+                        "name": "用户收藏",
+                        "domain": [],
+                        "context": {},
+                        "owner": 16,
+                        "is_shared": False,
+                    },
+                ],
                 "group_by": [
                     {
                         "key": "group_manager",
@@ -671,6 +681,7 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
         )
 
         self.assertEqual(full["searchContract"]["filters"][0]["key"], "filter_my_projects")
+        self.assertEqual(full["searchContract"]["saved_filters"][0]["name"], "用户收藏")
         self.assertEqual(full["searchContract"]["group_by"][0]["field"], "manager_id")
         self.assertEqual(full["dataContract"]["search"]["default_sort"], "write_date desc")
 
