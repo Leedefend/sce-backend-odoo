@@ -40,6 +40,12 @@ def write_json(path: Path, payload: dict[str, object]) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def scalar(sql: str, params: list[object] | None = None) -> object:
+    env.cr.execute(sql, params or [])  # noqa: F821
+    row = env.cr.fetchone()  # noqa: F821
+    return row[0] if row else None
+
+
 def normalize_limit() -> int:
     raw = (os.getenv("MIGRATION_MATERIAL_CATEGORY_LIMIT") or "200000").strip()
     try:
@@ -55,11 +61,53 @@ ensure_allowed_db()
 artifact_root = resolve_artifact_root()
 output_json = artifact_root / "fresh_db_material_category_projection_write_result_v1.json"
 limit = normalize_limit()
+force_refresh = os.getenv("MIGRATION_MATERIAL_CATEGORY_FORCE_REFRESH", "").strip().lower() in {"1", "true", "yes"}
 
 LegacyCategory = env["sc.legacy.material.category"].sudo().with_context(active_test=False)  # noqa: F821
 ProductCategory = env["product.category"].sudo().with_context(active_test=False)  # noqa: F821
 IMD = env["ir.model.data"].sudo()  # noqa: F821
 ROOT_PARENT_SENTINELS = {"0", "-1"}
+
+legacy_total = LegacyCategory.search_count([])
+target_total = ProductCategory.search_count([("legacy_material_category_id", "!=", False)])
+missing_before = int(
+    scalar(
+        """
+        SELECT COUNT(*)
+        FROM sc_legacy_material_category legacy
+        WHERE legacy.legacy_category_id IS NOT NULL
+          AND NOT EXISTS (
+            SELECT 1
+            FROM product_category category
+            WHERE category.legacy_material_category_id = legacy.id
+          )
+        """
+    )
+    or 0
+)
+if not force_refresh and legacy_total and missing_before == 0:
+    payload = {
+        "status": "PASS",
+        "mode": "fresh_db_material_category_projection_write",
+        "database": env.cr.dbname,  # noqa: F821
+        "limit": limit,
+        "legacy_total": legacy_total,
+        "selected": 0,
+        "created": 0,
+        "updated_or_seen": 0,
+        "target_total": target_total,
+        "remaining_unprojected": missing_before,
+        "parent_linked": 0,
+        "parent_missing_count": 0,
+        "failed_count": 0,
+        "parent_missing_sample": [],
+        "failures": [],
+        "db_writes": 0,
+        "decision": "legacy_material_categories_already_projected",
+    }
+    write_json(output_json, payload)
+    print("MATERIAL_CATEGORY_PROJECTION_WRITE=" + json.dumps(payload, ensure_ascii=False, sort_keys=True))
+    raise SystemExit(0)
 
 records = LegacyCategory.search(
     [("legacy_category_id", "!=", False)],
@@ -133,7 +181,6 @@ for record in records:
 
 env.cr.commit()  # noqa: F821
 
-legacy_total = LegacyCategory.search_count([])
 target_total = ProductCategory.search_count([("legacy_material_category_id", "!=", False)])
 remaining = max(legacy_total - target_total, 0)
 payload = {

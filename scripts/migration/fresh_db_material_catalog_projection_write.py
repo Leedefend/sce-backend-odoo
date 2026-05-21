@@ -50,9 +50,58 @@ ensure_allowed_db()
 output_json = artifact_root() / "fresh_db_material_catalog_projection_write_result_v1.json"
 uid = env.uid  # noqa: F821
 company_id = env.company.id  # noqa: F821
+force_refresh = os.getenv("MIGRATION_MATERIAL_CATALOG_FORCE_REFRESH", "").strip().lower() in {"1", "true", "yes"}
 
 before = int(scalar("SELECT COUNT(*) FROM sc_material_catalog") or 0)
 legacy_total = int(scalar("SELECT COUNT(*) FROM sc_legacy_material_detail") or 0)
+legacy_carried_before = int(
+    scalar("SELECT COUNT(*) FROM sc_material_catalog WHERE legacy_material_detail_id IS NOT NULL") or 0
+)
+
+if not force_refresh and legacy_total and legacy_carried_before >= legacy_total:
+    with_category = int(
+        scalar(
+            "SELECT COUNT(*) FROM sc_material_catalog WHERE legacy_material_detail_id IS NOT NULL AND category_id IS NOT NULL"
+        )
+        or 0
+    )
+    with_project = int(
+        scalar(
+            "SELECT COUNT(*) FROM sc_material_catalog WHERE legacy_material_detail_id IS NOT NULL AND project_id IS NOT NULL"
+        )
+        or 0
+    )
+    with_product = int(
+        scalar(
+            """
+            SELECT COUNT(*)
+            FROM sc_material_catalog
+            WHERE legacy_material_detail_id IS NOT NULL
+              AND promoted_product_tmpl_id IS NOT NULL
+            """
+        )
+        or 0
+    )
+    payload = {
+        "status": "PASS",
+        "mode": "fresh_db_material_catalog_projection_write",
+        "database": env.cr.dbname,  # noqa: F821
+        "legacy_total": legacy_total,
+        "before": before,
+        "after": before,
+        "delta": 0,
+        "affected_rows": 0,
+        "legacy_carried": legacy_carried_before,
+        "remaining_unprojected": 0,
+        "with_category": with_category,
+        "with_project": with_project,
+        "with_promoted_product": with_product,
+        "db_writes": 0,
+        "decision": "legacy_material_details_already_projected",
+    }
+    write_json(output_json, payload)
+    print("MATERIAL_CATALOG_PROJECTION_WRITE=" + json.dumps(payload, ensure_ascii=False, sort_keys=True))
+    raise SystemExit(0)
 
 env.cr.execute(  # noqa: F821
     """
