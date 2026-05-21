@@ -496,6 +496,7 @@ class UiContractV2Handler(BaseIntentHandler):
         if len(columns) > max_visible_columns:
             selected = columns[:max_visible_columns]
             list_visibility_fields = [
+                "operation_strategy",
                 "entry_user_text",
                 "entry_time",
                 "contract_duration_text",

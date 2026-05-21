@@ -227,6 +227,7 @@ class TestUiContractV2Boundaries(unittest.TestCase):
         handler = self.module.UiContractV2Handler(env=object())
         columns = [{"name": f"field_{index}"} for index in range(24)]
         columns.extend([
+            {"name": "operation_strategy"},
             {"name": "entry_user_text"},
             {"name": "entry_time"},
             {"name": "contract_duration_text"},
@@ -251,6 +252,7 @@ class TestUiContractV2Boundaries(unittest.TestCase):
 
         profile_columns = source_contract["list_profile"]["columns"]
         self.assertEqual(len(profile_columns), 24)
+        self.assertIn("operation_strategy", profile_columns)
         self.assertIn("entry_user_text", profile_columns)
         self.assertIn("entry_time", profile_columns)
         self.assertIn("contract_duration_text", profile_columns)

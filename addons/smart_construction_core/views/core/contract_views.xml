@@ -58,6 +58,7 @@
                 <field name="date_contract"/>
                 <field name="partner_id" string="发包人"/>
                 <field name="project_id"/>
+                <field name="operation_strategy"/>
                 <field name="subject"/>
                 <field name="legacy_contract_no"/>
                 <field name="engineering_category_text"/>
@@ -74,7 +75,6 @@
                 <field name="visible_received_amount" sum="累计收款合计"/>
                 <field name="visible_unreceived_amount" sum="未收款合计"/>
                 <field name="visible_unreceived_rate"/>
-                <field name="operation_strategy"/>
                 <field name="state"/>
                 <field name="handler_id"/>
             </tree>
