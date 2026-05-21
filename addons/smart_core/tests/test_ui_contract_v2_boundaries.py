@@ -223,6 +223,39 @@ class TestUiContractV2Boundaries(unittest.TestCase):
             {"id": 42, "name": "ACME"},
         )
 
+    def test_business_list_profile_keeps_contract_payment_terms_visible(self):
+        handler = self.module.UiContractV2Handler(env=object())
+        columns = [{"name": f"field_{index}"} for index in range(18)]
+        columns.extend([
+            {"name": "contract_duration_text"},
+            {"name": "contract_payment_method_text"},
+            {"name": "visible_contract_amount"},
+        ])
+        source_contract = {
+            "views": {"tree": {"columns": columns}},
+            "list_profile": {},
+        }
+
+        handler._merge_business_list_profile(
+            source_contract,
+            common_fields=[],
+            amount_fields=["visible_contract_amount"],
+            note_field="",
+            status_field="",
+            label_for=lambda name: name,
+            type_for=lambda name: "char",
+        )
+
+        profile_columns = source_contract["list_profile"]["columns"]
+        self.assertEqual(len(profile_columns), 18)
+        self.assertIn("contract_duration_text", profile_columns)
+        self.assertIn("contract_payment_method_text", profile_columns)
+        self.assertIn("visible_contract_amount", profile_columns)
+        self.assertEqual(
+            source_contract["list_profile"]["preference_policy"]["must_request_columns"],
+            profile_columns,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

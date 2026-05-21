@@ -494,14 +494,24 @@ class UiContractV2Handler(BaseIntentHandler):
             columns.append(note_field)
         if len(columns) > 18:
             selected = columns[:18]
-            protected = [name for name in amount_fields + [note_field] if name and name in columns and name not in selected]
+            list_visibility_fields = [
+                "contract_duration_text",
+                "contract_payment_method_text",
+            ]
+            protected = [
+                name
+                for name in amount_fields + [note_field] + list_visibility_fields
+                if name and name in columns and name not in selected
+            ]
+            protected_names = set(amount_fields + [note_field] + list_visibility_fields)
             for name in protected:
                 replace_index = len(selected) - 1
-                while replace_index >= 0 and selected[replace_index] in amount_fields:
+                while replace_index >= 0 and selected[replace_index] in protected_names:
                     replace_index -= 1
                 if replace_index < 0:
                     break
                 selected[replace_index] = name
+                protected_names.add(name)
             columns = selected
         if not columns:
             return

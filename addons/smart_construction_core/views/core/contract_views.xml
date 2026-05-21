@@ -23,6 +23,8 @@
                 <field name="affiliated_person"/>
                 <field name="engineering_address"/>
                 <field name="engineering_content"/>
+                <field name="contract_duration_text"/>
+                <field name="contract_payment_method_text"/>
                 <field name="entry_user_text"/>
                 <field name="entry_time"/>
                 <field name="approval_info"/>
@@ -292,6 +294,8 @@
                             <field name="engineering_category_text"/>
                             <field name="affiliated_person"/>
                             <field name="engineering_content"/>
+                            <field name="contract_duration_text"/>
+                            <field name="contract_payment_method_text"/>
                         </group>
                         <group>
                             <field name="company_id" readonly="1"/>
