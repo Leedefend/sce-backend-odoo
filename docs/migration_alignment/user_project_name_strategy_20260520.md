@@ -178,3 +178,19 @@ registration lines and no contract, payment, receipt, treasury, material,
 tender, or SCBS fact chain in the current `sc_demo` audit. Therefore the
 approved decision is to retain the row as an alias/rename target of project
 360, not to create a new project and not to use project 694 as the carrier.
+
+Apply the reviewed decisions through the guarded write entrypoint:
+
+```bash
+PROJECT_MASTER_REVIEW_DECISION_CSV=migration_assets/10_master/project/user_project_master_review_decisions_20260521.csv \
+make project.master.user_review.decision_apply.dry_run
+
+PROJECT_MASTER_REVIEW_DECISION_CSV=migration_assets/10_master/project/user_project_master_review_decisions_20260521.csv \
+make project.master.user_review.decision_apply
+```
+
+The write entrypoint updates only `project.project` master data. It can write
+the accepted carrier's name, operation strategy, active state, and derived
+project category; it can archive rejected duplicate/no-evidence project
+candidates. It must not rewrite `project_id`, `legacy_project_id`, contract,
+payment, SCBS, or other business-fact links.
