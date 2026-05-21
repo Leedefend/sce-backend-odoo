@@ -121,3 +121,34 @@ Current local package on `sc_demo`:
 
 The package remains a review artifact. It must not be used to automatically
 merge duplicate projects or relink business facts by name.
+
+## Decision Template
+
+After generating the review package, copy or mount the package directory to the
+host and generate a fillable decision CSV:
+
+```bash
+PROJECT_MASTER_REVIEW_INPUT_DIR=/tmp/project_master_stabilization_host \
+PROJECT_MASTER_REVIEW_DECISION_CSV=artifacts/project_master_stabilization/user_project_master_review_decisions_20260520.csv \
+make project.master.user_review.decision_template
+```
+
+The decision template contains only unresolved rows:
+
+- duplicate exact names: choose the canonical `project.project` carrier;
+- missing names: decide whether to alias an existing project, create a project,
+  exclude the row from the user baseline, or request more evidence;
+- exact matches without strong business evidence: keep, exclude, or request more
+  evidence.
+
+Validate a filled decision CSV before any future write step consumes it:
+
+```bash
+PROJECT_MASTER_REVIEW_DECISION_CSV=artifacts/project_master_stabilization/user_project_master_review_decisions_20260520.csv \
+make project.master.user_review.decision_validate
+```
+
+The validator is read-only. It checks decision values, required reviewer/time
+metadata, and duplicate-candidate target IDs. Passing validation still does not
+write projects, aliases, or business-fact links; it only establishes a bounded
+input contract for a later explicit write script.

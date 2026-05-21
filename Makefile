@@ -702,6 +702,13 @@ history.user_profile_runtime_projection.write: guard.prod.forbid check-compose-p
 history.legacy_user_recovery.probe: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/history_legacy_user_recovery_probe.py
 
+.PHONY: project.master.user_review.decision_template project.master.user_review.decision_validate
+project.master.user_review.decision_template: guard.prod.forbid
+	@python3 scripts/migration/user_project_master_review_decision_template.py --input-dir "$${PROJECT_MASTER_REVIEW_INPUT_DIR:-/tmp/project_master_stabilization_host}" --out "$${PROJECT_MASTER_REVIEW_DECISION_CSV:-artifacts/project_master_stabilization/user_project_master_review_decisions_20260520.csv}"
+
+project.master.user_review.decision_validate: guard.prod.forbid
+	@python3 scripts/migration/user_project_master_review_decision_template.py --validate-decisions "$${PROJECT_MASTER_REVIEW_DECISION_CSV:-artifacts/project_master_stabilization/user_project_master_review_decisions_20260520.csv}" --summary-json "$${PROJECT_MASTER_REVIEW_DECISION_RESULT:-artifacts/project_master_stabilization/user_project_master_review_decisions_20260520_validate.json}"
+
 fresh_db.legacy_user_context.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
 	@python3 scripts/migration/fresh_db_legacy_user_context_replay_adapter.py
 
