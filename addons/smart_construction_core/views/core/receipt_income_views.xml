@@ -13,6 +13,8 @@
                     <field name="partner_id"/>
                     <field name="contract_id"/>
                     <field name="income_category"/>
+                    <field name="legacy_receipt_type"/>
+                    <field name="legacy_receipt_subtype"/>
                     <field name="receipt_type"/>
                     <filter string="收款收入" name="source_kind_receipt_income" domain="[('source_kind', '=', 'receipt_income')]"/>
                     <filter string="残余收款" name="source_kind_residual_receipt" domain="[('source_kind', '=', 'residual_receipt')]"/>
@@ -23,7 +25,11 @@
                     <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
                     <filter string="按经营策略" name="group_operation_strategy" context="{'group_by': 'operation_strategy'}"/>
                     <filter string="按单位" name="group_partner" context="{'group_by': 'partner_id'}"/>
-                    <filter string="按类别" name="group_income_category" context="{'group_by': 'income_category'}"/>
+                    <separator/>
+                    <filter string="按收款类型" name="group_legacy_receipt_type" context="{'group_by': 'legacy_receipt_type'}"/>
+                    <filter string="按收款细分" name="group_legacy_receipt_subtype" context="{'group_by': 'legacy_receipt_subtype'}"/>
+                    <filter string="按收入类别" name="group_income_category" context="{'group_by': 'income_category'}"/>
+                    <filter string="按登记类型" name="group_receipt_type" context="{'group_by': 'receipt_type'}"/>
                     <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
                     <filter string="按日期" name="group_date" context="{'group_by': 'date_receipt'}"/>
                 </search>
@@ -43,6 +49,8 @@
                     <field name="contract_id"/>
                     <field name="document_no"/>
                     <field name="income_category"/>
+                    <field name="legacy_receipt_type"/>
+                    <field name="legacy_receipt_subtype"/>
                     <field name="receipt_type"/>
                     <field name="payment_method"/>
                     <field name="receiving_account"/>
@@ -100,6 +108,8 @@
                             </group>
                         </group>
                         <group string="收款信息">
+                            <field name="legacy_receipt_type" readonly="state == 'legacy_confirmed'"/>
+                            <field name="legacy_receipt_subtype" readonly="state == 'legacy_confirmed'"/>
                             <field name="receipt_type" readonly="state == 'legacy_confirmed'"/>
                             <field name="income_category" readonly="state == 'legacy_confirmed'"/>
                             <field name="payment_method" readonly="state == 'legacy_confirmed'"/>

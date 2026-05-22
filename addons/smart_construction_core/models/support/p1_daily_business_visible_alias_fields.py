@@ -15,12 +15,8 @@ P1_ALIAS_LABELS = {
         '登记时间',
         '申请人',
         '申请日期',
-        '收款账号',
-        '开户行',
         '金额',
         '备注',
-        '收款人',
-        '付款方式',
         '附件',
         '录入人',
         '录入时间',
@@ -106,11 +102,7 @@ P1_ALIAS_LABELS = {
         '价税合计',
         '税额',
         '不含税金额',
-        '数量',
         '税率',
-        '发票类型',
-        '录入人',
-        '录入时间',
     ],
     'sc.payment.execution': [
         '推送结果',
@@ -146,16 +138,12 @@ P1_ALIAS_LABELS = {
         '单据编号',
         '时间',
         '项目名称',
-        '期数',
         '本期收款',
         '本期代扣代缴合计',
         '本期拨付金额合计',
         '附件',
         '施工单位',
         '合同金额',
-        '目前形象进度',
-        '累计开票金额',
-        '上期留存余额',
         '录入人',
         '录入时间',
     ],
@@ -163,17 +151,11 @@ P1_ALIAS_LABELS = {
         '单据状态',
         '单据编号',
         '单据日期',
-        '账号名称',
-        '银行账号',
         '当前账户余额',
         '当前账户银行余额',
         '银行系统差额',
-        '当日累计收入',
-        '当日累计支出',
         '账户往来',
         '备注',
-        '录入人',
-        '录入时间',
     ],
     'sc.invoice.registration': [
         '开票状态',
@@ -181,12 +163,9 @@ P1_ALIAS_LABELS = {
         '项目名称',
         '单据编号',
         '申请人',
-        '预计回款日期',
         '申请日期',
         '受票方名称',
         '累计开票金额',
-        '合同额',
-        '本次开票张数',
         '本次开票金额',
         '附件',
         '备注',
@@ -197,8 +176,6 @@ P1_ALIAS_LABELS = {
         '金蝶单据编号',
         '含税金额',
         '附加税',
-        '开票张数',
-        '关联回款金额',
         '发票号',
         '发票种类',
         '开票单位',
@@ -207,20 +184,16 @@ P1_ALIAS_LABELS = {
     'sc.fund.account': [
         '推送结果',
         '账户状态',
-        '账户操作',
         '录入来源',
         '项目名称',
         '单据编号',
         '账号类型',
         '账号名称',
-        '账号户名',
         '开户账号',
         '初期余额',
         '是否默认账号',
         '是否过渡账户',
         '排序号',
-        '录入人',
-        '录入时间',
     ],
     'sc.material.purchase.request': [
         '单据状态',
@@ -503,13 +476,59 @@ P1_ALIAS_LABELS = {
     ],
 }
 
+P1_ALIAS_COMPAT_LABELS = {
+    # Existing databases may still validate old inherited views before the new
+    # view XML removes these fields during module upgrade. Keep field definitions
+    # for upgrade compatibility only; user-visible P1 contracts are driven by
+    # P1_ALIAS_LABELS above.
+    'tender.bid': [
+        '收款账号',
+        '开户行',
+        '收款人',
+        '付款方式',
+    ],
+    'sc.tax.deduction.registration': [
+        '数量',
+        '发票类型',
+        '录入人',
+        '录入时间',
+    ],
+    'sc.receipt.income': [
+        '期数',
+        '目前形象进度',
+        '累计开票金额',
+        '上期留存余额',
+    ],
+    'sc.legacy.fund.daily.snapshot.fact': [
+        '账号名称',
+        '银行账号',
+        '当日累计收入',
+        '当日累计支出',
+        '录入人',
+        '录入时间',
+    ],
+    'sc.invoice.registration': [
+        '预计回款日期',
+        '合同额',
+        '本次开票张数',
+        '开票张数',
+        '关联回款金额',
+    ],
+    'sc.fund.account': [
+        '账户操作',
+        '账号户名',
+        '录入人',
+        '录入时间',
+    ],
+}
+
 
 def _alias_field_name(label):
     return "p1_visible_" + hashlib.sha1(label.encode("utf-8")).hexdigest()[:12]
 
 
 LABEL_SOURCE_OVERRIDES = {
-    '单据状态': ['state', 'legacy_document_state'],
+    '单据状态': ['state', 'legacy_document_state', 'state_text', 'legacy_state'],
     '状态': ['state', 'legacy_document_state'],
     '开票状态': ['invoice_state', 'state'],
     '账户状态': ['state', 'active'],
@@ -526,11 +545,11 @@ LABEL_SOURCE_OVERRIDES = {
     '推送项目名称': ['project_id', 'legacy_project_name'],
     '登记时间': ['source_created_at', 'created_time', 'document_date', 'create_date'],
     '录入时间': ['source_created_at', 'created_time'],
-    '申请日期': ['request_date', 'date_request', 'document_date'],
-    '付款日期': ['payment_date', 'paid_at', 'document_date'],
-    '发生时间': ['operation_time', 'document_date', 'created_time'],
-    '时间': ['receipt_date', 'document_date', 'created_time'],
-    '单据日期': ['document_date', 'date_request', 'request_date', 'settlement_date'],
+    '申请日期': ['request_date', 'date_request', 'document_date', 'create_date'],
+    '付款日期': ['date_payment', 'payment_date', 'paid_at', 'document_date'],
+    '发生时间': ['operation_date', 'operation_time', 'document_date', 'created_time'],
+    '时间': ['date_receipt', 'receipt_date', 'document_date', 'created_time'],
+    '单据日期': ['document_date', 'date_request', 'request_date', 'settlement_date', 'snapshot_date', 'date_diary', 'inbound_date', 'outbound_date'],
     '签订日期': ['sign_date', 'contract_date', 'request_date'],
     '签订时间': ['sign_date', 'contract_date', 'request_date'],
     '还款时间': ['repay_date', 'due_date', 'document_date'],
@@ -545,6 +564,8 @@ LABEL_SOURCE_OVERRIDES = {
     '日期': ['date_diary', 'document_date', 'report_period_start'],
     '录入人': ['source_created_by', 'creator_name', 'requester_id', 'owner_id', 'handler_name'],
     '填写人': ['source_created_by', 'creator_name', 'requester_id', 'owner_id', 'handler_name'],
+    '借款人': ['partner_id', 'legacy_counterparty_name'],
+    '约定期限': ['due_date'],
     '申请人': ['requester_id', 'source_created_by', 'creator_name'],
     '采购人': ['buyer_id', 'requester_id', 'source_created_by', 'creator_name'],
     '施工员': ['handler_name', 'source_created_by', 'creator_name'],
@@ -574,38 +595,40 @@ LABEL_SOURCE_OVERRIDES = {
     '贷款金额': ['amount'],
     '未还款金额': ['unpaid_amount', 'amount'],
     '申请付款金额': ['amount'],
-    '实际付款金额': ['paid_amount_total', 'paid_amount'],
+    '实际付款金额': ['paid_amount_total', 'paid_amount', 'amount'],
     '可用余额': ['settlement_amount_payable', 'settlement_remaining_amount'],
     '付款金额': ['paid_amount', 'amount'],
     '本期收款': ['amount', 'received_amount'],
     '本期代扣代缴合计': ['deducted_invoice_amount', 'tax_amount'],
     '本期拨付金额合计': ['paid_amount', 'amount'],
-    '合同金额': ['contract_amount_total', 'amount_total'],
-    '累计开票金额': ['invoice_amount', 'invoice_amount_total'],
+    '合同金额': ['contract_amount_total', 'amount_total', 'amount'],
+    '累计开票金额': ['invoice_amount', 'invoice_amount_total', 'amount_total'],
     '上期留存余额': ['remaining_amount', 'settlement_remaining_amount'],
-    '当前账户余额': ['account_balance', 'balance'],
-    '当前账户银行余额': ['bank_balance', 'balance'],
-    '银行系统差额': ['difference_amount'],
-    '当日累计收入': ['income_amount', 'amount_in'],
-    '当日累计支出': ['expense_amount', 'amount_out'],
+    '当前账户余额': ['account_balance_total', 'account_balance', 'balance'],
+    '当前账户银行余额': ['bank_balance_total', 'bank_balance', 'balance'],
+    '银行系统差额': ['bank_system_difference', 'difference_amount'],
+    '当日累计收入': ['daily_income', 'income_amount', 'amount_in'],
+    '当日累计支出': ['daily_expense', 'expense_amount', 'amount_out'],
     '总金额': ['amount_total', 'amount'],
     '已开票金额': ['invoice_amount', 'invoiced_amount'],
-    '已付款金额': ['paid_amount', 'paid_amount_total'],
-    '未付款金额': ['unpaid_amount'],
+    '已付款金额': ['paid_amount', 'paid_amount_total', 'amount'],
+    '未付款金额': ['unpaid_amount', 'amount'],
     '未开票金额': ['uninvoiced_amount'],
     '含税金额': ['amount_total', 'invoice_amount_total'],
+    '价税合计': ['invoice_amount_total', 'amount_total'],
     '税额': ['tax_amount', 'invoice_tax_amount'],
     '不含税金额': ['amount_untaxed', 'invoice_amount_untaxed'],
-    '附加税': ['surcharge_amount', 'deduction_surcharge_amount'],
+    '附加税': ['surcharge_amount', 'deduction_surcharge_amount', 'tax_amount'],
     '关联回款金额': ['received_amount', 'amount'],
     '开票张数': ['invoice_count'],
     '本次开票张数': ['invoice_count'],
     '本次开票金额': ['invoice_amount', 'amount'],
     '抵扣总额': ['deduction_amount'],
     '抵扣税额': ['deduction_tax_amount'],
-    '本次实缴数': ['paid_amount', 'amount'],
-    '本次计划已缴数': ['planned_paid_amount', 'amount'],
-    '本次退回数': ['refund_amount', 'amount'],
+    '扣款金额': ['deduction_amount', 'amount'],
+    '本次实缴数': ['paid_amount', 'deduction_amount', 'amount'],
+    '本次计划已缴数': ['planned_paid_amount', 'deduction_amount', 'amount'],
+    '本次退回数': ['refund_amount', 'deduction_amount', 'amount'],
     '租赁押金': ['deposit_amount'],
     '单据金额': ['amount_total', 'amount'],
     '结算金额': ['amount_total'],
@@ -623,8 +646,8 @@ LABEL_SOURCE_OVERRIDES = {
     '年利率': ['rate_label'],
     '借款利率': ['rate_label'],
     '实际年利率': ['rate_label'],
-    '税率': ['tax_rate'],
-    '备注': ['note', 'purpose', 'description'],
+    '税率': ['tax_rate', 'tax_rate_text'],
+    '备注': ['note', 'purpose', 'description', 'legacy_note', 'remark'],
     '其它备注': ['note'],
     '用途': ['purpose', 'note'],
     '扣款事由': ['purpose', 'note'],
@@ -643,23 +666,25 @@ LABEL_SOURCE_OVERRIDES = {
     '曾用名单': ['legacy_note', 'description'],
     '机械名称': ['equipment_name', 'name'],
     '规格型号': ['material_spec_summary', 'material_spec', 'specification'],
-    '单位': ['uom_id'],
-    '材料名称': ['material_name', 'product_id'],
+    '单位': ['material_uom_summary', 'uom_id', 'product_uom_id'],
+    '材料名称': ['material_name_summary', 'material_name', 'product_id'],
+    '出勤人数': ['manpower_count'],
     '目前形象进度': ['progress_description', 'description'],
     '上缴内容': ['description', 'note'],
     '交税类型': ['tax_type', 'operation_strategy'],
     '发票类型': ['invoice_type', 'type'],
     '发票种类': ['invoice_type', 'type'],
-    '付款方式': ['payment_method', 'type'],
-    '付款方式名称': ['payment_method', 'type'],
+    '付款方式': ['payment_method', 'legacy_receipt_type', 'receipt_type', 'type'],
+    '付款方式名称': ['payment_method', 'legacy_receipt_type', 'receipt_type', 'type'],
     '转账类别': ['operation_type', 'type'],
-    '账户往来': ['operation_type', 'type'],
+    '账户往来': ['document_scope', 'source_family', 'operation_type', 'type'],
     '账户操作': ['operation_type', 'type'],
     '录入来源': ['source_origin', 'legacy_source_table'],
     '账号类型': ['account_type'],
     '开户账号': ['account_no', 'bank_account', 'payment_account_no', 'receipt_account_no'],
     '是否默认账号': ['is_default'],
     '是否过渡账户': ['fixed_account'],
+    '初期余额': ['opening_balance'],
     '排序号': ['sequence'],
     '是否关联单据': ['settlement_id', 'contract_id'],
     '是否退回': ['is_refund', 'state'],
@@ -667,27 +692,43 @@ LABEL_SOURCE_OVERRIDES = {
     '计价方式': ['pricing_method', 'type'],
     '支付条款': ['payment_terms', 'note'],
     '完税凭证号码': ['tax_certificate_no', 'invoice_no'],
+    '支付申请单号': ['payment_request_no', 'payment_request_id', 'document_no'],
     '发票号': ['invoice_no'],
     '发票号码': ['invoice_no'],
     '附件': ['attachment_ids', 'biz_attachment_ids', 'tech_attachment_ids', 'message_attachment_count', 'legacy_attachment_ref', 'legacy_attachment_name'],
     '收款账号': ['receipt_account_no', 'receipt_bank_account', 'bank_account_id'],
-    '付款账号': ['payment_account_no', 'bank_account', 'bank_account_id'],
-    '开户行': ['payment_bank_name', 'receipt_bank_name', 'bank_name'],
+    '付款账号': ['payment_account_no', 'partner_bank_account', 'bank_account', 'bank_account_id'],
+    '开户行': ['payment_bank_name', 'receipt_bank_name', 'partner_bank_name', 'bank_name'],
     '账户': ['bank_account', 'account_no', 'name'],
-    '账号': ['account_no', 'payment_account_no', 'receipt_account_no'],
-    '账户号码': ['account_no', 'bank_account', 'payment_account_no', 'receipt_account_no'],
+    '账号': ['account_no', 'payment_account_no', 'receipt_account_no', 'partner_bank_account'],
+    '账户号码': ['account_no', 'bank_account', 'payment_account_no', 'receipt_account_no', 'fund_account_id', 'source_account_id', 'target_account_id'],
     '账号名称': ['name', 'account_name'],
     '账号户名': ['account_holder', 'payment_account_name', 'receipt_account_name'],
-    '户名': ['payment_account_name', 'receipt_account_name'],
+    '户名': ['payment_account_name', 'receipt_account_name', 'partner_account_name'],
     '银行账号': ['account_no', 'bank_account'],
     '开户人姓名': ['account_holder', 'payment_account_name', 'receipt_account_name'],
     '贷款账户': ['bank_account', 'account_no'],
     '贷款银行': ['bank_name'],
     '还款账户': ['bank_account', 'account_no'],
-    '成本分类名称': ['cost_category_id', 'cost_type_id'],
+    '成本分类名称': ['cost_category_id', 'cost_type_id', 'cost_category_name'],
     '期数': ['period_no', 'report_period_start'],
     '实际还款天数': ['actual_days', 'due_date'],
     '贷款天数': ['loan_days', 'due_date'],
+}
+
+MODEL_LABEL_SOURCE_OVERRIDES = {
+    'sc.invoice.registration': {
+        '累计开票金额': ['amount_total'],
+        '本次开票金额': ['amount_total'],
+    },
+    'sc.material.inbound': {
+        '数量': ['total_qty'],
+        '入库总数量': ['total_qty'],
+        '含税金额': ['amount_total'],
+    },
+    'sc.payment.execution': {
+        '付款方式名称': ['payment_family', 'payment_method'],
+    },
 }
 
 FALLBACK_SOURCES = (
@@ -726,6 +767,10 @@ def _alias_value(record, label):
             value = _format_alias_value(record, field_name)
             if value:
                 return value
+    for field_name in MODEL_LABEL_SOURCE_OVERRIDES.get(record._name, {}).get(label, ()):
+        value = _format_alias_value(record, field_name)
+        if value:
+            return value
     for field_name in LABEL_SOURCE_OVERRIDES.get(label, ()):
         value = _format_alias_value(record, field_name)
         if value:
@@ -745,7 +790,13 @@ def _compute_p1_daily_business_visible_aliases(self):
             record[field_name] = _alias_value(record, label)
 
 
-for _index, (_model_name, _labels) in enumerate(P1_ALIAS_LABELS.items(), start=1):
+_ALIAS_MODEL_FIELD_LABELS = {
+    _model_name: list(dict.fromkeys(list(_labels) + P1_ALIAS_COMPAT_LABELS.get(_model_name, [])))
+    for _model_name, _labels in P1_ALIAS_LABELS.items()
+}
+
+
+for _index, (_model_name, _labels) in enumerate(_ALIAS_MODEL_FIELD_LABELS.items(), start=1):
     _attrs = {
         "__module__": __name__,
         "_inherit": _model_name,

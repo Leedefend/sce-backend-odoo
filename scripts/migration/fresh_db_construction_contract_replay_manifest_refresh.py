@@ -19,16 +19,26 @@ LANES = [
         "layer": "L2_user_visible_business",
         "default_run": False,
         "target_model": "construction.contract",
-        "write_scripts": ["scripts/migration/fresh_db_construction_contract_income_count_alignment_write.py"],
-        "source_files": ["tmp/raw/contract/contract.csv"],
+        "write_scripts": [
+            "scripts/migration/fresh_db_construction_contract_income_count_alignment_write.py",
+            "scripts/migration/fresh_db_new_construction_contract_xlsx_income_write.py",
+            "scripts/migration/fresh_db_income_fact_project_stub_write.py",
+        ],
+        "source_files": [
+            "tmp/raw/contract/contract.csv",
+            "tmp/new_construction_contract_income.xlsx",
+        ],
         "aggregate_artifacts": [
             "artifacts/migration/fresh_db_construction_contract_income_count_alignment_write_result_v1.json",
+            "artifacts/migration/fresh_db_new_construction_contract_xlsx_income_write_result_v1.json",
+            "artifacts/migration/fresh_db_income_fact_project_stub_write_result_v1.json",
             "artifacts/migration/fresh_db_construction_contract_income_count_probe_result_v1.json",
         ],
         "expected_current_result": {
-            "income_action_visible_rows": 1532,
-            "user_visible_contract_amount_sum": 3212021996.74,
-            "amount_difference_event_count": 18,
+            "project_income_contracts": 1730,
+            "general_income_contracts": 2,
+            "income_contract_ledger_rows": 1732,
+            "remaining_income_fact_projects_without_contract": 0,
         },
     },
     {

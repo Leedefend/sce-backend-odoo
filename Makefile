@@ -781,8 +781,15 @@ fresh_db.legacy_account_master.replay.adapter: guard.prod.forbid check-compose-p
 fresh_db.legacy_account_master.replay.write: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_legacy_account_master_replay_write.py
 
+.PHONY: fresh_db.construction_contract.new_xlsx_income.write fresh_db.construction_contract.income_fact_stub.write
 fresh_db.construction_contract.income_count_alignment.write: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_construction_contract_income_count_alignment_write.py
+
+fresh_db.construction_contract.new_xlsx_income.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" CONSTRUCTION_CONTRACT_NEW_XLSX="$(CONSTRUCTION_CONTRACT_NEW_XLSX)" CONSTRUCTION_CONTRACT_NEW_XLSX_JSON="$(CONSTRUCTION_CONTRACT_NEW_XLSX_JSON)" CONSTRUCTION_CONTRACT_NEW_XLSX_EXPECTED_ROWS="$(CONSTRUCTION_CONTRACT_NEW_XLSX_EXPECTED_ROWS)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_new_construction_contract_xlsx_income_write.py
+
+fresh_db.construction_contract.income_fact_stub.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_income_fact_project_stub_write.py
 
 fresh_db.construction_contract.income_count.probe: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_construction_contract_income_count_probe.py

@@ -30,6 +30,7 @@ ASSET_MANIFEST_REL_PATH = Path("manifest/receipt_asset_manifest_v1.json")
 REQUIRED_COLUMNS = {"Id", "f_JE", "WLDWID"}
 ASSET_PACKAGE_ID = "receipt_sc_v1"
 GENERATED_AT = "2026-04-15T08:15:00+00:00"
+EXCLUDED_RECEIPT_INCOME_CATEGORIES = {"材料款", "开票税金", "保险费", "代理服务费", "代理费"}
 
 
 class ReceiptAssetError(Exception):
@@ -92,6 +93,10 @@ def first_nonempty(row: dict[str, str], fields: list[str]) -> str:
         if value:
             return value
     return ""
+
+
+def receipt_income_category(row: dict[str, str]) -> str:
+    return clean(row.get("f_SRLBName"))
 
 
 def parse_date(value: object) -> str:
@@ -219,6 +224,9 @@ def generate(asset_root: Path, runtime_root: Path, source_csv: Path, expected_re
             errors.append("missing_legacy_receipt_id")
         if is_deleted(row.get("DEL")):
             errors.append("discard_deleted")
+        income_category = receipt_income_category(row)
+        if income_category in EXCLUDED_RECEIPT_INCOME_CATEGORIES:
+            errors.append("discard_non_receipt_request_category")
         if amount <= 0:
             errors.append("zero_or_negative_amount")
         if not legacy_partner_id:
@@ -240,6 +248,7 @@ def generate(asset_root: Path, runtime_root: Path, source_csv: Path, expected_re
                     "legacy_receipt_id": legacy_receipt_id,
                     "legacy_contract_id": legacy_contract_id,
                     "legacy_partner_id": legacy_partner_id,
+                    "income_category": income_category,
                     "errors": ",".join(errors),
                 }
             )
@@ -359,6 +368,7 @@ def generate(asset_root: Path, runtime_root: Path, source_csv: Path, expected_re
         "screen_profile": {
             "blocked_rows": len(blocked),
             "blocker_counts": dict(sorted(counters.items())),
+            "excluded_income_categories": sorted(EXCLUDED_RECEIPT_INCOME_CATEGORIES),
             "ready_rows": len(loadable),
             "contract_optional_empty_rows": sum(1 for row in loadable if not row["contract_external_id"]),
         },
@@ -399,6 +409,7 @@ def generate(asset_root: Path, runtime_root: Path, source_csv: Path, expected_re
             "blocked_records": len(blocked),
             "loadable_records": len(loadable),
             "raw_rows": len(source_rows),
+            "excluded_non_receipt_request_records": counters.get("discard_non_receipt_request_category", 0),
         },
         "db_writes": 0,
         "dependencies": ["project_sc_v1", "partner_sc_v1", "receipt_counterparty_partner_sc_v1", "contract_sc_v1"],
@@ -437,6 +448,7 @@ def generate(asset_root: Path, runtime_root: Path, source_csv: Path, expected_re
             "legacy_receipt_id_non_empty",
             "legacy_receipt_id_unique",
             "amount_positive",
+            "non_receipt_request_income_categories_excluded",
             "project_anchor_resolves",
             "contract_anchor_resolves",
             "contract_id_optional_when_missing_in_legacy",
@@ -468,7 +480,7 @@ def main() -> int:
     parser.add_argument("--asset-root", default=str(REPO_ASSET_ROOT))
     parser.add_argument("--runtime-root", default=str(RUNTIME_ROOT))
     parser.add_argument("--source", default=str(SOURCE_CSV))
-    parser.add_argument("--expected-ready", type=int, default=3411)
+    parser.add_argument("--expected-ready", type=int, default=3652)
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
 

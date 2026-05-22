@@ -137,6 +137,8 @@ for row in rows:
         "document_no": clean(row.get("document_no")),
         "document_date": clean(row.get("document_date")) or False,
         "legacy_state": clean(row.get("legacy_state")),
+        "receipt_type": clean(row.get("receipt_type")),
+        "receipt_subtype": clean(row.get("receipt_subtype")),
         "income_category": clean(row.get("income_category")),
         "project_id": project_id,
         "legacy_project_id": legacy_project_id,

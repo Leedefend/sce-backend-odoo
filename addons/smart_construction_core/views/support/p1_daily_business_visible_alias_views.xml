@@ -13,12 +13,8 @@
                 <field name="p1_visible_3f2c92346bec" string="登记时间" optional="show" readonly="1"/>
                 <field name="p1_visible_880ab989a872" string="申请人" optional="show" readonly="1"/>
                 <field name="p1_visible_2c346345746e" string="申请日期" optional="show" readonly="1"/>
-                <field name="p1_visible_3e5fd432c9df" string="收款账号" optional="show" readonly="1"/>
-                <field name="p1_visible_48a64eb40c71" string="开户行" optional="show" readonly="1"/>
                 <field name="p1_visible_34943c40c9af" string="金额" optional="show" readonly="1"/>
                 <field name="p1_visible_e0361480e3a5" string="备注" optional="show" readonly="1"/>
-                <field name="p1_visible_bb7c7aeff3e4" string="收款人" optional="show" readonly="1"/>
-                <field name="p1_visible_c6b9a8cfdb21" string="付款方式" optional="show" readonly="1"/>
                 <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
                 <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
                 <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
@@ -128,11 +124,7 @@
                 <field name="p1_visible_d09b05103331" string="价税合计" optional="show" readonly="1"/>
                 <field name="p1_visible_99f753ed6262" string="税额" optional="show" readonly="1"/>
                 <field name="p1_visible_007363f27191" string="不含税金额" optional="show" readonly="1"/>
-                <field name="p1_visible_b9ae89319036" string="数量" optional="show" readonly="1"/>
                 <field name="p1_visible_37d56ad493cf" string="税率" optional="show" readonly="1"/>
-                <field name="p1_visible_3d0afdf3736d" string="发票类型" optional="show" readonly="1"/>
-                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
-                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
             </xpath>
         </field>
     </record>
@@ -192,16 +184,12 @@
                 <field name="p1_visible_8fa8662ad38f" string="单据编号" optional="show" readonly="1"/>
                 <field name="p1_visible_89b4aa6364ce" string="时间" optional="show" readonly="1"/>
                 <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
-                <field name="p1_visible_389372a58a16" string="期数" optional="show" readonly="1"/>
                 <field name="p1_visible_fc06f3f3d307" string="本期收款" optional="show" readonly="1"/>
                 <field name="p1_visible_99219180c1b9" string="本期代扣代缴合计" optional="show" readonly="1"/>
                 <field name="p1_visible_50f529884746" string="本期拨付金额合计" optional="show" readonly="1"/>
                 <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
                 <field name="p1_visible_17d0f48c07fb" string="施工单位" optional="show" readonly="1"/>
                 <field name="p1_visible_75e856a13c7c" string="合同金额" optional="show" readonly="1"/>
-                <field name="p1_visible_689407e406ab" string="目前形象进度" optional="show" readonly="1"/>
-                <field name="p1_visible_0d8979d08c09" string="累计开票金额" optional="show" readonly="1"/>
-                <field name="p1_visible_aa6152009ab0" string="上期留存余额" optional="show" readonly="1"/>
                 <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
                 <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
             </xpath>
@@ -217,17 +205,11 @@
                 <field name="p1_visible_06fa8c6f628f" string="单据状态" optional="show" readonly="1"/>
                 <field name="p1_visible_8fa8662ad38f" string="单据编号" optional="show" readonly="1"/>
                 <field name="p1_visible_1e62803e196c" string="单据日期" optional="show" readonly="1"/>
-                <field name="p1_visible_3f2da24264f0" string="账号名称" optional="show" readonly="1"/>
-                <field name="p1_visible_ecaf440fd399" string="银行账号" optional="show" readonly="1"/>
                 <field name="p1_visible_bed51835debf" string="当前账户余额" optional="show" readonly="1"/>
                 <field name="p1_visible_5b112952b526" string="当前账户银行余额" optional="show" readonly="1"/>
                 <field name="p1_visible_834c5de2f288" string="银行系统差额" optional="show" readonly="1"/>
-                <field name="p1_visible_e5bf37733141" string="当日累计收入" optional="show" readonly="1"/>
-                <field name="p1_visible_af4cdd8ce788" string="当日累计支出" optional="show" readonly="1"/>
                 <field name="p1_visible_0027be5d5d7e" string="账户往来" optional="show" readonly="1"/>
                 <field name="p1_visible_e0361480e3a5" string="备注" optional="show" readonly="1"/>
-                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
-                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
             </xpath>
         </field>
     </record>
@@ -243,12 +225,9 @@
                 <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
                 <field name="p1_visible_8fa8662ad38f" string="单据编号" optional="show" readonly="1"/>
                 <field name="p1_visible_880ab989a872" string="申请人" optional="show" readonly="1"/>
-                <field name="p1_visible_ed9ce3e5ab3c" string="预计回款日期" optional="show" readonly="1"/>
                 <field name="p1_visible_2c346345746e" string="申请日期" optional="show" readonly="1"/>
                 <field name="p1_visible_f9cc22d53aff" string="受票方名称" optional="show" readonly="1"/>
                 <field name="p1_visible_0d8979d08c09" string="累计开票金额" optional="show" readonly="1"/>
-                <field name="p1_visible_83e1d169c7a2" string="合同额" optional="show" readonly="1"/>
-                <field name="p1_visible_4f43764bd23d" string="本次开票张数" optional="show" readonly="1"/>
                 <field name="p1_visible_c5e161f03e08" string="本次开票金额" optional="show" readonly="1"/>
                 <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
                 <field name="p1_visible_e0361480e3a5" string="备注" optional="show" readonly="1"/>
@@ -259,8 +238,6 @@
                 <field name="p1_visible_7f5da566c14e" string="金蝶单据编号" optional="show" readonly="1"/>
                 <field name="p1_visible_c73a8eab0d57" string="含税金额" optional="show" readonly="1"/>
                 <field name="p1_visible_c1b95b8ca332" string="附加税" optional="show" readonly="1"/>
-                <field name="p1_visible_0e2126d6cf82" string="开票张数" optional="show" readonly="1"/>
-                <field name="p1_visible_964a2edc6942" string="关联回款金额" optional="show" readonly="1"/>
                 <field name="p1_visible_ada9a85eab00" string="发票号" optional="show" readonly="1"/>
                 <field name="p1_visible_bbe7bbee241e" string="发票种类" optional="show" readonly="1"/>
                 <field name="p1_visible_be5462bd6a62" string="开票单位" optional="show" readonly="1"/>
@@ -277,15 +254,11 @@
             <xpath expr="//tree" position="inside">
                 <field name="p1_visible_f22832ce4781" string="推送结果" optional="show" readonly="1"/>
                 <field name="p1_visible_0fb499e9ebc9" string="账户状态" optional="show" readonly="1"/>
-                <field name="p1_visible_ef38c6c5245f" string="账户操作" optional="show" readonly="1"/>
                 <field name="p1_visible_bd1bb9040d11" string="录入来源" optional="show" readonly="1"/>
                 <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
                 <field name="p1_visible_8fa8662ad38f" string="单据编号" optional="show" readonly="1"/>
                 <field name="p1_visible_3f2da24264f0" string="账号名称" optional="show" readonly="1"/>
-                <field name="p1_visible_d8347d8e9fac" string="账号户名" optional="show" readonly="1"/>
                 <field name="p1_visible_a82dee991619" string="初期余额" optional="show" readonly="1"/>
-                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
-                <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
             </xpath>
         </field>
     </record>

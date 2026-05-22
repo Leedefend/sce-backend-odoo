@@ -23,7 +23,10 @@
                     <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
                     <filter string="按经营策略" name="group_operation_strategy" context="{'group_by': 'operation_strategy'}"/>
                     <filter string="按单位" name="group_partner" context="{'group_by': 'partner_id'}"/>
-                    <filter string="按类型" name="group_source_kind" context="{'group_by': 'source_kind'}"/>
+                    <separator/>
+                    <filter string="按业务类型" name="group_source_kind" context="{'group_by': 'source_kind'}"/>
+                    <filter string="按付款族" name="group_payment_family" context="{'group_by': 'payment_family'}"/>
+                    <filter string="按付款方式" name="group_payment_method" context="{'group_by': 'payment_method'}"/>
                     <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
                     <filter string="按日期" name="group_date" context="{'group_by': 'date_payment'}"/>
                 </search>

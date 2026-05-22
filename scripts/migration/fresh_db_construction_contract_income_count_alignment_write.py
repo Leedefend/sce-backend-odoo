@@ -45,7 +45,7 @@ RAW_CSV = Path(os.getenv("CONSTRUCTION_CONTRACT_RAW_CSV", str(REPO_ROOT / "tmp/r
 FILE_INDEX_CSV = Path(os.getenv("MIGRATION_FILE_INDEX_CSV", str(ARTIFACT_ROOT / "fresh_db_legacy_file_index_replay_payload_v1.csv")))
 OUTPUT_JSON = ARTIFACT_ROOT / "fresh_db_construction_contract_income_count_alignment_write_result_v1.json"
 DETAIL_CSV = ARTIFACT_ROOT / "fresh_db_construction_contract_income_count_alignment_detail_v1.csv"
-EXPECTED_TARGET_ROWS = int(os.getenv("CONSTRUCTION_CONTRACT_INCOME_VISIBLE_EXPECTED_ROWS", "1532"))
+EXPECTED_TARGET_ROWS = int(os.getenv("CONSTRUCTION_CONTRACT_INCOME_VISIBLE_EXPECTED_ROWS", "1566"))
 DETAIL_FIELDS = [
     "action",
     "legacy_contract_id",
@@ -109,11 +109,21 @@ def legacy_file_url(row: dict[str, str]) -> str:
 
 
 def is_legacy_income_visible(row: dict[str, str]) -> bool:
-    return (
-        clean(row.get("DEL")) != "1"
-        and clean(row.get("DJZT")) in {"2", "1", ""}
-        and bool(clean(row.get("HTBT")))
+    if clean(row.get("DEL")) == "1":
+        return False
+    if (
+        clean(row.get("DJZT")) in {"2", "1", ""}
         and bool(clean(row.get("FBF")))
+        and has_contract_identity_evidence(row)
+        and not is_test_contract_row(row)
+    ):
+        return True
+    return (
+        clean(row.get("DJZT")) == "0"
+        and clean(row.get("XMID")) in income_fact_project_legacy_ids
+        and has_counterparty_evidence(row)
+        and has_contract_identity_evidence(row)
+        and not is_test_contract_row(row)
     )
 
 
@@ -171,6 +181,27 @@ def contract_amount(row: dict[str, str]) -> Decimal:
     return amount
 
 
+def counterparty_text(row: dict[str, str]) -> str:
+    return clean(row.get("FBF")) or clean(row.get("f_JSDW")) or clean(row.get("CBF"))
+
+
+def has_counterparty_evidence(row: dict[str, str]) -> bool:
+    return bool(counterparty_text(row))
+
+
+def has_contract_identity_evidence(row: dict[str, str]) -> bool:
+    return clean(row.get("HTBH")) not in {"", "0"} or bool(clean(row.get("HTBT"))) or bool(contract_amount(row))
+
+
+def contract_subject(row: dict[str, str]) -> str:
+    return clean(row.get("HTBT")) or clean(row.get("HTBH")) or clean(row.get("DJBH")) or clean(row.get("f_XMMC"))
+
+
+def is_test_contract_row(row: dict[str, str]) -> bool:
+    text = " ".join(clean(row.get(field)) for field in ("HTBH", "HTBT", "f_XMMC", "DJBH"))
+    return "测试" in text
+
+
 def contract_event_date(contract):
     for value in (contract.date_contract, contract.entry_time, contract.create_date):
         if value:
@@ -198,6 +229,32 @@ for file_row in file_rows:
     if not bill_id or clean(file_row.get("active")) != "1" or not clean(file_row.get("file_name")):
         continue
     active_files_by_bill.setdefault(bill_id, []).append(file_row)
+env.cr.execute(  # noqa: F821
+    """
+    WITH invoice_projects AS (
+        SELECT DISTINCT project_id
+          FROM sc_invoice_registration
+         WHERE active IS TRUE
+           AND direction = 'output'
+           AND project_id IS NOT NULL
+    ),
+    receipt_projects AS (
+        SELECT DISTINCT project_id
+          FROM sc_receipt_income
+         WHERE active IS TRUE
+           AND project_id IS NOT NULL
+    )
+    SELECT DISTINCT p.legacy_project_id
+      FROM project_project p
+      JOIN (
+            SELECT project_id FROM invoice_projects
+            UNION
+            SELECT project_id FROM receipt_projects
+           ) fact_project ON fact_project.project_id = p.id
+     WHERE COALESCE(p.legacy_project_id, '') <> ''
+    """
+)
+income_fact_project_legacy_ids = {clean(row[0]) for row in env.cr.fetchall() if clean(row[0])}  # noqa: F821
 target_rows = [row for row in raw_rows if is_legacy_income_visible(row)]
 target_ids = {clean(row.get("Id")) for row in target_rows}
 duplicate_target_ids = sorted(
@@ -239,7 +296,7 @@ def resolve_project(row: dict[str, str]):
 
 
 def resolve_partner(row: dict[str, str]):
-    name = clean(row.get("FBF")) or clean(row.get("f_JSDW")) or "历史施工合同发包人"
+    name = counterparty_text(row) or "历史施工合同发包人"
     matches = Partner.search([("name", "=", name)], order="id")
     if matches:
         ranked = matches.filtered(lambda item: item.customer_rank > 0)
@@ -250,7 +307,7 @@ def resolve_partner(row: dict[str, str]):
         "legacy_partner_id": f"contract_income_counterparty:{clean(row.get('Id'))}",
         "legacy_partner_source": "contract_income_counterparty_runtime",
         "legacy_partner_name": name,
-        "legacy_source_evidence": f"T_ProjectContract_Out.FBF:{clean(row.get('Id'))}",
+        "legacy_source_evidence": f"T_ProjectContract_Out.counterparty:{clean(row.get('Id'))}",
     }
     if "is_company" in Partner._fields:
         vals["is_company"] = True
@@ -307,9 +364,9 @@ def visible_vals(row: dict[str, str]) -> dict[str, object]:
         "legacy_external_contract_no": clean(row.get("WBHTBH")),
         "legacy_status": clean(row.get("DJZT")),
         "legacy_deleted_flag": clean(row.get("DEL")),
-        "legacy_counterparty_text": clean(row.get("FBF")),
+        "legacy_counterparty_text": counterparty_text(row),
         "legacy_income_surface_visible": True,
-        "subject": clean(row.get("HTBT")),
+        "subject": contract_subject(row),
         "type": "out",
         "state": legacy_state(row),
         "project_id": project.id,

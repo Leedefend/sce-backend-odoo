@@ -120,7 +120,7 @@ def write_xml(path: Path, records: list[dict[str, str]]) -> None:
     data = ET.SubElement(root, "data", {"noupdate": "1"})
     for row in records:
         record = ET.SubElement(data, "record", {"id": row["external_id"], "model": "sc.legacy.receipt.income.fact"})
-        for field in ("legacy_source_table", "legacy_record_id", "legacy_pid", "source_family", "direction", "document_no", "document_date", "legacy_state", "income_category"):
+        for field in ("legacy_source_table", "legacy_record_id", "legacy_pid", "source_family", "direction", "document_no", "document_date", "legacy_state", "receipt_type", "receipt_subtype", "income_category"):
             add_text(record, field, row[field], field in {"legacy_source_table", "legacy_record_id", "source_family", "direction"})
         add_ref(record, "project_id", row["project_external_id"], True)
         add_text(record, "legacy_project_id", row["legacy_project_id"], True)
@@ -211,6 +211,8 @@ def build_records(asset_root: Path) -> tuple[list[dict[str, str]], dict[str, Any
             "document_no": clean(row.get("document_no")),
             "document_date": date_text(row.get("document_date", "")),
             "legacy_state": clean(row.get("state")),
+            "receipt_type": clean(row.get("receipt_type")),
+            "receipt_subtype": clean(row.get("receipt_subtype")),
             "income_category": clean(row.get("income_category")),
             "project_external_id": pmap[project_id],
             "legacy_project_id": project_id,

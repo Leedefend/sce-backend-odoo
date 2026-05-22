@@ -143,9 +143,14 @@
                     <group expand="0" string="分组">
                         <filter name="group_project" string="项目" context="{'group_by': 'project_id'}"/>
                         <filter name="group_operation_strategy" string="经营策略" context="{'group_by': 'operation_strategy'}"/>
+                        <filter name="group_partner" string="往来单位" context="{'group_by': 'partner_id'}"/>
                         <filter name="group_type" string="业务类型" context="{'group_by': 'claim_type'}"/>
+                        <filter name="group_direction" string="收支方向" context="{'group_by': 'direction'}"/>
+                        <filter name="group_expense_type" string="费用类型" context="{'group_by': 'expense_type'}"/>
+                        <filter name="group_payment_method" string="支付方式" context="{'group_by': 'payment_method'}"/>
                         <filter name="group_state" string="状态" context="{'group_by': 'state'}"/>
                         <filter name="group_month" string="月份" context="{'group_by': 'date_claim:month'}"/>
+                        <filter name="group_date_claim" string="单据日期" context="{'group_by': 'date_claim'}"/>
                     </group>
                 </search>
             </field>

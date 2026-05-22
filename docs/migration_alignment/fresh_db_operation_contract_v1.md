@@ -81,15 +81,24 @@ python3 scripts/migration/fresh_db_replay_runner_dry_run.py
 - Full construction contract attachment replay uses the deterministic join
   `T_ProjectContract_Out.f_FJ = legacy_file_index.bill_id`. The Excel filename matcher is only
   a visible-surface fallback and must not be used as the full-data attachment contract.
+- Income contract replay now has three ordered steps: legacy income-count alignment,
+  `副本施工合同（新）639150659690783750.xlsx` replay, and income-flow project stub generation.
+  Before server replay, stage the user Excel as `tmp/new_construction_contract_income.xlsx` or
+  pass `CONSTRUCTION_CONTRACT_NEW_XLSX=<xlsx_path>`. The stub step is intentionally permissive:
+  projects with income invoice or receipt facts but no visible income contract get a draft
+  "待确认" income contract so users can correct or delete questionable data in the product.
 
 ## Acceptance
 
 - `artifacts/migration/fresh_db_replay_runner_dry_run_result_v1.json` is `PASS`.
 - `artifacts/migration/fresh_db_construction_contract_replay_manifest_refresh_result_v1.json`
   reports `status=PASS`, `refreshed_lanes=5`, and `default_run_lanes=0`.
-- `artifacts/migration/fresh_db_construction_contract_income_count_probe_result_v1.json` is `PASS`
-  and reports `income_action_visible_rows=1532`, `user_visible_contract_amount_sum=3212021996.74`,
-  `amount_difference_event_count=18`, and `positive_amount_without_line_count=0`.
+- `artifacts/migration/fresh_db_construction_contract_income_count_alignment_write_result_v1.json`,
+  `artifacts/migration/fresh_db_new_construction_contract_xlsx_income_write_result_v1.json`, and
+  `artifacts/migration/fresh_db_income_fact_project_stub_write_result_v1.json` are `PASS`.
+- `scripts/verify/income_contract_ledger_scope_probe.py` reports project income contracts,
+  general company income contracts, and unified ledger rows consistently; current local baseline is
+  `project_income_contracts=1730`, `general_income_contracts=2`, and `ledger_total=1732`.
 - `artifacts/migration/fresh_db_construction_contract_visible_surface_write_result_v1.json`
   reports `visible_surface_mismatch_count=0` for the user acceptance Excel surface.
 - `artifacts/migration/fresh_db_construction_contract_visible_business_fact_write_result_v1.json`

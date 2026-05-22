@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import logging
 import re
+from decimal import Decimal, ROUND_HALF_UP
 
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError, UserError
@@ -11,6 +12,59 @@ from ..support.state_guard import raise_guard
 from ..support.state_machine import ScStateMachine
 
 _logger = logging.getLogger(__name__)
+
+
+def _amount_to_chinese_upper(value):
+    amount = Decimal(str(value or 0)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    if amount == 0:
+        return "零元整"
+    prefix = "负" if amount < 0 else ""
+    cents = int(abs(amount) * 100)
+    integer = cents // 100
+    jiao = cents // 10 % 10
+    fen = cents % 10
+    digits = "零壹贰叁肆伍陆柒捌玖"
+    units = ["", "拾", "佰", "仟"]
+    section_units = ["", "万", "亿", "兆"]
+
+    def section_to_text(section):
+        text = ""
+        zero = False
+        for index, char in enumerate(f"{section:04d}"):
+            digit = int(char)
+            if digit:
+                if zero:
+                    text += digits[0]
+                    zero = False
+                text += digits[digit] + units[3 - index]
+            elif text:
+                zero = True
+        return text
+
+    parts = []
+    section_index = 0
+    need_zero = False
+    while integer:
+        section = integer % 10000
+        if section:
+            text = section_to_text(section) + section_units[section_index]
+            if need_zero:
+                parts.insert(0, digits[0])
+            parts.insert(0, text)
+            need_zero = section < 1000
+        elif parts:
+            need_zero = True
+        integer //= 10000
+        section_index += 1
+
+    result = prefix + "".join(parts).rstrip(digits[0]) + "元"
+    if jiao:
+        result += digits[jiao] + "角"
+    if fen:
+        result += digits[fen] + "分"
+    if not jiao and not fen:
+        result += "整"
+    return result
 
 
 class PaymentRequest(models.Model):
@@ -157,6 +211,41 @@ class PaymentRequest(models.Model):
         required=True,
         tracking=True,
     )
+    amount_uppercase = fields.Char(
+        string="金额大写",
+        compute="_compute_amount_uppercase",
+        store=True,
+        readonly=True,
+        index=True,
+    )
+    cost_category_name = fields.Char(
+        string="成本分类名称",
+        compute="_compute_reconciliation_summary",
+        store=True,
+        readonly=True,
+        index=True,
+    )
+    partner_account_name = fields.Char(
+        string="户名",
+        related="partner_id.sc_account_name",
+        store=True,
+        readonly=True,
+        index=True,
+    )
+    partner_bank_name = fields.Char(
+        string="开户行",
+        related="partner_id.sc_bank_name",
+        store=True,
+        readonly=True,
+        index=True,
+    )
+    partner_bank_account = fields.Char(
+        string="账号",
+        related="partner_id.sc_bank_account",
+        store=True,
+        readonly=True,
+        index=True,
+    )
     date_request = fields.Date(
         string="单据日期",
         default=fields.Date.context_today,
@@ -214,6 +303,22 @@ class PaymentRequest(models.Model):
         default="draft",
         tracking=True,
     )
+
+    @api.depends("outflow_line_ids.source_line_type")
+    def _compute_reconciliation_summary(self):
+        for record in self:
+            line_types = [
+                line_type
+                for line_type in record.outflow_line_ids.mapped("source_line_type")
+                if line_type
+            ]
+            unique_types = sorted(set(line_types))
+            record.cost_category_name = " / ".join(unique_types[:5])
+
+    @api.depends("amount")
+    def _compute_amount_uppercase(self):
+        for record in self:
+            record.amount_uppercase = _amount_to_chinese_upper(record.amount)
 
     @api.model
     def _context_project_id(self):

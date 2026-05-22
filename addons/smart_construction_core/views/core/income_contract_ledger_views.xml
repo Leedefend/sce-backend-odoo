@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sc_income_contract_ledger_search" model="ir.ui.view">
+        <field name="name">sc.income.contract.ledger.search</field>
+        <field name="model">sc.income.contract.ledger</field>
+        <field name="arch" type="xml">
+            <search string="收入合同台账">
+                <field name="contract_name"/>
+                <field name="contract_no"/>
+                <field name="project_id"/>
+                <field name="partner_name_text"/>
+                <filter name="project_income" string="项目收入合同" domain="[('contract_family', '=', 'project_income')]"/>
+                <filter name="company_general_income" string="公司一般收入合同" domain="[('contract_family', '=', 'company_general_income')]"/>
+                <filter name="legacy" string="历史迁移" domain="[('source_origin', '=', 'legacy')]"/>
+                <filter name="manual" string="新系统登记" domain="[('source_origin', '=', 'manual')]"/>
+                <separator/>
+                <filter name="group_family" string="按合同来源" context="{'group_by': 'contract_family'}"/>
+                <filter name="group_project" string="按项目" context="{'group_by': 'project_id'}"/>
+                <filter name="group_partner_text" string="按合同方" context="{'group_by': 'partner_name_text'}"/>
+                <filter name="group_company" string="按公司" context="{'group_by': 'company_id'}"/>
+                <filter name="group_operation_strategy" string="按经营方式" context="{'group_by': 'operation_strategy'}"/>
+                <filter name="group_state" string="按状态" context="{'group_by': 'state'}"/>
+                <filter name="group_contract_date" string="按合同日期" context="{'group_by': 'contract_date'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_income_contract_ledger_tree" model="ir.ui.view">
+        <field name="name">sc.income.contract.ledger.tree</field>
+        <field name="model">sc.income.contract.ledger</field>
+        <field name="arch" type="xml">
+            <tree string="收入合同台账" create="0" edit="0" delete="0">
+                <field name="contract_family"/>
+                <field name="contract_no"/>
+                <field name="contract_name"/>
+                <field name="project_id"/>
+                <field name="operation_strategy"/>
+                <field name="partner_name_text"/>
+                <field name="contract_date"/>
+                <field name="contract_payment_method_text"/>
+                <field name="amount_total" sum="合同金额"/>
+                <field name="settlement_amount" sum="结算金额"/>
+                <field name="invoice_amount" sum="开票金额"/>
+                <field name="received_amount" sum="收款金额"/>
+                <field name="unreceived_amount" sum="未收款金额"/>
+                <field name="state"/>
+                <field name="source_origin"/>
+                <field name="entry_user_id"/>
+                <field name="entry_time"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_income_contract_ledger_form" model="ir.ui.view">
+        <field name="name">sc.income.contract.ledger.form</field>
+        <field name="model">sc.income.contract.ledger</field>
+        <field name="arch" type="xml">
+            <form string="收入合同台账" create="0" edit="0" delete="0">
+                <header>
+                    <button name="action_open_source_record" string="打开来源合同" type="object" class="oe_highlight"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group string="合同识别">
+                            <field name="contract_family"/>
+                            <field name="contract_no"/>
+                            <field name="contract_name"/>
+                            <field name="state"/>
+                        </group>
+                        <group string="业务对象">
+                            <field name="project_id"/>
+                            <field name="company_id"/>
+                            <field name="operation_strategy"/>
+                            <field name="partner_id"/>
+                            <field name="partner_name_text"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="金额执行">
+                            <field name="contract_date"/>
+                            <field name="contract_payment_method_text"/>
+                            <field name="amount_total"/>
+                            <field name="settlement_amount"/>
+                            <field name="invoice_amount"/>
+                            <field name="received_amount"/>
+                            <field name="unreceived_amount"/>
+                        </group>
+                        <group string="来源追溯">
+                            <field name="source_model"/>
+                            <field name="source_record_id"/>
+                            <field name="source_origin"/>
+                            <field name="legacy_source_model"/>
+                            <field name="legacy_source_table"/>
+                            <field name="legacy_record_id"/>
+                            <field name="handler_id"/>
+                            <field name="entry_user_id"/>
+                            <field name="entry_time"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sc_income_contract_ledger" model="ir.actions.act_window">
+        <field name="name">收入合同台账</field>
+        <field name="res_model">sc.income.contract.ledger</field>
+        <field name="view_mode">tree,form</field>
+        <field name="views" eval="[(ref('view_sc_income_contract_ledger_tree'), 'tree'), (ref('view_sc_income_contract_ledger_form'), 'form')]"/>
+        <field name="search_view_id" ref="view_sc_income_contract_ledger_search"/>
+        <field name="context">{}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
+    </record>
+</odoo>

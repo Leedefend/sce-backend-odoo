@@ -45,7 +45,8 @@ env.cr.execute(  # noqa: F821
     """
     INSERT INTO sc_receipt_income (
       name, source_origin, source_kind, state, project_id, partner_id,
-      date_receipt, document_no, receipt_type, income_category, amount, currency_id,
+      date_receipt, document_no, receipt_type, legacy_receipt_type, legacy_receipt_subtype,
+      income_category, amount, currency_id,
       legacy_source_model, legacy_source_table, legacy_record_id,
       legacy_document_state, creator_legacy_user_id, creator_name, created_time,
       note, active, create_uid, write_uid, create_date, write_date
@@ -65,6 +66,8 @@ env.cr.execute(  # noqa: F821
         WHEN f.source_family = 'customer_receipt' THEN '客户收款'
         ELSE NULLIF(f.source_family, '')
       END,
+      NULLIF(f.receipt_type, ''),
+      NULLIF(f.receipt_subtype, ''),
       NULLIF(f.income_category, ''),
       COALESCE(f.source_amount, 0),
       %s,
@@ -106,6 +109,8 @@ env.cr.execute(  # noqa: F821
       date_receipt = EXCLUDED.date_receipt,
       document_no = EXCLUDED.document_no,
       receipt_type = EXCLUDED.receipt_type,
+      legacy_receipt_type = EXCLUDED.legacy_receipt_type,
+      legacy_receipt_subtype = EXCLUDED.legacy_receipt_subtype,
       income_category = EXCLUDED.income_category,
       amount = EXCLUDED.amount,
       legacy_document_state = EXCLUDED.legacy_document_state,
@@ -124,7 +129,8 @@ env.cr.execute(  # noqa: F821
     """
     INSERT INTO sc_receipt_income (
       name, source_origin, source_kind, state, project_id, partner_id, contract_id,
-      date_receipt, document_no, receipt_type, income_category, payment_method,
+      date_receipt, document_no, receipt_type, legacy_receipt_type, legacy_receipt_subtype,
+      income_category, payment_method,
       receiving_account, bill_no, invoice_ref, amount, deducted_invoice_amount,
       deducted_tax_amount, settlement_amount, currency_id, legacy_source_model,
       legacy_source_table, legacy_record_id, legacy_document_state,
@@ -137,12 +143,14 @@ env.cr.execute(  # noqa: F821
       'legacy',
       'residual_receipt',
       CASE WHEN COALESCE(r.document_state, '') = '2' THEN 'legacy_confirmed' ELSE 'draft' END,
-      r.project_id,
+      COALESCE(r.project_id, project_match.id),
       r.partner_id,
       c.id,
       COALESCE(r.document_date, r.created_time::date, CURRENT_DATE),
       NULLIF(r.document_no, ''),
       NULLIF(r.receipt_type, ''),
+      NULLIF(r.legacy_receipt_type, ''),
+      NULLIF(r.legacy_receipt_subtype, ''),
       NULLIF(r.income_category, ''),
       NULLIF(r.payment_method, ''),
       NULLIF(r.receiving_account, ''),
@@ -181,9 +189,15 @@ env.cr.execute(  # noqa: F821
       NOW(),
       NOW()
     FROM sc_legacy_receipt_residual_fact r
+    LEFT JOIN (
+      SELECT DISTINCT ON (legacy_project_id) legacy_project_id, id
+      FROM project_project
+      WHERE legacy_project_id IS NOT NULL
+      ORDER BY legacy_project_id, id
+    ) project_match ON project_match.legacy_project_id = r.project_legacy_id
     LEFT JOIN construction_contract c ON c.legacy_contract_id = r.contract_legacy_id
     WHERE r.active
-      AND r.project_id IS NOT NULL
+      AND COALESCE(r.project_id, project_match.id) IS NOT NULL
       AND COALESCE(r.amount, 0) > 0
     ON CONFLICT (legacy_source_model, legacy_record_id)
     DO UPDATE SET
@@ -194,6 +208,8 @@ env.cr.execute(  # noqa: F821
       date_receipt = EXCLUDED.date_receipt,
       document_no = EXCLUDED.document_no,
       receipt_type = EXCLUDED.receipt_type,
+      legacy_receipt_type = EXCLUDED.legacy_receipt_type,
+      legacy_receipt_subtype = EXCLUDED.legacy_receipt_subtype,
       income_category = EXCLUDED.income_category,
       payment_method = EXCLUDED.payment_method,
       receiving_account = EXCLUDED.receiving_account,

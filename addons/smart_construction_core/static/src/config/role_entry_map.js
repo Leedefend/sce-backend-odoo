@@ -35,11 +35,12 @@ export const ROLE_ENTRY_MAP = [
     desc: "合同台账与合同清单",
     default_action: {
       menu_xmlid: "smart_construction_core.menu_sc_contract_income",
-      action_xmlid: "smart_construction_core.action_construction_contract_my",
+      action_xmlid: "smart_construction_core.action_sc_income_contract_ledger",
     },
     quick_actions: [
-      { label: "收入合同", action_xmlid: "smart_construction_core.action_construction_contract_income" },
-      { label: "支出合同", action_xmlid: "smart_construction_core.action_construction_contract_expense" },
+      { label: "收入合同台账", action_xmlid: "smart_construction_core.action_sc_income_contract_ledger" },
+      { label: "项目收入合同", action_xmlid: "smart_construction_core.action_construction_contract_income" },
+      { label: "支出合同台账", action_xmlid: "smart_construction_core.action_sc_expense_contract_ledger" },
     ],
   },
   {

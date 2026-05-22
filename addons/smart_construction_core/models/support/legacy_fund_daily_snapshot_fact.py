@@ -14,7 +14,7 @@ class ScLegacyFundDailySnapshotFact(models.Model):
     document_no = fields.Char(string="单号", index=True)
     snapshot_date = fields.Date(string="日期", required=True, index=True)
     legacy_state = fields.Char(string="历史状态", index=True)
-    state_text = fields.Char(string="状态文本", compute="_compute_business_aliases")
+    state_text = fields.Char(string="状态文本", compute="_compute_business_aliases", store=True)
     subject = fields.Char(string="摘要")
     company_id = fields.Many2one(
         "res.company",
@@ -48,9 +48,9 @@ class ScLegacyFundDailySnapshotFact(models.Model):
     source_account_balance_total = fields.Float(string="历史账面余额合计")
     source_bank_balance_total = fields.Float(string="历史银行余额合计")
     source_bank_system_difference = fields.Float(string="历史账实差异")
-    account_balance_total = fields.Float(string="账面余额合计", compute="_compute_business_aliases")
-    bank_balance_total = fields.Float(string="银行余额合计", compute="_compute_business_aliases")
-    bank_system_difference = fields.Float(string="账实差异", compute="_compute_business_aliases")
+    account_balance_total = fields.Float(string="账面余额合计", compute="_compute_business_aliases", store=True)
+    bank_balance_total = fields.Float(string="银行余额合计", compute="_compute_business_aliases", store=True)
+    bank_system_difference = fields.Float(string="账实差异", compute="_compute_business_aliases", store=True)
     note = fields.Text(string="备注")
     import_batch = fields.Char(string="导入批次", required=True, index=True)
 
