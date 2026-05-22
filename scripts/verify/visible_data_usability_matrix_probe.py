@@ -53,6 +53,35 @@ SCENE_COMPLETENESS_FIELD_EXCLUDES = {
     ("project.cost.code", None, None): {
         "parent_id",
     },
+    ("project.boq.line", None, None): {
+        "hierarchy_code",
+        "display_order",
+        "single_name",
+        "unit_name",
+        "major_name",
+        "category",
+        "version",
+        "code_division",
+        "code_subdivision",
+        "cost_item_id",
+        "spec",
+        "structure_id",
+        "task_id",
+        "remark",
+        "warning_message",
+    },
+    ("project.cost.ledger", None, None): {
+        "wbs_id",
+    },
+    ("project.profit.compare", None, None): {
+        "wbs_id",
+    },
+    ("construction.contract", None, None): {
+        "approval_info",
+        "legacy_external_contract_no",
+        "visible_unreceived_rate",
+        "category_id",
+    },
     ("hr.department", None, None): {
         "manager_id",
     },
@@ -158,11 +187,35 @@ SOURCE_COMPLETENESS_FIELD_EXCLUDES = {
         "creator_name",
         "created_time",
     },
+    ("sc.receipt.income", "legacy_source_model", "sc.legacy.fund.confirmation.line"): {
+        "contract_id",
+        "payment_method",
+        "receiving_account",
+        "receiving_account_name",
+        "receiving_account_no",
+        "receiving_bank_name",
+        "bill_no",
+        "invoice_ref",
+    },
     ("sc.receipt.income", "legacy_source_model", "sc.legacy.receipt.residual.fact"): {
         "receiving_account_name",
         "receiving_account_no",
         "receiving_bank_name",
         "bill_no",
+    },
+    ("sc.expense.claim", "legacy_source_model", "sc.legacy.deduction.adjustment.line"): {
+        "partner_id",
+        "payment_method",
+        "receipt_account_name",
+        "payee_account",
+        "payee_bank",
+    },
+    ("sc.expense.claim", "legacy_source_model", "sc.legacy.account.transaction.line"): {
+        "partner_id",
+        "payment_method",
+        "receipt_account_name",
+        "payee_account",
+        "payee_bank",
     },
     ("sc.treasury.ledger", "source_kind", "legacy_actual_outflow"): {
         "settlement_id",
@@ -225,6 +278,9 @@ SOURCE_COMPLETENESS_FIELD_EXCLUDES = {
         "material_uom_summary",
         "unit_price_summary",
         "line_note_summary",
+    },
+    ("sc.material.inbound", "legacy_fact_model", "sc.legacy.scbs.fact.staging"): {
+        "acceptance_id",
     },
     ("sc.legacy.tender.registration.fact", "source_table", "P_ZTB_GCBMGL"): {
         "owner_name",

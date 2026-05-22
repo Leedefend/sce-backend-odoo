@@ -75,6 +75,16 @@ run_odoo_script() {
   bash "$SHELL_EXEC" <"$script_path"
 }
 
+run_odoo_write_script() {
+  local script_path="$1"
+  DB_NAME="$DB_NAME" \
+  MIGRATION_REPO_ROOT="$MIGRATION_REPO_ROOT_ODOO" \
+  MIGRATION_REPLAY_DB_ALLOWLIST="$MIGRATION_REPLAY_DB_ALLOWLIST" \
+  MIGRATION_ARTIFACT_ROOT="$MIGRATION_ARTIFACT_ROOT_ODOO" \
+  MIGRATION_WRITE_MODE=write \
+  bash "$SHELL_EXEC" <"$script_path"
+}
+
 run_python_validator() {
   local script_path="$1"
   MIGRATION_REPO_ROOT="$MIGRATION_REPO_ROOT" \
@@ -409,6 +419,7 @@ case "$MODE" in
       run_step financing_loan_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_financing_loan_projection_write.py"
       run_step construction_contract_income_count_alignment run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_construction_contract_income_count_alignment_write.py"
       run_step project_contract_visible_surface_enrichment run_odoo_script "$ROOT_DIR/scripts/migration/visible_surface_project_contract_enrichment_write.py"
+      run_step project_migration_field_continuity_backfill run_odoo_write_script "$ROOT_DIR/scripts/migration/project_migration_field_continuity_backfill_write.py"
       run_step general_contract_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_general_contract_projection_write.py"
       run_step construction_diary_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_construction_diary_projection_write.py"
       run_step fund_account_between_projection run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_fund_account_between_projection_write.py"

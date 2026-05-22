@@ -244,8 +244,8 @@
 
             <!-- notebook 中重排业务页签，保证系统/描述/设置靠后 -->
             <xpath expr="//sheet/notebook/page[@name='sc_construction']" position="after">
-                <page string="历史项目资料" name="legacy_project_facts" groups="smart_construction_core.group_sc_cap_project_read">
-                    <group string="旧系统项目标识" col="4">
+                <page string="历史项目核对" name="legacy_project_facts" groups="smart_construction_core.group_sc_cap_project_read">
+                    <group string="来源项目标识" col="4">
                         <field name="legacy_project_id" readonly="1"/>
                         <field name="legacy_project_code" readonly="1"/>
                         <field name="legacy_parent_id" readonly="1"/>
@@ -253,10 +253,9 @@
                         <field name="other_system_code" readonly="1"/>
                         <field name="legacy_external_contract_id" readonly="1"/>
                     </group>
-                    <group string="旧系统组织与分类" col="4">
+                    <group string="组织与分类核对" col="4">
                         <field name="legacy_company_name" readonly="1"/>
                         <field name="legacy_company_id" readonly="1"/>
-                        <field name="business_nature" readonly="1"/>
                         <field name="operation_strategy" readonly="1"/>
                         <field name="legacy_stage_name" readonly="1"/>
                         <field name="legacy_stage_id" readonly="1"/>
@@ -267,7 +266,7 @@
                         <field name="legacy_project_nature" readonly="1"/>
                         <field name="legacy_contracting_method" readonly="1"/>
                     </group>
-                    <group string="旧系统联系人与责任人" col="4">
+                    <group string="联系人与责任人核对" col="4">
                         <field name="legacy_project_manager_name" readonly="1"/>
                         <field name="legacy_technical_responsibility_name" readonly="1"/>
                         <field name="legacy_owner_unit" readonly="1"/>
@@ -277,7 +276,7 @@
                         <field name="legacy_supervisory_engineer" readonly="1"/>
                         <field name="legacy_supervision_phone" readonly="1"/>
                     </group>
-                    <group string="旧系统财税与地址" col="4">
+                    <group string="财税与地址核对" col="4">
                         <field name="legacy_tax_organization_name" readonly="1"/>
                         <field name="legacy_tax_organization_id" readonly="1"/>
                         <field name="legacy_tax_type" readonly="1"/>
@@ -286,9 +285,8 @@
                         <field name="legacy_account_bank" readonly="1"/>
                         <field name="legacy_region_name" readonly="1"/>
                         <field name="legacy_region_id" readonly="1"/>
-                        <field name="detail_address" readonly="1"/>
                     </group>
-                    <group string="旧系统录入痕迹" col="4">
+                    <group string="历史录入痕迹" col="4">
                         <field name="legacy_source_created_by" readonly="1"/>
                         <field name="legacy_source_created_by_id" readonly="1"/>
                         <field name="legacy_source_created_at" readonly="1"/>
@@ -298,7 +296,7 @@
                         <field name="legacy_deleted_flag" readonly="1"/>
                         <field name="legacy_sort" readonly="1"/>
                     </group>
-                    <group string="旧系统补充资料" col="2">
+                    <group string="补充资料核对" col="2">
                         <field name="project_profile" readonly="1"/>
                         <field name="project_overview" readonly="1"/>
                         <field name="legacy_note" readonly="1"/>
