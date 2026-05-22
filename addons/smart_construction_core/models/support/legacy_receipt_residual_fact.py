@@ -15,6 +15,8 @@ class ScLegacyReceiptResidualFact(models.Model):
     document_state = fields.Char(index=True)
     deleted_flag = fields.Char(index=True)
     receipt_type = fields.Char(index=True)
+    legacy_receipt_type = fields.Char(index=True)
+    legacy_receipt_subtype = fields.Char(index=True)
     income_category_legacy_id = fields.Char(index=True)
     income_category = fields.Char(index=True)
     project_legacy_id = fields.Char(index=True)

@@ -38,6 +38,8 @@ from . import invoice_registration
 from . import tax_deduction_registration
 from . import financing_loan
 from . import general_contract
+from . import income_contract_ledger
+from . import expense_contract_ledger
 from . import construction_diary
 from . import payment_request
 from . import payment_request_line

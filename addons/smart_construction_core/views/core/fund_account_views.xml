@@ -20,6 +20,7 @@
                 <filter string="按经营策略" name="group_operation_strategy" context="{'group_by': 'operation_strategy'}"/>
                 <filter string="按账户类型" name="group_account_type" context="{'group_by': 'account_type'}"/>
                 <filter string="按开户行" name="group_bank" context="{'group_by': 'bank_name'}"/>
+                <filter string="按录入日期" name="group_create_date" context="{'group_by': 'create_date'}"/>
             </search>
         </field>
     </record>

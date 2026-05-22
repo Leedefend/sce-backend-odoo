@@ -101,6 +101,8 @@
         'views/projection/operating_metrics_views.xml',
         'views/projection/project_dashboard_kanban.xml',
         'views/core/contract_views.xml',
+        'views/core/income_contract_ledger_views.xml',
+        'views/core/expense_contract_ledger_views.xml',
         'views/core/contract_line_search.xml',
         'views/core/purchase_extend_views.xml',
         'views/support/account_extend_views.xml',

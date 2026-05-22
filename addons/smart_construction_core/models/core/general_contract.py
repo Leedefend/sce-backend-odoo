@@ -63,6 +63,21 @@ class ScGeneralContract(models.Model):
     submitted_time = fields.Datetime(string="提交时间", index=True)
     contract_type = fields.Char(string="合同类型", index=True)
     contract_attribute = fields.Char(string="合同属性", index=True)
+    contract_direction = fields.Selection(
+        [
+            ("income", "收入合同"),
+            ("expense", "支出合同"),
+            ("neutral", "一般合同"),
+            ("unknown", "未判定"),
+        ],
+        string="合同方向",
+        default="neutral",
+        required=True,
+        index=True,
+        tracking=True,
+    )
+    contract_direction_source = fields.Char(string="合同方向来源", readonly=True, copy=False)
+    contract_direction_reason = fields.Char(string="合同方向依据", readonly=True, copy=False)
     template_name = fields.Char(string="合同模板", index=True)
     union_mode = fields.Selection([("none", "非联合体"), ("lead", "联合体牵头"), ("member", "联合体成员")], string="联合体模式", default="none", index=True)
     pricing_mode = fields.Selection([("lump_sum", "总价"), ("unit_price", "单价"), ("mixed", "综合单价"), ("other", "其他")], string="计价模式", index=True)
@@ -128,20 +143,115 @@ class ScGeneralContract(models.Model):
         ("amount_total_nonnegative", "CHECK(amount_total >= 0)", "Contract amount must be non-negative."),
     ]
 
+    def init(self):
+        self.env.cr.execute(
+            """
+            UPDATE sc_general_contract
+               SET contract_direction = CASE
+                       WHEN evidence LIKE '%%收入%%'
+                         OR evidence LIKE '%%销售%%'
+                         OR evidence LIKE '%%收款%%'
+                         OR evidence LIKE '%%回款%%'
+                         OR evidence LIKE '%%应收%%'
+                         THEN 'income'
+                       WHEN evidence LIKE '%%供应商%%'
+                         OR evidence LIKE '%%采购%%'
+                         OR evidence LIKE '%%支出%%'
+                         OR evidence LIKE '%%付款%%'
+                         OR evidence LIKE '%%应付%%'
+                         OR evidence LIKE '%%分包%%'
+                         OR evidence LIKE '%%劳务%%'
+                         OR evidence LIKE '%%材料%%'
+                         OR evidence LIKE '%%设备%%'
+                         OR evidence LIKE '%%租赁%%'
+                         OR evidence LIKE '%%咨询%%'
+                         OR evidence LIKE '%%费用%%'
+                         THEN 'expense'
+                       WHEN trim(evidence) = '' THEN 'unknown'
+                       ELSE 'neutral'
+                   END,
+                   contract_direction_source = 'contract_evidence',
+                   contract_direction_reason = CASE
+                       WHEN trim(evidence) = '' THEN '缺少合同方向证据'
+                       ELSE '历史合同类型/属性/名称=' || evidence
+                   END
+              FROM (
+                    SELECT id, concat_ws(' ', contract_type, contract_attribute, contract_name) AS evidence
+                      FROM sc_general_contract
+                     WHERE source_origin = 'legacy'
+                       AND COALESCE(contract_direction, 'neutral') IN ('neutral', 'unknown')
+                   ) classified
+             WHERE sc_general_contract.id = classified.id
+            """
+        )
+
     @api.model_create_multi
     def create(self, vals_list):
         seq = self.env["ir.sequence"]
         for vals in vals_list:
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.general.contract") or _("一般合同（公司）")
+            vals.update(self._prepare_contract_direction_vals(vals))
         return super().create(vals_list)
 
     def write(self, vals):
+        if self._needs_contract_direction_refresh(vals):
+            vals = dict(vals)
+            vals.update(self._prepare_contract_direction_vals(vals))
         if any(rec.source_origin == "legacy" and rec.state == "legacy_confirmed" for rec in self):
-            allowed = {"partner_id", "note", "active", "write_uid", "write_date"}
+            allowed = {
+                "partner_id",
+                "note",
+                "active",
+                "write_uid",
+                "write_date",
+                "contract_direction",
+                "contract_direction_source",
+                "contract_direction_reason",
+            }
             if set(vals) - allowed:
                 raise UserError(_("历史迁移综合合同已确认，只允许补充往来单位和备注。"))
         return super().write(vals)
+
+    @api.model
+    def _needs_contract_direction_refresh(self, vals):
+        evidence_fields = {"contract_type", "contract_attribute", "contract_name"}
+        return bool(evidence_fields & set(vals)) and "contract_direction" not in vals
+
+    @api.model
+    def _prepare_contract_direction_vals(self, vals):
+        if vals.get("contract_direction"):
+            return {
+                "contract_direction_source": vals.get("contract_direction_source") or "manual",
+                "contract_direction_reason": vals.get("contract_direction_reason") or _("人工指定"),
+            }
+        direction, reason = self._classify_contract_direction(
+            vals.get("contract_type"),
+            vals.get("contract_attribute"),
+            vals.get("contract_name"),
+        )
+        return {
+            "contract_direction": direction,
+            "contract_direction_source": "contract_evidence",
+            "contract_direction_reason": reason,
+        }
+
+    @api.model
+    def _classify_contract_direction(self, contract_type=None, contract_attribute=None, contract_name=None):
+        evidence = " ".join(
+            str(item or "").strip()
+            for item in (contract_type, contract_attribute, contract_name)
+            if str(item or "").strip()
+        )
+        if not evidence:
+            return "unknown", _("缺少合同方向证据")
+        income_keywords = ("收入", "销售", "收款", "回款", "应收", "经营收入", "公司收入")
+        expense_keywords = ("供应商", "采购", "支出", "付款", "应付", "分包", "劳务", "材料", "设备", "租赁", "咨询", "费用")
+        if any(keyword in evidence for keyword in income_keywords):
+            return "income", _("命中收入合同关键字：%s") % evidence
+        if any(keyword in evidence for keyword in expense_keywords):
+            return "expense", _("命中支出合同关键字：%s") % evidence
+        return "neutral", _("未命中收支方向关键字：%s") % evidence
 
     @api.depends("install_debug_payment")
     def _compute_business_aliases(self):

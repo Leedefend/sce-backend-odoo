@@ -98,15 +98,15 @@ APP_DEFS: List[Dict[str, Any]] = [
             },
             {
                 "key": "income_contracts",
-                "label": "收入合同",
+                "label": "收入合同台账",
                 "kind": "work",
-                "open": {"odoo_action_xmlid": "smart_construction_core.action_construction_contract_income"},
+                "open": {"odoo_action_xmlid": "smart_construction_core.action_sc_income_contract_ledger"},
             },
             {
                 "key": "expense_contracts",
-                "label": "支出合同",
+                "label": "支出合同台账",
                 "kind": "work",
-                "open": {"odoo_action_xmlid": "smart_construction_core.action_construction_contract_expense"},
+                "open": {"odoo_action_xmlid": "smart_construction_core.action_sc_expense_contract_ledger"},
             },
             {
                 "key": "general_contracts",

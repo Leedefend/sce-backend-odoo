@@ -57,6 +57,13 @@ class ScTaxDeductionRegistration(models.Model):
     invoice_amount_untaxed = fields.Monetary(string="发票不含税金额", currency_field="currency_id")
     invoice_tax_amount = fields.Monetary(string="发票税额", currency_field="currency_id")
     invoice_amount_total = fields.Monetary(string="发票价税合计", currency_field="currency_id")
+    tax_rate_text = fields.Char(
+        string="税率",
+        compute="_compute_tax_rate_text",
+        store=True,
+        readonly=True,
+        index=True,
+    )
     deduction_amount = fields.Monetary(string="抵扣金额", currency_field="currency_id")
     deduction_tax_amount = fields.Monetary(string="抵扣税额", currency_field="currency_id")
     deduction_surcharge_amount = fields.Monetary(string="抵扣附加税", currency_field="currency_id")
@@ -88,6 +95,17 @@ class ScTaxDeductionRegistration(models.Model):
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.tax.deduction.registration") or _("Tax Deduction")
         return super().create(vals_list)
+
+    @api.depends("invoice_amount_untaxed", "invoice_tax_amount")
+    def _compute_tax_rate_text(self):
+        for record in self:
+            untaxed = record.invoice_amount_untaxed or 0.0
+            tax = record.invoice_tax_amount or 0.0
+            if not untaxed or not tax:
+                record.tax_rate_text = False
+                continue
+            rate = tax / untaxed * 100
+            record.tax_rate_text = f"{rate:.2f}".rstrip("0").rstrip(".") + "%"
 
     def write(self, vals):
         if any(rec.source_origin == "legacy" and rec.state == "legacy_confirmed" for rec in self):

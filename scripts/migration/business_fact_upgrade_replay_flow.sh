@@ -153,6 +153,8 @@ run_writes() {
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_supplier_contract_pricing_projection_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_purchase_contract_replay_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_construction_contract_income_count_alignment_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_new_construction_contract_xlsx_income_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_income_fact_project_stub_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/visible_surface_project_contract_enrichment_write.py"
   MIGRATION_WRITE_MODE=write run_odoo_script "$ROOT_DIR/scripts/migration/project_migration_field_continuity_backfill_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_construction_contract_visible_business_fact_write.py"

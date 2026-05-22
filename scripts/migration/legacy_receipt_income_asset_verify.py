@@ -13,7 +13,7 @@ from typing import Any
 
 
 REQUIRED_FIELDS = {"legacy_source_table", "legacy_record_id", "source_family", "direction", "project_id", "legacy_project_id", "source_amount", "import_batch"}
-ALLOWED_FIELDS = {"legacy_source_table", "legacy_record_id", "legacy_pid", "source_family", "direction", "document_no", "document_date", "legacy_state", "income_category", "project_id", "legacy_project_id", "legacy_project_name", "partner_id", "legacy_partner_id", "legacy_partner_name", "source_amount", "note", "import_batch"}
+ALLOWED_FIELDS = {"legacy_source_table", "legacy_record_id", "legacy_pid", "source_family", "direction", "document_no", "document_date", "legacy_state", "receipt_type", "receipt_subtype", "income_category", "project_id", "legacy_project_id", "legacy_project_name", "partner_id", "legacy_partner_id", "legacy_partner_name", "source_amount", "note", "import_batch"}
 FORBIDDEN_FIELDS = {"payment_request_id", "account_move_id", "settlement_id", "validation_status", "review_ids", "res_id"}
 ALLOWED_FAMILIES = {"customer_receipt", "receipt_confirmation", "company_financial_income"}
 

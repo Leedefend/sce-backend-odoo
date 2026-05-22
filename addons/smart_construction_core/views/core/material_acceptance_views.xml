@@ -440,6 +440,8 @@
                 <filter string="联营项目" name="operation_joint" domain="[('operation_strategy', '=', 'joint')]"/>
                 <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
                 <filter string="按经营策略" name="group_operation_strategy" context="{'group_by': 'operation_strategy'}"/>
+                <filter string="按入库日期" name="group_inbound_date" context="{'group_by': 'inbound_date'}"/>
+                <filter string="按供应商" name="group_supplier" context="{'group_by': 'supplier_id'}"/>
                 <filter string="按仓库" name="group_warehouse" context="{'group_by': 'warehouse_id'}"/>
                 <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
             </search>

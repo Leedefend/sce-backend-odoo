@@ -36,7 +36,7 @@ OUTPUT_JSON = ARTIFACT_ROOT / "fresh_db_receipt_core_write_result_v1.json"
 ROLLBACK_CSV = ARTIFACT_ROOT / "fresh_db_receipt_core_rollback_targets_v1.csv"
 PRE_SNAPSHOT_CSV = ARTIFACT_ROOT / "fresh_db_receipt_core_pre_write_snapshot_v1.csv"
 POST_SNAPSHOT_CSV = ARTIFACT_ROOT / "fresh_db_receipt_core_post_write_snapshot_v1.csv"
-EXPECTED_ROWS = int(os.getenv("FRESH_DB_RECEIPT_CORE_EXPECTED_ROWS", "5355"))
+EXPECTED_ROWS = int(os.getenv("FRESH_DB_RECEIPT_CORE_EXPECTED_ROWS", "3652"))
 MIGRATION_MARKER = "[migration:receipt_core]"
 SAFE_FIELDS = {
     "type",

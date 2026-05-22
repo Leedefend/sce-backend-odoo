@@ -29,7 +29,10 @@ class ConstructionContract(models.Model):
              USING construction_contract c
              WHERE e.contract_id = c.id
                AND c.id = ANY(%s)
-               AND c.type != 'in'
+               AND (
+                    c.type != 'in'
+                    OR COALESCE(c.subject, '') ILIKE '发票关联支出合同%%'
+               )
             """,
             (ids,),
         )
@@ -57,6 +60,7 @@ class ConstructionContract(models.Model):
               LEFT JOIN construction_contract_expense e ON e.contract_id = c.id
              WHERE c.id = ANY(%s)
                AND c.type = 'in'
+               AND COALESCE(c.subject, '') NOT ILIKE '发票关联支出合同%%'
                AND e.id IS NULL
             """,
             (ids,),
@@ -209,13 +213,22 @@ class ConstructionContractExpense(models.Model):
     def init(self):
         self.env.cr.execute(
             """
+            DELETE FROM construction_contract_expense e
+             USING construction_contract c
+             WHERE e.contract_id = c.id
+               AND COALESCE(c.subject, '') ILIKE '发票关联支出合同%%'
+            """
+        )
+        self.env.cr.execute(
+            """
             INSERT INTO construction_contract_expense
                 (contract_id, create_uid, create_date, write_uid, write_date)
             SELECT c.id, COALESCE(c.create_uid, 1), COALESCE(c.create_date, NOW()),
                    COALESCE(c.write_uid, c.create_uid, 1), COALESCE(c.write_date, c.create_date, NOW())
               FROM construction_contract c
-              LEFT JOIN construction_contract_expense e ON e.contract_id = c.id
+             LEFT JOIN construction_contract_expense e ON e.contract_id = c.id
              WHERE c.type = 'in'
+               AND COALESCE(c.subject, '') NOT ILIKE '发票关联支出合同%%'
                AND e.id IS NULL
             """
         )

@@ -26,6 +26,8 @@ WITH src AS (
     CONVERT(nvarchar(max), WLDWID) AS partner_id, CONVERT(nvarchar(max), WLDWMC) AS partner_name,
     CONVERT(nvarchar(max), f_JE) AS amount, CONVERT(nvarchar(max), f_RQ, 120) AS document_date,
     CONVERT(nvarchar(max), DJZT) AS state, CONVERT(nvarchar(max), DEL) AS deleted,
+    CONVERT(nvarchar(max), type) AS receipt_type,
+    CONVERT(nvarchar(max), BT) AS receipt_subtype,
     CONVERT(nvarchar(max), f_SRLBName) AS income_category, CONVERT(nvarchar(max), f_BZ) AS note,
     CONVERT(nvarchar(max), PID) AS pid, 'customer_receipt' AS family, 'inflow' AS direction
   FROM dbo.C_JFHKLR
@@ -33,7 +35,7 @@ WITH src AS (
   SELECT 'ZJGL_SZQR_DKQRB', CONVERT(nvarchar(max), Id), CONVERT(nvarchar(max), DJBH),
     CONVERT(nvarchar(max), XMID), CONVERT(nvarchar(max), XMMC), CONVERT(nvarchar(max), NULL),
     CONVERT(nvarchar(max), SGD), CONVERT(nvarchar(max), COALESCE(NULLIF(KPSKQK_BQS, 0), NULLIF(BCKYZJYE_BQS, 0), NULLIF(SGDGCK_2, 0), NULLIF(YFSGDGCK_2, 0), NULLIF(SJZJ, 0))),
-    CONVERT(nvarchar(max), SJ, 120), CONVERT(nvarchar(max), DJZT), CONVERT(nvarchar(max), DEL),
+    CONVERT(nvarchar(max), SJ, 120), CONVERT(nvarchar(max), DJZT), CONVERT(nvarchar(max), DEL), CONVERT(nvarchar(max), NULL), CONVERT(nvarchar(max), NULL),
     CONVERT(nvarchar(max), '到款确认'), CONVERT(nvarchar(max), COALESCE(NULLIF(KPSKQK_BZ, ''), NULLIF(BCKYZJYE_BZ, ''), NULLIF(SQLCYE_BZ, ''))),
     CONVERT(nvarchar(max), pid), 'receipt_confirmation', 'inflow'
   FROM dbo.ZJGL_SZQR_DKQRB
@@ -41,7 +43,7 @@ WITH src AS (
   SELECT 'C_CWSFK_GSCWSR', CONVERT(nvarchar(max), Id), CONVERT(nvarchar(max), DJBH),
     CONVERT(nvarchar(max), XMID), CONVERT(nvarchar(max), XMMC), CONVERT(nvarchar(max), FKDWID),
     CONVERT(nvarchar(max), FKDW), CONVERT(nvarchar(max), JZJE), CONVERT(nvarchar(max), SKSJ, 120),
-    CONVERT(nvarchar(max), DJZT), CONVERT(nvarchar(max), DEL), CONVERT(nvarchar(max), COALESCE(NULLIF(D_SCBSJS_CWSRLB, ''), NULLIF(SKLB, ''))),
+    CONVERT(nvarchar(max), DJZT), CONVERT(nvarchar(max), DEL), CONVERT(nvarchar(max), NULL), CONVERT(nvarchar(max), NULL), CONVERT(nvarchar(max), COALESCE(NULLIF(D_SCBSJS_CWSRLB, ''), NULLIF(SKLB, ''))),
     CONVERT(nvarchar(max), BZ), CONVERT(nvarchar(max), pid), 'company_financial_income', 'inflow'
   FROM dbo.C_CWSFK_GSCWSR
 )
@@ -57,6 +59,8 @@ SELECT CONCAT(
   ISNULL(REPLACE(REPLACE(REPLACE(document_date, @sep, ' '), CHAR(13), ' '), CHAR(10), ' '), ''), @sep,
   ISNULL(REPLACE(REPLACE(REPLACE(state, @sep, ' '), CHAR(13), ' '), CHAR(10), ' '), ''), @sep,
   ISNULL(REPLACE(REPLACE(REPLACE(deleted, @sep, ' '), CHAR(13), ' '), CHAR(10), ' '), ''), @sep,
+  ISNULL(REPLACE(REPLACE(REPLACE(receipt_type, @sep, ' '), CHAR(13), ' '), CHAR(10), ' '), ''), @sep,
+  ISNULL(REPLACE(REPLACE(REPLACE(receipt_subtype, @sep, ' '), CHAR(13), ' '), CHAR(10), ' '), ''), @sep,
   ISNULL(REPLACE(REPLACE(REPLACE(income_category, @sep, ' '), CHAR(13), ' '), CHAR(10), ' '), ''), @sep,
   ISNULL(REPLACE(REPLACE(REPLACE(note, @sep, ' '), CHAR(13), ' '), CHAR(10), ' '), ''), @sep,
   ISNULL(REPLACE(REPLACE(REPLACE(pid, @sep, ' '), CHAR(13), ' '), CHAR(10), ' '), ''), @sep,
@@ -70,7 +74,7 @@ ORDER BY source_table, legacy_id;
 SQL_COLUMNS = [
     "source_table", "legacy_id", "document_no", "project_id", "project_name",
     "partner_id", "partner_name", "amount", "document_date", "state", "deleted",
-    "income_category", "note", "pid", "family", "direction",
+    "receipt_type", "receipt_subtype", "income_category", "note", "pid", "family", "direction",
 ]
 
 

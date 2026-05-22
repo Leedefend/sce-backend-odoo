@@ -15,6 +15,8 @@ class ScLegacyReceiptIncomeFact(models.Model):
     document_no = fields.Char(string="单据编号", index=True)
     document_date = fields.Date(string="单据日期", index=True)
     legacy_state = fields.Char(string="旧库状态", index=True)
+    receipt_type = fields.Char(string="收款类型", index=True)
+    receipt_subtype = fields.Char(string="收款细分", index=True)
     income_category = fields.Char(string="收入类别", index=True)
     project_id = fields.Many2one("project.project", string="项目", required=True, index=True, ondelete="cascade")
     legacy_project_id = fields.Char(string="旧库项目", index=True)

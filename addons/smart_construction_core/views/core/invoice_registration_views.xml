@@ -28,6 +28,9 @@
                     <filter string="按单位" name="group_partner" context="{'group_by': 'partner_id'}"/>
                     <filter string="按方向" name="group_direction" context="{'group_by': 'direction'}"/>
                     <filter string="按类型" name="group_source_kind" context="{'group_by': 'source_kind'}"/>
+                    <filter string="按发票类型" name="group_invoice_type" context="{'group_by': 'invoice_type'}"/>
+                    <filter string="按税率" name="group_tax_rate" context="{'group_by': 'tax_rate'}"/>
+                    <filter string="按成本类别" name="group_cost_category" context="{'group_by': 'cost_category_name'}"/>
                     <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
                     <filter string="按发票日期" name="group_invoice_date" context="{'group_by': 'invoice_date'}"/>
                 </search>

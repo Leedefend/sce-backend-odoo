@@ -63,6 +63,8 @@ def main() -> int:
         "document_no",
         "document_date",
         "legacy_state",
+        "receipt_type",
+        "receipt_subtype",
         "income_category",
         "project_ref",
         "legacy_project_id",

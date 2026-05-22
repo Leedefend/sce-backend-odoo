@@ -115,15 +115,15 @@
               sequence="3"
               groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
     <menuitem id="menu_sc_contract_income"
-              name="收入合同"
+              name="收入合同台账"
               parent="menu_sc_contract_center"
-              action="action_construction_contract_income"
+              action="action_sc_income_contract_ledger"
               sequence="5"
               groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
     <menuitem id="menu_sc_contract_expense"
-              name="支出合同"
+              name="支出合同台账"
               parent="menu_sc_contract_center"
-              action="action_construction_contract_expense"
+              action="action_sc_expense_contract_ledger"
               sequence="10"
               groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
 

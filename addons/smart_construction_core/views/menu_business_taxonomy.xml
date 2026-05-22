@@ -918,7 +918,7 @@
     <menuitem id="menu_sc_income_contract_group"
               name="收入合同"
               parent="smart_construction_core.menu_sc_contract_center"
-              action="smart_construction_core.action_construction_contract_income"
+              action="smart_construction_core.action_sc_income_contract_ledger"
               sequence="10"/>
     <record id="menu_sc_construction_contract" model="ir.ui.menu">
         <field name="parent_id" ref="smart_construction_core.menu_sc_income_contract_group"/>
@@ -928,8 +928,15 @@
     <record id="menu_sc_contract_income" model="ir.ui.menu">
         <field name="name">收入合同台账</field>
         <field name="parent_id" ref="smart_construction_core.menu_sc_income_contract_group"/>
+        <field name="action" ref="smart_construction_core.action_sc_income_contract_ledger"/>
         <field name="sequence">10</field>
     </record>
+    <menuitem id="menu_sc_project_income_contract"
+              name="项目收入合同"
+              parent="smart_construction_core.menu_sc_income_contract_group"
+              action="smart_construction_core.action_construction_contract_income"
+              sequence="15"
+              groups="smart_construction_core.group_sc_cap_contract_read"/>
     <menuitem id="menu_sc_income_contract_variation"
               name="收入合同签证"
               parent="smart_construction_core.menu_sc_income_contract_group"
@@ -957,7 +964,7 @@
     <menuitem id="menu_sc_expense_contract_group"
               name="支出合同"
               parent="smart_construction_core.menu_sc_contract_center"
-              action="smart_construction_core.action_construction_contract_expense"
+              action="smart_construction_core.action_sc_expense_contract_ledger"
               sequence="20"/>
     <record id="menu_sc_general_contract" model="ir.ui.menu">
         <field name="parent_id" ref="smart_construction_core.menu_sc_expense_contract_group"/>
@@ -966,6 +973,7 @@
     <record id="menu_sc_contract_expense" model="ir.ui.menu">
         <field name="name">支出合同台账</field>
         <field name="parent_id" ref="smart_construction_core.menu_sc_expense_contract_group"/>
+        <field name="action" ref="smart_construction_core.action_sc_expense_contract_ledger"/>
         <field name="sequence">10</field>
     </record>
     <menuitem id="menu_sc_expense_contract_variation"

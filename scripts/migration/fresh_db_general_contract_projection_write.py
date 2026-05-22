@@ -52,6 +52,7 @@ env.cr.execute(  # noqa: F821
       handler_id,
       contact_name, contact_phone, bank_name, bank_account, document_no,
       contract_no, contract_name, submitted_time, contract_type, contract_attribute,
+      contract_direction, contract_direction_source, contract_direction_reason,
       sign_status, signing_place, contract_date, expected_sign_date, completion_date,
       amount_total, prepayment_amount, install_debug_payment,
       warranty_deposit, tax_rate, currency_id, payment_terms,
@@ -79,6 +80,34 @@ env.cr.execute(  # noqa: F821
       f.submitted_time,
       NULLIF(f.contract_type, ''),
       NULLIF(f.contract_attribute, ''),
+      CASE
+        WHEN concat_ws(' ', f.contract_type, f.contract_attribute, f.contract_name) LIKE '%%收入%%'
+          OR concat_ws(' ', f.contract_type, f.contract_attribute, f.contract_name) LIKE '%%销售%%'
+          OR concat_ws(' ', f.contract_type, f.contract_attribute, f.contract_name) LIKE '%%收款%%'
+          OR concat_ws(' ', f.contract_type, f.contract_attribute, f.contract_name) LIKE '%%回款%%'
+          OR concat_ws(' ', f.contract_type, f.contract_attribute, f.contract_name) LIKE '%%应收%%'
+          THEN 'income'
+        WHEN concat_ws(' ', f.contract_type, f.contract_attribute, f.contract_name) LIKE '%%供应商%%'
+          OR concat_ws(' ', f.contract_type, f.contract_attribute, f.contract_name) LIKE '%%采购%%'
+          OR concat_ws(' ', f.contract_type, f.contract_attribute, f.contract_name) LIKE '%%支出%%'
+          OR concat_ws(' ', f.contract_type, f.contract_attribute, f.contract_name) LIKE '%%付款%%'
+          OR concat_ws(' ', f.contract_type, f.contract_attribute, f.contract_name) LIKE '%%应付%%'
+          OR concat_ws(' ', f.contract_type, f.contract_attribute, f.contract_name) LIKE '%%分包%%'
+          OR concat_ws(' ', f.contract_type, f.contract_attribute, f.contract_name) LIKE '%%劳务%%'
+          OR concat_ws(' ', f.contract_type, f.contract_attribute, f.contract_name) LIKE '%%材料%%'
+          OR concat_ws(' ', f.contract_type, f.contract_attribute, f.contract_name) LIKE '%%设备%%'
+          OR concat_ws(' ', f.contract_type, f.contract_attribute, f.contract_name) LIKE '%%租赁%%'
+          OR concat_ws(' ', f.contract_type, f.contract_attribute, f.contract_name) LIKE '%%咨询%%'
+          OR concat_ws(' ', f.contract_type, f.contract_attribute, f.contract_name) LIKE '%%费用%%'
+          THEN 'expense'
+        WHEN trim(concat_ws(' ', f.contract_type, f.contract_attribute, f.contract_name)) = '' THEN 'unknown'
+        ELSE 'neutral'
+      END,
+      'contract_evidence',
+      CASE
+        WHEN trim(concat_ws(' ', f.contract_type, f.contract_attribute, f.contract_name)) = '' THEN '缺少合同方向证据'
+        ELSE '历史合同类型/属性/名称=' || concat_ws(' ', f.contract_type, f.contract_attribute, f.contract_name)
+      END,
       NULLIF(f.sign_status, ''),
       NULLIF(f.signing_place, ''),
       COALESCE(f.expected_sign_date::date, f.submitted_time::date, f.created_time::date, CURRENT_DATE),
@@ -139,6 +168,9 @@ env.cr.execute(  # noqa: F821
       submitted_time = EXCLUDED.submitted_time,
       contract_type = EXCLUDED.contract_type,
       contract_attribute = EXCLUDED.contract_attribute,
+      contract_direction = EXCLUDED.contract_direction,
+      contract_direction_source = EXCLUDED.contract_direction_source,
+      contract_direction_reason = EXCLUDED.contract_direction_reason,
       sign_status = EXCLUDED.sign_status,
       signing_place = EXCLUDED.signing_place,
       contract_date = EXCLUDED.contract_date,
@@ -197,6 +229,18 @@ payload = {
     ),
     "legacy_amount_sum": float(
         scalar("SELECT COALESCE(SUM(amount_total), 0) FROM sc_general_contract WHERE source_origin = 'legacy'") or 0
+    ),
+    "legacy_income_contracts": int(
+        scalar("SELECT COUNT(*) FROM sc_general_contract WHERE source_origin = 'legacy' AND contract_direction = 'income'")
+        or 0
+    ),
+    "legacy_expense_contracts": int(
+        scalar("SELECT COUNT(*) FROM sc_general_contract WHERE source_origin = 'legacy' AND contract_direction = 'expense'")
+        or 0
+    ),
+    "legacy_unknown_direction": int(
+        scalar("SELECT COUNT(*) FROM sc_general_contract WHERE source_origin = 'legacy' AND contract_direction = 'unknown'")
+        or 0
     ),
 }
 write_json(output_json, payload)
