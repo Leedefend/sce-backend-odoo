@@ -15,6 +15,7 @@ class SearchFavoriteSetHandler(BaseIntentHandler):
     DESCRIPTION = "保存当前搜索为用户收藏筛选"
     VERSION = "1.0.0"
     REQUIRED_GROUPS = ["base.group_user"]
+    ACL_MODE = "explicit_check"
     SOURCE_KIND = "odoo_filter_write_proxy"
     SOURCE_AUTHORITIES = ("ir.filters", "app.search.config", "ir.model.access")
     NO_BUSINESS_FACT_AUTHORITY = True

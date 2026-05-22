@@ -516,7 +516,25 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
     form_layout = _dict(_dict(ui.get("views")).get("form"))
     layout_rows = form_layout.get("layout") if isinstance(form_layout.get("layout"), list) else []
     form_subviews = _dict(form_layout.get("subviews"))
-    if layout_type == "form" and layout_rows:
+    form_structure_contract = _dict(source.get("formStructureContract") or source.get("form_structure_contract"))
+    if layout_type == "form" and form_structure_contract:
+        structure_rows = _form_structure_contract_layout_rows(
+            form_structure_contract,
+            fields_by_name,
+            native_layout_rows=[row for row in layout_rows if isinstance(row, dict)],
+            page_title=contract["pageInfo"]["pageName"],
+        )
+        container_tree = _normalize_native_layout_nodes(
+            structure_rows,
+            fields_by_name,
+            layout_type=layout_type,
+            form_subviews=form_subviews,
+            component_keys=component_keys,
+            container_status=contract["statusContract"]["containerStatus"],
+            widget_status=contract["statusContract"]["widgetStatus"],
+            context=source_context_context,
+        )
+    elif layout_type == "form" and layout_rows:
         container_tree = _normalize_native_layout_nodes(
             [row for row in layout_rows if isinstance(row, dict)],
             fields_by_name,
@@ -610,6 +628,8 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
     _standardize_form_container_semantics(container_tree, model=model, view_type=view_type, source=source)
     contract["layoutContract"]["containerTree"] = container_tree
     contract["layoutContract"]["componentRegistry"] = _component_registry(component_keys or {"sc.display.text"})
+    if form_structure_contract:
+        contract["formStructureContract"] = deepcopy(form_structure_contract)
     contract["dataContract"]["dataMeta"]["fieldCount"] = len(fields)
     if source_context:
         contract["dataContract"]["dataMeta"]["sourceContext"] = deepcopy(source_context)
@@ -646,6 +666,8 @@ def _assemble_ui_contract(source: dict[str, Any], *, client_type: str, request_i
         for key in (
             "business_operation_profile",
             "field_groups",
+            "form_structure_contract",
+            "formStructureContract",
             "list_profile",
             "visible_fields",
         )
@@ -669,7 +691,7 @@ def _ui_search_contract(source: dict[str, Any], ui: dict[str, Any]) -> dict[str,
         value = search.get(key)
         if _text(value):
             out[key] = deepcopy(value)
-    for key in ("filters", "group_by", "fields"):
+    for key in ("filters", "saved_filters", "group_by", "fields"):
         value = search.get(key)
         if isinstance(value, list):
             out[key] = deepcopy(value)
@@ -1288,6 +1310,193 @@ def _standardize_business_form_default_tabs(
     return
 
 
+def _form_structure_contract_layout_rows(
+    structure_contract: dict[str, Any],
+    fields_by_name: dict[str, dict[str, Any]],
+    *,
+    native_layout_rows: list[dict[str, Any]],
+    page_title: str,
+) -> list[dict[str, Any]]:
+    if not structure_contract:
+        return native_layout_rows
+    available = {name for name in fields_by_name if _text(name)}
+    native_field_nodes: dict[str, dict[str, Any]] = {}
+
+    def collect_native_field_nodes(nodes: Any) -> None:
+        for node in _list(nodes):
+            if not isinstance(node, dict):
+                continue
+            node_type = _text(node.get("type") or node.get("kind")).lower()
+            node_name = _text(node.get("name") or node.get("field"))
+            if node_type == "field" and node_name and node_name not in native_field_nodes:
+                native_field_nodes[node_name] = deepcopy(node)
+            for key in ("children", "pages", "tabs", "nodes", "items", "groups", "fields"):
+                child_rows = node.get(key)
+                if isinstance(child_rows, list) and child_rows:
+                    collect_native_field_nodes(child_rows)
+
+    def native_field_hidden(node: dict[str, Any]) -> bool:
+        if node.get("invisible") is True:
+            return True
+        modifiers = _dict(node.get("modifiers"))
+        if modifiers.get("invisible") is True:
+            return True
+        attrs = _dict(node.get("attrs") or node.get("attributes"))
+        if attrs.get("invisible") is True:
+            return True
+        return False
+
+    collect_native_field_nodes(native_layout_rows)
+
+    field_roles = _dict(structure_contract.get("fieldRoles") or structure_contract.get("field_roles"))
+
+    def field_nodes(names: list[Any], *, readonly: bool = False) -> list[dict[str, Any]]:
+        rows: list[dict[str, Any]] = []
+        seen: set[str] = set()
+        for item in names:
+            name = _text(item)
+            if not name or name in seen or name not in available:
+                continue
+            native_node = native_field_nodes.get(name)
+            if native_node and native_field_hidden(native_node):
+                continue
+            seen.add(name)
+            row: dict[str, Any] = deepcopy(native_node) if native_node else {"type": "field", "name": name}
+            row["type"] = "field"
+            row["name"] = name
+            if readonly:
+                row["readonly"] = True
+                modifiers = _dict(row.get("modifiers"))
+                modifiers["readonly"] = True
+                row["modifiers"] = modifiers
+            role = _dict(field_roles.get(name))
+            if role:
+                row["formStructureRole"] = deepcopy(role)
+            rows.append(row)
+        return rows
+
+    def group_node(group: dict[str, Any], *, readonly: bool = False, slot_name: str = "") -> dict[str, Any]:
+        name = _stable_id(group.get("name") or group.get("title") or "business_group", "group")
+        title = _text(group.get("title") or group.get("label") or group.get("string") or name, name)
+        field_refs = _list(group.get("fieldRefs") or group.get("field_refs") or group.get("fields"))
+        children = field_nodes(field_refs, readonly=readonly)
+        if not children:
+            return {}
+        return {
+            "type": "group",
+            "name": name,
+            "string": title,
+            "label": title,
+            "formStructure": {
+                "slot": slot_name,
+                "group": name,
+                "role": _text(group.get("role") or name, name),
+            },
+            "children": children,
+            "sourceAuthority": {
+                "kind": SOURCE_KIND,
+                "runtime_carrier": "form_structure_contract",
+                "no_business_fact_authority": True,
+            },
+        }
+
+    header_rows = [
+        deepcopy(row)
+        for row in native_layout_rows
+        if _text(row.get("type") or row.get("kind")).lower() == "header"
+    ]
+    children: list[dict[str, Any]] = []
+    slots = [_dict(item) for item in _list(structure_contract.get("slots")) if isinstance(item, dict)]
+    summary = next(
+        (
+            slot
+            for slot in slots
+            if _text(slot.get("slot") or slot.get("name")).lower() in {"overview", "summary", "business_overview"}
+        ),
+        _dict(structure_contract.get("summary")),
+    )
+    summary_group = group_node(summary, readonly=True) if summary else {}
+    if summary_group:
+        children.append(summary_group)
+
+    tabs: list[dict[str, Any]] = []
+    page_slots = [
+        slot
+        for slot in slots
+        if _text(slot.get("slot") or slot.get("name")).lower() not in {"overview", "summary", "business_overview"}
+    ]
+    legacy_pages = [_dict(item) for item in _list(structure_contract.get("pages")) if isinstance(item, dict)]
+    for page_dict in page_slots or legacy_pages:
+        page_name = _stable_id(
+            page_dict.get("slot") or page_dict.get("name") or page_dict.get("title") or "business_page",
+            "page",
+        )
+        page_title = _text(page_dict.get("title") or page_dict.get("label") or page_dict.get("string") or page_name, page_name)
+        page_role = _text(page_dict.get("role") or page_name, page_name)
+        page_children: list[dict[str, Any]] = []
+        for group in _list(page_dict.get("groups")):
+            group_row = group_node(_dict(group), readonly=bool(page_dict.get("readonly")), slot_name=page_name)
+            if group_row:
+                page_children.append(group_row)
+        if not page_children:
+            direct_group = group_node({
+                "name": f"{page_name}.fields",
+                "title": page_title,
+                "fieldRefs": _list(page_dict.get("fieldRefs") or page_dict.get("field_refs") or page_dict.get("fields")),
+                "role": page_role,
+            }, readonly=bool(page_dict.get("readonly")), slot_name=page_name)
+            if direct_group:
+                page_children.append(direct_group)
+        if not page_children:
+            continue
+        tabs.append({
+            "type": "page",
+            "name": page_name,
+            "string": page_title,
+            "label": page_title,
+            "formStructure": {
+                "slot": page_name,
+                "role": page_role,
+            },
+            "children": page_children,
+            "sourceAuthority": {
+                "kind": SOURCE_KIND,
+                "runtime_carrier": "form_structure_contract",
+                "no_business_fact_authority": True,
+            },
+        })
+    if tabs:
+        navigation = _dict(structure_contract.get("navigation"))
+        notebook_title = _text(navigation.get("title") or structure_contract.get("taskTitle") or "业务办理", "业务办理")
+        children.append({
+            "type": "notebook",
+            "name": "form_structure_task_tabs",
+            "string": notebook_title,
+            "label": notebook_title,
+            "tabs": tabs,
+            "sourceAuthority": {
+                "kind": SOURCE_KIND,
+                "runtime_carrier": "form_structure_contract",
+                "no_business_fact_authority": True,
+            },
+        })
+    if not children:
+        return native_layout_rows
+    sheet = {
+        "type": "sheet",
+        "name": "business_orchestrated_sheet",
+        "string": page_title,
+        "label": page_title,
+        "children": children,
+        "sourceAuthority": {
+            "kind": SOURCE_KIND,
+            "runtime_carrier": "form_structure_contract",
+            "no_business_fact_authority": True,
+        },
+    }
+    return header_rows + [sheet]
+
+
 def _badge_count(value: Any) -> int | None:
     if isinstance(value, bool):
         return None
@@ -1431,7 +1640,7 @@ def _ui_contract_data_source(
                 "params": {
                     "op": "default_get",
                     "model": model,
-                    "fields": field_names[:40],
+                    "fields": field_names[:80],
                     **extra_params,
                 },
             }
@@ -1444,7 +1653,7 @@ def _ui_contract_data_source(
                 "op": "read",
                 "model": model,
                 "ids": [record_id],
-                "fields": field_names[:40],
+                "fields": field_names[:80],
                 **extra_params,
             },
         }

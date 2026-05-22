@@ -279,6 +279,7 @@
 <script setup lang="ts">
 import { computed, useSlots } from 'vue';
 import X2ManyRelationRenderer from './X2ManyRelationRenderer.vue';
+import { formatDisplayValue } from '../../utils/display';
 import type {
   FormSectionFieldAction,
   FormSectionFieldActionPayload,
@@ -471,9 +472,7 @@ function inputPlaceholderText(field: FormSectionFieldSchema) {
 }
 
 function readonlyText(value: unknown) {
-  if (value === null || value === undefined || value === false) return '-';
-  if (Array.isArray(value)) return value.join(', ');
-  return String(value);
+  return formatDisplayValue(value, undefined, { emptyText: '-' });
 }
 
 function fieldActionsFor(field: FormSectionFieldSchema) {

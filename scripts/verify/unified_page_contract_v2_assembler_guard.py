@@ -69,7 +69,9 @@ def validate_contract(
         "runtimeContract",
         "meta",
     }
-    if set(payload.keys()) != required:
+    optional = {"formStructureContract"}
+    payload_keys = set(payload.keys())
+    if not required <= payload_keys or payload_keys - required - optional:
         fail(errors, f"contract top-level mismatch: {sorted(payload.keys())}")
     if payload.get("pageInfo", {}).get("contractVersion") != "2.1.0":
         fail(errors, "contractVersion must be 2.1.0")
@@ -87,6 +89,16 @@ def validate_contract(
         fail(errors, f"{expected_source_type}: widget status snapshot below baseline")
     if action_count < int(snapshot.get("minActionCount") or 0):
         fail(errors, f"{expected_source_type}: action snapshot below baseline")
+    expected_form_structure = snapshot.get("requiresFormStructureContract") is True
+    if expected_form_structure:
+        structure = payload.get("formStructureContract") if isinstance(payload.get("formStructureContract"), dict) else {}
+        if structure.get("source") != "ui.contract.v2.form_structure_contract":
+            fail(errors, f"{expected_source_type}: formStructureContract source missing")
+        slots = structure.get("slots") if isinstance(structure.get("slots"), list) else []
+        if not slots:
+            fail(errors, f"{expected_source_type}: formStructureContract slots missing")
+        if not _layout_has_form_structure(payload.get("layoutContract", {}).get("containerTree") or []):
+            fail(errors, f"{expected_source_type}: layout projection missing formStructure metadata")
     for legacy_key in ("scene_contract_v1", "page_orchestration_v1", "ui_contract", "api_onchange"):
         if legacy_key in payload:
             fail(errors, f"legacy key leaked at top-level: {legacy_key}")
@@ -95,6 +107,18 @@ def validate_contract(
             for key in node:
                 if str(key).lower() in {"script", "function", "eval", "jsonlogic", "workflowdsl", "frontendprivate"}:
                     fail(errors, f"forbidden executable/private key {key!r} at {node_path}")
+
+
+def _layout_has_form_structure(rows: list[Any]) -> bool:
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        if isinstance(row.get("formStructure"), dict) or isinstance(row.get("formStructureRole"), dict):
+            return True
+        for key in ("children", "pages", "tabs", "nodes", "items"):
+            if _layout_has_form_structure(row.get(key) if isinstance(row.get(key), list) else []):
+                return True
+    return False
 
 
 def validate_patch(payload: dict[str, Any], snapshot: dict[str, Any], errors: list[str]) -> None:

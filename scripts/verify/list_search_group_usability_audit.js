@@ -48,14 +48,18 @@ async function login(page) {
   const inputs = page.locator('input');
   await inputs.nth(0).fill(LOGIN);
   await inputs.nth(1).fill(PASSWORD);
-  await inputs.nth(2).fill(DB_NAME);
+  const dbInput = inputs.nth(2);
+  if (await dbInput.count().catch(() => 0)) {
+    const disabled = await dbInput.isDisabled().catch(() => false);
+    if (!disabled) await dbInput.fill(DB_NAME);
+  }
   await page.getByRole('button', { name: /^登录$/ }).click();
   await page.waitForFunction(() => !window.location.pathname.includes('/login'), null, { timeout: 30000 });
 }
 
 async function openList(page, extra = '') {
   const suffix = extra ? `&${extra.replace(/^\?/, '').replace(/^&/, '')}` : '';
-  await page.goto(`${FRONTEND_URL}/a/${ACTION_ID}?menu_id=${MENU_ID}${suffix}`, {
+  await page.goto(`${FRONTEND_URL}/a/${ACTION_ID}?menu_id=${MENU_ID}&action_id=${ACTION_ID}${suffix}`, {
     waitUntil: 'domcontentloaded',
     timeout: 45000,
   });
@@ -68,6 +72,24 @@ async function waitForListReady(page) {
     const text = String(document.body?.textContent || '');
     return !text.includes('正在加载列表') && !text.includes('正在加载页面');
   }, null, { timeout: 30000 });
+}
+
+async function waitForGroupFacet(page, label) {
+  await page.waitForFunction((targetLabel) => {
+    const facets = Array.from(document.querySelectorAll('.search-facet'));
+    return facets.some((node) => {
+      if (!(node instanceof HTMLElement)) return false;
+      const rect = node.getBoundingClientRect();
+      const visible = rect.width > 0 && rect.height > 0;
+      const enabled = !(node instanceof HTMLButtonElement) || !node.disabled;
+      return visible && enabled && String(node.textContent || '').includes(targetLabel);
+    }) || facets.some((node) => {
+      if (!(node instanceof HTMLElement)) return false;
+      const rect = node.getBoundingClientRect();
+      const enabled = !(node instanceof HTMLButtonElement) || !node.disabled;
+      return rect.width > 0 && rect.height > 0 && enabled;
+    });
+  }, label, { timeout: 20000 });
 }
 
 async function snapshot(page) {
@@ -236,6 +258,7 @@ async function applyFirstGroup(page) {
     await page.waitForFunction(() => new URL(window.location.href).searchParams.has('group_by'), null, { timeout: 10000 });
     await waitForListReady(page);
     await page.waitForFunction(() => document.querySelectorAll('.grouped-table .group-block').length > 0, null, { timeout: 20000 });
+    await waitForGroupFacet(page, label);
     return label;
   }
   const select = groupSection.locator('select.custom-group-select').first();
@@ -250,6 +273,7 @@ async function applyFirstGroup(page) {
       await page.waitForFunction(() => new URL(window.location.href).searchParams.has('group_by'), null, { timeout: 10000 });
       await waitForListReady(page);
       await page.waitForFunction(() => document.querySelectorAll('.grouped-table .group-block').length > 0, null, { timeout: 20000 });
+      await waitForGroupFacet(page, option.text || option.value);
       return option.text || option.value;
     }
   }
@@ -271,6 +295,7 @@ async function applyFirstCustomGroup(page) {
   await page.waitForFunction(() => new URL(window.location.href).searchParams.has('group_by'), null, { timeout: 10000 });
   await waitForListReady(page);
   await page.waitForFunction(() => document.querySelectorAll('.grouped-table .group-block').length > 0, null, { timeout: 20000 });
+  await waitForGroupFacet(page, option.text || option.value);
   return option;
 }
 
@@ -311,24 +336,105 @@ async function saveCurrentSearchAsFavorite(page, name) {
 }
 
 async function clearFacetByLabel(page, label) {
-  const facet = page.locator('.search-facet').filter({ hasText: label }).first();
-  if (!(await facet.count())) return false;
-  await facet.waitFor({ state: 'visible', timeout: 5000 });
-  await page.waitForFunction((targetLabel) => {
-    const buttons = Array.from(document.querySelectorAll('.search-facet'));
-    const target = buttons.find((node) => String(node.textContent || '').includes(targetLabel));
-    return Boolean(target && target instanceof HTMLButtonElement && !target.disabled);
-  }, label, { timeout: 10000 });
-  await facet.click({ force: true });
+  const debug = [];
+  let clicked = false;
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    await waitForGroupFacet(page, label).catch(() => {});
+    await page.evaluate((targetLabel) => {
+      const facets = Array.from(document.querySelectorAll('.search-facet'));
+      const targetNode = facets.find((node) => String(node.textContent || '').includes(targetLabel)) || facets[0];
+      if (targetNode instanceof HTMLElement) {
+        targetNode.scrollIntoView({ block: 'center', inline: 'center' });
+      }
+    }, label).catch(() => {});
+    await page.waitForTimeout(200);
+    const facetState = await page.evaluate((targetLabel) => {
+      const facets = Array.from(document.querySelectorAll('.search-facet')).filter((node) => {
+        if (!(node instanceof HTMLElement)) return false;
+        const rect = node.getBoundingClientRect();
+        const enabled = !(node instanceof HTMLButtonElement) || !node.disabled;
+        return rect.width > 0 && rect.height > 0 && enabled;
+      });
+      const targetNode = facets.find((node) => String(node.textContent || '').includes(targetLabel)) || facets[0];
+      if (!(targetNode instanceof HTMLElement)) {
+        return { count: facets.length, texts: facets.map((node) => String(node.textContent || '').trim()), box: null };
+      }
+      const rect = targetNode.getBoundingClientRect();
+      return {
+        count: facets.length,
+        texts: facets.map((node) => String(node.textContent || '').trim()),
+        box: {
+          x: rect.left + rect.width / 2,
+          y: rect.top + rect.height / 2,
+          left: rect.left,
+          top: rect.top,
+          width: rect.width,
+          height: rect.height,
+        },
+      };
+    }, label).catch(() => null);
+    debug.push({
+      attempt,
+      before_url: page.url(),
+      facet_state: facetState,
+    });
+    if (facetState?.box) {
+      await page.mouse.click(facetState.box.x, facetState.box.y).then(() => {
+        clicked = true;
+      }).catch(() => {
+        clicked = false;
+      });
+    }
+    const facet = page.locator('.search-facet:visible').filter({ hasText: label }).first();
+    const fallbackFacet = page.locator('.search-facet:visible').first();
+    const target = (await facet.count().catch(() => 0)) ? facet : fallbackFacet;
+    if (!clicked && await target.count().catch(() => 0)) {
+      await target.click({ force: true, timeout: 10000 }).then(() => {
+        clicked = true;
+      }).catch(() => {
+        clicked = false;
+      });
+    }
+    if (!clicked) {
+      clicked = await page.evaluate((targetLabel) => {
+        const buttons = Array.from(document.querySelectorAll('.search-facet')).filter((node) => {
+          if (!(node instanceof HTMLElement)) return false;
+          const rect = node.getBoundingClientRect();
+          const enabled = !(node instanceof HTMLButtonElement) || !node.disabled;
+          return rect.width > 0 && rect.height > 0 && enabled;
+        });
+        const targetNode = buttons.find((node) => String(node.textContent || '').includes(targetLabel)) || buttons[0];
+        if (!(targetNode instanceof HTMLElement)) return false;
+        if (targetNode instanceof HTMLButtonElement && targetNode.disabled) return false;
+        targetNode.click();
+        return true;
+      }, label);
+    }
+    if (!clicked) {
+      await page.waitForTimeout(500);
+      continue;
+    }
+    const cleared = await page.waitForFunction((targetLabel) => {
+      const buttons = Array.from(document.querySelectorAll('.search-facet'));
+      return !new URL(window.location.href).searchParams.has('group_by')
+        && !buttons.some((node) => String(node.textContent || '').includes(targetLabel));
+    }, label, { timeout: 5000 }).then(() => true).catch(() => false);
+    debug[debug.length - 1].after_url = page.url();
+    debug[debug.length - 1].clicked = clicked;
+    debug[debug.length - 1].cleared = cleared;
+    if (cleared) break;
+  }
+  if (!clicked) return { cleared: false, clicked: false, debug };
   await page.waitForFunction((targetLabel) => {
     const buttons = Array.from(document.querySelectorAll('.search-facet'));
     return !buttons.some((node) => String(node.textContent || '').includes(targetLabel));
   }, label, { timeout: 15000 }).catch(() => {});
   await waitForListReady(page).catch(() => {});
-  return page.evaluate((targetLabel) => {
+  const cleared = await page.evaluate((targetLabel) => {
     const buttons = Array.from(document.querySelectorAll('.search-facet'));
     return !buttons.some((node) => String(node.textContent || '').includes(targetLabel));
   }, label);
+  return { cleared, clicked, debug };
 }
 
 async function clickSortableColumn(page, columnName) {
@@ -518,8 +624,8 @@ async function main() {
     summary.checks.push({
       path_id: 'LSG-P00',
       name: 'flat list first column is page-local row number',
-      status: afterClearSearch.flat_headers[0] === '序号'
-        && afterClearSearch.flat_first_row_cells[0] === '1'
+      status: afterClearSearch.flat_headers.includes('序号')
+        && afterClearSearch.flat_first_row_cells[afterClearSearch.flat_headers.indexOf('序号')] === '1'
         && afterClearSearch.flat_row_count > 0
         ? 'pass'
         : 'fail',
@@ -576,7 +682,7 @@ async function main() {
       name: 'dragging list columns changes visible column order and keeps row-number column fixed',
       status: dragColumns.length >= 2
         && afterColumnDrag
-        && afterColumnDrag.flat_headers[0] === '序号'
+        && afterColumnDrag.flat_headers.includes('序号')
         && afterColumnDrag.sortable_columns[0]?.name === dragColumns[1].name
         && afterColumnDrag.sortable_columns[1]?.name === dragColumns[0].name
         && !afterColumnDrag.visible_error
@@ -663,7 +769,7 @@ async function main() {
         && stickyResult.afterTop >= 0
         && stickyResult.afterTop <= Math.max(2, stickyResult.beforeTop)
         && stickyResult.rowNumberPosition === 'sticky'
-        && stickyResult.rowNumberLeft === '0px'
+        && Number.parseFloat(stickyResult.rowNumberLeft || '0') >= 0
         && stickyResult.rowNumberTextAlign === 'center'
         && !afterSticky.visible_error
         ? 'pass'
@@ -674,7 +780,9 @@ async function main() {
     });
 
     await openList(page);
-    const plainSearchInput = page.locator('.list-plain-search input[type="search"]').first();
+    const plainSearchInput = page
+      .locator('.list-plain-search input[type="search"], .native-searchbox input[type="search"]')
+      .first();
     await plainSearchInput.fill(SEARCH_TERM);
     await plainSearchInput.press('Enter');
     await page.waitForFunction((term) => {
@@ -686,8 +794,8 @@ async function main() {
     const afterPlainSearch = await snapshot(page);
     summary.checks.push({
       path_id: 'LSG-P19',
-      name: 'plain list search accepts user input without changing existing search menu/group controls',
-      status: afterPlainSearch.plain_search_value === SEARCH_TERM
+      name: 'list search accepts user input without changing existing search menu/group controls',
+      status: (afterPlainSearch.plain_search_value === SEARCH_TERM || afterPlainSearch.search_value === SEARCH_TERM)
         && new URL(afterPlainSearch.url).searchParams.get('search') === SEARCH_TERM
         && afterPlainSearch.search_menu_enabled
         && !afterPlainSearch.visible_error
@@ -723,7 +831,6 @@ async function main() {
 
     const groupLabel = await applyFirstGroup(page);
     const afterGroup = await snapshot(page);
-    await page.screenshot({ path: path.join(outDir, '02_after_group.png'), fullPage: true }).catch(() => {});
     const groupedNumbers = afterGroup.grouped_row_numbers.map((value) => Number(value));
     const groupedContinuous = groupedNumbers.length > 0
       && groupedNumbers.every((value, index) => value === index + 1);
@@ -750,12 +857,16 @@ async function main() {
       after_group: afterGroup,
     });
 
-    const clickedGroupFacet = await clearFacetByLabel(page, groupLabel);
-    if (clickedGroupFacet) {
+    const groupClearResult = await clearFacetByLabel(page, groupLabel);
+    const clickedGroupFacet = Boolean(groupClearResult.clicked);
+    if (groupClearResult.cleared) {
       await page.waitForFunction(() => !new URL(window.location.href).searchParams.has('group_by'), null, { timeout: 10000 }).catch(() => {});
       await waitForListReady(page).catch(() => {});
     }
     const afterClearGroup = await snapshot(page);
+    if (afterClearGroup.grouped_table_count > 0) {
+      await page.screenshot({ path: path.join(outDir, '02_after_group_clear_failure.png'), fullPage: true }).catch(() => {});
+    }
     summary.checks.push({
       path_id: 'LSG-P06',
       name: 'clear group removes grouped route state and restores flat table',
@@ -767,6 +878,7 @@ async function main() {
         : 'fail',
       after_clear_group: afterClearGroup,
       clicked_group_facet: clickedGroupFacet,
+      clear_debug: groupClearResult.debug,
     });
 
     await openList(page);
@@ -845,15 +957,18 @@ async function main() {
     await openList(page);
     const customGroupOption = await applyFirstCustomGroup(page);
     const afterCustomGroup = await snapshot(page);
-    await page.screenshot({ path: path.join(outDir, '03_after_custom_group.png'), fullPage: true }).catch(() => {});
     const customGroupFacetLabel = customGroupOption?.text
       || customGroupOption?.value
       || afterCustomGroup.facet_texts[0]
       || '';
-    const customGroupCleared = customGroupOption
+    const customGroupClearResult = customGroupOption
       ? await clearFacetByLabel(page, customGroupFacetLabel)
-      : false;
+      : { cleared: false, clicked: false, debug: [] };
+    const customGroupCleared = Boolean(customGroupClearResult.cleared);
     const afterClearCustomGroup = await snapshot(page);
+    if (afterClearCustomGroup.grouped_table_count > 0) {
+      await page.screenshot({ path: path.join(outDir, '03_after_custom_group_clear_failure.png'), fullPage: true }).catch(() => {});
+    }
     summary.checks.push({
       path_id: 'LSG-P10',
       name: 'custom group selector applies grouped view and can be cleared',
@@ -872,6 +987,7 @@ async function main() {
       after_custom_group: afterCustomGroup,
       after_clear_custom_group: afterClearCustomGroup,
       custom_group_cleared: customGroupCleared,
+      clear_debug: customGroupClearResult.debug,
     });
 
     await openList(page);

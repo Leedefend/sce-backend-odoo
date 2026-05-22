@@ -589,6 +589,7 @@ import StatusPanel from '../components/StatusPanel.vue';
 import PageHeader from '../components/page/PageHeader.vue';
 import { resolveEmptyCopy, resolveErrorCopy, type StatusError } from '../composables/useStatus';
 import type { SceneListProfile } from '../app/resolvers/sceneRegistry';
+import { formatAttachmentReferenceValue } from '../utils/display';
 
 type SelectionAction = {
   key: string;
@@ -878,12 +879,16 @@ function semanticCell(field: string, value: unknown) {
   const selectionText = selectionLabel(option, value);
   const numericText = formatNumericCellValue(field, raw);
   const fieldType = String(option?.type || '').trim().toLowerCase();
+  const rawText = typeof raw === 'string' ? raw : '';
+  const attachmentText = rawText && /\|\s*(?:legacy-file|https?|file):\/\//i.test(rawText)
+    ? formatAttachmentReferenceValue(rawText)
+    : '';
   const text = selectionText
     || (raw === null || raw === undefined || raw === ''
       ? '--'
       : (typeof raw === 'boolean'
         ? (fieldType === 'boolean' ? uiLabel(raw ? 'boolean_true' : 'boolean_false', raw ? '是' : '否') : '--')
-        : numericText || String(raw)));
+        : attachmentText || numericText || String(raw)));
   const toneKey = String(raw ?? '').trim();
   const tone = option?.cellRole === 'status'
     ? (option.toneByValue?.[toneKey] || 'neutral')

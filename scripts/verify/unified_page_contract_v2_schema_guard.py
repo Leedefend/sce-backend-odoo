@@ -20,6 +20,10 @@ TOP_LEVEL_KEYS = {
     "runtimeContract",
     "meta",
 }
+OPTIONAL_TOP_LEVEL_KEYS = {
+    "formStructureContract",
+}
+TOP_LEVEL_PROPERTIES = TOP_LEVEL_KEYS | OPTIONAL_TOP_LEVEL_KEYS
 
 REQUIRED_DEFS = {
     "pageInfo",
@@ -31,6 +35,10 @@ REQUIRED_DEFS = {
     "actionRule",
     "dataContract",
     "runtimeContract",
+    "formStructureContract",
+    "formStructureSlot",
+    "formStructureGroup",
+    "formStructureRole",
     "meta",
 }
 
@@ -91,7 +99,7 @@ def validate_schema(schema: dict[str, Any], registry: dict[str, Any], errors: li
         fail(errors, f"schema top-level required keys mismatch: {sorted(required)}")
 
     properties = set(schema.get("properties", {}).keys())
-    if properties != TOP_LEVEL_KEYS:
+    if properties != TOP_LEVEL_PROPERTIES:
         fail(errors, f"schema top-level properties mismatch: {sorted(properties)}")
 
     defs = set(schema.get("$defs", {}).keys())

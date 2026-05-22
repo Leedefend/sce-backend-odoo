@@ -18,6 +18,7 @@ export async function executePageContractAction(deps: ContractActionDeps): Promi
   const target = deps.actionTarget(deps.actionKey);
   const kind = String(target.kind || '');
   const scene = String(target.scene_key || '');
+  const intent = deps.actionIntent(deps.actionKey, '');
   const query = deps.query || {};
 
   if (kind === 'page.refresh') {
@@ -42,6 +43,17 @@ export async function executePageContractAction(deps: ContractActionDeps): Promi
 
   if (kind === 'scene.key') {
     if (!scene) return false;
+    const sceneNode = getSceneByKey(scene);
+    await deps.router.push(buildCanonicalSceneRouteTarget(scene, {
+      scene: sceneNode,
+      query,
+      menuId: sceneNode?.target?.menu_id,
+      actionId: sceneNode?.target?.action_id,
+    }));
+    return true;
+  }
+
+  if (intent === 'ui.contract' && scene) {
     const sceneNode = getSceneByKey(scene);
     await deps.router.push(buildCanonicalSceneRouteTarget(scene, {
       scene: sceneNode,

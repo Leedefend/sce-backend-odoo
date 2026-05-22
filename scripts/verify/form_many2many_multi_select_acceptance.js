@@ -47,7 +47,11 @@ async function login(page) {
   const inputs = page.locator('input');
   await inputs.nth(0).fill(LOGIN);
   await inputs.nth(1).fill(PASSWORD);
-  await inputs.nth(2).fill(DB_NAME);
+  const dbInput = inputs.nth(2);
+  if (await dbInput.count().catch(() => 0)) {
+    const disabled = await dbInput.isDisabled().catch(() => false);
+    if (!disabled) await dbInput.fill(DB_NAME);
+  }
   await page.getByRole('button', { name: /^登录$/ }).click();
   await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 30000 });
 }
@@ -143,16 +147,28 @@ async function openProject(page) {
     timeout: 45000,
   });
   await waitForFormReady(page);
+  const detailsTab = page.getByRole('button', { name: /明细与来源/ }).first();
+  if (await detailsTab.count().catch(() => 0)) {
+    await detailsTab.click();
+  }
 }
 
 function tagEditor(page) {
   return page.locator('.relation-editor').first();
 }
 
-async function optionValueByText(select, label) {
-  const option = select.locator('option').filter({ hasText: label }).first();
+async function addTagByLabel(page, label) {
+  const editor = tagEditor(page);
+  const input = editor.locator('.relation-tags-input').first();
+  await input.waitFor({ timeout: 15000 });
+  await input.fill(label);
+  const option = editor.locator('.relation-tag-option').filter({ hasText: label }).first();
   await option.waitFor({ timeout: 15000 });
-  return option.getAttribute('value');
+  await option.click();
+  await page.waitForFunction((target) => {
+    return Array.from(document.querySelectorAll('.relation-tag'))
+      .some((node) => String(node.textContent || '').includes(target));
+  }, label, { timeout: 15000 });
 }
 
 async function saveForm(page) {
@@ -161,7 +177,19 @@ async function saveForm(page) {
 }
 
 async function visibleTags(page) {
-  return page.locator('.relation-tag').allInnerTexts().then((items) => items.map(normalize)).catch(() => []);
+  return page.locator('.relation-tag').allInnerTexts()
+    .then((items) => items.map((item) => normalize(item).replace(/\s*×$/, '').trim()))
+    .catch(() => []);
+}
+
+async function removeTagByLabel(page, label) {
+  const tag = tagEditor(page).locator('.relation-tag').filter({ hasText: label }).first();
+  await tag.waitFor({ timeout: 15000 });
+  await tag.click();
+  await page.waitForFunction((target) => {
+    return !Array.from(document.querySelectorAll('.relation-tag'))
+      .some((node) => String(node.textContent || '').includes(target));
+  }, label, { timeout: 15000 });
 }
 
 async function main() {
@@ -197,21 +225,17 @@ async function main() {
       tagIds.push(await createTag(page, label));
     }
     await openProject(page);
-    const editor = tagEditor(page);
-    const select = editor.locator('select').first();
-    await select.waitFor({ timeout: 15000 });
-    const optionValues = [];
     for (const label of labels) {
-      optionValues.push(await optionValueByText(select, label));
+      await addTagByLabel(page, label);
     }
-    await select.selectOption(optionValues.filter(Boolean));
     await saveForm(page);
     await openProject(page);
     const tagsAfterSave = await visibleTags(page);
     const projectTagsAfterSave = await readProjectTags(page);
 
-    const reloadedSelect = tagEditor(page).locator('select').first();
-    await reloadedSelect.selectOption(originalTagIds.map(String));
+    for (const label of labels) {
+      await removeTagByLabel(page, label);
+    }
     await saveForm(page);
     await openProject(page);
     const tagsAfterRemove = await visibleTags(page);
@@ -228,7 +252,6 @@ async function main() {
         ? 'pass'
         : 'fail',
       tag_ids: tagIds,
-      option_values: optionValues,
       original_tag_ids: originalTagIds,
       tags_after_save: tagsAfterSave,
       project_tags_after_save: projectTagsAfterSave,

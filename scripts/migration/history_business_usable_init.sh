@@ -23,6 +23,18 @@ run_odoo_script() {
     bash "$ROOT_DIR/scripts/ops/odoo_shell_exec.sh" <"$script_path"
 }
 
+run_odoo_write_script() {
+  local label="$1"
+  local script_path="$2"
+  echo "[history.business.usable.init] step=${label}"
+  DB_NAME="$DB_NAME" \
+    COMPOSE_FILES="${COMPOSE_FILES:-}" \
+    MIGRATION_ARTIFACT_ROOT="$ARTIFACT_ROOT" \
+    MIGRATION_REPLAY_DB_ALLOWLIST="$ALLOWLIST" \
+    MIGRATION_WRITE_MODE=write \
+    bash "$ROOT_DIR/scripts/ops/odoo_shell_exec.sh" <"$script_path"
+}
+
 run_partner_role_alignment() {
   local label="partner_business_fact_role_alignment"
   local script_path="$ROOT_DIR/scripts/migration/partner_business_fact_role_alignment_write.py"
@@ -47,7 +59,10 @@ run_odoo_script workbench_item_projection "$ROOT_DIR/scripts/migration/fresh_db_
 run_odoo_script organization_department_materialize "$ROOT_DIR/scripts/migration/history_organization_department_materialize_write.py"
 run_odoo_script supplier_contract_pricing_projection "$ROOT_DIR/scripts/migration/fresh_db_supplier_contract_pricing_projection_write.py"
 run_odoo_script construction_contract_income_count_alignment "$ROOT_DIR/scripts/migration/fresh_db_construction_contract_income_count_alignment_write.py"
+run_odoo_script construction_contract_history_value_gap_probe "$ROOT_DIR/scripts/verify/construction_contract_history_value_gap_probe.py"
 run_odoo_script project_contract_visible_surface_enrichment "$ROOT_DIR/scripts/migration/visible_surface_project_contract_enrichment_write.py"
+run_odoo_write_script project_migration_field_continuity_backfill "$ROOT_DIR/scripts/migration/project_migration_field_continuity_backfill_write.py"
+run_odoo_script project_migration_field_continuity_gap_probe "$ROOT_DIR/scripts/verify/project_migration_field_continuity_gap_probe.py"
 run_odoo_script dashboard_cockpit_projection "$ROOT_DIR/scripts/migration/fresh_db_dashboard_cockpit_projection_write.py"
 run_odoo_script payment_request_contract_visible_surface_normalize "$ROOT_DIR/scripts/migration/visible_surface_payment_request_contract_normalize_write.py"
 run_odoo_script treasury_ledger_projection "$ROOT_DIR/scripts/migration/fresh_db_treasury_ledger_projection_write.py"

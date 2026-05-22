@@ -280,6 +280,7 @@ class MenuConfigurationSaveHandler(MenuConfigurationLoadHandler):
     DESCRIPTION = "保存菜单配置面板数据"
     VERSION = "1.0.0"
     REQUIRED_GROUPS = [BUSINESS_CONFIG_GROUP]
+    ACL_MODE = "explicit_check"
 
     @classmethod
     def source_authority_contract(cls) -> dict:

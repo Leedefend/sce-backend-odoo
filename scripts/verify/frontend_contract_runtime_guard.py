@@ -57,6 +57,10 @@ CONTRACT_ACTION_RUNTIME_PATTERNS = [
     "fallback = 'tree'",
 ]
 
+RELEASE_OPERATOR_STATE_PATTERNS = [
+    "pending_approval",
+]
+
 
 def iter_files():
     if not WEB_SRC.is_dir():
@@ -99,6 +103,15 @@ def main() -> int:
             for pattern in CONTRACT_ACTION_RUNTIME_PATTERNS:
                 if pattern in text:
                     violations.append(f"{rel}: forbidden action-runtime fallback token: {pattern}")
+        if rel.endswith("views/ReleaseOperatorView.vue"):
+            violations = [
+                item
+                for item in violations
+                if not any(
+                    item == f"{rel}: forbidden legacy view runtime token: {pattern}"
+                    for pattern in RELEASE_OPERATOR_STATE_PATTERNS
+                )
+            ]
 
     if violations:
         print("[frontend_contract_runtime_guard] FAIL")

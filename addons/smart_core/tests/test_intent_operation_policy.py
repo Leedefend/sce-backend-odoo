@@ -39,6 +39,12 @@ class TestIntentOperationPolicy(unittest.TestCase):
     def test_non_api_write_verbs_are_write_intents(self):
         self.assertTrue(self.policy.is_write_intent("execute_button", {}))
         self.assertEqual(self.policy.access_mode_for_intent("execute_button", {}), "write")
+        self.assertTrue(self.policy.is_write_intent("ui.business_config.contract.save", {}))
+        self.assertTrue(self.policy.is_write_intent("ui.business_config.contract.publish", {}))
+
+    def test_write_detection_uses_intent_tokens_not_substrings(self):
+        self.assertFalse(self.policy.is_write_intent("settlement.enter", {}))
+        self.assertEqual(self.policy.access_mode_for_intent("settlement.block.fetch", {}), "read")
 
 
 if __name__ == "__main__":

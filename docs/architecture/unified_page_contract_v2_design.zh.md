@@ -224,7 +224,11 @@ UI Intermediate Representation
 }
 ```
 
-顶层字段必须固定。未来新增能力必须进入既有子契约，禁止不断新增平级顶层协议。
+必选顶层字段必须固定。当前 v2 仅允许一个受控可选顶层扩展：
+`formStructureContract`。
+
+`formStructureContract` 只表达产品级表单结构编排契约，不直接承载业务事实，
+也不得作为任意新增平级顶层协议的先例。未来新增能力默认仍必须进入既有子契约。
 
 ## 5. PageInfo
 
@@ -1063,7 +1067,8 @@ introduce
 
 Batch-A 冻结时必须同时冻结：
 
-- 顶层字段：`pageInfo/layoutContract/statusContract/actionContract/dataContract/runtimeContract/meta`
+- 必选顶层字段：`pageInfo/layoutContract/statusContract/actionContract/dataContract/runtimeContract/meta`
+- 受控可选顶层扩展：`formStructureContract`
 - ID 规则：稳定 ID 列表与禁止后缀规则
 - Client enum：首批支持与延期支持列表
 - Patch protocol：partial/full 与 patch operation enum
@@ -1104,4 +1109,3 @@ Batch-A 冻结时必须同时冻结：
 - Snapshot volatility normalization guard
 
 任何 guard 失败，都不得将 v2+ 设为默认 frontend contract。
-

@@ -183,7 +183,225 @@ def find_runtime_guard_issues(contract: dict[str, Any]) -> list[str]:
     for row in _list(status.get("selectorStatus")):
         if isinstance(row, dict) and not _text(row.get("selector")):
             issues.append("selectorStatus row missing selector")
+    issues.extend(find_form_structure_contract_issues(contract))
     return issues
+
+
+def find_form_structure_contract_issues(contract: dict[str, Any]) -> list[str]:
+    issues: list[str] = []
+    structure = _dict(contract.get("formStructureContract") or contract.get("form_structure_contract"))
+    if not structure:
+        return issues
+    if _text(structure.get("source")) != "ui.contract.v2.form_structure_contract":
+        issues.append("formStructureContract.source must be ui.contract.v2.form_structure_contract")
+    if _text(structure.get("viewType") or structure.get("view_type")) not in {"", "form"}:
+        issues.append("formStructureContract.viewType must be form")
+    source_authority = _dict(structure.get("sourceAuthority") or structure.get("source_authority"))
+    if source_authority and source_authority.get("governed_form_structure") is not True:
+        issues.append("formStructureContract.sourceAuthority.governed_form_structure must be true")
+    governance_source = _dict(source_authority.get("governance_source"))
+    if source_authority and not governance_source:
+        issues.append("formStructureContract.sourceAuthority.governance_source is required")
+
+    fields = _dict(_dict(contract.get("dataContract")).get("dataMeta")).get("fields")
+    known_fields = set(_dict(fields).keys())
+    if not known_fields:
+        known_fields = _collect_layout_field_names(_list(_dict(contract.get("layoutContract")).get("containerTree")))
+    slots = [_dict(row) for row in _list(structure.get("slots")) if isinstance(row, dict)]
+    if not slots:
+        issues.append("formStructureContract.slots is required")
+    slot_names: set[str] = set()
+    referenced_fields: list[str] = []
+    field_slots: dict[str, set[str]] = {}
+    field_slot_counts: dict[tuple[str, str], int] = {}
+    for index, slot in enumerate(slots):
+        slot_name = _text(slot.get("slot") or slot.get("name"))
+        if not slot_name:
+            issues.append(f"formStructureContract.slots[{index}].slot is required")
+        elif slot_name in slot_names:
+            issues.append(f"duplicate formStructureContract slot: {slot_name}")
+        else:
+            slot_names.add(slot_name)
+        slot_refs = _field_refs_from_structure_row(slot)
+        referenced_fields.extend(slot_refs)
+        for field_name in slot_refs:
+            field_slots.setdefault(field_name, set()).add(slot_name)
+            field_slot_counts[(field_name, slot_name)] = field_slot_counts.get((field_name, slot_name), 0) + 1
+
+    field_roles = _dict(structure.get("fieldRoles") or structure.get("field_roles"))
+    governance_field_names = {
+        _text(item)
+        for item in _list(governance_source.get("field_names") or governance_source.get("fieldNames"))
+        if _text(item)
+    }
+    for field_name, role in field_roles.items():
+        name = _text(field_name)
+        role_dict = _dict(role)
+        if not name:
+            issues.append("formStructureContract.fieldRoles contains blank field name")
+            continue
+        if known_fields and name not in known_fields:
+            issues.append(f"formStructureContract.fieldRoles.{name} references unknown field")
+        role_slot = _text(role_dict.get("slot"))
+        if role_slot and slot_names and role_slot not in slot_names:
+            issues.append(f"formStructureContract.fieldRoles.{name}.slot references unknown slot {role_slot}")
+
+    seen_fields: set[str] = set()
+    duplicate_fields: set[str] = set()
+    for name in referenced_fields:
+        if known_fields and name not in known_fields:
+            issues.append(f"formStructureContract references unknown field: {name}")
+        if name not in governance_field_names and _is_form_structure_internal_field(name):
+            issues.append(f"formStructureContract references internal field: {name}")
+        duplicate_allowed_as_overview_summary = (
+            "overview" in field_slots.get(name, set())
+            and len(field_slots.get(name, set()) - {"overview"}) == 1
+            and all(count == 1 for (field_name, _slot), count in field_slot_counts.items() if field_name == name)
+        )
+        if name in seen_fields and not duplicate_allowed_as_overview_summary:
+            duplicate_fields.add(name)
+        seen_fields.add(name)
+    for name in sorted(duplicate_fields):
+        issues.append(f"formStructureContract references field more than once: {name}")
+
+    layout_fields = _collect_layout_field_names(_list(_dict(contract.get("layoutContract")).get("containerTree")))
+    for name in referenced_fields:
+        if layout_fields and name not in layout_fields:
+            issues.append(f"formStructureContract field not projected to layout: {name}")
+    if governance_field_names:
+        for name in sorted(set(referenced_fields) - governance_field_names):
+            issues.append(f"formStructureContract references field outside governance: {name}")
+    if layout_fields:
+        allowed_layout_fields = set(referenced_fields)
+        for name in sorted(layout_fields - allowed_layout_fields):
+            if _is_form_structure_runtime_control_field(name):
+                continue
+            issues.append(f"formStructureContract layout projects field outside structure: {name}")
+    return issues
+
+
+def _is_form_structure_runtime_control_field(name: str) -> bool:
+    if not name:
+        return False
+    control_fields = {
+        "can_review",
+        "hide_reviews",
+        "need_validation",
+        "next_review",
+        "reviewer_ids",
+        "validation_status",
+    }
+    control_prefixes = (
+        "can_",
+        "allow_",
+        "has_",
+        "hide_",
+        "need_",
+    )
+    control_suffixes = (
+        "_count",
+    )
+    return (
+        name in control_fields
+        or any(name.startswith(prefix) for prefix in control_prefixes)
+        or any(name.endswith(suffix) for suffix in control_suffixes)
+    )
+
+
+def _is_form_structure_internal_field(name: str) -> bool:
+    if not name:
+        return False
+    allowed_legacy_fields = {
+        "legacy_document_no",
+        "legacy_contract_no",
+        "legacy_status",
+    }
+    if name in allowed_legacy_fields:
+        return False
+    internal_fields = {
+        "active",
+        "archived",
+        "color",
+        "can_review",
+        "entry_data",
+        "has_comment",
+        "has_message",
+        "hide_reviews",
+        "is_favorite",
+        "is_locked",
+        "my_activity_date_deadline",
+        "name_short",
+        "need_validation",
+        "next_review",
+        "sequence",
+        "source_origin",
+        "task_properties",
+        "reject_reason",
+        "rejected",
+        "rejected_message",
+        "review_ids",
+        "reviewer_ids",
+        "to_validate_message",
+        "validated",
+        "validated_message",
+        "validation_status",
+    }
+    internal_prefixes = (
+        "access_",
+        "alias_",
+        "allow_",
+        "dashboard_",
+        "favorite_",
+        "last_update_",
+        "privacy_",
+    )
+    internal_tokens = (
+        "_delta",
+        "_source",
+        "_source_",
+        "_visible",
+        "legacy_",
+        "source_created",
+        "validation",
+    )
+    internal_suffixes = (
+        "_count",
+        "_rate",
+    )
+    return (
+        name in internal_fields
+        or any(name.startswith(prefix) for prefix in internal_prefixes)
+        or any(token in name for token in internal_tokens)
+        or any(name.endswith(suffix) for suffix in internal_suffixes)
+    )
+
+
+def _field_refs_from_structure_row(row: dict[str, Any]) -> list[str]:
+    refs = [_text(item) for item in _list(row.get("fieldRefs") or row.get("field_refs") or row.get("fields"))]
+    out = [name for name in refs if name]
+    for group in _list(row.get("groups")):
+        if isinstance(group, dict):
+            out.extend(_field_refs_from_structure_row(group))
+    return out
+
+
+def _collect_layout_field_names(rows: list[Any]) -> set[str]:
+    out: set[str] = set()
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        if _text(row.get("type") or row.get("kind")).lower() == "field":
+            name = _text(row.get("name") or row.get("fieldCode") or row.get("field_code"))
+            if name:
+                out.add(name)
+        for widget in _list(row.get("widgetList") or row.get("widget_list")):
+            widget_dict = _dict(widget)
+            name = _text(widget_dict.get("fieldCode") or widget_dict.get("field_code"))
+            if name:
+                out.add(name)
+        for key in ("children", "pages", "tabs", "nodes", "items"):
+            out.update(_collect_layout_field_names(_list(row.get(key))))
+    return out
 
 
 def _walk(value: Any, path: str = "$"):

@@ -129,6 +129,33 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
 
         self.assertEqual(full["pageInfo"]["pageName"], "项目")
 
+    def test_form_data_source_keeps_deep_form_fields(self):
+        fields = {
+            f"field_{index}": {
+                "name": f"field_{index}",
+                "type": "char",
+                "string": f"字段{index}",
+            }
+            for index in range(70)
+        }
+        source = {
+            "model": "construction.contract.income",
+            "view_type": "form",
+            "fields": fields,
+            "record_id": 991,
+        }
+
+        full = assembler.assemble_unified_page_contract_v2(
+            source,
+            source_type="ui.contract",
+            client_type="web_pc",
+            request_id="test.form.deep.fields",
+        )
+
+        requested_fields = full["dataContract"]["dataSource"]["primary"]["params"]["fields"]
+        self.assertIn("field_69", requested_fields)
+        self.assertGreater(len(requested_fields), 40)
+
     def test_ui_contract_v2_readonly_form_page_auth_stays_read(self):
         source = {
             "model": "project.project",
@@ -366,6 +393,116 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
         self.assertEqual([node["name"] for node in page_group["children"]], ["company_id"])
         self.assertEqual(page_group["children"][0]["fieldInfo"]["label"], "公司")
 
+    def test_form_structure_contract_rebuilds_business_task_layout(self):
+        source = {
+            "model": "construction.contract.income",
+            "view_type": "form",
+            "views": {
+                "form": {
+                    "layout": [
+                        {
+                            "type": "header",
+                            "name": "contract_header",
+                            "children": [{"type": "button", "name": "action_confirm", "label": "提交"}],
+                        },
+                        {
+                            "type": "sheet",
+                            "name": "native_sheet",
+                            "children": [
+                                {
+                                    "type": "group",
+                                    "name": "native_group",
+                                    "children": [{"type": "field", "name": "name"}],
+                                }
+                            ],
+                        },
+                        {
+                            "type": "group",
+                            "name": "hidden_native_group",
+                            "children": [
+                                {
+                                    "type": "field",
+                                    "name": "hidden_internal_note",
+                                    "invisible": True,
+                                    "modifiers": {"invisible": True},
+                                }
+                            ],
+                        },
+                    ]
+                }
+            },
+            "fields": {
+                "name": {"name": "name", "type": "char", "string": "编号"},
+                "subject": {"name": "subject", "type": "char", "string": "标题"},
+                "project_id": {"name": "project_id", "type": "many2one", "string": "项目"},
+                "visible_contract_amount": {"name": "visible_contract_amount", "type": "monetary", "string": "合同金额"},
+                "line_ids": {"name": "line_ids", "type": "one2many", "string": "明细"},
+                "hidden_internal_note": {"name": "hidden_internal_note", "type": "char", "string": "隐藏内部说明"},
+            },
+            "form_structure_contract": {
+                "source": "ui.contract.v2.form_structure_contract",
+                "mode": "business_task_form",
+                "navigation": {"title": "业务办理"},
+                "fieldRoles": {
+                    "subject": {"role": "identity", "slot": "primary_facts", "group": "identity"},
+                    "line_ids": {"role": "detail", "slot": "details_source", "group": "details"},
+                },
+                "slots": [
+                    {
+                        "slot": "overview",
+                        "title": "办理总览",
+                        "readonly": True,
+                        "fieldRefs": ["subject", "project_id", "visible_contract_amount"],
+                    },
+                    {
+                        "slot": "primary_facts",
+                        "title": "主业务事实",
+                        "groups": [
+                            {"name": "identity", "title": "业务识别", "fieldRefs": ["name", "subject"]},
+                            {"name": "other_facts", "title": "其他事实", "fieldRefs": ["hidden_internal_note"]},
+                        ],
+                    },
+                    {
+                        "slot": "details_source",
+                        "title": "明细与来源",
+                        "groups": [
+                            {"name": "details", "title": "业务明细", "fieldRefs": ["line_ids"]},
+                        ],
+                    },
+                ],
+            },
+        }
+
+        full = assembler.assemble_unified_page_contract_v2(
+            source,
+            source_type="ui.contract",
+            client_type="web_pc",
+            request_id="test.web.form.structure",
+        )
+
+        self.assertEqual(full["formStructureContract"]["source"], "ui.contract.v2.form_structure_contract")
+        tree = full["layoutContract"]["containerTree"]
+        self.assertEqual([node["type"] for node in tree], ["header", "sheet"])
+        sheet_children = tree[1]["children"]
+        self.assertEqual([node["type"] for node in sheet_children], ["group", "notebook"])
+        self.assertEqual(sheet_children[0]["label"], "办理总览")
+        self.assertEqual([node["name"] for node in sheet_children[0]["children"]], ["subject", "project_id", "visible_contract_amount"])
+        self.assertTrue(sheet_children[0]["children"][0]["readonly"])
+        pages = sheet_children[1]["tabs"]
+        self.assertEqual([page["label"] for page in pages], ["主业务事实", "明细与来源"])
+        self.assertEqual(pages[0]["formStructure"], {"slot": "primary_facts", "role": "primary_facts"})
+        self.assertEqual(pages[0]["children"][0]["label"], "业务识别")
+        self.assertEqual(pages[0]["children"][0]["formStructure"]["role"], "identity")
+        self.assertEqual(pages[0]["children"][0]["children"][1]["formStructureRole"]["role"], "identity")
+        rendered_names = [
+            node.get("name")
+            for page in pages
+            for group in page.get("children", [])
+            for node in group.get("children", [])
+        ]
+        self.assertNotIn("hidden_internal_note", rendered_names)
+        self.assertEqual(pages[1]["children"][0]["children"][0]["name"], "line_ids")
+
     def test_ui_contract_v2_preserves_relation_entry_search_dialog(self):
         search_dialog = {
             "columns": [
@@ -514,6 +651,16 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
                 "filters": [
                     {"key": "filter_my_projects", "label": "我的项目", "domain_raw": "[('manager_id', '=', uid)]"},
                 ],
+                "saved_filters": [
+                    {
+                        "id": 7,
+                        "name": "用户收藏",
+                        "domain": [],
+                        "context": {},
+                        "owner": 16,
+                        "is_shared": False,
+                    },
+                ],
                 "group_by": [
                     {
                         "key": "group_manager",
@@ -534,6 +681,7 @@ class TestUnifiedPageContractV2MobileCompact(unittest.TestCase):
         )
 
         self.assertEqual(full["searchContract"]["filters"][0]["key"], "filter_my_projects")
+        self.assertEqual(full["searchContract"]["saved_filters"][0]["name"], "用户收藏")
         self.assertEqual(full["searchContract"]["group_by"][0]["field"], "manager_id")
         self.assertEqual(full["dataContract"]["search"]["default_sort"], "write_date desc")
 

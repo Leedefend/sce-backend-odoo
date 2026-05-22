@@ -93,6 +93,14 @@ class AppValidatorConfig(models.Model):
                 "config_hash": new_hash,
                 "last_generated": fields.Datetime.now(),
             }
+            if self.env.context.get('contract_projection_readonly'):
+                vals["version"] = cfg.version if cfg else 0
+                vals["meta_info"] = {
+                    "source": self._source_contract(model_name),
+                    "transient": True,
+                    "runtime_readonly": True,
+                }
+                return self.new(vals)
             if cfg:
                 if cfg.config_hash != new_hash:
                     vals["version"] = cfg.version + 1

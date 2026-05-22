@@ -532,6 +532,7 @@ function activeNotebookChildren(node: NativeFormLayoutNode) {
 }
 
 function fieldSectionTitle(node?: NativeFormLayoutNode) {
+  if (node && nodeType(node) === 'group' && containerTitle(node)) return '';
   const semanticTitle = String(node?.semanticTitle || '').trim();
   if (semanticTitle) return semanticTitle;
   return node ? containerTitle(node) : '';
@@ -704,7 +705,17 @@ function closeMore(node: NativeFormLayoutNode) {
 
 .native-container--group {
   border-top: 1px solid var(--sc-app-border);
-  padding-top: 12px;
+  padding-top: 14px;
+}
+
+.native-container--group > .native-container-head {
+  border-left: 3px solid var(--sc-app-accent);
+  padding-left: 10px;
+}
+
+.native-container--group > .native-container-head h3 {
+  font-size: 15px;
+  line-height: 1.35;
 }
 
 .native-container-head h3 {

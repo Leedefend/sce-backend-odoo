@@ -21,6 +21,7 @@ export interface ContractV2Widget {
   componentConfig?: ContractV2Dictionary;
   fieldType?: string;
   relation?: string;
+  formStructureRole?: ContractV2Dictionary;
 }
 
 export interface ContractV2Container {
@@ -41,6 +42,8 @@ export interface ContractV2Container {
   invisible?: unknown;
   readonly?: unknown;
   required?: unknown;
+  formStructure?: ContractV2Dictionary;
+  formStructureRole?: ContractV2Dictionary;
   children: ContractV2Container[];
   pages?: ContractV2Container[];
   tabs?: ContractV2Container[];
@@ -142,6 +145,7 @@ export interface ContractV2Snapshot {
   dataContract: ContractV2DataContract;
   runtimeContract: ContractV2Dictionary;
   meta: ContractV2Dictionary;
+  formStructureContract?: ContractV2Dictionary;
   searchContract?: ContractV2Dictionary;
 }
 

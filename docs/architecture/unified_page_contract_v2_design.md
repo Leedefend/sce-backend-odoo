@@ -252,6 +252,15 @@ Required top-level keys:
 - `runtimeContract`
 - `meta`
 
+Governed optional top-level extensions:
+
+- `formStructureContract`
+
+`formStructureContract` is the only governed optional top-level extension in v2.
+It describes product-level form structure orchestration only. It must not carry
+business facts directly, and it must not be used as a precedent for arbitrary
+peer-level protocol growth.
+
 ## 5. Client Type
 
 Supported values:
@@ -1252,7 +1261,8 @@ introduce
 
 Batch-A MUST freeze:
 
-- top-level keys: `pageInfo/layoutContract/statusContract/actionContract/dataContract/runtimeContract/meta`
+- required top-level keys: `pageInfo/layoutContract/statusContract/actionContract/dataContract/runtimeContract/meta`
+- governed optional top-level extension: `formStructureContract`
 - ID rules: stable ID list and forbidden suffix rules
 - client enum: first-release and deferred client values
 - patch protocol: partial/full plus patch operation enum

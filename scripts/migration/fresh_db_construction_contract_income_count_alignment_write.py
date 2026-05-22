@@ -79,7 +79,8 @@ def clean_rich_text(value: object) -> str:
     text = re.sub(r"<[^>]+>", "", text)
     text = html.unescape(text)
     lines = [line.strip() for line in text.splitlines()]
-    return "\n".join(line for line in lines if line)
+    result = "\n".join(line for line in lines if line).strip()
+    return "" if result in {"/", "／"} else result
 
 
 def read_csv(path: Path) -> list[dict[str, str]]:
@@ -465,14 +466,16 @@ try:
     for rec in existing:
         identity = rec.legacy_contract_id or ""
         should_show = identity in target_ids
+        raw_row = raw_by_id.get(identity)
         updates = {"legacy_income_surface_visible": should_show}
         if should_show and rec.type != "out":
             updates["type"] = "out"
             updates["tax_id"] = sale_tax.id
             type_corrected += 1
         rec.with_context(skip_validation_check=True).write(updates)
+        if raw_row:
+            sync_contract_amount_fields(rec, raw_row)
         if should_show:
-            raw_row = raw_by_id.get(identity)
             amount_action = ""
             event_action = ""
             if raw_row:
@@ -483,7 +486,6 @@ try:
                         [projected_state, rec.id],
                     )
                     rec.invalidate_recordset(["state"])
-                sync_contract_amount_fields(rec, raw_row)
                 amount_action = sync_contract_amount_line(rec, raw_row)
                 rec.flush_recordset()
                 rec.invalidate_recordset()

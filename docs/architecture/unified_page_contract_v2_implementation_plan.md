@@ -216,7 +216,8 @@ Freeze the v2+ contract schema and field enums.
 
 - v2+ schema exists and matches the design document.
 - Example payloads validate against schema.
-- Top-level keys are fixed to `pageInfo/layoutContract/statusContract/actionContract/dataContract/runtimeContract/meta`.
+- Required top-level keys are fixed to `pageInfo/layoutContract/statusContract/actionContract/dataContract/runtimeContract/meta`.
+- Governed optional top-level extension `formStructureContract` is explicitly documented and guarded.
 - Schema freeze boundary is explicit enough to implement JSON Schema without new semantic decisions.
 - No public intent behavior changes.
 - `git diff --check` passes.

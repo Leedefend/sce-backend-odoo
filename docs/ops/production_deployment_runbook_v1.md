@@ -15,6 +15,7 @@
 - Codex 生产协助策略：`docs/ops/codex_production_assist_policy.md`
 - 数据库命名策略：`docs/ops/db_strategy.md`
 - 历史连续性重放：`docs/ops/history_continuity_server_replay_runbook_v1.md`
+- 服务器升级后的业务数据收口：`docs/ops/server_post_upgrade_business_data_closure_runbook_v1.md`
 - 历史用户重建：`docs/ops/history_user_rebuild_runbook_v1.md`
 - 迁移资产交付清单：`docs/migration_alignment/migration_asset_delivery_manifest_v1.md`
 
@@ -162,6 +163,11 @@ ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_DANGER=1 \
 ```
 
 ### 5.4 发布后验证
+
+如果本次升级包含迁移投影、历史数据承载、业务字段、列表/表单契约或用户可见面改动，
+模块升级完成后必须继续执行
+`docs/ops/server_post_upgrade_business_data_closure_runbook_v1.md`。模块升级只证明
+代码和元数据已加载，不证明用户历史业务数据已经被新系统完整承载。
 
 最小生产验证：
 

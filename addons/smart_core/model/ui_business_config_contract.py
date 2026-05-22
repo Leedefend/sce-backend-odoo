@@ -242,6 +242,7 @@ class UIBusinessConfigContract(models.Model):
             "row_classes",
             "cards",
             "kpis",
+            "sections",
         }
         dict_keys = {
             "defaults",

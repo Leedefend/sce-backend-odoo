@@ -154,6 +154,7 @@ run_writes() {
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_purchase_contract_replay_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_construction_contract_income_count_alignment_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/visible_surface_project_contract_enrichment_write.py"
+  MIGRATION_WRITE_MODE=write run_odoo_script "$ROOT_DIR/scripts/migration/project_migration_field_continuity_backfill_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_construction_contract_visible_business_fact_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_general_contract_projection_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/history_outflow_partner_targeted_replay_write.py"

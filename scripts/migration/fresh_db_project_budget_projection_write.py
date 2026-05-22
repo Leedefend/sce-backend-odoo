@@ -10,10 +10,30 @@ reconciliation instead of being attached to an arbitrary project.
 from __future__ import annotations
 
 import json
+import os
+from pathlib import Path
 
 
 uid = env.uid  # noqa: F821
 currency_id = env.company.currency_id.id  # noqa: F821
+
+
+def artifact_root() -> Path:
+    candidates = []
+    env_root = os.getenv("MIGRATION_ARTIFACT_ROOT")
+    if env_root:
+        candidates.append(Path(env_root))
+    candidates.extend([Path("/mnt/artifacts/migration"), Path(f"/tmp/history_continuity/{env.cr.dbname}/adhoc")])  # noqa: F821
+    for candidate in candidates:
+        try:
+            candidate.mkdir(parents=True, exist_ok=True)
+            probe = candidate / ".write_probe"
+            probe.write_text("ok\n", encoding="utf-8")
+            probe.unlink()
+            return candidate
+        except Exception:
+            continue
+    return Path(f"/tmp/history_continuity/{env.cr.dbname}/adhoc")  # noqa: F821
 
 env.cr.execute(  # noqa: F821
     """
@@ -91,7 +111,7 @@ env.cr.execute(  # noqa: F821
     ),
     upserted AS (
       INSERT INTO project_budget (
-        name, budget_kind, project_id, version, version_date, is_active,
+        name, budget_kind, project_id, version, version_no, version_date, is_active,
         currency_id, amount_cost_target, amount_revenue_target, note,
         legacy_source_model, legacy_record_id, legacy_document_state,
         create_uid, create_date, write_uid, write_date
@@ -101,6 +121,7 @@ env.cr.execute(  # noqa: F821
         'material',
         s.project_id,
         'LEGACY-MATERIAL-BUDGET',
+        '历史材料预算',
         COALESCE(s.version_date, CURRENT_DATE),
         TRUE,
         %s,
@@ -119,6 +140,7 @@ env.cr.execute(  # noqa: F821
       ON CONFLICT (project_id, version) DO UPDATE SET
         name = EXCLUDED.name,
         budget_kind = EXCLUDED.budget_kind,
+        version_no = EXCLUDED.version_no,
         version_date = EXCLUDED.version_date,
         is_active = TRUE,
         currency_id = EXCLUDED.currency_id,
@@ -136,6 +158,18 @@ env.cr.execute(  # noqa: F821
     [currency_id, uid, uid],
 )
 budget_headers_upserted = env.cr.fetchone()[0]  # noqa: F821
+
+env.cr.execute(  # noqa: F821
+    """
+    UPDATE project_budget
+       SET version_no = COALESCE(NULLIF(version, ''), 'V1'),
+           write_uid = %s,
+           write_date = NOW()
+     WHERE NULLIF(version_no, '') IS NULL
+    """,
+    [uid],
+)
+budget_version_no_backfilled = env.cr.rowcount  # noqa: F821
 
 env.cr.execute(  # noqa: F821
     """
@@ -227,9 +261,14 @@ payload = {
         "cost_codes_inserted": cost_codes_inserted,
         "cost_codes_updated": cost_codes_updated,
         "budget_headers_upserted": budget_headers_upserted,
+        "budget_version_no_backfilled": budget_version_no_backfilled,
         "budget_lines_deleted": budget_lines_deleted,
         "budget_line_source": budget_line_source,
         "budget_lines_inserted": budget_lines_inserted,
     },
 }
+(artifact_root() / "fresh_db_project_budget_projection_write_result_v1.json").write_text(
+    json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+    encoding="utf-8",
+)
 print("FRESH_DB_PROJECT_BUDGET_PROJECTION_WRITE=" + json.dumps(payload, ensure_ascii=False, sort_keys=True))

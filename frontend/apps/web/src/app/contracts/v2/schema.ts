@@ -210,6 +210,8 @@ function decodeContainer(raw: unknown, path: string, issues: DecodeIssue[]): Con
   const fieldInfo = asRecord(raw.fieldInfo || raw.field_info);
   const action = asRecord(raw.action);
   const modifiers = asRecord(raw.modifiers);
+  const formStructure = asRecord(raw.formStructure || raw.form_structure);
+  const formStructureRole = asRecord(raw.formStructureRole || raw.form_structure_role);
   return {
     containerId,
     containerType,
@@ -227,6 +229,8 @@ function decodeContainer(raw: unknown, path: string, issues: DecodeIssue[]): Con
     ...(Object.prototype.hasOwnProperty.call(raw, 'invisible') ? { invisible: raw.invisible } : {}),
     ...(Object.prototype.hasOwnProperty.call(raw, 'readonly') ? { readonly: raw.readonly } : {}),
     ...(Object.prototype.hasOwnProperty.call(raw, 'required') ? { required: raw.required } : {}),
+    ...(Object.keys(formStructure).length ? { formStructure } : {}),
+    ...(Object.keys(formStructureRole).length ? { formStructureRole } : {}),
     children,
     ...(pages.length ? { pages } : {}),
     ...(tabs.length ? { tabs } : {}),
@@ -450,6 +454,9 @@ export function decodeContractV2Snapshot(value: unknown): ContractV2Snapshot {
     dataContract,
     runtimeContract: aliasedRecord(root, 'runtimeContract', ['runtime_contract']),
     meta: asRecord(root.meta),
+    ...(isRecord(root.formStructureContract || root.form_structure_contract)
+      ? { formStructureContract: asRecord(root.formStructureContract || root.form_structure_contract) }
+      : {}),
     ...(isRecord(root.searchContract) ? { searchContract: root.searchContract } : {}),
   };
 }
