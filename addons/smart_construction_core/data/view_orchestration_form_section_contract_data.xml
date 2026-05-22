@@ -1,6 +1,133 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <data noupdate="0">
+        <record id="business_config_contract_project_project_form_structure_v1" model="ui.business.config.contract">
+            <field name="name">project_project_form_structure_v1</field>
+            <field name="model">project.project</field>
+            <field name="view_type">form</field>
+            <field name="priority">90</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'views': {
+                        'form': {
+                            'sections': [
+                                {'title': '项目基本信息'},
+                                {'title': '业务关系与类型'},
+                                {'title': '参建单位与联系人'},
+                                {'title': '合同与工期'},
+                                {'title': '财税与账户'},
+                                {'title': '成本与进度'},
+                                {'title': '补充资料'},
+                                {'title': '来源核对'},
+                                {'title': '驾驶舱'}
+                            ],
+                            'fields': [
+                                {'name': 'name', 'sequence': 10},
+                                {'name': 'project_code', 'sequence': 20},
+                                {'name': 'short_name', 'sequence': 25},
+                                {'name': 'lifecycle_state', 'sequence': 30},
+                                {'name': 'partner_id', 'sequence': 40},
+                                {'name': 'initiation_date', 'sequence': 50},
+                                {'name': 'project_type_id', 'sequence': 60},
+                                {'name': 'project_environment', 'sequence': 65},
+                                {'name': 'project_category_id', 'sequence': 70},
+                                {'name': 'specialty_type_name', 'sequence': 75},
+                                {'name': 'operation_strategy', 'sequence': 80},
+                                {'name': 'business_nature', 'sequence': 85},
+                                {'name': 'owner_contact', 'sequence': 90},
+                                {'name': 'legacy_owner_contact_phone', 'sequence': 97},
+                                {'name': 'location', 'sequence': 100},
+                                {'name': 'legacy_region_name', 'sequence': 102},
+                                {'name': 'detail_address', 'sequence': 105},
+                                {'name': 'contract_no', 'sequence': 110},
+                                {'name': 'legacy_contracting_method', 'sequence': 114},
+                                {'name': 'legacy_price_method', 'sequence': 115},
+                                {'name': 'legacy_contract_status', 'sequence': 116},
+                                {'name': 'legacy_project_nature', 'sequence': 117},
+                                {'name': 'start_date', 'sequence': 120},
+                                {'name': 'end_date', 'sequence': 130},
+                                {'name': 'project_profile', 'sequence': 140},
+                                {'name': 'project_overview', 'sequence': 150},
+                                {'name': 'project_area', 'sequence': 160},
+                                {'name': 'legacy_tax_organization_name', 'sequence': 170},
+                                {'name': 'legacy_tax_type', 'sequence': 171},
+                                {'name': 'legacy_account_name', 'sequence': 180},
+                                {'name': 'legacy_account_number', 'sequence': 181},
+                                {'name': 'legacy_account_bank', 'sequence': 182},
+                                {'name': 'legacy_supervision_unit', 'sequence': 190},
+                                {'name': 'legacy_supervisory_engineer', 'sequence': 191},
+                                {'name': 'legacy_supervision_phone', 'sequence': 192},
+                                {'name': 'manager_id', 'sequence': 210},
+                                {'name': 'cost_manager_id', 'sequence': 220},
+                                {'name': 'doc_manager_id', 'sequence': 230},
+                                {'name': 'legacy_technical_responsibility_name', 'sequence': 236},
+                                {'name': 'responsibility_ids', 'sequence': 240},
+                                {'name': 'contract_count', 'sequence': 310},
+                                {'name': 'contract_income_total', 'sequence': 320},
+                                {'name': 'contract_expense_total', 'sequence': 330},
+                                {'name': 'contract_amount', 'sequence': 340},
+                                {'name': 'subcontract_amount', 'sequence': 350},
+                                {'name': 'dashboard_revenue_actual', 'sequence': 360},
+                                {'name': 'dashboard_cost_actual', 'sequence': 370},
+                                {'name': 'dashboard_profit_actual', 'sequence': 380},
+                                {'name': 'dashboard_invoice_amount', 'sequence': 390},
+                                {'name': 'dashboard_payment_in', 'sequence': 400},
+                                {'name': 'dashboard_payment_out', 'sequence': 410},
+                                {'name': 'dashboard_progress_rate', 'sequence': 420},
+                                {'name': 'dashboard_document_completion', 'sequence': 430},
+                                {'name': 'document_count', 'sequence': 510},
+                                {'name': 'document_required_count', 'sequence': 520},
+                                {'name': 'document_missing_count', 'sequence': 530},
+                                {'name': 'legacy_cost', 'sequence': 540},
+                                {'name': 'legacy_manage_fee_ratio', 'sequence': 550},
+                                {'name': 'legacy_note', 'sequence': 610},
+                                {'name': 'legacy_contract_agreement', 'sequence': 620},
+                                {'name': 'legacy_project_file', 'sequence': 630},
+                                {'name': 'collaborator_ids', 'sequence': 930},
+                                {'name': 'analytic_account_id', 'sequence': 940},
+                                {'name': 'legacy_project_id', 'sequence': 9710, 'visible': False},
+                                {'name': 'legacy_project_code', 'sequence': 9720, 'visible': False},
+                                {'name': 'legacy_parent_id', 'sequence': 9730, 'visible': False},
+                                {'name': 'legacy_company_id', 'sequence': 9740, 'visible': False},
+                                {'name': 'legacy_company_name', 'sequence': 9750, 'visible': False},
+                                {'name': 'legacy_owner_unit', 'sequence': 9755, 'visible': False},
+                                {'name': 'legacy_owner_contact', 'sequence': 9756, 'visible': False},
+                                {'name': 'legacy_project_manager_name', 'sequence': 9757, 'visible': False},
+                                {'name': 'legacy_specialty_type_id', 'sequence': 9760, 'visible': False},
+                                {'name': 'legacy_tax_organization_id', 'sequence': 9770, 'visible': False},
+                                {'name': 'legacy_stage_id', 'sequence': 9780, 'visible': False},
+                                {'name': 'legacy_stage_name', 'sequence': 9790, 'visible': False},
+                                {'name': 'legacy_state', 'sequence': 9800, 'visible': False},
+                                {'name': 'legacy_region_id', 'sequence': 9810, 'visible': False},
+                                {'name': 'legacy_attachment_ref', 'sequence': 9820, 'visible': False},
+                                {'name': 'legacy_source_created_by', 'sequence': 9830, 'visible': False},
+                                {'name': 'legacy_source_created_by_id', 'sequence': 9840, 'visible': False},
+                                {'name': 'legacy_source_created_at', 'sequence': 9850, 'visible': False},
+                                {'name': 'legacy_source_updated_by', 'sequence': 9860, 'visible': False},
+                                {'name': 'legacy_source_updated_by_id', 'sequence': 9870, 'visible': False},
+                                {'name': 'legacy_source_updated_at', 'sequence': 9880, 'visible': False},
+                                {'name': 'legacy_deleted_flag', 'sequence': 9890, 'visible': False},
+                                {'name': 'legacy_sort', 'sequence': 9900, 'visible': False},
+                                {'name': 'company_id', 'sequence': 9910, 'visible': False},
+                                {'name': 'message_needaction', 'sequence': 9920, 'visible': False},
+                                {'name': 'display_name', 'sequence': 9930, 'visible': False},
+                                {'name': 'label_tasks', 'sequence': 9940, 'visible': False},
+                                {'name': 'tag_ids', 'sequence': 9950, 'visible': False},
+                                {'name': 'task_ids', 'sequence': 9960, 'visible': False},
+                                {'name': 'contract_ids', 'sequence': 9970, 'visible': False},
+                                {'name': 'document_ids', 'sequence': 9980, 'visible': False},
+                                {'name': 'tender_bid_ids', 'sequence': 9990, 'visible': False}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
         <record id="business_config_contract_sc_financing_loan_form_sections_v1" model="ui.business.config.contract">
             <field name="name">sc_financing_loan_form_sections_v1</field>
             <field name="model">sc.financing.loan</field>

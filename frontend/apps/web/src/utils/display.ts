@@ -29,6 +29,28 @@ function numericValue(value: unknown): number | null {
   return Number.isFinite(parsed) ? parsed : null;
 }
 
+export function formatAttachmentReferenceValue(value: unknown): string {
+  const rawItems = Array.isArray(value) ? value.map((item) => String(item ?? '')) : [String(value ?? '')];
+  const seen = new Set<string>();
+  const names: string[] = [];
+
+  rawItems
+    .flatMap((item) => item.split(/\s+(?=[^\s|]+\s+\|\s+(?:legacy-file|https?|file):\/\/)/i))
+    .forEach((item) => {
+      const raw = item.trim();
+      if (!raw) return;
+      const pipeIndex = raw.search(/\s+\|\s+(?:legacy-file|https?|file):\/\//i);
+      const name = (pipeIndex >= 0 ? raw.slice(0, pipeIndex) : raw)
+        .replace(/\s*\|\s*(?:legacy-file|https?|file):\/\/.*$/i, '')
+        .trim();
+      if (!name || seen.has(name)) return;
+      seen.add(name);
+      names.push(name);
+    });
+
+  return names.join('、');
+}
+
 export function formatDisplayValue(
   value: unknown,
   field?: Pick<FieldDescriptor, 'ttype' | 'type' | 'selection'>,
@@ -78,6 +100,10 @@ export function formatDisplayValue(
     if (!value.length) {
       return normalized.emptyText;
     }
+    const attachmentText = formatAttachmentReferenceValue(value);
+    if (attachmentText && value.some((item) => /\|\s*(?:legacy-file|https?|file):\/\//i.test(String(item ?? '')))) {
+      return attachmentText;
+    }
     return value.map((item) => String(item)).join(', ');
   }
 
@@ -85,5 +111,9 @@ export function formatDisplayValue(
     return normalized.emptyText;
   }
 
-  return String(value);
+  const rawText = String(value);
+  if (/\|\s*(?:legacy-file|https?|file):\/\//i.test(rawText)) {
+    return formatAttachmentReferenceValue(rawText) || rawText;
+  }
+  return rawText;
 }

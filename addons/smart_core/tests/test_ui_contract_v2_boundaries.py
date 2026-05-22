@@ -327,6 +327,202 @@ class TestUiContractV2Boundaries(unittest.TestCase):
         self.assertFalse(hasattr(self.module, "BUSINESS_FORM_SECTION_ALIASES_BY_MODEL"))
         self.assertFalse(hasattr(self.module, "BUSINESS_FORM_STRUCTURE_P1_VISIBLE_FIELD_MODELS"))
 
+    def test_form_structure_contract_places_history_fields_in_check_group(self):
+        handler = self.module.UiContractV2Handler(env=object())
+        field_types = {
+            "project_id": "many2one",
+            "amount": "monetary",
+            "p1_visible_8fa8662ad38f": "char",
+            "p1_visible_3e7255522b33": "char",
+            "legacy_status": "char",
+        }
+
+        def unique(items):
+            out = []
+            seen = set()
+            for item in items:
+                value = str(item or "").strip()
+                if value and value in field_types and value not in seen:
+                    seen.add(value)
+                    out.append(value)
+            return out
+
+        structure = handler._build_form_structure_contract(
+            model="payment.request",
+            profile={
+                "common_fields": list(field_types.keys()),
+                "amount_fields": ["amount"],
+                "date_fields": [],
+                "status_field": "legacy_status",
+                "note_field": "",
+                "attachment_field": "",
+                "detail_fields": [],
+                "field_labels": {
+                    "p1_visible_8fa8662ad38f": "单据编号",
+                    "p1_visible_3e7255522b33": "项目名称",
+                    "legacy_status": "历史状态",
+                },
+            },
+            field_type=lambda name: field_types.get(name, "char"),
+            unique=unique,
+        )
+
+        history_group = None
+        primary_refs = []
+        for slot in structure["slots"]:
+            if slot["slot"] == "primary_facts":
+                for group in slot.get("groups") or []:
+                    primary_refs.extend(group.get("fieldRefs") or [])
+            if slot["slot"] == "details_source":
+                history_group = next(
+                    (group for group in slot.get("groups") or [] if group.get("name") == "history_check"),
+                    None,
+                )
+
+        self.assertIsNotNone(history_group)
+        self.assertEqual(
+            history_group["fieldRefs"],
+            ["p1_visible_8fa8662ad38f", "p1_visible_3e7255522b33", "legacy_status"],
+        )
+        self.assertNotIn("p1_visible_8fa8662ad38f", primary_refs)
+        self.assertNotIn("legacy_status", primary_refs)
+
+    def test_form_structure_contract_promotes_formalized_migration_business_fields(self):
+        handler = self.module.UiContractV2Handler(env=object())
+        field_types = {
+            "name": "char",
+            "legacy_owner_unit": "char",
+            "legacy_source_created_at": "char",
+            "legacy_attachment_ref": "char",
+        }
+
+        def unique(items):
+            out = []
+            seen = set()
+            for item in items:
+                value = str(item or "").strip()
+                if value and value in field_types and value not in seen:
+                    seen.add(value)
+                    out.append(value)
+            return out
+
+        structure = handler._build_form_structure_contract(
+            model="project.project",
+            profile={
+                "common_fields": list(field_types.keys()),
+                "amount_fields": [],
+                "date_fields": [],
+                "status_field": "",
+                "note_field": "",
+                "attachment_field": "",
+                "detail_fields": [],
+                "field_labels": {
+                    "name": "项目名称",
+                    "legacy_owner_unit": "业主单位",
+                    "legacy_source_created_at": "历史录入时间",
+                    "legacy_attachment_ref": "历史附件引用",
+                },
+            },
+            field_type=lambda name: field_types.get(name, "char"),
+            unique=unique,
+        )
+
+        roles = structure["fieldRoles"]
+        self.assertEqual(roles["legacy_owner_unit"]["slot"], "primary_facts")
+        self.assertEqual(roles["legacy_owner_unit"]["group"], "other_facts")
+        self.assertEqual(roles["legacy_source_created_at"]["slot"], "details_source")
+        self.assertEqual(roles["legacy_source_created_at"]["group"], "history_check")
+        self.assertEqual(roles["legacy_attachment_ref"]["slot"], "details_source")
+        self.assertEqual(roles["legacy_attachment_ref"]["group"], "history_check")
+
+    def test_form_structure_governance_hidden_rows_override_duplicate_migration_fields(self):
+        class _Field:
+            def __init__(self, field_type, string="", relation=""):
+                self.type = field_type
+                self.string = string
+                self.comodel_name = relation
+
+        class _Model:
+            _fields = {
+                "owner_id": _Field("many2one", "业主单位", "res.partner"),
+                "legacy_owner_unit": _Field("char", "业主单位名称"),
+                "owner_contact": _Field("char", "业主联系人"),
+                "legacy_owner_contact": _Field("char", "业主联系人姓名"),
+            }
+
+            def fields_get(self, names):
+                return {
+                    name: {
+                        "type": field.type,
+                        "string": field.string,
+                        "relation": field.comodel_name,
+                    }
+                    for name, field in self._fields.items()
+                    if name in names
+                }
+
+        class _Env:
+            def __contains__(self, model):
+                return model == "project.project"
+
+            def __getitem__(self, model):
+                if model != "project.project":
+                    raise KeyError(model)
+                return _Model()
+
+        handler = self.module.UiContractV2Handler(env=_Env())
+        source_contract = {
+            "fields": {
+                "owner_id": {"name": "owner_id", "type": "many2one", "string": "业主单位"},
+                "legacy_owner_unit": {"name": "legacy_owner_unit", "type": "char", "string": "业主单位名称"},
+                "owner_contact": {"name": "owner_contact", "type": "char", "string": "业主联系人"},
+                "legacy_owner_contact": {"name": "legacy_owner_contact", "type": "char", "string": "业主联系人姓名"},
+            },
+            "views": {
+                "form": {
+                    "layout": [
+                        {
+                            "type": "group",
+                            "children": [
+                                {"type": "field", "name": "owner_id"},
+                                {"type": "field", "name": "legacy_owner_unit"},
+                                {"type": "field", "name": "owner_contact"},
+                                {"type": "field", "name": "legacy_owner_contact"},
+                            ],
+                        }
+                    ]
+                }
+            },
+            "governance": {
+                "view_orchestration": {
+                    "applied": True,
+                    "business_config_contracts": [{"id": 7, "name": "project-form", "version_no": 1}],
+                    "fields": [
+                        {"name": "owner_id", "sequence": 10},
+                        {"name": "legacy_owner_unit", "sequence": 20},
+                        {"name": "owner_contact", "sequence": 30},
+                        {"name": "legacy_owner_contact", "sequence": 40},
+                        {"name": "legacy_owner_unit", "sequence": 900, "visible": False},
+                        {"name": "legacy_owner_contact", "sequence": 910, "visible": False},
+                    ],
+                }
+            },
+        }
+
+        handler._inject_business_operation_contract(
+            source_contract,
+            model="project.project",
+            view_type="form",
+        )
+
+        roles = source_contract["form_structure_contract"]["fieldRoles"]
+        self.assertIn("owner_id", roles)
+        self.assertIn("owner_contact", roles)
+        self.assertNotIn("legacy_owner_unit", roles)
+        self.assertNotIn("legacy_owner_contact", roles)
+        visible_fields = source_contract["business_operation_profile"]["form_structure_common_fields"]
+        self.assertEqual(visible_fields, ["owner_id", "owner_contact"])
+
     def test_form_structure_contract_does_not_fallback_to_wide_profile_fields(self):
         handler = self.module.UiContractV2Handler(env=object())
         field_types = {
@@ -609,6 +805,106 @@ class TestUiContractV2Boundaries(unittest.TestCase):
         self.assertNotIn("form_structure_contract", source_contract)
         self.assertNotIn("list_profile", source_contract)
         self.assertEqual(source_contract["visible_fields"], ["name"])
+
+    def test_form_structure_governance_ignores_hidden_config_fields(self):
+        class _Field:
+            def __init__(self, field_type, string="", relation=""):
+                self.type = field_type
+                self.string = string
+                self.comodel_name = relation
+
+        class _Model:
+            _fields = {
+                "name": _Field("char", "名称"),
+                "amount": _Field("monetary", "金额"),
+                "line_ids": _Field("one2many", "明细"),
+            }
+
+            def fields_get(self, names):
+                return {
+                    name: {
+                        "type": field.type,
+                        "string": field.string,
+                        "relation": field.comodel_name,
+                    }
+                    for name, field in self._fields.items()
+                    if name in names
+                }
+
+        class _GeneratedConfig:
+            id = 7
+            name = "demo_form_generated"
+            priority = 70
+            view_type = "form"
+            version_no = 1
+            contract_json = {
+                "view_orchestration": {
+                    "views": {
+                        "form": {
+                            "fields": [
+                                {"name": "name", "sequence": 10},
+                                {"name": "amount", "sequence": 20},
+                                {"name": "line_ids", "sequence": 30},
+                            ]
+                        }
+                    }
+                }
+            }
+
+        class _OverrideConfig:
+            id = 8
+            name = "demo_form_override"
+            priority = 90
+            view_type = "form"
+            version_no = 1
+            contract_json = {
+                "view_orchestration": {
+                    "views": {
+                        "form": {
+                            "fields": [
+                                {"name": "line_ids", "sequence": 30, "visible": False},
+                            ]
+                        }
+                    }
+                }
+            }
+
+        class _ConfigModel:
+            def _effective_view_orchestration_contracts(self, *args, **kwargs):
+                return [_GeneratedConfig(), _OverrideConfig()]
+
+        class _Env:
+            def __contains__(self, model):
+                return model in {"demo.business", "ui.business.config.contract"}
+
+            def __getitem__(self, model):
+                if model == "demo.business":
+                    return _Model()
+                if model == "ui.business.config.contract":
+                    return _ConfigModel()
+                raise KeyError(model)
+
+        handler = self.module.UiContractV2Handler(env=_Env())
+        source_contract = {
+            "fields": {
+                "name": {"name": "name", "type": "char", "string": "名称"},
+                "amount": {"name": "amount", "type": "monetary", "string": "金额"},
+                "line_ids": {"name": "line_ids", "type": "one2many", "string": "明细"},
+            },
+            "views": {"form": {"layout": []}},
+            "governance": {"view_orchestration": {"applied": True}},
+        }
+
+        handler._inject_business_operation_contract(
+            source_contract,
+            model="demo.business",
+            view_type="form",
+        )
+
+        structure = source_contract["form_structure_contract"]
+        self.assertIn("name", structure["fieldRoles"])
+        self.assertIn("amount", structure["fieldRoles"])
+        self.assertNotIn("line_ids", structure["fieldRoles"])
 
     def test_tree_projection_does_not_import_form_structure_fields_into_list_profile(self):
         class _Field:

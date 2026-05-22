@@ -1,0 +1,656 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="0">
+        <!-- Generated from P1_ALIAS_LABELS: P1 list facts must also be available on business forms. -->
+        <record id="business_config_contract_tender_bid_p1_form_business_facts_v1" model="ui.business.config.contract">
+            <field name="name">tender_bid_p1_form_business_facts_v1</field>
+            <field name="model">tender.bid</field>
+            <field name="view_type">form</field>
+            <field name="priority">88</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'views': {
+                        'form': {
+                            'sections': [
+                                {'title': '单据识别'},
+                                {'title': '业务对象'},
+                                {'title': '金额与办理'},
+                                {'title': '附件与来源'}
+                            ],
+                            'fields': [{'name': 'p1_visible_06fa8c6f628f', 'sequence': 10, 'readonly': True}, {'name': 'p1_visible_f22832ce4781', 'sequence': 20, 'readonly': True}, {'name': 'p1_visible_8fa8662ad38f', 'sequence': 30, 'readonly': True}, {'name': 'p1_visible_3e7255522b33', 'sequence': 40, 'readonly': True}, {'name': 'p1_visible_3f2c92346bec', 'sequence': 50, 'readonly': True}, {'name': 'p1_visible_880ab989a872', 'sequence': 60, 'readonly': True}, {'name': 'p1_visible_2c346345746e', 'sequence': 70, 'readonly': True}, {'name': 'p1_visible_3e5fd432c9df', 'sequence': 80, 'readonly': True}, {'name': 'p1_visible_48a64eb40c71', 'sequence': 90, 'readonly': True}, {'name': 'p1_visible_34943c40c9af', 'sequence': 100, 'readonly': True}, {'name': 'p1_visible_e0361480e3a5', 'sequence': 110, 'readonly': True}, {'name': 'p1_visible_bb7c7aeff3e4', 'sequence': 120, 'readonly': True}, {'name': 'p1_visible_c6b9a8cfdb21', 'sequence': 130, 'readonly': True}, {'name': 'p1_visible_99f6fe6c41ad', 'sequence': 140, 'readonly': True}, {'name': 'p1_visible_ee6a4d9e2956', 'sequence': 150, 'readonly': True}, {'name': 'p1_visible_dfc25d77dc39', 'sequence': 160, 'readonly': True}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_sc_financing_loan_p1_form_business_facts_v1" model="ui.business.config.contract">
+            <field name="name">sc_financing_loan_p1_form_business_facts_v1</field>
+            <field name="model">sc.financing.loan</field>
+            <field name="view_type">form</field>
+            <field name="priority">88</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'views': {
+                        'form': {
+                            'sections': [
+                                {'title': '单据识别'},
+                                {'title': '业务对象'},
+                                {'title': '金额与办理'},
+                                {'title': '附件与来源'}
+                            ],
+                            'fields': [{'name': 'p1_visible_06fa8c6f628f', 'sequence': 10, 'readonly': True}, {'name': 'p1_visible_8fa8662ad38f', 'sequence': 20, 'readonly': True}, {'name': 'p1_visible_3e7255522b33', 'sequence': 30, 'readonly': True}, {'name': 'p1_visible_f65ab1a8427f', 'sequence': 40, 'readonly': True}, {'name': 'p1_visible_f75550069cae', 'sequence': 50, 'readonly': True}, {'name': 'p1_visible_7c49c8f25a7a', 'sequence': 60, 'readonly': True}, {'name': 'p1_visible_0f6aab17d203', 'sequence': 70, 'readonly': True}, {'name': 'p1_visible_547c71732ac4', 'sequence': 80, 'readonly': True}, {'name': 'p1_visible_e0361480e3a5', 'sequence': 90, 'readonly': True}, {'name': 'p1_visible_99f6fe6c41ad', 'sequence': 100, 'readonly': True}, {'name': 'p1_visible_ee6a4d9e2956', 'sequence': 110, 'readonly': True}, {'name': 'p1_visible_dfc25d77dc39', 'sequence': 120, 'readonly': True}, {'name': 'p1_visible_9c075c710f62', 'sequence': 130, 'readonly': True}, {'name': 'p1_visible_f13b158f80f7', 'sequence': 140, 'readonly': True}, {'name': 'p1_visible_a5b7f233fadc', 'sequence': 150, 'readonly': True}, {'name': 'p1_visible_dca067f698a7', 'sequence': 160, 'readonly': True}, {'name': 'p1_visible_8ab2d41e7757', 'sequence': 170, 'readonly': True}, {'name': 'p1_visible_3bee2141cdb1', 'sequence': 180, 'readonly': True}, {'name': 'p1_visible_701ce5416c52', 'sequence': 190, 'readonly': True}, {'name': 'p1_visible_e242a03dd5b6', 'sequence': 200, 'readonly': True}, {'name': 'p1_visible_982d68c74aeb', 'sequence': 210, 'readonly': True}, {'name': 'p1_visible_ed43f478ec3d', 'sequence': 220, 'readonly': True}, {'name': 'p1_visible_a12b85cb38e6', 'sequence': 230, 'readonly': True}, {'name': 'p1_visible_099f8b5c680a', 'sequence': 240, 'readonly': True}, {'name': 'p1_visible_628f2a7878b3', 'sequence': 250, 'readonly': True}, {'name': 'p1_visible_b3620ea08897', 'sequence': 260, 'readonly': True}, {'name': 'p1_visible_a97833656ba0', 'sequence': 270, 'readonly': True}, {'name': 'p1_visible_393c1d188de6', 'sequence': 280, 'readonly': True}, {'name': 'p1_visible_94f294dac442', 'sequence': 290, 'readonly': True}, {'name': 'p1_visible_71e47f617269', 'sequence': 300, 'readonly': True}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_payment_request_p1_form_business_facts_v1" model="ui.business.config.contract">
+            <field name="name">payment_request_p1_form_business_facts_v1</field>
+            <field name="model">payment.request</field>
+            <field name="view_type">form</field>
+            <field name="priority">88</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'views': {
+                        'form': {
+                            'sections': [
+                                {'title': '单据识别'},
+                                {'title': '业务对象'},
+                                {'title': '金额与办理'},
+                                {'title': '附件与来源'}
+                            ],
+                            'fields': [{'name': 'p1_visible_06fa8c6f628f', 'sequence': 10, 'readonly': True}, {'name': 'p1_visible_8fa8662ad38f', 'sequence': 20, 'readonly': True}, {'name': 'p1_visible_3e7255522b33', 'sequence': 30, 'readonly': True}, {'name': 'p1_visible_ccfa1326c88f', 'sequence': 40, 'readonly': True}, {'name': 'p1_visible_c00fc55a25b8', 'sequence': 50, 'readonly': True}, {'name': 'p1_visible_9469a2ad32f8', 'sequence': 60, 'readonly': True}, {'name': 'p1_visible_ae1abe750af6', 'sequence': 70, 'readonly': True}, {'name': 'p1_visible_63c5facb9f66', 'sequence': 80, 'readonly': True}, {'name': 'p1_visible_e0361480e3a5', 'sequence': 90, 'readonly': True}, {'name': 'p1_visible_1874b0ce5103', 'sequence': 100, 'readonly': True}, {'name': 'p1_visible_3759fcfc297a', 'sequence': 110, 'readonly': True}, {'name': 'p1_visible_6cf6e39bece9', 'sequence': 120, 'readonly': True}, {'name': 'p1_visible_a103d7cee046', 'sequence': 130, 'readonly': True}, {'name': 'p1_visible_48a64eb40c71', 'sequence': 140, 'readonly': True}, {'name': 'p1_visible_901384917949', 'sequence': 150, 'readonly': True}, {'name': 'p1_visible_71e47f617269', 'sequence': 160, 'readonly': True}, {'name': 'p1_visible_99f6fe6c41ad', 'sequence': 170, 'readonly': True}, {'name': 'p1_visible_dfc25d77dc39', 'sequence': 180, 'readonly': True}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_sc_tax_deduction_registration_p1_form_business_facts_v1" model="ui.business.config.contract">
+            <field name="name">sc_tax_deduction_registration_p1_form_business_facts_v1</field>
+            <field name="model">sc.tax.deduction.registration</field>
+            <field name="view_type">form</field>
+            <field name="priority">88</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'views': {
+                        'form': {
+                            'sections': [
+                                {'title': '单据识别'},
+                                {'title': '业务对象'},
+                                {'title': '金额与办理'},
+                                {'title': '附件与来源'}
+                            ],
+                            'fields': [{'name': 'p1_visible_06fa8c6f628f', 'sequence': 10, 'readonly': True}, {'name': 'p1_visible_3e7255522b33', 'sequence': 20, 'readonly': True}, {'name': 'p1_visible_ea75d3bba41c', 'sequence': 30, 'readonly': True}, {'name': 'p1_visible_9b5c1b5cbd69', 'sequence': 40, 'readonly': True}, {'name': 'p1_visible_16e91e3d2738', 'sequence': 50, 'readonly': True}, {'name': 'p1_visible_99f6fe6c41ad', 'sequence': 60, 'readonly': True}, {'name': 'p1_visible_748d7dc7e321', 'sequence': 70, 'readonly': True}, {'name': 'p1_visible_62e5cf441092', 'sequence': 80, 'readonly': True}, {'name': 'p1_visible_1da8ed2551df', 'sequence': 90, 'readonly': True}, {'name': 'p1_visible_dbbcd74271cd', 'sequence': 100, 'readonly': True}, {'name': 'p1_visible_b0bff5c45de7', 'sequence': 110, 'readonly': True}, {'name': 'p1_visible_3ade9df90bf8', 'sequence': 120, 'readonly': True}, {'name': 'p1_visible_e0361480e3a5', 'sequence': 130, 'readonly': True}, {'name': 'p1_visible_f9cc22d53aff', 'sequence': 140, 'readonly': True}, {'name': 'p1_visible_61b3896f8414', 'sequence': 150, 'readonly': True}, {'name': 'p1_visible_34943c40c9af', 'sequence': 160, 'readonly': True}, {'name': 'p1_visible_a3c1a28bd34c', 'sequence': 170, 'readonly': True}, {'name': 'p1_visible_62319711f425', 'sequence': 180, 'readonly': True}, {'name': 'p1_visible_6514c1bee4d7', 'sequence': 190, 'readonly': True}, {'name': 'p1_visible_3540b47897be', 'sequence': 200, 'readonly': True}, {'name': 'p1_visible_be5462bd6a62', 'sequence': 210, 'readonly': True}, {'name': 'p1_visible_ada9a85eab00', 'sequence': 220, 'readonly': True}, {'name': 'p1_visible_ee19dd75350c', 'sequence': 230, 'readonly': True}, {'name': 'p1_visible_6bb76c93367b', 'sequence': 240, 'readonly': True}, {'name': 'p1_visible_f286b41bd7f0', 'sequence': 250, 'readonly': True}, {'name': 'p1_visible_d09b05103331', 'sequence': 260, 'readonly': True}, {'name': 'p1_visible_99f753ed6262', 'sequence': 270, 'readonly': True}, {'name': 'p1_visible_007363f27191', 'sequence': 280, 'readonly': True}, {'name': 'p1_visible_b9ae89319036', 'sequence': 290, 'readonly': True}, {'name': 'p1_visible_37d56ad493cf', 'sequence': 300, 'readonly': True}, {'name': 'p1_visible_3d0afdf3736d', 'sequence': 310, 'readonly': True}, {'name': 'p1_visible_ee6a4d9e2956', 'sequence': 320, 'readonly': True}, {'name': 'p1_visible_dfc25d77dc39', 'sequence': 330, 'readonly': True}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_sc_payment_execution_p1_form_business_facts_v1" model="ui.business.config.contract">
+            <field name="name">sc_payment_execution_p1_form_business_facts_v1</field>
+            <field name="model">sc.payment.execution</field>
+            <field name="view_type">form</field>
+            <field name="priority">88</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'views': {
+                        'form': {
+                            'sections': [
+                                {'title': '单据识别'},
+                                {'title': '业务对象'},
+                                {'title': '金额与办理'},
+                                {'title': '附件与来源'}
+                            ],
+                            'fields': [{'name': 'p1_visible_f22832ce4781', 'sequence': 10, 'readonly': True}, {'name': 'p1_visible_7f5da566c14e', 'sequence': 20, 'readonly': True}, {'name': 'p1_visible_8fa8662ad38f', 'sequence': 30, 'readonly': True}, {'name': 'p1_visible_3e7255522b33', 'sequence': 40, 'readonly': True}, {'name': 'p1_visible_cf44ec3f55f9', 'sequence': 50, 'readonly': True}, {'name': 'p1_visible_058f511c98cf', 'sequence': 60, 'readonly': True}, {'name': 'p1_visible_d890d302f7f7', 'sequence': 70, 'readonly': True}, {'name': 'p1_visible_e0361480e3a5', 'sequence': 80, 'readonly': True}, {'name': 'p1_visible_e560f90bd049', 'sequence': 90, 'readonly': True}, {'name': 'p1_visible_f35ba3fab897', 'sequence': 100, 'readonly': True}, {'name': 'p1_visible_71e47f617269', 'sequence': 110, 'readonly': True}, {'name': 'p1_visible_48a64eb40c71', 'sequence': 120, 'readonly': True}, {'name': 'p1_visible_c3d92b20c8a3', 'sequence': 130, 'readonly': True}, {'name': 'p1_visible_a4aa6578aa87', 'sequence': 140, 'readonly': True}, {'name': 'p1_visible_99f6fe6c41ad', 'sequence': 150, 'readonly': True}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_sc_fund_account_operation_p1_form_business_facts_v1" model="ui.business.config.contract">
+            <field name="name">sc_fund_account_operation_p1_form_business_facts_v1</field>
+            <field name="model">sc.fund.account.operation</field>
+            <field name="view_type">form</field>
+            <field name="priority">88</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'views': {
+                        'form': {
+                            'sections': [
+                                {'title': '单据识别'},
+                                {'title': '业务对象'},
+                                {'title': '金额与办理'},
+                                {'title': '附件与来源'}
+                            ],
+                            'fields': [{'name': 'p1_visible_06fa8c6f628f', 'sequence': 10, 'readonly': True}, {'name': 'p1_visible_3e7255522b33', 'sequence': 20, 'readonly': True}, {'name': 'p1_visible_51f85a78cac4', 'sequence': 30, 'readonly': True}, {'name': 'p1_visible_43f67c096554', 'sequence': 40, 'readonly': True}, {'name': 'p1_visible_df6e7b1e9eac', 'sequence': 50, 'readonly': True}, {'name': 'p1_visible_0675851fc19e', 'sequence': 60, 'readonly': True}, {'name': 'p1_visible_e0361480e3a5', 'sequence': 70, 'readonly': True}, {'name': 'p1_visible_99f6fe6c41ad', 'sequence': 80, 'readonly': True}, {'name': 'p1_visible_ee6a4d9e2956', 'sequence': 90, 'readonly': True}, {'name': 'p1_visible_dfc25d77dc39', 'sequence': 100, 'readonly': True}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_sc_receipt_income_p1_form_business_facts_v1" model="ui.business.config.contract">
+            <field name="name">sc_receipt_income_p1_form_business_facts_v1</field>
+            <field name="model">sc.receipt.income</field>
+            <field name="view_type">form</field>
+            <field name="priority">88</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'views': {
+                        'form': {
+                            'sections': [
+                                {'title': '单据识别'},
+                                {'title': '业务对象'},
+                                {'title': '金额与办理'},
+                                {'title': '附件与来源'}
+                            ],
+                            'fields': [{'name': 'p1_visible_06fa8c6f628f', 'sequence': 10, 'readonly': True}, {'name': 'p1_visible_8fa8662ad38f', 'sequence': 20, 'readonly': True}, {'name': 'p1_visible_89b4aa6364ce', 'sequence': 30, 'readonly': True}, {'name': 'p1_visible_3e7255522b33', 'sequence': 40, 'readonly': True}, {'name': 'p1_visible_389372a58a16', 'sequence': 50, 'readonly': True}, {'name': 'p1_visible_fc06f3f3d307', 'sequence': 60, 'readonly': True}, {'name': 'p1_visible_99219180c1b9', 'sequence': 70, 'readonly': True}, {'name': 'p1_visible_50f529884746', 'sequence': 80, 'readonly': True}, {'name': 'p1_visible_99f6fe6c41ad', 'sequence': 90, 'readonly': True}, {'name': 'p1_visible_17d0f48c07fb', 'sequence': 100, 'readonly': True}, {'name': 'p1_visible_75e856a13c7c', 'sequence': 110, 'readonly': True}, {'name': 'p1_visible_689407e406ab', 'sequence': 120, 'readonly': True}, {'name': 'p1_visible_0d8979d08c09', 'sequence': 130, 'readonly': True}, {'name': 'p1_visible_aa6152009ab0', 'sequence': 140, 'readonly': True}, {'name': 'p1_visible_ee6a4d9e2956', 'sequence': 150, 'readonly': True}, {'name': 'p1_visible_dfc25d77dc39', 'sequence': 160, 'readonly': True}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_sc_legacy_fund_daily_snapshot_fact_p1_form_business_facts_v1" model="ui.business.config.contract">
+            <field name="name">sc_legacy_fund_daily_snapshot_fact_p1_form_business_facts_v1</field>
+            <field name="model">sc.legacy.fund.daily.snapshot.fact</field>
+            <field name="view_type">form</field>
+            <field name="priority">88</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'views': {
+                        'form': {
+                            'sections': [
+                                {'title': '单据识别'},
+                                {'title': '业务对象'},
+                                {'title': '金额与办理'},
+                                {'title': '附件与来源'}
+                            ],
+                            'fields': [{'name': 'p1_visible_06fa8c6f628f', 'sequence': 10, 'readonly': True}, {'name': 'p1_visible_8fa8662ad38f', 'sequence': 20, 'readonly': True}, {'name': 'p1_visible_1e62803e196c', 'sequence': 30, 'readonly': True}, {'name': 'p1_visible_3f2da24264f0', 'sequence': 40, 'readonly': True}, {'name': 'p1_visible_ecaf440fd399', 'sequence': 50, 'readonly': True}, {'name': 'p1_visible_bed51835debf', 'sequence': 60, 'readonly': True}, {'name': 'p1_visible_5b112952b526', 'sequence': 70, 'readonly': True}, {'name': 'p1_visible_834c5de2f288', 'sequence': 80, 'readonly': True}, {'name': 'p1_visible_e5bf37733141', 'sequence': 90, 'readonly': True}, {'name': 'p1_visible_af4cdd8ce788', 'sequence': 100, 'readonly': True}, {'name': 'p1_visible_0027be5d5d7e', 'sequence': 110, 'readonly': True}, {'name': 'p1_visible_e0361480e3a5', 'sequence': 120, 'readonly': True}, {'name': 'p1_visible_ee6a4d9e2956', 'sequence': 130, 'readonly': True}, {'name': 'p1_visible_dfc25d77dc39', 'sequence': 140, 'readonly': True}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_sc_invoice_registration_p1_form_business_facts_v1" model="ui.business.config.contract">
+            <field name="name">sc_invoice_registration_p1_form_business_facts_v1</field>
+            <field name="model">sc.invoice.registration</field>
+            <field name="view_type">form</field>
+            <field name="priority">88</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'views': {
+                        'form': {
+                            'sections': [
+                                {'title': '单据识别'},
+                                {'title': '业务对象'},
+                                {'title': '金额与办理'},
+                                {'title': '附件与来源'}
+                            ],
+                            'fields': [{'name': 'p1_visible_3b66293fbe70', 'sequence': 10, 'readonly': True}, {'name': 'p1_visible_17b341733b7b', 'sequence': 20, 'readonly': True}, {'name': 'p1_visible_3e7255522b33', 'sequence': 30, 'readonly': True}, {'name': 'p1_visible_8fa8662ad38f', 'sequence': 40, 'readonly': True}, {'name': 'p1_visible_880ab989a872', 'sequence': 50, 'readonly': True}, {'name': 'p1_visible_ed9ce3e5ab3c', 'sequence': 60, 'readonly': True}, {'name': 'p1_visible_2c346345746e', 'sequence': 70, 'readonly': True}, {'name': 'p1_visible_f9cc22d53aff', 'sequence': 80, 'readonly': True}, {'name': 'p1_visible_0d8979d08c09', 'sequence': 90, 'readonly': True}, {'name': 'p1_visible_83e1d169c7a2', 'sequence': 100, 'readonly': True}, {'name': 'p1_visible_4f43764bd23d', 'sequence': 110, 'readonly': True}, {'name': 'p1_visible_c5e161f03e08', 'sequence': 120, 'readonly': True}, {'name': 'p1_visible_99f6fe6c41ad', 'sequence': 130, 'readonly': True}, {'name': 'p1_visible_e0361480e3a5', 'sequence': 140, 'readonly': True}, {'name': 'p1_visible_ee6a4d9e2956', 'sequence': 150, 'readonly': True}, {'name': 'p1_visible_dfc25d77dc39', 'sequence': 160, 'readonly': True}, {'name': 'p1_visible_06fa8c6f628f', 'sequence': 170, 'readonly': True}, {'name': 'p1_visible_f22832ce4781', 'sequence': 180, 'readonly': True}, {'name': 'p1_visible_7f5da566c14e', 'sequence': 190, 'readonly': True}, {'name': 'p1_visible_c73a8eab0d57', 'sequence': 200, 'readonly': True}, {'name': 'p1_visible_c1b95b8ca332', 'sequence': 210, 'readonly': True}, {'name': 'p1_visible_0e2126d6cf82', 'sequence': 220, 'readonly': True}, {'name': 'p1_visible_964a2edc6942', 'sequence': 230, 'readonly': True}, {'name': 'p1_visible_ada9a85eab00', 'sequence': 240, 'readonly': True}, {'name': 'p1_visible_bbe7bbee241e', 'sequence': 250, 'readonly': True}, {'name': 'p1_visible_be5462bd6a62', 'sequence': 260, 'readonly': True}, {'name': 'p1_visible_d42c2d26610f', 'sequence': 270, 'readonly': True}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_sc_fund_account_p1_form_business_facts_v1" model="ui.business.config.contract">
+            <field name="name">sc_fund_account_p1_form_business_facts_v1</field>
+            <field name="model">sc.fund.account</field>
+            <field name="view_type">form</field>
+            <field name="priority">88</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'views': {
+                        'form': {
+                            'sections': [
+                                {'title': '单据识别'},
+                                {'title': '业务对象'},
+                                {'title': '金额与办理'},
+                                {'title': '附件与来源'}
+                            ],
+                            'fields': [{'name': 'p1_visible_f22832ce4781', 'sequence': 10, 'readonly': True}, {'name': 'p1_visible_0fb499e9ebc9', 'sequence': 20, 'readonly': True}, {'name': 'p1_visible_ef38c6c5245f', 'sequence': 30, 'readonly': True}, {'name': 'p1_visible_bd1bb9040d11', 'sequence': 40, 'readonly': True}, {'name': 'p1_visible_3e7255522b33', 'sequence': 50, 'readonly': True}, {'name': 'p1_visible_8fa8662ad38f', 'sequence': 60, 'readonly': True}, {'name': 'p1_visible_f63da5b6950e', 'sequence': 70, 'readonly': True}, {'name': 'p1_visible_3f2da24264f0', 'sequence': 80, 'readonly': True}, {'name': 'p1_visible_d8347d8e9fac', 'sequence': 90, 'readonly': True}, {'name': 'p1_visible_0b959af0bd69', 'sequence': 100, 'readonly': True}, {'name': 'p1_visible_a82dee991619', 'sequence': 110, 'readonly': True}, {'name': 'p1_visible_256ffb1df96a', 'sequence': 120, 'readonly': True}, {'name': 'p1_visible_f462c3c4fc87', 'sequence': 130, 'readonly': True}, {'name': 'p1_visible_c9bb0821eed9', 'sequence': 140, 'readonly': True}, {'name': 'p1_visible_ee6a4d9e2956', 'sequence': 150, 'readonly': True}, {'name': 'p1_visible_dfc25d77dc39', 'sequence': 160, 'readonly': True}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_sc_material_purchase_request_p1_form_business_facts_v1" model="ui.business.config.contract">
+            <field name="name">sc_material_purchase_request_p1_form_business_facts_v1</field>
+            <field name="model">sc.material.purchase.request</field>
+            <field name="view_type">form</field>
+            <field name="priority">88</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'views': {
+                        'form': {
+                            'sections': [
+                                {'title': '单据识别'},
+                                {'title': '业务对象'},
+                                {'title': '金额与办理'},
+                                {'title': '附件与来源'}
+                            ],
+                            'fields': [{'name': 'p1_visible_06fa8c6f628f', 'sequence': 10, 'readonly': True}, {'name': 'p1_visible_17b341733b7b', 'sequence': 20, 'readonly': True}, {'name': 'p1_visible_748d7dc7e321', 'sequence': 30, 'readonly': True}, {'name': 'p1_visible_703c9eb0f092', 'sequence': 40, 'readonly': True}, {'name': 'p1_visible_fb3fb348357f', 'sequence': 50, 'readonly': True}, {'name': 'p1_visible_824168a11b21', 'sequence': 60, 'readonly': True}, {'name': 'p1_visible_3b652b9864d4', 'sequence': 70, 'readonly': True}, {'name': 'p1_visible_d3ebd50d724b', 'sequence': 80, 'readonly': True}, {'name': 'p1_visible_a22ecb7fab2f', 'sequence': 90, 'readonly': True}, {'name': 'p1_visible_462c614de6c7', 'sequence': 100, 'readonly': True}, {'name': 'p1_visible_3e7255522b33', 'sequence': 110, 'readonly': True}, {'name': 'p1_visible_37d56ad493cf', 'sequence': 120, 'readonly': True}, {'name': 'p1_visible_99f6fe6c41ad', 'sequence': 130, 'readonly': True}, {'name': 'p1_visible_ee6a4d9e2956', 'sequence': 140, 'readonly': True}, {'name': 'p1_visible_dfc25d77dc39', 'sequence': 150, 'readonly': True}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_sc_material_inbound_p1_form_business_facts_v1" model="ui.business.config.contract">
+            <field name="name">sc_material_inbound_p1_form_business_facts_v1</field>
+            <field name="model">sc.material.inbound</field>
+            <field name="view_type">form</field>
+            <field name="priority">88</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'views': {
+                        'form': {
+                            'sections': [
+                                {'title': '单据识别'},
+                                {'title': '业务对象'},
+                                {'title': '金额与办理'},
+                                {'title': '附件与来源'}
+                            ],
+                            'fields': [{'name': 'p1_visible_06fa8c6f628f', 'sequence': 10, 'readonly': True}, {'name': 'p1_visible_1e62803e196c', 'sequence': 20, 'readonly': True}, {'name': 'p1_visible_cf44ec3f55f9', 'sequence': 30, 'readonly': True}, {'name': 'p1_visible_b9ae89319036', 'sequence': 40, 'readonly': True}, {'name': 'p1_visible_37d56ad493cf', 'sequence': 50, 'readonly': True}, {'name': 'p1_visible_c73a8eab0d57', 'sequence': 60, 'readonly': True}, {'name': 'p1_visible_7037fe48a39a', 'sequence': 70, 'readonly': True}, {'name': 'p1_visible_b6959bb111d9', 'sequence': 80, 'readonly': True}, {'name': 'p1_visible_d3ebd50d724b', 'sequence': 90, 'readonly': True}, {'name': 'p1_visible_a22ecb7fab2f', 'sequence': 100, 'readonly': True}, {'name': 'p1_visible_523a114e3f97', 'sequence': 110, 'readonly': True}, {'name': 'p1_visible_ae142ac27fe4', 'sequence': 120, 'readonly': True}, {'name': 'p1_visible_3e7255522b33', 'sequence': 130, 'readonly': True}, {'name': 'p1_visible_99f6fe6c41ad', 'sequence': 140, 'readonly': True}, {'name': 'p1_visible_7588602fb22d', 'sequence': 150, 'readonly': True}, {'name': 'p1_visible_ee6a4d9e2956', 'sequence': 160, 'readonly': True}, {'name': 'p1_visible_dfc25d77dc39', 'sequence': 170, 'readonly': True}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_sc_material_settlement_p1_form_business_facts_v1" model="ui.business.config.contract">
+            <field name="name">sc_material_settlement_p1_form_business_facts_v1</field>
+            <field name="model">sc.material.settlement</field>
+            <field name="view_type">form</field>
+            <field name="priority">88</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'views': {
+                        'form': {
+                            'sections': [
+                                {'title': '单据识别'},
+                                {'title': '业务对象'},
+                                {'title': '金额与办理'},
+                                {'title': '附件与来源'}
+                            ],
+                            'fields': [{'name': 'p1_visible_06fa8c6f628f', 'sequence': 10, 'readonly': True}, {'name': 'p1_visible_3e7255522b33', 'sequence': 20, 'readonly': True}, {'name': 'p1_visible_8fa8662ad38f', 'sequence': 30, 'readonly': True}, {'name': 'p1_visible_748d7dc7e321', 'sequence': 40, 'readonly': True}, {'name': 'p1_visible_36cae65ab40a', 'sequence': 50, 'readonly': True}, {'name': 'p1_visible_b6959bb111d9', 'sequence': 60, 'readonly': True}, {'name': 'p1_visible_d3ebd50d724b', 'sequence': 70, 'readonly': True}, {'name': 'p1_visible_a22ecb7fab2f', 'sequence': 80, 'readonly': True}, {'name': 'p1_visible_ec15903ded76', 'sequence': 90, 'readonly': True}, {'name': 'p1_visible_72cf58c14fc0', 'sequence': 100, 'readonly': True}, {'name': 'p1_visible_825a06905b09', 'sequence': 110, 'readonly': True}, {'name': 'p1_visible_816dc9f7b786', 'sequence': 120, 'readonly': True}, {'name': 'p1_visible_99f6fe6c41ad', 'sequence': 130, 'readonly': True}, {'name': 'p1_visible_ee6a4d9e2956', 'sequence': 140, 'readonly': True}, {'name': 'p1_visible_dfc25d77dc39', 'sequence': 150, 'readonly': True}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_sc_labor_request_p1_form_business_facts_v1" model="ui.business.config.contract">
+            <field name="name">sc_labor_request_p1_form_business_facts_v1</field>
+            <field name="model">sc.labor.request</field>
+            <field name="view_type">form</field>
+            <field name="priority">88</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'views': {
+                        'form': {
+                            'sections': [
+                                {'title': '单据识别'},
+                                {'title': '业务对象'},
+                                {'title': '金额与办理'},
+                                {'title': '附件与来源'}
+                            ],
+                            'fields': [{'name': 'p1_visible_06fa8c6f628f', 'sequence': 10, 'readonly': True}, {'name': 'p1_visible_8fa8662ad38f', 'sequence': 20, 'readonly': True}, {'name': 'p1_visible_3e7255522b33', 'sequence': 30, 'readonly': True}, {'name': 'p1_visible_4f451f1752ff', 'sequence': 40, 'readonly': True}, {'name': 'p1_visible_748d7dc7e321', 'sequence': 50, 'readonly': True}, {'name': 'p1_visible_5c9cf136f91e', 'sequence': 60, 'readonly': True}, {'name': 'p1_visible_a4772564ef48', 'sequence': 70, 'readonly': True}, {'name': 'p1_visible_fbc9dd74a2e6', 'sequence': 80, 'readonly': True}, {'name': 'p1_visible_d4f294757227', 'sequence': 90, 'readonly': True}, {'name': 'p1_visible_3b652b9864d4', 'sequence': 100, 'readonly': True}, {'name': 'p1_visible_d3ebd50d724b', 'sequence': 110, 'readonly': True}, {'name': 'p1_visible_a22ecb7fab2f', 'sequence': 120, 'readonly': True}, {'name': 'p1_visible_462c614de6c7', 'sequence': 130, 'readonly': True}, {'name': 'p1_visible_c501b294a595', 'sequence': 140, 'readonly': True}, {'name': 'p1_visible_ae8c5d45f392', 'sequence': 150, 'readonly': True}, {'name': 'p1_visible_17b341733b7b', 'sequence': 160, 'readonly': True}, {'name': 'p1_visible_99f6fe6c41ad', 'sequence': 170, 'readonly': True}, {'name': 'p1_visible_1546ed5e57bd', 'sequence': 180, 'readonly': True}, {'name': 'p1_visible_98de2397eba2', 'sequence': 190, 'readonly': True}, {'name': 'p1_visible_ee6a4d9e2956', 'sequence': 200, 'readonly': True}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_sc_labor_usage_p1_form_business_facts_v1" model="ui.business.config.contract">
+            <field name="name">sc_labor_usage_p1_form_business_facts_v1</field>
+            <field name="model">sc.labor.usage</field>
+            <field name="view_type">form</field>
+            <field name="priority">88</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'views': {
+                        'form': {
+                            'sections': [
+                                {'title': '单据识别'},
+                                {'title': '业务对象'},
+                                {'title': '金额与办理'},
+                                {'title': '附件与来源'}
+                            ],
+                            'fields': [{'name': 'p1_visible_06fa8c6f628f', 'sequence': 10, 'readonly': True}, {'name': 'p1_visible_8fa8662ad38f', 'sequence': 20, 'readonly': True}, {'name': 'p1_visible_3e7255522b33', 'sequence': 30, 'readonly': True}, {'name': 'p1_visible_1e62803e196c', 'sequence': 40, 'readonly': True}, {'name': 'p1_visible_748d7dc7e321', 'sequence': 50, 'readonly': True}, {'name': 'p1_visible_ae8c5d45f392', 'sequence': 60, 'readonly': True}, {'name': 'p1_visible_523a114e3f97', 'sequence': 70, 'readonly': True}, {'name': 'p1_visible_824168a11b21', 'sequence': 80, 'readonly': True}, {'name': 'p1_visible_e0361480e3a5', 'sequence': 90, 'readonly': True}, {'name': 'p1_visible_99f6fe6c41ad', 'sequence': 100, 'readonly': True}, {'name': 'p1_visible_ee6a4d9e2956', 'sequence': 110, 'readonly': True}, {'name': 'p1_visible_dfc25d77dc39', 'sequence': 120, 'readonly': True}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_sc_labor_settlement_p1_form_business_facts_v1" model="ui.business.config.contract">
+            <field name="name">sc_labor_settlement_p1_form_business_facts_v1</field>
+            <field name="model">sc.labor.settlement</field>
+            <field name="view_type">form</field>
+            <field name="priority">88</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'views': {
+                        'form': {
+                            'sections': [
+                                {'title': '单据识别'},
+                                {'title': '业务对象'},
+                                {'title': '金额与办理'},
+                                {'title': '附件与来源'}
+                            ],
+                            'fields': [{'name': 'p1_visible_8fa8662ad38f', 'sequence': 10, 'readonly': True}, {'name': 'p1_visible_3e7255522b33', 'sequence': 20, 'readonly': True}, {'name': 'p1_visible_1e62803e196c', 'sequence': 30, 'readonly': True}, {'name': 'p1_visible_748d7dc7e321', 'sequence': 40, 'readonly': True}, {'name': 'p1_visible_36cae65ab40a', 'sequence': 50, 'readonly': True}, {'name': 'p1_visible_b6959bb111d9', 'sequence': 60, 'readonly': True}, {'name': 'p1_visible_d3ebd50d724b', 'sequence': 70, 'readonly': True}, {'name': 'p1_visible_a22ecb7fab2f', 'sequence': 80, 'readonly': True}, {'name': 'p1_visible_ec15903ded76', 'sequence': 90, 'readonly': True}, {'name': 'p1_visible_72cf58c14fc0', 'sequence': 100, 'readonly': True}, {'name': 'p1_visible_825a06905b09', 'sequence': 110, 'readonly': True}, {'name': 'p1_visible_816dc9f7b786', 'sequence': 120, 'readonly': True}, {'name': 'p1_visible_99f6fe6c41ad', 'sequence': 130, 'readonly': True}, {'name': 'p1_visible_17b341733b7b', 'sequence': 140, 'readonly': True}, {'name': 'p1_visible_ee6a4d9e2956', 'sequence': 150, 'readonly': True}, {'name': 'p1_visible_dfc25d77dc39', 'sequence': 160, 'readonly': True}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_sc_subcontract_register_p1_form_business_facts_v1" model="ui.business.config.contract">
+            <field name="name">sc_subcontract_register_p1_form_business_facts_v1</field>
+            <field name="model">sc.subcontract.register</field>
+            <field name="view_type">form</field>
+            <field name="priority">88</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'views': {
+                        'form': {
+                            'sections': [
+                                {'title': '单据识别'},
+                                {'title': '业务对象'},
+                                {'title': '金额与办理'},
+                                {'title': '附件与来源'}
+                            ],
+                            'fields': [{'name': 'p1_visible_8fa8662ad38f', 'sequence': 10, 'readonly': True}, {'name': 'p1_visible_c88947435308', 'sequence': 20, 'readonly': True}, {'name': 'p1_visible_748d7dc7e321', 'sequence': 30, 'readonly': True}, {'name': 'p1_visible_6b40af3eee21', 'sequence': 40, 'readonly': True}, {'name': 'p1_visible_c2bdcf08e8a5', 'sequence': 50, 'readonly': True}, {'name': 'p1_visible_34943c40c9af', 'sequence': 60, 'readonly': True}, {'name': 'p1_visible_17b341733b7b', 'sequence': 70, 'readonly': True}, {'name': 'p1_visible_3b652b9864d4', 'sequence': 80, 'readonly': True}, {'name': 'p1_visible_d3ebd50d724b', 'sequence': 90, 'readonly': True}, {'name': 'p1_visible_a22ecb7fab2f', 'sequence': 100, 'readonly': True}, {'name': 'p1_visible_462c614de6c7', 'sequence': 110, 'readonly': True}, {'name': 'p1_visible_3e7255522b33', 'sequence': 120, 'readonly': True}, {'name': 'p1_visible_e0361480e3a5', 'sequence': 130, 'readonly': True}, {'name': 'p1_visible_99f6fe6c41ad', 'sequence': 140, 'readonly': True}, {'name': 'p1_visible_ee6a4d9e2956', 'sequence': 150, 'readonly': True}, {'name': 'p1_visible_dfc25d77dc39', 'sequence': 160, 'readonly': True}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_sc_subcontract_request_p1_form_business_facts_v1" model="ui.business.config.contract">
+            <field name="name">sc_subcontract_request_p1_form_business_facts_v1</field>
+            <field name="model">sc.subcontract.request</field>
+            <field name="view_type">form</field>
+            <field name="priority">88</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'views': {
+                        'form': {
+                            'sections': [
+                                {'title': '单据识别'},
+                                {'title': '业务对象'},
+                                {'title': '金额与办理'},
+                                {'title': '附件与来源'}
+                            ],
+                            'fields': [{'name': 'p1_visible_06fa8c6f628f', 'sequence': 10, 'readonly': True}, {'name': 'p1_visible_8fa8662ad38f', 'sequence': 20, 'readonly': True}, {'name': 'p1_visible_3e7255522b33', 'sequence': 30, 'readonly': True}, {'name': 'p1_visible_748d7dc7e321', 'sequence': 40, 'readonly': True}, {'name': 'p1_visible_c2183068c097', 'sequence': 50, 'readonly': True}, {'name': 'p1_visible_cd47577e8847', 'sequence': 60, 'readonly': True}, {'name': 'p1_visible_6b40af3eee21', 'sequence': 70, 'readonly': True}, {'name': 'p1_visible_b9ae89319036', 'sequence': 80, 'readonly': True}, {'name': 'p1_visible_0b370511a765', 'sequence': 90, 'readonly': True}, {'name': 'p1_visible_34943c40c9af', 'sequence': 100, 'readonly': True}, {'name': 'p1_visible_ac666c1a3967', 'sequence': 110, 'readonly': True}, {'name': 'p1_visible_e0361480e3a5', 'sequence': 120, 'readonly': True}, {'name': 'p1_visible_99f6fe6c41ad', 'sequence': 130, 'readonly': True}, {'name': 'p1_visible_ee6a4d9e2956', 'sequence': 140, 'readonly': True}, {'name': 'p1_visible_dfc25d77dc39', 'sequence': 150, 'readonly': True}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_sc_subcontract_settlement_p1_form_business_facts_v1" model="ui.business.config.contract">
+            <field name="name">sc_subcontract_settlement_p1_form_business_facts_v1</field>
+            <field name="model">sc.subcontract.settlement</field>
+            <field name="view_type">form</field>
+            <field name="priority">88</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'views': {
+                        'form': {
+                            'sections': [
+                                {'title': '单据识别'},
+                                {'title': '业务对象'},
+                                {'title': '金额与办理'},
+                                {'title': '附件与来源'}
+                            ],
+                            'fields': [{'name': 'p1_visible_3e7255522b33', 'sequence': 10, 'readonly': True}, {'name': 'p1_visible_8fa8662ad38f', 'sequence': 20, 'readonly': True}, {'name': 'p1_visible_748d7dc7e321', 'sequence': 30, 'readonly': True}, {'name': 'p1_visible_36cae65ab40a', 'sequence': 40, 'readonly': True}, {'name': 'p1_visible_b6959bb111d9', 'sequence': 50, 'readonly': True}, {'name': 'p1_visible_d3ebd50d724b', 'sequence': 60, 'readonly': True}, {'name': 'p1_visible_a22ecb7fab2f', 'sequence': 70, 'readonly': True}, {'name': 'p1_visible_ec15903ded76', 'sequence': 80, 'readonly': True}, {'name': 'p1_visible_72cf58c14fc0', 'sequence': 90, 'readonly': True}, {'name': 'p1_visible_825a06905b09', 'sequence': 100, 'readonly': True}, {'name': 'p1_visible_17b341733b7b', 'sequence': 110, 'readonly': True}, {'name': 'p1_visible_3684e69e670b', 'sequence': 120, 'readonly': True}, {'name': 'p1_visible_2e2adb177c13', 'sequence': 130, 'readonly': True}, {'name': 'p1_visible_816dc9f7b786', 'sequence': 140, 'readonly': True}, {'name': 'p1_visible_99f6fe6c41ad', 'sequence': 150, 'readonly': True}, {'name': 'p1_visible_ee6a4d9e2956', 'sequence': 160, 'readonly': True}, {'name': 'p1_visible_dfc25d77dc39', 'sequence': 170, 'readonly': True}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_sc_equipment_request_p1_form_business_facts_v1" model="ui.business.config.contract">
+            <field name="name">sc_equipment_request_p1_form_business_facts_v1</field>
+            <field name="model">sc.equipment.request</field>
+            <field name="view_type">form</field>
+            <field name="priority">88</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'views': {
+                        'form': {
+                            'sections': [
+                                {'title': '单据识别'},
+                                {'title': '业务对象'},
+                                {'title': '金额与办理'},
+                                {'title': '附件与来源'}
+                            ],
+                            'fields': [{'name': 'p1_visible_06fa8c6f628f', 'sequence': 10, 'readonly': True}, {'name': 'p1_visible_8fa8662ad38f', 'sequence': 20, 'readonly': True}, {'name': 'p1_visible_17b341733b7b', 'sequence': 30, 'readonly': True}, {'name': 'p1_visible_3e7255522b33', 'sequence': 40, 'readonly': True}, {'name': 'p1_visible_3ec01dd569e2', 'sequence': 50, 'readonly': True}, {'name': 'p1_visible_a2cf2d1a84c3', 'sequence': 60, 'readonly': True}, {'name': 'p1_visible_d1d932d7d9f5', 'sequence': 70, 'readonly': True}, {'name': 'p1_visible_c2bdcf08e8a5', 'sequence': 80, 'readonly': True}, {'name': 'p1_visible_3b652b9864d4', 'sequence': 90, 'readonly': True}, {'name': 'p1_visible_d3ebd50d724b', 'sequence': 100, 'readonly': True}, {'name': 'p1_visible_a22ecb7fab2f', 'sequence': 110, 'readonly': True}, {'name': 'p1_visible_462c614de6c7', 'sequence': 120, 'readonly': True}, {'name': 'p1_visible_824168a11b21', 'sequence': 130, 'readonly': True}, {'name': 'p1_visible_c88947435308', 'sequence': 140, 'readonly': True}, {'name': 'p1_visible_8818fa7c0bc6', 'sequence': 150, 'readonly': True}, {'name': 'p1_visible_37d56ad493cf', 'sequence': 160, 'readonly': True}, {'name': 'p1_visible_294e7015ec01', 'sequence': 170, 'readonly': True}, {'name': 'p1_visible_e0361480e3a5', 'sequence': 180, 'readonly': True}, {'name': 'p1_visible_99f6fe6c41ad', 'sequence': 190, 'readonly': True}, {'name': 'p1_visible_ee6a4d9e2956', 'sequence': 200, 'readonly': True}, {'name': 'p1_visible_dfc25d77dc39', 'sequence': 210, 'readonly': True}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_sc_equipment_usage_p1_form_business_facts_v1" model="ui.business.config.contract">
+            <field name="name">sc_equipment_usage_p1_form_business_facts_v1</field>
+            <field name="model">sc.equipment.usage</field>
+            <field name="view_type">form</field>
+            <field name="priority">88</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'views': {
+                        'form': {
+                            'sections': [
+                                {'title': '单据识别'},
+                                {'title': '业务对象'},
+                                {'title': '金额与办理'},
+                                {'title': '附件与来源'}
+                            ],
+                            'fields': [{'name': 'p1_visible_06fa8c6f628f', 'sequence': 10, 'readonly': True}, {'name': 'p1_visible_3e7255522b33', 'sequence': 20, 'readonly': True}, {'name': 'p1_visible_8fa8662ad38f', 'sequence': 30, 'readonly': True}, {'name': 'p1_visible_1e62803e196c', 'sequence': 40, 'readonly': True}, {'name': 'p1_visible_a2cf2d1a84c3', 'sequence': 50, 'readonly': True}, {'name': 'p1_visible_0e3888031cb3', 'sequence': 60, 'readonly': True}, {'name': 'p1_visible_2c6b2e0dc811', 'sequence': 70, 'readonly': True}, {'name': 'p1_visible_6a92ad6d5d73', 'sequence': 80, 'readonly': True}, {'name': 'p1_visible_8ec8c8c712be', 'sequence': 90, 'readonly': True}, {'name': 'p1_visible_e6412d7d7f6a', 'sequence': 100, 'readonly': True}, {'name': 'p1_visible_0b370511a765', 'sequence': 110, 'readonly': True}, {'name': 'p1_visible_34943c40c9af', 'sequence': 120, 'readonly': True}, {'name': 'p1_visible_99f6fe6c41ad', 'sequence': 130, 'readonly': True}, {'name': 'p1_visible_e0361480e3a5', 'sequence': 140, 'readonly': True}, {'name': 'p1_visible_ee6a4d9e2956', 'sequence': 150, 'readonly': True}, {'name': 'p1_visible_dfc25d77dc39', 'sequence': 160, 'readonly': True}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_sc_equipment_settlement_p1_form_business_facts_v1" model="ui.business.config.contract">
+            <field name="name">sc_equipment_settlement_p1_form_business_facts_v1</field>
+            <field name="model">sc.equipment.settlement</field>
+            <field name="view_type">form</field>
+            <field name="priority">88</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'views': {
+                        'form': {
+                            'sections': [
+                                {'title': '单据识别'},
+                                {'title': '业务对象'},
+                                {'title': '金额与办理'},
+                                {'title': '附件与来源'}
+                            ],
+                            'fields': [{'name': 'p1_visible_06fa8c6f628f', 'sequence': 10, 'readonly': True}, {'name': 'p1_visible_8fa8662ad38f', 'sequence': 20, 'readonly': True}, {'name': 'p1_visible_3e7255522b33', 'sequence': 30, 'readonly': True}, {'name': 'p1_visible_1e62803e196c', 'sequence': 40, 'readonly': True}, {'name': 'p1_visible_36cae65ab40a', 'sequence': 50, 'readonly': True}, {'name': 'p1_visible_d5c7314894ba', 'sequence': 60, 'readonly': True}, {'name': 'p1_visible_824168a11b21', 'sequence': 70, 'readonly': True}, {'name': 'p1_visible_b6959bb111d9', 'sequence': 80, 'readonly': True}, {'name': 'p1_visible_d3ebd50d724b', 'sequence': 90, 'readonly': True}, {'name': 'p1_visible_a22ecb7fab2f', 'sequence': 100, 'readonly': True}, {'name': 'p1_visible_ec15903ded76', 'sequence': 110, 'readonly': True}, {'name': 'p1_visible_72cf58c14fc0', 'sequence': 120, 'readonly': True}, {'name': 'p1_visible_825a06905b09', 'sequence': 130, 'readonly': True}, {'name': 'p1_visible_99f6fe6c41ad', 'sequence': 140, 'readonly': True}, {'name': 'p1_visible_ee6a4d9e2956', 'sequence': 150, 'readonly': True}, {'name': 'p1_visible_dfc25d77dc39', 'sequence': 160, 'readonly': True}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_sc_material_rental_order_p1_form_business_facts_v1" model="ui.business.config.contract">
+            <field name="name">sc_material_rental_order_p1_form_business_facts_v1</field>
+            <field name="model">sc.material.rental.order</field>
+            <field name="view_type">form</field>
+            <field name="priority">88</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'views': {
+                        'form': {
+                            'sections': [
+                                {'title': '单据识别'},
+                                {'title': '业务对象'},
+                                {'title': '金额与办理'},
+                                {'title': '附件与来源'}
+                            ],
+                            'fields': [{'name': 'p1_visible_8fa8662ad38f', 'sequence': 10, 'readonly': True}, {'name': 'p1_visible_17b341733b7b', 'sequence': 20, 'readonly': True}, {'name': 'p1_visible_3e7255522b33', 'sequence': 30, 'readonly': True}, {'name': 'p1_visible_3ec01dd569e2', 'sequence': 40, 'readonly': True}, {'name': 'p1_visible_a2cf2d1a84c3', 'sequence': 50, 'readonly': True}, {'name': 'p1_visible_7c5dccd62b11', 'sequence': 60, 'readonly': True}, {'name': 'p1_visible_d1d932d7d9f5', 'sequence': 70, 'readonly': True}, {'name': 'p1_visible_824168a11b21', 'sequence': 80, 'readonly': True}, {'name': 'p1_visible_3b652b9864d4', 'sequence': 90, 'readonly': True}, {'name': 'p1_visible_d3ebd50d724b', 'sequence': 100, 'readonly': True}, {'name': 'p1_visible_a22ecb7fab2f', 'sequence': 110, 'readonly': True}, {'name': 'p1_visible_462c614de6c7', 'sequence': 120, 'readonly': True}, {'name': 'p1_visible_48a64eb40c71', 'sequence': 130, 'readonly': True}, {'name': 'p1_visible_ecaf440fd399', 'sequence': 140, 'readonly': True}, {'name': 'p1_visible_139909c2662e', 'sequence': 150, 'readonly': True}, {'name': 'p1_visible_99f6fe6c41ad', 'sequence': 160, 'readonly': True}, {'name': 'p1_visible_c88947435308', 'sequence': 170, 'readonly': True}, {'name': 'p1_visible_06fa8c6f628f', 'sequence': 180, 'readonly': True}, {'name': 'p1_visible_1e62803e196c', 'sequence': 190, 'readonly': True}, {'name': 'p1_visible_43f2759419f3', 'sequence': 200, 'readonly': True}, {'name': 'p1_visible_567b97eff5bc', 'sequence': 210, 'readonly': True}, {'name': 'p1_visible_6a92ad6d5d73', 'sequence': 220, 'readonly': True}, {'name': 'p1_visible_b9ae89319036', 'sequence': 230, 'readonly': True}, {'name': 'p1_visible_0b370511a765', 'sequence': 240, 'readonly': True}, {'name': 'p1_visible_3c6524d108d5', 'sequence': 250, 'readonly': True}, {'name': 'p1_visible_e0361480e3a5', 'sequence': 260, 'readonly': True}, {'name': 'p1_visible_ee6a4d9e2956', 'sequence': 270, 'readonly': True}, {'name': 'p1_visible_dfc25d77dc39', 'sequence': 280, 'readonly': True}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_sc_material_rental_settlement_p1_form_business_facts_v1" model="ui.business.config.contract">
+            <field name="name">sc_material_rental_settlement_p1_form_business_facts_v1</field>
+            <field name="model">sc.material.rental.settlement</field>
+            <field name="view_type">form</field>
+            <field name="priority">88</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'views': {
+                        'form': {
+                            'sections': [
+                                {'title': '单据识别'},
+                                {'title': '业务对象'},
+                                {'title': '金额与办理'},
+                                {'title': '附件与来源'}
+                            ],
+                            'fields': [{'name': 'p1_visible_06fa8c6f628f', 'sequence': 10, 'readonly': True}, {'name': 'p1_visible_3e7255522b33', 'sequence': 20, 'readonly': True}, {'name': 'p1_visible_8fa8662ad38f', 'sequence': 30, 'readonly': True}, {'name': 'p1_visible_36cae65ab40a', 'sequence': 40, 'readonly': True}, {'name': 'p1_visible_99f6fe6c41ad', 'sequence': 50, 'readonly': True}, {'name': 'p1_visible_ee6a4d9e2956', 'sequence': 60, 'readonly': True}, {'name': 'p1_visible_dfc25d77dc39', 'sequence': 70, 'readonly': True}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_sc_construction_diary_p1_form_business_facts_v1" model="ui.business.config.contract">
+            <field name="name">sc_construction_diary_p1_form_business_facts_v1</field>
+            <field name="model">sc.construction.diary</field>
+            <field name="view_type">form</field>
+            <field name="priority">88</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'views': {
+                        'form': {
+                            'sections': [
+                                {'title': '单据识别'},
+                                {'title': '业务对象'},
+                                {'title': '金额与办理'},
+                                {'title': '附件与来源'}
+                            ],
+                            'fields': [{'name': 'p1_visible_06fa8c6f628f', 'sequence': 10, 'readonly': True}, {'name': 'p1_visible_3e7255522b33', 'sequence': 20, 'readonly': True}, {'name': 'p1_visible_8fa8662ad38f', 'sequence': 30, 'readonly': True}, {'name': 'p1_visible_b6fed9af8313', 'sequence': 40, 'readonly': True}, {'name': 'p1_visible_ae8c5d45f392', 'sequence': 50, 'readonly': True}, {'name': 'p1_visible_c27cdbf90458', 'sequence': 60, 'readonly': True}, {'name': 'p1_visible_73bf794d61b3', 'sequence': 70, 'readonly': True}, {'name': 'p1_visible_d3bea9efb1b9', 'sequence': 80, 'readonly': True}, {'name': 'p1_visible_364d38fc2b37', 'sequence': 90, 'readonly': True}, {'name': 'p1_visible_853e6ba25fc5', 'sequence': 100, 'readonly': True}, {'name': 'p1_visible_bd3c202b3612', 'sequence': 110, 'readonly': True}, {'name': 'p1_visible_b18125817eb9', 'sequence': 120, 'readonly': True}, {'name': 'p1_visible_df39195d3c5c', 'sequence': 130, 'readonly': True}, {'name': 'p1_visible_f11e4f6f4dbe', 'sequence': 140, 'readonly': True}, {'name': 'p1_visible_e0361480e3a5', 'sequence': 150, 'readonly': True}, {'name': 'p1_visible_99f6fe6c41ad', 'sequence': 160, 'readonly': True}, {'name': 'p1_visible_ee6a4d9e2956', 'sequence': 170, 'readonly': True}, {'name': 'p1_visible_dfc25d77dc39', 'sequence': 180, 'readonly': True}]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+    </data>
+</odoo>

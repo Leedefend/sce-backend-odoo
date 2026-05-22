@@ -82,6 +82,30 @@ BUSINESS_FORM_STRUCTURE_ALLOWED_LEGACY_FIELDS = {
     "legacy_contract_no",
     "legacy_status",
 }
+BUSINESS_FORM_STRUCTURE_HISTORY_LABEL_TOKENS = (
+    "历史",
+    "旧系统",
+    "旧库",
+    "来源",
+    "导入",
+    "原始",
+)
+BUSINESS_FORM_STRUCTURE_HISTORY_NAME_PREFIXES = (
+    "legacy_source_",
+)
+BUSINESS_FORM_STRUCTURE_HISTORY_NAME_TOKENS = (
+    "_record_id",
+    "_source_",
+    "_batch",
+    "_deleted",
+    "_attachment_ref",
+    "_pid",
+    "_parent_id",
+)
+BUSINESS_FORM_STRUCTURE_HISTORY_NAME_SUFFIXES = (
+    "_id",
+    "_sort",
+)
 BUSINESS_FORM_STRUCTURE_INTERNAL_FIELDS = {
     "active",
     "archived",
@@ -664,6 +688,7 @@ class UiContractV2Handler(BaseIntentHandler):
             )
         except Exception:
             configs = []
+        hidden_field_names: set[str] = set()
         for config in configs:
             config_summaries.append({
                 "id": int(config.id or 0),
@@ -679,8 +704,16 @@ class UiContractV2Handler(BaseIntentHandler):
             for row in rows:
                 if isinstance(row, dict):
                     name = str(row.get("name") or row.get("field") or row.get("field_name") or "").strip()
+                    if not name:
+                        continue
+                    if row.get("visible") is False:
+                        hidden_field_names.add(name)
+                        field_names = [item for item in field_names if item != name]
+                        continue
                 else:
                     name = str(row or "").strip()
+                if name and name in hidden_field_names:
+                    hidden_field_names.remove(name)
                 if name and name not in field_names:
                     field_names.append(name)
             sections = form_spec.get("sections") if isinstance(form_spec.get("sections"), list) else []
@@ -768,20 +801,61 @@ class UiContractV2Handler(BaseIntentHandler):
         def first_existing(items: list[str]) -> list[str]:
             return fields_for(items)[:1]
 
+        field_labels = profile.get("field_labels") if isinstance(profile.get("field_labels"), dict) else {}
+
+        def field_display_label(name: str) -> str:
+            label = str(field_labels.get(name) or "").strip()
+            if label:
+                return label
+            try:
+                return str(field_label(name) or "").strip()
+            except Exception:
+                return str(name or "").strip()
+
+        def is_migration_history_field(name: str) -> bool:
+            value = str(name or "").strip()
+            label = field_display_label(value)
+            if any(token in label for token in BUSINESS_FORM_STRUCTURE_HISTORY_LABEL_TOKENS):
+                return True
+            return (
+                value.startswith(BUSINESS_FORM_STRUCTURE_HISTORY_NAME_PREFIXES)
+                or any(token in value for token in BUSINESS_FORM_STRUCTURE_HISTORY_NAME_TOKENS)
+                or any(value.endswith(suffix) for suffix in BUSINESS_FORM_STRUCTURE_HISTORY_NAME_SUFFIXES)
+            )
+
+        def is_history_check_field(name: str) -> bool:
+            value = str(name or "").strip()
+            if value.startswith("p1_visible_"):
+                return True
+            if value.startswith("legacy_") or "_legacy_" in value or value.endswith("_legacy"):
+                return is_migration_history_field(value)
+            return False
+
+        history_check_fields = [
+            name
+            for name in fields_for(common_fields)
+            if is_history_check_field(name)
+        ]
+        business_common_fields = [
+            name
+            for name in common_fields
+            if name not in set(history_check_fields)
+        ]
+
         identity_fields = claim_slot_fields([
-            "name", "document_no", "legacy_document_no", "invoice_no", "invoice_code",
+            "name", "document_no", "invoice_no", "invoice_code",
             "subject", "type", "source_kind", "direction", "category_id", "contract_type_id",
         ])
         source_fields_candidates = fields_for([
             "entry_user_id", "entry_user_text", "entry_time", "handler_name",
-            "creator_name", "created_time", "archived", "legacy_status",
+            "creator_name", "created_time", "archived",
         ])
         relation_candidates = fields_for([
             "project_id", "partner_id", "contract_id", "settlement_id", "payment_request_id",
             "operation_strategy", "handler_id", "company_id", "budget_id", "analytic_id",
         ] + [
             name
-            for name in common_fields
+            for name in business_common_fields
             if field_type(name) == "many2one"
         ])
         relation_fields = claim_slot_fields([
@@ -795,17 +869,21 @@ class UiContractV2Handler(BaseIntentHandler):
             "contract_payment_method_text",
         ])
         attachment_fields = fields_for(["attachment_text", attachment_field])
-        amount_fields = claim_slot_fields(amount_fields)
+        amount_fields = claim_slot_fields([name for name in amount_fields if name in business_common_fields])
         status_fields = claim_slot_fields([
             name
             for name in fields_for([status_field, "document_status"] + date_fields)
-            if name not in source_fields_candidates
+            if name not in source_fields_candidates and name in business_common_fields
         ])
-        collaboration_fields = claim_slot_fields(["approval_info", note_field] + attachment_fields)
+        collaboration_fields = claim_slot_fields([
+            name
+            for name in ["approval_info", note_field] + attachment_fields
+            if name in business_common_fields or name in attachment_fields
+        ])
         detail_fields = claim_slot_fields(detail_fields)
         source_fields = claim_slot_fields(source_fields_candidates)
+        history_check_fields = claim_slot_fields(history_check_fields)
         field_roles: dict[str, dict[str, Any]] = {}
-        field_labels = profile.get("field_labels") if isinstance(profile.get("field_labels"), dict) else {}
 
         def labels_for(items: list[str]) -> dict[str, str]:
             return {
@@ -827,10 +905,11 @@ class UiContractV2Handler(BaseIntentHandler):
             + collaboration_fields
             + source_fields
             + detail_fields
+            + history_check_fields
         )
         other_fact_fields = fields_for([
             name
-            for name in common_fields
+            for name in business_common_fields
             if name not in assigned and field_type(name) not in {"one2many", "many2many"}
         ])
         assign_role(identity_fields, role="identity", slot="primary_facts", group="identity")
@@ -842,6 +921,7 @@ class UiContractV2Handler(BaseIntentHandler):
         assign_role(collaboration_fields, role="collaboration", slot="collaboration", group="approval_remarks")
         assign_role(detail_fields, role="detail", slot="details_source", group="details")
         assign_role(source_fields, role="provenance", slot="details_source", group="provenance")
+        assign_role(history_check_fields, role="history_check", slot="details_source", group="history_check")
 
         summary_fields = fields_for(
             [status_field]
@@ -854,6 +934,8 @@ class UiContractV2Handler(BaseIntentHandler):
             ])
             + attachment_fields
         )
+        if summary_fields and all(is_history_check_field(name) for name in summary_fields):
+            summary_fields = []
 
         def group(name: str, title: str, fields: list[str], *, role: str = "") -> dict[str, Any]:
             group_fields = fields_for(fields)
@@ -884,7 +966,7 @@ class UiContractV2Handler(BaseIntentHandler):
                 "title": "办理总览",
                 "role": "overview",
                 "readonly": True,
-                "fieldRefs": summary_fields or fields_for(common_fields[:6]),
+                "fieldRefs": summary_fields or fields_for(business_common_fields[:6]),
             },
             slot("primary_facts", "主业务事实", [
                 group("identity", "业务识别", identity_fields, role="identity"),
@@ -902,6 +984,7 @@ class UiContractV2Handler(BaseIntentHandler):
             slot("details_source", "明细与来源", [
                 group("details", "业务明细", detail_fields, role="details"),
                 group("provenance", "录入与归档", source_fields, role="provenance"),
+                group("history_check", "历史核对信息", history_check_fields, role="history_check"),
             ], role="provenance"),
         ]
         slots = [
