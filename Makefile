@@ -3497,6 +3497,14 @@ verify.prod.sim.isolation.quick: guard.prod.forbid
 verify.product.delivery.gap: guard.prod.forbid
 	@python3 scripts/verify/product_delivery_gap_report.py
 
+.PHONY: verify.product.delivery.productization.readiness
+verify.product.delivery.productization.readiness: guard.prod.forbid
+	@python3 scripts/verify/product_delivery_productization_readiness.py
+
+.PHONY: verify.product.delivery.productization.readiness.strict
+verify.product.delivery.productization.readiness.strict: guard.prod.forbid
+	@python3 scripts/verify/product_delivery_productization_readiness.py --strict
+
 .PHONY: verify.product.delivery.v1.map
 verify.product.delivery.v1.map: guard.prod.forbid
 	@python3 scripts/verify/module_scene_capability_map_report.py
@@ -3592,7 +3600,7 @@ verify.backend.contract.closure.mainline.summary.schema.guard: guard.prod.forbid
 	@python3 scripts/verify/backend_contract_closure_mainline_summary_schema_guard.py
 
 .PHONY: verify.product.delivery.ready
-verify.product.delivery.ready: guard.prod.forbid verify.product.delivery.gap verify.product.delivery.freshness verify.product.delivery.governance_truth
+verify.product.delivery.ready: guard.prod.forbid verify.product.delivery.gap verify.product.delivery.freshness verify.product.delivery.governance_truth verify.product.delivery.productization.readiness.strict
 	@echo "[OK] verify.product.delivery.ready done"
 
 .PHONY: verify.restricted verify.product.delivery.mainline
@@ -3695,6 +3703,7 @@ verify.product.release.ready: guard.prod.forbid \
 	verify.product.complexity.bound \
 	verify.product.bundle.isolation \
 	verify.product.tier.enforcement \
+	verify.product.delivery.productization.readiness.strict \
 	verify.ui.product.stability \
 	verify.delivery.reproducible \
 	verify.product.sla.baseline

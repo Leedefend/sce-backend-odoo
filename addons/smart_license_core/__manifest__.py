@@ -6,7 +6,9 @@
     "category": "Smart Construction",
     "license": "LGPL-3",
     "depends": ["smart_core"],
-    "data": [],
+    "data": [
+        "data/license_customer_visibility.xml",
+    ],
     "application": False,
     "installable": True
 }

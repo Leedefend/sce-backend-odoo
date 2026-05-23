@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="param_license_customer_visible" model="ir.config_parameter">
+        <field name="key">smart_license_core.customer_visible</field>
+        <field name="value">1</field>
+    </record>
+    <record id="param_license_tier_labels" model="ir.config_parameter">
+        <field name="key">smart_license_core.tier_labels</field>
+        <field name="value">community:基础版,pro:专业版,enterprise:企业版</field>
+    </record>
+    <record id="param_license_upgrade_hint" model="ir.config_parameter">
+        <field name="key">smart_license_core.upgrade_hint</field>
+        <field name="value">当前能力不可用时，优先检查产品版本、角色权限和公司授权；需要更高版本时联系客户成功升级。</field>
+    </record>
+    <record id="param_license_reason_codes" model="ir.config_parameter">
+        <field name="key">smart_license_core.reason_codes</field>
+        <field name="value">tier_required,role_required,company_not_entitled,license_expired</field>
+    </record>
+</odoo>
