@@ -152,13 +152,16 @@ class _Env(dict):
 
 
 class _ConfigParameter:
-    def __init__(self, default_base):
+    def __init__(self, default_base, params=None):
         self.default_base = default_base
+        self.params = dict(params or {})
 
     def sudo(self):
         return self
 
     def get_param(self, key, default=""):
+        if key in self.params:
+            return self.params[key]
         if key == "smart_core.release_operator.default_base_product_key":
             return self.default_base
         return default
@@ -224,6 +227,45 @@ class TestReleaseOperatorSurfaceCopyBackend(unittest.TestCase):
 
         self.assertEqual((read_model.get("identity") or {}).get("product_key"), "platform.standard")
         self.assertEqual((read_model.get("identity") or {}).get("default_base_source"), "config")
+
+    def test_product_delivery_console_merges_product_extension_facts(self):
+        module = types.ModuleType("odoo.addons.test_product_delivery_extension")
+        module.get_system_init_fact_contributions = lambda env, user, context=None: {
+            "module": "product",
+            "facts": {
+                "bundle": {
+                    "name": "test_bundle",
+                    "profile": {"product_key": "construction.standard", "label": "测试交付包"},
+                    "capabilities": [{"key": "product.project.delivery", "label": "项目交付"}],
+                    "scenes": [{"code": "projects.dashboard", "name": "项目驾驶舱"}],
+                    "recommended_roles": ["pm"],
+                    "default_dashboard": "projects.dashboard",
+                },
+                "license": {
+                    "level": "enterprise",
+                    "tiers": ["community", "pro", "enterprise"],
+                    "customer_visible": True,
+                    "upgrade_hint": "联系管理员升级",
+                },
+            },
+        }
+        sys.modules["odoo.addons.test_product_delivery_extension"] = module
+        env = _Env()
+        env["ir.config_parameter"] = _ConfigParameter(
+            "",
+            params={"sc.core.extension_modules": "test_product_delivery_extension"},
+        )
+        service = TARGET.ReleaseOperatorSurfaceService(env)
+        service.read_model_service.audit_service = _AuditTrailService()
+        service.read_model_service.approval_policy_service = _ApprovalPolicyService()
+
+        payload = service.build_surface(product_key="construction.standard", action_limit=5)
+        console = payload.get("product_delivery_console") or {}
+
+        self.assertEqual((console.get("profile") or {}).get("label"), "测试交付包")
+        self.assertEqual(((console.get("license") or {}).get("level")), "enterprise")
+        self.assertEqual(((console.get("bundle") or {}).get("capability_count")), 1)
+        self.assertEqual(((console.get("source_authority") or {}).get("kind")), "release_operator_product_delivery_console_projection")
 
 
 if __name__ == "__main__":

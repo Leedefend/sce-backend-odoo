@@ -50,6 +50,7 @@ class SystemInitPayloadBuilder:
     }
     MINIMAL_EXT_FACT_KEYS = {
         "enterprise_enablement",
+        "product",
     }
     DEFAULT_STARTUP_PAGE_KEYS = ("home", "my_work", "workbench")
 

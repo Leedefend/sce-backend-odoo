@@ -150,11 +150,15 @@ export interface AppInitResponse {
       license?: {
         level?: string;
         tiers?: string[];
+        customer_visible?: boolean;
+        upgrade_hint?: string;
+        reason_codes?: string[];
       };
       bundle?: {
         name?: string;
-        scenes?: string[];
-        capabilities?: string[];
+        profile?: Record<string, unknown>;
+        scenes?: Array<Record<string, unknown>>;
+        capabilities?: Array<Record<string, unknown>>;
         recommended_roles?: string[];
         default_dashboard?: string;
       };

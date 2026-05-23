@@ -59,11 +59,15 @@ export interface ProductFacts {
   license: {
     level: string;
     tiers: string[];
+    customer_visible?: boolean;
+    upgrade_hint?: string;
+    reason_codes?: string[];
   } | null;
   bundle: {
     name: string;
-    scenes: string[];
-    capabilities: string[];
+    profile?: Record<string, unknown>;
+    scenes: Array<Record<string, unknown>>;
+    capabilities: Array<Record<string, unknown>>;
     recommended_roles: string[];
     default_dashboard: string;
   } | null;
@@ -1187,13 +1191,25 @@ export const useSessionStore = defineStore('session', {
           ? {
               level: String(rawLicense.level || ''),
               tiers: Array.isArray(rawLicense.tiers) ? rawLicense.tiers.map((item) => String(item || '')).filter(Boolean) : [],
+              customer_visible: rawLicense.customer_visible !== false,
+              upgrade_hint: String(rawLicense.upgrade_hint || ''),
+              reason_codes: Array.isArray(rawLicense.reason_codes)
+                ? rawLicense.reason_codes.map((item) => String(item || '')).filter(Boolean)
+                : [],
             }
           : null,
         bundle: Object.keys(rawBundle).length
           ? {
               name: String(rawBundle.name || ''),
-              scenes: Array.isArray(rawBundle.scenes) ? rawBundle.scenes.map((item) => String(item || '')).filter(Boolean) : [],
-              capabilities: Array.isArray(rawBundle.capabilities) ? rawBundle.capabilities.map((item) => String(item || '')).filter(Boolean) : [],
+              profile: rawBundle.profile && typeof rawBundle.profile === 'object'
+                ? rawBundle.profile as Record<string, unknown>
+                : {},
+              scenes: Array.isArray(rawBundle.scenes)
+                ? rawBundle.scenes.filter((item): item is Record<string, unknown> => Boolean(item && typeof item === 'object' && !Array.isArray(item)))
+                : [],
+              capabilities: Array.isArray(rawBundle.capabilities)
+                ? rawBundle.capabilities.filter((item): item is Record<string, unknown> => Boolean(item && typeof item === 'object' && !Array.isArray(item)))
+                : [],
               recommended_roles: Array.isArray(rawBundle.recommended_roles)
                 ? rawBundle.recommended_roles.map((item) => String(item || '')).filter(Boolean)
                 : [],
