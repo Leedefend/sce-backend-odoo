@@ -1,7 +1,7 @@
 # Sprint Week1 Audit Report
 
 - orphan_capability_count: 0
-- dormant_capability_count: 1
+- dormant_capability_count: 0
 - unclassified_404_count: 0
 - unassigned_scene_count: 0
 - role_sample_count: 8

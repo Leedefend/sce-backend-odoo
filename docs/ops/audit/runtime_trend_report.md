@@ -4,7 +4,7 @@
 - scene_series_points: 7
 - capability_series_points: 7
 - intent_heatmap_count: 6
-- role_distribution_count: 6
+- role_distribution_count: 7
 - role_intent_heatmap_count: 9
 - history_day_count: 1
 - error_count: 0
@@ -12,23 +12,23 @@
 
 ## Scene Count
 
-- 2026-02-20: null
-- 2026-02-21: null
-- 2026-02-22: null
-- 2026-02-23: null
-- 2026-02-24: null
-- 2026-02-25: 164
-- 2026-02-26: null
+- 2026-05-17: null
+- 2026-05-18: null
+- 2026-05-19: null
+- 2026-05-20: null
+- 2026-05-21: null
+- 2026-05-22: null
+- 2026-05-23: 66
 
 ## Capability Usage
 
-- 2026-02-20: null
-- 2026-02-21: null
-- 2026-02-22: null
-- 2026-02-23: null
-- 2026-02-24: null
-- 2026-02-25: avg=32.667, min=25, max=42
-- 2026-02-26: null
+- 2026-05-17: null
+- 2026-05-18: null
+- 2026-05-19: null
+- 2026-05-20: null
+- 2026-05-21: null
+- 2026-05-22: null
+- 2026-05-23: avg=52.571, min=46, max=63
 
 ## Intent Heatmap
 

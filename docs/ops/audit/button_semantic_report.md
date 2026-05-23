@@ -2,9 +2,9 @@
 
 - taxonomy: state_transition / permission_guard / fallback / deprecated
 - snapshot_case_count: 8
-- execute_button_statuses: [404]
-- observed_404_count: 1
-- explained_404_count: 1
+- execute_button_statuses: [200]
+- observed_404_count: 0
+- explained_404_count: 0
 - unexplained_404_count: 0
 - unclassified_404_count: 0
 - error_count: 0
