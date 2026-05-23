@@ -74,6 +74,32 @@ class TestSystemInitPayloadBuilderSemantics(unittest.TestCase):
 
         self.assertNotIn("workspace_home", payload)
 
+    def test_build_startup_surface_keeps_product_extension_facts(self):
+        payload = target.SystemInitPayloadBuilder.build_startup_surface(
+            {
+                "user": {"id": 1},
+                "nav": [],
+                "nav_meta": {},
+                "default_route": {"scene_key": "workspace.home"},
+                "intents": [],
+                "feature_flags": {},
+                "role_surface": {"landing_scene_key": "workspace.home"},
+                "ext_facts": {
+                    "product": {
+                        "bundle": {"profile": {"product_key": "construction.standard"}},
+                        "license": {"level": "enterprise"},
+                    },
+                    "internal_noise": {"hidden": True},
+                },
+            },
+            params={"contract_mode": "user"},
+        )
+
+        product = ((payload.get("ext_facts") or {}).get("product") or {})
+        self.assertEqual((((product.get("bundle") or {}).get("profile") or {}).get("product_key")), "construction.standard")
+        self.assertEqual(((product.get("license") or {}).get("level")), "enterprise")
+        self.assertNotIn("internal_noise", payload.get("ext_facts") or {})
+
     def test_build_startup_surface_keeps_workspace_home_ref(self):
         payload = target.SystemInitPayloadBuilder.build_startup_surface(
             {

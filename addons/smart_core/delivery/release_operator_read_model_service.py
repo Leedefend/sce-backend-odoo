@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import importlib
 from copy import deepcopy
 from typing import Any
 
 from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
+from odoo.addons.smart_core.utils.extension_hooks import iter_extension_modules
 
 from .release_approval_policy_service import ReleaseApprovalPolicyService
 from .release_audit_trail_service import ReleaseAuditTrailService
@@ -140,6 +142,7 @@ class ReleaseOperatorReadModelService:
             "action_retry": "重试",
             "action_refresh": "刷新",
             "section_release_state": "当前发布状态",
+            "section_product_delivery_console": "产品交付控制台",
             "section_control_scope": "受控内容",
             "section_policy_control": "产品策略管控",
             "section_candidate": "可 Promote 候选",
@@ -172,6 +175,79 @@ class ReleaseOperatorReadModelService:
             "history_actions_title": "Actions",
             "history_snapshots_title": "Snapshots",
             "approve_action_label": "审批并执行",
+        }
+
+    def _load_product_ext_facts(self) -> dict[str, Any]:
+        product: dict[str, Any] = {}
+        for module_name in iter_extension_modules(self.env):
+            try:
+                module = importlib.import_module(f"odoo.addons.{module_name}")
+            except Exception:
+                continue
+            hook = getattr(module, "get_system_init_fact_contributions", None)
+            if not callable(hook):
+                continue
+            try:
+                payload = hook(self.env, self.env.user, context={})
+            except Exception:
+                continue
+            rows = payload if isinstance(payload, list) else [payload]
+            for row in rows:
+                if not isinstance(row, dict) or _text(row.get("module")) != "product":
+                    continue
+                facts = row.get("facts")
+                if isinstance(facts, dict):
+                    product.update(facts)
+        return product
+
+    def _build_product_delivery_console(
+        self,
+        *,
+        identity: dict[str, Any],
+        control_scope: dict[str, Any],
+        release_pipeline: dict[str, Any],
+        current_release_state: dict[str, Any],
+    ) -> dict[str, Any]:
+        product_facts = self._load_product_ext_facts()
+        bundle = _dict(product_facts.get("bundle"))
+        license_payload = _dict(product_facts.get("license"))
+        profile = _dict(bundle.get("profile"))
+        capabilities = [row for row in _list(bundle.get("capabilities")) if isinstance(row, dict)]
+        scenes = [row for row in _list(bundle.get("scenes")) if isinstance(row, dict)]
+        checks = [row for row in _list(release_pipeline.get("preflight_checks")) if isinstance(row, dict)]
+        blocking_count = len([row for row in checks if _text(row.get("status")) == "fail"])
+        warn_count = len([row for row in checks if _text(row.get("status")) == "warn"])
+        return {
+            "product_key": identity.get("product_key") or profile.get("product_key") or "",
+            "base_product_key": identity.get("base_product_key") or "",
+            "edition_key": identity.get("edition_key") or "",
+            "profile": profile,
+            "bundle": {
+                "name": bundle.get("name") or "",
+                "default_dashboard": bundle.get("default_dashboard") or "",
+                "recommended_roles": _list(bundle.get("recommended_roles")),
+                "scene_count": len(scenes),
+                "capability_count": len(capabilities),
+                "scenes": scenes,
+                "capabilities": capabilities,
+            },
+            "license": license_payload,
+            "readiness": {
+                "status": "blocked" if blocking_count else ("warn" if warn_count else "ready"),
+                "blocking_count": blocking_count,
+                "warn_count": warn_count,
+                "controlled_page_count": int(control_scope.get("page_count") or 0),
+                "released_page_count": int(control_scope.get("released_page_count") or 0),
+                "candidate_snapshot_count": int(_dict(release_pipeline.get("change_summary")).get("candidate_snapshot_count") or 0),
+                "active_snapshot": _dict(current_release_state.get("active_snapshot")),
+            },
+            "acceptance_assets": _list(profile.get("acceptance_assets")),
+            "source_authority": {
+                "kind": "release_operator_product_delivery_console_projection",
+                "authorities": ["system_init_extension_fact_contributions", "release_operator_read_model_projection"],
+                "projection_only": True,
+                "no_business_fact_authority": True,
+            },
         }
 
     def _build_control_scope(self, *, product_key: str) -> dict[str, Any]:
@@ -596,6 +672,12 @@ class ReleaseOperatorReadModelService:
             pending_approval_queue=pending_approval_queue,
             candidate_snapshots=candidate_snapshots,
         )
+        product_delivery_console = self._build_product_delivery_console(
+            identity=identity,
+            control_scope=control_scope,
+            release_pipeline=release_pipeline,
+            current_release_state=current_release_state,
+        )
         role_context = self.approval_policy_service.resolve_actor_role_context(self.env.user)
         available_operator_actions = {
             "write_model_contract_version": RELEASE_OPERATOR_WRITE_MODEL_CONTRACT_VERSION,
@@ -696,6 +778,7 @@ class ReleaseOperatorReadModelService:
             "products": self._products(identity["product_key"]),
             "actor_role_context": role_context,
             "control_scope": control_scope,
+            "product_delivery_console": product_delivery_console,
             "release_pipeline": release_pipeline,
             "current_release_state": current_release_state,
             "pending_approval_queue": pending_approval_queue,

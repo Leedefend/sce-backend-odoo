@@ -8,6 +8,7 @@
     "depends": ["smart_core"],
     "data": [
         "data/construction_bundle_product_profile.xml",
+        "data/product_delivery_extension_modules.xml",
     ],
     "application": False,
     "installable": True

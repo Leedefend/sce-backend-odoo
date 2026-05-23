@@ -18,6 +18,30 @@ def get_intent_handler_contributions():
     return []
 
 
+def _build_bundle_product_fact() -> dict:
+    return {
+        "profile": product_profile(),
+        "name": "smart_construction_bundle",
+        "scenes": list_bundle_scenes(),
+        "capabilities": list_bundle_capabilities(),
+        "recommended_roles": recommended_roles(),
+        "default_dashboard": default_dashboard(),
+    }
+
+
+def get_system_init_fact_contributions(env, user, context=None):
+    context = context if isinstance(context, dict) else {}
+    bundle = str((context.get("sc.bundle") or (env.context or {}).get("sc.bundle") or "")).strip().lower()
+    if bundle not in {"", "construction"}:
+        return None
+    return {
+        "module": "product",
+        "facts": {
+            "bundle": _build_bundle_product_fact(),
+        },
+    }
+
+
 def smart_core_extend_system_init(data, env, user):
     try:
         bundle = str((env.context or {}).get("sc.bundle") or "").strip().lower()
@@ -25,14 +49,7 @@ def smart_core_extend_system_init(data, env, user):
             return
         ext_facts = data.get("ext_facts") if isinstance(data.get("ext_facts"), dict) else {}
         product = ext_facts.get("product") if isinstance(ext_facts.get("product"), dict) else {}
-        product["bundle"] = {
-            "profile": product_profile(),
-            "name": "smart_construction_bundle",
-            "scenes": list_bundle_scenes(),
-            "capabilities": list_bundle_capabilities(),
-            "recommended_roles": recommended_roles(),
-            "default_dashboard": default_dashboard(),
-        }
+        product["bundle"] = _build_bundle_product_fact()
         ext_facts["product"] = product
         data["ext_facts"] = ext_facts
     except Exception as exc:

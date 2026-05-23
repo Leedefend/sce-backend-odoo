@@ -69,6 +69,62 @@
 
       <section class="release-operator__section">
         <div class="release-operator__section-head">
+          <h2>{{ copy.section_product_delivery_console || '产品交付控制台' }}</h2>
+          <p>{{ productProfile.label || productConsole.product_key || '-' }}</p>
+        </div>
+        <div class="release-operator__product-grid">
+          <article>
+            <span>产品包</span>
+            <strong>{{ productBundle.name || '-' }}</strong>
+            <small>{{ productBundle.default_dashboard || '-' }}</small>
+          </article>
+          <article>
+            <span>授权层级</span>
+            <strong>{{ productLicense.level || '-' }}</strong>
+            <small>{{ productLicense.customer_visible === false ? '内部可见' : '客户可见' }}</small>
+          </article>
+          <article>
+            <span>交付就绪</span>
+            <strong>{{ readinessLabel(productReadiness.status) }}</strong>
+            <small>阻断 {{ productReadiness.blocking_count ?? 0 }} / 警告 {{ productReadiness.warn_count ?? 0 }}</small>
+          </article>
+          <article>
+            <span>受控页面</span>
+            <strong>{{ productReadiness.controlled_page_count ?? 0 }}</strong>
+            <small>已发布 {{ productReadiness.released_page_count ?? 0 }}</small>
+          </article>
+        </div>
+        <div class="release-operator__delivery-lists">
+          <article>
+            <h3>能力包</h3>
+            <div class="release-operator__tag-list">
+              <span v-for="capability in productCapabilities" :key="productItemKey(capability)">
+                {{ capability.label || capability.key || '-' }}
+              </span>
+            </div>
+          </article>
+          <article>
+            <h3>场景包</h3>
+            <div class="release-operator__tag-list">
+              <span v-for="scene in productScenes" :key="productItemKey(scene)">
+                {{ scene.name || scene.code || '-' }}
+              </span>
+            </div>
+          </article>
+          <article>
+            <h3>交付资产</h3>
+            <div class="release-operator__asset-list">
+              <span v-for="asset in acceptanceAssets" :key="asset">{{ asset }}</span>
+            </div>
+          </article>
+        </div>
+        <p v-if="productLicense.upgrade_hint" class="release-operator__upgrade-hint">
+          {{ productLicense.upgrade_hint }}
+        </p>
+      </section>
+
+      <section class="release-operator__section">
+        <div class="release-operator__section-head">
           <h2>产品配置发布线</h2>
           <p>草案、检查、候选、发布、生效</p>
         </div>
@@ -399,6 +455,7 @@ interface ReleaseOperatorSurface {
   copy?: AnyRecord;
   identity?: AnyRecord;
   products?: ProductRow[];
+  product_delivery_console?: AnyRecord;
   control_scope?: AnyRecord;
   release_pipeline?: AnyRecord;
   release_state?: AnyRecord;
@@ -426,6 +483,23 @@ const copy = computed<Record<string, string>>(() => {
 });
 const identity = computed(() => surface.value?.identity || {});
 const products = computed(() => surface.value?.products || []);
+const productConsole = computed(() => surface.value?.product_delivery_console || {});
+const productProfile = computed(() => (productConsole.value.profile || {}) as AnyRecord);
+const productBundle = computed(() => (productConsole.value.bundle || {}) as AnyRecord);
+const productLicense = computed(() => (productConsole.value.license || {}) as AnyRecord);
+const productReadiness = computed(() => (productConsole.value.readiness || {}) as AnyRecord);
+const productCapabilities = computed(() => {
+  const items = productBundle.value.capabilities;
+  return Array.isArray(items) ? items as AnyRecord[] : [];
+});
+const productScenes = computed(() => {
+  const items = productBundle.value.scenes;
+  return Array.isArray(items) ? items as AnyRecord[] : [];
+});
+const acceptanceAssets = computed(() => {
+  const items = productConsole.value.acceptance_assets;
+  return Array.isArray(items) ? items.map((item) => String(item || '')).filter(Boolean) : [];
+});
 const controlScope = computed(() => surface.value?.control_scope || {});
 const releasePipeline = computed(() => surface.value?.release_pipeline || {});
 const pipelineStages = computed(() => {
@@ -482,6 +556,18 @@ function definitionKey(item: AnyRecord) {
 }
 function pipelineKey(item: AnyRecord) {
   return String(item.key || item.label || '').trim();
+}
+function productItemKey(item: AnyRecord) {
+  return String(item.key || item.code || item.name || item.label || '').trim();
+}
+function readinessLabel(value: unknown) {
+  const status = String(value || '').trim();
+  const labels: Record<string, string> = {
+    ready: '可交付',
+    warn: '需关注',
+    blocked: '有阻断',
+  };
+  return labels[status] || status || '-';
 }
 function releaseStateLabel(page: AnyRecord) {
   const state = String(page.release_state || (page.enabled === false ? 'hidden' : 'released'));
@@ -728,6 +814,77 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
+}
+
+.release-operator__product-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.release-operator__product-grid article {
+  border: 1px solid var(--sc-app-border);
+  border-radius: var(--sc-component-panel-radius);
+  padding: 12px;
+}
+
+.release-operator__product-grid span,
+.release-operator__product-grid small {
+  display: block;
+  color: var(--sc-semantic-text-muted);
+  font-size: 12px;
+}
+
+.release-operator__product-grid strong {
+  display: block;
+  margin: 7px 0;
+  overflow-wrap: anywhere;
+  color: var(--sc-app-text-primary);
+  font-size: 18px;
+}
+
+.release-operator__delivery-lists {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.release-operator__delivery-lists article {
+  border: 1px solid var(--sc-app-border);
+  border-radius: var(--sc-component-panel-radius);
+  padding: 12px;
+}
+
+.release-operator__delivery-lists h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+}
+
+.release-operator__tag-list,
+.release-operator__asset-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.release-operator__tag-list span,
+.release-operator__asset-list span {
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  padding: 5px 8px;
+  color: var(--sc-app-text-primary);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.release-operator__asset-list span {
+  max-width: 100%;
+}
+
+.release-operator__upgrade-hint {
+  margin-top: 12px;
+  color: var(--sc-semantic-text-muted);
 }
 
 .release-operator__pipeline,
@@ -1029,6 +1186,8 @@ onMounted(() => {
 
   .release-operator__metrics,
   .release-operator__scope-grid,
+  .release-operator__product-grid,
+  .release-operator__delivery-lists,
   .release-operator__pipeline,
   .release-operator__summary-grid,
   .release-operator__checks,
