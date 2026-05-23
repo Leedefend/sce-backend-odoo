@@ -178,6 +178,56 @@ def _xmlid_record(env, xmlid: str):
         return None
 
 
+def _record_visible_to_user(record: Any, user: Any) -> bool:
+    groups = getattr(record, "groups_id", None)
+    if not groups:
+        return True
+    user_groups = getattr(user, "groups_id", None)
+    try:
+        if user_groups and groups & user_groups:
+            return True
+    except Exception:
+        pass
+    try:
+        group_xmlids = groups.get_external_id()
+    except Exception:
+        group_xmlids = {}
+    for group in groups:
+        xmlid = group_xmlids.get(getattr(group, "id", None)) if isinstance(group_xmlids, dict) else ""
+        if not xmlid:
+            continue
+        try:
+            if user.has_group(xmlid):
+                return True
+        except Exception:
+            continue
+    return False
+
+
+def _scene_accessible_for_user(env, scene: dict[str, Any]) -> bool:
+    key = _scene_key(scene)
+    app_id = _scene_app_id(key)
+    if app_id == "workspace":
+        return True
+    target = scene.get("target") if isinstance(scene.get("target"), dict) else {}
+    xmlids = [
+        _text(target.get("menu_xmlid")),
+        _text(target.get("action_xmlid")),
+    ]
+    declared_xmlids = [xmlid for xmlid in xmlids if xmlid]
+    for xmlid in declared_xmlids:
+        record = _xmlid_record(env, xmlid)
+        if _is_platform_admin_user(env) and not getattr(record, "groups_id", None):
+            continue
+        if record and _record_visible_to_user(record, env.user):
+            return True
+    if declared_xmlids:
+        return False
+    if _is_platform_admin_user(env):
+        return app_id in PLATFORM_ADMIN_SCENE_APP_IDS
+    return True
+
+
 def _is_platform_admin_user(env) -> bool:
     try:
         return bool(user_is_platform_admin(env.user))
@@ -318,6 +368,7 @@ class AppCatalogHandler(_SceneDeliveryAppShellMixin, BaseIntentHandler):
             for scene in _scene_list(self.env)
             if _is_publishable_scene(scene)
             and _is_scene_app_visible_for_user(self.env, _scene_app_id(_scene_key(scene)))
+            and _scene_accessible_for_user(self.env, scene)
         ]
         app_scenes: Dict[str, list[dict[str, Any]]] = {}
         for scene in scenes:
@@ -446,6 +497,7 @@ class AppNavHandler(_SceneDeliveryAppShellMixin, BaseIntentHandler):
             if _is_publishable_scene(scene)
             and _scene_app_id(_scene_key(scene)) == app_id
             and _is_scene_app_visible_for_user(env, app_id)
+            and _scene_accessible_for_user(env, scene)
         ]
 
         children = [
@@ -530,6 +582,7 @@ class AppOpenHandler(_SceneDeliveryAppShellMixin, BaseIntentHandler):
                 if _is_publishable_scene(scene)
                 and _scene_app_id(_scene_key(scene)) == app_id
                 and _is_scene_app_visible_for_user(self.env, app_id)
+                and _scene_accessible_for_user(self.env, scene)
             ]
             primary_scene = _primary_scene_for_app(app_id, scenes)
             if primary_scene:

@@ -195,6 +195,25 @@ class TestAppShellBoundaries(unittest.TestCase):
         self.assertNotIn("delivery", normal_app_ids)
         self.assertIn("delivery", admin_app_ids)
 
+    def test_catalog_hides_business_apps_from_platform_admin_without_business_groups(self):
+        handler = self.module.AppCatalogHandler(env=_FakeEnv(is_platform_admin=True))
+
+        result = handler.handle(payload={})
+
+        app_ids = [row["meta"]["app_id"] for row in result["data"]["apps"]]
+        self.assertIn("workspace", app_ids)
+        self.assertIn("release_management", app_ids)
+        self.assertNotIn("projects", app_ids)
+        self.assertNotIn("contracts", app_ids)
+
+    def test_nav_hides_business_scene_from_platform_admin_without_business_groups(self):
+        handler = self.module.AppNavHandler(env=_FakeEnv(is_platform_admin=True))
+
+        result = handler.handle(payload={"params": {"app": "projects"}})
+
+        self.assertTrue(result["ok"])
+        self.assertEqual(result["data"]["sections"], [])
+
     def test_open_alias_app_uses_stable_primary_scene(self):
         handler = self.module.AppOpenHandler(env=types.SimpleNamespace(uid=9))
 

@@ -88,6 +88,11 @@ ACL_EXPECTATIONS = [
     {"role": "settlement_read", "model": "sc.settlement.order.line", "rights": {"read": True, "create": False, "write": False, "unlink": False}},
     {"role": "settlement_user", "model": "sc.settlement.order.line", "rights": {"read": True, "create": True, "write": True, "unlink": False}},
     {"role": "settlement_manager", "model": "sc.settlement.order.line", "rights": {"read": True, "create": True, "write": True, "unlink": True}},
+    {"role": "platform_admin", "model": "project.project", "rights": {"read": False, "create": False, "write": False, "unlink": False}},
+    {"role": "platform_admin", "model": "construction.contract", "rights": {"read": False, "create": False, "write": False, "unlink": False}},
+    {"role": "platform_admin", "model": "payment.request", "rights": {"read": False, "create": False, "write": False, "unlink": False}},
+    {"role": "platform_admin", "model": "sc.settlement.order", "rights": {"read": False, "create": False, "write": False, "unlink": False}},
+    {"role": "platform_admin", "model": "sc.legacy.income.invoice.fact", "rights": {"read": False, "create": False, "write": False, "unlink": False}},
     {"role": "system_admin", "model": "sc.settlement.order", "rights": {"read": True, "create": False, "write": False, "unlink": False}},
     {"role": "system_admin", "model": "sc.settlement.order.line", "rights": {"read": True, "create": False, "write": False, "unlink": False}},
 ]

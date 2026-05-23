@@ -22,8 +22,7 @@
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
             <field name="implied_ids" eval="[(6, 0, [
                 ref('base.group_user'),
-                ref('smart_core.group_smart_core_data_operator'),
-                ref('smart_construction_core.group_sc_cap_business_initiator')
+                ref('smart_core.group_smart_core_data_operator')
             ])]"/>
         </record>
 
@@ -308,18 +307,16 @@
         </record>
 
         <!-- =========================
-             平台级系统管理员
-             - 管施工后台、工作流、系统级治理
-             - 兼容历史 group_sc_cap_config_admin 引用，并桥接 Smart Core 平台管理组
+             行业配置管理员（历史 XMLID 兼容）
+             - 承载行业配置、迁移治理和历史事实治理能力
+             - 不再代表平台管理员，不继承 Smart Core 平台组或 Odoo 系统组
         ========================== -->
         <record id="group_sc_cap_config_admin" model="res.groups">
-            <field name="name">SC 能力 - 平台系统管理员</field>
+            <field name="name">SC 能力 - 行业配置管理员</field>
             <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
             <field name="implied_ids" eval="[
                 (6, 0, [
-                    ref('smart_construction_core.group_sc_cap_business_config_admin'),
-                    ref('smart_core.group_smart_core_admin'),
-                    ref('base.group_system')
+                    ref('smart_construction_core.group_sc_cap_business_config_admin')
                 ])
             ]"/>
         </record>
