@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+from datetime import UTC, datetime
 import json
 import os
 import re
@@ -139,6 +140,15 @@ def _extract_data(body: dict) -> dict:
     return data
 
 
+def _extract_runtime_list(data: dict, key: str) -> list:
+    value = data.get(key) if isinstance(data.get(key), list) else []
+    if value:
+        return value
+    delivery_engine = data.get("delivery_engine_v1") if isinstance(data.get("delivery_engine_v1"), dict) else {}
+    nested = delivery_engine.get(key) if isinstance(delivery_engine.get(key), list) else []
+    return nested
+
+
 def _load_role_fixtures() -> list[RoleFixture]:
     baseline = _load_json(ROLE_BASELINE_JSON)
     password = str(os.getenv("E2E_PROD_LIKE_PASSWORD") or baseline.get("fixture_password") or "prod_like").strip()
@@ -210,8 +220,8 @@ def _collect_runtime_scenes_by_role(
             continue
         status, resp = _intent_post(intent_url, token=token, intent="system.init", params={"contract_mode": "hud"})
         data = _extract_data(resp if isinstance(resp, dict) else {})
-        scenes = data.get("scenes") if isinstance(data.get("scenes"), list) else []
-        caps = data.get("capabilities") if isinstance(data.get("capabilities"), list) else []
+        scenes = _extract_runtime_list(data, "scenes")
+        caps = _extract_runtime_list(data, "capabilities")
         roles[fx.role] = {
             "role": fx.role,
             "login": fx.login,
@@ -466,11 +476,14 @@ def _build_capability_coverage_matrix(roles: dict[str, dict]) -> dict:
             key = str(cap.get("key") or "").strip()
             if not key:
                 continue
+            state = str(cap.get("state") or cap.get("runtime_state") or "").strip()
+            if state == "POLICY_READY":
+                state = "READY"
             all_keys.add(key)
             role_caps[role][key] = {
-                "state": str(cap.get("state") or "").strip(),
-                "capability_state": str(cap.get("capability_state") or "").strip(),
-                "reason": str(cap.get("capability_state_reason") or "").strip(),
+                "state": state,
+                "capability_state": str(cap.get("capability_state") or cap.get("runtime_state") or "").strip(),
+                "reason": str(cap.get("capability_state_reason") or cap.get("runtime_reason_code") or "").strip(),
                 "group_key": str(cap.get("group_key") or "").strip(),
             }
 
@@ -798,7 +811,7 @@ def main() -> int:
 
     report = {
         "ok": journey_failed_steps == 0 and len(high_acl_runtime) == 0,
-        "generated_at": __import__("datetime").datetime.utcnow().isoformat() + "Z",
+        "generated_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         "summary": {
             "role_count": 3,
             "journey_count": 9,

@@ -29,25 +29,33 @@ def _load_json(path: Path) -> dict:
 
 
 def _extract_scene_count(payload: dict) -> int:
-    data = payload.get("data") if isinstance(payload.get("data"), dict) else {}
-    if isinstance(data.get("data"), dict):  # compat nested envelope
-        data = data.get("data") or data
-    scenes = data.get("scenes") if isinstance(data.get("scenes"), list) else []
-    return len(scenes)
+    return len(_extract_scene_codes(payload))
 
 
 def _extract_scene_codes(payload: dict) -> set[str]:
     data = payload.get("data") if isinstance(payload.get("data"), dict) else {}
     if isinstance(data.get("data"), dict):
         data = data.get("data") or data
-    scenes = data.get("scenes") if isinstance(data.get("scenes"), list) else []
+    scene_sources = [data.get("scenes") if isinstance(data.get("scenes"), list) else []]
+    delivery_engine = data.get("delivery_engine_v1") if isinstance(data.get("delivery_engine_v1"), dict) else {}
+    scene_sources.append(delivery_engine.get("scenes") if isinstance(delivery_engine.get("scenes"), list) else [])
+    scene_ready = data.get("scene_ready_contract_v1") if isinstance(data.get("scene_ready_contract_v1"), dict) else {}
+    scene_sources.append(scene_ready.get("scenes") if isinstance(scene_ready.get("scenes"), list) else [])
     out: set[str] = set()
-    for item in scenes:
-        if not isinstance(item, dict):
-            continue
-        code = str(item.get("code") or item.get("scene_key") or item.get("key") or "").strip()
-        if code:
-            out.add(code)
+    for scenes in scene_sources:
+        for item in scenes:
+            if not isinstance(item, dict):
+                continue
+            scene = item.get("scene") if isinstance(item.get("scene"), dict) else {}
+            code = str(
+                item.get("code")
+                or item.get("scene_key")
+                or item.get("key")
+                or scene.get("key")
+                or ""
+            ).strip()
+            if code:
+                out.add(code)
     return out
 
 

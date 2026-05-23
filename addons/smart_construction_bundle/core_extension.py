@@ -7,6 +7,7 @@ from .services.bundle_registry import (
     default_dashboard,
     list_bundle_capabilities,
     list_bundle_scenes,
+    product_profile,
     recommended_roles,
 )
 
@@ -25,6 +26,7 @@ def smart_core_extend_system_init(data, env, user):
         ext_facts = data.get("ext_facts") if isinstance(data.get("ext_facts"), dict) else {}
         product = ext_facts.get("product") if isinstance(ext_facts.get("product"), dict) else {}
         product["bundle"] = {
+            "profile": product_profile(),
             "name": "smart_construction_bundle",
             "scenes": list_bundle_scenes(),
             "capabilities": list_bundle_capabilities(),

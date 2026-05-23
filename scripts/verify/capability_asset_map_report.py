@@ -59,12 +59,12 @@ def _parse_capabilities() -> list[dict]:
             if fn_name != "_cap":
                 continue
             args = list(item.args)
-            if len(args) < 5:
+            if len(args) < 4:
                 continue
             key = _ast_literal(args[0]) or ""
             label = _ast_literal(args[1]) or ""
             group_key = _ast_literal(args[3]) or ""
-            scene_key = _ast_literal(args[4]) or ""
+            scene_key = _ast_literal(args[4]) if len(args) >= 5 else ""
             if not key:
                 continue
             kwargs = {kw.arg: kw.value for kw in item.keywords if kw.arg}
@@ -158,7 +158,10 @@ def main() -> int:
         )
         scene_refs = sorted(scene_usage_index.get(key, set()))
 
-        if key not in runtime_role_by_cap:
+        if key not in runtime_role_by_cap and scene_refs:
+            usage_status = "active_used"
+            active_used.append(key)
+        elif key not in runtime_role_by_cap:
             usage_status = "structural_only"
             structural_only.append(key)
         elif role_ready:

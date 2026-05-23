@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import ast
 import hashlib
 import json
 import os
@@ -36,8 +37,51 @@ def _hash_payload(payload: dict) -> str:
     return hashlib.sha256(canon.encode("utf-8")).hexdigest()[:16]
 
 
-def _extract_case(case_key: str, payload: dict) -> dict:
+def _extract_repr_data(raw_text: str) -> dict:
+    marker = "data="
+    start = raw_text.find(marker)
+    if start < 0:
+        return {}
+    start += len(marker)
+    if start >= len(raw_text) or raw_text[start] != "{":
+        return {}
+    depth = 0
+    end = None
+    for idx, ch in enumerate(raw_text[start:], start):
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                end = idx + 1
+                break
+    if end is None:
+        return {}
+    try:
+        parsed = ast.literal_eval(raw_text[start:end])
+    except Exception:
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
+
+
+def _extract_ui_contract_data(payload: dict) -> dict:
     raw = payload.get("ui_contract_raw") if isinstance(payload.get("ui_contract_raw"), dict) else {}
+    raw_payload = raw.get("raw")
+    if isinstance(raw_payload, dict):
+        raw = raw_payload or raw
+    elif isinstance(raw_payload, str):
+        parsed = _extract_repr_data(raw_payload)
+        if parsed:
+            raw = parsed
+    if isinstance(raw.get("data"), dict):
+        raw = raw.get("data") or raw
+        if isinstance(raw.get("data"), dict):
+            raw = raw.get("data") or raw
+    return raw if isinstance(raw, dict) else {}
+
+
+def _extract_case(case_key: str, payload: dict) -> dict:
+    raw = _extract_ui_contract_data(payload)
     if case_key == "execute_button_dry_run":
         result = ((raw.get("result") if isinstance(raw.get("result"), dict) else {}))
         return {
@@ -59,6 +103,9 @@ def _extract_case(case_key: str, payload: dict) -> dict:
         }
     if case_key == "system_init_admin":
         caps = raw.get("capabilities") if isinstance(raw.get("capabilities"), list) else []
+        if not caps:
+            delivery_engine = raw.get("delivery_engine_v1") if isinstance(raw.get("delivery_engine_v1"), dict) else {}
+            caps = delivery_engine.get("capabilities") if isinstance(delivery_engine.get("capabilities"), list) else []
         intents = raw.get("intents") if isinstance(raw.get("intents"), list) else []
         feature_flags = raw.get("feature_flags") if isinstance(raw.get("feature_flags"), dict) else {}
         return {

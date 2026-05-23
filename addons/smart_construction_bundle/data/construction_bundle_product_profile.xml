@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="param_construction_bundle_product_key" model="ir.config_parameter">
+        <field name="key">smart_construction_bundle.product_key</field>
+        <field name="value">construction.standard</field>
+    </record>
+    <record id="param_construction_bundle_tiers" model="ir.config_parameter">
+        <field name="key">smart_construction_bundle.tiers</field>
+        <field name="value">standard,pro,enterprise</field>
+    </record>
+    <record id="param_construction_bundle_default_roles" model="ir.config_parameter">
+        <field name="key">smart_construction_bundle.default_roles</field>
+        <field name="value">pm,finance,purchase_manager,executive,admin</field>
+    </record>
+    <record id="param_construction_bundle_acceptance_assets" model="ir.config_parameter">
+        <field name="key">smart_construction_bundle.acceptance_assets</field>
+        <field name="value">docs/product/delivery/v1/standard_delivery_package_v1.md,docs/product/delivery/v1/delivery_readiness_scoreboard_v1.md,docs/product/product_delivery_productization_audit_v1.md</field>
+    </record>
+    <record id="param_construction_bundle_customer_capability_catalog" model="ir.config_parameter">
+        <field name="key">smart_construction_bundle.customer_capability_catalog</field>
+        <field name="value">docs/product/feature_index.zh.md</field>
+    </record>
+</odoo>

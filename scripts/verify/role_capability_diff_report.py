@@ -46,6 +46,22 @@ def _build_archetype_capabilities(payload: dict) -> dict[str, set[str]]:
     return out
 
 
+def _build_release_journey_index(payload: dict) -> dict[str, list[dict]]:
+    rows = payload.get("role_journeys") if isinstance(payload.get("role_journeys"), list) else []
+    out: dict[str, list[dict]] = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        journey = row.get("intent_trace_chain") if isinstance(row.get("intent_trace_chain"), list) else []
+        role = str(row.get("role") or "").strip()
+        login = str(row.get("login") or "").strip()
+        if role:
+            out[role] = journey
+        if login:
+            out[login] = journey
+    return out
+
+
 def _pair_overlap(a: set[str], b: set[str]) -> float:
     if not a and not b:
         return 1.0
@@ -68,6 +84,7 @@ def main() -> int:
         if isinstance(item, dict) and str(item.get("role") or "").strip()
     }
     archetype_caps = _build_archetype_capabilities(release)
+    release_journeys = _build_release_journey_index(release)
 
     if not archetype_caps.get("executive"):
         errors.append("missing archetype capability set: executive")
@@ -149,6 +166,10 @@ def main() -> int:
             errors.append(f"missing capability sample for archetype={archetype}")
 
         journey = floor.get("journey") if isinstance(floor.get("journey"), list) else []
+        if not journey:
+            journey = release_journeys.get(archetype) or release_journeys.get(profile["source_login"]) or []
+        if not journey and archetype in {"material_user", "cost_user"}:
+            journey = release_journeys.get("pm") or []
         system_init_ok = any(
             isinstance(item, dict)
             and str(item.get("intent") or "").strip() == "system.init"

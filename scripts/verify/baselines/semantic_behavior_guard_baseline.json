@@ -26,16 +26,20 @@
     "system_init_admin": {
       "source": "docs/contract/snapshots/system_init_intent_admin.json",
       "semantic": {
-        "capability_count": 1,
-        "intent_count": 38,
+        "capability_count": 6,
+        "intent_count": 6,
         "feature_flag_keys": [
           "ai_enabled"
         ],
         "default_route_keys": [
-          "menu_id"
+          "entry_target",
+          "menu_id",
+          "reason",
+          "route",
+          "scene_key"
         ]
       },
-      "fingerprint": "c3c71a784029d165"
+      "fingerprint": "4d95424ca07aaa3d"
     }
   }
 }

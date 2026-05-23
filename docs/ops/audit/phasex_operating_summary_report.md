@@ -6,12 +6,12 @@
 
 ## Snapshot
 
-- capability_count: 42
-- domain_count: 6
-- isolated_capability_count: 1
+- capability_count: 63
+- domain_count: 9
+- isolated_capability_count: 0
 - over_authorized_profile_count: 0
 - role_sample_count: 8
-- runtime_scene_count: 164
+- runtime_scene_count: 66
 - semantic_drift_count: 0
 - stress_error_count: 0
 - stress_status: pass

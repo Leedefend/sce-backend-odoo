@@ -44,6 +44,19 @@ def _load_license_level(env) -> str:
 def smart_core_extend_system_init(data, env, user):
     try:
         level = _load_license_level(env)
+        upgrade_hint = ""
+        reason_codes: list[str] = []
+        try:
+            ICP = env["ir.config_parameter"].sudo()
+            upgrade_hint = str(ICP.get_param("smart_license_core.upgrade_hint") or "").strip()
+            reason_codes = [
+                item.strip()
+                for item in str(ICP.get_param("smart_license_core.reason_codes") or "").split(",")
+                if item.strip()
+            ]
+        except Exception:
+            upgrade_hint = ""
+            reason_codes = []
         caps = data.get("capabilities") if isinstance(data.get("capabilities"), list) else []
         filtered = [cap for cap in caps if isinstance(cap, dict) and _allow(cap.get("key"), level)]
         if caps:
@@ -64,6 +77,9 @@ def smart_core_extend_system_init(data, env, user):
         product["license"] = {
             "level": level,
             "tiers": ["community", "pro", "enterprise"],
+            "customer_visible": True,
+            "upgrade_hint": upgrade_hint,
+            "reason_codes": reason_codes,
         }
         ext_facts["product"] = product
         data["ext_facts"] = ext_facts
