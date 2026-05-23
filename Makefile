@@ -2322,6 +2322,14 @@ verify.e2e.ops_batch_smoke: guard.prod.forbid check-compose-project check-compos
 verify.list_batch_action.closure_guard: guard.prod.forbid
 	@python3 scripts/verify/list_batch_action_closure_guard.py
 
+.PHONY: verify.user_delete_data.closure_guard
+verify.user_delete_data.closure_guard: guard.prod.forbid
+	@python3 scripts/verify/user_delete_data_closure_guard.py
+
+.PHONY: verify.receipt_income_type_mapping.guard
+verify.receipt_income_type_mapping.guard: guard.prod.forbid
+	@python3 scripts/verify/receipt_income_type_mapping_guard.py
+
 verify.capability.lint: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/verify/capability_lint.sh
 

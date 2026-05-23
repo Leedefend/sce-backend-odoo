@@ -154,6 +154,71 @@ API_DATA_MUTATION_POLICIES = {
         "source": "smart_construction_core",
     },
 }
+
+DRAFT_DELETE_ALLOWED_STATES = ("cancel", "cancelled", "draft")
+
+
+def _state_unlink_policy(model_name: str, business_label: str, allowed_states=DRAFT_DELETE_ALLOWED_STATES):
+    return {
+        "allowed": True,
+        "delete_mode": "unlink",
+        "policy_kind": "state_limited_business_document",
+        "state_field": "state",
+        "allowed_states": list(allowed_states),
+        "reason_code": "DRAFT_BUSINESS_DOCUMENT_DELETE_ALLOWED",
+        "message": f"允许删除未形成业务事实的{business_label}；仅限草稿/取消等未提交状态，并继续受模型 ACL 与记录规则约束。",
+        "source": "smart_construction_core",
+    }
+
+
+API_DATA_DRAFT_UNLINK_POLICIES = {
+    "construction.contract": _state_unlink_policy("construction.contract", "合同记录"),
+    "construction.contract.income": _state_unlink_policy("construction.contract.income", "收入合同"),
+    "construction.contract.expense": _state_unlink_policy("construction.contract.expense", "支出合同"),
+    "payment.request": _state_unlink_policy("payment.request", "付款申请"),
+    "sc.general.contract": _state_unlink_policy("sc.general.contract", "综合合同"),
+    "sc.expense.claim": _state_unlink_policy("sc.expense.claim", "费用与保证金单据"),
+    "sc.payment.execution": _state_unlink_policy("sc.payment.execution", "付款执行单"),
+    "sc.receipt.income": _state_unlink_policy("sc.receipt.income", "收款收入登记"),
+    "sc.fund.account.operation": _state_unlink_policy("sc.fund.account.operation", "资金账户操作单"),
+    "sc.settlement.order": _state_unlink_policy("sc.settlement.order", "结算单"),
+    "sc.settlement.adjustment": _state_unlink_policy("sc.settlement.adjustment", "结算调整单"),
+    "sc.material.purchase.request": _state_unlink_policy("sc.material.purchase.request", "材料采购申请"),
+    "sc.material.acceptance": _state_unlink_policy("sc.material.acceptance", "材料验收单"),
+    "sc.material.inbound": _state_unlink_policy("sc.material.inbound", "材料入库单"),
+    "sc.material.outbound": _state_unlink_policy("sc.material.outbound", "材料出库单"),
+    "sc.material.rfq": _state_unlink_policy("sc.material.rfq", "材料询比价"),
+    "sc.material.settlement": _state_unlink_policy("sc.material.settlement", "材料结算单"),
+    "sc.material.rental.plan": _state_unlink_policy("sc.material.rental.plan", "材料租赁计划"),
+    "sc.material.rental.order": _state_unlink_policy("sc.material.rental.order", "材料租赁订单"),
+    "sc.material.rental.settlement": _state_unlink_policy("sc.material.rental.settlement", "材料租赁结算"),
+    "sc.labor.plan": _state_unlink_policy("sc.labor.plan", "劳务计划"),
+    "sc.labor.request": _state_unlink_policy("sc.labor.request", "劳务申请"),
+    "sc.labor.usage": _state_unlink_policy("sc.labor.usage", "劳务使用记录"),
+    "sc.labor.settlement": _state_unlink_policy("sc.labor.settlement", "劳务结算"),
+    "sc.labor.price": _state_unlink_policy("sc.labor.price", "劳务价格单"),
+    "sc.equipment.plan": _state_unlink_policy("sc.equipment.plan", "设备计划"),
+    "sc.equipment.request": _state_unlink_policy("sc.equipment.request", "设备申请"),
+    "sc.equipment.usage": _state_unlink_policy("sc.equipment.usage", "设备使用记录"),
+    "sc.equipment.settlement": _state_unlink_policy("sc.equipment.settlement", "设备结算"),
+    "sc.equipment.price": _state_unlink_policy("sc.equipment.price", "设备价格单"),
+    "sc.safety.plan": _state_unlink_policy("sc.safety.plan", "安全方案"),
+    "sc.safety.disclosure": _state_unlink_policy("sc.safety.disclosure", "安全交底"),
+    "sc.safety.issue": _state_unlink_policy("sc.safety.issue", "安全问题"),
+    "sc.safety.patrol.task": _state_unlink_policy("sc.safety.patrol.task", "安全巡检任务"),
+    "sc.quality.issue": _state_unlink_policy("sc.quality.issue", "质量问题"),
+    "sc.construction.diary": _state_unlink_policy("sc.construction.diary", "施工日志"),
+    "project.progress.entry": _state_unlink_policy("project.progress.entry", "进度填报"),
+    "project.risk.action": _state_unlink_policy("project.risk.action", "风险措施"),
+    "sc.plan": _state_unlink_policy("sc.plan", "项目计划"),
+    "sc.plan.line": _state_unlink_policy("sc.plan.line", "项目计划明细"),
+    "sc.plan.version": _state_unlink_policy("sc.plan.version", "计划版本"),
+    "sc.plan.report": _state_unlink_policy("sc.plan.report", "计划上报"),
+    "tender.bid": _state_unlink_policy("tender.bid", "投标主单", ("prepare", "estimating")),
+    "tender.doc.purchase": _state_unlink_policy("tender.doc.purchase", "投标文件购买申请"),
+    "tender.doc.review": _state_unlink_policy("tender.doc.review", "投标文件审查"),
+    "tender.guarantee": _state_unlink_policy("tender.guarantee", "投标保证金"),
+}
 API_DATA_UNLINK_POLICIES = {
     "construction.contract": {
         "allowed": True,
@@ -282,6 +347,7 @@ API_DATA_UNLINK_POLICIES = {
         "source": "smart_construction_core",
     },
 }
+API_DATA_UNLINK_POLICIES.update(API_DATA_DRAFT_UNLINK_POLICIES)
 API_DATA_UNLINK_ALLOWED_MODELS = list(API_DATA_UNLINK_POLICIES)
 
 MODEL_CODE_MAPPING = {
@@ -734,9 +800,11 @@ def get_api_data_unlink_allowed_model_contributions(env):
         policies["project.project"] = {
             "allowed": True,
             "delete_mode": "unlink",
-            "reason_code": "DELETE_POLICY_ALLOWED",
-            "message": "允许业务配置管理员删除项目；如存在业务依赖会由项目删除规则阻断。",
+            "reason_code": "PROJECT_MASTER_DELETE_ALLOWED",
+            "message": "允许业务配置管理员删除无业务依赖的项目主数据；存在业务依赖时由项目删除规则阻断。",
             "source": "smart_construction_core",
+            "requires_group": "smart_construction_core.group_sc_cap_business_config_admin",
+            "dependency_guard": "project.project._raise_project_unlink_blockers",
         }
     return policies
 

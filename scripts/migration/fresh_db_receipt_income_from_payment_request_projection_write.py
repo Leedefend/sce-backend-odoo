@@ -211,7 +211,7 @@ env.cr.execute(  # noqa: F821
       source.payment_request_id,
       COALESCE(NULLIF(source.document_date, '')::date, source.date_request, CURRENT_DATE),
       NULLIF(source.document_no, ''),
-      '收款申请',
+      COALESCE(NULLIF(source.legacy_receipt_type, ''), '收款申请'),
       NULLIF(source.legacy_receipt_type, ''),
       NULLIF(source.legacy_receipt_subtype, ''),
       NULLIF(source.income_category, ''),

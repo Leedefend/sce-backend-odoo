@@ -36,11 +36,13 @@ export function resolveBatchDeleteExecutionSeed(options: {
 }): {
   requestAction: 'unlink';
   ifMatchMap: Record<number, string>;
+  dryRunIdempotencyKey: string;
   idempotencyKey: string;
 } {
   return {
     requestAction: 'unlink',
     ifMatchMap: options.buildIfMatchMap(options.selectedIds),
+    dryRunIdempotencyKey: options.buildIdempotencyKey('delete.dry_run', options.selectedIds, { delete_mode: 'unlink', dry_run: true }),
     idempotencyKey: options.buildIdempotencyKey('delete', options.selectedIds, { delete_mode: 'unlink' }),
   };
 }
