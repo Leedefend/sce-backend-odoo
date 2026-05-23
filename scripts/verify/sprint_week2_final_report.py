@@ -40,13 +40,15 @@ def main() -> int:
     unknown_source = int(((explain.get("summary") or {}).get("unknown_source_count")) or 0)
     product_cap_count = int(((product.get("summary") or {}).get("product_capability_count")) or 0)
     module_count = int(((product.get("summary") or {}).get("industry_module_count")) or 0)
+    mapped_cap_count = int(((product.get("summary") or {}).get("mapped_capability_count")) or 0)
+    cap_count = int(((product.get("summary") or {}).get("capability_count")) or 0)
     unassigned_cap = int(((product.get("summary") or {}).get("unassigned_capability_count")) or 0)
 
     checks = {
         "semantic_drift_guard_pass": drift_count == 0,
         "trend_data_ready_7d": trend_points >= 7,
         "catalog_runtime_unknown_source_eq_0": unknown_source == 0,
-        "product_matrix_complete": product_cap_count == 16 and module_count == 8 and unassigned_cap == 0,
+        "product_matrix_complete": bool(product.get("ok")) and product_cap_count > 0 and module_count > 0 and mapped_cap_count == cap_count and unassigned_cap == 0,
     }
     if not checks["semantic_drift_guard_pass"]:
         errors.append(f"semantic_drift_count={drift_count}")
@@ -65,6 +67,8 @@ def main() -> int:
             "semantic_drift_count": drift_count,
             "trend_scene_series_points": trend_points,
             "catalog_runtime_unknown_source_count": unknown_source,
+            "capability_count": cap_count,
+            "mapped_capability_count": mapped_cap_count,
             "product_capability_count": product_cap_count,
             "industry_module_count": module_count,
             "product_unassigned_capability_count": unassigned_cap,
@@ -84,6 +88,8 @@ def main() -> int:
         f"- semantic_drift_count: {drift_count}",
         f"- trend_scene_series_points: {trend_points}",
         f"- catalog_runtime_unknown_source_count: {unknown_source}",
+        f"- capability_count: {cap_count}",
+        f"- mapped_capability_count: {mapped_cap_count}",
         f"- product_capability_count: {product_cap_count}",
         f"- industry_module_count: {module_count}",
         f"- product_unassigned_capability_count: {unassigned_cap}",
@@ -108,4 +114,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

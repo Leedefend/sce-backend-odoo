@@ -534,6 +534,14 @@ def export_snapshot():
                     }
                 else:
                     raise
+            to_legacy = getattr(raw_res, "to_legacy_dict", None)
+            if callable(to_legacy):
+                try:
+                    legacy_res = to_legacy()
+                except Exception:
+                    legacy_res = None
+                if isinstance(legacy_res, dict):
+                    raw_res = legacy_res
             if isinstance(raw_res, dict) and raw_res.get("ok") is False and not args.allow_error_response:
                 raise SystemExit(raw_res.get("error"))
             if isinstance(raw_res, dict):
