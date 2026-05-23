@@ -19,10 +19,7 @@ export function useActionViewDisplayComputedRuntime(options: UseActionViewDispla
     );
   });
 
-  const subtitle = computed(
-    () =>
-      `${options.records.value.length}${options.pageText('subtitle_records_suffix', ' 条记录')}`,
-  );
+  const subtitle = computed(() => '');
 
   const statusLabel = computed(() => {
     if (options.status.value === 'loading') return options.pageText('status_loading', '加载中');

@@ -78,7 +78,6 @@
             跳转
           </button>
         </div>
-        <span v-else class="kanban-count">{{ records.length }} 条记录</span>
       </section>
 
       <slot name="toolbar"></slot>
@@ -113,8 +112,8 @@
       </section>
 
       <section v-if="showPagination" class="pagination-bar">
-        <span>{{ paginationSummary }}</span>
         <div class="pagination-actions">
+          <span class="pagination-total">{{ paginationTotalText }}</span>
           <button
             type="button"
             class="pagination-btn"
@@ -150,6 +149,9 @@
             跳转
           </button>
         </div>
+      </section>
+      <section v-else class="pagination-bar pagination-bar--count-only">
+        <span class="pagination-total">{{ paginationTotalText }}</span>
       </section>
     </template>
   </section>
@@ -248,33 +250,19 @@ const totalPages = computed(() => {
   return Math.max(1, Math.ceil(total / listLimit.value));
 });
 const currentPage = computed(() => Math.min(totalPages.value, Math.floor(listOffset.value / listLimit.value) + 1));
-const rangeStart = computed(() => {
-  const total = listTotal.value || 0;
-  if (!total) return 0;
-  return Math.min(total, listOffset.value + 1);
-});
-const rangeEnd = computed(() => {
-  const total = listTotal.value || 0;
-  if (!total) return 0;
-  return Math.min(total, listOffset.value + props.records.length);
-});
 const showPagination = computed(() => listTotal.value !== null && props.status === 'ok');
 const canPagePrev = computed(() => listOffset.value > 0);
 const canPageNext = computed(() => {
   const total = listTotal.value || 0;
   return listOffset.value + listLimit.value < total;
 });
-const paginationSummary = computed(() => {
-  const total = listTotal.value || 0;
-  if (!total) return '共 0 条';
-  return `共 ${total} 条，当前 ${rangeStart.value}-${rangeEnd.value} 条`;
-});
+const paginationTotalText = computed(() => `共 ${listTotal.value ?? props.records.length} 条`);
 const compactSubtitle = computed(() => {
-  const summary = showPagination.value ? paginationSummary.value : `${props.records.length} 条记录`;
   const source = String(props.subtitle || '').trim();
-  if (!source) return summary;
-  const normalized = source.replace(/^\d+\s*条记录\s*·?\s*/, '').trim();
-  return normalized ? `${summary} · ${normalized}` : summary;
+  return source
+    .replace(/^共\s*\d+\s*条(?:，当前\s*\d+\s*-\s*\d+\s*条)?\s*·?\s*/, '')
+    .replace(/^\d+\s*条记录\s*·?\s*/, '')
+    .trim();
 });
 
 function semanticCell(field: string, value: unknown) {
@@ -415,12 +403,6 @@ function formatValue(value: unknown) {
   line-height: 1.35;
 }
 
-.kanban-count {
-  color: var(--sc-app-text-secondary);
-  font-size: 13px;
-  white-space: nowrap;
-}
-
 .card {
   background: var(--sc-app-panel);
   border: 1px solid var(--sc-app-border);
@@ -494,7 +476,7 @@ function formatValue(value: unknown) {
 .pagination-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 12px;
   border: 1px solid var(--sc-app-border);
   border-radius: 10px;
@@ -504,10 +486,21 @@ function formatValue(value: unknown) {
   font-size: 13px;
 }
 
+.pagination-bar--count-only {
+  justify-content: flex-end;
+}
+
 .pagination-actions {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+}
+
+.pagination-total {
+  color: var(--sc-app-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .pagination-actions--top {

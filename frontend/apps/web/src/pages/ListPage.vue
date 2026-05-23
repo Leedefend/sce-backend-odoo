@@ -47,7 +47,6 @@
             {{ uiLabel('search_submit', '搜索') }}
           </button>
         </div>
-        <span v-else-if="!showPagination" class="list-count">{{ uiLabel('record_count', '{count} 条记录', { count: records.length }) }}</span>
       </section>
       <section class="list-empty-state">
         <div class="list-empty-copy">
@@ -67,6 +66,11 @@
           <button type="button" class="list-empty-secondary" :disabled="loading" @click="onReload">
             {{ uiLabel('empty_retry', '刷新') }}
           </button>
+        </div>
+      </section>
+      <section class="pagination-footer pagination-footer--count-only">
+        <div class="pagination-actions pagination-actions--bottom">
+          <span class="pagination-total">{{ listRecordCountText }}</span>
         </div>
       </section>
     </template>
@@ -95,7 +99,6 @@
             {{ uiLabel('search_submit', '搜索') }}
           </button>
         </div>
-        <span v-else-if="!showPagination" class="list-count">{{ uiLabel('record_count', '{count} 条记录', { count: records.length }) }}</span>
       </section>
 
       <section v-if="enableSummaryStrip && summaryItems.length" class="summary-strip">
@@ -526,6 +529,7 @@
 
       <section v-if="showGroupedWindowPagination" class="pagination-footer">
         <div class="pagination-actions pagination-actions--bottom">
+          <span class="pagination-total">{{ listRecordCountText }}</span>
           <button
             type="button"
             class="pagination-btn"
@@ -608,6 +612,11 @@
               </select>
             </span>
           </label>
+        </div>
+      </section>
+      <section v-else class="pagination-footer pagination-footer--count-only">
+        <div class="pagination-actions pagination-actions--bottom">
+          <span class="pagination-total">{{ listRecordCountText }}</span>
         </div>
       </section>
 
@@ -1251,8 +1260,19 @@ const totalPages = computed(() => {
 });
 const currentPage = computed(() => Math.min(totalPages.value, Math.floor(listOffset.value / listLimit.value) + 1));
 const showPagination = computed(() => listTotal.value !== null && props.status === 'ok' && !showGroupedRows.value);
+const groupedRecordTotal = computed(() => {
+  if (!showGroupedRows.value) return null;
+  const total = sortedGroupedRows.value.reduce((sum, group) => {
+    const count = Number(group.count);
+    return Number.isFinite(count) && count > 0 ? sum + Math.trunc(count) : sum;
+  }, 0);
+  return total > 0 ? total : null;
+});
+const listRecordTotal = computed(() =>
+  listTotal.value ?? groupedRecordTotal.value ?? pageVisibleRows.value.length ?? props.records.length,
+);
 const listRecordCountText = computed(() =>
-  uiLabel('record_count', '{count} 条记录', { count: listTotal.value ?? props.records.length }),
+  uiLabel('record_count', '共 {count} 条', { count: listRecordTotal.value }),
 );
 const toolbarSubtitle = computed(() => props.subtitle || '');
 const canPagePrev = computed(() => listOffset.value > 0);
@@ -1887,12 +1907,6 @@ onBeforeUnmount(() => {
   white-space: nowrap;
 }
 
-.list-count {
-  color: var(--sc-app-text-secondary);
-  font-size: 13px;
-  white-space: nowrap;
-}
-
 .list-header-toolbar {
   display: flex;
   justify-content: flex-start;
@@ -2290,6 +2304,10 @@ onBeforeUnmount(() => {
   z-index: 24;
   background: var(--sc-app-bg);
   padding-top: 6px;
+}
+
+.pagination-footer--count-only {
+  position: static;
 }
 
 .pagination-actions--bottom {
