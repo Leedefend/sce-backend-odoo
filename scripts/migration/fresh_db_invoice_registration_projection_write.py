@@ -44,6 +44,7 @@ artifact_root = resolve_artifact_root()
 output_json = artifact_root / "fresh_db_invoice_registration_projection_write_result_v1.json"
 currency_id = env.company.currency_id.id  # noqa: F821
 default_issue_company_name = env.company.name  # noqa: F821
+include_income_invoice_facts = os.getenv("INVOICE_REGISTRATION_INCLUDE_INCOME_INVOICE_FACTS") == "1"
 before = int(scalar("SELECT COUNT(*) FROM sc_invoice_registration") or 0)
 
 env.cr.execute(  # noqa: F821
@@ -489,6 +490,7 @@ env.cr.execute(  # noqa: F821
     ) contract_match ON TRUE
     WHERE f.active
       AND f.project_id IS NOT NULL
+      AND %s
       AND f.fact_type IN ('invoice_application', 'invoice_application_line', 'invoice_issue', 'invoice_issue_line')
       AND (
         COALESCE(f.amount_total, 0) <> 0
@@ -536,7 +538,7 @@ env.cr.execute(  # noqa: F821
       write_uid = 1,
       write_date = NOW()
     """,
-    [default_issue_company_name, currency_id],
+    [default_issue_company_name, currency_id, include_income_invoice_facts],
 )
 
 env.cr.commit()  # noqa: F821
@@ -567,6 +569,15 @@ payload = {
     "legacy_invoice_tax": int(
         scalar("SELECT COUNT(*) FROM sc_invoice_registration WHERE legacy_source_model = 'sc.legacy.invoice.tax.fact'")
         or 0
+    ),
+    "legacy_income_invoice": int(
+        scalar("SELECT COUNT(*) FROM sc_invoice_registration WHERE legacy_source_model = 'sc.legacy.income.invoice.fact'")
+        or 0
+    ),
+    "include_income_invoice_facts": include_income_invoice_facts,
+    "income_invoice_projection_policy": (
+        "opt_in_only; current output invoice adjustment ledger scope is "
+        "sc.legacy.invoice.tax.fact/C_JXXP_XXKPDJ"
     ),
     "legacy_confirmed": int(
         scalar("SELECT COUNT(*) FROM sc_invoice_registration WHERE source_origin = 'legacy' AND state = 'legacy_confirmed'")

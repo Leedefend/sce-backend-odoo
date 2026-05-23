@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import inspect
 import re
 
 from odoo.tests import TransactionCase
@@ -863,6 +864,13 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         self.assertIn("signed_adjustment", action.domain)
         self.assertIn("search_default_signed_adjustment", action.context)
         self.assertEqual(menu.action, action)
+
+    def test_output_invoice_adjustment_ledger_scope_is_tax_fact_only(self):
+        from odoo.addons.smart_construction_core.models.core.output_invoice_ledger import ScOutputInvoiceLedger
+
+        init_source = inspect.getsource(ScOutputInvoiceLedger.init)
+        self.assertIn("ir.legacy_source_model = 'sc.legacy.invoice.tax.fact'", init_source)
+        self.assertIn("ir.legacy_source_table = 'C_JXXP_XXKPDJ'", init_source)
 
     def test_output_invoice_ledger_exposes_signed_adjustment_filters(self):
         ledger_tree = self.env.ref("smart_construction_core.view_output_invoice_ledger_tree").arch_db

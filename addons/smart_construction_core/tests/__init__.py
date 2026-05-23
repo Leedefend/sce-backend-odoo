@@ -30,7 +30,6 @@ from . import test_capability_contract_backend
 from . import test_api_data_batch_contract_backend
 from . import test_api_data_write_unlink_idempotency_backend
 from . import test_my_work_backend
-from . import test_usage_backend
 from . import test_reason_codes_backend
 from . import test_payment_request_permission
 from . import test_scene_governance_payload_backend
