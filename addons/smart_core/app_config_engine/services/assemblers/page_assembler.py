@@ -1341,39 +1341,39 @@ class PageAssembler:
         context = action_context if isinstance(action_context, dict) else {}
         if not context:
             return
-        default_tokens = {
+        default_tokens = [
             str(key).strip()
             for key, value in context.items()
             if str(key).strip().startswith("search_default_") and value
-        }
+        ]
         if not default_tokens:
             return
 
         group_rows = search.get("group_by") if isinstance(search.get("group_by"), list) else []
-        matched = set()
-        for row in group_rows:
-            if not isinstance(row, dict):
-                continue
-            field = str(row.get("field") or row.get("group_by") or row.get("key") or "").strip()
-            key = str(row.get("key") or row.get("name") or field).strip()
-            base_field = field.split(":", 1)[0]
-            candidates = {
-                f"search_default_{key}",
-                f"search_default_group_{field}",
-                f"search_default_group_{base_field}",
-            }
-            if default_tokens & candidates:
-                row["default"] = True
-                matched.add(field or key)
-        if not matched:
+        matched_row = None
+        for token in default_tokens:
+            for row in group_rows:
+                if not isinstance(row, dict):
+                    continue
+                field = str(row.get("field") or row.get("group_by") or row.get("key") or "").strip()
+                key = str(row.get("key") or row.get("name") or field).strip()
+                base_field = field.split(":", 1)[0]
+                candidates = {
+                    f"search_default_{key}",
+                    f"search_default_group_{field}",
+                    f"search_default_group_{base_field}",
+                }
+                if token in candidates:
+                    matched_row = row
+                    break
+            if matched_row is not None:
+                break
+        if matched_row is None:
             return
         for row in group_rows:
             if not isinstance(row, dict):
                 continue
-            field = str(row.get("field") or row.get("group_by") or row.get("key") or "").strip()
-            key = str(row.get("key") or row.get("name") or field).strip()
-            if (field or key) not in matched:
-                row["default"] = False
+            row["default"] = row is matched_row
 
     def _inject_relation_entry_contract(self, data, model_name=""):
         fields = data.get("fields") if isinstance(data, dict) else None
