@@ -1358,10 +1358,15 @@ class PageAssembler:
                 field = str(row.get("field") or row.get("group_by") or row.get("key") or "").strip()
                 key = str(row.get("key") or row.get("name") or field).strip()
                 base_field = field.split(":", 1)[0]
+                semantic_field = base_field[:-3] if base_field.endswith("_id") else base_field
                 candidates = {
                     f"search_default_{key}",
                     f"search_default_group_{field}",
                     f"search_default_group_{base_field}",
+                    f"search_default_group_{semantic_field}",
+                    f"search_default_group_by_{field}",
+                    f"search_default_group_by_{base_field}",
+                    f"search_default_group_by_{semantic_field}",
                 }
                 if token in candidates:
                     matched_row = row

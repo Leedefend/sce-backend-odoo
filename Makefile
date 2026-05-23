@@ -630,7 +630,7 @@ verify.user_role_approval_matrix.guard: check-compose-project check-compose-env
 verify.user_permission_view_contract_boundary.guard: check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/user_permission_view_contract_boundary_guard.py
 
-.PHONY: verify.form_structure.contract.guard verify.form_structure.contract_runtime.audit verify.form_structure.contract verify.form_view.native_structure.boundary_guard verify.view.orchestration_boundary_guard verify.view.orchestration_user_surface.browser verify.form_view.orchestration_boundary_guard verify.form_view.scope.boundary_guard verify.form_view.scope.runtime_chain_guard verify.form_view.scope.action_projection_audit
+.PHONY: verify.form_structure.contract.guard verify.form_structure.contract_runtime.audit verify.form_structure.contract verify.form_view.native_structure.boundary_guard verify.view.orchestration_boundary_guard verify.view.orchestration_user_surface.browser verify.form_view.orchestration_boundary_guard verify.form_view.scope.boundary_guard verify.form_view.scope.runtime_chain_guard verify.form_view.scope.action_projection_audit verify.action_default_group.contract_audit
 verify.form_view.scope.boundary_guard: guard.prod.forbid
 	@python3 -m py_compile scripts/verify/form_view_scope_boundary_guard.py
 	@python3 scripts/verify/form_view_scope_boundary_guard.py
@@ -642,6 +642,10 @@ verify.form_view.scope.runtime_chain_guard: guard.prod.forbid
 verify.form_view.scope.action_projection_audit: guard.prod.forbid check-compose-project check-compose-env
 	@python3 -m py_compile scripts/verify/form_view_scope_action_projection_audit.py
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/form_view_scope_action_projection_audit.sh
+
+verify.action_default_group.contract_audit: guard.prod.forbid check-compose-project check-compose-env
+	@python3 -m py_compile scripts/verify/action_default_group_contract_audit.py
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/action_default_group_contract_audit.py
 
 verify.form_view.native_structure.boundary_guard: guard.prod.forbid
 	@python3 -m py_compile scripts/verify/form_view_native_structure_boundary_guard.py
