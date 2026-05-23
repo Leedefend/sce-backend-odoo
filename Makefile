@@ -1020,6 +1020,9 @@ fresh_db.payment_execution_taxonomy.projection.write: guard.prod.forbid check-co
 fresh_db.invoice_registration.projection.write: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_invoice_registration_projection_write.py
 
+fresh_db.receipt_invoice_line.output_visible_enrich.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/receipt_invoice_line_output_visible_enrich_write.py
+
 fresh_db.financing_loan.projection.write: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_financing_loan_projection_write.py
 

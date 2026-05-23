@@ -168,11 +168,11 @@
     </record>
     <record id="action_sc_invoice_output" model="ir.actions.act_window">
         <field name="name">销项发票</field>
-        <field name="res_model">sc.invoice.registration</field>
+        <field name="res_model">sc.receipt.invoice.line</field>
         <field name="view_mode">tree,form</field>
-        <field name="search_view_id" ref="smart_construction_core.view_sc_invoice_registration_search"/>
-        <field name="domain">[('direction', '=', 'output')]</field>
-        <field name="context">{'default_direction': 'output', 'default_source_kind': 'output_invoice_tax', 'search_default_group_project': 1}</field>
+        <field name="search_view_id" ref="smart_construction_core.view_receipt_invoice_line_search"/>
+        <field name="domain">[('active', '=', True)]</field>
+        <field name="context">{'search_default_group_by_project_id': 1}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read'))]"/>
     </record>
     <record id="action_sc_invoice_input" model="ir.actions.act_window">

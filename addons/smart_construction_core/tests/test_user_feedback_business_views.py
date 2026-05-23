@@ -828,15 +828,30 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         self.assertIn('name="legacy_parent_id"', payment_line_form)
         self.assertIn('name="legacy_supplier_contract_id"', payment_line_form)
 
-        for field_name in ("source_document_no", "source_table_name", "amount_source"):
+        for field_name in (
+            "source_document_no",
+            "source_table_name",
+            "amount_source",
+            "invoice_date",
+            "invoice_document_no",
+            "invoice_document_state",
+            "surcharge_amount",
+        ):
             self.assertIn('name="%s"' % field_name, receipt_line_tree)
             self.assertIn('name="%s"' % field_name, receipt_line_form)
         self.assertIn('name="invoice_amount" sum="发票金额合计"', receipt_line_tree)
+        self.assertIn('name="surcharge_amount" sum="附加税合计"', receipt_line_tree)
         self.assertIn('name="invoiced_before_amount" sum="历史已开票合计"', receipt_line_tree)
         self.assertIn('name="current_receipt_amount" sum="本次收款合计"', receipt_line_tree)
         self.assertIn('name="legacy_invoice_line_id"', receipt_line_form)
         self.assertIn('name="legacy_receipt_id"', receipt_line_form)
         self.assertIn('name="legacy_file_bill_id"', receipt_line_form)
+
+    def test_output_invoice_menu_uses_detail_invoice_fact_model(self):
+        action = self.env.ref("smart_construction_core.action_sc_invoice_output")
+        self.assertEqual(action.res_model, "sc.receipt.invoice.line")
+        self.assertEqual(action.search_view_id, self.env.ref("smart_construction_core.view_receipt_invoice_line_search"))
+        self.assertIn("search_default_group_by_project_id", action.context)
 
     def test_material_outbound_and_settlement_lists_expose_business_totals(self):
         purchase_request_tree = self.env.ref("smart_construction_core.view_sc_material_purchase_request_tree").arch_db
