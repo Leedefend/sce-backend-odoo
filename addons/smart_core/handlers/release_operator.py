@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-from copy import deepcopy
 import time
 from typing import Any
 
@@ -32,10 +31,6 @@ SOURCE_AUTHORITIES = (
     "sc.product.policy",
 )
 NO_BUSINESS_FACT_AUTHORITY = True
-BUSINESS_CONFIG_ADMIN_GROUPS = (
-    "smart_core.group_smart_core_business_config_admin",
-    "smart_construction_core.group_sc_cap_business_config_admin",
-)
 
 
 def _text(value: Any) -> str:
@@ -71,52 +66,6 @@ def _selection(value: Any, allowed: set[str], field_name: str) -> str:
     return parsed
 
 
-def user_is_business_config_admin(user) -> bool:
-    if not user:
-        return False
-    for xmlid in BUSINESS_CONFIG_ADMIN_GROUPS:
-        try:
-            if user.has_group(xmlid):
-                return True
-        except Exception:
-            continue
-    return False
-
-
-def user_can_view_release_operator(user) -> bool:
-    return bool(user_is_platform_admin(user) or user_is_business_config_admin(user))
-
-
-def _readonly_operator_surface(surface: dict[str, Any]) -> dict[str, Any]:
-    payload = deepcopy(surface) if isinstance(surface, dict) else {}
-    actions = payload.get("available_actions")
-    if isinstance(actions, dict):
-        for key, value in list(actions.items()):
-            if isinstance(value, dict):
-                value["enabled"] = False
-                value["reason_code"] = "READ_ONLY_BUSINESS_CONFIG_ADMIN"
-                value["readonly"] = True
-                actions[key] = value
-            elif isinstance(value, list):
-                next_rows = []
-                for row in value:
-                    if isinstance(row, dict):
-                        item = dict(row)
-                        item["enabled"] = False
-                        item["reason_code"] = "READ_ONLY_BUSINESS_CONFIG_ADMIN"
-                        item["readonly"] = True
-                        next_rows.append(item)
-                    else:
-                        next_rows.append(row)
-                actions[key] = next_rows
-    payload["operator_access"] = {
-        "mode": "readonly",
-        "reason_code": "BUSINESS_CONFIG_ADMIN_SURFACE",
-        "write_enabled": False,
-    }
-    return payload
-
-
 class _ReleaseOperatorBaseHandler(BaseIntentHandler):
     REQUIRED_GROUPS = ["smart_core.group_smart_core_admin"]
     ACL_MODE = "explicit_check"
@@ -137,8 +86,8 @@ class _ReleaseOperatorBaseHandler(BaseIntentHandler):
         }
 
     def _check_permissions(self):
-        if not user_can_view_release_operator(self.env.user):
-            raise AccessError("PERMISSION_DENIED: release operator requires platform or business config administrator")
+        if not user_is_platform_admin(self.env.user):
+            raise AccessError("PERMISSION_DENIED: release operator requires platform administrator")
         return True
 
     def _params(self, payload: Any) -> dict[str, Any]:
@@ -285,8 +234,6 @@ class ReleaseOperatorSurfaceHandler(_ReleaseOperatorBaseHandler):
             product_key=product_key,
             action_limit=max(action_limit, 1),
         )
-        if not user_is_platform_admin(self.env.user):
-            surface = _readonly_operator_surface(surface)
         return self._response(ts0, surface)
 
 

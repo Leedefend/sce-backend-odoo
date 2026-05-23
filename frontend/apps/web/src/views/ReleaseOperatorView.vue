@@ -320,7 +320,7 @@
                   <button
                     class="sc-btn sc-btn-primary release-operator__row-action"
                     type="button"
-                    :disabled="busyKey === `promote:${snapshot.id}` || !candidateReady(snapshot) || !promoteActionEnabled(snapshot)"
+                    :disabled="busyKey === `promote:${snapshot.id}` || !candidateReady(snapshot)"
                     @click="promote(snapshot)"
                   >
                     发布
@@ -547,11 +547,6 @@ const updatePagePolicyAction = computed(() => {
   const actions = surface.value?.available_actions || {};
   return (actions.update_page_policy || {}) as { enabled?: boolean; params?: AnyRecord };
 });
-const promoteActions = computed(() => {
-  const actions = surface.value?.available_actions || {};
-  const rows = actions.promote;
-  return Array.isArray(rows) ? rows as AnyRecord[] : [];
-});
 
 function pageKey(page: AnyRecord) {
   return String(page.page_key || page.scene_key || page.menu_key || page.capability_key || '').trim();
@@ -619,13 +614,6 @@ function snapshotDiffLabel(snapshot: SnapshotRow) {
 function candidateReady(snapshot: SnapshotRow) {
   const draft = (snapshot.release_draft || {}) as AnyRecord;
   return Boolean(draft.fingerprint) && Number(draft.blocking_issue_count || 0) === 0;
-}
-function promoteActionEnabled(snapshot: SnapshotRow) {
-  const action = promoteActions.value.find((row) => {
-    const params = (row.params || {}) as AnyRecord;
-    return Number(params.snapshot_id || 0) === Number(snapshot.id || 0);
-  });
-  return Boolean(action?.enabled);
 }
 const freezeAction = computed(() => {
   const actions = surface.value?.available_actions || {};
