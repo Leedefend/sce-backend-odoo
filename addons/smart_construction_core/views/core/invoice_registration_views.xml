@@ -5,8 +5,10 @@
             <field name="name">sc.invoice.registration.search</field>
             <field name="model">sc.invoice.registration</field>
             <field name="arch" type="xml">
-                <search string="发票登记">
+                <search string="发票总台账">
                     <field name="name"/>
+                    <field name="source_kind"/>
+                    <field name="direction"/>
                     <field name="document_no"/>
                     <field name="invoice_no"/>
                     <field name="invoice_code"/>
@@ -19,6 +21,9 @@
                     <filter string="进项税额" name="source_kind_input_invoice_tax" domain="[('source_kind', '=', 'input_invoice_tax')]"/>
                     <filter string="销项税额" name="source_kind_output_invoice_tax" domain="[('source_kind', '=', 'output_invoice_tax')]"/>
                     <filter string="预缴税" name="source_kind_prepaid_tax" domain="[('source_kind', '=', 'prepaid_tax')]"/>
+                    <filter string="有发票号" name="has_invoice_no" domain="[('invoice_no', '!=', False), ('invoice_no', '!=', '')]"/>
+                    <filter string="无发票号" name="missing_invoice_no" domain="['|', ('invoice_no', '=', False), ('invoice_no', '=', '')]"/>
+                    <filter string="历史迁移" name="source_origin_legacy" domain="[('source_origin', '=', 'legacy')]"/>
                     <filter string="已确认" name="state_confirmed" domain="[('state', 'in', ['confirmed', 'legacy_confirmed'])]"/>
                     <filter string="已登记" name="state_registered" domain="[('state', '=', 'registered')]"/>
                     <filter string="公司直营" name="operation_direct" domain="[('operation_strategy', '=', 'direct')]"/>
@@ -41,34 +46,36 @@
             <field name="name">sc.invoice.registration.tree</field>
             <field name="model">sc.invoice.registration</field>
             <field name="arch" type="xml">
-                <tree string="发票登记">
+                <tree string="发票总台账">
                     <field name="name"/>
-                    <field name="invoice_date"/>
-                    <field name="document_no"/>
-                    <field name="document_date"/>
-                    <field name="project_id"/>
-                    <field name="operation_strategy"/>
-                    <field name="partner_id"/>
-                    <field name="contract_id"/>
-                    <field name="settlement_id"/>
-                    <field name="direction"/>
                     <field name="source_kind"/>
+                    <field name="direction"/>
+                    <field name="state"/>
+                    <field name="invoice_date"/>
                     <field name="invoice_no"/>
                     <field name="invoice_code"/>
                     <field name="invoice_type"/>
                     <field name="tax_rate"/>
                     <field name="invoice_content"/>
-                    <field name="cost_category_name"/>
                     <field name="amount_no_tax" sum="不含税金额"/>
                     <field name="tax_amount" sum="税额"/>
                     <field name="amount_total" sum="价税合计"/>
+                    <field name="project_id"/>
+                    <field name="operation_strategy"/>
+                    <field name="partner_id"/>
+                    <field name="contract_id" optional="show"/>
+                    <field name="settlement_id" optional="hide"/>
+                    <field name="cost_category_name" optional="show"/>
+                    <field name="document_no" optional="show"/>
+                    <field name="document_date" optional="show"/>
                     <field name="handler_name"/>
                     <field name="invoice_holder"/>
                     <field name="accounting_state"/>
                     <field name="voucher_no"/>
+                    <field name="legacy_source_model" optional="show"/>
+                    <field name="legacy_source_table" optional="show"/>
                     <field name="creator_name" optional="show"/>
                     <field name="created_time" optional="show"/>
-                    <field name="state"/>
                 </tree>
             </field>
         </record>
@@ -147,11 +154,11 @@
         </record>
 
         <record id="action_sc_invoice_registration" model="ir.actions.act_window">
-            <field name="name">发票登记</field>
+            <field name="name">发票总台账</field>
             <field name="res_model">sc.invoice.registration</field>
             <field name="view_mode">tree,form</field>
             <field name="search_view_id" ref="view_sc_invoice_registration_search"/>
-            <field name="context">{'search_default_group_project': 1}</field>
+            <field name="context">{'search_default_group_source_kind': 1}</field>
             <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_business_initiator')),
                                            (4, ref('smart_construction_core.group_sc_cap_finance_read')),
                                            (4, ref('smart_construction_core.group_sc_cap_finance_user')),
@@ -159,7 +166,7 @@
         </record>
 
         <menuitem id="menu_sc_invoice_registration"
-                  name="发票登记"
+                  name="发票总台账"
                   parent="smart_construction_core.menu_sc_finance_center"
                   action="action_sc_invoice_registration"
                   sequence="37"

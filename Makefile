@@ -2175,6 +2175,12 @@ verify.frontend.grouped_rows_runtime.guard: guard.prod.forbid
 verify.payment_request_receipt_type.browser_group_smoke: guard.prod.forbid
 	@node scripts/verify/payment_request_receipt_type_browser_group_smoke.js
 
+verify.invoice_entry_fact.contract_guard: guard.prod.forbid
+	@python3 scripts/verify/invoice_entry_fact_contract_guard.py
+
+verify.invoice_entry_fact.runtime_smoke: guard.prod.forbid
+	@node scripts/verify/invoice_entry_fact_runtime_smoke.js
+
 verify.frontend.grouped_pagination_semantic.guard: guard.prod.forbid
 	@python3 scripts/verify/grouped_pagination_semantic_guard.py
 
