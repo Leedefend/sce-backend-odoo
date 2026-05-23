@@ -173,6 +173,7 @@ export function buildSavedFilterPatch(key?: string): Dict {
 export function buildGroupByPatch(field?: string): Dict {
   return {
     group_by: field || undefined,
+    group_by_cleared: field ? undefined : true,
     group_value: undefined,
     group_page: undefined,
     group_offset: undefined,
