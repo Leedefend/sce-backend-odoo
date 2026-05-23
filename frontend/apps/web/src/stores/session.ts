@@ -11,6 +11,24 @@ import { isConfiguredDbPinned, resolveActiveDb, resolveConfiguredDb, resolveLogi
 
 let appInitInFlight: Promise<void> | null = null;
 
+function resolveAvailableSceneRoute(rawPath: string): string {
+  const normalized = normalizeLegacyWorkbenchPath(String(rawPath || '').trim());
+  if (!normalized) return '';
+  const match = normalized.match(/^\/s\/([^/?#]+)/);
+  if (!match) return normalized;
+  const sceneKey = decodeURIComponent(match[1] || '').trim();
+  return sceneKey && getSceneByKey(sceneKey) ? normalized : '';
+}
+
+function resolveAvailableSceneKeyRoute(sceneKey: string): string {
+  const key = String(sceneKey || '').trim();
+  if (!key) return '';
+  const scene = getSceneByKey(key);
+  if (!scene) return '';
+  const rawPath = String(scene.target?.route || scene.route || `/s/${key}`).trim();
+  return resolveAvailableSceneRoute(rawPath) || `/s/${key}`;
+}
+
 export interface RoleSurface {
   role_code: string;
   role_label: string;
@@ -1371,28 +1389,24 @@ export const useSessionStore = defineStore('session', {
     resolveLandingPath(fallback = '/') {
       const candidate = String(this.roleSurface?.landing_path || '').trim();
       if (candidate.startsWith('/')) {
-        const normalized = normalizeLegacyWorkbenchPath(candidate);
-        return normalized || fallback;
+        const normalized = resolveAvailableSceneRoute(candidate);
+        if (normalized) return normalized;
       }
       const sceneKey = String(this.roleSurface?.landing_scene_key || '').trim();
       if (sceneKey) {
-        const scene = getSceneByKey(sceneKey);
-        const rawPath = String(scene?.target?.route || scene?.route || `/s/${sceneKey}`).trim();
-        return normalizeLegacyWorkbenchPath(rawPath) || `/s/${sceneKey}`;
+        const normalized = resolveAvailableSceneKeyRoute(sceneKey);
+        if (normalized) return normalized;
       }
       const defaultRoutePath = String(this.defaultRoute?.route || '').trim();
       const defaultRouteSceneKey = String(this.defaultRoute?.scene_key || '').trim();
       const startsWithNativeActionRoute = /^\/(a|f|r)\//.test(defaultRoutePath);
       if (defaultRoutePath.startsWith('/') && !startsWithNativeActionRoute) {
-        const normalized = normalizeLegacyWorkbenchPath(defaultRoutePath);
+        const normalized = resolveAvailableSceneRoute(defaultRoutePath);
         if (normalized) return normalized;
       }
       if (defaultRouteSceneKey) {
-        const scene = getSceneByKey(defaultRouteSceneKey);
-        const rawPath = String(scene?.target?.route || scene?.route || `/s/${defaultRouteSceneKey}`).trim();
-        const normalized = normalizeLegacyWorkbenchPath(rawPath);
+        const normalized = resolveAvailableSceneKeyRoute(defaultRouteSceneKey);
         if (normalized) return normalized;
-        return `/s/${defaultRouteSceneKey}`;
       }
       return fallback;
     },
