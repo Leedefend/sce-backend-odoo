@@ -24,6 +24,9 @@ def main() -> int:
     taxonomy = read("addons/smart_construction_core/views/menu_business_taxonomy.xml")
     cleanup = read("addons/smart_construction_core/views/menu_user_acceptance_cleanup.xml")
     makefile = read("Makefile")
+    page_assembler = read("addons/smart_core/app_config_engine/services/assemblers/page_assembler.py")
+    menu_convergence = read("addons/smart_core/delivery/menu_delivery_convergence_service.py")
+    menu_service = read("addons/smart_core/delivery/menu_service.py")
 
     assert_ok(
         '<field name="name">发票总台账</field>' in invoice_views
@@ -67,6 +70,31 @@ def main() -> int:
         "verify.invoice_entry_fact.contract_guard" in makefile
         and "verify.invoice_entry_fact.runtime_smoke" in makefile,
         "invoice entry optimization must be wired into Makefile verification targets",
+        errors,
+    )
+    assert_ok(
+        "verify.invoice_entry_fact.browser_smoke" in makefile
+        and "invoice_entry_fact_browser_smoke.js" in makefile,
+        "invoice entry optimization must verify the custom frontend grouped browser surface",
+        errors,
+    )
+    assert_ok(
+        "_apply_action_search_defaults" in page_assembler
+        and "search_default_group_" in page_assembler,
+        "page contract assembler must project action search_default_group_* into default group chips",
+        errors,
+    )
+    assert_ok(
+        '"开票申请": "销项开票申请"' in menu_convergence
+        and '"开票登记": "进项发票登记"' in menu_convergence
+        and '"进项上报": "进项税额上报"' in menu_convergence,
+        "delivery navigation convergence must expose precise invoice handling labels",
+        errors,
+    )
+    assert_ok(
+        "convergence_service.RENAME_LABELS" in menu_service
+        and 'converged_menu["label"] = renamed' in menu_service,
+        "released product-policy navigation must consume invoice label convergence",
         errors,
     )
 

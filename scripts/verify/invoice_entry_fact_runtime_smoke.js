@@ -80,6 +80,8 @@ async function main() {
   for (const field of ['source_kind', 'direction', 'invoice_type', 'tax_rate', 'cost_category_name']) {
     assert(groupFields.includes(field), `invoice contract group_by missing ${field}`);
   }
+  const sourceKindGroup = (search.group_by || []).find((row) => row && row.field === 'source_kind');
+  assert(sourceKindGroup && sourceKindGroup.default === true, 'invoice total ledger must default group by source_kind');
 
   const list = await requestJson(intentUrl, {
     intent: 'api.data',

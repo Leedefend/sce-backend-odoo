@@ -402,10 +402,14 @@ class MenuService:
             }
             group_order.append(fallback_key)
 
+        convergence_service = MenuDeliveryConvergenceService()
         for menu in self._flatten_policy_menus(policy):
             if not self._policy_menu_user_authorized(menu, native_index, is_admin=is_admin):
                 continue
             converged_menu = dict(menu)
+            renamed = convergence_service.RENAME_LABELS.get(str(converged_menu.get("label") or "").strip())
+            if renamed:
+                converged_menu["label"] = renamed
             converged_menu["delivery_bucket"] = "released_product_policy"
             converged_menu["source_authority"] = self.source_authority_contract()
             menu_id = menu.get("menu_id")
