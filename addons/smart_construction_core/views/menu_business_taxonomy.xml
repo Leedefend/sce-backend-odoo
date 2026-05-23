@@ -31,7 +31,7 @@
         <field name="parent_id" ref="smart_construction_core.menu_sc_root"/>
         <field name="sequence">20</field>
         <field name="action" eval="False"/>
-        <field name="groups_id" eval="[(5, 0, 0)]"/>
+        <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_project_read')])]"/>
     </record>
 
     <record id="menu_sc_contract_center" model="ir.ui.menu">
@@ -39,7 +39,11 @@
         <field name="parent_id" ref="smart_construction_core.menu_sc_root"/>
         <field name="sequence">30</field>
         <field name="action" ref="smart_construction_core.action_construction_contract_income"/>
-        <field name="groups_id" eval="[(5, 0, 0)]"/>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_contract_user'),
+            ref('smart_construction_core.group_sc_cap_contract_manager'),
+            ref('smart_construction_core.group_sc_cap_purchase_manager')
+        ])]"/>
     </record>
 
     <record id="menu_sc_material_center" model="ir.ui.menu">
@@ -47,7 +51,11 @@
         <field name="parent_id" ref="smart_construction_core.menu_sc_root"/>
         <field name="sequence">40</field>
         <field name="action" eval="False"/>
-        <field name="groups_id" eval="[(5, 0, 0)]"/>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_material_read'),
+            ref('smart_construction_core.group_sc_cap_material_user'),
+            ref('smart_construction_core.group_sc_cap_material_manager')
+        ])]"/>
     </record>
 
     <menuitem id="menu_sc_construction_management_center"
@@ -68,7 +76,14 @@
         <field name="parent_id" ref="smart_construction_core.menu_sc_root"/>
         <field name="sequence">70</field>
         <field name="action" eval="False"/>
-        <field name="groups_id" eval="[(5, 0, 0)]"/>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_finance_read'),
+            ref('smart_construction_core.group_sc_cap_finance_user'),
+            ref('smart_construction_core.group_sc_cap_finance_manager'),
+            ref('smart_construction_core.group_sc_cap_settlement_read'),
+            ref('smart_construction_core.group_sc_cap_settlement_user'),
+            ref('smart_construction_core.group_sc_cap_settlement_manager')
+        ])]"/>
     </record>
 
     <record id="menu_sc_data_center" model="ir.ui.menu">

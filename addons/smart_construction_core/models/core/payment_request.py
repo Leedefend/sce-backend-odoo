@@ -516,7 +516,8 @@ class PaymentRequest(models.Model):
             )
         if vals.get("state") == "done":
             self._check_can_done()
-        if vals.get("state") in ("approved", "done"):
+        tier_validation_callback = self.env.context.get("tier_validation_callback")
+        if vals.get("state") in ("approved", "done") and not tier_validation_callback:
             for rec in self:
                 if rec.validation_status != "validated":
                     raise_guard(
@@ -872,7 +873,7 @@ class PaymentRequest(models.Model):
         for rec in self:
             if rec.state != "submit":
                 continue
-            if rec.validation_status != "validated":
+            if rec.validation_status != "validated" and not rec.env.context.get("tier_validation_callback"):
                 raise_guard(
                     "PAYMENT_TIER_INCOMPLETE",
                     f"付款申请[{rec.display_name}]",
@@ -952,7 +953,12 @@ class PaymentRequest(models.Model):
             raise ValidationError(_("你没有完成付款/收款申请的权限。"))
         advisory_result = {}
         for rec in self:
-            if rec.validation_status != "validated":
+            approved_reviews = rec.review_ids.filtered(lambda review: review.status == "approved")
+            open_reviews = rec.review_ids.filtered(
+                lambda review: review.status not in ("approved", "rejected")
+            )
+            tier_callback_complete = bool(approved_reviews) and not open_reviews
+            if rec.validation_status != "validated" and not tier_callback_complete:
                 raise_guard(
                     "PAYMENT_TIER_INCOMPLETE",
                     f"付款申请[{rec.display_name}]",
@@ -1018,13 +1024,6 @@ class PaymentRequest(models.Model):
         for rec in self:
             if rec.state != "submit":
                 continue
-            if rec.validation_status != "validated":
-                raise_guard(
-                    "PAYMENT_TIER_INCOMPLETE",
-                    f"付款申请[{rec.display_name}]",
-                    "审批付款申请",
-                    reasons=["tier validation not complete"],
-                )
             advisories = rec._collect_payment_advisories("approve")
             if advisories:
                 lines = [
@@ -1035,7 +1034,11 @@ class PaymentRequest(models.Model):
                 if lines:
                     rec._message_post_non_blocking(_("付款申请审批风险提示：\n%s") % "\n".join(lines))
             before = rec._snapshot_audit_payload()
-            rec.with_context(allow_transition=True, payment_soft_gate=True).write({"state": "approved"})
+            rec.with_context(
+                allow_transition=True,
+                payment_soft_gate=True,
+                tier_validation_callback=True,
+            ).write({"state": "approved"})
             after = rec._snapshot_audit_payload()
             rec._audit_transition("payment_approved", before, after, action_name="action_on_tier_approved")
             rec._message_post_non_blocking(_("付款/收款申请审批通过。"))

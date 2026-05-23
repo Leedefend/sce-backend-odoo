@@ -11,7 +11,7 @@ target_records = records or record
 if not target_records and env.context.get("active_model") == "payment.request" and env.context.get("active_id"):
     target_records = env["payment.request"].browse(env.context["active_id"])
 if target_records:
-    target_records.action_on_tier_approved()
+    target_records.with_context(tier_validation_callback=True).action_on_tier_approved()
 ]]></field>
         </record>
 

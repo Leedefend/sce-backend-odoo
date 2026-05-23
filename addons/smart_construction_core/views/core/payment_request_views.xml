@@ -43,7 +43,7 @@
                         <button name="action_approve" type="object" string="批准" class="btn-secondary" invisible="state != 'submit' or validation_status != 'validated'" groups="smart_construction_core.group_sc_cap_finance_manager"/>
                         <button name="action_set_approved" type="object" string="批准" class="btn-secondary" invisible="state != 'approve'" groups="smart_construction_core.group_sc_cap_finance_manager"/>
                         <button name="action_done" type="object" string="完成" class="btn-secondary" invisible="state not in ['approve', 'approved']" groups="smart_construction_core.group_sc_cap_finance_manager"/>
-                        <button name="action_create_payment_execution" type="object" string="生成付款登记" class="btn-secondary" invisible="type != 'pay'"/>
+                        <button name="action_create_payment_execution" type="object" string="生成付款登记" class="btn-secondary" invisible="type != 'pay'" groups="smart_construction_core.group_sc_cap_finance_manager"/>
                         <button name="action_cancel" type="object" string="取消" class="btn-secondary" invisible="state in ['done', 'cancel']" groups="smart_construction_core.group_sc_cap_finance_manager"/>
                         <field name="validation_status" invisible="1"/>
                         <field name="can_review" invisible="1"/>

@@ -5,6 +5,11 @@
         <field name="res_model">sc.material.rental.plan</field>
         <field name="view_mode">tree,form</field>
         <field name="context">{'search_default_group_project': 1}</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_material_read'),
+            ref('smart_construction_core.group_sc_cap_material_user'),
+            ref('smart_construction_core.group_sc_cap_material_manager')
+        ])]"/>
     </record>
 
     <record id="action_sc_material_rental_order" model="ir.actions.act_window">
@@ -12,6 +17,11 @@
         <field name="res_model">sc.material.rental.order</field>
         <field name="view_mode">tree,form</field>
         <field name="context">{'search_default_group_project': 1}</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_material_read'),
+            ref('smart_construction_core.group_sc_cap_material_user'),
+            ref('smart_construction_core.group_sc_cap_material_manager')
+        ])]"/>
     </record>
 
     <record id="action_sc_material_rental_settlement" model="ir.actions.act_window">
@@ -19,6 +29,11 @@
         <field name="res_model">sc.material.rental.settlement</field>
         <field name="view_mode">tree,form</field>
         <field name="context">{'search_default_group_project': 1}</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_material_read'),
+            ref('smart_construction_core.group_sc_cap_material_user'),
+            ref('smart_construction_core.group_sc_cap_material_manager')
+        ])]"/>
     </record>
 
     <record id="view_sc_material_rental_plan_tree" model="ir.ui.view">
