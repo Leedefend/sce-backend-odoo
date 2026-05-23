@@ -181,6 +181,24 @@ P1_ALIAS_LABELS = {
         '开票单位',
         '开票日期',
     ],
+    'sc.receipt.invoice.line': [
+        '项目名称',
+        '经营方式',
+        '往来单位',
+        '合同编号',
+        '单据编号',
+        '发票号',
+        '开票日期',
+        '受票方名称',
+        '开票单位',
+        '发票金额',
+        '附加税',
+        '本次收款',
+        '累计开票金额',
+        '开票登记单号',
+        '开票登记状态',
+        '附件',
+    ],
     'sc.fund.account': [
         '推送结果',
         '账户状态',
@@ -527,6 +545,10 @@ def _alias_field_name(label):
     return "p1_visible_" + hashlib.sha1(label.encode("utf-8")).hexdigest()[:12]
 
 
+def _alias_field_string(label):
+    return "可见-" + label
+
+
 LABEL_SOURCE_OVERRIDES = {
     '单据状态': ['state', 'legacy_document_state', 'state_text', 'legacy_state'],
     '状态': ['state', 'legacy_document_state'],
@@ -736,8 +758,26 @@ MODEL_LABEL_SOURCE_OVERRIDES = {
         '开票张数': ['invoice_count'],
         '发票号': ['invoice_no'],
         '发票种类': ['invoice_type'],
-        '开票单位': ['invoice_issue_company', 'company_id'],
+        '开票单位': ['invoice_issue_company'],
         '开票日期': ['invoice_date'],
+    },
+    'sc.receipt.invoice.line': {
+        '单据编号': ['source_document_no', 'invoice_document_no', 'request_id'],
+        '发票号': ['invoice_no'],
+        '发票号码': ['invoice_no'],
+        '开票日期': ['invoice_date'],
+        '受票方名称': ['invoice_party_name', 'partner_id'],
+        '开票抬头': ['invoice_party_name', 'partner_id'],
+        '开票单位': ['invoice_issue_company'],
+        '开票方': ['invoice_issue_company'],
+        '发票金额': ['invoice_amount'],
+        '含税金额': ['invoice_amount'],
+        '附加税': ['surcharge_amount'],
+        '本次收款': ['current_receipt_amount'],
+        '累计开票金额': ['invoiced_before_amount'],
+        '开票登记单号': ['invoice_document_no'],
+        '开票登记状态': ['invoice_document_state'],
+        '来源表名': ['source_table_name'],
     },
     'sc.material.inbound': {
         '数量': ['total_qty'],
@@ -824,7 +864,7 @@ for _index, (_model_name, _labels) in enumerate(_ALIAS_MODEL_FIELD_LABELS.items(
     }
     for _label in _labels:
         _attrs[_alias_field_name(_label)] = fields.Char(
-            string=_label,
+            string=_alias_field_string(_label),
             compute="_compute_p1_daily_business_visible_aliases",
             readonly=True,
         )

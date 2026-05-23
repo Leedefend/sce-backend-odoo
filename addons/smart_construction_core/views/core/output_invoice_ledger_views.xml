@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="view_output_invoice_ledger_tree" model="ir.ui.view">
+            <field name="name">sc.output.invoice.ledger.tree</field>
+            <field name="model">sc.output.invoice.ledger</field>
+            <field name="arch" type="xml">
+                <tree string="销项发票总台账" create="false" edit="false" delete="false"
+                      decoration-danger="adjustment_kind == 'signed_adjustment'">
+                    <field name="adjustment_kind"/>
+                    <field name="invoice_date"/>
+                    <field name="invoice_no"/>
+                    <field name="invoice_party_name"/>
+                    <field name="invoice_issue_company"/>
+                    <field name="project_id"/>
+                    <field name="operation_strategy"/>
+                    <field name="partner_id"/>
+                    <field name="contract_id"/>
+                    <field name="invoice_document_no"/>
+                    <field name="invoice_document_state"/>
+                    <field name="source_document_no"/>
+                    <field name="source_table_name"/>
+                    <field name="amount_source"/>
+                    <field name="receipt_line_count"/>
+                    <field name="invoice_amount" sum="发票金额合计"/>
+                    <field name="amount_no_tax" optional="show" sum="不含税金额合计"/>
+                    <field name="tax_amount" optional="show" sum="税额合计"/>
+                    <field name="surcharge_amount" sum="附加税合计"/>
+                    <field name="invoiced_before_amount" sum="历史已开票合计"/>
+                    <field name="current_receipt_amount" sum="本次收款合计"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_output_invoice_ledger_form" model="ir.ui.view">
+            <field name="name">sc.output.invoice.ledger.form</field>
+            <field name="model">sc.output.invoice.ledger</field>
+            <field name="arch" type="xml">
+                <form string="销项发票总台账" create="false" edit="false" delete="false">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="adjustment_kind"/>
+                                <field name="source_model"/>
+                                <field name="source_record_id"/>
+                                <field name="source_kind"/>
+                                <field name="project_id"/>
+                                <field name="operation_strategy"/>
+                                <field name="partner_id"/>
+                                <field name="contract_id"/>
+                            </group>
+                            <group>
+                                <field name="invoice_date"/>
+                                <field name="invoice_no"/>
+                                <field name="invoice_party_name"/>
+                                <field name="invoice_issue_company"/>
+                                <field name="invoice_document_no"/>
+                                <field name="invoice_document_state"/>
+                                <field name="source_document_no"/>
+                                <field name="source_table_name"/>
+                                <field name="amount_source"/>
+                                <field name="receipt_line_count"/>
+                            </group>
+                        </group>
+                        <group>
+                            <field name="invoice_amount"/>
+                            <field name="amount_no_tax"/>
+                            <field name="tax_amount"/>
+                            <field name="surcharge_amount"/>
+                            <field name="current_receipt_amount"/>
+                            <field name="invoiced_before_amount"/>
+                        </group>
+                        <group>
+                            <field name="note"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_output_invoice_ledger_search" model="ir.ui.view">
+            <field name="name">sc.output.invoice.ledger.search</field>
+            <field name="model">sc.output.invoice.ledger</field>
+            <field name="arch" type="xml">
+                <search string="销项发票总台账">
+                    <field name="project_id"/>
+                    <field name="operation_strategy"/>
+                    <field name="partner_id"/>
+                    <field name="contract_id"/>
+                    <field name="invoice_no"/>
+                    <field name="invoice_date"/>
+                    <field name="invoice_party_name"/>
+                    <field name="invoice_issue_company"/>
+                    <field name="invoice_document_no"/>
+                    <filter string="冲抵/红冲" name="signed_adjustment" domain="[('adjustment_kind', '=', 'signed_adjustment')]"/>
+                    <filter string="负数金额" name="negative_amount" domain="['|', '|', '|', ('invoice_amount', '&lt;', 0), ('amount_no_tax', '&lt;', 0), ('tax_amount', '&lt;', 0), ('surcharge_amount', '&lt;', 0)]"/>
+                    <filter string="有发票号" name="has_invoice_no" domain="[('invoice_no', '!=', False), ('invoice_no', '!=', '')]"/>
+                    <filter string="缺开票单位" name="missing_invoice_issue_company" domain="['|', ('invoice_issue_company', '=', False), ('invoice_issue_company', '=', '')]"/>
+                    <group expand="0" string="分组">
+                        <filter string="登记类型" name="group_by_adjustment_kind" context="{'group_by': 'adjustment_kind'}"/>
+                        <filter string="项目" name="group_by_project_id" context="{'group_by': 'project_id'}"/>
+                        <filter string="经营策略" name="group_by_operation_strategy" context="{'group_by': 'operation_strategy'}"/>
+                        <filter string="往来单位" name="group_by_partner_id" context="{'group_by': 'partner_id'}"/>
+                        <filter string="合同" name="group_by_contract_id" context="{'group_by': 'contract_id'}"/>
+                        <filter string="开票单位" name="group_by_invoice_issue_company" context="{'group_by': 'invoice_issue_company'}"/>
+                        <filter string="开票日期" name="group_by_invoice_date" context="{'group_by': 'invoice_date'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+    </data>
+</odoo>

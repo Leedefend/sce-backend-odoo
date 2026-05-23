@@ -43,7 +43,17 @@ if allowlist and env.cr.dbname not in allowlist:  # noqa: F821
 artifact_root = resolve_artifact_root()
 output_json = artifact_root / "fresh_db_invoice_registration_projection_write_result_v1.json"
 currency_id = env.company.currency_id.id  # noqa: F821
+default_issue_company_name = env.company.name  # noqa: F821
+include_income_invoice_facts = os.getenv("INVOICE_REGISTRATION_INCLUDE_INCOME_INVOICE_FACTS") == "1"
 before = int(scalar("SELECT COUNT(*) FROM sc_invoice_registration") or 0)
+
+env.cr.execute(  # noqa: F821
+    """
+    ALTER TABLE sc_invoice_registration DROP CONSTRAINT IF EXISTS sc_invoice_registration_amount_no_tax_nonnegative;
+    ALTER TABLE sc_invoice_registration DROP CONSTRAINT IF EXISTS sc_invoice_registration_tax_amount_nonnegative;
+    ALTER TABLE sc_invoice_registration DROP CONSTRAINT IF EXISTS sc_invoice_registration_amount_total_nonnegative;
+    """
+)
 
 env.cr.execute(  # noqa: F821
     """
@@ -51,7 +61,7 @@ env.cr.execute(  # noqa: F821
       name, source_origin, source_kind, direction, state, project_id, partner_id,
       contract_id, document_no, document_date, invoice_date, recognition_date,
       invoice_no, invoice_code, invoice_type, tax_rate, invoice_content,
-      cost_category_name, amount_no_tax, tax_amount, amount_total, currency_id,
+      cost_category_name, invoice_issue_company, amount_no_tax, tax_amount, amount_total, currency_id,
       handler_name, invoice_holder, accounting_state, voucher_no,
       legacy_source_model, legacy_source_table, legacy_record_id,
       legacy_document_state, legacy_partner_id, legacy_partner_name,
@@ -78,9 +88,10 @@ env.cr.execute(  # noqa: F821
       NULLIF(l.tax_rate, ''),
       NULLIF(l.invoice_content, ''),
       NULLIF(l.cost_category_name, ''),
-      GREATEST(COALESCE(l.amount_no_tax, 0), 0),
-      GREATEST(COALESCE(l.tax_amount, 0), 0),
-      GREATEST(COALESCE(l.amount_total, COALESCE(l.amount_no_tax, 0) + COALESCE(l.tax_amount, 0)), 0),
+      NULLIF(l.billing_unit, ''),
+      COALESCE(l.amount_no_tax, 0),
+      COALESCE(l.tax_amount, 0),
+      COALESCE(l.amount_total, COALESCE(l.amount_no_tax, 0) + COALESCE(l.tax_amount, 0)),
       %s,
       NULLIF(l.handler_name, ''),
       NULLIF(l.invoice_holder, ''),
@@ -125,9 +136,9 @@ env.cr.execute(  # noqa: F821
     WHERE l.active
       AND l.project_id IS NOT NULL
       AND (
-        GREATEST(COALESCE(l.amount_total, 0), 0) > 0
-        OR GREATEST(COALESCE(l.amount_no_tax, 0), 0) > 0
-        OR GREATEST(COALESCE(l.tax_amount, 0), 0) > 0
+        COALESCE(l.amount_total, 0) <> 0
+        OR COALESCE(l.amount_no_tax, 0) <> 0
+        OR COALESCE(l.tax_amount, 0) <> 0
       )
     ON CONFLICT (legacy_source_model, legacy_record_id)
     DO UPDATE SET
@@ -145,6 +156,7 @@ env.cr.execute(  # noqa: F821
       tax_rate = EXCLUDED.tax_rate,
       invoice_content = EXCLUDED.invoice_content,
       cost_category_name = EXCLUDED.cost_category_name,
+      invoice_issue_company = EXCLUDED.invoice_issue_company,
       amount_no_tax = EXCLUDED.amount_no_tax,
       tax_amount = EXCLUDED.tax_amount,
       amount_total = EXCLUDED.amount_total,
@@ -202,12 +214,12 @@ env.cr.execute(  # noqa: F821
       COALESCE(f.document_date, CURRENT_DATE),
       NULLIF(f.invoice_type, ''),
       CASE
-        WHEN COALESCE(f.source_tax_amount, 0) > 0
-         AND GREATEST(COALESCE(f.source_amount, 0) - COALESCE(f.source_tax_amount, 0), 0) > 0
+        WHEN COALESCE(f.source_tax_amount, 0) <> 0
+         AND COALESCE(f.source_amount, 0) - COALESCE(f.source_tax_amount, 0) <> 0
         THEN RTRIM(RTRIM(TO_CHAR(ROUND(
           (
-            COALESCE(f.source_tax_amount, 0)
-            / NULLIF(GREATEST(COALESCE(f.source_amount, 0) - COALESCE(f.source_tax_amount, 0), 0), 0)
+            ABS(COALESCE(f.source_tax_amount, 0))
+            / NULLIF(ABS(COALESCE(f.source_amount, 0) - COALESCE(f.source_tax_amount, 0)), 0)
             * 100
           )::numeric,
           2
@@ -215,15 +227,23 @@ env.cr.execute(  # noqa: F821
         ELSE NULL
       END,
       NULLIF(surcharge.invoice_no, ''),
-      COALESCE(NULLIF(company.name, ''), NULLIF(f.legacy_project_name, '')),
+      CASE
+        WHEN f.direction = 'output_invoice'
+        THEN COALESCE(
+          NULLIF(receipt_invoice.invoice_issue_company, ''),
+          NULLIF(project_issue_company.invoice_issue_company, ''),
+          NULLIF(%s, '')
+        )
+        ELSE NULL
+      END,
       NULLIF(f.legacy_state, ''),
       NULLIF(f.document_no, ''),
       COALESCE(surcharge.invoice_count, 0),
       0,
-      GREATEST(COALESCE(f.source_amount, 0) - COALESCE(f.source_tax_amount, 0), 0),
-      GREATEST(COALESCE(f.source_tax_amount, 0), 0),
-      GREATEST(COALESCE(f.source_amount, 0), 0),
-      GREATEST(COALESCE(surcharge.surcharge_amount, 0), 0),
+      COALESCE(f.source_amount, 0) - COALESCE(f.source_tax_amount, 0),
+      COALESCE(f.source_tax_amount, 0),
+      COALESCE(f.source_amount, 0),
+      COALESCE(surcharge.surcharge_amount, 0),
       0,
       %s,
       'sc.legacy.invoice.tax.fact',
@@ -247,8 +267,6 @@ env.cr.execute(  # noqa: F821
       NOW(),
       NOW()
     FROM sc_legacy_invoice_tax_fact f
-    LEFT JOIN project_project pp ON pp.id = f.project_id
-    LEFT JOIN res_company company ON company.id = pp.company_id
     LEFT JOIN LATERAL (
       SELECT
         MIN(NULLIF(s.invoice_no, '')) AS invoice_no,
@@ -264,6 +282,34 @@ env.cr.execute(  # noqa: F821
         AND (s.project_id = f.project_id OR s.project_id IS NULL OR f.project_id IS NULL)
     ) surcharge ON TRUE
     LEFT JOIN LATERAL (
+      SELECT MIN(NULLIF(ril.invoice_issue_company, '')) AS invoice_issue_company
+      FROM sc_legacy_invoice_surcharge_fact s2
+      JOIN sc_receipt_invoice_line ril ON ril.active
+        AND ril.invoice_no = s2.invoice_no
+        AND NULLIF(ril.invoice_issue_company, '') IS NOT NULL
+      WHERE s2.active
+        AND f.direction = 'output_invoice'
+        AND s2.direction = 'output'
+        AND s2.document_no = f.document_no
+        AND (s2.project_id = f.project_id OR s2.project_id IS NULL OR f.project_id IS NULL)
+    ) receipt_invoice ON TRUE
+    LEFT JOIN LATERAL (
+      SELECT ranked.invoice_issue_company
+      FROM (
+        SELECT
+          NULLIF(ril.invoice_issue_company, '') AS invoice_issue_company,
+          COUNT(*) AS fact_count
+        FROM sc_receipt_invoice_line ril
+        WHERE ril.active
+          AND f.direction = 'output_invoice'
+          AND ril.project_id = f.project_id
+          AND NULLIF(ril.invoice_issue_company, '') IS NOT NULL
+        GROUP BY NULLIF(ril.invoice_issue_company, '')
+      ) ranked
+      ORDER BY ranked.fact_count DESC, ranked.invoice_issue_company
+      LIMIT 1
+    ) project_issue_company ON TRUE
+    LEFT JOIN LATERAL (
       SELECT rp.id
         FROM res_partner rp
        WHERE rp.active
@@ -277,7 +323,7 @@ env.cr.execute(  # noqa: F821
        LIMIT 1
     ) partner_match ON TRUE
     WHERE f.project_id IS NOT NULL
-      AND (GREATEST(COALESCE(f.source_amount, 0), 0) > 0 OR GREATEST(COALESCE(f.source_tax_amount, 0), 0) > 0)
+      AND (COALESCE(f.source_amount, 0) <> 0 OR COALESCE(f.source_tax_amount, 0) <> 0)
     ON CONFLICT (legacy_source_model, legacy_record_id)
     DO UPDATE SET
       source_kind = EXCLUDED.source_kind,
@@ -310,7 +356,7 @@ env.cr.execute(  # noqa: F821
       write_uid = 1,
       write_date = NOW()
     """,
-    [currency_id],
+    [default_issue_company_name, currency_id],
 )
 
 env.cr.execute(  # noqa: F821
@@ -346,12 +392,16 @@ env.cr.execute(  # noqa: F821
       CASE
         WHEN COALESCE(f.tax_rate, 0) > 0
         THEN RTRIM(RTRIM(TO_CHAR(ROUND(f.tax_rate::numeric, 2), 'FM999999990.00'), '0'), '.') || '%%'
-        WHEN COALESCE(f.tax_amount, 0) > 0 AND GREATEST(COALESCE(f.amount_no_tax, 0), 0) > 0
-        THEN RTRIM(RTRIM(TO_CHAR(ROUND((f.tax_amount / NULLIF(f.amount_no_tax, 0) * 100)::numeric, 2), 'FM999999990.00'), '0'), '.') || '%%'
+        WHEN COALESCE(f.tax_amount, 0) <> 0 AND COALESCE(f.amount_no_tax, 0) <> 0
+        THEN RTRIM(RTRIM(TO_CHAR(ROUND((ABS(f.tax_amount) / NULLIF(ABS(f.amount_no_tax), 0) * 100)::numeric, 2), 'FM999999990.00'), '0'), '.') || '%%'
         ELSE NULL
       END,
       NULLIF(f.invoice_content, ''),
-      COALESCE(NULLIF(company.name, ''), NULLIF(f.project_name, '')),
+      COALESCE(
+        NULLIF(receipt_invoice.invoice_issue_company, ''),
+        NULLIF(project_issue_company.invoice_issue_company, ''),
+        NULLIF(%s, '')
+      ),
       NULLIF(f.document_state, ''),
       NULLIF(f.document_no, ''),
       NULLIF(f.creator_name, ''),
@@ -361,11 +411,11 @@ env.cr.execute(  # noqa: F821
         ELSE 0
       END,
       GREATEST(COALESCE(f.amount_contract, 0), 0),
-      GREATEST(COALESCE(f.amount_no_tax, 0), 0),
-      GREATEST(COALESCE(f.tax_amount, 0), 0),
-      GREATEST(COALESCE(f.amount_total, COALESCE(f.amount_no_tax, 0) + COALESCE(f.tax_amount, 0)), 0),
+      COALESCE(f.amount_no_tax, 0),
+      COALESCE(f.tax_amount, 0),
+      COALESCE(f.amount_total, COALESCE(f.amount_no_tax, 0) + COALESCE(f.tax_amount, 0)),
       0,
-      GREATEST(COALESCE(f.amount_received, 0), 0),
+      COALESCE(f.amount_received, 0),
       %s,
       'sc.legacy.income.invoice.fact',
       f.source_table,
@@ -393,8 +443,28 @@ env.cr.execute(  # noqa: F821
       NOW(),
       NOW()
     FROM sc_legacy_income_invoice_fact f
-    LEFT JOIN project_project pp ON pp.id = f.project_id
-    LEFT JOIN res_company company ON company.id = pp.company_id
+    LEFT JOIN LATERAL (
+      SELECT MIN(NULLIF(ril.invoice_issue_company, '')) AS invoice_issue_company
+      FROM sc_receipt_invoice_line ril
+      WHERE ril.active
+        AND NULLIF(f.invoice_no, '') IS NOT NULL
+        AND ril.invoice_no = f.invoice_no
+    ) receipt_invoice ON TRUE
+    LEFT JOIN LATERAL (
+      SELECT ranked.invoice_issue_company
+      FROM (
+        SELECT
+          NULLIF(ril.invoice_issue_company, '') AS invoice_issue_company,
+          COUNT(*) AS fact_count
+        FROM sc_receipt_invoice_line ril
+        WHERE ril.active
+          AND ril.project_id = f.project_id
+          AND NULLIF(ril.invoice_issue_company, '') IS NOT NULL
+        GROUP BY NULLIF(ril.invoice_issue_company, '')
+      ) ranked
+      ORDER BY ranked.fact_count DESC, ranked.invoice_issue_company
+      LIMIT 1
+    ) project_issue_company ON TRUE
     LEFT JOIN LATERAL (
       SELECT rp.id
         FROM res_partner rp
@@ -420,11 +490,12 @@ env.cr.execute(  # noqa: F821
     ) contract_match ON TRUE
     WHERE f.active
       AND f.project_id IS NOT NULL
+      AND %s
       AND f.fact_type IN ('invoice_application', 'invoice_application_line', 'invoice_issue', 'invoice_issue_line')
       AND (
-        GREATEST(COALESCE(f.amount_total, 0), 0) > 0
-        OR GREATEST(COALESCE(f.amount_no_tax, 0), 0) > 0
-        OR GREATEST(COALESCE(f.tax_amount, 0), 0) > 0
+        COALESCE(f.amount_total, 0) <> 0
+        OR COALESCE(f.amount_no_tax, 0) <> 0
+        OR COALESCE(f.tax_amount, 0) <> 0
       )
     ON CONFLICT (legacy_source_model, legacy_record_id)
     DO UPDATE SET
@@ -467,7 +538,7 @@ env.cr.execute(  # noqa: F821
       write_uid = 1,
       write_date = NOW()
     """,
-    [currency_id],
+    [default_issue_company_name, currency_id, include_income_invoice_facts],
 )
 
 env.cr.commit()  # noqa: F821
@@ -498,6 +569,15 @@ payload = {
     "legacy_invoice_tax": int(
         scalar("SELECT COUNT(*) FROM sc_invoice_registration WHERE legacy_source_model = 'sc.legacy.invoice.tax.fact'")
         or 0
+    ),
+    "legacy_income_invoice": int(
+        scalar("SELECT COUNT(*) FROM sc_invoice_registration WHERE legacy_source_model = 'sc.legacy.income.invoice.fact'")
+        or 0
+    ),
+    "include_income_invoice_facts": include_income_invoice_facts,
+    "income_invoice_projection_policy": (
+        "opt_in_only; current output invoice adjustment ledger scope is "
+        "sc.legacy.invoice.tax.fact/C_JXXP_XXKPDJ"
     ),
     "legacy_confirmed": int(
         scalar("SELECT COUNT(*) FROM sc_invoice_registration WHERE source_origin = 'legacy' AND state = 'legacy_confirmed'")

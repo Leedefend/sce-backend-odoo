@@ -9,17 +9,21 @@
                 <tree string="收款发票台账" create="false" delete="false">
                     <field name="request_id"/>
                     <field name="sequence"/>
+                    <field name="invoice_date"/>
+                    <field name="invoice_no"/>
+                    <field name="invoice_party_name"/>
+                    <field name="invoice_issue_company"/>
                     <field name="project_id"/>
                     <field name="operation_strategy"/>
                     <field name="partner_id"/>
                     <field name="contract_id"/>
+                    <field name="invoice_document_no"/>
+                    <field name="invoice_document_state"/>
                     <field name="source_document_no"/>
-                    <field name="invoice_no"/>
-                    <field name="invoice_party_name"/>
-                    <field name="invoice_issue_company"/>
                     <field name="source_table_name"/>
                     <field name="amount_source"/>
                     <field name="invoice_amount" sum="发票金额合计"/>
+                    <field name="surcharge_amount" sum="附加税合计"/>
                     <field name="invoiced_before_amount" sum="历史已开票合计"/>
                     <field name="current_receipt_amount" sum="本次收款合计"/>
                     <field name="attachment_count"/>
@@ -51,6 +55,8 @@
                                 <field name="partner_id" readonly="1"/>
                                 <field name="contract_id" readonly="1"/>
                                 <field name="source_document_no"/>
+                                <field name="invoice_document_no"/>
+                                <field name="invoice_document_state"/>
                                 <field name="source_table_name"/>
                                 <field name="amount_source"/>
                             </group>
@@ -65,12 +71,14 @@
                             <field name="import_batch" readonly="1"/>
                         </group>
                         <group>
+                            <field name="invoice_date"/>
                             <field name="invoice_no"/>
                             <field name="invoice_party_name"/>
                             <field name="invoice_issue_company"/>
                         </group>
                         <group>
                             <field name="invoice_amount"/>
+                            <field name="surcharge_amount"/>
                             <field name="current_receipt_amount"/>
                         </group>
                         <group>
@@ -92,14 +100,20 @@
                     <field name="partner_id"/>
                     <field name="contract_id"/>
                     <field name="invoice_no"/>
+                    <field name="invoice_date"/>
                     <field name="invoice_party_name"/>
                     <field name="invoice_issue_company"/>
+                    <field name="invoice_document_no"/>
+                    <filter string="有发票号" name="has_invoice_no" domain="[('invoice_no', '!=', False), ('invoice_no', '!=', '')]"/>
+                    <filter string="缺开票单位" name="missing_invoice_issue_company" domain="['|', ('invoice_issue_company', '=', False), ('invoice_issue_company', '=', '')]"/>
                     <group expand="0" string="分组">
                         <filter string="收款申请" name="group_by_request_id" context="{'group_by': 'request_id'}"/>
                         <filter string="项目" name="group_by_project_id" context="{'group_by': 'project_id'}"/>
                         <filter string="经营策略" name="group_by_operation_strategy" context="{'group_by': 'operation_strategy'}"/>
                         <filter string="往来单位" name="group_by_partner_id" context="{'group_by': 'partner_id'}"/>
                         <filter string="合同" name="group_by_contract_id" context="{'group_by': 'contract_id'}"/>
+                        <filter string="开票单位" name="group_by_invoice_issue_company" context="{'group_by': 'invoice_issue_company'}"/>
+                        <filter string="开票日期" name="group_by_invoice_date" context="{'group_by': 'invoice_date'}"/>
                     </group>
                 </search>
             </field>

@@ -298,6 +298,7 @@
               <tr
                 v-for="(row, index) in group.sampleRows"
                 :key="`group-row-${group.key}-${String(row.id ?? index)}`"
+                :class="rowToneClass(row)"
                 @click="handleRowClick(row, $event)"
               >
                 <td v-if="showSelectionColumn" class="cell-select" @click.stop>
@@ -454,7 +455,12 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(row, index) in records" :key="String(row.id ?? index)" @click="handleRowClick(row, $event)">
+          <tr
+            v-for="(row, index) in records"
+            :key="String(row.id ?? index)"
+            :class="rowToneClass(row)"
+            @click="handleRowClick(row, $event)"
+          >
             <td v-if="showSelectionColumn" class="cell-select" @click.stop>
               <input
                 v-if="rowId(row)"
@@ -905,6 +911,44 @@ function normalizeCellRawValue(value: unknown) {
     if (value.length) return value[0];
   }
   return value;
+}
+
+function scalarTexts(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value
+      .filter((item) => item !== null && item !== undefined)
+      .map((item) => String(item).trim())
+      .filter(Boolean);
+  }
+  const text = String(value ?? '').trim();
+  return text ? [text] : [];
+}
+
+function rowNumericCellValue(value: unknown): number | null {
+  const raw = Array.isArray(value) ? (value.length > 1 ? value[1] : value[0]) : value;
+  if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
+  if (typeof raw !== 'string') return null;
+  const cleaned = raw.replace(/,/g, '').trim();
+  if (!cleaned) return null;
+  const numeric = Number(cleaned);
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
+function isOutputInvoiceAdjustmentRow(row: Record<string, unknown>) {
+  if (props.model !== 'sc.output.invoice.ledger') return false;
+  const adjustmentTexts = scalarTexts(row.adjustment_kind).map((text) => text.toLowerCase());
+  if (adjustmentTexts.some((text) => text === 'signed_adjustment' || text.includes('冲抵') || text.includes('红冲'))) {
+    return true;
+  }
+  return ['invoice_amount', 'amount_no_tax', 'tax_amount', 'surcharge_amount']
+    .some((field) => {
+      const numeric = rowNumericCellValue(row[field]);
+      return numeric !== null && numeric < 0;
+    });
+}
+
+function rowToneClass(row: Record<string, unknown>) {
+  return { 'row-tone-danger': isOutputInvoiceAdjustmentRow(row) };
 }
 
 function selectionLabel(option: ColumnOption | null, value: unknown) {
@@ -2862,6 +2906,26 @@ tr:hover {
 .group-table tfoot tr:nth-child(2) .cell-select,
 .group-table tfoot tr:nth-child(2) .cell-row-number {
   background: var(--sc-app-info-bg);
+}
+
+.flat-table tbody tr.row-tone-danger td,
+.group-table tbody tr.row-tone-danger td,
+.flat-table tbody tr.row-tone-danger .cell-select,
+.flat-table tbody tr.row-tone-danger .cell-row-number,
+.group-table tbody tr.row-tone-danger .cell-select,
+.group-table tbody tr.row-tone-danger .cell-row-number {
+  background: var(--sc-app-danger-bg);
+  color: var(--sc-app-danger-text);
+}
+
+.flat-table tbody tr.row-tone-danger:hover td,
+.group-table tbody tr.row-tone-danger:hover td,
+.flat-table tbody tr.row-tone-danger:hover .cell-select,
+.flat-table tbody tr.row-tone-danger:hover .cell-row-number,
+.group-table tbody tr.row-tone-danger:hover .cell-select,
+.group-table tbody tr.row-tone-danger:hover .cell-row-number {
+  background: var(--sc-app-danger-bg);
+  color: var(--sc-app-danger-text);
 }
 
 tbody tr:hover .cell-select,

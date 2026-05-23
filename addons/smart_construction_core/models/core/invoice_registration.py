@@ -133,9 +133,6 @@ class ScInvoiceRegistration(models.Model):
             "unique(legacy_source_model, legacy_record_id)",
             "Legacy invoice registration source must be unique.",
         ),
-        ("amount_no_tax_nonnegative", "CHECK(amount_no_tax >= 0)", "Untaxed amount must be non-negative."),
-        ("tax_amount_nonnegative", "CHECK(tax_amount >= 0)", "Tax amount must be non-negative."),
-        ("amount_total_nonnegative", "CHECK(amount_total >= 0)", "Total amount must be non-negative."),
     ]
 
     @api.model

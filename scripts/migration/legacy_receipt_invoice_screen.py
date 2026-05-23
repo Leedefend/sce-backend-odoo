@@ -128,7 +128,7 @@ def amount(value: object) -> Decimal:
 def best_amount(row: dict[str, str]) -> tuple[str, Decimal]:
     for field in ("KPJE", "CCSKJE", "YKPJE"):
         value = amount(row.get(field))
-        if value > 0:
+        if value != 0:
             return field, value
     return "", Decimal("0")
 
@@ -153,8 +153,8 @@ def screen(asset_root: Path) -> dict[str, Any]:
             row_blockers.append("missing_parent_receipt_id")
         elif not receipt_external_id:
             row_blockers.append("receipt_anchor_missing")
-        if invoice_amount <= 0:
-            row_blockers.append("amount_not_positive")
+        if invoice_amount == 0:
+            row_blockers.append("amount_missing_or_zero")
         if clean(row.get("FPHM")):
             invoice_no_counts["invoice_no_present"] += 1
         else:
@@ -164,8 +164,8 @@ def screen(asset_root: Path) -> dict[str, Any]:
                 blockers[blocker] += 1
             if "receipt_anchor_missing" in row_blockers or "missing_parent_receipt_id" in row_blockers:
                 routes["block_receipt_anchor_missing"] += 1
-            elif "amount_not_positive" in row_blockers:
-                routes["block_amount_not_positive"] += 1
+            elif "amount_missing_or_zero" in row_blockers:
+                routes["block_amount_missing_or_zero"] += 1
             else:
                 routes["manual_review_hold"] += 1
         else:

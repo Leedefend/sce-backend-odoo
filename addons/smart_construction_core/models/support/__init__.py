@@ -84,3 +84,4 @@ from . import legacy_equipment_lease_fact
 from . import legacy_income_invoice_fact
 from . import legacy_report_inventory
 from . import runtime_user_management
+from . import product_policy_sync

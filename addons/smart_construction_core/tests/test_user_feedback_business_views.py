@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import inspect
 import re
 
 from odoo.tests import TransactionCase
@@ -828,15 +829,89 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         self.assertIn('name="legacy_parent_id"', payment_line_form)
         self.assertIn('name="legacy_supplier_contract_id"', payment_line_form)
 
-        for field_name in ("source_document_no", "source_table_name", "amount_source"):
+        for field_name in (
+            "source_document_no",
+            "source_table_name",
+            "amount_source",
+            "invoice_date",
+            "invoice_document_no",
+            "invoice_document_state",
+            "surcharge_amount",
+        ):
             self.assertIn('name="%s"' % field_name, receipt_line_tree)
             self.assertIn('name="%s"' % field_name, receipt_line_form)
         self.assertIn('name="invoice_amount" sum="发票金额合计"', receipt_line_tree)
+        self.assertIn('name="surcharge_amount" sum="附加税合计"', receipt_line_tree)
         self.assertIn('name="invoiced_before_amount" sum="历史已开票合计"', receipt_line_tree)
         self.assertIn('name="current_receipt_amount" sum="本次收款合计"', receipt_line_tree)
         self.assertIn('name="legacy_invoice_line_id"', receipt_line_form)
         self.assertIn('name="legacy_receipt_id"', receipt_line_form)
         self.assertIn('name="legacy_file_bill_id"', receipt_line_form)
+
+    def test_output_invoice_menu_uses_detail_invoice_fact_model(self):
+        action = self.env.ref("smart_construction_core.action_sc_invoice_output")
+        self.assertEqual(action.res_model, "sc.output.invoice.ledger")
+        self.assertEqual(action.search_view_id, self.env.ref("smart_construction_core.view_output_invoice_ledger_search"))
+        self.assertIn("search_default_group_by_project_id", action.context)
+
+    def test_output_invoice_adjustment_menu_uses_signed_adjustment_domain(self):
+        action = self.env.ref("smart_construction_core.action_sc_output_invoice_adjustment")
+        menu = self.env.ref("smart_construction_core.menu_sc_output_invoice_adjustment")
+
+        self.assertEqual(action.name, "销项调整记录")
+        self.assertEqual(action.res_model, "sc.output.invoice.ledger")
+        self.assertEqual(action.search_view_id, self.env.ref("smart_construction_core.view_output_invoice_ledger_search"))
+        self.assertIn("signed_adjustment", action.domain)
+        self.assertIn("search_default_signed_adjustment", action.context)
+        self.assertEqual(menu.action, action)
+
+    def test_output_invoice_adjustment_ledger_scope_is_tax_fact_only(self):
+        from odoo.addons.smart_construction_core.models.core.output_invoice_ledger import ScOutputInvoiceLedger
+
+        init_source = inspect.getsource(ScOutputInvoiceLedger.init)
+        self.assertIn("ir.legacy_source_model = 'sc.legacy.invoice.tax.fact'", init_source)
+        self.assertIn("ir.legacy_source_table = 'C_JXXP_XXKPDJ'", init_source)
+
+    def test_output_invoice_ledger_exposes_signed_adjustment_filters(self):
+        ledger_tree = self.env.ref("smart_construction_core.view_output_invoice_ledger_tree").arch_db
+        ledger_search = self.env.ref("smart_construction_core.view_output_invoice_ledger_search").arch_db
+
+        self.assertIn('decoration-danger="adjustment_kind == \'signed_adjustment\'"', ledger_tree)
+        for field_name in (
+            "adjustment_kind",
+            "invoice_amount",
+            "amount_no_tax",
+            "tax_amount",
+            "surcharge_amount",
+            "invoice_document_no",
+            "source_table_name",
+            "receipt_line_count",
+        ):
+            self.assertIn('name="%s"' % field_name, ledger_tree)
+        self.assertIn('name="negative_amount"', ledger_search)
+        self.assertIn('name="signed_adjustment"', ledger_search)
+
+    def test_invoice_registration_accepts_signed_legacy_adjustment_amounts(self):
+        invoice = self.env["sc.invoice.registration"].create(
+            {
+                "name": "LEGACY-RED-INVOICE",
+                "source_origin": "legacy",
+                "source_kind": "output_invoice_tax",
+                "direction": "output",
+                "state": "legacy_confirmed",
+                "project_id": self.project.id,
+                "amount_no_tax": -100.0,
+                "tax_amount": -9.0,
+                "amount_total": -109.0,
+                "surcharge_amount": -1.2,
+                "legacy_source_model": "sc.legacy.invoice.tax.fact",
+                "legacy_record_id": "signed-adjustment-smoke",
+            }
+        )
+
+        self.assertEqual(invoice.amount_total, -109.0)
+        self.assertEqual(invoice.tax_amount, -9.0)
+        self.assertEqual(invoice.surcharge_amount, -1.2)
 
     def test_material_outbound_and_settlement_lists_expose_business_totals(self):
         purchase_request_tree = self.env.ref("smart_construction_core.view_sc_material_purchase_request_tree").arch_db
@@ -1159,7 +1234,7 @@ class TestUserFeedbackBusinessViews(TransactionCase):
             "is_returned",
         ):
             self.assertIn('name="%s"' % field_name, tree + form)
-        self.assertEqual(contract_field.string, "最终合同价")
+        self.assertEqual(contract_field.string, "合同明细合计")
 
     def test_repayment_registration_is_inflow_business_entry(self):
         action = self.env.ref("smart_construction_core.action_sc_expense_claim_repayment_registration")

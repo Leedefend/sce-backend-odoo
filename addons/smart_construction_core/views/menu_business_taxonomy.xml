@@ -168,11 +168,20 @@
     </record>
     <record id="action_sc_invoice_output" model="ir.actions.act_window">
         <field name="name">销项发票</field>
-        <field name="res_model">sc.invoice.registration</field>
+        <field name="res_model">sc.output.invoice.ledger</field>
         <field name="view_mode">tree,form</field>
-        <field name="search_view_id" ref="smart_construction_core.view_sc_invoice_registration_search"/>
-        <field name="domain">[('direction', '=', 'output')]</field>
-        <field name="context">{'default_direction': 'output', 'default_source_kind': 'output_invoice_tax', 'search_default_group_project': 1}</field>
+        <field name="search_view_id" ref="smart_construction_core.view_output_invoice_ledger_search"/>
+        <field name="domain">[('active', '=', True)]</field>
+        <field name="context">{'search_default_group_by_project_id': 1}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read'))]"/>
+    </record>
+    <record id="action_sc_output_invoice_adjustment" model="ir.actions.act_window">
+        <field name="name">销项调整记录</field>
+        <field name="res_model">sc.output.invoice.ledger</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="smart_construction_core.view_output_invoice_ledger_search"/>
+        <field name="domain">[('active', '=', True), ('adjustment_kind', '=', 'signed_adjustment')]</field>
+        <field name="context">{'search_default_signed_adjustment': 1, 'search_default_group_by_project_id': 1}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read'))]"/>
     </record>
     <record id="action_sc_invoice_input" model="ir.actions.act_window">
@@ -1319,6 +1328,12 @@
               parent="smart_construction_core.menu_sc_invoice_management_group"
               action="smart_construction_core.action_sc_invoice_output"
               sequence="20"
+              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+    <menuitem id="menu_sc_output_invoice_adjustment"
+              name="销项调整记录"
+              parent="smart_construction_core.menu_sc_invoice_management_group"
+              action="smart_construction_core.action_sc_output_invoice_adjustment"
+              sequence="25"
               groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
     <menuitem id="menu_sc_invoice_input"
               name="进项发票"
