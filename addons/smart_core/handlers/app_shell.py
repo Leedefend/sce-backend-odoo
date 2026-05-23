@@ -60,14 +60,10 @@ APP_ALIASES = {
 
 HIDDEN_APP_IDS = {"default", "scene_smoke_default"}
 PLATFORM_ADMIN_SCENE_APP_IDS = {"delivery"}
-BUSINESS_CONFIG_ADMIN_GROUPS = (
-    "smart_core.group_smart_core_business_config_admin",
-    "smart_construction_core.group_sc_cap_business_config_admin",
-)
 
 ADMIN_APP_DEFS: dict[str, dict[str, Any]] = {
     "release_management": {
-        "label": "产品交付",
+        "label": "产品发布",
         "category": "platform_admin",
         "sequence": -20,
         "route": "/admin/release-operator?product_key=construction.standard",
@@ -189,26 +185,6 @@ def _is_platform_admin_user(env) -> bool:
         return False
 
 
-def _is_business_config_admin_user(env) -> bool:
-    user = getattr(env, "user", None)
-    if not user:
-        return False
-    for xmlid in BUSINESS_CONFIG_ADMIN_GROUPS:
-        try:
-            if user.has_group(xmlid):
-                return True
-        except Exception:
-            continue
-    return False
-
-
-def _can_access_admin_app(env, app_id: str) -> bool:
-    token = _text(app_id)
-    if token == "release_management":
-        return _is_platform_admin_user(env) or _is_business_config_admin_user(env)
-    return _is_platform_admin_user(env)
-
-
 def _is_scene_app_visible_for_user(env, app_id: str) -> bool:
     token = _text(app_id)
     if token in PLATFORM_ADMIN_SCENE_APP_IDS:
@@ -217,10 +193,10 @@ def _is_scene_app_visible_for_user(env, app_id: str) -> bool:
 
 
 def _admin_app_rows(env) -> list[dict[str, Any]]:
+    if not _is_platform_admin_user(env):
+        return []
     rows: list[dict[str, Any]] = []
     for app_id, spec in ADMIN_APP_DEFS.items():
-        if not _can_access_admin_app(env, app_id):
-            continue
         action = _xmlid_record(env, _text(spec.get("action_xmlid")))
         if not action:
             continue
@@ -236,8 +212,7 @@ def _admin_app_rows(env) -> list[dict[str, Any]]:
                     "sequence": int(spec.get("sequence") or 0),
                     "action_xmlid": _text(spec.get("action_xmlid")),
                     "menu_xmlid": _text(spec.get("menu_xmlid")),
-                    "admin_only": not _is_business_config_admin_user(env),
-                    "business_config_visible": app_id == "release_management",
+                    "admin_only": True,
                 },
             }
         )
@@ -439,7 +414,7 @@ class AppNavHandler(_SceneDeliveryAppShellMixin, BaseIntentHandler):
         if max_depth_error:
             return self._err(400, "max_depth 无效", ts0=ts0)
         app_id = APP_ALIASES.get(_text(payload.get("app") or "workspace"), _text(payload.get("app") or "workspace"))
-        if app_id in ADMIN_APP_DEFS and _can_access_admin_app(env, app_id):
+        if app_id in ADMIN_APP_DEFS and _is_platform_admin_user(env):
             target = _admin_app_target(env, app_id)
             if target:
                 return {
@@ -540,7 +515,7 @@ class AppOpenHandler(_SceneDeliveryAppShellMixin, BaseIntentHandler):
         scene_key = feature_key
         if not scene_key:
             app_id = APP_ALIASES.get(_text(payload.get("app") or "workspace"), _text(payload.get("app") or "workspace"))
-            if app_id in ADMIN_APP_DEFS and _can_access_admin_app(self.env, app_id):
+            if app_id in ADMIN_APP_DEFS and _is_platform_admin_user(self.env):
                 target = _admin_app_target(self.env, app_id)
                 if target:
                     return {

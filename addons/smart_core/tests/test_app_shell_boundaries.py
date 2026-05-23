@@ -91,29 +91,11 @@ class _FakeAction:
         self.view_mode = view_mode
 
 
-class _FakeUser:
-    def __init__(self, *, is_platform_admin=False, business_config_admin=False):
-        self.is_platform_admin = is_platform_admin
-        self.business_config_admin = business_config_admin
-
-    def has_group(self, xmlid):
-        return bool(
-            self.business_config_admin
-            and xmlid in {
-                "smart_core.group_smart_core_business_config_admin",
-                "smart_construction_core.group_sc_cap_business_config_admin",
-            }
-        )
-
-
 class _FakeEnv:
     uid = 9
 
-    def __init__(self, *, is_platform_admin=False, business_config_admin=False, has_action=True):
-        self.user = _FakeUser(
-            is_platform_admin=is_platform_admin,
-            business_config_admin=business_config_admin,
-        )
+    def __init__(self, *, is_platform_admin=False, has_action=True):
+        self.user = types.SimpleNamespace(is_platform_admin=is_platform_admin)
         self.has_action = has_action
 
     def ref(self, xmlid, raise_if_not_found=False):
@@ -221,25 +203,19 @@ class TestAppShellBoundaries(unittest.TestCase):
         self.assertTrue(result["ok"])
         self.assertEqual(result["data"]["scene_key"], "projects.list")
 
-    def test_catalog_adds_admin_apps_by_role(self):
+    def test_catalog_adds_platform_admin_apps_only_for_platform_admin(self):
         normal_handler = self.module.AppCatalogHandler(env=_FakeEnv(is_platform_admin=False))
-        business_handler = self.module.AppCatalogHandler(env=_FakeEnv(business_config_admin=True))
         admin_handler = self.module.AppCatalogHandler(env=_FakeEnv(is_platform_admin=True))
 
         normal_result = normal_handler.handle(payload={})
-        business_result = business_handler.handle(payload={})
         admin_result = admin_handler.handle(payload={})
 
         normal_app_ids = [row["meta"]["app_id"] for row in normal_result["data"]["apps"]]
-        business_app_ids = [row["meta"]["app_id"] for row in business_result["data"]["apps"]]
         admin_app_ids = [row["meta"]["app_id"] for row in admin_result["data"]["apps"]]
         self.assertNotIn("release_management", normal_app_ids)
-        self.assertIn("release_management", business_app_ids)
-        self.assertNotIn("company_access", business_app_ids)
         self.assertIn("release_management", admin_app_ids)
         self.assertIn("company_access", admin_app_ids)
         self.assertEqual(admin_result["data"]["apps"][0]["meta"]["app_id"], "release_management")
-        self.assertEqual(business_result["data"]["apps"][0]["label"], "产品交付")
 
     def test_open_platform_admin_app_returns_release_operator_target(self):
         handler = self.module.AppOpenHandler(env=_FakeEnv(is_platform_admin=True))
@@ -260,16 +236,6 @@ class TestAppShellBoundaries(unittest.TestCase):
         child = result["data"]["sections"][0]["children"][0]
         self.assertEqual(child["meta"]["kind"], "admin")
         self.assertEqual(child["meta"]["open"]["subject"], "ui.contract")
-        self.assertEqual(child["meta"]["open"]["route"], "/admin/release-operator?product_key=construction.standard")
-
-    def test_nav_business_config_admin_can_open_release_operator(self):
-        handler = self.module.AppNavHandler(env=_FakeEnv(business_config_admin=True))
-
-        result = handler.handle(payload={"params": {"app": "release_management"}})
-
-        self.assertTrue(result["ok"])
-        child = result["data"]["sections"][0]["children"][0]
-        self.assertEqual(child["meta"]["open"]["intent"], "release.operator.surface")
         self.assertEqual(child["meta"]["open"]["route"], "/admin/release-operator?product_key=construction.standard")
 
 
