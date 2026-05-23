@@ -232,13 +232,28 @@
               {{ uiLabel('group_view_all', '查看全部') }}
             </button>
           </header>
-          <table v-if="!isGroupCollapsed(group.key)" class="group-table" :style="tableWidthStyle">
+          <table
+            v-if="!isGroupCollapsed(group.key)"
+            class="group-table"
+            :class="{ 'has-selection-column': showSelectionColumn }"
+            :style="tableWidthStyle"
+          >
             <colgroup>
+              <col v-if="showSelectionColumn" class="col-select" />
               <col class="col-row-number" />
               <col v-for="col in displayedColumns" :key="`group-col-width-${group.key}-${col}`" :style="columnWidthStyle(col)" />
             </colgroup>
             <thead>
               <tr>
+                <th v-if="showSelectionColumn" class="cell-select">
+                  <input
+                    type="checkbox"
+                    :checked="isGroupAllSelected(group)"
+                    :disabled="loading || !groupSelectableRows(group).length"
+                    @click.stop
+                    @change="onGroupSelectAllChange(group, $event)"
+                  />
+                </th>
                 <th class="cell-row-number">{{ uiLabel('row_number', '序号') }}</th>
                 <th
                   v-for="col in displayedColumns"
@@ -282,6 +297,15 @@
                 :key="`group-row-${group.key}-${String(row.id ?? index)}`"
                 @click="handleRowClick(row, $event)"
               >
+                <td v-if="showSelectionColumn" class="cell-select" @click.stop>
+                  <input
+                    v-if="rowId(row)"
+                    type="checkbox"
+                    :checked="isSelected(row)"
+                    :disabled="loading"
+                    @change="onRowCheckboxChange(row, $event)"
+                  />
+                </td>
                 <td class="cell-row-number">{{ groupedRowNumber(group.key, index) }}</td>
                 <td
                   v-for="col in displayedColumns"
@@ -314,6 +338,7 @@
             </tbody>
             <tfoot>
               <tr>
+                <td v-if="showSelectionColumn" class="cell-select"></td>
                 <th class="cell-row-number footer-row-label">{{ footerRowLabel('page', group.sampleRows.length) }}</th>
                 <td
                   v-for="col in displayedColumns"
@@ -326,6 +351,7 @@
                 </td>
               </tr>
               <tr>
+                <td v-if="showSelectionColumn" class="cell-select"></td>
                 <th class="cell-row-number footer-row-label">{{ footerRowLabel('total', group.count) }}</th>
                 <td
                   v-for="col in displayedColumns"
@@ -341,7 +367,12 @@
           </table>
         </article>
       </section>
-      <table v-if="!showGroupedRows" class="flat-table" :style="tableWidthStyle">
+      <table
+        v-if="!showGroupedRows"
+        class="flat-table"
+        :class="{ 'has-selection-column': showSelectionColumn }"
+        :style="tableWidthStyle"
+      >
         <colgroup>
           <col v-if="showSelectionColumn" class="col-select" />
           <col class="col-row-number" />
@@ -516,6 +547,7 @@
       </section>
       <section v-else-if="showPagination" class="pagination-footer">
         <div class="pagination-actions pagination-actions--bottom">
+          <span class="pagination-total">{{ listRecordCountText }}</span>
           <button
             type="button"
             class="pagination-btn"
@@ -1188,9 +1220,8 @@ const selectedCount = computed(() => (props.selectedIds || []).length);
 const selectionActions = computed(() =>
   Array.isArray(props.selectionActions) ? props.selectionActions : [],
 );
-const hasSelectionActions = computed(() => selectionActions.value.length > 0);
-const selectableRows = computed(() => props.records.map((row) => rowId(row)).filter((id): id is number => typeof id === 'number'));
-const showSelectionColumn = computed(() => hasSelectionActions.value && !!props.onToggleSelection && !!props.onToggleSelectionAll);
+const selectableRows = computed(() => pageVisibleRows.value.map((row) => rowId(row)).filter((id): id is number => typeof id === 'number'));
+const showSelectionColumn = computed(() => !!props.onToggleSelection && !!props.onToggleSelectionAll);
 const showBatchBar = computed(() => showSelectionColumn.value && (selectedCount.value > 0 || Boolean(props.batchMessage)));
 const allSelected = computed(() => {
   const rows = selectableRows.value;
@@ -1220,12 +1251,10 @@ const totalPages = computed(() => {
 });
 const currentPage = computed(() => Math.min(totalPages.value, Math.floor(listOffset.value / listLimit.value) + 1));
 const showPagination = computed(() => listTotal.value !== null && props.status === 'ok' && !showGroupedRows.value);
-const toolbarSubtitle = computed(() => {
-  if (listTotal.value !== null) {
-    return uiLabel('record_count', '{count} 条记录', { count: listTotal.value });
-  }
-  return props.subtitle || '';
-});
+const listRecordCountText = computed(() =>
+  uiLabel('record_count', '{count} 条记录', { count: listTotal.value ?? props.records.length }),
+);
+const toolbarSubtitle = computed(() => props.subtitle || '');
 const canPagePrev = computed(() => listOffset.value > 0);
 const canPageNext = computed(() => {
   const total = listTotal.value || 0;
@@ -1253,6 +1282,24 @@ function onToggleRow(row: Record<string, unknown>, selected: boolean) {
 function onToggleAll(selected: boolean) {
   if (!props.onToggleSelectionAll) return;
   props.onToggleSelectionAll(selectableRows.value, selected);
+}
+
+function groupSelectableRows(group: { sampleRows?: Array<Record<string, unknown>> }) {
+  return (Array.isArray(group.sampleRows) ? group.sampleRows : [])
+    .map((row) => rowId(row))
+    .filter((id): id is number => typeof id === 'number');
+}
+
+function isGroupAllSelected(group: { sampleRows?: Array<Record<string, unknown>> }) {
+  const ids = groupSelectableRows(group);
+  if (!ids.length) return false;
+  return ids.every((id) => selectedIdSet.value.has(id));
+}
+
+function onGroupSelectAllChange(group: { sampleRows?: Array<Record<string, unknown>> }, event: Event) {
+  if (!props.onToggleSelectionAll) return;
+  const selected = Boolean((event.target as HTMLInputElement | null)?.checked);
+  props.onToggleSelectionAll(groupSelectableRows(group), selected);
 }
 
 function clearSelection() {
@@ -2253,6 +2300,13 @@ onBeforeUnmount(() => {
   white-space: nowrap;
 }
 
+.pagination-total {
+  color: var(--sc-app-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
 .pagination-size-control {
   display: inline-flex;
   align-items: center;
@@ -2742,43 +2796,15 @@ tr:hover {
   cursor: not-allowed;
 }
 
-.flat-table .cell-select {
+.flat-table .cell-select,
+.group-table .cell-select {
   position: sticky;
   left: 0;
   background: var(--sc-app-panel);
   z-index: 14;
 }
 
-.flat-table .cell-row-number {
-  position: sticky;
-  left: 44px;
-  background: var(--sc-app-panel);
-  z-index: 13;
-}
-
-.flat-table thead .cell-select {
-  z-index: 26;
-}
-
-.flat-table thead .cell-row-number {
-  z-index: 25;
-}
-
-.flat-table tfoot .cell-select {
-  background: var(--sc-app-muted-bg);
-  z-index: 15;
-}
-
-.flat-table tfoot .cell-row-number {
-  background: var(--sc-app-muted-bg);
-  z-index: 14;
-}
-
-.flat-table tfoot tr:nth-child(2) .cell-select,
-.flat-table tfoot tr:nth-child(2) .cell-row-number {
-  background: var(--sc-app-info-bg);
-}
-
+.flat-table .cell-row-number,
 .group-table .cell-row-number {
   position: sticky;
   left: 0;
@@ -2786,15 +2812,36 @@ tr:hover {
   z-index: 13;
 }
 
-.group-table thead .cell-row-number {
-  z-index: 24;
+.flat-table.has-selection-column .cell-row-number,
+.group-table.has-selection-column .cell-row-number {
+  left: 44px;
 }
 
+.flat-table thead .cell-select,
+.group-table thead .cell-select {
+  z-index: 26;
+}
+
+.flat-table thead .cell-row-number,
+.group-table thead .cell-row-number {
+  z-index: 25;
+}
+
+.flat-table tfoot .cell-select,
+.group-table tfoot .cell-select {
+  background: var(--sc-app-muted-bg);
+  z-index: 15;
+}
+
+.flat-table tfoot .cell-row-number,
 .group-table tfoot .cell-row-number {
   background: var(--sc-app-muted-bg);
   z-index: 14;
 }
 
+.flat-table tfoot tr:nth-child(2) .cell-select,
+.flat-table tfoot tr:nth-child(2) .cell-row-number,
+.group-table tfoot tr:nth-child(2) .cell-select,
 .group-table tfoot tr:nth-child(2) .cell-row-number {
   background: var(--sc-app-info-bg);
 }
