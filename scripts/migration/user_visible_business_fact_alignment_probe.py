@@ -58,6 +58,19 @@ def csv_ids(file_name: str, field_name: str) -> set[str]:
     return {clean(row.get(field_name)) for row in read_csv(path) if clean(row.get(field_name))}
 
 
+def csv_ids_where(file_name: str, field_name: str, filters: dict[str, str]) -> set[str]:
+    path = REPO_ROOT / "artifacts/migration" / file_name
+    if not path.exists():
+        return set()
+    values: set[str] = set()
+    for row in read_csv(path):
+        if all(clean(row.get(key)) == expected for key, expected in filters.items()):
+            value = clean(row.get(field_name))
+            if value:
+                values.add(value)
+    return values
+
+
 def target_values(model_name: str, field_name: str, domain: list[tuple] | None = None) -> set[str]:
     if model_name not in env:  # noqa: F821
         return set()
@@ -238,6 +251,11 @@ cost_ledger_source_ids = (
         ],
     )
 )
+hidden_contract_ids = csv_ids_where(
+    "fresh_db_construction_contract_income_count_alignment_detail_v1.csv",
+    "legacy_contract_id",
+    {"action": "mark_hidden"},
+)
 
 lanes = [
     lane(
@@ -259,8 +277,11 @@ lanes = [
     lane(
         "contract_headers",
         "合同台账事实",
-        csv_ids("fresh_db_contract_remaining_replay_payload_v1.csv", "legacy_contract_id")
-        | csv_ids("fresh_db_supplier_contract_replay_payload_v1.csv", "legacy_contract_id"),
+        (
+            csv_ids("fresh_db_contract_remaining_replay_payload_v1.csv", "legacy_contract_id")
+            | csv_ids("fresh_db_supplier_contract_replay_payload_v1.csv", "legacy_contract_id")
+        )
+        - hidden_contract_ids,
         target_values("construction.contract", "legacy_contract_id"),
         target_model="construction.contract",
         target_domain=[("legacy_contract_id", "!=", False)],

@@ -89,29 +89,37 @@ Partner = env["res.partner"].sudo()  # noqa: F821
 
 updated_existing = 0
 if rows:
-    env.cr.execute(  # noqa: F821
-        """
-        UPDATE payment_request pr
-           SET legacy_source_table = COALESCE(NULLIF(pr.legacy_source_table, ''), NULLIF(t.legacy_source_table, '')),
-               legacy_record_id = COALESCE(NULLIF(pr.legacy_record_id, ''), NULLIF(t.legacy_record_id, '')),
-               creator_legacy_user_id = COALESCE(NULLIF(pr.creator_legacy_user_id, ''), NULLIF(t.creator_legacy_user_id, '')),
-               creator_name = COALESCE(NULLIF(pr.creator_name, ''), NULLIF(t.creator_name, '')),
-               created_time = COALESCE(pr.created_time, NULLIF(t.created_time, '')::timestamp),
-               write_uid = %s,
-               write_date = NOW()
-          FROM tmp_outflow_request_replay_payload t
-         WHERE pr.note = t.note
-           AND (
-                (NULLIF(t.legacy_source_table, '') IS NOT NULL AND NULLIF(pr.legacy_source_table, '') IS NULL)
-             OR (NULLIF(t.legacy_record_id, '') IS NOT NULL AND NULLIF(pr.legacy_record_id, '') IS NULL)
-             OR (NULLIF(t.creator_legacy_user_id, '') IS NOT NULL AND NULLIF(pr.creator_legacy_user_id, '') IS NULL)
-             OR (NULLIF(t.creator_name, '') IS NOT NULL AND NULLIF(pr.creator_name, '') IS NULL)
-             OR (NULLIF(t.created_time, '') IS NOT NULL AND pr.created_time IS NULL)
-           )
-        """,
-        [env.uid],  # noqa: F821
-    )
-    updated_existing = env.cr.rowcount  # noqa: F821
+    optional_backfill = [
+        ("legacy_source_table", "text"),
+        ("legacy_record_id", "text"),
+        ("creator_legacy_user_id", "text"),
+        ("creator_name", "text"),
+        ("created_time", "timestamp"),
+    ]
+    available_backfill = [(field, kind) for field, kind in optional_backfill if field in payload_columns]
+    if available_backfill:
+        set_clauses = []
+        where_clauses = []
+        for field, kind in available_backfill:
+            if kind == "timestamp":
+                set_clauses.append(f"{field} = COALESCE(pr.{field}, NULLIF(t.{field}, '')::timestamp)")
+                where_clauses.append(f"(NULLIF(t.{field}, '') IS NOT NULL AND pr.{field} IS NULL)")
+            else:
+                set_clauses.append(f"{field} = COALESCE(NULLIF(pr.{field}, ''), NULLIF(t.{field}, ''))")
+                where_clauses.append(f"(NULLIF(t.{field}, '') IS NOT NULL AND NULLIF(pr.{field}, '') IS NULL)")
+        env.cr.execute(  # noqa: F821
+            f"""
+            UPDATE payment_request pr
+               SET {", ".join(set_clauses)},
+                   write_uid = %s,
+                   write_date = NOW()
+              FROM tmp_outflow_request_replay_payload t
+             WHERE pr.note = t.note
+               AND ({" OR ".join(where_clauses)})
+            """,
+            [env.uid],  # noqa: F821
+        )
+        updated_existing = env.cr.rowcount  # noqa: F821
 
 existing_note_rows = Request.search_read([("note", "in", [row["note"] for row in rows])], ["note"], order="id")
 existing_notes = {row["note"] for row in existing_note_rows if row.get("note")}

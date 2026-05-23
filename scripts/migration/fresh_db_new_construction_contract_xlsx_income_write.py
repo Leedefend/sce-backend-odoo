@@ -295,27 +295,57 @@ def sync_amount_line(contract, row: dict[str, str]) -> str:
 
 rows = read_source_rows()
 docs = [clean(row.get("单据编号")) for row in rows if clean(row.get("单据编号"))]
+source_legacy_ids = {
+    f"new_construction_contract_xlsx:{doc}"
+    for doc in docs
+}
 if len(rows) != EXPECTED_ROWS:
     raise RuntimeError({"unexpected_xlsx_rows": len(rows), "expected": EXPECTED_ROWS})
 if len(set(docs)) != len(docs):
     raise RuntimeError({"duplicate_document_no": [doc for doc in docs if docs.count(doc) > 1][:20]})
 
-existing = Contract.search([("legacy_document_no", "in", docs)], order="legacy_document_no,id")
+existing = Contract.search(
+    [
+        "|",
+        ("legacy_contract_id", "in", sorted(source_legacy_ids)),
+        ("legacy_document_no", "in", docs),
+    ],
+    order="legacy_document_no,id",
+)
 existing_by_doc: dict[str, object] = {}
+existing_by_source_legacy: dict[str, object] = {}
 duplicates: list[dict[str, object]] = []
 for rec in existing:
+    source_legacy_id = clean(rec.legacy_contract_id)
+    if source_legacy_id in source_legacy_ids:
+        document_no = source_legacy_id.removeprefix("new_construction_contract_xlsx:")
+        if source_legacy_id in existing_by_source_legacy:
+            duplicates.append(
+                {
+                    "legacy_contract_id": source_legacy_id,
+                    "ids": [existing_by_source_legacy[source_legacy_id].id, rec.id],
+                }
+            )
+        else:
+            existing_by_source_legacy[source_legacy_id] = rec
+            existing_by_doc[document_no] = rec
+        continue
     document_no = clean(rec.legacy_document_no)
     if document_no in existing_by_doc:
-        duplicates.append({"legacy_document_no": document_no, "ids": [existing_by_doc[document_no].id, rec.id]})
+        # Different historical sources can legitimately reuse a document number.
+        # Prefer the xlsx-owned record above and only treat duplicates inside the
+        # xlsx source identity as blocking.
+        continue
     else:
         existing_by_doc[document_no] = rec
 if duplicates:
-    raise RuntimeError({"duplicate_existing_document_no": duplicates[:20]})
+    raise RuntimeError({"duplicate_existing_source_contract": duplicates[:20]})
 
 created = updated = type_corrected = visible_corrected = line_created = line_updated = 0
 for row in rows:
     document_no = clean(row.get("单据编号"))
-    existing_contract = existing_by_doc.get(document_no)
+    source_legacy_id = f"new_construction_contract_xlsx:{document_no}"
+    existing_contract = existing_by_source_legacy.get(source_legacy_id) or existing_by_doc.get(document_no)
     project = resolve_project_for_contract(existing_contract, row)
     partner = resolve_partner(row)
     vals = contract_vals(row, project, partner)
@@ -349,13 +379,13 @@ env.cr.commit()  # noqa: F821
 
 visible_count = Contract.search_count(
     [
-        ("legacy_document_no", "in", docs),
+        ("legacy_contract_id", "in", sorted(source_legacy_ids)),
         ("type", "=", "out"),
         ("legacy_income_surface_visible", "=", True),
     ]
 )
 income_wrapper_count = env["construction.contract.income"].sudo().search_count(  # noqa: F821
-    [("legacy_document_no", "in", docs)]
+    [("legacy_contract_id", "in", sorted(source_legacy_ids))]
 )
 result = {
     "status": "PASS" if visible_count == len(docs) and income_wrapper_count == len(docs) else "FAIL",
