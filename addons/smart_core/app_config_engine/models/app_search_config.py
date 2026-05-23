@@ -488,10 +488,10 @@ class AppSearchConfig(models.Model):
                 filter_fields.append(row)
                 seen_filter.add(fname)
 
-        def add_group(fname, meta):
+        def add_group(fname, meta, *, explicit=False):
             if fname in seen_group:
                 return
-            row = self._normalize_custom_field(fname, meta, mode="group")
+            row = self._normalize_custom_field(fname, meta, mode="group", explicit=explicit)
             if row:
                 group_fields.append(row)
                 seen_group.add(fname)
@@ -500,7 +500,7 @@ class AppSearchConfig(models.Model):
             fname = str((gb or {}).get("field") or gb or '').split(':', 1)[0].strip()
             meta = fields_meta.get(fname)
             if meta:
-                add_group(fname, meta)
+                add_group(fname, meta, explicit=True)
                 add_filter(fname, meta)
 
         for fname, meta in fields_meta.items():
@@ -526,7 +526,7 @@ class AppSearchConfig(models.Model):
             },
         }
 
-    def _normalize_custom_field(self, fname, meta, mode="filter"):
+    def _normalize_custom_field(self, fname, meta, mode="filter", explicit=False):
         field_name = str(fname or '').strip()
         if not field_name or not isinstance(meta, dict):
             return None
@@ -534,7 +534,10 @@ class AppSearchConfig(models.Model):
             return None
         field_type = meta.get('type')
         if mode == "group":
-            if field_type not in ('many2one', 'many2many', 'selection', 'date', 'datetime', 'boolean'):
+            allowed_group_types = ('many2one', 'many2many', 'selection', 'date', 'datetime', 'boolean')
+            if explicit:
+                allowed_group_types = allowed_group_types + ('char',)
+            if field_type not in allowed_group_types:
                 return None
             if field_type == 'many2many' and not meta.get('store', True):
                 return None

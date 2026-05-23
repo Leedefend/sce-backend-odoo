@@ -9,6 +9,7 @@
                 <tree string="付款/收款申请" decoration-danger="is_overpay_risk">
                     <field name="name"/>
                     <field name="type"/>
+                    <field name="receipt_type" optional="show"/>
                     <field name="project_id"/>
                     <field name="operation_strategy"/>
                     <field name="contract_id"/>
@@ -61,6 +62,7 @@
                             <group>
                                 <field name="name" readonly="1"/>
                                 <field name="type"/>
+                                <field name="receipt_type" invisible="type != 'receive'"/>
                                 <field name="project_id" options="{'no_create': True}"/>
                                 <field name="operation_strategy" readonly="1"/>
                                 <field name="contract_id" domain="[('project_id', '=', project_id)]"/>
@@ -181,6 +183,7 @@
                 <search string="付款/收款申请">
                     <field name="name"/>
                     <field name="project_id"/>
+                    <field name="receipt_type"/>
                     <field name="operation_strategy"/>
                     <field name="partner_id"/>
                     <field name="contract_id"/>
@@ -190,6 +193,8 @@
                     <field name="partner_bank_account"/>
                     <filter string="付款" name="type_pay" domain="[('type', '=', 'pay')]"/>
                     <filter string="收款" name="type_receive" domain="[('type', '=', 'receive')]"/>
+                    <filter string="正常类型收款" name="receipt_type_normal" domain="[('type', '=', 'receive'), ('receipt_type', '=', '正常类型收款')]"/>
+                    <filter string="其他类型收款" name="receipt_type_other" domain="[('type', '=', 'receive'), ('receipt_type', '=', '其他类型收款')]"/>
                     <filter string="公司直营" name="operation_direct" domain="[('operation_strategy', '=', 'direct')]"/>
                     <filter string="联营项目" name="operation_joint" domain="[('operation_strategy', '=', 'joint')]"/>
                     <separator/>
@@ -202,6 +207,7 @@
                     <filter string="按经营策略" name="group_by_operation_strategy" context="{'group_by': 'operation_strategy'}"/>
                     <filter string="按单位" name="group_by_partner_id" context="{'group_by': 'partner_id'}"/>
                     <filter string="按类型" name="group_by_type" context="{'group_by': 'type'}"/>
+                    <filter string="按登记类型" name="group_by_receipt_type" context="{'group_by': 'receipt_type'}"/>
                     <filter string="按成本分类" name="group_by_cost_category_name" context="{'group_by': 'cost_category_name'}"/>
                     <filter string="按状态" name="group_by_state" context="{'group_by': 'state'}"/>
                     <filter string="按申请日期" name="group_by_date_request" context="{'group_by': 'date_request'}"/>
@@ -244,7 +250,7 @@
             <field name="view_mode">tree,form</field>
             <field name="search_view_id" ref="view_payment_request_search"/>
             <field name="domain">[('type', '=', 'receive')]</field>
-            <field name="context">{'default_type': 'receive', 'search_default_type_receive': 1, 'search_default_group_by_project_id': 1}</field>
+            <field name="context">{'default_type': 'receive', 'search_default_type_receive': 1, 'search_default_group_by_receipt_type': 1, 'search_default_group_by_project_id': 1}</field>
             <field name="groups_id" eval="[(6, 0, [
                 ref('smart_construction_core.group_sc_cap_finance_read'),
                 ref('smart_construction_core.group_sc_cap_finance_user'),

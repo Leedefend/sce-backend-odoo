@@ -25,6 +25,7 @@ FIELDS = [
     "amount",
     "date_request",
     "type",
+    "receipt_type",
     "creator_legacy_user_id",
     "creator_name",
     "created_time",
@@ -63,8 +64,21 @@ def extract_legacy_receipt_id(note: str) -> str:
     return note.split(token, 1)[1].split(";", 1)[0].split()[0].strip()
 
 
+def raw_receipt_type_map() -> dict[str, str]:
+    path = REPO_ROOT / "tmp/raw/receipt/receipt.csv"
+    if not path.exists():
+        return {}
+    with path.open("r", encoding="utf-8-sig", newline="") as handle:
+        return {
+            clean(row.get("Id")): clean(row.get("type"))
+            for row in csv.DictReader(handle)
+            if clean(row.get("Id"))
+        }
+
+
 def main() -> int:
     rows: list[dict[str, str]] = []
+    receipt_types = raw_receipt_type_map()
     root = ET.parse(ASSET_XML).getroot()
     for record in root.findall(".//record[@model='payment.request']"):
         values = field_map(record)
@@ -85,6 +99,7 @@ def main() -> int:
                 "amount": clean(values.get("amount")),
                 "date_request": clean(values.get("date_request")),
                 "type": clean(values.get("type")) or "receive",
+                "receipt_type": clean(values.get("receipt_type")) or receipt_types.get(legacy_receipt_id, ""),
                 "creator_legacy_user_id": clean(values.get("creator_legacy_user_id")),
                 "creator_name": clean(values.get("creator_name")),
                 "created_time": clean(values.get("created_time")),

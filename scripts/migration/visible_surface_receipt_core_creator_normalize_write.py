@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Backfill receipt request creator facts from the raw receipt source."""
+"""Backfill receipt request visible facts from the raw receipt source."""
 
 from __future__ import annotations
 
@@ -70,6 +70,7 @@ def read_receipt_facts(path: Path) -> dict[str, dict[str, str]]:
         if not legacy_id:
             continue
         facts[legacy_id] = {
+            "receipt_type": clean(row.get("type")),
             "creator_legacy_user_id": first_nonempty(row, ["LRRID", "f_LRRID"]),
             "creator_name": first_nonempty(row, ["LRR", "f_LRR"]),
             "created_time": parse_datetime(first_nonempty(row, ["LRSJ", "f_LRSJ"])),
@@ -104,6 +105,8 @@ for request in requests:
     if not fact:
         continue
     vals = {}
+    if fact["receipt_type"] and request.receipt_type != fact["receipt_type"]:
+        vals["receipt_type"] = fact["receipt_type"]
     if fact["creator_legacy_user_id"] and not request.creator_legacy_user_id:
         vals["creator_legacy_user_id"] = fact["creator_legacy_user_id"]
     if fact["creator_name"]:
@@ -129,9 +132,10 @@ payload = {
     "source_with_creator_name": with_creator_source,
     "source_with_created_time": with_created_source,
     "updated_rows": updated,
+    "receipt_requests_with_receipt_type": Request.search_count([("type", "=", "receive"), ("note", "ilike", "[migration:receipt_core]"), ("receipt_type", "!=", False)]),
     "receipt_requests_with_creator_name": Request.search_count([("type", "=", "receive"), ("note", "ilike", "[migration:receipt_core]"), ("creator_name", "!=", False)]),
     "receipt_requests_with_created_time": Request.search_count([("type", "=", "receive"), ("note", "ilike", "[migration:receipt_core]"), ("created_time", "!=", False)]),
-    "decision": "receipt_core_creator_facts_backfilled_from_raw_source",
+    "decision": "receipt_core_visible_facts_backfilled_from_raw_source",
 }
 write_json(artifact_root() / "visible_surface_receipt_core_creator_normalize_write_result_v1.json", payload)
 print("VISIBLE_SURFACE_RECEIPT_CORE_CREATOR_NORMALIZE_WRITE=" + json.dumps(payload, ensure_ascii=False, sort_keys=True))

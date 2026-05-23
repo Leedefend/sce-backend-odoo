@@ -2172,6 +2172,9 @@ verify.frontend.group_summary_runtime.guard: guard.prod.forbid
 verify.frontend.grouped_rows_runtime.guard: guard.prod.forbid
 	@python3 scripts/verify/grouped_rows_runtime_guard.py
 
+verify.payment_request_receipt_type.browser_group_smoke: guard.prod.forbid
+	@node scripts/verify/payment_request_receipt_type_browser_group_smoke.js
+
 verify.frontend.grouped_pagination_semantic.guard: guard.prod.forbid
 	@python3 scripts/verify/grouped_pagination_semantic_guard.py
 
@@ -2329,6 +2332,10 @@ verify.user_delete_data.closure_guard: guard.prod.forbid
 .PHONY: verify.receipt_income_type_mapping.guard
 verify.receipt_income_type_mapping.guard: guard.prod.forbid
 	@python3 scripts/verify/receipt_income_type_mapping_guard.py
+
+.PHONY: verify.payment_request_receipt_type.guard
+verify.payment_request_receipt_type.guard: guard.prod.forbid
+	@python3 scripts/verify/payment_request_receipt_type_guard.py
 
 verify.capability.lint: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/verify/capability_lint.sh
