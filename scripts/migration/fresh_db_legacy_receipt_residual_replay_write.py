@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import csv
 from pathlib import Path
 
 
@@ -36,8 +37,12 @@ def bulk_load(csv_path: Path, temp_table: str, columns: list[str]) -> None:
     env.cr.execute(f"DROP TABLE IF EXISTS {temp_table}")  # noqa: F821
     env.cr.execute(f"CREATE TEMP TABLE {temp_table} ({', '.join(f'{col} text' for col in columns)}) ON COMMIT DROP")  # noqa: F821
     with csv_path.open("r", encoding="utf-8-sig", newline="") as handle:
+        reader = csv.reader(handle)
+        header = next(reader, [])
+        handle.seek(0)
+        load_columns = [col for col in header if col in columns]
         env.cr.copy_expert(  # noqa: F821
-            f"COPY {temp_table} ({', '.join(columns)}) FROM STDIN WITH CSV HEADER",
+            f"COPY {temp_table} ({', '.join(load_columns)}) FROM STDIN WITH CSV HEADER",
             handle,
         )
 

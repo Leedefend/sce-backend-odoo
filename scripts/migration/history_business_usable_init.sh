@@ -8,24 +8,51 @@ export ROOT_DIR
 
 ARTIFACT_ROOT="${FORMAL_PROJECTION_ARTIFACT_ROOT:-${MIGRATION_ARTIFACT_ROOT:-/tmp/history_continuity/${DB_NAME}/business_usable_init}}"
 ALLOWLIST="${MIGRATION_REPLAY_DB_ALLOWLIST:-$DB_NAME}"
+START_AT="${HISTORY_BUSINESS_USABLE_START_AT:-}"
+STOP_AFTER="${HISTORY_BUSINESS_USABLE_STOP_AFTER:-}"
+STARTED=0
+if [[ -z "$START_AT" ]]; then
+  STARTED=1
+fi
 
 export MIGRATION_ARTIFACT_ROOT="$ARTIFACT_ROOT"
 export MIGRATION_REPLAY_DB_ALLOWLIST="$ALLOWLIST"
 
+should_run_step() {
+  local label="$1"
+  if [[ "$STARTED" == "0" && "$label" != "$START_AT" ]]; then
+    echo "[history.business.usable.init] skip step=${label} start_at=${START_AT}"
+    return 1
+  fi
+  STARTED=1
+  return 0
+}
+
+after_step() {
+  local label="$1"
+  if [[ -n "$STOP_AFTER" && "$label" == "$STOP_AFTER" ]]; then
+    echo "[history.business.usable.init] stop_after=${STOP_AFTER}"
+    exit 0
+  fi
+}
+
 run_odoo_script() {
   local label="$1"
   local script_path="$2"
+  should_run_step "$label" || return 0
   echo "[history.business.usable.init] step=${label}"
   DB_NAME="$DB_NAME" \
     COMPOSE_FILES="${COMPOSE_FILES:-}" \
     MIGRATION_ARTIFACT_ROOT="$ARTIFACT_ROOT" \
     MIGRATION_REPLAY_DB_ALLOWLIST="$ALLOWLIST" \
     bash "$ROOT_DIR/scripts/ops/odoo_shell_exec.sh" <"$script_path"
+  after_step "$label"
 }
 
 run_odoo_write_script() {
   local label="$1"
   local script_path="$2"
+  should_run_step "$label" || return 0
   echo "[history.business.usable.init] step=${label}"
   DB_NAME="$DB_NAME" \
     COMPOSE_FILES="${COMPOSE_FILES:-}" \
@@ -33,11 +60,13 @@ run_odoo_write_script() {
     MIGRATION_REPLAY_DB_ALLOWLIST="$ALLOWLIST" \
     MIGRATION_WRITE_MODE=write \
     bash "$ROOT_DIR/scripts/ops/odoo_shell_exec.sh" <"$script_path"
+  after_step "$label"
 }
 
 run_partner_role_alignment() {
   local label="partner_business_fact_role_alignment"
   local script_path="$ROOT_DIR/scripts/migration/partner_business_fact_role_alignment_write.py"
+  should_run_step "$label" || return 0
   echo "[history.business.usable.init] step=${label}"
   DB_NAME="$DB_NAME" \
     COMPOSE_FILES="${COMPOSE_FILES:-}" \
@@ -46,6 +75,7 @@ run_partner_role_alignment() {
     MIGRATION_WRITE_MODE=write \
     PARTNER_FACT_ALIGNMENT_DEMOTE_NO_FACT=1 \
     bash "$ROOT_DIR/scripts/ops/odoo_shell_exec.sh" <"$script_path"
+  after_step "$label"
 }
 
 echo "[history.business.usable.init] db=${DB_NAME} artifact_root=${ARTIFACT_ROOT}"
@@ -118,6 +148,7 @@ run_odoo_script document_admin_archive_projection "$ROOT_DIR/scripts/migration/f
 run_odoo_script business_user_priority_menu_plan "$ROOT_DIR/scripts/migration/business_user_priority_menu_plan_write.py"
 run_partner_role_alignment
 run_odoo_script formal_entry_metadata_surface "$ROOT_DIR/scripts/ops/formal_entry_metadata_surface_write.py"
+run_odoo_script project_cost_ledger_projection_refresh "$ROOT_DIR/scripts/migration/project_cost_ledger_projection_write.py"
 run_odoo_script formal_projection_refresh_probe "$ROOT_DIR/scripts/verify/formal_projection_refresh_probe.py"
 run_odoo_script formal_business_backfill_audit_probe "$ROOT_DIR/scripts/verify/formal_business_backfill_audit_probe.py"
 run_odoo_script business_usable_probe "$ROOT_DIR/scripts/migration/history_business_usable_probe.py"
