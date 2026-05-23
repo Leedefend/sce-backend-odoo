@@ -189,6 +189,7 @@ export async function unlinkRecord(params: {
   context?: Record<string, unknown>;
   requestId?: string;
   idempotencyKey?: string;
+  dryRun?: boolean;
 }) {
   return intentRequest<ApiDataUnlinkContract>({
     intent: 'api.data.unlink',
@@ -198,6 +199,7 @@ export async function unlinkRecord(params: {
       context: params.context ?? {},
       request_id: params.requestId,
       idempotency_key: params.idempotencyKey,
+      dry_run: Boolean(params.dryRun),
     },
   });
 }

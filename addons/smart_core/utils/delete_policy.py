@@ -42,7 +42,7 @@ def _normalize_policy(model: str, raw: Any, *, source: str) -> Dict[str, Any]:
     message = str(row.get("message") or "").strip()
     if not message:
         message = "允许删除" if allowed else "当前模型未开放删除"
-    return {
+    normalized = {
         "model": model,
         "allowed": allowed,
         "delete_mode": delete_mode if allowed else "none",
@@ -54,6 +54,20 @@ def _normalize_policy(model: str, raw: Any, *, source: str) -> Dict[str, Any]:
         "requires_record_rule": bool(row.get("requires_record_rule", True)),
         "dry_run_supported": True,
     }
+    for key in (
+        "policy_kind",
+        "state_field",
+        "requires_group",
+        "dependency_guard",
+    ):
+        value = str(row.get(key) or "").strip()
+        if value:
+            normalized[key] = value
+    for key in ("allowed_states", "blocked_states"):
+        values = sorted(_as_model_set(row.get(key)))
+        if values:
+            normalized[key] = values
+    return normalized
 
 
 def _normalize_policy_payload(payload: Any, *, default_allowed_models: Iterable[str] | None = None) -> Dict[str, Dict[str, Any]]:

@@ -112,7 +112,7 @@
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
     </record>
 
-    <record id="action_construction_contract_expense" model="ir.actions.act_window">
+    <record id="action_sc_expense_contract_ledger_alias" model="ir.actions.act_window">
         <field name="name">支出合同</field>
         <field name="res_model">sc.expense.contract.ledger</field>
         <field name="view_mode">tree,form</field>

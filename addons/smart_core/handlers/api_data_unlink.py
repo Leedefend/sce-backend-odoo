@@ -60,6 +60,33 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
     def _delete_policy(self, model: str) -> Dict[str, Any]:
         return resolve_unlink_policy(self.env, model, default_allowed_models=self.ALLOWED_MODELS)
 
+    def _check_record_delete_policy(self, recs, delete_policy: Dict[str, Any]):
+        state_field = str(delete_policy.get("state_field") or "").strip()
+        allowed_states = {
+            str(item or "").strip()
+            for item in (delete_policy.get("allowed_states") or [])
+            if str(item or "").strip()
+        }
+        if not state_field and not allowed_states:
+            return None
+        if not state_field or not allowed_states:
+            return self._err(403, "删除策略缺少状态字段或允许状态配置", REASON_DELETE_POLICY_DENIED)
+        if state_field not in getattr(recs, "_fields", {}):
+            return self._err(403, f"当前模型缺少删除策略要求的状态字段: {state_field}", REASON_DELETE_POLICY_DENIED)
+        invalid_ids = []
+        for rec in recs:
+            value = str(getattr(rec, state_field, "") or "").strip()
+            if value not in allowed_states:
+                invalid_ids.append(rec.id)
+        if invalid_ids:
+            allowed_text = "、".join(sorted(allowed_states))
+            return self._err(
+                400,
+                f"仅允许删除 {state_field} 为 {allowed_text} 的草稿/取消态数据",
+                REASON_BUSINESS_RULE_FAILED,
+            )
+        return None
+
     def _err(self, code: int, message: str, reason_code: str):
         return {
             "ok": False,
@@ -281,8 +308,14 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
                 return {"ok": True, "data": data, "meta": meta}
 
         recs = env_model.browse(ids).exists()
-        if not recs:
+        found_ids = set(recs.ids)
+        missing_ids = [rec_id for rec_id in ids if rec_id not in found_ids]
+        if missing_ids:
             return self._err(404, "记录不存在", REASON_NOT_FOUND)
+
+        policy_error = self._check_record_delete_policy(recs, delete_policy)
+        if policy_error:
+            return policy_error
 
         try:
             env_model.check_access_rights("unlink")
@@ -301,6 +334,7 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
 
         data = {
             "ids": ids,
+            "deleted_count": 0 if dry_run else len(set(ids)),
             "model": model,
             "dry_run": dry_run,
             "delete_policy": delete_policy,

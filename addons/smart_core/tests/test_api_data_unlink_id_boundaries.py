@@ -60,7 +60,10 @@ def _load_handler():
     )
     _install_module(
         "odoo.addons.smart_core.utils.delete_policy",
-        resolve_unlink_policy=lambda env, model, default_allowed_models=None: {"allowed": True, "delete_mode": "unlink"},
+        resolve_unlink_policy=lambda env, model, default_allowed_models=None: env.get(
+            "__delete_policy__",
+            {"allowed": True, "delete_mode": "unlink"},
+        ),
     )
 
     reason_name = "odoo.addons.smart_core.utils.reason_codes"
@@ -100,6 +103,118 @@ class TestApiDataUnlinkIdBoundaries(unittest.TestCase):
         self.assertFalse(result["ok"])
         self.assertEqual(result["code"], 400)
         self.assertEqual(result["error"]["reason_code"], "INVALID_ID")
+
+    def test_partial_missing_ids_rejects_without_unlink(self):
+        model = _FakeModel(existing_ids={1})
+        handler = self.module.ApiDataUnlinkHandler(
+            env={"x.model": model},
+            params={"model": "x.model", "ids": [1, 2]},
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 404)
+        self.assertEqual(result["error"]["reason_code"], "NOT_FOUND")
+        self.assertFalse(model.unlinked)
+
+    def test_dry_run_checks_access_but_does_not_unlink(self):
+        model = _FakeModel(existing_ids={1, 2})
+        handler = self.module.ApiDataUnlinkHandler(
+            env={"x.model": model},
+            params={"model": "x.model", "ids": [1, 2], "dry_run": True},
+        )
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        self.assertTrue(result["data"]["dry_run"])
+        self.assertEqual(result["data"]["deleted_count"], 0)
+        self.assertFalse(model.unlinked)
+
+    def test_state_policy_allows_draft_record(self):
+        model = _FakeModel(existing_ids={1}, states={1: "draft"})
+        handler = self.module.ApiDataUnlinkHandler(
+            env={
+                "x.model": model,
+                "__delete_policy__": {
+                    "allowed": True,
+                    "delete_mode": "unlink",
+                    "state_field": "state",
+                    "allowed_states": ["draft", "cancel"],
+                },
+            },
+            params={"model": "x.model", "ids": [1], "dry_run": True},
+        )
+
+        result = handler.handle()
+
+        self.assertTrue(result["ok"])
+        self.assertFalse(model.unlinked)
+
+    def test_state_policy_rejects_submitted_record_without_unlink(self):
+        model = _FakeModel(existing_ids={1}, states={1: "submitted"})
+        handler = self.module.ApiDataUnlinkHandler(
+            env={
+                "x.model": model,
+                "__delete_policy__": {
+                    "allowed": True,
+                    "delete_mode": "unlink",
+                    "state_field": "state",
+                    "allowed_states": ["draft", "cancel"],
+                },
+            },
+            params={"model": "x.model", "ids": [1]},
+        )
+
+        result = handler.handle()
+
+        self.assertFalse(result["ok"])
+        self.assertEqual(result["code"], 400)
+        self.assertEqual(result["error"]["reason_code"], "BUSINESS_RULE_FAILED")
+        self.assertFalse(model.unlinked)
+
+
+class _FakeModel:
+    _fields = {"state": object()}
+
+    def __init__(self, existing_ids, states=None):
+        self.existing_ids = set(existing_ids)
+        self.states = dict(states or {})
+        self.unlinked = False
+
+    def browse(self, ids):
+        return _FakeRecords(self, ids)
+
+    def check_access_rights(self, operation):
+        self.access_operation = operation
+
+
+class _FakeRecords:
+    def __init__(self, model, ids):
+        self.model = model
+        self._fields = model._fields
+        self.requested_ids = list(ids or [])
+        self.ids = [rec_id for rec_id in self.requested_ids if rec_id in model.existing_ids]
+
+    def exists(self):
+        return self
+
+    def __iter__(self):
+        for rec_id in self.ids:
+            yield _FakeRecord(rec_id, self.model.states.get(rec_id, "draft"))
+
+    def check_access_rule(self, operation):
+        self.access_rule_operation = operation
+
+    def unlink(self):
+        self.model.unlinked = True
+
+
+class _FakeRecord:
+    def __init__(self, rec_id, state):
+        self.id = rec_id
+        self.state = state
 
 
 if __name__ == "__main__":

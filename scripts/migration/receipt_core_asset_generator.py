@@ -184,6 +184,7 @@ def write_xml(path: Path, records: list[dict[str, str]]) -> None:
     for row in records:
         record = ET.SubElement(data, "record", {"id": row["external_id"], "model": "payment.request"})
         add_text_field(record, "type", "receive", required=True)
+        add_text_field(record, "receipt_type", row["receipt_type"])
         add_ref_field(record, "project_id", row["project_external_id"])
         if row["contract_external_id"]:
             add_ref_field(record, "contract_id", row["contract_external_id"])
@@ -256,6 +257,7 @@ def generate(asset_root: Path, runtime_root: Path, source_csv: Path, expected_re
 
         receipt_ids[legacy_receipt_id] += 1
         document_no = clean(row.get("DJBH"))
+        receipt_type = clean(row.get("type"))
         receipt_date = parse_date(first_nonempty(row, ["f_RQ", "LRSJ", "f_LRSJ"]))
         created_time = parse_date(first_nonempty(row, ["LRSJ", "f_LRSJ"]))
         loadable.append(
@@ -275,6 +277,7 @@ def generate(asset_root: Path, runtime_root: Path, source_csv: Path, expected_re
                 "partner_external_id": partner_external_id or "",
                 "amount": str(amount),
                 "date_request": receipt_date,
+                "receipt_type": receipt_type,
                 "document_no": document_no,
                 "creator_legacy_user_id": first_nonempty(row, ["LRRID", "f_LRRID"]),
                 "creator_name": first_nonempty(row, ["LRR", "f_LRR"]),

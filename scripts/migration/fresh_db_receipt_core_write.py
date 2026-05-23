@@ -40,6 +40,7 @@ EXPECTED_ROWS = int(os.getenv("FRESH_DB_RECEIPT_CORE_EXPECTED_ROWS", "3652"))
 MIGRATION_MARKER = "[migration:receipt_core]"
 SAFE_FIELDS = {
     "type",
+    "receipt_type",
     "project_id",
     "contract_id",
     "partner_id",
@@ -54,6 +55,7 @@ SNAPSHOT_FIELDS = [
     "request_id",
     "name",
     "type",
+    "receipt_type",
     "project_id",
     "contract_id",
     "partner_id",
@@ -92,8 +94,21 @@ def ref_map(record: ET.Element) -> dict[str, str]:
     return values
 
 
+def raw_receipt_type_map() -> dict[str, str]:
+    path = REPO_ROOT / "tmp/raw/receipt/receipt.csv"
+    if not path.exists():
+        return {}
+    with path.open("r", encoding="utf-8-sig", newline="") as handle:
+        return {
+            clean(row.get("Id")): clean(row.get("type"))
+            for row in csv.DictReader(handle)
+            if clean(row.get("Id"))
+        }
+
+
 def load_asset_rows(path: Path) -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
+    receipt_types = raw_receipt_type_map()
     root = ET.parse(path).getroot()
     for record in root.findall(".//record[@model='payment.request']"):
         values = field_map(record)
@@ -114,6 +129,7 @@ def load_asset_rows(path: Path) -> list[dict[str, str]]:
                 "amount": clean(values.get("amount")),
                 "date_request": clean(values.get("date_request")),
                 "type": clean(values.get("type")) or "receive",
+                "receipt_type": clean(values.get("receipt_type")) or receipt_types.get(legacy_receipt_id, ""),
                 "note": note,
             }
         )
@@ -323,6 +339,7 @@ for index, row in enumerate(rows, start=2):
         request_type = clean(row.get("type")) or "receive"
         vals = {
             "type": request_type,
+            "receipt_type": clean(row.get("receipt_type")) or False,
             "project_id": resolved_project_id,
             "partner_id": resolved_partner_id,
             "amount": float(clean(row.get("amount"))),
@@ -348,6 +365,7 @@ for index, row in enumerate(rows, start=2):
     request_type = "receive" if contract.type == "out" else "pay"
     vals = {
         "type": request_type,
+        "receipt_type": clean(row.get("receipt_type")) or False,
         "project_id": contract.project_id.id or resolved_project_id or 0,
         "contract_id": contract.id,
         "partner_id": contract.partner_id.id or resolved_partner_id or 0,
@@ -382,6 +400,7 @@ try:
                 "request_id": rec.id,
                 "name": rec.name or "",
                 "type": rec.type or "",
+                "receipt_type": rec.receipt_type or "",
                 "project_id": rec.project_id.id or "",
                 "contract_id": rec.contract_id.id or "",
                 "partner_id": rec.partner_id.id or "",

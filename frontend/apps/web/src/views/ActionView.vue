@@ -1762,6 +1762,13 @@ async function runBatchPolicyAction(action: 'archive' | 'activate' | 'delete') {
     });
     batchBusy.value = true;
     try {
+      await unlinkActionViewRecord({
+        model: targetModel,
+        ids: selected,
+        context: resolveEffectiveRequestContext(),
+        idempotencyKey: seed.dryRunIdempotencyKey,
+        dryRun: true,
+      });
       const result = await unlinkActionViewRecord({
         model: targetModel,
         ids: selected,

@@ -84,6 +84,12 @@ class PaymentRequest(models.Model):
         required=True,
         tracking=True,
     )
+    receipt_type = fields.Char(
+        string="登记类型",
+        index=True,
+        tracking=True,
+        help="收款申请来源登记类型，历史数据来自 C_JFHKLR.type。",
+    )
     # 兼容部分搜索条件（有时被带入 account.move 的 move_type 过滤）
     move_type = fields.Selection(
         [("pay", "付款"), ("receive", "收款")],

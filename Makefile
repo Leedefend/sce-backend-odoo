@@ -630,7 +630,7 @@ verify.user_role_approval_matrix.guard: check-compose-project check-compose-env
 verify.user_permission_view_contract_boundary.guard: check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/user_permission_view_contract_boundary_guard.py
 
-.PHONY: verify.form_structure.contract.guard verify.form_structure.contract_runtime.audit verify.form_structure.contract verify.form_view.native_structure.boundary_guard verify.view.orchestration_boundary_guard verify.view.orchestration_user_surface.browser verify.form_view.orchestration_boundary_guard verify.form_view.scope.boundary_guard verify.form_view.scope.runtime_chain_guard verify.form_view.scope.action_projection_audit
+.PHONY: verify.form_structure.contract.guard verify.form_structure.contract_runtime.audit verify.form_structure.contract verify.form_view.native_structure.boundary_guard verify.view.orchestration_boundary_guard verify.view.orchestration_user_surface.browser verify.form_view.orchestration_boundary_guard verify.form_view.scope.boundary_guard verify.form_view.scope.runtime_chain_guard verify.form_view.scope.action_projection_audit verify.action_default_group.contract_audit
 verify.form_view.scope.boundary_guard: guard.prod.forbid
 	@python3 -m py_compile scripts/verify/form_view_scope_boundary_guard.py
 	@python3 scripts/verify/form_view_scope_boundary_guard.py
@@ -642,6 +642,10 @@ verify.form_view.scope.runtime_chain_guard: guard.prod.forbid
 verify.form_view.scope.action_projection_audit: guard.prod.forbid check-compose-project check-compose-env
 	@python3 -m py_compile scripts/verify/form_view_scope_action_projection_audit.py
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/verify/form_view_scope_action_projection_audit.sh
+
+verify.action_default_group.contract_audit: guard.prod.forbid check-compose-project check-compose-env
+	@python3 -m py_compile scripts/verify/action_default_group_contract_audit.py
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/action_default_group_contract_audit.py
 
 verify.form_view.native_structure.boundary_guard: guard.prod.forbid
 	@python3 -m py_compile scripts/verify/form_view_native_structure_boundary_guard.py
@@ -2172,6 +2176,18 @@ verify.frontend.group_summary_runtime.guard: guard.prod.forbid
 verify.frontend.grouped_rows_runtime.guard: guard.prod.forbid
 	@python3 scripts/verify/grouped_rows_runtime_guard.py
 
+verify.payment_request_receipt_type.browser_group_smoke: guard.prod.forbid
+	@node scripts/verify/payment_request_receipt_type_browser_group_smoke.js
+
+verify.invoice_entry_fact.contract_guard: guard.prod.forbid
+	@python3 scripts/verify/invoice_entry_fact_contract_guard.py
+
+verify.invoice_entry_fact.runtime_smoke: guard.prod.forbid
+	@node scripts/verify/invoice_entry_fact_runtime_smoke.js
+
+verify.invoice_entry_fact.browser_smoke: guard.prod.forbid
+	@node scripts/verify/invoice_entry_fact_browser_smoke.js
+
 verify.frontend.grouped_pagination_semantic.guard: guard.prod.forbid
 	@python3 scripts/verify/grouped_pagination_semantic_guard.py
 
@@ -2321,6 +2337,18 @@ verify.e2e.ops_batch_smoke: guard.prod.forbid check-compose-project check-compos
 .PHONY: verify.list_batch_action.closure_guard
 verify.list_batch_action.closure_guard: guard.prod.forbid
 	@python3 scripts/verify/list_batch_action_closure_guard.py
+
+.PHONY: verify.user_delete_data.closure_guard
+verify.user_delete_data.closure_guard: guard.prod.forbid
+	@python3 scripts/verify/user_delete_data_closure_guard.py
+
+.PHONY: verify.receipt_income_type_mapping.guard
+verify.receipt_income_type_mapping.guard: guard.prod.forbid
+	@python3 scripts/verify/receipt_income_type_mapping_guard.py
+
+.PHONY: verify.payment_request_receipt_type.guard
+verify.payment_request_receipt_type.guard: guard.prod.forbid
+	@python3 scripts/verify/payment_request_receipt_type_guard.py
 
 verify.capability.lint: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/verify/capability_lint.sh
