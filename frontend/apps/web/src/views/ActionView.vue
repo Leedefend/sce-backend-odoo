@@ -2450,6 +2450,7 @@ const {
     routeFilterRaw: route.query.preset_filter,
     routeSavedFilterRaw: route.query.saved_filter,
     routeGroupByRaw: route.query.group_by,
+    routeGroupClearedRaw: route.query.group_by_cleared,
     routeGroupValueRaw: route.query.group_value,
     sceneReadyDefaultSortRaw: '',
     sceneDefaultSortRaw: '',

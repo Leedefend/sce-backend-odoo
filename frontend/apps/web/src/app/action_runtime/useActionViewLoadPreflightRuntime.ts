@@ -13,6 +13,7 @@ type ExecuteLoadPreflightOptions = {
   routeFilterRaw: unknown;
   routeSavedFilterRaw: unknown;
   routeGroupByRaw: unknown;
+  routeGroupClearedRaw?: unknown;
   routeGroupValueRaw?: unknown;
   sceneReadyDefaultSortRaw: unknown;
   sceneDefaultSortRaw: unknown;
@@ -205,6 +206,7 @@ export function useActionViewLoadPreflightRuntime() {
       routeFilterRaw: options.routeFilterRaw,
       routeSavedFilterRaw: options.routeSavedFilterRaw,
       routeGroupByRaw: options.routeGroupByRaw,
+      routeGroupClearedRaw: options.routeGroupClearedRaw,
       routeGroupValueRaw: options.routeGroupValueRaw,
       activeContractFilterKey: options.activeContractFilterKey,
       activeSavedFilterKey: options.activeSavedFilterKey,

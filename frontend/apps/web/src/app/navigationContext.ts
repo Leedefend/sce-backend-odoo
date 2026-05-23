@@ -12,6 +12,7 @@ export const CONTRACT_NAV_QUERY_KEYS = [
   'preset_filter',
   'search',
   'ctx_source',
+  'group_by_cleared',
 ] as const;
 
 export function pickContractNavQuery(
