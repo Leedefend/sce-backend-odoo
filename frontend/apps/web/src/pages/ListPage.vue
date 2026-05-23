@@ -1272,7 +1272,7 @@ const listRecordTotal = computed(() =>
   listTotal.value ?? groupedRecordTotal.value ?? pageVisibleRows.value.length ?? props.records.length,
 );
 const listRecordCountText = computed(() =>
-  uiLabel('record_count', '共 {count} 条', { count: listRecordTotal.value }),
+  uiLabel('footer_record_count', '共 {count} 条', { count: listRecordTotal.value }),
 );
 const toolbarSubtitle = computed(() => props.subtitle || '');
 const canPagePrev = computed(() => listOffset.value > 0);
