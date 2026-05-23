@@ -104,9 +104,9 @@ def load_ref_set(path: Path) -> set[str]:
     }
 
 
-def positive_decimal(value: str) -> bool:
+def signed_nonzero_decimal(value: str) -> bool:
     try:
-        return Decimal(value) > 0
+        return Decimal(value) != 0
     except InvalidOperation:
         return False
 
@@ -148,7 +148,7 @@ def verify_xml_records(records: list[dict[str, str]], expected_count: int, recei
         require(not forbidden, f"forbidden computed/default/attachment fields for {row['id']}: {forbidden}")
         require(row["request_id"] in receipt_refs, f"receipt ref does not resolve: {row['request_id']}")
         require(row["source_table_name"] == "C_JFHKLR_CB", f"source table drift for {row['id']}")
-        require(positive_decimal(row["invoice_amount"]), f"invoice amount must be positive for {row['id']}")
+        require(signed_nonzero_decimal(row["invoice_amount"]), f"invoice amount must be nonzero for {row['id']}")
         require("invoice_fact=true" in row["note"], f"missing invoice fact marker for {row['id']}")
         require("not_account_move=true" in row["note"], f"missing accounting boundary marker for {row['id']}")
         require("not_settlement=true" in row["note"], f"missing settlement boundary marker for {row['id']}")
@@ -174,7 +174,7 @@ def verify_validation_manifest(validation_manifest: dict[str, Any]) -> None:
     required = {
         "legacy_receipt_invoice_line_id_unique",
         "receipt_external_id_resolves",
-        "invoice_amount_positive",
+        "invoice_amount_signed_nonzero",
         "source_table_preserved",
         "account_move_not_written",
         "settlement_not_written",

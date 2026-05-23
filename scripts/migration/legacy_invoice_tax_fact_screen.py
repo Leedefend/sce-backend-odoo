@@ -200,8 +200,8 @@ def classify_row(row: dict[str, str], project_refs: set[str]) -> tuple[str, list
         reasons.append("missing_project_id")
     elif project_id not in project_refs:
         reasons.append("project_not_assetized")
-    if parse_amount(row.get("amount", "")) <= 0 and parse_amount(row.get("tax_amount", "")) <= 0:
-        reasons.append("amount_and_tax_not_positive_or_missing")
+    if parse_amount(row.get("amount", "")) == 0 and parse_amount(row.get("tax_amount", "")) == 0:
+        reasons.append("amount_and_tax_missing_or_zero")
     if not clean(row.get("partner_name")) and not clean(row.get("partner_tax_no")):
         reasons.append("missing_counterparty_evidence")
     return ("loadable_candidate" if not reasons else "blocked", reasons)

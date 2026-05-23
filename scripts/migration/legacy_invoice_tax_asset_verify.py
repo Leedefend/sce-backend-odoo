@@ -73,10 +73,10 @@ def refs(asset_root: Path, rel_path: str) -> set[str]:
     }
 
 
-def positive_amount(row: dict[str, str]) -> bool:
+def signed_nonzero_amount(row: dict[str, str]) -> bool:
     for field in ("source_amount", "source_tax_amount"):
         try:
-            if Decimal(row.get(field, "0") or "0") > 0:
+            if Decimal(row.get(field, "0") or "0") != 0:
                 return True
         except InvalidOperation:
             return False
@@ -112,7 +112,7 @@ def verify(asset_root: Path, lane: str) -> dict[str, Any]:
             require(row["partner_id"] in partner_refs, f"partner external id does not resolve: {row['partner_id']}")
         require(row["source_family"] in ALLOWED_FAMILIES, f"bad family: {row['source_family']}")
         require(row["direction"] in ALLOWED_DIRECTIONS, f"bad direction: {row['direction']}")
-        require(positive_amount(row), f"amount/tax must be positive for {row['id']}")
+        require(signed_nonzero_amount(row), f"amount/tax must be nonzero for {row['id']}")
         require(row.get("partner_id") or row.get("legacy_partner_name") or row.get("legacy_partner_tax_no"), f"missing counterparty evidence for {row['id']}")
     require({row["id"] for row in records} == {row.get("external_id") for row in external_manifest.get("records", [])}, "external manifest ids do not match XML")
     boundary = validation_manifest.get("business_boundary", {})

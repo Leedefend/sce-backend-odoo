@@ -104,8 +104,8 @@ def classify_row(row: dict[str, str], project_map: dict[str, str]) -> tuple[str,
         reasons.append("missing_project_id")
     elif project_id not in project_map:
         reasons.append("project_not_assetized")
-    if parse_amount(row.get("amount", "")) <= 0 and parse_amount(row.get("tax_amount", "")) <= 0:
-        reasons.append("amount_and_tax_not_positive_or_missing")
+    if parse_amount(row.get("amount", "")) == 0 and parse_amount(row.get("tax_amount", "")) == 0:
+        reasons.append("amount_and_tax_missing_or_zero")
     if not clean(row.get("partner_name")) and not clean(row.get("partner_tax_no")):
         reasons.append("missing_counterparty_evidence")
     return ("loadable" if not reasons else "blocked", reasons)
@@ -272,7 +272,7 @@ def generate(asset_root: Path, runtime_root: Path) -> dict[str, Any]:
         "asset_package_id": ASSET_PACKAGE_ID,
         "business_boundary": {"legacy_invoice_tax_fact": "included", "account_move": "excluded", "tax_ledger": "excluded", "payment_state": "excluded", "settlement_state": "excluded", "approval_runtime": "excluded"},
         "counts": summary,
-        "validation_gates": {"generate_time": ["legacy_source_key_unique", "project_external_id_required_and_resolves", "counterparty_evidence_required", "source_amount_or_tax_positive", "no_account_move_records_generated", "no_tax_ledger_records_generated", "no_payment_or_settlement_records_generated", "no_runtime_approval_records_generated", "no_database_integer_ids_required"]},
+        "validation_gates": {"generate_time": ["legacy_source_key_unique", "project_external_id_required_and_resolves", "counterparty_evidence_required", "source_amount_or_tax_signed_nonzero", "no_account_move_records_generated", "no_tax_ledger_records_generated", "no_payment_or_settlement_records_generated", "no_runtime_approval_records_generated", "no_database_integer_ids_required"]},
     })
     asset_manifest = {
         "asset_manifest_version": "1.0",

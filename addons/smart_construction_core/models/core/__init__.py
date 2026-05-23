@@ -44,6 +44,7 @@ from . import construction_diary
 from . import payment_request
 from . import payment_request_line
 from . import receipt_invoice_line
+from . import output_invoice_ledger
 from . import payment_ledger
 from . import project_dashboard
 from . import contract_recon_summary

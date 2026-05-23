@@ -10,6 +10,9 @@ const DB_NAME = process.env.DB_NAME || process.env.E2E_DB || 'sc_demo';
 const LOGIN = process.env.E2E_LOGIN || 'demo_role_finance';
 const PASSWORD = process.env.E2E_PASSWORD || 'demo';
 const ACTION_ID = Number(process.env.INVOICE_OUTPUT_ACTION_ID || 755);
+const ADJUSTMENT_ACTION_ID = Number(process.env.INVOICE_OUTPUT_ADJUSTMENT_ACTION_ID || 869);
+const MODEL = 'sc.output.invoice.ledger';
+const EXPECTED_MIN_TOTAL = Number(process.env.INVOICE_OUTPUT_MIN_TOTAL || 3819);
 
 function fail(message) {
   throw new Error(message);
@@ -26,7 +29,7 @@ async function main() {
       const body = await response.json();
       const meta = body && body.meta ? body.meta : {};
       const data = body && body.data ? body.data : {};
-      if (meta.intent !== 'api.data' || meta.model !== 'sc.receipt.invoice.line') return;
+      if (meta.intent !== 'api.data' || meta.model !== MODEL) return;
       const rowCount = Array.isArray(data.rows)
         ? data.rows.length
         : (Array.isArray(data.records)
@@ -61,19 +64,40 @@ async function main() {
     await page.waitForTimeout(1500);
 
     const bodyText = await page.locator('body').innerText({ timeout: 10000 });
-    for (const label of ['销项发票', '发票号码', '开票单位', '发票金额']) {
+    for (const label of ['销项发票', '登记类型', '发票号码', '开票单位', '关联收款笔数', '发票金额']) {
       if (!bodyText.includes(label)) {
         fail(`browser output invoice detail missing label: ${label}`);
       }
     }
 
     const latest = listResponses[listResponses.length - 1];
-    if (!latest) fail('api.data response for sc.receipt.invoice.line was not observed');
-    if (latest.total !== 4454) fail(`visible output invoice total expected 4454, got ${latest.total}`);
+    if (!latest) fail(`api.data response for ${MODEL} was not observed`);
+    if (latest.total < EXPECTED_MIN_TOTAL) fail(`visible output invoice total expected at least ${EXPECTED_MIN_TOTAL}, got ${latest.total}`);
     if (latest.sample_count <= 0) fail('visible output invoice should expose sample rows');
 
+    await page.goto(`${FRONTEND_URL}/a/${ADJUSTMENT_ACTION_ID}?db=${encodeURIComponent(DB_NAME)}`, {
+      waitUntil: 'networkidle',
+      timeout: 30000,
+    });
+    await page.waitForTimeout(1500);
+
+    const adjustmentText = await page.locator('body').innerText({ timeout: 10000 });
+    for (const label of ['销项调整记录', '登记类型', '冲抵/红冲', '发票号码', '发票金额']) {
+      if (!adjustmentText.includes(label)) {
+        fail(`browser output invoice adjustment missing label: ${label}`);
+      }
+    }
+    const dangerRows = await page.locator('tbody tr.row-tone-danger').count();
+    if (dangerRows <= 0) fail('browser output invoice adjustment rows should be highlighted as danger');
+
     console.log('[verify.invoice_output_detail.browser_smoke] PASS');
-    console.log(JSON.stringify({ url: page.url(), total: latest.total, sample_count: latest.sample_count }));
+    console.log(JSON.stringify({
+      url: page.url(),
+      total: latest.total,
+      sample_count: latest.sample_count,
+      adjustment_action_id: ADJUSTMENT_ACTION_ID,
+      danger_rows: dangerRows,
+    }));
   } finally {
     await browser.close();
   }

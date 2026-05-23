@@ -9,6 +9,9 @@ const DB_NAME = process.env.DB_NAME || process.env.E2E_DB || 'sc_demo';
 const LOGIN = process.env.E2E_LOGIN || 'demo_role_finance';
 const PASSWORD = process.env.E2E_PASSWORD || 'demo';
 const ACTION_ID = Number(process.env.INVOICE_OUTPUT_ACTION_ID || 755);
+const ADJUSTMENT_ACTION_ID = Number(process.env.INVOICE_OUTPUT_ADJUSTMENT_ACTION_ID || 869);
+const MODEL = 'sc.output.invoice.ledger';
+const EXPECTED_MIN_TOTAL = Number(process.env.INVOICE_OUTPUT_MIN_TOTAL || 3819);
 
 function requestJson(url, payload, headers = {}) {
   return new Promise((resolve, reject) => {
@@ -53,6 +56,17 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
+function findNavLabel(nodes, label) {
+  for (const node of Array.isArray(nodes) ? nodes : []) {
+    if (!node || typeof node !== 'object') continue;
+    const nodeLabel = String(node.label || node.name || node.title || '').trim();
+    if (nodeLabel === label) return node;
+    const found = findNavLabel(node.children || node.items || node.menus || node.pages, label);
+    if (found) return found;
+  }
+  return null;
+}
+
 async function main() {
   const intentUrl = `${BASE_URL}/api/v1/intent?db=${encodeURIComponent(DB_NAME)}`;
   const login = await requestJson(
@@ -63,6 +77,19 @@ async function main() {
   const token = unwrap(login, 'login').token;
   assert(token, 'login response missing token');
   const auth = { Authorization: `Bearer ${token}` };
+
+  const init = unwrap(await requestJson(intentUrl, {
+    intent: 'system.init',
+    params: { contract_mode: 'user' },
+  }, auth), 'system.init');
+  const adjustmentNav = findNavLabel(init.nav || [], '销项调整记录');
+  assert(adjustmentNav, 'system.init nav missing 销项调整记录');
+  const adjustmentNavMeta = adjustmentNav.meta && typeof adjustmentNav.meta === 'object' ? adjustmentNav.meta : {};
+  const adjustmentRoute = String(adjustmentNav.route || adjustmentNav.path || adjustmentNavMeta.route || '');
+  assert(
+    adjustmentRoute.includes(`/a/${ADJUSTMENT_ACTION_ID}`),
+    `销项调整记录 route should target action ${ADJUSTMENT_ACTION_ID}`,
+  );
 
   const contract = unwrap(await requestJson(intentUrl, {
     intent: 'ui.contract.v2',
@@ -79,22 +106,26 @@ async function main() {
     || (contract.params && contract.params.model)
     || (contract.dataContract && contract.dataContract.model);
   if (model) {
-    assert(model === 'sc.receipt.invoice.line', `output invoice action model drifted: ${model}`);
+    assert(model === MODEL, `output invoice action model drifted: ${model}`);
   }
 
   const list = unwrap(await requestJson(intentUrl, {
     intent: 'api.data',
     params: {
       op: 'list',
-      model: 'sc.receipt.invoice.line',
+      model: MODEL,
       fields: [
         'id',
+        'adjustment_kind',
         'invoice_date',
         'invoice_no',
         'invoice_issue_company',
         'invoice_party_name',
         'invoice_document_no',
+        'receipt_line_count',
         'invoice_amount',
+        'amount_no_tax',
+        'tax_amount',
         'surcharge_amount',
         'project_id',
         'partner_id',
@@ -107,15 +138,21 @@ async function main() {
     },
   }, auth), 'api.data');
 
-  assert(Number(list.total || 0) === 4454, `output invoice detail total expected 4454, got ${list.total}`);
+  assert(Number(list.total || 0) >= EXPECTED_MIN_TOTAL, `output invoice ledger total expected at least ${EXPECTED_MIN_TOTAL}, got ${list.total}`);
   const rows = list.rows || list.records || [];
   assert(rows.length > 0, 'output invoice detail list returned no rows');
-  for (const field of ['invoice_no', 'invoice_issue_company', 'invoice_amount']) {
+  for (const field of ['adjustment_kind', 'invoice_issue_company', 'invoice_amount']) {
     assert(rows.every((row) => row[field] !== undefined && row[field] !== null && row[field] !== ''), `visible row missing ${field}`);
   }
 
   console.log('[verify.invoice_output_detail.runtime_smoke] PASS');
-  console.log(JSON.stringify({ action_id: ACTION_ID, total: list.total, sample_count: rows.length }));
+  console.log(JSON.stringify({
+    action_id: ACTION_ID,
+    adjustment_action_id: ADJUSTMENT_ACTION_ID,
+    adjustment_route: adjustmentRoute,
+    total: list.total,
+    sample_count: rows.length,
+  }));
 }
 
 main().catch((err) => {

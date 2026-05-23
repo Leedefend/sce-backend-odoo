@@ -149,7 +149,7 @@ def parse_amount(value: object) -> Decimal:
 def best_amount(row: dict[str, str]) -> tuple[str, Decimal]:
     for field in ("KPJE", "CCSKJE", "YKPJE"):
         amount = parse_amount(row.get(field))
-        if amount > 0:
+        if amount != 0:
             return field, amount
     return "", Decimal("0")
 
@@ -247,8 +247,8 @@ def generate(asset_root: Path, runtime_root: Path, expected_ready: int) -> dict[
             errors.append("missing_parent_receipt_id")
         elif not receipt_external_id:
             errors.append("receipt_anchor_missing")
-        if invoice_amount <= 0:
-            errors.append("amount_not_positive")
+        if invoice_amount == 0:
+            errors.append("amount_missing_or_zero")
 
         if clean(row.get("FPHM")):
             invoice_no_counts["invoice_no_present"] += 1
@@ -288,8 +288,8 @@ def generate(asset_root: Path, runtime_root: Path, expected_ready: int) -> dict[
                 "source_document_no": clean(row.get("DJBH")),
                 "amount_source": amount_source,
                 "invoice_amount": str(invoice_amount),
-                "current_receipt_amount": str(parse_amount(row.get("CCSKJE"))) if parse_amount(row.get("CCSKJE")) > 0 else "",
-                "invoiced_before_amount": str(parse_amount(row.get("YKPJE"))) if parse_amount(row.get("YKPJE")) > 0 else "",
+                "current_receipt_amount": str(parse_amount(row.get("CCSKJE"))) if parse_amount(row.get("CCSKJE")) != 0 else "",
+                "invoiced_before_amount": str(parse_amount(row.get("YKPJE"))) if parse_amount(row.get("YKPJE")) != 0 else "",
                 "attachment_candidate_keys": {
                     "Id": legacy_line_id,
                     "ZBID": legacy_receipt_id,
@@ -344,7 +344,7 @@ def generate(asset_root: Path, runtime_root: Path, expected_ready: int) -> dict[
             "generate_time": [
                 "legacy_receipt_invoice_line_id_unique",
                 "receipt_external_id_resolves",
-                "invoice_amount_positive",
+                "invoice_amount_signed_nonzero",
                 "source_table_preserved",
                 "account_move_not_written",
                 "settlement_not_written",
