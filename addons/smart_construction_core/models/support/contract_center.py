@@ -139,7 +139,7 @@ class ConstructionContract(models.Model):
         tracking=True,
     )
     line_amount_total = fields.Monetary(
-        string="最终合同价",
+        string="合同明细合计",
         compute="_compute_line_amount_total",
         currency_field="currency_id",
         store=True,

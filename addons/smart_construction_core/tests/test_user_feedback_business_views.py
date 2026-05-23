@@ -1234,7 +1234,7 @@ class TestUserFeedbackBusinessViews(TransactionCase):
             "is_returned",
         ):
             self.assertIn('name="%s"' % field_name, tree + form)
-        self.assertEqual(contract_field.string, "最终合同价")
+        self.assertEqual(contract_field.string, "合同明细合计")
 
     def test_repayment_registration_is_inflow_business_entry(self):
         action = self.env.ref("smart_construction_core.action_sc_expense_claim_repayment_registration")

@@ -99,8 +99,8 @@ def _extension_attrs(model_name):
     return {
         "_inherit": model_name,
         "__module__": __name__,
-        "source_created_by": fields.Char(string="录入人", index=True, readonly=True),
-        "source_created_at": fields.Datetime(string="录入时间", index=True, readonly=True),
+        "source_created_by": fields.Char(string="来源录入人", index=True, readonly=True),
+        "source_created_at": fields.Datetime(string="来源录入时间", index=True, readonly=True),
     }
 
 

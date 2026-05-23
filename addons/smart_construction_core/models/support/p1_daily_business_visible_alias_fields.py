@@ -545,6 +545,10 @@ def _alias_field_name(label):
     return "p1_visible_" + hashlib.sha1(label.encode("utf-8")).hexdigest()[:12]
 
 
+def _alias_field_string(label):
+    return "可见-" + label
+
+
 LABEL_SOURCE_OVERRIDES = {
     '单据状态': ['state', 'legacy_document_state', 'state_text', 'legacy_state'],
     '状态': ['state', 'legacy_document_state'],
@@ -860,7 +864,7 @@ for _index, (_model_name, _labels) in enumerate(_ALIAS_MODEL_FIELD_LABELS.items(
     }
     for _label in _labels:
         _attrs[_alias_field_name(_label)] = fields.Char(
-            string=_label,
+            string=_alias_field_string(_label),
             compute="_compute_p1_daily_business_visible_aliases",
             readonly=True,
         )
