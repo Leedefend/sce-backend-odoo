@@ -83,9 +83,18 @@ class ScInvoiceRegistration(models.Model):
     tax_rate = fields.Char(string="税率", index=True)
     invoice_content = fields.Char(string="开票内容", index=True)
     cost_category_name = fields.Char(string="成本类别", index=True)
+    invoice_issue_company = fields.Char(string="开票单位", index=True)
+    push_result = fields.Char(string="推送结果", index=True)
+    kingdee_document_no = fields.Char(string="金蝶单据编号", index=True)
+    expected_receipt_date = fields.Date(string="预计回款日期", index=True)
+    applicant_name = fields.Char(string="申请人", index=True)
+    invoice_count = fields.Integer(string="开票张数", default=0)
+    contract_amount = fields.Monetary(string="合同额", currency_field="currency_id")
     amount_no_tax = fields.Monetary(string="不含税金额", currency_field="currency_id")
     tax_amount = fields.Monetary(string="税额", currency_field="currency_id")
     amount_total = fields.Monetary(string="价税合计", currency_field="currency_id")
+    surcharge_amount = fields.Monetary(string="附加税", currency_field="currency_id")
+    related_receipt_amount = fields.Monetary(string="关联回款金额", currency_field="currency_id")
     currency_id = fields.Many2one(
         "res.currency",
         string="币种",

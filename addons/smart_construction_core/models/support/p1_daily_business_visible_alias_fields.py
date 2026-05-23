@@ -718,8 +718,26 @@ LABEL_SOURCE_OVERRIDES = {
 
 MODEL_LABEL_SOURCE_OVERRIDES = {
     'sc.invoice.registration': {
+        '推送结果': ['push_result', 'legacy_document_state', 'state'],
+        '金蝶单据编号': ['kingdee_document_no', 'document_no', 'name'],
+        '预计回款日期': ['expected_receipt_date'],
+        '申请人': ['applicant_name', 'creator_name', 'source_created_by'],
+        '受票方名称': ['partner_id', 'legacy_partner_name'],
+        '含税金额': ['amount_total'],
+        '不含税金额': ['amount_no_tax'],
+        '税额': ['tax_amount'],
+        '附加税': ['surcharge_amount'],
+        '税率': ['tax_rate'],
+        '关联回款金额': ['related_receipt_amount'],
         '累计开票金额': ['amount_total'],
         '本次开票金额': ['amount_total'],
+        '合同额': ['contract_amount'],
+        '本次开票张数': ['invoice_count'],
+        '开票张数': ['invoice_count'],
+        '发票号': ['invoice_no'],
+        '发票种类': ['invoice_type'],
+        '开票单位': ['invoice_issue_company', 'company_id'],
+        '开票日期': ['invoice_date'],
     },
     'sc.material.inbound': {
         '数量': ['total_qty'],
@@ -783,7 +801,9 @@ def _alias_value(record, label):
 
 
 def _compute_p1_daily_business_visible_aliases(self):
-    labels = P1_ALIAS_LABELS.get(self._name, ())
+    labels = list(dict.fromkeys(
+        list(P1_ALIAS_LABELS.get(self._name, ())) + P1_ALIAS_COMPAT_LABELS.get(self._name, [])
+    ))
     field_pairs = [(_alias_field_name(label), label) for label in labels]
     for record in self:
         for field_name, label in field_pairs:
