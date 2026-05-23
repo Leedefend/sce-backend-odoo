@@ -17,6 +17,9 @@
                     <field name="partner_id"/>
                     <field name="contract_id"/>
                     <field name="invoice_type"/>
+                    <field name="invoice_issue_company"/>
+                    <field name="kingdee_document_no"/>
+                    <field name="push_result"/>
                     <filter string="发票登记" name="source_kind_invoice_registration" domain="[('source_kind', '=', 'invoice_registration')]"/>
                     <filter string="进项税额" name="source_kind_input_invoice_tax" domain="[('source_kind', '=', 'input_invoice_tax')]"/>
                     <filter string="销项税额" name="source_kind_output_invoice_tax" domain="[('source_kind', '=', 'output_invoice_tax')]"/>
@@ -35,6 +38,8 @@
                     <filter string="按类型" name="group_source_kind" context="{'group_by': 'source_kind'}"/>
                     <filter string="按发票类型" name="group_invoice_type" context="{'group_by': 'invoice_type'}"/>
                     <filter string="按税率" name="group_tax_rate" context="{'group_by': 'tax_rate'}"/>
+                    <filter string="按开票单位" name="group_invoice_issue_company" context="{'group_by': 'invoice_issue_company'}"/>
+                    <filter string="按推送结果" name="group_push_result" context="{'group_by': 'push_result'}"/>
                     <filter string="按成本类别" name="group_cost_category" context="{'group_by': 'cost_category_name'}"/>
                     <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
                     <filter string="按发票日期" name="group_invoice_date" context="{'group_by': 'invoice_date'}"/>
@@ -56,18 +61,27 @@
                     <field name="invoice_code"/>
                     <field name="invoice_type"/>
                     <field name="tax_rate"/>
+                    <field name="invoice_issue_company"/>
                     <field name="invoice_content"/>
                     <field name="amount_no_tax" sum="不含税金额"/>
                     <field name="tax_amount" sum="税额"/>
                     <field name="amount_total" sum="价税合计"/>
+                    <field name="surcharge_amount" optional="show" sum="附加税"/>
+                    <field name="invoice_count" optional="show" sum="开票张数"/>
+                    <field name="related_receipt_amount" optional="show" sum="关联回款金额"/>
                     <field name="project_id"/>
                     <field name="operation_strategy"/>
                     <field name="partner_id"/>
                     <field name="contract_id" optional="show"/>
+                    <field name="contract_amount" optional="show" sum="合同额"/>
                     <field name="settlement_id" optional="hide"/>
                     <field name="cost_category_name" optional="show"/>
                     <field name="document_no" optional="show"/>
                     <field name="document_date" optional="show"/>
+                    <field name="kingdee_document_no" optional="show"/>
+                    <field name="push_result" optional="show"/>
+                    <field name="expected_receipt_date" optional="show"/>
+                    <field name="applicant_name" optional="show"/>
                     <field name="handler_name"/>
                     <field name="invoice_holder"/>
                     <field name="accounting_state"/>
@@ -125,14 +139,25 @@
                             <field name="invoice_code" readonly="state == 'legacy_confirmed'"/>
                             <field name="invoice_type" readonly="state == 'legacy_confirmed'"/>
                             <field name="tax_rate" readonly="state == 'legacy_confirmed'"/>
+                            <field name="invoice_issue_company" readonly="state == 'legacy_confirmed'"/>
                             <field name="invoice_content" readonly="state == 'legacy_confirmed'"/>
                             <field name="cost_category_name" readonly="state == 'legacy_confirmed'"/>
+                            <field name="invoice_count" readonly="state == 'legacy_confirmed'"/>
                         </group>
                         <group string="金额">
                             <field name="amount_no_tax" readonly="state == 'legacy_confirmed'"/>
                             <field name="tax_amount" readonly="state == 'legacy_confirmed'"/>
                             <field name="amount_total" readonly="state == 'legacy_confirmed'"/>
+                            <field name="surcharge_amount" readonly="state == 'legacy_confirmed'"/>
+                            <field name="related_receipt_amount" readonly="state == 'legacy_confirmed'"/>
+                            <field name="contract_amount" readonly="state == 'legacy_confirmed'"/>
                             <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group string="销项业务信息">
+                            <field name="push_result" readonly="state == 'legacy_confirmed'"/>
+                            <field name="kingdee_document_no" readonly="state == 'legacy_confirmed'"/>
+                            <field name="expected_receipt_date" readonly="state == 'legacy_confirmed'"/>
+                            <field name="applicant_name" readonly="state == 'legacy_confirmed'"/>
                         </group>
                         <group string="办理信息">
                             <field name="handler_name" readonly="state == 'legacy_confirmed'"/>
