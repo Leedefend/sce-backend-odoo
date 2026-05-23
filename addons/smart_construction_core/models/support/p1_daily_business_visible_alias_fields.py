@@ -736,7 +736,7 @@ MODEL_LABEL_SOURCE_OVERRIDES = {
         '开票张数': ['invoice_count'],
         '发票号': ['invoice_no'],
         '发票种类': ['invoice_type'],
-        '开票单位': ['invoice_issue_company', 'company_id'],
+        '开票单位': ['invoice_issue_company'],
         '开票日期': ['invoice_date'],
     },
     'sc.material.inbound': {
