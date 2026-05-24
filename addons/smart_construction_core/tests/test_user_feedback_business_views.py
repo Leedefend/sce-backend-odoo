@@ -883,6 +883,38 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         self.assertIn("ir.red_flush_adjustment_id IS NOT NULL", init_source)
         self.assertIn("ir.legacy_source_model = 'sc.legacy.invoice.tax.fact'", init_source)
         self.assertIn("ir.legacy_source_table = 'C_JXXP_XXKPDJ'", init_source)
+        self.assertIn("legacy_output_invoice_registration", init_source)
+        self.assertIn("sc_receipt_invoice_line ril2", init_source)
+
+    @tagged("post_install", "-at_install", "user_feedback", "output_invoice_red_flush")
+    def test_output_invoice_ledger_includes_positive_legacy_output_tax_fact_without_receipt_duplicate(self):
+        positive = self.env["sc.invoice.registration"].create(
+            {
+                "source_origin": "legacy",
+                "source_kind": "output_invoice_tax",
+                "direction": "output",
+                "state": "legacy_confirmed",
+                "project_id": self.project.id,
+                "partner_id": self.partner.id,
+                "document_no": "XXKPDJ-POSITIVE-LEGACY",
+                "invoice_no": "INV-POSITIVE-LEGACY",
+                "amount_no_tax": 100.0,
+                "tax_amount": 9.0,
+                "amount_total": 109.0,
+                "legacy_source_model": "sc.legacy.invoice.tax.fact",
+                "legacy_source_table": "C_JXXP_XXKPDJ",
+                "legacy_record_id": "positive-output-tax-fact-smoke",
+            }
+        )
+
+        ledger = self.env["sc.output.invoice.ledger"].search(
+            [("source_model", "=", "sc.invoice.registration"), ("source_record_id", "=", positive.id)],
+            limit=1,
+        )
+        self.assertTrue(ledger)
+        self.assertEqual(ledger.adjustment_kind, "normal")
+        self.assertEqual(ledger.amount_source, "legacy_output_invoice_registration")
+        self.assertEqual(ledger.invoice_amount, 109.0)
 
     @tagged("post_install", "-at_install", "user_feedback", "output_invoice_red_flush")
     def test_output_invoice_ledger_exposes_signed_adjustment_filters(self):
