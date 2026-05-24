@@ -884,7 +884,7 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         self.assertIn("ir.legacy_source_model = 'sc.legacy.invoice.tax.fact'", init_source)
         self.assertIn("ir.legacy_source_table = 'C_JXXP_XXKPDJ'", init_source)
         self.assertIn("legacy_output_invoice_registration", init_source)
-        self.assertIn("sc_receipt_invoice_line ril2", init_source)
+        self.assertIn("FROM sc_invoice_registration ir2", init_source)
 
     @tagged("post_install", "-at_install", "user_feedback", "output_invoice_red_flush")
     def test_output_invoice_ledger_includes_positive_legacy_output_tax_fact_without_receipt_duplicate(self):
@@ -915,6 +915,63 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         self.assertEqual(ledger.adjustment_kind, "normal")
         self.assertEqual(ledger.amount_source, "legacy_output_invoice_registration")
         self.assertEqual(ledger.invoice_amount, 109.0)
+
+    @tagged("post_install", "-at_install", "user_feedback", "output_invoice_red_flush")
+    def test_output_invoice_ledger_prefers_registration_fact_over_receipt_invoice_line(self):
+        request = self.env["payment.request"].create(
+            {
+                "name": "FB-RECEIPT-WITH-OUTPUT-REGISTRATION",
+                "type": "receive",
+                "project_id": self.project.id,
+                "partner_id": self.partner.id,
+                "amount": 50.0,
+            }
+        )
+        receipt_line = self.env["sc.receipt.invoice.line"].create(
+            {
+                "request_id": request.id,
+                "project_id": self.project.id,
+                "partner_id": self.partner.id,
+                "legacy_invoice_line_id": "registration-first-line",
+                "legacy_receipt_id": "registration-first-receipt",
+                "invoice_no": "INV-REGISTRATION-FIRST",
+                "invoice_issue_company": "Feedback Issue Company",
+                "invoice_party_name": "Feedback Party",
+                "invoice_amount": 50.0,
+                "surcharge_amount": 0.5,
+            }
+        )
+        registration = self.env["sc.invoice.registration"].create(
+            {
+                "source_origin": "legacy",
+                "source_kind": "output_invoice_tax",
+                "direction": "output",
+                "state": "legacy_confirmed",
+                "project_id": self.project.id,
+                "partner_id": self.partner.id,
+                "document_no": "XXKPDJ-REGISTRATION-FIRST",
+                "invoice_no": "INV-REGISTRATION-FIRST",
+                "amount_no_tax": 90.0,
+                "tax_amount": 9.0,
+                "amount_total": 99.0,
+                "legacy_source_model": "sc.legacy.invoice.tax.fact",
+                "legacy_source_table": "C_JXXP_XXKPDJ",
+                "legacy_record_id": "registration-first-output-tax-fact",
+            }
+        )
+
+        receipt_ledger = self.env["sc.output.invoice.ledger"].search(
+            [("source_model", "=", "sc.receipt.invoice.line"), ("source_record_id", "=", receipt_line.id)],
+            limit=1,
+        )
+        registration_ledger = self.env["sc.output.invoice.ledger"].search(
+            [("source_model", "=", "sc.invoice.registration"), ("source_record_id", "=", registration.id)],
+            limit=1,
+        )
+        self.assertFalse(receipt_ledger)
+        self.assertTrue(registration_ledger)
+        self.assertEqual(registration_ledger.invoice_document_no, "XXKPDJ-REGISTRATION-FIRST")
+        self.assertEqual(registration_ledger.invoice_amount, 99.0)
 
     @tagged("post_install", "-at_install", "user_feedback", "output_invoice_red_flush")
     def test_output_invoice_ledger_exposes_signed_adjustment_filters(self):
