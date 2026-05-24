@@ -128,7 +128,15 @@ class ScOutputInvoiceLedger(models.Model):
                     'sc.invoice.registration'::varchar AS source_model,
                     ir.id::integer AS source_record_id,
                     ir.source_kind::varchar AS source_kind,
-                    'signed_adjustment'::varchar AS adjustment_kind,
+                    CASE
+                        WHEN ir.red_flush_adjustment_id IS NOT NULL
+                          OR COALESCE(ir.amount_total, 0) < 0
+                          OR COALESCE(ir.amount_no_tax, 0) < 0
+                          OR COALESCE(ir.tax_amount, 0) < 0
+                          OR COALESCE(ir.surcharge_amount, 0) < 0
+                        THEN 'signed_adjustment'
+                        ELSE 'normal'
+                    END::varchar AS adjustment_kind,
                     ir.project_id,
                     p.operation_strategy::varchar AS operation_strategy,
                     ir.partner_id,
@@ -142,7 +150,15 @@ class ScOutputInvoiceLedger(models.Model):
                     ir.legacy_document_state::varchar AS invoice_document_state,
                     ir.document_no::varchar AS source_document_no,
                     ir.legacy_source_table::varchar AS source_table_name,
-                    'invoice_registration_signed_amount'::varchar AS amount_source,
+                    CASE
+                        WHEN ir.red_flush_adjustment_id IS NOT NULL
+                          OR COALESCE(ir.amount_total, 0) < 0
+                          OR COALESCE(ir.amount_no_tax, 0) < 0
+                          OR COALESCE(ir.tax_amount, 0) < 0
+                          OR COALESCE(ir.surcharge_amount, 0) < 0
+                        THEN 'invoice_registration_signed_amount'
+                        ELSE 'legacy_output_invoice_registration'
+                    END::varchar AS amount_source,
                     0::integer AS receipt_line_count,
                     ir.amount_total::numeric AS invoice_amount,
                     ir.tax_amount::numeric AS tax_amount,
@@ -164,11 +180,22 @@ class ScOutputInvoiceLedger(models.Model):
                       AND ir.legacy_source_table = 'C_JXXP_XXKPDJ'
                     )
                   )
-                  AND (
-                    COALESCE(ir.amount_total, 0) < 0
-                    OR COALESCE(ir.amount_no_tax, 0) < 0
-                    OR COALESCE(ir.tax_amount, 0) < 0
-                    OR COALESCE(ir.surcharge_amount, 0) < 0
+                  AND NOT (
+                    ir.red_flush_adjustment_id IS NULL
+                    AND COALESCE(ir.amount_total, 0) >= 0
+                    AND COALESCE(ir.amount_no_tax, 0) >= 0
+                    AND COALESCE(ir.tax_amount, 0) >= 0
+                    AND COALESCE(ir.surcharge_amount, 0) >= 0
+                    AND EXISTS (
+                        SELECT 1
+                        FROM sc_receipt_invoice_line ril2
+                        WHERE ril2.active
+                          AND NULLIF(TRIM(ril2.invoice_no), '') = NULLIF(TRIM(ir.invoice_no), '')
+                          AND NULLIF(TRIM(ril2.invoice_no), '') IS NOT NULL
+                          AND TRIM(ril2.invoice_no) <> '0'
+                          AND (ril2.project_id = ir.project_id OR ril2.project_id IS NULL OR ir.project_id IS NULL)
+                          AND (ril2.partner_id = ir.partner_id OR ril2.partner_id IS NULL OR ir.partner_id IS NULL)
+                    )
                   )
             )
             """
