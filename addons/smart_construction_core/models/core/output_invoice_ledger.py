@@ -11,7 +11,7 @@ class ScOutputInvoiceLedger(models.Model):
     source_model = fields.Selection(
         [
             ("sc.receipt.invoice.line", "收款发票明细"),
-            ("sc.invoice.registration", "销项冲抵/红冲"),
+            ("sc.invoice.registration", "开票登记"),
         ],
         string="来源模型",
         readonly=True,
@@ -120,6 +120,17 @@ class ScOutputInvoiceLedger(models.Model):
                 FROM receipt_invoice_dedup ril
                 LEFT JOIN project_project p ON p.id = ril.project_id
                 WHERE ril.receipt_rank = 1
+                  AND NOT EXISTS (
+                    SELECT 1
+                    FROM sc_invoice_registration ir2
+                    WHERE ir2.active
+                      AND ir2.direction = 'output'
+                      AND ir2.legacy_source_model = 'sc.legacy.invoice.tax.fact'
+                      AND ir2.legacy_source_table = 'C_JXXP_XXKPDJ'
+                      AND NULLIF(TRIM(ir2.invoice_no), '') = ril.normalized_invoice_no
+                      AND (ir2.project_id = ril.project_id OR ir2.project_id IS NULL OR ril.project_id IS NULL)
+                      AND (ir2.partner_id = ril.partner_id OR ir2.partner_id IS NULL OR ril.partner_id IS NULL)
+                  )
 
                 UNION ALL
 
@@ -178,23 +189,6 @@ class ScOutputInvoiceLedger(models.Model):
                     OR (
                       ir.legacy_source_model = 'sc.legacy.invoice.tax.fact'
                       AND ir.legacy_source_table = 'C_JXXP_XXKPDJ'
-                    )
-                  )
-                  AND NOT (
-                    ir.red_flush_adjustment_id IS NULL
-                    AND COALESCE(ir.amount_total, 0) >= 0
-                    AND COALESCE(ir.amount_no_tax, 0) >= 0
-                    AND COALESCE(ir.tax_amount, 0) >= 0
-                    AND COALESCE(ir.surcharge_amount, 0) >= 0
-                    AND EXISTS (
-                        SELECT 1
-                        FROM sc_receipt_invoice_line ril2
-                        WHERE ril2.active
-                          AND NULLIF(TRIM(ril2.invoice_no), '') = NULLIF(TRIM(ir.invoice_no), '')
-                          AND NULLIF(TRIM(ril2.invoice_no), '') IS NOT NULL
-                          AND TRIM(ril2.invoice_no) <> '0'
-                          AND (ril2.project_id = ir.project_id OR ril2.project_id IS NULL OR ir.project_id IS NULL)
-                          AND (ril2.partner_id = ir.partner_id OR ril2.partner_id IS NULL OR ir.partner_id IS NULL)
                     )
                   )
             )
