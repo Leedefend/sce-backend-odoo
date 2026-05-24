@@ -865,13 +865,26 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         self.assertIn("search_default_signed_adjustment", action.context)
         self.assertEqual(menu.action, action)
 
-    def test_output_invoice_adjustment_ledger_scope_is_tax_fact_only(self):
+    @tagged("post_install", "-at_install", "user_feedback", "output_invoice_red_flush")
+    def test_output_invoice_change_registration_menu_is_operational_entry(self):
+        action = self.env.ref("smart_construction_core.action_sc_output_invoice_change_registration")
+        menu = self.env.ref("smart_construction_core.menu_sc_output_invoice_change_registration")
+
+        self.assertEqual(action.name, "销项变更登记")
+        self.assertEqual(action.res_model, "sc.output.invoice.adjustment")
+        self.assertEqual(action.search_view_id, self.env.ref("smart_construction_core.view_sc_output_invoice_adjustment_search"))
+        self.assertEqual(menu.action, action)
+
+    @tagged("post_install", "-at_install", "user_feedback", "output_invoice_red_flush")
+    def test_output_invoice_adjustment_ledger_scope_includes_runtime_red_flush(self):
         from odoo.addons.smart_construction_core.models.core.output_invoice_ledger import ScOutputInvoiceLedger
 
         init_source = inspect.getsource(ScOutputInvoiceLedger.init)
+        self.assertIn("ir.red_flush_adjustment_id IS NOT NULL", init_source)
         self.assertIn("ir.legacy_source_model = 'sc.legacy.invoice.tax.fact'", init_source)
         self.assertIn("ir.legacy_source_table = 'C_JXXP_XXKPDJ'", init_source)
 
+    @tagged("post_install", "-at_install", "user_feedback", "output_invoice_red_flush")
     def test_output_invoice_ledger_exposes_signed_adjustment_filters(self):
         ledger_tree = self.env.ref("smart_construction_core.view_output_invoice_ledger_tree").arch_db
         ledger_search = self.env.ref("smart_construction_core.view_output_invoice_ledger_search").arch_db
@@ -890,6 +903,64 @@ class TestUserFeedbackBusinessViews(TransactionCase):
             self.assertIn('name="%s"' % field_name, ledger_tree)
         self.assertIn('name="negative_amount"', ledger_search)
         self.assertIn('name="signed_adjustment"', ledger_search)
+
+    @tagged("post_install", "-at_install", "user_feedback", "output_invoice_red_flush")
+    def test_output_invoice_red_flush_registration_generates_negative_output_invoice(self):
+        request = self.env["payment.request"].create(
+            {
+                "name": "FB-RECEIPT-RED-FLUSH",
+                "type": "receive",
+                "project_id": self.project.id,
+                "partner_id": self.partner.id,
+                "amount": 109.0,
+            }
+        )
+        receipt_line = self.env["sc.receipt.invoice.line"].create(
+            {
+                "request_id": request.id,
+                "legacy_invoice_line_id": "red-flush-line",
+                "legacy_receipt_id": "red-flush-receipt",
+                "invoice_no": "INV-RED-001",
+                "invoice_issue_company": "Feedback Issue Company",
+                "invoice_party_name": "Feedback Party",
+                "invoice_amount": 109.0,
+                "surcharge_amount": 1.2,
+            }
+        )
+        ledger = self.env["sc.output.invoice.ledger"].search(
+            [("source_model", "=", "sc.receipt.invoice.line"), ("source_record_id", "=", receipt_line.id)],
+            limit=1,
+        )
+        self.assertTrue(ledger)
+
+        adjustment = self.env["sc.output.invoice.adjustment"].create(
+            {
+                "original_ledger_id": ledger.id,
+                "reason": "用户反馈红冲闭环验证",
+            }
+        )
+        adjustment.action_confirm()
+
+        generated = adjustment.generated_invoice_id
+        self.assertTrue(generated)
+        self.assertEqual(adjustment.state, "confirmed")
+        self.assertEqual(generated.red_flush_adjustment_id, adjustment)
+        self.assertEqual(generated.direction, "output")
+        self.assertEqual(generated.source_kind, "output_invoice_tax")
+        self.assertEqual(generated.state, "registered")
+        self.assertEqual(generated.invoice_no, "INV-RED-001")
+        self.assertEqual(generated.amount_total, -109.0)
+        self.assertEqual(generated.amount_no_tax, -109.0)
+        self.assertEqual(generated.tax_amount, 0.0)
+        self.assertEqual(generated.surcharge_amount, -1.2)
+
+        red_ledger = self.env["sc.output.invoice.ledger"].search(
+            [("source_model", "=", "sc.invoice.registration"), ("source_record_id", "=", generated.id)],
+            limit=1,
+        )
+        self.assertTrue(red_ledger)
+        self.assertEqual(red_ledger.adjustment_kind, "signed_adjustment")
+        self.assertEqual(red_ledger.invoice_amount, -109.0)
 
     def test_invoice_registration_accepts_signed_legacy_adjustment_amounts(self):
         invoice = self.env["sc.invoice.registration"].create(

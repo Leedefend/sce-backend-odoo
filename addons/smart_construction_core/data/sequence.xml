@@ -112,6 +112,14 @@
         <field name="company_id" eval="False"/>
     </record>
 
+    <record id="seq_sc_output_invoice_adjustment" model="ir.sequence">
+        <field name="name">销项变更登记</field>
+        <field name="code">sc.output.invoice.adjustment</field>
+        <field name="prefix">OIA%(y)s</field>
+        <field name="padding">5</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
     <record id="seq_sc_tax_deduction_registration" model="ir.sequence">
         <field name="name">抵扣登记</field>
         <field name="code">sc.tax.deduction.registration</field>

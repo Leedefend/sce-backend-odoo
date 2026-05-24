@@ -157,8 +157,13 @@ class ScOutputInvoiceLedger(models.Model):
                 LEFT JOIN res_partner rp ON rp.id = ir.partner_id
                 WHERE ir.active
                   AND ir.direction = 'output'
-                  AND ir.legacy_source_model = 'sc.legacy.invoice.tax.fact'
-                  AND ir.legacy_source_table = 'C_JXXP_XXKPDJ'
+                  AND (
+                    ir.red_flush_adjustment_id IS NOT NULL
+                    OR (
+                      ir.legacy_source_model = 'sc.legacy.invoice.tax.fact'
+                      AND ir.legacy_source_table = 'C_JXXP_XXKPDJ'
+                    )
+                  )
                   AND (
                     COALESCE(ir.amount_total, 0) < 0
                     OR COALESCE(ir.amount_no_tax, 0) < 0

@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="view_sc_output_invoice_adjustment_search" model="ir.ui.view">
+            <field name="name">sc.output.invoice.adjustment.search</field>
+            <field name="model">sc.output.invoice.adjustment</field>
+            <field name="arch" type="xml">
+                <search string="销项变更登记">
+                    <field name="name"/>
+                    <field name="invoice_no"/>
+                    <field name="red_flush_invoice_no"/>
+                    <field name="project_id"/>
+                    <field name="partner_id"/>
+                    <field name="contract_id"/>
+                    <field name="invoice_issue_company"/>
+                    <filter string="草稿" name="state_draft" domain="[('state', '=', 'draft')]"/>
+                    <filter string="已确认" name="state_confirmed" domain="[('state', '=', 'confirmed')]"/>
+                    <filter string="已取消" name="state_cancel" domain="[('state', '=', 'cancel')]"/>
+                    <group expand="0" string="分组">
+                        <filter string="状态" name="group_state" context="{'group_by': 'state'}"/>
+                        <filter string="项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                        <filter string="往来单位" name="group_partner" context="{'group_by': 'partner_id'}"/>
+                        <filter string="开票单位" name="group_invoice_issue_company" context="{'group_by': 'invoice_issue_company'}"/>
+                        <filter string="变更日期" name="group_adjustment_date" context="{'group_by': 'adjustment_date'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_output_invoice_adjustment_tree" model="ir.ui.view">
+            <field name="name">sc.output.invoice.adjustment.tree</field>
+            <field name="model">sc.output.invoice.adjustment</field>
+            <field name="arch" type="xml">
+                <tree string="销项变更登记" decoration-danger="state == 'confirmed'">
+                    <field name="name"/>
+                    <field name="state"/>
+                    <field name="adjustment_type"/>
+                    <field name="adjustment_date"/>
+                    <field name="invoice_no"/>
+                    <field name="red_flush_invoice_no"/>
+                    <field name="project_id"/>
+                    <field name="partner_id"/>
+                    <field name="invoice_issue_company"/>
+                    <field name="original_invoice_amount" sum="原发票金额合计"/>
+                    <field name="red_flush_invoice_amount" sum="红冲价税合计"/>
+                    <field name="red_flush_tax_amount" sum="红冲税额合计"/>
+                    <field name="generated_invoice_id"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_output_invoice_adjustment_form" model="ir.ui.view">
+            <field name="name">sc.output.invoice.adjustment.form</field>
+            <field name="model">sc.output.invoice.adjustment</field>
+            <field name="arch" type="xml">
+                <form string="销项变更登记">
+                    <header>
+                        <button name="action_confirm" string="确认红冲" type="object" class="btn-primary"
+                                invisible="state != 'draft'"/>
+                        <button name="action_cancel" string="取消" type="object"
+                                invisible="state != 'draft'"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,cancel"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name" readonly="1"/>
+                                <field name="adjustment_type" readonly="state != 'draft'"/>
+                                <field name="adjustment_date" readonly="state != 'draft'"/>
+                                <field name="original_ledger_id" readonly="state != 'draft'"/>
+                                <field name="generated_invoice_id" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="project_id"/>
+                                <field name="partner_id"/>
+                                <field name="contract_id"/>
+                                <field name="currency_id" invisible="1"/>
+                            </group>
+                        </group>
+                        <group string="原销项票">
+                            <field name="original_source_model"/>
+                            <field name="original_source_record_id"/>
+                            <field name="invoice_no"/>
+                            <field name="invoice_issue_company"/>
+                            <field name="invoice_party_name"/>
+                            <field name="original_invoice_amount"/>
+                            <field name="original_amount_no_tax"/>
+                            <field name="original_tax_amount"/>
+                            <field name="original_surcharge_amount"/>
+                        </group>
+                        <group string="红冲销项票">
+                            <field name="red_flush_invoice_no" readonly="state != 'draft'"/>
+                            <field name="red_flush_invoice_amount"/>
+                            <field name="red_flush_amount_no_tax"/>
+                            <field name="red_flush_tax_amount"/>
+                            <field name="red_flush_surcharge_amount"/>
+                        </group>
+                        <group>
+                            <field name="reason" readonly="state != 'draft'"/>
+                            <field name="note"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_sc_output_invoice_change_registration" model="ir.actions.act_window">
+            <field name="name">销项变更登记</field>
+            <field name="res_model">sc.output.invoice.adjustment</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_sc_output_invoice_adjustment_search"/>
+            <field name="context">{'search_default_state_draft': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_user')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+        </record>
+
+        <menuitem id="menu_sc_output_invoice_change_registration"
+                  name="销项变更登记"
+                  parent="smart_construction_core.menu_sc_invoice_management_group"
+                  action="smart_construction_core.action_sc_output_invoice_change_registration"
+                  sequence="24"
+                  groups="smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+    </data>
+</odoo>
