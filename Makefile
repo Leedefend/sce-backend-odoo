@@ -4657,7 +4657,11 @@ verify.unified_page_contract.lite.harmony_h5_runtime_acceptance_pilot.host: veri
 verify.unified_page_contract.lite.harmony_h5_device_acceptance_pilot.host: verify.unified_page_contract.lite.harmony_h5_runtime_acceptance_pilot.host
 	@python3 scripts/verify/unified_page_contract_lite_harmony_h5_device_acceptance_pilot_guard.py --report artifacts/backend/unified_page_contract_lite_harmony_h5_device_acceptance_pilot.json
 
-.PHONY: verify.native.business_fact.static verify.backend_business_fact.model_audit verify.backend_business_fact.model_standard
+.PHONY: verify.native.business_fact.static verify.backend_business_fact.model_audit verify.backend_business_fact.model_standard verify.output_invoice.source_gap_audit
+verify.output_invoice.source_gap_audit: guard.prod.forbid
+	@python3 -m py_compile scripts/verify/output_invoice_source_gap_audit.py
+	@python3 scripts/verify/output_invoice_source_gap_audit.py
+
 verify.backend_business_fact.model_audit: guard.prod.forbid
 	@python3 -m py_compile scripts/verify/backend_business_fact_model_audit.py
 	@python3 scripts/verify/backend_business_fact_model_audit.py --registry docs/architecture/backend_business_fact_model_standard_registry_v1.json --report artifacts/backend/backend_business_fact_model_audit.json --markdown artifacts/backend/backend_business_fact_model_audit.md
