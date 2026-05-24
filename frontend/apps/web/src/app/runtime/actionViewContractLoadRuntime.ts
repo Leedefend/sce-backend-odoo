@@ -50,9 +50,6 @@ export function resolveRouteSelectionState(options: {
   const routeFilter = String(options.routeFilterRaw || '').trim();
   const routeSavedFilter = String(options.routeSavedFilterRaw || '').trim();
   const routeGroupBy = String(options.routeGroupByRaw || '').trim();
-  const routeGroupCleared = String(options.routeGroupClearedRaw || '').trim() === '1'
-    || options.routeGroupClearedRaw === true;
-  const routeGroupValue = String(options.routeGroupValueRaw || '').trim();
 
   let activeContractFilterKey = String(options.activeContractFilterKey || '').trim();
   if (!activeContractFilterKey && routeFilter) {
@@ -84,9 +81,6 @@ export function resolveRouteSelectionState(options: {
   if (activeGroupByField) {
     const hasGroupBy = options.groupByChips.some((item) => item.field === activeGroupByField);
     if (!hasGroupBy) activeGroupByField = '';
-  } else if (!routeGroupValue && !routeGroupCleared) {
-    const defaultGroupBy = options.groupByChips.find((item) => item.isDefault);
-    if (defaultGroupBy) activeGroupByField = defaultGroupBy.field;
   }
 
   return {
