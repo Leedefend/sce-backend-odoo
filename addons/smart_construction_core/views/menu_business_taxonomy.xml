@@ -1344,6 +1344,12 @@
               action="smart_construction_core.action_sc_invoice_output"
               sequence="20"
               groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+    <menuitem id="menu_sc_output_invoice_change_registration"
+              name="销项变更登记"
+              parent="smart_construction_core.menu_sc_invoice_management_group"
+              action="smart_construction_core.action_sc_output_invoice_change_registration"
+              sequence="24"
+              groups="smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
     <menuitem id="menu_sc_output_invoice_adjustment"
               name="销项调整记录"
               parent="smart_construction_core.menu_sc_invoice_management_group"

@@ -116,6 +116,17 @@ class ScInvoiceRegistration(models.Model):
     creator_legacy_user_id = fields.Char(string="历史录入人ID", index=True, readonly=True)
     creator_name = fields.Char(string="历史录入人", index=True, readonly=True)
     created_time = fields.Datetime(string="历史录入时间", index=True, readonly=True)
+    red_flush_adjustment_id = fields.Many2one(
+        "sc.output.invoice.adjustment",
+        string="红冲变更登记",
+        readonly=True,
+        copy=False,
+        index=True,
+        ondelete="restrict",
+    )
+    red_flush_origin_source_model = fields.Char(string="红冲原票来源模型", readonly=True, copy=False, index=True)
+    red_flush_origin_source_record_id = fields.Integer(string="红冲原票来源ID", readonly=True, copy=False, index=True)
+    red_flush_origin_invoice_no = fields.Char(string="红冲原发票号码", readonly=True, copy=False, index=True)
     reject_reason = fields.Char(string="驳回原因", readonly=True, copy=False)
     note = fields.Text(string="备注")
     attachment_ids = fields.Many2many(

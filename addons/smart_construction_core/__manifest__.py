@@ -138,6 +138,7 @@
         'views/core/payment_ledger_views.xml',
         'views/core/payment_request_line_views.xml',
         'views/core/receipt_invoice_line_views.xml',
+        'views/core/output_invoice_adjustment_views.xml',
         'views/core/output_invoice_ledger_views.xml',
         'views/core/expense_claim_views.xml',
         'views/core/treasury_reconciliation_views.xml',
