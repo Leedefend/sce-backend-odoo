@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data noupdate="1">
+
+    <record id="sc_demo_material_catalog_070_steel" model="sc.material.catalog">
+      <field name="name">三级螺纹钢 HRB400E</field>
+      <field name="code">MAT-DEMO-STEEL-070</field>
+      <field name="company_id" ref="base.main_company"/>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="spec_model">HRB400E Φ18</field>
+      <field name="uom_text">吨</field>
+      <field name="planned_price">3980.0</field>
+      <field name="internal_price">3920.0</field>
+      <field name="depth">项目常用材料</field>
+      <field name="remark">S70 日常业务表单面材料样例</field>
+    </record>
+
+    <record id="sc_demo_material_price_070_steel_quote" model="sc.material.price">
+      <field name="material_catalog_id" ref="smart_construction_demo.sc_demo_material_catalog_070_steel"/>
+      <field name="supplier_id" ref="smart_construction_demo.sc_demo_partner_vendor_steel"/>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="price_type">quote</field>
+      <field name="currency_id" ref="base.CNY"/>
+      <field name="unit_price">4015.0</field>
+      <field name="tax_rate">13.0</field>
+      <field name="tax_included">True</field>
+      <field name="effective_date">2025-03-01</field>
+      <field name="note">供应商月度报价样例</field>
+    </record>
+
+    <record id="sc_demo_expense_claim_070_travel" model="sc.expense.claim">
+      <field name="name">S70-EXP-001</field>
+      <field name="claim_type">expense</field>
+      <field name="state">draft</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_vendor_concrete"/>
+      <field name="applicant_name">测试-项目经理A</field>
+      <field name="date_claim">2025-03-05</field>
+      <field name="expense_type">现场协调费</field>
+      <field name="summary">月度现场协调与交通费用</field>
+      <field name="amount">8600.0</field>
+      <field name="approved_amount">8600.0</field>
+      <field name="currency_id" ref="base.CNY"/>
+      <field name="payment_method">银行转账</field>
+      <field name="payee">德阳某某商砼有限公司（示例）</field>
+      <field name="note">S70 日常费用报销样例</field>
+    </record>
+
+    <record id="sc_demo_receipt_income_070_progress" model="sc.receipt.income">
+      <field name="name">S70-RI-001</field>
+      <field name="source_kind">receipt_income</field>
+      <field name="state">confirmed</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_owner_001"/>
+      <field name="contract_id" ref="smart_construction_demo.sc_demo_contract_out_010"/>
+      <field name="payment_request_id" ref="smart_construction_demo.sc_demo_pay_req_010_001"/>
+      <field name="date_receipt">2025-03-10</field>
+      <field name="document_no">S70-RECEIPT-001</field>
+      <field name="receipt_type">工程进度款</field>
+      <field name="income_category">主营业务收入</field>
+      <field name="payment_method">银行转账</field>
+      <field name="receiving_account_name">四川保盛建设集团有限公司</field>
+      <field name="receiving_account_no">6222000000000701</field>
+      <field name="amount">1200000.0</field>
+      <field name="settlement_amount">1200000.0</field>
+      <field name="currency_id" ref="base.CNY"/>
+      <field name="note">S70 收款收入登记样例</field>
+    </record>
+
+    <record id="sc_demo_payment_execution_070_material" model="sc.payment.execution">
+      <field name="name">S70-PE-001</field>
+      <field name="source_kind">actual_outflow</field>
+      <field name="state">confirmed</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_vendor_steel"/>
+      <field name="date_payment">2025-03-12</field>
+      <field name="document_no">S70-PAY-001</field>
+      <field name="payment_family">材料款</field>
+      <field name="payment_method">银行转账</field>
+      <field name="handler_name">测试-财务专员</field>
+      <field name="planned_amount">386000.0</field>
+      <field name="paid_amount">386000.0</field>
+      <field name="invoice_amount">386000.0</field>
+      <field name="currency_id" ref="base.CNY"/>
+      <field name="receipt_account_name">德阳某某钢材贸易有限公司（示例）</field>
+      <field name="note">S70 付款执行样例</field>
+    </record>
+
+    <record id="sc_demo_treasury_reconciliation_070_daily" model="sc.treasury.reconciliation">
+      <field name="name">S70-TR-001</field>
+      <field name="source_kind">daily_line</field>
+      <field name="state">confirmed</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="date_document">2025-03-13</field>
+      <field name="document_no">S70-FUND-DAILY-001</field>
+      <field name="account_name">项目基本户</field>
+      <field name="bank_account_no">6222000000000702</field>
+      <field name="account_balance">1914000.0</field>
+      <field name="bank_balance">1914000.0</field>
+      <field name="system_difference">0.0</field>
+      <field name="daily_income">1200000.0</field>
+      <field name="daily_expense">386000.0</field>
+      <field name="currency_id" ref="base.CNY"/>
+      <field name="note">S70 资金日报对账样例</field>
+    </record>
+
+    <record id="sc_demo_invoice_registration_070_input" model="sc.invoice.registration">
+      <field name="name">S70-INV-001</field>
+      <field name="source_kind">input_invoice_tax</field>
+      <field name="direction">input</field>
+      <field name="state">registered</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_vendor_steel"/>
+      <field name="document_no">S70-INVOICE-DOC-001</field>
+      <field name="document_date">2025-03-14</field>
+      <field name="invoice_date">2025-03-14</field>
+      <field name="recognition_date">2025-03-15</field>
+      <field name="invoice_no">S70INV0001</field>
+      <field name="invoice_code">510000S70001</field>
+      <field name="invoice_type">增值税专用发票</field>
+      <field name="tax_rate">13%</field>
+      <field name="invoice_content">钢材采购</field>
+      <field name="invoice_issue_company">德阳某某钢材贸易有限公司（示例）</field>
+      <field name="invoice_count">1</field>
+      <field name="amount_no_tax">341592.92</field>
+      <field name="tax_amount">44407.08</field>
+      <field name="amount_total">386000.0</field>
+      <field name="currency_id" ref="base.CNY"/>
+      <field name="handler_name">测试-财务专员</field>
+      <field name="note">S70 发票登记样例</field>
+    </record>
+
+    <record id="sc_demo_tax_deduction_070_input" model="sc.tax.deduction.registration">
+      <field name="name">S70-TAX-001</field>
+      <field name="state">deducted</field>
+      <field name="document_no">S70-TAX-DOC-001</field>
+      <field name="document_date">2025-03-16</field>
+      <field name="deduction_confirm_date">2025-03-20</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_vendor_steel"/>
+      <field name="partner_name">德阳某某钢材贸易有限公司（示例）</field>
+      <field name="invoice_no">S70INV0001</field>
+      <field name="invoice_code">510000S70001</field>
+      <field name="invoice_date">2025-03-14</field>
+      <field name="invoice_amount_untaxed">341592.92</field>
+      <field name="invoice_tax_amount">44407.08</field>
+      <field name="invoice_amount_total">386000.0</field>
+      <field name="deduction_amount">341592.92</field>
+      <field name="deduction_tax_amount">44407.08</field>
+      <field name="deduction_surcharge_amount">0.0</field>
+      <field name="currency_id" ref="base.CNY"/>
+      <field name="note">S70 进项税抵扣登记样例</field>
+    </record>
+
+    <record id="sc_demo_construction_diary_070_daily" model="sc.construction.diary">
+      <field name="name">S70-DIARY-001</field>
+      <field name="state">confirmed</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="date_diary">2025-03-18 09:00:00</field>
+      <field name="report_period_start">2025-03-18</field>
+      <field name="report_period_end">2025-03-18</field>
+      <field name="document_no">S70-DIARY-DOC-001</field>
+      <field name="title">主体结构施工日报</field>
+      <field name="diary_type">施工日报</field>
+      <field name="category">主体结构</field>
+      <field name="construction_unit">四川保盛建设集团有限公司</field>
+      <field name="project_manager">测试-项目经理A</field>
+      <field name="weather">晴</field>
+      <field name="manpower_count">86</field>
+      <field name="quality_name">钢筋绑扎与模板安装</field>
+      <field name="handler_name">测试-项目经理A</field>
+      <field name="description">完成 A 区二层梁板钢筋绑扎，模板安装同步推进。</field>
+      <field name="material_inspection_note">钢材进场验收合格，抽检留样完成。</field>
+      <field name="safety_note">班前安全交底已完成，现场防护符合要求。</field>
+      <field name="next_plan">继续推进混凝土浇筑准备。</field>
+      <field name="note">S70 施工日志样例</field>
+    </record>
+
+  </data>
+</odoo>

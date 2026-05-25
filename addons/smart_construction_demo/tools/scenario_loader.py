@@ -70,6 +70,12 @@ SCENARIOS: Dict[str, List[str]] = {
             "data/scenario/s60_project_cockpit/10_cockpit_business_facts.xml",
         ],
     },
+    "s70_daily_business_surface": {
+        "sequence": 70,
+        "files": [
+            "data/scenario/s70_daily_business_surface/10_daily_business_records.xml",
+        ],
+    },
     "s90_users_roles": {
         "sequence": 90,
         "files": [
@@ -112,6 +118,7 @@ RELEASE_SCENARIOS: List[str] = [
     "s20_settlement_clearing",
     "s30_settlement_workflow",
     "s60_project_cockpit",
+    "s70_daily_business_surface",
     "s90_users_roles",
 ]
 
@@ -181,6 +188,8 @@ def load_scenario(
 
     if scenario == "s90_users_roles":
         _ensure_demo_user_xmlids(env)
+    if scenario == "s50_repairable_paths":
+        _reset_s50_repairable_records(env)
 
     module = "smart_construction_demo"
     if ensure_base:
@@ -300,3 +309,22 @@ def _ensure_demo_user_xmlids(env) -> None:
                 "noupdate": True,
             }
         )
+
+
+def _reset_s50_repairable_records(env) -> None:
+    """Replay S50 from its intended bad seed without mutating guarded fields."""
+    for xmlid in (
+        "smart_construction_demo.sc_demo_payment_050_001",
+        "smart_construction_demo.sc_demo_settlement_line_050_001",
+        "smart_construction_demo.sc_demo_settlement_050_001",
+    ):
+        model_name, res_id = env["ir.model.data"]._xmlid_to_res_model_res_id(
+            xmlid,
+            raise_if_not_found=False,
+        )
+        if not model_name or not res_id:
+            continue
+        record = env[model_name].sudo().browse(res_id).exists()
+        if record:
+            record.with_context(allow_transition=True, allow_contract_change=True).unlink()
+    env.cr.commit()

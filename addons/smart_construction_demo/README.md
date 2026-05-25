@@ -218,6 +218,7 @@ make demo.verify DB_NAME=sc_demo
 | 场景 | 目标 | 关键模型 | 可验证点 |
 | --- | --- | --- | --- |
 | S00 | 最短路径（项目/BOQ/材料/发票） | project.project / project.boq.line / project.material.plan / account.move | projects/boq/material/invoices |
+| S70 | 日常业务表单面 | sc.material.catalog / sc.expense.claim / sc.receipt.income / sc.payment.execution / sc.treasury.reconciliation / sc.invoice.registration / sc.tax.deduction.registration / sc.construction.diary | 材料价格、费用、收款、付款、资金、发票、抵扣、施工日志均有可打开样例 |
 | S10 | 合同 + 付款申请 + 发票（draft） | construction.contract / payment.request / account.move | contract/payment_request/invoices |
 | S20 | 结算单 + 明细 + 收款关联 | sc.settlement.order / sc.settlement.order.line / payment.request | settlement/lines/payment_request.link |
 | S30 | 工作流种子 + 门禁（bad） | sc.settlement.order / sc.settlement.order.line / payment.request | draft + gate |

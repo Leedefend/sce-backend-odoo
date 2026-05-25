@@ -19,7 +19,7 @@ printf '[demo.verify] db=%s\n' "$DB_NAME"
 
 scenario="${SCENARIO:-}"
 step="${STEP:-}"
-known="s00_min_path s10_contract_payment s20_settlement_clearing s30_settlement_workflow s40_failure_paths s50_repairable_paths s90_users_roles showroom"
+known="s00_min_path s10_contract_payment s20_settlement_clearing s30_settlement_workflow s40_failure_paths s50_repairable_paths s70_daily_business_surface s90_users_roles showroom"
 
 if [ -n "$scenario" ]; then
   found=0
@@ -165,6 +165,15 @@ run_expect_fail "S50 bad seed should fail verification" "s50_repairable_paths" \
 run_check "S50 settlement links payment request after fix" "s50_repairable_paths" \
   "select case when count(*) = 1 then 'ok' else 'S50 payment not linked' end from payment_request where settlement_id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_settlement_050_001');" \
   "select id, amount, settlement_id from payment_request where id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_payment_050_001');"
+run_check "S70 material catalog and price exist" "s70_daily_business_surface" \
+  "select case when (select count(*) from sc_material_catalog where id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_material_catalog_070_steel')) = 1 and (select count(*) from sc_material_price where id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_material_price_070_steel_quote')) = 1 then 'ok' else 'S70 material records missing' end;" \
+  "select c.id, c.name, p.unit_price from sc_material_catalog c left join sc_material_price p on p.material_catalog_id = c.id where c.id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_material_catalog_070_steel');"
+run_check "S70 finance daily records exist" "s70_daily_business_surface" \
+  "select case when (select count(*) from sc_expense_claim where name='S70-EXP-001') = 1 and (select count(*) from sc_receipt_income where name='S70-RI-001') = 1 and (select count(*) from sc_payment_execution where name='S70-PE-001') = 1 and (select count(*) from sc_treasury_reconciliation where name='S70-TR-001') = 1 then 'ok' else 'S70 finance records missing' end;" \
+  "select 'expense' as kind, id, name, state from sc_expense_claim where name='S70-EXP-001' union all select 'receipt', id, name, state from sc_receipt_income where name='S70-RI-001' union all select 'payment', id, name, state from sc_payment_execution where name='S70-PE-001' union all select 'treasury', id, name, state from sc_treasury_reconciliation where name='S70-TR-001';"
+run_check "S70 invoice tax and diary records exist" "s70_daily_business_surface" \
+  "select case when (select count(*) from sc_invoice_registration where name='S70-INV-001') = 1 and (select count(*) from sc_tax_deduction_registration where name='S70-TAX-001') = 1 and (select count(*) from sc_construction_diary where name='S70-DIARY-001') = 1 then 'ok' else 'S70 invoice/tax/diary records missing' end;" \
+  "select 'invoice' as kind, id, name, state from sc_invoice_registration where name='S70-INV-001' union all select 'tax', id, name, state from sc_tax_deduction_registration where name='S70-TAX-001' union all select 'diary', id, name, state from sc_construction_diary where name='S70-DIARY-001';"
 run_check "S90 users exist" "s90_users_roles" \
   "select case when count(*) >= 6 then 'ok' else 'S90 users missing' end from res_users where login in ('demo_pm','demo_finance','demo_cost','demo_audit','demo_readonly','svc_e2e_smoke');" \
   "select id, login, active from res_users where login in ('demo_pm','demo_finance','demo_cost','demo_audit','demo_readonly','svc_e2e_smoke') order by login;"
