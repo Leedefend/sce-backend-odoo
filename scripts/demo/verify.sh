@@ -19,7 +19,7 @@ printf '[demo.verify] db=%s\n' "$DB_NAME"
 
 scenario="${SCENARIO:-}"
 step="${STEP:-}"
-known="s00_min_path s10_contract_payment s20_settlement_clearing s30_settlement_workflow s40_failure_paths s50_repairable_paths s65_cost_budget_funding_surface s66_ledger_entity_surface s67_scene_pack_surface s70_daily_business_surface s80_execution_management_surface s85_admin_finance_surface s86_tender_rental_finance_surface s87_resource_contract_surface s88_output_invoice_surface s89_quality_safety_surface s90_users_roles showroom"
+known="s00_min_path s10_contract_payment s20_settlement_clearing s30_settlement_workflow s40_failure_paths s50_repairable_paths s65_cost_budget_funding_surface s66_ledger_entity_surface s67_scene_pack_surface s69_payment_ledger_surface s70_daily_business_surface s80_execution_management_surface s85_admin_finance_surface s86_tender_rental_finance_surface s87_resource_contract_surface s88_output_invoice_surface s89_quality_safety_surface s90_users_roles showroom"
 
 if [ -n "$scenario" ]; then
   found=0
@@ -186,6 +186,9 @@ run_check "S67 scene capability records exist" "s67_scene_pack_surface" \
 run_check "S67 pack registry records exist" "s67_scene_pack_surface" \
   "select case when (select count(*) from sc_pack_registry where pack_id='s67.demo.surface.pack' and channel='stable') = 1 and (select count(*) from sc_pack_installation where pack_id in (select id from sc_pack_registry where pack_id='s67.demo.surface.pack') and status='installed') = 1 then 'ok' else 'S67 pack records missing' end;" \
   "select r.id, r.pack_id, r.pack_version, i.status from sc_pack_registry r left join sc_pack_installation i on i.pack_id = r.id where r.pack_id='s67.demo.surface.pack';"
+run_check "S69 payment ledger chain exists" "s69_payment_ledger_surface" \
+  "select case when (select count(*) from sc_settlement_order where name='S69-PAY-SET-001' and state='approve') = 1 and (select count(*) from payment_request where name='S69-PAY-REQ-001' and state='approved') = 1 and (select count(*) from payment_ledger where ref='S69-PAY-LEDGER-001' and amount=120000.0) = 1 then 'ok' else 'S69 payment ledger chain missing' end;" \
+  "select l.id, l.ref, l.amount, pr.name as request_name, pr.state as request_state, s.name as settlement_name, s.state as settlement_state from payment_ledger l join payment_request pr on pr.id = l.payment_request_id left join sc_settlement_order s on s.id = pr.settlement_id where l.ref='S69-PAY-LEDGER-001';"
 run_check "S70 material catalog and price exist" "s70_daily_business_surface" \
   "select case when (select count(*) from sc_material_catalog where id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_material_catalog_070_steel')) = 1 and (select count(*) from sc_material_price where id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_material_price_070_steel_quote')) = 1 then 'ok' else 'S70 material records missing' end;" \
   "select c.id, c.name, p.unit_price from sc_material_catalog c left join sc_material_price p on p.material_catalog_id = c.id where c.id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_material_catalog_070_steel');"

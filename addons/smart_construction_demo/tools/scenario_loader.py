@@ -88,6 +88,12 @@ SCENARIOS: Dict[str, List[str]] = {
             "data/scenario/s67_scene_pack_surface/10_scene_pack_records.xml",
         ],
     },
+    "s69_payment_ledger_surface": {
+        "sequence": 69,
+        "files": [
+            "data/scenario/s69_payment_ledger_surface/10_payment_ledger_records.xml",
+        ],
+    },
     "s70_daily_business_surface": {
         "sequence": 70,
         "files": [
@@ -175,6 +181,7 @@ RELEASE_SCENARIOS: List[str] = [
     "s65_cost_budget_funding_surface",
     "s66_ledger_entity_surface",
     "s67_scene_pack_surface",
+    "s69_payment_ledger_surface",
     "s70_daily_business_surface",
     "s80_execution_management_surface",
     "s85_admin_finance_surface",
@@ -280,6 +287,9 @@ def load_scenario(
             kind="data",
         )
 
+    if scenario == "s69_payment_ledger_surface":
+        _ensure_s69_payment_ledger(env)
+
     env.cr.commit()
 
 
@@ -305,6 +315,27 @@ def load_base_seed(env, mode: str = "update") -> None:
             kind="data",
         )
     env.cr.commit()
+
+
+def _ensure_s69_payment_ledger(env) -> None:
+    """Create the S69 payment ledger through the guarded model context."""
+    module = "smart_construction_demo"
+    request = env.ref(f"{module}.sc_demo_payment_request_069_pay", raise_if_not_found=False)
+    if not request:
+        return
+    Ledger = env["payment.ledger"].sudo()
+    ledger = Ledger.search([("payment_request_id", "=", request.id)], limit=1)
+    values = {
+        "payment_request_id": request.id,
+        "amount": 120000.0,
+        "paid_at": "2025-08-24 10:00:00",
+        "ref": "S69-PAY-LEDGER-001",
+        "note": "S69 支付台账样例。",
+    }
+    if ledger:
+        ledger.write(values)
+    else:
+        Ledger.with_context(allow_payment_ledger_create=True).create(values)
 
 
 def load_all(env, mode: str = "update") -> None:
