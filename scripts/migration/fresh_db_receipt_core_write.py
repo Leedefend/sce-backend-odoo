@@ -39,6 +39,8 @@ PRE_SNAPSHOT_CSV = ARTIFACT_ROOT / "fresh_db_receipt_core_pre_write_snapshot_v1.
 POST_SNAPSHOT_CSV = ARTIFACT_ROOT / "fresh_db_receipt_core_post_write_snapshot_v1.csv"
 EXPECTED_ROWS = int(os.getenv("FRESH_DB_RECEIPT_CORE_EXPECTED_ROWS", "1480"))
 MIGRATION_MARKER = "[migration:receipt_core]"
+LEGACY_SOURCE_TABLE_DELETED = "C_JFHKLR_DELETED"
+LEGACY_SOURCE_TABLE_ROUTED_OUT = "C_JFHKLR_ROUTED_OUT"
 SAFE_FIELDS = {
     "type",
     "receipt_type",
@@ -352,7 +354,12 @@ if deleted_receipt_ids:
                 }
             )
     if existing_deleted_records:
-        existing_deleted_records.unlink()
+        existing_deleted_records.write(
+            {
+                "legacy_source_table": LEGACY_SOURCE_TABLE_DELETED,
+                "legacy_document_state": "old_system_deleted",
+            }
+        )
 for rec in Request.search([("note", "ilike", MIGRATION_MARKER)], order="id"):
     legacy_receipt_id = extract_legacy_receipt_id(rec.note)
     if legacy_receipt_id and legacy_receipt_id not in payload_receipt_ids and legacy_receipt_id not in deleted_receipt_ids:
@@ -367,7 +374,12 @@ for rec in Request.search([("note", "ilike", MIGRATION_MARKER)], order="id"):
             }
         )
 if stale_payload_records:
-    stale_payload_records.unlink()
+    stale_payload_records.write(
+        {
+            "legacy_source_table": LEGACY_SOURCE_TABLE_ROUTED_OUT,
+            "legacy_document_state": "routed_out_of_receipt_request",
+        }
+    )
 pre_records = snapshot(Request, PRE_SNAPSHOT_CSV)
 pre_existing_receipt_ids = {
     legacy_id

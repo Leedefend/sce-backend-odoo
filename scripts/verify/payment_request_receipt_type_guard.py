@@ -117,15 +117,21 @@ def main() -> int:
     )
     _assert(
         "discarded_existing_old_system_deleted_rows" in receipt_write
-        and "existing_deleted_records.unlink()" in receipt_write,
-        "receipt core write must remove already-written migration rows deleted in the old system",
+        and "C_JFHKLR_DELETED" in receipt_write
+        and "old_system_deleted" in receipt_write,
+        "receipt core write must quarantine already-written migration rows deleted in the old system",
         errors,
     )
     _assert(
         "discarded_existing_stale_payload_rows" in receipt_write
-        and "stale_payload_records.unlink()" in receipt_write
+        and "C_JFHKLR_ROUTED_OUT" in receipt_write
         and "legacy_receipt_id not in payload_receipt_ids" in receipt_write,
-        "receipt core write must remove already-written migration rows routed out of the current receipt payload",
+        "receipt core write must quarantine already-written migration rows routed out of the current receipt payload",
+        errors,
+    )
+    _assert(
+        "C_JFHKLR_DELETED" in views and "C_JFHKLR_ROUTED_OUT" in views,
+        "receipt request action must hide quarantined legacy receipt carriers",
         errors,
     )
     _assert(
