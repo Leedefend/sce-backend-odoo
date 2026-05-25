@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data noupdate="1">
+
+    <record id="sc_demo_workflow_def_076_payment" model="sc.workflow.def">
+      <field name="name">S76 付款申请兼容工作流</field>
+      <field name="code">s76_payment_request_compat</field>
+      <field name="state">published</field>
+      <field name="active">True</field>
+      <field name="company_id" ref="base.main_company"/>
+      <field name="model_name">payment.request</field>
+      <field name="trigger">submit</field>
+    </record>
+
+    <record id="sc_demo_workflow_node_076_start" model="sc.workflow.node">
+      <field name="workflow_def_id" ref="smart_construction_demo.sc_demo_workflow_def_076_payment"/>
+      <field name="active">True</field>
+      <field name="code">s76_start</field>
+      <field name="name">S76 发起审核</field>
+      <field name="sequence">10</field>
+      <field name="node_type">start</field>
+      <field name="can_reject">False</field>
+      <field name="approve_group_id" ref="smart_construction_core.group_sc_cap_finance_user"/>
+    </record>
+
+    <record id="sc_demo_workflow_node_076_finance" model="sc.workflow.node">
+      <field name="workflow_def_id" ref="smart_construction_demo.sc_demo_workflow_def_076_payment"/>
+      <field name="active">True</field>
+      <field name="code">s76_finance_review</field>
+      <field name="name">S76 财务审核</field>
+      <field name="sequence">20</field>
+      <field name="node_type">normal</field>
+      <field name="can_reject">True</field>
+      <field name="approve_group_id" ref="smart_construction_core.group_sc_cap_finance_manager"/>
+      <field name="reject_node_id" ref="smart_construction_demo.sc_demo_workflow_node_076_start"/>
+    </record>
+
+    <record id="sc_demo_workflow_node_076_end" model="sc.workflow.node">
+      <field name="workflow_def_id" ref="smart_construction_demo.sc_demo_workflow_def_076_payment"/>
+      <field name="active">True</field>
+      <field name="code">s76_done</field>
+      <field name="name">S76 完成</field>
+      <field name="sequence">30</field>
+      <field name="node_type">end</field>
+      <field name="can_reject">False</field>
+      <field name="approve_group_id" ref="smart_construction_core.group_sc_cap_finance_manager"/>
+    </record>
+
+    <record id="sc_demo_workflow_node_076_start" model="sc.workflow.node">
+      <field name="next_node_id" ref="smart_construction_demo.sc_demo_workflow_node_076_finance"/>
+    </record>
+
+    <record id="sc_demo_workflow_node_076_finance" model="sc.workflow.node">
+      <field name="next_node_id" ref="smart_construction_demo.sc_demo_workflow_node_076_end"/>
+    </record>
+
+    <record id="sc_demo_workflow_def_076_payment" model="sc.workflow.def">
+      <field name="start_node_id" ref="smart_construction_demo.sc_demo_workflow_node_076_start"/>
+    </record>
+
+    <record id="sc_demo_workflow_instance_076_payment" model="sc.workflow.instance">
+      <field name="workflow_def_id" ref="smart_construction_demo.sc_demo_workflow_def_076_payment"/>
+      <field name="company_id" ref="base.main_company"/>
+      <field name="model_name">payment.request</field>
+      <field name="res_id" eval="ref('smart_construction_demo.sc_demo_payment_request_069_pay')"/>
+      <field name="state">running</field>
+      <field name="current_node_id" ref="smart_construction_demo.sc_demo_workflow_node_076_finance"/>
+      <field name="submitter_id" ref="base.user_admin"/>
+      <field name="submitted_at">2025-08-31 09:00:00</field>
+    </record>
+
+    <record id="sc_demo_workflow_workitem_076_finance" model="sc.workflow.workitem">
+      <field name="instance_id" ref="smart_construction_demo.sc_demo_workflow_instance_076_payment"/>
+      <field name="node_id" ref="smart_construction_demo.sc_demo_workflow_node_076_finance"/>
+      <field name="assignee_id" ref="base.user_admin"/>
+      <field name="assignee_group_id" ref="smart_construction_core.group_sc_cap_finance_manager"/>
+      <field name="status">todo</field>
+      <field name="created_at">2025-08-31 09:05:00</field>
+      <field name="note">S76 兼容工作流待办样例。</field>
+    </record>
+
+    <record id="sc_demo_workflow_log_076_create" model="sc.workflow.log">
+      <field name="instance_id" ref="smart_construction_demo.sc_demo_workflow_instance_076_payment"/>
+      <field name="action">create</field>
+      <field name="from_state">draft</field>
+      <field name="to_state">draft</field>
+      <field name="from_node_id" ref="smart_construction_demo.sc_demo_workflow_node_076_start"/>
+      <field name="to_node_id" ref="smart_construction_demo.sc_demo_workflow_node_076_start"/>
+      <field name="actor_id" ref="base.user_admin"/>
+      <field name="note">S76 兼容工作流实例创建。</field>
+      <field name="created_at">2025-08-31 09:00:00</field>
+    </record>
+
+    <record id="sc_demo_workflow_log_076_submit" model="sc.workflow.log">
+      <field name="instance_id" ref="smart_construction_demo.sc_demo_workflow_instance_076_payment"/>
+      <field name="action">submit</field>
+      <field name="from_state">draft</field>
+      <field name="to_state">running</field>
+      <field name="from_node_id" ref="smart_construction_demo.sc_demo_workflow_node_076_start"/>
+      <field name="to_node_id" ref="smart_construction_demo.sc_demo_workflow_node_076_finance"/>
+      <field name="actor_id" ref="base.user_admin"/>
+      <field name="note">S76 付款申请进入财务审核节点。</field>
+      <field name="created_at">2025-08-31 09:05:00</field>
+    </record>
+
+  </data>
+</odoo>

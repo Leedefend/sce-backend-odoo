@@ -134,6 +134,12 @@ SCENARIOS: Dict[str, List[str]] = {
         "sequence": 75,
         "files": [],
     },
+    "s76_workflow_compat_surface": {
+        "sequence": 76,
+        "files": [
+            "data/scenario/s76_workflow_compat_surface/10_workflow_compat_records.xml",
+        ],
+    },
     "s80_execution_management_surface": {
         "sequence": 80,
         "files": [
@@ -223,6 +229,7 @@ RELEASE_SCENARIOS: List[str] = [
     "s73_risk_settlement_surface",
     "s74_partner_supplier_surface",
     "s75_summary_projection_surface",
+    "s76_workflow_compat_surface",
     "s80_execution_management_surface",
     "s85_admin_finance_surface",
     "s86_tender_rental_finance_surface",
