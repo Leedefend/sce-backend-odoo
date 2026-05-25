@@ -146,6 +146,12 @@ SCENARIOS: Dict[str, List[str]] = {
             "data/scenario/s77_data_dictionary_surface/10_data_dictionary_records.xml",
         ],
     },
+    "s78_project_document_wbs_surface": {
+        "sequence": 78,
+        "files": [
+            "data/scenario/s78_project_document_wbs_surface/10_project_document_wbs_records.xml",
+        ],
+    },
     "s80_execution_management_surface": {
         "sequence": 80,
         "files": [
@@ -237,6 +243,7 @@ RELEASE_SCENARIOS: List[str] = [
     "s75_summary_projection_surface",
     "s76_workflow_compat_surface",
     "s77_data_dictionary_surface",
+    "s78_project_document_wbs_surface",
     "s80_execution_management_surface",
     "s85_admin_finance_surface",
     "s86_tender_rental_finance_surface",
@@ -345,6 +352,8 @@ def load_scenario(
         _ensure_s69_payment_ledger(env)
     if scenario == "s71_governance_audit_surface":
         _ensure_s71_user_preference(env)
+    if scenario == "s78_project_document_wbs_surface":
+        _ensure_s78_project_document_wbs(env)
 
     env.cr.commit()
 
@@ -413,6 +422,27 @@ def _ensure_s71_user_preference(env) -> None:
         preference.write(values)
     else:
         Preference.create(values)
+
+
+def _ensure_s78_project_document_wbs(env) -> None:
+    """Keep XML-loaded S78 WBS levels and document attachment relations stable."""
+    wbs_records = env["construction.work.breakdown"].sudo().search(
+        [("code", "in", ("S78-SINGLE", "S78-UNIT", "S78-SUBDIV", "S78-INSP-001"))],
+        order="id",
+    )
+    if wbs_records:
+        wbs_records._compute_level()
+
+    doc = env.ref(
+        "smart_construction_demo.sc_demo_document_078_quality_archive",
+        raise_if_not_found=False,
+    )
+    attachment = env.ref(
+        "smart_construction_demo.sc_demo_attachment_078_quality_archive",
+        raise_if_not_found=False,
+    )
+    if doc and attachment and attachment not in doc.attachment_ids:
+        doc.sudo().write({"attachment_ids": [(4, attachment.id)]})
 
 
 def load_all(env, mode: str = "update") -> None:
