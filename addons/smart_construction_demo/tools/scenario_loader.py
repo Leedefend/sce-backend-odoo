@@ -88,6 +88,12 @@ SCENARIOS: Dict[str, List[str]] = {
             "data/scenario/s67_scene_pack_surface/10_scene_pack_records.xml",
         ],
     },
+    "s68_cockpit_workbench_surface": {
+        "sequence": 68,
+        "files": [
+            "data/scenario/s68_cockpit_workbench_surface/10_cockpit_workbench_records.xml",
+        ],
+    },
     "s69_payment_ledger_surface": {
         "sequence": 69,
         "files": [
@@ -181,6 +187,7 @@ RELEASE_SCENARIOS: List[str] = [
     "s65_cost_budget_funding_surface",
     "s66_ledger_entity_surface",
     "s67_scene_pack_surface",
+    "s68_cockpit_workbench_surface",
     "s69_payment_ledger_surface",
     "s70_daily_business_surface",
     "s80_execution_management_surface",
