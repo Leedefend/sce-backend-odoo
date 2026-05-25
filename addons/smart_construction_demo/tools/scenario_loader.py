@@ -106,6 +106,12 @@ SCENARIOS: Dict[str, List[str]] = {
             "data/scenario/s70_daily_business_surface/10_daily_business_records.xml",
         ],
     },
+    "s71_governance_audit_surface": {
+        "sequence": 71,
+        "files": [
+            "data/scenario/s71_governance_audit_surface/10_governance_audit_records.xml",
+        ],
+    },
     "s80_execution_management_surface": {
         "sequence": 80,
         "files": [
@@ -190,6 +196,7 @@ RELEASE_SCENARIOS: List[str] = [
     "s68_cockpit_workbench_surface",
     "s69_payment_ledger_surface",
     "s70_daily_business_surface",
+    "s71_governance_audit_surface",
     "s80_execution_management_surface",
     "s85_admin_finance_surface",
     "s86_tender_rental_finance_surface",
@@ -296,6 +303,8 @@ def load_scenario(
 
     if scenario == "s69_payment_ledger_surface":
         _ensure_s69_payment_ledger(env)
+    if scenario == "s71_governance_audit_surface":
+        _ensure_s71_user_preference(env)
 
     env.cr.commit()
 
@@ -343,6 +352,27 @@ def _ensure_s69_payment_ledger(env) -> None:
         ledger.write(values)
     else:
         Ledger.with_context(allow_payment_ledger_create=True).create(values)
+
+
+def _ensure_s71_user_preference(env) -> None:
+    """Upsert the S71 scene preference because it is unique per user."""
+    module = "smart_construction_demo"
+    user = env.ref("base.user_admin", raise_if_not_found=False)
+    scene = env.ref(f"{module}.sc_demo_scene_067_demo_ops", raise_if_not_found=False)
+    if not user or not scene:
+        return
+    Preference = env["sc.user.preference"].sudo()
+    values = {
+        "user_id": user.id,
+        "default_scene_id": scene.id,
+        "pinned_tile_keys": ["demo.ops.dashboard"],
+        "recent_tiles": ["demo.ops.dashboard", "finance.payment.ledger"],
+    }
+    preference = Preference.search([("user_id", "=", user.id)], limit=1)
+    if preference:
+        preference.write(values)
+    else:
+        Preference.create(values)
 
 
 def load_all(env, mode: str = "update") -> None:

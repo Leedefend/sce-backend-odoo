@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data noupdate="1">
+
+    <record id="sc_demo_scene_validation_071_demo_ops_pass" model="sc.scene.validation">
+      <field name="scene_id" ref="smart_construction_demo.sc_demo_scene_067_demo_ops"/>
+      <field name="status">pass</field>
+      <field name="issues_json" eval="{'checks': ['tiles_resolved', 'capabilities_available', 'active_version_present'], 'scenario': 's71_governance_audit_surface'}"/>
+      <field name="checked_at">2025-08-25 09:10:00</field>
+      <field name="checked_by" ref="base.user_admin"/>
+    </record>
+
+    <record id="sc_demo_scene_audit_071_publish" model="sc.scene.audit.log">
+      <field name="event">publish</field>
+      <field name="actor_user_id" ref="base.user_admin"/>
+      <field name="scene_id" ref="smart_construction_demo.sc_demo_scene_067_demo_ops"/>
+      <field name="version_id" ref="smart_construction_demo.sc_demo_scene_version_067_v1"/>
+      <field name="payload_diff" eval="{'state': {'from': 'draft', 'to': 'published'}, 'version': 'v1.0', 'scenario': 's71_governance_audit_surface'}"/>
+      <field name="created_at">2025-08-25 09:20:00</field>
+    </record>
+
+    <record id="sc_demo_scene_audit_071_update_pref" model="sc.scene.audit.log">
+      <field name="event">update_pref</field>
+      <field name="actor_user_id" ref="base.user_admin"/>
+      <field name="scene_id" ref="smart_construction_demo.sc_demo_scene_067_demo_ops"/>
+      <field name="version_id" ref="smart_construction_demo.sc_demo_scene_version_067_v1"/>
+      <field name="payload_diff" eval="{'default_scene': 's67_demo_ops_scene', 'pinned_tile_keys': ['demo.ops.dashboard']}"/>
+      <field name="created_at">2025-08-25 09:25:00</field>
+    </record>
+
+    <record id="sc_demo_capability_audit_071_update" model="sc.capability.audit.log">
+      <field name="event">update</field>
+      <field name="actor_user_id" ref="base.user_admin"/>
+      <field name="capability_id" ref="smart_construction_demo.sc_demo_capability_067_demo_dashboard"/>
+      <field name="source_pack_id">s67.demo.surface.pack</field>
+      <field name="payload_diff" eval="{'status': {'from': 'beta', 'to': 'ga'}, 'tags': ['demo', 'scene', 'pack'], 'scenario': 's71_governance_audit_surface'}"/>
+      <field name="created_at">2025-08-25 09:30:00</field>
+    </record>
+
+    <record id="sc_demo_audit_log_071_payment_amount" model="sc.audit.log">
+      <field name="event_code">S71_PAYMENT_REQUEST_REVIEW</field>
+      <field name="action">governance.review</field>
+      <field name="model">payment.request</field>
+      <field name="res_id" eval="ref('smart_construction_demo.sc_demo_payment_request_069_pay')"/>
+      <field name="actor_uid" ref="base.user_admin"/>
+      <field name="actor_login">admin</field>
+      <field name="ts">2025-08-25 09:40:00</field>
+      <field name="before_json">{"state":"approved","amount":120000.0}</field>
+      <field name="after_json">{"state":"approved","amount":120000.0,"reviewed":true}</field>
+      <field name="reason">S71 demo 审计留痕：付款申请已完成治理复核。</field>
+      <field name="trace_id">S71-GOV-AUDIT-001</field>
+      <field name="company_id" ref="base.main_company"/>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_069_payment_ledger"/>
+    </record>
+
+  </data>
+</odoo>
