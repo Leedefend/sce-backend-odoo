@@ -70,6 +70,12 @@ SCENARIOS: Dict[str, List[str]] = {
             "data/scenario/s60_project_cockpit/10_cockpit_business_facts.xml",
         ],
     },
+    "s65_cost_budget_funding_surface": {
+        "sequence": 65,
+        "files": [
+            "data/scenario/s65_cost_budget_funding_surface/10_cost_budget_funding_records.xml",
+        ],
+    },
     "s70_daily_business_surface": {
         "sequence": 70,
         "files": [
@@ -154,6 +160,7 @@ RELEASE_SCENARIOS: List[str] = [
     "s20_settlement_clearing",
     "s30_settlement_workflow",
     "s60_project_cockpit",
+    "s65_cost_budget_funding_surface",
     "s70_daily_business_surface",
     "s80_execution_management_surface",
     "s85_admin_finance_surface",

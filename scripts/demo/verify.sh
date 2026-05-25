@@ -19,7 +19,7 @@ printf '[demo.verify] db=%s\n' "$DB_NAME"
 
 scenario="${SCENARIO:-}"
 step="${STEP:-}"
-known="s00_min_path s10_contract_payment s20_settlement_clearing s30_settlement_workflow s40_failure_paths s50_repairable_paths s70_daily_business_surface s80_execution_management_surface s85_admin_finance_surface s86_tender_rental_finance_surface s87_resource_contract_surface s88_output_invoice_surface s89_quality_safety_surface s90_users_roles showroom"
+known="s00_min_path s10_contract_payment s20_settlement_clearing s30_settlement_workflow s40_failure_paths s50_repairable_paths s65_cost_budget_funding_surface s70_daily_business_surface s80_execution_management_surface s85_admin_finance_surface s86_tender_rental_finance_surface s87_resource_contract_surface s88_output_invoice_surface s89_quality_safety_surface s90_users_roles showroom"
 
 if [ -n "$scenario" ]; then
   found=0
@@ -165,6 +165,12 @@ run_expect_fail "S50 bad seed should fail verification" "s50_repairable_paths" \
 run_check "S50 settlement links payment request after fix" "s50_repairable_paths" \
   "select case when count(*) = 1 then 'ok' else 'S50 payment not linked' end from payment_request where settlement_id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_settlement_050_001');" \
   "select id, amount, settlement_id from payment_request where id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_payment_050_001');"
+run_check "S65 cost budget and allocation records exist" "s65_cost_budget_funding_surface" \
+  "select case when (select count(*) from project_budget where name='S65 主体结构成本控制版' and version='S65-CTRL-V1') = 1 and (select count(*) from project_budget_boq_line where name='三层梁板钢筋制安') = 1 and (select count(*) from project_budget_cost_alloc where budget_boq_line_id in (select id from project_budget_boq_line where name='三层梁板钢筋制安')) = 2 then 'ok' else 'S65 budget records missing' end;" \
+  "select b.id, b.name, b.version, b.amount_revenue_target, b.amount_cost_target from project_budget b where b.name='S65 主体结构成本控制版';"
+run_check "S65 cost ledger progress and funding records exist" "s65_cost_budget_funding_surface" \
+  "select case when (select count(*) from construction_work_breakdown where code in ('S65-01','S65-0101')) = 2 and (select count(*) from project_cost_period where period='2025-08' and locked=false) >= 1 and (select count(*) from project_cost_ledger where note='S65 钢筋材料成本入账样例。') = 1 and (select count(*) from project_progress_entry where note='S65 三层梁板钢筋本期进度计量草稿。' and state='draft') = 1 and (select count(*) from project_funding_baseline where total_amount=5000000.0 and state='active') = 1 then 'ok' else 'S65 cost ledger/progress/funding missing' end;" \
+  "select 'cost_ledger' as kind, id, note, amount::text as value from project_cost_ledger where note='S65 钢筋材料成本入账样例。' union all select 'progress', id, note, progress_rate::text from project_progress_entry where note='S65 三层梁板钢筋本期进度计量草稿。' union all select 'funding', id, state, total_amount::text from project_funding_baseline where total_amount=5000000.0;"
 run_check "S70 material catalog and price exist" "s70_daily_business_surface" \
   "select case when (select count(*) from sc_material_catalog where id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_material_catalog_070_steel')) = 1 and (select count(*) from sc_material_price where id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_material_price_070_steel_quote')) = 1 then 'ok' else 'S70 material records missing' end;" \
   "select c.id, c.name, p.unit_price from sc_material_catalog c left join sc_material_price p on p.material_catalog_id = c.id where c.id in (select res_id from ir_model_data where module='smart_construction_demo' and name='sc_demo_material_catalog_070_steel');"
