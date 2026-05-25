@@ -37,8 +37,17 @@ class ProjectProject(models.Model):
             "payment.request",
             "construction.contract",
             "project.material.plan",
+            "sc.material.rental.settlement",
             "tender.bid",
             "sc.project.document",
+            "sc.quality.issue",
+            "sc.safety.issue",
+            "sc.site.photo.batch",
+            "sc.safety.disclosure",
+            "sc.safety.plan",
+            "sc.hazard.source",
+            "sc.safety.patrol.task",
+            "sc.check.standard",
             "project.cost.ledger",
             "project.cost.period",
             "project.progress.entry",
@@ -76,10 +85,16 @@ class ProjectProject(models.Model):
         if model_name not in self.env:
             return
         Model = self.env[model_name].sudo().with_context(active_test=False)
+        if not getattr(Model, "_auto", True):
+            return
         if "project_id" not in Model._fields:
             return
         records = Model.search([("project_id", "in", project_ids)])
         if not records:
+            return
+        if model_name in ("account.move", "account.move.line"):
+            records.write({"project_id": False})
+            deleted[f"{model_name}.project_id"] = deleted.get(f"{model_name}.project_id", 0) + len(records)
             return
         if model_name == "payment.request" and "state" in records._fields:
             records.with_context(allow_transition=True).write({"state": "cancel"})
@@ -87,5 +102,7 @@ class ProjectProject(models.Model):
             records.write({"state": "cancel"})
         elif model_name == "project.material.plan" and "state" in records._fields:
             records.write({"state": "draft"})
+        elif model_name in ("sc.quality.issue", "sc.safety.issue") and hasattr(records, "action_cancel"):
+            records.filtered(lambda record: record.state != "cancel").action_cancel()
         deleted[model_name] = deleted.get(model_name, 0) + len(records)
         records.unlink()

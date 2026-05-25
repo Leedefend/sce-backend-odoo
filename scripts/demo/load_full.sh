@@ -17,7 +17,12 @@ guard_prod_forbid
 
 printf '[demo.load.full] db=%s\n' "$DB_NAME"
 
-bash "$ROOT_DIR/scripts/demo/load_all.sh"
+DEMO_RESTART_AFTER_LOAD=0 bash "$ROOT_DIR/scripts/demo/load_all.sh"
 
 printf '[demo.load.full] seed demo_full\n'
 PROFILE=demo_full DB_NAME="$DB_NAME" bash "$ROOT_DIR/scripts/seed/run.sh"
+
+if [ "${DEMO_RESTART_AFTER_LOAD:-1}" = "1" ]; then
+  printf '[demo.load.full] restart odoo to refresh ACL/menu caches\n'
+  compose_dev up -d --force-recreate "${ODOO_SERVICE:-odoo}"
+fi

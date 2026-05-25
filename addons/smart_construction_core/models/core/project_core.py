@@ -271,41 +271,8 @@ class ProjectProjectStage(models.Model):
 class ProjectProject(models.Model):
     _inherit = 'project.project'
     _description = '项目'
-    _PROJECT_UNLINK_BLOCK_MODELS = (
-        "construction.contract",
-        "project.budget",
-        "project.cost.ledger",
-        "project.cost.period",
-        "project.progress.entry",
-        "project.material.plan",
-        "payment.request",
-        "sc.material.purchase.request",
-        "sc.material.acceptance",
-        "sc.material.inbound",
-        "sc.material.outbound",
-        "sc.material.rfq",
-        "sc.material.settlement",
-        "sc.material.rental.plan",
-        "sc.material.rental.order",
-        "sc.labor.plan",
-        "sc.labor.request",
-        "sc.attendance.checkin",
-        "sc.labor.usage",
-        "sc.labor.settlement",
-        "sc.equipment.plan",
-        "sc.equipment.request",
-        "sc.equipment.usage",
-        "sc.equipment.settlement",
-        "sc.subcontract.plan",
-        "sc.subcontract.request",
-        "sc.subcontract.register",
-        "sc.subcontract.settlement",
-        "sc.settlement.order",
-        "sc.settlement.adjustment",
-        "tender.bid",
-        "sc.project.document",
-        "sc.safety.issue",
-    )
+    # Empty means discover all stored project.project Many2one blockers at runtime.
+    _PROJECT_UNLINK_BLOCK_MODELS = ()
 
     _STAGE_XMLID_BY_KEY = {
         "planning": "smart_construction_core.project_stage_planning",
@@ -2033,6 +2000,8 @@ class ProjectProject(models.Model):
             if model_name not in self.env:
                 continue
             Model = self.env[model_name].sudo().with_context(active_test=False)
+            if not getattr(Model, "_auto", True):
+                continue
             label = str(getattr(Model, "_description", "") or model_name).strip() or model_name
             for project_id in project_ids:
                 count = int(Model.search_count([("project_id", "=", project_id)]) or 0)

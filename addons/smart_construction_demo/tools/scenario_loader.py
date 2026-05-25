@@ -15,6 +15,7 @@ BASE_SEED_FILES: List[str] = [
     "data/base/10_partners.xml",
     "data/base/20_projects.xml",
     "data/base/25_project_tasks.xml",
+    "data/demo/admin_menu_access.xml",
 ]
 
 
