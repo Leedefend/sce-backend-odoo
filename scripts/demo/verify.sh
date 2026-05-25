@@ -19,7 +19,7 @@ printf '[demo.verify] db=%s\n' "$DB_NAME"
 
 scenario="${SCENARIO:-}"
 step="${STEP:-}"
-known="s00_min_path s10_contract_payment s20_settlement_clearing s30_settlement_workflow s40_failure_paths s50_repairable_paths s70_daily_business_surface s80_execution_management_surface s85_admin_finance_surface s86_tender_rental_finance_surface s87_resource_contract_surface s88_output_invoice_surface s90_users_roles showroom"
+known="s00_min_path s10_contract_payment s20_settlement_clearing s30_settlement_workflow s40_failure_paths s50_repairable_paths s70_daily_business_surface s80_execution_management_surface s85_admin_finance_surface s86_tender_rental_finance_surface s87_resource_contract_surface s88_output_invoice_surface s89_quality_safety_surface s90_users_roles showroom"
 
 if [ -n "$scenario" ]; then
   found=0
@@ -216,6 +216,15 @@ run_check "S88 output invoice ledger record exists" "s88_output_invoice_surface"
 run_check "S88 output invoice adjustment record exists" "s88_output_invoice_surface" \
   "select case when (select count(*) from sc_output_invoice_adjustment where name='S88-OIA-001' and state='draft' and invoice_no='S88-OUT-NO-001' and red_flush_invoice_amount < 0) = 1 then 'ok' else 'S88 output invoice adjustment missing' end;" \
   "select id, name, state, invoice_no, original_invoice_amount, red_flush_invoice_amount from sc_output_invoice_adjustment where name='S88-OIA-001';"
+run_check "S89 quality standard and loop records exist" "s89_quality_safety_surface" \
+  "select case when (select count(*) from sc_check_standard where name='S89 主体结构质量检查标准') = 1 and (select count(*) from sc_check_standard_item where name='钢筋保护层厚度') = 1 and (select count(*) from sc_quality_issue where name='S89 梁底钢筋保护层偏差' and state='closed') = 1 and (select count(*) from sc_quality_rectification where issue_id in (select id from sc_quality_issue where name='S89 梁底钢筋保护层偏差')) = 1 and (select count(*) from sc_quality_recheck where issue_id in (select id from sc_quality_issue where name='S89 梁底钢筋保护层偏差') and result='passed') = 1 then 'ok' else 'S89 quality records missing' end;" \
+  "select 'issue' as kind, id, name, state from sc_quality_issue where name='S89 梁底钢筋保护层偏差' union all select 'standard', id, name, null as state from sc_check_standard where name='S89 主体结构质量检查标准';"
+run_check "S89 safety plan risk and loop records exist" "s89_quality_safety_surface" \
+  "select case when (select count(*) from sc_safety_plan where name='S89 高支模专项安全施工方案' and state='approved') = 1 and (select count(*) from sc_safety_disclosure where name='S89 高支模班前安全交底' and state='approved') = 1 and (select count(*) from sc_risk_library where name='S89 项目安全风险库') = 1 and (select count(*) from sc_risk_item where name='高支模架体失稳') = 1 and (select count(*) from sc_hazard_source where name='S89 1#楼高支模危险源' and state='controlled') = 1 and (select count(*) from sc_safety_issue where name='S89 高支模剪刀撑局部缺失' and state='closed') = 1 and (select count(*) from sc_safety_patrol_task where name='S89 高支模专项巡检' and state='done') = 1 then 'ok' else 'S89 safety records missing' end;" \
+  "select 'plan' as kind, id, name, state from sc_safety_plan where name='S89 高支模专项安全施工方案' union all select 'hazard', id, name, state from sc_hazard_source where name='S89 1#楼高支模危险源' union all select 'issue', id, name, state from sc_safety_issue where name='S89 高支模剪刀撑局部缺失' union all select 'patrol', id, name, state from sc_safety_patrol_task where name='S89 高支模专项巡检';"
+run_check "S89 site photo batches exist" "s89_quality_safety_surface" \
+  "select case when count(*) = 2 then 'ok' else 'S89 photo batches missing' end from sc_site_photo_batch where name in ('S89 质量整改复验照片','S89 安全整改复验照片');" \
+  "select id, name, evidence_stage, quality_issue_id, safety_issue_id from sc_site_photo_batch where name in ('S89 质量整改复验照片','S89 安全整改复验照片') order by name;"
 run_check "S90 users exist" "s90_users_roles" \
   "select case when count(*) >= 6 then 'ok' else 'S90 users missing' end from res_users where login in ('demo_pm','demo_finance','demo_cost','demo_audit','demo_readonly','svc_e2e_smoke');" \
   "select id, login, active from res_users where login in ('demo_pm','demo_finance','demo_cost','demo_audit','demo_readonly','svc_e2e_smoke') order by login;"
