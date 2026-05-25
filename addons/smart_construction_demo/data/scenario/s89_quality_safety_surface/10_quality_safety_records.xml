@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data noupdate="1">
+
+    <record id="sc_demo_check_standard_089_quality" model="sc.check.standard">
+      <field name="name">S89 主体结构质量检查标准</field>
+      <field name="standard_type">quality</field>
+      <field name="scope">project</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="default_rechecker_id" ref="base.user_admin"/>
+      <field name="import_source">manual</field>
+      <field name="effective_from">2025-08-01</field>
+      <field name="applies_building_room">True</field>
+      <field name="active">True</field>
+    </record>
+
+    <record id="sc_demo_check_standard_item_089_rebar" model="sc.check.standard.item">
+      <field name="standard_id" ref="smart_construction_demo.sc_demo_check_standard_089_quality"/>
+      <field name="sequence">10</field>
+      <field name="name">钢筋保护层厚度</field>
+      <field name="requirement">保护层厚度满足设计和规范允许偏差要求。</field>
+      <field name="bottom_line">True</field>
+      <field name="photo_required">True</field>
+      <field name="control_type">main</field>
+      <field name="acceptance_flow">supervisor</field>
+      <field name="score_weight">40.0</field>
+      <field name="tag">主体结构</field>
+    </record>
+
+    <record id="sc_demo_quality_issue_089_rebar" model="sc.quality.issue">
+      <field name="name">S89 梁底钢筋保护层偏差</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="standard_id" ref="smart_construction_demo.sc_demo_check_standard_089_quality"/>
+      <field name="standard_item_id" ref="smart_construction_demo.sc_demo_check_standard_item_089_rebar"/>
+      <field name="issue_date">2025-08-06</field>
+      <field name="source_channel">app</field>
+      <field name="issue_category">quality</field>
+      <field name="location">1# 楼三层 B 区梁底</field>
+      <field name="building">1# 楼</field>
+      <field name="room">三层 B 区</field>
+      <field name="issue_level">important</field>
+      <field name="responsible_party_id" ref="smart_construction_demo.sc_demo_partner_vendor_concrete"/>
+      <field name="owner_id" ref="base.user_admin"/>
+      <field name="rechecker_id" ref="base.user_admin"/>
+      <field name="rectification_deadline">2025-08-09</field>
+      <field name="description">抽检发现局部梁底钢筋保护层垫块缺失，需补设并复验。</field>
+      <field name="state">submitted</field>
+    </record>
+
+    <record id="sc_demo_quality_rectification_089_rebar" model="sc.quality.rectification">
+      <field name="issue_id" ref="smart_construction_demo.sc_demo_quality_issue_089_rebar"/>
+      <field name="rectification_date">2025-08-07</field>
+      <field name="source_channel">app</field>
+      <field name="handler_id" ref="base.user_admin"/>
+      <field name="result">已补设保护层垫块并复核钢筋定位。</field>
+    </record>
+
+    <record id="sc_demo_quality_recheck_089_rebar" model="sc.quality.recheck">
+      <field name="issue_id" ref="smart_construction_demo.sc_demo_quality_issue_089_rebar"/>
+      <field name="recheck_date">2025-08-08</field>
+      <field name="source_channel">pc</field>
+      <field name="recheck_user_id" ref="base.user_admin"/>
+      <field name="result">passed</field>
+      <field name="comment">复验通过，问题闭环。</field>
+    </record>
+
+    <record id="sc_demo_site_photo_batch_089_quality" model="sc.site.photo.batch">
+      <field name="name">S89 质量整改复验照片</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="evidence_stage">recheck</field>
+      <field name="quality_issue_id" ref="smart_construction_demo.sc_demo_quality_issue_089_rebar"/>
+      <field name="quality_rectification_id" ref="smart_construction_demo.sc_demo_quality_rectification_089_rebar"/>
+      <field name="quality_recheck_id" ref="smart_construction_demo.sc_demo_quality_recheck_089_rebar"/>
+      <field name="batch_date">2025-08-08</field>
+      <field name="owner_id" ref="base.user_admin"/>
+      <field name="location">1# 楼三层 B 区梁底</field>
+      <field name="source_channel">app</field>
+      <field name="album_category">recheck</field>
+      <field name="note">质量问题整改前后对比照片批次。</field>
+    </record>
+
+    <record id="sc_demo_safety_plan_089_dangerous" model="sc.safety.plan">
+      <field name="name">S89 高支模专项安全施工方案</field>
+      <field name="plan_type">dangerous</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="owner_id" ref="base.user_admin"/>
+      <field name="plan_date">2025-08-01</field>
+      <field name="approval_deadline">2025-08-03</field>
+      <field name="state">approved</field>
+      <field name="description">高支模区域施工前专项方案，覆盖搭设、验收、监测和拆除要求。</field>
+    </record>
+
+    <record id="sc_demo_safety_disclosure_089_dangerous" model="sc.safety.disclosure">
+      <field name="name">S89 高支模班前安全交底</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="safety_plan_id" ref="smart_construction_demo.sc_demo_safety_plan_089_dangerous"/>
+      <field name="disclosure_date">2025-08-04</field>
+      <field name="approval_deadline">2025-08-04</field>
+      <field name="owner_id" ref="base.user_admin"/>
+      <field name="participant_note">架子班、木工班、专职安全员。</field>
+      <field name="content">重点交底立杆间距、扫地杆、剪刀撑、验收挂牌和临边防护要求。</field>
+      <field name="state">approved</field>
+    </record>
+
+    <record id="sc_demo_risk_library_089_safety" model="sc.risk.library">
+      <field name="name">S89 项目安全风险库</field>
+      <field name="library_level">project</field>
+      <field name="version_no">2025.08</field>
+      <field name="active">True</field>
+    </record>
+
+    <record id="sc_demo_risk_item_089_high_support" model="sc.risk.item">
+      <field name="library_id" ref="smart_construction_demo.sc_demo_risk_library_089_safety"/>
+      <field name="name">高支模架体失稳</field>
+      <field name="category">危大工程</field>
+      <field name="subcategory">模板支撑体系</field>
+      <field name="risk_level">critical</field>
+      <field name="control_measure">方案审批、材料验收、搭设验收、沉降监测和旁站巡检。</field>
+      <field name="group_attention">True</field>
+      <field name="qualification_required">架子工持证上岗</field>
+      <field name="bottom_line">True</field>
+    </record>
+
+    <record id="sc_demo_hazard_source_089_high_support" model="sc.hazard.source">
+      <field name="name">S89 1#楼高支模危险源</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="risk_item_id" ref="smart_construction_demo.sc_demo_risk_item_089_high_support"/>
+      <field name="location">1# 楼四层中庭</field>
+      <field name="valid_from">2025-08-04</field>
+      <field name="valid_to">2025-08-20</field>
+      <field name="owner_id" ref="base.user_admin"/>
+      <field name="reporter_id" ref="base.user_admin"/>
+      <field name="control_status">controlled</field>
+      <field name="state">controlled</field>
+      <field name="description">高支模搭设区域，已设置专项巡检和旁站监测。</field>
+    </record>
+
+    <record id="sc_demo_safety_issue_089_high_support" model="sc.safety.issue">
+      <field name="name">S89 高支模剪刀撑局部缺失</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="hazard_source_id" ref="smart_construction_demo.sc_demo_hazard_source_089_high_support"/>
+      <field name="issue_date">2025-08-06</field>
+      <field name="source_channel">app</field>
+      <field name="issue_category">patrol</field>
+      <field name="location">1# 楼四层中庭北侧</field>
+      <field name="issue_level">critical</field>
+      <field name="responsible_party_id" ref="smart_construction_demo.sc_demo_partner_vendor_steel"/>
+      <field name="owner_id" ref="base.user_admin"/>
+      <field name="rechecker_id" ref="base.user_admin"/>
+      <field name="rectification_deadline">2025-08-07</field>
+      <field name="description">巡检发现高支模北侧一道剪刀撑缺失，要求立即整改。</field>
+      <field name="state">submitted</field>
+    </record>
+
+    <record id="sc_demo_safety_rectification_089_high_support" model="sc.safety.rectification">
+      <field name="issue_id" ref="smart_construction_demo.sc_demo_safety_issue_089_high_support"/>
+      <field name="rectification_date">2025-08-06</field>
+      <field name="source_channel">app</field>
+      <field name="handler_id" ref="base.user_admin"/>
+      <field name="result">已按方案补设剪刀撑并复查扣件扭矩。</field>
+    </record>
+
+    <record id="sc_demo_safety_recheck_089_high_support" model="sc.safety.recheck">
+      <field name="issue_id" ref="smart_construction_demo.sc_demo_safety_issue_089_high_support"/>
+      <field name="recheck_date">2025-08-07</field>
+      <field name="source_channel">pc</field>
+      <field name="recheck_user_id" ref="base.user_admin"/>
+      <field name="result">passed</field>
+      <field name="comment">复查合格，允许继续下道工序。</field>
+    </record>
+
+    <record id="sc_demo_safety_patrol_task_089_high_support" model="sc.safety.patrol.task">
+      <field name="name">S89 高支模专项巡检</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="planned_date">2025-08-06</field>
+      <field name="patrol_type">special</field>
+      <field name="check_standard_id" ref="smart_construction_demo.sc_demo_check_standard_089_quality"/>
+      <field name="owner_id" ref="base.user_admin"/>
+      <field name="planned_scope">1# 楼四层中庭高支模区域。</field>
+      <field name="score">92.0</field>
+      <field name="pass_rate">96.0</field>
+      <field name="state">done</field>
+      <field name="note">专项巡检已完成，发现问题已闭环。</field>
+    </record>
+
+    <record id="sc_demo_site_photo_batch_089_safety" model="sc.site.photo.batch">
+      <field name="name">S89 安全整改复验照片</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="evidence_stage">recheck</field>
+      <field name="safety_issue_id" ref="smart_construction_demo.sc_demo_safety_issue_089_high_support"/>
+      <field name="safety_rectification_id" ref="smart_construction_demo.sc_demo_safety_rectification_089_high_support"/>
+      <field name="safety_recheck_id" ref="smart_construction_demo.sc_demo_safety_recheck_089_high_support"/>
+      <field name="batch_date">2025-08-07</field>
+      <field name="owner_id" ref="base.user_admin"/>
+      <field name="location">1# 楼四层中庭北侧</field>
+      <field name="source_channel">app</field>
+      <field name="album_category">recheck</field>
+      <field name="note">安全问题整改复查照片批次。</field>
+    </record>
+
+  </data>
+</odoo>

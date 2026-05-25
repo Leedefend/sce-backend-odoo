@@ -15,6 +15,7 @@ SHOWROOM_PROJECTS = [
     {"name": "展厅-科技研发中心", "state": "warranty", "with_chain": False},
     {"name": "展厅-海绵城市示范区", "state": "done", "with_chain": False},
     {"name": "展厅-装配式住宅试点", "state": "in_progress", "with_chain": False},
+    {"name": "展厅-停工整改样板", "state": "paused", "with_chain": False},
 ]
 
 TASKS_PER_PROJECT = 12
@@ -64,6 +65,8 @@ def _ensure_lifecycle(project, target_state):
         return
     if target_state == "in_progress":
         project.action_set_lifecycle_state("in_progress")
+    elif target_state == "paused":
+        project.action_set_lifecycle_state("paused")
     elif target_state == "closing":
         project.action_set_lifecycle_state("in_progress")
         project.action_set_lifecycle_state("closing")

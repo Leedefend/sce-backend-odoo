@@ -39,4 +39,4 @@ export VITE_BUILD_OUT_DIR="${FRONTEND_DIST_ABS}"
 
 echo "[frontend.static.build] env_file=${ENV_FILE} vite_db=${VITE_ODOO_DB} app_env=${VITE_APP_ENV} out_dir=${VITE_BUILD_OUT_DIR}"
 cd "${ROOT_DIR}"
-exec pnpm -C frontend/apps/web build
+exec "${ROOT_DIR}/scripts/dev/pnpm_exec.sh" -C frontend/apps/web build

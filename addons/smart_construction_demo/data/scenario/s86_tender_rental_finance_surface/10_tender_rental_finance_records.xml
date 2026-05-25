@@ -1,0 +1,319 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data noupdate="1">
+
+    <record id="sc_demo_partner_rental_086" model="res.partner">
+      <field name="name">德阳某某周转材料租赁有限公司（示例）</field>
+      <field name="is_company">True</field>
+      <field name="company_type">company</field>
+      <field name="supplier_rank">1</field>
+      <field name="phone">0838-4444444</field>
+    </record>
+
+    <record id="sc_demo_fund_account_086_general" model="sc.fund.account">
+      <field name="sequence">86</field>
+      <field name="name">S86 项目基本户</field>
+      <field name="account_no">6222000000000861</field>
+      <field name="account_type">基本户</field>
+      <field name="bank_name">中国银行德阳示范支行</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="company_id" ref="base.main_company"/>
+      <field name="opening_balance">1800000.0</field>
+      <field name="currency_id" ref="base.CNY"/>
+      <field name="state">active</field>
+      <field name="note">S86 资金操作转出账户样例</field>
+    </record>
+
+    <record id="sc_demo_fund_account_086_supervision" model="sc.fund.account">
+      <field name="sequence">87</field>
+      <field name="name">S86 工资监管户</field>
+      <field name="account_no">6222000000000862</field>
+      <field name="account_type">工资监管户</field>
+      <field name="bank_name">中国农业银行德阳示范支行</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="company_id" ref="base.main_company"/>
+      <field name="opening_balance">320000.0</field>
+      <field name="currency_id" ref="base.CNY"/>
+      <field name="state">active</field>
+      <field name="note">S86 资金操作转入账户样例</field>
+    </record>
+
+    <record id="sc_demo_fund_operation_086_transfer" model="sc.fund.account.operation">
+      <field name="name">S86-FUND-TR-001</field>
+      <field name="operation_type">transfer_between</field>
+      <field name="operation_date">2025-06-02</field>
+      <field name="source_account_id" ref="smart_construction_demo.sc_demo_fund_account_086_general"/>
+      <field name="target_account_id" ref="smart_construction_demo.sc_demo_fund_account_086_supervision"/>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="company_id" ref="base.main_company"/>
+      <field name="currency_id" ref="base.CNY"/>
+      <field name="amount">260000.0</field>
+      <field name="operation_reason">六月工资监管户资金调拨</field>
+      <field name="state">done</field>
+      <field name="note">S86 资金调拨样例</field>
+    </record>
+
+    <record id="sc_demo_fund_operation_086_daily" model="sc.fund.account.operation">
+      <field name="name">S86-FUND-DAY-001</field>
+      <field name="operation_type">fund_daily_report</field>
+      <field name="operation_date">2025-06-03</field>
+      <field name="fund_account_id" ref="smart_construction_demo.sc_demo_fund_account_086_general"/>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="company_id" ref="base.main_company"/>
+      <field name="currency_id" ref="base.CNY"/>
+      <field name="daily_income">580000.0</field>
+      <field name="daily_expense">260000.0</field>
+      <field name="account_balance">2120000.0</field>
+      <field name="bank_balance">2120000.0</field>
+      <field name="operation_reason">项目资金日报</field>
+      <field name="state">confirmed</field>
+      <field name="note">S86 资金日报操作单样例</field>
+    </record>
+
+    <record id="sc_demo_tender_bid_086_complex" model="tender.bid">
+      <field name="name">S86-TB-001</field>
+      <field name="tender_name">S86 智慧园区配套工程投标</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="tender_round">1</field>
+      <field name="owner_id" ref="smart_construction_demo.sc_demo_partner_owner_001"/>
+      <field name="bid_amount">3260000.0</field>
+      <field name="deadline">2025-06-10 09:00:00</field>
+      <field name="open_date">2025-06-12 02:00:00</field>
+      <field name="state">won</field>
+      <field name="legacy_note">S86 投标全流程样例</field>
+    </record>
+
+    <record id="sc_demo_tender_bid_line_086_civil" model="tender.bid.line">
+      <field name="bid_id" ref="smart_construction_demo.sc_demo_tender_bid_086_complex"/>
+      <field name="sequence">10</field>
+      <field name="code">S86-TB-L001</field>
+      <field name="name">园区配套土建工程</field>
+      <field name="spec">基础、道路、管沟</field>
+      <field name="uom_id" ref="uom.product_uom_unit"/>
+      <field name="quantity">1.0</field>
+      <field name="price">2260000.0</field>
+    </record>
+
+    <record id="sc_demo_tender_bid_line_086_install" model="tender.bid.line">
+      <field name="bid_id" ref="smart_construction_demo.sc_demo_tender_bid_086_complex"/>
+      <field name="sequence">20</field>
+      <field name="code">S86-TB-L002</field>
+      <field name="name">园区配套安装工程</field>
+      <field name="spec">弱电、照明、给排水</field>
+      <field name="uom_id" ref="uom.product_uom_unit"/>
+      <field name="quantity">1.0</field>
+      <field name="price">1000000.0</field>
+    </record>
+
+    <record id="sc_demo_tender_doc_purchase_086" model="tender.doc.purchase">
+      <field name="bid_id" ref="smart_construction_demo.sc_demo_tender_bid_086_complex"/>
+      <field name="applicant_id" ref="base.user_admin"/>
+      <field name="apply_date">2025-06-01</field>
+      <field name="amount">1200.0</field>
+      <field name="invoice_no">S86-TENDER-FEE-001</field>
+      <field name="payment_method">银行转账</field>
+      <field name="receipt_partner_name">德阳市某产业发展有限公司（示例）</field>
+      <field name="receipt_payee_name">招标代理机构</field>
+      <field name="receipt_bank_name">中国银行德阳分行</field>
+      <field name="receipt_bank_account">6222000000000868</field>
+      <field name="state">approved</field>
+      <field name="remark">S86 标书购买样例</field>
+    </record>
+
+    <record id="sc_demo_tender_survey_086" model="tender.survey">
+      <field name="bid_id" ref="smart_construction_demo.sc_demo_tender_bid_086_complex"/>
+      <field name="survey_date">2025-06-04</field>
+      <field name="location">智慧园区项目现场</field>
+      <field name="issue_notes">现场临水临电条件满足，需关注雨季道路保通。</field>
+    </record>
+
+    <record id="sc_demo_tender_doc_review_086" model="tender.doc.review">
+      <field name="bid_id" ref="smart_construction_demo.sc_demo_tender_bid_086_complex"/>
+      <field name="version">V1.0</field>
+      <field name="comment">商务报价与技术响应已完成复核。</field>
+      <field name="state">approved</field>
+    </record>
+
+    <record id="sc_demo_tender_opening_086" model="tender.opening">
+      <field name="bid_id" ref="smart_construction_demo.sc_demo_tender_bid_086_complex"/>
+      <field name="open_time">2025-06-12 02:00:00</field>
+      <field name="result">won</field>
+      <field name="win_price">3260000.0</field>
+      <field name="remark">S86 开标中标样例</field>
+    </record>
+
+    <record id="sc_demo_tender_opening_competitor_086" model="tender.opening.competitor">
+      <field name="opening_id" ref="smart_construction_demo.sc_demo_tender_opening_086"/>
+      <field name="name">成都某某建设有限公司（示例）</field>
+      <field name="quote">3380000.0</field>
+      <field name="rank">2</field>
+      <field name="remark">第二名</field>
+    </record>
+
+    <record id="sc_demo_tender_guarantee_086_out" model="tender.guarantee">
+      <field name="bid_id" ref="smart_construction_demo.sc_demo_tender_bid_086_complex"/>
+      <field name="type">out</field>
+      <field name="date">2025-06-05</field>
+      <field name="amount">50000.0</field>
+      <field name="state">confirmed</field>
+      <field name="remark">S86 投标保证金缴纳</field>
+    </record>
+
+    <record id="sc_demo_tender_guarantee_086_return" model="tender.guarantee">
+      <field name="bid_id" ref="smart_construction_demo.sc_demo_tender_bid_086_complex"/>
+      <field name="type">return</field>
+      <field name="date">2025-06-20</field>
+      <field name="amount">50000.0</field>
+      <field name="state">confirmed</field>
+      <field name="remark">S86 投标保证金退回</field>
+    </record>
+
+    <record id="sc_demo_expense_claim_086_deposit_pay" model="sc.expense.claim">
+      <field name="name">S86-DEP-PAY-001</field>
+      <field name="source_origin">manual</field>
+      <field name="claim_type">deposit_pay</field>
+      <field name="state">done</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_owner_001"/>
+      <field name="applicant_name">测试-投标专员</field>
+      <field name="guarantee_project_name">S86 智慧园区配套工程投标</field>
+      <field name="guarantee_type">bid</field>
+      <field name="payment_method">银行转账</field>
+      <field name="payee">招标代理机构</field>
+      <field name="payment_account_name">S86 项目基本户</field>
+      <field name="date_claim">2025-06-05</field>
+      <field name="expense_type">投标保证金</field>
+      <field name="summary">S86 投标保证金支付</field>
+      <field name="amount">50000.0</field>
+      <field name="approved_amount">50000.0</field>
+      <field name="currency_id" ref="base.CNY"/>
+      <field name="note">S86 保证金支付样例</field>
+    </record>
+
+    <record id="sc_demo_expense_claim_086_deposit_refund" model="sc.expense.claim">
+      <field name="name">S86-DEP-REF-001</field>
+      <field name="source_origin">manual</field>
+      <field name="claim_type">deposit_refund</field>
+      <field name="state">done</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_owner_001"/>
+      <field name="applicant_name">测试-投标专员</field>
+      <field name="guarantee_project_name">S86 智慧园区配套工程投标</field>
+      <field name="guarantee_type">bid</field>
+      <field name="payment_method">银行转账</field>
+      <field name="return_reason">中标后保证金按流程退回</field>
+      <field name="is_returned">True</field>
+      <field name="receipt_account_name">S86 项目基本户</field>
+      <field name="date_claim">2025-06-20</field>
+      <field name="expense_type">投标保证金退回</field>
+      <field name="summary">S86 投标保证金退回</field>
+      <field name="amount">50000.0</field>
+      <field name="approved_amount">50000.0</field>
+      <field name="currency_id" ref="base.CNY"/>
+      <field name="note">S86 保证金退回样例</field>
+    </record>
+
+    <record id="sc_demo_material_catalog_086_scaffold" model="sc.material.catalog">
+      <field name="name">S86 盘扣脚手架</field>
+      <field name="code">MAT-DEMO-SCAFFOLD-086</field>
+      <field name="company_id" ref="base.main_company"/>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="spec_model">48 系列</field>
+      <field name="uom_text">吨</field>
+      <field name="planned_price">18.0</field>
+      <field name="internal_price">16.0</field>
+      <field name="depth">周转材料租赁样例</field>
+    </record>
+
+    <record id="sc_demo_material_rental_plan_086_scaffold" model="sc.material.rental.plan">
+      <field name="name">S86-MRP-001</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="supplier_id" ref="smart_construction_demo.sc_demo_partner_rental_086"/>
+      <field name="plan_date">2025-06-01</field>
+      <field name="planned_start">2025-06-08</field>
+      <field name="planned_end">2025-07-08</field>
+      <field name="rent_purpose">A 区主体结构外架搭设</field>
+      <field name="currency_id" ref="base.CNY"/>
+      <field name="state">approved</field>
+      <field name="note">S86 周转材料租赁计划样例</field>
+    </record>
+
+    <record id="sc_demo_material_rental_plan_line_086_scaffold" model="sc.material.rental.plan.line">
+      <field name="plan_id" ref="smart_construction_demo.sc_demo_material_rental_plan_086_scaffold"/>
+      <field name="material_catalog_id" ref="smart_construction_demo.sc_demo_material_catalog_086_scaffold"/>
+      <field name="material_name">S86 盘扣脚手架</field>
+      <field name="material_spec">48 系列</field>
+      <field name="unit_name">吨</field>
+      <field name="planned_qty">80.0</field>
+      <field name="planned_days">30.0</field>
+      <field name="daily_price">16.0</field>
+      <field name="note">主体结构外架周转材料</field>
+    </record>
+
+    <record id="sc_demo_material_rental_order_086_scaffold" model="sc.material.rental.order">
+      <field name="name">S86-MRO-001</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="plan_id" ref="smart_construction_demo.sc_demo_material_rental_plan_086_scaffold"/>
+      <field name="supplier_id" ref="smart_construction_demo.sc_demo_partner_rental_086"/>
+      <field name="rental_date">2025-06-08</field>
+      <field name="planned_return_date">2025-07-08</field>
+      <field name="currency_id" ref="base.CNY"/>
+      <field name="state">settled</field>
+      <field name="note">S86 周转材料租赁单样例</field>
+    </record>
+
+    <record id="sc_demo_material_rental_order_line_086_scaffold" model="sc.material.rental.order.line">
+      <field name="order_id" ref="smart_construction_demo.sc_demo_material_rental_order_086_scaffold"/>
+      <field name="material_catalog_id" ref="smart_construction_demo.sc_demo_material_catalog_086_scaffold"/>
+      <field name="material_name">S86 盘扣脚手架</field>
+      <field name="material_spec">48 系列</field>
+      <field name="unit_name">吨</field>
+      <field name="qty">80.0</field>
+      <field name="rental_days">30.0</field>
+      <field name="daily_price">16.0</field>
+      <field name="returned_qty">80.0</field>
+      <field name="damage_qty">0.0</field>
+      <field name="note">已按期退还</field>
+    </record>
+
+    <record id="sc_demo_material_rental_settlement_086_scaffold" model="sc.material.rental.settlement">
+      <field name="name">S86-MRS-001</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="rental_order_id" ref="smart_construction_demo.sc_demo_material_rental_order_086_scaffold"/>
+      <field name="supplier_id" ref="smart_construction_demo.sc_demo_partner_rental_086"/>
+      <field name="settlement_date">2025-07-10</field>
+      <field name="currency_id" ref="base.CNY"/>
+      <field name="state">paid</field>
+      <field name="note">S86 周转材料租赁结算样例</field>
+    </record>
+
+    <record id="sc_demo_material_rental_settlement_line_086_scaffold" model="sc.material.rental.settlement.line">
+      <field name="settlement_id" ref="smart_construction_demo.sc_demo_material_rental_settlement_086_scaffold"/>
+      <field name="material_catalog_id" ref="smart_construction_demo.sc_demo_material_catalog_086_scaffold"/>
+      <field name="material_name">S86 盘扣脚手架</field>
+      <field name="material_spec">48 系列</field>
+      <field name="unit_name">吨</field>
+      <field name="qty">80.0</field>
+      <field name="rental_days">30.0</field>
+      <field name="daily_price">16.0</field>
+      <field name="damage_amount">0.0</field>
+      <field name="note">租赁期 30 天</field>
+    </record>
+
+    <record id="sc_demo_settlement_adjustment_086_deduction" model="sc.settlement.adjustment">
+      <field name="name">S86-ADJ-001</field>
+      <field name="source_origin">manual</field>
+      <field name="adjustment_type">deduction</field>
+      <field name="state">confirmed</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_rental_086"/>
+      <field name="date_adjustment">2025-07-11</field>
+      <field name="item_name">租赁结算资料延迟扣款</field>
+      <field name="account_name">项目基本户</field>
+      <field name="amount">1800.0</field>
+      <field name="currency_id" ref="base.CNY"/>
+      <field name="note">S86 结算调整扣款样例</field>
+    </record>
+
+  </data>
+</odoo>

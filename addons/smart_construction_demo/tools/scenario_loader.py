@@ -8,6 +8,16 @@ from odoo.tools import convert
 from odoo.tools.misc import file_path
 
 
+BASE_SEED_FILES: List[str] = [
+    "data/base/00_dictionary.xml",
+    "data/base/dictionary_demo.xml",
+    "data/base/cost_demo.xml",
+    "data/base/10_partners.xml",
+    "data/base/20_projects.xml",
+    "data/base/25_project_tasks.xml",
+]
+
+
 # Scenario registry: scenario_name -> ordered xml file list (relative under module root)
 SCENARIOS: Dict[str, List[str]] = {
     # S00 is "default baseline" (usually already loaded by manifest, but loader can load too)
@@ -60,6 +70,130 @@ SCENARIOS: Dict[str, List[str]] = {
             "data/scenario/s60_project_cockpit/10_cockpit_business_facts.xml",
         ],
     },
+    "s65_cost_budget_funding_surface": {
+        "sequence": 65,
+        "files": [
+            "data/scenario/s65_cost_budget_funding_surface/10_cost_budget_funding_records.xml",
+        ],
+    },
+    "s66_ledger_entity_surface": {
+        "sequence": 66,
+        "files": [
+            "data/scenario/s66_ledger_entity_surface/10_ledger_entity_records.xml",
+        ],
+    },
+    "s67_scene_pack_surface": {
+        "sequence": 67,
+        "files": [
+            "data/scenario/s67_scene_pack_surface/10_scene_pack_records.xml",
+        ],
+    },
+    "s68_cockpit_workbench_surface": {
+        "sequence": 68,
+        "files": [
+            "data/scenario/s68_cockpit_workbench_surface/10_cockpit_workbench_records.xml",
+        ],
+    },
+    "s69_payment_ledger_surface": {
+        "sequence": 69,
+        "files": [
+            "data/scenario/s69_payment_ledger_surface/10_payment_ledger_records.xml",
+        ],
+    },
+    "s70_daily_business_surface": {
+        "sequence": 70,
+        "files": [
+            "data/scenario/s70_daily_business_surface/10_daily_business_records.xml",
+        ],
+    },
+    "s71_governance_audit_surface": {
+        "sequence": 71,
+        "files": [
+            "data/scenario/s71_governance_audit_surface/10_governance_audit_records.xml",
+        ],
+    },
+    "s72_project_governance_surface": {
+        "sequence": 72,
+        "files": [
+            "data/scenario/s72_project_governance_surface/10_project_governance_records.xml",
+        ],
+    },
+    "s73_risk_settlement_surface": {
+        "sequence": 73,
+        "files": [
+            "data/scenario/s73_risk_settlement_surface/10_risk_settlement_records.xml",
+        ],
+    },
+    "s74_partner_supplier_surface": {
+        "sequence": 74,
+        "files": [
+            "data/scenario/s74_partner_supplier_surface/10_partner_supplier_records.xml",
+        ],
+    },
+    "s75_summary_projection_surface": {
+        "sequence": 75,
+        "files": [],
+    },
+    "s76_workflow_compat_surface": {
+        "sequence": 76,
+        "files": [
+            "data/scenario/s76_workflow_compat_surface/10_workflow_compat_records.xml",
+        ],
+    },
+    "s77_data_dictionary_surface": {
+        "sequence": 77,
+        "files": [
+            "data/scenario/s77_data_dictionary_surface/10_data_dictionary_records.xml",
+        ],
+    },
+    "s78_project_document_wbs_surface": {
+        "sequence": 78,
+        "files": [
+            "data/scenario/s78_project_document_wbs_surface/10_project_document_wbs_records.xml",
+        ],
+    },
+    "s79_execution_structure_surface": {
+        "sequence": 79,
+        "files": [
+            "data/scenario/s79_execution_structure_surface/10_execution_structure_records.xml",
+        ],
+    },
+    "s80_execution_management_surface": {
+        "sequence": 80,
+        "files": [
+            "data/scenario/s80_execution_management_surface/10_execution_management_records.xml",
+        ],
+    },
+    "s85_admin_finance_surface": {
+        "sequence": 85,
+        "files": [
+            "data/scenario/s85_admin_finance_surface/10_admin_finance_records.xml",
+        ],
+    },
+    "s86_tender_rental_finance_surface": {
+        "sequence": 86,
+        "files": [
+            "data/scenario/s86_tender_rental_finance_surface/10_tender_rental_finance_records.xml",
+        ],
+    },
+    "s87_resource_contract_surface": {
+        "sequence": 87,
+        "files": [
+            "data/scenario/s87_resource_contract_surface/10_resource_contract_records.xml",
+        ],
+    },
+    "s88_output_invoice_surface": {
+        "sequence": 88,
+        "files": [
+            "data/scenario/s88_output_invoice_surface/10_output_invoice_records.xml",
+        ],
+    },
+    "s89_quality_safety_surface": {
+        "sequence": 89,
+        "files": [
+            "data/scenario/s89_quality_safety_surface/10_quality_safety_records.xml",
+        ],
+    },
     "s90_users_roles": {
         "sequence": 90,
         "files": [
@@ -102,6 +236,27 @@ RELEASE_SCENARIOS: List[str] = [
     "s20_settlement_clearing",
     "s30_settlement_workflow",
     "s60_project_cockpit",
+    "s65_cost_budget_funding_surface",
+    "s66_ledger_entity_surface",
+    "s67_scene_pack_surface",
+    "s68_cockpit_workbench_surface",
+    "s69_payment_ledger_surface",
+    "s70_daily_business_surface",
+    "s71_governance_audit_surface",
+    "s72_project_governance_surface",
+    "s73_risk_settlement_surface",
+    "s74_partner_supplier_surface",
+    "s75_summary_projection_surface",
+    "s76_workflow_compat_surface",
+    "s77_data_dictionary_surface",
+    "s78_project_document_wbs_surface",
+    "s79_execution_structure_surface",
+    "s80_execution_management_surface",
+    "s85_admin_finance_surface",
+    "s86_tender_rental_finance_surface",
+    "s87_resource_contract_surface",
+    "s88_output_invoice_surface",
+    "s89_quality_safety_surface",
     "s90_users_roles",
 ]
 
@@ -151,6 +306,7 @@ def load_scenario(
     scenario: str,
     mode: str = "update",
     step: str | None = None,
+    ensure_base: bool = True,
 ) -> None:
     """
     Load a demo scenario XML files into current DB using Odoo converter.
@@ -170,8 +326,13 @@ def load_scenario(
 
     if scenario == "s90_users_roles":
         _ensure_demo_user_xmlids(env)
+    if scenario == "s50_repairable_paths":
+        _reset_s50_repairable_records(env)
 
     module = "smart_construction_demo"
+    if ensure_base:
+        load_base_seed(env, mode=mode)
+
     registry = _normalize_registry()
     files = registry[scenario]["files"]
     files = _filter_files(files, step)
@@ -194,20 +355,135 @@ def load_scenario(
             kind="data",
         )
 
+    if scenario == "s69_payment_ledger_surface":
+        _ensure_s69_payment_ledger(env)
+    if scenario == "s71_governance_audit_surface":
+        _ensure_s71_user_preference(env)
+    if scenario == "s78_project_document_wbs_surface":
+        _ensure_s78_project_document_wbs(env)
+    if scenario == "s79_execution_structure_surface":
+        _ensure_s79_execution_structure(env)
+
     env.cr.commit()
+
+
+def load_base_seed(env, mode: str = "update") -> None:
+    """
+    Recreate shared demo base records that scenarios reference.
+
+    The module install path intentionally runs user_acceptance_project_cleanup
+    after loading the default demo records, which removes the base projects and
+    their XMLIDs. Scenario replay must restore that base first.
+    """
+    module = "smart_construction_demo"
+    idref = {}
+    for relpath in BASE_SEED_FILES:
+        abspath = file_path(f"{module}/{relpath}")
+        convert.convert_file(
+            env,
+            module,
+            abspath,
+            idref,
+            mode=mode,
+            noupdate=False,
+            kind="data",
+        )
+    env.cr.commit()
+
+
+def _ensure_s69_payment_ledger(env) -> None:
+    """Create the S69 payment ledger through the guarded model context."""
+    module = "smart_construction_demo"
+    request = env.ref(f"{module}.sc_demo_payment_request_069_pay", raise_if_not_found=False)
+    if not request:
+        return
+    Ledger = env["payment.ledger"].sudo()
+    ledger = Ledger.search([("payment_request_id", "=", request.id)], limit=1)
+    values = {
+        "payment_request_id": request.id,
+        "amount": 120000.0,
+        "paid_at": "2025-08-24 10:00:00",
+        "ref": "S69-PAY-LEDGER-001",
+        "note": "S69 支付台账样例。",
+    }
+    if ledger:
+        ledger.write(values)
+    else:
+        Ledger.with_context(allow_payment_ledger_create=True).create(values)
+
+
+def _ensure_s71_user_preference(env) -> None:
+    """Upsert the S71 scene preference because it is unique per user."""
+    module = "smart_construction_demo"
+    user = env.ref("base.user_admin", raise_if_not_found=False)
+    scene = env.ref(f"{module}.sc_demo_scene_067_demo_ops", raise_if_not_found=False)
+    if not user or not scene:
+        return
+    Preference = env["sc.user.preference"].sudo()
+    values = {
+        "user_id": user.id,
+        "default_scene_id": scene.id,
+        "pinned_tile_keys": ["demo.ops.dashboard"],
+        "recent_tiles": ["demo.ops.dashboard", "finance.payment.ledger"],
+    }
+    preference = Preference.search([("user_id", "=", user.id)], limit=1)
+    if preference:
+        preference.write(values)
+    else:
+        Preference.create(values)
+
+
+def _ensure_s78_project_document_wbs(env) -> None:
+    """Keep XML-loaded S78 WBS levels and document attachment relations stable."""
+    wbs_records = env["construction.work.breakdown"].sudo().search(
+        [("code", "in", ("S78-SINGLE", "S78-UNIT", "S78-SUBDIV", "S78-INSP-001"))],
+        order="id",
+    )
+    if wbs_records:
+        wbs_records._compute_level()
+
+    doc = env.ref(
+        "smart_construction_demo.sc_demo_document_078_quality_archive",
+        raise_if_not_found=False,
+    )
+    attachment = env.ref(
+        "smart_construction_demo.sc_demo_attachment_078_quality_archive",
+        raise_if_not_found=False,
+    )
+    if doc and attachment and attachment not in doc.attachment_ids:
+        doc.sudo().write({"attachment_ids": [(4, attachment.id)]})
+
+
+def _ensure_s79_execution_structure(env) -> None:
+    """Refresh stored execution-structure rollups after XML replay."""
+    structures = env["sc.project.structure"].sudo().search(
+        [
+            (
+                "code",
+                "in",
+                ("S79-SINGLE", "S79-UNIT-MEP", "S79-DIV-FIRE", "S79-ITEM-FIRE-PIPE"),
+            )
+        ],
+        order="id",
+    )
+    for node in structures:
+        node._compute_level()
+    for node in reversed(structures):
+        node._compute_totals()
 
 
 def load_all(env, mode: str = "update") -> None:
     """
     Load all registered scenarios in stable order.
     """
+    load_base_seed(env, mode=mode)
     registry = _normalize_registry()
     ordered = sorted(
         registry.items(),
         key=lambda item: (item[1]["sequence"], item[0]),
     )
     for scenario, _spec in ordered:
-        load_scenario(env, scenario, mode=mode)
+        load_scenario(env, scenario, mode=mode, ensure_base=False)
 
 
 def load_release_seed(env, mode: str = "update") -> None:
@@ -218,10 +494,11 @@ def load_release_seed(env, mode: str = "update") -> None:
     walkthrough path for product demo and acceptance.
     """
     known = set(SCENARIOS.keys())
+    load_base_seed(env, mode=mode)
     for scenario in RELEASE_SCENARIOS:
         if scenario not in known:
             raise ValueError(f"release scenario '{scenario}' not registered")
-        load_scenario(env, scenario, mode=mode)
+        load_scenario(env, scenario, mode=mode, ensure_base=False)
 
 
 def _ensure_demo_user_xmlids(env) -> None:
@@ -260,3 +537,22 @@ def _ensure_demo_user_xmlids(env) -> None:
                 "noupdate": True,
             }
         )
+
+
+def _reset_s50_repairable_records(env) -> None:
+    """Replay S50 from its intended bad seed without mutating guarded fields."""
+    for xmlid in (
+        "smart_construction_demo.sc_demo_payment_050_001",
+        "smart_construction_demo.sc_demo_settlement_line_050_001",
+        "smart_construction_demo.sc_demo_settlement_050_001",
+    ):
+        model_name, res_id = env["ir.model.data"]._xmlid_to_res_model_res_id(
+            xmlid,
+            raise_if_not_found=False,
+        )
+        if not model_name or not res_id:
+            continue
+        record = env[model_name].sudo().browse(res_id).exists()
+        if record:
+            record.with_context(allow_transition=True, allow_contract_change=True).unlink()
+    env.cr.commit()

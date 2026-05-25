@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data noupdate="1">
+
+    <record id="sc_demo_dictionary_077_discipline_civil" model="project.dictionary">
+      <field name="name">S77 土建工程</field>
+      <field name="code">S77-DISC-CIVIL</field>
+      <field name="type">discipline</field>
+      <field name="sequence">7710</field>
+      <field name="active">True</field>
+    </record>
+
+    <record id="sc_demo_dictionary_077_chapter_structure" model="project.dictionary">
+      <field name="name">S77 主体结构章节</field>
+      <field name="code">S77-CH-STRUCT</field>
+      <field name="type">chapter</field>
+      <field name="parent_id" ref="smart_construction_demo.sc_demo_dictionary_077_discipline_civil"/>
+      <field name="sequence">7720</field>
+      <field name="active">True</field>
+    </record>
+
+    <record id="sc_demo_dictionary_077_quota_rebar" model="project.dictionary">
+      <field name="name">S77 钢筋制作安装定额</field>
+      <field name="code">S77-QI-REBAR</field>
+      <field name="type">quota_item</field>
+      <field name="parent_id" ref="smart_construction_demo.sc_demo_dictionary_077_chapter_structure"/>
+      <field name="sequence">7730</field>
+      <field name="active">True</field>
+    </record>
+
+    <record id="sc_demo_dictionary_077_sub_rebar_install" model="project.dictionary">
+      <field name="name">S77 HRB400 钢筋绑扎安装</field>
+      <field name="code">S77-SUB-REBAR-INSTALL</field>
+      <field name="type">sub_item</field>
+      <field name="parent_id" ref="smart_construction_demo.sc_demo_dictionary_077_quota_rebar"/>
+      <field name="sequence">7740</field>
+      <field name="active">True</field>
+      <field name="quota_code">S77-5-001</field>
+      <field name="uom_id" ref="uom.product_uom_unit"/>
+      <field name="price_total">486.50</field>
+      <field name="price_direct">420.00</field>
+      <field name="price_labor">95.00</field>
+      <field name="price_material">305.00</field>
+      <field name="price_machine">20.00</field>
+      <field name="amount_misc">66.50</field>
+      <field name="rate_misc">15.83</field>
+      <field name="work_content">S77 钢筋除锈、制作、绑扎、安装和成品保护。</field>
+      <field name="raw_line">S77-5-001;HRB400 钢筋绑扎安装;项;486.50</field>
+    </record>
+
+    <record id="sc_demo_signup_throttle_077_active" model="sc.signup.throttle">
+      <field name="key">s77:signup:demo@example.com</field>
+      <field name="count">2</field>
+      <field name="window_start">1756605600</field>
+      <field name="last_seen">1756605660</field>
+    </record>
+
+    <record id="sc_demo_signup_throttle_077_stale" model="sc.signup.throttle">
+      <field name="key">s77:signup:stale@example.com</field>
+      <field name="count">5</field>
+      <field name="window_start">1725069600</field>
+      <field name="last_seen">1725069900</field>
+    </record>
+
+  </data>
+</odoo>

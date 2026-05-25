@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data noupdate="1">
+
+    <record id="sc_dict_doc_subtype_078_acceptance" model="sc.dictionary">
+      <field name="name">S78 分项验收资料</field>
+      <field name="code">S78-DOC-SUB-ACCEPT</field>
+      <field name="type">doc_subtype</field>
+      <field name="sequence">7810</field>
+      <field name="active">True</field>
+    </record>
+
+    <record id="sc_demo_wbs_078_single" model="project.wbs">
+      <field name="name">S78 园区二期单项工程</field>
+      <field name="code">S78-SINGLE</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="level_type">single</field>
+      <field name="sequence">7810</field>
+      <field name="active">True</field>
+    </record>
+
+    <record id="sc_demo_wbs_078_unit" model="project.wbs">
+      <field name="name">S78 2# 研发楼单位工程</field>
+      <field name="code">S78-UNIT</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="parent_id" ref="smart_construction_demo.sc_demo_wbs_078_single"/>
+      <field name="level_type">unit</field>
+      <field name="sequence">7820</field>
+      <field name="active">True</field>
+    </record>
+
+    <record id="sc_demo_wbs_078_sub_division" model="project.wbs">
+      <field name="name">S78 主体结构分部工程</field>
+      <field name="code">S78-SUBDIV</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="parent_id" ref="smart_construction_demo.sc_demo_wbs_078_unit"/>
+      <field name="level_type">sub_division</field>
+      <field name="sequence">7830</field>
+      <field name="active">True</field>
+    </record>
+
+    <record id="sc_demo_wbs_078_inspection_lot" model="project.wbs">
+      <field name="name">S78 三层梁板钢筋检验批</field>
+      <field name="code">S78-INSP-001</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="parent_id" ref="smart_construction_demo.sc_demo_wbs_078_sub_division"/>
+      <field name="level_type">inspection_lot</field>
+      <field name="sequence">7840</field>
+      <field name="active">True</field>
+    </record>
+
+    <record id="sc_demo_document_078_safety_review" model="sc.project.document">
+      <field name="name">S78 临边防护专项安全资料</field>
+      <field name="document_kind">safety</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="wbs_id" ref="smart_construction_demo.sc_demo_wbs_078_unit"/>
+      <field name="task_id" ref="smart_construction_demo.sc_demo_task_round1_001"/>
+      <field name="doc_type_id" ref="smart_construction_demo.sc_dict_doc_type_safety"/>
+      <field name="doc_subtype_id" ref="smart_construction_demo.sc_dict_doc_subtype_078_acceptance"/>
+      <field name="date_doc">2025-08-18</field>
+      <field name="version">S78-SAFE-A1</field>
+      <field name="is_mandatory">True</field>
+      <field name="responsible_id" ref="base.user_admin"/>
+      <field name="company_id" ref="base.main_company"/>
+      <field name="state">review</field>
+      <field name="note">S78 项目资料中心安全资料样例，关联 WBS 与任务。</field>
+    </record>
+
+    <record id="sc_demo_document_078_quality_archive" model="sc.project.document">
+      <field name="name">S78 三层梁板钢筋隐蔽验收记录</field>
+      <field name="document_kind">quality</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="wbs_id" ref="smart_construction_demo.sc_demo_wbs_078_inspection_lot"/>
+      <field name="task_id" ref="smart_construction_demo.sc_demo_task_round1_002"/>
+      <field name="doc_type_id" ref="smart_construction_demo.sc_dict_doc_type_quality"/>
+      <field name="doc_subtype_id" ref="smart_construction_demo.sc_dict_doc_subtype_078_acceptance"/>
+      <field name="date_doc">2025-08-20</field>
+      <field name="version">S78-QUAL-A1</field>
+      <field name="is_mandatory">True</field>
+      <field name="responsible_id" ref="base.user_admin"/>
+      <field name="company_id" ref="base.main_company"/>
+      <field name="state">done</field>
+      <field name="note">S78 项目资料中心归档资料样例，带附件计数校验。</field>
+    </record>
+
+    <record id="sc_demo_attachment_078_quality_archive" model="ir.attachment">
+      <field name="name">S78-quality-acceptance-note.txt</field>
+      <field name="type">binary</field>
+      <field name="datas">Uzc4IHF1YWxpdHkgYWNjZXB0YW5jZSBhdHRhY2htZW50Lg==</field>
+      <field name="mimetype">text/plain</field>
+      <field name="res_model">sc.project.document</field>
+      <field name="res_id" eval="ref('smart_construction_demo.sc_demo_document_078_quality_archive')"/>
+    </record>
+
+    <record id="sc_demo_document_078_quality_archive" model="sc.project.document">
+      <field name="attachment_ids" eval="[(6, 0, [ref('smart_construction_demo.sc_demo_attachment_078_quality_archive')])]"/>
+    </record>
+
+  </data>
+</odoo>

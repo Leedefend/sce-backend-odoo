@@ -218,12 +218,33 @@ make demo.verify DB_NAME=sc_demo
 | 场景 | 目标 | 关键模型 | 可验证点 |
 | --- | --- | --- | --- |
 | S00 | 最短路径（项目/BOQ/材料/发票） | project.project / project.boq.line / project.material.plan / account.move | projects/boq/material/invoices |
+| S65 | 成本预算资金表单面 | construction.work.breakdown / project.budget / project.budget.boq.line / project.budget.cost.alloc / project.cost.period / project.cost.ledger / project.progress.entry / project.funding.baseline | 工程结构、预算版本、预算清单、成本分摊、成本期间、成本台账、进度计量、资金基线均有可打开样例 |
+| S66 | 台账与主体映射表单面 | sc.receipt.invoice.line / sc.output.invoice.ledger / sc.income.contract.ledger / sc.expense.contract.ledger / sc.business.entity / sc.legacy.*.map | 收款发票台账、销项总台账、收入/支出合同台账、业务核算主体和旧库映射均有可打开样例 |
+| S67 | 场景编排与包注册表单面 | sc.capability.group / sc.capability / sc.scene / sc.scene.tile / sc.scene.version / sc.pack.registry / sc.pack.installation | 能力目录、场景、场景版本、场景卡片、包注册和安装记录均有可打开样例 |
+| S68 | 驾驶舱与工作台表单面 | sc.dashboard.cockpit.fact / sc.workbench.item | 资金/成本驾驶舱事实、我的待办、我的审批和最近访问均有可打开样例 |
+| S69 | 支付台账表单面 | construction.contract / sc.settlement.order / payment.request / payment.ledger | 支出合同、已审批结算单、已批准付款申请和支付台账均有可打开样例 |
+| S70 | 日常业务表单面 | sc.material.catalog / sc.expense.claim / sc.receipt.income / sc.payment.execution / sc.treasury.reconciliation / sc.invoice.registration / sc.tax.deduction.registration / sc.construction.diary | 材料价格、费用、收款、付款、资金、发票、抵扣、施工日志均有可打开样例 |
+| S71 | 治理审计表单面 | sc.approval.policy / sc.approval.step / sc.approval.scope / sc.audit.log / sc.user.preference / sc.scene.validation / sc.scene.audit.log / sc.capability.audit.log | 审批治理种子、审计留痕、用户场景偏好、场景校验和场景/能力审计均有可验证样例 |
+| S72 | 项目推进治理表单面 | sc.project.stage.requirement.item / sc.project.next_action.rule / sc.project.member.staging / sc.operating.metrics.project | 阶段要求、下一步动作规则、成员暂存和项目经营指标视图均有可验证样例 |
+| S73 | 风险与兼容结算表单面 | project.risk / project.risk.action / project.settlement / project.settlement.line | 项目风险投影、风险处置动作、兼容结算单和结算行均有可验证样例 |
+| S74 | 客商与供应商治理表单面 | sc.supplier.type / res.partner / sc.partner.import.review | 供应商类型、客商扩展字段、待复核和已处理导入复核均有可打开样例 |
+| S75 | 汇总投影校验面 | sc.invoice.category.summary / sc.expense.reimbursement.summary / sc.salary.summary / sc.company.operation.summary | 基于新系统业务数据校验发票、报销、工资和公司经营汇总视图有输出 |
+| S76 | 工作流兼容表单面 | sc.workflow.def / sc.workflow.node / sc.workflow.instance / sc.workflow.workitem / sc.workflow.log | 兼容工作流定义、节点、运行实例、待办和日志均有可打开样例 |
+| S77 | 数据字典与注册治理表单面 | project.dictionary / sc.signup.throttle / sc.data.validator | 定额字典层级和注册限流记录均有可验证样例；sc.data.validator 为抽象校验入口，不造持久化记录 |
+| S78 | 项目资料与 WBS 兼容表单面 | project.wbs / construction.work.breakdown / sc.project.document / ir.attachment | 兼容 WBS 写入统一工程结构表，项目资料关联 WBS、任务、字典细类和附件均有可验证样例 |
+| S79 | 执行结构与清单归属表单面 | sc.project.structure / project.boq.line | 执行结构树和清单行归属节点、任务、金额计算均有可验证样例 |
+| S80 | 执行管理表单面 | sc.material.purchase.request / sc.material.acceptance / sc.material.inbound / sc.material.outbound / sc.material.settlement / sc.plan / sc.quality.issue / sc.safety.issue / sc.labor.plan / sc.equipment.plan | 材料采购验收入出库结算、计划汇报、质量安全闭环、劳务机械均有可打开样例 |
+| S85 | 管理与资金表单面 | sc.fund.account / sc.financing.loan / sc.document.admin.document / sc.office.admin.document / sc.hr.payroll.document / sc.subcontract.* | 资金账户、融资借款、资料证照、人事行政、薪酬、分包计划到结算均有可打开样例 |
+| S86 | 投标租赁资金表单面 | tender.bid / tender.doc.purchase / tender.opening / tender.guarantee / sc.material.rental.* / sc.fund.account.operation / sc.expense.claim / sc.settlement.adjustment | 投标到开标保证金、周转材料租赁、资金操作、保证金、结算调整均有可打开样例 |
+| S87 | 资源与合同表单面 | sc.labor.usage / sc.labor.settlement / sc.labor.price / sc.equipment.settlement / sc.equipment.price / sc.general.contract / sc.contract.event | 劳务用工结算价格、设备结算价格、通用合同、合同事件均有可打开样例 |
+| S88 | 销项发票表单面 | sc.invoice.registration / sc.output.invoice.ledger / sc.output.invoice.adjustment | 销项发票登记进入总台账，销项变更登记可打开并带原票快照 |
+| S89 | 质量安全表单面 | sc.check.standard / sc.quality.* / sc.site.photo.batch / sc.safety.* / sc.risk.* / sc.hazard.source | 质量标准、质量整改复验、安全方案交底、风险危险源、巡检整改复验和照片批次均有可打开样例 |
 | S10 | 合同 + 付款申请 + 发票（draft） | construction.contract / payment.request / account.move | contract/payment_request/invoices |
 | S20 | 结算单 + 明细 + 收款关联 | sc.settlement.order / sc.settlement.order.line / payment.request | settlement/lines/payment_request.link |
 | S30 | 工作流种子 + 门禁（bad） | sc.settlement.order / sc.settlement.order.line / payment.request | draft + gate |
 | S40 | 失败路径（结构/金额/关联） | sc.settlement.order / sc.settlement.order.line / payment.request | fail conditions locked |
 
-发布态默认种子集合：`S00 + S10 + S20 + S30 + S60 + S90`
+发布态默认种子集合：`S00 + S10 + S20 + S30 + S60 + S65 + S66 + S67 + S68 + S69 + S70 + S71 + S72 + S73 + S74 + S75 + S76 + S77 + S78 + S79 + S80 + S85 + S86 + S87 + S88 + S89 + S90`
 
 ## Product Hardening 场景别名
 

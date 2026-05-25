@@ -19,8 +19,8 @@ guard_prod_forbid
 printf '[demo.load] db=%s scenario=%s step=%s\n' "$DB_NAME" "$SCENARIO" "${STEP:-}"
 
 compose_dev run --rm -T \
-  -e SCENARIO \
-  -e STEP \
+  -e SCENARIO="$SCENARIO" \
+  -e STEP="${STEP:-}" \
   --entrypoint /usr/bin/odoo odoo \
   shell --config="$ODOO_CONF" \
   -d "$DB_NAME" \

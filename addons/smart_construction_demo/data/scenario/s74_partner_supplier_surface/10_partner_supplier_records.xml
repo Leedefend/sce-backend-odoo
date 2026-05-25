@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data noupdate="1">
+
+    <record id="sc_demo_partner_supplier_074_service" model="res.partner">
+      <field name="name">S74 四川智建咨询服务有限公司</field>
+      <field name="is_company">True</field>
+      <field name="company_type">company</field>
+      <field name="supplier_rank">1</field>
+      <field name="customer_rank">1</field>
+      <field name="phone">028-74000001</field>
+      <field name="email">demo-s74@example.com</field>
+      <field name="street">四川省成都市高新区 S74 号</field>
+      <field name="vat">91510100S74DEMO001</field>
+      <field name="sc_supplier_type">service</field>
+      <field name="sc_supplier_type_ids" eval="[(6, 0, [ref('smart_construction_core.sc_supplier_type_service'), ref('smart_construction_core.sc_supplier_type_equipment')])]"/>
+      <field name="sc_account_name">S74 四川智建咨询服务有限公司</field>
+      <field name="sc_bank_name">中国建设银行成都 S74 支行</field>
+      <field name="sc_bank_account">510000000000740001</field>
+      <field name="sc_region">四川成都</field>
+      <field name="sc_registered_capital">1000万元</field>
+      <field name="sc_business_scope">工程咨询、项目管理、设备维保和数字化实施服务。</field>
+      <field name="sc_default_tax_rate">6.0</field>
+      <field name="sc_default_tax_rate_text">6%</field>
+      <field name="sc_source_partner_code">S74-PARTNER-001</field>
+      <field name="sc_source_document_state">已复核</field>
+      <field name="sc_source_push_result">已同步</field>
+      <field name="sc_source_project_name">S74 客商治理演示项目</field>
+      <field name="sc_source_cooperation_type">咨询服务及设备维保</field>
+      <field name="sc_source_fact_count">3</field>
+      <field name="sc_source_fact_source">s74_partner_supplier_surface</field>
+      <field name="sc_source_receipt_amount">180000.0</field>
+      <field name="sc_source_payment_amount">260000.0</field>
+      <field name="sc_source_created_by">demo_admin</field>
+      <field name="sc_source_created_at">2025-08-30 10:00:00</field>
+      <field name="sc_supplier_note">S74 客商扩展字段和供应商类型演示数据。</field>
+      <field name="legacy_partner_id">S74-LEGACY-PARTNER-001</field>
+      <field name="legacy_partner_source">demo_partner_import</field>
+      <field name="legacy_partner_name">四川智建咨询服务有限公司</field>
+      <field name="legacy_credit_code">91510100S74DEMO001</field>
+    </record>
+
+    <record id="sc_demo_partner_import_review_074_candidate" model="sc.partner.import.review">
+      <field name="import_batch">s74_partner_supplier_surface</field>
+      <field name="legacy_partner_source">demo_partner_import</field>
+      <field name="legacy_partner_id">S74-IMPORT-CANDIDATE-001</field>
+      <field name="partner_name">S74 待复核设备租赁单位</field>
+      <field name="company_type">company</field>
+      <field name="review_reason">unknown_business_role</field>
+      <field name="review_state">candidate</field>
+      <field name="suggested_customer_rank">0</field>
+      <field name="suggested_supplier_rank">1</field>
+      <field name="sc_supplier_type">equipment</field>
+      <field name="sc_region">四川德阳</field>
+      <field name="street">德阳市 S74 设备园区</field>
+      <field name="sc_registered_capital">500万元</field>
+      <field name="sc_business_scope">设备租赁和维保服务。</field>
+      <field name="sc_default_tax_rate">13.0</field>
+      <field name="sc_default_tax_rate_text">13%</field>
+      <field name="vat">91510600S74WAIT001</field>
+      <field name="sc_account_name">S74 待复核设备租赁单位</field>
+      <field name="sc_bank_name">中国银行德阳 S74 支行</field>
+      <field name="sc_bank_account">510600000000740002</field>
+      <field name="source_created_by">legacy_user_074</field>
+      <field name="source_created_at">2025-08-30 11:00:00</field>
+      <field name="source_document_state">待复核</field>
+      <field name="source_push_result">未同步</field>
+      <field name="source_project_name">S74 客商导入复核</field>
+      <field name="review_flags">supplier_candidate,bank_checked</field>
+      <field name="gate_reason">业务角色需人工确认。</field>
+      <field name="evidence">来源业务事实显示为设备租赁供应商，但缺少正式供应商档案。</field>
+      <field name="note">S74 待复核客商导入样例。</field>
+      <field name="active">True</field>
+    </record>
+
+    <record id="sc_demo_partner_import_review_074_resolved" model="sc.partner.import.review">
+      <field name="import_batch">s74_partner_supplier_surface</field>
+      <field name="legacy_partner_source">demo_partner_import</field>
+      <field name="legacy_partner_id">S74-IMPORT-RESOLVED-001</field>
+      <field name="partner_name">S74 四川智建咨询服务有限公司</field>
+      <field name="company_type">company</field>
+      <field name="review_reason">multiple_current_payload_matches</field>
+      <field name="review_state">resolved</field>
+      <field name="suggested_customer_rank">1</field>
+      <field name="suggested_supplier_rank">1</field>
+      <field name="confirmed_customer_rank">1</field>
+      <field name="confirmed_supplier_rank">1</field>
+      <field name="target_partner_id" ref="smart_construction_demo.sc_demo_partner_supplier_074_service"/>
+      <field name="sc_supplier_type">service</field>
+      <field name="sc_region">四川成都</field>
+      <field name="vat">91510100S74DEMO001</field>
+      <field name="review_flags">matched,target_confirmed</field>
+      <field name="gate_reason">已确认当前系统目标客商。</field>
+      <field name="evidence">统一信用代码和银行账户均匹配目标客商。</field>
+      <field name="reviewer_id" ref="base.user_admin"/>
+      <field name="reviewed_at">2025-08-30 12:00:00</field>
+      <field name="note">S74 已处理客商导入样例。</field>
+      <field name="active">True</field>
+    </record>
+
+  </data>
+</odoo>

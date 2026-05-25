@@ -114,7 +114,7 @@ resolve_profile_defaults
 log "start frontend dev host=${HOST} port=${PORT} profile=${FRONTEND_PROFILE} db=${PROFILE_DB} proxy=${PROFILE_PROXY_TARGET}"
 cd "${ROOT_DIR}"
 rm -f "${LOGFILE}"
-START_CMD="cd \"${ROOT_DIR}\" && export VITE_API_PROXY_TARGET=\"${PROFILE_PROXY_TARGET}\" VITE_ODOO_DB=\"${PROFILE_DB}\" VITE_PLATFORM_ADMIN_DB=\"${VITE_PLATFORM_ADMIN_DB:-}\" && exec pnpm -C frontend/apps/web dev --host \"${HOST}\" --port \"${PORT}\" > \"${LOGFILE}\" 2>&1"
+START_CMD="cd \"${ROOT_DIR}\" && export VITE_API_PROXY_TARGET=\"${PROFILE_PROXY_TARGET}\" VITE_ODOO_DB=\"${PROFILE_DB}\" VITE_PLATFORM_ADMIN_DB=\"${VITE_PLATFORM_ADMIN_DB:-}\" && exec \"${ROOT_DIR}/scripts/dev/pnpm_exec.sh\" -C frontend/apps/web dev --host \"${HOST}\" --port \"${PORT}\" > \"${LOGFILE}\" 2>&1"
 
 new_pid=""
 if command -v setsid >/dev/null 2>&1; then

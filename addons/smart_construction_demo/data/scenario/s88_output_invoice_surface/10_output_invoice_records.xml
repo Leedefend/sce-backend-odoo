@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data noupdate="1">
+
+    <record id="sc_demo_invoice_registration_088_output" model="sc.invoice.registration">
+      <field name="name">S88-OUT-INV-001</field>
+      <field name="source_origin">legacy</field>
+      <field name="source_kind">output_invoice_tax</field>
+      <field name="direction">output</field>
+      <field name="state">registered</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_owner_001"/>
+      <field name="document_no">S88-OUT-DOC-001</field>
+      <field name="document_date">2025-08-05</field>
+      <field name="invoice_date">2025-08-05</field>
+      <field name="invoice_no">S88-OUT-NO-001</field>
+      <field name="invoice_code">S88-CODE-001</field>
+      <field name="invoice_type">增值税专用发票</field>
+      <field name="tax_rate">9%</field>
+      <field name="invoice_content">工程进度款</field>
+      <field name="invoice_issue_company">智慧建造示例公司</field>
+      <field name="invoice_count">1</field>
+      <field name="amount_no_tax">458715.60</field>
+      <field name="tax_amount">41284.40</field>
+      <field name="amount_total">500000.00</field>
+      <field name="surcharge_amount">2889.91</field>
+      <field name="related_receipt_amount">300000.00</field>
+      <field name="currency_id" ref="base.CNY"/>
+      <field name="handler_name">测试-开票员</field>
+      <field name="invoice_holder">测试-财务</field>
+      <field name="legacy_source_model">sc.legacy.invoice.tax.fact</field>
+      <field name="legacy_source_table">C_JXXP_XXKPDJ</field>
+      <field name="legacy_record_id">S88-OUT-LEGACY-001</field>
+      <field name="legacy_document_state">已登记</field>
+      <field name="legacy_partner_name">四川智慧建设业主有限公司（示例）</field>
+      <field name="note">S88 销项发票台账样例来源单。</field>
+    </record>
+
+    <record id="sc_demo_output_invoice_adjustment_088_red_flush" model="sc.output.invoice.adjustment">
+      <field name="name">S88-OIA-001</field>
+      <field name="adjustment_type">red_flush</field>
+      <field name="state">draft</field>
+      <field name="adjustment_date">2025-08-10</field>
+      <field name="original_ledger_id" search="[('invoice_no', '=', 'S88-OUT-NO-001'), ('adjustment_kind', '=', 'normal')]"/>
+      <field name="red_flush_invoice_no">S88-RED-NO-001</field>
+      <field name="reason">发票抬头信息复核后需红冲重开。</field>
+      <field name="note">S88 销项变更登记样例，保持草稿便于前端演示确认动作。</field>
+    </record>
+
+  </data>
+</odoo>

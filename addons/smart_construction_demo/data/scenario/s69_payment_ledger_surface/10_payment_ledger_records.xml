@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data noupdate="1">
+
+    <record id="sc_demo_project_069_payment_ledger" model="project.project">
+      <field name="name">S69 支付台账演示项目</field>
+      <field name="project_code">S69-PAY-2025-001</field>
+      <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_owner_001"/>
+      <field name="company_id" ref="base.main_company"/>
+      <field name="funding_enabled">True</field>
+      <field name="lifecycle_state">in_progress</field>
+      <field name="active">True</field>
+      <field name="description">S69 支出合同、结算单、付款申请和支付台账演示项目。</field>
+    </record>
+
+    <record id="sc_demo_funding_baseline_069_payment" model="project.funding.baseline">
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_069_payment_ledger"/>
+      <field name="total_amount">1000000.0</field>
+      <field name="state">active</field>
+    </record>
+
+    <record id="sc_demo_contract_in_069_payment" model="construction.contract">
+      <field name="subject">S69 支付台账支出合同</field>
+      <field name="type">in</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_069_payment_ledger"/>
+      <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_vendor_steel"/>
+      <field name="date_contract">2025-08-21</field>
+      <field name="amount_total">240000.0</field>
+      <field name="amount_final">240000.0</field>
+      <field name="currency_id" ref="base.CNY"/>
+    </record>
+
+    <record id="sc_demo_contract_in_069_payment_line" model="construction.contract.line">
+      <field name="contract_id" ref="smart_construction_demo.sc_demo_contract_in_069_payment"/>
+      <field name="qty_contract">1.0</field>
+      <field name="price_contract">240000.0</field>
+      <field name="note">S69 支付台账合同明细</field>
+    </record>
+
+    <record id="sc_demo_settlement_069_payment" model="sc.settlement.order">
+      <field name="name">S69-PAY-SET-001</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_069_payment_ledger"/>
+      <field name="contract_id" ref="smart_construction_demo.sc_demo_contract_in_069_payment"/>
+      <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_vendor_steel"/>
+      <field name="currency_id" ref="base.CNY"/>
+      <field name="settlement_type">out</field>
+      <field name="amount_total">240000.0</field>
+      <field name="approved_amount">240000.0</field>
+      <field name="date_settlement">2025-08-22</field>
+      <field name="approved_date">2025-08-22</field>
+      <field name="state">approve</field>
+    </record>
+
+    <record id="sc_demo_settlement_line_069_payment" model="sc.settlement.order.line">
+      <field name="settlement_id" ref="smart_construction_demo.sc_demo_settlement_069_payment"/>
+      <field name="contract_id" ref="smart_construction_demo.sc_demo_contract_in_069_payment"/>
+      <field name="name">S69 钢材到货结算</field>
+      <field name="qty">1.0</field>
+      <field name="price_unit">240000.0</field>
+      <field name="amount">240000.0</field>
+    </record>
+
+    <record id="sc_demo_payment_request_069_pay" model="payment.request">
+      <field name="name">S69-PAY-REQ-001</field>
+      <field name="type">pay</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_069_payment_ledger"/>
+      <field name="contract_id" ref="smart_construction_demo.sc_demo_contract_in_069_payment"/>
+      <field name="settlement_id" ref="smart_construction_demo.sc_demo_settlement_069_payment"/>
+      <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_vendor_steel"/>
+      <field name="amount">120000.0</field>
+      <field name="currency_id" ref="base.CNY"/>
+      <field name="date_request">2025-08-23</field>
+      <field name="state">approved</field>
+      <field name="validation_status">validated</field>
+      <field name="note">S69 支付台账来源付款申请。</field>
+    </record>
+
+  </data>
+</odoo>

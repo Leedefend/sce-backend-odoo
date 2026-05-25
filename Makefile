@@ -2052,10 +2052,10 @@ branch.cleanup.feature: guard.prod.forbid
 .PHONY: fe.install fe.dev fe.gate verify.frontend.build verify.frontend.typecheck.strict verify.frontend.lint.src verify.frontend.quick.gate verify.frontend.relation_entry.contract_guard verify.frontend.relation_read_closure.guard verify.frontend.modifiers_runtime.guard verify.frontend.onchange_roundtrip.guard verify.frontend.onchange_contract_schema.guard verify.frontend.onchange_line_patch.guard verify.frontend.x2many_command_semantic.guard verify.frontend.x2many_inline_edit.guard verify.contract.subviews.guard verify.frontend.view_type_render_coverage.guard verify.frontend.view_type_contract_semantic.guard verify.frontend.search_groupby_savedfilters.guard verify.frontend.group_summary_runtime.guard verify.frontend.grouped_rows_runtime.guard verify.frontend.grouped_pagination_semantic.guard verify.frontend.grouped_pagination_semantic_drift.guard verify.contract.operation_gateway.guard verify.frontend.suggested_action.contract_guard verify.frontend.suggested_action.catalog verify.frontend.suggested_action.parser_guard verify.frontend.suggested_action.runtime_guard verify.frontend.suggested_action.import_boundary_guard verify.frontend.suggested_action.usage_guard verify.frontend.suggested_action.trace_export_guard verify.frontend.suggested_action.topk_guard verify.frontend.suggested_action.since_filter_guard verify.frontend.suggested_action.hud_export_guard verify.frontend.cross_stack_smoke verify.frontend.no_new_any_guard verify.frontend.suggested_action.all verify.portal.scene_observability.structure_guard verify.portal.scene_observability.structure_guard.update
 
 fe.install:
-	@pnpm -C frontend install
+	@scripts/dev/pnpm_exec.sh -C frontend install
 
 fe.dev:
-	@pnpm -C frontend dev
+	@scripts/dev/pnpm_exec.sh -C frontend dev
 
 fe.dev.reset: guard.prod.forbid
 	@bash scripts/dev/frontend_dev_reset.sh
@@ -2070,16 +2070,16 @@ fe.dev.uat: guard.prod.forbid
 	@FRONTEND_PROFILE=uat bash scripts/dev/frontend_dev_reset.sh
 
 fe.gate:
-	@pnpm -C frontend gate
+	@scripts/dev/pnpm_exec.sh -C frontend gate
 
 verify.frontend.build: guard.prod.forbid
 	@bash scripts/dev/frontend_static_build.sh
 
 verify.frontend.typecheck.strict: guard.prod.forbid
-	@pnpm -C frontend/apps/web typecheck:strict
+	@scripts/dev/pnpm_exec.sh -C frontend/apps/web typecheck:strict
 
 verify.frontend.lint.src: guard.prod.forbid
-	@pnpm -C frontend/apps/web lint:src
+	@scripts/dev/pnpm_exec.sh -C frontend/apps/web lint:src
 
 .PHONY: verify.frontend.style_system.guard
 verify.frontend.style_system.guard: guard.prod.forbid
