@@ -227,6 +227,7 @@ make demo.verify DB_NAME=sc_demo
 | S71 | 治理审计表单面 | sc.approval.policy / sc.approval.step / sc.approval.scope / sc.audit.log / sc.user.preference / sc.scene.validation / sc.scene.audit.log / sc.capability.audit.log | 审批治理种子、审计留痕、用户场景偏好、场景校验和场景/能力审计均有可验证样例 |
 | S72 | 项目推进治理表单面 | sc.project.stage.requirement.item / sc.project.next_action.rule / sc.project.member.staging / sc.operating.metrics.project | 阶段要求、下一步动作规则、成员暂存和项目经营指标视图均有可验证样例 |
 | S73 | 风险与兼容结算表单面 | project.risk / project.risk.action / project.settlement / project.settlement.line | 项目风险投影、风险处置动作、兼容结算单和结算行均有可验证样例 |
+| S74 | 客商与供应商治理表单面 | sc.supplier.type / res.partner / sc.partner.import.review | 供应商类型、客商扩展字段、待复核和已处理导入复核均有可打开样例 |
 | S80 | 执行管理表单面 | sc.material.purchase.request / sc.material.acceptance / sc.material.inbound / sc.material.outbound / sc.material.settlement / sc.plan / sc.quality.issue / sc.safety.issue / sc.labor.plan / sc.equipment.plan | 材料采购验收入出库结算、计划汇报、质量安全闭环、劳务机械均有可打开样例 |
 | S85 | 管理与资金表单面 | sc.fund.account / sc.financing.loan / sc.document.admin.document / sc.office.admin.document / sc.hr.payroll.document / sc.subcontract.* | 资金账户、融资借款、资料证照、人事行政、薪酬、分包计划到结算均有可打开样例 |
 | S86 | 投标租赁资金表单面 | tender.bid / tender.doc.purchase / tender.opening / tender.guarantee / sc.material.rental.* / sc.fund.account.operation / sc.expense.claim / sc.settlement.adjustment | 投标到开标保证金、周转材料租赁、资金操作、保证金、结算调整均有可打开样例 |
@@ -238,7 +239,7 @@ make demo.verify DB_NAME=sc_demo
 | S30 | 工作流种子 + 门禁（bad） | sc.settlement.order / sc.settlement.order.line / payment.request | draft + gate |
 | S40 | 失败路径（结构/金额/关联） | sc.settlement.order / sc.settlement.order.line / payment.request | fail conditions locked |
 
-发布态默认种子集合：`S00 + S10 + S20 + S30 + S60 + S65 + S66 + S67 + S68 + S69 + S70 + S71 + S72 + S73 + S80 + S85 + S86 + S87 + S88 + S89 + S90`
+发布态默认种子集合：`S00 + S10 + S20 + S30 + S60 + S65 + S66 + S67 + S68 + S69 + S70 + S71 + S72 + S73 + S74 + S80 + S85 + S86 + S87 + S88 + S89 + S90`
 
 ## Product Hardening 场景别名
 

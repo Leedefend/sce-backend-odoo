@@ -124,6 +124,12 @@ SCENARIOS: Dict[str, List[str]] = {
             "data/scenario/s73_risk_settlement_surface/10_risk_settlement_records.xml",
         ],
     },
+    "s74_partner_supplier_surface": {
+        "sequence": 74,
+        "files": [
+            "data/scenario/s74_partner_supplier_surface/10_partner_supplier_records.xml",
+        ],
+    },
     "s80_execution_management_surface": {
         "sequence": 80,
         "files": [
@@ -211,6 +217,7 @@ RELEASE_SCENARIOS: List[str] = [
     "s71_governance_audit_surface",
     "s72_project_governance_surface",
     "s73_risk_settlement_surface",
+    "s74_partner_supplier_surface",
     "s80_execution_management_surface",
     "s85_admin_finance_surface",
     "s86_tender_rental_finance_surface",
