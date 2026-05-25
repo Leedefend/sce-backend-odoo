@@ -327,6 +327,85 @@ run_check "S90 finance user lacks contract capability" "s90_users_roles" \
 run_check "S90 readonly user not in settlement user group" "s90_users_roles" \
   "select case when count(*) = 0 then 'ok' else 'S90 readonly has settlement group' end from res_groups_users_rel r where r.uid = (select id from res_users where login='demo_readonly') and r.gid in (select id from res_groups where coalesce(name->>'zh_CN', name->>'en_US') = 'SC 能力 - 结算中心经办');" \
   "select u.login, coalesce(g.name->>'zh_CN', g.name->>'en_US') as group_name from res_groups_users_rel r join res_users u on u.id = r.uid join res_groups g on g.id = r.gid where u.login='demo_readonly' order by group_name;"
+run_check "S90 admin has full demo menu groups" "s90_users_roles" \
+  "select case when (select count(*) from res_groups_users_rel r join ir_model_data d on d.res_id=r.gid and d.model='res.groups' where r.uid=(select id from res_users where login='admin') and ((d.module='smart_core' and d.name='group_smart_core_admin') or (d.module='smart_construction_core' and d.name='group_sc_super_admin'))) = 2 then 'ok' else 'S90 admin menu groups missing' end;" \
+  "select u.login, d.module || '.' || d.name as group_xmlid, coalesce(g.name->>'zh_CN', g.name->>'en_US') as group_name from res_groups_users_rel r join res_users u on u.id=r.uid join res_groups g on g.id=r.gid join ir_model_data d on d.res_id=g.id and d.model='res.groups' where u.login='admin' and d.module in ('smart_core','smart_construction_core') order by group_xmlid;"
+if [ -z "$scenario" ] || [ "$scenario" = "s90_users_roles" ]; then
+  printf '[demo.verify] S90 admin menu openability\n'
+  if compose_dev exec -T odoo odoo shell -d "$DB_NAME" -c /var/lib/odoo/odoo.conf <<'PY'
+import sys
+
+admin = env.ref("base.user_admin")
+required_groups = [
+    "smart_core.group_smart_core_admin",
+    "smart_construction_core.group_sc_super_admin",
+    "smart_construction_core.group_sc_cap_config_admin",
+    "smart_construction_core.group_sc_cap_business_config_admin",
+    "smart_construction_core.group_sc_cap_project_read",
+    "smart_construction_core.group_sc_cap_cost_read",
+    "smart_construction_core.group_sc_cap_material_read",
+    "smart_construction_core.group_sc_cap_finance_read",
+    "project.group_project_user",
+    "project.group_project_manager",
+]
+missing_groups = [xmlid for xmlid in required_groups if not admin.has_group(xmlid)]
+if missing_groups:
+    print("missing admin groups:", ", ".join(missing_groups))
+    sys.exit(1)
+
+root = env.ref("smart_construction_core.menu_sc_root", raise_if_not_found=False)
+domain = [("action", "!=", False)]
+if root:
+    domain.append(("id", "child_of", root.id))
+menus = env["ir.ui.menu"].with_user(admin).search(domain)
+failures = []
+checked = 0
+for menu in menus:
+    action = menu.action if menu.action._name == "ir.actions.act_window" else False
+    if not action or not action.res_model or action.res_model not in env:
+        continue
+    checked += 1
+    model_name = action.res_model
+    Model = env[model_name].with_user(admin)
+    try:
+        Model.check_access_rights("read", raise_exception=True)
+        Model.search([], limit=1)
+        if action.search_view_id:
+            Model.with_context(load_all_views=True).get_view(
+                view_id=action.search_view_id.id,
+                view_type="search",
+            )
+        for mode in [m.strip() for m in (action.view_mode or "tree,form").split(",") if m.strip()][:3]:
+            view_type = "tree" if mode == "list" else mode
+            if view_type not in {"tree", "form", "kanban", "pivot", "graph", "calendar", "activity"}:
+                continue
+            view_id = False
+            for action_view in action.view_ids:
+                action_view_type = "tree" if action_view.view_mode == "list" else action_view.view_mode
+                if action_view_type == view_type and action_view.view_id:
+                    view_id = action_view.view_id.id
+                    break
+            if view_id:
+                Model.with_context(load_all_views=True).get_view(view_id=view_id, view_type=view_type)
+            else:
+                Model.with_context(load_all_views=True).get_view(view_type=view_type)
+    except Exception as exc:
+        failures.append((menu.complete_name, model_name, type(exc).__name__, str(exc).splitlines()[0]))
+
+if failures:
+    print("admin menu open failures:", len(failures), "checked:", checked)
+    for row in failures[:50]:
+        print("FAIL", row)
+    sys.exit(1)
+print("ok admin menu openability checked:", checked)
+PY
+  then
+    echo "✓ S90 admin can open delivered menus"
+  else
+    echo "✗ S90 admin can open delivered menus"
+    exit 1
+  fi
+fi
 run_check "showroom projects >= 8" "showroom" \
   "select case when count(*) >= 8 then 'ok' else 'showroom projects < 8' end from project_project where coalesce(name->>'zh_CN', name->>'en_US', name::text) like '展厅-%';" \
   "select id, name, lifecycle_state from project_project where coalesce(name->>'zh_CN', name->>'en_US', name::text) like '展厅-%' order by id;"

@@ -38,4 +38,9 @@ PY
 printf '[demo.load.release] apply showroom reconciliation seed chain\n'
 STEPS=demo_showroom,demo_40_contracts,demo_50_boq_wbs,demo_60_attachments,z_demo_full_my_work,project_stage_sync DB_NAME="$DB_NAME" bash "$ROOT_DIR/scripts/seed/run.sh"
 
+if [ "${DEMO_RESTART_AFTER_LOAD:-1}" = "1" ]; then
+  printf '[demo.load.release] restart odoo to refresh ACL/menu caches\n'
+  compose_dev up -d --force-recreate "${ODOO_SERVICE:-odoo}"
+fi
+
 printf '[demo.load.release] done\n'

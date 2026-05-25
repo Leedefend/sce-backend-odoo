@@ -16,6 +16,7 @@
         "data/base/20_projects.xml",
         "data/base/25_project_tasks.xml",
         "data/demo/sc_demo_users.xml",
+        "data/demo/admin_menu_access.xml",
         "data/demo/role_matrix_demo_users.xml",
         "data/demo/sc_demo_showcase_actions.xml",
         "data/demo/demo_company_currency.xml",

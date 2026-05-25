@@ -37,3 +37,8 @@ print("[demo.load] loading scenario:", scenario, "step:", step)
 load_scenario(env, scenario, mode="update", step=step)
 print("[demo.load] done")
 PY
+
+if [ "${DEMO_RESTART_AFTER_LOAD:-1}" = "1" ]; then
+  printf '[demo.load] restart odoo to refresh ACL/menu caches\n'
+  compose_dev up -d --force-recreate "${ODOO_SERVICE:-odoo}"
+fi
