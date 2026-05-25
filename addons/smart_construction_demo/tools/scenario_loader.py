@@ -88,6 +88,12 @@ SCENARIOS: Dict[str, List[str]] = {
             "data/scenario/s85_admin_finance_surface/10_admin_finance_records.xml",
         ],
     },
+    "s86_tender_rental_finance_surface": {
+        "sequence": 86,
+        "files": [
+            "data/scenario/s86_tender_rental_finance_surface/10_tender_rental_finance_records.xml",
+        ],
+    },
     "s90_users_roles": {
         "sequence": 90,
         "files": [
@@ -133,6 +139,7 @@ RELEASE_SCENARIOS: List[str] = [
     "s70_daily_business_surface",
     "s80_execution_management_surface",
     "s85_admin_finance_surface",
+    "s86_tender_rental_finance_surface",
     "s90_users_roles",
 ]
 
