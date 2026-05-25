@@ -6708,6 +6708,10 @@ async function downloadNativeAttachment(att: { id?: number; name?: string; mimet
   attachmentError.value = '';
   try {
     const payload = await downloadFile({ id: Number(att.id) });
+    if (payload.url) {
+      window.open(payload.url, '_blank', 'noopener');
+      return;
+    }
     const binary = atob(payload.datas || '');
     const bytes = new Uint8Array(binary.length);
     for (let i = 0; i < binary.length; i += 1) {

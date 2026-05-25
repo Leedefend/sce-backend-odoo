@@ -25,6 +25,8 @@ def main() -> int:
     asset_generator = _read("scripts/migration/receipt_core_asset_generator.py")
     replay_adapter = _read("scripts/migration/fresh_db_receipt_core_replay_adapter.py")
     receipt_write = _read("scripts/migration/fresh_db_receipt_core_write.py")
+    contract_generator = _read("scripts/migration/contract_header_asset_generator.py")
+    contract_remaining_screen = _read("scripts/migration/contract_remaining214_strict_screen.py")
     normalize = _read("scripts/migration/visible_surface_receipt_core_creator_normalize_write.py")
     search_config = _read("addons/smart_core/app_config_engine/models/app_search_config.py")
     browser_smoke = _read("scripts/verify/payment_request_receipt_type_browser_group_smoke.js")
@@ -71,6 +73,28 @@ def main() -> int:
         errors,
     )
     _assert(
+        "LEGACY_DELETE_FIELDS" in asset_generator
+        and "def is_deleted_row" in asset_generator
+        and "old_system_deleted_rows_discarded" in asset_generator,
+        "receipt core asset generation must directly discard old-system deleted rows",
+        errors,
+    )
+    _assert(
+        "def receipt_source_lane" in asset_generator
+        and "route_sales_receipt_or_pushed_income" in asset_generator
+        and "route_other_receipt_income" in asset_generator
+        and "sales_receipt_or_pushed_income_routed_out" in asset_generator,
+        "receipt core asset generation must route sales/pushed income out of payment.request",
+        errors,
+    )
+    _assert(
+        'direction = "out"' in contract_generator
+        and 'direction_source = "receipt_contract_reference"' in contract_generator
+        and 'direction = "out"' in contract_remaining_screen,
+        "receipt contract reference evidence must infer income contracts, not payment contracts",
+        errors,
+    )
+    _assert(
         '"receipt_type",' in replay_adapter
         and '"receipt_type": clean(values.get("receipt_type"))' in replay_adapter,
         "receipt core replay adapter must emit receipt_type in the payload",
@@ -82,6 +106,32 @@ def main() -> int:
         and "def raw_receipt_type_map" in receipt_write
         and "receipt_types.get(legacy_receipt_id" in receipt_write,
         "receipt core replay/write must backfill receipt_type from raw CSV when packaged XML lacks the field",
+        errors,
+    )
+    _assert(
+        "def raw_deleted_receipt_ids" in receipt_write
+        and "discarded_old_system_deleted_rows" in receipt_write
+        and "is_deleted_source_row" in receipt_write,
+        "receipt core write must filter stale payload/XML rows deleted in the old system",
+        errors,
+    )
+    _assert(
+        "discarded_existing_old_system_deleted_rows" in receipt_write
+        and "C_JFHKLR_DELETED" in receipt_write
+        and "old_system_deleted" in receipt_write,
+        "receipt core write must quarantine already-written migration rows deleted in the old system",
+        errors,
+    )
+    _assert(
+        "discarded_existing_stale_payload_rows" in receipt_write
+        and "C_JFHKLR_ROUTED_OUT" in receipt_write
+        and "legacy_receipt_id not in payload_receipt_ids" in receipt_write,
+        "receipt core write must quarantine already-written migration rows routed out of the current receipt payload",
+        errors,
+    )
+    _assert(
+        "C_JFHKLR_DELETED" in views and "C_JFHKLR_ROUTED_OUT" in views,
+        "receipt request action must hide quarantined legacy receipt carriers",
         errors,
     )
     _assert(

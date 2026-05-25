@@ -294,7 +294,7 @@ def generate(asset_root: Path, runtime_root: Path, source_csv: Path, expected_re
         direction_source = "party_role"
         receipt_direction_evidence = receipt_contract_evidence.get(legacy_contract_id, {})
         if direction == "defer" and receipt_direction_evidence:
-            direction = "in"
+            direction = "out"
             direction_source = "receipt_contract_reference"
             counterparty = (
                 clean(receipt_direction_evidence.get("receipt_partner_name"))

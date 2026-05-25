@@ -492,6 +492,8 @@ export interface FileDownloadResponse {
   name: string;
   mimetype: string;
   datas: string;
+  type?: string;
+  url?: string;
   res_model: string;
   res_id: number;
 }

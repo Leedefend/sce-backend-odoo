@@ -30,25 +30,33 @@ function numericValue(value: unknown): number | null {
 }
 
 export function formatAttachmentReferenceValue(value: unknown): string {
+  return parseAttachmentReferenceLinks(value).map((item) => item.name).join('、');
+}
+
+export function parseAttachmentReferenceLinks(value: unknown): Array<{ name: string; url: string }> {
   const rawItems = Array.isArray(value) ? value.map((item) => String(item ?? '')) : [String(value ?? '')];
   const seen = new Set<string>();
-  const names: string[] = [];
+  const links: Array<{ name: string; url: string }> = [];
+  const urlStartPattern = '(?:legacy-file|https?|file):\\/\\/|\\/web\\/content\\/';
+  const itemBoundary = new RegExp(`\\s+(?=[^\\s|]+\\s+\\|\\s+(?:${urlStartPattern}))`, 'i');
+  const itemPattern = new RegExp(`^(.*?)\\s+\\|\\s+((?:${urlStartPattern}).+)$`, 'i');
 
   rawItems
-    .flatMap((item) => item.split(/\s+(?=[^\s|]+\s+\|\s+(?:legacy-file|https?|file):\/\/)/i))
+    .flatMap((item) => item.split(itemBoundary))
     .forEach((item) => {
       const raw = item.trim();
       if (!raw) return;
-      const pipeIndex = raw.search(/\s+\|\s+(?:legacy-file|https?|file):\/\//i);
-      const name = (pipeIndex >= 0 ? raw.slice(0, pipeIndex) : raw)
-        .replace(/\s*\|\s*(?:legacy-file|https?|file):\/\/.*$/i, '')
-        .trim();
-      if (!name || seen.has(name)) return;
-      seen.add(name);
-      names.push(name);
+      const match = raw.match(itemPattern);
+      if (!match) return;
+      const name = match[1].trim();
+      const url = match[2].trim();
+      const key = `${name}\n${url}`;
+      if (!name || !url || seen.has(key)) return;
+      seen.add(key);
+      links.push({ name, url });
     });
 
-  return names.join('、');
+  return links;
 }
 
 export function formatDisplayValue(

@@ -57,6 +57,7 @@ P1_ALIAS_LABELS = {
         '单据状态',
         '单据编号',
         '项目名称',
+        '申请日期',
         '收款单位',
         '申请付款金额',
         '实际付款金额',
@@ -546,7 +547,7 @@ def _alias_field_name(label):
 
 
 def _alias_field_string(label):
-    return "可见-" + label
+    return label
 
 
 LABEL_SOURCE_OVERRIDES = {
@@ -739,6 +740,21 @@ LABEL_SOURCE_OVERRIDES = {
 }
 
 MODEL_LABEL_SOURCE_OVERRIDES = {
+    'payment.request': {
+        '单据状态': ['legacy_document_state', 'state'],
+        '申请日期': ['date_request', 'request_date', 'document_date', 'create_date'],
+        '实际付款金额': ['legacy_visible_actual_paid_amount', 'paid_amount_total', 'paid_amount', 'amount'],
+        '可用余额': ['legacy_visible_available_balance', 'settlement_amount_payable', 'settlement_remaining_amount'],
+        '是否关联单据': ['settlement_id', 'contract_id'],
+        '付款账号': ['legacy_payment_account_no', 'payment_account_no', 'partner_bank_account', 'bank_account', 'bank_account_id'],
+        '金额大写': ['legacy_visible_amount_uppercase', 'amount_uppercase'],
+        '户名': ['legacy_payee_account_name', 'payment_account_name', 'partner_account_name'],
+        '开户行': ['legacy_payee_bank_name', 'payment_bank_name', 'partner_bank_name', 'bank_name'],
+        '账号': ['legacy_payee_account_no', 'account_no', 'payment_account_no', 'partner_bank_account'],
+        '附件': ['attachment_ids'],
+        '成本分类名称': ['legacy_visible_cost_category_name', 'cost_category_id', 'cost_type_id', 'cost_category_name'],
+        '备注': ['legacy_visible_remark', 'note'],
+    },
     'sc.invoice.registration': {
         '推送结果': ['push_result', 'legacy_document_state', 'state'],
         '金蝶单据编号': ['kingdee_document_no', 'document_no', 'name'],
@@ -789,6 +805,14 @@ MODEL_LABEL_SOURCE_OVERRIDES = {
     },
 }
 
+
+PAYMENT_REQUEST_DOCUMENT_STATE_LABELS = {
+    "-1": "已作废",
+    "0": "未审核",
+    "1": "审核中",
+    "2": "已审核",
+}
+
 FALLBACK_SOURCES = (
     "name", "document_no", "title", "project_id", "partner_id", "supplier_id", "contractor_id",
     "subcontractor_id", "owner_id", "requester_id", "state", "legacy_document_state",
@@ -807,6 +831,16 @@ def _format_alias_value(record, field_name):
         return ""
     if field.type == "many2one":
         return value.display_name or ""
+    if field.type == "many2many" and field.comodel_name == "ir.attachment":
+        items = []
+        for attachment in value:
+            label = str(attachment.name or attachment.display_name or attachment.id).strip()
+            if not label:
+                continue
+            url = attachment.url or f"/web/content/{attachment.id}?download=true"
+            label = f"{label} | {url}"
+            items.append(label)
+        return " ".join(items)
     if field.type in ("one2many", "many2many") or field_name == "message_attachment_count":
         return "有" if value else ""
     if field.type == "selection":
@@ -816,19 +850,29 @@ def _format_alias_value(record, field_name):
         return dict(selection or []).get(value, value) or ""
     if field.type == "boolean":
         return "是" if value else "否"
-    return str(value)
+    text = str(value).strip()
+    return "" if text in {"False", "false", "None", "NULL"} else text
 
 
 def _alias_value(record, label):
+    if record._name == 'payment.request' and label == '单据状态':
+        legacy_state = _format_alias_value(record, 'legacy_document_state')
+        if legacy_state:
+            return PAYMENT_REQUEST_DOCUMENT_STATE_LABELS.get(legacy_state, legacy_state)
+    if record._name == 'payment.request' and label == '是否关联单据':
+        return "是" if record.settlement_id or record.contract_id or record.outflow_line_ids else "否"
+    model_sources = MODEL_LABEL_SOURCE_OVERRIDES.get(record._name, {}).get(label)
+    if model_sources is not None:
+        for field_name in model_sources:
+            value = _format_alias_value(record, field_name)
+            if value:
+                return value
+        return ""
     for field_name, field in record._fields.items():
         if field.string == label and not field_name.startswith("p1_visible_"):
             value = _format_alias_value(record, field_name)
             if value:
                 return value
-    for field_name in MODEL_LABEL_SOURCE_OVERRIDES.get(record._name, {}).get(label, ()):
-        value = _format_alias_value(record, field_name)
-        if value:
-            return value
     for field_name in LABEL_SOURCE_OVERRIDES.get(label, ()):
         value = _format_alias_value(record, field_name)
         if value:

@@ -32,12 +32,15 @@ REPO_ROOT = repo_root()
 ARTIFACT_ROOT = Path(os.getenv("MIGRATION_ARTIFACT_ROOT", str(REPO_ROOT / "artifacts/migration")))
 PAYLOAD_CSV = REPO_ROOT / "artifacts/migration/fresh_db_receipt_write_design_payload_v1.csv"
 ASSET_XML = REPO_ROOT / "migration_assets/20_business/receipt/receipt_core_v1.xml"
+RAW_RECEIPT_CSV = REPO_ROOT / "tmp/raw/receipt/receipt.csv"
 OUTPUT_JSON = ARTIFACT_ROOT / "fresh_db_receipt_core_write_result_v1.json"
 ROLLBACK_CSV = ARTIFACT_ROOT / "fresh_db_receipt_core_rollback_targets_v1.csv"
 PRE_SNAPSHOT_CSV = ARTIFACT_ROOT / "fresh_db_receipt_core_pre_write_snapshot_v1.csv"
 POST_SNAPSHOT_CSV = ARTIFACT_ROOT / "fresh_db_receipt_core_post_write_snapshot_v1.csv"
-EXPECTED_ROWS = int(os.getenv("FRESH_DB_RECEIPT_CORE_EXPECTED_ROWS", "3652"))
+EXPECTED_ROWS = int(os.getenv("FRESH_DB_RECEIPT_CORE_EXPECTED_ROWS", "1480"))
 MIGRATION_MARKER = "[migration:receipt_core]"
+LEGACY_SOURCE_TABLE_DELETED = "C_JFHKLR_DELETED"
+LEGACY_SOURCE_TABLE_ROUTED_OUT = "C_JFHKLR_ROUTED_OUT"
 SAFE_FIELDS = {
     "type",
     "receipt_type",
@@ -95,14 +98,33 @@ def ref_map(record: ET.Element) -> dict[str, str]:
 
 
 def raw_receipt_type_map() -> dict[str, str]:
-    path = REPO_ROOT / "tmp/raw/receipt/receipt.csv"
-    if not path.exists():
+    if not RAW_RECEIPT_CSV.exists():
         return {}
-    with path.open("r", encoding="utf-8-sig", newline="") as handle:
+    with RAW_RECEIPT_CSV.open("r", encoding="utf-8-sig", newline="") as handle:
         return {
             clean(row.get("Id")): clean(row.get("type"))
             for row in csv.DictReader(handle)
             if clean(row.get("Id"))
+        }
+
+
+def is_deleted_source_value(value: object) -> bool:
+    normalized = clean(value).lower()
+    return bool(normalized) and normalized not in {"0", "false", "no", "n", "否"}
+
+
+def is_deleted_source_row(row: dict[str, str]) -> bool:
+    return is_deleted_source_value(row.get("DEL")) or any(clean(row.get(field)) for field in ("SCRID", "SCR", "SCRQ"))
+
+
+def raw_deleted_receipt_ids() -> set[str]:
+    if not RAW_RECEIPT_CSV.exists():
+        return set()
+    with RAW_RECEIPT_CSV.open("r", encoding="utf-8-sig", newline="") as handle:
+        return {
+            clean(row.get("Id"))
+            for row in csv.DictReader(handle)
+            if clean(row.get("Id")) and is_deleted_source_row(row)
         }
 
 
@@ -299,8 +321,65 @@ Contract = env["construction.contract"].sudo()  # noqa: F821
 Partner = env["res.partner"].sudo()  # noqa: F821
 
 rows = read_csv(PAYLOAD_CSV) if PAYLOAD_CSV.exists() else load_asset_rows(ASSET_XML)
+source_input_rows = len(rows)
+deleted_receipt_ids = raw_deleted_receipt_ids()
+discarded_deleted_rows = [
+    row
+    for row in rows
+    if clean(row.get("legacy_receipt_id")) and clean(row.get("legacy_receipt_id")) in deleted_receipt_ids
+]
+rows = [
+    row
+    for row in rows
+    if not (clean(row.get("legacy_receipt_id")) and clean(row.get("legacy_receipt_id")) in deleted_receipt_ids)
+]
 asset_payload = any(clean(row.get("source_mode")) == "asset_xml" for row in rows) or not PAYLOAD_CSV.exists()
 payload_receipt_ids = {clean(row.get("legacy_receipt_id")) for row in rows if clean(row.get("legacy_receipt_id"))}
+existing_deleted_records = Request.browse()
+discarded_existing_deleted_rows = []
+stale_payload_records = Request.browse()
+discarded_existing_stale_payload_rows = []
+if deleted_receipt_ids:
+    for rec in Request.search([("note", "ilike", MIGRATION_MARKER)], order="id"):
+        legacy_receipt_id = extract_legacy_receipt_id(rec.note)
+        if legacy_receipt_id in deleted_receipt_ids:
+            existing_deleted_records |= rec
+            discarded_existing_deleted_rows.append(
+                {
+                    "request_id": rec.id,
+                    "name": rec.name or "",
+                    "legacy_receipt_id": legacy_receipt_id,
+                    "state": rec.state or "",
+                    "amount": rec.amount or 0,
+                }
+            )
+    if existing_deleted_records:
+        existing_deleted_records.write(
+            {
+                "legacy_source_table": LEGACY_SOURCE_TABLE_DELETED,
+                "legacy_document_state": "old_system_deleted",
+            }
+        )
+for rec in Request.search([("note", "ilike", MIGRATION_MARKER)], order="id"):
+    legacy_receipt_id = extract_legacy_receipt_id(rec.note)
+    if legacy_receipt_id and legacy_receipt_id not in payload_receipt_ids and legacy_receipt_id not in deleted_receipt_ids:
+        stale_payload_records |= rec
+        discarded_existing_stale_payload_rows.append(
+            {
+                "request_id": rec.id,
+                "name": rec.name or "",
+                "legacy_receipt_id": legacy_receipt_id,
+                "state": rec.state or "",
+                "amount": rec.amount or 0,
+            }
+        )
+if stale_payload_records:
+    stale_payload_records.write(
+        {
+            "legacy_source_table": LEGACY_SOURCE_TABLE_ROUTED_OUT,
+            "legacy_document_state": "routed_out_of_receipt_request",
+        }
+    )
 pre_records = snapshot(Request, PRE_SNAPSHOT_CSV)
 pre_existing_receipt_ids = {
     legacy_id
@@ -442,7 +521,21 @@ result = {
     "database": env.cr.dbname,  # noqa: F821
     "target_model": "payment.request",
     "target_type": "receive",
+    "source_input_rows": source_input_rows,
     "input_rows": len(rows),
+    "discarded_old_system_deleted_rows": len(discarded_deleted_rows),
+    "discarded_existing_old_system_deleted_rows": len(discarded_existing_deleted_rows),
+    "discarded_existing_stale_payload_rows": len(discarded_existing_stale_payload_rows),
+    "discarded_old_system_deleted_samples": [
+        {
+            "legacy_receipt_id": clean(row.get("legacy_receipt_id")),
+            "amount": clean(row.get("amount")),
+            "date_request": clean(row.get("date_request")),
+        }
+        for row in discarded_deleted_rows[:20]
+    ],
+    "discarded_existing_old_system_deleted_samples": discarded_existing_deleted_rows[:20],
+    "discarded_existing_stale_payload_samples": discarded_existing_stale_payload_rows[:20],
     "created_rows": len(created),
     "skipped_existing": skipped_existing,
     "post_write_match_count": len(post_records),
@@ -468,7 +561,11 @@ print(
     + json.dumps(
         {
             "status": status,
+            "source_input_rows": source_input_rows,
             "input_rows": len(rows),
+            "discarded_old_system_deleted_rows": len(discarded_deleted_rows),
+            "discarded_existing_old_system_deleted_rows": len(discarded_existing_deleted_rows),
+            "discarded_existing_stale_payload_rows": len(discarded_existing_stale_payload_rows),
             "created_rows": len(created),
             "skipped_existing": skipped_existing,
             "post_write_match_count": len(post_records),

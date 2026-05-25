@@ -13,7 +13,7 @@ REPO_ROOT = Path.cwd()
 ASSET_XML = REPO_ROOT / "migration_assets/20_business/receipt/receipt_core_v1.xml"
 OUTPUT_CSV = REPO_ROOT / "artifacts/migration/fresh_db_receipt_write_design_payload_v1.csv"
 OUTPUT_JSON = REPO_ROOT / "artifacts/migration/fresh_db_receipt_core_replay_adapter_result_v1.json"
-EXPECTED_ROWS = 3652
+EXPECTED_ROWS = 1480
 FIELDS = [
     "legacy_receipt_id",
     "legacy_project_id",
