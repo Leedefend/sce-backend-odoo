@@ -1163,6 +1163,10 @@ fresh_db.legacy_expense_deposit.replay.adapter: guard.prod.forbid check-compose-
 fresh_db.legacy_invoice_tax.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
 	@python3 scripts/migration/fresh_db_legacy_invoice_tax_replay_adapter.py
 
+.PHONY: fresh_db.legacy_invoice_tax.replay.write
+fresh_db.legacy_invoice_tax.replay.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_legacy_invoice_tax_replay_write.py
+
 fresh_db.legacy_tax_deduction.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
 	@python3 scripts/migration/fresh_db_legacy_tax_deduction_replay_adapter.py
 

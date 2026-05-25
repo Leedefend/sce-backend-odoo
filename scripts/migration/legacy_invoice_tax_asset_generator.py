@@ -25,7 +25,7 @@ CATALOG_REL_PATH = Path("manifest/migration_asset_catalog_v1.json")
 ASSET_PACKAGE_ID = "legacy_invoice_tax_sc_v1"
 GENERATED_AT = "2026-04-15T18:10:00+00:00"
 EXPECTED_RAW_ROWS = 21323
-EXPECTED_LOADABLE_ROWS = 5920
+EXPECTED_LOADABLE_ROWS = 5959
 
 
 class InvoiceTaxAssetError(Exception):
