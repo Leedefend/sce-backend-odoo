@@ -165,7 +165,7 @@ P1_ENTRIES: list[dict[str, Any]] = [
         "name": "预缴税款",
         "domain": "发票税务",
         "images": "image67-image68",
-        "candidates": ["sc.tax.deduction.registration"],
+        "candidates": ["sc.invoice.registration"],
         "expected_list_fields": ["状态", "项目名称", "单据编号", "受票方名称", "交税类型", "金额", "发票开具日期", "预缴税款日期", "完税凭证号码", "附件", "录入人"],
         "expected_form_sections": ["开票详情", "预缴税款详情", "附件"],
     },

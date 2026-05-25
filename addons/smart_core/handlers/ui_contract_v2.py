@@ -1090,15 +1090,31 @@ class UiContractV2Handler(BaseIntentHandler):
             deduped_columns.append(name)
         columns = deduped_columns
         labels = {name: labels.get(name) or label_for(name) for name in columns}
+        derived_status_field = str(profile.get("status_field") or status_field or "").strip()
+        if not derived_status_field:
+            derived_status_field = next(
+                (
+                    name
+                    for name in columns
+                    if str(labels.get(name) or label_for(name) or name).strip()
+                    in {"状态", "单据状态", "开票状态", "付款状态", "结算状态", "支付申请状态", "账户状态"}
+                ),
+                "",
+            )
+        default_primary = "name" if "name" in columns else next((name for name in columns if name != derived_status_field), columns[0])
+        row_primary = str(profile.get("row_primary") or default_primary or "").strip()
+        row_secondary = str(profile.get("row_secondary") or "").strip()
+        if not row_secondary and row_primary != derived_status_field and "project_id" in columns:
+            row_secondary = "project_id"
         profile.update({
             "source": "ui.contract.v2.business_operation_projection",
             "columns": columns,
             "fact_columns": columns,
             "hidden_columns": [name for name in (profile.get("hidden_columns") if isinstance(profile.get("hidden_columns"), list) else []) if name in columns],
             "column_labels": labels,
-            "row_primary": profile.get("row_primary") or ("name" if "name" in columns else columns[0]),
-            "row_secondary": profile.get("row_secondary") or ("project_id" if "project_id" in columns else ""),
-            "status_field": profile.get("status_field") or status_field,
+            "row_primary": row_primary,
+            "row_secondary": row_secondary,
+            "status_field": derived_status_field,
             "preference_policy": {
                 **(profile.get("preference_policy") if isinstance(profile.get("preference_policy"), dict) else {}),
                 "scope": "ui_only",

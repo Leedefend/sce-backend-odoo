@@ -197,6 +197,7 @@ run_writes() {
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_invoice_contract_anchor_projection_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_invoice_surcharge_replay_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_invoice_tax_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_invoice_registration_projection_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_tax_deduction_replay_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_fund_confirmation_line_replay_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_fund_daily_snapshot_replay_write.py"

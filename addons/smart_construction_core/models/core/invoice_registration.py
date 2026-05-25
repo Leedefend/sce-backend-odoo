@@ -81,6 +81,9 @@ class ScInvoiceRegistration(models.Model):
     invoice_code = fields.Char(string="发票代码", index=True)
     invoice_type = fields.Char(string="发票类型", index=True)
     tax_rate = fields.Char(string="税率", index=True)
+    tax_type = fields.Char(string="交税类型", index=True)
+    prepaid_tax_date = fields.Date(string="预缴税款日期", index=True)
+    tax_certificate_no = fields.Char(string="完税凭证号码", index=True)
     invoice_content = fields.Char(string="开票内容", index=True)
     cost_category_name = fields.Char(string="成本类别", index=True)
     invoice_issue_company = fields.Char(string="开票单位", index=True)
@@ -184,6 +187,10 @@ class ScInvoiceRegistration(models.Model):
                 "creator_legacy_user_id",
                 "creator_name",
                 "created_time",
+                "tax_type",
+                "prepaid_tax_date",
+                "tax_certificate_no",
+                "legacy_attachment_ref",
                 "write_uid",
                 "write_date",
             }

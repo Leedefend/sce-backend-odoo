@@ -350,6 +350,8 @@ case "$MODE" in
     run_step expense_deposit_partner_targeted_adapter python3 "$ROOT_DIR/scripts/migration/history_expense_deposit_partner_targeted_replay_adapter.py"
     run_step expense_deposit_partner_targeted_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_expense_deposit_partner_targeted_replay_write.py"
     run_step legacy_expense_deposit_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_expense_deposit_replay_write.py"
+    run_step legacy_income_invoice_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_income_invoice_replay_adapter.py"
+    run_step legacy_income_invoice_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_income_invoice_replay_write.py"
     run_step legacy_invoice_tax_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_invoice_tax_replay_adapter.py"
     run_step legacy_invoice_tax_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_invoice_tax_replay_write.py"
     run_step legacy_tax_deduction_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_tax_deduction_replay_adapter.py"

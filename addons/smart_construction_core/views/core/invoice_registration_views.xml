@@ -139,6 +139,9 @@
                             <field name="invoice_code" readonly="state == 'legacy_confirmed'"/>
                             <field name="invoice_type" readonly="state == 'legacy_confirmed'"/>
                             <field name="tax_rate" readonly="state == 'legacy_confirmed'"/>
+                            <field name="tax_type" readonly="state == 'legacy_confirmed'"/>
+                            <field name="prepaid_tax_date" readonly="state == 'legacy_confirmed'"/>
+                            <field name="tax_certificate_no" readonly="state == 'legacy_confirmed'"/>
                             <field name="invoice_issue_company" readonly="state == 'legacy_confirmed'"/>
                             <field name="invoice_content" readonly="state == 'legacy_confirmed'"/>
                             <field name="cost_category_name" readonly="state == 'legacy_confirmed'"/>

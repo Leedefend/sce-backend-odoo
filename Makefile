@@ -16,6 +16,7 @@ CONSTRUCTION_CONTRACT_RAW_CSV ?= /mnt/tmp/raw/contract/contract.csv
 PROJECT_POSITIVE_MIGRATION_EXCEL_PATH ?= /mnt/tmp/001/672施工合同项目名称去重统计.xlsx
 PROJECT_POSITIVE_MIGRATION_RAW_CONTRACT_CSV ?= $(CONSTRUCTION_CONTRACT_RAW_CSV)
 FORMAL_PROJECTION_ARTIFACT_ROOT ?= $(if $(MIGRATION_ARTIFACT_ROOT),$(MIGRATION_ARTIFACT_ROOT),/tmp/history_continuity/$(DB_NAME)/adhoc)
+PREPAID_TAX_VISIBLE_XLSX ?= /home/odoo/workspace/partner_import_source/3/+预缴税款639153288551406250.xlsx
 
 # Snapshot DB knobs from invocation context before .env include so explicit
 # shell/CLI inputs are not overridden by values inside .env.<tier>.
@@ -1162,6 +1163,18 @@ fresh_db.legacy_receipt_income.replay.adapter: guard.prod.forbid check-compose-p
 
 fresh_db.legacy_expense_deposit.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
 	@python3 scripts/migration/fresh_db_legacy_expense_deposit_replay_adapter.py
+
+.PHONY: fresh_db.legacy_income_invoice.replay.adapter
+fresh_db.legacy_income_invoice.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
+	@python3 scripts/migration/fresh_db_legacy_income_invoice_replay_adapter.py
+
+.PHONY: fresh_db.legacy_income_invoice.replay.write
+fresh_db.legacy_income_invoice.replay.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/fresh_db_legacy_income_invoice_replay_write.py
+
+.PHONY: fresh_db.prepaid_tax.visible.refresh
+fresh_db.prepaid_tax.visible.refresh: fresh_db.legacy_income_invoice.replay.adapter fresh_db.legacy_income_invoice.replay.write fresh_db.invoice_registration.projection.write
+	@echo "[OK] fresh_db.prepaid_tax.visible.refresh done"
 
 fresh_db.legacy_invoice_tax.replay.adapter: guard.prod.forbid check-compose-project check-compose-env
 	@python3 scripts/migration/fresh_db_legacy_invoice_tax_replay_adapter.py
@@ -3354,6 +3367,13 @@ verify.intent.concurrent.smoke: guard.prod.forbid
 
 verify.p1.daily_business_visible_contract.audit: guard.prod.forbid
 	@python3 scripts/verify/p1_daily_business_visible_contract_audit.py
+
+.PHONY: verify.prepaid_tax.visible_surface_alignment.audit
+verify.prepaid_tax.visible_surface_alignment.audit: guard.prod.forbid check-compose-project check-compose-env
+	@if [[ -f "$(PREPAID_TAX_VISIBLE_XLSX)" ]]; then \
+	  $(RUN_ENV) $(COMPOSE_BASE) cp "$(PREPAID_TAX_VISIBLE_XLSX)" "$(ODOO_SERVICE):/tmp/prepaid_tax_visible_alignment.xlsx"; \
+	fi
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/prepaid_tax_visible_surface_alignment_audit.py
 
 verify.p1.daily_business_form.usability.audit: guard.prod.forbid
 	@python3 scripts/verify/p1_daily_business_form_usability_audit.py
