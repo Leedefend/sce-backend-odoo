@@ -19,7 +19,7 @@ printf '[demo.verify] db=%s\n' "$DB_NAME"
 
 scenario="${SCENARIO:-}"
 step="${STEP:-}"
-known="s00_min_path s10_contract_payment s20_settlement_clearing s30_settlement_workflow s40_failure_paths s50_repairable_paths s70_daily_business_surface s80_execution_management_surface s85_admin_finance_surface s86_tender_rental_finance_surface s87_resource_contract_surface s90_users_roles showroom"
+known="s00_min_path s10_contract_payment s20_settlement_clearing s30_settlement_workflow s40_failure_paths s50_repairable_paths s70_daily_business_surface s80_execution_management_surface s85_admin_finance_surface s86_tender_rental_finance_surface s87_resource_contract_surface s88_output_invoice_surface s90_users_roles showroom"
 
 if [ -n "$scenario" ]; then
   found=0
@@ -210,6 +210,12 @@ run_check "S87 equipment resource records exist" "s87_resource_contract_surface"
 run_check "S87 contract records exist" "s87_resource_contract_surface" \
   "select case when (select count(*) from sc_general_contract where name='S87-GC-001' and state='signed') = 1 and (select count(*) from sc_contract_event where event_no in ('S87-CE-001','S87-CE-002') and state in ('approved','done')) = 2 then 'ok' else 'S87 contract records missing' end;" \
   "select 'general_contract' as kind, id, name, state from sc_general_contract where name='S87-GC-001' union all select 'contract_event', id, name, state from sc_contract_event where event_no in ('S87-CE-001','S87-CE-002');"
+run_check "S88 output invoice ledger record exists" "s88_output_invoice_surface" \
+  "select case when (select count(*) from sc_invoice_registration where name='S88-OUT-INV-001' and direction='output' and state='registered') = 1 and (select count(*) from sc_output_invoice_ledger where invoice_no='S88-OUT-NO-001' and adjustment_kind='normal') = 1 then 'ok' else 'S88 output invoice ledger missing' end;" \
+  "select id, invoice_no, adjustment_kind, invoice_amount, amount_no_tax, tax_amount from sc_output_invoice_ledger where invoice_no='S88-OUT-NO-001';"
+run_check "S88 output invoice adjustment record exists" "s88_output_invoice_surface" \
+  "select case when (select count(*) from sc_output_invoice_adjustment where name='S88-OIA-001' and state='draft' and invoice_no='S88-OUT-NO-001' and red_flush_invoice_amount < 0) = 1 then 'ok' else 'S88 output invoice adjustment missing' end;" \
+  "select id, name, state, invoice_no, original_invoice_amount, red_flush_invoice_amount from sc_output_invoice_adjustment where name='S88-OIA-001';"
 run_check "S90 users exist" "s90_users_roles" \
   "select case when count(*) >= 6 then 'ok' else 'S90 users missing' end from res_users where login in ('demo_pm','demo_finance','demo_cost','demo_audit','demo_readonly','svc_e2e_smoke');" \
   "select id, login, active from res_users where login in ('demo_pm','demo_finance','demo_cost','demo_audit','demo_readonly','svc_e2e_smoke') order by login;"
