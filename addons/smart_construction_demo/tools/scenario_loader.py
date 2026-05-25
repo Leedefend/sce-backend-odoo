@@ -8,6 +8,16 @@ from odoo.tools import convert
 from odoo.tools.misc import file_path
 
 
+BASE_SEED_FILES: List[str] = [
+    "data/base/00_dictionary.xml",
+    "data/base/dictionary_demo.xml",
+    "data/base/cost_demo.xml",
+    "data/base/10_partners.xml",
+    "data/base/20_projects.xml",
+    "data/base/25_project_tasks.xml",
+]
+
+
 # Scenario registry: scenario_name -> ordered xml file list (relative under module root)
 SCENARIOS: Dict[str, List[str]] = {
     # S00 is "default baseline" (usually already loaded by manifest, but loader can load too)
@@ -151,6 +161,7 @@ def load_scenario(
     scenario: str,
     mode: str = "update",
     step: str | None = None,
+    ensure_base: bool = True,
 ) -> None:
     """
     Load a demo scenario XML files into current DB using Odoo converter.
@@ -172,6 +183,9 @@ def load_scenario(
         _ensure_demo_user_xmlids(env)
 
     module = "smart_construction_demo"
+    if ensure_base:
+        load_base_seed(env, mode=mode)
+
     registry = _normalize_registry()
     files = registry[scenario]["files"]
     files = _filter_files(files, step)
@@ -197,17 +211,42 @@ def load_scenario(
     env.cr.commit()
 
 
+def load_base_seed(env, mode: str = "update") -> None:
+    """
+    Recreate shared demo base records that scenarios reference.
+
+    The module install path intentionally runs user_acceptance_project_cleanup
+    after loading the default demo records, which removes the base projects and
+    their XMLIDs. Scenario replay must restore that base first.
+    """
+    module = "smart_construction_demo"
+    idref = {}
+    for relpath in BASE_SEED_FILES:
+        abspath = file_path(f"{module}/{relpath}")
+        convert.convert_file(
+            env,
+            module,
+            abspath,
+            idref,
+            mode=mode,
+            noupdate=False,
+            kind="data",
+        )
+    env.cr.commit()
+
+
 def load_all(env, mode: str = "update") -> None:
     """
     Load all registered scenarios in stable order.
     """
+    load_base_seed(env, mode=mode)
     registry = _normalize_registry()
     ordered = sorted(
         registry.items(),
         key=lambda item: (item[1]["sequence"], item[0]),
     )
     for scenario, _spec in ordered:
-        load_scenario(env, scenario, mode=mode)
+        load_scenario(env, scenario, mode=mode, ensure_base=False)
 
 
 def load_release_seed(env, mode: str = "update") -> None:
@@ -218,10 +257,11 @@ def load_release_seed(env, mode: str = "update") -> None:
     walkthrough path for product demo and acceptance.
     """
     known = set(SCENARIOS.keys())
+    load_base_seed(env, mode=mode)
     for scenario in RELEASE_SCENARIOS:
         if scenario not in known:
             raise ValueError(f"release scenario '{scenario}' not registered")
-        load_scenario(env, scenario, mode=mode)
+        load_scenario(env, scenario, mode=mode, ensure_base=False)
 
 
 def _ensure_demo_user_xmlids(env) -> None:
