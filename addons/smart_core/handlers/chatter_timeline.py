@@ -156,11 +156,24 @@ class ChatterTimelineHandler(BaseIntentHandler):
 
     def _load_attachments(self, model: str, res_id: int, limit: int) -> List[Dict[str, Any]]:
         Attachment = self.env["ir.attachment"]
-        rows = Attachment.search(
-            [("res_model", "=", model), ("res_id", "=", res_id)],
-            order="id desc",
-            limit=limit,
-        )
+        domain = [("res_model", "=", model), ("res_id", "=", res_id)]
+        related_ids: List[int] = []
+        if model in self.env:
+            record = self.env[model].browse(res_id).exists()
+            attachment_field = record and next(
+                (
+                    name
+                    for name, field in record._fields.items()
+                    if name == "attachment_ids"
+                    or (field.type == "many2many" and field.comodel_name == "ir.attachment")
+                ),
+                "",
+            )
+            if attachment_field:
+                related_ids = record[attachment_field].ids
+        if related_ids:
+            domain = ["|", ("id", "in", related_ids), "&", ("res_model", "=", model), ("res_id", "=", res_id)]
+        rows = Attachment.sudo().search(domain, order="id desc", limit=limit)
         items: List[Dict[str, Any]] = []
         for row in rows:
             date_value = _to_iso(row.create_date) or _to_iso(row.write_date)

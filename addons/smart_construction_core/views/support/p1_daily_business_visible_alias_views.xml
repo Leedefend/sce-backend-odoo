@@ -67,10 +67,11 @@
         <field name="model">payment.request</field>
         <field name="inherit_id" ref="view_payment_request_tree"/>
         <field name="arch" type="xml">
-            <xpath expr="//tree" position="inside">
+            <xpath expr="//tree/field[1]" position="before">
                 <field name="p1_visible_06fa8c6f628f" string="单据状态" optional="show" readonly="1"/>
                 <field name="p1_visible_8fa8662ad38f" string="单据编号" optional="show" readonly="1"/>
                 <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
+                <field name="p1_visible_2c346345746e" string="申请日期" optional="show" readonly="1"/>
                 <field name="p1_visible_ccfa1326c88f" string="收款单位" optional="show" readonly="1"/>
                 <field name="p1_visible_c00fc55a25b8" string="申请付款金额" optional="show" readonly="1"/>
                 <field name="p1_visible_9469a2ad32f8" string="实际付款金额" optional="show" readonly="1"/>
@@ -84,8 +85,8 @@
                 <field name="p1_visible_48a64eb40c71" string="开户行" optional="show" readonly="1"/>
                 <field name="p1_visible_901384917949" string="账号" optional="show" readonly="1"/>
                 <field name="p1_visible_71e47f617269" string="填写人" optional="show" readonly="1"/>
-                <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
                 <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
+                <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
             </xpath>
         </field>
     </record>

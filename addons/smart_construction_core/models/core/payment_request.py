@@ -231,6 +231,52 @@ class PaymentRequest(models.Model):
         readonly=True,
         index=True,
     )
+    legacy_visible_cost_category_name = fields.Char(
+        string="历史成本分类名称",
+        readonly=True,
+        index=True,
+    )
+    legacy_visible_remark = fields.Text(
+        string="历史备注",
+        readonly=True,
+    )
+    legacy_visible_amount_uppercase = fields.Char(
+        string="历史金额大写",
+        readonly=True,
+    )
+    legacy_visible_actual_paid_amount = fields.Char(
+        string="历史实际付款金额",
+        readonly=True,
+    )
+    legacy_visible_available_balance = fields.Char(
+        string="历史可用余额",
+        readonly=True,
+    )
+    legacy_payment_account_name = fields.Char(
+        string="历史付款户名",
+        readonly=True,
+        index=True,
+    )
+    legacy_payment_account_no = fields.Char(
+        string="历史付款账号",
+        readonly=True,
+        index=True,
+    )
+    legacy_payee_account_name = fields.Char(
+        string="历史收款户名",
+        readonly=True,
+        index=True,
+    )
+    legacy_payee_bank_name = fields.Char(
+        string="历史收款开户行",
+        readonly=True,
+        index=True,
+    )
+    legacy_payee_account_no = fields.Char(
+        string="历史收款账号",
+        readonly=True,
+        index=True,
+    )
     partner_account_name = fields.Char(
         string="户名",
         related="partner_id.sc_account_name",
@@ -311,7 +357,7 @@ class PaymentRequest(models.Model):
         tracking=True,
     )
 
-    @api.depends("outflow_line_ids.source_line_type")
+    @api.depends("outflow_line_ids.source_line_type", "legacy_visible_cost_category_name")
     def _compute_reconciliation_summary(self):
         for record in self:
             line_types = [
@@ -320,7 +366,7 @@ class PaymentRequest(models.Model):
                 if line_type
             ]
             unique_types = sorted(set(line_types))
-            record.cost_category_name = " / ".join(unique_types[:5])
+            record.cost_category_name = " / ".join(unique_types[:5]) or record.legacy_visible_cost_category_name
 
     @api.depends("amount")
     def _compute_amount_uppercase(self):

@@ -1079,6 +1079,17 @@ class UiContractV2Handler(BaseIntentHandler):
 
         labels = profile.get("column_labels") if isinstance(profile.get("column_labels"), dict) else {}
         labels = {**labels, **{name: label_for(name) for name in columns}}
+        deduped_columns: list[str] = []
+        seen_labels: set[str] = set()
+        for name in columns:
+            label = str(labels.get(name) or label_for(name) or name).strip()
+            dedupe_key = label or name
+            if dedupe_key in seen_labels:
+                continue
+            seen_labels.add(dedupe_key)
+            deduped_columns.append(name)
+        columns = deduped_columns
+        labels = {name: labels.get(name) or label_for(name) for name in columns}
         profile.update({
             "source": "ui.contract.v2.business_operation_projection",
             "columns": columns,
@@ -1253,6 +1264,7 @@ class UiContractV2Handler(BaseIntentHandler):
             rows = record.read(field_names)
             if rows and isinstance(rows[0], dict):
                 merged.update(rows[0])
+                self._hydrate_attachment_display_values(record, field_names, merged)
         except Exception:
             _logger.debug("ui.contract.v2 bulk record hydration skipped; falling back to per-field read", exc_info=True)
             try:
@@ -1265,9 +1277,30 @@ class UiContractV2Handler(BaseIntentHandler):
                         rows = record.read([name])
                         if rows and isinstance(rows[0], dict) and name in rows[0]:
                             merged[name] = rows[0].get(name)
+                            self._hydrate_attachment_display_values(record, [name], merged)
                     except Exception:
                         _logger.debug("ui.contract.v2 field hydration skipped: %s.%s", model, name, exc_info=True)
         return merged
+
+    def _hydrate_attachment_display_values(self, record, field_names: list[str], values: dict[str, Any]) -> None:
+        for name in field_names:
+            field = record._fields.get(name)
+            if not field or field.type != "many2many" or field.comodel_name != "ir.attachment":
+                continue
+            raw_value = values.get(name)
+            if not isinstance(raw_value, list):
+                continue
+            attachment_ids = [int(item) for item in raw_value if isinstance(item, int) or str(item).isdigit()]
+            if not attachment_ids:
+                continue
+            attachments = self.env["ir.attachment"].sudo().browse(attachment_ids).exists()
+            display_values = []
+            for attachment in attachments:
+                label = str(attachment.name or attachment.display_name or attachment.id)
+                url = attachment.url or f"/web/content/{attachment.id}?download=true"
+                label = f"{label} | {url}"
+                display_values.append(label)
+            values[name] = display_values
 
     def _handle_scene_contract(self, params: dict[str, Any], *, client_type: str, delivery_profile: str):
         scene_key = str(params.get("scene_key") or params.get("sceneKey") or "").strip()

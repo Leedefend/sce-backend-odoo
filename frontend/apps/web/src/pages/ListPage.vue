@@ -336,6 +336,18 @@
                   >
                     {{ semanticCell(col, row[col]).text }}
                   </span>
+                  <span v-else-if="attachmentLinks(row[col]).length" class="attachment-links">
+                    <a
+                      v-for="link in attachmentLinks(row[col])"
+                      :key="`${link.name}-${link.url}`"
+                      :href="link.url"
+                      target="_blank"
+                      rel="noopener"
+                      @click.stop
+                    >
+                      {{ link.name }}
+                    </a>
+                  </span>
                   <span v-else>{{ semanticCell(col, row[col]).text }}</span>
                 </td>
               </tr>
@@ -493,6 +505,18 @@
                 <div class="primary">{{ semanticCell(col, row[col]).text }}</div>
                 <div v-if="rowSecondary" class="secondary">{{ semanticCell(rowSecondary, row[rowSecondary]).text }}</div>
               </div>
+              <div v-else-if="attachmentLinks(row[col]).length" class="attachment-links">
+                <a
+                  v-for="link in attachmentLinks(row[col])"
+                  :key="`${link.name}-${link.url}`"
+                  :href="link.url"
+                  target="_blank"
+                  rel="noopener"
+                  @click.stop
+                >
+                  {{ link.name }}
+                </a>
+              </div>
               <div v-else>
                 {{ semanticCell(col, row[col]).text }}
               </div>
@@ -636,7 +660,7 @@ import StatusPanel from '../components/StatusPanel.vue';
 import PageHeader from '../components/page/PageHeader.vue';
 import { resolveEmptyCopy, resolveErrorCopy, type StatusError } from '../composables/useStatus';
 import type { SceneListProfile } from '../app/resolvers/sceneRegistry';
-import { formatAttachmentReferenceValue } from '../utils/display';
+import { formatAttachmentReferenceValue, parseAttachmentReferenceLinks } from '../utils/display';
 
 type SelectionAction = {
   key: string;
@@ -979,6 +1003,10 @@ function semanticCell(field: string, value: unknown) {
     ? (option.toneByValue?.[toneKey] || 'neutral')
     : 'neutral';
   return { text, tone };
+}
+
+function attachmentLinks(value: unknown) {
+  return parseAttachmentReferenceLinks(value);
 }
 
 function isStatusColumn(field: string) {
@@ -2806,6 +2834,20 @@ tr:hover {
 .status-badge.tone-danger { background: var(--sc-app-danger-bg); color: var(--sc-app-danger-text); border-color: var(--sc-app-danger-border); }
 .status-badge.tone-info { background: var(--sc-app-info-bg); color: var(--sc-app-info-text); border-color: var(--sc-app-info-border); }
 .status-badge.tone-neutral { background: var(--sc-app-subtle-bg); color: var(--sc-app-text-primary); border-color: var(--sc-app-border); }
+
+.attachment-links {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  max-width: 100%;
+}
+
+.attachment-links a {
+  color: var(--sc-app-accent, #2563eb);
+  overflow-wrap: anywhere;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 
 .favorite-toggle {
   display: inline-flex;

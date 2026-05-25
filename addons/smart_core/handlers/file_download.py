@@ -108,20 +108,29 @@ class FileDownloadHandler(BaseIntentHandler):
             trace_id = self.context.get("trace_id") or ""
 
         try:
-            attachment = attachment or self.env["ir.attachment"].browse(attachment_id).exists()
+            attachment = attachment or self.env["ir.attachment"].sudo().browse(attachment_id).exists()
             if not attachment:
                 return self._err(404, "附件不存在")
-            attachment_model = attachment.res_model
-            if attachment_model not in self._allowed_models():
+            auth_model = attachment.res_model
+            auth_res_id = attachment.res_id
+            if "payment.request" in self.env:
+                parent_request = self.env["payment.request"].sudo().search(
+                    [("attachment_ids", "in", attachment.id)],
+                    limit=1,
+                )
+                if parent_request:
+                    auth_model = "payment.request"
+                    auth_res_id = parent_request.id
+            if auth_model not in self._allowed_models():
                 return self._err(403, "附件不可访问")
-            if attachment_model not in self.env:
+            if auth_model not in self.env:
                 return self._err(404, "附件业务模型不存在")
-            self.env[attachment_model].check_access_rights("read")
-            record = self.env[attachment_model].browse(attachment.res_id).exists()
+            self.env[auth_model].check_access_rights("read")
+            record = self.env[auth_model].browse(auth_res_id).exists()
             if not record:
                 return self._err(404, "附件业务记录不存在")
             current_project_id = selected_project_id_from_context(params, self.context if isinstance(self.context, dict) else {})
-            in_scope, scope_meta = record_in_project_scope(self.env[attachment_model], int(record.id), current_project_id)
+            in_scope, scope_meta = record_in_project_scope(self.env[auth_model], int(record.id), current_project_id)
             if not in_scope:
                 return project_scope_denied_response(scope_meta)
             record.check_access_rule("read")
@@ -137,6 +146,8 @@ class FileDownloadHandler(BaseIntentHandler):
             "name": attachment.name,
             "mimetype": attachment.mimetype or "application/octet-stream",
             "datas": attachment.datas or "",
+            "type": attachment.type or "binary",
+            "url": attachment.url or "",
             "res_model": attachment.res_model,
             "res_id": attachment.res_id,
         }
