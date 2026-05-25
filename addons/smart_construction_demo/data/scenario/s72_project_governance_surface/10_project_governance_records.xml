@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data noupdate="1">
+
+    <record id="sc_demo_stage_requirement_072_funding" model="sc.project.stage.requirement.item">
+      <field name="name">S72 在建阶段资金基线已配置</field>
+      <field name="active">True</field>
+      <field name="sequence">72</field>
+      <field name="lifecycle_state">in_progress</field>
+      <field name="required">True</field>
+      <field name="action_xmlid">smart_construction_core.action_project_funding_baseline</field>
+      <field name="target_field">funding_baseline_ids</field>
+    </record>
+
+    <record id="sc_demo_stage_requirement_072_progress" model="sc.project.stage.requirement.item">
+      <field name="name">S72 在建阶段进度计量已登记</field>
+      <field name="active">True</field>
+      <field name="sequence">73</field>
+      <field name="lifecycle_state">in_progress</field>
+      <field name="required">True</field>
+      <field name="action_xmlid">smart_construction_core.action_project_progress_entry</field>
+      <field name="target_field">progress_entry_ids</field>
+    </record>
+
+    <record id="sc_demo_next_action_rule_072_payment" model="sc.project.next_action.rule">
+      <field name="name">S72 复核待付款申请</field>
+      <field name="active">True</field>
+      <field name="sequence">72</field>
+      <field name="lifecycle_state">in_progress</field>
+      <field name="condition_expr">s.get('payment_pending', 0) &gt;= 0</field>
+      <field name="action_type">act_window_xmlid</field>
+      <field name="action_ref">smart_construction_core.action_payment_request</field>
+      <field name="hint_template">当前项目有 {payment_pending} 条待处理付款/收款申请。</field>
+    </record>
+
+    <record id="sc_demo_next_action_rule_072_cost" model="sc.project.next_action.rule">
+      <field name="name">S72 查看成本台账</field>
+      <field name="active">True</field>
+      <field name="sequence">73</field>
+      <field name="lifecycle_state">in_progress</field>
+      <field name="condition_expr">s.get('cost_count', 0) &gt;= 0</field>
+      <field name="action_type">act_window_xmlid</field>
+      <field name="action_ref">smart_construction_core.action_project_cost_ledger</field>
+      <field name="hint_template">当前项目已有 {cost_count} 条成本台账。</field>
+    </record>
+
+    <record id="sc_demo_project_member_staging_072_pm" model="sc.project.member.staging">
+      <field name="legacy_member_id">S72-MEMBER-001</field>
+      <field name="legacy_project_id">S65-COST-2025-001</field>
+      <field name="legacy_user_ref">admin</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_065_cost_funding"/>
+      <field name="user_id" ref="base.user_admin"/>
+      <field name="legacy_role_text">项目负责人</field>
+      <field name="role_fact_status">resolved</field>
+      <field name="import_batch">s72_project_governance_surface</field>
+      <field name="evidence">S72 demo 成员暂存样例。</field>
+      <field name="notes">用于项目成员导入暂存和角色事实解析表单演示。</field>
+      <field name="active">True</field>
+    </record>
+
+    <record id="sc_demo_project_member_staging_072_cost" model="sc.project.member.staging">
+      <field name="legacy_member_id">S72-MEMBER-002</field>
+      <field name="legacy_project_id">S65-COST-2025-001</field>
+      <field name="legacy_user_ref">cost.manager.demo</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_065_cost_funding"/>
+      <field name="user_id" ref="base.user_admin"/>
+      <field name="legacy_role_text">成本经理</field>
+      <field name="role_fact_status">missing</field>
+      <field name="import_batch">s72_project_governance_surface</field>
+      <field name="evidence">S72 demo 成员角色待补齐样例。</field>
+      <field name="notes">用于展示成员暂存中未解析角色的治理状态。</field>
+      <field name="active">True</field>
+    </record>
+
+  </data>
+</odoo>
