@@ -130,6 +130,10 @@ SCENARIOS: Dict[str, List[str]] = {
             "data/scenario/s74_partner_supplier_surface/10_partner_supplier_records.xml",
         ],
     },
+    "s75_summary_projection_surface": {
+        "sequence": 75,
+        "files": [],
+    },
     "s80_execution_management_surface": {
         "sequence": 80,
         "files": [
@@ -218,6 +222,7 @@ RELEASE_SCENARIOS: List[str] = [
     "s72_project_governance_surface",
     "s73_risk_settlement_surface",
     "s74_partner_supplier_surface",
+    "s75_summary_projection_surface",
     "s80_execution_management_surface",
     "s85_admin_finance_surface",
     "s86_tender_rental_finance_surface",
