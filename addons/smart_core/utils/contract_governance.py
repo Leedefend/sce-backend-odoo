@@ -396,6 +396,50 @@ _TAX_DEDUCTION_REGISTRATION_LIST_COLUMN_LABELS = {
     "p1_visible_ee6a4d9e2956": "录入人",
     "p1_visible_1e62803e196c": "单据日期",
 }
+_FOREIGN_TAX_CERTIFICATE_REGISTRATION_LIST_COLUMNS = [
+    "document_state_label",
+    "document_no",
+    "project_name",
+    "taxpayer_name",
+    "taxpayer_identifier",
+    "handler_phone",
+    "regional_tax_contact",
+    "regional_tax_contact_phone",
+    "operation_address",
+    "payment_method",
+    "contract_name",
+    "planned_amount",
+    "contract_start_date",
+    "contract_end_date",
+    "partner_name",
+    "counterparty_tax_identifier",
+    "tax_report_management_no",
+    "attachment_links",
+    "creator_name",
+    "created_time",
+]
+_FOREIGN_TAX_CERTIFICATE_REGISTRATION_LIST_COLUMN_LABELS = {
+    "document_state_label": "单据状态",
+    "document_no": "单据编号",
+    "project_name": "项目名称",
+    "taxpayer_name": "纳税人名称",
+    "taxpayer_identifier": "纳税人识别号",
+    "handler_phone": "经办人联系电话",
+    "regional_tax_contact": "区域所属税所联系人",
+    "regional_tax_contact_phone": "区域所属税所联系人手机",
+    "operation_address": "跨区域经营地址",
+    "payment_method": "经营方式",
+    "contract_name": "合同名称",
+    "planned_amount": "合同金额",
+    "contract_start_date": "合同开始日期",
+    "contract_end_date": "合同结束日期",
+    "partner_name": "合同相对方名称",
+    "counterparty_tax_identifier": "合同相对方纳税人识别号",
+    "tax_report_management_no": "跨区域涉税事项报验管理编号",
+    "attachment_links": "附件",
+    "creator_name": "录入人",
+    "created_time": "录入时间",
+}
 _MATERIAL_PLAN_LIST_COLUMNS = [
     "name",
     "project_id",
@@ -1313,6 +1357,31 @@ def _is_model_tree_contract(data: dict, model_name: str) -> bool:
     )
 
 
+def _is_foreign_tax_certificate_registration_tree_contract(data: dict) -> bool:
+    if not _is_model_tree_contract(data, "sc.legacy.payment.residual.fact"):
+        return False
+    head = _as_dict(data.get("head"))
+    context = _as_dict(data.get("context"))
+    views = _as_dict(data.get("views"))
+    tree_view = _as_dict(views.get("tree") or views.get("list"))
+    raw_parts = [
+        head.get("name"),
+        data.get("name"),
+        data.get("title"),
+        data.get("domain"),
+        data.get("domain_raw"),
+        head.get("domain"),
+        head.get("domain_raw"),
+        context.get("default_payment_family"),
+        context.get("default_source_table"),
+        tree_view.get("name"),
+        tree_view.get("domain"),
+        tree_view.get("domain_raw"),
+    ]
+    signature = " ".join(_safe_text(part) for part in raw_parts)
+    return "tax_certificate_registration" in signature or "外经证登记" in signature
+
+
 def _is_form_contract(data: dict) -> bool:
     head = _as_dict(data.get("head"))
     views = _as_dict(data.get("views"))
@@ -1955,6 +2024,7 @@ def _govern_standard_list_for_user(
     row_primary: str,
     row_secondary: str,
     status_field: str,
+    strict_columns: bool = False,
 ) -> None:
     if not _is_model_tree_contract(data, model_name):
         return
@@ -2121,6 +2191,7 @@ def _govern_standard_list_for_user(
     list_profile = _as_dict(data.get("list_profile"))
     list_profile.update(
         {
+            "source": "contract_governance.curated_list_facts",
             "columns": selected,
             "fact_columns": selected,
             "hidden_columns": [],
@@ -2150,6 +2221,14 @@ def _govern_standard_list_for_user(
             },
         }
     )
+    if strict_columns:
+        list_profile["column_policy"] = {
+            "mode": "strict",
+            "reason": "native_tree_columns_are_the_user_visible_business_surface",
+        }
+        list_profile["preference_policy"]["allow_visibility"] = False
+        list_profile["preference_policy"]["allow_order"] = False
+        list_profile["preference_policy"]["locked_columns"] = selected
     data["list_profile"] = list_profile
     views = _as_dict(data.get("views"))
     tree_view = _as_dict(views.get("tree") or views.get("list"))
@@ -4231,6 +4310,17 @@ def apply_project_form_domain_override(data: dict, contract_mode: str) -> None:
             row_secondary="project_id",
             status_field="state",
         )
+        if _is_foreign_tax_certificate_registration_tree_contract(data):
+            _govern_standard_list_for_user(
+                data,
+                model_name="sc.legacy.payment.residual.fact",
+                columns_order=_FOREIGN_TAX_CERTIFICATE_REGISTRATION_LIST_COLUMNS,
+                column_labels=_FOREIGN_TAX_CERTIFICATE_REGISTRATION_LIST_COLUMN_LABELS,
+                row_primary="document_no",
+                row_secondary="",
+                status_field="document_state_label",
+                strict_columns=True,
+            )
         _govern_standard_list_for_user(
             data,
             model_name="project.material.plan",

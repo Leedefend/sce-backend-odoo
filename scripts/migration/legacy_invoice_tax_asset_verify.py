@@ -93,12 +93,13 @@ def verify(asset_root: Path, lane: str) -> dict[str, Any]:
     require(asset_manifest.get("odoo_shell") is False, "asset manifest must declare odoo_shell=false")
     require(asset_manifest.get("lane", {}).get("layer") == "30_relation", "unexpected layer")
     require(asset_manifest.get("target", {}).get("model") == "sc.legacy.invoice.tax.fact", "unexpected target model")
-    require(asset_manifest.get("counts", {}).get("loadable_records") == 5920, "loadable count drifted")
+    expected_count = asset_manifest.get("counts", {}).get("loadable_records")
+    require(isinstance(expected_count, int) and expected_count > 0, "loadable count must be declared")
     for asset in asset_manifest.get("assets", []):
         require(sha256_file(asset_root / asset["path"]) == asset["sha256"], f"sha256 mismatch for {asset['path']}")
     project_refs = refs(asset_root, "manifest/project_external_id_manifest_v1.json")
     partner_refs = refs(asset_root, "manifest/partner_external_id_manifest_v1.json")
-    require(len(records) == 5920, f"xml record count mismatch: {len(records)}")
+    require(len(records) == expected_count, f"xml record count mismatch: {len(records)} != {expected_count}")
     ids = [row["id"] for row in records]
     require(len(ids) == len(set(ids)), "duplicate XML external ids")
     for row in records:

@@ -17,6 +17,7 @@ PROJECT_POSITIVE_MIGRATION_EXCEL_PATH ?= /mnt/tmp/001/672施工合同项目名�
 PROJECT_POSITIVE_MIGRATION_RAW_CONTRACT_CSV ?= $(CONSTRUCTION_CONTRACT_RAW_CSV)
 FORMAL_PROJECTION_ARTIFACT_ROOT ?= $(if $(MIGRATION_ARTIFACT_ROOT),$(MIGRATION_ARTIFACT_ROOT),/tmp/history_continuity/$(DB_NAME)/adhoc)
 PREPAID_TAX_VISIBLE_XLSX ?= /home/odoo/workspace/partner_import_source/3/+预缴税款639153288551406250.xlsx
+FOREIGN_TAX_CERTIFICATE_VISIBLE_XLSX ?= /home/odoo/workspace/partner_import_source/3/外经证登记639153428231093750.xlsx
 
 # Snapshot DB knobs from invocation context before .env include so explicit
 # shell/CLI inputs are not overridden by values inside .env.<tier>.
@@ -3374,6 +3375,13 @@ verify.prepaid_tax.visible_surface_alignment.audit: guard.prod.forbid check-comp
 	  $(RUN_ENV) $(COMPOSE_BASE) cp "$(PREPAID_TAX_VISIBLE_XLSX)" "$(ODOO_SERVICE):/tmp/prepaid_tax_visible_alignment.xlsx"; \
 	fi
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/prepaid_tax_visible_surface_alignment_audit.py
+
+.PHONY: verify.foreign_tax_certificate.visible_surface_alignment.audit
+verify.foreign_tax_certificate.visible_surface_alignment.audit: guard.prod.forbid check-compose-project check-compose-env
+	@if [[ -f "$(FOREIGN_TAX_CERTIFICATE_VISIBLE_XLSX)" ]]; then \
+	  $(RUN_ENV) $(COMPOSE_BASE) cp "$(FOREIGN_TAX_CERTIFICATE_VISIBLE_XLSX)" "$(ODOO_SERVICE):/tmp/foreign_tax_certificate_visible_alignment.xlsx"; \
+	fi
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/foreign_tax_certificate_visible_surface_alignment_audit.py
 
 verify.p1.daily_business_form.usability.audit: guard.prod.forbid
 	@python3 scripts/verify/p1_daily_business_form_usability_audit.py
