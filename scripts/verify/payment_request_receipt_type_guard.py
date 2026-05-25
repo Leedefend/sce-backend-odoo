@@ -122,6 +122,13 @@ def main() -> int:
         errors,
     )
     _assert(
+        "discarded_existing_stale_payload_rows" in receipt_write
+        and "stale_payload_records.unlink()" in receipt_write
+        and "legacy_receipt_id not in payload_receipt_ids" in receipt_write,
+        "receipt core write must remove already-written migration rows routed out of the current receipt payload",
+        errors,
+    )
+    _assert(
         '"receipt_type"' in receipt_write
         and '"receipt_type": clean(row.get("receipt_type")) or False' in receipt_write,
         "receipt core write must create payment.request rows with receipt_type",

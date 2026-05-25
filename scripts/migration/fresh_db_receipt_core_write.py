@@ -335,6 +335,8 @@ asset_payload = any(clean(row.get("source_mode")) == "asset_xml" for row in rows
 payload_receipt_ids = {clean(row.get("legacy_receipt_id")) for row in rows if clean(row.get("legacy_receipt_id"))}
 existing_deleted_records = Request.browse()
 discarded_existing_deleted_rows = []
+stale_payload_records = Request.browse()
+discarded_existing_stale_payload_rows = []
 if deleted_receipt_ids:
     for rec in Request.search([("note", "ilike", MIGRATION_MARKER)], order="id"):
         legacy_receipt_id = extract_legacy_receipt_id(rec.note)
@@ -351,6 +353,21 @@ if deleted_receipt_ids:
             )
     if existing_deleted_records:
         existing_deleted_records.unlink()
+for rec in Request.search([("note", "ilike", MIGRATION_MARKER)], order="id"):
+    legacy_receipt_id = extract_legacy_receipt_id(rec.note)
+    if legacy_receipt_id and legacy_receipt_id not in payload_receipt_ids and legacy_receipt_id not in deleted_receipt_ids:
+        stale_payload_records |= rec
+        discarded_existing_stale_payload_rows.append(
+            {
+                "request_id": rec.id,
+                "name": rec.name or "",
+                "legacy_receipt_id": legacy_receipt_id,
+                "state": rec.state or "",
+                "amount": rec.amount or 0,
+            }
+        )
+if stale_payload_records:
+    stale_payload_records.unlink()
 pre_records = snapshot(Request, PRE_SNAPSHOT_CSV)
 pre_existing_receipt_ids = {
     legacy_id
@@ -496,6 +513,7 @@ result = {
     "input_rows": len(rows),
     "discarded_old_system_deleted_rows": len(discarded_deleted_rows),
     "discarded_existing_old_system_deleted_rows": len(discarded_existing_deleted_rows),
+    "discarded_existing_stale_payload_rows": len(discarded_existing_stale_payload_rows),
     "discarded_old_system_deleted_samples": [
         {
             "legacy_receipt_id": clean(row.get("legacy_receipt_id")),
@@ -505,6 +523,7 @@ result = {
         for row in discarded_deleted_rows[:20]
     ],
     "discarded_existing_old_system_deleted_samples": discarded_existing_deleted_rows[:20],
+    "discarded_existing_stale_payload_samples": discarded_existing_stale_payload_rows[:20],
     "created_rows": len(created),
     "skipped_existing": skipped_existing,
     "post_write_match_count": len(post_records),
@@ -534,6 +553,7 @@ print(
             "input_rows": len(rows),
             "discarded_old_system_deleted_rows": len(discarded_deleted_rows),
             "discarded_existing_old_system_deleted_rows": len(discarded_existing_deleted_rows),
+            "discarded_existing_stale_payload_rows": len(discarded_existing_stale_payload_rows),
             "created_rows": len(created),
             "skipped_existing": skipped_existing,
             "post_write_match_count": len(post_records),
