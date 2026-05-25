@@ -76,6 +76,12 @@ SCENARIOS: Dict[str, List[str]] = {
             "data/scenario/s70_daily_business_surface/10_daily_business_records.xml",
         ],
     },
+    "s80_execution_management_surface": {
+        "sequence": 80,
+        "files": [
+            "data/scenario/s80_execution_management_surface/10_execution_management_records.xml",
+        ],
+    },
     "s90_users_roles": {
         "sequence": 90,
         "files": [
@@ -119,6 +125,7 @@ RELEASE_SCENARIOS: List[str] = [
     "s30_settlement_workflow",
     "s60_project_cockpit",
     "s70_daily_business_surface",
+    "s80_execution_management_surface",
     "s90_users_roles",
 ]
 

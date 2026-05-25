@@ -219,12 +219,13 @@ make demo.verify DB_NAME=sc_demo
 | --- | --- | --- | --- |
 | S00 | 最短路径（项目/BOQ/材料/发票） | project.project / project.boq.line / project.material.plan / account.move | projects/boq/material/invoices |
 | S70 | 日常业务表单面 | sc.material.catalog / sc.expense.claim / sc.receipt.income / sc.payment.execution / sc.treasury.reconciliation / sc.invoice.registration / sc.tax.deduction.registration / sc.construction.diary | 材料价格、费用、收款、付款、资金、发票、抵扣、施工日志均有可打开样例 |
+| S80 | 执行管理表单面 | sc.material.purchase.request / sc.material.acceptance / sc.material.inbound / sc.material.outbound / sc.material.settlement / sc.plan / sc.quality.issue / sc.safety.issue / sc.labor.plan / sc.equipment.plan | 材料采购验收入出库结算、计划汇报、质量安全闭环、劳务机械均有可打开样例 |
 | S10 | 合同 + 付款申请 + 发票（draft） | construction.contract / payment.request / account.move | contract/payment_request/invoices |
 | S20 | 结算单 + 明细 + 收款关联 | sc.settlement.order / sc.settlement.order.line / payment.request | settlement/lines/payment_request.link |
 | S30 | 工作流种子 + 门禁（bad） | sc.settlement.order / sc.settlement.order.line / payment.request | draft + gate |
 | S40 | 失败路径（结构/金额/关联） | sc.settlement.order / sc.settlement.order.line / payment.request | fail conditions locked |
 
-发布态默认种子集合：`S00 + S10 + S20 + S30 + S60 + S90`
+发布态默认种子集合：`S00 + S10 + S20 + S30 + S60 + S70 + S80 + S90`
 
 ## Product Hardening 场景别名
 

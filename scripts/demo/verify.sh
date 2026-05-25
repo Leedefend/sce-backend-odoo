@@ -19,7 +19,7 @@ printf '[demo.verify] db=%s\n' "$DB_NAME"
 
 scenario="${SCENARIO:-}"
 step="${STEP:-}"
-known="s00_min_path s10_contract_payment s20_settlement_clearing s30_settlement_workflow s40_failure_paths s50_repairable_paths s70_daily_business_surface s90_users_roles showroom"
+known="s00_min_path s10_contract_payment s20_settlement_clearing s30_settlement_workflow s40_failure_paths s50_repairable_paths s70_daily_business_surface s80_execution_management_surface s90_users_roles showroom"
 
 if [ -n "$scenario" ]; then
   found=0
@@ -174,6 +174,15 @@ run_check "S70 finance daily records exist" "s70_daily_business_surface" \
 run_check "S70 invoice tax and diary records exist" "s70_daily_business_surface" \
   "select case when (select count(*) from sc_invoice_registration where name='S70-INV-001') = 1 and (select count(*) from sc_tax_deduction_registration where name='S70-TAX-001') = 1 and (select count(*) from sc_construction_diary where name='S70-DIARY-001') = 1 then 'ok' else 'S70 invoice/tax/diary records missing' end;" \
   "select 'invoice' as kind, id, name, state from sc_invoice_registration where name='S70-INV-001' union all select 'tax', id, name, state from sc_tax_deduction_registration where name='S70-TAX-001' union all select 'diary', id, name, state from sc_construction_diary where name='S70-DIARY-001';"
+run_check "S80 material execution chain exists" "s80_execution_management_surface" \
+  "select case when (select count(*) from sc_material_purchase_request where name='S80-MPR-001') = 1 and (select count(*) from sc_material_acceptance where name='S80-MA-001' and state='accepted') = 1 and (select count(*) from sc_material_inbound where name='S80-MIN-001' and state='received') = 1 and (select count(*) from sc_material_outbound where name='S80-MOUT-001' and state='issued') = 1 and (select count(*) from sc_material_settlement where name='S80-MSET-001' and state='confirmed') = 1 then 'ok' else 'S80 material chain missing' end;" \
+  "select 'request' as kind, id, name, state from sc_material_purchase_request where name='S80-MPR-001' union all select 'acceptance', id, name, state from sc_material_acceptance where name='S80-MA-001' union all select 'inbound', id, name, state from sc_material_inbound where name='S80-MIN-001' union all select 'outbound', id, name, state from sc_material_outbound where name='S80-MOUT-001' union all select 'settlement', id, name, state from sc_material_settlement where name='S80-MSET-001';"
+run_check "S80 plan quality safety records exist" "s80_execution_management_surface" \
+  "select case when (select count(*) from sc_plan where name='S80 主体结构月度执行计划') = 1 and (select count(*) from sc_plan_report where name='S80 周计划进度汇报') = 1 and (select count(*) from sc_quality_issue where name='S80 钢筋保护层垫块局部缺失' and state='closed') = 1 and (select count(*) from sc_safety_issue where name='S80 楼层临边防护局部松动' and state='closed') = 1 then 'ok' else 'S80 plan/quality/safety missing' end;" \
+  "select 'plan' as kind, id, name, state from sc_plan where name='S80 主体结构月度执行计划' union all select 'quality', id, name, state from sc_quality_issue where name='S80 钢筋保护层垫块局部缺失' union all select 'safety', id, name, state from sc_safety_issue where name='S80 楼层临边防护局部松动';"
+run_check "S80 labor and equipment records exist" "s80_execution_management_surface" \
+  "select case when (select count(*) from sc_labor_plan where name='S80-LP-001') = 1 and (select count(*) from sc_labor_request where name='S80-LR-001') = 1 and (select count(*) from sc_attendance_checkin where name='S80-ATT-001' and state='confirmed') = 1 and (select count(*) from sc_equipment_plan where name='S80-EP-001') = 1 and (select count(*) from sc_equipment_request where name='S80-ER-001') = 1 and (select count(*) from sc_equipment_usage where name='S80-EU-001' and state='confirmed') = 1 then 'ok' else 'S80 labor/equipment missing' end;" \
+  "select 'labor_plan' as kind, id, name, state from sc_labor_plan where name='S80-LP-001' union all select 'labor_request', id, name, state from sc_labor_request where name='S80-LR-001' union all select 'attendance', id, name, state from sc_attendance_checkin where name='S80-ATT-001' union all select 'equipment_plan', id, name, state from sc_equipment_plan where name='S80-EP-001' union all select 'equipment_request', id, name, state from sc_equipment_request where name='S80-ER-001' union all select 'equipment_usage', id, name, state from sc_equipment_usage where name='S80-EU-001';"
 run_check "S90 users exist" "s90_users_roles" \
   "select case when count(*) >= 6 then 'ok' else 'S90 users missing' end from res_users where login in ('demo_pm','demo_finance','demo_cost','demo_audit','demo_readonly','svc_e2e_smoke');" \
   "select id, login, active from res_users where login in ('demo_pm','demo_finance','demo_cost','demo_audit','demo_readonly','svc_e2e_smoke') order by login;"

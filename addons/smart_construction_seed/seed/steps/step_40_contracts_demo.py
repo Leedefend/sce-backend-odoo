@@ -271,6 +271,36 @@ def _ensure_payments(env, project, pay_contract, receive_contract, settlement):
     env.invalidate_all()
 
 
+def _cleanup_paused_showroom_settlement(env, project):
+    Settlement = env["sc.settlement.order"].sudo()
+    Payment = env["payment.request"].sudo()
+
+    settlements = Settlement.search(
+        [
+            ("project_id", "=", project.id),
+            ("name", "=", f"SET-{project.project_code}-01"),
+        ]
+    )
+    if not settlements:
+        return
+
+    payments = Payment.search(
+        [
+            ("project_id", "=", project.id),
+            ("settlement_id", "in", settlements.ids),
+        ]
+    )
+    if payments:
+        env.cr.execute(
+            "UPDATE payment_request SET state=%s WHERE id in %s",
+            ("draft", tuple(payments.ids)),
+        )
+        env.invalidate_all()
+        payments.unlink()
+    settlements.mapped("line_ids").unlink()
+    settlements.unlink()
+
+
 def _get_project(env, code):
     return env["project.project"].sudo().search([("project_code", "=", code)], limit=1)
 
@@ -396,9 +426,13 @@ def run(env):
     split_codes = {"DEMO-PJ-TENDER"}
 
     for project in projects:
+        is_core_demo = bool(project.project_code and project.project_code.startswith("DEMO-"))
+        if not is_core_demo and project.lifecycle_state == "paused":
+            _cleanup_paused_showroom_settlement(env, project)
+            continue
+
         has_contract = Contract.search_count([("project_id", "=", project.id)]) > 0
         has_tender = Tender.search_count([("project_id", "=", project.id)]) > 0
-        is_core_demo = bool(project.project_code and project.project_code.startswith("DEMO-"))
         if (not is_core_demo and
                 project.lifecycle_state in ("draft", "in_progress", "paused") and
                 not has_contract):
