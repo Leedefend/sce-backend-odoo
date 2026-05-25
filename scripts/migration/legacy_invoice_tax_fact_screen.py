@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import shlex
 import subprocess
 from collections import Counter
 from decimal import Decimal, InvalidOperation
@@ -31,14 +33,25 @@ WITH src AS (
     'input_invoice_handover' AS family, 'input_invoice' AS direction, 'D_SCBSJS_ZKPJE' AS amount_field
   FROM dbo.C_JXXP_ZYFPJJD
   UNION ALL
-  SELECT 'C_JXXP_XXKPDJ', CONVERT(nvarchar(max), Id), CONVERT(nvarchar(max), DJBH),
-    CONVERT(nvarchar(max), XMID), CONVERT(nvarchar(max), XMMC), CONVERT(nvarchar(max), D_BYK_KFDWID),
-    CONVERT(nvarchar(max), SPFMC), CONVERT(nvarchar(max), D_BYK_SPF_NSSBH),
-    CONVERT(nvarchar(max), KPZJE), CONVERT(nvarchar(max), ZSE), CONVERT(nvarchar(max), SQRQ, 120),
-    CONVERT(nvarchar(max), DJZT), CONVERT(nvarchar(max), DEL), CONVERT(nvarchar(max), FPZL),
-    CONVERT(nvarchar(max), BZ), CONVERT(nvarchar(max), pid), 'output_invoice_register',
-    'output_invoice', 'KPZJE'
-  FROM dbo.C_JXXP_XXKPDJ
+  SELECT 'C_JXXP_XXKPDJ', CONVERT(nvarchar(max), h.Id), CONVERT(nvarchar(max), h.DJBH),
+    CONVERT(nvarchar(max), h.XMID), CONVERT(nvarchar(max), h.XMMC), CONVERT(nvarchar(max), h.D_BYK_KFDWID),
+    CONVERT(nvarchar(max), h.SPFMC), CONVERT(nvarchar(max), h.D_BYK_SPF_NSSBH),
+    CONVERT(nvarchar(max), CASE WHEN child.child_rows > 0 THEN child.amount_total ELSE h.KPZJE END),
+    CONVERT(nvarchar(max), CASE WHEN child.child_rows > 0 THEN child.tax_amount ELSE h.ZSE END),
+    CONVERT(nvarchar(max), h.SQRQ, 120),
+    CONVERT(nvarchar(max), h.DJZT), CONVERT(nvarchar(max), h.DEL), CONVERT(nvarchar(max), h.FPZL),
+    CONVERT(nvarchar(max), h.BZ), CONVERT(nvarchar(max), h.pid), 'output_invoice_register',
+    'output_invoice',
+    CASE WHEN child.child_rows > 0 THEN 'C_JXXP_XXKPDJ_CB.JE_SUM' ELSE 'KPZJE' END
+  FROM dbo.C_JXXP_XXKPDJ h
+  OUTER APPLY (
+    SELECT
+      COUNT(c.Id) AS child_rows,
+      SUM(ISNULL(c.JE, 0)) AS amount_total,
+      SUM(ISNULL(c.SE, 0)) AS tax_amount
+    FROM dbo.C_JXXP_XXKPDJ_CB c
+    WHERE c.ZBID = h.Id
+  ) child
   UNION ALL
   SELECT 'C_JXXP_KJFPSQ', CONVERT(nvarchar(max), Id), CONVERT(nvarchar(max), DJBH),
     CONVERT(nvarchar(max), XMID), CONVERT(nvarchar(max), XMMC), CONVERT(nvarchar(max), NULL),
@@ -139,14 +152,22 @@ def parse_amount(value: str) -> Decimal:
 
 
 def run_sql() -> str:
+    container = os.getenv("LEGACY_MSSQL_CONTAINER", "legacy-sqlserver")
+    sqlcmd = os.getenv("LEGACY_SQLCMD", "/opt/mssql-tools18/bin/sqlcmd")
+    database = os.getenv("LEGACY_MSSQL_DATABASE", "LegacyDb")
+    password = os.getenv("LEGACY_MSSQL_SA_PASSWORD")
+    password_expr = '"$SA_PASSWORD"' if password is None else shlex.quote(password)
     cmd = [
         "docker",
         "exec",
         "-i",
-        "legacy-sqlserver",
+        container,
         "bash",
         "-lc",
-        "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$SA_PASSWORD\" -C -d LegacyDb -s '|' -y 0 -Y 0",
+        (
+            f"{shlex.quote(sqlcmd)} -S localhost -U sa -P {password_expr} "
+            f"-C -d {shlex.quote(database)} -s '|' -y 0 -Y 0"
+        ),
     ]
     completed = subprocess.run(cmd, input=SQL, text=True, capture_output=True, check=False)
     require(completed.returncode == 0, completed.stderr.strip() or completed.stdout.strip())

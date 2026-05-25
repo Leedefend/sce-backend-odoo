@@ -64,8 +64,8 @@ expected_rows = int(adapter["expected_rows"])
 Model = env["sc.legacy.invoice.tax.fact"].sudo().with_context(active_test=False)  # noqa: F821
 Project = env["project.project"].sudo().with_context(active_test=False)  # noqa: F821
 
-existing_keys = {
-    (clean(rec["legacy_source_table"]), clean(rec["legacy_record_id"]))
+existing_by_key = {
+    (clean(rec["legacy_source_table"]), clean(rec["legacy_record_id"])): rec["id"]
     for rec in Model.search_read([("legacy_record_id", "!=", False)], ["legacy_source_table", "legacy_record_id"])
 }
 project_ids = sorted({clean(row.get("legacy_project_id")) for row in rows if clean(row.get("legacy_project_id"))})
@@ -76,14 +76,11 @@ project_map = {
 }
 
 created = 0
-skipped = 0
+updated = 0
 buffer: list[dict[str, object]] = []
 batch_size = 500
 for row in rows:
     key = (clean(row.get("legacy_source_table")), clean(row.get("legacy_record_id")))
-    if key in existing_keys:
-        skipped += 1
-        continue
     legacy_project_id = clean(row.get("legacy_project_id"))
     project_id = project_map.get(legacy_project_id)
     if not project_id:
@@ -110,8 +107,12 @@ for row in rows:
         "note": clean(row.get("note")),
         "import_batch": clean(row.get("import_batch")) or "legacy_invoice_tax_asset_v1",
     }
+    if key in existing_by_key:
+        Model.browse(existing_by_key[key]).write(vals)
+        updated += 1
+        continue
     buffer.append(vals)
-    existing_keys.add(key)
+    existing_by_key[key] = 0
     if len(buffer) >= batch_size:
         Model.create(buffer)
         created += len(buffer)
@@ -122,15 +123,15 @@ if buffer:
     created += len(buffer)
 
 env.cr.commit()  # noqa: F821
-status = "PASS" if created + skipped == expected_rows else "FAIL"
+status = "PASS" if created + updated == expected_rows else "FAIL"
 payload = {
     "status": status,
     "mode": "fresh_db_legacy_invoice_tax_replay_write",
     "database": env.cr.dbname,  # noqa: F821
     "input_rows": len(rows),
     "created_rows": created,
-    "skipped_existing": skipped,
-    "db_writes": created,
+    "updated_existing": updated,
+    "db_writes": created + updated,
     "decision": "legacy_invoice_tax_replay_write_complete" if status == "PASS" else "STOP_REVIEW_REQUIRED",
 }
 write_json(OUTPUT_JSON, payload)

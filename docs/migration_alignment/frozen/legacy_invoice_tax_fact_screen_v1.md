@@ -7,8 +7,8 @@ This is a read-only screen for invoice and tax-related legacy facts.
 ## Result
 
 - raw rows: `21323`
-- loadable rows: `5920`
-- blocked rows: `15403`
+- loadable rows: `5959`
+- blocked rows: `15364`
 - DB writes: `0`
 - Odoo shell: `false`
 
@@ -16,17 +16,17 @@ This is a read-only screen for invoice and tax-related legacy facts.
 
 | Source table | Raw rows | Loadable candidates |
 |---|---:|---:|
-| C_JXXP_ZYFPJJD | 16616 | 1913 |
-| C_JXXP_XXKPDJ | 3157 | 2881 |
-| C_JXXP_YJSKDJ | 1290 | 904 |
-| C_JXXP_KJFPSQ | 260 | 222 |
+| C_JXXP_ZYFPJJD | 16616 | 1919 |
+| C_JXXP_XXKPDJ | 3157 | 2907 |
+| C_JXXP_YJSKDJ | 1290 | 908 |
+| C_JXXP_KJFPSQ | 260 | 225 |
 
 ## Blocked Reasons
 
 | Reason | Rows |
 |---|---:|
 | missing_counterparty_evidence | 14734 |
-| amount_and_tax_not_positive_or_missing | 2612 |
+| amount_and_tax_missing_or_zero | 1829 |
 | deleted | 623 |
 | project_not_assetized | 132 |
 | missing_project_id | 9 |
@@ -53,7 +53,7 @@ This is a read-only screen for invoice and tax-related legacy facts.
 
 - lane: `legacy_invoice_tax_fact_carrier`
 - source table priority: `C_JXXP_XXKPDJ`
-- loadable rows: `2881`
+- loadable rows: `2907`
 - reason: screen found project-anchored invoice/tax facts; design a neutral carrier before XML generation
 
 ## Boundary
