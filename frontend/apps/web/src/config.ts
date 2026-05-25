@@ -49,9 +49,9 @@ const envDbNormalized = envDb.toLowerCase();
 const localBlockedProductionDb = isLocalHost && ['sc_delivery_local', 'sc_prod_sim'].includes(envDbNormalized);
 const localBlockedEnvDb = localBlockedProductionDb ? '' : envDb;
 const allowLocalFallbackDb = isLocalHost || appEnv === 'dev' || appEnv === 'test' || appEnv === 'local';
-// For local dev/test only, fallback to sc_demo when db env is not explicitly set.
-const localDefaultDb = allowLocalFallbackDb && !runtimeDb && !localBlockedEnvDb && isLocalHost ? 'sc_demo' : '';
-const localDevPinnedDb = isLocalDevRuntime && !runtimeDb && !localBlockedEnvDb ? 'sc_demo' : '';
+// For local dev/test only, fallback to the restored daily development DB.
+const localDefaultDb = allowLocalFallbackDb && !runtimeDb && !localBlockedEnvDb && isLocalHost ? 'sc_odoo' : '';
+const localDevPinnedDb = isLocalDevRuntime && !runtimeDb && !localBlockedEnvDb ? 'sc_odoo' : '';
 const pinnedDb = isPlatformAdminEntry && platformAdminDb
   ? platformAdminDb
   : envDbLocked ? localBlockedEnvDb : runtimeDb || localBlockedEnvDb || enforcedDb || localDevPinnedDb;

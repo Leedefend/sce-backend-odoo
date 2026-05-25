@@ -28,7 +28,7 @@ fi
 resolve_profile_defaults() {
   case "${FRONTEND_PROFILE}" in
     daily)
-      PROFILE_DB="${DB_NAME:-sc_demo}"
+      PROFILE_DB="${DB_NAME:-sc_odoo}"
       PROFILE_PROXY_TARGET="http://localhost:8070"
       ;;
     test)
@@ -46,7 +46,7 @@ resolve_profile_defaults() {
     *)
       log "unknown FRONTEND_PROFILE=${FRONTEND_PROFILE}, fallback to daily"
       FRONTEND_PROFILE="daily"
-      PROFILE_DB="sc_demo"
+      PROFILE_DB="sc_odoo"
       PROFILE_PROXY_TARGET="http://localhost:8070"
       ;;
   esac
