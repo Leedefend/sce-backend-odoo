@@ -31,6 +31,10 @@ REQUIRED_COLUMNS = {"Id", "f_JE", "WLDWID"}
 ASSET_PACKAGE_ID = "receipt_sc_v1"
 GENERATED_AT = "2026-04-15T08:15:00+00:00"
 EXCLUDED_RECEIPT_INCOME_CATEGORIES = {"材料款", "开票税金", "保险费", "代理服务费", "代理费"}
+LEGACY_DELETE_FIELDS = ("DEL", "SCRID", "SCR", "SCRQ")
+SALES_RECEIPT_KINDS = {"销售收款", "预收款"}
+LEGACY_RECEIPT_SOURCE_NAMES = {"甲方回款录入"}
+LEGACY_RECEIPT_DOCUMENT_PREFIXES = ("ZJSR", "QTSR", "ZCDFSR")
 
 
 class ReceiptAssetError(Exception):
@@ -87,6 +91,10 @@ def is_deleted(value: object) -> bool:
     return bool(normalized) and normalized not in {"0", "false", "no", "n", "否"}
 
 
+def is_deleted_row(row: dict[str, str]) -> bool:
+    return is_deleted(row.get("DEL")) or any(clean(row.get(field)) for field in ("SCRID", "SCR", "SCRQ"))
+
+
 def first_nonempty(row: dict[str, str], fields: list[str]) -> str:
     for field in fields:
         value = clean(row.get(field))
@@ -97,6 +105,21 @@ def first_nonempty(row: dict[str, str], fields: list[str]) -> str:
 
 def receipt_income_category(row: dict[str, str]) -> str:
     return clean(row.get("f_SRLBName"))
+
+
+def receipt_source_lane(row: dict[str, str]) -> str:
+    if (
+        clean(row.get("D_SCBSJS_SKYT")) in SALES_RECEIPT_KINDS
+        or bool(clean(row.get("OTHER_SYSTEM_CODE")))
+        or clean(row.get("D_SCBSJS_IsPush")) == "1"
+    ):
+        return "sales_receipt_or_pushed_income"
+    if clean(row.get("SJBMC")) in LEGACY_RECEIPT_SOURCE_NAMES:
+        return "legacy_receipt_entry"
+    document_no = clean(row.get("DJBH")).upper()
+    if document_no.startswith(LEGACY_RECEIPT_DOCUMENT_PREFIXES):
+        return "legacy_receipt_entry"
+    return "other_receipt_income"
 
 
 def parse_date(value: object) -> str:
@@ -220,11 +243,16 @@ def generate(asset_root: Path, runtime_root: Path, source_csv: Path, expected_re
         legacy_partner_id = clean(row.get("WLDWID"))
         contract = contract_by_legacy.get(legacy_contract_id)
         partner_external_id = partner_by_legacy.get(legacy_partner_id)
+        source_lane = receipt_source_lane(row)
         errors: list[str] = []
         if not legacy_receipt_id:
             errors.append("missing_legacy_receipt_id")
-        if is_deleted(row.get("DEL")):
+        if is_deleted_row(row):
             errors.append("discard_deleted")
+        if source_lane == "sales_receipt_or_pushed_income":
+            errors.append("route_sales_receipt_or_pushed_income")
+        elif source_lane != "legacy_receipt_entry":
+            errors.append("route_other_receipt_income")
         income_category = receipt_income_category(row)
         if income_category in EXCLUDED_RECEIPT_INCOME_CATEGORIES:
             errors.append("discard_non_receipt_request_category")
@@ -249,7 +277,14 @@ def generate(asset_root: Path, runtime_root: Path, source_csv: Path, expected_re
                     "legacy_receipt_id": legacy_receipt_id,
                     "legacy_contract_id": legacy_contract_id,
                     "legacy_partner_id": legacy_partner_id,
+                    "legacy_delete_values": {field: clean(row.get(field)) for field in LEGACY_DELETE_FIELDS},
                     "income_category": income_category,
+                    "source_lane": source_lane,
+                    "sales_receipt_kind": clean(row.get("D_SCBSJS_SKYT")),
+                    "is_pushed": clean(row.get("D_SCBSJS_IsPush")),
+                    "other_system_code": clean(row.get("OTHER_SYSTEM_CODE")),
+                    "source_form": clean(row.get("SJBMC")),
+                    "document_no": clean(row.get("DJBH")),
                     "errors": ",".join(errors),
                 }
             )
@@ -278,6 +313,7 @@ def generate(asset_root: Path, runtime_root: Path, source_csv: Path, expected_re
                 "amount": str(amount),
                 "date_request": receipt_date,
                 "receipt_type": receipt_type,
+                "source_lane": source_lane,
                 "document_no": document_no,
                 "creator_legacy_user_id": first_nonempty(row, ["LRRID", "f_LRRID"]),
                 "creator_name": first_nonempty(row, ["LRR", "f_LRR"]),
@@ -323,6 +359,7 @@ def generate(asset_root: Path, runtime_root: Path, source_csv: Path, expected_re
                 "legacy_receipt_id": row["legacy_receipt_id"],
                 "partner_external_id": row["partner_external_id"],
                 "project_external_id": row["project_external_id"],
+                "source_lane": row["source_lane"],
                 "status": "loadable",
                 "target_model": "payment.request",
                 "target_type": "receive",
@@ -356,10 +393,14 @@ def generate(asset_root: Path, runtime_root: Path, source_csv: Path, expected_re
             "generate_time": [
                 "legacy_receipt_id_unique",
                 "amount_positive",
+                "old_system_deleted_rows_discarded",
+                "receipt_source_lane_classified",
+                "sales_receipt_or_pushed_income_routed_out",
+                "other_receipt_income_routed_out",
                 "project_external_id_resolves",
-            "contract_external_id_resolves",
-            "contract_id_optional_when_missing_in_legacy",
-            "partner_external_id_resolves",
+                "contract_external_id_resolves",
+                "contract_id_optional_when_missing_in_legacy",
+                "partner_external_id_resolves",
                 "type_receive_only",
                 "state_not_written",
                 "settlement_not_written",
@@ -372,6 +413,11 @@ def generate(asset_root: Path, runtime_root: Path, source_csv: Path, expected_re
             "blocked_rows": len(blocked),
             "blocker_counts": dict(sorted(counters.items())),
             "excluded_income_categories": sorted(EXCLUDED_RECEIPT_INCOME_CATEGORIES),
+            "legacy_delete_fields": list(LEGACY_DELETE_FIELDS),
+            "old_system_deleted_rows": counters.get("discard_deleted", 0),
+            "receipt_source_lanes": dict(sorted(Counter(row["source_lane"] for row in loadable).items())),
+            "routed_sales_receipt_or_pushed_income_rows": counters.get("route_sales_receipt_or_pushed_income", 0),
+            "routed_other_receipt_income_rows": counters.get("route_other_receipt_income", 0),
             "ready_rows": len(loadable),
             "contract_optional_empty_rows": sum(1 for row in loadable if not row["contract_external_id"]),
         },
@@ -413,6 +459,9 @@ def generate(asset_root: Path, runtime_root: Path, source_csv: Path, expected_re
             "loadable_records": len(loadable),
             "raw_rows": len(source_rows),
             "excluded_non_receipt_request_records": counters.get("discard_non_receipt_request_category", 0),
+            "discarded_old_system_deleted_records": counters.get("discard_deleted", 0),
+            "routed_sales_receipt_or_pushed_income_records": counters.get("route_sales_receipt_or_pushed_income", 0),
+            "routed_other_receipt_income_records": counters.get("route_other_receipt_income", 0),
         },
         "db_writes": 0,
         "dependencies": ["project_sc_v1", "partner_sc_v1", "receipt_counterparty_partner_sc_v1", "contract_sc_v1"],
@@ -451,6 +500,10 @@ def generate(asset_root: Path, runtime_root: Path, source_csv: Path, expected_re
             "legacy_receipt_id_non_empty",
             "legacy_receipt_id_unique",
             "amount_positive",
+            "old_system_deleted_rows_discarded",
+            "receipt_source_lane_classified",
+            "sales_receipt_or_pushed_income_routed_out",
+            "other_receipt_income_routed_out",
             "non_receipt_request_income_categories_excluded",
             "project_anchor_resolves",
             "contract_anchor_resolves",
@@ -483,7 +536,7 @@ def main() -> int:
     parser.add_argument("--asset-root", default=str(REPO_ASSET_ROOT))
     parser.add_argument("--runtime-root", default=str(RUNTIME_ROOT))
     parser.add_argument("--source", default=str(SOURCE_CSV))
-    parser.add_argument("--expected-ready", type=int, default=3652)
+    parser.add_argument("--expected-ready", type=int, default=1480)
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
 

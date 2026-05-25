@@ -130,7 +130,7 @@ def current_blocked_rows(asset_root: Path, source_rows: list[dict[str, str]]) ->
         subject = clean(row.get("HTBT")) or clean(row.get("DJBH")) or clean(row.get("HTBH"))
         direction, counterparty = contract_header.infer_direction(row)
         if direction == "defer" and receipt_contract_evidence.get(legacy_contract_id):
-            direction = "in"
+            direction = "out"
             counterparty = (
                 clean(receipt_contract_evidence[legacy_contract_id].get("receipt_partner_name"))
                 or clean(row.get("FBF"))
