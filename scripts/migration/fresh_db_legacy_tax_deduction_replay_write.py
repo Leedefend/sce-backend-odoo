@@ -40,6 +40,11 @@ def as_float(value: object) -> float:
     return float(text) if text else 0.0
 
 
+def as_bool(value: object) -> bool:
+    text = clean(value).lower()
+    return text in {"1", "true", "t", "yes", "y", "是", "已转出", "转出"}
+
+
 def read_csv(path: Path) -> list[dict[str, str]]:
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
         return [dict(row) for row in csv.DictReader(handle)]
@@ -69,8 +74,8 @@ Model = env["sc.legacy.tax.deduction.fact"].sudo().with_context(active_test=Fals
 Project = env["project.project"].sudo().with_context(active_test=False)  # noqa: F821
 Partner = env["res.partner"].sudo().with_context(active_test=False)  # noqa: F821
 
-existing_ids = {
-    clean(rec["legacy_line_id"])
+existing_by_line_id = {
+    clean(rec["legacy_line_id"]): rec["id"]
     for rec in Model.search_read([("legacy_line_id", "!=", False)], ["legacy_line_id"])
 }
 project_legacy_ids = sorted({clean(row.get("project_legacy_id")) for row in rows if clean(row.get("project_legacy_id"))})
@@ -93,17 +98,16 @@ partner_name_map = {
 }
 
 created = 0
+updated = 0
 skipped = 0
 missing_project = 0
 buffer: list[dict[str, object]] = []
 batch_size = 500
 for row in rows:
     legacy_line_id = clean(row.get("legacy_line_id"))
-    if legacy_line_id in existing_ids:
-        skipped += 1
-        continue
+    existing_id = existing_by_line_id.get(legacy_line_id)
     project_id = project_map.get(clean(row.get("project_legacy_id")))
-    if not project_id:
+    if not project_id and not existing_id:
         missing_project += 1
         continue
     partner_id = partner_map.get(clean(row.get("partner_legacy_id")))
@@ -120,7 +124,6 @@ for row in rows:
         "deleted_flag": clean(row.get("deleted_flag")) or "0",
         "project_legacy_id": clean(row.get("project_legacy_id")),
         "project_name": clean(row.get("project_name")),
-        "project_id": project_id,
         "partner_legacy_id": clean(row.get("partner_legacy_id")),
         "partner_name": clean(row.get("partner_name")),
         "partner_credit_code": clean(row.get("partner_credit_code")),
@@ -135,12 +138,22 @@ for row in rows:
         "deduction_tax_amount": as_float(row.get("deduction_tax_amount")),
         "deduction_surcharge_amount": as_float(row.get("deduction_surcharge_amount")),
         "deduction_confirm_date": clean(row.get("deduction_confirm_date")) or False,
+        "is_transfer_out": as_bool(row.get("is_transfer_out")),
+        "creator_legacy_user_id": clean(row.get("creator_legacy_user_id")),
+        "creator_name": clean(row.get("creator_name")),
+        "created_time": clean(row.get("created_time")) or False,
         "note": clean(row.get("note")),
         "import_batch": clean(row.get("import_batch")) or "legacy_tax_deduction_v1",
         "active": True,
     }
+    if project_id:
+        vals["project_id"] = project_id
+    if existing_id:
+        Model.browse(existing_id).write(vals)
+        updated += 1
+        continue
     buffer.append(vals)
-    existing_ids.add(legacy_line_id)
+    existing_by_line_id[legacy_line_id] = 0
     if len(buffer) >= batch_size:
         Model.create(buffer)
         created += len(buffer)
@@ -151,16 +164,17 @@ if buffer:
     created += len(buffer)
 
 env.cr.commit()  # noqa: F821
-status = "PASS" if created + skipped + missing_project == expected_rows else "FAIL"
+status = "PASS" if created + updated + skipped + missing_project == expected_rows else "FAIL"
 payload = {
     "status": status,
     "mode": "fresh_db_legacy_tax_deduction_replay_write",
     "database": env.cr.dbname,  # noqa: F821
     "input_rows": len(rows),
     "created_rows": created,
+    "updated_rows": updated,
     "skipped_existing": skipped,
     "missing_project": missing_project,
-    "db_writes": created,
+    "db_writes": created + updated,
 }
 write_json(OUTPUT_JSON, payload)
 print("FRESH_DB_LEGACY_TAX_DEDUCTION_REPLAY_WRITE=" + json.dumps(payload, ensure_ascii=False, sort_keys=True))

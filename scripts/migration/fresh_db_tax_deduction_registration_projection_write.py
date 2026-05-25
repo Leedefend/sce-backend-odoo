@@ -35,6 +35,18 @@ output_json.parent.mkdir(parents=True, exist_ok=True)
 Target = env["sc.tax.deduction.registration"].sudo()  # noqa: F821
 Legacy = env["sc.legacy.tax.deduction.fact"].sudo()  # noqa: F821
 
+
+def target_state(document_state):
+    state = str(document_state or "").strip()
+    if state in {"-1", "cancel", "cancelled", "作废", "已作废"}:
+        return "cancel"
+    if state in {"0", "draft", "未审核"}:
+        return "draft"
+    if state in {"1", "审核中", "已确认"}:
+        return "confirmed"
+    return "legacy_confirmed"
+
+
 source_domain = [("active", "=", True), ("project_id", "!=", False)]
 candidate_count = Legacy.search_count(source_domain)
 before = Target.search_count([])
@@ -50,7 +62,7 @@ for line in Legacy.search(source_domain, order="document_date desc, id desc"):
     document_date = line.document_date or line.invoice_date or fields.Date.context_today(Target)
     values = {
         "source_origin": "legacy",
-        "state": "legacy_confirmed",
+        "state": target_state(line.document_state),
         "document_no": line.document_no,
         "document_date": document_date,
         "deduction_confirm_date": line.deduction_confirm_date or document_date,
@@ -66,17 +78,15 @@ for line in Legacy.search(source_domain, order="document_date desc, id desc"):
         "deduction_amount": line.deduction_amount or 0.0,
         "deduction_tax_amount": line.deduction_tax_amount or 0.0,
         "deduction_surcharge_amount": line.deduction_surcharge_amount or 0.0,
+        "is_transfer_out": bool(line.is_transfer_out),
         "legacy_source_model": "sc.legacy.tax.deduction.fact",
         "legacy_source_table": line.source_table,
         "legacy_record_id": line.legacy_line_id,
         "legacy_document_state": line.document_state or "历史已确认",
-        "note": (
-            "[migration:tax_deduction_registration] "
-            f"legacy_tax_deduction_fact_id={line.id}; "
-            f"legacy_line_id={line.legacy_line_id}; "
-            f"legacy_header_id={line.legacy_header_id or ''}; "
-            f"legacy_pid={line.legacy_pid or ''}"
-        ),
+        "creator_legacy_user_id": line.creator_legacy_user_id,
+        "creator_name": line.creator_name,
+        "created_time": line.created_time or None,
+        "note": line.note or None,
     }
     existing = Target.search(
         [
@@ -89,7 +99,8 @@ for line in Legacy.search(source_domain, order="document_date desc, id desc"):
         env.cr.execute(  # noqa: F821
             """
             UPDATE sc_tax_deduction_registration
-               SET document_no = %s,
+               SET state = %s,
+                   document_no = %s,
                    document_date = %s,
                    deduction_confirm_date = %s,
                    project_id = %s,
@@ -104,14 +115,19 @@ for line in Legacy.search(source_domain, order="document_date desc, id desc"):
                    deduction_amount = %s,
                    deduction_tax_amount = %s,
                    deduction_surcharge_amount = %s,
+                   is_transfer_out = %s,
                    legacy_source_table = %s,
                    legacy_document_state = %s,
+                   creator_legacy_user_id = %s,
+                   creator_name = %s,
+                   created_time = %s,
                    note = %s,
                    active = TRUE,
                    write_date = NOW()
              WHERE id = %s
             """,
             [
+                values["state"],
                 values["document_no"],
                 values["document_date"],
                 values["deduction_confirm_date"],
@@ -127,8 +143,12 @@ for line in Legacy.search(source_domain, order="document_date desc, id desc"):
                 values["deduction_amount"],
                 values["deduction_tax_amount"],
                 values["deduction_surcharge_amount"],
+                values["is_transfer_out"],
                 values["legacy_source_table"],
                 values["legacy_document_state"],
+                values["creator_legacy_user_id"],
+                values["creator_name"],
+                values["created_time"],
                 values["note"],
                 existing.id,
             ],

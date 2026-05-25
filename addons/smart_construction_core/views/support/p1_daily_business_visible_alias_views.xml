@@ -96,36 +96,52 @@
         <field name="model">sc.tax.deduction.registration</field>
         <field name="inherit_id" ref="view_sc_tax_deduction_registration_tree"/>
         <field name="arch" type="xml">
-            <xpath expr="//tree" position="inside">
+            <xpath expr="//tree/field[1]" position="before">
                 <field name="p1_visible_06fa8c6f628f" string="单据状态" optional="show" readonly="1"/>
-                <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
-                <field name="p1_visible_ea75d3bba41c" string="扣款单位" optional="show" readonly="1"/>
-                <field name="p1_visible_9b5c1b5cbd69" string="扣款金额" optional="show" readonly="1"/>
-                <field name="p1_visible_16e91e3d2738" string="扣款事由" optional="show" readonly="1"/>
-                <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
-                <field name="p1_visible_748d7dc7e321" string="标题" optional="show" readonly="1"/>
-                <field name="p1_visible_62e5cf441092" string="本次实缴数" optional="show" readonly="1"/>
-                <field name="p1_visible_1da8ed2551df" string="是否退回" optional="show" readonly="1"/>
-                <field name="p1_visible_dbbcd74271cd" string="上缴内容" optional="show" readonly="1"/>
-                <field name="p1_visible_b0bff5c45de7" string="本次计划已缴数" optional="show" readonly="1"/>
-                <field name="p1_visible_3ade9df90bf8" string="本次退回数" optional="show" readonly="1"/>
-                <field name="p1_visible_e0361480e3a5" string="备注" optional="show" readonly="1"/>
-                <field name="p1_visible_f9cc22d53aff" string="受票方名称" optional="show" readonly="1"/>
-                <field name="p1_visible_61b3896f8414" string="交税类型" optional="show" readonly="1"/>
-                <field name="p1_visible_34943c40c9af" string="金额" optional="show" readonly="1"/>
-                <field name="p1_visible_a3c1a28bd34c" string="发票开具日期" optional="show" readonly="1"/>
-                <field name="p1_visible_62319711f425" string="预缴税款日期" optional="show" readonly="1"/>
-                <field name="p1_visible_6514c1bee4d7" string="完税凭证号码" optional="show" readonly="1"/>
+                <field name="p1_visible_8fa8662ad38f" string="单据编号" optional="show" readonly="1"/>
                 <field name="p1_visible_3540b47897be" string="是否转出" optional="show" readonly="1"/>
+                <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
                 <field name="p1_visible_be5462bd6a62" string="开票单位" optional="show" readonly="1"/>
                 <field name="p1_visible_ada9a85eab00" string="发票号" optional="show" readonly="1"/>
+                <field name="p1_visible_8acf4918f1f1" string="抵扣税额" optional="show" readonly="1"/>
                 <field name="p1_visible_ee19dd75350c" string="抵扣总额" optional="show" readonly="1"/>
-                <field name="p1_visible_6bb76c93367b" string="受票单位" optional="show" readonly="1"/>
-                <field name="p1_visible_f286b41bd7f0" string="实际开票单位" optional="show" readonly="1"/>
-                <field name="p1_visible_d09b05103331" string="价税合计" optional="show" readonly="1"/>
-                <field name="p1_visible_99f753ed6262" string="税额" optional="show" readonly="1"/>
-                <field name="p1_visible_007363f27191" string="不含税金额" optional="show" readonly="1"/>
-                <field name="p1_visible_37d56ad493cf" string="税率" optional="show" readonly="1"/>
+                <field name="p1_visible_eaa05c7105f7" string="抵扣附加税" optional="show" readonly="1"/>
+                <field name="p1_visible_e0361480e3a5" string="备注" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="p1_visible_1e62803e196c" string="单据日期" optional="show" readonly="1"/>
+            </xpath>
+            <xpath expr="//tree/field[@name='name']" position="attributes">
+                <attribute name="optional">hide</attribute>
+            </xpath>
+            <xpath expr="//tree/field[@name='document_date']" position="attributes">
+                <attribute name="optional">hide</attribute>
+            </xpath>
+            <xpath expr="//tree/field[@name='document_no']" position="attributes">
+                <attribute name="optional">hide</attribute>
+            </xpath>
+            <xpath expr="//tree/field[@name='project_id']" position="attributes">
+                <attribute name="optional">hide</attribute>
+            </xpath>
+            <xpath expr="//tree/field[@name='partner_id']" position="attributes">
+                <attribute name="optional">hide</attribute>
+            </xpath>
+            <xpath expr="//tree/field[@name='partner_name']" position="attributes">
+                <attribute name="optional">hide</attribute>
+            </xpath>
+            <xpath expr="//tree/field[@name='invoice_no']" position="attributes">
+                <attribute name="optional">hide</attribute>
+            </xpath>
+            <xpath expr="//tree/field[@name='deduction_amount']" position="attributes">
+                <attribute name="optional">hide</attribute>
+            </xpath>
+            <xpath expr="//tree/field[@name='deduction_tax_amount']" position="attributes">
+                <attribute name="optional">hide</attribute>
+            </xpath>
+            <xpath expr="//tree/field[@name='deduction_surcharge_amount']" position="attributes">
+                <attribute name="optional">hide</attribute>
+            </xpath>
+            <xpath expr="//tree/field[@name='state']" position="attributes">
+                <attribute name="optional">hide</attribute>
             </xpath>
         </field>
     </record>
