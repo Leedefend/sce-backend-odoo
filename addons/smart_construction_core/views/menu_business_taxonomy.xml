@@ -282,17 +282,17 @@
         <field name="model">sc.legacy.payment.residual.fact</field>
         <field name="arch" type="xml">
             <search string="外经证登记">
-                <field name="document_no" string="外经证编号"/>
-                <field name="project_id" string="项目"/>
-                <field name="project_name" string="旧系统项目"/>
-                <field name="partner_id" string="机构"/>
-                <field name="partner_name" string="旧系统机构"/>
-                <field name="contract_no" string="合同编号"/>
+                <field name="document_no" string="单据编号"/>
+                <field name="project_name" string="项目名称"/>
+                <field name="taxpayer_name" string="纳税人名称"/>
+                <field name="taxpayer_identifier" string="纳税人识别号"/>
+                <field name="partner_name" string="合同相对方名称"/>
+                <field name="tax_report_management_no" string="跨区域涉税事项报验管理编号"/>
                 <field name="handler_name" string="经办人"/>
-                <filter string="有项目" name="has_project" domain="[('project_id', '!=', False)]"/>
+                <filter string="有项目" name="has_project" domain="[('project_name', '!=', False)]"/>
                 <filter string="有附件" name="has_attachment" domain="[('attachment_ref', '!=', False)]"/>
-                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
-                <filter string="按机构" name="group_partner" context="{'group_by': 'partner_id'}"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_name'}"/>
+                <filter string="按合同相对方" name="group_partner" context="{'group_by': 'partner_name'}"/>
                 <filter string="按经办人" name="group_handler" context="{'group_by': 'handler_name'}"/>
             </search>
         </field>
@@ -301,21 +301,27 @@
         <field name="name">sc.legacy.payment.residual.fact.tax.certificate.tree</field>
         <field name="model">sc.legacy.payment.residual.fact</field>
         <field name="arch" type="xml">
-            <tree string="外经证登记" create="true" edit="true" delete="false" default_order="document_date desc, id desc">
-                <field name="document_date" string="登记日期"/>
-                <field name="document_no" string="外经证编号"/>
-                <field name="project_id" string="项目"/>
-                <field name="project_name" string="旧系统项目"/>
-                <field name="partner_id" string="机构"/>
-                <field name="partner_name" string="旧系统机构"/>
-                <field name="contract_no" string="合同编号"/>
-                <field name="planned_amount" string="合同金额" sum="合同金额合计"/>
+            <tree string="外经证登记" create="true" edit="true" delete="false" default_order="created_time desc, id desc">
+                <field name="document_state_label" string="单据状态" readonly="1"/>
+                <field name="document_no" string="单据编号"/>
+                <field name="project_name" string="项目名称"/>
+                <field name="taxpayer_name" string="纳税人名称"/>
+                <field name="taxpayer_identifier" string="纳税人识别号"/>
+                <field name="handler_phone" string="经办人手机"/>
+                <field name="regional_tax_contact" string="区域涉税事项联系人"/>
+                <field name="regional_tax_contact_phone" string="区域涉税事项联系人座机手机"/>
+                <field name="operation_address" string="跨区域经营地址"/>
                 <field name="payment_method" string="经营方式"/>
-                <field name="handler_name" string="经办人"/>
-                <field name="creator_name" string="历史录入人"/>
-                <field name="created_time" string="历史录入时间"/>
-                <field name="attachment_ref" string="附件"/>
-                <field name="note" string="合同名称/外经证地址"/>
+                <field name="contract_name" string="合同名称"/>
+                <field name="planned_amount" string="合同金额" sum="合同金额合计"/>
+                <field name="contract_start_date" string="合同开始日期"/>
+                <field name="contract_end_date" string="合同结束日期"/>
+                <field name="partner_name" string="合同相对方名称"/>
+                <field name="counterparty_tax_identifier" string="合同相对方名称编号"/>
+                <field name="tax_report_management_no" string="跨区域涉税事项报验管理编号"/>
+                <field name="attachment_links" string="附件" readonly="1"/>
+                <field name="creator_name" string="录入人"/>
+                <field name="created_time" string="录入时间"/>
             </tree>
         </field>
     </record>
@@ -327,32 +333,40 @@
                 <sheet>
                     <group>
                         <group string="外经证">
-                            <field name="document_no" string="外经证编号"/>
+                            <field name="document_no" string="单据编号"/>
                             <field name="document_date" string="登记日期"/>
-                            <field name="document_state" string="办理状态"/>
+                            <field name="document_state_label" string="单据状态"/>
                             <field name="payment_method" string="经营方式"/>
                             <field name="handler_name" string="经办人"/>
+                            <field name="handler_phone" string="经办人手机"/>
                         </group>
                         <group string="项目与机构">
-                            <field name="project_id" string="项目"/>
-                            <field name="project_name" string="旧系统项目"/>
-                            <field name="partner_id" string="机构"/>
-                            <field name="partner_name" string="旧系统机构"/>
+                            <field name="project_name" string="项目名称"/>
+                            <field name="taxpayer_name" string="纳税人名称"/>
+                            <field name="taxpayer_identifier" string="纳税人识别号"/>
+                            <field name="partner_name" string="合同相对方名称"/>
+                            <field name="counterparty_tax_identifier" string="合同相对方名称编号"/>
                         </group>
                     </group>
                     <group>
                         <group string="合同">
                             <field name="contract_no" string="合同编号"/>
+                            <field name="contract_name" string="合同名称"/>
                             <field name="planned_amount" string="合同金额"/>
+                            <field name="contract_start_date" string="合同开始日期"/>
+                            <field name="contract_end_date" string="合同结束日期"/>
                         </group>
                         <group string="附件">
-                            <field name="attachment_ref" string="附件"/>
-                            <field name="creator_name" string="历史录入人"/>
-                            <field name="created_time" string="历史录入时间"/>
+                            <field name="attachment_links" string="附件"/>
+                            <field name="creator_name" string="录入人"/>
+                            <field name="created_time" string="录入时间"/>
                         </group>
                     </group>
                     <group>
-                        <field name="note" string="合同名称/外经证地址" nolabel="1"/>
+                        <field name="regional_tax_contact" string="区域涉税事项联系人"/>
+                        <field name="regional_tax_contact_phone" string="区域涉税事项联系人座机手机"/>
+                        <field name="operation_address" string="跨区域经营地址"/>
+                        <field name="tax_report_management_no" string="跨区域涉税事项报验管理编号"/>
                     </group>
                     <group string="旧系统来源">
                         <field name="source_table" string="来源表" readonly="1"/>
@@ -370,7 +384,7 @@
         <field name="views" eval="[(ref('smart_construction_core.view_sc_tax_certificate_registration_tree'), 'tree'), (ref('smart_construction_core.view_sc_tax_certificate_registration_form'), 'form')]"/>
         <field name="search_view_id" ref="smart_construction_core.view_sc_tax_certificate_registration_search"/>
         <field name="domain">[('payment_family', '=', 'tax_certificate_registration')]</field>
-        <field name="context">{'create': True, 'edit': True, 'delete': False, 'search_default_group_project': 1, 'default_payment_family': 'tax_certificate_registration', 'default_source_table': 'USER_TAX_CERTIFICATE_REGISTRATION'}</field>
+        <field name="context">{'create': True, 'edit': True, 'delete': False, 'default_payment_family': 'tax_certificate_registration', 'default_source_table': 'USER_TAX_CERTIFICATE_REGISTRATION'}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
             ref('smart_construction_core.group_sc_cap_business_config_admin'),

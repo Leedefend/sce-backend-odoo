@@ -1043,11 +1043,14 @@ class UiContractV2Handler(BaseIntentHandler):
             normalized = str(name or "").strip()
             if normalized and normalized not in columns:
                 columns.append(normalized)
-        for name in common_fields:
-            if name and name not in columns:
-                columns.append(name)
-        if note_field and note_field not in columns:
-            columns.append(note_field)
+        column_policy = profile.get("column_policy") if isinstance(profile.get("column_policy"), dict) else {}
+        strict_columns = str(column_policy.get("mode") or "").strip().lower() == "strict"
+        if not strict_columns:
+            for name in common_fields:
+                if name and name not in columns:
+                    columns.append(name)
+            if note_field and note_field not in columns:
+                columns.append(note_field)
         max_visible_columns = 24
         if len(columns) > max_visible_columns:
             selected = columns[:max_visible_columns]
