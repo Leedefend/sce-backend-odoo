@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data noupdate="1">
+
+    <record id="sc_demo_capability_group_067_demo_ops" model="sc.capability.group">
+      <field name="active">True</field>
+      <field name="sequence">67</field>
+      <field name="key">demo_ops_surface</field>
+      <field name="label">S67 Demo 运营能力</field>
+      <field name="icon">settings</field>
+    </record>
+
+    <record id="sc_demo_capability_067_demo_dashboard" model="sc.capability">
+      <field name="active">True</field>
+      <field name="sequence">10</field>
+      <field name="key">demo.ops.dashboard</field>
+      <field name="name">S67 Demo 运营驾驶舱</field>
+      <field name="group_id" ref="smart_construction_demo.sc_demo_capability_group_067_demo_ops"/>
+      <field name="ui_label">Demo 运营</field>
+      <field name="ui_hint">用于演示场景编排和能力目录。</field>
+      <field name="intent">ui.contract</field>
+      <field name="default_payload" eval="{'action': 'open_demo_ops', 'scenario': 's67_scene_pack_surface'}"/>
+      <field name="role_scope">admin,project_manager,finance_manager</field>
+      <field name="capability_scope">project.work.dashboard</field>
+      <field name="tags">demo,scene,pack</field>
+      <field name="status">ga</field>
+      <field name="version">v1.0</field>
+      <field name="smoke_test">True</field>
+      <field name="is_test">False</field>
+    </record>
+
+    <record id="sc_demo_scene_067_demo_ops" model="sc.scene">
+      <field name="active">True</field>
+      <field name="sequence">67</field>
+      <field name="name">S67 Demo 运营场景</field>
+      <field name="code">s67_demo_ops_scene</field>
+      <field name="layout">grid</field>
+      <field name="is_default">False</field>
+      <field name="is_test">False</field>
+      <field name="version">v1.0</field>
+      <field name="state">published</field>
+      <field name="published_at">2025-08-20 09:00:00</field>
+      <field name="published_by" ref="base.user_admin"/>
+      <field name="description">S67 场景编排 demo 样例。</field>
+    </record>
+
+    <record id="sc_demo_scene_tile_067_demo_dashboard" model="sc.scene.tile">
+      <field name="active">True</field>
+      <field name="sequence">10</field>
+      <field name="scene_id" ref="smart_construction_demo.sc_demo_scene_067_demo_ops"/>
+      <field name="capability_id" ref="smart_construction_demo.sc_demo_capability_067_demo_dashboard"/>
+      <field name="title">Demo 运营</field>
+      <field name="subtitle">场景和能力编排样例</field>
+      <field name="icon">layout-dashboard</field>
+      <field name="badge">S67</field>
+      <field name="visible">True</field>
+      <field name="span">1</field>
+      <field name="min_width">240</field>
+      <field name="payload_override" eval="{'route': '/demo/ops', 'scenario': 's67_scene_pack_surface'}"/>
+      <field name="version">v1.0</field>
+    </record>
+
+    <record id="sc_demo_scene_version_067_v1" model="sc.scene.version">
+      <field name="scene_id" ref="smart_construction_demo.sc_demo_scene_067_demo_ops"/>
+      <field name="version">v1.0</field>
+      <field name="payload_json" eval="{'code': 's67_demo_ops_scene', 'name': 'S67 Demo 运营场景', 'layout': 'grid', 'tiles': [{'key': 'demo.ops.dashboard', 'title': 'Demo 运营', 'scenario': 's67_scene_pack_surface'}]}"/>
+      <field name="note">S67 场景版本快照。</field>
+      <field name="source">manual</field>
+    </record>
+
+    <record id="sc_demo_scene_067_demo_ops" model="sc.scene">
+      <field name="active_version_id" ref="smart_construction_demo.sc_demo_scene_version_067_v1"/>
+    </record>
+
+    <record id="sc_demo_pack_registry_067_demo_surface" model="sc.pack.registry">
+      <field name="active">True</field>
+      <field name="pack_id">s67.demo.surface.pack</field>
+      <field name="name">S67 Demo Surface Pack</field>
+      <field name="pack_version">1.0.0</field>
+      <field name="vendor">Smart Construction Demo</field>
+      <field name="channel">stable</field>
+      <field name="pack_type">platform</field>
+      <field name="industry_code">construction</field>
+      <field name="pack_hash">sha256:s67demo</field>
+      <field name="signed_by">demo-seed</field>
+      <field name="published_at">2025-08-20 09:30:00</field>
+      <field name="published_by" ref="base.user_admin"/>
+      <field name="notes">S67 场景编排和能力目录演示包。</field>
+      <field name="changelog">1.0.0: 新增 Demo 运营能力和场景。</field>
+      <field name="payload_json" eval="{'scenarios': ['s67_scene_pack_surface'], 'capabilities': ['demo.ops.dashboard']}"/>
+    </record>
+
+    <record id="sc_demo_pack_installation_067_demo_surface" model="sc.pack.installation">
+      <field name="company_id" ref="base.main_company"/>
+      <field name="pack_id" ref="smart_construction_demo.sc_demo_pack_registry_067_demo_surface"/>
+      <field name="installed_version">1.0.0</field>
+      <field name="installed_at">2025-08-20 10:00:00</field>
+      <field name="installed_by" ref="base.user_admin"/>
+      <field name="status">installed</field>
+      <field name="last_diff_json" eval="{'added': ['demo.ops.dashboard', 's67_demo_ops_scene'], 'changed': []}"/>
+      <field name="source_hash">sha256:s67demo</field>
+      <field name="upgrade_history" eval="[{'version': '1.0.0', 'installed_at': '2025-08-20T10:00:00'}]"/>
+    </record>
+
+  </data>
+</odoo>
