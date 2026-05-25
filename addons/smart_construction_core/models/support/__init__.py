@@ -67,6 +67,7 @@ from . import legacy_task_evidence
 from . import legacy_invoice_registration_line
 from . import legacy_deduction_adjustment_line
 from . import legacy_fund_confirmation_line
+from . import legacy_fund_confirmation_document
 from . import legacy_expense_reimbursement_line
 from . import legacy_construction_diary_line
 from . import legacy_payment_residual_fact
