@@ -222,12 +222,13 @@ make demo.verify DB_NAME=sc_demo
 | S80 | 执行管理表单面 | sc.material.purchase.request / sc.material.acceptance / sc.material.inbound / sc.material.outbound / sc.material.settlement / sc.plan / sc.quality.issue / sc.safety.issue / sc.labor.plan / sc.equipment.plan | 材料采购验收入出库结算、计划汇报、质量安全闭环、劳务机械均有可打开样例 |
 | S85 | 管理与资金表单面 | sc.fund.account / sc.financing.loan / sc.document.admin.document / sc.office.admin.document / sc.hr.payroll.document / sc.subcontract.* | 资金账户、融资借款、资料证照、人事行政、薪酬、分包计划到结算均有可打开样例 |
 | S86 | 投标租赁资金表单面 | tender.bid / tender.doc.purchase / tender.opening / tender.guarantee / sc.material.rental.* / sc.fund.account.operation / sc.expense.claim / sc.settlement.adjustment | 投标到开标保证金、周转材料租赁、资金操作、保证金、结算调整均有可打开样例 |
+| S87 | 资源与合同表单面 | sc.labor.usage / sc.labor.settlement / sc.labor.price / sc.equipment.settlement / sc.equipment.price / sc.general.contract / sc.contract.event | 劳务用工结算价格、设备结算价格、通用合同、合同事件均有可打开样例 |
 | S10 | 合同 + 付款申请 + 发票（draft） | construction.contract / payment.request / account.move | contract/payment_request/invoices |
 | S20 | 结算单 + 明细 + 收款关联 | sc.settlement.order / sc.settlement.order.line / payment.request | settlement/lines/payment_request.link |
 | S30 | 工作流种子 + 门禁（bad） | sc.settlement.order / sc.settlement.order.line / payment.request | draft + gate |
 | S40 | 失败路径（结构/金额/关联） | sc.settlement.order / sc.settlement.order.line / payment.request | fail conditions locked |
 
-发布态默认种子集合：`S00 + S10 + S20 + S30 + S60 + S70 + S80 + S85 + S86 + S90`
+发布态默认种子集合：`S00 + S10 + S20 + S30 + S60 + S70 + S80 + S85 + S86 + S87 + S90`
 
 ## Product Hardening 场景别名
 

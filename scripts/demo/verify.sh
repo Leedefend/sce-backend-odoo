@@ -19,7 +19,7 @@ printf '[demo.verify] db=%s\n' "$DB_NAME"
 
 scenario="${SCENARIO:-}"
 step="${STEP:-}"
-known="s00_min_path s10_contract_payment s20_settlement_clearing s30_settlement_workflow s40_failure_paths s50_repairable_paths s70_daily_business_surface s80_execution_management_surface s85_admin_finance_surface s86_tender_rental_finance_surface s90_users_roles showroom"
+known="s00_min_path s10_contract_payment s20_settlement_clearing s30_settlement_workflow s40_failure_paths s50_repairable_paths s70_daily_business_surface s80_execution_management_surface s85_admin_finance_surface s86_tender_rental_finance_surface s87_resource_contract_surface s90_users_roles showroom"
 
 if [ -n "$scenario" ]; then
   found=0
@@ -201,6 +201,15 @@ run_check "S86 fund deposit and adjustment records exist" "s86_tender_rental_fin
 run_check "S86 material rental chain exists" "s86_tender_rental_finance_surface" \
   "select case when (select count(*) from sc_material_rental_plan where name='S86-MRP-001' and state='approved') = 1 and (select count(*) from sc_material_rental_order where name='S86-MRO-001' and state='settled') = 1 and (select count(*) from sc_material_rental_settlement where name='S86-MRS-001' and state='paid') = 1 then 'ok' else 'S86 material rental chain missing' end;" \
   "select 'plan' as kind, id, name, state from sc_material_rental_plan where name='S86-MRP-001' union all select 'order', id, name, state from sc_material_rental_order where name='S86-MRO-001' union all select 'settlement', id, name, state from sc_material_rental_settlement where name='S86-MRS-001';"
+run_check "S87 labor resource records exist" "s87_resource_contract_surface" \
+  "select case when (select count(*) from sc_labor_usage where name='S87-LU-001' and state='confirmed') = 1 and (select count(*) from sc_labor_settlement where name='S87-LS-001' and state='confirmed') = 1 and (select count(*) from sc_labor_settlement_line where settlement_id in (select id from sc_labor_settlement where name='S87-LS-001')) = 1 and (select count(*) from sc_labor_price where name='S87-LPRICE-001' and state='active') = 1 then 'ok' else 'S87 labor resource records missing' end;" \
+  "select 'usage' as kind, id, name, state from sc_labor_usage where name='S87-LU-001' union all select 'settlement', id, name, state from sc_labor_settlement where name='S87-LS-001' union all select 'price', id, name, state from sc_labor_price where name='S87-LPRICE-001';"
+run_check "S87 equipment resource records exist" "s87_resource_contract_surface" \
+  "select case when (select count(*) from sc_equipment_settlement where name='S87-ES-001' and state='confirmed') = 1 and (select count(*) from sc_equipment_settlement_line where settlement_id in (select id from sc_equipment_settlement where name='S87-ES-001')) = 1 and (select count(*) from sc_equipment_price where name='S87-EPRICE-001' and state='active') = 1 then 'ok' else 'S87 equipment resource records missing' end;" \
+  "select 'settlement' as kind, id, name, state from sc_equipment_settlement where name='S87-ES-001' union all select 'price', id, name, state from sc_equipment_price where name='S87-EPRICE-001';"
+run_check "S87 contract records exist" "s87_resource_contract_surface" \
+  "select case when (select count(*) from sc_general_contract where name='S87-GC-001' and state='signed') = 1 and (select count(*) from sc_contract_event where event_no in ('S87-CE-001','S87-CE-002') and state in ('approved','done')) = 2 then 'ok' else 'S87 contract records missing' end;" \
+  "select 'general_contract' as kind, id, name, state from sc_general_contract where name='S87-GC-001' union all select 'contract_event', id, name, state from sc_contract_event where event_no in ('S87-CE-001','S87-CE-002');"
 run_check "S90 users exist" "s90_users_roles" \
   "select case when count(*) >= 6 then 'ok' else 'S90 users missing' end from res_users where login in ('demo_pm','demo_finance','demo_cost','demo_audit','demo_readonly','svc_e2e_smoke');" \
   "select id, login, active from res_users where login in ('demo_pm','demo_finance','demo_cost','demo_audit','demo_readonly','svc_e2e_smoke') order by login;"
