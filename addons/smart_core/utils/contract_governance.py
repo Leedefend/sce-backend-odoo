@@ -368,6 +368,34 @@ _PAYMENT_REQUEST_LIST_COLUMN_LABELS = {
     "p1_visible_71e47f617269": "填写人",
     "p1_visible_dfc25d77dc39": "录入时间",
 }
+_TAX_DEDUCTION_REGISTRATION_LIST_COLUMNS = [
+    "p1_visible_06fa8c6f628f",
+    "p1_visible_8fa8662ad38f",
+    "p1_visible_3540b47897be",
+    "p1_visible_3e7255522b33",
+    "p1_visible_be5462bd6a62",
+    "p1_visible_ada9a85eab00",
+    "p1_visible_8acf4918f1f1",
+    "p1_visible_ee19dd75350c",
+    "p1_visible_eaa05c7105f7",
+    "p1_visible_e0361480e3a5",
+    "p1_visible_ee6a4d9e2956",
+    "p1_visible_1e62803e196c",
+]
+_TAX_DEDUCTION_REGISTRATION_LIST_COLUMN_LABELS = {
+    "p1_visible_06fa8c6f628f": "单据状态",
+    "p1_visible_8fa8662ad38f": "单据编号",
+    "p1_visible_3540b47897be": "是否转出",
+    "p1_visible_3e7255522b33": "项目名称",
+    "p1_visible_be5462bd6a62": "开票单位",
+    "p1_visible_ada9a85eab00": "发票号",
+    "p1_visible_8acf4918f1f1": "抵扣税额",
+    "p1_visible_ee19dd75350c": "抵扣总额",
+    "p1_visible_eaa05c7105f7": "抵扣附加税",
+    "p1_visible_e0361480e3a5": "备注",
+    "p1_visible_ee6a4d9e2956": "录入人",
+    "p1_visible_1e62803e196c": "单据日期",
+}
 _MATERIAL_PLAN_LIST_COLUMNS = [
     "name",
     "project_id",
@@ -4191,6 +4219,15 @@ def apply_project_form_domain_override(data: dict, contract_mode: str) -> None:
             columns_order=_PAYMENT_REQUEST_LIST_COLUMNS,
             column_labels=_PAYMENT_REQUEST_LIST_COLUMN_LABELS,
             row_primary="name",
+            row_secondary="project_id",
+            status_field="state",
+        )
+        _govern_standard_list_for_user(
+            data,
+            model_name="sc.tax.deduction.registration",
+            columns_order=_TAX_DEDUCTION_REGISTRATION_LIST_COLUMNS,
+            column_labels=_TAX_DEDUCTION_REGISTRATION_LIST_COLUMN_LABELS,
+            row_primary="document_no",
             row_secondary="project_id",
             status_field="state",
         )

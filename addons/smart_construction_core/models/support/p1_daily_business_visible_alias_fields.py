@@ -76,34 +76,17 @@ P1_ALIAS_LABELS = {
     ],
     'sc.tax.deduction.registration': [
         '单据状态',
-        '项目名称',
-        '扣款单位',
-        '扣款金额',
-        '扣款事由',
-        '附件',
-        '标题',
-        '本次实缴数',
-        '是否退回',
-        '上缴内容',
-        '本次计划已缴数',
-        '本次退回数',
-        '备注',
-        '受票方名称',
-        '交税类型',
-        '金额',
-        '发票开具日期',
-        '预缴税款日期',
-        '完税凭证号码',
+        '单据编号',
         '是否转出',
+        '项目名称',
         '开票单位',
         '发票号',
+        '抵扣税额',
         '抵扣总额',
-        '受票单位',
-        '实际开票单位',
-        '价税合计',
-        '税额',
-        '不含税金额',
-        '税率',
+        '抵扣附加税',
+        '备注',
+        '录入人',
+        '单据日期',
     ],
     'sc.payment.execution': [
         '推送结果',
@@ -511,6 +494,28 @@ P1_ALIAS_COMPAT_LABELS = {
         '发票类型',
         '录入人',
         '录入时间',
+        '扣款单位',
+        '扣款金额',
+        '扣款事由',
+        '附件',
+        '标题',
+        '本次实缴数',
+        '是否退回',
+        '上缴内容',
+        '本次计划已缴数',
+        '本次退回数',
+        '受票方名称',
+        '交税类型',
+        '金额',
+        '发票开具日期',
+        '预缴税款日期',
+        '完税凭证号码',
+        '受票单位',
+        '实际开票单位',
+        '价税合计',
+        '税额',
+        '不含税金额',
+        '税率',
     ],
     'sc.receipt.income': [
         '期数',
@@ -795,6 +800,20 @@ MODEL_LABEL_SOURCE_OVERRIDES = {
         '开票登记状态': ['invoice_document_state'],
         '来源表名': ['source_table_name'],
     },
+    'sc.tax.deduction.registration': {
+        '单据状态': ['legacy_document_state', 'state'],
+        '单据编号': ['document_no', 'name'],
+        '是否转出': ['is_transfer_out'],
+        '项目名称': ['project_id'],
+        '开票单位': ['partner_id', 'partner_name'],
+        '发票号': ['invoice_no'],
+        '抵扣税额': ['deduction_tax_amount'],
+        '抵扣总额': ['deduction_amount', 'invoice_amount_total'],
+        '抵扣附加税': ['deduction_surcharge_amount'],
+        '备注': ['note'],
+        '录入人': ['creator_name', 'source_created_by'],
+        '单据日期': ['document_date'],
+    },
     'sc.material.inbound': {
         '数量': ['total_qty'],
         '入库总数量': ['total_qty'],
@@ -811,6 +830,13 @@ PAYMENT_REQUEST_DOCUMENT_STATE_LABELS = {
     "0": "未审核",
     "1": "审核中",
     "2": "已审核",
+}
+
+TAX_DEDUCTION_DOCUMENT_STATE_LABELS = {
+    "-1": "已作废",
+    "0": "未审核",
+    "1": "审核中",
+    "2": "审核通过",
 }
 
 FALLBACK_SOURCES = (
@@ -861,6 +887,12 @@ def _alias_value(record, label):
             return PAYMENT_REQUEST_DOCUMENT_STATE_LABELS.get(legacy_state, legacy_state)
     if record._name == 'payment.request' and label == '是否关联单据':
         return "是" if record.settlement_id or record.contract_id or record.outflow_line_ids else "否"
+    if record._name == 'sc.tax.deduction.registration' and label == '单据状态':
+        legacy_state = _format_alias_value(record, 'legacy_document_state')
+        if legacy_state:
+            return TAX_DEDUCTION_DOCUMENT_STATE_LABELS.get(legacy_state, legacy_state)
+    if record._name == 'sc.tax.deduction.registration' and label == '是否转出':
+        return _format_alias_value(record, 'is_transfer_out') if 'is_transfer_out' in record._fields else "否"
     model_sources = MODEL_LABEL_SOURCE_OVERRIDES.get(record._name, {}).get(label)
     if model_sources is not None:
         for field_name in model_sources:

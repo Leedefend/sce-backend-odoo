@@ -43,6 +43,10 @@ FIELDS = [
     "deduction_tax_amount",
     "deduction_surcharge_amount",
     "deduction_confirm_date",
+    "is_transfer_out",
+    "creator_legacy_user_id",
+    "creator_name",
+    "created_time",
     "note",
     "import_batch",
 ]
@@ -89,8 +93,75 @@ def run_sql(sql: str) -> str:
     return subprocess.check_output(cmd, text=True)
 
 
+def table_columns(table_name: str) -> set[str]:
+    sql = f"""
+SET NOCOUNT ON;
+SELECT COLUMN_NAME
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_SCHEMA = 'dbo' AND TABLE_NAME = '{table_name.replace("'", "''")}';
+"""
+    return {line.strip() for line in run_sql(sql).splitlines() if line.strip() and not line.strip().startswith("(")}
+
+
+def optional_column(alias: str, columns: set[str], candidates: tuple[str, ...]) -> str:
+    lower_map = {column.lower(): column for column in columns}
+    for candidate in candidates:
+        column = lower_map.get(candidate.lower())
+        if column:
+            return f"{alias}.[{column}]"
+    return "NULL"
+
+
+def clean_sql(expr: str) -> str:
+    return f"REPLACE(REPLACE(ISNULL(CONVERT(varchar(4000), {expr}), ''), CHAR(31), ' '), CHAR(9), ' ')"
+
+
+def date_sql(expr: str) -> str:
+    return f"ISNULL(CONVERT(varchar(19), {expr}, 120), '')" if expr != "NULL" else "''"
+
+
 def main() -> int:
-    sql = r"""
+    header_columns = table_columns("C_JXXP_DKDJ_New")
+    line_columns = table_columns("C_JXXP_DKDJ_CB")
+    transfer_expr = optional_column(
+        "cb",
+        line_columns,
+        (
+            "SFZC",
+            "SFTZC",
+            "SFZZC",
+            "IS_TRANSFER_OUT",
+            "IsTransferOut",
+            "TransferOut",
+            "ZCBZ",
+            "ZC",
+            "JXSEZC",
+            "DKZC",
+            "OUTFLAG",
+        ),
+    )
+    if transfer_expr == "NULL":
+        transfer_expr = optional_column(
+            "h",
+            header_columns,
+            (
+                "SFZC",
+                "SFTZC",
+                "SFZZC",
+                "IS_TRANSFER_OUT",
+                "IsTransferOut",
+                "TransferOut",
+                "ZCBZ",
+                "ZC",
+                "JXSEZC",
+                "DKZC",
+                "OUTFLAG",
+            ),
+        )
+    creator_id_expr = optional_column("h", header_columns, ("LRRID", "CJRID", "ZDRID", "CREATORID", "CREATEUSERID"))
+    creator_name_expr = optional_column("h", header_columns, ("LRR", "CJR", "ZDR", "CreatorName", "CREATEUSER", "CreatedBy"))
+    created_time_expr = optional_column("h", header_columns, ("LRSJ", "CJSJ", "ZDSJ", "CreateTime", "CREATETIME", "CreatedOn"))
+    sql = f"""
 SET NOCOUNT ON;
 SELECT CONCAT_WS(CHAR(31),
   ISNULL(cb.Id, ''),
@@ -116,7 +187,11 @@ SELECT CONCAT_WS(CHAR(31),
   CAST(ISNULL(cb.DKSE, 0) AS varchar(50)),
   CAST(ISNULL(cb.D_SCBSJS_DKFJS, 0) AS varchar(50)),
   ISNULL(CONVERT(varchar(10), cb.RZDKRQ, 23), ''),
-  REPLACE(REPLACE(ISNULL(cb.BZ, ''), CHAR(31), ' '), CHAR(9), ' '),
+  {clean_sql(transfer_expr)},
+  {clean_sql(creator_id_expr)},
+  {clean_sql(creator_name_expr)},
+  {date_sql(created_time_expr)},
+  {clean_sql("COALESCE(NULLIF(cb.BZ, ''), h.BZ)")},
   'legacy_tax_deduction_v1'
 )
 FROM dbo.C_JXXP_DKDJ_CB cb
