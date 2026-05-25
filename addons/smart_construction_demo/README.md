@@ -219,6 +219,7 @@ make demo.verify DB_NAME=sc_demo
 | --- | --- | --- | --- |
 | S00 | 最短路径（项目/BOQ/材料/发票） | project.project / project.boq.line / project.material.plan / account.move | projects/boq/material/invoices |
 | S65 | 成本预算资金表单面 | construction.work.breakdown / project.budget / project.budget.boq.line / project.budget.cost.alloc / project.cost.period / project.cost.ledger / project.progress.entry / project.funding.baseline | 工程结构、预算版本、预算清单、成本分摊、成本期间、成本台账、进度计量、资金基线均有可打开样例 |
+| S66 | 台账与主体映射表单面 | sc.receipt.invoice.line / sc.output.invoice.ledger / sc.income.contract.ledger / sc.expense.contract.ledger / sc.business.entity / sc.legacy.*.map | 收款发票台账、销项总台账、收入/支出合同台账、业务核算主体和旧库映射均有可打开样例 |
 | S70 | 日常业务表单面 | sc.material.catalog / sc.expense.claim / sc.receipt.income / sc.payment.execution / sc.treasury.reconciliation / sc.invoice.registration / sc.tax.deduction.registration / sc.construction.diary | 材料价格、费用、收款、付款、资金、发票、抵扣、施工日志均有可打开样例 |
 | S80 | 执行管理表单面 | sc.material.purchase.request / sc.material.acceptance / sc.material.inbound / sc.material.outbound / sc.material.settlement / sc.plan / sc.quality.issue / sc.safety.issue / sc.labor.plan / sc.equipment.plan | 材料采购验收入出库结算、计划汇报、质量安全闭环、劳务机械均有可打开样例 |
 | S85 | 管理与资金表单面 | sc.fund.account / sc.financing.loan / sc.document.admin.document / sc.office.admin.document / sc.hr.payroll.document / sc.subcontract.* | 资金账户、融资借款、资料证照、人事行政、薪酬、分包计划到结算均有可打开样例 |
@@ -231,7 +232,7 @@ make demo.verify DB_NAME=sc_demo
 | S30 | 工作流种子 + 门禁（bad） | sc.settlement.order / sc.settlement.order.line / payment.request | draft + gate |
 | S40 | 失败路径（结构/金额/关联） | sc.settlement.order / sc.settlement.order.line / payment.request | fail conditions locked |
 
-发布态默认种子集合：`S00 + S10 + S20 + S30 + S60 + S65 + S70 + S80 + S85 + S86 + S87 + S88 + S89 + S90`
+发布态默认种子集合：`S00 + S10 + S20 + S30 + S60 + S65 + S66 + S70 + S80 + S85 + S86 + S87 + S88 + S89 + S90`
 
 ## Product Hardening 场景别名
 
