@@ -232,6 +232,7 @@ make demo.verify DB_NAME=sc_demo
 | S76 | 工作流兼容表单面 | sc.workflow.def / sc.workflow.node / sc.workflow.instance / sc.workflow.workitem / sc.workflow.log | 兼容工作流定义、节点、运行实例、待办和日志均有可打开样例 |
 | S77 | 数据字典与注册治理表单面 | project.dictionary / sc.signup.throttle / sc.data.validator | 定额字典层级和注册限流记录均有可验证样例；sc.data.validator 为抽象校验入口，不造持久化记录 |
 | S78 | 项目资料与 WBS 兼容表单面 | project.wbs / construction.work.breakdown / sc.project.document / ir.attachment | 兼容 WBS 写入统一工程结构表，项目资料关联 WBS、任务、字典细类和附件均有可验证样例 |
+| S79 | 执行结构与清单归属表单面 | sc.project.structure / project.boq.line | 执行结构树和清单行归属节点、任务、金额计算均有可验证样例 |
 | S80 | 执行管理表单面 | sc.material.purchase.request / sc.material.acceptance / sc.material.inbound / sc.material.outbound / sc.material.settlement / sc.plan / sc.quality.issue / sc.safety.issue / sc.labor.plan / sc.equipment.plan | 材料采购验收入出库结算、计划汇报、质量安全闭环、劳务机械均有可打开样例 |
 | S85 | 管理与资金表单面 | sc.fund.account / sc.financing.loan / sc.document.admin.document / sc.office.admin.document / sc.hr.payroll.document / sc.subcontract.* | 资金账户、融资借款、资料证照、人事行政、薪酬、分包计划到结算均有可打开样例 |
 | S86 | 投标租赁资金表单面 | tender.bid / tender.doc.purchase / tender.opening / tender.guarantee / sc.material.rental.* / sc.fund.account.operation / sc.expense.claim / sc.settlement.adjustment | 投标到开标保证金、周转材料租赁、资金操作、保证金、结算调整均有可打开样例 |
@@ -243,7 +244,7 @@ make demo.verify DB_NAME=sc_demo
 | S30 | 工作流种子 + 门禁（bad） | sc.settlement.order / sc.settlement.order.line / payment.request | draft + gate |
 | S40 | 失败路径（结构/金额/关联） | sc.settlement.order / sc.settlement.order.line / payment.request | fail conditions locked |
 
-发布态默认种子集合：`S00 + S10 + S20 + S30 + S60 + S65 + S66 + S67 + S68 + S69 + S70 + S71 + S72 + S73 + S74 + S75 + S76 + S77 + S78 + S80 + S85 + S86 + S87 + S88 + S89 + S90`
+发布态默认种子集合：`S00 + S10 + S20 + S30 + S60 + S65 + S66 + S67 + S68 + S69 + S70 + S71 + S72 + S73 + S74 + S75 + S76 + S77 + S78 + S79 + S80 + S85 + S86 + S87 + S88 + S89 + S90`
 
 ## Product Hardening 场景别名
 

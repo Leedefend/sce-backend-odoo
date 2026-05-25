@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data noupdate="1">
+
+    <record id="sc_demo_structure_079_single" model="sc.project.structure">
+      <field name="name">S79 园区扩建单项工程</field>
+      <field name="code">S79-SINGLE</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="structure_type">single</field>
+      <field name="biz_scope">work</field>
+      <field name="state">active</field>
+      <field name="sequence">7910</field>
+    </record>
+
+    <record id="sc_demo_structure_079_unit" model="sc.project.structure">
+      <field name="name">S79 机电安装单位工程</field>
+      <field name="code">S79-UNIT-MEP</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="parent_id" ref="smart_construction_demo.sc_demo_structure_079_single"/>
+      <field name="structure_type">unit</field>
+      <field name="biz_scope">work</field>
+      <field name="state">active</field>
+      <field name="sequence">7920</field>
+    </record>
+
+    <record id="sc_demo_structure_079_division" model="sc.project.structure">
+      <field name="name">S79 消防给水分部工程</field>
+      <field name="code">S79-DIV-FIRE</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="parent_id" ref="smart_construction_demo.sc_demo_structure_079_unit"/>
+      <field name="structure_type">division</field>
+      <field name="biz_scope">work</field>
+      <field name="state">active</field>
+      <field name="sequence">7930</field>
+    </record>
+
+    <record id="sc_demo_structure_079_item" model="sc.project.structure">
+      <field name="name">S79 消防主管安装清单节点</field>
+      <field name="code">S79-ITEM-FIRE-PIPE</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="parent_id" ref="smart_construction_demo.sc_demo_structure_079_division"/>
+      <field name="structure_type">item</field>
+      <field name="biz_scope">work</field>
+      <field name="state">active</field>
+      <field name="sequence">7940</field>
+    </record>
+
+    <record id="sc_demo_boq_079_fire_pipe" model="project.boq.line">
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="sequence">790</field>
+      <field name="code">S79-BOQ-FIRE-PIPE</field>
+      <field name="name">S79 消防主管安装</field>
+      <field name="spec">DN100 镀锌钢管，含支吊架安装和压力试验</field>
+      <field name="uom_id" ref="uom.product_uom_meter"/>
+      <field name="quantity">320.0</field>
+      <field name="price">185.0</field>
+      <field name="cost_item_id" ref="smart_construction_demo.sc_demo_dict_cost_item_structure"/>
+      <field name="structure_id" ref="smart_construction_demo.sc_demo_structure_079_item"/>
+      <field name="task_id" ref="smart_construction_demo.sc_demo_task_round1_003"/>
+      <field name="category">subitem</field>
+      <field name="boq_category">boq</field>
+      <field name="line_type">item</field>
+      <field name="single_name">S79 园区扩建单项工程</field>
+      <field name="unit_name">S79 机电安装单位工程</field>
+      <field name="division_name">S79 消防给水分部工程</field>
+      <field name="major_name">安装工程</field>
+      <field name="section_type">installation</field>
+      <field name="remark">S79 执行结构清单归属样例。</field>
+    </record>
+
+  </data>
+</odoo>

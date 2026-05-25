@@ -152,6 +152,12 @@ SCENARIOS: Dict[str, List[str]] = {
             "data/scenario/s78_project_document_wbs_surface/10_project_document_wbs_records.xml",
         ],
     },
+    "s79_execution_structure_surface": {
+        "sequence": 79,
+        "files": [
+            "data/scenario/s79_execution_structure_surface/10_execution_structure_records.xml",
+        ],
+    },
     "s80_execution_management_surface": {
         "sequence": 80,
         "files": [
@@ -244,6 +250,7 @@ RELEASE_SCENARIOS: List[str] = [
     "s76_workflow_compat_surface",
     "s77_data_dictionary_surface",
     "s78_project_document_wbs_surface",
+    "s79_execution_structure_surface",
     "s80_execution_management_surface",
     "s85_admin_finance_surface",
     "s86_tender_rental_finance_surface",
@@ -354,6 +361,8 @@ def load_scenario(
         _ensure_s71_user_preference(env)
     if scenario == "s78_project_document_wbs_surface":
         _ensure_s78_project_document_wbs(env)
+    if scenario == "s79_execution_structure_surface":
+        _ensure_s79_execution_structure(env)
 
     env.cr.commit()
 
@@ -443,6 +452,24 @@ def _ensure_s78_project_document_wbs(env) -> None:
     )
     if doc and attachment and attachment not in doc.attachment_ids:
         doc.sudo().write({"attachment_ids": [(4, attachment.id)]})
+
+
+def _ensure_s79_execution_structure(env) -> None:
+    """Refresh stored execution-structure rollups after XML replay."""
+    structures = env["sc.project.structure"].sudo().search(
+        [
+            (
+                "code",
+                "in",
+                ("S79-SINGLE", "S79-UNIT-MEP", "S79-DIV-FIRE", "S79-ITEM-FIRE-PIPE"),
+            )
+        ],
+        order="id",
+    )
+    for node in structures:
+        node._compute_level()
+    for node in reversed(structures):
+        node._compute_totals()
 
 
 def load_all(env, mode: str = "update") -> None:
