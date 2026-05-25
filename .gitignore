@@ -76,6 +76,7 @@ addons/smart_construction_core/models/var/**
 node_modules/
 frontend/apps/web/.vite/
 frontend/apps/web/dist/
+frontend/apps/web/dist-dev/
 config/odoo.conf
 
 config/odoo.conf
