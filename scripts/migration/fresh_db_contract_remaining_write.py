@@ -261,9 +261,9 @@ def resolve_partner_id(row: dict[str, str], partner_model) -> int | None:
 
 ensure_allowed_db()
 
-Contract = env["construction.contract"].sudo()  # noqa: F821
-Project = env["project.project"].sudo()  # noqa: F821
-Partner = env["res.partner"].sudo()  # noqa: F821
+Contract = env["construction.contract"].sudo().with_context(active_test=False)  # noqa: F821
+Project = env["project.project"].sudo().with_context(active_test=False)  # noqa: F821
+Partner = env["res.partner"].sudo().with_context(active_test=False)  # noqa: F821
 
 rows = read_csv(PAYLOAD_CSV)
 ids = [clean(row.get("legacy_contract_id")) for row in rows]
@@ -292,6 +292,7 @@ if duplicate_existing_ids:
 create_vals = []
 for index, row in enumerate(rows, start=2):
     vals = build_vals(row)
+    existing = existing_by_legacy.get(vals.get("legacy_contract_id"))
     resolved_project_id = resolve_project_id(row, Project)
     resolved_partner_id = resolve_partner_id(row, Partner)
     if resolved_project_id:
@@ -299,7 +300,6 @@ for index, row in enumerate(rows, start=2):
     if resolved_partner_id:
         vals["partner_id"] = resolved_partner_id
     if vals.get("type"):
-        existing = existing_by_legacy.get(vals.get("legacy_contract_id"))
         existing_tax = existing.tax_id if existing else False
         if not Contract._is_contract_tax_compatible(existing_tax, vals["type"]):
             vals["tax_id"] = Contract._get_default_tax(vals["type"]).id
@@ -310,9 +310,11 @@ for index, row in enumerate(rows, start=2):
         errors.append({"line": index, "legacy_contract_id": vals.get("legacy_contract_id"), "error": "invalid_contract_type", "type": vals.get("type")})
     if not vals.get("subject"):
         errors.append({"line": index, "legacy_contract_id": vals.get("legacy_contract_id"), "error": "missing_subject"})
-    if not vals.get("project_id") or not Project.browse(vals["project_id"]).exists():
+    effective_project_id = vals.get("project_id") or (existing.project_id.id if existing else None)
+    effective_partner_id = vals.get("partner_id") or (existing.partner_id.id if existing else None)
+    if not effective_project_id or not Project.browse(effective_project_id).exists():
         errors.append({"line": index, "legacy_contract_id": vals.get("legacy_contract_id"), "error": "project_missing", "legacy_project_id": vals.get("legacy_project_id"), "project_id": vals.get("project_id")})
-    if not vals.get("partner_id") or not Partner.browse(vals["partner_id"]).exists():
+    if not effective_partner_id or not Partner.browse(effective_partner_id).exists():
         errors.append({"line": index, "legacy_contract_id": vals.get("legacy_contract_id"), "error": "partner_missing", "legacy_counterparty_text": vals.get("legacy_counterparty_text"), "partner_id": vals.get("partner_id")})
     create_vals.append(vals)
 
