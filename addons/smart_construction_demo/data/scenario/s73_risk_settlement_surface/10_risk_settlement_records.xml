@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data noupdate="1">
+
+    <record id="sc_demo_project_073_risk" model="project.project">
+      <field name="name">S73 风险治理演示项目</field>
+      <field name="project_code">S73-RISK-2025-001</field>
+      <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_owner_001"/>
+      <field name="company_id" ref="base.main_company"/>
+      <field name="lifecycle_state">in_progress</field>
+      <field name="budget_total">1000000.0</field>
+      <field name="cost_committed">1150000.0</field>
+      <field name="cost_actual">1080000.0</field>
+      <field name="plan_percent">70.0</field>
+      <field name="actual_percent">48.0</field>
+      <field name="active">True</field>
+      <field name="description">S73 风险治理样例项目：成本与进度均触发风险投影。</field>
+    </record>
+
+    <record id="sc_demo_contract_in_073_risk" model="construction.contract">
+      <field name="subject">S73 风险项目支出合同</field>
+      <field name="type">in</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_073_risk"/>
+      <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_vendor_concrete"/>
+      <field name="date_contract">2025-08-26</field>
+      <field name="amount_total">360000.0</field>
+      <field name="amount_final">360000.0</field>
+      <field name="currency_id" ref="base.CNY"/>
+    </record>
+
+    <record id="sc_demo_contract_in_073_risk_line" model="construction.contract.line">
+      <field name="contract_id" ref="smart_construction_demo.sc_demo_contract_in_073_risk"/>
+      <field name="qty_contract">1.0</field>
+      <field name="price_contract">360000.0</field>
+      <field name="note">S73 风险项目兼容结算合同明细</field>
+    </record>
+
+    <record id="sc_demo_project_settlement_073_risk" model="project.settlement">
+      <field name="name">S73-PSET-001</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_073_risk"/>
+      <field name="type">pay</field>
+      <field name="contract_id" ref="smart_construction_demo.sc_demo_contract_in_073_risk"/>
+      <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_vendor_concrete"/>
+      <field name="currency_id" ref="base.CNY"/>
+      <field name="amount">360000.0</field>
+      <field name="date_settle">2025-08-27</field>
+      <field name="state">confirmed</field>
+    </record>
+
+    <record id="sc_demo_project_settlement_line_073_material" model="project.settlement.line">
+      <field name="settlement_id" ref="smart_construction_demo.sc_demo_project_settlement_073_risk"/>
+      <field name="sequence">10</field>
+      <field name="name">S73 混凝土超耗结算</field>
+      <field name="amount">260000.0</field>
+    </record>
+
+    <record id="sc_demo_project_settlement_line_073_delay" model="project.settlement.line">
+      <field name="settlement_id" ref="smart_construction_demo.sc_demo_project_settlement_073_risk"/>
+      <field name="sequence">20</field>
+      <field name="name">S73 赶工资源补偿</field>
+      <field name="amount">100000.0</field>
+    </record>
+
+    <record id="sc_demo_project_risk_action_073_cost" model="project.risk.action">
+      <field name="name">S73 成本超预算风险处置</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_073_risk"/>
+      <field name="state">claimed</field>
+      <field name="risk_level">critical</field>
+      <field name="owner_id" ref="base.user_admin"/>
+      <field name="note">成本实际发生和承诺成本均超过预算，需冻结新增支出并复核结算口径。</field>
+      <field name="active">True</field>
+    </record>
+
+    <record id="sc_demo_project_risk_action_073_schedule" model="project.risk.action">
+      <field name="name">S73 进度严重滞后风险升级</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_073_risk"/>
+      <field name="state">escalated</field>
+      <field name="risk_level">high</field>
+      <field name="owner_id" ref="base.user_admin"/>
+      <field name="note">实际进度较计划进度落后 22 个百分点，需重排关键路径。</field>
+      <field name="active">True</field>
+    </record>
+
+  </data>
+</odoo>
