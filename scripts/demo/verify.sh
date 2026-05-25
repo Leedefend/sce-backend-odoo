@@ -19,7 +19,7 @@ printf '[demo.verify] db=%s\n' "$DB_NAME"
 
 scenario="${SCENARIO:-}"
 step="${STEP:-}"
-known="s00_min_path s10_contract_payment s20_settlement_clearing s30_settlement_workflow s40_failure_paths s50_repairable_paths s70_daily_business_surface s80_execution_management_surface s90_users_roles showroom"
+known="s00_min_path s10_contract_payment s20_settlement_clearing s30_settlement_workflow s40_failure_paths s50_repairable_paths s70_daily_business_surface s80_execution_management_surface s85_admin_finance_surface s90_users_roles showroom"
 
 if [ -n "$scenario" ]; then
   found=0
@@ -183,6 +183,15 @@ run_check "S80 plan quality safety records exist" "s80_execution_management_surf
 run_check "S80 labor and equipment records exist" "s80_execution_management_surface" \
   "select case when (select count(*) from sc_labor_plan where name='S80-LP-001') = 1 and (select count(*) from sc_labor_request where name='S80-LR-001') = 1 and (select count(*) from sc_attendance_checkin where name='S80-ATT-001' and state='confirmed') = 1 and (select count(*) from sc_equipment_plan where name='S80-EP-001') = 1 and (select count(*) from sc_equipment_request where name='S80-ER-001') = 1 and (select count(*) from sc_equipment_usage where name='S80-EU-001' and state='confirmed') = 1 then 'ok' else 'S80 labor/equipment missing' end;" \
   "select 'labor_plan' as kind, id, name, state from sc_labor_plan where name='S80-LP-001' union all select 'labor_request', id, name, state from sc_labor_request where name='S80-LR-001' union all select 'attendance', id, name, state from sc_attendance_checkin where name='S80-ATT-001' union all select 'equipment_plan', id, name, state from sc_equipment_plan where name='S80-EP-001' union all select 'equipment_request', id, name, state from sc_equipment_request where name='S80-ER-001' union all select 'equipment_usage', id, name, state from sc_equipment_usage where name='S80-EU-001';"
+run_check "S85 fund and financing records exist" "s85_admin_finance_surface" \
+  "select case when (select count(*) from sc_fund_account where name='S85 项目监管户') = 1 and (select count(*) from sc_financing_loan where name='S85-FL-001' and state='confirmed') = 1 then 'ok' else 'S85 fund/financing missing' end;" \
+  "select 'fund_account' as kind, id, name, state from sc_fund_account where name='S85 项目监管户' union all select 'financing_loan', id, name, state from sc_financing_loan where name='S85-FL-001';"
+run_check "S85 admin and payroll records exist" "s85_admin_finance_surface" \
+  "select case when (select count(*) from sc_document_admin_document where name in ('S85 安全生产许可证登记','S85 合同原件借阅申请') and state='done') = 2 and (select count(*) from sc_office_admin_document where name in ('S85 项目经理调休审批','S85 项目章使用审批') and state='done') = 2 and (select count(*) from sc_hr_payroll_document where name in ('S85 项目管理人员工资登记','S85 节点奖登记') and state='done') = 2 then 'ok' else 'S85 admin/payroll missing' end;" \
+  "select 'document' as kind, id, name, state from sc_document_admin_document where name like 'S85 %' union all select 'office', id, name, state from sc_office_admin_document where name like 'S85 %' union all select 'payroll', id, name, state from sc_hr_payroll_document where name like 'S85 %';"
+run_check "S85 subcontract chain exists" "s85_admin_finance_surface" \
+  "select case when (select count(*) from sc_subcontract_plan where name='S85-SP-001' and state='approved') = 1 and (select count(*) from sc_subcontract_request where name='S85-SR-001' and state='approved') = 1 and (select count(*) from sc_subcontract_register where name='S85-SREG-001' and state='active') = 1 and (select count(*) from sc_subcontract_settlement where name='S85-SSET-001' and state='confirmed') = 1 and (select count(*) from sc_subcontract_price where name='S85-SPRICE-001' and state='active') = 1 then 'ok' else 'S85 subcontract chain missing' end;" \
+  "select 'plan' as kind, id, name, state from sc_subcontract_plan where name='S85-SP-001' union all select 'request', id, name, state from sc_subcontract_request where name='S85-SR-001' union all select 'register', id, name, state from sc_subcontract_register where name='S85-SREG-001' union all select 'settlement', id, name, state from sc_subcontract_settlement where name='S85-SSET-001' union all select 'price', id, name, state from sc_subcontract_price where name='S85-SPRICE-001';"
 run_check "S90 users exist" "s90_users_roles" \
   "select case when count(*) >= 6 then 'ok' else 'S90 users missing' end from res_users where login in ('demo_pm','demo_finance','demo_cost','demo_audit','demo_readonly','svc_e2e_smoke');" \
   "select id, login, active from res_users where login in ('demo_pm','demo_finance','demo_cost','demo_audit','demo_readonly','svc_e2e_smoke') order by login;"

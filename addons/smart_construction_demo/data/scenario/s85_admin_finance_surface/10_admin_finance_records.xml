@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <data noupdate="1">
+
+    <record id="sc_demo_partner_subcontract_085_fitout" model="res.partner">
+      <field name="name">德阳某某装饰分包有限公司（示例）</field>
+      <field name="is_company">True</field>
+      <field name="company_type">company</field>
+      <field name="supplier_rank">1</field>
+      <field name="phone">0838-3333333</field>
+    </record>
+
+    <record id="sc_demo_fund_account_085_project" model="sc.fund.account">
+      <field name="sequence">85</field>
+      <field name="name">S85 项目监管户</field>
+      <field name="account_no">6222000000000851</field>
+      <field name="account_type">监管户</field>
+      <field name="bank_name">中国建设银行德阳示范支行</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="company_id" ref="base.main_company"/>
+      <field name="opening_balance">2500000.0</field>
+      <field name="currency_id" ref="base.CNY"/>
+      <field name="is_default">True</field>
+      <field name="fixed_account">True</field>
+      <field name="state">active</field>
+      <field name="note">S85 资金账户样例</field>
+    </record>
+
+    <record id="sc_demo_financing_loan_085_bank" model="sc.financing.loan">
+      <field name="name">S85-FL-001</field>
+      <field name="source_origin">manual</field>
+      <field name="loan_type">loan_registration</field>
+      <field name="direction">financing_in</field>
+      <field name="state">confirmed</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_owner_001"/>
+      <field name="document_no">S85-FIN-DOC-001</field>
+      <field name="document_date">2025-05-06</field>
+      <field name="due_date">2026-05-05</field>
+      <field name="amount">1500000.0</field>
+      <field name="currency_id" ref="base.CNY"/>
+      <field name="purpose">项目阶段性周转资金补充</field>
+      <field name="rate_label">年化 4.2%</field>
+      <field name="extra_label">银行授信提款</field>
+      <field name="note">S85 融资登记样例</field>
+    </record>
+
+    <record id="sc_demo_document_admin_085_certificate" model="sc.document.admin.document">
+      <field name="name">S85 安全生产许可证登记</field>
+      <field name="fact_type">certificate_registration</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="partner_id" ref="smart_construction_demo.sc_demo_partner_owner_001"/>
+      <field name="requester_id" ref="base.user_admin"/>
+      <field name="handler_id" ref="base.user_admin"/>
+      <field name="business_date">2025-05-07</field>
+      <field name="certificate_name">安全生产许可证</field>
+      <field name="certificate_no">S85-CERT-0001</field>
+      <field name="holder_name">四川保盛建设集团有限公司</field>
+      <field name="issue_authority">四川省住房和城乡建设厅</field>
+      <field name="issue_date">2025-01-01</field>
+      <field name="valid_until">2028-01-01</field>
+      <field name="state">done</field>
+      <field name="description">S85 资料证照登记样例</field>
+      <field name="result_note">证照已归档，可在资料证照菜单直接查看。</field>
+    </record>
+
+    <record id="sc_demo_document_admin_085_borrow" model="sc.document.admin.document">
+      <field name="name">S85 合同原件借阅申请</field>
+      <field name="fact_type">document_borrow</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="requester_id" ref="base.user_admin"/>
+      <field name="handler_id" ref="base.user_admin"/>
+      <field name="business_date">2025-05-08</field>
+      <field name="document_title">总承包合同原件</field>
+      <field name="borrow_user_id" ref="base.user_admin"/>
+      <field name="borrow_date">2025-05-08</field>
+      <field name="expected_return_date">2025-05-15</field>
+      <field name="actual_return_date">2025-05-14</field>
+      <field name="state">done</field>
+      <field name="description">S85 资料借阅样例</field>
+      <field name="result_note">已按期归还。</field>
+    </record>
+
+    <record id="sc_demo_office_admin_085_leave" model="sc.office.admin.document">
+      <field name="name">S85 项目经理调休审批</field>
+      <field name="fact_type">leave_request</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="requester_id" ref="base.user_admin"/>
+      <field name="handler_id" ref="base.user_admin"/>
+      <field name="business_date">2025-05-09</field>
+      <field name="leave_type">compensatory</field>
+      <field name="start_datetime">2025-05-12 01:00:00</field>
+      <field name="end_datetime">2025-05-12 10:00:00</field>
+      <field name="duration_days">1.0</field>
+      <field name="state">done</field>
+      <field name="description">S85 人事行政请假样例</field>
+      <field name="result_note">调休审批完成。</field>
+    </record>
+
+    <record id="sc_demo_office_admin_085_seal" model="sc.office.admin.document">
+      <field name="name">S85 项目章使用审批</field>
+      <field name="fact_type">seal_use</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="requester_id" ref="base.user_admin"/>
+      <field name="handler_id" ref="base.user_admin"/>
+      <field name="business_date">2025-05-10</field>
+      <field name="seal_type">project</field>
+      <field name="use_purpose">提交阶段性进度确认资料</field>
+      <field name="use_date">2025-05-10</field>
+      <field name="return_date">2025-05-10</field>
+      <field name="state">done</field>
+      <field name="description">S85 印章审批样例</field>
+      <field name="result_note">项目章已归还。</field>
+    </record>
+
+    <record id="sc_demo_hr_payroll_085_salary" model="sc.hr.payroll.document">
+      <field name="name">S85 项目管理人员工资登记</field>
+      <field name="fact_type">salary_registration</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="requester_id" ref="base.user_admin"/>
+      <field name="handler_id" ref="base.user_admin"/>
+      <field name="business_date">2025-05-15</field>
+      <field name="employee_user_id" ref="base.user_admin"/>
+      <field name="employee_name">测试-项目经理A</field>
+      <field name="id_number">510600199001010001</field>
+      <field name="period_year">2025</field>
+      <field name="period_month">5</field>
+      <field name="payer_unit">四川保盛建设集团有限公司</field>
+      <field name="salary_base">18000.0</field>
+      <field name="gross_amount">18500.0</field>
+      <field name="deduction_amount">2300.0</field>
+      <field name="net_salary">16200.0</field>
+      <field name="currency_id" ref="base.CNY"/>
+      <field name="state">done</field>
+      <field name="description">S85 薪酬办理样例</field>
+      <field name="result_note">工资登记完成。</field>
+    </record>
+
+    <record id="sc_demo_hr_payroll_085_bonus" model="sc.hr.payroll.document">
+      <field name="name">S85 节点奖登记</field>
+      <field name="fact_type">bonus</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="requester_id" ref="base.user_admin"/>
+      <field name="handler_id" ref="base.user_admin"/>
+      <field name="business_date">2025-05-20</field>
+      <field name="employee_user_id" ref="base.user_admin"/>
+      <field name="employee_name">测试-项目经理A</field>
+      <field name="item_type">主体结构节点奖</field>
+      <field name="amount">3500.0</field>
+      <field name="occurrence_date">2025-05-20</field>
+      <field name="currency_id" ref="base.CNY"/>
+      <field name="state">done</field>
+      <field name="description">S85 奖金登记样例</field>
+      <field name="result_note">节点奖登记完成。</field>
+    </record>
+
+    <record id="sc_demo_subcontract_plan_085_fitout" model="sc.subcontract.plan">
+      <field name="name">S85-SP-001</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="plan_date">2025-05-01</field>
+      <field name="start_date">2025-05-20</field>
+      <field name="end_date">2025-06-20</field>
+      <field name="subcontract_scope">样板区精装修工程</field>
+      <field name="subcontractor_id" ref="smart_construction_demo.sc_demo_partner_subcontract_085_fitout"/>
+      <field name="currency_id" ref="base.CNY"/>
+      <field name="state">approved</field>
+      <field name="note">S85 分包计划样例</field>
+    </record>
+
+    <record id="sc_demo_subcontract_plan_line_085_fitout" model="sc.subcontract.plan.line">
+      <field name="plan_id" ref="smart_construction_demo.sc_demo_subcontract_plan_085_fitout"/>
+      <field name="work_scope">样板区精装修工程</field>
+      <field name="work_content">墙地面、吊顶、样板间收口</field>
+      <field name="planned_qty">1.0</field>
+      <field name="unit_name">项</field>
+      <field name="estimated_amount">280000.0</field>
+      <field name="note">计划分包范围</field>
+    </record>
+
+    <record id="sc_demo_subcontract_request_085_fitout" model="sc.subcontract.request">
+      <field name="name">S85-SR-001</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="plan_id" ref="smart_construction_demo.sc_demo_subcontract_plan_085_fitout"/>
+      <field name="request_date">2025-05-12</field>
+      <field name="need_start_date">2025-05-20</field>
+      <field name="need_end_date">2025-06-20</field>
+      <field name="subcontract_scope">样板区精装修工程</field>
+      <field name="suggested_subcontractor_id" ref="smart_construction_demo.sc_demo_partner_subcontract_085_fitout"/>
+      <field name="priority">urgent</field>
+      <field name="currency_id" ref="base.CNY"/>
+      <field name="state">approved</field>
+      <field name="request_reason">样板区开放节点前需完成精装修收口。</field>
+    </record>
+
+    <record id="sc_demo_subcontract_request_line_085_fitout" model="sc.subcontract.request.line">
+      <field name="request_id" ref="smart_construction_demo.sc_demo_subcontract_request_085_fitout"/>
+      <field name="work_scope">样板区精装修工程</field>
+      <field name="work_content">墙地面、吊顶、样板间收口</field>
+      <field name="required_qty">1.0</field>
+      <field name="unit_name">项</field>
+      <field name="required_date">2025-05-20</field>
+      <field name="estimated_amount">280000.0</field>
+    </record>
+
+    <record id="sc_demo_subcontract_register_085_fitout" model="sc.subcontract.register">
+      <field name="name">S85-SREG-001</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="request_id" ref="smart_construction_demo.sc_demo_subcontract_request_085_fitout"/>
+      <field name="register_date">2025-05-18</field>
+      <field name="start_date">2025-05-20</field>
+      <field name="end_date">2025-06-20</field>
+      <field name="subcontract_scope">样板区精装修工程</field>
+      <field name="subcontractor_id" ref="smart_construction_demo.sc_demo_partner_subcontract_085_fitout"/>
+      <field name="currency_id" ref="base.CNY"/>
+      <field name="state">active</field>
+      <field name="management_note">进场前完成安全交底，样板先行。</field>
+    </record>
+
+    <record id="sc_demo_subcontract_register_line_085_fitout" model="sc.subcontract.register.line">
+      <field name="register_id" ref="smart_construction_demo.sc_demo_subcontract_register_085_fitout"/>
+      <field name="work_scope">样板区精装修工程</field>
+      <field name="work_content">墙地面、吊顶、样板间收口</field>
+      <field name="contract_qty">1.0</field>
+      <field name="unit_name">项</field>
+      <field name="registered_amount">280000.0</field>
+    </record>
+
+    <record id="sc_demo_subcontract_settlement_085_fitout" model="sc.subcontract.settlement">
+      <field name="name">S85-SSET-001</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="register_id" ref="smart_construction_demo.sc_demo_subcontract_register_085_fitout"/>
+      <field name="subcontractor_id" ref="smart_construction_demo.sc_demo_partner_subcontract_085_fitout"/>
+      <field name="settlement_date">2025-06-25</field>
+      <field name="currency_id" ref="base.CNY"/>
+      <field name="state">confirmed</field>
+      <field name="note">S85 分包结算样例</field>
+    </record>
+
+    <record id="sc_demo_subcontract_settlement_line_085_fitout" model="sc.subcontract.settlement.line">
+      <field name="settlement_id" ref="smart_construction_demo.sc_demo_subcontract_settlement_085_fitout"/>
+      <field name="work_scope">样板区精装修工程</field>
+      <field name="work_content">墙地面、吊顶、样板间收口</field>
+      <field name="qty">1.0</field>
+      <field name="unit_name">项</field>
+      <field name="unit_price">280000.0</field>
+      <field name="tax_rate">9.0</field>
+      <field name="note">按登记范围一次性结算</field>
+    </record>
+
+    <record id="sc_demo_subcontract_price_085_fitout" model="sc.subcontract.price">
+      <field name="name">S85-SPRICE-001</field>
+      <field name="project_id" ref="smart_construction_demo.sc_demo_project_001"/>
+      <field name="subcontractor_id" ref="smart_construction_demo.sc_demo_partner_subcontract_085_fitout"/>
+      <field name="work_scope">样板区精装修工程</field>
+      <field name="work_content">墙地面、吊顶、样板间收口</field>
+      <field name="unit_name">项</field>
+      <field name="currency_id" ref="base.CNY"/>
+      <field name="unit_price">280000.0</field>
+      <field name="tax_rate">9.0</field>
+      <field name="effective_date">2025-05-01</field>
+      <field name="state">active</field>
+      <field name="note">S85 分包价格库样例</field>
+    </record>
+
+  </data>
+</odoo>
