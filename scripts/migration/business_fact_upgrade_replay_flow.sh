@@ -162,6 +162,7 @@ run_writes() {
   run_odoo_script "$ROOT_DIR/scripts/migration/history_outflow_partner_targeted_replay_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/history_actual_outflow_partner_targeted_replay_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_outflow_request_replay_write.py"
+  run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_outflow_request_fact_coverage_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_actual_outflow_replay_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_actual_outflow_residual_replay_write.py"
   run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_outflow_request_line_replay_write.py"
