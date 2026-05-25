@@ -54,6 +54,8 @@ class ScLegacyIncomeInvoiceFact(models.Model):
     invoice_type = fields.Char(string="发票类型", index=True)
     invoice_content = fields.Char(string="开票内容", index=True)
     tax_method = fields.Char(string="计税方法", index=True)
+    tax_type = fields.Char(string="交税类型", index=True)
+    tax_certificate_no = fields.Char(string="完税凭证号码", index=True)
 
     document_date = fields.Datetime(string="单据日期", index=True)
     invoice_date = fields.Datetime(string="开票/缴纳日期", index=True)

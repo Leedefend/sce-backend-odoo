@@ -330,7 +330,7 @@
                     <span class="favorite-star" aria-hidden="true">{{ isFavoriteValue(row[col]) ? '★' : '☆' }}</span>
                   </button>
                   <span
-                    v-else-if="isStatusColumn(col)"
+                    v-else-if="isStatusLikeColumn(col)"
                     class="status-badge"
                     :class="`tone-${semanticCell(col, row[col]).tone}`"
                   >
@@ -496,14 +496,14 @@
               >
                 <span class="favorite-star" aria-hidden="true">{{ isFavoriteValue(row[col]) ? '★' : '☆' }}</span>
               </button>
-              <div v-else-if="isStatusColumn(col)">
+              <div v-else-if="isStatusLikeColumn(col)">
                 <span class="status-badge" :class="`tone-${semanticCell(col, row[col]).tone}`">
                   {{ semanticCell(col, row[col]).text }}
                 </span>
               </div>
-              <div v-else-if="col === rowPrimary" class="cell-primary">
+              <div v-else-if="isPrimaryTextColumn(col)" class="cell-primary">
                 <div class="primary">{{ semanticCell(col, row[col]).text }}</div>
-                <div v-if="rowSecondary" class="secondary">{{ semanticCell(rowSecondary, row[rowSecondary]).text }}</div>
+                <div v-if="shouldRenderRowSecondary(col)" class="secondary">{{ semanticCell(rowSecondary, row[rowSecondary]).text }}</div>
               </div>
               <div v-else-if="attachmentLinks(row[col]).length" class="attachment-links">
                 <a
@@ -1015,6 +1015,19 @@ function isStatusColumn(field: string) {
   return option?.cellRole === 'status'
     || props.listProfile?.status_field === normalized
     || ['document_status', 'state', 'status', 'lifecycle_state'].includes(normalized);
+}
+
+function isStatusLikeColumn(field: string) {
+  const label = columnLabel(field).trim();
+  return isStatusColumn(field) || /^(状态|单据状态|开票状态|付款状态|结算状态|支付申请状态|账户状态)$/.test(label);
+}
+
+function isPrimaryTextColumn(field: string) {
+  return field === rowPrimary.value && !isStatusLikeColumn(field);
+}
+
+function shouldRenderRowSecondary(field: string) {
+  return Boolean(rowSecondary.value) && isPrimaryTextColumn(field);
 }
 
 function isFavoriteColumn(field: string) {

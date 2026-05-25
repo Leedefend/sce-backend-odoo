@@ -263,6 +263,41 @@
         </field>
     </record>
 
+    <record id="view_sc_invoice_prepaid_tax_user_tree" model="ir.ui.view">
+        <field name="name">sc.invoice.registration.prepaid.tax.user.tree</field>
+        <field name="model">sc.invoice.registration</field>
+        <field name="arch" type="xml">
+            <tree string="预缴税款">
+                <field name="p1_visible_62e951a692ff" string="状态" optional="show" readonly="1"/>
+                <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
+                <field name="p1_visible_8fa8662ad38f" string="单据编号" optional="show" readonly="1"/>
+                <field name="p1_visible_f9cc22d53aff" string="受票方名称" optional="show" readonly="1"/>
+                <field name="p1_visible_61b3896f8414" string="交税类型" optional="show" readonly="1"/>
+                <field name="p1_visible_34943c40c9af" string="金额" optional="show" readonly="1" sum="金额"/>
+                <field name="p1_visible_a3c1a28bd34c" string="发票开具日期" optional="show" readonly="1"/>
+                <field name="p1_visible_62319711f425" string="预缴税款日期" optional="show" readonly="1"/>
+                <field name="p1_visible_6514c1bee4d7" string="完税凭证号码" optional="show" readonly="1"/>
+                <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+                <field name="state" optional="hide"/>
+                <field name="project_id" optional="hide"/>
+                <field name="document_no" optional="hide"/>
+                <field name="partner_id" optional="hide"/>
+                <field name="tax_type" optional="hide"/>
+                <field name="amount_total" optional="hide"/>
+                <field name="invoice_date" optional="hide"/>
+                <field name="prepaid_tax_date" optional="hide"/>
+                <field name="tax_certificate_no" optional="hide"/>
+                <field name="legacy_attachment_ref" optional="hide"/>
+                <field name="creator_name" optional="hide"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_sc_invoice_prepaid_tax_user" model="ir.actions.act_window">
+        <field name="view_id" ref="view_sc_invoice_prepaid_tax_user_tree"/>
+    </record>
+
     <record id="view_p1_daily_business_visible_sc_fund_account_tree" model="ir.ui.view">
         <field name="name">sc.fund.account.p1.daily.business.visible.tree</field>
         <field name="model">sc.fund.account</field>
@@ -847,8 +882,10 @@
                     <separator string="本次开票信息"/>
                     <separator string="相关数据"/>
                     <separator string="开票详情"/>
+                    <separator string="预缴税款详情"/>
                     <separator string="发票实开详情"/>
                     <separator string="发票金额"/>
+                    <separator string="附件"/>
                 </group>
             </xpath>
         </field>

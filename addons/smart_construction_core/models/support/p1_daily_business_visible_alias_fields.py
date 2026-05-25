@@ -532,6 +532,12 @@ P1_ALIAS_COMPAT_LABELS = {
         '录入时间',
     ],
     'sc.invoice.registration': [
+        '状态',
+        '交税类型',
+        '金额',
+        '发票开具日期',
+        '预缴税款日期',
+        '完税凭证号码',
         '预计回款日期',
         '合同额',
         '本次开票张数',
@@ -761,11 +767,17 @@ MODEL_LABEL_SOURCE_OVERRIDES = {
         '备注': ['legacy_visible_remark', 'note'],
     },
     'sc.invoice.registration': {
+        '状态': ['legacy_document_state', 'state'],
         '推送结果': ['push_result', 'legacy_document_state', 'state'],
         '金蝶单据编号': ['kingdee_document_no', 'document_no', 'name'],
         '预计回款日期': ['expected_receipt_date'],
         '申请人': ['applicant_name', 'creator_name', 'source_created_by'],
         '受票方名称': ['partner_id', 'legacy_partner_name'],
+        '交税类型': ['tax_type', 'invoice_content', 'operation_strategy'],
+        '金额': ['amount_total'],
+        '发票开具日期': ['invoice_date', 'document_date'],
+        '预缴税款日期': ['prepaid_tax_date', 'document_date'],
+        '完税凭证号码': ['tax_certificate_no', 'invoice_no'],
         '含税金额': ['amount_total'],
         '不含税金额': ['amount_no_tax'],
         '税额': ['tax_amount'],
@@ -839,6 +851,13 @@ TAX_DEDUCTION_DOCUMENT_STATE_LABELS = {
     "2": "审核通过",
 }
 
+INVOICE_DOCUMENT_STATE_LABELS = {
+    "-1": "已作废",
+    "0": "未审核",
+    "1": "审核中",
+    "2": "审核通过",
+}
+
 FALLBACK_SOURCES = (
     "name", "document_no", "title", "project_id", "partner_id", "supplier_id", "contractor_id",
     "subcontractor_id", "owner_id", "requester_id", "state", "legacy_document_state",
@@ -880,6 +899,33 @@ def _format_alias_value(record, field_name):
     return "" if text in {"False", "false", "None", "NULL"} else text
 
 
+def _legacy_attachment_links(record):
+    attachment_ref = _format_alias_value(record, 'legacy_attachment_ref')
+    if not attachment_ref or 'sc.legacy.file.index' not in record.env:
+        return ""
+    files = record.env['sc.legacy.file.index'].sudo().search([
+        ('active', '=', True),
+        ('bill_id', '=', attachment_ref),
+    ], order='upload_time, id')
+    if not files:
+        return attachment_ref
+    lines = []
+    seen = set()
+    for item in files:
+        name = str(item.file_name or item.display_name or item.legacy_file_id or "").strip()
+        path = str(item.file_path or item.preview_path or "").strip()
+        if path:
+            url = "legacy-file://" + path.lstrip("/")
+        else:
+            url = "legacy-file-id://" + str(item.legacy_file_id or item.id).strip()
+        key = (name, url)
+        if not name or key in seen:
+            continue
+        seen.add(key)
+        lines.append(f"{name} | {url}")
+    return " ".join(lines) if lines else attachment_ref
+
+
 def _alias_value(record, label):
     if record._name == 'payment.request' and label == '单据状态':
         legacy_state = _format_alias_value(record, 'legacy_document_state')
@@ -887,6 +933,14 @@ def _alias_value(record, label):
             return PAYMENT_REQUEST_DOCUMENT_STATE_LABELS.get(legacy_state, legacy_state)
     if record._name == 'payment.request' and label == '是否关联单据':
         return "是" if record.settlement_id or record.contract_id or record.outflow_line_ids else "否"
+    if record._name == 'sc.invoice.registration' and label in ('状态', '单据状态'):
+        legacy_state = _format_alias_value(record, 'legacy_document_state')
+        if legacy_state:
+            return INVOICE_DOCUMENT_STATE_LABELS.get(legacy_state, legacy_state)
+    if record._name == 'sc.invoice.registration' and label == '附件':
+        legacy_links = _legacy_attachment_links(record)
+        if legacy_links:
+            return legacy_links
     if record._name == 'sc.tax.deduction.registration' and label == '单据状态':
         legacy_state = _format_alias_value(record, 'legacy_document_state')
         if legacy_state:

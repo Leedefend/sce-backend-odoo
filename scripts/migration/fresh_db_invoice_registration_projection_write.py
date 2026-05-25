@@ -363,6 +363,122 @@ env.cr.execute(  # noqa: F821
     """
     INSERT INTO sc_invoice_registration (
       name, source_origin, source_kind, direction, state, project_id, partner_id,
+      document_no, document_date, invoice_date, tax_type, prepaid_tax_date,
+      tax_certificate_no, invoice_no, invoice_code, amount_total, currency_id,
+      legacy_source_model, legacy_source_table, legacy_record_id,
+      legacy_document_state, legacy_partner_id, legacy_partner_name,
+      legacy_partner_tax_no, legacy_attachment_ref, creator_legacy_user_id,
+      creator_name, created_time, note, active, create_uid, write_uid, create_date, write_date
+    )
+    SELECT
+      COALESCE(NULLIF(f.document_no, ''), 'LEGACY-PREPAID-TAX-' || f.legacy_record_id),
+      'legacy',
+      'prepaid_tax',
+      'prepaid',
+      CASE WHEN COALESCE(f.document_state, '') = '2' THEN 'legacy_confirmed' ELSE 'draft' END,
+      f.project_id,
+      partner_match.id,
+      NULLIF(f.document_no, ''),
+      f.document_date::date,
+      COALESCE(f.expected_receipt_date::date, f.document_date::date, f.created_time::date, CURRENT_DATE),
+      NULLIF(f.tax_type, ''),
+      f.invoice_date::date,
+      NULLIF(f.tax_certificate_no, ''),
+      NULLIF(f.invoice_no, ''),
+      NULLIF(f.invoice_code, ''),
+      COALESCE(f.amount_total, 0),
+      %s,
+      'sc.legacy.income.invoice.fact',
+      f.source_table,
+      f.legacy_record_id,
+      NULLIF(f.document_state, ''),
+      NULLIF(f.partner_legacy_id, ''),
+      NULLIF(f.partner_name, ''),
+      NULLIF(f.partner_tax_no, ''),
+      NULLIF(f.attachment_ref, ''),
+      NULLIF(f.creator_legacy_user_id, ''),
+      NULLIF(f.creator_name, ''),
+      f.created_time,
+      NULLIF(f.note, ''),
+      f.active,
+      1,
+      1,
+      NOW(),
+      NOW()
+    FROM sc_legacy_income_invoice_fact f
+    LEFT JOIN LATERAL (
+      SELECT rp.id
+        FROM res_partner rp
+       WHERE rp.active
+         AND (
+           (f.partner_name IS NOT NULL AND rp.name = f.partner_name)
+           OR (f.partner_tax_no IS NOT NULL AND rp.vat = f.partner_tax_no)
+         )
+       ORDER BY
+         CASE WHEN f.partner_tax_no IS NOT NULL AND rp.vat = f.partner_tax_no THEN 0 ELSE 1 END,
+         rp.id
+       LIMIT 1
+    ) partner_match ON TRUE
+    WHERE f.active
+      AND f.project_id IS NOT NULL
+      AND f.fact_type = 'prepaid_tax_line'
+      AND COALESCE(f.amount_total, 0) <> 0
+    ON CONFLICT (legacy_source_model, legacy_record_id)
+    DO UPDATE SET
+      source_kind = EXCLUDED.source_kind,
+      direction = EXCLUDED.direction,
+      state = EXCLUDED.state,
+      project_id = EXCLUDED.project_id,
+      partner_id = EXCLUDED.partner_id,
+      document_no = EXCLUDED.document_no,
+      document_date = EXCLUDED.document_date,
+      invoice_date = EXCLUDED.invoice_date,
+      tax_type = EXCLUDED.tax_type,
+      prepaid_tax_date = EXCLUDED.prepaid_tax_date,
+      tax_certificate_no = EXCLUDED.tax_certificate_no,
+      invoice_no = EXCLUDED.invoice_no,
+      invoice_code = EXCLUDED.invoice_code,
+      amount_total = EXCLUDED.amount_total,
+      legacy_document_state = EXCLUDED.legacy_document_state,
+      legacy_partner_id = EXCLUDED.legacy_partner_id,
+      legacy_partner_name = EXCLUDED.legacy_partner_name,
+      legacy_partner_tax_no = EXCLUDED.legacy_partner_tax_no,
+      legacy_attachment_ref = EXCLUDED.legacy_attachment_ref,
+      creator_legacy_user_id = EXCLUDED.creator_legacy_user_id,
+      creator_name = EXCLUDED.creator_name,
+      created_time = EXCLUDED.created_time,
+      note = EXCLUDED.note,
+      active = EXCLUDED.active,
+      write_uid = 1,
+      write_date = NOW()
+    """,
+    [currency_id],
+)
+
+env.cr.execute(  # noqa: F821
+    """
+    UPDATE sc_invoice_registration summary
+       SET active = FALSE,
+           write_uid = 1,
+           write_date = NOW()
+     WHERE summary.source_kind = 'prepaid_tax'
+       AND summary.direction = 'prepaid'
+       AND summary.legacy_source_model = 'sc.legacy.invoice.tax.fact'
+       AND EXISTS (
+           SELECT 1
+             FROM sc_invoice_registration detail
+            WHERE detail.source_kind = 'prepaid_tax'
+              AND detail.direction = 'prepaid'
+              AND detail.legacy_source_model = 'sc.legacy.income.invoice.fact'
+              AND detail.active
+       )
+    """
+)
+
+env.cr.execute(  # noqa: F821
+    """
+    INSERT INTO sc_invoice_registration (
+      name, source_origin, source_kind, direction, state, project_id, partner_id,
       contract_id, document_no, document_date, invoice_date, expected_receipt_date,
       invoice_no, invoice_code, invoice_type, tax_rate, invoice_content,
       invoice_issue_company, push_result, kingdee_document_no, applicant_name,
