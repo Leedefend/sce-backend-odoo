@@ -28,7 +28,7 @@ ASSET_MANIFEST_REL_PATH = Path("manifest/outflow_request_asset_manifest_v1.json"
 ASSET_PACKAGE_ID = "outflow_request_sc_v1"
 GENERATED_AT = "2026-04-15T10:20:00+00:00"
 EXPECTED_RAW_ROWS = 13646
-AMOUNT_FIELDS = ("f_JHJE", "f_JHFKJE", "f_NEW_JHJE", "f_SFJE", "ZSJE", "YJJE")
+AMOUNT_FIELDS = ("f_JHJE", "f_JHFKJE", "f_NEW_JHJE", "f_SFJE", "ZSJE", "YJJE", "LJFK")
 REQUIRED_COLUMNS = {"Id", "f_XMID", "f_GYSID", "f_JHJE"}
 
 
@@ -297,7 +297,7 @@ def generate(asset_root: Path, runtime_root: Path, source_csv: Path, expected_re
         "target_model": "payment.request",
         "target_type": "pay",
         "business_boundary": {
-            "state_replay": "excluded",
+            "state_replay": "legacy_document_state_preserved_by_fact_coverage_write",
             "settlement_link": "excluded",
             "ledger": "excluded",
             "accounting": "excluded",
@@ -311,7 +311,7 @@ def generate(asset_root: Path, runtime_root: Path, source_csv: Path, expected_re
                 "partner_external_id_resolves",
                 "contract_id_optional_when_missing_in_legacy",
                 "type_pay_only",
-                "state_not_written",
+                "legacy_document_state_available_for_fact_coverage",
                 "settlement_not_written",
                 "ledger_not_written",
                 "accounting_not_written",
@@ -409,7 +409,7 @@ def generate(asset_root: Path, runtime_root: Path, source_csv: Path, expected_re
             "project_anchor_resolves",
             "partner_anchor_resolves",
             "contract_id_optional_when_missing_in_legacy",
-            "state_not_written",
+            "legacy_document_state_available_for_fact_coverage",
             "settlement_not_written",
             "ledger_not_written",
             "accounting_not_written",
@@ -437,7 +437,7 @@ def main() -> int:
     parser.add_argument("--asset-root", default=str(REPO_ASSET_ROOT))
     parser.add_argument("--runtime-root", default=str(RUNTIME_ROOT))
     parser.add_argument("--source", default=str(SOURCE_CSV))
-    parser.add_argument("--expected-ready", type=int, default=12284)
+    parser.add_argument("--expected-ready", type=int, default=12410)
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
 

@@ -314,6 +314,7 @@ case "$MODE" in
     run_step outflow_partner_targeted_adapter python3 "$ROOT_DIR/scripts/migration/history_outflow_partner_targeted_replay_adapter.py"
     run_step outflow_partner_targeted_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_outflow_partner_targeted_replay_write.py"
     run_step outflow_request_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_outflow_request_replay_write.py"
+    run_step outflow_request_fact_coverage run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_outflow_request_fact_coverage_write.py"
     run_step actual_outflow_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_actual_outflow_replay_adapter.py"
     run_step actual_outflow_partner_targeted_adapter python3 "$ROOT_DIR/scripts/migration/history_actual_outflow_partner_targeted_replay_adapter.py"
     run_step actual_outflow_partner_targeted_replay run_odoo_script "$ROOT_DIR/scripts/migration/history_actual_outflow_partner_targeted_replay_write.py"
