@@ -220,6 +220,7 @@
             <field name="res_model">payment.request</field>
             <field name="view_mode">tree,form</field>
             <field name="search_view_id" ref="view_payment_request_search"/>
+            <field name="domain">['|', ('legacy_source_table', '=', False), ('legacy_source_table', '!=', 'T_FK_Supplier')]</field>
             <field name="context">{'search_default_group_by_project_id': 1}</field>
             <field name="groups_id" eval="[(6, 0, [
                 ref('smart_construction_core.group_sc_cap_finance_read'),
@@ -234,7 +235,7 @@
             <field name="res_model">payment.request</field>
             <field name="view_mode">tree,form</field>
             <field name="search_view_id" ref="view_payment_request_search"/>
-            <field name="domain">[('type', '=', 'pay')]</field>
+            <field name="domain">['&amp;', ('type', '=', 'pay'), '|', ('legacy_source_table', '=', False), ('legacy_source_table', '!=', 'T_FK_Supplier')]</field>
             <field name="context">{'default_type': 'pay', 'search_default_type_pay': 1, 'search_default_group_by_project_id': 1}</field>
             <field name="groups_id" eval="[(6, 0, [
                 ref('smart_construction_core.group_sc_cap_finance_read'),
@@ -263,7 +264,7 @@
             <field name="name">我的付款申请</field>
             <field name="res_model">payment.request</field>
             <field name="view_mode">tree,form</field>
-            <field name="domain">[('create_uid', '=', uid)]</field>
+            <field name="domain">['&amp;', ('create_uid', '=', uid), '|', ('legacy_source_table', '=', False), ('legacy_source_table', '!=', 'T_FK_Supplier')]</field>
             <field name="search_view_id" ref="view_payment_request_search"/>
             <field name="context">{'search_default_group_by_project_id': 1}</field>
             <field name="groups_id" eval="[(6, 0, [
