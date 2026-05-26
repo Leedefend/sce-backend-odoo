@@ -19,6 +19,9 @@ class _FakeUser:
     company_id = object()
     groups_id = set()
 
+    def exists(self):
+        return self
+
 
 class _FakeRecordset:
     def __init__(self, model, ids):
@@ -112,8 +115,25 @@ class _FakeEntitlementModel:
         return bool((flags or {}).get(required_flag))
 
 
+class _FakeUserModel:
+    def __init__(self, user):
+        self.user = user
+
+    def browse(self, user_id):
+        return self.user if int(user_id or 0) == self.user.id else _FakeMissingUser()
+
+
+class _FakeMissingUser:
+    id = 0
+    groups_id = set()
+
+    def exists(self):
+        return False
+
+
 class _FakeModel:
-    def __init__(self):
+    def __init__(self, name="x.model"):
+        self.name = name
         self.access_modes = []
         self.rule_modes = []
         self.browsed_ids = []
@@ -127,7 +147,7 @@ class _FakeModel:
 
 
 class _FakeEnv:
-    def __init__(self, model):
+    def __init__(self, model, dbname="sc_demo"):
         self.model = model
         self.action = _FakeAction()
         self.generic_action_model = _FakeActionModel(self.action)
@@ -136,13 +156,16 @@ class _FakeEnv:
         self.entitlement_model = None
         self.capability_model = _FakeCapabilityModel()
         self.user = _FakeUser()
+        self.uid = self.user.id
+        self.context = {}
+        self.cr = _FakeCursor(dbname, self)
 
     def __call__(self, user=None):
         self.uid = user
         return self
 
     def __getitem__(self, name):
-        if name == "x.model":
+        if name == self.model.name:
             return self.model
         if name == "ir.actions.actions":
             return self.generic_action_model
@@ -150,6 +173,8 @@ class _FakeEnv:
             return self.client_action_model
         if name == "ir.ui.menu":
             return self.menu_model
+        if name == "res.users":
+            return _FakeUserModel(self.user)
         if name == "sc.entitlement" and self.entitlement_model:
             return self.entitlement_model
         if name == "sc.capability":
@@ -157,10 +182,41 @@ class _FakeEnv:
         raise KeyError(name)
 
 
-class _FakeRequest:
+class _FakeCursor:
+    def __init__(self, dbname, env):
+        self.dbname = dbname
+        self.env = env
+        self.closed = False
+
+    def close(self):
+        self.closed = True
+
+
+class _FakeRegistry:
     def __init__(self, env):
         self.env = env
+
+    def check_signaling(self):
+        return None
+
+    def cursor(self):
+        return self.env.cr
+
+
+class _FakeApi:
+    @staticmethod
+    def Environment(cr, uid, context):
+        env = cr.env
+        env.uid = uid
+        env.context = context
+        return env
+
+
+class _FakeRequest:
+    def __init__(self, env, registry_envs=None):
+        self.env = env
         self.uid = None
+        self.registry_envs = registry_envs or {}
 
 
 class _Ctx:
@@ -176,6 +232,8 @@ def _load_module(fake_request, user_provider=None):
     module_path = root / "security" / "intent_permission.py"
 
     odoo_mod = types.ModuleType("odoo")
+    odoo_mod.api = _FakeApi
+    odoo_mod.registry = lambda db: _FakeRegistry(fake_request.registry_envs[db])
     http_mod = types.ModuleType("odoo.http")
     http_mod.request = fake_request
     exc_mod = types.ModuleType("odoo.exceptions")
@@ -195,6 +253,7 @@ def _load_module(fake_request, user_provider=None):
     sys.modules.update(
         {
             "odoo": odoo_mod,
+            "odoo.api": _FakeApi,
             "odoo.http": http_mod,
             "odoo.exceptions": exc_mod,
             "odoo.addons": addons_mod,
@@ -231,6 +290,23 @@ class TestIntentPermissionOperationPolicy(unittest.TestCase):
         self.assertIs(ctx.env, self.env)
         self.assertIs(ctx.user, self.env.user)
         self.assertEqual(ctx.uid, 7)
+
+    def test_api_data_permission_uses_params_db_when_request_env_db_differs(self):
+        current_model = _FakeModel()
+        current_env = _FakeEnv(current_model, dbname="sc_demo")
+        target_model = _FakeModel()
+        target_env = _FakeEnv(target_model, dbname="sc_odoo")
+        self.permission = _load_module(
+            _FakeRequest(current_env, registry_envs={"sc_odoo": target_env})
+        )
+        ctx = _Ctx({"intent": "api.data", "params": {"db": "sc_odoo", "model": "x.model"}})
+
+        self.permission.check_intent_permission(ctx)
+
+        self.assertEqual(current_model.access_modes, [])
+        self.assertEqual(target_model.access_modes, ["read"])
+        self.assertTrue(target_env.cr.closed)
+        self.assertIs(ctx.env, target_env)
 
     def test_existing_context_user_is_reused_without_redecoding_token(self):
         def _unexpected_auth():
