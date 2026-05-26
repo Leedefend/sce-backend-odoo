@@ -161,7 +161,7 @@ def visible_value_coverage(expected_labels: list[str], field_names: list[str]) -
 def projection_coverage() -> dict[str, object]:
     Fact = env["sc.legacy.income.invoice.fact"].sudo()  # noqa: F821
     Invoice = env["sc.invoice.registration"].sudo()  # noqa: F821
-    fact_domain = [("fact_type", "=", "prepaid_tax_line")]
+    fact_domain = [("fact_type", "=", "prepaid_tax")]
     eligible_domain = fact_domain + [("active", "=", True), ("amount_total", "!=", 0)]
     missing_project = Fact.search(eligible_domain + [("project_id", "=", False)], order="document_date desc, id", limit=20)
     runtime_domain = [("source_kind", "=", "prepaid_tax"), ("direction", "=", "prepaid"), ("active", "=", True)]
@@ -197,10 +197,7 @@ def projection_coverage() -> dict[str, object]:
         ],
         "status_project_name_contamination_count": len(status_project_name_hits),
         "status_project_name_contamination_examples": status_project_name_hits[:5],
-        "decision": (
-            "runtime_rows_match_project_anchored_eligible_facts; "
-            "missing_project_anchor_rows_require_project_master_recovery_before_projection"
-        ),
+        "decision": "runtime_rows_match_project_anchored_eligible_prepaid_tax_headers",
     }
 
 
@@ -217,8 +214,15 @@ def action_context_audit() -> dict[str, object]:
 source = source_path()
 headers, source_data_rows = read_headers(source)
 expected = [item for item in headers if item != "序号"]
+if "金额" in expected:
+    amount_index = expected.index("金额")
+    for offset, label in enumerate(("不含税金额", "税额"), start=1):
+        if label not in expected:
+            expected.insert(amount_index + offset, label)
 if "附件" not in expected and "录入人" in expected:
     expected.insert(expected.index("录入人"), "附件")
+if "数据类型" not in expected and "录入人" in expected:
+    expected.insert(expected.index("录入人"), "数据类型")
 labels, fields = tree_labels()
 first_labels = labels[: len(expected)]
 first_fields = fields[: len(expected)]
