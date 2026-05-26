@@ -233,7 +233,6 @@
       <field name="model">sc.legacy.fund.confirmation.document</field>
       <field name="arch" type="xml">
         <tree string="到款确认表" create="false" edit="false" delete="false" default_order="receipt_time desc, document_no desc">
-          <field name="sequence_no"/>
           <field name="document_state"/>
           <field name="document_no"/>
           <field name="receipt_time"/>
