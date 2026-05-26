@@ -35,9 +35,55 @@ class ScLegacyFundConfirmationDocument(models.Model):
         self.env.cr.execute(
             f"""
             CREATE OR REPLACE VIEW {self._table} AS (
-                WITH document_rows AS (
+                WITH header_available AS (
+                    SELECT EXISTS (
+                        SELECT 1
+                        FROM sc_legacy_fund_confirmation_header
+                        WHERE COALESCE(active, false)
+                        LIMIT 1
+                    ) AS has_headers
+                ), header_rows AS (
                     SELECT
-                        COALESCE(NULLIF(l.legacy_header_id, ''), NULLIF(l.document_no, ''), l.legacy_line_id) AS document_key,
+                        h.id,
+                        h.legacy_header_id,
+                        NULLIF(h.document_no, '') AS document_no,
+                        h.receipt_time,
+                        COALESCE(NULLIF(h.project_name, ''), COALESCE(p.name->>'zh_CN', p.name->>'en_US')) AS project_name,
+                        h.project_id,
+                        NULLIF(h.period_no, '') AS period_no,
+                        COALESCE(h.actual_fund_amount, 0.0) AS actual_fund_amount,
+                        COALESCE(line_totals.deducted_amount_total, 0.0) AS deducted_amount_total,
+                        GREATEST(COALESCE(h.actual_fund_amount, 0.0) - COALESCE(line_totals.deducted_amount_total, 0.0), 0.0) AS paid_amount_total,
+                        NULLIF(h.contract_name, '') AS construction_unit_name,
+                        COALESCE(h.contract_amount, 0.0) AS contract_amount,
+                        NULLIF(h.current_project_stage, '') AS current_project_stage,
+                        COALESCE(h.accumulated_invoice_amount, 0.0) AS accumulated_invoice_amount,
+                        0.0::double precision AS previous_retained_balance,
+                        NULLIF(h.creator_name, '') AS creator_name,
+                        h.created_time,
+                        NULLIF(h.attachment_ref, '') AS attachment_ref,
+                        COALESCE(h.active, false) AS active,
+                        CASE NULLIF(h.document_state, '')
+                            WHEN '-1' THEN '已驳回'
+                            WHEN '0' THEN '草稿'
+                            WHEN '1' THEN '审核中'
+                            WHEN '2' THEN '审核通过'
+                            ELSE COALESCE(NULLIF(h.document_state, ''), '')
+                        END AS document_state
+                    FROM sc_legacy_fund_confirmation_header h
+                    LEFT JOIN project_project p ON p.id = h.project_id
+                    LEFT JOIN (
+                        SELECT
+                            legacy_header_id,
+                            SUM(GREATEST(COALESCE(current_actual_amount, 0.0), 0.0)) AS deducted_amount_total
+                        FROM sc_legacy_fund_confirmation_line
+                        WHERE COALESCE(active, false)
+                          AND COALESCE(NULLIF(legacy_header_id, ''), '') <> ''
+                        GROUP BY legacy_header_id
+                    ) line_totals ON line_totals.legacy_header_id = h.legacy_header_id
+                    WHERE COALESCE(h.active, false)
+                ), fallback_document_rows AS (
+                    SELECT
                         MIN(l.id) AS id,
                         MIN(NULLIF(l.legacy_header_id, '')) AS legacy_header_id,
                         MIN(NULLIF(l.document_no, '')) AS document_no,
@@ -68,9 +114,16 @@ class ScLegacyFundConfirmationDocument(models.Model):
                     LEFT JOIN project_project p ON p.id = l.project_id
                     WHERE COALESCE(l.active, false)
                     GROUP BY COALESCE(NULLIF(l.legacy_header_id, ''), NULLIF(l.document_no, ''), l.legacy_line_id)
+                ), document_rows AS (
+                    SELECT *
+                    FROM header_rows
+                    UNION ALL
+                    SELECT *
+                    FROM fallback_document_rows
+                    WHERE NOT (SELECT has_headers FROM header_available)
                 ), attachment_rows AS (
                     SELECT
-                        d.document_key,
+                        d.id AS document_id,
                         STRING_AGG(
                             DISTINCT fi.file_name || ' | legacy-file://' || ltrim(COALESCE(NULLIF(fi.preview_path, ''), fi.file_path), '/'),
                             ' '
@@ -81,7 +134,7 @@ class ScLegacyFundConfirmationDocument(models.Model):
                      AND fi.bill_id = d.attachment_ref
                      AND COALESCE(NULLIF(fi.file_name, ''), '') <> ''
                      AND COALESCE(NULLIF(fi.preview_path, ''), NULLIF(fi.file_path, '')) IS NOT NULL
-                    GROUP BY d.document_key
+                    GROUP BY d.id
                 )
                 SELECT
                     ROW_NUMBER() OVER (ORDER BY d.receipt_time DESC NULLS LAST, d.document_no DESC NULLS LAST, d.id DESC)::integer AS sequence_no,
@@ -107,7 +160,7 @@ class ScLegacyFundConfirmationDocument(models.Model):
                     d.legacy_header_id,
                     d.active
                 FROM document_rows d
-                LEFT JOIN attachment_rows a ON a.document_key = d.document_key
+                LEFT JOIN attachment_rows a ON a.document_id = d.id
             )
             """
         )

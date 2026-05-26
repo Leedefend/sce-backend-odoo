@@ -360,6 +360,8 @@ case "$MODE" in
     run_step legacy_invoice_registration_line_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_invoice_registration_line_replay_write.py"
     run_step legacy_deduction_adjustment_line_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_deduction_adjustment_line_replay_adapter.py"
     run_step legacy_deduction_adjustment_line_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_deduction_adjustment_line_replay_write.py"
+    run_step legacy_fund_confirmation_header_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_fund_confirmation_header_replay_adapter.py"
+    run_step legacy_fund_confirmation_header_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_fund_confirmation_header_replay_write.py"
     run_step legacy_fund_confirmation_line_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_fund_confirmation_line_replay_adapter.py"
     run_step legacy_fund_confirmation_line_replay run_odoo_script "$ROOT_DIR/scripts/migration/fresh_db_legacy_fund_confirmation_line_replay_write.py"
     run_step legacy_expense_reimbursement_line_adapter python3 "$ROOT_DIR/scripts/migration/fresh_db_legacy_expense_reimbursement_line_replay_adapter.py"
