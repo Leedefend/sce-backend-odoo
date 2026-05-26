@@ -387,21 +387,17 @@ env.cr.execute(  # noqa: F821
       NULLIF(f.tax_certificate_no, ''),
       NULLIF(f.invoice_no, ''),
       NULLIF(f.invoice_code, ''),
-      COALESCE(NULLIF(f.invoice_type, ''), NULLIF(header_fact.invoice_type, '')),
+      NULLIF(f.invoice_type, ''),
       CASE
         WHEN COALESCE(f.tax_rate, 0) > 0
         THEN RTRIM(RTRIM(TO_CHAR(ROUND((f.tax_rate * 100)::numeric, 2), 'FM999999990.00'), '0'), '.') || '%%'
         WHEN COALESCE(f.tax_amount, 0) <> 0 AND COALESCE(f.amount_no_tax, 0) <> 0
         THEN RTRIM(RTRIM(TO_CHAR(ROUND((ABS(f.tax_amount) / NULLIF(ABS(f.amount_no_tax), 0) * 100)::numeric, 2), 'FM999999990.00'), '0'), '.') || '%%'
-        WHEN COALESCE(header_fact.tax_rate, 0) > 0
-        THEN RTRIM(RTRIM(TO_CHAR(ROUND((header_fact.tax_rate * 100)::numeric, 2), 'FM999999990.00'), '0'), '.') || '%%'
-        WHEN COALESCE(header_fact.tax_amount, 0) <> 0 AND COALESCE(header_fact.amount_no_tax, 0) <> 0
-        THEN RTRIM(RTRIM(TO_CHAR(ROUND((ABS(header_fact.tax_amount) / NULLIF(ABS(header_fact.amount_no_tax), 0) * 100)::numeric, 2), 'FM999999990.00'), '0'), '.') || '%%'
         ELSE NULL
       END,
-      COALESCE(NULLIF(f.invoice_content, ''), NULLIF(header_fact.invoice_content, '')),
-      COALESCE(NULLIF(f.amount_no_tax, 0), header_fact.amount_no_tax, 0),
-      COALESCE(NULLIF(f.tax_amount, 0), header_fact.tax_amount, 0),
+      NULLIF(f.invoice_content, ''),
+      COALESCE(f.amount_no_tax, 0),
+      COALESCE(f.tax_amount, 0),
       COALESCE(f.amount_total, 0),
       %s,
       'sc.legacy.income.invoice.fact',
@@ -422,18 +418,6 @@ env.cr.execute(  # noqa: F821
       NOW(),
       NOW()
     FROM sc_legacy_income_invoice_fact f
-    LEFT JOIN LATERAL (
-      SELECT h.invoice_type, h.invoice_content, h.tax_rate, h.amount_no_tax, h.tax_amount
-        FROM sc_legacy_income_invoice_fact h
-       WHERE h.active
-         AND h.fact_type = 'prepaid_tax'
-         AND h.document_no = f.document_no
-         AND (h.project_id = f.project_id OR h.project_id IS NULL OR f.project_id IS NULL)
-       ORDER BY
-         CASE WHEN h.project_id = f.project_id THEN 0 ELSE 1 END,
-         h.id
-       LIMIT 1
-    ) header_fact ON TRUE
     LEFT JOIN LATERAL (
       SELECT rp.id
         FROM res_partner rp

@@ -197,10 +197,7 @@ def projection_coverage() -> dict[str, object]:
         ],
         "status_project_name_contamination_count": len(status_project_name_hits),
         "status_project_name_contamination_examples": status_project_name_hits[:5],
-        "decision": (
-            "runtime_rows_match_project_anchored_eligible_prepaid_tax_lines; "
-            "summary tax fields are enriched from same-document prepaid_tax headers"
-        ),
+        "decision": "runtime_rows_match_project_anchored_eligible_prepaid_tax_lines",
     }
 
 
