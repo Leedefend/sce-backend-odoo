@@ -364,7 +364,8 @@ env.cr.execute(  # noqa: F821
     INSERT INTO sc_invoice_registration (
       name, source_origin, source_kind, direction, state, project_id, partner_id,
       document_no, document_date, invoice_date, tax_type, prepaid_tax_date,
-      tax_certificate_no, invoice_no, invoice_code, amount_total, currency_id,
+      tax_certificate_no, invoice_no, invoice_code, invoice_type, tax_rate, invoice_content,
+      amount_no_tax, tax_amount, amount_total, currency_id,
       legacy_source_model, legacy_source_table, legacy_record_id,
       legacy_document_state, legacy_partner_id, legacy_partner_name,
       legacy_partner_tax_no, legacy_attachment_ref, creator_legacy_user_id,
@@ -386,6 +387,17 @@ env.cr.execute(  # noqa: F821
       NULLIF(f.tax_certificate_no, ''),
       NULLIF(f.invoice_no, ''),
       NULLIF(f.invoice_code, ''),
+      NULLIF(f.invoice_type, ''),
+      CASE
+        WHEN COALESCE(f.tax_rate, 0) > 0
+        THEN RTRIM(RTRIM(TO_CHAR(ROUND((f.tax_rate * 100)::numeric, 2), 'FM999999990.00'), '0'), '.') || '%%'
+        WHEN COALESCE(f.tax_amount, 0) <> 0 AND COALESCE(f.amount_no_tax, 0) <> 0
+        THEN RTRIM(RTRIM(TO_CHAR(ROUND((ABS(f.tax_amount) / NULLIF(ABS(f.amount_no_tax), 0) * 100)::numeric, 2), 'FM999999990.00'), '0'), '.') || '%%'
+        ELSE NULL
+      END,
+      NULLIF(f.invoice_content, ''),
+      COALESCE(f.amount_no_tax, 0),
+      COALESCE(f.tax_amount, 0),
       COALESCE(f.amount_total, 0),
       %s,
       'sc.legacy.income.invoice.fact',
@@ -421,7 +433,7 @@ env.cr.execute(  # noqa: F821
     ) partner_match ON TRUE
     WHERE f.active
       AND f.project_id IS NOT NULL
-      AND f.fact_type = 'prepaid_tax_line'
+      AND f.fact_type = 'prepaid_tax'
       AND COALESCE(f.amount_total, 0) <> 0
     ON CONFLICT (legacy_source_model, legacy_record_id)
     DO UPDATE SET
@@ -438,6 +450,11 @@ env.cr.execute(  # noqa: F821
       tax_certificate_no = EXCLUDED.tax_certificate_no,
       invoice_no = EXCLUDED.invoice_no,
       invoice_code = EXCLUDED.invoice_code,
+      invoice_type = EXCLUDED.invoice_type,
+      tax_rate = EXCLUDED.tax_rate,
+      invoice_content = EXCLUDED.invoice_content,
+      amount_no_tax = EXCLUDED.amount_no_tax,
+      tax_amount = EXCLUDED.tax_amount,
       amount_total = EXCLUDED.amount_total,
       legacy_document_state = EXCLUDED.legacy_document_state,
       legacy_partner_id = EXCLUDED.legacy_partner_id,
@@ -453,6 +470,21 @@ env.cr.execute(  # noqa: F821
       write_date = NOW()
     """,
     [currency_id],
+)
+
+env.cr.execute(  # noqa: F821
+    """
+    UPDATE sc_invoice_registration target
+       SET active = FALSE,
+           write_uid = 1,
+           write_date = NOW()
+      FROM sc_legacy_income_invoice_fact fact
+     WHERE target.source_kind = 'prepaid_tax'
+       AND target.direction = 'prepaid'
+       AND target.legacy_source_model = 'sc.legacy.income.invoice.fact'
+       AND target.legacy_record_id = fact.legacy_record_id
+       AND fact.fact_type = 'prepaid_tax_line'
+    """
 )
 
 env.cr.execute(  # noqa: F821
