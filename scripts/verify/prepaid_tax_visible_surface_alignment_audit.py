@@ -161,7 +161,7 @@ def visible_value_coverage(expected_labels: list[str], field_names: list[str]) -
 def projection_coverage() -> dict[str, object]:
     Fact = env["sc.legacy.income.invoice.fact"].sudo()  # noqa: F821
     Invoice = env["sc.invoice.registration"].sudo()  # noqa: F821
-    fact_domain = [("fact_type", "=", "prepaid_tax")]
+    fact_domain = [("fact_type", "=", "prepaid_tax_line")]
     eligible_domain = fact_domain + [("active", "=", True), ("amount_total", "!=", 0)]
     missing_project = Fact.search(eligible_domain + [("project_id", "=", False)], order="document_date desc, id", limit=20)
     runtime_domain = [("source_kind", "=", "prepaid_tax"), ("direction", "=", "prepaid"), ("active", "=", True)]
@@ -197,7 +197,10 @@ def projection_coverage() -> dict[str, object]:
         ],
         "status_project_name_contamination_count": len(status_project_name_hits),
         "status_project_name_contamination_examples": status_project_name_hits[:5],
-        "decision": "runtime_rows_match_project_anchored_eligible_prepaid_tax_headers",
+        "decision": (
+            "runtime_rows_match_project_anchored_eligible_prepaid_tax_lines; "
+            "summary tax fields are enriched from same-document prepaid_tax headers"
+        ),
     }
 
 
