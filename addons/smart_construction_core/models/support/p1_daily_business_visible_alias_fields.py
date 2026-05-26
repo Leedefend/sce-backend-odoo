@@ -941,6 +941,11 @@ def _alias_value(record, label):
         legacy_links = _legacy_attachment_links(record)
         if legacy_links:
             return legacy_links
+        for field_name in ('attachment_ids', 'biz_attachment_ids', 'tech_attachment_ids', 'legacy_attachment_name'):
+            value = _format_alias_value(record, field_name)
+            if value:
+                return value
+        return ""
     if record._name == 'sc.tax.deduction.registration' and label == '单据状态':
         legacy_state = _format_alias_value(record, 'legacy_document_state')
         if legacy_state:
