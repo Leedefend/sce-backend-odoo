@@ -228,6 +228,90 @@
       <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
     </record>
 
+    <record id="view_sc_legacy_fund_confirmation_document_tree" model="ir.ui.view">
+      <field name="name">sc.legacy.fund.confirmation.document.tree</field>
+      <field name="model">sc.legacy.fund.confirmation.document</field>
+      <field name="arch" type="xml">
+        <tree string="到款确认表" create="false" edit="false" delete="false" default_order="receipt_time desc, document_no desc">
+          <field name="sequence_no"/>
+          <field name="document_state"/>
+          <field name="document_no"/>
+          <field name="receipt_time"/>
+          <field name="project_name"/>
+          <field name="period_no"/>
+          <field name="actual_fund_amount"/>
+          <field name="deducted_amount_total"/>
+          <field name="paid_amount_total"/>
+          <field name="construction_unit_name"/>
+          <field name="contract_amount"/>
+          <field name="current_project_stage"/>
+          <field name="accumulated_invoice_amount"/>
+          <field name="previous_retained_balance"/>
+          <field name="attachment_links"/>
+          <field name="creator_name"/>
+          <field name="created_time"/>
+        </tree>
+      </field>
+    </record>
+
+    <record id="view_sc_legacy_fund_confirmation_document_form" model="ir.ui.view">
+      <field name="name">sc.legacy.fund.confirmation.document.form</field>
+      <field name="model">sc.legacy.fund.confirmation.document</field>
+      <field name="arch" type="xml">
+        <form string="到款确认表" create="false" edit="false" delete="false">
+          <sheet>
+            <group>
+              <group string="单据">
+                <field name="document_state"/>
+                <field name="document_no"/>
+                <field name="receipt_time"/>
+                <field name="period_no"/>
+                <field name="attachment_links"/>
+              </group>
+              <group string="项目">
+                <field name="project_name"/>
+                <field name="construction_unit_name"/>
+                <field name="contract_amount"/>
+                <field name="current_project_stage"/>
+              </group>
+            </group>
+            <group string="金额">
+              <field name="actual_fund_amount"/>
+              <field name="deducted_amount_total"/>
+              <field name="paid_amount_total"/>
+              <field name="accumulated_invoice_amount"/>
+              <field name="previous_retained_balance"/>
+            </group>
+            <group string="来源">
+              <field name="creator_name"/>
+              <field name="created_time"/>
+              <field name="legacy_header_id"/>
+              <field name="attachment_ref"/>
+            </group>
+          </sheet>
+        </form>
+      </field>
+    </record>
+
+    <record id="view_sc_legacy_fund_confirmation_document_search" model="ir.ui.view">
+      <field name="name">sc.legacy.fund.confirmation.document.search</field>
+      <field name="model">sc.legacy.fund.confirmation.document</field>
+      <field name="arch" type="xml">
+        <search string="到款确认表">
+          <field name="document_no"/>
+          <field name="project_name"/>
+          <field name="construction_unit_name"/>
+          <field name="creator_name"/>
+          <filter name="has_attachment" string="有附件" domain="[('attachment_links', '!=', False)]"/>
+          <group expand="0" string="分组">
+            <filter name="group_project" string="项目" context="{'group_by': 'project_name'}"/>
+            <filter name="group_state" string="单据状态" context="{'group_by': 'document_state'}"/>
+            <filter name="group_construction_unit" string="施工单位" context="{'group_by': 'construction_unit_name'}"/>
+          </group>
+        </search>
+      </field>
+    </record>
+
     <record id="view_sc_legacy_fund_confirmation_line_tree" model="ir.ui.view">
       <field name="name">sc.legacy.fund.confirmation.line.tree</field>
       <field name="model">sc.legacy.fund.confirmation.line</field>

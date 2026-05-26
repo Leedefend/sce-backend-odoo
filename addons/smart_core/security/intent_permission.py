@@ -1,4 +1,6 @@
 # smart_core/security/intent_permission.py
+import odoo
+from odoo import api
 from odoo.http import request
 from odoo.exceptions import AccessError, MissingError
 from ..core.intent_operation_policy import access_mode_for_intent, nested_params
@@ -185,6 +187,30 @@ def _sync_authenticated_identity(ctx, user):
     return env
 
 
+def _permission_env_for_params(env, user, ctx_params):
+    target_db = str(_param_value(ctx_params, "db") or _param_value(ctx_params, "database") or "").strip()
+    current_db = str(getattr(getattr(env, "cr", None), "dbname", "") or "").strip()
+    user_id = identity_id(user)
+    if not target_db or not current_db or target_db == current_db or not user_id:
+        return env, user, None
+
+    registry = odoo.registry(target_db)
+    try:
+        registry.check_signaling()
+    except Exception:
+        pass
+    cr = registry.cursor()
+    try:
+        target_env = api.Environment(cr, user_id, dict(getattr(env, "context", {}) or {}))
+        target_user = target_env["res.users"].browse(user_id).exists()
+        if not target_user:
+            raise AccessError("Token 中指定的用户不存在")
+        return target_env, target_user, cr
+    except Exception:
+        cr.close()
+        raise
+
+
 def check_intent_permission(ctx):
     """
     核心权限校验入口：模型、记录、字段、菜单、动作
@@ -206,82 +232,96 @@ def check_intent_permission(ctx):
         raise AccessError("Token 无效或缺少 user_id")
     # 2. 切换并同步 request/ctx 身份，避免后续跨库分发读取到 public uid。
     env = _sync_authenticated_identity(ctx, user)
-
-    # 3. 正常的权限检查逻辑
-    model = _param_value(ctx_params, "model")
-    menu_id = _param_value(ctx_params, "menu_id")
-    action_id = _param_value(ctx_params, "action_id")
-    action_type = _param_value(ctx_params, "action_type") or _param_value(ctx_params, "type")
-    access_mode = access_mode_for_intent(intent_name, ctx_params)
-
-
-    # ✅ 校验模型访问权限
-    model_obj = _resolve_model(env, model) if model else None
-    skip_model_acl = _is_ui_only_user_preference_intent(intent_name)
-    if model and not skip_model_acl:
-        try:
-            model_obj.check_access_rights(access_mode)
-        except AccessError:
-            raise AccessError(f"用户无权以 {access_mode} 访问模型 {model}")
-
-    # ✅ 校验记录访问权限（如果传入 record_id/id/ids；create 无既有记录可校验）
-    record_ids = _record_ids(ctx_params)
-    if model and record_ids and access_mode != "create" and not skip_model_acl:
-        rec = model_obj.browse(record_ids)
-        existing = rec.exists()
-        try:
-            has_missing = len(existing) != len(record_ids)
-        except Exception:
-            has_missing = not bool(existing)
-        if not existing or has_missing:
-            raise MissingError(f"记录 {record_ids} 不存在")
-        try:
-            existing.check_access_rule(access_mode)
-        except AccessError:
-            raise AccessError(f"用户无权以 {access_mode} 访问记录 {record_ids}")
-
-    # ✅ 校验菜单权限（如果传入 menu_id）
-    if menu_id:
-        normalized_menu_id = _to_int(menu_id)
-        if normalized_menu_id <= 0:
-            raise MissingError(f"菜单 {menu_id} 不存在")
-        menu = env["ir.ui.menu"].browse(normalized_menu_id)
-        if not menu.exists():
-            raise MissingError(f"菜单 {menu_id} 不存在")
-        if not _menu_visible_for_user(menu, env.user):
-            raise AccessError(f"用户无权访问菜单 {menu.name}")
-
-    # ✅ 校验动作权限（如果传入 action_id）
-    if action_id:
-        # 动作元数据读取使用 sudo，避免被 ir.actions.* 模型 ACL 拦截。
-        # 最终授权仍基于当前用户组与动作 groups_id 交集判断。
-        action = _resolve_action(env, action_id, action_type=action_type)
-        if not action:
-            raise MissingError(f"动作 {action_id} 不存在")
-        # 集合交集判断
-        groups = getattr(action, "groups_id", None)
-        if groups and not (groups & env.user.groups_id):
-            raise AccessError(f"用户无权执行动作 {getattr(action, 'name', action_id)}")
-
-    # ✅ 授权/功能开关检查（若启用）
+    permission_cr = None
     try:
+        env, permission_user, permission_cr = _permission_env_for_params(env, user, ctx_params)
+        if permission_cr is not None:
+            user = permission_user
+            try:
+                ctx.env = env
+                ctx.user = user
+                ctx.uid = identity_id(user)
+            except Exception:
+                pass
+
+        # 3. 正常的权限检查逻辑
+        model = _param_value(ctx_params, "model")
+        menu_id = _param_value(ctx_params, "menu_id")
+        action_id = _param_value(ctx_params, "action_id")
+        action_type = _param_value(ctx_params, "action_type") or _param_value(ctx_params, "type")
+        access_mode = access_mode_for_intent(intent_name, ctx_params)
+
+
+        # ✅ 校验模型访问权限
+        model_obj = _resolve_model(env, model) if model else None
+        skip_model_acl = _is_ui_only_user_preference_intent(intent_name)
+        if model and not skip_model_acl:
+            try:
+                model_obj.check_access_rights(access_mode)
+            except AccessError:
+                raise AccessError(f"用户无权以 {access_mode} 访问模型 {model}")
+
+        # ✅ 校验记录访问权限（如果传入 record_id/id/ids；create 无既有记录可校验）
+        record_ids = _record_ids(ctx_params)
+        if model and record_ids and access_mode != "create" and not skip_model_acl:
+            rec = model_obj.browse(record_ids)
+            existing = rec.exists()
+            try:
+                has_missing = len(existing) != len(record_ids)
+            except Exception:
+                has_missing = not bool(existing)
+            if not existing or has_missing:
+                raise MissingError(f"记录 {record_ids} 不存在")
+            try:
+                existing.check_access_rule(access_mode)
+            except AccessError:
+                raise AccessError(f"用户无权以 {access_mode} 访问记录 {record_ids}")
+
+        # ✅ 校验菜单权限（如果传入 menu_id）
+        if menu_id:
+            normalized_menu_id = _to_int(menu_id)
+            if normalized_menu_id <= 0:
+                raise MissingError(f"菜单 {menu_id} 不存在")
+            menu = env["ir.ui.menu"].browse(normalized_menu_id)
+            if not menu.exists():
+                raise MissingError(f"菜单 {menu_id} 不存在")
+            if not _menu_visible_for_user(menu, env.user):
+                raise AccessError(f"用户无权访问菜单 {menu.name}")
+
+        # ✅ 校验动作权限（如果传入 action_id）
+        if action_id:
+            # 动作元数据读取使用 sudo，避免被 ir.actions.* 模型 ACL 拦截。
+            # 最终授权仍基于当前用户组与动作 groups_id 交集判断。
+            action = _resolve_action(env, action_id, action_type=action_type)
+            if not action:
+                raise MissingError(f"动作 {action_id} 不存在")
+            # 集合交集判断
+            groups = getattr(action, "groups_id", None)
+            if groups and not (groups & env.user.groups_id):
+                raise AccessError(f"用户无权执行动作 {getattr(action, 'name', action_id)}")
+
+        # ✅ 授权/功能开关检查（若启用）
         try:
-            Entitlement = env["sc.entitlement"]
+            try:
+                Entitlement = env["sc.entitlement"]
+            except Exception:
+                Entitlement = None
+            if Entitlement:
+                cap_key = _capability_key(ctx_params)
+                cap = _find_capability(env, cap_key)
+                flags = _effective_flags(Entitlement, env.user.company_id)
+                if cap and cap.required_flag:
+                    if not Entitlement._flag_enabled(flags, cap.required_flag):
+                        raise AccessError(f"FEATURE_DISABLED: {{'required_flag': '{cap.required_flag}', 'capability_key': '{cap.key}'}}")
+            else:
+                cap_key = _capability_key(ctx_params)
+                cap = _find_capability(env, cap_key)
+                if cap and cap.required_flag:
+                    raise AccessError(f"FEATURE_DISABLED: {{'required_flag': '{cap.required_flag}', 'capability_key': '{cap.key}', 'reason': 'ENTITLEMENT_UNAVAILABLE'}}")
         except Exception:
-            Entitlement = None
-        if Entitlement:
-            cap_key = _capability_key(ctx_params)
-            cap = _find_capability(env, cap_key)
-            flags = _effective_flags(Entitlement, env.user.company_id)
-            if cap and cap.required_flag:
-                if not Entitlement._flag_enabled(flags, cap.required_flag):
-                    raise AccessError(f"FEATURE_DISABLED: {{'required_flag': '{cap.required_flag}', 'capability_key': '{cap.key}'}}")
-        else:
-            cap_key = _capability_key(ctx_params)
-            cap = _find_capability(env, cap_key)
-            if cap and cap.required_flag:
-                raise AccessError(f"FEATURE_DISABLED: {{'required_flag': '{cap.required_flag}', 'capability_key': '{cap.key}', 'reason': 'ENTITLEMENT_UNAVAILABLE'}}")
-    except Exception:
-        raise
+            raise
+    finally:
+        if permission_cr is not None:
+            permission_cr.close()
 
     return True

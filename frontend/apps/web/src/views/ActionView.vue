@@ -1230,6 +1230,8 @@ const model = computed(() => actionMeta.value?.model ?? '');
 const injectedTitle = inject('pageTitle', computed(() => ''));
 const currentMenuTitle = computed(() => {
   const node = findMenuNode(session.menuTree, Number(menuId.value || 0));
+  const nodeActionId = Number(node?.meta?.action_id || 0);
+  if (nodeActionId && nodeActionId !== actionId.value) return '';
   return String(node?.label || node?.name || node?.title || '').trim();
 });
 const contractViewType = ref('');

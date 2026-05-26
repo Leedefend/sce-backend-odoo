@@ -9,6 +9,18 @@ from .product_policy_service import ProductPolicyService
 from .scene_service import SceneService
 
 
+def _text(value) -> str:
+    return str(value or "").strip()
+
+
+def _to_int(value) -> int:
+    try:
+        parsed = int(value)
+    except Exception:
+        return 0
+    return parsed if parsed > 0 else 0
+
+
 class DeliveryEngine:
     SOURCE_KIND = "delivery_engine_projection"
     SOURCE_AUTHORITIES = ("delivery_product_policy_projection", "delivery_menu_projection", "delivery_scene_projection")
@@ -47,6 +59,133 @@ class DeliveryEngine:
             runtime_carrier="delivery_engine_v1",
         )
 
+    def _resolve_xmlid_record(self, xmlid: str, expected_model: str = "", expected_prefix: str = ""):
+        value = _text(xmlid)
+        if not value or "." not in value:
+            return None
+        try:
+            rec = self.env.ref(value, raise_if_not_found=False)
+        except Exception:
+            return None
+        if not rec:
+            return None
+        model_name = _text(getattr(rec, "_name", ""))
+        if expected_model and model_name != expected_model:
+            return None
+        if expected_prefix and not model_name.startswith(expected_prefix):
+            return None
+        return rec
+
+    def _normalize_entry_target_refs(
+        self,
+        *,
+        entry_target: dict,
+        menu_id: int,
+        action_id: int,
+        model: str,
+        view_modes: list[str],
+        route: str,
+    ) -> dict:
+        if not isinstance(entry_target, dict):
+            entry_target = {}
+        if _text(entry_target.get("type")) == "scene":
+            next_target = dict(entry_target)
+            refs = dict(next_target.get("compatibility_refs") or {})
+            if menu_id:
+                refs["menu_id"] = menu_id
+            if action_id:
+                refs["action_id"] = action_id
+            if model:
+                refs["model"] = model
+            if view_modes:
+                refs["view_modes"] = view_modes
+            if refs:
+                next_target["compatibility_refs"] = refs
+            return next_target
+
+        refs = dict(entry_target.get("compatibility_refs") or {})
+        if menu_id:
+            refs["menu_id"] = menu_id
+        if action_id:
+            refs["action_id"] = action_id
+        if model:
+            refs["model"] = model
+        if view_modes:
+            refs["view_modes"] = view_modes
+        return {
+            "type": "compatibility",
+            "route": route or _text(entry_target.get("route")),
+            "compatibility_refs": refs,
+        }
+
+    def _normalize_delivery_nav_node_refs(self, node: dict) -> None:
+        if not isinstance(node, dict):
+            return
+        children = node.get("children") if isinstance(node.get("children"), list) else []
+        for child in children:
+            self._normalize_delivery_nav_node_refs(child)
+        if children:
+            return
+
+        meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+        if not meta:
+            return
+
+        menu_xmlid = _text(meta.get("menu_xmlid") or node.get("menu_xmlid"))
+        action_xmlid = _text(meta.get("action_xmlid") or node.get("action_xmlid"))
+        menu = self._resolve_xmlid_record(menu_xmlid, expected_model="ir.ui.menu") if menu_xmlid else None
+        action = self._resolve_xmlid_record(action_xmlid, expected_prefix="ir.actions.") if action_xmlid else None
+        if menu and not action:
+            try:
+                action = menu.action
+            except Exception:
+                action = None
+
+        menu_id = _to_int(getattr(menu, "id", 0)) or _to_int(node.get("menu_id") or meta.get("menu_id"))
+        action_id = _to_int(getattr(action, "id", 0)) or _to_int(meta.get("action_id"))
+        model = _text(getattr(action, "res_model", "")) if action and _text(getattr(action, "_name", "")) == "ir.actions.act_window" else _text(meta.get("model"))
+        view_mode_raw = _text(getattr(action, "view_mode", "")) if action and _text(getattr(action, "_name", "")) == "ir.actions.act_window" else ""
+        view_modes = [_text(item) for item in view_mode_raw.split(",") if _text(item)]
+        if not view_modes and isinstance(meta.get("view_modes"), list):
+            view_modes = [_text(item) for item in meta.get("view_modes") if _text(item)]
+
+        if not (menu or action):
+            return
+
+        if menu_id:
+            node["menu_id"] = menu_id
+            meta["menu_id"] = menu_id
+        if action_id:
+            meta["action_id"] = action_id
+        if model:
+            meta["model"] = model
+        if view_modes:
+            meta["view_modes"] = view_modes
+
+        current_route = _text(meta.get("route") or node.get("route"))
+        if action_id and not current_route.startswith("/s/"):
+            route = f"/a/{action_id}"
+            if menu_id:
+                route = f"{route}?menu_id={menu_id}"
+            meta["route"] = route
+        else:
+            route = current_route
+
+        meta["entry_target"] = self._normalize_entry_target_refs(
+            entry_target=meta.get("entry_target") if isinstance(meta.get("entry_target"), dict) else {},
+            menu_id=menu_id,
+            action_id=action_id,
+            model=model,
+            view_modes=view_modes,
+            route=route,
+        )
+        node["meta"] = meta
+
+    def _normalize_delivery_nav_refs(self, nav: list[dict]) -> list[dict]:
+        for node in nav or []:
+            self._normalize_delivery_nav_node_refs(node)
+        return nav
+
     def build(
         self,
         *,
@@ -71,6 +210,7 @@ class DeliveryEngine:
             role_surface=role_surface,
             native_nav=native_nav if isinstance(native_nav, list) else [],
         )
+        nav = self._normalize_delivery_nav_refs(nav)
         scenes = self.scene_service.build_entries(policy=policy, scenes=runtime.get("scenes") or [])
         capabilities = self.capability_service.build_entries(policy=policy, capabilities=runtime.get("capabilities") or [])
         nav_meta = self.menu_service.describe_nav(nav)
