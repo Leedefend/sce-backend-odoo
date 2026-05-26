@@ -37,7 +37,7 @@ export function parseAttachmentReferenceLinks(value: unknown): Array<{ name: str
   const rawItems = Array.isArray(value) ? value.map((item) => String(item ?? '')) : [String(value ?? '')];
   const seen = new Set<string>();
   const links: Array<{ name: string; url: string }> = [];
-  const urlStartPattern = '(?:legacy-file|https?|file):\\/\\/|\\/web\\/content\\/';
+  const urlStartPattern = '(?:legacy-file-id|legacy-file|https?|file):\\/\\/|\\/web\\/content\\/';
   const itemBoundary = new RegExp(`\\s+(?=[^\\s|]+\\s+\\|\\s+(?:${urlStartPattern}))`, 'i');
   const itemPattern = new RegExp(`^(.*?)\\s+\\|\\s+((?:${urlStartPattern}).+)$`, 'i');
 
@@ -109,7 +109,7 @@ export function formatDisplayValue(
       return normalized.emptyText;
     }
     const attachmentText = formatAttachmentReferenceValue(value);
-    if (attachmentText && value.some((item) => /\|\s*(?:legacy-file|https?|file):\/\//i.test(String(item ?? '')))) {
+    if (attachmentText && value.some((item) => /\|\s*(?:legacy-file-id|legacy-file|https?|file):\/\//i.test(String(item ?? '')))) {
       return attachmentText;
     }
     return value.map((item) => String(item)).join(', ');
@@ -120,7 +120,7 @@ export function formatDisplayValue(
   }
 
   const rawText = String(value);
-  if (/\|\s*(?:legacy-file|https?|file):\/\//i.test(rawText)) {
+  if (/\|\s*(?:legacy-file-id|legacy-file|https?|file):\/\//i.test(rawText)) {
     return formatAttachmentReferenceValue(rawText) || rawText;
   }
   return rawText;

@@ -155,7 +155,14 @@ class ScLegacyFundConfirmationDocument(models.Model):
                     d.previous_retained_balance,
                     d.creator_name,
                     d.created_time,
-                    COALESCE(a.attachment_links, d.attachment_ref) AS attachment_links,
+                    COALESCE(
+                        a.attachment_links,
+                        CASE
+                            WHEN COALESCE(NULLIF(d.attachment_ref, ''), '') <> ''
+                            THEN '历史附件 | legacy-file-id://' || d.attachment_ref
+                            ELSE NULL
+                        END
+                    ) AS attachment_links,
                     d.attachment_ref,
                     d.legacy_header_id,
                     d.active

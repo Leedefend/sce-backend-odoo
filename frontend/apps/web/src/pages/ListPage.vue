@@ -989,7 +989,7 @@ function semanticCell(field: string, value: unknown) {
   const numericText = formatNumericCellValue(field, raw);
   const fieldType = String(option?.type || '').trim().toLowerCase();
   const rawText = typeof raw === 'string' ? raw : '';
-  const attachmentText = rawText && /\|\s*(?:legacy-file|https?|file):\/\//i.test(rawText)
+  const attachmentText = rawText && /\|\s*(?:legacy-file-id|legacy-file|https?|file):\/\//i.test(rawText)
     ? formatAttachmentReferenceValue(rawText)
     : '';
   const text = selectionText
