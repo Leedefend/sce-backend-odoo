@@ -440,6 +440,42 @@ _FOREIGN_TAX_CERTIFICATE_REGISTRATION_LIST_COLUMN_LABELS = {
     "creator_name": "录入人",
     "created_time": "录入时间",
 }
+_ARRIVAL_CONFIRMATION_LIST_COLUMNS = [
+    "document_state",
+    "document_no",
+    "receipt_time",
+    "project_name",
+    "period_no",
+    "actual_fund_amount",
+    "deducted_amount_total",
+    "paid_amount_total",
+    "construction_unit_name",
+    "contract_amount",
+    "current_project_stage",
+    "accumulated_invoice_amount",
+    "previous_retained_balance",
+    "attachment_links",
+    "creator_name",
+    "created_time",
+]
+_ARRIVAL_CONFIRMATION_LIST_COLUMN_LABELS = {
+    "document_state": "单据状态",
+    "document_no": "单据编号",
+    "receipt_time": "时间",
+    "project_name": "项目名称",
+    "period_no": "期数",
+    "actual_fund_amount": "本期收款",
+    "deducted_amount_total": "本期代扣代缴合计",
+    "paid_amount_total": "本期拨付金额合计",
+    "construction_unit_name": "施工单位",
+    "contract_amount": "合同金额",
+    "current_project_stage": "目前形象进度",
+    "accumulated_invoice_amount": "累计开票金额",
+    "previous_retained_balance": "上期留存余额",
+    "attachment_links": "附件",
+    "creator_name": "录入人",
+    "created_time": "录入时间",
+}
 _MATERIAL_PLAN_LIST_COLUMNS = [
     "name",
     "project_id",
@@ -4321,6 +4357,16 @@ def apply_project_form_domain_override(data: dict, contract_mode: str) -> None:
                 status_field="document_state_label",
                 strict_columns=True,
             )
+        _govern_standard_list_for_user(
+            data,
+            model_name="sc.legacy.fund.confirmation.document",
+            columns_order=_ARRIVAL_CONFIRMATION_LIST_COLUMNS,
+            column_labels=_ARRIVAL_CONFIRMATION_LIST_COLUMN_LABELS,
+            row_primary="document_no",
+            row_secondary="",
+            status_field="document_state",
+            strict_columns=True,
+        )
         _govern_standard_list_for_user(
             data,
             model_name="project.material.plan",
