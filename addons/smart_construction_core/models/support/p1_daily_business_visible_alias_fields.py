@@ -776,7 +776,7 @@ MODEL_LABEL_SOURCE_OVERRIDES = {
         '预计回款日期': ['expected_receipt_date'],
         '申请人': ['applicant_name', 'creator_name', 'source_created_by'],
         '受票方名称': ['partner_id', 'legacy_partner_name'],
-        '交税类型': ['tax_type', 'invoice_content', 'source_kind', 'operation_strategy'],
+        '交税类型': ['tax_type', 'invoice_content', 'operation_strategy'],
         '数据类型': ['source_kind'],
         '金额': ['amount_total'],
         '发票开具日期': ['invoice_date', 'document_date'],
