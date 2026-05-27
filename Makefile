@@ -917,6 +917,10 @@ verify.scbs_55_user_visible_surface.custom_gap.audit: guard.prod.forbid check-co
 migration.scbs_55_user_visible_surface.custom_gap.status.write: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(or $(MIGRATION_REPLAY_DB_ALLOWLIST),$(DB_NAME))" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/scbs_55_user_visible_surface_custom_gap_status_write.py
 
+.PHONY: migration.scbs_55_user_visible_surface.dashboard_contract.write
+migration.scbs_55_user_visible_surface.dashboard_contract.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(or $(MIGRATION_REPLAY_DB_ALLOWLIST),$(DB_NAME))" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/scbs_55_user_visible_surface_dashboard_contract_write.py
+
 .PHONY: verify.user_priority.browser_evidence.coverage
 verify.user_priority.browser_evidence.coverage: guard.prod.forbid
 	@python3 scripts/verify/user_priority_browser_evidence_coverage.py
