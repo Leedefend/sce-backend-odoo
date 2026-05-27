@@ -44,28 +44,46 @@ def write_json(path: Path, payload: dict[str, object]) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
-def carrier(model: str, *candidates: str, note: str = "") -> dict[str, object]:
+def carrier(model: str, *candidates: str, note: str = "", action_xmlid: str = "") -> dict[str, object]:
     ordered = [model]
     ordered.extend(item for item in candidates if item and item not in ordered)
-    return {"target_model": model, "candidate_models": ordered, "note": note}
+    return {"target_model": model, "candidate_models": ordered, "note": note, "action_xmlid": action_xmlid}
 
 
 CARRIER_MAP = {
     "供应商/合作单位": carrier("sc.business.entity", "res.partner", "sc.partner.import.review"),
     "往来单位": carrier("sc.business.entity", "res.partner"),
     "施工合同": carrier("construction.contract", "sc.income.contract.ledger"),
-    "公司资料存档": carrier("sc.document.admin.document", "sc.office.admin.document", "sc.project.document"),
+    "公司资料存档": carrier(
+        "sc.document.admin.document",
+        "sc.office.admin.document",
+        "sc.project.document",
+        action_xmlid="smart_construction_core.action_sc_company_document_archive",
+    ),
     "请假/休假审批单": carrier("sc.office.admin.document"),
     "印章使用审批表": carrier("sc.office.admin.document"),
-    "组织机构": carrier("hr.department", "sc.legacy.department", note="legacy custom page maps to organization department"),
+    "组织机构": carrier(
+        "hr.department",
+        "sc.legacy.department",
+        note="legacy custom page maps to organization department",
+        action_xmlid="smart_construction_core.action_sc_organization_department",
+    ),
     "公司人员名册（配置）": carrier("sc.legacy.user.profile", "res.users"),
     "社保人员登记": carrier("sc.hr.payroll.document", "sc.legacy.salary.line"),
     "社保登记": carrier("sc.hr.payroll.document", "sc.salary.summary"),
     "工资登记": carrier("sc.hr.payroll.document", "sc.legacy.salary.line", "sc.salary.summary"),
     "补助": carrier("sc.hr.payroll.document", "sc.legacy.salary.line"),
     "奖金": carrier("sc.hr.payroll.document", "sc.legacy.salary.line"),
-    "证照登记": carrier("sc.document.admin.document", "sc.legacy.file.index"),
-    "借阅申请": carrier("sc.document.admin.document", "sc.office.admin.document"),
+    "证照登记": carrier(
+        "sc.document.admin.document",
+        "sc.legacy.file.index",
+        action_xmlid="smart_construction_core.action_sc_certificate_registration",
+    ),
+    "借阅申请": carrier(
+        "sc.document.admin.document",
+        "sc.office.admin.document",
+        action_xmlid="smart_construction_core.action_sc_document_borrow",
+    ),
     "投标报名管理": carrier("tender.bid", "sc.legacy.tender.registration.fact"),
     "投标报名费申请": carrier("payment.request", "tender.bid"),
     "自筹保证金": carrier("tender.guarantee", "sc.legacy.self.funding.fact"),
@@ -104,13 +122,40 @@ CARRIER_MAP = {
     "发票分析报表": carrier("sc.invoice.category.summary", "sc.invoice.registration"),
     "项目经营统计表": carrier("sc.company.operation.summary", "sc.operating.metrics.project"),
     "应收应付报表": carrier("sc.ar.ap.project.summary", "sc.ar.ap.company.summary"),
-    "成本大屏": carrier("sc.operating.metrics.project", "sc.comprehensive.cost.summary"),
-    "经营大屏": carrier("sc.operating.metrics.project", "sc.company.operation.summary"),
+    "成本大屏": carrier(
+        "sc.dashboard.cockpit.fact",
+        "sc.operating.metrics.project",
+        "sc.comprehensive.cost.summary",
+        action_xmlid="smart_construction_core.action_sc_cost_big_screen_delivery",
+    ),
+    "经营大屏": carrier(
+        "sc.operating.metrics.project",
+        "sc.company.operation.summary",
+        action_xmlid="smart_construction_core.action_sc_operation_big_screen_delivery",
+    ),
 }
 
 
 def first_action_for_model(model: str):
     return env["ir.actions.act_window"].sudo().search([("res_model", "=", model)], order="id", limit=1)  # noqa: F821
+
+
+def action_from_xmlid(xmlid: str):
+    if not xmlid:
+        return env["ir.actions.act_window"].browse()  # noqa: F821
+    return env.ref(xmlid, raise_if_not_found=False) or env["ir.actions.act_window"].browse()  # noqa: F821
+
+
+def resolve_action(record, mapping: dict[str, object], target_model: str):
+    action = action_from_xmlid(str(mapping.get("action_xmlid") or ""))
+    if action and getattr(action, "res_model", "") == target_model:
+        return action
+    named_action = env["ir.actions.act_window"].sudo().search(  # noqa: F821
+        [("res_model", "=", target_model), ("name", "=", record.legacy_menu_name)],
+        order="id",
+        limit=1,
+    )
+    return named_action or first_action_for_model(target_model)
 
 
 ensure_allowed_db()
@@ -139,7 +184,7 @@ for record in rows:
         missing_model.append({"name": record.legacy_menu_name, "target_model": target_model})
         target_model = ""
 
-    action = first_action_for_model(target_model) if target_model else env["ir.actions.act_window"].browse()  # noqa: F821
+    action = resolve_action(record, mapping, target_model) if target_model else env["ir.actions.act_window"].browse()  # noqa: F821
     if target_model and not action:
         without_action.append({"name": record.legacy_menu_name, "target_model": target_model})
 
