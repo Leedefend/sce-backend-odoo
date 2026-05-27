@@ -897,6 +897,10 @@ verify.user_visible_business_fact_alignment: guard.prod.forbid check-compose-pro
 verify.business_user_priority_menu_plan.alignment: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/business_user_priority_menu_plan_probe.py
 
+.PHONY: migration.scbs_55_user_visible_surface.live_alignment.write
+migration.scbs_55_user_visible_surface.live_alignment.write: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(or $(MIGRATION_REPLAY_DB_ALLOWLIST),$(DB_NAME))" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/scbs_55_user_visible_surface_live_alignment_write.py
+
 .PHONY: verify.user_priority.browser_evidence.coverage
 verify.user_priority.browser_evidence.coverage: guard.prod.forbid
 	@python3 scripts/verify/user_priority_browser_evidence_coverage.py
