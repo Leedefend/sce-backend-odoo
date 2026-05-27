@@ -47,6 +47,7 @@ class ScLegacyExpenseDepositFact(models.Model):
     project_id = fields.Many2one("project.project", string="项目", required=True, index=True, ondelete="cascade")
     legacy_project_id = fields.Char(string="旧系统项目ID", index=True)
     legacy_project_name = fields.Char(string="旧系统项目名称")
+    legacy_tender_project_name = fields.Char(string="旧系统投标项目名称", index=True)
     partner_id = fields.Many2one("res.partner", string="往来单位", index=True, ondelete="set null")
     legacy_partner_id = fields.Char(string="旧系统往来单位ID", index=True)
     legacy_partner_name = fields.Char(string="旧系统往来单位名称")

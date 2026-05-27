@@ -44,6 +44,9 @@
                 <field name="out_qty" sum="出库数量合计"/>
                 <field name="out_avg_price"/>
                 <field name="out_amount" sum="出库金额合计"/>
+                <field name="profit_qty" sum="利润数量合计"/>
+                <field name="price_diff"/>
+                <field name="profit_amount" sum="利润金额合计"/>
                 <field name="stock_qty" sum="库存数量合计"/>
                 <field name="stock_avg_price"/>
                 <field name="stock_amount" sum="库存金额合计"/>
@@ -99,6 +102,11 @@
                         <field name="out_amount"/>
                         <field name="stock_out_line_count"/>
                     </group>
+                    <group string="利润">
+                        <field name="profit_qty"/>
+                        <field name="price_diff"/>
+                        <field name="profit_amount"/>
+                    </group>
                     <group string="库存">
                         <field name="stock_qty"/>
                         <field name="stock_avg_price"/>
@@ -120,6 +128,8 @@
                 <field name="in_amount" type="measure"/>
                 <field name="out_qty" type="measure"/>
                 <field name="out_amount" type="measure"/>
+                <field name="profit_qty" type="measure"/>
+                <field name="profit_amount" type="measure"/>
                 <field name="stock_qty" type="measure"/>
                 <field name="stock_amount" type="measure"/>
             </pivot>

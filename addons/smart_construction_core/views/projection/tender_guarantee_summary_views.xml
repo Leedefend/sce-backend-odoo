@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_sc_tender_guarantee_summary_search" model="ir.ui.view">
+        <field name="name">sc.tender.guarantee.summary.search</field>
+        <field name="model">sc.tender.guarantee.summary</field>
+        <field name="arch" type="xml">
+            <search string="投标保证金报表">
+                <field name="tender_project_name"/>
+                <field name="project_id"/>
+                <filter string="付保证金未退" name="has_pay_unreturned" domain="[('pay_guarantee_unreturned_amount', '!=', 0)]"/>
+                <filter string="自筹保证金未退" name="has_self_unreturned" domain="[('self_funding_unreturned_amount', '!=', 0)]"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_tender_guarantee_summary_tree" model="ir.ui.view">
+        <field name="name">sc.tender.guarantee.summary.tree</field>
+        <field name="model">sc.tender.guarantee.summary</field>
+        <field name="arch" type="xml">
+            <tree string="投标保证金报表" create="0" edit="0" delete="0" default_order="registration_time">
+                <field name="tender_project_name"/>
+                <field name="self_funding_amount" sum="自筹保证金合计"/>
+                <field name="pay_guarantee_amount" sum="付保证金合计"/>
+                <field name="pay_guarantee_refund_amount" sum="付保证金退回合计"/>
+                <field name="self_funding_refund_amount" sum="自筹保证金退回合计"/>
+                <field name="pay_guarantee_unreturned_amount" sum="付保证金未退合计"/>
+                <field name="self_funding_unreturned_amount" sum="自筹保证金未退合计"/>
+                <field name="registration_time" optional="hide"/>
+                <field name="coverage_note" optional="hide"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_tender_guarantee_summary_form" model="ir.ui.view">
+        <field name="name">sc.tender.guarantee.summary.form</field>
+        <field name="model">sc.tender.guarantee.summary</field>
+        <field name="arch" type="xml">
+            <form string="投标保证金报表" create="0" edit="0" delete="0">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="tender_project_name"/>
+                            <field name="project_id"/>
+                            <field name="company_id"/>
+                            <field name="currency_id"/>
+                            <field name="registration_time"/>
+                        </group>
+                        <group>
+                            <field name="self_funding_amount"/>
+                            <field name="pay_guarantee_amount"/>
+                            <field name="pay_guarantee_refund_amount"/>
+                            <field name="self_funding_refund_amount"/>
+                            <field name="pay_guarantee_unreturned_amount"/>
+                            <field name="self_funding_unreturned_amount"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="coverage_note"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_tender_guarantee_summary_pivot" model="ir.ui.view">
+        <field name="name">sc.tender.guarantee.summary.pivot</field>
+        <field name="model">sc.tender.guarantee.summary</field>
+        <field name="arch" type="xml">
+            <pivot string="投标保证金报表">
+                <field name="project_id" type="row"/>
+                <field name="self_funding_amount" type="measure"/>
+                <field name="pay_guarantee_amount" type="measure"/>
+                <field name="pay_guarantee_refund_amount" type="measure"/>
+                <field name="self_funding_refund_amount" type="measure"/>
+                <field name="pay_guarantee_unreturned_amount" type="measure"/>
+                <field name="self_funding_unreturned_amount" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_sc_tender_guarantee_summary" model="ir.actions.act_window">
+        <field name="name">投标保证金报表</field>
+        <field name="res_model">sc.tender.guarantee.summary</field>
+        <field name="view_mode">tree,form,pivot,graph</field>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_tender_guarantee_summary_search"/>
+        <field name="context">{'create': False, 'edit': False, 'delete': False}</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_business_initiator'),
+            ref('smart_construction_core.group_sc_cap_finance_read'),
+            ref('smart_construction_core.group_sc_cap_finance_user'),
+            ref('smart_construction_core.group_sc_cap_finance_manager'),
+            ref('smart_construction_core.group_sc_cap_cost_read'),
+            ref('smart_construction_core.group_sc_cap_cost_user'),
+            ref('smart_construction_core.group_sc_cap_cost_manager')
+        ])]"/>
+    </record>
+</odoo>

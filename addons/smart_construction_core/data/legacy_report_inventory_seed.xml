@@ -77,10 +77,10 @@
         <field name="parameter_summary">项目。</field>
         <field name="metric_summary">本期收款、抵扣、税费、管理费、销项、进项、可抵扣金额、经手人等项目经营指标。</field>
         <field name="source_tables">BASE_SYSTEM_PROJECT, C_JXXP_DKDJ_New, C_JXXP_DKDJ_CB, C_JXXP_XXKPDJ, C_JXXP_XXKPDJ_CB, C_JXXP_YJSKDJ, C_JXXP_YJSKDJ_CB, C_JXXP_ZYFPJJD, C_JXXP_ZYFPJJD_CB, T_KK_SJDJB, T_KK_SJDJB_CB, ZJGL_SZQR_DKQRB, ZJGL_SZQR_DKQRB_CB。</field>
-        <field name="target_model">sc.operating.metrics.project；已承载项目维度收款、销项/进项/预缴税、抵扣登记、扣款实缴/退回、公司财务收支、费用支出、结算与付款风险。</field>
+        <field name="target_model">sc.project.operation.summary；按旧存储过程 SELECT_XMJYTJB 项目维度承载项目名称、其他、本期收款、增值税、预缴增值税、销项税金/扣款税金差额、销项金额、净收入、经营收入。</field>
         <field name="carrier_status">ready</field>
-        <field name="next_action">继续按旧过程输出细项补经手人、管理费等展示维度；当前不把贷款登记/还款登记误并入扣款口径。</field>
-        <field name="evidence">ts_function_RecordUserClick: 866 clicks, 8 users, last 2026-04-10。</field>
+        <field name="next_action">继续按旧过程输出抽样核对项目级金额，确认 XSSJKKSJZC 公式列与旧前端一致。</field>
+        <field name="evidence">ts_function_RecordUserClick: 866 clicks, 8 users, last 2026-04-10；旧配置 c901291a239649bf8e93e91255fc86b4 已解析为 SELECT_XMJYTJB。</field>
     </record>
 
     <record id="legacy_report_inventory_ar_ap_company" model="sc.legacy.report.inventory">
@@ -98,10 +98,10 @@
         <field name="parameter_summary">项目名称、开始日期、截止日期。</field>
         <field name="metric_summary">公司/全局项目维度应收应付、开票、收付款、税额、差额。</field>
         <field name="source_tables">BASE_SYSTEM_PROJECT, T_ProjectContract_Out, T_GYSHT_INFO, C_JFHKLR, C_JFHKLR_TH_ZCDF, C_JXXP_DKDJ_New, C_JXXP_DKDJ_CB, C_JXXP_XXKPDJ, C_JXXP_XXKPDJ_CB, C_JXXP_ZYFPJJD, C_JXXP_ZYFPJJD_CB。</field>
-        <field name="target_model">sc.ar.ap.company.summary；复用 sc.ar.ap.project.summary 已验证事实，按项目汇总为公司/全局口径。</field>
+        <field name="target_model">sc.ar.ap.report.summary；按旧存储过程 UP_USP_SELECT_YSYFHZB_XM_ZJ 默认日期口径承载项目汇总应收、应付、税务列。</field>
         <field name="carrier_status">ready</field>
-        <field name="next_action">已提供“供应商账款”用户入口承载全局/项目汇总应收应付；后续继续按旧过程常用查询条件做项目级汇总、日期区间和公司维度筛选对账。</field>
-        <field name="evidence">ts_function_RecordUserClick: 752 clicks, 10 users, last 2026-04-08。</field>
+        <field name="next_action">继续抽样核对项目级金额；旧过程默认日期口径已导入项目汇总行。</field>
+        <field name="evidence">ts_function_RecordUserClick: 752 clicks, 10 users, last 2026-04-08；旧过程导入 195 行，旧项目锚点缺失 0，主要可见列合计已与新视图一致。</field>
     </record>
 
     <record id="legacy_report_inventory_company_operation" model="sc.legacy.report.inventory">
@@ -247,5 +247,83 @@
         <field name="carrier_status">ready</field>
         <field name="next_action">继续核对旧库存统计的利润/价差字段，当前先保证用户可从统计分析入口看到库存数量和金额汇总。</field>
         <field name="evidence">旧库 T_RK_RKD 37 rows, T_RK_RKDCB 62 rows, T_CK_CKD 4 rows, T_CK_CKDCB 5 rows；当前开发库 sc.legacy.material.stock.fact 16389 行，出入库相关事实 130 行。</field>
+    </record>
+
+    <record id="legacy_report_inventory_bid_guarantee" model="sc.legacy.report.inventory">
+        <field name="priority">p1</field>
+        <field name="name">投标保证金报表</field>
+        <field name="legacy_config_id">2205259cb52c43b79cfe997ee1f4b643</field>
+        <field name="legacy_url">LowCode/Report/ReportForm?ConfigId=2205259cb52c43b79cfe997ee1f4b643</field>
+        <field name="source_kind">lowcode_sql</field>
+        <field name="domain_group">cost</field>
+        <field name="parameter_summary">投标项目名称、开始日期、结束日期、付保证金退回、自筹保证金退回。</field>
+        <field name="metric_summary">自筹保证金、付保证金、付保证金退回、自筹保证金退回、付保证金未退金额、自筹保证金未退金额。</field>
+        <field name="source_tables">P_ZTB_GCBMGL, ZJGL_BZJGL_Branch_SBZJDJ, ZJGL_BZJGL_Branch_SBZJTH, ZJGL_BZJGL_Pay_FBZJ, ZJGL_BZJGL_Pay_FBZJTH。</field>
+        <field name="target_model">sc.tender.guarantee.summary；按旧 SQL 的 P_ZTB_GCBMGL.f_GCMC = 保证金表.TBXMMC 口径汇总自筹/付款保证金、退回和未退余额。</field>
+        <field name="carrier_status">ready</field>
+        <field name="next_action">继续抽样核对旧配置 2205259cb52c43b79cfe997ee1f4b643 与新系统项目级金额，并确认是否需要默认日期/退回筛选。</field>
+        <field name="evidence">2026-05-27 scbs_55_report_schema_capture 已解析旧 SQL 和可见列；新增 legacy_tender_project_name/TBXMMC 口径和专用 carrier sc.tender.guarantee.summary。</field>
+    </record>
+
+    <record id="legacy_report_inventory_invoice_cost_progress" model="sc.legacy.report.inventory">
+        <field name="priority">p1</field>
+        <field name="name">发票成本进度报表</field>
+        <field name="legacy_config_id">0b44ca60c88a4845b8f489b346896853</field>
+        <field name="legacy_url">LowCode/Report/ReportForm?ConfigId=0b44ca60c88a4845b8f489b346896853</field>
+        <field name="source_kind">lowcode_sqlid</field>
+        <field name="sql_id">996ae8837cd54d72975eb238cbb7c9d3</field>
+        <field name="domain_group">invoice</field>
+        <field name="parameter_summary">项目。</field>
+        <field name="metric_summary">工程进度收款、开票登记金额、进项上报金额、成本差额=max(开票登记金额-进项上报金额, 0)。</field>
+        <field name="source_tables">BASE_SYSTEM_PROJECT, C_JFHKLR, C_JXXP_XXKPDJ, C_JXXP_XXKPDJ_CB, C_JXXP_ZYFPJJD。</field>
+        <field name="target_model">sc.invoice.cost.progress.summary；按旧 SQLID 项目维度汇总工程进度收款、开票登记金额、进项上报金额和成本差额。</field>
+        <field name="carrier_status">ready</field>
+        <field name="next_action">继续抽样核对旧 SQLID 996ae8837cd54d72975eb238cbb7c9d3 与新系统项目级金额，并确认是否需要默认项目过滤。</field>
+        <field name="evidence">2026-05-27 scbs_55_report_schema_capture 已解析 SQLID 996ae8837cd54d72975eb238cbb7c9d3；已新增 sc.invoice.cost.progress.summary 专用只读 view。</field>
+    </record>
+
+    <record id="legacy_report_inventory_invoice_analysis" model="sc.legacy.report.inventory">
+        <field name="priority">p1</field>
+        <field name="name">发票分析报表</field>
+        <field name="legacy_config_id">0c3c8434fff54c9e80fb3e483c318150</field>
+        <field name="legacy_url">LowCode/Report/ReportForm?ConfigId=0c3c8434fff54c9e80fb3e483c318150</field>
+        <field name="source_kind">lowcode_sqlid</field>
+        <field name="sql_id">87d7d56f62494c99a0c339f303335813</field>
+        <field name="domain_group">invoice</field>
+        <field name="parameter_summary">项目。</field>
+        <field name="metric_summary">施工合同金额、公司发票比例、个体发票比例。</field>
+        <field name="source_tables">BASE_SYSTEM_PROJECT, T_ProjectContract_Out, C_JXXP_ZYFPJJD。</field>
+        <field name="target_model">sc.invoice.analysis.summary；按旧 SQLID 项目维度汇总施工合同金额，并按 D_SCBSJS_FPGSLX 分类计算公司/个体发票比例。</field>
+        <field name="carrier_status">ready</field>
+        <field name="next_action">继续抽样核对旧 SQLID 87d7d56f62494c99a0c339f303335813 与新系统项目级合同金额、公司发票比例、个体发票比例。</field>
+        <field name="evidence">2026-05-27 scbs_55_report_schema_capture 已解析 SQLID 87d7d56f62494c99a0c339f303335813；新增原始报表事实 sc.legacy.invoice.analysis.report.fact 和专用 carrier sc.invoice.analysis.summary。</field>
+    </record>
+
+    <record id="legacy_report_inventory_cost_big_screen" model="sc.legacy.report.inventory">
+        <field name="priority">p0</field>
+        <field name="name">成本大屏</field>
+        <field name="source_kind">legacy_page</field>
+        <field name="domain_group">cost</field>
+        <field name="parameter_summary">成本驾驶舱/大屏入口，无低代码 ConfigId。</field>
+        <field name="metric_summary">项目维度成本驾驶舱事实，包含业务日期、项目、往来单位、指标周期、指标值、金额、来源模型和状态。</field>
+        <field name="source_tables">新系统 sc.dashboard.cockpit.fact；上游复用成本统计、经营指标和业务事实投影。</field>
+        <field name="target_model">sc.dashboard.cockpit.fact；action_sc_cost_big_screen_delivery 按 fact_type=cost_cockpit 过滤。</field>
+        <field name="carrier_status">ready</field>
+        <field name="next_action">继续按用户验收样例抽查项目级成本大屏指标。</field>
+        <field name="evidence">2026-05-27 服务器 sc_demo：成本大屏 action 788，cost_cockpit 7802 条，金额/指标值合计 2,402,850,271.36；树视图字段合同已通过 dashboard contract 校验。</field>
+    </record>
+
+    <record id="legacy_report_inventory_operation_big_screen" model="sc.legacy.report.inventory">
+        <field name="priority">p0</field>
+        <field name="name">经营大屏</field>
+        <field name="source_kind">legacy_page</field>
+        <field name="domain_group">operation</field>
+        <field name="parameter_summary">经营大屏入口，无低代码 ConfigId。</field>
+        <field name="metric_summary">项目维度经营指标，包含收款、销项/进项、预缴税、抵扣、扣款实缴、经营现金净额、结算总额和可付余额。</field>
+        <field name="source_tables">新系统 sc.operating.metrics.project；上游复用收款、发票、抵扣、扣款、费用和结算事实。</field>
+        <field name="target_model">sc.operating.metrics.project；action_sc_operation_big_screen_delivery 提供 tree/form/pivot。</field>
+        <field name="carrier_status">ready</field>
+        <field name="next_action">继续按用户验收样例抽查项目级经营大屏指标。</field>
+        <field name="evidence">2026-05-27 服务器 sc_demo：经营大屏 action 789，项目指标 898 行；收款 2,364,111,397.18，销项开票 3,047,011,199.60，进项发票 2,576,085,176.79，扣款实缴 88,141,282.74，经营现金净额 1,706,698,383.70。</field>
     </record>
 </odoo>

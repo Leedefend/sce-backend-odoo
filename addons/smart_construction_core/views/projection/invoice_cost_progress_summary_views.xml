@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_sc_invoice_cost_progress_summary_search" model="ir.ui.view">
+        <field name="name">sc.invoice.cost.progress.summary.search</field>
+        <field name="model">sc.invoice.cost.progress.summary</field>
+        <field name="arch" type="xml">
+            <search string="发票成本进度报表">
+                <field name="project_id"/>
+                <field name="project_name"/>
+                <filter string="有成本差额" name="has_cost_difference" domain="[('cost_difference_amount', '!=', 0)]"/>
+                <filter string="有工程进度收款" name="has_progress_receipt" domain="[('progress_receipt_amount', '!=', 0)]"/>
+                <filter string="有开票登记" name="has_output_invoice" domain="[('output_invoice_amount', '!=', 0)]"/>
+                <filter string="有进项上报" name="has_input_invoice" domain="[('input_invoice_amount', '!=', 0)]"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_invoice_cost_progress_summary_tree" model="ir.ui.view">
+        <field name="name">sc.invoice.cost.progress.summary.tree</field>
+        <field name="model">sc.invoice.cost.progress.summary</field>
+        <field name="arch" type="xml">
+            <tree string="发票成本进度报表" create="0" edit="0" delete="0" default_order="project_name">
+                <field name="project_name"/>
+                <field name="progress_receipt_amount" sum="工程进度收款合计"/>
+                <field name="output_invoice_amount" sum="开票登记金额合计"/>
+                <field name="input_invoice_amount" sum="进项上报金额合计"/>
+                <field name="cost_difference_amount" sum="成本差额合计"/>
+                <field name="coverage_note" optional="hide"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_invoice_cost_progress_summary_form" model="ir.ui.view">
+        <field name="name">sc.invoice.cost.progress.summary.form</field>
+        <field name="model">sc.invoice.cost.progress.summary</field>
+        <field name="arch" type="xml">
+            <form string="发票成本进度报表" create="0" edit="0" delete="0">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="project_id"/>
+                            <field name="project_name"/>
+                            <field name="company_id"/>
+                            <field name="currency_id"/>
+                        </group>
+                        <group>
+                            <field name="progress_receipt_amount"/>
+                            <field name="output_invoice_amount"/>
+                            <field name="input_invoice_amount"/>
+                            <field name="cost_difference_amount"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="coverage_note"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_invoice_cost_progress_summary_pivot" model="ir.ui.view">
+        <field name="name">sc.invoice.cost.progress.summary.pivot</field>
+        <field name="model">sc.invoice.cost.progress.summary</field>
+        <field name="arch" type="xml">
+            <pivot string="发票成本进度报表">
+                <field name="project_id" type="row"/>
+                <field name="progress_receipt_amount" type="measure"/>
+                <field name="output_invoice_amount" type="measure"/>
+                <field name="input_invoice_amount" type="measure"/>
+                <field name="cost_difference_amount" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_sc_invoice_cost_progress_summary" model="ir.actions.act_window">
+        <field name="name">发票成本进度报表</field>
+        <field name="res_model">sc.invoice.cost.progress.summary</field>
+        <field name="view_mode">tree,form,pivot,graph</field>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_invoice_cost_progress_summary_search"/>
+        <field name="context">{'create': False, 'edit': False, 'delete': False}</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_business_initiator'),
+            ref('smart_construction_core.group_sc_cap_finance_read'),
+            ref('smart_construction_core.group_sc_cap_finance_user'),
+            ref('smart_construction_core.group_sc_cap_finance_manager'),
+            ref('smart_construction_core.group_sc_cap_cost_read'),
+            ref('smart_construction_core.group_sc_cap_cost_user'),
+            ref('smart_construction_core.group_sc_cap_cost_manager')
+        ])]"/>
+    </record>
+</odoo>

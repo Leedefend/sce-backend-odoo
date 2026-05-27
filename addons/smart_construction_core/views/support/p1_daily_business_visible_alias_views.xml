@@ -274,13 +274,10 @@
                 <field name="p1_visible_f9cc22d53aff" string="受票方名称" optional="show" readonly="1"/>
                 <field name="p1_visible_61b3896f8414" string="交税类型" optional="show" readonly="1"/>
                 <field name="p1_visible_34943c40c9af" string="金额" optional="show" readonly="1" sum="金额"/>
-                <field name="p1_visible_007363f27191" string="不含税金额" optional="show" readonly="1" sum="不含税金额"/>
-                <field name="p1_visible_99f753ed6262" string="税额" optional="show" readonly="1" sum="税额"/>
                 <field name="p1_visible_a3c1a28bd34c" string="发票开具日期" optional="show" readonly="1"/>
                 <field name="p1_visible_62319711f425" string="预缴税款日期" optional="show" readonly="1"/>
                 <field name="p1_visible_6514c1bee4d7" string="完税凭证号码" optional="show" readonly="1"/>
                 <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
-                <field name="p1_visible_b031dc9a8507" string="数据类型" optional="show" readonly="1"/>
                 <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
                 <field name="state" optional="hide"/>
                 <field name="project_id" optional="hide"/>

@@ -112,7 +112,7 @@ CARRIER_MAP = {
     "预缴税款": carrier("sc.invoice.registration", "sc.legacy.income.invoice.fact"),
     "进项上报": carrier("sc.legacy.invoice.tax.fact", "sc.tax.deduction.registration"),
     "抵扣登记": carrier("sc.tax.deduction.registration", "sc.legacy.tax.deduction.fact"),
-    "外经证登记": carrier("sc.legacy.finance.auxiliary.fact", "sc.legacy.business.fact.residual"),
+    "外经证登记": carrier("sc.legacy.payment.residual.fact"),
     "供货合同分析": carrier(
         "sc.legacy.supplier.contract.pricing.fact",
         "sc.expense.contract.ledger",
@@ -122,11 +122,11 @@ CARRIER_MAP = {
     "库存统计表（新）": carrier("sc.material.stock.summary", "sc.legacy.material.stock.fact"),
     "账户收支统计表": carrier("sc.account.income.expense.summary", "sc.legacy.account.transaction.line"),
     "成本统计表（综合）": carrier("sc.comprehensive.cost.summary", "project.cost.ledger"),
-    "投标保证金报表": carrier("sc.legacy.tender.registration.fact", "tender.guarantee"),
-    "发票成本进度报表": carrier("sc.invoice.category.summary", "sc.invoice.registration"),
-    "发票分析报表": carrier("sc.invoice.category.summary", "sc.invoice.registration"),
-    "项目经营统计表": carrier("sc.company.operation.summary", "sc.operating.metrics.project"),
-    "应收应付报表": carrier("sc.ar.ap.project.summary", "sc.ar.ap.company.summary"),
+    "投标保证金报表": carrier("sc.tender.guarantee.summary", "sc.legacy.tender.registration.fact", "tender.guarantee"),
+    "发票成本进度报表": carrier("sc.invoice.cost.progress.summary", "sc.invoice.registration"),
+    "发票分析报表": carrier("sc.invoice.analysis.summary", "sc.invoice.registration"),
+    "项目经营统计表": carrier("sc.project.operation.summary", "sc.legacy.project.operation.report.fact"),
+    "应收应付报表": carrier("sc.ar.ap.report.summary", "sc.legacy.ar.ap.report.fact"),
     "成本大屏": carrier(
         "sc.dashboard.cockpit.fact",
         "sc.operating.metrics.project",
@@ -139,6 +139,8 @@ CARRIER_MAP = {
         action_xmlid="smart_construction_core.action_sc_operation_big_screen_delivery",
     ),
 }
+
+VIEW_GAP_SUMMARY_BY_NAME = {}
 
 
 def first_action_for_model(model: str):
@@ -201,9 +203,23 @@ for record in rows:
         }
         for index, model in enumerate(candidates)
     ]
-    status = "runtime_spec_landed" if target_model_record else "view_gap_audit_required"
-    if record.surface_contract_status == "view_gap_audit_required":
+    forced_gap_summary = VIEW_GAP_SUMMARY_BY_NAME.get(record.legacy_menu_name, "")
+    has_runtime_target = bool(target_model_record and action and not forced_gap_summary)
+    status = "runtime_spec_landed" if has_runtime_target else "view_gap_audit_required"
+    if record.surface_contract_status == "view_gap_audit_required" and not has_runtime_target:
         status = "view_gap_audit_required"
+    existing_runtime_gap = "" if has_runtime_target else record.runtime_gap_summary or ""
+    if forced_gap_summary:
+        existing_runtime_gap = forced_gap_summary
+
+    runtime_gap_parts = [existing_runtime_gap]
+    if not has_runtime_target:
+        runtime_gap_parts.extend(
+            [
+                mapping.get("note", ""),
+                "target_action_missing" if target_model and not action else "",
+            ]
+        )
 
     record.write(
         {
@@ -213,13 +229,7 @@ for record in rows:
             "candidate_models_json": candidate_payload,
             "surface_contract_status": status,
             "runtime_gap_summary": "; ".join(
-                part
-                for part in [
-                    record.runtime_gap_summary or "",
-                    mapping.get("note", ""),
-                    "target_action_missing" if target_model and not action else "",
-                ]
-                if part
+                part for part in runtime_gap_parts if part
             ),
         }
     )
@@ -238,8 +248,13 @@ payload = {
     "missing_map": missing_map,
     "missing_model": missing_model,
     "without_action": without_action,
+    "known_view_gaps": sorted(VIEW_GAP_SUMMARY_BY_NAME),
     "db_writes": updated,
-    "decision": "scbs_55_target_carriers_landed" if updated == len(rows) and not missing_map and not missing_model else "STOP_REVIEW_REQUIRED",
+    "decision": (
+        "scbs_55_target_carriers_landed_with_known_view_gaps"
+        if updated == len(rows) and not missing_map and not missing_model
+        else "STOP_REVIEW_REQUIRED"
+    ),
 }
 write_json(artifact_dir / OUTPUT_JSON_NAME, payload)
 print("SCBS_55_USER_VISIBLE_SURFACE_TARGET_CARRIER_WRITE=" + json.dumps(payload, ensure_ascii=False, sort_keys=True))

@@ -83,6 +83,10 @@ def is_seal_request(source_table, raw):
     return any(term in text for term in SEAL_INCLUDE_TERMS)
 
 
+def is_active(row):
+    return str(row.get("active") or "1").strip() != "0"
+
+
 def existing_legacy_pairs():
     env.cr.execute(  # noqa: F821
         """
@@ -176,7 +180,19 @@ before_count = env.cr.fetchone()[0]  # noqa: F821
 for row, raw, legacy_source_id in iter_rows():
     source_table = row.get("source_table")
     legacy_pair = (source_table, legacy_source_id)
+    active = is_active(row)
     if legacy_pair in seen:
+        env.cr.execute(  # noqa: F821
+            """
+            UPDATE sc_office_admin_document
+               SET active = %s,
+                   write_date = now()
+             WHERE fact_type = %s
+               AND legacy_source_table = %s
+               AND legacy_source_id = %s
+            """,
+            (active, FACT_TYPE, source_table, legacy_source_id),
+        )
         continue
     document_no = str(row.get("document_no") or raw.get("DJBH") or "").strip()
     document_date = row_use_date(source_table, row, raw)
@@ -237,7 +253,7 @@ for row, raw, legacy_source_id in iter_rows():
             %s,
             %s,
             %s,
-            TRUE
+            %s
         )
         """,
         (
@@ -255,6 +271,7 @@ for row, raw, legacy_source_id in iter_rows():
             source_table,
             legacy_source_id,
             cur_currency_id,
+            active,
         ),
     )
     created += 1

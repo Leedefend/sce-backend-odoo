@@ -171,6 +171,17 @@ def load_candidate_tables(label: str) -> list[dict[str, Any]]:
             }
         )
     rows.sort(key=lambda row: (str(row["family"]), -int(row["score"]), -int(row["rows"]), str(row["table"])))
+    if SOURCE_TABLE_ALLOWLIST:
+        for name in sorted(SOURCE_TABLE_ALLOWLIST - seen):
+            rows.append(
+                {
+                    "family": "manual_allowlist",
+                    "table": name,
+                    "classification": "manual_allowlist",
+                    "score": 0,
+                    "rows": 0,
+                }
+            )
     return rows
 
 

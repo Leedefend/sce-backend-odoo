@@ -69,7 +69,7 @@ SELECT
   {clean_sql("h.HTJE")} AS contract_amount,
   COALESCE(CONVERT(varchar(23), h.ZBRQ, 121), '') AS bid_date,
   {clean_sql("h.MQXXJD")} AS current_project_stage,
-  {clean_sql("h.SJZJ")} AS actual_fund_amount,
+  {clean_sql("h.KPSKQK_BQS")} AS actual_fund_amount,
   {clean_sql("h.LJKPJE")} AS accumulated_invoice_amount,
   {clean_sql("h.TXR")} AS filler_name,
   {clean_sql("h.DJZT")} AS document_state,

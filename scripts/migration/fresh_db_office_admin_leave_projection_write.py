@@ -83,6 +83,10 @@ def state(value):
     return "in_progress"
 
 
+def is_active(row):
+    return str(row.get("active") or "1").strip() != "0"
+
+
 def existing_legacy_ids():
     env.cr.execute(  # noqa: F821
         """
@@ -134,7 +138,19 @@ env.cr.execute("SELECT COUNT(*) FROM sc_office_admin_document WHERE fact_type = 
 before_count = env.cr.fetchone()[0]  # noqa: F821
 
 for row, raw, legacy_source_id in iter_rows():
+    active = is_active(row)
     if legacy_source_id in seen:
+        env.cr.execute(  # noqa: F821
+            """
+            UPDATE sc_office_admin_document
+               SET active = %s,
+                   write_date = now()
+             WHERE fact_type = %s
+               AND legacy_source_table = %s
+               AND legacy_source_id = %s
+            """,
+            (active, FACT_TYPE, SOURCE_TABLE, legacy_source_id),
+        )
         continue
     document_date = parse_datetime(row.get("document_date") or raw.get("LRSJ"))
     start_dt = parse_datetime(raw.get("QJSJ"))
@@ -198,7 +214,7 @@ for row, raw, legacy_source_id in iter_rows():
             %s,
             %s,
             %s,
-            TRUE
+            %s
         )
         """,
         (
@@ -217,6 +233,7 @@ for row, raw, legacy_source_id in iter_rows():
             SOURCE_TABLE,
             legacy_source_id,
             cur_currency_id,
+            active,
         ),
     )
     created += 1

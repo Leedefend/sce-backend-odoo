@@ -26,14 +26,15 @@ WITH src AS (
     CONVERT(nvarchar(max), SKR) AS partner_name, CONVERT(nvarchar(max), HJ) AS amount,
     CONVERT(nvarchar(max), RQ) AS document_date, CONVERT(nvarchar(max), DJZT) AS state,
     CONVERT(nvarchar(max), DEL) AS deleted, CONVERT(nvarchar(max), BZ) AS note,
-    CONVERT(nvarchar(max), pid) AS pid, 'expense_reimbursement' AS family, 'outflow' AS direction
+    CONVERT(nvarchar(max), pid) AS pid, CONVERT(nvarchar(max), NULL) AS tender_project_name,
+    'expense_reimbursement' AS family, 'outflow' AS direction
   FROM dbo.CWGL_FYBX
   UNION ALL
   SELECT 'C_CWSFK_GSCWZC', CONVERT(nvarchar(max), Id), CONVERT(nvarchar(max), DJBH),
     CONVERT(nvarchar(max), XMID), CONVERT(nvarchar(max), XMMC), CONVERT(nvarchar(max), SKDWID),
     CONVERT(nvarchar(max), SKDWMC), CONVERT(nvarchar(max), FKJE), CONVERT(nvarchar(max), FKSJ, 120),
     CONVERT(nvarchar(max), DJZT), CONVERT(nvarchar(max), DEL), CONVERT(nvarchar(max), BZ),
-    CONVERT(nvarchar(max), PID), 'company_financial_outflow', 'outflow'
+    CONVERT(nvarchar(max), PID), CONVERT(nvarchar(max), NULL), 'company_financial_outflow', 'outflow'
   FROM dbo.C_CWSFK_GSCWZC
   UNION ALL
   SELECT 'ZJGL_BZJGL_Pay_FBZJ', CONVERT(nvarchar(max), Id), CONVERT(nvarchar(max), DJBH),
@@ -41,7 +42,8 @@ WITH src AS (
     CONVERT(nvarchar(max), COALESCE(NULLIF(XMMC, ''), NULLIF(TBXMMC, ''))),
     CONVERT(nvarchar(max), SKDWID), CONVERT(nvarchar(max), SKDW), CONVERT(nvarchar(max), BZJJE),
     CONVERT(nvarchar(max), TXRQ, 120), CONVERT(nvarchar(max), DJZT), CONVERT(nvarchar(max), DEL),
-    CONVERT(nvarchar(max), BZ), CONVERT(nvarchar(max), pid), 'pay_guarantee_deposit', 'outflow'
+    CONVERT(nvarchar(max), BZ), CONVERT(nvarchar(max), pid), CONVERT(nvarchar(max), TBXMMC),
+    'pay_guarantee_deposit', 'outflow'
   FROM dbo.ZJGL_BZJGL_Pay_FBZJ
   UNION ALL
   SELECT 'ZJGL_BZJGL_Pay_FBZJTH', CONVERT(nvarchar(max), Id), CONVERT(nvarchar(max), DJBH),
@@ -49,14 +51,15 @@ WITH src AS (
     CONVERT(nvarchar(max), COALESCE(NULLIF(XMMC, ''), NULLIF(TBXMMC, ''))),
     CONVERT(nvarchar(max), Y_SKDWID), CONVERT(nvarchar(max), Y_SKDW), CONVERT(nvarchar(max), THJE),
     CONVERT(nvarchar(max), THRQ, 120), CONVERT(nvarchar(max), DJZT), CONVERT(nvarchar(max), DEL),
-    CONVERT(nvarchar(max), SM), CONVERT(nvarchar(max), pid), 'pay_guarantee_deposit_refund', 'inflow_or_refund'
+    CONVERT(nvarchar(max), SM), CONVERT(nvarchar(max), pid), CONVERT(nvarchar(max), TBXMMC),
+    'pay_guarantee_deposit_refund', 'inflow_or_refund'
   FROM dbo.ZJGL_BZJGL_Pay_FBZJTH
   UNION ALL
   SELECT 'C_JFHKLR_TH_ZCDF', CONVERT(nvarchar(max), Id), CONVERT(nvarchar(max), DJBH),
     CONVERT(nvarchar(max), XMID), CONVERT(nvarchar(max), XMMC), CONVERT(nvarchar(max), WLDWFKDW),
     CONVERT(nvarchar(max), WLDWFKDW), CONVERT(nvarchar(max), 0), CONVERT(nvarchar(max), DJRQ, 120),
     CONVERT(nvarchar(max), DJZT), CONVERT(nvarchar(max), DEL), CONVERT(nvarchar(max), BZ),
-    CONVERT(nvarchar(max), pid), 'self_funded_income_refund', 'inflow_or_refund'
+    CONVERT(nvarchar(max), pid), CONVERT(nvarchar(max), NULL), 'self_funded_income_refund', 'inflow_or_refund'
   FROM dbo.C_JFHKLR_TH_ZCDF
   UNION ALL
   SELECT 'ZJGL_BZJGL_Branch_SBZJTH', CONVERT(nvarchar(max), Id), CONVERT(nvarchar(max), DJBH),
@@ -64,14 +67,15 @@ WITH src AS (
     CONVERT(nvarchar(max), COALESCE(NULLIF(XMMC, ''), NULLIF(TBXMMC, ''))),
     CONVERT(nvarchar(max), SKDWID), CONVERT(nvarchar(max), SKDW), CONVERT(nvarchar(max), THJE),
     CONVERT(nvarchar(max), DJRQ, 120), CONVERT(nvarchar(max), DJZT), CONVERT(nvarchar(max), DEL),
-    CONVERT(nvarchar(max), BZ), CONVERT(nvarchar(max), pid), 'received_guarantee_deposit_refund', 'inflow_or_refund'
+    CONVERT(nvarchar(max), BZ), CONVERT(nvarchar(max), pid), CONVERT(nvarchar(max), TBXMMC),
+    'received_guarantee_deposit_refund', 'inflow_or_refund'
   FROM dbo.ZJGL_BZJGL_Branch_SBZJTH
   UNION ALL
   SELECT 'T_KK_SJTHB', CONVERT(nvarchar(max), Id), CONVERT(nvarchar(max), DJBH),
     CONVERT(nvarchar(max), XMID), CONVERT(nvarchar(max), XMMC), CONVERT(nvarchar(max), KKZHID),
     CONVERT(nvarchar(max), KKZH), CONVERT(nvarchar(max), 0), CONVERT(nvarchar(max), DJRQ, 120),
     CONVERT(nvarchar(max), DJZT), CONVERT(nvarchar(max), DEL), CONVERT(nvarchar(max), BZ),
-    CONVERT(nvarchar(max), pid), 'project_deduction_refund', 'inflow_or_refund'
+    CONVERT(nvarchar(max), pid), CONVERT(nvarchar(max), NULL), 'project_deduction_refund', 'inflow_or_refund'
   FROM dbo.T_KK_SJTHB
   UNION ALL
   SELECT 'ZJGL_BZJGL_Branch_SBZJDJ', CONVERT(nvarchar(max), ID), CONVERT(nvarchar(max), DJBH),
@@ -79,7 +83,8 @@ WITH src AS (
     CONVERT(nvarchar(max), COALESCE(NULLIF(XMMC, ''), NULLIF(TBXMMC, ''))),
     CONVERT(nvarchar(max), DWID), CONVERT(nvarchar(max), DW), CONVERT(nvarchar(max), JE),
     CONVERT(nvarchar(max), DJRQ, 120), CONVERT(nvarchar(max), DJZT), CONVERT(nvarchar(max), DEL),
-    CONVERT(nvarchar(max), BZ), CONVERT(nvarchar(max), pid), 'received_guarantee_deposit_register', 'inflow'
+    CONVERT(nvarchar(max), BZ), CONVERT(nvarchar(max), pid), CONVERT(nvarchar(max), TBXMMC),
+    'received_guarantee_deposit_register', 'inflow'
   FROM dbo.ZJGL_BZJGL_Branch_SBZJDJ
 )
 SELECT CONCAT(
@@ -96,6 +101,7 @@ SELECT CONCAT(
   ISNULL(REPLACE(REPLACE(REPLACE(deleted, @sep, ' '), CHAR(13), ' '), CHAR(10), ' '), ''), @sep,
   ISNULL(REPLACE(REPLACE(REPLACE(note, @sep, ' '), CHAR(13), ' '), CHAR(10), ' '), ''), @sep,
   ISNULL(REPLACE(REPLACE(REPLACE(pid, @sep, ' '), CHAR(13), ' '), CHAR(10), ' '), ''), @sep,
+  ISNULL(REPLACE(REPLACE(REPLACE(tender_project_name, @sep, ' '), CHAR(13), ' '), CHAR(10), ' '), ''), @sep,
   ISNULL(REPLACE(REPLACE(REPLACE(family, @sep, ' '), CHAR(13), ' '), CHAR(10), ' '), ''), @sep,
   ISNULL(REPLACE(REPLACE(REPLACE(direction, @sep, ' '), CHAR(13), ' '), CHAR(10), ' '), '')
 ) AS rowdata
@@ -117,6 +123,7 @@ SQL_COLUMNS = [
     "deleted",
     "note",
     "pid",
+    "tender_project_name",
     "family",
     "direction",
 ]

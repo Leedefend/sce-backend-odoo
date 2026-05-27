@@ -71,14 +71,14 @@ class ScLegacyPaymentResidualFact(models.Model):
         for rec in self:
             attachment_ref = (rec.attachment_ref or "").strip()
             if not attachment_ref or FileIndex is None:
-                rec.attachment_links = attachment_ref
+                rec.attachment_links = "历史附件 | legacy-file-id://%s" % attachment_ref if attachment_ref else False
                 continue
             files = FileIndex.search([
                 ("active", "=", True),
                 ("bill_id", "=", attachment_ref),
             ], order="upload_time, id")
             if not files:
-                rec.attachment_links = f"历史附件 {attachment_ref} | legacy-file-id://{attachment_ref}"
+                rec.attachment_links = f"历史附件 | legacy-file-id://{attachment_ref}"
                 continue
             lines = []
             seen = set()
