@@ -113,7 +113,12 @@ CARRIER_MAP = {
     "进项上报": carrier("sc.legacy.invoice.tax.fact", "sc.tax.deduction.registration"),
     "抵扣登记": carrier("sc.tax.deduction.registration", "sc.legacy.tax.deduction.fact"),
     "外经证登记": carrier("sc.legacy.finance.auxiliary.fact", "sc.legacy.business.fact.residual"),
-    "供货合同分析": carrier("sc.legacy.report.inventory", "sc.expense.contract.ledger"),
+    "供货合同分析": carrier(
+        "sc.legacy.supplier.contract.pricing.fact",
+        "sc.expense.contract.ledger",
+        "sc.legacy.report.inventory",
+        action_xmlid="smart_construction_core.action_sc_supplier_contract_analysis_report",
+    ),
     "库存统计表（新）": carrier("sc.material.stock.summary", "sc.legacy.material.stock.fact"),
     "账户收支统计表": carrier("sc.account.income.expense.summary", "sc.legacy.account.transaction.line"),
     "成本统计表（综合）": carrier("sc.comprehensive.cost.summary", "project.cost.ledger"),
