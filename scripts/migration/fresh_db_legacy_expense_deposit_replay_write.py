@@ -140,6 +140,7 @@ for row in rows:
         "project_id": project_id,
         "legacy_project_id": legacy_project_id,
         "legacy_project_name": clean(row.get("legacy_project_name")),
+        "legacy_tender_project_name": clean(row.get("legacy_tender_project_name")),
         "legacy_partner_id": clean(row.get("legacy_partner_id")),
         "legacy_partner_name": clean(row.get("legacy_partner_name")),
         "source_amount": as_float(row.get("source_amount", "")),

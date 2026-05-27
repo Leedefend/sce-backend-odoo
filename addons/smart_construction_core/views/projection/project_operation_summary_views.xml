@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_sc_project_operation_summary_search" model="ir.ui.view">
+            <field name="name">sc.project.operation.summary.search</field>
+            <field name="model">sc.project.operation.summary</field>
+            <field name="arch" type="xml">
+                <search string="项目经营统计表">
+                    <field name="project_name"/>
+                    <field name="project_id"/>
+                    <filter string="有经营收入" name="has_operation_income" domain="[('operation_income_amount', '!=', 0)]"/>
+                    <filter string="有净收入" name="has_net_income" domain="[('net_income_amount', '!=', 0)]"/>
+                    <group expand="0" string="分组">
+                        <filter string="项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_project_operation_summary_tree" model="ir.ui.view">
+            <field name="name">sc.project.operation.summary.tree</field>
+            <field name="model">sc.project.operation.summary</field>
+            <field name="arch" type="xml">
+                <tree string="项目经营统计表" create="0" edit="0" delete="0">
+                    <field name="project_name"/>
+                    <field name="other_amount" sum="其他合计"/>
+                    <field name="current_receipt_amount" sum="本期收款合计"/>
+                    <field name="vat_amount" sum="增值税合计"/>
+                    <field name="vat_nonrefundable_amount" sum="增值税(不可退)合计"/>
+                    <field name="vat_three_percent_amount" sum="增值税3%合计"/>
+                    <field name="prepaid_vat_amount" sum="预缴增值税合计"/>
+                    <field name="output_deduction_tax_diff_amount" sum="销项税金/扣款税金差额合计"/>
+                    <field name="output_tax_amount" sum="销项金额合计"/>
+                    <field name="net_income_amount" sum="净收入合计"/>
+                    <field name="operation_income_amount" sum="经营收入合计"/>
+                    <field name="coverage_note" optional="hide"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_project_operation_summary_form" model="ir.ui.view">
+            <field name="name">sc.project.operation.summary.form</field>
+            <field name="model">sc.project.operation.summary</field>
+            <field name="arch" type="xml">
+                <form string="项目经营统计表" create="0" edit="0" delete="0">
+                    <sheet>
+                        <group>
+                            <field name="project_name"/>
+                            <field name="project_id"/>
+                            <field name="legacy_project_id"/>
+                        </group>
+                        <group>
+                            <field name="current_receipt_amount"/>
+                            <field name="other_amount"/>
+                            <field name="vat_amount"/>
+                            <field name="vat_nonrefundable_amount"/>
+                            <field name="vat_three_percent_amount"/>
+                            <field name="prepaid_vat_amount"/>
+                            <field name="output_deduction_tax_diff_amount"/>
+                            <field name="output_tax_amount"/>
+                            <field name="net_income_amount"/>
+                            <field name="operation_income_amount"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_sc_project_operation_summary_pivot" model="ir.ui.view">
+            <field name="name">sc.project.operation.summary.pivot</field>
+            <field name="model">sc.project.operation.summary</field>
+            <field name="arch" type="xml">
+                <pivot string="项目经营统计表">
+                    <field name="project_name" type="row"/>
+                    <field name="current_receipt_amount" type="measure"/>
+                    <field name="other_amount" type="measure"/>
+                    <field name="vat_amount" type="measure"/>
+                    <field name="vat_nonrefundable_amount" type="measure"/>
+                    <field name="vat_three_percent_amount" type="measure"/>
+                    <field name="prepaid_vat_amount" type="measure"/>
+                    <field name="output_deduction_tax_diff_amount" type="measure"/>
+                    <field name="output_tax_amount" type="measure"/>
+                    <field name="net_income_amount" type="measure"/>
+                    <field name="operation_income_amount" type="measure"/>
+                </pivot>
+            </field>
+        </record>
+
+        <record id="action_sc_project_operation_summary" model="ir.actions.act_window">
+            <field name="name">项目经营统计表</field>
+            <field name="res_model">sc.project.operation.summary</field>
+            <field name="view_mode">tree,form,pivot</field>
+            <field name="search_view_id" ref="view_sc_project_operation_summary_search"/>
+            <field name="context">{'search_default_has_operation_income': 0}</field>
+        </record>
+    </data>
+</odoo>

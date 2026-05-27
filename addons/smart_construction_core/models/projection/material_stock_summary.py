@@ -27,6 +27,9 @@ class ScMaterialStockSummary(models.Model):
     out_qty = fields.Float(string="出库数量", readonly=True)
     out_amount = fields.Monetary(string="出库金额", currency_field="currency_id", readonly=True)
     out_avg_price = fields.Float(string="出库均价", readonly=True)
+    profit_qty = fields.Float(string="利润数量", readonly=True)
+    price_diff = fields.Float(string="价差", readonly=True)
+    profit_amount = fields.Monetary(string="利润金额", currency_field="currency_id", readonly=True)
     stock_qty = fields.Float(string="库存数量", readonly=True)
     stock_amount = fields.Monetary(string="库存金额", currency_field="currency_id", readonly=True)
     stock_avg_price = fields.Float(string="库存均价", readonly=True)
@@ -49,7 +52,18 @@ class ScMaterialStockSummary(models.Model):
             CREATE OR REPLACE VIEW {self._table} AS (
                 WITH stock_fact AS (
                     SELECT
-                        f.*,
+                        f.id,
+                        f.fact_type,
+                        f.material_code,
+                        f.material_name,
+                        f.material_spec,
+                        f.material_uom,
+                        COALESCE(f.project_id, parent.project_id) AS project_id,
+                        COALESCE(NULLIF(f.project_name, ''), NULLIF(parent.project_name, '')) AS project_name,
+                        COALESCE(NULLIF(f.partner_name, ''), NULLIF(parent.partner_name, '')) AS partner_name,
+                        COALESCE(NULLIF(f.contract_no, ''), NULLIF(parent.contract_no, '')) AS contract_no,
+                        COALESCE(NULLIF(f.department_name, ''), NULLIF(parent.department_name, '')) AS department_name,
+                        COALESCE(f.document_date, parent.document_date) AS document_date,
                         CASE
                             WHEN f.fact_type IN ('stock_in', 'stock_in_line', 'scbs_stock_in')
                                 THEN COALESCE(f.qty, 0.0)
@@ -71,9 +85,13 @@ class ScMaterialStockSummary(models.Model):
                             ELSE 0.0
                         END AS stock_out_amount
                     FROM sc_legacy_material_stock_fact f
+                    LEFT JOIN sc_legacy_material_stock_fact parent
+                      ON parent.source_table IN ('T_RK_RKD', 'T_CK_CKD')
+                     AND parent.legacy_record_id = f.legacy_parent_id
                     WHERE f.active IS TRUE
                       AND f.state <> 'cancel'
                       AND f.fact_type IN ('stock_in', 'stock_in_line', 'scbs_stock_in', 'stock_out', 'stock_out_line')
+                      AND COALESCE(NULLIF(f.material_name, ''), '') <> ''
                 )
                 SELECT
                     row_number() OVER (
@@ -115,6 +133,24 @@ class ScMaterialStockSummary(models.Model):
                     SUM(sf.stock_out_qty) AS out_qty,
                     SUM(sf.stock_out_amount) AS out_amount,
                     CASE WHEN SUM(sf.stock_out_qty) = 0.0 THEN 0.0 ELSE SUM(sf.stock_out_amount) / SUM(sf.stock_out_qty) END AS out_avg_price,
+                    SUM(sf.stock_out_qty) AS profit_qty,
+                    CASE
+                        WHEN SUM(sf.stock_out_qty) = 0.0 OR SUM(sf.stock_in_qty) = 0.0 THEN 0.0
+                        ELSE
+                            CASE WHEN SUM(sf.stock_out_qty) = 0.0 THEN 0.0 ELSE SUM(sf.stock_out_amount) / SUM(sf.stock_out_qty) END
+                            -
+                            CASE WHEN SUM(sf.stock_in_qty) = 0.0 THEN 0.0 ELSE SUM(sf.stock_in_amount) / SUM(sf.stock_in_qty) END
+                    END AS price_diff,
+                    CASE
+                        WHEN SUM(sf.stock_out_qty) = 0.0 OR SUM(sf.stock_in_qty) = 0.0 THEN 0.0
+                        ELSE
+                            (
+                                CASE WHEN SUM(sf.stock_out_qty) = 0.0 THEN 0.0 ELSE SUM(sf.stock_out_amount) / SUM(sf.stock_out_qty) END
+                                -
+                                CASE WHEN SUM(sf.stock_in_qty) = 0.0 THEN 0.0 ELSE SUM(sf.stock_in_amount) / SUM(sf.stock_in_qty) END
+                            )
+                            * SUM(sf.stock_out_qty)
+                    END AS profit_amount,
                     SUM(sf.stock_in_qty) - SUM(sf.stock_out_qty) AS stock_qty,
                     SUM(sf.stock_in_amount) - SUM(sf.stock_out_amount) AS stock_amount,
                     CASE
@@ -128,7 +164,7 @@ class ScMaterialStockSummary(models.Model):
                     MAX(sf.document_date::date) AS last_date,
                     '按项目、材料、规格和单位汇总历史出入库事实，库存=入库-出库' AS coverage_note
                 FROM stock_fact sf
-                LEFT JOIN project_project p ON p.id = sf.project_id
+                JOIN project_project p ON p.id = sf.project_id AND p.active IS TRUE
                 LEFT JOIN res_company rc ON rc.id = COALESCE(p.company_id, (SELECT id FROM res_company ORDER BY id LIMIT 1))
                 GROUP BY
                     sf.project_id,

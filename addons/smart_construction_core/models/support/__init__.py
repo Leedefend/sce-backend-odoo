@@ -80,10 +80,14 @@ from . import legacy_personnel_movement
 from . import legacy_salary_line
 from . import legacy_purchase_contract_fact
 from . import legacy_tender_registration_fact
+from . import legacy_tender_guarantee_report_fact
 from . import legacy_labor_subcontract_fact
 from . import legacy_material_stock_fact
 from . import legacy_equipment_lease_fact
 from . import legacy_income_invoice_fact
 from . import legacy_report_inventory
+from . import legacy_invoice_analysis_report_fact
+from . import legacy_project_operation_report_fact
+from . import legacy_ar_ap_report_fact
 from . import runtime_user_management
 from . import product_policy_sync

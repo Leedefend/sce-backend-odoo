@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <record id="view_sc_invoice_analysis_summary_search" model="ir.ui.view">
+        <field name="name">sc.invoice.analysis.summary.search</field>
+        <field name="model">sc.invoice.analysis.summary</field>
+        <field name="arch" type="xml">
+            <search string="发票分析报表">
+                <field name="project_id"/>
+                <field name="project_name"/>
+                <filter string="有施工合同金额" name="has_contract_amount" domain="[('contract_amount', '!=', 0)]"/>
+                <filter string="有公司发票" name="has_company_invoice" domain="[('company_invoice_amount', '!=', 0)]"/>
+                <filter string="有个体发票" name="has_individual_invoice" domain="[('individual_invoice_amount', '!=', 0)]"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_invoice_analysis_summary_tree" model="ir.ui.view">
+        <field name="name">sc.invoice.analysis.summary.tree</field>
+        <field name="model">sc.invoice.analysis.summary</field>
+        <field name="arch" type="xml">
+            <tree string="发票分析报表" create="0" edit="0" delete="0" default_order="project_name">
+                <field name="project_name"/>
+                <field name="contract_amount" sum="施工合同金额合计"/>
+                <field name="company_invoice_ratio" widget="percentage"/>
+                <field name="individual_invoice_ratio" widget="percentage"/>
+                <field name="company_invoice_amount" sum="公司发票金额合计" optional="hide"/>
+                <field name="individual_invoice_amount" sum="个体发票金额合计" optional="hide"/>
+                <field name="coverage_note" optional="hide"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_invoice_analysis_summary_form" model="ir.ui.view">
+        <field name="name">sc.invoice.analysis.summary.form</field>
+        <field name="model">sc.invoice.analysis.summary</field>
+        <field name="arch" type="xml">
+            <form string="发票分析报表" create="0" edit="0" delete="0">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="project_id"/>
+                            <field name="project_name"/>
+                            <field name="company_id"/>
+                            <field name="currency_id"/>
+                        </group>
+                        <group>
+                            <field name="contract_amount"/>
+                            <field name="company_invoice_ratio" widget="percentage"/>
+                            <field name="individual_invoice_ratio" widget="percentage"/>
+                            <field name="company_invoice_amount"/>
+                            <field name="individual_invoice_amount"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="coverage_note"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_invoice_analysis_summary_pivot" model="ir.ui.view">
+        <field name="name">sc.invoice.analysis.summary.pivot</field>
+        <field name="model">sc.invoice.analysis.summary</field>
+        <field name="arch" type="xml">
+            <pivot string="发票分析报表">
+                <field name="project_id" type="row"/>
+                <field name="contract_amount" type="measure"/>
+                <field name="company_invoice_amount" type="measure"/>
+                <field name="individual_invoice_amount" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_sc_invoice_analysis_summary" model="ir.actions.act_window">
+        <field name="name">发票分析报表</field>
+        <field name="res_model">sc.invoice.analysis.summary</field>
+        <field name="view_mode">tree,form,pivot,graph</field>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_invoice_analysis_summary_search"/>
+        <field name="context">{'create': False, 'edit': False, 'delete': False}</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_business_initiator'),
+            ref('smart_construction_core.group_sc_cap_finance_read'),
+            ref('smart_construction_core.group_sc_cap_finance_user'),
+            ref('smart_construction_core.group_sc_cap_finance_manager'),
+            ref('smart_construction_core.group_sc_cap_cost_read'),
+            ref('smart_construction_core.group_sc_cap_cost_user'),
+            ref('smart_construction_core.group_sc_cap_cost_manager')
+        ])]"/>
+    </record>
+</odoo>

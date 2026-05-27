@@ -66,6 +66,7 @@ def main() -> int:
         "project_ref",
         "legacy_project_id",
         "legacy_project_name",
+        "legacy_tender_project_name",
         "partner_ref",
         "legacy_partner_id",
         "legacy_partner_name",

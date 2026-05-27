@@ -434,7 +434,6 @@ env.cr.execute(  # noqa: F821
     WHERE f.active
       AND f.project_id IS NOT NULL
       AND f.fact_type = 'prepaid_tax_line'
-      AND COALESCE(f.amount_total, 0) <> 0
     ON CONFLICT (legacy_source_model, legacy_record_id)
     DO UPDATE SET
       source_kind = EXCLUDED.source_kind,

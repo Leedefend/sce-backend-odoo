@@ -164,6 +164,7 @@ def write_xml(path: Path, records: list[dict[str, str]]) -> None:
         add_ref_field(record, "project_id", row["project_external_id"], required=True)
         add_text_field(record, "legacy_project_id", row["legacy_project_id"], required=True)
         add_text_field(record, "legacy_project_name", row["legacy_project_name"])
+        add_text_field(record, "legacy_tender_project_name", row["legacy_tender_project_name"])
         add_ref_field(record, "partner_id", row["partner_external_id"])
         add_text_field(record, "legacy_partner_id", row["legacy_partner_id"])
         add_text_field(record, "legacy_partner_name", row["legacy_partner_name"])
@@ -262,6 +263,7 @@ def build_records(asset_root: Path) -> tuple[list[dict[str, str]], dict[str, Any
                 "project_external_id": project_map[project_id],
                 "legacy_project_id": project_id,
                 "legacy_project_name": clean(row.get("project_name")),
+                "legacy_tender_project_name": clean(row.get("tender_project_name")),
                 "partner_external_id": partner_external_id,
                 "legacy_partner_id": partner_id,
                 "legacy_partner_name": clean(row.get("partner_name")),
