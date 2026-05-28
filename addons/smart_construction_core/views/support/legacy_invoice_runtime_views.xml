@@ -233,22 +233,39 @@
       <field name="model">sc.legacy.fund.confirmation.document</field>
       <field name="arch" type="xml">
         <tree string="到款确认表" create="false" edit="false" delete="false" default_order="receipt_time desc, document_no desc">
-          <field name="document_state"/>
-          <field name="document_no"/>
-          <field name="receipt_time"/>
-          <field name="project_name"/>
-          <field name="period_no"/>
-          <field name="actual_fund_amount"/>
-          <field name="deducted_amount_total"/>
-          <field name="paid_amount_total"/>
-          <field name="construction_unit_name"/>
-          <field name="contract_amount"/>
-          <field name="current_project_stage"/>
-          <field name="accumulated_invoice_amount"/>
-          <field name="previous_retained_balance"/>
-          <field name="attachment_links"/>
-          <field name="creator_name"/>
-          <field name="created_time"/>
+          <field name="p1_visible_06fa8c6f628f" string="单据状态" optional="show" readonly="1"/>
+          <field name="p1_visible_8fa8662ad38f" string="单据编号" optional="show" readonly="1"/>
+          <field name="p1_visible_89b4aa6364ce" string="时间" optional="show" readonly="1"/>
+          <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
+          <field name="p1_visible_389372a58a16" string="期数" optional="show" readonly="1"/>
+          <field name="p1_visible_fc06f3f3d307" string="本期收款" optional="show" readonly="1" sum="本期收款"/>
+          <field name="p1_visible_99219180c1b9" string="本期代扣代缴合计" optional="show" readonly="1" sum="本期代扣代缴合计"/>
+          <field name="p1_visible_50f529884746" string="本期拨付金额合计" optional="show" readonly="1" sum="本期拨付金额合计"/>
+          <field name="p1_visible_99f6fe6c41ad" string="附件" optional="show" readonly="1"/>
+          <field name="p1_visible_17d0f48c07fb" string="施工单位" optional="show" readonly="1"/>
+          <field name="p1_visible_75e856a13c7c" string="合同金额" optional="show" readonly="1" sum="合同金额"/>
+          <field name="p1_visible_689407e406ab" string="目前形象进度" optional="show" readonly="1"/>
+          <field name="p1_visible_0d8979d08c09" string="累计开票金额" optional="show" readonly="1" sum="累计开票金额"/>
+          <field name="p1_visible_aa6152009ab0" string="上期留存余额" optional="show" readonly="1" sum="上期留存余额"/>
+          <field name="p1_visible_ee6a4d9e2956" string="录入人" optional="show" readonly="1"/>
+          <field name="p1_visible_dfc25d77dc39" string="录入时间" optional="show" readonly="1"/>
+          <field name="document_state" optional="hide"/>
+          <field name="document_no" optional="hide"/>
+          <field name="receipt_time" optional="hide"/>
+          <field name="project_name" optional="hide"/>
+          <field name="period_no" optional="hide"/>
+          <field name="actual_fund_amount" optional="hide"/>
+          <field name="deducted_amount_total" optional="hide"/>
+          <field name="paid_amount_total" optional="hide"/>
+          <field name="construction_unit_name" optional="hide"/>
+          <field name="contract_amount" optional="hide"/>
+          <field name="current_project_stage" optional="hide"/>
+          <field name="accumulated_invoice_amount" optional="hide"/>
+          <field name="previous_retained_balance" optional="hide"/>
+          <field name="attachment_links" optional="hide"/>
+          <field name="attachment_ref" optional="hide"/>
+          <field name="creator_name" optional="hide"/>
+          <field name="created_time" optional="hide"/>
         </tree>
       </field>
     </record>
