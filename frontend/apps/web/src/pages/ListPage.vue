@@ -1026,31 +1026,10 @@ function isPrimaryTextColumn(field: string) {
   return field === rowPrimary.value && !isStatusLikeColumn(field);
 }
 
-function normalizeDuplicateDisplayText(value: unknown) {
-  return String(value ?? '')
-    .replace(/\s+/g, '')
-    .replace(/[（）()【】\[\]「」『』《》,，.。:：;；\-_—]/g, '')
-    .replace(/[\\/|]/g, '')
-    .trim();
-}
-
-function isSameDisplayTextFamily(primary: string, secondary: string) {
-  const left = normalizeDuplicateDisplayText(primary);
-  const right = normalizeDuplicateDisplayText(secondary);
-  if (!left || !right) return false;
-  if (left === right) return true;
-  const shorter = left.length <= right.length ? left : right;
-  const longer = left.length > right.length ? left : right;
-  if (shorter.length < 8) return false;
-  return longer.startsWith(shorter);
-}
-
 function shouldRenderRowSecondary(field: string, row: Record<string, unknown>) {
-  if (!rowSecondary.value || !isPrimaryTextColumn(field) || rowSecondary.value === field) return false;
-  const primaryText = semanticCell(field, row[field]).text;
-  const secondaryText = semanticCell(rowSecondary.value, row[rowSecondary.value]).text;
-  if (!secondaryText || secondaryText === '--') return false;
-  return !isSameDisplayTextFamily(primaryText, secondaryText);
+  void field;
+  void row;
+  return false;
 }
 
 function isFavoriteColumn(field: string) {
