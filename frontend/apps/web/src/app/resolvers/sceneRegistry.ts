@@ -44,6 +44,7 @@ export interface SceneListProfile {
   };
   row_primary?: string;
   row_secondary?: string;
+  show_row_number?: boolean;
   status_field?: string;
   metric_fields?: string[];
   batch_policy?: {

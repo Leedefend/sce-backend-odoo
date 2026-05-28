@@ -497,6 +497,7 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
     });
     const rowPrimary = String(rawProfile.row_primary || listSemantics.row_primary || '').trim();
     const rowSecondary = String(rawProfile.row_secondary || listSemantics.row_secondary || '').trim();
+    const showRowNumber = rawProfile.show_row_number !== false;
     const statusField = String(rawProfile.status_field || listSemantics.status_field || '').trim();
     const metricFields = Array.isArray(rawProfile.metric_fields || listSemantics.metric_fields)
       ? ((rawProfile.metric_fields || listSemantics.metric_fields) as unknown[])
@@ -562,6 +563,7 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
       preference_policy: preferencePolicy,
       row_primary: rowPrimary,
       row_secondary: rowSecondary,
+      show_row_number: showRowNumber,
       status_field: statusField,
       metric_fields: metricFields,
       batch_policy: batchPolicy,
