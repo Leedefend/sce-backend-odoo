@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import hashlib
 from copy import deepcopy
 from typing import Any, Dict, Optional
 
@@ -157,6 +158,7 @@ BUSINESS_FORM_STRUCTURE_INTERNAL_SUFFIXES = (
     "_count",
     "_rate",
 )
+SCBS55_SOURCE_DOCUMENT = "/home/odoo/workspace/partner_import_source/5.6优化（老系统菜单，字段列表展示）1.docx"
 
 
 class UiContractV2Handler(BaseIntentHandler):
@@ -1033,6 +1035,7 @@ class UiContractV2Handler(BaseIntentHandler):
         views = source_contract.get("views") if isinstance(source_contract.get("views"), dict) else {}
         tree = views.get("tree") if isinstance(views.get("tree"), dict) else views.get("list") if isinstance(views.get("list"), dict) else {}
         raw_columns = tree.get("columns") if isinstance(tree.get("columns"), list) else []
+        legacy_override = self._scbs55_legacy_visible_list_override(source_contract)
         columns: list[str] = []
         for row in raw_columns:
             name = str(row.get("name") if isinstance(row, dict) else row or "").strip()
@@ -1045,6 +1048,17 @@ class UiContractV2Handler(BaseIntentHandler):
                 columns.append(normalized)
         column_policy = profile.get("column_policy") if isinstance(profile.get("column_policy"), dict) else {}
         strict_columns = str(column_policy.get("mode") or "").strip().lower() == "strict"
+        override_labels = {}
+        if legacy_override:
+            columns = list(legacy_override.get("columns") or [])
+            override_labels = dict(legacy_override.get("column_labels") or {})
+            strict_columns = True
+        if not strict_columns and columns and all(str(name or "").startswith("p1_visible_") for name in columns):
+            # SCBS55 legacy-visible delivery actions use action-scoped alias
+            # columns to mirror the old system. Keep that list exact: appending
+            # business-operation fallback fields reintroduces user-hidden
+            # migration columns and can truncate long old-system lists.
+            strict_columns = True
         if not strict_columns:
             for name in common_fields:
                 if name and name not in columns:
@@ -1052,7 +1066,7 @@ class UiContractV2Handler(BaseIntentHandler):
             if note_field and note_field not in columns:
                 columns.append(note_field)
         max_visible_columns = 24
-        if len(columns) > max_visible_columns:
+        if not strict_columns and len(columns) > max_visible_columns:
             selected = columns[:max_visible_columns]
             list_visibility_fields = [
                 "operation_strategy",
@@ -1081,7 +1095,7 @@ class UiContractV2Handler(BaseIntentHandler):
             return
 
         labels = profile.get("column_labels") if isinstance(profile.get("column_labels"), dict) else {}
-        labels = {**labels, **{name: label_for(name) for name in columns}}
+        labels = {**labels, **{name: label_for(name) for name in columns}, **override_labels}
         deduped_columns: list[str] = []
         seen_labels: set[str] = set()
         for name in columns:
@@ -1110,20 +1124,26 @@ class UiContractV2Handler(BaseIntentHandler):
         if not row_secondary and row_primary != derived_status_field and "project_id" in columns:
             row_secondary = "project_id"
         profile.update({
-            "source": "ui.contract.v2.business_operation_projection",
+            "source": "ui.contract.v2.scbs55_legacy_visible_projection" if legacy_override else "ui.contract.v2.business_operation_projection",
             "columns": columns,
             "fact_columns": columns,
             "hidden_columns": [name for name in (profile.get("hidden_columns") if isinstance(profile.get("hidden_columns"), list) else []) if name in columns],
             "column_labels": labels,
+            "show_row_number": False if legacy_override else profile.get("show_row_number", True),
             "row_primary": row_primary,
             "row_secondary": row_secondary,
             "status_field": derived_status_field,
             "preference_policy": {
                 **(profile.get("preference_policy") if isinstance(profile.get("preference_policy"), dict) else {}),
                 "scope": "ui_only",
-                "allow_visibility": True,
-                "allow_order": True,
-                "allow_width": True,
+                "allow_visibility": False if legacy_override else True,
+                "allow_order": False if legacy_override else True,
+                "allow_width": False if legacy_override else True,
+                "locked_columns": columns if legacy_override else (
+                    (profile.get("preference_policy") or {}).get("locked_columns", [])
+                    if isinstance(profile.get("preference_policy"), dict)
+                    else []
+                ),
                 "must_request_columns": columns,
             },
         })
@@ -1153,6 +1173,68 @@ class UiContractV2Handler(BaseIntentHandler):
             elif "list" in views:
                 views["list"] = tree
             source_contract["views"] = views
+
+    def _scbs55_legacy_visible_list_override(self, source_contract: dict[str, Any]) -> dict[str, Any] | None:
+        action_id = 0
+        for raw in (
+            source_contract.get("action_id"),
+            source_contract.get("actionId"),
+            (source_contract.get("head") or {}).get("action_id") if isinstance(source_contract.get("head"), dict) else None,
+            (source_contract.get("source_meta") or {}).get("action_id") if isinstance(source_contract.get("source_meta"), dict) else None,
+        ):
+            try:
+                action_id = int(raw or 0)
+            except Exception:
+                action_id = 0
+            if action_id > 0:
+                break
+        if action_id <= 0 or "sc.legacy.user.priority.menu.plan" not in self.env:
+            return None
+        try:
+            plan = self.env["sc.legacy.user.priority.menu.plan"].sudo().with_context(active_test=False).search(
+                [
+                    ("source_document", "=", SCBS55_SOURCE_DOCUMENT),
+                    ("target_action_id", "=", action_id),
+                    ("list_field_contract", "!=", False),
+                ],
+                limit=1,
+            )
+        except Exception:
+            _logger.debug("SCBS55 legacy visible list override lookup skipped", exc_info=True)
+            return None
+        if not plan:
+            return None
+        model_name = str(getattr(plan, "target_model", "") or source_contract.get("model") or "").strip()
+        model_fields = {}
+        try:
+            model_fields = getattr(self.env[model_name], "_fields", {}) if model_name in self.env else {}
+        except Exception:
+            model_fields = {}
+
+        columns: list[str] = []
+        labels: dict[str, str] = {}
+        for item in plan.list_field_contract or []:
+            if not isinstance(item, dict):
+                continue
+            label = str(item.get("legacy_label") or "").strip()
+            if not label or label == "操作":
+                continue
+            field_name = "p1_visible_" + hashlib.sha1(label.encode("utf-8")).hexdigest()[:12]
+            if field_name in columns:
+                continue
+            if model_fields and field_name not in model_fields:
+                continue
+            columns.append(field_name)
+            labels[field_name] = label
+        if not columns:
+            return None
+        return {
+            "source": "scbs55_legacy_user_priority_menu_plan",
+            "action_id": action_id,
+            "plan_id": int(plan.id),
+            "columns": columns,
+            "column_labels": labels,
+        }
 
     def _inject_collaboration_contract(self, source_contract: dict[str, Any], *, model: str, view_type: str) -> None:
         try:

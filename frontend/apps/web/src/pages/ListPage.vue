@@ -243,7 +243,7 @@
           >
             <colgroup>
               <col v-if="showSelectionColumn" class="col-select" />
-              <col class="col-row-number" />
+              <col v-if="showRowNumberColumn" class="col-row-number" />
               <col v-for="col in displayedColumns" :key="`group-col-width-${group.key}-${col}`" :style="columnWidthStyle(col)" />
             </colgroup>
             <thead>
@@ -257,7 +257,7 @@
                     @change="onGroupSelectAllChange(group, $event)"
                   />
                 </th>
-                <th class="cell-row-number">{{ uiLabel('row_number', '序号') }}</th>
+                <th v-if="showRowNumberColumn" class="cell-row-number">{{ uiLabel('row_number', '序号') }}</th>
                 <th
                   v-for="col in displayedColumns"
                   :key="`group-col-${group.key}-${col}`"
@@ -310,7 +310,7 @@
                     @change="onRowCheckboxChange(row, $event)"
                   />
                 </td>
-                <td class="cell-row-number">{{ groupedRowNumber(group.key, index) }}</td>
+                <td v-if="showRowNumberColumn" class="cell-row-number">{{ groupedRowNumber(group.key, index) }}</td>
                 <td
                   v-for="col in displayedColumns"
                   :key="`group-cell-${group.key}-${String(row.id ?? index)}-${col}`"
@@ -355,7 +355,7 @@
             <tfoot>
               <tr>
                 <td v-if="showSelectionColumn" class="cell-select"></td>
-                <th class="cell-row-number footer-row-label">{{ footerRowLabel('page', group.sampleRows.length) }}</th>
+                <th v-if="showRowNumberColumn" class="cell-row-number footer-row-label">{{ footerRowLabel('page', group.sampleRows.length) }}</th>
                 <td
                   v-for="col in displayedColumns"
                   :key="`group-footer-page-${group.key}-${col}`"
@@ -368,7 +368,7 @@
               </tr>
               <tr>
                 <td v-if="showSelectionColumn" class="cell-select"></td>
-                <th class="cell-row-number footer-row-label">{{ footerRowLabel('total', group.count) }}</th>
+                <th v-if="showRowNumberColumn" class="cell-row-number footer-row-label">{{ footerRowLabel('total', group.count) }}</th>
                 <td
                   v-for="col in displayedColumns"
                   :key="`group-footer-total-${group.key}-${col}`"
@@ -389,12 +389,12 @@
         :class="{ 'has-selection-column': showSelectionColumn }"
         :style="tableWidthStyle"
       >
-        <colgroup>
-          <col v-if="showSelectionColumn" class="col-select" />
-          <col class="col-row-number" />
-          <col v-for="col in displayedColumns" :key="`col-width-${col}`" :style="columnWidthStyle(col)" />
-          <col v-if="columnChoices.length" class="col-column-picker" />
-        </colgroup>
+          <colgroup>
+            <col v-if="showSelectionColumn" class="col-select" />
+          <col v-if="showRowNumberColumn" class="col-row-number" />
+            <col v-for="col in displayedColumns" :key="`col-width-${col}`" :style="columnWidthStyle(col)" />
+            <col v-if="columnChoices.length" class="col-column-picker" />
+          </colgroup>
         <thead>
           <tr>
             <th v-if="showSelectionColumn" class="cell-select">
@@ -406,7 +406,7 @@
                 @change="onSelectAllChange"
               />
             </th>
-            <th class="cell-row-number">{{ uiLabel('row_number', '序号') }}</th>
+            <th v-if="showRowNumberColumn" class="cell-row-number">{{ uiLabel('row_number', '序号') }}</th>
             <th
               v-for="col in displayedColumns"
               :key="col"
@@ -482,7 +482,7 @@
                 @change="onRowCheckboxChange(row, $event)"
               />
             </td>
-            <td class="cell-row-number">{{ flatRowNumber(index) }}</td>
+            <td v-if="showRowNumberColumn" class="cell-row-number">{{ flatRowNumber(index) }}</td>
             <td v-for="col in displayedColumns" :key="col" :style="columnWidthStyle(col)" :class="columnDensityClass(col)">
               <button
                 v-if="isFavoriteColumn(col)"
@@ -527,7 +527,7 @@
         <tfoot>
           <tr>
             <td v-if="showSelectionColumn" class="cell-select"></td>
-            <th class="cell-row-number footer-row-label">{{ footerRowLabel('page', pageVisibleRows.length) }}</th>
+            <th v-if="showRowNumberColumn" class="cell-row-number footer-row-label">{{ footerRowLabel('page', pageVisibleRows.length) }}</th>
             <td
               v-for="col in displayedColumns"
               :key="`footer-page-${col}`"
@@ -541,7 +541,7 @@
           </tr>
           <tr>
             <td v-if="showSelectionColumn" class="cell-select"></td>
-            <th class="cell-row-number footer-row-label">{{ footerRowLabel('total', listTotal || pageVisibleRows.length) }}</th>
+            <th v-if="showRowNumberColumn" class="cell-row-number footer-row-label">{{ footerRowLabel('total', listTotal || pageVisibleRows.length) }}</th>
             <td
               v-for="col in displayedColumns"
               :key="`footer-total-${col}`"
@@ -1534,6 +1534,7 @@ function onRowCheckboxChange(row: Record<string, unknown>, event: Event) {
 
 const rowPrimary = computed(() => props.listProfile?.row_primary || '');
 const rowSecondary = computed(() => props.listProfile?.row_secondary || '');
+const showRowNumberColumn = computed(() => props.listProfile?.show_row_number !== false);
 const hiddenColumns = computed(() => {
   return (props.listProfile?.hidden_columns || []).reduce<Record<string, true>>((acc, col) => {
     acc[col] = true;
@@ -1593,7 +1594,9 @@ const displayedColumns = computed(() => {
   return filtered.length ? filtered : source.slice(0, 1);
 });
 const tableMinWidthPx = computed(() => {
-  const fixedWidth = (showSelectionColumn.value ? 44 : 0) + 64 + (columnChoices.value.length ? 72 : 0);
+  const fixedWidth = (showSelectionColumn.value ? 44 : 0)
+    + (showRowNumberColumn.value ? 64 : 0)
+    + (columnChoices.value.length ? 72 : 0);
   const dynamicWidth = displayedColumns.value.reduce((total, field) => {
     const explicit = effectiveColumnWidth(field);
     if (explicit) return total + explicit;

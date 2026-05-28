@@ -2811,6 +2811,8 @@ async function loadListColumnPreference(): Promise<void> {
     }, {});
     const preferencePolicy = listProfile.value?.preference_policy || {};
     const allowVisibility = preferencePolicy.allow_visibility !== false;
+    const allowOrder = preferencePolicy.allow_order !== false;
+    const allowWidth = preferencePolicy.allow_width !== false;
     const lockedColumns = new Set(
       (Array.isArray(preferencePolicy.locked_columns) ? preferencePolicy.locked_columns : [])
         .map((item) => String(item || '').trim())
@@ -2826,8 +2828,8 @@ async function loadListColumnPreference(): Promise<void> {
       });
     }
     listColumnVisibility.value = next;
-    listColumnOrder.value = columnOrder;
-    listColumnWidths.value = columnWidths;
+    listColumnOrder.value = allowOrder ? columnOrder : [];
+    listColumnWidths.value = allowWidth ? columnWidths : {};
   } catch (err) {
     if (seq === listColumnPreferenceLoadSeq) {
       listColumnVisibility.value = {};

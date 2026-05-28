@@ -153,6 +153,7 @@ artifact_dir = artifact_root()
 Plan = env["sc.legacy.user.priority.menu.plan"].sudo().with_context(active_test=False)  # noqa: F821
 View = env["ir.ui.view"].sudo()  # noqa: F821
 Action = env["ir.actions.act_window"].sudo()  # noqa: F821
+ActionView = env["ir.actions.act_window.view"].sudo()  # noqa: F821
 Menu = env["ir.ui.menu"].sudo().with_context(active_test=False)  # noqa: F821
 
 rows = Plan.search([("source_document", "=", SOURCE_DOCUMENT)], order="priority_sequence")
@@ -202,6 +203,17 @@ def action_for_record(record, base_action, view):
         action.write(values)
     else:
         action = Action.create(values)
+    action_view = ActionView.search([("act_window_id", "=", action.id), ("view_mode", "=", "tree")], limit=1)
+    action_view_values = {
+        "sequence": 1,
+        "view_id": view.id,
+        "act_window_id": action.id,
+        "view_mode": "tree",
+    }
+    if action_view:
+        action_view.write(action_view_values)
+    else:
+        ActionView.create(action_view_values)
     return action
 
 for record in rows:
