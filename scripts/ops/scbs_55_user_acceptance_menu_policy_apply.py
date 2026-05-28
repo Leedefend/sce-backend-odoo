@@ -123,6 +123,46 @@ def iter_policy_menus(policy):
                 yield menu
 
 
+def collect_descendants(menu):
+    Menu = env["ir.ui.menu"].sudo().with_context(active_test=False)  # noqa: F821
+    env.cr.execute(  # noqa: F821
+        """
+        WITH RECURSIVE descendants AS (
+            SELECT id
+              FROM ir_ui_menu
+             WHERE parent_id = %s
+            UNION ALL
+            SELECT child.id
+              FROM ir_ui_menu child
+              JOIN descendants parent ON child.parent_id = parent.id
+        )
+        SELECT id FROM descendants
+        """,
+        [int(menu.id)],
+    )
+    return Menu.browse([int(row[0]) for row in env.cr.fetchall()]).exists()  # noqa: F821
+
+
+def upsert_runtime_policy(*, menu, visible: bool, note: str) -> int:
+    Policy = env["ui.menu.config.policy"].sudo().with_context(active_test=False)  # noqa: F821
+    policies = Policy.search([("company_id", "=", env.company.id), ("menu_id", "=", menu.id)])  # noqa: F821
+    values = {
+        "active": True,
+        "company_id": env.company.id,  # noqa: F821
+        "menu_id": menu.id,
+        "visible": visible,
+        "custom_label": False,
+        "target_parent_menu_id": False,
+        "sequence_override": int(menu.sequence or 0),
+        "note": note,
+    }
+    if policies:
+        policies.write(values)
+        return len(policies)
+    Policy.create(values)
+    return 1
+
+
 ensure_allowed_db()
 artifact_dir = artifact_root()
 
@@ -144,6 +184,7 @@ acceptance_root = ensure_menu(
 
 groups_by_name = {}
 allowed_xmlids = set()
+allowed_menu_ids = {int(root.id), int(acceptance_root.id)}
 created_or_updated = []
 for row in rows:
     action = row.target_action_id
@@ -161,6 +202,7 @@ for row in rows:
             sequence=group_sequence,
         )
         groups_by_name[group_name] = group_menu
+        allowed_menu_ids.add(int(group_menu.id))
 
     menu_xmlid_name = xml_name("menu_scbs55_user_acceptance", f"{int(row.priority_sequence):03d}", row.legacy_menu_name)
     menu = ensure_menu(
@@ -172,6 +214,7 @@ for row in rows:
     )
     allowed_xmlid = f"{MODULE}.{menu_xmlid_name}"
     allowed_xmlids.add(allowed_xmlid)
+    allowed_menu_ids.add(int(menu.id))
     created_or_updated.append(
         {
             "priority_sequence": int(row.priority_sequence or 0),
@@ -181,6 +224,24 @@ for row in rows:
             "menu_xmlid": allowed_xmlid,
             "action_id": int(action.id),
         }
+    )
+
+runtime_keep_policy_count = 0
+runtime_hide_policy_count = 0
+for menu in env["ir.ui.menu"].sudo().browse(sorted(allowed_menu_ids)).exists():  # noqa: F821
+    runtime_keep_policy_count += upsert_runtime_policy(
+        menu=menu,
+        visible=True,
+        note="SCBS 55 user acceptance menu retained for customer verification.",
+    )
+
+root_descendants = collect_descendants(root)
+hidden_menus = root_descendants.filtered(lambda menu: int(menu.id) not in allowed_menu_ids and bool(menu.active))
+for menu in hidden_menus:
+    runtime_hide_policy_count += upsert_runtime_policy(
+        menu=menu,
+        visible=False,
+        note="Hidden while SCBS 55 user acceptance menu-only publishing strategy is active.",
     )
 
 from odoo.addons.smart_core.delivery.product_policy_catalog_sync_service import ProductPolicyCatalogSyncService  # noqa: E402
@@ -245,6 +306,10 @@ payload = {
     "database": env.cr.dbname,  # noqa: F821
     "source_document": SOURCE_DOCUMENT,
     "created_or_updated_menu_count": len(created_or_updated),
+    "runtime_allowed_menu_count": len(allowed_menu_ids),
+    "runtime_hidden_menu_count": len(hidden_menus),
+    "runtime_keep_policy_count": runtime_keep_policy_count,
+    "runtime_hide_policy_count": runtime_hide_policy_count,
     "acceptance_root_xmlid": ACCEPTANCE_ROOT_XMLID,
     "allowed_menu_xmlids": sorted(allowed_xmlids),
     "policy_results": policy_results,
