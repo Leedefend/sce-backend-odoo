@@ -87,7 +87,7 @@ class MenuService:
             yield parent_chain, node
 
     def _resolve_preview_group_anchor(self, ancestors: list[dict]) -> tuple[str, str]:
-        skipped_labels = {"智慧施工管理平台", "系统菜单", "业务菜单", "产品发布面"}
+        skipped_labels = {"智慧施工管理平台", "系统菜单", "业务菜单", "产品发布面", "用户核对菜单"}
         for ancestor in ancestors or []:
             if not isinstance(ancestor, dict):
                 continue

@@ -279,6 +279,53 @@ class TestDeliveryMenuEntryTarget(unittest.TestCase):
         labels = [child.get("label") for group in groups for child in group.get("children") or []]
         self.assertEqual(labels, ["项目台账"])
 
+    def test_user_acceptance_container_is_not_used_as_native_preview_group(self):
+        groups = menu_service.MenuService()._native_preview_menus(
+            native_nav=[
+                {
+                    "label": "系统菜单",
+                    "children": [
+                        {
+                            "label": "用户核对菜单",
+                            "menu_id": 100,
+                            "children": [
+                                {
+                                    "label": "基础资料",
+                                    "menu_id": 101,
+                                    "children": [
+                                        self._native_leaf(
+                                            label="供应商/合作单位",
+                                            menu_id=652,
+                                            route="/a/900?menu_id=652",
+                                            action_id=900,
+                                            model="res.partner",
+                                        )
+                                    ],
+                                },
+                                {
+                                    "label": "发票税务",
+                                    "menu_id": 102,
+                                    "children": [
+                                        self._native_leaf(
+                                            label="预缴税款",
+                                            menu_id=709,
+                                            route="/a/901?menu_id=709",
+                                            action_id=901,
+                                            model="sc.prepaid.tax",
+                                        )
+                                    ],
+                                },
+                            ],
+                        }
+                    ],
+                }
+            ],
+            policy={},
+        )
+
+        self.assertEqual([group.get("group_label") for group in groups], ["基础资料", "发票税务"])
+        self.assertEqual([group["menus"][0]["label"] for group in groups], ["供应商/合作单位", "预缴税款"])
+
 
 if __name__ == "__main__":
     unittest.main()

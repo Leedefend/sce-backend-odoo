@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import os
+import hashlib
 from pathlib import Path
 
 
@@ -304,8 +305,136 @@ for menu_id, sequence in hidden_menu_rows:
     )
 
 from odoo.addons.smart_core.delivery.product_policy_catalog_sync_service import ProductPolicyCatalogSyncService  # noqa: E402
+from odoo import SUPERUSER_ID, api  # noqa: E402
+from odoo.modules.registry import Registry  # noqa: E402
+
+
+def policy_release_pages(groups: list[dict]) -> list[dict]:
+    pages = []
+    for group in groups:
+        if not isinstance(group, dict) or group.get("category") == "hidden_original_menu":
+            continue
+        group_label = str(group.get("group_label") or "").strip()
+        for menu in group.get("menus") if isinstance(group.get("menus"), list) else []:
+            if not isinstance(menu, dict) or not effective(menu):
+                continue
+            menu_xmlid = str(menu.get("menu_xmlid") or "").strip()
+            menu_id = int(menu.get("menu_id") or 0)
+            action_id = int(menu.get("action_id") or 0)
+            route = str(menu.get("route") or "").strip()
+            if not route and action_id:
+                route = f"/a/{action_id}" + (f"?menu_id={menu_id}" if menu_id else "")
+            pages.append(
+                {
+                    "page_key": menu_xmlid or str(menu.get("menu_key") or "").strip(),
+                    "menu_key": menu_xmlid or str(menu.get("menu_key") or "").strip(),
+                    "menu_xmlid": menu_xmlid,
+                    "label": str(menu.get("label") or "").strip(),
+                    "route": route,
+                    "menu_id": menu_id,
+                    "action_id": action_id,
+                    "res_model": str(menu.get("model") or menu.get("res_model") or "").strip(),
+                    "enabled": True,
+                    "release_state": "released",
+                    "access_level": "public",
+                    "visible_menu_path": f"系统菜单 / 用户核对菜单 / {group_label} / {str(menu.get('label') or '').strip()}",
+                }
+            )
+    return pages
+
+
+def merge_release_pages(existing_pages: list, required_pages: list[dict]) -> tuple[list[dict], int]:
+    merged = [dict(page) for page in existing_pages if isinstance(page, dict)]
+    index = {}
+    for pos, page in enumerate(merged):
+        for key in ("menu_xmlid", "page_key", "menu_key"):
+            value = str(page.get(key) or "").strip()
+            if value:
+                index.setdefault(value, pos)
+        menu_id = int(page.get("menu_id") or 0)
+        action_id = int(page.get("action_id") or 0)
+        if menu_id:
+            index.setdefault(f"menu_id:{menu_id}", pos)
+        if action_id:
+            index.setdefault(f"action_id:{action_id}", pos)
+    added = 0
+    for page in required_pages:
+        keys = [
+            str(page.get("menu_xmlid") or "").strip(),
+            str(page.get("page_key") or "").strip(),
+            str(page.get("menu_key") or "").strip(),
+        ]
+        menu_id = int(page.get("menu_id") or 0)
+        action_id = int(page.get("action_id") or 0)
+        if menu_id:
+            keys.append(f"menu_id:{menu_id}")
+        if action_id:
+            keys.append(f"action_id:{action_id}")
+        hit = next((index[key] for key in keys if key and key in index), None)
+        if hit is None:
+            index[str(page.get("menu_xmlid") or page.get("page_key") or len(merged))] = len(merged)
+            merged.append(dict(page))
+            added += 1
+            continue
+        next_page = dict(merged[hit])
+        next_page.update({key: value for key, value in page.items() if value not in ("", 0, None)})
+        next_page["enabled"] = True
+        next_page["release_state"] = "released"
+        next_page["access_level"] = "public"
+        merged[hit] = next_page
+    return merged, added
+
+
+def sync_platform_release_gate_pages(product_key: str, required_pages: list[dict]) -> dict[str, object]:
+    platform_db = str(env["ir.config_parameter"].sudo().get_param("smart_core.platform_release_db", "") or "").strip()  # noqa: F821
+    platform_db = platform_db or "sc_platform_core"
+    current_db = str(env.cr.dbname)  # noqa: F821
+
+    def update_in(read_env):
+        Snapshot = read_env["sc.edition.release.snapshot"].sudo()
+        snapshot = Snapshot.search(
+            [
+                ("product_key", "=", product_key),
+                ("state", "=", "released"),
+                ("is_active", "=", True),
+                ("active", "=", True),
+            ],
+            order="released_at desc, activated_at desc, id desc",
+            limit=1,
+        )
+        if not snapshot:
+            return {"status": "SKIP", "reason": "active_release_snapshot_not_found", "platform_db": platform_db}
+        meta = dict(snapshot.meta_json if isinstance(snapshot.meta_json, dict) else {})
+        draft = dict(meta.get("release_draft") if isinstance(meta.get("release_draft"), dict) else {})
+        existing_pages = draft.get("pages") if isinstance(draft.get("pages"), list) else []
+        merged_pages, added = merge_release_pages(existing_pages, required_pages)
+        draft["pages"] = merged_pages
+        draft["page_count"] = sum(1 for page in merged_pages if isinstance(page, dict) and page.get("enabled", True) and str(page.get("release_state") or "released") in {"released", "preview"})
+        draft["total_page_count"] = len(merged_pages)
+        draft["fingerprint"] = hashlib.sha256(json.dumps(merged_pages, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()
+        meta["release_draft"] = draft
+        snapshot.write({"meta_json": meta})
+        return {
+            "status": "PASS",
+            "platform_db": platform_db,
+            "snapshot_id": int(snapshot.id),
+            "snapshot_version": str(snapshot.version or ""),
+            "required_page_count": len(required_pages),
+            "added_page_count": added,
+            "release_draft_page_count": int(draft["page_count"]),
+        }
+
+    if platform_db == current_db:
+        return update_in(env)  # noqa: F821
+    registry = Registry(platform_db)
+    with registry.cursor() as cr:
+        read_env = api.Environment(cr, SUPERUSER_ID, dict(env.context or {}))  # noqa: F821
+        result = update_in(read_env)
+        cr.commit()
+        return result
 
 policy_results = {}
+platform_release_gate_results = {}
 for product_key in PRODUCT_KEYS:
     policy = ProductPolicyCatalogSyncService(env).sync_policy(product_key=product_key)
     menu_groups = policy.menu_groups if isinstance(policy.menu_groups, list) else []
@@ -367,6 +496,10 @@ for product_key in PRODUCT_KEYS:
             "note": "SCBS 55 user acceptance menu-only publishing strategy active.",
         }
     )
+    platform_release_gate_results[product_key] = sync_platform_release_gate_pages(
+        product_key,
+        policy_release_pages(next_groups),
+    )
     policy_results[product_key] = {
         "total_policy_menus": total,
         "enabled_policy_menus": enabled,
@@ -392,6 +525,7 @@ payload = {
     "acceptance_root_xmlid": ACCEPTANCE_ROOT_XMLID,
     "allowed_menu_xmlids": sorted(allowed_xmlids),
     "policy_results": policy_results,
+    "platform_release_gate_results": platform_release_gate_results,
     "menus": created_or_updated,
 }
 write_json(artifact_dir / OUTPUT_JSON_NAME, payload)

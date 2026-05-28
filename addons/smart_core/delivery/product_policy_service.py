@@ -420,7 +420,10 @@ class ProductPolicyService:
     def _construction_policy_needs_catalog_refresh(self, payload: dict) -> bool:
         if not isinstance(payload, dict):
             return True
-        return not (payload.get("menu_groups") and payload.get("scenes") and payload.get("capabilities"))
+        # Native action/menu release policies can be complete without scene entries:
+        # scenes are only required for scene-first products, while user-visible
+        # menu publishing is driven by menu_groups plus capabilities.
+        return not (payload.get("menu_groups") and payload.get("capabilities"))
 
     def _stable_policy_domain(self, *, base_product_key: str):
         return [

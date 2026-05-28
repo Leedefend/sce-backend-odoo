@@ -250,8 +250,9 @@ class UiMenuConfigPolicy(models.Model):
                 normalized_menu_id = int(menu_id or 0)
             except Exception:
                 normalized_menu_id = 0
+            children = node.get("children")
             policy = policies_by_menu.get(normalized_menu_id)
-            if not policy:
+            if not policy and not (isinstance(children, list) and children):
                 labels = [
                     str(node.get("name") or "").strip(),
                     str(node.get("label") or "").strip(),
@@ -271,7 +272,6 @@ class UiMenuConfigPolicy(models.Model):
                 if policy.sequence_override:
                     node["sequence"] = policy.sequence_override
                     stats["reordered_count"] += 1
-            children = node.get("children")
             if isinstance(children, list):
                 next_children = []
                 for child in children:
