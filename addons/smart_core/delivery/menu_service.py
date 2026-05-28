@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
+import re
 from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
 from odoo.addons.smart_core.core.delivery_menu_defaults import (
     build_delivery_menu_child,
@@ -229,10 +230,30 @@ class MenuService:
                         "scene_source": "delivery_policy",
                         "policy_group_key": str(group.get("group_key") or "").strip(),
                         "policy_group_label": str(group.get("group_label") or "").strip(),
+                        "visible_menu_path": str(menu.get("visible_menu_path") or "").strip(),
                         "entry_target": menu.get("entry_target") if isinstance(menu.get("entry_target"), dict) else {},
                     }
                 )
         return [row for row in out if row.get("menu_key") and row.get("label")]
+
+    def _policy_menu_path_parts(self, menu: dict) -> list[str]:
+        path = str(menu.get("visible_menu_path") or "").strip()
+        if not path:
+            return []
+        return [part.strip() for part in re.split(r"\s*/\s*", path) if part.strip()]
+
+    def _acceptance_menu_subgroup_label(self, menu: dict) -> str:
+        parts = self._policy_menu_path_parts(menu)
+        for index, part in enumerate(parts):
+            if part == "用户核对菜单" and index + 1 < len(parts):
+                label = parts[index + 1]
+                if label and label != "用户核对菜单":
+                    return label
+        return ""
+
+    def _acceptance_group_key(self, parent_key: str, label: str, index: int) -> str:
+        safe = re.sub(r"[^0-9A-Za-z\u4e00-\u9fff]+", "_", str(label or "").strip()).strip("_")
+        return f"{parent_key}.{safe or index}"
 
     def _native_preview_menus(self, *, native_nav: list[dict], policy: dict) -> list[dict]:
         preview_menus_by_group = {}
@@ -441,17 +462,51 @@ class MenuService:
         group_nodes = []
         for group_key in group_order:
             row = groups_by_key.get(group_key) or {}
-            children = [
-                build_delivery_menu_child(menu)
-                for menu in (row.get("menus") if isinstance(row.get("menus"), list) else [])
-            ]
-            children = [child for child in children if child]
+            group_label = str(row.get("group_label") or "系统菜单")
+            menus = row.get("menus") if isinstance(row.get("menus"), list) else []
+            if group_label == "用户核对菜单":
+                grouped_children = []
+                subgroups: dict[str, dict] = {}
+                subgroup_order: list[str] = []
+                loose_children = []
+                for menu in menus:
+                    child = build_delivery_menu_child(menu)
+                    if not child:
+                        continue
+                    subgroup_label = self._acceptance_menu_subgroup_label(menu)
+                    if not subgroup_label:
+                        loose_children.append(child)
+                        continue
+                    if subgroup_label not in subgroups:
+                        subgroups[subgroup_label] = {
+                            "key": self._acceptance_group_key(str(row.get("group_key") or group_key), subgroup_label, len(subgroup_order) + 1),
+                            "label": subgroup_label,
+                            "children": [],
+                        }
+                        subgroup_order.append(subgroup_label)
+                    subgroups[subgroup_label]["children"].append(child)
+                for subgroup_label in subgroup_order:
+                    subgroup = subgroups[subgroup_label]
+                    grouped_children.append(
+                        build_delivery_menu_group(
+                            str(subgroup["key"]),
+                            str(subgroup["label"]),
+                            subgroup["children"],
+                        )
+                    )
+                children = grouped_children + loose_children
+            else:
+                children = [
+                    build_delivery_menu_child(menu)
+                    for menu in menus
+                ]
+                children = [child for child in children if child]
             if not children:
                 continue
             group_nodes.append(
                 build_delivery_menu_group(
                     str(row.get("group_key") or group_key),
-                    str(row.get("group_label") or "系统菜单"),
+                    group_label,
                     children,
                 )
             )
