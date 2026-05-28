@@ -20,6 +20,26 @@ from xml.sax.saxutils import escape
 SOURCE_DOCUMENT = "/home/odoo/workspace/partner_import_source/5.6优化（老系统菜单，字段列表展示）1.docx"
 OUTPUT_JSON_NAME = "scbs_55_user_visible_surface_action_tree_alias_write_result_v1.json"
 
+DOMAIN_OVERRIDES_BY_SEQUENCE = {
+    # These user-facing menus already have runtime projections, but the
+    # historical plan records keep the old SQL table names. Use the runtime
+    # carrier's stable classification so the menu does not appear empty.
+    40: [("fact_type", "=", "company_document_archive")],
+    100: [("fact_type", "=", "social_registration")],
+    110: [("fact_type", "=", "salary_registration")],
+    120: [("fact_type", "=", "subsidy")],
+    150: [("fact_type", "=", "document_borrow")],
+    270: [("claim_type", "=", "project_company_repay"), ("expense_type", "=", "还款登记")],
+    330: [("claim_type", "=", "expense"), ("expense_type", "=", "扣款实缴登记")],
+    340: [("claim_type", "=", "deduction_refund"), ("expense_type", "=", "扣款实缴退回")],
+}
+
+TARGET_MODEL_OVERRIDES_BY_SEQUENCE = {
+    270: "sc.expense.claim",
+    330: "sc.expense.claim",
+    340: "sc.expense.claim",
+}
+
 
 def artifact_root() -> Path:
     env_root = os.getenv("MIGRATION_ARTIFACT_ROOT")
@@ -113,14 +133,17 @@ def acceptance_menu(record):
 def action_for_record(record, base_action, view):
     action_name = "SCBS55 %03d %s" % (record.priority_sequence, record.legacy_menu_name)
     action = Action.search([("name", "=", action_name), ("res_model", "=", record.target_model)], limit=1)
-    domain = base_action.domain or "[]"
+    domain_override = DOMAIN_OVERRIDES_BY_SEQUENCE.get(record.priority_sequence)
+    domain = repr(domain_override) if domain_override else base_action.domain or "[]"
     source_tables = [
         item.strip()
         for item in re.split(r"[;,，；]", str(record.legacy_source_tables or ""))
         if item.strip()
     ]
     model_fields = env[record.target_model]._fields  # noqa: F821
-    if source_tables and "legacy_source_table" in model_fields:
+    if domain_override:
+        domain = repr(domain_override)
+    elif source_tables and "legacy_source_table" in model_fields:
         domain = repr([("legacy_source_table", "in", source_tables)])
     elif source_tables and "source_table" in model_fields:
         domain = repr([("source_table", "in", source_tables)])
@@ -142,6 +165,17 @@ def action_for_record(record, base_action, view):
     return action
 
 for record in rows:
+    target_model_override = TARGET_MODEL_OVERRIDES_BY_SEQUENCE.get(record.priority_sequence)
+    if target_model_override and record.target_model != target_model_override:
+        ir_model = env["ir.model"].sudo().search([("model", "=", target_model_override)], limit=1)  # noqa: F821
+        record.write(
+            {
+                "target_model": target_model_override,
+                "target_model_id": ir_model.id or False,
+                "current_round_action": "specialized_carrier_exists",
+                "target_iteration": "user_page_aligned_v3",
+            }
+        )
     labels = contract_labels(record)
     action = record.target_action_id
     model = str(record.target_model or "")
