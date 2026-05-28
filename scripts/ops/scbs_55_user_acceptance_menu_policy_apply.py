@@ -140,20 +140,70 @@ def collect_descendants(menu):
         """,
         [int(menu.id)],
     )
-    return Menu.browse([int(row[0]) for row in env.cr.fetchall()]).exists()  # noqa: F821
+    return Menu.browse([int(row[0]) for row in env.cr.fetchall()])  # noqa: F821
+
+
+def collect_active_descendant_ids(menu) -> set[int]:
+    env.cr.execute(  # noqa: F821
+        """
+        WITH RECURSIVE descendants AS (
+            SELECT id, active
+              FROM ir_ui_menu
+             WHERE parent_id = %s
+            UNION ALL
+            SELECT child.id, child.active
+              FROM ir_ui_menu child
+              JOIN descendants parent ON child.parent_id = parent.id
+        )
+        SELECT id FROM descendants WHERE active
+        """,
+        [int(menu.id)],
+    )
+    return {int(row[0]) for row in env.cr.fetchall()}  # noqa: F821
+
+
+def collect_active_descendant_rows(menu) -> list[tuple[int, int]]:
+    env.cr.execute(  # noqa: F821
+        """
+        WITH RECURSIVE descendants AS (
+            SELECT id, active, sequence
+              FROM ir_ui_menu
+             WHERE parent_id = %s
+            UNION ALL
+            SELECT child.id, child.active, child.sequence
+              FROM ir_ui_menu child
+              JOIN descendants parent ON child.parent_id = parent.id
+        )
+        SELECT id, COALESCE(sequence, 0)
+          FROM descendants
+         WHERE active
+         ORDER BY sequence, id
+        """,
+        [int(menu.id)],
+    )
+    return [(int(row[0]), int(row[1] or 0)) for row in env.cr.fetchall()]  # noqa: F821
 
 
 def upsert_runtime_policy(*, menu, visible: bool, note: str) -> int:
+    return upsert_runtime_policy_by_id(
+        menu_id=int(menu.id),
+        sequence=int(menu.sequence or 0),
+        visible=visible,
+        note=note,
+    )
+
+
+def upsert_runtime_policy_by_id(*, menu_id: int, sequence: int, visible: bool, note: str) -> int:
     Policy = env["ui.menu.config.policy"].sudo().with_context(active_test=False)  # noqa: F821
-    policies = Policy.search([("company_id", "=", env.company.id), ("menu_id", "=", menu.id)])  # noqa: F821
+    policies = Policy.search([("company_id", "=", env.company.id), ("menu_id", "=", menu_id)])  # noqa: F821
     values = {
         "active": True,
         "company_id": env.company.id,  # noqa: F821
-        "menu_id": menu.id,
+        "menu_id": menu_id,
         "visible": visible,
         "custom_label": False,
         "target_parent_menu_id": False,
-        "sequence_override": int(menu.sequence or 0),
+        "sequence_override": int(sequence or 0),
         "note": note,
     }
     if policies:
@@ -185,6 +235,8 @@ acceptance_root = ensure_menu(
 groups_by_name = {}
 allowed_xmlids = set()
 allowed_menu_ids = {int(root.id), int(acceptance_root.id)}
+allowed_group_by_xmlid = {}
+allowed_sequence_by_xmlid = {}
 created_or_updated = []
 for row in rows:
     action = row.target_action_id
@@ -215,6 +267,8 @@ for row in rows:
     allowed_xmlid = f"{MODULE}.{menu_xmlid_name}"
     allowed_xmlids.add(allowed_xmlid)
     allowed_menu_ids.add(int(menu.id))
+    allowed_group_by_xmlid[allowed_xmlid] = row.legacy_menu_group or "用户核对"
+    allowed_sequence_by_xmlid[allowed_xmlid] = int(row.priority_sequence or 0)
     created_or_updated.append(
         {
             "priority_sequence": int(row.priority_sequence or 0),
@@ -235,11 +289,16 @@ for menu in env["ir.ui.menu"].sudo().browse(sorted(allowed_menu_ids)).exists(): 
         note="SCBS 55 user acceptance menu retained for customer verification.",
     )
 
-root_descendants = collect_descendants(root)
-hidden_menus = root_descendants.filtered(lambda menu: int(menu.id) not in allowed_menu_ids and bool(menu.active))
-for menu in hidden_menus:
-    runtime_hide_policy_count += upsert_runtime_policy(
-        menu=menu,
+active_descendant_rows = collect_active_descendant_rows(root)
+hidden_menu_rows = [
+    (menu_id, sequence)
+    for menu_id, sequence in active_descendant_rows
+    if menu_id not in allowed_menu_ids
+]
+for menu_id, sequence in hidden_menu_rows:
+    runtime_hide_policy_count += upsert_runtime_policy_by_id(
+        menu_id=menu_id,
+        sequence=sequence,
         visible=False,
         note="Hidden while SCBS 55 user acceptance menu-only publishing strategy is active.",
     )
@@ -254,12 +313,11 @@ for product_key in PRODUCT_KEYS:
     enabled = 0
     hidden = 0
     allowed_seen = set()
-    next_groups = []
+    grouped_allowed_menus = {}
+    hidden_menus = []
     for group in menu_groups:
         if not isinstance(group, dict):
             continue
-        next_group = dict(group)
-        next_menus = []
         for menu in group.get("menus") if isinstance(group.get("menus"), list) else []:
             if not isinstance(menu, dict):
                 continue
@@ -267,20 +325,41 @@ for product_key in PRODUCT_KEYS:
             next_menu = dict(menu)
             menu_xmlid = str(next_menu.get("menu_xmlid") or "").strip()
             if menu_xmlid in allowed_xmlids:
+                group_label = allowed_group_by_xmlid.get(menu_xmlid) or "用户核对"
                 next_menu["enabled"] = True
                 next_menu["release_state"] = "released"
                 next_menu["access_level"] = "public"
                 next_menu["policy_note"] = "SCBS 55 user acceptance menu retained for customer verification."
+                next_menu["sequence"] = allowed_sequence_by_xmlid.get(menu_xmlid, int(next_menu.get("sequence") or 0))
                 enabled += 1
                 allowed_seen.add(menu_xmlid)
+                grouped_allowed_menus.setdefault(group_label, []).append(next_menu)
             else:
                 next_menu["enabled"] = False
                 next_menu["release_state"] = "hidden"
                 next_menu["policy_note"] = "Hidden while SCBS 55 user acceptance menu-only publishing strategy is active."
                 hidden += 1
-            next_menus.append(next_menu)
-        next_group["menus"] = next_menus
-        next_groups.append(next_group)
+                hidden_menus.append(next_menu)
+    next_groups = []
+    for group_index, (group_label, menus) in enumerate(grouped_allowed_menus.items(), start=1):
+        next_groups.append(
+            {
+                "group_key": f"construction.scbs55.{xml_name(group_label)}",
+                "group_label": group_label,
+                "category": "scbs55_user_acceptance_menu",
+                "menus": sorted(menus, key=lambda item: int(item.get("sequence") or 0)),
+            }
+        )
+        _ = group_index
+    if hidden_menus:
+        next_groups.append(
+            {
+                "group_key": "construction.scbs55.hidden_original_menus",
+                "group_label": "隐藏原菜单",
+                "category": "hidden_original_menu",
+                "menus": hidden_menus,
+            }
+        )
     missing_allowed = sorted(allowed_xmlids - allowed_seen)
     policy.write(
         {
@@ -307,7 +386,7 @@ payload = {
     "source_document": SOURCE_DOCUMENT,
     "created_or_updated_menu_count": len(created_or_updated),
     "runtime_allowed_menu_count": len(allowed_menu_ids),
-    "runtime_hidden_menu_count": len(hidden_menus),
+    "runtime_hidden_menu_count": len(hidden_menu_rows),
     "runtime_keep_policy_count": runtime_keep_policy_count,
     "runtime_hide_policy_count": runtime_hide_policy_count,
     "acceptance_root_xmlid": ACCEPTANCE_ROOT_XMLID,
