@@ -407,7 +407,9 @@ class MenuService:
             if not self._policy_menu_user_authorized(menu, native_index, is_admin=is_admin):
                 continue
             converged_menu = dict(menu)
-            renamed = convergence_service.RENAME_LABELS.get(str(converged_menu.get("label") or "").strip())
+            policy_group_key = str(menu.get("policy_group_key") or "").strip()
+            preserve_policy_label = policy_group_key.startswith("construction.scbs55.")
+            renamed = None if preserve_policy_label else convergence_service.RENAME_LABELS.get(str(converged_menu.get("label") or "").strip())
             if renamed:
                 converged_menu["label"] = renamed
             converged_menu["delivery_bucket"] = "released_product_policy"
@@ -426,7 +428,7 @@ class MenuService:
                 dedupe_routes.add(route)
             if menu_xmlid:
                 dedupe_xmlids.add(menu_xmlid)
-            target_group_key = scene_group_map.get(scene_key) or str(menu.get("policy_group_key") or "").strip() or group_order[0]
+            target_group_key = scene_group_map.get(scene_key) or policy_group_key or group_order[0]
             if target_group_key not in groups_by_key:
                 groups_by_key[target_group_key] = {
                     "group_key": target_group_key,
