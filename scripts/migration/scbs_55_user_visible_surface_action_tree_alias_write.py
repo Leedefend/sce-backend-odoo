@@ -32,12 +32,41 @@ DOMAIN_OVERRIDES_BY_SEQUENCE = {
     270: [("claim_type", "=", "project_company_repay"), ("expense_type", "=", "还款登记")],
     330: [("claim_type", "=", "expense"), ("expense_type", "=", "扣款实缴登记")],
     340: [("claim_type", "=", "deduction_refund"), ("expense_type", "=", "扣款实缴退回")],
+    # The legacy prepaid-tax menu is a detail-line surface. Exclude blank
+    # child rows imported only to preserve source identity; users need rows
+    # with a real tax/payment amount.
+    410: [
+        ("source_kind", "=", "prepaid_tax"),
+        ("direction", "=", "prepaid"),
+        ("amount_total", "!=", 0),
+    ],
 }
 
 TARGET_MODEL_OVERRIDES_BY_SEQUENCE = {
     270: "sc.expense.claim",
     330: "sc.expense.claim",
     340: "sc.expense.claim",
+}
+
+LIST_CONTRACT_LABEL_OVERRIDES_BY_SEQUENCE = {
+    # Source: old prepaid-tax export header
+    # /home/odoo/workspace/partner_import_source/3/+预缴税款639153288551406250.xlsx
+    410: [
+        "状态",
+        "项目名称",
+        "单据编号",
+        "受票方名称",
+        "交税类型",
+        "金额",
+        "不含税金额",
+        "税额",
+        "发票开具日期",
+        "预缴税款日期",
+        "完税凭证号码",
+        "附件",
+        "数据类型",
+        "录入人",
+    ],
 }
 
 
@@ -91,6 +120,17 @@ def contract_labels(record) -> list[str]:
         if label:
             labels.append(label)
     return labels
+
+
+def list_field_contract_from_labels(labels: list[str]) -> list[dict[str, object]]:
+    return [
+        {
+            "legacy_label": label,
+            "target_field": alias_field_name(label),
+            "sequence": index * 10,
+        }
+        for index, label in enumerate(labels, start=1)
+    ]
 
 
 def tree_arch(record, labels: list[str]) -> str:
@@ -176,7 +216,15 @@ for record in rows:
                 "target_iteration": "user_page_aligned_v3",
             }
         )
-    labels = contract_labels(record)
+    override_labels = LIST_CONTRACT_LABEL_OVERRIDES_BY_SEQUENCE.get(record.priority_sequence)
+    labels = override_labels or contract_labels(record)
+    if override_labels:
+        record.write(
+            {
+                "list_field_contract": list_field_contract_from_labels(labels),
+                "target_iteration": "user_page_aligned_v4",
+            }
+        )
     action = record.target_action_id
     model = str(record.target_model or "")
     if not labels:
