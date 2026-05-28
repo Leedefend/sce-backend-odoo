@@ -287,6 +287,7 @@ class TenderDocPurchase(models.Model):
     legacy_source_created_at = fields.Datetime("录入时间", index=True)
     legacy_record_id = fields.Char("旧系统记录ID", index=True)
     legacy_source_table = fields.Char("来源表", index=True)
+    legacy_attachment_ref = fields.Char("历史附件引用", readonly=True, index=True)
     attachment_ids = fields.Many2many("ir.attachment", string="附件")
     state = fields.Selection(
         [("draft", "草稿"), ("submitted", "审批中"), ("approved", "已通过"), ("rejected", "已驳回")],
