@@ -131,6 +131,24 @@ P1_ALIAS_LABELS = {
         '录入人',
         '录入时间',
     ],
+    'sc.legacy.fund.confirmation.document': [
+        '单据状态',
+        '单据编号',
+        '时间',
+        '项目名称',
+        '期数',
+        '本期收款',
+        '本期代扣代缴合计',
+        '本期拨付金额合计',
+        '附件',
+        '施工单位',
+        '合同金额',
+        '目前形象进度',
+        '累计开票金额',
+        '上期留存余额',
+        '录入人',
+        '录入时间',
+    ],
     'sc.legacy.fund.daily.snapshot.fact': [
         '单据状态',
         '单据编号',
@@ -798,6 +816,23 @@ MODEL_LABEL_SOURCE_OVERRIDES = {
         '开票单位': ['invoice_issue_company'],
         '开票日期': ['invoice_date'],
     },
+    'sc.legacy.fund.confirmation.document': {
+        '单据状态': ['document_state'],
+        '单据编号': ['document_no'],
+        '时间': ['receipt_time'],
+        '项目名称': ['project_name'],
+        '期数': ['period_no'],
+        '本期收款': ['actual_fund_amount'],
+        '本期代扣代缴合计': ['deducted_amount_total'],
+        '本期拨付金额合计': ['paid_amount_total'],
+        '施工单位': ['construction_unit_name'],
+        '合同金额': ['contract_amount'],
+        '目前形象进度': ['current_project_stage'],
+        '累计开票金额': ['accumulated_invoice_amount'],
+        '上期留存余额': ['previous_retained_balance'],
+        '录入人': ['creator_name'],
+        '录入时间': ['created_time'],
+    },
     'sc.receipt.invoice.line': {
         '单据编号': ['source_document_no', 'invoice_document_no', 'request_id'],
         '发票号': ['invoice_no'],
@@ -905,6 +940,8 @@ def _format_alias_value(record, field_name):
 
 def _legacy_attachment_links(record):
     attachment_ref = _format_alias_value(record, 'legacy_attachment_ref')
+    if not attachment_ref:
+        attachment_ref = _format_alias_value(record, 'attachment_ref')
     if not attachment_ref or 'sc.legacy.file.index' not in record.env:
         return ""
     files = record.env['sc.legacy.file.index'].sudo().search([
@@ -912,7 +949,7 @@ def _legacy_attachment_links(record):
         ('bill_id', '=', attachment_ref),
     ], order='upload_time, id')
     if not files:
-        return attachment_ref
+        return "历史附件"
     lines = []
     seen = set()
     for item in files:
@@ -927,7 +964,7 @@ def _legacy_attachment_links(record):
             continue
         seen.add(key)
         lines.append(f"{name} | {url}")
-    return " ".join(lines) if lines else attachment_ref
+    return " ".join(lines) if lines else "历史附件"
 
 
 def _alias_value(record, label):
@@ -950,6 +987,11 @@ def _alias_value(record, label):
             if value:
                 return value
         return ""
+    if record._name == 'sc.legacy.fund.confirmation.document' and label == '附件':
+        legacy_links = _legacy_attachment_links(record)
+        if legacy_links:
+            return legacy_links
+        return _format_alias_value(record, 'attachment_links')
     if record._name == 'sc.tax.deduction.registration' and label == '单据状态':
         legacy_state = _format_alias_value(record, 'legacy_document_state')
         if legacy_state:
