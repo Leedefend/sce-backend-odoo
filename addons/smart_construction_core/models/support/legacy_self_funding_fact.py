@@ -5,14 +5,19 @@ from odoo import fields, models
 class ScLegacySelfFundingFact(models.Model):
     _name = "sc.legacy.self.funding.fact"
     _description = "历史自筹资金事实"
-    _order = "document_date desc, source_table, legacy_record_id"
+    _order = "entry_time desc nulls last, document_date desc nulls last, legacy_pid desc, source_table, legacy_record_id"
 
     source_table = fields.Char(string="来源表", required=True, index=True)
     legacy_record_id = fields.Char(string="历史记录ID", required=True, index=True)
     legacy_header_id = fields.Char(string="历史主表ID", index=True)
     legacy_pid = fields.Char(string="历史PID", index=True)
     line_type = fields.Selection(
-        [("income", "自筹收入"), ("refund", "自筹退回")],
+        [
+            ("income", "自筹收入"),
+            ("refund", "自筹退回"),
+            ("income_visible", "自筹垫付收入"),
+            ("refund_visible", "自筹垫付退回"),
+        ],
         string="类型",
         required=True,
         index=True,
@@ -20,6 +25,9 @@ class ScLegacySelfFundingFact(models.Model):
     document_no = fields.Char(string="单据编号", index=True)
     document_date = fields.Date(string="单据日期", index=True)
     document_state = fields.Char(string="历史状态", index=True)
+    document_state_label = fields.Char(string="单据状态", index=True)
+    push_result = fields.Char(string="推送结果", index=True)
+    kingdee_document_no = fields.Char(string="金蝶单据编号", index=True)
     deleted_flag = fields.Char(string="删除标记", index=True)
     project_legacy_id = fields.Char(string="历史项目ID", index=True)
     project_name = fields.Char(string="项目名称", index=True)
@@ -30,11 +38,16 @@ class ScLegacySelfFundingFact(models.Model):
     income_category = fields.Char(string="收入类别", index=True)
     receipt_type = fields.Char(string="收款类型", index=True)
     legacy_category = fields.Char(string="历史分类", index=True)
+    title = fields.Char(string="标题", index=True)
+    need_refund = fields.Char(string="是否需要退回", index=True)
     self_funding_amount = fields.Float(string="自筹收入金额")
     refund_amount = fields.Float(string="自筹退回金额")
     unreturned_amount = fields.Float(string="自筹未退金额")
     payment_method = fields.Char(string="收款/退回方式", index=True)
     account_name = fields.Char(string="账户", index=True)
+    attachment_text = fields.Char(string="附件")
+    entry_user = fields.Char(string="录入人", index=True)
+    entry_time = fields.Datetime(string="录入时间", index=True)
     import_batch = fields.Char(string="导入批次", default="legacy_self_funding_v1", required=True, index=True)
     note = fields.Text(string="备注")
     active = fields.Boolean(string="有效", default=True, index=True)

@@ -12,6 +12,8 @@
                     <field name="partner_name"/>
                     <filter string="自筹收入" name="line_type_income" domain="[('line_type', '=', 'income')]"/>
                     <filter string="自筹退回" name="line_type_refund" domain="[('line_type', '=', 'refund')]"/>
+                    <filter string="自筹垫付收入" name="line_type_income_visible" domain="[('line_type', '=', 'income_visible')]"/>
+                    <filter string="自筹垫付退回" name="line_type_refund_visible" domain="[('line_type', '=', 'refund_visible')]"/>
                     <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
                     <filter string="按往来单位" name="group_partner" context="{'group_by': 'partner_name'}"/>
                     <filter string="按类型" name="group_line_type" context="{'group_by': 'line_type'}"/>
@@ -25,6 +27,9 @@
             <field name="model">sc.legacy.self.funding.fact</field>
             <field name="arch" type="xml">
                 <tree string="历史自筹资金事实" create="false" edit="false" delete="false">
+                    <field name="document_state_label"/>
+                    <field name="push_result"/>
+                    <field name="kingdee_document_no"/>
                     <field name="document_date"/>
                     <field name="document_no"/>
                     <field name="line_type"/>
@@ -37,6 +42,11 @@
                     <field name="self_funding_amount" sum="自筹收入合计"/>
                     <field name="refund_amount" sum="自筹退回合计"/>
                     <field name="unreturned_amount" sum="自筹未退合计"/>
+                    <field name="title"/>
+                    <field name="need_refund"/>
+                    <field name="attachment_text"/>
+                    <field name="entry_user"/>
+                    <field name="entry_time"/>
                     <field name="document_state"/>
                     <field name="deleted_flag"/>
                 </tree>
@@ -55,13 +65,60 @@
                                            (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
         </record>
 
+        <record id="view_sc_self_funding_advance_income_tree" model="ir.ui.view">
+            <field name="name">sc.self.funding.advance.income.tree</field>
+            <field name="model">sc.legacy.self.funding.fact</field>
+            <field name="arch" type="xml">
+                <tree string="自筹垫付收入" create="false" edit="false" delete="false">
+                    <field name="document_state_label" string="单据状态"/>
+                    <field name="document_no" string="单据编号"/>
+                    <field name="push_result" string="推送结果"/>
+                    <field name="kingdee_document_no" string="金蝶单据编号"/>
+                    <field name="document_date" string="日期"/>
+                    <field name="project_name" string="项目名称"/>
+                    <field name="partner_name" string="对方单位/付款"/>
+                    <field name="self_funding_amount" string="自筹金额" sum="自筹金额合计"/>
+                    <field name="income_category" string="收入类别"/>
+                    <field name="account_name" string="收款账户"/>
+                    <field name="refund_amount" string="自筹垫付退回金额" sum="退回金额合计"/>
+                    <field name="unreturned_amount" string="未退金额" sum="未退金额合计"/>
+                    <field name="title" string="标题"/>
+                    <field name="need_refund" string="是否需要退回"/>
+                    <field name="attachment_text" string="附件"/>
+                    <field name="entry_user" string="录入人"/>
+                    <field name="entry_time" string="录入时间"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_self_funding_advance_refund_tree" model="ir.ui.view">
+            <field name="name">sc.self.funding.advance.refund.tree</field>
+            <field name="model">sc.legacy.self.funding.fact</field>
+            <field name="arch" type="xml">
+                <tree string="自筹垫付退回" create="false" edit="false" delete="false" default_order="legacy_record_id desc">
+                    <field name="document_state_label" string="单据状态"/>
+                    <field name="push_result" string="推送结果"/>
+                    <field name="document_date" string="单据日期"/>
+                    <field name="document_no" string="单据编号"/>
+                    <field name="project_name" string="项目名称"/>
+                    <field name="refund_amount" string="退回金额" sum="退回金额合计"/>
+                    <field name="partner_name" string="往来单位/付款单位"/>
+                    <field name="note" string="备注"/>
+                    <field name="attachment_text" string="附件"/>
+                    <field name="entry_user" string="录入人"/>
+                    <field name="entry_time" string="录入时间"/>
+                </tree>
+            </field>
+        </record>
+
         <record id="action_sc_self_funding_advance_income" model="ir.actions.act_window">
             <field name="name">自筹垫付收入</field>
             <field name="res_model">sc.legacy.self.funding.fact</field>
             <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_sc_self_funding_advance_income_tree"/>
             <field name="search_view_id" ref="view_sc_legacy_self_funding_fact_search"/>
-            <field name="domain">[('line_type', '=', 'income')]</field>
-            <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_line_type_income': 1}</field>
+            <field name="domain">[('line_type', '=', 'income_visible')]</field>
+            <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_line_type_income_visible': 1}</field>
             <field name="groups_id" eval="[(6, 0, [
                 ref('smart_construction_core.group_sc_cap_business_initiator'),
                 ref('smart_construction_core.group_sc_cap_finance_read'),
@@ -74,9 +131,10 @@
             <field name="name">自筹垫付退回</field>
             <field name="res_model">sc.legacy.self.funding.fact</field>
             <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_sc_self_funding_advance_refund_tree"/>
             <field name="search_view_id" ref="view_sc_legacy_self_funding_fact_search"/>
-            <field name="domain">[('line_type', '=', 'refund')]</field>
-            <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_line_type_refund': 1}</field>
+            <field name="domain">[('line_type', '=', 'refund_visible')]</field>
+            <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_line_type_refund_visible': 1}</field>
             <field name="groups_id" eval="[(6, 0, [
                 ref('smart_construction_core.group_sc_cap_business_initiator'),
                 ref('smart_construction_core.group_sc_cap_finance_read'),
