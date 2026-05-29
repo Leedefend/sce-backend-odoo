@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="view_sc_legacy_engineering_progress_receipt_search" model="ir.ui.view">
+            <field name="name">sc.legacy.engineering.progress.receipt.search</field>
+            <field name="model">sc.legacy.engineering.progress.receipt</field>
+            <field name="arch" type="xml">
+                <search string="工程进度收款">
+                    <field name="document_no"/>
+                    <field name="project_id"/>
+                    <field name="project_name"/>
+                    <field name="partner_id"/>
+                    <field name="partner_name"/>
+                    <field name="receipt_type"/>
+                    <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="按往来单位" name="group_partner" context="{'group_by': 'partner_id'}"/>
+                    <filter string="按申请日期" name="group_document_date" context="{'group_by': 'document_date:month'}"/>
+                    <filter string="按承载模型" name="group_source_model" context="{'group_by': 'source_model'}"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_legacy_engineering_progress_receipt_tree" model="ir.ui.view">
+            <field name="name">sc.legacy.engineering.progress.receipt.tree</field>
+            <field name="model">sc.legacy.engineering.progress.receipt</field>
+            <field name="arch" type="xml">
+                <tree string="工程进度收款" create="false" edit="false" delete="false">
+                    <field name="document_date"/>
+                    <field name="document_no"/>
+                    <field name="project_id"/>
+                    <field name="project_name" optional="hide"/>
+                    <field name="partner_id"/>
+                    <field name="partner_name" optional="hide"/>
+                    <field name="amount" sum="收款金额合计"/>
+                    <field name="receipt_type"/>
+                    <field name="income_category" optional="show"/>
+                    <field name="state_label" optional="hide"/>
+                    <field name="creator_name" optional="show"/>
+                    <field name="created_time" optional="show"/>
+                    <field name="legacy_record_id" optional="hide"/>
+                    <field name="source_model" optional="hide"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="action_sc_legacy_engineering_progress_receipt" model="ir.actions.act_window">
+            <field name="name">工程进度收款</field>
+            <field name="res_model">sc.legacy.engineering.progress.receipt</field>
+            <field name="view_mode">tree</field>
+            <field name="views" eval="[(ref('smart_construction_core.view_sc_legacy_engineering_progress_receipt_tree'), 'tree')]"/>
+            <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_engineering_progress_receipt_search"/>
+            <field name="context">{'create': False, 'edit': False, 'delete': False}</field>
+            <field name="groups_id" eval="[(6, 0, [
+                ref('smart_construction_core.group_sc_cap_business_initiator'),
+                ref('smart_construction_core.group_sc_cap_finance_read'),
+                ref('smart_construction_core.group_sc_cap_finance_user'),
+                ref('smart_construction_core.group_sc_cap_finance_manager')
+            ])]"/>
+        </record>
+
+        <menuitem id="menu_sc_legacy_engineering_progress_receipt"
+                  name="工程进度收款"
+                  parent="smart_construction_core.menu_sc_cost_report_group"
+                  action="smart_construction_core.action_sc_legacy_engineering_progress_receipt"
+                  sequence="9"
+                  groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+
+        <record id="action_sc_supplier_contract_current" model="ir.actions.act_window">
+            <field name="name">供货合同</field>
+            <field name="res_model">sc.legacy.supplier.contract.pricing.fact</field>
+            <field name="view_mode">tree</field>
+            <field name="views" eval="[(ref('smart_construction_core.view_sc_legacy_supplier_contract_pricing_fact_tree'), 'tree')]"/>
+            <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_supplier_contract_pricing_fact_search"/>
+            <field name="context">{'create': False, 'edit': False, 'delete': False}</field>
+            <field name="domain">[('legacy_source_table', '=', 'T_GYSHT_INFO')]</field>
+            <field name="groups_id" eval="[(6, 0, [
+                ref('smart_construction_core.group_sc_cap_business_initiator'),
+                ref('smart_construction_core.group_sc_cap_contract_read'),
+                ref('smart_construction_core.group_sc_cap_contract_user'),
+                ref('smart_construction_core.group_sc_cap_contract_manager')
+            ])]"/>
+        </record>
+
+        <menuitem id="menu_sc_supplier_contract_current"
+                  name="供货合同"
+                  parent="smart_construction_core.menu_sc_cost_report_group"
+                  action="smart_construction_core.action_sc_supplier_contract_current"
+                  sequence="11"
+                  groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_contract_read,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
+
+        <menuitem id="menu_scbs55_user_acceptance_445_工程进度收款"
+                  name="工程进度收款"
+                  parent="smart_construction_core.menu_scbs55_user_acceptance_group_成本报表"
+                  action="smart_construction_core.action_sc_legacy_engineering_progress_receipt"
+                  sequence="445"
+                  groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+
+        <menuitem id="menu_scbs55_user_acceptance_455_供货合同"
+                  name="供货合同"
+                  parent="smart_construction_core.menu_scbs55_user_acceptance_group_成本报表"
+                  action="smart_construction_core.action_sc_supplier_contract_current"
+                  sequence="455"
+                  groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_contract_read,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
+    </data>
+</odoo>

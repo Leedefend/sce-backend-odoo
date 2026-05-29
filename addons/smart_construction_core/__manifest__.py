@@ -118,6 +118,7 @@
         'views/support/legacy_self_funding_views.xml',
         'views/support/legacy_project_fund_balance_views.xml',
         'views/support/legacy_supplier_contract_pricing_views.xml',
+        'views/support/legacy_engineering_progress_receipt_views.xml',
         'views/support/legacy_finance_internal_views.xml',
         'views/support/legacy_workflow_audit_views.xml',
         'views/support/legacy_workflow_detail_views.xml',

@@ -88,6 +88,7 @@ from . import legacy_income_invoice_fact
 from . import legacy_report_inventory
 from . import legacy_invoice_analysis_report_fact
 from . import legacy_invoice_cost_progress_report_fact
+from . import legacy_engineering_progress_receipt
 from . import legacy_project_operation_report_fact
 from . import legacy_ar_ap_report_fact
 from . import runtime_user_management
