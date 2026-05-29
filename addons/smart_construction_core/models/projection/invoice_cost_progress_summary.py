@@ -26,12 +26,39 @@ class ScInvoiceCostProgressSummary(models.Model):
                 to_regclass('project_project'),
                 to_regclass('res_company'),
                 to_regclass('sc_receipt_income'),
-                to_regclass('sc_invoice_registration')
+                to_regclass('sc_invoice_registration'),
+                to_regclass('sc_legacy_invoice_cost_progress_report_fact')
             """
         )
-        if not all(self._cr.fetchone()):
+        project_table, company_table, receipt_table, invoice_table, legacy_report_table = self._cr.fetchone()
+        if not (project_table and company_table):
             return
         tools.drop_view_if_exists(self._cr, self._table)
+        if legacy_report_table:
+            self._cr.execute(
+                f"""
+                CREATE OR REPLACE VIEW {self._table} AS (
+                    SELECT
+                        f.id::integer AS id,
+                        f.project_id,
+                        COALESCE(NULLIF(f.legacy_project_name, ''), p.name->>'zh_CN', p.name->>'en_US', '') AS project_name,
+                        p.company_id,
+                        COALESCE(c.currency_id, (SELECT currency_id FROM res_company ORDER BY id LIMIT 1)) AS currency_id,
+                        COALESCE(f.progress_receipt_amount, 0.0) AS progress_receipt_amount,
+                        COALESCE(f.output_invoice_amount, 0.0) AS output_invoice_amount,
+                        COALESCE(f.input_invoice_amount, 0.0) AS input_invoice_amount,
+                        COALESCE(f.cost_difference_amount, 0.0) AS cost_difference_amount,
+                        '按旧发票成本进度报表 SQLID 996ae8837cd54d72975eb238cbb7c9d3 导入项目汇总行'
+                            AS coverage_note
+                    FROM sc_legacy_invoice_cost_progress_report_fact f
+                    LEFT JOIN project_project p ON p.id = f.project_id
+                    LEFT JOIN res_company c ON c.id = p.company_id
+                )
+                """
+            )
+            return
+        if not (receipt_table and invoice_table):
+            return
         self._cr.execute(
             f"""
             CREATE OR REPLACE VIEW {self._table} AS (
