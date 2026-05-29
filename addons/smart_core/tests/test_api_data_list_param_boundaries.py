@@ -273,6 +273,20 @@ class TestApiDataListParamBoundaries(unittest.TestCase):
         self.assertNotIn(("computed_label", "ilike", "ABC"), domain)
         self.assertNotIn(("amount", "ilike", "ABC"), domain)
 
+    def test_python_order_sorts_date_text_chronologically(self):
+        rows = [
+            {"apply_date": "2024-10-01"},
+            {"apply_date": "2024-2-01"},
+            {"apply_date": ""},
+            {"apply_date": "2023年12月31日"},
+        ]
+
+        asc = self.handler._sort_rows_by_python_clause(rows, "apply_date", "asc")
+        desc = self.handler._sort_rows_by_python_clause(rows, "apply_date", "desc")
+
+        self.assertEqual([row["apply_date"] for row in asc], ["2023年12月31日", "2024-2-01", "2024-10-01", ""])
+        self.assertEqual([row["apply_date"] for row in desc], ["2024-10-01", "2024-2-01", "2023年12月31日", ""])
+
     def test_read_rejects_invalid_fields(self):
         result = self.handler._op_read("x.model", {"ids": [1], "fields": 7}, {}, False)
 

@@ -632,6 +632,7 @@ class ApiDataHandler(BaseIntentHandler):
         group_page_size: Optional[int] = None,
         group_page_offsets: Optional[Dict[str, int]] = None,
         group_summary: Optional[List[Dict[str, Any]]] = None,
+        order: str = "",
     ):
         summary = group_summary if isinstance(group_summary, list) else self._build_group_summary(env_model, domain, group_by, limit=limit)
         if not summary:
@@ -658,8 +659,16 @@ class ApiDataHandler(BaseIntentHandler):
             page_range_start = page_offset + 1 if count > 0 else 0
             page_range_end = min(count, page_offset + page_limit) if count > 0 else 0
             try:
-                group_recs = env_model.search(group_domain, limit=page_limit, offset=page_offset)
-                sample_rows = group_recs.read(row_fields)
+                sample_rows, order_error, _python_order_applied = self._search_read_with_order(
+                    env_model,
+                    group_domain,
+                    row_fields,
+                    order,
+                    page_limit,
+                    page_offset,
+                )
+                if order_error:
+                    sample_rows = []
             except Exception:
                 _logger.exception("group sample query failed model=%s group=%s", env_model._name, item.get("label"))
                 sample_rows = []
@@ -819,6 +828,119 @@ class ApiDataHandler(BaseIntentHandler):
         if "id" not in safe:
             safe.insert(0, "id")
         return safe
+
+    def _parse_order_clauses(self, env_model, order: str):
+        clauses = []
+        for raw_clause in str(order or "").split(","):
+            text = raw_clause.strip()
+            if not text:
+                continue
+            parts = text.split()
+            field_name = parts[0].strip()
+            if not field_name or field_name not in env_model._fields:
+                return [], self._err(400, "order 无效")
+            direction = parts[1].strip().lower() if len(parts) > 1 else "asc"
+            if direction not in {"asc", "desc"}:
+                return [], self._err(400, "order 无效")
+            clauses.append((field_name, direction))
+        return clauses, None
+
+    def _requires_python_order(self, env_model, clauses: List[Tuple[str, str]]) -> bool:
+        for field_name, _direction in clauses or []:
+            field = env_model._fields.get(field_name)
+            if not field:
+                return False
+            if field_name == "id":
+                continue
+            if not bool(getattr(field, "store", False)) or not bool(getattr(field, "column_type", None)):
+                return True
+        return False
+
+    def _sort_key_value(self, value):
+        if value in (None, False):
+            return (1, 9, "")
+        if isinstance(value, (list, tuple)):
+            if len(value) >= 2:
+                return self._sort_key_value(value[1])
+            if value:
+                return self._sort_key_value(value[0])
+            return (1, 9, "")
+        if isinstance(value, str):
+            text = value.strip()
+            if not text:
+                return (1, 9, "")
+            date_key = self._sort_key_date_text(text)
+            if date_key is not None:
+                return (0, 0, date_key)
+            return (0, 2, text.casefold())
+        if isinstance(value, (int, float)):
+            return (0, 1, value)
+        if isinstance(value, datetime):
+            return (0, 0, (value.year, value.month, value.day, value.hour, value.minute, value.second))
+        try:
+            return (0, 2, str(value).casefold())
+        except Exception:
+            return (1, 9, "")
+
+    def _sort_key_date_text(self, text: str):
+        normalized = text.strip().replace("T", " ")
+        normalized = re.sub(r"[年月/.]", "-", normalized)
+        normalized = normalized.replace("日", "")
+        match = re.match(
+            r"^(\d{4})-(\d{1,2})-(\d{1,2})(?:\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?",
+            normalized,
+        )
+        if not match:
+            return None
+        try:
+            year, month, day = (int(match.group(i) or 0) for i in range(1, 4))
+            hour = int(match.group(4) or 0)
+            minute = int(match.group(5) or 0)
+            second = int(match.group(6) or 0)
+            datetime(year, month, day, hour, minute, second)
+        except Exception:
+            return None
+        return (year, month, day, hour, minute, second)
+
+    def _sort_rows_by_python_clause(self, rows: List[Dict[str, Any]], field_name: str, direction: str):
+        blanks = []
+        values = []
+        for row in rows:
+            key = self._sort_key_value(row.get(field_name))
+            if key[0]:
+                blanks.append(row)
+            else:
+                values.append(row)
+        values.sort(
+            key=lambda row, name=field_name: self._sort_key_value(row.get(name))[1:],
+            reverse=direction == "desc",
+        )
+        return values + blanks
+
+    def _search_read_with_order(
+        self,
+        env_model,
+        domain,
+        fields_safe: List[str],
+        order: str,
+        limit: int,
+        offset: int = 0,
+    ):
+        clauses, order_error = self._parse_order_clauses(env_model, order)
+        if order_error:
+            return [], order_error, False
+        if not clauses or not self._requires_python_order(env_model, clauses):
+            recs = env_model.search(domain or [], order=order or None, limit=limit or None, offset=offset or 0)
+            return recs.read(fields_safe or ["id", "name"]), None, False
+
+        row_fields = list(dict.fromkeys(list(fields_safe or ["id", "name"]) + [field for field, _direction in clauses]))
+        recs = env_model.search(domain or [], order="id asc")
+        rows = recs.read(row_fields)
+        for field_name, direction in reversed(clauses):
+            rows = self._sort_rows_by_python_clause(rows, field_name, direction)
+        start = max(0, int(offset or 0))
+        end = start + int(limit or 0) if int(limit or 0) > 0 else None
+        return rows[start:end], None, True
 
     def _current_project_id(self, p: Dict[str, Any], ctx: Dict[str, Any]) -> int:
         return selected_project_id_from_context(p, ctx)
@@ -1255,13 +1377,31 @@ class ApiDataHandler(BaseIntentHandler):
             domain = domain + self._build_search_term_domain(env_model, search_term, fields_safe)
         domain, project_scope_meta = self._apply_project_scope(env_model, domain, p, ctx)
 
-        recs = env_model.search(domain or [], order=order or None, limit=limit or None, offset=offset or 0)
         try:
-            rows: List[Dict[str, Any]] = recs.read(fields_safe or ["id", "name"])
+            rows, order_error, python_order_applied = self._search_read_with_order(
+                env_model,
+                domain,
+                fields_safe,
+                order,
+                limit,
+                offset,
+            )
+            if order_error:
+                return order_error
         except AccessError as ae:
             # 兜底：仍然被 field-level 权限阻断时，退回最小安全字段集
             _logger.warning("read() AccessError on %s, fallback to minimal fields. err=%s", model, ae)
-            rows = recs.read(["id", "name", "display_name"] if "display_name" in env_model._fields else ["id", "name"])
+            fallback_fields = ["id", "name", "display_name"] if "display_name" in env_model._fields else ["id", "name"]
+            rows, order_error, python_order_applied = self._search_read_with_order(
+                env_model,
+                domain,
+                fallback_fields,
+                order,
+                limit,
+                offset,
+            )
+            if order_error:
+                return order_error
 
         need_total = self._get_bool(p, "need_total", False)
         total = env_model.search_count(domain or []) if need_total else None
@@ -1336,6 +1476,7 @@ class ApiDataHandler(BaseIntentHandler):
             group_page_size=group_page_size if group_page_size > 0 else None,
             group_page_offsets=group_page_offsets,
             group_summary=group_summary,
+            order=order,
         )
 
         data = {
@@ -1376,6 +1517,7 @@ class ApiDataHandler(BaseIntentHandler):
             "limit": limit,
             "offset": offset,
             "order": order,
+            "python_order_applied": bool(python_order_applied),
             "count": len(rows),
             "aggregates": bool(aggregates),
             "fields": fields_safe,
