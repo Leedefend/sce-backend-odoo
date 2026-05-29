@@ -108,7 +108,6 @@ for row in rows:
     project_id = project_map.get(clean(row.get("project_legacy_id")))
     if not project_id:
         missing_project += 1
-        continue
     partner_id = partner_map.get(clean(row.get("partner_legacy_id")))
     if not partner_id:
         partner_id = partner_name_map.get(clean(row.get("partner_name")).lower())
@@ -124,7 +123,7 @@ for row in rows:
         "deleted_flag": clean(row.get("deleted_flag")) or "0",
         "project_legacy_id": clean(row.get("project_legacy_id")),
         "project_name": clean(row.get("project_name")),
-        "project_id": project_id,
+        "project_id": project_id or False,
         "partner_legacy_id": clean(row.get("partner_legacy_id")),
         "partner_name": clean(row.get("partner_name")),
         "partner_id": partner_id or False,
