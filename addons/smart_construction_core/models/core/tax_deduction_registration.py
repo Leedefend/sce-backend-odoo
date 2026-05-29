@@ -33,6 +33,7 @@ class ScTaxDeductionRegistration(models.Model):
     document_no = fields.Char(string="单据编号", index=True)
     document_date = fields.Date(string="单据日期", default=fields.Date.context_today, index=True)
     deduction_confirm_date = fields.Date(string="认证抵扣日期", index=True)
+    legacy_visible_project_name = fields.Char(string="历史可见项目名称", readonly=True, index=True)
     project_id = fields.Many2one("project.project", string="项目", required=True, index=True)
     company_id = fields.Many2one(
         "res.company",

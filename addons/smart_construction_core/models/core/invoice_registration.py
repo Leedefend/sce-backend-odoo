@@ -54,6 +54,7 @@ class ScInvoiceRegistration(models.Model):
         required=True,
         index=True,
     )
+    legacy_visible_project_name = fields.Char(string="历史可见项目名称", readonly=True, index=True)
     project_id = fields.Many2one("project.project", string="项目", required=True, index=True)
     company_id = fields.Many2one(
         "res.company",
@@ -82,6 +83,22 @@ class ScInvoiceRegistration(models.Model):
     invoice_type = fields.Char(string="发票类型", index=True)
     tax_rate = fields.Char(string="税率", index=True)
     tax_type = fields.Char(string="交税类型", index=True)
+    legacy_visible_data_type = fields.Char(string="历史可见数据类型", readonly=True, index=True)
+    legacy_visible_contract_no = fields.Char(string="历史可见合同编号", readonly=True)
+    legacy_visible_application_date = fields.Datetime(string="历史可见申请日期", readonly=True)
+    legacy_visible_invoice_state = fields.Char(string="历史可见开票状态", readonly=True)
+    legacy_visible_partner_name = fields.Char(string="历史可见受票方名称", readonly=True)
+    legacy_visible_cumulative_invoice_amount = fields.Char(string="历史可见累计开票金额", readonly=True)
+    legacy_visible_invoice_count = fields.Char(string="历史可见开票张数", readonly=True)
+    legacy_visible_current_invoice_amount = fields.Char(string="历史可见本次开票金额", readonly=True)
+    legacy_visible_note = fields.Text(string="历史可见备注", readonly=True)
+    legacy_visible_kingdee_no = fields.Char(string="历史可见金蝶单据编号", readonly=True)
+    legacy_visible_surcharge_amount = fields.Char(string="历史可见附加税", readonly=True)
+    legacy_visible_tax_rate = fields.Char(string="历史可见税率", readonly=True)
+    legacy_visible_related_receipt_amount = fields.Char(string="历史可见关联回款金额", readonly=True)
+    legacy_visible_invoice_no = fields.Char(string="历史可见发票号", readonly=True)
+    legacy_visible_invoice_type = fields.Char(string="历史可见发票种类", readonly=True)
+    legacy_visible_invoice_issue_company = fields.Char(string="历史可见开票单位", readonly=True)
     prepaid_tax_date = fields.Date(string="预缴税款日期", index=True)
     tax_certificate_no = fields.Char(string="完税凭证号码", index=True)
     invoice_content = fields.Char(string="开票内容", index=True)

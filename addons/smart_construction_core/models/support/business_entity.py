@@ -52,6 +52,8 @@ class ScBusinessEntity(models.Model):
     legacy_xmmc = fields.Char(string="旧主体名称", index=True)
     legacy_company_id = fields.Char(string="旧公司ID", index=True)
     legacy_company_name = fields.Char(string="旧公司名称", index=True)
+    legacy_visible_created_time = fields.Datetime(string="历史可见录入时间", readonly=True)
+    legacy_visible_creator_name = fields.Char(string="历史可见录入人", readonly=True)
     note = fields.Text(string="备注")
     active = fields.Boolean(default=True, index=True)
     map_ids = fields.One2many("sc.legacy.business.entity.map", "business_entity_id", string="旧主体映射")

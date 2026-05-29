@@ -92,6 +92,11 @@ class TenderBid(models.Model):
     legacy_fact_id = fields.Integer("来源通用记录ID", index=True)
     legacy_fact_type = fields.Char("来源业务类型", index=True)
     legacy_note = fields.Text("历史来源说明")
+    legacy_visible_document_state = fields.Char("历史单据状态", readonly=True)
+    legacy_visible_opening_time = fields.Datetime("历史开标时间", readonly=True)
+    legacy_visible_project_name = fields.Char("历史项目名称", readonly=True)
+    legacy_visible_registration_time = fields.Datetime("历史登记时间", readonly=True)
+    legacy_visible_creator_name = fields.Char("历史录入人", readonly=True)
 
     _sql_constraints = [
         ("legacy_tender_bid_unique", "unique(legacy_fact_model, legacy_fact_id)", "来源通用投标事实已迁移为投标记录。"),
@@ -283,6 +288,8 @@ class TenderDocPurchase(models.Model):
     receipt_bank_name = fields.Char("开户银行", index=True)
     receipt_bank_account = fields.Char("收款账户", index=True)
     remark = fields.Text("备注")
+    legacy_visible_applicant_name = fields.Char("历史申请人", readonly=True)
+    legacy_visible_document_state = fields.Char("历史单据状态", readonly=True)
     legacy_source_created_by = fields.Char("录入人", index=True)
     legacy_source_created_at = fields.Datetime("录入时间", index=True)
     legacy_record_id = fields.Char("旧系统记录ID", index=True)
@@ -395,6 +402,12 @@ class TenderGuarantee(models.Model):
     _inherit = ["mail.thread", "mail.activity.mixin"]
 
     bid_id = fields.Many2one("tender.bid", string="投标", required=True, ondelete="cascade", tracking=True)
+    legacy_fact_id = fields.Integer(related="bid_id.legacy_fact_id", string="历史投标事实ID", readonly=True)
+    legacy_visible_document_state = fields.Char("历史可见状态", readonly=True)
+    legacy_visible_document_no = fields.Char("历史可见单据编号", readonly=True)
+    legacy_visible_project_name = fields.Char("历史可见项目名称", readonly=True)
+    legacy_visible_creator_name = fields.Char("历史可见录入人", readonly=True)
+    legacy_visible_created_time = fields.Datetime("历史可见录入时间", readonly=True)
     project_id = fields.Many2one(related="bid_id.project_id", store=True, readonly=True)
     type = fields.Selection([("out", "支出"), ("return", "退回")], string="类型", required=True, default="out")
     date = fields.Date("单据日期", default=fields.Date.context_today)

@@ -224,6 +224,29 @@ class PaymentRequest(models.Model):
         readonly=True,
         index=True,
     )
+    legacy_visible_document_no = fields.Char(
+        string="历史可见单据编号",
+        readonly=True,
+        index=True,
+    )
+    legacy_visible_project_name = fields.Char(
+        string="历史可见项目名称",
+        readonly=True,
+        index=True,
+    )
+    legacy_visible_request_date = fields.Char(
+        string="历史可见申请日期",
+        readonly=True,
+    )
+    legacy_visible_payee_unit = fields.Char(
+        string="历史可见收款单位",
+        readonly=True,
+        index=True,
+    )
+    legacy_visible_request_amount = fields.Char(
+        string="历史申请付款金额",
+        readonly=True,
+    )
     cost_category_name = fields.Char(
         string="成本分类名称",
         compute="_compute_reconciliation_summary",
@@ -274,6 +297,11 @@ class PaymentRequest(models.Model):
     )
     legacy_payee_account_no = fields.Char(
         string="历史收款账号",
+        readonly=True,
+        index=True,
+    )
+    legacy_visible_writer = fields.Char(
+        string="历史填写人",
         readonly=True,
         index=True,
     )

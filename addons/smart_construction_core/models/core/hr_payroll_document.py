@@ -39,6 +39,13 @@ class ScHrPayrollDocument(models.Model):
     legacy_document_state = fields.Char(string="历史状态", index=True, readonly=True)
     legacy_source_table = fields.Char(string="历史来源表", index=True, readonly=True)
     legacy_source_id = fields.Char(string="历史来源ID", index=True, readonly=True)
+    legacy_visible_creator_name = fields.Char(string="历史录入人", readonly=True)
+    legacy_visible_created_time = fields.Datetime(string="历史录入时间", readonly=True)
+    legacy_visible_people_count = fields.Char(string="历史人数", readonly=True)
+    legacy_visible_type = fields.Char(string="历史类型", readonly=True)
+    legacy_visible_note = fields.Text(string="历史备注", readonly=True)
+    legacy_visible_certificate_fee = fields.Char(string="历史证书费用", readonly=True)
+    legacy_visible_item_type = fields.Char(string="历史事项类型", readonly=True)
 
     _sql_constraints = [
         (
@@ -70,6 +77,13 @@ class ScHrPayrollDocument(models.Model):
             "legacy_document_state",
             "legacy_source_table",
             "legacy_source_id",
+            "legacy_visible_creator_name",
+            "legacy_visible_created_time",
+            "legacy_visible_people_count",
+            "legacy_visible_type",
+            "legacy_visible_note",
+            "legacy_visible_certificate_fee",
+            "legacy_visible_item_type",
         ]
 
     def _check_submit_requirements(self):
