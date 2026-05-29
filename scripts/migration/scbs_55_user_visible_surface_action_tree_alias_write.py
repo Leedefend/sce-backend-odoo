@@ -24,22 +24,53 @@ DOMAIN_OVERRIDES_BY_SEQUENCE = {
     # These user-facing menus already have runtime projections, but the
     # historical plan records keep the old SQL table names. Use the runtime
     # carrier's stable classification so the menu does not appear empty.
-    40: [("fact_type", "=", "company_document_archive")],
-    100: [("fact_type", "=", "social_registration")],
-    110: [("fact_type", "=", "salary_registration")],
-    120: [("fact_type", "=", "subsidy")],
-    150: [("fact_type", "=", "document_borrow")],
-    270: [("claim_type", "=", "project_company_repay"), ("expense_type", "=", "还款登记")],
-    330: [("claim_type", "=", "expense"), ("expense_type", "=", "扣款实缴登记")],
-    340: [("claim_type", "=", "deduction_refund"), ("expense_type", "=", "扣款实缴退回")],
-    # The legacy prepaid-tax menu is a detail-line surface. Exclude blank
-    # child rows imported only to preserve source identity; users need rows
-    # with a real tax/payment amount.
-    410: [
-        ("source_kind", "=", "prepaid_tax"),
-        ("direction", "=", "prepaid"),
-        ("amount_total", "!=", 0),
-    ],
+    # 基础资料 pages are mirrored from the live old-system page grain. The
+    # canonical business entity map only contains deduplicated mapping rows.
+    10: [("legacy_company_id", "=", "online_old_scbs:T_Base_CooperatCompany:list853")],
+    20: [("legacy_company_id", "=", "online_old_scbs:T_Base_CooperatCompany:list854")],
+    30: [("legacy_contract_id", "!=", False), ("legacy_income_surface_visible", "=", True)],
+    40: [("legacy_source_table", "=", "online_old_scbs:SGZL_RZRJ:list856")],
+    50: [("legacy_source_table", "=", "online_old_scbs:BGGL_HBZJ_XZD_QJXJSPB:list857")],
+    60: [("legacy_source_table", "=", "online_old_scbs:BGGL_XZD_YZSYSPB:list858")],
+    80: [("source_table", "=", "online_old_scbs:BASE_SYSTEM_USER:list859")],
+    90: [("legacy_source_table", "=", "online_old_scbs:D_SCBSJS_BGGL_XZ_SBRY:list860")],
+    100: [("legacy_source_table", "=", "online_old_scbs:BGGL_XZ_JXDJ_ZB:list861")],
+    110: [("legacy_source_table", "=", "online_old_scbs:BGGL_XZ_GZ:list862")],
+    120: [("legacy_source_table", "=", "online_old_scbs:BGGL_XZ_BZ:list863")],
+    150: [("legacy_source_table", "=", "online_old_scbs:ZJGL_ZSJYGL:list865")],
+    160: [("legacy_fact_model", "=", "online_old_scbs:P_ZTB_GCBMGL:list866")],
+    170: [("legacy_source_table", "=", "online_old_scbs:BGGL_ZTBJHT_TBBM_TBBMFSQ:list895")],
+    180: [("bid_id.legacy_fact_model", "=", "online_old_scbs:ZJGL_BZJGL_Branch_SBZJDJ:list868")],
+    190: [("bid_id.legacy_fact_model", "=", "online_old_scbs:ZJGL_BZJGL_Branch_SBZJTH:list869")],
+    200: [("bid_id.legacy_fact_model", "=", "online_old_scbs:ZJGL_BZJGL_Pay_FBZJ:list870")],
+    210: [("bid_id.legacy_fact_model", "=", "online_old_scbs:ZJGL_BZJGL_Pay_FBZJTH:list871")],
+    220: [("legacy_source_model", "=", "online_old_scbs:BGGL_JHK_JKSQ:list872")],
+    230: [("legacy_source_model", "=", "online_old_scbs:BGGL_JHK_HKDJ:list873")],
+    240: [("legacy_source_model", "=", "online_old_scbs:CWGL_FYBX:list874")],
+    250: [("legacy_source_model", "=", "online_old_scbs:C_CWSFK_GSCWSR:list875")],
+    260: [("legacy_source_model", "=", "online_old_scbs:C_CWSFK_GSCWZC:list876")],
+    270: [("legacy_source_model", "=", "online_old_scbs:ZJGL_ZCDFSZ_FXJK_HK:list896")],
+    280: [("legacy_source_model", "=", "online_old_scbs:ZJGL_ZCDFSZ_FXJK_JK:list878")],
+    # 支付申请 is the old C_ZFSQGL list. Exclude blank-source residual rows and
+    # T_FK_Supplier actual-payment rows so the browser count matches old SCBS.
+    290: [("legacy_source_table", "=", "C_ZFSQGL")],
+    300: [("legacy_source_model", "=", "online_old_scbs:C_ZFSQGL_KKD:list880")],
+    # 往来单位付款 is mirrored from the live old-system T_FK_SUPPLIER list,
+    # because prior fact imports use a different row grain than the old page.
+    310: [("legacy_source_model", "=", "online_old_scbs:T_FK_SUPPLIER:list881")],
+    320: [("legacy_source_model", "=", "online_old_scbs:C_FKGL_ZHJZJWL:list882")],
+    330: [("legacy_source_model", "=", "online_old_scbs:T_KK_SJDJB:list897")],
+    340: [("legacy_source_model", "=", "online_old_scbs:T_KK_SJTHB:list898")],
+    350: [("legacy_header_id", "like", "online_old_scbs:ZJGL_SZQR_DKQRB:list885:%")],
+    360: [("source_table", "=", "online_old_scbs:D_SCBSJS_ZJGL_ZJSZ_ZJRBB:list886")],
+    370: [("legacy_source_model", "=", "online_old_scbs:ZJGL_ZJSZ_DKGL_DKDJ:list887")],
+    380: [("legacy_source_model", "=", "online_old_scbs:ZJGL_ZJSZ_DKGL_HKDJ:list888")],
+    390: [("legacy_source_model", "=", "online_old_scbs:C_JXXP_KJFPSQ:list889")],
+    400: [("legacy_source_model", "=", "online_old_scbs:C_JXXP_XXKPDJ:list890")],
+    410: [("legacy_source_model", "=", "online_old_scbs:C_JXXP_YJSKDJ:list891")],
+    420: [("legacy_source_table", "=", "online_old_scbs:C_JXXP_ZYFPJJD:list892")],
+    430: [("legacy_source_model", "=", "online_old_scbs:C_JXXP_DKDJ_New:list893")],
+    440: [("source_table", "=", "online_old_scbs:ZJGL_WJZ_WJZDJB:list894")],
 }
 
 TARGET_MODEL_OVERRIDES_BY_SEQUENCE = {
@@ -48,26 +79,7 @@ TARGET_MODEL_OVERRIDES_BY_SEQUENCE = {
     340: "sc.expense.claim",
 }
 
-LIST_CONTRACT_LABEL_OVERRIDES_BY_SEQUENCE = {
-    # Source: old prepaid-tax export header
-    # /home/odoo/workspace/partner_import_source/3/+预缴税款639153288551406250.xlsx
-    410: [
-        "状态",
-        "项目名称",
-        "单据编号",
-        "受票方名称",
-        "交税类型",
-        "金额",
-        "不含税金额",
-        "税额",
-        "发票开具日期",
-        "预缴税款日期",
-        "完税凭证号码",
-        "附件",
-        "数据类型",
-        "录入人",
-    ],
-}
+LIST_CONTRACT_LABEL_OVERRIDES_BY_SEQUENCE = {}
 
 
 def artifact_root() -> Path:
@@ -141,7 +153,7 @@ def tree_arch(record, labels: list[str]) -> str:
     for label in labels:
         escaped = escape(label)
         parts.append(
-            '  <field name="%s" string="%s" optional="show" readonly="1"/>'
+            '  <field name="%s" string="%s" readonly="1"/>'
             % (alias_field_name(label), escaped)
         )
     parts.append("</tree>")
@@ -174,15 +186,16 @@ def acceptance_menu(record):
 def action_for_record(record, base_action, view):
     action_name = "SCBS55 %03d %s" % (record.priority_sequence, record.legacy_menu_name)
     action = Action.search([("name", "=", action_name), ("res_model", "=", record.target_model)], limit=1)
+    has_domain_override = record.priority_sequence in DOMAIN_OVERRIDES_BY_SEQUENCE
     domain_override = DOMAIN_OVERRIDES_BY_SEQUENCE.get(record.priority_sequence)
-    domain = repr(domain_override) if domain_override else base_action.domain or "[]"
+    domain = repr(domain_override) if has_domain_override else base_action.domain or "[]"
     source_tables = [
         item.strip()
         for item in re.split(r"[;,，；]", str(record.legacy_source_tables or ""))
         if item.strip()
     ]
     model_fields = env[record.target_model]._fields  # noqa: F821
-    if domain_override:
+    if has_domain_override:
         domain = repr(domain_override)
     elif source_tables and "legacy_source_table" in model_fields:
         domain = repr([("legacy_source_table", "in", source_tables)])

@@ -199,12 +199,12 @@ SELECT
   {clean_sql("SKLB")} AS category,
   {clean_sql("BT")} AS source_summary,
   {clean_sql("BZ")} AS note,
-  '' AS creator_legacy_user_id,
-  '' AS creator_name,
-  '' AS created_time,
-  '' AS modifier_legacy_user_id,
-  '' AS modifier_name,
-  '' AS modified_time,
+  {clean_sql("LRRID")} AS creator_legacy_user_id,
+  {clean_sql("LRR")} AS creator_name,
+  {clean_sql("CONVERT(varchar(19), LRSJ, 120)")} AS created_time,
+  {clean_sql("XGRID")} AS modifier_legacy_user_id,
+  {clean_sql("XGR")} AS modifier_name,
+  {clean_sql("CONVERT(varchar(19), XGSJ, 120)")} AS modified_time,
   '1' AS active
 FROM dbo.C_CWSFK_GSCWSR
 WHERE NULLIF(LTRIM(RTRIM(Id)), '') IS NOT NULL

@@ -48,6 +48,13 @@ def resolve_input_csv(env_name, file_name):
     raise FileNotFoundError("missing input csv: %s" % [str(c) for c in candidates])
 
 
+def resolve_optional_input_csv(env_name, file_name):
+    try:
+        return resolve_input_csv(env_name, file_name)
+    except FileNotFoundError:
+        return None
+
+
 def parse_datetime(value):
     value = str(value or "").strip()
     if not value:
@@ -369,7 +376,7 @@ def project_social_registration_rows(input_csv, seen, cur_currency_id):
 
 artifact_root = resolve_artifact_root()
 business_csv = resolve_input_csv("MIGRATION_BUSINESS_FACT_RESIDUAL_CSV", BUSINESS_FACT_CSV)
-salary_csv = resolve_input_csv("MIGRATION_SALARY_LINE_CSV", SALARY_LINE_CSV)
+salary_csv = resolve_optional_input_csv("MIGRATION_SALARY_LINE_CSV", SALARY_LINE_CSV)
 output_json = artifact_root / "fresh_db_hr_payroll_social_projection_write_result_v1.json"
 seen = existing_pairs()
 cur_currency_id = currency_id()
@@ -381,11 +388,15 @@ env.cr.execute(  # noqa: F821
 before_counts = {row[0]: row[1] for row in env.cr.fetchall()}  # noqa: F821
 
 person_inserted, person_active_inserted, person_samples = project_social_person_rows(business_csv, seen, cur_currency_id)
-registration_inserted, registration_active_inserted, registration_samples = project_social_registration_rows(
-    salary_csv,
-    seen,
-    cur_currency_id,
-)
+registration_inserted = 0
+registration_active_inserted = 0
+registration_samples = []
+if salary_csv:
+    registration_inserted, registration_active_inserted, registration_samples = project_social_registration_rows(
+        salary_csv,
+        seen,
+        cur_currency_id,
+    )
 
 env.cr.commit()  # noqa: F821
 
@@ -398,7 +409,7 @@ after_counts = {row[0]: row[1] for row in env.cr.fetchall()}  # noqa: F821
 result = {
     "mode": "fresh_db_hr_payroll_social_projection_write",
     "business_source_csv": str(business_csv),
-    "salary_source_csv": str(salary_csv),
+    "salary_source_csv": str(salary_csv) if salary_csv else None,
     "target_model": "sc.hr.payroll.document",
     "before_counts": before_counts,
     "after_counts": after_counts,

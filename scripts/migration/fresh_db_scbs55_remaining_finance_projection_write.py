@@ -193,19 +193,31 @@ def upsert_loan(values: dict[str, object]) -> str:
                 values["legacy_counterparty_id"],
                 values["legacy_counterparty_name"],
                 values["legacy_amount_field"],
-                values["creator_legacy_user_id"],
-                values["creator_name"],
-                values["created_time"],
+                values.get("creator_legacy_user_id"),
+                values.get("creator_name"),
+                values.get("created_time"),
                 values["note"],
                 existing.id,
             ],
         )
         return "updated"
+    values.setdefault("creator_legacy_user_id", False)
+    values.setdefault("creator_name", False)
+    values.setdefault("created_time", False)
     Loan.create(values)
     return "created"
 
 
 def project_employee_loans(input_csv: Path) -> dict[str, object]:
+    if not input_csv.exists():
+        return {
+            "rows": 0,
+            "created": 0,
+            "updated": 0,
+            "skipped_no_amount": 0,
+            "by_source": {},
+            "skipped_missing_input": str(input_csv),
+        }
     rows = read_csv(input_csv)
     stats = {"rows": len(rows), "created": 0, "updated": 0, "skipped_no_amount": 0, "by_source": {}}
     for row in rows:
@@ -271,7 +283,7 @@ def project_deduction_bills() -> dict[str, object]:
             "document_no": clean(item.document_no) or False,
             "document_date": item.document_date or False,
             "project_id": item.project_id.id,
-            "partner_id": item.partner_id.id or False,
+            "partner_id": item.partner_id.id or None,
             "partner_name": clean(item.partner_name) or clean(item.taxpayer_name) or False,
             "deduction_amount": amount,
             "deduction_tax_amount": 0.0,

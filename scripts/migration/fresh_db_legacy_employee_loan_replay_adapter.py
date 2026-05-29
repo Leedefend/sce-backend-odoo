@@ -18,6 +18,11 @@ SQL_CONTAINER = os.getenv("LEGACY_MSSQL_CONTAINER", "legacy-mssql-restore")
 SQLCMD = os.getenv("LEGACY_SQLCMD", "/opt/mssql-tools18/bin/sqlcmd")
 SQL_PASSWORD = os.getenv("LEGACY_MSSQL_SA_PASSWORD", "LegacyRestore!2026")
 SQL_DATABASE = os.getenv("LEGACY_MSSQL_DATABASE", "LegacyDb")
+SQL_HOST = os.getenv("LEGACY_MSSQL_HOST", "")
+SQL_PORT = os.getenv("LEGACY_MSSQL_PORT", "1433")
+SQL_USER = os.getenv("LEGACY_MSSQL_USER", "sa")
+SQLCMD_DOCKER_IMAGE = os.getenv("LEGACY_SQLCMD_DOCKER_IMAGE", "mcr.microsoft.com/mssql-tools")
+SQLCMD_DOCKER_BIN = os.getenv("LEGACY_SQLCMD_DOCKER_BIN", "/opt/mssql-tools/bin/sqlcmd")
 
 FIELDS = [
     "source_table",
@@ -59,6 +64,51 @@ def clean_sql(field: str) -> str:
 
 
 def sqlcmd(sql: str) -> list[str]:
+    if SQL_HOST:
+        server = f"tcp:{SQL_HOST},{SQL_PORT}"
+        if Path(SQLCMD).exists():
+            return [
+                SQLCMD,
+                "-S",
+                server,
+                "-U",
+                SQL_USER,
+                "-P",
+                SQL_PASSWORD,
+                "-C",
+                "-d",
+                SQL_DATABASE,
+                "-W",
+                "-s",
+                "\t",
+                "-h",
+                "-1",
+                "-Q",
+                sql,
+            ]
+        return [
+            "docker",
+            "run",
+            "--rm",
+            SQLCMD_DOCKER_IMAGE,
+            SQLCMD_DOCKER_BIN,
+            "-S",
+            server,
+            "-U",
+            SQL_USER,
+            "-P",
+            SQL_PASSWORD,
+            "-C",
+            "-d",
+            SQL_DATABASE,
+            "-W",
+            "-s",
+            "\t",
+            "-h",
+            "-1",
+            "-Q",
+            sql,
+        ]
     return [
         "docker",
         "exec",

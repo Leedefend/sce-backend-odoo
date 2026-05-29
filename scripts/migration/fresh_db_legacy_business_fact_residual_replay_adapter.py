@@ -29,6 +29,11 @@ SOURCE_TABLE_ALLOWLIST = {
 }
 SQL_PASSWORD = os.getenv("LEGACY_MSSQL_SA_PASSWORD") or os.getenv("LEGACY_MSSQL_PASSWORD") or "LegacyRestore!2026"
 SQLCMD = os.getenv("LEGACY_SQLCMD", "/opt/mssql-tools18/bin/sqlcmd")
+SQL_HOST = os.getenv("LEGACY_MSSQL_HOST", "")
+SQL_PORT = os.getenv("LEGACY_MSSQL_PORT", "1433")
+SQL_USER = os.getenv("LEGACY_MSSQL_USER", "sa")
+SQLCMD_DOCKER_IMAGE = os.getenv("LEGACY_SQLCMD_DOCKER_IMAGE", "mcr.microsoft.com/mssql-tools")
+SQLCMD_DOCKER_BIN = os.getenv("LEGACY_SQLCMD_DOCKER_BIN", "/opt/mssql-tools/bin/sqlcmd")
 
 FIELDS = [
     "source_label",
@@ -96,15 +101,44 @@ def sql_identifier(name: str) -> str:
 
 
 def run_sql(source: dict[str, str], sql: str) -> str:
-    command = [
-        "docker",
-        "exec",
-        "-i",
-        source["container"],
-        "bash",
-        "-lc",
-        f"{SQLCMD} -S localhost -U sa -P {shell_quote(SQL_PASSWORD)} -C -d {shell_quote(source['database'])} -s '\t' -y 0 -Y 0",
-    ]
+    if SQL_HOST:
+        server = f"tcp:{SQL_HOST},{SQL_PORT}"
+        if Path(SQLCMD).exists():
+            command = [SQLCMD, "-S", server, "-U", SQL_USER, "-P", SQL_PASSWORD, "-C", "-d", source["database"], "-s", "\t", "-y", "0", "-Y", "0"]
+        else:
+            command = [
+                "docker",
+                "run",
+                "--rm",
+                "-i",
+                SQLCMD_DOCKER_IMAGE,
+                SQLCMD_DOCKER_BIN,
+                "-S",
+                server,
+                "-U",
+                SQL_USER,
+                "-P",
+                SQL_PASSWORD,
+                "-C",
+                "-d",
+                source["database"],
+                "-s",
+                "\t",
+                "-y",
+                "0",
+                "-Y",
+                "0",
+            ]
+    else:
+        command = [
+            "docker",
+            "exec",
+            "-i",
+            source["container"],
+            "bash",
+            "-lc",
+            f"{SQLCMD} -S localhost -U sa -P {shell_quote(SQL_PASSWORD)} -C -d {shell_quote(source['database'])} -s '\t' -y 0 -Y 0",
+        ]
     completed = subprocess.run(command, input=sql, text=True, capture_output=True, check=False)
     if completed.returncode != 0:
         raise RuntimeError(
@@ -151,6 +185,17 @@ def choose(columns: list[str], candidates: tuple[str, ...]) -> str | None:
 
 def load_candidate_tables(label: str) -> list[dict[str, Any]]:
     path = source_scan_root(label) / "legacy_db_full_business_fact_loss_scan_v1.json"
+    if SOURCE_TABLE_ALLOWLIST and not path.exists():
+        return [
+            {
+                "family": "manual_allowlist",
+                "table": name,
+                "classification": "manual_allowlist",
+                "score": 0,
+                "rows": 0,
+            }
+            for name in sorted(SOURCE_TABLE_ALLOWLIST)
+        ]
     payload = json.loads(path.read_text(encoding="utf-8"))
     rows = []
     seen = set()

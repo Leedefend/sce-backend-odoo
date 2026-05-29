@@ -35,6 +35,7 @@ def clean_decimal(value: object) -> str:
 def source_csv() -> Path:
     candidates = [
         os.getenv("PAYMENT_REQUEST_RAW_CSV"),
+        "/tmp/c_zfsqgl_visible.csv",
         str(DEFAULT_SOURCE),
         "/mnt/extra-addons/tmp/raw/payment/payment.csv",
         "/tmp/payment_request_raw_payment.csv",
@@ -55,14 +56,34 @@ def ensure_allowed_db() -> None:
         raise RuntimeError({"db_name_not_allowed_for_replay": env.cr.dbname, "allowlist": sorted(allowlist)})  # noqa: F821
 
 
+def add_column(column: str, column_type: str = "text") -> None:
+    env.cr.execute(f"ALTER TABLE payment_request ADD COLUMN IF NOT EXISTS {column} {column_type}")  # noqa: F821
+
+
 ensure_allowed_db()
+for column in (
+    "legacy_visible_document_no",
+    "legacy_visible_project_name",
+    "legacy_visible_request_date",
+    "legacy_visible_payee_unit",
+    "legacy_visible_request_amount",
+    "legacy_visible_writer",
+):
+    add_column(column)
 
 Request = env["payment.request"].sudo().with_context(active_test=False)  # noqa: F821
 path = source_csv()
 
 rows_by_id: dict[str, dict[str, str]] = {}
 with path.open("r", encoding="utf-8-sig", newline="") as handle:
-    for row in csv.DictReader(handle):
+    sample = handle.read(4096)
+    handle.seek(0)
+    try:
+        dialect = csv.Sniffer().sniff(sample, delimiters=",|\t") if sample else csv.excel
+    except csv.Error:
+        dialect = csv.excel()
+        dialect.delimiter = "|"
+    for row in csv.DictReader(handle, dialect=dialect):
         legacy_id = clean(row.get("Id"))
         if legacy_id:
             rows_by_id[legacy_id] = dict(row)
@@ -71,6 +92,11 @@ records = Request.search([("legacy_source_table", "=", "C_ZFSQGL"), ("legacy_rec
 updated = 0
 unchanged = 0
 filled_counts = {
+    "legacy_visible_document_no": 0,
+    "legacy_visible_project_name": 0,
+    "legacy_visible_request_date": 0,
+    "legacy_visible_payee_unit": 0,
+    "legacy_visible_request_amount": 0,
     "legacy_visible_cost_category_name": 0,
     "legacy_visible_remark": 0,
     "legacy_visible_amount_uppercase": 0,
@@ -81,21 +107,28 @@ filled_counts = {
     "legacy_payee_account_name": 0,
     "legacy_payee_bank_name": 0,
     "legacy_payee_account_no": 0,
+    "legacy_visible_writer": 0,
 }
 
 for record in records:
     row = rows_by_id.get(clean(record.legacy_record_id), {})
     vals = {
+        "legacy_visible_document_no": clean(row.get("DJBH")),
+        "legacy_visible_project_name": clean(row.get("f_XMMC")),
+        "legacy_visible_request_date": clean(row.get("f_SQRQ"))[:10],
+        "legacy_visible_payee_unit": clean(row.get("f_GYSMC")),
+        "legacy_visible_request_amount": clean_decimal(row.get("f_JHJE")) or clean_decimal(row.get("f_JHFKJE")),
         "legacy_visible_cost_category_name": clean(row.get("f_CBFLMC")),
         "legacy_visible_remark": clean(row.get("f_Remark")),
         "legacy_visible_amount_uppercase": clean(row.get("JEDX")),
-        "legacy_visible_actual_paid_amount": clean_decimal(row.get("f_SFJE")) or clean_decimal(row.get("LJFK")),
+        "legacy_visible_actual_paid_amount": clean_decimal(row.get("f_SFJE")),
         "legacy_visible_available_balance": clean_decimal(row.get("SJKYYE")) or clean_decimal(row.get("ZMYE")),
         "legacy_payment_account_name": clean(row.get("FKZHMC")),
         "legacy_payment_account_no": clean(row.get("FKZH")),
         "legacy_payee_account_name": clean(row.get("HM")) or clean(row.get("f_GYSMC")),
         "legacy_payee_bank_name": clean(row.get("f_KHH")),
         "legacy_payee_account_no": clean(row.get("f_ZH")),
+        "legacy_visible_writer": clean(row.get("f_TXR")) or clean(row.get("LRR")),
     }
     vals = {key: value or False for key, value in vals.items()}
     for key, value in vals.items():
