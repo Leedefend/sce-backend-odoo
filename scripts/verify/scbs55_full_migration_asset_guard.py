@@ -157,9 +157,28 @@ def check_inventory(payload: dict[str, Any]) -> list[str]:
     history = inventory.get("history_continuity") if isinstance(inventory.get("history_continuity"), dict) else {}
     if as_int(history.get("step_count")) < 100:
         errors.append(f"inventory history_continuity step_count unexpectedly low: {history.get('step_count')}")
+    history_steps = history.get("steps") if isinstance(history.get("steps"), list) else []
+    if len(history_steps) != as_int(history.get("step_count")):
+        errors.append("inventory history_continuity steps count drift")
+    history_by_kind = history.get("by_kind") if isinstance(history.get("by_kind"), dict) else {}
+    if sum(as_int(value) for value in history_by_kind.values()) != as_int(history.get("step_count")):
+        errors.append("inventory history_continuity by_kind total drift")
     runtime = inventory.get("runtime_artifacts") if isinstance(inventory.get("runtime_artifacts"), dict) else {}
     if as_int(runtime.get("file_count")) <= 0:
         errors.append("inventory runtime artifact file_count must be positive")
+    runtime_by_category = runtime.get("by_category") if isinstance(runtime.get("by_category"), dict) else {}
+    runtime_by_suffix = runtime.get("by_suffix") if isinstance(runtime.get("by_suffix"), dict) else {}
+    if sum(as_int(value) for value in runtime_by_category.values()) != as_int(runtime.get("file_count")):
+        errors.append("inventory runtime artifact by_category total drift")
+    if sum(as_int(value) for value in runtime_by_suffix.values()) != as_int(runtime.get("file_count")):
+        errors.append("inventory runtime artifact by_suffix total drift")
+    surfaces = compare.get("surfaces") if isinstance(compare.get("surfaces"), list) else []
+    if len(surfaces) != as_int(compare.get("checked_count")):
+        errors.append("inventory full visibility surfaces count drift")
+    if sum(as_int(row.get("old_count")) for row in surfaces if isinstance(row, dict)) != as_int(compare.get("total_old_rows")):
+        errors.append("inventory full visibility total_old_rows drift")
+    if sum(as_int(row.get("new_count")) for row in surfaces if isinstance(row, dict)) != as_int(compare.get("total_new_rows")):
+        errors.append("inventory full visibility total_new_rows drift")
     scripts = inventory.get("script_status") if isinstance(inventory.get("script_status"), dict) else {}
     ungoverned = scripts.get("ungoverned_runtime_scripts") if isinstance(scripts.get("ungoverned_runtime_scripts"), list) else []
     if len(ungoverned) < 2:
