@@ -44,6 +44,13 @@
 
 首批高风险验收切片 6 个页面：
 
+这 6 个页面不是全量迁移边界，只是用户反复反馈的首批高风险验收切片。它们与 42 个全量用户可见面的关系已经写入
+`docs/migration_alignment/scbs55_user_acceptance_asset_freeze_v1.json` 的 `full_scope_lineage`：
+
+- `自筹保证金`、`自筹保证金退回` 直接映射 42 面全量证据 seq 18、19。
+- `自筹垫付收入`、`自筹垫付退回`、`工程进度收款`、`供货合同` 是独立高风险验收切片，由专门的旧系统在线、浏览器、row dump evidence lock 约束，不冒充 42 面全量 compare 行。
+- `make migration.assets.full_scope_guard` 会校验上述 lineage，不允许 6 页切片和全量范围关系漂移。
+
 | 页面 | 旧 ConfigId | 旧表 | 旧系统总数 | 新菜单 | 新 action | 新系统总数 |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
 | 自筹保证金 | `74fcd2b29acb4101aee0da39851971f4` | `ZJGL_BZJGL_Branch_SBZJDJ` | 1580 | 613 | 868 | 1580 |
