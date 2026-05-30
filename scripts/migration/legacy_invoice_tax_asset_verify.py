@@ -21,7 +21,9 @@ ALLOWED_FIELDS = {
     "document_no", "document_date", "legacy_state", "invoice_type", "project_id",
     "legacy_project_id", "legacy_project_name", "partner_id", "legacy_partner_id",
     "legacy_partner_name", "legacy_partner_tax_no", "source_amount", "source_tax_amount",
-    "source_amount_field", "note", "import_batch",
+    "source_amount_untaxed", "source_amount_field", "invoice_no", "invoice_company_type",
+    "invoice_issue_company", "invoice_provider_name", "push_result", "kingdee_document_no",
+    "creator_legacy_user_id", "creator_name", "created_time", "note", "import_batch",
 }
 FORBIDDEN_FIELDS = {
     "account_move_id", "tax_ledger_id", "payment_id", "settlement_id",

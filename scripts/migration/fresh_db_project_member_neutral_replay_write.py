@@ -141,7 +141,7 @@ ensure_allowed_db()
 Model = env[TARGET_MODEL].sudo()  # noqa: F821
 Responsibility = env[FORBIDDEN_MODEL].sudo()  # noqa: F821
 Project = env["project.project"].sudo()  # noqa: F821
-Users = env["res.users"].sudo()  # noqa: F821
+Users = env["res.users"].sudo().with_context(active_test=False)  # noqa: F821
 
 rows = read_csv(INPUT_CSV)
 errors: list[dict[str, object]] = []

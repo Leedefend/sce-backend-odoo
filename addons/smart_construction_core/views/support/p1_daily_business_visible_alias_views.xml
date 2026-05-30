@@ -298,6 +298,36 @@
         <field name="view_id" ref="view_sc_invoice_prepaid_tax_user_tree"/>
     </record>
 
+    <record id="view_sc_invoice_input_report_user_tree" model="ir.ui.view">
+        <field name="name">sc.invoice.registration.input.report.user.tree</field>
+        <field name="model">sc.invoice.registration</field>
+        <field name="arch" type="xml">
+            <tree string="进项税额上报">
+                <field name="p1_visible_62e951a692ff" string="状态" optional="show" readonly="1"/>
+                <field name="push_result" string="推送结果" optional="show" readonly="1"/>
+                <field name="kingdee_document_no" string="金蝶单据编号" optional="show" readonly="1"/>
+                <field name="invoice_company_type" string="发票公司类型" optional="show" readonly="1"/>
+                <field name="document_no" string="单据编号" optional="show" readonly="1"/>
+                <field name="project_id" string="项目名称" optional="show" readonly="1"/>
+                <field name="invoice_date" string="发票开具日期" optional="show" readonly="1"/>
+                <field name="invoice_issue_company" string="开票单位" optional="show" readonly="1"/>
+                <field name="invoice_provider_name" string="发票提供人/单位" optional="show" readonly="1"/>
+                <field name="amount_total" string="价税合计" optional="show" readonly="1" sum="价税合计"/>
+                <field name="tax_amount" string="税额" optional="show" readonly="1" sum="税额"/>
+                <field name="amount_no_tax" string="不含税金额" optional="show" readonly="1" sum="不含税金额"/>
+                <field name="invoice_no" string="发票号码" optional="show" readonly="1"/>
+                <field name="invoice_type" string="发票类型" optional="show" readonly="1"/>
+                <field name="creator_name" string="录入人" optional="show" readonly="1"/>
+                <field name="note" string="发票备注" optional="show" readonly="1"/>
+                <field name="created_time" string="录入时间" optional="show" readonly="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_sc_invoice_input_report_user" model="ir.actions.act_window">
+        <field name="view_id" ref="view_sc_invoice_input_report_user_tree"/>
+    </record>
+
     <record id="view_p1_daily_business_visible_sc_fund_account_tree" model="ir.ui.view">
         <field name="name">sc.fund.account.p1.daily.business.visible.tree</field>
         <field name="model">sc.fund.account</field>

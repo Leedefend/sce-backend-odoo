@@ -24,8 +24,8 @@ ASSET_MANIFEST_REL_PATH = Path("manifest/legacy_invoice_tax_asset_manifest_v1.js
 CATALOG_REL_PATH = Path("manifest/migration_asset_catalog_v1.json")
 ASSET_PACKAGE_ID = "legacy_invoice_tax_sc_v1"
 GENERATED_AT = "2026-04-15T18:10:00+00:00"
-EXPECTED_RAW_ROWS = 21323
-EXPECTED_LOADABLE_ROWS = 5959
+EXPECTED_RAW_ROWS = 29987
+EXPECTED_LOADABLE_ROWS = 26700
 
 
 class InvoiceTaxAssetError(Exception):
@@ -134,7 +134,8 @@ def write_xml(path: Path, records: list[dict[str, str]]) -> None:
         record = ET.SubElement(data, "record", {"id": row["external_id"], "model": "sc.legacy.invoice.tax.fact"})
         for field in (
             "legacy_source_table", "legacy_record_id", "legacy_pid", "source_family", "direction",
-            "document_no", "document_date", "legacy_state", "invoice_type",
+            "document_no", "document_date", "legacy_state", "invoice_type", "invoice_no",
+            "invoice_company_type", "invoice_issue_company", "invoice_provider_name",
         ):
             add_text_field(record, field, row[field], required=field in {"legacy_source_table", "legacy_record_id", "source_family", "direction"})
         add_ref_field(record, "project_id", row["project_external_id"], required=True)
@@ -144,9 +145,15 @@ def write_xml(path: Path, records: list[dict[str, str]]) -> None:
         add_text_field(record, "legacy_partner_id", row["legacy_partner_id"])
         add_text_field(record, "legacy_partner_name", row["legacy_partner_name"])
         add_text_field(record, "legacy_partner_tax_no", row["legacy_partner_tax_no"])
+        add_text_field(record, "source_amount_untaxed", row["source_amount_untaxed"])
         add_text_field(record, "source_amount", row["source_amount"])
         add_text_field(record, "source_tax_amount", row["source_tax_amount"])
         add_text_field(record, "source_amount_field", row["source_amount_field"], required=True)
+        add_text_field(record, "push_result", row["push_result"])
+        add_text_field(record, "kingdee_document_no", row["kingdee_document_no"])
+        add_text_field(record, "creator_legacy_user_id", row["creator_legacy_user_id"])
+        add_text_field(record, "creator_name", row["creator_name"])
+        add_text_field(record, "created_time", row["created_time"])
         add_text_field(record, "note", row["note"])
         add_text_field(record, "import_batch", "legacy_invoice_tax_asset_v1", required=True)
     ET.indent(root, space="  ")
@@ -233,9 +240,19 @@ def build_records(asset_root: Path) -> tuple[list[dict[str, str]], dict[str, Any
             "legacy_partner_id": partner_id,
             "legacy_partner_name": clean(row.get("partner_name")),
             "legacy_partner_tax_no": clean(row.get("partner_tax_no")),
+            "source_amount_untaxed": decimal_text(parse_amount(row.get("amount_untaxed", ""))),
             "source_amount": decimal_text(parse_amount(row.get("amount", ""))),
             "source_tax_amount": decimal_text(parse_amount(row.get("tax_amount", ""))),
             "source_amount_field": clean(row.get("amount_field")),
+            "invoice_no": clean(row.get("invoice_no")),
+            "invoice_company_type": clean(row.get("invoice_company_type")),
+            "invoice_issue_company": clean(row.get("invoice_issue_company")),
+            "invoice_provider_name": clean(row.get("invoice_provider_name")),
+            "push_result": clean(row.get("push_result")),
+            "kingdee_document_no": clean(row.get("kingdee_document_no")),
+            "creator_legacy_user_id": clean(row.get("creator_legacy_user_id")),
+            "creator_name": clean(row.get("creator_name")),
+            "created_time": clean(row.get("created_time")),
             "note": clean(row.get("note")),
         })
     require(len(records) == EXPECTED_LOADABLE_ROWS, f"loadable row count drifted: {len(records)} != {EXPECTED_LOADABLE_ROWS}")

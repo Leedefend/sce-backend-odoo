@@ -6,9 +6,9 @@ This is a read-only screen for invoice and tax-related legacy facts.
 
 ## Result
 
-- raw rows: `21323`
-- loadable rows: `5959`
-- blocked rows: `15364`
+- raw rows: `29987`
+- loadable rows: `26700`
+- blocked rows: `3287`
 - DB writes: `0`
 - Odoo shell: `false`
 
@@ -16,7 +16,7 @@ This is a read-only screen for invoice and tax-related legacy facts.
 
 | Source table | Raw rows | Loadable candidates |
 |---|---:|---:|
-| C_JXXP_ZYFPJJD | 16616 | 1919 |
+| C_JXXP_ZYFPJJD_CB | 25280 | 22660 |
 | C_JXXP_XXKPDJ | 3157 | 2907 |
 | C_JXXP_YJSKDJ | 1290 | 908 |
 | C_JXXP_KJFPSQ | 260 | 225 |
@@ -25,17 +25,17 @@ This is a read-only screen for invoice and tax-related legacy facts.
 
 | Reason | Rows |
 |---|---:|
-| missing_counterparty_evidence | 14734 |
-| amount_and_tax_missing_or_zero | 1829 |
-| deleted | 623 |
-| project_not_assetized | 132 |
-| missing_project_id | 9 |
+| amount_and_tax_missing_or_zero | 2427 |
+| deleted | 683 |
+| project_not_assetized | 186 |
+| missing_counterparty_evidence | 96 |
+| missing_project_id | 7 |
 
 ## Family Counts
 
 | Family | Rows |
 |---|---:|
-| input_invoice_handover | 16616 |
+| input_invoice_handover | 25280 |
 | output_invoice_register | 3157 |
 | prepaid_tax_register | 1290 |
 | invoice_issue_request | 260 |
@@ -44,16 +44,17 @@ This is a read-only screen for invoice and tax-related legacy facts.
 
 | Route | Rows |
 |---|---:|
-| partner_missing | 14731 |
-| partner_name_text | 5670 |
-| partner_id_not_assetized | 662 |
-| partner_tax_no_text | 260 |
+| partner_id_assetized | 21213 |
+| partner_id_not_assetized | 4720 |
+| partner_name_text | 3697 |
+| partner_tax_no_text | 264 |
+| partner_missing | 93 |
 
 ## Next lane recommendation
 
 - lane: `legacy_invoice_tax_fact_carrier`
-- source table priority: `C_JXXP_XXKPDJ`
-- loadable rows: `2907`
+- source table priority: `C_JXXP_ZYFPJJD_CB`
+- loadable rows: `22660`
 - reason: screen found project-anchored invoice/tax facts; design a neutral carrier before XML generation
 
 ## Boundary

@@ -3376,6 +3376,13 @@ verify.prepaid_tax.visible_surface_alignment.audit: guard.prod.forbid check-comp
 	fi
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/prepaid_tax_visible_surface_alignment_audit.py
 
+.PHONY: verify.input_invoice.visible_surface_alignment.audit
+verify.input_invoice.visible_surface_alignment.audit: guard.prod.forbid check-compose-project check-compose-env
+	@if [[ -f "$(INPUT_INVOICE_VISIBLE_XLSX)" ]]; then \
+	  $(RUN_ENV) $(COMPOSE_BASE) cp "$(INPUT_INVOICE_VISIBLE_XLSX)" "$(ODOO_SERVICE):/tmp/input_invoice_visible_alignment.xlsx"; \
+	fi
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/input_invoice_visible_surface_alignment_audit.py
+
 .PHONY: verify.foreign_tax_certificate.visible_surface_alignment.audit
 verify.foreign_tax_certificate.visible_surface_alignment.audit: guard.prod.forbid check-compose-project check-compose-env
 	@if [[ -f "$(FOREIGN_TAX_CERTIFICATE_VISIBLE_XLSX)" ]]; then \

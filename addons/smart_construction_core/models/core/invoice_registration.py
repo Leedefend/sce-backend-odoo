@@ -86,7 +86,9 @@ class ScInvoiceRegistration(models.Model):
     tax_certificate_no = fields.Char(string="完税凭证号码", index=True)
     invoice_content = fields.Char(string="开票内容", index=True)
     cost_category_name = fields.Char(string="成本类别", index=True)
+    invoice_company_type = fields.Char(string="发票公司类型", index=True)
     invoice_issue_company = fields.Char(string="开票单位", index=True)
+    invoice_provider_name = fields.Char(string="发票提供人/单位", index=True)
     push_result = fields.Char(string="推送结果", index=True)
     kingdee_document_no = fields.Char(string="金蝶单据编号", index=True)
     expected_receipt_date = fields.Date(string="预计回款日期", index=True)
@@ -190,6 +192,8 @@ class ScInvoiceRegistration(models.Model):
                 "tax_type",
                 "prepaid_tax_date",
                 "tax_certificate_no",
+                "invoice_company_type",
+                "invoice_provider_name",
                 "legacy_attachment_ref",
                 "write_uid",
                 "write_date",
