@@ -202,6 +202,20 @@ def check_promotion_queue() -> list[str]:
         errors.append(f"payload promotion queue lane_count unexpectedly low: {len(rows)}")
     if any(isinstance(row, dict) and row.get("lane") == "unclassified" for row in rows):
         errors.append("payload promotion queue must not contain unclassified lane")
+    for row in rows:
+        if not isinstance(row, dict):
+            errors.append("payload promotion queue rows must be objects")
+            continue
+        missing = row.get("missing_required_inputs")
+        runtime = row.get("runtime_output_backlog")
+        if not isinstance(missing, list):
+            errors.append(f"payload promotion queue lane {row.get('lane')!r} must expose missing_required_inputs")
+        elif len(missing) != as_int(row.get("missing_required_input_count")):
+            errors.append(f"payload promotion queue lane {row.get('lane')!r} missing_required_inputs count drift")
+        if not isinstance(runtime, list):
+            errors.append(f"payload promotion queue lane {row.get('lane')!r} must expose runtime_output_backlog")
+        elif len(runtime) != as_int(row.get("runtime_output_backlog_count")):
+            errors.append(f"payload promotion queue lane {row.get('lane')!r} runtime_output_backlog count drift")
     priorities = [as_int(row.get("priority")) for row in rows if isinstance(row, dict)]
     if priorities != sorted(priorities):
         errors.append("payload promotion queue priorities must be sorted")

@@ -117,6 +117,8 @@ def build_queue() -> dict[str, Any]:
                 "missing_required_input_count": 0,
                 "runtime_output_backlog_count": 0,
                 "step_kinds": Counter(),
+                "missing_required_inputs": [],
+                "runtime_output_backlog": [],
                 "sample_missing_inputs": [],
                 "sample_runtime_outputs": [],
             },
@@ -133,9 +135,11 @@ def build_queue() -> dict[str, Any]:
         row["missing_required_input_count"] += len(missing)
         row["runtime_output_backlog_count"] += len(runtime)
         for path in missing:
+            row["missing_required_inputs"].append({"step": step_name, "path": path})
             if len(row["sample_missing_inputs"]) < 10:
                 row["sample_missing_inputs"].append({"step": step_name, "path": path})
         for path in runtime:
+            row["runtime_output_backlog"].append({"step": step_name, "path": path})
             if len(row["sample_runtime_outputs"]) < 10:
                 row["sample_runtime_outputs"].append({"step": step_name, "path": path})
 
