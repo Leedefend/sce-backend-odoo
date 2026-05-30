@@ -19,13 +19,13 @@ Status: `DELIVERY_READY_WITH_PACKAGING_ACTIONS`
 以 `make migration.assets.delivery_audit` 最新结果为准：
 
 - catalog 包数：`23`
-- 资产文件数：`98`
+- 资产文件数：`97`
 - catalog 引用文件数：`93`
-- 未纳入 catalog 引用文件数：`5`
-- 资产目录总大小：`467.27 MB`
-- 一键重放 step 数：`144`
+- 未纳入 catalog 引用文件数：`4`
+- 资产目录总大小：`324.69 MB`
+- 一键重放 step 数：`219`
 - 阻断项：`0`
-- 包装整理项：`2`
+- 包装整理项：`1`
 
 审计产物：
 

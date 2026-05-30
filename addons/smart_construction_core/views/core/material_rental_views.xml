@@ -24,6 +24,32 @@
         ])]"/>
     </record>
 
+    <record id="action_sc_material_rental_in_acceptance" model="ir.actions.act_window">
+        <field name="name">租入</field>
+        <field name="res_model">sc.material.rental.order</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('legacy_fact_type', '=', 'scbsly_lease_in')]</field>
+        <field name="context">{'search_default_group_project': 1}</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_material_read'),
+            ref('smart_construction_core.group_sc_cap_material_user'),
+            ref('smart_construction_core.group_sc_cap_material_manager')
+        ])]"/>
+    </record>
+
+    <record id="action_sc_material_rental_return_acceptance" model="ir.actions.act_window">
+        <field name="name">还租</field>
+        <field name="res_model">sc.material.rental.order</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('legacy_fact_type', '=', 'scbsly_lease_return')]</field>
+        <field name="context">{'search_default_group_project': 1}</field>
+        <field name="groups_id" eval="[(6, 0, [
+            ref('smart_construction_core.group_sc_cap_material_read'),
+            ref('smart_construction_core.group_sc_cap_material_user'),
+            ref('smart_construction_core.group_sc_cap_material_manager')
+        ])]"/>
+    </record>
+
     <record id="action_sc_material_rental_settlement" model="ir.actions.act_window">
         <field name="name">租赁结算</field>
         <field name="res_model">sc.material.rental.settlement</field>

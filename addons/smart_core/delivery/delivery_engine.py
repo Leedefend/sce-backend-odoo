@@ -28,7 +28,7 @@ class DeliveryEngine:
 
     def __init__(self, env):
         self.env = env
-        self.menu_service = MenuService()
+        self.menu_service = MenuService(env)
         self.scene_service = SceneService(env)
         self.capability_service = CapabilityService()
         self.product_policy_service = ProductPolicyService(env)

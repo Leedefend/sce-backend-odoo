@@ -11,6 +11,7 @@ class ScLegacyReceiptIncomeFact(models.Model):
     legacy_record_id = fields.Char(string="旧库记录", required=True, index=True)
     legacy_pid = fields.Char(string="旧库序号", index=True)
     source_family = fields.Char(string="来源类别", index=True)
+    operation_strategy = fields.Char(string="经营方式", index=True)
     direction = fields.Char(string="收支方向", index=True)
     document_no = fields.Char(string="单据编号", index=True)
     document_date = fields.Date(string="单据日期", index=True)

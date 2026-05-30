@@ -15,6 +15,17 @@ import re
 from pathlib import Path
 from typing import Any
 
+try:
+    from scripts.migration.migration_asset_replay_requirements import (
+        BASELINE_EXCLUDED_REQUIRED_ARTIFACTS,
+        EXTRA_REQUIRED_REPLAY_ARTIFACTS,
+    )
+except ModuleNotFoundError:  # pragma: no cover - direct script execution
+    from migration_asset_replay_requirements import (
+        BASELINE_EXCLUDED_REQUIRED_ARTIFACTS,
+        EXTRA_REQUIRED_REPLAY_ARTIFACTS,
+    )
+
 
 REPO_ROOT = Path.cwd()
 DEFAULT_ASSET_ROOT = REPO_ROOT / "migration_assets"
@@ -45,36 +56,6 @@ MANDATORY_BUSINESS_SCOPE_ARTIFACTS = {
         ],
     },
 }
-BASELINE_EXCLUDED_REQUIRED_ARTIFACTS = {
-    # Default-off privacy lanes. These are intentionally not shipped in the
-    # baseline package because they may contain sensitive personal data.
-    "artifacts/migration/fresh_db_legacy_attendance_checkin_replay_adapter_result_v1.json",
-    "artifacts/migration/fresh_db_legacy_attendance_checkin_replay_payload_v1.csv",
-    "artifacts/migration/fresh_db_legacy_personnel_movement_replay_adapter_result_v1.json",
-    "artifacts/migration/fresh_db_legacy_personnel_movement_replay_payload_v1.csv",
-    "artifacts/migration/fresh_db_legacy_salary_line_replay_adapter_result_v1.json",
-    "artifacts/migration/fresh_db_legacy_salary_line_replay_payload_v1.csv",
-    # Default-off recovery lanes backed by old downstream snapshots.
-    "artifacts/migration/history_payment_request_outflow_approved_recovery_payload_v1.csv",
-    "artifacts/migration/history_payment_request_outflow_done_recovery_payload_v1.csv",
-    "artifacts/migration/history_project_lifecycle_continuity_payload_v1.csv",
-    # Deprecated recovery lanes skipped when authoritative XML assets exist.
-    "artifacts/migration/contract_12_row_write_authorization_packet_v1.json",
-    "artifacts/migration/contract_12_row_write_authorization_payload_v1.csv",
-    "artifacts/migration/contract_partner_source_57_design_rows_v1.csv",
-    "artifacts/migration/fresh_db_contract_57_retry_rollback_targets_v1.csv",
-    "artifacts/migration/fresh_db_contract_partner_12_anchor_replay_resolution_v1.csv",
-    "artifacts/migration/history_contract_direction_defer_recovery_payload_v1.csv",
-    "artifacts/migration/history_contract_partner_recovery_payload_v1.csv",
-    "artifacts/migration/history_contract_unreached_ready_replay_payload_v1.csv",
-    "artifacts/migration/history_partner_master_direction_defer_replay_payload_v1.csv",
-    "artifacts/migration/history_partner_master_targeted_replay_payload_v1.csv",
-    "artifacts/migration/history_receipt_parent_recovery_adapter_result_v1.json",
-    "artifacts/migration/history_receipt_parent_recovery_payload_v1.csv",
-    "artifacts/migration/history_receipt_partner_targeted_replay_payload_v1.csv",
-}
-
-
 def sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -91,6 +72,13 @@ def rel(path: Path) -> str:
     return path.relative_to(REPO_ROOT).as_posix()
 
 
+def display_path(path: Path) -> str:
+    try:
+        return rel(path)
+    except ValueError:
+        return path.as_posix()
+
+
 def size_mb(size: int) -> float:
     return round(size / 1024 / 1024, 2)
 
@@ -101,6 +89,21 @@ def asset_files(asset_root: Path) -> list[Path]:
 
 def catalog_audit(asset_root: Path) -> dict[str, Any]:
     catalog_path = asset_root / "manifest/migration_asset_catalog_v1.json"
+    if not catalog_path.is_file():
+        return {
+            "catalog_version": None,
+            "package_count": 0,
+            "package_order_count": 0,
+            "package_order_matches_packages": False,
+            "duplicate_package_ids": [],
+            "packages": [],
+            "referenced_file_count": 0,
+            "asset_file_count": len(asset_files(asset_root)) if asset_root.exists() else 0,
+            "unreferenced_files": [display_path(path) for path in asset_files(asset_root)] if asset_root.exists() else [],
+            "missing_files": [display_path(catalog_path)],
+            "manifest_hash_mismatches": [],
+            "asset_hash_mismatches": [],
+        }
     catalog = load_json(catalog_path)
     packages = catalog.get("packages", [])
     package_order = catalog.get("package_order", [])
@@ -235,6 +238,7 @@ def required_replay_artifacts() -> list[str]:
             required.add(path)
     for scope in MANDATORY_BUSINESS_SCOPE_ARTIFACTS.values():
         required.update(scope["artifacts"])
+    required.update(EXTRA_REQUIRED_REPLAY_ARTIFACTS)
     return sorted(required)
 
 

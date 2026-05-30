@@ -10,6 +10,8 @@ class ScLegacyEngineeringProgressReceipt(models.Model):
 
     source_model = fields.Char(string="新系统承载模型", readonly=True)
     legacy_source_table = fields.Char(string="旧库来源表", readonly=True)
+    source_family = fields.Char(string="来源类别", readonly=True)
+    operation_strategy = fields.Char(string="经营方式", readonly=True)
     legacy_record_id = fields.Char(string="旧库记录", readonly=True)
     document_no = fields.Char(string="单据编号", readonly=True)
     document_date = fields.Date(string="申请日期", readonly=True)
@@ -34,6 +36,8 @@ class ScLegacyEngineeringProgressReceipt(models.Model):
                     300000000 + f.id AS id,
                     'sc.legacy.receipt.income.fact'::varchar AS source_model,
                     f.legacy_source_table::varchar AS legacy_source_table,
+                    f.source_family::varchar AS source_family,
+                    f.operation_strategy::varchar AS operation_strategy,
                     f.legacy_record_id::varchar AS legacy_record_id,
                     f.document_no::varchar AS document_no,
                     f.document_date::date AS document_date,
@@ -51,6 +55,7 @@ class ScLegacyEngineeringProgressReceipt(models.Model):
                 FROM sc_legacy_receipt_income_fact f
                 WHERE f.legacy_source_table = 'C_JFHKLR'
                   AND f.source_family = 'engineering_progress_receipt_visible'
+                  AND f.operation_strategy IN ('joint', 'direct')
             )
             """
         )

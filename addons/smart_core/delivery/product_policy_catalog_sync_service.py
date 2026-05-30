@@ -87,7 +87,8 @@ class ProductPolicyCatalogSyncService:
             )
         except Exception:
             configured = ""
-        return _text(configured) or "sc_demo"
+        current_db = _text(getattr(getattr(self.env, "cr", None), "dbname", ""))
+        return _text(configured) or current_db
 
     def _candidate_user_menus(self, source_env):
         try:

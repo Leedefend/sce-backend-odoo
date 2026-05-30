@@ -28,7 +28,7 @@ fi
 resolve_profile_defaults() {
   case "${FRONTEND_PROFILE}" in
     daily)
-      PROFILE_DB="${DB_NAME:-sc_odoo}"
+      PROFILE_DB="${FRONTEND_DAILY_DB:-sc_demo}"
       PROFILE_PROXY_TARGET="http://localhost:8070"
       ;;
     test)

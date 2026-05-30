@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="view_sc_legacy_fuel_card_fact_search" model="ir.ui.view">
+    <field name="name">sc.legacy.fuel.card.fact.search</field>
+    <field name="model">sc.legacy.fuel.card.fact</field>
+    <field name="arch" type="xml">
+      <search string="油卡登记">
+        <field name="document_no"/>
+        <field name="project_name"/>
+        <field name="card_no"/>
+        <field name="manager_name"/>
+        <filter string="有效" name="active_rows" domain="[('active', '=', True)]"/>
+        <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+      </search>
+    </field>
+  </record>
+
+  <record id="view_sc_legacy_fuel_card_fact_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.fuel.card.fact.tree</field>
+    <field name="model">sc.legacy.fuel.card.fact</field>
+    <field name="arch" type="xml">
+      <tree string="油卡登记" create="false" edit="false" delete="false">
+        <field name="document_date"/>
+        <field name="document_no"/>
+        <field name="project_id"/>
+        <field name="project_name" optional="hide"/>
+        <field name="card_no"/>
+        <field name="initial_amount" sum="初始金额合计"/>
+        <field name="balance_amount" sum="余额合计"/>
+        <field name="manager_name"/>
+        <field name="document_state"/>
+        <field name="creator_name"/>
+        <field name="created_time"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="action_sc_legacy_fuel_card_fact" model="ir.actions.act_window">
+    <field name="name">油卡登记</field>
+    <field name="res_model">sc.legacy.fuel.card.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_sc_legacy_fuel_card_fact_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_fuel_card_fact_search"/>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+    <field name="groups_id" eval="[(6, 0, [
+      ref('smart_construction_core.group_sc_cap_business_initiator'),
+      ref('smart_construction_core.group_sc_cap_finance_read'),
+      ref('smart_construction_core.group_sc_cap_finance_user'),
+      ref('smart_construction_core.group_sc_cap_finance_manager')
+    ])]"/>
+  </record>
+
+  <record id="view_sc_legacy_fuel_card_recharge_fact_search" model="ir.ui.view">
+    <field name="name">sc.legacy.fuel.card.recharge.fact.search</field>
+    <field name="model">sc.legacy.fuel.card.recharge.fact</field>
+    <field name="arch" type="xml">
+      <search string="充值登记">
+        <field name="document_no"/>
+        <field name="project_name"/>
+        <field name="card_no"/>
+        <field name="handler_name"/>
+        <filter string="有效" name="active_rows" domain="[('active', '=', True)]"/>
+        <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+      </search>
+    </field>
+  </record>
+
+  <record id="view_sc_legacy_fuel_card_recharge_fact_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.fuel.card.recharge.fact.tree</field>
+    <field name="model">sc.legacy.fuel.card.recharge.fact</field>
+    <field name="arch" type="xml">
+      <tree string="充值登记" create="false" edit="false" delete="false">
+        <field name="document_date"/>
+        <field name="document_no"/>
+        <field name="project_id"/>
+        <field name="project_name" optional="hide"/>
+        <field name="card_no"/>
+        <field name="recharge_amount" sum="充值金额合计"/>
+        <field name="used_amount" sum="已使用金额合计"/>
+        <field name="balance_amount" sum="剩余金额合计"/>
+        <field name="handler_name"/>
+        <field name="document_state"/>
+        <field name="creator_name"/>
+        <field name="created_time"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="action_sc_legacy_fuel_card_recharge_fact" model="ir.actions.act_window">
+    <field name="name">充值登记</field>
+    <field name="res_model">sc.legacy.fuel.card.recharge.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_sc_legacy_fuel_card_recharge_fact_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_fuel_card_recharge_fact_search"/>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+    <field name="groups_id" eval="[(6, 0, [
+      ref('smart_construction_core.group_sc_cap_business_initiator'),
+      ref('smart_construction_core.group_sc_cap_finance_read'),
+      ref('smart_construction_core.group_sc_cap_finance_user'),
+      ref('smart_construction_core.group_sc_cap_finance_manager')
+    ])]"/>
+  </record>
+
+  <record id="view_sc_legacy_fuel_card_refuel_fact_search" model="ir.ui.view">
+    <field name="name">sc.legacy.fuel.card.refuel.fact.search</field>
+    <field name="model">sc.legacy.fuel.card.refuel.fact</field>
+    <field name="arch" type="xml">
+      <search string="加油登记">
+        <field name="document_no"/>
+        <field name="project_name"/>
+        <field name="card_no"/>
+        <field name="handler_name"/>
+        <filter string="有效" name="active_rows" domain="[('active', '=', True)]"/>
+        <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+      </search>
+    </field>
+  </record>
+
+  <record id="view_sc_legacy_fuel_card_refuel_fact_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.fuel.card.refuel.fact.tree</field>
+    <field name="model">sc.legacy.fuel.card.refuel.fact</field>
+    <field name="arch" type="xml">
+      <tree string="加油登记" create="false" edit="false" delete="false">
+        <field name="document_date"/>
+        <field name="document_no"/>
+        <field name="project_id"/>
+        <field name="project_name" optional="hide"/>
+        <field name="card_no"/>
+        <field name="fuel_date"/>
+        <field name="fuel_amount" sum="加油金额合计"/>
+        <field name="total_recharge_amount" sum="累计充值金额"/>
+        <field name="total_fuel_amount" sum="累计加油金额"/>
+        <field name="balance_amount" sum="剩余金额合计"/>
+        <field name="handler_name"/>
+        <field name="document_state"/>
+        <field name="creator_name"/>
+        <field name="created_time"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="action_sc_legacy_fuel_card_refuel_fact" model="ir.actions.act_window">
+    <field name="name">加油登记</field>
+    <field name="res_model">sc.legacy.fuel.card.refuel.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_sc_legacy_fuel_card_refuel_fact_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_fuel_card_refuel_fact_search"/>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+    <field name="groups_id" eval="[(6, 0, [
+      ref('smart_construction_core.group_sc_cap_business_initiator'),
+      ref('smart_construction_core.group_sc_cap_finance_read'),
+      ref('smart_construction_core.group_sc_cap_finance_user'),
+      ref('smart_construction_core.group_sc_cap_finance_manager')
+    ])]"/>
+  </record>
+</odoo>

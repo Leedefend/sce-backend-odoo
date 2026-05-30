@@ -151,6 +151,12 @@ def main() -> int:
     actual_sha = sha256_file(package_path)
     if actual_sha != expected_sha:
         raise SystemExit(f"sha256 mismatch: expected={expected_sha} actual={actual_sha}")
+    expected_size = lock.get("package_size_bytes")
+    if expected_size is not None and package_path.stat().st_size != int(expected_size):
+        raise SystemExit(
+            "package size mismatch: "
+            f"expected={expected_size} actual={package_path.stat().st_size}"
+        )
 
     counts = extract_package(package_path, Path(args.asset_root), Path(args.artifact_root))
     print(
