@@ -6,6 +6,7 @@ from __future__ import annotations
 import gzip
 import hashlib
 import json
+import os
 import re
 from datetime import datetime
 from pathlib import Path
@@ -269,7 +270,9 @@ def import_surface(seq: int) -> dict[str, Any]:
     if stale_bids:
         stale_bids.write({"legacy_fact_model": f"{spec['surface']}:hidden"})
     domain = [("bid_id.legacy_fact_model", "=", spec["surface"])]
-    Action.browse(spec["action_id"]).write({"domain": repr(domain)})
+    action = Action.browse(spec["action_id"]).exists()
+    if action:
+        action.write({"domain": repr(domain)})
     final_count = Guarantee.search_count(domain)
     return {
         "seq": seq,
@@ -285,6 +288,12 @@ def import_surface(seq: int) -> dict[str, Any]:
 
 
 ensure_payload_table()
-result = {"surfaces": [import_surface(seq) for seq in sorted(SPECS)]}
+requested = [
+    int(item.strip())
+    for item in os.getenv("SCBS55_TENDER_GUARANTEE_SEQS", "").replace("，", ",").split(",")
+    if item.strip()
+]
+seqs = requested or sorted(SPECS)
+result = {"surfaces": [import_surface(seq) for seq in seqs]}
 env.cr.commit()  # noqa: F821
 print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))

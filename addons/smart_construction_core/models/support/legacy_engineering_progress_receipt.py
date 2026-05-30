@@ -31,56 +31,6 @@ class ScLegacyEngineeringProgressReceipt(models.Model):
             f"""
             CREATE OR REPLACE VIEW {self._table} AS (
                 SELECT
-                    100000000 + r.id AS id,
-                    'sc.receipt.income'::varchar AS source_model,
-                    r.legacy_source_table::varchar AS legacy_source_table,
-                    r.legacy_record_id::varchar AS legacy_record_id,
-                    COALESCE(NULLIF(r.document_no, ''), r.name)::varchar AS document_no,
-                    r.date_receipt::date AS document_date,
-                    r.project_id AS project_id,
-                    COALESCE(rp.name->>'zh_CN', rp.name->>'en_US')::varchar AS project_name,
-                    r.partner_id AS partner_id,
-                    rpartner.name::varchar AS partner_name,
-                    r.amount::double precision AS amount,
-                    COALESCE(NULLIF(r.legacy_receipt_type, ''), r.receipt_type)::varchar AS receipt_type,
-                    r.income_category::varchar AS income_category,
-                    r.state::varchar AS state_label,
-                    r.creator_name::varchar AS creator_name,
-                    r.created_time AS created_time,
-                    r.note::text AS note
-                FROM sc_receipt_income r
-                LEFT JOIN project_project rp ON rp.id = r.project_id
-                LEFT JOIN res_partner rpartner ON rpartner.id = r.partner_id
-                WHERE r.legacy_source_table = 'C_JFHKLR'
-
-                UNION ALL
-
-                SELECT
-                    200000000 + p.id AS id,
-                    'payment.request'::varchar AS source_model,
-                    p.legacy_source_table::varchar AS legacy_source_table,
-                    substring(COALESCE(p.note, '') from 'legacy_receipt_id=([^;\\s]+)')::varchar AS legacy_record_id,
-                    p.name::varchar AS document_no,
-                    p.date_request::date AS document_date,
-                    p.project_id AS project_id,
-                    COALESCE(pp.name->>'zh_CN', pp.name->>'en_US')::varchar AS project_name,
-                    p.partner_id AS partner_id,
-                    ppartner.name::varchar AS partner_name,
-                    p.amount::double precision AS amount,
-                    p.receipt_type::varchar AS receipt_type,
-                    NULL::varchar AS income_category,
-                    p.state::varchar AS state_label,
-                    p.creator_name::varchar AS creator_name,
-                    p.created_time AS created_time,
-                    p.note::text AS note
-                FROM payment_request p
-                LEFT JOIN project_project pp ON pp.id = p.project_id
-                LEFT JOIN res_partner ppartner ON ppartner.id = p.partner_id
-                WHERE p.legacy_source_table = 'C_JFHKLR_ROUTED_OUT'
-
-                UNION ALL
-
-                SELECT
                     300000000 + f.id AS id,
                     'sc.legacy.receipt.income.fact'::varchar AS source_model,
                     f.legacy_source_table::varchar AS legacy_source_table,
@@ -100,6 +50,7 @@ class ScLegacyEngineeringProgressReceipt(models.Model):
                     f.note::text AS note
                 FROM sc_legacy_receipt_income_fact f
                 WHERE f.legacy_source_table = 'C_JFHKLR'
+                  AND f.source_family = 'engineering_progress_receipt_visible'
             )
             """
         )

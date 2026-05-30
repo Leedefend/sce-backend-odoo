@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+from odoo import SUPERUSER_ID, api
+
 
 def migrate(cr, version):
     cr.execute(
@@ -10,3 +12,6 @@ def migrate(cr, version):
          WHERE state IS NULL
         """
     )
+    env = api.Environment(cr, SUPERUSER_ID, {})
+    if "sc.output.invoice.ledger" in env:
+        env["sc.output.invoice.ledger"].init()

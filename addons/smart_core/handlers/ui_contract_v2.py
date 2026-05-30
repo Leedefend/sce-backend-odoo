@@ -1037,17 +1037,20 @@ class UiContractV2Handler(BaseIntentHandler):
         raw_columns = tree.get("columns") if isinstance(tree.get("columns"), list) else []
         legacy_override = self._scbs55_legacy_visible_list_override(source_contract)
         columns: list[str] = []
+        has_explicit_view_columns = False
         for row in raw_columns:
             name = str(row.get("name") if isinstance(row, dict) else row or "").strip()
             if name and name not in columns:
                 columns.append(name)
+                has_explicit_view_columns = True
         profile = source_contract.get("list_profile") if isinstance(source_contract.get("list_profile"), dict) else {}
         for name in profile.get("columns") if isinstance(profile.get("columns"), list) else []:
             normalized = str(name or "").strip()
             if normalized and normalized not in columns:
                 columns.append(normalized)
         column_policy = profile.get("column_policy") if isinstance(profile.get("column_policy"), dict) else {}
-        strict_columns = str(column_policy.get("mode") or "").strip().lower() == "strict"
+        column_policy_mode = str(column_policy.get("mode") or "").strip().lower()
+        strict_columns = column_policy_mode == "strict" or (has_explicit_view_columns and column_policy_mode != "extend")
         override_labels = {}
         if legacy_override:
             columns = list(legacy_override.get("columns") or [])
