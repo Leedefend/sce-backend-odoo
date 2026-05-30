@@ -21,6 +21,7 @@
 冻结清单：
 
 - `docs/migration_alignment/scbs55_user_acceptance_asset_freeze_v1.json`
+- `docs/migration_alignment/scbs55_user_acceptance_evidence_lock_v1.json`
 
 首批冻结 6 个用户验收面：
 
@@ -65,6 +66,16 @@
 
 该路径是本轮开发证据，不是最终交付资产。进入资产包前必须复制为带 hash 的归档产物，或由专题脚本重新生成。
 
+### 4. 证据锁
+
+`scbs55_user_acceptance_evidence_lock_v1.json` 固化以下不可漂移事实：
+
+- 每个旧系统 row dump 的 `sha256`、文件大小、行数。
+- 每个旧系统身份字段的总数、唯一数、缺失数。
+- 浏览器 summary 的 `sha256` 和 6 个菜单总数。
+
+guard 会在存在证据文件时校验 hash；开启 `SCBS55_REQUIRE_ACCEPTANCE_EVIDENCE=1` 时，缺少证据文件会直接失败。
+
 ## 禁止事项
 
 - 禁止在契约层按 action 或菜单写数据裁剪特例。
@@ -96,3 +107,20 @@ SCBS55_BROWSER_SUMMARY=/tmp/scbs55_six_pages_aligned_20260530/summary.json \
 python3 scripts/verify/scbs55_user_acceptance_asset_manifest_guard.py
 ```
 
+重新在线核对旧系统 count：
+
+```bash
+OLD_SCBS_USERNAME=13518193984 \
+OLD_SCBS_PASSWORD=****** \
+python3 scripts/verify/scbs55_user_acceptance_online_probe.py
+```
+
+或：
+
+```bash
+OLD_SCBS_USERNAME=13518193984 \
+OLD_SCBS_PASSWORD=****** \
+make migration.assets.user_acceptance_online_probe
+```
+
+注意：该在线探针使用旧页面 `DETAIL_CONFIG` 的默认 `WhereInfo`，不会像旧的通用 count probe 那样自动注入 `DJZT` 过滤。`自筹垫付收入` 已验证会因这种通用注入从 `2141` 漂移为 `2139`，因此本专题后续所有验收面必须使用 manifest 绑定的页面口径探针。

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import os
+import hashlib
 import sys
 from pathlib import Path
 from typing import Any
@@ -12,6 +13,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = ROOT / "docs/migration_alignment/scbs55_user_acceptance_asset_freeze_v1.json"
+EVIDENCE_LOCK = ROOT / "docs/migration_alignment/scbs55_user_acceptance_evidence_lock_v1.json"
 DEFAULT_OLD_ROWS_DIR = Path(os.getenv("SCBS55_OLD_ROWS_DIR", "/tmp/scbs55_old_pages_20260530"))
 DEFAULT_BROWSER_SUMMARY = Path(
     os.getenv("SCBS55_BROWSER_SUMMARY", "/tmp/scbs55_six_pages_aligned_20260530/summary.json")
@@ -21,6 +23,14 @@ REQUIRE_EVIDENCE = os.getenv("SCBS55_REQUIRE_ACCEPTANCE_EVIDENCE", "0") == "1"
 
 def load_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def as_int(value: object) -> int:
@@ -151,12 +161,75 @@ def check_optional_evidence(payload: dict[str, Any]) -> list[str]:
     return errors
 
 
+def check_evidence_lock(payload: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    if not EVIDENCE_LOCK.exists():
+        errors.append(f"missing evidence lock: {EVIDENCE_LOCK.relative_to(ROOT)}")
+        return errors
+    lock = load_json(EVIDENCE_LOCK)
+    if not isinstance(lock, dict):
+        return ["evidence lock root must be object"]
+    if lock.get("lock_version") != "scbs55_user_acceptance_evidence_lock_v1":
+        errors.append("evidence lock version must be scbs55_user_acceptance_evidence_lock_v1")
+    if lock.get("asset_package_id") != payload.get("asset_package_id"):
+        errors.append("evidence lock asset_package_id does not match manifest")
+    surfaces = payload.get("surfaces") if isinstance(payload.get("surfaces"), list) else []
+    manifest_by_key = {str(row.get("key")): row for row in surfaces if isinstance(row, dict)}
+    lock_surfaces = lock.get("surfaces") if isinstance(lock.get("surfaces"), list) else []
+    if len(lock_surfaces) != len(manifest_by_key):
+        errors.append(f"evidence lock surface count {len(lock_surfaces)} != manifest {len(manifest_by_key)}")
+    for locked in lock_surfaces:
+        if not isinstance(locked, dict):
+            errors.append("evidence lock surface entry must be object")
+            continue
+        key = str(locked.get("key") or "")
+        manifest_surface = manifest_by_key.get(key)
+        if not manifest_surface:
+            errors.append(f"evidence lock has unknown key {key}")
+            continue
+        old = manifest_surface.get("old") if isinstance(manifest_surface.get("old"), dict) else {}
+        new = manifest_surface.get("new") if isinstance(manifest_surface.get("new"), dict) else {}
+        expected = as_int(old.get("expected_count"))
+        for field, expected_value in (
+            ("old_config_id", old.get("config_id")),
+            ("old_main_table", old.get("main_table")),
+            ("old_row_dump_file", old.get("row_dump_file")),
+            ("old_identity_field", old.get("identity_field")),
+            ("new_menu_id", new.get("menu_id")),
+            ("new_action_id", new.get("action_id")),
+            ("new_model", new.get("model")),
+        ):
+            if locked.get(field) != expected_value:
+                errors.append(f"{key}: evidence lock {field}={locked.get(field)!r} != {expected_value!r}")
+        for field in ("old_expected_count", "new_expected_count", "old_row_count", "old_identity_count", "old_identity_unique_count", "browser_total"):
+            if as_int(locked.get(field)) != expected:
+                errors.append(f"{key}: evidence lock {field}={locked.get(field)} != {expected}")
+        if as_int(locked.get("old_identity_missing_count")) != 0:
+            errors.append(f"{key}: evidence lock has missing old identities")
+        row_file = DEFAULT_OLD_ROWS_DIR / str(old.get("row_dump_file") or "")
+        if row_file.exists():
+            actual_sha = sha256_file(row_file)
+            if actual_sha != locked.get("old_row_dump_sha256"):
+                errors.append(f"{key}: old row dump sha256 drift: {actual_sha} != {locked.get('old_row_dump_sha256')}")
+        elif REQUIRE_EVIDENCE:
+            errors.append(f"{key}: cannot verify evidence lock because {row_file} is missing")
+    browser_lock = lock.get("browser_summary") if isinstance(lock.get("browser_summary"), dict) else {}
+    if DEFAULT_BROWSER_SUMMARY.exists():
+        actual_sha = sha256_file(DEFAULT_BROWSER_SUMMARY)
+        if actual_sha != browser_lock.get("sha256"):
+            errors.append(f"browser summary sha256 drift: {actual_sha} != {browser_lock.get('sha256')}")
+    elif REQUIRE_EVIDENCE:
+        errors.append(f"cannot verify browser evidence lock because {DEFAULT_BROWSER_SUMMARY} is missing")
+    return errors
+
+
 def main() -> int:
     payload = load_json(MANIFEST)
     if not isinstance(payload, dict):
         print("[scbs55-user-acceptance-asset-manifest] FAIL: manifest root must be object")
         return 2
     errors = check_manifest(payload)
+    errors.extend(check_evidence_lock(payload))
     errors.extend(check_optional_evidence(payload))
     report = {
         "status": "FAIL" if errors else "PASS",
