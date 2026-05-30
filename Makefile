@@ -1076,7 +1076,7 @@ migration.assets.verify_all: guard.prod.forbid check-compose-project check-compo
 migration.assets.delivery_audit: guard.prod.forbid check-compose-project check-compose-env
 	@python3 scripts/migration/migration_asset_delivery_audit.py --asset-root "$(MIGRATION_ASSET_ROOT)"
 
-.PHONY: migration.assets.user_acceptance_manifest_guard migration.assets.user_acceptance_manifest_guard.evidence migration.assets.user_acceptance_online_probe migration.assets.user_acceptance_browser_field_guard migration.assets.user_acceptance_replay.write migration.assets.release_package migration.assets.release_package.verify
+.PHONY: migration.assets.user_acceptance_manifest_guard migration.assets.user_acceptance_manifest_guard.evidence migration.assets.user_acceptance_online_probe migration.assets.user_acceptance_browser_field_guard migration.assets.user_acceptance_replay.write migration.assets.full_scope_guard migration.assets.release_package migration.assets.release_package.verify
 migration.assets.user_acceptance_manifest_guard: guard.prod.forbid
 	@python3 scripts/verify/scbs55_user_acceptance_asset_manifest_guard.py
 
@@ -1091,6 +1091,9 @@ migration.assets.user_acceptance_browser_field_guard: guard.prod.forbid
 
 migration.assets.user_acceptance_replay.write: guard.prod.forbid
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_REPLAY_DB_ALLOWLIST="$(DB_NAME)" MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" MIGRATION_SCBS55_OLD_ROWS_DIR="$${MIGRATION_SCBS55_OLD_ROWS_DIR:-$${SCBS55_OLD_ROWS_DIR:-/tmp/scbs55_old_pages_20260530}}" bash scripts/ops/odoo_shell_exec.sh < scripts/migration/scbs55_user_acceptance_replay.py
+
+migration.assets.full_scope_guard: guard.prod.forbid
+	@python3 scripts/verify/scbs55_full_migration_asset_guard.py
 
 migration.assets.release_package: guard.prod.forbid
 	@python3 scripts/migration/migration_asset_release_package.py --asset-root "$(MIGRATION_ASSET_ROOT)"

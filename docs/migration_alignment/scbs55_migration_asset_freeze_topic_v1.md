@@ -6,13 +6,16 @@
 
 ## 目标
 
-把用户验收面用到的迁移数据资产从“临时在线核对 + 手工补差”推进为可复核、可重放、可交付的资产包。
+把 SCBS55 全量数据迁移从“运行态产物 + 临时在线核对 + 手工补差”推进为可复核、可重放、可交付的资产包。
+
+首批 6 个用户反馈页面只是高风险验收切片，用来验证专题方法是否正确；它不是本专题边界。本专题边界是完整迁移资产包，包括 `migration_assets/`、`artifacts/migration/` 离线 payload、历史重放脚本、生产初始化入口、全量用户可见面和资产交付门禁。
 
 本专题的判断标准不是“新系统数量看起来一致”，而是：
 
+- 全量迁移发布包可按 lock 拉取、校验、解包、重放。
 - 旧系统在线菜单配置、默认过滤条件、列表接口总数可复核。
-- 旧系统行级身份集合和新系统承载集合可复核。
-- 新系统用户可见菜单浏览器总数可复核。
+- 旧系统行级身份集合和新系统承载集合可复核，并逐步从 6 页扩展到 42 个用户可见面。
+- 新系统用户可见菜单浏览器总数和字段可复核。
 - 数据补齐逻辑在迁移资产层或承载视图层，不进入契约层。
 - 生产交付不得依赖临时 `/tmp` 文件、手工 SQL 或开发库残留状态。
 
@@ -20,10 +23,20 @@
 
 冻结清单：
 
+- `docs/migration_alignment/scbs55_full_migration_asset_freeze_v1.json`
+- `docs/migration_alignment/migration_asset_package_lock_v1.json`
 - `docs/migration_alignment/scbs55_user_acceptance_asset_freeze_v1.json`
 - `docs/migration_alignment/scbs55_user_acceptance_evidence_lock_v1.json`
 
-首批冻结 6 个用户验收面：
+全量迁移当前基线：
+
+- 发布包：`migration_assets_release_20260429T135959Z_baseline`
+- sha256：`6ec233be3798c4957b58035de30a5162c9f3a6a6602dbd1ea701f76fc5a65716`
+- 物化目录：`migration_assets/ and artifacts/migration/`
+- 全量用户可见列表：`artifacts/migration/scbs55_wutao_old_new_final_aligned_compare.json`
+- 当前列表证据：42 个用户可见面 `PASS`，blocking = 0
+
+首批高风险验收切片 6 个页面：
 
 | 页面 | 旧 ConfigId | 旧表 | 旧系统总数 | 新菜单 | 新 action | 新系统总数 |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
@@ -85,6 +98,7 @@ guard 会在存在证据文件时校验 hash；开启 `SCBS55_REQUIRE_ACCEPTANCE
 
 ## 专题第一阶段交付
 
+- 全量 scope guard：验证本专题确实覆盖完整迁移资产包、42 个用户可见面、发布包 lock 和首批验收切片。
 - 静态 manifest guard：验证冻结清单结构、唯一性、计数字段和证据引用。
 - 证据 guard：在存在旧系统 row dump 和浏览器 summary 时复核 count。
 - 在线 guard：使用旧系统登录态重新拉取 count，并绑定旧页面 `DETAIL_CONFIG.WhereInfo`，避免通用探针注入口径。
@@ -94,6 +108,21 @@ guard 会在存在证据文件时校验 hash；开启 `SCBS55_REQUIRE_ACCEPTANCE
 临时脚本 `scripts/migration/scbs55_live_delta_backfill_write.py` 不进入本专题交付范围。它覆盖合同、收款、付款申请、付款执行等宽口径补差，来源是全量 seq dump，不受本 manifest 和 evidence lock 约束，容易把“用户验收面补齐”扩散成“数据库猜测迁移”。本专题只接受 manifest/evidence 约束 replay。
 
 ## 当前验收命令
+
+全量专题范围校验：
+
+```bash
+make migration.assets.full_scope_guard
+```
+
+发布包级门禁：
+
+```bash
+make migration.assets.fetch
+make migration.assets.verify_all
+make migration.assets.delivery_audit
+make migration.assets.release_package
+```
 
 静态校验：
 
