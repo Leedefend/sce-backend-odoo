@@ -91,6 +91,13 @@ def rel(path: Path) -> str:
     return path.relative_to(REPO_ROOT).as_posix()
 
 
+def display_path(path: Path) -> str:
+    try:
+        return rel(path)
+    except ValueError:
+        return path.as_posix()
+
+
 def size_mb(size: int) -> float:
     return round(size / 1024 / 1024, 2)
 
@@ -101,6 +108,21 @@ def asset_files(asset_root: Path) -> list[Path]:
 
 def catalog_audit(asset_root: Path) -> dict[str, Any]:
     catalog_path = asset_root / "manifest/migration_asset_catalog_v1.json"
+    if not catalog_path.is_file():
+        return {
+            "catalog_version": None,
+            "package_count": 0,
+            "package_order_count": 0,
+            "package_order_matches_packages": False,
+            "duplicate_package_ids": [],
+            "packages": [],
+            "referenced_file_count": 0,
+            "asset_file_count": len(asset_files(asset_root)) if asset_root.exists() else 0,
+            "unreferenced_files": [display_path(path) for path in asset_files(asset_root)] if asset_root.exists() else [],
+            "missing_files": [display_path(catalog_path)],
+            "manifest_hash_mismatches": [],
+            "asset_hash_mismatches": [],
+        }
     catalog = load_json(catalog_path)
     packages = catalog.get("packages", [])
     package_order = catalog.get("package_order", [])

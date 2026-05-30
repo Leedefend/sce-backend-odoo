@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -18,6 +19,8 @@ PACKAGE_LOCK = ROOT / "docs/migration_alignment/migration_asset_package_lock_v1.
 COMPARE = ROOT / "artifacts/migration/scbs55_wutao_old_new_final_aligned_compare.json"
 SIX_SLICE = ROOT / "docs/migration_alignment/scbs55_user_acceptance_asset_freeze_v1.json"
 SIX_LOCK = ROOT / "docs/migration_alignment/scbs55_user_acceptance_evidence_lock_v1.json"
+DELIVERY_AUDIT_MD = ROOT / "docs/migration_alignment/migration_asset_delivery_audit_v1.md"
+DELIVERY_MANIFEST_MD = ROOT / "docs/migration_alignment/migration_asset_delivery_manifest_v1.md"
 
 
 def load_json(path: Path) -> Any:
@@ -237,6 +240,73 @@ def check_promotion_queue() -> list[str]:
     return errors
 
 
+def md_fact(text: str, pattern: str) -> str:
+    match = re.search(pattern, text)
+    return match.group(1) if match else ""
+
+
+def check_delivery_manifest_facts() -> list[str]:
+    errors: list[str] = []
+    if not DELIVERY_AUDIT_MD.exists():
+        return [f"missing delivery audit report: {DELIVERY_AUDIT_MD.relative_to(ROOT)}"]
+    if not DELIVERY_MANIFEST_MD.exists():
+        return [f"missing delivery manifest: {DELIVERY_MANIFEST_MD.relative_to(ROOT)}"]
+    audit = DELIVERY_AUDIT_MD.read_text(encoding="utf-8")
+    manifest = DELIVERY_MANIFEST_MD.read_text(encoding="utf-8")
+    pairs = [
+        (
+            "catalog packages",
+            r"- catalog packages: `([^`]+)`",
+            r"- catalog 包数：`([^`]+)`",
+        ),
+        (
+            "asset files",
+            r"- asset files: `([^`]+)`",
+            r"- 资产文件数：`([^`]+)`",
+        ),
+        (
+            "referenced files",
+            r"- referenced files: `([^`]+)`",
+            r"- catalog 引用文件数：`([^`]+)`",
+        ),
+        (
+            "unreferenced files",
+            r"- unreferenced files: `([^`]+)`",
+            r"- 未纳入 catalog 引用文件数：`([^`]+)`",
+        ),
+        (
+            "total asset size MB",
+            r"- total asset size MB: `([^`]+)`",
+            r"- 资产目录总大小：`([^`]+) MB`",
+        ),
+        (
+            "replay steps",
+            r"- replay steps: `([^`]+)`",
+            r"- 一键重放 step 数：`([^`]+)`",
+        ),
+        (
+            "blockers",
+            r"- blockers: `([^`]+)`",
+            r"- 阻断项：`([^`]+)`",
+        ),
+        (
+            "packaging actions",
+            r"- packaging actions: `([^`]+)`",
+            r"- 包装整理项：`([^`]+)`",
+        ),
+    ]
+    for label, audit_pattern, manifest_pattern in pairs:
+        audit_value = md_fact(audit, audit_pattern)
+        manifest_value = md_fact(manifest, manifest_pattern)
+        if not audit_value:
+            errors.append(f"delivery audit missing fact: {label}")
+        if not manifest_value:
+            errors.append(f"delivery manifest missing fact: {label}")
+        if audit_value and manifest_value and audit_value != manifest_value:
+            errors.append(f"delivery manifest {label} drift: audit={audit_value!r} manifest={manifest_value!r}")
+    return errors
+
+
 def main() -> int:
     payload = load_json(FREEZE)
     if not isinstance(payload, dict):
@@ -250,6 +320,7 @@ def main() -> int:
     errors.extend(check_inventory(payload))
     errors.extend(check_replay_gap_report())
     errors.extend(check_promotion_queue())
+    errors.extend(check_delivery_manifest_facts())
     report = {
         "status": "FAIL" if errors else "PASS",
         "freeze": str(FREEZE.relative_to(ROOT)),
