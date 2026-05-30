@@ -16,7 +16,9 @@ OUTPUT_JSON = ROOT / "docs/migration_alignment/scbs55_replay_payload_gap_report_
 OUTPUT_MD = ROOT / "docs/migration_alignment/scbs55_replay_payload_gap_report_v1.md"
 
 RUN_STEP_RE = re.compile(r"run_step\s+(?P<step>[A-Za-z0-9_]+)\s+(?P<command>.*)")
-SCRIPT_RE = re.compile(r'scripts/migration/(?P<script>[A-Za-z0-9_./-]+\.py)')
+SCRIPT_RE = re.compile(r'scripts/migration/(?P<script>[A-Za-z0-9_./-]+\.(?:py|sh))')
+VAR_SCRIPT_RE = re.compile(r'^(?P<name>[A-Z][A-Z0-9_]*)="\$ROOT_DIR/scripts/migration/(?P<script>[A-Za-z0-9_./-]+\.(?:py|sh))"$')
+COMMAND_VAR_RE = re.compile(r'\$(?P<name>[A-Z][A-Z0-9_]*)\b')
 ARTIFACT_RE = re.compile(r'(?P<path>artifacts/migration/[A-Za-z0-9_./\-\u4e00-\u9fa5]+(?:\.csv|\.json|\.gz|\.tsv|\.md|\.xml|\.tgz))')
 OUTPUT_NAME_RE = re.compile(r'(?P<name>[A-Za-z0-9_./-]+(?:payload|result|report|snapshot|targets|manifest)[A-Za-z0-9_./-]*(?:\.csv|\.json|\.md|\.tsv|\.gz))')
 
@@ -35,6 +37,10 @@ OPTIONAL_STEP_MARKERS = (
     "receipt_parent_recovery",
     "receipt_partner_targeted",
 )
+FUNCTION_SCRIPT_HINTS = {
+    "run_legacy_workflow_audit_adapter": "fresh_db_legacy_workflow_audit_replay_adapter.py",
+    "run_payment_request_outflow_state_activation_adapter": "history_payment_request_outflow_state_activation_adapter.py",
+}
 
 
 def rel(path: Path) -> str:
@@ -49,9 +55,24 @@ def normalize_artifact(path: str) -> str:
     return path.replace("/mnt/", "").replace(str(ROOT) + "/", "").lstrip("./")
 
 
-def script_path_from_command(command: str) -> Path | None:
+def script_variables(oneclick_text: str) -> dict[str, Path]:
+    variables: dict[str, Path] = {}
+    for line in oneclick_text.splitlines():
+        match = VAR_SCRIPT_RE.match(line.strip())
+        if match:
+            variables[match.group("name")] = ROOT / "scripts/migration" / match.group("script")
+    return variables
+
+
+def script_path_from_command(command: str, variables: dict[str, Path]) -> Path | None:
     match = SCRIPT_RE.search(command)
     if not match:
+        for variable_match in COMMAND_VAR_RE.finditer(command):
+            if variable_match.group("name") in variables:
+                return variables[variable_match.group("name")]
+        for function_name, script_name in FUNCTION_SCRIPT_HINTS.items():
+            if function_name in command:
+                return ROOT / "scripts/migration" / script_name
         return None
     return ROOT / "scripts/migration" / match.group("script")
 
@@ -96,6 +117,7 @@ def scope_for_step(step: str) -> str:
 
 def build_report() -> dict[str, Any]:
     text = read_text(ONECLICK)
+    variables = script_variables(text)
     rows: list[dict[str, Any]] = []
     missing_inputs: list[dict[str, str]] = []
     runtime_outputs: list[dict[str, str]] = []
@@ -103,9 +125,10 @@ def build_report() -> dict[str, Any]:
         match = RUN_STEP_RE.search(line)
         if not match:
             continue
+        step_index = len(rows) + 1
         step = match.group("step")
         command = match.group("command").strip()
-        script = script_path_from_command(command)
+        script = script_path_from_command(command, variables)
         artifacts = artifact_paths_from_script(script) if script else {"inputs": [], "outputs": []}
         inputs = []
         outputs = []
@@ -113,19 +136,21 @@ def build_report() -> dict[str, Any]:
             exists = (ROOT / item).exists()
             inputs.append({"path": item, "exists": exists})
             if not exists and scope_for_step(step) == "required":
-                missing_inputs.append({"step": step, "script": rel(script) if script else "", "path": item})
+                missing_inputs.append({"step_index": step_index, "step": step, "script": rel(script) if script else "", "path": item})
         for item in artifacts["outputs"]:
             exists = (ROOT / item).exists()
             outputs.append({"path": item, "exists": exists})
             if not exists:
-                runtime_outputs.append({"step": step, "script": rel(script) if script else "", "path": item})
+                runtime_outputs.append({"step_index": step_index, "step": step, "script": rel(script) if script else "", "path": item})
         rows.append(
             {
+                "step_index": step_index,
                 "step": step,
                 "kind": step_kind(step),
                 "scope": scope_for_step(step),
                 "script": rel(script) if script and script.exists() else "",
                 "script_exists": bool(script and script.exists()),
+                "command": command,
                 "input_artifacts": inputs,
                 "output_artifacts": outputs,
             }

@@ -5,11 +5,35 @@
     {
       "decision": "promote_required_inputs_first",
       "lane": "foundation_manifest",
-      "missing_required_input_count": 1,
+      "missing_required_input_count": 7,
       "missing_required_inputs": [
         {
           "path": "artifacts/migration/fresh_db_replay_manifest_v1.json",
           "step": "manifest_dry_run"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_contract_counterparty_partner_replay_payload_v1.csv",
+          "step": "replay_payload_precheck"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_partner_l4_replay_payload_v1.csv",
+          "step": "replay_payload_precheck"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_project_anchor_replay_payload_v1.csv",
+          "step": "replay_payload_precheck"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_contract_counterparty_partner_replay_payload_v1.csv",
+          "step": "replay_payload_precheck"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_partner_l4_replay_payload_v1.csv",
+          "step": "replay_payload_precheck"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_project_anchor_replay_payload_v1.csv",
+          "step": "replay_payload_precheck"
         }
       ],
       "optional_step_count": 0,
@@ -19,19 +43,75 @@
         {
           "path": "artifacts/migration/fresh_db_replay_manifest_runner_dry_run_v1.md",
           "step": "manifest_dry_run"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_replay_payload_precheck_report_v1.md",
+          "step": "replay_payload_precheck"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_replay_payload_precheck_result_v1.json",
+          "step": "replay_payload_precheck"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_replay_payload_precheck_report_v1.md",
+          "step": "replay_payload_precheck"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_replay_payload_precheck_result_v1.json",
+          "step": "replay_payload_precheck"
         }
       ],
-      "runtime_output_backlog_count": 1,
+      "runtime_output_backlog_count": 5,
       "sample_missing_inputs": [
         {
           "path": "artifacts/migration/fresh_db_replay_manifest_v1.json",
           "step": "manifest_dry_run"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_contract_counterparty_partner_replay_payload_v1.csv",
+          "step": "replay_payload_precheck"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_partner_l4_replay_payload_v1.csv",
+          "step": "replay_payload_precheck"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_project_anchor_replay_payload_v1.csv",
+          "step": "replay_payload_precheck"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_contract_counterparty_partner_replay_payload_v1.csv",
+          "step": "replay_payload_precheck"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_partner_l4_replay_payload_v1.csv",
+          "step": "replay_payload_precheck"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_project_anchor_replay_payload_v1.csv",
+          "step": "replay_payload_precheck"
         }
       ],
       "sample_runtime_outputs": [
         {
           "path": "artifacts/migration/fresh_db_replay_manifest_runner_dry_run_v1.md",
           "step": "manifest_dry_run"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_replay_payload_precheck_report_v1.md",
+          "step": "replay_payload_precheck"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_replay_payload_precheck_result_v1.json",
+          "step": "replay_payload_precheck"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_replay_payload_precheck_report_v1.md",
+          "step": "replay_payload_precheck"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_replay_payload_precheck_result_v1.json",
+          "step": "replay_payload_precheck"
         }
       ],
       "step_count": 3,
@@ -379,12 +459,28 @@
           "step": "project_anchor_completed"
         },
         {
+          "path": "artifacts/migration/fresh_db_contract_counterparty_partner_replay_adapter_result_v1.json",
+          "step": "contract_counterparty_partner_adapter"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_contract_counterparty_partner_replay_payload_v1.csv",
+          "step": "contract_counterparty_partner_adapter"
+        },
+        {
           "path": "artifacts/migration/fresh_db_contract_counterparty_partner_replay_rollback_targets_v1.csv",
           "step": "contract_counterparty_partner_completed"
         },
         {
           "path": "artifacts/migration/fresh_db_contract_counterparty_partner_replay_write_result_v1.json",
           "step": "contract_counterparty_partner_completed"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_receipt_counterparty_partner_replay_adapter_result_v1.json",
+          "step": "receipt_counterparty_partner_adapter"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_receipt_counterparty_partner_replay_payload_v1.csv",
+          "step": "receipt_counterparty_partner_adapter"
         },
         {
           "path": "artifacts/migration/fresh_db_receipt_counterparty_partner_replay_rollback_targets_v1.csv",
@@ -599,7 +695,7 @@
           "step": "project_lifecycle_continuity_replay"
         }
       ],
-      "runtime_output_backlog_count": 59,
+      "runtime_output_backlog_count": 63,
       "sample_missing_inputs": [
         {
           "path": "artifacts/migration/fresh_db_partner_l4_replay_payload_v1.csv",
@@ -660,6 +756,14 @@
           "step": "project_anchor_completed"
         },
         {
+          "path": "artifacts/migration/fresh_db_contract_counterparty_partner_replay_adapter_result_v1.json",
+          "step": "contract_counterparty_partner_adapter"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_contract_counterparty_partner_replay_payload_v1.csv",
+          "step": "contract_counterparty_partner_adapter"
+        },
+        {
           "path": "artifacts/migration/fresh_db_contract_counterparty_partner_replay_rollback_targets_v1.csv",
           "step": "contract_counterparty_partner_completed"
         },
@@ -668,20 +772,12 @@
           "step": "contract_counterparty_partner_completed"
         },
         {
-          "path": "artifacts/migration/fresh_db_receipt_counterparty_partner_replay_rollback_targets_v1.csv",
-          "step": "receipt_counterparty_partner_completed"
+          "path": "artifacts/migration/fresh_db_receipt_counterparty_partner_replay_adapter_result_v1.json",
+          "step": "receipt_counterparty_partner_adapter"
         },
         {
-          "path": "artifacts/migration/fresh_db_receipt_counterparty_partner_replay_write_result_v1.json",
-          "step": "receipt_counterparty_partner_completed"
-        },
-        {
-          "path": "artifacts/migration/_rollback_targets_v1.csv",
-          "step": "project_member_neutral_adapter"
-        },
-        {
-          "path": "artifacts/migration/fresh_db_project_member_neutral_replay_adapter_report_v1.md",
-          "step": "project_member_neutral_adapter"
+          "path": "artifacts/migration/fresh_db_receipt_counterparty_partner_replay_payload_v1.csv",
+          "step": "receipt_counterparty_partner_adapter"
         }
       ],
       "step_count": 34,
@@ -878,12 +974,36 @@
           "step": "contract_direction_defer_recovery_replay"
         },
         {
+          "path": "artifacts/migration/fresh_db_contract_line_replay_adapter_result_v1.json",
+          "step": "contract_line_adapter"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_contract_line_replay_payload_v1.csv",
+          "step": "contract_line_adapter"
+        },
+        {
           "path": "artifacts/migration/fresh_db_contract_line_replay_write_result_v1.json",
           "step": "contract_line_completed"
         },
         {
+          "path": "artifacts/migration/fresh_db_supplier_contract_replay_adapter_result_v1.json",
+          "step": "supplier_contract_adapter"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_supplier_contract_replay_payload_v1.csv",
+          "step": "supplier_contract_adapter"
+        },
+        {
           "path": "artifacts/migration/fresh_db_supplier_contract_replay_write_result_v1.json",
           "step": "supplier_contract_completed"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_supplier_contract_line_replay_adapter_result_v1.json",
+          "step": "supplier_contract_line_adapter"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_supplier_contract_line_replay_payload_v1.csv",
+          "step": "supplier_contract_line_adapter"
         },
         {
           "path": "artifacts/migration/fresh_db_supplier_contract_line_replay_write_result_v1.json",
@@ -918,7 +1038,7 @@
           "step": "purchase_contract_runtime_probe"
         }
       ],
-      "runtime_output_backlog_count": 37,
+      "runtime_output_backlog_count": 43,
       "sample_missing_inputs": [
         {
           "path": "artifacts/migration/fresh_db_legacy_labor_subcontract_replay_adapter_result_v1.json",
@@ -1370,6 +1490,14 @@
           "step": "legacy_payment_residual_replay"
         },
         {
+          "path": "artifacts/migration/history_payment_request_outflow_state_activation_adapter_result_v1.json",
+          "step": "payment_request_outflow_state_activation_adapter"
+        },
+        {
+          "path": "artifacts/migration/history_payment_request_outflow_state_activation_payload_v1.csv",
+          "step": "payment_request_outflow_state_activation_adapter"
+        },
+        {
           "path": "artifacts/migration/history_payment_request_outflow_state_activation_rollback_targets_v1.csv",
           "step": "payment_request_outflow_state_activation_replay"
         },
@@ -1410,7 +1538,7 @@
           "step": "payment_request_outflow_done_recovery_replay"
         }
       ],
-      "runtime_output_backlog_count": 28,
+      "runtime_output_backlog_count": 30,
       "sample_missing_inputs": [
         {
           "path": "artifacts/migration/fresh_db_outflow_request_replay_adapter_result_v1.json",
@@ -2087,11 +2215,19 @@
           "step": "legacy_attachment_backfill_replay"
         },
         {
+          "path": "artifacts/migration/fresh_db_legacy_workflow_audit_replay_adapter_result_v1.json",
+          "step": "legacy_workflow_audit_adapter"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_legacy_workflow_audit_replay_payload_v1.csv",
+          "step": "legacy_workflow_audit_adapter"
+        },
+        {
           "path": "artifacts/migration/fresh_db_legacy_workflow_audit_replay_write_result_v1.json",
           "step": "legacy_workflow_audit_replay"
         }
       ],
-      "runtime_output_backlog_count": 7,
+      "runtime_output_backlog_count": 9,
       "sample_missing_inputs": [
         {
           "path": "artifacts/migration/fresh_db_legacy_file_index_replay_adapter_result_v1.json",
@@ -2142,6 +2278,14 @@
         {
           "path": "artifacts/migration/fresh_db_legacy_attachment_backfill_replay_write_result_v1.json",
           "step": "legacy_attachment_backfill_replay"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_legacy_workflow_audit_replay_adapter_result_v1.json",
+          "step": "legacy_workflow_audit_adapter"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_legacy_workflow_audit_replay_payload_v1.csv",
+          "step": "legacy_workflow_audit_adapter"
         },
         {
           "path": "artifacts/migration/fresh_db_legacy_workflow_audit_replay_write_result_v1.json",
@@ -2328,6 +2472,14 @@
       "required_step_count": 8,
       "runtime_output_backlog": [
         {
+          "path": "artifacts/migration/history_continuity_usability_probe_report_v1.md",
+          "step": "usability_probe"
+        },
+        {
+          "path": "artifacts/migration/history_continuity_usability_probe_result_v1.json",
+          "step": "usability_probe"
+        },
+        {
           "path": "artifacts/migration/history_attachment_custody_probe_report_v1.md",
           "step": "attachment_custody_probe"
         },
@@ -2350,12 +2502,28 @@
         {
           "path": "artifacts/migration/history_material_catalog_runtime_probe_result_v1.json",
           "step": "material_catalog_runtime_probe"
+        },
+        {
+          "path": "artifacts/migration/history_continuity_usability_probe_report_v1.md",
+          "step": "usability_probe"
+        },
+        {
+          "path": "artifacts/migration/history_continuity_usability_probe_result_v1.json",
+          "step": "usability_probe"
         }
       ],
-      "runtime_output_backlog_count": 6,
+      "runtime_output_backlog_count": 10,
       "sample_missing_inputs": [],
       "sample_runtime_outputs": [
         {
+          "path": "artifacts/migration/history_continuity_usability_probe_report_v1.md",
+          "step": "usability_probe"
+        },
+        {
+          "path": "artifacts/migration/history_continuity_usability_probe_result_v1.json",
+          "step": "usability_probe"
+        },
+        {
           "path": "artifacts/migration/history_attachment_custody_probe_report_v1.md",
           "step": "attachment_custody_probe"
         },
@@ -2378,6 +2546,14 @@
         {
           "path": "artifacts/migration/history_material_catalog_runtime_probe_result_v1.json",
           "step": "material_catalog_runtime_probe"
+        },
+        {
+          "path": "artifacts/migration/history_continuity_usability_probe_report_v1.md",
+          "step": "usability_probe"
+        },
+        {
+          "path": "artifacts/migration/history_continuity_usability_probe_result_v1.json",
+          "step": "usability_probe"
         }
       ],
       "step_count": 8,
@@ -2389,6 +2565,6 @@
   "queue_version": "scbs55_payload_promotion_queue_v1",
   "source_gap_report": "docs/migration_alignment/scbs55_replay_payload_gap_report_v1.json",
   "status": "PASS",
-  "total_missing_required_inputs": 122,
-  "total_runtime_output_backlog": 240
+  "total_missing_required_inputs": 128,
+  "total_runtime_output_backlog": 262
 }

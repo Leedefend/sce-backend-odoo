@@ -7,36 +7,44 @@ Source: `docs/migration_alignment/scbs55_replay_payload_gap_report_v1.json`
 ## Summary
 
 - lanes: `11`
-- missing required inputs: `122`
-- runtime output backlog: `240`
+- missing required inputs: `128`
+- runtime output backlog: `262`
 
 ## Queue
 
 | Priority | Lane | Steps | Missing required inputs | Runtime output backlog | Decision |
 |---:|---|---:|---:|---:|---|
-| 10 | foundation_manifest | 3 | 1 | 1 | promote_required_inputs_first |
+| 10 | foundation_manifest | 3 | 7 | 5 | promote_required_inputs_first |
 | 20 | user_security_context | 18 | 7 | 16 | promote_required_inputs_first |
-| 30 | master_partner_project | 34 | 32 | 59 | promote_required_inputs_first |
-| 40 | contract_and_supplier | 29 | 17 | 37 | promote_required_inputs_first |
+| 30 | master_partner_project | 34 | 32 | 63 | promote_required_inputs_first |
+| 40 | contract_and_supplier | 29 | 17 | 43 | promote_required_inputs_first |
 | 50 | receipt_income | 20 | 9 | 22 | promote_required_inputs_first |
-| 60 | outflow_payment | 24 | 12 | 28 | promote_required_inputs_first |
+| 60 | outflow_payment | 24 | 12 | 30 | promote_required_inputs_first |
 | 70 | finance_accounting | 30 | 25 | 39 | promote_required_inputs_first |
 | 80 | materials_tender_purchase | 8 | 8 | 10 | promote_required_inputs_first |
-| 90 | attachments_workflow | 6 | 6 | 7 | promote_required_inputs_first |
+| 90 | attachments_workflow | 6 | 6 | 9 | promote_required_inputs_first |
 | 100 | formal_projections | 41 | 5 | 15 | promote_required_inputs_first |
-| 110 | runtime_probes | 8 | 0 | 6 | promote_runtime_outputs_after_required_inputs |
+| 110 | runtime_probes | 8 | 0 | 10 | promote_runtime_outputs_after_required_inputs |
 
 ## Lane Details
 
 ### 10 foundation_manifest
 
 - steps: `3`
-- missing required inputs: `1`
-- runtime output backlog: `1`
+- missing required inputs: `7`
+- runtime output backlog: `5`
 - sample missing inputs:
   - `manifest_dry_run` `artifacts/migration/fresh_db_replay_manifest_v1.json`
+  - `replay_payload_precheck` `artifacts/migration/fresh_db_contract_counterparty_partner_replay_payload_v1.csv`
+  - `replay_payload_precheck` `artifacts/migration/fresh_db_partner_l4_replay_payload_v1.csv`
+  - `replay_payload_precheck` `artifacts/migration/fresh_db_project_anchor_replay_payload_v1.csv`
+  - `replay_payload_precheck` `artifacts/migration/fresh_db_contract_counterparty_partner_replay_payload_v1.csv`
 - sample runtime outputs:
   - `manifest_dry_run` `artifacts/migration/fresh_db_replay_manifest_runner_dry_run_v1.md`
+  - `replay_payload_precheck` `artifacts/migration/fresh_db_replay_payload_precheck_report_v1.md`
+  - `replay_payload_precheck` `artifacts/migration/fresh_db_replay_payload_precheck_result_v1.json`
+  - `replay_payload_precheck` `artifacts/migration/fresh_db_replay_payload_precheck_report_v1.md`
+  - `replay_payload_precheck` `artifacts/migration/fresh_db_replay_payload_precheck_result_v1.json`
 
 ### 20 user_security_context
 
@@ -60,7 +68,7 @@ Source: `docs/migration_alignment/scbs55_replay_payload_gap_report_v1.json`
 
 - steps: `34`
 - missing required inputs: `32`
-- runtime output backlog: `59`
+- runtime output backlog: `63`
 - sample missing inputs:
   - `partner_l4_anchor_completed` `artifacts/migration/fresh_db_partner_l4_replay_payload_v1.csv`
   - `project_anchor_completed` `artifacts/migration/fresh_db_project_anchor_replay_payload_v1.csv`
@@ -72,13 +80,13 @@ Source: `docs/migration_alignment/scbs55_replay_payload_gap_report_v1.json`
   - `partner_l4_anchor_completed` `artifacts/migration/fresh_db_partner_l4_replay_write_result_v1.json`
   - `project_anchor_completed` `artifacts/migration/fresh_db_project_anchor_replay_rollback_targets_v1.csv`
   - `project_anchor_completed` `artifacts/migration/fresh_db_project_anchor_replay_write_result_v1.json`
-  - `contract_counterparty_partner_completed` `artifacts/migration/fresh_db_contract_counterparty_partner_replay_rollback_targets_v1.csv`
+  - `contract_counterparty_partner_adapter` `artifacts/migration/fresh_db_contract_counterparty_partner_replay_adapter_result_v1.json`
 
 ### 40 contract_and_supplier
 
 - steps: `29`
 - missing required inputs: `17`
-- runtime output backlog: `37`
+- runtime output backlog: `43`
 - sample missing inputs:
   - `legacy_labor_subcontract_replay` `artifacts/migration/fresh_db_legacy_labor_subcontract_replay_adapter_result_v1.json`
   - `legacy_labor_subcontract_replay` `artifacts/migration/fresh_db_legacy_labor_subcontract_replay_payload_v1.csv`
@@ -114,7 +122,7 @@ Source: `docs/migration_alignment/scbs55_replay_payload_gap_report_v1.json`
 
 - steps: `24`
 - missing required inputs: `12`
-- runtime output backlog: `28`
+- runtime output backlog: `30`
 - sample missing inputs:
   - `outflow_request_replay` `artifacts/migration/fresh_db_outflow_request_replay_adapter_result_v1.json`
   - `outflow_request_replay` `artifacts/migration/fresh_db_outflow_request_replay_payload_v1.csv`
@@ -168,7 +176,7 @@ Source: `docs/migration_alignment/scbs55_replay_payload_gap_report_v1.json`
 
 - steps: `6`
 - missing required inputs: `6`
-- runtime output backlog: `7`
+- runtime output backlog: `9`
 - sample missing inputs:
   - `legacy_file_index_replay` `artifacts/migration/fresh_db_legacy_file_index_replay_adapter_result_v1.json`
   - `legacy_file_index_replay` `artifacts/migration/fresh_db_legacy_file_index_replay_payload_v1.csv`
@@ -204,13 +212,13 @@ Source: `docs/migration_alignment/scbs55_replay_payload_gap_report_v1.json`
 
 - steps: `8`
 - missing required inputs: `0`
-- runtime output backlog: `6`
+- runtime output backlog: `10`
 - sample runtime outputs:
+  - `usability_probe` `artifacts/migration/history_continuity_usability_probe_report_v1.md`
+  - `usability_probe` `artifacts/migration/history_continuity_usability_probe_result_v1.json`
   - `attachment_custody_probe` `artifacts/migration/history_attachment_custody_probe_report_v1.md`
   - `attachment_custody_probe` `artifacts/migration/history_attachment_custody_probe_result_v1.json`
   - `expense_deposit_runtime_probe` `artifacts/migration/history_expense_deposit_runtime_probe_report_v1.md`
-  - `expense_deposit_runtime_probe` `artifacts/migration/history_expense_deposit_runtime_probe_result_v1.json`
-  - `material_catalog_runtime_probe` `artifacts/migration/history_material_catalog_runtime_probe_report_v1.md`
 
 ## Decision
 

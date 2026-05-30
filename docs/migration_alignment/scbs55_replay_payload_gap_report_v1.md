@@ -8,8 +8,8 @@ Status: `PASS_WITH_GAPS`
 - steps: `221`
 - adapter steps: `69`
 - adapters with packaged outputs: `0`
-- required missing inputs: `122`
-- runtime outputs not currently packaged: `240`
+- required missing inputs: `128`
+- runtime outputs not currently packaged: `262`
 
 ## Step Kinds
 
@@ -28,6 +28,9 @@ Status: `PASS_WITH_GAPS`
 ## Missing Required Inputs
 
 - `manifest_dry_run` `artifacts/migration/fresh_db_replay_manifest_v1.json`
+- `replay_payload_precheck` `artifacts/migration/fresh_db_contract_counterparty_partner_replay_payload_v1.csv`
+- `replay_payload_precheck` `artifacts/migration/fresh_db_partner_l4_replay_payload_v1.csv`
+- `replay_payload_precheck` `artifacts/migration/fresh_db_project_anchor_replay_payload_v1.csv`
 - `legacy_user_context_replay` `artifacts/migration/fresh_db_legacy_department_replay_payload_v1.csv`
 - `legacy_user_context_replay` `artifacts/migration/fresh_db_legacy_user_context_replay_adapter_result_v1.json`
 - `legacy_user_context_replay` `artifacts/migration/fresh_db_legacy_user_role_replay_payload_v1.csv`
@@ -35,6 +38,9 @@ Status: `PASS_WITH_GAPS`
 - `legacy_user_project_scope_replay` `artifacts/migration/fresh_db_legacy_user_project_scope_replay_payload_v1.csv`
 - `legacy_task_evidence_replay` `artifacts/migration/fresh_db_legacy_task_evidence_replay_adapter_result_v1.json`
 - `legacy_task_evidence_replay` `artifacts/migration/fresh_db_legacy_task_evidence_replay_payload_v1.csv`
+- `replay_payload_precheck` `artifacts/migration/fresh_db_contract_counterparty_partner_replay_payload_v1.csv`
+- `replay_payload_precheck` `artifacts/migration/fresh_db_partner_l4_replay_payload_v1.csv`
+- `replay_payload_precheck` `artifacts/migration/fresh_db_project_anchor_replay_payload_v1.csv`
 - `partner_l4_anchor_completed` `artifacts/migration/fresh_db_partner_l4_replay_payload_v1.csv`
 - `project_anchor_completed` `artifacts/migration/fresh_db_project_anchor_replay_payload_v1.csv`
 - `legacy_account_master_replay` `artifacts/migration/fresh_db_legacy_account_master_replay_adapter_result_v1.json`
@@ -101,16 +107,14 @@ Status: `PASS_WITH_GAPS`
 - `actual_outflow_line_replay` `artifacts/migration/fresh_db_actual_outflow_line_replay_payload_v1.csv`
 - `project_member_attachment_targeted_adapter` `artifacts/migration/fresh_db_legacy_attachment_backfill_replay_payload_v1.csv`
 - `project_member_attachment_targeted_replay` `artifacts/migration/history_project_member_attachment_targeted_replay_adapter_result_v1.json`
-- `project_member_attachment_targeted_replay` `artifacts/migration/history_project_member_attachment_targeted_replay_payload_v1.csv`
-- `legacy_attachment_backfill_replay` `artifacts/migration/fresh_db_legacy_attachment_backfill_replay_adapter_result_v1.json`
-- `legacy_attachment_backfill_replay` `artifacts/migration/fresh_db_legacy_attachment_backfill_replay_payload_v1.csv`
-- `receipt_income_partner_targeted_adapter` `artifacts/migration/fresh_db_contract_counterparty_partner_replay_payload_v1.csv`
-- `receipt_income_partner_targeted_adapter` `artifacts/migration/fresh_db_legacy_receipt_income_replay_payload_v1.csv`
-- `receipt_income_partner_targeted_adapter` `artifacts/migration/fresh_db_receipt_counterparty_partner_replay_payload_v1.csv`
 
 ## Runtime Output Promotion Backlog
 
 - `manifest_dry_run` `artifacts/migration/fresh_db_replay_manifest_runner_dry_run_v1.md`
+- `replay_payload_precheck` `artifacts/migration/fresh_db_replay_payload_precheck_report_v1.md`
+- `replay_payload_precheck` `artifacts/migration/fresh_db_replay_payload_precheck_result_v1.json`
+- `usability_probe` `artifacts/migration/history_continuity_usability_probe_report_v1.md`
+- `usability_probe` `artifacts/migration/history_continuity_usability_probe_result_v1.json`
 - `legacy_user_context_adapter` `artifacts/migration/fresh_db_legacy_user_context_replay_adapter_result_v1.json`
 - `legacy_user_context_replay` `artifacts/migration/fresh_db_legacy_user_context_replay_write_result_v1.json`
 - `legacy_user_project_scope_adapter` `artifacts/migration/fresh_db_legacy_user_project_scope_replay_adapter_result_v1.json`
@@ -127,6 +131,8 @@ Status: `PASS_WITH_GAPS`
 - `legacy_personnel_movement_replay` `artifacts/migration/fresh_db_legacy_personnel_movement_replay_write_result_v1.json`
 - `legacy_salary_line_adapter` `artifacts/migration/fresh_db_legacy_salary_line_replay_adapter_result_v1.json`
 - `legacy_salary_line_replay` `artifacts/migration/fresh_db_legacy_salary_line_replay_write_result_v1.json`
+- `replay_payload_precheck` `artifacts/migration/fresh_db_replay_payload_precheck_report_v1.md`
+- `replay_payload_precheck` `artifacts/migration/fresh_db_replay_payload_precheck_result_v1.json`
 - `partner_l4_anchor_completed` `artifacts/migration/fresh_db_partner_l4_replay_rollback_targets_v1.csv`
 - `partner_l4_anchor_completed` `artifacts/migration/fresh_db_partner_l4_replay_write_result_v1.json`
 - `project_anchor_completed` `artifacts/migration/fresh_db_project_anchor_replay_rollback_targets_v1.csv`
@@ -151,8 +157,12 @@ Status: `PASS_WITH_GAPS`
 - `legacy_file_index_adapter` `artifacts/migration/fresh_db_legacy_file_index_replay_adapter_result_v1.json`
 - `legacy_file_index_adapter` `artifacts/migration/fresh_db_legacy_file_index_replay_payload_v1.csv`
 - `legacy_file_index_replay` `artifacts/migration/fresh_db_legacy_file_index_replay_write_result_v1.json`
+- `contract_counterparty_partner_adapter` `artifacts/migration/fresh_db_contract_counterparty_partner_replay_adapter_result_v1.json`
+- `contract_counterparty_partner_adapter` `artifacts/migration/fresh_db_contract_counterparty_partner_replay_payload_v1.csv`
 - `contract_counterparty_partner_completed` `artifacts/migration/fresh_db_contract_counterparty_partner_replay_rollback_targets_v1.csv`
 - `contract_counterparty_partner_completed` `artifacts/migration/fresh_db_contract_counterparty_partner_replay_write_result_v1.json`
+- `receipt_counterparty_partner_adapter` `artifacts/migration/fresh_db_receipt_counterparty_partner_replay_adapter_result_v1.json`
+- `receipt_counterparty_partner_adapter` `artifacts/migration/fresh_db_receipt_counterparty_partner_replay_payload_v1.csv`
 - `receipt_counterparty_partner_completed` `artifacts/migration/fresh_db_receipt_counterparty_partner_replay_rollback_targets_v1.csv`
 - `receipt_counterparty_partner_completed` `artifacts/migration/fresh_db_receipt_counterparty_partner_replay_write_result_v1.json`
 - `project_member_neutral_adapter` `artifacts/migration/_rollback_targets_v1.csv`
@@ -180,16 +190,6 @@ Status: `PASS_WITH_GAPS`
 - `contract_header_retry_57` `artifacts/migration/fresh_db_contract_57_retry_rollback_targets_v1.csv`
 - `contract_header_retry_57` `artifacts/migration/fresh_db_contract_57_retry_write_result_v1.json`
 - `contract_unreached_ready_adapter` `artifacts/migration/history_contract_unreached_ready_replay_adapter_result_v1.json`
-- `contract_unreached_ready_adapter` `artifacts/migration/history_contract_unreached_ready_replay_payload_v1.csv`
-- `contract_unreached_ready_replay` `artifacts/migration/history_contract_unreached_ready_replay_rollback_targets_v1.csv`
-- `contract_unreached_ready_replay` `artifacts/migration/history_contract_unreached_ready_replay_write_result_v1.json`
-- `partner_master_targeted_adapter` `artifacts/migration/history_partner_master_targeted_replay_adapter_result_v1.json`
-- `partner_master_targeted_adapter` `artifacts/migration/history_partner_master_targeted_replay_payload_v1.csv`
-- `partner_master_targeted_replay` `artifacts/migration/history_partner_master_targeted_replay_rollback_targets_v1.csv`
-- `partner_master_targeted_replay` `artifacts/migration/history_partner_master_targeted_replay_write_result_v1.json`
-- `contract_partner_recovery_adapter` `artifacts/migration/history_contract_partner_recovery_adapter_result_v1.json`
-- `contract_partner_recovery_adapter` `artifacts/migration/history_contract_partner_recovery_payload_v1.csv`
-- `contract_partner_recovery_replay` `artifacts/migration/history_contract_partner_recovery_rollback_targets_v1.csv`
 
 ## Decision
 

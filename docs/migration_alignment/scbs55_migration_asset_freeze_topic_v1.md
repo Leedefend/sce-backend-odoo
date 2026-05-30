@@ -39,8 +39,8 @@
 - 全量用户可见列表：`artifacts/migration/scbs55_wutao_old_new_final_aligned_compare.json`
 - 当前列表证据：42 个用户可见面 `PASS`，blocking = 0
 - 当前资产台账：225 个运行态 artifact，历史连续性重放 221 个 step，42 个用户可见面合计 142427 行旧/新一致
-- 当前 replay gap：221 个 step、69 个 adapter step、122 条 required missing input、240 条 runtime output backlog；在未物化完整 release package 的工作区里，缺口报告为 `PASS_WITH_GAPS`，用于推进 payload 晋级队列，不替代发布包校验
-- 当前 payload 晋级队列：11 个 lane，按 foundation、用户权限、主数据、合同/供应商、收款、付款、财务、物资投标、附件流程、正式投影、runtime probe 顺序推进；JSON 固化 122/240 全量 backlog 明细，全量守卫禁止 `unclassified` lane 并校验明细计数
+- 当前 replay gap：221 个 step、69 个 adapter step、128 条 required missing input、262 条 runtime output backlog；在未物化完整 release package 的工作区里，缺口报告为 `PASS_WITH_GAPS`，用于推进 payload 晋级队列，不替代发布包校验
+- 当前 payload 晋级队列：11 个 lane，按 foundation、用户权限、主数据、合同/供应商、收款、付款、财务、物资投标、附件流程、正式投影、runtime probe 顺序推进；JSON 固化 128/262 全量 backlog 明细，全量守卫禁止 `unclassified` lane 并校验明细计数
 
 首批高风险验收切片 6 个页面：
 

@@ -95,11 +95,11 @@ def build_queue() -> dict[str, Any]:
     missing_by_step = defaultdict(list)
     for item in gap.get("missing_required_inputs", []):
         if isinstance(item, dict):
-            missing_by_step[item.get("step")].append(item.get("path"))
+            missing_by_step[item.get("step_index", item.get("step"))].append(item.get("path"))
     runtime_by_step = defaultdict(list)
     for item in gap.get("runtime_outputs_not_currently_packaged", []):
         if isinstance(item, dict):
-            runtime_by_step[item.get("step")].append(item.get("path"))
+            runtime_by_step[item.get("step_index", item.get("step"))].append(item.get("path"))
 
     lane_rows: dict[str, dict[str, Any]] = {}
     for step in steps:
@@ -129,9 +129,10 @@ def build_queue() -> dict[str, Any]:
         else:
             row["optional_step_count"] += 1
         row["step_kinds"][step.get("kind") or "other"] += 1
+        step_index = step.get("step_index", step.get("step"))
         step_name = step.get("step")
-        missing = missing_by_step.get(step_name, [])
-        runtime = runtime_by_step.get(step_name, [])
+        missing = missing_by_step.get(step_index, [])
+        runtime = runtime_by_step.get(step_index, [])
         row["missing_required_input_count"] += len(missing)
         row["runtime_output_backlog_count"] += len(runtime)
         for path in missing:

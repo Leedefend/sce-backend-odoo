@@ -276,6 +276,19 @@ def check_replay_gap_report() -> list[str]:
         errors.append(f"replay gap report step_count unexpectedly low: {report.get('step_count')}")
     if as_int(report.get("adapter_step_count")) <= 0:
         errors.append("replay gap report must include adapter steps")
+    steps = report.get("steps") if isinstance(report.get("steps"), list) else []
+    step_indexes = [as_int(row.get("step_index")) for row in steps if isinstance(row, dict)]
+    if len(step_indexes) != as_int(report.get("step_count")):
+        errors.append("replay gap report steps count drift")
+    if sorted(step_indexes) != list(range(1, len(step_indexes) + 1)):
+        errors.append("replay gap report step_index must be contiguous and unique")
+    unresolved_scripts = [
+        row.get("step")
+        for row in steps
+        if isinstance(row, dict) and not row.get("script_exists")
+    ]
+    if unresolved_scripts:
+        errors.append(f"replay gap report has unresolved step scripts: {unresolved_scripts[:10]}")
     if "missing_required_inputs" not in report:
         errors.append("replay gap report must expose missing_required_inputs")
     if "runtime_outputs_not_currently_packaged" not in report:
