@@ -359,6 +359,13 @@ def check_promotion_queue() -> list[str]:
             errors.append(f"payload promotion queue lane {row.get('lane')!r} must expose runtime_output_backlog")
         elif len(runtime) != as_int(row.get("runtime_output_backlog_count")):
             errors.append(f"payload promotion queue lane {row.get('lane')!r} runtime_output_backlog count drift")
+        for item in list(missing if isinstance(missing, list) else []) + list(runtime if isinstance(runtime, list) else []):
+            if not isinstance(item, dict):
+                errors.append(f"payload promotion queue lane {row.get('lane')!r} backlog entries must be objects")
+                continue
+            for field in ("step_index", "step", "script", "path"):
+                if item.get(field) in (None, ""):
+                    errors.append(f"payload promotion queue lane {row.get('lane')!r} backlog entry missing {field}")
     priorities = [as_int(row.get("priority")) for row in rows if isinstance(row, dict)]
     if priorities != sorted(priorities):
         errors.append("payload promotion queue priorities must be sorted")
@@ -371,6 +378,34 @@ def check_promotion_queue() -> list[str]:
                 errors.append("payload promotion queue missing input total must match replay gap report")
             if as_int(queue.get("total_runtime_output_backlog")) != as_int(report.get("runtime_output_count")):
                 errors.append("payload promotion queue runtime output total must match replay gap report")
+            gap_missing = {
+                (as_int(item.get("step_index")), item.get("step"), item.get("script"), item.get("path"))
+                for item in report.get("missing_required_inputs", [])
+                if isinstance(item, dict)
+            }
+            gap_runtime = {
+                (as_int(item.get("step_index")), item.get("step"), item.get("script"), item.get("path"))
+                for item in report.get("runtime_outputs_not_currently_packaged", [])
+                if isinstance(item, dict)
+            }
+            queue_missing = {
+                (as_int(item.get("step_index")), item.get("step"), item.get("script"), item.get("path"))
+                for row in rows
+                if isinstance(row, dict)
+                for item in row.get("missing_required_inputs", [])
+                if isinstance(item, dict)
+            }
+            queue_runtime = {
+                (as_int(item.get("step_index")), item.get("step"), item.get("script"), item.get("path"))
+                for row in rows
+                if isinstance(row, dict)
+                for item in row.get("runtime_output_backlog", [])
+                if isinstance(item, dict)
+            }
+            if queue_missing != gap_missing:
+                errors.append("payload promotion queue missing input entries must match replay gap report")
+            if queue_runtime != gap_runtime:
+                errors.append("payload promotion queue runtime output entries must match replay gap report")
     return errors
 
 

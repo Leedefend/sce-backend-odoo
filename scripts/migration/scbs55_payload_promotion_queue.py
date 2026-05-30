@@ -95,11 +95,11 @@ def build_queue() -> dict[str, Any]:
     missing_by_step = defaultdict(list)
     for item in gap.get("missing_required_inputs", []):
         if isinstance(item, dict):
-            missing_by_step[item.get("step_index", item.get("step"))].append(item.get("path"))
+            missing_by_step[item.get("step_index", item.get("step"))].append(item)
     runtime_by_step = defaultdict(list)
     for item in gap.get("runtime_outputs_not_currently_packaged", []):
         if isinstance(item, dict):
-            runtime_by_step[item.get("step_index", item.get("step"))].append(item.get("path"))
+            runtime_by_step[item.get("step_index", item.get("step"))].append(item)
 
     lane_rows: dict[str, dict[str, Any]] = {}
     for step in steps:
@@ -135,14 +135,14 @@ def build_queue() -> dict[str, Any]:
         runtime = runtime_by_step.get(step_index, [])
         row["missing_required_input_count"] += len(missing)
         row["runtime_output_backlog_count"] += len(runtime)
-        for path in missing:
-            row["missing_required_inputs"].append({"step": step_name, "path": path})
+        for item in missing:
+            row["missing_required_inputs"].append(dict(item))
             if len(row["sample_missing_inputs"]) < 10:
-                row["sample_missing_inputs"].append({"step": step_name, "path": path})
-        for path in runtime:
-            row["runtime_output_backlog"].append({"step": step_name, "path": path})
+                row["sample_missing_inputs"].append(dict(item))
+        for item in runtime:
+            row["runtime_output_backlog"].append(dict(item))
             if len(row["sample_runtime_outputs"]) < 10:
-                row["sample_runtime_outputs"].append({"step": step_name, "path": path})
+                row["sample_runtime_outputs"].append(dict(item))
 
     queue = []
     for row in lane_rows.values():
