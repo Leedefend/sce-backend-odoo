@@ -227,6 +227,13 @@ def check_promotion_queue() -> list[str]:
         errors.append("payload promotion queue priorities must be sorted")
     if as_int(queue.get("total_missing_required_inputs")) <= 0:
         errors.append("payload promotion queue must expose current missing required input backlog")
+    if REPLAY_GAP.exists():
+        report = load_json(REPLAY_GAP)
+        if isinstance(report, dict):
+            if as_int(queue.get("total_missing_required_inputs")) != as_int(report.get("required_missing_input_count")):
+                errors.append("payload promotion queue missing input total must match replay gap report")
+            if as_int(queue.get("total_runtime_output_backlog")) != as_int(report.get("runtime_output_count")):
+                errors.append("payload promotion queue runtime output total must match replay gap report")
     return errors
 
 
