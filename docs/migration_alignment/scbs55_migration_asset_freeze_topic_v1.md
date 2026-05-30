@@ -41,6 +41,7 @@
 - 当前资产台账：225 个运行态 artifact，历史连续性重放 221 个 step，42 个用户可见面合计 142427 行旧/新一致
 - 当前 replay gap：221 个 step、69 个 adapter step、128 条 required missing input（106 个唯一文件）、262 条 runtime output backlog（258 个唯一文件）；在未物化完整 release package 的工作区里，缺口报告为 `PASS_WITH_GAPS`，用于推进 payload 晋级队列，不替代发布包校验
 - 当前 payload 晋级队列：11 个 lane，按 foundation、用户权限、主数据、合同/供应商、收款、付款、财务、物资投标、附件流程、正式投影、runtime probe 顺序推进；JSON 固化 128/262 全量 backlog 明细，其中 10 个缺失输入文件跨 lane 共享，全量守卫禁止 `unclassified` lane 并校验明细计数、唯一文件数和跨 lane 清单
+- 当前 delivery/release 必需 replay artifact 口径：115 个 required input 唯一路径扣除 4 个 baseline excluded recovery artifact 后，最终发布包门禁要求 111 个；`make migration.assets.full_scope_guard` 校验 delivery audit、release package、replay gap 三方集合一致
 
 首批高风险验收切片 6 个页面：
 
