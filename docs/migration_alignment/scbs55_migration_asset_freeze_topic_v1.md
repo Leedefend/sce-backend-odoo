@@ -118,10 +118,7 @@ guard 会在存在证据文件时校验 hash；开启 `SCBS55_REQUIRE_ACCEPTANCE
 全量专题范围校验：
 
 ```bash
-make migration.assets.full_inventory
-make migration.assets.replay_payload_gap_report
-make migration.assets.payload_promotion_queue
-make migration.assets.full_scope_guard
+make migration.assets.full_scope_refresh
 ```
 
 发布包级门禁：
