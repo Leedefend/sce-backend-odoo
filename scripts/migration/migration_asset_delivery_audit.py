@@ -31,6 +31,13 @@ ONECLICK_SCRIPT_RE = re.compile(r'run_odoo_script\s+"\$ROOT_DIR/scripts/migratio
 EXTRA_REPLAY_SCRIPT_NAMES = [
     "fresh_db_replay_payload_precheck.py",
 ]
+EXTRA_REQUIRED_REPLAY_ARTIFACTS = {
+    # Variable/function-based one-click dependencies that are required for
+    # packaged replay but are not discoverable by the legacy direct regex.
+    "artifacts/migration/fresh_db_project_anchor_replay_rollback_targets_v1.csv",
+    "artifacts/migration/fresh_db_replay_manifest_v1.json",
+    "artifacts/migration/project_member_neutral_34_write_result_v1.json",
+}
 MANDATORY_BUSINESS_SCOPE_ARTIFACTS = {
     # Tender history is now part of the user-visible delivery scope.  The XML
     # asset catalog only covers declared asset packages, so keep this replay
@@ -257,6 +264,7 @@ def required_replay_artifacts() -> list[str]:
             required.add(path)
     for scope in MANDATORY_BUSINESS_SCOPE_ARTIFACTS.values():
         required.update(scope["artifacts"])
+    required.update(EXTRA_REQUIRED_REPLAY_ARTIFACTS)
     return sorted(required)
 
 

@@ -544,6 +544,40 @@ def check_delivery_manifest_facts() -> list[str]:
     return errors
 
 
+def check_delivery_replay_required_artifacts() -> list[str]:
+    errors: list[str] = []
+    if not REPLAY_GAP.exists():
+        return errors
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+    from scripts.migration import migration_asset_delivery_audit
+    from scripts.migration import migration_asset_release_package
+
+    report = load_json(REPLAY_GAP)
+    if not isinstance(report, dict):
+        return errors
+    steps = report.get("steps") if isinstance(report.get("steps"), list) else []
+    gap_required = {
+        item.get("path")
+        for step in steps
+        if isinstance(step, dict) and step.get("scope") == "required"
+        for item in step.get("input_artifacts", [])
+        if isinstance(item, dict)
+    }
+    excluded = set(migration_asset_delivery_audit.BASELINE_EXCLUDED_REQUIRED_ARTIFACTS)
+    expected = gap_required - excluded
+    audit_required = set(migration_asset_delivery_audit.required_replay_artifacts())
+    release_required = set(migration_asset_release_package.required_replay_artifacts())
+    if audit_required != release_required:
+        errors.append("delivery audit and release package required replay artifact sets differ")
+    if audit_required != expected:
+        errors.append(
+            "delivery required replay artifact set must match replay gap required inputs "
+            "minus baseline exclusions"
+        )
+    return errors
+
+
 def main() -> int:
     payload = load_json(FREEZE)
     if not isinstance(payload, dict):
@@ -559,6 +593,7 @@ def main() -> int:
     errors.extend(check_inventory_replay_sequence())
     errors.extend(check_promotion_queue())
     errors.extend(check_delivery_manifest_facts())
+    errors.extend(check_delivery_replay_required_artifacts())
     report = {
         "status": "FAIL" if errors else "PASS",
         "freeze": str(FREEZE.relative_to(ROOT)),
