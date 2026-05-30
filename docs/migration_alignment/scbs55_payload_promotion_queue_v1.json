@@ -581,9 +581,25 @@
         {
           "path": "artifacts/migration/history_expense_deposit_partner_targeted_replay_write_result_v1.json",
           "step": "expense_deposit_partner_targeted_replay"
+        },
+        {
+          "path": "artifacts/migration/history_project_lifecycle_continuity_adapter_result_v1.json",
+          "step": "project_lifecycle_continuity_adapter"
+        },
+        {
+          "path": "artifacts/migration/history_project_lifecycle_continuity_payload_v1.csv",
+          "step": "project_lifecycle_continuity_adapter"
+        },
+        {
+          "path": "artifacts/migration/history_project_lifecycle_continuity_report_v1.md",
+          "step": "project_lifecycle_continuity_adapter"
+        },
+        {
+          "path": "artifacts/migration/history_project_lifecycle_continuity_write_result_v1.json",
+          "step": "project_lifecycle_continuity_replay"
         }
       ],
-      "runtime_output_backlog_count": 55,
+      "runtime_output_backlog_count": 59,
       "sample_missing_inputs": [
         {
           "path": "artifacts/migration/fresh_db_partner_l4_replay_payload_v1.csv",
@@ -884,9 +900,25 @@
         {
           "path": "artifacts/migration/fresh_db_legacy_supplier_contract_pricing_replay_write_result_v1.json",
           "step": "legacy_supplier_contract_pricing_replay"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_construction_contract_income_count_alignment_write_result_v1.json",
+          "step": "construction_contract_income_count_alignment"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_new_construction_contract_xlsx_income_write_result_v1.json",
+          "step": "new_construction_contract_xlsx_income"
+        },
+        {
+          "path": "artifacts/migration/history_purchase_contract_runtime_probe_report_v1.md",
+          "step": "purchase_contract_runtime_probe"
+        },
+        {
+          "path": "artifacts/migration/history_purchase_contract_runtime_probe_result_v1.json",
+          "step": "purchase_contract_runtime_probe"
         }
       ],
-      "runtime_output_backlog_count": 33,
+      "runtime_output_backlog_count": 37,
       "sample_missing_inputs": [
         {
           "path": "artifacts/migration/fresh_db_legacy_labor_subcontract_replay_adapter_result_v1.json",
@@ -1110,9 +1142,13 @@
         {
           "path": "artifacts/migration/fresh_db_legacy_receipt_residual_replay_write_result_v1.json",
           "step": "legacy_receipt_residual_replay"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_income_fact_project_stub_write_result_v1.json",
+          "step": "income_fact_project_stub"
         }
       ],
-      "runtime_output_backlog_count": 21,
+      "runtime_output_backlog_count": 22,
       "sample_missing_inputs": [
         {
           "path": "artifacts/migration/fresh_db_receipt_write_design_payload_v1.csv",
@@ -1332,9 +1368,49 @@
         {
           "path": "artifacts/migration/fresh_db_legacy_payment_residual_replay_write_result_v1.json",
           "step": "legacy_payment_residual_replay"
+        },
+        {
+          "path": "artifacts/migration/history_payment_request_outflow_state_activation_rollback_targets_v1.csv",
+          "step": "payment_request_outflow_state_activation_replay"
+        },
+        {
+          "path": "artifacts/migration/history_payment_request_outflow_state_activation_write_result_v1.json",
+          "step": "payment_request_outflow_state_activation_replay"
+        },
+        {
+          "path": "artifacts/migration/history_payment_request_outflow_approved_recovery_adapter_result_v1.json",
+          "step": "payment_request_outflow_approved_recovery_adapter"
+        },
+        {
+          "path": "artifacts/migration/history_payment_request_outflow_approved_recovery_payload_v1.csv",
+          "step": "payment_request_outflow_approved_recovery_adapter"
+        },
+        {
+          "path": "artifacts/migration/history_payment_request_outflow_approved_recovery_rollback_targets_v1.csv",
+          "step": "payment_request_outflow_approved_recovery_replay"
+        },
+        {
+          "path": "artifacts/migration/history_payment_request_outflow_approved_recovery_write_result_v1.json",
+          "step": "payment_request_outflow_approved_recovery_replay"
+        },
+        {
+          "path": "artifacts/migration/history_payment_request_outflow_done_recovery_adapter_result_v1.json",
+          "step": "payment_request_outflow_done_recovery_adapter"
+        },
+        {
+          "path": "artifacts/migration/history_payment_request_outflow_done_recovery_payload_v1.csv",
+          "step": "payment_request_outflow_done_recovery_adapter"
+        },
+        {
+          "path": "artifacts/migration/history_payment_request_outflow_done_recovery_rollback_targets_v1.csv",
+          "step": "payment_request_outflow_done_recovery_replay"
+        },
+        {
+          "path": "artifacts/migration/history_payment_request_outflow_done_recovery_write_result_v1.json",
+          "step": "payment_request_outflow_done_recovery_replay"
         }
       ],
-      "runtime_output_backlog_count": 18,
+      "runtime_output_backlog_count": 28,
       "sample_missing_inputs": [
         {
           "path": "artifacts/migration/fresh_db_outflow_request_replay_adapter_result_v1.json",
@@ -1661,9 +1737,41 @@
         {
           "path": "artifacts/migration/fresh_db_legacy_expense_reimbursement_line_replay_write_result_v1.json",
           "step": "legacy_expense_reimbursement_line_replay"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_legacy_financing_loan_replay_adapter_result_v1.json",
+          "step": "legacy_financing_loan_adapter"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_legacy_financing_loan_replay_write_result_v1.json",
+          "step": "legacy_financing_loan_replay"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_legacy_fund_daily_snapshot_replay_adapter_result_v1.json",
+          "step": "legacy_fund_daily_snapshot_adapter"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_legacy_fund_daily_snapshot_replay_payload_v1.csv",
+          "step": "legacy_fund_daily_snapshot_adapter"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_legacy_fund_daily_snapshot_replay_write_result_v1.json",
+          "step": "legacy_fund_daily_snapshot_replay"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_legacy_fund_daily_line_replay_adapter_result_v1.json",
+          "step": "legacy_fund_daily_line_adapter"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_legacy_fund_daily_line_replay_payload_v1.csv",
+          "step": "legacy_fund_daily_line_adapter"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_legacy_fund_daily_line_replay_write_result_v1.json",
+          "step": "legacy_fund_daily_line_replay"
         }
       ],
-      "runtime_output_backlog_count": 31,
+      "runtime_output_backlog_count": 39,
       "sample_missing_inputs": [
         {
           "path": "artifacts/migration/fresh_db_legacy_account_master_replay_adapter_result_v1.json",
@@ -2107,9 +2215,37 @@
         {
           "path": "artifacts/migration/fresh_db_legacy_construction_diary_line_replay_write_result_v1.json",
           "step": "legacy_construction_diary_line_replay"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_history_todo_projection_write_result_v1.json",
+          "step": "history_todo_projection"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_treasury_ledger_projection_write_result_v1.json",
+          "step": "treasury_ledger_projection"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_document_admin_archive_projection_write_result_v1.json",
+          "step": "document_admin_archive_projection"
+        },
+        {
+          "path": "artifacts/migration/history_invoice_tax_runtime_probe_report_v1.md",
+          "step": "invoice_tax_runtime_probe"
+        },
+        {
+          "path": "artifacts/migration/history_invoice_tax_runtime_probe_result_v1.json",
+          "step": "invoice_tax_runtime_probe"
+        },
+        {
+          "path": "artifacts/migration/history_treasury_reconciliation_probe_report_v1.md",
+          "step": "treasury_reconciliation_probe"
+        },
+        {
+          "path": "artifacts/migration/history_treasury_reconciliation_probe_result_v1.json",
+          "step": "treasury_reconciliation_probe"
         }
       ],
-      "runtime_output_backlog_count": 8,
+      "runtime_output_backlog_count": 15,
       "sample_missing_inputs": [
         {
           "path": "artifacts/migration/fresh_db_legacy_project_fund_balance_replay_adapter_result_v1.json",
@@ -2164,6 +2300,14 @@
         {
           "path": "artifacts/migration/fresh_db_legacy_construction_diary_line_replay_write_result_v1.json",
           "step": "legacy_construction_diary_line_replay"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_history_todo_projection_write_result_v1.json",
+          "step": "history_todo_projection"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_treasury_ledger_projection_write_result_v1.json",
+          "step": "treasury_ledger_projection"
         }
       ],
       "step_count": 41,
@@ -2175,17 +2319,67 @@
       }
     },
     {
-      "decision": "covered_in_current_workspace",
+      "decision": "promote_runtime_outputs_after_required_inputs",
       "lane": "runtime_probes",
       "missing_required_input_count": 0,
       "missing_required_inputs": [],
       "optional_step_count": 0,
       "priority": 110,
       "required_step_count": 8,
-      "runtime_output_backlog": [],
-      "runtime_output_backlog_count": 0,
+      "runtime_output_backlog": [
+        {
+          "path": "artifacts/migration/history_attachment_custody_probe_report_v1.md",
+          "step": "attachment_custody_probe"
+        },
+        {
+          "path": "artifacts/migration/history_attachment_custody_probe_result_v1.json",
+          "step": "attachment_custody_probe"
+        },
+        {
+          "path": "artifacts/migration/history_expense_deposit_runtime_probe_report_v1.md",
+          "step": "expense_deposit_runtime_probe"
+        },
+        {
+          "path": "artifacts/migration/history_expense_deposit_runtime_probe_result_v1.json",
+          "step": "expense_deposit_runtime_probe"
+        },
+        {
+          "path": "artifacts/migration/history_material_catalog_runtime_probe_report_v1.md",
+          "step": "material_catalog_runtime_probe"
+        },
+        {
+          "path": "artifacts/migration/history_material_catalog_runtime_probe_result_v1.json",
+          "step": "material_catalog_runtime_probe"
+        }
+      ],
+      "runtime_output_backlog_count": 6,
       "sample_missing_inputs": [],
-      "sample_runtime_outputs": [],
+      "sample_runtime_outputs": [
+        {
+          "path": "artifacts/migration/history_attachment_custody_probe_report_v1.md",
+          "step": "attachment_custody_probe"
+        },
+        {
+          "path": "artifacts/migration/history_attachment_custody_probe_result_v1.json",
+          "step": "attachment_custody_probe"
+        },
+        {
+          "path": "artifacts/migration/history_expense_deposit_runtime_probe_report_v1.md",
+          "step": "expense_deposit_runtime_probe"
+        },
+        {
+          "path": "artifacts/migration/history_expense_deposit_runtime_probe_result_v1.json",
+          "step": "expense_deposit_runtime_probe"
+        },
+        {
+          "path": "artifacts/migration/history_material_catalog_runtime_probe_report_v1.md",
+          "step": "material_catalog_runtime_probe"
+        },
+        {
+          "path": "artifacts/migration/history_material_catalog_runtime_probe_result_v1.json",
+          "step": "material_catalog_runtime_probe"
+        }
+      ],
       "step_count": 8,
       "step_kinds": {
         "probe": 8
@@ -2196,5 +2390,5 @@
   "source_gap_report": "docs/migration_alignment/scbs55_replay_payload_gap_report_v1.json",
   "status": "PASS",
   "total_missing_required_inputs": 122,
-  "total_runtime_output_backlog": 200
+  "total_runtime_output_backlog": 240
 }

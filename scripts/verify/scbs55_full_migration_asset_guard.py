@@ -183,6 +183,12 @@ def check_replay_gap_report() -> list[str]:
         errors.append("replay gap report must expose missing_required_inputs")
     if "runtime_outputs_not_currently_packaged" not in report:
         errors.append("replay gap report must expose runtime_outputs_not_currently_packaged")
+    missing = report.get("missing_required_inputs")
+    runtime = report.get("runtime_outputs_not_currently_packaged")
+    if isinstance(missing, list) and len(missing) != as_int(report.get("required_missing_input_count")):
+        errors.append("replay gap report missing_required_inputs count drift")
+    if isinstance(runtime, list) and len(runtime) != as_int(report.get("runtime_output_count")):
+        errors.append("replay gap report runtime_outputs_not_currently_packaged count drift")
     return errors
 
 

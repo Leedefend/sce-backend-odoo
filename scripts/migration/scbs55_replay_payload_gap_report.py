@@ -149,7 +149,7 @@ def build_report() -> dict[str, Any]:
         "required_missing_input_count": len(missing_inputs),
         "runtime_output_count": len(runtime_outputs),
         "missing_required_inputs": missing_inputs,
-        "runtime_outputs_not_currently_packaged": runtime_outputs[:200],
+        "runtime_outputs_not_currently_packaged": runtime_outputs,
         "steps": rows,
         "decision": "gap report is informational until a release package is fetched; release-package verification remains the blocking gate",
     }

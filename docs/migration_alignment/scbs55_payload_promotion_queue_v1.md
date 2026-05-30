@@ -8,7 +8,7 @@ Source: `docs/migration_alignment/scbs55_replay_payload_gap_report_v1.json`
 
 - lanes: `11`
 - missing required inputs: `122`
-- runtime output backlog: `200`
+- runtime output backlog: `240`
 
 ## Queue
 
@@ -16,15 +16,15 @@ Source: `docs/migration_alignment/scbs55_replay_payload_gap_report_v1.json`
 |---:|---|---:|---:|---:|---|
 | 10 | foundation_manifest | 3 | 1 | 1 | promote_required_inputs_first |
 | 20 | user_security_context | 18 | 7 | 16 | promote_required_inputs_first |
-| 30 | master_partner_project | 34 | 32 | 55 | promote_required_inputs_first |
-| 40 | contract_and_supplier | 29 | 17 | 33 | promote_required_inputs_first |
-| 50 | receipt_income | 20 | 9 | 21 | promote_required_inputs_first |
-| 60 | outflow_payment | 24 | 12 | 18 | promote_required_inputs_first |
-| 70 | finance_accounting | 30 | 25 | 31 | promote_required_inputs_first |
+| 30 | master_partner_project | 34 | 32 | 59 | promote_required_inputs_first |
+| 40 | contract_and_supplier | 29 | 17 | 37 | promote_required_inputs_first |
+| 50 | receipt_income | 20 | 9 | 22 | promote_required_inputs_first |
+| 60 | outflow_payment | 24 | 12 | 28 | promote_required_inputs_first |
+| 70 | finance_accounting | 30 | 25 | 39 | promote_required_inputs_first |
 | 80 | materials_tender_purchase | 8 | 8 | 10 | promote_required_inputs_first |
 | 90 | attachments_workflow | 6 | 6 | 7 | promote_required_inputs_first |
-| 100 | formal_projections | 41 | 5 | 8 | promote_required_inputs_first |
-| 110 | runtime_probes | 8 | 0 | 0 | covered_in_current_workspace |
+| 100 | formal_projections | 41 | 5 | 15 | promote_required_inputs_first |
+| 110 | runtime_probes | 8 | 0 | 6 | promote_runtime_outputs_after_required_inputs |
 
 ## Lane Details
 
@@ -60,7 +60,7 @@ Source: `docs/migration_alignment/scbs55_replay_payload_gap_report_v1.json`
 
 - steps: `34`
 - missing required inputs: `32`
-- runtime output backlog: `55`
+- runtime output backlog: `59`
 - sample missing inputs:
   - `partner_l4_anchor_completed` `artifacts/migration/fresh_db_partner_l4_replay_payload_v1.csv`
   - `project_anchor_completed` `artifacts/migration/fresh_db_project_anchor_replay_payload_v1.csv`
@@ -78,7 +78,7 @@ Source: `docs/migration_alignment/scbs55_replay_payload_gap_report_v1.json`
 
 - steps: `29`
 - missing required inputs: `17`
-- runtime output backlog: `33`
+- runtime output backlog: `37`
 - sample missing inputs:
   - `legacy_labor_subcontract_replay` `artifacts/migration/fresh_db_legacy_labor_subcontract_replay_adapter_result_v1.json`
   - `legacy_labor_subcontract_replay` `artifacts/migration/fresh_db_legacy_labor_subcontract_replay_payload_v1.csv`
@@ -96,7 +96,7 @@ Source: `docs/migration_alignment/scbs55_replay_payload_gap_report_v1.json`
 
 - steps: `20`
 - missing required inputs: `9`
-- runtime output backlog: `21`
+- runtime output backlog: `22`
 - sample missing inputs:
   - `receipt_header_pending` `artifacts/migration/fresh_db_receipt_write_design_payload_v1.csv`
   - `receipt_invoice_line_replay` `artifacts/migration/fresh_db_receipt_invoice_line_replay_adapter_result_v1.json`
@@ -114,7 +114,7 @@ Source: `docs/migration_alignment/scbs55_replay_payload_gap_report_v1.json`
 
 - steps: `24`
 - missing required inputs: `12`
-- runtime output backlog: `18`
+- runtime output backlog: `28`
 - sample missing inputs:
   - `outflow_request_replay` `artifacts/migration/fresh_db_outflow_request_replay_adapter_result_v1.json`
   - `outflow_request_replay` `artifacts/migration/fresh_db_outflow_request_replay_payload_v1.csv`
@@ -132,7 +132,7 @@ Source: `docs/migration_alignment/scbs55_replay_payload_gap_report_v1.json`
 
 - steps: `30`
 - missing required inputs: `25`
-- runtime output backlog: `31`
+- runtime output backlog: `39`
 - sample missing inputs:
   - `legacy_account_master_replay` `artifacts/migration/fresh_db_legacy_account_master_replay_adapter_result_v1.json`
   - `legacy_account_master_replay` `artifacts/migration/fresh_db_legacy_account_master_replay_payload_v1.csv`
@@ -186,7 +186,7 @@ Source: `docs/migration_alignment/scbs55_replay_payload_gap_report_v1.json`
 
 - steps: `41`
 - missing required inputs: `5`
-- runtime output backlog: `8`
+- runtime output backlog: `15`
 - sample missing inputs:
   - `legacy_project_fund_balance_replay` `artifacts/migration/fresh_db_legacy_project_fund_balance_replay_adapter_result_v1.json`
   - `legacy_project_fund_balance_replay` `artifacts/migration/fresh_db_legacy_project_fund_balance_replay_payload_v1.csv`
@@ -204,7 +204,13 @@ Source: `docs/migration_alignment/scbs55_replay_payload_gap_report_v1.json`
 
 - steps: `8`
 - missing required inputs: `0`
-- runtime output backlog: `0`
+- runtime output backlog: `6`
+- sample runtime outputs:
+  - `attachment_custody_probe` `artifacts/migration/history_attachment_custody_probe_report_v1.md`
+  - `attachment_custody_probe` `artifacts/migration/history_attachment_custody_probe_result_v1.json`
+  - `expense_deposit_runtime_probe` `artifacts/migration/history_expense_deposit_runtime_probe_report_v1.md`
+  - `expense_deposit_runtime_probe` `artifacts/migration/history_expense_deposit_runtime_probe_result_v1.json`
+  - `material_catalog_runtime_probe` `artifacts/migration/history_material_catalog_runtime_probe_report_v1.md`
 
 ## Decision
 

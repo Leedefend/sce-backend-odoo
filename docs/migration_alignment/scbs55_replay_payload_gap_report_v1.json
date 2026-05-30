@@ -1630,6 +1630,206 @@
       "path": "artifacts/migration/fresh_db_legacy_workflow_audit_replay_write_result_v1.json",
       "script": "scripts/migration/fresh_db_legacy_workflow_audit_replay_write.py",
       "step": "legacy_workflow_audit_replay"
+    },
+    {
+      "path": "artifacts/migration/fresh_db_history_todo_projection_write_result_v1.json",
+      "script": "scripts/migration/fresh_db_history_todo_projection_write.py",
+      "step": "history_todo_projection"
+    },
+    {
+      "path": "artifacts/migration/fresh_db_treasury_ledger_projection_write_result_v1.json",
+      "script": "scripts/migration/fresh_db_treasury_ledger_projection_write.py",
+      "step": "treasury_ledger_projection"
+    },
+    {
+      "path": "artifacts/migration/history_payment_request_outflow_state_activation_rollback_targets_v1.csv",
+      "script": "scripts/migration/history_payment_request_outflow_state_activation_write.py",
+      "step": "payment_request_outflow_state_activation_replay"
+    },
+    {
+      "path": "artifacts/migration/history_payment_request_outflow_state_activation_write_result_v1.json",
+      "script": "scripts/migration/history_payment_request_outflow_state_activation_write.py",
+      "step": "payment_request_outflow_state_activation_replay"
+    },
+    {
+      "path": "artifacts/migration/history_payment_request_outflow_approved_recovery_adapter_result_v1.json",
+      "script": "scripts/migration/history_payment_request_outflow_approved_recovery_adapter.py",
+      "step": "payment_request_outflow_approved_recovery_adapter"
+    },
+    {
+      "path": "artifacts/migration/history_payment_request_outflow_approved_recovery_payload_v1.csv",
+      "script": "scripts/migration/history_payment_request_outflow_approved_recovery_adapter.py",
+      "step": "payment_request_outflow_approved_recovery_adapter"
+    },
+    {
+      "path": "artifacts/migration/history_payment_request_outflow_approved_recovery_rollback_targets_v1.csv",
+      "script": "scripts/migration/history_payment_request_outflow_approved_recovery_write.py",
+      "step": "payment_request_outflow_approved_recovery_replay"
+    },
+    {
+      "path": "artifacts/migration/history_payment_request_outflow_approved_recovery_write_result_v1.json",
+      "script": "scripts/migration/history_payment_request_outflow_approved_recovery_write.py",
+      "step": "payment_request_outflow_approved_recovery_replay"
+    },
+    {
+      "path": "artifacts/migration/history_payment_request_outflow_done_recovery_adapter_result_v1.json",
+      "script": "scripts/migration/history_payment_request_outflow_done_recovery_adapter.py",
+      "step": "payment_request_outflow_done_recovery_adapter"
+    },
+    {
+      "path": "artifacts/migration/history_payment_request_outflow_done_recovery_payload_v1.csv",
+      "script": "scripts/migration/history_payment_request_outflow_done_recovery_adapter.py",
+      "step": "payment_request_outflow_done_recovery_adapter"
+    },
+    {
+      "path": "artifacts/migration/history_payment_request_outflow_done_recovery_rollback_targets_v1.csv",
+      "script": "scripts/migration/history_payment_request_outflow_done_recovery_write.py",
+      "step": "payment_request_outflow_done_recovery_replay"
+    },
+    {
+      "path": "artifacts/migration/history_payment_request_outflow_done_recovery_write_result_v1.json",
+      "script": "scripts/migration/history_payment_request_outflow_done_recovery_write.py",
+      "step": "payment_request_outflow_done_recovery_replay"
+    },
+    {
+      "path": "artifacts/migration/history_project_lifecycle_continuity_adapter_result_v1.json",
+      "script": "scripts/migration/history_project_lifecycle_continuity_adapter.py",
+      "step": "project_lifecycle_continuity_adapter"
+    },
+    {
+      "path": "artifacts/migration/history_project_lifecycle_continuity_payload_v1.csv",
+      "script": "scripts/migration/history_project_lifecycle_continuity_adapter.py",
+      "step": "project_lifecycle_continuity_adapter"
+    },
+    {
+      "path": "artifacts/migration/history_project_lifecycle_continuity_report_v1.md",
+      "script": "scripts/migration/history_project_lifecycle_continuity_adapter.py",
+      "step": "project_lifecycle_continuity_adapter"
+    },
+    {
+      "path": "artifacts/migration/history_project_lifecycle_continuity_write_result_v1.json",
+      "script": "scripts/migration/history_project_lifecycle_continuity_write.py",
+      "step": "project_lifecycle_continuity_replay"
+    },
+    {
+      "path": "artifacts/migration/fresh_db_legacy_financing_loan_replay_adapter_result_v1.json",
+      "script": "scripts/migration/fresh_db_legacy_financing_loan_replay_adapter.py",
+      "step": "legacy_financing_loan_adapter"
+    },
+    {
+      "path": "artifacts/migration/fresh_db_legacy_financing_loan_replay_write_result_v1.json",
+      "script": "scripts/migration/fresh_db_legacy_financing_loan_replay_write.py",
+      "step": "legacy_financing_loan_replay"
+    },
+    {
+      "path": "artifacts/migration/fresh_db_legacy_fund_daily_snapshot_replay_adapter_result_v1.json",
+      "script": "scripts/migration/fresh_db_legacy_fund_daily_snapshot_replay_adapter.py",
+      "step": "legacy_fund_daily_snapshot_adapter"
+    },
+    {
+      "path": "artifacts/migration/fresh_db_legacy_fund_daily_snapshot_replay_payload_v1.csv",
+      "script": "scripts/migration/fresh_db_legacy_fund_daily_snapshot_replay_adapter.py",
+      "step": "legacy_fund_daily_snapshot_adapter"
+    },
+    {
+      "path": "artifacts/migration/fresh_db_legacy_fund_daily_snapshot_replay_write_result_v1.json",
+      "script": "scripts/migration/fresh_db_legacy_fund_daily_snapshot_replay_write.py",
+      "step": "legacy_fund_daily_snapshot_replay"
+    },
+    {
+      "path": "artifacts/migration/fresh_db_legacy_fund_daily_line_replay_adapter_result_v1.json",
+      "script": "scripts/migration/fresh_db_legacy_fund_daily_line_replay_adapter.py",
+      "step": "legacy_fund_daily_line_adapter"
+    },
+    {
+      "path": "artifacts/migration/fresh_db_legacy_fund_daily_line_replay_payload_v1.csv",
+      "script": "scripts/migration/fresh_db_legacy_fund_daily_line_replay_adapter.py",
+      "step": "legacy_fund_daily_line_adapter"
+    },
+    {
+      "path": "artifacts/migration/fresh_db_legacy_fund_daily_line_replay_write_result_v1.json",
+      "script": "scripts/migration/fresh_db_legacy_fund_daily_line_replay_write.py",
+      "step": "legacy_fund_daily_line_replay"
+    },
+    {
+      "path": "artifacts/migration/fresh_db_construction_contract_income_count_alignment_write_result_v1.json",
+      "script": "scripts/migration/fresh_db_construction_contract_income_count_alignment_write.py",
+      "step": "construction_contract_income_count_alignment"
+    },
+    {
+      "path": "artifacts/migration/fresh_db_new_construction_contract_xlsx_income_write_result_v1.json",
+      "script": "scripts/migration/fresh_db_new_construction_contract_xlsx_income_write.py",
+      "step": "new_construction_contract_xlsx_income"
+    },
+    {
+      "path": "artifacts/migration/fresh_db_income_fact_project_stub_write_result_v1.json",
+      "script": "scripts/migration/fresh_db_income_fact_project_stub_write.py",
+      "step": "income_fact_project_stub"
+    },
+    {
+      "path": "artifacts/migration/fresh_db_document_admin_archive_projection_write_result_v1.json",
+      "script": "scripts/migration/fresh_db_document_admin_archive_projection_write.py",
+      "step": "document_admin_archive_projection"
+    },
+    {
+      "path": "artifacts/migration/history_attachment_custody_probe_report_v1.md",
+      "script": "scripts/migration/history_attachment_custody_probe.py",
+      "step": "attachment_custody_probe"
+    },
+    {
+      "path": "artifacts/migration/history_attachment_custody_probe_result_v1.json",
+      "script": "scripts/migration/history_attachment_custody_probe.py",
+      "step": "attachment_custody_probe"
+    },
+    {
+      "path": "artifacts/migration/history_invoice_tax_runtime_probe_report_v1.md",
+      "script": "scripts/migration/history_invoice_tax_runtime_probe.py",
+      "step": "invoice_tax_runtime_probe"
+    },
+    {
+      "path": "artifacts/migration/history_invoice_tax_runtime_probe_result_v1.json",
+      "script": "scripts/migration/history_invoice_tax_runtime_probe.py",
+      "step": "invoice_tax_runtime_probe"
+    },
+    {
+      "path": "artifacts/migration/history_treasury_reconciliation_probe_report_v1.md",
+      "script": "scripts/migration/history_treasury_reconciliation_probe.py",
+      "step": "treasury_reconciliation_probe"
+    },
+    {
+      "path": "artifacts/migration/history_treasury_reconciliation_probe_result_v1.json",
+      "script": "scripts/migration/history_treasury_reconciliation_probe.py",
+      "step": "treasury_reconciliation_probe"
+    },
+    {
+      "path": "artifacts/migration/history_expense_deposit_runtime_probe_report_v1.md",
+      "script": "scripts/migration/history_expense_deposit_runtime_probe.py",
+      "step": "expense_deposit_runtime_probe"
+    },
+    {
+      "path": "artifacts/migration/history_expense_deposit_runtime_probe_result_v1.json",
+      "script": "scripts/migration/history_expense_deposit_runtime_probe.py",
+      "step": "expense_deposit_runtime_probe"
+    },
+    {
+      "path": "artifacts/migration/history_material_catalog_runtime_probe_report_v1.md",
+      "script": "scripts/migration/history_material_catalog_runtime_probe.py",
+      "step": "material_catalog_runtime_probe"
+    },
+    {
+      "path": "artifacts/migration/history_material_catalog_runtime_probe_result_v1.json",
+      "script": "scripts/migration/history_material_catalog_runtime_probe.py",
+      "step": "material_catalog_runtime_probe"
+    },
+    {
+      "path": "artifacts/migration/history_purchase_contract_runtime_probe_report_v1.md",
+      "script": "scripts/migration/history_purchase_contract_runtime_probe.py",
+      "step": "purchase_contract_runtime_probe"
+    },
+    {
+      "path": "artifacts/migration/history_purchase_contract_runtime_probe_result_v1.json",
+      "script": "scripts/migration/history_purchase_contract_runtime_probe.py",
+      "step": "purchase_contract_runtime_probe"
     }
   ],
   "status": "PASS_WITH_GAPS",
