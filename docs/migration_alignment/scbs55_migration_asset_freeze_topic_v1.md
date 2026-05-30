@@ -61,6 +61,62 @@
 | 工程进度收款 | `e65e4a85bed946968daad69271e91ca2` | `C_JFHKLR` | 3259 | 729 | 899 | 3259 |
 | 供货合同 | `77585134a02a48e7bd578e8ee3dd5bf2` | `T_GYSHT_INFO` | 5565 | 730 | 900 | 5565 |
 
+直营项目系统菜单验收分组：
+
+用户指定的 `https://www.builderp.cn/SCBSLY_V2` 直营项目系统菜单已经进入
+`docs/migration_alignment/scbs55_user_acceptance_asset_freeze_v1.json` 的 `user_acceptance_groups`，
+作为 `scbsly_direct_project_business_menus` 独立验收分组。当前在线证据：
+`artifacts/migration/scbsly_direct_project_acceptance_menu_probe_v1.json`，34/34 菜单可见并通过；
+其中 32 个 LowCode 列表已拉取旧系统 DataCount，2 个报表入口为 LowCode Report 路由。该分组不是 6 页 evidence lock
+的一部分，后续新系统浏览器/API 验证完成后再晋级为逐页 count、字段、身份集合锁。
+
+日常开发新系统在线验证证据：
+`artifacts/migration/scbsly_direct_project_new_system_alignment_probe_v1.json`。当前结论是 `PASS`：
+34 个菜单全部通过；用户可见菜单/路由缺口为 0，字段缺口为 0，旧/新数量口径差异为 0。
+注意：该证据是后端 API/菜单交付合同口径，不等同于用户浏览器实际侧边栏渲染口径。
+本轮已补充真实浏览器验收脚本
+`scripts/verify/scbsly_direct_project_browser_menu_acceptance.js`，在服务器日常开发环境
+`http://1.95.85.92:18081` 登录 `wutao/sc_demo` 后逐级展开侧边栏，校验
+`用户验收 / 直营项目系统菜单` 的 43 个可见标签（根、分组、34 个叶子）。
+最新浏览器报告：
+`artifacts/browser/scbsly-direct-project-menu/20260530T090744/report.json`，结论 `PASS`，
+`expected_count=43`、`visible_count=43`、`missing_count=0`。对应平台发布快照已在
+`sc_platform_core` 重新冻结并发布为
+`v20260530_scbsly_direct_acceptance_menu_daily_dev`，发布页 355 个，其中用户验收 34 个。
+菜单交付层对 `用户验收` 分组保留旧系统原始标签，避免通用重命名把 `进项上报` 改为
+`进项税额上报` 导致浏览器验收口径漂移。
+其中 `油卡登记`、`充值登记`、`加油登记` 已通过新增 legacy fact 承载和在线 replay 对齐到 8/32/500；`工程进度收款` 已并入同一 `sc.legacy.receipt.income.fact` 事实承载，主系统通过 `operation_strategy=joint` 保持 3259/3259，直营验收入口 `工程进度收款（直营）` 通过 `operation_strategy=direct` 对齐到 639/639；`还租` 已通过独立验收 action 和 `sc.material.rental.order` 身份回放对齐到 37/37，且 `租入` 保持 0/0。
+其余 26 个此前口径不一致的直营项目菜单已通过 `sc.legacy.direct.acceptance.fact` 只读验收承载回放旧系统 identity lock 对齐；
+回放结果为 `artifacts/migration/scbsly_direct_project_direct_acceptance_replay_result_v1.json`，26/26 标签通过。
+整改矩阵已固化为
+`artifacts/migration/scbsly_direct_project_alignment_gap_matrix_v1.json`。该结论说明当前日常开发新系统已经对齐
+`SCBSLY_V2` 直营项目用户验收面；补齐发生在迁移资产 replay 或验收承载层，未在契约层按菜单裁剪。
+
+旧系统行级资产已经开始分批固化：`artifacts/migration/scbsly_direct_project_old_row_dump_summary_v1.json`
+当前锁定 32 个 LowCode 列表、76411/76411 行，覆盖合同类 6 项、材料管理列表含入库、劳务/分包/机械租赁列表含机械台班记录、零星用工、项目费用报销、油卡/充值/加油等资金类小表、支付申请、往来单位付款、进项上报和施工日志。2 个剩余入口是旧系统报表路由，没有列表 DataCount。
+当前缓存目录为 `/tmp/scbsly_direct_project_old_pages_20260530/_pages/...`；后续进入新系统 replay/身份集合锁。
+
+旧系统身份集合锁：`artifacts/migration/scbsly_direct_project_old_identity_lock_v1.json`。32 个列表、76411 行通过；
+其中 24 个列表使用旧系统首选业务字段，7 个旧系统明细展开列表使用 `RowIndex` 作为用户可见行身份兜底，
+`租入` 是 0 行空列表。后续新系统 replay 和验收比对必须绑定该 identity lock，不接受只按数量补齐。
+
+新系统承载/replay 计划：`artifacts/migration/scbsly_direct_project_replay_carrier_plan_v1.json`。当前拆分为：
+21 个已有承载但需要 identity replay 或独立验收承载，7 个菜单别名已补但仍需 replay，1 个菜单别名对应旧系统
+0 行，3 个油卡/充值/加油页面已新增 legacy fact 承载且已在日常开发 `sc_odoo` 回放通过，`工程进度收款` 已在既有历史收款事实承载中按经营方式切片回放通过，`还租` 已用独立 action 避免污染 `租入` 口径并回放通过，2 个报表入口不做列表 replay。服务器侧整改从该计划开始，
+按 identity lock 做 replay/验收比对。
+本轮已进一步把剩余 26 个直营项目列表通过 `sc.legacy.direct.acceptance.fact` 验收承载回放完成，作为用户启用前的可见面锁定结果；
+正式业务模型的资产包规范化仍按本专题后续任务推进。
+
+| 分类 | 验收菜单 |
+| --- | --- |
+| 合同类单据 | 施工合同、分包合同、租赁合同、供货合同、劳务合同、机械合同（合同） |
+| 材料管理类单据 | 材料计划、报价单、入库、材料结算单、库存统计表（新） |
+| 劳务管理类单据 | 方单、零星用工、劳务结算 |
+| 分包管理类单据 | 分包方单、分包结算单 |
+| 机械与租赁管理类单据 | 机械台班记录、机械结算单、租入、还租、租赁结算单 |
+| 费用与资金管理类单据 | 项目费用报销单、管理人员工资表、油卡登记、充值登记、加油登记、支付申请、工程进度收款、往来单位付款、工程结算单、进项上报、总包进项上报、成本统计表（数据） |
+| 项目管理类单据 | 施工日志（新） |
+
 ## 证据分层
 
 ### 1. 旧系统在线证据
@@ -90,6 +146,8 @@
 - `/tmp/scbs55_six_pages_aligned_20260530/summary.json`
 - 6/6 页面总数与旧系统一致
 - console errors = 0
+- `artifacts/browser/scbsly-direct-project-menu/20260530T090744/report.json`
+- 直营项目系统菜单真实浏览器侧边栏展开 43/43 可见，缺失 0
 
 该路径是本轮开发证据，不是最终交付资产。进入资产包前必须复制为带 hash 的归档产物，或由专题脚本重新生成。
 

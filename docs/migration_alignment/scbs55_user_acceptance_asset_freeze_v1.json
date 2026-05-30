@@ -27,6 +27,261 @@
       "using demo/sample project data as acceptance evidence"
     ]
   },
+  "user_acceptance_groups": [
+    {
+      "group_id": "scbs55_high_risk_six_surfaces",
+      "name": "首批高风险数据页面",
+      "type": "locked_data_surface_slice",
+      "item_count": 6,
+      "source": "surfaces",
+      "surface_keys": [
+        "self_guarantee",
+        "self_guarantee_refund",
+        "self_funding_income",
+        "self_funding_refund",
+        "engineering_progress_receipt",
+        "supplier_contract"
+      ],
+      "acceptance_policy": "old-system online count, row identity evidence lock, new-system browser count and headers"
+    },
+    {
+      "group_id": "scbsly_direct_project_business_menus",
+      "name": "直营项目系统菜单",
+      "type": "online_direct_project_menu_acceptance",
+      "item_count": 34,
+      "source_system": {
+        "base_url": "https://www.builderp.cn/SCBSLY_V2",
+        "login_policy": "SCBSLY_USERNAME and SCBSLY_PASSWORD are required at verification time",
+        "verified_account_phone": "13518193984"
+      },
+      "target_acceptance_surface": {
+        "environment": "daily_dev",
+        "grouping_rule": "用户验收分组中单独展示为直营项目系统菜单，按旧系统业务分类逐项验收",
+        "expected_project_policy": "公司直营"
+      },
+      "latest_online_evidence": {
+        "status": "PASS",
+        "path": "artifacts/migration/scbsly_direct_project_acceptance_menu_probe_v1.json",
+        "report": "artifacts/migration/scbsly_direct_project_acceptance_menu_probe_v1.md",
+        "generated_at": "2026-05-30T06:08:00.668672+00:00",
+        "old_menu_count": 648,
+        "checked_count": 34,
+        "pass_count": 34,
+        "failure_count": 0,
+        "form_list_count_probe_count": 32,
+        "report_route_count": 2,
+        "alias_matches": {
+          "成本统计表（数据）": "成本统计表（综合）"
+        }
+      },
+  "latest_new_system_alignment": {
+    "status": "PASS",
+    "path": "artifacts/migration/scbsly_direct_project_new_system_alignment_probe_v1.json",
+    "report": "artifacts/migration/scbsly_direct_project_new_system_alignment_probe_v1.md",
+    "gap_matrix": "artifacts/migration/scbsly_direct_project_alignment_gap_matrix_v1.json",
+    "gap_matrix_report": "artifacts/migration/scbsly_direct_project_alignment_gap_matrix_v1.md",
+    "generated_at": "2026-05-30T08:42:32.253Z",
+    "checked_count": 34,
+    "pass_count": 34,
+    "failure_count": 0,
+    "missing_menu_count": 0,
+    "count_mismatch_count": 0,
+    "field_failure_count": 0,
+    "gap_buckets": {
+      "data_scope_count_mismatch": 0,
+      "missing_user_visible_menu_route": 0,
+      "missing_server_carrier": 0,
+      "pass": 34
+    },
+    "blocking_conclusion": "daily-dev new system menus, fields, and counts are aligned for the SCBSLY_V2 direct-project user acceptance surface; oil/fuel, engineering-progress receipt, rental-return, and the remaining 26 menus have been verified through identity-bound migration replay or scoped acceptance carriers, not contract-layer trimming."
+  },
+  "latest_browser_menu_acceptance": {
+    "status": "PASS",
+    "path": "artifacts/browser/scbsly-direct-project-menu/20260530T090744/report.json",
+    "report": "artifacts/browser/scbsly-direct-project-menu/20260530T090744/report.md",
+    "screenshot_after_expand": "artifacts/browser/scbsly-direct-project-menu/20260530T090744/02-after-expand-all.png",
+    "generated_at": "2026-05-30T09:07:44Z",
+    "environment": "daily_dev",
+    "frontend_url": "http://1.95.85.92:18081",
+    "db_name": "sc_demo",
+    "login": "wutao",
+    "verification_scope": "real browser sidebar rendering after recursively expanding 用户验收 / 直营项目系统菜单",
+    "expected_visible_label_count": 43,
+    "actual_visible_label_count": 43,
+    "missing_label_count": 0,
+    "platform_release_snapshot": "v20260530_scbsly_direct_acceptance_menu_daily_dev",
+    "release_snapshot_policy": "sc_platform_core active construction.standard snapshot must include the 34 direct-project acceptance pages; API navigation evidence alone is not sufficient for user acceptance."
+  },
+  "latest_direct_acceptance_replay": {
+    "status": "PASS",
+    "path": "artifacts/migration/scbsly_direct_project_direct_acceptance_replay_result_v1.json",
+    "source_system": "online_old_scbsly",
+    "model": "sc.legacy.direct.acceptance.fact",
+    "label_count": 26,
+    "failure_count": 0,
+    "policy": "26 previously mismatched SCBSLY_V2 direct-project menus are replayed into a read-only acceptance carrier from the old identity lock; formal business replay remains a separate migration asset hardening task."
+  },
+      "latest_partial_old_row_dump": {
+        "status": "PASS",
+        "path": "artifacts/migration/scbsly_direct_project_old_row_dump_summary_v1.json",
+        "report": "artifacts/migration/scbsly_direct_project_old_row_dump_summary_v1.md",
+        "dump_dir": "/tmp/scbsly_direct_project_old_pages_20260530",
+        "dumped_count": 32,
+        "total_expected_rows": 76411,
+        "total_actual_rows": 76411,
+        "labels": [
+          "施工合同",
+          "分包合同",
+          "租赁合同",
+          "供货合同",
+          "劳务合同",
+          "机械合同（合同）",
+          "材料计划",
+          "报价单",
+          "入库",
+          "材料结算单",
+          "方单",
+          "零星用工",
+          "劳务结算",
+          "分包方单",
+          "分包结算单",
+          "机械台班记录",
+          "机械结算单",
+          "租入",
+          "还租",
+          "租赁结算单",
+          "项目费用报销单",
+          "管理人员工资表",
+          "油卡登记",
+          "充值登记",
+          "加油登记",
+          "支付申请",
+          "工程进度收款",
+          "往来单位付款",
+          "工程结算单",
+          "进项上报",
+          "总包进项上报",
+          "施工日志（新）"
+        ],
+        "continuation_policy": "all 32 LowCode list row dumps are complete; SCBSLY_OLD_ROW_DUMP_SUMMARY_ONLY=1 regenerates cumulative summary from completed files"
+      },
+      "latest_old_identity_lock": {
+        "status": "PASS",
+        "path": "artifacts/migration/scbsly_direct_project_old_identity_lock_v1.json",
+        "report": "artifacts/migration/scbsly_direct_project_old_identity_lock_v1.md",
+        "list_count": 32,
+        "total_rows": 76411,
+        "preferred_identity_count": 24,
+        "row_index_fallback_count": 7,
+        "row_hash_fallback_count": 0,
+        "empty_list_count": 1,
+        "failure_count": 0,
+        "policy": "new-system replay and acceptance comparison must use this old identity lock, not count-only matching"
+      },
+  "latest_replay_carrier_plan": {
+    "status": "READY_FOR_REPLAY_IMPLEMENTATION_WITH_BLOCKERS",
+        "path": "artifacts/migration/scbsly_direct_project_replay_carrier_plan_v1.json",
+        "report": "artifacts/migration/scbsly_direct_project_replay_carrier_plan_v1.md",
+        "checked_count": 34,
+        "old_list_identity_count": 32,
+        "bucket_summary": {
+          "existing_carrier_requires_identity_replay_or_scoped_surface": {
+            "count": 21,
+            "old_rows": 48250
+          },
+          "menu_alias_added_requires_replay": {
+            "count": 7,
+            "old_rows": 27621
+          },
+          "menu_alias_added_empty_old_list": {
+            "count": 1,
+            "old_rows": 0
+          },
+          "legacy_fuel_carrier_added_requires_replay": {
+            "count": 3,
+            "old_rows": 540
+          },
+          "report_route_no_row_replay": {
+            "count": 2,
+            "old_rows": 0
+          }
+        },
+    "policy": "server-side acceptance remediation started from this carrier plan; oil/fuel legacy carriers, engineering-progress receipt facts, rental-return facts, and the 26 scoped direct acceptance carrier labels were replayed into daily-dev sc_odoo on 2026-05-30"
+  },
+      "categories": [
+        {
+          "name": "合同类单据",
+          "items": [
+            "施工合同",
+            "分包合同",
+            "租赁合同",
+            "供货合同",
+            "劳务合同",
+            "机械合同（合同）"
+          ]
+        },
+        {
+          "name": "材料管理类单据",
+          "items": [
+            "材料计划",
+            "报价单",
+            "入库",
+            "材料结算单",
+            "库存统计表（新）"
+          ]
+        },
+        {
+          "name": "劳务管理类单据",
+          "items": [
+            "方单",
+            "零星用工",
+            "劳务结算"
+          ]
+        },
+        {
+          "name": "分包管理类单据",
+          "items": [
+            "分包方单",
+            "分包结算单"
+          ]
+        },
+        {
+          "name": "机械与租赁管理类单据",
+          "items": [
+            "机械台班记录",
+            "机械结算单",
+            "租入",
+            "还租",
+            "租赁结算单"
+          ]
+        },
+        {
+          "name": "费用与资金管理类单据",
+          "items": [
+            "项目费用报销单",
+            "管理人员工资表",
+            "油卡登记",
+            "充值登记",
+            "加油登记",
+            "支付申请",
+            "工程进度收款",
+            "往来单位付款",
+            "工程结算单",
+            "进项上报",
+            "总包进项上报",
+            "成本统计表（数据）"
+          ]
+        },
+        {
+          "name": "项目管理类单据",
+          "items": [
+            "施工日志（新）"
+          ]
+        }
+      ],
+      "acceptance_policy": "online menu visibility, list opening, user-visible field/data verification; count and identity locks must be promoted after browser/API evidence is captured"
+    }
+  ],
   "surfaces": [
     {
       "key": "self_guarantee",
@@ -226,7 +481,7 @@
         "menu_id": 729,
         "action_id": 899,
         "model": "sc.legacy.engineering.progress.receipt",
-        "domain": "source_family='engineering_progress_receipt_visible' through sc_legacy_receipt_income_fact",
+        "domain": "source_family='engineering_progress_receipt_visible' and operation_strategy='joint' through sc_legacy_receipt_income_fact",
         "expected_count": 3259,
         "identity_field": "legacy_record_id",
         "expected_headers": [

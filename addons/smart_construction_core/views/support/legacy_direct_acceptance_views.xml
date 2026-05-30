@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="view_sc_legacy_direct_acceptance_fact_search" model="ir.ui.view">
+    <field name="name">sc.legacy.direct.acceptance.fact.search</field>
+    <field name="model">sc.legacy.direct.acceptance.fact</field>
+    <field name="arch" type="xml">
+      <search string="直营项目验收">
+        <field name="acceptance_label"/>
+        <field name="document_no"/>
+        <field name="document_title"/>
+        <field name="project_name"/>
+        <field name="partner_name"/>
+        <field name="creator_name"/>
+        <filter string="有效" name="active_rows" domain="[('active', '=', True)]"/>
+        <filter string="按菜单" name="group_acceptance_label" context="{'group_by': 'acceptance_label'}"/>
+        <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+      </search>
+    </field>
+  </record>
+
+  <record id="view_sc_legacy_direct_acceptance_fact_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.direct.acceptance.fact.tree</field>
+    <field name="model">sc.legacy.direct.acceptance.fact</field>
+    <field name="arch" type="xml">
+      <tree string="直营项目验收" create="false" edit="false" delete="false">
+        <field name="document_date"/>
+        <field name="document_no"/>
+        <field name="acceptance_label"/>
+        <field name="project_id"/>
+        <field name="project_name" optional="hide"/>
+        <field name="document_title"/>
+        <field name="partner_name"/>
+        <field name="amount_total" sum="金额合计"/>
+        <field name="quantity" sum="数量合计"/>
+        <field name="document_state"/>
+        <field name="creator_name"/>
+        <field name="created_time"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="action_scbsly_direct_acceptance_construction_contract" model="ir.actions.act_window">
+    <field name="name">施工合同</field>
+    <field name="res_model">sc.legacy.direct.acceptance.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
+    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '施工合同')]</field>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+  </record>
+
+  <record id="action_scbsly_direct_acceptance_subcontract_contract" model="ir.actions.act_window">
+    <field name="name">分包合同</field>
+    <field name="res_model">sc.legacy.direct.acceptance.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
+    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '分包合同')]</field>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+  </record>
+
+  <record id="action_scbsly_direct_acceptance_rental_contract" model="ir.actions.act_window">
+    <field name="name">租赁合同</field>
+    <field name="res_model">sc.legacy.direct.acceptance.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
+    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '租赁合同')]</field>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+  </record>
+
+  <record id="action_scbsly_direct_acceptance_supplier_contract" model="ir.actions.act_window">
+    <field name="name">供货合同</field>
+    <field name="res_model">sc.legacy.direct.acceptance.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
+    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '供货合同')]</field>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+  </record>
+
+  <record id="action_scbsly_direct_acceptance_labor_contract" model="ir.actions.act_window">
+    <field name="name">劳务合同</field>
+    <field name="res_model">sc.legacy.direct.acceptance.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
+    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '劳务合同')]</field>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+  </record>
+
+  <record id="action_scbsly_direct_acceptance_equipment_contract" model="ir.actions.act_window">
+    <field name="name">机械合同（合同）</field>
+    <field name="res_model">sc.legacy.direct.acceptance.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
+    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '机械合同（合同）')]</field>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+  </record>
+
+  <record id="action_scbsly_direct_acceptance_material_plan" model="ir.actions.act_window">
+    <field name="name">材料计划</field>
+    <field name="res_model">sc.legacy.direct.acceptance.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
+    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '材料计划')]</field>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+  </record>
+
+  <record id="action_scbsly_direct_acceptance_material_quote" model="ir.actions.act_window">
+    <field name="name">报价单</field>
+    <field name="res_model">sc.legacy.direct.acceptance.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
+    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '报价单')]</field>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+  </record>
+
+  <record id="action_scbsly_direct_acceptance_material_inbound" model="ir.actions.act_window">
+    <field name="name">入库</field>
+    <field name="res_model">sc.legacy.direct.acceptance.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
+    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '入库')]</field>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+  </record>
+
+  <record id="action_scbsly_direct_acceptance_material_settlement" model="ir.actions.act_window">
+    <field name="name">材料结算单</field>
+    <field name="res_model">sc.legacy.direct.acceptance.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
+    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '材料结算单')]</field>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+  </record>
+
+  <record id="action_scbsly_direct_acceptance_labor_usage" model="ir.actions.act_window">
+    <field name="name">方单</field>
+    <field name="res_model">sc.legacy.direct.acceptance.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
+    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '方单')]</field>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+  </record>
+
+  <record id="action_scbsly_direct_acceptance_labor_casual" model="ir.actions.act_window">
+    <field name="name">零星用工</field>
+    <field name="res_model">sc.legacy.direct.acceptance.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
+    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '零星用工')]</field>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+  </record>
+
+  <record id="action_scbsly_direct_acceptance_labor_settlement" model="ir.actions.act_window">
+    <field name="name">劳务结算</field>
+    <field name="res_model">sc.legacy.direct.acceptance.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
+    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '劳务结算')]</field>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+  </record>
+
+  <record id="action_scbsly_direct_acceptance_subcontract_request" model="ir.actions.act_window">
+    <field name="name">分包方单</field>
+    <field name="res_model">sc.legacy.direct.acceptance.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
+    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '分包方单')]</field>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+  </record>
+
+  <record id="action_scbsly_direct_acceptance_subcontract_settlement" model="ir.actions.act_window">
+    <field name="name">分包结算单</field>
+    <field name="res_model">sc.legacy.direct.acceptance.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
+    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '分包结算单')]</field>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+  </record>
+
+  <record id="action_scbsly_direct_acceptance_equipment_shift" model="ir.actions.act_window">
+    <field name="name">机械台班记录</field>
+    <field name="res_model">sc.legacy.direct.acceptance.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
+    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '机械台班记录')]</field>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+  </record>
+
+  <record id="action_scbsly_direct_acceptance_equipment_settlement" model="ir.actions.act_window">
+    <field name="name">机械结算单</field>
+    <field name="res_model">sc.legacy.direct.acceptance.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
+    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '机械结算单')]</field>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+  </record>
+
+  <record id="action_scbsly_direct_acceptance_rental_settlement" model="ir.actions.act_window">
+    <field name="name">租赁结算单</field>
+    <field name="res_model">sc.legacy.direct.acceptance.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
+    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '租赁结算单')]</field>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+  </record>
+
+  <record id="action_scbsly_direct_acceptance_project_expense" model="ir.actions.act_window">
+    <field name="name">项目费用报销单</field>
+    <field name="res_model">sc.legacy.direct.acceptance.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
+    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '项目费用报销单')]</field>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+  </record>
+
+  <record id="action_scbsly_direct_acceptance_salary" model="ir.actions.act_window">
+    <field name="name">管理人员工资表</field>
+    <field name="res_model">sc.legacy.direct.acceptance.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
+    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '管理人员工资表')]</field>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+  </record>
+
+  <record id="action_scbsly_direct_acceptance_payment_apply" model="ir.actions.act_window">
+    <field name="name">支付申请</field>
+    <field name="res_model">sc.legacy.direct.acceptance.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
+    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '支付申请')]</field>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+  </record>
+
+  <record id="action_scbsly_direct_acceptance_partner_payment" model="ir.actions.act_window">
+    <field name="name">往来单位付款</field>
+    <field name="res_model">sc.legacy.direct.acceptance.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
+    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '往来单位付款')]</field>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+  </record>
+
+  <record id="action_scbsly_direct_acceptance_settlement_order" model="ir.actions.act_window">
+    <field name="name">工程结算单</field>
+    <field name="res_model">sc.legacy.direct.acceptance.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
+    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '工程结算单')]</field>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+  </record>
+
+  <record id="action_scbsly_direct_acceptance_input_tax_report" model="ir.actions.act_window">
+    <field name="name">进项上报</field>
+    <field name="res_model">sc.legacy.direct.acceptance.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
+    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '进项上报')]</field>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+  </record>
+
+  <record id="action_scbsly_direct_acceptance_general_contract_input_tax_report" model="ir.actions.act_window">
+    <field name="name">总包进项上报</field>
+    <field name="res_model">sc.legacy.direct.acceptance.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
+    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '总包进项上报')]</field>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+  </record>
+
+  <record id="action_scbsly_direct_acceptance_construction_diary" model="ir.actions.act_window">
+    <field name="name">施工日志（新）</field>
+    <field name="res_model">sc.legacy.direct.acceptance.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
+    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '施工日志（新）')]</field>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+  </record>
+</odoo>

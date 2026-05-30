@@ -17,6 +17,9 @@ class MenuService:
     NATIVE_PREVIEW_GROUP_KEY = "native_preview"
     NATIVE_PREVIEW_GROUP_LABEL = "系统菜单"
 
+    def __init__(self, env=None):
+        self.env = env
+
     @classmethod
     def source_authority_contract(cls) -> dict:
         return build_source_authority_contract(
@@ -187,6 +190,35 @@ class MenuService:
         route = str(menu.get("route") or "").strip()
         if route and route in native_index.get("routes", set()):
             return True
+        if self.env is not None:
+            resolved_menu = None
+            if menu_xmlid:
+                try:
+                    resolved_menu = self.env.ref(menu_xmlid, raise_if_not_found=False)
+                except Exception:
+                    resolved_menu = None
+            if not resolved_menu and menu_id_int > 0:
+                try:
+                    resolved_menu = self.env["ir.ui.menu"].sudo().browse(menu_id_int).exists()
+                except Exception:
+                    resolved_menu = None
+            if resolved_menu:
+                if hasattr(resolved_menu, "active") and not bool(resolved_menu.active):
+                    return False
+                try:
+                    required_group_ids = set(resolved_menu.groups_id.ids)
+                    if required_group_ids and not (required_group_ids & set(self.env.user.groups_id.ids)):
+                        return False
+                except Exception:
+                    return False
+                try:
+                    action = resolved_menu.action
+                    model = str(getattr(action, "res_model", "") or "").strip()
+                    if model and model in self.env:
+                        return bool(self.env[model].check_access_rights("read", raise_exception=False))
+                except Exception:
+                    return False
+                return True
         return False
 
     def _flatten_policy_menus(self, policy: dict) -> list[dict]:
@@ -242,18 +274,44 @@ class MenuService:
             return []
         return [part.strip() for part in re.split(r"\s*/\s*", path) if part.strip()]
 
-    def _acceptance_menu_subgroup_label(self, menu: dict) -> str:
+    def _acceptance_menu_group_parts(self, menu: dict, group_label: str) -> list[str]:
         parts = self._policy_menu_path_parts(menu)
         for index, part in enumerate(parts):
-            if part == "用户核对菜单" and index + 1 < len(parts):
-                label = parts[index + 1]
-                if label and label != "用户核对菜单":
-                    return label
-        return ""
+            if part == group_label:
+                return [item for item in parts[index + 1 : -1] if item and item != group_label]
+        return []
 
     def _acceptance_group_key(self, parent_key: str, label: str, index: int) -> str:
         safe = re.sub(r"[^0-9A-Za-z\u4e00-\u9fff]+", "_", str(label or "").strip()).strip("_")
         return f"{parent_key}.{safe or index}"
+
+    def _append_acceptance_child(
+        self,
+        *,
+        nodes: list[dict],
+        parent_key: str,
+        group_parts: list[str],
+        child: dict,
+    ) -> None:
+        if not group_parts:
+            nodes.append(child)
+            return
+        label = group_parts[0]
+        group = next((row for row in nodes if row.get("label") == label and str(row.get("key") or "").startswith("group:")), None)
+        if not group:
+            group = build_delivery_menu_group(
+                self._acceptance_group_key(parent_key, label, len(nodes) + 1),
+                label,
+                [],
+            )
+            nodes.append(group)
+        next_parent_key = str((group.get("meta") or {}).get("group_key") or parent_key)
+        self._append_acceptance_child(
+            nodes=group.setdefault("children", []),
+            parent_key=next_parent_key,
+            group_parts=group_parts[1:],
+            child=child,
+        )
 
     def _native_preview_menus(self, *, native_nav: list[dict], policy: dict) -> list[dict]:
         preview_menus_by_group = {}
@@ -429,7 +487,8 @@ class MenuService:
                 continue
             converged_menu = dict(menu)
             policy_group_key = str(menu.get("policy_group_key") or "").strip()
-            preserve_policy_label = policy_group_key.startswith("construction.scbs55.")
+            policy_group_label = str(menu.get("policy_group_label") or "").strip()
+            preserve_policy_label = policy_group_key.startswith("construction.scbs55.") or policy_group_label == "用户验收"
             renamed = None if preserve_policy_label else convergence_service.RENAME_LABELS.get(str(converged_menu.get("label") or "").strip())
             if renamed:
                 converged_menu["label"] = renamed
@@ -464,37 +523,18 @@ class MenuService:
             row = groups_by_key.get(group_key) or {}
             group_label = str(row.get("group_label") or "系统菜单")
             menus = row.get("menus") if isinstance(row.get("menus"), list) else []
-            if group_label == "用户核对菜单":
-                grouped_children = []
-                subgroups: dict[str, dict] = {}
-                subgroup_order: list[str] = []
-                loose_children = []
+            if group_label in {"用户核对菜单", "用户验收"}:
+                children = []
                 for menu in menus:
                     child = build_delivery_menu_child(menu)
                     if not child:
                         continue
-                    subgroup_label = self._acceptance_menu_subgroup_label(menu)
-                    if not subgroup_label:
-                        loose_children.append(child)
-                        continue
-                    if subgroup_label not in subgroups:
-                        subgroups[subgroup_label] = {
-                            "key": self._acceptance_group_key(str(row.get("group_key") or group_key), subgroup_label, len(subgroup_order) + 1),
-                            "label": subgroup_label,
-                            "children": [],
-                        }
-                        subgroup_order.append(subgroup_label)
-                    subgroups[subgroup_label]["children"].append(child)
-                for subgroup_label in subgroup_order:
-                    subgroup = subgroups[subgroup_label]
-                    grouped_children.append(
-                        build_delivery_menu_group(
-                            str(subgroup["key"]),
-                            str(subgroup["label"]),
-                            subgroup["children"],
-                        )
+                    self._append_acceptance_child(
+                        nodes=children,
+                        parent_key=str(row.get("group_key") or group_key),
+                        group_parts=self._acceptance_menu_group_parts(menu, group_label),
+                        child=child,
                     )
-                children = grouped_children + loose_children
             else:
                 children = [
                     build_delivery_menu_child(menu)

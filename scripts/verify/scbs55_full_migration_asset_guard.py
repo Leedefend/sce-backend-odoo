@@ -22,6 +22,7 @@ SIX_SLICE = ROOT / "docs/migration_alignment/scbs55_user_acceptance_asset_freeze
 SIX_LOCK = ROOT / "docs/migration_alignment/scbs55_user_acceptance_evidence_lock_v1.json"
 DELIVERY_AUDIT_MD = ROOT / "docs/migration_alignment/migration_asset_delivery_audit_v1.md"
 DELIVERY_MANIFEST_MD = ROOT / "docs/migration_alignment/migration_asset_delivery_manifest_v1.md"
+DIRECT_PROJECT_MENU_ITEM_COUNT = 34
 
 
 def load_json(path: Path) -> Any:
@@ -191,6 +192,53 @@ def check_slices(payload: dict[str, Any]) -> list[str]:
             errors.append(f"{key}: six-page slice old/new expected count drift")
         if as_int(evidence.get("last_browser_total")) != as_int(old.get("expected_count")):
             errors.append(f"{key}: six-page slice browser total drift")
+    return errors
+
+
+def check_user_acceptance_groups(payload: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    groups = payload.get("user_acceptance_groups") if isinstance(payload.get("user_acceptance_groups"), list) else []
+    by_id = {str(group.get("group_id") or ""): group for group in groups if isinstance(group, dict)}
+    for group_id in ("scbs55_high_risk_six_surfaces", "scbsly_direct_project_business_menus"):
+        if group_id not in by_id:
+            errors.append(f"user_acceptance_groups missing {group_id}")
+    six_group = by_id.get("scbs55_high_risk_six_surfaces")
+    if isinstance(six_group, dict):
+        if six_group.get("manifest") != str(SIX_SLICE.relative_to(ROOT)):
+            errors.append("six-surface acceptance group manifest drift")
+        if as_int(six_group.get("item_count")) != 6:
+            errors.append("six-surface acceptance group item_count must be 6")
+    direct_group = by_id.get("scbsly_direct_project_business_menus")
+    if isinstance(direct_group, dict):
+        if direct_group.get("manifest") != str(SIX_SLICE.relative_to(ROOT)):
+            errors.append("direct project acceptance group manifest drift")
+        if direct_group.get("source_system") != "https://www.builderp.cn/SCBSLY_V2":
+            errors.append("direct project acceptance group source_system drift")
+        if as_int(direct_group.get("category_count")) != 7:
+            errors.append("direct project acceptance group category_count must be 7")
+        if as_int(direct_group.get("item_count")) != DIRECT_PROJECT_MENU_ITEM_COUNT:
+            errors.append(f"direct project acceptance group item_count must be {DIRECT_PROJECT_MENU_ITEM_COUNT}")
+        if direct_group.get("latest_online_evidence") != "artifacts/migration/scbsly_direct_project_acceptance_menu_probe_v1.json":
+            errors.append("direct project acceptance group latest_online_evidence drift")
+        if (
+            direct_group.get("latest_new_system_alignment")
+            != "artifacts/migration/scbsly_direct_project_new_system_alignment_probe_v1.json"
+        ):
+            errors.append("direct project acceptance group latest_new_system_alignment drift")
+        if (
+            direct_group.get("latest_browser_menu_acceptance")
+            != "artifacts/browser/scbsly-direct-project-menu/20260530T090744/report.json"
+        ):
+            errors.append("direct project acceptance group latest_browser_menu_acceptance drift")
+        if direct_group.get("latest_gap_matrix") != "artifacts/migration/scbsly_direct_project_alignment_gap_matrix_v1.json":
+            errors.append("direct project acceptance group latest_gap_matrix drift")
+        if direct_group.get("platform_release_snapshot") != "v20260530_scbsly_direct_acceptance_menu_daily_dev":
+            errors.append("direct project acceptance group platform_release_snapshot drift")
+        if (
+            direct_group.get("status")
+            != "old_online_pass_new_daily_dev_browser_visible_aligned_with_identity_bound_acceptance_replay"
+        ):
+            errors.append("direct project acceptance group status drift")
     return errors
 
 
@@ -608,6 +656,7 @@ def main() -> int:
     errors.extend(check_package_lock(payload))
     errors.extend(check_compare(payload))
     errors.extend(check_slices(payload))
+    errors.extend(check_user_acceptance_groups(payload))
     errors.extend(check_inventory(payload))
     errors.extend(check_replay_gap_report())
     errors.extend(check_inventory_replay_sequence())
@@ -623,6 +672,7 @@ def main() -> int:
         "delivery_requirement_lock": str(DELIVERY_REQUIREMENT_LOCK.relative_to(ROOT)),
         "package_lock": str(PACKAGE_LOCK.relative_to(ROOT)),
         "compare": str(COMPARE.relative_to(ROOT)),
+        "user_acceptance_group_count": len(payload.get("user_acceptance_groups", [])) if isinstance(payload.get("user_acceptance_groups"), list) else 0,
         "surface_count": len(payload.get("full_visibility_surfaces", [])) if isinstance(payload.get("full_visibility_surfaces"), list) else 0,
         "errors": errors,
     }

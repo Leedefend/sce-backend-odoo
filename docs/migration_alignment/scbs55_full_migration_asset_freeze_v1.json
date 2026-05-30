@@ -46,6 +46,30 @@
       "status": "locked_with_online_and_browser_guards"
     }
   ],
+  "user_acceptance_groups": [
+    {
+      "group_id": "scbs55_high_risk_six_surfaces",
+      "name": "首批高风险数据页面",
+      "manifest": "docs/migration_alignment/scbs55_user_acceptance_asset_freeze_v1.json",
+      "item_count": 6,
+      "status": "locked_with_online_row_identity_and_browser_guards"
+    },
+    {
+      "group_id": "scbsly_direct_project_business_menus",
+      "name": "直营项目系统菜单",
+      "manifest": "docs/migration_alignment/scbs55_user_acceptance_asset_freeze_v1.json",
+      "source_system": "https://www.builderp.cn/SCBSLY_V2",
+      "category_count": 7,
+      "item_count": 34,
+      "latest_online_evidence": "artifacts/migration/scbsly_direct_project_acceptance_menu_probe_v1.json",
+      "latest_new_system_alignment": "artifacts/migration/scbsly_direct_project_new_system_alignment_probe_v1.json",
+      "latest_browser_menu_acceptance": "artifacts/browser/scbsly-direct-project-menu/20260530T090744/report.json",
+      "latest_gap_matrix": "artifacts/migration/scbsly_direct_project_alignment_gap_matrix_v1.json",
+      "latest_direct_acceptance_replay": "artifacts/migration/scbsly_direct_project_direct_acceptance_replay_result_v1.json",
+      "platform_release_snapshot": "v20260530_scbsly_direct_acceptance_menu_daily_dev",
+      "status": "old_online_pass_new_daily_dev_browser_visible_aligned_with_identity_bound_acceptance_replay"
+    }
+  ],
   "full_visibility_surfaces": [
     {"seq": 1, "name": "供应商/合作单位", "old_count": 5172, "new_count": 5172, "status": "PASS"},
     {"seq": 2, "name": "往来单位", "old_count": 5866, "new_count": 5866, "status": "PASS"},

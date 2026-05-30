@@ -171,6 +171,7 @@ def precheck_replay_dependencies(rows_by_key):
             [
                 ("legacy_source_table", "=", "C_JFHKLR"),
                 ("source_family", "=", "engineering_progress_receipt_visible"),
+                ("operation_strategy", "=", "joint"),
                 ("legacy_record_id", "in", ids),
             ],
             ["legacy_record_id"],
@@ -320,13 +321,14 @@ def replay_engineering_progress(rows_by_key):
         if not legacy_id:
             continue
         seen.add(legacy_id)
-        rec = Model.search([("legacy_source_table", "=", "C_JFHKLR"), ("source_family", "=", "engineering_progress_receipt_visible"), ("legacy_record_id", "=", legacy_id)], limit=1)
+        rec = Model.search([("legacy_source_table", "=", "C_JFHKLR"), ("source_family", "=", "engineering_progress_receipt_visible"), ("operation_strategy", "=", "joint"), ("legacy_record_id", "=", legacy_id)], limit=1)
         project_id = rec.project_id.id if rec and rec.project_id else project_id_for(clean(row.get("XMID")), clean(row.get("XMMC")), required=True)
         vals = {
             "legacy_source_table": "C_JFHKLR",
             "legacy_record_id": legacy_id,
             "legacy_pid": clean(row.get("PID") or row.get("pid")),
             "source_family": "engineering_progress_receipt_visible",
+            "operation_strategy": "joint",
             "direction": "income",
             "document_no": clean(row.get("DJBH")),
             "document_date": date_value(row.get("f_RQ")),
@@ -352,10 +354,12 @@ def replay_engineering_progress(rows_by_key):
         else:
             Model.create(vals)
             created += 1
-    stale = Model.search([("legacy_source_table", "=", "C_JFHKLR"), ("source_family", "=", "engineering_progress_receipt_visible"), ("legacy_record_id", "not in", list(seen) or ["__none__"])])
+    stale = Model.search([("legacy_source_table", "=", "C_JFHKLR"), ("source_family", "=", "engineering_progress_receipt_visible"), ("operation_strategy", "=", "joint"), ("legacy_record_id", "not in", list(seen) or ["__none__"])])
     stale.unlink()
-    actual = env["sc.legacy.engineering.progress.receipt"].sudo().search_count([])  # noqa: F821
-    return {"created": created, "updated": updated, "stale_deleted": len(stale), "actual_count": actual, "expected_count": len(rows)}
+    no_strategy_stale = Model.search([("legacy_source_table", "=", "C_JFHKLR"), ("source_family", "=", "engineering_progress_receipt_visible"), ("operation_strategy", "=", False)])
+    no_strategy_stale.unlink()
+    actual = env["sc.legacy.engineering.progress.receipt"].sudo().search_count([("operation_strategy", "=", "joint")])  # noqa: F821
+    return {"created": created, "updated": updated, "stale_deleted": len(stale), "no_strategy_stale_deleted": len(no_strategy_stale), "actual_count": actual, "expected_count": len(rows)}
 
 
 def replay_supplier_contract(rows_by_key):
@@ -408,7 +412,7 @@ def post_counts():
         "self_guarantee_refund": env["tender.guarantee"].sudo().search_count([("bid_id.legacy_fact_model", "=", "online_old_scbs:ZJGL_BZJGL_Branch_SBZJTH:list869")]),  # noqa: F821
         "self_funding_income": env["sc.legacy.self.funding.fact"].sudo().search_count([("line_type", "=", "income_visible")]),  # noqa: F821
         "self_funding_refund": env["sc.legacy.self.funding.fact"].sudo().search_count([("line_type", "=", "refund_visible")]),  # noqa: F821
-        "engineering_progress_receipt": env["sc.legacy.engineering.progress.receipt"].sudo().search_count([]),  # noqa: F821
+        "engineering_progress_receipt": env["sc.legacy.engineering.progress.receipt"].sudo().search_count([("operation_strategy", "=", "joint")]),  # noqa: F821
         "supplier_contract": env["sc.legacy.supplier.contract.pricing.fact"].sudo().search_count([("legacy_source_table", "=", "T_GYSHT_INFO"), ("active", "=", True)]),  # noqa: F821
     }
 

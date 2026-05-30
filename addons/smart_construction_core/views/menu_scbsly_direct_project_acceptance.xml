@@ -1,0 +1,236 @@
+<odoo>
+    <data>
+        <menuitem id="menu_sc_user_acceptance_root"
+                  name="用户验收"
+                  parent="smart_construction_core.menu_sc_root"
+                  sequence="85"/>
+
+        <menuitem id="menu_scbsly_direct_project_acceptance_root"
+                  name="直营项目系统菜单"
+                  parent="smart_construction_core.menu_sc_user_acceptance_root"
+                  sequence="10"/>
+
+        <menuitem id="menu_scbsly_direct_project_acceptance_contracts"
+                  name="合同类单据"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_root"
+                  sequence="10"/>
+        <menuitem id="menu_scbsly_direct_project_acceptance_materials"
+                  name="材料管理类单据"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_root"
+                  sequence="20"/>
+        <menuitem id="menu_scbsly_direct_project_acceptance_labor"
+                  name="劳务管理类单据"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_root"
+                  sequence="30"/>
+        <menuitem id="menu_scbsly_direct_project_acceptance_subcontract"
+                  name="分包管理类单据"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_root"
+                  sequence="40"/>
+        <menuitem id="menu_scbsly_direct_project_acceptance_rental"
+                  name="机械与租赁管理类单据"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_root"
+                  sequence="50"/>
+        <menuitem id="menu_scbsly_direct_project_acceptance_finance"
+                  name="费用与资金管理类单据"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_root"
+                  sequence="60"/>
+        <menuitem id="menu_scbsly_direct_project_acceptance_project"
+                  name="项目管理类单据"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_root"
+                  sequence="70"/>
+
+        <menuitem id="menu_scbsly_acceptance_construction_contract"
+                  name="施工合同"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_contracts"
+                  action="smart_construction_core.action_scbsly_direct_acceptance_construction_contract"
+                  sequence="10"/>
+        <menuitem id="menu_scbsly_acceptance_subcontract_contract"
+                  name="分包合同"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_contracts"
+                  action="smart_construction_core.action_scbsly_direct_acceptance_subcontract_contract"
+                  sequence="20"/>
+        <menuitem id="menu_scbsly_acceptance_rental_contract"
+                  name="租赁合同"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_contracts"
+                  action="smart_construction_core.action_scbsly_direct_acceptance_rental_contract"
+                  sequence="30"/>
+        <menuitem id="menu_scbsly_acceptance_supplier_contract"
+                  name="供货合同"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_contracts"
+                  action="smart_construction_core.action_scbsly_direct_acceptance_supplier_contract"
+                  sequence="40"/>
+        <menuitem id="menu_scbsly_acceptance_labor_contract"
+                  name="劳务合同"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_contracts"
+                  action="smart_construction_core.action_scbsly_direct_acceptance_labor_contract"
+                  sequence="50"/>
+        <menuitem id="menu_scbsly_acceptance_equipment_contract"
+                  name="机械合同（合同）"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_contracts"
+                  action="smart_construction_core.action_scbsly_direct_acceptance_equipment_contract"
+                  sequence="60"/>
+
+        <menuitem id="menu_scbsly_acceptance_material_plan"
+                  name="材料计划"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_materials"
+                  action="smart_construction_core.action_scbsly_direct_acceptance_material_plan"
+                  sequence="10"/>
+        <menuitem id="menu_scbsly_acceptance_material_quote"
+                  name="报价单"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_materials"
+                  action="smart_construction_core.action_scbsly_direct_acceptance_material_quote"
+                  sequence="20"/>
+        <menuitem id="menu_scbsly_acceptance_material_inbound"
+                  name="入库"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_materials"
+                  action="smart_construction_core.action_scbsly_direct_acceptance_material_inbound"
+                  sequence="30"/>
+        <menuitem id="menu_scbsly_acceptance_material_settlement"
+                  name="材料结算单"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_materials"
+                  action="smart_construction_core.action_scbsly_direct_acceptance_material_settlement"
+                  sequence="40"/>
+        <menuitem id="menu_scbsly_acceptance_material_stock"
+                  name="库存统计表（新）"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_materials"
+                  action="smart_construction_core.action_sc_material_stock_statistics_report"
+                  sequence="50"/>
+
+        <menuitem id="menu_scbsly_acceptance_labor_usage"
+                  name="方单"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_labor"
+                  action="smart_construction_core.action_scbsly_direct_acceptance_labor_usage"
+                  sequence="10"/>
+        <menuitem id="menu_scbsly_acceptance_labor_casual"
+                  name="零星用工"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_labor"
+                  action="smart_construction_core.action_scbsly_direct_acceptance_labor_casual"
+                  sequence="20"/>
+        <menuitem id="menu_scbsly_acceptance_labor_settlement"
+                  name="劳务结算"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_labor"
+                  action="smart_construction_core.action_scbsly_direct_acceptance_labor_settlement"
+                  sequence="30"/>
+
+        <menuitem id="menu_scbsly_acceptance_subcontract_request"
+                  name="分包方单"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_subcontract"
+                  action="smart_construction_core.action_scbsly_direct_acceptance_subcontract_request"
+                  sequence="10"/>
+        <menuitem id="menu_scbsly_acceptance_subcontract_settlement"
+                  name="分包结算单"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_subcontract"
+                  action="smart_construction_core.action_scbsly_direct_acceptance_subcontract_settlement"
+                  sequence="20"/>
+
+        <menuitem id="menu_scbsly_acceptance_equipment_shift"
+                  name="机械台班记录"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_rental"
+                  action="smart_construction_core.action_scbsly_direct_acceptance_equipment_shift"
+                  sequence="10"/>
+        <menuitem id="menu_scbsly_acceptance_equipment_settlement"
+                  name="机械结算单"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_rental"
+                  action="smart_construction_core.action_scbsly_direct_acceptance_equipment_settlement"
+                  sequence="20"/>
+        <menuitem id="menu_scbsly_acceptance_rental_in"
+                  name="租入"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_rental"
+                  action="smart_construction_core.action_sc_material_rental_in_acceptance"
+                  sequence="30"/>
+        <menuitem id="menu_scbsly_acceptance_rental_return"
+                  name="还租"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_rental"
+                  action="smart_construction_core.action_sc_material_rental_return_acceptance"
+                  sequence="40"/>
+        <menuitem id="menu_scbsly_acceptance_rental_settlement"
+                  name="租赁结算单"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_rental"
+                  action="smart_construction_core.action_scbsly_direct_acceptance_rental_settlement"
+                  sequence="50"/>
+
+        <menuitem id="menu_scbsly_acceptance_project_expense"
+                  name="项目费用报销单"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_finance"
+                  action="smart_construction_core.action_scbsly_direct_acceptance_project_expense"
+                  sequence="10"/>
+        <menuitem id="menu_scbsly_acceptance_salary"
+                  name="管理人员工资表"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_finance"
+                  action="smart_construction_core.action_scbsly_direct_acceptance_salary"
+                  sequence="20"/>
+        <menuitem id="menu_scbsly_acceptance_fuel_card"
+                  name="油卡登记"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_finance"
+                  action="smart_construction_core.action_sc_legacy_fuel_card_fact"
+                  sequence="30"/>
+        <menuitem id="menu_scbsly_acceptance_fuel_recharge"
+                  name="充值登记"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_finance"
+                  action="smart_construction_core.action_sc_legacy_fuel_card_recharge_fact"
+                  sequence="40"/>
+        <menuitem id="menu_scbsly_acceptance_fuel_refuel"
+                  name="加油登记"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_finance"
+                  action="smart_construction_core.action_sc_legacy_fuel_card_refuel_fact"
+                  sequence="50"/>
+        <menuitem id="menu_scbsly_acceptance_payment_apply"
+                  name="支付申请"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_finance"
+                  action="smart_construction_core.action_scbsly_direct_acceptance_payment_apply"
+                  sequence="60"/>
+        <menuitem id="menu_scbsly_acceptance_engineering_progress_receipt"
+                  name="工程进度收款"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_finance"
+                  action="smart_construction_core.action_sc_legacy_engineering_progress_receipt_direct"
+                  sequence="70"/>
+        <menuitem id="menu_scbsly_acceptance_partner_payment"
+                  name="往来单位付款"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_finance"
+                  action="smart_construction_core.action_scbsly_direct_acceptance_partner_payment"
+                  sequence="80"/>
+        <menuitem id="menu_scbsly_acceptance_settlement_order"
+                  name="工程结算单"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_finance"
+                  action="smart_construction_core.action_scbsly_direct_acceptance_settlement_order"
+                  sequence="90"/>
+        <menuitem id="menu_scbsly_acceptance_input_tax_report"
+                  name="进项上报"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_finance"
+                  action="smart_construction_core.action_scbsly_direct_acceptance_input_tax_report"
+                  sequence="100"/>
+        <menuitem id="menu_scbsly_acceptance_general_contract_input_tax_report"
+                  name="总包进项上报"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_finance"
+                  action="smart_construction_core.action_scbsly_direct_acceptance_general_contract_input_tax_report"
+                  sequence="110"/>
+        <menuitem id="menu_scbsly_acceptance_comprehensive_cost"
+                  name="成本统计表（数据）"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_finance"
+                  action="smart_construction_core.action_sc_comprehensive_cost_statistics_report"
+                  sequence="120"/>
+
+        <menuitem id="menu_scbsly_acceptance_construction_diary"
+                  name="施工日志（新）"
+                  parent="smart_construction_core.menu_scbsly_direct_project_acceptance_project"
+                  action="smart_construction_core.action_scbsly_direct_acceptance_construction_diary"
+                  sequence="10"/>
+
+        <record id="menu_config_policy_scbsly_direct_project_acceptance_root" model="ui.menu.config.policy">
+            <field name="company_id" ref="base.main_company"/>
+            <field name="menu_id" ref="smart_construction_core.menu_scbsly_direct_project_acceptance_root"/>
+            <field name="custom_label">直营项目系统菜单</field>
+            <field name="sequence_override">10</field>
+            <field name="visible">1</field>
+            <field name="note">用户验收阶段前端自定义菜单入口。</field>
+        </record>
+        <record id="menu_config_policy_scbsly_direct_engineering_progress_receipt" model="ui.menu.config.policy">
+            <field name="company_id" ref="base.main_company"/>
+            <field name="menu_id" ref="smart_construction_core.menu_scbsly_acceptance_engineering_progress_receipt"/>
+            <field name="custom_label">工程进度收款</field>
+            <field name="sequence_override">70</field>
+            <field name="visible">1</field>
+            <field name="note">直营项目工程进度收款验收入口，action 域按 operation_strategy=direct 切分。</field>
+        </record>
+    </data>
+</odoo>
