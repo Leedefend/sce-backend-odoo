@@ -25,16 +25,22 @@
             <field name="model">sc.legacy.supplier.contract.pricing.fact</field>
             <field name="arch" type="xml">
                 <tree string="供货合同分析" create="false" edit="false" delete="false">
-                    <field name="project_name" string="项目"/>
+                    <field name="document_state_label" string="单据状态"/>
+                    <field name="contract_no" string="合同编号"/>
+                    <field name="project_name" string="项目名称"/>
+                    <field name="document_no" string="自编合同号"/>
                     <field name="partner_name" string="供应商"/>
+                    <field name="settlement_amount" string="结算金额" sum="结算金额合计"/>
+                    <field name="original_contract_holder" string="合同原件"/>
                     <field name="pricing_method_text" string="计价方式"/>
-                    <field name="amount_total" string="合同金额" sum="合同金额合计"/>
-                    <field name="document_state_label" string="合同状态"/>
-                    <field name="creator_name" string="历史录入人"/>
-                    <field name="created_time" string="历史录入时间"/>
-                    <field name="legacy_contract_id" string="历史合同ID" optional="hide"/>
-                    <field name="document_state" string="历史状态" optional="hide"/>
-                    <field name="legacy_source_table" string="来源表" optional="hide"/>
+                    <field name="contract_type_text" string="合同类型"/>
+                    <field name="title" string="标题"/>
+                    <field name="amount_total" string="总金额" sum="总金额合计"/>
+                    <field name="paid_amount" string="已付款金额" sum="已付款金额合计"/>
+                    <field name="unpaid_amount" string="未付款金额" sum="未付款金额合计"/>
+                    <field name="attachment_text" string="附件"/>
+                    <field name="creator_name" string="录入人"/>
+                    <field name="sign_date" string="签约日期"/>
                 </tree>
             </field>
         </record>

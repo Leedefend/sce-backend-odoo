@@ -34,6 +34,42 @@ const TARGET_KEYS = new Set([
   'supplier_contract',
 ]);
 const HELPER_HEADERS = new Set(['', '序号', '列', '操作', 'Actions']);
+const SUPPLIER_CONTRACT_VALUE_FIELDS = [
+  'document_state_label',
+  'contract_no',
+  'project_name',
+  'document_no',
+  'partner_name',
+  'settlement_amount',
+  'original_contract_holder',
+  'pricing_method_text',
+  'contract_type_text',
+  'title',
+  'amount_total',
+  'paid_amount',
+  'unpaid_amount',
+  'attachment_text',
+  'creator_name',
+  'sign_date',
+];
+const SUPPLIER_CONTRACT_OLD_VALUE_MAP = [
+  ['单据状态', 'DJZT', 'document_state_label', 'state'],
+  ['合同编号', 'f_HTBH', 'contract_no', 'text'],
+  ['项目名称', 'ProjectName', 'project_name', 'text'],
+  ['自编合同号', 'DJBH', 'document_no', 'text'],
+  ['供应商', 'f_GYSName', 'partner_name', 'text'],
+  ['结算金额', 'HTJSJE', 'settlement_amount', 'number'],
+  ['合同原件', 'D_SCBSJS_HTYJSZD', 'original_contract_holder', 'text'],
+  ['计价方式', 'JJFSTEXT', 'pricing_method_text', 'text'],
+  ['合同类型', 'HTLX_New', 'contract_type_text', 'text'],
+  ['标题', 'BT', 'title', 'text'],
+  ['总金额', 'ZJE', 'amount_total', 'number'],
+  ['已付款金额', 'YFKJE', 'paid_amount', 'number'],
+  ['未付款金额', 'WFKJE', 'unpaid_amount', 'number'],
+  ['附件', 'f_FJ_FJ', 'attachment_text', 'text'],
+  ['录入人', 'f_LRR', 'creator_name', 'text'],
+  ['签约日期', 'f_QYRQ', 'sign_date', 'date'],
+];
 
 function ensureDir(dirPath) {
   fs.mkdirSync(dirPath, { recursive: true });
@@ -59,6 +95,43 @@ function identityValue(row, fieldName) {
   const wanted = String(fieldName || '').toLowerCase();
   const key = Object.keys(row).find((candidate) => candidate.toLowerCase() === wanted);
   return key ? normalize(row[key]) : '';
+}
+
+function normalizeNumber(value) {
+  const text = normalize(value).replace(/,/g, '');
+  if (!text) return '0.00';
+  const parsed = Number(text);
+  if (!Number.isFinite(parsed)) return text;
+  return parsed.toFixed(2);
+}
+
+function normalizeDate(value) {
+  const text = normalize(value);
+  return text ? text.slice(0, 10) : '';
+}
+
+function stateLabel(value) {
+  const text = normalize(value);
+  return {
+    0: '未审核',
+    1: '审核中',
+    2: '已审核',
+    '-1': '已驳回',
+  }[text] || text;
+}
+
+function oldComparableValue(row, fieldName, kind) {
+  if (kind === 'state') return stateLabel(row.DJZT);
+  if (kind === 'number') return normalizeNumber(row[fieldName]);
+  if (kind === 'date') return normalizeDate(row[fieldName]);
+  if (fieldName === 'f_FJ_FJ') return normalize(row.f_FJ_FJ || row.f_FJ);
+  return normalize(row[fieldName]);
+}
+
+function newComparableValue(row, fieldName, kind) {
+  if (kind === 'number') return normalizeNumber(row[fieldName]);
+  if (kind === 'date') return normalizeDate(row[fieldName]);
+  return normalize(row[fieldName]);
 }
 
 function setDiff(left, right, limit = 20) {
@@ -164,6 +237,27 @@ async function fetchIdentities(page, model, domain, identityField, expectedCount
     if (records.length < pageSize) break;
   }
   return identities;
+}
+
+async function fetchRecords(page, model, domain, fields, expectedCount) {
+  const records = [];
+  const pageSize = 1000;
+  for (let offset = 0; offset < expectedCount + pageSize; offset += pageSize) {
+    const data = await intent(page, 'api.data', {
+      op: 'list',
+      model,
+      domain,
+      fields,
+      limit: pageSize,
+      offset,
+      order: 'id',
+      context: { active_test: false },
+    });
+    const pageRecords = Array.isArray(data.records) ? data.records : [];
+    records.push(...pageRecords);
+    if (pageRecords.length < pageSize) break;
+  }
+  return records;
 }
 
 async function waitForList(page) {
@@ -285,6 +379,9 @@ async function main() {
         new_identity_count: 0,
         new_identity_unique_count: 0,
         new_identity_missing_count: 0,
+        value_status: 'SKIP',
+        value_mismatch_count: 0,
+        value_mismatch_sample: [],
         actual_headers: [],
         expected_headers: expectedHeaders,
         browser_visible_row_count: 0,
@@ -352,6 +449,39 @@ async function main() {
           && result.extra_new_identities_sample.length === 0
         ) ? 'PASS' : 'FAIL';
         if (result.identity_status !== 'PASS') result.errors.push('identity_set_mismatch');
+
+        if (surface.key === 'supplier_contract') {
+          const newRecords = await fetchRecords(
+            page,
+            newer.model,
+            result.action_domain || '[]',
+            ['legacy_contract_id', ...SUPPLIER_CONTRACT_VALUE_FIELDS],
+            expectedCount,
+          );
+          const newByLegacyId = new Map(newRecords.map((record) => [normalize(record.legacy_contract_id), record]));
+          const mismatches = [];
+          for (const oldRow of oldRows) {
+            const legacyId = identityValue(oldRow, old.identity_field);
+            const newRow = newByLegacyId.get(legacyId);
+            if (!newRow) {
+              mismatches.push({ legacy_id: legacyId, field: '__record__', old: 'present', new: 'missing' });
+              continue;
+            }
+            for (const [label, oldField, newField, kind] of SUPPLIER_CONTRACT_OLD_VALUE_MAP) {
+              const oldValue = oldComparableValue(oldRow, oldField, kind);
+              const newValue = newComparableValue(newRow, newField, kind);
+              if (oldValue !== newValue) {
+                mismatches.push({ legacy_id: legacyId, label, old_field: oldField, new_field: newField, old: oldValue, new: newValue });
+              }
+              if (mismatches.length >= 50) break;
+            }
+            if (mismatches.length >= 50) break;
+          }
+          result.value_mismatch_count = mismatches.length;
+          result.value_mismatch_sample = mismatches.slice(0, 20);
+          result.value_status = mismatches.length ? 'FAIL' : 'PASS';
+          if (result.value_status !== 'PASS') result.errors.push(`value_mismatch:${mismatches.length}`);
+        }
 
         await page.goto(`${FRONTEND_URL}/a/${newer.action_id}?db=${encodeURIComponent(DB_NAME)}&scbs55_last6_strict=${Date.now()}`, {
           waitUntil: 'domcontentloaded',

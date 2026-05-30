@@ -378,18 +378,28 @@ def replay_supplier_contract(rows_by_key):
             "legacy_contract_id": legacy_id,
             "document_state": clean(row.get("DJZT")),
             "deleted_flag": clean(row.get("DEL")) or "0",
+            "contract_no": clean(row.get("f_HTBH")),
+            "document_no": clean(row.get("DJBH")),
             "project_legacy_id": clean(row.get("XMID")),
             "project_name": clean(row.get("ProjectName") or row.get("XMMC")),
             "project_id": project_id_for(clean(row.get("XMID")), clean(row.get("ProjectName") or row.get("XMMC"))),
             "partner_legacy_id": clean(row.get("f_GYSID") or row.get("GYSID")),
             "partner_name": clean(row.get("f_GYSName") or row.get("GYSName")),
             "partner_id": partner_id_for(clean(row.get("f_GYSID") or row.get("GYSID")), clean(row.get("f_GYSName") or row.get("GYSName"))),
+            "settlement_amount": amount(row.get("HTJSJE")),
+            "original_contract_holder": clean(row.get("D_SCBSJS_HTYJSZD")),
             "pricing_method_legacy_id": clean(row.get("JJFSID")),
             "pricing_method_text": clean(row.get("JJFSTEXT")),
+            "contract_type_text": clean(row.get("HTLX_New")),
+            "title": clean(row.get("BT")),
             "amount_total": amount(row.get("ZJE")),
+            "paid_amount": amount(row.get("YFKJE")),
+            "unpaid_amount": amount(row.get("WFKJE")),
+            "attachment_text": clean(row.get("f_FJ_FJ") or row.get("f_FJ")),
             "creator_legacy_user_id": clean(row.get("LRRID")),
             "creator_name": clean(row.get("f_LRR") or row.get("LRR")),
             "created_time": datetime_value(row.get("f_LRRQ") or row.get("LRSJ")),
+            "sign_date": date_value(row.get("f_QYRQ")),
             "import_batch": "scbs55_user_acceptance_replay_v1",
             "active": True,
         }
@@ -402,8 +412,22 @@ def replay_supplier_contract(rows_by_key):
             created += 1
     stale = Model.search([("legacy_source_table", "=", "T_GYSHT_INFO"), ("active", "=", True), ("legacy_contract_id", "not in", list(seen) or ["__none__"])])
     stale.write({"active": False})
+    stale_preferences = env["sc.user.view.preference"].sudo().search([  # noqa: F821
+        ("model_name", "=", "sc.legacy.supplier.contract.pricing.fact"),
+        ("action_id", "=", 900),
+        ("preference_key", "=", "list_columns"),
+    ])
+    preference_reset_count = len(stale_preferences)
+    stale_preferences.unlink()
     actual = Model.search_count([("legacy_source_table", "=", "T_GYSHT_INFO"), ("active", "=", True)])
-    return {"created": created, "updated": updated, "stale_deactivated": len(stale), "actual_count": actual, "expected_count": len(rows)}
+    return {
+        "created": created,
+        "updated": updated,
+        "stale_deactivated": len(stale),
+        "user_view_preferences_reset": preference_reset_count,
+        "actual_count": actual,
+        "expected_count": len(rows),
+    }
 
 
 def post_counts():
