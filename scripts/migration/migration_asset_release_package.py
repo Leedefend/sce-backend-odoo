@@ -274,6 +274,14 @@ def build_package(asset_root: Path, out_dir: Path, package_id: str) -> dict[str,
             add_file(tar, REPO_ROOT / item["path"], item["path"])
         add_bytes(tar, "migration_asset_release_manifest_v1.json", manifest_bytes)
 
+    with tarfile.open(package_path, "r:gz") as tar:
+        packaged_names = sorted(member.name for member in tar.getmembers() if member.isfile())
+    expected_names = sorted([item["path"] for item in files] + ["migration_asset_release_manifest_v1.json"])
+    if packaged_names != expected_names:
+        missing = sorted(set(expected_names) - set(packaged_names))
+        extra = sorted(set(packaged_names) - set(expected_names))
+        raise RuntimeError(f"release package file list drift: missing={missing[:20]} extra={extra[:20]}")
+
     package_sha = sha256_file(package_path)
     sha_path.write_text(f"{package_sha}  {package_name}\n", encoding="utf-8")
 

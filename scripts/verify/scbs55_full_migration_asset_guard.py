@@ -85,6 +85,23 @@ def check_package_lock(payload: dict[str, Any]) -> list[str]:
     for field in ("package_id", "sha256", "package_size_bytes", "payload_mode", "materializes"):
         if lock.get(field) != baseline.get(field):
             errors.append(f"baseline package {field} drift: freeze={baseline.get(field)!r} lock={lock.get(field)!r}")
+    if lock.get("payload_mode") != "packaged_artifacts":
+        errors.append("package lock payload_mode must be packaged_artifacts")
+    if lock.get("materializes") != "migration_assets/ and artifacts/migration/":
+        errors.append("package lock must materialize both migration_assets/ and artifacts/migration/")
+    if as_int(lock.get("package_size_bytes")) <= 0:
+        errors.append("package lock package_size_bytes must be positive")
+    if as_int(lock.get("included_file_count")) <= 0:
+        errors.append("package lock included_file_count must be positive")
+    required_before = lock.get("required_before") if isinstance(lock.get("required_before"), list) else []
+    for target in (
+        "migration.assets.verify_all",
+        "migration.assets.delivery_audit",
+        "history.continuity.rehearse",
+        "history.production.fresh_init",
+    ):
+        if target not in required_before:
+            errors.append(f"package lock required_before missing {target}")
     return errors
 
 
