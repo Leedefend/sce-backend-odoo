@@ -317,124 +317,148 @@
       {
         "command": "run_python_validator \"$ROOT_DIR/scripts/migration/fresh_db_replay_runner_dry_run.py\"",
         "kind": "other",
-        "step": "manifest_dry_run"
+        "step": "manifest_dry_run",
+        "step_index": 1
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/user_asset_verify.py\" --asset-root \"$ROOT_DIR/migration_assets\" --lane user --check",
         "kind": "other",
-        "step": "user_asset_verify"
+        "step": "user_asset_verify",
+        "step_index": 2
       },
       {
         "command": "run_odoo_script \"$PRECHECK_SCRIPT\"",
         "kind": "other",
-        "step": "replay_payload_precheck"
+        "step": "replay_payload_precheck",
+        "step_index": 3
       },
       {
         "command": "run_odoo_script \"$PROBE_SCRIPT\"",
         "kind": "probe",
-        "step": "usability_probe"
+        "step": "usability_probe",
+        "step_index": 4
       },
       {
         "command": "bash -c \"DB_NAME=\\\"$DB_NAME\\\" MIGRATION_REPO_ROOT=\\\"$MIGRATION_REPO_ROOT\\\" MIGRATION_ARTIFACT_ROOT=\\\"$MIGRATION_ARTIFACT_ROOT\\\" bash \\\"$USER_REBUILD\\\"\"",
         "kind": "other",
-        "step": "user_rebuild"
+        "step": "user_rebuild",
+        "step_index": 5
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_user_context_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_user_context_adapter"
+        "step": "legacy_user_context_adapter",
+        "step_index": 6
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_user_context_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_user_context_replay"
+        "step": "legacy_user_context_replay",
+        "step_index": 7
       },
       {
         "command": "run_odoo_script \"$REAL_USER_NORMALIZE_SCRIPT\"",
         "kind": "normalization",
-        "step": "real_user_normalize"
+        "step": "real_user_normalize",
+        "step_index": 8
       },
       {
         "command": "run_odoo_script \"$USER_VISIBLE_SURFACE_OVERLAY_SCRIPT\"",
         "kind": "other",
-        "step": "legacy_user_visible_surface_overlay"
+        "step": "legacy_user_visible_surface_overlay",
+        "step_index": 9
       },
       {
         "command": "run_odoo_script \"$USER_PROFILE_RUNTIME_PROJECTION_SCRIPT\"",
         "kind": "formal_projection",
-        "step": "legacy_user_profile_runtime_projection"
+        "step": "legacy_user_profile_runtime_projection",
+        "step_index": 10
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_user_project_scope_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_user_project_scope_adapter"
+        "step": "legacy_user_project_scope_adapter",
+        "step_index": 11
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_user_project_scope_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_user_project_scope_replay"
+        "step": "legacy_user_project_scope_replay",
+        "step_index": 12
       }
     ],
     "last_steps": [
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_expense_claim_runtime_probe.py\"",
         "kind": "probe",
-        "step": "expense_claim_runtime_probe"
+        "step": "expense_claim_runtime_probe",
+        "step_index": 210
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_treasury_reconciliation_runtime_probe.py\"",
         "kind": "probe",
-        "step": "treasury_reconciliation_runtime_probe"
+        "step": "treasury_reconciliation_runtime_probe",
+        "step_index": 211
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_receipt_income_runtime_probe.py\"",
         "kind": "probe",
-        "step": "receipt_income_runtime_probe"
+        "step": "receipt_income_runtime_probe",
+        "step_index": 212
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_payment_execution_runtime_probe.py\"",
         "kind": "probe",
-        "step": "payment_execution_runtime_probe"
+        "step": "payment_execution_runtime_probe",
+        "step_index": 213
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_financing_loan_runtime_probe.py\"",
         "kind": "probe",
-        "step": "financing_loan_runtime_probe"
+        "step": "financing_loan_runtime_probe",
+        "step_index": 214
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_general_contract_runtime_probe.py\"",
         "kind": "probe",
-        "step": "general_contract_runtime_probe"
+        "step": "general_contract_runtime_probe",
+        "step_index": 215
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_construction_diary_runtime_probe.py\"",
         "kind": "probe",
-        "step": "construction_diary_runtime_probe"
+        "step": "construction_diary_runtime_probe",
+        "step_index": 216
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_treasury_reconciliation_probe.py\"",
         "kind": "probe",
-        "step": "treasury_reconciliation_probe"
+        "step": "treasury_reconciliation_probe",
+        "step_index": 217
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_expense_deposit_runtime_probe.py\"",
         "kind": "probe",
-        "step": "expense_deposit_runtime_probe"
+        "step": "expense_deposit_runtime_probe",
+        "step_index": 218
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_material_catalog_runtime_probe.py\"",
         "kind": "probe",
-        "step": "material_catalog_runtime_probe"
+        "step": "material_catalog_runtime_probe",
+        "step_index": 219
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_purchase_contract_runtime_probe.py\"",
         "kind": "probe",
-        "step": "purchase_contract_runtime_probe"
+        "step": "purchase_contract_runtime_probe",
+        "step_index": 220
       },
       {
         "command": "run_odoo_script \"$PROBE_SCRIPT\"",
         "kind": "probe",
-        "step": "usability_probe"
+        "step": "usability_probe",
+        "step_index": 221
       }
     ],
     "script": "scripts/migration/history_continuity_oneclick.sh",
@@ -443,1107 +467,1328 @@
       {
         "command": "run_python_validator \"$ROOT_DIR/scripts/migration/fresh_db_replay_runner_dry_run.py\"",
         "kind": "other",
-        "step": "manifest_dry_run"
+        "step": "manifest_dry_run",
+        "step_index": 1
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/user_asset_verify.py\" --asset-root \"$ROOT_DIR/migration_assets\" --lane user --check",
         "kind": "other",
-        "step": "user_asset_verify"
+        "step": "user_asset_verify",
+        "step_index": 2
       },
       {
         "command": "run_odoo_script \"$PRECHECK_SCRIPT\"",
         "kind": "other",
-        "step": "replay_payload_precheck"
+        "step": "replay_payload_precheck",
+        "step_index": 3
       },
       {
         "command": "run_odoo_script \"$PROBE_SCRIPT\"",
         "kind": "probe",
-        "step": "usability_probe"
+        "step": "usability_probe",
+        "step_index": 4
       },
       {
         "command": "bash -c \"DB_NAME=\\\"$DB_NAME\\\" MIGRATION_REPO_ROOT=\\\"$MIGRATION_REPO_ROOT\\\" MIGRATION_ARTIFACT_ROOT=\\\"$MIGRATION_ARTIFACT_ROOT\\\" bash \\\"$USER_REBUILD\\\"\"",
         "kind": "other",
-        "step": "user_rebuild"
+        "step": "user_rebuild",
+        "step_index": 5
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_user_context_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_user_context_adapter"
+        "step": "legacy_user_context_adapter",
+        "step_index": 6
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_user_context_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_user_context_replay"
+        "step": "legacy_user_context_replay",
+        "step_index": 7
       },
       {
         "command": "run_odoo_script \"$REAL_USER_NORMALIZE_SCRIPT\"",
         "kind": "normalization",
-        "step": "real_user_normalize"
+        "step": "real_user_normalize",
+        "step_index": 8
       },
       {
         "command": "run_odoo_script \"$USER_VISIBLE_SURFACE_OVERLAY_SCRIPT\"",
         "kind": "other",
-        "step": "legacy_user_visible_surface_overlay"
+        "step": "legacy_user_visible_surface_overlay",
+        "step_index": 9
       },
       {
         "command": "run_odoo_script \"$USER_PROFILE_RUNTIME_PROJECTION_SCRIPT\"",
         "kind": "formal_projection",
-        "step": "legacy_user_profile_runtime_projection"
+        "step": "legacy_user_profile_runtime_projection",
+        "step_index": 10
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_user_project_scope_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_user_project_scope_adapter"
+        "step": "legacy_user_project_scope_adapter",
+        "step_index": 11
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_user_project_scope_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_user_project_scope_replay"
+        "step": "legacy_user_project_scope_replay",
+        "step_index": 12
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_task_evidence_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_task_evidence_adapter"
+        "step": "legacy_task_evidence_adapter",
+        "step_index": 13
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_task_evidence_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_task_evidence_replay"
+        "step": "legacy_task_evidence_replay",
+        "step_index": 14
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_attendance_checkin_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_attendance_checkin_adapter"
+        "step": "legacy_attendance_checkin_adapter",
+        "step_index": 15
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_attendance_checkin_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_attendance_checkin_replay"
+        "step": "legacy_attendance_checkin_replay",
+        "step_index": 16
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_personnel_movement_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_personnel_movement_adapter"
+        "step": "legacy_personnel_movement_adapter",
+        "step_index": 17
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_personnel_movement_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_personnel_movement_replay"
+        "step": "legacy_personnel_movement_replay",
+        "step_index": 18
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_salary_line_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_salary_line_adapter"
+        "step": "legacy_salary_line_adapter",
+        "step_index": 19
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_salary_line_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_salary_line_replay"
+        "step": "legacy_salary_line_replay",
+        "step_index": 20
       },
       {
         "command": "run_odoo_script \"$PRECHECK_SCRIPT\"",
         "kind": "other",
-        "step": "replay_payload_precheck"
+        "step": "replay_payload_precheck",
+        "step_index": 21
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_partner_l4_replay_write.py\"",
         "kind": "write_replay",
-        "step": "partner_l4_anchor_completed"
+        "step": "partner_l4_anchor_completed",
+        "step_index": 22
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_project_anchor_replay_write.py\"",
         "kind": "write_replay",
-        "step": "project_anchor_completed"
+        "step": "project_anchor_completed",
+        "step_index": 23
       },
       {
         "command": "run_odoo_script \"$USER_ACCESS_PROJECTION_SCRIPT\"",
         "kind": "formal_projection",
-        "step": "legacy_user_access_projection"
+        "step": "legacy_user_access_projection",
+        "step_index": 24
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_account_master_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_account_master_adapter"
+        "step": "legacy_account_master_adapter",
+        "step_index": 25
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_account_master_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_account_master_replay"
+        "step": "legacy_account_master_replay",
+        "step_index": 26
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_account_transaction_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_account_transaction_adapter"
+        "step": "legacy_account_transaction_adapter",
+        "step_index": 27
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_account_transaction_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_account_transaction_replay"
+        "step": "legacy_account_transaction_replay",
+        "step_index": 28
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_material_catalog_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_material_catalog_adapter"
+        "step": "legacy_material_catalog_adapter",
+        "step_index": 29
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_material_catalog_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_material_catalog_replay"
+        "step": "legacy_material_catalog_replay",
+        "step_index": 30
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_tender_registration_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_tender_registration_adapter"
+        "step": "legacy_tender_registration_adapter",
+        "step_index": 31
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_tender_registration_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_tender_registration_replay"
+        "step": "legacy_tender_registration_replay",
+        "step_index": 32
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_material_stock_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_material_stock_adapter"
+        "step": "legacy_material_stock_adapter",
+        "step_index": 33
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_material_stock_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_material_stock_replay"
+        "step": "legacy_material_stock_replay",
+        "step_index": 34
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_labor_subcontract_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_labor_subcontract_adapter"
+        "step": "legacy_labor_subcontract_adapter",
+        "step_index": 35
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_labor_subcontract_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_labor_subcontract_replay"
+        "step": "legacy_labor_subcontract_replay",
+        "step_index": 36
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_equipment_lease_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_equipment_lease_adapter"
+        "step": "legacy_equipment_lease_adapter",
+        "step_index": 37
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_equipment_lease_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_equipment_lease_replay"
+        "step": "legacy_equipment_lease_replay",
+        "step_index": 38
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_file_index_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_file_index_adapter"
+        "step": "legacy_file_index_adapter",
+        "step_index": 39
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_file_index_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_file_index_replay"
+        "step": "legacy_file_index_replay",
+        "step_index": 40
       },
       {
         "command": "python3 \"$CONTRACT_COUNTERPARTY_ADAPTER\"",
         "kind": "adapter",
-        "step": "contract_counterparty_partner_adapter"
+        "step": "contract_counterparty_partner_adapter",
+        "step_index": 41
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_contract_counterparty_partner_replay_write.py\"",
         "kind": "write_replay",
-        "step": "contract_counterparty_partner_completed"
+        "step": "contract_counterparty_partner_completed",
+        "step_index": 42
       },
       {
         "command": "python3 \"$RECEIPT_COUNTERPARTY_ADAPTER\"",
         "kind": "adapter",
-        "step": "receipt_counterparty_partner_adapter"
+        "step": "receipt_counterparty_partner_adapter",
+        "step_index": 43
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_receipt_counterparty_partner_replay_write.py\"",
         "kind": "write_replay",
-        "step": "receipt_counterparty_partner_completed"
+        "step": "receipt_counterparty_partner_completed",
+        "step_index": 44
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_project_member_neutral_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "project_member_neutral_adapter"
+        "step": "project_member_neutral_adapter",
+        "step_index": 45
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_project_member_neutral_replay_write.py\"",
         "kind": "write_replay",
-        "step": "project_member_neutral_completed"
+        "step": "project_member_neutral_completed",
+        "step_index": 46
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_contract_remaining_adapter.py\"",
         "kind": "adapter",
-        "step": "contract_header_remaining_adapter"
+        "step": "contract_header_remaining_adapter",
+        "step_index": 47
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_contract_remaining_write.py\"",
         "kind": "other",
-        "step": "contract_header_completed_1332"
+        "step": "contract_header_completed_1332",
+        "step_index": 48
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_contract_missing_partner_anchor_write.py\"",
         "kind": "other",
-        "step": "contract_missing_partner_anchors"
+        "step": "contract_missing_partner_anchors",
+        "step_index": 49
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/contract_12_row_missing_partner_anchor_write.py\"",
         "kind": "other",
-        "step": "contract_12_missing_partner_anchors"
+        "step": "contract_12_missing_partner_anchors",
+        "step_index": 50
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/contract_12_row_create_only_write.py\"",
         "kind": "other",
-        "step": "contract_header_special_12"
+        "step": "contract_header_special_12",
+        "step_index": 51
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_contract_57_retry_write.py\"",
         "kind": "other",
-        "step": "contract_header_retry_57"
+        "step": "contract_header_retry_57",
+        "step_index": 52
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/history_contract_unreached_ready_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "contract_unreached_ready_adapter"
+        "step": "contract_unreached_ready_adapter",
+        "step_index": 53
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_contract_unreached_ready_replay_write.py\"",
         "kind": "write_replay",
-        "step": "contract_unreached_ready_replay"
+        "step": "contract_unreached_ready_replay",
+        "step_index": 54
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/history_partner_master_targeted_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "partner_master_targeted_adapter"
+        "step": "partner_master_targeted_adapter",
+        "step_index": 55
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_partner_master_targeted_replay_write.py\"",
         "kind": "write_replay",
-        "step": "partner_master_targeted_replay"
+        "step": "partner_master_targeted_replay",
+        "step_index": 56
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/history_contract_partner_recovery_adapter.py\"",
         "kind": "adapter",
-        "step": "contract_partner_recovery_adapter"
+        "step": "contract_partner_recovery_adapter",
+        "step_index": 57
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_contract_partner_recovery_write.py\"",
         "kind": "write_replay",
-        "step": "contract_partner_recovery_replay"
+        "step": "contract_partner_recovery_replay",
+        "step_index": 58
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_purchase_contract_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_purchase_contract_adapter"
+        "step": "legacy_purchase_contract_adapter",
+        "step_index": 59
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_purchase_contract_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_purchase_contract_replay"
+        "step": "legacy_purchase_contract_replay",
+        "step_index": 60
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/history_partner_master_direction_defer_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "partner_master_direction_defer_adapter"
+        "step": "partner_master_direction_defer_adapter",
+        "step_index": 61
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_partner_master_direction_defer_replay_write.py\"",
         "kind": "write_replay",
-        "step": "partner_master_direction_defer_replay"
+        "step": "partner_master_direction_defer_replay",
+        "step_index": 62
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/history_contract_direction_defer_recovery_adapter.py\"",
         "kind": "adapter",
-        "step": "contract_direction_defer_recovery_adapter"
+        "step": "contract_direction_defer_recovery_adapter",
+        "step_index": 63
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_contract_direction_defer_recovery_write.py\"",
         "kind": "write_replay",
-        "step": "contract_direction_defer_recovery_replay"
+        "step": "contract_direction_defer_recovery_replay",
+        "step_index": 64
       },
       {
         "command": "python3 \"$CONTRACT_LINE_ADAPTER\"",
         "kind": "adapter",
-        "step": "contract_line_adapter"
+        "step": "contract_line_adapter",
+        "step_index": 65
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_contract_line_replay_write.py\"",
         "kind": "write_replay",
-        "step": "contract_line_completed"
+        "step": "contract_line_completed",
+        "step_index": 66
       },
       {
         "command": "python3 \"$SUPPLIER_CONTRACT_ADAPTER\"",
         "kind": "adapter",
-        "step": "supplier_contract_adapter"
+        "step": "supplier_contract_adapter",
+        "step_index": 67
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/history_supplier_partner_targeted_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "supplier_partner_targeted_adapter"
+        "step": "supplier_partner_targeted_adapter",
+        "step_index": 68
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_supplier_partner_targeted_replay_write.py\"",
         "kind": "write_replay",
-        "step": "supplier_partner_targeted_replay"
+        "step": "supplier_partner_targeted_replay",
+        "step_index": 69
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_supplier_contract_replay_write.py\"",
         "kind": "write_replay",
-        "step": "supplier_contract_completed"
+        "step": "supplier_contract_completed",
+        "step_index": 70
       },
       {
         "command": "python3 \"$SUPPLIER_CONTRACT_LINE_ADAPTER\"",
         "kind": "adapter",
-        "step": "supplier_contract_line_adapter"
+        "step": "supplier_contract_line_adapter",
+        "step_index": 71
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_supplier_contract_line_replay_write.py\"",
         "kind": "write_replay",
-        "step": "supplier_contract_line_completed"
+        "step": "supplier_contract_line_completed",
+        "step_index": 72
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_receipt_core_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "receipt_core_adapter"
+        "step": "receipt_core_adapter",
+        "step_index": 73
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_receipt_core_write.py\"",
         "kind": "write_replay",
-        "step": "receipt_header_pending"
+        "step": "receipt_header_pending",
+        "step_index": 74
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/history_receipt_partner_targeted_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "receipt_partner_targeted_adapter"
+        "step": "receipt_partner_targeted_adapter",
+        "step_index": 75
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_receipt_partner_targeted_replay_write.py\"",
         "kind": "write_replay",
-        "step": "receipt_partner_targeted_replay"
+        "step": "receipt_partner_targeted_replay",
+        "step_index": 76
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/history_receipt_parent_recovery_adapter.py\"",
         "kind": "adapter",
-        "step": "receipt_parent_recovery_adapter"
+        "step": "receipt_parent_recovery_adapter",
+        "step_index": 77
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_receipt_parent_recovery_write.py\"",
         "kind": "write_replay",
-        "step": "receipt_parent_recovery_replay"
+        "step": "receipt_parent_recovery_replay",
+        "step_index": 78
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_receipt_invoice_line_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "receipt_invoice_line_adapter"
+        "step": "receipt_invoice_line_adapter",
+        "step_index": 79
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/visible_surface_receipt_core_creator_normalize_write.py\"",
         "kind": "normalization",
-        "step": "receipt_core_creator_visible_surface_normalize"
+        "step": "receipt_core_creator_visible_surface_normalize",
+        "step_index": 80
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/visible_surface_receipt_request_scope_normalize_write.py\"",
         "kind": "normalization",
-        "step": "receipt_request_scope_normalize"
+        "step": "receipt_request_scope_normalize",
+        "step_index": 81
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_receipt_invoice_line_replay_write.py\"",
         "kind": "write_replay",
-        "step": "receipt_invoice_line_replay"
+        "step": "receipt_invoice_line_replay",
+        "step_index": 82
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/visible_surface_receipt_invoice_line_normalize_write.py\"",
         "kind": "normalization",
-        "step": "receipt_invoice_line_visible_surface_normalize"
+        "step": "receipt_invoice_line_visible_surface_normalize",
+        "step_index": 83
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_receipt_invoice_attachment_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "receipt_invoice_attachment_adapter"
+        "step": "receipt_invoice_attachment_adapter",
+        "step_index": 84
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_receipt_invoice_attachment_replay_write.py\"",
         "kind": "write_replay",
-        "step": "receipt_invoice_attachment_replay"
+        "step": "receipt_invoice_attachment_replay",
+        "step_index": 85
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_outflow_request_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "outflow_request_adapter"
+        "step": "outflow_request_adapter",
+        "step_index": 86
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/history_outflow_partner_targeted_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "outflow_partner_targeted_adapter"
+        "step": "outflow_partner_targeted_adapter",
+        "step_index": 87
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_outflow_partner_targeted_replay_write.py\"",
         "kind": "write_replay",
-        "step": "outflow_partner_targeted_replay"
+        "step": "outflow_partner_targeted_replay",
+        "step_index": 88
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_outflow_request_replay_write.py\"",
         "kind": "write_replay",
-        "step": "outflow_request_replay"
+        "step": "outflow_request_replay",
+        "step_index": 89
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_outflow_request_fact_coverage_write.py\"",
         "kind": "other",
-        "step": "outflow_request_fact_coverage"
+        "step": "outflow_request_fact_coverage",
+        "step_index": 90
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_actual_outflow_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "actual_outflow_adapter"
+        "step": "actual_outflow_adapter",
+        "step_index": 91
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/history_actual_outflow_partner_targeted_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "actual_outflow_partner_targeted_adapter"
+        "step": "actual_outflow_partner_targeted_adapter",
+        "step_index": 92
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_actual_outflow_partner_targeted_replay_write.py\"",
         "kind": "write_replay",
-        "step": "actual_outflow_partner_targeted_replay"
+        "step": "actual_outflow_partner_targeted_replay",
+        "step_index": 93
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_actual_outflow_replay_write.py\"",
         "kind": "write_replay",
-        "step": "actual_outflow_replay"
+        "step": "actual_outflow_replay",
+        "step_index": 94
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_outflow_request_line_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "outflow_request_line_adapter"
+        "step": "outflow_request_line_adapter",
+        "step_index": 95
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_outflow_request_line_replay_write.py\"",
         "kind": "write_replay",
-        "step": "outflow_request_line_replay"
+        "step": "outflow_request_line_replay",
+        "step_index": 96
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_actual_outflow_residual_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "actual_outflow_residual_adapter"
+        "step": "actual_outflow_residual_adapter",
+        "step_index": 97
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_actual_outflow_residual_replay_write.py\"",
         "kind": "write_replay",
-        "step": "actual_outflow_residual_replay"
+        "step": "actual_outflow_residual_replay",
+        "step_index": 98
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_actual_outflow_line_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "actual_outflow_line_adapter"
+        "step": "actual_outflow_line_adapter",
+        "step_index": 99
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_actual_outflow_line_replay_write.py\"",
         "kind": "write_replay",
-        "step": "actual_outflow_line_replay"
+        "step": "actual_outflow_line_replay",
+        "step_index": 100
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/visible_surface_payment_request_contract_normalize_write.py\"",
         "kind": "normalization",
-        "step": "payment_request_contract_visible_surface_normalize"
+        "step": "payment_request_contract_visible_surface_normalize",
+        "step_index": 101
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_attachment_backfill_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_attachment_backfill_adapter"
+        "step": "legacy_attachment_backfill_adapter",
+        "step_index": 102
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/history_project_member_attachment_targeted_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "project_member_attachment_targeted_adapter"
+        "step": "project_member_attachment_targeted_adapter",
+        "step_index": 103
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_project_member_attachment_targeted_replay_write.py\"",
         "kind": "write_replay",
-        "step": "project_member_attachment_targeted_replay"
+        "step": "project_member_attachment_targeted_replay",
+        "step_index": 104
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_attachment_backfill_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_attachment_backfill_replay"
+        "step": "legacy_attachment_backfill_replay",
+        "step_index": 105
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_receipt_income_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_receipt_income_adapter"
+        "step": "legacy_receipt_income_adapter",
+        "step_index": 106
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/history_receipt_income_partner_targeted_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "receipt_income_partner_targeted_adapter"
+        "step": "receipt_income_partner_targeted_adapter",
+        "step_index": 107
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_receipt_income_partner_targeted_replay_write.py\"",
         "kind": "write_replay",
-        "step": "receipt_income_partner_targeted_replay"
+        "step": "receipt_income_partner_targeted_replay",
+        "step_index": 108
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_receipt_income_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_receipt_income_replay"
+        "step": "legacy_receipt_income_replay",
+        "step_index": 109
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_self_funding_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_self_funding_adapter"
+        "step": "legacy_self_funding_adapter",
+        "step_index": 110
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_self_funding_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_self_funding_replay"
+        "step": "legacy_self_funding_replay",
+        "step_index": 111
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_project_fund_balance_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_project_fund_balance_adapter"
+        "step": "legacy_project_fund_balance_adapter",
+        "step_index": 112
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_project_fund_balance_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_project_fund_balance_replay"
+        "step": "legacy_project_fund_balance_replay",
+        "step_index": 113
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_invoice_surcharge_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_invoice_surcharge_adapter"
+        "step": "legacy_invoice_surcharge_adapter",
+        "step_index": 114
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_invoice_surcharge_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_invoice_surcharge_replay"
+        "step": "legacy_invoice_surcharge_replay",
+        "step_index": 115
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_supplier_contract_pricing_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_supplier_contract_pricing_adapter"
+        "step": "legacy_supplier_contract_pricing_adapter",
+        "step_index": 116
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_supplier_contract_pricing_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_supplier_contract_pricing_replay"
+        "step": "legacy_supplier_contract_pricing_replay",
+        "step_index": 117
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_expense_deposit_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_expense_deposit_adapter"
+        "step": "legacy_expense_deposit_adapter",
+        "step_index": 118
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/history_expense_deposit_partner_targeted_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "expense_deposit_partner_targeted_adapter"
+        "step": "expense_deposit_partner_targeted_adapter",
+        "step_index": 119
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_expense_deposit_partner_targeted_replay_write.py\"",
         "kind": "write_replay",
-        "step": "expense_deposit_partner_targeted_replay"
+        "step": "expense_deposit_partner_targeted_replay",
+        "step_index": 120
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_expense_deposit_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_expense_deposit_replay"
+        "step": "legacy_expense_deposit_replay",
+        "step_index": 121
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_income_invoice_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_income_invoice_adapter"
+        "step": "legacy_income_invoice_adapter",
+        "step_index": 122
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_income_invoice_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_income_invoice_replay"
+        "step": "legacy_income_invoice_replay",
+        "step_index": 123
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_invoice_tax_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_invoice_tax_adapter"
+        "step": "legacy_invoice_tax_adapter",
+        "step_index": 124
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_invoice_tax_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_invoice_tax_replay"
+        "step": "legacy_invoice_tax_replay",
+        "step_index": 125
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_tax_deduction_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_tax_deduction_adapter"
+        "step": "legacy_tax_deduction_adapter",
+        "step_index": 126
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_tax_deduction_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_tax_deduction_replay"
+        "step": "legacy_tax_deduction_replay",
+        "step_index": 127
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_invoice_registration_line_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_invoice_registration_line_adapter"
+        "step": "legacy_invoice_registration_line_adapter",
+        "step_index": 128
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_invoice_registration_line_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_invoice_registration_line_replay"
+        "step": "legacy_invoice_registration_line_replay",
+        "step_index": 129
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_deduction_adjustment_line_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_deduction_adjustment_line_adapter"
+        "step": "legacy_deduction_adjustment_line_adapter",
+        "step_index": 130
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_deduction_adjustment_line_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_deduction_adjustment_line_replay"
+        "step": "legacy_deduction_adjustment_line_replay",
+        "step_index": 131
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_fund_confirmation_header_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_fund_confirmation_header_adapter"
+        "step": "legacy_fund_confirmation_header_adapter",
+        "step_index": 132
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_fund_confirmation_header_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_fund_confirmation_header_replay"
+        "step": "legacy_fund_confirmation_header_replay",
+        "step_index": 133
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_fund_confirmation_line_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_fund_confirmation_line_adapter"
+        "step": "legacy_fund_confirmation_line_adapter",
+        "step_index": 134
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_fund_confirmation_line_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_fund_confirmation_line_replay"
+        "step": "legacy_fund_confirmation_line_replay",
+        "step_index": 135
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_expense_reimbursement_line_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_expense_reimbursement_line_adapter"
+        "step": "legacy_expense_reimbursement_line_adapter",
+        "step_index": 136
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_expense_reimbursement_line_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_expense_reimbursement_line_replay"
+        "step": "legacy_expense_reimbursement_line_replay",
+        "step_index": 137
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_construction_diary_line_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_construction_diary_line_adapter"
+        "step": "legacy_construction_diary_line_adapter",
+        "step_index": 138
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_construction_diary_line_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_construction_diary_line_replay"
+        "step": "legacy_construction_diary_line_replay",
+        "step_index": 139
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_payment_residual_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_payment_residual_adapter"
+        "step": "legacy_payment_residual_adapter",
+        "step_index": 140
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_payment_residual_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_payment_residual_replay"
+        "step": "legacy_payment_residual_replay",
+        "step_index": 141
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_receipt_residual_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_receipt_residual_adapter"
+        "step": "legacy_receipt_residual_adapter",
+        "step_index": 142
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_receipt_residual_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_receipt_residual_replay"
+        "step": "legacy_receipt_residual_replay",
+        "step_index": 143
       },
       {
         "command": "run_legacy_workflow_audit_adapter",
         "kind": "adapter",
-        "step": "legacy_workflow_audit_adapter"
+        "step": "legacy_workflow_audit_adapter",
+        "step_index": 144
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_workflow_audit_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_workflow_audit_replay"
+        "step": "legacy_workflow_audit_replay",
+        "step_index": 145
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_history_todo_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "history_todo_projection"
+        "step": "history_todo_projection",
+        "step_index": 146
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_project_task_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "project_task_projection"
+        "step": "project_task_projection",
+        "step_index": 147
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_treasury_ledger_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "treasury_ledger_projection"
+        "step": "treasury_ledger_projection",
+        "step_index": 148
       },
       {
         "command": "run_payment_request_outflow_state_activation_adapter",
         "kind": "adapter",
-        "step": "payment_request_outflow_state_activation_adapter"
+        "step": "payment_request_outflow_state_activation_adapter",
+        "step_index": 149
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_payment_request_outflow_state_activation_write.py\"",
         "kind": "write_replay",
-        "step": "payment_request_outflow_state_activation_replay"
+        "step": "payment_request_outflow_state_activation_replay",
+        "step_index": 150
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/history_payment_request_outflow_approved_recovery_adapter.py\"",
         "kind": "adapter",
-        "step": "payment_request_outflow_approved_recovery_adapter"
+        "step": "payment_request_outflow_approved_recovery_adapter",
+        "step_index": 151
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_payment_request_outflow_approved_recovery_write.py\"",
         "kind": "write_replay",
-        "step": "payment_request_outflow_approved_recovery_replay"
+        "step": "payment_request_outflow_approved_recovery_replay",
+        "step_index": 152
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/history_payment_request_outflow_done_recovery_adapter.py\"",
         "kind": "adapter",
-        "step": "payment_request_outflow_done_recovery_adapter"
+        "step": "payment_request_outflow_done_recovery_adapter",
+        "step_index": 153
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_payment_request_outflow_done_recovery_write.py\"",
         "kind": "write_replay",
-        "step": "payment_request_outflow_done_recovery_replay"
+        "step": "payment_request_outflow_done_recovery_replay",
+        "step_index": 154
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/history_project_lifecycle_continuity_adapter.py\"",
         "kind": "adapter",
-        "step": "project_lifecycle_continuity_adapter"
+        "step": "project_lifecycle_continuity_adapter",
+        "step_index": 155
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_project_lifecycle_continuity_write.py\"",
         "kind": "write_replay",
-        "step": "project_lifecycle_continuity_replay"
+        "step": "project_lifecycle_continuity_replay",
+        "step_index": 156
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_financing_loan_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_financing_loan_adapter"
+        "step": "legacy_financing_loan_adapter",
+        "step_index": 157
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_financing_loan_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_financing_loan_replay"
+        "step": "legacy_financing_loan_replay",
+        "step_index": 158
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_fund_daily_snapshot_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_fund_daily_snapshot_adapter"
+        "step": "legacy_fund_daily_snapshot_adapter",
+        "step_index": 159
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_fund_daily_snapshot_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_fund_daily_snapshot_replay"
+        "step": "legacy_fund_daily_snapshot_replay",
+        "step_index": 160
       },
       {
         "command": "python3 \"$ROOT_DIR/scripts/migration/fresh_db_legacy_fund_daily_line_replay_adapter.py\"",
         "kind": "adapter",
-        "step": "legacy_fund_daily_line_adapter"
+        "step": "legacy_fund_daily_line_adapter",
+        "step_index": 161
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_legacy_fund_daily_line_replay_write.py\"",
         "kind": "write_replay",
-        "step": "legacy_fund_daily_line_replay"
+        "step": "legacy_fund_daily_line_replay",
+        "step_index": 162
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_settlement_adjustment_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "settlement_adjustment_projection"
+        "step": "settlement_adjustment_projection",
+        "step_index": 163
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_expense_claim_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "expense_claim_projection"
+        "step": "expense_claim_projection",
+        "step_index": 164
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_deposit_claim_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "deposit_claim_projection"
+        "step": "deposit_claim_projection",
+        "step_index": 165
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_deposit_claim_taxonomy_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "deposit_claim_taxonomy_projection"
+        "step": "deposit_claim_taxonomy_projection",
+        "step_index": 166
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_repayment_registration_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "repayment_registration_projection"
+        "step": "repayment_registration_projection",
+        "step_index": 167
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_contractor_project_repay_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "contractor_project_repay_projection"
+        "step": "contractor_project_repay_projection",
+        "step_index": 168
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_project_repay_company_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "project_repay_company_projection"
+        "step": "project_repay_company_projection",
+        "step_index": 169
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_deduction_bill_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "deduction_bill_projection"
+        "step": "deduction_bill_projection",
+        "step_index": 170
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_deduction_paid_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "deduction_paid_projection"
+        "step": "deduction_paid_projection",
+        "step_index": 171
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_deduction_paid_refund_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "deduction_paid_refund_projection"
+        "step": "deduction_paid_refund_projection",
+        "step_index": 172
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_treasury_reconciliation_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "treasury_reconciliation_projection"
+        "step": "treasury_reconciliation_projection",
+        "step_index": 173
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_receipt_income_missing_project_anchor_write.py\"",
         "kind": "other",
-        "step": "receipt_income_missing_project_anchor"
+        "step": "receipt_income_missing_project_anchor",
+        "step_index": 174
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_receipt_income_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "receipt_income_projection"
+        "step": "receipt_income_projection",
+        "step_index": 175
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_receipt_income_from_payment_request_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "receipt_income_from_payment_request_projection"
+        "step": "receipt_income_from_payment_request_projection",
+        "step_index": 176
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/visible_surface_receipt_income_type_normalize_write.py\"",
         "kind": "normalization",
-        "step": "receipt_income_type_normalize"
+        "step": "receipt_income_type_normalize",
+        "step_index": 177
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_arrival_confirmation_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "arrival_confirmation_projection"
+        "step": "arrival_confirmation_projection",
+        "step_index": 178
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_payment_execution_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "payment_execution_projection"
+        "step": "payment_execution_projection",
+        "step_index": 179
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_payment_execution_taxonomy_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "payment_execution_taxonomy_projection"
+        "step": "payment_execution_taxonomy_projection",
+        "step_index": 180
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_actual_outflow_line_payment_execution_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "actual_outflow_line_payment_execution_projection"
+        "step": "actual_outflow_line_payment_execution_projection",
+        "step_index": 181
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_invoice_contract_anchor_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "invoice_contract_anchor_projection"
+        "step": "invoice_contract_anchor_projection",
+        "step_index": 182
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_invoice_registration_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "invoice_registration_projection"
+        "step": "invoice_registration_projection",
+        "step_index": 183
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_financing_loan_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "financing_loan_projection"
+        "step": "financing_loan_projection",
+        "step_index": 184
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_construction_contract_income_count_alignment_write.py\"",
         "kind": "other",
-        "step": "construction_contract_income_count_alignment"
+        "step": "construction_contract_income_count_alignment",
+        "step_index": 185
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_new_construction_contract_xlsx_income_write.py\"",
         "kind": "other",
-        "step": "new_construction_contract_xlsx_income"
+        "step": "new_construction_contract_xlsx_income",
+        "step_index": 186
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_income_fact_project_stub_write.py\"",
         "kind": "other",
-        "step": "income_fact_project_stub"
+        "step": "income_fact_project_stub",
+        "step_index": 187
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/visible_surface_project_contract_enrichment_write.py\"",
         "kind": "other",
-        "step": "project_contract_visible_surface_enrichment"
+        "step": "project_contract_visible_surface_enrichment",
+        "step_index": 188
       },
       {
         "command": "run_odoo_write_script \"$ROOT_DIR/scripts/migration/project_migration_field_continuity_backfill_write.py\"",
         "kind": "other",
-        "step": "project_migration_field_continuity_backfill"
+        "step": "project_migration_field_continuity_backfill",
+        "step_index": 189
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_general_contract_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "general_contract_projection"
+        "step": "general_contract_projection",
+        "step_index": 190
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_construction_diary_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "construction_diary_projection"
+        "step": "construction_diary_projection",
+        "step_index": 191
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_fund_account_between_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "fund_account_between_projection"
+        "step": "fund_account_between_projection",
+        "step_index": 192
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_fund_daily_report_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "fund_daily_report_projection"
+        "step": "fund_daily_report_projection",
+        "step_index": 193
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_tender_registration_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "tender_registration_projection"
+        "step": "tender_registration_projection",
+        "step_index": 194
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_material_stock_document_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "material_stock_document_projection"
+        "step": "material_stock_document_projection",
+        "step_index": 195
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_project_budget_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "project_budget_projection"
+        "step": "project_budget_projection",
+        "step_index": 196
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_labor_equipment_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "labor_equipment_projection"
+        "step": "labor_equipment_projection",
+        "step_index": 197
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_work_breakdown_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "work_breakdown_projection"
+        "step": "work_breakdown_projection",
+        "step_index": 198
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_office_admin_leave_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "office_admin_leave_projection"
+        "step": "office_admin_leave_projection",
+        "step_index": 199
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_office_admin_seal_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "office_admin_seal_projection"
+        "step": "office_admin_seal_projection",
+        "step_index": 200
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_hr_payroll_salary_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "hr_payroll_salary_projection"
+        "step": "hr_payroll_salary_projection",
+        "step_index": 201
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_hr_payroll_social_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "hr_payroll_social_projection"
+        "step": "hr_payroll_social_projection",
+        "step_index": 202
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_hr_payroll_allowance_bonus_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "hr_payroll_allowance_bonus_projection"
+        "step": "hr_payroll_allowance_bonus_projection",
+        "step_index": 203
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_document_certificate_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "document_certificate_projection"
+        "step": "document_certificate_projection",
+        "step_index": 204
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_document_borrow_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "document_borrow_projection"
+        "step": "document_borrow_projection",
+        "step_index": 205
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/fresh_db_document_admin_archive_projection_write.py\"",
         "kind": "formal_projection",
-        "step": "document_admin_archive_projection"
+        "step": "document_admin_archive_projection",
+        "step_index": 206
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_attachment_custody_probe.py\"",
         "kind": "probe",
-        "step": "attachment_custody_probe"
+        "step": "attachment_custody_probe",
+        "step_index": 207
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_invoice_tax_runtime_probe.py\"",
         "kind": "probe",
-        "step": "invoice_tax_runtime_probe"
+        "step": "invoice_tax_runtime_probe",
+        "step_index": 208
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_settlement_adjustment_runtime_probe.py\"",
         "kind": "probe",
-        "step": "settlement_adjustment_runtime_probe"
+        "step": "settlement_adjustment_runtime_probe",
+        "step_index": 209
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_expense_claim_runtime_probe.py\"",
         "kind": "probe",
-        "step": "expense_claim_runtime_probe"
+        "step": "expense_claim_runtime_probe",
+        "step_index": 210
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_treasury_reconciliation_runtime_probe.py\"",
         "kind": "probe",
-        "step": "treasury_reconciliation_runtime_probe"
+        "step": "treasury_reconciliation_runtime_probe",
+        "step_index": 211
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_receipt_income_runtime_probe.py\"",
         "kind": "probe",
-        "step": "receipt_income_runtime_probe"
+        "step": "receipt_income_runtime_probe",
+        "step_index": 212
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_payment_execution_runtime_probe.py\"",
         "kind": "probe",
-        "step": "payment_execution_runtime_probe"
+        "step": "payment_execution_runtime_probe",
+        "step_index": 213
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_financing_loan_runtime_probe.py\"",
         "kind": "probe",
-        "step": "financing_loan_runtime_probe"
+        "step": "financing_loan_runtime_probe",
+        "step_index": 214
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_general_contract_runtime_probe.py\"",
         "kind": "probe",
-        "step": "general_contract_runtime_probe"
+        "step": "general_contract_runtime_probe",
+        "step_index": 215
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_construction_diary_runtime_probe.py\"",
         "kind": "probe",
-        "step": "construction_diary_runtime_probe"
+        "step": "construction_diary_runtime_probe",
+        "step_index": 216
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_treasury_reconciliation_probe.py\"",
         "kind": "probe",
-        "step": "treasury_reconciliation_probe"
+        "step": "treasury_reconciliation_probe",
+        "step_index": 217
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_expense_deposit_runtime_probe.py\"",
         "kind": "probe",
-        "step": "expense_deposit_runtime_probe"
+        "step": "expense_deposit_runtime_probe",
+        "step_index": 218
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_material_catalog_runtime_probe.py\"",
         "kind": "probe",
-        "step": "material_catalog_runtime_probe"
+        "step": "material_catalog_runtime_probe",
+        "step_index": 219
       },
       {
         "command": "run_odoo_script \"$ROOT_DIR/scripts/migration/history_purchase_contract_runtime_probe.py\"",
         "kind": "probe",
-        "step": "purchase_contract_runtime_probe"
+        "step": "purchase_contract_runtime_probe",
+        "step_index": 220
       },
       {
         "command": "run_odoo_script \"$PROBE_SCRIPT\"",
         "kind": "probe",
-        "step": "usability_probe"
+        "step": "usability_probe",
+        "step_index": 221
       }
     ]
   },

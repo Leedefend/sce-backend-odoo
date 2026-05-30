@@ -102,6 +102,7 @@ def oneclick_steps() -> dict[str, Any]:
         match = RUN_STEP_RE.search(line)
         if not match:
             continue
+        step_index = len(rows) + 1
         step = match.group(1)
         command = match.group(2).strip()
         if step.endswith("_adapter"):
@@ -116,7 +117,7 @@ def oneclick_steps() -> dict[str, Any]:
             kind = "normalization"
         else:
             kind = "other"
-        rows.append({"step": step, "kind": kind, "command": command[:220]})
+        rows.append({"step_index": step_index, "step": step, "kind": kind, "command": command[:220]})
     return {
         "script": rel(ONECLICK),
         "step_count": len(rows),

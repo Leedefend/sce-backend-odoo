@@ -302,6 +302,33 @@ def check_replay_gap_report() -> list[str]:
     return errors
 
 
+def check_inventory_replay_sequence() -> list[str]:
+    errors: list[str] = []
+    if not INVENTORY.exists() or not REPLAY_GAP.exists():
+        return errors
+    inventory = load_json(INVENTORY)
+    report = load_json(REPLAY_GAP)
+    if not isinstance(inventory, dict) or not isinstance(report, dict):
+        return errors
+    history = inventory.get("history_continuity") if isinstance(inventory.get("history_continuity"), dict) else {}
+    inventory_steps = history.get("steps") if isinstance(history.get("steps"), list) else []
+    report_steps = report.get("steps") if isinstance(report.get("steps"), list) else []
+    if len(inventory_steps) != len(report_steps):
+        errors.append("inventory and replay gap step counts differ")
+        return errors
+    for index, (inventory_step, report_step) in enumerate(zip(inventory_steps, report_steps), start=1):
+        if not isinstance(inventory_step, dict) or not isinstance(report_step, dict):
+            errors.append(f"step {index}: inventory and replay gap entries must be objects")
+            continue
+        for field in ("step_index", "step", "kind"):
+            if inventory_step.get(field) != report_step.get(field):
+                errors.append(
+                    f"step {index}: inventory {field}={inventory_step.get(field)!r} "
+                    f"!= replay gap {report_step.get(field)!r}"
+                )
+    return errors
+
+
 def check_promotion_queue() -> list[str]:
     errors: list[str] = []
     if not PROMOTION_QUEUE.exists():
@@ -426,6 +453,7 @@ def main() -> int:
     errors.extend(check_slices(payload))
     errors.extend(check_inventory(payload))
     errors.extend(check_replay_gap_report())
+    errors.extend(check_inventory_replay_sequence())
     errors.extend(check_promotion_queue())
     errors.extend(check_delivery_manifest_facts())
     report = {
