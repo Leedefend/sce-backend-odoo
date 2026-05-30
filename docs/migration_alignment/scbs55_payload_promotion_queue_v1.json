@@ -1,6 +1,6 @@
 {
   "decision": "promote payloads lane-by-lane in priority order; release-package verification remains the blocking gate",
-  "lane_count": 12,
+  "lane_count": 11,
   "queue": [
     {
       "decision": "promote_required_inputs_first",
@@ -30,11 +30,11 @@
     {
       "decision": "promote_required_inputs_first",
       "lane": "user_security_context",
-      "missing_required_input_count": 5,
-      "optional_step_count": 0,
+      "missing_required_input_count": 7,
+      "optional_step_count": 6,
       "priority": 20,
-      "required_step_count": 9,
-      "runtime_output_backlog_count": 5,
+      "required_step_count": 12,
+      "runtime_output_backlog_count": 16,
       "sample_missing_inputs": [
         {
           "path": "artifacts/migration/fresh_db_legacy_department_replay_payload_v1.csv",
@@ -55,6 +55,14 @@
         {
           "path": "artifacts/migration/fresh_db_legacy_user_project_scope_replay_payload_v1.csv",
           "step": "legacy_user_project_scope_replay"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_legacy_task_evidence_replay_adapter_result_v1.json",
+          "step": "legacy_task_evidence_replay"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_legacy_task_evidence_replay_payload_v1.csv",
+          "step": "legacy_task_evidence_replay"
         }
       ],
       "sample_runtime_outputs": [
@@ -77,24 +85,44 @@
         {
           "path": "artifacts/migration/fresh_db_legacy_user_project_scope_replay_write_result_v1.json",
           "step": "legacy_user_project_scope_replay"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_legacy_task_evidence_replay_adapter_result_v1.json",
+          "step": "legacy_task_evidence_adapter"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_legacy_task_evidence_replay_payload_v1.csv",
+          "step": "legacy_task_evidence_adapter"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_legacy_task_evidence_replay_write_result_v1.json",
+          "step": "legacy_task_evidence_replay"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_legacy_attendance_checkin_replay_adapter_result_v1.json",
+          "step": "legacy_attendance_checkin_adapter"
+        },
+        {
+          "path": "artifacts/migration/fresh_db_legacy_attendance_checkin_replay_payload_v1.csv",
+          "step": "legacy_attendance_checkin_adapter"
         }
       ],
-      "step_count": 9,
+      "step_count": 18,
       "step_kinds": {
-        "adapter": 2,
+        "adapter": 6,
         "formal_projection": 2,
         "normalization": 1,
-        "other": 2,
-        "write_replay": 2
+        "other": 3,
+        "write_replay": 6
       }
     },
     {
       "decision": "promote_required_inputs_first",
       "lane": "master_partner_project",
       "missing_required_input_count": 32,
-      "optional_step_count": 8,
+      "optional_step_count": 10,
       "priority": 30,
-      "required_step_count": 23,
+      "required_step_count": 24,
       "runtime_output_backlog_count": 55,
       "sample_missing_inputs": [
         {
@@ -180,11 +208,11 @@
           "step": "project_member_neutral_adapter"
         }
       ],
-      "step_count": 31,
+      "step_count": 34,
       "step_kinds": {
-        "adapter": 13,
-        "other": 3,
-        "write_replay": 15
+        "adapter": 14,
+        "other": 4,
+        "write_replay": 16
       }
     },
     {
@@ -295,7 +323,7 @@
       "missing_required_input_count": 9,
       "optional_step_count": 2,
       "priority": 50,
-      "required_step_count": 17,
+      "required_step_count": 18,
       "runtime_output_backlog_count": 21,
       "sample_missing_inputs": [
         {
@@ -377,11 +405,12 @@
           "step": "receipt_invoice_line_adapter"
         }
       ],
-      "step_count": 19,
+      "step_count": 20,
       "step_kinds": {
         "adapter": 6,
         "formal_projection": 2,
         "normalization": 4,
+        "other": 1,
         "probe": 1,
         "write_replay": 6
       }
@@ -490,11 +519,11 @@
     {
       "decision": "promote_required_inputs_first",
       "lane": "finance_accounting",
-      "missing_required_input_count": 24,
+      "missing_required_input_count": 25,
       "optional_step_count": 0,
       "priority": 70,
-      "required_step_count": 28,
-      "runtime_output_backlog_count": 29,
+      "required_step_count": 30,
+      "runtime_output_backlog_count": 31,
       "sample_missing_inputs": [
         {
           "path": "artifacts/migration/fresh_db_legacy_account_master_replay_adapter_result_v1.json",
@@ -579,10 +608,10 @@
           "step": "legacy_invoice_surcharge_replay"
         }
       ],
-      "step_count": 28,
+      "step_count": 30,
       "step_kinds": {
-        "adapter": 14,
-        "write_replay": 14
+        "adapter": 15,
+        "write_replay": 15
       }
     },
     {
@@ -830,77 +859,6 @@
       "step_count": 8,
       "step_kinds": {
         "probe": 8
-      }
-    },
-    {
-      "decision": "promote_required_inputs_first",
-      "lane": "unclassified",
-      "missing_required_input_count": 3,
-      "optional_step_count": 8,
-      "priority": 999,
-      "required_step_count": 7,
-      "runtime_output_backlog_count": 13,
-      "sample_missing_inputs": [
-        {
-          "path": "artifacts/migration/fresh_db_legacy_task_evidence_replay_adapter_result_v1.json",
-          "step": "legacy_task_evidence_replay"
-        },
-        {
-          "path": "artifacts/migration/fresh_db_legacy_task_evidence_replay_payload_v1.csv",
-          "step": "legacy_task_evidence_replay"
-        },
-        {
-          "path": "artifacts/migration/fresh_db_legacy_deduction_adjustment_line_replay_adapter_result_v1.json",
-          "step": "legacy_deduction_adjustment_line_replay"
-        }
-      ],
-      "sample_runtime_outputs": [
-        {
-          "path": "artifacts/migration/fresh_db_legacy_task_evidence_replay_adapter_result_v1.json",
-          "step": "legacy_task_evidence_adapter"
-        },
-        {
-          "path": "artifacts/migration/fresh_db_legacy_task_evidence_replay_payload_v1.csv",
-          "step": "legacy_task_evidence_adapter"
-        },
-        {
-          "path": "artifacts/migration/fresh_db_legacy_task_evidence_replay_write_result_v1.json",
-          "step": "legacy_task_evidence_replay"
-        },
-        {
-          "path": "artifacts/migration/fresh_db_legacy_attendance_checkin_replay_adapter_result_v1.json",
-          "step": "legacy_attendance_checkin_adapter"
-        },
-        {
-          "path": "artifacts/migration/fresh_db_legacy_attendance_checkin_replay_payload_v1.csv",
-          "step": "legacy_attendance_checkin_adapter"
-        },
-        {
-          "path": "artifacts/migration/fresh_db_legacy_attendance_checkin_replay_write_result_v1.json",
-          "step": "legacy_attendance_checkin_replay"
-        },
-        {
-          "path": "artifacts/migration/fresh_db_legacy_personnel_movement_replay_adapter_result_v1.json",
-          "step": "legacy_personnel_movement_adapter"
-        },
-        {
-          "path": "artifacts/migration/fresh_db_legacy_personnel_movement_replay_payload_v1.csv",
-          "step": "legacy_personnel_movement_adapter"
-        },
-        {
-          "path": "artifacts/migration/fresh_db_legacy_personnel_movement_replay_write_result_v1.json",
-          "step": "legacy_personnel_movement_replay"
-        },
-        {
-          "path": "artifacts/migration/fresh_db_legacy_salary_line_replay_adapter_result_v1.json",
-          "step": "legacy_salary_line_adapter"
-        }
-      ],
-      "step_count": 15,
-      "step_kinds": {
-        "adapter": 6,
-        "other": 3,
-        "write_replay": 6
       }
     }
   ],

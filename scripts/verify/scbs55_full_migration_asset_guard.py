@@ -200,6 +200,8 @@ def check_promotion_queue() -> list[str]:
     rows = queue.get("queue") if isinstance(queue.get("queue"), list) else []
     if len(rows) < 8:
         errors.append(f"payload promotion queue lane_count unexpectedly low: {len(rows)}")
+    if any(isinstance(row, dict) and row.get("lane") == "unclassified" for row in rows):
+        errors.append("payload promotion queue must not contain unclassified lane")
     priorities = [as_int(row.get("priority")) for row in rows if isinstance(row, dict)]
     if priorities != sorted(priorities):
         errors.append("payload promotion queue priorities must be sorted")
