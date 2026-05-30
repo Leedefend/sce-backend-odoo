@@ -12,6 +12,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 FREEZE = ROOT / "docs/migration_alignment/scbs55_full_migration_asset_freeze_v1.json"
 INVENTORY = ROOT / "docs/migration_alignment/scbs55_full_migration_asset_inventory_v1.json"
+REPLAY_GAP = ROOT / "docs/migration_alignment/scbs55_replay_payload_gap_report_v1.json"
 PACKAGE_LOCK = ROOT / "docs/migration_alignment/migration_asset_package_lock_v1.json"
 COMPARE = ROOT / "artifacts/migration/scbs55_wutao_old_new_final_aligned_compare.json"
 SIX_SLICE = ROOT / "docs/migration_alignment/scbs55_user_acceptance_asset_freeze_v1.json"
@@ -162,6 +163,28 @@ def check_inventory(payload: dict[str, Any]) -> list[str]:
     return errors
 
 
+def check_replay_gap_report() -> list[str]:
+    errors: list[str] = []
+    if not REPLAY_GAP.exists():
+        return [f"missing replay payload gap report: {REPLAY_GAP.relative_to(ROOT)}"]
+    report = load_json(REPLAY_GAP)
+    if not isinstance(report, dict):
+        return ["replay payload gap report root must be object"]
+    if report.get("report_version") != "scbs55_replay_payload_gap_report_v1":
+        errors.append("replay gap report version must be scbs55_replay_payload_gap_report_v1")
+    if report.get("status") not in {"PASS", "PASS_WITH_GAPS"}:
+        errors.append(f"replay gap report status must be PASS or PASS_WITH_GAPS, got {report.get('status')!r}")
+    if as_int(report.get("step_count")) < 100:
+        errors.append(f"replay gap report step_count unexpectedly low: {report.get('step_count')}")
+    if as_int(report.get("adapter_step_count")) <= 0:
+        errors.append("replay gap report must include adapter steps")
+    if "missing_required_inputs" not in report:
+        errors.append("replay gap report must expose missing_required_inputs")
+    if "runtime_outputs_not_currently_packaged" not in report:
+        errors.append("replay gap report must expose runtime_outputs_not_currently_packaged")
+    return errors
+
+
 def main() -> int:
     payload = load_json(FREEZE)
     if not isinstance(payload, dict):
@@ -173,10 +196,12 @@ def main() -> int:
     errors.extend(check_compare(payload))
     errors.extend(check_slices(payload))
     errors.extend(check_inventory(payload))
+    errors.extend(check_replay_gap_report())
     report = {
         "status": "FAIL" if errors else "PASS",
         "freeze": str(FREEZE.relative_to(ROOT)),
         "inventory": str(INVENTORY.relative_to(ROOT)),
+        "replay_gap": str(REPLAY_GAP.relative_to(ROOT)),
         "package_lock": str(PACKAGE_LOCK.relative_to(ROOT)),
         "compare": str(COMPARE.relative_to(ROOT)),
         "surface_count": len(payload.get("full_visibility_surfaces", [])) if isinstance(payload.get("full_visibility_surfaces"), list) else 0,
