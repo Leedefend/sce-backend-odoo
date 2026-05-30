@@ -196,6 +196,19 @@ def check_inventory(payload: dict[str, Any]) -> list[str]:
         errors.append("inventory full visibility total_old_rows drift")
     if sum(as_int(row.get("new_count")) for row in surfaces if isinstance(row, dict)) != as_int(compare.get("total_new_rows")):
         errors.append("inventory full visibility total_new_rows drift")
+    freeze_surfaces = payload.get("full_visibility_surfaces") if isinstance(payload.get("full_visibility_surfaces"), list) else []
+    inventory_by_seq = {as_int(row.get("seq")): row for row in surfaces if isinstance(row, dict)}
+    for row in freeze_surfaces:
+        if not isinstance(row, dict):
+            continue
+        seq = as_int(row.get("seq"))
+        actual = inventory_by_seq.get(seq)
+        if not actual:
+            errors.append(f"inventory full visibility missing seq {seq}")
+            continue
+        for field in ("name", "old_count", "new_count", "status"):
+            if actual.get(field) != row.get(field):
+                errors.append(f"seq {seq}: inventory {field}={actual.get(field)!r} != freeze {row.get(field)!r}")
     scripts = inventory.get("script_status") if isinstance(inventory.get("script_status"), dict) else {}
     ungoverned = scripts.get("ungoverned_runtime_scripts") if isinstance(scripts.get("ungoverned_runtime_scripts"), list) else []
     if len(ungoverned) < 2:
