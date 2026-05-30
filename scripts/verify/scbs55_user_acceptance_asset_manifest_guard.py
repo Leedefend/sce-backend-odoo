@@ -98,10 +98,22 @@ def check_manifest(payload: dict[str, Any]) -> list[str]:
             ("new.action_id", new.get("action_id")),
             ("new.model", new.get("model")),
             ("new.identity_field", new.get("identity_field")),
+            ("new.expected_headers", new.get("expected_headers")),
             ("evidence.set_check", evidence.get("set_check")),
         ):
             if value in (None, ""):
                 errors.append(f"{key or index}: missing {field}")
+        headers = new.get("expected_headers")
+        if not isinstance(headers, list) or not headers:
+            errors.append(f"{key}: new.expected_headers must be a non-empty list")
+        else:
+            normalized_headers = [str(item or "").strip() for item in headers]
+            missing_headers = [idx for idx, item in enumerate(normalized_headers) if not item]
+            duplicate_headers = sorted({item for item in normalized_headers if normalized_headers.count(item) > 1})
+            if missing_headers:
+                errors.append(f"{key}: new.expected_headers has blank labels at indexes {missing_headers}")
+            if duplicate_headers:
+                errors.append(f"{key}: new.expected_headers has duplicate labels {duplicate_headers}")
         old_count = as_int(old.get("expected_count"))
         new_count = as_int(new.get("expected_count"))
         last_total = as_int(evidence.get("last_browser_total"))

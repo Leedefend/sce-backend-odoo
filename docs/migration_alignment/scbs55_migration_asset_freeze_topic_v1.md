@@ -87,8 +87,11 @@ guard 会在存在证据文件时校验 hash；开启 `SCBS55_REQUIRE_ACCEPTANCE
 
 - 静态 manifest guard：验证冻结清单结构、唯一性、计数字段和证据引用。
 - 证据 guard：在存在旧系统 row dump 和浏览器 summary 时复核 count。
-- 在线 guard：后续加入，使用旧系统登录态重新拉取 count/row identity，与新系统 API 或浏览器结果比较。
-- replay 规范：把本轮 2 条自筹垫付收入、249 条供货合同、29 条供货合同移出口径等补差动作转成幂等 replay 资产。
+- 在线 guard：使用旧系统登录态重新拉取 count，并绑定旧页面 `DETAIL_CONFIG.WhereInfo`，避免通用探针注入口径。
+- 浏览器字段 guard：按 manifest 固化的 6 个新菜单逐页校验用户可见总数、表头顺序、首行可见数据、`api.data` 字段返回和 console error。
+- replay 资产：从证据锁定的旧系统 row dump 幂等重放自筹垫付收入、自筹垫付退回、工程进度收款、供货合同；保证写入前先校验 row dump sha256。
+
+临时脚本 `scripts/migration/scbs55_live_delta_backfill_write.py` 不进入本专题交付范围。它覆盖合同、收款、付款申请、付款执行等宽口径补差，来源是全量 seq dump，不受本 manifest 和 evidence lock 约束，容易把“用户验收面补齐”扩散成“数据库猜测迁移”。本专题只接受 manifest/evidence 约束 replay。
 
 ## 当前验收命令
 
@@ -124,3 +127,23 @@ make migration.assets.user_acceptance_online_probe
 ```
 
 注意：该在线探针使用旧页面 `DETAIL_CONFIG` 的默认 `WhereInfo`，不会像旧的通用 count probe 那样自动注入 `DJZT` 过滤。`自筹垫付收入` 已验证会因这种通用注入从 `2141` 漂移为 `2139`，因此本专题后续所有验收面必须使用 manifest 绑定的页面口径探针。
+
+新系统浏览器字段和数据验收：
+
+```bash
+FRONTEND_URL=http://1.95.85.92:18081 \
+DB_NAME=sc_demo \
+E2E_LOGIN=wutao \
+E2E_PASSWORD=****** \
+make migration.assets.user_acceptance_browser_field_guard
+```
+
+受 evidence lock 保护的日常开发库 replay：
+
+```bash
+SCBS55_OLD_ROWS_DIR=/tmp/scbs55_old_pages_20260530 \
+DB_NAME=sc_demo \
+make migration.assets.user_acceptance_replay.write
+```
+
+容器内路径可直接用 `MIGRATION_SCBS55_OLD_ROWS_DIR` 覆盖。该 replay 只允许写 `MIGRATION_REPLAY_DB_ALLOWLIST` 中的数据库，默认由 Makefile 绑定为当前 `DB_NAME`。如果 row dump 与 `scbs55_user_acceptance_evidence_lock_v1.json` 的 sha256 不一致，脚本在写库前失败。
