@@ -11,6 +11,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[2]
 FREEZE = ROOT / "docs/migration_alignment/scbs55_full_migration_asset_freeze_v1.json"
+INVENTORY = ROOT / "docs/migration_alignment/scbs55_full_migration_asset_inventory_v1.json"
 PACKAGE_LOCK = ROOT / "docs/migration_alignment/migration_asset_package_lock_v1.json"
 COMPARE = ROOT / "artifacts/migration/scbs55_wutao_old_new_final_aligned_compare.json"
 SIX_SLICE = ROOT / "docs/migration_alignment/scbs55_user_acceptance_asset_freeze_v1.json"
@@ -125,6 +126,42 @@ def check_slices(payload: dict[str, Any]) -> list[str]:
     return errors
 
 
+def check_inventory(payload: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    if not INVENTORY.exists():
+        return [f"missing full migration asset inventory: {INVENTORY.relative_to(ROOT)}"]
+    inventory = load_json(INVENTORY)
+    if not isinstance(inventory, dict):
+        return ["full migration asset inventory root must be object"]
+    if inventory.get("inventory_version") != "scbs55_full_migration_asset_inventory_v1":
+        errors.append("inventory_version must be scbs55_full_migration_asset_inventory_v1")
+    if inventory.get("status") != "PASS":
+        errors.append(f"inventory status must be PASS, got {inventory.get('status')!r}")
+    if inventory.get("scope_freeze") != str(FREEZE.relative_to(ROOT)):
+        errors.append("inventory scope_freeze does not point to the full freeze file")
+
+    compare = inventory.get("full_visibility_compare") if isinstance(inventory.get("full_visibility_compare"), dict) else {}
+    evidence = payload.get("current_full_visibility_evidence") if isinstance(payload.get("current_full_visibility_evidence"), dict) else {}
+    if as_int(compare.get("checked_count")) != as_int(evidence.get("checked_count")):
+        errors.append("inventory full visibility checked_count drift")
+    if as_int(compare.get("blocking_count")) != as_int(evidence.get("blocking_count")):
+        errors.append("inventory full visibility blocking_count drift")
+    if compare.get("status") != evidence.get("status"):
+        errors.append("inventory full visibility status drift")
+
+    history = inventory.get("history_continuity") if isinstance(inventory.get("history_continuity"), dict) else {}
+    if as_int(history.get("step_count")) < 100:
+        errors.append(f"inventory history_continuity step_count unexpectedly low: {history.get('step_count')}")
+    runtime = inventory.get("runtime_artifacts") if isinstance(inventory.get("runtime_artifacts"), dict) else {}
+    if as_int(runtime.get("file_count")) <= 0:
+        errors.append("inventory runtime artifact file_count must be positive")
+    scripts = inventory.get("script_status") if isinstance(inventory.get("script_status"), dict) else {}
+    ungoverned = scripts.get("ungoverned_runtime_scripts") if isinstance(scripts.get("ungoverned_runtime_scripts"), list) else []
+    if len(ungoverned) < 2:
+        errors.append("inventory must explicitly classify current ungoverned runtime scripts")
+    return errors
+
+
 def main() -> int:
     payload = load_json(FREEZE)
     if not isinstance(payload, dict):
@@ -135,9 +172,11 @@ def main() -> int:
     errors.extend(check_package_lock(payload))
     errors.extend(check_compare(payload))
     errors.extend(check_slices(payload))
+    errors.extend(check_inventory(payload))
     report = {
         "status": "FAIL" if errors else "PASS",
         "freeze": str(FREEZE.relative_to(ROOT)),
+        "inventory": str(INVENTORY.relative_to(ROOT)),
         "package_lock": str(PACKAGE_LOCK.relative_to(ROOT)),
         "compare": str(COMPARE.relative_to(ROOT)),
         "surface_count": len(payload.get("full_visibility_surfaces", [])) if isinstance(payload.get("full_visibility_surfaces"), list) else 0,

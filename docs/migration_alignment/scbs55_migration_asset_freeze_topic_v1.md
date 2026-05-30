@@ -24,6 +24,7 @@
 冻结清单：
 
 - `docs/migration_alignment/scbs55_full_migration_asset_freeze_v1.json`
+- `docs/migration_alignment/scbs55_full_migration_asset_inventory_v1.json`
 - `docs/migration_alignment/migration_asset_package_lock_v1.json`
 - `docs/migration_alignment/scbs55_user_acceptance_asset_freeze_v1.json`
 - `docs/migration_alignment/scbs55_user_acceptance_evidence_lock_v1.json`
@@ -35,6 +36,7 @@
 - 物化目录：`migration_assets/ and artifacts/migration/`
 - 全量用户可见列表：`artifacts/migration/scbs55_wutao_old_new_final_aligned_compare.json`
 - 当前列表证据：42 个用户可见面 `PASS`，blocking = 0
+- 当前资产台账：225 个运行态 artifact，历史连续性重放 221 个 step，42 个用户可见面合计 142427 行旧/新一致
 
 首批高风险验收切片 6 个页面：
 
@@ -112,6 +114,7 @@ guard 会在存在证据文件时校验 hash；开启 `SCBS55_REQUIRE_ACCEPTANCE
 全量专题范围校验：
 
 ```bash
+make migration.assets.full_inventory
 make migration.assets.full_scope_guard
 ```
 
