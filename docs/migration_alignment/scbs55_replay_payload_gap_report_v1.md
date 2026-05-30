@@ -9,7 +9,9 @@ Status: `PASS_WITH_GAPS`
 - adapter steps: `69`
 - adapters with packaged outputs: `0`
 - required missing inputs: `128`
+- required missing input unique paths: `106`
 - runtime outputs not currently packaged: `262`
+- runtime output unique paths: `258`
 
 ## Step Kinds
 

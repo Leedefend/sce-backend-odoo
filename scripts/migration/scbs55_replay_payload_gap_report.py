@@ -162,6 +162,8 @@ def build_report() -> dict[str, Any]:
         row for row in adapter_steps if row["output_artifacts"] and all(item["exists"] for item in row["output_artifacts"])
     ]
     status = "PASS" if not missing_inputs and not runtime_outputs else "PASS_WITH_GAPS"
+    missing_path_counts = Counter(item["path"] for item in missing_inputs)
+    runtime_path_counts = Counter(item["path"] for item in runtime_outputs)
     return {
         "report_version": "scbs55_replay_payload_gap_report_v1",
         "status": status,
@@ -172,7 +174,19 @@ def build_report() -> dict[str, Any]:
         "adapter_step_count": len(adapter_steps),
         "adapters_with_packaged_outputs": len(adapters_with_packaged_outputs),
         "required_missing_input_count": len(missing_inputs),
+        "required_missing_input_unique_path_count": len(missing_path_counts),
         "runtime_output_count": len(runtime_outputs),
+        "runtime_output_unique_path_count": len(runtime_path_counts),
+        "duplicate_missing_required_input_paths": [
+            {"path": path, "step_reference_count": count}
+            for path, count in sorted(missing_path_counts.items())
+            if count > 1
+        ],
+        "duplicate_runtime_output_paths": [
+            {"path": path, "step_reference_count": count}
+            for path, count in sorted(runtime_path_counts.items())
+            if count > 1
+        ],
         "missing_required_inputs": missing_inputs,
         "runtime_outputs_not_currently_packaged": runtime_outputs,
         "steps": rows,
@@ -200,7 +214,9 @@ Status: `{payload["status"]}`
 - adapter steps: `{payload["adapter_step_count"]}`
 - adapters with packaged outputs: `{payload["adapters_with_packaged_outputs"]}`
 - required missing inputs: `{payload["required_missing_input_count"]}`
+- required missing input unique paths: `{payload["required_missing_input_unique_path_count"]}`
 - runtime outputs not currently packaged: `{payload["runtime_output_count"]}`
+- runtime output unique paths: `{payload["runtime_output_unique_path_count"]}`
 
 ## Step Kinds
 

@@ -14,6 +14,70 @@
     "required": 195
   },
   "decision": "gap report is informational until a release package is fetched; release-package verification remains the blocking gate",
+  "duplicate_missing_required_input_paths": [
+    {
+      "path": "artifacts/migration/contract_12_row_write_authorization_payload_v1.csv",
+      "step_reference_count": 2
+    },
+    {
+      "path": "artifacts/migration/fresh_db_actual_outflow_replay_payload_v1.csv",
+      "step_reference_count": 2
+    },
+    {
+      "path": "artifacts/migration/fresh_db_contract_counterparty_partner_replay_payload_v1.csv",
+      "step_reference_count": 7
+    },
+    {
+      "path": "artifacts/migration/fresh_db_legacy_attachment_backfill_replay_payload_v1.csv",
+      "step_reference_count": 2
+    },
+    {
+      "path": "artifacts/migration/fresh_db_legacy_expense_deposit_replay_payload_v1.csv",
+      "step_reference_count": 2
+    },
+    {
+      "path": "artifacts/migration/fresh_db_legacy_receipt_income_replay_payload_v1.csv",
+      "step_reference_count": 2
+    },
+    {
+      "path": "artifacts/migration/fresh_db_outflow_request_replay_payload_v1.csv",
+      "step_reference_count": 2
+    },
+    {
+      "path": "artifacts/migration/fresh_db_partner_l4_replay_payload_v1.csv",
+      "step_reference_count": 3
+    },
+    {
+      "path": "artifacts/migration/fresh_db_project_anchor_replay_payload_v1.csv",
+      "step_reference_count": 3
+    },
+    {
+      "path": "artifacts/migration/fresh_db_receipt_counterparty_partner_replay_payload_v1.csv",
+      "step_reference_count": 6
+    },
+    {
+      "path": "artifacts/migration/fresh_db_supplier_contract_replay_payload_v1.csv",
+      "step_reference_count": 2
+    }
+  ],
+  "duplicate_runtime_output_paths": [
+    {
+      "path": "artifacts/migration/fresh_db_replay_payload_precheck_report_v1.md",
+      "step_reference_count": 2
+    },
+    {
+      "path": "artifacts/migration/fresh_db_replay_payload_precheck_result_v1.json",
+      "step_reference_count": 2
+    },
+    {
+      "path": "artifacts/migration/history_continuity_usability_probe_report_v1.md",
+      "step_reference_count": 2
+    },
+    {
+      "path": "artifacts/migration/history_continuity_usability_probe_result_v1.json",
+      "step_reference_count": 2
+    }
+  ],
   "missing_required_inputs": [
     {
       "path": "artifacts/migration/fresh_db_replay_manifest_v1.json",
@@ -787,7 +851,9 @@
   "oneclick": "scripts/migration/history_continuity_oneclick.sh",
   "report_version": "scbs55_replay_payload_gap_report_v1",
   "required_missing_input_count": 128,
+  "required_missing_input_unique_path_count": 106,
   "runtime_output_count": 262,
+  "runtime_output_unique_path_count": 258,
   "runtime_outputs_not_currently_packaged": [
     {
       "path": "artifacts/migration/fresh_db_replay_manifest_runner_dry_run_v1.md",
