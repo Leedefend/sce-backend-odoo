@@ -1076,7 +1076,13 @@ migration.assets.verify_all: guard.prod.forbid check-compose-project check-compo
 migration.assets.delivery_audit: guard.prod.forbid check-compose-project check-compose-env
 	@python3 scripts/migration/migration_asset_delivery_audit.py --asset-root "$(MIGRATION_ASSET_ROOT)"
 
-.PHONY: migration.assets.release_package migration.assets.release_package.verify
+.PHONY: migration.assets.user_acceptance_manifest_guard migration.assets.user_acceptance_manifest_guard.evidence migration.assets.release_package migration.assets.release_package.verify
+migration.assets.user_acceptance_manifest_guard: guard.prod.forbid
+	@python3 scripts/verify/scbs55_user_acceptance_asset_manifest_guard.py
+
+migration.assets.user_acceptance_manifest_guard.evidence: guard.prod.forbid
+	@SCBS55_REQUIRE_ACCEPTANCE_EVIDENCE=1 python3 scripts/verify/scbs55_user_acceptance_asset_manifest_guard.py
+
 migration.assets.release_package: guard.prod.forbid
 	@python3 scripts/migration/migration_asset_release_package.py --asset-root "$(MIGRATION_ASSET_ROOT)"
 
