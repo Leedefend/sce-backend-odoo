@@ -87,6 +87,7 @@ def check_manifest(payload: dict[str, Any]) -> list[str]:
         old = surface.get("old") if isinstance(surface.get("old"), dict) else {}
         new = surface.get("new") if isinstance(surface.get("new"), dict) else {}
         evidence = surface.get("evidence") if isinstance(surface.get("evidence"), dict) else {}
+        lineage = surface.get("full_scope_lineage") if isinstance(surface.get("full_scope_lineage"), dict) else {}
         for field, value in (
             ("key", key),
             ("name", name),
@@ -100,9 +101,21 @@ def check_manifest(payload: dict[str, Any]) -> list[str]:
             ("new.identity_field", new.get("identity_field")),
             ("new.expected_headers", new.get("expected_headers")),
             ("evidence.set_check", evidence.get("set_check")),
+            ("full_scope_lineage.relation", lineage.get("relation")),
         ):
             if value in (None, ""):
                 errors.append(f"{key or index}: missing {field}")
+        relation = lineage.get("relation")
+        if relation == "direct_full_visibility_surface":
+            if as_int(lineage.get("seq")) <= 0:
+                errors.append(f"{key}: full_scope_lineage.seq must be positive for direct full visibility surfaces")
+            if not lineage.get("surface_name"):
+                errors.append(f"{key}: full_scope_lineage.surface_name is required for direct full visibility surfaces")
+        elif relation == "independent_high_risk_acceptance_slice":
+            if not lineage.get("reason"):
+                errors.append(f"{key}: full_scope_lineage.reason is required for independent slices")
+        elif relation:
+            errors.append(f"{key}: unsupported full_scope_lineage.relation {relation!r}")
         headers = new.get("expected_headers")
         if not isinstance(headers, list) or not headers:
             errors.append(f"{key}: new.expected_headers must be a non-empty list")

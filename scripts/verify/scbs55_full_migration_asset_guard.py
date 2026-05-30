@@ -145,6 +145,51 @@ def check_slices(payload: dict[str, Any]) -> list[str]:
     slices = payload.get("acceptance_slices") if isinstance(payload.get("acceptance_slices"), list) else []
     if len(slices) != 1:
         errors.append("acceptance_slices must declare the current six-page slice")
+    if not SIX_SLICE.exists():
+        return errors
+    slice_payload = load_json(SIX_SLICE)
+    slice_surfaces = slice_payload.get("surfaces") if isinstance(slice_payload, dict) and isinstance(slice_payload.get("surfaces"), list) else []
+    if len(slice_surfaces) != 6:
+        errors.append(f"six-page slice must contain 6 surfaces, got {len(slice_surfaces)}")
+    full_by_seq = {
+        as_int(row.get("seq")): row
+        for row in payload.get("full_visibility_surfaces", [])
+        if isinstance(row, dict)
+    }
+    for surface in slice_surfaces:
+        if not isinstance(surface, dict):
+            errors.append("six-page slice surface entries must be objects")
+            continue
+        key = str(surface.get("key") or "")
+        old = surface.get("old") if isinstance(surface.get("old"), dict) else {}
+        new = surface.get("new") if isinstance(surface.get("new"), dict) else {}
+        evidence = surface.get("evidence") if isinstance(surface.get("evidence"), dict) else {}
+        lineage = surface.get("full_scope_lineage") if isinstance(surface.get("full_scope_lineage"), dict) else {}
+        relation = lineage.get("relation")
+        if relation == "direct_full_visibility_surface":
+            seq = as_int(lineage.get("seq"))
+            full = full_by_seq.get(seq)
+            if not full:
+                errors.append(f"{key}: direct full scope lineage seq {seq} is not present in full visibility surfaces")
+                continue
+            for field, expected_value in (
+                ("name", surface.get("name")),
+                ("old_count", old.get("expected_count")),
+                ("new_count", new.get("expected_count")),
+            ):
+                if full.get(field) != expected_value:
+                    errors.append(f"{key}: full scope lineage {field}={full.get(field)!r} != {expected_value!r}")
+            if lineage.get("surface_name") != full.get("name"):
+                errors.append(f"{key}: full scope lineage surface_name drift")
+        elif relation == "independent_high_risk_acceptance_slice":
+            if not lineage.get("reason"):
+                errors.append(f"{key}: independent high-risk slice must declare a reason")
+        else:
+            errors.append(f"{key}: unsupported or missing full_scope_lineage.relation")
+        if as_int(old.get("expected_count")) != as_int(new.get("expected_count")):
+            errors.append(f"{key}: six-page slice old/new expected count drift")
+        if as_int(evidence.get("last_browser_total")) != as_int(old.get("expected_count")):
+            errors.append(f"{key}: six-page slice browser total drift")
     return errors
 
 

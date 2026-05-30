@@ -68,6 +68,11 @@
       "evidence": {
         "set_check": "document_no_old_equals_new",
         "last_browser_total": 1580
+      },
+      "full_scope_lineage": {
+        "relation": "direct_full_visibility_surface",
+        "seq": 18,
+        "surface_name": "自筹保证金"
       }
     },
     {
@@ -109,6 +114,11 @@
       "evidence": {
         "set_check": "document_no_old_equals_new",
         "last_browser_total": 823
+      },
+      "full_scope_lineage": {
+        "relation": "direct_full_visibility_surface",
+        "seq": 19,
+        "surface_name": "自筹保证金退回"
       }
     },
     {
@@ -153,6 +163,10 @@
       "evidence": {
         "set_check": "legacy_record_id_old_equals_new",
         "last_browser_total": 2141
+      },
+      "full_scope_lineage": {
+        "relation": "independent_high_risk_acceptance_slice",
+        "reason": "old LowCode page is locked by dedicated online/browser/evidence guards and is not a direct 42-surface compare row"
       }
     },
     {
@@ -190,6 +204,10 @@
       "evidence": {
         "set_check": "legacy_record_id_old_equals_new",
         "last_browser_total": 827
+      },
+      "full_scope_lineage": {
+        "relation": "independent_high_risk_acceptance_slice",
+        "reason": "old LowCode page is locked by dedicated online/browser/evidence guards and is not a direct 42-surface compare row"
       }
     },
     {
@@ -231,6 +249,10 @@
       "evidence": {
         "set_check": "legacy_record_id_old_equals_new",
         "last_browser_total": 3259
+      },
+      "full_scope_lineage": {
+        "relation": "independent_high_risk_acceptance_slice",
+        "reason": "old LowCode page is locked by dedicated online/browser/evidence guards and is not a direct 42-surface compare row"
       }
     },
     {
@@ -268,6 +290,10 @@
       "evidence": {
         "set_check": "legacy_contract_id_old_equals_new",
         "last_browser_total": 5565
+      },
+      "full_scope_lineage": {
+        "relation": "independent_high_risk_acceptance_slice",
+        "reason": "old LowCode page is locked by dedicated online/browser/evidence guards and is not a direct 42-surface compare row"
       }
     }
   ],
