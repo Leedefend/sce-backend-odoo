@@ -9,6 +9,7 @@ Source: `docs/migration_alignment/scbs55_replay_payload_gap_report_v1.json`
 - lanes: `11`
 - missing required inputs: `128`
 - runtime output backlog: `262`
+- full backlog lineage: see JSON `queue[].missing_required_inputs[]` and `queue[].runtime_output_backlog[]` with `step_index`, `step`, `script`, and `path`
 
 ## Queue
 

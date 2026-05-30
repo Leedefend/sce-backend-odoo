@@ -201,6 +201,7 @@ Source: `{payload["source_gap_report"]}`
 - lanes: `{payload["lane_count"]}`
 - missing required inputs: `{payload["total_missing_required_inputs"]}`
 - runtime output backlog: `{payload["total_runtime_output_backlog"]}`
+- full backlog lineage: see JSON `queue[].missing_required_inputs[]` and `queue[].runtime_output_backlog[]` with `step_index`, `step`, `script`, and `path`
 
 ## Queue
 
