@@ -156,13 +156,65 @@ def build_queue() -> dict[str, Any]:
         row["decision"] = decision
         queue.append(row)
     queue.sort(key=lambda item: (item["priority"], item["lane"]))
+    missing_path_lanes: dict[str, set[str]] = defaultdict(set)
+    runtime_path_lanes: dict[str, set[str]] = defaultdict(set)
+    missing_path_refs: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    runtime_path_refs: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for row in queue:
+        lane = row["lane"]
+        for item in row["missing_required_inputs"]:
+            path = str(item.get("path") or "")
+            missing_path_lanes[path].add(lane)
+            missing_path_refs[path].append(
+                {
+                    "lane": lane,
+                    "step_index": item.get("step_index"),
+                    "step": item.get("step"),
+                    "script": item.get("script"),
+                }
+            )
+        for item in row["runtime_output_backlog"]:
+            path = str(item.get("path") or "")
+            runtime_path_lanes[path].add(lane)
+            runtime_path_refs[path].append(
+                {
+                    "lane": lane,
+                    "step_index": item.get("step_index"),
+                    "step": item.get("step"),
+                    "script": item.get("script"),
+                }
+            )
+    cross_lane_missing = [
+        {
+            "path": path,
+            "lanes": sorted(lanes),
+            "step_reference_count": len(missing_path_refs[path]),
+            "references": sorted(missing_path_refs[path], key=lambda item: int(item.get("step_index") or 0)),
+        }
+        for path, lanes in sorted(missing_path_lanes.items())
+        if len(lanes) > 1
+    ]
+    cross_lane_runtime = [
+        {
+            "path": path,
+            "lanes": sorted(lanes),
+            "step_reference_count": len(runtime_path_refs[path]),
+            "references": sorted(runtime_path_refs[path], key=lambda item: int(item.get("step_index") or 0)),
+        }
+        for path, lanes in sorted(runtime_path_lanes.items())
+        if len(lanes) > 1
+    ]
     return {
         "queue_version": "scbs55_payload_promotion_queue_v1",
         "status": "PASS",
         "source_gap_report": str(GAP.relative_to(ROOT)),
         "lane_count": len(queue),
         "total_missing_required_inputs": sum(row["missing_required_input_count"] for row in queue),
+        "total_missing_required_input_unique_paths": len(missing_path_lanes),
+        "cross_lane_missing_required_input_paths": cross_lane_missing,
         "total_runtime_output_backlog": sum(row["runtime_output_backlog_count"] for row in queue),
+        "total_runtime_output_unique_paths": len(runtime_path_lanes),
+        "cross_lane_runtime_output_paths": cross_lane_runtime,
         "queue": queue,
         "decision": "promote payloads lane-by-lane in priority order; release-package verification remains the blocking gate",
     }
@@ -200,7 +252,11 @@ Source: `{payload["source_gap_report"]}`
 
 - lanes: `{payload["lane_count"]}`
 - missing required inputs: `{payload["total_missing_required_inputs"]}`
+- missing required input unique paths: `{payload["total_missing_required_input_unique_paths"]}`
+- cross-lane missing required input paths: `{len(payload["cross_lane_missing_required_input_paths"])}`
 - runtime output backlog: `{payload["total_runtime_output_backlog"]}`
+- runtime output unique paths: `{payload["total_runtime_output_unique_paths"]}`
+- cross-lane runtime output paths: `{len(payload["cross_lane_runtime_output_paths"])}`
 - full backlog lineage: see JSON `queue[].missing_required_inputs[]` and `queue[].runtime_output_backlog[]` with `step_index`, `step`, `script`, and `path`
 
 ## Queue

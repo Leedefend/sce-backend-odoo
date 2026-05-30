@@ -1,4 +1,269 @@
 {
+  "cross_lane_missing_required_input_paths": [
+    {
+      "lanes": [
+        "contract_and_supplier",
+        "master_partner_project"
+      ],
+      "path": "artifacts/migration/contract_12_row_write_authorization_payload_v1.csv",
+      "references": [
+        {
+          "lane": "master_partner_project",
+          "script": "scripts/migration/contract_12_row_missing_partner_anchor_write.py",
+          "step": "contract_12_missing_partner_anchors",
+          "step_index": 50
+        },
+        {
+          "lane": "contract_and_supplier",
+          "script": "scripts/migration/contract_12_row_create_only_write.py",
+          "step": "contract_header_special_12",
+          "step_index": 51
+        }
+      ],
+      "step_reference_count": 2
+    },
+    {
+      "lanes": [
+        "master_partner_project",
+        "outflow_payment"
+      ],
+      "path": "artifacts/migration/fresh_db_actual_outflow_replay_payload_v1.csv",
+      "references": [
+        {
+          "lane": "master_partner_project",
+          "script": "scripts/migration/history_actual_outflow_partner_targeted_replay_adapter.py",
+          "step": "actual_outflow_partner_targeted_adapter",
+          "step_index": 92
+        },
+        {
+          "lane": "outflow_payment",
+          "script": "scripts/migration/fresh_db_actual_outflow_replay_write.py",
+          "step": "actual_outflow_replay",
+          "step_index": 94
+        }
+      ],
+      "step_reference_count": 2
+    },
+    {
+      "lanes": [
+        "foundation_manifest",
+        "master_partner_project"
+      ],
+      "path": "artifacts/migration/fresh_db_contract_counterparty_partner_replay_payload_v1.csv",
+      "references": [
+        {
+          "lane": "foundation_manifest",
+          "script": "scripts/migration/fresh_db_replay_payload_precheck.py",
+          "step": "replay_payload_precheck",
+          "step_index": 3
+        },
+        {
+          "lane": "foundation_manifest",
+          "script": "scripts/migration/fresh_db_replay_payload_precheck.py",
+          "step": "replay_payload_precheck",
+          "step_index": 21
+        },
+        {
+          "lane": "master_partner_project",
+          "script": "scripts/migration/fresh_db_contract_counterparty_partner_replay_write.py",
+          "step": "contract_counterparty_partner_completed",
+          "step_index": 42
+        },
+        {
+          "lane": "master_partner_project",
+          "script": "scripts/migration/history_outflow_partner_targeted_replay_adapter.py",
+          "step": "outflow_partner_targeted_adapter",
+          "step_index": 87
+        },
+        {
+          "lane": "master_partner_project",
+          "script": "scripts/migration/history_actual_outflow_partner_targeted_replay_adapter.py",
+          "step": "actual_outflow_partner_targeted_adapter",
+          "step_index": 92
+        },
+        {
+          "lane": "master_partner_project",
+          "script": "scripts/migration/history_receipt_income_partner_targeted_replay_adapter.py",
+          "step": "receipt_income_partner_targeted_adapter",
+          "step_index": 107
+        },
+        {
+          "lane": "master_partner_project",
+          "script": "scripts/migration/history_expense_deposit_partner_targeted_replay_adapter.py",
+          "step": "expense_deposit_partner_targeted_adapter",
+          "step_index": 119
+        }
+      ],
+      "step_reference_count": 7
+    },
+    {
+      "lanes": [
+        "attachments_workflow",
+        "master_partner_project"
+      ],
+      "path": "artifacts/migration/fresh_db_legacy_attachment_backfill_replay_payload_v1.csv",
+      "references": [
+        {
+          "lane": "master_partner_project",
+          "script": "scripts/migration/history_project_member_attachment_targeted_replay_adapter.py",
+          "step": "project_member_attachment_targeted_adapter",
+          "step_index": 103
+        },
+        {
+          "lane": "attachments_workflow",
+          "script": "scripts/migration/fresh_db_legacy_attachment_backfill_replay_write.py",
+          "step": "legacy_attachment_backfill_replay",
+          "step_index": 105
+        }
+      ],
+      "step_reference_count": 2
+    },
+    {
+      "lanes": [
+        "finance_accounting",
+        "master_partner_project"
+      ],
+      "path": "artifacts/migration/fresh_db_legacy_expense_deposit_replay_payload_v1.csv",
+      "references": [
+        {
+          "lane": "master_partner_project",
+          "script": "scripts/migration/history_expense_deposit_partner_targeted_replay_adapter.py",
+          "step": "expense_deposit_partner_targeted_adapter",
+          "step_index": 119
+        },
+        {
+          "lane": "finance_accounting",
+          "script": "scripts/migration/fresh_db_legacy_expense_deposit_replay_write.py",
+          "step": "legacy_expense_deposit_replay",
+          "step_index": 121
+        }
+      ],
+      "step_reference_count": 2
+    },
+    {
+      "lanes": [
+        "master_partner_project",
+        "receipt_income"
+      ],
+      "path": "artifacts/migration/fresh_db_legacy_receipt_income_replay_payload_v1.csv",
+      "references": [
+        {
+          "lane": "master_partner_project",
+          "script": "scripts/migration/history_receipt_income_partner_targeted_replay_adapter.py",
+          "step": "receipt_income_partner_targeted_adapter",
+          "step_index": 107
+        },
+        {
+          "lane": "receipt_income",
+          "script": "scripts/migration/fresh_db_legacy_receipt_income_replay_write.py",
+          "step": "legacy_receipt_income_replay",
+          "step_index": 109
+        }
+      ],
+      "step_reference_count": 2
+    },
+    {
+      "lanes": [
+        "master_partner_project",
+        "outflow_payment"
+      ],
+      "path": "artifacts/migration/fresh_db_outflow_request_replay_payload_v1.csv",
+      "references": [
+        {
+          "lane": "master_partner_project",
+          "script": "scripts/migration/history_outflow_partner_targeted_replay_adapter.py",
+          "step": "outflow_partner_targeted_adapter",
+          "step_index": 87
+        },
+        {
+          "lane": "outflow_payment",
+          "script": "scripts/migration/fresh_db_outflow_request_replay_write.py",
+          "step": "outflow_request_replay",
+          "step_index": 89
+        }
+      ],
+      "step_reference_count": 2
+    },
+    {
+      "lanes": [
+        "foundation_manifest",
+        "master_partner_project"
+      ],
+      "path": "artifacts/migration/fresh_db_partner_l4_replay_payload_v1.csv",
+      "references": [
+        {
+          "lane": "foundation_manifest",
+          "script": "scripts/migration/fresh_db_replay_payload_precheck.py",
+          "step": "replay_payload_precheck",
+          "step_index": 3
+        },
+        {
+          "lane": "foundation_manifest",
+          "script": "scripts/migration/fresh_db_replay_payload_precheck.py",
+          "step": "replay_payload_precheck",
+          "step_index": 21
+        },
+        {
+          "lane": "master_partner_project",
+          "script": "scripts/migration/fresh_db_partner_l4_replay_write.py",
+          "step": "partner_l4_anchor_completed",
+          "step_index": 22
+        }
+      ],
+      "step_reference_count": 3
+    },
+    {
+      "lanes": [
+        "foundation_manifest",
+        "master_partner_project"
+      ],
+      "path": "artifacts/migration/fresh_db_project_anchor_replay_payload_v1.csv",
+      "references": [
+        {
+          "lane": "foundation_manifest",
+          "script": "scripts/migration/fresh_db_replay_payload_precheck.py",
+          "step": "replay_payload_precheck",
+          "step_index": 3
+        },
+        {
+          "lane": "foundation_manifest",
+          "script": "scripts/migration/fresh_db_replay_payload_precheck.py",
+          "step": "replay_payload_precheck",
+          "step_index": 21
+        },
+        {
+          "lane": "master_partner_project",
+          "script": "scripts/migration/fresh_db_project_anchor_replay_write.py",
+          "step": "project_anchor_completed",
+          "step_index": 23
+        }
+      ],
+      "step_reference_count": 3
+    },
+    {
+      "lanes": [
+        "contract_and_supplier",
+        "master_partner_project"
+      ],
+      "path": "artifacts/migration/fresh_db_supplier_contract_replay_payload_v1.csv",
+      "references": [
+        {
+          "lane": "master_partner_project",
+          "script": "scripts/migration/history_supplier_partner_targeted_replay_adapter.py",
+          "step": "supplier_partner_targeted_adapter",
+          "step_index": 68
+        },
+        {
+          "lane": "contract_and_supplier",
+          "script": "scripts/migration/fresh_db_supplier_contract_replay_write.py",
+          "step": "supplier_contract_completed",
+          "step_index": 70
+        }
+      ],
+      "step_reference_count": 2
+    }
+  ],
+  "cross_lane_runtime_output_paths": [],
   "decision": "promote payloads lane-by-lane in priority order; release-package verification remains the blocking gate",
   "lane_count": 11,
   "queue": [
@@ -3717,6 +3982,8 @@
   "queue_version": "scbs55_payload_promotion_queue_v1",
   "source_gap_report": "docs/migration_alignment/scbs55_replay_payload_gap_report_v1.json",
   "status": "PASS",
+  "total_missing_required_input_unique_paths": 106,
   "total_missing_required_inputs": 128,
-  "total_runtime_output_backlog": 262
+  "total_runtime_output_backlog": 262,
+  "total_runtime_output_unique_paths": 258
 }

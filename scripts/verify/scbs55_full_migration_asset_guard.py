@@ -379,6 +379,62 @@ def check_promotion_queue() -> list[str]:
         errors.append("payload promotion queue priorities must be sorted")
     if as_int(queue.get("total_missing_required_inputs")) <= 0:
         errors.append("payload promotion queue must expose current missing required input backlog")
+    all_queue_missing = [
+        item
+        for row in rows
+        if isinstance(row, dict)
+        for item in row.get("missing_required_inputs", [])
+        if isinstance(item, dict)
+    ]
+    all_queue_runtime = [
+        item
+        for row in rows
+        if isinstance(row, dict)
+        for item in row.get("runtime_output_backlog", [])
+        if isinstance(item, dict)
+    ]
+    queue_missing_unique_paths = {item.get("path") for item in all_queue_missing}
+    queue_runtime_unique_paths = {item.get("path") for item in all_queue_runtime}
+    if len(queue_missing_unique_paths) != as_int(queue.get("total_missing_required_input_unique_paths")):
+        errors.append("payload promotion queue missing input unique path count drift")
+    if len(queue_runtime_unique_paths) != as_int(queue.get("total_runtime_output_unique_paths")):
+        errors.append("payload promotion queue runtime output unique path count drift")
+    lane_by_missing_path: dict[object, set[str]] = {}
+    lane_by_runtime_path: dict[object, set[str]] = {}
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        lane = str(row.get("lane") or "")
+        for item in row.get("missing_required_inputs", []):
+            if isinstance(item, dict):
+                lane_by_missing_path.setdefault(item.get("path"), set()).add(lane)
+        for item in row.get("runtime_output_backlog", []):
+            if isinstance(item, dict):
+                lane_by_runtime_path.setdefault(item.get("path"), set()).add(lane)
+    expected_cross_missing = {
+        path
+        for path, lanes in lane_by_missing_path.items()
+        if len(lanes) > 1
+    }
+    expected_cross_runtime = {
+        path
+        for path, lanes in lane_by_runtime_path.items()
+        if len(lanes) > 1
+    }
+    actual_cross_missing = {
+        item.get("path")
+        for item in queue.get("cross_lane_missing_required_input_paths", [])
+        if isinstance(item, dict)
+    }
+    actual_cross_runtime = {
+        item.get("path")
+        for item in queue.get("cross_lane_runtime_output_paths", [])
+        if isinstance(item, dict)
+    }
+    if actual_cross_missing != expected_cross_missing:
+        errors.append("payload promotion queue cross-lane missing input path list drift")
+    if actual_cross_runtime != expected_cross_runtime:
+        errors.append("payload promotion queue cross-lane runtime output path list drift")
     if REPLAY_GAP.exists():
         report = load_json(REPLAY_GAP)
         if isinstance(report, dict):
@@ -386,6 +442,10 @@ def check_promotion_queue() -> list[str]:
                 errors.append("payload promotion queue missing input total must match replay gap report")
             if as_int(queue.get("total_runtime_output_backlog")) != as_int(report.get("runtime_output_count")):
                 errors.append("payload promotion queue runtime output total must match replay gap report")
+            if as_int(queue.get("total_missing_required_input_unique_paths")) != as_int(report.get("required_missing_input_unique_path_count")):
+                errors.append("payload promotion queue missing input unique path total must match replay gap report")
+            if as_int(queue.get("total_runtime_output_unique_paths")) != as_int(report.get("runtime_output_unique_path_count")):
+                errors.append("payload promotion queue runtime output unique path total must match replay gap report")
             gap_missing = {
                 (as_int(item.get("step_index")), item.get("step"), item.get("script"), item.get("path"))
                 for item in report.get("missing_required_inputs", [])
