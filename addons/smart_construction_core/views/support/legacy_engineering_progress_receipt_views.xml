@@ -36,7 +36,7 @@
                     <field name="partner_id"/>
                     <field name="partner_name" optional="hide"/>
                     <field name="amount" sum="收款金额合计"/>
-                    <field name="operation_strategy" optional="show"/>
+                    <field name="operation_strategy" optional="hide"/>
                     <field name="receipt_type"/>
                     <field name="income_category" optional="show"/>
                     <field name="state_label" optional="hide"/>
