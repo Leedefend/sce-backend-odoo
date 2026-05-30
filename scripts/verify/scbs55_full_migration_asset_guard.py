@@ -15,6 +15,7 @@ FREEZE = ROOT / "docs/migration_alignment/scbs55_full_migration_asset_freeze_v1.
 INVENTORY = ROOT / "docs/migration_alignment/scbs55_full_migration_asset_inventory_v1.json"
 REPLAY_GAP = ROOT / "docs/migration_alignment/scbs55_replay_payload_gap_report_v1.json"
 PROMOTION_QUEUE = ROOT / "docs/migration_alignment/scbs55_payload_promotion_queue_v1.json"
+DELIVERY_REQUIREMENT_LOCK = ROOT / "docs/migration_alignment/scbs55_delivery_replay_requirement_lock_v1.json"
 PACKAGE_LOCK = ROOT / "docs/migration_alignment/migration_asset_package_lock_v1.json"
 COMPARE = ROOT / "artifacts/migration/scbs55_wutao_old_new_final_aligned_compare.json"
 SIX_SLICE = ROOT / "docs/migration_alignment/scbs55_user_acceptance_asset_freeze_v1.json"
@@ -548,6 +549,8 @@ def check_delivery_replay_required_artifacts() -> list[str]:
     errors: list[str] = []
     if not REPLAY_GAP.exists():
         return errors
+    if not DELIVERY_REQUIREMENT_LOCK.exists():
+        return [f"missing delivery replay requirement lock: {DELIVERY_REQUIREMENT_LOCK.relative_to(ROOT)}"]
     if str(ROOT) not in sys.path:
         sys.path.insert(0, str(ROOT))
     from scripts.migration import migration_asset_delivery_audit
@@ -575,6 +578,23 @@ def check_delivery_replay_required_artifacts() -> list[str]:
             "delivery required replay artifact set must match replay gap required inputs "
             "minus baseline exclusions"
         )
+    lock = load_json(DELIVERY_REQUIREMENT_LOCK)
+    if not isinstance(lock, dict):
+        return errors + ["delivery replay requirement lock root must be object"]
+    if lock.get("lock_version") != "scbs55_delivery_replay_requirement_lock_v1":
+        errors.append("delivery replay requirement lock version drift")
+    if lock.get("status") != "PASS":
+        errors.append(f"delivery replay requirement lock status must be PASS, got {lock.get('status')!r}")
+    if as_int(lock.get("gap_required_input_unique_path_count")) != len(gap_required):
+        errors.append("delivery replay requirement lock gap required count drift")
+    if as_int(lock.get("baseline_excluded_required_path_count")) != len(gap_required & excluded):
+        errors.append("delivery replay requirement lock baseline exclusion count drift")
+    if as_int(lock.get("delivery_required_replay_artifact_count")) != len(audit_required):
+        errors.append("delivery replay requirement lock delivery required count drift")
+    if as_int(lock.get("release_required_replay_artifact_count")) != len(release_required):
+        errors.append("delivery replay requirement lock release required count drift")
+    if set(lock.get("delivery_required_replay_artifacts", [])) != audit_required:
+        errors.append("delivery replay requirement lock delivery required artifact set drift")
     return errors
 
 
@@ -600,6 +620,7 @@ def main() -> int:
         "inventory": str(INVENTORY.relative_to(ROOT)),
         "replay_gap": str(REPLAY_GAP.relative_to(ROOT)),
         "promotion_queue": str(PROMOTION_QUEUE.relative_to(ROOT)),
+        "delivery_requirement_lock": str(DELIVERY_REQUIREMENT_LOCK.relative_to(ROOT)),
         "package_lock": str(PACKAGE_LOCK.relative_to(ROOT)),
         "compare": str(COMPARE.relative_to(ROOT)),
         "surface_count": len(payload.get("full_visibility_surfaces", [])) if isinstance(payload.get("full_visibility_surfaces"), list) else 0,
