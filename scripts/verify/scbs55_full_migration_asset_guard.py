@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[2]
 FREEZE = ROOT / "docs/migration_alignment/scbs55_full_migration_asset_freeze_v1.json"
 INVENTORY = ROOT / "docs/migration_alignment/scbs55_full_migration_asset_inventory_v1.json"
 REPLAY_GAP = ROOT / "docs/migration_alignment/scbs55_replay_payload_gap_report_v1.json"
+PROMOTION_QUEUE = ROOT / "docs/migration_alignment/scbs55_payload_promotion_queue_v1.json"
 PACKAGE_LOCK = ROOT / "docs/migration_alignment/migration_asset_package_lock_v1.json"
 COMPARE = ROOT / "artifacts/migration/scbs55_wutao_old_new_final_aligned_compare.json"
 SIX_SLICE = ROOT / "docs/migration_alignment/scbs55_user_acceptance_asset_freeze_v1.json"
@@ -185,6 +186,28 @@ def check_replay_gap_report() -> list[str]:
     return errors
 
 
+def check_promotion_queue() -> list[str]:
+    errors: list[str] = []
+    if not PROMOTION_QUEUE.exists():
+        return [f"missing payload promotion queue: {PROMOTION_QUEUE.relative_to(ROOT)}"]
+    queue = load_json(PROMOTION_QUEUE)
+    if not isinstance(queue, dict):
+        return ["payload promotion queue root must be object"]
+    if queue.get("queue_version") != "scbs55_payload_promotion_queue_v1":
+        errors.append("payload promotion queue version must be scbs55_payload_promotion_queue_v1")
+    if queue.get("status") != "PASS":
+        errors.append(f"payload promotion queue status must be PASS, got {queue.get('status')!r}")
+    rows = queue.get("queue") if isinstance(queue.get("queue"), list) else []
+    if len(rows) < 8:
+        errors.append(f"payload promotion queue lane_count unexpectedly low: {len(rows)}")
+    priorities = [as_int(row.get("priority")) for row in rows if isinstance(row, dict)]
+    if priorities != sorted(priorities):
+        errors.append("payload promotion queue priorities must be sorted")
+    if as_int(queue.get("total_missing_required_inputs")) <= 0:
+        errors.append("payload promotion queue must expose current missing required input backlog")
+    return errors
+
+
 def main() -> int:
     payload = load_json(FREEZE)
     if not isinstance(payload, dict):
@@ -197,11 +220,13 @@ def main() -> int:
     errors.extend(check_slices(payload))
     errors.extend(check_inventory(payload))
     errors.extend(check_replay_gap_report())
+    errors.extend(check_promotion_queue())
     report = {
         "status": "FAIL" if errors else "PASS",
         "freeze": str(FREEZE.relative_to(ROOT)),
         "inventory": str(INVENTORY.relative_to(ROOT)),
         "replay_gap": str(REPLAY_GAP.relative_to(ROOT)),
+        "promotion_queue": str(PROMOTION_QUEUE.relative_to(ROOT)),
         "package_lock": str(PACKAGE_LOCK.relative_to(ROOT)),
         "compare": str(COMPARE.relative_to(ROOT)),
         "surface_count": len(payload.get("full_visibility_surfaces", [])) if isinstance(payload.get("full_visibility_surfaces"), list) else 0,
