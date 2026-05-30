@@ -40,12 +40,19 @@ def main() -> int:
         if clean(elem.attrib.get("model")) != "sc.legacy.invoice.tax.fact":
             elem.clear()
             continue
-        record = {"external_id": clean(elem.attrib.get("id")), "project_ref": "", "replay_action": "create_if_missing"}
+        record = {
+            "external_id": clean(elem.attrib.get("id")),
+            "project_ref": "",
+            "partner_ref": "",
+            "replay_action": "create_if_missing",
+        }
         for field in elem.findall("field"):
             name = clean(field.attrib.get("name"))
             value = clean(field.attrib.get("ref")) or clean(field.text)
             if name == "project_id":
                 record["project_ref"] = value
+            elif name == "partner_id":
+                record["partner_ref"] = value
             else:
                 record[name] = value
         rows.append(record)
@@ -62,15 +69,26 @@ def main() -> int:
         "document_date",
         "legacy_state",
         "invoice_type",
+        "invoice_no",
+        "invoice_company_type",
+        "invoice_issue_company",
+        "invoice_provider_name",
         "project_ref",
+        "partner_ref",
         "legacy_project_id",
         "legacy_project_name",
         "legacy_partner_id",
         "legacy_partner_name",
         "legacy_partner_tax_no",
+        "source_amount_untaxed",
         "source_amount",
         "source_tax_amount",
         "source_amount_field",
+        "push_result",
+        "kingdee_document_no",
+        "creator_legacy_user_id",
+        "creator_name",
+        "created_time",
         "note",
         "import_batch",
         "replay_action",

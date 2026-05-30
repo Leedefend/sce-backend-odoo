@@ -57,11 +57,26 @@ env.cr.execute(  # noqa: F821
 
 env.cr.execute(  # noqa: F821
     """
+    UPDATE sc_invoice_registration
+       SET active = FALSE,
+           write_uid = 1,
+           write_date = NOW()
+     WHERE legacy_source_model = 'sc.legacy.invoice.tax.fact'
+       AND legacy_source_table = 'C_JXXP_ZYFPJJD'
+       AND source_kind = 'input_invoice_tax'
+       AND direction = 'input'
+       AND active = TRUE
+    """
+)
+
+env.cr.execute(  # noqa: F821
+    """
     INSERT INTO sc_invoice_registration (
       name, source_origin, source_kind, direction, state, project_id, partner_id,
       contract_id, document_no, document_date, invoice_date, recognition_date,
       invoice_no, invoice_code, invoice_type, tax_rate, invoice_content,
-      cost_category_name, invoice_issue_company, amount_no_tax, tax_amount, amount_total, currency_id,
+      cost_category_name, invoice_company_type, invoice_issue_company, invoice_provider_name,
+      amount_no_tax, tax_amount, amount_total, currency_id,
       handler_name, invoice_holder, accounting_state, voucher_no,
       legacy_source_model, legacy_source_table, legacy_record_id,
       legacy_document_state, legacy_partner_id, legacy_partner_name,
@@ -88,7 +103,9 @@ env.cr.execute(  # noqa: F821
       NULLIF(l.tax_rate, ''),
       NULLIF(l.invoice_content, ''),
       NULLIF(l.cost_category_name, ''),
+      NULLIF(l.invoice_source, ''),
       NULLIF(l.billing_unit, ''),
+      COALESCE(NULLIF(l.billing_unit, ''), NULLIF(l.supplier_name, '')),
       COALESCE(l.amount_no_tax, 0),
       COALESCE(l.tax_amount, 0),
       COALESCE(l.amount_total, COALESCE(l.amount_no_tax, 0) + COALESCE(l.tax_amount, 0)),
@@ -156,7 +173,9 @@ env.cr.execute(  # noqa: F821
       tax_rate = EXCLUDED.tax_rate,
       invoice_content = EXCLUDED.invoice_content,
       cost_category_name = EXCLUDED.cost_category_name,
+      invoice_company_type = EXCLUDED.invoice_company_type,
       invoice_issue_company = EXCLUDED.invoice_issue_company,
+      invoice_provider_name = EXCLUDED.invoice_provider_name,
       amount_no_tax = EXCLUDED.amount_no_tax,
       tax_amount = EXCLUDED.tax_amount,
       amount_total = EXCLUDED.amount_total,
@@ -185,12 +204,14 @@ env.cr.execute(  # noqa: F821
     INSERT INTO sc_invoice_registration (
       name, source_origin, source_kind, direction, state, project_id, partner_id,
       document_no, document_date, invoice_date, invoice_type,
-      tax_rate, invoice_no, invoice_issue_company, push_result, kingdee_document_no,
+      tax_rate, invoice_no, invoice_company_type, invoice_issue_company, invoice_provider_name,
+      push_result, kingdee_document_no,
       invoice_count, contract_amount, amount_no_tax, tax_amount, amount_total,
       surcharge_amount, related_receipt_amount, currency_id,
       legacy_source_model, legacy_source_table, legacy_record_id,
       legacy_document_state, legacy_partner_id, legacy_partner_name,
-      legacy_partner_tax_no, note, active, create_uid, write_uid, create_date, write_date
+      legacy_partner_tax_no, creator_legacy_user_id, creator_name, created_time,
+      note, active, create_uid, write_uid, create_date, write_date
     )
     SELECT
       COALESCE(NULLIF(f.document_no, ''), 'LEGACY-TAX-' || f.legacy_record_id),
@@ -226,21 +247,24 @@ env.cr.execute(  # noqa: F821
         ), 'FM999999990.00'), '0'), '.') || '%%'
         ELSE NULL
       END,
-      NULLIF(surcharge.invoice_no, ''),
+      COALESCE(NULLIF(f.invoice_no, ''), NULLIF(surcharge.invoice_no, '')),
+      NULLIF(f.invoice_company_type, ''),
       CASE
         WHEN f.direction = 'output_invoice'
         THEN COALESCE(
+          NULLIF(f.invoice_issue_company, ''),
           NULLIF(receipt_invoice.invoice_issue_company, ''),
           NULLIF(project_issue_company.invoice_issue_company, ''),
           NULLIF(%s, '')
         )
-        ELSE NULL
+        ELSE COALESCE(NULLIF(f.invoice_issue_company, ''), NULLIF(f.legacy_partner_name, ''))
       END,
-      NULLIF(f.legacy_state, ''),
-      NULLIF(f.document_no, ''),
+      COALESCE(NULLIF(f.invoice_provider_name, ''), NULLIF(f.legacy_partner_name, '')),
+      NULLIF(COALESCE(f.push_result, f.legacy_state), ''),
+      COALESCE(NULLIF(f.kingdee_document_no, ''), NULLIF(f.document_no, '')),
       COALESCE(surcharge.invoice_count, 0),
       0,
-      COALESCE(f.source_amount, 0) - COALESCE(f.source_tax_amount, 0),
+      COALESCE(NULLIF(f.source_amount_untaxed, 0), COALESCE(f.source_amount, 0) - COALESCE(f.source_tax_amount, 0)),
       COALESCE(f.source_tax_amount, 0),
       COALESCE(f.source_amount, 0),
       COALESCE(surcharge.surcharge_amount, 0),
@@ -253,6 +277,9 @@ env.cr.execute(  # noqa: F821
       NULLIF(f.legacy_partner_id, ''),
       NULLIF(f.legacy_partner_name, ''),
       NULLIF(f.legacy_partner_tax_no, ''),
+      NULLIF(f.creator_legacy_user_id, ''),
+      NULLIF(f.creator_name, ''),
+      f.created_time,
       CONCAT_WS(E'\n',
         '[migration:invoice_registration_tax] legacy_record_id=' || f.legacy_record_id,
         NULLIF(f.direction, ''),
@@ -323,6 +350,10 @@ env.cr.execute(  # noqa: F821
        LIMIT 1
     ) partner_match ON TRUE
     WHERE f.project_id IS NOT NULL
+      AND NOT (
+        f.direction = 'input_invoice'
+        AND f.legacy_source_table = 'C_JXXP_ZYFPJJD'
+      )
       AND (COALESCE(f.source_amount, 0) <> 0 OR COALESCE(f.source_tax_amount, 0) <> 0)
     ON CONFLICT (legacy_source_model, legacy_record_id)
     DO UPDATE SET
@@ -337,7 +368,9 @@ env.cr.execute(  # noqa: F821
       invoice_type = EXCLUDED.invoice_type,
       tax_rate = EXCLUDED.tax_rate,
       invoice_no = EXCLUDED.invoice_no,
+      invoice_company_type = EXCLUDED.invoice_company_type,
       invoice_issue_company = EXCLUDED.invoice_issue_company,
+      invoice_provider_name = EXCLUDED.invoice_provider_name,
       push_result = EXCLUDED.push_result,
       kingdee_document_no = EXCLUDED.kingdee_document_no,
       invoice_count = EXCLUDED.invoice_count,
@@ -351,12 +384,29 @@ env.cr.execute(  # noqa: F821
       legacy_partner_id = EXCLUDED.legacy_partner_id,
       legacy_partner_name = EXCLUDED.legacy_partner_name,
       legacy_partner_tax_no = EXCLUDED.legacy_partner_tax_no,
+      creator_legacy_user_id = EXCLUDED.creator_legacy_user_id,
+      creator_name = EXCLUDED.creator_name,
+      created_time = EXCLUDED.created_time,
       note = EXCLUDED.note,
       active = EXCLUDED.active,
       write_uid = 1,
       write_date = NOW()
     """,
     [default_issue_company_name, currency_id],
+)
+
+env.cr.execute(  # noqa: F821
+    """
+    UPDATE sc_invoice_registration
+       SET active = FALSE,
+           write_uid = 1,
+           write_date = NOW()
+     WHERE legacy_source_model = 'sc.legacy.invoice.tax.fact'
+       AND legacy_source_table = 'C_JXXP_ZYFPJJD'
+       AND source_kind = 'input_invoice_tax'
+       AND direction = 'input'
+       AND active = TRUE
+    """
 )
 
 env.cr.execute(  # noqa: F821

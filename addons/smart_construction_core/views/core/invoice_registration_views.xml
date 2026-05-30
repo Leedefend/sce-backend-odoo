@@ -18,6 +18,8 @@
                     <field name="contract_id"/>
                     <field name="invoice_type"/>
                     <field name="invoice_issue_company"/>
+                    <field name="invoice_provider_name"/>
+                    <field name="invoice_company_type"/>
                     <field name="kingdee_document_no"/>
                     <field name="push_result"/>
                     <filter string="发票登记" name="source_kind_invoice_registration" domain="[('source_kind', '=', 'invoice_registration')]"/>
@@ -61,7 +63,9 @@
                     <field name="invoice_code"/>
                     <field name="invoice_type"/>
                     <field name="tax_rate"/>
+                    <field name="invoice_company_type"/>
                     <field name="invoice_issue_company"/>
+                    <field name="invoice_provider_name"/>
                     <field name="invoice_content"/>
                     <field name="amount_no_tax" sum="不含税金额"/>
                     <field name="tax_amount" sum="税额"/>
@@ -142,7 +146,9 @@
                             <field name="tax_type" readonly="state == 'legacy_confirmed'"/>
                             <field name="prepaid_tax_date" readonly="state == 'legacy_confirmed'"/>
                             <field name="tax_certificate_no" readonly="state == 'legacy_confirmed'"/>
+                            <field name="invoice_company_type" readonly="state == 'legacy_confirmed'"/>
                             <field name="invoice_issue_company" readonly="state == 'legacy_confirmed'"/>
+                            <field name="invoice_provider_name" readonly="state == 'legacy_confirmed'"/>
                             <field name="invoice_content" readonly="state == 'legacy_confirmed'"/>
                             <field name="cost_category_name" readonly="state == 'legacy_confirmed'"/>
                             <field name="invoice_count" readonly="state == 'legacy_confirmed'"/>

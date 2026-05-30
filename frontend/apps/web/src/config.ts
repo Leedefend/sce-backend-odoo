@@ -32,7 +32,7 @@ const isLocalHost = typeof window !== 'undefined'
   ? ['localhost', '127.0.0.1', '::1'].includes(window.location.hostname)
   : false;
 const isLocalDevPort = typeof window !== 'undefined'
-  ? ['18081', '5174', '8070'].includes(window.location.port)
+  ? ['18081', '5174', '8070', '8073'].includes(window.location.port)
   : false;
 const isLocalDevRuntime = isLocalHost && isLocalDevPort;
 const runtimeDbRaw = typeof window !== 'undefined'
@@ -50,8 +50,8 @@ const localBlockedProductionDb = isLocalHost && ['sc_delivery_local', 'sc_prod_s
 const localBlockedEnvDb = localBlockedProductionDb ? '' : envDb;
 const allowLocalFallbackDb = isLocalHost || appEnv === 'dev' || appEnv === 'test' || appEnv === 'local';
 // For local dev/test only, fallback to the restored daily development DB.
-const localDefaultDb = allowLocalFallbackDb && !runtimeDb && !localBlockedEnvDb && isLocalHost ? 'sc_odoo' : '';
-const localDevPinnedDb = isLocalDevRuntime && !runtimeDb && !localBlockedEnvDb ? 'sc_odoo' : '';
+const localDefaultDb = allowLocalFallbackDb && !runtimeDb && !localBlockedEnvDb && isLocalHost ? 'sc_demo' : '';
+const localDevPinnedDb = isLocalDevRuntime && !runtimeDb && !localBlockedEnvDb ? 'sc_demo' : '';
 const pinnedDb = isPlatformAdminEntry && platformAdminDb
   ? platformAdminDb
   : envDbLocked ? localBlockedEnvDb : runtimeDb || localBlockedEnvDb || enforcedDb || localDevPinnedDb;
