@@ -27,6 +27,10 @@ OLD_ROWS_DIR = Path(
 )
 ARTIFACT_ROOT = Path(os.getenv("MIGRATION_ARTIFACT_ROOT", str(ROOT / "artifacts/migration")))
 OUTPUT_JSON = ARTIFACT_ROOT / "scbs55_user_acceptance_replay_result_v1.json"
+SUPPLIER_ATTACHMENT_DISPLAY_LOCK = Path(
+    os.getenv("SCBS55_SUPPLIER_ATTACHMENT_DISPLAY_LOCK")
+    or str(ARTIFACT_ROOT / "scbs55_supplier_contract_attachment_display_lock_v1.json")
+)
 
 
 def clean(value):
@@ -77,6 +81,18 @@ def sha256_file(path):
 
 def load_json(path):
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def load_supplier_attachment_display_by_id():
+    if not SUPPLIER_ATTACHMENT_DISPLAY_LOCK.exists():
+        return {}
+    payload = load_json(SUPPLIER_ATTACHMENT_DISPLAY_LOCK)
+    rows = payload.get("rows") if isinstance(payload.get("rows"), list) else []
+    return {
+        clean(row.get("Id")): clean(row.get("f_FJ_FJ"))
+        for row in rows
+        if isinstance(row, dict) and clean(row.get("Id"))
+    }
 
 
 def write_json(path, payload):
@@ -365,6 +381,7 @@ def replay_engineering_progress(rows_by_key):
 def replay_supplier_contract(rows_by_key):
     Model = env["sc.legacy.supplier.contract.pricing.fact"].sudo().with_context(active_test=False)  # noqa: F821
     rows = rows_by_key["supplier_contract"]
+    attachment_display_by_id = load_supplier_attachment_display_by_id()
     seen = set()
     created = 0
     updated = 0
@@ -395,7 +412,11 @@ def replay_supplier_contract(rows_by_key):
             "amount_total": amount(row.get("ZJE")),
             "paid_amount": amount(row.get("YFKJE")),
             "unpaid_amount": amount(row.get("WFKJE")),
-            "attachment_text": clean(row.get("f_FJ_FJ") or row.get("f_FJ")),
+            "attachment_text": (
+                attachment_display_by_id[legacy_id]
+                if legacy_id in attachment_display_by_id
+                else clean(row.get("f_FJ_FJ") or row.get("f_FJ"))
+            ),
             "creator_legacy_user_id": clean(row.get("LRRID")),
             "creator_name": clean(row.get("f_LRR") or row.get("LRR")),
             "created_time": datetime_value(row.get("f_LRRQ") or row.get("LRSJ")),
@@ -425,6 +446,8 @@ def replay_supplier_contract(rows_by_key):
         "updated": updated,
         "stale_deactivated": len(stale),
         "user_view_preferences_reset": preference_reset_count,
+        "attachment_display_lock": str(SUPPLIER_ATTACHMENT_DISPLAY_LOCK),
+        "attachment_display_locked_rows": len(attachment_display_by_id),
         "actual_count": actual,
         "expected_count": len(rows),
     }

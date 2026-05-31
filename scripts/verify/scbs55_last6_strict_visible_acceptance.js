@@ -25,6 +25,8 @@ const OLD_ROWS_DIR = process.env.SCBS55_OLD_ROWS_DIR || '/tmp/scbs55_old_pages_2
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || path.join(ROOT, 'artifacts/migration');
 const OUT_JSON = path.join(ARTIFACTS_DIR, 'scbs55_last6_strict_visible_acceptance_v1.json');
 const OUT_MD = path.join(ARTIFACTS_DIR, 'scbs55_last6_strict_visible_acceptance_v1.md');
+const SUPPLIER_ATTACHMENT_DISPLAY_LOCK = process.env.SCBS55_SUPPLIER_ATTACHMENT_DISPLAY_LOCK
+  || path.join(ARTIFACTS_DIR, 'scbs55_supplier_contract_attachment_display_lock_v1.json');
 const TARGET_KEYS = new Set([
   'self_guarantee',
   'self_guarantee_refund',
@@ -79,6 +81,15 @@ function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
 }
 
+function loadSupplierAttachmentDisplayById() {
+  if (!fs.existsSync(SUPPLIER_ATTACHMENT_DISPLAY_LOCK)) return new Map();
+  const payload = readJson(SUPPLIER_ATTACHMENT_DISPLAY_LOCK);
+  const rows = Array.isArray(payload.rows) ? payload.rows : [];
+  return new Map(rows
+    .map((row) => [normalize(row?.Id), normalize(row?.f_FJ_FJ)])
+    .filter(([id]) => id));
+}
+
 function normalize(value) {
   return String(value ?? '').replace(/\s+/g, ' ').trim();
 }
@@ -120,11 +131,16 @@ function stateLabel(value) {
   }[text] || text;
 }
 
-function oldComparableValue(row, fieldName, kind) {
+function oldComparableValue(row, fieldName, kind, attachmentDisplayById = new Map()) {
   if (kind === 'state') return stateLabel(row.DJZT);
   if (kind === 'number') return normalizeNumber(row[fieldName]);
   if (kind === 'date') return normalizeDate(row[fieldName]);
-  if (fieldName === 'f_FJ_FJ') return normalize(row.f_FJ_FJ || row.f_FJ);
+  if (fieldName === 'f_FJ_FJ') {
+    const legacyId = normalize(row.Id);
+    return attachmentDisplayById.has(legacyId)
+      ? normalize(attachmentDisplayById.get(legacyId))
+      : normalize(row.f_FJ_FJ || row.f_FJ);
+  }
   return normalize(row[fieldName]);
 }
 
@@ -451,6 +467,12 @@ async function main() {
         if (result.identity_status !== 'PASS') result.errors.push('identity_set_mismatch');
 
         if (surface.key === 'supplier_contract') {
+          const attachmentDisplayById = loadSupplierAttachmentDisplayById();
+          result.attachment_display_lock = SUPPLIER_ATTACHMENT_DISPLAY_LOCK;
+          result.attachment_display_locked_rows = attachmentDisplayById.size;
+          if (attachmentDisplayById.size !== expectedCount) {
+            result.errors.push(`attachment_display_lock_count_mismatch:${attachmentDisplayById.size}`);
+          }
           const newRecords = await fetchRecords(
             page,
             newer.model,
@@ -468,7 +490,7 @@ async function main() {
               continue;
             }
             for (const [label, oldField, newField, kind] of SUPPLIER_CONTRACT_OLD_VALUE_MAP) {
-              const oldValue = oldComparableValue(oldRow, oldField, kind);
+              const oldValue = oldComparableValue(oldRow, oldField, kind, attachmentDisplayById);
               const newValue = newComparableValue(newRow, newField, kind);
               if (oldValue !== newValue) {
                 mismatches.push({ legacy_id: legacyId, label, old_field: oldField, new_field: newField, old: oldValue, new: newValue });
