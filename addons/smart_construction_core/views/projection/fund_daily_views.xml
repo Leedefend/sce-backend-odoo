@@ -157,11 +157,11 @@
                     <field name="project_id"/>
                     <field name="account_name"/>
                     <field name="bank_account_no"/>
-                    <field name="daily_income"/>
-                    <field name="daily_expense"/>
-                    <field name="current_account_balance"/>
-                    <field name="current_bank_balance"/>
-                    <field name="bank_system_difference"/>
+                    <field name="daily_income" sum="当日累计收入合计"/>
+                    <field name="daily_expense" sum="当日累计支出合计"/>
+                    <field name="current_account_balance" sum="当前账户余额合计"/>
+                    <field name="current_bank_balance" sum="当前账户银行余额合计"/>
+                    <field name="bank_system_difference" sum="银行系统差额合计"/>
                     <field name="document_state"/>
                 </tree>
             </field>
