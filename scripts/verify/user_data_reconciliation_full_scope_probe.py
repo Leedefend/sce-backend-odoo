@@ -127,7 +127,8 @@ def view_fields(model_name: str, view_type: str) -> dict[str, set[str]]:
     views = env["ir.ui.view"].sudo().search([("model", "=", model_name), ("type", "=", view_type)])  # noqa: F821
     for view in views:
         arch = view.arch_db or ""
-        group_fields.update(re.findall(r"group_by'?\s*:\s*'([^']+)'", arch))
+        for group_field in re.findall(r"group_by'?\s*:\s*'([^']+)'", arch):
+            group_fields.add(group_field.split(":", 1)[0])
         try:
             root = etree.fromstring(arch.encode("utf-8")) if arch else None
         except Exception:
@@ -177,6 +178,11 @@ AXES = {
         "date_receipt",
         "invoice_date",
         "operation_date",
+        "date_contract",
+        "business_date",
+        "apply_date",
+        "date",
+        "receipt_time",
         "settlement_date",
         "contract_date",
         "date_diary",
@@ -197,6 +203,7 @@ AXES = {
         "partner_name",
         "partner_name_text",
         "legacy_partner_name",
+        "construction_unit_name",
         "receipt_partner_name",
     ],
     "type": [
@@ -216,6 +223,7 @@ AXES = {
         "entity_type",
         "fact_type",
         "invoice_type",
+        "direction",
         "tax_rate",
         "cost_category_name",
         "document_scope",

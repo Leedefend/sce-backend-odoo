@@ -22,7 +22,11 @@
           <filter string="办理中" name="in_progress" domain="[('state', '=', 'in_progress')]"/>
           <filter string="已完成" name="done" domain="[('state', '=', 'done')]"/>
           <group expand="0" string="分组">
+            <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+            <filter string="按历史项目名称" name="group_legacy_project" context="{'group_by': 'legacy_visible_project_name'}"/>
+            <filter string="按业务日期" name="group_business_date" context="{'group_by': 'business_date'}"/>
             <filter string="按类型" name="group_type" context="{'group_by': 'fact_type'}"/>
+            <filter string="按录入人" name="group_requester" context="{'group_by': 'requester_id'}"/>
             <filter string="按借阅人" name="group_borrow_user" context="{'group_by': 'borrow_user_id'}"/>
             <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
           </group>

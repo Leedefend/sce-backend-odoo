@@ -15,6 +15,9 @@
                     <filter string="冲突" name="state_conflict" domain="[('mapping_state', '=', 'conflict')]"/>
                     <filter string="平台主体" name="type_platform" domain="[('entity_type', '=', 'platform')]"/>
                     <filter string="按隔离公司" name="group_company" context="{'group_by': 'company_id'}"/>
+                    <filter string="按旧主体名称" name="group_legacy_xmmc" context="{'group_by': 'legacy_xmmc'}"/>
+                    <filter string="按往来单位" name="group_partner" context="{'group_by': 'partner_id'}"/>
+                    <filter string="按创建时间" name="group_create_date" context="{'group_by': 'create_date'}"/>
                     <filter string="按类型" name="group_type" context="{'group_by': 'entity_type'}"/>
                     <filter string="按状态" name="group_state" context="{'group_by': 'mapping_state'}"/>
                 </search>

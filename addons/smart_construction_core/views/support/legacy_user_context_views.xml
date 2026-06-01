@@ -68,7 +68,11 @@
                 <field name="legacy_user_id"/>
                 <field name="user_id"/>
                 <filter string="已绑定新用户" name="with_user" domain="[('user_id', '!=', False)]"/>
+                <filter string="按项目" name="group_project_name" context="{'group_by': 'project_name'}"/>
                 <filter string="按部门" name="group_department" context="{'group_by': 'department_name'}"/>
+                <filter string="按用户类型" name="group_user_type" context="{'group_by': 'user_type'}"/>
+                <filter string="按人员状态" name="group_person_state" context="{'group_by': 'person_state'}"/>
+                <filter string="按创建时间" name="group_create_date" context="{'group_by': 'create_date'}"/>
             </search>
         </field>
     </record>
