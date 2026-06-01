@@ -110,6 +110,7 @@ class ScLegacyDirectAcceptanceFact(models.Model):
                         fields_for_label[index - 1],
                         acceptance_label=record.acceptance_label or "",
                         visible_index=index,
+                        attachment_ref=record.attachment_ref or "",
                     )
                 setattr(record, f"legacy_visible_{index:02d}", value)
 
@@ -121,7 +122,7 @@ class ScLegacyDirectAcceptanceFact(models.Model):
         return payload if isinstance(payload, dict) else {}
 
     @classmethod
-    def _legacy_payload_value(cls, payload, field_name, acceptance_label="", visible_index=0):
+    def _legacy_payload_value(cls, payload, field_name, acceptance_label="", visible_index=0, attachment_ref=""):
         if acceptance_label == "还租" and field_name in {"f_LRR", "f_LRSJ"}:
             fallback_field = "XGR" if field_name == "f_LRR" else "XGSJ"
             value = payload.get(field_name) or payload.get(fallback_field)
@@ -147,10 +148,25 @@ class ScLegacyDirectAcceptanceFact(models.Model):
                     return text
             return ""
 
+        is_attachment_field = field_name.endswith("FJ") or field_name.endswith("_FJ") or field_name == "FJ"
+        if is_attachment_field:
+            display_candidates = [f"{field_name}_FJ", "f_FJ_FJ", "FJ_FJ"]
+            for candidate in display_candidates:
+                value = payload.get(candidate)
+                if value is None or value is False:
+                    continue
+                text = str(value).strip()
+                if text:
+                    return text if text.startswith("附件(") else text
+            raw_value = payload.get(field_name)
+            raw_text = "" if raw_value is None or raw_value is False else str(raw_value).strip()
+            clean_attachment_ref = str(attachment_ref or "").strip()
+            if raw_text and clean_attachment_ref and raw_text == clean_attachment_ref:
+                return "附件(1)"
+            return ""
+
         candidates = []
         if field_name:
-            if field_name.endswith("FJ") or field_name.endswith("_FJ") or field_name == "FJ":
-                candidates.extend([f"{field_name}_FJ", "f_FJ_FJ", "FJ_FJ", "FJ"])
             candidates.append(field_name)
         for candidate in candidates:
             value = payload.get(candidate)
@@ -160,8 +176,6 @@ class ScLegacyDirectAcceptanceFact(models.Model):
                 return json.dumps(value, ensure_ascii=False, sort_keys=True)
             text = str(value).strip()
             if text:
-                if field_name.endswith("FJ") or field_name.endswith("_FJ") or field_name == "FJ":
-                    return text if text.startswith("附件(") else "附件(1)"
                 if field_name in {"SLV", "SLVS", "D_SCBSJS_SL1"}:
                     return cls._legacy_tax_rate_text(text)
                 return text
