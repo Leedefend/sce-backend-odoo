@@ -74,13 +74,13 @@ MENU_ALIASES.update({
 })
 
 PREFERRED_MENU_IDS = {
-    "施工合同": 655,
-    "供货合同": 730,
+    "施工合同": 743,
+    "供货合同": 746,
     "库存统计表（新）": 715,
-    "支付申请": 692,
-    "工程进度收款": 671,
-    "往来单位付款": 695,
-    "进项上报": 710,
+    "支付申请": 769,
+    "工程进度收款": 770,
+    "往来单位付款": 771,
+    "进项上报": 773,
     "成本统计表（数据）": 717,
 }
 
@@ -432,7 +432,7 @@ def score_node(original_label: str, candidate_label: str, node: dict[str, Any]) 
     label = node_label(node)
     path_text = normalize(node.get("__path"))
     score = 0
-    if "用户验收" in path_text and "直营项目系统菜单" in path_text:
+    if ("用户验收" in path_text and "直营项目系统菜单" in path_text) or "直营项目数据核对" in path_text:
         score += 5000
     if node.get("menu_id") == PREFERRED_MENU_IDS.get(original_label):
         score += 1000
@@ -656,9 +656,6 @@ def main() -> int:
             try:
                 config = api_get(old_session, old_token, f"LowCode/FormApi/GetConfigById?Id={old_config_id}&LoadInitData=true")["Data"]
                 columns = old_visible_columns(config)
-                if label == "支付申请" and not any(col.get("field") == "SJKYYE" for col in columns):
-                    insert_at = next((index + 1 for index, col in enumerate(columns) if col.get("field") == "FKJE"), len(columns))
-                    columns.insert(insert_at, {"name": "可用余额", "field": "SJKYYE"})
                 row["old_headers"] = [col["name"] for col in columns]
                 row["old_fields"] = [col["field"] for col in columns]
                 row["old_header_count"] = len(columns)

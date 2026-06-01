@@ -35,13 +35,13 @@ const MENU_ALIASES = {
 };
 
 const PREFERRED_MENU_IDS = {
-  '施工合同': 655,
-  '供货合同': 730,
+  '施工合同': 743,
+  '供货合同': 746,
   '库存统计表（新）': 715,
-  '支付申请': 692,
-  '工程进度收款': 671,
-  '往来单位付款': 695,
-  '进项上报': 710,
+  '支付申请': 769,
+  '工程进度收款': 770,
+  '往来单位付款': 771,
+  '进项上报': 773,
   '成本统计表（数据）': 717,
 };
 
@@ -161,7 +161,10 @@ function scoreNode(originalLabel, candidateLabel, node) {
   const label = nodeLabel(node);
   const pathText = normalize(node.__path);
   let score = 0;
-  if (pathText.includes('用户验收') && pathText.includes('直营项目系统菜单')) score += 5000;
+  if (
+    (pathText.includes('用户验收') && pathText.includes('直营项目系统菜单'))
+    || pathText.includes('直营项目数据核对')
+  ) score += 5000;
   if (node.menu_id === PREFERRED_MENU_IDS[originalLabel]) score += 1000;
   if (label === originalLabel) score += 200;
   if (label === candidateLabel) score += 160;

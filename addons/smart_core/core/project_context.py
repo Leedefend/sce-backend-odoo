@@ -16,6 +16,14 @@ SOURCE_AUTHORITIES = ("odoo.orm", "ir.rule", "ir.model.access", "record_context_
 NO_BUSINESS_FACT_AUTHORITY = True
 LEGACY_PROJECT_SCOPE_ADAPTER_SOURCE_KIND = "legacy_project_scope_adapter"
 VALID_OPERATION_STRATEGIES = ("direct", "joint")
+BUSINESS_SCOPE_EXEMPT_MODELS = {
+    # Company-level legacy acceptance archives do not carry project/company
+    # dimensions. Applying project.operation_strategy scope hides valid old
+    # business rows from the customer acceptance surface.
+    "sc.document.admin.document",
+    "sc.hr.payroll.document",
+    "sc.legacy.user.profile",
+}
 
 
 def source_authority_contract() -> dict[str, Any]:
@@ -377,10 +385,20 @@ def _operation_strategy_scope_domain(env_model, operation_strategy: str) -> list
 
 
 def business_scope_domain(env_model, scope: dict | None = None, *, company_id: int = 0, project_id: int = 0, operation_strategy: str = "") -> list:
+    model_name = str(getattr(env_model, "_name", "") or "").strip()
+    if model_name in BUSINESS_SCOPE_EXEMPT_MODELS:
+        return []
     scope = scope if isinstance(scope, dict) else {}
     selected_company_id = _as_int(scope.get("company_id") or company_id)
     selected_project_id = _as_int(scope.get("project_id") or project_id)
     selected_operation_strategy = _as_operation_strategy(scope.get("operation_strategy") or operation_strategy)
+    if model_name == "sc.legacy.direct.acceptance.fact" and not selected_project_id:
+        if selected_operation_strategy == "direct":
+            return ["|", ("project_id", "=", False), ("project_id.operation_strategy", "=", "direct")]
+        if selected_operation_strategy:
+            return [("project_id.operation_strategy", "=", selected_operation_strategy)]
+        if selected_company_id:
+            return ["|", ("project_id", "=", False), ("project_id.company_id", "=", selected_company_id)]
     domain = []
     domain += _company_scope_domain(env_model, selected_company_id)
     domain += project_scope_domain(env_model, selected_project_id)

@@ -614,7 +614,6 @@
         <field name="legacy_visible_07" string="付款单位"/>
         <field name="legacy_visible_08" string="申请付款金额"/>
         <field name="legacy_visible_09" string="实际付款金额"/>
-        <field name="legacy_visible_10" string="可用余额"/>
         <field name="legacy_visible_11" string="类型（成本）"/>
         <field name="legacy_visible_12" string="备注"/>
         <field name="legacy_visible_13" string="是否关联单据"/>

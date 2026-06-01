@@ -518,6 +518,10 @@ P1_ALIAS_LABELS = {'tender.bid': ['单据状态', '推送结果', '单据编号'
                                 '项目名称',
                                 '资料类型',
                                 '资料说明',
+                                '证照名称',
+                                '编号',
+                                '持有人',
+                                '有效期',
                                 '录入人',
                                 '备注',
                                 '录入时间',
@@ -1334,6 +1338,15 @@ RECEIPT_INCOME_DOCUMENT_STATE_LABELS = {
     "2": "审核通过",
 }
 
+BUSINESS_DOCUMENT_STATE_LABELS = {
+    "-1": "已作废",
+    "0": "未审核",
+    "1": "审核中",
+    "2": "审核通过",
+    "3": "已驳回",
+    "4": "已作废",
+}
+
 FALLBACK_SOURCES = (
     "name", "document_no", "title", "project_id", "partner_id", "supplier_id", "contractor_id",
     "subcontractor_id", "owner_id", "requester_id", "state", "legacy_document_state",
@@ -1377,6 +1390,35 @@ def _format_alias_value(record, field_name):
         if text[:half] == text[half:]:
             text = text[:half].strip()
     return "" if text in {"False", "false", "None", "NULL"} else text
+
+
+def _normalize_payload_alias_value(label, value):
+    if value or value in (0, 0.0):
+        text = str(value).strip()
+        if text in {"False", "false", "None", "NULL"}:
+            return ""
+        if label in ("单据状态", "状态"):
+            return BUSINESS_DOCUMENT_STATE_LABELS.get(text, text)
+        return text
+    return ""
+
+
+def _business_document_state_alias(record):
+    for field_name in (
+        "legacy_visible_document_state",
+        "legacy_document_state",
+        "document_state",
+        "legacy_state",
+        "state",
+    ):
+        value = _format_alias_value(record, field_name)
+        if not value:
+            continue
+        if value in BUSINESS_DOCUMENT_STATE_LABELS:
+            return BUSINESS_DOCUMENT_STATE_LABELS[value]
+        if field_name != "state":
+            return value
+    return ""
 
 
 def _is_hash_file_name(name):
@@ -1456,11 +1498,7 @@ def _legacy_visible_alias_payload(record):
 def _alias_value(record, label):
     payload = _legacy_visible_alias_payload(record)
     if payload and label in payload:
-        value = payload.get(label)
-        if value or value in (0, 0.0):
-            text = str(value).strip()
-            return "" if text in {"False", "false", "None", "NULL"} else text
-        return ""
+        return _normalize_payload_alias_value(label, payload.get(label))
     if record._name == 'sc.business.entity':
         strict_sources = {
             '单据状态': None,
@@ -1488,14 +1526,7 @@ def _alias_value(record, label):
         if label in ('单据状态', '状态'):
             legacy_state = _format_alias_value(record, 'legacy_visible_document_state')
             if legacy_state:
-                return {
-                    '-1': '已作废',
-                    '0': '未审核',
-                    '1': '审核中',
-                    '2': '审核通过',
-                    '3': '已驳回',
-                    '4': '已作废',
-                }.get(legacy_state, legacy_state)
+                return BUSINESS_DOCUMENT_STATE_LABELS.get(legacy_state, legacy_state)
             return ''
         strict_sources = {
             '单据编号': 'legacy_visible_document_no',
@@ -1525,21 +1556,17 @@ def _alias_value(record, label):
         if label in ('单据状态', '状态'):
             legacy_state = _format_alias_value(record, 'legacy_document_state')
             if legacy_state:
-                return {
-                    '-1': '已作废',
-                    '0': '未审核',
-                    '1': '审核中',
-                    '2': '审核通过',
-                    '3': '已驳回',
-                    '4': '已作废',
-                    '历史文件索引': '历史文件索引',
-                }.get(legacy_state, legacy_state)
+                return BUSINESS_DOCUMENT_STATE_LABELS.get(legacy_state, legacy_state)
         strict_sources = {
             '单据编号': 'legacy_document_no',
             '项目名称': 'legacy_visible_project_name',
             '借阅项目名称': 'legacy_visible_project_name',
             '资料类型': 'legacy_visible_document_type',
             '资料说明': 'legacy_visible_description',
+            '证照名称': 'certificate_name',
+            '编号': 'certificate_no',
+            '持有人': 'holder_name',
+            '有效期': 'valid_until',
             '证件名称': 'document_title',
             '申请日期': 'legacy_visible_application_date',
             '借阅部门或项目部名称': 'legacy_visible_department',
@@ -1570,14 +1597,7 @@ def _alias_value(record, label):
         if label in ('单据状态', '状态'):
             legacy_state = _format_alias_value(record, 'legacy_document_state')
             if legacy_state:
-                return {
-                    '-1': '已作废',
-                    '0': '未审核',
-                    '1': '审核中',
-                    '2': '审核通过',
-                    '3': '已驳回',
-                    '4': '已作废',
-                }.get(legacy_state, legacy_state)
+                return BUSINESS_DOCUMENT_STATE_LABELS.get(legacy_state, legacy_state)
         strict_sources = {
             '单据编号': 'legacy_document_no',
             '项目名称': 'legacy_visible_project_name',
@@ -1614,14 +1634,7 @@ def _alias_value(record, label):
         if label in ('单据状态', '状态'):
             legacy_state = _format_alias_value(record, 'legacy_document_state')
             if legacy_state:
-                return {
-                    '-1': '已作废',
-                    '0': '未审核',
-                    '1': '审核中',
-                    '2': '审核通过',
-                    '3': '已驳回',
-                    '4': '已作废',
-                }.get(legacy_state, legacy_state)
+                return BUSINESS_DOCUMENT_STATE_LABELS.get(legacy_state, legacy_state)
         strict_sources = {
             '项目名称': 'legacy_visible_project_name',
             '申请部门': 'legacy_visible_request_department',
@@ -1977,6 +1990,10 @@ def _alias_value(record, label):
         legacy_state = _format_alias_value(record, 'legacy_document_state')
         if legacy_state:
             return INVOICE_DOCUMENT_STATE_LABELS.get(legacy_state, legacy_state)
+    if label in ('单据状态', '状态'):
+        state_label = _business_document_state_alias(record)
+        if state_label:
+            return state_label
     if record._name == 'sc.expense.claim' and label == '是否退回':
         legacy_flag = _format_alias_value(record, 'legacy_visible_returned_flag')
         if legacy_flag:

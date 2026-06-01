@@ -37,6 +37,7 @@ DOMAIN_OVERRIDES_BY_SEQUENCE = {
     100: [("legacy_source_table", "=", "online_old_scbs:BGGL_XZ_JXDJ_ZB:list861")],
     110: [("legacy_source_table", "=", "online_old_scbs:BGGL_XZ_GZ:list862")],
     120: [("legacy_source_table", "=", "online_old_scbs:BGGL_XZ_BZ:list863")],
+    140: [("fact_type", "=", "certificate_registration")],
     150: [("legacy_source_table", "=", "online_old_scbs:ZJGL_ZSJYGL:list865")],
     160: [("legacy_fact_model", "=", "online_old_scbs:P_ZTB_GCBMGL:list866")],
     170: [("legacy_source_table", "=", "online_old_scbs:BGGL_ZTBJHT_TBBM_TBBMFSQ:list895")],
@@ -79,7 +80,9 @@ TARGET_MODEL_OVERRIDES_BY_SEQUENCE = {
     340: "sc.expense.claim",
 }
 
-LIST_CONTRACT_LABEL_OVERRIDES_BY_SEQUENCE = {}
+LIST_CONTRACT_LABEL_OVERRIDES_BY_SEQUENCE = {
+    140: ["证照名称", "编号", "持有人", "有效期", "附件"],
+}
 
 
 def artifact_root() -> Path:
