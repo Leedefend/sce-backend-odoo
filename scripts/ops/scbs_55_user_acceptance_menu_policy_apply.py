@@ -339,6 +339,9 @@ def is_internal_only_path(path: str) -> bool:
             "旧库往来单位映射",
             "旧库项目映射",
             "旧库报表承载清单",
+            "用户信息与权限",
+            "SCBS旧库事实暂存",
+            "SCBS旧库材料映射",
         )
     )
 
@@ -398,6 +401,19 @@ def discover_legacy_data_menus(root_menu) -> list[dict[str, object]]:
                 "acceptance_path": acceptance_path,
             }
         )
+    best_by_identity = {}
+    for item in discovered:
+        key = (str(item["path"]), str(item["action_name"]), str(item["model"]))
+        xmlid = str(item.get("menu_xmlid") or "")
+        priority = (
+            1 if "analysis_report" in xmlid else 0,
+            1 if "scbs55_user_acceptance" in xmlid else 0,
+            int(item["menu_id"]),
+        )
+        current = best_by_identity.get(key)
+        if current is None or priority < current[0]:
+            best_by_identity[key] = (priority, item)
+    discovered = [item for _, item in best_by_identity.values()]
     discovered.sort(key=lambda item: (str(item["path"]), int(item["menu_id"])))
     return discovered
 
