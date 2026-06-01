@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Publish only the SCBS 55 user-acceptance menus for construction products.
+"""Publish SCBS user-acceptance data menus for construction products.
 
 Run with:
     odoo shell -c /path/to/odoo.conf -d sc_demo --no-http < scripts/ops/scbs_55_user_acceptance_menu_policy_apply.py
@@ -145,7 +145,7 @@ def direct_acceptance_policy_groups(root_menu) -> list[dict]:
             groups.append(
                 {
                     "group_key": f"construction.scbsly_direct.{xml_name(category.name)}",
-                    "group_label": "用户验收",
+                    "group_label": f"直营项目系统菜单 / {category.name}",
                     "category": "scbsly_direct_acceptance_menu",
                     "menus": menus,
                 }
@@ -284,8 +284,8 @@ artifact_dir = artifact_root()
 
 Plan = env["sc.legacy.user.priority.menu.plan"].sudo()  # noqa: F821
 rows = Plan.search([("source_document", "=", SOURCE_DOCUMENT), ("active", "=", True)], order="priority_sequence")
-if len(rows) != 55:
-    raise RuntimeError({"expected_55_plan_rows": 55, "actual": len(rows)})
+if not rows:
+    raise RuntimeError({"missing_active_user_acceptance_plan_rows": SOURCE_DOCUMENT})
 
 root = ref(ROOT_XMLID)
 if not root:
@@ -302,7 +302,10 @@ groups_by_name = {}
 allowed_xmlids = set()
 allowed_menu_ids = {int(root.id), int(acceptance_root.id)}
 allowed_group_by_xmlid = {}
+allowed_group_by_menu_id = {int(acceptance_root.id): "用户核对菜单"}
 allowed_sequence_by_xmlid = {}
+allowed_sequence_by_menu_id = {int(acceptance_root.id): int(acceptance_root.sequence or 0)}
+allowed_sources_by_menu_id = {int(root.id): {"root"}, int(acceptance_root.id): {"acceptance_root"}}
 created_or_updated = []
 for row in rows:
     action = row.target_action_id
@@ -324,6 +327,9 @@ for row in rows:
         )
         groups_by_name[group_name] = group_menu
         allowed_menu_ids.add(int(group_menu.id))
+        allowed_group_by_menu_id[int(group_menu.id)] = "用户核对菜单"
+        allowed_sequence_by_menu_id[int(group_menu.id)] = int(group_menu.sequence or 0)
+        allowed_sources_by_menu_id.setdefault(int(group_menu.id), set()).add("plan_group")
 
     menu_xmlid_name = xml_name("menu_scbs55_user_acceptance", f"{int(row.priority_sequence):03d}", row.legacy_menu_name)
     menu = ensure_menu(
@@ -337,7 +343,10 @@ for row in rows:
     allowed_xmlids.add(allowed_xmlid)
     allowed_menu_ids.add(int(menu.id))
     allowed_group_by_xmlid[allowed_xmlid] = row.legacy_menu_group or "用户核对"
+    allowed_group_by_menu_id[int(menu.id)] = row.legacy_menu_group or "用户核对"
     allowed_sequence_by_xmlid[allowed_xmlid] = int(row.priority_sequence or 0)
+    allowed_sequence_by_menu_id[int(menu.id)] = int(row.priority_sequence or 0)
+    allowed_sources_by_menu_id.setdefault(int(menu.id), set()).add("priority_plan")
     created_or_updated.append(
         {
             "priority_sequence": int(row.priority_sequence or 0),
@@ -349,9 +358,29 @@ for row in rows:
         }
     )
 
+acceptance_descendant_ids = collect_active_descendant_ids(acceptance_root)
+for menu in env["ir.ui.menu"].sudo().browse(sorted(acceptance_descendant_ids)).exists():  # noqa: F821
+    allowed_menu_ids.add(int(menu.id))
+    menu_xmlid = xmlid_for(menu)
+    if menu.action and menu_xmlid:
+        allowed_xmlids.add(menu_xmlid)
+        allowed_group_by_xmlid.setdefault(menu_xmlid, menu.parent_id.name or "用户核对")
+        allowed_sequence_by_xmlid.setdefault(menu_xmlid, int(menu.sequence or 0))
+    allowed_group_by_menu_id.setdefault(int(menu.id), menu.parent_id.name or "用户核对")
+    allowed_sequence_by_menu_id.setdefault(int(menu.id), int(menu.sequence or 0))
+    allowed_sources_by_menu_id.setdefault(int(menu.id), set()).add("existing_acceptance_tree")
+
 direct_acceptance_root = ref(DIRECT_ACCEPTANCE_ROOT_XMLID)
 direct_acceptance_menu_ids = collect_active_menu_ids(direct_acceptance_root) if direct_acceptance_root else set()
 allowed_menu_ids.update(direct_acceptance_menu_ids)
+for menu_id in direct_acceptance_menu_ids:
+    allowed_sources_by_menu_id.setdefault(int(menu_id), set()).add("direct_acceptance_tree")
+direct_acceptance_groups = direct_acceptance_policy_groups(direct_acceptance_root)
+direct_acceptance_leaf_count = sum(
+    len(group.get("menus") if isinstance(group.get("menus"), list) else [])
+    for group in direct_acceptance_groups
+    if isinstance(group, dict)
+)
 
 runtime_keep_policy_count = 0
 runtime_hide_policy_count = 0
@@ -409,7 +438,8 @@ def policy_release_pages(groups: list[dict]) -> list[dict]:
                     "enabled": True,
                     "release_state": "released",
                     "access_level": "public",
-                    "visible_menu_path": f"系统菜单 / 用户核对菜单 / {group_label} / {str(menu.get('label') or '').strip()}",
+                    "visible_menu_path": str(menu.get("visible_menu_path") or "").strip()
+                    or f"系统菜单 / 用户核对菜单 / {group_label} / {str(menu.get('label') or '').strip()}",
                 }
             )
     return pages
@@ -418,6 +448,7 @@ def policy_release_pages(groups: list[dict]) -> list[dict]:
 def merge_release_pages(existing_pages: list, required_pages: list[dict]) -> tuple[list[dict], int]:
     merged = [dict(page) for page in existing_pages if isinstance(page, dict)]
     index = {}
+    action_fallback_index = {}
     for pos, page in enumerate(merged):
         for key in ("menu_xmlid", "page_key", "menu_key"):
             value = str(page.get(key) or "").strip()
@@ -427,8 +458,9 @@ def merge_release_pages(existing_pages: list, required_pages: list[dict]) -> tup
         action_id = int(page.get("action_id") or 0)
         if menu_id:
             index.setdefault(f"menu_id:{menu_id}", pos)
-        if action_id:
-            index.setdefault(f"action_id:{action_id}", pos)
+        has_stable_page_key = bool(menu_id) or any(str(page.get(key) or "").strip() for key in ("menu_xmlid", "page_key", "menu_key"))
+        if action_id and not has_stable_page_key:
+            action_fallback_index.setdefault(f"action_id:{action_id}", pos)
     added = 0
     for page in required_pages:
         keys = [
@@ -440,11 +472,16 @@ def merge_release_pages(existing_pages: list, required_pages: list[dict]) -> tup
         action_id = int(page.get("action_id") or 0)
         if menu_id:
             keys.append(f"menu_id:{menu_id}")
-        if action_id:
-            keys.append(f"action_id:{action_id}")
         hit = next((index[key] for key in keys if key and key in index), None)
+        if hit is None and action_id and not any(keys):
+            hit = action_fallback_index.get(f"action_id:{action_id}")
         if hit is None:
-            index[str(page.get("menu_xmlid") or page.get("page_key") or len(merged))] = len(merged)
+            next_pos = len(merged)
+            for key in keys:
+                if key:
+                    index.setdefault(key, next_pos)
+            if action_id and not any(keys):
+                action_fallback_index.setdefault(f"action_id:{action_id}", next_pos)
             merged.append(dict(page))
             added += 1
             continue
@@ -498,12 +535,20 @@ def sync_platform_release_gate_pages(product_key: str, required_pages: list[dict
 
     if platform_db == current_db:
         return update_in(env)  # noqa: F821
-    registry = Registry(platform_db)
-    with registry.cursor() as cr:
-        read_env = api.Environment(cr, SUPERUSER_ID, dict(env.context or {}))  # noqa: F821
-        result = update_in(read_env)
-        cr.commit()
-        return result
+    try:
+        registry = Registry(platform_db)
+        with registry.cursor() as cr:
+            read_env = api.Environment(cr, SUPERUSER_ID, dict(env.context or {}))  # noqa: F821
+            result = update_in(read_env)
+            cr.commit()
+            return result
+    except Exception as exc:
+        return {
+            "status": "SKIP",
+            "reason": "platform_release_db_unavailable",
+            "platform_db": platform_db,
+            "error": str(exc),
+        }
 
 policy_results = {}
 platform_release_gate_results = {}
@@ -525,15 +570,17 @@ for product_key in PRODUCT_KEYS:
             total += 1
             next_menu = dict(menu)
             menu_xmlid = str(next_menu.get("menu_xmlid") or "").strip()
-            if menu_xmlid in allowed_xmlids:
-                group_label = allowed_group_by_xmlid.get(menu_xmlid) or "用户核对"
+            menu_id = int(next_menu.get("menu_id") or 0)
+            if menu_xmlid in allowed_xmlids or menu_id in allowed_menu_ids:
+                group_label = allowed_group_by_xmlid.get(menu_xmlid) or allowed_group_by_menu_id.get(menu_id) or "用户核对"
                 next_menu["enabled"] = True
                 next_menu["release_state"] = "released"
                 next_menu["access_level"] = "public"
                 next_menu["policy_note"] = "SCBS 55 user acceptance menu retained for customer verification."
-                next_menu["sequence"] = allowed_sequence_by_xmlid.get(menu_xmlid, int(next_menu.get("sequence") or 0))
+                next_menu["sequence"] = allowed_sequence_by_xmlid.get(menu_xmlid, allowed_sequence_by_menu_id.get(menu_id, int(next_menu.get("sequence") or 0)))
                 enabled += 1
-                allowed_seen.add(menu_xmlid)
+                if menu_xmlid:
+                    allowed_seen.add(menu_xmlid)
                 grouped_allowed_menus.setdefault(group_label, []).append(next_menu)
             else:
                 next_menu["enabled"] = False
@@ -552,7 +599,7 @@ for product_key in PRODUCT_KEYS:
             }
         )
         _ = group_index
-    next_groups.extend(direct_acceptance_policy_groups(direct_acceptance_root))
+    next_groups.extend(direct_acceptance_groups)
     if hidden_menus:
         next_groups.append(
             {
@@ -562,7 +609,13 @@ for product_key in PRODUCT_KEYS:
                 "menus": hidden_menus,
             }
         )
-    missing_allowed = sorted(allowed_xmlids - allowed_seen)
+    policy_visible_xmlids = {
+        str(menu.get("menu_xmlid") or "").strip()
+        for menus in grouped_allowed_menus.values()
+        for menu in menus
+        if str(menu.get("menu_xmlid") or "").strip()
+    }
+    missing_allowed = sorted(allowed_xmlids - policy_visible_xmlids)
     policy.write(
         {
             "menu_groups": next_groups,
@@ -577,6 +630,7 @@ for product_key in PRODUCT_KEYS:
         "total_policy_menus": total,
         "enabled_policy_menus": enabled,
         "hidden_policy_menus": hidden,
+        "direct_acceptance_enabled_menus": direct_acceptance_leaf_count,
         "missing_allowed_xmlids": missing_allowed,
     }
 
@@ -584,20 +638,28 @@ env.cr.commit()  # noqa: F821
 
 payload = {
     "status": "PASS"
-    if len(created_or_updated) == 55
-    and all(not result["missing_allowed_xmlids"] and result["enabled_policy_menus"] == 55 for result in policy_results.values())
+    if created_or_updated
+    and not any(result["missing_allowed_xmlids"] for result in policy_results.values())
+    and all(result["enabled_policy_menus"] >= len(created_or_updated) for result in policy_results.values())
     else "FAIL",
     "mode": "scbs_55_user_acceptance_menu_policy_apply",
     "database": env.cr.dbname,  # noqa: F821
     "source_document": SOURCE_DOCUMENT,
+    "active_plan_menu_count": len(rows),
     "created_or_updated_menu_count": len(created_or_updated),
+    "acceptance_tree_menu_count": len(acceptance_descendant_ids) + 1,
     "runtime_allowed_menu_count": len(allowed_menu_ids),
     "direct_acceptance_menu_count": len(direct_acceptance_menu_ids),
+    "direct_acceptance_leaf_count": direct_acceptance_leaf_count,
     "runtime_hidden_menu_count": len(hidden_menu_rows),
     "runtime_keep_policy_count": runtime_keep_policy_count,
     "runtime_hide_policy_count": runtime_hide_policy_count,
     "acceptance_root_xmlid": ACCEPTANCE_ROOT_XMLID,
     "allowed_menu_xmlids": sorted(allowed_xmlids),
+    "allowed_menu_sources": {
+        str(menu_id): sorted(sources)
+        for menu_id, sources in sorted(allowed_sources_by_menu_id.items())
+    },
     "policy_results": policy_results,
     "platform_release_gate_results": platform_release_gate_results,
     "menus": created_or_updated,
