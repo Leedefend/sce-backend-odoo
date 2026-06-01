@@ -134,6 +134,7 @@ FILE_ATTACHMENT_ALLOWED_MODEL_EXACT = {
     "sc.legacy.payment.residual.fact",
 }
 FILE_ATTACHMENT_ALLOWED_MODEL_PREFIXES = ("construction.", "project.", "quota.", "sc.", "tender.")
+FILE_ATTACHMENT_ALLOWED_LEGACY_MODEL_PREFIXES = ("sc.legacy.",)
 FILE_ATTACHMENT_EXCLUDED_MODEL_PREFIXES = (
     "sc.legacy.",
     "sc.ops.",
@@ -758,9 +759,18 @@ def _business_attachment_allowed_models(env):
         model_name = str(row.model or "").strip()
         if not model_name:
             continue
-        if model_name not in FILE_ATTACHMENT_ALLOWED_MODEL_EXACT and model_name.startswith(FILE_ATTACHMENT_EXCLUDED_MODEL_PREFIXES):
+        legacy_attachment_model = model_name.startswith(FILE_ATTACHMENT_ALLOWED_LEGACY_MODEL_PREFIXES)
+        if (
+            model_name not in FILE_ATTACHMENT_ALLOWED_MODEL_EXACT
+            and not legacy_attachment_model
+            and model_name.startswith(FILE_ATTACHMENT_EXCLUDED_MODEL_PREFIXES)
+        ):
             continue
-        if model_name not in FILE_ATTACHMENT_ALLOWED_MODEL_EXACT and not model_name.startswith(FILE_ATTACHMENT_ALLOWED_MODEL_PREFIXES):
+        if (
+            model_name not in FILE_ATTACHMENT_ALLOWED_MODEL_EXACT
+            and not legacy_attachment_model
+            and not model_name.startswith(FILE_ATTACHMENT_ALLOWED_MODEL_PREFIXES)
+        ):
             continue
         if model_name not in env:
             continue
