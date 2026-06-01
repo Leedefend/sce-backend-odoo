@@ -153,6 +153,28 @@ def direct_acceptance_policy_groups(root_menu) -> list[dict]:
     return groups
 
 
+def menu_policy_payload(menu, *, group_label: str, note: str) -> dict:
+    action = menu.action
+    action_id = int(action.id) if action else 0
+    menu_xmlid = xmlid_for(menu)
+    model_name = str(getattr(action, "res_model", "") or "") if action else ""
+    return {
+        "menu_xmlid": menu_xmlid,
+        "menu_id": int(menu.id),
+        "action_id": action_id,
+        "route": f"/a/{action_id}?menu_id={int(menu.id)}" if action_id else "",
+        "label": str(menu.name or ""),
+        "model": model_name,
+        "res_model": model_name,
+        "enabled": True,
+        "release_state": "released",
+        "access_level": "public",
+        "sequence": int(menu.sequence or 0),
+        "visible_menu_path": str(menu.complete_name or f"系统菜单 / {group_label} / {menu.name}"),
+        "policy_note": note,
+    }
+
+
 def ensure_menu(*, xmlid_name: str, name: str, parent, sequence: int, action=None):
     menu = ref(f"{MODULE}.{xmlid_name}")
     values = {
@@ -761,6 +783,34 @@ for product_key in PRODUCT_KEYS:
         for menu in menus
         if str(menu.get("menu_xmlid") or "").strip()
     }
+    supplemental_xmlids = sorted(allowed_xmlids - policy_visible_xmlids)
+    if supplemental_xmlids:
+        supplemental_menus = []
+        for menu_xmlid in supplemental_xmlids:
+            menu = ref(menu_xmlid)
+            if not menu or not menu.active or not menu.action:
+                continue
+            supplemental_menus.append(
+                menu_policy_payload(
+                    menu,
+                    group_label=allowed_group_by_xmlid.get(menu_xmlid) or allowed_group_by_menu_id.get(int(menu.id)) or "旧业务数据核对",
+                    note="Supplemental legacy business data menu retained because the product catalog did not emit it.",
+                )
+            )
+        if supplemental_menus:
+            next_groups.append(
+                {
+                    "group_key": "construction.legacy_data.supplemental_customer_verification",
+                    "group_label": "旧业务数据核对补充入口",
+                    "category": "legacy_data_supplemental_customer_verification",
+                    "menus": sorted(supplemental_menus, key=lambda item: (str(item.get("visible_menu_path") or ""), int(item.get("menu_id") or 0))),
+                }
+            )
+            policy_visible_xmlids.update(
+                str(menu.get("menu_xmlid") or "").strip()
+                for menu in supplemental_menus
+                if str(menu.get("menu_xmlid") or "").strip()
+            )
     missing_allowed = sorted(allowed_xmlids - policy_visible_xmlids)
     policy.write(
         {
