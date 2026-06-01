@@ -21,9 +21,24 @@ def repo_root() -> Path:
 
 
 def artifact_root() -> Path:
-    root = Path(os.getenv("MIGRATION_ARTIFACT_ROOT", str(repo_root() / "artifacts/migration")))
-    root.mkdir(parents=True, exist_ok=True)
-    return root
+    env_root = os.getenv("MIGRATION_ARTIFACT_ROOT")
+    candidates = [Path(env_root)] if env_root else []
+    candidates.extend(
+        [
+            repo_root() / "artifacts/migration",
+            Path(f"/tmp/history_legacy_user_recovery/{env.cr.dbname}"),  # noqa: F821
+        ]
+    )
+    for root in candidates:
+        try:
+            root.mkdir(parents=True, exist_ok=True)
+            probe = root / ".write_probe"
+            probe.write_text("ok\n", encoding="utf-8")
+            probe.unlink()
+            return root
+        except Exception:
+            continue
+    return Path(f"/tmp/history_legacy_user_recovery/{env.cr.dbname}")  # noqa: F821
 
 
 def count(model_name: str, domain: list[tuple[str, str, object]] | None = None) -> int:
@@ -34,7 +49,19 @@ def sample_login(login: str) -> dict[str, object]:
     Users = env["res.users"].sudo().with_context(active_test=False)  # noqa: F821
     Profile = env["sc.legacy.user.profile"].sudo().with_context(active_test=False)  # noqa: F821
     user = Users.search([("login", "=", login)], limit=1)
-    profile = Profile.search([("source_login", "=", login), ("active", "=", True)], limit=1)
+    profile = Profile
+    if user:
+        profile = Profile.search([("active", "=", True), ("user_id", "=", user.id)], limit=1)
+    if not profile:
+        profile = Profile.search(
+            [
+                ("active", "=", True),
+                "|",
+                ("source_login", "=", login),
+                ("generated_login", "=", login),
+            ],
+            limit=1,
+        )
     return {
         "login": login,
         "user_id": user.id if user else 0,
