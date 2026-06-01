@@ -30,6 +30,14 @@ BUSINESS_MODELS = (
     "sc.financing.loan",
 )
 VALID_OPERATION_STRATEGIES = {"direct", "joint"}
+PROJECT_CATEGORY_CODE_BY_OPERATION = {
+    "direct": "PROJECT_CATEGORY_DIRECT",
+    "joint": "PROJECT_CATEGORY_JOINT",
+}
+BUSINESS_NATURE_BY_OPERATION = {
+    "direct": "公司直营",
+    "joint": "联营",
+}
 
 
 def _as_int(value) -> int:
@@ -45,6 +53,19 @@ def _target_company_id() -> int:
     if explicit:
         return explicit
     return _as_int(getattr(env.company, "id", 0)) or 1  # noqa: F821
+
+
+def _project_category_by_operation() -> dict[str, int]:
+    categories: dict[str, int] = {}
+    Dictionary = env["sc.dictionary"].sudo()  # noqa: F821
+    for operation, code in PROJECT_CATEGORY_CODE_BY_OPERATION.items():
+        category = Dictionary.search(
+            [("type", "=", "project_category"), ("code", "=", code), ("active", "=", True)],
+            limit=1,
+        )
+        if category:
+            categories[operation] = category.id
+    return categories
 
 
 def _linked_project_company_map() -> dict[int, set[int]]:
@@ -88,6 +109,7 @@ def main() -> None:
     if not company:
         raise RuntimeError(f"USER_ACCEPTANCE_COMPANY_ID not found: {default_company_id}")
 
+    category_by_operation = _project_category_by_operation()
     linked_companies = _linked_project_company_map()
     strategy_projects = Project.search([("operation_strategy", "in", sorted(VALID_OPERATION_STRATEGIES))])
     linked_projects = Project.browse(sorted(linked_companies)).exists()
@@ -118,6 +140,12 @@ def main() -> None:
         vals = {}
         if not project.company_id:
             vals["company_id"] = target_company_id
+        target_category_id = category_by_operation.get(project.operation_strategy or "")
+        if target_category_id and project.project_category_id.id != target_category_id:
+            vals["project_category_id"] = target_category_id
+        target_business_nature = BUSINESS_NATURE_BY_OPERATION.get(project.operation_strategy or "")
+        if target_business_nature and (project.business_nature or "") != target_business_nature:
+            vals["business_nature"] = target_business_nature
         if vals:
             plan.append(
                 {
@@ -127,6 +155,10 @@ def main() -> None:
                     "old_company_id": project.company_id.id or None,
                     "target_company_id": target_company_id,
                     "old_active": bool(project.active),
+                    "old_project_category_id": project.project_category_id.id or None,
+                    "target_project_category_id": target_category_id or None,
+                    "old_business_nature": project.business_nature or "",
+                    "target_business_nature": target_business_nature or "",
                     "vals": vals,
                     "has_linked_business_facts": project.id in linked_companies,
                 }
@@ -144,6 +176,7 @@ def main() -> None:
         "status": "APPLIED" if apply else "DRY_RUN",
         "database": env.cr.dbname,  # noqa: F821
         "default_company_id": default_company_id,
+        "category_by_operation": category_by_operation,
         "candidate_project_count": len(projects),
         "linked_project_count": len(linked_companies),
         "write_count": len(plan),
