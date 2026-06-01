@@ -152,6 +152,110 @@ class TestProjectContextBoundaries(unittest.TestCase):
             ],
         )
 
+    def test_business_scope_domain_applies_company_project_and_operation_strategy(self):
+        core = _load_project_context_core()
+
+        class Field:
+            def __init__(self, comodel_name=""):
+                self.comodel_name = comodel_name
+
+        class Model:
+            _name = "payment.request"
+            _fields = {
+                "company_id": Field("res.company"),
+                "project_id": Field("project.project"),
+                "operation_strategy": Field(),
+            }
+
+        domain, meta = core.apply_business_scope_domain(
+            Model,
+            [("state", "=", "draft")],
+            {
+                "company_id": 3,
+                "current_project_id": 9,
+                "operation_strategy": "joint",
+            },
+            {},
+        )
+
+        self.assertEqual(
+            domain,
+            [
+                ("company_id", "=", 3),
+                ("project_id", "=", 9),
+                "|",
+                "&",
+                ("project_id", "!=", False),
+                ("project_id.operation_strategy", "=", "joint"),
+                "&",
+                ("project_id", "=", False),
+                ("operation_strategy", "=", "joint"),
+                ("state", "=", "draft"),
+            ],
+        )
+        self.assertTrue(meta["applied"])
+        self.assertEqual(meta["company_id"], 3)
+        self.assertEqual(meta["project_id"], 9)
+        self.assertEqual(meta["operation_strategy"], "joint")
+
+    def test_business_scope_operation_strategy_prefers_project_field(self):
+        core = _load_project_context_core()
+
+        class Field:
+            def __init__(self, comodel_name=""):
+                self.comodel_name = comodel_name
+
+        class Model:
+            _name = "sc.general.contract"
+            _fields = {
+                "project_id": Field("project.project"),
+                "operation_strategy": Field(),
+            }
+
+        self.assertEqual(
+            core.business_scope_domain(Model, {"operation_strategy": "joint"}),
+            [
+                "|",
+                "&",
+                ("project_id", "!=", False),
+                ("project_id.operation_strategy", "=", "joint"),
+                "&",
+                ("project_id", "=", False),
+                ("operation_strategy", "=", "joint"),
+            ],
+        )
+
+    def test_business_scope_domain_uses_project_fields_when_direct_fields_missing(self):
+        core = _load_project_context_core()
+
+        class Field:
+            def __init__(self, comodel_name=""):
+                self.comodel_name = comodel_name
+
+        class Model:
+            _name = "project.boq.line"
+            _fields = {
+                "project_id": Field("project.project"),
+            }
+
+        domain, meta = core.apply_business_scope_domain(
+            Model,
+            [],
+            {"company_id": 5, "operation_strategy": "direct"},
+            {},
+        )
+
+        self.assertEqual(
+            domain,
+            [
+                ("project_id.company_id", "=", 5),
+                ("project_id.operation_strategy", "=", "direct"),
+            ],
+        )
+        self.assertTrue(meta["applied"])
+        self.assertEqual(meta["company_id"], 5)
+        self.assertEqual(meta["operation_strategy"], "direct")
+
 
 if __name__ == "__main__":
     unittest.main()

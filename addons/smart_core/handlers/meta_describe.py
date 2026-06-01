@@ -52,6 +52,10 @@ class MetaDescribeHandler(BaseIntentHandler):
             return self._err(400, "company_id 无效")
         if company_id:
             ctx["allowed_company_ids"] = [company_id]
+            ctx["company_id"] = company_id
+        operation_strategy = str(p.get("operation_strategy") or p.get("operationStrategy") or "").strip()
+        if operation_strategy:
+            ctx["operation_strategy"] = operation_strategy
         t0 = time.time()
 
         try:

@@ -218,6 +218,10 @@ class LoadContractHandler(BaseIntentHandler):
             return self._err(400, "company_id 无效")
         if company_id:
             ctx_user["allowed_company_ids"] = [company_id]
+            ctx_user["company_id"] = company_id
+        operation_strategy = str(p.get("operation_strategy") or p.get("operationStrategy") or "").strip()
+        if operation_strategy:
+            ctx_user["operation_strategy"] = operation_strategy
 
         # ---------- 6) 生成契约（按当前用户权限，不 sudo） ----------
         if "app.contract.service" in self.env:

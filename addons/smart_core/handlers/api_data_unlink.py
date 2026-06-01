@@ -9,10 +9,15 @@ from odoo.exceptions import AccessError, UserError, ValidationError
 
 from ..core.base_handler import BaseIntentHandler
 from ..core.project_context import (
-    apply_project_scope_domain,
     project_scope_denied_response,
-    selected_project_id_from_context,
 )
+try:
+    from ..core.project_context import apply_business_scope_domain
+except ImportError:  # pragma: no cover - compatibility for lightweight boundary tests
+    from ..core.project_context import apply_project_scope_domain, selected_project_id_from_context
+
+    def apply_business_scope_domain(env_model, domain, params=None, context=None):
+        return apply_project_scope_domain(env_model, domain, selected_project_id_from_context(params, context))
 from ..core.request_params import parse_bool
 from ..utils.idempotency import (
     apply_idempotency_identity,
@@ -217,6 +222,29 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
             return [], self._err(400, "ids 无效", REASON_INVALID_ID)
         return [value], None
 
+    def _request_context(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        ctx = dict(params.get("context") or {}) if isinstance(params.get("context"), dict) else {}
+        company_id = 0
+        try:
+            company_id = int(params.get("company_id") or 0)
+        except Exception:
+            company_id = 0
+        if company_id > 0:
+            ctx["allowed_company_ids"] = [company_id]
+            ctx["company_id"] = company_id
+        project_id = 0
+        try:
+            project_id = int(params.get("current_project_id") or params.get("project_id") or 0)
+        except Exception:
+            project_id = 0
+        if project_id > 0:
+            ctx["current_project_id"] = project_id
+            ctx.setdefault("default_project_id", project_id)
+        operation_strategy = str(params.get("operation_strategy") or params.get("operationStrategy") or "").strip()
+        if operation_strategy:
+            ctx["operation_strategy"] = operation_strategy
+        return ctx
+
     def handle(self, payload=None, ctx=None):
         payload = payload or {}
         params = self._collect_params(payload)
@@ -241,9 +269,8 @@ class ApiDataUnlinkHandler(BaseIntentHandler):
             return self._err(400, "缺少参数 ids", REASON_MISSING_PARAMS)
 
         env_model = self.env[model]
-        context = params.get("context") if isinstance(params.get("context"), dict) else {}
-        project_id = selected_project_id_from_context(params, context)
-        scoped_domain, project_scope_meta = apply_project_scope_domain(env_model, [("id", "in", ids)], project_id)
+        context = self._request_context(params)
+        scoped_domain, project_scope_meta = apply_business_scope_domain(env_model, [("id", "in", ids)], params, context)
         if project_scope_meta.get("applied"):
             allowed_count = env_model.search_count(scoped_domain)
             if int(allowed_count or 0) != len(set(ids)):
