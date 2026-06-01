@@ -124,6 +124,21 @@ class FileDownloadHandler(BaseIntentHandler):
                         order="id desc",
                         limit=1,
                     )
+                if not attachment and model and not _is_empty_param(res_id):
+                    if model not in self._allowed_models():
+                        return self._err(403, "附件不可访问")
+                    if model not in self.env:
+                        return self._err(404, "附件业务模型不存在")
+                    attachment = self.env["ir.attachment"].sudo().create(
+                        {
+                            "name": name or Path(attachment_url.split("?", 1)[0]).name or "历史附件",
+                            "res_model": model,
+                            "res_id": res_id,
+                            "type": "url",
+                            "url": attachment_url,
+                            "mimetype": mimetypes.guess_type(name or attachment_url)[0] or "application/octet-stream",
+                        }
+                    )
                 if not attachment:
                     return self._err(404, "附件不存在")
                 attachment_id = attachment.id
