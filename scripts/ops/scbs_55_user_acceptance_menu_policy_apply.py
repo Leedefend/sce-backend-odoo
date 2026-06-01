@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Publish only the SCBS 55 user-acceptance menus for construction products.
+"""Publish SCBS user-acceptance data menus for construction products.
 
 Run with:
     odoo shell -c /path/to/odoo.conf -d sc_demo --no-http < scripts/ops/scbs_55_user_acceptance_menu_policy_apply.py
@@ -145,7 +145,7 @@ def direct_acceptance_policy_groups(root_menu) -> list[dict]:
             groups.append(
                 {
                     "group_key": f"construction.scbsly_direct.{xml_name(category.name)}",
-                    "group_label": "用户验收",
+                    "group_label": f"直营项目系统菜单 / {category.name}",
                     "category": "scbsly_direct_acceptance_menu",
                     "menus": menus,
                 }
@@ -250,6 +250,136 @@ def collect_active_descendant_rows(menu) -> list[tuple[int, int]]:
     return [(int(row[0]), int(row[1] or 0)) for row in env.cr.fetchall()]  # noqa: F821
 
 
+def action_domain(action) -> list:
+    text = str(getattr(action, "domain", "") or "").strip()
+    if not text:
+        return []
+    try:
+        from odoo.tools.safe_eval import safe_eval  # noqa: E402
+
+        value = safe_eval(text, {"context": {}, "uid": env.uid, "active_id": False, "active_ids": []})  # noqa: F821
+        return value if isinstance(value, list) else []
+    except Exception:
+        return []
+
+
+def action_record_count(action) -> int:
+    model_name = str(getattr(action, "res_model", "") or "").strip()
+    if not model_name or model_name not in env:  # noqa: F821
+        return 0
+    model = env[model_name].sudo().with_context(active_test=False)  # noqa: F821
+    try:
+        return int(model.search_count(action_domain(action)))
+    except Exception:
+        try:
+            return int(model.search_count([]))
+        except Exception:
+            return 0
+
+
+def legacy_data_signals(model_name: str) -> list[str]:
+    if not model_name or model_name not in env:  # noqa: F821
+        return []
+    field_names = set(env[model_name]._fields)  # noqa: F821
+    signals = []
+    if model_name.startswith("sc.legacy."):
+        signals.append("legacy_model")
+    if any(field_name.startswith("legacy_") for field_name in field_names):
+        signals.append("legacy_field")
+    for field_name in (
+        "raw_payload",
+        "source_table",
+        "legacy_source_table",
+        "legacy_record_id",
+        "legacy_fact_model",
+        "legacy_contract_id",
+        "legacy_project_id",
+        "old_system_id",
+    ):
+        if field_name in field_names:
+            signals.append(field_name)
+    return sorted(set(signals))
+
+
+def is_customer_acceptance_path(path: str) -> bool:
+    return any(marker in path for marker in ("用户核对菜单", "用户验收", "直营项目系统菜单"))
+
+
+def is_internal_only_path(path: str) -> bool:
+    return any(
+        marker in path
+        for marker in (
+            "基础设置/系统权限",
+            "系统权限",
+            "历史财务事实（内部）",
+            "用户优先入口迭代计划",
+            "旧库业务主体映射",
+            "旧库往来单位映射",
+            "旧库项目映射",
+            "旧库报表承载清单",
+        )
+    )
+
+
+def has_active_children(menu) -> bool:
+    return any(child.active for child in menu.child_id)
+
+
+def top_level_group_label(menu) -> str:
+    current = menu
+    while current.parent_id and int(current.parent_id.id) != int(root.id):  # noqa: F821
+        current = current.parent_id
+    return str(current.name or menu.parent_id.name or "旧业务数据核对")
+
+
+def add_menu_and_active_ancestors(menu, *, source: str) -> None:
+    current = menu
+    while current and current.exists():
+        allowed_menu_ids.add(int(current.id))  # noqa: F821
+        allowed_group_by_menu_id.setdefault(int(current.id), top_level_group_label(current))  # noqa: F821
+        allowed_sequence_by_menu_id.setdefault(int(current.id), int(current.sequence or 0))  # noqa: F821
+        allowed_sources_by_menu_id.setdefault(int(current.id), set()).add(source)  # noqa: F821
+        if int(current.id) == int(root.id):  # noqa: F821
+            break
+        current = current.parent_id
+
+
+def discover_legacy_data_menus(root_menu) -> list[dict[str, object]]:
+    discovered = []
+    for menu in collect_descendants(root_menu):
+        if not menu.active or not menu.action:
+            continue
+        action = menu.action
+        model_name = str(getattr(action, "res_model", "") or "").strip()
+        path = str(menu.complete_name or menu.name or "")
+        signals = legacy_data_signals(model_name)
+        count = action_record_count(action)
+        acceptance_path = is_customer_acceptance_path(path)
+        if not acceptance_path and is_internal_only_path(path):
+            continue
+        if not acceptance_path and (not signals or count <= 0):
+            continue
+        menu_xmlid = xmlid_for(menu)
+        if menu_xmlid.startswith("smart_construction_demo.") or "演示" in path:
+            continue
+        discovered.append(
+            {
+                "menu_id": int(menu.id),
+                "menu_xmlid": menu_xmlid,
+                "label": str(menu.name or ""),
+                "path": path,
+                "action_id": int(action.id),
+                "action_name": str(getattr(action, "name", "") or ""),
+                "model": model_name,
+                "record_count": count,
+                "legacy_data_signals": signals,
+                "acceptance_path": acceptance_path,
+            }
+        )
+    discovered.sort(key=lambda item: (str(item["path"]), int(item["menu_id"])))
+    return discovered
+
+
 def upsert_runtime_policy(*, menu, visible: bool, note: str) -> int:
     return upsert_runtime_policy_by_id(
         menu_id=int(menu.id),
@@ -284,8 +414,8 @@ artifact_dir = artifact_root()
 
 Plan = env["sc.legacy.user.priority.menu.plan"].sudo()  # noqa: F821
 rows = Plan.search([("source_document", "=", SOURCE_DOCUMENT), ("active", "=", True)], order="priority_sequence")
-if len(rows) != 55:
-    raise RuntimeError({"expected_55_plan_rows": 55, "actual": len(rows)})
+if not rows:
+    raise RuntimeError({"missing_active_user_acceptance_plan_rows": SOURCE_DOCUMENT})
 
 root = ref(ROOT_XMLID)
 if not root:
@@ -302,7 +432,10 @@ groups_by_name = {}
 allowed_xmlids = set()
 allowed_menu_ids = {int(root.id), int(acceptance_root.id)}
 allowed_group_by_xmlid = {}
+allowed_group_by_menu_id = {int(acceptance_root.id): "用户核对菜单"}
 allowed_sequence_by_xmlid = {}
+allowed_sequence_by_menu_id = {int(acceptance_root.id): int(acceptance_root.sequence or 0)}
+allowed_sources_by_menu_id = {int(root.id): {"root"}, int(acceptance_root.id): {"acceptance_root"}}
 created_or_updated = []
 for row in rows:
     action = row.target_action_id
@@ -324,6 +457,9 @@ for row in rows:
         )
         groups_by_name[group_name] = group_menu
         allowed_menu_ids.add(int(group_menu.id))
+        allowed_group_by_menu_id[int(group_menu.id)] = "用户核对菜单"
+        allowed_sequence_by_menu_id[int(group_menu.id)] = int(group_menu.sequence or 0)
+        allowed_sources_by_menu_id.setdefault(int(group_menu.id), set()).add("plan_group")
 
     menu_xmlid_name = xml_name("menu_scbs55_user_acceptance", f"{int(row.priority_sequence):03d}", row.legacy_menu_name)
     menu = ensure_menu(
@@ -337,7 +473,10 @@ for row in rows:
     allowed_xmlids.add(allowed_xmlid)
     allowed_menu_ids.add(int(menu.id))
     allowed_group_by_xmlid[allowed_xmlid] = row.legacy_menu_group or "用户核对"
+    allowed_group_by_menu_id[int(menu.id)] = row.legacy_menu_group or "用户核对"
     allowed_sequence_by_xmlid[allowed_xmlid] = int(row.priority_sequence or 0)
+    allowed_sequence_by_menu_id[int(menu.id)] = int(row.priority_sequence or 0)
+    allowed_sources_by_menu_id.setdefault(int(menu.id), set()).add("priority_plan")
     created_or_updated.append(
         {
             "priority_sequence": int(row.priority_sequence or 0),
@@ -349,9 +488,45 @@ for row in rows:
         }
     )
 
+acceptance_descendant_ids = collect_active_descendant_ids(acceptance_root)
+for menu in env["ir.ui.menu"].sudo().browse(sorted(acceptance_descendant_ids)).exists():  # noqa: F821
+    allowed_menu_ids.add(int(menu.id))
+    menu_xmlid = xmlid_for(menu)
+    if menu.action and menu_xmlid:
+        allowed_xmlids.add(menu_xmlid)
+        allowed_group_by_xmlid.setdefault(menu_xmlid, menu.parent_id.name or "用户核对")
+        allowed_sequence_by_xmlid.setdefault(menu_xmlid, int(menu.sequence or 0))
+    allowed_group_by_menu_id.setdefault(int(menu.id), menu.parent_id.name or "用户核对")
+    allowed_sequence_by_menu_id.setdefault(int(menu.id), int(menu.sequence or 0))
+    allowed_sources_by_menu_id.setdefault(int(menu.id), set()).add("existing_acceptance_tree")
+
 direct_acceptance_root = ref(DIRECT_ACCEPTANCE_ROOT_XMLID)
 direct_acceptance_menu_ids = collect_active_menu_ids(direct_acceptance_root) if direct_acceptance_root else set()
 allowed_menu_ids.update(direct_acceptance_menu_ids)
+for menu_id in direct_acceptance_menu_ids:
+    allowed_sources_by_menu_id.setdefault(int(menu_id), set()).add("direct_acceptance_tree")
+direct_acceptance_groups = direct_acceptance_policy_groups(direct_acceptance_root)
+direct_acceptance_leaf_count = sum(
+    len(group.get("menus") if isinstance(group.get("menus"), list) else [])
+    for group in direct_acceptance_groups
+    if isinstance(group, dict)
+)
+
+legacy_data_discovered_menus = discover_legacy_data_menus(root)
+for item in legacy_data_discovered_menus:
+    menu = env["ir.ui.menu"].sudo().browse(int(item["menu_id"])).exists()  # noqa: F821
+    if not menu:
+        continue
+    add_menu_and_active_ancestors(menu, source="legacy_data_discovery")
+    menu_xmlid = str(item.get("menu_xmlid") or "").strip()
+    group_label = top_level_group_label(menu)
+    if menu_xmlid:
+        if item.get("acceptance_path") or not has_active_children(menu):
+            allowed_xmlids.add(menu_xmlid)
+        allowed_group_by_xmlid.setdefault(menu_xmlid, group_label)
+        allowed_sequence_by_xmlid.setdefault(menu_xmlid, int(menu.sequence or 0))
+    allowed_group_by_menu_id.setdefault(int(menu.id), group_label)
+    allowed_sequence_by_menu_id.setdefault(int(menu.id), int(menu.sequence or 0))
 
 runtime_keep_policy_count = 0
 runtime_hide_policy_count = 0
@@ -359,7 +534,7 @@ for menu in env["ir.ui.menu"].sudo().browse(sorted(allowed_menu_ids)).exists(): 
     runtime_keep_policy_count += upsert_runtime_policy(
         menu=menu,
         visible=True,
-        note="SCBS 55 user acceptance menu retained for customer verification.",
+        note="User acceptance menu retained because it exposes legacy business data for customer verification.",
     )
 
 active_descendant_rows = collect_active_descendant_rows(root)
@@ -373,7 +548,7 @@ for menu_id, sequence in hidden_menu_rows:
         menu_id=menu_id,
         sequence=sequence,
         visible=False,
-        note="Hidden while SCBS 55 user acceptance menu-only publishing strategy is active.",
+        note="Hidden while legacy business data customer-verification publishing strategy is active.",
     )
 
 from odoo.addons.smart_core.delivery.product_policy_catalog_sync_service import ProductPolicyCatalogSyncService  # noqa: E402
@@ -409,7 +584,8 @@ def policy_release_pages(groups: list[dict]) -> list[dict]:
                     "enabled": True,
                     "release_state": "released",
                     "access_level": "public",
-                    "visible_menu_path": f"系统菜单 / 用户核对菜单 / {group_label} / {str(menu.get('label') or '').strip()}",
+                    "visible_menu_path": str(menu.get("visible_menu_path") or "").strip()
+                    or f"系统菜单 / 用户核对菜单 / {group_label} / {str(menu.get('label') or '').strip()}",
                 }
             )
     return pages
@@ -418,6 +594,7 @@ def policy_release_pages(groups: list[dict]) -> list[dict]:
 def merge_release_pages(existing_pages: list, required_pages: list[dict]) -> tuple[list[dict], int]:
     merged = [dict(page) for page in existing_pages if isinstance(page, dict)]
     index = {}
+    action_fallback_index = {}
     for pos, page in enumerate(merged):
         for key in ("menu_xmlid", "page_key", "menu_key"):
             value = str(page.get(key) or "").strip()
@@ -427,8 +604,9 @@ def merge_release_pages(existing_pages: list, required_pages: list[dict]) -> tup
         action_id = int(page.get("action_id") or 0)
         if menu_id:
             index.setdefault(f"menu_id:{menu_id}", pos)
-        if action_id:
-            index.setdefault(f"action_id:{action_id}", pos)
+        has_stable_page_key = bool(menu_id) or any(str(page.get(key) or "").strip() for key in ("menu_xmlid", "page_key", "menu_key"))
+        if action_id and not has_stable_page_key:
+            action_fallback_index.setdefault(f"action_id:{action_id}", pos)
     added = 0
     for page in required_pages:
         keys = [
@@ -440,11 +618,16 @@ def merge_release_pages(existing_pages: list, required_pages: list[dict]) -> tup
         action_id = int(page.get("action_id") or 0)
         if menu_id:
             keys.append(f"menu_id:{menu_id}")
-        if action_id:
-            keys.append(f"action_id:{action_id}")
         hit = next((index[key] for key in keys if key and key in index), None)
+        if hit is None and action_id and not any(keys):
+            hit = action_fallback_index.get(f"action_id:{action_id}")
         if hit is None:
-            index[str(page.get("menu_xmlid") or page.get("page_key") or len(merged))] = len(merged)
+            next_pos = len(merged)
+            for key in keys:
+                if key:
+                    index.setdefault(key, next_pos)
+            if action_id and not any(keys):
+                action_fallback_index.setdefault(f"action_id:{action_id}", next_pos)
             merged.append(dict(page))
             added += 1
             continue
@@ -498,12 +681,20 @@ def sync_platform_release_gate_pages(product_key: str, required_pages: list[dict
 
     if platform_db == current_db:
         return update_in(env)  # noqa: F821
-    registry = Registry(platform_db)
-    with registry.cursor() as cr:
-        read_env = api.Environment(cr, SUPERUSER_ID, dict(env.context or {}))  # noqa: F821
-        result = update_in(read_env)
-        cr.commit()
-        return result
+    try:
+        registry = Registry(platform_db)
+        with registry.cursor() as cr:
+            read_env = api.Environment(cr, SUPERUSER_ID, dict(env.context or {}))  # noqa: F821
+            result = update_in(read_env)
+            cr.commit()
+            return result
+    except Exception as exc:
+        return {
+            "status": "SKIP",
+            "reason": "platform_release_db_unavailable",
+            "platform_db": platform_db,
+            "error": str(exc),
+        }
 
 policy_results = {}
 platform_release_gate_results = {}
@@ -525,20 +716,22 @@ for product_key in PRODUCT_KEYS:
             total += 1
             next_menu = dict(menu)
             menu_xmlid = str(next_menu.get("menu_xmlid") or "").strip()
-            if menu_xmlid in allowed_xmlids:
-                group_label = allowed_group_by_xmlid.get(menu_xmlid) or "用户核对"
+            menu_id = int(next_menu.get("menu_id") or 0)
+            if menu_xmlid in allowed_xmlids or menu_id in allowed_menu_ids:
+                group_label = allowed_group_by_xmlid.get(menu_xmlid) or allowed_group_by_menu_id.get(menu_id) or "用户核对"
                 next_menu["enabled"] = True
                 next_menu["release_state"] = "released"
                 next_menu["access_level"] = "public"
-                next_menu["policy_note"] = "SCBS 55 user acceptance menu retained for customer verification."
-                next_menu["sequence"] = allowed_sequence_by_xmlid.get(menu_xmlid, int(next_menu.get("sequence") or 0))
+                next_menu["policy_note"] = "Retained because it exposes legacy business data for customer verification."
+                next_menu["sequence"] = allowed_sequence_by_xmlid.get(menu_xmlid, allowed_sequence_by_menu_id.get(menu_id, int(next_menu.get("sequence") or 0)))
                 enabled += 1
-                allowed_seen.add(menu_xmlid)
+                if menu_xmlid:
+                    allowed_seen.add(menu_xmlid)
                 grouped_allowed_menus.setdefault(group_label, []).append(next_menu)
             else:
                 next_menu["enabled"] = False
                 next_menu["release_state"] = "hidden"
-                next_menu["policy_note"] = "Hidden while SCBS 55 user acceptance menu-only publishing strategy is active."
+                next_menu["policy_note"] = "Hidden while legacy business data customer-verification publishing strategy is active."
                 hidden += 1
                 hidden_menus.append(next_menu)
     next_groups = []
@@ -552,7 +745,7 @@ for product_key in PRODUCT_KEYS:
             }
         )
         _ = group_index
-    next_groups.extend(direct_acceptance_policy_groups(direct_acceptance_root))
+    next_groups.extend(direct_acceptance_groups)
     if hidden_menus:
         next_groups.append(
             {
@@ -562,11 +755,17 @@ for product_key in PRODUCT_KEYS:
                 "menus": hidden_menus,
             }
         )
-    missing_allowed = sorted(allowed_xmlids - allowed_seen)
+    policy_visible_xmlids = {
+        str(menu.get("menu_xmlid") or "").strip()
+        for menus in grouped_allowed_menus.values()
+        for menu in menus
+        if str(menu.get("menu_xmlid") or "").strip()
+    }
+    missing_allowed = sorted(allowed_xmlids - policy_visible_xmlids)
     policy.write(
         {
             "menu_groups": next_groups,
-            "note": "SCBS 55 user acceptance menu-only publishing strategy active.",
+            "note": "Legacy business data customer-verification menu publishing strategy active.",
         }
     )
     platform_release_gate_results[product_key] = sync_platform_release_gate_pages(
@@ -577,6 +776,7 @@ for product_key in PRODUCT_KEYS:
         "total_policy_menus": total,
         "enabled_policy_menus": enabled,
         "hidden_policy_menus": hidden,
+        "direct_acceptance_enabled_menus": direct_acceptance_leaf_count,
         "missing_allowed_xmlids": missing_allowed,
     }
 
@@ -584,20 +784,30 @@ env.cr.commit()  # noqa: F821
 
 payload = {
     "status": "PASS"
-    if len(created_or_updated) == 55
-    and all(not result["missing_allowed_xmlids"] and result["enabled_policy_menus"] == 55 for result in policy_results.values())
+    if created_or_updated
+    and not any(result["missing_allowed_xmlids"] for result in policy_results.values())
+    and all(result["enabled_policy_menus"] >= len(created_or_updated) for result in policy_results.values())
     else "FAIL",
     "mode": "scbs_55_user_acceptance_menu_policy_apply",
     "database": env.cr.dbname,  # noqa: F821
     "source_document": SOURCE_DOCUMENT,
+    "active_plan_menu_count": len(rows),
     "created_or_updated_menu_count": len(created_or_updated),
+    "acceptance_tree_menu_count": len(acceptance_descendant_ids) + 1,
     "runtime_allowed_menu_count": len(allowed_menu_ids),
+    "legacy_data_discovered_menu_count": len(legacy_data_discovered_menus),
     "direct_acceptance_menu_count": len(direct_acceptance_menu_ids),
+    "direct_acceptance_leaf_count": direct_acceptance_leaf_count,
     "runtime_hidden_menu_count": len(hidden_menu_rows),
     "runtime_keep_policy_count": runtime_keep_policy_count,
     "runtime_hide_policy_count": runtime_hide_policy_count,
     "acceptance_root_xmlid": ACCEPTANCE_ROOT_XMLID,
     "allowed_menu_xmlids": sorted(allowed_xmlids),
+    "allowed_menu_sources": {
+        str(menu_id): sorted(sources)
+        for menu_id, sources in sorted(allowed_sources_by_menu_id.items())
+    },
+    "legacy_data_discovered_menus": legacy_data_discovered_menus,
     "policy_results": policy_results,
     "platform_release_gate_results": platform_release_gate_results,
     "menus": created_or_updated,
