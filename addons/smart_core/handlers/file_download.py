@@ -67,12 +67,13 @@ class FileDownloadHandler(BaseIntentHandler):
         }
 
     def _allowed_models(self):
+        base_values = set(self.ALLOWED_MODELS)
         payload = call_extension_hook_first(self.env, "smart_core_file_download_allowed_models", self.env)
         if isinstance(payload, (list, tuple, set)):
             values = {str(item).strip() for item in payload if str(item).strip()}
             if values:
-                return values
-        return set(self.ALLOWED_MODELS)
+                return base_values | values
+        return base_values
 
     def _err(self, code: int, message: str):
         return {"ok": False, "error": {"code": code, "message": message}, "code": code}

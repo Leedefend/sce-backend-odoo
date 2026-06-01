@@ -20,6 +20,41 @@ function canPreviewInline(mimetype: string) {
   return INLINE_MIMETYPES.has(normalized) || INLINE_MIMETYPE_PREFIXES.some((prefix) => normalized.startsWith(prefix));
 }
 
+function attachmentIdFromWebContentUrl(url: string): number {
+  const clean = String(url || '').trim();
+  const direct = clean.match(/^\/web\/content\/(\d+)(?:[/?#]|$)/);
+  if (direct) return Number(direct[1] || 0) || 0;
+  const modelField = clean.match(/^\/web\/content\/ir\.attachment\/(\d+)\//);
+  if (modelField) return Number(modelField[1] || 0) || 0;
+  try {
+    const parsed = new URL(clean, window.location.origin);
+    const id = Number(parsed.searchParams.get('id') || parsed.searchParams.get('attachment_id') || 0);
+    return Number.isFinite(id) && id > 0 ? Math.trunc(id) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+export function attachmentLinkDownloadParams(
+  link: { name: string; url: string },
+  context?: { model?: string; res_id?: number },
+): FileDownloadRequest | null {
+  const url = String(link.url || '').trim();
+  if (url.startsWith('legacy-file://') || url.startsWith('legacy-file-id://')) {
+    return {
+      url,
+      model: context?.model,
+      res_id: context?.res_id,
+      name: link.name,
+    };
+  }
+  if (url.startsWith('/web/content/')) {
+    const id = attachmentIdFromWebContentUrl(url);
+    return id ? { id, name: link.name } : null;
+  }
+  return null;
+}
+
 function downloadBlob(blob: Blob, name: string) {
   const objectUrl = URL.createObjectURL(blob);
   const link = document.createElement('a');
@@ -75,4 +110,16 @@ export function openExternalAttachmentUrl(url: string) {
   const clean = String(url || '').trim();
   if (!clean) return;
   window.open(clean, '_blank', 'noopener');
+}
+
+export async function previewAttachmentReferenceLink(
+  link: { name: string; url: string },
+  context?: { model?: string; res_id?: number },
+) {
+  const params = attachmentLinkDownloadParams(link, context);
+  if (params) {
+    await previewOrDownloadFile(params, link.name);
+    return;
+  }
+  openExternalAttachmentUrl(link.url);
 }

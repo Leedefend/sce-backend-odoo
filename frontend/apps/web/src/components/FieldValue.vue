@@ -18,7 +18,7 @@
 import { computed } from 'vue';
 import type { FieldDescriptor } from '@sc/schema';
 import { formatDisplayValue, parseAttachmentReferenceLinks } from '../utils/display';
-import { openExternalAttachmentUrl, previewOrDownloadFile } from '../utils/filePreview';
+import { previewAttachmentReferenceLink } from '../utils/filePreview';
 
 const props = defineProps<{ value: unknown; field?: FieldDescriptor }>();
 
@@ -29,11 +29,7 @@ const display = computed(() => {
 const attachmentLinks = computed(() => parseAttachmentReferenceLinks(props.value));
 
 async function previewAttachmentLink(link: { name: string; url: string }) {
-  if (link.url.startsWith('legacy-file://') || link.url.startsWith('legacy-file-id://')) {
-    await previewOrDownloadFile({ url: link.url }, link.name);
-    return;
-  }
-  openExternalAttachmentUrl(link.url);
+  await previewAttachmentReferenceLink(link);
 }
 </script>
 

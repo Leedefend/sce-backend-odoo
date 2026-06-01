@@ -661,7 +661,7 @@ import PageHeader from '../components/page/PageHeader.vue';
 import { resolveEmptyCopy, resolveErrorCopy, type StatusError } from '../composables/useStatus';
 import type { SceneListProfile } from '../app/resolvers/sceneRegistry';
 import { formatAttachmentReferenceValue, parseAttachmentReferenceLinks } from '../utils/display';
-import { openExternalAttachmentUrl, previewOrDownloadFile } from '../utils/filePreview';
+import { previewAttachmentReferenceLink } from '../utils/filePreview';
 
 type SelectionAction = {
   key: string;
@@ -1011,16 +1011,10 @@ function attachmentLinks(value: unknown) {
 }
 
 async function previewAttachmentLink(link: { name: string; url: string }, row: Record<string, unknown>) {
-  if (link.url.startsWith('legacy-file://') || link.url.startsWith('legacy-file-id://')) {
-    await previewOrDownloadFile({
-      url: link.url,
-      model: props.model,
-      res_id: Number(row.id || 0) || undefined,
-      name: link.name,
-    }, link.name);
-    return;
-  }
-  openExternalAttachmentUrl(link.url);
+  await previewAttachmentReferenceLink(link, {
+    model: props.model,
+    res_id: Number(row.id || 0) || undefined,
+  });
 }
 
 function isStatusColumn(field: string) {

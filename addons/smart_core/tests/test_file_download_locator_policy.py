@@ -77,6 +77,18 @@ def _load_handler():
 
 
 class TestFileDownloadLocatorPolicy(unittest.TestCase):
+    def test_extension_allowed_models_are_union_with_base_policy(self):
+        module = _load_handler()
+        old_hook = module.call_extension_hook_first
+        module.call_extension_hook_first = lambda *args, **kwargs: ["payment.request"]
+        try:
+            handler = module.FileDownloadHandler(env=_Env())
+
+            self.assertIn("res.partner", handler._allowed_models())
+            self.assertIn("payment.request", handler._allowed_models())
+        finally:
+            module.call_extension_hook_first = old_hook
+
     def test_fallback_locator_rejects_disallowed_model_before_attachment_lookup(self):
         module = _load_handler()
         env = _Env()
