@@ -48,7 +48,13 @@ class ScLegacyEngineeringProgressReceipt(models.Model):
                     f.source_amount::double precision AS amount,
                     f.receipt_type::varchar AS receipt_type,
                     f.income_category::varchar AS income_category,
-                    f.legacy_state::varchar AS state_label,
+                    CASE f.legacy_state::varchar
+                        WHEN '-1' THEN '已驳回'
+                        WHEN '0' THEN '未审核'
+                        WHEN '1' THEN '审核中'
+                        WHEN '2' THEN '已审核'
+                        ELSE f.legacy_state::varchar
+                    END AS state_label,
                     f.creator_name::varchar AS creator_name,
                     f.created_time AS created_time,
                     f.note::text AS note

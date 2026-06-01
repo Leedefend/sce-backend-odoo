@@ -124,21 +124,21 @@
         <menuitem id="menu_sc_expense_contract_labor"
                   name="劳务合同"
                   parent="smart_construction_core.menu_sc_expense_contract_group"
-                  action="smart_construction_core.action_construction_contract_expense_labor"
+                  action="smart_construction_core.action_scbsly_direct_acceptance_labor_contract"
                   sequence="13"
                   groups="smart_construction_core.group_sc_cap_contract_read,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
 
         <menuitem id="menu_sc_expense_contract_rental"
                   name="租赁合同"
                   parent="smart_construction_core.menu_sc_expense_contract_group"
-                  action="smart_construction_core.action_construction_contract_expense_rental"
+                  action="smart_construction_core.action_scbsly_direct_acceptance_rental_contract"
                   sequence="14"
                   groups="smart_construction_core.group_sc_cap_contract_read,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
 
         <menuitem id="menu_sc_expense_contract_subcontract"
                   name="分包合同"
                   parent="smart_construction_core.menu_sc_expense_contract_group"
-                  action="smart_construction_core.action_construction_contract_expense_subcontract"
+                  action="smart_construction_core.action_scbsly_direct_acceptance_subcontract_contract"
                   sequence="15"
                   groups="smart_construction_core.group_sc_cap_contract_read,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
 

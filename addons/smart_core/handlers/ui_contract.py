@@ -34,6 +34,7 @@ _VIEW_MAP = {  # Odoo -> 前端别名
     "calendar":"calendar","gantt":"gantt","search":"search","activity":"activity","dashboard":"dashboard",
 }
 _VIEW_INV = {v:k for k,v in _VIEW_MAP.items()}  # 前端别名 -> Odoo
+LEGACY_DIRECT_ACCEPTANCE_MODEL = "sc.legacy.direct.acceptance.fact"
 
 FRONTEND_BLOCKED_NATIVE_OPS = {"nav", "model", "view", "action_open", "menu"}
 INTERNAL_NATIVE_SOURCE_MODES = {
@@ -199,6 +200,7 @@ class UiContractHandler(BaseIntentHandler):
             contract_surface=contract_surface,
             source_mode=source_mode,
         )
+        data = _align_direct_acceptance_dynamic_column_labels(data)
         meta = _normalize_meta(meta)
         etag = self._make_etag(
             meta=meta,
@@ -605,6 +607,94 @@ def _safe_eval_or(val, default):
         return val if val is not None else default
     except Exception:
         return default
+
+
+def _align_direct_acceptance_dynamic_column_labels(data):
+    if not isinstance(data, dict):
+        return data
+    head = data.get("head") if isinstance(data.get("head"), dict) else {}
+    model_name = (
+        data.get("model")
+        or data.get("res_model")
+        or head.get("model")
+        or head.get("res_model")
+        or ""
+    )
+    views = data.get("views") if isinstance(data.get("views"), dict) else {}
+    tree = views.get("tree") if isinstance(views.get("tree"), dict) else None
+    if tree is None:
+        tree = views.get("list") if isinstance(views.get("list"), dict) else None
+    if not tree:
+        return data
+
+    schema_rows = tree.get("columns_schema")
+    if not isinstance(schema_rows, list):
+        return data
+
+    dynamic_labels = {}
+    dynamic_columns = []
+    for row in schema_rows:
+        if not isinstance(row, dict):
+            continue
+        name = str(row.get("name") or "").strip()
+        if not name.startswith("legacy_visible_"):
+            continue
+        label = str(row.get("label") or row.get("string") or "").strip()
+        if not label or label.lower().startswith("legacy visible "):
+            continue
+        dynamic_columns.append(name)
+        dynamic_labels[name] = label
+
+    if not dynamic_labels:
+        return data
+    if model_name and model_name != LEGACY_DIRECT_ACCEPTANCE_MODEL:
+        return data
+
+    fields_map = data.get("fields") if isinstance(data.get("fields"), dict) else {}
+    if fields_map:
+        fields_map = dict(fields_map)
+        for name, label in dynamic_labels.items():
+            field = fields_map.get(name)
+            if isinstance(field, dict):
+                descriptor = dict(field)
+                descriptor["string"] = label
+                descriptor["label"] = label
+                fields_map[name] = descriptor
+        data["fields"] = fields_map
+
+    list_profile = data.get("list_profile") if isinstance(data.get("list_profile"), dict) else {}
+    list_profile = dict(list_profile)
+    column_labels = list_profile.get("column_labels") if isinstance(list_profile.get("column_labels"), dict) else {}
+    column_labels = dict(column_labels)
+    column_labels.update(dynamic_labels)
+    list_profile["column_labels"] = column_labels
+
+    profile_columns = list_profile.get("columns")
+    if not isinstance(profile_columns, list) or not profile_columns:
+        tree_columns = tree.get("columns") if isinstance(tree.get("columns"), list) else []
+        list_profile["columns"] = [
+            str(name).strip()
+            for name in (tree_columns or dynamic_columns)
+            if str(name or "").strip()
+        ]
+    locked_columns = [
+        str(name).strip()
+        for name in (list_profile.get("columns") or dynamic_columns)
+        if str(name or "").strip()
+    ]
+    preference_policy = list_profile.get("preference_policy") if isinstance(list_profile.get("preference_policy"), dict) else {}
+    preference_policy = dict(preference_policy)
+    preference_policy.update(
+        {
+            "allow_visibility": False,
+            "allow_order": False,
+            "locked_columns": locked_columns,
+            "must_request_columns": locked_columns,
+        }
+    )
+    list_profile["preference_policy"] = preference_policy
+    data["list_profile"] = list_profile
+    return data
 
 
 def _normalize_render_profile_name(value):

@@ -36,7 +36,7 @@
                     <field name="partner_id"/>
                     <field name="partner_name" optional="hide"/>
                     <field name="amount" sum="收款金额合计"/>
-                    <field name="operation_strategy" optional="show"/>
+                    <field name="operation_strategy" optional="hide"/>
                     <field name="receipt_type"/>
                     <field name="income_category" optional="show"/>
                     <field name="state_label" optional="hide"/>
@@ -109,7 +109,7 @@
         <menuitem id="menu_sc_supplier_contract_current"
                   name="供货合同"
                   parent="smart_construction_core.menu_sc_cost_report_group"
-                  action="smart_construction_core.action_sc_supplier_contract_current"
+                  action="smart_construction_core.action_scbsly_direct_acceptance_supplier_contract"
                   sequence="11"
                   groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_contract_read,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
 
@@ -130,7 +130,7 @@
         <menuitem id="menu_scbs55_user_acceptance_455_供货合同"
                   name="供货合同"
                   parent="smart_construction_core.menu_sc_cost_report_group"
-                  action="smart_construction_core.action_sc_supplier_contract_current"
+                  action="smart_construction_core.action_scbsly_direct_acceptance_supplier_contract"
                   sequence="455"
                   groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_contract_read,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
     </data>

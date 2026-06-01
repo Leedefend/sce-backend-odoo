@@ -992,7 +992,7 @@
     <menuitem id="menu_sc_project_income_contract_acceptance_construction"
               name="施工合同"
               parent="smart_construction_core.menu_sc_income_contract_group"
-              action="smart_construction_core.action_construction_contract_income"
+              action="smart_construction_core.action_scbsly_direct_acceptance_construction_contract"
               sequence="16"
               groups="smart_construction_core.group_sc_cap_contract_read"/>
     <menuitem id="menu_sc_income_contract_variation"
@@ -1194,7 +1194,7 @@
     <menuitem id="menu_sc_equipment_contract_acceptance"
               name="机械合同（合同）"
               parent="smart_construction_core.menu_sc_equipment_management_group"
-              action="smart_construction_core.action_sc_equipment_request"
+              action="smart_construction_core.action_scbsly_direct_acceptance_equipment_contract"
               sequence="21"
               groups="smart_construction_core.group_sc_internal_user"/>
     <menuitem id="menu_sc_equipment_usage"
@@ -1236,13 +1236,13 @@
     <menuitem id="menu_sc_material_rental_in_acceptance"
               name="租入"
               parent="smart_construction_core.menu_sc_material_rental_group"
-              action="smart_construction_core.action_sc_material_rental_in_acceptance"
+              action="smart_construction_core.action_scbsly_direct_acceptance_rental_in"
               sequence="21"
               groups="smart_construction_core.group_sc_cap_material_read,smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"/>
     <menuitem id="menu_sc_material_rental_return_acceptance"
               name="还租"
               parent="smart_construction_core.menu_sc_material_rental_group"
-              action="smart_construction_core.action_sc_material_rental_return_acceptance"
+              action="smart_construction_core.action_scbsly_direct_acceptance_rental_return"
               sequence="22"
               groups="smart_construction_core.group_sc_cap_material_read,smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"/>
     <menuitem id="menu_sc_material_rental_settlement"
@@ -1859,7 +1859,7 @@
     <menuitem id="menu_sc_supplier_contract_analysis_report"
               name="供货合同分析"
               parent="smart_construction_core.menu_sc_cost_report_group"
-              action="smart_construction_core.action_sc_supplier_contract_analysis_report"
+              action="smart_construction_core.action_scbsly_direct_acceptance_supplier_contract"
               sequence="10"
               groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_contract_read,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
     <record id="action_sc_material_stock_statistics_report" model="ir.actions.act_window">

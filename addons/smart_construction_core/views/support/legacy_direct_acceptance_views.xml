@@ -39,11 +39,924 @@
     </field>
   </record>
 
+
+  <record id="view_scbsly_direct_acceptance_construction_contract_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.direct.acceptance.fact.action_scbsly_direct_acceptance_construction_contract.tree</field>
+    <field name="model">sc.legacy.direct.acceptance.fact</field>
+    <field name="arch" type="xml">
+      <tree string="施工合同" create="false" edit="false" delete="false">
+        <field name="legacy_visible_01" string="单据状态"/>
+        <field name="legacy_visible_02" string="单据编号"/>
+        <field name="legacy_visible_03" string="发包人"/>
+        <field name="legacy_visible_04" string="承包人"/>
+        <field name="legacy_visible_05" string="项目名称"/>
+        <field name="legacy_visible_06" string="合同标题"/>
+        <field name="legacy_visible_07" string="合同金额"/>
+        <field name="legacy_visible_08" string="累计开票"/>
+        <field name="legacy_visible_09" string="累计收款"/>
+        <field name="legacy_visible_10" string="开票未收款"/>
+        <field name="legacy_visible_11" string="未收款"/>
+        <field name="legacy_visible_12" string="未收款比例"/>
+        <field name="legacy_visible_13" string="合同编号"/>
+        <field name="legacy_visible_14" string="合同订立日期"/>
+        <field name="legacy_visible_15" string="工程地址"/>
+        <field name="legacy_visible_16" string="工程内容"/>
+        <field name="legacy_visible_17" string="合同工期天数"/>
+        <field name="legacy_visible_18" string="录入人"/>
+        <field name="legacy_visible_19" string="录入时间"/>
+        <field name="legacy_visible_20" string="附件"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_scbsly_direct_acceptance_subcontract_contract_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.direct.acceptance.fact.action_scbsly_direct_acceptance_subcontract_contract.tree</field>
+    <field name="model">sc.legacy.direct.acceptance.fact</field>
+    <field name="arch" type="xml">
+      <tree string="分包合同" create="false" edit="false" delete="false">
+        <field name="legacy_visible_01" string="状态"/>
+        <field name="legacy_visible_02" string="单据编号"/>
+        <field name="legacy_visible_03" string="签订时间"/>
+        <field name="legacy_visible_04" string="标题"/>
+        <field name="legacy_visible_05" string="分包单位"/>
+        <field name="legacy_visible_06" string="分包内容"/>
+        <field name="legacy_visible_07" string="总数量"/>
+        <field name="legacy_visible_08" string="金额（元）"/>
+        <field name="legacy_visible_09" string="合同编号"/>
+        <field name="legacy_visible_10" string="已开票金额"/>
+        <field name="legacy_visible_11" string="已付款金额"/>
+        <field name="legacy_visible_12" string="未付款金额"/>
+        <field name="legacy_visible_13" string="未开票金额"/>
+        <field name="legacy_visible_14" string="项目名称"/>
+        <field name="legacy_visible_15" string="备注"/>
+        <field name="legacy_visible_16" string="附件"/>
+        <field name="legacy_visible_17" string="录入人"/>
+        <field name="legacy_visible_18" string="录入时间"/>
+        <field name="legacy_visible_19" string="推送项目"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_scbsly_direct_acceptance_rental_contract_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.direct.acceptance.fact.action_scbsly_direct_acceptance_rental_contract.tree</field>
+    <field name="model">sc.legacy.direct.acceptance.fact</field>
+    <field name="arch" type="xml">
+      <tree string="租赁合同" create="false" edit="false" delete="false">
+        <field name="legacy_visible_01" string="单据状态"/>
+        <field name="legacy_visible_02" string="单据编号"/>
+        <field name="legacy_visible_03" string="合同编号"/>
+        <field name="legacy_visible_04" string="项目名称"/>
+        <field name="legacy_visible_05" string="合同标题"/>
+        <field name="legacy_visible_06" string="租赁单位"/>
+        <field name="legacy_visible_07" string="租赁内容"/>
+        <field name="legacy_visible_08" string="总数量"/>
+        <field name="legacy_visible_09" string="已开票金额"/>
+        <field name="legacy_visible_10" string="已付款金额"/>
+        <field name="legacy_visible_11" string="未付款金额"/>
+        <field name="legacy_visible_12" string="未开票金额"/>
+        <field name="legacy_visible_13" string="总金额"/>
+        <field name="legacy_visible_14" string="签订时间"/>
+        <field name="legacy_visible_15" string="经办人及电话"/>
+        <field name="legacy_visible_16" string="税率"/>
+        <field name="legacy_visible_17" string="增值税类型"/>
+        <field name="legacy_visible_18" string="备注"/>
+        <field name="legacy_visible_19" string="附件"/>
+        <field name="legacy_visible_20" string="录入人"/>
+        <field name="legacy_visible_21" string="录入时间"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_scbsly_direct_acceptance_supplier_contract_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.direct.acceptance.fact.action_scbsly_direct_acceptance_supplier_contract.tree</field>
+    <field name="model">sc.legacy.direct.acceptance.fact</field>
+    <field name="arch" type="xml">
+      <tree string="供货合同" create="false" edit="false" delete="false">
+        <field name="legacy_visible_01" string="单据状态"/>
+        <field name="legacy_visible_02" string="合同编号"/>
+        <field name="legacy_visible_03" string="标题"/>
+        <field name="legacy_visible_04" string="供应商"/>
+        <field name="legacy_visible_05" string="购货单位"/>
+        <field name="legacy_visible_06" string="总金额"/>
+        <field name="legacy_visible_07" string="已开票金额"/>
+        <field name="legacy_visible_08" string="已付款金额"/>
+        <field name="legacy_visible_09" string="未付款金额"/>
+        <field name="legacy_visible_10" string="未开票金额"/>
+        <field name="legacy_visible_11" string="项目名称"/>
+        <field name="legacy_visible_12" string="录入时间"/>
+        <field name="legacy_visible_13" string="税率"/>
+        <field name="legacy_visible_14" string="录入人"/>
+        <field name="legacy_visible_15" string="附件"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_scbsly_direct_acceptance_labor_contract_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.direct.acceptance.fact.action_scbsly_direct_acceptance_labor_contract.tree</field>
+    <field name="model">sc.legacy.direct.acceptance.fact</field>
+    <field name="arch" type="xml">
+      <tree string="劳务合同" create="false" edit="false" delete="false">
+        <field name="legacy_visible_01" string="单据状态"/>
+        <field name="legacy_visible_02" string="单据编号"/>
+        <field name="legacy_visible_03" string="项目名称"/>
+        <field name="legacy_visible_04" string="签订日期"/>
+        <field name="legacy_visible_05" string="标题"/>
+        <field name="legacy_visible_06" string="劳务单位"/>
+        <field name="legacy_visible_07" string="施工队负责人"/>
+        <field name="legacy_visible_08" string="总含税金额"/>
+        <field name="legacy_visible_09" string="结算比列"/>
+        <field name="legacy_visible_10" string="已开票金额"/>
+        <field name="legacy_visible_11" string="已付款金额"/>
+        <field name="legacy_visible_12" string="未付款金额"/>
+        <field name="legacy_visible_13" string="未开票金额"/>
+        <field name="legacy_visible_14" string="计价方式"/>
+        <field name="legacy_visible_15" string="施工部位"/>
+        <field name="legacy_visible_16" string="合同编号"/>
+        <field name="legacy_visible_17" string="附件"/>
+        <field name="legacy_visible_18" string="录入人"/>
+        <field name="legacy_visible_19" string="支付条款"/>
+        <field name="legacy_visible_20" string="推送项目名称"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_scbsly_direct_acceptance_equipment_contract_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.direct.acceptance.fact.action_scbsly_direct_acceptance_equipment_contract.tree</field>
+    <field name="model">sc.legacy.direct.acceptance.fact</field>
+    <field name="arch" type="xml">
+      <tree string="机械合同（合同）" create="false" edit="false" delete="false">
+        <field name="legacy_visible_01" string="单据状态"/>
+        <field name="legacy_visible_02" string="项目名称"/>
+        <field name="legacy_visible_03" string="分包单位"/>
+        <field name="legacy_visible_04" string="合同编号"/>
+        <field name="legacy_visible_05" string="租赁内容"/>
+        <field name="legacy_visible_06" string="承包方式"/>
+        <field name="legacy_visible_07" string="合同工期"/>
+        <field name="legacy_visible_08" string="合同印花税"/>
+        <field name="legacy_visible_09" string="金额"/>
+        <field name="legacy_visible_10" string="项目经理"/>
+        <field name="legacy_visible_11" string="签订时间"/>
+        <field name="legacy_visible_12" string="返回合同时间"/>
+        <field name="legacy_visible_13" string="备注"/>
+        <field name="legacy_visible_14" string="经办人及电话"/>
+        <field name="legacy_visible_15" string="修改时间"/>
+        <field name="legacy_visible_16" string="上传人"/>
+        <field name="legacy_visible_17" string="上传时间"/>
+        <field name="legacy_visible_18" string="单据编号"/>
+        <field name="legacy_visible_19" string="XGBZ"/>
+        <field name="legacy_visible_20" string="银行账号"/>
+        <field name="legacy_visible_21" string="开户行"/>
+        <field name="legacy_visible_22" string="开户人"/>
+        <field name="legacy_visible_23" string="总数量"/>
+        <field name="legacy_visible_24" string="总金额"/>
+        <field name="legacy_visible_25" string="合同类型"/>
+        <field name="legacy_visible_26" string="管理员后台编号"/>
+        <field name="legacy_visible_27" string="施工部位名称"/>
+        <field name="legacy_visible_28" string="合同标题"/>
+        <field name="legacy_visible_29" string="签约人"/>
+        <field name="legacy_visible_30" string="经办部门"/>
+        <field name="legacy_visible_31" string="我方单位"/>
+        <field name="legacy_visible_32" string="收款单位"/>
+        <field name="legacy_visible_33" string="币种"/>
+        <field name="legacy_visible_34" string="汇率"/>
+        <field name="legacy_visible_35" string="合同金额（不含税）"/>
+        <field name="legacy_visible_36" string="税额"/>
+        <field name="legacy_visible_37" string="税率"/>
+        <field name="legacy_visible_38" string="成本分项"/>
+        <field name="legacy_visible_39" string="甲方值码表TEXT"/>
+        <field name="legacy_visible_40" string="增值税类型"/>
+        <field name="legacy_visible_41" string="备注"/>
+        <field name="legacy_visible_42" string="计价方式TEXT"/>
+        <field name="legacy_visible_43" string="ZR_TWJS"/>
+        <field name="legacy_visible_44" string="HZ_TWJS"/>
+        <field name="legacy_visible_45" string="项目经理名称"/>
+        <field name="legacy_visible_46" string="是否集团用印"/>
+        <field name="legacy_visible_47" string="标题"/>
+        <field name="legacy_visible_48" string="结算方式"/>
+        <field name="legacy_visible_49" string="推送项目"/>
+        <field name="legacy_visible_50" string="项目资金余额"/>
+        <field name="legacy_visible_51" string="附件"/>
+        <field name="legacy_visible_52" string="录入人"/>
+        <field name="legacy_visible_53" string="录入时间"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_scbsly_direct_acceptance_material_plan_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.direct.acceptance.fact.action_scbsly_direct_acceptance_material_plan.tree</field>
+    <field name="model">sc.legacy.direct.acceptance.fact</field>
+    <field name="arch" type="xml">
+      <tree string="材料计划" create="false" edit="false" delete="false">
+        <field name="legacy_visible_01" string="单据状态"/>
+        <field name="legacy_visible_02" string="单据编号"/>
+        <field name="legacy_visible_03" string="单据日期"/>
+        <field name="legacy_visible_04" string="到货时间"/>
+        <field name="legacy_visible_05" string="采购材料名称"/>
+        <field name="legacy_visible_06" string="规格型号"/>
+        <field name="legacy_visible_07" string="单位"/>
+        <field name="legacy_visible_08" string="数量"/>
+        <field name="legacy_visible_09" string="材料别名(设计/清单)"/>
+        <field name="legacy_visible_10" string="备注"/>
+        <field name="legacy_visible_11" string="附件"/>
+        <field name="legacy_visible_12" string="项目名称"/>
+        <field name="legacy_visible_13" string="录入人"/>
+        <field name="legacy_visible_14" string="录入时间"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_scbsly_direct_acceptance_material_quote_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.direct.acceptance.fact.action_scbsly_direct_acceptance_material_quote.tree</field>
+    <field name="model">sc.legacy.direct.acceptance.fact</field>
+    <field name="arch" type="xml">
+      <tree string="报价单" create="false" edit="false" delete="false">
+        <field name="legacy_visible_01" string="单据状态"/>
+        <field name="legacy_visible_02" string="单据编号"/>
+        <field name="legacy_visible_03" string="供应商名称"/>
+        <field name="legacy_visible_04" string="询价时间"/>
+        <field name="legacy_visible_05" string="材料名称"/>
+        <field name="legacy_visible_06" string="规格型号"/>
+        <field name="legacy_visible_07" string="数量"/>
+        <field name="legacy_visible_08" string="含税单价"/>
+        <field name="legacy_visible_09" string="含税总金额"/>
+        <field name="legacy_visible_10" string="总数量"/>
+        <field name="legacy_visible_11" string="总金额"/>
+        <field name="legacy_visible_12" string="备注"/>
+        <field name="legacy_visible_13" string="联系人"/>
+        <field name="legacy_visible_14" string="联系电话"/>
+        <field name="legacy_visible_15" string="附件"/>
+        <field name="legacy_visible_16" string="是否中标"/>
+        <field name="legacy_visible_17" string="项目名称"/>
+        <field name="legacy_visible_18" string="录入人"/>
+        <field name="legacy_visible_19" string="录入时间"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_scbsly_direct_acceptance_material_inbound_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.direct.acceptance.fact.action_scbsly_direct_acceptance_material_inbound.tree</field>
+    <field name="model">sc.legacy.direct.acceptance.fact</field>
+    <field name="arch" type="xml">
+      <tree string="入库" create="false" edit="false" delete="false">
+        <field name="legacy_visible_01" string="单据状态"/>
+        <field name="legacy_visible_02" string="入库单号"/>
+        <field name="legacy_visible_03" string="单据日期"/>
+        <field name="legacy_visible_04" string="供应商名称"/>
+        <field name="legacy_visible_05" string="材料名称"/>
+        <field name="legacy_visible_06" string="规格型号"/>
+        <field name="legacy_visible_07" string="数量"/>
+        <field name="legacy_visible_08" string="单价"/>
+        <field name="legacy_visible_09" string="税率"/>
+        <field name="legacy_visible_10" string="含税金额"/>
+        <field name="legacy_visible_11" string="入库总数量"/>
+        <field name="legacy_visible_12" string="付款状态"/>
+        <field name="legacy_visible_13" string="已付款金额"/>
+        <field name="legacy_visible_14" string="未付款金额"/>
+        <field name="legacy_visible_15" string="结算状态"/>
+        <field name="legacy_visible_16" string="已结算金额"/>
+        <field name="legacy_visible_17" string="项目名称"/>
+        <field name="legacy_visible_18" string="备注"/>
+        <field name="legacy_visible_19" string="附件"/>
+        <field name="legacy_visible_20" string="录入人"/>
+        <field name="legacy_visible_21" string="录入时间"/>
+        <field name="legacy_visible_22" string="采购人"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_scbsly_direct_acceptance_material_settlement_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.direct.acceptance.fact.action_scbsly_direct_acceptance_material_settlement.tree</field>
+    <field name="model">sc.legacy.direct.acceptance.fact</field>
+    <field name="arch" type="xml">
+      <tree string="材料结算单" create="false" edit="false" delete="false">
+        <field name="legacy_visible_01" string="单据状态"/>
+        <field name="legacy_visible_02" string="项目名称"/>
+        <field name="legacy_visible_03" string="单据编号"/>
+        <field name="legacy_visible_04" string="标题"/>
+        <field name="legacy_visible_05" string="结算单位"/>
+        <field name="legacy_visible_06" string="结算日期"/>
+        <field name="legacy_visible_07" string="结算金额"/>
+        <field name="legacy_visible_08" string="付款状态"/>
+        <field name="legacy_visible_09" string="已付款金额"/>
+        <field name="legacy_visible_10" string="未付款金额"/>
+        <field name="legacy_visible_11" string="支付申请状态"/>
+        <field name="legacy_visible_12" string="已申请金额"/>
+        <field name="legacy_visible_13" string="未申请金额"/>
+        <field name="legacy_visible_14" string="结算说明"/>
+        <field name="legacy_visible_15" string="附件"/>
+        <field name="legacy_visible_16" string="录入人"/>
+        <field name="legacy_visible_17" string="录入时间"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_scbsly_direct_acceptance_labor_usage_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.direct.acceptance.fact.action_scbsly_direct_acceptance_labor_usage.tree</field>
+    <field name="model">sc.legacy.direct.acceptance.fact</field>
+    <field name="arch" type="xml">
+      <tree string="方单" create="false" edit="false" delete="false">
+        <field name="legacy_visible_01" string="单据状态"/>
+        <field name="legacy_visible_02" string="单据编号"/>
+        <field name="legacy_visible_03" string="项目名称"/>
+        <field name="legacy_visible_04" string="单据日期"/>
+        <field name="legacy_visible_05" string="标题"/>
+        <field name="legacy_visible_06" string="劳务单位"/>
+        <field name="legacy_visible_07" string="施工部位"/>
+        <field name="legacy_visible_08" string="结算状态"/>
+        <field name="legacy_visible_09" string="总金额"/>
+        <field name="legacy_visible_10" string="备注"/>
+        <field name="legacy_visible_11" string="附件"/>
+        <field name="legacy_visible_12" string="录入人"/>
+        <field name="legacy_visible_13" string="录入时间"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_scbsly_direct_acceptance_labor_casual_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.direct.acceptance.fact.action_scbsly_direct_acceptance_labor_casual.tree</field>
+    <field name="model">sc.legacy.direct.acceptance.fact</field>
+    <field name="arch" type="xml">
+      <tree string="零星用工" create="false" edit="false" delete="false">
+        <field name="legacy_visible_01" string="单据状态"/>
+        <field name="legacy_visible_02" string="单据编号"/>
+        <field name="legacy_visible_03" string="项目名称"/>
+        <field name="legacy_visible_04" string="用工日期"/>
+        <field name="legacy_visible_05" string="劳务单位"/>
+        <field name="legacy_visible_06" string="工种"/>
+        <field name="legacy_visible_07" string="数量"/>
+        <field name="legacy_visible_08" string="单价"/>
+        <field name="legacy_visible_09" string="金额"/>
+        <field name="legacy_visible_10" string="工作内容"/>
+        <field name="legacy_visible_11" string="附件"/>
+        <field name="legacy_visible_12" string="结算状态"/>
+        <field name="legacy_visible_13" string="备注"/>
+        <field name="legacy_visible_14" string="录入人"/>
+        <field name="legacy_visible_15" string="录入时间"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_scbsly_direct_acceptance_labor_settlement_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.direct.acceptance.fact.action_scbsly_direct_acceptance_labor_settlement.tree</field>
+    <field name="model">sc.legacy.direct.acceptance.fact</field>
+    <field name="arch" type="xml">
+      <tree string="劳务结算" create="false" edit="false" delete="false">
+        <field name="legacy_visible_01" string="状态"/>
+        <field name="legacy_visible_02" string="单据编号"/>
+        <field name="legacy_visible_03" string="项目名称"/>
+        <field name="legacy_visible_04" string="单据日期"/>
+        <field name="legacy_visible_05" string="标题"/>
+        <field name="legacy_visible_06" string="结算单位"/>
+        <field name="legacy_visible_07" string="结算金额"/>
+        <field name="legacy_visible_08" string="付款状态"/>
+        <field name="legacy_visible_09" string="已付款金额"/>
+        <field name="legacy_visible_10" string="未付款金额"/>
+        <field name="legacy_visible_11" string="支付申请状态"/>
+        <field name="legacy_visible_12" string="已申请金额"/>
+        <field name="legacy_visible_13" string="未申请金额"/>
+        <field name="legacy_visible_14" string="结算说明"/>
+        <field name="legacy_visible_15" string="附件"/>
+        <field name="legacy_visible_16" string="录入人"/>
+        <field name="legacy_visible_17" string="录入时间"/>
+        <field name="legacy_visible_18" string="合同编号"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_scbsly_direct_acceptance_subcontract_request_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.direct.acceptance.fact.action_scbsly_direct_acceptance_subcontract_request.tree</field>
+    <field name="model">sc.legacy.direct.acceptance.fact</field>
+    <field name="arch" type="xml">
+      <tree string="分包方单" create="false" edit="false" delete="false">
+        <field name="legacy_visible_01" string="单据状态"/>
+        <field name="legacy_visible_02" string="单据编号"/>
+        <field name="legacy_visible_03" string="项目名称"/>
+        <field name="legacy_visible_04" string="标题"/>
+        <field name="legacy_visible_05" string="分包商"/>
+        <field name="legacy_visible_06" string="分包类型"/>
+        <field name="legacy_visible_07" string="分包内容"/>
+        <field name="legacy_visible_08" string="数量"/>
+        <field name="legacy_visible_09" string="单价"/>
+        <field name="legacy_visible_10" string="金额"/>
+        <field name="legacy_visible_11" string="本月合价"/>
+        <field name="legacy_visible_12" string="备注"/>
+        <field name="legacy_visible_13" string="附件"/>
+        <field name="legacy_visible_14" string="录入人"/>
+        <field name="legacy_visible_15" string="录入时间"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_scbsly_direct_acceptance_subcontract_settlement_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.direct.acceptance.fact.action_scbsly_direct_acceptance_subcontract_settlement.tree</field>
+    <field name="model">sc.legacy.direct.acceptance.fact</field>
+    <field name="arch" type="xml">
+      <tree string="分包结算单" create="false" edit="false" delete="false">
+        <field name="legacy_visible_01" string="状态"/>
+        <field name="legacy_visible_02" string="项目名称"/>
+        <field name="legacy_visible_03" string="单据编号"/>
+        <field name="legacy_visible_04" string="标题"/>
+        <field name="legacy_visible_05" string="结算单位"/>
+        <field name="legacy_visible_06" string="结算金额"/>
+        <field name="legacy_visible_07" string="付款状态"/>
+        <field name="legacy_visible_08" string="已付款金额"/>
+        <field name="legacy_visible_09" string="未付款金额"/>
+        <field name="legacy_visible_10" string="支付申请状态"/>
+        <field name="legacy_visible_11" string="已申请金额"/>
+        <field name="legacy_visible_12" string="未申请金额"/>
+        <field name="legacy_visible_13" string="合同编号"/>
+        <field name="legacy_visible_14" string="起始结算日期"/>
+        <field name="legacy_visible_15" string="终止结算日期"/>
+        <field name="legacy_visible_16" string="结算日期"/>
+        <field name="legacy_visible_17" string="结算说明"/>
+        <field name="legacy_visible_18" string="附件"/>
+        <field name="legacy_visible_19" string="录入人"/>
+        <field name="legacy_visible_20" string="录入时间"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_scbsly_direct_acceptance_equipment_shift_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.direct.acceptance.fact.action_scbsly_direct_acceptance_equipment_shift.tree</field>
+    <field name="model">sc.legacy.direct.acceptance.fact</field>
+    <field name="arch" type="xml">
+      <tree string="机械台班记录" create="false" edit="false" delete="false">
+        <field name="legacy_visible_01" string="单据状态"/>
+        <field name="legacy_visible_02" string="项目名称"/>
+        <field name="legacy_visible_03" string="单据编号"/>
+        <field name="legacy_visible_04" string="单据日期"/>
+        <field name="legacy_visible_05" string="租赁单位"/>
+        <field name="legacy_visible_06" string="曾用名单位"/>
+        <field name="legacy_visible_07" string="机械名称"/>
+        <field name="legacy_visible_08" string="规格型号"/>
+        <field name="legacy_visible_09" string="单位"/>
+        <field name="legacy_visible_10" string="工作时间"/>
+        <field name="legacy_visible_11" string="单价"/>
+        <field name="legacy_visible_12" string="金额"/>
+        <field name="legacy_visible_13" string="附件"/>
+        <field name="legacy_visible_14" string="备注"/>
+        <field name="legacy_visible_15" string="录入人"/>
+        <field name="legacy_visible_16" string="录入时间"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_scbsly_direct_acceptance_equipment_settlement_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.direct.acceptance.fact.action_scbsly_direct_acceptance_equipment_settlement.tree</field>
+    <field name="model">sc.legacy.direct.acceptance.fact</field>
+    <field name="arch" type="xml">
+      <tree string="机械结算单" create="false" edit="false" delete="false">
+        <field name="legacy_visible_01" string="单据状态"/>
+        <field name="legacy_visible_02" string="单据编号"/>
+        <field name="legacy_visible_03" string="项目名称"/>
+        <field name="legacy_visible_04" string="单据日期"/>
+        <field name="legacy_visible_05" string="结算单位"/>
+        <field name="legacy_visible_06" string="结算内容"/>
+        <field name="legacy_visible_07" string="总金额"/>
+        <field name="legacy_visible_08" string="付款状态"/>
+        <field name="legacy_visible_09" string="已付款金额"/>
+        <field name="legacy_visible_10" string="未付款金额"/>
+        <field name="legacy_visible_11" string="支付申请状态"/>
+        <field name="legacy_visible_12" string="已申请金额"/>
+        <field name="legacy_visible_13" string="未申请金额"/>
+        <field name="legacy_visible_14" string="附件"/>
+        <field name="legacy_visible_15" string="录入人"/>
+        <field name="legacy_visible_16" string="录入时间"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_scbsly_direct_acceptance_rental_settlement_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.direct.acceptance.fact.action_scbsly_direct_acceptance_rental_settlement.tree</field>
+    <field name="model">sc.legacy.direct.acceptance.fact</field>
+    <field name="arch" type="xml">
+      <tree string="租赁结算单" create="false" edit="false" delete="false">
+        <field name="legacy_visible_01" string="单据状态"/>
+        <field name="legacy_visible_02" string="单据编号"/>
+        <field name="legacy_visible_03" string="项目名称"/>
+        <field name="legacy_visible_04" string="单据日期"/>
+        <field name="legacy_visible_05" string="结算单位"/>
+        <field name="legacy_visible_06" string="结算内容"/>
+        <field name="legacy_visible_07" string="总金额"/>
+        <field name="legacy_visible_08" string="付款状态"/>
+        <field name="legacy_visible_09" string="已付款金额"/>
+        <field name="legacy_visible_10" string="未付款金额"/>
+        <field name="legacy_visible_11" string="支付申请状态"/>
+        <field name="legacy_visible_12" string="已申请金额"/>
+        <field name="legacy_visible_13" string="未申请金额"/>
+        <field name="legacy_visible_14" string="附件"/>
+        <field name="legacy_visible_15" string="录入人"/>
+        <field name="legacy_visible_16" string="录入时间"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_scbsly_direct_acceptance_project_expense_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.direct.acceptance.fact.action_scbsly_direct_acceptance_project_expense.tree</field>
+    <field name="model">sc.legacy.direct.acceptance.fact</field>
+    <field name="arch" type="xml">
+      <tree string="项目费用报销单" create="false" edit="false" delete="false">
+        <field name="legacy_visible_01" string="单据状态"/>
+        <field name="legacy_visible_02" string="单据编号"/>
+        <field name="legacy_visible_03" string="日期"/>
+        <field name="legacy_visible_04" string="报销种类"/>
+        <field name="legacy_visible_05" string="事项说明"/>
+        <field name="legacy_visible_06" string="报销金额"/>
+        <field name="legacy_visible_07" string="付款状态"/>
+        <field name="legacy_visible_08" string="已付款金额"/>
+        <field name="legacy_visible_09" string="未付款金额"/>
+        <field name="legacy_visible_10" string="付款方式"/>
+        <field name="legacy_visible_11" string="报销人"/>
+        <field name="legacy_visible_12" string="收款人"/>
+        <field name="legacy_visible_13" string="备注"/>
+        <field name="legacy_visible_14" string="项目名称"/>
+        <field name="legacy_visible_15" string="附件"/>
+        <field name="legacy_visible_16" string="录入人"/>
+        <field name="legacy_visible_17" string="录入时间"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_scbsly_direct_acceptance_salary_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.direct.acceptance.fact.action_scbsly_direct_acceptance_salary.tree</field>
+    <field name="model">sc.legacy.direct.acceptance.fact</field>
+    <field name="arch" type="xml">
+      <tree string="管理人员工资表" create="false" edit="false" delete="false">
+        <field name="legacy_visible_01" string="单据状态"/>
+        <field name="legacy_visible_02" string="项目名称"/>
+        <field name="legacy_visible_03" string="单据编号"/>
+        <field name="legacy_visible_04" string="单据日期"/>
+        <field name="legacy_visible_05" string="工资月份"/>
+        <field name="legacy_visible_06" string="本次实发工资总额"/>
+        <field name="legacy_visible_07" string="本次应发工资总额"/>
+        <field name="legacy_visible_08" string="付款状态"/>
+        <field name="legacy_visible_09" string="已付款金额"/>
+        <field name="legacy_visible_10" string="未付款金额"/>
+        <field name="legacy_visible_11" string="备注"/>
+        <field name="legacy_visible_12" string="附件"/>
+        <field name="legacy_visible_13" string="录入人"/>
+        <field name="legacy_visible_14" string="录入时间"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_scbsly_direct_acceptance_payment_apply_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.direct.acceptance.fact.action_scbsly_direct_acceptance_payment_apply.tree</field>
+    <field name="model">sc.legacy.direct.acceptance.fact</field>
+    <field name="arch" type="xml">
+      <tree string="支付申请" create="false" edit="false" delete="false">
+        <field name="legacy_visible_01" string="单据状态"/>
+        <field name="legacy_visible_02" string="单据编号"/>
+        <field name="legacy_visible_03" string="申请日期"/>
+        <field name="legacy_visible_04" string="项目名称"/>
+        <field name="legacy_visible_05" string="收款单位"/>
+        <field name="legacy_visible_06" string="实际收款单位"/>
+        <field name="legacy_visible_07" string="付款单位"/>
+        <field name="legacy_visible_08" string="申请付款金额"/>
+        <field name="legacy_visible_09" string="实际付款金额"/>
+        <field name="legacy_visible_10" string="可用余额"/>
+        <field name="legacy_visible_11" string="类型（成本）"/>
+        <field name="legacy_visible_12" string="备注"/>
+        <field name="legacy_visible_13" string="是否关联单据"/>
+        <field name="legacy_visible_14" string="付款账号"/>
+        <field name="legacy_visible_15" string="金额大写"/>
+        <field name="legacy_visible_16" string="户名"/>
+        <field name="legacy_visible_17" string="开户行"/>
+        <field name="legacy_visible_18" string="账号"/>
+        <field name="legacy_visible_19" string="附件"/>
+        <field name="legacy_visible_20" string="录入人"/>
+        <field name="legacy_visible_21" string="录入时间"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_scbsly_direct_acceptance_partner_payment_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.direct.acceptance.fact.action_scbsly_direct_acceptance_partner_payment.tree</field>
+    <field name="model">sc.legacy.direct.acceptance.fact</field>
+    <field name="arch" type="xml">
+      <tree string="往来单位付款" create="false" edit="false" delete="false">
+        <field name="legacy_visible_01" string="单据状态"/>
+        <field name="legacy_visible_02" string="付款日期"/>
+        <field name="legacy_visible_03" string="收款单位"/>
+        <field name="legacy_visible_04" string="实际收款单位"/>
+        <field name="legacy_visible_05" string="付款金额"/>
+        <field name="legacy_visible_06" string="支付类别"/>
+        <field name="legacy_visible_07" string="付款内容"/>
+        <field name="legacy_visible_08" string="付款方式名称"/>
+        <field name="legacy_visible_09" string="类型（成本）"/>
+        <field name="legacy_visible_10" string="付款账户名称"/>
+        <field name="legacy_visible_11" string="附件"/>
+        <field name="legacy_visible_12" string="凭证号"/>
+        <field name="legacy_visible_13" string="填写人"/>
+        <field name="legacy_visible_14" string="录入人"/>
+        <field name="legacy_visible_15" string="项目名称"/>
+        <field name="legacy_visible_16" string="付款单关联来源"/>
+        <field name="legacy_visible_17" string="单据编号"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_scbsly_direct_acceptance_settlement_order_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.direct.acceptance.fact.action_scbsly_direct_acceptance_settlement_order.tree</field>
+    <field name="model">sc.legacy.direct.acceptance.fact</field>
+    <field name="arch" type="xml">
+      <tree string="工程结算单" create="false" edit="false" delete="false">
+        <field name="legacy_visible_01" string="单据状态"/>
+        <field name="legacy_visible_02" string="单据编号"/>
+        <field name="legacy_visible_03" string="单据日期"/>
+        <field name="legacy_visible_04" string="项目名称"/>
+        <field name="legacy_visible_05" string="送审金额"/>
+        <field name="legacy_visible_06" string="合同总额"/>
+        <field name="legacy_visible_07" string="审定金额"/>
+        <field name="legacy_visible_08" string="标题"/>
+        <field name="legacy_visible_09" string="发包人"/>
+        <field name="legacy_visible_10" string="承包人"/>
+        <field name="legacy_visible_11" string="审增减金额"/>
+        <field name="legacy_visible_12" string="审计单位"/>
+        <field name="legacy_visible_13" string="合同名称"/>
+        <field name="legacy_visible_14" string="审定日期"/>
+        <field name="legacy_visible_15" string="工程地址"/>
+        <field name="legacy_visible_16" string="附件"/>
+        <field name="legacy_visible_17" string="录入人"/>
+        <field name="legacy_visible_18" string="录入时间"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_scbsly_direct_acceptance_input_tax_report_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.direct.acceptance.fact.action_scbsly_direct_acceptance_input_tax_report.tree</field>
+    <field name="model">sc.legacy.direct.acceptance.fact</field>
+    <field name="arch" type="xml">
+      <tree string="进项上报" create="false" edit="false" delete="false">
+        <field name="legacy_visible_01" string="状态"/>
+        <field name="legacy_visible_02" string="单据编号"/>
+        <field name="legacy_visible_03" string="项目名称"/>
+        <field name="legacy_visible_04" string="发票开具日期"/>
+        <field name="legacy_visible_05" string="受票单位"/>
+        <field name="legacy_visible_06" string="开票单位"/>
+        <field name="legacy_visible_07" string="实际开票单位"/>
+        <field name="legacy_visible_08" string="价税合计"/>
+        <field name="legacy_visible_09" string="税额"/>
+        <field name="legacy_visible_10" string="不含税金额"/>
+        <field name="legacy_visible_11" string="发票号码"/>
+        <field name="legacy_visible_12" string="数量"/>
+        <field name="legacy_visible_13" string="税率"/>
+        <field name="legacy_visible_14" string="发票类型"/>
+        <field name="legacy_visible_15" string="备注"/>
+        <field name="legacy_visible_16" string="录入人"/>
+        <field name="legacy_visible_17" string="附件"/>
+        <field name="legacy_visible_18" string="录入时间"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_scbsly_direct_acceptance_general_contract_input_tax_report_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.direct.acceptance.fact.action_scbsly_direct_acceptance_general_contract_input_tax_report.tree</field>
+    <field name="model">sc.legacy.direct.acceptance.fact</field>
+    <field name="arch" type="xml">
+      <tree string="总包进项上报" create="false" edit="false" delete="false">
+        <field name="legacy_visible_01" string="单据状态"/>
+        <field name="legacy_visible_02" string="单据编号"/>
+        <field name="legacy_visible_03" string="开票日期"/>
+        <field name="legacy_visible_04" string="开票单位"/>
+        <field name="legacy_visible_05" string="项目名称"/>
+        <field name="legacy_visible_06" string="受票单位"/>
+        <field name="legacy_visible_07" string="实开总金额"/>
+        <field name="legacy_visible_08" string="不含税金额"/>
+        <field name="legacy_visible_09" string="税额"/>
+        <field name="legacy_visible_10" string="税率"/>
+        <field name="legacy_visible_11" string="附加税"/>
+        <field name="legacy_visible_12" string="开票张数"/>
+        <field name="legacy_visible_13" string="关联回款金额"/>
+        <field name="legacy_visible_14" string="发票号码"/>
+        <field name="legacy_visible_15" string="发票种类"/>
+        <field name="legacy_visible_16" string="附件"/>
+        <field name="legacy_visible_17" string="录入人"/>
+        <field name="legacy_visible_18" string="录入时间"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_scbsly_direct_acceptance_construction_diary_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.direct.acceptance.fact.action_scbsly_direct_acceptance_construction_diary.tree</field>
+    <field name="model">sc.legacy.direct.acceptance.fact</field>
+    <field name="arch" type="xml">
+      <tree string="施工日志（新）" create="false" edit="false" delete="false">
+        <field name="legacy_visible_01" string="单据状态"/>
+        <field name="legacy_visible_02" string="项目名称"/>
+        <field name="legacy_visible_03" string="单据编号"/>
+        <field name="legacy_visible_04" string="日期"/>
+        <field name="legacy_visible_05" string="施工部位"/>
+        <field name="legacy_visible_06" string="出勤人数"/>
+        <field name="legacy_visible_07" string="出勤机械"/>
+        <field name="legacy_visible_08" string="备注"/>
+        <field name="legacy_visible_09" string="附件"/>
+        <field name="legacy_visible_10" string="录入人"/>
+        <field name="legacy_visible_11" string="录入时间"/>
+      </tree>
+    </field>
+  </record>
+
+
+  <record id="view_scbsly_direct_acceptance_rental_in_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.direct.acceptance.fact.action_scbsly_direct_acceptance_rental_in.tree</field>
+    <field name="model">sc.legacy.direct.acceptance.fact</field>
+    <field name="arch" type="xml">
+      <tree string="租入" create="false" edit="false" delete="false">
+        <field name="legacy_visible_01" string="单据状态"/>
+        <field name="legacy_visible_02" string="单据编号"/>
+        <field name="legacy_visible_03" string="单据日期"/>
+        <field name="legacy_visible_04" string="租赁单位"/>
+        <field name="legacy_visible_05" string="使用单位名称"/>
+        <field name="legacy_visible_06" string="材料名称"/>
+        <field name="legacy_visible_07" string="规格型号"/>
+        <field name="legacy_visible_08" string="数量"/>
+        <field name="legacy_visible_09" string="单价"/>
+        <field name="legacy_visible_10" string="租赁押金"/>
+        <field name="legacy_visible_11" string="备注"/>
+        <field name="legacy_visible_12" string="附件"/>
+        <field name="legacy_visible_13" string="录入人"/>
+        <field name="legacy_visible_14" string="录入时间"/>
+        <field name="legacy_visible_15" string="项目名称"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="action_scbsly_direct_acceptance_rental_in" model="ir.actions.act_window">
+    <field name="name">租入</field>
+    <field name="res_model">sc.legacy.direct.acceptance.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_rental_in_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
+    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '租入')]</field>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+  </record>
+
+  <record id="view_scbsly_direct_acceptance_rental_return_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.direct.acceptance.fact.action_scbsly_direct_acceptance_rental_return.tree</field>
+    <field name="model">sc.legacy.direct.acceptance.fact</field>
+    <field name="arch" type="xml">
+      <tree string="还租" create="false" edit="false" delete="false">
+        <field name="legacy_visible_01" string="单据状态"/>
+        <field name="legacy_visible_02" string="项目名称"/>
+        <field name="legacy_visible_03" string="结算状态"/>
+        <field name="legacy_visible_04" string="还租单号"/>
+        <field name="legacy_visible_05" string="单据日期"/>
+        <field name="legacy_visible_06" string="租赁单位"/>
+        <field name="legacy_visible_07" string="单据结算金额"/>
+        <field name="legacy_visible_08" string="赔偿费"/>
+        <field name="legacy_visible_09" string="维修费"/>
+        <field name="legacy_visible_10" string="进出场费"/>
+        <field name="legacy_visible_11" string="附件"/>
+        <field name="legacy_visible_12" string="备注"/>
+        <field name="legacy_visible_13" string="录入人"/>
+        <field name="legacy_visible_14" string="录入时间"/>
+        <field name="legacy_visible_15" string="抵扣押金"/>
+        <field name="legacy_visible_16" string="使用单位"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="action_scbsly_direct_acceptance_rental_return" model="ir.actions.act_window">
+    <field name="name">还租</field>
+    <field name="res_model">sc.legacy.direct.acceptance.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_rental_return_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
+    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '还租')]</field>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+  </record>
+
+  <record id="view_scbsly_direct_acceptance_fuel_card_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.direct.acceptance.fact.action_scbsly_direct_acceptance_fuel_card.tree</field>
+    <field name="model">sc.legacy.direct.acceptance.fact</field>
+    <field name="arch" type="xml">
+      <tree string="油卡登记" create="false" edit="false" delete="false">
+        <field name="legacy_visible_01" string="单据状态"/>
+        <field name="legacy_visible_02" string="单据编号"/>
+        <field name="legacy_visible_03" string="单据日期"/>
+        <field name="legacy_visible_04" string="项目名称"/>
+        <field name="legacy_visible_05" string="油卡卡号"/>
+        <field name="legacy_visible_06" string="初始金额"/>
+        <field name="legacy_visible_07" string="油卡管理人"/>
+        <field name="legacy_visible_08" string="备注"/>
+        <field name="legacy_visible_09" string="附件"/>
+        <field name="legacy_visible_10" string="录入人"/>
+        <field name="legacy_visible_11" string="录入时间"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="action_scbsly_direct_acceptance_fuel_card" model="ir.actions.act_window">
+    <field name="name">油卡登记</field>
+    <field name="res_model">sc.legacy.direct.acceptance.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_fuel_card_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
+    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '油卡登记')]</field>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+  </record>
+
+  <record id="view_scbsly_direct_acceptance_fuel_recharge_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.direct.acceptance.fact.action_scbsly_direct_acceptance_fuel_recharge.tree</field>
+    <field name="model">sc.legacy.direct.acceptance.fact</field>
+    <field name="arch" type="xml">
+      <tree string="充值登记" create="false" edit="false" delete="false">
+        <field name="legacy_visible_01" string="单据状态"/>
+        <field name="legacy_visible_02" string="单据编号"/>
+        <field name="legacy_visible_03" string="单据日期"/>
+        <field name="legacy_visible_04" string="项目名称"/>
+        <field name="legacy_visible_05" string="充值卡号"/>
+        <field name="legacy_visible_06" string="充值总额"/>
+        <field name="legacy_visible_07" string="充值日期"/>
+        <field name="legacy_visible_08" string="充值人"/>
+        <field name="legacy_visible_09" string="备注"/>
+        <field name="legacy_visible_10" string="附件"/>
+        <field name="legacy_visible_11" string="录入人"/>
+        <field name="legacy_visible_12" string="录入时间"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="action_scbsly_direct_acceptance_fuel_recharge" model="ir.actions.act_window">
+    <field name="name">充值登记</field>
+    <field name="res_model">sc.legacy.direct.acceptance.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_fuel_recharge_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
+    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '充值登记')]</field>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+  </record>
+
+  <record id="view_scbsly_direct_acceptance_fuel_refuel_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.direct.acceptance.fact.action_scbsly_direct_acceptance_fuel_refuel.tree</field>
+    <field name="model">sc.legacy.direct.acceptance.fact</field>
+    <field name="arch" type="xml">
+      <tree string="加油登记" create="false" edit="false" delete="false">
+        <field name="legacy_visible_01" string="单据状态"/>
+        <field name="legacy_visible_02" string="单据编号"/>
+        <field name="legacy_visible_03" string="加油日期"/>
+        <field name="legacy_visible_04" string="项目名称"/>
+        <field name="legacy_visible_05" string="加油金额"/>
+        <field name="legacy_visible_06" string="累计加油金额"/>
+        <field name="legacy_visible_07" string="油卡剩余金额"/>
+        <field name="legacy_visible_08" string="加油卡号"/>
+        <field name="legacy_visible_09" string="累计充值金额"/>
+        <field name="legacy_visible_10" string="备注"/>
+        <field name="legacy_visible_11" string="附件"/>
+        <field name="legacy_visible_12" string="录入人"/>
+        <field name="legacy_visible_13" string="录入时间"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="action_scbsly_direct_acceptance_fuel_refuel" model="ir.actions.act_window">
+    <field name="name">加油登记</field>
+    <field name="res_model">sc.legacy.direct.acceptance.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_fuel_refuel_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
+    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '加油登记')]</field>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+  </record>
+
+  <record id="view_scbsly_direct_acceptance_engineering_progress_receipt_tree" model="ir.ui.view">
+    <field name="name">sc.legacy.direct.acceptance.fact.action_scbsly_direct_acceptance_engineering_progress_receipt.tree</field>
+    <field name="model">sc.legacy.direct.acceptance.fact</field>
+    <field name="arch" type="xml">
+      <tree string="工程进度收款" create="false" edit="false" delete="false">
+        <field name="legacy_visible_01" string="单据状态"/>
+        <field name="legacy_visible_02" string="单据编号"/>
+        <field name="legacy_visible_03" string="日期"/>
+        <field name="legacy_visible_04" string="对方单位/付款单位"/>
+        <field name="legacy_visible_05" string="承包单位"/>
+        <field name="legacy_visible_06" string="收入类别"/>
+        <field name="legacy_visible_07" string="工程款收入"/>
+        <field name="legacy_visible_08" string="备注"/>
+        <field name="legacy_visible_09" string="施工管理合同"/>
+        <field name="legacy_visible_10" string="项目名称"/>
+        <field name="legacy_visible_11" string="附件"/>
+        <field name="legacy_visible_12" string="录入人"/>
+        <field name="legacy_visible_13" string="录入时间"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="action_scbsly_direct_acceptance_engineering_progress_receipt" model="ir.actions.act_window">
+    <field name="name">工程进度收款</field>
+    <field name="res_model">sc.legacy.direct.acceptance.fact</field>
+    <field name="view_mode">tree</field>
+    <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_engineering_progress_receipt_tree"/>
+    <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
+    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '工程进度收款')]</field>
+    <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
+  </record>
+
   <record id="action_scbsly_direct_acceptance_construction_contract" model="ir.actions.act_window">
     <field name="name">施工合同</field>
     <field name="res_model">sc.legacy.direct.acceptance.fact</field>
     <field name="view_mode">tree</field>
-    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_construction_contract_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
     <field name="domain">[('active', '=', True), ('acceptance_label', '=', '施工合同')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
@@ -53,7 +966,7 @@
     <field name="name">分包合同</field>
     <field name="res_model">sc.legacy.direct.acceptance.fact</field>
     <field name="view_mode">tree</field>
-    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_subcontract_contract_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
     <field name="domain">[('active', '=', True), ('acceptance_label', '=', '分包合同')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
@@ -63,7 +976,7 @@
     <field name="name">租赁合同</field>
     <field name="res_model">sc.legacy.direct.acceptance.fact</field>
     <field name="view_mode">tree</field>
-    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_rental_contract_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
     <field name="domain">[('active', '=', True), ('acceptance_label', '=', '租赁合同')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
@@ -73,7 +986,7 @@
     <field name="name">供货合同</field>
     <field name="res_model">sc.legacy.direct.acceptance.fact</field>
     <field name="view_mode">tree</field>
-    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_supplier_contract_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
     <field name="domain">[('active', '=', True), ('acceptance_label', '=', '供货合同')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
@@ -83,7 +996,7 @@
     <field name="name">劳务合同</field>
     <field name="res_model">sc.legacy.direct.acceptance.fact</field>
     <field name="view_mode">tree</field>
-    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_labor_contract_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
     <field name="domain">[('active', '=', True), ('acceptance_label', '=', '劳务合同')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
@@ -93,7 +1006,7 @@
     <field name="name">机械合同（合同）</field>
     <field name="res_model">sc.legacy.direct.acceptance.fact</field>
     <field name="view_mode">tree</field>
-    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_equipment_contract_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
     <field name="domain">[('active', '=', True), ('acceptance_label', '=', '机械合同（合同）')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
@@ -103,7 +1016,7 @@
     <field name="name">材料计划</field>
     <field name="res_model">sc.legacy.direct.acceptance.fact</field>
     <field name="view_mode">tree</field>
-    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_material_plan_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
     <field name="domain">[('active', '=', True), ('acceptance_label', '=', '材料计划')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
@@ -113,7 +1026,7 @@
     <field name="name">报价单</field>
     <field name="res_model">sc.legacy.direct.acceptance.fact</field>
     <field name="view_mode">tree</field>
-    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_material_quote_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
     <field name="domain">[('active', '=', True), ('acceptance_label', '=', '报价单')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
@@ -123,7 +1036,7 @@
     <field name="name">入库</field>
     <field name="res_model">sc.legacy.direct.acceptance.fact</field>
     <field name="view_mode">tree</field>
-    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_material_inbound_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
     <field name="domain">[('active', '=', True), ('acceptance_label', '=', '入库')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
@@ -133,7 +1046,7 @@
     <field name="name">材料结算单</field>
     <field name="res_model">sc.legacy.direct.acceptance.fact</field>
     <field name="view_mode">tree</field>
-    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_material_settlement_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
     <field name="domain">[('active', '=', True), ('acceptance_label', '=', '材料结算单')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
@@ -143,7 +1056,7 @@
     <field name="name">方单</field>
     <field name="res_model">sc.legacy.direct.acceptance.fact</field>
     <field name="view_mode">tree</field>
-    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_labor_usage_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
     <field name="domain">[('active', '=', True), ('acceptance_label', '=', '方单')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
@@ -153,7 +1066,7 @@
     <field name="name">零星用工</field>
     <field name="res_model">sc.legacy.direct.acceptance.fact</field>
     <field name="view_mode">tree</field>
-    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_labor_casual_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
     <field name="domain">[('active', '=', True), ('acceptance_label', '=', '零星用工')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
@@ -163,7 +1076,7 @@
     <field name="name">劳务结算</field>
     <field name="res_model">sc.legacy.direct.acceptance.fact</field>
     <field name="view_mode">tree</field>
-    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_labor_settlement_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
     <field name="domain">[('active', '=', True), ('acceptance_label', '=', '劳务结算')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
@@ -173,7 +1086,7 @@
     <field name="name">分包方单</field>
     <field name="res_model">sc.legacy.direct.acceptance.fact</field>
     <field name="view_mode">tree</field>
-    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_subcontract_request_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
     <field name="domain">[('active', '=', True), ('acceptance_label', '=', '分包方单')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
@@ -183,7 +1096,7 @@
     <field name="name">分包结算单</field>
     <field name="res_model">sc.legacy.direct.acceptance.fact</field>
     <field name="view_mode">tree</field>
-    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_subcontract_settlement_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
     <field name="domain">[('active', '=', True), ('acceptance_label', '=', '分包结算单')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
@@ -193,7 +1106,7 @@
     <field name="name">机械台班记录</field>
     <field name="res_model">sc.legacy.direct.acceptance.fact</field>
     <field name="view_mode">tree</field>
-    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_equipment_shift_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
     <field name="domain">[('active', '=', True), ('acceptance_label', '=', '机械台班记录')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
@@ -203,7 +1116,7 @@
     <field name="name">机械结算单</field>
     <field name="res_model">sc.legacy.direct.acceptance.fact</field>
     <field name="view_mode">tree</field>
-    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_equipment_settlement_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
     <field name="domain">[('active', '=', True), ('acceptance_label', '=', '机械结算单')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
@@ -213,7 +1126,7 @@
     <field name="name">租赁结算单</field>
     <field name="res_model">sc.legacy.direct.acceptance.fact</field>
     <field name="view_mode">tree</field>
-    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_rental_settlement_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
     <field name="domain">[('active', '=', True), ('acceptance_label', '=', '租赁结算单')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
@@ -223,7 +1136,7 @@
     <field name="name">项目费用报销单</field>
     <field name="res_model">sc.legacy.direct.acceptance.fact</field>
     <field name="view_mode">tree</field>
-    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_project_expense_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
     <field name="domain">[('active', '=', True), ('acceptance_label', '=', '项目费用报销单')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
@@ -233,7 +1146,7 @@
     <field name="name">管理人员工资表</field>
     <field name="res_model">sc.legacy.direct.acceptance.fact</field>
     <field name="view_mode">tree</field>
-    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_salary_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
     <field name="domain">[('active', '=', True), ('acceptance_label', '=', '管理人员工资表')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
@@ -243,7 +1156,7 @@
     <field name="name">支付申请</field>
     <field name="res_model">sc.legacy.direct.acceptance.fact</field>
     <field name="view_mode">tree</field>
-    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_payment_apply_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
     <field name="domain">[('active', '=', True), ('acceptance_label', '=', '支付申请')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
@@ -253,7 +1166,7 @@
     <field name="name">往来单位付款</field>
     <field name="res_model">sc.legacy.direct.acceptance.fact</field>
     <field name="view_mode">tree</field>
-    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_partner_payment_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
     <field name="domain">[('active', '=', True), ('acceptance_label', '=', '往来单位付款')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
@@ -263,7 +1176,7 @@
     <field name="name">工程结算单</field>
     <field name="res_model">sc.legacy.direct.acceptance.fact</field>
     <field name="view_mode">tree</field>
-    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_settlement_order_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
     <field name="domain">[('active', '=', True), ('acceptance_label', '=', '工程结算单')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
@@ -273,7 +1186,7 @@
     <field name="name">进项上报</field>
     <field name="res_model">sc.legacy.direct.acceptance.fact</field>
     <field name="view_mode">tree</field>
-    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_input_tax_report_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
     <field name="domain">[('active', '=', True), ('acceptance_label', '=', '进项上报')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
@@ -283,7 +1196,7 @@
     <field name="name">总包进项上报</field>
     <field name="res_model">sc.legacy.direct.acceptance.fact</field>
     <field name="view_mode">tree</field>
-    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_general_contract_input_tax_report_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
     <field name="domain">[('active', '=', True), ('acceptance_label', '=', '总包进项上报')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
@@ -293,7 +1206,7 @@
     <field name="name">施工日志（新）</field>
     <field name="res_model">sc.legacy.direct.acceptance.fact</field>
     <field name="view_mode">tree</field>
-    <field name="view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_tree"/>
+    <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_construction_diary_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
     <field name="domain">[('active', '=', True), ('acceptance_label', '=', '施工日志（新）')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>

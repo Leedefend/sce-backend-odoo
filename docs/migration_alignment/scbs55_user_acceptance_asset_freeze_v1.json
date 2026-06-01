@@ -74,53 +74,53 @@
           "成本统计表（数据）": "成本统计表（综合）"
         }
       },
-  "latest_new_system_alignment": {
-    "status": "PASS",
-    "path": "artifacts/migration/scbsly_direct_project_new_system_alignment_probe_v1.json",
-    "report": "artifacts/migration/scbsly_direct_project_new_system_alignment_probe_v1.md",
-    "gap_matrix": "artifacts/migration/scbsly_direct_project_alignment_gap_matrix_v1.json",
-    "gap_matrix_report": "artifacts/migration/scbsly_direct_project_alignment_gap_matrix_v1.md",
-    "generated_at": "2026-05-30T08:42:32.253Z",
-    "checked_count": 34,
-    "pass_count": 34,
-    "failure_count": 0,
-    "missing_menu_count": 0,
-    "count_mismatch_count": 0,
-    "field_failure_count": 0,
-    "gap_buckets": {
-      "data_scope_count_mismatch": 0,
-      "missing_user_visible_menu_route": 0,
-      "missing_server_carrier": 0,
-      "pass": 34
-    },
-    "blocking_conclusion": "daily-dev new system menus, fields, and counts are aligned for the SCBSLY_V2 direct-project user acceptance surface; oil/fuel, engineering-progress receipt, rental-return, and the remaining 26 menus have been verified through identity-bound migration replay or scoped acceptance carriers, not contract-layer trimming."
-  },
-  "latest_browser_menu_acceptance": {
-    "status": "PASS",
-    "path": "artifacts/browser/scbsly-direct-project-menu/20260530T090744/report.json",
-    "report": "artifacts/browser/scbsly-direct-project-menu/20260530T090744/report.md",
-    "screenshot_after_expand": "artifacts/browser/scbsly-direct-project-menu/20260530T090744/02-after-expand-all.png",
-    "generated_at": "2026-05-30T09:07:44Z",
-    "environment": "daily_dev",
-    "frontend_url": "http://1.95.85.92:18081",
-    "db_name": "sc_demo",
-    "login": "wutao",
-    "verification_scope": "real browser sidebar rendering after recursively expanding 用户验收 / 直营项目系统菜单",
-    "expected_visible_label_count": 43,
-    "actual_visible_label_count": 43,
-    "missing_label_count": 0,
-    "platform_release_snapshot": "v20260530_scbsly_direct_acceptance_menu_daily_dev",
-    "release_snapshot_policy": "sc_platform_core active construction.standard snapshot must include the 34 direct-project acceptance pages; API navigation evidence alone is not sufficient for user acceptance."
-  },
-  "latest_direct_acceptance_replay": {
-    "status": "PASS",
-    "path": "artifacts/migration/scbsly_direct_project_direct_acceptance_replay_result_v1.json",
-    "source_system": "online_old_scbsly",
-    "model": "sc.legacy.direct.acceptance.fact",
-    "label_count": 26,
-    "failure_count": 0,
-    "policy": "26 previously mismatched SCBSLY_V2 direct-project menus are replayed into a read-only acceptance carrier from the old identity lock; formal business replay remains a separate migration asset hardening task."
-  },
+      "latest_new_system_alignment": {
+        "status": "PASS",
+        "path": "artifacts/migration/scbsly_direct_project_new_system_alignment_probe_v1.json",
+        "report": "artifacts/migration/scbsly_direct_project_new_system_alignment_probe_v1.md",
+        "gap_matrix": "artifacts/migration/scbsly_direct_project_alignment_gap_matrix_v1.json",
+        "gap_matrix_report": "artifacts/migration/scbsly_direct_project_alignment_gap_matrix_v1.md",
+        "generated_at": "2026-05-30T08:42:32.253Z",
+        "checked_count": 34,
+        "pass_count": 34,
+        "failure_count": 0,
+        "missing_menu_count": 0,
+        "count_mismatch_count": 0,
+        "field_failure_count": 0,
+        "gap_buckets": {
+          "data_scope_count_mismatch": 0,
+          "missing_user_visible_menu_route": 0,
+          "missing_server_carrier": 0,
+          "pass": 34
+        },
+        "blocking_conclusion": "daily-dev new system menus, fields, and counts are aligned for the SCBSLY_V2 direct-project user acceptance surface; oil/fuel, engineering-progress receipt, rental-return, and the remaining 26 menus have been verified through identity-bound migration replay or scoped acceptance carriers, not contract-layer trimming."
+      },
+      "latest_browser_menu_acceptance": {
+        "status": "PASS",
+        "path": "artifacts/browser/scbsly-direct-project-menu/20260530T090744/report.json",
+        "report": "artifacts/browser/scbsly-direct-project-menu/20260530T090744/report.md",
+        "screenshot_after_expand": "artifacts/browser/scbsly-direct-project-menu/20260530T090744/02-after-expand-all.png",
+        "generated_at": "2026-05-30T09:07:44Z",
+        "environment": "daily_dev",
+        "frontend_url": "http://1.95.85.92:18081",
+        "db_name": "sc_demo",
+        "login": "wutao",
+        "verification_scope": "real browser sidebar rendering after recursively expanding 用户验收 / 直营项目系统菜单",
+        "expected_visible_label_count": 43,
+        "actual_visible_label_count": 43,
+        "missing_label_count": 0,
+        "platform_release_snapshot": "v20260530_scbsly_direct_acceptance_menu_daily_dev",
+        "release_snapshot_policy": "sc_platform_core active construction.standard snapshot must include the 34 direct-project acceptance pages; API navigation evidence alone is not sufficient for user acceptance."
+      },
+      "latest_direct_acceptance_replay": {
+        "status": "PASS",
+        "path": "artifacts/migration/scbsly_direct_project_direct_acceptance_replay_result_v1.json",
+        "source_system": "online_old_scbsly",
+        "model": "sc.legacy.direct.acceptance.fact",
+        "label_count": 26,
+        "failure_count": 0,
+        "policy": "26 previously mismatched SCBSLY_V2 direct-project menus are replayed into a read-only acceptance carrier from the old identity lock; formal business replay remains a separate migration asset hardening task."
+      },
       "latest_partial_old_row_dump": {
         "status": "PASS",
         "path": "artifacts/migration/scbsly_direct_project_old_row_dump_summary_v1.json",
@@ -178,8 +178,8 @@
         "failure_count": 0,
         "policy": "new-system replay and acceptance comparison must use this old identity lock, not count-only matching"
       },
-  "latest_replay_carrier_plan": {
-    "status": "READY_FOR_REPLAY_IMPLEMENTATION_WITH_BLOCKERS",
+      "latest_replay_carrier_plan": {
+        "status": "READY_FOR_REPLAY_IMPLEMENTATION_WITH_BLOCKERS",
         "path": "artifacts/migration/scbsly_direct_project_replay_carrier_plan_v1.json",
         "report": "artifacts/migration/scbsly_direct_project_replay_carrier_plan_v1.md",
         "checked_count": 34,
@@ -206,8 +206,8 @@
             "old_rows": 0
           }
         },
-    "policy": "server-side acceptance remediation started from this carrier plan; oil/fuel legacy carriers, engineering-progress receipt facts, rental-return facts, and the 26 scoped direct acceptance carrier labels were replayed into daily-dev sc_odoo on 2026-05-30"
-  },
+        "policy": "server-side acceptance remediation started from this carrier plan; oil/fuel legacy carriers, engineering-progress receipt facts, rental-return facts, and the 26 scoped direct acceptance carrier labels were replayed into daily-dev sc_odoo on 2026-05-30"
+      },
       "categories": [
         {
           "name": "合同类单据",
@@ -530,21 +530,28 @@
         "expected_count": 5565,
         "identity_field": "legacy_contract_id",
         "expected_headers": [
+          "单据状态",
+          "合同编号",
           "项目名称",
+          "自编合同号",
           "供应商",
+          "结算金额",
+          "合同原件",
           "计价方式",
-          "合同金额",
-          "合同状态",
-          "历史录入人",
-          "历史录入时间",
-          "历史合同ID",
-          "历史状态",
-          "来源表"
+          "合同类型",
+          "标题",
+          "总金额",
+          "已付款金额",
+          "未付款金额",
+          "附件",
+          "录入人",
+          "签约日期"
         ]
       },
       "evidence": {
         "set_check": "legacy_contract_id_old_equals_new",
-        "last_browser_total": 5565
+        "last_browser_total": 5565,
+        "value_check": "old_visible_columns_exact_by_legacy_contract_id"
       },
       "full_scope_lineage": {
         "relation": "independent_high_risk_acceptance_slice",

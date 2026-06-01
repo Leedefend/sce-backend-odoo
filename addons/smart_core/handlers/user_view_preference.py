@@ -295,6 +295,8 @@ class UserViewPreferenceGetHandler(BaseIntentHandler):
                 view_type=view_type,
             )
         value = self._sanitize_preference(preference_key, record.value_json if record else {})
+        if preference_key == "list_columns":
+            value = self._apply_list_preference_policy(value, list_profile=list_profile)
         return {
             "ok": True,
             "data": {
