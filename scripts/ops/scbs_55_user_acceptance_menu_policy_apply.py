@@ -18,7 +18,12 @@ PRODUCT_KEYS = ("construction.standard", "construction.preview")
 MODULE = "smart_construction_core"
 ROOT_XMLID = "smart_construction_core.menu_sc_root"
 ACCEPTANCE_ROOT_XMLID = "smart_construction_core.menu_scbs55_user_acceptance_root"
+DIRECT_ACCEPTANCE_ROOT_XMLID = "smart_construction_core.menu_scbsly_direct_project_acceptance_root"
 OUTPUT_JSON_NAME = "scbs_55_user_acceptance_menu_policy_apply_result_v1.json"
+ACCEPTANCE_ACTION_BY_MENU_NAME = {
+    "施工合同": "smart_construction_core.action_scbsly_direct_acceptance_construction_contract",
+    "供货合同分析": "smart_construction_core.action_scbsly_direct_acceptance_supplier_contract",
+}
 
 
 def artifact_root() -> Path:
@@ -86,6 +91,66 @@ def ensure_xmlid(record, name: str) -> None:
             "noupdate": True,
         }
     )
+
+
+def collect_active_menu_ids(root_menu) -> set[int]:
+    out = set()
+    stack = [root_menu]
+    while stack:
+        menu = stack.pop()
+        if not menu.exists() or not menu.active:
+            continue
+        out.add(int(menu.id))
+        stack.extend(menu.child_id)
+    return out
+
+
+def xmlid_for(record) -> str:
+    xid = env["ir.model.data"].sudo().search(  # noqa: F821
+        [("model", "=", record._name), ("res_id", "=", int(record.id))],
+        limit=1,
+    )
+    return f"{xid.module}.{xid.name}" if xid else ""
+
+
+def direct_acceptance_policy_groups(root_menu) -> list[dict]:
+    if not root_menu:
+        return []
+    groups = []
+    for category in root_menu.child_id.sorted("sequence"):
+        menus = []
+        for menu in category.child_id.sorted("sequence"):
+            if not menu.active or not menu.action:
+                continue
+            action = menu.action
+            action_id = int(action.id)
+            menus.append(
+                {
+                    "menu_xmlid": xmlid_for(menu),
+                    "menu_id": int(menu.id),
+                    "action_id": action_id,
+                    "route": f"/a/{action_id}?menu_id={int(menu.id)}",
+                    "label": str(menu.name or ""),
+                    "model": str(getattr(action, "res_model", "") or ""),
+                    "res_model": str(getattr(action, "res_model", "") or ""),
+                    "enabled": True,
+                    "release_state": "released",
+                    "access_level": "public",
+                    "sequence": int(menu.sequence or 0),
+                    "visible_menu_path": f"系统菜单 / 用户验收 / 直营项目系统菜单 / {category.name} / {menu.name}",
+                    "policy_note": "SCBSLY direct-project acceptance menu retained for customer verification.",
+                }
+            )
+        if menus:
+            groups.append(
+                {
+                    "group_key": f"construction.scbsly_direct.{xml_name(category.name)}",
+                    "group_label": "用户验收",
+                    "category": "scbsly_direct_acceptance_menu",
+                    "menus": menus,
+                }
+            )
+    return groups
 
 
 def ensure_menu(*, xmlid_name: str, name: str, parent, sequence: int, action=None):
@@ -241,6 +306,9 @@ allowed_sequence_by_xmlid = {}
 created_or_updated = []
 for row in rows:
     action = row.target_action_id
+    override_xmlid = ACCEPTANCE_ACTION_BY_MENU_NAME.get(str(row.legacy_menu_name or "").strip())
+    if override_xmlid:
+        action = ref(override_xmlid) or action
     if not action:
         raise RuntimeError({"missing_target_action": row.legacy_menu_name, "priority_sequence": row.priority_sequence})
     group_name = row.legacy_menu_group or "用户核对"
@@ -280,6 +348,10 @@ for row in rows:
             "action_id": int(action.id),
         }
     )
+
+direct_acceptance_root = ref(DIRECT_ACCEPTANCE_ROOT_XMLID)
+direct_acceptance_menu_ids = collect_active_menu_ids(direct_acceptance_root) if direct_acceptance_root else set()
+allowed_menu_ids.update(direct_acceptance_menu_ids)
 
 runtime_keep_policy_count = 0
 runtime_hide_policy_count = 0
@@ -480,6 +552,7 @@ for product_key in PRODUCT_KEYS:
             }
         )
         _ = group_index
+    next_groups.extend(direct_acceptance_policy_groups(direct_acceptance_root))
     if hidden_menus:
         next_groups.append(
             {
@@ -519,6 +592,7 @@ payload = {
     "source_document": SOURCE_DOCUMENT,
     "created_or_updated_menu_count": len(created_or_updated),
     "runtime_allowed_menu_count": len(allowed_menu_ids),
+    "direct_acceptance_menu_count": len(direct_acceptance_menu_ids),
     "runtime_hidden_menu_count": len(hidden_menu_rows),
     "runtime_keep_policy_count": runtime_keep_policy_count,
     "runtime_hide_policy_count": runtime_hide_policy_count,

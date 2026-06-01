@@ -27,6 +27,10 @@ PASSWORD = os.getenv("SCBSLY_PASSWORD") or os.getenv("OLD_SCBS_PASSWORD")
 MENU_ALIASES = {
     "成本统计表（数据）": ["成本统计表（综合）"],
 }
+PREFERRED_CONFIG_IDS = {
+    "租入": "c9fdf7867d9a4509a9b19255741fe9de",
+    "还租": "fa1a970eae754b78a7f095606d906b87",
+}
 
 
 def clean(value: object) -> str:
@@ -198,7 +202,10 @@ def score_menu(label: str, menu: dict[str, Any]) -> tuple[int, int, int, str]:
         score += 50
     if clean(menu.get("DEFAULT_NAME")) == label:
         score += 40
-    if config_id_from_link(link):
+    config_id = config_id_from_link(link)
+    if config_id == PREFERRED_CONFIG_IDS.get(label):
+        score += 1000
+    if config_id:
         score += 5
     return (score, 1 if label in names else 0, 1 if link else 0, link)
 

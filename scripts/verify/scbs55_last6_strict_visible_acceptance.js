@@ -72,6 +72,78 @@ const SUPPLIER_CONTRACT_OLD_VALUE_MAP = [
   ['录入人', 'f_LRR', 'creator_name', 'text'],
   ['签约日期', 'f_QYRQ', 'sign_date', 'date'],
 ];
+const VALUE_COMPARE_SKIP_LABELS = new Set(['新系统承载模型']);
+const NEW_VISIBLE_FIELD_MAP = {
+  self_funding_income: {
+    单据状态: 'document_state_label',
+    单据编号: 'document_no',
+    推送结果: 'push_result',
+    金蝶单据编号: 'kingdee_document_no',
+    单据日期: 'document_date',
+    项目名称: 'project_name',
+    往来单位: 'partner_name',
+    自筹收入金额: 'self_funding_amount',
+    收入类别: 'income_category',
+    账户: 'account_name',
+    自筹退回金额: 'refund_amount',
+    自筹未退金额: 'unreturned_amount',
+    标题: 'title',
+    是否需要退回: 'need_refund',
+    附件: 'attachment_text',
+    录入人: 'entry_user',
+    录入时间: 'entry_time',
+  },
+  self_funding_refund: {
+    单据状态: 'document_state_label',
+    推送结果: 'push_result',
+    单据日期: 'document_date',
+    单据编号: 'document_no',
+    项目名称: 'project_name',
+    自筹退回金额: 'refund_amount',
+    往来单位: 'partner_name',
+    备注: 'note',
+    附件: 'attachment_text',
+    录入人: 'entry_user',
+    录入时间: 'entry_time',
+  },
+  engineering_progress_receipt: {
+    申请日期: 'document_date',
+    单据编号: 'document_no',
+    项目: 'project_name',
+    历史项目名称: 'project_name',
+    往来单位: 'partner_name',
+    历史往来单位: 'partner_name',
+    收款金额: 'amount',
+    收款类型: 'receipt_type',
+    收入类别: 'income_category',
+    状态: 'state_label',
+    历史录入人: 'creator_name',
+    历史录入时间: 'created_time',
+    旧库记录: 'legacy_record_id',
+  },
+  supplier_contract: {
+    单据状态: 'document_state_label',
+    合同编号: 'contract_no',
+    项目名称: 'project_name',
+    自编合同号: 'document_no',
+    供应商: 'partner_name',
+    结算金额: 'settlement_amount',
+    合同原件: 'original_contract_holder',
+    计价方式: 'pricing_method_text',
+    合同类型: 'contract_type_text',
+    标题: 'title',
+    总金额: 'amount_total',
+    已付款金额: 'paid_amount',
+    未付款金额: 'unpaid_amount',
+    附件: 'attachment_text',
+    录入人: 'creator_name',
+    签约日期: 'sign_date',
+  },
+};
+
+function aliasFieldName(label) {
+  return `p1_visible_${crypto.createHash('sha1').update(label).digest('hex').slice(0, 12)}`;
+}
 
 function ensureDir(dirPath) {
   fs.mkdirSync(dirPath, { recursive: true });
@@ -91,6 +163,7 @@ function loadSupplierAttachmentDisplayById() {
 }
 
 function normalize(value) {
+  if (value === null || value === undefined || value === false) return '';
   return String(value ?? '').replace(/\s+/g, ' ').trim();
 }
 
@@ -129,6 +202,206 @@ function stateLabel(value) {
     2: '已审核',
     '-1': '已驳回',
   }[text] || text;
+}
+
+function auditStateLabel(value) {
+  const text = normalize(value);
+  return {
+    '-1': '已作废',
+    0: '未审核',
+    1: '审核中',
+    2: '审核通过',
+    3: '已驳回',
+    4: '已作废',
+  }[text] || text;
+}
+
+function firstValue(row, fields) {
+  for (const field of fields) {
+    const value = identityValue(row, field);
+    if (value) return value;
+  }
+  return '';
+}
+
+function oldAmountText(value) {
+  const text = normalize(value).replace(/,/g, '');
+  if (!text) return '';
+  const parsed = Number(text);
+  if (!Number.isFinite(parsed)) return text;
+  return String(parsed);
+}
+
+function attachmentText(row) {
+  return firstValue(row, ['f_FJ', 'FJ', 'f_FJ_FJ']);
+}
+
+function selfFundingIncomeUnreturned(row) {
+  const selfAmount = Number(normalize(row.f_JE).replace(/,/g, '')) || 0;
+  const refundAmount = Number(normalize(row.THJE || row.CZJE).replace(/,/g, '')) || 0;
+  const receivable = normalize(row.YSJE);
+  if (receivable) {
+    const base = Number(receivable.replace(/,/g, '')) || 0;
+    return oldAmountText(base - refundAmount);
+  }
+  return oldAmountText(selfAmount - refundAmount);
+}
+
+function oldVisibleValue(surfaceKey, label, row, attachmentDisplayById = new Map()) {
+  if (surfaceKey === 'self_guarantee') {
+    const values = {
+      状态: auditStateLabel(row.DJZT),
+      单据编号: identityValue(row, 'DJBH'),
+      投标项目名称: identityValue(row, 'TBXMMC'),
+      项目名称: identityValue(row, 'XMMC'),
+      所属公司: identityValue(row, 'SSGS'),
+      金额: oldAmountText(row.JE),
+      已退保证金金额: oldAmountText(row.YTBZJJE),
+      转款单位: identityValue(row, 'DW'),
+      汇款方式: identityValue(row, 'HKFS'),
+      保证金类型: firstValue(row, ['BZJLX', 'Y_BZJLX']),
+      收款账户: identityValue(row, 'SKZH'),
+      收款账户名称: identityValue(row, 'SKZHMC'),
+      备注: firstValue(row, ['BZ', 'Y_BZ', 'SM']),
+      附件: attachmentText(row),
+      录入人: identityValue(row, 'LRR'),
+      录入时间: identityValue(row, 'LRSJ'),
+    };
+    return values[label] ?? '';
+  }
+  if (surfaceKey === 'self_guarantee_refund') {
+    const values = {
+      状态: auditStateLabel(row.DJZT),
+      收保证金单号: identityValue(row, 'SBZJDH'),
+      单据编号: identityValue(row, 'DJBH'),
+      项目名称: identityValue(row, 'XMMC'),
+      投标项目名称: identityValue(row, 'TBXMMC'),
+      退还金额: oldAmountText(row.THJE),
+      备注: firstValue(row, ['BZ', 'Y_BZ', 'SM']),
+      退还账号: identityValue(row, 'THKHHZH'),
+      退还开户行: identityValue(row, 'THKHH'),
+      单位: identityValue(row, 'DW'),
+      收款开户行: identityValue(row, 'SKKHH'),
+      收款账号: identityValue(row, 'SKZH'),
+      录入人: identityValue(row, 'LRR'),
+      录入时间: identityValue(row, 'LRSJ'),
+      附件: attachmentText(row),
+    };
+    return values[label] ?? '';
+  }
+  if (surfaceKey === 'self_funding_income') {
+    const values = {
+      单据状态: stateLabel(row.DJZTText || row.DJZT),
+      单据编号: identityValue(row, 'DJBH'),
+      推送结果: firstValue(row, ['TSJG', 'D_SCBSJS_IsPush']),
+      金蝶单据编号: identityValue(row, 'OTHER_SYSTEM_CODE'),
+      单据日期: identityValue(row, 'f_RQ'),
+      项目名称: identityValue(row, 'XMMC'),
+      往来单位: identityValue(row, 'WLDWMC'),
+      自筹收入金额: oldAmountText(row.f_JE),
+      收入类别: identityValue(row, 'f_SRLBName'),
+      账户: identityValue(row, 'SKZH'),
+      自筹退回金额: oldAmountText(row.THJE || row.CZJE),
+      自筹未退金额: selfFundingIncomeUnreturned(row),
+      标题: identityValue(row, 'BT'),
+      是否需要退回: firstValue(row, ['SFTH', 'SFXYTHID']),
+      附件: attachmentText(row),
+      录入人: identityValue(row, 'LRR'),
+      录入时间: identityValue(row, 'LRSJ'),
+    };
+    return values[label] ?? '';
+  }
+  if (surfaceKey === 'self_funding_refund') {
+    const values = {
+      单据状态: stateLabel(row.DJZTText || row.DJZT),
+      推送结果: firstValue(row, ['TSJG', 'D_SCBSJS_IsPush']),
+      单据日期: firstValue(row, ['DJRQ', 'f_RQ']),
+      单据编号: identityValue(row, 'DJBH'),
+      项目名称: identityValue(row, 'XMMC'),
+      自筹退回金额: oldAmountText(row.THJE || row.f_JE),
+      往来单位: firstValue(row, ['WLDWFKDW', 'XMJLMC', 'WLDWMC']),
+      备注: firstValue(row, ['BZ', 'f_BZ']),
+      附件: attachmentText(row),
+      录入人: identityValue(row, 'LRR'),
+      录入时间: identityValue(row, 'LRSJ'),
+    };
+    return values[label] ?? '';
+  }
+  if (surfaceKey === 'engineering_progress_receipt') {
+    const values = {
+      申请日期: identityValue(row, 'f_RQ'),
+      单据编号: identityValue(row, 'DJBH'),
+      项目: identityValue(row, 'XMMC'),
+      历史项目名称: identityValue(row, 'XMMC'),
+      往来单位: identityValue(row, 'WLDWMC'),
+      历史往来单位: identityValue(row, 'WLDWMC'),
+      收款金额: oldAmountText(row.f_JE),
+      收款类型: identityValue(row, 'type'),
+      收入类别: identityValue(row, 'f_SRLBName'),
+      状态: stateLabel(row.DJZTText || row.DJZT),
+      历史录入人: identityValue(row, 'LRR'),
+      历史录入时间: identityValue(row, 'LRSJ'),
+      旧库记录: identityValue(row, 'Id'),
+    };
+    return values[label] ?? '';
+  }
+  if (surfaceKey === 'supplier_contract') {
+    const spec = SUPPLIER_CONTRACT_OLD_VALUE_MAP.find(([mappedLabel]) => mappedLabel === label);
+    if (!spec) return '';
+    return oldComparableValue(row, spec[1], spec[3], attachmentDisplayById);
+  }
+  return '';
+}
+
+function comparableVisibleValue(value, label) {
+  if (/金额|合计|收款|退回|未退/.test(label)) return normalizeNumber(value);
+  if (/日期|时间/.test(label)) return normalizeDate(value);
+  return normalize(value);
+}
+
+async function compareSurfaceVisibleValues(page, surface, oldRows, attachmentDisplayById = new Map()) {
+  const old = surface.old || {};
+  const newer = surface.new || {};
+  const labels = (newer.expected_headers || [])
+    .map(normalize)
+    .filter((label) => label && !VALUE_COMPARE_SKIP_LABELS.has(label));
+  const fieldMap = NEW_VISIBLE_FIELD_MAP[surface.key] || {};
+  const fields = Array.from(new Set([
+    newer.identity_field,
+    ...labels.map((label) => fieldMap[label] || aliasFieldName(label)),
+  ]));
+  const newRecords = await fetchRecords(
+    page,
+    newer.model,
+    domainFromManifest(surface),
+    fields,
+    Math.max(Number(newer.expected_count || old.expected_count || 0), oldRows.length),
+  );
+  const newByIdentity = new Map(newRecords.map((record) => [normalize(record[newer.identity_field]), record]));
+  const mismatches = [];
+  for (const oldRow of oldRows) {
+    const identity = identityValue(oldRow, old.identity_field);
+    const newRow = newByIdentity.get(identity);
+    if (!newRow) {
+      mismatches.push({ legacy_id: identity, field: '__record__', old: 'present', new: 'missing' });
+      continue;
+    }
+    for (const label of labels) {
+      const aliasField = aliasFieldName(label);
+      const newField = fieldMap[label] || aliasField;
+      const oldRaw = oldVisibleValue(surface.key, label, oldRow, attachmentDisplayById);
+      if (normalize(oldRaw).includes('�')) continue;
+      const newRaw = newRow[newField];
+      const oldValue = comparableVisibleValue(oldRaw, label);
+      const newValue = comparableVisibleValue(newRaw, label);
+      if (oldValue !== newValue) {
+        mismatches.push({ legacy_id: identity, label, new_field: newField, old: oldValue, new: newValue });
+      }
+      if (mismatches.length >= 50) break;
+    }
+    if (mismatches.length >= 50) break;
+  }
+  return mismatches;
 }
 
 function oldComparableValue(row, fieldName, kind, attachmentDisplayById = new Map()) {
@@ -466,13 +739,23 @@ async function main() {
         ) ? 'PASS' : 'FAIL';
         if (result.identity_status !== 'PASS') result.errors.push('identity_set_mismatch');
 
+        const attachmentDisplayById = surface.key === 'supplier_contract'
+          ? loadSupplierAttachmentDisplayById()
+          : new Map();
         if (surface.key === 'supplier_contract') {
-          const attachmentDisplayById = loadSupplierAttachmentDisplayById();
           result.attachment_display_lock = SUPPLIER_ATTACHMENT_DISPLAY_LOCK;
           result.attachment_display_locked_rows = attachmentDisplayById.size;
           if (attachmentDisplayById.size !== expectedCount) {
             result.errors.push(`attachment_display_lock_count_mismatch:${attachmentDisplayById.size}`);
           }
+        }
+        const visibleValueMismatches = await compareSurfaceVisibleValues(page, surface, oldRows, attachmentDisplayById);
+        result.value_mismatch_count = visibleValueMismatches.length;
+        result.value_mismatch_sample = visibleValueMismatches.slice(0, 20);
+        result.value_status = visibleValueMismatches.length ? 'FAIL' : 'PASS';
+        if (result.value_status !== 'PASS') result.errors.push(`visible_value_mismatch:${visibleValueMismatches.length}`);
+
+        if (surface.key === 'supplier_contract') {
           const newRecords = await fetchRecords(
             page,
             newer.model,
@@ -499,10 +782,10 @@ async function main() {
             }
             if (mismatches.length >= 50) break;
           }
-          result.value_mismatch_count = mismatches.length;
-          result.value_mismatch_sample = mismatches.slice(0, 20);
-          result.value_status = mismatches.length ? 'FAIL' : 'PASS';
-          if (result.value_status !== 'PASS') result.errors.push(`value_mismatch:${mismatches.length}`);
+          result.supplier_raw_value_mismatch_count = mismatches.length;
+          result.supplier_raw_value_mismatch_sample = mismatches.slice(0, 20);
+          result.supplier_raw_value_status = mismatches.length ? 'FAIL' : 'PASS';
+          if (result.supplier_raw_value_status !== 'PASS') result.errors.push(`supplier_raw_value_mismatch:${mismatches.length}`);
         }
 
         await page.goto(`${FRONTEND_URL}/a/${newer.action_id}?db=${encodeURIComponent(DB_NAME)}&scbs55_last6_strict=${Date.now()}`, {
