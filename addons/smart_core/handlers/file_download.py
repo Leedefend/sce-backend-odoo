@@ -139,6 +139,8 @@ class FileDownloadHandler(BaseIntentHandler):
                 if name:
                     domain.append(("name", "=", name))
                 attachment = self.env["ir.attachment"].sudo().search(domain, order="id desc", limit=1)
+                if not attachment and not name:
+                    attachment = self._legacy_attachment_for_record(model, res_id)
                 if not attachment:
                     return self._err(404, "附件不存在")
                 attachment_id = attachment.id
@@ -247,9 +249,85 @@ class FileDownloadHandler(BaseIntentHandler):
             return ""
         return file_index.preview_path or file_index.file_path or ""
 
+    def _legacy_attachment_for_record(self, model: str, res_id: int):
+        if "sc.legacy.file.index" not in self.env:
+            return None
+        record = self.env[model].sudo().browse(res_id).exists()
+        if not record:
+            return None
+        legacy_refs = self._legacy_attachment_refs(record)
+        if not legacy_refs:
+            return None
+        file_index = self.env["sc.legacy.file.index"].sudo().search(
+            [
+                ("active", "=", True),
+                "|",
+                "|",
+                ("bill_id", "in", legacy_refs),
+                ("legacy_pid", "in", legacy_refs),
+                ("business_id", "in", legacy_refs),
+            ],
+            order="upload_time desc, id desc",
+            limit=1,
+        )
+        if not file_index:
+            return None
+        path = (file_index.preview_path or file_index.file_path or "").strip()
+        if not path:
+            return None
+        url = LEGACY_FILE_URL_PREFIX + path.lstrip("/")
+        attachment = self.env["ir.attachment"].sudo().search(
+            [
+                ("res_model", "=", model),
+                ("res_id", "=", res_id),
+                ("type", "=", "url"),
+                ("url", "=", url),
+            ],
+            order="id desc",
+            limit=1,
+        )
+        if attachment:
+            return attachment
+        return self.env["ir.attachment"].sudo().create(
+            {
+                "name": file_index.file_name or file_index.legacy_file_id or "历史附件",
+                "res_model": model,
+                "res_id": res_id,
+                "type": "url",
+                "url": url,
+                "mimetype": mimetypes.guess_type(path)[0] or "application/octet-stream",
+            }
+        )
+
+    def _legacy_attachment_refs(self, record) -> list[str]:
+        refs: list[str] = []
+        fields = getattr(record, "_fields", {}) or {}
+        for field in ("attachment_ref", "legacy_record_id", "legacy_source_id", "legacy_file_id"):
+            if field not in fields:
+                continue
+            value = getattr(record, field, "")
+            if isinstance(value, str):
+                refs.extend(_split_legacy_refs(value))
+        if "attachment_links" in fields:
+            value = getattr(record, "attachment_links", "")
+            if isinstance(value, str):
+                refs.extend(_split_legacy_refs(value))
+        return list(dict.fromkeys(refs))
+
 
 def _is_empty_param(value: Any) -> bool:
     return value is None or (isinstance(value, str) and not value.strip())
+
+
+def _split_legacy_refs(value: str) -> list[str]:
+    refs = []
+    for part in value.replace("\n", " ").replace("\r", " ").split():
+        clean = part.strip().strip(",;|")
+        if clean.startswith(LEGACY_FILE_ID_URL_PREFIX):
+            clean = clean[len(LEGACY_FILE_ID_URL_PREFIX):].strip()
+        if clean and "://" not in clean:
+            refs.append(clean)
+    return refs
 
 
 def _legacy_file_roots():
@@ -277,6 +355,15 @@ def _resolve_legacy_file_path(relative_path: str):
     candidates = [clean]
     if clean.startswith("UploadFile/UserFile/"):
         candidates.append(clean[len("UploadFile/"):])
+    if clean.startswith("~/"):
+        without_home = clean[2:]
+        candidates.append(without_home)
+        if without_home.startswith("File_New/"):
+            candidates.append("OldSystem/" + without_home)
+            candidates.append("UploadFile/OldSystem/" + without_home)
+    if clean.startswith("File_New/"):
+        candidates.append("OldSystem/" + clean)
+        candidates.append("UploadFile/OldSystem/" + clean)
     for root in _legacy_file_roots():
         root_resolved = root.resolve()
         for candidate in candidates:

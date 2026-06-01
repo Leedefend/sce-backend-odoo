@@ -125,7 +125,14 @@ SERVER_ACTION_WINDOW_MAP = {
     "smart_construction_core.action_exec_structure_entry": "smart_construction_core.action_exec_structure_wbs",
 }
 
-FILE_ATTACHMENT_ALLOWED_MODEL_EXACT = {"payment.ledger", "payment.request", "payment.request.line"}
+FILE_ATTACHMENT_ALLOWED_MODEL_EXACT = {
+    "payment.ledger",
+    "payment.request",
+    "payment.request.line",
+    "sc.legacy.fund.confirmation.document",
+    "sc.legacy.invoice.tax.fact",
+    "sc.legacy.payment.residual.fact",
+}
 FILE_ATTACHMENT_ALLOWED_MODEL_PREFIXES = ("construction.", "project.", "quota.", "sc.", "tender.")
 FILE_ATTACHMENT_EXCLUDED_MODEL_PREFIXES = (
     "sc.legacy.",
@@ -751,7 +758,7 @@ def _business_attachment_allowed_models(env):
         model_name = str(row.model or "").strip()
         if not model_name:
             continue
-        if model_name.startswith(FILE_ATTACHMENT_EXCLUDED_MODEL_PREFIXES):
+        if model_name not in FILE_ATTACHMENT_ALLOWED_MODEL_EXACT and model_name.startswith(FILE_ATTACHMENT_EXCLUDED_MODEL_PREFIXES):
             continue
         if model_name not in FILE_ATTACHMENT_ALLOWED_MODEL_EXACT and not model_name.startswith(FILE_ATTACHMENT_ALLOWED_MODEL_PREFIXES):
             continue

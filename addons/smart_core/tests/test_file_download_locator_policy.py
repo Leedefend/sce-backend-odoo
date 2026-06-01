@@ -144,6 +144,15 @@ class TestFileDownloadLocatorPolicy(unittest.TestCase):
                 else:
                     os.environ["SC_LEGACY_FILE_ROOTS"] = old_value
 
+    def test_splits_legacy_file_id_links_from_display_text(self):
+        module = _load_handler()
+
+        refs = module._split_legacy_refs("历史附件 | legacy-file-id://abc123 other; legacy-file://ignored/path")
+
+        self.assertIn("abc123", refs)
+        self.assertIn("other", refs)
+        self.assertNotIn("legacy-file://ignored/path", refs)
+
     def test_resolves_legacy_userfile_path_when_url_keeps_uploadfile_prefix(self):
         module = _load_handler()
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -155,6 +164,25 @@ class TestFileDownloadLocatorPolicy(unittest.TestCase):
             try:
                 self.assertEqual(
                     module._resolve_legacy_file_path("UploadFile/UserFile/2023/a.png"),
+                    target.resolve(),
+                )
+            finally:
+                if old_value is None:
+                    os.environ.pop("SC_LEGACY_FILE_ROOTS", None)
+                else:
+                    os.environ["SC_LEGACY_FILE_ROOTS"] = old_value
+
+    def test_resolves_legacy_home_file_new_path_to_oldsystem_uploadfile(self):
+        module = _load_handler()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            target = Path(tmpdir) / "UploadFile" / "OldSystem" / "File_New" / "PaymentApply" / "a.png"
+            target.parent.mkdir(parents=True)
+            target.write_bytes(b"x")
+            old_value = os.environ.get("SC_LEGACY_FILE_ROOTS")
+            os.environ["SC_LEGACY_FILE_ROOTS"] = tmpdir
+            try:
+                self.assertEqual(
+                    module._resolve_legacy_file_path("~/File_New/PaymentApply/a.png"),
                     target.resolve(),
                 )
             finally:
