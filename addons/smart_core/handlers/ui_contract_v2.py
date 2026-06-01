@@ -1100,13 +1100,14 @@ class UiContractV2Handler(BaseIntentHandler):
         labels = profile.get("column_labels") if isinstance(profile.get("column_labels"), dict) else {}
         labels = {**labels, **{name: label_for(name) for name in columns}, **override_labels}
         deduped_columns: list[str] = []
-        seen_labels: set[str] = set()
+        preserve_duplicate_labels = bool(columns) and all(str(name or "").startswith("legacy_visible_") for name in columns)
+        seen_keys: set[str] = set()
         for name in columns:
             label = str(labels.get(name) or label_for(name) or name).strip()
-            dedupe_key = label or name
-            if dedupe_key in seen_labels:
+            dedupe_key = name if preserve_duplicate_labels else (label or name)
+            if dedupe_key in seen_keys:
                 continue
-            seen_labels.add(dedupe_key)
+            seen_keys.add(dedupe_key)
             deduped_columns.append(name)
         columns = deduped_columns
         labels = {name: labels.get(name) or label_for(name) for name in columns}
