@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 """Materialize local project master data needed for user acceptance.
 
-Old business facts are scoped by company/project/operation strategy.  A local
+Old business facts are scoped by company/project/operation strategy.  An
 acceptance database is not usable when historical projects are present but have
-no company or are archived, because the project ledger then looks empty while
-the downstream business facts still exist.
+no company, because company/project/operation filters then hide valid facts.
+
+This script does not reactivate archived projects. Archived records must stay
+archived so visible project counts keep matching the user-facing old systems.
 
 Default mode is dry-run. Set APPLY=1 to write.
 """
@@ -87,16 +89,9 @@ def main() -> None:
         raise RuntimeError(f"USER_ACCEPTANCE_COMPANY_ID not found: {default_company_id}")
 
     linked_companies = _linked_project_company_map()
-    legacy_projects = Project.search(
-        [
-            ("operation_strategy", "in", sorted(VALID_OPERATION_STRATEGIES)),
-            "|",
-            ("legacy_project_id", "!=", False),
-            ("name", "ilike", "SCBS未指定项目 -"),
-        ]
-    )
+    strategy_projects = Project.search([("operation_strategy", "in", sorted(VALID_OPERATION_STRATEGIES))])
     linked_projects = Project.browse(sorted(linked_companies)).exists()
-    projects = (legacy_projects | linked_projects).filtered(
+    projects = (strategy_projects | linked_projects).filtered(
         lambda project: (project.operation_strategy or "") in VALID_OPERATION_STRATEGIES
     )
 
@@ -123,8 +118,6 @@ def main() -> None:
         vals = {}
         if not project.company_id:
             vals["company_id"] = target_company_id
-        if not project.active:
-            vals["active"] = True
         if vals:
             plan.append(
                 {
@@ -156,6 +149,7 @@ def main() -> None:
         "write_count": len(plan),
         "operation_counts": dict(Counter(row["operation_strategy"] for row in plan)),
         "field_counts": dict(Counter(field for row in plan for field in row["vals"])),
+        "archived_candidate_count": sum(1 for project in projects if not project.active),
         "sample": plan[:20],
     }
     print("USER_ACCEPTANCE_PROJECT_MASTER_MATERIALIZE=" + json.dumps(payload, ensure_ascii=False, sort_keys=True))

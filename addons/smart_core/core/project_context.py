@@ -541,7 +541,7 @@ def build_project_context_contract(env, params: dict | None = None, *, search: s
         }
 
     try:
-        Model = env[context_model].with_context(active_test=False)
+        Model = env[context_model]
         domain = _record_context_domain(Model, search)
         if context_model == PROJECT_MODEL:
             if selected_company_id:
