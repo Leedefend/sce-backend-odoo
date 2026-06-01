@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import ast
 import csv
+import gzip
 import hashlib
 import json
 import os
@@ -371,6 +372,71 @@ def record_secondary_key(record, source_rule: dict[str, Any]) -> str:
 
 
 TENDER_GUARANTEE_FACT_CSV = "/mnt/artifacts/migration/scbs_tender_registration_fact_visible_payload_v1.csv"
+BUSINESS_ENTITY_VISIBLE_TSV = Path("/mnt/artifacts/migration/scbs_business_entity_visible_unified.tsv")
+
+
+def latest_scbs55_old_dump_dir() -> Path | None:
+    explicit = [
+        os.getenv("MIGRATION_SCBS55_OLD_FULL_DUMP_DIR"),
+        os.getenv("SCBS55_OLD_FULL_DUMP_DIR"),
+    ]
+    candidates = [Path(item) for item in explicit if item]
+    for pattern in (
+        "artifacts/migration/live_old_system_strict_parity_gate/*/scbs55_old_live_rows",
+        "/mnt/artifacts/migration/live_old_system_strict_parity_gate/*/scbs55_old_live_rows",
+    ):
+        candidates.extend(sorted(Path().glob(pattern) if not pattern.startswith("/") else Path("/").glob(pattern[1:])))
+    usable = [candidate for candidate in candidates if candidate.exists() and candidate.is_dir()]
+    return sorted(usable)[-1] if usable else None
+
+
+def read_old_dump_rows(path: Path) -> list[dict[str, Any]]:
+    opener = gzip.open if path.suffix == ".gz" else open
+    with opener(path, "rt", encoding="utf-8") as handle:
+        payload = json.load(handle)
+    rows = payload.get("rows")
+    return rows if isinstance(rows, list) else []
+
+
+def refresh_business_entity_visible_unified_tsv() -> None:
+    dump_dir = latest_scbs55_old_dump_dir()
+    if not dump_dir:
+        return
+    files = sorted(dump_dir.glob("scbs_55_old_live_full_rows_seq001_*.json*"))
+    files.extend(sorted(dump_dir.glob("scbs_55_old_live_full_rows_seq002_*.json*")))
+    if not files:
+        return
+
+    rows: list[dict[str, str]] = []
+    columns: set[str] = {"legacy_xmid", "legacy_record_id", "source_seq", "raw_payload"}
+    for file_path in files:
+        seq_match = re.search(r"seq0*(\d+)_", file_path.name)
+        source_seq = seq_match.group(1) if seq_match else ""
+        for raw_row in read_old_dump_rows(file_path):
+            if not isinstance(raw_row, dict):
+                continue
+            legacy_id = clean(raw_row.get("Id"))
+            if not legacy_id:
+                continue
+            row = {clean(key): clean(value) for key, value in raw_row.items()}
+            row["legacy_xmid"] = legacy_id
+            row["legacy_record_id"] = legacy_id
+            row["source_seq"] = source_seq
+            row["raw_payload"] = json.dumps(raw_row, ensure_ascii=False, sort_keys=True)
+            columns.update(row.keys())
+            rows.append(row)
+
+    if not rows:
+        return
+    ordered_columns = ["legacy_xmid", "legacy_record_id", "source_seq"] + sorted(
+        column for column in columns if column not in {"legacy_xmid", "legacy_record_id", "source_seq"}
+    )
+    BUSINESS_ENTITY_VISIBLE_TSV.parent.mkdir(parents=True, exist_ok=True)
+    with BUSINESS_ENTITY_VISIBLE_TSV.open("w", encoding="utf-8", newline="") as handle:
+        writer = csv.DictWriter(handle, fieldnames=ordered_columns, delimiter="\t", extrasaction="ignore")
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(row)
 
 
 FIELD_RULES: dict[int, dict[str, Any]] = {
@@ -383,18 +449,18 @@ FIELD_RULES: dict[int, dict[str, Any]] = {
         "record_key": "legacy_xmid",
         "domain": [],
         "fields": {
-            "单据状态": (["__CONST__:"], clean),
-            "推送结果": (["__CONST__:"], clean),
-            "项目名称": (["legacy_xmmc"], clean_alias_text),
-            "单位编号": (["legacy_xmid"], clean),
-            "合作类型": (["__CONST__:"], clean),
-            "单位名称": (["legacy_xmmc"], clean_alias_text),
-            "开户银行": (["__CONST__:"], clean),
-            "账号": (["__CONST__:"], clean),
-            "统一社会信用代码": (["__CONST__:"], clean),
-            "主税率": (["__CONST__:"], clean),
-            "录入人": (["__CONST__:"], clean),
-            "录入时间": (["__CONST__:"], clean_datetime),
+            "单据状态": (["DJZTText", "DJZT"], business_document_state_label),
+            "推送结果": (["TSJG"], clean),
+            "项目名称": (["XMMC"], clean_alias_text),
+            "单位编号": (["DJBH"], clean),
+            "合作类型": (["HZLX"], clean),
+            "单位名称": (["DWMC"], clean_alias_text),
+            "开户银行": (["KHYH"], clean),
+            "账号": (["KHZH"], clean),
+            "统一社会信用代码": (["TYSHXYDM"], clean),
+            "主税率": (["ZSLV"], clean),
+            "录入人": (["LRR"], clean),
+            "录入时间": (["LRSJ"], clean_datetime),
         },
     },
     20: {
@@ -406,17 +472,17 @@ FIELD_RULES: dict[int, dict[str, Any]] = {
         "record_key": "legacy_xmid",
         "domain": [],
         "fields": {
-            "单据状态": (["__CONST__:"], clean),
-            "项目名称": (["legacy_xmmc"], clean_alias_text),
-            "单位名称": (["legacy_xmmc"], clean_alias_text),
-            "收款金额": (["__CONST__:"], clean_amount),
-            "付款金额": (["__CONST__:"], clean_amount),
-            "开户姓名": (["__CONST__:"], clean),
-            "开户账号": (["__CONST__:"], clean),
-            "开户银行": (["__CONST__:"], clean),
-            "录入人": (["__CONST__:"], clean),
-            "录入时间": (["__CONST__:"], clean_datetime),
-            "银行账号": (["__CONST__:"], clean),
+            "单据状态": (["DJZTText", "DJZT"], business_document_state_label),
+            "项目名称": (["XMMC"], clean_alias_text),
+            "单位名称": (["DWMC"], clean_alias_text),
+            "收款金额": (["SKJE"], clean_amount),
+            "付款金额": (["FKJE"], clean_amount),
+            "开户姓名": (["KHXM$T_Base_CooperatCompany_Account"], clean),
+            "开户账号": (["KHZH$T_Base_CooperatCompany_Account"], clean),
+            "开户银行": (["KHYH$T_Base_CooperatCompany_Account"], clean),
+            "录入人": (["LRR"], clean),
+            "录入时间": (["LRSJ"], clean_datetime),
+            "银行账号": (["D_SCBSJS_YHZH"], clean),
         },
     },
     30: {
@@ -1515,6 +1581,7 @@ def report_markdown(payload: dict[str, Any]) -> str:
 
 artifact_dir = artifact_root()
 ensure_visible_alias_payload_table()
+refresh_business_entity_visible_unified_tsv()
 Plan = env["sc.legacy.user.priority.menu.plan"].sudo().with_context(active_test=False)  # noqa: F821
 plans = Plan.search([("source_document", "=", SOURCE_DOCUMENT)], order="priority_sequence")
 
