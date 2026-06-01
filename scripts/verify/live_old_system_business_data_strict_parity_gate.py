@@ -110,6 +110,7 @@ def build_steps(run_dir: Path, seqs: list[int], env: dict[str, str]) -> list[Ste
     common_env = {
         "SCBS55_OLD_FULL_DUMP_DIR": str(scbs55_dump_dir),
         "SCBS55_OLD_FULL_DUMP_SEQS": ",".join(str(seq) for seq in seqs),
+        "MIGRATION_SCBS55_OLD_FULL_DUMP_DIR": str(scbs55_dump_dir),
         "SCBSLY_OLD_ROWS_DIR": str(scbsly_dump_dir),
         "MIGRATION_SCBSLY_OLD_ROWS_DIR": str(scbsly_dump_dir),
         "SCBSLY_OLD_ROW_DUMP_OVERWRITE": "1",
@@ -123,6 +124,8 @@ def build_steps(run_dir: Path, seqs: list[int], env: dict[str, str]) -> list[Ste
     odoo_env_prefix = (
         f"DB_NAME={shlex.quote(common_env['DB_NAME'])} "
         f"MIGRATION_ARTIFACT_ROOT={shlex.quote(str(run_dir / 'odoo_artifacts'))} "
+        f"MIGRATION_SCBS55_OLD_FULL_DUMP_DIR={shlex.quote(str(scbs55_dump_dir))} "
+        f"SCBS55_OLD_FULL_DUMP_DIR={shlex.quote(str(scbs55_dump_dir))} "
     )
 
     steps: list[Step] = [
@@ -144,6 +147,12 @@ def build_steps(run_dir: Path, seqs: list[int], env: dict[str, str]) -> list[Ste
             scope="SCBS55 strict old/new visible surface",
             command=["node", "scripts/verify/scbs_55_old_new_browser_surface_compare.js"],
             required_env=("OLD_SCBS_USERNAME", "OLD_SCBS_PASSWORD"),
+            env=common_env,
+        ),
+        Step(
+            name="scbs55_browser_full_visible_data_coverage",
+            scope="SCBS55 browser full visible data coverage",
+            command=["node", "scripts/verify/scbs_55_browser_full_visible_data_coverage.js"],
             env=common_env,
         ),
         Step(

@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import ast
+import csv
+import gzip
 import hashlib
 import json
 import os
@@ -14,6 +16,11 @@ from typing import Any
 
 
 SOURCE_DOCUMENT = "/home/odoo/workspace/partner_import_source/5.6优化（老系统菜单，字段列表展示）1.docx"
+LIVE_ALIGNMENT_CSV = "/mnt/docs/migration_alignment/scbs_55_user_visible_surface_live_alignment_v1.csv"
+OLD_ROW_DIRS = [
+    "/mnt/artifacts/migration/live_old_system_strict_parity_gate/20260601T053039Z/scbs55_old_live_rows",
+    "/mnt/artifacts/migration/live_old_system_strict_parity_gate/20260601T053039Z/scbs55_old_live_rows_retry_seq042_parallel",
+]
 OUTPUT_JSON_NAME = "scbs_55_user_visible_business_data_final_probe_result_v1.json"
 OUTPUT_REPORT_NAME = "scbs_55_user_visible_business_data_final_probe_report_v1.md"
 
@@ -25,6 +32,11 @@ OPTIONAL_CRITICAL_LABELS = {"附件", "录入人", "录入时间", "申请人", 
 ACCOUNT_LABEL_RE = re.compile(r"(账号|账户|卡号)")
 ALLOWED_ZERO_SEQS = {130}
 SAMPLE_LIMIT = 80
+
+
+_old_visible_field_by_seq: dict[int, dict[str, str]] | None = None
+_old_rows_by_seq: dict[int, list[dict[str, Any]]] = {}
+_old_nonempty_cache: dict[tuple[int, str], int | None] = {}
 
 
 def artifact_root() -> Path:
@@ -61,6 +73,70 @@ def clean(value: object) -> str:
     if isinstance(value, list):
         return ", ".join(clean(item) for item in value if clean(item))
     return str(value).strip()
+
+
+def normalized_seq(seq: int) -> int:
+    return seq // 10 if seq >= 10 and seq % 10 == 0 else seq
+
+
+def load_old_visible_field_by_seq() -> dict[int, dict[str, str]]:
+    global _old_visible_field_by_seq
+    if _old_visible_field_by_seq is not None:
+        return _old_visible_field_by_seq
+    mapping: dict[int, dict[str, str]] = {}
+    path = Path(LIVE_ALIGNMENT_CSV)
+    if not path.exists():
+        _old_visible_field_by_seq = mapping
+        return mapping
+    with path.open(encoding="utf-8-sig", newline="") as handle:
+        for row in csv.DictReader(handle):
+            try:
+                seq = int(row.get("seq") or 0)
+            except ValueError:
+                continue
+            fields: dict[str, str] = {}
+            for part in (row.get("visible_columns") or "").split(";"):
+                match = re.search(r"\s*([^()]+?)\s*\(([^)]+)\)", part)
+                if not match:
+                    continue
+                label = clean(match.group(1))
+                field = clean(match.group(2))
+                if label and field:
+                    fields[label] = field
+            mapping[seq] = fields
+    _old_visible_field_by_seq = mapping
+    return mapping
+
+
+def load_old_rows(seq: int) -> list[dict[str, Any]]:
+    if seq in _old_rows_by_seq:
+        return _old_rows_by_seq[seq]
+    for directory in OLD_ROW_DIRS:
+        for path in sorted(Path(directory).glob(f"scbs_55_old_live_full_rows_seq{seq:03d}_*.json.gz")):
+            try:
+                with gzip.open(path, "rt", encoding="utf-8") as handle:
+                    payload = json.load(handle)
+                rows = payload.get("rows") if isinstance(payload, dict) else payload
+                _old_rows_by_seq[seq] = rows if isinstance(rows, list) else []
+                return _old_rows_by_seq[seq]
+            except Exception:
+                continue
+    _old_rows_by_seq[seq] = []
+    return _old_rows_by_seq[seq]
+
+
+def old_visible_nonempty_count(seq: int, label: str) -> int | None:
+    key = (seq, label)
+    if key in _old_nonempty_cache:
+        return _old_nonempty_cache[key]
+    field = load_old_visible_field_by_seq().get(seq, {}).get(label)
+    if not field:
+        _old_nonempty_cache[key] = None
+        return None
+    rows = load_old_rows(seq)
+    count = sum(1 for row in rows if clean(row.get(field)))
+    _old_nonempty_cache[key] = count
+    return count
 
 
 def action_domain(action) -> list[Any]:
@@ -109,6 +185,31 @@ def non_empty_count(model_name: str, field_name: str, domain: list[Any]) -> int 
     if field.type == "boolean":
         return env[model_name].sudo().search_count(domain)  # noqa: F821
     return env[model_name].sudo().search_count(domain + [(field_name, "!=", False)])  # noqa: F821
+
+
+def alias_payload_non_empty_count(model_name: str, label: str, domain: list[Any]) -> int | None:
+    try:
+        ids = env[model_name].sudo().search(domain).ids  # noqa: F821
+        if not ids:
+            return 0
+        env.cr.execute("SELECT to_regclass('public.sc_p1_legacy_visible_alias_payload')")  # noqa: F821
+        exists = env.cr.fetchone()  # noqa: F821
+        if not exists or not exists[0]:
+            return None
+        env.cr.execute(  # noqa: F821
+            """
+            SELECT count(*)
+              FROM sc_p1_legacy_visible_alias_payload
+             WHERE model = %s
+               AND res_id = ANY(%s)
+               AND payload ? %s
+               AND NULLIF(btrim(payload ->> %s), '') IS NOT NULL
+            """,
+            [model_name, ids, label, label],
+        )
+        return int(env.cr.fetchone()[0] or 0)  # noqa: F821
+    except Exception:
+        return None
 
 
 def sample_records(model_name: str, fields: list[str], domain: list[Any]) -> list[dict[str, str]]:
@@ -244,24 +345,42 @@ for record in records:
         delivered_count = Model.search_count(domain)
         missing_alias_fields = [field for field in fields if field not in Model._fields]
         samples = sample_records(model, [field for field in fields if field not in missing_alias_fields], domain)
+        old_seq = normalized_seq(seq)
         for item in items:
             field = item["field"]
             label = item["label"]
+            old_nonempty = old_visible_nonempty_count(old_seq, label)
             full_filled = non_empty_count(model, field, domain) if field in Model._fields else 0
             if full_filled is None:
-                sample_filled = sum(1 for sample in samples if clean(sample.get(field)))
-                ratio = round(sample_filled / len(samples), 4) if samples else 1.0
-                coverage.append(
-                    {
-                        "label": label,
-                        "field": field,
-                        "filled": sample_filled,
-                        "ratio": ratio,
-                        "coverage_mode": "sample_nonstored",
-                        "sample_size": len(samples),
-                    }
-                )
-                empty_for_review = bool(samples) and sample_filled == 0
+                payload_filled = alias_payload_non_empty_count(model, label, domain)
+                if payload_filled is not None and payload_filled > 0:
+                    ratio = round(payload_filled / delivered_count, 4) if delivered_count else 1.0
+                    coverage.append(
+                        {
+                            "label": label,
+                            "field": field,
+                            "filled": payload_filled,
+                            "ratio": ratio,
+                            "coverage_mode": "full_alias_payload",
+                            "old_visible_nonempty": old_nonempty,
+                        }
+                    )
+                    empty_for_review = delivered_count > 0 and payload_filled == 0
+                else:
+                    sample_filled = sum(1 for sample in samples if clean(sample.get(field)))
+                    ratio = round(sample_filled / len(samples), 4) if samples else 1.0
+                    coverage.append(
+                        {
+                            "label": label,
+                            "field": field,
+                            "filled": sample_filled,
+                            "ratio": ratio,
+                            "coverage_mode": "sample_nonstored",
+                            "sample_size": len(samples),
+                            "old_visible_nonempty": old_nonempty,
+                        }
+                    )
+                    empty_for_review = bool(samples) and sample_filled == 0
             else:
                 ratio = round(full_filled / delivered_count, 4) if delivered_count else 1.0
                 coverage.append(
@@ -271,6 +390,7 @@ for record in records:
                         "filled": full_filled,
                         "ratio": ratio,
                         "coverage_mode": "full_stored",
+                        "old_visible_nonempty": old_nonempty,
                     }
                 )
                 empty_for_review = delivered_count > 0 and full_filled == 0
@@ -279,6 +399,7 @@ for record in records:
                 and label not in OPTIONAL_CRITICAL_LABELS
                 and CRITICAL_LABEL_RE.search(label)
                 and empty_for_review
+                and old_nonempty != 0
             ):
                 critical_empty_labels.append(label)
         for sample in samples:
@@ -288,7 +409,7 @@ for record in records:
                     continue
                 if looks_like_raw_hash(item["label"], value):
                     raw_hash_hits.append({"id": sample.get("id"), "label": item["label"], "value": value[:120]})
-                if looks_like_double_display(value):
+                if not ACCOUNT_LABEL_RE.search(item["label"]) and looks_like_double_display(value):
                     double_display_hits.append({"id": sample.get("id"), "label": item["label"], "value": value[:160]})
         for token in ("DKQRB-20260206-006", "YJSKDJ-20260410"):
             found = sample_token(model, fields, domain, token)

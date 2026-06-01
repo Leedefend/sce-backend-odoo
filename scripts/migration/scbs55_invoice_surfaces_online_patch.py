@@ -264,7 +264,18 @@ def import_surface(seq: int) -> dict[str, Any]:
             "active": True,
         }
         if rec:
-            rec.write(vals)
+            allowed_existing = {
+                "note",
+                "active",
+                "creator_legacy_user_id",
+                "creator_name",
+                "created_time",
+                "tax_type",
+                "prepaid_tax_date",
+                "tax_certificate_no",
+                "legacy_attachment_ref",
+            }
+            rec.write({key: vals[key] for key in allowed_existing if key in vals})
             updated += 1
         else:
             rec = Invoice.create(vals)
