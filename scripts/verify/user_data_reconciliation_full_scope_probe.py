@@ -149,8 +149,25 @@ def view_fields(model_name: str, view_type: str) -> dict[str, set[str]]:
 
 
 AXES = {
-    "project": ["project_id", "business_entity_id", "legacy_project_name", "project_name", "project_name_text"],
-    "document": ["document_no", "name", "contract_no", "invoice_no"],
+    "project": [
+        "project_id",
+        "business_entity_id",
+        "legacy_project_name",
+        "legacy_visible_project_name",
+        "project_name",
+        "project_name_text",
+        "legacy_xmmc",
+    ],
+    "document": [
+        "document_no",
+        "legacy_document_no",
+        "legacy_visible_document_no",
+        "name",
+        "contract_no",
+        "invoice_no",
+        "source_login",
+        "generated_login",
+    ],
     "date": [
         "document_date",
         "request_date",
@@ -196,11 +213,16 @@ AXES = {
         "legacy_receipt_subtype",
         "operation_type",
         "operation_strategy",
+        "entity_type",
+        "fact_type",
         "invoice_type",
         "tax_rate",
         "cost_category_name",
         "document_scope",
         "source_family",
+        "document_state",
+        "user_type",
+        "person_state",
         "state",
     ],
     "creator": ["source_created_by", "creator_name", "requester_id", "owner_id"],
@@ -208,6 +230,10 @@ AXES = {
 }
 
 AMOUNT_FIELDS = [
+    "visible_contract_amount",
+    "visible_invoice_amount",
+    "visible_received_amount",
+    "visible_unreceived_amount",
     "amount_total",
     "amount",
     "paid_amount",
@@ -287,10 +313,15 @@ for model_name, labels in sorted(P1_ALIAS_LABELS.items()):
     domain = domain_for_model(model_name)
     total = Model.search_count(domain)
     fields = existing_fields(model_name)
-    amount_field = first_existing(model_name, AMOUNT_FIELDS)
-    amount_total = amount_sum(model_name, amount_field, domain) if amount_field and total else 0.0
     search = view_fields(model_name, "search")
     tree = view_fields(model_name, "tree")
+    amount_candidates = [
+        field_name
+        for field_name in AMOUNT_FIELDS
+        if field_name in fields and field_name in tree["visible_fields"]
+    ]
+    amount_field = first_existing(model_name, amount_candidates)
+    amount_total = amount_sum(model_name, amount_field, domain) if amount_field and total else 0.0
 
     axes = {}
     missing_axes = []
