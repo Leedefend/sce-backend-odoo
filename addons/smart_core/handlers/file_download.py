@@ -91,6 +91,7 @@ class FileDownloadHandler(BaseIntentHandler):
         params = self._collect_params(payload)
 
         attachment_id = params.get("id") if "id" in params else params.get("attachment_id")
+        attachment_url = str(params.get("url") or "").strip()
         model = str(params.get("model") or params.get("res_model") or "").strip()
         res_id = params.get("res_id") if "res_id" in params else params.get("record_id")
         name = str(params.get("name") or "").strip()
@@ -102,24 +103,44 @@ class FileDownloadHandler(BaseIntentHandler):
             if attachment_id_error:
                 return self._err(400, "id 无效")
         else:
-            # Fallback locator for contract/export scenarios where attachment id
-            # is created in a prior step and only model/res_id/name are known.
-            if not model or _is_empty_param(res_id):
-                return self._err(400, "缺少参数 id")
-            if model not in self._allowed_models():
-                return self._err(403, "附件不可访问")
-            if model not in self.env:
-                return self._err(404, "附件业务模型不存在")
-            res_id, res_id_error = parse_positive_int(res_id)
-            if res_id_error:
-                return self._err(400, "res_id 无效")
-            domain = [("res_model", "=", model), ("res_id", "=", res_id)]
-            if name:
-                domain.append(("name", "=", name))
-            attachment = self.env["ir.attachment"].sudo().search(domain, order="id desc", limit=1)
-            if not attachment:
-                return self._err(404, "附件不存在")
-            attachment_id = attachment.id
+            if attachment_url.startswith((LEGACY_FILE_URL_PREFIX, LEGACY_FILE_ID_URL_PREFIX)):
+                domain = [("type", "=", "url"), ("url", "=", attachment_url)]
+                if model:
+                    domain.append(("res_model", "=", model))
+                if not _is_empty_param(res_id):
+                    res_id, res_id_error = parse_positive_int(res_id)
+                    if res_id_error:
+                        return self._err(400, "res_id 无效")
+                    domain.append(("res_id", "=", res_id))
+                attachment = self.env["ir.attachment"].sudo().search(domain, order="id desc", limit=1)
+                if not attachment and (model or not _is_empty_param(res_id)):
+                    attachment = self.env["ir.attachment"].sudo().search(
+                        [("type", "=", "url"), ("url", "=", attachment_url)],
+                        order="id desc",
+                        limit=1,
+                    )
+                if not attachment:
+                    return self._err(404, "附件不存在")
+                attachment_id = attachment.id
+            else:
+                # Fallback locator for contract/export scenarios where attachment id
+                # is created in a prior step and only model/res_id/name are known.
+                if not model or _is_empty_param(res_id):
+                    return self._err(400, "缺少参数 id")
+                if model not in self._allowed_models():
+                    return self._err(403, "附件不可访问")
+                if model not in self.env:
+                    return self._err(404, "附件业务模型不存在")
+                res_id, res_id_error = parse_positive_int(res_id)
+                if res_id_error:
+                    return self._err(400, "res_id 无效")
+                domain = [("res_model", "=", model), ("res_id", "=", res_id)]
+                if name:
+                    domain.append(("name", "=", name))
+                attachment = self.env["ir.attachment"].sudo().search(domain, order="id desc", limit=1)
+                if not attachment:
+                    return self._err(404, "附件不存在")
+                attachment_id = attachment.id
 
         trace_id = ""
         if isinstance(self.context, dict):

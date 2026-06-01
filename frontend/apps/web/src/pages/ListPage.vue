@@ -340,10 +340,10 @@
                     <a
                       v-for="link in attachmentLinks(row[col])"
                       :key="`${link.name}-${link.url}`"
-                      :href="link.url"
+                      href="#"
                       target="_blank"
                       rel="noopener"
-                      @click.stop
+                      @click.prevent.stop="previewAttachmentLink(link, row)"
                     >
                       {{ link.name }}
                     </a>
@@ -509,10 +509,10 @@
                 <a
                   v-for="link in attachmentLinks(row[col])"
                   :key="`${link.name}-${link.url}`"
-                  :href="link.url"
+                  href="#"
                   target="_blank"
                   rel="noopener"
-                  @click.stop
+                  @click.prevent.stop="previewAttachmentLink(link, row)"
                 >
                   {{ link.name }}
                 </a>
@@ -661,6 +661,7 @@ import PageHeader from '../components/page/PageHeader.vue';
 import { resolveEmptyCopy, resolveErrorCopy, type StatusError } from '../composables/useStatus';
 import type { SceneListProfile } from '../app/resolvers/sceneRegistry';
 import { formatAttachmentReferenceValue, parseAttachmentReferenceLinks } from '../utils/display';
+import { openExternalAttachmentUrl, previewOrDownloadFile } from '../utils/filePreview';
 
 type SelectionAction = {
   key: string;
@@ -1007,6 +1008,19 @@ function semanticCell(field: string, value: unknown) {
 
 function attachmentLinks(value: unknown) {
   return parseAttachmentReferenceLinks(value);
+}
+
+async function previewAttachmentLink(link: { name: string; url: string }, row: Record<string, unknown>) {
+  if (link.url.startsWith('legacy-file://') || link.url.startsWith('legacy-file-id://')) {
+    await previewOrDownloadFile({
+      url: link.url,
+      model: props.model,
+      res_id: Number(row.id || 0) || undefined,
+      name: link.name,
+    }, link.name);
+    return;
+  }
+  openExternalAttachmentUrl(link.url);
 }
 
 function isStatusColumn(field: string) {

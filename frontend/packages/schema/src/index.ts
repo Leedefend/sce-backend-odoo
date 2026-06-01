@@ -506,7 +506,13 @@ export interface FileUploadResponse {
 }
 
 export interface FileDownloadRequest {
-  id: number;
+  id?: number;
+  url?: string;
+  model?: string;
+  res_model?: string;
+  res_id?: number;
+  record_id?: number;
+  name?: string;
 }
 
 export interface FileDownloadResponse {
@@ -516,6 +522,7 @@ export interface FileDownloadResponse {
   datas: string;
   type?: string;
   url?: string;
+  legacy_url?: string;
   res_model: string;
   res_id: number;
 }

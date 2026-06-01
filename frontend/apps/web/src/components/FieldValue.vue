@@ -3,9 +3,10 @@
     <a
       v-for="link in attachmentLinks"
       :key="`${link.name}-${link.url}`"
-      :href="link.url"
+      href="#"
       target="_blank"
       rel="noopener"
+      @click.prevent="previewAttachmentLink(link)"
     >
       {{ link.name }}
     </a>
@@ -17,6 +18,7 @@
 import { computed } from 'vue';
 import type { FieldDescriptor } from '@sc/schema';
 import { formatDisplayValue, parseAttachmentReferenceLinks } from '../utils/display';
+import { openExternalAttachmentUrl, previewOrDownloadFile } from '../utils/filePreview';
 
 const props = defineProps<{ value: unknown; field?: FieldDescriptor }>();
 
@@ -25,6 +27,14 @@ const display = computed(() => {
 });
 
 const attachmentLinks = computed(() => parseAttachmentReferenceLinks(props.value));
+
+async function previewAttachmentLink(link: { name: string; url: string }) {
+  if (link.url.startsWith('legacy-file://') || link.url.startsWith('legacy-file-id://')) {
+    await previewOrDownloadFile({ url: link.url }, link.name);
+    return;
+  }
+  openExternalAttachmentUrl(link.url);
+}
 </script>
 
 <style scoped>

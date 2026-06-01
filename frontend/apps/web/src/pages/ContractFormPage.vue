@@ -756,7 +756,8 @@ import { loadActionContractRaw, loadModelContractRaw } from '../api/contract';
 import { ApiError } from '../api/client';
 import { executeButton } from '../api/executeButton';
 import { fetchChatterTimeline, postChatterMessage, scheduleChatterActivity, type ChatterTimelineEntry } from '../api/chatter';
-import { downloadFile, fileToBase64, uploadFile } from '../api/files';
+import { fileToBase64, uploadFile } from '../api/files';
+import { previewOrDownloadFile } from '../utils/filePreview';
 import { triggerOnchange } from '../api/onchange';
 import type { OnchangeLinePatch } from '../api/onchange';
 import type { ActionContract, FieldDescriptor } from '@sc/schema';
@@ -6707,23 +6708,7 @@ async function downloadNativeAttachment(att: { id?: number; name?: string; mimet
   if (!att?.id) return;
   attachmentError.value = '';
   try {
-    const payload = await downloadFile({ id: Number(att.id) });
-    if (payload.url) {
-      window.open(payload.url, '_blank', 'noopener');
-      return;
-    }
-    const binary = atob(payload.datas || '');
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i += 1) {
-      bytes[i] = binary.charCodeAt(i);
-    }
-    const blob = new Blob([bytes], { type: payload.mimetype || att.mimetype || 'application/octet-stream' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = payload.name || att.name || 'download';
-    link.click();
-    URL.revokeObjectURL(url);
+    await previewOrDownloadFile({ id: Number(att.id) }, att.name);
   } catch (err) {
     attachmentError.value = err instanceof Error ? err.message : nativeAttachmentLabel('download_failed', '附件下载失败');
   }
