@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import importlib.util
+import os
 import sys
+import tempfile
 import types
 import unittest
 from pathlib import Path
@@ -110,6 +112,49 @@ class TestFileDownloadLocatorPolicy(unittest.TestCase):
         self.assertFalse(result["ok"])
         self.assertEqual(result["code"], 400)
         self.assertEqual(result["error"]["message"], "res_id 无效")
+
+    def test_resolves_legacy_uploadfile_path_from_configured_root(self):
+        module = _load_handler()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            target = Path(tmpdir) / "UploadFile" / "OldSystem" / "File_New" / "a.pdf"
+            target.parent.mkdir(parents=True)
+            target.write_bytes(b"x")
+            old_value = os.environ.get("SC_LEGACY_FILE_ROOTS")
+            os.environ["SC_LEGACY_FILE_ROOTS"] = tmpdir
+            try:
+                self.assertEqual(
+                    module._resolve_legacy_file_path("UploadFile/OldSystem/File_New/a.pdf"),
+                    target.resolve(),
+                )
+            finally:
+                if old_value is None:
+                    os.environ.pop("SC_LEGACY_FILE_ROOTS", None)
+                else:
+                    os.environ["SC_LEGACY_FILE_ROOTS"] = old_value
+
+    def test_resolves_legacy_userfile_path_when_url_keeps_uploadfile_prefix(self):
+        module = _load_handler()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            target = Path(tmpdir) / "UserFile" / "2023" / "a.png"
+            target.parent.mkdir(parents=True)
+            target.write_bytes(b"x")
+            old_value = os.environ.get("SC_LEGACY_FILE_ROOTS")
+            os.environ["SC_LEGACY_FILE_ROOTS"] = tmpdir
+            try:
+                self.assertEqual(
+                    module._resolve_legacy_file_path("UploadFile/UserFile/2023/a.png"),
+                    target.resolve(),
+                )
+            finally:
+                if old_value is None:
+                    os.environ.pop("SC_LEGACY_FILE_ROOTS", None)
+                else:
+                    os.environ["SC_LEGACY_FILE_ROOTS"] = old_value
+
+    def test_rejects_legacy_path_traversal(self):
+        module = _load_handler()
+
+        self.assertIsNone(module._resolve_legacy_file_path("../secret.pdf"))
 
 
 if __name__ == "__main__":

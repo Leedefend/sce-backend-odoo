@@ -2,7 +2,11 @@
 # 📄 smart_core/handlers/file_download.py
 # Minimal file download intent for portal attachments
 
+import base64
 import logging
+import mimetypes
+import os
+from pathlib import Path
 from typing import Any, Dict
 
 from odoo.exceptions import AccessError
@@ -22,6 +26,15 @@ from ..core.request_params import parse_positive_int
 from ..utils.extension_hooks import call_extension_hook_first
 
 _logger = logging.getLogger(__name__)
+
+LEGACY_FILE_URL_PREFIX = "legacy-file://"
+LEGACY_FILE_ID_URL_PREFIX = "legacy-file-id://"
+DEFAULT_LEGACY_FILE_ROOTS = (
+    "/mnt/legacy-files",
+    "/mnt/legacy_files",
+    "/opt/sce-legacy-files",
+    "/opt/sce/legacy-files",
+)
 
 
 class FileDownloadHandler(BaseIntentHandler):
@@ -150,15 +163,20 @@ class FileDownloadHandler(BaseIntentHandler):
             _logger.exception("file.download failed on %s", attachment_id)
             return self._err(500, str(e))
 
+        legacy_file = self._read_legacy_file(attachment)
+        if legacy_file.get("error"):
+            return self._err(legacy_file["code"], legacy_file["message"])
+
         data = {
             "id": attachment.id,
-            "name": attachment.name,
-            "mimetype": attachment.mimetype or "application/octet-stream",
-            "datas": attachment.datas or "",
-            "type": attachment.type or "binary",
+            "name": legacy_file.get("name") or attachment.name,
+            "mimetype": legacy_file.get("mimetype") or attachment.mimetype or "application/octet-stream",
+            "datas": legacy_file.get("datas") or attachment.datas or "",
+            "type": "binary" if legacy_file.get("datas") else attachment.type or "binary",
             "url": attachment.url or "",
             "res_model": attachment.res_model,
             "res_id": attachment.res_id,
+            "legacy_url": attachment.url or "",
         }
         meta = {
             "trace_id": trace_id,
@@ -170,6 +188,81 @@ class FileDownloadHandler(BaseIntentHandler):
         }
         return {"ok": True, "data": data, "meta": meta}
 
+    def _read_legacy_file(self, attachment):
+        url = str(attachment.url or "").strip()
+        if attachment.type != "url" or not url.startswith((LEGACY_FILE_URL_PREFIX, LEGACY_FILE_ID_URL_PREFIX)):
+            return {}
+        relative_path = self._legacy_relative_path(url)
+        if not relative_path:
+            return {"error": True, "code": 404, "message": "历史附件索引不存在"}
+        path = _resolve_legacy_file_path(relative_path)
+        if not path:
+            _logger.warning("legacy attachment file missing: attachment=%s url=%s path=%s", attachment.id, url, relative_path)
+            return {"error": True, "code": 404, "message": "历史附件文件不存在"}
+        try:
+            raw = path.read_bytes()
+        except OSError:
+            _logger.exception("legacy attachment file unreadable: attachment=%s path=%s", attachment.id, path)
+            return {"error": True, "code": 500, "message": "历史附件读取失败"}
+        mimetype = attachment.mimetype or mimetypes.guess_type(str(path))[0] or "application/octet-stream"
+        return {
+            "datas": base64.b64encode(raw).decode("ascii"),
+            "name": attachment.name or path.name,
+            "mimetype": mimetype,
+        }
+
+    def _legacy_relative_path(self, url: str) -> str:
+        if url.startswith(LEGACY_FILE_URL_PREFIX):
+            return url[len(LEGACY_FILE_URL_PREFIX):]
+        legacy_file_id = url[len(LEGACY_FILE_ID_URL_PREFIX):].strip()
+        if not legacy_file_id or "sc.legacy.file.index" not in self.env:
+            return ""
+        file_index = self.env["sc.legacy.file.index"].sudo().search(
+            ["|", ("legacy_file_id", "=", legacy_file_id), ("legacy_file_key", "=", legacy_file_id)],
+            limit=1,
+        )
+        if not file_index:
+            return ""
+        return file_index.preview_path or file_index.file_path or ""
+
 
 def _is_empty_param(value: Any) -> bool:
     return value is None or (isinstance(value, str) and not value.strip())
+
+
+def _legacy_file_roots():
+    raw = os.environ.get("SC_LEGACY_FILE_ROOTS") or os.environ.get("LEGACY_FILE_ROOTS") or ""
+    roots = []
+    for item in raw.replace(",", os.pathsep).split(os.pathsep):
+        item = item.strip()
+        if item:
+            roots.append(Path(item))
+    roots.extend(Path(item) for item in DEFAULT_LEGACY_FILE_ROOTS)
+    deduped = []
+    seen = set()
+    for root in roots:
+        marker = str(root)
+        if marker not in seen:
+            seen.add(marker)
+            deduped.append(root)
+    return deduped
+
+
+def _resolve_legacy_file_path(relative_path: str):
+    clean = relative_path.replace("\\", "/").lstrip("/")
+    if not clean or ".." in Path(clean).parts:
+        return None
+    candidates = [clean]
+    if clean.startswith("UploadFile/UserFile/"):
+        candidates.append(clean[len("UploadFile/"):])
+    for root in _legacy_file_roots():
+        root_resolved = root.resolve()
+        for candidate in candidates:
+            full_path = (root_resolved / candidate).resolve()
+            try:
+                full_path.relative_to(root_resolved)
+            except ValueError:
+                continue
+            if full_path.is_file():
+                return full_path
+    return None
