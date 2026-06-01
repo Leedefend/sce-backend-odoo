@@ -203,6 +203,7 @@
                     <filter string="有项目" name="has_project" domain="[('project_id', '!=', False)]"/>
                     <filter string="有往来单位" name="has_partner" domain="[('partner_id', '!=', False)]"/>
                     <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="按单据日期" name="group_document_date" context="{'group_by': 'document_date'}"/>
                     <filter string="按往来单位" name="group_partner" context="{'group_by': 'partner_id'}"/>
                     <filter string="按残余原因" name="group_residual_reason" context="{'group_by': 'residual_reason'}"/>
                     <filter string="按付款族" name="group_payment_family" context="{'group_by': 'payment_family'}"/>

@@ -143,6 +143,7 @@
                     <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
                     <filter string="按日期" name="group_document_date" context="{'group_by': 'document_date'}"/>
                     <filter string="按账户" name="group_account" context="{'group_by': 'account_name'}"/>
+                    <filter string="按单据状态" name="group_document_state" context="{'group_by': 'document_state'}"/>
                 </search>
             </field>
         </record>

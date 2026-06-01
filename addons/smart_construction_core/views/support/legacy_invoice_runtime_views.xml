@@ -321,6 +321,8 @@
           <filter name="has_attachment" string="有附件" domain="[('attachment_links', '!=', False)]"/>
           <group expand="0" string="分组">
             <filter name="group_project" string="项目" context="{'group_by': 'project_name'}"/>
+            <filter name="group_receipt_time" string="到款时间" context="{'group_by': 'receipt_time'}"/>
+            <filter name="group_created_time" string="创建时间" context="{'group_by': 'created_time'}"/>
             <filter name="group_state" string="单据状态" context="{'group_by': 'document_state'}"/>
             <filter name="group_construction_unit" string="施工单位" context="{'group_by': 'construction_unit_name'}"/>
           </group>

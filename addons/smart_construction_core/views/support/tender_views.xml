@@ -269,6 +269,7 @@
                 <filter string="已确认" name="confirmed" domain="[('state', '=', 'confirmed')]"/>
                 <filter string="已取消" name="cancel" domain="[('state', '=', 'cancel')]"/>
                 <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按日期" name="group_date" context="{'group_by': 'date'}"/>
                 <filter string="按类型" name="group_type" context="{'group_by': 'type'}"/>
                 <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
             </search>
@@ -297,6 +298,8 @@
                 <group expand="0" string="分组">
                     <filter string="按投标" name="group_bid" context="{'group_by': 'bid_id'}"/>
                     <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="按申请日期" name="group_apply_date" context="{'group_by': 'apply_date'}"/>
+                    <filter string="按收款单位" name="group_receipt_partner" context="{'group_by': 'receipt_partner_name'}"/>
                     <filter string="按申请人" name="group_applicant" context="{'group_by': 'applicant_id'}"/>
                     <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
                 </group>
