@@ -49,6 +49,11 @@ def clean(value: object) -> str:
     return "" if text.upper() == "NULL" else text
 
 
+def is_broken_legacy_text(value: object) -> bool:
+    text = clean(value)
+    return bool(text) and "?" in text
+
+
 def number(value: object) -> float:
     text = clean(value)
     return float(text) if text else 0.0
@@ -74,6 +79,11 @@ project_map = {
     for rec in Project.search_read([("legacy_project_id", "in", legacy_ids)], ["legacy_project_id"])
     if rec.get("legacy_project_id")
 }
+project_name_map = {
+    rec["legacy_project_id"]: rec["name"]
+    for rec in Project.search_read([("legacy_project_id", "in", legacy_ids)], ["legacy_project_id", "name"])
+    if rec.get("legacy_project_id") and rec.get("name")
+}
 
 created = 0
 updated = 0
@@ -83,9 +93,12 @@ for row in rows:
     project_id = project_map.get(legacy_project_id)
     if not project_id:
         missing_project += 1
+    legacy_project_name = clean(row.get("legacy_project_name"))
+    if is_broken_legacy_text(legacy_project_name) and project_name_map.get(legacy_project_id):
+        legacy_project_name = clean(project_name_map.get(legacy_project_id))
     vals = {
         "legacy_project_id": legacy_project_id,
-        "legacy_project_name": clean(row.get("legacy_project_name")),
+        "legacy_project_name": legacy_project_name,
         "project_id": project_id or False,
         "import_batch": clean(row.get("import_batch")) or "legacy_ar_ap_report_v1",
         "tax_burden_rate": number(row.get("tax_burden_rate")),
