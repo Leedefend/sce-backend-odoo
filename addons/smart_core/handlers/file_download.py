@@ -3,11 +3,14 @@
 # Minimal file download intent for portal attachments
 
 import base64
+import json
 import logging
 import mimetypes
 import os
 from pathlib import Path
 from typing import Any, Dict
+from urllib.error import URLError
+from urllib.request import Request, urlopen
 
 from odoo.exceptions import AccessError
 
@@ -29,6 +32,7 @@ _logger = logging.getLogger(__name__)
 
 LEGACY_FILE_URL_PREFIX = "legacy-file://"
 LEGACY_FILE_ID_URL_PREFIX = "legacy-file-id://"
+DEFAULT_ONLINE_LEGACY_BASE_URL = "https://www.builderp.cn/SCBSLY_V2"
 DEFAULT_LEGACY_FILE_ROOTS = (
     "/mnt/legacy-files",
     "/mnt/legacy_files",
@@ -214,7 +218,11 @@ class FileDownloadHandler(BaseIntentHandler):
 
     def _read_legacy_file(self, attachment):
         url = str(attachment.url or "").strip()
-        if attachment.type != "url" or not url.startswith((LEGACY_FILE_URL_PREFIX, LEGACY_FILE_ID_URL_PREFIX)):
+        if attachment.type != "url":
+            return {}
+        if url and _is_online_legacy_file_url(url):
+            return _read_online_legacy_file_url(url, attachment.name, attachment.mimetype)
+        if not url.startswith((LEGACY_FILE_URL_PREFIX, LEGACY_FILE_ID_URL_PREFIX)):
             return {}
         relative_path = self._legacy_relative_path(url)
         if not relative_path:
@@ -275,10 +283,10 @@ class FileDownloadHandler(BaseIntentHandler):
             limit=1,
         )
         if not file_index:
-            return None
+            return self._online_legacy_attachment_for_refs(model, res_id, legacy_refs)
         path = (file_index.preview_path or file_index.file_path or "").strip()
         if not path:
-            return None
+            return self._online_legacy_attachment_for_refs(model, res_id, legacy_refs)
         url = LEGACY_FILE_URL_PREFIX + path.lstrip("/")
         attachment = self.env["ir.attachment"].sudo().search(
             [
@@ -302,6 +310,39 @@ class FileDownloadHandler(BaseIntentHandler):
                 "mimetype": mimetypes.guess_type(path)[0] or "application/octet-stream",
             }
         )
+
+    def _online_legacy_attachment_for_refs(self, model: str, res_id: int, legacy_refs: list[str]):
+        for ref in legacy_refs:
+            file_info = _fetch_online_legacy_file_by_bill_id(ref)
+            if not file_info:
+                continue
+            url = str(file_info.get("ATTR_PATH") or "").strip()
+            if not url:
+                continue
+            name = str(file_info.get("ATTR_NAME") or file_info.get("ID") or "历史附件").strip()
+            attachment = self.env["ir.attachment"].sudo().search(
+                [
+                    ("res_model", "=", model),
+                    ("res_id", "=", res_id),
+                    ("type", "=", "url"),
+                    ("url", "=", url),
+                ],
+                order="id desc",
+                limit=1,
+            )
+            if attachment:
+                return attachment
+            return self.env["ir.attachment"].sudo().create(
+                {
+                    "name": name,
+                    "res_model": model,
+                    "res_id": res_id,
+                    "type": "url",
+                    "url": url,
+                    "mimetype": mimetypes.guess_type(name or url)[0] or "application/octet-stream",
+                }
+            )
+        return None
 
     def _legacy_attachment_refs(self, record) -> list[str]:
         refs: list[str] = []
@@ -332,6 +373,58 @@ def _split_legacy_refs(value: str) -> list[str]:
         if clean and "://" not in clean:
             refs.append(clean)
     return refs
+
+
+def _fetch_online_legacy_file_by_bill_id(bill_id: str) -> dict[str, Any] | None:
+    clean = str(bill_id or "").strip()
+    if not clean:
+        return None
+    base_url = os.environ.get("SC_ONLINE_LEGACY_BASE_URL", DEFAULT_ONLINE_LEGACY_BASE_URL).rstrip("/")
+    url = f"{base_url}/api/System/FileApi/GetFileByBillId?BillId={clean}"
+    try:
+        request = Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urlopen(request, timeout=15) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except (OSError, URLError, ValueError, json.JSONDecodeError):
+        _logger.exception("online legacy file lookup failed: bill_id=%s", clean)
+        return None
+    rows = payload.get("Data") if isinstance(payload, dict) else None
+    if not isinstance(rows, list):
+        return None
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        if str(row.get("DEL") or "0") not in ("0", "False", "false", ""):
+            continue
+        if str(row.get("ATTR_PATH") or "").strip():
+            return row
+    return None
+
+
+def _is_online_legacy_file_url(url: str) -> bool:
+    clean = str(url or "").strip()
+    if not clean:
+        return False
+    base_url = os.environ.get("SC_ONLINE_LEGACY_BASE_URL", DEFAULT_ONLINE_LEGACY_BASE_URL).rstrip("/")
+    return clean.startswith(f"{base_url}/Api/System/FileApi/ShowFileById/")
+
+
+def _read_online_legacy_file_url(url: str, fallback_name: str = "", fallback_mimetype: str = "") -> dict[str, Any]:
+    try:
+        request = Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urlopen(request, timeout=30) as response:
+            raw = response.read()
+            content_type = response.headers.get_content_type() if response.headers else ""
+    except (OSError, URLError):
+        _logger.exception("online legacy file read failed: url=%s", url)
+        return {"error": True, "code": 502, "message": "历史附件在线读取失败"}
+    name = fallback_name or Path(url.split("?", 1)[0]).name or "历史附件"
+    mimetype = fallback_mimetype or content_type or mimetypes.guess_type(name)[0] or "application/octet-stream"
+    return {
+        "datas": base64.b64encode(raw).decode("ascii"),
+        "name": name,
+        "mimetype": mimetype,
+    }
 
 
 def _legacy_file_roots():

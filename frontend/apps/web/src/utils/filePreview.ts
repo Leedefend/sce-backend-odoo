@@ -64,12 +64,36 @@ function downloadBlob(blob: Blob, name: string) {
   URL.revokeObjectURL(objectUrl);
 }
 
+function previewBlob(objectUrl: string, name: string, previewWindow?: Window | null) {
+  if (!previewWindow) {
+    window.open(objectUrl, '_blank', 'noopener');
+    return;
+  }
+  const doc = previewWindow.document;
+  doc.title = name || '附件预览';
+  const iframe = doc.createElement('iframe');
+  iframe.src = objectUrl;
+  iframe.title = name || '附件预览';
+  iframe.style.border = '0';
+  iframe.style.width = '100vw';
+  iframe.style.height = '100vh';
+  iframe.style.display = 'block';
+  doc.documentElement.style.margin = '0';
+  doc.body.style.margin = '0';
+  doc.body.replaceChildren(iframe);
+}
+
 export function openDownloadedFile(payload: FileDownloadResponse, fallbackName?: string, previewWindow?: Window | null) {
   const name = payload.name || fallbackName || 'download';
   const mimetype = payload.mimetype || 'application/octet-stream';
   if (!payload.datas && payload.url && !payload.url.startsWith('legacy-file')) {
     if (previewWindow) {
-      previewWindow.location.href = payload.url;
+      const link = previewWindow.document.createElement('a');
+      link.href = payload.url;
+      link.rel = 'noopener';
+      link.textContent = '打开附件';
+      previewWindow.document.body.replaceChildren(link);
+      previewWindow.setTimeout(() => previewWindow.location.replace(payload.url), 0);
     } else {
       window.open(payload.url, '_blank', 'noopener');
     }
@@ -78,11 +102,7 @@ export function openDownloadedFile(payload: FileDownloadResponse, fallbackName?:
   const blob = base64ToBlob(payload.datas || '', mimetype);
   if (canPreviewInline(mimetype)) {
     const objectUrl = URL.createObjectURL(blob);
-    if (previewWindow) {
-      previewWindow.location.href = objectUrl;
-    } else {
-      window.open(objectUrl, '_blank', 'noopener');
-    }
+    previewBlob(objectUrl, name, previewWindow);
     window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
     return;
   }
