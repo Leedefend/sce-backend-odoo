@@ -362,14 +362,17 @@ class FileDownloadHandler(BaseIntentHandler):
     def _legacy_attachment_refs(self, record) -> list[str]:
         refs: list[str] = []
         fields = getattr(record, "_fields", {}) or {}
-        for field in ("attachment_ref", "legacy_record_id", "legacy_source_id", "legacy_file_id"):
+        for field in (
+            "attachment_ref",
+            "attachment_links",
+            "line_attachment_ref",
+            "legacy_record_id",
+            "legacy_source_id",
+            "legacy_file_id",
+        ):
             if field not in fields:
                 continue
             value = getattr(record, field, "")
-            if isinstance(value, str):
-                refs.extend(_split_legacy_refs(value))
-        if "attachment_links" in fields:
-            value = getattr(record, "attachment_links", "")
             if isinstance(value, str):
                 refs.extend(_split_legacy_refs(value))
         return list(dict.fromkeys(refs))
