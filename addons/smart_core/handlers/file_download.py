@@ -372,9 +372,14 @@ class FileDownloadHandler(BaseIntentHandler):
             "attachment_ref",
             "attachment_links",
             "line_attachment_ref",
+            "legacy_pid",
+            "legacy_header_id",
+            "legacy_contract_id",
             "legacy_record_id",
             "legacy_source_id",
             "legacy_file_id",
+            "contract_no",
+            "document_no",
         ):
             if field not in fields:
                 continue
