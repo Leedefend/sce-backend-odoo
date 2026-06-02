@@ -85,6 +85,7 @@ class ScFinancingLoan(models.Model):
     legacy_counterparty_id = fields.Char(string="历史往来方ID", index=True, readonly=True)
     legacy_counterparty_name = fields.Char(string="历史往来方", index=True, readonly=True)
     legacy_amount_field = fields.Char(string="历史金额字段", index=True, readonly=True)
+    legacy_attachment_ref = fields.Char(string="历史附件引用", index=True, readonly=True)
     creator_legacy_user_id = fields.Char(string="历史录入人ID", index=True, readonly=True)
     creator_name = fields.Char(string="历史录入人", index=True, readonly=True)
     created_time = fields.Datetime(string="历史录入时间", index=True, readonly=True)

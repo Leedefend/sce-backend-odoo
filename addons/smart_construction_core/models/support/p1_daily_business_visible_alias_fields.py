@@ -1397,6 +1397,8 @@ def _normalize_payload_alias_value(label, value):
         text = str(value).strip()
         if text in {"False", "false", "None", "NULL"}:
             return ""
+        if label == "附件" and _is_hash_file_name(text):
+            return "历史附件"
         if label in ("单据状态", "状态"):
             return BUSINESS_DOCUMENT_STATE_LABELS.get(text, text)
         return text
