@@ -1217,7 +1217,7 @@
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_input_tax_report_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
-    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '进项上报')]</field>
+    <field name="domain">[('active', '=', True), ('source_system', '=', 'online_old_scbsly'), ('acceptance_label', '=', '进项上报')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
   </record>
 
@@ -1227,7 +1227,7 @@
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_general_contract_input_tax_report_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
-    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '总包进项上报')]</field>
+    <field name="domain">[('active', '=', True), ('source_system', '=', 'online_old_scbsly'), ('acceptance_label', '=', '总包进项上报')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
   </record>
 

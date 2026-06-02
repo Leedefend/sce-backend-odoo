@@ -679,6 +679,8 @@ def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict]) -> tuple[lis
         "smart_construction_core.menu_scbsly_joint_acceptance_supplier_contract",
         "smart_construction_core.menu_scbsly_joint_acceptance_labor_contract",
         "smart_construction_core.menu_scbsly_joint_acceptance_rental_contract",
+        "smart_construction_core.menu_scbsly_joint_acceptance_input_tax_report",
+        "smart_construction_core.menu_scbsly_joint_acceptance_general_contract_input_tax_report",
     ]
 
     def has_nav_target(node: dict) -> bool:
@@ -728,6 +730,10 @@ def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict]) -> tuple[lis
         view_modes = [_text(item) for item in view_mode.split(",") if _text(item)]
         menu_id = int(getattr(menu, "id", 0) or 0)
         label = _text(getattr(menu, "name", "")) or xmlid.rsplit(".", 1)[-1]
+        if xmlid == "smart_construction_core.menu_scbsly_joint_acceptance_input_tax_report":
+            label = "进项税额上报"
+        elif xmlid == "smart_construction_core.menu_scbsly_joint_acceptance_general_contract_input_tax_report":
+            label = "总包进项税额上报"
         route = f"/a/{action_id}?menu_id={menu_id}"
         sequence = int(getattr(menu, "sequence", 0) or 0)
         return {
