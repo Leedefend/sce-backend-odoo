@@ -57,6 +57,14 @@ def number_text(value: object) -> str:
         return text
 
 
+def attachment_refs(row: dict[str, Any]) -> str:
+    refs = [
+        clean(row.get("FJ$C_JXXP_ZYFPJJD_CB")),
+        clean(row.get("FJ")),
+    ]
+    return " ".join(item for item in dict.fromkeys(refs) if item)
+
+
 def state_label(value: object) -> str:
     text = clean(value)
     return {"-1": "已作废", "0": "未审核", "1": "审核中", "2": "审核通过", "3": "已驳回", "4": "已作废"}.get(text, text)
@@ -161,6 +169,7 @@ def import_rows() -> dict[str, Any]:
             "source_amount": amount(row.get("HJJE$C_JXXP_ZYFPJJD_CB")),
             "source_tax_amount": amount(row.get("JXSE$C_JXXP_ZYFPJJD_CB")),
             "source_amount_field": "HJJE$C_JXXP_ZYFPJJD_CB",
+            "attachment_ref": attachment_refs(row),
             "note": "SCBS55 old visible surface mirror: %s; header=%s; attachment=%s; invoice_note=%s"
             % (
                 SURFACE,

@@ -30,6 +30,7 @@ class ScLegacyInvoiceTaxFact(models.Model):
     source_amount = fields.Float()
     source_tax_amount = fields.Float()
     source_amount_field = fields.Char(index=True)
+    attachment_ref = fields.Char(string="附件引用", index=True)
     push_result = fields.Char(index=True)
     kingdee_document_no = fields.Char(index=True)
     creator_legacy_user_id = fields.Char(index=True)

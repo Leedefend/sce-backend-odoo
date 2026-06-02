@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Dict
 from urllib.error import URLError
 from urllib.request import Request, urlopen
+from urllib.parse import quote, urljoin
 
 from odoo.exceptions import AccessError
 
@@ -244,6 +245,9 @@ class FileDownloadHandler(BaseIntentHandler):
             return {"error": True, "code": 404, "message": "历史附件索引不存在"}
         path = _resolve_legacy_file_path(relative_path)
         if not path:
+            remote_file = _read_remote_legacy_file_path(relative_path, attachment.name, attachment.mimetype)
+            if not remote_file.get("error"):
+                return remote_file
             _logger.warning("legacy attachment file missing: attachment=%s url=%s path=%s", attachment.id, url, relative_path)
             return {"error": True, "code": 404, "message": "历史附件文件不存在"}
         try:
@@ -437,6 +441,32 @@ def _read_online_legacy_file_url(url: str, fallback_name: str = "", fallback_mim
         _logger.exception("online legacy file read failed: url=%s", url)
         return {"error": True, "code": 502, "message": "历史附件在线读取失败"}
     name = fallback_name or Path(url.split("?", 1)[0]).name or "历史附件"
+    mimetype = fallback_mimetype or content_type or mimetypes.guess_type(name)[0] or "application/octet-stream"
+    return {
+        "datas": base64.b64encode(raw).decode("ascii"),
+        "name": name,
+        "mimetype": mimetype,
+    }
+
+
+def _read_remote_legacy_file_path(relative_path: str, fallback_name: str = "", fallback_mimetype: str = "") -> dict[str, Any]:
+    base_url = str(os.environ.get("SC_LEGACY_FILE_HTTP_BASE") or "").strip().rstrip("/")
+    if not base_url:
+        return {"error": True}
+    clean = str(relative_path or "").strip().lstrip("/")
+    if clean.startswith("UploadFile/"):
+        clean = clean[len("UploadFile/"):]
+    quoted = "/".join(quote(part) for part in clean.split("/") if part)
+    url = urljoin(base_url + "/", quoted)
+    try:
+        request = Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urlopen(request, timeout=30) as response:
+            raw = response.read()
+            content_type = response.headers.get_content_type() if response.headers else ""
+    except (OSError, URLError):
+        _logger.exception("remote legacy file read failed: url=%s", url)
+        return {"error": True, "code": 404, "message": "历史附件文件不存在"}
+    name = fallback_name or Path(clean).name or "历史附件"
     mimetype = fallback_mimetype or content_type or mimetypes.guess_type(name)[0] or "application/octet-stream"
     return {
         "datas": base64.b64encode(raw).decode("ascii"),
