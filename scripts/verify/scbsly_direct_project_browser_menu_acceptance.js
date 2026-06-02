@@ -69,9 +69,9 @@ const EXPECTED_GROUPS = [
 ];
 
 const EXPECTED_LABELS = [
-  '用户验收',
-  '直营项目系统菜单',
-  ...EXPECTED_GROUPS.flatMap((group) => [group.label, ...group.leaves]),
+  '旧业务数据核对',
+  '直营项目数据核对',
+  ...EXPECTED_GROUPS.flatMap((group) => group.leaves),
 ];
 
 function ensureDir(dirPath) {

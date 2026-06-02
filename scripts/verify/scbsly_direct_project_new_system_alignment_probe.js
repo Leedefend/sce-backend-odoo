@@ -9,6 +9,7 @@ const https = require('https');
 const ROOT = path.resolve(__dirname, '..', '..');
 const MANIFEST = path.join(ROOT, 'docs/migration_alignment/scbs55_user_acceptance_asset_freeze_v1.json');
 const OLD_EVIDENCE = path.join(ROOT, 'artifacts/migration/scbsly_direct_project_acceptance_menu_probe_v1.json');
+const CURRENT_ONLINE_COUNTS = process.env.SCBSLY_CURRENT_ONLINE_COUNTS || '';
 const BASE_URL = process.env.FRONTEND_URL || process.env.BASE_URL || 'http://1.95.85.92:18081';
 const DB_NAME = process.env.DB_NAME || process.env.E2E_DB || 'sc_demo';
 const LOGIN = process.env.E2E_LOGIN || 'wutao';
@@ -37,6 +38,7 @@ const MENU_ALIASES = {
 const PREFERRED_MENU_IDS = {
   '施工合同': 743,
   '供货合同': 746,
+  '劳务合同': 747,
   '库存统计表（新）': 715,
   '支付申请': 769,
   '工程进度收款': 770,
@@ -139,6 +141,21 @@ function labelsFromManifest() {
 }
 
 function oldEvidenceByLabel() {
+  if (CURRENT_ONLINE_COUNTS && fs.existsSync(CURRENT_ONLINE_COUNTS)) {
+    const payload = readJson(CURRENT_ONLINE_COUNTS);
+    const out = {};
+    for (const row of payload.rows || []) {
+      const label = normalize(row.label);
+      if (!label || row.status !== 'PASS' || !Number.isFinite(Number(row.online_count))) continue;
+      out[label] = {
+        count_probe: {
+          status: 'PASS',
+          data_count: Number(row.online_count),
+        },
+      };
+    }
+    return out;
+  }
   if (!fs.existsSync(OLD_EVIDENCE)) return {};
   const payload = readJson(OLD_EVIDENCE);
   const out = {};
