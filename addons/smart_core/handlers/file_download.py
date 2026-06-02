@@ -252,7 +252,8 @@ class FileDownloadHandler(BaseIntentHandler):
                 )
                 online_url = str((file_info or {}).get("ATTR_PATH") or "").strip()
                 if online_url:
-                    return _read_online_legacy_file_url(online_url, attachment.name, attachment.mimetype)
+                    online_name = str((file_info or {}).get("ATTR_NAME") or "").strip()
+                    return _read_online_legacy_file_url(online_url, online_name or attachment.name, "")
             return {"error": True, "code": 404, "message": "历史附件索引不存在"}
         path = _resolve_legacy_file_path(relative_path)
         if not path:
