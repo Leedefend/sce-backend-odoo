@@ -10,6 +10,11 @@
                   parent="smart_construction_core.menu_sc_user_acceptance_root"
                   sequence="10"/>
 
+        <menuitem id="menu_scbsly_joint_project_acceptance_root"
+                  name="联营项目系统菜单"
+                  parent="smart_construction_core.menu_sc_user_acceptance_root"
+                  sequence="20"/>
+
         <menuitem id="menu_scbsly_direct_project_acceptance_contracts"
                   name="合同类单据"
                   parent="smart_construction_core.menu_scbsly_direct_project_acceptance_root"
@@ -38,6 +43,15 @@
                   name="项目管理类单据"
                   parent="smart_construction_core.menu_scbsly_direct_project_acceptance_root"
                   sequence="70"/>
+
+        <menuitem id="menu_scbsly_joint_project_acceptance_contracts"
+                  name="合同类单据"
+                  parent="smart_construction_core.menu_scbsly_joint_project_acceptance_root"
+                  sequence="10"/>
+        <menuitem id="menu_scbsly_joint_project_acceptance_finance"
+                  name="费用与资金管理类单据"
+                  parent="smart_construction_core.menu_scbsly_joint_project_acceptance_root"
+                  sequence="20"/>
 
         <menuitem id="menu_scbsly_acceptance_construction_contract"
                   name="施工合同"
@@ -216,6 +230,32 @@
                   action="smart_construction_core.action_scbsly_direct_acceptance_construction_diary"
                   sequence="10"/>
 
+        <menuitem id="menu_scbsly_joint_acceptance_self_funding_advance_income"
+                  name="自筹垫付收入"
+                  parent="smart_construction_core.menu_scbsly_joint_project_acceptance_finance"
+                  action="smart_construction_core.action_sc_self_funding_advance_income"
+                  sequence="10"/>
+        <menuitem id="menu_scbsly_joint_acceptance_self_funding_advance_refund"
+                  name="自筹垫付退回"
+                  parent="smart_construction_core.menu_scbsly_joint_project_acceptance_finance"
+                  action="smart_construction_core.action_sc_self_funding_advance_refund"
+                  sequence="20"/>
+        <menuitem id="menu_scbsly_joint_acceptance_supplier_contract"
+                  name="供货合同"
+                  parent="smart_construction_core.menu_scbsly_joint_project_acceptance_contracts"
+                  action="smart_construction_core.action_scbsly_direct_acceptance_supplier_contract"
+                  sequence="10"/>
+        <menuitem id="menu_scbsly_joint_acceptance_labor_contract"
+                  name="劳务合同"
+                  parent="smart_construction_core.menu_scbsly_joint_project_acceptance_contracts"
+                  action="smart_construction_core.action_scbsly_direct_acceptance_labor_contract"
+                  sequence="20"/>
+        <menuitem id="menu_scbsly_joint_acceptance_rental_contract"
+                  name="租赁合同"
+                  parent="smart_construction_core.menu_scbsly_joint_project_acceptance_contracts"
+                  action="smart_construction_core.action_scbsly_direct_acceptance_rental_contract"
+                  sequence="30"/>
+
         <record id="menu_config_policy_scbsly_direct_project_acceptance_root" model="ui.menu.config.policy">
             <field name="company_id" ref="base.main_company"/>
             <field name="menu_id" ref="smart_construction_core.menu_scbsly_direct_project_acceptance_root"/>
@@ -223,6 +263,14 @@
             <field name="sequence_override">10</field>
             <field name="visible">1</field>
             <field name="note">用户验收阶段前端自定义菜单入口。</field>
+        </record>
+        <record id="menu_config_policy_scbsly_joint_project_acceptance_root" model="ui.menu.config.policy">
+            <field name="company_id" ref="base.main_company"/>
+            <field name="menu_id" ref="smart_construction_core.menu_scbsly_joint_project_acceptance_root"/>
+            <field name="custom_label">联营项目系统菜单</field>
+            <field name="sequence_override">20</field>
+            <field name="visible">1</field>
+            <field name="note">用户验收阶段联营项目历史数据核对入口。</field>
         </record>
         <record id="menu_config_policy_scbsly_direct_engineering_progress_receipt" model="ui.menu.config.policy">
             <field name="company_id" ref="base.main_company"/>

@@ -662,11 +662,14 @@ def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict]) -> tuple[lis
 
     allowed_formal_labels = {"客户", "供应商"}
     old_acceptance_group_labels = {"用户核对菜单", "旧业务数据核对"}
-    direct_acceptance_group_labels = {"用户验收", "直营项目数据核对"}
+    direct_acceptance_group_labels = {"直营项目数据核对", "直营项目系统菜单"}
+    joint_acceptance_group_labels = {"联营项目数据核对", "联营项目系统菜单"}
+    acceptance_root_labels = {"用户验收", "直营项目数据核对"}
     formal_group = None
     old_acceptance_children = []
     direct_acceptance_children = []
-    acceptance_source_labels = {"old": [], "direct": []}
+    joint_acceptance_children = []
+    acceptance_source_labels = {"old": [], "direct": [], "joint": []}
 
     def has_nav_target(node: dict) -> bool:
         if not isinstance(node, dict):
@@ -719,9 +722,29 @@ def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict]) -> tuple[lis
                 acceptance_source_labels["old"].append(label)
                 old_acceptance_children.extend(flatten_target_children(children))
                 continue
+            if label in acceptance_root_labels:
+                for child in children:
+                    if not isinstance(child, dict):
+                        continue
+                    child_label = _text(child.get("label") or child.get("title") or child.get("name"))
+                    child_children = child.get("children") if isinstance(child.get("children"), list) else []
+                    if child_label in joint_acceptance_group_labels or "联营" in child_label:
+                        acceptance_source_labels["joint"].append(child_label or label)
+                        joint_acceptance_children.extend(flatten_target_children(child_children))
+                    elif child_label in direct_acceptance_group_labels or "直营" in child_label:
+                        acceptance_source_labels["direct"].append(child_label or label)
+                        direct_acceptance_children.extend(flatten_target_children(child_children))
+                    else:
+                        acceptance_source_labels["direct"].append(child_label or label)
+                        direct_acceptance_children.extend(flatten_target_children([child]))
+                continue
             if label in direct_acceptance_group_labels:
                 acceptance_source_labels["direct"].append(label)
                 direct_acceptance_children.extend(flatten_target_children(children))
+                continue
+            if label in joint_acceptance_group_labels:
+                acceptance_source_labels["joint"].append(label)
+                joint_acceptance_children.extend(flatten_target_children(children))
                 continue
 
     root_nodes = []
@@ -766,6 +789,20 @@ def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict]) -> tuple[lis
                 },
             }
         )
+    if joint_acceptance_children:
+        next_children.append(
+            {
+                "key": "group:joint_project_data_acceptance",
+                "label": "联营项目数据核对",
+                "title": "联营项目数据核对",
+                "children": joint_acceptance_children,
+                "meta": {
+                    "group_key": "joint_project_data_acceptance",
+                    "source": "user_data_acceptance_only_runtime_filter",
+                    "source_labels": acceptance_source_labels["joint"],
+                },
+            }
+        )
 
     if not next_children:
         return [], {
@@ -780,6 +817,7 @@ def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict]) -> tuple[lis
         "formal_entry_count": len(formal_group.get("children") or []) if formal_group else 0,
         "old_acceptance_entry_count": len(old_acceptance_children),
         "direct_acceptance_entry_count": len(direct_acceptance_children),
+        "joint_acceptance_entry_count": len(joint_acceptance_children),
         "acceptance_source_labels": acceptance_source_labels,
     }
 
