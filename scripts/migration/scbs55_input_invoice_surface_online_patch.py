@@ -5,13 +5,14 @@ from __future__ import annotations
 
 import gzip
 import json
+import os
 import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 
-INPUT = Path("/tmp/scbs_55_old_live_full_rows_seq042_进项上报.json.gz")
+INPUT = Path(os.getenv("SCBS55_INPUT_INVOICE_SURFACE_INPUT") or "/tmp/scbs_55_old_live_full_rows_seq042_进项上报.json.gz")
 SURFACE = "online_old_scbs:C_JXXP_ZYFPJJD:list892"
 TABLE = "C_JXXP_ZYFPJJD"
 LABELS = [
