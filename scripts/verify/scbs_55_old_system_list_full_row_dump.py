@@ -59,6 +59,8 @@ def existing_pass_item(item: dict[str, Any], path: Path) -> dict[str, Any] | Non
         rows = payload.get("rows") or []
         if not isinstance(rows, list):
             return None
+        if "data_fetch_count" not in payload or "datafetch_pages" not in payload:
+            return None
         reused = dict(item)
         reused.update(
             {

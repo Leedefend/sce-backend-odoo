@@ -36,6 +36,12 @@ def md5(value: str) -> str:
     return hashlib.md5(value.encode("utf-8")).hexdigest()
 
 
+def sm3(value: str) -> str:
+    digest = hashlib.new("sm3")
+    digest.update(value.encode("utf-8"))
+    return digest.hexdigest()
+
+
 def _json_request_with_retry(session: requests.Session, method: str, url: str, **kwargs: Any) -> dict[str, Any]:
     last_exc: Exception | None = None
     for attempt in range(1, max(API_RETRIES, 1) + 1):
@@ -85,35 +91,79 @@ def api_post(session: requests.Session, token: str, path: str, payload: dict[str
 
 
 def login(session: requests.Session) -> dict[str, Any]:
+    token = os.getenv("OLD_SCBS_TOKEN")
+    if token:
+        return {
+            "Token": token,
+            "UserId": os.getenv("OLD_SCBS_TOKEN_USER_ID", ""),
+            "UserName": os.getenv("OLD_SCBS_TOKEN_USER_NAME", ""),
+            "PersonName": os.getenv("OLD_SCBS_TOKEN_PERSON_NAME", ""),
+            "ProjectId": os.getenv("OLD_SCBS_TOKEN_PROJECT_ID", ""),
+            "ProjectName": os.getenv("OLD_SCBS_TOKEN_PROJECT_NAME", ""),
+        }
     username = os.getenv("OLD_SCBS_USERNAME")
     password = os.getenv("OLD_SCBS_PASSWORD")
     if not username or not password:
         raise RuntimeError("OLD_SCBS_USERNAME and OLD_SCBS_PASSWORD are required")
-    payload = {
-        "Type": "Common",
-        "Param": {
-            "UserName": username,
-            "IsEncrypt": False,
-            "Password": password,
-            "PasswordMd5": md5(password),
-            "VerificationCodeKey": "",
-            "VerificationCode": "",
-            "EncryptLockKey": "",
-            "PhoneNumber": "",
-            "SMSVerificationCodeKey": "",
-            "SMSVerificationCode": "",
-        },
-    }
-    body = _json_request_with_retry(
-        session,
-        "POST",
-        f"{BASE_URL}/api/System/UserApi/Login",
-        json=payload,
-        timeout=LOGIN_TIMEOUT,
+    encrypted_login = os.getenv("OLD_SCBS_ENCRYPTED_LOGIN", "1").strip().lower() not in {"0", "false", "no"}
+    payloads = []
+    if encrypted_login:
+        payloads.append(
+            {
+                "Type": "Common",
+                "Param": {
+                    "UserName": username,
+                    "IsEncrypt": True,
+                    "Password": sm3(password),
+                    "PasswordMd5": md5(password),
+                    "VerificationCodeKey": None,
+                    "VerificationCode": None,
+                    "EncryptLockKey": None,
+                    "PhoneNumber": None,
+                    "SMSVerificationCodeKey": None,
+                    "SMSVerificationCode": None,
+                },
+            }
+        )
+    payloads.append(
+        {
+            "Type": "Common",
+            "Param": {
+                "UserName": username,
+                "IsEncrypt": False,
+                "Password": password,
+                "PasswordMd5": md5(password),
+                "VerificationCodeKey": "",
+                "VerificationCode": "",
+                "EncryptLockKey": "",
+                "PhoneNumber": "",
+                "SMSVerificationCodeKey": "",
+                "SMSVerificationCode": "",
+            },
+        }
     )
-    if str(body.get("Code")) != "10000" or not body.get("Data", {}).get("Token"):
-        raise RuntimeError(f"old login failed: {body.get('Code')} {body.get('Msg')}")
-    return body["Data"]
+    last_body = None
+    last_exc = None
+    for payload in payloads:
+        try:
+            body = _json_request_with_retry(
+                session,
+                "POST",
+                f"{BASE_URL}/api/System/UserApi/Login",
+                json=payload,
+                timeout=LOGIN_TIMEOUT,
+            )
+        except Exception as exc:  # noqa: BLE001
+            last_exc = exc
+            continue
+        last_body = body
+        if str(body.get("Code")) == "10000" and body.get("Data", {}).get("Token"):
+            return body["Data"]
+    if last_body is not None:
+        raise RuntimeError(f"old login failed: {last_body.get('Code')} {last_body.get('Msg')}")
+    if last_exc is not None:
+        raise last_exc
+    raise RuntimeError("old login failed")
 
 
 def enclosure_ident(detail: dict[str, Any]) -> str:

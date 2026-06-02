@@ -5,13 +5,14 @@ from __future__ import annotations
 
 import gzip
 import json
+import os
 import re
 import csv
 from datetime import datetime
 from decimal import Decimal
 
 
-SOURCE_PATH = "/tmp/scbs_55_old_live_full_rows_seq003_contract.json.gz"
+SOURCE_PATH = os.getenv("SCBS55_CONTRACT_SOURCE_PATH", "/tmp/scbs_55_old_live_full_rows_seq003_contract.json.gz")
 AMOUNT_BACKFILL_PATHS = (
     "/tmp/contract_business_amount_backfill_from_mssql_v1.csv",
     "artifacts/migration/scbs_55_old_live_full_rows_current/contract_business_amount_backfill_from_mssql_v1.csv",
@@ -163,7 +164,7 @@ def values_for(row):
         "legacy_visible_category": clean(row.get("HTLX")) or False,
         "legacy_visible_contract_no": clean(row.get("HTBH")) or False,
         "legacy_visible_amount": clean(row.get("GCYSZJ")) or False,
-        "legacy_visible_settlement_amount": clean(row.get("D_SCBSJS_JSJE")) or False,
+        "legacy_visible_settlement_amount": clean(row.get("D_SCBSJS_JSJE") or row.get("ZJE") or row.get("GCJSZJ")) or False,
         "legacy_visible_invoice_amount": clean(row.get("LJKP")) or False,
         "legacy_visible_received_amount": clean(row.get("LJSK")) or False,
         "legacy_visible_unreceived_amount": clean(row.get("WSK")) or False,
