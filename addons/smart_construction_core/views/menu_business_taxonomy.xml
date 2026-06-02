@@ -223,12 +223,12 @@
         ])]"/>
     </record>
     <record id="action_sc_invoice_registration_user" model="ir.actions.act_window">
-        <field name="name">进项发票登记</field>
+        <field name="name">销项发票登记</field>
         <field name="res_model">sc.invoice.registration</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="smart_construction_core.view_sc_invoice_registration_search"/>
         <field name="domain">[('source_kind', '=', 'invoice_registration'), ('direction', '=', 'input')]</field>
-        <field name="context">{'default_source_kind': 'invoice_registration', 'default_direction': 'input', 'default_invoice_content': '进项发票登记', 'search_default_group_project': 1}</field>
+        <field name="context">{'default_source_kind': 'invoice_registration', 'default_direction': 'input', 'default_invoice_content': '销项发票登记', 'search_default_group_project': 1}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
             ref('smart_construction_core.group_sc_cap_finance_read'),
@@ -1460,7 +1460,7 @@
               sequence="10"
               groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
     <menuitem id="menu_sc_invoice_registration_user"
-              name="进项发票登记"
+              name="销项发票登记"
               parent="smart_construction_core.menu_sc_invoice_tax_user_group"
               action="smart_construction_core.action_sc_invoice_registration_user"
               sequence="20"

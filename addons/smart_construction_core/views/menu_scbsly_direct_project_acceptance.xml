@@ -233,27 +233,27 @@
         <menuitem id="menu_scbsly_joint_acceptance_self_funding_advance_income"
                   name="自筹垫付收入"
                   parent="smart_construction_core.menu_scbsly_joint_project_acceptance_finance"
-                  action="smart_construction_core.action_sc_self_funding_advance_income"
+                  action="smart_construction_core.action_sc_joint_self_funding_advance_income"
                   sequence="10"/>
         <menuitem id="menu_scbsly_joint_acceptance_self_funding_advance_refund"
                   name="自筹垫付退回"
                   parent="smart_construction_core.menu_scbsly_joint_project_acceptance_finance"
-                  action="smart_construction_core.action_sc_self_funding_advance_refund"
+                  action="smart_construction_core.action_sc_joint_self_funding_advance_refund"
                   sequence="20"/>
         <menuitem id="menu_scbsly_joint_acceptance_supplier_contract"
                   name="供货合同"
                   parent="smart_construction_core.menu_scbsly_joint_project_acceptance_contracts"
-                  action="smart_construction_core.action_scbsly_direct_acceptance_supplier_contract"
+                  action="smart_construction_core.action_scbs_joint_acceptance_supplier_contract"
                   sequence="10"/>
         <menuitem id="menu_scbsly_joint_acceptance_labor_contract"
                   name="劳务合同"
                   parent="smart_construction_core.menu_scbsly_joint_project_acceptance_contracts"
-                  action="smart_construction_core.action_scbsly_direct_acceptance_labor_contract"
+                  action="smart_construction_core.action_scbs_joint_acceptance_labor_contract"
                   sequence="20"/>
         <menuitem id="menu_scbsly_joint_acceptance_rental_contract"
                   name="租赁合同"
                   parent="smart_construction_core.menu_scbsly_joint_project_acceptance_contracts"
-                  action="smart_construction_core.action_scbsly_direct_acceptance_rental_contract"
+                  action="smart_construction_core.action_scbs_joint_acceptance_rental_contract"
                   sequence="30"/>
 
         <record id="menu_config_policy_scbsly_direct_project_acceptance_root" model="ui.menu.config.policy">
