@@ -648,6 +648,142 @@ def _apply_user_menu_config_to_delivery_nav(env, nav: list[dict]) -> tuple[list[
     return next_nav, stats if isinstance(stats, dict) else {}
 
 
+def _user_data_acceptance_nav_only_enabled(env) -> bool:
+    try:
+        raw = env["ir.config_parameter"].sudo().get_param("smart_core.nav.user_data_acceptance_only", "")
+    except Exception:
+        raw = ""
+    return str(raw or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict]) -> tuple[list[dict], dict]:
+    if not isinstance(nav, list) or not _user_data_acceptance_nav_only_enabled(env):
+        return nav if isinstance(nav, list) else [], {"applied": False}
+
+    allowed_formal_labels = {"客户", "供应商"}
+    old_acceptance_group_labels = {"用户核对菜单", "旧业务数据核对"}
+    direct_acceptance_group_labels = {"用户验收", "直营项目数据核对"}
+    formal_group = None
+    old_acceptance_children = []
+    direct_acceptance_children = []
+    acceptance_source_labels = {"old": [], "direct": []}
+
+    def has_nav_target(node: dict) -> bool:
+        if not isinstance(node, dict):
+            return False
+        meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+        return bool(
+            node.get("route")
+            or node.get("scene_key")
+            or node.get("action_id")
+            or node.get("model")
+            or meta.get("route")
+            or meta.get("scene_key")
+            or meta.get("action_id")
+            or meta.get("model")
+        )
+
+    def flatten_target_children(nodes: list[dict]) -> list[dict]:
+        out = []
+        for node in nodes or []:
+            if not isinstance(node, dict):
+                continue
+            children = node.get("children") if isinstance(node.get("children"), list) else []
+            if children:
+                out.extend(flatten_target_children(children))
+                continue
+            if has_nav_target(node):
+                out.append(node)
+        return out
+
+    def scan_groups(groups: list[dict]) -> None:
+        nonlocal formal_group
+        for group in groups or []:
+            if not isinstance(group, dict):
+                continue
+            label = _text(group.get("label") or group.get("title") or group.get("name"))
+            children = group.get("children") if isinstance(group.get("children"), list) else []
+            if label == "基础设置":
+                kept_children = [
+                    child
+                    for child in children
+                    if isinstance(child, dict)
+                    and _text(child.get("label") or child.get("title") or child.get("name")) in allowed_formal_labels
+                ]
+                if kept_children:
+                    next_group = dict(group)
+                    next_group["children"] = kept_children
+                    formal_group = next_group
+                continue
+            if label in old_acceptance_group_labels:
+                acceptance_source_labels["old"].append(label)
+                old_acceptance_children.extend(flatten_target_children(children))
+                continue
+            if label in direct_acceptance_group_labels:
+                acceptance_source_labels["direct"].append(label)
+                direct_acceptance_children.extend(flatten_target_children(children))
+                continue
+
+    root_nodes = []
+    for node in nav:
+        if not isinstance(node, dict):
+            continue
+        children = node.get("children") if isinstance(node.get("children"), list) else []
+        if children:
+            scan_groups(children)
+            root_nodes.append(dict(node))
+        else:
+            scan_groups([node])
+
+    next_children = []
+    if formal_group:
+        next_children.append(formal_group)
+    if old_acceptance_children:
+        next_children.append(
+            {
+                "key": "group:legacy_business_data_acceptance",
+                "label": "旧业务数据核对",
+                "title": "旧业务数据核对",
+                "children": old_acceptance_children,
+                "meta": {
+                    "group_key": "legacy_business_data_acceptance",
+                    "source": "user_data_acceptance_only_runtime_filter",
+                    "source_labels": acceptance_source_labels["old"],
+                },
+            }
+        )
+    if direct_acceptance_children:
+        next_children.append(
+            {
+                "key": "group:direct_project_data_acceptance",
+                "label": "直营项目数据核对",
+                "title": "直营项目数据核对",
+                "children": direct_acceptance_children,
+                "meta": {
+                    "group_key": "direct_project_data_acceptance",
+                    "source": "user_data_acceptance_only_runtime_filter",
+                    "source_labels": acceptance_source_labels["direct"],
+                },
+            }
+        )
+
+    if not next_children:
+        return [], {
+            "applied": True,
+            "formal_entry_count": 0,
+            "acceptance_group_count": 0,
+            "reason": "no_matching_entries",
+        }
+
+    return next_children, {
+        "applied": True,
+        "formal_entry_count": len(formal_group.get("children") or []) if formal_group else 0,
+        "old_acceptance_entry_count": len(old_acceptance_children),
+        "direct_acceptance_entry_count": len(direct_acceptance_children),
+        "acceptance_source_labels": acceptance_source_labels,
+    }
+
+
 def _build_minimal_intent_surface(intents: list[str], intents_meta: dict) -> list[str]:
     minimal_order = [
         "system.init",
@@ -1163,6 +1299,17 @@ class SystemInitHandler(BaseIntentHandler):
         }
         delivery_nav = delivery_payload.get("nav") if isinstance(delivery_payload.get("nav"), list) else []
         if delivery_nav and not platform_minimum_surface_mode:
+            delivery_nav, user_data_acceptance_meta = _filter_nav_for_user_data_acceptance_only(env, delivery_nav)
+            delivery_payload["nav"] = delivery_nav
+            if isinstance(data.get("delivery_engine_v1"), dict):
+                data["delivery_engine_v1"]["nav"] = delivery_nav
+            if isinstance(data.get("release_navigation_v1"), dict):
+                data["release_navigation_v1"]["nav"] = delivery_nav
+                release_meta = data["release_navigation_v1"].get("meta")
+                if not isinstance(release_meta, dict):
+                    release_meta = {}
+                    data["release_navigation_v1"]["meta"] = release_meta
+                release_meta["user_data_acceptance_only"] = user_data_acceptance_meta
             data["nav_role_surface"] = data.get("nav") if isinstance(data.get("nav"), list) else []
             data["nav"] = delivery_nav
             nav_meta = data.get("nav_meta") if isinstance(data.get("nav_meta"), dict) else {}
@@ -1174,6 +1321,7 @@ class SystemInitHandler(BaseIntentHandler):
                 if isinstance(delivery_payload.get("meta"), dict)
                 else {}
             )
+            nav_meta["user_data_acceptance_only"] = user_data_acceptance_meta
             data["nav_meta"] = nav_meta
 
         default_route_payload = data.get("default_route") if isinstance(data.get("default_route"), dict) else {}

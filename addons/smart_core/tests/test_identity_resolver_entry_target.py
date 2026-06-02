@@ -114,6 +114,40 @@ class TestIdentityResolverEntryTarget(unittest.TestCase):
         self.assertEqual(((((default_route.get("entry_target") or {}).get("record_entry") or {}).get("model"))), "project.project")
         self.assertEqual(((((default_route.get("entry_target") or {}).get("record_entry") or {}).get("record_id"))), 42)
 
+    def test_filter_nav_for_role_surface_drops_empty_targetless_groups(self):
+        resolver = target.IdentityResolver()
+        filtered = resolver.filter_nav_for_role_surface(
+            [
+                {
+                    "label": "系统菜单",
+                    "children": [
+                        {"label": "基础设置", "children": []},
+                        {
+                            "label": "基础设置",
+                            "children": [
+                                {
+                                    "label": "客户",
+                                    "route": "/a/786?menu_id=598",
+                                    "meta": {"action_id": 786, "model": "res.partner"},
+                                },
+                                {
+                                    "label": "供应商",
+                                    "route": "/a/787?menu_id=599",
+                                    "meta": {"action_id": 787, "model": "res.partner"},
+                                },
+                            ],
+                        },
+                    ],
+                }
+            ],
+            {"role_code": "business_config_admin"},
+        )
+
+        groups = filtered[0]["children"]
+        self.assertEqual(len(groups), 1)
+        self.assertEqual(groups[0]["label"], "基础设置")
+        self.assertEqual([child["label"] for child in groups[0]["children"]], ["客户", "供应商"])
+
 
 if __name__ == "__main__":
     unittest.main()
