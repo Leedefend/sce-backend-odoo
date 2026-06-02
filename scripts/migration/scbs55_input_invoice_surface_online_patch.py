@@ -60,8 +60,8 @@ def number_text(value: object) -> str:
 
 def attachment_refs(row: dict[str, Any]) -> str:
     refs = [
-        clean(row.get("FJ$C_JXXP_ZYFPJJD_CB")),
         clean(row.get("FJ")),
+        clean(row.get("FJ$C_JXXP_ZYFPJJD_CB")),
     ]
     return " ".join(item for item in dict.fromkeys(refs) if item)
 

@@ -244,6 +244,15 @@ class FileDownloadHandler(BaseIntentHandler):
             return {}
         relative_path = self._legacy_relative_path(url)
         if not relative_path:
+            if url.startswith(LEGACY_FILE_ID_URL_PREFIX):
+                legacy_file_id = url[len(LEGACY_FILE_ID_URL_PREFIX):].strip()
+                file_info = _fetch_online_legacy_file_by_bill_id(
+                    legacy_file_id,
+                    _online_legacy_base_url_for_attachment(attachment),
+                )
+                online_url = str((file_info or {}).get("ATTR_PATH") or "").strip()
+                if online_url:
+                    return _read_online_legacy_file_url(online_url, attachment.name, attachment.mimetype)
             return {"error": True, "code": 404, "message": "历史附件索引不存在"}
         path = _resolve_legacy_file_path(relative_path)
         if not path:
@@ -333,8 +342,10 @@ class FileDownloadHandler(BaseIntentHandler):
         )
 
     def _online_legacy_attachment_for_refs(self, model: str, res_id: int, legacy_refs: list[str]):
+        record = self.env[model].sudo().browse(res_id).exists() if model in self.env else None
+        base_url = _online_legacy_base_url_for_record(record)
         for ref in legacy_refs:
-            file_info = _fetch_online_legacy_file_by_bill_id(ref)
+            file_info = _fetch_online_legacy_file_by_bill_id(ref, base_url)
             if not file_info:
                 continue
             url = str(file_info.get("ATTR_PATH") or "").strip()
@@ -432,11 +443,35 @@ def _legacy_inline_attachment_refs(raw_payload: Any) -> list[str]:
     return list(dict.fromkeys(refs))
 
 
-def _fetch_online_legacy_file_by_bill_id(bill_id: str) -> dict[str, Any] | None:
+def _online_legacy_base_url_for_attachment(attachment) -> str:
+    if not attachment or not getattr(attachment, "res_model", "") or not getattr(attachment, "res_id", 0):
+        return os.environ.get("SC_ONLINE_LEGACY_BASE_URL", DEFAULT_ONLINE_LEGACY_BASE_URL).rstrip("/")
+    try:
+        record = attachment.env[attachment.res_model].sudo().browse(attachment.res_id).exists()
+    except Exception:
+        record = None
+    return _online_legacy_base_url_for_record(record)
+
+
+def _online_legacy_base_url_for_record(record) -> str:
+    source_table = ""
+    if record:
+        try:
+            source_table = str(getattr(record, "legacy_source_table", "") or "")
+        except Exception:
+            source_table = ""
+    if source_table.startswith("online_old_scbs:"):
+        return os.environ.get("SC_ONLINE_LEGACY_SCBS_BASE_URL", "https://www.builderp.cn/SCBS").rstrip("/")
+    if source_table.startswith("online_old_scbsly"):
+        return os.environ.get("SC_ONLINE_LEGACY_SCBSLY_BASE_URL", "https://www.builderp.cn/SCBSLY_V2").rstrip("/")
+    return os.environ.get("SC_ONLINE_LEGACY_BASE_URL", DEFAULT_ONLINE_LEGACY_BASE_URL).rstrip("/")
+
+
+def _fetch_online_legacy_file_by_bill_id(bill_id: str, base_url: str | None = None) -> dict[str, Any] | None:
     clean = str(bill_id or "").strip()
     if not clean:
         return None
-    base_url = os.environ.get("SC_ONLINE_LEGACY_BASE_URL", DEFAULT_ONLINE_LEGACY_BASE_URL).rstrip("/")
+    base_url = (base_url or os.environ.get("SC_ONLINE_LEGACY_BASE_URL", DEFAULT_ONLINE_LEGACY_BASE_URL)).rstrip("/")
     url = f"{base_url}/api/System/FileApi/GetFileByBillId?BillId={clean}"
     try:
         request = Request(url, headers={"User-Agent": "Mozilla/5.0"})

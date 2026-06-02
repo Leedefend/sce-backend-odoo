@@ -1445,12 +1445,16 @@ def _legacy_attachment_links(record):
         name = str(item.file_name or item.display_name or "").strip()
         if _is_hash_file_name(name):
             continue
+        path = str(item.preview_path or item.file_path or "").strip()
         key = name
         if not name or key in seen:
             continue
         seen.add(key)
-        lines.append(name)
-    return " ".join(lines) if lines else "历史附件"
+        lines.append(f"{name} | legacy-file://{path.lstrip('/')}" if path else name)
+    if lines:
+        return " ".join(lines)
+    clean_attachment_ref = str(attachment_ref or "").strip()
+    return f"附件 | legacy-file-id://{clean_attachment_ref}" if clean_attachment_ref else ""
 
 
 def _description_line_value(record, prefix):
@@ -1499,9 +1503,10 @@ def _legacy_visible_alias_payload(record):
 
 def _alias_value(record, label):
     payload = _legacy_visible_alias_payload(record)
+    payload_value = ""
     if payload and label in payload:
         payload_value = _normalize_payload_alias_value(label, payload.get(label))
-        if label != '附件' or payload_value:
+        if label != '附件':
             return payload_value
     if record._name == 'sc.business.entity':
         strict_sources = {
@@ -2044,6 +2049,8 @@ def _alias_value(record, label):
         legacy_links = _legacy_attachment_links(record)
         if legacy_links:
             return legacy_links
+        if payload_value:
+            return payload_value
         for field_name in ('attachment_ids', 'biz_attachment_ids', 'tech_attachment_ids', 'legacy_attachment_name'):
             value = _format_alias_value(record, field_name)
             if value:
