@@ -196,6 +196,38 @@ class TestFileDownloadLocatorPolicy(unittest.TestCase):
 
         self.assertIsNone(module._resolve_legacy_file_path("../secret.pdf"))
 
+    def test_reads_remote_legacy_file_when_configured(self):
+        module = _load_handler()
+
+        class _Response:
+            headers = None
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+            def read(self):
+                return b"remote"
+
+        seen = {}
+        old_base = os.environ.get("SC_LEGACY_FILE_HTTP_BASE")
+        old_urlopen = module.urlopen
+        os.environ["SC_LEGACY_FILE_HTTP_BASE"] = "https://files.example/legacy/"
+        module.urlopen = lambda request, timeout=0: seen.setdefault("url", request.full_url) and _Response()
+        try:
+            result = module._read_remote_legacy_file_path("UploadFile/UserFile/2026/a b.pdf")
+        finally:
+            module.urlopen = old_urlopen
+            if old_base is None:
+                os.environ.pop("SC_LEGACY_FILE_HTTP_BASE", None)
+            else:
+                os.environ["SC_LEGACY_FILE_HTTP_BASE"] = old_base
+
+        self.assertEqual(seen["url"], "https://files.example/legacy/UserFile/2026/a%20b.pdf")
+        self.assertEqual(result["datas"], "cmVtb3Rl")
+
 
 if __name__ == "__main__":
     unittest.main()

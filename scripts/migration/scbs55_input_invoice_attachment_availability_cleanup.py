@@ -20,6 +20,7 @@ ONLINE_CHECK = os.environ.get("ONLINE_CHECK") == "1"
 ONLINE_WORKERS = int(os.environ.get("ONLINE_WORKERS") or "16")
 ONLINE_LIMIT = int(os.environ.get("ONLINE_LIMIT") or "0")
 BASE_URL = os.environ.get("SC_ONLINE_LEGACY_BASE_URL") or "https://www.builderp.cn/SCBSLY_V2"
+EXISTING_FILE_PATHS = Path(os.environ["EXISTING_FILE_PATHS"]) if os.environ.get("EXISTING_FILE_PATHS") else None
 MODEL = "sc.legacy.invoice.tax.fact"
 ATTACHMENT_LABEL_RE = re.compile(r"^附件\([1-9]\d*\)$")
 
@@ -58,6 +59,17 @@ def load_raw_refs() -> dict[str, dict[str, Any]]:
     return result
 
 
+def load_existing_file_paths() -> set[str]:
+    if not EXISTING_FILE_PATHS:
+        return set()
+    paths = set()
+    for line in EXISTING_FILE_PATHS.read_text(encoding="utf-8").splitlines():
+        clean_path = clean(line)
+        if clean_path:
+            paths.add(clean_path)
+    return paths
+
+
 def has_online_file(ref: str) -> bool:
     url = f"{BASE_URL.rstrip()}/api/System/FileApi/GetFileByBillId?BillId={ref}"
     try:
@@ -88,7 +100,7 @@ def online_hits(refs: set[str]) -> set[str]:
     return hits
 
 
-def file_index_hits(refs: set[str]) -> set[str]:
+def file_index_hits(refs: set[str], existing_file_paths: set[str] | None = None) -> set[str]:
     if not refs or "sc.legacy.file.index" not in env:  # noqa: F821
         return set()
     FileIndex = env["sc.legacy.file.index"].sudo().with_context(active_test=False)  # noqa: F821
@@ -109,9 +121,14 @@ def file_index_hits(refs: set[str]) -> set[str]:
                 ("legacy_file_id", "in", chunk),
                 ("legacy_file_key", "in", chunk),
             ],
-            ["bill_id", "legacy_pid", "business_id", "legacy_file_id", "legacy_file_key"],
+            ["bill_id", "legacy_pid", "business_id", "legacy_file_id", "legacy_file_key", "file_path", "preview_path"],
         )
         for row in rows:
+            if existing_file_paths:
+                file_path = clean(row.get("file_path"))
+                preview_path = clean(row.get("preview_path"))
+                if file_path not in existing_file_paths and preview_path not in existing_file_paths:
+                    continue
             for field in ("bill_id", "legacy_pid", "business_id", "legacy_file_id", "legacy_file_key"):
                 value = clean(row.get(field))
                 if value and value in refs:
@@ -120,6 +137,7 @@ def file_index_hits(refs: set[str]) -> set[str]:
 
 
 raw_by_line_id = load_raw_refs()
+existing_file_paths = load_existing_file_paths()
 env.cr.execute("ALTER TABLE sc_legacy_invoice_tax_fact ADD COLUMN IF NOT EXISTS attachment_ref varchar")  # noqa: F821
 Model = env[MODEL].sudo().with_context(active_test=False)  # noqa: F821
 env.cr.execute(  # noqa: F821
@@ -137,7 +155,7 @@ payload_rows = env.cr.fetchall()  # noqa: F821
 all_refs: set[str] = set()
 for _res_id, legacy_record_id, _payload in payload_rows:
     all_refs.update(raw_by_line_id.get(clean(legacy_record_id), {}).get("refs") or [])
-local_hits = file_index_hits(all_refs)
+local_hits = file_index_hits(all_refs, existing_file_paths or None)
 remote_hits = online_hits(all_refs - local_hits)
 usable_refs = local_hits | remote_hits
 
@@ -180,6 +198,8 @@ report = {
     "raw_rows": len(raw_by_line_id),
     "payload_rows_with_attachment": len(payload_rows),
     "candidate_refs": len(all_refs),
+    "existing_file_path_check": bool(existing_file_paths),
+    "existing_file_paths": len(existing_file_paths),
     "local_hit_refs": len(local_hits),
     "online_hit_refs": len(remote_hits),
     "kept_rows": len(to_keep),
