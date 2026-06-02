@@ -354,7 +354,7 @@
     <field name="name">sc.legacy.direct.acceptance.fact.action_scbsly_direct_acceptance_labor_usage.tree</field>
     <field name="model">sc.legacy.direct.acceptance.fact</field>
     <field name="arch" type="xml">
-      <tree string="方单" create="false" edit="false" delete="false">
+      <tree string="劳务方单" create="false" edit="false" delete="false">
         <field name="legacy_visible_01" string="单据状态"/>
         <field name="legacy_visible_02" string="单据编号"/>
         <field name="legacy_visible_03" string="项目名称"/>
@@ -1082,7 +1082,7 @@
   </record>
 
   <record id="action_scbsly_direct_acceptance_labor_usage" model="ir.actions.act_window">
-    <field name="name">方单</field>
+    <field name="name">劳务方单</field>
     <field name="res_model">sc.legacy.direct.acceptance.fact</field>
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_labor_usage_tree"/>

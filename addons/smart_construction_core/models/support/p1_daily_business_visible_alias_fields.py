@@ -1347,6 +1347,25 @@ BUSINESS_DOCUMENT_STATE_LABELS = {
     "4": "已作废",
 }
 
+ZERO_IF_EMPTY_NUMERIC_LABELS = {
+    "还款金额",
+    "到期利息",
+    "利息",
+    "借款利息",
+    "贷款利息",
+    "未还款金额",
+    "实际付款金额",
+    "抵扣税额",
+    "抵扣总额",
+    "抵扣附加税",
+}
+
+NONNEGATIVE_NUMERIC_LABELS = {
+    "未还款金额",
+    "未付款金额",
+    "未申请金额",
+}
+
 FALLBACK_SOURCES = (
     "name", "document_no", "title", "project_id", "partner_id", "supplier_id", "contractor_id",
     "subcontractor_id", "owner_id", "requester_id", "state", "legacy_document_state",
@@ -1354,6 +1373,20 @@ FALLBACK_SOURCES = (
     "amount", "amount_total", "paid_amount", "unpaid_amount", "note", "purpose",
     "source_created_by", "source_created_at", "creator_name", "created_time",
 )
+
+
+def _normalize_visible_numeric_alias(label, value):
+    text = str(value or "").strip()
+    if not text:
+        return "0" if label in ZERO_IF_EMPTY_NUMERIC_LABELS else ""
+    if label in NONNEGATIVE_NUMERIC_LABELS:
+        try:
+            number = float(text.replace(",", ""))
+        except ValueError:
+            return text
+        if number < 0:
+            return "0"
+    return text
 
 
 def _format_alias_value(record, field_name):
@@ -2092,7 +2125,7 @@ def _compute_p1_daily_business_visible_aliases(self):
     field_pairs = [(_alias_field_name(label), label) for label in labels]
     for record in self:
         for field_name, label in field_pairs:
-            record[field_name] = _alias_value(record, label)
+            record[field_name] = _normalize_visible_numeric_alias(label, _alias_value(record, label))
 
 
 _ALIAS_MODEL_FIELD_LABELS = {

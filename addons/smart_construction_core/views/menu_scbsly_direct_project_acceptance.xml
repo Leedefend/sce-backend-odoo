@@ -111,7 +111,7 @@
                   sequence="50"/>
 
         <menuitem id="menu_scbsly_acceptance_labor_usage"
-                  name="方单"
+                  name="劳务方单"
                   parent="smart_construction_core.menu_scbsly_direct_project_acceptance_labor"
                   action="smart_construction_core.action_scbsly_direct_acceptance_labor_usage"
                   sequence="10"/>
