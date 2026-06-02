@@ -32,39 +32,39 @@
         <field name="model">res.partner</field>
         <field name="arch" type="xml">
             <tree string="客户" default_order="name">
-                <field name="sc_source_document_state"/>
-                <field name="sc_source_push_result"/>
-                <field name="sc_source_project_name"/>
-                <field name="sc_source_partner_code"/>
-                <field name="sc_source_cooperation_type"/>
-                <field name="sc_supplier_type" optional="hide"/>
+                <field name="sc_source_document_state" string="单据状态"/>
+                <field name="sc_source_push_result" string="推送结果"/>
+                <field name="sc_source_project_name" string="关联项目"/>
+                <field name="sc_source_partner_code" string="单位编号"/>
+                <field name="sc_source_cooperation_type" string="合作类型"/>
+                <field name="sc_supplier_type_label" string="供应商类型" optional="hide"/>
                 <field name="name" string="单位名称"/>
                 <field name="sc_source_receipt_amount" string="收款金额"/>
                 <field name="sc_source_payment_amount" string="付款金额"/>
-                <field name="sc_bank_name" string="开户银行"/>
-                <field name="sc_bank_account" string="账号"/>
                 <field name="vat" string="统一社会信用代码"/>
                 <field name="sc_default_tax_rate_text" string="主税率"/>
-                <field name="sc_source_created_by"/>
-                <field name="sc_source_created_at"/>
-                <field name="sc_business_role_label" optional="hide"/>
-                <field name="sc_business_fact_basis" optional="hide"/>
-                <field name="sc_region" optional="hide"/>
-                <field name="sc_default_tax_rate" optional="hide"/>
+                <field name="sc_source_created_by" string="录入人"/>
+                <field name="sc_source_created_at" string="录入时间"/>
+                <field name="sc_business_role_label" string="业务身份" optional="hide"/>
+                <field name="sc_business_fact_basis" string="业务依据" optional="hide"/>
                 <field name="phone" string="电话" optional="hide"/>
                 <field name="mobile" string="手机" optional="hide"/>
                 <field name="email" string="电子邮件" optional="hide"/>
+                <field name="sc_region" optional="hide"/>
+                <field name="sc_bank_name" string="开户银行"/>
+                <field name="sc_bank_account" string="账号"/>
+                <field name="sc_default_tax_rate" optional="hide"/>
+                <field name="active" string="启用" optional="hide"/>
+                <field name="user_id" string="负责人" optional="hide"/>
+                <field name="category_id" widget="many2many_tags" string="标签" optional="hide"/>
+                <field name="comment" string="备注" optional="hide"/>
                 <field name="is_company" string="企业/组织" optional="hide"/>
                 <field name="sc_registered_capital" optional="hide"/>
                 <field name="sc_account_name" optional="hide"/>
-                <field name="sc_source_fact_count" optional="hide"/>
-                <field name="sc_source_fact_source" optional="hide"/>
+                <field name="sc_source_fact_count" string="关联业务数" optional="hide"/>
+                <field name="sc_source_fact_source" string="关联业务范围" optional="hide"/>
                 <field name="street" string="地址" optional="hide"/>
                 <field name="sc_business_scope" optional="hide"/>
-                <field name="sc_legacy_source_label"/>
-                <field name="legacy_partner_name" optional="hide"/>
-                <field name="legacy_partner_id" optional="hide"/>
-                <field name="legacy_partner_source" optional="hide"/>
                 <field name="customer_rank" invisible="1"/>
                 <field name="supplier_rank" invisible="1"/>
             </tree>
@@ -85,35 +85,67 @@
                             <field name="sc_region"/>
                             <field name="sc_registered_capital"/>
                             <field name="sc_default_tax_rate"/>
-                            <field name="sc_default_tax_rate_text"/>
+                            <field name="sc_default_tax_rate_text" string="主税率"/>
                             <field name="sc_business_scope"/>
+                            <field name="category_id" widget="many2many_tags" string="标签"/>
+                            <field name="user_id" string="负责人"/>
+                            <field name="customer_rank" string="客户等级"/>
+                            <field name="supplier_rank" string="供应商等级"/>
+                            <field name="active" string="启用"/>
                         </group>
                         <group string="联系方式">
                             <field name="phone" string="电话"/>
                             <field name="mobile" string="手机"/>
                             <field name="email" string="电子邮件"/>
                             <field name="street" string="地址"/>
+                            <field name="street2" string="地址补充"/>
                             <field name="city" string="城市"/>
+                            <field name="zip" string="邮编"/>
+                            <field name="website" string="网站"/>
                         </group>
                     </group>
                     <group string="账户信息">
                         <group>
                             <field name="sc_account_name"/>
                             <field name="sc_bank_name"/>
+                            <field name="property_payment_term_id" string="客户付款条件"/>
                         </group>
                         <group>
                             <field name="sc_bank_account"/>
+                            <field name="property_account_position_id" string="财政状况"/>
                         </group>
                     </group>
                     <notebook>
+                        <page string="联系人">
+                            <field name="child_ids" mode="tree,form" context="{'default_parent_id': id}">
+                                <tree editable="bottom">
+                                    <field name="name"/>
+                                    <field name="function"/>
+                                    <field name="phone"/>
+                                    <field name="mobile"/>
+                                    <field name="email"/>
+                                </tree>
+                                <form>
+                                    <sheet>
+                                        <group>
+                                            <field name="name"/>
+                                            <field name="function"/>
+                                            <field name="phone"/>
+                                            <field name="mobile"/>
+                                            <field name="email"/>
+                                            <field name="street"/>
+                                            <field name="comment"/>
+                                        </group>
+                                    </sheet>
+                                </form>
+                            </field>
+                        </page>
                         <page string="银行账户">
                             <field name="bank_ids" nolabel="1">
                                 <tree editable="bottom">
                                     <field name="acc_number"/>
                                     <field name="sc_account_holder_name"/>
                                     <field name="sc_bank_name"/>
-                                    <field name="sc_legacy_external_id"/>
-                                    <field name="sc_import_batch"/>
                                 </tree>
                                 <form>
                                     <sheet>
@@ -121,39 +153,52 @@
                                             <field name="acc_number"/>
                                             <field name="sc_account_holder_name"/>
                                             <field name="sc_bank_name"/>
-                                            <field name="sc_legacy_external_id"/>
-                                            <field name="sc_legacy_partner_source"/>
-                                            <field name="sc_legacy_partner_id"/>
-                                            <field name="sc_import_batch"/>
-                                            <field name="sc_source_evidence"/>
                                         </group>
                                     </sheet>
                                 </form>
                             </field>
                         </page>
-                        <page string="内部来源">
+                        <page string="附件">
+                            <field name="sc_attachment_ids" widget="many2many_binary" string="附件"/>
+                        </page>
+                        <page string="业务信息">
+                            <button name="action_open_sc_partner_business_fact_lines" type="object" string="查看关联业务明细" class="btn-primary"/>
                             <group>
-                                <field name="sc_business_role_label"/>
-                                <field name="sc_business_fact_basis"/>
-                                <field name="sc_legacy_source_label"/>
-                                <field name="legacy_partner_id"/>
-                                <field name="legacy_partner_source"/>
-                                <field name="legacy_partner_name"/>
-                                <field name="legacy_credit_code"/>
-                                <field name="legacy_tax_no"/>
-                                <field name="sc_source_partner_code"/>
-                                <field name="sc_source_document_state"/>
-                                <field name="sc_source_push_result"/>
-                                <field name="sc_source_project_name"/>
-                                <field name="sc_source_cooperation_type"/>
-                                <field name="sc_source_fact_count"/>
-                                <field name="sc_source_fact_source"/>
-                                <field name="sc_source_receipt_amount"/>
-                                <field name="sc_source_payment_amount"/>
-                                <field name="sc_source_created_by"/>
-                                <field name="sc_source_created_at"/>
+                                <field name="sc_business_role_label" string="业务身份" readonly="1"/>
+                                <field name="sc_business_fact_basis" string="业务依据" readonly="1"/>
+                                <field name="sc_source_partner_code" string="单位编号" readonly="1"/>
+                                <field name="sc_supplier_type_label" string="供应商类型" readonly="1"/>
+                                <field name="sc_source_document_state" string="单据状态" readonly="1"/>
+                                <field name="sc_source_push_result" string="推送结果" readonly="1"/>
+                                <field name="sc_source_project_name" string="关联项目" readonly="1"/>
+                                <field name="sc_source_cooperation_type" string="合作类型" readonly="1"/>
+                                <field name="sc_source_fact_count" string="关联业务数" readonly="1"/>
+                                <field name="sc_source_fact_source" string="关联业务范围" readonly="1"/>
+                                <field name="sc_source_receipt_amount" string="收款金额" readonly="1"/>
+                                <field name="sc_source_payment_amount" string="付款金额" readonly="1"/>
+                                <field name="sc_source_created_by" string="录入人" readonly="1"/>
+                                <field name="sc_source_created_at" string="录入时间" readonly="1"/>
                             </group>
-                            <field name="legacy_source_evidence" nolabel="1"/>
+                        </page>
+                        <page string="关联业务明细">
+                            <field name="sc_business_fact_line_ids" nolabel="1" readonly="1">
+                                <tree string="关联业务明细" create="false" edit="false" delete="false">
+                                    <button name="action_open_source_record" type="object" string="打开" class="btn-link"/>
+                                    <field name="business_role"/>
+                                    <field name="source_label"/>
+                                    <field name="project_name"/>
+                                    <field name="document_no"/>
+                                    <field name="document_date"/>
+                                    <field name="amount" sum="金额合计"/>
+                                    <field name="currency_id" invisible="1"/>
+                                    <field name="document_state"/>
+                                    <field name="creator_name"/>
+                                    <field name="created_time"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="备注">
+                            <field name="comment" nolabel="1"/>
                         </page>
                     </notebook>
                 </sheet>
@@ -170,17 +215,37 @@
                 <field name="vat" string="统一社会信用代码"/>
                 <field name="sc_region"/>
                 <field name="sc_default_tax_rate"/>
+                <field name="sc_default_tax_rate_text" string="主税率"/>
                 <field name="sc_bank_name"/>
                 <field name="sc_bank_account"/>
                 <field name="phone"/>
                 <field name="mobile"/>
                 <field name="email"/>
+                <field name="sc_source_partner_code" string="单位编号"/>
+                <field name="sc_source_document_state" string="单据状态"/>
+                <field name="sc_source_push_result" string="推送结果"/>
+                <field name="sc_source_project_name" string="关联项目"/>
+                <field name="sc_source_cooperation_type" string="合作类型"/>
+                <field name="sc_supplier_type_label" string="供应商类型"/>
+                <field name="sc_source_created_by" string="录入人"/>
+                <field name="sc_business_role_label" string="业务身份"/>
+                <field name="sc_business_fact_basis" string="业务依据"/>
+                <field name="category_id" string="标签"/>
+                <field name="user_id" string="负责人"/>
+                <field name="active" string="启用"/>
+                <field name="comment" string="备注"/>
+                <field name="street" string="地址"/>
+                <field name="sc_business_scope" string="经营范围"/>
                 <filter string="企业/组织" name="customer_company" domain="[('is_company', '=', True)]"/>
                 <filter string="个人" name="customer_person" domain="[('is_company', '=', False)]"/>
                 <filter string="客户兼供应商" name="customer_supplier_mixed" domain="[('supplier_rank', '&gt;', 0)]"/>
                 <filter string="含银行账户" name="customer_with_bank_account" domain="[('sc_bank_account', '!=', False)]"/>
+                <filter string="已归档" name="customer_inactive" domain="[('active', '=', False)]"/>
                 <separator/>
+                <filter string="按业务身份" name="group_business_role" context="{'group_by': 'sc_business_role_label'}"/>
+                <filter string="按业务依据" name="group_business_fact_basis" context="{'group_by': 'sc_business_fact_basis'}"/>
                 <filter string="按企业组织/个人" name="group_is_company" context="{'group_by': 'is_company'}"/>
+                <filter string="按负责人" name="group_user" context="{'group_by': 'user_id'}"/>
                 <filter string="按地区" name="group_region" context="{'group_by': 'sc_region'}"/>
                 <filter string="按默认税率" name="group_default_tax_rate" context="{'group_by': 'sc_default_tax_rate'}"/>
             </search>
@@ -192,35 +257,39 @@
         <field name="model">res.partner</field>
         <field name="arch" type="xml">
             <tree string="供应商" default_order="name">
-                <field name="sc_source_document_state"/>
-                <field name="sc_source_push_result"/>
-                <field name="sc_source_project_name"/>
-                <field name="sc_source_partner_code"/>
-                <field name="sc_source_cooperation_type"/>
+                <field name="sc_source_document_state" string="单据状态"/>
+                <field name="sc_source_push_result" string="推送结果"/>
+                <field name="sc_source_project_name" string="关联项目"/>
+                <field name="sc_source_partner_code" string="单位编号"/>
+                <field name="sc_source_cooperation_type" string="合作类型"/>
                 <field name="sc_supplier_type_label" string="供应商类型"/>
                 <field name="name" string="单位名称"/>
                 <field name="sc_source_receipt_amount" string="收款金额"/>
                 <field name="sc_source_payment_amount" string="付款金额"/>
-                <field name="sc_bank_name" string="开户银行"/>
-                <field name="sc_bank_account" string="账号"/>
                 <field name="vat" string="统一社会信用代码"/>
                 <field name="sc_default_tax_rate_text" string="主税率"/>
-                <field name="sc_source_created_by"/>
-                <field name="sc_source_created_at"/>
-                <field name="sc_business_role_label" optional="hide"/>
-                <field name="sc_business_fact_basis" optional="hide"/>
-                <field name="sc_region" optional="hide"/>
-                <field name="sc_default_tax_rate" optional="hide"/>
+                <field name="sc_source_created_by" string="录入人"/>
+                <field name="sc_source_created_at" string="录入时间"/>
+                <field name="sc_business_role_label" string="业务身份" optional="hide"/>
+                <field name="sc_business_fact_basis" string="业务依据" optional="hide"/>
                 <field name="phone" string="电话" optional="hide"/>
                 <field name="mobile" string="手机" optional="hide"/>
                 <field name="email" string="电子邮件" optional="hide"/>
+                <field name="sc_region" optional="hide"/>
+                <field name="sc_bank_name" string="开户银行"/>
+                <field name="sc_bank_account" string="账号"/>
+                <field name="sc_default_tax_rate" optional="hide"/>
+                <field name="active" string="启用" optional="hide"/>
+                <field name="user_id" string="负责人" optional="hide"/>
+                <field name="category_id" widget="many2many_tags" string="标签" optional="hide"/>
+                <field name="comment" string="备注" optional="hide"/>
                 <field name="is_company" string="企业/组织" optional="hide"/>
                 <field name="sc_registered_capital" optional="hide"/>
                 <field name="sc_account_name" optional="hide"/>
-                <field name="sc_legacy_source_label"/>
-                <field name="legacy_partner_name" optional="hide"/>
-                <field name="legacy_partner_id" optional="hide"/>
-                <field name="legacy_partner_source" optional="hide"/>
+                <field name="sc_source_fact_count" string="关联业务数" optional="hide"/>
+                <field name="sc_source_fact_source" string="关联业务范围" optional="hide"/>
+                <field name="street" string="地址" optional="hide"/>
+                <field name="sc_business_scope" optional="hide"/>
                 <field name="supplier_rank" invisible="1"/>
                 <field name="customer_rank" invisible="1"/>
             </tree>
@@ -238,57 +307,73 @@
                             <field name="name" string="名称"/>
                             <field name="is_company" string="企业/组织"/>
                             <field name="sc_supplier_type_ids" widget="many2many_tags"/>
+                            <field name="sc_supplier_type_label" string="供应商类型文本"/>
                             <field name="sc_supplier_type" invisible="1"/>
                             <field name="vat" string="统一社会信用代码"/>
                             <field name="sc_region"/>
                             <field name="sc_registered_capital"/>
                             <field name="sc_default_tax_rate"/>
-                            <field name="sc_default_tax_rate_text"/>
+                            <field name="sc_default_tax_rate_text" string="主税率"/>
                             <field name="sc_business_scope"/>
-                            <field name="sc_business_role_label"/>
-                            <field name="sc_business_fact_basis"/>
-                            <field name="sc_legacy_source_label"/>
-                            <field name="sc_source_partner_code"/>
-                            <field name="sc_source_document_state"/>
-                            <field name="sc_source_push_result"/>
-                            <field name="sc_source_project_name"/>
-                            <field name="sc_source_cooperation_type"/>
-                            <field name="sc_source_receipt_amount"/>
-                            <field name="sc_source_payment_amount"/>
-                            <field name="sc_source_created_by"/>
-                            <field name="sc_source_created_at"/>
-                            <field name="legacy_partner_id"/>
-                            <field name="legacy_partner_source"/>
-                            <field name="legacy_partner_name"/>
-                            <field name="legacy_credit_code"/>
-                            <field name="legacy_tax_no"/>
+                            <field name="category_id" widget="many2many_tags" string="标签"/>
+                            <field name="user_id" string="负责人"/>
+                            <field name="supplier_rank" string="供应商等级"/>
+                            <field name="customer_rank" string="客户等级"/>
+                            <field name="active" string="启用"/>
                         </group>
                         <group string="联系方式">
                             <field name="phone" string="电话"/>
                             <field name="mobile" string="手机"/>
                             <field name="email" string="电子邮件"/>
                             <field name="street" string="地址"/>
+                            <field name="street2" string="地址补充"/>
                             <field name="city" string="城市"/>
+                            <field name="zip" string="邮编"/>
+                            <field name="website" string="网站"/>
                         </group>
                     </group>
                     <group string="账户信息">
                         <group>
                             <field name="sc_account_name"/>
                             <field name="sc_bank_name"/>
+                            <field name="property_supplier_payment_term_id" string="供应商付款条件"/>
                         </group>
                         <group>
                             <field name="sc_bank_account"/>
+                            <field name="property_account_position_id" string="财政状况"/>
                         </group>
                     </group>
                     <notebook>
+                        <page string="联系人">
+                            <field name="child_ids" mode="tree,form" context="{'default_parent_id': id}">
+                                <tree editable="bottom">
+                                    <field name="name"/>
+                                    <field name="function"/>
+                                    <field name="phone"/>
+                                    <field name="mobile"/>
+                                    <field name="email"/>
+                                </tree>
+                                <form>
+                                    <sheet>
+                                        <group>
+                                            <field name="name"/>
+                                            <field name="function"/>
+                                            <field name="phone"/>
+                                            <field name="mobile"/>
+                                            <field name="email"/>
+                                            <field name="street"/>
+                                            <field name="comment"/>
+                                        </group>
+                                    </sheet>
+                                </form>
+                            </field>
+                        </page>
                         <page string="银行账户">
                             <field name="bank_ids" nolabel="1">
                                 <tree editable="bottom">
                                     <field name="acc_number"/>
                                     <field name="sc_account_holder_name"/>
                                     <field name="sc_bank_name"/>
-                                    <field name="sc_legacy_external_id"/>
-                                    <field name="sc_import_batch"/>
                                 </tree>
                                 <form>
                                     <sheet>
@@ -296,11 +381,6 @@
                                             <field name="acc_number"/>
                                             <field name="sc_account_holder_name"/>
                                             <field name="sc_bank_name"/>
-                                            <field name="sc_legacy_external_id"/>
-                                            <field name="sc_legacy_partner_source"/>
-                                            <field name="sc_legacy_partner_id"/>
-                                            <field name="sc_import_batch"/>
-                                            <field name="sc_source_evidence"/>
                                         </group>
                                     </sheet>
                                 </form>
@@ -309,11 +389,43 @@
                         <page string="备注">
                             <field name="sc_supplier_note" nolabel="1"/>
                         </page>
+                        <page string="业务信息">
+                            <button name="action_open_sc_partner_business_fact_lines" type="object" string="查看关联业务明细" class="btn-primary"/>
+                            <group>
+                                <field name="sc_business_role_label" string="业务身份" readonly="1"/>
+                                <field name="sc_business_fact_basis" string="业务依据" readonly="1"/>
+                                <field name="sc_source_partner_code" string="单位编号" readonly="1"/>
+                                <field name="sc_source_document_state" string="单据状态" readonly="1"/>
+                                <field name="sc_source_push_result" string="推送结果" readonly="1"/>
+                                <field name="sc_source_project_name" string="关联项目" readonly="1"/>
+                                <field name="sc_source_cooperation_type" string="合作类型" readonly="1"/>
+                                <field name="sc_source_fact_count" string="关联业务数" readonly="1"/>
+                                <field name="sc_source_fact_source" string="关联业务范围" readonly="1"/>
+                                <field name="sc_source_receipt_amount" string="收款金额" readonly="1"/>
+                                <field name="sc_source_payment_amount" string="付款金额" readonly="1"/>
+                                <field name="sc_source_created_by" string="录入人" readonly="1"/>
+                                <field name="sc_source_created_at" string="录入时间" readonly="1"/>
+                            </group>
+                        </page>
+                        <page string="关联业务明细">
+                            <field name="sc_business_fact_line_ids" nolabel="1" readonly="1">
+                                <tree string="关联业务明细" create="false" edit="false" delete="false">
+                                    <button name="action_open_source_record" type="object" string="打开" class="btn-link"/>
+                                    <field name="business_role"/>
+                                    <field name="source_label"/>
+                                    <field name="project_name"/>
+                                    <field name="document_no"/>
+                                    <field name="document_date"/>
+                                    <field name="amount" sum="金额合计"/>
+                                    <field name="currency_id" invisible="1"/>
+                                    <field name="document_state"/>
+                                    <field name="creator_name"/>
+                                    <field name="created_time"/>
+                                </tree>
+                            </field>
+                        </page>
                         <page string="附件">
                             <field name="sc_attachment_ids" widget="many2many_binary"/>
-                        </page>
-                        <page string="来源追溯">
-                            <field name="legacy_source_evidence" nolabel="1"/>
                         </page>
                     </notebook>
                 </sheet>
@@ -332,33 +444,39 @@
                 <field name="vat" string="统一社会信用代码"/>
                 <field name="sc_region"/>
                 <field name="sc_default_tax_rate"/>
+                <field name="sc_default_tax_rate_text" string="主税率"/>
                 <field name="sc_bank_name"/>
                 <field name="sc_bank_account"/>
-                <field name="legacy_partner_id"/>
-                <field name="legacy_partner_name"/>
-                <field name="legacy_partner_source"/>
-                <field name="legacy_deleted_flag"/>
-                <field name="sc_source_partner_code"/>
-                <field name="sc_source_document_state"/>
-                <field name="sc_source_push_result"/>
-                <field name="sc_source_project_name"/>
-                <field name="sc_source_created_by"/>
-                <field name="sc_business_role_label"/>
-                <field name="sc_business_fact_basis"/>
-                <field name="sc_legacy_source_label"/>
-                <filter string="含历史来源" name="legacy_supplier" domain="[('legacy_partner_id', '!=', False)]"/>
+                <field name="phone"/>
+                <field name="mobile"/>
+                <field name="email"/>
+                <field name="sc_source_partner_code" string="单位编号"/>
+                <field name="sc_source_document_state" string="单据状态"/>
+                <field name="sc_source_push_result" string="推送结果"/>
+                <field name="sc_source_project_name" string="关联项目"/>
+                <field name="sc_source_cooperation_type" string="合作类型"/>
+                <field name="sc_source_created_by" string="录入人"/>
+                <field name="sc_business_role_label" string="业务身份"/>
+                <field name="sc_business_fact_basis" string="业务依据"/>
+                <field name="category_id" string="标签"/>
+                <field name="user_id" string="负责人"/>
+                <field name="active" string="启用"/>
+                <field name="comment" string="备注"/>
+                <field name="street" string="地址"/>
+                <field name="sc_business_scope" string="经营范围"/>
                 <filter string="企业/组织" name="supplier_company" domain="[('is_company', '=', True)]"/>
                 <filter string="个人" name="supplier_person" domain="[('is_company', '=', False)]"/>
                 <filter string="供应商兼客户" name="supplier_customer_mixed" domain="[('customer_rank', '&gt;', 0)]"/>
                 <filter string="含银行账户" name="supplier_with_bank_account" domain="[('sc_bank_account', '!=', False)]"/>
+                <filter string="已归档" name="supplier_inactive" domain="[('active', '=', False)]"/>
                 <separator/>
                 <filter string="按业务身份" name="group_business_role" context="{'group_by': 'sc_business_role_label'}"/>
                 <filter string="按业务依据" name="group_business_fact_basis" context="{'group_by': 'sc_business_fact_basis'}"/>
                 <filter string="按企业组织/个人" name="group_is_company" context="{'group_by': 'is_company'}"/>
+                <filter string="按负责人" name="group_user" context="{'group_by': 'user_id'}"/>
                 <filter string="按主供应商类型" name="group_supplier_type" context="{'group_by': 'sc_supplier_type'}"/>
                 <filter string="按地区" name="group_region" context="{'group_by': 'sc_region'}"/>
                 <filter string="按默认税率" name="group_default_tax_rate" context="{'group_by': 'sc_default_tax_rate'}"/>
-                <filter string="按来源类型" name="group_legacy_source" context="{'group_by': 'sc_legacy_source_label'}"/>
             </search>
         </field>
     </record>

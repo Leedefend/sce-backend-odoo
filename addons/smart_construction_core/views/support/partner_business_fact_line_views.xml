@@ -1,0 +1,97 @@
+<odoo>
+    <record id="view_sc_partner_business_fact_line_search" model="ir.ui.view">
+        <field name="name">sc.partner.business.fact.line.search</field>
+        <field name="model">sc.partner.business.fact.line</field>
+        <field name="arch" type="xml">
+            <search string="关联业务明细">
+                <field name="partner_id"/>
+                <field name="project_name"/>
+                <field name="document_no"/>
+                <field name="source_label"/>
+                <field name="business_role"/>
+                <field name="document_state"/>
+                <field name="creator_name"/>
+                <filter string="客户业务" name="customer_role" domain="[('business_role', '=', 'customer')]"/>
+                <filter string="供应商业务" name="supplier_role" domain="[('business_role', '=', 'supplier')]"/>
+                <separator/>
+                <filter string="按业务类型" name="group_source_label" context="{'group_by': 'source_label'}"/>
+                <filter string="按项目" name="group_project" context="{'group_by': 'project_name'}"/>
+                <filter string="按业务方向" name="group_business_role" context="{'group_by': 'business_role'}"/>
+                <filter string="按状态" name="group_state" context="{'group_by': 'document_state'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_partner_business_fact_line_tree" model="ir.ui.view">
+        <field name="name">sc.partner.business.fact.line.tree</field>
+        <field name="model">sc.partner.business.fact.line</field>
+        <field name="arch" type="xml">
+            <tree string="关联业务明细" default_order="document_date desc, id desc" create="false" edit="false" delete="false">
+                <button name="action_open_source_record" type="object" string="打开" class="btn-link"/>
+                <field name="business_role"/>
+                <field name="source_label"/>
+                <field name="project_name"/>
+                <field name="document_no"/>
+                <field name="document_date"/>
+                <field name="amount" sum="金额合计"/>
+                <field name="currency_id" invisible="1"/>
+                <field name="document_state"/>
+                <field name="creator_name"/>
+                <field name="created_time"/>
+                <field name="source_model" optional="hide"/>
+                <field name="source_res_id" optional="hide"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_partner_business_fact_line_form" model="ir.ui.view">
+        <field name="name">sc.partner.business.fact.line.form</field>
+        <field name="model">sc.partner.business.fact.line</field>
+        <field name="arch" type="xml">
+            <form string="关联业务明细" create="false" edit="false" delete="false">
+                <header>
+                    <button name="action_open_source_record" type="object" string="打开来源单据" class="btn-primary"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group string="业务定位">
+                            <field name="partner_id"/>
+                            <field name="business_role"/>
+                            <field name="source_label"/>
+                            <field name="project_id"/>
+                            <field name="project_name"/>
+                        </group>
+                        <group string="单据信息">
+                            <field name="document_no"/>
+                            <field name="document_date"/>
+                            <field name="amount"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="document_state"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="录入信息">
+                            <field name="creator_name"/>
+                            <field name="created_time"/>
+                        </group>
+                        <group string="来源">
+                            <field name="source_model"/>
+                            <field name="source_res_id"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="source_note" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_sc_partner_business_fact_line" model="ir.actions.act_window">
+        <field name="name">关联业务明细</field>
+        <field name="res_model">sc.partner.business.fact.line</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="smart_construction_core.view_sc_partner_business_fact_line_search"/>
+        <field name="context">{'search_default_group_source_label': 1}</field>
+    </record>
+</odoo>
