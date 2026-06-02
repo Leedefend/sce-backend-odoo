@@ -7,6 +7,7 @@ import json
 import logging
 import mimetypes
 import os
+import re
 from pathlib import Path
 from typing import Any, Dict
 from urllib.error import URLError
@@ -33,6 +34,7 @@ _logger = logging.getLogger(__name__)
 
 LEGACY_FILE_URL_PREFIX = "legacy-file://"
 LEGACY_FILE_ID_URL_PREFIX = "legacy-file-id://"
+LEGACY_ATTACHMENT_LABEL_RE = re.compile(r"^附件\([1-9]\d*\)$")
 DEFAULT_ONLINE_LEGACY_BASE_URL = "https://www.builderp.cn/SCBSLY_V2"
 DEFAULT_LEGACY_FILE_ROOTS = (
     "/mnt/legacy-files",
@@ -379,6 +381,7 @@ class FileDownloadHandler(BaseIntentHandler):
             value = getattr(record, field, "")
             if isinstance(value, str):
                 refs.extend(_split_legacy_refs(value))
+        refs.extend(_legacy_inline_attachment_refs(getattr(record, "raw_payload", "")))
         return list(dict.fromkeys(refs))
 
 
@@ -395,6 +398,33 @@ def _split_legacy_refs(value: str) -> list[str]:
         if clean and "://" not in clean:
             refs.append(clean)
     return refs
+
+
+def _legacy_inline_attachment_refs(raw_payload: Any) -> list[str]:
+    if not raw_payload:
+        return []
+    if isinstance(raw_payload, str):
+        try:
+            payload = json.loads(raw_payload)
+        except (TypeError, ValueError, json.JSONDecodeError):
+            return []
+    elif isinstance(raw_payload, dict):
+        payload = raw_payload
+    else:
+        return []
+    refs: list[str] = []
+    for key, label_value in payload.items():
+        key_text = str(key or "").strip()
+        if not key_text.endswith("_FJ"):
+            continue
+        label_text = str(label_value or "").strip()
+        if not LEGACY_ATTACHMENT_LABEL_RE.match(label_text):
+            continue
+        source_key = key_text[:-3]
+        ref = str(payload.get(source_key) or "").strip()
+        if ref and "://" not in ref:
+            refs.append(ref)
+    return list(dict.fromkeys(refs))
 
 
 def _fetch_online_legacy_file_by_bill_id(bill_id: str) -> dict[str, Any] | None:
