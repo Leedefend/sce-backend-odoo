@@ -240,16 +240,6 @@
                   parent="smart_construction_core.menu_scbsly_joint_project_acceptance_finance"
                   action="smart_construction_core.action_sc_joint_self_funding_advance_refund"
                   sequence="20"/>
-        <menuitem id="menu_scbsly_joint_acceptance_input_tax_report"
-                  name="进项税额上报"
-                  parent="smart_construction_core.menu_scbsly_joint_project_acceptance_finance"
-                  action="smart_construction_core.action_scbsly_direct_acceptance_input_tax_report"
-                  sequence="30"/>
-        <menuitem id="menu_scbsly_joint_acceptance_general_contract_input_tax_report"
-                  name="总包进项税额上报"
-                  parent="smart_construction_core.menu_scbsly_joint_project_acceptance_finance"
-                  action="smart_construction_core.action_scbsly_direct_acceptance_general_contract_input_tax_report"
-                  sequence="40"/>
         <menuitem id="menu_scbsly_joint_acceptance_supplier_contract"
                   name="供货合同"
                   parent="smart_construction_core.menu_scbsly_joint_project_acceptance_contracts"
@@ -298,27 +288,11 @@
             <field name="visible">1</field>
             <field name="note">联营项目自筹垫付退回验收入口。</field>
         </record>
-        <record id="menu_config_policy_scbsly_joint_acceptance_input_tax_report" model="ui.menu.config.policy">
-            <field name="company_id" ref="base.main_company"/>
-            <field name="menu_id" ref="smart_construction_core.menu_scbsly_joint_acceptance_input_tax_report"/>
-            <field name="custom_label">进项税额上报</field>
-            <field name="sequence_override">30</field>
-            <field name="visible">1</field>
-            <field name="note">联营项目进项税额上报验收入口，action 域固定 SCBSLY 联营用户可见口径。</field>
-        </record>
-        <record id="menu_config_policy_scbsly_joint_acceptance_general_contract_input_tax_report" model="ui.menu.config.policy">
-            <field name="company_id" ref="base.main_company"/>
-            <field name="menu_id" ref="smart_construction_core.menu_scbsly_joint_acceptance_general_contract_input_tax_report"/>
-            <field name="custom_label">总包进项税额上报</field>
-            <field name="sequence_override">40</field>
-            <field name="visible">1</field>
-            <field name="note">联营项目总包进项税额上报验收入口，action 域固定 SCBSLY 联营用户可见口径。</field>
-        </record>
         <record id="menu_config_policy_scbsly_joint_acceptance_supplier_contract" model="ui.menu.config.policy">
             <field name="company_id" ref="base.main_company"/>
             <field name="menu_id" ref="smart_construction_core.menu_scbsly_joint_acceptance_supplier_contract"/>
             <field name="custom_label">供货合同</field>
-            <field name="sequence_override">50</field>
+            <field name="sequence_override">30</field>
             <field name="visible">1</field>
             <field name="note">联营项目供货合同验收入口。</field>
         </record>
@@ -326,7 +300,7 @@
             <field name="company_id" ref="base.main_company"/>
             <field name="menu_id" ref="smart_construction_core.menu_scbsly_joint_acceptance_labor_contract"/>
             <field name="custom_label">劳务合同</field>
-            <field name="sequence_override">60</field>
+            <field name="sequence_override">40</field>
             <field name="visible">1</field>
             <field name="note">联营项目劳务合同验收入口。</field>
         </record>
@@ -334,7 +308,7 @@
             <field name="company_id" ref="base.main_company"/>
             <field name="menu_id" ref="smart_construction_core.menu_scbsly_joint_acceptance_rental_contract"/>
             <field name="custom_label">租赁合同</field>
-            <field name="sequence_override">70</field>
+            <field name="sequence_override">50</field>
             <field name="visible">1</field>
             <field name="note">联营项目租赁合同验收入口。</field>
         </record>
