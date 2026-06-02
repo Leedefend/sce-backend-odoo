@@ -58,6 +58,7 @@ LEGACY_PAYMENT_REQUEST_STATUS_DISPLAY = {
     "1": "部分申请",
     "2": "已申请",
 }
+LEGACY_ATTACHMENT_LABEL_RE = re.compile(r"^附件\([1-9]\d*\)$")
 
 class ScLegacyDirectAcceptanceFact(models.Model):
     _name = "sc.legacy.direct.acceptance.fact"
@@ -123,6 +124,10 @@ class ScLegacyDirectAcceptanceFact(models.Model):
 
     @classmethod
     def _legacy_payload_value(cls, payload, field_name, acceptance_label="", visible_index=0, attachment_ref=""):
+        display_value = cls._legacy_attachment_display_value(payload, field_name)
+        if display_value:
+            return display_value
+
         if acceptance_label == "还租" and field_name in {"f_LRR", "f_LRSJ"}:
             fallback_field = "XGR" if field_name == "f_LRR" else "XGSJ"
             value = payload.get(field_name) or payload.get(fallback_field)
@@ -157,7 +162,7 @@ class ScLegacyDirectAcceptanceFact(models.Model):
                     continue
                 text = str(value).strip()
                 if text:
-                    return text if text.startswith("附件(") else text
+                    return text if LEGACY_ATTACHMENT_LABEL_RE.match(text) else ""
             raw_value = payload.get(field_name)
             raw_text = "" if raw_value is None or raw_value is False else str(raw_value).strip()
             clean_attachment_ref = str(attachment_ref or "").strip()
@@ -180,6 +185,16 @@ class ScLegacyDirectAcceptanceFact(models.Model):
                     return cls._legacy_tax_rate_text(text)
                 return text
         return ""
+
+    @staticmethod
+    def _legacy_attachment_display_value(payload, field_name):
+        if not field_name:
+            return ""
+        value = payload.get(f"{field_name}_FJ")
+        if value is None or value is False:
+            return ""
+        text = str(value).strip()
+        return text if LEGACY_ATTACHMENT_LABEL_RE.match(text) else ""
 
     @staticmethod
     def _legacy_number(payload, *field_names):
