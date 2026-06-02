@@ -9,11 +9,19 @@ from odoo.exceptions import AccessError
 
 from ..core.base_handler import BaseIntentHandler
 from ..core.project_context import (
-    apply_project_scope_domain,
     project_scope_denied_response,
-    record_in_project_scope,
     selected_project_id_from_context,
 )
+try:
+    from ..core.project_context import apply_business_scope_domain, record_in_business_scope
+except ImportError:  # pragma: no cover - compatibility for lightweight boundary tests
+    from ..core.project_context import apply_project_scope_domain, record_in_project_scope
+
+    def apply_business_scope_domain(env_model, domain, params=None, context=None):
+        return apply_project_scope_domain(env_model, domain, selected_project_id_from_context(params, context))
+
+    def record_in_business_scope(env_model, record_id, params=None, context=None):
+        return record_in_project_scope(env_model, record_id, selected_project_id_from_context(params, context))
 from ..core.request_params import parse_bool, parse_positive_int
 from ..utils.idempotency import (
     apply_idempotency_identity,
@@ -240,8 +248,22 @@ class ApiDataWriteHandler(BaseIntentHandler):
         return params
 
     def _get_context(self, params: Dict[str, Any]) -> Dict[str, Any]:
-        ctx = params.get("context")
-        return ctx if isinstance(ctx, dict) else {}
+        ctx = dict(params.get("context") or {}) if isinstance(params.get("context"), dict) else {}
+        company_id, company_error = parse_positive_int(params.get("company_id"), allow_empty=True)
+        if not company_error and company_id:
+            ctx["allowed_company_ids"] = [company_id]
+            ctx["company_id"] = company_id
+        project_id, project_error = parse_positive_int(
+            params.get("current_project_id") or params.get("project_id"),
+            allow_empty=True,
+        )
+        if not project_error and project_id:
+            ctx["current_project_id"] = project_id
+            ctx.setdefault("default_project_id", project_id)
+        operation_strategy = str(params.get("operation_strategy") or params.get("operationStrategy") or "").strip()
+        if operation_strategy:
+            ctx["operation_strategy"] = operation_strategy
+        return ctx
 
     def _get_model(self, params: Dict[str, Any]) -> str:
         model = params.get("model") or params.get("res_model") or ""
@@ -338,7 +360,7 @@ class ApiDataWriteHandler(BaseIntentHandler):
             rec = env_model.browse(record_id).exists()
             if not rec:
                 return self._err(404, "记录不存在", REASON_NOT_FOUND)
-            in_scope, scope_meta = record_in_project_scope(env_model, record_id, current_project_id)
+            in_scope, scope_meta = record_in_business_scope(env_model, record_id, params, context)
             if not in_scope:
                 return self._scope_denied(scope_meta)
             if current_project_id and "project_id" in safe_vals and "project_id" in env_model._fields:
@@ -463,7 +485,34 @@ class ApiDataWriteHandler(BaseIntentHandler):
             return {"ok": True, "data": data, "meta": meta}
 
         if intent == "api.data.create":
-            _scoped_domain, scope_meta = apply_project_scope_domain(env_model, [], current_project_id)
+            _scoped_domain, scope_meta = apply_business_scope_domain(env_model, [], params, context)
+            if scope_meta.get("project_operation_strategy_mismatch"):
+                return self._scope_denied(scope_meta)
+            scope_company_id = int(scope_meta.get("company_id") or 0)
+            if scope_company_id and "company_id" in env_model._fields:
+                target_company_id, target_company_id_error = parse_positive_int(
+                    safe_vals.get("company_id"),
+                    allow_empty=True,
+                )
+                if target_company_id_error:
+                    return self._err(400, "company_id 无效", REASON_USER_ERROR)
+                if target_company_id and target_company_id != scope_company_id:
+                    return self._scope_denied(scope_meta)
+                if not target_company_id and "company_id" in allowed_fields:
+                    safe_vals["company_id"] = scope_company_id
+            scope_operation_strategy = str(scope_meta.get("operation_strategy") or "").strip()
+            operation_field = env_model._fields.get("operation_strategy")
+            if (
+                scope_operation_strategy
+                and operation_field
+                and not getattr(operation_field, "related", None)
+                and "operation_strategy" in allowed_fields
+            ):
+                incoming_operation_strategy = str(safe_vals.get("operation_strategy") or "").strip()
+                if not incoming_operation_strategy:
+                    safe_vals["operation_strategy"] = scope_operation_strategy
+                elif incoming_operation_strategy != scope_operation_strategy:
+                    return self._scope_denied(scope_meta)
             if current_project_id and scope_meta.get("applied") and "project_id" in env_model._fields:
                 target_project_id, target_project_id_error = parse_positive_int(
                     safe_vals.get("project_id"),

@@ -436,6 +436,8 @@ function normalizeProjectOption(raw: unknown): ProjectContextOption | null {
     name: asText(row.name),
     display_name: asText(row.display_name) || asText(row.name),
     code: asText(row.code),
+    company_id: Number(row.company_id || 0) || undefined,
+    company_name: asText(row.company_name),
     stage: asText(row.stage),
     owner_id: Number(row.owner_id || 0) || undefined,
     owner_name: asText(row.owner_name),
@@ -443,6 +445,37 @@ function normalizeProjectOption(raw: unknown): ProjectContextOption | null {
     operation_strategy_label: asText(row.operation_strategy_label),
     active: row.active === undefined ? undefined : Boolean(row.active),
   };
+}
+
+function normalizeCompanyOptions(raw: unknown) {
+  return Array.isArray(raw)
+    ? raw.map((item) => {
+      const row = asRecord(item);
+      const companyId = Number(row.company_id || 0);
+      if (!Number.isFinite(companyId) || companyId <= 0) return null;
+      return {
+        company_id: companyId,
+        company_name: asText(row.company_name),
+        active: row.active === undefined ? undefined : Boolean(row.active),
+      };
+    }).filter(Boolean) as NonNullable<ProjectContextContract['company_options']>
+    : [];
+}
+
+function normalizeOperationOptions(raw: unknown) {
+  return Array.isArray(raw)
+    ? raw.map((item) => {
+      const row = asRecord(item);
+      const strategy = asText(row.operation_strategy);
+      return {
+        operation_strategy: strategy,
+        operation_strategy_label: asText(row.operation_strategy_label),
+        active: row.active === undefined ? undefined : Boolean(row.active),
+        disabled: row.disabled === undefined ? undefined : Boolean(row.disabled),
+        disabled_reason: asText(row.disabled_reason),
+      };
+    }).filter(Boolean) as NonNullable<ProjectContextContract['operation_options']>
+    : [];
 }
 
 function normalizeProjectContext(raw: unknown): ProjectContextContract | null {
@@ -459,6 +492,12 @@ function normalizeProjectContext(raw: unknown): ProjectContextContract | null {
     enabled: Boolean(row.enabled),
     source: asText(row.source),
     model: asText(row.model),
+    company_id: Number(row.company_id || 0) || selected?.company_id || null,
+    company_name: asText(row.company_name) || selected?.company_name || '',
+    company_options: normalizeCompanyOptions(row.company_options),
+    operation_strategy: asText(row.operation_strategy),
+    operation_strategy_label: asText(row.operation_strategy_label),
+    operation_options: normalizeOperationOptions(row.operation_options),
     selected,
     options,
     total: Number(row.total || 0),
@@ -1018,6 +1057,8 @@ export const useSessionStore = defineStore('session', {
           with: ['workspace_home'],
           ...(config.startupRootXmlid ? { root_xmlid: config.startupRootXmlid } : {}),
           ...(currentSceneKey ? { scene_key: currentSceneKey } : {}),
+          ...(this.projectContext?.company_id ? { company_id: this.projectContext.company_id } : {}),
+          ...(this.projectContext?.operation_strategy ? { operation_strategy: this.projectContext.operation_strategy } : {}),
           ...(this.projectContext?.selected?.id ? { current_project_id: this.projectContext.selected.id } : {}),
         },
       };
@@ -1334,6 +1375,8 @@ export const useSessionStore = defineStore('session', {
           scene_ready_mode: 'registry',
           with: ['workspace_home'],
           ...(config.startupRootXmlid ? { root_xmlid: config.startupRootXmlid } : {}),
+          ...(this.projectContext?.company_id ? { company_id: this.projectContext.company_id } : {}),
+          ...(this.projectContext?.operation_strategy ? { operation_strategy: this.projectContext.operation_strategy } : {}),
           ...(this.projectContext?.selected?.id ? { current_project_id: this.projectContext.selected.id } : {}),
         },
       });
@@ -1357,6 +1400,8 @@ export const useSessionStore = defineStore('session', {
         intent,
         params: {
           search,
+          company_id: this.projectContext?.company_id || undefined,
+          operation_strategy: this.projectContext?.operation_strategy || undefined,
           selected_id: this.projectContext?.selected?.id || undefined,
           limit: selector.limit || 20,
         },
@@ -1376,8 +1421,31 @@ export const useSessionStore = defineStore('session', {
       this.projectContext = {
         ...current,
         selected: option,
+        company_id: option?.company_id || current.company_id || null,
+        company_name: option?.company_name || current.company_name || '',
+        operation_strategy: option?.operation_strategy || current.operation_strategy || '',
+        operation_strategy_label: option?.operation_strategy_label || current.operation_strategy_label || '',
       };
       this.persist();
+      await this.loadAppInit();
+    },
+    async selectBusinessScope(scope: { company_id?: number | null; operation_strategy?: string }) {
+      const current = this.projectContext || {};
+      const nextCompanyId = Number(scope.company_id ?? current.company_id ?? 0) || null;
+      const nextOperation = asText(scope.operation_strategy ?? current.operation_strategy);
+      const selected = current.selected;
+      const keepSelected = selected
+        && (!nextCompanyId || !selected.company_id || selected.company_id === nextCompanyId)
+        && (!nextOperation || !selected.operation_strategy || selected.operation_strategy === nextOperation);
+      this.projectContext = {
+        ...current,
+        company_id: nextCompanyId,
+        operation_strategy: nextOperation,
+        operation_strategy_label: current.operation_options?.find((option) => option.operation_strategy === nextOperation)?.operation_strategy_label || '',
+        selected: keepSelected ? selected : null,
+      };
+      this.persist();
+      await this.searchProjectContext('');
       await this.loadAppInit();
     },
     async ensureReady() {

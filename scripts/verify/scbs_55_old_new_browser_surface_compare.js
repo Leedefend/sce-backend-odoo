@@ -377,7 +377,7 @@ async function newBrowserBaseline(browser) {
         const actual = result.actual_headers.slice(0, plan.expected_headers.length);
         result.field_match = JSON.stringify(actual) === JSON.stringify(plan.expected_headers);
       }
-      if (result.row_count < 1 && plan.expected_headers.length && !ALLOW_ZERO_RECORD_SEQS.has(plan.seq)) {
+      if (result.row_count < 1 && !ALLOW_ZERO_RECORD_SEQS.has(plan.seq)) {
         throw new Error('no rows rendered');
       }
     } catch (err) {

@@ -7,9 +7,14 @@ from odoo.exceptions import AccessError, UserError
 from ..core.base_handler import BaseIntentHandler
 from ..core.project_context import (
     project_scope_denied_response,
-    record_in_project_scope,
-    selected_project_id_from_context,
 )
+try:
+    from ..core.project_context import record_in_business_scope
+except ImportError:  # pragma: no cover - compatibility for lightweight boundary tests
+    from ..core.project_context import record_in_project_scope, selected_project_id_from_context
+
+    def record_in_business_scope(env_model, record_id, params=None, context=None):
+        return record_in_project_scope(env_model, record_id, selected_project_id_from_context(params, context))
 from ..core.request_params import parse_bool, parse_positive_int
 from ..utils.reason_codes import (
     REASON_MISSING_PARAMS,
@@ -70,8 +75,12 @@ class ChatterTimelineHandler(BaseIntentHandler):
             return self._failure(REASON_SYSTEM_ERROR, "读取协作时间线失败", 500, trace_id)
         if not record:
             return self._failure(REASON_NOT_FOUND, "记录不存在", 404, trace_id)
-        current_project_id = selected_project_id_from_context(params, self.context if isinstance(self.context, dict) else {})
-        in_scope, scope_meta = record_in_project_scope(self.env[model], int(record.id), current_project_id)
+        in_scope, scope_meta = record_in_business_scope(
+            self.env[model],
+            int(record.id),
+            params,
+            self.context if isinstance(self.context, dict) else {},
+        )
         if not in_scope:
             return project_scope_denied_response(scope_meta)
 
@@ -160,10 +169,11 @@ class ChatterTimelineHandler(BaseIntentHandler):
         related_ids: List[int] = []
         if model in self.env:
             record = self.env[model].browse(res_id).exists()
+            record_fields = getattr(record, "_fields", {}) if record else {}
             attachment_field = record and next(
                 (
                     name
-                    for name, field in record._fields.items()
+                    for name, field in record_fields.items()
                     if name == "attachment_ids"
                     or (field.type == "many2many" and field.comodel_name == "ir.attachment")
                 ),
@@ -173,7 +183,8 @@ class ChatterTimelineHandler(BaseIntentHandler):
                 related_ids = record[attachment_field].ids
         if related_ids:
             domain = ["|", ("id", "in", related_ids), "&", ("res_model", "=", model), ("res_id", "=", res_id)]
-        rows = Attachment.sudo().search(domain, order="id desc", limit=limit)
+        AttachmentModel = Attachment.sudo() if hasattr(Attachment, "sudo") else Attachment
+        rows = AttachmentModel.search(domain, order="id desc", limit=limit)
         items: List[Dict[str, Any]] = []
         for row in rows:
             date_value = _to_iso(row.create_date) or _to_iso(row.write_date)

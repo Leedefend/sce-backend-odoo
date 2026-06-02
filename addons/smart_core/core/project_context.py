@@ -15,6 +15,15 @@ SOURCE_KIND = "record_context_projection"
 SOURCE_AUTHORITIES = ("odoo.orm", "ir.rule", "ir.model.access", "record_context_model", "legacy_project_context_adapter")
 NO_BUSINESS_FACT_AUTHORITY = True
 LEGACY_PROJECT_SCOPE_ADAPTER_SOURCE_KIND = "legacy_project_scope_adapter"
+VALID_OPERATION_STRATEGIES = ("direct", "joint")
+BUSINESS_SCOPE_EXEMPT_MODELS = {
+    # Company-level legacy acceptance archives do not carry project/company
+    # dimensions. Applying project.operation_strategy scope hides valid old
+    # business rows from the customer acceptance surface.
+    "sc.document.admin.document",
+    "sc.hr.payroll.document",
+    "sc.legacy.user.profile",
+}
 
 
 def source_authority_contract() -> dict[str, Any]:
@@ -83,6 +92,60 @@ def _as_int(value: Any) -> int:
     return parsed if parsed > 0 else 0
 
 
+def _as_operation_strategy(value: Any) -> str:
+    normalized = str(value or "").strip()
+    return normalized if normalized in VALID_OPERATION_STRATEGIES else ""
+
+
+def _selected_company_id_from_source(source: dict | None) -> int:
+    source = source if isinstance(source, dict) else {}
+    candidate = _as_int(source.get("company_id") or source.get("current_company_id"))
+    if candidate:
+        return candidate
+    allowed = source.get("allowed_company_ids")
+    if isinstance(allowed, (list, tuple)) and len(allowed) == 1:
+        return _as_int(allowed[0])
+    nested = source.get("context")
+    if isinstance(nested, dict):
+        return _selected_company_id_from_source(nested)
+    return 0
+
+
+def selected_company_id_from_context(params: dict | None = None, context: dict | None = None) -> int:
+    candidate = _selected_company_id_from_source(params)
+    if candidate:
+        return candidate
+    return _selected_company_id_from_source(context)
+
+
+def _selected_operation_strategy_from_source(source: dict | None) -> str:
+    source = source if isinstance(source, dict) else {}
+    candidate = _as_operation_strategy(
+        source.get("operation_strategy")
+        or source.get("operationStrategy")
+        or source.get("current_operation_strategy")
+        or source.get("currentOperationStrategy")
+    )
+    if candidate:
+        return candidate
+    project_context = source.get("project_context")
+    if isinstance(project_context, dict):
+        candidate = _as_operation_strategy(project_context.get("operation_strategy") or project_context.get("operationStrategy"))
+        if candidate:
+            return candidate
+    nested = source.get("context")
+    if isinstance(nested, dict):
+        return _selected_operation_strategy_from_source(nested)
+    return ""
+
+
+def selected_operation_strategy_from_context(params: dict | None = None, context: dict | None = None) -> str:
+    candidate = _selected_operation_strategy_from_source(params)
+    if candidate:
+        return candidate
+    return _selected_operation_strategy_from_source(context)
+
+
 def _field_text(record, field_name: str) -> str:
     if field_name not in getattr(record, "_fields", {}):
         return ""
@@ -117,11 +180,23 @@ def format_project_option(record) -> dict:
             operation_strategy_label = dict(field.selection).get(operation_strategy, operation_strategy)
         except Exception:
             operation_strategy_label = operation_strategy
+    company_id = 0
+    company_name = ""
+    if "company_id" in getattr(record, "_fields", {}):
+        try:
+            company = record.company_id
+            company_id = int(company.id or 0)
+            company_name = str(company.display_name or company.name or "").strip()
+        except Exception:
+            company_id = 0
+            company_name = ""
     return {
         "id": int(record.id),
         "name": name,
         "display_name": name,
         "code": code,
+        "company_id": company_id,
+        "company_name": company_name,
         "stage": stage,
         "owner_id": owner_id,
         "owner_name": owner_name,
@@ -129,6 +204,56 @@ def format_project_option(record) -> dict:
         "operation_strategy_label": operation_strategy_label,
         "active": bool(getattr(record, "active", True)),
     }
+
+
+def _company_options(env, active_company_id: int = 0) -> list[dict[str, Any]]:
+    selected_id = _as_int(active_company_id) or _as_int(getattr(env.company, "id", 0))
+    try:
+        companies = env.user.company_ids.sorted(key=lambda item: item.id)
+    except Exception:
+        companies = env["res.company"].browse([])
+    return [
+        {
+            "company_id": int(company.id),
+            "company_name": str(company.display_name or company.name or "").strip(),
+            "active": int(company.id) == selected_id,
+        }
+        for company in companies
+    ]
+
+
+def _operation_strategy_label(Project, operation_strategy: str) -> str:
+    selected = _as_operation_strategy(operation_strategy)
+    if not selected:
+        return ""
+    field = getattr(Project, "_fields", {}).get("operation_strategy")
+    try:
+        selection = field.selection if field else []
+        if callable(selection):
+            selection = selection(Project)
+        return str(dict(selection or []).get(selected, selected))
+    except Exception:
+        return selected
+
+
+def _operation_options(Project, active_operation_strategy: str = "") -> list[dict[str, Any]]:
+    active = _as_operation_strategy(active_operation_strategy)
+    return [{
+        "operation_strategy": "",
+        "operation_strategy_label": "全部",
+        "active": not active,
+        "disabled": False,
+        "disabled_reason": "",
+    }] + [
+        {
+            "operation_strategy": strategy,
+            "operation_strategy_label": _operation_strategy_label(Project, strategy) or strategy,
+            "active": strategy == active,
+            "disabled": False,
+            "disabled_reason": "",
+        }
+        for strategy in VALID_OPERATION_STRATEGIES
+    ]
 
 
 def _record_context_domain(Model, search: str) -> list:
@@ -186,6 +311,14 @@ def selected_project_id_from_context(params: dict | None = None, context: dict |
     return _current_project_id_from_source(context)
 
 
+def selected_business_scope_from_context(params: dict | None = None, context: dict | None = None) -> dict[str, Any]:
+    return {
+        "company_id": selected_company_id_from_context(params, context),
+        "project_id": selected_project_id_from_context(params, context),
+        "operation_strategy": selected_operation_strategy_from_context(params, context),
+    }
+
+
 def project_scope_domain(env_model, project_id: int) -> list:
     selected_id = _as_int(project_id)
     if not selected_id:
@@ -201,6 +334,122 @@ def project_scope_domain(env_model, project_id: int) -> list:
     if projects_field and str(getattr(projects_field, "comodel_name", "") or "") == PROJECT_MODEL:
         return [("project_ids", "in", [selected_id])]
     return []
+
+
+def _company_scope_domain(env_model, company_id: int) -> list:
+    selected_id = _as_int(company_id)
+    if not selected_id:
+        return []
+    model_name = str(getattr(env_model, "_name", "") or "").strip()
+    if model_name == "res.company":
+        return [("id", "=", selected_id)]
+    fields = getattr(env_model, "_fields", {}) or {}
+    company_field = fields.get("company_id")
+    if company_field and str(getattr(company_field, "comodel_name", "") or "") == "res.company":
+        return [("company_id", "=", selected_id)]
+    project_field = fields.get("project_id")
+    if project_field and str(getattr(project_field, "comodel_name", "") or "") == PROJECT_MODEL:
+        return [("project_id.company_id", "=", selected_id)]
+    projects_field = fields.get("project_ids")
+    if projects_field and str(getattr(projects_field, "comodel_name", "") or "") == PROJECT_MODEL:
+        return [("project_ids.company_id", "=", selected_id)]
+    return []
+
+
+def _operation_strategy_scope_domain(env_model, operation_strategy: str) -> list:
+    selected = _as_operation_strategy(operation_strategy)
+    if not selected:
+        return []
+    fields = getattr(env_model, "_fields", {}) or {}
+    project_field = fields.get("project_id")
+    if project_field and str(getattr(project_field, "comodel_name", "") or "") == PROJECT_MODEL:
+        if "operation_strategy" in fields:
+            return [
+                "|",
+                "&",
+                ("project_id", "!=", False),
+                ("project_id.operation_strategy", "=", selected),
+                "&",
+                ("project_id", "=", False),
+                ("operation_strategy", "=", selected),
+            ]
+        return [("project_id.operation_strategy", "=", selected)]
+    projects_field = fields.get("project_ids")
+    if projects_field and str(getattr(projects_field, "comodel_name", "") or "") == PROJECT_MODEL:
+        if "operation_strategy" in fields:
+            return ["|", ("project_ids.operation_strategy", "=", selected), ("operation_strategy", "=", selected)]
+        return [("project_ids.operation_strategy", "=", selected)]
+    if "operation_strategy" in fields:
+        return [("operation_strategy", "=", selected)]
+    return []
+
+
+def business_scope_domain(env_model, scope: dict | None = None, *, company_id: int = 0, project_id: int = 0, operation_strategy: str = "") -> list:
+    model_name = str(getattr(env_model, "_name", "") or "").strip()
+    if model_name in BUSINESS_SCOPE_EXEMPT_MODELS:
+        return []
+    scope = scope if isinstance(scope, dict) else {}
+    selected_company_id = _as_int(scope.get("company_id") or company_id)
+    selected_project_id = _as_int(scope.get("project_id") or project_id)
+    selected_operation_strategy = _as_operation_strategy(scope.get("operation_strategy") or operation_strategy)
+    if model_name == "sc.legacy.direct.acceptance.fact" and not selected_project_id:
+        if selected_operation_strategy == "direct":
+            return ["|", ("project_id", "=", False), ("project_id.operation_strategy", "=", "direct")]
+        if selected_operation_strategy:
+            return [("project_id.operation_strategy", "=", selected_operation_strategy)]
+        if selected_company_id:
+            return ["|", ("project_id", "=", False), ("project_id.company_id", "=", selected_company_id)]
+    domain = []
+    domain += _company_scope_domain(env_model, selected_company_id)
+    domain += project_scope_domain(env_model, selected_project_id)
+    domain += _operation_strategy_scope_domain(env_model, selected_operation_strategy)
+    return domain
+
+
+def business_scope_meta(env_model, scope: dict | None = None, *, applied_domain: list | None = None) -> dict:
+    scope = scope if isinstance(scope, dict) else {}
+    domain = list(applied_domain or [])
+    company_id = _as_int(scope.get("company_id"))
+    project_id = _as_int(scope.get("project_id"))
+    operation_strategy = _as_operation_strategy(scope.get("operation_strategy"))
+    project_operation_strategy = ""
+    if project_id and operation_strategy:
+        try:
+            project = env_model.env[PROJECT_MODEL].sudo().browse(project_id).exists()
+            project_operation_strategy = _as_operation_strategy(getattr(project, "operation_strategy", ""))
+        except Exception:
+            project_operation_strategy = ""
+    return {
+        "enabled": bool(company_id or project_id or operation_strategy),
+        "company_id": company_id or None,
+        "project_id": project_id or None,
+        "record_context_id": project_id or None,
+        "operation_strategy": operation_strategy or "",
+        "project_operation_strategy": project_operation_strategy or "",
+        "project_operation_strategy_mismatch": bool(
+            project_id
+            and operation_strategy
+            and project_operation_strategy
+            and project_operation_strategy != operation_strategy
+        ),
+        "operation_strategy_values": list(VALID_OPERATION_STRATEGIES),
+        "applied": bool(domain),
+        "domain": domain,
+        "model": str(getattr(env_model, "_name", "") or ""),
+        "legacy_project_scope": True,
+        "business_scope": True,
+        "source_authority": legacy_project_scope_source_authority_contract(),
+    }
+
+
+def apply_business_scope_domain(env_model, domain: list | None, params: dict | None = None, context: dict | None = None) -> tuple[list, dict]:
+    base_domain = list(domain or [])
+    scope = selected_business_scope_from_context(params, context)
+    scope_domain = business_scope_domain(env_model, scope)
+    meta = business_scope_meta(env_model, scope, applied_domain=scope_domain)
+    if not scope_domain:
+        return base_domain, meta
+    return scope_domain + base_domain, meta
 
 
 def apply_project_scope_domain(env_model, domain: list | None, project_id: int) -> tuple[list, dict]:
@@ -219,6 +468,18 @@ def apply_project_scope_domain(env_model, domain: list | None, project_id: int) 
     if not scope_domain:
         return base_domain, meta
     return scope_domain + base_domain, meta
+
+
+def record_in_business_scope(env_model, record_id: int, params: dict | None = None, context: dict | None = None) -> tuple[bool, dict]:
+    scoped_domain, meta = apply_business_scope_domain(env_model, [("id", "=", _as_int(record_id))], params, context)
+    if not _as_int(record_id):
+        return False, meta
+    if not meta.get("applied"):
+        return True, meta
+    try:
+        return bool(env_model.search_count(scoped_domain)), meta
+    except Exception:
+        return False, meta
 
 
 def record_in_project_scope(env_model, record_id: int, project_id: int) -> tuple[bool, dict]:
@@ -254,6 +515,10 @@ def build_project_context_contract(env, params: dict | None = None, *, search: s
     selected_id = _selected_id_from_params(params)
     context_config = _resolve_record_context_config(env, params)
     context_model = context_config["model"]
+    selected_company_id = selected_company_id_from_context(params, env.context)
+    selected_operation_strategy = selected_operation_strategy_from_context(params, env.context)
+    if not selected_company_id:
+        selected_company_id = _as_int(getattr(env.company, "id", 0))
     selector = {
         "intent": "project.context.search",
         "search_param": "search",
@@ -270,6 +535,12 @@ def build_project_context_contract(env, params: dict | None = None, *, search: s
         "model": context_model,
         "context_model": context_model,
         "context_model_source": context_config.get("source") or "",
+        "company_id": selected_company_id or None,
+        "company_name": "",
+        "company_options": _company_options(env, selected_company_id),
+        "operation_strategy": selected_operation_strategy,
+        "operation_strategy_label": "",
+        "operation_options": [],
         "legacy_project_context": context_model == PROJECT_MODEL,
         "selected": None,
         "options": [],
@@ -288,21 +559,39 @@ def build_project_context_contract(env, params: dict | None = None, *, search: s
         }
 
     try:
-        Model = env[context_model].with_context(active_test=False)
+        Model = env[context_model]
         domain = _record_context_domain(Model, search)
+        if context_model == PROJECT_MODEL:
+            if selected_company_id:
+                domain += [("company_id", "=", selected_company_id)]
+            if selected_operation_strategy:
+                domain += [("operation_strategy", "=", selected_operation_strategy)]
         records = Model.search(domain, limit=safe_limit, order="write_date desc, id desc")
         selected = None
         if selected_id:
             selected_record = Model.browse(selected_id)
-            if selected_record.exists():
+            selected_record = selected_record.exists()
+            if selected_record and context_model == PROJECT_MODEL:
+                if selected_company_id and getattr(selected_record, "company_id", None).id != selected_company_id:
+                    selected_record = Model.browse([])
+                if selected_operation_strategy and getattr(selected_record, "operation_strategy", "") != selected_operation_strategy:
+                    selected_record = Model.browse([])
+            if selected_record:
                 selected = format_project_option(selected_record)
         options = [format_project_option(record) for record in records]
         if selected and all(option.get("id") != selected.get("id") for option in options):
             options = [selected, *options]
         total = Model.search_count(domain)
+        company = env["res.company"].browse(selected_company_id).exists() if selected_company_id else env["res.company"].browse([])
         return {
             **base,
             "enabled": True,
+            "company_id": selected_company_id or None,
+            "company_name": str(company.display_name or company.name or "").strip() if company else "",
+            "company_options": _company_options(env, selected_company_id),
+            "operation_strategy": selected_operation_strategy,
+            "operation_strategy_label": _operation_strategy_label(Model, selected_operation_strategy),
+            "operation_options": _operation_options(Model, selected_operation_strategy) if context_model == PROJECT_MODEL else [],
             "selected": selected,
             "options": options,
             "total": int(total or 0),

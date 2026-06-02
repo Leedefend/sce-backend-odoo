@@ -109,7 +109,7 @@ export function formatDisplayValue(
       return normalized.emptyText;
     }
     const attachmentText = formatAttachmentReferenceValue(value);
-    if (attachmentText && value.some((item) => /\|\s*(?:legacy-file-id|legacy-file|https?|file):\/\//i.test(String(item ?? '')))) {
+    if (attachmentText && value.some((item) => /\|\s*(?:(?:legacy-file-id|legacy-file|https?|file):\/\/|\/web\/content\/)/i.test(String(item ?? '')))) {
       return attachmentText;
     }
     return value.map((item) => String(item)).join(', ');
@@ -120,7 +120,7 @@ export function formatDisplayValue(
   }
 
   const rawText = String(value);
-  if (/\|\s*(?:legacy-file-id|legacy-file|https?|file):\/\//i.test(rawText)) {
+  if (/\|\s*(?:(?:legacy-file-id|legacy-file|https?|file):\/\/|\/web\/content\/)/i.test(rawText)) {
     return formatAttachmentReferenceValue(rawText) || rawText;
   }
   return rawText;

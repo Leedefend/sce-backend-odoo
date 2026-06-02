@@ -45,6 +45,21 @@ class ProjectEntryContextOptionsHandler(BaseIntentHandler):
                 return project_id
         return 0
 
+    def _resolve_company_id(self, params: Dict[str, Any], ctx: Dict[str, Any]) -> int:
+        for raw in ((params or {}).get("company_id"), (params or {}).get("current_company_id"), (ctx or {}).get("company_id")):
+            company_id = self._coerce_project_id(raw)
+            if company_id > 0:
+                return company_id
+        return 0
+
+    @staticmethod
+    def _resolve_operation_strategy(params: Dict[str, Any], ctx: Dict[str, Any]) -> str:
+        for source in (params or {}, ctx or {}):
+            value = str(source.get("operation_strategy") or source.get("operationStrategy") or "").strip()
+            if value in {"direct", "joint"}:
+                return value
+        return ""
+
     def handle(self, payload=None, ctx=None):
         ts0 = time.time()
         params = payload or self.params or {}
@@ -52,7 +67,11 @@ class ProjectEntryContextOptionsHandler(BaseIntentHandler):
             params = params.get("params") or {}
         ctx = ctx or {}
         service = ProjectEntryContextService(self.env)
-        data = service.list_options(active_project_id=self._resolve_project_id(params, ctx))
+        data = service.list_options(
+            active_project_id=self._resolve_project_id(params, ctx),
+            company_id=self._resolve_company_id(params, ctx),
+            operation_strategy=self._resolve_operation_strategy(params, ctx),
+        )
         return {
             "ok": True,
             "data": data,

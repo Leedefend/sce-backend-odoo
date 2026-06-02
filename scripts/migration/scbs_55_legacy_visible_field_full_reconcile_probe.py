@@ -238,6 +238,24 @@ def contract_labels(record) -> list[str]:
 def read_csv_rows(path: Path, key: str) -> dict[str, dict[str, str]]:
     if not path.exists():
         raise RuntimeError({"missing_legacy_visible_csv": str(path)})
+    if path.suffix in {".gz", ".json"} or path.name.endswith(".json.gz"):
+        rows: dict[str, dict[str, str]] = {}
+        for index, raw_row in enumerate(read_old_dump_rows(path), start=1):
+            row = {clean(column): clean(value) for column, value in raw_row.items()}
+            if key == "__company_archive_row_key__":
+                header = clean(row.get("ID") or row.get("Id") or row.get("Pid"))
+                child = clean(
+                    row.get("Id$SGZL_RZRJ_CB")
+                    or row.get("pid$SGZL_RZRJ_CB")
+                    or row.get("RowIndex")
+                    or index
+                )
+                row_key = f"{header}:{child}"
+            else:
+                row_key = clean(row.get(key))
+            if row_key:
+                rows[row_key] = row
+        return rows
     with path.open("r", encoding="utf-8-sig", newline="") as handle:
         sample = handle.read(4096)
         handle.seek(0)
@@ -520,19 +538,19 @@ FIELD_RULES: dict[int, dict[str, Any]] = {
     40: {
         "name": "公司资料存档",
         "model": "sc.document.admin.document",
-        "legacy_table": "sc_legacy_file_index",
-        "legacy_csv": "/mnt/artifacts/migration/scbs_document_admin_archive_visible.tsv",
-        "legacy_key": "legacy_source_id",
+        "legacy_table": "online_old_scbs:SGZL_RZRJ:list856",
+        "legacy_csv": "/tmp/scbs_55_old_live_full_rows_seq004_company_archive.json.gz",
+        "legacy_key": "__company_archive_row_key__",
         "record_key": "legacy_source_id",
-        "domain": [("fact_type", "=", "company_document_archive")],
+        "domain": [("legacy_source_table", "=", "online_old_scbs:SGZL_RZRJ:list856")],
         "fields": {
-            "单据状态": (["legacy_document_state"], clean),
-            "项目名称": (["legacy_visible_project_name"], clean),
-            "资料类型": (["legacy_visible_document_type"], clean),
-            "资料说明": (["legacy_visible_description"], clean),
-            "录入人": (["legacy_visible_creator_name"], clean),
-            "备注": (["legacy_visible_note"], clean_visible_note),
-            "录入时间": (["legacy_visible_created_time"], clean_datetime),
+            "单据状态": (["DJZT"], business_document_state_label),
+            "项目名称": (["f_GCMC"], clean),
+            "资料类型": (["ZLMC$SGZL_RZRJ_CB", "ZLMC"], clean),
+            "资料说明": (["ZLSM$SGZL_RZRJ_CB", "f_SM"], clean),
+            "录入人": (["LRR", "f_LRR"], clean),
+            "备注": (["BZ"], clean_visible_note),
+            "录入时间": (["LRSJ", "f_LRSJ", "f_SJ"], clean_datetime),
         },
     },
     50: {

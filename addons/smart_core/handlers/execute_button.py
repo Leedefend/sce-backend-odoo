@@ -4,9 +4,14 @@ from typing import Any, List, Optional
 from ..core.base_handler import BaseIntentHandler
 from ..core.project_context import (
     project_scope_denied_response,
-    record_in_project_scope,
-    selected_project_id_from_context,
 )
+try:
+    from ..core.project_context import record_in_business_scope
+except ImportError:  # pragma: no cover - compatibility for lightweight boundary tests
+    from ..core.project_context import record_in_project_scope, selected_project_id_from_context
+
+    def record_in_business_scope(env_model, record_id, params=None, context=None):
+        return record_in_project_scope(env_model, record_id, selected_project_id_from_context(params, context))
 from ..core.navigation_entry_target import normalize_odoo_action_result
 from ..core.request_params import parse_bool
 from odoo.exceptions import AccessError, UserError
@@ -110,9 +115,13 @@ class ExecuteButtonHandler(BaseIntentHandler):
                     trace_id=self.context.get("trace_id") if isinstance(self.context, dict) else "",
                     status_code=404,
                 )
-            current_project_id = selected_project_id_from_context(params, self.context if isinstance(self.context, dict) else {})
             for record in recordset:
-                in_scope, scope_meta = record_in_project_scope(self.env[model], int(record.id), current_project_id)
+                in_scope, scope_meta = record_in_business_scope(
+                    self.env[model],
+                    int(record.id),
+                    params,
+                    self.context if isinstance(self.context, dict) else {},
+                )
                 if not in_scope:
                     return project_scope_denied_response(scope_meta)
 

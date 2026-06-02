@@ -48,6 +48,10 @@ function hasRawHash(label, value) {
   return false;
 }
 
+function hasRawDocumentStateCode(label, value) {
+  return /^(单据状态|状态)$/.test(label) && /^-?\d+$/.test(value);
+}
+
 function parseDomain(raw) {
   const text = normalize(raw || '[]');
   if (!text || text === '[]') return [];
@@ -257,18 +261,21 @@ async function main() {
         }
         const fields = ['id', ...plan.labels.map(aliasField)];
         let records = [];
-        if (plan.labels.length && plan.model) {
+        if (plan.model) {
           records = await fetchAll(page, plan.model, domain, fields);
         }
         entry.data.record_count = records.length;
-        if (plan.labels.length && records.length === 0 && !ALLOW_ZERO.has(plan.seq)) {
+        if (records.length === 0 && !ALLOW_ZERO.has(plan.seq)) {
           entry.errors.push('no_records_from_browser_api');
+        }
+        if (records.length > 0 && table.row_count < 1 && !ALLOW_ZERO.has(plan.seq)) {
+          entry.errors.push('records_exist_but_no_rows_rendered');
         }
         for (const record of records) {
           for (const label of plan.labels) {
             const value = normalize(record[aliasField(label)]);
             entry.data.cell_count += 1;
-            if (hasTechnicalKey(value) || hasRawHash(label, value)) {
+            if (hasTechnicalKey(value) || hasRawHash(label, value) || hasRawDocumentStateCode(label, value)) {
               entry.data.anomaly_count += 1;
               if (entry.data.anomalies.length < 20) {
                 entry.data.anomalies.push({ id: record.id, label, value: value.slice(0, 200) });

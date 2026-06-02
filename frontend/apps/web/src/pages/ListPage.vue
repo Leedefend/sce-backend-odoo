@@ -340,14 +340,22 @@
                     <a
                       v-for="link in attachmentLinks(row[col])"
                       :key="`${link.name}-${link.url}`"
-                      :href="link.url"
+                      href="#"
                       target="_blank"
                       rel="noopener"
-                      @click.stop
+                      @click.prevent.stop="previewAttachmentLink(link, row)"
                     >
                       {{ link.name }}
                     </a>
                   </span>
+                  <button
+                    v-else-if="isAttachmentCountCell(col, row[col])"
+                    type="button"
+                    class="attachment-count-link"
+                    @click.prevent.stop="previewRecordAttachmentCount(row, row[col])"
+                  >
+                    {{ semanticCell(col, row[col]).text }}
+                  </button>
                   <span v-else>{{ semanticCell(col, row[col]).text }}</span>
                 </td>
               </tr>
@@ -509,14 +517,22 @@
                 <a
                   v-for="link in attachmentLinks(row[col])"
                   :key="`${link.name}-${link.url}`"
-                  :href="link.url"
+                  href="#"
                   target="_blank"
                   rel="noopener"
-                  @click.stop
+                  @click.prevent.stop="previewAttachmentLink(link, row)"
                 >
                   {{ link.name }}
                 </a>
               </div>
+              <button
+                v-else-if="isAttachmentCountCell(col, row[col])"
+                type="button"
+                class="attachment-count-link"
+                @click.prevent.stop="previewRecordAttachmentCount(row, row[col])"
+              >
+                {{ semanticCell(col, row[col]).text }}
+              </button>
               <div v-else>
                 {{ semanticCell(col, row[col]).text }}
               </div>
@@ -661,6 +677,7 @@ import PageHeader from '../components/page/PageHeader.vue';
 import { resolveEmptyCopy, resolveErrorCopy, type StatusError } from '../composables/useStatus';
 import type { SceneListProfile } from '../app/resolvers/sceneRegistry';
 import { formatAttachmentReferenceValue, parseAttachmentReferenceLinks } from '../utils/display';
+import { previewAttachmentReferenceLink, previewOrDownloadFile } from '../utils/filePreview';
 
 type SelectionAction = {
   key: string;
@@ -1007,6 +1024,35 @@ function semanticCell(field: string, value: unknown) {
 
 function attachmentLinks(value: unknown) {
   return parseAttachmentReferenceLinks(value);
+}
+
+async function previewAttachmentLink(link: { name: string; url: string }, row: Record<string, unknown>) {
+  try {
+    await previewAttachmentReferenceLink(link, {
+      model: props.model,
+      res_id: Number(row.id || 0) || undefined,
+    });
+  } catch (err) {
+    window.alert(err instanceof Error ? err.message : '附件打开失败');
+  }
+}
+
+function isAttachmentCountCell(field: string, value: unknown) {
+  const label = columnLabel(field).trim();
+  const text = String(normalizeCellRawValue(value) ?? '').trim();
+  return label === '附件' && /^附件\([1-9]\d*\)$/.test(text);
+}
+
+async function previewRecordAttachmentCount(row: Record<string, unknown>, value: unknown) {
+  const text = String(normalizeCellRawValue(value) ?? '').trim() || '附件';
+  try {
+    await previewOrDownloadFile({
+      model: props.model,
+      res_id: Number(row.id || 0) || undefined,
+    }, text);
+  } catch (err) {
+    window.alert(err instanceof Error ? err.message : '附件打开失败');
+  }
 }
 
 function isStatusColumn(field: string) {
@@ -2863,6 +2909,18 @@ tr:hover {
 .attachment-links a {
   color: var(--sc-app-accent, #2563eb);
   overflow-wrap: anywhere;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.attachment-count-link {
+  border: 0;
+  background: transparent;
+  color: var(--sc-app-accent, #2563eb);
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+  text-align: left;
   text-decoration: underline;
   text-underline-offset: 2px;
 }

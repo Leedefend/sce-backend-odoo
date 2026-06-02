@@ -12,7 +12,13 @@ from uuid import uuid4
 from odoo.exceptions import AccessError
 
 from ..core.base_handler import BaseIntentHandler
-from ..core.project_context import apply_project_scope_domain, selected_project_id_from_context
+try:
+    from ..core.project_context import apply_business_scope_domain
+except ImportError:  # pragma: no cover - compatibility for lightweight boundary tests
+    from ..core.project_context import apply_project_scope_domain, selected_project_id_from_context
+
+    def apply_business_scope_domain(env_model, domain, params=None, context=None):
+        return apply_project_scope_domain(env_model, domain, selected_project_id_from_context(params, context))
 from ..core.request_params import parse_bool, parse_non_negative_int, parse_positive_int
 from .reason_codes import (
     REASON_CONFLICT,
@@ -138,6 +144,24 @@ class ApiDataBatchHandler(BaseIntentHandler):
         if error:
             return 0, self._err(400, f"{key} 无效")
         return default if value is None else value, None
+
+    def _request_context(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        ctx = dict(params.get("context") or {}) if isinstance(params.get("context"), dict) else {}
+        company_id, company_error = parse_positive_int(params.get("company_id"), allow_empty=True)
+        if not company_error and company_id:
+            ctx["allowed_company_ids"] = [company_id]
+            ctx["company_id"] = company_id
+        project_id, project_error = parse_positive_int(
+            params.get("current_project_id") or params.get("project_id"),
+            allow_empty=True,
+        )
+        if not project_error and project_id:
+            ctx["current_project_id"] = project_id
+            ctx.setdefault("default_project_id", project_id)
+        operation_strategy = str(params.get("operation_strategy") or params.get("operationStrategy") or "").strip()
+        if operation_strategy:
+            ctx["operation_strategy"] = operation_strategy
+        return ctx
 
     def _normalize_if_match_map(self, params: Dict[str, Any]):
         raw = params.get("if_match_map") or {}
@@ -321,7 +345,7 @@ class ApiDataBatchHandler(BaseIntentHandler):
         if page_offset_error:
             return page_offset_error
         export_failed_csv = parse_bool(params.get("export_failed_csv"), False)
-        context = params.get("context") if isinstance(params.get("context"), dict) else {}
+        context = self._request_context(params)
 
         if not model:
             return self._err(400, "缺少参数 model")
@@ -333,8 +357,7 @@ class ApiDataBatchHandler(BaseIntentHandler):
             return self._err(400, "缺少有效的 action/vals")
 
         env_model = self.env[model].with_context(context)
-        project_id = selected_project_id_from_context(params, context)
-        scoped_domain, project_scope_meta = apply_project_scope_domain(env_model, [("id", "in", ids)], project_id)
+        scoped_domain, project_scope_meta = apply_business_scope_domain(env_model, [("id", "in", ids)], params, context)
         if project_scope_meta.get("applied"):
             allowed_count = env_model.search_count(scoped_domain)
             if int(allowed_count or 0) != len(set(ids)):

@@ -6,9 +6,15 @@ from uuid import uuid4
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
 from odoo.addons.smart_core.core.project_context import (
     project_scope_denied_response,
-    record_in_project_scope,
     selected_project_id_from_context,
 )
+try:
+    from odoo.addons.smart_core.core.project_context import record_in_business_scope
+except ImportError:  # pragma: no cover - compatibility for lightweight boundary tests
+    from odoo.addons.smart_core.core.project_context import record_in_project_scope
+
+    def record_in_business_scope(env_model, record_id, params=None, context=None):
+        return record_in_project_scope(env_model, record_id, selected_project_id_from_context(params, context))
 from odoo.addons.smart_core.handlers.reason_codes import (
     REASON_MISSING_PARAMS,
     REASON_NOT_FOUND,
@@ -155,7 +161,12 @@ class RiskActionExecuteHandler(BaseIntentHandler):
                 reason_code=REASON_NOT_FOUND,
             )
         if record:
-            in_scope, scope_meta = record_in_project_scope(RiskAction, int(record.id), current_project_id)
+            in_scope, scope_meta = record_in_business_scope(
+                RiskAction,
+                int(record.id),
+                params,
+                self.context if isinstance(self.context, dict) else {},
+            )
             if not in_scope:
                 return project_scope_denied_response(scope_meta)
 

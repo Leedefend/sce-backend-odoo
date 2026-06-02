@@ -169,6 +169,10 @@ class UiContractHandler(BaseIntentHandler):
             return self._err(400, "company_id 无效")
         if company_id:
             ctx["allowed_company_ids"] = [company_id]
+            ctx["company_id"] = company_id
+        operation_strategy = self._get_param(p, "operation_strategy", "operationStrategy")
+        if operation_strategy:
+            ctx["operation_strategy"] = str(operation_strategy).strip()
 
         if_none_match = self._read_if_none_match(p)
         force_refresh = str(self._get_param(p, "force_refresh") or "").lower() in ("1","true","yes")

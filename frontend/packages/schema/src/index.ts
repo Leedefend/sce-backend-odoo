@@ -247,6 +247,8 @@ export interface ProjectContextOption {
   name?: string;
   display_name?: string;
   code?: string;
+  company_id?: number;
+  company_name?: string;
   stage?: string;
   owner_id?: number;
   owner_name?: string;
@@ -255,11 +257,31 @@ export interface ProjectContextOption {
   active?: boolean;
 }
 
+export interface BusinessScopeCompanyOption {
+  company_id: number;
+  company_name?: string;
+  active?: boolean;
+}
+
+export interface BusinessScopeOperationOption {
+  operation_strategy: string;
+  operation_strategy_label?: string;
+  active?: boolean;
+  disabled?: boolean;
+  disabled_reason?: string;
+}
+
 export interface ProjectContextContract {
   contract_version?: string;
   enabled?: boolean;
   source?: string;
   model?: string;
+  company_id?: number | null;
+  company_name?: string;
+  company_options?: BusinessScopeCompanyOption[];
+  operation_strategy?: string;
+  operation_strategy_label?: string;
+  operation_options?: BusinessScopeOperationOption[];
   selected?: ProjectContextOption | null;
   options?: ProjectContextOption[];
   total?: number;
@@ -484,7 +506,13 @@ export interface FileUploadResponse {
 }
 
 export interface FileDownloadRequest {
-  id: number;
+  id?: number;
+  url?: string;
+  model?: string;
+  res_model?: string;
+  res_id?: number;
+  record_id?: number;
+  name?: string;
 }
 
 export interface FileDownloadResponse {
@@ -494,6 +522,7 @@ export interface FileDownloadResponse {
   datas: string;
   type?: string;
   url?: string;
+  legacy_url?: string;
   res_model: string;
   res_id: number;
 }

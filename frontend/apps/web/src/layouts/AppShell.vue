@@ -39,6 +39,33 @@
             ×
           </button>
         </div>
+        <div v-if="companyOptions.length || operationOptions.length" class="business-scope-controls">
+          <label v-if="companyOptions.length" class="business-scope-field">
+            <span>公司</span>
+            <select :value="selectedCompanyId || ''" :disabled="companyOptions.length <= 1" @change="changeCompanyScope">
+              <option
+                v-for="company in companyOptions"
+                :key="`company-${company.company_id}`"
+                :value="company.company_id"
+              >
+                {{ company.company_name || `公司 ${company.company_id}` }}
+              </option>
+            </select>
+          </label>
+          <div v-if="operationOptions.length" class="business-scope-segments" role="group" aria-label="经营方式">
+            <button
+              v-for="operation in operationOptions"
+              :key="`operation-${operation.operation_strategy || 'all'}`"
+              type="button"
+              :class="{ active: operation.operation_strategy === selectedOperationStrategy }"
+              :disabled="operation.disabled"
+              :title="operation.disabled_reason || operation.operation_strategy_label || operation.operation_strategy || '全部'"
+              @click.stop="changeOperationScope(operation.operation_strategy)"
+            >
+              {{ operation.operation_strategy_label || operation.operation_strategy || '全部' }}
+            </button>
+          </div>
+        </div>
         <div v-if="projectMenuOpen && projectContextEnabled" class="project-dropdown" @click.stop>
           <input
             v-model="projectSearch"
@@ -343,6 +370,24 @@ const showRecordContext = computed(() =>
 );
 const selectedProject = computed(() => projectContext.value?.selected ?? null);
 const projectOptions = computed(() => projectContext.value?.options ?? []);
+const companyOptions = computed(() => projectContext.value?.company_options ?? []);
+const operationOptions = computed(() => projectContext.value?.operation_options ?? []);
+const selectedCompanyId = computed(() =>
+  Number(projectContext.value?.company_id || selectedProject.value?.company_id || 0) || 0,
+);
+const selectedCompanyLabel = computed(() => {
+  const companyId = selectedCompanyId.value;
+  const match = companyOptions.value.find((item) => Number(item.company_id || 0) === companyId);
+  return String(match?.company_name || projectContext.value?.company_name || selectedProject.value?.company_name || '').trim();
+});
+const selectedOperationStrategy = computed(() =>
+  String(projectContext.value?.operation_strategy || '').trim(),
+);
+const selectedOperationLabel = computed(() => {
+  const strategy = selectedOperationStrategy.value;
+  const match = operationOptions.value.find((item) => String(item.operation_strategy || '') === strategy);
+  return String(match?.operation_strategy_label || projectContext.value?.operation_strategy_label || '').trim();
+});
 const recordContextLabel = computed(() =>
   String(projectContext.value?.selector?.label || '当前记录').trim() || '当前记录'
 );
@@ -353,7 +398,8 @@ const currentProjectLabel = computed(() => {
     return projectContext.value?.message || '未启用';
   }
   const selected = selectedProject.value;
-  if (!selected) return '全部记录';
+  const scopeParts = [selectedCompanyLabel.value, selectedOperationLabel.value].filter(Boolean);
+  if (!selected) return scopeParts.length ? `全部记录 · ${scopeParts.join(' / ')}` : '全部记录';
   return projectOptionLabel(selected);
 });
 const projectSearchPlaceholder = computed(() =>
@@ -495,7 +541,9 @@ function resolveDeliveryRoleLabel(roleLabelRaw: string, roleCodeRaw: string) {
 
 function projectOptionLabel(option: ProjectContextOption | null | undefined) {
   if (!option) return '';
-  return String(option.display_name || option.name || `记录 ${option.id}`).trim();
+  const label = String(option.display_name || option.name || `记录 ${option.id}`).trim();
+  const scope = String(option.operation_strategy_label || option.operation_strategy || '').trim();
+  return scope ? `${label} · ${scope}` : label;
 }
 
 function normalizePublishedApps(raw: unknown): PublishedApp[] {
@@ -696,6 +744,31 @@ async function selectProject(option: ProjectContextOption) {
   projectMenuOpen.value = false;
   if (previousProjectId === nextProjectId) return;
   await session.selectProjectContext(option);
+  emitProjectContextChanged(previousProjectId);
+}
+
+async function changeCompanyScope(event: Event) {
+  const target = event.currentTarget;
+  if (!(target instanceof HTMLSelectElement)) return;
+  const companyId = Number(target.value || 0) || null;
+  const previousProjectId = Number(selectedProject.value?.id || 0) || 0;
+  await session.selectBusinessScope({
+    company_id: companyId,
+    operation_strategy: selectedOperationStrategy.value,
+  });
+  await loadProjectOptions();
+  emitProjectContextChanged(previousProjectId);
+}
+
+async function changeOperationScope(operationStrategy: string) {
+  const normalized = String(operationStrategy || '').trim();
+  if (normalized === selectedOperationStrategy.value) return;
+  const previousProjectId = Number(selectedProject.value?.id || 0) || 0;
+  await session.selectBusinessScope({
+    company_id: selectedCompanyId.value || null,
+    operation_strategy: normalized,
+  });
+  await loadProjectOptions();
   emitProjectContextChanged(previousProjectId);
 }
 
@@ -1429,6 +1502,64 @@ async function logout() {
   border-radius: 8px;
   background: var(--sc-app-panel);
   box-shadow: var(--sc-semantic-shadow-popover);
+}
+
+.business-scope-controls {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.business-scope-field {
+  display: grid;
+  gap: 4px;
+  color: var(--sc-app-text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.business-scope-field select {
+  width: 100%;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-primary);
+  font-size: 12px;
+}
+
+.business-scope-field select:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.business-scope-segments {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.business-scope-segments button {
+  min-width: 0;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  padding: 6px 4px;
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.business-scope-segments button.active {
+  border-color: var(--sc-app-info-border);
+  background: var(--sc-app-info-bg);
+  color: var(--sc-app-info-text);
+}
+
+.business-scope-segments button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }
 
 .project-search {

@@ -8,10 +8,15 @@ from odoo.exceptions import AccessError
 from ..core.base_handler import BaseIntentHandler
 from ..core.project_context import (
     project_scope_denied_response,
-    record_in_project_scope,
-    selected_project_id_from_context,
 )
-from ..core.request_params import parse_bool
+try:
+    from ..core.project_context import record_in_business_scope
+except ImportError:  # pragma: no cover - compatibility for lightweight boundary tests
+    from ..core.project_context import record_in_project_scope, selected_project_id_from_context
+
+    def record_in_business_scope(env_model, record_id, params=None, context=None):
+        return record_in_project_scope(env_model, record_id, selected_project_id_from_context(params, context))
+from ..core.request_params import parse_bool, parse_positive_int
 from ..core.unified_page_contract_v2_assembler import assemble_unified_page_patch_v2
 from ..core.unified_page_contract_lite_preview import with_lite_preview_if_requested
 from ..utils.reason_codes import normalize_onchange_reason_code
@@ -271,6 +276,24 @@ class ApiOnchangeHandler(BaseIntentHandler):
             return record_id, None
         return 0, None
 
+    def _request_context(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        ctx = dict(params.get("context") or {}) if isinstance(params.get("context"), dict) else {}
+        company_id, company_error = parse_positive_int(params.get("company_id"), allow_empty=True)
+        if not company_error and company_id:
+            ctx["allowed_company_ids"] = [company_id]
+            ctx["company_id"] = company_id
+        project_id, project_error = parse_positive_int(
+            params.get("current_project_id") or params.get("project_id"),
+            allow_empty=True,
+        )
+        if not project_error and project_id:
+            ctx["current_project_id"] = project_id
+            ctx.setdefault("default_project_id", project_id)
+        operation_strategy = str(params.get("operation_strategy") or params.get("operationStrategy") or "").strip()
+        if operation_strategy:
+            ctx["operation_strategy"] = operation_strategy
+        return ctx
+
     def _normalize_row_state(self, item: Dict[str, Any], row_patch: Dict[str, Any], warnings: List[Dict[str, str]]) -> str:
         raw = str(item.get("row_state") or "").strip().lower()
         if raw in ("create", "update", "remove", "keep"):
@@ -361,14 +384,13 @@ class ApiOnchangeHandler(BaseIntentHandler):
         if model not in self.env:
             return self._err(404, "unknown model")
 
-        context = params.get("context") if isinstance(params.get("context"), dict) else {}
+        context = self._request_context(params)
         env_model = self.env[model].with_context(context)
         record_id, record_id_error = self._read_record_id(params)
         if record_id_error:
             return record_id_error
-        current_project_id = selected_project_id_from_context(params, context)
         if record_id > 0:
-            in_scope, scope_meta = record_in_project_scope(env_model, record_id, current_project_id)
+            in_scope, scope_meta = record_in_business_scope(env_model, record_id, params, context)
             if not in_scope:
                 return project_scope_denied_response(scope_meta)
 

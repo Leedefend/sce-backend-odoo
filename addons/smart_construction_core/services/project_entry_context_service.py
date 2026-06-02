@@ -21,6 +21,51 @@ class ProjectEntryContextService:
         self.env = env
         self._dashboard_service = ProjectDashboardService(env)
 
+    def _company_options(self, active_company_id=0):
+        allowed = self.env.user.company_ids
+        rows = []
+        active_id = int(active_company_id or self.env.company.id or 0)
+        for company in allowed.sorted(key=lambda item: item.id):
+            rows.append(
+                {
+                    "company_id": int(company.id),
+                    "company_name": str(company.display_name or company.name or "").strip(),
+                    "active": int(company.id) == active_id,
+                }
+            )
+        return rows
+
+    def _allowed_company_id(self, company_id=0):
+        selected = int(company_id or 0)
+        allowed_ids = set(self.env.user.company_ids.ids)
+        if selected and selected in allowed_ids:
+            return selected
+        current = int(self.env.company.id or 0)
+        return current if current in allowed_ids else 0
+
+    @staticmethod
+    def _operation_options(project_context=None, active_operation_strategy=""):
+        context = project_context if isinstance(project_context, dict) else {}
+        project_strategy = str(context.get("operation_strategy") or "").strip()
+        active = str(active_operation_strategy or project_strategy or "").strip()
+        base = [
+            {"operation_strategy": "direct", "operation_strategy_label": "公司直营"},
+            {"operation_strategy": "joint", "operation_strategy_label": "联营项目"},
+        ]
+        rows = []
+        for item in base:
+            strategy = item["operation_strategy"]
+            disabled = bool(project_strategy and strategy != project_strategy)
+            rows.append(
+                {
+                    **item,
+                    "active": strategy == active,
+                    "disabled": disabled,
+                    "disabled_reason": "经营方式必须与当前项目一致" if disabled else "",
+                }
+            )
+        return rows
+
     @staticmethod
     def _source_from_reason(resolution_path):
         normalized = str(resolution_path or "").strip().lower()
@@ -67,8 +112,16 @@ class ProjectEntryContextService:
             },
         }
 
-    def resolve(self, project_id=0):
+    def resolve(self, project_id=0, company_id=0, operation_strategy=""):
         project, diagnostics = self._dashboard_service.resolve_project_with_diagnostics(project_id)
+        allowed_company_id = self._allowed_company_id(company_id)
+        if project and allowed_company_id and project.company_id.id != allowed_company_id:
+            project = self.env["project.project"].browse([])
+            diagnostics = {**(diagnostics or {}), "resolution_path": "company_scope_denied"}
+        operation_strategy = str(operation_strategy or "").strip()
+        if project and operation_strategy in {"direct", "joint"} and project.operation_strategy != operation_strategy:
+            project = self.env["project.project"].browse([])
+            diagnostics = {**(diagnostics or {}), "resolution_path": "operation_scope_denied"}
         project_context = build_project_context(project)
         source, confidence = self._source_from_reason((diagnostics or {}).get("resolution_path"))
         available = int(project_context.get("project_id") or 0) > 0
@@ -84,6 +137,8 @@ class ProjectEntryContextService:
             "source": source if available else "none",
             "confidence": confidence if available else "low",
             "route": self.ENTRY_ROUTE if available else "/my-work",
+            "company_options": self._company_options(active_company_id=allowed_company_id or project_context.get("company_id") or 0),
+            "operation_options": self._operation_options(project_context, operation_strategy),
             "suggested_action": dict(guidance.get("suggested_action") or {}),
             "lifecycle_hints": dict(guidance.get("lifecycle_hints") or {}),
             "diagnostics": diagnostics or {},
@@ -219,15 +274,21 @@ class ProjectEntryContextService:
             ("sc_demo_showcase_ready", "=", True),
         ]
 
-    def _option_candidate_records(self, Project, active_project_id=0, limit=12):
+    def _option_candidate_records(self, Project, active_project_id=0, limit=12, company_id=0, operation_strategy=""):
         fetch_limit = max(int(limit or 12) * 6, 24)
         candidates = Project.browse([])
         seen_ids = set()
+        scope_domain = []
+        if int(company_id or 0) > 0:
+            scope_domain.append(("company_id", "=", int(company_id)))
+        operation_strategy = str(operation_strategy or "").strip()
+        if operation_strategy in {"direct", "joint"}:
+            scope_domain.append(("operation_strategy", "=", operation_strategy))
 
         if int(active_project_id or 0) > 0:
             active_record = self._safe_search(
                 Project,
-                [("id", "=", int(active_project_id or 0))],
+                scope_domain + [("id", "=", int(active_project_id or 0))],
                 limit=1,
             )
             candidates = self._append_unique_records(candidates, active_record, seen_ids)
@@ -235,7 +296,7 @@ class ProjectEntryContextService:
         user_domain = self._dashboard_service._project_domain_for_user()
         user_records = self._safe_search(
             Project,
-            user_domain,
+            scope_domain + user_domain,
             order="write_date desc,id desc",
             limit=fetch_limit,
         )
@@ -243,7 +304,7 @@ class ProjectEntryContextService:
 
         showroom_records = self._safe_search(
             Project,
-            self._showroom_candidate_domain(),
+            scope_domain + self._showroom_candidate_domain(),
             order="write_date desc,id desc",
             limit=max(int(limit or 12), 6),
         )
@@ -254,16 +315,26 @@ class ProjectEntryContextService:
 
         fallback_records = self._safe_search(
             Project,
-            [],
+            scope_domain,
             order="write_date desc,id desc",
             limit=fetch_limit,
         )
         candidates = self._append_unique_records(candidates, fallback_records, seen_ids)
         return candidates
 
-    def list_options(self, active_project_id=0, limit=12):
+    def list_options(self, active_project_id=0, limit=12, company_id=0, operation_strategy=""):
         Project = self.env["project.project"]
-        records = self._option_candidate_records(Project, active_project_id=active_project_id, limit=limit)
+        allowed_company_id = self._allowed_company_id(company_id)
+        operation_strategy = str(operation_strategy or "").strip()
+        if operation_strategy not in {"direct", "joint"}:
+            operation_strategy = ""
+        records = self._option_candidate_records(
+            Project,
+            active_project_id=active_project_id,
+            limit=limit,
+            company_id=allowed_company_id,
+            operation_strategy=operation_strategy,
+        )
         ranked_rows = []
         for project in records:
             rank, context = self._project_rank(project, active_project_id=active_project_id)
@@ -302,6 +373,11 @@ class ProjectEntryContextService:
         return {
             "options": options,
             "active_project_id": int(active_project_id or 0),
+            "company_options": self._company_options(active_company_id=allowed_company_id),
+            "operation_options": self._operation_options(
+                options[0].get("project_context") if options else {},
+                operation_strategy or (options[0].get("operation_strategy") if options else ""),
+            ),
             "suggested_action": dict(guidance.get("suggested_action") or {}),
             "lifecycle_hints": dict(guidance.get("lifecycle_hints") or {}),
             "diagnostics_summary": dict(diagnostics_summary or {}),

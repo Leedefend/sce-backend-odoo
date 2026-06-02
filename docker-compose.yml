@@ -72,6 +72,7 @@ services:
       SCENE_ROLLBACK: ${SCENE_ROLLBACK}
 
       REDIS_HOST: redis
+      SC_LEGACY_FILE_ROOTS: ${SC_LEGACY_FILE_ROOTS:-/mnt/legacy-files}
       # === 新增：runtime 明确配置出口 ===
       ODOO_CONF_OUT: /var/lib/odoo/odoo.conf
       ODOO_DB: ${DB_NAME}
@@ -86,6 +87,7 @@ services:
       - ./addons_external:/mnt/addons_external
       - ./artifacts:/mnt/artifacts
       - ./migration_assets:/mnt/migration_assets:ro
+      - ${SC_LEGACY_FILE_ROOT:-/opt/sce-legacy-files}:/mnt/legacy-files:ro
       - ./scripts:/mnt/scripts:ro
       - ./docs:/mnt/docs:ro
       - ./tmp:/mnt/tmp:ro

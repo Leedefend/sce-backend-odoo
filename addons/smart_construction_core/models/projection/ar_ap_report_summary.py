@@ -51,7 +51,17 @@ class ScArApReportSummary(models.Model):
                 SELECT
                     f.id::integer AS id,
                     f.project_id,
-                    COALESCE(NULLIF(f.legacy_project_name, ''), p.name->>'zh_CN', p.name->>'en_US', '') AS project_name,
+                    COALESCE(
+                        NULLIF(p.name->>'zh_CN', ''),
+                        NULLIF(p.name->>'en_US', ''),
+                        CASE
+                            WHEN NULLIF(f.legacy_project_name, '') IS NOT NULL
+                             AND f.legacy_project_name NOT LIKE '%?%'
+                            THEN f.legacy_project_name
+                            ELSE ''
+                        END,
+                        ''
+                    ) AS project_name,
                     f.legacy_project_id,
                     p.company_id,
                     COALESCE(c.currency_id, (SELECT currency_id FROM res_company ORDER BY id LIMIT 1)) AS currency_id,

@@ -66,12 +66,18 @@ function withCurrentProjectContext(session: ReturnType<typeof useSessionStore>, 
   const intent = String(payload.intent || '').trim();
   const skip = new Set(['login', 'auth.login', 'auth.logout', 'session.bootstrap', 'sys.intents', 'project.context.search']);
   const projectId = Number(session.projectContext?.selected?.id || 0);
-  if (!projectId || skip.has(intent)) {
+  const companyId = Number(session.projectContext?.company_id || session.projectContext?.selected?.company_id || 0);
+  const operationStrategy = String(
+    session.projectContext?.operation_strategy || session.projectContext?.selected?.operation_strategy || '',
+  ).trim();
+  if ((!projectId && !companyId && !operationStrategy) || skip.has(intent)) {
     return payload;
   }
   const context = {
     ...(payload.context || {}),
-    current_project_id: projectId,
+    ...(companyId ? { company_id: companyId } : {}),
+    ...(operationStrategy ? { operation_strategy: operationStrategy } : {}),
+    ...(projectId ? { current_project_id: projectId } : {}),
   };
   const params = (payload.params && typeof payload.params === 'object' && !Array.isArray(payload.params))
     ? { ...(payload.params as Record<string, unknown>) }
@@ -83,9 +89,13 @@ function withCurrentProjectContext(session: ReturnType<typeof useSessionStore>, 
       : {};
     paramsRecord.context = {
       ...paramsContext,
-      current_project_id: projectId,
+      ...(companyId ? { company_id: companyId } : {}),
+      ...(operationStrategy ? { operation_strategy: operationStrategy } : {}),
+      ...(projectId ? { current_project_id: projectId } : {}),
     };
-    paramsRecord.current_project_id = projectId;
+    if (companyId) paramsRecord.company_id = companyId;
+    if (operationStrategy) paramsRecord.operation_strategy = operationStrategy;
+    if (projectId) paramsRecord.current_project_id = projectId;
   }
   return {
     ...payload,

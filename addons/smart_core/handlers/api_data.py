@@ -23,7 +23,14 @@ from odoo.http import request
 
 from ..core.base_handler import BaseIntentHandler
 from ..core.api_data_execution_policy import client_requested_sudo, resolve_api_data_sudo
-from ..core.project_context import apply_project_scope_domain, selected_project_id_from_context
+from ..core.project_context import selected_project_id_from_context
+try:
+    from ..core.project_context import apply_business_scope_domain
+except ImportError:  # pragma: no cover - compatibility for lightweight boundary tests
+    from ..core.project_context import apply_project_scope_domain
+
+    def apply_business_scope_domain(env_model, domain, params=None, context=None):
+        return apply_project_scope_domain(env_model, domain, selected_project_id_from_context(params, context))
 from ..core.request_params import parse_non_negative_int, parse_positive_int
 from ..utils.extension_hooks import call_extension_hook_first
 from ..utils.reason_codes import (
@@ -151,6 +158,26 @@ class ApiDataHandler(BaseIntentHandler):
             context.update(payload_context)
         if "active_test" not in context:
             context["active_test"] = self._get_bool(p, "active_test", True)
+        company_id, company_error = parse_positive_int(self._dig(p, "company_id", None), allow_empty=True)
+        if company_error:
+            return context
+        if company_id:
+            context["allowed_company_ids"] = [company_id]
+            context["company_id"] = company_id
+        project_id, project_error = parse_positive_int(
+            self._dig(p, "current_project_id", None) or self._dig(p, "project_id", None),
+            allow_empty=True,
+        )
+        if not project_error and project_id:
+            context["current_project_id"] = project_id
+            context.setdefault("default_project_id", project_id)
+        operation_strategy = str(
+            self._dig(p, "operation_strategy", None)
+            or self._dig(p, "operationStrategy", None)
+            or ""
+        ).strip()
+        if operation_strategy:
+            context["operation_strategy"] = operation_strategy
         return context
 
     def _dig(self, p: Dict[str, Any], key: str, default=None):
@@ -946,7 +973,7 @@ class ApiDataHandler(BaseIntentHandler):
         return selected_project_id_from_context(p, ctx)
 
     def _apply_project_scope(self, env_model, domain: List[Any], p: Dict[str, Any], ctx: Dict[str, Any]):
-        return apply_project_scope_domain(env_model, domain, self._current_project_id(p, ctx))
+        return apply_business_scope_domain(env_model, domain, p, ctx)
 
     def _project_scope_denied(self, message: str, scope_meta: Dict[str, Any]):
         return {
@@ -1649,6 +1676,32 @@ class ApiDataHandler(BaseIntentHandler):
             return self._err(400, "vals 中无可写字段")
         project_id = self._current_project_id(p, ctx)
         _, project_scope_meta = self._apply_project_scope(env_model, [], p, ctx)
+        if project_scope_meta.get("project_operation_strategy_mismatch"):
+            return self._project_scope_denied("当前项目与经营方式不一致，禁止创建业务数据", project_scope_meta)
+        scope_company_id = int(project_scope_meta.get("company_id") or 0)
+        if scope_company_id and "company_id" in env_model._fields:
+            incoming_company_id = safe_vals.get("company_id")
+            if incoming_company_id in (None, False, ""):
+                safe_vals["company_id"] = scope_company_id
+            else:
+                try:
+                    incoming_company_id = int(incoming_company_id or 0)
+                except Exception:
+                    incoming_company_id = 0
+                if incoming_company_id != scope_company_id:
+                    return self._project_scope_denied("当前公司上下文不允许创建到其他公司", project_scope_meta)
+        scope_operation_strategy = str(project_scope_meta.get("operation_strategy") or "").strip()
+        operation_field = env_model._fields.get("operation_strategy")
+        if (
+            scope_operation_strategy
+            and operation_field
+            and not getattr(operation_field, "related", None)
+        ):
+            incoming_operation_strategy = str(safe_vals.get("operation_strategy") or "").strip()
+            if not incoming_operation_strategy:
+                safe_vals["operation_strategy"] = scope_operation_strategy
+            elif incoming_operation_strategy != scope_operation_strategy:
+                return self._project_scope_denied("当前经营方式上下文不允许创建到其他经营方式", project_scope_meta)
         if project_scope_meta.get("applied") and "project_id" in env_model._fields:
             incoming_project_id = safe_vals.get("project_id")
             if incoming_project_id in (None, False, ""):

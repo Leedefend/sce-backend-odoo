@@ -29,6 +29,40 @@ const LABEL_FILTER = new Set(
     .filter(Boolean),
 );
 const CATEGORY_FILTER = normalize(process.env.STRICT_ACCEPTANCE_CATEGORY || '');
+const NEW_DIRECT_ROUTES = {
+  '施工合同': { menuId: 743, actionId: 909 },
+  '分包合同': { menuId: 744, actionId: 910 },
+  '租赁合同': { menuId: 745, actionId: 911 },
+  '供货合同': { menuId: 746, actionId: 912 },
+  '劳务合同': { menuId: 747, actionId: 913 },
+  '机械合同（合同）': { menuId: 748, actionId: 914 },
+  '材料计划': { menuId: 749, actionId: 915 },
+  '报价单': { menuId: 750, actionId: 916 },
+  '入库': { menuId: 751, actionId: 917 },
+  '材料结算单': { menuId: 752, actionId: 918 },
+  '方单': { menuId: 754, actionId: 919 },
+  '零星用工': { menuId: 755, actionId: 920 },
+  '劳务结算': { menuId: 756, actionId: 921 },
+  '分包方单': { menuId: 757, actionId: 922 },
+  '分包结算单': { menuId: 758, actionId: 923 },
+  '机械台班记录': { menuId: 759, actionId: 924 },
+  '机械结算单': { menuId: 760, actionId: 925 },
+  '租入': { menuId: 761, actionId: 935 },
+  '还租': { menuId: 762, actionId: 936 },
+  '租赁结算单': { menuId: 763, actionId: 926 },
+  '项目费用报销单': { menuId: 764, actionId: 927 },
+  '管理人员工资表': { menuId: 765, actionId: 928 },
+  '油卡登记': { menuId: 766, actionId: 937 },
+  '充值登记': { menuId: 767, actionId: 938 },
+  '加油登记': { menuId: 768, actionId: 939 },
+  '支付申请': { menuId: 769, actionId: 929 },
+  '工程进度收款': { menuId: 770, actionId: 940 },
+  '往来单位付款': { menuId: 771, actionId: 930 },
+  '工程结算单': { menuId: 772, actionId: 931 },
+  '进项上报': { menuId: 773, actionId: 932 },
+  '总包进项上报': { menuId: 774, actionId: 933 },
+  '施工日志（新）': { menuId: 776, actionId: 934 },
+};
 const OUT_DIR = path.join(
   ARTIFACTS_DIR,
   'browser',
@@ -49,8 +83,11 @@ function loadJson(filePath) {
 }
 
 function businessHeaders(headers) {
+  function canonicalHeader(value) {
+    return normalize(value).replace(/^查询\s+/, '');
+  }
   const normalized = headers
-    .map((item) => normalize(item))
+    .map((item) => canonicalHeader(item))
     .filter((item) => item && item !== '序号' && item !== '列');
   if (normalized.length % 2 === 0) {
     const middle = normalized.length / 2;
@@ -159,6 +196,19 @@ async function openOldList(page, row, outDir) {
 }
 
 async function openNewAcceptanceMenu(page, label, outDir) {
+  const directRoute = NEW_DIRECT_ROUTES[label];
+  if (directRoute) {
+    const actionId = Number(directRoute.actionId);
+    const menuId = Number(directRoute.menuId);
+    await page.goto(`${FRONTEND_URL}/a/${actionId}?menu_id=${menuId}&action_id=${actionId}`, {
+      waitUntil: 'networkidle',
+      timeout: 45000,
+    });
+    await page.waitForTimeout(1500);
+    const headers = await renderedHeaders(page);
+    await page.screenshot({ path: path.join(outDir, `new-${label}.png`), fullPage: true }).catch(() => undefined);
+    return headers;
+  }
   await page.goto(FRONTEND_URL, { waitUntil: 'networkidle', timeout: 45000 }).catch(() => undefined);
   await page.waitForSelector('[data-component="SidebarNav"] .menu', { timeout: 30000 });
   await expandAllVisibleMenuToggles(page);

@@ -139,6 +139,16 @@ class MenuService:
                     return True
         return False
 
+    def _policy_is_customer_acceptance_focus(self, policy: dict) -> bool:
+        for group in policy.get("menu_groups") or []:
+            if not isinstance(group, dict):
+                continue
+            group_key = str(group.get("group_key") or "").strip()
+            category = str(group.get("category") or "").strip()
+            if group_key.startswith("construction.acceptance.") or category.startswith("customer_acceptance_"):
+                return True
+        return False
+
     def _release_menu_enabled(self, menu: dict) -> bool:
         if not isinstance(menu, dict):
             return False
@@ -400,7 +410,10 @@ class MenuService:
                     is_admin=bool(is_admin) or self._is_admin_role(role_code),
                     is_business_config_admin=bool(is_business_config_admin) or self._is_business_config_role(role_code),
                 )
-                if category == "delivery_business_config" or model in {"ui.menu.config.policy"}:
+                if (
+                    category == "delivery_business_config"
+                    or (model in {"ui.menu.config.policy"} and (is_admin or is_business_config_admin))
+                ):
                     menus.append(menu)
             if menus:
                 next_group = dict(group)
@@ -413,15 +426,18 @@ class MenuService:
         is_admin = bool((role_surface or {}).get("is_platform_admin"))
         is_business_config_admin = bool((role_surface or {}).get("is_business_config_admin"))
         policy_has_menu_surface = self._policy_has_menu_surface(policy)
+        customer_acceptance_focus = self._policy_is_customer_acceptance_focus(policy)
         native_index = self._native_authorized_menu_index(native_nav or [])
         grouped_native = (
-            self._native_runtime_config_menus(
-                native_nav=native_nav or [],
-                policy=policy,
-                role_code=role_code,
-                is_admin=is_admin,
-                is_business_config_admin=is_business_config_admin,
-            )
+            []
+            if customer_acceptance_focus and not is_admin
+            else self._native_runtime_config_menus(
+                    native_nav=native_nav or [],
+                    policy=policy,
+                    role_code=role_code,
+                    is_admin=is_admin,
+                    is_business_config_admin=is_business_config_admin,
+                )
             if policy_has_menu_surface
             else self._native_preview_menus(native_nav=native_nav or [], policy=policy)
         )

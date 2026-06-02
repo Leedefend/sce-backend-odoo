@@ -15,6 +15,8 @@ def operation_strategy_label(value):
 def build_project_context(project):
     if not project:
         return {
+            "company_id": 0,
+            "company_name": "",
             "project_id": 0,
             "project_name": "",
             "operation_strategy": "",
@@ -30,11 +32,14 @@ def build_project_context(project):
         }
     execution_stage = str(getattr(project, "lifecycle_state", "") or "").strip()
     operation_strategy = str(getattr(project, "operation_strategy", "") or "").strip()
+    company = getattr(project, "company_id", None)
     execution_stage_label = lifecycle_state_label(execution_stage, default="")
     milestone = str(getattr(project, "sc_execution_state", "") or "").strip()
     milestone_label = str(getattr(project, "sc_execution_state_label", "") or "").strip()
     project_condition = str(getattr(project, "health_state", "") or getattr(project, "state", "") or "").strip()
     return {
+        "company_id": int(getattr(company, "id", 0) or 0),
+        "company_name": str(getattr(company, "display_name", "") or getattr(company, "name", "") or "").strip(),
         "project_id": int(getattr(project, "id", 0) or 0),
         "project_name": str(getattr(project, "display_name", "") or getattr(project, "name", "") or "").strip(),
         "operation_strategy": operation_strategy,

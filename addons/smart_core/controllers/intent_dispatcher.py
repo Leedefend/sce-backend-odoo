@@ -306,7 +306,21 @@ class IntentDispatcher(http.Controller):
             context_in: Dict[str, Any] = body.get("context") if isinstance(body.get("context"), dict) else {}
 
             # 兼容：旧 context 里可能混入业务字段，不覆盖 params 显式给出的
-            for k in ("db", "database", "login", "username", "password", "lang", "tz", "company_id"):
+            for k in (
+                "db",
+                "database",
+                "login",
+                "username",
+                "password",
+                "lang",
+                "tz",
+                "company_id",
+                "current_company_id",
+                "current_project_id",
+                "project_id",
+                "operation_strategy",
+                "operationStrategy",
+            ):
                 if k in context_in and k not in params:
                     params[k] = context_in[k]
 

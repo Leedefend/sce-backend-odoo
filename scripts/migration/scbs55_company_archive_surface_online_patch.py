@@ -105,7 +105,7 @@ def visible_payload(row: dict[str, Any]) -> dict[str, str]:
         "资料说明": clean(row.get("ZLSM$SGZL_RZRJ_CB") or row.get("f_SM")),
         "录入人": clean(row.get("LRR") or row.get("f_LRR")),
         "备注": clean(row.get("BZ")),
-        "录入时间": clean(row.get("LRSJ") or row.get("f_LRSJ")),
+        "录入时间": clean(row.get("LRSJ") or row.get("f_LRSJ") or row.get("f_SJ")),
     }
 
 
@@ -144,7 +144,7 @@ for index, row in enumerate(rows, start=1):
         "legacy_visible_description": clean(row.get("ZLSM$SGZL_RZRJ_CB") or row.get("f_SM")),
         "legacy_visible_creator_name": clean(row.get("LRR") or row.get("f_LRR")),
         "legacy_visible_note": clean(row.get("BZ")),
-        "legacy_visible_created_time": parse_dt(row.get("LRSJ") or row.get("f_LRSJ")),
+        "legacy_visible_created_time": parse_dt(row.get("LRSJ") or row.get("f_LRSJ") or row.get("f_SJ")),
         "active": True,
     }
     if rec:

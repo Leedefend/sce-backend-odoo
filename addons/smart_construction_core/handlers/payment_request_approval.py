@@ -7,9 +7,14 @@ from uuid import uuid4
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
 from odoo.addons.smart_core.core.project_context import (
     project_scope_denied_response,
-    record_in_project_scope,
-    selected_project_id_from_context,
 )
+try:
+    from odoo.addons.smart_core.core.project_context import record_in_business_scope
+except ImportError:  # pragma: no cover - compatibility for lightweight boundary tests
+    from odoo.addons.smart_core.core.project_context import record_in_project_scope, selected_project_id_from_context
+
+    def record_in_business_scope(env_model, record_id, params=None, context=None):
+        return record_in_project_scope(env_model, record_id, selected_project_id_from_context(params, context))
 from odoo.addons.smart_core.handlers.reason_codes import (
     REASON_BUSINESS_RULE_FAILED,
     REASON_MISSING_PARAMS,
@@ -283,8 +288,12 @@ class _BasePaymentApprovalHandler(BaseIntentHandler):
                 trace_id=trace_id,
                 status_code=404,
             )
-        current_project_id = selected_project_id_from_context(params, self.context if isinstance(self.context, dict) else {})
-        in_scope, scope_meta = record_in_project_scope(self.env["payment.request"], payment_request_id, current_project_id)
+        in_scope, scope_meta = record_in_business_scope(
+            self.env["payment.request"],
+            payment_request_id,
+            params,
+            self.context if isinstance(self.context, dict) else {},
+        )
         if not in_scope:
             return project_scope_denied_response(scope_meta)
 
