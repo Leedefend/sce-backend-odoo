@@ -1500,7 +1500,9 @@ def _legacy_visible_alias_payload(record):
 def _alias_value(record, label):
     payload = _legacy_visible_alias_payload(record)
     if payload and label in payload:
-        return _normalize_payload_alias_value(label, payload.get(label))
+        payload_value = _normalize_payload_alias_value(label, payload.get(label))
+        if label != '附件' or payload_value:
+            return payload_value
     if record._name == 'sc.business.entity':
         strict_sources = {
             '单据状态': None,
