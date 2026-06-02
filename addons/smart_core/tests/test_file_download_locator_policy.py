@@ -226,6 +226,30 @@ class TestFileDownloadLocatorPolicy(unittest.TestCase):
                 else:
                     os.environ["SC_LEGACY_FILE_ROOTS"] = old_value
 
+    def test_file_index_path_falls_back_when_preview_file_missing(self):
+        module = _load_handler()
+
+        class _FileIndex:
+            preview_path = "UploadFile/UserFile/2026/missing-preview.html"
+            file_path = "UploadFile/UserFile/2026/source.pdf"
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            target = Path(tmpdir) / "UserFile" / "2026" / "source.pdf"
+            target.parent.mkdir(parents=True)
+            target.write_bytes(b"x")
+            old_value = os.environ.get("SC_LEGACY_FILE_ROOTS")
+            os.environ["SC_LEGACY_FILE_ROOTS"] = tmpdir
+            try:
+                self.assertEqual(
+                    module._legacy_file_index_relative_path(_FileIndex()),
+                    "UploadFile/UserFile/2026/source.pdf",
+                )
+            finally:
+                if old_value is None:
+                    os.environ.pop("SC_LEGACY_FILE_ROOTS", None)
+                else:
+                    os.environ["SC_LEGACY_FILE_ROOTS"] = old_value
+
     def test_rejects_legacy_path_traversal(self):
         module = _load_handler()
 

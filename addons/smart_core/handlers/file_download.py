@@ -276,7 +276,7 @@ class FileDownloadHandler(BaseIntentHandler):
         )
         if not file_index:
             return ""
-        return file_index.preview_path or file_index.file_path or ""
+        return _legacy_file_index_relative_path(file_index)
 
     def _legacy_attachment_for_record(self, model: str, res_id: int):
         if "sc.legacy.file.index" not in self.env:
@@ -305,7 +305,7 @@ class FileDownloadHandler(BaseIntentHandler):
         )
         if not file_index:
             return self._online_legacy_attachment_for_refs(model, res_id, legacy_refs)
-        path = (file_index.preview_path or file_index.file_path or "").strip()
+        path = _legacy_file_index_relative_path(file_index)
         if not path:
             return self._online_legacy_attachment_for_refs(model, res_id, legacy_refs)
         url = LEGACY_FILE_URL_PREFIX + path.lstrip("/")
@@ -464,6 +464,18 @@ def _is_online_legacy_file_url(url: str) -> bool:
         return False
     base_url = os.environ.get("SC_ONLINE_LEGACY_BASE_URL", DEFAULT_ONLINE_LEGACY_BASE_URL).rstrip("/")
     return clean.startswith(f"{base_url}/Api/System/FileApi/ShowFileById/")
+
+
+def _legacy_file_index_relative_path(file_index) -> str:
+    values = [
+        str(getattr(file_index, "preview_path", "") or "").strip(),
+        str(getattr(file_index, "file_path", "") or "").strip(),
+    ]
+    values = [value for value in values if value]
+    for value in values:
+        if _resolve_legacy_file_path(value):
+            return value
+    return values[0] if values else ""
 
 
 def _read_online_legacy_file_url(url: str, fallback_name: str = "", fallback_mimetype: str = "") -> dict[str, Any]:
