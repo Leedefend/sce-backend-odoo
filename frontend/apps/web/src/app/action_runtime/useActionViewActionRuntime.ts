@@ -57,6 +57,7 @@ type ExecuteButtonInput = {
 type ContractActionResponseNavigation = {
   nextActionId: number | null;
   entryTarget: Dict | null;
+  query?: Dict;
 };
 
 type UseActionViewActionRuntimeOptions = {

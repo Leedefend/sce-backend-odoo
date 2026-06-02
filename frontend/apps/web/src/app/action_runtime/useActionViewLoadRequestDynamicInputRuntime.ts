@@ -13,6 +13,8 @@ type BuildLoadRequestDynamicInputOptions = {
   groupSampleLimit: number;
   contractLimit: number;
   groupPageOffsets: Record<string, number>;
+  routeDomainRaw?: unknown;
+  routeContextRaw?: unknown;
   metaDomainRaw: unknown;
   sceneFiltersRaw: unknown;
   metaContextRaw: unknown;
@@ -33,6 +35,8 @@ export function useActionViewLoadRequestDynamicInputRuntime() {
       groupSampleLimit: input.groupSampleLimit,
       contractLimit: input.contractLimit,
       groupPageOffsets: input.groupPageOffsets,
+      routeDomainRaw: input.routeDomainRaw,
+      routeContextRaw: input.routeContextRaw,
       metaDomainRaw: input.metaDomainRaw,
       sceneFiltersRaw: input.sceneFiltersRaw,
       metaContextRaw: input.metaContextRaw,

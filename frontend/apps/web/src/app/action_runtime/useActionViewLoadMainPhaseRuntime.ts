@@ -101,6 +101,8 @@ export function useActionViewLoadMainPhaseRuntime() {
             groupSampleLimit: requestGroupSampleLimit,
             contractLimit: requestContractLimit,
             groupPageOffsets: requestGroupPageOffsets,
+            routeDomainRaw: options.routeQueryMap.domain_raw,
+            routeContextRaw: options.routeQueryMap.context_raw,
             metaDomainRaw: (preflightPhaseResult.meta || {}).domain,
             sceneFiltersRaw: options.sceneFiltersRaw,
             metaContextRaw: (preflightPhaseResult.meta || {}).context,
