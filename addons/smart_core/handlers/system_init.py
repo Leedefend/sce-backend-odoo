@@ -573,6 +573,9 @@ def _node_is_runtime_business_config_entry(node: dict) -> bool:
         return True
     if _text(meta.get("delivery_bucket")) == "delivery_business_config":
         return True
+    menu_xmlid = _text(node.get("menu_xmlid") or meta.get("menu_xmlid"))
+    if menu_xmlid.startswith("smart_construction_core.menu_scbsly_joint_acceptance_"):
+        return True
     model = _text(node.get("model") or meta.get("model"))
     if model in {"ui.menu.config.policy"}:
         return True
@@ -670,6 +673,13 @@ def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict]) -> tuple[lis
     direct_acceptance_children = []
     joint_acceptance_children = []
     acceptance_source_labels = {"old": [], "direct": [], "joint": []}
+    required_joint_acceptance_menu_xmlids = [
+        "smart_construction_core.menu_scbsly_joint_acceptance_self_funding_advance_income",
+        "smart_construction_core.menu_scbsly_joint_acceptance_self_funding_advance_refund",
+        "smart_construction_core.menu_scbsly_joint_acceptance_supplier_contract",
+        "smart_construction_core.menu_scbsly_joint_acceptance_labor_contract",
+        "smart_construction_core.menu_scbsly_joint_acceptance_rental_contract",
+    ]
 
     def has_nav_target(node: dict) -> bool:
         if not isinstance(node, dict):
@@ -698,6 +708,74 @@ def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict]) -> tuple[lis
             if has_nav_target(node):
                 out.append(node)
         return out
+
+    def menu_leaf_from_xmlid(xmlid: str) -> dict | None:
+        try:
+            menu = env.ref(xmlid, raise_if_not_found=False)
+        except Exception:
+            menu = None
+        if not menu:
+            return None
+        try:
+            action = menu.action
+        except Exception:
+            action = None
+        action_id = int(getattr(action, "id", 0) or 0) if action else 0
+        if action_id <= 0:
+            return None
+        model = _text(getattr(action, "res_model", ""))
+        view_mode = _text(getattr(action, "view_mode", ""))
+        view_modes = [_text(item) for item in view_mode.split(",") if _text(item)]
+        menu_id = int(getattr(menu, "id", 0) or 0)
+        label = _text(getattr(menu, "name", "")) or xmlid.rsplit(".", 1)[-1]
+        route = f"/a/{action_id}?menu_id={menu_id}"
+        sequence = int(getattr(menu, "sequence", 0) or 0)
+        return {
+            "key": f"runtime.acceptance.{xmlid}",
+            "label": label,
+            "title": label,
+            "name": label,
+            "menu_id": menu_id,
+            "children": [],
+            "route": route,
+            "sequence": sequence,
+            "meta": {
+                "action_type": "delivery.engine",
+                "menu_key": xmlid,
+                "menu_xmlid": xmlid,
+                "menu_id": menu_id,
+                "action_id": action_id,
+                "model": model,
+                "view_modes": view_modes,
+                "route": route,
+                "delivery_bucket": "delivery_business_config",
+                "source": "user_data_acceptance_only_runtime_completion",
+                "source_authority": {
+                    "kind": "user_data_acceptance_only_runtime_completion",
+                    "authorities": ["ir.ui.menu", "ir.actions", "ui.menu.config.policy"],
+                    "projection_only": True,
+                    "no_business_fact_authority": True,
+                    "rebuildable": True,
+                },
+            },
+        }
+
+    def ensure_required_joint_acceptance_children() -> int:
+        existing_menu_ids = {
+            int(node.get("menu_id") or 0)
+            for node in joint_acceptance_children
+            if isinstance(node, dict) and int(node.get("menu_id") or 0) > 0
+        }
+        added = 0
+        for xmlid in required_joint_acceptance_menu_xmlids:
+            leaf = menu_leaf_from_xmlid(xmlid)
+            menu_id = int((leaf or {}).get("menu_id") or 0)
+            if not leaf or not menu_id or menu_id in existing_menu_ids:
+                continue
+            joint_acceptance_children.append(leaf)
+            existing_menu_ids.add(menu_id)
+            added += 1
+        return added
 
     def scan_groups(groups: list[dict]) -> None:
         nonlocal formal_group
@@ -757,6 +835,8 @@ def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict]) -> tuple[lis
             root_nodes.append(dict(node))
         else:
             scan_groups([node])
+
+    joint_acceptance_completion_count = ensure_required_joint_acceptance_children()
 
     next_children = []
     if formal_group:
@@ -818,6 +898,7 @@ def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict]) -> tuple[lis
         "old_acceptance_entry_count": len(old_acceptance_children),
         "direct_acceptance_entry_count": len(direct_acceptance_children),
         "joint_acceptance_entry_count": len(joint_acceptance_children),
+        "joint_acceptance_completion_count": joint_acceptance_completion_count,
         "acceptance_source_labels": acceptance_source_labels,
     }
 

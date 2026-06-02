@@ -272,6 +272,46 @@
             <field name="visible">1</field>
             <field name="note">用户验收阶段联营项目历史数据核对入口。</field>
         </record>
+        <record id="menu_config_policy_scbsly_joint_acceptance_self_funding_advance_income" model="ui.menu.config.policy">
+            <field name="company_id" ref="base.main_company"/>
+            <field name="menu_id" ref="smart_construction_core.menu_scbsly_joint_acceptance_self_funding_advance_income"/>
+            <field name="custom_label">自筹垫付收入</field>
+            <field name="sequence_override">10</field>
+            <field name="visible">1</field>
+            <field name="note">联营项目自筹垫付收入验收入口。</field>
+        </record>
+        <record id="menu_config_policy_scbsly_joint_acceptance_self_funding_advance_refund" model="ui.menu.config.policy">
+            <field name="company_id" ref="base.main_company"/>
+            <field name="menu_id" ref="smart_construction_core.menu_scbsly_joint_acceptance_self_funding_advance_refund"/>
+            <field name="custom_label">自筹垫付退回</field>
+            <field name="sequence_override">20</field>
+            <field name="visible">1</field>
+            <field name="note">联营项目自筹垫付退回验收入口。</field>
+        </record>
+        <record id="menu_config_policy_scbsly_joint_acceptance_supplier_contract" model="ui.menu.config.policy">
+            <field name="company_id" ref="base.main_company"/>
+            <field name="menu_id" ref="smart_construction_core.menu_scbsly_joint_acceptance_supplier_contract"/>
+            <field name="custom_label">供货合同</field>
+            <field name="sequence_override">30</field>
+            <field name="visible">1</field>
+            <field name="note">联营项目供货合同验收入口。</field>
+        </record>
+        <record id="menu_config_policy_scbsly_joint_acceptance_labor_contract" model="ui.menu.config.policy">
+            <field name="company_id" ref="base.main_company"/>
+            <field name="menu_id" ref="smart_construction_core.menu_scbsly_joint_acceptance_labor_contract"/>
+            <field name="custom_label">劳务合同</field>
+            <field name="sequence_override">40</field>
+            <field name="visible">1</field>
+            <field name="note">联营项目劳务合同验收入口。</field>
+        </record>
+        <record id="menu_config_policy_scbsly_joint_acceptance_rental_contract" model="ui.menu.config.policy">
+            <field name="company_id" ref="base.main_company"/>
+            <field name="menu_id" ref="smart_construction_core.menu_scbsly_joint_acceptance_rental_contract"/>
+            <field name="custom_label">租赁合同</field>
+            <field name="sequence_override">50</field>
+            <field name="visible">1</field>
+            <field name="note">联营项目租赁合同验收入口。</field>
+        </record>
         <record id="menu_config_policy_scbsly_direct_engineering_progress_receipt" model="ui.menu.config.policy">
             <field name="company_id" ref="base.main_company"/>
             <field name="menu_id" ref="smart_construction_core.menu_scbsly_acceptance_engineering_progress_receipt"/>
