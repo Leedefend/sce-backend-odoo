@@ -162,6 +162,32 @@ class TestFileDownloadLocatorPolicy(unittest.TestCase):
 
         self.assertEqual(refs, ["228e3e4f51e8713919fecb4f08b4a485"])
 
+    def test_uses_legacy_carrier_fields_as_attachment_refs(self):
+        module = _load_handler()
+
+        class _Record:
+            _fields = {
+                "legacy_pid": object(),
+                "legacy_contract_id": object(),
+                "contract_no": object(),
+                "document_no": object(),
+                "raw_payload": object(),
+            }
+            legacy_pid = "17799398042030000"
+            legacy_contract_id = "7508903432694e2897fe74484e2236e6"
+            contract_no = "GYSHT-20210926-003"
+            document_no = "202109170844-1"
+            raw_payload = ""
+
+        handler = module.FileDownloadHandler(env=_Env())
+
+        refs = handler._legacy_attachment_refs(_Record())
+
+        self.assertIn("17799398042030000", refs)
+        self.assertIn("7508903432694e2897fe74484e2236e6", refs)
+        self.assertIn("GYSHT-20210926-003", refs)
+        self.assertIn("202109170844-1", refs)
+
     def test_resolves_legacy_userfile_path_when_url_keeps_uploadfile_prefix(self):
         module = _load_handler()
         with tempfile.TemporaryDirectory() as tmpdir:
