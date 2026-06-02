@@ -153,6 +153,15 @@ class TestFileDownloadLocatorPolicy(unittest.TestCase):
         self.assertIn("other", refs)
         self.assertNotIn("legacy-file://ignored/path", refs)
 
+    def test_extracts_inline_legacy_attachment_ref_from_raw_payload(self):
+        module = _load_handler()
+
+        refs = module._legacy_inline_attachment_refs(
+            '{"f_FDWB":"228e3e4f51e8713919fecb4f08b4a485","f_FDWB_FJ":"附件(1)","other_FJ":"not-an-attachment"}'
+        )
+
+        self.assertEqual(refs, ["228e3e4f51e8713919fecb4f08b4a485"])
+
     def test_resolves_legacy_userfile_path_when_url_keeps_uploadfile_prefix(self):
         module = _load_handler()
         with tempfile.TemporaryDirectory() as tmpdir:
