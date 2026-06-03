@@ -75,6 +75,14 @@ def dt(value):
     return False
 
 
+def first_present(row, *field_names):
+    for field_name in field_names:
+        value = row.get(field_name)
+        if clean(value):
+            return value
+    return ""
+
+
 rows = json.load(gzip.open(SOURCE_PATH, "rt", encoding="utf-8"))["rows"]
 amount_backfill = {}
 for amount_path in AMOUNT_BACKFILL_PATHS:
@@ -164,7 +172,7 @@ def values_for(row):
         "legacy_visible_category": clean(row.get("HTLX")) or False,
         "legacy_visible_contract_no": clean(row.get("HTBH")) or False,
         "legacy_visible_amount": clean(row.get("GCYSZJ")) or False,
-        "legacy_visible_settlement_amount": clean(row.get("D_SCBSJS_JSJE") or row.get("ZJE") or row.get("GCJSZJ")) or False,
+        "legacy_visible_settlement_amount": clean(first_present(row, "D_SCBSJS_JSJE", "ZJE", "GCJSZJ")) or False,
         "legacy_visible_invoice_amount": clean(row.get("LJKP")) or False,
         "legacy_visible_received_amount": clean(row.get("LJSK")) or False,
         "legacy_visible_unreceived_amount": clean(row.get("WSK")) or False,
@@ -182,12 +190,7 @@ def values_for(row):
         "attachment_text": clean(row.get("f_FJ") or row.get("FJ")) or False,
     }
     for field, value in amount_backfill.get(legacy_id, {}).items():
-        if field in {
-            "legacy_visible_invoice_amount",
-            "legacy_visible_received_amount",
-            "legacy_visible_unreceived_amount",
-            "legacy_visible_unreceived_rate",
-        }:
+        if field in FINANCIAL_VISIBLE_FIELDS:
             continue
         if value and vals.get(field) in (False, ""):
             vals[field] = value

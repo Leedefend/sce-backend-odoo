@@ -14,7 +14,7 @@ Generated At: 2026-06-02T17:41:51Z
 
 用户反馈的 `结算金额` 等字段缺失，根因不是前端显示问题，而是旧系统列表首层接口没有完整返回页面可见财务字段；旧系统页面还会继续调用 `LowCode/FormApi/GetFormDatabyDataSourceConfig` 做二次取数，再把返回字段合并到列表行。
 
-当前缺口状态：脚本逻辑已补齐，但无法完成在线全量重抓和回填，因为联营旧系统 `SCBS` 登录接口当前对账号 `13518193984 / 890785` 返回 `500 {"Code":10002,"Msg":"操作失败"}`。该问题不能记为“等待网络恢复”，应作为外部登录态阻断缺口跟踪。
+当前缺口状态：已于 2026-06-03 恢复并收口。联营旧系统 `SCBS` 账号 `13518193984 / 890785` 已可登录，已完成 `seq003 施工合同` 在线全量重抓、二次取数回填和新旧字段严格比对。
 
 ## 已确认事实
 
@@ -80,15 +80,16 @@ Generated At: 2026-06-02T17:41:51Z
 
 本地与开发服务器均已同步并通过 `py_compile`。
 
-## 未完成事项
+## 恢复后执行结果
 
-以下动作尚未完成，不能标记施工合同数据合格：
+2026-06-03 已完成以下动作：
 
-1. 使用有效联营 SCBS 登录态在线重抓 `seq003 施工合同`。
-2. 确认输出包包含 `data_fetch_count > 0` 和 `datafetch_pages > 0`。
-3. 用二次取数后的全量包回填 action 855 对应的 `construction.contract`。
-4. 对比 `legacy_visible_settlement_amount/LJKP/LJSK/WSK/WSKBL` 与旧系统在线页面可见值。
-5. 浏览器打开 `http://1.95.85.92:18081/a/855?menu_id=655` 验证用户看面。
+1. 使用联营 SCBS 登录态在线重抓 `seq003 施工合同`。
+2. 输出包确认：`row_count=1564`、`data_fetch_count=6`、`datafetch_pages=1878`。
+3. 使用二次取数后的全量包回填开发库 `sc_demo` action 855 对应的 `construction.contract`。
+4. 回填结果：旧系统 1564 条，新系统最终可见 1564 条，action 域为 `[('legacy_contract_id', '!=', False), ('legacy_income_surface_visible', '=', True)]`。
+5. 严格字段比对通过：`结算金额`、`累计开票`、`累计收款`、`未收款`、`未收款比例` mismatch 均为 0。旧系统在线包为空的值，新系统保持为空。
+6. 浏览器打开 `http://1.95.85.92:18081/a/855?menu_id=655&action_id=855` 验证通过：页面标题、关键字段列和结算金额样例可见，前端错误 0。
 
 ## 恢复执行方式
 
@@ -120,6 +121,6 @@ SCBS55_CONTRACT_SOURCE_PATH=/tmp/scbs55_seq003_datafetch/scbs_55_old_live_full_r
 odoo shell -c /var/lib/odoo/odoo.conf -d sc_demo --no-http < scripts/migration/scbs55_contract_surface_online_patch.py
 ```
 
-## 风险
+## 收口注意
 
-在没有完成在线二次取数全量重抓前，不能再把旧包复用结果作为严格验证结论。旧包如果没有 `data_fetch_count/datafetch_pages`，只能作为首层接口证据，不能证明用户旧系统看面一致。
+严格验证必须继续使用包含 `data_fetch_count/datafetch_pages` 的在线全量包。旧包如果没有这些元信息，只能作为首层接口证据，不能证明用户旧系统看面一致。
