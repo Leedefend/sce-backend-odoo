@@ -200,6 +200,7 @@ class ExecuteButtonHandler(BaseIntentHandler):
                     source_model=model,
                     source_record_id=res_ids[0],
                 ) or result
+                _enrich_payload_with_action_navigation(payload, normalized_action)
                 payload["raw_action"] = normalized_action
                 entry_target = normalized_action.get("entry_target") if isinstance(normalized_action.get("entry_target"), dict) else {}
                 if entry_target:
@@ -291,6 +292,7 @@ class ExecuteButtonHandler(BaseIntentHandler):
                 source_model=model,
                 source_record_id=res_ids[0] if res_ids else None,
             ) or result
+            _enrich_payload_with_action_navigation(payload, normalized_action)
             payload["raw_action"] = normalized_action
             entry_target = normalized_action.get("entry_target") if isinstance(normalized_action.get("entry_target"), dict) else {}
             if entry_target:
@@ -412,6 +414,33 @@ def _positive_int(value) -> int:
     return parsed if parsed > 0 else 0
 
 
+def _query_literal(value) -> str:
+    if value in (None, False, ""):
+        return ""
+    if isinstance(value, str):
+        return value.strip()
+    return repr(value)
+
+
+def _enrich_payload_with_action_navigation(payload: dict, action: dict) -> None:
+    action_id = _positive_int(action.get("id") or action.get("action_id"))
+    if action_id:
+        payload["action_id"] = action_id
+    domain_raw = _query_literal(action.get("domain_raw") or action.get("domain"))
+    context_raw = _query_literal(action.get("context_raw") or action.get("context"))
+    if domain_raw:
+        payload["domain_raw"] = domain_raw
+    if context_raw:
+        payload["context_raw"] = context_raw
+    entry_target = action.get("entry_target") if isinstance(action.get("entry_target"), dict) else {}
+    refs = entry_target.get("compatibility_refs") if isinstance(entry_target.get("compatibility_refs"), dict) else {}
+    if refs:
+        if domain_raw:
+            refs["domain_raw"] = domain_raw
+        if context_raw:
+            refs["context_raw"] = context_raw
+
+
 def _effect_from_normalized_action(action: dict, *, fallback_effect: dict) -> dict:
     entry_target = action.get("entry_target") if isinstance(action.get("entry_target"), dict) else {}
     action_type = action.get("type")
@@ -420,12 +449,19 @@ def _effect_from_normalized_action(action: dict, *, fallback_effect: dict) -> di
     action_res_id = _positive_int(action.get("res_id"))
     action_url = str(action.get("url") or "").strip()
     if entry_target:
+        target = {
+            "kind": "entry_target",
+            "entry_target": entry_target,
+        }
+        domain_raw = _query_literal(action.get("domain_raw") or action.get("domain"))
+        context_raw = _query_literal(action.get("context_raw") or action.get("context"))
+        if domain_raw:
+            target["domain_raw"] = domain_raw
+        if context_raw:
+            target["context_raw"] = context_raw
         return {
             "type": "navigate",
-            "target": {
-                "kind": "entry_target",
-                "entry_target": entry_target,
-            },
+            "target": target,
         }
     if action_model and action_res_id:
         return {"type": "navigate", "target": {"kind": "record", "model": action_model, "id": action_res_id}}

@@ -573,6 +573,9 @@ def _node_is_runtime_business_config_entry(node: dict) -> bool:
         return True
     if _text(meta.get("delivery_bucket")) == "delivery_business_config":
         return True
+    menu_xmlid = _text(node.get("menu_xmlid") or meta.get("menu_xmlid"))
+    if menu_xmlid.startswith("smart_construction_core.menu_scbsly_joint_acceptance_"):
+        return True
     model = _text(node.get("model") or meta.get("model"))
     if model in {"ui.menu.config.policy"}:
         return True
@@ -646,6 +649,258 @@ def _apply_user_menu_config_to_delivery_nav(env, nav: list[dict]) -> tuple[list[
     overlaid, stats = policy_model.apply_runtime_overlay({"tree": nav, "flat": []}, user=env.user)
     next_nav = overlaid.get("tree") if isinstance(overlaid, dict) and isinstance(overlaid.get("tree"), list) else nav
     return next_nav, stats if isinstance(stats, dict) else {}
+
+
+def _user_data_acceptance_nav_only_enabled(env) -> bool:
+    try:
+        raw = env["ir.config_parameter"].sudo().get_param("smart_core.nav.user_data_acceptance_only", "")
+    except Exception:
+        raw = ""
+    return str(raw or "").strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict]) -> tuple[list[dict], dict]:
+    if not isinstance(nav, list) or not _user_data_acceptance_nav_only_enabled(env):
+        return nav if isinstance(nav, list) else [], {"applied": False}
+
+    allowed_formal_labels = {"客户", "供应商"}
+    old_acceptance_group_labels = {"用户核对菜单", "旧业务数据核对"}
+    direct_acceptance_group_labels = {"直营项目数据核对", "直营项目系统菜单"}
+    joint_acceptance_group_labels = {"联营项目数据核对", "联营项目系统菜单"}
+    acceptance_root_labels = {"用户验收", "直营项目数据核对"}
+    formal_group = None
+    old_acceptance_children = []
+    direct_acceptance_children = []
+    joint_acceptance_children = []
+    acceptance_source_labels = {"old": [], "direct": [], "joint": []}
+    required_joint_acceptance_menu_xmlids = [
+        "smart_construction_core.menu_scbsly_joint_acceptance_self_funding_advance_income",
+        "smart_construction_core.menu_scbsly_joint_acceptance_self_funding_advance_refund",
+        "smart_construction_core.menu_scbsly_joint_acceptance_supplier_contract",
+        "smart_construction_core.menu_scbsly_joint_acceptance_labor_contract",
+        "smart_construction_core.menu_scbsly_joint_acceptance_rental_contract",
+    ]
+
+    def has_nav_target(node: dict) -> bool:
+        if not isinstance(node, dict):
+            return False
+        meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+        return bool(
+            node.get("route")
+            or node.get("scene_key")
+            or node.get("action_id")
+            or node.get("model")
+            or meta.get("route")
+            or meta.get("scene_key")
+            or meta.get("action_id")
+            or meta.get("model")
+        )
+
+    def flatten_target_children(nodes: list[dict]) -> list[dict]:
+        out = []
+        for node in nodes or []:
+            if not isinstance(node, dict):
+                continue
+            children = node.get("children") if isinstance(node.get("children"), list) else []
+            if children:
+                out.extend(flatten_target_children(children))
+                continue
+            if has_nav_target(node):
+                out.append(node)
+        return out
+
+    def menu_leaf_from_xmlid(xmlid: str) -> dict | None:
+        try:
+            menu = env.ref(xmlid, raise_if_not_found=False)
+        except Exception:
+            menu = None
+        if not menu:
+            return None
+        try:
+            action = menu.action
+        except Exception:
+            action = None
+        action_id = int(getattr(action, "id", 0) or 0) if action else 0
+        if action_id <= 0:
+            return None
+        model = _text(getattr(action, "res_model", ""))
+        view_mode = _text(getattr(action, "view_mode", ""))
+        view_modes = [_text(item) for item in view_mode.split(",") if _text(item)]
+        menu_id = int(getattr(menu, "id", 0) or 0)
+        label = _text(getattr(menu, "name", "")) or xmlid.rsplit(".", 1)[-1]
+        route = f"/a/{action_id}?menu_id={menu_id}"
+        sequence = int(getattr(menu, "sequence", 0) or 0)
+        return {
+            "key": f"runtime.acceptance.{xmlid}",
+            "label": label,
+            "title": label,
+            "name": label,
+            "menu_id": menu_id,
+            "children": [],
+            "route": route,
+            "sequence": sequence,
+            "meta": {
+                "action_type": "delivery.engine",
+                "menu_key": xmlid,
+                "menu_xmlid": xmlid,
+                "menu_id": menu_id,
+                "action_id": action_id,
+                "model": model,
+                "view_modes": view_modes,
+                "route": route,
+                "delivery_bucket": "delivery_business_config",
+                "source": "user_data_acceptance_only_runtime_completion",
+                "source_authority": {
+                    "kind": "user_data_acceptance_only_runtime_completion",
+                    "authorities": ["ir.ui.menu", "ir.actions", "ui.menu.config.policy"],
+                    "projection_only": True,
+                    "no_business_fact_authority": True,
+                    "rebuildable": True,
+                },
+            },
+        }
+
+    def ensure_required_joint_acceptance_children() -> int:
+        existing_menu_ids = {
+            int(node.get("menu_id") or 0)
+            for node in joint_acceptance_children
+            if isinstance(node, dict) and int(node.get("menu_id") or 0) > 0
+        }
+        added = 0
+        for xmlid in required_joint_acceptance_menu_xmlids:
+            leaf = menu_leaf_from_xmlid(xmlid)
+            menu_id = int((leaf or {}).get("menu_id") or 0)
+            if not leaf or not menu_id or menu_id in existing_menu_ids:
+                continue
+            joint_acceptance_children.append(leaf)
+            existing_menu_ids.add(menu_id)
+            added += 1
+        return added
+
+    def scan_groups(groups: list[dict]) -> None:
+        nonlocal formal_group
+        for group in groups or []:
+            if not isinstance(group, dict):
+                continue
+            label = _text(group.get("label") or group.get("title") or group.get("name"))
+            children = group.get("children") if isinstance(group.get("children"), list) else []
+            if label == "基础设置":
+                kept_children = [
+                    child
+                    for child in children
+                    if isinstance(child, dict)
+                    and _text(child.get("label") or child.get("title") or child.get("name")) in allowed_formal_labels
+                ]
+                if kept_children:
+                    next_group = dict(group)
+                    next_group["children"] = kept_children
+                    formal_group = next_group
+                continue
+            if label in old_acceptance_group_labels:
+                acceptance_source_labels["old"].append(label)
+                old_acceptance_children.extend(flatten_target_children(children))
+                continue
+            if label in acceptance_root_labels:
+                for child in children:
+                    if not isinstance(child, dict):
+                        continue
+                    child_label = _text(child.get("label") or child.get("title") or child.get("name"))
+                    child_children = child.get("children") if isinstance(child.get("children"), list) else []
+                    if child_label in joint_acceptance_group_labels or "联营" in child_label:
+                        acceptance_source_labels["joint"].append(child_label or label)
+                        joint_acceptance_children.extend(flatten_target_children(child_children))
+                    elif child_label in direct_acceptance_group_labels or "直营" in child_label:
+                        acceptance_source_labels["direct"].append(child_label or label)
+                        direct_acceptance_children.extend(flatten_target_children(child_children))
+                    else:
+                        acceptance_source_labels["direct"].append(child_label or label)
+                        direct_acceptance_children.extend(flatten_target_children([child]))
+                continue
+            if label in direct_acceptance_group_labels:
+                acceptance_source_labels["direct"].append(label)
+                direct_acceptance_children.extend(flatten_target_children(children))
+                continue
+            if label in joint_acceptance_group_labels:
+                acceptance_source_labels["joint"].append(label)
+                joint_acceptance_children.extend(flatten_target_children(children))
+                continue
+
+    root_nodes = []
+    for node in nav:
+        if not isinstance(node, dict):
+            continue
+        children = node.get("children") if isinstance(node.get("children"), list) else []
+        if children:
+            scan_groups(children)
+            root_nodes.append(dict(node))
+        else:
+            scan_groups([node])
+
+    joint_acceptance_completion_count = ensure_required_joint_acceptance_children()
+
+    next_children = []
+    if formal_group:
+        next_children.append(formal_group)
+    if old_acceptance_children:
+        next_children.append(
+            {
+                "key": "group:legacy_business_data_acceptance",
+                "label": "旧业务数据核对",
+                "title": "旧业务数据核对",
+                "children": old_acceptance_children,
+                "meta": {
+                    "group_key": "legacy_business_data_acceptance",
+                    "source": "user_data_acceptance_only_runtime_filter",
+                    "source_labels": acceptance_source_labels["old"],
+                },
+            }
+        )
+    if direct_acceptance_children:
+        next_children.append(
+            {
+                "key": "group:direct_project_data_acceptance",
+                "label": "直营项目数据核对",
+                "title": "直营项目数据核对",
+                "children": direct_acceptance_children,
+                "meta": {
+                    "group_key": "direct_project_data_acceptance",
+                    "source": "user_data_acceptance_only_runtime_filter",
+                    "source_labels": acceptance_source_labels["direct"],
+                },
+            }
+        )
+    if joint_acceptance_children:
+        next_children.append(
+            {
+                "key": "group:joint_project_data_acceptance",
+                "label": "联营项目数据核对",
+                "title": "联营项目数据核对",
+                "children": joint_acceptance_children,
+                "meta": {
+                    "group_key": "joint_project_data_acceptance",
+                    "source": "user_data_acceptance_only_runtime_filter",
+                    "source_labels": acceptance_source_labels["joint"],
+                },
+            }
+        )
+
+    if not next_children:
+        return [], {
+            "applied": True,
+            "formal_entry_count": 0,
+            "acceptance_group_count": 0,
+            "reason": "no_matching_entries",
+        }
+
+    return next_children, {
+        "applied": True,
+        "formal_entry_count": len(formal_group.get("children") or []) if formal_group else 0,
+        "old_acceptance_entry_count": len(old_acceptance_children),
+        "direct_acceptance_entry_count": len(direct_acceptance_children),
+        "joint_acceptance_entry_count": len(joint_acceptance_children),
+        "joint_acceptance_completion_count": joint_acceptance_completion_count,
+        "acceptance_source_labels": acceptance_source_labels,
+    }
 
 
 def _build_minimal_intent_surface(intents: list[str], intents_meta: dict) -> list[str]:
@@ -1163,6 +1418,17 @@ class SystemInitHandler(BaseIntentHandler):
         }
         delivery_nav = delivery_payload.get("nav") if isinstance(delivery_payload.get("nav"), list) else []
         if delivery_nav and not platform_minimum_surface_mode:
+            delivery_nav, user_data_acceptance_meta = _filter_nav_for_user_data_acceptance_only(env, delivery_nav)
+            delivery_payload["nav"] = delivery_nav
+            if isinstance(data.get("delivery_engine_v1"), dict):
+                data["delivery_engine_v1"]["nav"] = delivery_nav
+            if isinstance(data.get("release_navigation_v1"), dict):
+                data["release_navigation_v1"]["nav"] = delivery_nav
+                release_meta = data["release_navigation_v1"].get("meta")
+                if not isinstance(release_meta, dict):
+                    release_meta = {}
+                    data["release_navigation_v1"]["meta"] = release_meta
+                release_meta["user_data_acceptance_only"] = user_data_acceptance_meta
             data["nav_role_surface"] = data.get("nav") if isinstance(data.get("nav"), list) else []
             data["nav"] = delivery_nav
             nav_meta = data.get("nav_meta") if isinstance(data.get("nav_meta"), dict) else {}
@@ -1174,6 +1440,7 @@ class SystemInitHandler(BaseIntentHandler):
                 if isinstance(delivery_payload.get("meta"), dict)
                 else {}
             )
+            nav_meta["user_data_acceptance_only"] = user_data_acceptance_meta
             data["nav_meta"] = nav_meta
 
         default_route_payload = data.get("default_route") if isinstance(data.get("default_route"), dict) else {}

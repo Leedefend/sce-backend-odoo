@@ -132,6 +132,18 @@ def state_label(value: object) -> str:
     return {"-1": "已作废", "0": "未审核", "1": "审核中", "2": "审核通过", "3": "已驳回", "4": "已作废"}.get(text, text)
 
 
+def yes_no(value: object, *, blank_as_no: bool = False) -> str:
+    text = clean(value)
+    if not text:
+        return "否" if blank_as_no else ""
+    lowered = text.lower()
+    if lowered in {"1", "true", "yes", "y", "是"}:
+        return "是"
+    if lowered in {"0", "false", "no", "n", "否"}:
+        return "否"
+    return text
+
+
 def key_for(row: dict[str, Any], index: int) -> str:
     return clean(row.get("Id") or row.get("ID") or row.get("pid") or row.get("PID")) or str(index)
 
@@ -251,7 +263,7 @@ def visible(seq: int, row: dict[str, Any]) -> dict[str, str]:
         "当日累计收入": number_text(row.get("DRLJSR$D_SCBSJS_ZJGL_ZJSZ_ZJRBB_CB")),
         "当日累计支出": number_text(row.get("DRLJZC$D_SCBSJS_ZJGL_ZJSZ_ZJRBB_CB")),
         "账户往来": number_text(row.get("ZHWL$D_SCBSJS_ZJGL_ZJSZ_ZJRBB_CB")),
-        "是否转出": clean(row.get("SFZC")),
+        "是否转出": yes_no(row.get("SFZC"), blank_as_no=seq == 43),
         "开票单位": clean(row.get("KPDW$C_JXXP_DKDJ_CB")),
         "发票号": clean(row.get("FPHM$C_JXXP_DKDJ_CB")),
         "抵扣税额": number_text(row.get("DKSE$C_JXXP_DKDJ_CB")),

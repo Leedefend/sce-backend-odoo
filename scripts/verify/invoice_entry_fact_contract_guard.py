@@ -51,10 +51,10 @@ def main() -> int:
     )
     assert_ok(
         "<field name=\"name\">销项开票申请</field>" in taxonomy
-        and "<field name=\"name\">进项发票登记</field>" in taxonomy
+        and "<field name=\"name\">销项发票登记</field>" in taxonomy
         and "<field name=\"name\">进项税额上报</field>" in taxonomy
         and 'name="销项开票申请"' in taxonomy
-        and 'name="进项发票登记"' in taxonomy
+        and 'name="销项发票登记"' in taxonomy
         and 'name="进项税额上报"' in taxonomy,
         "invoice business entries must use precise output/input/prepaid labels",
         errors,
@@ -86,7 +86,7 @@ def main() -> int:
     )
     assert_ok(
         '"开票申请": "销项开票申请"' in menu_convergence
-        and '"开票登记": "进项发票登记"' in menu_convergence
+        and '"开票登记": "销项发票登记"' in menu_convergence
         and '"进项上报": "进项税额上报"' in menu_convergence,
         "delivery navigation convergence must expose precise invoice handling labels",
         errors,

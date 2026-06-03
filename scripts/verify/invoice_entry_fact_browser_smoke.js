@@ -63,7 +63,7 @@ async function main() {
     await page.waitForTimeout(1500);
 
     const bodyText = await page.locator('body').innerText({ timeout: 10000 });
-    for (const label of ['发票总台账', '销项开票申请', '进项发票登记', '进项税额上报', '分组结果']) {
+    for (const label of ['发票总台账', '销项开票申请', '销项发票登记', '进项税额上报', '分组结果']) {
       if (!bodyText.includes(label)) {
         fail(`browser invoice ledger missing label: ${label}`);
       }

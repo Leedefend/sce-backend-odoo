@@ -5,16 +5,29 @@ from __future__ import annotations
 
 import gzip
 import json
+import os
 import re
+import csv
 from datetime import datetime
 from decimal import Decimal
 
 
-SOURCE_PATH = "/tmp/scbs_55_old_live_full_rows_seq003_contract.json.gz"
+SOURCE_PATH = os.getenv("SCBS55_CONTRACT_SOURCE_PATH", "/tmp/scbs_55_old_live_full_rows_seq003_contract.json.gz")
+AMOUNT_BACKFILL_PATHS = (
+    "/tmp/contract_business_amount_backfill_from_mssql_v1.csv",
+    "artifacts/migration/scbs_55_old_live_full_rows_current/contract_business_amount_backfill_from_mssql_v1.csv",
+)
+FINANCIAL_VISIBLE_FIELDS = {
+    "legacy_visible_settlement_amount",
+    "legacy_visible_invoice_amount",
+    "legacy_visible_received_amount",
+    "legacy_visible_unreceived_amount",
+    "legacy_visible_unreceived_rate",
+}
 
 
 def clean(value):
-    if value in (None, False):
+    if value is None or value is False:
         return ""
     return re.sub(r"\s+", " ", str(value).replace("\u3000", " ").strip())
 
@@ -24,6 +37,26 @@ def money(value):
         return float(Decimal(str(value or 0)))
     except Exception:
         return 0.0
+
+
+def amount_text(value):
+    text = clean(value)
+    if not text:
+        return ""
+    try:
+        return f"{Decimal(text):.2f}"
+    except Exception:
+        return text
+
+
+def rate_text(numerator, denominator):
+    total = Decimal(str(money(denominator)))
+    if not total:
+        return ""
+    rate = Decimal(str(money(numerator))) / total * Decimal("100")
+    if rate == 0:
+        rate = Decimal("0")
+    return f"{rate:.2f}%"
 
 
 def date(value):
@@ -42,7 +75,34 @@ def dt(value):
     return False
 
 
+def first_present(row, *field_names):
+    for field_name in field_names:
+        value = row.get(field_name)
+        if clean(value):
+            return value
+    return ""
+
+
 rows = json.load(gzip.open(SOURCE_PATH, "rt", encoding="utf-8"))["rows"]
+amount_backfill = {}
+for amount_path in AMOUNT_BACKFILL_PATHS:
+    try:
+        with open(amount_path, "r", encoding="utf-8-sig", newline="") as handle:
+            for row in csv.DictReader(handle):
+                legacy_id = clean(row.get("Id"))
+                if not legacy_id:
+                    continue
+                amount_backfill[legacy_id] = {
+                    "legacy_visible_settlement_amount": amount_text(row.get("settlement_amount")),
+                    "legacy_visible_invoice_amount": amount_text(row.get("invoice_amount")),
+                    "legacy_visible_received_amount": amount_text(row.get("received_amount")),
+                    "legacy_visible_unreceived_amount": amount_text(row.get("unreceived_amount")),
+                    "legacy_visible_unreceived_rate": rate_text(row.get("unreceived_amount"), row.get("contract_amount")),
+                }
+        break
+    except FileNotFoundError:
+        continue
+
 Contract = env["construction.contract"].sudo().with_context(active_test=False)  # noqa: F821
 Project = env["project.project"].sudo().with_context(active_test=False)  # noqa: F821
 Partner = env["res.partner"].sudo().with_context(active_test=False)  # noqa: F821
@@ -84,7 +144,7 @@ def resolve_partner(row):
 def values_for(row):
     legacy_id = clean(row.get("Id"))
     amount = money(row.get("GCYSZJ"))
-    return {
+    vals = {
         "subject": clean(row.get("HTBT")) or clean(row.get("HTBH")) or clean(row.get("DJBH")) or legacy_id,
         "type": "out",
         "project_id": resolve_project(row).id,
@@ -112,7 +172,7 @@ def values_for(row):
         "legacy_visible_category": clean(row.get("HTLX")) or False,
         "legacy_visible_contract_no": clean(row.get("HTBH")) or False,
         "legacy_visible_amount": clean(row.get("GCYSZJ")) or False,
-        "legacy_visible_settlement_amount": clean(row.get("D_SCBSJS_JSJE")) or False,
+        "legacy_visible_settlement_amount": clean(first_present(row, "D_SCBSJS_JSJE", "ZJE", "GCJSZJ")) or False,
         "legacy_visible_invoice_amount": clean(row.get("LJKP")) or False,
         "legacy_visible_received_amount": clean(row.get("LJSK")) or False,
         "legacy_visible_unreceived_amount": clean(row.get("WSK")) or False,
@@ -129,6 +189,12 @@ def values_for(row):
         "engineering_content": clean(row.get("f_GCNR")) or False,
         "attachment_text": clean(row.get("f_FJ") or row.get("FJ")) or False,
     }
+    for field, value in amount_backfill.get(legacy_id, {}).items():
+        if field in FINANCIAL_VISIBLE_FIELDS:
+            continue
+        if value and vals.get(field) in (False, ""):
+            vals[field] = value
+    return vals
 
 
 old_ids = {clean(row.get("Id")) for row in rows if clean(row.get("Id"))}
@@ -141,6 +207,14 @@ for row in rows:
     vals = values_for(row)
     record = by_id.get(legacy_id)
     if record:
+        # The live list endpoint may omit SQL-derived financial columns even
+        # when the legacy page/business evidence has values. Never let a blank
+        # list payload erase an already reconciled visible amount.
+        datafetch_present = any(field in row for field in ("LJKP", "LJSK", "WSK", "WSKBL", "ZJE"))
+        if not datafetch_present:
+            for field in FINANCIAL_VISIBLE_FIELDS:
+                if vals.get(field) in (False, "") and getattr(record, field):
+                    vals.pop(field, None)
         record.write(vals)
         updated += 1
     else:

@@ -1347,6 +1347,25 @@ BUSINESS_DOCUMENT_STATE_LABELS = {
     "4": "已作废",
 }
 
+ZERO_IF_EMPTY_NUMERIC_LABELS = {
+    "还款金额",
+    "到期利息",
+    "利息",
+    "借款利息",
+    "贷款利息",
+    "未还款金额",
+    "实际付款金额",
+    "抵扣税额",
+    "抵扣总额",
+    "抵扣附加税",
+}
+
+NONNEGATIVE_NUMERIC_LABELS = {
+    "未还款金额",
+    "未付款金额",
+    "未申请金额",
+}
+
 FALLBACK_SOURCES = (
     "name", "document_no", "title", "project_id", "partner_id", "supplier_id", "contractor_id",
     "subcontractor_id", "owner_id", "requester_id", "state", "legacy_document_state",
@@ -1354,6 +1373,20 @@ FALLBACK_SOURCES = (
     "amount", "amount_total", "paid_amount", "unpaid_amount", "note", "purpose",
     "source_created_by", "source_created_at", "creator_name", "created_time",
 )
+
+
+def _normalize_visible_numeric_alias(label, value):
+    text = str(value or "").strip()
+    if not text:
+        return "0" if label in ZERO_IF_EMPTY_NUMERIC_LABELS else ""
+    if label in NONNEGATIVE_NUMERIC_LABELS:
+        try:
+            number = float(text.replace(",", ""))
+        except ValueError:
+            return text
+        if number < 0:
+            return "0"
+    return text
 
 
 def _format_alias_value(record, field_name):
@@ -1397,6 +1430,8 @@ def _normalize_payload_alias_value(label, value):
         text = str(value).strip()
         if text in {"False", "false", "None", "NULL"}:
             return ""
+        if label == "附件" and _is_hash_file_name(text):
+            return "历史附件"
         if label in ("单据状态", "状态"):
             return BUSINESS_DOCUMENT_STATE_LABELS.get(text, text)
         return text
@@ -1443,12 +1478,16 @@ def _legacy_attachment_links(record):
         name = str(item.file_name or item.display_name or "").strip()
         if _is_hash_file_name(name):
             continue
+        path = str(item.preview_path or item.file_path or "").strip()
         key = name
         if not name or key in seen:
             continue
         seen.add(key)
-        lines.append(name)
-    return " ".join(lines) if lines else "历史附件"
+        lines.append(f"{name} | legacy-file://{path.lstrip('/')}" if path else name)
+    if lines:
+        return " ".join(lines)
+    clean_attachment_ref = str(attachment_ref or "").strip()
+    return f"附件 | legacy-file-id://{clean_attachment_ref}" if clean_attachment_ref else ""
 
 
 def _description_line_value(record, prefix):
@@ -1497,8 +1536,11 @@ def _legacy_visible_alias_payload(record):
 
 def _alias_value(record, label):
     payload = _legacy_visible_alias_payload(record)
+    payload_value = ""
     if payload and label in payload:
-        return _normalize_payload_alias_value(label, payload.get(label))
+        payload_value = _normalize_payload_alias_value(label, payload.get(label))
+        if label != '附件':
+            return payload_value
     if record._name == 'sc.business.entity':
         strict_sources = {
             '单据状态': None,
@@ -2040,6 +2082,8 @@ def _alias_value(record, label):
         legacy_links = _legacy_attachment_links(record)
         if legacy_links:
             return legacy_links
+        if payload_value:
+            return payload_value
         for field_name in ('attachment_ids', 'biz_attachment_ids', 'tech_attachment_ids', 'legacy_attachment_name'):
             value = _format_alias_value(record, field_name)
             if value:
@@ -2081,7 +2125,7 @@ def _compute_p1_daily_business_visible_aliases(self):
     field_pairs = [(_alias_field_name(label), label) for label in labels]
     for record in self:
         for field_name, label in field_pairs:
-            record[field_name] = _alias_value(record, label)
+            record[field_name] = _normalize_visible_numeric_alias(label, _alias_value(record, label))
 
 
 _ALIAS_MODEL_FIELD_LABELS = {

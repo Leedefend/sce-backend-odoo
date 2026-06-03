@@ -4314,6 +4314,43 @@ function contractActionFromNativeRow(row: Record<string, unknown>): ContractActi
   };
 }
 
+function actionResponseNavQuery(result: object | null | undefined, extra?: Record<string, unknown>) {
+  const payload = (result && typeof result === 'object' && !Array.isArray(result))
+    ? result as Record<string, unknown>
+    : {};
+  const rawAction = (payload.raw_action && typeof payload.raw_action === 'object' && !Array.isArray(payload.raw_action))
+    ? payload.raw_action as Record<string, unknown>
+    : {};
+  const entryTarget = (payload.entry_target && typeof payload.entry_target === 'object' && !Array.isArray(payload.entry_target))
+    ? payload.entry_target as Record<string, unknown>
+    : {};
+  const refs = (entryTarget.compatibility_refs && typeof entryTarget.compatibility_refs === 'object' && !Array.isArray(entryTarget.compatibility_refs))
+    ? entryTarget.compatibility_refs as Record<string, unknown>
+    : {};
+  return pickContractNavQuery(route.query as Record<string, unknown>, {
+    action_id: payload.action_id || rawAction.id || rawAction.action_id || refs.action_id,
+    domain_raw: payload.domain_raw || rawAction.domain_raw || refs.domain_raw,
+    context_raw: payload.context_raw || rawAction.context_raw || refs.context_raw,
+    ...(extra || {}),
+  });
+}
+
+function actionResponseRouteTarget(target: unknown, result: object | null | undefined, extra?: Record<string, unknown>) {
+  const routeTarget = (target && typeof target === 'object' && !Array.isArray(target))
+    ? target as Record<string, unknown>
+    : {};
+  const currentQuery = (routeTarget.query && typeof routeTarget.query === 'object' && !Array.isArray(routeTarget.query))
+    ? routeTarget.query as Record<string, unknown>
+    : {};
+  return {
+    ...routeTarget,
+    query: {
+      ...currentQuery,
+      ...actionResponseNavQuery(result, extra),
+    },
+  };
+}
+
 async function runNativeLayoutAction(row: Record<string, unknown>) {
   const action = contractActionFromNativeRow(row);
   if (!action) return;
@@ -4334,10 +4371,10 @@ async function runNativeLayoutAction(row: Record<string, unknown>) {
       });
       const result = response?.result;
       if (result?.entry_target) {
-        await router.push(buildEntryTargetRouteTarget(result.entry_target, {
-          query: pickContractNavQuery(route.query as Record<string, unknown>),
+        await router.push(actionResponseRouteTarget(buildEntryTargetRouteTarget(result.entry_target, {
+          query: actionResponseNavQuery(result),
           actionId: result.action_id,
-        }) as never);
+        }), result) as never);
         return;
       }
       const nextActionId = toPositiveInt(result?.action_id);
@@ -4345,7 +4382,7 @@ async function runNativeLayoutAction(row: Record<string, unknown>) {
         await router.push({
           name: 'action',
           params: { actionId: String(nextActionId) },
-          query: pickContractNavQuery(route.query as Record<string, unknown>, { action_id: nextActionId }),
+          query: actionResponseNavQuery(result, { action_id: nextActionId }),
         });
         return;
       }
@@ -7356,16 +7393,11 @@ async function runAction(action: ContractAction) {
         },
       });
       const result = response?.result;
-      const refresh = result?.type;
-      if (refresh === 'refresh' && !action.refreshPolicy) {
-        await reload();
-        return;
-      }
       if (result?.entry_target) {
-        await router.push(buildEntryTargetRouteTarget(result.entry_target, {
-          query: pickContractNavQuery(route.query as Record<string, unknown>),
+        await router.push(actionResponseRouteTarget(buildEntryTargetRouteTarget(result.entry_target, {
+          query: actionResponseNavQuery(result),
           actionId: result.action_id,
-        }) as never);
+        }), result) as never);
         if (action.refreshPolicy) {
           await applyProjectionRefreshPolicy(action.refreshPolicy);
         }
@@ -7376,11 +7408,16 @@ async function runAction(action: ContractAction) {
         await router.push({
           name: 'action',
           params: { actionId: String(nextActionId) },
-          query: pickContractNavQuery(route.query as Record<string, unknown>, { action_id: nextActionId }),
+          query: actionResponseNavQuery(result, { action_id: nextActionId }),
         });
         if (action.refreshPolicy) {
           await applyProjectionRefreshPolicy(action.refreshPolicy);
         }
+        return;
+      }
+      const refresh = result?.type;
+      if (refresh === 'refresh' && !action.refreshPolicy) {
+        await reload();
         return;
       }
       if (action.refreshPolicy) {

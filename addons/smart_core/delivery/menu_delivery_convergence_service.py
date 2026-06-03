@@ -274,7 +274,7 @@ class MenuDeliveryConvergenceService:
     RENAME_LABELS = {
         "项目台账（试点）": "项目台账",
         "开票申请": "销项开票申请",
-        "开票登记": "进项发票登记",
+        "开票登记": "销项发票登记",
         "进项上报": "进项税额上报",
     }
 

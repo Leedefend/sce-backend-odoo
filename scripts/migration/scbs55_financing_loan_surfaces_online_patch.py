@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import gzip
 import json
+import os
 import re
 from datetime import datetime
 from pathlib import Path
@@ -77,7 +78,7 @@ SPECS = {
 
 
 def clean(value: object) -> str:
-    if value in (None, False):
+    if value is None or value is False:
         return ""
     text = re.sub(r"\s+", " ", str(value).replace("\u3000", " ").strip())
     return "" if text in {"False", "false", "None", "NULL"} else text
@@ -124,6 +125,10 @@ def visible_number(value: object) -> str:
     except ValueError:
         return text
     return ("%.2f" % number).rstrip("0").rstrip(".")
+
+
+def visible_attachment(value: object) -> str:
+    return "历史附件" if clean(value) else ""
 
 
 def state_label(value: object) -> str:
@@ -228,7 +233,7 @@ def visible_values(seq: int, row: dict[str, Any]) -> dict[str, str]:
         "贷款利息": visible_number(row.get("DKLX")),
         "还款账户": clean(row.get("HKZH")),
         "填写人": clean(row.get("TXR")),
-        "附件": clean(row.get("f_FJ") or row.get("FJ")),
+        "附件": visible_attachment(row.get("f_FJ") or row.get("FJ")),
         "录入人": clean(row.get("LRR")),
         "录入时间": clean(row.get("LRSJ")),
     }
@@ -261,6 +266,7 @@ def loan_vals(seq: int, spec: dict[str, Any], row: dict[str, Any], key: str) -> 
         "legacy_counterparty_id": clean(row.get("WLDWID")),
         "legacy_counterparty_name": clean(row.get("WLDWMC") or row.get("JKR")),
         "legacy_amount_field": "HKJE" if seq in (23, 38) else "JKJE/DKJE",
+        "legacy_attachment_ref": clean(row.get("f_FJ") or row.get("FJ")),
         "creator_legacy_user_id": clean(row.get("LRRID")),
         "creator_name": clean(row.get("LRR")),
         "created_time": parse_dt(row.get("LRSJ")),
@@ -412,8 +418,23 @@ def import_surface(seq: int) -> dict[str, Any]:
     }
 
 
+def selected_sequences() -> list[int]:
+    raw = os.getenv("SCBS55_FINANCING_SURFACE_SEQS") or os.getenv("SCBS55_FINANCING_SURFACE_SEQ") or ""
+    if not raw:
+        return sorted(SPECS)
+    seqs: list[int] = []
+    for item in re.split(r"[,，;；\s]+", raw):
+        if not item:
+            continue
+        seq = int(item)
+        if seq not in SPECS:
+            raise RuntimeError({"unsupported_financing_surface_seq": seq, "supported": sorted(SPECS)})
+        seqs.append(seq)
+    return sorted(set(seqs))
+
+
 ensure_payload_table()
-results = [import_surface(seq) for seq in sorted(SPECS)]
+results = [import_surface(seq) for seq in selected_sequences()]
 out = Path("/tmp/scbs55_financing_loan_surfaces_online_patch_result.json")
 out.write_text(json.dumps({"results": results}, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 env.cr.commit()  # noqa: F821

@@ -212,6 +212,8 @@ export function buildEntryTargetRouteTarget(
   const refs = entryTargetRefs(entryTarget);
   const menuId = positiveInteger(options.menuId) ?? positiveInteger(refs.menu_id);
   const actionId = positiveInteger(options.actionId) ?? entryTargetActionId(entryTarget);
+  const domainRaw = firstQueryValue(normalizedQuery.domain_raw) || firstQueryValue(refs.domain_raw);
+  const contextRaw = firstQueryValue(normalizedQuery.context_raw) || firstQueryValue(refs.context_raw);
   if (type === 'scene') {
     const sceneKey = entryTargetSceneKey(entryTarget);
     return buildCanonicalSceneRouteTarget(sceneKey, {
@@ -225,6 +227,8 @@ export function buildEntryTargetRouteTarget(
     ...normalizedQuery,
     menu_id: menuId,
     action_id: actionId,
+    domain_raw: domainRaw || undefined,
+    context_raw: contextRaw || undefined,
   });
   const route = String(entryTarget?.route || '').trim();
   if (type === 'compatibility' && route && !actionId) {

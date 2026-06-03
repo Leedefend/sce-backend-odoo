@@ -127,6 +127,22 @@
             ])]"/>
         </record>
 
+        <record id="action_sc_joint_self_funding_advance_income" model="ir.actions.act_window">
+            <field name="name">自筹垫付收入</field>
+            <field name="res_model">sc.legacy.self.funding.fact</field>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_sc_self_funding_advance_income_tree"/>
+            <field name="search_view_id" ref="view_sc_legacy_self_funding_fact_search"/>
+            <field name="domain">[('active', '=', True), ('line_type', '=', 'income_visible'), ('source_table', '=', 'online_old_scbs:C_JFHKLR:self_funding_income')]</field>
+            <field name="context">{'create': False, 'edit': False, 'delete': False}</field>
+            <field name="groups_id" eval="[(6, 0, [
+                ref('smart_construction_core.group_sc_cap_business_initiator'),
+                ref('smart_construction_core.group_sc_cap_finance_read'),
+                ref('smart_construction_core.group_sc_cap_finance_user'),
+                ref('smart_construction_core.group_sc_cap_finance_manager')
+            ])]"/>
+        </record>
+
         <record id="action_sc_self_funding_advance_refund" model="ir.actions.act_window">
             <field name="name">自筹垫付退回</field>
             <field name="res_model">sc.legacy.self.funding.fact</field>
@@ -134,6 +150,22 @@
             <field name="view_id" ref="view_sc_self_funding_advance_refund_tree"/>
             <field name="search_view_id" ref="view_sc_legacy_self_funding_fact_search"/>
             <field name="domain">[('line_type', '=', 'refund_visible')]</field>
+            <field name="context">{'create': False, 'edit': False, 'delete': False}</field>
+            <field name="groups_id" eval="[(6, 0, [
+                ref('smart_construction_core.group_sc_cap_business_initiator'),
+                ref('smart_construction_core.group_sc_cap_finance_read'),
+                ref('smart_construction_core.group_sc_cap_finance_user'),
+                ref('smart_construction_core.group_sc_cap_finance_manager')
+            ])]"/>
+        </record>
+
+        <record id="action_sc_joint_self_funding_advance_refund" model="ir.actions.act_window">
+            <field name="name">自筹垫付退回</field>
+            <field name="res_model">sc.legacy.self.funding.fact</field>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_sc_self_funding_advance_refund_tree"/>
+            <field name="search_view_id" ref="view_sc_legacy_self_funding_fact_search"/>
+            <field name="domain">[('active', '=', True), ('line_type', '=', 'refund_visible'), ('source_table', '=', 'online_old_scbs:C_JFHKLR_TH_ZCDF:self_funding_refund')]</field>
             <field name="context">{'create': False, 'edit': False, 'delete': False}</field>
             <field name="groups_id" eval="[(6, 0, [
                 ref('smart_construction_core.group_sc_cap_business_initiator'),

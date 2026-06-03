@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import csv
+import gzip
 import json
 import os
 import re
@@ -32,6 +33,12 @@ def clean_decimal(value: object) -> str:
     return format(number.normalize(), "f")
 
 
+def clean_decimal_autozero(row: dict[str, object], key: str) -> str:
+    if key in row and clean(row.get(key)) == "":
+        return "0"
+    return clean_decimal(row.get(key))
+
+
 def source_csv() -> Path:
     candidates = [
         os.getenv("PAYMENT_REQUEST_RAW_CSV"),
@@ -44,6 +51,13 @@ def source_csv() -> Path:
         if candidate and Path(candidate).exists():
             return Path(candidate)
     raise RuntimeError({"payment_request_raw_csv_missing": [item for item in candidates if item]})
+
+
+def source_path() -> Path:
+    explicit = os.getenv("PAYMENT_REQUEST_RAW_SOURCE") or os.getenv("PAYMENT_REQUEST_RAW_JSON")
+    if explicit and Path(explicit).exists():
+        return Path(explicit)
+    return source_csv()
 
 
 def ensure_allowed_db() -> None:
@@ -72,21 +86,29 @@ for column in (
     add_column(column)
 
 Request = env["payment.request"].sudo().with_context(active_test=False)  # noqa: F821
-path = source_csv()
+path = source_path()
 
 rows_by_id: dict[str, dict[str, str]] = {}
-with path.open("r", encoding="utf-8-sig", newline="") as handle:
-    sample = handle.read(4096)
-    handle.seek(0)
-    try:
-        dialect = csv.Sniffer().sniff(sample, delimiters=",|\t") if sample else csv.excel
-    except csv.Error:
-        dialect = csv.excel()
-        dialect.delimiter = "|"
-    for row in csv.DictReader(handle, dialect=dialect):
+if path.suffix == ".gz" or path.name.endswith(".json.gz"):
+    with gzip.open(path, "rt", encoding="utf-8") as handle:
+        payload = json.load(handle)
+    for row in payload.get("rows") or []:
         legacy_id = clean(row.get("Id"))
         if legacy_id:
             rows_by_id[legacy_id] = dict(row)
+else:
+    with path.open("r", encoding="utf-8-sig", newline="") as handle:
+        sample = handle.read(4096)
+        handle.seek(0)
+        try:
+            dialect = csv.Sniffer().sniff(sample, delimiters=",|\t") if sample else csv.excel
+        except csv.Error:
+            dialect = csv.excel()
+            dialect.delimiter = "|"
+        for row in csv.DictReader(handle, dialect=dialect):
+            legacy_id = clean(row.get("Id"))
+            if legacy_id:
+                rows_by_id[legacy_id] = dict(row)
 
 records = Request.search([("legacy_source_table", "=", "C_ZFSQGL"), ("legacy_record_id", "in", list(rows_by_id))])
 updated = 0
@@ -121,7 +143,7 @@ for record in records:
         "legacy_visible_cost_category_name": clean(row.get("f_CBFLMC")),
         "legacy_visible_remark": clean(row.get("f_Remark")),
         "legacy_visible_amount_uppercase": clean(row.get("JEDX")),
-        "legacy_visible_actual_paid_amount": clean_decimal(row.get("f_SFJE")),
+        "legacy_visible_actual_paid_amount": clean_decimal_autozero(row, "FKJE") or clean_decimal(row.get("f_SFJE")),
         "legacy_visible_available_balance": clean_decimal(row.get("SJKYYE")) or clean_decimal(row.get("ZMYE")),
         "legacy_payment_account_name": clean(row.get("FKZHMC")),
         "legacy_payment_account_no": clean(row.get("FKZH")),
@@ -146,7 +168,7 @@ payload = {
     "status": "PASS",
     "mode": "payment_request_visible_history_backfill_write",
     "database": env.cr.dbname,  # noqa: F821
-    "source_csv": str(path),
+    "source_path": str(path),
     "source_rows": len(rows_by_id),
     "matched_records": len(records),
     "updated_records": updated,

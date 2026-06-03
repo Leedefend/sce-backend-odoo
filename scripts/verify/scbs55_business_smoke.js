@@ -56,7 +56,7 @@ const DEFAULT_MENUS = [
   ['收款', '到款确认表', 701, 783, 'sc.legacy.fund.confirmation.document'],
   ['资金日报', '资金日报表', 703, 598, 'sc.legacy.fund.daily.line'],
   ['发票税务', '开票申请', 707, 630, 'sc.invoice.registration'],
-  ['发票税务', '开票登记', 708, 630, 'sc.invoice.registration'],
+  ['发票税务', '销项发票登记', 708, 630, 'sc.invoice.registration'],
   ['发票税务', '预缴税款', 709, 759, 'sc.invoice.registration'],
   ['发票税务', '进项上报', 710, 589, 'sc.legacy.invoice.tax.fact'],
   ['发票税务', '抵扣登记', 711, 761, 'sc.tax.deduction.registration'],

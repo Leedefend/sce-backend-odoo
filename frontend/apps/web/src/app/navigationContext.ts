@@ -7,6 +7,7 @@ export const CONTRACT_NAV_QUERY_KEYS = [
   'surface',
   'scene',
   'scene_key',
+  'domain_raw',
   'context_raw',
   'preset',
   'preset_filter',

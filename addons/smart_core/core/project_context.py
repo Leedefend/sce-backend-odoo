@@ -23,6 +23,10 @@ BUSINESS_SCOPE_EXEMPT_MODELS = {
     "sc.document.admin.document",
     "sc.hr.payroll.document",
     "sc.legacy.user.profile",
+    # Partner master data is validated as a cross-project customer/supplier
+    # corpus. Project/operation context belongs to business facts, not to the
+    # productized customer and supplier master-data entries.
+    "res.partner",
 }
 
 

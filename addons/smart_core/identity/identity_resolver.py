@@ -316,6 +316,21 @@ class IdentityResolver:
             return meta_xmlid
         return ""
 
+    def _node_has_nav_target(self, node: dict) -> bool:
+        if not isinstance(node, dict):
+            return False
+        meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+        return bool(
+            node.get("route")
+            or node.get("scene_key")
+            or node.get("action_id")
+            or node.get("model")
+            or meta.get("route")
+            or meta.get("scene_key")
+            or meta.get("action_id")
+            or meta.get("model")
+        )
+
     def filter_nav_for_role_surface(self, nav_tree: list, role_surface: dict) -> list:
         if not isinstance(nav_tree, list) or not isinstance(role_surface, dict):
             return nav_tree if isinstance(nav_tree, list) else []
@@ -348,6 +363,8 @@ class IdentityResolver:
 
             out = dict(node)
             out["children"] = kept_children
+            if not kept_children and not self._node_has_nav_target(out):
+                return None, (has_explicit_allow or has_allowed_descendant or current_allowed)
             return out, (has_explicit_allow or has_allowed_descendant or current_allowed)
 
         filtered = []

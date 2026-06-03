@@ -93,5 +93,6 @@ from . import legacy_invoice_cost_progress_report_fact
 from . import legacy_engineering_progress_receipt
 from . import legacy_project_operation_report_fact
 from . import legacy_ar_ap_report_fact
+from . import partner_business_fact_line
 from . import runtime_user_management
 from . import product_policy_sync

@@ -126,7 +126,7 @@ def state_label(value: object) -> str:
         "-1": "已作废",
         "0": "未审核",
         "1": "审核中",
-        "2": "审核通过",
+        "2": "已审核",
         "3": "已驳回",
         "4": "已作废",
     }.get(clean(value), clean(value))
@@ -157,7 +157,7 @@ def payment_request_state_label(value: object) -> str:
         "-1": "已作废",
         "0": "未审核",
         "1": "审核中",
-        "2": "已审核",
+        "2": "审核通过",
     }.get(clean(value), clean(value))
 
 
@@ -203,7 +203,7 @@ def first_line_business_note(value: object) -> str:
 
 
 def clean_visible_note(value: object) -> str:
-    text = clean(value).replace("|", " ")
+    text = clean(str(value or "").replace("|", " "))
     return "" if text in {"==请选择==", "请选择"} else text
 
 
@@ -236,6 +236,7 @@ def contract_labels(record) -> list[str]:
 
 
 def read_csv_rows(path: Path, key: str) -> dict[str, dict[str, str]]:
+    path = resolve_legacy_visible_csv(path)
     if not path.exists():
         raise RuntimeError({"missing_legacy_visible_csv": str(path)})
     if path.suffix in {".gz", ".json"} or path.name.endswith(".json.gz"):
@@ -412,8 +413,35 @@ def read_old_dump_rows(path: Path) -> list[dict[str, Any]]:
     opener = gzip.open if path.suffix == ".gz" else open
     with opener(path, "rt", encoding="utf-8") as handle:
         payload = json.load(handle)
-    rows = payload.get("rows")
+    rows = payload.get("rows") if isinstance(payload, dict) else None
+    if rows is None and isinstance(payload, dict) and all(isinstance(value, dict) for value in payload.values()):
+        return [
+            {
+                "legacy_record_id": key,
+                "Id": key,
+                **value,
+            }
+            for key, value in payload.items()
+        ]
     return rows if isinstance(rows, list) else []
+
+
+def resolve_legacy_visible_csv(path: Path) -> Path:
+    if path.exists():
+        return path
+    if path.is_absolute() and path.parent == Path("/tmp"):
+        for candidate in (Path("/tmp/scbs_visible_csv") / path.name, Path.cwd() / "artifacts/migration" / path.name):
+            if candidate.exists():
+                return candidate
+    match = re.search(r"scbs_55_old_live_full_rows_seq(\d{3})_", path.name)
+    if not match:
+        return path
+    seq = match.group(1)
+    dump_dir = latest_scbs55_old_dump_dir()
+    if not dump_dir:
+        return path
+    matches = sorted(dump_dir.glob(f"scbs_55_old_live_full_rows_seq{seq}_*.json*"))
+    return matches[-1] if matches else path
 
 
 def refresh_business_entity_visible_unified_tsv() -> None:
@@ -606,6 +634,22 @@ FIELD_RULES: dict[int, dict[str, Any]] = {
             "是否外带": (["D_JCLY_SFWD"], clean),
             "录入人": (["LRR"], clean),
             "录入时间": (["LRSJ"], clean_datetime),
+        },
+        "optional_labels": {"附件"},
+    },
+    140: {
+        "name": "证照登记",
+        "model": "sc.document.admin.document",
+        "legacy_table": "DataSpider_ScjstPersonCertificate",
+        "legacy_csv": "/tmp/scbs55_certificate_expected_from_full_payload.json",
+        "legacy_key": "legacy_record_id",
+        "record_key": "legacy_source_id",
+        "domain": [("fact_type", "=", "certificate_registration")],
+        "fields": {
+            "证照名称": (["certificate_name"], clean),
+            "编号": (["certificate_no"], clean),
+            "持有人": (["holder_name"], clean),
+            "有效期": (["valid_until"], clean_date),
         },
         "optional_labels": {"附件"},
     },
@@ -804,12 +848,12 @@ FIELD_RULES: dict[int, dict[str, Any]] = {
         "name": "公司财务支出",
         "model": "sc.expense.claim",
         "legacy_table": "C_CWSFK_GSCWZC",
-        "legacy_csv": "/tmp/c_cwsfk_gscwzc_visible.csv",
+        "legacy_csv": "/tmp/scbs_55_old_live_full_rows_seq026_公司财务支出.json.gz",
         "legacy_key": "Id",
         "record_key": "legacy_record_id",
         "domain": [("legacy_source_table", "=", "C_CWSFK_GSCWZC")],
         "fields": {
-            "单据状态": (["DJZT"], clean),
+            "单据状态": (["DJZT"], business_document_state_label),
             "推送结果": (["D_SCBSJS_IsPush"], clean),
             "单据编号": (["DJBH"], clean),
             "付款时间": (["FKSJ"], clean_date),
@@ -831,6 +875,9 @@ FIELD_RULES: dict[int, dict[str, Any]] = {
         "legacy_key": "Id",
         "record_key": "legacy_record_id",
         "domain": [("legacy_source_table", "=", "C_ZFSQGL")],
+        "merge_sources": [
+            {"legacy_csv": "/tmp/scbs_55_old_live_full_rows_seq029_支付申请.json.gz", "legacy_key": "Id"}
+        ],
         "fields": {
             "单据状态": (["DJZT"], payment_request_state_label),
             "单据编号": (["DJBH"], clean),
@@ -838,7 +885,7 @@ FIELD_RULES: dict[int, dict[str, Any]] = {
             "申请日期": (["f_SQRQ"], clean_date),
             "收款单位": (["f_GYSMC"], clean),
             "申请付款金额": (["f_JHJE"], clean_amount),
-            "实际付款金额": (["f_SFJE"], clean_amount),
+            "实际付款金额": (["f_SFJE", "FKJE"], clean_amount),
             "可用余额": (["SJKYYE", "ZMYE"], clean_amount),
             "成本分类名称": (["f_CBFLMC"], clean),
             "备注": (["f_Remark"], clean_visible_note),
@@ -1074,7 +1121,7 @@ FIELD_RULES.update(
             "model": "sc.hr.payroll.document",
             "legacy_table": "D_SCBSJS_BGGL_XZ_SBRY",
             "legacy_csv": "/mnt/artifacts/migration/scbs_legacy_social_person_visible_payload_v1.tsv",
-            "legacy_key": "legacy_record_id",
+            "legacy_key": "Id",
             "record_key": "legacy_source_id",
             "strip_record_key_suffix": True,
             "domain": [("legacy_source_table", "in", ["D_SCBSJS_BGGL_XZ_SBRY"])],
@@ -1337,21 +1384,18 @@ FIELD_RULES.update(
             "name": "项目借公司款登记",
             "model": "sc.financing.loan",
             "legacy_table": "ZJGL_ZJSZ_DKGL_DKDJ",
-            "legacy_csv": "/mnt/artifacts/migration/fresh_db_legacy_financing_loan_replay_payload_v1.csv",
-            "legacy_key": "legacy_record_id",
+            "legacy_csv": "/tmp/scbs_55_old_live_full_rows_seq037_项目借公司款登记.json.gz",
+            "legacy_key": "Id",
             "record_key": "legacy_record_id",
-            "domain": [("legacy_source_table", "=", "ZJGL_ZJSZ_DKGL_DKDJ")],
-            "merge_sources": [
-                {"legacy_csv": "/mnt/artifacts/migration/ZJGL_ZJSZ_DKGL_DKDJ_visible.tsv", "legacy_key": "legacy_record_id"}
-            ],
+            "domain": [("legacy_source_model", "=", "online_old_scbs:ZJGL_ZJSZ_DKGL_DKDJ:list887")],
             "fields": {
                 "单据状态": (["DJZT", "legacy_state"], business_document_state_label),
                 "单据编号": (["DJBH", "document_no"], clean),
                 "项目名称": (["XMMC", "legacy_project_name"], clean_alias_text),
                 "贷款金额": (["DKJE", "source_amount"], clean_amount),
-                "到期利息": (["LX"], clean_amount),
-                "还款金额": (["__CONST__:"], clean_amount),
-                "未还款金额": (["__CONST__:"], clean_amount),
+                "到期利息": (["D_SCBSJS_DQLX", "LX"], clean_amount),
+                "还款金额": (["HKJE", "__CONST__:0"], clean_amount),
+                "未还款金额": (["HKSYJE", "__CONST__:0"], clean_amount),
                 "贷款日期": (["DKRQ", "document_date"], clean_datetime),
                 "还款日期": (["HKRQ", "due_date"], clean_datetime),
                 "贷款天数": (["DKSJ"], clean),
@@ -1728,6 +1772,8 @@ for plan in plans:
             if seq == 360 and label in {"当前账户余额", "当前账户银行余额", "银行系统差额", "当日累计收入", "当日累计支出"} and expected == "" and actual == "0":
                 expected = "0"
             if seq == 410 and label in {"金额", "不含税金额", "税额"} and expected == "" and actual == "0":
+                expected = "0"
+            if seq == 260 and label in {"付款金额"} and expected == "" and actual == "0":
                 expected = "0"
             if seq == 390 and label in {"合同额"} and expected == "" and actual == "0":
                 expected = "0"

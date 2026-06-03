@@ -1006,15 +1006,20 @@ function semanticCell(field: string, value: unknown) {
   const numericText = formatNumericCellValue(field, raw);
   const fieldType = String(option?.type || '').trim().toLowerCase();
   const rawText = typeof raw === 'string' ? raw : '';
+  const rawTrimmedText = rawText.trim();
   const attachmentText = rawText && /\|\s*(?:legacy-file-id|legacy-file|https?|file):\/\//i.test(rawText)
     ? formatAttachmentReferenceValue(rawText)
     : '';
   const text = selectionText
     || (raw === null || raw === undefined || raw === ''
-      ? '--'
+      ? (isNumericDisplayColumn(field) ? '0' : '--')
+      : (raw === false && isNumericDisplayColumn(field)
+        ? '0'
+      : (rawTrimmedText === '--' && isNumericDisplayColumn(field)
+        ? '0'
       : (typeof raw === 'boolean'
         ? (fieldType === 'boolean' ? uiLabel(raw ? 'boolean_true' : 'boolean_false', raw ? '是' : '否') : '--')
-        : attachmentText || numericText || String(raw)));
+        : attachmentText || numericText || String(raw)))));
   const toneKey = String(raw ?? '').trim();
   const tone = option?.cellRole === 'status'
     ? (option.toneByValue?.[toneKey] || 'neutral')
@@ -1872,6 +1877,16 @@ const pageVisibleRows = computed(() => {
 function isNumericColumn(field: string) {
   const type = String(columnOption(field)?.type || '').trim();
   return type === 'integer' || type === 'float' || type === 'monetary';
+}
+
+function isNumericDisplayColumn(field: string) {
+  if (isNumericColumn(field)) return true;
+  const label = columnLabel(field).trim();
+  if (!label) return false;
+  if (/编号|单号|号码|账号|代码|日期|时间|状态|是否|项目|名称|单位|人员|录入人|附件|备注|类型/.test(label)) {
+    return false;
+  }
+  return /金额|税额|总额|余额|收入|支出|价税|含税|不含税|附加税|抵扣|付款|收款|借款|还款|未还款|利息|保证金|合同价|控制价|单价|数量|税率|累计|本期|已退|未退|张数|份数|天数/.test(label);
 }
 
 function numericCellValue(value: unknown) {

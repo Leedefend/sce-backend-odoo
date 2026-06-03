@@ -99,18 +99,24 @@ class ResPartner(models.Model):
     sc_registered_capital = fields.Char(string="注册资本")
     sc_business_scope = fields.Text(string="经营范围")
     sc_default_tax_rate = fields.Float(string="默认税率%", digits=(16, 4))
-    sc_default_tax_rate_text = fields.Char(string="历史税率文本")
+    sc_default_tax_rate_text = fields.Char(string="税率文本")
     sc_source_partner_code = fields.Char(string="单位编号", index=True)
     sc_source_document_state = fields.Char(string="单据状态", index=True)
     sc_source_push_result = fields.Char(string="推送结果", index=True)
     sc_source_project_name = fields.Text(string="项目名称")
     sc_source_cooperation_type = fields.Char(string="合作类型", index=True)
     sc_source_fact_count = fields.Integer(string="业务事实数")
-    sc_source_fact_source = fields.Char(string="业务事实来源")
+    sc_source_fact_source = fields.Char(string="关联业务范围")
     sc_source_receipt_amount = fields.Float(string="收款金额", digits=(16, 2))
     sc_source_payment_amount = fields.Float(string="付款金额", digits=(16, 2))
     sc_source_created_by = fields.Char(string="录入人")
     sc_source_created_at = fields.Char(string="录入时间")
+    sc_business_fact_line_ids = fields.One2many(
+        "sc.partner.business.fact.line",
+        "partner_id",
+        string="关联业务明细",
+        readonly=True,
+    )
     sc_supplier_note = fields.Text(string="供应商备注")
     sc_business_role_label = fields.Char(string="业务身份", compute="_compute_sc_business_display", store=True, readonly=True)
     sc_business_fact_basis = fields.Char(string="业务依据", compute="_compute_sc_business_display", store=True, readonly=True)
@@ -226,6 +232,25 @@ class ResPartner(models.Model):
                 partner.sc_legacy_source_label = source
             else:
                 partner.sc_legacy_source_label = ""
+
+    def action_open_sc_partner_business_fact_lines(self):
+        self.ensure_one()
+        action = self.env["ir.actions.actions"]._for_xml_id(
+            "smart_construction_core.action_sc_partner_business_fact_line"
+        )
+        context = action.get("context") if isinstance(action.get("context"), dict) else {}
+        action.update(
+            {
+                "domain": [("partner_id", "=", self.id)],
+                "context": {
+                    **context,
+                    "search_default_group_source_label": 1,
+                    "default_partner_id": self.id,
+                },
+                "target": "current",
+            }
+        )
+        return action
 
     @api.model
     def _sc_fact_model(self, model_name):

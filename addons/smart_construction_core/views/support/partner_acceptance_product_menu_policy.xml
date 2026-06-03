@@ -1,0 +1,63 @@
+<odoo>
+    <data noupdate="0">
+        <record id="menu_config_policy_partner_acceptance_customer" model="ui.menu.config.policy">
+            <field name="company_id" ref="base.main_company"/>
+            <field name="menu_id" ref="smart_construction_core.menu_sc_customer_partner"/>
+            <field name="custom_label">客户</field>
+            <field name="sequence_override">1</field>
+            <field name="visible">1</field>
+            <field name="active">1</field>
+            <field name="note">第一批产品化数据验收入口：客户主数据。</field>
+        </record>
+
+        <record id="menu_config_policy_partner_acceptance_supplier" model="ui.menu.config.policy">
+            <field name="company_id" ref="base.main_company"/>
+            <field name="menu_id" ref="smart_construction_core.menu_sc_supplier_partner"/>
+            <field name="custom_label">供应商</field>
+            <field name="sequence_override">2</field>
+            <field name="visible">1</field>
+            <field name="active">1</field>
+            <field name="note">第一批产品化数据验收入口：供应商主数据。</field>
+        </record>
+
+        <record id="menu_config_policy_partner_acceptance_hide_import_review" model="ui.menu.config.policy">
+            <field name="company_id" ref="base.main_company"/>
+            <field name="menu_id" ref="smart_construction_core.menu_sc_partner_import_review"/>
+            <field name="visible">0</field>
+            <field name="active">1</field>
+            <field name="note">第一批产品化数据验收阶段暂不向用户展示导入复核入口。</field>
+        </record>
+
+        <record id="menu_config_policy_partner_acceptance_hide_customer_ar" model="ui.menu.config.policy">
+            <field name="company_id" ref="base.main_company"/>
+            <field name="menu_id" ref="smart_construction_core.menu_sc_ar_ap_project_summary"/>
+            <field name="visible">0</field>
+            <field name="active">1</field>
+            <field name="note">第一批产品化数据验收阶段暂不展示客户账款入口。</field>
+        </record>
+
+        <record id="menu_config_policy_partner_acceptance_hide_supplier_ar" model="ui.menu.config.policy">
+            <field name="company_id" ref="base.main_company"/>
+            <field name="menu_id" ref="smart_construction_core.menu_sc_ar_ap_company_summary"/>
+            <field name="visible">0</field>
+            <field name="active">1</field>
+            <field name="note">第一批产品化数据验收阶段暂不展示供应商账款入口。</field>
+        </record>
+
+        <record id="menu_config_policy_partner_acceptance_hide_supplier_pricing_history" model="ui.menu.config.policy">
+            <field name="company_id" ref="base.main_company"/>
+            <field name="menu_id" ref="smart_construction_core.menu_sc_legacy_supplier_contract_pricing_fact"/>
+            <field name="visible">0</field>
+            <field name="active">1</field>
+            <field name="note">第一批产品化数据验收阶段暂不展示历史供应商合同计价方式入口。</field>
+        </record>
+
+        <record id="menu_config_policy_partner_acceptance_hide_supplier_pricing_fact" model="ui.menu.config.policy">
+            <field name="company_id" ref="base.main_company"/>
+            <field name="menu_id" ref="smart_construction_core.menu_sc_expense_contract_supplier_pricing_fact"/>
+            <field name="visible">0</field>
+            <field name="active">1</field>
+            <field name="note">第一批产品化数据验收阶段暂不展示供应商合同计价事实入口。</field>
+        </record>
+    </data>
+</odoo>

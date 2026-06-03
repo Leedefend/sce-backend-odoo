@@ -21,6 +21,8 @@ type ExecuteLoadDataRequestOptions = {
   groupSampleLimit: number;
   contractLimit: number;
   groupPageOffsets: Record<string, number>;
+  routeDomainRaw?: unknown;
+  routeContextRaw?: unknown;
   resolveEffectiveFilterDomainRaw: () => string;
   resolveEffectiveFilterDomain: () => unknown[];
   resolveEffectiveRequestContext: () => Dict;
@@ -88,6 +90,15 @@ type ExecuteLoadDataRequestResult =
       requestContextRaw: string;
       requestPayload: Dict;
     };
+
+function readRouteQueryValue(key: string): string {
+  if (typeof window === 'undefined') return '';
+  try {
+    return String(new URLSearchParams(window.location.search).get(key) || '').trim();
+  } catch {
+    return '';
+  }
+}
 
 export function useActionViewLoadRequestRuntime() {
   async function executeLoadDataRequest(options: ExecuteLoadDataRequestOptions): Promise<ExecuteLoadDataRequestResult> {
@@ -186,7 +197,9 @@ export function useActionViewLoadRequestRuntime() {
       model: options.resolvedModel,
       requestedFields,
       activeDomain,
-      effectiveFilterDomainRaw: options.resolveEffectiveFilterDomainRaw(),
+      effectiveFilterDomainRaw: String(options.routeDomainRaw || '').trim()
+        || readRouteQueryValue('domain_raw')
+        || options.resolveEffectiveFilterDomainRaw(),
       activeGroupByField: options.activeGroupByField,
       listOffset: options.listOffset,
       groupWindowOffset: options.groupWindowOffset,
@@ -194,7 +207,9 @@ export function useActionViewLoadRequestRuntime() {
       contractLimit: options.contractLimit,
       groupPageOffsets: options.groupPageOffsets,
       requestContext,
-      requestContextRaw,
+      requestContextRaw: String(options.routeContextRaw || '').trim()
+        || readRouteQueryValue('context_raw')
+        || requestContextRaw,
       searchTerm: options.searchTerm,
       order: options.sortLabel,
     });

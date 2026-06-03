@@ -5,13 +5,14 @@ from __future__ import annotations
 
 import gzip
 import json
+import os
 import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 
-INPUT = Path("/tmp/scbs_55_old_live_full_rows_seq042_进项上报.json.gz")
+INPUT = Path(os.getenv("SCBS55_INPUT_INVOICE_SURFACE_INPUT") or "/tmp/scbs_55_old_live_full_rows_seq042_进项上报.json.gz")
 SURFACE = "online_old_scbs:C_JXXP_ZYFPJJD:list892"
 TABLE = "C_JXXP_ZYFPJJD"
 LABELS = [
@@ -59,8 +60,8 @@ def number_text(value: object) -> str:
 
 def attachment_refs(row: dict[str, Any]) -> str:
     refs = [
-        clean(row.get("FJ$C_JXXP_ZYFPJJD_CB")),
         clean(row.get("FJ")),
+        clean(row.get("FJ$C_JXXP_ZYFPJJD_CB")),
     ]
     return " ".join(item for item in dict.fromkeys(refs) if item)
 
@@ -114,7 +115,7 @@ def write_payload(record, payload: dict[str, str]) -> None:
 def visible(row: dict[str, Any]) -> dict[str, str]:
     values = {
         "状态": state_label(row.get("DJZT")),
-        "推送结果": clean(row.get("TSJG") or row.get("D_SCBSJS_IsPush")),
+        "推送结果": clean(row.get("TSJG")),
         "金蝶单据编号": clean(row.get("OTHER_SYSTEM_CODE") or row.get("OTHER_SYSTEM_CODE$C_JXXP_ZYFPJJD_CB")),
         "发票公司类型": clean(row.get("D_SCBSJS_FPGSLX$C_JXXP_ZYFPJJD_CB") or row.get("D_SCBSJS_FPGSLX")),
         "单据编号": clean(row.get("DJBH")),
