@@ -90,7 +90,7 @@
                   action="smart_construction_core.action_scbsly_direct_acceptance_material_plan"
                   sequence="10"/>
         <menuitem id="menu_scbsly_acceptance_material_quote"
-                  name="报价单"
+                  name="材料报价单"
                   parent="smart_construction_core.menu_scbsly_direct_project_acceptance_materials"
                   action="smart_construction_core.action_scbsly_direct_acceptance_material_quote"
                   sequence="20"/>
