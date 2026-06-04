@@ -71,6 +71,13 @@ def state_label(value, fallback=""):
     return {"2": "已审核", "1": "审核中", "0": "未审核", "-1": "已驳回"}.get(clean(value), clean(value))
 
 
+def attachment_display(row, display_field="f_FJ", raw_field="FJ"):
+    display = clean(row.get(display_field))
+    if display:
+        return display
+    return "附件(1)" if clean(row.get(raw_field)) else ""
+
+
 def sha256_file(path):
     digest = hashlib.sha256()
     with path.open("rb") as handle:
@@ -357,6 +364,9 @@ def replay_engineering_progress(rows_by_key):
             "partner_id": partner_id_for(clean(row.get("WLDWID")), clean(row.get("WLDWMC"))),
             "legacy_partner_id": clean(row.get("WLDWID")),
             "legacy_partner_name": clean(row.get("WLDWMC")),
+            "legacy_company_name": clean(row.get("SSGS")),
+            "legacy_contract_no": clean(row.get("SGHTBH")),
+            "legacy_attachment_ref": attachment_display(row),
             "source_amount": amount(row.get("f_JE")),
             "creator_legacy_user_id": clean(row.get("LRRID")),
             "creator_name": clean(row.get("LRR")),
