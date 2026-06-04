@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import re
+
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
@@ -44,6 +46,27 @@ class ScSettlementOrder(models.Model):
         string="结算类型",
         default="out",
     )
+    expense_contract_category_id = fields.Many2one(
+        "sc.dictionary",
+        string="合同分类",
+        related="contract_id.expense_contract_category_id",
+        store=True,
+        readonly=True,
+        index=True,
+    )
+    settlement_category_id = fields.Many2one(
+        "sc.dictionary",
+        string="结算类型",
+        domain=[("type", "=", "expense_contract_category")],
+        index=True,
+    )
+    legacy_settlement_category = fields.Char(string="迁移结算类型", index=True)
+    settlement_category_display = fields.Char(
+        string="结算类型",
+        compute="_compute_settlement_category_display",
+        store=True,
+        index=True,
+    )
     settlement_stage = fields.Selection(
         [
             ("plan", "结算计划"),
@@ -81,6 +104,7 @@ class ScSettlementOrder(models.Model):
         compute="_compute_amount_total",
         store=True,
     )
+    settlement_amount = fields.Monetary(string="结算金额", currency_field="currency_id", index=True)
     contract_subject = fields.Char(
         string="合同名称",
         related="contract_id.subject",
@@ -97,6 +121,15 @@ class ScSettlementOrder(models.Model):
     submitted_amount = fields.Monetary(string="送审金额", currency_field="currency_id")
     approved_amount = fields.Monetary(string="审定金额", currency_field="currency_id")
     requested_fund_amount = fields.Monetary(string="申请资金金额", currency_field="currency_id")
+    legacy_document_state = fields.Char(string="原始单据状态", index=True)
+    legacy_contract_no = fields.Char(string="合同编号", index=True)
+    settlement_period_start = fields.Date(string="起始结算日期", index=True)
+    settlement_period_end = fields.Date(string="终止结算日期", index=True)
+    legacy_payment_state = fields.Char(string="付款状态", index=True)
+    legacy_paid_amount = fields.Monetary(string="原始已付款金额", currency_field="currency_id")
+    legacy_unpaid_amount = fields.Monetary(string="原始未付款金额", currency_field="currency_id")
+    legacy_payment_request_state = fields.Char(string="支付申请状态", index=True)
+    legacy_unrequested_amount = fields.Monetary(string="原始未申请金额", currency_field="currency_id")
     engineering_address = fields.Char(
         string="工程地址",
         compute="_compute_contract_snapshot",
@@ -117,6 +150,7 @@ class ScSettlementOrder(models.Model):
         compute_sudo=True,
     )
     settlement_description = fields.Text(string="结算说明")
+    legacy_visible_attachment = fields.Char(string="附件", readonly=True)
     entry_user_id = fields.Many2one("res.users", string="录入人", default=lambda self: self.env.user, index=True)
     entry_data = fields.Char(string="录入数据")
     note = fields.Text(string="备注")
@@ -229,6 +263,12 @@ class ScSettlementOrder(models.Model):
         for order in self:
             order.amount_total = sum(order.line_ids.mapped("amount"))
 
+    @api.depends("settlement_category_id.name", "expense_contract_category_id.name")
+    def _compute_settlement_category_display(self):
+        for order in self:
+            category = order.settlement_category_id or order.expense_contract_category_id
+            order.settlement_category_display = category.name or ""
+
     @api.depends("settlement_type", "partner_id", "legacy_counterparty_name", "company_id.partner_id")
     def _compute_party_names(self):
         for order in self:
@@ -264,10 +304,16 @@ class ScSettlementOrder(models.Model):
                 ).mapped("amount")
             )
 
-    @api.depends("attachment_ids")
+    @api.depends("attachment_ids", "legacy_visible_attachment")
     def _compute_attachment_count(self):
         for order in self:
-            order.attachment_count = len(order.attachment_ids)
+            actual_count = len(order.attachment_ids)
+            if actual_count:
+                order.attachment_count = actual_count
+                continue
+            legacy_attachment = (order.legacy_visible_attachment or "").strip()
+            match = re.search(r"附件\((\d+)\)", legacy_attachment)
+            order.attachment_count = int(match.group(1)) if match else int(bool(legacy_attachment))
 
     @api.constrains("purchase_order_ids", "partner_id")
     def _check_po_vendor_consistency(self):
