@@ -109,7 +109,11 @@ class ScReceiptIncome(models.Model):
             "unique(legacy_source_model, legacy_record_id)",
             "Legacy receipt income source must be unique.",
         ),
-        ("amount_nonnegative", "CHECK(amount >= 0)", "Receipt amount must be non-negative."),
+        (
+            "amount_manual_nonnegative",
+            "CHECK(source_origin = 'legacy' OR amount >= 0)",
+            "Manual receipt amount must be non-negative.",
+        ),
     ]
 
     @api.model
