@@ -920,6 +920,51 @@ def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict], *, force: bo
     settlement_product_completion_count = ensure_required_settlement_product_children()
 
     next_children = []
+    if formal_group:
+        next_children.append(
+            {
+                **formal_group,
+                "key": "group:formal_master_data_acceptance",
+                "label": "基础资料核对",
+                "title": "基础资料核对",
+                "meta": {
+                    **(formal_group.get("meta") if isinstance(formal_group.get("meta"), dict) else {}),
+                    "group_key": "formal_master_data_acceptance",
+                    "source": "user_data_acceptance_master_data_projection",
+                    "acceptance_projection": True,
+                },
+            }
+        )
+    if contract_product_children:
+        next_children.append(
+            {
+                "key": "group:contract_data_acceptance",
+                "label": "合同数据核对",
+                "title": "合同数据核对",
+                "children": contract_product_children,
+                "meta": {
+                    "group_key": "contract_data_acceptance",
+                    "source": "user_data_acceptance_contract_data_projection",
+                    "source_labels": ["合同中心"],
+                    "acceptance_projection": True,
+                },
+            }
+        )
+    if settlement_product_children:
+        next_children.append(
+            {
+                "key": "group:settlement_data_acceptance",
+                "label": "结算数据核对",
+                "title": "结算数据核对",
+                "children": settlement_product_children,
+                "meta": {
+                    "group_key": "settlement_data_acceptance",
+                    "source": "user_data_acceptance_settlement_data_projection",
+                    "source_labels": ["结算中心", "合同中心", "物资与分包"],
+                    "acceptance_projection": True,
+                },
+            }
+        )
     if old_acceptance_children:
         next_children.append(
             {
