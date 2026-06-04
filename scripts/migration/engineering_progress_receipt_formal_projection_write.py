@@ -163,6 +163,7 @@ env.cr.execute(  # noqa: F821
     """
     INSERT INTO sc_receipt_income (
       name, source_origin, source_kind, state, project_id, partner_id,
+      operation_strategy,
       date_receipt, document_no, receipt_type, legacy_receipt_type, legacy_receipt_subtype,
       income_category, payment_method, receiving_account, amount, currency_id,
       legacy_source_model, legacy_source_table, legacy_record_id, legacy_document_state,
@@ -176,6 +177,7 @@ env.cr.execute(  # noqa: F821
       'legacy_confirmed',
       f.project_id,
       COALESCE(f.partner_id, partner_match.id),
+      f.operation_strategy,
       COALESCE(f.document_date, f.created_time::date, CURRENT_DATE),
       NULLIF(f.document_no, ''),
       '工程进度收款',
@@ -229,6 +231,7 @@ env.cr.execute(  # noqa: F821
       state = EXCLUDED.state,
       project_id = EXCLUDED.project_id,
       partner_id = EXCLUDED.partner_id,
+      operation_strategy = EXCLUDED.operation_strategy,
       date_receipt = EXCLUDED.date_receipt,
       document_no = EXCLUDED.document_no,
       receipt_type = EXCLUDED.receipt_type,
@@ -253,6 +256,26 @@ env.cr.execute(  # noqa: F821
     [currency_id, SOURCE_MODEL, SOURCE_TABLE, SOURCE_FAMILY],
 )
 upserted = env.cr.rowcount  # noqa: F821
+
+env.cr.execute(  # noqa: F821
+    """
+    UPDATE sc_receipt_income income
+       SET operation_strategy = fact.operation_strategy,
+           write_uid = 1,
+           write_date = NOW()
+      FROM sc_legacy_receipt_income_fact fact
+     WHERE fact.legacy_record_id = income.legacy_record_id
+       AND fact.legacy_source_table = %s
+       AND fact.source_family = %s
+       AND fact.operation_strategy IN ('direct', 'joint')
+       AND income.legacy_source_model = %s
+       AND income.legacy_source_table = %s
+       AND income.active
+       AND COALESCE(income.operation_strategy, '') <> COALESCE(fact.operation_strategy, '')
+    """,
+    [SOURCE_TABLE, SOURCE_FAMILY, SOURCE_MODEL, SOURCE_TABLE],
+)
+operation_strategy_synced = env.cr.rowcount  # noqa: F821
 env.cr.commit()  # noqa: F821
 
 projected_count = int(
@@ -392,6 +415,7 @@ payload = {
     "source_missing_project": source_missing_project,
     "expected_projected": expected_projected,
     "upserted": upserted,
+    "operation_strategy_synced": operation_strategy_synced,
     "superseded_old_active": superseded_old_active,
     "projected_active_count": projected_count,
     "active_coverage": active_coverage,
