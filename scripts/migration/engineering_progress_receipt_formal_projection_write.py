@@ -177,11 +177,11 @@ env.cr.execute(  # noqa: F821
       'legacy_confirmed',
       f.project_id,
       project.company_id,
-      COALESCE(f.partner_id, partner_match.id),
+      f.partner_id,
       f.operation_strategy,
       COALESCE(f.document_date, f.created_time::date, CURRENT_DATE),
       NULLIF(f.document_no, ''),
-      '工程进度收款',
+      NULLIF(f.receipt_type, ''),
       NULLIF(f.receipt_type, ''),
       NULLIF(f.receipt_subtype, ''),
       NULLIF(f.income_category, ''),
@@ -212,15 +212,6 @@ env.cr.execute(  # noqa: F821
       NOW()
     FROM sc_legacy_receipt_income_fact f
     JOIN project_project project ON project.id = f.project_id
-    LEFT JOIN LATERAL (
-      SELECT rp.id
-      FROM res_partner rp
-      WHERE rp.active
-        AND NULLIF(f.legacy_partner_name, '') IS NOT NULL
-        AND rp.name = f.legacy_partner_name
-      ORDER BY rp.id
-      LIMIT 1
-    ) partner_match ON TRUE
     WHERE f.legacy_source_table = %s
       AND f.source_family = %s
       AND f.operation_strategy IN ('direct', 'joint')
