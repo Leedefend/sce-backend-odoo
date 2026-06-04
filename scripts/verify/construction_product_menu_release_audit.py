@@ -7,6 +7,7 @@ import json
 PRODUCT_KEYS = ("construction.standard", "construction.preview")
 VISIBLE_CHECK_USERS = ("wutao", "demo_role_project_read", "sc_fx_pm")
 ALLOWED_HIDDEN_RELEASE_DOMAINS = {"internal_config"}
+TRUTHY_VALUES = {"1", "true", "yes", "on"}
 
 
 def _text(value):
@@ -15,6 +16,24 @@ def _text(value):
 
 def _external_id(record):
     return record.get_external_id().get(record.id, "") if record else ""
+
+
+def _assert_product_navigation_mode():
+    Param = env["ir.config_parameter"].sudo()  # noqa: F821
+    acceptance_only = Param.get_param("smart_core.nav.user_data_acceptance_only", "")
+    user_menu_config = Param.get_param("smart_core.nav.user_menu_config.enabled", "")
+    if _text(acceptance_only).lower() in TRUTHY_VALUES:
+        raise AssertionError(
+            "smart_core.nav.user_data_acceptance_only must be disabled for full product menu release"
+        )
+    if _text(user_menu_config).lower() in TRUTHY_VALUES:
+        raise AssertionError(
+            "smart_core.nav.user_menu_config.enabled must be disabled for full product menu release"
+        )
+    return {
+        "smart_core.nav.user_data_acceptance_only": _text(acceptance_only) or "0",
+        "smart_core.nav.user_menu_config.enabled": _text(user_menu_config) or "0",
+    }
 
 
 def _released_policy_menus(product_key):
@@ -106,6 +125,7 @@ def _assert_menu_runtime(menu_row, visible_by_login):
 
 
 def main():
+    runtime_mode = _assert_product_navigation_mode()
     visible_by_login = _visible_menu_ids_by_login()
     product_counts = {}
     hidden_counts = {}
@@ -128,6 +148,7 @@ def main():
                 "status": "PASS",
                 "db": env.cr.dbname,  # noqa: F821
                 "products": product_counts,
+                "runtime_mode": runtime_mode,
                 "allowed_hidden_internal_menu_counts": hidden_counts,
                 "unique_released_menu_count": len(audited),
                 "visible_users": sorted(visible_by_login),

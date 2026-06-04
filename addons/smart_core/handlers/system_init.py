@@ -641,14 +641,32 @@ def _filter_nav_by_release_gate(nav: list[dict], gate: dict) -> tuple[list[dict]
 
 def _apply_user_menu_config_to_delivery_nav(env, nav: list[dict]) -> tuple[list[dict], dict]:
     if not isinstance(nav, list):
-        return [], {"applied_count": 0, "hidden_count": 0, "renamed_count": 0, "reordered_count": 0}
+        return [], {"applied": False, "applied_count": 0, "hidden_count": 0, "renamed_count": 0, "reordered_count": 0}
+    try:
+        raw = env["ir.config_parameter"].sudo().get_param("smart_core.nav.user_menu_config.enabled", "")
+    except Exception:
+        raw = ""
+    if str(raw or "").strip().lower() not in {"1", "true", "yes", "on"}:
+        return nav, {
+            "applied": False,
+            "reason": "disabled",
+            "smart_core.nav.user_menu_config.enabled": str(raw or "").strip() or "0",
+            "applied_count": 0,
+            "hidden_count": 0,
+            "renamed_count": 0,
+            "reordered_count": 0,
+            "moved_count": 0,
+        }
     try:
         policy_model = env["ui.menu.config.policy"]
     except Exception:
-        return nav, {"applied_count": 0, "hidden_count": 0, "renamed_count": 0, "reordered_count": 0}
+        return nav, {"applied": False, "applied_count": 0, "hidden_count": 0, "renamed_count": 0, "reordered_count": 0}
     overlaid, stats = policy_model.apply_runtime_overlay({"tree": nav, "flat": []}, user=env.user)
     next_nav = overlaid.get("tree") if isinstance(overlaid, dict) and isinstance(overlaid.get("tree"), list) else nav
-    return next_nav, stats if isinstance(stats, dict) else {}
+    if not isinstance(stats, dict):
+        stats = {}
+    stats.setdefault("applied", True)
+    return next_nav, stats
 
 
 def _user_data_acceptance_nav_only_enabled(env) -> bool:

@@ -246,9 +246,28 @@ def _is_business_config_user(env) -> bool:
 
 
 def _apply_user_menu_config(env, nav_fact: dict) -> tuple[dict, dict]:
+    try:
+        raw = env["ir.config_parameter"].sudo().get_param("smart_core.nav.user_menu_config.enabled", "")
+    except Exception:
+        raw = ""
+    if str(raw or "").strip().lower() not in {"1", "true", "yes", "on"}:
+        return nav_fact, {
+            "applied": False,
+            "reason": "disabled",
+            "smart_core.nav.user_menu_config.enabled": str(raw or "").strip() or "0",
+            "applied_count": 0,
+            "hidden_count": 0,
+            "renamed_count": 0,
+            "reordered_count": 0,
+            "moved_count": 0,
+        }
     if "ui.menu.config.policy" not in env:
-        return nav_fact, {"applied_count": 0, "hidden_count": 0, "renamed_count": 0, "reordered_count": 0}
-    return env["ui.menu.config.policy"].apply_runtime_overlay(nav_fact, user=env.user)
+        return nav_fact, {"applied": False, "applied_count": 0, "hidden_count": 0, "renamed_count": 0, "reordered_count": 0}
+    overlaid, stats = env["ui.menu.config.policy"].apply_runtime_overlay(nav_fact, user=env.user)
+    if not isinstance(stats, dict):
+        stats = {}
+    stats.setdefault("applied", True)
+    return overlaid, stats
 
 
 class PlatformMenuAPI(http.Controller):
