@@ -95,6 +95,7 @@ class ScReceiptIncome(models.Model):
     legacy_document_state_label = fields.Char(string="历史状态名称", index=True, readonly=True)
     legacy_residual_reason = fields.Char(string="残余原因", index=True, readonly=True)
     legacy_attachment_ref = fields.Char(string="历史附件引用", readonly=True)
+    legacy_note = fields.Text(string="历史备注", readonly=True)
     creator_legacy_user_id = fields.Char(string="历史录入人ID", index=True, readonly=True)
     creator_name = fields.Char(string="历史录入人", index=True, readonly=True)
     created_time = fields.Datetime(string="历史录入时间", index=True, readonly=True)
