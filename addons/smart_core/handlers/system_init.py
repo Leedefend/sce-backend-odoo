@@ -945,10 +945,41 @@ def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict], *, force: bo
     contract_product_completion_count = ensure_required_contract_product_children()
     settlement_product_completion_count = ensure_required_settlement_product_children()
 
+    def acceptance_project_group(*, key: str, label: str, children: list[dict], source_bucket: str) -> dict:
+        return {
+            "key": key,
+            "label": label,
+            "title": label,
+            "children": children,
+            "meta": {
+                "group_key": key.replace("group:", "", 1),
+                "source": "user_data_acceptance_source_menu_projection",
+                "acceptance_projection": True,
+                "acceptance_source_bucket": source_bucket,
+                "source_labels": acceptance_source_labels[source_bucket],
+            },
+        }
+
     next_children = []
     next_children.extend(old_acceptance_children)
-    next_children.extend(direct_acceptance_children)
-    next_children.extend(joint_acceptance_children)
+    if direct_acceptance_children:
+        next_children.append(
+            acceptance_project_group(
+                key="group:direct_project_data_acceptance",
+                label="直营项目数据核对",
+                children=direct_acceptance_children,
+                source_bucket="direct",
+            )
+        )
+    if joint_acceptance_children:
+        next_children.append(
+            acceptance_project_group(
+                key="group:joint_project_data_acceptance",
+                label="联营项目数据核对",
+                children=joint_acceptance_children,
+                source_bucket="joint",
+            )
+        )
 
     if not next_children:
         return [], {
