@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import re
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 from odoo import fields, models
 
@@ -1414,13 +1414,10 @@ def _format_progress_receipt_amount_alias(value):
     if value is False or value is None:
         return ""
     try:
-        amount = Decimal(str(value)).normalize()
+        amount = Decimal(str(value)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
     except (InvalidOperation, ValueError):
         return str(value).strip()
-    text = format(amount, "f")
-    if "." in text:
-        text = text.rstrip("0").rstrip(".")
-    return text or "0"
+    return f"{amount:,.2f}"
 
 
 def _business_document_state_alias(record):
