@@ -35,11 +35,15 @@
                     <field name="project_name" optional="hide"/>
                     <field name="partner_id"/>
                     <field name="partner_name" optional="hide"/>
-                    <field name="amount" sum="收款金额合计"/>
+                    <field name="company_name" string="承包单位" optional="show"/>
+                    <field name="income_category" string="收入类别" optional="show"/>
+                    <field name="amount" string="工程款收入" sum="工程款收入合计"/>
+                    <field name="note" optional="show"/>
+                    <field name="contract_no" string="施工管理合同" optional="show"/>
+                    <field name="attachment_ref" string="附件" optional="show"/>
                     <field name="operation_strategy" optional="hide"/>
-                    <field name="receipt_type"/>
-                    <field name="income_category" optional="show"/>
-                    <field name="state_label" optional="hide"/>
+                    <field name="receipt_type" optional="hide"/>
+                    <field name="state_label" optional="show"/>
                     <field name="creator_name" optional="show"/>
                     <field name="created_time" optional="show"/>
                     <field name="legacy_record_id" optional="hide"/>
