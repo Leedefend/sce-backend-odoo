@@ -691,6 +691,9 @@ def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict], *, force: bo
     direct_acceptance_children = []
     joint_acceptance_children = []
     acceptance_source_labels = {"old": [], "direct": [], "joint": []}
+    required_old_acceptance_menu_xmlids = [
+        "smart_construction_core.menu_scbs55_user_acceptance_445_工程进度收款",
+    ]
     required_joint_acceptance_menu_xmlids = [
         "smart_construction_core.menu_scbsly_joint_acceptance_self_funding_advance_income",
         "smart_construction_core.menu_scbsly_joint_acceptance_self_funding_advance_refund",
@@ -814,22 +817,36 @@ def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict], *, force: bo
             },
         }
 
-    def ensure_required_joint_acceptance_children() -> int:
+    def ensure_required_acceptance_children(xmlids: list[str], target_children: list[dict], source_bucket: str) -> int:
         existing_menu_ids = {
             int(node.get("menu_id") or 0)
-            for node in joint_acceptance_children
+            for node in target_children
             if isinstance(node, dict) and int(node.get("menu_id") or 0) > 0
         }
         added = 0
-        for xmlid in required_joint_acceptance_menu_xmlids:
+        for xmlid in xmlids:
             leaf = menu_leaf_from_xmlid(xmlid)
             menu_id = int((leaf or {}).get("menu_id") or 0)
             if not leaf or not menu_id or menu_id in existing_menu_ids:
                 continue
-            joint_acceptance_children.append(leaf)
+            target_children.extend(mark_acceptance_projection([leaf], source_bucket=source_bucket))
             existing_menu_ids.add(menu_id)
             added += 1
         return added
+
+    def ensure_required_old_acceptance_children() -> int:
+        return ensure_required_acceptance_children(
+            required_old_acceptance_menu_xmlids,
+            old_acceptance_children,
+            "old",
+        )
+
+    def ensure_required_joint_acceptance_children() -> int:
+        return ensure_required_acceptance_children(
+            required_joint_acceptance_menu_xmlids,
+            joint_acceptance_children,
+            "joint",
+        )
 
     def ensure_required_product_children(xmlids: list[str], target_children: list[dict], key_prefix: str, source: str) -> int:
         existing_menu_ids = {
@@ -941,6 +958,7 @@ def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict], *, force: bo
         else:
             scan_groups([node])
 
+    old_acceptance_completion_count = ensure_required_old_acceptance_children()
     joint_acceptance_completion_count = ensure_required_joint_acceptance_children()
     contract_product_completion_count = ensure_required_contract_product_children()
     settlement_product_completion_count = ensure_required_settlement_product_children()
@@ -993,6 +1011,7 @@ def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict], *, force: bo
         "applied": True,
         "formal_entry_count": len(formal_group.get("children") or []) if formal_group else 0,
         "old_acceptance_entry_count": len(old_acceptance_children),
+        "old_acceptance_completion_count": old_acceptance_completion_count,
         "direct_acceptance_entry_count": len(direct_acceptance_children),
         "joint_acceptance_entry_count": len(joint_acceptance_children),
         "joint_acceptance_completion_count": joint_acceptance_completion_count,
