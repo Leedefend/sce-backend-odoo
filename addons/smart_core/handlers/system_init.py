@@ -690,6 +690,9 @@ def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict], *, force: bo
     old_acceptance_children = []
     direct_acceptance_children = []
     joint_acceptance_children = []
+    old_acceptance_groups = []
+    direct_acceptance_groups = []
+    joint_acceptance_groups = []
     acceptance_source_labels = {"old": [], "direct": [], "joint": []}
     required_joint_acceptance_menu_xmlids = [
         "smart_construction_core.menu_scbsly_joint_acceptance_self_funding_advance_income",
@@ -748,6 +751,18 @@ def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict], *, force: bo
             if has_nav_target(node):
                 out.append(node)
         return out
+
+    def acceptance_group_from_source(group: dict, *, label: str, key: str, source: str) -> dict:
+        next_group = dict(group)
+        next_group["key"] = key
+        next_group["label"] = label
+        next_group["title"] = label
+        meta = dict(next_group.get("meta") if isinstance(next_group.get("meta"), dict) else {})
+        meta["group_key"] = key.replace("group:", "", 1)
+        meta["source"] = source
+        meta["acceptance_projection"] = True
+        next_group["meta"] = meta
+        return next_group
 
     def menu_leaf_from_xmlid(xmlid: str) -> dict | None:
         try:
@@ -877,6 +892,14 @@ def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict], *, force: bo
                 continue
             if label in old_acceptance_group_labels:
                 acceptance_source_labels["old"].append(label)
+                old_acceptance_groups.append(
+                    acceptance_group_from_source(
+                        group,
+                        label="旧业务数据核对",
+                        key="group:legacy_business_data_acceptance",
+                        source="user_data_acceptance_source_menu_projection",
+                    )
+                )
                 old_acceptance_children.extend(flatten_target_children(children))
                 continue
             if label in acceptance_root_labels:
@@ -887,9 +910,25 @@ def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict], *, force: bo
                     child_children = child.get("children") if isinstance(child.get("children"), list) else []
                     if child_label in joint_acceptance_group_labels or "联营" in child_label:
                         acceptance_source_labels["joint"].append(child_label or label)
+                        joint_acceptance_groups.append(
+                            acceptance_group_from_source(
+                                child,
+                                label="联营项目数据核对",
+                                key="group:joint_project_data_acceptance",
+                                source="user_data_acceptance_source_menu_projection",
+                            )
+                        )
                         joint_acceptance_children.extend(flatten_target_children(child_children))
                     elif child_label in direct_acceptance_group_labels or "直营" in child_label:
                         acceptance_source_labels["direct"].append(child_label or label)
+                        direct_acceptance_groups.append(
+                            acceptance_group_from_source(
+                                child,
+                                label="直营项目数据核对",
+                                key="group:direct_project_data_acceptance",
+                                source="user_data_acceptance_source_menu_projection",
+                            )
+                        )
                         direct_acceptance_children.extend(flatten_target_children(child_children))
                     else:
                         acceptance_source_labels["direct"].append(child_label or label)
@@ -897,10 +936,26 @@ def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict], *, force: bo
                 continue
             if label in direct_acceptance_group_labels:
                 acceptance_source_labels["direct"].append(label)
+                direct_acceptance_groups.append(
+                    acceptance_group_from_source(
+                        group,
+                        label="直营项目数据核对",
+                        key="group:direct_project_data_acceptance",
+                        source="user_data_acceptance_source_menu_projection",
+                    )
+                )
                 direct_acceptance_children.extend(flatten_target_children(children))
                 continue
             if label in joint_acceptance_group_labels:
                 acceptance_source_labels["joint"].append(label)
+                joint_acceptance_groups.append(
+                    acceptance_group_from_source(
+                        group,
+                        label="联营项目数据核对",
+                        key="group:joint_project_data_acceptance",
+                        source="user_data_acceptance_source_menu_projection",
+                    )
+                )
                 joint_acceptance_children.extend(flatten_target_children(children))
                 continue
 
@@ -920,52 +975,9 @@ def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict], *, force: bo
     settlement_product_completion_count = ensure_required_settlement_product_children()
 
     next_children = []
-    if formal_group:
-        next_children.append(
-            {
-                **formal_group,
-                "key": "group:formal_master_data_acceptance",
-                "label": "基础资料核对",
-                "title": "基础资料核对",
-                "meta": {
-                    **(formal_group.get("meta") if isinstance(formal_group.get("meta"), dict) else {}),
-                    "group_key": "formal_master_data_acceptance",
-                    "source": "user_data_acceptance_master_data_projection",
-                    "acceptance_projection": True,
-                },
-            }
-        )
-    if contract_product_children:
-        next_children.append(
-            {
-                "key": "group:contract_data_acceptance",
-                "label": "合同数据核对",
-                "title": "合同数据核对",
-                "children": contract_product_children,
-                "meta": {
-                    "group_key": "contract_data_acceptance",
-                    "source": "user_data_acceptance_contract_data_projection",
-                    "source_labels": ["合同中心"],
-                    "acceptance_projection": True,
-                },
-            }
-        )
-    if settlement_product_children:
-        next_children.append(
-            {
-                "key": "group:settlement_data_acceptance",
-                "label": "结算数据核对",
-                "title": "结算数据核对",
-                "children": settlement_product_children,
-                "meta": {
-                    "group_key": "settlement_data_acceptance",
-                    "source": "user_data_acceptance_settlement_data_projection",
-                    "source_labels": ["结算中心", "合同中心", "物资与分包"],
-                    "acceptance_projection": True,
-                },
-            }
-        )
-    if old_acceptance_children:
+    if old_acceptance_groups:
+        next_children.extend(old_acceptance_groups)
+    elif old_acceptance_children:
         next_children.append(
             {
                 "key": "group:legacy_business_data_acceptance",
@@ -979,7 +991,9 @@ def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict], *, force: bo
                 },
             }
         )
-    if direct_acceptance_children:
+    if direct_acceptance_groups:
+        next_children.extend(direct_acceptance_groups)
+    elif direct_acceptance_children:
         next_children.append(
             {
                 "key": "group:direct_project_data_acceptance",
@@ -993,7 +1007,9 @@ def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict], *, force: bo
                 },
             }
         )
-    if joint_acceptance_children:
+    if joint_acceptance_groups:
+        next_children.extend(joint_acceptance_groups)
+    elif joint_acceptance_children:
         next_children.append(
             {
                 "key": "group:joint_project_data_acceptance",
