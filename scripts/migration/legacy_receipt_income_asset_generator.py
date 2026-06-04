@@ -128,6 +128,9 @@ def write_xml(path: Path, records: list[dict[str, str]]) -> None:
         add_ref(record, "partner_id", row["partner_external_id"])
         add_text(record, "legacy_partner_id", row["legacy_partner_id"])
         add_text(record, "legacy_partner_name", row["legacy_partner_name"])
+        add_text(record, "legacy_company_name", row["legacy_company_name"])
+        add_text(record, "legacy_contract_no", row["legacy_contract_no"])
+        add_text(record, "legacy_attachment_ref", row["legacy_attachment_ref"])
         add_text(record, "source_amount", row["source_amount"], True)
         add_text(record, "note", row["note"])
         add_text(record, "import_batch", "legacy_receipt_income_asset_v1", True)
@@ -220,6 +223,9 @@ def build_records(asset_root: Path) -> tuple[list[dict[str, str]], dict[str, Any
             "partner_external_id": partner_external_id,
             "legacy_partner_id": partner_id,
             "legacy_partner_name": clean(row.get("partner_name")),
+            "legacy_company_name": clean(row.get("company_name")),
+            "legacy_contract_no": clean(row.get("contract_no")),
+            "legacy_attachment_ref": clean(row.get("attachment_ref")),
             "source_amount": money(parse_amount(row.get("amount", ""))),
             "note": clean(row.get("note")),
         })

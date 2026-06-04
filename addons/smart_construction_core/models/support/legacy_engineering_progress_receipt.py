@@ -19,10 +19,13 @@ class ScLegacyEngineeringProgressReceipt(models.Model):
     project_name = fields.Char(string="历史项目名称", readonly=True)
     partner_id = fields.Many2one("res.partner", string="往来单位", readonly=True)
     partner_name = fields.Char(string="历史往来单位", readonly=True)
+    company_name = fields.Char(string="承包单位", readonly=True)
     amount = fields.Float(string="收款金额", readonly=True)
     receipt_type = fields.Char(string="收款类型", readonly=True)
     income_category = fields.Char(string="收入类别", readonly=True)
     state_label = fields.Char(string="状态", readonly=True)
+    contract_no = fields.Char(string="施工管理合同", readonly=True)
+    attachment_ref = fields.Char(string="附件", readonly=True)
     creator_name = fields.Char(string="历史录入人", readonly=True)
     created_time = fields.Datetime(string="历史录入时间", readonly=True)
     note = fields.Text(string="备注", readonly=True)
@@ -45,6 +48,7 @@ class ScLegacyEngineeringProgressReceipt(models.Model):
                     f.legacy_project_name::varchar AS project_name,
                     f.partner_id AS partner_id,
                     f.legacy_partner_name::varchar AS partner_name,
+                    f.legacy_company_name::varchar AS company_name,
                     f.source_amount::double precision AS amount,
                     f.receipt_type::varchar AS receipt_type,
                     f.income_category::varchar AS income_category,
@@ -55,6 +59,8 @@ class ScLegacyEngineeringProgressReceipt(models.Model):
                         WHEN '2' THEN '已审核'
                         ELSE f.legacy_state::varchar
                     END AS state_label,
+                    f.legacy_contract_no::varchar AS contract_no,
+                    f.legacy_attachment_ref::varchar AS attachment_ref,
                     f.creator_name::varchar AS creator_name,
                     f.created_time AS created_time,
                     f.note::text AS note
