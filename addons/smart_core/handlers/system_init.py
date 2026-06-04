@@ -677,8 +677,8 @@ def _user_data_acceptance_nav_only_enabled(env) -> bool:
     return str(raw or "").strip().lower() in {"1", "true", "yes", "on"}
 
 
-def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict]) -> tuple[list[dict], dict]:
-    if not isinstance(nav, list) or not _user_data_acceptance_nav_only_enabled(env):
+def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict], *, force: bool = False) -> tuple[list[dict], dict]:
+    if not isinstance(nav, list) or (not force and not _user_data_acceptance_nav_only_enabled(env)):
         return nav if isinstance(nav, list) else [], {"applied": False}
 
     allowed_formal_labels = {"客户", "供应商"}
@@ -1014,6 +1014,51 @@ def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict]) -> tuple[lis
         "settlement_product_completion_count": settlement_product_completion_count,
         "acceptance_source_labels": acceptance_source_labels,
     }
+
+
+def _append_user_data_acceptance_nav_group(nav: list[dict], acceptance_children: list[dict]) -> list[dict]:
+    if not isinstance(nav, list) or not acceptance_children:
+        return nav if isinstance(nav, list) else []
+
+    acceptance_group = {
+        "key": "group:user_data_acceptance",
+        "label": "用户数据验收",
+        "title": "用户数据验收",
+        "children": acceptance_children,
+        "sequence": 910,
+        "meta": {
+            "group_key": "user_data_acceptance",
+            "source": "user_data_acceptance_runtime_projection",
+            "projection_only": True,
+        },
+    }
+
+    next_nav = []
+    inserted = False
+    for node in nav:
+        if not isinstance(node, dict):
+            continue
+        node = dict(node)
+        children = node.get("children") if isinstance(node.get("children"), list) else []
+        if not inserted and children:
+            existing_keys = {
+                str(child.get("key") or "").strip()
+                for child in children
+                if isinstance(child, dict)
+            }
+            existing_labels = {
+                str(child.get("label") or child.get("title") or child.get("name") or "").strip()
+                for child in children
+                if isinstance(child, dict)
+            }
+            if acceptance_group["key"] not in existing_keys and acceptance_group["label"] not in existing_labels:
+                node["children"] = children + [acceptance_group]
+            inserted = True
+        next_nav.append(node)
+
+    if not inserted:
+        next_nav.append(acceptance_group)
+    return next_nav
 
 
 def _build_minimal_intent_surface(intents: list[str], intents_meta: dict) -> list[str]:
@@ -1532,6 +1577,21 @@ class SystemInitHandler(BaseIntentHandler):
         delivery_nav = delivery_payload.get("nav") if isinstance(delivery_payload.get("nav"), list) else []
         if delivery_nav and not platform_minimum_surface_mode:
             delivery_nav, user_data_acceptance_meta = _filter_nav_for_user_data_acceptance_only(env, delivery_nav)
+            if not user_data_acceptance_meta.get("applied"):
+                acceptance_nav, acceptance_nav_meta = _filter_nav_for_user_data_acceptance_only(
+                    env,
+                    delivery_nav,
+                    force=True,
+                )
+                if acceptance_nav_meta.get("applied"):
+                    delivery_nav = _append_user_data_acceptance_nav_group(delivery_nav, acceptance_nav)
+                    user_data_acceptance_meta = {
+                        "applied": False,
+                        "projected": True,
+                        "projection_group_label": "用户数据验收",
+                        "projection_group_count": len(acceptance_nav),
+                        "projection_meta": acceptance_nav_meta,
+                    }
             delivery_payload["nav"] = delivery_nav
             if isinstance(data.get("delivery_engine_v1"), dict):
                 data["delivery_engine_v1"]["nav"] = delivery_nav
