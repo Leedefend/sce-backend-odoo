@@ -193,7 +193,9 @@ def upsert_file_index(row, relative_path, source_system, record):
         "temporary_flag": clean(row.get("IsTemporary")) or False,
         "active": True,
     }
-    existing = FileIndex.search([("legacy_file_key", "=", key)], limit=1)
+    env.cr.execute("SELECT id FROM sc_legacy_file_index WHERE legacy_file_key = %s LIMIT 1", [key])  # noqa: F821
+    row_id = env.cr.fetchone()  # noqa: F821
+    existing = FileIndex.browse(row_id[0]) if row_id else FileIndex.browse()
     if existing:
         if APPLY:
             existing.write(values)
@@ -224,10 +226,11 @@ def main():
     seen_refs = {}
     committed_files = 0
     stop_requested = False
-    for record in records:
+    total_records = len(records)
+    for record_index, record in enumerate(records):
         if stop_requested:
-            counts["records_skipped_after_stop"] += 1
-            continue
+            counts["records_skipped_after_stop"] += total_records - record_index
+            break
         counts["records_checked"] += 1
         if not visible_attachment_text(record):
             counts["records_without_visible_attachment"] += 1
@@ -271,10 +274,10 @@ def main():
                 examples.append({"kind": "online_missing", "record_id": record.id, "ref": ref, "document_no": clean(getattr(record, "document_no", ""))})
             continue
         counts["online_refs_ok"] += 1
-        for row in files:
+        for file_index, row in enumerate(files):
             if MAX_FILES and committed_files >= MAX_FILES:
                 stop_requested = True
-                counts["files_skipped_by_max_files"] += max(0, len(files) - committed_files)
+                counts["files_skipped_by_max_files"] += len(files) - file_index
                 break
             relative = relative_path_for(row, source_system)
             target, error = safe_download_to_local(row, relative)

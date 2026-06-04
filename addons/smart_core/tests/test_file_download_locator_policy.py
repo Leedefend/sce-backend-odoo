@@ -183,10 +183,42 @@ class TestFileDownloadLocatorPolicy(unittest.TestCase):
 
         refs = handler._legacy_attachment_refs(_Record())
 
-        self.assertIn("17799398042030000", refs)
-        self.assertIn("7508903432694e2897fe74484e2236e6", refs)
-        self.assertIn("GYSHT-20210926-003", refs)
-        self.assertIn("202109170844-1", refs)
+        self.assertIn("17799398042030000", refs.secondary)
+        self.assertIn("7508903432694e2897fe74484e2236e6", refs.secondary)
+        self.assertIn("GYSHT-20210926-003", refs.secondary)
+        self.assertIn("202109170844-1", refs.secondary)
+
+    def test_uses_attachment_ref_as_primary_legacy_ref(self):
+        module = _load_handler()
+
+        class _Record:
+            _fields = {
+                "attachment_ref": object(),
+                "legacy_record_id": object(),
+                "raw_payload": object(),
+            }
+            attachment_ref = "9612cd3fe152f68af8e08aa486c82128"
+            legacy_record_id = "2"
+            raw_payload = ""
+
+        handler = module.FileDownloadHandler(env=_Env())
+
+        refs = handler._legacy_attachment_refs(_Record())
+
+        self.assertEqual(refs.primary, ["9612cd3fe152f68af8e08aa486c82128"])
+        self.assertEqual(refs.secondary, ["2"])
+
+    def test_online_legacy_attachment_fallback_can_be_disabled(self):
+        module = _load_handler()
+        old_value = os.environ.get(module.LEGACY_ONLINE_ATTACHMENT_FALLBACK_ENV)
+        os.environ[module.LEGACY_ONLINE_ATTACHMENT_FALLBACK_ENV] = "0"
+        try:
+            self.assertFalse(module._online_legacy_attachment_fallback_enabled())
+        finally:
+            if old_value is None:
+                os.environ.pop(module.LEGACY_ONLINE_ATTACHMENT_FALLBACK_ENV, None)
+            else:
+                os.environ[module.LEGACY_ONLINE_ATTACHMENT_FALLBACK_ENV] = old_value
 
     def test_resolves_legacy_userfile_path_when_url_keeps_uploadfile_prefix(self):
         module = _load_handler()

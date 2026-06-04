@@ -101,6 +101,19 @@ class TestLegacyDirectAcceptanceAttachmentDisplay(unittest.TestCase):
 
         self.assertEqual(value, "附件(1)")
 
+    def test_subcontract_usage_raw_attachment_hash_without_old_label_is_hidden(self):
+        module = _load_module()
+        payload = {"FJ": "f965ab7575498081ce6b291f989923fb", "f_FJ": None}
+
+        value = module.ScLegacyDirectAcceptanceFact._legacy_payload_value(
+            payload,
+            "f_FJ",
+            acceptance_label="分包方单",
+            attachment_ref="f965ab7575498081ce6b291f989923fb",
+        )
+
+        self.assertEqual(value, "")
+
     def test_negative_legacy_unpaid_amount_falls_back_to_balance(self):
         module = _load_module()
         payload = {"ZJE": "2450", "CCCC_FKJE": "0", "WFKJE": "-2450"}
