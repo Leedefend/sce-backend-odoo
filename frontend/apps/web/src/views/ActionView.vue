@@ -2110,6 +2110,7 @@ const {
   mergeContext,
   mergeActiveFilterDomain,
 } = useActionViewRequestContextRuntime({
+  routeDomainRaw: () => String(route.query.domain_raw || '').trim(),
   routeContextRaw: () => String(route.query.context_raw || '').trim(),
   menuId,
   activeField,
@@ -2233,6 +2234,7 @@ const { runContractAction } = useActionViewActionRuntime({
     nextActionId: typeof navigation === 'number' ? navigation : navigation.nextActionId,
     entryTarget: typeof navigation === 'number' ? null : navigation.entryTarget,
     carryQuery: resolveCarryQuery(),
+    responseQuery: typeof navigation === 'number' ? null : navigation.query,
     menuId: menuId.value,
     keepSceneRoute: keepSceneRoute.value,
     routePath: route.path,
