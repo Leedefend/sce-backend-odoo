@@ -1512,7 +1512,40 @@ def _legacy_visible_alias_payload(record):
     return payload
 
 
+def _payment_request_c_zfsqgl_alias_value(record, label):
+    if record._name != 'payment.request' or _format_alias_value(record, 'legacy_source_table') != 'C_ZFSQGL':
+        return None
+    if label == '单据状态':
+        legacy_state = _format_alias_value(record, 'legacy_document_state')
+        return PAYMENT_REQUEST_DOCUMENT_STATE_LABELS.get(legacy_state, legacy_state) if legacy_state else ""
+    strict_sources = {
+        '单据编号': 'legacy_visible_document_no',
+        '项目名称': 'legacy_visible_project_name',
+        '申请日期': 'legacy_visible_request_date',
+        '收款单位': 'legacy_visible_payee_unit',
+        '申请付款金额': 'legacy_visible_request_amount',
+        '实际付款金额': 'legacy_visible_actual_paid_amount',
+        '可用余额': 'legacy_visible_available_balance',
+        '成本分类名称': 'legacy_visible_cost_category_name',
+        '备注': 'legacy_visible_remark',
+        '付款账号': 'legacy_payment_account_no',
+        '金额大写': 'legacy_visible_amount_uppercase',
+        '户名': 'legacy_payee_account_name',
+        '开户行': 'legacy_payee_bank_name',
+        '账号': 'legacy_payee_account_no',
+        '填写人': 'legacy_visible_writer',
+        '附件': 'legacy_visible_attachment',
+        '录入时间': 'created_time',
+    }
+    if label in strict_sources:
+        return _format_alias_value(record, strict_sources[label])
+    return None
+
+
 def _alias_value(record, label):
+    strict_value = _payment_request_c_zfsqgl_alias_value(record, label)
+    if strict_value is not None:
+        return strict_value
     payload = _legacy_visible_alias_payload(record)
     if payload and label in payload:
         return _normalize_payload_alias_value(label, payload.get(label))
@@ -1894,29 +1927,6 @@ def _alias_value(record, label):
         legacy_state = _format_alias_value(record, 'legacy_document_state')
         if legacy_state:
             return PAYMENT_REQUEST_DOCUMENT_STATE_LABELS.get(legacy_state, legacy_state)
-    if record._name == 'payment.request' and _format_alias_value(record, 'legacy_source_table') == 'C_ZFSQGL':
-        strict_sources = {
-            '单据编号': 'legacy_visible_document_no',
-            '项目名称': 'legacy_visible_project_name',
-            '申请日期': 'legacy_visible_request_date',
-            '收款单位': 'legacy_visible_payee_unit',
-            '申请付款金额': 'legacy_visible_request_amount',
-            '实际付款金额': 'legacy_visible_actual_paid_amount',
-            '可用余额': 'legacy_visible_available_balance',
-            '成本分类名称': 'legacy_visible_cost_category_name',
-            '备注': 'legacy_visible_remark',
-            '付款账号': 'legacy_payment_account_no',
-            '金额大写': 'legacy_visible_amount_uppercase',
-            '户名': 'legacy_payee_account_name',
-            '开户行': 'legacy_payee_bank_name',
-            '账号': 'legacy_payee_account_no',
-            '填写人': 'legacy_visible_writer',
-            '附件': 'legacy_visible_attachment',
-            '录入时间': 'created_time',
-        }
-        field_name = strict_sources.get(label)
-        if field_name:
-            return _format_alias_value(record, field_name)
     if record._name == 'payment.request' and label == '是否关联单据':
         return "是" if record.settlement_id or record.contract_id or record.outflow_line_ids else "否"
     if record._name == 'tender.doc.purchase' and label == '申请人':
