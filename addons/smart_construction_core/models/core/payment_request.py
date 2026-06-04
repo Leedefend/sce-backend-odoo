@@ -305,6 +305,10 @@ class PaymentRequest(models.Model):
         readonly=True,
         index=True,
     )
+    legacy_visible_attachment = fields.Char(
+        string="历史可见附件",
+        readonly=True,
+    )
     partner_account_name = fields.Char(
         string="户名",
         related="partner_id.sc_account_name",
