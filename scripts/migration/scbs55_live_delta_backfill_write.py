@@ -12,6 +12,7 @@ import gzip
 import json
 import os
 from datetime import datetime
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from pathlib import Path
 
 
@@ -29,6 +30,17 @@ def as_float(value):
 
 def as_nonnegative_float(value):
     return max(as_float(value), 0.0)
+
+
+def visible_amount(value):
+    text = clean(value).replace(",", "")
+    if not text:
+        return False
+    try:
+        amount = Decimal(text).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    except (InvalidOperation, ValueError):
+        return clean(value) or False
+    return f"{amount:,.2f}"
 
 
 def parse_date(value):
@@ -219,9 +231,9 @@ def backfill_payment_requests() -> dict[str, int]:
             "legacy_visible_project_name": clean(row.get("f_XMMC")) or False,
             "legacy_visible_request_date": clean(row.get("f_SQRQ")) or False,
             "legacy_visible_payee_unit": clean(row.get("f_GYSMC")) or False,
-            "legacy_visible_request_amount": clean(row.get("f_JHJE")) or False,
-            "legacy_visible_actual_paid_amount": clean(row.get("FKJE")) or False,
-            "legacy_visible_available_balance": clean(row.get("SJKYYE")) or False,
+            "legacy_visible_request_amount": visible_amount(row.get("f_JHJE")),
+            "legacy_visible_actual_paid_amount": visible_amount(row.get("FKJE")),
+            "legacy_visible_available_balance": visible_amount(row.get("SJKYYE")),
             "legacy_visible_cost_category_name": clean(row.get("f_CBFLMC")) or False,
             "legacy_visible_remark": clean(row.get("f_Remark")) or False,
             "legacy_payment_account_no": clean(row.get("FKZH")) or False,
@@ -230,12 +242,52 @@ def backfill_payment_requests() -> dict[str, int]:
             "legacy_payee_bank_name": clean(row.get("f_KHH")) or False,
             "legacy_payee_account_no": clean(row.get("f_ZH")) or False,
             "legacy_visible_writer": clean(row.get("f_TXR")) or False,
+            "legacy_visible_attachment": clean(row.get("f_FJ")) or False,
             "creator_legacy_user_id": clean(row.get("LRRID")) or False,
             "creator_name": clean(row.get("f_LRR")) or clean(row.get("LRR")) or False,
             "created_time": parse_datetime(row.get("f_LRSJ")) or parse_datetime(row.get("LRSJ")) or False,
             "note": clean(row.get("f_Remark")) or clean(row.get("BZ")) or False,
         })
         stats["created"] += 1
+    return stats
+
+
+def sync_payment_request_visible_fields() -> dict[str, int]:
+    Request = env["payment.request"].sudo().with_context(active_test=False)  # noqa: F821
+    stats = {"updated": 0, "missing": 0}
+    for row in load_rows(29):
+        legacy_id = clean(row.get("Id"))
+        if not legacy_id:
+            continue
+        record = Request.search([("legacy_source_table", "=", "C_ZFSQGL"), ("legacy_record_id", "=", legacy_id)], limit=1)
+        if not record:
+            stats["missing"] += 1
+            continue
+        values = {
+            "legacy_document_state": clean(row.get("DJZT")) or False,
+            "legacy_visible_document_no": clean(row.get("DJBH")) or False,
+            "legacy_visible_project_name": clean(row.get("f_XMMC")) or False,
+            "legacy_visible_request_date": clean(row.get("f_SQRQ")) or False,
+            "legacy_visible_payee_unit": clean(row.get("f_GYSMC")) or False,
+            "legacy_visible_request_amount": visible_amount(row.get("f_JHJE")),
+            "legacy_visible_actual_paid_amount": visible_amount(row.get("FKJE")),
+            "legacy_visible_available_balance": visible_amount(row.get("SJKYYE")),
+            "legacy_visible_cost_category_name": clean(row.get("f_CBFLMC")) or False,
+            "legacy_visible_remark": clean(row.get("f_Remark")) or False,
+            "legacy_payment_account_no": clean(row.get("FKZH")) or False,
+            "legacy_visible_amount_uppercase": clean(row.get("JEDX")) or False,
+            "legacy_payee_account_name": clean(row.get("HM")) or False,
+            "legacy_payee_bank_name": clean(row.get("f_KHH")) or False,
+            "legacy_payee_account_no": clean(row.get("f_ZH")) or False,
+            "legacy_visible_writer": clean(row.get("f_TXR")) or False,
+            "legacy_visible_attachment": clean(row.get("f_FJ")) or False,
+            "creator_legacy_user_id": clean(row.get("LRRID")) or False,
+            "creator_name": clean(row.get("f_LRR")) or clean(row.get("LRR")) or False,
+            "created_time": parse_datetime(row.get("f_LRSJ")) or parse_datetime(row.get("LRSJ")) or False,
+            "note": clean(row.get("f_Remark")) or clean(row.get("BZ")) or False,
+        }
+        record.write(values)
+        stats["updated"] += 1
     return stats
 
 
@@ -365,6 +417,7 @@ stats = {
     "documents": backfill_documents(),
     "receipts": backfill_receipts(),
     "payment_requests": backfill_payment_requests(),
+    "payment_request_visible_fields": sync_payment_request_visible_fields(),
     "payment_request_acceptance_domain": sync_payment_request_acceptance_domain(),
     "payment_executions": backfill_payment_executions(),
     "fund_confirmations": backfill_fund_confirmations(),

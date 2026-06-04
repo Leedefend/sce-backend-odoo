@@ -1911,6 +1911,7 @@ def _alias_value(record, label):
             '开户行': 'legacy_payee_bank_name',
             '账号': 'legacy_payee_account_no',
             '填写人': 'legacy_visible_writer',
+            '附件': 'legacy_visible_attachment',
             '录入时间': 'created_time',
         }
         field_name = strict_sources.get(label)
