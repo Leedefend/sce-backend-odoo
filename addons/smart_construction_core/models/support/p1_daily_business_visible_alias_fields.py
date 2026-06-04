@@ -1505,6 +1505,33 @@ def _alias_value(record, label):
     payload = _legacy_visible_alias_payload(record)
     if payload and label in payload:
         return _normalize_payload_alias_value(label, payload.get(label))
+    if (
+        record._name == 'sc.receipt.income'
+        and _format_alias_value(record, 'source_family') == 'engineering_progress_receipt_visible'
+    ):
+        strict_sources = {
+            '单据状态': 'legacy_document_state_label',
+            '状态': 'legacy_document_state_label',
+            '项目名称': 'legacy_project_name',
+            '往来单位': 'legacy_partner_name',
+            '承包单位': 'legacy_company_name',
+            '施工管理合同': 'legacy_contract_no',
+            '单据编号': 'document_no',
+            '填写人': 'creator_name',
+            '收款账户': 'receiving_account',
+            '进账金额': 'amount',
+            '收入类别': 'income_category',
+            '收款时间': 'date_receipt',
+            '备注': 'legacy_note',
+            '附件': 'legacy_attachment_ref',
+            '录入人': 'creator_name',
+            '录入时间': 'created_time',
+        }
+        field_name = strict_sources.get(label)
+        if field_name:
+            return _format_alias_value(record, field_name)
+        if label in strict_sources:
+            return ''
     if record._name == 'sc.business.entity':
         strict_sources = {
             '单据状态': None,

@@ -70,6 +70,7 @@
                     <field name="amount" sum="收款金额"/>
                     <field name="legacy_document_state_label" optional="show"/>
                     <field name="legacy_attachment_ref" optional="show"/>
+                    <field name="legacy_note" optional="show"/>
                     <field name="deducted_invoice_amount" sum="已抵发票金额"/>
                     <field name="deducted_tax_amount" sum="已抵税额"/>
                     <field name="settlement_amount" sum="结算金额"/>
@@ -154,6 +155,7 @@
                             <field name="legacy_document_state" readonly="1"/>
                             <field name="legacy_document_state_label" readonly="1"/>
                             <field name="legacy_attachment_ref" readonly="1"/>
+                            <field name="legacy_note" readonly="1"/>
                             <field name="creator_legacy_user_id" readonly="1"/>
                             <field name="creator_name" readonly="1"/>
                             <field name="created_time" readonly="1"/>

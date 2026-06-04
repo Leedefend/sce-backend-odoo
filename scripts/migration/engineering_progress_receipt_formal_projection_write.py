@@ -168,7 +168,7 @@ env.cr.execute(  # noqa: F821
       date_receipt, document_no, receipt_type, legacy_receipt_type, legacy_receipt_subtype,
       income_category, payment_method, receiving_account, amount, currency_id,
       legacy_source_model, legacy_source_table, legacy_record_id, legacy_document_state,
-      legacy_document_state_label, legacy_attachment_ref, creator_legacy_user_id, creator_name, created_time,
+      legacy_document_state_label, legacy_attachment_ref, legacy_note, creator_legacy_user_id, creator_name, created_time,
       note, active, create_uid, write_uid, create_date, write_date
     )
     SELECT
@@ -207,6 +207,7 @@ env.cr.execute(  # noqa: F821
         ELSE NULLIF(f.legacy_state::varchar, '')
       END,
       NULLIF(f.legacy_attachment_ref, ''),
+      NULLIF(f.note, ''),
       NULLIF(f.creator_legacy_user_id, ''),
       NULLIF(f.creator_name, ''),
       f.created_time,
@@ -258,6 +259,7 @@ env.cr.execute(  # noqa: F821
       legacy_document_state = EXCLUDED.legacy_document_state,
       legacy_document_state_label = EXCLUDED.legacy_document_state_label,
       legacy_attachment_ref = EXCLUDED.legacy_attachment_ref,
+      legacy_note = EXCLUDED.legacy_note,
       creator_legacy_user_id = EXCLUDED.creator_legacy_user_id,
       creator_name = EXCLUDED.creator_name,
       created_time = EXCLUDED.created_time,
@@ -439,9 +441,9 @@ for field_name, formal_expr, source_expr in [
     ("legacy_attachment_ref", "COALESCE(NULLIF(income.legacy_attachment_ref, ''), '')", "COALESCE(NULLIF(fact.legacy_attachment_ref, ''), '')"),
     ("creator_name", "COALESCE(NULLIF(income.creator_name, ''), '')", "COALESCE(NULLIF(fact.creator_name, ''), '')"),
     ("created_time", "income.created_time", "fact.created_time"),
-    ("note_contains_source_note", "COALESCE(income.note, '')", "COALESCE(fact.note, '')"),
+    ("legacy_note", "COALESCE(NULLIF(income.legacy_note, ''), '')", "COALESCE(NULLIF(fact.note, ''), '')"),
 ]:
-    comparator = "POSITION(COALESCE(fact.note, '') IN COALESCE(income.note, '')) = 0" if field_name == "note_contains_source_note" else f"({formal_expr}) IS DISTINCT FROM ({source_expr})"
+    comparator = f"({formal_expr}) IS DISTINCT FROM ({source_expr})"
     field_mismatches[field_name] = int(
         scalar(
             f"""
