@@ -42,6 +42,7 @@ class ScReceiptIncome(models.Model):
         index=True,
     )
     project_id = fields.Many2one("project.project", string="项目", required=True, index=True)
+    legacy_project_name = fields.Char(string="历史项目名称", index=True, readonly=True)
     company_id = fields.Many2one(
         "res.company",
         string="公司",
@@ -50,6 +51,7 @@ class ScReceiptIncome(models.Model):
         readonly=True,
         index=True,
     )
+    legacy_company_name = fields.Char(string="承包单位", index=True, readonly=True)
     operation_strategy = fields.Selection(
         related="project_id.operation_strategy",
         string="经营方式",
@@ -58,7 +60,9 @@ class ScReceiptIncome(models.Model):
         index=True,
     )
     partner_id = fields.Many2one("res.partner", string="往来单位", index=True)
+    legacy_partner_name = fields.Char(string="历史往来单位", index=True, readonly=True)
     contract_id = fields.Many2one("construction.contract", string="合同", index=True)
+    legacy_contract_no = fields.Char(string="施工管理合同", index=True, readonly=True)
     payment_request_id = fields.Many2one("payment.request", string="收款申请", index=True, ondelete="set null")
     treasury_ledger_id = fields.Many2one("sc.treasury.ledger", string="资金台账", index=True, ondelete="set null")
     date_receipt = fields.Date(string="单据日期", default=fields.Date.context_today, index=True)
@@ -88,6 +92,7 @@ class ScReceiptIncome(models.Model):
     legacy_source_table = fields.Char(string="历史来源表", index=True, readonly=True)
     legacy_record_id = fields.Char(string="历史记录ID", index=True, readonly=True)
     legacy_document_state = fields.Char(string="历史状态", index=True, readonly=True)
+    legacy_document_state_label = fields.Char(string="历史状态名称", index=True, readonly=True)
     legacy_residual_reason = fields.Char(string="残余原因", index=True, readonly=True)
     legacy_attachment_ref = fields.Char(string="历史附件引用", readonly=True)
     creator_legacy_user_id = fields.Char(string="历史录入人ID", index=True, readonly=True)
