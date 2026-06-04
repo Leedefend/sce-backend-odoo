@@ -537,6 +537,38 @@ class MenuService:
                 group_order.append(target_group_key)
             groups_by_key[target_group_key]["menus"].append(converged_menu)
 
+        label_to_group_key = {}
+        for group_key in group_order:
+            row = groups_by_key.get(group_key) or {}
+            group_label = str(row.get("group_label") or "").strip()
+            if not group_label:
+                continue
+            current_key = label_to_group_key.get(group_label)
+            if not current_key or (
+                not str(current_key).startswith("construction.")
+                and str(group_key).startswith("construction.")
+            ):
+                label_to_group_key[group_label] = group_key
+
+        merged_groups_by_key = {}
+        merged_group_order = []
+        for group_key in group_order:
+            row = groups_by_key.get(group_key) or {}
+            group_label = str(row.get("group_label") or "").strip()
+            canonical_key = label_to_group_key.get(group_label) or group_key
+            canonical_row = groups_by_key.get(canonical_key) or row
+            if canonical_key not in merged_groups_by_key:
+                merged_groups_by_key[canonical_key] = {
+                    "group_key": canonical_key,
+                    "group_label": str(canonical_row.get("group_label") or group_label or "系统菜单"),
+                    "menus": [],
+                }
+                merged_group_order.append(canonical_key)
+            merged_groups_by_key[canonical_key]["menus"].extend(row.get("menus") if isinstance(row.get("menus"), list) else [])
+
+        groups_by_key = merged_groups_by_key
+        group_order = merged_group_order
+
         group_nodes = []
         for group_key in group_order:
             row = groups_by_key.get(group_key) or {}
