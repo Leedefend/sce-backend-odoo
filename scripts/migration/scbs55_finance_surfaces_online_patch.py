@@ -123,6 +123,10 @@ def write_payload(record, payload: dict[str, str]) -> None:
     )
 
 
+def safe_vals(model, vals: dict[str, Any]) -> dict[str, Any]:
+    return {key: value for key, value in vals.items() if key in model._fields}
+
+
 def project_for(row: dict[str, Any]):
     Project = env["project.project"].sudo().with_context(active_test=False)  # noqa: F821
     legacy_project_id = clean(row.get("XMID") or row.get("XMID$CWGL_FYBX_CB"))
@@ -245,10 +249,10 @@ def import_expense(seq: int, rows: list[dict[str, Any]]) -> dict[str, Any]:
             "active": True,
         }
         if rec:
-            rec.write(vals)
+            rec.write(safe_vals(Claim, vals))
             updated += 1
         else:
-            rec = Claim.create(vals)
+            rec = Claim.create(safe_vals(Claim, vals))
             created += 1
         write_payload(rec, visible_values(seq, row))
     stale = Claim.search([("legacy_source_model", "=", spec["surface"]), ("legacy_record_id", "not in", list(seen) or ["__none__"])])
@@ -296,10 +300,10 @@ def import_receipt(seq: int, rows: list[dict[str, Any]]) -> dict[str, Any]:
             "active": True,
         }
         if rec:
-            rec.write(vals)
+            rec.write(safe_vals(Receipt, vals))
             updated += 1
         else:
-            rec = Receipt.create(vals)
+            rec = Receipt.create(safe_vals(Receipt, vals))
             created += 1
         write_payload(rec, visible_values(seq, row))
     stale = Receipt.search([("legacy_source_model", "=", spec["surface"]), ("legacy_record_id", "not in", list(seen) or ["__none__"])])
@@ -349,10 +353,10 @@ def import_fund_operation(seq: int, rows: list[dict[str, Any]]) -> dict[str, Any
             "active": True,
         }
         if rec:
-            rec.write(vals)
+            rec.write(safe_vals(Operation, vals))
             updated += 1
         else:
-            rec = Operation.create(vals)
+            rec = Operation.create(safe_vals(Operation, vals))
             created += 1
         write_payload(rec, visible_values(seq, row))
     stale = Operation.search([("legacy_source_model", "=", spec["surface"]), ("legacy_record_id", "not in", list(seen) or ["__none__"])])
@@ -376,7 +380,9 @@ for seq in sorted(SPECS):
     elif seq == 32:
         created, updated, stale_hidden, final_count = import_fund_operation(seq, rows)
     domain = [("legacy_source_model", "=", spec["surface"])]
-    Action.browse(spec["action_id"]).write({"domain": repr(domain)})
+    action = Action.browse(spec["action_id"]).exists()
+    if action:
+        action.write({"domain": repr(domain)})
     results.append(
         {
             "seq": seq,
