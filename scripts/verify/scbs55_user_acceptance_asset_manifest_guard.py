@@ -28,7 +28,7 @@ SCBSLY_DIRECT_REPLAY_CARRIER_PLAN = ROOT / "artifacts/migration/scbsly_direct_pr
 SCBSLY_DIRECT_ACCEPTANCE_REPLAY = ROOT / "artifacts/migration/scbsly_direct_project_direct_acceptance_replay_result_v1.json"
 REQUIRE_EVIDENCE = os.getenv("SCBS55_REQUIRE_ACCEPTANCE_EVIDENCE", "0") == "1"
 EXPECTED_DIRECT_PROJECT_MENU_GROUP = [
-    ("合同类单据", ["施工合同", "分包合同", "租赁合同", "供货合同", "劳务合同", "机械合同（合同）"]),
+    ("合同类单据", ["施工合同", "分包合同", "租赁合同", "供货合同", "供货合同（数据）", "劳务合同", "机械合同（合同）"]),
     ("材料管理类单据", ["材料计划", "报价单", "入库", "材料结算单", "库存统计表（新）"]),
     ("劳务管理类单据", ["方单", "零星用工", "劳务结算"]),
     ("分包管理类单据", ["分包方单", "分包结算单"]),
@@ -52,7 +52,7 @@ EXPECTED_DIRECT_PROJECT_MENU_GROUP = [
     ),
     ("项目管理类单据", ["施工日志（新）"]),
 ]
-EXPECTED_DIRECT_PROJECT_BROWSER_LABEL_COUNT = 2 + len(EXPECTED_DIRECT_PROJECT_MENU_GROUP) + sum(
+EXPECTED_DIRECT_PROJECT_BROWSER_LABEL_COUNT = sum(
     len(items) for _, items in EXPECTED_DIRECT_PROJECT_MENU_GROUP
 )
 

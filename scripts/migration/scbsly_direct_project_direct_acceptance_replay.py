@@ -124,6 +124,8 @@ CREATOR_ID_FIELDS = ("LRRID", "BXRID", "DJRID", "CJRID")
 CREATED_TIME_FIELDS = ("LRSJ", "f_LRSJ", "XGSJ", "CJSJ")
 ATTACHMENT_FIELDS = ("FJ", "f_FJ")
 NOTE_FIELDS = ("BZ", "f_BZ", "SXSM", "SM", "NR")
+ATTACHMENT_ID_RE = re.compile(r"^[0-9a-fA-F]{32}$")
+ATTACHMENT_LABEL_RE = re.compile(r"^附件\([1-9]\d*\)$")
 
 
 def clean(value):
@@ -134,6 +136,20 @@ def first_text(row, fields):
     for field in fields:
         value = clean(row.get(field))
         if value:
+            return value
+    return ""
+
+
+def attachment_ref_value(row, acceptance_label=""):
+    if acceptance_label == "分包方单" and not ATTACHMENT_LABEL_RE.match(clean(row.get("f_FJ"))):
+        return ""
+    for field in ATTACHMENT_FIELDS:
+        value = clean(row.get(field))
+        if value and ATTACHMENT_ID_RE.match(value):
+            return value
+    for field in ATTACHMENT_FIELDS:
+        value = clean(row.get(field))
+        if value and not ATTACHMENT_LABEL_RE.match(value):
             return value
     return ""
 
@@ -269,7 +285,7 @@ def values_for(row, spec, project_cache):
         "creator_name": first_text(row, CREATOR_FIELDS),
         "creator_legacy_user_id": first_text(row, CREATOR_ID_FIELDS),
         "created_time": first_datetime(row, CREATED_TIME_FIELDS),
-        "attachment_ref": first_text(row, ATTACHMENT_FIELDS),
+        "attachment_ref": attachment_ref_value(row, spec.get("label") or ""),
         "note": first_text(row, NOTE_FIELDS),
         "raw_payload": raw_payload,
         "active": True,

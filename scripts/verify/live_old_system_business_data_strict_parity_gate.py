@@ -11,7 +11,9 @@ from __future__ import annotations
 import csv
 import json
 import os
+import re
 import shlex
+import shutil
 import subprocess
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -68,6 +70,42 @@ def discover_scbs55_list_seqs() -> list[int]:
     return seqs
 
 
+def seed_scbs55_dump_dir(run_dir: Path) -> dict[str, Any]:
+    target = run_dir / "scbs55_old_live_rows"
+    target.mkdir(parents=True, exist_ok=True)
+    source_root = ROOT / "artifacts/migration/live_old_system_strict_parity_gate"
+    copied: dict[int, str] = {}
+    if not source_root.exists():
+        return {"copied_count": 0, "copied_seqs": [], "source_dirs": []}
+    source_dirs = [
+        path
+        for path in sorted(source_root.glob("*"), reverse=True)
+        if path.is_dir() and path != run_dir
+    ]
+    pattern = re.compile(r"scbs_55_old_live_full_rows_seq(\d{3})_.*\.json\.gz$")
+    used_dirs: set[str] = set()
+    for directory in source_dirs:
+        rows_dir = directory / "scbs55_old_live_rows"
+        if not rows_dir.exists():
+            continue
+        for source in sorted(rows_dir.glob("scbs_55_old_live_full_rows_seq*.json.gz")):
+            match = pattern.match(source.name)
+            if not match:
+                continue
+            seq = int(match.group(1))
+            if seq in copied:
+                continue
+            dest = target / source.name
+            shutil.copy2(source, dest)
+            copied[seq] = str(dest.relative_to(ROOT))
+            used_dirs.add(str(directory.relative_to(ROOT)))
+    return {
+        "copied_count": len(copied),
+        "copied_seqs": sorted(copied),
+        "source_dirs": sorted(used_dirs, reverse=True),
+    }
+
+
 def env_missing(required: tuple[str, ...], env: dict[str, str]) -> list[str]:
     return [key for key in required if not clean(env.get(key))]
 
@@ -110,6 +148,7 @@ def build_steps(run_dir: Path, seqs: list[int], env: dict[str, str]) -> list[Ste
     common_env = {
         "SCBS55_OLD_FULL_DUMP_DIR": str(scbs55_dump_dir),
         "SCBS55_OLD_FULL_DUMP_SEQS": ",".join(str(seq) for seq in seqs),
+        "SCBS55_OLD_FULL_DUMP_REUSE_EXISTING": "1",
         "MIGRATION_SCBS55_OLD_FULL_DUMP_DIR": str(scbs55_dump_dir),
         "SCBSLY_OLD_ROWS_DIR": str(scbsly_dump_dir),
         "MIGRATION_SCBSLY_OLD_ROWS_DIR": str(scbsly_dump_dir),
@@ -306,6 +345,7 @@ def main() -> int:
     run_dir = ROOT / "artifacts/migration/live_old_system_strict_parity_gate" / utc_slug()
     run_dir.mkdir(parents=True, exist_ok=True)
     seqs = discover_scbs55_list_seqs()
+    scbs55_seed = seed_scbs55_dump_dir(run_dir)
     steps = build_steps(run_dir, seqs, env)
     preflight_result = preflight(env)
     step_results: list[dict[str, Any]] = []
@@ -344,6 +384,7 @@ def main() -> int:
         "run_dir": str(run_dir.relative_to(ROOT)),
         "scbs55_list_seq_count": len(seqs),
         "scbs55_list_seqs": seqs,
+        "scbs55_seeded_old_rows": scbs55_seed,
         "preflight": preflight_result,
         "steps": step_results,
     }

@@ -153,7 +153,7 @@ P1_ENTRIES: list[dict[str, Any]] = [
     },
     {
         "id": "DBS-034",
-        "name": "开票登记",
+        "name": "销项发票登记",
         "domain": "发票税务",
         "images": "image65-image66",
         "candidates": ["sc.invoice.registration", "sc.legacy.income.invoice.fact"],

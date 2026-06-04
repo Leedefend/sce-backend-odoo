@@ -84,6 +84,12 @@ LIST_CONTRACT_LABEL_OVERRIDES_BY_SEQUENCE = {
     140: ["证照名称", "编号", "持有人", "有效期", "附件"],
 }
 
+DISPLAY_NAME_OVERRIDES_BY_SEQUENCE = {
+    # Old SCBS labels this surface "开票登记", but its source is the output
+    # invoice table C_JXXP_XXKPDJ. Show the product-facing business name.
+    400: "销项发票登记",
+}
+
 
 def artifact_root() -> Path:
     env_root = os.getenv("MIGRATION_ARTIFACT_ROOT")
@@ -148,10 +154,14 @@ def list_field_contract_from_labels(labels: list[str]) -> list[dict[str, object]
     ]
 
 
+def display_name(record) -> str:
+    return DISPLAY_NAME_OVERRIDES_BY_SEQUENCE.get(record.priority_sequence, record.legacy_menu_name or "SCBS55")
+
+
 def tree_arch(record, labels: list[str]) -> str:
     parts = [
         '<tree string="%s" create="false" edit="false" delete="false">'
-        % escape(record.legacy_menu_name or "SCBS55")
+        % escape(display_name(record))
     ]
     for label in labels:
         escaped = escape(label)
@@ -179,7 +189,8 @@ view_rows: list[dict[str, object]] = []
 
 
 def acceptance_menu(record):
-    menus = Menu.search([("name", "=", record.legacy_menu_name)])
+    candidate_names = list({record.legacy_menu_name, display_name(record)})
+    menus = Menu.search([("name", "in", candidate_names)])
     for menu in menus:
         if "用户核对菜单" in (menu.complete_name or ""):
             return menu
@@ -187,8 +198,10 @@ def acceptance_menu(record):
 
 
 def action_for_record(record, base_action, view):
-    action_name = "SCBS55 %03d %s" % (record.priority_sequence, record.legacy_menu_name)
-    action = Action.search([("name", "=", action_name), ("res_model", "=", record.target_model)], limit=1)
+    action_name = "SCBS55 %03d %s" % (record.priority_sequence, display_name(record))
+    legacy_action_name = "SCBS55 %03d %s" % (record.priority_sequence, record.legacy_menu_name)
+    action_names = list({action_name, legacy_action_name})
+    action = Action.search([("name", "in", action_names), ("res_model", "=", record.target_model)], limit=1)
     has_domain_override = record.priority_sequence in DOMAIN_OVERRIDES_BY_SEQUENCE
     domain_override = DOMAIN_OVERRIDES_BY_SEQUENCE.get(record.priority_sequence)
     domain = repr(domain_override) if has_domain_override else base_action.domain or "[]"
@@ -301,7 +314,12 @@ for record in rows:
     dedicated_action = action_for_record(record, action, view)
     menu = acceptance_menu(record)
     if menu:
-        menu.write({"action": "ir.actions.act_window,%d" % dedicated_action.id})
+        menu.write(
+            {
+                "name": display_name(record),
+                "action": "ir.actions.act_window,%d" % dedicated_action.id,
+            }
+        )
     record.write(
         {
             "target_action_id": dedicated_action.id,

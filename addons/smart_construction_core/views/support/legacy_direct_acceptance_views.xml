@@ -787,7 +787,7 @@
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_rental_in_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
-    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '租入')]</field>
+    <field name="domain">[('active', '=', True), ('source_system', '=', 'online_old_scbsly'), ('acceptance_label', '=', '租入')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
   </record>
 
@@ -822,7 +822,7 @@
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_rental_return_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
-    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '还租')]</field>
+    <field name="domain">[('active', '=', True), ('source_system', '=', 'online_old_scbsly'), ('acceptance_label', '=', '还租')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
   </record>
 
@@ -852,7 +852,7 @@
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_fuel_card_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
-    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '油卡登记')]</field>
+    <field name="domain">[('active', '=', True), ('source_system', '=', 'online_old_scbsly'), ('acceptance_label', '=', '油卡登记')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
   </record>
 
@@ -883,7 +883,7 @@
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_fuel_recharge_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
-    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '充值登记')]</field>
+    <field name="domain">[('active', '=', True), ('source_system', '=', 'online_old_scbsly'), ('acceptance_label', '=', '充值登记')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
   </record>
 
@@ -915,7 +915,7 @@
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_fuel_refuel_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
-    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '加油登记')]</field>
+    <field name="domain">[('active', '=', True), ('source_system', '=', 'online_old_scbsly'), ('acceptance_label', '=', '加油登记')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
   </record>
 
@@ -947,7 +947,7 @@
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_engineering_progress_receipt_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
-    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '工程进度收款')]</field>
+    <field name="domain">[('active', '=', True), ('source_system', '=', 'online_old_scbsly'), ('acceptance_label', '=', '工程进度收款')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
   </record>
 
@@ -957,7 +957,7 @@
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_construction_contract_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
-    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '施工合同')]</field>
+    <field name="domain">[('active', '=', True), ('source_system', '=', 'online_old_scbsly'), ('acceptance_label', '=', '施工合同')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
   </record>
 
@@ -967,7 +967,7 @@
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_subcontract_contract_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
-    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '分包合同')]</field>
+    <field name="domain">[('active', '=', True), ('source_system', '=', 'online_old_scbsly'), ('acceptance_label', '=', '分包合同')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
   </record>
 
@@ -977,7 +977,7 @@
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_rental_contract_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
-    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '租赁合同')]</field>
+    <field name="domain">[('active', '=', True), ('source_system', '=', 'online_old_scbsly'), ('acceptance_label', '=', '租赁合同')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
   </record>
 
@@ -987,7 +987,7 @@
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_supplier_contract_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
-    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '供货合同')]</field>
+    <field name="domain">[('active', '=', True), ('source_system', '=', 'online_old_scbsly'), ('acceptance_label', '=', '供货合同')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
   </record>
 
@@ -997,7 +997,7 @@
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_labor_contract_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
-    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '劳务合同')]</field>
+    <field name="domain">[('active', '=', True), ('source_system', '=', 'online_old_scbsly'), ('acceptance_label', '=', '劳务合同')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
   </record>
 
@@ -1007,7 +1007,7 @@
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_equipment_contract_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
-    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '机械合同（合同）')]</field>
+    <field name="domain">[('active', '=', True), ('source_system', '=', 'online_old_scbsly'), ('acceptance_label', '=', '机械合同（合同）')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
   </record>
 
@@ -1017,7 +1017,7 @@
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_material_plan_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
-    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '材料计划')]</field>
+    <field name="domain">[('active', '=', True), ('source_system', '=', 'online_old_scbsly'), ('acceptance_label', '=', '材料计划')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
   </record>
 
@@ -1027,7 +1027,7 @@
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_material_quote_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
-    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '报价单')]</field>
+    <field name="domain">[('active', '=', True), ('source_system', '=', 'online_old_scbsly'), ('acceptance_label', '=', '报价单')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
   </record>
 
@@ -1037,7 +1037,7 @@
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_material_inbound_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
-    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '入库')]</field>
+    <field name="domain">[('active', '=', True), ('source_system', '=', 'online_old_scbsly'), ('acceptance_label', '=', '入库')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
   </record>
 
@@ -1047,7 +1047,7 @@
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_material_settlement_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
-    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '材料结算单')]</field>
+    <field name="domain">[('active', '=', True), ('source_system', '=', 'online_old_scbsly'), ('acceptance_label', '=', '材料结算单')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
   </record>
 
@@ -1057,7 +1057,7 @@
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_labor_usage_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
-    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '方单')]</field>
+    <field name="domain">[('active', '=', True), ('source_system', '=', 'online_old_scbsly'), ('acceptance_label', '=', '方单')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
   </record>
 
@@ -1067,7 +1067,7 @@
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_labor_casual_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
-    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '零星用工')]</field>
+    <field name="domain">[('active', '=', True), ('source_system', '=', 'online_old_scbsly'), ('acceptance_label', '=', '零星用工')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
   </record>
 
@@ -1077,7 +1077,7 @@
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_labor_settlement_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
-    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '劳务结算')]</field>
+    <field name="domain">[('active', '=', True), ('source_system', '=', 'online_old_scbsly'), ('acceptance_label', '=', '劳务结算')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
   </record>
 
@@ -1087,7 +1087,7 @@
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_subcontract_request_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
-    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '分包方单')]</field>
+    <field name="domain">[('active', '=', True), ('source_system', '=', 'online_old_scbsly'), ('acceptance_label', '=', '分包方单')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
   </record>
 
@@ -1097,7 +1097,7 @@
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_subcontract_settlement_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
-    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '分包结算单')]</field>
+    <field name="domain">[('active', '=', True), ('source_system', '=', 'online_old_scbsly'), ('acceptance_label', '=', '分包结算单')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
   </record>
 
@@ -1107,7 +1107,7 @@
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_equipment_shift_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
-    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '机械台班记录')]</field>
+    <field name="domain">[('active', '=', True), ('source_system', '=', 'online_old_scbsly'), ('acceptance_label', '=', '机械台班记录')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
   </record>
 
@@ -1117,7 +1117,7 @@
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_equipment_settlement_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
-    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '机械结算单')]</field>
+    <field name="domain">[('active', '=', True), ('source_system', '=', 'online_old_scbsly'), ('acceptance_label', '=', '机械结算单')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
   </record>
 
@@ -1127,7 +1127,7 @@
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_rental_settlement_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
-    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '租赁结算单')]</field>
+    <field name="domain">[('active', '=', True), ('source_system', '=', 'online_old_scbsly'), ('acceptance_label', '=', '租赁结算单')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
   </record>
 
@@ -1137,7 +1137,7 @@
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_project_expense_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
-    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '项目费用报销单')]</field>
+    <field name="domain">[('active', '=', True), ('source_system', '=', 'online_old_scbsly'), ('acceptance_label', '=', '项目费用报销单')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
   </record>
 
@@ -1147,7 +1147,7 @@
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_salary_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
-    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '管理人员工资表')]</field>
+    <field name="domain">[('active', '=', True), ('source_system', '=', 'online_old_scbsly'), ('acceptance_label', '=', '管理人员工资表')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
   </record>
 
@@ -1157,7 +1157,7 @@
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_payment_apply_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
-    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '支付申请')]</field>
+    <field name="domain">[('active', '=', True), ('source_system', '=', 'online_old_scbsly'), ('acceptance_label', '=', '支付申请')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
   </record>
 
@@ -1167,7 +1167,7 @@
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_partner_payment_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
-    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '往来单位付款')]</field>
+    <field name="domain">[('active', '=', True), ('source_system', '=', 'online_old_scbsly'), ('acceptance_label', '=', '往来单位付款')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
   </record>
 
@@ -1177,7 +1177,7 @@
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_settlement_order_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
-    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '工程结算单')]</field>
+    <field name="domain">[('active', '=', True), ('source_system', '=', 'online_old_scbsly'), ('acceptance_label', '=', '工程结算单')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
   </record>
 
@@ -1187,7 +1187,7 @@
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_input_tax_report_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
-    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '进项上报')]</field>
+    <field name="domain">[('active', '=', True), ('source_system', '=', 'online_old_scbsly'), ('acceptance_label', '=', '进项上报')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
   </record>
 
@@ -1197,7 +1197,7 @@
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_general_contract_input_tax_report_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
-    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '总包进项上报')]</field>
+    <field name="domain">[('active', '=', True), ('source_system', '=', 'online_old_scbsly'), ('acceptance_label', '=', '总包进项上报')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
   </record>
 
@@ -1207,7 +1207,7 @@
     <field name="view_mode">tree</field>
     <field name="view_id" ref="smart_construction_core.view_scbsly_direct_acceptance_construction_diary_tree"/>
     <field name="search_view_id" ref="smart_construction_core.view_sc_legacy_direct_acceptance_fact_search"/>
-    <field name="domain">[('active', '=', True), ('acceptance_label', '=', '施工日志（新）')]</field>
+    <field name="domain">[('active', '=', True), ('source_system', '=', 'online_old_scbsly'), ('acceptance_label', '=', '施工日志（新）')]</field>
     <field name="context">{'create': False, 'edit': False, 'delete': False, 'search_default_active_rows': 1}</field>
   </record>
 </odoo>

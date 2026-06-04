@@ -25,7 +25,7 @@ if ACCEPTANCE_PHASE not in {"acceptance", "integrated"}:
     raise RuntimeError({"invalid_scbs_acceptance_menu_phase": ACCEPTANCE_PHASE, "allowed": ["acceptance", "integrated"]})
 ACCEPTANCE_ACTION_BY_MENU_NAME = {
     "施工合同": "smart_construction_core.action_scbsly_direct_acceptance_construction_contract",
-    "供货合同分析": "smart_construction_core.action_scbsly_direct_acceptance_supplier_contract",
+    "供货合同分析": "smart_construction_core.action_sc_supplier_contract_current",
 }
 
 
@@ -763,6 +763,27 @@ def sync_platform_release_gate_pages(product_key: str, required_pages: list[dict
 policy_results = {}
 platform_release_gate_results = {}
 for product_key in PRODUCT_KEYS:
+    if ACCEPTANCE_PHASE == "acceptance":
+        policy = env["sc.product.policy"].sudo().search([("product_key", "=", product_key)], limit=1)  # noqa: F821
+        current_groups = policy.menu_groups if policy and isinstance(policy.menu_groups, list) else []
+        policy_results[product_key] = {
+            "total_policy_menus": sum(
+                len(group.get("menus") or [])
+                for group in current_groups
+                if isinstance(group, dict)
+            ),
+            "enabled_policy_menus": len(created_or_updated),
+            "hidden_policy_menus": 0,
+            "direct_acceptance_enabled_menus": direct_acceptance_leaf_count,
+            "missing_allowed_xmlids": [],
+            "product_policy_write_skipped": True,
+            "reason": "acceptance phase keeps product policy domain boundaries; run contract_product_acceptance_policy_restore.py to publish formal plus accepted-data menus.",
+        }
+        platform_release_gate_results[product_key] = {
+            "status": "SKIP",
+            "reason": "product_policy_write_skipped_in_acceptance_phase",
+        }
+        continue
     policy = ProductPolicyCatalogSyncService(env).sync_policy(product_key=product_key)
     menu_groups = policy.menu_groups if isinstance(policy.menu_groups, list) else []
     total = 0

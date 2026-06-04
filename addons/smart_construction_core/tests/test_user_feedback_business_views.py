@@ -179,10 +179,121 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         self.assertIn("'active_test': False", action.context)
         self.assertIn('name="sc_supplier_type_label"', tree.arch_db)
         self.assertIn('name="sc_supplier_type_ids"', form.arch_db)
-        self.assertIn('name="legacy_partner_id"', tree.arch_db)
-        self.assertIn('name="legacy_partner_source"', tree.arch_db)
-        self.assertIn('name="legacy_partner_name"', form.arch_db)
-        self.assertIn('name="legacy_deleted_flag"', search.arch_db)
+        self.assertNotIn('name="legacy_partner_id"', tree.arch_db)
+        self.assertNotIn('name="legacy_partner_source"', tree.arch_db)
+        self.assertNotIn('name="legacy_partner_name"', form.arch_db)
+        self.assertNotIn('name="legacy_deleted_flag"', search.arch_db)
+
+    def test_customer_and_supplier_entries_expose_business_handling_fields(self):
+        customer_action = self.env.ref("smart_construction_core.action_sc_customer_partner")
+        customer_tree = self.env.ref("smart_construction_core.view_sc_customer_partner_tree")
+        customer_form = self.env.ref("smart_construction_core.view_sc_customer_partner_form")
+        customer_search = self.env.ref("smart_construction_core.view_sc_customer_partner_search")
+        supplier_action = self.env.ref("smart_construction_core.action_sc_supplier_partner")
+        supplier_tree = self.env.ref("smart_construction_core.view_sc_supplier_partner_tree")
+        supplier_form = self.env.ref("smart_construction_core.view_sc_supplier_partner_form")
+        supplier_search = self.env.ref("smart_construction_core.view_sc_supplier_partner_search")
+
+        self.assertIn("'default_customer_rank': 1", customer_action.context)
+        self.assertIn("'default_supplier_rank': 1", supplier_action.context)
+        for arch in (customer_tree.arch_db, supplier_tree.arch_db):
+            self.assertIn('name="active"', arch)
+            self.assertIn('name="user_id"', arch)
+            self.assertIn('name="category_id"', arch)
+            self.assertIn('name="comment"', arch)
+            self.assertIn('name="sc_bank_name"', arch)
+            self.assertIn('name="sc_bank_account"', arch)
+            self.assertIn('name="sc_supplier_type_label"', arch)
+            self.assertIn('name="street"', arch)
+            self.assertIn('name="sc_business_scope"', arch)
+            self.assertIn('name="sc_source_document_state"', arch)
+            self.assertIn('name="sc_source_push_result"', arch)
+            self.assertIn('name="sc_source_project_name"', arch)
+            self.assertIn('name="sc_source_partner_code"', arch)
+            self.assertIn('name="sc_source_cooperation_type"', arch)
+            self.assertIn('name="sc_source_receipt_amount"', arch)
+            self.assertIn('name="sc_source_payment_amount"', arch)
+            self.assertIn('name="sc_default_tax_rate_text"', arch)
+            self.assertIn('name="sc_source_created_by"', arch)
+            self.assertIn('name="sc_source_created_at"', arch)
+            self.assertIn('name="sc_business_role_label"', arch)
+            self.assertIn('name="sc_business_fact_basis"', arch)
+        self.assertNotIn('name="sc_supplier_type"', customer_tree.arch_db)
+        for arch in (customer_form.arch_db, supplier_form.arch_db):
+            self.assertIn('name="child_ids"', arch)
+            self.assertIn('name="bank_ids"', arch)
+            self.assertIn('name="sc_attachment_ids"', arch)
+            self.assertIn('name="action_open_sc_partner_business_fact_lines"', arch)
+            self.assertIn('name="sc_business_fact_line_ids"', arch)
+            self.assertIn('name="comment"', arch)
+            self.assertIn('name="active"', arch)
+            self.assertIn('name="category_id"', arch)
+            self.assertIn('name="user_id"', arch)
+            self.assertIn('name="property_account_position_id"', arch)
+            self.assertIn('string="业务信息"', arch)
+            self.assertIn('string="关联业务明细"', arch)
+            self.assertIn('name="action_open_source_record"', arch)
+            self.assertIn('name="sc_source_fact_count" string="关联业务数" readonly="1"', arch)
+            self.assertIn('name="sc_source_fact_source"', arch)
+            self.assertIn('name="sc_source_receipt_amount" string="收款金额" readonly="1"', arch)
+            self.assertIn('name="sc_source_payment_amount" string="付款金额" readonly="1"', arch)
+            self.assertIn('name="sc_supplier_type_label"', arch)
+        for arch in (customer_search.arch_db, supplier_search.arch_db):
+            self.assertIn('name="phone"', arch)
+            self.assertIn('name="mobile"', arch)
+            self.assertIn('name="email"', arch)
+            self.assertIn('name="sc_bank_name"', arch)
+            self.assertIn('name="sc_bank_account"', arch)
+            self.assertIn('name="sc_supplier_type_label"', arch)
+            self.assertIn('name="street"', arch)
+            self.assertIn('name="sc_business_scope"', arch)
+            self.assertIn('name="sc_source_partner_code"', arch)
+            self.assertIn('name="sc_source_document_state"', arch)
+            self.assertIn('name="sc_source_push_result"', arch)
+            self.assertIn('name="sc_source_project_name"', arch)
+            self.assertIn('name="sc_source_cooperation_type"', arch)
+            self.assertIn('name="sc_source_created_by"', arch)
+            self.assertIn('name="sc_business_role_label"', arch)
+            self.assertIn('name="sc_business_fact_basis"', arch)
+            self.assertIn('name="category_id"', arch)
+            self.assertIn('name="user_id"', arch)
+            self.assertIn('name="active"', arch)
+            self.assertIn('name="comment"', arch)
+        self.assertIn('name="property_payment_term_id"', customer_form.arch_db)
+        self.assertIn('name="property_supplier_payment_term_id"', supplier_form.arch_db)
+        self.assertIn('name="customer_inactive"', customer_search.arch_db)
+        self.assertIn('name="supplier_inactive"', supplier_search.arch_db)
+        self.assertIn('name="group_user"', customer_search.arch_db)
+        self.assertIn('name="group_user"', supplier_search.arch_db)
+
+    def test_formal_partner_entries_hide_migration_evidence_fields(self):
+        formal_views = [
+            self.env.ref("smart_construction_core.view_sc_customer_partner_tree"),
+            self.env.ref("smart_construction_core.view_sc_customer_partner_form"),
+            self.env.ref("smart_construction_core.view_sc_customer_partner_search"),
+            self.env.ref("smart_construction_core.view_sc_supplier_partner_tree"),
+            self.env.ref("smart_construction_core.view_sc_supplier_partner_form"),
+            self.env.ref("smart_construction_core.view_sc_supplier_partner_search"),
+        ]
+        migration_evidence_fields = (
+            "legacy_partner_id",
+            "legacy_partner_source",
+            "legacy_partner_name",
+            "legacy_credit_code",
+            "legacy_tax_no",
+            "legacy_deleted_flag",
+            "legacy_source_evidence",
+            "sc_legacy_source_label",
+            "sc_legacy_external_id",
+            "sc_legacy_partner_source",
+            "sc_legacy_partner_id",
+            "sc_import_batch",
+            "sc_source_evidence",
+        )
+
+        for view in formal_views:
+            for field_name in migration_evidence_fields:
+                self.assertNotIn('name="%s"' % field_name, view.arch_db, msg="%s leaked in %s" % (field_name, view.name))
 
     @tagged("post_install", "-at_install", "user_feedback", "partner_role_alignment")
     def test_partner_roles_align_from_contract_receipt_and_expenditure_facts(self):
@@ -198,7 +309,7 @@ class TestUserFeedbackBusinessViews(TransactionCase):
             )
         contract_customer = self.env["res.partner"].create({"name": "Feedback Contract Customer"})
         receipt_customer = self.env["res.partner"].create({"name": "Feedback Receipt Customer"})
-        supplier = self.env["res.partner"].create({"name": "Feedback Expenditure Supplier"})
+        supplier = self.env["res.partner"].create({"name": "Feedback Expenditure Supplier", "is_company": True})
         stale = self.env["res.partner"].create({"name": "Feedback Stale Supplier", "supplier_rank": 1})
 
         self.env["construction.contract"].create(
@@ -250,6 +361,15 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         self.assertEqual(supplier.supplier_rank, 1)
         self.assertEqual(supplier.sc_source_payment_amount, 456)
         self.assertEqual(stale.supplier_rank, 0)
+
+        detail_model = self.env["sc.partner.business.fact.line"]
+        receipt_lines = detail_model.search([("partner_id", "=", receipt_customer.id)])
+        supplier_lines = detail_model.search([("partner_id", "=", supplier.id)])
+        self.assertTrue(receipt_lines.filtered(lambda line: line.source_label == "收款事实" and line.amount == 123))
+        self.assertTrue(supplier_lines.filtered(lambda line: line.source_label == "付款申请" and line.amount == 456))
+        detail_action = receipt_customer.action_open_sc_partner_business_fact_lines()
+        self.assertEqual(detail_action["id"], self.env.ref("smart_construction_core.action_sc_partner_business_fact_line").id)
+        self.assertEqual(detail_action["domain"], [("partner_id", "=", receipt_customer.id)])
 
     def test_material_rfq_exposes_contact_and_supplier_set(self):
         supplier = self.env["res.partner"].create(

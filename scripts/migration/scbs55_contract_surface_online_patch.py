@@ -5,12 +5,14 @@ from __future__ import annotations
 
 import gzip
 import json
+import os
 import re
 from datetime import datetime
 from decimal import Decimal
 
 
-SOURCE_PATH = "/tmp/scbs_55_old_live_full_rows_seq003_contract.json.gz"
+SOURCE_PATH = os.getenv("SCBS55_CONTRACT_SOURCE_PATH", "/tmp/scbs_55_old_live_full_rows_seq003_施工合同.json.gz")
+DIRECT_ACCEPTANCE_PREFIX = "direct_acceptance:construction_contract:"
 
 
 def clean(value):
@@ -24,6 +26,42 @@ def money(value):
         return float(Decimal(str(value or 0)))
     except Exception:
         return 0.0
+
+
+def visible_money(value):
+    text = clean(value).replace(",", "").replace("￥", "").replace("¥", "")
+    if not text:
+        return ""
+    try:
+        return ("%f" % Decimal(text)).rstrip("0").rstrip(".")
+    except Exception:
+        return clean(value)
+
+
+def first_visible(row, *fields):
+    for field in fields:
+        value = clean(row.get(field))
+        if value:
+            return value
+    return ""
+
+
+def attachment_visible(row):
+    return first_visible(row, "f_FJ_FJ", "FJ_FJ", "f_FJ", "FJ")
+
+
+def invoice_unreceived(row):
+    value = first_visible(row, "KPWSK")
+    if value:
+        return value
+    invoice = visible_money(row.get("LJKP"))
+    received = visible_money(row.get("LJSK"))
+    if not invoice and not received:
+        return ""
+    try:
+        return ("%f" % (Decimal(invoice or "0") - Decimal(received or "0"))).rstrip("0").rstrip(".")
+    except Exception:
+        return ""
 
 
 def date(value):
@@ -42,7 +80,17 @@ def dt(value):
     return False
 
 
-rows = json.load(gzip.open(SOURCE_PATH, "rt", encoding="utf-8"))["rows"]
+payload = json.load(gzip.open(SOURCE_PATH, "rt", encoding="utf-8"))
+if int(payload.get("data_fetch_count") or 0) <= 0 or int(payload.get("datafetch_pages") or 0) <= 0:
+    raise RuntimeError(
+        {
+            "error": "scbs55_contract_source_missing_datafetch",
+            "source_path": SOURCE_PATH,
+            "data_fetch_count": payload.get("data_fetch_count"),
+            "datafetch_pages": payload.get("datafetch_pages"),
+        }
+    )
+rows = payload["rows"]
 Contract = env["construction.contract"].sudo().with_context(active_test=False)  # noqa: F821
 Project = env["project.project"].sudo().with_context(active_test=False)  # noqa: F821
 Partner = env["res.partner"].sudo().with_context(active_test=False)  # noqa: F821
@@ -87,6 +135,7 @@ def values_for(row):
     return {
         "subject": clean(row.get("HTBT")) or clean(row.get("HTBH")) or clean(row.get("DJBH")) or legacy_id,
         "type": "out",
+        "operation_strategy": "joint",
         "project_id": resolve_project(row).id,
         "partner_id": resolve_partner(row).id,
         "company_id": Company.id,
@@ -107,32 +156,43 @@ def values_for(row):
         "legacy_visible_contract_date": date(row.get("f_HTDLRQ")) or False,
         "legacy_visible_archived": clean(row.get("D_SCBSJS_SFGD")) or False,
         "legacy_visible_counterparty": clean(row.get("FBF")) or False,
+        "legacy_visible_contractor": clean(row.get("CBF")) or False,
         "legacy_visible_project_name": clean(row.get("f_XMMC")) or False,
         "legacy_visible_title": clean(row.get("HTBT")) or False,
         "legacy_visible_category": clean(row.get("HTLX")) or False,
         "legacy_visible_contract_no": clean(row.get("HTBH")) or False,
         "legacy_visible_amount": clean(row.get("GCYSZJ")) or False,
-        "legacy_visible_settlement_amount": clean(row.get("D_SCBSJS_JSJE")) or False,
+        "legacy_visible_settlement_amount": first_visible(row, "ZJE", "D_SCBSJS_JSJE", "GCJSZJ") or False,
         "legacy_visible_invoice_amount": clean(row.get("LJKP")) or False,
+        "legacy_visible_invoice_unreceived_amount": invoice_unreceived(row) or False,
         "legacy_visible_received_amount": clean(row.get("LJSK")) or False,
         "legacy_visible_unreceived_amount": clean(row.get("WSK")) or False,
         "legacy_visible_unreceived_rate": clean(row.get("WSKBL")) or False,
         "legacy_visible_affiliated_person": clean(row.get("GKR") or row.get("f_GKR")) or False,
         "legacy_visible_engineering_address": clean(row.get("f_GCDZ")) or False,
         "legacy_visible_engineering_content": clean(row.get("f_GCNR")) or False,
+        "legacy_visible_contract_duration_days": clean(row.get("f_THGQTS") or row.get("GQSM")) or False,
         "legacy_visible_creator_name": clean(row.get("LRR")) or False,
         "legacy_visible_created_time": dt(row.get("f_LRSJ")) or False,
+        "legacy_visible_attachment": attachment_visible(row) or False,
         "entry_user_text": clean(row.get("LRR")) or False,
         "entry_time": dt(row.get("f_LRSJ")) or False,
         "engineering_category_text": clean(row.get("HTLX")) or False,
         "affiliated_person": clean(row.get("GKR") or row.get("f_GKR")) or False,
         "engineering_content": clean(row.get("f_GCNR")) or False,
-        "attachment_text": clean(row.get("f_FJ") or row.get("FJ")) or False,
+        "contract_duration_text": clean(row.get("f_THGQTS") or row.get("GQSM")) or False,
+        "attachment_text": attachment_visible(row) or False,
     }
 
 
 old_ids = {clean(row.get("Id")) for row in rows if clean(row.get("Id"))}
-existing = Contract.search([("legacy_contract_id", "!=", False)])
+existing = Contract.search(
+    [
+        ("legacy_contract_id", "!=", False),
+        ("legacy_contract_id", "not ilike", DIRECT_ACCEPTANCE_PREFIX + "%"),
+        ("legacy_document_no", "ilike", "WBHTGL%"),
+    ]
+)
 by_id = {record.legacy_contract_id: record for record in existing if record.legacy_contract_id}
 created = 0
 updated = 0
@@ -147,9 +207,20 @@ for row in rows:
         Contract.create(vals)
         created += 1
 
-Contract.search([("legacy_contract_id", "!=", False), ("legacy_contract_id", "not in", list(old_ids))]).write({"legacy_income_surface_visible": False})
+Contract.search(
+    [
+        ("legacy_contract_id", "!=", False),
+        ("legacy_contract_id", "not ilike", DIRECT_ACCEPTANCE_PREFIX + "%"),
+        ("legacy_document_no", "ilike", "WBHTGL%"),
+        ("legacy_contract_id", "not in", list(old_ids)),
+    ]
+).write({"legacy_income_surface_visible": False})
 action = env["ir.actions.act_window"].sudo().browse(855)  # noqa: F821
-domain = [("legacy_contract_id", "!=", False), ("legacy_income_surface_visible", "=", True)]
+domain = [
+    ("legacy_contract_id", "!=", False),
+    ("legacy_contract_id", "not ilike", DIRECT_ACCEPTANCE_PREFIX + "%"),
+    ("legacy_income_surface_visible", "=", True),
+]
 action.write({"domain": repr(domain)})
 env.cr.commit()  # noqa: F821
 print({"old": len(old_ids), "created": created, "updated": updated, "final_count": Contract.search_count(domain), "action_domain": action.domain})
