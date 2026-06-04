@@ -920,36 +920,6 @@ def _filter_nav_for_user_data_acceptance_only(env, nav: list[dict], *, force: bo
     settlement_product_completion_count = ensure_required_settlement_product_children()
 
     next_children = []
-    if formal_group:
-        next_children.append(formal_group)
-    if contract_product_children:
-        next_children.append(
-            {
-                "key": "group:contract_product_menus",
-                "label": "合同管理",
-                "title": "合同管理",
-                "children": contract_product_children,
-                "meta": {
-                    "group_key": "contract_product_menus",
-                    "source": "user_data_acceptance_only_contract_product_completion",
-                    "source_labels": ["合同中心"],
-                },
-            }
-        )
-    if settlement_product_children:
-        next_children.append(
-            {
-                "key": "group:settlement_product_menus",
-                "label": "结算管理",
-                "title": "结算管理",
-                "children": settlement_product_children,
-                "meta": {
-                    "group_key": "settlement_product_menus",
-                    "source": "user_data_acceptance_only_settlement_product_completion",
-                    "source_labels": ["结算中心", "合同中心", "物资与分包"],
-                },
-            }
-        )
     if old_acceptance_children:
         next_children.append(
             {
