@@ -74,22 +74,45 @@ function withCurrentProjectContext(session: ReturnType<typeof useSessionStore>, 
     && !Array.isArray((params as Record<string, unknown>).context))
     ? (params as Record<string, unknown>).context as Record<string, unknown>
     : {};
+  const projectId = Number(session.projectContext?.selected?.id || 0);
+  const companyId = Number(session.projectContext?.company_id || session.projectContext?.selected?.company_id || 0);
+  const operationStrategy = String(
+    session.projectContext?.operation_strategy || session.projectContext?.selected?.operation_strategy || '',
+  ).trim();
   const isMenuListRequest = intent === 'api.data'
     && params
     && typeof params === 'object'
     && !Array.isArray(params)
     && ['list', 'read'].includes(String((params as Record<string, unknown>).op || '').trim())
     && Number(paramsContext.menu_id || 0) > 0;
-  if (isMenuListRequest) {
-    return payload;
-  }
-  const projectId = Number(session.projectContext?.selected?.id || 0);
-  const companyId = Number(session.projectContext?.company_id || session.projectContext?.selected?.company_id || 0);
-  const operationStrategy = String(
-    session.projectContext?.operation_strategy || session.projectContext?.selected?.operation_strategy || '',
-  ).trim();
   if ((!projectId && !companyId && !operationStrategy) || skip.has(intent)) {
     return payload;
+  }
+  if (isMenuListRequest) {
+    const context = {
+      ...(payload.context || {}),
+      ...(companyId ? { company_id: companyId } : {}),
+      ...(operationStrategy ? { operation_strategy: operationStrategy } : {}),
+    };
+    const paramsRecord = params as Record<string, unknown>;
+    const requestContext = (paramsRecord.context && typeof paramsRecord.context === 'object' && !Array.isArray(paramsRecord.context))
+      ? paramsRecord.context as Record<string, unknown>
+      : {};
+    // Menu actions are global lists: keep company/operation scope, but never narrow them to the selected project.
+    paramsRecord.context = {
+      ...requestContext,
+      ...(companyId ? { company_id: companyId } : {}),
+      ...(operationStrategy ? { operation_strategy: operationStrategy } : {}),
+    };
+    if (companyId) paramsRecord.company_id = companyId;
+    if (operationStrategy) paramsRecord.operation_strategy = operationStrategy;
+    delete paramsRecord.current_project_id;
+    delete (paramsRecord.context as Record<string, unknown>).current_project_id;
+    return {
+      ...payload,
+      context,
+      params,
+    };
   }
   const context = {
     ...(payload.context || {}),

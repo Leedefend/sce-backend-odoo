@@ -162,7 +162,7 @@ superseded_old_active = env.cr.rowcount  # noqa: F821
 env.cr.execute(  # noqa: F821
     """
     INSERT INTO sc_receipt_income (
-      name, source_origin, source_kind, state, project_id, partner_id,
+      name, source_origin, source_kind, state, project_id, company_id, partner_id,
       operation_strategy,
       date_receipt, document_no, receipt_type, legacy_receipt_type, legacy_receipt_subtype,
       income_category, payment_method, receiving_account, amount, currency_id,
@@ -176,6 +176,7 @@ env.cr.execute(  # noqa: F821
       'receipt_income',
       'legacy_confirmed',
       f.project_id,
+      project.company_id,
       COALESCE(f.partner_id, partner_match.id),
       f.operation_strategy,
       COALESCE(f.document_date, f.created_time::date, CURRENT_DATE),
@@ -210,6 +211,7 @@ env.cr.execute(  # noqa: F821
       NOW(),
       NOW()
     FROM sc_legacy_receipt_income_fact f
+    JOIN project_project project ON project.id = f.project_id
     LEFT JOIN LATERAL (
       SELECT rp.id
       FROM res_partner rp
@@ -230,6 +232,7 @@ env.cr.execute(  # noqa: F821
       source_kind = EXCLUDED.source_kind,
       state = EXCLUDED.state,
       project_id = EXCLUDED.project_id,
+      company_id = EXCLUDED.company_id,
       partner_id = EXCLUDED.partner_id,
       operation_strategy = EXCLUDED.operation_strategy,
       date_receipt = EXCLUDED.date_receipt,
@@ -261,9 +264,11 @@ env.cr.execute(  # noqa: F821
     """
     UPDATE sc_receipt_income income
        SET operation_strategy = fact.operation_strategy,
+           company_id = project.company_id,
            write_uid = 1,
            write_date = NOW()
       FROM sc_legacy_receipt_income_fact fact
+      JOIN project_project project ON project.id = fact.project_id
      WHERE fact.legacy_record_id = income.legacy_record_id
        AND fact.legacy_source_table = %s
        AND fact.source_family = %s
@@ -271,7 +276,10 @@ env.cr.execute(  # noqa: F821
        AND income.legacy_source_model = %s
        AND income.legacy_source_table = %s
        AND income.active
-       AND COALESCE(income.operation_strategy, '') <> COALESCE(fact.operation_strategy, '')
+       AND (
+         COALESCE(income.operation_strategy, '') <> COALESCE(fact.operation_strategy, '')
+         OR income.company_id IS DISTINCT FROM project.company_id
+       )
     """,
     [SOURCE_TABLE, SOURCE_FAMILY, SOURCE_MODEL, SOURCE_TABLE],
 )
