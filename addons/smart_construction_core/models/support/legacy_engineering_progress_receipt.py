@@ -25,6 +25,7 @@ class ScLegacyEngineeringProgressReceipt(models.Model):
     income_category = fields.Char(string="收入类别", readonly=True)
     state_label = fields.Char(string="状态", readonly=True)
     contract_no = fields.Char(string="施工管理合同", readonly=True)
+    receiving_account = fields.Char(string="收款账户", readonly=True)
     attachment_ref = fields.Char(string="附件", readonly=True)
     creator_name = fields.Char(string="历史录入人", readonly=True)
     created_time = fields.Datetime(string="历史录入时间", readonly=True)
@@ -60,6 +61,7 @@ class ScLegacyEngineeringProgressReceipt(models.Model):
                         ELSE f.legacy_state::varchar
                     END AS state_label,
                     f.legacy_contract_no::varchar AS contract_no,
+                    f.legacy_receiving_account::varchar AS receiving_account,
                     f.legacy_attachment_ref::varchar AS attachment_ref,
                     f.creator_name::varchar AS creator_name,
                     f.created_time AS created_time,

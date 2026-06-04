@@ -147,6 +147,7 @@ for row in rows:
         "legacy_partner_name": clean(row.get("legacy_partner_name")),
         "legacy_company_name": clean(row.get("legacy_company_name")),
         "legacy_contract_no": clean(row.get("legacy_contract_no")),
+        "legacy_receiving_account": clean(row.get("legacy_receiving_account")),
         "legacy_attachment_ref": clean(row.get("legacy_attachment_ref")),
         "source_amount": as_float(row.get("source_amount", "")),
         "note": clean(row.get("note")),

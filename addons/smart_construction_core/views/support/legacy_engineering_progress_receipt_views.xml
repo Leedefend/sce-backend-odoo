@@ -40,6 +40,7 @@
                     <field name="amount" string="工程款收入" sum="工程款收入合计"/>
                     <field name="note" optional="show"/>
                     <field name="contract_no" string="施工管理合同" optional="show"/>
+                    <field name="receiving_account" string="收款账户" optional="show"/>
                     <field name="attachment_ref" string="附件" optional="show"/>
                     <field name="operation_strategy" optional="hide"/>
                     <field name="receipt_type" optional="hide"/>

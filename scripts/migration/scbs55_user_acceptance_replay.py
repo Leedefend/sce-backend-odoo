@@ -366,6 +366,7 @@ def replay_engineering_progress(rows_by_key):
             "legacy_partner_name": clean(row.get("WLDWMC")),
             "legacy_company_name": clean(row.get("SSGS")),
             "legacy_contract_no": clean(row.get("SGHTBH")),
+            "legacy_receiving_account": clean(row.get("SKZH")),
             "legacy_attachment_ref": attachment_display(row),
             "source_amount": amount(row.get("f_JE")),
             "creator_legacy_user_id": clean(row.get("LRRID")),
