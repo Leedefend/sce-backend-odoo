@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import logging
 import hashlib
+import ast
 from copy import deepcopy
 from typing import Any, Dict, Optional
 
@@ -268,6 +269,11 @@ class UiContractV2Handler(BaseIntentHandler):
             "record": source_record,
             "source_meta": ui_meta,
         })
+        self._inject_action_window_contract(
+            source_contract,
+            params=params,
+            ui_params=ui_params,
+        )
         self._inject_current_form_settings_action(
             source_contract,
             params=params,
@@ -325,6 +331,80 @@ class UiContractV2Handler(BaseIntentHandler):
                 "source_authority": self.source_authority_contract(),
             },
         )
+
+    def _inject_action_window_contract(
+        self,
+        source_contract: dict[str, Any],
+        *,
+        params: dict[str, Any],
+        ui_params: dict[str, Any],
+    ) -> None:
+        head = source_contract.get("head") if isinstance(source_contract.get("head"), dict) else {}
+        raw_action_id = (
+            params.get("action_id")
+            or params.get("actionId")
+            or ui_params.get("action_id")
+            or ui_params.get("actionId")
+            or source_contract.get("action_id")
+            or source_contract.get("actionId")
+            or head.get("action_id")
+        )
+        action_id, action_error = parse_positive_int(raw_action_id, allow_empty=True)
+        if action_error or not action_id:
+            return
+        try:
+            Action = self.env["ir.actions.act_window"].sudo()
+            action = Action.browse(action_id)
+        except Exception:
+            _logger.debug("ui.contract.v2 action metadata lookup skipped", exc_info=True)
+            return
+        try:
+            if not action.exists():
+                return
+        except Exception:
+            return
+
+        action_name = str(getattr(action, "name", "") or "").strip()
+        action_model = str(getattr(action, "res_model", "") or "").strip()
+        action_domain_raw = getattr(action, "domain", None)
+        action_context_raw = getattr(action, "context", None)
+        action_domain = _safe_eval_action_value(action_domain_raw, [])
+        action_context = _safe_eval_action_value(action_context_raw, {})
+
+        source_contract["action_id"] = action_id
+        if action_model:
+            source_contract["model"] = action_model
+        if action_name:
+            source_contract["title"] = action_name
+            head = source_contract.get("head") if isinstance(source_contract.get("head"), dict) else {}
+            head = dict(head)
+            head["title"] = action_name
+            head["action_id"] = action_id
+            source_contract["head"] = head
+
+        if isinstance(action_domain, list):
+            if not source_contract.get("domain"):
+                source_contract["domain"] = deepcopy(action_domain)
+            head = source_contract.get("head") if isinstance(source_contract.get("head"), dict) else {}
+            head = dict(head)
+            head.setdefault("domain", deepcopy(action_domain))
+            source_contract["head"] = head
+        if isinstance(action_domain_raw, str) and action_domain_raw.strip():
+            if not source_contract.get("domain_raw"):
+                source_contract["domain_raw"] = action_domain_raw
+
+        if isinstance(action_context, dict):
+            current_context = source_contract.get("context") if isinstance(source_contract.get("context"), dict) else {}
+            merged_context = dict(action_context)
+            merged_context.update(current_context)
+            source_contract["context"] = merged_context
+            head = source_contract.get("head") if isinstance(source_contract.get("head"), dict) else {}
+            head = dict(head)
+            head.setdefault("context", deepcopy(merged_context))
+            source_contract["head"] = head
+        if isinstance(action_context_raw, str) and action_context_raw.strip():
+            if not source_contract.get("context_raw"):
+                source_contract["context_raw"] = action_context_raw
 
     def _inject_current_form_settings_action(
         self,
@@ -1647,6 +1727,25 @@ def _ensure_source_form_contract(source_contract: dict[str, Any]) -> dict[str, A
         form = {}
         views["form"] = form
     return form
+
+
+def _safe_eval_action_value(value: Any, default: Any) -> Any:
+    if value in (None, False, ""):
+        return default
+    if not isinstance(value, str):
+        return value
+    text = value.strip()
+    if not text:
+        return default
+    try:
+        from odoo.tools.safe_eval import safe_eval
+
+        return safe_eval(text)
+    except Exception:
+        try:
+            return ast.literal_eval(text)
+        except Exception:
+            return default
 
 
 def _allowed_models_from_hook(env, hook_name: str) -> set[str]:
