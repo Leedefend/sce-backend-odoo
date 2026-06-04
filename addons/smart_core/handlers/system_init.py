@@ -1092,6 +1092,24 @@ def _append_user_data_acceptance_nav_group(nav: list[dict], acceptance_children:
     return next_nav
 
 
+def _remove_nav_groups_by_label(nav: list[dict], labels: set[str]) -> list[dict]:
+    if not isinstance(nav, list) or not labels:
+        return nav if isinstance(nav, list) else []
+    out = []
+    for node in nav:
+        if not isinstance(node, dict):
+            continue
+        node_label = _text(node.get("label") or node.get("title") or node.get("name"))
+        if node_label in labels:
+            continue
+        next_node = dict(node)
+        children = next_node.get("children") if isinstance(next_node.get("children"), list) else []
+        if children:
+            next_node["children"] = _remove_nav_groups_by_label(children, labels)
+        out.append(next_node)
+    return out
+
+
 def _build_minimal_intent_surface(intents: list[str], intents_meta: dict) -> list[str]:
     minimal_order = [
         "system.init",
@@ -1623,6 +1641,9 @@ class SystemInitHandler(BaseIntentHandler):
                         "projection_group_count": len(acceptance_nav),
                         "projection_meta": acceptance_nav_meta,
                     }
+            delivery_nav = _remove_nav_groups_by_label(delivery_nav, {"用户核对菜单"})
+            if isinstance(user_data_acceptance_meta, dict):
+                user_data_acceptance_meta["source_user_check_menu_hidden"] = True
             delivery_payload["nav"] = delivery_nav
             if isinstance(data.get("delivery_engine_v1"), dict):
                 data["delivery_engine_v1"]["nav"] = delivery_nav
