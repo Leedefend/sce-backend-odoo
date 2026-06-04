@@ -31,6 +31,7 @@ WITH src AS (
     CONVERT(nvarchar(max), f_SRLBName) AS income_category, CONVERT(nvarchar(max), f_BZ) AS note,
     CONVERT(nvarchar(max), SSGS) AS company_name,
     CONVERT(nvarchar(max), SGHTBH) AS contract_no,
+    CONVERT(nvarchar(max), SKZH) AS receiving_account,
     CONVERT(nvarchar(max), FJ) AS attachment_ref,
     CONVERT(nvarchar(max), PID) AS pid, 'customer_receipt' AS family, 'inflow' AS direction
   FROM dbo.C_JFHKLR
@@ -40,7 +41,7 @@ WITH src AS (
     CONVERT(nvarchar(max), SGD), CONVERT(nvarchar(max), COALESCE(NULLIF(KPSKQK_BQS, 0), NULLIF(BCKYZJYE_BQS, 0), NULLIF(SGDGCK_2, 0), NULLIF(YFSGDGCK_2, 0), NULLIF(SJZJ, 0))),
     CONVERT(nvarchar(max), SJ, 120), CONVERT(nvarchar(max), DJZT), CONVERT(nvarchar(max), DEL), CONVERT(nvarchar(max), NULL), CONVERT(nvarchar(max), NULL),
     CONVERT(nvarchar(max), '到款确认'), CONVERT(nvarchar(max), COALESCE(NULLIF(KPSKQK_BZ, ''), NULLIF(BCKYZJYE_BZ, ''), NULLIF(SQLCYE_BZ, ''))),
-    CONVERT(nvarchar(max), NULL), CONVERT(nvarchar(max), NULL), CONVERT(nvarchar(max), NULL),
+    CONVERT(nvarchar(max), NULL), CONVERT(nvarchar(max), NULL), CONVERT(nvarchar(max), NULL), CONVERT(nvarchar(max), NULL),
     CONVERT(nvarchar(max), pid), 'receipt_confirmation', 'inflow'
   FROM dbo.ZJGL_SZQR_DKQRB
   UNION ALL
@@ -48,7 +49,7 @@ WITH src AS (
     CONVERT(nvarchar(max), XMID), CONVERT(nvarchar(max), XMMC), CONVERT(nvarchar(max), FKDWID),
     CONVERT(nvarchar(max), FKDW), CONVERT(nvarchar(max), JZJE), CONVERT(nvarchar(max), SKSJ, 120),
     CONVERT(nvarchar(max), DJZT), CONVERT(nvarchar(max), DEL), CONVERT(nvarchar(max), NULL), CONVERT(nvarchar(max), NULL), CONVERT(nvarchar(max), COALESCE(NULLIF(D_SCBSJS_CWSRLB, ''), NULLIF(SKLB, ''))),
-    CONVERT(nvarchar(max), BZ), CONVERT(nvarchar(max), NULL), CONVERT(nvarchar(max), NULL), CONVERT(nvarchar(max), NULL),
+    CONVERT(nvarchar(max), BZ), CONVERT(nvarchar(max), NULL), CONVERT(nvarchar(max), NULL), CONVERT(nvarchar(max), NULL), CONVERT(nvarchar(max), NULL),
     CONVERT(nvarchar(max), pid), 'company_financial_income', 'inflow'
   FROM dbo.C_CWSFK_GSCWSR
 )
@@ -70,6 +71,7 @@ SELECT CONCAT(
   ISNULL(REPLACE(REPLACE(REPLACE(note, @sep, ' '), CHAR(13), ' '), CHAR(10), ' '), ''), @sep,
   ISNULL(REPLACE(REPLACE(REPLACE(company_name, @sep, ' '), CHAR(13), ' '), CHAR(10), ' '), ''), @sep,
   ISNULL(REPLACE(REPLACE(REPLACE(contract_no, @sep, ' '), CHAR(13), ' '), CHAR(10), ' '), ''), @sep,
+  ISNULL(REPLACE(REPLACE(REPLACE(receiving_account, @sep, ' '), CHAR(13), ' '), CHAR(10), ' '), ''), @sep,
   ISNULL(REPLACE(REPLACE(REPLACE(attachment_ref, @sep, ' '), CHAR(13), ' '), CHAR(10), ' '), ''), @sep,
   ISNULL(REPLACE(REPLACE(REPLACE(pid, @sep, ' '), CHAR(13), ' '), CHAR(10), ' '), ''), @sep,
   ISNULL(REPLACE(REPLACE(REPLACE(family, @sep, ' '), CHAR(13), ' '), CHAR(10), ' '), ''), @sep,
@@ -83,7 +85,7 @@ SQL_COLUMNS = [
     "source_table", "legacy_id", "document_no", "project_id", "project_name",
     "partner_id", "partner_name", "amount", "document_date", "state", "deleted",
     "receipt_type", "receipt_subtype", "income_category", "note", "company_name",
-    "contract_no", "attachment_ref", "pid", "family", "direction",
+    "contract_no", "receiving_account", "attachment_ref", "pid", "family", "direction",
 ]
 
 

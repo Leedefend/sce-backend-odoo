@@ -27,6 +27,7 @@ class ScLegacyReceiptIncomeFact(models.Model):
     legacy_partner_name = fields.Char(string="旧库往来单位名称")
     legacy_company_name = fields.Char(string="旧库所属公司")
     legacy_contract_no = fields.Char(string="旧库施工管理合同")
+    legacy_receiving_account = fields.Char(string="旧库收款账户")
     legacy_attachment_ref = fields.Char(string="旧库附件")
     source_amount = fields.Float(string="原始金额")
     creator_legacy_user_id = fields.Char(string="历史录入人ID", index=True)

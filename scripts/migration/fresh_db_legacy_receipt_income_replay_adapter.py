@@ -74,6 +74,7 @@ def main() -> int:
         "legacy_partner_name",
         "legacy_company_name",
         "legacy_contract_no",
+        "legacy_receiving_account",
         "legacy_attachment_ref",
         "source_amount",
         "note",

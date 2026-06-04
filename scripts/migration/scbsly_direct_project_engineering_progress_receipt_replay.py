@@ -160,6 +160,7 @@ def values_for(row, project_cache, partner_cache, created_projects):
         "legacy_partner_name": clean(row.get("WLDWMC")),
         "legacy_company_name": clean(row.get("SSGS")),
         "legacy_contract_no": clean(row.get("SGHTBH")),
+        "legacy_receiving_account": clean(row.get("SKZH")),
         "legacy_attachment_ref": clean(row.get("f_FJ") or row.get("FJ")),
         "source_amount": amount(row.get("f_JE"), row.get("D_LYXM_JENR3")),
         "creator_legacy_user_id": clean(row.get("LRRID")),

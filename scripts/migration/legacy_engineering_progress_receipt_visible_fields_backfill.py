@@ -2,7 +2,8 @@
 """Backfill old-page visible fields for engineering-progress receipt facts.
 
 Run through ``odoo shell`` after exporting a CSV with columns:
-legacy_record_id, legacy_company_name, legacy_contract_no, legacy_attachment_ref.
+legacy_record_id, legacy_company_name, legacy_contract_no, legacy_receiving_account,
+legacy_attachment_ref.
 """
 
 from __future__ import annotations
@@ -49,6 +50,7 @@ def main() -> int:
         clean(row.get("legacy_record_id")): {
             "legacy_company_name": clean(row.get("legacy_company_name")),
             "legacy_contract_no": clean(row.get("legacy_contract_no")),
+            "legacy_receiving_account": clean(row.get("legacy_receiving_account")),
             "legacy_attachment_ref": clean(row.get("legacy_attachment_ref")),
         }
         for row in rows
