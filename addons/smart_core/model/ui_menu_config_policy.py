@@ -229,6 +229,7 @@ class UiMenuConfigPolicy(models.Model):
             "source_authority": self._source_contract(),
             "applied_count": 0,
             "hidden_count": 0,
+            "protected_count": 0,
             "renamed_count": 0,
             "reordered_count": 0,
             "moved_count": 0,
@@ -243,6 +244,16 @@ class UiMenuConfigPolicy(models.Model):
             label = str(policy.menu_id.name or "").strip()
             if label:
                 policies_by_label.setdefault(label, policy)
+
+        def is_protected_runtime_config_node(node: dict) -> bool:
+            meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+            if str(node.get("delivery_bucket") or meta.get("delivery_bucket") or "").strip() == "delivery_business_config":
+                return True
+            if str(node.get("model") or meta.get("model") or "").strip() == "ui.menu.config.policy":
+                return True
+            if str(node.get("menu_xmlid") or meta.get("menu_xmlid") or "").strip() == "smart_construction_core.menu_ui_menu_config_policy_business_config":
+                return True
+            return False
 
         def apply_node(node: dict) -> dict | None:
             menu_id = node.get("menu_id")
@@ -262,8 +273,11 @@ class UiMenuConfigPolicy(models.Model):
             if policy:
                 stats["applied_count"] += 1
                 if not policy.visible:
-                    stats["hidden_count"] += 1
-                    return None
+                    if is_protected_runtime_config_node(node):
+                        stats["protected_count"] += 1
+                    else:
+                        stats["hidden_count"] += 1
+                        return None
                 if policy.custom_label:
                     node["name"] = policy.custom_label
                     node["label"] = policy.custom_label
