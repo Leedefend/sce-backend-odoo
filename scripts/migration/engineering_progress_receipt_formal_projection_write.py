@@ -162,7 +162,7 @@ superseded_old_active = env.cr.rowcount  # noqa: F821
 env.cr.execute(  # noqa: F821
     """
     INSERT INTO sc_receipt_income (
-      name, source_origin, source_kind, state, project_id, company_id, partner_id,
+      name, source_origin, source_kind, source_family, state, project_id, company_id, partner_id,
       operation_strategy,
       date_receipt, document_no, receipt_type, legacy_receipt_type, legacy_receipt_subtype,
       income_category, payment_method, receiving_account, amount, currency_id,
@@ -174,6 +174,7 @@ env.cr.execute(  # noqa: F821
       COALESCE(NULLIF(f.document_no, ''), 'LEGACY-ENGINEERING-RECEIPT-' || f.legacy_record_id),
       'legacy',
       'receipt_income',
+      f.source_family,
       'legacy_confirmed',
       f.project_id,
       project.company_id,
@@ -221,6 +222,7 @@ env.cr.execute(  # noqa: F821
       name = EXCLUDED.name,
       source_origin = EXCLUDED.source_origin,
       source_kind = EXCLUDED.source_kind,
+      source_family = EXCLUDED.source_family,
       state = EXCLUDED.state,
       project_id = EXCLUDED.project_id,
       company_id = EXCLUDED.company_id,
