@@ -17,7 +17,9 @@ from pathlib import Path
 
 
 def clean(value):
-    return str(value or "").strip()
+    if value is None or value is False:
+        return ""
+    return str(value).strip()
 
 
 def as_float(value):
