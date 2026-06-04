@@ -15,9 +15,9 @@ LEGACY_VISIBLE_FIELD_MAP = {
     '材料计划': ['DJZTText', 'DJBH', 'DJRQ', 'BZSJ', 'f_CLMC$T_JH_XMZJH', 'f_GGXH$T_JH_XMZJH', 'f_DW$T_JH_XMZJH', 'f_YSCBSL$T_JH_XMZJH', 'D_LYXM_CLBM$T_JH_XMZJH', 'f_BZ$T_JH_XMZJH', 'f_FJ', 'XMMC', 'LRR', 'LRSJ'],
     '报价单': ['DJZTText', 'DJBH', 'XJDW', 'XJSJ', 'HWMC$CGXBJ_CGXJD_CB', 'PPXH$CGXBJ_CGXJD_CB', 'SL$CGXBJ_CGXJD_CB', 'HSDJ$CGXBJ_CGXJD_CB', 'HS_ZJE$CGXBJ_CGXJD_CB', 'ZSL', 'ZJE', 'BZ', 'LXR', 'LXDH', 'f_FJ', 'D_LYXM_SFZB', 'XMMC', 'LRR', 'LRSJ'],
     '入库': ['DJZTText', 'RKDH', 'DJRQ', 'SupplierName', 'CLMC$T_RK_RKDCB', 'GGXH$T_RK_RKDCB', 'SL$T_RK_RKDCB', 'DJ$T_RK_RKDCB', 'SLV', 'HJ$T_RK_RKDCB', 'RK_ZSL', 'CCCC_FKZT', 'CCCC_FKJE', 'CCCC_WFKJE', 'CCCC_FKZT', 'CCCC_JSJE', 'f_ProjectName', 'BZ', 'f_FJ', 'LRR', 'LRRQ', 'CGR'],
-    '材料结算单': ['DJZTText', 'XMMC', 'DJBH', 'BT', 'GYDW', 'JSRQ', 'ZJE', 'CCCC_FKZT', 'YFKJE', 'WFKJE', 'CCCC_SQZT', 'CCCC_SQJE', 'CCCC_WSQJE', 'JSSM', 'f_FJ', 'LRR', 'LRSJ'],
-    '方单': ['DJZTText', 'DJBH', 'f_GCMC', 'DJRQ', 'BT', 'f_LWDW', 'SGBWMC', 'CCCC_FKZT', 'ZJE', 'f_BZ', 'f_FDWB', 'TXR', 'f_LRSJ'],
-    '零星用工': ['DJZTText', 'DJBH', 'XMMC', 'DJRQ', 'SGDWMC', 'SGNR$SGGL_LWGL_LXYG_CB', 'GRHJ$SGGL_LWGL_LXYG_CB', 'DJ$SGGL_LWGL_LXYG_CB', 'JE$SGGL_LWGL_LXYG_CB', 'BZ', 'FJ', 'CCCC_FKZT', 'BZ$SGGL_LWGL_LXYG_CB', 'LRR', 'LRSJ'],
+    '材料结算单': ['DJZTText', 'XMMC', 'DJBH', 'BT', 'GYDW', 'JSRQ', 'ZJE', 'CCCC_FKZT', 'YFKJE', 'CCCC_WFKJE', 'CCCC_SQZT', 'CCCC_SQJE', 'CCCC_WSQJE', 'JSSM', 'f_FJ', 'LRR', 'LRSJ'],
+    '方单': ['DJZTText', 'DJBH', 'f_GCMC', 'DJRQ', 'BT', 'f_LWDW', 'SGBWMC', '__LABOR_USAGE_SETTLEMENT_STATUS__', 'ZJE', 'f_BZ', 'f_FDWB', 'TXR', 'f_LRSJ'],
+    '零星用工': ['DJZTText', 'DJBH', 'XMMC', 'DJRQ', 'SGDWMC', 'SGNR$SGGL_LWGL_LXYG_CB', 'GRHJ$SGGL_LWGL_LXYG_CB', 'DJ$SGGL_LWGL_LXYG_CB', 'JE$SGGL_LWGL_LXYG_CB', 'BZ', 'FJ', 'CCCC_JSZT', 'BZ$SGGL_LWGL_LXYG_CB', 'LRR', 'LRSJ'],
     '劳务结算': ['DJZTText', 'DJBH', 'XMMC', 'JSRQ', 'BT', 'GYDW', 'ZJE', 'CCCC_FKZT', 'CCCC_FKJE', 'CCCC_WFKJE', 'CCCC_SQZT', 'CCCC_SQJE', 'CCCC_WSQJE', 'JSSM', 'f_FJ', 'LRR', 'LRSJ', 'HTBH'],
     '分包方单': ['DJZTText', 'DJBH', 'XMMC', 'BT', 'FBS', 'FBNR', 'FBNR$SGGL_FBGL_FBFD_CB', 'BYWCL$SGGL_FBGL_FBFD_CB', 'DJ$SGGL_FBGL_FBFD_CB', 'BYGZJE$SGGL_FBGL_FBFD_CB', 'JEHJ', 'BZ', 'f_FJ', 'LRR', 'LRSJ'],
     '分包结算单': ['DJZTText', 'XMMC', 'DJBH', 'BT', 'GYDW', 'ZJE', 'CCCC_FKZT', 'CCCC_FKJE', 'CCCC_WFKJE', 'CCCC_SQZT', 'CCCC_SQJE', 'CCCC_WSQJE', 'HTBH', 'QSJSRQ', 'ZZJSRQ', 'JSRQ', 'JSSM', 'f_FJ', 'LRR', 'LRSJ'],
@@ -35,7 +35,7 @@ LEGACY_VISIBLE_FIELD_MAP = {
     '工程进度收款': ['DJZTText', 'DJBH', 'f_RQ', 'WLDWMC', 'SSGS', 'f_SRLBName', 'D_LYXM_JENR3', 'f_BZ', 'SGHTBH', 'XMMC', 'f_FJ', 'LRR', 'LRSJ'],
     '往来单位付款': ['DJZTText', 'f_FKRQ', 'f_SupplierName', 'D_LYXM_SJSKDW', 'f_FKJE', 'f_BZ', 'Remark', 'f_FKFSMC', 'D_LYXM_LX', 'FKZHMC', 'f_FJ', 'BZ', 'f_LRR', 'f_LRR', 'XMMC', 'FKDLY', 'DJBH'],
     '工程结算单': ['DJZTText', 'DJBH', 'DJRQ', 'XMMC', 'SSJE', 'HTZE', 'SDJE', 'BT', 'FBR', 'CBR', 'SZJJE', 'SJDW', 'HTMC', 'SDRQ', 'GCDZ', 'f_FJ', 'LRR', 'LRSJ'],
-    '进项上报': ['DJZTText', 'DJBH', 'XMMC', 'KPRQ$C_JXXP_ZYFPJJD_CB', 'FPTGF$C_JXXP_ZYFPJJD_CB', 'GYSMC$C_JXXP_ZYFPJJD_CB', 'D_LYXM_SJKPDW$C_JXXP_ZYFPJJD_CB', 'HJJE$C_JXXP_ZYFPJJD_CB', 'JXSE$C_JXXP_ZYFPJJD_CB', 'JE_NO$C_JXXP_ZYFPJJD_CB', 'FPHM$C_JXXP_ZYFPJJD_CB', 'SL$C_JXXP_ZYFPJJD_CB', 'SLVS', 'FPLX$C_JXXP_ZYFPJJD_CB', 'BZ', 'LRR', 'f_FJ', 'LRSJ'],
+    '进项上报': ['DJZTText', 'DJBH', 'XMMC', 'KPRQ$C_JXXP_ZYFPJJD_CB', 'FPTGF$C_JXXP_ZYFPJJD_CB', 'GYSMC$C_JXXP_ZYFPJJD_CB', 'D_LYXM_SJKPDW$C_JXXP_ZYFPJJD_CB', 'HJJE$C_JXXP_ZYFPJJD_CB', 'JXSE$C_JXXP_ZYFPJJD_CB', 'JE_NO$C_JXXP_ZYFPJJD_CB', 'FPHM$C_JXXP_ZYFPJJD_CB', 'SL$C_JXXP_ZYFPJJD_CB', 'SLV$C_JXXP_ZYFPJJD_CB', 'FPLX$C_JXXP_ZYFPJJD_CB', 'BZ', 'LRR', 'f_FJ', 'LRSJ'],
     '总包进项上报': ['DJZTText', 'DJBH', 'KPRQ', 'KPDW', 'XMMC', 'SPFMC', 'SKZJE', 'BHSJE', 'ZSE', 'SLVS', 'D_SCBSJS_FJS', 'KPZS', 'GLHKJE', 'FPHM', 'FPZL', 'f_FJ', 'LRR', 'LRSJ'],
     '施工日志（新）': ['DJZTText', 'XMMC', 'DJBH', 'RQ', 'SGBW', 'CQRS', 'D_LYXM_CQJX', 'BZ', 'f_FJ', 'LRR', 'LRSJ']
 }
@@ -56,9 +56,16 @@ LEGACY_PAYMENT_STATUS_DISPLAY = {
 LEGACY_PAYMENT_REQUEST_STATUS_DISPLAY = {
     "0": "未申请",
     "1": "部分申请",
-    "2": "已申请",
+    "2": "全部申请",
+}
+
+LEGACY_SETTLEMENT_STATUS_DISPLAY = {
+    "0": "未结算",
+    "1": "部分结算",
+    "2": "已结算",
 }
 LEGACY_ATTACHMENT_LABEL_RE = re.compile(r"^附件\([1-9]\d*\)$")
+LEGACY_ATTACHMENT_ID_RE = re.compile(r"^[0-9a-fA-F]{32}$")
 
 class ScLegacyDirectAcceptanceFact(models.Model):
     _name = "sc.legacy.direct.acceptance.fact"
@@ -137,6 +144,8 @@ class ScLegacyDirectAcceptanceFact(models.Model):
             value = cls._legacy_stock_in_computed_visible_value(payload, visible_index)
             if value:
                 return value
+        if field_name == "__LABOR_USAGE_SETTLEMENT_STATUS__":
+            return cls._legacy_labor_usage_settlement_status(payload)
         value = cls._legacy_common_computed_visible_value(payload, field_name)
         if value:
             return value
@@ -155,18 +164,31 @@ class ScLegacyDirectAcceptanceFact(models.Model):
 
         is_attachment_field = field_name.endswith("FJ") or field_name.endswith("_FJ") or field_name == "FJ"
         if is_attachment_field:
-            display_candidates = [f"{field_name}_FJ", "f_FJ_FJ", "FJ_FJ"]
+            if acceptance_label == "分包方单" and field_name == "f_FJ":
+                value = payload.get("f_FJ")
+                text = "" if value is None or value is False else str(value).strip()
+                return text if LEGACY_ATTACHMENT_LABEL_RE.match(text) else ""
+            display_candidates = [f"{field_name}_FJ", field_name, "f_FJ", "FJ", "f_FJ_FJ", "FJ_FJ"]
             for candidate in display_candidates:
                 value = payload.get(candidate)
                 if value is None or value is False:
                     continue
                 text = str(value).strip()
                 if text:
-                    return text if LEGACY_ATTACHMENT_LABEL_RE.match(text) else ""
+                    if LEGACY_ATTACHMENT_LABEL_RE.match(text):
+                        return text
+                    clean_attachment_ref = str(attachment_ref or "").strip()
+                    if clean_attachment_ref and text == clean_attachment_ref:
+                        return "附件(1)"
+                    if LEGACY_ATTACHMENT_ID_RE.match(text):
+                        return "附件(1)"
+                    return ""
             raw_value = payload.get(field_name)
             raw_text = "" if raw_value is None or raw_value is False else str(raw_value).strip()
             clean_attachment_ref = str(attachment_ref or "").strip()
             if raw_text and clean_attachment_ref and raw_text == clean_attachment_ref:
+                return "附件(1)"
+            if LEGACY_ATTACHMENT_ID_RE.match(raw_text):
                 return "附件(1)"
             return ""
 
@@ -181,9 +203,14 @@ class ScLegacyDirectAcceptanceFact(models.Model):
                 return json.dumps(value, ensure_ascii=False, sort_keys=True)
             text = str(value).strip()
             if text:
-                if field_name in {"SLV", "SLVS", "D_SCBSJS_SL1"}:
+                if field_name in {"SLV", "SLVS", "D_SCBSJS_SL1", "SLV$C_JXXP_ZYFPJJD_CB"}:
                     return cls._legacy_tax_rate_text(text)
                 return text
+        if field_name == "SLVS":
+            untaxed_amount = cls._legacy_number(payload, "BHSJE", "JE_NO$C_JXXP_ZYFPJJD_CB")
+            tax_amount = cls._legacy_number(payload, "ZSE", "JXSE$C_JXXP_ZYFPJJD_CB")
+            if untaxed_amount and tax_amount:
+                return cls._legacy_tax_rate_text(tax_amount / untaxed_amount)
         return ""
 
     @staticmethod
@@ -276,6 +303,17 @@ class ScLegacyDirectAcceptanceFact(models.Model):
         return partial_label
 
     @classmethod
+    def _legacy_labor_usage_settlement_status(cls, payload):
+        for field_name in ("CCCC_JSZT", "JSZT", "CCCC_FKZT"):
+            raw = payload.get(field_name)
+            if raw is None or raw is False:
+                continue
+            text = str(raw).strip()
+            if text:
+                return LEGACY_SETTLEMENT_STATUS_DISPLAY.get(text, text)
+        return ""
+
+    @classmethod
     def _legacy_stock_in_computed_visible_value(cls, payload, visible_index):
         total_amount = cls._legacy_number(payload, "ZJE", "RK_ZJE", "HJ$T_RK_RKDCB")
         note_quantity, note_amount = cls._legacy_stock_in_note_numbers(payload)
@@ -296,8 +334,9 @@ class ScLegacyDirectAcceptanceFact(models.Model):
                 return cls._legacy_number_text(0.0)
             return ""
         if visible_index == 12:
-            text = str(payload.get("CCCC_FKZT") or "").strip()
-            return text or cls._legacy_amount_status(
+            raw_status = payload.get("CCCC_FKZT")
+            text = "" if raw_status is None or raw_status is False else str(raw_status).strip()
+            return LEGACY_PAYMENT_STATUS_DISPLAY.get(text, text) if text else cls._legacy_amount_status(
                 paid_amount,
                 total_amount,
                 paid_label="已付款",
@@ -310,8 +349,9 @@ class ScLegacyDirectAcceptanceFact(models.Model):
             unpaid_amount = max(total_amount - paid_amount, 0.0)
             return cls._legacy_number_text(unpaid_amount)
         if visible_index == 15:
-            text = str(payload.get("CCCC_JSZT") or "").strip()
-            return text or cls._legacy_amount_status(
+            raw_status = payload.get("CCCC_JSZT")
+            text = "" if raw_status is None or raw_status is False else str(raw_status).strip()
+            return LEGACY_SETTLEMENT_STATUS_DISPLAY.get(text, text) if text else cls._legacy_amount_status(
                 settled_amount,
                 total_amount,
                 paid_label="已结算",
@@ -331,6 +371,7 @@ class ScLegacyDirectAcceptanceFact(models.Model):
             "CCCC_SQZT",
             "CCCC_SQJE",
             "CCCC_WSQJE",
+            "CCCC_JSZT",
             "JSZT",
         }:
             return ""
@@ -342,7 +383,10 @@ class ScLegacyDirectAcceptanceFact(models.Model):
                 return LEGACY_PAYMENT_STATUS_DISPLAY.get(text, text)
             if field_name == "CCCC_SQZT":
                 return LEGACY_PAYMENT_REQUEST_STATUS_DISPLAY.get(text, text)
-            return str(raw).strip()
+            if field_name == "CCCC_JSZT":
+                return LEGACY_SETTLEMENT_STATUS_DISPLAY.get(text, text)
+            if field_name not in {"CCCC_WFKJE", "CCCC_WSQJE"}:
+                return str(raw).strip()
 
         total_amount = cls._legacy_number(
             payload,
@@ -364,6 +408,14 @@ class ScLegacyDirectAcceptanceFact(models.Model):
             if settlement_amount > 0:
                 return "已结算"
             return "未结算"
+        if field_name == "CCCC_JSZT":
+            return cls._legacy_amount_status(
+                settlement_amount,
+                total_amount,
+                paid_label="已结算",
+                partial_label="部分结算",
+                unpaid_label="未结算",
+            )
 
         if field_name == "CCCC_FKZT":
             return cls._legacy_amount_status(
@@ -377,13 +429,13 @@ class ScLegacyDirectAcceptanceFact(models.Model):
             return cls._legacy_number_text(paid_amount)
         if field_name == "CCCC_WFKJE":
             raw_unpaid = cls._legacy_number(payload, "WFKJE")
-            unpaid_amount = raw_unpaid if raw_unpaid else max(total_amount - paid_amount, 0.0)
+            unpaid_amount = raw_unpaid if raw_unpaid > 0 else max(total_amount - paid_amount, 0.0)
             return cls._legacy_number_text(unpaid_amount)
         if field_name == "CCCC_SQZT":
             return cls._legacy_amount_status(
                 applied_amount,
                 total_amount,
-                paid_label="已申请",
+                paid_label="全部申请",
                 partial_label="部分申请",
                 unpaid_label="未申请",
             )
@@ -391,7 +443,7 @@ class ScLegacyDirectAcceptanceFact(models.Model):
             return cls._legacy_number_text(applied_amount)
         if field_name == "CCCC_WSQJE":
             raw_unapplied = cls._legacy_number(payload, "WSQJE")
-            unapplied_amount = raw_unapplied if raw_unapplied else max(total_amount - applied_amount, 0.0)
+            unapplied_amount = raw_unapplied if raw_unapplied > 0 else max(total_amount - applied_amount, 0.0)
             return cls._legacy_number_text(unapplied_amount)
         return ""
 

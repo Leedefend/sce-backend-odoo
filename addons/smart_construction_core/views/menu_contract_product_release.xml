@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Formal contract product entrypoints: expose the published contract center to contract-read users. -->
+        <record id="menu_sc_contract_center" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6, 0, [
+                ref('smart_construction_core.group_sc_cap_business_initiator'),
+                ref('smart_construction_core.group_sc_cap_contract_read'),
+                ref('smart_construction_core.group_sc_cap_contract_user'),
+                ref('smart_construction_core.group_sc_cap_contract_manager'),
+                ref('smart_construction_core.group_sc_cap_purchase_manager')
+            ])]"/>
+        </record>
+
+        <record id="menu_sc_income_contract_group" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6, 0, [
+                ref('smart_construction_core.group_sc_cap_business_initiator'),
+                ref('smart_construction_core.group_sc_cap_contract_read'),
+                ref('smart_construction_core.group_sc_cap_contract_user'),
+                ref('smart_construction_core.group_sc_cap_contract_manager')
+            ])]"/>
+        </record>
+        <record id="menu_sc_contract_income" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6, 0, [
+                ref('smart_construction_core.group_sc_cap_business_initiator'),
+                ref('smart_construction_core.group_sc_cap_contract_read'),
+                ref('smart_construction_core.group_sc_cap_contract_user'),
+                ref('smart_construction_core.group_sc_cap_contract_manager')
+            ])]"/>
+        </record>
+
+        <record id="menu_sc_expense_contract_group" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6, 0, [
+                ref('smart_construction_core.group_sc_cap_business_initiator'),
+                ref('smart_construction_core.group_sc_cap_contract_read'),
+                ref('smart_construction_core.group_sc_cap_contract_user'),
+                ref('smart_construction_core.group_sc_cap_contract_manager')
+            ])]"/>
+        </record>
+        <record id="menu_sc_general_contract" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6, 0, [
+                ref('smart_construction_core.group_sc_cap_business_initiator'),
+                ref('smart_construction_core.group_sc_cap_contract_read'),
+                ref('smart_construction_core.group_sc_cap_contract_user'),
+                ref('smart_construction_core.group_sc_cap_contract_manager')
+            ])]"/>
+        </record>
+        <record id="menu_sc_contract_expense" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6, 0, [
+                ref('smart_construction_core.group_sc_cap_business_initiator'),
+                ref('smart_construction_core.group_sc_cap_contract_read'),
+                ref('smart_construction_core.group_sc_cap_contract_user'),
+                ref('smart_construction_core.group_sc_cap_contract_manager')
+            ])]"/>
+        </record>
+    </data>
+</odoo>

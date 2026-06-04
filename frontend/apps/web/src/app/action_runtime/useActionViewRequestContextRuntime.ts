@@ -34,6 +34,7 @@ type GroupByChip = {
 };
 
 type UseActionViewRequestContextRuntimeOptions = {
+  routeDomainRaw: () => string;
   routeContextRaw: () => string;
   menuId: Ref<number | null>;
   activeField: Ref<string>;
@@ -91,7 +92,10 @@ export function useActionViewRequestContextRuntime(options: UseActionViewRequest
   }
 
   function resolveEffectiveFilterDomainRaw() {
-    return resolveEffectiveFilterDomainRawRuntime(resolveContractFilterDomainRaw(), resolveSavedFilterDomainRaw());
+    return [
+      options.routeDomainRaw(),
+      resolveEffectiveFilterDomainRawRuntime(resolveContractFilterDomainRaw(), resolveSavedFilterDomainRaw()),
+    ].map((item) => String(item || '').trim()).filter(Boolean).join(' && ');
   }
 
   function resolveEffectiveFilterContext() {

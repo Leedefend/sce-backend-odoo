@@ -1546,6 +1546,7 @@ def _alias_value(record, label):
             '挂靠人': 'legacy_visible_affiliated_person',
             '工程地址': 'legacy_visible_engineering_address',
             '工程内容': 'legacy_visible_engineering_content',
+            '附件': 'legacy_visible_attachment',
             '录入人': 'legacy_visible_creator_name',
             '录入时间': 'legacy_visible_created_time',
         }

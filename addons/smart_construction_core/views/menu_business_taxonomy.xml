@@ -149,7 +149,7 @@
         <field name="view_mode">tree,form</field>
         <field name="views" eval="[(ref('smart_construction_core.view_construction_contract_income_tree'), 'tree'), (ref('smart_construction_core.view_construction_contract_income_form'), 'form')]"/>
         <field name="search_view_id" ref="smart_construction_core.view_construction_contract_income_search"/>
-        <field name="domain">[('state', 'in', ['confirmed', 'running']), '|', ('legacy_contract_id', '=', False), ('legacy_income_surface_visible', '=', True)]</field>
+        <field name="domain">['&amp;', '&amp;', '&amp;', '|', ('legacy_income_surface_visible', '=', True), '&amp;', ('state', 'in', ['confirmed', 'running']), ('legacy_contract_id', '=', False), ('legacy_visible_title', 'not ilike', '结算'), ('legacy_visible_title', 'not ilike', '报告'), ('legacy_visible_title', 'not ilike', '审核')]</field>
         <field name="context">{'default_type': 'out', 'search_default_visible_income': 1}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
     </record>
@@ -159,7 +159,7 @@
         <field name="view_mode">tree,form</field>
         <field name="views" eval="[(ref('smart_construction_core.view_construction_contract_expense_tree'), 'tree'), (ref('smart_construction_core.view_construction_contract_expense_form'), 'form')]"/>
         <field name="search_view_id" ref="smart_construction_core.view_construction_contract_expense_search"/>
-        <field name="domain">[('state', 'in', ['confirmed', 'running'])]</field>
+        <field name="domain">['&amp;', '&amp;', ('state', 'in', ['confirmed', 'running']), ('legacy_visible_title', 'not ilike', '结算'), ('subject', 'not ilike', '结算')]</field>
         <field name="context">{'default_type': 'in'}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
     </record>
@@ -1859,7 +1859,7 @@
     <menuitem id="menu_sc_supplier_contract_analysis_report"
               name="供货合同分析"
               parent="smart_construction_core.menu_sc_cost_report_group"
-              action="smart_construction_core.action_scbsly_direct_acceptance_supplier_contract"
+              action="smart_construction_core.action_sc_supplier_contract_analysis_report"
               sequence="10"
               groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_contract_read,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
     <record id="action_sc_material_stock_statistics_report" model="ir.actions.act_window">

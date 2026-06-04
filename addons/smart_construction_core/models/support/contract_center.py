@@ -92,6 +92,22 @@ class ConstructionContract(models.Model):
         string="合同类别",
         domain=[("type", "=", "contract_category")],
     )
+    expense_contract_category_auto_id = fields.Many2one(
+        "sc.dictionary",
+        string="自动支出分类",
+        compute="_compute_expense_contract_category_auto_id",
+        store=True,
+        index=True,
+        domain=[("type", "=", "expense_contract_category")],
+        help="系统按合同标题/历史标题自动识别的支出合同分类。",
+    )
+    expense_contract_category_id = fields.Many2one(
+        "sc.dictionary",
+        string="支出合同分类",
+        domain=[("type", "=", "expense_contract_category")],
+        index=True,
+        help="正式业务办理使用的支出合同分类；用户可按字典维护分类并手工调整。",
+    )
     contract_type_id = fields.Many2one(
         "sc.dictionary",
         string="合同方向类型",
@@ -534,6 +550,68 @@ class ConstructionContract(models.Model):
             contract.amount_change = change_amount
             contract.amount_final = (contract.amount_total or 0.0) + change_amount
 
+    def _expense_contract_category_rule_text(self):
+        self.ensure_one()
+        return " ".join(
+            value
+            for value in (
+                self.subject,
+                self.legacy_visible_title,
+                self.legacy_visible_category,
+                self.legacy_contract_no,
+                self.legacy_document_no,
+                self.legacy_external_contract_no,
+                self.note,
+            )
+            if value
+        )
+
+    @api.model
+    def _expense_contract_category_code_for_text(self, value):
+        text = str(value or "")
+        rules = (
+            ("material", ("材料", "供货", "采购", "供应", "商砼", "混凝土", "砂石", "钢材", "水泥", "砖", "管材", "苗木")),
+            ("labor", ("劳务", "人工", "用工", "清包", "班组", "工资")),
+            ("machine", ("机械", "挖机", "装载机", "吊车", "台班", "设备", "泵车", "塔吊")),
+            ("rental", ("租赁", "租用", "租入", "租金", "钢管租赁", "周转材料")),
+            ("subcontract", ("分包", "专业分包", "专包", "专业承包")),
+        )
+        for code, keywords in rules:
+            if any(keyword in text for keyword in keywords):
+                return code
+        return "other"
+
+    @api.model
+    def _expense_contract_category_by_code(self, code):
+        return self.env["sc.dictionary"].sudo().search(
+            [("type", "=", "expense_contract_category"), ("code", "=", code), ("active", "=", True)],
+            limit=1,
+        )
+
+    @api.depends(
+        "type",
+        "subject",
+        "legacy_visible_title",
+        "legacy_visible_category",
+        "legacy_contract_no",
+        "legacy_document_no",
+        "legacy_external_contract_no",
+        "note",
+    )
+    def _compute_expense_contract_category_auto_id(self):
+        category_model = self.env["sc.dictionary"].sudo()
+        categories = {
+            row.code: row
+            for row in category_model.search([("type", "=", "expense_contract_category"), ("active", "=", True)])
+            if row.code
+        }
+        for contract in self:
+            if contract.type != "in":
+                contract.expense_contract_category_auto_id = False
+                continue
+            code = contract._expense_contract_category_code_for_text(contract._expense_contract_category_rule_text())
+            contract.expense_contract_category_auto_id = categories.get(code) or categories.get("other")
+
     # --- Sequencing --------------------------------------------------------
     @api.model_create_multi
     def create(self, vals_list):
@@ -555,7 +633,43 @@ class ConstructionContract(models.Model):
                     else "construction.contract.expense"
                 )
                 vals["name"] = seq.next_by_code(seq_code) or seq.next_by_code("construction.contract") or "新建"
-        return super().create(vals_list)
+            if vals.get("type") == "in" and not vals.get("expense_contract_category_id"):
+                rule_text = " ".join(
+                    str(vals.get(field_name) or "")
+                    for field_name in (
+                        "subject",
+                        "legacy_visible_title",
+                        "legacy_visible_category",
+                        "legacy_contract_no",
+                        "legacy_document_no",
+                        "legacy_external_contract_no",
+                        "note",
+                    )
+                )
+                category = self._expense_contract_category_by_code(self._expense_contract_category_code_for_text(rule_text))
+                if category:
+                    vals["expense_contract_category_id"] = category.id
+        records = super().create(vals_list)
+        for record in records.filtered(lambda rec: rec.type == "in" and not rec.expense_contract_category_id and rec.expense_contract_category_auto_id):
+            record.expense_contract_category_id = record.expense_contract_category_auto_id.id
+        return records
+
+    def write(self, vals):
+        res = super().write(vals)
+        trigger_fields = {
+            "type",
+            "subject",
+            "legacy_visible_title",
+            "legacy_visible_category",
+            "legacy_contract_no",
+            "legacy_document_no",
+            "legacy_external_contract_no",
+            "note",
+        }
+        if trigger_fields.intersection(vals) and "expense_contract_category_id" not in vals:
+            for record in self.filtered(lambda rec: rec.type == "in" and not rec.expense_contract_category_id and rec.expense_contract_category_auto_id):
+                record.expense_contract_category_id = record.expense_contract_category_auto_id.id
+        return res
 
     # --- State transitions -------------------------------------------------
     def action_confirm(self):

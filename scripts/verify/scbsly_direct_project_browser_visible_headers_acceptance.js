@@ -34,6 +34,7 @@ const NEW_DIRECT_ROUTES = {
   '分包合同': { menuId: 744, actionId: 910 },
   '租赁合同': { menuId: 745, actionId: 911 },
   '供货合同': { menuId: 746, actionId: 912 },
+  '供货合同（数据）': { menuId: 802, actionId: 900 },
   '劳务合同': { menuId: 747, actionId: 913 },
   '机械合同（合同）': { menuId: 748, actionId: 914 },
   '材料计划': { menuId: 749, actionId: 915 },

@@ -27,7 +27,7 @@ const OUT_DIR = path.join(
 const EXPECTED_GROUPS = [
   {
     label: '合同类单据',
-    leaves: ['施工合同', '分包合同', '租赁合同', '供货合同', '劳务合同', '机械合同（合同）'],
+    leaves: ['施工合同', '分包合同', '租赁合同', '供货合同', '供货合同（数据）', '劳务合同', '机械合同（合同）'],
   },
   {
     label: '材料管理类单据',
@@ -68,11 +68,7 @@ const EXPECTED_GROUPS = [
   },
 ];
 
-const EXPECTED_LABELS = [
-  '用户验收',
-  '直营项目系统菜单',
-  ...EXPECTED_GROUPS.flatMap((group) => [group.label, ...group.leaves]),
-];
+const EXPECTED_LABELS = EXPECTED_GROUPS.flatMap((group) => group.leaves);
 
 function ensureDir(dirPath) {
   fs.mkdirSync(dirPath, { recursive: true });

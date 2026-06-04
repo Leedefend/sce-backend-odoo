@@ -53,30 +53,30 @@
         <field name="model">construction.contract.income</field>
         <field name="arch" type="xml">
             <tree string="收入合同">
-                <field name="document_status"/>
-                <field name="legacy_document_no"/>
-                <field name="date_contract"/>
-                <field name="partner_id" string="发包人"/>
-                <field name="project_id"/>
-                <field name="operation_strategy"/>
-                <field name="subject"/>
-                <field name="legacy_contract_no"/>
-                <field name="engineering_category_text"/>
-                <field name="engineering_address"/>
-                <field name="engineering_content"/>
-                <field name="affiliated_person"/>
-                <field name="contract_duration_text"/>
-                <field name="contract_payment_method_text"/>
-                <field name="entry_user_text"/>
-                <field name="entry_time"/>
-                <field name="attachment_text"/>
-                <field name="visible_contract_amount" sum="收入合同金额合计"/>
-                <field name="visible_invoice_amount" sum="累计开票合计"/>
-                <field name="visible_received_amount" sum="累计收款合计"/>
-                <field name="visible_unreceived_amount" sum="未收款合计"/>
-                <field name="visible_unreceived_rate"/>
-                <field name="state"/>
-                <field name="handler_id"/>
+                <field name="legacy_visible_document_state" string="单据状态"/>
+                <field name="legacy_visible_document_no" string="单据编号"/>
+                <field name="legacy_visible_contract_date" string="合同订立日期"/>
+                <field name="legacy_visible_archived" string="原件是否归档"/>
+                <field name="legacy_visible_counterparty" string="发包人"/>
+                <field name="legacy_visible_project_name" string="项目名称"/>
+                <field name="legacy_visible_title" string="合同标题"/>
+                <field name="legacy_visible_category" string="工程类别"/>
+                <field name="legacy_visible_contract_no" string="合同编号"/>
+                <field name="legacy_visible_amount" string="合同金额"/>
+                <field name="legacy_visible_settlement_amount" string="结算金额"/>
+                <field name="legacy_visible_invoice_amount" string="累计开票"/>
+                <field name="legacy_visible_received_amount" string="累计收款"/>
+                <field name="legacy_visible_unreceived_amount" string="未收款"/>
+                <field name="legacy_visible_unreceived_rate" string="未收款比例"/>
+                <field name="legacy_visible_affiliated_person" string="挂靠人"/>
+                <field name="legacy_visible_engineering_address" string="工程地址"/>
+                <field name="legacy_visible_engineering_content" string="工程内容"/>
+                <field name="legacy_visible_creator_name" string="录入人"/>
+                <field name="legacy_visible_created_time" string="录入时间"/>
+                <field name="legacy_visible_attachment" string="附件"/>
+                <field name="legacy_visible_contractor" string="承包人" optional="hide"/>
+                <field name="legacy_visible_invoice_unreceived_amount" string="开票未收款" optional="hide"/>
+                <field name="legacy_visible_contract_duration_days" string="合同工期天数" optional="hide"/>
             </tree>
         </field>
     </record>
@@ -92,13 +92,19 @@
                 <field name="partner_id" string="供应商/分包方"/>
                 <field name="project_id"/>
                 <field name="subject"/>
+                <field name="legacy_visible_engineering_content" string="合同内容"/>
+                <field name="expense_contract_category_id"/>
                 <field name="legacy_contract_no"/>
+                <field name="legacy_visible_attachment" string="附件"/>
                 <field name="visible_contract_amount" sum="支出合同金额合计"/>
                 <field name="settlement_amount" sum="结算金额合计"/>
                 <field name="paid_amount" sum="付款金额合计"/>
                 <field name="unpaid_amount" sum="未付款金额合计"/>
                 <field name="operation_strategy"/>
                 <field name="state"/>
+                <field name="legacy_visible_creator_name" string="录入人"/>
+                <field name="legacy_visible_created_time" string="录入时间"/>
+                <field name="note" string="备注"/>
                 <field name="handler_id"/>
             </tree>
         </field>
@@ -399,6 +405,8 @@
                             <field name="project_id" required="1"/>
                             <field name="operation_strategy" readonly="1"/>
                             <field name="partner_id" string="供应商/分包方" required="1"/>
+                            <field name="expense_contract_category_id"/>
+                            <field name="expense_contract_category_auto_id" readonly="1"/>
                             <field name="category_id"/>
                             <field name="contract_type_id"/>
                             <field name="engineering_address"/>
@@ -418,6 +426,8 @@
                             <field name="entry_user_id"/>
                             <field name="entry_user_text"/>
                             <field name="entry_time"/>
+                            <field name="legacy_visible_creator_name" readonly="1"/>
+                            <field name="legacy_visible_created_time" readonly="1"/>
                             <field name="archived"/>
                             <field name="legacy_status"/>
                         </group>
@@ -453,7 +463,8 @@
                         </page>
                         <page string="审批信息">
                             <field name="approval_info"/>
-                            <field name="attachment_text"/>
+                            <field name="legacy_visible_attachment" string="附件"/>
+                            <field name="attachment_text" string="平台附件文本"/>
                         </page>
                         <page string="备注">
                             <field name="note"/>
@@ -538,12 +549,20 @@
                 <field name="project_id"/>
                 <field name="operation_strategy"/>
                 <field name="partner_id"/>
+                <field name="expense_contract_category_id"/>
+                <filter name="category_material" string="材料" domain="[('expense_contract_category_id.code', '=', 'material')]"/>
+                <filter name="category_labor" string="劳务" domain="[('expense_contract_category_id.code', '=', 'labor')]"/>
+                <filter name="category_machine" string="机械" domain="[('expense_contract_category_id.code', '=', 'machine')]"/>
+                <filter name="category_rental" string="租赁" domain="[('expense_contract_category_id.code', '=', 'rental')]"/>
+                <filter name="category_subcontract" string="专业分包" domain="[('expense_contract_category_id.code', '=', 'subcontract')]"/>
+                <filter name="category_other" string="其他" domain="[('expense_contract_category_id.code', '=', 'other')]"/>
                 <filter name="state_confirmed" string="已确认" domain="[('state', '=', 'confirmed')]"/>
                 <filter name="state_running" string="执行中" domain="[('state', '=', 'running')]"/>
                 <filter name="operation_direct" string="公司直营" domain="[('operation_strategy', '=', 'direct')]"/>
                 <filter name="operation_joint" string="联营项目" domain="[('operation_strategy', '=', 'joint')]"/>
                 <group expand="0" string="分组">
                     <filter name="group_project" string="按项目" context="{'group_by': 'project_id'}"/>
+                    <filter name="group_expense_contract_category" string="按支出合同分类" context="{'group_by': 'expense_contract_category_id'}"/>
                     <filter name="group_operation_strategy" string="按经营策略" context="{'group_by': 'operation_strategy'}"/>
                     <filter name="group_partner" string="按供应商/分包方" context="{'group_by': 'partner_id'}"/>
                     <filter name="group_state" string="按状态" context="{'group_by': 'state'}"/>

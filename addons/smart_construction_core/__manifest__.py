@@ -31,6 +31,7 @@
         'data/sc_extension_params.xml',
         'data/supplier_type_data.xml',
         'data/project_dictionary_data.xml',
+        'data/expense_contract_category_data.xml',
         'data/sc_capability_group_seed.xml',
         'data/legacy_report_inventory_seed.xml',
 
@@ -106,6 +107,7 @@
         'views/core/contract_line_search.xml',
         'views/core/purchase_extend_views.xml',
         'views/support/account_extend_views.xml',
+        'views/support/partner_business_fact_line_views.xml',
         'views/support/partner_import_review_views.xml',
         'views/support/product_extend_views.xml',
         'views/support/legacy_receipt_income_views.xml',
@@ -222,6 +224,7 @@
         'views/menu_scbsly_direct_project_acceptance.xml',
         'views/core/expense_business_fact_taxonomy_views.xml',
         'views/menu_user_acceptance_cleanup.xml',
+        'views/menu_contract_product_release.xml',
         'data/product_policy_menu_sync.xml',
         'views/support/audit_list_fields_views.xml',
         'views/support/p1_daily_business_visible_alias_views.xml',

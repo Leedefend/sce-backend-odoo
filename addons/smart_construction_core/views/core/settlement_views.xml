@@ -10,25 +10,40 @@
                 <tree string="结算单">
                     <field name="name"/>
                     <field name="title"/>
-                    <field name="settlement_type"/>
+                    <field name="settlement_category_id" string="结算类型"/>
+                    <field name="settlement_category_display" string="结算类型"/>
+                    <field name="settlement_type" invisible="1"/>
                     <field name="settlement_stage"/>
                     <field name="project_id"/>
                     <field name="operation_strategy"/>
                     <field name="contract_id"/>
+                    <field name="legacy_contract_no"/>
                     <field name="contract_subject"/>
                     <field name="contract_total_amount" sum="合同总额合计"/>
                     <field name="settlement_unit_id"/>
                     <field name="partner_id"/>
+                    <field name="settlement_amount" sum="结算金额合计"/>
                     <field name="submitted_amount" sum="送审金额合计"/>
                     <field name="approved_amount" sum="审定金额合计"/>
                     <field name="requested_fund_amount" sum="申请资金金额合计"/>
+                    <field name="legacy_unrequested_amount" sum="原始未申请金额合计"/>
                     <field name="amount_total" sum="金额合计"/>
+                    <field name="legacy_payment_state"/>
+                    <field name="legacy_paid_amount" sum="原始已付款金额合计"/>
+                    <field name="legacy_unpaid_amount" sum="原始未付款金额合计"/>
+                    <field name="legacy_payment_request_state"/>
                     <field name="deduction_amount" sum="扣款金额合计"/>
                     <field name="amount_paid" sum="已付款金额合计"/>
                     <field name="unpaid_amount" sum="未付款金额合计"/>
+                    <field name="legacy_document_state"/>
+                    <field name="settlement_period_start"/>
+                    <field name="settlement_period_end"/>
                     <field name="engineering_address"/>
                     <field name="settlement_description"/>
+                    <field name="legacy_visible_attachment" string="附件"/>
                     <field name="attachment_count"/>
+                    <field name="source_created_by" string="录入人"/>
+                    <field name="source_created_at" string="录入时间"/>
                     <field name="entry_user_id"/>
                     <field name="state"/>
                     <field name="document_date"/>
@@ -47,9 +62,19 @@
                     <field name="project_id"/>
                     <field name="operation_strategy"/>
                     <field name="contract_id"/>
+                    <field name="legacy_contract_no"/>
                     <field name="partner_id"/>
                     <field name="settlement_unit_id"/>
+                    <field name="settlement_category_id" string="结算类型"/>
+                    <field name="settlement_category_display" string="结算类型"/>
+                    <field name="legacy_payment_state"/>
+                    <field name="legacy_payment_request_state"/>
+                    <field name="legacy_document_state"/>
                     <field name="settlement_stage"/>
+                    <filter name="category_material_settlement" string="材料" domain="[('settlement_category_id.code', '=', 'material')]"/>
+                    <filter name="category_labor_settlement" string="劳务" domain="[('settlement_category_id.code', '=', 'labor')]"/>
+                    <filter name="category_machine_settlement" string="机械" domain="[('settlement_category_id.code', '=', 'machine')]"/>
+                    <filter name="category_subcontract_settlement" string="专业分包" domain="[('settlement_category_id.code', '=', 'subcontract')]"/>
                     <filter name="state_draft" string="草稿" domain="[('state', '=', 'draft')]"/>
                     <filter name="state_submit" string="已提交" domain="[('state', '=', 'submit')]"/>
                     <filter name="state_approve" string="已批准" domain="[('state', '=', 'approve')]"/>
@@ -66,7 +91,10 @@
                         <filter name="group_operation_strategy" string="按经营策略" context="{'group_by': 'operation_strategy'}"/>
                         <filter name="group_contract" string="按合同" context="{'group_by': 'contract_id'}"/>
                         <filter name="group_partner" string="按往来单位" context="{'group_by': 'partner_id'}"/>
-                        <filter name="group_type" string="按结算类型" context="{'group_by': 'settlement_type'}"/>
+                        <filter name="group_type" string="按结算类型" context="{'group_by': 'settlement_category_display'}"/>
+                        <filter name="group_payment_state" string="按付款状态" context="{'group_by': 'legacy_payment_state'}"/>
+                        <filter name="group_payment_request_state" string="按支付申请状态" context="{'group_by': 'legacy_payment_request_state'}"/>
+                        <filter name="group_settlement_income_out" string="按收支类型" context="{'group_by': 'settlement_type'}"/>
                         <filter name="group_stage" string="按结算阶段" context="{'group_by': 'settlement_stage'}"/>
                         <filter name="group_state" string="按状态" context="{'group_by': 'state'}"/>
                         <filter name="group_date_settlement" string="按结算日期" context="{'group_by': 'date_settlement:month'}"/>
@@ -138,10 +166,12 @@
                                 <field name="title"/>
                                 <field name="project_id" options="{'no_create': True}" required="1"/>
                                 <field name="operation_strategy" readonly="1"/>
-                                <field name="settlement_type" required="1"/>
+                                <field name="settlement_category_id" string="结算类型"/>
+                                <field name="settlement_type" required="1" invisible="1"/>
                                 <field name="settlement_stage"/>
                                 <field name="contract_id"
                                        domain="[('project_id','=',project_id),('company_id','=',company_id)]"/>
+                                <field name="legacy_contract_no" readonly="1"/>
                                 <field name="contract_subject" readonly="1"/>
                                 <field name="contract_total_amount" readonly="1"/>
                             </group>
@@ -152,20 +182,32 @@
                                 <field name="contractor_name" readonly="1"/>
                                 <field name="document_date"/>
                                 <field name="date_settlement"/>
+                                <field name="settlement_period_start" readonly="1"/>
+                                <field name="settlement_period_end" readonly="1"/>
                                 <field name="planned_settlement_date"/>
                                 <field name="declared_date"/>
                                 <field name="final_approved_date"/>
                                 <field name="approved_date"/>
                                 <field name="currency_id" required="1" invisible="1"/>
+                                <field name="settlement_amount"/>
                                 <field name="company_id" readonly="1"/>
                             </group>
                         </group>
                         <group>
+                            <field name="legacy_document_state" readonly="1"/>
+                            <field name="legacy_payment_state" readonly="1"/>
+                            <field name="legacy_paid_amount" readonly="1"/>
+                            <field name="legacy_unpaid_amount" readonly="1"/>
+                            <field name="legacy_payment_request_state" readonly="1"/>
                             <field name="requested_fund_amount"/>
+                            <field name="legacy_unrequested_amount" readonly="1"/>
                             <field name="engineering_address" readonly="1"/>
+                            <field name="source_created_by" readonly="1" string="录入人"/>
+                            <field name="source_created_at" readonly="1" string="录入时间"/>
                             <field name="entry_user_id"/>
                             <field name="entry_data"/>
                             <field name="settlement_description"/>
+                            <field name="legacy_visible_attachment" string="附件"/>
                             <field name="note"/>
                         </group>
                         <group string="发票信息（占位）">

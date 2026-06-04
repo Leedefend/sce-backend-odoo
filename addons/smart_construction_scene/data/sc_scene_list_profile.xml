@@ -539,6 +539,18 @@
                     'row_primary': 'name',
                     'row_secondary': 'project_id'
                 },
+                'search_surface': {
+                    'filters': [
+                        {'key': 'category_material', 'label': '材料', 'domain_raw': &quot;[('settlement_category_display', '=', '材料')]&quot;},
+                        {'key': 'category_labor', 'label': '劳务', 'domain_raw': &quot;[('settlement_category_display', '=', '劳务')]&quot;},
+                        {'key': 'category_machine', 'label': '机械', 'domain_raw': &quot;[('settlement_category_display', '=', '机械')]&quot;},
+                        {'key': 'category_subcontract', 'label': '专业分包', 'domain_raw': &quot;[('settlement_category_display', '=', '专业分包')]&quot;}
+                    ],
+                    'group_by': [
+                        {'key': 'group_category', 'label': '按结算类型', 'context_raw': &quot;{'group_by': 'settlement_category_display'}&quot;}
+                    ],
+                    'fields': ['name', 'title', 'project_id', 'partner_id', 'settlement_category_display']
+                },
                 'action_specs': {
                     'open_finance_center': {'label': '返回财务中心', 'intent': 'ui.contract'},
                     'open_treasury_ledger': {'label': '查看资金台账', 'intent': 'ui.contract'}

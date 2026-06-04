@@ -114,7 +114,7 @@ def write_payload(record, payload: dict[str, str]) -> None:
 def visible(row: dict[str, Any]) -> dict[str, str]:
     values = {
         "状态": state_label(row.get("DJZT")),
-        "推送结果": clean(row.get("TSJG") or row.get("D_SCBSJS_IsPush")),
+        "推送结果": clean(row.get("TSJG")),
         "金蝶单据编号": clean(row.get("OTHER_SYSTEM_CODE") or row.get("OTHER_SYSTEM_CODE$C_JXXP_ZYFPJJD_CB")),
         "发票公司类型": clean(row.get("D_SCBSJS_FPGSLX$C_JXXP_ZYFPJJD_CB") or row.get("D_SCBSJS_FPGSLX")),
         "单据编号": clean(row.get("DJBH")),

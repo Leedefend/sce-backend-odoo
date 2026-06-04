@@ -431,6 +431,18 @@ function resolveCarryQuery(extra?: Record<string, unknown>) {
   return pickContractNavQuery(route.query as Record<string, unknown>, extra);
 }
 
+function resolveButtonActionQuery(result: object | null | undefined, extra?: Record<string, unknown>) {
+  const payload = (result && typeof result === 'object' && !Array.isArray(result))
+    ? result as Record<string, unknown>
+    : {};
+  return resolveCarryQuery({
+    action_id: payload.action_id,
+    domain_raw: payload.domain_raw,
+    context_raw: payload.context_raw,
+    ...(extra || {}),
+  });
+}
+
 function openProjectAction(path: string, query?: Record<string, string>) {
   router.push({ path, query: query || undefined }).catch(() => {});
 }
@@ -855,11 +867,15 @@ async function runHeaderButton(btn: ViewButton) {
       await load();
     } else if (response?.result?.entry_target) {
       await router.push(buildEntryTargetRouteTarget(response.result.entry_target, {
-        query: resolveCarryQuery(),
+        query: resolveButtonActionQuery(response.result),
         actionId: response.result.action_id,
       }) as never);
     } else if (response?.result?.action_id) {
-      await router.push({ name: 'action', params: { actionId: response.result.action_id } });
+      await router.push({
+        name: 'action',
+        params: { actionId: response.result.action_id },
+        query: resolveButtonActionQuery(response.result, { action_id: response.result.action_id }),
+      });
     }
     actionFeedback.value = parseExecuteResult(response);
   } catch (err) {
@@ -904,7 +920,7 @@ async function applyButtonEffect(effect: ButtonEffect) {
     }
     if (target.kind === 'entry_target' && target.entry_target) {
       await router.push(buildEntryTargetRouteTarget(target.entry_target, {
-        query: resolveCarryQuery(),
+        query: resolveButtonActionQuery(target),
       }) as never);
       return;
     }
@@ -912,7 +928,7 @@ async function applyButtonEffect(effect: ButtonEffect) {
       await router.push({
         name: 'action',
         params: { actionId: target.action_id },
-        query: resolveCarryQuery({ action_id: target.action_id }),
+        query: resolveButtonActionQuery(target, { action_id: target.action_id }),
       });
       return;
     }

@@ -5,6 +5,7 @@ export type ContractActionSelection = 'none' | 'single' | 'multi';
 export type ContractActionResponseNavigation = {
   nextActionId: number | null;
   entryTarget: Record<string, unknown> | null;
+  query?: Record<string, unknown>;
 };
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -114,6 +115,7 @@ export function buildContractActionRouteTarget(options: {
   nextActionId?: number | null;
   entryTarget?: Record<string, unknown> | null;
   carryQuery: Record<string, unknown>;
+  responseQuery?: Record<string, unknown> | null;
   menuId: number;
   keepSceneRoute: boolean;
   routePath: string;
@@ -132,6 +134,7 @@ export function buildContractActionRouteTarget(options: {
   const nextActionId = toPositiveInt(options.nextActionId) || entryTargetActionId;
   const query = {
     ...options.carryQuery,
+    ...(options.responseQuery || {}),
     menu_id: options.menuId || undefined,
     action_id: nextActionId || undefined,
   };
@@ -188,9 +191,15 @@ export function resolveContractActionResponseNavigation(responseRaw: unknown): C
       || effectTarget.action_id
       || resolveEntryTargetActionId(normalizedEntryTarget),
   );
+  const domainRaw = String(result.domain_raw || rawAction.domain_raw || effectTarget.domain_raw || '').trim();
+  const contextRaw = String(result.context_raw || rawAction.context_raw || effectTarget.context_raw || '').trim();
   return {
     nextActionId: actionId || null,
     entryTarget: normalizedEntryTarget,
+    query: {
+      domain_raw: domainRaw || undefined,
+      context_raw: contextRaw || undefined,
+    },
   };
 }
 

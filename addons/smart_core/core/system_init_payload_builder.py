@@ -131,6 +131,17 @@ class SystemInitPayloadBuilder:
             row["children"] = cls._normalize_nav_tree(row.get("children") if isinstance(row.get("children"), list) else [])
             meta = dict(row.get("meta") or {})
             route = str(meta.get("route") or row.get("route") or "").strip()
+            has_target = bool(
+                route
+                or row.get("scene_key")
+                or row.get("action_id")
+                or row.get("model")
+                or meta.get("scene_key")
+                or meta.get("action_id")
+                or meta.get("model")
+            )
+            if not row["children"] and not has_target:
+                continue
             entry_target = build_scene_entry_target(
                 scene_key=str(row.get("scene_key") or meta.get("scene_key") or "").strip() or cls._extract_scene_key_from_route(route),
                 route=route,

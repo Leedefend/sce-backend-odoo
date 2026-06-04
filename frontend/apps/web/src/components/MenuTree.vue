@@ -119,7 +119,39 @@ function onSelect(node: NavNode) {
   if (isBlocked(node)) {
     return;
   }
+  if (node.children?.length && !hasNavigationTarget(node)) {
+    toggle(nodeKey(node));
+    return;
+  }
   emit('select', node);
+}
+
+function hasNavigationTarget(node: NavNode) {
+  const raw = node as NavNode & {
+    action?: unknown;
+    action_id?: unknown;
+    actionId?: unknown;
+    model?: unknown;
+    route?: unknown;
+    scene_key?: unknown;
+    sceneKey?: unknown;
+  };
+  const meta = (node.meta && typeof node.meta === 'object') ? node.meta : {};
+  return Boolean(
+    raw.action
+      || raw.action_id
+      || raw.actionId
+      || raw.model
+      || raw.route
+      || raw.scene_key
+      || raw.sceneKey
+      || meta.action_id
+      || meta.actionId
+      || meta.model
+      || meta.route
+      || meta.scene_key
+      || meta.sceneKey,
+  );
 }
 
 function ensureExpandedForActive(nodes: NavNode[], menuId?: number): Set<string> {
@@ -142,10 +174,31 @@ function ensureExpandedForActive(nodes: NavNode[], menuId?: number): Set<string>
   return next;
 }
 
+function ensureExpandedForAcceptanceMenus(nodes: NavNode[]): Set<string> {
+  const next = new Set<string>();
+  const walk = (items: NavNode[], insideJointAcceptance = false) => {
+    for (const node of items) {
+      const key = nodeKey(node);
+      const label = normalizedNodeLabel(node);
+      const isJointAcceptanceRoot = label === '联营项目数据核对';
+      const shouldExpand = isJointAcceptanceRoot || (insideJointAcceptance && Boolean(node.children?.length));
+      if (shouldExpand) {
+        next.add(key);
+      }
+      if (node.children?.length) {
+        walk(node.children, insideJointAcceptance || isJointAcceptanceRoot);
+      }
+    }
+  };
+  walk(nodes);
+  return next;
+}
+
 watchEffect(() => {
   const parents = ensureExpandedForActive(props.nodes, props.activeMenuId);
-  if (parents.size) {
-    session.ensureMenuExpanded([...parents]);
+  const defaults = ensureExpandedForAcceptanceMenus(props.nodes);
+  if (parents.size || defaults.size) {
+    session.ensureMenuExpanded([...parents, ...defaults]);
   }
   activeParents.value = parents;
 });
