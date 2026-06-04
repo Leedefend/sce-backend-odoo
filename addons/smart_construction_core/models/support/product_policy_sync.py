@@ -34,6 +34,12 @@ USER_ACCEPTANCE_MENU_KEY_TOKENS = (
     "user_acceptance",
 )
 
+INTERNAL_CONFIG_ONLY_GROUP_XMLIDS = {
+    "base.group_no_one",
+    "smart_core.group_smart_core_admin",
+    "smart_construction_core.group_sc_cap_config_admin",
+}
+
 
 def _text(value):
     return str(value or "").strip()
@@ -54,7 +60,86 @@ class ScProductPolicy(models.Model):
         service = ProductPolicyCatalogSyncService(self.env)
         for product_key in ("construction.standard", "construction.preview"):
             policy = service.sync_policy(product_key=product_key, preserve_state=True, preserve_access_level=True)
-            self._apply_formal_contract_product_menu_domain(policy)
+            self._release_all_construction_product_menus(policy)
+        return True
+
+    @api.model
+    def _release_all_construction_product_menus(self, policy):
+        if not policy:
+            return False
+
+        def _menu_key(row):
+            return _text(row.get("menu_xmlid") or row.get("page_key") or row.get("menu_key"))
+
+        def _menu_group_xmlids(row):
+            key = _menu_key(row)
+            menu = self.env.ref(key, raise_if_not_found=False) if key else False
+            if not menu:
+                return set()
+            return {_text(xmlid) for xmlid in menu.groups_id.get_external_id().values() if _text(xmlid)}
+
+        def _is_internal_config_only(row):
+            group_xmlids = _menu_group_xmlids(row)
+            return bool(group_xmlids) and group_xmlids.issubset(INTERNAL_CONFIG_ONLY_GROUP_XMLIDS)
+
+        def _release_domain(row):
+            key = _menu_key(row)
+            if key in FORMAL_CONTRACT_PRODUCT_MENU_XMLIDS:
+                return "contract"
+            if key in FORMAL_SETTLEMENT_PRODUCT_MENU_XMLIDS:
+                return "settlement"
+            if _is_user_acceptance_menu_key(key):
+                return "user_acceptance"
+            group_key = _text(row.get("group_key"))
+            if group_key.startswith("construction."):
+                return group_key.split(".", 1)[1] or "construction"
+            return "construction"
+
+        def _apply_release_state(rows):
+            out = []
+            for row in rows or []:
+                if not isinstance(row, dict):
+                    continue
+                next_row = dict(row)
+                if _is_internal_config_only(next_row):
+                    next_row.update(
+                        {
+                            "enabled": False,
+                            "release_state": "hidden",
+                            "access_level": "internal",
+                            "release_domain": "internal_config",
+                            "policy_note": "hidden_from_user_product_release_config_admin_only",
+                        }
+                    )
+                else:
+                    next_row.update(
+                        {
+                            "enabled": True,
+                            "release_state": "released",
+                            "access_level": "public",
+                            "release_domain": _release_domain(next_row),
+                            "policy_note": "released_as_construction_product_menu",
+                        }
+                    )
+                out.append(next_row)
+            return out
+
+        menu_groups = []
+        for group in policy.menu_groups or []:
+            if not isinstance(group, dict):
+                continue
+            next_group = dict(group)
+            next_group["menus"] = _apply_release_state(group.get("menus"))
+            menu_groups.append(next_group)
+
+        policy.write(
+            {
+                "menu_groups": menu_groups,
+                "scenes": _apply_release_state(policy.scenes),
+                "capabilities": _apply_release_state(policy.capabilities),
+                "note": "all construction user-facing menu pages are released as product menus; config-admin-only internal pages remain hidden",
+            }
+        )
         return True
 
     @api.model
