@@ -8,6 +8,7 @@ from odoo.addons.smart_core.core.delivery_menu_defaults import (
     build_delivery_menu_root,
 )
 from odoo.addons.smart_core.delivery.menu_delivery_convergence_service import MenuDeliveryConvergenceService
+from odoo.addons.smart_core.delivery.native_config_menu_projection import native_config_delivery_groups
 
 
 class MenuService:
@@ -441,6 +442,8 @@ class MenuService:
             if policy_has_menu_surface
             else self._native_preview_menus(native_nav=native_nav or [], policy=policy)
         )
+        if self.env is not None and (is_admin or is_business_config_admin):
+            grouped_native = list(grouped_native or []) + native_config_delivery_groups(self.env)
         groups_by_key = {}
         group_order = []
         scene_group_map = {}

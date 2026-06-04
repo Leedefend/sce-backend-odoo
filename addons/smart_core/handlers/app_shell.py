@@ -14,6 +14,10 @@ from odoo.addons.smart_core.core.unified_page_contract_v2_client import (
     resolve_delivery_profile,
     trim_navigation_contract_for_client,
 )
+from odoo.addons.smart_core.delivery.native_config_menu_projection import (
+    native_config_app_children,
+    native_config_available,
+)
 try:
     from odoo.addons.smart_core.security.platform_admin import user_is_platform_admin
 except Exception:
@@ -293,117 +297,6 @@ def _admin_app_target(env, app_id: str) -> dict[str, Any]:
     }
 
 
-def _visible_menu_ids(env) -> set[int]:
-    try:
-        return set(env["ir.ui.menu"]._visible_menu_ids(debug=False))
-    except Exception:
-        try:
-            return set(env["ir.ui.menu"]._visible_menu_ids())
-        except Exception:
-            return set()
-
-
-def _menu_xmlid(menu: Any) -> str:
-    try:
-        return _text(menu.get_external_id().get(menu.id))
-    except Exception:
-        return ""
-
-
-def _menu_action_payload(menu: Any) -> dict[str, Any]:
-    action = getattr(menu, "action", None)
-    action_id = int(getattr(action, "id", 0) or 0) if action else 0
-    action_model = _text(getattr(action, "res_model", "")) if action else ""
-    menu_id = int(getattr(menu, "id", 0) or 0)
-    route = f"/a/{action_id}?menu_id={menu_id}" if action_id and menu_id else (f"/m/{menu_id}" if menu_id else "")
-    payload = {
-        "subject": "action" if action_id else "menu",
-        "menu_id": menu_id,
-        "route": route,
-        "menu_xmlid": _menu_xmlid(menu),
-    }
-    if action_id:
-        payload.update(
-            {
-                "id": action_id,
-                "action_id": action_id,
-                "model": action_model,
-                "view_type": _text(getattr(action, "view_mode", "")).split(",", 1)[0] or "tree",
-                "action_xmlid": _menu_xmlid(action),
-            }
-        )
-    return payload
-
-
-def _native_config_root(env):
-    return _xmlid_record(env, "smart_construction_core.menu_sc_business_config_center")
-
-
-def _native_config_app_available(env) -> bool:
-    root = _native_config_root(env)
-    return bool(root and int(root.id or 0) in _visible_menu_ids(env))
-
-
-def _native_config_nav_children(env) -> list[dict[str, Any]]:
-    root = _native_config_root(env)
-    if not root:
-        return []
-    visible_ids = _visible_menu_ids(env)
-
-    def build(menu):
-        if int(menu.id or 0) not in visible_ids:
-            return None
-        children = []
-        for child in menu.child_id.sorted(lambda row: (row.sequence or 10, row.name or "")):
-            node = build(child)
-            if node:
-                children.append(node)
-        target = _menu_action_payload(menu)
-        has_action = bool(target.get("action_id"))
-        if not children and not has_action:
-            return None
-        meta = {
-            "app": "config",
-            "feature": _menu_xmlid(menu) or f"menu_{menu.id}",
-            "kind": "config",
-            "menu_id": int(menu.id),
-            "menu_xmlid": _menu_xmlid(menu),
-            "open": target,
-            "entry_target": target,
-            "route": target.get("route"),
-        }
-        if target.get("action_id"):
-            meta.update(
-                {
-                    "action_id": target.get("action_id"),
-                    "action_xmlid": target.get("action_xmlid"),
-                    "model": target.get("model"),
-                    "view_modes": [target.get("view_type")] if target.get("view_type") else [],
-                }
-            )
-        node = {
-            "key": f"menu:{int(menu.id)}",
-            "id": int(menu.id),
-            "menu_id": int(menu.id),
-            "label": _text(menu.name),
-            "children": children,
-            "sequence": int(menu.sequence or 10),
-            "meta": meta,
-        }
-        if target.get("route"):
-            node["route"] = target.get("route")
-        if target.get("action_id"):
-            node["action_id"] = target.get("action_id")
-        return node
-
-    rows = []
-    for child in root.child_id.sorted(lambda row: (row.sequence or 10, row.name or "")):
-        node = build(child)
-        if node:
-            rows.append(node)
-    return rows
-
-
 def _headers(request) -> dict[str, Any]:
     try:
         http_request = getattr(request, "httprequest", None)
@@ -514,13 +407,14 @@ class AppCatalogHandler(_SceneDeliveryAppShellMixin, BaseIntentHandler):
             for item in apps
             if isinstance(item.get("meta"), dict)
         }
-        if "config" not in app_ids and _native_config_app_available(self.env):
+        if "config" not in app_ids and native_config_available(self.env):
+            config_children = native_config_app_children(self.env)
             apps.append(
                 {
                     "key": "app:config",
                     "label": _app_label("config"),
                     "icon": None,
-                    "badges": {"count": len(_native_config_nav_children(self.env))},
+                    "badges": {"count": len(config_children)},
                     "meta": {
                         "app_id": "config",
                         "category": _app_category("config"),
@@ -650,7 +544,7 @@ class AppNavHandler(_SceneDeliveryAppShellMixin, BaseIntentHandler):
             if _scene_key(scene)
         ]
         if app_id == "config":
-            native_children = _native_config_nav_children(env)
+            native_children = native_config_app_children(env)
             if native_children:
                 children = native_children
 
