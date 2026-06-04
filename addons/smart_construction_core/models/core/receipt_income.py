@@ -27,6 +27,7 @@ class ScReceiptIncome(models.Model):
         required=True,
         index=True,
     )
+    source_family = fields.Char(string="来源类别", index=True, readonly=True)
     state = fields.Selection(
         [
             ("draft", "草稿"),

@@ -597,7 +597,7 @@
         <field name="res_model">sc.receipt.income</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="smart_construction_core.view_sc_receipt_income_search"/>
-        <field name="domain">[('source_kind', '=', 'receipt_income'), ('legacy_source_model', '=', 'sc.legacy.receipt.income.fact'), ('legacy_source_table', '=', 'C_JFHKLR')]</field>
+        <field name="domain">[('source_kind', '=', 'receipt_income'), ('legacy_source_model', '=', 'sc.legacy.receipt.income.fact'), ('legacy_source_table', '=', 'C_JFHKLR'), ('source_family', '=', 'engineering_progress_receipt_visible')]</field>
         <field name="context">{'default_source_kind': 'receipt_income', 'default_receipt_type': '正常类型收款', 'default_income_category': '工程进度款收入', 'search_default_group_project': 1}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
