@@ -63,6 +63,79 @@ class TestLegacyDirectAcceptanceAttachmentDisplay(unittest.TestCase):
 
         self.assertEqual(value, "")
 
+    def test_direct_attachment_label_from_payload_is_displayed(self):
+        module = _load_module()
+        payload = {"FJ": "7c728a58b0962153c6663b05e2192d01", "f_FJ": "附件(1)"}
+
+        value = module.ScLegacyDirectAcceptanceFact._legacy_payload_value(
+            payload,
+            "f_FJ",
+            acceptance_label="材料结算单",
+            attachment_ref="7c728a58b0962153c6663b05e2192d01",
+        )
+
+        self.assertEqual(value, "附件(1)")
+
+    def test_raw_attachment_id_matching_record_ref_is_displayed_as_one_attachment(self):
+        module = _load_module()
+        payload = {"FJ": "172ebd3a702bb774da4b2d1ef419465e"}
+
+        value = module.ScLegacyDirectAcceptanceFact._legacy_payload_value(
+            payload,
+            "f_FJ",
+            acceptance_label="项目费用报销单",
+            attachment_ref="172ebd3a702bb774da4b2d1ef419465e",
+        )
+
+        self.assertEqual(value, "附件(1)")
+
+    def test_raw_attachment_hash_without_record_ref_is_displayed_as_one_attachment(self):
+        module = _load_module()
+        payload = {"FJ": "fed85f8d2066871e2d2037ffcadfd7fd"}
+
+        value = module.ScLegacyDirectAcceptanceFact._legacy_payload_value(
+            payload,
+            "f_FJ",
+            acceptance_label="工程进度收款",
+        )
+
+        self.assertEqual(value, "附件(1)")
+
+    def test_negative_legacy_unpaid_amount_falls_back_to_balance(self):
+        module = _load_module()
+        payload = {"ZJE": "2450", "CCCC_FKJE": "0", "WFKJE": "-2450"}
+
+        value = module.ScLegacyDirectAcceptanceFact._legacy_common_computed_visible_value(
+            payload,
+            "CCCC_WFKJE",
+        )
+
+        self.assertEqual(value, "2450.0")
+
+    def test_input_tax_line_rate_is_formatted_as_percent(self):
+        module = _load_module()
+        payload = {"SLV$C_JXXP_ZYFPJJD_CB": "0.13"}
+
+        value = module.ScLegacyDirectAcceptanceFact._legacy_payload_value(
+            payload,
+            "SLV$C_JXXP_ZYFPJJD_CB",
+            acceptance_label="进项上报",
+        )
+
+        self.assertEqual(value, "13%")
+
+    def test_general_contract_input_tax_rate_falls_back_to_amount_ratio(self):
+        module = _load_module()
+        payload = {"BHSJE": "22591.74", "ZSE": "2711.01"}
+
+        value = module.ScLegacyDirectAcceptanceFact._legacy_payload_value(
+            payload,
+            "SLVS",
+            acceptance_label="总包进项上报",
+        )
+
+        self.assertEqual(value, "12%")
+
 
 if __name__ == "__main__":
     unittest.main()
