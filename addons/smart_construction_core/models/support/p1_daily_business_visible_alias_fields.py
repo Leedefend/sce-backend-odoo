@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import hashlib
 import re
+from decimal import Decimal, InvalidOperation
 
 from odoo import fields, models
 
@@ -1409,6 +1410,19 @@ def _normalize_payload_alias_value(label, value):
     return ""
 
 
+def _format_progress_receipt_amount_alias(value):
+    if value is False or value is None:
+        return ""
+    try:
+        amount = Decimal(str(value)).normalize()
+    except (InvalidOperation, ValueError):
+        return str(value).strip()
+    text = format(amount, "f")
+    if "." in text:
+        text = text.rstrip("0").rstrip(".")
+    return text or "0"
+
+
 def _business_document_state_alias(record):
     for field_name in (
         "legacy_visible_document_state",
@@ -1529,6 +1543,8 @@ def _alias_value(record, label):
         }
         field_name = strict_sources.get(label)
         if field_name:
+            if label == '进账金额':
+                return _format_progress_receipt_amount_alias(record[field_name])
             return _format_alias_value(record, field_name)
         if label in strict_sources:
             return ''
