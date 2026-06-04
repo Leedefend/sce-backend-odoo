@@ -162,12 +162,13 @@ superseded_old_active = env.cr.rowcount  # noqa: F821
 env.cr.execute(  # noqa: F821
     """
     INSERT INTO sc_receipt_income (
-      name, source_origin, source_kind, source_family, state, project_id, company_id, partner_id,
-      operation_strategy,
+      name, source_origin, source_kind, source_family, state,
+      project_id, legacy_project_name, company_id, legacy_company_name,
+      partner_id, legacy_partner_name, operation_strategy, legacy_contract_no,
       date_receipt, document_no, receipt_type, legacy_receipt_type, legacy_receipt_subtype,
       income_category, payment_method, receiving_account, amount, currency_id,
       legacy_source_model, legacy_source_table, legacy_record_id, legacy_document_state,
-      legacy_attachment_ref, creator_legacy_user_id, creator_name, created_time,
+      legacy_document_state_label, legacy_attachment_ref, creator_legacy_user_id, creator_name, created_time,
       note, active, create_uid, write_uid, create_date, write_date
     )
     SELECT
@@ -177,9 +178,13 @@ env.cr.execute(  # noqa: F821
       f.source_family,
       'legacy_confirmed',
       f.project_id,
+      NULLIF(f.legacy_project_name, ''),
       project.company_id,
+      NULLIF(f.legacy_company_name, ''),
       f.partner_id,
+      NULLIF(f.legacy_partner_name, ''),
       f.operation_strategy,
+      NULLIF(f.legacy_contract_no, ''),
       COALESCE(f.document_date, f.created_time::date, CURRENT_DATE),
       NULLIF(f.document_no, ''),
       NULLIF(f.receipt_type, ''),
@@ -194,6 +199,13 @@ env.cr.execute(  # noqa: F821
       f.legacy_source_table,
       f.legacy_record_id,
       NULLIF(f.legacy_state, ''),
+      CASE f.legacy_state::varchar
+        WHEN '-1' THEN '已驳回'
+        WHEN '0' THEN '未审核'
+        WHEN '1' THEN '审核中'
+        WHEN '2' THEN '已审核'
+        ELSE NULLIF(f.legacy_state::varchar, '')
+      END,
       NULLIF(f.legacy_attachment_ref, ''),
       NULLIF(f.creator_legacy_user_id, ''),
       NULLIF(f.creator_name, ''),
@@ -225,9 +237,13 @@ env.cr.execute(  # noqa: F821
       source_family = EXCLUDED.source_family,
       state = EXCLUDED.state,
       project_id = EXCLUDED.project_id,
+      legacy_project_name = EXCLUDED.legacy_project_name,
       company_id = EXCLUDED.company_id,
+      legacy_company_name = EXCLUDED.legacy_company_name,
       partner_id = EXCLUDED.partner_id,
+      legacy_partner_name = EXCLUDED.legacy_partner_name,
       operation_strategy = EXCLUDED.operation_strategy,
+      legacy_contract_no = EXCLUDED.legacy_contract_no,
       date_receipt = EXCLUDED.date_receipt,
       document_no = EXCLUDED.document_no,
       receipt_type = EXCLUDED.receipt_type,
@@ -240,6 +256,7 @@ env.cr.execute(  # noqa: F821
       currency_id = EXCLUDED.currency_id,
       legacy_source_table = EXCLUDED.legacy_source_table,
       legacy_document_state = EXCLUDED.legacy_document_state,
+      legacy_document_state_label = EXCLUDED.legacy_document_state_label,
       legacy_attachment_ref = EXCLUDED.legacy_attachment_ref,
       creator_legacy_user_id = EXCLUDED.creator_legacy_user_id,
       creator_name = EXCLUDED.creator_name,
@@ -394,6 +411,58 @@ with_receiving_account = int(
     or 0
 )
 
+field_mismatches = {}
+for field_name, formal_expr, source_expr in [
+    ("document_no", "COALESCE(NULLIF(income.document_no, ''), '')", "COALESCE(NULLIF(fact.document_no, ''), '')"),
+    ("date_receipt", "income.date_receipt", "fact.document_date"),
+    ("project_id", "income.project_id", "fact.project_id"),
+    ("legacy_project_name", "COALESCE(NULLIF(income.legacy_project_name, ''), '')", "COALESCE(NULLIF(fact.legacy_project_name, ''), '')"),
+    ("partner_id", "income.partner_id", "fact.partner_id"),
+    ("legacy_partner_name", "COALESCE(NULLIF(income.legacy_partner_name, ''), '')", "COALESCE(NULLIF(fact.legacy_partner_name, ''), '')"),
+    ("legacy_company_name", "COALESCE(NULLIF(income.legacy_company_name, ''), '')", "COALESCE(NULLIF(fact.legacy_company_name, ''), '')"),
+    ("amount", "ROUND(COALESCE(income.amount, 0)::numeric, 2)", "ROUND(COALESCE(fact.source_amount, 0)::numeric, 2)"),
+    ("receipt_type", "COALESCE(NULLIF(income.receipt_type, ''), '')", "COALESCE(NULLIF(fact.receipt_type, ''), '')"),
+    ("income_category", "COALESCE(NULLIF(income.income_category, ''), '')", "COALESCE(NULLIF(fact.income_category, ''), '')"),
+    (
+        "legacy_document_state_label",
+        "COALESCE(NULLIF(income.legacy_document_state_label, ''), '')",
+        """COALESCE(NULLIF(CASE fact.legacy_state::varchar
+             WHEN '-1' THEN '已驳回'
+             WHEN '0' THEN '未审核'
+             WHEN '1' THEN '审核中'
+             WHEN '2' THEN '已审核'
+             ELSE fact.legacy_state::varchar
+           END, ''), '')""",
+    ),
+    ("legacy_contract_no", "COALESCE(NULLIF(income.legacy_contract_no, ''), '')", "COALESCE(NULLIF(fact.legacy_contract_no, ''), '')"),
+    ("receiving_account", "COALESCE(NULLIF(income.receiving_account, ''), '')", "COALESCE(NULLIF(fact.legacy_receiving_account, ''), '')"),
+    ("legacy_attachment_ref", "COALESCE(NULLIF(income.legacy_attachment_ref, ''), '')", "COALESCE(NULLIF(fact.legacy_attachment_ref, ''), '')"),
+    ("creator_name", "COALESCE(NULLIF(income.creator_name, ''), '')", "COALESCE(NULLIF(fact.creator_name, ''), '')"),
+    ("created_time", "income.created_time", "fact.created_time"),
+    ("note_contains_source_note", "COALESCE(income.note, '')", "COALESCE(fact.note, '')"),
+]:
+    comparator = "POSITION(COALESCE(fact.note, '') IN COALESCE(income.note, '')) = 0" if field_name == "note_contains_source_note" else f"({formal_expr}) IS DISTINCT FROM ({source_expr})"
+    field_mismatches[field_name] = int(
+        scalar(
+            f"""
+            SELECT COUNT(*)
+            FROM sc_receipt_income income
+            JOIN sc_legacy_receipt_income_fact fact
+              ON fact.legacy_record_id = income.legacy_record_id
+             AND fact.legacy_source_table = %s
+             AND fact.source_family = %s
+             AND fact.operation_strategy IN ('direct', 'joint')
+            WHERE income.legacy_source_model = %s
+              AND income.legacy_source_table = %s
+              AND income.source_family = %s
+              AND income.active
+              AND {comparator}
+            """,
+            [SOURCE_TABLE, SOURCE_FAMILY, SOURCE_MODEL, SOURCE_TABLE, SOURCE_FAMILY],
+        )
+        or 0
+    )
+
 expected_projected = source_count - source_missing_project
 payload = {
     "status": "PASS"
@@ -404,6 +473,7 @@ payload = {
         and active_coverage == source_count
         and active_duplicates == 0
         and projected_sum == source_sum
+        and not any(field_mismatches.values())
     )
     else "FAIL",
     "mode": "engineering_progress_receipt_formal_projection_write",
@@ -426,6 +496,7 @@ payload = {
     "source_by_strategy": source_by_strategy,
     "projected_by_strategy": projected_by_strategy,
     "with_receiving_account": with_receiving_account,
+    "field_mismatches": field_mismatches,
     "decision": "formal_receipt_income_uses_user_accepted_engineering_progress_receipts_as_authoritative_source",
 }
 write_json(output_json, payload)

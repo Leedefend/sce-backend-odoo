@@ -9,9 +9,13 @@
                     <field name="name"/>
                     <field name="document_no"/>
                     <field name="project_id"/>
+                    <field name="legacy_project_name"/>
                     <field name="operation_strategy"/>
                     <field name="partner_id"/>
+                    <field name="legacy_partner_name"/>
+                    <field name="legacy_company_name"/>
                     <field name="contract_id"/>
+                    <field name="legacy_contract_no"/>
                     <field name="income_category"/>
                     <field name="legacy_receipt_type"/>
                     <field name="legacy_receipt_subtype"/>
@@ -44,9 +48,13 @@
                     <field name="name"/>
                     <field name="date_receipt"/>
                     <field name="project_id"/>
+                    <field name="legacy_project_name" optional="show"/>
                     <field name="operation_strategy"/>
                     <field name="partner_id"/>
+                    <field name="legacy_partner_name" optional="show"/>
+                    <field name="legacy_company_name" optional="show"/>
                     <field name="contract_id"/>
+                    <field name="legacy_contract_no" optional="show"/>
                     <field name="document_no"/>
                     <field name="income_category"/>
                     <field name="legacy_receipt_type"/>
@@ -60,6 +68,8 @@
                     <field name="bill_no"/>
                     <field name="invoice_ref"/>
                     <field name="amount" sum="收款金额"/>
+                    <field name="legacy_document_state_label" optional="show"/>
+                    <field name="legacy_attachment_ref" optional="show"/>
                     <field name="deducted_invoice_amount" sum="已抵发票金额"/>
                     <field name="deducted_tax_amount" sum="已抵税额"/>
                     <field name="settlement_amount" sum="结算金额"/>
@@ -100,9 +110,13 @@
                             </group>
                             <group>
                                 <field name="project_id" readonly="state == 'legacy_confirmed'"/>
+                                <field name="legacy_project_name" readonly="1"/>
                                 <field name="operation_strategy" readonly="1"/>
                                 <field name="partner_id"/>
+                                <field name="legacy_partner_name" readonly="1"/>
+                                <field name="legacy_company_name" readonly="1"/>
                                 <field name="contract_id"/>
+                                <field name="legacy_contract_no" readonly="1"/>
                                 <field name="payment_request_id"/>
                                 <field name="treasury_ledger_id"/>
                             </group>
@@ -138,6 +152,8 @@
                             <field name="legacy_source_table" readonly="1"/>
                             <field name="legacy_record_id" readonly="1"/>
                             <field name="legacy_document_state" readonly="1"/>
+                            <field name="legacy_document_state_label" readonly="1"/>
+                            <field name="legacy_attachment_ref" readonly="1"/>
                             <field name="creator_legacy_user_id" readonly="1"/>
                             <field name="creator_name" readonly="1"/>
                             <field name="created_time" readonly="1"/>
