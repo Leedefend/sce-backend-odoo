@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="dict_expense_contract_category_material" model="sc.dictionary">
+        <field name="name">材料</field>
+        <field name="code">material</field>
+        <field name="type">expense_contract_category</field>
+        <field name="sequence">10</field>
+        <field name="active">1</field>
+    </record>
+
+    <record id="dict_expense_contract_category_labor" model="sc.dictionary">
+        <field name="name">劳务</field>
+        <field name="code">labor</field>
+        <field name="type">expense_contract_category</field>
+        <field name="sequence">20</field>
+        <field name="active">1</field>
+    </record>
+
+    <record id="dict_expense_contract_category_machine" model="sc.dictionary">
+        <field name="name">机械</field>
+        <field name="code">machine</field>
+        <field name="type">expense_contract_category</field>
+        <field name="sequence">30</field>
+        <field name="active">1</field>
+    </record>
+
+    <record id="dict_expense_contract_category_rental" model="sc.dictionary">
+        <field name="name">租赁</field>
+        <field name="code">rental</field>
+        <field name="type">expense_contract_category</field>
+        <field name="sequence">40</field>
+        <field name="active">1</field>
+    </record>
+
+    <record id="dict_expense_contract_category_subcontract" model="sc.dictionary">
+        <field name="name">专业分包</field>
+        <field name="code">subcontract</field>
+        <field name="type">expense_contract_category</field>
+        <field name="sequence">50</field>
+        <field name="active">1</field>
+    </record>
+
+    <record id="dict_expense_contract_category_other" model="sc.dictionary">
+        <field name="name">其他</field>
+        <field name="code">other</field>
+        <field name="type">expense_contract_category</field>
+        <field name="sequence">60</field>
+        <field name="active">1</field>
+    </record>
+</odoo>

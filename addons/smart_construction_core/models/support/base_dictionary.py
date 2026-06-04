@@ -13,6 +13,7 @@ class ScDictionary(models.Model):
       - expense_type  费用类别
       - contract_type     合同方向（收入/支出）
       - contract_category 合同类别（施工、监理、材料采购等）
+      - expense_contract_category 支出合同分类（材料、劳务、机械等）
     """
     _name = 'sc.dictionary'
     _description = 'Smart Construction Dictionary'
@@ -33,6 +34,7 @@ class ScDictionary(models.Model):
         ('tax_type', '税种'),
         ('contract_type', '合同方向'),
         ('contract_category', '合同类别'),
+        ('expense_contract_category', '支出合同分类'),
     ], string='字典类型', required=True, index=True)
 
     sequence = fields.Integer('排序', default=10)

@@ -231,3 +231,25 @@ class TestConstructionContract(TransactionCase):
         self.assertEqual(income_execution.res_model, "construction.contract.income")
         self.assertEqual(expense_execution.res_model, "construction.contract.expense")
         self.assertFalse(mixed_menu.active)
+
+    @tagged("post_install", "-at_install", "sc_regression", "contract")
+    def test_expense_contract_category_auto_and_manual_override(self):
+        material_category = self.env.ref("smart_construction_core.dict_expense_contract_category_material")
+        labor_category = self.env.ref("smart_construction_core.dict_expense_contract_category_labor")
+
+        expense = self.env["construction.contract.expense"].create(
+            {
+                "subject": "钢材材料采购合同",
+                "project_id": self.project.id,
+                "partner_id": self.partner.id,
+                "tax_id": self.tax_purchase_9.id,
+            }
+        )
+
+        self.assertEqual(expense.expense_contract_category_auto_id, material_category)
+        self.assertEqual(expense.expense_contract_category_id, material_category)
+
+        expense.write({"expense_contract_category_id": labor_category.id})
+        expense.write({"subject": "钢材材料补充合同"})
+        self.assertEqual(expense.expense_contract_category_auto_id, material_category)
+        self.assertEqual(expense.expense_contract_category_id, labor_category)
