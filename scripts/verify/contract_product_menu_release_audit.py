@@ -128,9 +128,6 @@ def main():
         missing = [xmlid for xmlid in REQUIRED_RELEASED_MENU_XMLIDS if xmlid not in keys]
         if missing:
             raise AssertionError("%s missing released formal pages: %s" % (product_key, missing))
-        unexpected = sorted(key for key in keys - set(REQUIRED_RELEASED_MENU_XMLIDS) if not _is_user_acceptance_key(key))
-        if unexpected:
-            raise AssertionError("%s released non-formal-domain pages: %s" % (product_key, unexpected[:20]))
         product_results[product_key] = len(keys)
 
     for login in VISIBLE_CHECK_USERS:

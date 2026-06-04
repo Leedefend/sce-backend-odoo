@@ -609,6 +609,9 @@ verify.business.finance_document_tier_runtime_smoke: check-compose-project check
 verify.contract_product_menu.release: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/contract_product_menu_release_audit.py
 
+verify.construction_product_menu.release: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/construction_product_menu_release_audit.py
+
 verify.tender_optional_scope_metadata.probe: check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/tender_optional_scope_metadata_probe.py
 
