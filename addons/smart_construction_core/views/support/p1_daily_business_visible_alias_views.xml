@@ -201,6 +201,9 @@
                 <field name="p1_visible_8fa8662ad38f" string="单据编号" optional="show" readonly="1"/>
                 <field name="p1_visible_89b4aa6364ce" string="时间" optional="show" readonly="1"/>
                 <field name="p1_visible_3e7255522b33" string="项目名称" optional="show" readonly="1"/>
+                <field name="p1_visible_00381a68b952" string="往来单位" optional="show" readonly="1"/>
+                <field name="p1_visible_8cd973ab9373" string="承包单位" optional="show" readonly="1"/>
+                <field name="p1_visible_205fcc1bc5d4" string="施工管理合同" optional="show" readonly="1"/>
                 <field name="p1_visible_fc06f3f3d307" string="本期收款" optional="show" readonly="1"/>
                 <field name="p1_visible_99219180c1b9" string="本期代扣代缴合计" optional="show" readonly="1"/>
                 <field name="p1_visible_50f529884746" string="本期拨付金额合计" optional="show" readonly="1"/>
