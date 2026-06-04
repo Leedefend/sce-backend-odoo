@@ -223,6 +223,48 @@ class TestUiContractV2Boundaries(unittest.TestCase):
             {"id": 42, "name": "ACME"},
         )
 
+    def test_action_open_injects_action_window_domain_context_and_title(self):
+        class _Action:
+            id = 949
+            name = "工程进度款收入登记"
+            res_model = "sc.receipt.income"
+            domain = "[('source_kind', '=', 'receipt_income'), ('receipt_type', '=', '工程进度收款')]"
+            context = "{'default_source_kind': 'receipt_income', 'default_receipt_type': '工程进度收款'}"
+
+            def exists(self):
+                return True
+
+        class _ActionModel:
+            def sudo(self):
+                return self
+
+            def browse(self, action_id):
+                self.action_id = action_id
+                return _Action()
+
+        class _Env:
+            def __getitem__(self, model):
+                if model != "ir.actions.act_window":
+                    raise KeyError(model)
+                return _ActionModel()
+
+        handler = self.module.UiContractV2Handler(env=_Env())
+
+        result = handler.handle(payload={"params": {"op": "action_open", "action_id": 949}})
+
+        self.assertTrue(result.ok)
+        source = self.module._captured["assembler_source"]
+        self.assertEqual(source["action_id"], 949)
+        self.assertEqual(source["model"], "sc.receipt.income")
+        self.assertEqual(source["title"], "工程进度款收入登记")
+        self.assertEqual(source["head"]["title"], "工程进度款收入登记")
+        self.assertEqual(
+            source["domain"],
+            [("source_kind", "=", "receipt_income"), ("receipt_type", "=", "工程进度收款")],
+        )
+        self.assertEqual(source["context"]["default_receipt_type"], "工程进度收款")
+        self.assertEqual(source["domain_raw"], _Action.domain)
+
     def test_business_list_profile_keeps_contract_ledger_fields_visible(self):
         handler = self.module.UiContractV2Handler(env=object())
         columns = [{"name": f"field_{index}"} for index in range(24)]
