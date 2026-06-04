@@ -215,6 +215,21 @@ def backfill_payment_requests() -> dict[str, int]:
             "legacy_source_table": "C_ZFSQGL",
             "legacy_record_id": legacy_id,
             "legacy_document_state": clean(row.get("DJZT")) or False,
+            "legacy_visible_document_no": clean(row.get("DJBH")) or False,
+            "legacy_visible_project_name": clean(row.get("f_XMMC")) or False,
+            "legacy_visible_request_date": clean(row.get("f_SQRQ")) or False,
+            "legacy_visible_payee_unit": clean(row.get("f_GYSMC")) or False,
+            "legacy_visible_request_amount": clean(row.get("f_JHJE")) or False,
+            "legacy_visible_actual_paid_amount": clean(row.get("FKJE")) or False,
+            "legacy_visible_available_balance": clean(row.get("SJKYYE")) or False,
+            "legacy_visible_cost_category_name": clean(row.get("f_CBFLMC")) or False,
+            "legacy_visible_remark": clean(row.get("f_Remark")) or False,
+            "legacy_payment_account_no": clean(row.get("FKZH")) or False,
+            "legacy_visible_amount_uppercase": clean(row.get("JEDX")) or False,
+            "legacy_payee_account_name": clean(row.get("HM")) or False,
+            "legacy_payee_bank_name": clean(row.get("f_KHH")) or False,
+            "legacy_payee_account_no": clean(row.get("f_ZH")) or False,
+            "legacy_visible_writer": clean(row.get("f_TXR")) or False,
             "creator_legacy_user_id": clean(row.get("LRRID")) or False,
             "creator_name": clean(row.get("f_LRR")) or clean(row.get("LRR")) or False,
             "created_time": parse_datetime(row.get("f_LRSJ")) or parse_datetime(row.get("LRSJ")) or False,
@@ -222,6 +237,33 @@ def backfill_payment_requests() -> dict[str, int]:
         })
         stats["created"] += 1
     return stats
+
+
+def sync_payment_request_acceptance_domain() -> dict[str, object]:
+    rows = load_rows(29)
+    old_ids = {clean(row.get("Id")) for row in rows if clean(row.get("Id"))}
+    Request = env["payment.request"].sudo().with_context(active_test=False)  # noqa: F821
+    existing = Request.search([("legacy_source_table", "=", "C_ZFSQGL")])
+    stale_ids = sorted(
+        {
+            clean(record.legacy_record_id)
+            for record in existing
+            if clean(record.legacy_record_id) and clean(record.legacy_record_id) not in old_ids
+        }
+    )
+    domain = [("legacy_source_table", "=", "C_ZFSQGL")]
+    if stale_ids:
+        domain = ["&", ("legacy_source_table", "=", "C_ZFSQGL"), ("legacy_record_id", "not in", stale_ids)]
+    action = env["ir.actions.act_window"].sudo().browse(879)  # noqa: F821
+    if action.exists() and action.res_model == "payment.request":
+        action.write({"domain": repr(domain)})
+    return {
+        "old_online_count": len(old_ids),
+        "stale_count": len(stale_ids),
+        "stale_legacy_record_ids": stale_ids,
+        "action_id": action.id if action.exists() else False,
+        "domain": domain,
+    }
 
 
 def backfill_payment_executions() -> dict[str, int]:
@@ -323,6 +365,7 @@ stats = {
     "documents": backfill_documents(),
     "receipts": backfill_receipts(),
     "payment_requests": backfill_payment_requests(),
+    "payment_request_acceptance_domain": sync_payment_request_acceptance_domain(),
     "payment_executions": backfill_payment_executions(),
     "fund_confirmations": backfill_fund_confirmations(),
 }
