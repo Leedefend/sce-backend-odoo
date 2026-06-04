@@ -256,6 +256,35 @@ class TestProjectContextBoundaries(unittest.TestCase):
         self.assertEqual(meta["company_id"], 5)
         self.assertEqual(meta["operation_strategy"], "direct")
 
+    def test_partner_master_data_is_not_filtered_by_business_scope(self):
+        core = _load_project_context_core()
+
+        class Field:
+            def __init__(self, comodel_name=""):
+                self.comodel_name = comodel_name
+
+        class Model:
+            _name = "res.partner"
+            _fields = {
+                "project_ids": Field("project.project"),
+                "company_id": Field("res.company"),
+            }
+
+        domain, meta = core.apply_business_scope_domain(
+            Model,
+            [("customer_rank", ">", 0)],
+            {
+                "company_id": 3,
+                "current_project_id": 9,
+                "operation_strategy": "direct",
+            },
+            {},
+        )
+
+        self.assertEqual(domain, [("customer_rank", ">", 0)])
+        self.assertFalse(meta["applied"])
+        self.assertEqual(meta["model"], "res.partner")
+
 
 if __name__ == "__main__":
     unittest.main()
