@@ -160,6 +160,9 @@ P1_ALIAS_LABELS = {'tender.bid': ['单据状态', '推送结果', '单据编号'
                        '单据编号',
                        '时间',
                        '项目名称',
+                       '往来单位',
+                       '承包单位',
+                       '施工管理合同',
                        '本期收款',
                        '本期代扣代缴合计',
                        '本期拨付金额合计',
@@ -1045,9 +1048,12 @@ LABEL_SOURCE_OVERRIDES = {
 
 MODEL_LABEL_SOURCE_OVERRIDES = {
     'sc.receipt.income': {
-        '单据状态': ['legacy_document_state', 'state'],
-        '项目名称': ['legacy_visible_project_name', 'project_id'],
+        '单据状态': ['legacy_document_state_label', 'legacy_document_state', 'state'],
+        '项目名称': ['legacy_project_name', 'legacy_visible_project_name', 'project_id'],
         '单据编号': ['document_no', 'name'],
+        '往来单位': ['legacy_partner_name', 'partner_id'],
+        '承包单位': ['legacy_company_name', 'company_id'],
+        '施工管理合同': ['legacy_contract_no', 'contract_id'],
         '填写人': ['creator_name'],
         '收款账户': ['receiving_account_name', 'receiving_account', 'receiving_account_no'],
         '进账金额': ['amount'],
