@@ -59,10 +59,10 @@
               type="button"
               :class="{ active: operation.operation_strategy === selectedOperationStrategy }"
               :disabled="operation.disabled"
-              :title="operation.disabled_reason || operation.operation_strategy_label || operation.operation_strategy || '全部'"
+              :title="operation.disabled_reason || operationScopeLabel(operation)"
               @click.stop="changeOperationScope(operation.operation_strategy)"
             >
-              {{ operation.operation_strategy_label || operation.operation_strategy || '全部' }}
+              {{ operationScopeLabel(operation) }}
             </button>
           </div>
         </div>
@@ -238,7 +238,7 @@ import { buildRuntimeNavigationRegistry } from '../app/navigationRegistry';
 import { applyTheme, nextTheme, persistTheme, type ScTheme } from '../styles/theme';
 import { config } from '../config';
 import { openAction } from '../services/action_service';
-import type { NavNode, ProjectContextOption } from '@sc/schema';
+import type { BusinessScopeOperationOption, NavNode, ProjectContextOption } from '@sc/schema';
 import {
   exportSuggestedActionTraces,
   getLatestSuggestedActionTrace,
@@ -544,6 +544,14 @@ function projectOptionLabel(option: ProjectContextOption | null | undefined) {
   const label = String(option.display_name || option.name || `记录 ${option.id}`).trim();
   const scope = String(option.operation_strategy_label || option.operation_strategy || '').trim();
   return scope ? `${label} · ${scope}` : label;
+}
+
+function operationScopeLabel(option: BusinessScopeOperationOption | null | undefined) {
+  const strategy = String(option?.operation_strategy || '').trim().toLowerCase();
+  if (!strategy) return '全部';
+  if (strategy === 'direct') return '直营';
+  if (strategy === 'joint') return '联营';
+  return String(option?.operation_strategy_label || option?.operation_strategy || '').trim() || '全部';
 }
 
 function normalizePublishedApps(raw: unknown): PublishedApp[] {
@@ -1535,8 +1543,9 @@ async function logout() {
 
 .business-scope-segments {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 4px;
+  white-space: nowrap;
 }
 
 .business-scope-segments button {
