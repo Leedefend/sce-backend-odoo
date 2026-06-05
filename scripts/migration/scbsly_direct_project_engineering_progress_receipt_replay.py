@@ -32,6 +32,9 @@ SOURCE_TABLE = "C_JFHKLR"
 SOURCE_FAMILY = "engineering_progress_receipt_visible"
 OPERATION_STRATEGY = "direct"
 IMPORT_BATCH = "scbsly_direct_project_engineering_progress_receipt_replay_v1"
+ATTACHMENT_ID_RE = re.compile(r"^[0-9a-fA-F]{32}$")
+ATTACHMENT_LABEL_RE = re.compile(r"^附件\([1-9]\d*\)$")
+ATTACHMENT_FIELDS = ("FJ", "f_FJ")
 
 
 def clean(value):
@@ -66,6 +69,18 @@ def datetime_value(value):
         except ValueError:
             continue
     return False
+
+
+def attachment_ref_value(row):
+    for field in ATTACHMENT_FIELDS:
+        value = clean(row.get(field))
+        if value and ATTACHMENT_ID_RE.match(value):
+            return value
+    for field in ATTACHMENT_FIELDS:
+        value = clean(row.get(field))
+        if value and not ATTACHMENT_LABEL_RE.match(value):
+            return value
+    return ""
 
 
 def load_json(path):
@@ -161,7 +176,7 @@ def values_for(row, project_cache, partner_cache, created_projects):
         "legacy_company_name": clean(row.get("SSGS")),
         "legacy_contract_no": clean(row.get("SGHTBH")),
         "legacy_receiving_account": clean(row.get("SKZH")),
-        "legacy_attachment_ref": clean(row.get("f_FJ") or row.get("FJ")),
+        "legacy_attachment_ref": attachment_ref_value(row),
         "source_amount": amount(row.get("f_JE"), row.get("D_LYXM_JENR3")),
         "creator_legacy_user_id": clean(row.get("LRRID")),
         "creator_name": clean(row.get("LRR")),

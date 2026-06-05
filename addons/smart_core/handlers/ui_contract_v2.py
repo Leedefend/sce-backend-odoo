@@ -6,6 +6,7 @@ import hashlib
 import ast
 from copy import deepcopy
 from typing import Any, Dict, Optional
+from lxml import etree
 
 from ..core.base_handler import BaseIntentHandler
 from ..core.intent_execution_result import IntentExecutionResult
@@ -306,6 +307,7 @@ class UiContractV2Handler(BaseIntentHandler):
             client_type=client_type,
             request_id=str(request_id),
         )
+        self._apply_legacy_visible_list_layout(contract_v2, source_contract)
         if isinstance(source_contract.get("delete_policy"), dict):
             contract_v2["delete_policy"] = dict(source_contract.get("delete_policy") or {})
         contract_v2 = trim_unified_page_contract_v2(
@@ -331,6 +333,67 @@ class UiContractV2Handler(BaseIntentHandler):
                 "source_authority": self.source_authority_contract(),
             },
         )
+
+    def _apply_legacy_visible_list_layout(self, contract_v2: dict[str, Any], source_contract: dict[str, Any]) -> None:
+        profile = source_contract.get("list_profile") if isinstance(source_contract.get("list_profile"), dict) else {}
+        columns = [
+            str(name or "").strip()
+            for name in (profile.get("columns") if isinstance(profile.get("columns"), list) else [])
+            if str(name or "").strip()
+        ]
+        if not columns or not all(name.startswith("legacy_visible_") for name in columns):
+            return
+        labels = profile.get("column_labels") if isinstance(profile.get("column_labels"), dict) else {}
+        field_map = source_contract.get("fields") if isinstance(source_contract.get("fields"), dict) else {}
+
+        def widget_for(name: str) -> dict[str, Any]:
+            field = field_map.get(name) if isinstance(field_map.get(name), dict) else {}
+            field_type = str(field.get("type") or field.get("ttype") or "char").strip() or "char"
+            label = str(labels.get(name) or field.get("string") or field.get("label") or name).strip()
+            return {
+                "widgetId": f"field.{name}",
+                "widgetType": "table",
+                "fieldCode": name,
+                "label": label,
+                "span": 12,
+                "componentKey": "sc.table.data",
+                "capabilities": ["sortable", "filterable"],
+                "componentConfig": {
+                    "readonly": True,
+                    "required": False,
+                    "fieldType": field_type,
+                },
+            }
+
+        widgets = [widget_for(name) for name in columns]
+        layout = contract_v2.get("layoutContract") if isinstance(contract_v2.get("layoutContract"), dict) else {}
+        containers = layout.get("containerTree") if isinstance(layout.get("containerTree"), list) else []
+        changed = False
+        for container in containers:
+            if not isinstance(container, dict):
+                continue
+            existing = container.get("widgetList")
+            if isinstance(existing, list):
+                container["widgetList"] = deepcopy(widgets)
+                container["children"] = []
+                changed = True
+                break
+        if not changed and containers:
+            container = containers[0]
+            if isinstance(container, dict):
+                container["widgetList"] = deepcopy(widgets)
+                container["children"] = []
+                changed = True
+        if changed:
+            layout["componentRegistry"] = {
+                **(layout.get("componentRegistry") if isinstance(layout.get("componentRegistry"), dict) else {}),
+                "sc.table.data": {"componentKey": "sc.table.data"},
+            }
+            data_contract = contract_v2.get("dataContract") if isinstance(contract_v2.get("dataContract"), dict) else {}
+            data_meta = data_contract.get("dataMeta") if isinstance(data_contract.get("dataMeta"), dict) else {}
+            data_meta["fieldCount"] = len(columns)
+            data_contract["dataMeta"] = data_meta
+            contract_v2["dataContract"] = data_contract
 
     def _inject_action_window_contract(
         self,
@@ -1115,6 +1178,17 @@ class UiContractV2Handler(BaseIntentHandler):
         views = source_contract.get("views") if isinstance(source_contract.get("views"), dict) else {}
         tree = views.get("tree") if isinstance(views.get("tree"), dict) else views.get("list") if isinstance(views.get("list"), dict) else {}
         raw_columns = tree.get("columns") if isinstance(tree.get("columns"), list) else []
+        tree_schema_rows = tree.get("columns_schema") if isinstance(tree.get("columns_schema"), list) else []
+        action_view_override = self._action_scoped_visible_list_columns(source_contract)
+        action_view_columns = list(action_view_override.get("columns") or []) if action_view_override else []
+        action_view_labels = dict(action_view_override.get("column_labels") or {}) if action_view_override else {}
+        legacy_view_columns = []
+        for row in [*raw_columns, *tree_schema_rows]:
+            if not isinstance(row, dict):
+                continue
+            name = str(row.get("name") or "").strip()
+            if name.startswith("legacy_visible_") and name not in legacy_view_columns:
+                legacy_view_columns.append(name)
         legacy_override = self._scbs55_legacy_visible_list_override(source_contract)
         columns: list[str] = []
         has_explicit_view_columns = False
@@ -1135,6 +1209,13 @@ class UiContractV2Handler(BaseIntentHandler):
         if legacy_override:
             columns = list(legacy_override.get("columns") or [])
             override_labels = dict(legacy_override.get("column_labels") or {})
+            strict_columns = True
+        elif action_view_columns:
+            columns = action_view_columns
+            override_labels = dict(action_view_labels)
+            strict_columns = True
+        elif legacy_view_columns:
+            columns = legacy_view_columns
             strict_columns = True
         if not strict_columns and columns and all(str(name or "").startswith("p1_visible_") for name in columns):
             # SCBS55 legacy-visible delivery actions use action-scoped alias
@@ -1178,7 +1259,17 @@ class UiContractV2Handler(BaseIntentHandler):
             return
 
         labels = profile.get("column_labels") if isinstance(profile.get("column_labels"), dict) else {}
-        labels = {**labels, **{name: label_for(name) for name in columns}, **override_labels}
+        view_column_labels = {}
+        for row in [*raw_columns, *tree_schema_rows]:
+            if not isinstance(row, dict):
+                continue
+            name = str(row.get("name") or "").strip()
+            if not name.startswith("legacy_visible_"):
+                continue
+            label = str(row.get("label") or row.get("string") or "").strip()
+            if label:
+                view_column_labels[name] = label
+        labels = {**labels, **{name: label_for(name) for name in columns}, **view_column_labels, **override_labels}
         deduped_columns: list[str] = []
         preserve_duplicate_labels = bool(columns) and all(str(name or "").startswith("legacy_visible_") for name in columns)
         seen_keys: set[str] = set()
@@ -1258,12 +1349,12 @@ class UiContractV2Handler(BaseIntentHandler):
                 views["list"] = tree
             source_contract["views"] = views
 
-    def _scbs55_legacy_visible_list_override(self, source_contract: dict[str, Any]) -> dict[str, Any] | None:
-        action_id = 0
+    def _source_action_id(self, source_contract: dict[str, Any]) -> int:
         for raw in (
             source_contract.get("action_id"),
             source_contract.get("actionId"),
             (source_contract.get("head") or {}).get("action_id") if isinstance(source_contract.get("head"), dict) else None,
+            (source_contract.get("head") or {}).get("actionId") if isinstance(source_contract.get("head"), dict) else None,
             (source_contract.get("source_meta") or {}).get("action_id") if isinstance(source_contract.get("source_meta"), dict) else None,
         ):
             try:
@@ -1271,7 +1362,82 @@ class UiContractV2Handler(BaseIntentHandler):
             except Exception:
                 action_id = 0
             if action_id > 0:
-                break
+                return action_id
+        return 0
+
+    def _action_scoped_visible_list_columns(self, source_contract: dict[str, Any]) -> dict[str, Any] | None:
+        action_id = self._source_action_id(source_contract)
+        if action_id <= 0:
+            return None
+        try:
+            action = self.env["ir.actions.act_window"].sudo().browse(action_id).exists()
+        except Exception:
+            _logger.debug("ui.contract.v2 action-scoped visible list lookup skipped", exc_info=True)
+            return None
+        if not action:
+            return None
+
+        candidate_views = []
+        try:
+            if action.view_id and action.view_id.type in {"tree", "list"}:
+                candidate_views.append(action.view_id)
+        except Exception:
+            pass
+        try:
+            for relation in action.view_ids:
+                view = relation.view_id
+                if view and view.type in {"tree", "list"} and view not in candidate_views:
+                    candidate_views.append(view)
+        except Exception:
+            pass
+
+        model_name = str(source_contract.get("model") or (source_contract.get("head") or {}).get("model") or "").strip()
+        model_fields = {}
+        try:
+            model_fields = getattr(self.env[model_name], "_fields", {}) if model_name in self.env else {}
+        except Exception:
+            model_fields = {}
+
+        for view in candidate_views:
+            try:
+                try:
+                    arch = view.sudo().read_combined(["arch"]).get("arch") or ""
+                except Exception:
+                    arch = view.sudo().arch_db or ""
+                if not arch:
+                    continue
+                root = etree.fromstring(arch.encode("utf-8"))
+            except Exception:
+                _logger.debug("ui.contract.v2 action-scoped visible list arch parse skipped", exc_info=True)
+                continue
+            columns: list[str] = []
+            labels: dict[str, str] = {}
+            for node in root.xpath(".//field"):
+                name = str(node.get("name") or "").strip()
+                if not name:
+                    continue
+                if not (name.startswith("p1_visible_") or name.startswith("legacy_visible_")):
+                    continue
+                if model_fields and name not in model_fields:
+                    continue
+                if name in columns:
+                    continue
+                columns.append(name)
+                label = str(node.get("string") or "").strip()
+                if label:
+                    labels[name] = label
+            if columns and all(name.startswith("p1_visible_") for name in columns):
+                return {
+                    "source": "ir.actions.act_window.tree_view",
+                    "action_id": action_id,
+                    "view_id": int(view.id),
+                    "columns": columns,
+                    "column_labels": labels,
+                }
+        return None
+
+    def _scbs55_legacy_visible_list_override(self, source_contract: dict[str, Any]) -> dict[str, Any] | None:
+        action_id = self._source_action_id(source_contract)
         if action_id <= 0 or "sc.legacy.user.priority.menu.plan" not in self.env:
             return None
         try:

@@ -88,6 +88,26 @@ _logger = logging.getLogger(__name__)
 CONTRACT_VERSION = "1.0.0"
 API_VERSION = "v1"
 
+_BUSINESS_NAV_GROUP_DISPLAY_ORDER = {
+    "基础资料": 5,
+    "项目中心": 10,
+    "投标管理类单据": 20,
+    "合同中心": 30,
+    "施工管理": 40,
+    "物资与分包": 50,
+    "财务中心": 60,
+    "人事行政": 70,
+    "资料证照": 80,
+    "基础设置": 990,
+    "配置": 990,
+    "系统配置": 990,
+}
+
+_BUSINESS_MASTER_DATA_MENU_XMLIDS = {
+    "smart_construction_core.menu_sc_customer_partner",
+    "smart_construction_core.menu_sc_supplier_partner",
+}
+
 _INDUSTRY_EXTENSION_MODULES = (
     "smart_construction_core",
     "smart_construction_scene",
@@ -1086,6 +1106,149 @@ def _remove_nav_groups_by_label(nav: list[dict], labels: set[str]) -> list[dict]
     return out
 
 
+def _unwrap_internal_nav_groups(nav: list[dict], labels: set[str]) -> list[dict]:
+    if not isinstance(nav, list) or not labels:
+        return nav if isinstance(nav, list) else []
+
+    def unwrap(nodes: list[dict]) -> list[dict]:
+        out = []
+        for node in nodes:
+            if not isinstance(node, dict):
+                continue
+            next_node = dict(node)
+            children = next_node.get("children") if isinstance(next_node.get("children"), list) else []
+            if children:
+                next_node["children"] = unwrap(children)
+            node_label = _text(next_node.get("label") or next_node.get("title") or next_node.get("name"))
+            if node_label in labels:
+                out.extend(next_node.get("children") if isinstance(next_node.get("children"), list) else [])
+                continue
+            out.append(next_node)
+        return out
+
+    return unwrap(nav)
+
+
+def _sort_business_nav_groups(nav: list[dict]) -> list[dict]:
+    if not isinstance(nav, list):
+        return []
+
+    def sequence_value(node: dict) -> int:
+        try:
+            return int(node.get("sequence") or 0)
+        except Exception:
+            return 0
+
+    def sort_key(node: dict) -> tuple[int, int, str]:
+        label = _text(node.get("label") or node.get("title") or node.get("name"))
+        return (
+            _BUSINESS_NAV_GROUP_DISPLAY_ORDER.get(label, 900),
+            sequence_value(node),
+            label,
+        )
+
+    sorted_nodes = []
+    for node in nav:
+        if not isinstance(node, dict):
+            continue
+        next_node = dict(node)
+        label = _text(next_node.get("label") or next_node.get("title") or next_node.get("name"))
+        group_sequence = _BUSINESS_NAV_GROUP_DISPLAY_ORDER.get(label)
+        if group_sequence is not None:
+            next_node["sequence"] = group_sequence
+            meta = next_node.get("meta")
+            if not isinstance(meta, dict):
+                meta = {}
+                next_node["meta"] = meta
+            meta["sequence"] = group_sequence
+        children = next_node.get("children") if isinstance(next_node.get("children"), list) else []
+        if children:
+            next_node["children"] = _sort_business_nav_groups(children)
+        sorted_nodes.append(next_node)
+    return sorted(sorted_nodes, key=sort_key)
+
+
+def _rehome_business_master_data_nav_groups(nav: list[dict]) -> list[dict]:
+    if not isinstance(nav, list):
+        return []
+
+    extracted: list[dict] = []
+    seen = set()
+
+    def node_menu_xmlid(node: dict) -> str:
+        meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+        return _text(node.get("menu_xmlid") or meta.get("menu_xmlid") or meta.get("menu_key"))
+
+    def node_identity(node: dict) -> str:
+        meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+        return _text(node.get("menu_id") or meta.get("menu_id") or node_menu_xmlid(node) or node.get("key"))
+
+    def remove_master_leaves(nodes: list[dict]) -> list[dict]:
+        out = []
+        for node in nodes:
+            if not isinstance(node, dict):
+                continue
+            next_node = dict(node)
+            children = next_node.get("children") if isinstance(next_node.get("children"), list) else []
+            if children:
+                next_node["children"] = remove_master_leaves(children)
+                out.append(next_node)
+                continue
+            if node_menu_xmlid(next_node) in _BUSINESS_MASTER_DATA_MENU_XMLIDS:
+                identity = node_identity(next_node)
+                if identity and identity not in seen:
+                    seen.add(identity)
+                    extracted.append(next_node)
+                continue
+            out.append(next_node)
+        return out
+
+    next_nav = remove_master_leaves(nav)
+    if not extracted:
+        return next_nav
+
+    extracted.sort(key=lambda node: (int(node.get("sequence") or 0), int(node.get("menu_id") or 0)))
+    master_group = {
+        "key": "group:construction.基础资料",
+        "label": "基础资料",
+        "title": "基础资料",
+        "children": extracted,
+        "sequence": _BUSINESS_NAV_GROUP_DISPLAY_ORDER["基础资料"],
+        "meta": {
+            "group_key": "construction.基础资料",
+            "source": "business_master_data_runtime_rehome",
+            "sequence": _BUSINESS_NAV_GROUP_DISPLAY_ORDER["基础资料"],
+        },
+    }
+
+    for root in next_nav:
+        if not isinstance(root, dict):
+            continue
+        children = root.get("children") if isinstance(root.get("children"), list) else []
+        if not children:
+            continue
+        merged = False
+        next_children = []
+        for child in children:
+            if not isinstance(child, dict):
+                continue
+            label = _text(child.get("label") or child.get("title") or child.get("name"))
+            if label == "基础资料":
+                child = dict(child)
+                existing = child.get("children") if isinstance(child.get("children"), list) else []
+                child["children"] = extracted + existing
+                child["sequence"] = _BUSINESS_NAV_GROUP_DISPLAY_ORDER["基础资料"]
+                merged = True
+            next_children.append(child)
+        if not merged:
+            next_children.append(master_group)
+        root["children"] = next_children
+        return next_nav
+
+    next_nav.append(master_group)
+    return next_nav
+
+
 def _build_minimal_intent_surface(intents: list[str], intents_meta: dict) -> list[str]:
     minimal_order = [
         "system.init",
@@ -1618,6 +1781,14 @@ class SystemInitHandler(BaseIntentHandler):
                         "projection_meta": acceptance_nav_meta,
                     }
             delivery_nav = _remove_nav_groups_by_label(delivery_nav, {"用户核对菜单"})
+            formal_product_menu_meta = {
+                "applied": False,
+                "reason": "formal_entries_released_by_product_policy",
+            }
+            delivery_nav, post_append_user_menu_config_meta = _apply_user_menu_config_to_delivery_nav(env, delivery_nav)
+            delivery_nav = _unwrap_internal_nav_groups(delivery_nav, {"产品发布面", "正式业务菜单"})
+            delivery_nav = _rehome_business_master_data_nav_groups(delivery_nav)
+            delivery_nav = _sort_business_nav_groups(delivery_nav)
             if isinstance(user_data_acceptance_meta, dict):
                 user_data_acceptance_meta["source_user_check_menu_hidden"] = True
             delivery_payload["nav"] = delivery_nav
@@ -1630,6 +1801,8 @@ class SystemInitHandler(BaseIntentHandler):
                     release_meta = {}
                     data["release_navigation_v1"]["meta"] = release_meta
                 release_meta["user_data_acceptance_only"] = user_data_acceptance_meta
+                release_meta["formal_product_menu_policy"] = formal_product_menu_meta
+                release_meta["user_menu_config_post_append"] = post_append_user_menu_config_meta
             data["nav_role_surface"] = data.get("nav") if isinstance(data.get("nav"), list) else []
             data["nav"] = delivery_nav
             nav_meta = data.get("nav_meta") if isinstance(data.get("nav_meta"), dict) else {}
@@ -1642,6 +1815,8 @@ class SystemInitHandler(BaseIntentHandler):
                 else {}
             )
             nav_meta["user_data_acceptance_only"] = user_data_acceptance_meta
+            nav_meta["formal_product_menu_policy"] = formal_product_menu_meta
+            nav_meta["user_menu_config_post_append"] = post_append_user_menu_config_meta
             data["nav_meta"] = nav_meta
 
         default_route_payload = data.get("default_route") if isinstance(data.get("default_route"), dict) else {}

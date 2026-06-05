@@ -30,6 +30,7 @@ class AppMenuConfig(models.Model):
     SOURCE_AUTHORITIES = ("ir.ui.menu", "ir.actions", "res.groups")
     DEFAULT_MODEL_WHITELIST_PATTERNS = (
         r'^project\.',
+        r'^sc\.',
         r'^smart_',
         r'^oa\.',
         r'^ui\.form\.field\.policy$',

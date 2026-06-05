@@ -112,6 +112,7 @@ class ScFundAccountOperation(models.Model):
     legacy_visible_transfer_type = fields.Char(string="历史可见转账类别", readonly=True)
     legacy_visible_reason = fields.Char(string="历史可见事由", readonly=True)
     legacy_visible_note = fields.Text(string="历史可见备注", readonly=True)
+    legacy_attachment_ref = fields.Char(string="历史附件引用", readonly=True)
     creator_legacy_user_id = fields.Char(string="历史录入人ID", readonly=True, index=True)
     creator_name = fields.Char(string="历史录入人", readonly=True, index=True)
     created_time = fields.Datetime(string="历史录入时间", readonly=True, index=True)
