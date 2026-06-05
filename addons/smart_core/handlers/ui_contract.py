@@ -651,9 +651,6 @@ def _align_direct_acceptance_dynamic_column_labels(data):
 
     if not dynamic_labels:
         return data
-    if model_name and model_name != LEGACY_DIRECT_ACCEPTANCE_MODEL:
-        return data
-
     fields_map = data.get("fields") if isinstance(data.get("fields"), dict) else {}
     if fields_map:
         fields_map = dict(fields_map)

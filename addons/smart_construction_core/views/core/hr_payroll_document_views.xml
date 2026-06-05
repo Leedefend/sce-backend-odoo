@@ -209,7 +209,7 @@
               sequence="40"
               groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_business_config_admin"/>
     <menuitem id="menu_sc_salary_registration"
-              name="工资登记"
+              name="项目管理人员工资登记"
               parent="smart_construction_core.menu_sc_hr_admin_center"
               action="smart_construction_core.action_sc_salary_registration"
               sequence="45"

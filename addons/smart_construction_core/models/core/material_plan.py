@@ -54,6 +54,9 @@ class ProjectMaterialPlan(models.Model):
     )
 
     line_ids = fields.One2many("project.material.plan.line", "plan_id", string="计划明细")
+    legacy_fact_model = fields.Char(string="来源通用模型", index=True)
+    legacy_fact_id = fields.Integer(string="来源通用记录ID", index=True)
+    legacy_fact_type = fields.Char(string="来源业务类型", index=True)
 
     submitted_by = fields.Many2one("res.users", string="提交人", readonly=True, tracking=True)
     submitted_at = fields.Datetime(string="提交时间", readonly=True, tracking=True)
@@ -63,6 +66,14 @@ class ProjectMaterialPlan(models.Model):
 
     purchase_order_count = fields.Integer("采购单", compute="_compute_po_counts")
     purchase_line_count = fields.Integer("采购明细", compute="_compute_po_counts")
+
+    _sql_constraints = [
+        (
+            "legacy_material_plan_unique",
+            "unique(legacy_fact_model, legacy_fact_id)",
+            "来源通用材料计划已迁移为材料计划。",
+        ),
+    ]
 
     @api.depends("line_ids.quantity", "line_ids.bill_qty")
     def _compute_plan_totals(self):

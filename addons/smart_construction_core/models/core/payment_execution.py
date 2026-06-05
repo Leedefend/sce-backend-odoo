@@ -73,6 +73,7 @@ class ScPaymentExecution(models.Model):
     handler_name = fields.Char(string="经办人", index=True)
     planned_amount = fields.Monetary(string="申请/计划金额", currency_field="currency_id")
     paid_amount = fields.Monetary(string="实付金额", currency_field="currency_id")
+    legacy_visible_payment_amount = fields.Char(string="历史可见付款金额", readonly=True)
     invoice_amount = fields.Monetary(string="发票金额", currency_field="currency_id")
     currency_id = fields.Many2one(
         "res.currency",
@@ -100,6 +101,7 @@ class ScPaymentExecution(models.Model):
     legacy_visible_request_no = fields.Char(string="历史可见支付申请单号", readonly=True)
     creator_legacy_user_id = fields.Char(string="历史录入人ID", index=True, readonly=True)
     creator_name = fields.Char(string="历史录入人", index=True, readonly=True)
+    legacy_visible_entry_date = fields.Char(string="历史可见录入日期", readonly=True)
     created_time = fields.Datetime(string="历史录入时间", index=True, readonly=True)
     reject_reason = fields.Char(string="驳回原因", readonly=True, copy=False)
     note = fields.Text(string="备注")
@@ -184,6 +186,7 @@ class ScPaymentExecution(models.Model):
                 "contract_id",
                 "creator_legacy_user_id",
                 "creator_name",
+                "legacy_visible_entry_date",
                 "created_time",
                 "note",
                 "active",

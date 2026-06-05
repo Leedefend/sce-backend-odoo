@@ -415,7 +415,7 @@ class FileDownloadHandler(BaseIntentHandler):
             return False
         env_model = self.env[model]
         fields = getattr(env_model, "_fields", {}) or {}
-        return bool({"attachment_ref", "raw_payload", "legacy_record_id"} & set(fields))
+        return bool({"attachment_ref", "legacy_attachment_ref", "raw_payload", "legacy_record_id"} & set(fields))
 
     def _legacy_attachment_refs(self, record):
         primary_refs: list[str] = []
@@ -424,6 +424,7 @@ class FileDownloadHandler(BaseIntentHandler):
         for field in (
             "attachment_ref",
             "attachment_links",
+            "legacy_attachment_ref",
             "line_attachment_ref",
         ):
             if field not in fields:

@@ -213,7 +213,7 @@
         <field name="res_model">sc.invoice.registration</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="smart_construction_core.view_sc_invoice_registration_search"/>
-        <field name="domain">[('source_kind', '=', 'output_invoice_tax'), ('direction', '=', 'output')]</field>
+        <field name="domain">[('legacy_source_model', '=', 'online_old_scbs:C_JXXP_KJFPSQ:list889')]</field>
         <field name="context">{'default_source_kind': 'output_invoice_tax', 'default_direction': 'output', 'default_invoice_content': '销项开票申请', 'search_default_group_project': 1}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
@@ -223,12 +223,12 @@
         ])]"/>
     </record>
     <record id="action_sc_invoice_registration_user" model="ir.actions.act_window">
-        <field name="name">进项发票登记</field>
+        <field name="name">销项开票登记</field>
         <field name="res_model">sc.invoice.registration</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="smart_construction_core.view_sc_invoice_registration_search"/>
-        <field name="domain">[('source_kind', '=', 'invoice_registration'), ('direction', '=', 'input')]</field>
-        <field name="context">{'default_source_kind': 'invoice_registration', 'default_direction': 'input', 'default_invoice_content': '进项发票登记', 'search_default_group_project': 1}</field>
+        <field name="domain">[('legacy_source_model', 'in', ['online_old_scbs:C_JXXP_XXKPDJ:list890', 'online_old_scbsly:direct_acceptance:general_contract_input_tax_report:action933'])]</field>
+        <field name="context">{'default_source_kind': 'output_invoice_tax', 'default_direction': 'output', 'default_invoice_content': '销项开票登记', 'search_default_group_project': 1}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
             ref('smart_construction_core.group_sc_cap_finance_read'),
@@ -625,7 +625,7 @@
         <field name="res_model">payment.request</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="smart_construction_core.view_payment_request_search"/>
-        <field name="domain">['&amp;', ('type', '=', 'pay'), '|', ('legacy_source_table', '=', False), ('legacy_source_table', '!=', 'T_FK_Supplier')]</field>
+        <field name="domain">['&amp;', ('type', '=', 'pay'), '|', '&amp;', ('legacy_source_table', '=', 'C_ZFSQGL'), ('operation_strategy', '=', 'joint'), ('legacy_source_table', '=', 'SCBSLY_DIRECT_PAYMENT_APPLY_ACCEPTED')]</field>
         <field name="context">{'default_type': 'pay', 'search_default_type_pay': 1, 'search_default_group_by_project_id': 1}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
@@ -653,7 +653,7 @@
         <field name="res_model">sc.payment.execution</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="smart_construction_core.view_sc_payment_execution_search"/>
-        <field name="domain">['&amp;', ('source_kind', '=', 'actual_outflow'), ('payment_family', 'in', ['往来单位付款', 'SCBS供应商付款'])]</field>
+        <field name="domain">['&amp;', ('source_kind', '=', 'actual_outflow'), ('legacy_source_model', 'in', ['online_old_scbs:T_FK_SUPPLIER:list881', 'online_old_scbsly:T_FK_SUPPLIER:list881'])]</field>
         <field name="context">{'default_source_kind': 'actual_outflow', 'default_payment_family': '往来单位付款', 'search_default_group_project': 1}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
@@ -1469,15 +1469,15 @@
               sequence="33"/>
     <menuitem id="menu_sc_invoice_application_user"
               name="销项开票申请"
-              parent="smart_construction_core.menu_sc_invoice_tax_user_group"
+              parent="smart_construction_core.menu_sc_finance_center"
               action="smart_construction_core.action_sc_invoice_application_user"
-              sequence="10"
+              sequence="33"
               groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
     <menuitem id="menu_sc_invoice_registration_user"
-              name="进项发票登记"
-              parent="smart_construction_core.menu_sc_invoice_tax_user_group"
+              name="销项开票登记"
+              parent="smart_construction_core.menu_sc_finance_center"
               action="smart_construction_core.action_sc_invoice_registration_user"
-              sequence="20"
+              sequence="34"
               groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
     <menuitem id="menu_sc_invoice_prepaid_tax_user"
               name="预缴税款"
@@ -1623,7 +1623,7 @@
     <menuitem id="menu_sc_partner_payment"
               name="往来单位付款"
               parent="smart_construction_core.menu_sc_payment_user_group"
-              action="smart_construction_core.action_payment_request_counterparty_payment"
+              action="smart_construction_core.action_sc_payment_execution_partner_payment"
               sequence="20"
               groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
     <menuitem id="menu_sc_legacy_fuel_card_fact_acceptance"

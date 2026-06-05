@@ -45,6 +45,13 @@ def visible_amount(value):
     return f"{amount:,.2f}"
 
 
+def visible_actual_paid_amount(row):
+    for key in ("FKJE", "f_SFJE", "f_JHFKJE"):
+        if key in row:
+            return visible_amount(row.get(key))
+    return False
+
+
 def parse_date(value):
     text = clean(value)
     return text[:10] if len(text) >= 10 else False
@@ -234,7 +241,7 @@ def backfill_payment_requests() -> dict[str, int]:
             "legacy_visible_request_date": clean(row.get("f_SQRQ")) or False,
             "legacy_visible_payee_unit": clean(row.get("f_GYSMC")) or False,
             "legacy_visible_request_amount": visible_amount(row.get("f_JHJE")),
-            "legacy_visible_actual_paid_amount": visible_amount(row.get("FKJE")),
+            "legacy_visible_actual_paid_amount": visible_actual_paid_amount(row),
             "legacy_visible_available_balance": visible_amount(row.get("SJKYYE")),
             "legacy_visible_cost_category_name": clean(row.get("f_CBFLMC")) or False,
             "legacy_visible_remark": clean(row.get("f_Remark")) or False,
@@ -272,7 +279,7 @@ def sync_payment_request_visible_fields() -> dict[str, int]:
             "legacy_visible_request_date": clean(row.get("f_SQRQ")) or False,
             "legacy_visible_payee_unit": clean(row.get("f_GYSMC")) or False,
             "legacy_visible_request_amount": visible_amount(row.get("f_JHJE")),
-            "legacy_visible_actual_paid_amount": visible_amount(row.get("FKJE")),
+            "legacy_visible_actual_paid_amount": visible_actual_paid_amount(row),
             "legacy_visible_available_balance": visible_amount(row.get("SJKYYE")),
             "legacy_visible_cost_category_name": clean(row.get("f_CBFLMC")) or False,
             "legacy_visible_remark": clean(row.get("f_Remark")) or False,
