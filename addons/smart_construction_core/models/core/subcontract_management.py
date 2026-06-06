@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import _, api, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 
 
 class ScSubcontractPlan(models.Model):
@@ -52,6 +52,9 @@ class ScSubcontractPlan(models.Model):
 
     def action_submit(self):
         for record in self:
+            if record.state != "draft":
+                raise UserError(_("只有草稿状态的分包计划可以提交。"))
+            record._check_business_anchor()
             if not record.line_ids:
                 raise ValidationError(_("提交分包计划前必须维护计划明细。"))
             record.line_ids._check_values()
@@ -60,17 +63,34 @@ class ScSubcontractPlan(models.Model):
 
     def action_approve(self):
         for record in self:
+            if record.state != "submitted":
+                raise UserError(_("只有已提交状态的分包计划可以确认。"))
+            record._check_business_anchor()
             record.line_ids._check_values()
         self.write({"state": "approved"})
         return True
 
     def action_cancel(self):
+        for record in self:
+            if record.state not in ("draft", "submitted"):
+                raise UserError(_("只有草稿或已提交状态的分包计划可以取消。"))
         self.write({"state": "cancel"})
         return True
 
     def action_reset_draft(self):
+        for record in self:
+            if record.state != "cancel":
+                raise UserError(_("只有已取消状态的分包计划可以重置为草稿。"))
         self.write({"state": "draft"})
         return True
+
+    def _check_business_anchor(self):
+        for record in self:
+            if record.contract_id:
+                if record.contract_id.project_id != record.project_id:
+                    raise UserError(_("分包计划关联合同必须属于当前项目。"))
+                if record.subcontractor_id and record.contract_id.partner_id and record.subcontractor_id != record.contract_id.partner_id:
+                    raise UserError(_("分包计划建议分包单位必须与关联合同相对方一致。"))
 
     @api.constrains("start_date", "end_date")
     def _check_date_order(self):
@@ -163,6 +183,9 @@ class ScSubcontractRequest(models.Model):
 
     def action_submit(self):
         for record in self:
+            if record.state != "draft":
+                raise UserError(_("只有草稿状态的分包申请可以提交。"))
+            record._check_business_anchor()
             if not record.line_ids:
                 raise ValidationError(_("提交分包申请前必须维护申请明细。"))
             record.line_ids._check_values()
@@ -171,17 +194,49 @@ class ScSubcontractRequest(models.Model):
 
     def action_approve(self):
         for record in self:
+            if record.state != "submitted":
+                raise UserError(_("只有已提交状态的分包申请可以确认。"))
+            record._check_business_anchor()
             record.line_ids._check_values()
         self.write({"state": "approved"})
         return True
 
     def action_cancel(self):
+        for record in self:
+            if record.state not in ("draft", "submitted"):
+                raise UserError(_("只有草稿或已提交状态的分包申请可以取消。"))
         self.write({"state": "cancel"})
         return True
 
     def action_reset_draft(self):
+        for record in self:
+            if record.state != "cancel":
+                raise UserError(_("只有已取消状态的分包申请可以重置为草稿。"))
         self.write({"state": "draft"})
         return True
+
+    def _check_business_anchor(self):
+        for record in self:
+            if record.plan_id:
+                if record.plan_id.project_id != record.project_id:
+                    raise UserError(_("分包申请来源计划必须属于当前项目。"))
+                if record.plan_id.state != "approved":
+                    raise UserError(_("分包申请只能引用已确认的分包计划。"))
+                if (
+                    record.suggested_subcontractor_id
+                    and record.plan_id.subcontractor_id
+                    and record.suggested_subcontractor_id != record.plan_id.subcontractor_id
+                ):
+                    raise UserError(_("分包申请建议分包单位必须与来源计划一致。"))
+            if record.contract_id:
+                if record.contract_id.project_id != record.project_id:
+                    raise UserError(_("分包申请关联合同必须属于当前项目。"))
+                if (
+                    record.suggested_subcontractor_id
+                    and record.contract_id.partner_id
+                    and record.suggested_subcontractor_id != record.contract_id.partner_id
+                ):
+                    raise UserError(_("分包申请建议分包单位必须与关联合同相对方一致。"))
 
     @api.constrains("need_start_date", "need_end_date")
     def _check_need_date_order(self):
@@ -267,6 +322,9 @@ class ScSubcontractRegister(models.Model):
 
     def action_register(self):
         for record in self:
+            if record.state != "draft":
+                raise UserError(_("只有草稿状态的分包登记可以确认登记。"))
+            record._check_business_anchor()
             if not record.subcontractor_id:
                 raise ValidationError(_("确认分包登记前必须维护分包单位。"))
             if not record.line_ids:
@@ -277,17 +335,45 @@ class ScSubcontractRegister(models.Model):
 
     def action_close(self):
         for record in self:
+            if record.state != "active":
+                raise UserError(_("只有已登记状态的分包登记可以关闭。"))
+            record._check_business_anchor()
             record.line_ids._check_values()
         self.write({"state": "closed"})
         return True
 
     def action_cancel(self):
+        for record in self:
+            if record.state not in ("draft", "active"):
+                raise UserError(_("只有草稿或已登记状态的分包登记可以取消。"))
         self.write({"state": "cancel"})
         return True
 
     def action_reset_draft(self):
+        for record in self:
+            if record.state != "cancel":
+                raise UserError(_("只有已取消状态的分包登记可以重置为草稿。"))
         self.write({"state": "draft"})
         return True
+
+    def _check_business_anchor(self):
+        for record in self:
+            if record.request_id:
+                if record.request_id.project_id != record.project_id:
+                    raise UserError(_("分包登记来源申请必须属于当前项目。"))
+                if record.request_id.state != "approved":
+                    raise UserError(_("分包登记只能引用已确认的分包申请。"))
+                if (
+                    record.subcontractor_id
+                    and record.request_id.suggested_subcontractor_id
+                    and record.subcontractor_id != record.request_id.suggested_subcontractor_id
+                ):
+                    raise UserError(_("分包登记单位必须与来源申请建议分包单位一致。"))
+            if record.contract_id:
+                if record.contract_id.project_id != record.project_id:
+                    raise UserError(_("分包登记合同必须属于当前项目。"))
+                if record.subcontractor_id and record.contract_id.partner_id and record.subcontractor_id != record.contract_id.partner_id:
+                    raise UserError(_("分包登记单位必须与合同相对方一致。"))
 
     @api.constrains("start_date", "end_date")
     def _check_date_order(self):
@@ -372,6 +458,9 @@ class ScSubcontractSettlement(models.Model):
 
     def action_submit(self):
         for record in self:
+            if record.state != "draft":
+                raise UserError(_("只有草稿状态的分包结算可以提交。"))
+            record._check_business_anchor()
             if not record.line_ids:
                 raise ValidationError(_("提交分包结算前必须维护结算明细。"))
             record.line_ids._check_values()
@@ -380,17 +469,41 @@ class ScSubcontractSettlement(models.Model):
 
     def action_confirm(self):
         for record in self:
+            if record.state != "submitted":
+                raise UserError(_("只有已提交状态的分包结算可以确认。"))
+            record._check_business_anchor()
             record.line_ids._check_values()
         self.write({"state": "confirmed"})
         return True
 
     def action_cancel(self):
+        for record in self:
+            if record.state not in ("draft", "submitted"):
+                raise UserError(_("只有草稿或已提交状态的分包结算可以取消。"))
         self.write({"state": "cancel"})
         return True
 
     def action_reset_draft(self):
+        for record in self:
+            if record.state != "cancel":
+                raise UserError(_("只有已取消状态的分包结算可以重置为草稿。"))
         self.write({"state": "draft"})
         return True
+
+    def _check_business_anchor(self):
+        for record in self:
+            if record.register_id:
+                if record.register_id.project_id != record.project_id:
+                    raise UserError(_("分包结算来源登记必须属于当前项目。"))
+                if record.register_id.state not in ("active", "closed"):
+                    raise UserError(_("分包结算只能引用已登记或已关闭的分包登记。"))
+                if record.register_id.subcontractor_id and record.register_id.subcontractor_id != record.subcontractor_id:
+                    raise UserError(_("分包结算单位必须与来源登记一致。"))
+            if record.contract_id:
+                if record.contract_id.project_id != record.project_id:
+                    raise UserError(_("分包结算合同必须属于当前项目。"))
+                if record.contract_id.partner_id and record.contract_id.partner_id != record.subcontractor_id:
+                    raise UserError(_("分包结算单位必须与合同相对方一致。"))
 
 
 class ScSubcontractSettlementLine(models.Model):
@@ -476,15 +589,24 @@ class ScSubcontractPrice(models.Model):
         return super().create(vals_list)
 
     def action_activate(self):
+        for record in self:
+            if record.state != "draft":
+                raise UserError(_("只有草稿状态的分包价格可以生效。"))
         self._check_values()
         self.write({"state": "active"})
         return True
 
     def action_deactivate(self):
+        for record in self:
+            if record.state != "active":
+                raise UserError(_("只有生效状态的分包价格可以停用。"))
         self.write({"state": "inactive"})
         return True
 
     def action_reset_draft(self):
+        for record in self:
+            if record.state != "inactive":
+                raise UserError(_("只有停用状态的分包价格可以重置为草稿。"))
         self.write({"state": "draft"})
         return True
 

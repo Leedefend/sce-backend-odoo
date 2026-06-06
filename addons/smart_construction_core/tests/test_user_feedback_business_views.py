@@ -2,6 +2,7 @@
 import inspect
 import re
 
+from odoo.exceptions import UserError
 from odoo.tests import TransactionCase
 from odoo.tests.common import tagged
 
@@ -881,6 +882,43 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         ):
             self.assertIn('name="%s"' % field_name, bid_form)
 
+    def test_tender_registration_form_exposes_business_workflow_buttons(self):
+        bid_form = self.env.ref("smart_construction_core.view_tender_bid_form").arch_db
+
+        for button_name in (
+            "action_to_estimating",
+            "action_to_submitted",
+            "action_to_waiting",
+            "action_mark_won",
+            "action_mark_lost",
+            "action_to_prepare",
+        ):
+            self.assertIn('name="%s"' % button_name, bid_form)
+
+    def test_tender_registration_business_workflow_reaches_won_contract(self):
+        bid = self.env["tender.bid"].create(
+            {
+                "tender_name": "Feedback Tender Workflow",
+                "project_id": self.project.id,
+                "owner_id": self.partner.id,
+                "bid_amount": 1200.0,
+            }
+        )
+
+        bid.action_to_estimating()
+        self.assertEqual(bid.state, "estimating")
+        bid.action_to_submitted()
+        self.assertEqual(bid.state, "submitted")
+        bid.action_to_waiting()
+        self.assertEqual(bid.state, "waiting")
+        bid.action_mark_won()
+
+        self.assertEqual(bid.state, "won")
+        self.assertTrue(bid.contract_id)
+        self.assertEqual(bid.contract_id.project_id, self.project)
+        self.assertEqual(bid.contract_id.partner_id, self.partner)
+        self.assertEqual(bid.contract_id.subject, "Feedback Tender Workflow")
+
     def test_construction_diary_list_exposes_projected_site_fields(self):
         tree = self.env.ref("smart_construction_core.view_sc_construction_diary_tree").arch_db
 
@@ -1145,6 +1183,7 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         adjustment = self.env["sc.output.invoice.adjustment"].create(
             {
                 "original_ledger_id": ledger.id,
+                "red_flush_invoice_no": "INV-RED-001-R",
                 "reason": "用户反馈红冲闭环验证",
             }
         )
@@ -1157,7 +1196,7 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         self.assertEqual(generated.direction, "output")
         self.assertEqual(generated.source_kind, "output_invoice_tax")
         self.assertEqual(generated.state, "registered")
-        self.assertEqual(generated.invoice_no, "INV-RED-001")
+        self.assertEqual(generated.invoice_no, "INV-RED-001-R")
         self.assertEqual(generated.amount_total, -109.0)
         self.assertEqual(generated.amount_no_tax, -109.0)
         self.assertEqual(generated.tax_amount, 0.0)
@@ -1170,6 +1209,99 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         self.assertTrue(red_ledger)
         self.assertEqual(red_ledger.adjustment_kind, "signed_adjustment")
         self.assertEqual(red_ledger.invoice_amount, -109.0)
+
+    @tagged("post_install", "-at_install", "user_feedback", "output_invoice_red_flush")
+    def test_output_invoice_red_flush_blocks_same_invoice_no(self):
+        request = self.env["payment.request"].create(
+            {
+                "name": "FB-RECEIPT-RED-FLUSH-BLOCK",
+                "type": "receive",
+                "project_id": self.project.id,
+                "partner_id": self.partner.id,
+                "amount": 109.0,
+            }
+        )
+        receipt_line = self.env["sc.receipt.invoice.line"].create(
+            {
+                "request_id": request.id,
+                "legacy_invoice_line_id": "red-flush-line-block",
+                "legacy_receipt_id": "red-flush-receipt-block",
+                "invoice_no": "INV-RED-BLOCK-001",
+                "invoice_issue_company": "Feedback Issue Company",
+                "invoice_party_name": "Feedback Party",
+                "invoice_amount": 109.0,
+            }
+        )
+        ledger = self.env["sc.output.invoice.ledger"].search(
+            [("source_model", "=", "sc.receipt.invoice.line"), ("source_record_id", "=", receipt_line.id)],
+            limit=1,
+        )
+        adjustment = self.env["sc.output.invoice.adjustment"].create(
+            {
+                "original_ledger_id": ledger.id,
+                "red_flush_invoice_no": "INV-RED-BLOCK-001",
+            }
+        )
+
+        with self.assertRaises(UserError):
+            adjustment.action_confirm()
+        adjustment.invalidate_recordset()
+        self.assertEqual(adjustment.state, "draft")
+
+    @tagged("post_install", "-at_install", "user_feedback", "output_invoice_red_flush")
+    def test_output_invoice_red_flush_blocks_invalid_state_jump_or_late_cancel(self):
+        request = self.env["payment.request"].create(
+            {
+                "name": "FB-RECEIPT-RED-FLUSH-STATE",
+                "type": "receive",
+                "project_id": self.project.id,
+                "partner_id": self.partner.id,
+                "amount": 109.0,
+            }
+        )
+        receipt_line = self.env["sc.receipt.invoice.line"].create(
+            {
+                "request_id": request.id,
+                "legacy_invoice_line_id": "red-flush-line-state",
+                "legacy_receipt_id": "red-flush-receipt-state",
+                "invoice_no": "INV-RED-STATE-001",
+                "invoice_issue_company": "Feedback Issue Company",
+                "invoice_party_name": "Feedback Party",
+                "invoice_amount": 109.0,
+            }
+        )
+        ledger = self.env["sc.output.invoice.ledger"].search(
+            [("source_model", "=", "sc.receipt.invoice.line"), ("source_record_id", "=", receipt_line.id)],
+            limit=1,
+        )
+        adjustment = self.env["sc.output.invoice.adjustment"].create(
+            {
+                "original_ledger_id": ledger.id,
+                "red_flush_invoice_no": "INV-RED-STATE-001-R",
+            }
+        )
+
+        adjustment.action_confirm()
+        adjustment.invalidate_recordset()
+        self.assertEqual(adjustment.state, "confirmed")
+        with self.assertRaises(UserError):
+            adjustment.action_confirm()
+        with self.assertRaises(UserError):
+            adjustment.action_cancel()
+
+        cancel_adjustment = self.env["sc.output.invoice.adjustment"].create(
+            {
+                "original_ledger_id": ledger.id,
+                "red_flush_invoice_no": "INV-RED-STATE-001-CANCEL",
+            }
+        )
+        cancel_adjustment.action_cancel()
+        cancel_adjustment.invalidate_recordset()
+        self.assertEqual(cancel_adjustment.state, "cancel")
+        with self.assertRaises(UserError):
+            cancel_adjustment.action_confirm()
+        with self.assertRaises(UserError):
+            cancel_adjustment.action_cancel()
 
     def test_invoice_registration_accepts_signed_legacy_adjustment_amounts(self):
         invoice = self.env["sc.invoice.registration"].create(

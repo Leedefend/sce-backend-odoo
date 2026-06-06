@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-from odoo import fields, models
+from odoo import _, fields, models
+from odoo.exceptions import UserError
 
 
 class ProjectRiskAction(models.Model):
@@ -42,6 +43,8 @@ class ProjectRiskAction(models.Model):
 
     def action_claim(self, owner_id: int | None = None):
         for rec in self:
+            if rec.state != "open":
+                raise UserError(_("只有待处理的风险事项可以认领。"))
             values = {"state": "claimed"}
             if owner_id:
                 values["owner_id"] = int(owner_id)
@@ -52,16 +55,27 @@ class ProjectRiskAction(models.Model):
 
     def action_escalate(self, note: str | None = None):
         for rec in self:
+            if rec.state not in ("open", "claimed"):
+                raise UserError(_("只有待处理或已认领的风险事项可以升级。"))
             values = {"state": "escalated"}
-            if note:
-                values["note"] = str(note)
+            values["note"] = rec._merge_note(note)
             rec.write(values)
         return True
 
     def action_close(self, note: str | None = None):
         for rec in self:
+            if rec.state not in ("claimed", "escalated"):
+                raise UserError(_("只有已认领或已升级的风险事项可以关闭。"))
+            if not rec.owner_id:
+                raise UserError(_("风险事项关闭前必须明确负责人。"))
             values = {"state": "closed"}
-            if note:
-                values["note"] = str(note)
+            values["note"] = rec._merge_note(note)
             rec.write(values)
         return True
+
+    def _merge_note(self, note):
+        self.ensure_one()
+        if not note:
+            return self.note
+        note = str(note)
+        return f"{self.note}\n{note}" if self.note else note

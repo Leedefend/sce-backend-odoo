@@ -193,27 +193,41 @@ class ScFinancingLoan(models.Model):
     def action_confirm(self):
         policy = self.env["sc.approval.policy"]
         for rec in self:
-            if rec.state == "draft":
-                if policy.is_approval_required(rec._name, company=rec.company_id):
-                    company = rec.company_id or self.env.company
-                    rec.with_company(company).with_context(allowed_company_ids=[company.id])._request_document_approval()
-                else:
-                    rec.write({"state": "confirmed", "reject_reason": False})
+            if rec.state != "draft":
+                raise UserError(_("只有草稿状态的融资借款可以确认。"))
+            rec._check_done_ready()
+            if policy.is_approval_required(rec._name, company=rec.company_id):
+                company = rec.company_id or self.env.company
+                rec.with_company(company).with_context(allowed_company_ids=[company.id])._request_document_approval()
+            else:
+                rec.write({"state": "confirmed", "reject_reason": False})
 
     def action_done(self):
         policy = self.env["sc.approval.policy"]
         for rec in self:
-            if rec.state in ("draft", "confirmed"):
-                if policy.is_approval_required(rec._name, company=rec.company_id) and rec.validation_status != "validated":
-                    raise UserError(_("融资借款尚未完成统一审批流程。"))
-                rec.state = "done"
+            if rec.state not in ("draft", "confirmed"):
+                raise UserError(_("只有草稿或已确认状态的融资借款可以完成。"))
+            if policy.is_approval_required(rec._name, company=rec.company_id) and rec.validation_status != "validated":
+                raise UserError(_("融资借款尚未完成统一审批流程。"))
+            rec._check_done_ready()
+            rec.state = "done"
+
+    def _check_done_ready(self):
+        self.ensure_one()
+        if not self.partner_id:
+            raise UserError(_("请先选择往来单位后再完成融资借款。"))
+        if not self.document_date:
+            raise UserError(_("请先填写单据日期后再完成融资借款。"))
+        if self.amount <= 0:
+            raise UserError(_("融资借款金额必须大于 0。"))
 
     def action_cancel(self):
         for rec in self:
             if rec.source_origin == "legacy":
                 raise UserError(_("历史迁移融资/借款单据不能在新系统取消。"))
-            if rec.state != "cancel":
-                rec.state = "cancel"
+            if rec.state not in ("draft", "confirmed"):
+                raise UserError(_("只有草稿或已确认状态的融资借款可以取消。"))
+            rec.state = "cancel"
 
     def _request_document_approval(self):
         self.ensure_one()

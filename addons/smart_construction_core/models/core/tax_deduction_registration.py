@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
+from odoo.tools.float_utils import float_compare
 
 
 class ScTaxDeductionRegistration(models.Model):
@@ -129,13 +130,53 @@ class ScTaxDeductionRegistration(models.Model):
         return super().write(vals)
 
     def action_confirm(self):
-        self.filtered(lambda rec: rec.state == "draft").write({"state": "confirmed"})
+        for rec in self:
+            if rec.state != "draft":
+                raise UserError(_("只有草稿状态的抵扣登记可以确认。"))
+            rec.write({"state": "confirmed"})
 
     def action_deduct(self):
-        self.filtered(lambda rec: rec.state in ("draft", "confirmed")).write({"state": "deducted"})
+        for rec in self:
+            if rec.state not in ("draft", "confirmed"):
+                raise UserError(_("只有草稿或已确认状态的抵扣登记可以确认抵扣。"))
+            vals = {}
+            if not rec.deduction_confirm_date:
+                vals["deduction_confirm_date"] = fields.Date.context_today(rec)
+            if not rec.deduction_amount and rec.invoice_amount_untaxed:
+                vals["deduction_amount"] = rec.invoice_amount_untaxed
+            if not rec.deduction_tax_amount and rec.invoice_tax_amount:
+                vals["deduction_tax_amount"] = rec.invoice_tax_amount
+            if vals:
+                rec.write(vals)
+            rec._check_deduct_ready()
+            rec.write({"state": "deducted"})
+
+    def _check_deduct_ready(self):
+        for rec in self:
+            if not rec.invoice_no:
+                raise UserError(_("请先填写发票号码后再确认抵扣。"))
+            if not rec.deduction_confirm_date:
+                raise UserError(_("请先填写认证抵扣日期后再确认抵扣。"))
+            rounding = rec.currency_id.rounding if rec.currency_id else 0.01
+            if float_compare(rec.deduction_tax_amount or 0.0, 0.0, precision_rounding=rounding) <= 0:
+                raise UserError(_("抵扣税额必须大于 0。"))
+            if rec.invoice_tax_amount and float_compare(
+                rec.deduction_tax_amount or 0.0,
+                rec.invoice_tax_amount or 0.0,
+                precision_rounding=rounding,
+            ) == 1:
+                raise UserError(_("抵扣税额不能超过发票税额。"))
+            if rec.invoice_amount_untaxed and rec.deduction_amount and float_compare(
+                rec.deduction_amount or 0.0,
+                rec.invoice_amount_untaxed or 0.0,
+                precision_rounding=rounding,
+            ) == 1:
+                raise UserError(_("抵扣金额不能超过发票不含税金额。"))
 
     def action_cancel(self):
         for rec in self:
             if rec.source_origin == "legacy":
                 raise UserError(_("历史迁移抵扣登记不能在新系统取消。"))
-        self.filtered(lambda rec: rec.state != "cancel").write({"state": "cancel"})
+            if rec.state not in ("draft", "confirmed"):
+                raise UserError(_("只有草稿或已确认状态的抵扣登记可以取消。"))
+            rec.write({"state": "cancel"})

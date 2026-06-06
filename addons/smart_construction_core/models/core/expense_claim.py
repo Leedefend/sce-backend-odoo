@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
+from odoo.tools.float_utils import float_compare
 
 
 class ScExpenseClaim(models.Model):
@@ -218,7 +219,8 @@ class ScExpenseClaim(models.Model):
         policy = self.env["sc.approval.policy"]
         for rec in self:
             if rec.state != "draft":
-                continue
+                raise UserError(_("只有草稿状态的费用/保证金单据可以提交。"))
+            rec._check_business_ready()
             if policy.is_approval_required(rec._name, company=rec.company_id):
                 rec.write({"state": "submit", "reject_reason": False})
                 company = rec.company_id or self.env.company
@@ -232,7 +234,8 @@ class ScExpenseClaim(models.Model):
         policy_model = self.env["sc.approval.policy"]
         for rec in self:
             if rec.state != "submit":
-                continue
+                raise UserError(_("只有已提交的费用/保证金单据可以批准。"))
+            rec._check_business_ready()
             if policy_model.is_approval_required(rec._name, company=rec.company_id):
                 if rec.validation_status != "validated":
                     raise UserError(_("请先完成统一审批流程后再批准费用/保证金单据。"))
@@ -258,15 +261,16 @@ class ScExpenseClaim(models.Model):
     def action_on_tier_approved(self):
         for rec in self:
             if rec.state != "submit":
-                continue
+                raise UserError(_("只有已提交的费用/保证金单据可以完成统一审批回调。"))
             if rec.validation_status != "validated":
                 raise UserError(_("费用/保证金单据尚未完成统一审批流程。"))
+            rec._check_business_ready()
             rec.write({"state": "approved", "reject_reason": False})
 
     def action_on_tier_rejected(self, reason=None):
         for rec in self:
             if rec.state != "submit":
-                continue
+                raise UserError(_("只有已提交的费用/保证金单据可以驳回。"))
             rec.write(
                 {
                     "state": "draft",
@@ -276,12 +280,65 @@ class ScExpenseClaim(models.Model):
 
     def action_done(self):
         for rec in self:
-            if rec.state == "approved":
-                rec.state = "done"
+            if rec.state != "approved":
+                raise UserError(_("只有已批准的费用/保证金单据可以完成。"))
+            rec._check_business_ready()
+            rec._sync_payment_request_done()
+            rec.state = "done"
+
+    def _check_business_ready(self):
+        for rec in self:
+            if not rec.project_id:
+                raise UserError(_("费用/保证金单据必须关联项目。"))
+            if (rec.amount or 0.0) <= 0:
+                raise UserError(_("费用/保证金申请金额必须大于 0。"))
+            if (rec.approved_amount or 0.0) < 0:
+                raise UserError(_("费用/保证金批准金额不能为负数。"))
+
+    def _sync_payment_request_done(self):
+        for rec in self:
+            request = rec.payment_request_id
+            if not request or request.state == "done":
+                continue
+            expected_type = "receive" if rec.direction == "inflow" else "pay"
+            if request.type != expected_type:
+                raise UserError(
+                    _("费用/保证金资金方向与付款/收款申请类型不一致，不能自动完成申请。")
+                )
+            rounding = request.currency_id.rounding if request.currency_id else 0.01
+            amount = rec.approved_amount or rec.amount or 0.0
+            if float_compare(amount, request.amount or 0.0, precision_rounding=rounding) == -1:
+                raise UserError(_("费用/保证金批准金额低于付款/收款申请金额，不能自动完成申请。"))
+            if request.state == "submit" and request.validation_status == "validated":
+                request.with_context(tier_validation_callback=True).action_on_tier_approved()
+                request.invalidate_recordset()
+            if request.state == "approve" and request.validation_status == "validated":
+                request.action_set_approved()
+                request.invalidate_recordset()
+            if request.state != "approved":
+                continue
+            if request.type == "receive":
+                before = request._snapshot_audit_payload()
+                request.with_context(payment_soft_gate=True)._ensure_treasury_ledger(
+                    amount=request.amount or 0.0,
+                    date=rec.date_claim,
+                    note=_("auto:expense_claim_done"),
+                )
+                request.with_context(allow_transition=True, payment_soft_gate=True).write({"state": "done"})
+                after = request._snapshot_audit_payload()
+                request._audit_transition("payment_paid", before, after, action_name="expense_claim_done")
+            else:
+                request.with_context(payment_soft_gate=True)._ensure_payment_ledger(
+                    amount=request.amount or 0.0,
+                    ref=rec.name,
+                    note=_("auto:expense_claim_done"),
+                )
+                request.with_context(allow_transition=True, payment_soft_gate=True).write({"state": "done"})
 
     def action_cancel(self):
         for rec in self:
             if rec.source_origin == "legacy":
                 raise UserError(_("历史迁移费用/保证金单据不能在新系统取消。"))
-            if rec.state not in ("done", "cancel"):
-                rec.state = "cancel"
+            if rec.state not in ("draft", "submit", "approved"):
+                raise UserError(_("只有草稿、已提交或已批准的费用/保证金单据可以取消。"))
+            rec.state = "cancel"

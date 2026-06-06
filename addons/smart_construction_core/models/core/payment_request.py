@@ -798,15 +798,12 @@ class PaymentRequest(models.Model):
             if rec.state != "approved":
                 raise ValidationError(_("仅已批准的付款申请可以完成。"))
             rounding = rec.currency_id.rounding if rec.currency_id else 0.01
-            data = self.env["payment.ledger"].read_group(
-                [("payment_request_id", "=", rec.id)],
-                ["amount:sum"],
-                [],
-            )
+            ledger_model = "sc.treasury.ledger" if rec.type == "receive" else "payment.ledger"
+            data = self.env[ledger_model].read_group([("payment_request_id", "=", rec.id)], ["amount:sum"], [])
             paid_total = data[0].get("amount_sum", data[0].get("amount", 0.0)) if data else 0.0
             unpaid = (rec.amount or 0.0) - paid_total
             if float_compare(unpaid, 0.0, precision_rounding=rounding) == 1:
-                raise ValidationError(_("付款未结清，无法完成。"))
+                raise ValidationError(_("付款/收款未结清，无法完成。"))
 
     @api.onchange("type", "project_id")
     def _onchange_type_set_contract_domain(self):
@@ -1018,9 +1015,16 @@ class PaymentRequest(models.Model):
                 "批准付款申请",
                 rec._collect_payment_advisories("approve"),
             )
+            if rec.state == "approve" and rec.validation_status == "validated":
+                before = rec._snapshot_audit_payload()
+                rec.with_context(allow_transition=True, payment_soft_gate=True).write({"state": "approved"})
+                after = rec._snapshot_audit_payload()
+                rec._audit_transition("payment_approved", before, after, action_name="action_set_approved")
+                continue
             action = rec.validate_tier()
             if action:
                 result = action
+                continue
         return result or {"warnings": advisory_result}
 
     def action_done(self):
@@ -1057,7 +1061,9 @@ class PaymentRequest(models.Model):
             )
         for rec in self:
             before = rec._snapshot_audit_payload()
-            if not rec.is_fully_paid:
+            if rec.type == "receive":
+                rec.with_context(payment_soft_gate=True)._ensure_treasury_ledger(note="auto:payment_request_done")
+            elif not rec.is_fully_paid:
                 rec.with_context(payment_soft_gate=True)._ensure_payment_ledger(note="auto:payment_request_done")
             rec.with_context(allow_transition=True, payment_soft_gate=True).write({"state": "done"})
             after = rec._snapshot_audit_payload()
@@ -1082,6 +1088,30 @@ class PaymentRequest(models.Model):
             vals["ref"] = ref
         if note:
             vals["note"] = note
+        return Ledger.create(vals)
+
+    def _ensure_treasury_ledger(self, amount=None, date=None, note=None):
+        self.ensure_one()
+        if self.type != "receive":
+            raise UserError(_("只有收款申请可以生成收入资金台账。"))
+        Ledger = self.env["sc.treasury.ledger"].with_context(allow_ledger_auto=True)
+        existing = Ledger.search([("payment_request_id", "=", self.id)], limit=1)
+        if existing:
+            return existing
+        partner = self.partner_id
+        if not partner:
+            raise UserError(_("收款申请未选择往来单位，不能生成资金台账。"))
+        vals = {
+            "date": date or fields.Date.context_today(self),
+            "project_id": self.project_id.id,
+            "partner_id": partner.id,
+            "settlement_id": self.settlement_id.id or False,
+            "payment_request_id": self.id,
+            "direction": "in",
+            "amount": amount if amount is not None else (self.amount or 0.0),
+            "currency_id": self.currency_id.id,
+            "note": note,
+        }
         return Ledger.create(vals)
 
     def action_cancel(self):

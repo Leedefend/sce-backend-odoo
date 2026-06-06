@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import _, api, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 
 
 class ScPlan(models.Model):
@@ -126,24 +126,49 @@ class ScPlan(models.Model):
                 raise ValidationError(_("实际开始不能晚于实际完成。"))
 
     def action_confirm(self):
+        for rec in self:
+            if rec.state != "draft":
+                raise UserError(_("只有草稿状态的计划可以确认。"))
+            rec._check_business_anchor(require_schedule=True)
         self.write({"state": "confirmed"})
         return True
 
     def action_start(self):
+        for rec in self:
+            if rec.state != "confirmed":
+                raise UserError(_("只有已确认状态的计划可以开始执行。"))
+            rec._check_business_anchor(require_schedule=True)
         self.write({"state": "in_progress", "actual_start": fields.Date.context_today(self)})
         return True
 
     def action_done(self):
+        for rec in self:
+            if rec.state != "in_progress":
+                raise UserError(_("只有执行中的计划可以完成。"))
+            rec._check_business_anchor(require_schedule=True, require_lines_done=True)
         self.write({"state": "done", "actual_finish": fields.Date.context_today(self)})
         return True
 
     def action_cancel(self):
+        for rec in self:
+            if rec.state not in ("draft", "confirmed", "in_progress"):
+                raise UserError(_("只有未完成的计划可以取消。"))
         self.write({"state": "cancel"})
         return True
 
     def action_reset_draft(self):
+        for rec in self:
+            if rec.state != "cancel":
+                raise UserError(_("只有已取消状态的计划可以重置为草稿。"))
         self.write({"state": "draft"})
         return True
+
+    def _check_business_anchor(self, require_schedule=False, require_lines_done=False):
+        for rec in self:
+            if require_schedule and not rec.line_ids and not (rec.planned_start and rec.planned_finish):
+                raise UserError(_("计划确认前必须维护计划起止日期或计划节点。"))
+            if require_lines_done and rec.line_ids.filtered(lambda line: line.state not in ("done", "cancel")):
+                raise UserError(_("计划完成前所有未取消节点必须完成。"))
 
 
 class ScPlanLine(models.Model):

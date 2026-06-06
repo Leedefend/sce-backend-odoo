@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
+from odoo.tools.float_utils import float_compare
+
+from ..support.state_guard import raise_guard
 
 
 class ScReceiptIncome(models.Model):
@@ -172,27 +175,72 @@ class ScReceiptIncome(models.Model):
     def action_confirm(self):
         policy = self.env["sc.approval.policy"]
         for rec in self:
-            if rec.state == "draft":
-                if policy.is_approval_required(rec._name, company=rec.company_id):
-                    company = rec.company_id or self.env.company
-                    rec.with_company(company).with_context(allowed_company_ids=[company.id])._request_document_approval()
-                else:
-                    rec.write({"state": "confirmed", "reject_reason": False})
+            if rec.state != "draft":
+                raise_guard(
+                    "RECEIPT_INCOME_INVALID_TRANSITION",
+                    f"收款收入[{rec.display_name}]",
+                    _("确认收款收入"),
+                    reasons=[_("只有草稿状态的收款收入可以确认")],
+                )
+            rec._check_business_anchor_or_raise()
+            if policy.is_approval_required(rec._name, company=rec.company_id):
+                company = rec.company_id or self.env.company
+                rec.with_company(company).with_context(allowed_company_ids=[company.id])._request_document_approval()
+            else:
+                rec.write({"state": "confirmed", "reject_reason": False})
 
     def action_received(self):
         policy = self.env["sc.approval.policy"]
         for rec in self:
-            if rec.state in ("draft", "confirmed"):
-                if policy.is_approval_required(rec._name, company=rec.company_id) and rec.validation_status != "validated":
-                    raise UserError(_("收款收入尚未完成统一审批流程。"))
-                rec.state = "received"
+            if rec.state not in ("draft", "confirmed"):
+                raise_guard(
+                    "RECEIPT_INCOME_INVALID_TRANSITION",
+                    f"收款收入[{rec.display_name}]",
+                    _("登记收款"),
+                    reasons=[_("只有草稿或已确认状态的收款收入可以登记收款")],
+                )
+            rec._check_business_anchor_or_raise()
+            if policy.is_approval_required(rec._name, company=rec.company_id) and rec.validation_status != "validated":
+                raise UserError(_("收款收入尚未完成统一审批流程。"))
+            rec._sync_payment_request_done()
+            rec.state = "received"
 
     def action_cancel(self):
         for rec in self:
             if rec.source_origin == "legacy":
                 raise UserError(_("历史迁移收款/收入单据不能在新系统取消。"))
-            if rec.state != "cancel":
-                rec.state = "cancel"
+            if rec.state in ("received", "legacy_confirmed", "cancel"):
+                raise_guard(
+                    "RECEIPT_INCOME_INVALID_TRANSITION",
+                    f"收款收入[{rec.display_name}]",
+                    _("取消收款收入"),
+                    reasons=[_("已收款、历史已确认或已取消的收款收入不能取消")],
+                )
+            rec.state = "cancel"
+
+    def _check_business_anchor_or_raise(self):
+        for rec in self:
+            if not rec.project_id:
+                raise_guard(
+                    "RECEIPT_INCOME_MISSING_PROJECT",
+                    f"收款收入[{rec.display_name}]",
+                    _("办理收款收入"),
+                    reasons=[_("收款收入必须关联项目")],
+                )
+            if not rec.partner_id:
+                raise_guard(
+                    "RECEIPT_INCOME_MISSING_PARTNER",
+                    f"收款收入[{rec.display_name}]",
+                    _("办理收款收入"),
+                    reasons=[_("收款收入必须选择往来单位")],
+                )
+            if (rec.amount or 0.0) <= 0:
+                raise_guard(
+                    "RECEIPT_INCOME_INVALID_AMOUNT",
+                    f"收款收入[{rec.display_name}]",
+                    _("办理收款收入"),
+                    reasons=[_("收款金额必须大于0")],
+                )
 
     def _request_document_approval(self):
         self.ensure_one()
@@ -229,3 +277,35 @@ class ScReceiptIncome(models.Model):
                 rec.with_context(skip_validation_check=True).write(
                     {"reject_reason": reason or rec._get_tier_reject_reason()}
                 )
+
+    def _sync_payment_request_done(self):
+        for rec in self:
+            request = rec.payment_request_id
+            if not request:
+                continue
+            if request.type != "receive":
+                raise UserError(_("收款收入只能关联收款类型的付款/收款申请。"))
+            rounding = request.currency_id.rounding if request.currency_id else 0.01
+            if float_compare(rec.amount or 0.0, request.amount or 0.0, precision_rounding=rounding) == -1:
+                raise UserError(_("收款金额低于收款申请金额，不能自动完成收款申请。"))
+            if request.state == "submit" and request.validation_status == "validated":
+                request.with_context(tier_validation_callback=True).action_on_tier_approved()
+            if request.state == "approve" and request.validation_status == "validated":
+                request.action_set_approved()
+            if request.state != "approved":
+                continue
+            before = request._snapshot_audit_payload()
+            request.with_context(payment_soft_gate=True)._ensure_treasury_ledger(
+                amount=request.amount or 0.0,
+                date=rec.date_receipt,
+                note=_("auto:receipt_income_received"),
+            )
+            request.with_context(allow_transition=True, payment_soft_gate=True).write({"state": "done"})
+            after = request._snapshot_audit_payload()
+            request._audit_transition("payment_paid", before, after, action_name="receipt_income_received")
+            ledger = self.env["sc.treasury.ledger"].sudo().search(
+                [("payment_request_id", "=", request.id)],
+                limit=1,
+            )
+            if ledger:
+                rec.with_context(skip_validation_check=True).write({"treasury_ledger_id": ledger.id})

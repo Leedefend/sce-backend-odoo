@@ -273,23 +273,38 @@ class ScGeneralContract(models.Model):
     def action_confirm(self):
         policy_model = self.env["sc.approval.policy"]
         for rec in self:
-            if rec.state == "draft":
-                if policy_model.is_approval_required(rec._name, company=rec.company_id) and rec.validation_status != "validated":
-                    rec._request_general_contract_validation()
-                    continue
-                policy = policy_model.get_active_policy(rec._name, company=rec.company_id)
-                if policy and not policy_model.is_approval_required(rec._name, company=rec.company_id):
-                    policy.assert_user_can_approve()
-                rec.with_context(skip_validation_check=True).write({"state": "confirmed", "reject_reason": False})
+            if rec.state != "draft":
+                raise UserError(_("只有草稿状态的一般合同（公司）可以确认。"))
+            rec._check_business_anchor()
+            if policy_model.is_approval_required(rec._name, company=rec.company_id) and rec.validation_status != "validated":
+                rec._request_general_contract_validation()
+                continue
+            policy = policy_model.get_active_policy(rec._name, company=rec.company_id)
+            if policy and not policy_model.is_approval_required(rec._name, company=rec.company_id):
+                policy.assert_user_can_approve()
+            rec.with_context(skip_validation_check=True).write({"state": "confirmed", "reject_reason": False})
 
     def action_signed(self):
         for rec in self:
-            if rec.state in ("draft", "confirmed"):
-                if rec.state == "draft":
-                    rec.action_confirm()
-                    if rec.state != "confirmed":
-                        continue
-                rec.state = "signed"
+            if rec.state not in ("draft", "confirmed"):
+                raise UserError(_("只有草稿或已确认状态的一般合同（公司）可以签署。"))
+            rec._check_business_anchor()
+            if rec.state == "draft":
+                rec.action_confirm()
+                if rec.state != "confirmed":
+                    continue
+            rec.state = "signed"
+
+    def _check_business_anchor(self):
+        for rec in self:
+            if not rec.contract_name:
+                raise UserError(_("一般合同（公司）必须填写合同名称。"))
+            if not rec.partner_id and not rec.partner_name_text:
+                raise UserError(_("一般合同（公司）必须填写往来单位或合同方文本。"))
+            if rec.amount_total <= 0:
+                raise UserError(_("一般合同（公司）合同金额必须大于0。"))
+            if rec.contract_direction == "unknown":
+                raise UserError(_("一般合同（公司）必须明确合同方向。"))
 
     def _request_general_contract_validation(self):
         self.ensure_one()
@@ -337,5 +352,6 @@ class ScGeneralContract(models.Model):
         for rec in self:
             if rec.source_origin == "legacy":
                 raise UserError(_("历史迁移综合合同不能在新系统取消。"))
-            if rec.state != "cancel":
-                rec.state = "cancel"
+            if rec.state not in ("draft", "confirmed"):
+                raise UserError(_("只有草稿或已确认状态的一般合同（公司）可以取消。"))
+            rec.state = "cancel"

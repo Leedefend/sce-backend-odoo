@@ -1766,20 +1766,11 @@ class SystemInitHandler(BaseIntentHandler):
         if delivery_nav and not platform_minimum_surface_mode:
             delivery_nav, user_data_acceptance_meta = _filter_nav_for_user_data_acceptance_only(env, delivery_nav)
             if not user_data_acceptance_meta.get("applied"):
-                acceptance_nav, acceptance_nav_meta = _filter_nav_for_user_data_acceptance_only(
-                    env,
-                    delivery_nav,
-                    force=True,
-                )
-                if acceptance_nav_meta.get("applied"):
-                    delivery_nav = _append_user_data_acceptance_nav_group(delivery_nav, acceptance_nav)
-                    user_data_acceptance_meta = {
-                        "applied": False,
-                        "projected": True,
-                        "projection_group_label": "用户数据验收",
-                        "projection_group_count": len(acceptance_nav),
-                        "projection_meta": acceptance_nav_meta,
-                    }
+                user_data_acceptance_meta = {
+                    "applied": False,
+                    "projected": False,
+                    "reason": "user_confirmed_formal_product_menu_locked",
+                }
             delivery_nav = _remove_nav_groups_by_label(delivery_nav, {"用户核对菜单"})
             formal_product_menu_meta = {
                 "applied": False,

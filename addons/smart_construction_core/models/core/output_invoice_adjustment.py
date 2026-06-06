@@ -168,7 +168,7 @@ class ScOutputInvoiceAdjustment(models.Model):
     def action_confirm(self):
         for rec in self:
             if rec.state != "draft":
-                continue
+                raise UserError(_("只有草稿状态的销项变更登记可以确认。"))
             rec._sync_original_invoice_snapshot()
             rec._validate_red_flush_ready()
             generated = rec._create_red_flush_invoice_registration()
@@ -178,6 +178,8 @@ class ScOutputInvoiceAdjustment(models.Model):
         for rec in self:
             if rec.generated_invoice_id:
                 raise UserError(_("已生成红冲销项票的变更登记不能取消。"))
+            if rec.state != "draft":
+                raise UserError(_("只有草稿状态的销项变更登记可以取消。"))
             rec.state = "cancel"
 
     def _validate_red_flush_ready(self):
@@ -188,6 +190,10 @@ class ScOutputInvoiceAdjustment(models.Model):
             raise UserError(_("只能对正常开票记录做红冲，不能重复红冲红冲记录。"))
         if self.generated_invoice_id:
             raise UserError(_("该变更登记已经生成红冲销项票。"))
+        if not (self.red_flush_invoice_no or "").strip():
+            raise UserError(_("请填写红冲发票号码。"))
+        if (self.red_flush_invoice_no or "").strip() == (self.invoice_no or "").strip():
+            raise UserError(_("红冲发票号码不能与原发票号码相同。"))
         existing = self.search(
             [
                 ("id", "!=", self.id),

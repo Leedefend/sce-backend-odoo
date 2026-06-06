@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import _, api, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 
 
 class ScCheckStandard(models.Model):
@@ -146,24 +146,49 @@ class ScQualityIssue(models.Model):
                 issue.is_overdue = False
 
     def action_submit(self):
+        for issue in self:
+            if issue.state != "draft":
+                raise UserError(_("只有草稿状态的质量问题可以提交。"))
+            issue._check_business_anchor()
         self.write({"state": "submitted"})
         return True
 
     def action_start_rectification(self):
+        for issue in self:
+            if issue.state != "submitted":
+                raise UserError(_("只有已提交状态的质量问题可以开始整改。"))
         self.write({"state": "rectifying"})
         return True
 
     def action_request_recheck(self):
+        for issue in self:
+            if issue.state != "rectifying":
+                raise UserError(_("只有整改中的质量问题可以申请复验。"))
+            if not issue.rectification_ids:
+                raise UserError(_("申请复验前必须登记整改记录。"))
         self.write({"state": "rechecking"})
         return True
 
     def action_close(self):
+        for issue in self:
+            if issue.state != "rechecking":
+                raise UserError(_("只有待复验状态的质量问题可以闭环。"))
+            if not issue.recheck_ids.filtered(lambda recheck: recheck.result == "passed"):
+                raise UserError(_("质量问题闭环前必须有通过的复验记录。"))
         self.write({"state": "closed", "closed_date": fields.Date.context_today(self)})
         return True
 
     def action_cancel(self):
+        for issue in self:
+            if issue.state not in ("draft", "submitted", "rectifying", "rechecking"):
+                raise UserError(_("只有未闭环的质量问题可以取消。"))
         self.write({"state": "cancel"})
         return True
+
+    def _check_business_anchor(self):
+        for issue in self:
+            if not issue.location and not issue.description:
+                raise UserError(_("质量问题提交前必须维护问题部位或问题描述。"))
 
 
 class ScQualityRectification(models.Model):
@@ -192,7 +217,10 @@ class ScQualityRectification(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         records = super().create(vals_list)
-        records.mapped("issue_id").filtered(lambda issue: issue.state in ("draft", "submitted")).write({"state": "rectifying"})
+        invalid_issues = records.mapped("issue_id").filtered(lambda issue: issue.state not in ("submitted", "rectifying"))
+        if invalid_issues:
+            raise UserError(_("只有已提交或整改中的质量问题可以登记整改。"))
+        records.mapped("issue_id").filtered(lambda issue: issue.state == "submitted").write({"state": "rectifying"})
         return records
 
 
@@ -223,6 +251,8 @@ class ScQualityRecheck(models.Model):
     def create(self, vals_list):
         records = super().create(vals_list)
         for record in records:
+            if record.issue_id.state != "rechecking":
+                raise UserError(_("只有待复验的质量问题可以登记复验。"))
             if record.result == "passed":
                 record.issue_id.write({"state": "closed", "closed_date": fields.Date.context_today(record)})
             elif record.result == "failed":

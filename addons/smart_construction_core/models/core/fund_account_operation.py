@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import _, api, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 
 
 class ScFundAccountOperation(models.Model):
@@ -170,13 +170,38 @@ class ScFundAccountOperation(models.Model):
         return super().create(vals_list)
 
     def action_confirm(self):
-        self.write({"state": "confirmed"})
+        for rec in self:
+            if rec.state != "draft":
+                raise UserError(_("只有草稿状态的资金账户操作单可以确认。"))
+            rec._check_active_accounts()
+            rec.state = "confirmed"
 
     def action_done(self):
-        self.write({"state": "done"})
+        for rec in self:
+            if rec.state != "confirmed":
+                raise UserError(_("只有已确认的资金账户操作单可以完成。"))
+            rec._check_active_accounts()
+            rec.state = "done"
+
+    def _check_active_accounts(self):
+        self.ensure_one()
+        accounts = self.env["sc.fund.account"]
+        if self.operation_type in ("transfer_out", "transfer_between"):
+            accounts |= self.source_account_id | self.target_account_id
+        elif self.operation_type in ("balance_adjustment", "fund_daily_report"):
+            accounts |= self.fund_account_id
+        inactive = accounts.filtered(lambda account: account.state != "active")
+        if inactive:
+            raise UserError(_("资金账户 %s 未启用，不能办理该操作。") % ", ".join(inactive.mapped("display_name")))
 
     def action_cancel(self):
-        self.write({"state": "cancelled"})
+        for rec in self:
+            if rec.state not in ("draft", "confirmed"):
+                raise UserError(_("只有草稿或已确认状态的资金账户操作单可以取消。"))
+            rec.write({"state": "cancelled"})
 
     def action_reset_draft(self):
-        self.write({"state": "draft"})
+        for rec in self:
+            if rec.state != "cancelled":
+                raise UserError(_("只有已取消的资金账户操作单可以重置为草稿。"))
+            rec.write({"state": "draft"})

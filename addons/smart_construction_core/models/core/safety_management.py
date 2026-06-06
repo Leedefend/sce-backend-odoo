@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from odoo import api, fields, models
+from odoo import _, api, fields, models
+from odoo.exceptions import UserError
 
 
 class ScSafetyPlan(models.Model):
@@ -35,12 +36,38 @@ class ScSafetyPlan(models.Model):
     legacy_fact_type = fields.Char(string="来源业务类型", index=True)
 
     def action_submit(self):
+        for plan in self:
+            if plan.state != "draft":
+                raise UserError(_("只有草稿状态的安全施工方案可以提交。"))
+            plan._check_business_anchor()
         self.write({"state": "submitted"})
         return True
 
     def action_approve(self):
+        for plan in self:
+            if plan.state != "submitted":
+                raise UserError(_("只有已提交状态的安全施工方案可以审批。"))
         self.write({"state": "approved"})
         return True
+
+    def action_cancel(self):
+        for plan in self:
+            if plan.state not in ("draft", "submitted"):
+                raise UserError(_("只有草稿或已提交状态的安全施工方案可以取消。"))
+        self.write({"state": "cancel"})
+        return True
+
+    def action_reset_draft(self):
+        for plan in self:
+            if plan.state != "cancel":
+                raise UserError(_("只有已取消状态的安全施工方案可以重置为草稿。"))
+        self.write({"state": "draft"})
+        return True
+
+    def _check_business_anchor(self):
+        for plan in self:
+            if not plan.description and not plan.attachment_ids:
+                raise UserError(_("安全施工方案提交前必须维护方案说明或方案附件。"))
 
 
 class ScSafetyDisclosure(models.Model):
@@ -69,6 +96,42 @@ class ScSafetyDisclosure(models.Model):
     legacy_fact_model = fields.Char(string="来源通用模型", index=True)
     legacy_fact_id = fields.Integer(string="来源通用记录ID", index=True)
     legacy_fact_type = fields.Char(string="来源业务类型", index=True)
+
+    def action_submit(self):
+        for disclosure in self:
+            if disclosure.state != "draft":
+                raise UserError(_("只有草稿状态的安全交底可以提交。"))
+            disclosure._check_business_anchor()
+        self.write({"state": "submitted"})
+        return True
+
+    def action_approve(self):
+        for disclosure in self:
+            if disclosure.state != "submitted":
+                raise UserError(_("只有已提交状态的安全交底可以确认。"))
+        self.write({"state": "approved"})
+        return True
+
+    def action_cancel(self):
+        for disclosure in self:
+            if disclosure.state not in ("draft", "submitted"):
+                raise UserError(_("只有草稿或已提交状态的安全交底可以取消。"))
+        self.write({"state": "cancel"})
+        return True
+
+    def action_reset_draft(self):
+        for disclosure in self:
+            if disclosure.state != "cancel":
+                raise UserError(_("只有已取消状态的安全交底可以重置为草稿。"))
+        self.write({"state": "draft"})
+        return True
+
+    def _check_business_anchor(self):
+        for disclosure in self:
+            if not disclosure.participant_note or not disclosure.content:
+                raise UserError(_("安全交底提交前必须维护交底对象和交底内容。"))
+            if disclosure.safety_plan_id and disclosure.safety_plan_id.state != "approved":
+                raise UserError(_("关联安全施工方案审批通过后才能提交安全交底。"))
 
 
 class ScRiskLibrary(models.Model):
@@ -122,6 +185,36 @@ class ScHazardSource(models.Model):
     legacy_fact_model = fields.Char(string="来源通用模型", index=True)
     legacy_fact_id = fields.Integer(string="来源通用记录ID", index=True)
     legacy_fact_type = fields.Char(string="来源业务类型", index=True)
+
+    def action_report(self):
+        for hazard in self:
+            if hazard.state != "draft":
+                raise UserError(_("只有草稿状态的危险源可以上报。"))
+            hazard._check_business_anchor(require_period=True)
+        self.write({"state": "reported"})
+        return True
+
+    def action_control(self):
+        for hazard in self:
+            if hazard.state != "reported":
+                raise UserError(_("只有已上报状态的危险源可以标记管控。"))
+            hazard._check_business_anchor(require_period=True)
+        self.write({"state": "controlled", "control_status": "controlled"})
+        return True
+
+    def action_close(self):
+        for hazard in self:
+            if hazard.state != "controlled":
+                raise UserError(_("只有已管控状态的危险源可以关闭。"))
+        self.write({"state": "closed", "control_status": "controlled"})
+        return True
+
+    def _check_business_anchor(self, require_period=False):
+        for hazard in self:
+            if not hazard.location and not hazard.description:
+                raise UserError(_("危险源上报前必须维护位置或说明。"))
+            if require_period and hazard.valid_from and hazard.valid_to and hazard.valid_from > hazard.valid_to:
+                raise UserError(_("危险源有效期开始日期不能晚于结束日期。"))
 
 
 class ScSafetyIssue(models.Model):
@@ -184,20 +277,49 @@ class ScSafetyIssue(models.Model):
                 issue.is_overdue = False
 
     def action_submit(self):
+        for issue in self:
+            if issue.state != "draft":
+                raise UserError(_("只有草稿状态的安全问题可以提交。"))
+            issue._check_business_anchor()
         self.write({"state": "submitted"})
         return True
 
     def action_start_rectification(self):
+        for issue in self:
+            if issue.state != "submitted":
+                raise UserError(_("只有已提交状态的安全问题可以开始整改。"))
         self.write({"state": "rectifying"})
         return True
 
     def action_request_recheck(self):
+        for issue in self:
+            if issue.state != "rectifying":
+                raise UserError(_("只有整改中的安全问题可以申请复验。"))
+            if not issue.rectification_ids:
+                raise UserError(_("申请复验前必须登记整改记录。"))
         self.write({"state": "rechecking"})
         return True
 
     def action_close(self):
+        for issue in self:
+            if issue.state != "rechecking":
+                raise UserError(_("只有待复验状态的安全问题可以闭环。"))
+            if not issue.recheck_ids.filtered(lambda recheck: recheck.result == "passed"):
+                raise UserError(_("安全问题闭环前必须有通过的复验记录。"))
         self.write({"state": "closed", "closed_date": fields.Date.context_today(self)})
         return True
+
+    def action_cancel(self):
+        for issue in self:
+            if issue.state not in ("draft", "submitted", "rectifying", "rechecking"):
+                raise UserError(_("只有未闭环的安全问题可以取消。"))
+        self.write({"state": "cancel"})
+        return True
+
+    def _check_business_anchor(self):
+        for issue in self:
+            if not issue.location and not issue.description:
+                raise UserError(_("安全问题提交前必须维护问题位置或问题描述。"))
 
 
 class ScSafetyRectification(models.Model):
@@ -226,7 +348,10 @@ class ScSafetyRectification(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         records = super().create(vals_list)
-        records.mapped("issue_id").filtered(lambda issue: issue.state in ("draft", "submitted")).write({"state": "rectifying"})
+        invalid_issues = records.mapped("issue_id").filtered(lambda issue: issue.state not in ("submitted", "rectifying"))
+        if invalid_issues:
+            raise UserError(_("只有已提交或整改中的安全问题可以登记整改。"))
+        records.mapped("issue_id").filtered(lambda issue: issue.state == "submitted").write({"state": "rectifying"})
         return records
 
 
@@ -257,6 +382,8 @@ class ScSafetyRecheck(models.Model):
     def create(self, vals_list):
         records = super().create(vals_list)
         for record in records:
+            if record.issue_id.state != "rechecking":
+                raise UserError(_("只有待复验的安全问题可以登记复验。"))
             if record.result == "passed":
                 record.issue_id.write({"state": "closed", "closed_date": fields.Date.context_today(record)})
             elif record.result == "failed":
@@ -282,3 +409,35 @@ class ScSafetyPatrolTask(models.Model):
     pass_rate = fields.Float(string="合格率(%)")
     state = fields.Selection([("draft", "草稿"), ("planned", "已计划"), ("done", "已完成"), ("cancel", "已取消")], string="状态", default="draft", index=True)
     note = fields.Text(string="说明")
+
+    def action_plan(self):
+        for task in self:
+            if task.state != "draft":
+                raise UserError(_("只有草稿状态的安全巡检任务可以计划。"))
+            if not task.planned_date:
+                raise UserError(_("安全巡检任务计划前必须维护计划巡检日期。"))
+        self.write({"state": "planned"})
+        return True
+
+    def action_done(self):
+        for task in self:
+            if task.state != "planned":
+                raise UserError(_("只有已计划状态的安全巡检任务可以完成。"))
+            if task.pass_rate < 0 or task.pass_rate > 100:
+                raise UserError(_("安全巡检任务合格率必须在 0 到 100 之间。"))
+        self.write({"state": "done"})
+        return True
+
+    def action_cancel(self):
+        for task in self:
+            if task.state not in ("draft", "planned"):
+                raise UserError(_("只有草稿或已计划状态的安全巡检任务可以取消。"))
+        self.write({"state": "cancel"})
+        return True
+
+    def action_reset_draft(self):
+        for task in self:
+            if task.state != "cancel":
+                raise UserError(_("只有已取消状态的安全巡检任务可以重置为草稿。"))
+        self.write({"state": "draft"})
+        return True

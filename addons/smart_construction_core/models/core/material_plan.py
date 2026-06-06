@@ -149,18 +149,29 @@ class ProjectMaterialPlan(models.Model):
             if not line.material_uom_text and line.uom_id:
                 line.material_uom_text = line.uom_id.name
 
+    def _check_business_anchor(self):
+        for rec in self:
+            if not rec.project_id:
+                raise UserError(_("物资计划必须关联项目。"))
+            if not rec.line_ids:
+                raise UserError(_("请先填写物资计划明细再提交。"))
+            for line in rec.line_ids:
+                if not line.material_catalog_id:
+                    raise UserError(_("计划行缺少材料档案，请补全后再提交。"))
+                if line.quantity <= 0:
+                    raise UserError(_("物资计划数量必须大于0。"))
+
     def action_submit(self):
         seq = self.env["ir.sequence"]
         for rec in self:
             if rec.state != "draft":
-                continue
+                raise UserError(_("只有草稿状态的物资计划可以提交。"))
             if not (
                 self.env.user.has_group("smart_construction_core.group_sc_cap_business_initiator")
                 or self.env.user.has_group("smart_construction_core.group_sc_cap_material_user")
             ):
                 raise UserError(_("你没有提交物资计划的权限。"))
-            if not rec.line_ids:
-                raise UserError(_("请先填写物资计划明细再提交。"))
+            rec._check_business_anchor()
             rec._normalize_lines_uom()
             if rec.name == "新建":
                 rec.name = seq.next_by_code("project.material.plan") or rec.name
@@ -182,9 +193,10 @@ class ProjectMaterialPlan(models.Model):
     def action_approve(self):
         for rec in self:
             if rec.state != "submit":
-                continue
+                raise UserError(_("只有已提交状态的物资计划可以批准。"))
             if not self.env.user.has_group("smart_construction_core.group_sc_cap_material_manager"):
                 raise UserError(_("你没有审批物资计划的权限。"))
+            rec._check_business_anchor()
             rec.write(
                 {
                     "state": "approved",
@@ -198,7 +210,7 @@ class ProjectMaterialPlan(models.Model):
     def action_reject(self, reason=None):
         for rec in self:
             if rec.state != "submit":
-                continue
+                raise UserError(_("只有已提交状态的物资计划可以驳回。"))
             if not self.env.user.has_group("smart_construction_core.group_sc_cap_material_manager"):
                 raise UserError(_("你没有驳回物资计划的权限。"))
             rec.activity_unlink(["mail.mail_activity_data_todo"])
@@ -214,7 +226,10 @@ class ProjectMaterialPlan(models.Model):
     def action_on_tier_approved(self):
         for rec in self:
             if rec.state != "submit":
-                continue
+                raise UserError(_("只有已提交状态的物资计划可以执行审批通过回调。"))
+            if rec.validation_status != "validated":
+                raise UserError(_("物资计划尚未完成统一审批流程。"))
+            rec._check_business_anchor()
             rec.write(
                 {
                     "state": "approved",
@@ -227,7 +242,7 @@ class ProjectMaterialPlan(models.Model):
     def action_on_tier_rejected(self, reason=None):
         for rec in self:
             if rec.state != "submit":
-                continue
+                raise UserError(_("只有已提交状态的物资计划可以执行审批驳回回调。"))
             rec.write(
                 {
                     "state": "draft",
@@ -239,15 +254,16 @@ class ProjectMaterialPlan(models.Model):
     def action_done(self):
         for rec in self:
             if rec.state != "approved":
-                continue
+                raise UserError(_("只有已批准状态的物资计划可以完成。"))
             if not self.env.user.has_group("smart_construction_core.group_sc_cap_material_manager"):
                 raise UserError(_("你没有完成物资计划的权限。"))
+            rec._check_business_anchor()
             rec.state = "done"
 
     def action_cancel(self):
         for rec in self:
-            if rec.state in ("done", "cancel"):
-                continue
+            if rec.state not in ("draft", "submit", "approved"):
+                raise UserError(_("只有草稿、已提交或已批准状态的物资计划可以取消。"))
             if not self.env.user.has_group("smart_construction_core.group_sc_cap_material_manager"):
                 raise UserError(_("你没有取消物资计划的权限。"))
             rec.state = "cancel"

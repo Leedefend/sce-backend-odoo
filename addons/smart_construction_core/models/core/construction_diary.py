@@ -106,17 +106,46 @@ class ScConstructionDiary(models.Model):
 
     def action_confirm(self):
         for rec in self:
-            if rec.state == "draft":
-                rec.state = "confirmed"
+            if rec.state != "draft":
+                raise UserError(_("只有草稿状态的施工日志可以确认。"))
+            rec._check_business_ready()
+            rec.state = "confirmed"
 
     def action_done(self):
         for rec in self:
-            if rec.state in ("draft", "confirmed"):
-                rec.state = "done"
+            if rec.state not in ("draft", "confirmed"):
+                raise UserError(_("只有草稿或已确认状态的施工日志可以完成。"))
+            rec._check_business_ready()
+            rec.state = "done"
+
+    def _check_business_ready(self):
+        self.ensure_one()
+        if not self.date_diary:
+            raise UserError(_("请先填写日志日期。"))
+        if not (self.title or "").strip():
+            raise UserError(_("请先填写施工日志标题。"))
+        if not (self.diary_type or "").strip():
+            raise UserError(_("请先填写日志类型。"))
+        if self.manpower_count < 0:
+            raise UserError(_("现场人数不能为负数。"))
+        content_fields = (
+            "description",
+            "material_inspection_note",
+            "design_change_note",
+            "test_block_note",
+            "safety_note",
+            "hidden_acceptance_note",
+            "next_plan",
+            "header_description",
+            "note",
+        )
+        if not any((self[field_name] or "").strip() for field_name in content_fields):
+            raise UserError(_("请至少填写一项施工日志内容。"))
 
     def action_cancel(self):
         for rec in self:
             if rec.source_origin == "legacy":
                 raise UserError(_("历史迁移施工日志不能在新系统取消。"))
-            if rec.state != "cancel":
-                rec.state = "cancel"
+            if rec.state not in ("draft", "confirmed"):
+                raise UserError(_("只有草稿或已确认状态的施工日志可以取消。"))
+            rec.state = "cancel"

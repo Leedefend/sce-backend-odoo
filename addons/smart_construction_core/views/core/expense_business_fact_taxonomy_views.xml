@@ -36,7 +36,7 @@
             <field name="view_mode">tree,form</field>
             <field name="views" eval="[(ref('smart_construction_core.view_construction_contract_expense_tree'), 'tree'), (ref('smart_construction_core.view_construction_contract_expense_form'), 'form')]"/>
             <field name="search_view_id" ref="smart_construction_core.view_construction_contract_expense_search"/>
-            <field name="domain">[('subject', '=', '材料合同')]</field>
+            <field name="domain">['|', ('expense_contract_category_id.code', '=', 'material'), ('subject', 'ilike', '材料%')]</field>
             <field name="context">{'default_type': 'in', 'default_subject': '材料合同'}</field>
             <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
         </record>
@@ -58,7 +58,7 @@
             <field name="view_mode">tree,form</field>
             <field name="views" eval="[(ref('smart_construction_core.view_construction_contract_expense_tree'), 'tree'), (ref('smart_construction_core.view_construction_contract_expense_form'), 'form')]"/>
             <field name="search_view_id" ref="smart_construction_core.view_construction_contract_expense_search"/>
-            <field name="domain">[('subject', '=', '劳务合同')]</field>
+            <field name="domain">['|', ('expense_contract_category_id.code', '=', 'labor'), ('subject', 'ilike', '劳务%')]</field>
             <field name="context">{'default_type': 'in', 'default_subject': '劳务合同'}</field>
             <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
         </record>
@@ -69,7 +69,7 @@
             <field name="view_mode">tree,form</field>
             <field name="views" eval="[(ref('smart_construction_core.view_construction_contract_expense_tree'), 'tree'), (ref('smart_construction_core.view_construction_contract_expense_form'), 'form')]"/>
             <field name="search_view_id" ref="smart_construction_core.view_construction_contract_expense_search"/>
-            <field name="domain">[('subject', '=', '租赁合同')]</field>
+            <field name="domain">['|', ('expense_contract_category_id.code', '=', 'rental'), ('subject', 'ilike', '%租赁%')]</field>
             <field name="context">{'default_type': 'in', 'default_subject': '租赁合同'}</field>
             <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
         </record>
@@ -80,7 +80,7 @@
             <field name="view_mode">tree,form</field>
             <field name="views" eval="[(ref('smart_construction_core.view_construction_contract_expense_tree'), 'tree'), (ref('smart_construction_core.view_construction_contract_expense_form'), 'form')]"/>
             <field name="search_view_id" ref="smart_construction_core.view_construction_contract_expense_search"/>
-            <field name="domain">[('subject', '=', '分包合同')]</field>
+            <field name="domain">['|', '|', ('expense_contract_category_id.code', '=', 'subcontract'), ('subject', 'ilike', '%分包%'), ('subject', 'ilike', '%专包%')]</field>
             <field name="context">{'default_type': 'in', 'default_subject': '分包合同'}</field>
             <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
         </record>
@@ -124,21 +124,21 @@
         <menuitem id="menu_sc_expense_contract_labor"
                   name="劳务合同"
                   parent="smart_construction_core.menu_sc_expense_contract_group"
-                  action="smart_construction_core.action_scbsly_direct_acceptance_labor_contract"
+                  action="smart_construction_core.action_construction_contract_expense_labor"
                   sequence="13"
                   groups="smart_construction_core.group_sc_cap_contract_read,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
 
         <menuitem id="menu_sc_expense_contract_rental"
                   name="租赁合同"
                   parent="smart_construction_core.menu_sc_expense_contract_group"
-                  action="smart_construction_core.action_scbsly_direct_acceptance_rental_contract"
+                  action="smart_construction_core.action_construction_contract_expense_rental"
                   sequence="14"
                   groups="smart_construction_core.group_sc_cap_contract_read,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
 
         <menuitem id="menu_sc_expense_contract_subcontract"
                   name="分包合同"
                   parent="smart_construction_core.menu_sc_expense_contract_group"
-                  action="smart_construction_core.action_scbsly_direct_acceptance_subcontract_contract"
+                  action="smart_construction_core.action_construction_contract_expense_subcontract"
                   sequence="15"
                   groups="smart_construction_core.group_sc_cap_contract_read,smart_construction_core.group_sc_cap_contract_user,smart_construction_core.group_sc_cap_contract_manager"/>
 

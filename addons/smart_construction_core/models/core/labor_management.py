@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import _, api, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 
 
 class ScLaborPlan(models.Model):
@@ -216,21 +216,33 @@ class ScAttendanceCheckin(models.Model):
         return super().create(vals_list)
 
     def action_submit(self):
-        self._check_values()
-        self.write({"state": "submitted"})
+        for record in self:
+            if record.state != "draft":
+                raise UserError(_("只有草稿用工单可以提交。"))
+            record._check_values()
+            record.write({"state": "submitted"})
         return True
 
     def action_confirm(self):
-        self._check_values()
-        self.write({"state": "confirmed"})
+        for record in self:
+            if record.state != "submitted":
+                raise UserError(_("只有已提交用工单可以确认。"))
+            record._check_values()
+            record.write({"state": "confirmed"})
         return True
 
     def action_cancel(self):
-        self.write({"state": "cancel"})
+        for record in self:
+            if record.state not in ("draft", "submitted"):
+                raise UserError(_("只有草稿或已提交用工单可以取消。"))
+            record.write({"state": "cancel"})
         return True
 
     def action_reset_draft(self):
-        self.write({"state": "draft"})
+        for record in self:
+            if record.state != "cancel":
+                raise UserError(_("只有已取消用工单可以重置为草稿。"))
+            record.write({"state": "draft"})
         return True
 
     @api.constrains("attendance_qty", "work_hours")
@@ -283,21 +295,33 @@ class ScLaborUsage(models.Model):
         return super().create(vals_list)
 
     def action_submit(self):
-        self._check_values()
-        self.write({"state": "submitted"})
+        for record in self:
+            if record.state != "draft":
+                raise UserError(_("只有草稿用工单可以提交。"))
+            record._check_values()
+            record.write({"state": "submitted"})
         return True
 
     def action_confirm(self):
-        self._check_values()
-        self.write({"state": "confirmed"})
+        for record in self:
+            if record.state != "submitted":
+                raise UserError(_("只有已提交用工单可以确认。"))
+            record._check_values()
+            record.write({"state": "confirmed"})
         return True
 
     def action_cancel(self):
-        self.write({"state": "cancel"})
+        for record in self:
+            if record.state not in ("draft", "submitted"):
+                raise UserError(_("只有草稿或已提交用工单可以取消。"))
+            record.write({"state": "cancel"})
         return True
 
     def action_reset_draft(self):
-        self.write({"state": "draft"})
+        for record in self:
+            if record.state != "cancel":
+                raise UserError(_("只有已取消用工单可以重置为草稿。"))
+            record.write({"state": "draft"})
         return True
 
     @api.constrains("worker_qty", "work_hours")
@@ -358,24 +382,34 @@ class ScLaborSettlement(models.Model):
 
     def action_submit(self):
         for record in self:
+            if record.state != "draft":
+                raise UserError(_("只有草稿劳务结算可以提交。"))
             if not record.line_ids:
                 raise ValidationError(_("提交结算前必须维护结算明细。"))
             record.line_ids._check_values()
-        self.write({"state": "submitted"})
+            record.write({"state": "submitted"})
         return True
 
     def action_confirm(self):
         for record in self:
+            if record.state != "submitted":
+                raise UserError(_("只有已提交劳务结算可以确认。"))
             record.line_ids._check_values()
-        self.write({"state": "confirmed"})
+            record.write({"state": "confirmed"})
         return True
 
     def action_cancel(self):
-        self.write({"state": "cancel"})
+        for record in self:
+            if record.state not in ("draft", "submitted"):
+                raise UserError(_("只有草稿或已提交劳务结算可以取消。"))
+            record.write({"state": "cancel"})
         return True
 
     def action_reset_draft(self):
-        self.write({"state": "draft"})
+        for record in self:
+            if record.state != "cancel":
+                raise UserError(_("只有已取消劳务结算可以重置为草稿。"))
+            record.write({"state": "draft"})
         return True
 
 
@@ -461,15 +495,24 @@ class ScLaborPrice(models.Model):
         return super().create(vals_list)
 
     def action_activate(self):
+        for record in self:
+            if record.state != "draft":
+                raise UserError(_("只有草稿状态的劳务价格可以生效。"))
         self._check_values()
         self.write({"state": "active"})
         return True
 
     def action_deactivate(self):
+        for record in self:
+            if record.state != "active":
+                raise UserError(_("只有生效状态的劳务价格可以停用。"))
         self.write({"state": "inactive"})
         return True
 
     def action_reset_draft(self):
+        for record in self:
+            if record.state != "inactive":
+                raise UserError(_("只有停用状态的劳务价格可以重置为草稿。"))
         self.write({"state": "draft"})
         return True
 

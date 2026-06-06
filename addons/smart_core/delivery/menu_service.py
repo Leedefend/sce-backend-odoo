@@ -479,6 +479,13 @@ class MenuService:
                 scene_key = str(menu.get("scene_key") or "").strip()
                 route = str(menu.get("route") or "").strip()
                 menu_xmlid = str(menu.get("menu_xmlid") or "").strip()
+                if (
+                    (isinstance(menu_id, int) and menu_id > 0 and menu_id in dedupe_ids)
+                    or (scene_key and scene_key in dedupe_scenes)
+                    or (route and route in dedupe_routes)
+                    or (menu_xmlid and menu_xmlid in dedupe_xmlids)
+                ):
+                    continue
                 if isinstance(menu_id, int) and menu_id > 0:
                     dedupe_ids.add(menu_id)
                 if scene_key:

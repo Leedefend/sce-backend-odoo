@@ -139,6 +139,18 @@ class ScMaterialSystemDefaultMixin(models.AbstractModel):
                 # 提醒不能反过来阻断业务动作；页面字段标识仍保留兜底痕迹。
                 continue
 
+    def _sc_require_state(self, allowed_states, action_label):
+        allowed_states = set(allowed_states)
+        for record in self:
+            if record.state not in allowed_states:
+                raise ValidationError(
+                    _("%(action)s只能处理状态为%(states)s的单据。")
+                    % {
+                        "action": action_label,
+                        "states": "、".join(sorted(allowed_states)),
+                    }
+                )
+
 
 class ScMaterialPurchaseRequest(models.Model):
     _name = "sc.material.purchase.request"
@@ -196,6 +208,7 @@ class ScMaterialPurchaseRequest(models.Model):
 
     def action_submit(self):
         for record in self:
+            record._sc_require_state({"draft"}, _("提交采购申请"))
             if not record.line_ids:
                 raise ValidationError(_("提交采购申请前必须维护申请明细。"))
             record.line_ids._check_qty()
@@ -205,16 +218,19 @@ class ScMaterialPurchaseRequest(models.Model):
 
     def action_approve(self):
         for record in self:
+            record._sc_require_state({"submitted"}, _("审批采购申请"))
             record.line_ids._check_qty()
         self._sc_warn_system_defaults_on_action(_("审批采购申请"))
         self.write({"state": "approved"})
         return True
 
     def action_cancel(self):
+        self._sc_require_state({"draft", "submitted"}, _("取消采购申请"))
         self.write({"state": "cancel"})
         return True
 
     def action_reset_draft(self):
+        self._sc_require_state({"cancel"}, _("重置采购申请为草稿"))
         self.write({"state": "draft"})
         return True
 
@@ -437,6 +453,7 @@ class ScMaterialAcceptance(models.Model):
 
     def action_submit(self):
         for record in self:
+            record._sc_require_state({"draft"}, _("提交材料验收"))
             if not record.line_ids:
                 raise ValidationError(_("提交前必须维护验收明细。"))
         self._sc_warn_system_defaults_on_action(_("提交材料验收"))
@@ -445,6 +462,7 @@ class ScMaterialAcceptance(models.Model):
 
     def action_accept(self):
         for record in self:
+            record._sc_require_state({"submitted"}, _("验收通过"))
             record.line_ids._check_quantities()
         self._sc_warn_system_defaults_on_action(_("验收通过"))
         self.write({"state": "accepted", "rejection_reason": False})
@@ -452,16 +470,19 @@ class ScMaterialAcceptance(models.Model):
 
     def action_reject(self):
         for record in self:
+            record._sc_require_state({"submitted"}, _("验收不通过"))
             if not record.rejection_reason:
                 raise ValidationError(_("验收不通过前必须填写不通过原因。"))
         self.write({"state": "rejected"})
         return True
 
     def action_cancel(self):
+        self._sc_require_state({"draft", "submitted"}, _("取消材料验收"))
         self.write({"state": "cancel"})
         return True
 
     def action_reset_draft(self):
+        self._sc_require_state({"cancel", "rejected"}, _("重置材料验收为草稿"))
         self.write({"state": "draft"})
         return True
 
@@ -721,6 +742,7 @@ class ScMaterialInbound(models.Model):
 
     def action_submit(self):
         for record in self:
+            record._sc_require_state({"draft"}, _("提交材料入库"))
             if not record.line_ids:
                 raise ValidationError(_("提交入库前必须维护入库明细。"))
             record.line_ids._check_qty()
@@ -730,6 +752,7 @@ class ScMaterialInbound(models.Model):
 
     def action_receive(self):
         for record in self:
+            record._sc_require_state({"submitted"}, _("确认材料入库"))
             record.line_ids._check_qty()
             if record.acceptance_id and record.acceptance_id.state != "accepted":
                 raise ValidationError(_("只有验收通过的材料才能办理入库。"))
@@ -738,10 +761,12 @@ class ScMaterialInbound(models.Model):
         return True
 
     def action_cancel(self):
+        self._sc_require_state({"draft", "submitted"}, _("取消材料入库"))
         self.write({"state": "cancel"})
         return True
 
     def action_reset_draft(self):
+        self._sc_require_state({"cancel"}, _("重置材料入库为草稿"))
         self.write({"state": "draft"})
         return True
 
@@ -880,6 +905,7 @@ class ScMaterialOutbound(models.Model):
 
     def action_submit(self):
         for record in self:
+            record._sc_require_state({"draft"}, _("提交材料出库"))
             if not record.line_ids:
                 raise ValidationError(_("提交出库前必须维护出库明细。"))
             record.line_ids._check_qty()
@@ -889,16 +915,19 @@ class ScMaterialOutbound(models.Model):
 
     def action_issue(self):
         for record in self:
+            record._sc_require_state({"submitted"}, _("确认材料出库"))
             record.line_ids._check_qty()
         self._sc_warn_system_defaults_on_action(_("确认材料出库"))
         self.write({"state": "issued"})
         return True
 
     def action_cancel(self):
+        self._sc_require_state({"draft", "submitted"}, _("取消材料出库"))
         self.write({"state": "cancel"})
         return True
 
     def action_reset_draft(self):
+        self._sc_require_state({"cancel"}, _("重置材料出库为草稿"))
         self.write({"state": "draft"})
         return True
 
@@ -998,6 +1027,7 @@ class ScMaterialRfq(models.Model):
 
     def action_submit(self):
         for record in self:
+            record._sc_require_state({"draft"}, _("提交材料询比价"))
             if not record.line_ids:
                 raise ValidationError(_("发起询价前必须维护报价明细。"))
             record.line_ids._check_values()
@@ -1007,6 +1037,7 @@ class ScMaterialRfq(models.Model):
 
     def action_select(self):
         for record in self:
+            record._sc_require_state({"submitted"}, _("选定材料报价"))
             record.line_ids._check_values()
             selected = record.line_ids.filtered("selected")
             if not selected:
@@ -1017,10 +1048,12 @@ class ScMaterialRfq(models.Model):
         return True
 
     def action_cancel(self):
+        self._sc_require_state({"draft", "submitted"}, _("取消材料询比价"))
         self.write({"state": "cancel"})
         return True
 
     def action_reset_draft(self):
+        self._sc_require_state({"cancel"}, _("重置材料询比价为草稿"))
         self.write({"state": "draft"})
         return True
 
@@ -1242,6 +1275,7 @@ class ScMaterialSettlement(models.Model):
 
     def action_submit(self):
         for record in self:
+            record._sc_require_state({"draft"}, _("提交材料结算"))
             if not record.line_ids:
                 raise ValidationError(_("提交结算前必须维护结算明细。"))
             record.line_ids._check_values()
@@ -1251,16 +1285,19 @@ class ScMaterialSettlement(models.Model):
 
     def action_confirm(self):
         for record in self:
+            record._sc_require_state({"submitted"}, _("确认材料结算"))
             record.line_ids._check_values()
         self._sc_warn_system_defaults_on_action(_("确认材料结算"))
         self.write({"state": "confirmed"})
         return True
 
     def action_cancel(self):
+        self._sc_require_state({"draft", "submitted"}, _("取消材料结算"))
         self.write({"state": "cancel"})
         return True
 
     def action_reset_draft(self):
+        self._sc_require_state({"cancel"}, _("重置材料结算为草稿"))
         self.write({"state": "draft"})
         return True
 
