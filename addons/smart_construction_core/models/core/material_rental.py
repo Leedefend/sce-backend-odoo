@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import _, api, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 
 
 class ScMaterialRentalPlan(models.Model):
@@ -54,20 +54,51 @@ class ScMaterialRentalPlan(models.Model):
                 raise ValidationError(_("计划进场日期不能晚于计划退场日期。"))
 
     def action_submit(self):
-        self.write({"state": "submitted"})
+        for record in self:
+            if record.state != "draft":
+                raise UserError(_("只有草稿租赁计划可以提交。"))
+            record._check_business_anchor()
+            record.write({"state": "submitted"})
         return True
 
     def action_approve(self):
-        self.write({"state": "approved"})
+        for record in self:
+            if record.state != "submitted":
+                raise UserError(_("只有已提交租赁计划可以确认。"))
+            record._check_business_anchor()
+            record.write({"state": "approved"})
         return True
 
     def action_cancel(self):
-        self.write({"state": "cancel"})
+        for record in self:
+            if record.state not in ("draft", "submitted"):
+                raise UserError(_("只有草稿或已提交租赁计划可以取消。"))
+            record.write({"state": "cancel"})
         return True
 
     def action_reset_draft(self):
-        self.write({"state": "draft"})
+        for record in self:
+            if record.state != "cancel":
+                raise UserError(_("只有已取消租赁计划可以重置为草稿。"))
+            record.write({"state": "draft"})
         return True
+
+    def _check_business_anchor(self):
+        for record in self:
+            if not record.line_ids:
+                raise UserError(_("租赁计划必须填写计划明细。"))
+            if record.contract_id:
+                if record.contract_id.project_id != record.project_id:
+                    raise UserError(_("租赁计划关联合同必须属于当前项目。"))
+                if record.contract_id.partner_id and record.supplier_id and record.contract_id.partner_id != record.supplier_id:
+                    raise UserError(_("租赁计划建议供应商必须与合同相对方一致。"))
+            for line in record.line_ids:
+                if line.planned_qty <= 0:
+                    raise UserError(_("计划租赁数量必须大于 0。"))
+                if line.planned_days <= 0:
+                    raise UserError(_("计划租赁天数必须大于 0。"))
+                if line.daily_price < 0:
+                    raise UserError(_("计划日租单价不能为负数。"))
 
 
 class ScMaterialRentalPlanLine(models.Model):
@@ -174,20 +205,57 @@ class ScMaterialRentalOrder(models.Model):
         return super().create(vals_list)
 
     def action_activate(self):
-        self.write({"state": "active"})
+        for record in self:
+            if record.state != "draft":
+                raise UserError(_("只有草稿租赁单可以启用。"))
+            record._check_business_anchor()
+            record.write({"state": "active"})
         return True
 
     def action_return(self):
-        self.write({"state": "returned"})
+        for record in self:
+            if record.state != "active":
+                raise UserError(_("只有租赁中的租赁单可以退还。"))
+            record._check_business_anchor()
+            record.write({"state": "returned"})
         return True
 
     def action_settle(self):
-        self.write({"state": "settled"})
+        for record in self:
+            if record.state != "returned":
+                raise UserError(_("只有已退还的租赁单可以结算。"))
+            record._check_business_anchor()
+            record.write({"state": "settled"})
         return True
 
     def action_cancel(self):
-        self.write({"state": "cancel"})
+        for record in self:
+            if record.state not in ("draft", "active"):
+                raise UserError(_("只有草稿或租赁中的租赁单可以取消。"))
+            record.write({"state": "cancel"})
         return True
+
+    def _check_business_anchor(self):
+        for record in self:
+            if not record.line_ids:
+                raise UserError(_("租赁单必须填写租赁明细。"))
+            if record.plan_id:
+                if record.plan_id.project_id != record.project_id:
+                    raise UserError(_("租赁单来源计划必须属于当前项目。"))
+                if record.plan_id.state != "approved":
+                    raise UserError(_("租赁单来源计划必须已确认。"))
+            if record.contract_id:
+                if record.contract_id.project_id != record.project_id:
+                    raise UserError(_("租赁合同必须属于当前项目。"))
+                if record.contract_id.partner_id and record.contract_id.partner_id != record.supplier_id:
+                    raise UserError(_("租赁单供应商必须与租赁合同相对方一致。"))
+            for line in record.line_ids:
+                if line.qty <= 0:
+                    raise UserError(_("租赁数量必须大于 0。"))
+                if line.rental_days <= 0:
+                    raise UserError(_("租赁天数必须大于 0。"))
+                if line.daily_price < 0:
+                    raise UserError(_("日租单价不能为负数。"))
 
 
 class ScMaterialRentalOrderLine(models.Model):
@@ -299,20 +367,64 @@ class ScMaterialRentalSettlement(models.Model):
         return super().create(vals_list)
 
     def action_submit(self):
-        self.write({"state": "submitted"})
+        for record in self:
+            if record.state != "draft":
+                raise UserError(_("只有草稿租赁结算可以提交。"))
+            record._check_business_anchor()
+            record.write({"state": "submitted"})
         return True
 
     def action_confirm(self):
-        self.write({"state": "confirmed"})
+        for record in self:
+            if record.state != "submitted":
+                raise UserError(_("只有已提交租赁结算可以确认。"))
+            record._check_business_anchor()
+            record.write({"state": "confirmed"})
         return True
 
     def action_paid(self):
-        self.write({"state": "paid"})
+        for record in self:
+            if record.state != "confirmed":
+                raise UserError(_("只有已确认租赁结算可以支付。"))
+            record._check_business_anchor()
+            record.write({"state": "paid"})
         return True
 
     def action_cancel(self):
-        self.write({"state": "cancel"})
+        for record in self:
+            if record.state not in ("draft", "submitted", "confirmed"):
+                raise UserError(_("只有未支付租赁结算可以取消。"))
+            record.write({"state": "cancel"})
         return True
+
+    def _check_business_anchor(self):
+        for record in self:
+            if not record.line_ids:
+                raise UserError(_("租赁结算必须填写结算明细。"))
+            if record.rental_order_id:
+                if record.rental_order_id.project_id != record.project_id:
+                    raise UserError(_("租赁结算来源租赁单必须属于当前项目。"))
+                if record.rental_order_id.state not in ("returned", "settled"):
+                    raise UserError(_("租赁结算来源租赁单必须已退还或已结算。"))
+                if record.rental_order_id.supplier_id != record.supplier_id:
+                    raise UserError(_("租赁结算供应商必须与来源租赁单一致。"))
+            if record.contract_id:
+                if record.contract_id.project_id != record.project_id:
+                    raise UserError(_("租赁结算合同必须属于当前项目。"))
+                if record.contract_id.partner_id and record.contract_id.partner_id != record.supplier_id:
+                    raise UserError(_("租赁结算供应商必须与合同相对方一致。"))
+            if record.payment_request_id:
+                if record.payment_request_id.project_id != record.project_id:
+                    raise UserError(_("租赁结算支付申请必须属于当前项目。"))
+                if record.payment_request_id.partner_id and record.payment_request_id.partner_id != record.supplier_id:
+                    raise UserError(_("租赁结算供应商必须与支付申请收款方一致。"))
+            for line in record.line_ids:
+                if line.qty <= 0:
+                    raise UserError(_("租赁结算数量必须大于 0。"))
+                if line.rental_days <= 0:
+                    raise UserError(_("租赁结算天数必须大于 0。"))
+                if line.daily_price < 0 or line.damage_amount < 0:
+                    raise UserError(_("租赁结算金额不能为负数。"))
 
 
 class ScMaterialRentalSettlementLine(models.Model):

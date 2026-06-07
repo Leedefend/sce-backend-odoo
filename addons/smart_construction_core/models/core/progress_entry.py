@@ -128,11 +128,19 @@ class ProjectProgressEntry(models.Model):
 
     def action_submit_progress(self):
         for rec in self:
+            if rec.state != "draft":
+                raise_guard(
+                    "PROGRESS_GUARD_INVALID_TRANSITION",
+                    rec.display_name or "Progress Entry",
+                    "Submit",
+                    reasons=["only draft record can be submitted"],
+                )
             if rec.project_id:
                 rec.project_id._ensure_operation_allowed(
                     operation_label="提交进度计量",
                     blocked_states=("paused", "closed", "closing"),
                 )
+            rec._ensure_business_anchor()
             rec._ensure_immutable("Submit")
             before_state = rec.state
             rec.with_context(allow_progress_transition=True, allow_progress_edit=True).write(
@@ -144,6 +152,13 @@ class ProjectProgressEntry(models.Model):
     def action_revert_progress(self, reason=None):
         self._ensure_manager_role()
         for rec in self:
+            if rec.state != "submitted":
+                raise_guard(
+                    "PROGRESS_GUARD_INVALID_TRANSITION",
+                    rec.display_name or "Progress Entry",
+                    "Revert",
+                    reasons=["only submitted record can be reverted"],
+                )
             before_state = rec.state
             rec.with_context(allow_progress_transition=True, allow_progress_edit=True).write(
                 {"state": "draft"}
@@ -157,3 +172,20 @@ class ProjectProgressEntry(models.Model):
                 require_reason=True,
             )
         return True
+
+    def _ensure_business_anchor(self):
+        for rec in self:
+            if rec.qty_done <= 0 and rec.qty_cum <= 0:
+                raise_guard(
+                    "PROGRESS_GUARD_MISSING_QUANTITY",
+                    rec.display_name or "Progress Entry",
+                    "Submit",
+                    reasons=["qty_done or qty_cum must be positive"],
+                )
+            if rec.progress_rate < 0 or rec.progress_rate > 100:
+                raise_guard(
+                    "PROGRESS_GUARD_INVALID_RATE",
+                    rec.display_name or "Progress Entry",
+                    "Submit",
+                    reasons=["progress_rate must be between 0 and 100"],
+                )

@@ -1,4 +1,7 @@
 # -*- coding: utf-8 -*-
+import json
+from pathlib import Path
+
 from odoo import api, models
 
 
@@ -40,6 +43,12 @@ INTERNAL_CONFIG_ONLY_GROUP_XMLIDS = {
     "smart_construction_core.group_sc_cap_config_admin",
 }
 
+USER_CONFIRMED_POLICY_LOCK_NOTE = "user_confirmed_formal_menu_policy_62_locked"
+USER_CONFIRMED_POLICY_BASELINE_PATHS = (
+    "/mnt/scripts/verify/baselines/user_confirmed_formal_menu_policy_62.json",
+    "scripts/verify/baselines/user_confirmed_formal_menu_policy_62.json",
+)
+
 
 def _text(value):
     return str(value or "").strip()
@@ -57,10 +66,111 @@ class ScProductPolicy(models.Model):
     def sync_construction_menu_product_policies(self):
         from odoo.addons.smart_core.delivery.product_policy_catalog_sync_service import ProductPolicyCatalogSyncService
 
+        if self._sync_user_confirmed_locked_construction_product_policies():
+            return True
+
         service = ProductPolicyCatalogSyncService(self.env)
         for product_key in ("construction.standard", "construction.preview"):
             policy = service.sync_policy(product_key=product_key, preserve_state=True, preserve_access_level=True)
             self._release_all_construction_product_menus(policy)
+        return True
+
+    @api.model
+    def _load_user_confirmed_policy_baseline(self):
+        candidates = []
+        for raw_path in USER_CONFIRMED_POLICY_BASELINE_PATHS:
+            path = Path(raw_path)
+            if not path.is_absolute():
+                path = Path(__file__).resolve().parents[4] / path
+            candidates.append(path)
+        for path in candidates:
+            try:
+                payload = json.loads(path.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            products = payload.get("products") if isinstance(payload, dict) else payload
+            if not isinstance(products, list):
+                continue
+            by_key = {
+                _text(item.get("product_key")): item
+                for item in products
+                if isinstance(item, dict) and _text(item.get("product_key"))
+            }
+            if {"construction.standard", "construction.preview"}.issubset(set(by_key)):
+                return by_key
+        return {}
+
+    @api.model
+    def _capabilities_from_user_confirmed_menu_groups(self, menu_groups):
+        capabilities = []
+        seen = set()
+        for group in menu_groups or []:
+            if not isinstance(group, dict):
+                continue
+            group_key = _text(group.get("group_key")) or _text(group.get("group_label")) or "construction.locked"
+            group_label = _text(group.get("group_label")) or group_key
+            for menu in group.get("menus") or []:
+                if not isinstance(menu, dict):
+                    continue
+                page_key = _text(menu.get("page_key") or menu.get("menu_xmlid") or menu.get("menu_key"))
+                if not page_key or page_key in seen:
+                    continue
+                seen.add(page_key)
+                capabilities.append(
+                    {
+                        "capability_key": _text(menu.get("capability_key")) or "construction.menu.%s" % page_key.replace(".", "_"),
+                        "label": _text(menu.get("label") or menu.get("page_label")) or page_key,
+                        "group_key": group_key,
+                        "group_label": group_label,
+                        "target_scene_key": _text(menu.get("target_scene_key")),
+                        "target_page_key": page_key,
+                        "product_key": _text(menu.get("product_key")),
+                        "delivery_level": "exclusive",
+                        "entry_kind": "user_visible_menu_page",
+                        "visible_menu_path": _text(menu.get("visible_menu_path")),
+                        "enabled": bool(menu.get("enabled", True)),
+                        "release_state": _text(menu.get("release_state")) or "released",
+                        "access_level": _text(menu.get("access_level")) or "public",
+                        "control_object": "用户已确认正式菜单页面",
+                        "source_kind": "user_confirmed_menu_policy_baseline",
+                        "menu_xmlid": _text(menu.get("menu_xmlid") or page_key),
+                        "action_id": int(menu.get("action_id") or 0),
+                        "res_model": _text(menu.get("res_model")),
+                    }
+                )
+        return capabilities
+
+    @api.model
+    def _sync_user_confirmed_locked_construction_product_policies(self):
+        baseline = self._load_user_confirmed_policy_baseline()
+        if not baseline:
+            return False
+        model = self.sudo()
+        for product_key in ("construction.standard", "construction.preview"):
+            item = baseline.get(product_key) or {}
+            menu_groups = item.get("menu_groups") if isinstance(item.get("menu_groups"), list) else []
+            capabilities = self._capabilities_from_user_confirmed_menu_groups(menu_groups)
+            values = {
+                "active": bool(item.get("active", True)),
+                "product_key": product_key,
+                "base_product_key": "construction",
+                "edition_key": product_key.split(".", 1)[1],
+                "state": _text(item.get("state")) or ("preview" if product_key.endswith(".preview") else "stable"),
+                "access_level": "public",
+                "allowed_role_codes": [],
+                "label": "施工管理预览版" if product_key.endswith(".preview") else "施工管理标准版",
+                "version": "v1",
+                "scene_version_bindings": {},
+                "menu_groups": menu_groups,
+                "scenes": [],
+                "capabilities": capabilities,
+                "note": USER_CONFIRMED_POLICY_LOCK_NOTE,
+            }
+            rec = model.search([("product_key", "=", product_key)], limit=1)
+            if rec:
+                rec.write(values)
+            else:
+                model.create(values)
         return True
 
     @api.model

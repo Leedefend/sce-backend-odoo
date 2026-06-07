@@ -648,7 +648,7 @@ class ProjectProject(models.Model):
 
     lifecycle_state = fields.Selection(
         ScStateMachine.selection(ScStateMachine.PROJECT),
-        string='生命周期状态',
+        string='项目状态',
         default='draft',
         tracking=True,
         help='驱动项目级联动控制：暂停/关闭禁止新增进度、成本等业务数据；结算中限制部分操作。'

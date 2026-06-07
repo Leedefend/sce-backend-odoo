@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
+from odoo.tools.float_utils import float_compare
+
+from ..support.state_guard import raise_guard
 
 
 class ScPaymentExecution(models.Model):
@@ -200,27 +203,92 @@ class ScPaymentExecution(models.Model):
     def action_confirm(self):
         policy = self.env["sc.approval.policy"]
         for rec in self:
-            if rec.state == "draft":
-                if policy.is_approval_required(rec._name, company=rec.company_id):
-                    company = rec.company_id or self.env.company
-                    rec.with_company(company).with_context(allowed_company_ids=[company.id])._request_document_approval()
-                else:
-                    rec.write({"state": "confirmed", "reject_reason": False})
+            if rec.state != "draft":
+                raise_guard(
+                    "PAYMENT_EXECUTION_INVALID_TRANSITION",
+                    f"付款执行[{rec.display_name}]",
+                    _("确认付款执行"),
+                    reasons=[_("只有草稿状态的付款执行可以确认")],
+                )
+            rec._check_business_anchor_or_raise()
+            if policy.is_approval_required(rec._name, company=rec.company_id):
+                company = rec.company_id or self.env.company
+                rec.with_company(company).with_context(allowed_company_ids=[company.id])._request_document_approval()
+            else:
+                rec.write({"state": "confirmed", "reject_reason": False})
 
     def action_paid(self):
         policy = self.env["sc.approval.policy"]
         for rec in self:
-            if rec.state in ("draft", "confirmed"):
-                if policy.is_approval_required(rec._name, company=rec.company_id) and rec.validation_status != "validated":
-                    raise UserError(_("付款执行尚未完成统一审批流程。"))
-                rec.state = "paid"
+            if rec.state not in ("draft", "confirmed"):
+                raise_guard(
+                    "PAYMENT_EXECUTION_INVALID_TRANSITION",
+                    f"付款执行[{rec.display_name}]",
+                    _("登记付款"),
+                    reasons=[_("只有草稿或已确认状态的付款执行可以登记付款")],
+                )
+            rec._check_business_anchor_or_raise()
+            if policy.is_approval_required(rec._name, company=rec.company_id) and rec.validation_status != "validated":
+                raise UserError(_("付款执行尚未完成统一审批流程。"))
+            rec.state = "paid"
+            rec._sync_payment_request_done()
+
+    def _sync_payment_request_done(self):
+        for rec in self:
+            request = rec.payment_request_id
+            if not request or request.state == "done":
+                continue
+            if request.state == "approve" and request.validation_status == "validated":
+                request.action_set_approved()
+                request.invalidate_recordset()
+            if request.state != "approved":
+                continue
+            rounding = request.currency_id.rounding if request.currency_id else 0.01
+            if float_compare(rec.paid_amount or 0.0, request.amount or 0.0, precision_rounding=rounding) == -1:
+                raise UserError(_("实付金额低于付款申请金额，不能自动完成付款申请。"))
+            request.with_context(payment_soft_gate=True)._ensure_payment_ledger(
+                amount=request.amount or 0.0,
+                ref=rec.name,
+                note=_("auto:payment_execution_paid"),
+            )
+            request.with_context(allow_transition=True, payment_soft_gate=True).write({"state": "done"})
 
     def action_cancel(self):
         for rec in self:
             if rec.source_origin == "legacy":
                 raise UserError(_("历史迁移付款执行单据不能在新系统取消。"))
-            if rec.state != "cancel":
-                rec.state = "cancel"
+            if rec.state in ("paid", "legacy_confirmed", "cancel"):
+                raise_guard(
+                    "PAYMENT_EXECUTION_INVALID_TRANSITION",
+                    f"付款执行[{rec.display_name}]",
+                    _("取消付款执行"),
+                    reasons=[_("已付款、历史已确认或已取消的付款执行不能取消")],
+                )
+            rec.state = "cancel"
+
+    def _check_business_anchor_or_raise(self):
+        for rec in self:
+            if not rec.project_id:
+                raise_guard(
+                    "PAYMENT_EXECUTION_MISSING_PROJECT",
+                    f"付款执行[{rec.display_name}]",
+                    _("办理付款执行"),
+                    reasons=[_("付款执行必须关联项目")],
+                )
+            if not rec.partner_id:
+                raise_guard(
+                    "PAYMENT_EXECUTION_MISSING_PARTNER",
+                    f"付款执行[{rec.display_name}]",
+                    _("办理付款执行"),
+                    reasons=[_("付款执行必须选择往来单位")],
+                )
+            if (rec.paid_amount or 0.0) <= 0:
+                raise_guard(
+                    "PAYMENT_EXECUTION_INVALID_AMOUNT",
+                    f"付款执行[{rec.display_name}]",
+                    _("办理付款执行"),
+                    reasons=[_("实付金额必须大于0")],
+                )
 
     def _request_document_approval(self):
         self.ensure_one()

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
+from odoo.tools.float_utils import float_is_zero
 
 
 class ScTreasuryReconciliation(models.Model):
@@ -134,27 +135,43 @@ class ScTreasuryReconciliation(models.Model):
     def action_confirm(self):
         policy = self.env["sc.approval.policy"]
         for rec in self:
-            if rec.state == "draft":
-                if policy.is_approval_required(rec._name, company=rec.company_id):
-                    company = rec.company_id or self.env.company
-                    rec.with_company(company).with_context(allowed_company_ids=[company.id])._request_document_approval()
-                else:
-                    rec.write({"state": "confirmed", "reject_reason": False})
+            if rec.state != "draft":
+                raise UserError(_("只有草稿状态的资金对账单可以确认。"))
+            rec._check_reconcile_ready()
+            if policy.is_approval_required(rec._name, company=rec.company_id):
+                company = rec.company_id or self.env.company
+                rec.with_company(company).with_context(allowed_company_ids=[company.id])._request_document_approval()
+            else:
+                rec.write({"state": "confirmed", "reject_reason": False})
 
     def action_reconcile(self):
         policy = self.env["sc.approval.policy"]
         for rec in self:
-            if rec.state in ("draft", "confirmed"):
-                if policy.is_approval_required(rec._name, company=rec.company_id) and rec.validation_status != "validated":
-                    raise UserError(_("资金对账尚未完成统一审批流程。"))
-                rec.state = "reconciled"
+            if rec.state not in ("draft", "confirmed"):
+                raise UserError(_("只有草稿或已确认状态的资金对账单可以完成对账。"))
+            if policy.is_approval_required(rec._name, company=rec.company_id) and rec.validation_status != "validated":
+                raise UserError(_("资金对账尚未完成统一审批流程。"))
+            rec._check_reconcile_ready()
+            rec.state = "reconciled"
+
+    def _check_reconcile_ready(self):
+        self.ensure_one()
+        if not self.treasury_ledger_id:
+            raise UserError(_("请先关联资金台账后再完成对账。"))
+        if self.treasury_ledger_id.state != "posted":
+            raise UserError(_("只能对已入账的资金台账完成对账。"))
+        if self.treasury_ledger_id.project_id != self.project_id:
+            raise UserError(_("资金台账项目与对账单项目不一致，不能完成对账。"))
+        if not float_is_zero(self.system_difference, precision_rounding=self.currency_id.rounding):
+            raise UserError(_("银企差额未归零，不能完成资金对账。"))
 
     def action_cancel(self):
         for rec in self:
             if rec.source_origin == "legacy":
                 raise UserError(_("历史迁移资金对账单不能在新系统取消。"))
-            if rec.state != "cancel":
-                rec.state = "cancel"
+            if rec.state not in ("draft", "confirmed"):
+                raise UserError(_("只有草稿或已确认状态的资金对账单可以取消。"))
+            rec.state = "cancel"
 
     def _request_document_approval(self):
         self.ensure_one()

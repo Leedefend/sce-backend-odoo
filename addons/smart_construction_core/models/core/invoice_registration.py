@@ -222,27 +222,56 @@ class ScInvoiceRegistration(models.Model):
     def action_confirm(self):
         policy = self.env["sc.approval.policy"]
         for rec in self:
-            if rec.state == "draft":
-                if policy.is_approval_required(rec._name, company=rec.company_id):
-                    company = rec.company_id or self.env.company
-                    rec.with_company(company).with_context(allowed_company_ids=[company.id])._request_document_approval()
-                else:
-                    rec.write({"state": "confirmed", "reject_reason": False})
+            if rec.state != "draft":
+                raise UserError(_("只有草稿发票登记可以确认。"))
+            rec._check_business_anchor()
+            if policy.is_approval_required(rec._name, company=rec.company_id):
+                company = rec.company_id or self.env.company
+                rec.with_company(company).with_context(allowed_company_ids=[company.id])._request_document_approval()
+            else:
+                rec.write({"state": "confirmed", "reject_reason": False})
 
     def action_register(self):
         policy = self.env["sc.approval.policy"]
         for rec in self:
-            if rec.state in ("draft", "confirmed"):
-                if policy.is_approval_required(rec._name, company=rec.company_id) and rec.validation_status != "validated":
-                    raise UserError(_("发票登记尚未完成统一审批流程。"))
-                rec.state = "registered"
+            if rec.state != "confirmed":
+                raise UserError(_("只有已确认发票登记可以登记。"))
+            rec._check_business_anchor()
+            if policy.is_approval_required(rec._name, company=rec.company_id) and rec.validation_status != "validated":
+                raise UserError(_("发票登记尚未完成统一审批流程。"))
+            rec.state = "registered"
 
     def action_cancel(self):
         for rec in self:
             if rec.source_origin == "legacy":
                 raise UserError(_("历史迁移发票登记不能在新系统取消。"))
-            if rec.state != "cancel":
-                rec.state = "cancel"
+            if rec.state not in ("draft", "confirmed"):
+                raise UserError(_("只有草稿或已确认发票登记可以取消。"))
+            rec.state = "cancel"
+
+    def _check_business_anchor(self):
+        for rec in self:
+            if not rec.invoice_date:
+                raise UserError(_("发票登记必须填写发票日期。"))
+            if (rec.amount_total or 0.0) <= 0 and (rec.tax_amount or 0.0) <= 0 and (rec.surcharge_amount or 0.0) <= 0:
+                raise UserError(_("发票登记必须填写有效金额。"))
+            if rec.source_kind == "prepaid_tax" or rec.direction == "prepaid":
+                if not rec.tax_certificate_no:
+                    raise UserError(_("预缴税登记必须填写完税凭证号码。"))
+            elif not rec.invoice_no:
+                raise UserError(_("发票登记必须填写发票号码。"))
+            if rec.contract_id:
+                if rec.contract_id.project_id != rec.project_id:
+                    raise UserError(_("发票登记合同必须属于当前项目。"))
+                if rec.contract_id.partner_id and rec.partner_id and rec.contract_id.partner_id != rec.partner_id:
+                    raise UserError(_("发票登记往来单位必须与合同相对方一致。"))
+            if rec.settlement_id:
+                if rec.settlement_id.project_id != rec.project_id:
+                    raise UserError(_("发票登记结算单必须属于当前项目。"))
+                if rec.settlement_id.contract_id and rec.contract_id and rec.settlement_id.contract_id != rec.contract_id:
+                    raise UserError(_("发票登记合同必须与结算单合同一致。"))
+                if rec.settlement_id.partner_id and rec.partner_id and rec.settlement_id.partner_id != rec.partner_id:
+                    raise UserError(_("发票登记往来单位必须与结算单往来单位一致。"))
 
     def _request_document_approval(self):
         self.ensure_one()
@@ -270,12 +299,15 @@ class ScInvoiceRegistration(models.Model):
 
     def action_on_tier_approved(self):
         for rec in self:
-            if rec.state == "draft":
-                rec.with_context(skip_validation_check=True).write({"state": "confirmed", "reject_reason": False})
+            if rec.state != "draft":
+                raise UserError(_("只有草稿发票登记可以完成统一审批回调。"))
+            rec._check_business_anchor()
+            rec.with_context(skip_validation_check=True).write({"state": "confirmed", "reject_reason": False})
 
     def action_on_tier_rejected(self, reason=None):
         for rec in self:
-            if rec.state == "draft":
-                rec.with_context(skip_validation_check=True).write(
-                    {"reject_reason": reason or rec._get_tier_reject_reason()}
-                )
+            if rec.state != "draft":
+                raise UserError(_("只有草稿发票登记可以驳回。"))
+            rec.with_context(skip_validation_check=True).write(
+                {"reject_reason": reason or rec._get_tier_reject_reason()}
+            )

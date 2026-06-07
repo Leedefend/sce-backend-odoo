@@ -24,6 +24,7 @@ POLICY_FILES = [
     "scripts/verify/baselines/role_capability_floor_guard.json",
     "scripts/verify/baselines/contract_evidence_guard_baseline.json",
     "scripts/verify/baselines/controller_boundary_guard_baseline.json",
+    "scripts/verify/baselines/user_confirmed_formal_menu_policy_62.json",
     "scripts/verify/baselines/baseline_frozen_paths.json",
 ]
 

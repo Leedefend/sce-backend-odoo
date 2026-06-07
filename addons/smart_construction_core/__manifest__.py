@@ -228,6 +228,7 @@
         'data/product_policy_menu_sync.xml',
         'views/support/audit_list_fields_views.xml',
         'views/support/p1_daily_business_visible_alias_views.xml',
+        'views/support/user_confirmed_formal_list_alignment_views.xml',
     ],
     'assets': {
         'web.assets_frontend_minimal': [

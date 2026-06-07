@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import _, api, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 
 
 class ScEquipmentPlan(models.Model):
@@ -44,6 +44,8 @@ class ScEquipmentPlan(models.Model):
 
     def action_submit(self):
         for record in self:
+            if record.state != "draft":
+                raise UserError(_("只有草稿状态的设备计划可以提交。"))
             if not record.line_ids:
                 raise ValidationError(_("提交设备计划前必须维护计划明细。"))
             record.line_ids._check_values()
@@ -52,15 +54,23 @@ class ScEquipmentPlan(models.Model):
 
     def action_approve(self):
         for record in self:
+            if record.state != "submitted":
+                raise UserError(_("只有已提交状态的设备计划可以确认。"))
             record.line_ids._check_values()
         self.write({"state": "approved"})
         return True
 
     def action_cancel(self):
+        for record in self:
+            if record.state not in ("draft", "submitted"):
+                raise UserError(_("只有草稿或已提交状态的设备计划可以取消。"))
         self.write({"state": "cancel"})
         return True
 
     def action_reset_draft(self):
+        for record in self:
+            if record.state != "cancel":
+                raise UserError(_("只有已取消状态的设备计划可以重置为草稿。"))
         self.write({"state": "draft"})
         return True
 
@@ -137,25 +147,48 @@ class ScEquipmentRequest(models.Model):
 
     def action_submit(self):
         for record in self:
+            if record.state != "draft":
+                raise UserError(_("只有草稿状态的设备申请可以提交。"))
             if not record.line_ids:
                 raise ValidationError(_("提交设备申请前必须维护申请明细。"))
             record.line_ids._check_values()
+            record._check_business_anchor()
         self.write({"state": "submitted"})
         return True
 
     def action_approve(self):
         for record in self:
+            if record.state != "submitted":
+                raise UserError(_("只有已提交状态的设备申请可以确认。"))
             record.line_ids._check_values()
+            record._check_business_anchor()
         self.write({"state": "approved"})
         return True
 
     def action_cancel(self):
+        for record in self:
+            if record.state not in ("draft", "submitted"):
+                raise UserError(_("只有草稿或已提交状态的设备申请可以取消。"))
         self.write({"state": "cancel"})
         return True
 
     def action_reset_draft(self):
+        for record in self:
+            if record.state != "cancel":
+                raise UserError(_("只有已取消状态的设备申请可以重置为草稿。"))
         self.write({"state": "draft"})
         return True
+
+    def _check_business_anchor(self):
+        for record in self:
+            if not record.plan_id:
+                continue
+            if record.plan_id.project_id != record.project_id:
+                raise UserError(_("设备申请的项目必须与来源设备计划一致。"))
+            if record.plan_id.state != "approved":
+                raise UserError(_("设备申请只能引用已确认的设备计划。"))
+            if record.supplier_id and record.plan_id.supplier_id and record.supplier_id != record.plan_id.supplier_id:
+                raise UserError(_("设备申请的供应单位必须与来源设备计划一致。"))
 
 
 class ScEquipmentRequestLine(models.Model):
@@ -226,22 +259,47 @@ class ScEquipmentUsage(models.Model):
         return super().create(vals_list)
 
     def action_submit(self):
+        for record in self:
+            if record.state != "draft":
+                raise UserError(_("只有草稿状态的设备使用登记可以提交。"))
+            record._check_business_anchor()
         self._check_values()
         self.write({"state": "submitted"})
         return True
 
     def action_confirm(self):
+        for record in self:
+            if record.state != "submitted":
+                raise UserError(_("只有已提交状态的设备使用登记可以确认。"))
+            record._check_business_anchor()
         self._check_values()
         self.write({"state": "confirmed"})
         return True
 
     def action_cancel(self):
+        for record in self:
+            if record.state not in ("draft", "submitted"):
+                raise UserError(_("只有草稿或已提交状态的设备使用登记可以取消。"))
         self.write({"state": "cancel"})
         return True
 
     def action_reset_draft(self):
+        for record in self:
+            if record.state != "cancel":
+                raise UserError(_("只有已取消状态的设备使用登记可以重置为草稿。"))
         self.write({"state": "draft"})
         return True
+
+    def _check_business_anchor(self):
+        for record in self:
+            if not record.request_id:
+                continue
+            if record.request_id.project_id != record.project_id:
+                raise UserError(_("设备使用登记的项目必须与来源设备申请一致。"))
+            if record.request_id.state != "approved":
+                raise UserError(_("设备使用登记只能引用已确认的设备申请。"))
+            if record.supplier_id and record.request_id.supplier_id and record.supplier_id != record.request_id.supplier_id:
+                raise UserError(_("设备使用登记的供应单位必须与来源设备申请一致。"))
 
     @api.constrains("usage_qty", "usage_hours")
     def _check_values(self):
@@ -301,25 +359,47 @@ class ScEquipmentSettlement(models.Model):
 
     def action_submit(self):
         for record in self:
+            if record.state != "draft":
+                raise UserError(_("只有草稿状态的设备结算可以提交。"))
             if not record.line_ids:
                 raise ValidationError(_("提交设备结算前必须维护结算明细。"))
             record.line_ids._check_values()
+            record._check_business_anchor()
         self.write({"state": "submitted"})
         return True
 
     def action_confirm(self):
         for record in self:
+            if record.state != "submitted":
+                raise UserError(_("只有已提交状态的设备结算可以确认。"))
             record.line_ids._check_values()
+            record._check_business_anchor()
         self.write({"state": "confirmed"})
         return True
 
     def action_cancel(self):
+        for record in self:
+            if record.state not in ("draft", "submitted"):
+                raise UserError(_("只有草稿或已提交状态的设备结算可以取消。"))
         self.write({"state": "cancel"})
         return True
 
     def action_reset_draft(self):
+        for record in self:
+            if record.state != "cancel":
+                raise UserError(_("只有已取消状态的设备结算可以重置为草稿。"))
         self.write({"state": "draft"})
         return True
+
+    def _check_business_anchor(self):
+        for record in self:
+            for line in record.line_ids.filtered("usage_id"):
+                if line.usage_id.project_id != record.project_id:
+                    raise UserError(_("设备结算明细引用的使用登记必须属于同一项目。"))
+                if line.usage_id.state != "confirmed":
+                    raise UserError(_("设备结算只能引用已确认的设备使用登记。"))
+                if line.usage_id.supplier_id and line.usage_id.supplier_id != record.supplier_id:
+                    raise UserError(_("设备结算明细引用的使用登记供应单位必须与结算单一致。"))
 
 
 class ScEquipmentSettlementLine(models.Model):
@@ -405,15 +485,24 @@ class ScEquipmentPrice(models.Model):
         return super().create(vals_list)
 
     def action_activate(self):
+        for record in self:
+            if record.state != "draft":
+                raise UserError(_("只有草稿状态的设备价格可以生效。"))
         self._check_values()
         self.write({"state": "active"})
         return True
 
     def action_deactivate(self):
+        for record in self:
+            if record.state != "active":
+                raise UserError(_("只有生效状态的设备价格可以停用。"))
         self.write({"state": "inactive"})
         return True
 
     def action_reset_draft(self):
+        for record in self:
+            if record.state != "inactive":
+                raise UserError(_("只有停用状态的设备价格可以重置为草稿。"))
         self.write({"state": "draft"})
         return True
 

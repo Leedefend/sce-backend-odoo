@@ -108,19 +108,31 @@ class ScSettlementAdjustment(models.Model):
     def action_confirm(self):
         policy = self.env["sc.approval.policy"]
         for rec in self:
-            if rec.state == "draft":
-                if policy.is_approval_required(rec._name, company=rec.company_id):
-                    company = rec.company_id or self.env.company
-                    rec.with_company(company).with_context(allowed_company_ids=[company.id])._request_document_approval()
-                else:
-                    rec.write({"state": "confirmed", "reject_reason": False})
+            if rec.state != "draft":
+                raise UserError(_("只有草稿状态的结算调整可以确认。"))
+            rec._check_business_anchor()
+            if policy.is_approval_required(rec._name, company=rec.company_id):
+                company = rec.company_id or self.env.company
+                rec.with_company(company).with_context(allowed_company_ids=[company.id])._request_document_approval()
+            else:
+                rec.write({"state": "confirmed", "reject_reason": False})
 
     def action_cancel(self):
         for rec in self:
             if rec.source_origin == "legacy":
                 raise UserError(_("历史迁移调整不能在新系统取消。"))
-            if rec.state == "confirmed":
-                rec.state = "cancel"
+            if rec.state not in ("draft", "confirmed"):
+                raise UserError(_("只有草稿或已确认状态的结算调整可以取消。"))
+        self.write({"state": "cancel"})
+
+    def _check_business_anchor(self):
+        for rec in self:
+            if not rec.item_name:
+                raise UserError(_("结算调整确认前必须维护调整事项。"))
+            if rec.amount <= 0:
+                raise UserError(_("结算调整确认前调整金额必须大于 0。"))
+            if not rec.settlement_id and not rec.contract_id:
+                raise UserError(_("结算调整确认前必须关联结算单或合同。"))
 
     def _request_document_approval(self):
         self.ensure_one()

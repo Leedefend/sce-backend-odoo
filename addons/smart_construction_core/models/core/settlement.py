@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import _, api, fields, models
+from odoo.exceptions import UserError
 
 from ..support.state_machine import ScStateMachine
 
@@ -74,13 +75,36 @@ class ProjectSettlement(models.Model):
         return super().create(vals_list)
 
     def action_confirm(self):
-        self.write({"state": "confirmed"})
+        for rec in self:
+            if rec.state != "draft":
+                raise UserError(_("只有草稿结算单可以确认。"))
+            rec._check_business_anchor()
+            rec.write({"state": "confirmed"})
 
     def action_done(self):
-        self.write({"state": "done"})
+        for rec in self:
+            if rec.state != "confirmed":
+                raise UserError(_("只有已确认结算单可以完成。"))
+            rec._check_business_anchor()
+            rec.write({"state": "done"})
 
     def action_cancel(self):
-        self.write({"state": "cancel"})
+        for rec in self:
+            if rec.state not in ("draft", "confirmed"):
+                raise UserError(_("只有草稿或已确认结算单可以取消。"))
+            rec.write({"state": "cancel"})
+
+    def _check_business_anchor(self):
+        for rec in self:
+            if not rec.date_settle:
+                raise UserError(_("结算单必须填写结算日期。"))
+            if rec.amount <= 0:
+                raise UserError(_("结算金额必须大于 0。"))
+            if rec.contract_id:
+                if rec.contract_id.project_id != rec.project_id:
+                    raise UserError(_("结算单合同必须属于当前项目。"))
+                if rec.contract_id.partner_id and rec.contract_id.partner_id != rec.partner_id:
+                    raise UserError(_("结算单往来单位必须与合同相对方一致。"))
 
 
 class ProjectSettlementLine(models.Model):

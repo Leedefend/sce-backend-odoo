@@ -1191,11 +1191,13 @@ class UiContractV2Handler(BaseIntentHandler):
                 legacy_view_columns.append(name)
         legacy_override = self._scbs55_legacy_visible_list_override(source_contract)
         columns: list[str] = []
+        explicit_view_columns: list[str] = []
         has_explicit_view_columns = False
         for row in raw_columns:
             name = str(row.get("name") if isinstance(row, dict) else row or "").strip()
             if name and name not in columns:
                 columns.append(name)
+                explicit_view_columns.append(name)
                 has_explicit_view_columns = True
         profile = source_contract.get("list_profile") if isinstance(source_contract.get("list_profile"), dict) else {}
         for name in profile.get("columns") if isinstance(profile.get("columns"), list) else []:
@@ -1214,7 +1216,11 @@ class UiContractV2Handler(BaseIntentHandler):
             columns = action_view_columns
             override_labels = dict(action_view_labels)
             strict_columns = True
-        elif legacy_view_columns:
+        elif (
+            legacy_view_columns
+            and explicit_view_columns
+            and all(name.startswith("legacy_visible_") for name in explicit_view_columns)
+        ):
             columns = legacy_view_columns
             strict_columns = True
         if not strict_columns and columns and all(str(name or "").startswith("p1_visible_") for name in columns):

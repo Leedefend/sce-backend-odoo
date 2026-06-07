@@ -448,6 +448,14 @@ class ScSettlementOrder(models.Model):
 
     def action_submit(self):
         for rec in self:
+            if rec.state != "draft":
+                raise_guard(
+                    "SETTLEMENT_INVALID_TRANSITION",
+                    f"结算单[{rec.display_name}]",
+                    _("提交结算单"),
+                    reasons=[_("只有草稿状态的结算单可以提交")],
+                )
+            rec._check_business_anchor_or_raise()
             rec._check_line_contracts_or_raise()
             rec._check_contract_consistency_or_raise(strict=False)
             rec._check_purchase_orders_or_raise(strict=False)
@@ -468,6 +476,14 @@ class ScSettlementOrder(models.Model):
     def action_approve(self):
         policy_model = self.env["sc.approval.policy"]
         for rec in self:
+            if rec.state not in ("draft", "submit"):
+                raise_guard(
+                    "SETTLEMENT_INVALID_TRANSITION",
+                    f"结算单[{rec.display_name}]",
+                    _("审批结算单"),
+                    reasons=[_("只有草稿或已提交状态的结算单可以审批")],
+                )
+            rec._check_business_anchor_or_raise()
             rec._check_line_contracts_or_raise()
             rec._check_contract_consistency_or_raise(strict=True)
             rec._check_purchase_orders_or_raise(strict=True)
@@ -504,7 +520,13 @@ class ScSettlementOrder(models.Model):
     def action_on_tier_approved(self):
         for rec in self:
             if rec.state != "submit":
-                continue
+                raise_guard(
+                    "SETTLEMENT_INVALID_TRANSITION",
+                    f"结算单[{rec.display_name}]",
+                    _("审批通过结算单"),
+                    reasons=[_("只有已提交状态的结算单可以执行审批通过回调")],
+                )
+            rec._check_business_anchor_or_raise()
             rec._check_line_contracts_or_raise()
             rec._check_contract_consistency_or_raise(strict=True)
             rec._check_purchase_orders_or_raise(strict=True)
@@ -520,7 +542,12 @@ class ScSettlementOrder(models.Model):
     def action_on_tier_rejected(self, reason=None):
         for rec in self:
             if rec.state != "submit":
-                continue
+                raise_guard(
+                    "SETTLEMENT_INVALID_TRANSITION",
+                    f"结算单[{rec.display_name}]",
+                    _("驳回结算单"),
+                    reasons=[_("只有已提交状态的结算单可以执行审批驳回回调")],
+                )
             rec.write(
                 {
                     "state": "draft",
@@ -529,11 +556,74 @@ class ScSettlementOrder(models.Model):
             )
 
     def action_done(self):
-        self.write({"state": "done"})
+        for rec in self:
+            if rec.state != "approve":
+                raise_guard(
+                    "SETTLEMENT_INVALID_TRANSITION",
+                    f"结算单[{rec.display_name}]",
+                    _("完成结算单"),
+                    reasons=[_("只有已批准状态的结算单可以完成")],
+                )
+            rec._check_business_anchor_or_raise()
+            rec.write({"state": "done"})
 
     def action_cancel(self):
-        self._check_payments_before_cancel()
-        self.write({"state": "cancel"})
+        for rec in self:
+            if rec.state not in ("draft", "submit", "approve"):
+                raise_guard(
+                    "SETTLEMENT_INVALID_TRANSITION",
+                    f"结算单[{rec.display_name}]",
+                    _("作废结算单"),
+                    reasons=[_("只有草稿、已提交或已批准状态的结算单可以作废")],
+                )
+            rec._check_payments_before_cancel()
+            rec.write({"state": "cancel"})
+
+    def _check_business_anchor_or_raise(self):
+        for rec in self:
+            if not rec.project_id:
+                raise_guard(
+                    "SETTLEMENT_MISSING_PROJECT",
+                    f"结算单[{rec.display_name}]",
+                    _("校验结算单"),
+                    reasons=[_("结算单必须关联项目")],
+                )
+            if not rec.partner_id and not rec.legacy_fact_model:
+                raise_guard(
+                    "SETTLEMENT_MISSING_PARTNER",
+                    f"结算单[{rec.display_name}]",
+                    _("校验结算单"),
+                    reasons=[_("结算单必须选择往来单位")],
+                )
+            if not rec.line_ids:
+                raise_guard(
+                    "SETTLEMENT_MISSING_LINES",
+                    f"结算单[{rec.display_name}]",
+                    _("校验结算单"),
+                    reasons=[_("结算单必须维护结算明细")],
+                )
+            if rec.amount_total <= 0:
+                raise_guard(
+                    "SETTLEMENT_INVALID_AMOUNT",
+                    f"结算单[{rec.display_name}]",
+                    _("校验结算单"),
+                    reasons=[_("结算金额必须大于0")],
+                )
+            for line in rec.line_ids:
+                if line.qty <= 0:
+                    raise_guard(
+                        "SETTLEMENT_INVALID_LINE_QTY",
+                        f"结算单[{rec.display_name}]",
+                        _("校验结算明细"),
+                        reasons=[_("结算行数量必须大于0")],
+                    )
+                if line.price_unit < 0:
+                    raise_guard(
+                        "SETTLEMENT_INVALID_LINE_PRICE",
+                        f"结算单[{rec.display_name}]",
+                        _("校验结算明细"),
+                        reasons=[_("结算行单价不能为负数")],
+                    )
 
     def _check_payments_before_cancel(self):
         Payment = self.env["payment.request"]

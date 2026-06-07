@@ -1003,10 +1003,20 @@
               action="smart_construction_core.action_construction_contract_income"
               sequence="15"
               groups="smart_construction_core.group_sc_cap_contract_read"/>
+    <record id="action_construction_contract_income_construction" model="ir.actions.act_window">
+        <field name="name">施工合同</field>
+        <field name="res_model">construction.contract.income</field>
+        <field name="view_mode">tree,form</field>
+        <field name="views" eval="[(ref('smart_construction_core.view_construction_contract_income_tree'), 'tree'), (ref('smart_construction_core.view_construction_contract_income_form'), 'form')]"/>
+        <field name="search_view_id" ref="smart_construction_core.view_construction_contract_income_search"/>
+        <field name="domain">['|', ('legacy_contract_id', '=', False), ('legacy_income_surface_visible', '=', True)]</field>
+        <field name="context">{'default_type': 'out', 'default_subject': '施工合同', 'search_default_visible_income': 1}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
+    </record>
     <menuitem id="menu_sc_project_income_contract_acceptance_construction"
               name="施工合同"
               parent="smart_construction_core.menu_sc_income_contract_group"
-              action="smart_construction_core.action_scbsly_direct_acceptance_construction_contract"
+              action="smart_construction_core.action_construction_contract_income_construction"
               sequence="16"
               groups="smart_construction_core.group_sc_cap_contract_read"/>
     <menuitem id="menu_sc_income_contract_variation"

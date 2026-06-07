@@ -453,14 +453,14 @@
         <field name="model">sc.material.outbound</field>
         <field name="arch" type="xml">
             <tree string="出库单" default_order="outbound_date desc">
-                <field name="name"/>
+                <field name="name" string="出库单号"/>
                 <field name="project_id"/>
-                <field name="outbound_date"/>
-                <field name="warehouse_id"/>
-                <field name="source_location_id"/>
-                <field name="purpose"/>
-                <field name="receiver_id"/>
-                <field name="receiver_user_id"/>
+                <field name="outbound_date" string="出库日期"/>
+                <field name="warehouse_id" string="出库仓库"/>
+                <field name="source_location_id" string="出库库位"/>
+                <field name="purpose" string="领用用途"/>
+                <field name="receiver_id" string="领用单位"/>
+                <field name="receiver_user_id" string="领料人"/>
                 <field name="keeper_id"/>
                 <field name="legacy_fact_type"/>
                 <field name="sc_has_system_default"/>

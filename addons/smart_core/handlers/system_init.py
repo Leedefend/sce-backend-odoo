@@ -1168,6 +1168,70 @@ def _sort_business_nav_groups(nav: list[dict]) -> list[dict]:
     return sorted(sorted_nodes, key=sort_key)
 
 
+def _dedupe_nav_siblings_by_identity(nav: list[dict]) -> list[dict]:
+    if not isinstance(nav, list):
+        return []
+
+    def node_menu_xmlid(node: dict) -> str:
+        meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+        return _text(node.get("menu_xmlid") or meta.get("menu_xmlid") or meta.get("menu_key"))
+
+    def node_identity(node: dict) -> str:
+        meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+        target = node.get("target") if isinstance(node.get("target"), dict) else {}
+        return _text(
+            node.get("menu_id")
+            or meta.get("menu_id")
+            or target.get("menu_id")
+            or node_menu_xmlid(node)
+            or node.get("key")
+        )
+
+    def merge_node(base: dict, incoming: dict) -> dict:
+        merged = dict(base)
+        for key, value in incoming.items():
+            if key in {"children", "meta"}:
+                continue
+            if merged.get(key) in (None, "", [], {}):
+                merged[key] = value
+        base_meta = merged.get("meta") if isinstance(merged.get("meta"), dict) else {}
+        incoming_meta = incoming.get("meta") if isinstance(incoming.get("meta"), dict) else {}
+        if incoming_meta:
+            next_meta = dict(incoming_meta)
+            next_meta.update(base_meta)
+            merged["meta"] = next_meta
+        children = []
+        if isinstance(base.get("children"), list):
+            children.extend(base.get("children") or [])
+        if isinstance(incoming.get("children"), list):
+            children.extend(incoming.get("children") or [])
+        if children:
+            merged["children"] = dedupe(children)
+        return merged
+
+    def dedupe(nodes: list[dict]) -> list[dict]:
+        out = []
+        by_identity = {}
+        for node in nodes or []:
+            if not isinstance(node, dict):
+                continue
+            next_node = dict(node)
+            children = next_node.get("children") if isinstance(next_node.get("children"), list) else []
+            if children:
+                next_node["children"] = dedupe(children)
+            identity = node_identity(next_node)
+            if identity and identity in by_identity:
+                index = by_identity[identity]
+                out[index] = merge_node(out[index], next_node)
+                continue
+            if identity:
+                by_identity[identity] = len(out)
+            out.append(next_node)
+        return out
+
+    return dedupe(nav)
+
+
 def _rehome_business_master_data_nav_groups(nav: list[dict]) -> list[dict]:
     if not isinstance(nav, list):
         return []
@@ -1766,20 +1830,11 @@ class SystemInitHandler(BaseIntentHandler):
         if delivery_nav and not platform_minimum_surface_mode:
             delivery_nav, user_data_acceptance_meta = _filter_nav_for_user_data_acceptance_only(env, delivery_nav)
             if not user_data_acceptance_meta.get("applied"):
-                acceptance_nav, acceptance_nav_meta = _filter_nav_for_user_data_acceptance_only(
-                    env,
-                    delivery_nav,
-                    force=True,
-                )
-                if acceptance_nav_meta.get("applied"):
-                    delivery_nav = _append_user_data_acceptance_nav_group(delivery_nav, acceptance_nav)
-                    user_data_acceptance_meta = {
-                        "applied": False,
-                        "projected": True,
-                        "projection_group_label": "用户数据验收",
-                        "projection_group_count": len(acceptance_nav),
-                        "projection_meta": acceptance_nav_meta,
-                    }
+                user_data_acceptance_meta = {
+                    "applied": False,
+                    "projected": False,
+                    "reason": "user_confirmed_formal_product_menu_locked",
+                }
             delivery_nav = _remove_nav_groups_by_label(delivery_nav, {"用户核对菜单"})
             formal_product_menu_meta = {
                 "applied": False,
@@ -1788,6 +1843,7 @@ class SystemInitHandler(BaseIntentHandler):
             delivery_nav, post_append_user_menu_config_meta = _apply_user_menu_config_to_delivery_nav(env, delivery_nav)
             delivery_nav = _unwrap_internal_nav_groups(delivery_nav, {"产品发布面", "正式业务菜单"})
             delivery_nav = _rehome_business_master_data_nav_groups(delivery_nav)
+            delivery_nav = _dedupe_nav_siblings_by_identity(delivery_nav)
             delivery_nav = _sort_business_nav_groups(delivery_nav)
             if isinstance(user_data_acceptance_meta, dict):
                 user_data_acceptance_meta["source_user_check_menu_hidden"] = True

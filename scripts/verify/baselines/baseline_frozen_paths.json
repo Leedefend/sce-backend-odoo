@@ -27,6 +27,8 @@
     "scripts/verify/baselines/contract_evidence_schema_guard.json",
     "scripts/verify/baselines/controller_boundary_guard_baseline.json",
     "scripts/verify/baselines/contract_evidence_guard_baseline.json",
+    "scripts/verify/baselines/user_confirmed_formal_menu_policy_62.json",
+    "scripts/verify/user_confirmed_menu_surface_guard.py",
     "docs/ops/verify/scene_observability_troubleshooting.md"
   ],
   "exempt_paths": [

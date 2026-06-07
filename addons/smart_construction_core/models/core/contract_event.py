@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import _, api, fields, models
-from odoo.exceptions import ValidationError
+from odoo.exceptions import UserError, ValidationError
 
 
 class ScContractEvent(models.Model):
@@ -65,21 +65,46 @@ class ScContractEvent(models.Model):
                 raise ValidationError(_("税额不能为负数。"))
 
     def action_submit(self):
-        self.write({"state": "submitted"})
+        for rec in self:
+            if rec.state not in ("draft", "rejected"):
+                raise UserError(_("只有草稿或已驳回的合同履约事件可以提交。"))
+            rec._check_business_anchor()
+            rec.write({"state": "submitted"})
         return True
 
     def action_approve(self):
-        self.write({"state": "approved"})
+        for rec in self:
+            if rec.state != "submitted":
+                raise UserError(_("只有已提交的合同履约事件可以审批。"))
+            rec._check_business_anchor()
+            rec.write({"state": "approved"})
         return True
 
     def action_reject(self):
-        self.write({"state": "rejected"})
+        for rec in self:
+            if rec.state != "submitted":
+                raise UserError(_("只有已提交的合同履约事件可以驳回。"))
+            rec.write({"state": "rejected"})
         return True
 
     def action_done(self):
-        self.write({"state": "done"})
+        for rec in self:
+            if rec.state != "approved":
+                raise UserError(_("只有已审批的合同履约事件可以完成。"))
+            rec._check_business_anchor()
+            rec.write({"state": "done"})
         return True
 
     def action_cancel(self):
-        self.write({"state": "cancel"})
+        for rec in self:
+            if rec.state not in ("draft", "submitted", "rejected"):
+                raise UserError(_("只有草稿、已提交或已驳回的合同履约事件可以取消。"))
+            rec.write({"state": "cancel"})
         return True
+
+    def _check_business_anchor(self):
+        for rec in self:
+            if not rec.event_date:
+                raise UserError(_("合同履约事件必须填写事件日期。"))
+            if rec.contract_id and rec.contract_id.project_id != rec.project_id:
+                raise UserError(_("合同履约事件的合同必须属于当前项目。"))
