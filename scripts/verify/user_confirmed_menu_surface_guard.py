@@ -13,6 +13,7 @@ from odoo.addons.smart_core.delivery.delivery_engine import DeliveryEngine
 from odoo.addons.smart_core.delivery.product_policy_service import ProductPolicyService
 from odoo.addons.smart_core.handlers.system_init import (
     _apply_user_menu_config_to_delivery_nav,
+    _dedupe_nav_siblings_by_identity,
     _filter_nav_by_release_gate,
     _filter_nav_for_user_data_acceptance_only,
     _load_platform_release_gate,
@@ -215,6 +216,7 @@ def _runtime_delivery_nav_for_login(login: str) -> list[dict]:
     delivery_nav, _config_meta = _apply_user_menu_config_to_delivery_nav(user_env, delivery_nav)
     delivery_nav = _unwrap_internal_nav_groups(delivery_nav, {"产品发布面", "正式业务菜单"})
     delivery_nav = _rehome_business_master_data_nav_groups(delivery_nav)
+    delivery_nav = _dedupe_nav_siblings_by_identity(delivery_nav)
     return _sort_business_nav_groups(delivery_nav)
 
 

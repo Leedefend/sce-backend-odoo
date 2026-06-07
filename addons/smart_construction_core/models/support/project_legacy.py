@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from odoo import fields, models
+from odoo import api, fields, models
 
 
 class ProjectProject(models.Model):
@@ -8,6 +8,8 @@ class ProjectProject(models.Model):
 
     # Migration carriers used by replay scripts. Business-useful values are
     # labeled as product fields; source/provenance values stay as history facts.
+    partner_id = fields.Many2one("res.partner", string="关联单位")
+    sc_partner_display_name = fields.Char(string="关联单位", compute="_compute_sc_partner_display_name")
     short_name = fields.Char(string="项目简称")
     project_environment = fields.Char(string="项目环境")
     legacy_project_id = fields.Char(string="历史项目ID", index=True)
@@ -35,9 +37,9 @@ class ProjectProject(models.Model):
     legacy_sort = fields.Char(string="历史排序")
     legacy_note = fields.Text(string="备注")
     legacy_attachment_ref = fields.Char(string="历史附件引用")
-    legacy_source_created_by = fields.Char(string="历史录入人")
+    legacy_source_created_by = fields.Char(string="原始录入人")
     legacy_source_created_by_id = fields.Char(string="历史录入人ID", index=True)
-    legacy_source_created_at = fields.Char(string="历史录入时间")
+    legacy_source_created_at = fields.Char(string="录入时间")
     legacy_source_updated_by = fields.Char(string="历史修改人")
     legacy_source_updated_by_id = fields.Char(string="历史修改人ID", index=True)
     legacy_source_updated_at = fields.Char(string="历史修改时间")
@@ -70,3 +72,8 @@ class ProjectProject(models.Model):
     legacy_xqrgzxzr = fields.Char(string="确认协作人")
     legacy_project_manager_name = fields.Char(string="项目经理姓名")
     legacy_technical_responsibility_name = fields.Char(string="技术负责人")
+
+    @api.depends("partner_id", "partner_id.display_name")
+    def _compute_sc_partner_display_name(self):
+        for project in self:
+            project.sc_partner_display_name = project.partner_id.display_name or ""

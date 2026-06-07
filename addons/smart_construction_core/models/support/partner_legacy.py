@@ -87,7 +87,7 @@ class ResPartner(models.Model):
         string="供应商类型",
     )
     sc_supplier_type_label = fields.Char(
-        string="供应商类型文本",
+        string="供应商类型",
         compute="_compute_sc_supplier_type_label",
         store=True,
         readonly=True,
@@ -103,7 +103,7 @@ class ResPartner(models.Model):
     sc_source_partner_code = fields.Char(string="单位编号", index=True)
     sc_source_document_state = fields.Char(string="单据状态", index=True)
     sc_source_push_result = fields.Char(string="推送结果", index=True)
-    sc_source_project_name = fields.Text(string="项目名称")
+    sc_source_project_name = fields.Text(string="关联项目")
     sc_source_cooperation_type = fields.Char(string="合作类型", index=True)
     sc_source_fact_count = fields.Integer(string="业务事实数")
     sc_source_fact_source = fields.Char(string="关联业务范围")

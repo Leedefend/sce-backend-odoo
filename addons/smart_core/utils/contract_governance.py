@@ -2766,12 +2766,17 @@ def _ensure_scene_contract_v1_envelope(data: dict) -> None:
 
 def _business_field_label(field_name: str, current_label: Any = "") -> str:
     name = _safe_text(field_name)
+    label = _safe_text(current_label)
     if not name:
-        return _safe_text(current_label)
+        return label
+    if label == "CODEX_PARTNER_COLUMN":
+        return "关联单位"
+    if label == "CODEX_NAME_COLUMN":
+        return "名称"
     override = _BUSINESS_FIELD_LABEL_OVERRIDES.get(name)
     if override:
         return override
-    return _safe_text(current_label)
+    return label
 
 
 def _normalize_business_field_labels(data: dict) -> None:

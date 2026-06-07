@@ -23,7 +23,7 @@
         <field name="document_date"/>
         <field name="document_no"/>
         <field name="project_id"/>
-        <field name="project_name" optional="hide"/>
+        <field name="project_name" string="项目名称" optional="show"/>
         <field name="card_no"/>
         <field name="initial_amount" sum="初始金额合计"/>
         <field name="balance_amount" sum="余额合计"/>
@@ -73,7 +73,7 @@
         <field name="document_date"/>
         <field name="document_no"/>
         <field name="project_id"/>
-        <field name="project_name" optional="hide"/>
+        <field name="project_name" string="项目名称" optional="show"/>
         <field name="card_no"/>
         <field name="recharge_amount" sum="充值金额合计"/>
         <field name="used_amount" sum="已使用金额合计"/>

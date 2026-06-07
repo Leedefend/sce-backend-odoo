@@ -2,6 +2,17 @@
 from ..core.base_handler import BaseIntentHandler
 
 
+USER_CONFIRMED_FORMAL_LIST_ACTION_IDS = {
+    506, 525, 529, 530, 531, 545, 549, 565, 566, 615,
+    642, 644, 645, 646, 647, 669, 701, 751, 752, 753,
+    754, 756, 757, 758, 759, 761, 762, 764, 768, 769,
+    770, 771, 772, 773, 776, 777, 778, 779, 780, 781,
+    782, 783, 784, 786, 787, 805, 814, 841, 859, 862,
+    868, 869, 871, 901, 902, 906, 907, 935, 936, 949,
+    963, 964,
+}
+
+
 class UserViewPreferenceGetHandler(BaseIntentHandler):
     INTENT_TYPE = "user.view.preference.get"
     DESCRIPTION = "读取当前用户视图偏好"
@@ -191,7 +202,7 @@ class UserViewPreferenceGetHandler(BaseIntentHandler):
         except Exception:
             return {}
 
-    def _apply_list_preference_policy(self, payload, *, list_profile):
+    def _apply_list_preference_policy(self, payload, *, list_profile, action_id=0):
         value = payload if isinstance(payload, dict) else {}
         profile = list_profile if isinstance(list_profile, dict) else {}
         columns = self._sanitize_list(profile.get("columns"), max_size=200)
@@ -203,6 +214,11 @@ class UserViewPreferenceGetHandler(BaseIntentHandler):
         allow_width = policy.get("allow_width") is not False
         locked = set(self._sanitize_list(policy.get("locked_columns"), max_size=200))
         must_request = set(self._sanitize_list(policy.get("must_request_columns"), max_size=200))
+        formal_locked = int(action_id or 0) in USER_CONFIRMED_FORMAL_LIST_ACTION_IDS
+        if formal_locked:
+            allow_visibility = False
+            locked.update(columns or fact_columns)
+            must_request.update(columns or fact_columns)
         # Scope boundary:
         # - fact_columns / must_request_columns: data request contract only
         # - locked_columns: UI visibility constraint
@@ -240,18 +256,26 @@ class UserViewPreferenceGetHandler(BaseIntentHandler):
             "column_widths": widths,
         }
 
-    def _build_preference_contract_meta(self, *, list_profile):
+    def _build_preference_contract_meta(self, *, list_profile, action_id=0):
         profile = list_profile if isinstance(list_profile, dict) else {}
         policy = profile.get("preference_policy") if isinstance(profile.get("preference_policy"), dict) else {}
+        try:
+            action_id = int(action_id or 0)
+        except Exception:
+            action_id = 0
+        formal_locked = action_id in USER_CONFIRMED_FORMAL_LIST_ACTION_IDS
+        locked_columns = self._sanitize_list(policy.get("locked_columns"), max_size=200)
+        if formal_locked:
+            locked_columns = self._sanitize_list(profile.get("columns"), max_size=200) or locked_columns
         return {
             "columns": self._sanitize_list(profile.get("columns"), max_size=200),
             "fact_columns": self._sanitize_list(profile.get("fact_columns"), max_size=200),
             "preference_policy": {
                 "scope": str(policy.get("scope") or "ui_only"),
-                "allow_visibility": policy.get("allow_visibility") is not False,
+                "allow_visibility": False if formal_locked else policy.get("allow_visibility") is not False,
                 "allow_order": policy.get("allow_order") is not False,
                 "allow_width": policy.get("allow_width") is not False,
-                "locked_columns": self._sanitize_list(policy.get("locked_columns"), max_size=200),
+                "locked_columns": locked_columns,
                 "must_request_columns": self._sanitize_list(policy.get("must_request_columns"), max_size=200),
             },
         }
@@ -296,7 +320,7 @@ class UserViewPreferenceGetHandler(BaseIntentHandler):
             )
         value = self._sanitize_preference(preference_key, record.value_json if record else {})
         if preference_key == "list_columns":
-            value = self._apply_list_preference_policy(value, list_profile=list_profile)
+            value = self._apply_list_preference_policy(value, list_profile=list_profile, action_id=action_id)
         return {
             "ok": True,
             "data": {
@@ -306,7 +330,10 @@ class UserViewPreferenceGetHandler(BaseIntentHandler):
             "meta": {
                 "intent": self.INTENT_TYPE,
                 "version": self.VERSION,
-                "preference_contract": self._build_preference_contract_meta(list_profile=list_profile),
+                "preference_contract": self._build_preference_contract_meta(
+                    list_profile=list_profile,
+                    action_id=action_id,
+                ),
                 **self._source_meta(),
             },
         }
@@ -344,7 +371,7 @@ class UserViewPreferenceSetHandler(UserViewPreferenceGetHandler):
                 model_name=model_name,
                 view_type=view_type,
             )
-            value = self._apply_list_preference_policy(value, list_profile=list_profile)
+            value = self._apply_list_preference_policy(value, list_profile=list_profile, action_id=action_id)
         Preference = self.env["sc.user.view.preference"]
         record = Preference.search([
             ("user_id", "=", self.env.uid),
@@ -373,7 +400,10 @@ class UserViewPreferenceSetHandler(UserViewPreferenceGetHandler):
             "meta": {
                 "intent": self.INTENT_TYPE,
                 "version": self.VERSION,
-                "preference_contract": self._build_preference_contract_meta(list_profile=list_profile),
+                "preference_contract": self._build_preference_contract_meta(
+                    list_profile=list_profile,
+                    action_id=action_id,
+                ),
                 **self._source_meta(),
             },
         }

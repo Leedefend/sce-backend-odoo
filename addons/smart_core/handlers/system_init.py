@@ -1168,6 +1168,70 @@ def _sort_business_nav_groups(nav: list[dict]) -> list[dict]:
     return sorted(sorted_nodes, key=sort_key)
 
 
+def _dedupe_nav_siblings_by_identity(nav: list[dict]) -> list[dict]:
+    if not isinstance(nav, list):
+        return []
+
+    def node_menu_xmlid(node: dict) -> str:
+        meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+        return _text(node.get("menu_xmlid") or meta.get("menu_xmlid") or meta.get("menu_key"))
+
+    def node_identity(node: dict) -> str:
+        meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+        target = node.get("target") if isinstance(node.get("target"), dict) else {}
+        return _text(
+            node.get("menu_id")
+            or meta.get("menu_id")
+            or target.get("menu_id")
+            or node_menu_xmlid(node)
+            or node.get("key")
+        )
+
+    def merge_node(base: dict, incoming: dict) -> dict:
+        merged = dict(base)
+        for key, value in incoming.items():
+            if key in {"children", "meta"}:
+                continue
+            if merged.get(key) in (None, "", [], {}):
+                merged[key] = value
+        base_meta = merged.get("meta") if isinstance(merged.get("meta"), dict) else {}
+        incoming_meta = incoming.get("meta") if isinstance(incoming.get("meta"), dict) else {}
+        if incoming_meta:
+            next_meta = dict(incoming_meta)
+            next_meta.update(base_meta)
+            merged["meta"] = next_meta
+        children = []
+        if isinstance(base.get("children"), list):
+            children.extend(base.get("children") or [])
+        if isinstance(incoming.get("children"), list):
+            children.extend(incoming.get("children") or [])
+        if children:
+            merged["children"] = dedupe(children)
+        return merged
+
+    def dedupe(nodes: list[dict]) -> list[dict]:
+        out = []
+        by_identity = {}
+        for node in nodes or []:
+            if not isinstance(node, dict):
+                continue
+            next_node = dict(node)
+            children = next_node.get("children") if isinstance(next_node.get("children"), list) else []
+            if children:
+                next_node["children"] = dedupe(children)
+            identity = node_identity(next_node)
+            if identity and identity in by_identity:
+                index = by_identity[identity]
+                out[index] = merge_node(out[index], next_node)
+                continue
+            if identity:
+                by_identity[identity] = len(out)
+            out.append(next_node)
+        return out
+
+    return dedupe(nav)
+
+
 def _rehome_business_master_data_nav_groups(nav: list[dict]) -> list[dict]:
     if not isinstance(nav, list):
         return []
@@ -1779,6 +1843,7 @@ class SystemInitHandler(BaseIntentHandler):
             delivery_nav, post_append_user_menu_config_meta = _apply_user_menu_config_to_delivery_nav(env, delivery_nav)
             delivery_nav = _unwrap_internal_nav_groups(delivery_nav, {"产品发布面", "正式业务菜单"})
             delivery_nav = _rehome_business_master_data_nav_groups(delivery_nav)
+            delivery_nav = _dedupe_nav_siblings_by_identity(delivery_nav)
             delivery_nav = _sort_business_nav_groups(delivery_nav)
             if isinstance(user_data_acceptance_meta, dict):
                 user_data_acceptance_meta["source_user_check_menu_hidden"] = True

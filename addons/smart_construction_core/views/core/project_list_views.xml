@@ -5,6 +5,7 @@
         <field name="model">project.project</field>
         <field name="arch" type="xml">
             <tree string="项目台账" default_order="write_date desc, id desc">
+                <field name="sc_partner_display_name" string="关联单位" optional="show"/>
                 <field name="name"/>
                 <field name="project_code" string="项目编号"/>
                 <field name="operation_strategy" string="经营方式"/>

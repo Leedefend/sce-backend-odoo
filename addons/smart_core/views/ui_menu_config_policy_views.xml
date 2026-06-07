@@ -25,13 +25,13 @@
     <field name="model">ui.menu.config.policy</field>
     <field name="arch" type="xml">
       <tree string="菜单配置" create="1" edit="1" delete="1" default_order="menu_id, id desc">
-        <field name="menu_id"/>
-        <field name="current_parent_menu_id"/>
-        <field name="target_parent_menu_id"/>
-        <field name="effect_summary"/>
-        <field name="scope_summary"/>
-        <field name="visible"/>
-        <field name="active"/>
+        <field name="menu_id" string="菜单"/>
+        <field name="current_parent_menu_id" string="当前所属分组"/>
+        <field name="target_parent_menu_id" string="调整到菜单分组"/>
+        <field name="effect_summary" string="配置结果"/>
+        <field name="scope_summary" string="适用范围"/>
+        <field name="visible" string="显示菜单"/>
+        <field name="active" string="启用"/>
       </tree>
     </field>
   </record>
@@ -85,6 +85,8 @@
     <field name="name">菜单配置</field>
     <field name="res_model">ui.menu.config.policy</field>
     <field name="view_mode">tree,form</field>
+    <field name="view_id" ref="smart_core.view_ui_menu_config_policy_tree"/>
+    <field name="view_ids" eval="[(5, 0, 0), (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_core.view_ui_menu_config_policy_tree')}), (0, 0, {'view_mode': 'form', 'view_id': ref('smart_core.view_ui_menu_config_policy_form')})]"/>
     <field name="search_view_id" ref="smart_core.view_ui_menu_config_policy_search"/>
     <field name="context">{'search_default_visible': 1}</field>
     <field name="groups_id" eval="[(6, 0, [
