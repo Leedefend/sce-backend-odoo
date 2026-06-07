@@ -28,6 +28,9 @@
                     <field name="summary"/>
                     <field name="amount" sum="申请金额合计"/>
                     <field name="approved_amount" sum="批准金额合计"/>
+                    <field name="paid_amount" sum="已付款金额合计"/>
+                    <field name="unpaid_amount" sum="未付款金额合计"/>
+                    <field name="payment_state"/>
                     <field name="legacy_document_no"/>
                     <field name="legacy_document_state"/>
                     <field name="creator_name" optional="show"/>
@@ -75,6 +78,9 @@
                             <group>
                                 <field name="amount" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="approved_amount" readonly="state in ['done', 'legacy_confirmed', 'cancel']"/>
+                                <field name="paid_amount" readonly="state in ['done', 'legacy_confirmed', 'cancel']"/>
+                                <field name="unpaid_amount" readonly="1"/>
+                                <field name="payment_state" readonly="state in ['done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="currency_id" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']" invisible="1"/>
                                 <field name="active"/>
                             </group>
@@ -91,6 +97,7 @@
                             </group>
                             <group string="申请与收款">
                                 <field name="applicant_name" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
+                                <field name="department_name" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="payee" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="receipt_account_name" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="payee_account" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
@@ -109,9 +116,14 @@
                         <group string="费用说明">
                             <field name="expense_type" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                             <field name="summary" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
+                            <field name="legacy_visible_title" readonly="1" invisible="not legacy_visible_title"/>
+                            <field name="legacy_visible_adjustment_item" readonly="1" invisible="not legacy_visible_adjustment_item"/>
                         </group>
                         <group>
                             <field name="note"/>
+                            <field name="legacy_visible_push_result" readonly="1" invisible="not legacy_visible_push_result"/>
+                            <field name="legacy_document_no" readonly="1" invisible="not legacy_document_no"/>
+                            <field name="legacy_document_state" readonly="1" invisible="not legacy_document_state"/>
                             <field name="creator_name" readonly="1"/>
                             <field name="creator_legacy_user_id" readonly="1"/>
                             <field name="created_time" readonly="1"/>

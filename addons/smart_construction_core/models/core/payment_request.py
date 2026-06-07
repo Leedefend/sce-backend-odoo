@@ -243,6 +243,16 @@ class PaymentRequest(models.Model):
         readonly=True,
         index=True,
     )
+    legacy_visible_actual_payee_unit = fields.Char(
+        string="历史可见实际收款单位",
+        readonly=True,
+        index=True,
+    )
+    legacy_visible_payer_unit = fields.Char(
+        string="历史可见付款单位",
+        readonly=True,
+        index=True,
+    )
     legacy_visible_request_amount = fields.Char(
         string="历史申请付款金额",
         readonly=True,
@@ -256,6 +266,11 @@ class PaymentRequest(models.Model):
     )
     legacy_visible_cost_category_name = fields.Char(
         string="历史成本分类名称",
+        readonly=True,
+        index=True,
+    )
+    legacy_visible_cost_type = fields.Char(
+        string="历史类型（成本）",
         readonly=True,
         index=True,
     )

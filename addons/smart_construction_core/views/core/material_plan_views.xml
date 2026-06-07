@@ -144,6 +144,8 @@
         <field name="name">物资计划</field>
         <field name="res_model">project.material.plan</field>
         <field name="view_mode">tree,form</field>
+        <field name="domain">[('legacy_fact_model', '=', 'online_old_scbsly:direct_acceptance_fact'), ('legacy_fact_type', '=', 'direct_acceptance:材料计划')]</field>
+        <field name="context">{'create': False, 'search_default_active_rows': 1}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_business_initiator')), (4, ref('smart_construction_core.group_sc_cap_material_user')), (4, ref('smart_construction_core.group_sc_cap_material_manager'))]"/>
     </record>
 

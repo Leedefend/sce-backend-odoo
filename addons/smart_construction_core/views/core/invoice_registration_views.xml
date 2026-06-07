@@ -10,6 +10,7 @@
                     <field name="source_kind"/>
                     <field name="direction"/>
                     <field name="document_no"/>
+                    <field name="application_date"/>
                     <field name="invoice_no"/>
                     <field name="invoice_code"/>
                     <field name="project_id"/>
@@ -65,11 +66,16 @@
                     <field name="tax_rate"/>
                     <field name="invoice_company_type"/>
                     <field name="invoice_issue_company"/>
+                    <field name="actual_invoice_issue_company"/>
+                    <field name="recipient_unit_name"/>
+                    <field name="caliber"/>
+                    <field name="invoice_state"/>
                     <field name="invoice_provider_name"/>
                     <field name="invoice_content"/>
                     <field name="amount_no_tax" sum="不含税金额"/>
                     <field name="tax_amount" sum="税额"/>
                     <field name="amount_total" sum="价税合计"/>
+                    <field name="actual_invoice_amount" optional="show" sum="实开总金额"/>
                     <field name="surcharge_amount" optional="show" sum="附加税"/>
                     <field name="invoice_count" optional="show" sum="开票张数"/>
                     <field name="related_receipt_amount" optional="show" sum="关联回款金额"/>
@@ -127,6 +133,7 @@
                                 <field name="direction" readonly="state == 'legacy_confirmed'"/>
                                 <field name="document_no" readonly="state == 'legacy_confirmed'"/>
                                 <field name="document_date" required="1" readonly="state == 'legacy_confirmed'"/>
+                                <field name="application_date" readonly="state == 'legacy_confirmed'"/>
                             </group>
                             <group>
                                 <field name="project_id" readonly="state == 'legacy_confirmed'"/>
@@ -137,6 +144,7 @@
                             </group>
                         </group>
                         <group string="发票">
+                            <field name="invoice_state" readonly="state == 'legacy_confirmed'"/>
                             <field name="invoice_date" readonly="state == 'legacy_confirmed'"/>
                             <field name="recognition_date" readonly="state == 'legacy_confirmed'"/>
                             <field name="invoice_no" readonly="state == 'legacy_confirmed'"/>
@@ -147,7 +155,10 @@
                             <field name="prepaid_tax_date" readonly="state == 'legacy_confirmed'"/>
                             <field name="tax_certificate_no" readonly="state == 'legacy_confirmed'"/>
                             <field name="invoice_company_type" readonly="state == 'legacy_confirmed'"/>
+                            <field name="recipient_unit_name" readonly="state == 'legacy_confirmed'"/>
+                            <field name="caliber" readonly="state == 'legacy_confirmed'"/>
                             <field name="invoice_issue_company" readonly="state == 'legacy_confirmed'"/>
+                            <field name="actual_invoice_issue_company" readonly="state == 'legacy_confirmed'"/>
                             <field name="invoice_provider_name" readonly="state == 'legacy_confirmed'"/>
                             <field name="invoice_content" readonly="state == 'legacy_confirmed'"/>
                             <field name="cost_category_name" readonly="state == 'legacy_confirmed'"/>
@@ -157,6 +168,7 @@
                             <field name="amount_no_tax" readonly="state == 'legacy_confirmed'"/>
                             <field name="tax_amount" readonly="state == 'legacy_confirmed'"/>
                             <field name="amount_total" readonly="state == 'legacy_confirmed'"/>
+                            <field name="actual_invoice_amount" readonly="state == 'legacy_confirmed'"/>
                             <field name="surcharge_amount" readonly="state == 'legacy_confirmed'"/>
                             <field name="related_receipt_amount" readonly="state == 'legacy_confirmed'"/>
                             <field name="contract_amount" readonly="state == 'legacy_confirmed'"/>
@@ -179,6 +191,7 @@
                             <field name="creator_name" readonly="1"/>
                             <field name="creator_legacy_user_id" readonly="1"/>
                             <field name="created_time" readonly="1"/>
+                            <field name="legacy_attachment_ref" readonly="1"/>
                             <field name="attachment_ids" widget="many2many_binary"/>
                             <field name="active"/>
                         </group>

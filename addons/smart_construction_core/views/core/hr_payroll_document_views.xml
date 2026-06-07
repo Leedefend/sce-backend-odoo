@@ -49,10 +49,14 @@
           <field name="name"/>
           <field name="employee_user_id" optional="show"/>
           <field name="employee_name" optional="show"/>
+          <field name="employee_status" optional="show"/>
+          <field name="employee_type" optional="show"/>
           <field name="department_id"/>
           <field name="period_year" optional="show"/>
           <field name="period_month" optional="show"/>
           <field name="payer_unit" optional="show"/>
+          <field name="payout_unit" optional="show"/>
+          <field name="people_count" optional="show" sum="人数合计"/>
           <field name="social_security_base" optional="show" sum="社保基数合计"/>
           <field name="company_amount" optional="show" sum="公司承担合计"/>
           <field name="individual_amount" optional="show" sum="个人承担合计"/>
@@ -61,6 +65,7 @@
           <field name="deduction_amount" optional="show" sum="扣款合计"/>
           <field name="net_salary" optional="show" sum="实发工资合计"/>
           <field name="amount" optional="show" sum="金额合计"/>
+          <field name="certificate_fee" optional="show" sum="证书费用合计"/>
           <field name="item_type" optional="show"/>
           <field name="occurrence_date" optional="show"/>
           <field name="legacy_document_no" optional="hide"/>
@@ -95,7 +100,10 @@
               <group string="人员">
                 <field name="employee_user_id"/>
                 <field name="employee_name"/>
+                <field name="employee_status"/>
+                <field name="employee_type"/>
                 <field name="id_number"/>
+                <field name="contact_phone"/>
               </group>
             </group>
             <group>
@@ -103,19 +111,25 @@
                 <field name="period_year" required="fact_type in ['social_person_registration', 'social_registration']"/>
                 <field name="period_month" required="fact_type in ['social_person_registration', 'social_registration']"/>
                 <field name="payer_unit" required="fact_type in ['social_person_registration', 'social_registration']"/>
+                <field name="people_count"/>
                 <field name="social_security_base" required="fact_type == 'social_person_registration'"/>
                 <field name="company_amount" required="fact_type == 'social_registration'"/>
                 <field name="individual_amount" required="fact_type == 'social_registration'"/>
+                <field name="certificate_fee"/>
               </group>
               <group string="工资" invisible="fact_type != 'salary_registration'">
                 <field name="period_year" required="fact_type == 'salary_registration'"/>
                 <field name="period_month" required="fact_type == 'salary_registration'"/>
+                <field name="payout_unit"/>
+                <field name="people_count"/>
                 <field name="salary_base"/>
                 <field name="gross_amount" required="fact_type == 'salary_registration'"/>
                 <field name="deduction_amount"/>
                 <field name="net_salary" required="fact_type == 'salary_registration'"/>
               </group>
               <group string="补助/奖金" invisible="fact_type not in ['subsidy', 'bonus']">
+                <field name="payout_unit"/>
+                <field name="people_count"/>
                 <field name="item_type" required="fact_type in ['subsidy', 'bonus']"/>
                 <field name="amount" required="fact_type in ['subsidy', 'bonus']"/>
                 <field name="occurrence_date" required="fact_type in ['subsidy', 'bonus']"/>
@@ -138,6 +152,9 @@
               <page string="说明">
                 <field name="description"/>
                 <field name="result_note"/>
+              </page>
+              <page string="附件">
+                <field name="attachment_ids" widget="many2many_binary"/>
               </page>
             </notebook>
           </sheet>

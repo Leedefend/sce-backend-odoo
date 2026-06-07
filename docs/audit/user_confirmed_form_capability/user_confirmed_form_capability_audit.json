@@ -1,0 +1,2772 @@
+{
+  "summary": {
+    "audit": "user_confirmed_form_capability_audit",
+    "baseline": "/mnt/scripts/verify/baselines/user_confirmed_formal_menu_policy_62.json",
+    "product_key": "construction.standard",
+    "menus": 62,
+    "models": 36,
+    "severity_counts": {
+      "ok": 62
+    },
+    "gap_counts": {},
+    "top_reused_models": [
+      [
+        "sc.expense.claim",
+        7
+      ],
+      [
+        "sc.hr.payroll.document",
+        5
+      ],
+      [
+        "tender.guarantee",
+        4
+      ],
+      [
+        "sc.invoice.registration",
+        4
+      ],
+      [
+        "res.partner",
+        2
+      ],
+      [
+        "construction.contract.expense",
+        2
+      ],
+      [
+        "sc.settlement.order",
+        2
+      ],
+      [
+        "sc.legacy.direct.acceptance.fact",
+        2
+      ],
+      [
+        "sc.labor.usage",
+        2
+      ],
+      [
+        "sc.receipt.income",
+        2
+      ]
+    ],
+    "status": "PASS"
+  },
+  "rows": [
+    {
+      "group": "基础资料",
+      "menu": "客户",
+      "menu_xmlid": "smart_construction_core.menu_sc_customer_partner",
+      "action_id": 786,
+      "action_exists": true,
+      "action_name": "客户",
+      "model": "res.partner",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 58,
+      "list_fields": 35,
+      "list_fields_missing_on_form": [],
+      "has_state_field": false,
+      "has_statusbar": false,
+      "statusbar_fields": [],
+      "business_methods": [
+        "action_archive",
+        "action_privacy_lookup",
+        "action_sc_align_partner_roles_from_business_facts",
+        "action_signup_prepare",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_open_sc_partner_business_fact_lines",
+        "action_open_source_record"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_privacy_lookup",
+        "action_sc_align_partner_roles_from_business_facts",
+        "action_signup_prepare",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "基础资料",
+      "menu": "供应商",
+      "menu_xmlid": "smart_construction_core.menu_sc_supplier_partner",
+      "action_id": 787,
+      "action_exists": true,
+      "action_name": "供应商",
+      "model": "res.partner",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 61,
+      "list_fields": 35,
+      "list_fields_missing_on_form": [],
+      "has_state_field": false,
+      "has_statusbar": false,
+      "statusbar_fields": [],
+      "business_methods": [
+        "action_archive",
+        "action_privacy_lookup",
+        "action_sc_align_partner_roles_from_business_facts",
+        "action_signup_prepare",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_open_sc_partner_business_fact_lines",
+        "action_open_source_record"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_privacy_lookup",
+        "action_sc_align_partner_roles_from_business_facts",
+        "action_signup_prepare",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "项目中心",
+      "menu": "项目台账",
+      "menu_xmlid": "smart_construction_core.menu_sc_project_project",
+      "action_id": 506,
+      "action_exists": true,
+      "action_name": "项目台账",
+      "model": "project.project",
+      "view_mode": "tree,kanban,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": false,
+      "form_edit_enabled": false,
+      "form_fields": 20,
+      "list_fields": 10,
+      "list_fields_missing_on_form": [],
+      "has_state_field": false,
+      "has_statusbar": false,
+      "statusbar_fields": [],
+      "business_methods": [
+        "action_archive",
+        "action_generate_structure_from_boq",
+        "action_generate_wbs_from_boq",
+        "action_get_list_view",
+        "action_portal_demo_ping",
+        "action_profitability_items",
+        "action_project_sharing",
+        "action_project_task_burndown_chart_report",
+        "action_project_timesheets",
+        "action_rebuild_boq_hierarchy",
+        "action_sc_stage_sync",
+        "action_sc_submit",
+        "action_set_lifecycle_state",
+        "action_set_state",
+        "action_share",
+        "action_unarchive",
+        "action_validate_boq"
+      ],
+      "form_buttons": [
+        "556",
+        "action_sc_submit",
+        "action_view_stage_requirements",
+        "577",
+        "512",
+        "673",
+        "action_view_my_tasks"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_generate_structure_from_boq",
+        "action_generate_wbs_from_boq",
+        "action_get_list_view",
+        "action_portal_demo_ping",
+        "action_profitability_items",
+        "action_project_sharing",
+        "action_project_task_burndown_chart_report",
+        "action_project_timesheets",
+        "action_rebuild_boq_hierarchy",
+        "action_sc_stage_sync",
+        "action_set_lifecycle_state",
+        "action_set_state",
+        "action_share",
+        "action_unarchive",
+        "action_validate_boq"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "项目中心",
+      "menu": "投标报名管理",
+      "menu_xmlid": "smart_construction_core.menu_sc_tender_registration",
+      "action_id": 565,
+      "action_exists": true,
+      "action_name": "投标报名管理",
+      "model": "tender.bid",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 63,
+      "list_fields": 7,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_mark_lost",
+        "action_mark_won",
+        "action_to_estimating",
+        "action_to_prepare",
+        "action_to_submitted",
+        "action_to_waiting",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_to_estimating",
+        "action_to_submitted",
+        "action_to_waiting",
+        "action_mark_won",
+        "action_mark_lost",
+        "action_to_prepare",
+        "514"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "项目中心",
+      "menu": "投标报名费申请",
+      "menu_xmlid": "smart_construction_core.menu_sc_tender_registration_fee",
+      "action_id": 566,
+      "action_exists": true,
+      "action_name": "投标报名费申请",
+      "model": "tender.doc.purchase",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 19,
+      "list_fields": 14,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_approve",
+        "action_archive",
+        "action_reject",
+        "action_reset_draft",
+        "action_submit",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_submit",
+        "action_approve",
+        "action_reject",
+        "action_reset_draft"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "合同中心",
+      "menu": "一般合同（公司）",
+      "menu_xmlid": "smart_construction_core.menu_sc_general_contract",
+      "action_id": 669,
+      "action_exists": true,
+      "action_name": "一般合同（公司）",
+      "model": "sc.general.contract",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 64,
+      "list_fields": 35,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_confirm",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_signed",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_confirm",
+        "validate_tier",
+        "reject_tier"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_cancel",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_signed",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "合同中心",
+      "menu": "补充合同",
+      "menu_xmlid": "smart_construction_core.menu_sc_expense_contract_supplement",
+      "action_id": 805,
+      "action_exists": true,
+      "action_name": "补充合同",
+      "model": "construction.contract.expense",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 70,
+      "list_fields": 17,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_close",
+        "action_confirm",
+        "action_generate_lines_from_budget",
+        "action_reset_draft",
+        "action_set_running",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_generate_lines_from_budget",
+        "action_confirm",
+        "validate_tier",
+        "reject_tier",
+        "action_reset_draft"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_cancel",
+        "action_close",
+        "action_set_running",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "合同中心",
+      "menu": "收入合同执行",
+      "menu_xmlid": "smart_construction_core.menu_sc_income_contract_execution",
+      "action_id": 751,
+      "action_exists": true,
+      "action_name": "收入合同执行",
+      "model": "construction.contract.income",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 67,
+      "list_fields": 25,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_close",
+        "action_confirm",
+        "action_generate_lines_from_budget",
+        "action_reset_draft",
+        "action_set_running",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_generate_lines_from_budget",
+        "action_confirm",
+        "validate_tier",
+        "reject_tier",
+        "action_reset_draft"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_cancel",
+        "action_close",
+        "action_set_running",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "合同中心",
+      "menu": "支出合同执行",
+      "menu_xmlid": "smart_construction_core.menu_sc_expense_contract_execution",
+      "action_id": 752,
+      "action_exists": true,
+      "action_name": "支出合同执行",
+      "model": "construction.contract.expense",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 70,
+      "list_fields": 22,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_close",
+        "action_confirm",
+        "action_generate_lines_from_budget",
+        "action_reset_draft",
+        "action_set_running",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_generate_lines_from_budget",
+        "action_confirm",
+        "validate_tier",
+        "reject_tier",
+        "action_reset_draft"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_cancel",
+        "action_close",
+        "action_set_running",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "合同中心",
+      "menu": "收入合同结算",
+      "menu_xmlid": "smart_construction_core.menu_sc_income_contract_settlement",
+      "action_id": 753,
+      "action_exists": true,
+      "action_name": "收入合同结算",
+      "model": "sc.settlement.order",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 83,
+      "list_fields": 18,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_approve",
+        "action_archive",
+        "action_cancel",
+        "action_done",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_submit",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_submit"
+      ],
+      "business_methods_missing_buttons": [
+        "action_approve",
+        "action_archive",
+        "action_cancel",
+        "action_done",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "合同中心",
+      "menu": "支出合同结算",
+      "menu_xmlid": "smart_construction_core.menu_sc_expense_contract_settlement",
+      "action_id": 754,
+      "action_exists": true,
+      "action_name": "支出合同结算",
+      "model": "sc.settlement.order",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 83,
+      "list_fields": 18,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_approve",
+        "action_archive",
+        "action_cancel",
+        "action_done",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_submit",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_submit"
+      ],
+      "business_methods_missing_buttons": [
+        "action_approve",
+        "action_archive",
+        "action_cancel",
+        "action_done",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "施工管理",
+      "menu": "施工日志",
+      "menu_xmlid": "smart_construction_core.menu_sc_construction_diary",
+      "action_id": 701,
+      "action_exists": true,
+      "action_name": "施工日志（新）",
+      "model": "sc.construction.diary",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 50,
+      "list_fields": 11,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_confirm",
+        "action_done",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_confirm",
+        "action_done",
+        "action_cancel"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "物资与分包",
+      "menu": "材料计划",
+      "menu_xmlid": "smart_construction_core.menu_project_material_plan",
+      "action_id": 525,
+      "action_exists": true,
+      "action_name": "物资计划",
+      "model": "project.material.plan",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 42,
+      "list_fields": 14,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_approve",
+        "action_archive",
+        "action_cancel",
+        "action_done",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_reject",
+        "action_submit",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_submit",
+        "validate_tier",
+        "reject_tier",
+        "action_view_purchase_orders",
+        "action_view_purchase_lines"
+      ],
+      "business_methods_missing_buttons": [
+        "action_approve",
+        "action_archive",
+        "action_cancel",
+        "action_done",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_reject",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "物资与分包",
+      "menu": "租入",
+      "menu_xmlid": "smart_construction_core.menu_sc_material_rental_in_acceptance",
+      "action_id": 935,
+      "action_exists": true,
+      "action_name": "租入",
+      "model": "sc.legacy.direct.acceptance.fact",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": false,
+      "form_edit_enabled": false,
+      "form_fields": 15,
+      "list_fields": 15,
+      "list_fields_missing_on_form": [],
+      "has_state_field": false,
+      "has_statusbar": false,
+      "statusbar_fields": [],
+      "business_methods": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "form_buttons": [],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "物资与分包",
+      "menu": "分包方单",
+      "menu_xmlid": "smart_construction_core.menu_sc_subcontract_request_acceptance",
+      "action_id": 549,
+      "action_exists": true,
+      "action_name": "分包申请",
+      "model": "sc.subcontract.request",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 43,
+      "list_fields": 33,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_approve",
+        "action_archive",
+        "action_cancel",
+        "action_reset_draft",
+        "action_submit",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_submit",
+        "action_approve",
+        "action_reset_draft",
+        "action_cancel"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "物资与分包",
+      "menu": "还租",
+      "menu_xmlid": "smart_construction_core.menu_sc_material_rental_return_acceptance",
+      "action_id": 936,
+      "action_exists": true,
+      "action_name": "还租",
+      "model": "sc.legacy.direct.acceptance.fact",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": false,
+      "form_edit_enabled": false,
+      "form_fields": 16,
+      "list_fields": 16,
+      "list_fields_missing_on_form": [],
+      "has_state_field": false,
+      "has_statusbar": false,
+      "statusbar_fields": [],
+      "business_methods": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "form_buttons": [],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "物资与分包",
+      "menu": "方单",
+      "menu_xmlid": "smart_construction_core.menu_sc_labor_usage_acceptance",
+      "action_id": 963,
+      "action_exists": true,
+      "action_name": "方单",
+      "model": "sc.labor.usage",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 32,
+      "list_fields": 13,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_confirm",
+        "action_reset_draft",
+        "action_submit",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_submit",
+        "action_confirm",
+        "action_reset_draft",
+        "action_cancel"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "物资与分包",
+      "menu": "机械台班记录",
+      "menu_xmlid": "smart_construction_core.menu_sc_equipment_shift_acceptance",
+      "action_id": 545,
+      "action_exists": true,
+      "action_name": "设备使用登记",
+      "model": "sc.equipment.usage",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 35,
+      "list_fields": 16,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_confirm",
+        "action_reset_draft",
+        "action_submit",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_submit",
+        "action_confirm",
+        "action_reset_draft",
+        "action_cancel"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "物资与分包",
+      "menu": "零星用工",
+      "menu_xmlid": "smart_construction_core.menu_sc_labor_casual_acceptance",
+      "action_id": 964,
+      "action_exists": true,
+      "action_name": "零星用工",
+      "model": "sc.labor.usage",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 32,
+      "list_fields": 15,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_confirm",
+        "action_reset_draft",
+        "action_submit",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_submit",
+        "action_confirm",
+        "action_reset_draft",
+        "action_cancel"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "物资与分包",
+      "menu": "报价单",
+      "menu_xmlid": "smart_construction_core.menu_sc_material_quote_acceptance",
+      "action_id": 531,
+      "action_exists": true,
+      "action_name": "询比价",
+      "model": "sc.material.rfq",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 55,
+      "list_fields": 19,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_create_purchase_order",
+        "action_reset_draft",
+        "action_select",
+        "action_submit",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_submit",
+        "action_select",
+        "action_create_purchase_order",
+        "action_reset_draft",
+        "action_cancel"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "物资与分包",
+      "menu": "入库单",
+      "menu_xmlid": "smart_construction_core.menu_sc_material_inbound",
+      "action_id": 529,
+      "action_exists": true,
+      "action_name": "入库",
+      "model": "sc.material.inbound",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 51,
+      "list_fields": 22,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_load_acceptance_lines",
+        "action_receive",
+        "action_reset_draft",
+        "action_submit",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_submit",
+        "action_receive",
+        "action_reset_draft",
+        "action_cancel",
+        "action_load_acceptance_lines"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "物资与分包",
+      "menu": "出库单",
+      "menu_xmlid": "smart_construction_core.menu_sc_material_outbound",
+      "action_id": 530,
+      "action_exists": true,
+      "action_name": "出库单",
+      "model": "sc.material.outbound",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 27,
+      "list_fields": 16,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_issue",
+        "action_reset_draft",
+        "action_submit",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_submit",
+        "action_issue",
+        "action_reset_draft",
+        "action_cancel"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "财务中心",
+      "menu": "收入",
+      "menu_xmlid": "smart_construction_core.menu_sc_user_income",
+      "action_id": 778,
+      "action_exists": true,
+      "action_name": "收入",
+      "model": "sc.receipt.income",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 47,
+      "list_fields": 15,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_confirm",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_received",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_confirm",
+        "validate_tier",
+        "reject_tier",
+        "action_received",
+        "action_cancel"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "财务中心",
+      "menu": "承包人还项目款",
+      "menu_xmlid": "smart_construction_core.menu_sc_contractor_project_repay",
+      "action_id": 768,
+      "action_exists": true,
+      "action_name": "承包人还项目款",
+      "model": "sc.expense.claim",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 47,
+      "list_fields": 17,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_approve",
+        "action_archive",
+        "action_cancel",
+        "action_done",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_submit",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_submit",
+        "validate_tier",
+        "reject_tier"
+      ],
+      "business_methods_missing_buttons": [
+        "action_approve",
+        "action_archive",
+        "action_cancel",
+        "action_done",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "财务中心",
+      "menu": "扣款单",
+      "menu_xmlid": "smart_construction_core.menu_sc_deduction_bill",
+      "action_id": 770,
+      "action_exists": true,
+      "action_name": "扣款单",
+      "model": "sc.tax.deduction.registration",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 34,
+      "list_fields": 10,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_confirm",
+        "action_deduct",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_confirm",
+        "action_deduct",
+        "action_cancel"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "财务中心",
+      "menu": "到款确认表",
+      "menu_xmlid": "smart_construction_core.menu_sc_arrival_confirmation",
+      "action_id": 783,
+      "action_exists": true,
+      "action_name": "到款确认表",
+      "model": "sc.legacy.fund.confirmation.document",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": false,
+      "form_edit_enabled": false,
+      "form_fields": 18,
+      "list_fields": 16,
+      "list_fields_missing_on_form": [],
+      "has_state_field": false,
+      "has_statusbar": false,
+      "statusbar_fields": [],
+      "business_methods": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "form_buttons": [],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "财务中心",
+      "menu": "资金日报表",
+      "menu_xmlid": "smart_construction_core.menu_sc_fund_daily_user_report",
+      "action_id": 784,
+      "action_exists": true,
+      "action_name": "资金日报表",
+      "model": "sc.fund.account.operation",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 37,
+      "list_fields": 13,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_confirm",
+        "action_done",
+        "action_reset_draft",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_confirm",
+        "action_done",
+        "action_cancel",
+        "action_reset_draft"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "财务中心",
+      "menu": "报销申请",
+      "menu_xmlid": "smart_construction_core.menu_sc_reimbursement_request",
+      "action_id": 764,
+      "action_exists": true,
+      "action_name": "报销申请",
+      "model": "sc.expense.claim",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 47,
+      "list_fields": 13,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_approve",
+        "action_archive",
+        "action_cancel",
+        "action_done",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_submit",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_submit",
+        "validate_tier",
+        "reject_tier"
+      ],
+      "business_methods_missing_buttons": [
+        "action_approve",
+        "action_archive",
+        "action_cancel",
+        "action_done",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "财务中心",
+      "menu": "工程进度款收入登记",
+      "menu_xmlid": "smart_construction_core.menu_sc_engineering_progress_income",
+      "action_id": 949,
+      "action_exists": true,
+      "action_name": "工程进度收款",
+      "model": "sc.receipt.income",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 47,
+      "list_fields": 13,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_confirm",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_received",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_confirm",
+        "validate_tier",
+        "reject_tier",
+        "action_received",
+        "action_cancel"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "财务中心",
+      "menu": "付款还保证金退回",
+      "menu_xmlid": "smart_construction_core.menu_sc_payment_deposit_return_refund_formal",
+      "action_id": 871,
+      "action_exists": true,
+      "action_name": "SCBS55 210 付款还保证金退回",
+      "model": "tender.guarantee",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 46,
+      "list_fields": 14,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_confirm",
+        "action_reset_draft",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_confirm",
+        "action_cancel",
+        "action_reset_draft"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "财务中心",
+      "menu": "公司财务支出",
+      "menu_xmlid": "smart_construction_core.menu_sc_company_finance_expense",
+      "action_id": 779,
+      "action_exists": true,
+      "action_name": "公司财务支出",
+      "model": "sc.expense.claim",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 47,
+      "list_fields": 12,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_approve",
+        "action_archive",
+        "action_cancel",
+        "action_done",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_submit",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_submit",
+        "validate_tier",
+        "reject_tier"
+      ],
+      "business_methods_missing_buttons": [
+        "action_approve",
+        "action_archive",
+        "action_cancel",
+        "action_done",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "财务中心",
+      "menu": "承包人借项目款",
+      "menu_xmlid": "smart_construction_core.menu_sc_contractor_project_borrow",
+      "action_id": 776,
+      "action_exists": true,
+      "action_name": "承包人借项目款",
+      "model": "sc.financing.loan",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 44,
+      "list_fields": 12,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_confirm",
+        "action_done",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_confirm",
+        "validate_tier",
+        "reject_tier",
+        "action_done",
+        "action_cancel"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "财务中心",
+      "menu": "扣款实缴登记",
+      "menu_xmlid": "smart_construction_core.menu_sc_deduction_paid",
+      "action_id": 771,
+      "action_exists": true,
+      "action_name": "扣款实缴登记",
+      "model": "sc.expense.claim",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 47,
+      "list_fields": 11,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_approve",
+        "action_archive",
+        "action_cancel",
+        "action_done",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_submit",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_submit",
+        "validate_tier",
+        "reject_tier"
+      ],
+      "business_methods_missing_buttons": [
+        "action_approve",
+        "action_archive",
+        "action_cancel",
+        "action_done",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "财务中心",
+      "menu": "支付申请",
+      "menu_xmlid": "smart_construction_core.menu_sc_user_payment_apply_acceptance",
+      "action_id": 780,
+      "action_exists": true,
+      "action_name": "支付申请",
+      "model": "payment.request",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 56,
+      "list_fields": 20,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_approval_decision",
+        "action_approve",
+        "action_archive",
+        "action_cancel",
+        "action_create_payment_execution",
+        "action_done",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_set_approved",
+        "action_submit",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_submit"
+      ],
+      "business_methods_missing_buttons": [
+        "action_approval_decision",
+        "action_approve",
+        "action_archive",
+        "action_cancel",
+        "action_done",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_set_approved",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "财务中心",
+      "menu": "进项发票",
+      "menu_xmlid": "smart_construction_core.menu_sc_invoice_input",
+      "action_id": 756,
+      "action_exists": true,
+      "action_name": "进项发票",
+      "model": "sc.invoice.registration",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 56,
+      "list_fields": 19,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_confirm",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_register",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_confirm",
+        "validate_tier",
+        "reject_tier",
+        "action_register",
+        "action_cancel"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "财务中心",
+      "menu": "预缴税款",
+      "menu_xmlid": "smart_construction_core.menu_sc_invoice_prepaid_tax_user",
+      "action_id": 759,
+      "action_exists": true,
+      "action_name": "预缴税款",
+      "model": "sc.invoice.registration",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 56,
+      "list_fields": 27,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_confirm",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_register",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_confirm",
+        "validate_tier",
+        "reject_tier",
+        "action_register",
+        "action_cancel"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "财务中心",
+      "menu": "项目借公司款登记",
+      "menu_xmlid": "smart_construction_core.menu_sc_project_borrow_company",
+      "action_id": 777,
+      "action_exists": true,
+      "action_name": "项目借公司款登记",
+      "model": "sc.financing.loan",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 44,
+      "list_fields": 17,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_confirm",
+        "action_done",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_confirm",
+        "validate_tier",
+        "reject_tier",
+        "action_done",
+        "action_cancel"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "财务中心",
+      "menu": "扣款实缴退回",
+      "menu_xmlid": "smart_construction_core.menu_sc_deduction_paid_refund",
+      "action_id": 772,
+      "action_exists": true,
+      "action_name": "扣款实缴退回",
+      "model": "sc.expense.claim",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 47,
+      "list_fields": 10,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_approve",
+        "action_archive",
+        "action_cancel",
+        "action_done",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_submit",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_submit",
+        "validate_tier",
+        "reject_tier"
+      ],
+      "business_methods_missing_buttons": [
+        "action_approve",
+        "action_archive",
+        "action_cancel",
+        "action_done",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "财务中心",
+      "menu": "项目费用报销单",
+      "menu_xmlid": "smart_construction_core.menu_sc_project_expense_claim",
+      "action_id": 773,
+      "action_exists": true,
+      "action_name": "项目费用报销单",
+      "model": "sc.expense.claim",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 47,
+      "list_fields": 17,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_approve",
+        "action_archive",
+        "action_cancel",
+        "action_done",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_submit",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_submit",
+        "validate_tier",
+        "reject_tier"
+      ],
+      "business_methods_missing_buttons": [
+        "action_approve",
+        "action_archive",
+        "action_cancel",
+        "action_done",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "财务中心",
+      "menu": "油卡登记",
+      "menu_xmlid": "smart_construction_core.menu_sc_legacy_fuel_card_fact_acceptance",
+      "action_id": 906,
+      "action_exists": true,
+      "action_name": "油卡登记",
+      "model": "sc.legacy.fuel.card.fact",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": false,
+      "form_edit_enabled": false,
+      "form_fields": 13,
+      "list_fields": 11,
+      "list_fields_missing_on_form": [],
+      "has_state_field": false,
+      "has_statusbar": false,
+      "statusbar_fields": [],
+      "business_methods": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "form_buttons": [],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "财务中心",
+      "menu": "销项开票申请",
+      "menu_xmlid": "smart_construction_core.menu_sc_invoice_application_user",
+      "action_id": 757,
+      "action_exists": true,
+      "action_name": "销项开票申请",
+      "model": "sc.invoice.registration",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 56,
+      "list_fields": 17,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_confirm",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_register",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_confirm",
+        "validate_tier",
+        "reject_tier",
+        "action_register",
+        "action_cancel"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "财务中心",
+      "menu": "销项开票登记",
+      "menu_xmlid": "smart_construction_core.menu_sc_invoice_registration_user",
+      "action_id": 758,
+      "action_exists": true,
+      "action_name": "销项开票登记",
+      "model": "sc.invoice.registration",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 56,
+      "list_fields": 18,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_confirm",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_register",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_confirm",
+        "validate_tier",
+        "reject_tier",
+        "action_register",
+        "action_cancel"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "财务中心",
+      "menu": "往来单位付款",
+      "menu_xmlid": "smart_construction_core.menu_sc_partner_payment",
+      "action_id": 781,
+      "action_exists": true,
+      "action_name": "往来单位付款",
+      "model": "sc.payment.execution",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 41,
+      "list_fields": 17,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_confirm",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_paid",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_confirm",
+        "validate_tier",
+        "reject_tier",
+        "action_paid",
+        "action_cancel"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "财务中心",
+      "menu": "项目还公司款登记",
+      "menu_xmlid": "smart_construction_core.menu_sc_project_repay_company",
+      "action_id": 769,
+      "action_exists": true,
+      "action_name": "项目还公司款登记",
+      "model": "sc.expense.claim",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 47,
+      "list_fields": 17,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_approve",
+        "action_archive",
+        "action_cancel",
+        "action_done",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_submit",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_submit",
+        "validate_tier",
+        "reject_tier"
+      ],
+      "business_methods_missing_buttons": [
+        "action_approve",
+        "action_archive",
+        "action_cancel",
+        "action_done",
+        "action_on_tier_approved",
+        "action_on_tier_rejected",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "财务中心",
+      "menu": "充值登记",
+      "menu_xmlid": "smart_construction_core.menu_sc_legacy_fuel_card_recharge_fact_acceptance",
+      "action_id": 907,
+      "action_exists": true,
+      "action_name": "充值登记",
+      "model": "sc.legacy.fuel.card.recharge.fact",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": false,
+      "form_edit_enabled": false,
+      "form_fields": 16,
+      "list_fields": 12,
+      "list_fields_missing_on_form": [],
+      "has_state_field": false,
+      "has_statusbar": false,
+      "statusbar_fields": [],
+      "business_methods": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "form_buttons": [],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "财务中心",
+      "menu": "账户间资金往来",
+      "menu_xmlid": "smart_construction_core.menu_sc_fund_account_between_user",
+      "action_id": 782,
+      "action_exists": true,
+      "action_name": "账户间资金往来",
+      "model": "sc.fund.account.operation",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 37,
+      "list_fields": 13,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_confirm",
+        "action_done",
+        "action_reset_draft",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_confirm",
+        "action_done",
+        "action_cancel",
+        "action_reset_draft"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "财务中心",
+      "menu": "抵扣登记",
+      "menu_xmlid": "smart_construction_core.menu_sc_tax_deduction_registration_user",
+      "action_id": 761,
+      "action_exists": true,
+      "action_name": "抵扣登记",
+      "model": "sc.tax.deduction.registration",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 34,
+      "list_fields": 12,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_confirm",
+        "action_deduct",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_confirm",
+        "action_deduct",
+        "action_cancel"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "财务中心",
+      "menu": "自筹垫付收入",
+      "menu_xmlid": "smart_construction_core.menu_sc_self_funding_advance_income",
+      "action_id": 901,
+      "action_exists": true,
+      "action_name": "自筹垫付收入",
+      "model": "sc.legacy.self.funding.fact",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": false,
+      "form_edit_enabled": false,
+      "form_fields": 19,
+      "list_fields": 17,
+      "list_fields_missing_on_form": [],
+      "has_state_field": false,
+      "has_statusbar": false,
+      "statusbar_fields": [],
+      "business_methods": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "form_buttons": [],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "财务中心",
+      "menu": "外经证登记",
+      "menu_xmlid": "smart_construction_core.menu_sc_tax_certificate_registration_user",
+      "action_id": 762,
+      "action_exists": true,
+      "action_name": "外经证登记",
+      "model": "sc.legacy.payment.residual.fact",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 26,
+      "list_fields": 20,
+      "list_fields_missing_on_form": [],
+      "has_state_field": false,
+      "has_statusbar": false,
+      "statusbar_fields": [],
+      "business_methods": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "form_buttons": [],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "财务中心",
+      "menu": "自筹保证金",
+      "menu_xmlid": "smart_construction_core.menu_sc_self_funding_deposit",
+      "action_id": 868,
+      "action_exists": true,
+      "action_name": "SCBS55 180 自筹保证金",
+      "model": "tender.guarantee",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 46,
+      "list_fields": 16,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_confirm",
+        "action_reset_draft",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_confirm",
+        "action_cancel",
+        "action_reset_draft"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "财务中心",
+      "menu": "自筹垫付退回",
+      "menu_xmlid": "smart_construction_core.menu_sc_self_funding_advance_refund",
+      "action_id": 902,
+      "action_exists": true,
+      "action_name": "自筹垫付退回",
+      "model": "sc.legacy.self.funding.fact",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": false,
+      "form_edit_enabled": false,
+      "form_fields": 14,
+      "list_fields": 11,
+      "list_fields_missing_on_form": [],
+      "has_state_field": false,
+      "has_statusbar": false,
+      "statusbar_fields": [],
+      "business_methods": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "form_buttons": [],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "财务中心",
+      "menu": "自筹保证金退回",
+      "menu_xmlid": "smart_construction_core.menu_sc_self_funding_deposit_refund",
+      "action_id": 869,
+      "action_exists": true,
+      "action_name": "SCBS55 190 自筹保证金退回",
+      "model": "tender.guarantee",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 46,
+      "list_fields": 15,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_confirm",
+        "action_reset_draft",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_confirm",
+        "action_cancel",
+        "action_reset_draft"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "财务中心",
+      "menu": "付款还保证金",
+      "menu_xmlid": "smart_construction_core.menu_sc_payment_deposit_return",
+      "action_id": 814,
+      "action_exists": true,
+      "action_name": "付款还保证金",
+      "model": "tender.guarantee",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 46,
+      "list_fields": 18,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_confirm",
+        "action_reset_draft",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_confirm",
+        "action_cancel",
+        "action_reset_draft"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "人事行政",
+      "menu": "请假/休假审批单",
+      "menu_xmlid": "smart_construction_core.menu_sc_leave_request",
+      "action_id": 642,
+      "action_exists": true,
+      "action_name": "请假/休假审批单",
+      "model": "sc.office.admin.document",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 39,
+      "list_fields": 13,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_confirm",
+        "action_done",
+        "action_reset_draft",
+        "action_submit",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_submit",
+        "action_done",
+        "action_cancel",
+        "action_reset_draft"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_confirm",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "人事行政",
+      "menu": "公司人员名册",
+      "menu_xmlid": "smart_construction_core.menu_sc_company_user_roster_formal",
+      "action_id": 859,
+      "action_exists": true,
+      "action_name": "SCBS55 080 公司人员名册（配置）",
+      "model": "sc.legacy.user.profile",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 87,
+      "list_fields": 27,
+      "list_fields_missing_on_form": [],
+      "has_state_field": false,
+      "has_statusbar": false,
+      "statusbar_fields": [],
+      "business_methods": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "form_buttons": [],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "人事行政",
+      "menu": "项目管理人员工资登记",
+      "menu_xmlid": "smart_construction_core.menu_sc_salary_registration_scbs55_formal",
+      "action_id": 862,
+      "action_exists": true,
+      "action_name": "SCBS55 110 工资登记",
+      "model": "sc.hr.payroll.document",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 47,
+      "list_fields": 16,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_confirm",
+        "action_done",
+        "action_reset_draft",
+        "action_submit",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_submit",
+        "action_done",
+        "action_cancel",
+        "action_reset_draft"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_confirm",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "人事行政",
+      "menu": "社保人员登记",
+      "menu_xmlid": "smart_construction_core.menu_sc_social_person_registration",
+      "action_id": 644,
+      "action_exists": true,
+      "action_name": "社保人员登记",
+      "model": "sc.hr.payroll.document",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 47,
+      "list_fields": 14,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_confirm",
+        "action_done",
+        "action_reset_draft",
+        "action_submit",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_submit",
+        "action_done",
+        "action_cancel",
+        "action_reset_draft"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_confirm",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "人事行政",
+      "menu": "社保登记",
+      "menu_xmlid": "smart_construction_core.menu_sc_social_registration",
+      "action_id": 645,
+      "action_exists": true,
+      "action_name": "社保登记",
+      "model": "sc.hr.payroll.document",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 47,
+      "list_fields": 13,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_confirm",
+        "action_done",
+        "action_reset_draft",
+        "action_submit",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_submit",
+        "action_done",
+        "action_cancel",
+        "action_reset_draft"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_confirm",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "人事行政",
+      "menu": "项目管理人员工资登记",
+      "menu_xmlid": "smart_construction_core.menu_sc_salary_registration",
+      "action_id": 647,
+      "action_exists": true,
+      "action_name": "项目管理人员工资登记",
+      "model": "sc.hr.payroll.document",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 47,
+      "list_fields": 14,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_confirm",
+        "action_done",
+        "action_reset_draft",
+        "action_submit",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_submit",
+        "action_done",
+        "action_cancel",
+        "action_reset_draft"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_confirm",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "人事行政",
+      "menu": "补助",
+      "menu_xmlid": "smart_construction_core.menu_sc_subsidy",
+      "action_id": 646,
+      "action_exists": true,
+      "action_name": "补助",
+      "model": "sc.hr.payroll.document",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 47,
+      "list_fields": 11,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_confirm",
+        "action_done",
+        "action_reset_draft",
+        "action_submit",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_submit",
+        "action_done",
+        "action_cancel",
+        "action_reset_draft"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_confirm",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "资料证照",
+      "menu": "公司资料存档",
+      "menu_xmlid": "smart_construction_core.menu_sc_company_document_archive",
+      "action_id": 615,
+      "action_exists": true,
+      "action_name": "公司资料存档",
+      "model": "sc.document.admin.document",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 37,
+      "list_fields": 7,
+      "list_fields_missing_on_form": [],
+      "has_state_field": true,
+      "has_statusbar": true,
+      "statusbar_fields": [
+        "state"
+      ],
+      "business_methods": [
+        "action_archive",
+        "action_cancel",
+        "action_confirm",
+        "action_done",
+        "action_reset_draft",
+        "action_submit",
+        "action_unarchive"
+      ],
+      "form_buttons": [
+        "action_submit",
+        "action_done",
+        "action_cancel",
+        "action_reset_draft"
+      ],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_confirm",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    },
+    {
+      "group": "基础设置",
+      "menu": "菜单配置",
+      "menu_xmlid": "smart_construction_core.menu_ui_menu_config_policy_business_config",
+      "action_id": 841,
+      "action_exists": true,
+      "action_name": "菜单配置",
+      "model": "ui.menu.config.policy",
+      "view_mode": "tree,form",
+      "form_mode": true,
+      "form_arch": true,
+      "form_create_enabled": true,
+      "form_edit_enabled": true,
+      "form_fields": 16,
+      "list_fields": 7,
+      "list_fields_missing_on_form": [],
+      "has_state_field": false,
+      "has_statusbar": false,
+      "statusbar_fields": [],
+      "business_methods": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "form_buttons": [],
+      "business_methods_missing_buttons": [
+        "action_archive",
+        "action_unarchive"
+      ],
+      "write_access_for_current_user": true,
+      "gaps": [],
+      "severity": "ok"
+    }
+  ]
+}

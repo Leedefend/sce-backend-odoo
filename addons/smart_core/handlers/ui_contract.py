@@ -20,6 +20,7 @@ from odoo.addons.smart_core.utils.contract_governance import (
     resolve_contract_mode,
     resolve_contract_surface,
 )
+from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
 
 _logger = logging.getLogger(__name__)
 
@@ -308,6 +309,20 @@ class UiContractHandler(BaseIntentHandler):
     ):
         fixed_data = self._finalize_data(data, subject=subject, meta=meta)
         inject_primary_view_projection(fixed_data, requested_view_type=view_type)
+        hook_payload = call_extension_hook_first(
+            self.env,
+            "smart_core_finalize_projected_contract_data",
+            self.env,
+            fixed_data,
+            {
+                "view_type": view_type,
+                "subject": subject,
+                "versions": versions,
+                "meta": meta or {},
+            },
+        )
+        if isinstance(hook_payload, Mapping):
+            fixed_data = dict(hook_payload)
         return fixed_data, {"schema_version": "view-contract-1", "version": format_versions_safe(versions)}
 
     def _finalize_data(self, data, *, subject, meta=None):

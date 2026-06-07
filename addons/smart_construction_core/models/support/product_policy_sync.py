@@ -48,6 +48,23 @@ USER_CONFIRMED_POLICY_BASELINE_PATHS = (
     "/mnt/scripts/verify/baselines/user_confirmed_formal_menu_policy_62.json",
     "scripts/verify/baselines/user_confirmed_formal_menu_policy_62.json",
 )
+USER_CONFIRMED_FORMAL_HIDDEN_GROUP_LABELS = {"用户核对菜单", "用户验收", "用户数据验收"}
+USER_CONFIRMED_FORMAL_VISIBLE_PARENT_XMLIDS = {
+    "smart_construction_core.menu_sc_material_management_group",
+    "smart_construction_core.menu_sc_labor_management_group",
+    "smart_construction_core.menu_sc_equipment_management_group",
+    "smart_construction_core.menu_sc_subcontract_management_group",
+}
+USER_CONFIRMED_FORMAL_HIDE_PATH_TOKENS = (
+    "/用户验收",
+    "/用户数据验收",
+    "/用户核对菜单",
+)
+USER_CONFIRMED_FORMAL_HIDE_MENU_XMLIDS = (
+    "smart_construction_core.menu_sc_legacy_engineering_progress_receipt",
+    "smart_construction_core.menu_scbsly_direct_project_acceptance_root",
+    "smart_construction_core.menu_scbsly_acceptance_engineering_progress_receipt",
+)
 
 
 def _text(value):
@@ -141,6 +158,90 @@ class ScProductPolicy(models.Model):
         return capabilities
 
     @api.model
+    def _is_user_confirmed_formal_group(self, group):
+        if not isinstance(group, dict):
+            return False
+        label = _text(group.get("group_label") or group.get("label") or group.get("title"))
+        key = _text(group.get("group_key") or group.get("key"))
+        return label not in USER_CONFIRMED_FORMAL_HIDDEN_GROUP_LABELS and "acceptance" not in key.lower()
+
+    @api.model
+    def _hydrate_user_confirmed_formal_menu(self, menu):
+        row = dict(menu or {})
+        menu_xmlid = _text(row.get("menu_xmlid") or row.get("page_key") or row.get("menu_key"))
+        menu_record = self.env.ref(menu_xmlid, raise_if_not_found=False) if menu_xmlid else False
+        if not menu_record:
+            return row
+        action = menu_record.action
+        action_id = int(action.id or 0) if action else 0
+        res_model = _text(getattr(action, "res_model", "") if action else "") or _text(row.get("res_model"))
+        view_modes = []
+        if action and _text(getattr(action, "view_mode", "")):
+            view_modes = [_text(item) for item in action.view_mode.split(",") if _text(item)]
+        row.update(
+            {
+                "menu_id": int(menu_record.id),
+                "menu_xmlid": menu_xmlid,
+                "menu_key": menu_xmlid,
+                "page_key": menu_xmlid,
+                "action_id": action_id or int(row.get("action_id") or 0),
+                "res_model": res_model,
+                "route": "/a/%s?menu_id=%s" % (action_id, menu_record.id) if action_id else _text(row.get("route")),
+                "view_modes": view_modes or row.get("view_modes") or [],
+                "enabled": True,
+                "release_state": "released",
+                "access_level": "public",
+                "policy_note": "released_as_user_confirmed_formal_product_menu",
+            }
+        )
+        return row
+
+    @api.model
+    def _formal_user_confirmed_menu_groups(self, menu_groups):
+        out = []
+        for group in menu_groups or []:
+            if not self._is_user_confirmed_formal_group(group):
+                continue
+            next_group = dict(group)
+            next_group["menus"] = [
+                self._hydrate_user_confirmed_formal_menu(menu)
+                for menu in (group.get("menus") or [])
+                if isinstance(menu, dict)
+            ]
+            out.append(next_group)
+        return out
+
+    @api.model
+    def _sync_user_confirmed_formal_menu_overlay(self):
+        Policy = self.env["ui.menu.config.policy"].sudo().with_context(active_test=False)
+        Menu = self.env["ir.ui.menu"].sudo().with_context(active_test=False)
+
+        def upsert(menu, visible, note):
+            if not menu:
+                return
+            policy = Policy.search([("menu_id", "=", menu.id)], limit=1)
+            values = {
+                "menu_id": menu.id,
+                "visible": bool(visible),
+                "active": True,
+                "note": note,
+            }
+            if policy:
+                policy.write(values)
+            else:
+                Policy.create(values)
+
+        for xmlid in USER_CONFIRMED_FORMAL_VISIBLE_PARENT_XMLIDS:
+            upsert(self.env.ref(xmlid, raise_if_not_found=False), True, "user_confirmed_formal_parent_required_visible")
+
+        for menu in Menu.search([]):
+            complete_name = _text(menu.complete_name)
+            if any(token in complete_name for token in USER_CONFIRMED_FORMAL_HIDE_PATH_TOKENS):
+                upsert(menu, False, "user_confirmed_formal_release_hide_acceptance_surface")
+        for xmlid in USER_CONFIRMED_FORMAL_HIDE_MENU_XMLIDS:
+            upsert(self.env.ref(xmlid, raise_if_not_found=False), False, "user_confirmed_formal_release_hide_acceptance_surface")
+
+    @api.model
     def _sync_user_confirmed_locked_construction_product_policies(self):
         baseline = self._load_user_confirmed_policy_baseline()
         if not baseline:
@@ -148,7 +249,8 @@ class ScProductPolicy(models.Model):
         model = self.sudo()
         for product_key in ("construction.standard", "construction.preview"):
             item = baseline.get(product_key) or {}
-            menu_groups = item.get("menu_groups") if isinstance(item.get("menu_groups"), list) else []
+            baseline_menu_groups = item.get("menu_groups") if isinstance(item.get("menu_groups"), list) else []
+            menu_groups = self._formal_user_confirmed_menu_groups(baseline_menu_groups)
             capabilities = self._capabilities_from_user_confirmed_menu_groups(menu_groups)
             values = {
                 "active": bool(item.get("active", True)),
@@ -171,6 +273,7 @@ class ScProductPolicy(models.Model):
                 rec.write(values)
             else:
                 model.create(values)
+        self._sync_user_confirmed_formal_menu_overlay()
         return True
 
     @api.model

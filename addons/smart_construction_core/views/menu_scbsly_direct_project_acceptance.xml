@@ -226,24 +226,24 @@
             <field name="menu_id" ref="smart_construction_core.menu_scbsly_direct_project_acceptance_root"/>
             <field name="custom_label">直营项目系统菜单</field>
             <field name="sequence_override">10</field>
-            <field name="visible">1</field>
-            <field name="note">用户验收阶段前端自定义菜单入口。</field>
+            <field name="visible">0</field>
+            <field name="note">用户验收阶段入口已收敛到正式业务菜单，默认隐藏。</field>
         </record>
         <record id="menu_config_policy_scbsly_direct_engineering_progress_receipt" model="ui.menu.config.policy">
             <field name="company_id" ref="base.main_company"/>
             <field name="menu_id" ref="smart_construction_core.menu_scbsly_acceptance_engineering_progress_receipt"/>
             <field name="custom_label">工程进度收款</field>
             <field name="sequence_override">70</field>
-            <field name="visible">1</field>
-            <field name="note">直营项目工程进度收款验收入口，action 域按 operation_strategy=direct 切分。</field>
+            <field name="visible">0</field>
+            <field name="note">用户验收阶段入口已收敛到正式业务菜单，默认隐藏。</field>
         </record>
         <record id="menu_config_policy_scbsly_direct_supplier_contract_current" model="ui.menu.config.policy">
             <field name="company_id" ref="base.main_company"/>
             <field name="menu_id" ref="smart_construction_core.menu_scbsly_acceptance_supplier_contract_current"/>
             <field name="custom_label">供货合同（数据）</field>
             <field name="sequence_override">45</field>
-            <field name="visible">1</field>
-            <field name="note">直营项目用户验收阶段供货合同数据面入口。</field>
+            <field name="visible">0</field>
+            <field name="note">用户验收阶段入口已收敛到正式业务菜单，默认隐藏。</field>
         </record>
     </data>
 </odoo>

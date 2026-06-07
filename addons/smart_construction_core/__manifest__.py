@@ -229,6 +229,8 @@
         'views/support/audit_list_fields_views.xml',
         'views/support/p1_daily_business_visible_alias_views.xml',
         'views/support/user_confirmed_formal_list_alignment_views.xml',
+        'views/support/user_confirmed_formal_list_views.xml',
+        'views/support/user_confirmed_formal_form_views.xml',
     ],
     'assets': {
         'web.assets_frontend_minimal': [

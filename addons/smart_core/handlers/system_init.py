@@ -586,8 +586,58 @@ def _node_release_gate_keys(node: dict) -> set[str]:
     return {item for item in values if item}
 
 
+def _node_is_user_acceptance_surface(node: dict) -> bool:
+    meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+    entry_target = meta.get("entry_target") if isinstance(meta.get("entry_target"), dict) else {}
+    compatibility_refs = entry_target.get("compatibility_refs") if isinstance(entry_target.get("compatibility_refs"), dict) else {}
+    menu_id = node.get("menu_id") or meta.get("menu_id") or compatibility_refs.get("menu_id")
+    action_id = meta.get("action_id") or compatibility_refs.get("action_id")
+    try:
+        normalized_menu_id = int(menu_id or 0)
+    except Exception:
+        normalized_menu_id = 0
+    try:
+        normalized_action_id = int(action_id or 0)
+    except Exception:
+        normalized_action_id = 0
+    if normalized_menu_id in {727, 729, 735, 770} or normalized_action_id == 899:
+        return True
+    text = "/".join(
+        _text(value)
+        for value in (
+            node.get("key"),
+            node.get("name"),
+            node.get("label"),
+            node.get("title"),
+            node.get("path"),
+            node.get("complete_name"),
+            node.get("menu_xmlid"),
+            node.get("model"),
+            meta.get("menu_xmlid"),
+            meta.get("model"),
+            compatibility_refs.get("model"),
+        )
+        if _text(value)
+    )
+    if any(token in text for token in ("用户验收", "用户数据验收", "用户核对菜单")):
+        return True
+    if any(
+        token in text
+        for token in (
+            "menu_scbsly_acceptance_",
+            "menu_scbs55_user_acceptance_",
+            "menu_scbsly_direct_project_acceptance_root",
+            "menu_sc_legacy_engineering_progress_receipt",
+        )
+    ):
+        return True
+    return False
+
+
 def _node_is_runtime_business_config_entry(node: dict) -> bool:
     """Keep already-authorized runtime configuration entries available."""
+    if _node_is_user_acceptance_surface(node):
+        return False
     meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
     if _text(node.get("delivery_bucket")) == "delivery_business_config":
         return True
@@ -620,6 +670,9 @@ def _filter_nav_by_release_gate(nav: list[dict], gate: dict) -> tuple[list[dict]
     def _filter_node(node: dict):
         nonlocal kept_leaf_count, removed_leaf_count, runtime_business_config_count
         if not isinstance(node, dict):
+            return None
+        if _node_is_user_acceptance_surface(node):
+            removed_leaf_count += 1
             return None
         children = node.get("children") if isinstance(node.get("children"), list) else []
         next_node = dict(node)

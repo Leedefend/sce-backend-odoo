@@ -1,0 +1,510 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Keep accepted list/menu stable and expose the same accepted fields on formal forms. -->
+
+    <record id="view_project_project_user_confirmed_form_fields" model="ir.ui.view">
+        <field name="name">project.project.user.confirmed.form.fields</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.edit_project"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="用户确认数据">
+                    <field name="sc_partner_display_name" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_project_overview_user_confirmed_form_fields" model="ir.ui.view">
+        <field name="name">project.project.overview.user.confirmed.form.fields</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="smart_construction_core.view_project_overview_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[field[@name='owner_id']]" position="after">
+                <div class="small text-muted mt-1">
+                    关联单位 <field name="sc_partner_display_name" readonly="1" nolabel="1"/>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_tender_bid_user_confirmed_form_fields" model="ir.ui.view">
+        <field name="name">tender.bid.user.confirmed.form.fields</field>
+        <field name="model">tender.bid</field>
+        <field name="inherit_id" ref="smart_construction_core.view_tender_bid_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="用户确认数据">
+                    <field name="p1_visible_06fa8c6f628f" readonly="1"/>
+                    <field name="p1_visible_8fa8662ad38f" readonly="1"/>
+                    <field name="p1_visible_3e7255522b33" readonly="1"/>
+                    <field name="p1_visible_3f2c92346bec" readonly="1"/>
+                    <field name="p1_visible_f22832ce4781" readonly="1"/>
+                    <field name="p1_visible_ee6a4d9e2956" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_construction_contract_expense_user_confirmed_form_fields" model="ir.ui.view">
+        <field name="name">construction.contract.expense.user.confirmed.form.fields</field>
+        <field name="model">construction.contract.expense</field>
+        <field name="inherit_id" ref="smart_construction_core.view_construction_contract_expense_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="用户确认数据">
+                    <field name="legacy_visible_contract_date" readonly="1"/>
+                    <field name="legacy_visible_counterparty" readonly="1"/>
+                    <field name="legacy_visible_title" readonly="1"/>
+                    <field name="legacy_visible_invoice_amount" readonly="1"/>
+                    <field name="legacy_visible_invoice_unreceived_amount" readonly="1"/>
+                    <field name="legacy_visible_received_amount" readonly="1"/>
+                    <field name="legacy_visible_engineering_content" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_sc_settlement_order_user_confirmed_form_fields" model="ir.ui.view">
+        <field name="name">sc.settlement.order.user.confirmed.form.fields</field>
+        <field name="model">sc.settlement.order</field>
+        <field name="inherit_id" ref="smart_construction_core.view_sc_settlement_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="用户确认数据">
+                    <field name="legacy_acceptance_label" readonly="1"/>
+                    <field name="user_acceptance_document_state" readonly="1"/>
+                    <field name="user_acceptance_document_no" readonly="1"/>
+                    <field name="user_acceptance_project_name" readonly="1"/>
+                    <field name="user_acceptance_title" readonly="1"/>
+                    <field name="user_acceptance_paid_amount" readonly="1"/>
+                    <field name="user_acceptance_requested_amount" readonly="1"/>
+                    <field name="user_acceptance_unrequested_amount" readonly="1"/>
+                    <field name="user_acceptance_note" readonly="1"/>
+                    <field name="user_acceptance_attachment" readonly="1"/>
+                    <field name="user_acceptance_created_at" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_sc_construction_diary_user_confirmed_form_fields" model="ir.ui.view">
+        <field name="name">sc.construction.diary.user.confirmed.form.fields</field>
+        <field name="model">sc.construction.diary</field>
+        <field name="inherit_id" ref="smart_construction_core.view_sc_construction_diary_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="用户确认数据">
+                    <field name="legacy_visible_01" readonly="1"/>
+                    <field name="legacy_visible_02" readonly="1"/>
+                    <field name="legacy_visible_03" readonly="1"/>
+                    <field name="legacy_visible_04" readonly="1"/>
+                    <field name="legacy_visible_05" readonly="1"/>
+                    <field name="legacy_visible_06" readonly="1"/>
+                    <field name="legacy_visible_07" readonly="1"/>
+                    <field name="legacy_visible_10" readonly="1"/>
+                    <field name="legacy_visible_11" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_project_material_plan_user_confirmed_form_fields" model="ir.ui.view">
+        <field name="name">project.material.plan.user.confirmed.form.fields</field>
+        <field name="model">project.material.plan</field>
+        <field name="inherit_id" ref="smart_construction_core.view_project_material_plan_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="用户确认数据">
+                    <field name="legacy_visible_01" readonly="1"/>
+                    <field name="legacy_visible_02" readonly="1"/>
+                    <field name="legacy_visible_03" readonly="1"/>
+                    <field name="legacy_visible_04" readonly="1"/>
+                    <field name="legacy_visible_05" readonly="1"/>
+                    <field name="legacy_visible_06" readonly="1"/>
+                    <field name="legacy_visible_07" readonly="1"/>
+                    <field name="legacy_visible_08" readonly="1"/>
+                    <field name="legacy_visible_09" readonly="1"/>
+                    <field name="legacy_visible_10" readonly="1"/>
+                    <field name="legacy_visible_12" readonly="1"/>
+                    <field name="legacy_visible_13" readonly="1"/>
+                    <field name="legacy_visible_14" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_sc_labor_usage_user_confirmed_form_fields" model="ir.ui.view">
+        <field name="name">sc.labor.usage.user.confirmed.form.fields</field>
+        <field name="model">sc.labor.usage</field>
+        <field name="inherit_id" ref="smart_construction_core.view_sc_labor_usage_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="用户确认数据">
+                    <field name="legacy_visible_01" readonly="1"/>
+                    <field name="legacy_visible_02" readonly="1"/>
+                    <field name="legacy_visible_03" readonly="1"/>
+                    <field name="legacy_visible_04" readonly="1"/>
+                    <field name="legacy_visible_05" readonly="1"/>
+                    <field name="legacy_visible_06" readonly="1"/>
+                    <field name="legacy_visible_07" readonly="1"/>
+                    <field name="legacy_visible_08" readonly="1"/>
+                    <field name="legacy_visible_09" readonly="1"/>
+                    <field name="legacy_visible_10" readonly="1"/>
+                    <field name="legacy_visible_11" readonly="1"/>
+                    <field name="legacy_visible_12" readonly="1"/>
+                    <field name="legacy_visible_13" readonly="1"/>
+                    <field name="legacy_visible_14" readonly="1"/>
+                    <field name="legacy_visible_15" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_sc_subcontract_request_user_confirmed_form_fields" model="ir.ui.view">
+        <field name="name">sc.subcontract.request.user.confirmed.form.fields</field>
+        <field name="model">sc.subcontract.request</field>
+        <field name="inherit_id" ref="smart_construction_core.view_sc_subcontract_request_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="用户确认数据">
+                    <field name="p1_visible_06fa8c6f628f" readonly="1"/>
+                    <field name="p1_visible_8fa8662ad38f" readonly="1"/>
+                    <field name="p1_visible_3e7255522b33" readonly="1"/>
+                    <field name="p1_visible_748d7dc7e321" readonly="1"/>
+                    <field name="p1_visible_c2183068c097" readonly="1"/>
+                    <field name="p1_visible_cd47577e8847" readonly="1"/>
+                    <field name="p1_visible_6b40af3eee21" readonly="1"/>
+                    <field name="p1_visible_b9ae89319036" readonly="1"/>
+                    <field name="p1_visible_0b370511a765" readonly="1"/>
+                    <field name="p1_visible_34943c40c9af" readonly="1"/>
+                    <field name="p1_visible_ac666c1a3967" readonly="1"/>
+                    <field name="p1_visible_99f6fe6c41ad" readonly="1"/>
+                    <field name="p1_visible_ee6a4d9e2956" readonly="1"/>
+                    <field name="p1_visible_dfc25d77dc39" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_sc_equipment_usage_user_confirmed_form_fields" model="ir.ui.view">
+        <field name="name">sc.equipment.usage.user.confirmed.form.fields</field>
+        <field name="model">sc.equipment.usage</field>
+        <field name="inherit_id" ref="smart_construction_core.view_sc_equipment_usage_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="用户确认数据">
+                    <field name="legacy_visible_01" readonly="1"/>
+                    <field name="legacy_visible_02" readonly="1"/>
+                    <field name="legacy_visible_03" readonly="1"/>
+                    <field name="legacy_visible_04" readonly="1"/>
+                    <field name="legacy_visible_05" readonly="1"/>
+                    <field name="legacy_visible_06" readonly="1"/>
+                    <field name="legacy_visible_07" readonly="1"/>
+                    <field name="legacy_visible_08" readonly="1"/>
+                    <field name="legacy_visible_09" readonly="1"/>
+                    <field name="legacy_visible_10" readonly="1"/>
+                    <field name="legacy_visible_11" readonly="1"/>
+                    <field name="legacy_visible_12" readonly="1"/>
+                    <field name="legacy_visible_13" readonly="1"/>
+                    <field name="legacy_visible_14" readonly="1"/>
+                    <field name="legacy_visible_15" readonly="1"/>
+                    <field name="legacy_visible_16" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_sc_material_rfq_user_confirmed_form_fields" model="ir.ui.view">
+        <field name="name">sc.material.rfq.user.confirmed.form.fields</field>
+        <field name="model">sc.material.rfq</field>
+        <field name="inherit_id" ref="smart_construction_core.view_sc_material_rfq_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="用户确认数据">
+                    <field name="legacy_visible_01" readonly="1"/>
+                    <field name="legacy_visible_02" readonly="1"/>
+                    <field name="legacy_visible_03" readonly="1"/>
+                    <field name="legacy_visible_04" readonly="1"/>
+                    <field name="legacy_visible_05" readonly="1"/>
+                    <field name="legacy_visible_06" readonly="1"/>
+                    <field name="legacy_visible_07" readonly="1"/>
+                    <field name="legacy_visible_08" readonly="1"/>
+                    <field name="legacy_visible_09" readonly="1"/>
+                    <field name="legacy_visible_10" readonly="1"/>
+                    <field name="legacy_visible_11" readonly="1"/>
+                    <field name="legacy_visible_12" readonly="1"/>
+                    <field name="legacy_visible_15" readonly="1"/>
+                    <field name="legacy_visible_16" readonly="1"/>
+                    <field name="legacy_visible_17" readonly="1"/>
+                    <field name="legacy_visible_18" readonly="1"/>
+                    <field name="legacy_visible_19" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_sc_material_inbound_user_confirmed_form_fields" model="ir.ui.view">
+        <field name="name">sc.material.inbound.user.confirmed.form.fields</field>
+        <field name="model">sc.material.inbound</field>
+        <field name="inherit_id" ref="smart_construction_core.view_sc_material_inbound_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="用户确认数据">
+                    <field name="legacy_visible_01" readonly="1"/>
+                    <field name="legacy_visible_03" readonly="1"/>
+                    <field name="legacy_visible_04" readonly="1"/>
+                    <field name="legacy_visible_05" readonly="1"/>
+                    <field name="legacy_visible_06" readonly="1"/>
+                    <field name="legacy_visible_07" readonly="1"/>
+                    <field name="legacy_visible_08" readonly="1"/>
+                    <field name="legacy_visible_09" readonly="1"/>
+                    <field name="legacy_visible_11" readonly="1"/>
+                    <field name="legacy_visible_12" readonly="1"/>
+                    <field name="legacy_visible_13" readonly="1"/>
+                    <field name="legacy_visible_14" readonly="1"/>
+                    <field name="legacy_visible_15" readonly="1"/>
+                    <field name="legacy_visible_16" readonly="1"/>
+                    <field name="legacy_visible_17" readonly="1"/>
+                    <field name="legacy_visible_18" readonly="1"/>
+                    <field name="legacy_visible_19" readonly="1"/>
+                    <field name="legacy_visible_20" readonly="1"/>
+                    <field name="legacy_visible_21" readonly="1"/>
+                    <field name="legacy_visible_22" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_sc_receipt_income_user_confirmed_form_fields" model="ir.ui.view">
+        <field name="name">sc.receipt.income.user.confirmed.form.fields</field>
+        <field name="model">sc.receipt.income</field>
+        <field name="inherit_id" ref="smart_construction_core.view_sc_receipt_income_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="用户确认数据">
+                    <field name="legacy_visible_03" readonly="1"/>
+                    <field name="legacy_visible_04" readonly="1"/>
+                    <field name="legacy_visible_07" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_sc_hr_payroll_document_user_confirmed_form_fields" model="ir.ui.view">
+        <field name="name">sc.hr.payroll.document.user.confirmed.form.fields</field>
+        <field name="model">sc.hr.payroll.document</field>
+        <field name="inherit_id" ref="smart_construction_core.view_sc_hr_payroll_document_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="用户确认数据">
+                    <field name="legacy_visible_05" readonly="1"/>
+                    <field name="legacy_visible_06" readonly="1"/>
+                    <field name="legacy_visible_07" readonly="1"/>
+                    <field name="legacy_visible_08" readonly="1"/>
+                    <field name="legacy_visible_09" readonly="1"/>
+                    <field name="legacy_visible_10" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_sc_tax_deduction_registration_user_confirmed_form_fields" model="ir.ui.view">
+        <field name="name">sc.tax.deduction.registration.user.confirmed.form.fields</field>
+        <field name="model">sc.tax.deduction.registration</field>
+        <field name="inherit_id" ref="smart_construction_core.view_sc_tax_deduction_registration_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="用户确认数据">
+                    <field name="p1_visible_dfc25d77dc39" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_sc_fund_account_operation_user_confirmed_form_fields" model="ir.ui.view">
+        <field name="name">sc.fund.account.operation.user.confirmed.form.fields</field>
+        <field name="model">sc.fund.account.operation</field>
+        <field name="inherit_id" ref="smart_construction_core.view_sc_fund_account_operation_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="用户确认数据">
+                    <field name="p1_visible_06fa8c6f628f" readonly="1"/>
+                    <field name="p1_visible_3e7255522b33" readonly="1"/>
+                    <field name="p1_visible_51f85a78cac4" readonly="1"/>
+                    <field name="p1_visible_43f67c096554" readonly="1"/>
+                    <field name="p1_visible_df6e7b1e9eac" readonly="1"/>
+                    <field name="p1_visible_0675851fc19e" readonly="1"/>
+                    <field name="p1_visible_ee6a4d9e2956" readonly="1"/>
+                    <field name="p1_visible_dfc25d77dc39" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_sc_financing_loan_user_confirmed_form_fields" model="ir.ui.view">
+        <field name="name">sc.financing.loan.user.confirmed.form.fields</field>
+        <field name="model">sc.financing.loan</field>
+        <field name="inherit_id" ref="smart_construction_core.view_sc_financing_loan_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="用户确认数据">
+                    <field name="p1_visible_06fa8c6f628f" readonly="1"/>
+                    <field name="p1_visible_8fa8662ad38f" readonly="1"/>
+                    <field name="p1_visible_3e7255522b33" readonly="1"/>
+                    <field name="p1_visible_f65ab1a8427f" readonly="1"/>
+                    <field name="p1_visible_f75550069cae" readonly="1"/>
+                    <field name="p1_visible_7c49c8f25a7a" readonly="1"/>
+                    <field name="p1_visible_0f6aab17d203" readonly="1"/>
+                    <field name="p1_visible_547c71732ac4" readonly="1"/>
+                    <field name="p1_visible_628f2a7878b3" readonly="1"/>
+                    <field name="p1_visible_099f8b5c680a" readonly="1"/>
+                    <field name="p1_visible_e242a03dd5b6" readonly="1"/>
+                    <field name="p1_visible_ed43f478ec3d" readonly="1"/>
+                    <field name="p1_visible_a12b85cb38e6" readonly="1"/>
+                    <field name="p1_visible_3bee2141cdb1" readonly="1"/>
+                    <field name="p1_visible_8ab2d41e7757" readonly="1"/>
+                    <field name="p1_visible_9c075c710f62" readonly="1"/>
+                    <field name="p1_visible_982d68c74aeb" readonly="1"/>
+                    <field name="p1_visible_701ce5416c52" readonly="1"/>
+                    <field name="p1_visible_ee6a4d9e2956" readonly="1"/>
+                    <field name="p1_visible_dfc25d77dc39" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_payment_request_user_confirmed_form_fields" model="ir.ui.view">
+        <field name="name">payment.request.user.confirmed.form.fields</field>
+        <field name="model">payment.request</field>
+        <field name="inherit_id" ref="smart_construction_core.view_payment_request_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="用户确认数据">
+                    <field name="p1_visible_3f91cf4fc953" readonly="1"/>
+                    <field name="p1_visible_cf2988988f42" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_sc_payment_execution_user_confirmed_form_fields" model="ir.ui.view">
+        <field name="name">sc.payment.execution.user.confirmed.form.fields</field>
+        <field name="model">sc.payment.execution</field>
+        <field name="inherit_id" ref="smart_construction_core.view_sc_payment_execution_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="用户确认数据">
+                    <field name="p1_visible_cf2988988f42" readonly="1"/>
+                    <field name="p1_visible_9b388243bdd8" readonly="1"/>
+                    <field name="p1_visible_c7133de10947" readonly="1"/>
+                    <field name="p1_visible_cdac00d3097d" readonly="1"/>
+                    <field name="p1_visible_6c5a21ae4538" readonly="1"/>
+                    <field name="p1_visible_876617c2cb2b" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_tender_guarantee_user_confirmed_form_fields" model="ir.ui.view">
+        <field name="name">tender.guarantee.user.confirmed.form.fields</field>
+        <field name="model">tender.guarantee</field>
+        <field name="inherit_id" ref="smart_construction_core.view_tender_guarantee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="用户确认数据">
+                    <field name="p1_visible_2559d3f7672e" readonly="1"/>
+                    <field name="p1_visible_8fa8662ad38f" readonly="1"/>
+                    <field name="p1_visible_9664566d48ce" readonly="1"/>
+                    <field name="p1_visible_e32341fe14e8" readonly="1"/>
+                    <field name="p1_visible_ccfa1326c88f" readonly="1"/>
+                    <field name="p1_visible_f22832ce4781" readonly="1"/>
+                    <field name="p1_visible_9909f5df1a75" readonly="1"/>
+                    <field name="p1_visible_6b05c4e240c0" readonly="1"/>
+                    <field name="p1_visible_9ea4037225af" readonly="1"/>
+                    <field name="p1_visible_a0b2e8bb26c8" readonly="1"/>
+                    <field name="p1_visible_c6baf132e1dd" readonly="1"/>
+                    <field name="p1_visible_3e7255522b33" readonly="1"/>
+                    <field name="p1_visible_af37d8d6ef07" readonly="1"/>
+                    <field name="p1_visible_87fa6ef6554a" readonly="1"/>
+                    <field name="p1_visible_1932637f45ee" readonly="1"/>
+                    <field name="p1_visible_e1182de05c3f" readonly="1"/>
+                    <field name="p1_visible_488cfebeaf9d" readonly="1"/>
+                    <field name="p1_visible_8ec8c8c712be" readonly="1"/>
+                    <field name="p1_visible_93997ec88a8a" readonly="1"/>
+                    <field name="p1_visible_3e5fd432c9df" readonly="1"/>
+                    <field name="p1_visible_1ccf3b6408df" readonly="1"/>
+                    <field name="p1_visible_c8839fd18cdd" readonly="1"/>
+                    <field name="p1_visible_6ef508189cc0" readonly="1"/>
+                    <field name="p1_visible_667eee716adf" readonly="1"/>
+                    <field name="p1_visible_efb7cd864aa6" readonly="1"/>
+                    <field name="p1_visible_6eceee6e57dd" readonly="1"/>
+                    <field name="p1_visible_1484fc99a1d3" readonly="1"/>
+                    <field name="p1_visible_2f40d268a798" readonly="1"/>
+                    <field name="p1_visible_7f5da566c14e" readonly="1"/>
+                    <field name="p1_visible_e626b428509f" readonly="1"/>
+                    <field name="p1_visible_fff7e95a48d8" readonly="1"/>
+                    <field name="p1_visible_ee6a4d9e2956" readonly="1"/>
+                    <field name="p1_visible_dfc25d77dc39" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_sc_legacy_fuel_card_recharge_fact_user_confirmed_form_fields" model="ir.ui.view">
+        <field name="name">sc.legacy.fuel.card.recharge.fact.user.confirmed.form.fields</field>
+        <field name="model">sc.legacy.fuel.card.recharge.fact</field>
+        <field name="inherit_id" ref="smart_construction_core.view_sc_legacy_fuel_card_recharge_fact_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="用户确认数据">
+                    <field name="accepted_visible_06" readonly="1"/>
+                    <field name="accepted_visible_07" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_sc_office_admin_document_user_confirmed_form_fields" model="ir.ui.view">
+        <field name="name">sc.office.admin.document.user.confirmed.form.fields</field>
+        <field name="model">sc.office.admin.document</field>
+        <field name="inherit_id" ref="smart_construction_core.view_sc_office_admin_document_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="用户确认数据">
+                    <field name="p1_visible_06fa8c6f628f" readonly="1"/>
+                    <field name="p1_visible_8fa8662ad38f" readonly="1"/>
+                    <field name="p1_visible_3e7255522b33" readonly="1"/>
+                    <field name="p1_visible_342372602a87" readonly="1"/>
+                    <field name="p1_visible_a8e78b10a188" readonly="1"/>
+                    <field name="p1_visible_3f36b5502196" readonly="1"/>
+                    <field name="p1_visible_4f1b37216d49" readonly="1"/>
+                    <field name="p1_visible_b03bc1337add" readonly="1"/>
+                    <field name="p1_visible_b56f68e8a4db" readonly="1"/>
+                    <field name="p1_visible_e0361480e3a5" readonly="1"/>
+                    <field name="p1_visible_ee6a4d9e2956" readonly="1"/>
+                    <field name="p1_visible_dfc25d77dc39" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="view_sc_document_admin_document_user_confirmed_form_fields" model="ir.ui.view">
+        <field name="name">sc.document.admin.document.user.confirmed.form.fields</field>
+        <field name="model">sc.document.admin.document</field>
+        <field name="inherit_id" ref="smart_construction_core.view_sc_document_admin_document_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet" position="inside">
+                <group string="用户确认数据">
+                    <field name="p1_visible_06fa8c6f628f" readonly="1"/>
+                    <field name="p1_visible_3e7255522b33" readonly="1"/>
+                    <field name="p1_visible_8fdc4ab6f3dc" readonly="1"/>
+                    <field name="p1_visible_0791e483b4d2" readonly="1"/>
+                    <field name="p1_visible_e0361480e3a5" readonly="1"/>
+                    <field name="p1_visible_ee6a4d9e2956" readonly="1"/>
+                    <field name="p1_visible_dfc25d77dc39" readonly="1"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+</odoo>

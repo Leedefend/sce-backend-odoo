@@ -21,10 +21,15 @@ class ScHrPayrollDocument(models.Model):
 
     employee_user_id = fields.Many2one("res.users", string="人员", index=True, tracking=True)
     employee_name = fields.Char(string="人员姓名", index=True, tracking=True)
+    employee_status = fields.Char(string="人员状态", index=True)
+    employee_type = fields.Char(string="人员类型", index=True)
     id_number = fields.Char(string="身份证号", index=True)
+    contact_phone = fields.Char(string="联系方式", index=True)
     period_year = fields.Integer(string="年度", index=True)
     period_month = fields.Integer(string="月份", index=True)
     payer_unit = fields.Char(string="缴纳单位", index=True)
+    payout_unit = fields.Char(string="发放单位", index=True)
+    people_count = fields.Integer(string="人数")
     social_security_base = fields.Monetary(string="社保基数", currency_field="currency_id")
     company_amount = fields.Monetary(string="公司承担", currency_field="currency_id")
     individual_amount = fields.Monetary(string="个人承担", currency_field="currency_id")
@@ -34,7 +39,15 @@ class ScHrPayrollDocument(models.Model):
     net_salary = fields.Monetary(string="实发工资", currency_field="currency_id")
     item_type = fields.Char(string="事项类型", tracking=True)
     amount = fields.Monetary(string="金额", currency_field="currency_id", tracking=True)
+    certificate_fee = fields.Monetary(string="证书费用", currency_field="currency_id")
     occurrence_date = fields.Date(string="发生日期", index=True)
+    attachment_ids = fields.Many2many(
+        "ir.attachment",
+        "sc_hr_payroll_document_attachment_rel",
+        "document_id",
+        "attachment_id",
+        string="附件",
+    )
     legacy_document_no = fields.Char(string="历史单号", index=True, readonly=True)
     legacy_document_state = fields.Char(string="历史状态", index=True, readonly=True)
     legacy_source_table = fields.Char(string="历史来源表", index=True, readonly=True)
@@ -59,10 +72,15 @@ class ScHrPayrollDocument(models.Model):
         return [
             "employee_user_id",
             "employee_name",
+            "employee_status",
+            "employee_type",
             "id_number",
+            "contact_phone",
             "period_year",
             "period_month",
             "payer_unit",
+            "payout_unit",
+            "people_count",
             "social_security_base",
             "company_amount",
             "individual_amount",
@@ -72,7 +90,9 @@ class ScHrPayrollDocument(models.Model):
             "net_salary",
             "item_type",
             "amount",
+            "certificate_fee",
             "occurrence_date",
+            "attachment_ids",
             "legacy_document_no",
             "legacy_document_state",
             "legacy_source_table",
@@ -108,6 +128,40 @@ class ScHrPayrollDocument(models.Model):
 
             if record.period_month and (record.period_month < 1 or record.period_month > 12):
                 raise ValidationError(_("月份必须在 1 到 12 之间。"))
+
+    def init(self):
+        self.env.cr.execute(
+            """
+            UPDATE sc_hr_payroll_document
+               SET employee_status = COALESCE(NULLIF(employee_status, ''), NULLIF(legacy_document_state, '')),
+                   employee_type = COALESCE(NULLIF(employee_type, ''), NULLIF(legacy_visible_type, ''), NULLIF(item_type, '')),
+                   contact_phone = COALESCE(
+                       NULLIF(contact_phone, ''),
+                       NULLIF(substring(COALESCE(description, '') from '联系方式[：:]\\s*([^\\n\\r]+)'), '')
+                   ),
+                   payout_unit = COALESCE(NULLIF(payout_unit, ''), NULLIF(payer_unit, '')),
+                   people_count = COALESCE(
+                       people_count,
+                       CASE
+                           WHEN COALESCE(legacy_visible_people_count, '') ~ '^[0-9]+$'
+                           THEN legacy_visible_people_count::integer
+                           ELSE NULL
+                       END
+                   ),
+                   certificate_fee = COALESCE(
+                       certificate_fee,
+                       CASE
+                           WHEN regexp_replace(COALESCE(legacy_visible_certificate_fee, ''), '[^0-9\\.-]', '', 'g') ~ '^-?[0-9]+(\\.[0-9]+)?$'
+                           THEN regexp_replace(legacy_visible_certificate_fee, '[^0-9\\.-]', '', 'g')::numeric
+                           ELSE NULL
+                       END
+                   ),
+                   result_note = COALESCE(NULLIF(result_note, ''), NULLIF(legacy_visible_note, '')),
+                   source_created_by = COALESCE(NULLIF(source_created_by, ''), NULLIF(legacy_visible_creator_name, '')),
+                   source_created_at = COALESCE(source_created_at, legacy_visible_created_time)
+             WHERE legacy_source_table IS NOT NULL
+            """
+        )
 
     def unlink(self):
         locked = self.filtered(lambda rec: rec.state not in ("draft", "cancel"))

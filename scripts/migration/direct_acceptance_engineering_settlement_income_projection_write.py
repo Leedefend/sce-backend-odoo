@@ -142,7 +142,7 @@ def settlement_values(fact, project, partner):
     creator = text(fact.legacy_visible_17) or text(fact.creator_name)
     created_time = text(fact.legacy_visible_18) or text(fact.created_time)
     state = state_from_visible(visible_state)
-    return {
+    vals = {
         "name": document_no,
         "project_id": project.id,
         "partner_id": partner.id if partner else False,
@@ -163,6 +163,7 @@ def settlement_values(fact, project, partner):
         "state": state,
         "entry_user_id": fact.create_uid.id or env.user.id,  # noqa: F821
         "entry_data": "formal_projection:%s:%s" % (SOURCE_MODEL, fact.id),
+        "legacy_acceptance_label": ACCEPTANCE_LABEL,
         "legacy_fact_model": SOURCE_MODEL,
         "legacy_fact_id": fact.id,
         "legacy_fact_type": "direct_acceptance_engineering_settlement_order",
@@ -201,6 +202,11 @@ def settlement_values(fact, project, partner):
             ]
         ),
     }
+    for index in range(1, 61):
+        field = "legacy_visible_%02d" % index
+        if field in env["sc.settlement.order"]._fields:  # noqa: F821
+            vals[field] = text(getattr(fact, field, "")) or False
+    return vals
 
 
 def line_values(fact, amount):

@@ -70,6 +70,16 @@ class ScTaxDeductionRegistration(models.Model):
     deduction_tax_amount = fields.Monetary(string="抵扣税额", currency_field="currency_id")
     deduction_surcharge_amount = fields.Monetary(string="抵扣附加税", currency_field="currency_id")
     is_transfer_out = fields.Boolean(string="是否转出", default=False, index=True)
+    deduction_unit_name = fields.Char(string="扣款单位", index=True)
+    withholding_amount = fields.Monetary(string="扣款金额", currency_field="currency_id")
+    deduction_reason = fields.Text(string="扣款事由")
+    attachment_ids = fields.Many2many(
+        "ir.attachment",
+        "sc_tax_deduction_registration_attachment_rel",
+        "registration_id",
+        "attachment_id",
+        string="附件",
+    )
     currency_id = fields.Many2one(
         "res.currency",
         string="币种",
@@ -122,6 +132,10 @@ class ScTaxDeductionRegistration(models.Model):
                 "creator_legacy_user_id",
                 "creator_name",
                 "created_time",
+                "deduction_unit_name",
+                "withholding_amount",
+                "deduction_reason",
+                "attachment_ids",
                 "write_uid",
                 "write_date",
             }
