@@ -407,7 +407,7 @@ def settlement_values(fact, cfg: dict):
         "settlement_amount": amount,
         "submitted_amount": amount,
         "approved_amount": amount,
-        "requested_fund_amount": money(detail["requested_amount_text"]) or amount,
+        "requested_fund_amount": money(detail["requested_amount_text"]),
         "legacy_document_state": state_text,
         "legacy_contract_no": contract_no or False,
         "legacy_payment_state": detail["payment_state"],

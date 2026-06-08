@@ -162,6 +162,8 @@ def settlement_values(fact, project, partner):
         "requested_fund_amount": approved_amount,
         "state": state,
         "entry_user_id": fact.create_uid.id or env.user.id,  # noqa: F821
+        "source_created_by": creator or False,
+        "source_created_at": created_time or False,
         "entry_data": "formal_projection:%s:%s" % (SOURCE_MODEL, fact.id),
         "legacy_acceptance_label": ACCEPTANCE_LABEL,
         "legacy_fact_model": SOURCE_MODEL,

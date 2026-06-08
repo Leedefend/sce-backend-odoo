@@ -56,6 +56,7 @@ SKIP_FIELD_NAMES = {
 SKIP_FIELD_TYPES = {"binary", "html", "one2many"}
 SOURCE_ONLY_PREFIXES = ("legacy_visible_", "accepted_visible_", "user_acceptance_", "p1_visible_")
 FORMAL_PREFIXES = ("legacy_visible_", "accepted_visible_", "user_acceptance_", "p1_visible_")
+GENERIC_LEGACY_VISIBLE_RE = re.compile(r"legacy_visible_\d{2}$")
 
 P1_ALIAS_FIELD_LABELS = {
     model_name: {
@@ -168,6 +169,10 @@ def _is_source_only_field(field_name):
 
 
 def _is_formal_field(field_name):
+    if GENERIC_LEGACY_VISIBLE_RE.match(field_name):
+        return False
+    if field_name.startswith("legacy_visible_"):
+        return True
     return not field_name.startswith(FORMAL_PREFIXES)
 
 
@@ -181,7 +186,14 @@ def _field_candidates(model_name, field_name, label, form_field_names, model_fie
         candidates |= _label_equivalent_fields(model_name, label, model_fields)
     else:
         candidates |= _label_equivalent_fields(model_name, label, model_fields)
-    candidates = {name for name in candidates if name in form_field_names and name in model_fields}
+    candidates = {
+        name for name in candidates
+        if name in model_fields
+        and (
+            name in form_field_names
+            or (name.startswith("legacy_visible_") and not GENERIC_LEGACY_VISIBLE_RE.match(name))
+        )
+    }
     if _is_source_only_field(field_name):
         candidates = {name for name in candidates if _is_formal_field(name)}
     return sorted(candidates)
@@ -213,6 +225,16 @@ def _decimal_text(value):
     except (InvalidOperation, ValueError):
         return ""
     return str(amount.normalize())
+
+
+def _decimal_value(value):
+    text_value = _decimal_text(value)
+    if not text_value:
+        return None
+    try:
+        return Decimal(text_value)
+    except InvalidOperation:
+        return None
 
 
 def _state_text(value):
@@ -338,7 +360,32 @@ def _values_match(source_value, source_field, target_value, target_field, label)
         return True
     if label == "附件" and target_values and "attachment:present" in source_values:
         return True
+    if label in {"结算说明/备注", "结算说明", "备注", "标题/结算内容", "结算内容"}:
+        for source_text in source_values:
+            if any(source_text in target_text for target_text in target_values):
+                return True
+    if label in {"付款金额", "实际付款金额"}:
+        source_decimal = _decimal_value(source_value)
+        target_decimal = _decimal_value(target_value)
+        if source_decimal is not None and target_decimal is not None and abs(source_decimal) == abs(target_decimal):
+            return True
+        if source_decimal is not None and target_decimal is not None and abs(abs(source_decimal) - abs(target_decimal)) <= Decimal("0.01"):
+            return True
+    if label in {"收款单位", "实际收款单位", "供应商名称", "结算单位", "往来单位"}:
+        stripped_source = re.sub(r"[（(][^（）()]+[）)]$", "", _normalize_text(source_value)).strip()
+        stripped_target = re.sub(r"[（(][^（）()]+[）)]$", "", _normalize_text(target_value)).strip()
+        stripped_source = re.sub(r"\s+(分包|材料|劳务|机械|租赁|其他)$", "", stripped_source).strip()
+        stripped_target = re.sub(r"\s+(分包|材料|劳务|机械|租赁|其他)$", "", stripped_target).strip()
+        if stripped_source and stripped_source == stripped_target:
+            return True
     return bool(source_values & target_values)
+
+
+def _field_has_values(records, field_name, label):
+    for record in records:
+        if _normalize_text(_display_value(record, field_name, label)):
+            return True
+    return False
 
 
 def _field_should_check(model_fields, field_name):
@@ -367,6 +414,7 @@ def _audit_menu(menu):
         "checked_fields": 0,
         "formal_aligned_fields": 0,
         "readonly_source_only_fields": [],
+        "unchecked_source_value_fields": [],
         "missing_formal_target_fields": [],
         "mismatch_fields": [],
         "mismatch_samples": [],
@@ -415,6 +463,8 @@ def _audit_menu(menu):
             row["readonly_source_only_fields"].append(
                 {"field": field_name, "label": label, "readonly_source_on_form": bool(readonly)}
             )
+            if _is_source_only_field(field_name) and _field_has_values(records, field_name, label):
+                row["unchecked_source_value_fields"].append({"field": field_name, "label": label})
             continue
 
         for record in records:
@@ -479,6 +529,9 @@ def _audit_menu(menu):
 
     if field_rows:
         row["severity"] = "mismatch"
+    elif row["record_count"] and row["checked_records"] and row["unchecked_source_value_fields"] and not row["checked_fields"]:
+        row["severity"] = "blocker"
+        row["domain_issue"] = "source_values_without_formal_field_checks"
     elif row["missing_formal_target_fields"]:
         row["severity"] = "needs_formalization"
     return row
