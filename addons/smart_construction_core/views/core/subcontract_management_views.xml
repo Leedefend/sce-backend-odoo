@@ -194,6 +194,9 @@
                         <page string="申请原因">
                             <field name="request_reason" nolabel="1"/>
                         </page>
+                        <page string="附件">
+                            <field name="attachment_ids" widget="many2many_binary" nolabel="1"/>
+                        </page>
                         <page string="备注">
                             <field name="note" nolabel="1"/>
                         </page>

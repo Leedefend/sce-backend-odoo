@@ -408,6 +408,9 @@
                         <page string="入库说明">
                             <field name="note" nolabel="1"/>
                         </page>
+                        <page string="附件">
+                            <field name="attachment_ids" widget="many2many_binary" nolabel="1"/>
+                        </page>
                         <page string="来源追溯">
                             <group>
                                 <field name="legacy_fact_model"/>
@@ -640,6 +643,9 @@
                         </page>
                         <page string="询价说明">
                             <field name="note" nolabel="1"/>
+                        </page>
+                        <page string="附件">
+                            <field name="attachment_ids" widget="many2many_binary" nolabel="1"/>
                         </page>
                         <page string="来源追溯">
                             <group>

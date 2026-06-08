@@ -93,6 +93,13 @@ class ScLegacyDirectAcceptanceFact(models.Model):
     creator_legacy_user_id = fields.Char(string="录入人ID", index=True)
     created_time = fields.Datetime(string="录入时间", index=True)
     attachment_ref = fields.Char(string="附件")
+    attachment_ids = fields.Many2many(
+        "ir.attachment",
+        "sc_legacy_direct_acceptance_fact_attachment_rel",
+        "fact_id",
+        "attachment_id",
+        string="附件",
+    )
     note = fields.Text(string="备注")
     raw_payload = fields.Text(string="旧系统原始行JSON")
 

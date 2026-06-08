@@ -241,6 +241,13 @@ class ScEquipmentUsage(models.Model):
         index=True,
         tracking=True,
     )
+    attachment_ids = fields.Many2many(
+        "ir.attachment",
+        "sc_equipment_usage_attachment_rel",
+        "usage_id",
+        "attachment_id",
+        string="附件",
+    )
     note = fields.Text(string="使用说明")
     legacy_fact_model = fields.Char(string="来源通用模型", index=True)
     legacy_fact_id = fields.Integer(string="来源通用记录ID", index=True)

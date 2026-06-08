@@ -254,6 +254,19 @@ class LoadContractHandler(BaseIntentHandler):
         self._ensure_form_auxiliary_slots(data, model_name)
         self._ensure_native_view_field_descriptors(data, model_name)
         self._inject_semantic_contract(data)
+        hook_payload = call_extension_hook_first(
+            self.env,
+            "smart_core_finalize_projected_contract_data",
+            self.env,
+            data,
+            {
+                "view_type": view_type_final,
+                "subject": "load_contract",
+                "meta": meta or {},
+            },
+        )
+        if isinstance(hook_payload, dict):
+            data = hook_payload
 
         # ---------- 7) 计算聚合 ETag ----------
         etag_source = _json({

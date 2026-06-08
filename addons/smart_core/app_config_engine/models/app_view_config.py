@@ -335,6 +335,13 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
             force_parser = bool(ctx_flags.get('contract_force_parser'))
             force_fallback = bool(ctx_flags.get('contract_force_fallback'))
 
+            # When the projection is scoped to a concrete action/view, the
+            # already-resolved view_data is the authority. The generic parser
+            # can fall back to the model default tree and leak unrelated
+            # columns into action-specific list contracts.
+            if identity.get('source_view_id'):
+                force_fallback = True
+
             parse_service = NativeParseService(self)
             fallback_service = ParseFallbackService(self)
             parsed_json = parse_service.parse_with_primary_parser(
@@ -638,14 +645,28 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
         # ======== TREE：沿用你的旧策略 ========
         if view_type == 'tree':
             view_fields = []
+            columns_schema = []
+            order_default = getattr(self.env[model_name], '_order', 'id desc') or 'id desc'
             if arch:
                 try:
                     root = ET.fromstring(arch)
+                    if root.get('default_order'):
+                        order_default = root.get('default_order')
                     for field in root.findall('.//field[@name]'):
                         fname = field.get('name')
                         is_invisible = field.get('column_invisible')
                         if fname and is_invisible not in ('True', '1'):
                             view_fields.append(fname)
+                            meta = (fields_get or {}).get(fname) or {}
+                            label = field.get('string') or meta.get('string') or fname
+                            columns_schema.append({
+                                'name': fname,
+                                'label': label,
+                                'string': label,
+                                'type': meta.get('type') or 'char',
+                                'widget': field.get('widget') or '',
+                                'optional': field.get('optional') or '',
+                            })
                     _logger.debug("从原始视图提取到字段: %s", view_fields)
                 except Exception as e:
                     _logger.warning("从原始视图解析字段失败: %s", e)
@@ -669,11 +690,22 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
                         other_fields.append(fname)
                 all_candidates = candidate_fields + relation_fields + other_fields
                 view_fields = all_candidates[:10] if all_candidates else ['id']
+                columns_schema = [
+                    {
+                        'name': fname,
+                        'label': ((fields_get or {}).get(fname) or {}).get('string') or fname,
+                        'string': ((fields_get or {}).get(fname) or {}).get('string') or fname,
+                        'type': ((fields_get or {}).get(fname) or {}).get('type') or 'char',
+                        'widget': '',
+                        'optional': '',
+                    }
+                    for fname in view_fields
+                ]
 
-            order_default = getattr(self.env[model_name], '_order', 'id desc') or 'id desc'
             base.update({
                 'order': order_default,
                 'columns': view_fields,
+                'columns_schema': columns_schema,
                 'row_actions': [{'name': 'open_form', 'label': _('Open'), 'intent': 'form.open'}],
                 'page_size': 50,
                 'row_classes': [],

@@ -71,6 +71,7 @@ class ScExpenseClaim(models.Model):
     )
     partner_id = fields.Many2one("res.partner", string="往来单位", index=True)
     applicant_name = fields.Char(string="申请人", index=True)
+    department_name = fields.Char(string="部门", index=True)
     company_name_text = fields.Char(string="所属公司")
     guarantee_project_name = fields.Char(string="投标项目/合同名称", index=True)
     guarantee_type = fields.Selection(
@@ -96,6 +97,14 @@ class ScExpenseClaim(models.Model):
     summary = fields.Char(string="摘要", index=True)
     amount = fields.Monetary(string="申请金额", currency_field="currency_id", required=True)
     approved_amount = fields.Monetary(string="批准金额", currency_field="currency_id")
+    paid_amount = fields.Monetary(string="已付款金额", currency_field="currency_id")
+    unpaid_amount = fields.Monetary(
+        string="未付款金额",
+        currency_field="currency_id",
+        compute="_compute_unpaid_amount",
+        store=True,
+    )
+    payment_state = fields.Char(string="付款状态", index=True)
     currency_id = fields.Many2one(
         "res.currency",
         string="币种",
@@ -149,6 +158,7 @@ class ScExpenseClaim(models.Model):
             "Legacy expense/deposit claim source must be unique.",
         ),
         ("amount_nonnegative", "CHECK(amount >= 0)", "Claim amount must be non-negative."),
+        ("paid_amount_nonnegative", "CHECK(paid_amount IS NULL OR paid_amount >= 0)", "Paid amount must be non-negative."),
     ]
 
     @api.depends("claim_type")
@@ -200,6 +210,9 @@ class ScExpenseClaim(models.Model):
                 "payment_request_id",
                 "partner_id",
                 "note",
+                "department_name",
+                "payment_state",
+                "paid_amount",
                 "active",
                 "creator_legacy_user_id",
                 "creator_name",
@@ -214,6 +227,28 @@ class ScExpenseClaim(models.Model):
             if blocked:
                 raise UserError(_("历史迁移费用/保证金单据已确认，只允许补充支付锚点、往来单位、备注和历史录入审计事实。"))
         return super().write(vals)
+
+    @api.depends("amount", "approved_amount", "paid_amount")
+    def _compute_unpaid_amount(self):
+        for rec in self:
+            expected = rec.approved_amount or rec.amount or 0.0
+            rec.unpaid_amount = max(expected - (rec.paid_amount or 0.0), 0.0)
+
+    def init(self):
+        self.env.cr.execute(
+            """
+            UPDATE sc_expense_claim
+               SET department_name = COALESCE(NULLIF(department_name, ''), NULLIF(legacy_visible_department, '')),
+                   payment_state = COALESCE(
+                       NULLIF(payment_state, ''),
+                       NULLIF(legacy_document_state, ''),
+                       NULLIF(legacy_visible_document_state, ''),
+                       state
+                   ),
+                   paid_amount = COALESCE(paid_amount, approved_amount, amount, 0.0)
+             WHERE source_origin = 'legacy'
+            """
+        )
 
     def action_submit(self):
         policy = self.env["sc.approval.policy"]
@@ -294,6 +329,11 @@ class ScExpenseClaim(models.Model):
                 raise UserError(_("费用/保证金申请金额必须大于 0。"))
             if (rec.approved_amount or 0.0) < 0:
                 raise UserError(_("费用/保证金批准金额不能为负数。"))
+            expected = rec.approved_amount or rec.amount or 0.0
+            if (rec.paid_amount or 0.0) < 0:
+                raise UserError(_("费用/保证金已付款金额不能为负数。"))
+            if (rec.paid_amount or 0.0) > expected:
+                raise UserError(_("费用/保证金已付款金额不能超过批准/申请金额。"))
 
     def _sync_payment_request_done(self):
         for rec in self:

@@ -5,11 +5,12 @@ import hashlib
 import re
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
-from odoo import fields, models
+from odoo import api, fields, models
 
 
 HEX_NAME_RE = re.compile(r"^[0-9a-fA-F]{24,64}(?:\.[A-Za-z0-9]{1,8})?$")
 _LEGACY_VISIBLE_ALIAS_PAYLOAD_CACHE = {}
+_USER_ACCEPTANCE_VISIBLE_CACHE = {}
 
 
 P1_ALIAS_LABELS = {'tender.bid': ['单据状态', '推送结果', '单据编号', '项目名称', '登记时间', '申请人', '申请日期', '金额', '备注', '附件', '录入人', '录入时间', '开标时间'],
@@ -81,10 +82,13 @@ P1_ALIAS_LABELS = {'tender.bid': ['单据状态', '推送结果', '单据编号'
                      '项目名称',
                      '申请日期',
                      '收款单位',
+                     '实际收款单位',
+                     '付款单位',
                      '申请付款金额',
                      '实际付款金额',
                      '可用余额',
                      '成本分类名称',
+                     '类型（成本）',
                      '备注',
                      '是否关联单据',
                      '付款账号',
@@ -131,9 +135,14 @@ P1_ALIAS_LABELS = {'tender.bid': ['单据状态', '推送结果', '单据编号'
                           '供应商名称',
                           '付款日期',
                           '付款金额',
+                          '收款单位',
+                          '实际收款单位',
+                          '支付类别',
+                          '付款内容',
                           '备注',
                           '其它备注',
                           '付款方式名称',
+                          '类型（成本）',
                           '填写人',
                           '开户行',
                           '账户',
@@ -144,6 +153,9 @@ P1_ALIAS_LABELS = {'tender.bid': ['单据状态', '推送结果', '单据编号'
                           '其他备注',
                           '付款账户',
                           '付款账户名称',
+                          '凭证号',
+                          '录入人',
+                          '付款单关联来源',
                           '录入日期'],
  'sc.fund.account.operation': ['单据状态',
                                '项目名称',
@@ -1099,19 +1111,23 @@ MODEL_LABEL_SOURCE_OVERRIDES = {
         '项目名称': ['legacy_visible_project_name', 'project_id'],
         '申请日期': ['legacy_visible_request_date', 'date_request', 'request_date', 'document_date', 'create_date'],
         '收款单位': ['legacy_visible_payee_unit', 'partner_id', 'receipt_partner_name', 'owner_id'],
+        '实际收款单位': ['actual_payee_unit', 'legacy_visible_actual_payee_unit'],
+        '付款单位': ['payer_unit', 'legacy_visible_payer_unit', 'legacy_payment_account_name'],
         '申请付款金额': ['legacy_visible_request_amount', 'amount'],
         '实际付款金额': ['legacy_visible_actual_paid_amount', 'paid_amount_total', 'paid_amount', 'amount'],
         '可用余额': ['legacy_visible_available_balance', 'settlement_amount_payable', 'settlement_remaining_amount'],
         '是否关联单据': ['settlement_id', 'contract_id'],
-        '付款账号': ['legacy_payment_account_no', 'payment_account_no', 'partner_bank_account', 'bank_account', 'bank_account_id'],
-        '金额大写': ['legacy_visible_amount_uppercase', 'amount_uppercase'],
-        '户名': ['legacy_payee_account_name', 'payment_account_name', 'partner_account_name'],
-        '开户行': ['legacy_payee_bank_name', 'payment_bank_name', 'partner_bank_name', 'bank_name'],
-        '账号': ['legacy_payee_account_no', 'account_no', 'payment_account_no', 'partner_bank_account'],
+        '付款账号': ['payment_account_no', 'legacy_payment_account_no', 'partner_bank_account', 'bank_account', 'bank_account_id'],
+        '金额大写': ['accepted_amount_uppercase', 'legacy_visible_amount_uppercase', 'amount_uppercase'],
+        '户名': ['payment_account_name', 'legacy_payee_account_name', 'partner_account_name'],
+        '开户行': ['payment_bank_name', 'legacy_payee_bank_name', 'partner_bank_name', 'bank_name'],
+        '账号': ['payment_account_no', 'legacy_payee_account_no', 'account_no', 'partner_bank_account'],
         '附件': ['attachment_ids'],
         '成本分类名称': ['legacy_visible_cost_category_name', 'cost_category_id', 'cost_type_id', 'cost_category_name'],
+        '类型（成本）': ['legacy_visible_cost_type', 'legacy_visible_cost_category_name', 'cost_category_name'],
         '备注': ['legacy_visible_remark', 'note'],
         '填写人': ['legacy_visible_writer', 'creator_name'],
+        '录入人': ['legacy_visible_writer', 'creator_name'],
         '录入时间': ['created_time'],
     },
     'tender.doc.purchase': {
@@ -1137,15 +1153,15 @@ MODEL_LABEL_SOURCE_OVERRIDES = {
         '所属公司': ['company_id', 'company_name_text'],
         '日期': ['date_claim', 'fill_date'],
         '单据日期': ['date_claim', 'fill_date'],
-        '部门': ['legacy_visible_department'],
+        '部门': ['department_name', 'legacy_visible_department'],
         '报销人': ['applicant_name', 'payee'],
         '报销种类': ['expense_type', 'claim_type'],
         '报销类别': ['expense_type', 'claim_type'],
         '事项说明': ['summary', 'note'],
         '报销金额': ['amount', 'approved_amount'],
-        '付款状态': ['legacy_visible_payment_state', 'state'],
-        '已付款金额': ['legacy_visible_paid_amount', 'approved_amount'],
-        '未付款金额': ['legacy_visible_unpaid_amount', 'amount'],
+        '付款状态': ['payment_state', 'state'],
+        '已付款金额': ['paid_amount', 'approved_amount'],
+        '未付款金额': ['unpaid_amount', 'amount'],
         '付款方式': ['payment_method'],
         '借款人': ['legacy_visible_borrower', 'applicant_name', 'payee'],
         '借款金额': ['legacy_visible_loan_amount', 'amount', 'approved_amount'],
@@ -1157,7 +1173,7 @@ MODEL_LABEL_SOURCE_OVERRIDES = {
         '付款时间': ['legacy_visible_payment_time', 'date_claim', 'fill_date'],
         '标题': ['legacy_visible_title', 'summary', 'expense_type'],
         '本次实缴数': ['amount', 'approved_amount'],
-        '是否退回': ['legacy_visible_returned_flag', 'claim_type'],
+        '是否退回': ['is_returned', 'legacy_visible_returned_flag', 'claim_type'],
         '上缴内容': ['legacy_visible_adjustment_item', 'summary', 'expense_type'],
         '本次计划已缴数': ['amount', 'approved_amount'],
         '本次退回数': ['amount', 'approved_amount'],
@@ -1173,15 +1189,20 @@ MODEL_LABEL_SOURCE_OVERRIDES = {
         '备注': ['legacy_visible_note', 'summary', 'note'],
     },
     'sc.invoice.registration': {
-        '状态': ['legacy_document_state', 'state'],
+        '状态': ['state', 'legacy_document_state'],
+        '单据状态': ['state', 'legacy_document_state'],
+        '单据编号': ['document_no', 'name'],
         '推送结果': ['push_result', 'legacy_document_state', 'state'],
         '金蝶单据编号': ['kingdee_document_no', 'document_no', 'name'],
         '项目名称': ['legacy_visible_project_name', 'project_id'],
         '预计回款日期': ['expected_receipt_date'],
         '申请人': ['applicant_name', 'creator_name', 'source_created_by'],
-        '受票方名称': ['partner_id', 'legacy_partner_name'],
+        '申请日期': ['application_date', 'document_date', 'legacy_visible_application_date'],
+        '受票单位': ['recipient_unit_name', 'partner_id', 'legacy_visible_partner_name', 'legacy_partner_name'],
+        '受票方名称': ['recipient_unit_name', 'partner_id', 'legacy_visible_partner_name', 'legacy_partner_name'],
         '交税类型': ['tax_type', 'invoice_content', 'operation_strategy'],
-        '数据类型': ['legacy_visible_data_type', 'source_kind'],
+        '数据类型': ['caliber', 'legacy_visible_data_type', 'source_kind'],
+        '口径': ['caliber', 'legacy_visible_data_type', 'source_kind'],
         '金额': ['amount_total'],
         '发票开具日期': ['invoice_date', 'document_date'],
         '预缴税款日期': ['prepaid_tax_date', 'document_date'],
@@ -1193,13 +1214,18 @@ MODEL_LABEL_SOURCE_OVERRIDES = {
         '税率': ['tax_rate'],
         '关联回款金额': ['related_receipt_amount'],
         '累计开票金额': ['amount_total'],
-        '本次开票金额': ['amount_total'],
+        '本次开票金额': ['actual_invoice_amount', 'amount_total'],
+        '实开总金额': ['actual_invoice_amount', 'amount_total'],
         '合同额': ['contract_amount'],
         '本次开票张数': ['invoice_count'],
         '开票张数': ['invoice_count'],
+        '数量': ['invoice_count'],
         '发票号': ['invoice_no'],
         '发票种类': ['invoice_type'],
         '开票单位': ['invoice_issue_company'],
+        '实际开票单位': ['actual_invoice_issue_company', 'invoice_issue_company', 'legacy_visible_invoice_issue_company'],
+        '开票状态': ['invoice_state', 'state', 'legacy_visible_invoice_state'],
+        '合同编号': ['contract_id', 'legacy_visible_contract_no'],
         '开票日期': ['invoice_date'],
         '附件': ['attachment_ids', 'legacy_attachment_ref'],
         '录入人': ['creator_name'],
@@ -1325,6 +1351,7 @@ MODEL_LABEL_SOURCE_OVERRIDES = {
         '数量': ['total_qty'],
         '入库总数量': ['total_qty'],
         '含税金额': ['amount_total'],
+        '附件': ['attachment_ids'],
     },
     'sc.payment.execution': {
         '单据状态': ['legacy_document_state', 'state'],
@@ -1333,13 +1360,18 @@ MODEL_LABEL_SOURCE_OVERRIDES = {
         '单据编号': ['legacy_visible_document_no', 'document_no', 'name'],
         '项目名称': ['legacy_visible_project_name', 'project_id'],
         '項目名称': ['legacy_visible_project_name', 'project_id'],
+        '收款单位': ['legacy_visible_supplier_name', 'partner_id'],
+        '实际收款单位': ['legacy_visible_actual_payee_unit'],
         '供应商名称': ['legacy_visible_supplier_name', 'partner_id'],
         '付款日期': ['legacy_visible_payment_date', 'date_payment'],
         '付款金额': ['legacy_visible_payment_amount', 'paid_amount'],
+        '支付类别': ['legacy_visible_payment_category'],
+        '付款内容': ['legacy_visible_payment_content'],
         '备注': ['legacy_visible_note', 'note'],
         '其它备注': ['legacy_visible_other_note', 'other_note', 'note'],
         '其他备注': ['legacy_visible_other_note', 'other_note', 'note'],
         '付款方式名称': ['legacy_visible_payment_method', 'payment_family', 'payment_method'],
+        '类型（成本）': ['legacy_visible_cost_type'],
         '填写人': ['handler_name', 'creator_name'],
         '开户行': ['legacy_visible_receipt_bank_name', 'receipt_bank_name', 'payment_bank_name'],
         '账户': ['legacy_visible_receipt_account_no', 'receipt_account_no', 'payment_account_no', 'bank_account'],
@@ -1347,9 +1379,70 @@ MODEL_LABEL_SOURCE_OVERRIDES = {
         '付款账户名称': ['legacy_visible_payment_account_name', 'payment_account_name'],
         '支付申请单号': ['legacy_visible_request_no', 'payment_request_id', 'document_no'],
         '附件': ['attachment_ids', 'legacy_attachment_ref'],
+        '凭证号': ['legacy_visible_voucher_no'],
         '录入人': ['creator_name'],
+        '付款单关联来源': ['legacy_visible_payment_source'],
         '录入日期': ['legacy_visible_entry_date', 'created_time'],
         '录入时间': ['created_time'],
+    },
+    'sc.hr.payroll.document': {
+        '单据状态': ['legacy_document_state', 'state'],
+        '状态': ['state'],
+        '财务支出登记状态': ['state'],
+        '单据编号': ['document_no', 'legacy_document_no', 'name'],
+        '单据日期': ['business_date'],
+        '项目名称': ['project_id', 'payer_unit', 'payout_unit'],
+        '标题': ['name', 'description'],
+        '姓名': ['employee_name', 'employee_user_id'],
+        '补助人': ['employee_name', 'employee_user_id'],
+        '人员状态': ['employee_status'],
+        '人员类型': ['employee_type'],
+        '身份证号码': ['id_number'],
+        '联系方式': ['contact_phone'],
+        '部门': ['department_id'],
+        '年份': ['period_year'],
+        '年度': ['period_year'],
+        '月份': ['period_month'],
+        '社保购买单位': ['payer_unit'],
+        '发放单位': ['payout_unit', 'payer_unit'],
+        '购买人数': ['people_count'],
+        '发放人数': ['people_count'],
+        '社保基数': ['social_security_base'],
+        '缴费金额': ['amount', 'company_amount', 'individual_amount'],
+        '个人证书': ['certificate_fee'],
+        '证书费用': ['certificate_fee'],
+        '类型': ['employee_type', 'legacy_visible_type'],
+        '应发工资': ['gross_amount'],
+        '实发工资': ['net_salary'],
+        '补助事由': ['item_type', 'legacy_visible_item_type'],
+        '补助金额': ['amount'],
+        '备注': ['result_note', 'description', 'legacy_visible_note'],
+        '附件': ['attachment_ids'],
+        '录入人': ['source_created_by', 'legacy_visible_creator_name'],
+        '登记人': ['source_created_by', 'legacy_visible_creator_name'],
+        '录入时间': ['source_created_at', 'legacy_visible_created_time'],
+        '登记时间': ['source_created_at', 'legacy_visible_created_time'],
+    },
+    'project.material.plan': {
+        '附件': ['attachment_ids'],
+    },
+    'sc.settlement.order': {
+        '附件': ['attachment_ids', 'legacy_visible_attachment'],
+    },
+    'sc.subcontract.request': {
+        '附件': ['attachment_ids'],
+    },
+    'sc.legacy.direct.acceptance.fact': {
+        '附件': ['attachment_ids', 'attachment_ref'],
+    },
+    'sc.labor.usage': {
+        '附件': ['attachment_ids'],
+    },
+    'sc.equipment.usage': {
+        '附件': ['attachment_ids'],
+    },
+    'sc.material.rfq': {
+        '附件': ['attachment_ids'],
     },
 }
 
@@ -1357,8 +1450,8 @@ MODEL_LABEL_SOURCE_OVERRIDES = {
 PAYMENT_REQUEST_DOCUMENT_STATE_LABELS = {
     "-1": "已作废",
     "0": "未审核",
-    "1": "审核中",
-    "2": "已审核",
+    "1": "审批中",
+    "2": "审核通过",
 }
 
 TAX_DEDUCTION_DOCUMENT_STATE_LABELS = {
@@ -1485,25 +1578,124 @@ def _legacy_attachment_links(record):
         attachment_ref = _format_alias_value(record, 'attachment_ref')
     if not attachment_ref or 'sc.legacy.file.index' not in record.env:
         return ""
-    fallback_link = f"历史附件 | legacy-file-id://{attachment_ref}"
     files = record.env['sc.legacy.file.index'].sudo().search([
         ('active', '=', True),
         ('bill_id', '=', attachment_ref),
     ], order='upload_time, id')
     if not files:
-        return fallback_link
-    lines = []
-    seen = set()
-    for item in files:
-        name = str(item.file_name or item.display_name or "").strip()
-        if _is_hash_file_name(name):
-            continue
-        key = name
-        if not name or key in seen:
-            continue
-        seen.add(key)
-        lines.append(name)
-    return " ".join(lines) if lines else "历史附件"
+        return "附件(1)"
+    return "附件(%s)" % len(files)
+
+
+USER_ACCEPTANCE_ALIAS_LABELS = {
+    "支付申请": [
+        "单据状态", "单据编号", "申请日期", "项目名称", "收款单位", "实际收款单位", "付款单位",
+        "申请付款金额", "实际付款金额", "类型（成本）", "备注", "是否关联单据", "付款账号",
+        "金额大写", "户名", "开户行", "账号", "附件", "录入人", "录入时间",
+    ],
+    "项目费用报销单": [
+        "单据状态", "单据编号", "日期", "报销种类", "事项说明", "报销金额", "付款状态",
+        "已付款金额", "未付款金额", "付款方式", "报销人", "收款人", "备注", "项目名称",
+        "附件", "录入人", "录入时间",
+    ],
+    "往来单位付款": [
+        "单据状态", "付款日期", "收款单位", "实际收款单位", "付款金额", "支付类别", "付款内容",
+        "付款方式名称", "类型（成本）", "付款账户名称", "附件", "凭证号", "填写人", "录入人",
+        "项目名称", "付款单关联来源", "单据编号",
+    ],
+}
+
+USER_ACCEPTANCE_ALIAS_INDEXES = {
+    "支付申请": {
+        "单据状态": 1,
+        "单据编号": 2,
+        "申请日期": 3,
+        "项目名称": 4,
+        "收款单位": 5,
+        "实际收款单位": 6,
+        "付款单位": 7,
+        "申请付款金额": 8,
+        "实际付款金额": 9,
+        "类型（成本）": 11,
+        "备注": 12,
+        "是否关联单据": 13,
+        "付款账号": 14,
+        "金额大写": 15,
+        "户名": 16,
+        "开户行": 17,
+        "账号": 18,
+        "附件": 19,
+        "录入人": 20,
+        "录入时间": 21,
+    },
+}
+
+
+def _strip_legacy_file_suffix(value):
+    text = str(value or "").strip()
+    if " | legacy-file-id://" in text:
+        return text.split(" | legacy-file-id://", 1)[0].strip()
+    return text
+
+
+def _user_acceptance_alias_context(record):
+    if (
+        record._name == "payment.request"
+        and _format_alias_value(record, "legacy_source_table") == "SCBSLY_DIRECT_PAYMENT_APPLY_ACCEPTED"
+    ):
+        return "支付申请", ("legacy_visible_document_no", "document_no", "name")
+    if (
+        record._name == "sc.expense.claim"
+        and getattr(record, "claim_type", "") == "expense"
+        and _format_alias_value(record, "expense_type") == "项目费用报销单"
+    ):
+        return "项目费用报销单", ("name",)
+    if (
+        record._name == "sc.payment.execution"
+        and getattr(record, "source_kind", "") == "actual_outflow"
+        and _format_alias_value(record, "legacy_source_model") == "online_old_scbsly:T_FK_SUPPLIER:list881"
+    ):
+        return "往来单位付款", ("legacy_visible_document_no", "document_no", "name")
+    return None, ()
+
+
+def _user_acceptance_alias_value(record, label):
+    acceptance_label, doc_fields = _user_acceptance_alias_context(record)
+    labels = USER_ACCEPTANCE_ALIAS_LABELS.get(acceptance_label or "")
+    if not acceptance_label or label not in (labels or ()):
+        return None
+    document_no = ""
+    for field_name in doc_fields:
+        document_no = _format_alias_value(record, field_name)
+        if document_no:
+            break
+    if not document_no or "sc.legacy.direct.acceptance.fact" not in record.env:
+        return None
+    key = (record.env.cr.dbname, acceptance_label, document_no)
+    payload = _USER_ACCEPTANCE_VISIBLE_CACHE.get(key)
+    if payload is None:
+        fact = record.env["sc.legacy.direct.acceptance.fact"].sudo().search(
+            [
+                ("active", "=", True),
+                ("source_system", "=", "online_old_scbsly"),
+                ("acceptance_label", "=", acceptance_label),
+                "|",
+                ("document_no", "=", document_no),
+                ("legacy_record_id", "=", document_no),
+            ],
+            order="id desc",
+            limit=1,
+        )
+        payload = {}
+        if fact:
+            indexes = USER_ACCEPTANCE_ALIAS_INDEXES.get(acceptance_label, {})
+            for index, visible_label in enumerate(labels, start=1):
+                visible_index = indexes.get(visible_label, index)
+                payload[visible_label] = getattr(fact, f"legacy_visible_{visible_index:02d}", "")
+        _USER_ACCEPTANCE_VISIBLE_CACHE[key] = payload
+    if label not in payload:
+        return None
+    return _strip_legacy_file_suffix(payload.get(label))
 
 
 def _description_line_value(record, prefix):
@@ -1581,9 +1773,12 @@ def _payment_request_c_zfsqgl_alias_value(record, label):
 
 
 def _alias_value(record, label):
+    acceptance_value = _user_acceptance_alias_value(record, label)
+    if acceptance_value is not None:
+        return acceptance_value
     strict_value = _payment_request_c_zfsqgl_alias_value(record, label)
     if strict_value is not None:
-        return strict_value
+        return _strip_legacy_file_suffix(strict_value) if label == "附件" else strict_value
     payload = _legacy_visible_alias_payload(record)
     if payload and label in payload:
         return _normalize_payload_alias_value(label, payload.get(label))
@@ -1814,25 +2009,30 @@ def _alias_value(record, label):
                     '4': '已作废',
                 }.get(legacy_state, legacy_state)
         strict_sources = {
-            '开票状态': 'legacy_visible_invoice_state',
-            '合同编号': 'legacy_visible_contract_no',
+            '开票状态': 'invoice_state',
+            '合同编号': 'contract_id',
             '项目名称': 'legacy_visible_project_name',
-            '申请日期': 'legacy_visible_application_date',
-            '受票方名称': 'legacy_visible_partner_name',
+            '申请日期': 'application_date',
+            '受票单位': 'recipient_unit_name',
+            '受票方名称': 'recipient_unit_name',
             '累计开票金额': 'legacy_visible_cumulative_invoice_amount',
-            '本次开票张数': 'legacy_visible_invoice_count',
-            '开票张数': 'legacy_visible_invoice_count',
-            '本次开票金额': 'legacy_visible_current_invoice_amount',
+            '本次开票张数': 'invoice_count',
+            '开票张数': 'invoice_count',
+            '数量': 'invoice_count',
+            '本次开票金额': 'actual_invoice_amount',
+            '实开总金额': 'actual_invoice_amount',
             '备注': 'legacy_visible_note',
             '推送结果': 'push_result',
-            '金蝶单据编号': 'legacy_visible_kingdee_no',
-            '含税金额': 'legacy_visible_current_invoice_amount',
-            '附加税': 'legacy_visible_surcharge_amount',
-            '税率': 'legacy_visible_tax_rate',
-            '关联回款金额': 'legacy_visible_related_receipt_amount',
-            '发票号': 'legacy_visible_invoice_no',
-            '发票种类': 'legacy_visible_invoice_type',
-            '开票单位': 'legacy_visible_invoice_issue_company',
+            '金蝶单据编号': 'kingdee_document_no',
+            '含税金额': 'amount_total',
+            '附加税': 'surcharge_amount',
+            '税率': 'tax_rate',
+            '关联回款金额': 'related_receipt_amount',
+            '发票号': 'invoice_no',
+            '发票种类': 'invoice_type',
+            '开票单位': 'invoice_issue_company',
+            '实际开票单位': 'actual_invoice_issue_company',
+            '口径': 'caliber',
             '录入人': 'creator_name',
             '录入时间': 'created_time',
         }
@@ -2051,33 +2251,33 @@ def _alias_value(record, label):
             '单据编号': 'legacy_document_no',
             '单据日期': 'business_date',
             '姓名': 'employee_name',
-            '人员类型': 'item_type',
+            '人员类型': 'employee_type',
             '身份证号码': 'id_number',
-            '证书费用': 'legacy_visible_certificate_fee',
+            '证书费用': 'certificate_fee',
             '社保基数': 'social_security_base',
             '社保购买单位': 'payer_unit',
-            '人员状态': 'legacy_document_state',
+            '人员状态': 'employee_status',
             '项目名称': 'payer_unit',
-            '类型': 'legacy_visible_type',
-            '购买人数': 'legacy_visible_people_count',
-            '发放人数': 'legacy_visible_people_count',
+            '类型': 'employee_type',
+            '购买人数': 'people_count',
+            '发放人数': 'people_count',
             '标题': 'description',
             '年份': 'period_year',
             '年度': 'period_year',
             '月份': 'period_month',
             '部门': 'department_id',
-            '发放单位': 'payer_unit',
+            '发放单位': 'payout_unit',
             '应发工资': 'gross_amount',
             '实发工资': 'net_salary',
             '缴费金额': 'amount',
             '补助金额': 'amount',
-            '补助事由': 'legacy_visible_item_type',
+            '补助事由': 'item_type',
             '补助人': 'employee_name',
-            '备注': 'legacy_visible_note',
-            '录入人': 'legacy_visible_creator_name',
-            '登记人': 'legacy_visible_creator_name',
-            '录入时间': 'legacy_visible_created_time',
-            '登记时间': 'legacy_visible_created_time',
+            '备注': 'result_note',
+            '录入人': 'source_created_by',
+            '登记人': 'source_created_by',
+            '录入时间': 'source_created_at',
+            '登记时间': 'source_created_at',
         }
         field_name = strict_sources.get(label)
         if field_name:
@@ -2123,7 +2323,7 @@ def _alias_value(record, label):
         for field_name in ('attachment_ids', 'biz_attachment_ids', 'tech_attachment_ids', 'legacy_attachment_name'):
             value = _format_alias_value(record, field_name)
             if value:
-                return value
+                return _strip_legacy_file_suffix(value)
         return ""
     if record._name == 'sc.legacy.fund.confirmation.document' and label == '附件':
         legacy_links = _legacy_attachment_links(record)
@@ -2139,7 +2339,7 @@ def _alias_value(record, label):
         for field_name in ('attachment_ids', 'biz_attachment_ids', 'tech_attachment_ids', 'legacy_attachment_name'):
             value = _format_alias_value(record, field_name)
             if value:
-                return value
+                return _strip_legacy_file_suffix(value)
         return ""
     if record._name == 'sc.tax.deduction.registration' and label == '单据状态':
         legacy_state = _format_alias_value(record, 'legacy_document_state')
@@ -2203,3 +2403,39 @@ for _index, (_model_name, _labels) in enumerate(_ALIAS_MODEL_FIELD_LABELS.items(
         (models.Model,),
         _attrs,
     )
+
+
+class ScPaymentExecutionUserAcceptanceOrder(models.Model):
+    _inherit = "sc.payment.execution"
+
+    user_acceptance_partner_payment_sort_id = fields.Integer(
+        string="用户验收排序号",
+        compute="_compute_user_acceptance_partner_payment_sort_id",
+        store=True,
+        index=True,
+        readonly=True,
+    )
+
+    @api.depends("source_kind", "legacy_source_model", "legacy_visible_document_no")
+    def _compute_user_acceptance_partner_payment_sort_id(self):
+        target_records = self.filtered(
+            lambda record: record.source_kind == "actual_outflow"
+            and record.legacy_source_model == "online_old_scbsly:T_FK_SUPPLIER:list881"
+            and record.legacy_visible_document_no
+        )
+        values_by_doc = {}
+        if target_records and "sc.legacy.direct.acceptance.fact" in self.env:
+            docs = list(dict.fromkeys(target_records.mapped("legacy_visible_document_no")))
+            facts = self.env["sc.legacy.direct.acceptance.fact"].sudo().search(
+                [
+                    ("active", "=", True),
+                    ("source_system", "=", "online_old_scbsly"),
+                    ("acceptance_label", "=", "往来单位付款"),
+                    ("legacy_record_id", "in", docs),
+                ],
+                order="id desc",
+            )
+            for fact in facts:
+                values_by_doc.setdefault(fact.legacy_record_id, fact.id if not fact.document_date else 0)
+        for record in self:
+            record.user_acceptance_partner_payment_sort_id = values_by_doc.get(record.legacy_visible_document_no, 0)

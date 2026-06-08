@@ -53,4 +53,5 @@ from . import contract_recon_summary
 from . import project_risk
 from . import project_risk_action
 from ..support import p1_daily_business_visible_alias_fields
+from ..support import user_confirmed_formal_visible_fields
 from . import list_batch_archive_extensions

@@ -247,6 +247,28 @@ class UiMenuConfigPolicy(models.Model):
 
         def is_protected_runtime_config_node(node: dict) -> bool:
             meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+            menu_id = node.get("menu_id") or meta.get("menu_id")
+            try:
+                if int(menu_id or 0) in {727, 729, 735, 770}:
+                    return False
+            except Exception:
+                pass
+            fingerprint = "/".join(
+                str(value or "").strip()
+                for value in (
+                    node.get("key"),
+                    node.get("name"),
+                    node.get("label"),
+                    node.get("title"),
+                    node.get("menu_xmlid"),
+                    node.get("model"),
+                    meta.get("menu_xmlid"),
+                    meta.get("model"),
+                )
+                if str(value or "").strip()
+            )
+            if any(token in fingerprint for token in ("用户验收", "用户数据验收", "用户核对菜单")):
+                return False
             if str(node.get("delivery_bucket") or meta.get("delivery_bucket") or "").strip() == "delivery_business_config":
                 return True
             if str(node.get("model") or meta.get("model") or "").strip() == "ui.menu.config.policy":

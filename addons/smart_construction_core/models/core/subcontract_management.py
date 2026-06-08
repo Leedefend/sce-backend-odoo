@@ -158,6 +158,13 @@ class ScSubcontractRequest(models.Model):
         tracking=True,
     )
     line_ids = fields.One2many("sc.subcontract.request.line", "request_id", string="申请明细")
+    attachment_ids = fields.Many2many(
+        "ir.attachment",
+        "sc_subcontract_request_attachment_rel",
+        "request_id",
+        "attachment_id",
+        string="附件",
+    )
     request_reason = fields.Text(string="申请原因")
     note = fields.Text(string="备注")
     legacy_fact_model = fields.Char(string="来源通用模型", index=True)

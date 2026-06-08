@@ -147,7 +147,12 @@
         <field name="name">收入合同执行</field>
         <field name="res_model">construction.contract.income</field>
         <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="smart_construction_core.view_construction_contract_income_tree"/>
         <field name="views" eval="[(ref('smart_construction_core.view_construction_contract_income_tree'), 'tree'), (ref('smart_construction_core.view_construction_contract_income_form'), 'form')]"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_construction_contract_income_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_construction_contract_income_form')})
+        ]"/>
         <field name="search_view_id" ref="smart_construction_core.view_construction_contract_income_search"/>
         <field name="domain">['&amp;', '&amp;', '&amp;', '|', ('legacy_income_surface_visible', '=', True), '&amp;', ('state', 'in', ['confirmed', 'running']), ('legacy_contract_id', '=', False), ('legacy_visible_title', 'not ilike', '结算'), ('legacy_visible_title', 'not ilike', '报告'), ('legacy_visible_title', 'not ilike', '审核')]</field>
         <field name="context">{'default_type': 'out', 'search_default_visible_income': 1}</field>
@@ -157,7 +162,12 @@
         <field name="name">支出合同执行</field>
         <field name="res_model">construction.contract.expense</field>
         <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="smart_construction_core.view_construction_contract_expense_tree"/>
         <field name="views" eval="[(ref('smart_construction_core.view_construction_contract_expense_tree'), 'tree'), (ref('smart_construction_core.view_construction_contract_expense_form'), 'form')]"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_construction_contract_expense_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_construction_contract_expense_form')})
+        ]"/>
         <field name="search_view_id" ref="smart_construction_core.view_construction_contract_expense_search"/>
         <field name="domain">['&amp;', '&amp;', ('state', 'in', ['confirmed', 'running']), ('legacy_visible_title', 'not ilike', '结算'), ('subject', 'not ilike', '结算')]</field>
         <field name="context">{'default_type': 'in'}</field>
@@ -495,7 +505,7 @@
         <field name="res_model">sc.expense.claim</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="smart_construction_core.view_sc_expense_claim_search"/>
-        <field name="domain">[('claim_type', '=', 'expense'), ('expense_type', '=', '扣款实缴登记')]</field>
+        <field name="domain">[('legacy_source_model', '=', 'online_old_scbs:T_KK_SJDJB:list897')]</field>
         <field name="context">{'default_claim_type': 'expense', 'default_expense_type': '扣款实缴登记', 'default_summary': '扣款实缴登记', 'search_default_active_rows': 1, 'search_default_group_project': 1}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
@@ -509,7 +519,7 @@
         <field name="res_model">sc.expense.claim</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="smart_construction_core.view_sc_expense_claim_search"/>
-        <field name="domain">[('claim_type', '=', 'deduction_refund'), ('expense_type', '=', '扣款实缴退回')]</field>
+        <field name="domain">[('legacy_source_model', '=', 'online_old_scbs:T_KK_SJTHB:list898')]</field>
         <field name="context">{'default_claim_type': 'deduction_refund', 'default_expense_type': '扣款实缴退回', 'default_summary': '扣款实缴退回', 'search_default_active_rows': 1, 'search_default_group_project': 1}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
@@ -625,7 +635,7 @@
         <field name="res_model">payment.request</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="smart_construction_core.view_payment_request_search"/>
-        <field name="domain">['&amp;', ('type', '=', 'pay'), '|', '&amp;', ('legacy_source_table', '=', 'C_ZFSQGL'), ('operation_strategy', '=', 'joint'), ('legacy_source_table', '=', 'SCBSLY_DIRECT_PAYMENT_APPLY_ACCEPTED')]</field>
+        <field name="domain">[('type', '=', 'pay'), ('legacy_source_table', '=', 'SCBSLY_DIRECT_PAYMENT_APPLY_ACCEPTED')]</field>
         <field name="context">{'default_type': 'pay', 'search_default_type_pay': 1, 'search_default_group_by_project_id': 1}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
@@ -653,7 +663,7 @@
         <field name="res_model">sc.payment.execution</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="smart_construction_core.view_sc_payment_execution_search"/>
-        <field name="domain">['&amp;', ('source_kind', '=', 'actual_outflow'), ('legacy_source_model', 'in', ['online_old_scbs:T_FK_SUPPLIER:list881', 'online_old_scbsly:T_FK_SUPPLIER:list881'])]</field>
+        <field name="domain">[('source_kind', '=', 'actual_outflow'), ('legacy_source_model', '=', 'online_old_scbsly:T_FK_SUPPLIER:list881')]</field>
         <field name="context">{'default_source_kind': 'actual_outflow', 'default_payment_family': '往来单位付款', 'search_default_group_project': 1}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
@@ -1182,13 +1192,13 @@
     <menuitem id="menu_sc_labor_usage_acceptance"
               name="方单"
               parent="smart_construction_core.menu_sc_labor_management_group"
-              action="smart_construction_core.action_sc_labor_usage"
+              action="smart_construction_core.action_sc_labor_usage_ticket"
               sequence="31"
               groups="smart_construction_core.group_sc_internal_user"/>
     <menuitem id="menu_sc_labor_casual_acceptance"
               name="零星用工"
               parent="smart_construction_core.menu_sc_labor_management_group"
-              action="smart_construction_core.action_sc_labor_usage"
+              action="smart_construction_core.action_sc_labor_usage_casual"
               sequence="32"
               groups="smart_construction_core.group_sc_internal_user"/>
     <menuitem id="menu_sc_labor_settlement"

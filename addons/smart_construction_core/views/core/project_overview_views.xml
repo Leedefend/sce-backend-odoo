@@ -13,11 +13,21 @@
                                 <div class="sc-project-title h3 mb-1">
                                     <field name="name" readonly="1"/>
                                 </div>
+                                <div class="small text-muted">
+                                    项目编号 <field name="project_code" readonly="1" nolabel="1"/>
+                                    · 经营方式 <field name="operation_strategy" readonly="1" nolabel="1"/>
+                                    · 经营性质 <field name="business_nature" readonly="1" nolabel="1"/>
+                                </div>
                                 <div class="text-muted">你是：项目负责人 <field name="user_id" readonly="1"/></div>
                                 <div class="text-muted">项目经理 <field name="manager_id" readonly="1"/></div>
                                 <div class="small text-muted mt-1">
                                     业主 <field name="owner_id" readonly="1"/>
                                     · 类型 <field name="project_type_id" readonly="1"/>
+                                </div>
+                                <div class="small text-muted mt-1">
+                                    原始录入人 <field name="legacy_source_created_by" readonly="1" nolabel="1"/>
+                                    · 录入时间 <field name="legacy_source_created_at" readonly="1" nolabel="1"/>
+                                    · 更新时间 <field name="write_date" readonly="1" nolabel="1"/>
                                 </div>
                                 <field name="location" readonly="1" invisible="1"/>
                             </div>

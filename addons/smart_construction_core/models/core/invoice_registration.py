@@ -76,7 +76,9 @@ class ScInvoiceRegistration(models.Model):
     settlement_id = fields.Many2one("sc.settlement.order", string="结算单", index=True)
     document_no = fields.Char(string="来源单号", index=True)
     document_date = fields.Date(string="单据日期", default=fields.Date.context_today, index=True)
+    application_date = fields.Date(string="申请日期", index=True)
     invoice_date = fields.Date(string="发票日期", default=fields.Date.context_today, index=True)
+    invoice_state = fields.Char(string="开票状态", index=True)
     recognition_date = fields.Date(string="认票日期", index=True)
     invoice_no = fields.Char(string="发票号码", index=True)
     invoice_code = fields.Char(string="发票代码", index=True)
@@ -103,8 +105,11 @@ class ScInvoiceRegistration(models.Model):
     tax_certificate_no = fields.Char(string="完税凭证号码", index=True)
     invoice_content = fields.Char(string="开票内容", index=True)
     cost_category_name = fields.Char(string="成本类别", index=True)
+    recipient_unit_name = fields.Char(string="受票单位", index=True)
+    caliber = fields.Char(string="口径", index=True)
     invoice_company_type = fields.Char(string="发票公司类型", index=True)
     invoice_issue_company = fields.Char(string="开票单位", index=True)
+    actual_invoice_issue_company = fields.Char(string="实际开票单位", index=True)
     invoice_provider_name = fields.Char(string="发票提供人/单位", index=True)
     push_result = fields.Char(string="推送结果", index=True)
     kingdee_document_no = fields.Char(string="金蝶单据编号", index=True)
@@ -115,6 +120,7 @@ class ScInvoiceRegistration(models.Model):
     amount_no_tax = fields.Monetary(string="不含税金额", currency_field="currency_id")
     tax_amount = fields.Monetary(string="税额", currency_field="currency_id")
     amount_total = fields.Monetary(string="价税合计", currency_field="currency_id")
+    actual_invoice_amount = fields.Monetary(string="实开总金额", currency_field="currency_id")
     surcharge_amount = fields.Monetary(string="附加税", currency_field="currency_id")
     related_receipt_amount = fields.Monetary(string="关联回款金额", currency_field="currency_id")
     currency_id = fields.Many2one(
@@ -210,14 +216,79 @@ class ScInvoiceRegistration(models.Model):
                 "prepaid_tax_date",
                 "tax_certificate_no",
                 "invoice_company_type",
+                "application_date",
+                "invoice_state",
+                "recipient_unit_name",
+                "caliber",
+                "actual_invoice_issue_company",
+                "actual_invoice_amount",
                 "invoice_provider_name",
                 "legacy_attachment_ref",
+                "legacy_acceptance_label",
+                "legacy_acceptance_sort_id",
                 "write_uid",
                 "write_date",
             }
             if set(vals) - allowed:
                 raise UserError(_("历史迁移发票登记已确认，只允许补充业务锚点和备注。"))
         return super().write(vals)
+
+    def init(self):
+        self.env.cr.execute(
+            """
+            UPDATE sc_invoice_registration
+               SET application_date = COALESCE(application_date, legacy_visible_application_date::date, document_date),
+                   invoice_state = COALESCE(NULLIF(invoice_state, ''), NULLIF(legacy_visible_invoice_state, ''), NULLIF(legacy_document_state, ''), state),
+                   recipient_unit_name = COALESCE(NULLIF(recipient_unit_name, ''), NULLIF(legacy_visible_partner_name, ''), NULLIF(legacy_partner_name, '')),
+                   caliber = COALESCE(NULLIF(caliber, ''), NULLIF(legacy_visible_data_type, ''), source_kind),
+                   actual_invoice_issue_company = COALESCE(
+                       NULLIF(actual_invoice_issue_company, ''),
+                       NULLIF(legacy_visible_invoice_issue_company, ''),
+                       NULLIF(invoice_issue_company, '')
+                   ),
+                   actual_invoice_amount = COALESCE(
+                       actual_invoice_amount,
+                       CASE
+                           WHEN regexp_replace(COALESCE(legacy_visible_current_invoice_amount, ''), '[^0-9\\.-]', '', 'g') ~ '^-?[0-9]+(\\.[0-9]+)?$'
+                           THEN regexp_replace(legacy_visible_current_invoice_amount, '[^0-9\\.-]', '', 'g')::numeric
+                           ELSE NULL
+                       END,
+                       amount_total
+                   ),
+                   invoice_count = COALESCE(
+                       NULLIF(invoice_count, 0),
+                       CASE
+                           WHEN regexp_replace(COALESCE(legacy_visible_invoice_count, ''), '[^0-9-]', '', 'g') ~ '^-?[0-9]+$'
+                           THEN regexp_replace(legacy_visible_invoice_count, '[^0-9-]', '', 'g')::integer
+                           ELSE NULL
+                       END,
+                       0
+                   ),
+                   invoice_issue_company = COALESCE(NULLIF(invoice_issue_company, ''), NULLIF(legacy_visible_invoice_issue_company, '')),
+                   invoice_no = COALESCE(NULLIF(invoice_no, ''), NULLIF(legacy_visible_invoice_no, '')),
+                   invoice_type = COALESCE(NULLIF(invoice_type, ''), NULLIF(legacy_visible_invoice_type, '')),
+                   tax_rate = COALESCE(NULLIF(tax_rate, ''), NULLIF(legacy_visible_tax_rate, '')),
+                   surcharge_amount = COALESCE(
+                       surcharge_amount,
+                       CASE
+                           WHEN regexp_replace(COALESCE(legacy_visible_surcharge_amount, ''), '[^0-9\\.-]', '', 'g') ~ '^-?[0-9]+(\\.[0-9]+)?$'
+                           THEN regexp_replace(legacy_visible_surcharge_amount, '[^0-9\\.-]', '', 'g')::numeric
+                           ELSE NULL
+                       END
+                   ),
+                   related_receipt_amount = COALESCE(
+                       related_receipt_amount,
+                       CASE
+                           WHEN regexp_replace(COALESCE(legacy_visible_related_receipt_amount, ''), '[^0-9\\.-]', '', 'g') ~ '^-?[0-9]+(\\.[0-9]+)?$'
+                           THEN regexp_replace(legacy_visible_related_receipt_amount, '[^0-9\\.-]', '', 'g')::numeric
+                           ELSE NULL
+                       END
+                   ),
+                   kingdee_document_no = COALESCE(NULLIF(kingdee_document_no, ''), NULLIF(legacy_visible_kingdee_no, '')),
+                   note = COALESCE(NULLIF(note, ''), NULLIF(legacy_visible_note, ''))
+             WHERE legacy_source_model IS NOT NULL OR legacy_source_table IS NOT NULL
+            """
+        )
 
     def action_confirm(self):
         policy = self.env["sc.approval.policy"]

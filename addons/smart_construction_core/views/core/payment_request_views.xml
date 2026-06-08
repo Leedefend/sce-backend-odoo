@@ -73,6 +73,7 @@
                                 <field name="cost_category_name" readonly="1"/>
                                 <field name="amount"/>
                                 <field name="amount_uppercase" readonly="1"/>
+                                <field name="accepted_amount_uppercase"/>
                                 <field name="currency_id" invisible="1"/>
                                 <field name="date_request" required="1"/>
                                 <field name="paid_amount_total" readonly="1"/>
@@ -107,6 +108,11 @@
                             </div>
                         </group>
                         <group string="往来账户">
+                            <field name="actual_payee_unit"/>
+                            <field name="payer_unit"/>
+                            <field name="payment_account_name"/>
+                            <field name="payment_bank_name"/>
+                            <field name="payment_account_no"/>
                             <field name="partner_account_name" readonly="1"/>
                             <field name="partner_bank_name" readonly="1"/>
                             <field name="partner_bank_account" readonly="1"/>

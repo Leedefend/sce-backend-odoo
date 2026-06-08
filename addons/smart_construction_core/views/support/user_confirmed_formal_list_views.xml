@@ -1,0 +1,717 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- User-confirmed formal menus: keep formal models/actions, but pin list columns to the accepted surface. -->
+
+    <record id="view_project_material_plan_user_confirmed_tree" model="ir.ui.view">
+        <field name="name">project.material.plan.user.confirmed.tree</field>
+        <field name="model">project.material.plan</field>
+        <field name="arch" type="xml">
+            <tree string="材料计划" create="false" edit="false" delete="false" default_order="legacy_visible_03 desc, legacy_visible_14 asc, legacy_visible_02 asc">
+                <field name="legacy_visible_01" string="单据状态"/>
+                <field name="legacy_visible_02" string="单据编号"/>
+                <field name="legacy_visible_03" string="单据日期"/>
+                <field name="legacy_visible_04" string="到货时间"/>
+                <field name="legacy_visible_05" string="采购材料名称"/>
+                <field name="legacy_visible_06" string="规格型号"/>
+                <field name="legacy_visible_07" string="单位"/>
+                <field name="legacy_visible_08" string="数量"/>
+                <field name="legacy_visible_09" string="材料别名(设计/清单)"/>
+                <field name="legacy_visible_10" string="备注"/>
+                <field name="legacy_visible_11" string="附件"/>
+                <field name="legacy_visible_12" string="项目名称"/>
+                <field name="legacy_visible_13" string="录入人"/>
+                <field name="legacy_visible_14" string="录入时间"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_material_rfq_quote_user_confirmed_tree" model="ir.ui.view">
+        <field name="name">sc.material.rfq.quote.user.confirmed.tree</field>
+        <field name="model">sc.material.rfq</field>
+        <field name="arch" type="xml">
+            <tree string="报价单" create="false" edit="false" delete="false">
+                <field name="legacy_visible_01" string="单据状态"/>
+                <field name="legacy_visible_02" string="单据编号"/>
+                <field name="legacy_visible_03" string="供应商名称"/>
+                <field name="legacy_visible_04" string="询价时间"/>
+                <field name="legacy_visible_05" string="材料名称"/>
+                <field name="legacy_visible_06" string="规格型号"/>
+                <field name="legacy_visible_07" string="数量"/>
+                <field name="legacy_visible_08" string="含税单价"/>
+                <field name="legacy_visible_09" string="含税总金额"/>
+                <field name="legacy_visible_10" string="总数量"/>
+                <field name="legacy_visible_11" string="总金额"/>
+                <field name="legacy_visible_12" string="备注"/>
+                <field name="legacy_visible_13" string="联系人"/>
+                <field name="legacy_visible_14" string="联系电话"/>
+                <field name="legacy_visible_15" string="附件"/>
+                <field name="legacy_visible_16" string="是否中标"/>
+                <field name="legacy_visible_17" string="项目名称"/>
+                <field name="legacy_visible_18" string="录入人"/>
+                <field name="legacy_visible_19" string="录入时间"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_material_inbound_user_confirmed_tree" model="ir.ui.view">
+        <field name="name">sc.material.inbound.user.confirmed.tree</field>
+        <field name="model">sc.material.inbound</field>
+        <field name="arch" type="xml">
+            <tree string="入库" create="false" edit="false" delete="false" default_order="legacy_acceptance_sort_id desc, id desc">
+                <field name="legacy_visible_01" string="单据状态"/>
+                <field name="legacy_visible_02" string="入库单号"/>
+                <field name="legacy_visible_03" string="单据日期"/>
+                <field name="legacy_visible_04" string="供应商名称"/>
+                <field name="legacy_visible_05" string="材料名称"/>
+                <field name="legacy_visible_06" string="规格型号"/>
+                <field name="legacy_visible_07" string="数量"/>
+                <field name="legacy_visible_08" string="单价"/>
+                <field name="legacy_visible_09" string="税率"/>
+                <field name="legacy_visible_10" string="含税金额"/>
+                <field name="legacy_visible_11" string="入库总数量"/>
+                <field name="legacy_visible_12" string="付款状态"/>
+                <field name="legacy_visible_13" string="已付款金额"/>
+                <field name="legacy_visible_14" string="未付款金额"/>
+                <field name="legacy_visible_15" string="结算状态"/>
+                <field name="legacy_visible_16" string="已结算金额"/>
+                <field name="legacy_visible_17" string="项目名称"/>
+                <field name="legacy_visible_18" string="备注"/>
+                <field name="legacy_visible_19" string="附件"/>
+                <field name="legacy_visible_20" string="录入人"/>
+                <field name="legacy_visible_21" string="录入时间"/>
+                <field name="legacy_visible_22" string="采购人"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_subcontract_request_user_confirmed_tree" model="ir.ui.view">
+        <field name="name">sc.subcontract.request.user.confirmed.tree</field>
+        <field name="model">sc.subcontract.request</field>
+        <field name="arch" type="xml">
+            <tree string="分包方单" create="false" edit="false" delete="false">
+                <field name="legacy_visible_01" string="单据状态"/>
+                <field name="legacy_visible_02" string="单据编号"/>
+                <field name="legacy_visible_03" string="项目名称"/>
+                <field name="legacy_visible_04" string="标题"/>
+                <field name="legacy_visible_05" string="分包商"/>
+                <field name="legacy_visible_06" string="分包类型"/>
+                <field name="legacy_visible_07" string="分包内容"/>
+                <field name="legacy_visible_08" string="数量"/>
+                <field name="legacy_visible_09" string="单价"/>
+                <field name="legacy_visible_10" string="金额"/>
+                <field name="legacy_visible_11" string="本月合价"/>
+                <field name="legacy_visible_12" string="备注"/>
+                <field name="legacy_visible_13" string="附件"/>
+                <field name="legacy_visible_14" string="录入人"/>
+                <field name="legacy_visible_15" string="录入时间"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_labor_usage_ticket_user_confirmed_tree" model="ir.ui.view">
+        <field name="name">sc.labor.usage.ticket.user.confirmed.tree</field>
+        <field name="model">sc.labor.usage</field>
+        <field name="arch" type="xml">
+            <tree string="方单" create="false" edit="false" delete="false">
+                <field name="legacy_visible_01" string="单据状态"/>
+                <field name="legacy_visible_02" string="单据编号"/>
+                <field name="legacy_visible_03" string="项目名称"/>
+                <field name="legacy_visible_04" string="单据日期"/>
+                <field name="legacy_visible_05" string="标题"/>
+                <field name="legacy_visible_06" string="劳务单位"/>
+                <field name="legacy_visible_07" string="施工部位"/>
+                <field name="legacy_visible_08" string="结算状态"/>
+                <field name="legacy_visible_09" string="总金额"/>
+                <field name="legacy_visible_10" string="备注"/>
+                <field name="legacy_visible_11" string="附件"/>
+                <field name="legacy_visible_12" string="录入人"/>
+                <field name="legacy_visible_13" string="录入时间"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_labor_usage_casual_user_confirmed_tree" model="ir.ui.view">
+        <field name="name">sc.labor.usage.casual.user.confirmed.tree</field>
+        <field name="model">sc.labor.usage</field>
+        <field name="arch" type="xml">
+            <tree string="零星用工" create="false" edit="false" delete="false" default_order="legacy_visible_04 desc, legacy_visible_15 asc, legacy_visible_02 asc, legacy_visible_06 asc">
+                <field name="legacy_visible_01" string="单据状态"/>
+                <field name="legacy_visible_02" string="单据编号"/>
+                <field name="legacy_visible_03" string="项目名称"/>
+                <field name="legacy_visible_04" string="用工日期"/>
+                <field name="legacy_visible_05" string="劳务单位"/>
+                <field name="legacy_visible_06" string="工种"/>
+                <field name="legacy_visible_07" string="数量"/>
+                <field name="legacy_visible_08" string="单价"/>
+                <field name="legacy_visible_09" string="金额"/>
+                <field name="legacy_visible_10" string="工作内容"/>
+                <field name="legacy_visible_11" string="附件"/>
+                <field name="legacy_visible_12" string="结算状态"/>
+                <field name="legacy_visible_13" string="备注"/>
+                <field name="legacy_visible_14" string="录入人"/>
+                <field name="legacy_visible_15" string="录入时间"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_equipment_usage_shift_user_confirmed_tree" model="ir.ui.view">
+        <field name="name">sc.equipment.usage.shift.user.confirmed.tree</field>
+        <field name="model">sc.equipment.usage</field>
+        <field name="arch" type="xml">
+            <tree string="机械台班记录" create="false" edit="false" delete="false" default_order="legacy_visible_04 desc, legacy_visible_16 asc, legacy_visible_03 asc">
+                <field name="legacy_visible_01" string="单据状态"/>
+                <field name="legacy_visible_02" string="项目名称"/>
+                <field name="legacy_visible_03" string="单据编号"/>
+                <field name="legacy_visible_04" string="单据日期"/>
+                <field name="legacy_visible_05" string="租赁单位"/>
+                <field name="legacy_visible_06" string="曾用名单位"/>
+                <field name="legacy_visible_07" string="机械名称"/>
+                <field name="legacy_visible_08" string="规格型号"/>
+                <field name="legacy_visible_09" string="单位"/>
+                <field name="legacy_visible_10" string="工作时间"/>
+                <field name="legacy_visible_11" string="单价"/>
+                <field name="legacy_visible_12" string="金额"/>
+                <field name="legacy_visible_13" string="附件"/>
+                <field name="legacy_visible_14" string="备注"/>
+                <field name="legacy_visible_15" string="录入人"/>
+                <field name="legacy_visible_16" string="录入时间"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_material_rental_in_user_confirmed_tree" model="ir.ui.view">
+        <field name="name">sc.material.rental.order.in.user.confirmed.tree</field>
+        <field name="model">sc.material.rental.order</field>
+        <field name="arch" type="xml">
+            <tree string="租入" create="false" edit="false" delete="false">
+                <field name="legacy_visible_01" string="单据状态"/>
+                <field name="legacy_visible_02" string="单据编号"/>
+                <field name="legacy_visible_03" string="单据日期"/>
+                <field name="legacy_visible_04" string="租赁单位"/>
+                <field name="legacy_visible_05" string="使用单位名称"/>
+                <field name="legacy_visible_06" string="材料名称"/>
+                <field name="legacy_visible_07" string="规格型号"/>
+                <field name="legacy_visible_08" string="数量"/>
+                <field name="legacy_visible_09" string="单价"/>
+                <field name="legacy_visible_10" string="租赁押金"/>
+                <field name="legacy_visible_11" string="备注"/>
+                <field name="legacy_visible_12" string="附件"/>
+                <field name="legacy_visible_13" string="录入人"/>
+                <field name="legacy_visible_14" string="录入时间"/>
+                <field name="legacy_visible_15" string="项目名称"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_material_rental_return_user_confirmed_tree" model="ir.ui.view">
+        <field name="name">sc.material.rental.order.return.user.confirmed.tree</field>
+        <field name="model">sc.material.rental.order</field>
+        <field name="arch" type="xml">
+            <tree string="还租" create="false" edit="false" delete="false">
+                <field name="legacy_visible_01" string="单据状态"/>
+                <field name="legacy_visible_02" string="项目名称"/>
+                <field name="legacy_visible_03" string="结算状态"/>
+                <field name="legacy_visible_04" string="还租单号"/>
+                <field name="legacy_visible_05" string="单据日期"/>
+                <field name="legacy_visible_06" string="租赁单位"/>
+                <field name="legacy_visible_07" string="单据结算金额"/>
+                <field name="legacy_visible_08" string="赔偿费"/>
+                <field name="legacy_visible_09" string="维修费"/>
+                <field name="legacy_visible_10" string="进出场费"/>
+                <field name="legacy_visible_11" string="附件"/>
+                <field name="legacy_visible_12" string="备注"/>
+                <field name="legacy_visible_13" string="录入人"/>
+                <field name="legacy_visible_14" string="录入时间"/>
+                <field name="legacy_visible_15" string="抵扣押金"/>
+                <field name="legacy_visible_16" string="使用单位"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_hr_payroll_document_user_confirmed_tree" model="ir.ui.view">
+        <field name="name">sc.hr.payroll.document.user.confirmed.tree</field>
+        <field name="model">sc.hr.payroll.document</field>
+        <field name="arch" type="xml">
+            <tree string="项目管理人员工资登记" create="false" edit="false" delete="false" default_order="legacy_acceptance_sort_id desc, id desc">
+                <field name="legacy_visible_01" string="单据状态"/>
+                <field name="legacy_visible_02" string="项目名称"/>
+                <field name="legacy_visible_03" string="单据编号"/>
+                <field name="legacy_visible_04" string="单据日期"/>
+                <field name="legacy_visible_05" string="工资月份"/>
+                <field name="legacy_visible_06" string="本次实发工资总额"/>
+                <field name="legacy_visible_07" string="本次应发工资总额"/>
+                <field name="legacy_visible_08" string="付款状态"/>
+                <field name="legacy_visible_09" string="已付款金额"/>
+                <field name="legacy_visible_10" string="未付款金额"/>
+                <field name="legacy_visible_11" string="备注"/>
+                <field name="legacy_visible_12" string="附件"/>
+                <field name="legacy_visible_13" string="录入人"/>
+                <field name="legacy_visible_14" string="录入时间"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_construction_diary_user_confirmed_tree" model="ir.ui.view">
+        <field name="name">sc.construction.diary.user.confirmed.tree</field>
+        <field name="model">sc.construction.diary</field>
+        <field name="arch" type="xml">
+            <tree string="施工日志（新）" create="false" edit="false" delete="false">
+                <field name="legacy_visible_01" string="单据状态"/>
+                <field name="legacy_visible_02" string="项目名称"/>
+                <field name="legacy_visible_03" string="单据编号"/>
+                <field name="legacy_visible_04" string="日期"/>
+                <field name="legacy_visible_05" string="施工部位"/>
+                <field name="legacy_visible_06" string="出勤人数"/>
+                <field name="legacy_visible_07" string="出勤机械"/>
+                <field name="legacy_visible_08" string="备注"/>
+                <field name="legacy_visible_09" string="附件"/>
+                <field name="legacy_visible_10" string="录入人"/>
+                <field name="legacy_visible_11" string="录入时间"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_payment_request_user_confirmed_payment_apply_tree" model="ir.ui.view">
+        <field name="name">payment.request.user.confirmed.payment.apply.tree</field>
+        <field name="model">payment.request</field>
+        <field name="arch" type="xml">
+            <tree string="支付申请" create="false" edit="false" delete="false" default_order="created_time desc, legacy_visible_document_no desc">
+                <field name="p1_visible_06fa8c6f628f" string="单据状态"/>
+                <field name="p1_visible_8fa8662ad38f" string="单据编号"/>
+                <field name="p1_visible_2c346345746e" string="申请日期"/>
+                <field name="p1_visible_3e7255522b33" string="项目名称"/>
+                <field name="p1_visible_ccfa1326c88f" string="收款单位"/>
+                <field name="p1_visible_cf2988988f42" string="实际收款单位"/>
+                <field name="p1_visible_3f91cf4fc953" string="付款单位"/>
+                <field name="p1_visible_c00fc55a25b8" string="申请付款金额"/>
+                <field name="p1_visible_9469a2ad32f8" string="实际付款金额"/>
+                <field name="p1_visible_cdac00d3097d" string="类型（成本）"/>
+                <field name="p1_visible_e0361480e3a5" string="备注"/>
+                <field name="p1_visible_1874b0ce5103" string="是否关联单据"/>
+                <field name="p1_visible_3759fcfc297a" string="付款账号"/>
+                <field name="p1_visible_6cf6e39bece9" string="金额大写"/>
+                <field name="p1_visible_a103d7cee046" string="户名"/>
+                <field name="p1_visible_48a64eb40c71" string="开户行"/>
+                <field name="p1_visible_901384917949" string="账号"/>
+                <field name="p1_visible_99f6fe6c41ad" string="附件"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_payment_execution_partner_user_confirmed_tree" model="ir.ui.view">
+        <field name="name">sc.payment.execution.partner.user.confirmed.tree</field>
+        <field name="model">sc.payment.execution</field>
+        <field name="arch" type="xml">
+            <tree string="往来单位付款" create="false" edit="false" delete="false" default_order="user_acceptance_partner_payment_sort_id desc">
+                <field name="p1_visible_06fa8c6f628f" string="单据状态"/>
+                <field name="p1_visible_058f511c98cf" string="付款日期"/>
+                <field name="p1_visible_ccfa1326c88f" string="收款单位"/>
+                <field name="p1_visible_cf2988988f42" string="实际收款单位"/>
+                <field name="p1_visible_d890d302f7f7" string="付款金额"/>
+                <field name="p1_visible_9b388243bdd8" string="支付类别"/>
+                <field name="p1_visible_c7133de10947" string="付款内容"/>
+                <field name="p1_visible_f35ba3fab897" string="付款方式名称"/>
+                <field name="p1_visible_cdac00d3097d" string="类型（成本）"/>
+                <field name="p1_visible_dacbd33c31fd" string="付款账户名称"/>
+                <field name="p1_visible_99f6fe6c41ad" string="附件"/>
+                <field name="p1_visible_6c5a21ae4538" string="凭证号"/>
+                <field name="p1_visible_71e47f617269" string="填写人"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人"/>
+                <field name="p1_visible_3e7255522b33" string="项目名称"/>
+                <field name="p1_visible_876617c2cb2b" string="付款单关联来源"/>
+                <field name="p1_visible_8fa8662ad38f" string="单据编号"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_legacy_fuel_card_fact_user_confirmed_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.fuel.card.fact.user.confirmed.tree</field>
+        <field name="model">sc.legacy.fuel.card.fact</field>
+        <field name="arch" type="xml">
+            <tree string="油卡登记" create="false" edit="false" delete="false" default_order="id desc">
+                <field name="accepted_visible_01" string="单据状态"/>
+                <field name="document_no" string="单据编号"/>
+                <field name="document_date" string="单据日期"/>
+                <field name="project_name" string="项目名称"/>
+                <field name="card_no" string="油卡卡号"/>
+                <field name="accepted_visible_06" string="初始金额"/>
+                <field name="manager_name" string="油卡管理人"/>
+                <field name="note" string="备注"/>
+                <field name="accepted_visible_09" string="附件"/>
+                <field name="creator_name" string="录入人"/>
+                <field name="created_time" string="录入时间"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_legacy_fuel_card_recharge_fact_user_confirmed_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.fuel.card.recharge.fact.user.confirmed.tree</field>
+        <field name="model">sc.legacy.fuel.card.recharge.fact</field>
+        <field name="arch" type="xml">
+            <tree string="充值登记" create="false" edit="false" delete="false" default_order="document_date desc, document_no desc">
+                <field name="accepted_visible_01" string="单据状态"/>
+                <field name="document_no" string="单据编号"/>
+                <field name="document_date" string="单据日期"/>
+                <field name="project_name" string="项目名称"/>
+                <field name="card_no" string="充值卡号"/>
+                <field name="accepted_visible_06" string="充值总额"/>
+                <field name="accepted_visible_07" string="充值日期"/>
+                <field name="handler_name" string="充值人"/>
+                <field name="note" string="备注"/>
+                <field name="accepted_visible_10" string="附件"/>
+                <field name="creator_name" string="录入人"/>
+                <field name="created_time" string="录入时间"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_legacy_fuel_card_refuel_fact_user_confirmed_tree" model="ir.ui.view">
+        <field name="name">sc.legacy.fuel.card.refuel.fact.user.confirmed.tree</field>
+        <field name="model">sc.legacy.fuel.card.refuel.fact</field>
+        <field name="arch" type="xml">
+            <tree string="加油登记" create="false" edit="false" delete="false" default_order="created_time desc, document_no desc">
+                <field name="accepted_visible_01" string="单据状态"/>
+                <field name="document_no" string="单据编号"/>
+                <field name="fuel_date" string="加油日期"/>
+                <field name="project_name" string="项目名称"/>
+                <field name="accepted_visible_05" string="加油金额"/>
+                <field name="accepted_visible_06" string="累计加油金额"/>
+                <field name="accepted_visible_07" string="油卡剩余金额"/>
+                <field name="card_no" string="加油卡号"/>
+                <field name="accepted_visible_09" string="累计充值金额"/>
+                <field name="note" string="备注"/>
+                <field name="accepted_visible_11" string="附件"/>
+                <field name="creator_name" string="录入人"/>
+                <field name="created_time" string="录入时间"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_construction_contract_income_construction_user_confirmed_tree" model="ir.ui.view">
+        <field name="name">construction.contract.income.construction.user.confirmed.tree</field>
+        <field name="model">construction.contract.income</field>
+        <field name="arch" type="xml">
+            <tree string="施工合同" create="false" edit="false" delete="false" default_order="legacy_acceptance_sort_id desc, id desc">
+                <field name="legacy_visible_01" string="单据状态"/>
+                <field name="legacy_visible_02" string="单据编号"/>
+                <field name="legacy_visible_03" string="发包人"/>
+                <field name="legacy_visible_04" string="承包人"/>
+                <field name="legacy_visible_05" string="项目名称"/>
+                <field name="legacy_visible_06" string="合同标题"/>
+                <field name="legacy_visible_07" string="合同金额"/>
+                <field name="legacy_visible_08" string="累计开票"/>
+                <field name="legacy_visible_09" string="累计收款"/>
+                <field name="legacy_visible_10" string="开票未收款"/>
+                <field name="legacy_visible_11" string="未收款"/>
+                <field name="legacy_visible_12" string="未收款比例"/>
+                <field name="legacy_visible_13" string="合同编号"/>
+                <field name="legacy_visible_14" string="合同订立日期"/>
+                <field name="legacy_visible_15" string="工程地址"/>
+                <field name="legacy_visible_16" string="工程内容"/>
+                <field name="legacy_visible_17" string="合同工期天数"/>
+                <field name="legacy_visible_18" string="录入人"/>
+                <field name="legacy_visible_19" string="录入时间"/>
+                <field name="legacy_visible_20" string="附件"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_receipt_income_engineering_progress_user_confirmed_tree" model="ir.ui.view">
+        <field name="name">sc.receipt.income.engineering.progress.user.confirmed.tree</field>
+        <field name="model">sc.receipt.income</field>
+        <field name="arch" type="xml">
+            <tree string="工程进度收款" create="false" edit="false" delete="false" default_order="legacy_visible_13 desc, legacy_visible_02 desc, id desc">
+                <field name="legacy_visible_01" string="单据状态"/>
+                <field name="legacy_visible_02" string="单据编号"/>
+                <field name="legacy_visible_03" string="日期"/>
+                <field name="legacy_visible_04" string="对方单位/付款单位"/>
+                <field name="legacy_visible_05" string="承包单位"/>
+                <field name="legacy_visible_06" string="收入类别"/>
+                <field name="legacy_visible_07" string="工程款收入"/>
+                <field name="legacy_visible_08" string="备注"/>
+                <field name="legacy_visible_09" string="施工管理合同"/>
+                <field name="legacy_visible_10" string="项目名称"/>
+                <field name="legacy_visible_11" string="附件"/>
+                <field name="legacy_visible_12" string="录入人"/>
+                <field name="legacy_visible_13" string="录入时间"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_invoice_registration_input_tax_user_confirmed_tree" model="ir.ui.view">
+        <field name="name">sc.invoice.registration.input.tax.user.confirmed.tree</field>
+        <field name="model">sc.invoice.registration</field>
+        <field name="arch" type="xml">
+            <tree string="进项上报" create="false" edit="false" delete="false" default_order="legacy_acceptance_sort_id desc, id desc">
+                <field name="legacy_visible_01" string="状态"/>
+                <field name="legacy_visible_02" string="单据编号"/>
+                <field name="legacy_visible_03" string="项目名称"/>
+                <field name="legacy_visible_04" string="发票开具日期"/>
+                <field name="legacy_visible_05" string="受票单位"/>
+                <field name="legacy_visible_06" string="开票单位"/>
+                <field name="legacy_visible_07" string="实际开票单位"/>
+                <field name="legacy_visible_08" string="价税合计"/>
+                <field name="legacy_visible_09" string="税额"/>
+                <field name="legacy_visible_10" string="不含税金额"/>
+                <field name="legacy_visible_11" string="发票号码"/>
+                <field name="legacy_visible_12" string="数量"/>
+                <field name="legacy_visible_13" string="税率"/>
+                <field name="legacy_visible_14" string="发票类型"/>
+                <field name="legacy_visible_15" string="备注"/>
+                <field name="legacy_visible_16" string="录入人"/>
+                <field name="legacy_visible_17" string="附件"/>
+                <field name="legacy_visible_18" string="录入时间"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_invoice_registration_general_input_tax_user_confirmed_tree" model="ir.ui.view">
+        <field name="name">sc.invoice.registration.general.input.tax.user.confirmed.tree</field>
+        <field name="model">sc.invoice.registration</field>
+        <field name="arch" type="xml">
+            <tree string="总包进项上报" create="false" edit="false" delete="false" default_order="legacy_acceptance_sort_id desc, id desc">
+                <field name="legacy_visible_01" string="单据状态"/>
+                <field name="legacy_visible_02" string="单据编号"/>
+                <field name="legacy_visible_03" string="开票日期"/>
+                <field name="legacy_visible_04" string="开票单位"/>
+                <field name="legacy_visible_05" string="项目名称"/>
+                <field name="legacy_visible_06" string="受票单位"/>
+                <field name="legacy_visible_07" string="实开总金额"/>
+                <field name="legacy_visible_08" string="不含税金额"/>
+                <field name="legacy_visible_09" string="税额"/>
+                <field name="legacy_visible_10" string="税率"/>
+                <field name="legacy_visible_11" string="附加税"/>
+                <field name="legacy_visible_12" string="开票张数"/>
+                <field name="legacy_visible_13" string="关联回款金额"/>
+                <field name="legacy_visible_14" string="发票号码"/>
+                <field name="legacy_visible_15" string="发票种类"/>
+                <field name="legacy_visible_16" string="附件"/>
+                <field name="legacy_visible_17" string="录入人"/>
+                <field name="legacy_visible_18" string="录入时间"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_settlement_order_user_confirmed_tree" model="ir.ui.view">
+        <field name="name">sc.settlement.order.user.confirmed.tree</field>
+        <field name="model">sc.settlement.order</field>
+        <field name="arch" type="xml">
+            <tree string="合同结算" create="false" edit="false" delete="false" default_order="id desc">
+                <field name="legacy_acceptance_label" string="业务分类"/>
+                <field name="user_acceptance_document_state" string="单据状态"/>
+                <field name="user_acceptance_document_no" string="单据编号"/>
+                <field name="user_acceptance_project_name" string="项目名称"/>
+                <field name="user_acceptance_document_date" string="单据日期"/>
+                <field name="user_acceptance_title" string="标题/结算内容"/>
+                <field name="user_acceptance_partner_name" string="结算单位"/>
+                <field name="user_acceptance_amount" string="结算金额"/>
+                <field name="user_acceptance_payment_state" string="付款状态"/>
+                <field name="user_acceptance_paid_amount" string="已付款金额"/>
+                <field name="user_acceptance_unpaid_amount" string="未付款金额"/>
+                <field name="user_acceptance_request_state" string="支付申请状态"/>
+                <field name="user_acceptance_requested_amount" string="已申请金额"/>
+                <field name="user_acceptance_unrequested_amount" string="未申请金额"/>
+                <field name="user_acceptance_note" string="结算说明/备注"/>
+                <field name="user_acceptance_attachment" string="附件"/>
+                <field name="user_acceptance_creator" string="录入人"/>
+                <field name="user_acceptance_created_at" string="录入时间"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_sc_material_quote_user_confirmed" model="ir.actions.act_window">
+        <field name="name">报价单</field>
+        <field name="res_model">sc.material.rfq</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="smart_construction_core.view_sc_material_rfq_quote_user_confirmed_tree"/>
+        <field name="domain">[('legacy_fact_model', '=', 'online_old_scbsly:direct_acceptance_fact'), ('legacy_fact_type', '=', 'direct_acceptance:报价单')]</field>
+        <field name="context">{'create': False, 'search_default_group_project': 1}</field>
+    </record>
+
+    <record id="action_sc_subcontract_request_user_confirmed" model="ir.actions.act_window">
+        <field name="name">分包方单</field>
+        <field name="res_model">sc.subcontract.request</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="smart_construction_core.view_sc_subcontract_request_user_confirmed_tree"/>
+        <field name="domain">[('legacy_fact_model', '=', 'online_old_scbsly:direct_acceptance_fact'), ('legacy_fact_type', '=', 'direct_acceptance:分包方单')]</field>
+        <field name="context">{'create': False, 'search_default_group_project': 1}</field>
+    </record>
+
+    <record id="action_sc_equipment_usage_shift_user_confirmed" model="ir.actions.act_window">
+        <field name="name">机械台班记录</field>
+        <field name="res_model">sc.equipment.usage</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="smart_construction_core.view_sc_equipment_usage_shift_user_confirmed_tree"/>
+        <field name="domain">[('legacy_fact_model', '=', 'online_old_scbsly:direct_acceptance_fact'), ('legacy_fact_type', '=', 'direct_acceptance:机械台班记录')]</field>
+        <field name="context">{'create': False, 'search_default_group_project': 1}</field>
+    </record>
+
+    <record id="action_project_material_plan" model="ir.actions.act_window">
+        <field name="view_id" ref="smart_construction_core.view_project_material_plan_user_confirmed_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_project_material_plan_user_confirmed_tree')})
+        ]"/>
+    </record>
+    <record id="action_sc_labor_usage_ticket" model="ir.actions.act_window">
+        <field name="view_id" ref="smart_construction_core.view_sc_labor_usage_ticket_user_confirmed_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_labor_usage_ticket_user_confirmed_tree')})
+        ]"/>
+    </record>
+    <record id="action_sc_labor_usage_casual" model="ir.actions.act_window">
+        <field name="view_id" ref="smart_construction_core.view_sc_labor_usage_casual_user_confirmed_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_labor_usage_casual_user_confirmed_tree')})
+        ]"/>
+    </record>
+    <record id="action_payment_request_user_payment_apply" model="ir.actions.act_window">
+        <field name="view_id" ref="smart_construction_core.view_payment_request_user_confirmed_payment_apply_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_payment_request_user_confirmed_payment_apply_tree')})
+        ]"/>
+    </record>
+    <record id="action_sc_payment_execution_partner_payment" model="ir.actions.act_window">
+        <field name="view_id" ref="smart_construction_core.view_sc_payment_execution_partner_user_confirmed_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_payment_execution_partner_user_confirmed_tree')})
+        ]"/>
+    </record>
+    <record id="action_sc_legacy_fuel_card_fact" model="ir.actions.act_window">
+        <field name="view_id" ref="smart_construction_core.view_sc_legacy_fuel_card_fact_user_confirmed_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_legacy_fuel_card_fact_user_confirmed_tree')})
+        ]"/>
+    </record>
+    <record id="action_sc_legacy_fuel_card_recharge_fact" model="ir.actions.act_window">
+        <field name="view_id" ref="smart_construction_core.view_sc_legacy_fuel_card_recharge_fact_user_confirmed_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_legacy_fuel_card_recharge_fact_user_confirmed_tree')})
+        ]"/>
+    </record>
+    <record id="action_sc_legacy_fuel_card_refuel_fact" model="ir.actions.act_window">
+        <field name="view_id" ref="smart_construction_core.view_sc_legacy_fuel_card_refuel_fact_user_confirmed_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_legacy_fuel_card_refuel_fact_user_confirmed_tree')})
+        ]"/>
+    </record>
+    <record id="action_construction_contract_expense_execution" model="ir.actions.act_window">
+        <field name="view_id" ref="smart_construction_core.view_construction_contract_expense_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_construction_contract_expense_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_construction_contract_expense_form')})
+        ]"/>
+        <field name="domain">['&amp;', '&amp;', ('state', 'in', ['confirmed', 'running']), ('legacy_visible_title', 'not ilike', '结算'), ('subject', 'not ilike', '结算')]</field>
+        <field name="context">{'default_type': 'in'}</field>
+    </record>
+    <record id="action_construction_contract_income_construction" model="ir.actions.act_window">
+        <field name="view_id" ref="smart_construction_core.view_construction_contract_income_construction_user_confirmed_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_construction_contract_income_construction_user_confirmed_tree')})
+        ]"/>
+        <field name="domain">[('legacy_contract_id', 'ilike', 'direct_acceptance:construction_contract:%')]</field>
+        <field name="context">{'create': False, 'default_type': 'out', 'default_subject': '施工合同'}</field>
+    </record>
+    <record id="action_sc_material_inbound" model="ir.actions.act_window">
+        <field name="name">入库</field>
+        <field name="view_id" ref="smart_construction_core.view_sc_material_inbound_user_confirmed_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_material_inbound_user_confirmed_tree')})
+        ]"/>
+        <field name="domain">[('legacy_fact_model', '=', 'online_old_scbsly:direct_acceptance_fact'), ('legacy_fact_type', '=', 'direct_acceptance:入库')]</field>
+        <field name="context">{'create': False, 'search_default_group_project': 1}</field>
+    </record>
+    <record id="action_sc_material_rental_in_acceptance" model="ir.actions.act_window">
+        <field name="view_id" ref="smart_construction_core.view_sc_material_rental_in_user_confirmed_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_material_rental_in_user_confirmed_tree')})
+        ]"/>
+        <field name="domain">[('legacy_fact_model', '=', 'online_old_scbsly:direct_acceptance_fact'), ('legacy_fact_type', '=', 'direct_acceptance:租入')]</field>
+        <field name="context">{'create': False, 'search_default_group_project': 1}</field>
+    </record>
+    <record id="action_sc_material_rental_return_acceptance" model="ir.actions.act_window">
+        <field name="view_id" ref="smart_construction_core.view_sc_material_rental_return_user_confirmed_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_material_rental_return_user_confirmed_tree')})
+        ]"/>
+        <field name="domain">[('legacy_fact_model', '=', 'online_old_scbsly:direct_acceptance_fact'), ('legacy_fact_type', '=', 'direct_acceptance:还租')]</field>
+        <field name="context">{'create': False, 'search_default_group_project': 1}</field>
+    </record>
+    <record id="action_sc_salary_registration" model="ir.actions.act_window">
+        <field name="name">项目管理人员工资登记</field>
+        <field name="view_id" ref="smart_construction_core.view_sc_hr_payroll_document_user_confirmed_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_hr_payroll_document_user_confirmed_tree')})
+        ]"/>
+        <field name="domain">[('legacy_source_table', '=', 'direct_acceptance:管理人员工资表')]</field>
+        <field name="context">{'create': False, 'default_fact_type': 'salary_registration'}</field>
+    </record>
+    <record id="action_sc_construction_diary" model="ir.actions.act_window">
+        <field name="name">施工日志（新）</field>
+        <field name="view_id" ref="smart_construction_core.view_sc_construction_diary_user_confirmed_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_construction_diary_user_confirmed_tree')})
+        ]"/>
+        <field name="domain">[('legacy_source_model', '=', 'online_old_scbsly:direct_acceptance'), ('legacy_source_table', '=', 'direct_acceptance:施工日志（新）')]</field>
+        <field name="context">{'create': False, 'default_diary_type': '施工日志'}</field>
+    </record>
+    <record id="action_sc_receipt_income_engineering_progress" model="ir.actions.act_window">
+        <field name="name">工程进度收款</field>
+        <field name="view_id" ref="smart_construction_core.view_sc_receipt_income_engineering_progress_user_confirmed_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_receipt_income_engineering_progress_user_confirmed_tree')})
+        ]"/>
+        <field name="domain">[('legacy_source_model', '=', 'online_old_scbsly:direct_acceptance:engineering_progress_receipt'), ('legacy_source_table', '=', 'direct_acceptance:工程进度收款')]</field>
+        <field name="context">{'create': False, 'default_source_kind': 'receipt_income', 'default_income_category': '工程进度收款'}</field>
+    </record>
+    <record id="action_sc_invoice_input_report_user" model="ir.actions.act_window">
+        <field name="name">进项上报</field>
+        <field name="view_id" ref="smart_construction_core.view_sc_invoice_registration_input_tax_user_confirmed_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_invoice_registration_input_tax_user_confirmed_tree')})
+        ]"/>
+        <field name="domain">[('legacy_source_model', '=', 'online_old_scbsly:direct_acceptance:input_tax_report:action932'), ('legacy_source_table', '=', 'SCBSLY_DIRECT_INPUT_TAX_REPORT')]</field>
+        <field name="context">{'create': False, 'default_source_kind': 'input_invoice_tax', 'default_direction': 'input', 'default_invoice_content': '进项上报'}</field>
+    </record>
+    <record id="action_sc_invoice_registration_user" model="ir.actions.act_window">
+        <field name="view_id" ref="smart_construction_core.view_sc_invoice_registration_general_input_tax_user_confirmed_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_invoice_registration_general_input_tax_user_confirmed_tree')})
+        ]"/>
+        <field name="domain">[('legacy_source_model', '=', 'online_old_scbsly:direct_acceptance:general_contract_input_tax_report:action933'), ('legacy_source_table', '=', 'SCBSLY_DIRECT_GENERAL_CONTRACT_INPUT_TAX_REPORT')]</field>
+        <field name="context">{'create': False, 'default_source_kind': 'output_invoice_tax', 'default_direction': 'output', 'default_invoice_content': '总包进项上报'}</field>
+    </record>
+    <record id="action_sc_settlement_order_income" model="ir.actions.act_window">
+        <field name="view_id" ref="smart_construction_core.view_sc_settlement_order_user_confirmed_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_settlement_order_user_confirmed_tree')})
+        ]"/>
+        <field name="domain">[('settlement_type', '=', 'in'), ('legacy_fact_model', '=', 'sc.legacy.direct.acceptance.fact:direct_engineering_settlement_order')]</field>
+        <field name="context">{'create': False, 'default_settlement_type': 'in'}</field>
+    </record>
+    <record id="action_sc_settlement_order_expense" model="ir.actions.act_window">
+        <field name="view_id" ref="smart_construction_core.view_sc_settlement_order_user_confirmed_tree"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_settlement_order_user_confirmed_tree')})
+        ]"/>
+        <field name="domain">[('settlement_type', '=', 'out'), ('legacy_fact_type', 'in', ['direct_acceptance_expense_settlement:材料结算单', 'direct_acceptance_expense_settlement:劳务结算', 'direct_acceptance_subcontract_settlement_expense_settlement', 'direct_acceptance_expense_settlement:机械结算单', 'direct_acceptance_expense_settlement:租赁结算单'])]</field>
+        <field name="context">{'create': False, 'default_settlement_type': 'out'}</field>
+    </record>
+
+    <record id="menu_sc_material_quote_acceptance" model="ir.ui.menu">
+        <field name="action" eval="'ir.actions.act_window,%d' % ref('smart_construction_core.action_sc_material_quote_user_confirmed')"/>
+    </record>
+    <record id="menu_sc_subcontract_request_acceptance" model="ir.ui.menu">
+        <field name="action" eval="'ir.actions.act_window,%d' % ref('smart_construction_core.action_sc_subcontract_request_user_confirmed')"/>
+    </record>
+    <record id="menu_sc_equipment_shift_acceptance" model="ir.ui.menu">
+        <field name="action" eval="'ir.actions.act_window,%d' % ref('smart_construction_core.action_sc_equipment_usage_shift_user_confirmed')"/>
+    </record>
+    <record id="menu_sc_material_rental_in_acceptance" model="ir.ui.menu">
+        <field name="action" eval="'ir.actions.act_window,%d' % ref('smart_construction_core.action_sc_material_rental_in_acceptance')"/>
+    </record>
+    <record id="menu_sc_material_rental_return_acceptance" model="ir.ui.menu">
+        <field name="action" eval="'ir.actions.act_window,%d' % ref('smart_construction_core.action_sc_material_rental_return_acceptance')"/>
+    </record>
+</odoo>

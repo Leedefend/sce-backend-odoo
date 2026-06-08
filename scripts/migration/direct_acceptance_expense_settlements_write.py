@@ -63,12 +63,60 @@ CONFIGS = {
         "created_at": "17",
         "contract_no": "18",
     },
+    "分包结算单": {
+        "category": "分包",
+        "fallback_project": "直营项目分包结算未匹配项目",
+        "fallback_partner": "直营项目分包结算未匹配结算单位",
+        "entry_data": "直营项目数据核对 / 分包结算单",
+        "state": "01",
+        "project": "02",
+        "document_no": "03",
+        "title": "04",
+        "partner": "05",
+        "amount": "06",
+        "payment_state": "07",
+        "paid": "08",
+        "unpaid": "09",
+        "request_state": "10",
+        "requested": "11",
+        "unrequested": "12",
+        "contract_no": "13",
+        "date": "16",
+        "note": "17",
+        "attachment": "18",
+        "creator": "19",
+        "created_at": "20",
+    },
     "机械结算单": {
         "category": "机械",
         "fallback_project": "直营项目机械结算未匹配项目",
         "fallback_partner": "直营项目机械结算未匹配结算单位",
         "allow_missing_settlement_unit": True,
         "entry_data": "直营项目数据核对 / 机械结算单",
+        "state": "01",
+        "document_no": "02",
+        "project": "03",
+        "date": "04",
+        "partner": "05",
+        "write_partner": False,
+        "note": "06",
+        "amount": "07",
+        "payment_state": "08",
+        "paid": "09",
+        "unpaid": "10",
+        "request_state": "11",
+        "requested": "12",
+        "unrequested": "13",
+        "attachment": "14",
+        "creator": "15",
+        "created_at": "16",
+    },
+    "租赁结算单": {
+        "category": "租赁",
+        "fallback_project": "直营项目租赁结算未匹配项目",
+        "fallback_partner": "直营项目租赁结算未匹配结算单位",
+        "allow_missing_settlement_unit": True,
+        "entry_data": "直营项目数据核对 / 租赁结算单",
         "state": "01",
         "document_no": "02",
         "project": "03",
@@ -284,12 +332,27 @@ def description_text(detail: dict) -> str:
 
 
 def legacy_fact_type(label: str) -> str:
+    if label == "分包结算单":
+        return "direct_acceptance_subcontract_settlement_expense_settlement"
     return LEGACY_FACT_TYPE_PREFIX + ":" + label
 
 
 def expense_category(name: str):
     category = env["sc.dictionary"].sudo().search(  # noqa: F821
         [("type", "=", "expense_contract_category"), ("name", "=", name)],
+        limit=1,
+    )
+    if category:
+        return category
+    aliases = {
+        "分包": ["专业分包", "分包"],
+        "材料": ["材料"],
+        "劳务": ["劳务"],
+        "机械": ["机械"],
+        "租赁": ["租赁"],
+    }
+    category = env["sc.dictionary"].sudo().search(  # noqa: F821
+        [("type", "=", "expense_contract_category"), ("name", "in", aliases.get(name, [name]))],
         limit=1,
     )
     if not category:
@@ -356,6 +419,7 @@ def settlement_values(fact, cfg: dict):
         "source_created_by": creator or False,
         "source_created_at": created_at,
         "entry_data": cfg["entry_data"],
+        "legacy_acceptance_label": fact.acceptance_label,
         "settlement_description": description_text(detail),
         "legacy_visible_attachment": attachment_display(fact, payload, cfg) or False,
         "note": False,
@@ -363,6 +427,10 @@ def settlement_values(fact, cfg: dict):
         "legacy_fact_id": fact.id,
         "legacy_fact_type": legacy_fact_type(fact.acceptance_label),
     }
+    for index in range(1, 61):
+        field = "legacy_visible_%02d" % index
+        if field in env[TARGET_MODEL]._fields:  # noqa: F821
+            vals[field] = visible(fact, "%02d" % index) or False
     return {key: value for key, value in vals.items() if value not in ("", None)}, detail, amount
 
 
@@ -380,6 +448,7 @@ def write_label(label: str, cfg: dict) -> dict:
     Fact = env[SOURCE_MODEL].sudo().with_context(active_test=False)  # noqa: F821
     Settlement = env[TARGET_MODEL].sudo().with_context(active_test=False, legacy_migration_allow_missing_contract=True)  # noqa: F821
     Line = env["sc.settlement.order.line"].sudo().with_context(legacy_migration_allow_missing_contract=True)  # noqa: F821
+    category = expense_category(cfg["category"])
     facts = Fact.search(
         [("source_system", "=", SOURCE_SYSTEM), ("acceptance_label", "=", label), ("active", "=", True)],
         order="legacy_record_id,id",
@@ -448,7 +517,7 @@ def write_label(label: str, cfg: dict) -> dict:
         "projected_count": Settlement.search_count(domain),
         "visible_in_expense_settlement_count": Settlement.search_count([("settlement_type", "=", "out")] + domain),
         "direct_operation_count": Settlement.search_count(domain + [("operation_strategy", "=", "direct")]),
-        "category_count": Settlement.search_count(domain + [("settlement_category_display", "=", cfg["category"])]),
+        "category_count": Settlement.search_count(domain + [("settlement_category_id", "=", category.id)]),
         "document_state_count": Settlement.search_count(domain + [("legacy_document_state", "!=", False)]),
         "payment_state_count": Settlement.search_count(domain + [("legacy_payment_state", "!=", False)]),
         "payment_request_state_count": Settlement.search_count(domain + [("legacy_payment_request_state", "!=", False)]),

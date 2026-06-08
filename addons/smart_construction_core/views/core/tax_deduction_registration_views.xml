@@ -11,6 +11,7 @@
                     <field name="project_id"/>
                     <field name="partner_id"/>
                     <field name="partner_name"/>
+                    <field name="deduction_unit_name"/>
                     <field name="invoice_no"/>
                     <field name="tax_rate_text"/>
                     <filter string="已确认" name="state_confirmed" domain="[('state', 'in', ['confirmed', 'legacy_confirmed'])]"/>
@@ -41,6 +42,7 @@
                     <field name="operation_strategy"/>
                     <field name="partner_id"/>
                     <field name="partner_name"/>
+                    <field name="deduction_unit_name" optional="show"/>
                     <field name="invoice_no"/>
                     <field name="invoice_code"/>
                     <field name="invoice_date"/>
@@ -51,6 +53,8 @@
                     <field name="deduction_amount" sum="抵扣金额"/>
                     <field name="deduction_tax_amount" sum="抵扣税额"/>
                     <field name="deduction_surcharge_amount" sum="抵扣附加税"/>
+                    <field name="withholding_amount" optional="show" sum="扣款金额"/>
+                    <field name="is_transfer_out" optional="hide"/>
                     <field name="state"/>
                 </tree>
             </field>
@@ -99,7 +103,15 @@
                             <field name="deduction_amount" readonly="state == 'legacy_confirmed'"/>
                             <field name="deduction_tax_amount" readonly="state == 'legacy_confirmed'"/>
                             <field name="deduction_surcharge_amount" readonly="state == 'legacy_confirmed'"/>
+                            <field name="is_transfer_out" readonly="state == 'legacy_confirmed'"/>
+                            <field name="withholding_amount" readonly="state == 'legacy_confirmed'"/>
                             <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group string="扣款办理">
+                            <field name="deduction_unit_name" readonly="state == 'legacy_confirmed'"/>
+                            <field name="withholding_amount" readonly="state == 'legacy_confirmed'"/>
+                            <field name="deduction_reason" readonly="state == 'legacy_confirmed'" nolabel="1"/>
+                            <field name="attachment_ids" widget="many2many_binary" readonly="state == 'legacy_confirmed'"/>
                         </group>
                         <group string="历史追溯">
                             <field name="source_origin" readonly="1"/>

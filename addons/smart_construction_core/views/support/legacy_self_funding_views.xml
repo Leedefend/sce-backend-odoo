@@ -91,6 +91,46 @@
             </field>
         </record>
 
+        <record id="view_sc_self_funding_advance_income_form" model="ir.ui.view">
+            <field name="name">sc.self.funding.advance.income.form</field>
+            <field name="model">sc.legacy.self.funding.fact</field>
+            <field name="arch" type="xml">
+                <form string="自筹垫付收入" create="false" edit="false" delete="false">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="document_state_label" string="单据状态" readonly="1"/>
+                                <field name="push_result" string="推送结果" readonly="1"/>
+                                <field name="kingdee_document_no" string="金蝶单据编号" readonly="1"/>
+                                <field name="document_no" string="单据编号" readonly="1"/>
+                                <field name="document_date" string="日期" readonly="1"/>
+                                <field name="project_id" string="项目记录" readonly="1"/>
+                                <field name="project_name" string="项目名称" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="partner_id" string="往来单位记录" readonly="1"/>
+                                <field name="partner_name" string="对方单位/付款" readonly="1"/>
+                                <field name="income_category" string="收入类别" readonly="1"/>
+                                <field name="account_name" string="收款账户" readonly="1"/>
+                            </group>
+                        </group>
+                        <group string="金额">
+                            <field name="self_funding_amount" string="自筹金额" readonly="1"/>
+                            <field name="refund_amount" string="自筹垫付退回金额" readonly="1"/>
+                            <field name="unreturned_amount" string="未退金额" readonly="1"/>
+                            <field name="need_refund" string="是否需要退回" readonly="1"/>
+                        </group>
+                        <group string="附件与审计">
+                            <field name="title" string="标题" readonly="1"/>
+                            <field name="attachment_text" string="附件" readonly="1"/>
+                            <field name="entry_user" string="录入人" readonly="1"/>
+                            <field name="entry_time" string="录入时间" readonly="1"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
         <record id="view_sc_self_funding_advance_refund_tree" model="ir.ui.view">
             <field name="name">sc.self.funding.advance.refund.tree</field>
             <field name="model">sc.legacy.self.funding.fact</field>
@@ -111,11 +151,49 @@
             </field>
         </record>
 
+        <record id="view_sc_self_funding_advance_refund_form" model="ir.ui.view">
+            <field name="name">sc.self.funding.advance.refund.form</field>
+            <field name="model">sc.legacy.self.funding.fact</field>
+            <field name="arch" type="xml">
+                <form string="自筹垫付退回" create="false" edit="false" delete="false">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="document_state_label" string="单据状态" readonly="1"/>
+                                <field name="push_result" string="推送结果" readonly="1"/>
+                                <field name="document_date" string="单据日期" readonly="1"/>
+                                <field name="document_no" string="单据编号" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="project_id" string="项目记录" readonly="1"/>
+                                <field name="project_name" string="项目名称" readonly="1"/>
+                                <field name="partner_id" string="往来单位记录" readonly="1"/>
+                                <field name="partner_name" string="往来单位/付款单位" readonly="1"/>
+                            </group>
+                        </group>
+                        <group string="金额">
+                            <field name="refund_amount" string="退回金额" readonly="1"/>
+                            <field name="unreturned_amount" string="未退金额" readonly="1"/>
+                        </group>
+                        <group string="附件与审计">
+                            <field name="note" string="备注" readonly="1"/>
+                            <field name="attachment_text" string="附件" readonly="1"/>
+                            <field name="entry_user" string="录入人" readonly="1"/>
+                            <field name="entry_time" string="录入时间" readonly="1"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
         <record id="action_sc_self_funding_advance_income" model="ir.actions.act_window">
             <field name="name">自筹垫付收入</field>
             <field name="res_model">sc.legacy.self.funding.fact</field>
-            <field name="view_mode">tree</field>
-            <field name="view_id" ref="view_sc_self_funding_advance_income_tree"/>
+            <field name="view_mode">tree,form</field>
+            <field name="view_ids" eval="[(5, 0, 0),
+                (0, 0, {'view_mode': 'tree', 'view_id': ref('view_sc_self_funding_advance_income_tree')}),
+                (0, 0, {'view_mode': 'form', 'view_id': ref('view_sc_self_funding_advance_income_form')})
+            ]"/>
             <field name="search_view_id" ref="view_sc_legacy_self_funding_fact_search"/>
             <field name="domain">[('line_type', '=', 'income_visible')]</field>
             <field name="context">{'create': False, 'edit': False, 'delete': False}</field>
@@ -146,8 +224,11 @@
         <record id="action_sc_self_funding_advance_refund" model="ir.actions.act_window">
             <field name="name">自筹垫付退回</field>
             <field name="res_model">sc.legacy.self.funding.fact</field>
-            <field name="view_mode">tree</field>
-            <field name="view_id" ref="view_sc_self_funding_advance_refund_tree"/>
+            <field name="view_mode">tree,form</field>
+            <field name="view_ids" eval="[(5, 0, 0),
+                (0, 0, {'view_mode': 'tree', 'view_id': ref('view_sc_self_funding_advance_refund_tree')}),
+                (0, 0, {'view_mode': 'form', 'view_id': ref('view_sc_self_funding_advance_refund_form')})
+            ]"/>
             <field name="search_view_id" ref="view_sc_legacy_self_funding_fact_search"/>
             <field name="domain">[('line_type', '=', 'refund_visible')]</field>
             <field name="context">{'create': False, 'edit': False, 'delete': False}</field>

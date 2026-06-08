@@ -53,30 +53,29 @@
         <field name="model">construction.contract.income</field>
         <field name="arch" type="xml">
             <tree string="收入合同">
-                <field name="legacy_visible_document_state" string="单据状态"/>
-                <field name="legacy_visible_document_no" string="单据编号"/>
-                <field name="legacy_visible_contract_date" string="合同订立日期"/>
-                <field name="legacy_visible_archived" string="原件是否归档"/>
-                <field name="legacy_visible_counterparty" string="发包人"/>
-                <field name="legacy_visible_project_name" string="项目名称"/>
-                <field name="legacy_visible_title" string="合同标题"/>
-                <field name="legacy_visible_category" string="工程类别"/>
-                <field name="legacy_visible_contract_no" string="合同编号"/>
-                <field name="legacy_visible_amount" string="合同金额"/>
-                <field name="legacy_visible_settlement_amount" string="结算金额"/>
-                <field name="legacy_visible_invoice_amount" string="累计开票"/>
-                <field name="legacy_visible_received_amount" string="累计收款"/>
-                <field name="legacy_visible_unreceived_amount" string="未收款"/>
-                <field name="legacy_visible_unreceived_rate" string="未收款比例"/>
-                <field name="legacy_visible_affiliated_person" string="挂靠人"/>
-                <field name="legacy_visible_engineering_address" string="工程地址"/>
-                <field name="legacy_visible_engineering_content" string="工程内容"/>
-                <field name="legacy_visible_creator_name" string="录入人"/>
-                <field name="legacy_visible_created_time" string="录入时间"/>
-                <field name="legacy_visible_attachment" string="附件"/>
-                <field name="legacy_visible_contractor" string="承包人" optional="hide"/>
-                <field name="legacy_visible_invoice_unreceived_amount" string="开票未收款" optional="hide"/>
-                <field name="legacy_visible_contract_duration_days" string="合同工期天数" optional="hide"/>
+                <field name="document_status" string="单据状态"/>
+                <field name="legacy_document_no" string="单据编号"/>
+                <field name="date_contract" string="合同订立日期"/>
+                <field name="archived" string="原件是否归档"/>
+                <field name="partner_id" string="发包人"/>
+                <field name="project_id" string="项目名称"/>
+                <field name="subject" string="合同标题"/>
+                <field name="engineering_category_text" string="工程类别"/>
+                <field name="legacy_contract_no" string="合同编号"/>
+                <field name="visible_contract_amount" string="合同金额" sum="合同金额合计"/>
+                <field name="settlement_amount" string="结算金额" sum="结算金额合计"/>
+                <field name="invoice_amount" string="累计开票" sum="累计开票合计"/>
+                <field name="received_amount" string="累计收款" sum="累计收款合计"/>
+                <field name="unreceived_amount" string="未收款" sum="未收款合计"/>
+                <field name="visible_unreceived_rate" string="未收款比例"/>
+                <field name="affiliated_person" string="挂靠人"/>
+                <field name="engineering_address" string="工程地址"/>
+                <field name="engineering_content" string="工程内容"/>
+                <field name="entry_user_text" string="录入人"/>
+                <field name="entry_time" string="录入时间"/>
+                <field name="attachment_text" string="附件"/>
+                <field name="operation_strategy" string="经营方式" optional="hide"/>
+                <field name="contract_duration_text" string="合同工期天数" optional="hide"/>
             </tree>
         </field>
     </record>
