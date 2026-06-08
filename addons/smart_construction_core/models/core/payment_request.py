@@ -224,6 +224,12 @@ class PaymentRequest(models.Model):
         readonly=True,
         index=True,
     )
+    accepted_amount_uppercase = fields.Char(
+        string="金额大写",
+        index=True,
+        tracking=True,
+        help="用户确认验收口径的金额大写；用于历史数据延续和后续业务办理。",
+    )
     legacy_visible_document_no = fields.Char(
         string="历史可见单据编号",
         readonly=True,
@@ -314,6 +320,36 @@ class PaymentRequest(models.Model):
         string="历史收款账号",
         readonly=True,
         index=True,
+    )
+    actual_payee_unit = fields.Char(
+        string="实际收款单位",
+        index=True,
+        tracking=True,
+        help="付款申请自身确认的实际收款单位；历史迁移数据来自用户验收面。",
+    )
+    payer_unit = fields.Char(
+        string="付款单位",
+        index=True,
+        tracking=True,
+        help="付款申请自身确认的付款单位；历史迁移数据来自用户验收面。",
+    )
+    payment_account_name = fields.Char(
+        string="户名",
+        index=True,
+        tracking=True,
+        help="付款申请自身确认的收款户名；不覆盖往来单位主数据。",
+    )
+    payment_bank_name = fields.Char(
+        string="开户行",
+        index=True,
+        tracking=True,
+        help="付款申请自身确认的收款开户行；不覆盖往来单位主数据。",
+    )
+    payment_account_no = fields.Char(
+        string="账号",
+        index=True,
+        tracking=True,
+        help="付款申请自身确认的收款账号；不覆盖往来单位主数据。",
     )
     legacy_visible_writer = fields.Char(
         string="历史填写人",
