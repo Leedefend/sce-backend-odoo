@@ -325,7 +325,7 @@ def vals_for(label: str, fact, caches: dict[str, dict[str, int | bool]]) -> dict
         }
     elif label == "入库":
         vals = {
-            "name": doc_no,
+            "name": visible(fact, 2) or doc_no,
             "project_id": project,
             "inbound_date": date,
             "supplier_id": partner,
