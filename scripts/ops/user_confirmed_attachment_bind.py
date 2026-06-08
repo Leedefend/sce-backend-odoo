@@ -13,6 +13,7 @@ attachments when ``sc.legacy.file.index`` has a concrete file row.
 from __future__ import annotations
 
 import json
+import os
 import re
 from collections import Counter, defaultdict
 
@@ -20,6 +21,7 @@ from collections import Counter, defaultdict
 MARKER = "[migration:user_confirmed_attachment_bind]"
 HEX_REF_RE = re.compile(r"^[0-9a-fA-F]{32}$")
 ATTACHMENT_LABEL_RE = re.compile(r"附件\((?P<count>\d+)\)")
+FACT_CACHE_BY_LABELS = {}
 
 TARGETS = [
     {
@@ -58,6 +60,41 @@ TARGETS = [
         "record_ref_fields": ["legacy_document_no", "legacy_source_id", "name"],
         "fact_labels": ["管理人员工资表"],
     },
+    {
+        "model": "sc.legacy.direct.acceptance.fact",
+        "domain": [
+            ("acceptance_label", "in", ["租入", "还租"]),
+            "|",
+            ("attachment_ref", "!=", False),
+            ("raw_payload", "ilike", '"FJ": "'),
+        ],
+        "record_ref_fields": ["attachment_ref", "legacy_record_id", "document_no"],
+        "fact_labels": [],
+    },
+    {
+        "model": "sc.labor.usage",
+        "domain": [],
+        "record_ref_fields": ["name", "legacy_visible_11"],
+        "fact_labels": ["方单", "零星用工"],
+    },
+    {
+        "model": "sc.equipment.usage",
+        "domain": [],
+        "record_ref_fields": ["name", "legacy_visible_13"],
+        "fact_labels": ["机械台班记录"],
+    },
+    {
+        "model": "sc.material.rfq",
+        "domain": [],
+        "record_ref_fields": ["name", "legacy_visible_15"],
+        "fact_labels": ["报价单"],
+    },
+    {
+        "model": "sc.material.inbound",
+        "domain": [],
+        "record_ref_fields": ["name", "legacy_visible_19"],
+        "fact_labels": ["入库"],
+    },
 ]
 
 
@@ -90,7 +127,22 @@ def _payload_attachment_refs(raw_payload):
         if key_text.endswith("FJ") or key_text.endswith("_FJ") or key_text in {"FJ", "f_FJ"}:
             if HEX_REF_RE.match(value_text) or not _is_attachment_label(value_text):
                 refs.append(value_text)
+            if _is_attachment_label(value_text):
+                base_key = key_text[:-3] if key_text.endswith("_FJ") else ""
+                base_value = _text(payload.get(base_key)) if base_key else ""
+                if HEX_REF_RE.match(base_value):
+                    refs.append(base_value)
     return refs
+
+
+def _payload_lookup_keys(raw_payload):
+    payload = _payload_dict(raw_payload)
+    keys = []
+    for key in ("DJBH", "RKDH", "ID", "Pid", "PID"):
+        text = _text(payload.get(key))
+        if text:
+            keys.append(text)
+    return keys
 
 
 def _record_refs(record, field_names):
@@ -111,15 +163,56 @@ def _find_facts(record, labels):
     if not labels:
         return env["sc.legacy.direct.acceptance.fact"].sudo().browse()  # noqa: F821
     Fact = env["sc.legacy.direct.acceptance.fact"].sudo().with_context(active_test=False)  # noqa: F821
-    names = [value for value in {_text(getattr(record, "name", "")), _text(getattr(record, "legacy_document_no", ""))} if value]
+    label_key = tuple(sorted(labels))
+    if label_key not in FACT_CACHE_BY_LABELS:
+        facts = Fact.search(
+            [
+                ("acceptance_label", "in", list(label_key)),
+                "|",
+                ("attachment_ref", "!=", False),
+                ("raw_payload", "ilike", '"FJ": "'),
+            ]
+        )
+        by_key = defaultdict(lambda: Fact.browse())
+        for fact in facts:
+            keys = [
+                _text(fact.document_no),
+                _text(fact.legacy_record_id),
+                *_payload_lookup_keys(fact.raw_payload),
+            ]
+            for key in keys:
+                if key:
+                    by_key[key] |= fact
+        FACT_CACHE_BY_LABELS[label_key] = by_key
+    names = [
+        value
+        for value in {
+            _text(getattr(record, "name", "")),
+            _text(getattr(record, "legacy_document_no", "")),
+            _text(getattr(record, "document_no", "")),
+            _text(getattr(record, "legacy_record_id", "")),
+            _text(getattr(record, "legacy_fact_id", "")),
+        }
+        if value
+    ]
     if not names:
         return Fact.browse()
-    domain = [("acceptance_label", "in", labels), "|", ("document_no", "in", names), ("legacy_record_id", "in", names)]
-    return Fact.search(domain)
+    facts = Fact.browse()
+    by_key = FACT_CACHE_BY_LABELS[label_key]
+    for name in names:
+        facts |= by_key.get(name, Fact.browse())
+    if facts:
+        return facts
+    raw_matches = Fact.browse()
+    for name in names:
+        raw_matches |= Fact.search([("acceptance_label", "in", labels), ("raw_payload", "ilike", name)], limit=10)
+    return raw_matches
 
 
 def _refs_for_record(record, target):
     refs = _record_refs(record, target.get("record_ref_fields") or [])
+    if "raw_payload" in record._fields:
+        refs.extend(_payload_attachment_refs(record.raw_payload))
     for fact in _find_facts(record, target.get("fact_labels") or []):
         for value in (fact.attachment_ref, fact.legacy_record_id, fact.document_no):
             text = _text(value)
@@ -251,6 +344,11 @@ def _bind_record(record, target):
 
 
 def main():
+    model_filter = {
+        model.strip()
+        for model in os.environ.get("USER_CONFIRMED_ATTACHMENT_BIND_MODELS", "").split(",")
+        if model.strip()
+    }
     summary = {
         "script": "user_confirmed_attachment_bind",
         "marker": MARKER,
@@ -264,6 +362,8 @@ def main():
     blocked_reasons = Counter()
     for target in TARGETS:
         model_name = target["model"]
+        if model_filter and model_name not in model_filter:
+            continue
         Model = env[model_name].sudo().with_context(active_test=False)  # noqa: F821
         records = Model.search(target.get("domain") or [])
         model_stats = defaultdict(int)

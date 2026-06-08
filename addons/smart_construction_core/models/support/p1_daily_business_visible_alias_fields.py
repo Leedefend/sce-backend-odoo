@@ -1351,6 +1351,7 @@ MODEL_LABEL_SOURCE_OVERRIDES = {
         '数量': ['total_qty'],
         '入库总数量': ['total_qty'],
         '含税金额': ['amount_total'],
+        '附件': ['attachment_ids'],
     },
     'sc.payment.execution': {
         '单据状态': ['legacy_document_state', 'state'],
@@ -1429,6 +1430,18 @@ MODEL_LABEL_SOURCE_OVERRIDES = {
         '附件': ['attachment_ids', 'legacy_visible_attachment'],
     },
     'sc.subcontract.request': {
+        '附件': ['attachment_ids'],
+    },
+    'sc.legacy.direct.acceptance.fact': {
+        '附件': ['attachment_ids', 'attachment_ref'],
+    },
+    'sc.labor.usage': {
+        '附件': ['attachment_ids'],
+    },
+    'sc.equipment.usage': {
+        '附件': ['attachment_ids'],
+    },
+    'sc.material.rfq': {
         '附件': ['attachment_ids'],
     },
 }

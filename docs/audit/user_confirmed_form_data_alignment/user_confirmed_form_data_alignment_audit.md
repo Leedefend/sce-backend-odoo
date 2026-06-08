@@ -4,7 +4,7 @@
 - 菜单数：62
 - 总记录数：260357
 - 已检查记录数：2858
-- 已检查正式字段：794
+- 已检查正式字段：801
 - 数据不一致菜单：0
 - 仍需正式字段承接菜单：0
 
@@ -23,14 +23,14 @@
 | 合同中心 | 支出合同结算 | `sc.settlement.order` | 3225 | ok | - | - |
 | 施工管理 | 施工日志 | `sc.construction.diary` | 3233 | ok | - | - |
 | 物资与分包 | 材料计划 | `project.material.plan` | 686 | ok | - | - |
-| 物资与分包 | 租入 | `sc.legacy.direct.acceptance.fact` | 166 | ok | - | 附件 |
+| 物资与分包 | 租入 | `sc.legacy.direct.acceptance.fact` | 166 | ok | - | - |
 | 物资与分包 | 分包方单 | `sc.subcontract.request` | 721 | ok | - | - |
-| 物资与分包 | 还租 | `sc.legacy.direct.acceptance.fact` | 37 | ok | - | 附件 |
-| 物资与分包 | 方单 | `sc.labor.usage` | 252 | ok | - | 附件 |
-| 物资与分包 | 机械台班记录 | `sc.equipment.usage` | 17502 | ok | - | 附件 |
-| 物资与分包 | 零星用工 | `sc.labor.usage` | 8794 | ok | - | 附件 |
-| 物资与分包 | 报价单 | `sc.material.rfq` | 126 | ok | - | 附件 |
-| 物资与分包 | 入库单 | `sc.material.inbound` | 13184 | ok | - | 附件 |
+| 物资与分包 | 还租 | `sc.legacy.direct.acceptance.fact` | 37 | ok | - | - |
+| 物资与分包 | 方单 | `sc.labor.usage` | 252 | ok | - | - |
+| 物资与分包 | 机械台班记录 | `sc.equipment.usage` | 17502 | ok | - | - |
+| 物资与分包 | 零星用工 | `sc.labor.usage` | 8794 | ok | - | - |
+| 物资与分包 | 报价单 | `sc.material.rfq` | 126 | ok | - | - |
+| 物资与分包 | 入库单 | `sc.material.inbound` | 13184 | ok | - | - |
 | 物资与分包 | 出库单 | `sc.material.outbound` | 3 | ok | - | - |
 | 财务中心 | 收入 | `sc.receipt.income` | 29638 | ok | - | - |
 | 财务中心 | 承包人还项目款 | `sc.expense.claim` | 425 | ok | - | - |

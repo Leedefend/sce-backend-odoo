@@ -8,9 +8,9 @@
     "models": 36,
     "record_count": 260357,
     "checked_records": 2858,
-    "checked_fields": 794,
+    "checked_fields": 801,
     "mismatch_fields": 0,
-    "readonly_source_only_fields": 7,
+    "readonly_source_only_fields": 0,
     "severity_counts": {
       "ok": 62
     },
@@ -247,15 +247,9 @@
       "domain_issue": "",
       "record_count": 166,
       "checked_records": 50,
-      "checked_fields": 14,
-      "formal_aligned_fields": 14,
-      "readonly_source_only_fields": [
-        {
-          "field": "legacy_visible_12",
-          "label": "附件",
-          "readonly_source_on_form": true
-        }
-      ],
+      "checked_fields": 15,
+      "formal_aligned_fields": 15,
+      "readonly_source_only_fields": [],
       "missing_formal_target_fields": [],
       "mismatch_fields": [],
       "mismatch_samples": [],
@@ -287,15 +281,9 @@
       "domain_issue": "",
       "record_count": 37,
       "checked_records": 37,
-      "checked_fields": 13,
-      "formal_aligned_fields": 15,
-      "readonly_source_only_fields": [
-        {
-          "field": "legacy_visible_11",
-          "label": "附件",
-          "readonly_source_on_form": true
-        }
-      ],
+      "checked_fields": 14,
+      "formal_aligned_fields": 16,
+      "readonly_source_only_fields": [],
       "missing_formal_target_fields": [],
       "mismatch_fields": [],
       "mismatch_samples": [],
@@ -310,15 +298,9 @@
       "domain_issue": "",
       "record_count": 252,
       "checked_records": 50,
-      "checked_fields": 11,
-      "formal_aligned_fields": 12,
-      "readonly_source_only_fields": [
-        {
-          "field": "legacy_visible_11",
-          "label": "附件",
-          "readonly_source_on_form": true
-        }
-      ],
+      "checked_fields": 12,
+      "formal_aligned_fields": 13,
+      "readonly_source_only_fields": [],
       "missing_formal_target_fields": [],
       "mismatch_fields": [],
       "mismatch_samples": [],
@@ -333,15 +315,9 @@
       "domain_issue": "",
       "record_count": 17502,
       "checked_records": 50,
-      "checked_fields": 14,
-      "formal_aligned_fields": 15,
-      "readonly_source_only_fields": [
-        {
-          "field": "legacy_visible_13",
-          "label": "附件",
-          "readonly_source_on_form": true
-        }
-      ],
+      "checked_fields": 15,
+      "formal_aligned_fields": 16,
+      "readonly_source_only_fields": [],
       "missing_formal_target_fields": [],
       "mismatch_fields": [],
       "mismatch_samples": [],
@@ -356,15 +332,9 @@
       "domain_issue": "",
       "record_count": 8794,
       "checked_records": 50,
-      "checked_fields": 14,
-      "formal_aligned_fields": 14,
-      "readonly_source_only_fields": [
-        {
-          "field": "legacy_visible_11",
-          "label": "附件",
-          "readonly_source_on_form": true
-        }
-      ],
+      "checked_fields": 15,
+      "formal_aligned_fields": 15,
+      "readonly_source_only_fields": [],
       "missing_formal_target_fields": [],
       "mismatch_fields": [],
       "mismatch_samples": [],
@@ -379,15 +349,9 @@
       "domain_issue": "",
       "record_count": 126,
       "checked_records": 50,
-      "checked_fields": 18,
-      "formal_aligned_fields": 18,
-      "readonly_source_only_fields": [
-        {
-          "field": "legacy_visible_15",
-          "label": "附件",
-          "readonly_source_on_form": true
-        }
-      ],
+      "checked_fields": 19,
+      "formal_aligned_fields": 19,
+      "readonly_source_only_fields": [],
       "missing_formal_target_fields": [],
       "mismatch_fields": [],
       "mismatch_samples": [],
@@ -402,15 +366,9 @@
       "domain_issue": "",
       "record_count": 13184,
       "checked_records": 50,
-      "checked_fields": 21,
-      "formal_aligned_fields": 21,
-      "readonly_source_only_fields": [
-        {
-          "field": "legacy_visible_19",
-          "label": "附件",
-          "readonly_source_on_form": true
-        }
-      ],
+      "checked_fields": 22,
+      "formal_aligned_fields": 22,
+      "readonly_source_only_fields": [],
       "missing_formal_target_fields": [],
       "mismatch_fields": [],
       "mismatch_samples": [],

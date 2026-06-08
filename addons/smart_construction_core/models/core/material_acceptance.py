@@ -612,6 +612,13 @@ class ScMaterialInbound(models.Model):
         index=True,
         tracking=True,
     )
+    attachment_ids = fields.Many2many(
+        "ir.attachment",
+        "sc_material_inbound_attachment_rel",
+        "inbound_id",
+        "attachment_id",
+        string="附件",
+    )
     line_ids = fields.One2many("sc.material.inbound.line", "inbound_id", string="入库明细")
     note = fields.Text(string="入库说明")
     legacy_fact_model = fields.Char(string="来源通用模型", index=True)
@@ -1000,6 +1007,13 @@ class ScMaterialRfq(models.Model):
         default="draft",
         index=True,
         tracking=True,
+    )
+    attachment_ids = fields.Many2many(
+        "ir.attachment",
+        "sc_material_rfq_attachment_rel",
+        "rfq_id",
+        "attachment_id",
+        string="附件",
     )
     line_ids = fields.One2many("sc.material.rfq.line", "rfq_id", string="报价明细")
     note = fields.Text(string="询价说明")

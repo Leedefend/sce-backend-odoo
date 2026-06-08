@@ -815,6 +815,7 @@
           <group string="补充信息">
             <field name="legacy_visible_11" string="备注" readonly="1"/>
             <field name="legacy_visible_12" string="附件" readonly="1"/>
+            <field name="attachment_ids" string="附件" widget="many2many_binary"/>
           </group>
         </sheet>
       </form>
@@ -933,6 +934,7 @@
           </group>
           <group string="补充信息">
             <field name="legacy_visible_11" string="附件" readonly="1"/>
+            <field name="attachment_ids" string="附件" widget="many2many_binary"/>
             <field name="legacy_visible_12" string="备注" readonly="1"/>
           </group>
         </sheet>
