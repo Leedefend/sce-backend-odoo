@@ -56,6 +56,7 @@ echo "FORMAL_BUSINESS_RELEASE_GATE_START: db=${DB_NAME} started_at=${started_at}
 run_odoo_shell_check "user_confirmed_menu_surface" "scripts/verify/user_confirmed_menu_surface_guard.py"
 run_odoo_shell_check "user_confirmed_form_capability" "scripts/verify/user_confirmed_form_capability_audit.py"
 run_odoo_shell_check "user_confirmed_form_data_alignment" "scripts/verify/user_confirmed_form_data_alignment_audit.py"
+run_odoo_shell_check "user_confirmed_settlement_usability" "scripts/verify/user_confirmed_settlement_usability_audit.py"
 
 echo "FORMAL_BUSINESS_RELEASE_GATE_CHECK_START: business_capability"
 DB_NAME="$DB_NAME" "$ROOT_DIR/scripts/ops/validate_business_capability_gate.sh"
