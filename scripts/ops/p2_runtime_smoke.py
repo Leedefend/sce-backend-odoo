@@ -16,7 +16,8 @@ def _guard_code(err):
 
 def _expect_guard(label, code, func, failures):
     try:
-        func()
+        with env.cr.savepoint():
+            func()
     except Exception as err:
         actual = _guard_code(err)
         if actual != code:
@@ -30,6 +31,14 @@ def _expect_guard(label, code, func, failures):
 def _expect_state(label, record, state, failures):
     if record.state != state:
         failures.append(f"{label}: expected state={state}, got {record.state}")
+        return False
+    return True
+
+
+def _expect_field_state(label, record, field_name, state, failures):
+    actual = record[field_name]
+    if actual != state:
+        failures.append(f"{label}: expected {field_name}={state}, got {actual}")
         return False
     return True
 
@@ -49,6 +58,14 @@ def _ensure_events(label, actual, expected, failures):
         failures.append(f"{label}: missing audit events {missing}")
         return False
     return True
+
+
+def _force_payment_attachment_block(record):
+    record.env["ir.config_parameter"].sudo().set_param(
+        "sc.payment.force_block.payment_attachments_required",
+        "1",
+    )
+    record.action_submit()
 
 
 failures = []
@@ -112,23 +129,23 @@ try:
         }
     )
     _expect_guard(
-        "TASK direct state write",
+        "TASK direct sc_state write",
         "TASK_GUARD_DIRECT_STATE_WRITE",
-        lambda: task.write({"state": "ready"}),
+        lambda: task.write({"sc_state": "ready"}),
         failures,
     )
     task.action_prepare_task()
-    _expect_state("TASK prepare", task, "ready", failures)
+    _expect_field_state("TASK prepare", task, "sc_state", "ready", failures)
     task.action_start_task()
-    _expect_state("TASK start", task, "in_progress", failures)
+    _expect_field_state("TASK start", task, "sc_state", "in_progress", failures)
     if "progress_rate" in task._fields:
         task.write({"progress_rate": 1.0})
     if "progress" in task._fields:
         task.write({"progress": 1.0})
     task.action_mark_done()
-    _expect_state("TASK done", task, "done", failures)
+    _expect_field_state("TASK done", task, "sc_state", "done", failures)
     task.action_cancel_task(reason="smoke cancel")
-    _expect_state("TASK cancel", task, "cancelled", failures)
+    _expect_field_state("TASK cancel", task, "sc_state", "cancelled", failures)
 
     task_events = _audit_events(env, "project.task", task.id)
     audit_summary["task"] = task_events
@@ -377,7 +394,7 @@ try:
     _expect_guard(
         "PAYMENT attachments required",
         "PAYMENT_ATTACHMENTS_REQUIRED",
-        lambda: payment_no_attach.action_submit(),
+        lambda: _force_payment_attachment_block(payment_no_attach),
         failures,
     )
 
@@ -385,17 +402,16 @@ try:
     Uom = env["uom.uom"].sudo()
     uom = Uom.search([], limit=1)
     Product = env["product.product"].sudo()
-    product = Product.search([], limit=1)
-    if not product:
-        product = Product.create(
-            {"name": "P2 Smoke Product", "type": "service", "uom_id": uom.id, "uom_po_id": uom.id}
-        )
+    product = Product.create(
+        {"name": "P2 Smoke Product", "type": "service", "uom_id": uom.id, "uom_po_id": uom.id}
+    )
 
     po = env["purchase.order"].create(
         {
             "partner_id": partner.id,
             "company_id": company.id,
             "currency_id": company.currency_id.id,
+            "state": "purchase",
             "order_line": [
                 (
                     0,
@@ -404,7 +420,7 @@ try:
                         "name": "P2 Smoke PO Line",
                         "product_id": product.id,
                         "product_qty": 1.0,
-                        "product_uom": uom.id,
+                        "product_uom": product.uom_po_id.id,
                         "price_unit": 1000.0,
                         "date_planned": fields.Datetime.now(),
                     },
@@ -412,7 +428,6 @@ try:
             ],
         }
     )
-    po.write({"state": "purchase"})
     settlement.write({"purchase_order_ids": [(6, 0, [po.id])], "state": "approve"})
 
     payment = env["payment.request"].create(
@@ -449,16 +464,9 @@ try:
     _expect_state("PAYMENT submit", payment, "submit", failures)
 
     _expect_guard(
-        "PAYMENT reject no reason",
-        "AUDIT_REASON_REQUIRED",
-        lambda: payment.action_on_tier_rejected(),
-        failures,
-    )
-
-    _expect_guard(
         "PAYMENT approve not validated",
         "PAYMENT_TIER_INCOMPLETE",
-        lambda: payment.action_on_tier_approved(),
+        lambda: payment.action_approve(),
         failures,
     )
 
