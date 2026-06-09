@@ -157,6 +157,7 @@ def _classify_issue(
     *,
     entry_metadata_pass: bool,
     contract_value_pass: bool,
+    settlement_contract_pass: bool,
 ) -> tuple[str, str, set[str]]:
     fields = _fields(issue)
     business_fields = fields - ENTRY_METADATA_FIELDS - DERIVED_OR_SYSTEM_FIELDS
@@ -190,6 +191,9 @@ def _classify_issue(
             return "contract_warning_partly_covered", "contract_gate_passed_but_some_fields_need_rule", uncovered
         return "contract_value_gate_required", "contract_targeted_gate_missing_or_failed", business_fields
 
+    if issue.get("model") == "sc.settlement.order" and settlement_contract_pass:
+        return "covered_by_settlement_contract_surface_gate", "targeted_settlement_contract_surface_gate_passed", set()
+
     if fields and business_fields:
         return "requires_model_specific_business_value_gate", "business_fields_need_source_value_rule_or_backfill", business_fields
 
@@ -203,11 +207,13 @@ def main() -> int:
 
     entry_path, entry = _latest_json("formal_entry_metadata_audit_result_v1.json")
     contract_path, contract = _latest_json("construction_contract_history_value_gap_probe_result_v1.json")
+    settlement_path, settlement = _latest_json("settlement_contract_surface_audit_result_v1.json")
     project_path, project = _latest_json("project_migration_field_continuity_gap_probe_result_v1.json")
     formal_path, formal = _latest_json("formal_business_backfill_audit_probe_result_v1.json")
 
     entry_metadata_pass = _status(entry) == "PASS"
     contract_value_pass = _status(contract) == "PASS"
+    settlement_contract_pass = _status(settlement) == "PASS"
 
     rows: list[dict[str, Any]] = []
     bucket_counts: Counter[str] = Counter()
@@ -219,6 +225,7 @@ def main() -> int:
             issue,
             entry_metadata_pass=entry_metadata_pass,
             contract_value_pass=contract_value_pass,
+            settlement_contract_pass=settlement_contract_pass,
         )
         bucket_counts[bucket] += 1
         if unresolved:
@@ -257,6 +264,7 @@ def main() -> int:
         "visible_matrix": str(visible_path),
         "entry_metadata_audit": str(entry_path) if entry_path else None,
         "contract_history_value_probe": str(contract_path) if contract_path else None,
+        "settlement_contract_surface_audit": str(settlement_path) if settlement_path else None,
         "project_migration_field_continuity_probe": str(project_path) if project_path else None,
         "formal_business_backfill_audit": str(formal_path) if formal_path else None,
         "visible_warning_count": int(visible.get("warning_count") or 0),
