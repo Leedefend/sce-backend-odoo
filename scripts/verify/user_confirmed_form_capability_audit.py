@@ -201,9 +201,21 @@ def _model_has_write_access(model_name):
         return False
 
 
-def _audit_menu(menu):
+def _resolve_action(menu):
     action_id = int(menu.get("action_id") or 0)
-    action = env["ir.actions.act_window"].sudo().browse(action_id)  # noqa: F821
+    Action = env["ir.actions.act_window"].sudo()  # noqa: F821
+    action = Action.browse(action_id)
+    if action.exists():
+        return action, action_id
+    menu_xmlid = menu.get("menu_xmlid") or menu.get("menu_key") or menu.get("page_key") or ""
+    current_menu = env.ref(menu_xmlid, raise_if_not_found=False) if menu_xmlid else False  # noqa: F821
+    if current_menu and current_menu.action and current_menu.action._name == "ir.actions.act_window":
+        return current_menu.action.sudo(), current_menu.action.id
+    return action, action_id
+
+
+def _audit_menu(menu):
+    action, action_id = _resolve_action(menu)
     row = {
         "group": menu.get("group_label") or "",
         "menu": menu.get("label") or menu.get("name") or "",
