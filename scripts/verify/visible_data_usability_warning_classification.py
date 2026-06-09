@@ -158,6 +158,7 @@ def _classify_issue(
     entry_metadata_pass: bool,
     contract_value_pass: bool,
     settlement_contract_pass: bool,
+    material_plan_note_pass: bool,
 ) -> tuple[str, str, set[str]]:
     fields = _fields(issue)
     business_fields = fields - ENTRY_METADATA_FIELDS - DERIVED_OR_SYSTEM_FIELDS
@@ -194,6 +195,9 @@ def _classify_issue(
     if issue.get("model") == "sc.settlement.order" and settlement_contract_pass:
         return "covered_by_settlement_contract_surface_gate", "targeted_settlement_contract_surface_gate_passed", set()
 
+    if issue.get("model") == "project.material.plan" and business_fields == {"legacy_visible_10"} and material_plan_note_pass:
+        return "covered_by_material_plan_visible_note_gate", "targeted_material_plan_visible_note_gate_passed", set()
+
     if fields and business_fields:
         return "requires_model_specific_business_value_gate", "business_fields_need_source_value_rule_or_backfill", business_fields
 
@@ -208,12 +212,14 @@ def main() -> int:
     entry_path, entry = _latest_json("formal_entry_metadata_audit_result_v1.json")
     contract_path, contract = _latest_json("construction_contract_history_value_gap_probe_result_v1.json")
     settlement_path, settlement = _latest_json("settlement_contract_surface_audit_result_v1.json")
+    material_plan_path, material_plan = _latest_json("material_plan_visible_note_audit_result_v1.json")
     project_path, project = _latest_json("project_migration_field_continuity_gap_probe_result_v1.json")
     formal_path, formal = _latest_json("formal_business_backfill_audit_probe_result_v1.json")
 
     entry_metadata_pass = _status(entry) == "PASS"
     contract_value_pass = _status(contract) == "PASS"
     settlement_contract_pass = _status(settlement) == "PASS"
+    material_plan_note_pass = _status(material_plan) == "PASS"
 
     rows: list[dict[str, Any]] = []
     bucket_counts: Counter[str] = Counter()
@@ -226,6 +232,7 @@ def main() -> int:
             entry_metadata_pass=entry_metadata_pass,
             contract_value_pass=contract_value_pass,
             settlement_contract_pass=settlement_contract_pass,
+            material_plan_note_pass=material_plan_note_pass,
         )
         bucket_counts[bucket] += 1
         if unresolved:
@@ -265,6 +272,7 @@ def main() -> int:
         "entry_metadata_audit": str(entry_path) if entry_path else None,
         "contract_history_value_probe": str(contract_path) if contract_path else None,
         "settlement_contract_surface_audit": str(settlement_path) if settlement_path else None,
+        "material_plan_visible_note_audit": str(material_plan_path) if material_plan_path else None,
         "project_migration_field_continuity_probe": str(project_path) if project_path else None,
         "formal_business_backfill_audit": str(formal_path) if formal_path else None,
         "visible_warning_count": int(visible.get("warning_count") or 0),
