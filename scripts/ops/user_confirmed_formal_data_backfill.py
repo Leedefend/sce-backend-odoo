@@ -476,6 +476,19 @@ updates.append(
 
 updates.append(
     _run(
+        "material_inbound_visible_document_no",
+        """
+        UPDATE sc_material_inbound
+           SET name = legacy_visible_02
+         WHERE COALESCE(legacy_visible_02, '') <> ''
+           AND COALESCE(name, '') <> legacy_visible_02
+        """,
+        required=[("sc_material_inbound", ("name", "legacy_visible_02"))],
+    )
+)
+
+updates.append(
+    _run(
         "fuel_card_state_label",
         """
         UPDATE sc_legacy_fuel_card_fact

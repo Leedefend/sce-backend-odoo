@@ -8,6 +8,7 @@ Optional environment:
     USER_CONFIRMED_ATTACHMENT_BIND_MODELS=sc.labor.usage,sc.material.inbound
     USER_CONFIRMED_ATTACHMENT_BIND_FAST=0
     USER_CONFIRMED_ATTACHMENT_BIND_BATCH_SIZE=2000
+    USER_CONFIRMED_ATTACHMENT_BIND_DEEP_RAW_SEARCH=1
 
 The accepted list surface can show legacy values such as ``附件(1)``.  Formal
 business handling must expose those files through real ``ir.attachment`` rows,
@@ -22,6 +23,8 @@ import json
 import os
 import re
 from collections import Counter, defaultdict
+
+from psycopg2.extras import execute_values
 
 
 MARKER = "[migration:user_confirmed_attachment_bind]"
@@ -209,6 +212,8 @@ def _find_facts(record, labels):
             seen_fact_ids.add(fact.id)
     if facts:
         return facts
+    if os.environ.get("USER_CONFIRMED_ATTACHMENT_BIND_DEEP_RAW_SEARCH", "0") != "1":
+        return Fact.browse()
     raw_matches = Fact.browse()
     for name in names:
         raw_matches |= Fact.search([("acceptance_label", "in", labels), ("raw_payload", "ilike", name)], limit=10)
@@ -387,14 +392,24 @@ def _existing_rel_pairs(field, record_ids):
 def _bulk_link_attachment_ids(field, pairs):
     if not pairs:
         return 0
-    env.cr.executemany(  # noqa: F821
-        f"INSERT INTO {field.relation} ({field.column1}, {field.column2}) "
-        f"SELECT %s, %s WHERE NOT EXISTS ("
-        f"SELECT 1 FROM {field.relation} WHERE {field.column1} = %s AND {field.column2} = %s"
-        f")",
-        [(record_id, attachment_id, record_id, attachment_id) for record_id, attachment_id in pairs],
+    unique_pairs = list(dict.fromkeys(pairs))
+    execute_values(
+        env.cr,  # noqa: F821
+        f"""
+        INSERT INTO {field.relation} ({field.column1}, {field.column2})
+        SELECT incoming.{field.column1}, incoming.{field.column2}
+          FROM (VALUES %s) AS incoming({field.column1}, {field.column2})
+         WHERE NOT EXISTS (
+               SELECT 1
+                 FROM {field.relation} existing
+                WHERE existing.{field.column1} = incoming.{field.column1}
+                  AND existing.{field.column2} = incoming.{field.column2}
+         )
+        """,
+        unique_pairs,
+        page_size=5000,
     )
-    return len(pairs)
+    return len(unique_pairs)
 
 
 def _bind_records_fast(records, target):
