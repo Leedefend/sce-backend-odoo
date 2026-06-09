@@ -16,6 +16,7 @@ guard_prod_forbid
 : "${DB_NAME:?DB_NAME is required}"
 
 checks=(
+  "core_document_processing:scripts/ops/validate_core_document_processing_gate.sh"
   "business_flow_closure:scripts/ops/validate_business_flow_closure.sh"
   "business_action_coverage:scripts/ops/validate_business_action_coverage.sh"
   "field_operation_actions:scripts/ops/validate_field_operation_actions.sh"

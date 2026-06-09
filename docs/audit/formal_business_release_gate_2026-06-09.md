@@ -20,8 +20,8 @@ DB_NAME=sc_demo scripts/ops/validate_formal_business_release_gate.sh
 ## Result
 
 - 数据库：`sc_demo`
-- 开始时间：`2026-06-09T22:53:00+08:00`
-- 结束时间：`2026-06-09T22:54:50+08:00`
+- 开始时间：`2026-06-09T23:37:45+08:00`
+- 结束时间：`2026-06-09T23:39:55+08:00`
 - 总结果：`PASS`
 
 子门禁结果：
@@ -36,7 +36,7 @@ DB_NAME=sc_demo scripts/ops/validate_formal_business_release_gate.sh
 - 用户确认菜单分组、可见菜单、禁止泄漏分组
 - 用户确认正式表单字段能力
 - 用户确认列表与正式表单数据值对齐
-- 正式业务办理能力：核心闭环、财务动作、施工生产动作
+- 正式业务办理能力：核心单据办理、核心闭环、财务动作、施工生产动作
 
 ## Data Alignment
 
