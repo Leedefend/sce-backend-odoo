@@ -6,7 +6,7 @@ Branch: `feature/business-capability-acceptance-audit`
 
 ## Result
 
-Status: PASS with one product-review boundary.
+Status: PASS.
 
 ## Checks
 
@@ -15,16 +15,17 @@ Status: PASS with one product-review boundary.
    - Menus: 62
    - Models: 36
    - Records checked: 260357
-   - Fields checked: 862
+   - Fields checked: 863
    - Mismatch fields: 0
-   - Readonly source-only fields: 1
+   - Readonly source-only fields: 0
+   - Severity: 62 ok
    - Status: PASS
 
 2. User-confirmed form capability audit
    - Script: `scripts/verify/user_confirmed_form_capability_audit.py`
    - Menus: 62
    - Models: 36
-   - Severity: 61 ok, 1 needs_review
+   - Severity: 62 ok
    - Status: PASS
 
 3. P2 runtime business smoke
@@ -42,10 +43,10 @@ Status: PASS with one product-review boundary.
      - `payment_submitted`, `payment_approved`, `payment_paid`
    - Status: PASS
 
-## Boundary
+## Notes
 
-The only review item is `sc.material.inbound` / 入库单: the formal list includes a legacy source-only field for old-system line tax-included amount. This field remains aligned for visible data, but is not promoted to a header-level editable form field because it is line-level source data, not an inbound document header total.
+`sc.material.inbound` / 入库单 now carries the user-confirmed "含税金额" surface as a formal computed field. Historical records use the accepted legacy value when present; new business records fall back to the current inbound amount total.
 
 ## Conclusion
 
-The user-confirmed formal menu data surface is aligned with the acceptance surface, and the core business processing chain is executable on the development server. The next product decision is whether the inbound legacy line amount should remain source-only or be modeled as a dedicated line-level editable field.
+The user-confirmed formal menu data surface is fully aligned with the acceptance surface, and the core business processing chain is executable on the development server. The current conclusion can be given to the user: the confirmed formal menus are data-aligned and support the core business processing flow.
