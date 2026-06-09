@@ -53,7 +53,17 @@ def _baseline_candidates() -> list[Path]:
     ]
 
 
-def _load_baseline() -> dict[str, list[tuple[str, str, str, int, int, str]]]:
+def _policy_row(group_label, menu_label, menu_key, menu_id, res_model) -> tuple[str, str, str, int, str]:
+    return (
+        _text(group_label),
+        _text(menu_label),
+        _text(menu_key),
+        int(menu_id or 0),
+        _text(res_model),
+    )
+
+
+def _load_baseline() -> dict[str, list[tuple[str, str, str, int, str]]]:
     path = next((candidate for candidate in _baseline_candidates() if candidate.is_file()), None)
     if not path:
         raise AssertionError("missing user confirmed menu baseline: %s" % BASELINE_FILE)
@@ -77,20 +87,19 @@ def _load_baseline() -> dict[str, list[tuple[str, str, str, int, int, str]]]:
                 if not isinstance(menu, dict):
                     continue
                 rows.append(
-                    (
+                    _policy_row(
                         group_label,
-                        _text(menu.get("label") or menu.get("name")),
-                        _text(menu.get("menu_xmlid") or menu.get("page_key") or menu.get("menu_key")),
-                        int(menu.get("menu_id") or 0),
-                        int(menu.get("action_id") or 0),
-                        _text(menu.get("res_model") or menu.get("model")),
+                        menu.get("label") or menu.get("name"),
+                        menu.get("menu_xmlid") or menu.get("page_key") or menu.get("menu_key"),
+                        menu.get("menu_id"),
+                        menu.get("res_model") or menu.get("model"),
                     )
                 )
         out[product_key] = rows
     return out
 
 
-def _effective_policy_rows(product_key: str) -> list[tuple[str, str, str, int, int, str]]:
+def _effective_policy_rows(product_key: str) -> list[tuple[str, str, str, int, str]]:
     policy = ProductPolicyService(env).get_policy(  # noqa: F821
         product_key=product_key,
         enforce_release=True,
@@ -109,13 +118,12 @@ def _effective_policy_rows(product_key: str) -> list[tuple[str, str, str, int, i
             if not isinstance(menu, dict):
                 continue
             rows.append(
-                (
+                _policy_row(
                     group_label,
-                    _text(menu.get("label") or menu.get("name")),
-                    _text(menu.get("menu_xmlid") or menu.get("page_key") or menu.get("menu_key")),
-                    int(menu.get("menu_id") or 0),
-                    int(menu.get("action_id") or 0),
-                    _text(menu.get("res_model") or menu.get("model")),
+                    menu.get("label") or menu.get("name"),
+                    menu.get("menu_xmlid") or menu.get("page_key") or menu.get("menu_key"),
+                    menu.get("menu_id"),
+                    menu.get("res_model") or menu.get("model"),
                 )
             )
     if group_counts != EXPECTED_GROUP_COUNTS:
