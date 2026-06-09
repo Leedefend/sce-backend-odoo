@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import re
+
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
 
@@ -594,6 +596,13 @@ class ScMaterialInbound(models.Model):
         index=True,
     )
     amount_total = fields.Monetary(string="金额合计", currency_field="currency_id", compute="_compute_amount_total", store=True)
+    tax_included_amount = fields.Monetary(
+        string="含税金额",
+        currency_field="currency_id",
+        compute="_compute_tax_included_amount",
+        store=True,
+        readonly=True,
+    )
     material_name_summary = fields.Char(string="材料名称", compute="_compute_inbound_line_summaries", store=True)
     material_spec_summary = fields.Char(string="规格型号", compute="_compute_inbound_line_summaries", store=True)
     material_uom_summary = fields.Char(string="单位", compute="_compute_inbound_line_summaries", store=True)
@@ -645,6 +654,25 @@ class ScMaterialInbound(models.Model):
     def _compute_amount_total(self):
         for record in self:
             record.amount_total = sum(record.line_ids.mapped("amount"))
+
+    @api.depends("amount_total", "legacy_visible_10")
+    def _compute_tax_included_amount(self):
+        for record in self:
+            legacy_value = record._parse_legacy_amount(getattr(record, "legacy_visible_10", False))
+            record.tax_included_amount = legacy_value if legacy_value is not False else record.amount_total
+
+    @api.model
+    def _parse_legacy_amount(self, value):
+        text = str(value or "").replace(",", "").replace("￥", "").replace("¥", "").strip()
+        if not text:
+            return False
+        match = re.search(r"-?\d+(?:\.\d+)?", text)
+        if not match:
+            return False
+        try:
+            return float(match.group(0))
+        except ValueError:
+            return False
 
     @api.depends(
         "line_ids.product_id",

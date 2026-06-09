@@ -1349,6 +1349,7 @@ MODEL_LABEL_SOURCE_OVERRIDES = {
     },
     'sc.material.inbound': {
         '数量': ['total_qty'],
+        '含税金额': ['tax_included_amount', 'amount_total'],
         '入库总数量': ['total_qty'],
         '附件': ['attachment_ids'],
     },

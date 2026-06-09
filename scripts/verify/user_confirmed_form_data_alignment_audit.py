@@ -610,6 +610,17 @@ for index, menu in enumerate(menus, start=1):
     )
 severity_counts = Counter(row["severity"] for row in rows)
 model_counts = Counter(row["model"] for row in rows)
+readonly_source_only_field_details = [
+    {
+        "group": row["group"],
+        "menu": row["menu"],
+        "model": row["model"],
+        "fields": row["readonly_source_only_fields"],
+        "unchecked_source_value_fields": row["unchecked_source_value_fields"],
+    }
+    for row in rows
+    if row["readonly_source_only_fields"]
+]
 summary = {
     "audit": "user_confirmed_form_data_alignment_audit",
     "baseline": str(baseline_path),
@@ -622,6 +633,7 @@ summary = {
     "checked_fields": sum(row["checked_fields"] for row in rows),
     "mismatch_fields": sum(len(row["mismatch_fields"]) for row in rows),
     "readonly_source_only_fields": sum(len(row["readonly_source_only_fields"]) for row in rows),
+    "readonly_source_only_field_details": readonly_source_only_field_details[:SAMPLE_LIMIT],
     "severity_counts": dict(severity_counts),
     "status": "PASS" if not severity_counts.get("blocker") and not severity_counts.get("mismatch") else "FAIL",
 }
