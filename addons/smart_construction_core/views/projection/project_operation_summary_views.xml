@@ -43,6 +43,10 @@
             <field name="model">sc.project.operation.summary</field>
             <field name="arch" type="xml">
                 <form string="项目经营统计表" create="0" edit="0" delete="0">
+                    <header>
+                        <button name="action_open_project" type="object" string="查看项目" class="btn-primary" invisible="not project_id"/>
+                        <button name="action_open_source_fact" type="object" string="旧统计事实" class="btn-secondary"/>
+                    </header>
                     <sheet>
                         <group>
                             <field name="project_name"/>
