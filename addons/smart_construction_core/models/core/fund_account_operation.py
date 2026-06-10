@@ -198,6 +198,21 @@ class ScFundAccountOperation(models.Model):
             project_id = self._context_project_id()
             if project_id:
                 vals.setdefault("project_id", project_id)
+            context_date = self.env.context.get("default_operation_date") or self.env.context.get("current_document_date")
+            if context_date:
+                vals.setdefault("operation_date", context_date)
+            context_amount = self.env.context.get("default_amount") or self.env.context.get("current_business_amount")
+            if context_amount:
+                vals.setdefault("amount", context_amount)
+            context_reason = self.env.context.get("default_operation_reason") or self.env.context.get("default_note")
+            if context_reason:
+                vals.setdefault("operation_reason", context_reason)
+            source_account_id = self.env.context.get("default_source_account_id")
+            if source_account_id:
+                vals.setdefault("source_account_id", source_account_id)
+            target_account_id = self.env.context.get("default_target_account_id")
+            if target_account_id:
+                vals.setdefault("target_account_id", target_account_id)
             if vals.get("name", "/") == "/":
                 vals["name"] = seq.next_by_code("sc.fund.account.operation") or _("资金账户操作单")
         return super().create(vals_list)

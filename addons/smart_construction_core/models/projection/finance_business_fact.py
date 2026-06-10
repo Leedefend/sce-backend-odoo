@@ -137,6 +137,26 @@ class ScFinanceBusinessFact(models.Model):
                     "current_partner_id": self.partner_id.id,
                 }
             )
+        if self.document_date:
+            context.update(
+                {
+                    "default_date_claim": self.document_date,
+                    "default_document_date": self.document_date,
+                    "current_document_date": self.document_date,
+                }
+            )
+        if self.amount:
+            context["default_amount"] = abs(self.amount)
+            context["current_business_amount"] = abs(self.amount)
+        if self.display_name:
+            context.setdefault("default_summary", self.display_name)
+            context.setdefault("default_purpose", self.display_name)
+            context.setdefault("default_note", self.display_name)
+        if self.fact_type == "tax_deducted":
+            if self.deduction_amount:
+                context["default_deduction_amount"] = abs(self.deduction_amount)
+            if self.tax_amount:
+                context["default_deduction_tax_amount"] = abs(self.tax_amount)
         return context
 
     def _source_record(self):

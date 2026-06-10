@@ -196,6 +196,15 @@ class ScFinancingLoan(models.Model):
             partner_id = self._context_partner_id()
             if partner_id:
                 vals.setdefault("partner_id", partner_id)
+            context_date = self.env.context.get("default_document_date") or self.env.context.get("current_document_date")
+            if context_date:
+                vals.setdefault("document_date", context_date)
+            context_amount = self.env.context.get("default_amount") or self.env.context.get("current_business_amount")
+            if context_amount:
+                vals.setdefault("amount", context_amount)
+            context_purpose = self.env.context.get("default_purpose") or self.env.context.get("default_note")
+            if context_purpose:
+                vals.setdefault("purpose", context_purpose)
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.financing.loan") or _("Financing Loan")
         return super().create(vals_list)

@@ -142,6 +142,18 @@ class ScTaxDeductionRegistration(models.Model):
             partner_id = self._context_partner_id()
             if partner_id:
                 vals.setdefault("partner_id", partner_id)
+            context_date = self.env.context.get("default_document_date") or self.env.context.get("current_document_date")
+            if context_date:
+                vals.setdefault("document_date", context_date)
+            context_deduction_amount = self.env.context.get("default_deduction_amount") or self.env.context.get("default_amount")
+            if context_deduction_amount:
+                vals.setdefault("deduction_amount", context_deduction_amount)
+            context_tax_amount = self.env.context.get("default_deduction_tax_amount")
+            if context_tax_amount:
+                vals.setdefault("deduction_tax_amount", context_tax_amount)
+            context_note = self.env.context.get("default_note")
+            if context_note:
+                vals.setdefault("note", context_note)
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.tax.deduction.registration") or _("Tax Deduction")
         return super().create(vals_list)

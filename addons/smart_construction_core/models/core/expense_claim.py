@@ -244,6 +244,15 @@ class ScExpenseClaim(models.Model):
             partner_id = self._context_partner_id()
             if partner_id:
                 vals.setdefault("partner_id", partner_id)
+            context_date = self.env.context.get("default_date_claim") or self.env.context.get("current_document_date")
+            if context_date:
+                vals.setdefault("date_claim", context_date)
+            context_amount = self.env.context.get("default_amount") or self.env.context.get("current_business_amount")
+            if context_amount:
+                vals.setdefault("amount", context_amount)
+            context_summary = self.env.context.get("default_summary") or self.env.context.get("default_note")
+            if context_summary:
+                vals.setdefault("summary", context_summary)
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.expense.claim") or _("Expense Claim")
             vals.setdefault("approved_amount", vals.get("amount", 0.0))
