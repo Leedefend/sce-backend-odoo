@@ -37,6 +37,13 @@
         <field name="model">sc.tender.guarantee.summary</field>
         <field name="arch" type="xml">
             <form string="投标保证金报表" create="0" edit="0" delete="0">
+                <header>
+                    <button name="action_open_tender_registration" type="object" string="投标报名来源" class="btn-primary"/>
+                    <button name="action_open_pay_guarantee" type="object" string="付保证金" class="btn-secondary" invisible="pay_guarantee_amount == 0"/>
+                    <button name="action_open_pay_guarantee_refund" type="object" string="付保证金退回" class="btn-secondary" invisible="pay_guarantee_refund_amount == 0"/>
+                    <button name="action_open_self_funding" type="object" string="自筹保证金" class="btn-secondary" invisible="self_funding_amount == 0"/>
+                    <button name="action_open_self_funding_refund" type="object" string="自筹保证金退回" class="btn-secondary" invisible="self_funding_refund_amount == 0"/>
+                </header>
                 <sheet>
                     <group>
                         <group>

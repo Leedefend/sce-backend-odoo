@@ -207,6 +207,7 @@
         'views/support/legacy_material_catalog_views.xml',
         'views/support/legacy_purchase_contract_views.xml',
         'views/support/legacy_tender_registration_views.xml',
+        'views/support/legacy_tender_guarantee_views.xml',
         'views/support/legacy_labor_subcontract_views.xml',
         'views/support/legacy_material_stock_views.xml',
         'views/support/legacy_equipment_lease_views.xml',
