@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import ast
+
 from odoo import api, fields, models, tools
 from odoo.osv import expression
 from odoo.exceptions import UserError
@@ -13,6 +15,10 @@ class ScFinanceProjectCapitalPosition(models.Model):
     _sc_readonly_navigation_button_methods = {
         "action_open_finance_facts",
         "action_open_interfund_facts",
+        "action_open_project_borrow_company_entry",
+        "action_open_project_repay_company_entry",
+        "action_open_account_transfer_entry",
+        "action_open_guarantee_entry",
     }
 
     display_name = fields.Char(string="项目资金总览", readonly=True)
@@ -71,6 +77,54 @@ class ScFinanceProjectCapitalPosition(models.Model):
             return [(field_name, "=", self.project_id.id)]
         return [(field_name, "=", False)]
 
+    def _action_domain(self, action_result):
+        raw_domain = action_result.get("domain") or []
+        if isinstance(raw_domain, str):
+            try:
+                parsed = ast.literal_eval(raw_domain)
+            except (SyntaxError, ValueError):
+                parsed = []
+            return list(parsed) if isinstance(parsed, list) else []
+        return list(raw_domain) if isinstance(raw_domain, list) else []
+
+    def _action_context(self, action_result):
+        raw_context = action_result.get("context") or {}
+        if isinstance(raw_context, str):
+            try:
+                parsed = ast.literal_eval(raw_context)
+            except (SyntaxError, ValueError):
+                parsed = {}
+            context = dict(parsed) if isinstance(parsed, dict) else {}
+        else:
+            context = dict(raw_context) if isinstance(raw_context, dict) else {}
+        if self.project_id:
+            context.update(
+                {
+                    "default_project_id": self.project_id.id,
+                    "current_project_id": self.project_id.id,
+                }
+            )
+        return context
+
+    def _formal_entry_action(self, action_xmlid, action_name):
+        self.ensure_one()
+        action = self.env.ref(action_xmlid, raise_if_not_found=False)
+        if not action:
+            raise UserError("正式办理入口不存在，请检查业务菜单配置。")
+        result = action.sudo().read()[0]
+        domain = self._action_domain(result)
+        if self.project_id and result.get("res_model") in {"sc.expense.claim", "sc.financing.loan", "sc.tax.deduction.registration"}:
+            domain.append(("project_id", "=", self.project_id.id))
+        result.update(
+            {
+                "name": "%s / %s" % (self.project_id.display_name if self.project_id else "项目资金", action_name),
+                "domain": domain,
+                "context": self._action_context(result),
+                "target": "current",
+            }
+        )
+        return result
+
     def action_open_finance_facts(self):
         self.ensure_one()
         return {
@@ -106,6 +160,30 @@ class ScFinanceProjectCapitalPosition(models.Model):
             "domain": domain,
             "context": {"search_default_group_movement_type": 1},
         }
+
+    def action_open_project_borrow_company_entry(self):
+        return self._formal_entry_action(
+            "smart_construction_core.action_sc_financing_loan_project_borrow_company",
+            "项目借公司款登记",
+        )
+
+    def action_open_project_repay_company_entry(self):
+        return self._formal_entry_action(
+            "smart_construction_core.action_sc_expense_claim_project_repay_company",
+            "项目还公司款登记",
+        )
+
+    def action_open_account_transfer_entry(self):
+        return self._formal_entry_action(
+            "smart_construction_core.action_sc_fund_account_between_user",
+            "账户间资金往来",
+        )
+
+    def action_open_guarantee_entry(self):
+        return self._formal_entry_action(
+            "smart_construction_core.action_sc_expense_claim_deposit",
+            "保证金管理",
+        )
 
     def init(self):
         self._cr.execute(

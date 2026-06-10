@@ -54,6 +54,11 @@
                 <header>
                     <button name="action_open_finance_facts" type="object" string="查看收付款明细" class="btn-primary"/>
                     <button name="action_open_interfund_facts" type="object" string="查看借还调拨明细" class="btn-secondary"/>
+                    <button name="action_open_company_borrow_entry" type="object" string="项目借公司款" class="btn-secondary" invisible="counterparty_type != 'company'"/>
+                    <button name="action_open_company_repay_entry" type="object" string="项目还公司款" class="btn-secondary" invisible="counterparty_type != 'company'"/>
+                    <button name="action_open_contractor_borrow_entry" type="object" string="承包人借项目款" class="btn-secondary" invisible="counterparty_type != 'partner'"/>
+                    <button name="action_open_contractor_repay_entry" type="object" string="承包人还项目款" class="btn-secondary" invisible="counterparty_type != 'partner'"/>
+                    <button name="action_open_account_transfer_entry" type="object" string="账户调拨" class="btn-secondary" invisible="counterparty_type not in ['company', 'project', 'internal']"/>
                 </header>
                 <sheet>
                     <group>
