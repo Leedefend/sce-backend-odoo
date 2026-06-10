@@ -94,6 +94,13 @@ EXPECTED_MENUS = OrderedDict(
         ),
     ]
 )
+EXPECTED_PRODUCT_MENU_XMLIDS = (
+    f"{MODULE}.menu_sc_finance_project_capital_position",
+    f"{MODULE}.menu_sc_finance_counterparty_position_summary",
+    f"{MODULE}.menu_sc_finance_project_counterparty_position",
+)
+PRODUCT_KEYS = ("construction.standard", "construction.preview")
+VISIBLE_CHECK_USERS = ("wutao", "demo_role_project_read", "sc_fx_pm")
 
 
 def ref_or_error(xmlid, errors, key):
@@ -204,6 +211,60 @@ for menu_xmlid, spec in EXPECTED_MENUS.items():
     menu_rows.append(row)
 
 summary["business_menus"] = menu_rows
+
+product_rows = []
+for product_key in PRODUCT_KEYS:
+    policy = env["sc.product.policy"].sudo().search([("product_key", "=", product_key)], limit=1)  # noqa: F821
+    if not policy:
+        errors.append({"key": "missing_product_policy", "product_key": product_key})
+        continue
+    released = {}
+    for group in policy.menu_groups or []:
+        if not isinstance(group, dict):
+            continue
+        group_label = str(group.get("group_label") or group.get("label") or "").strip()
+        for menu in group.get("menus") or []:
+            if not isinstance(menu, dict):
+                continue
+            xmlid = str(menu.get("menu_xmlid") or menu.get("page_key") or menu.get("menu_key") or "").strip()
+            if xmlid in EXPECTED_PRODUCT_MENU_XMLIDS:
+                released[xmlid] = {
+                    "group": group_label,
+                    "label": str(menu.get("label") or "").strip(),
+                    "enabled": bool(menu.get("enabled")),
+                    "release_state": str(menu.get("release_state") or "").strip(),
+                    "release_domain": str(menu.get("release_domain") or "").strip(),
+                }
+    missing = [xmlid for xmlid in EXPECTED_PRODUCT_MENU_XMLIDS if xmlid not in released]
+    if missing:
+        errors.append({"key": "product_policy_missing_finance_interfund_menus", "product_key": product_key, "missing": missing})
+    for xmlid, row in released.items():
+        if row["group"] != "财务中心":
+            errors.append({"key": "product_policy_wrong_group", "product_key": product_key, "menu": xmlid, "actual": row["group"]})
+        if not row["enabled"] or row["release_state"] != "released":
+            errors.append({"key": "product_policy_menu_not_released", "product_key": product_key, "menu": xmlid, "actual": row})
+        if row["release_domain"] != "finance_interfund_analysis":
+            errors.append({"key": "product_policy_wrong_release_domain", "product_key": product_key, "menu": xmlid, "actual": row["release_domain"]})
+    product_rows.append({"product_key": product_key, "released": released})
+summary["product_policy"] = product_rows
+
+visible_by_login = {}
+visible_logins_by_menu = {xmlid: [] for xmlid in EXPECTED_PRODUCT_MENU_XMLIDS}
+for login in VISIBLE_CHECK_USERS:
+    user = env["res.users"].sudo().search([("login", "=", login)], limit=1)  # noqa: F821
+    if not user:
+        continue
+    visible_ids = set(env["ir.ui.menu"].with_user(user)._visible_menu_ids())  # noqa: F821
+    visible_by_login[login] = len(visible_ids)
+    for xmlid in EXPECTED_PRODUCT_MENU_XMLIDS:
+        menu = env.ref(xmlid, raise_if_not_found=False)  # noqa: F821
+        if menu and int(menu.id) in visible_ids:
+            visible_logins_by_menu.setdefault(xmlid, []).append(login)
+for xmlid, logins in visible_logins_by_menu.items():
+    if not logins:
+        errors.append({"key": "finance_interfund_product_menu_not_visible_to_any_check_user", "menu": xmlid})
+summary["visible_check_users"] = visible_by_login
+summary["visible_logins_by_product_menu"] = visible_logins_by_menu
 
 result = OrderedDict(
     [

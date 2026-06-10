@@ -32,6 +32,12 @@ USER_ACCEPTANCE_PRODUCT_MENU_XMLIDS = {
     "smart_construction_core.menu_sc_supplier_partner",
 }
 
+FINANCE_INTERFUND_ANALYSIS_PRODUCT_MENU_XMLIDS = (
+    "smart_construction_core.menu_sc_finance_project_capital_position",
+    "smart_construction_core.menu_sc_finance_counterparty_position_summary",
+    "smart_construction_core.menu_sc_finance_project_counterparty_position",
+)
+
 USER_ACCEPTANCE_MENU_KEY_TOKENS = (
     "_acceptance",
     "user_acceptance",
@@ -83,6 +89,7 @@ class ScProductPolicy(models.Model):
     def sync_construction_menu_product_policies(self):
         from odoo.addons.smart_core.delivery.product_policy_catalog_sync_service import ProductPolicyCatalogSyncService
 
+        self._ensure_formal_product_navigation_runtime_params()
         if self._sync_user_confirmed_locked_construction_product_policies():
             return True
 
@@ -90,6 +97,13 @@ class ScProductPolicy(models.Model):
         for product_key in ("construction.standard", "construction.preview"):
             policy = service.sync_policy(product_key=product_key, preserve_state=True, preserve_access_level=True)
             self._release_all_construction_product_menus(policy)
+        return True
+
+    @api.model
+    def _ensure_formal_product_navigation_runtime_params(self):
+        Param = self.env["ir.config_parameter"].sudo()
+        Param.set_param("smart_core.nav.user_data_acceptance_only", "0")
+        Param.set_param("smart_core.nav.user_menu_config.enabled", "0")
         return True
 
     @api.model
@@ -212,6 +226,75 @@ class ScProductPolicy(models.Model):
         return out
 
     @api.model
+    def _hydrate_finance_interfund_analysis_menu(self, menu_xmlid):
+        menu_record = self.env.ref(menu_xmlid, raise_if_not_found=False)
+        if not menu_record:
+            return None
+        action = menu_record.action
+        action_id = int(action.id or 0) if action else 0
+        res_model = _text(getattr(action, "res_model", "") if action else "")
+        if not action_id or not res_model:
+            return None
+        view_modes = [_text(item) for item in _text(getattr(action, "view_mode", "")).split(",") if _text(item)]
+        return {
+            "menu_key": menu_xmlid,
+            "label": _text(menu_record.name),
+            "page_key": menu_xmlid,
+            "page_label": _text(menu_record.name),
+            "route": "/a/%s?menu_id=%s" % (action_id, menu_record.id),
+            "scene_key": "",
+            "product_key": "财务中心",
+            "capability_key": "construction.menu.%s" % menu_xmlid.replace(".", "_"),
+            "target_scene_key": "",
+            "visible_menu_path": "智慧施工管理平台 / 财务中心 / 资金往来分析 / %s" % _text(menu_record.name),
+            "control_granularity": "finance_interfund_analysis_page",
+            "enabled": True,
+            "release_state": "released",
+            "access_level": "public",
+            "control_object": "资金往来统一分析入口",
+            "source_kind": "finance_interfund_product_release_overlay",
+            "menu_id": int(menu_record.id),
+            "menu_xmlid": menu_xmlid,
+            "action_id": action_id,
+            "action_model": _text(getattr(action, "_name", "")),
+            "res_model": res_model,
+            "view_modes": view_modes,
+            "release_domain": "finance_interfund_analysis",
+            "policy_note": "released_as_finance_interfund_analysis_product_menu",
+        }
+
+    @api.model
+    def _append_finance_interfund_analysis_product_menus(self, menu_groups):
+        out = [dict(group) for group in (menu_groups or []) if isinstance(group, dict)]
+        finance_group = None
+        for group in out:
+            if _text(group.get("group_label") or group.get("label")) == "财务中心":
+                finance_group = group
+                break
+        if finance_group is None:
+            finance_group = {
+                "group_key": "construction.财务中心",
+                "group_label": "财务中心",
+                "category": "user_visible_menu",
+                "menus": [],
+            }
+            out.append(finance_group)
+        menus = [dict(menu) for menu in (finance_group.get("menus") or []) if isinstance(menu, dict)]
+        existing = {
+            _text(menu.get("menu_xmlid") or menu.get("page_key") or menu.get("menu_key"))
+            for menu in menus
+        }
+        for menu_xmlid in FINANCE_INTERFUND_ANALYSIS_PRODUCT_MENU_XMLIDS:
+            if menu_xmlid in existing:
+                continue
+            row = self._hydrate_finance_interfund_analysis_menu(menu_xmlid)
+            if row:
+                menus.append(row)
+                existing.add(menu_xmlid)
+        finance_group["menus"] = menus
+        return out
+
+    @api.model
     def _sync_user_confirmed_formal_menu_overlay(self):
         Policy = self.env["ui.menu.config.policy"].sudo().with_context(active_test=False)
         Menu = self.env["ir.ui.menu"].sudo().with_context(active_test=False)
@@ -251,6 +334,7 @@ class ScProductPolicy(models.Model):
             item = baseline.get(product_key) or {}
             baseline_menu_groups = item.get("menu_groups") if isinstance(item.get("menu_groups"), list) else []
             menu_groups = self._formal_user_confirmed_menu_groups(baseline_menu_groups)
+            menu_groups = self._append_finance_interfund_analysis_product_menus(menu_groups)
             capabilities = self._capabilities_from_user_confirmed_menu_groups(menu_groups)
             values = {
                 "active": bool(item.get("active", True)),

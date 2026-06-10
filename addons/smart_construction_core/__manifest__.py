@@ -233,12 +233,12 @@
         'views/core/expense_business_fact_taxonomy_views.xml',
         'views/menu_user_acceptance_cleanup.xml',
         'views/menu_contract_product_release.xml',
-        'data/product_policy_menu_sync.xml',
         'views/support/audit_list_fields_views.xml',
         'views/support/p1_daily_business_visible_alias_views.xml',
         'views/support/user_confirmed_formal_list_alignment_views.xml',
         'views/support/user_confirmed_formal_list_views.xml',
         'views/support/user_confirmed_formal_form_views.xml',
+        'data/product_policy_menu_sync.xml',
     ],
     'assets': {
         'web.assets_frontend_minimal': [

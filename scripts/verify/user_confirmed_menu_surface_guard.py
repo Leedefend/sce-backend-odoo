@@ -34,10 +34,15 @@ EXPECTED_GROUP_COUNTS = {
     "合同中心": 6,
     "施工管理": 1,
     "物资与分包": 10,
-    "财务中心": 31,
+    "财务中心": 34,
     "人事行政": 7,
     "资料证照": 1,
     "基础设置": 1,
+}
+FINANCE_INTERFUND_ANALYSIS_PRODUCT_MENU_XMLIDS = {
+    "smart_construction_core.menu_sc_finance_project_capital_position",
+    "smart_construction_core.menu_sc_finance_counterparty_position_summary",
+    "smart_construction_core.menu_sc_finance_project_counterparty_position",
 }
 
 
@@ -139,13 +144,22 @@ def _assert_policy_matches_baseline() -> dict[str, int]:
         if expected is None:
             raise AssertionError("baseline missing product: %s" % product_key)
         actual = _effective_policy_rows(product_key)
-        if actual != expected:
+        actual_without_finance_interfund = [
+            row for row in actual if row[2] not in FINANCE_INTERFUND_ANALYSIS_PRODUCT_MENU_XMLIDS
+        ]
+        if actual_without_finance_interfund != expected:
             expected_set = set(expected)
-            actual_set = set(actual)
+            actual_set = set(actual_without_finance_interfund)
             raise AssertionError(
                 "%s confirmed menu policy drift: only_expected=%s only_actual=%s"
                 % (product_key, sorted(expected_set - actual_set)[:20], sorted(actual_set - expected_set)[:20])
             )
+        missing_finance_interfund = sorted(
+            FINANCE_INTERFUND_ANALYSIS_PRODUCT_MENU_XMLIDS
+            - {row[2] for row in actual}
+        )
+        if missing_finance_interfund:
+            raise AssertionError("%s missing finance interfund product menus: %s" % (product_key, missing_finance_interfund))
         counts[product_key] = len(actual)
     return counts
 
