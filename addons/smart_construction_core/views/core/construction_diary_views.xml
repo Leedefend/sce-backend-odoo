@@ -44,6 +44,7 @@
                     <field name="project_manager"/>
                     <field name="weather"/>
                     <field name="manpower_count" sum="现场人数"/>
+                    <field name="attendance_equipment"/>
                     <field name="quality_name"/>
                     <field name="handler_name"/>
                     <field name="state"/>
@@ -89,6 +90,7 @@
                             <field name="project_manager" readonly="state == 'legacy_confirmed'"/>
                             <field name="weather" readonly="state == 'legacy_confirmed'"/>
                             <field name="manpower_count" readonly="state == 'legacy_confirmed'"/>
+                            <field name="attendance_equipment" readonly="state == 'legacy_confirmed'"/>
                             <field name="quality_name" readonly="state == 'legacy_confirmed'"/>
                         </group>
                         <group string="日志内容">

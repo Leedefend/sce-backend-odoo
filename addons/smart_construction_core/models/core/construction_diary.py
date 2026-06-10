@@ -42,6 +42,7 @@ class ScConstructionDiary(models.Model):
     project_manager = fields.Char(string="项目经理", index=True)
     weather = fields.Char(string="天气")
     manpower_count = fields.Integer(string="现场人数")
+    attendance_equipment = fields.Text(string="出勤机械")
     quality_name = fields.Char(string="质量/事项", index=True)
     handler_name = fields.Char(string="经办人", index=True)
     description = fields.Text(string="日志内容")
@@ -93,9 +94,9 @@ class ScConstructionDiary(models.Model):
 
     def write(self, vals):
         if any(rec.source_origin == "legacy" and rec.state == "legacy_confirmed" for rec in self):
-            allowed = {"note", "active", "attachment_ids", "write_uid", "write_date"}
+            allowed = {"note", "attendance_equipment", "active", "attachment_ids", "write_uid", "write_date"}
             if set(vals) - allowed:
-                raise UserError(_("历史迁移施工日志已确认，只允许补充备注。"))
+                raise UserError(_("历史迁移施工日志已确认，只允许补充备注和出勤机械。"))
         return super().write(vals)
 
     @api.constrains("report_period_start", "report_period_end")
@@ -131,6 +132,7 @@ class ScConstructionDiary(models.Model):
         content_fields = (
             "description",
             "material_inspection_note",
+            "attendance_equipment",
             "design_change_note",
             "test_block_note",
             "safety_note",
