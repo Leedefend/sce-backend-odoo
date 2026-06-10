@@ -5,7 +5,7 @@ from odoo.exceptions import UserError
 
 class ScInterfundMovementProjectSummary(models.Model):
     _name = "sc.interfund.movement.project.summary"
-    _description = "项目资金往来事实汇总"
+    _description = "项目往来资金汇总"
     _auto = False
     _rec_name = "display_name"
     _order = "project_id, movement_type"
@@ -30,7 +30,7 @@ class ScInterfundMovementProjectSummary(models.Model):
         readonly=True,
         index=True,
     )
-    source_line_count = fields.Integer(string="事实明细数", readonly=True)
+    source_line_count = fields.Integer(string="来源明细数", readonly=True)
     low_confidence_count = fields.Integer(string="低置信度明细数", readonly=True)
     inflow_amount = fields.Monetary(string="项目流入", currency_field="currency_id", readonly=True)
     outflow_amount = fields.Monetary(string="项目流出", currency_field="currency_id", readonly=True)
@@ -45,7 +45,7 @@ class ScInterfundMovementProjectSummary(models.Model):
     coverage_note = fields.Char(string="承载说明", readonly=True)
 
     def _raise_readonly_projection(self):
-        raise UserError("项目资金往来事实汇总是只读投影，请从来源业务单据维护数据。")
+        raise UserError("项目往来资金汇总是只读汇总，请从来源业务单据维护数据。")
 
     @api.model_create_multi
     def create(self, vals_list):

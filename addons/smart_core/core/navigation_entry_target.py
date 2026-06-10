@@ -183,8 +183,11 @@ def normalize_odoo_action_result(env, result, *, menu_id=None, source_model: str
         }
 
     action_type = _text(payload.get("type"))
-    action_id = _to_int(payload.get("id") or payload.get("action_id"))
     model = _text(payload.get("res_model") or source_model)
+    action_id = _to_int(payload.get("id") or payload.get("action_id")) or _resolve_action_id_for_model(env, model)
+    if action_id:
+        payload.setdefault("id", action_id)
+        payload.setdefault("action_id", action_id)
     record_id = _to_int(payload.get("res_id") or source_record_id)
     view_modes = payload.get("view_mode") or payload.get("view_modes")
     url = _text(payload.get("url")) if action_type == "ir.actions.act_url" else ""
@@ -227,6 +230,17 @@ def resolve_scene_key(env, *, menu_id=None, action_id=None, model: str = "", vie
         if normalized_model and target_model == normalized_model and target_view in normalized_view_modes:
             return scene_key
     return ""
+
+
+def _resolve_action_id_for_model(env, model: str) -> int:
+    normalized_model = _text(model)
+    if env is None or not normalized_model:
+        return 0
+    try:
+        action = env["ir.actions.act_window"].sudo().search([("res_model", "=", normalized_model)], order="id", limit=1)
+        return _to_int(action.id)
+    except Exception:
+        return 0
 
 
 def _load_scene_configs(env) -> list[dict]:

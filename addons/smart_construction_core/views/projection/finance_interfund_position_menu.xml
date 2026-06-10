@@ -8,49 +8,49 @@
                   groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
 
         <menuitem id="menu_sc_finance_project_capital_position"
-                  name="项目资金综合口径"
+                  name="项目资金总览"
                   parent="menu_sc_finance_interfund_analysis"
                   action="action_sc_finance_project_capital_position"
                   sequence="10"
                   groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
 
         <menuitem id="menu_sc_finance_counterparty_position_summary"
-                  name="往来对象资金综合口径"
+                  name="往来对象资金总览"
                   parent="menu_sc_finance_interfund_analysis"
                   action="action_sc_finance_counterparty_position_summary"
                   sequence="20"
                   groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
 
         <menuitem id="menu_sc_finance_project_counterparty_position"
-                  name="项目往来对象资金口径"
+                  name="项目往来明细"
                   parent="menu_sc_finance_interfund_analysis"
                   action="action_sc_finance_project_counterparty_position"
                   sequence="30"
                   groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
 
         <menuitem id="menu_sc_finance_business_project_summary"
-                  name="项目财务业务事实汇总"
+                  name="项目财务来源汇总"
                   parent="menu_sc_finance_interfund_analysis"
                   action="action_sc_finance_business_project_summary"
                   sequence="40"
                   groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
 
         <menuitem id="menu_sc_interfund_movement_project_summary"
-                  name="项目资金往来事实汇总"
+                  name="项目往来资金汇总"
                   parent="menu_sc_finance_interfund_analysis"
                   action="action_sc_interfund_movement_project_summary"
                   sequence="50"
                   groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
 
         <menuitem id="menu_sc_finance_business_fact"
-                  name="财务业务事实明细"
+                  name="财务来源明细"
                   parent="menu_sc_finance_interfund_analysis"
                   action="action_sc_finance_business_fact"
                   sequence="60"
                   groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
 
         <menuitem id="menu_sc_interfund_movement_fact"
-                  name="资金往来事实明细"
+                  name="往来资金明细"
                   parent="menu_sc_finance_interfund_analysis"
                   action="action_sc_interfund_movement_fact"
                   sequence="70"

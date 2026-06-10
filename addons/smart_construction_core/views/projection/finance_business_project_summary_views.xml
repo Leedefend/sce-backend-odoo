@@ -5,7 +5,7 @@
             <field name="name">sc.finance.business.project.summary.search</field>
             <field name="model">sc.finance.business.project.summary</field>
             <field name="arch" type="xml">
-                <search string="项目财务业务事实汇总">
+                <search string="项目财务来源汇总">
                     <field name="project_id"/>
                     <filter string="到款确认" name="arrival_settlement" domain="[('business_domain', '=', 'arrival_settlement')]"/>
                     <filter string="扣款清分" name="deduction_clearing" domain="[('business_domain', '=', 'deduction_clearing')]"/>
@@ -22,10 +22,10 @@
             <field name="name">sc.finance.business.project.summary.tree</field>
             <field name="model">sc.finance.business.project.summary</field>
             <field name="arch" type="xml">
-                <tree string="项目财务业务事实汇总" create="0" edit="0" delete="0">
+                <tree string="项目财务来源汇总" create="0" edit="0" delete="0">
                     <field name="project_id"/>
                     <field name="business_domain"/>
-                    <field name="source_line_count" sum="事实明细数"/>
+                    <field name="source_line_count" sum="来源明细数"/>
                     <field name="canonical_line_count" sum="正式余额明细数"/>
                     <field name="visible_reference_line_count" sum="可见参考明细数"/>
                     <field name="arrival_amount" sum="到款金额"/>
@@ -51,7 +51,7 @@
             <field name="name">sc.finance.business.project.summary.form</field>
             <field name="model">sc.finance.business.project.summary</field>
             <field name="arch" type="xml">
-                <form string="项目财务业务事实汇总" create="0" edit="0" delete="0">
+                <form string="项目财务来源汇总" create="0" edit="0" delete="0">
                     <sheet>
                         <group>
                             <group string="归集维度">
@@ -104,7 +104,7 @@
             <field name="name">sc.finance.business.project.summary.pivot</field>
             <field name="model">sc.finance.business.project.summary</field>
             <field name="arch" type="xml">
-                <pivot string="项目财务业务事实汇总">
+                <pivot string="项目财务来源汇总">
                     <field name="business_domain" type="row"/>
                     <field name="project_id" type="row"/>
                     <field name="balance_effect" type="measure"/>
@@ -114,7 +114,7 @@
         </record>
 
         <record id="action_sc_finance_business_project_summary" model="ir.actions.act_window">
-            <field name="name">项目财务业务事实汇总</field>
+            <field name="name">项目财务来源汇总</field>
             <field name="res_model">sc.finance.business.project.summary</field>
             <field name="view_mode">tree,form,pivot</field>
             <field name="search_view_id" ref="view_sc_finance_business_project_summary_search"/>

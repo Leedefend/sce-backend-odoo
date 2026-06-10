@@ -51,6 +51,12 @@ class ExecuteButtonHandler(BaseIntentHandler):
             "proxy_only": True,
         }
 
+    def _button_access_mode(self, env_model, method_name: str) -> str:
+        readonly_methods = getattr(env_model, "_sc_readonly_navigation_button_methods", ())
+        if method_name in set(readonly_methods or ()):
+            return "read"
+        return "write"
+
     def handle(self, payload=None, ctx=None):
         params = self.params if isinstance(self.params, dict) else {}
         model = params.get("model") or params.get("res_model")
@@ -103,9 +109,11 @@ class ExecuteButtonHandler(BaseIntentHandler):
                     status_code=404,
                 )
 
-            self.env[model].check_access_rights("write")
+            env_model = self.env[model]
+            access_mode = self._button_access_mode(env_model, method_name)
+            env_model.check_access_rights(access_mode)
 
-            recordset = self.env[model].browse(res_ids)
+            recordset = env_model.browse(res_ids)
             if not recordset.exists():
                 return _failure_result(
                     model=model,
@@ -117,7 +125,7 @@ class ExecuteButtonHandler(BaseIntentHandler):
                 )
             for record in recordset:
                 in_scope, scope_meta = record_in_business_scope(
-                    self.env[model],
+                    env_model,
                     int(record.id),
                     params,
                     self.context if isinstance(self.context, dict) else {},
@@ -125,7 +133,7 @@ class ExecuteButtonHandler(BaseIntentHandler):
                 if not in_scope:
                     return project_scope_denied_response(scope_meta)
 
-            recordset.check_access_rule("write")
+            recordset.check_access_rule(access_mode)
 
             method = getattr(recordset.with_context(self.context), method_name, None)
             if not callable(method):

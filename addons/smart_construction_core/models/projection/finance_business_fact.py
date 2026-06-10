@@ -5,7 +5,7 @@ from odoo.exceptions import UserError
 
 class ScFinanceBusinessFact(models.Model):
     _name = "sc.finance.business.fact"
-    _description = "财务业务事实"
+    _description = "财务来源明细"
     _auto = False
     _rec_name = "display_name"
     _order = "document_date desc, id desc"
@@ -77,7 +77,7 @@ class ScFinanceBusinessFact(models.Model):
     legacy_visible_note = fields.Text(string="历史可见说明", readonly=True)
 
     def _raise_readonly_projection(self):
-        raise UserError("财务业务事实是只读归一投影，请从来源业务单据维护数据。")
+        raise UserError("财务来源明细是只读汇总，请从来源业务单据维护数据。")
 
     @api.model_create_multi
     def create(self, vals_list):

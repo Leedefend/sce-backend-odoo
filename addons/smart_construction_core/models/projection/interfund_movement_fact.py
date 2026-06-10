@@ -5,7 +5,7 @@ from odoo.exceptions import UserError
 
 class ScInterfundMovementFact(models.Model):
     _name = "sc.interfund.movement.fact"
-    _description = "资金往来事实"
+    _description = "往来资金明细"
     _auto = False
     _rec_name = "display_name"
     _order = "document_date desc, id desc"
@@ -71,7 +71,7 @@ class ScInterfundMovementFact(models.Model):
     legacy_visible_note = fields.Text(string="历史可见说明", readonly=True)
 
     def _raise_readonly_projection(self):
-        raise UserError("资金往来事实是只读归一投影，请从来源业务单据维护数据。")
+        raise UserError("往来资金明细是只读汇总，请从来源业务单据维护数据。")
 
     @api.model_create_multi
     def create(self, vals_list):

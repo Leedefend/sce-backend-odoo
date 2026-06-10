@@ -5,7 +5,7 @@ from odoo.exceptions import UserError
 
 class ScFinanceBusinessProjectSummary(models.Model):
     _name = "sc.finance.business.project.summary"
-    _description = "项目财务业务事实汇总"
+    _description = "项目财务来源汇总"
     _auto = False
     _rec_name = "display_name"
     _order = "project_id, business_domain"
@@ -26,7 +26,7 @@ class ScFinanceBusinessProjectSummary(models.Model):
     project_id = fields.Many2one("project.project", string="项目", readonly=True, index=True)
     company_id = fields.Many2one("res.company", string="公司", readonly=True, index=True)
     currency_id = fields.Many2one("res.currency", string="币种", readonly=True)
-    source_line_count = fields.Integer(string="事实明细数", readonly=True)
+    source_line_count = fields.Integer(string="来源明细数", readonly=True)
     canonical_line_count = fields.Integer(string="正式余额明细数", readonly=True)
     visible_reference_line_count = fields.Integer(string="可见参考明细数", readonly=True)
     amount = fields.Monetary(string="事实金额", currency_field="currency_id", readonly=True)
@@ -54,7 +54,7 @@ class ScFinanceBusinessProjectSummary(models.Model):
     coverage_note = fields.Char(string="承载说明", readonly=True)
 
     def _raise_readonly_projection(self):
-        raise UserError("项目财务业务事实汇总是只读投影，请从来源业务单据维护数据。")
+        raise UserError("项目财务来源汇总是只读汇总，请从来源业务单据维护数据。")
 
     @api.model_create_multi
     def create(self, vals_list):

@@ -39,7 +39,7 @@ EXPECTED_MENUS = OrderedDict(
         (
             f"{MODULE}.menu_sc_finance_project_capital_position",
             {
-                "name": "项目资金综合口径",
+                "name": "项目资金总览",
                 "action": f"{MODULE}.action_sc_finance_project_capital_position",
                 "model": "sc.finance.project.capital.position",
             },
@@ -47,7 +47,7 @@ EXPECTED_MENUS = OrderedDict(
         (
             f"{MODULE}.menu_sc_finance_counterparty_position_summary",
             {
-                "name": "往来对象资金综合口径",
+                "name": "往来对象资金总览",
                 "action": f"{MODULE}.action_sc_finance_counterparty_position_summary",
                 "model": "sc.finance.counterparty.position.summary",
             },
@@ -55,7 +55,7 @@ EXPECTED_MENUS = OrderedDict(
         (
             f"{MODULE}.menu_sc_finance_project_counterparty_position",
             {
-                "name": "项目往来对象资金口径",
+                "name": "项目往来明细",
                 "action": f"{MODULE}.action_sc_finance_project_counterparty_position",
                 "model": "sc.finance.project.counterparty.position",
             },
@@ -63,7 +63,7 @@ EXPECTED_MENUS = OrderedDict(
         (
             f"{MODULE}.menu_sc_finance_business_project_summary",
             {
-                "name": "项目财务业务事实汇总",
+                "name": "项目财务来源汇总",
                 "action": f"{MODULE}.action_sc_finance_business_project_summary",
                 "model": "sc.finance.business.project.summary",
             },
@@ -71,7 +71,7 @@ EXPECTED_MENUS = OrderedDict(
         (
             f"{MODULE}.menu_sc_interfund_movement_project_summary",
             {
-                "name": "项目资金往来事实汇总",
+                "name": "项目往来资金汇总",
                 "action": f"{MODULE}.action_sc_interfund_movement_project_summary",
                 "model": "sc.interfund.movement.project.summary",
             },
@@ -79,7 +79,7 @@ EXPECTED_MENUS = OrderedDict(
         (
             f"{MODULE}.menu_sc_finance_business_fact",
             {
-                "name": "财务业务事实明细",
+                "name": "财务来源明细",
                 "action": f"{MODULE}.action_sc_finance_business_fact",
                 "model": "sc.finance.business.fact",
             },
@@ -87,7 +87,7 @@ EXPECTED_MENUS = OrderedDict(
         (
             f"{MODULE}.menu_sc_interfund_movement_fact",
             {
-                "name": "资金往来事实明细",
+                "name": "往来资金明细",
                 "action": f"{MODULE}.action_sc_interfund_movement_fact",
                 "model": "sc.interfund.movement.fact",
             },

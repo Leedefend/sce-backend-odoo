@@ -5,10 +5,13 @@ from odoo.exceptions import UserError
 
 class ScFinanceCounterpartyPositionSummary(models.Model):
     _name = "sc.finance.counterparty.position.summary"
-    _description = "往来对象资金综合口径"
+    _description = "往来对象资金总览"
     _auto = False
     _rec_name = "display_name"
     _order = "counterparty_type, counterparty_name"
+    _sc_readonly_navigation_button_methods = {
+        "action_open_project_positions",
+    }
 
     display_name = fields.Char(string="往来对象", readonly=True)
     company_id = fields.Many2one("res.company", string="公司", readonly=True, index=True)
@@ -29,7 +32,7 @@ class ScFinanceCounterpartyPositionSummary(models.Model):
     partner_id = fields.Many2one("res.partner", string="对方单位/人员", readonly=True, index=True)
     counterparty_name = fields.Char(string="对方名称", readonly=True, index=True)
     project_count = fields.Integer(string="涉及项目数", readonly=True)
-    finance_source_line_count = fields.Integer(string="财务事实明细数", readonly=True)
+    finance_source_line_count = fields.Integer(string="财务来源明细数", readonly=True)
     interfund_source_line_count = fields.Integer(string="资金往来明细数", readonly=True)
     source_line_count = fields.Integer(string="综合明细数", readonly=True)
     finance_balance_effect = fields.Monetary(string="财务余额影响", currency_field="currency_id", readonly=True)
@@ -55,7 +58,7 @@ class ScFinanceCounterpartyPositionSummary(models.Model):
     coverage_note = fields.Char(string="承载说明", readonly=True)
 
     def _raise_readonly_projection(self):
-        raise UserError("往来对象资金综合口径是只读投影，请从来源业务单据维护数据。")
+        raise UserError("往来对象资金总览是只读汇总，请从来源业务单据维护数据。")
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -91,7 +94,7 @@ class ScFinanceCounterpartyPositionSummary(models.Model):
         self.ensure_one()
         return {
             "type": "ir.actions.act_window",
-            "name": "项目往来对象资金口径",
+            "name": "项目往来明细",
             "res_model": "sc.finance.project.counterparty.position",
             "view_mode": "tree,pivot,form",
             "domain": self._counterparty_identity_domain(),
@@ -162,7 +165,7 @@ class ScFinanceCounterpartyPositionSummary(models.Model):
                         WHEN combined_balance_effect < -0.005 THEN 'negative'
                         ELSE 'balanced'
                     END AS position_direction,
-                    '由项目往来对象资金口径跨项目归集；用于对象层面总余额判断，不替代来源业务单据' AS coverage_note
+                    '由项目往来明细跨项目归集；用于对象层面总余额判断，不替代来源业务单据' AS coverage_note
                 FROM grouped
             )
             """

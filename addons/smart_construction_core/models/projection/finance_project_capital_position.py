@@ -6,18 +6,22 @@ from odoo.exceptions import UserError
 
 class ScFinanceProjectCapitalPosition(models.Model):
     _name = "sc.finance.project.capital.position"
-    _description = "项目资金综合口径"
+    _description = "项目资金总览"
     _auto = False
     _rec_name = "display_name"
     _order = "project_id"
+    _sc_readonly_navigation_button_methods = {
+        "action_open_finance_facts",
+        "action_open_interfund_facts",
+    }
 
-    display_name = fields.Char(string="项目资金口径", readonly=True)
+    display_name = fields.Char(string="项目资金总览", readonly=True)
     project_id = fields.Many2one("project.project", string="项目", readonly=True, index=True)
     company_id = fields.Many2one("res.company", string="公司", readonly=True, index=True)
     currency_id = fields.Many2one("res.currency", string="币种", readonly=True)
-    finance_group_count = fields.Integer(string="财务事实分组数", readonly=True)
+    finance_group_count = fields.Integer(string="财务来源分组数", readonly=True)
     interfund_group_count = fields.Integer(string="资金往来分组数", readonly=True)
-    finance_source_line_count = fields.Integer(string="财务事实明细数", readonly=True)
+    finance_source_line_count = fields.Integer(string="财务来源明细数", readonly=True)
     interfund_source_line_count = fields.Integer(string="资金往来明细数", readonly=True)
     source_line_count = fields.Integer(string="综合明细数", readonly=True)
 
@@ -49,7 +53,7 @@ class ScFinanceProjectCapitalPosition(models.Model):
     coverage_note = fields.Char(string="承载说明", readonly=True)
 
     def _raise_readonly_projection(self):
-        raise UserError("项目资金综合口径是只读投影，请从来源业务单据维护数据。")
+        raise UserError("项目资金总览是只读汇总，请从来源业务单据维护数据。")
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -71,7 +75,7 @@ class ScFinanceProjectCapitalPosition(models.Model):
         self.ensure_one()
         return {
             "type": "ir.actions.act_window",
-            "name": "财务业务事实",
+            "name": "财务来源明细",
             "res_model": "sc.finance.business.fact",
             "view_mode": "tree,pivot,form",
             "domain": self._project_domain("project_id"),
@@ -96,7 +100,7 @@ class ScFinanceProjectCapitalPosition(models.Model):
             ]
         return {
             "type": "ir.actions.act_window",
-            "name": "资金往来事实",
+            "name": "往来资金明细",
             "res_model": "sc.interfund.movement.fact",
             "view_mode": "tree,pivot,form",
             "domain": domain,
@@ -197,8 +201,8 @@ class ScFinanceProjectCapitalPosition(models.Model):
                 SELECT
                     ROW_NUMBER() OVER (ORDER BY c.project_key)::integer AS id,
                     CASE
-                        WHEN c.project_id IS NULL THEN '未关联项目 / 资金综合口径'
-                        ELSE COALESCE(p.name->>'zh_CN', p.name->>'en_US', '项目') || ' / 资金综合口径'
+                        WHEN c.project_id IS NULL THEN '未关联项目 / 项目资金总览'
+                        ELSE COALESCE(p.name->>'zh_CN', p.name->>'en_US', '项目') || ' / 项目资金总览'
                     END AS display_name,
                     c.project_id,
                     c.company_id,

@@ -4,10 +4,10 @@
         <field name="name">sc.finance.project.capital.position.search</field>
         <field name="model">sc.finance.project.capital.position</field>
         <field name="arch" type="xml">
-            <search string="项目资金综合口径">
+            <search string="项目资金总览">
                 <field name="project_id"/>
                 <field name="company_id"/>
-                <filter string="有财务事实" name="has_finance" domain="[('finance_source_line_count', '&gt;', 0)]"/>
+                <filter string="有财务来源" name="has_finance" domain="[('finance_source_line_count', '&gt;', 0)]"/>
                 <filter string="有资金往来" name="has_interfund" domain="[('interfund_source_line_count', '&gt;', 0)]"/>
                 <filter string="综合正向" name="positive_combined" domain="[('combined_balance_effect', '&gt;', 0)]"/>
                 <filter string="综合负向" name="negative_combined" domain="[('combined_balance_effect', '&lt;', 0)]"/>
@@ -23,7 +23,7 @@
         <field name="name">sc.finance.project.capital.position.tree</field>
         <field name="model">sc.finance.project.capital.position</field>
         <field name="arch" type="xml">
-            <tree string="项目资金综合口径" create="0" edit="0" delete="0">
+            <tree string="项目资金总览" create="0" edit="0" delete="0">
                 <field name="project_id"/>
                 <field name="source_line_count" sum="综合明细数"/>
                 <field name="finance_balance_effect" sum="财务余额影响"/>
@@ -47,10 +47,10 @@
         <field name="name">sc.finance.project.capital.position.form</field>
         <field name="model">sc.finance.project.capital.position</field>
         <field name="arch" type="xml">
-            <form string="项目资金综合口径" create="0" edit="0" delete="0">
+            <form string="项目资金总览" create="0" edit="0" delete="0">
                 <header>
-                    <button name="action_open_finance_facts" type="object" string="查看财务事实" class="btn-primary"/>
-                    <button name="action_open_interfund_facts" type="object" string="查看资金往来事实" class="btn-secondary"/>
+                    <button name="action_open_finance_facts" type="object" string="查看财务来源明细" class="btn-primary"/>
+                    <button name="action_open_interfund_facts" type="object" string="查看往来资金明细" class="btn-secondary"/>
                 </header>
                 <sheet>
                     <group>
@@ -67,7 +67,7 @@
                         <field name="interfund_source_line_count"/>
                         <field name="source_line_count"/>
                     </group>
-                    <group string="财务事实">
+                    <group string="财务来源">
                         <field name="arrival_amount"/>
                         <field name="arrival_paid_amount"/>
                         <field name="deduction_net_amount"/>
@@ -92,7 +92,7 @@
                         <field name="contractor_borrow_out_amount"/>
                         <field name="contractor_repay_in_amount"/>
                     </group>
-                    <group string="综合口径">
+                    <group string="资金汇总">
                         <field name="combined_balance_effect"/>
                         <field name="combined_cash_net_amount"/>
                     </group>
@@ -105,7 +105,7 @@
         <field name="name">sc.finance.project.capital.position.pivot</field>
         <field name="model">sc.finance.project.capital.position</field>
         <field name="arch" type="xml">
-            <pivot string="项目资金综合口径">
+            <pivot string="项目资金总览">
                 <field name="project_id" type="row"/>
                 <field name="finance_balance_effect" type="measure"/>
                 <field name="interfund_net_amount" type="measure"/>
@@ -116,7 +116,7 @@
     </record>
 
     <record id="action_sc_finance_project_capital_position" model="ir.actions.act_window">
-        <field name="name">项目资金综合口径</field>
+        <field name="name">项目资金总览</field>
         <field name="res_model">sc.finance.project.capital.position</field>
         <field name="view_mode">tree,pivot,form</field>
         <field name="search_view_id" ref="view_sc_finance_project_capital_position_search"/>
