@@ -191,6 +191,7 @@
         'views/projection/finance_project_capital_position_views.xml',
         'views/projection/finance_project_counterparty_position_views.xml',
         'views/projection/finance_counterparty_position_summary_views.xml',
+        'views/projection/finance_interfund_position_menu.xml',
         'views/core/workflow_views.xml',
         'views/menu.xml',
         'views/support/legacy_report_inventory_views.xml',

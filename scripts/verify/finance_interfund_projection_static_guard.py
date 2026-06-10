@@ -19,44 +19,60 @@ PROJECTIONS = {
         "view": "addons/smart_construction_core/views/projection/finance_business_fact_views.xml",
         "manifest_view": "views/projection/finance_business_fact_views.xml",
         "table": "sc_finance_business_fact",
+        "action": "action_sc_finance_business_fact",
+        "menu": "menu_sc_finance_business_fact",
     },
     "sc.finance.business.project.summary": {
         "model": "addons/smart_construction_core/models/projection/finance_business_project_summary.py",
         "view": "addons/smart_construction_core/views/projection/finance_business_project_summary_views.xml",
         "manifest_view": "views/projection/finance_business_project_summary_views.xml",
         "table": "sc_finance_business_project_summary",
+        "action": "action_sc_finance_business_project_summary",
+        "menu": "menu_sc_finance_business_project_summary",
     },
     "sc.interfund.movement.fact": {
         "model": "addons/smart_construction_core/models/projection/interfund_movement_fact.py",
         "view": "addons/smart_construction_core/views/projection/interfund_movement_fact_views.xml",
         "manifest_view": "views/projection/interfund_movement_fact_views.xml",
         "table": "sc_interfund_movement_fact",
+        "action": "action_sc_interfund_movement_fact",
+        "menu": "menu_sc_interfund_movement_fact",
     },
     "sc.interfund.movement.project.summary": {
         "model": "addons/smart_construction_core/models/projection/interfund_movement_project_summary.py",
         "view": "addons/smart_construction_core/views/projection/interfund_movement_project_summary_views.xml",
         "manifest_view": "views/projection/interfund_movement_project_summary_views.xml",
         "table": "sc_interfund_movement_project_summary",
+        "action": "action_sc_interfund_movement_project_summary",
+        "menu": "menu_sc_interfund_movement_project_summary",
     },
     "sc.finance.project.capital.position": {
         "model": "addons/smart_construction_core/models/projection/finance_project_capital_position.py",
         "view": "addons/smart_construction_core/views/projection/finance_project_capital_position_views.xml",
         "manifest_view": "views/projection/finance_project_capital_position_views.xml",
         "table": "sc_finance_project_capital_position",
+        "action": "action_sc_finance_project_capital_position",
+        "menu": "menu_sc_finance_project_capital_position",
     },
     "sc.finance.project.counterparty.position": {
         "model": "addons/smart_construction_core/models/projection/finance_project_counterparty_position.py",
         "view": "addons/smart_construction_core/views/projection/finance_project_counterparty_position_views.xml",
         "manifest_view": "views/projection/finance_project_counterparty_position_views.xml",
         "table": "sc_finance_project_counterparty_position",
+        "action": "action_sc_finance_project_counterparty_position",
+        "menu": "menu_sc_finance_project_counterparty_position",
     },
     "sc.finance.counterparty.position.summary": {
         "model": "addons/smart_construction_core/models/projection/finance_counterparty_position_summary.py",
         "view": "addons/smart_construction_core/views/projection/finance_counterparty_position_summary_views.xml",
         "manifest_view": "views/projection/finance_counterparty_position_summary_views.xml",
         "table": "sc_finance_counterparty_position_summary",
+        "action": "action_sc_finance_counterparty_position_summary",
+        "menu": "menu_sc_finance_counterparty_position_summary",
     },
 }
+
+MENU_VIEW = "views/projection/finance_interfund_position_menu.xml"
 
 
 def constant_value(node):
@@ -87,6 +103,31 @@ summary = OrderedDict()
 
 manifest_path = ROOT / "addons/smart_construction_core/__manifest__.py"
 manifest_text = manifest_path.read_text(encoding="utf-8")
+if MENU_VIEW not in manifest_text:
+    errors.append({"key": "menu_view_not_in_manifest", "view": MENU_VIEW})
+
+menu_path = ROOT / "addons/smart_construction_core" / MENU_VIEW
+menu_actions = {}
+menu_parent = {}
+if not menu_path.exists():
+    errors.append({"key": "missing_menu_view_file", "view": MENU_VIEW})
+else:
+    menu_root = ET.parse(menu_path).getroot()
+    for elem in menu_root.iter("menuitem"):
+        menu_id = elem.attrib.get("id")
+        if menu_id:
+            menu_actions[menu_id] = elem.attrib.get("action", "")
+            menu_parent[menu_id] = elem.attrib.get("parent", "")
+    root_parent = menu_parent.get("menu_sc_finance_interfund_analysis")
+    if root_parent != "smart_construction_core.menu_sc_finance_center":
+        errors.append(
+            {
+                "key": "finance_interfund_menu_wrong_parent",
+                "menu": "menu_sc_finance_interfund_analysis",
+                "expected": "smart_construction_core.menu_sc_finance_center",
+                "actual": root_parent,
+            }
+        )
 
 access_path = ROOT / "addons/smart_construction_core/security/ir.model.access.csv"
 with access_path.open(encoding="utf-8") as fh:
@@ -155,6 +196,22 @@ for model_name, spec in PROJECTIONS.items():
 
     if spec["manifest_view"] not in manifest_text:
         errors.append({"key": "view_not_in_manifest", "model": model_name, "view": spec["manifest_view"]})
+
+    expected_menu = spec["menu"]
+    expected_action = spec["action"]
+    actual_action = menu_actions.get(expected_menu)
+    row_summary["business_menu"] = expected_menu
+    row_summary["business_menu_action"] = actual_action or ""
+    if actual_action != expected_action:
+        errors.append(
+            {
+                "key": "missing_or_wrong_business_menu_action",
+                "model": model_name,
+                "menu": expected_menu,
+                "expected_action": expected_action,
+                "actual_action": actual_action,
+            }
+        )
 
     access_matches = [row for row in access_rows if row.get("model_id:id") == model_external]
     row_summary["access_rows"] = len(access_matches)
