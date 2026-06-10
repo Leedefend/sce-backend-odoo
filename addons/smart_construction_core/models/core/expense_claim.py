@@ -253,6 +253,18 @@ class ScExpenseClaim(models.Model):
             context_summary = self.env.context.get("default_summary") or self.env.context.get("default_note")
             if context_summary:
                 vals.setdefault("summary", context_summary)
+            context_note = self.env.context.get("default_note")
+            if context_note:
+                vals.setdefault("note", context_note)
+            context_payee = self.env.context.get("default_payee") or self.env.context.get("default_partner_name")
+            if context_payee:
+                vals.setdefault("payee", context_payee)
+            context_receipt_account = self.env.context.get("default_receipt_account_name")
+            if context_receipt_account:
+                vals.setdefault("receipt_account_name", context_receipt_account)
+            context_payment_account = self.env.context.get("default_payment_account_name")
+            if context_payment_account:
+                vals.setdefault("payment_account_name", context_payment_account)
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.expense.claim") or _("Expense Claim")
             vals.setdefault("approved_amount", vals.get("amount", 0.0))

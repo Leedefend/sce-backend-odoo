@@ -213,6 +213,9 @@ class ScFundAccountOperation(models.Model):
             target_account_id = self.env.context.get("default_target_account_id")
             if target_account_id:
                 vals.setdefault("target_account_id", target_account_id)
+            context_note = self.env.context.get("default_note")
+            if context_note:
+                vals.setdefault("note", context_note)
             if vals.get("name", "/") == "/":
                 vals["name"] = seq.next_by_code("sc.fund.account.operation") or _("资金账户操作单")
         return super().create(vals_list)

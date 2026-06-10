@@ -205,6 +205,12 @@ class ScFinancingLoan(models.Model):
             context_purpose = self.env.context.get("default_purpose") or self.env.context.get("default_note")
             if context_purpose:
                 vals.setdefault("purpose", context_purpose)
+            context_document_no = self.env.context.get("default_document_no") or self.env.context.get("current_source_document_no")
+            if context_document_no:
+                vals.setdefault("document_no", context_document_no)
+            context_note = self.env.context.get("default_note")
+            if context_note:
+                vals.setdefault("note", context_note)
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.financing.loan") or _("Financing Loan")
         return super().create(vals_list)

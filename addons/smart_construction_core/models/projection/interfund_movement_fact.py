@@ -151,7 +151,26 @@ class ScInterfundMovementFact(models.Model):
             context.setdefault("default_summary", self.display_name)
             context.setdefault("default_purpose", self.display_name)
             context.setdefault("default_operation_reason", self.display_name)
-            context.setdefault("default_note", self.display_name)
+        source_no = self.source_document_no or self.source_record_name
+        if source_no:
+            context["default_document_no"] = source_no
+            context["current_source_document_no"] = source_no
+        if self.partner_name:
+            context["default_partner_name"] = self.partner_name
+            context.setdefault("default_payee", self.partner_name)
+        if self.source_account_name:
+            context.setdefault("default_payment_account_name", self.source_account_name)
+        if self.target_account_name:
+            context.setdefault("default_receipt_account_name", self.target_account_name)
+        note_parts = [
+            self.display_name,
+            "来源入口：%s" % self.source_menu_hint if self.source_menu_hint else False,
+            "来源单号：%s" % source_no if source_no else False,
+            "付款账户：%s" % self.source_account_name if self.source_account_name else False,
+            "收款账户：%s" % self.target_account_name if self.target_account_name else False,
+            self.legacy_visible_note,
+        ]
+        context.setdefault("default_note", "\n".join(part for part in note_parts if part))
         if self.source_account_id:
             context["default_source_account_id"] = self.source_account_id.id
         if self.target_account_id:

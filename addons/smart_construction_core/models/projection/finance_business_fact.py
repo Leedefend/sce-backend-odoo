@@ -151,7 +151,21 @@ class ScFinanceBusinessFact(models.Model):
         if self.display_name:
             context.setdefault("default_summary", self.display_name)
             context.setdefault("default_purpose", self.display_name)
-            context.setdefault("default_note", self.display_name)
+        source_no = self.source_document_no or self.source_record_name
+        if source_no:
+            context["default_document_no"] = source_no
+            context["current_source_document_no"] = source_no
+        if self.partner_name:
+            context["default_partner_name"] = self.partner_name
+            context.setdefault("default_payee", self.partner_name)
+            context.setdefault("default_deduction_unit_name", self.partner_name)
+        note_parts = [
+            self.display_name,
+            "来源入口：%s" % self.source_menu_hint if self.source_menu_hint else False,
+            "来源单号：%s" % source_no if source_no else False,
+            self.legacy_visible_note,
+        ]
+        context.setdefault("default_note", "\n".join(part for part in note_parts if part))
         if self.fact_type == "tax_deducted":
             if self.deduction_amount:
                 context["default_deduction_amount"] = abs(self.deduction_amount)
