@@ -83,13 +83,22 @@ run_static_check "python_compile_productization_guards" \
     scripts/verify/user_business_data_portrait.py \
     scripts/verify/user_business_productization_baseline_guard.py \
     scripts/verify/user_confirmed_62_business_entry_integration_matrix.py \
+    scripts/verify/user_confirmed_menu_surface_guard.py \
+    scripts/verify/locked_fact_formal_model_continuity_guard.py \
     scripts/verify/p1_locked_fact_mapping_candidate_guard.py \
+    scripts/verify/p1_locked_fact_mapping_candidate_probe.py \
     scripts/verify/p1_relationship_suggestion_audit.py \
     scripts/verify/p1_relationship_review_queue_audit.py \
     scripts/verify/finance_interfund_handling_entry_audit.py \
     scripts/verify/p1_daily_business_form_usability_audit.py \
     scripts/verify/p1_formal_relationship_continuity_audit.py \
-    scripts/verify/p1_formal_relationship_scope_block_smoke.py
+    scripts/verify/p1_formal_relationship_scope_block_smoke.py \
+    scripts/verify/finance_business_fact_projection_audit.py \
+    scripts/verify/finance_business_project_summary_audit.py \
+    scripts/verify/interfund_movement_project_summary_audit.py \
+    scripts/verify/finance_project_capital_position_audit.py \
+    scripts/verify/finance_project_counterparty_position_audit.py \
+    scripts/verify/finance_counterparty_position_summary_audit.py
 run_static_check "user_confirmed_62_business_entry_integration_matrix" \
   python3 scripts/verify/user_confirmed_62_business_entry_integration_matrix.py
 run_static_check "user_business_productization_baseline_guard" \
