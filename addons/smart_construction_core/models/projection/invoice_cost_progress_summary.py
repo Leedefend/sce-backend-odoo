@@ -8,6 +8,11 @@ class ScInvoiceCostProgressSummary(models.Model):
     _auto = False
     _rec_name = "project_name"
     _order = "project_name"
+    _sc_readonly_navigation_button_methods = {
+        "action_open_progress_receipts",
+        "action_open_output_invoices",
+        "action_open_input_invoices",
+    }
 
     project_id = fields.Many2one("project.project", string="项目", readonly=True, index=True)
     project_name = fields.Char(string="项目名称", readonly=True, index=True)
@@ -18,6 +23,88 @@ class ScInvoiceCostProgressSummary(models.Model):
     input_invoice_amount = fields.Monetary(string="进项上报金额", currency_field="currency_id", readonly=True)
     cost_difference_amount = fields.Monetary(string="成本差额", currency_field="currency_id", readonly=True)
     coverage_note = fields.Char(string="承载说明", readonly=True)
+
+    def _project_domain(self):
+        self.ensure_one()
+        if self.project_id:
+            return [("project_id", "=", self.project_id.id)]
+        return [("project_id", "=", False)]
+
+    def _project_context(self):
+        self.ensure_one()
+        return {
+            "default_project_id": self.project_id.id if self.project_id else False,
+            "current_project_id": self.project_id.id if self.project_id else False,
+            "search_default_group_project": 1,
+        }
+
+    def _open_action(self, action_xmlid, name, domain, context=None):
+        self.ensure_one()
+        action = self.env.ref(action_xmlid, raise_if_not_found=False)
+        result = action.sudo().read()[0] if action else {"type": "ir.actions.act_window", "view_mode": "tree,form"}
+        result.update(
+            {
+                "name": "%s / %s" % (self.project_name or "项目", name),
+                "domain": domain,
+                "context": context or self._project_context(),
+                "target": "current",
+            }
+        )
+        return result
+
+    def _open_action_with_fallback(self, action_xmlid, name, domain, context=None):
+        self.ensure_one()
+        action = self._open_action(action_xmlid, name, domain, context=context)
+        res_model = action.get("res_model")
+        if res_model in self.env and self.env[res_model].search_count(domain):
+            return action
+        return self._open_action(
+            "smart_construction_core.action_sc_legacy_invoice_cost_progress_report_fact",
+            "%s锁定事实" % name,
+            self._project_domain(),
+            context=self._project_context(),
+        )
+
+    def action_open_progress_receipts(self):
+        return self._open_action_with_fallback(
+            "smart_construction_core.action_sc_receipt_income",
+            "工程进度收款",
+            self._project_domain()
+            + [
+                ("active", "=", True),
+                ("state", "!=", "cancel"),
+                ("legacy_source_table", "=", "C_JFHKLR"),
+            ],
+            dict(self._project_context(), default_source_kind="receipt_income"),
+        )
+
+    def action_open_output_invoices(self):
+        return self._open_action_with_fallback(
+            "smart_construction_core.action_sc_invoice_registration",
+            "销项开票登记",
+            self._project_domain()
+            + [
+                ("active", "=", True),
+                ("state", "!=", "cancel"),
+                ("direction", "=", "output"),
+                ("legacy_source_table", "=", "C_JXXP_XXKPDJ"),
+            ],
+            dict(self._project_context(), default_direction="output", default_source_kind="output_invoice_tax"),
+        )
+
+    def action_open_input_invoices(self):
+        return self._open_action_with_fallback(
+            "smart_construction_core.action_sc_invoice_registration",
+            "进项税额上报",
+            self._project_domain()
+            + [
+                ("active", "=", True),
+                ("state", "!=", "cancel"),
+                ("direction", "=", "input"),
+                ("legacy_source_table", "=", "C_JXXP_ZYFPJJD"),
+            ],
+            dict(self._project_context(), default_direction="input", default_source_kind="input_invoice_tax"),
+        )
 
     def init(self):
         self._cr.execute(

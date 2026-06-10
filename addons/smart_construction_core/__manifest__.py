@@ -211,6 +211,7 @@
         'views/support/legacy_material_stock_views.xml',
         'views/support/legacy_equipment_lease_views.xml',
         'views/support/legacy_income_invoice_views.xml',
+        'views/support/legacy_invoice_report_fact_views.xml',
         'views/support/legacy_user_context_views.xml',
         'views/support/runtime_user_management_views.xml',
         'views/support/menu_config_policy_views.xml',

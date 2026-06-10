@@ -8,6 +8,11 @@ class ScInvoiceAnalysisSummary(models.Model):
     _auto = False
     _rec_name = "project_name"
     _order = "project_name"
+    _sc_readonly_navigation_button_methods = {
+        "action_open_income_contracts",
+        "action_open_company_invoices",
+        "action_open_individual_invoices",
+    }
 
     project_id = fields.Many2one("project.project", string="项目", readonly=True, index=True)
     project_name = fields.Char(string="项目名称", readonly=True, index=True)
@@ -19,6 +24,63 @@ class ScInvoiceAnalysisSummary(models.Model):
     company_invoice_ratio = fields.Float(string="公司发票比例", readonly=True, digits=(16, 6))
     individual_invoice_ratio = fields.Float(string="个体发票比例", readonly=True, digits=(16, 6))
     coverage_note = fields.Char(string="承载说明", readonly=True)
+
+    def _project_domain(self):
+        self.ensure_one()
+        if self.project_id:
+            return [("project_id", "=", self.project_id.id)]
+        return [("project_id", "=", False)]
+
+    def _project_context(self):
+        self.ensure_one()
+        return {
+            "default_project_id": self.project_id.id if self.project_id else False,
+            "current_project_id": self.project_id.id if self.project_id else False,
+            "search_default_group_project": 1,
+        }
+
+    def _open_action(self, action_xmlid, name, domain, context=None):
+        self.ensure_one()
+        action = self.env.ref(action_xmlid, raise_if_not_found=False)
+        result = action.sudo().read()[0] if action else {"type": "ir.actions.act_window", "view_mode": "tree,form"}
+        result.update(
+            {
+                "name": "%s / %s" % (self.project_name or "项目", name),
+                "domain": domain,
+                "context": context or self._project_context(),
+                "target": "current",
+            }
+        )
+        return result
+
+    def action_open_income_contracts(self):
+        return self._open_action(
+            "smart_construction_core.action_sc_legacy_invoice_analysis_report_fact",
+            "施工合同金额来源",
+            self._project_domain() + [("fact_type", "=", "contract_amount")],
+        )
+
+    def action_open_company_invoices(self):
+        return self._open_action(
+            "smart_construction_core.action_sc_legacy_invoice_analysis_report_fact",
+            "公司发票金额来源",
+            self._project_domain()
+            + [
+                ("fact_type", "=", "input_invoice_amount"),
+                ("invoice_company_type", "=", "公司发票"),
+            ],
+        )
+
+    def action_open_individual_invoices(self):
+        return self._open_action(
+            "smart_construction_core.action_sc_legacy_invoice_analysis_report_fact",
+            "个体发票金额来源",
+            self._project_domain()
+            + [
+                ("fact_type", "=", "input_invoice_amount"),
+                ("invoice_company_type", "=", "个体发票"),
+            ],
+        )
 
     def init(self):
         self._cr.execute(
