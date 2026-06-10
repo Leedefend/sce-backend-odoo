@@ -41,6 +41,7 @@ EXCLUDE_PREFIXES = (
     "payment.transaction",
 )
 ENTRY_FIELDS = ("source_created_by", "source_created_at")
+ACCEPTED_ENTRY_FIELDS = ("user_acceptance_creator", "user_acceptance_created_at")
 ENTRY_PAIRS = (
     ("legacy_source_created_by", "legacy_source_created_at"),
     ("creator_name", "created_time"),
@@ -175,7 +176,62 @@ def visible_entry_pairs(model_name, Model):
     return ["%s/%s" % pair for pair in existing_entry_pairs(Model) if pair[0] in arch and pair[1] in arch]
 
 
+def has_accepted_entry_pair(Model):
+    return all(field in Model._fields for field in ACCEPTED_ENTRY_FIELDS)
+
+
+def sync_from_accepted_entry_fields(Model):
+    if not all(field in Model._fields and column_exists(Model._table, field) for field in ENTRY_FIELDS):
+        return 0
+    if not has_accepted_entry_pair(Model):
+        return 0
+    if not all(column_exists(Model._table, field) for field in ACCEPTED_ENTRY_FIELDS):
+        updated = 0
+        for record in Model.search([]):
+            vals = {}
+            creator = clean(record.user_acceptance_creator)
+            if creator and clean(record.source_created_by) != creator:
+                vals["source_created_by"] = creator
+            created_at = record.user_acceptance_created_at
+            if created_at and not record.source_created_at:
+                vals["source_created_at"] = created_at
+            if vals:
+                record.write(vals)
+                updated += 1
+        return updated
+    query = sql.SQL(
+        """
+        UPDATE {table} AS t
+           SET source_created_by = COALESCE(NULLIF(BTRIM(t.user_acceptance_creator), ''), NULLIF(BTRIM(t.source_created_by), '')),
+               source_created_at = COALESCE(
+                   CASE
+                     WHEN NULLIF(BTRIM(t.user_acceptance_created_at), '') ~ '^[0-9]{{4}}-[0-9]{{2}}-[0-9]{{2}}'
+                     THEN NULLIF(BTRIM(t.user_acceptance_created_at), '')::timestamp
+                     ELSE NULL
+                   END,
+                   t.source_created_at
+               )
+         WHERE (
+                NULLIF(BTRIM(t.user_acceptance_creator), '') IS NOT NULL
+            AND COALESCE(NULLIF(BTRIM(t.source_created_by), ''), '') <> NULLIF(BTRIM(t.user_acceptance_creator), '')
+         )
+            OR (
+                t.user_acceptance_created_at IS NOT NULL
+            AND NULLIF(BTRIM(t.user_acceptance_created_at), '') ~ '^[0-9]{{4}}-[0-9]{{2}}-[0-9]{{2}}'
+            AND (
+                   t.source_created_at IS NULL
+                OR t.source_created_at <> NULLIF(BTRIM(t.user_acceptance_created_at), '')::timestamp
+            )
+         )
+        """
+    ).format(table=sql.Identifier(Model._table))
+    env.cr.execute(query)  # noqa: F821
+    return int(env.cr.rowcount or 0)  # noqa: F821
+
+
 def clear_non_business_existing_entry_pairs(Model):
+    if has_accepted_entry_pair(Model):
+        return 0
     cleared = 0
     for creator_field, _time_field in existing_entry_pairs(Model):
         field = Model._fields.get(creator_field)
@@ -410,6 +466,9 @@ def backfill_from_legacy_source_model(Model):
 
 
 def backfill_model(Model):
+    if has_accepted_entry_pair(Model):
+        return sync_from_accepted_entry_fields(Model), 0
+
     table = Model._table
     creator_candidates, time_candidates = best_source_fields(Model)
     clear_query = sql.SQL(

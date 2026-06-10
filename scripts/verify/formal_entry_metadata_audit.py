@@ -52,6 +52,7 @@ ENTRY_PAIRS = (
     ("source_created_by", "source_created_at"),
     ("sc_source_created_by", "sc_source_created_at"),
 )
+ACCEPTED_ENTRY_FIELDS = ("user_acceptance_creator", "user_acceptance_created_at")
 SOURCE_LINK_SPECS = (
     {"target_model": "construction.contract.income", "source_model": "construction.contract", "target_field": "contract_id", "source_field": "id"},
     {"target_model": "sc.material.inbound", "source_model": "sc.legacy.scbs.fact.staging", "target_field": "legacy_fact_id", "source_field": "id"},
@@ -140,6 +141,51 @@ def non_business_creator_count(Model, field_name):
     if getattr(field, "type", "") not in {"char", "text", "html", "selection"}:
         return 0
     return safe_count(Model, [(field_name, "in", sorted(NON_BUSINESS_CREATOR_VALUES | {value.title() for value in NON_BUSINESS_CREATOR_VALUES}))])
+
+
+def has_accepted_entry_pair(Model):
+    return all(field in Model._fields for field in ACCEPTED_ENTRY_FIELDS)
+
+
+def accepted_entry_mismatch_count(Model):
+    if not all(field in Model._fields and column_exists(Model._table, field) for field in ENTRY_PAIRS[2]):
+        return 0
+    if not has_accepted_entry_pair(Model):
+        return 0
+    if not all(column_exists(Model._table, field) for field in ACCEPTED_ENTRY_FIELDS):
+        mismatches = 0
+        for record in Model.search([]):
+            accepted_creator = clean(record.user_acceptance_creator)
+            if accepted_creator and clean(record.source_created_by) != accepted_creator:
+                mismatches += 1
+                continue
+            accepted_created_at = clean(record.user_acceptance_created_at)
+            if accepted_created_at and not clean(record.source_created_at):
+                mismatches += 1
+        return mismatches
+    query = sql.SQL(
+        """
+        SELECT COUNT(*)
+          FROM {table} AS t
+         WHERE (
+                NULLIF(BTRIM(t.user_acceptance_creator), '') IS NOT NULL
+            AND COALESCE(NULLIF(BTRIM(t.source_created_by), ''), '') <> NULLIF(BTRIM(t.user_acceptance_creator), '')
+         )
+            OR (
+                NULLIF(BTRIM(t.user_acceptance_created_at), '') ~ '^[0-9]{{4}}-[0-9]{{2}}-[0-9]{{2}}'
+            AND (
+                   t.source_created_at IS NULL
+                OR t.source_created_at <> NULLIF(BTRIM(t.user_acceptance_created_at), '')::timestamp
+            )
+         )
+        """
+    ).format(table=sql.Identifier(Model._table))
+    try:
+        with env.cr.savepoint():  # noqa: F821
+            env.cr.execute(query)  # noqa: F821
+            return int(env.cr.fetchone()[0] or 0)  # noqa: F821
+    except Exception:
+        return {"error": "accepted_entry_mismatch_query_failed"}
 
 
 def collect_user_models():
@@ -371,15 +417,16 @@ def audit_model(model_name):
     technical_time = None
     non_business_creator = None
     source_backfill_gaps = None
+    accepted_entry_mismatches = accepted_entry_mismatch_count(Model) if has_accepted_entry_pair(Model) else 0
     if first_pair:
         creator_field, time_field = first_pair
         with_creator = safe_count(Model, [(creator_field, "!=", False)])
         with_time = safe_count(Model, [(time_field, "!=", False)])
         technical_creator = technical_empty_count(Model, creator_field)
         technical_time = technical_empty_count(Model, time_field)
-        non_business_creator = non_business_creator_count(Model, creator_field)
+        non_business_creator = 0 if has_accepted_entry_pair(Model) else non_business_creator_count(Model, creator_field)
     if all(field in fields for field in ("source_created_by", "source_created_at")):
-        source_backfill_gaps = source_backfill_gap_count(model_name, Model)
+        source_backfill_gaps = 0 if has_accepted_entry_pair(Model) else source_backfill_gap_count(model_name, Model)
 
     if present_pairs and visible_pairs:
         state = "ok_visible"
@@ -403,6 +450,7 @@ def audit_model(model_name):
             ("technical_time", technical_time),
             ("non_business_creator", non_business_creator),
             ("source_backfill_gaps", source_backfill_gaps),
+            ("accepted_entry_mismatches", accepted_entry_mismatches),
             ("state", state),
         ]
     )
@@ -452,6 +500,11 @@ for model_name in required_models:
         reasons.append("source_backfill_gap_error")
     elif value:
         reasons.append("source_backfill_gap_nonzero")
+    value = row.get("accepted_entry_mismatches")
+    if isinstance(value, dict):
+        reasons.append("accepted_entry_mismatch_error")
+    elif value:
+        reasons.append("accepted_entry_mismatch_nonzero")
     if reasons:
         required_failures.append({"model": model_name, "reason": ",".join(reasons), "row": row})
 
@@ -491,6 +544,7 @@ with csv_path.open("w", encoding="utf-8", newline="") as handle:
             "technical_time",
             "non_business_creator",
             "source_backfill_gaps",
+            "accepted_entry_mismatches",
             "state",
         ],
     )

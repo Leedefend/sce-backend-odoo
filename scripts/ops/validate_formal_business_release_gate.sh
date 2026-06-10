@@ -40,7 +40,27 @@ run_odoo_shell_check() {
   fi
   local summary_status
   summary_status="$(
-    grep -E '^\{.*"status"' "$output_file" | tail -n 1 | jq -r '.status // empty'
+    python3 - "$output_file" <<'PY'
+import json
+import sys
+
+status = ""
+with open(sys.argv[1], "r", encoding="utf-8") as handle:
+    for raw in handle:
+        line = raw.strip()
+        if not line:
+            continue
+        if not line.startswith("{") and "={" in line:
+            line = line[line.index("={") + 1:]
+        if not line.startswith("{") or '"status"' not in line:
+            continue
+        try:
+            payload = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        status = payload.get("status") or status
+print(status)
+PY
   )"
   rm -f "$output_file"
   if [[ "$summary_status" != "PASS" ]]; then
@@ -56,6 +76,7 @@ echo "FORMAL_BUSINESS_RELEASE_GATE_START: db=${DB_NAME} started_at=${started_at}
 run_odoo_shell_check "user_confirmed_menu_surface" "scripts/verify/user_confirmed_menu_surface_guard.py"
 run_odoo_shell_check "user_confirmed_form_capability" "scripts/verify/user_confirmed_form_capability_audit.py"
 run_odoo_shell_check "user_confirmed_form_data_alignment" "scripts/verify/user_confirmed_form_data_alignment_audit.py"
+run_odoo_shell_check "formal_entry_metadata" "scripts/verify/formal_entry_metadata_audit.py"
 run_odoo_shell_check "user_confirmed_settlement_usability" "scripts/verify/user_confirmed_settlement_usability_audit.py"
 run_odoo_shell_check "project_budget_legacy_material" "scripts/verify/project_budget_legacy_material_audit.py"
 run_odoo_shell_check "operation_strategy_contract_surface" "scripts/verify/operation_strategy_contract_surface_audit.py"
