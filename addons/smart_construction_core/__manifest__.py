@@ -192,6 +192,7 @@
         'views/projection/finance_project_counterparty_position_views.xml',
         'views/projection/finance_counterparty_position_summary_views.xml',
         'views/projection/p1_relationship_suggestion_views.xml',
+        'views/projection/p1_relationship_review_queue_views.xml',
         'views/projection/finance_interfund_position_menu.xml',
         'views/core/workflow_views.xml',
         'views/menu.xml',

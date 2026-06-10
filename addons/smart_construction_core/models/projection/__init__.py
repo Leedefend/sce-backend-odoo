@@ -25,3 +25,4 @@ from . import finance_project_capital_position
 from . import finance_project_counterparty_position
 from . import finance_counterparty_position_summary
 from . import p1_relationship_suggestion
+from . import p1_relationship_review_queue
