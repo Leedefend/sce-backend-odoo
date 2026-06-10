@@ -265,6 +265,19 @@ class ScExpenseClaim(models.Model):
             context_payment_account = self.env.context.get("default_payment_account_name")
             if context_payment_account:
                 vals.setdefault("payment_account_name", context_payment_account)
+            for field_name in (
+                "applicant_name",
+                "department_name",
+                "company_name_text",
+                "guarantee_project_name",
+                "payee_account",
+                "payee_bank",
+                "payer_account",
+                "payer_bank",
+            ):
+                value = self.env.context.get("default_%s" % field_name)
+                if value:
+                    vals.setdefault(field_name, value)
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.expense.claim") or _("Expense Claim")
             vals.setdefault("approved_amount", vals.get("amount", 0.0))

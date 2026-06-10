@@ -111,6 +111,53 @@ class ScInterfundMovementFact(models.Model):
             return list(parsed) if isinstance(parsed, list) else []
         return list(raw_domain) if isinstance(raw_domain, list) else []
 
+    def _source_default_context(self, target_model):
+        self.ensure_one()
+        if not self.source_model or not self.source_res_id or self.source_model not in self.env:
+            return {}
+        source = self.env[self.source_model].browse(self.source_res_id).exists()
+        if not source:
+            return {}
+        context = {}
+
+        def put(context_key, field_name):
+            if field_name in source._fields:
+                value = source[field_name]
+                if value:
+                    context[context_key] = value.id if hasattr(value, "id") else value
+
+        put("default_document_no", "document_no")
+        put("default_document_no", "legacy_document_no")
+        if target_model == "sc.financing.loan":
+            for context_key, field_name in (
+                ("default_due_date", "due_date"),
+                ("default_rate_label", "rate_label"),
+                ("default_extra_ref", "extra_ref"),
+                ("default_extra_label", "extra_label"),
+            ):
+                put(context_key, field_name)
+        elif target_model == "sc.expense.claim":
+            for context_key, field_name in (
+                ("default_applicant_name", "applicant_name"),
+                ("default_department_name", "department_name"),
+                ("default_payee", "payee"),
+                ("default_receipt_account_name", "receipt_account_name"),
+                ("default_payee_account", "payee_account"),
+                ("default_payee_bank", "payee_bank"),
+                ("default_payment_account_name", "payment_account_name"),
+                ("default_payer_account", "payer_account"),
+                ("default_payer_bank", "payer_bank"),
+            ):
+                put(context_key, field_name)
+        elif target_model == "sc.fund.account.operation":
+            for context_key, field_name in (
+                ("default_source_account_id", "source_account_id"),
+                ("default_target_account_id", "target_account_id"),
+                ("default_fund_account_id", "fund_account_id"),
+            ):
+                put(context_key, field_name)
+        return context
+
     def _action_context(self, action_result):
         raw_context = action_result.get("context") or {}
         if isinstance(raw_context, str):
@@ -121,6 +168,7 @@ class ScInterfundMovementFact(models.Model):
             context = dict(parsed) if isinstance(parsed, dict) else {}
         else:
             context = dict(raw_context) if isinstance(raw_context, dict) else {}
+        context.update(self._source_default_context(action_result.get("res_model")))
         if self.project_id:
             context.update(
                 {

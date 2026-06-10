@@ -161,6 +161,20 @@ class ScTaxDeductionRegistration(models.Model):
             if context_partner_name:
                 vals.setdefault("partner_name", context_partner_name)
                 vals.setdefault("deduction_unit_name", context_partner_name)
+            for field_name in (
+                "invoice_no",
+                "invoice_code",
+                "invoice_date",
+                "invoice_amount_untaxed",
+                "invoice_tax_amount",
+                "invoice_amount_total",
+                "deduction_confirm_date",
+                "withholding_amount",
+                "deduction_reason",
+            ):
+                value = self.env.context.get("default_%s" % field_name)
+                if value:
+                    vals.setdefault(field_name, value)
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.tax.deduction.registration") or _("Tax Deduction")
         return super().create(vals_list)

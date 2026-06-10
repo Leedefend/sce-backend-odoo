@@ -211,6 +211,10 @@ class ScFinancingLoan(models.Model):
             context_note = self.env.context.get("default_note")
             if context_note:
                 vals.setdefault("note", context_note)
+            for field_name in ("due_date", "rate_label", "extra_ref", "extra_label"):
+                value = self.env.context.get("default_%s" % field_name)
+                if value:
+                    vals.setdefault(field_name, value)
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.financing.loan") or _("Financing Loan")
         return super().create(vals_list)
