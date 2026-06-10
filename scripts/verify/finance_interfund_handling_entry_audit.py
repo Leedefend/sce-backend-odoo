@@ -425,6 +425,54 @@ def parse_context(raw):
     return parsed if isinstance(parsed, dict) else {"__invalid_context__": raw}
 
 
+def _action_default_fields(model, context):
+    return sorted(
+        key.removeprefix("default_")
+        for key in context
+        if key.startswith("default_") and key.removeprefix("default_") in model._fields
+    )
+
+
+def _audit_action_default_get(xmlid, model_name, context, expected_context):
+    model = env[model_name]  # noqa: F821
+    field_names = _action_default_fields(model, expected_context)
+    defaults = model.with_context(**context).default_get(field_names) if field_names else {}
+    mismatches = []
+    for context_key, expected_value in expected_context.items():
+        if not context_key.startswith("default_"):
+            continue
+        field_name = context_key.removeprefix("default_")
+        if field_name not in model._fields:
+            mismatches.append(
+                {
+                    "field": field_name,
+                    "expected": expected_value,
+                    "actual": None,
+                    "reason": "missing_model_field",
+                }
+            )
+            continue
+        actual_value = defaults.get(field_name)
+        if actual_value != expected_value:
+            mismatches.append(
+                {
+                    "field": field_name,
+                    "expected": expected_value,
+                    "actual": actual_value,
+                    "reason": "default_get_mismatch",
+                }
+            )
+    if mismatches:
+        errors.append({"key": "handling_action_default_get_drift", "xmlid": xmlid, "mismatches": mismatches})
+    return OrderedDict(
+        [
+            ("requested_fields", field_names),
+            ("defaults", {field_name: defaults.get(field_name) for field_name in field_names}),
+            ("mismatches", mismatches),
+        ]
+    )
+
+
 errors = []
 summary = OrderedDict()
 
@@ -456,6 +504,8 @@ for xmlid, spec in EXPECTED_ACTIONS.items():
                         "actual": context.get(key),
                     }
                 )
+        if "__parse_error__" not in context and "__invalid_context__" not in context and action.res_model == spec["model"]:
+            row["default_get"] = _audit_action_default_get(xmlid, action.res_model, context, spec["context"])
     action_rows.append(row)
 summary["actions"] = action_rows
 
