@@ -54,6 +54,11 @@
             <field name="model">sc.account.income.expense.summary</field>
             <field name="arch" type="xml">
                 <form string="账户收支统计表" create="0" edit="0" delete="0">
+                    <header>
+                        <button name="action_open_account_master" type="object" string="查看账户" class="btn-primary"/>
+                        <button name="action_open_fund_daily_lines" type="object" string="资金日报明细" class="btn-secondary" invisible="line_count == 0"/>
+                        <button name="action_open_transaction_lines" type="object" string="账户收支明细" class="btn-secondary" invisible="income_amount == 0 and expense_amount == 0 and cumulative_receipt_amount == 0 and cumulative_expense_amount == 0 and account_transfer_amount == 0"/>
+                    </header>
                     <sheet>
                         <group>
                             <group string="账户">
