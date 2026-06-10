@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import ast
+
 from odoo import api, fields, models, tools
 from odoo.exceptions import UserError
 
@@ -9,6 +11,18 @@ class ScFinanceBusinessFact(models.Model):
     _auto = False
     _rec_name = "display_name"
     _order = "document_date desc, id desc"
+    _sc_readonly_navigation_button_methods = {
+        "action_open_source_record",
+        "action_open_business_entry",
+    }
+
+    _BUSINESS_ENTRY_ACTION_BY_FACT_TYPE = {
+        "deduction_paid": "smart_construction_core.action_sc_expense_claim_deduction_paid",
+        "deduction_refund": "smart_construction_core.action_sc_expense_claim_deduction_paid_refund",
+        "tax_deducted": "smart_construction_core.action_sc_tax_deduction_registration_user",
+        "guarantee_out": "smart_construction_core.action_sc_expense_claim_deposit",
+        "guarantee_return": "smart_construction_core.action_sc_expense_claim_deposit",
+    }
 
     display_name = fields.Char(string="业务摘要", readonly=True)
     business_domain = fields.Selection(
@@ -88,6 +102,61 @@ class ScFinanceBusinessFact(models.Model):
 
     def unlink(self):
         self._raise_readonly_projection()
+
+    def _action_domain(self, action_result):
+        raw_domain = action_result.get("domain") or []
+        if isinstance(raw_domain, str):
+            try:
+                parsed = ast.literal_eval(raw_domain)
+            except (SyntaxError, ValueError):
+                parsed = []
+            return list(parsed) if isinstance(parsed, list) else []
+        return list(raw_domain) if isinstance(raw_domain, list) else []
+
+    def _source_record(self):
+        self.ensure_one()
+        if not self.source_model or not self.source_res_id or self.source_model not in self.env:
+            raise UserError("没有可打开的来源业务单据。")
+        source = self.env[self.source_model].browse(self.source_res_id).exists()
+        if not source:
+            raise UserError("来源业务单据不存在或已归档。")
+        return source
+
+    def action_open_source_record(self):
+        self.ensure_one()
+        source = self._source_record()
+        return {
+            "type": "ir.actions.act_window",
+            "name": self.source_menu_hint or source.display_name,
+            "res_model": self.source_model,
+            "res_id": source.id,
+            "views": [(False, "form")],
+            "view_mode": "form",
+            "target": "current",
+        }
+
+    def action_open_business_entry(self):
+        self.ensure_one()
+        action_xmlid = self._BUSINESS_ENTRY_ACTION_BY_FACT_TYPE.get(self.fact_type)
+        if not action_xmlid:
+            return self.action_open_source_record()
+        action = self.env.ref(action_xmlid, raise_if_not_found=False)
+        if not action:
+            return self.action_open_source_record()
+        result = action.sudo().read()[0]
+        domain = self._action_domain(result)
+        if self.project_id:
+            domain.append(("project_id", "=", self.project_id.id))
+        if self.partner_id and result.get("res_model") in {"sc.expense.claim", "sc.tax.deduction.registration"}:
+            domain.append(("partner_id", "=", self.partner_id.id))
+        result.update(
+            {
+                "name": "%s / 同类正式办理" % (self.source_menu_hint or result.get("name") or "业务办理"),
+                "domain": domain,
+                "target": "current",
+            }
+        )
+        return result
 
     def init(self):
         self._cr.execute(

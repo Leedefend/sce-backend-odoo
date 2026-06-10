@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import ast
+
 from odoo import api, fields, models, tools
 from odoo.exceptions import UserError
 
@@ -9,6 +11,22 @@ class ScInterfundMovementFact(models.Model):
     _auto = False
     _rec_name = "display_name"
     _order = "document_date desc, id desc"
+    _sc_readonly_navigation_button_methods = {
+        "action_open_source_record",
+        "action_open_business_entry",
+    }
+
+    _BUSINESS_ENTRY_ACTION_BY_MOVEMENT_TYPE = {
+        "company_to_project_borrow": "smart_construction_core.action_sc_financing_loan_project_borrow_company",
+        "project_to_company_repay": "smart_construction_core.action_sc_expense_claim_project_repay_company",
+        "project_to_project_transfer": "smart_construction_core.action_sc_fund_account_between_user",
+        "same_project_account_transfer": "smart_construction_core.action_sc_fund_account_between_user",
+        "project_to_contractor_borrow": "smart_construction_core.action_sc_financing_loan_contractor_project_borrow",
+        "contractor_to_project_repay": "smart_construction_core.action_sc_expense_claim_contractor_project_repay",
+        "project_to_company_transfer": "smart_construction_core.action_sc_fund_account_between_user",
+        "company_to_project_transfer": "smart_construction_core.action_sc_fund_account_between_user",
+        "unclassified_account_transfer": "smart_construction_core.action_sc_fund_account_between_user",
+    }
 
     display_name = fields.Char(string="业务摘要", readonly=True)
     movement_type = fields.Selection(
@@ -82,6 +100,59 @@ class ScInterfundMovementFact(models.Model):
 
     def unlink(self):
         self._raise_readonly_projection()
+
+    def _action_domain(self, action_result):
+        raw_domain = action_result.get("domain") or []
+        if isinstance(raw_domain, str):
+            try:
+                parsed = ast.literal_eval(raw_domain)
+            except (SyntaxError, ValueError):
+                parsed = []
+            return list(parsed) if isinstance(parsed, list) else []
+        return list(raw_domain) if isinstance(raw_domain, list) else []
+
+    def _source_record(self):
+        self.ensure_one()
+        if not self.source_model or not self.source_res_id or self.source_model not in self.env:
+            raise UserError("没有可打开的来源业务单据。")
+        source = self.env[self.source_model].browse(self.source_res_id).exists()
+        if not source:
+            raise UserError("来源业务单据不存在或已归档。")
+        return source
+
+    def action_open_source_record(self):
+        self.ensure_one()
+        source = self._source_record()
+        return {
+            "type": "ir.actions.act_window",
+            "name": self.source_menu_hint or source.display_name,
+            "res_model": self.source_model,
+            "res_id": source.id,
+            "views": [(False, "form")],
+            "view_mode": "form",
+            "target": "current",
+        }
+
+    def action_open_business_entry(self):
+        self.ensure_one()
+        action_xmlid = self._BUSINESS_ENTRY_ACTION_BY_MOVEMENT_TYPE.get(self.movement_type)
+        action = self.env.ref(action_xmlid, raise_if_not_found=False) if action_xmlid else None
+        if not action:
+            return self.action_open_source_record()
+        result = action.sudo().read()[0]
+        domain = self._action_domain(result)
+        if self.project_id and result.get("res_model") != "sc.fund.account.operation":
+            domain.append(("project_id", "=", self.project_id.id))
+        if self.partner_id and result.get("res_model") in {"sc.financing.loan", "sc.expense.claim"}:
+            domain.append(("partner_id", "=", self.partner_id.id))
+        result.update(
+            {
+                "name": "%s / 同类正式办理" % (self.source_menu_hint or result.get("name") or "资金办理"),
+                "domain": domain,
+                "target": "current",
+            }
+        )
+        return result
 
     def init(self):
         self._cr.execute(
