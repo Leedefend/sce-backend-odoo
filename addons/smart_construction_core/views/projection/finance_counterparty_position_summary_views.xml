@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sc_finance_counterparty_position_summary_search" model="ir.ui.view">
+        <field name="name">sc.finance.counterparty.position.summary.search</field>
+        <field name="model">sc.finance.counterparty.position.summary</field>
+        <field name="arch" type="xml">
+            <search string="往来对象资金综合口径">
+                <field name="counterparty_name"/>
+                <field name="partner_id"/>
+                <field name="counterparty_project_id"/>
+                <filter string="正向余额" name="positive_balance" domain="[('position_direction', '=', 'positive')]"/>
+                <filter string="负向余额" name="negative_balance" domain="[('position_direction', '=', 'negative')]"/>
+                <filter string="已平衡" name="balanced" domain="[('position_direction', '=', 'balanced')]"/>
+                <filter string="有财务事实" name="has_finance" domain="[('finance_source_line_count', '&gt;', 0)]"/>
+                <filter string="有资金往来" name="has_interfund" domain="[('interfund_source_line_count', '&gt;', 0)]"/>
+                <group expand="0" string="分组">
+                    <filter string="对象类型" name="group_counterparty_type" context="{'group_by': 'counterparty_type'}"/>
+                    <filter string="余额方向" name="group_position_direction" context="{'group_by': 'position_direction'}"/>
+                    <filter string="对方单位" name="group_partner" context="{'group_by': 'partner_id'}"/>
+                    <filter string="对方项目" name="group_counterparty_project" context="{'group_by': 'counterparty_project_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_finance_counterparty_position_summary_tree" model="ir.ui.view">
+        <field name="name">sc.finance.counterparty.position.summary.tree</field>
+        <field name="model">sc.finance.counterparty.position.summary</field>
+        <field name="arch" type="xml">
+            <tree string="往来对象资金综合口径" create="0" edit="0" delete="0">
+                <field name="counterparty_type"/>
+                <field name="counterparty_name"/>
+                <field name="position_direction"/>
+                <field name="project_count" sum="涉及项目数"/>
+                <field name="source_line_count" sum="综合明细数"/>
+                <field name="finance_balance_effect" sum="财务余额影响"/>
+                <field name="interfund_net_amount" sum="往来项目净流入"/>
+                <field name="combined_balance_effect" sum="综合余额影响"/>
+                <field name="combined_cash_net_amount" sum="综合现金净额"/>
+                <field name="partner_id"/>
+                <field name="counterparty_project_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_finance_counterparty_position_summary_form" model="ir.ui.view">
+        <field name="name">sc.finance.counterparty.position.summary.form</field>
+        <field name="model">sc.finance.counterparty.position.summary</field>
+        <field name="arch" type="xml">
+            <form string="往来对象资金综合口径" create="0" edit="0" delete="0">
+                <sheet>
+                    <group>
+                        <field name="display_name"/>
+                        <field name="company_id"/>
+                        <field name="currency_id"/>
+                        <field name="coverage_note"/>
+                    </group>
+                    <group string="往来对象">
+                        <field name="counterparty_type"/>
+                        <field name="counterparty_name"/>
+                        <field name="partner_id"/>
+                        <field name="counterparty_project_id"/>
+                        <field name="position_direction"/>
+                    </group>
+                    <group string="规模">
+                        <field name="project_count"/>
+                        <field name="finance_source_line_count"/>
+                        <field name="interfund_source_line_count"/>
+                        <field name="source_line_count"/>
+                    </group>
+                    <group string="金额">
+                        <field name="finance_balance_effect"/>
+                        <field name="finance_cash_in_amount"/>
+                        <field name="finance_cash_out_amount"/>
+                        <field name="finance_cash_net_amount"/>
+                        <field name="interfund_inflow_amount"/>
+                        <field name="interfund_outflow_amount"/>
+                        <field name="interfund_net_amount"/>
+                        <field name="internal_transfer_amount"/>
+                        <field name="combined_balance_effect"/>
+                        <field name="combined_cash_net_amount"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_finance_counterparty_position_summary_pivot" model="ir.ui.view">
+        <field name="name">sc.finance.counterparty.position.summary.pivot</field>
+        <field name="model">sc.finance.counterparty.position.summary</field>
+        <field name="arch" type="xml">
+            <pivot string="往来对象资金综合口径">
+                <field name="counterparty_type" type="row"/>
+                <field name="position_direction" type="col"/>
+                <field name="combined_balance_effect" type="measure"/>
+                <field name="combined_cash_net_amount" type="measure"/>
+                <field name="source_line_count" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_sc_finance_counterparty_position_summary" model="ir.actions.act_window">
+        <field name="name">往来对象资金综合口径</field>
+        <field name="res_model">sc.finance.counterparty.position.summary</field>
+        <field name="view_mode">tree,pivot,form</field>
+        <field name="search_view_id" ref="view_sc_finance_counterparty_position_summary_search"/>
+        <field name="context">{'search_default_group_counterparty_type': 1, 'search_default_group_position_direction': 1}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')), (4, ref('smart_construction_core.group_sc_cap_finance_user')), (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+    </record>
+</odoo>
