@@ -85,7 +85,21 @@ class ScFinanceProjectCounterpartyPosition(models.Model):
             return list(parsed) if isinstance(parsed, list) else []
         return list(raw_domain) if isinstance(raw_domain, list) else []
 
-    def _action_context(self, action_result):
+    def _analysis_note(self, action_name):
+        self.ensure_one()
+        parts = [
+            "办理来源：项目与对象资金往来",
+            "办理事项：%s" % action_name,
+            "项目：%s" % self.project_id.display_name if self.project_id else False,
+            "往来对象：%s" % (self.counterparty_name or self.display_name or ""),
+            "对象类型：%s" % (dict(self._fields["counterparty_type"].selection).get(self.counterparty_type) or self.counterparty_type or ""),
+            "全部明细数：%s" % self.source_line_count,
+            "资金余额影响：%s" % (self.combined_balance_effect or 0.0),
+            "现金净额：%s" % (self.combined_cash_net_amount or 0.0),
+        ]
+        return "\n".join(part for part in parts if part)
+
+    def _action_context(self, action_result, action_name=None):
         raw_context = action_result.get("context") or {}
         if isinstance(raw_context, str):
             try:
@@ -118,6 +132,11 @@ class ScFinanceProjectCounterpartyPosition(models.Model):
             )
         if self.counterparty_project_id:
             context["current_counterparty_project_id"] = self.counterparty_project_id.id
+        if action_name:
+            context.setdefault("default_summary", action_name)
+            context.setdefault("default_purpose", action_name)
+            context.setdefault("default_operation_reason", action_name)
+            context.setdefault("default_note", self._analysis_note(action_name))
         return context
 
     def _formal_entry_action(self, action_xmlid, action_name):
@@ -137,7 +156,7 @@ class ScFinanceProjectCounterpartyPosition(models.Model):
             {
                 "name": "%s / %s" % (self.display_name or "项目与对象资金往来", action_name),
                 "domain": domain,
-                "context": self._action_context(result),
+                "context": self._action_context(result, action_name=action_name),
                 "target": "current",
             }
         )
