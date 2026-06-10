@@ -3505,6 +3505,10 @@ verify.intent.concurrent.smoke: guard.prod.forbid
 verify.p1.daily_business_visible_contract.audit: guard.prod.forbid
 	@python3 scripts/verify/p1_daily_business_visible_contract_audit.py
 
+.PHONY: verify.engineering_progress_income.visible_contract.audit
+verify.engineering_progress_income.visible_contract.audit: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/verify/engineering_progress_income_visible_contract_audit.py
+
 .PHONY: verify.prepaid_tax.visible_surface_alignment.audit
 verify.prepaid_tax.visible_surface_alignment.audit: guard.prod.forbid check-compose-project check-compose-env
 	@if [[ -f "$(PREPAID_TAX_VISIBLE_XLSX)" ]]; then \
