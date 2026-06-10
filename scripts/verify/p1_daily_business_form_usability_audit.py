@@ -339,6 +339,7 @@ def main() -> int:
     intent_url = f"{get_base_url()}/api/v1/intent"
     token, audit_login = _login(intent_url)
     rows = [_audit_entry(intent_url, token, entry) for entry in P1_ENTRIES]
+    attention_rows = [row for row in rows if row["status"] != "usable_contract_ready"]
     summary = {
         "entry_count": len(rows),
         "usable_contract_ready_count": len([row for row in rows if row["status"] == "usable_contract_ready"]),
@@ -355,17 +356,31 @@ def main() -> int:
             [row for row in rows if "missing_expected_form_fields" in set(row.get("gaps") or [])]
         ),
     }
+    errors = [
+        {
+            "id": row["id"],
+            "name": row["name"],
+            "selected_model": row.get("selected_model") or "",
+            "gaps": list(row.get("gaps") or []),
+        }
+        for row in attention_rows
+    ]
     payload = {
-        "ok": True,
+        "ok": not errors,
         "scope": "P1 old-system daily-business form usability audit",
         "source_doc": "/home/odoo/workspace/partner_import_source/老系统列表，填单页面截图.docx",
         "audit_login": audit_login,
         "summary": summary,
         "rows": rows,
+        "errors": errors,
     }
     _write_reports(payload)
     print(str(REPORT_MD))
     print(str(REPORT_JSON))
+    if errors:
+        print("[p1_daily_business_form_usability_audit] FAIL")
+        print(json.dumps({"error_count": len(errors), "errors": errors[:10]}, ensure_ascii=False, indent=2))
+        return 1
     print("[p1_daily_business_form_usability_audit] PASS")
     return 0
 

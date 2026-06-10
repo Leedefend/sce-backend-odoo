@@ -87,6 +87,7 @@ run_static_check "python_compile_productization_guards" \
     scripts/verify/p1_relationship_suggestion_audit.py \
     scripts/verify/p1_relationship_review_queue_audit.py \
     scripts/verify/finance_interfund_handling_entry_audit.py \
+    scripts/verify/p1_daily_business_form_usability_audit.py \
     scripts/verify/p1_formal_relationship_continuity_audit.py \
     scripts/verify/p1_formal_relationship_scope_block_smoke.py
 run_static_check "user_confirmed_62_business_entry_integration_matrix" \
@@ -100,6 +101,8 @@ run_odoo_shell_check "locked_fact_formal_model_continuity_guard" \
   scripts/verify/locked_fact_formal_model_continuity_guard.py
 run_odoo_shell_check "finance_interfund_handling_entry_audit" \
   scripts/verify/finance_interfund_handling_entry_audit.py
+run_static_check "p1_daily_business_form_usability_audit" \
+  python3 scripts/verify/p1_daily_business_form_usability_audit.py
 run_odoo_shell_json_artifact_check "p1_locked_fact_mapping_candidate_probe" \
   scripts/verify/p1_locked_fact_mapping_candidate_probe.py \
   "artifacts/p1_locked_fact_mapping_candidate_probe.${DB_NAME}.json" \
