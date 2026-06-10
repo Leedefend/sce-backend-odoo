@@ -48,6 +48,10 @@
         <field name="model">sc.finance.project.capital.position</field>
         <field name="arch" type="xml">
             <form string="项目资金综合口径" create="0" edit="0" delete="0">
+                <header>
+                    <button name="action_open_finance_facts" type="object" string="查看财务事实" class="btn-primary"/>
+                    <button name="action_open_interfund_facts" type="object" string="查看资金往来事实" class="btn-secondary"/>
+                </header>
                 <sheet>
                     <group>
                         <field name="display_name"/>

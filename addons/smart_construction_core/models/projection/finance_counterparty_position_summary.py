@@ -67,6 +67,37 @@ class ScFinanceCounterpartyPositionSummary(models.Model):
     def unlink(self):
         self._raise_readonly_projection()
 
+    def _counterparty_identity_domain(self):
+        self.ensure_one()
+        domain = [("counterparty_type", "=", self.counterparty_type)]
+        if self.counterparty_type == "project":
+            domain.append(("counterparty_project_id", "=", self.counterparty_project_id.id or False))
+        elif self.counterparty_type == "partner":
+            if self.partner_id:
+                domain.append(("partner_id", "=", self.partner_id.id))
+            else:
+                domain.extend([("partner_id", "=", False), ("counterparty_name", "=", self.counterparty_name or False)])
+        else:
+            domain.extend(
+                [
+                    ("counterparty_project_id", "=", False),
+                    ("partner_id", "=", False),
+                    ("counterparty_name", "=", self.counterparty_name or False),
+                ]
+            )
+        return domain
+
+    def action_open_project_positions(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": "项目往来对象资金口径",
+            "res_model": "sc.finance.project.counterparty.position",
+            "view_mode": "tree,pivot,form",
+            "domain": self._counterparty_identity_domain(),
+            "context": {"search_default_group_project": 1},
+        }
+
     def init(self):
         self._cr.execute("SELECT to_regclass('sc_finance_project_counterparty_position')")
         if not self._cr.fetchone()[0]:

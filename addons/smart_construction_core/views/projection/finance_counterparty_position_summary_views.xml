@@ -48,6 +48,9 @@
         <field name="model">sc.finance.counterparty.position.summary</field>
         <field name="arch" type="xml">
             <form string="往来对象资金综合口径" create="0" edit="0" delete="0">
+                <header>
+                    <button name="action_open_project_positions" type="object" string="查看涉及项目" class="btn-primary"/>
+                </header>
                 <sheet>
                     <group>
                         <field name="display_name"/>
