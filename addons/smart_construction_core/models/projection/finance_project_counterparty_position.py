@@ -131,6 +131,8 @@ class ScFinanceProjectCounterpartyPosition(models.Model):
             domain.append(("project_id", "=", self.project_id.id))
         if self.partner_id and result.get("res_model") in {"sc.expense.claim", "sc.financing.loan", "sc.tax.deduction.registration"}:
             domain.append(("partner_id", "=", self.partner_id.id))
+        if result.get("res_model") == "sc.fund.account.operation":
+            domain = expression.AND([domain, self._fund_account_operation_domain()])
         result.update(
             {
                 "name": "%s / %s" % (self.display_name or "项目与对象资金往来", action_name),
@@ -140,6 +142,38 @@ class ScFinanceProjectCounterpartyPosition(models.Model):
             }
         )
         return result
+
+    def _fund_account_operation_domain(self):
+        self.ensure_one()
+        project_id = self.project_id.id if self.project_id else False
+        if not project_id:
+            return [("id", "=", 0)]
+        if self.counterparty_type == "company":
+            return expression.OR(
+                [
+                    [("source_project_id", "=", project_id), ("target_project_id", "=", False)],
+                    [("source_project_id", "=", False), ("target_project_id", "=", project_id)],
+                    [("project_id", "=", project_id)],
+                ]
+            )
+        if self.counterparty_type == "project":
+            counterparty_project_id = self.counterparty_project_id.id if self.counterparty_project_id else False
+            if not counterparty_project_id:
+                return [("id", "=", 0)]
+            return expression.OR(
+                [
+                    [("source_project_id", "=", project_id), ("target_project_id", "=", counterparty_project_id)],
+                    [("source_project_id", "=", counterparty_project_id), ("target_project_id", "=", project_id)],
+                ]
+            )
+        if self.counterparty_type == "internal":
+            return expression.OR(
+                [
+                    [("source_project_id", "=", project_id), ("target_project_id", "=", project_id)],
+                    [("project_id", "=", project_id)],
+                ]
+            )
+        return [("id", "=", 0)]
 
     def _counterparty_identity_domain(self):
         self.ensure_one()

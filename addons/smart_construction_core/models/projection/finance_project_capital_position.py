@@ -115,6 +115,8 @@ class ScFinanceProjectCapitalPosition(models.Model):
         domain = self._action_domain(result)
         if self.project_id and result.get("res_model") in {"sc.expense.claim", "sc.financing.loan", "sc.tax.deduction.registration"}:
             domain.append(("project_id", "=", self.project_id.id))
+        if result.get("res_model") == "sc.fund.account.operation":
+            domain = expression.AND([domain, self._fund_account_operation_domain()])
         result.update(
             {
                 "name": "%s / %s" % (self.project_id.display_name if self.project_id else "项目资金", action_name),
@@ -124,6 +126,22 @@ class ScFinanceProjectCapitalPosition(models.Model):
             }
         )
         return result
+
+    def _fund_account_operation_domain(self):
+        self.ensure_one()
+        if not self.project_id:
+            return [
+                ("source_project_id", "=", False),
+                ("target_project_id", "=", False),
+                ("project_id", "=", False),
+            ]
+        return expression.OR(
+            [
+                [("source_project_id", "=", self.project_id.id)],
+                [("target_project_id", "=", self.project_id.id)],
+                [("project_id", "=", self.project_id.id)],
+            ]
+        )
 
     def action_open_finance_facts(self):
         self.ensure_one()
