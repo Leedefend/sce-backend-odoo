@@ -4,6 +4,10 @@
 
 画像：`artifacts/user_business_data_portrait.sc_demo.json`
 
+用户确认 62 可见列表业务入口整合计划：`docs/product/user_confirmed_62_business_entry_integration_plan.md`
+
+62 菜单整合矩阵：`artifacts/user_confirmed_62_business_entry_integration_matrix.md`
+
 门禁：`scripts/verify/user_business_productization_baseline_guard.py`
 
 锁定事实正式模型连续性守卫：`scripts/verify/locked_fact_formal_model_continuity_guard.py`
@@ -19,6 +23,18 @@
 7. 新系统业务闭环可以基于锁定事实设计归集口径，但归集结果必须通过新办理单据、派生视图或非侵入式映射层承载，不写回锁定事实表。
 
 ## 第一轮 P1 范围
+
+### 用户确认 62 可见列表先行分析
+
+功能完善必须先服从用户确认的 62 个可见列表入口。62 个入口不是简单菜单清单，而是用户已验收的业务事实边界。后续办理能力完善不能绕过这套入口体系，也不能因为新增产品化能力改变用户已经确认的菜单和列表数据。
+
+本轮新增只读整合矩阵：
+
+- 脚本：`scripts/verify/user_confirmed_62_business_entry_integration_matrix.py`
+- 输出：`artifacts/user_confirmed_62_business_entry_integration_matrix.json`
+- 输出：`artifacts/user_confirmed_62_business_entry_integration_matrix.md`
+
+矩阵将 62 个入口分类为正式办理入口、主数据入口、来源事实明细、汇总分析入口和配置入口，并给出统一承接口径。后续所有办理能力改造必须从该矩阵进入，不能只按单个模型或单个按钮局部修补。
 
 ### 首轮缺口优先级
 
@@ -79,12 +95,15 @@
 - 固化收入合同办理、支出合同办理、收入合同结算、支出合同结算四个入口。
 - 结算单合同/往来单位关系缺口分析。
 - 合同台账提供收款、付款、发票、结算的汇总关系。
+- `sc.settlement.order` 表单以“业务方向、项目与合同、往来单位、结算金额、来源匹配、办理说明”组织字段，列表直接展示办理事项。
+- 收入合同结算、支出合同结算保持用户确认的锁定列表口径，运行态仍为 `create=False`；底层正式模型承接新增和后续连续办理能力。
 
 验收：
 
 - 合同记录能进入结算办理。
 - 结算记录能反查合同、项目、往来单位。
 - 合同台账能解释核心金额来源。
+- `scripts/verify/finance_interfund_handling_entry_audit.py` 必须覆盖结算主模型和收入/支出结算动作，防止 action 模型、默认结算类型和表单语义漂移。
 
 ### C. 收入与收款办理
 
@@ -95,12 +114,15 @@
 - 以 `sc.receipt.income` 作为项目收款登记主模型。
 - 区分正式办理入口和到款/工程进度/自筹来源明细。
 - 设计往来单位、合同、收款申请关系在新办理链路和派生汇总中的承载规则。
+- `sc.receipt.income` 表单以“业务方向、项目与往来单位、收款信息、收款账户、收款金额/抵扣与结算、办理说明”组织字段，列表直接展示办理事项。
+- “收入”作为可办理入口继续指向 `sc.receipt.income`；“工程进度款收入登记”保持用户确认的锁定列表口径，只作为已验收历史事实可见面，不被改成普通可编辑入口。
 
 验收：
 
 - 用户从“项目收款登记”能新增并完成收款业务。
 - 历史来源数据仍可追溯到来源明细。
 - 收款记录能进入项目资金总览和收入汇总。
+- `scripts/verify/finance_interfund_handling_entry_audit.py` 必须覆盖收款收入主模型，防止 action 模型、默认收入类型和表单语义漂移。
 
 ### D. 付款与费用办理
 
@@ -127,12 +149,16 @@
 - 固化发票登记、抵扣登记、销项发票台账入口。
 - 抵扣登记作为非现金税务事实，进入项目经营汇总。
 - 发票按项目、合同、往来单位的非侵入式归集规则。
+- `sc.invoice.registration` 表单以“业务方向、项目与往来单位、发票与税务信息、发票金额与税额、办理说明”组织字段，列表直接展示办理事项。
+- `sc.tax.deduction.registration` 表单以“业务方向、项目与往来单位、发票信息、抵扣金额与税额、扣款办理、办理说明”组织字段，区分进项抵扣、扣款抵扣和税额转出。
+- 销项开票申请、进项上报、预缴税款、抵扣登记的 action 模型和默认上下文纳入运行时审计；用户确认的锁定列表入口保持原验收口径。
 
 验收：
 
 - 发票/抵扣可办理并保留附件。
 - 发票能按项目、合同、往来单位汇总。
 - 抵扣金额不被错误计入现金收支。
+- `scripts/verify/finance_interfund_handling_entry_audit.py` 必须覆盖发票税务主模型，防止 action 模型、默认业务口径和表单语义漂移。
 
 ### F. 资金往来与账户调拨办理
 
@@ -141,14 +167,17 @@
 本轮任务：
 
 - 以 `sc.fund.account.operation` 和 `sc.financing.loan` 承接办理入口。
-- 资金往来结果回流 `项目资金总览`、`往来对象资金总览`、`项目往来明细`。
+- 资金往来结果回流 `项目资金总览`、`往来对象资金总览`、`项目与对象资金往来`。
 - 账户、往来单位、来源项目关系的映射建议和新办理必填规则。
+- `sc.fund.account.operation` 表单以“业务方向、付款与收款、办理说明”组织字段，列表直接展示付款项目、收款项目、调拨金额。
+- `sc.financing.loan` 表单以“借款方向、项目与往来单位、办理说明”组织字段，区分承包人借项目款、项目借公司款等办理口径。
 
 验收：
 
 - 资金往来/账户调拨能新增、确认、完成。
 - 汇总视图只作为分析入口，不替代办理入口。
 - 用户不需要理解旧表名即可办理业务。
+- `scripts/verify/finance_interfund_handling_entry_audit.py` 必须通过，防止办理入口 action、默认业务口径和表单方向字段漂移。
 
 ### G. 预算成本管控
 
@@ -159,11 +188,14 @@
 - 成本科目、成本台账、成本期间锁定作为 P1 入口。
 - 建立费用/付款/发票到成本台账的派生归集策略。
 - 成本期间锁定防止历史数据被办理流误改。
+- `project.cost.ledger` 正式入口统一发布为“成本归集台账”，表单按“成本归集、项目与成本科目、发生金额、来源追溯、办理说明”组织。
+- 成本台账补充 `cost_flow_label`，把采购、入库、付款、费用、发票、抵扣、合同结算等来源转为用户能理解的成本来源口径。
 
 验收：
 
 - 成本台账能按项目、成本科目、往来单位统计。
 - 已锁定期间不能被普通办理动作破坏。
+- `scripts/verify/finance_interfund_handling_entry_audit.py` 必须覆盖成本归集入口、表单字段和核心分组文案，防止后续功能完善破坏办理口径。
 
 ### H. 审批附件治理
 
@@ -174,20 +206,41 @@
 - 明确 P1 单据附件字段和审批策略。
 - 历史附件索引与正式附件关系可查。
 - 历史流程作为审计轨迹，不作为新审批流状态。
+- P1 正式办理主链的附件、历史附件引用、状态动作纳入 `finance_interfund_handling_entry_audit.py` 运行态守护。
+- 借款、付款申请、付款登记表单补充历史附件引用展示，确保历史依据能从正式办理页追溯。
 
 验收：
 
 - P1 办理入口保存附件。
 - 审批动作产生可追溯记录。
 - 历史审批事实能在来源明细中查看。
+- 审计必须确认 P1 办理模型具备状态字段、附件字段、关键流转动作，且表单中可见附件/历史附件追溯字段。
 
 ## 第一轮验收组合
 
-必须同时通过：
+统一门禁：
+
+- `make verify.business_capability.productization_p1 DB_NAME=sc_demo`
+
+该门禁必须同时覆盖：
+
+- 用户确认 62 菜单整合矩阵。
+- 用户业务产品化基线。
+- 用户已验收菜单/列表稳定性。
+- 锁定事实只读和正式模型连续性。
+- P1 办理入口 action、表单字段、附件/历史附件和状态动作。
+- 锁定事实到正式关系的候选映射阈值。
+- 结算、付款申请、付款登记、收款、发票之间的正式关系连续性。
+- 新正式办理单据的项目/合同/申请类型范围拦截。
+- 项目收付款、借还调拨、项目资金和往来单位资金投影一致性。
+
+必要时可单独拆跑：
 
 - `python3 scripts/verify/user_business_productization_baseline_guard.py`
 - `python3 -m py_compile scripts/verify/user_business_data_portrait.py scripts/verify/user_business_productization_baseline_guard.py`
-- `docker compose exec -T odoo odoo shell -d sc_demo -c /var/lib/odoo/odoo.conf < scripts/verify/locked_fact_formal_model_continuity_guard.py`
+- `DB_NAME=sc_demo bash scripts/ops/odoo_shell_exec.sh < scripts/verify/locked_fact_formal_model_continuity_guard.py`
+- `DB_NAME=sc_demo bash scripts/ops/odoo_shell_exec.sh < scripts/verify/p1_formal_relationship_continuity_audit.py`
+- `DB_NAME=sc_demo bash scripts/ops/odoo_shell_exec.sh < scripts/verify/p1_formal_relationship_scope_block_smoke.py`
 - 用户已验收菜单/列表稳定性验收
 - P1 办理入口浏览器验收
 - P1 主模型关系缺口统计验收
@@ -202,6 +255,22 @@
 - `sc.payment.execution`：37,716 条锁定历史事实，非法改 `planned_amount` 被拦截。
 - `sc.financing.loan`：463 条锁定历史事实，非法改 `amount` 被拦截。
 - `payment.request`、`sc.settlement.order`、`sc.fund.account.operation` 已有正式来源载体记录，后续连续办理通过新单据、派生视图或非侵入式映射层承载。
+
+本轮运行态闭环验证：
+
+- `scripts/verify/finance_interfund_handling_entry_audit.py`：通过，覆盖 P1 办理入口 action、业务方向字段、表单语义、附件/历史附件追溯和关键流转动作。
+- `scripts/verify/user_confirmed_menu_surface_guard.py`：通过，用户确认菜单可见面未漂移。
+- `scripts/verify/locked_fact_formal_model_continuity_guard.py`：通过，锁定历史事实非法写入被拦截，连续办理只能走新单据、派生视图或非侵入式映射层。
+- `scripts/verify/finance_business_fact_projection_audit.py`：通过，项目收付款来源明细与来源事实数量、金额一致。
+- `scripts/verify/finance_business_project_summary_audit.py`：通过，项目收付款汇总与来源明细一致。
+- `scripts/verify/interfund_movement_project_summary_audit.py`：通过，项目借还调拨汇总与来源明细一致。
+- `scripts/verify/finance_project_capital_position_audit.py`：通过，项目资金总览 660 个项目口径与项目收付款汇总、借还调拨汇总一致。
+- `scripts/verify/p1_locked_fact_mapping_candidate_guard.py`：通过，历史事实到正式关系的候选映射阈值未退化。
+- `scripts/verify/p1_formal_relationship_continuity_audit.py`：通过，结算、付款申请、付款登记、收款、发票之间已存在的正式关系没有非锁定办理记录串项目/串合同硬错误。
+- 该审计同时识别出 `payment_execution_request_scope` 关系风险 7,167 条，主要是历史付款登记与付款申请之间合同未带入或实际收款方不同；后续应进入付款办理口径细化，不直接改写锁定历史事实。
+- 付款登记、收款收入、费用/保证金的正式办理动作已增加付款/收款申请关系校验：新单据关联申请时必须匹配申请类型和项目，合同两边都有时必须一致；历史锁定事实继续只作为风险样本，不被回写。
+- 运行态 smoke 已验证新建付款登记、费用/保证金、收款收入在项目与申请不一致时会被拦截并回滚。
+- 固化脚本：`scripts/verify/p1_formal_relationship_scope_block_smoke.py`，用于后续持续验证正式办理动作不会再产生项目串线关系。
 
 ## 第二轮再进入的范围
 

@@ -22,35 +22,35 @@
                   groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
 
         <menuitem id="menu_sc_finance_project_counterparty_position"
-                  name="项目往来明细"
+                  name="项目与对象资金往来"
                   parent="menu_sc_finance_interfund_analysis"
                   action="action_sc_finance_project_counterparty_position"
                   sequence="30"
                   groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
 
         <menuitem id="menu_sc_finance_business_project_summary"
-                  name="项目财务来源汇总"
+                  name="项目收付款汇总"
                   parent="menu_sc_finance_interfund_analysis"
                   action="action_sc_finance_business_project_summary"
                   sequence="40"
                   groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
 
         <menuitem id="menu_sc_interfund_movement_project_summary"
-                  name="项目往来资金汇总"
+                  name="项目借还调拨汇总"
                   parent="menu_sc_finance_interfund_analysis"
                   action="action_sc_interfund_movement_project_summary"
                   sequence="50"
                   groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
 
         <menuitem id="menu_sc_finance_business_fact"
-                  name="财务来源明细"
+                  name="项目收付款来源明细"
                   parent="menu_sc_finance_interfund_analysis"
                   action="action_sc_finance_business_fact"
                   sequence="60"
                   groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
 
         <menuitem id="menu_sc_interfund_movement_fact"
-                  name="往来资金明细"
+                  name="借款还款与调拨明细"
                   parent="menu_sc_finance_interfund_analysis"
                   action="action_sc_interfund_movement_fact"
                   sequence="70"

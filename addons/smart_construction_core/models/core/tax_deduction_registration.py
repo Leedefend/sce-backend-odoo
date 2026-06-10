@@ -31,6 +31,7 @@ class ScTaxDeductionRegistration(models.Model):
         required=True,
         index=True,
     )
+    deduction_flow_label = fields.Char(string="办理事项", compute="_compute_deduction_flow_label")
     document_no = fields.Char(string="单据编号", index=True)
     document_date = fields.Date(string="单据日期", default=fields.Date.context_today, index=True)
     deduction_confirm_date = fields.Date(string="认证抵扣日期", index=True)
@@ -122,6 +123,18 @@ class ScTaxDeductionRegistration(models.Model):
                 continue
             rate = tax / untaxed * 100
             record.tax_rate_text = f"{rate:.2f}".rstrip("0").rstrip(".") + "%"
+
+    @api.depends("is_transfer_out", "withholding_amount", "deduction_tax_amount", "deduction_amount")
+    def _compute_deduction_flow_label(self):
+        for rec in self:
+            if rec.is_transfer_out:
+                rec.deduction_flow_label = _("进项税额转出")
+            elif rec.withholding_amount:
+                rec.deduction_flow_label = _("扣款抵扣")
+            elif rec.deduction_tax_amount or rec.deduction_amount:
+                rec.deduction_flow_label = _("进项税额抵扣")
+            else:
+                rec.deduction_flow_label = _("抵扣登记")
 
     def write(self, vals):
         if any(rec.source_origin == "legacy" and rec.state == "legacy_confirmed" for rec in self):

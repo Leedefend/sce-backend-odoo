@@ -34,6 +34,7 @@ class ScFinancingLoan(models.Model):
         required=True,
         index=True,
     )
+    loan_flow_label = fields.Char(string="借款方向", compute="_compute_loan_flow_label")
     state = fields.Selection(
         [
             ("draft", "草稿"),
@@ -142,6 +143,21 @@ class ScFinancingLoan(models.Model):
         ),
         ("amount_nonnegative", "CHECK(amount >= 0)", "Financing loan amount must be non-negative."),
     ]
+
+    @api.depends("loan_type", "direction", "purpose")
+    def _compute_loan_flow_label(self):
+        for record in self:
+            purpose = (record.purpose or "").strip()
+            if "承包人借项目款" in purpose:
+                record.loan_flow_label = _("项目借款给承包人")
+            elif "项目借公司款" in purpose:
+                record.loan_flow_label = _("公司借款给项目")
+            elif record.loan_type == "borrowing_request" and record.direction == "borrowed_fund":
+                record.loan_flow_label = _("项目借入资金")
+            elif record.direction == "financing_in":
+                record.loan_flow_label = _("融资流入项目")
+            else:
+                record.loan_flow_label = _("借款办理")
 
     @api.model
     def _context_project_id(self):

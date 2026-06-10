@@ -5,12 +5,12 @@ from odoo.exceptions import UserError
 
 class ScInterfundMovementFact(models.Model):
     _name = "sc.interfund.movement.fact"
-    _description = "往来资金明细"
+    _description = "借款还款与调拨明细"
     _auto = False
     _rec_name = "display_name"
     _order = "document_date desc, id desc"
 
-    display_name = fields.Char(string="事实摘要", readonly=True)
+    display_name = fields.Char(string="业务摘要", readonly=True)
     movement_type = fields.Selection(
         [
             ("company_to_project_borrow", "公司借款给项目"),
@@ -23,7 +23,7 @@ class ScInterfundMovementFact(models.Model):
             ("company_to_project_transfer", "公司账户转项目账户"),
             ("unclassified_account_transfer", "未完全分类账户调拨"),
         ],
-        string="往来类型",
+        string="业务类型",
         readonly=True,
         index=True,
     )
@@ -33,7 +33,7 @@ class ScInterfundMovementFact(models.Model):
             ("out", "流出项目"),
             ("transfer", "账户调拨"),
         ],
-        string="项目视角方向",
+        string="项目方向",
         readonly=True,
         index=True,
     )
@@ -48,15 +48,15 @@ class ScInterfundMovementFact(models.Model):
     source_res_id = fields.Integer(string="来源记录ID", readonly=True, index=True)
     source_record_name = fields.Char(string="来源单据号", readonly=True, index=True)
     source_document_no = fields.Char(string="来源编号", readonly=True, index=True)
-    source_menu_hint = fields.Char(string="来源业务入口提示", readonly=True, index=True)
+    source_menu_hint = fields.Char(string="来源业务入口", readonly=True, index=True)
     document_date = fields.Date(string="发生日期", readonly=True, index=True)
     company_id = fields.Many2one("res.company", string="公司", readonly=True, index=True)
     currency_id = fields.Many2one("res.currency", string="币种", readonly=True)
     amount = fields.Monetary(string="金额", currency_field="currency_id", readonly=True)
-    source_project_id = fields.Many2one("project.project", string="资金来源项目", readonly=True, index=True)
-    source_project_name = fields.Char(string="资金来源项目名称", readonly=True)
-    target_project_id = fields.Many2one("project.project", string="资金目标项目", readonly=True, index=True)
-    target_project_name = fields.Char(string="资金目标项目名称", readonly=True)
+    source_project_id = fields.Many2one("project.project", string="付款方项目", readonly=True, index=True)
+    source_project_name = fields.Char(string="付款方项目名称", readonly=True)
+    target_project_id = fields.Many2one("project.project", string="收款方项目", readonly=True, index=True)
+    target_project_name = fields.Char(string="收款方项目名称", readonly=True)
     project_id = fields.Many2one("project.project", string="业务归属项目", readonly=True, index=True)
     partner_id = fields.Many2one("res.partner", string="往来单位/人员", readonly=True, index=True)
     partner_name = fields.Char(string="往来单位/人员名称", readonly=True, index=True)
@@ -71,7 +71,7 @@ class ScInterfundMovementFact(models.Model):
     legacy_visible_note = fields.Text(string="历史可见说明", readonly=True)
 
     def _raise_readonly_projection(self):
-        raise UserError("往来资金明细是只读汇总，请从来源业务单据维护数据。")
+        raise UserError("借款还款与调拨明细是只读汇总，请从来源业务单据维护数据。")
 
     @api.model_create_multi
     def create(self, vals_list):

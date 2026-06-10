@@ -5,7 +5,7 @@
             <field name="name">sc.interfund.movement.project.summary.search</field>
             <field name="model">sc.interfund.movement.project.summary</field>
             <field name="arch" type="xml">
-                <search string="项目往来资金汇总">
+                <search string="项目借还调拨汇总">
                     <field name="project_id"/>
                     <filter string="公司借项目" name="company_to_project_borrow" domain="[('movement_type', '=', 'company_to_project_borrow')]"/>
                     <filter string="项目还公司" name="project_to_company_repay" domain="[('movement_type', '=', 'project_to_company_repay')]"/>
@@ -13,7 +13,7 @@
                     <filter string="承包人往来" name="contractor" domain="[('movement_type', 'in', ['project_to_contractor_borrow', 'contractor_to_project_repay'])]"/>
                     <filter string="低置信度" name="low_confidence" domain="[('low_confidence_count', '>', 0)]"/>
                     <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
-                    <filter string="按往来类型" name="group_movement_type" context="{'group_by': 'movement_type'}"/>
+                    <filter string="按业务类型" name="group_movement_type" context="{'group_by': 'movement_type'}"/>
                 </search>
             </field>
         </record>
@@ -22,7 +22,7 @@
             <field name="name">sc.interfund.movement.project.summary.tree</field>
             <field name="model">sc.interfund.movement.project.summary</field>
             <field name="arch" type="xml">
-                <tree string="项目往来资金汇总" create="0" edit="0" delete="0">
+                <tree string="项目借还调拨汇总" create="0" edit="0" delete="0">
                     <field name="project_id"/>
                     <field name="movement_type"/>
                     <field name="source_line_count" sum="来源明细数"/>
@@ -46,10 +46,10 @@
             <field name="name">sc.interfund.movement.project.summary.form</field>
             <field name="model">sc.interfund.movement.project.summary</field>
             <field name="arch" type="xml">
-                <form string="项目往来资金汇总" create="0" edit="0" delete="0">
+                <form string="项目借还调拨汇总" create="0" edit="0" delete="0">
                     <sheet>
                         <group>
-                            <group string="归集维度">
+                            <group string="汇总口径">
                                 <field name="display_name"/>
                                 <field name="project_id"/>
                                 <field name="movement_type"/>
@@ -86,7 +86,7 @@
             <field name="name">sc.interfund.movement.project.summary.pivot</field>
             <field name="model">sc.interfund.movement.project.summary</field>
             <field name="arch" type="xml">
-                <pivot string="项目往来资金汇总">
+                <pivot string="项目借还调拨汇总">
                     <field name="project_id" type="row"/>
                     <field name="movement_type" type="row"/>
                     <field name="net_amount" type="measure"/>
@@ -97,7 +97,7 @@
         </record>
 
         <record id="action_sc_interfund_movement_project_summary" model="ir.actions.act_window">
-            <field name="name">项目往来资金汇总</field>
+            <field name="name">项目借还调拨汇总</field>
             <field name="res_model">sc.interfund.movement.project.summary</field>
             <field name="view_mode">tree,form,pivot</field>
             <field name="search_view_id" ref="view_sc_interfund_movement_project_summary_search"/>

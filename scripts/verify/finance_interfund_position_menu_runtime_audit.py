@@ -55,7 +55,7 @@ EXPECTED_MENUS = OrderedDict(
         (
             f"{MODULE}.menu_sc_finance_project_counterparty_position",
             {
-                "name": "项目往来明细",
+                "name": "项目与对象资金往来",
                 "action": f"{MODULE}.action_sc_finance_project_counterparty_position",
                 "model": "sc.finance.project.counterparty.position",
             },
@@ -63,7 +63,7 @@ EXPECTED_MENUS = OrderedDict(
         (
             f"{MODULE}.menu_sc_finance_business_project_summary",
             {
-                "name": "项目财务来源汇总",
+                "name": "项目收付款汇总",
                 "action": f"{MODULE}.action_sc_finance_business_project_summary",
                 "model": "sc.finance.business.project.summary",
             },
@@ -71,7 +71,7 @@ EXPECTED_MENUS = OrderedDict(
         (
             f"{MODULE}.menu_sc_interfund_movement_project_summary",
             {
-                "name": "项目往来资金汇总",
+                "name": "项目借还调拨汇总",
                 "action": f"{MODULE}.action_sc_interfund_movement_project_summary",
                 "model": "sc.interfund.movement.project.summary",
             },
@@ -79,7 +79,7 @@ EXPECTED_MENUS = OrderedDict(
         (
             f"{MODULE}.menu_sc_finance_business_fact",
             {
-                "name": "财务来源明细",
+                "name": "项目收付款来源明细",
                 "action": f"{MODULE}.action_sc_finance_business_fact",
                 "model": "sc.finance.business.fact",
             },
@@ -87,7 +87,7 @@ EXPECTED_MENUS = OrderedDict(
         (
             f"{MODULE}.menu_sc_interfund_movement_fact",
             {
-                "name": "往来资金明细",
+                "name": "借款还款与调拨明细",
                 "action": f"{MODULE}.action_sc_interfund_movement_fact",
                 "model": "sc.interfund.movement.fact",
             },

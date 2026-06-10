@@ -5,7 +5,7 @@ from odoo.exceptions import UserError
 
 class ScInterfundMovementProjectSummary(models.Model):
     _name = "sc.interfund.movement.project.summary"
-    _description = "项目往来资金汇总"
+    _description = "项目借还调拨汇总"
     _auto = False
     _rec_name = "display_name"
     _order = "project_id, movement_type"
@@ -26,7 +26,7 @@ class ScInterfundMovementProjectSummary(models.Model):
             ("company_to_project_transfer", "公司账户转项目账户"),
             ("unclassified_account_transfer", "未完全分类账户调拨"),
         ],
-        string="往来类型",
+        string="业务类型",
         readonly=True,
         index=True,
     )
@@ -34,18 +34,18 @@ class ScInterfundMovementProjectSummary(models.Model):
     low_confidence_count = fields.Integer(string="低置信度明细数", readonly=True)
     inflow_amount = fields.Monetary(string="项目流入", currency_field="currency_id", readonly=True)
     outflow_amount = fields.Monetary(string="项目流出", currency_field="currency_id", readonly=True)
-    net_amount = fields.Monetary(string="项目净流入", currency_field="currency_id", readonly=True)
-    internal_transfer_amount = fields.Monetary(string="项目内调拨", currency_field="currency_id", readonly=True)
+    net_amount = fields.Monetary(string="项目借还调拨净流入", currency_field="currency_id", readonly=True)
+    internal_transfer_amount = fields.Monetary(string="账户调拨", currency_field="currency_id", readonly=True)
     company_borrow_in_amount = fields.Monetary(string="公司借款流入", currency_field="currency_id", readonly=True)
     company_repay_out_amount = fields.Monetary(string="归还公司流出", currency_field="currency_id", readonly=True)
     project_transfer_in_amount = fields.Monetary(string="项目间调入", currency_field="currency_id", readonly=True)
     project_transfer_out_amount = fields.Monetary(string="项目间调出", currency_field="currency_id", readonly=True)
     contractor_borrow_out_amount = fields.Monetary(string="承包人借款流出", currency_field="currency_id", readonly=True)
     contractor_repay_in_amount = fields.Monetary(string="承包人还款流入", currency_field="currency_id", readonly=True)
-    coverage_note = fields.Char(string="承载说明", readonly=True)
+    coverage_note = fields.Char(string="口径说明", readonly=True)
 
     def _raise_readonly_projection(self):
-        raise UserError("项目往来资金汇总是只读汇总，请从来源业务单据维护数据。")
+        raise UserError("项目借还调拨汇总是只读汇总，请从来源业务单据维护数据。")
 
     @api.model_create_multi
     def create(self, vals_list):

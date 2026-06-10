@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 import sys
 
 
 ROOT = Path(__file__).resolve().parents[2]
-PROBE_JSON = ROOT / "artifacts" / "p1_locked_fact_mapping_candidate_probe.sc_demo.json"
+DB_NAME = os.getenv("DB_NAME") or os.getenv("DB") or "sc_demo"
+PROBE_JSON = ROOT / "artifacts" / f"p1_locked_fact_mapping_candidate_probe.{DB_NAME}.json"
 
 AUTO_REQUIRED = {
     ("sc.receipt.income", "partner_id"): 0.95,

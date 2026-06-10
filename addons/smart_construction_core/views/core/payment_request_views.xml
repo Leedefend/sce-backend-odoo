@@ -6,9 +6,10 @@
             <field name="name">payment.request.tree</field>
             <field name="model">payment.request</field>
             <field name="arch" type="xml">
-                <tree string="付款/收款申请" decoration-danger="is_overpay_risk">
+                <tree string="付款与收款申请办理" decoration-danger="is_overpay_risk">
                     <field name="name"/>
-                    <field name="type"/>
+                    <field name="payment_flow_label"/>
+                    <field name="type" optional="hide"/>
                     <field name="receipt_type" optional="show"/>
                     <field name="project_id"/>
                     <field name="operation_strategy"/>
@@ -21,7 +22,7 @@
                     <field name="partner_account_name" optional="hide"/>
                     <field name="partner_bank_name" optional="hide"/>
                     <field name="partner_bank_account" optional="hide"/>
-                    <field name="amount" sum="申请金额合计"/>
+                    <field name="amount" string="申请金额" sum="申请金额合计"/>
                     <field name="amount_uppercase" optional="hide"/>
                     <field name="state"/>
                     <field name="date_request"/>
@@ -35,7 +36,7 @@
             <field name="name">payment.request.form</field>
             <field name="model">payment.request</field>
             <field name="arch" type="xml">
-                <form string="付款/收款申请">
+                <form string="付款与收款申请办理">
                     <header>
                         <button name="action_submit" type="object" string="提交审批" class="btn-primary" invisible="state != 'draft' or validation_status in ('waiting', 'pending', 'validated')" groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_user"/>
                         <button name="validate_tier" type="object" string="审批通过" class="btn-primary" invisible="not can_review or validation_status not in ('waiting', 'pending')" groups="smart_construction_core.group_sc_cap_finance_manager"/>
@@ -59,23 +60,32 @@
                                     groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
                         </div>
                         <group>
-                            <group>
+                            <group string="业务方向">
                                 <field name="name" readonly="1"/>
+                                <field name="payment_flow_label" readonly="1"/>
                                 <field name="type"/>
                                 <field name="receipt_type" invisible="type != 'receive'"/>
+                                <field name="date_request" required="1"/>
+                            </group>
+                            <group string="项目与合同">
                                 <field name="project_id" options="{'no_create': True}"/>
                                 <field name="operation_strategy" readonly="1"/>
                                 <field name="contract_id" domain="[('project_id', '=', project_id)]"/>
                                 <field name="settlement_id" domain="[('project_id', '=', project_id)]"/>
                             </group>
-                            <group>
+                        </group>
+                        <group>
+                            <group string="往来单位">
                                 <field name="partner_id"/>
                                 <field name="cost_category_name" readonly="1"/>
+                                <field name="actual_payee_unit"/>
+                                <field name="payer_unit"/>
+                            </group>
+                            <group string="申请金额">
                                 <field name="amount"/>
                                 <field name="amount_uppercase" readonly="1"/>
                                 <field name="accepted_amount_uppercase"/>
                                 <field name="currency_id" invisible="1"/>
-                                <field name="date_request" required="1"/>
                                 <field name="paid_amount_total" readonly="1"/>
                                 <field name="unpaid_amount" readonly="1"/>
                                 <field name="is_fully_paid" readonly="1"/>
@@ -107,9 +117,7 @@
                                 ⚠ 结算额度不足（剩余额度低于申请金额），系统将提示风险，是否继续办理由审批人判断。
                             </div>
                         </group>
-                        <group string="往来账户">
-                            <field name="actual_payee_unit"/>
-                            <field name="payer_unit"/>
+                        <group string="收付款账户">
                             <field name="payment_account_name"/>
                             <field name="payment_bank_name"/>
                             <field name="payment_account_no"/>
@@ -136,6 +144,7 @@
                         <group string="历史来源">
                             <field name="legacy_source_table" readonly="1"/>
                             <field name="legacy_record_id" readonly="1"/>
+                            <field name="legacy_visible_attachment" readonly="1"/>
                             <field name="creator_legacy_user_id" readonly="1"/>
                             <field name="creator_name" readonly="1"/>
                             <field name="created_time" readonly="1"/>

@@ -5,10 +5,10 @@
             <field name="name">sc.expense.claim.tree</field>
             <field name="model">sc.expense.claim</field>
             <field name="arch" type="xml">
-                <tree string="费用/保证金" decoration-muted="state == 'cancel'">
+                <tree string="费用、保证金与还款办理" decoration-muted="state == 'cancel'">
                     <field name="date_claim"/>
                     <field name="name"/>
-                    <field name="claim_type"/>
+                    <field name="claim_flow_label"/>
                     <field name="direction"/>
                     <field name="project_id"/>
                     <field name="operation_strategy"/>
@@ -26,11 +26,12 @@
                     <field name="payer_bank"/>
                     <field name="expense_type"/>
                     <field name="summary"/>
-                    <field name="amount" sum="申请金额合计"/>
+                    <field name="amount" string="办理金额" sum="申请金额合计"/>
                     <field name="approved_amount" sum="批准金额合计"/>
                     <field name="paid_amount" sum="已付款金额合计"/>
                     <field name="unpaid_amount" sum="未付款金额合计"/>
                     <field name="payment_state"/>
+                    <field name="claim_type" optional="hide"/>
                     <field name="legacy_document_no"/>
                     <field name="legacy_document_state"/>
                     <field name="creator_name" optional="show"/>
@@ -44,7 +45,7 @@
             <field name="name">sc.expense.claim.form</field>
             <field name="model">sc.expense.claim</field>
             <field name="arch" type="xml">
-                <form string="费用/保证金">
+                <form string="费用、保证金与还款办理">
                     <header>
                         <button name="action_submit" type="object" string="提交审批" class="btn-primary"
                                 invisible="state != 'draft' or validation_status in ('waiting', 'pending', 'validated')"
@@ -68,15 +69,16 @@
                     </header>
                     <sheet>
                         <group>
-                            <group>
+                            <group string="业务方向">
                                 <field name="name" readonly="1"/>
+                                <field name="claim_flow_label" readonly="1"/>
                                 <field name="claim_type" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="direction" readonly="1"/>
                                 <field name="date_claim" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="fill_date" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                             </group>
-                            <group>
-                                <field name="amount" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
+                            <group string="金额与状态">
+                                <field name="amount" string="办理金额" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="approved_amount" readonly="state in ['done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="paid_amount" readonly="state in ['done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="unpaid_amount" readonly="1"/>
@@ -86,7 +88,7 @@
                             </group>
                         </group>
                         <group>
-                            <group string="业务锚点">
+                            <group string="项目与往来单位">
                                 <field name="project_id" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="operation_strategy" readonly="1"/>
                                 <field name="partner_id"/>
@@ -95,13 +97,17 @@
                                 <field name="guarantee_project_name"/>
                                 <field name="guarantee_type"/>
                             </group>
-                            <group string="申请与收款">
+                            <group string="申请人与收款方">
                                 <field name="applicant_name" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="department_name" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="payee" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="receipt_account_name" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="payee_account" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="payee_bank" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
+                            </group>
+                        </group>
+                        <group string="付款账户">
+                            <group>
                                 <field name="payment_account_name" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="payer_account" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="payer_bank" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
@@ -113,7 +119,7 @@
                             <field name="is_returned" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                             <field name="return_reason" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                         </group>
-                        <group string="费用说明">
+                        <group string="事项说明">
                             <field name="expense_type" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                             <field name="summary" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                             <field name="legacy_visible_title" readonly="1" invisible="not legacy_visible_title"/>
@@ -138,7 +144,7 @@
             <field name="name">sc.expense.claim.search</field>
             <field name="model">sc.expense.claim</field>
             <field name="arch" type="xml">
-                <search string="费用/保证金">
+                <search string="费用、保证金与还款办理">
                     <field name="name"/>
                     <field name="project_id"/>
                     <field name="operation_strategy"/>

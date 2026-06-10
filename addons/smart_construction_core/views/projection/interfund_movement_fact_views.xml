@@ -5,7 +5,7 @@
             <field name="name">sc.interfund.movement.fact.search</field>
             <field name="model">sc.interfund.movement.fact</field>
             <field name="arch" type="xml">
-                <search string="往来资金明细">
+                <search string="借款还款与调拨明细">
                     <field name="source_record_name"/>
                     <field name="source_document_no"/>
                     <field name="source_project_id"/>
@@ -15,9 +15,9 @@
                     <filter string="项目还公司" name="project_to_company_repay" domain="[('movement_type', '=', 'project_to_company_repay')]"/>
                     <filter string="项目间调拨" name="project_to_project_transfer" domain="[('movement_type', '=', 'project_to_project_transfer')]"/>
                     <filter string="低置信度" name="low_confidence" domain="[('classification_confidence', '=', 'low')]"/>
-                    <filter string="按往来类型" name="group_movement_type" context="{'group_by': 'movement_type'}"/>
-                    <filter string="按来源项目" name="group_source_project" context="{'group_by': 'source_project_id'}"/>
-                    <filter string="按目标项目" name="group_target_project" context="{'group_by': 'target_project_id'}"/>
+                    <filter string="按业务类型" name="group_movement_type" context="{'group_by': 'movement_type'}"/>
+                    <filter string="按付款方项目" name="group_source_project" context="{'group_by': 'source_project_id'}"/>
+                    <filter string="按收款方项目" name="group_target_project" context="{'group_by': 'target_project_id'}"/>
                     <filter string="按来源模型" name="group_source_model" context="{'group_by': 'source_model'}"/>
                 </search>
             </field>
@@ -27,7 +27,7 @@
             <field name="name">sc.interfund.movement.fact.tree</field>
             <field name="model">sc.interfund.movement.fact</field>
             <field name="arch" type="xml">
-                <tree string="往来资金明细" create="0" edit="0" delete="0" default_order="document_date desc, id desc">
+                <tree string="借款还款与调拨明细" create="0" edit="0" delete="0" default_order="document_date desc, id desc">
                     <field name="document_date"/>
                     <field name="movement_type"/>
                     <field name="source_project_id"/>
@@ -48,10 +48,10 @@
             <field name="name">sc.interfund.movement.fact.form</field>
             <field name="model">sc.interfund.movement.fact</field>
             <field name="arch" type="xml">
-                <form string="往来资金明细" create="0" edit="0" delete="0">
+                <form string="借款还款与调拨明细" create="0" edit="0" delete="0">
                     <sheet>
                         <group>
-                            <group string="事实分类">
+                            <group string="业务分类">
                                 <field name="display_name"/>
                                 <field name="movement_type"/>
                                 <field name="direction"/>
@@ -66,12 +66,12 @@
                             </group>
                         </group>
                         <group>
-                            <group string="来源方">
+                            <group string="付款方">
                                 <field name="source_project_id"/>
                                 <field name="source_account_id"/>
                                 <field name="source_account_name"/>
                             </group>
-                            <group string="目标方">
+                            <group string="收款方">
                                 <field name="target_project_id"/>
                                 <field name="target_account_id"/>
                                 <field name="target_account_name"/>
@@ -105,7 +105,7 @@
             <field name="name">sc.interfund.movement.fact.pivot</field>
             <field name="model">sc.interfund.movement.fact</field>
             <field name="arch" type="xml">
-                <pivot string="往来资金明细">
+                <pivot string="借款还款与调拨明细">
                     <field name="movement_type" type="row"/>
                     <field name="source_project_id" type="row"/>
                     <field name="target_project_id" type="col"/>
@@ -115,7 +115,7 @@
         </record>
 
         <record id="action_sc_interfund_movement_fact" model="ir.actions.act_window">
-            <field name="name">往来资金明细</field>
+            <field name="name">借款还款与调拨明细</field>
             <field name="res_model">sc.interfund.movement.fact</field>
             <field name="view_mode">tree,form,pivot</field>
             <field name="search_view_id" ref="view_sc_interfund_movement_fact_search"/>

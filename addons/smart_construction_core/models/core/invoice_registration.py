@@ -41,6 +41,7 @@ class ScInvoiceRegistration(models.Model):
         required=True,
         index=True,
     )
+    invoice_flow_label = fields.Char(string="办理事项", compute="_compute_invoice_flow_label")
     state = fields.Selection(
         [
             ("draft", "草稿"),
@@ -200,6 +201,22 @@ class ScInvoiceRegistration(models.Model):
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.invoice.registration") or _("Invoice Registration")
         return super().create(vals_list)
+
+    @api.depends("source_kind", "direction", "invoice_content", "tax_type")
+    def _compute_invoice_flow_label(self):
+        for rec in self:
+            if rec.invoice_content:
+                rec.invoice_flow_label = rec.invoice_content
+            elif rec.source_kind == "prepaid_tax" or rec.direction == "prepaid":
+                rec.invoice_flow_label = _("预缴税款")
+            elif rec.source_kind == "output_invoice_tax" or rec.direction == "output":
+                rec.invoice_flow_label = _("销项开票")
+            elif rec.source_kind == "input_invoice_tax" or rec.direction == "input":
+                rec.invoice_flow_label = _("进项发票")
+            elif rec.tax_type:
+                rec.invoice_flow_label = rec.tax_type
+            else:
+                rec.invoice_flow_label = _("发票登记")
 
     def write(self, vals):
         if any(rec.source_origin == "legacy" and rec.state == "legacy_confirmed" for rec in self):

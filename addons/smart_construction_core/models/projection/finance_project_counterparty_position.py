@@ -6,7 +6,7 @@ from odoo.exceptions import UserError
 
 class ScFinanceProjectCounterpartyPosition(models.Model):
     _name = "sc.finance.project.counterparty.position"
-    _description = "项目往来明细"
+    _description = "项目与对象资金往来"
     _auto = False
     _rec_name = "display_name"
     _order = "project_id, counterparty_type, counterparty_name"
@@ -34,23 +34,23 @@ class ScFinanceProjectCounterpartyPosition(models.Model):
     counterparty_project_id = fields.Many2one("project.project", string="对方项目", readonly=True, index=True)
     partner_id = fields.Many2one("res.partner", string="对方单位/人员", readonly=True, index=True)
     counterparty_name = fields.Char(string="对方名称", readonly=True, index=True)
-    finance_source_line_count = fields.Integer(string="财务来源明细数", readonly=True)
-    interfund_source_line_count = fields.Integer(string="资金往来明细数", readonly=True)
-    source_line_count = fields.Integer(string="综合明细数", readonly=True)
-    finance_balance_effect = fields.Monetary(string="财务余额影响", currency_field="currency_id", readonly=True)
-    finance_cash_in_amount = fields.Monetary(string="财务现金流入", currency_field="currency_id", readonly=True)
-    finance_cash_out_amount = fields.Monetary(string="财务现金流出", currency_field="currency_id", readonly=True)
-    finance_cash_net_amount = fields.Monetary(string="财务现金净额", currency_field="currency_id", readonly=True)
-    interfund_inflow_amount = fields.Monetary(string="往来项目流入", currency_field="currency_id", readonly=True)
-    interfund_outflow_amount = fields.Monetary(string="往来项目流出", currency_field="currency_id", readonly=True)
-    interfund_net_amount = fields.Monetary(string="往来项目净流入", currency_field="currency_id", readonly=True)
-    internal_transfer_amount = fields.Monetary(string="项目内调拨", currency_field="currency_id", readonly=True)
-    combined_balance_effect = fields.Monetary(string="综合余额影响", currency_field="currency_id", readonly=True)
-    combined_cash_net_amount = fields.Monetary(string="综合现金净额", currency_field="currency_id", readonly=True)
-    coverage_note = fields.Char(string="承载说明", readonly=True)
+    finance_source_line_count = fields.Integer(string="收付款明细数", readonly=True)
+    interfund_source_line_count = fields.Integer(string="借还调拨明细数", readonly=True)
+    source_line_count = fields.Integer(string="全部明细数", readonly=True)
+    finance_balance_effect = fields.Monetary(string="收付款余额影响", currency_field="currency_id", readonly=True)
+    finance_cash_in_amount = fields.Monetary(string="收付款现金流入", currency_field="currency_id", readonly=True)
+    finance_cash_out_amount = fields.Monetary(string="收付款现金流出", currency_field="currency_id", readonly=True)
+    finance_cash_net_amount = fields.Monetary(string="收付款现金净额", currency_field="currency_id", readonly=True)
+    interfund_inflow_amount = fields.Monetary(string="借还调拨流入", currency_field="currency_id", readonly=True)
+    interfund_outflow_amount = fields.Monetary(string="借还调拨流出", currency_field="currency_id", readonly=True)
+    interfund_net_amount = fields.Monetary(string="借还调拨净流入", currency_field="currency_id", readonly=True)
+    internal_transfer_amount = fields.Monetary(string="账户调拨", currency_field="currency_id", readonly=True)
+    combined_balance_effect = fields.Monetary(string="资金余额影响", currency_field="currency_id", readonly=True)
+    combined_cash_net_amount = fields.Monetary(string="现金净额", currency_field="currency_id", readonly=True)
+    coverage_note = fields.Char(string="口径说明", readonly=True)
 
     def _raise_readonly_projection(self):
-        raise UserError("项目往来明细是只读汇总，请从来源业务单据维护数据。")
+        raise UserError("项目与对象资金往来是只读汇总，请从来源业务单据维护数据。")
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -181,7 +181,7 @@ class ScFinanceProjectCounterpartyPosition(models.Model):
         self.ensure_one()
         return {
             "type": "ir.actions.act_window",
-            "name": "财务来源明细",
+            "name": "项目收付款来源明细",
             "res_model": "sc.finance.business.fact",
             "view_mode": "tree,pivot,form",
             "domain": self._finance_fact_counterparty_domain(),
@@ -192,7 +192,7 @@ class ScFinanceProjectCounterpartyPosition(models.Model):
         self.ensure_one()
         return {
             "type": "ir.actions.act_window",
-            "name": "往来资金明细",
+            "name": "借款还款与调拨明细",
             "res_model": "sc.interfund.movement.fact",
             "view_mode": "tree,pivot,form",
             "domain": self._interfund_fact_counterparty_domain(),
@@ -389,7 +389,7 @@ class ScFinanceProjectCounterpartyPosition(models.Model):
                     g.internal_transfer_amount,
                     (g.finance_balance_effect + g.interfund_net_amount) AS combined_balance_effect,
                     ((g.finance_cash_in_amount - g.finance_cash_out_amount) + g.interfund_net_amount) AS combined_cash_net_amount,
-                    '由财务来源明细与往来资金明细按项目及对方对象归集；不替代来源业务单据' AS coverage_note
+                    '由项目收付款与借款还款调拨数据按项目和对方对象归集；本页只做分析，不替代业务办理单据' AS coverage_note
                 FROM grouped g
                 LEFT JOIN project_project p ON p.id = g.project_id
             )

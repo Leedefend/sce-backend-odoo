@@ -5,7 +5,7 @@
             <field name="name">sc.financing.loan.search</field>
             <field name="model">sc.financing.loan</field>
             <field name="arch" type="xml">
-                <search string="融资借款">
+                <search string="借款办理">
                     <field name="name"/>
                     <field name="document_no"/>
                     <field name="project_id"/>
@@ -32,18 +32,19 @@
             <field name="name">sc.financing.loan.tree</field>
             <field name="model">sc.financing.loan</field>
             <field name="arch" type="xml">
-                <tree string="融资借款">
+                <tree string="借款办理">
                     <field name="name"/>
                     <field name="document_date"/>
                     <field name="document_no"/>
-                    <field name="loan_type"/>
-                    <field name="direction"/>
+                    <field name="loan_flow_label"/>
                     <field name="project_id"/>
                     <field name="operation_strategy"/>
                     <field name="partner_id"/>
-                    <field name="amount" sum="金额"/>
+                    <field name="amount" string="借款金额" sum="金额"/>
                     <field name="due_date"/>
                     <field name="purpose"/>
+                    <field name="loan_type" optional="hide"/>
+                    <field name="direction" optional="hide"/>
                     <field name="rate_label"/>
                     <field name="extra_ref"/>
                     <field name="extra_label"/>
@@ -58,7 +59,7 @@
             <field name="name">sc.financing.loan.form</field>
             <field name="model">sc.financing.loan</field>
             <field name="arch" type="xml">
-                <form string="融资借款">
+                <form string="借款办理">
                     <header>
                         <button name="action_confirm" string="提交审批" type="object" class="btn-primary"
                                 invisible="state != 'draft' or validation_status in ('waiting', 'pending', 'validated')"/>
@@ -77,23 +78,24 @@
                     </header>
                     <sheet>
                         <group>
-                            <group>
+                            <group string="借款方向">
                                 <field name="name" readonly="1"/>
+                                <field name="loan_flow_label" readonly="1"/>
                                 <field name="loan_type" readonly="state == 'legacy_confirmed'"/>
                                 <field name="direction" readonly="state == 'legacy_confirmed'"/>
                                 <field name="document_no" readonly="state == 'legacy_confirmed'"/>
                                 <field name="document_date" required="1" readonly="state == 'legacy_confirmed'"/>
                                 <field name="due_date" readonly="state == 'legacy_confirmed'"/>
                             </group>
-                            <group>
+                            <group string="项目与往来单位">
                                 <field name="project_id" readonly="state == 'legacy_confirmed'"/>
                                 <field name="operation_strategy" readonly="1"/>
                                 <field name="partner_id"/>
-                                <field name="amount" readonly="state == 'legacy_confirmed'"/>
+                                <field name="amount" string="借款金额" readonly="state == 'legacy_confirmed'"/>
                                 <field name="currency_id" invisible="1"/>
                             </group>
                         </group>
-                        <group string="说明">
+                        <group string="办理说明">
                             <field name="purpose" readonly="state == 'legacy_confirmed'"/>
                             <field name="rate_label" readonly="state == 'legacy_confirmed'"/>
                             <field name="extra_ref" readonly="state == 'legacy_confirmed'"/>
@@ -104,6 +106,7 @@
                             <field name="creator_name" readonly="1"/>
                             <field name="creator_legacy_user_id" readonly="1"/>
                             <field name="created_time" readonly="1"/>
+                            <field name="legacy_attachment_ref" readonly="1"/>
                             <field name="attachment_ids" widget="many2many_binary"/>
                             <field name="active"/>
                         </group>

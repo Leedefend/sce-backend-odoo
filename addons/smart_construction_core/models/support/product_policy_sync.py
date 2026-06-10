@@ -188,7 +188,8 @@ class ScProductPolicy(models.Model):
             return row
         action = menu_record.action
         action_id = int(action.id or 0) if action else 0
-        res_model = _text(getattr(action, "res_model", "") if action else "") or _text(row.get("res_model"))
+        locked_res_model = _text(row.get("res_model"))
+        res_model = locked_res_model or _text(getattr(action, "res_model", "") if action else "")
         view_modes = []
         if action and _text(getattr(action, "view_mode", "")):
             view_modes = [_text(item) for item in action.view_mode.split(",") if _text(item)]

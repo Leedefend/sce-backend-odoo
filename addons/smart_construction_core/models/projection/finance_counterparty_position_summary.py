@@ -32,19 +32,19 @@ class ScFinanceCounterpartyPositionSummary(models.Model):
     partner_id = fields.Many2one("res.partner", string="对方单位/人员", readonly=True, index=True)
     counterparty_name = fields.Char(string="对方名称", readonly=True, index=True)
     project_count = fields.Integer(string="涉及项目数", readonly=True)
-    finance_source_line_count = fields.Integer(string="财务来源明细数", readonly=True)
-    interfund_source_line_count = fields.Integer(string="资金往来明细数", readonly=True)
-    source_line_count = fields.Integer(string="综合明细数", readonly=True)
-    finance_balance_effect = fields.Monetary(string="财务余额影响", currency_field="currency_id", readonly=True)
-    finance_cash_in_amount = fields.Monetary(string="财务现金流入", currency_field="currency_id", readonly=True)
-    finance_cash_out_amount = fields.Monetary(string="财务现金流出", currency_field="currency_id", readonly=True)
-    finance_cash_net_amount = fields.Monetary(string="财务现金净额", currency_field="currency_id", readonly=True)
-    interfund_inflow_amount = fields.Monetary(string="往来项目流入", currency_field="currency_id", readonly=True)
-    interfund_outflow_amount = fields.Monetary(string="往来项目流出", currency_field="currency_id", readonly=True)
-    interfund_net_amount = fields.Monetary(string="往来项目净流入", currency_field="currency_id", readonly=True)
-    internal_transfer_amount = fields.Monetary(string="项目内调拨", currency_field="currency_id", readonly=True)
-    combined_balance_effect = fields.Monetary(string="综合余额影响", currency_field="currency_id", readonly=True)
-    combined_cash_net_amount = fields.Monetary(string="综合现金净额", currency_field="currency_id", readonly=True)
+    finance_source_line_count = fields.Integer(string="收付款明细数", readonly=True)
+    interfund_source_line_count = fields.Integer(string="借还调拨明细数", readonly=True)
+    source_line_count = fields.Integer(string="全部明细数", readonly=True)
+    finance_balance_effect = fields.Monetary(string="收付款余额影响", currency_field="currency_id", readonly=True)
+    finance_cash_in_amount = fields.Monetary(string="收付款现金流入", currency_field="currency_id", readonly=True)
+    finance_cash_out_amount = fields.Monetary(string="收付款现金流出", currency_field="currency_id", readonly=True)
+    finance_cash_net_amount = fields.Monetary(string="收付款现金净额", currency_field="currency_id", readonly=True)
+    interfund_inflow_amount = fields.Monetary(string="借还调拨流入", currency_field="currency_id", readonly=True)
+    interfund_outflow_amount = fields.Monetary(string="借还调拨流出", currency_field="currency_id", readonly=True)
+    interfund_net_amount = fields.Monetary(string="借还调拨净流入", currency_field="currency_id", readonly=True)
+    internal_transfer_amount = fields.Monetary(string="账户调拨", currency_field="currency_id", readonly=True)
+    combined_balance_effect = fields.Monetary(string="资金余额影响", currency_field="currency_id", readonly=True)
+    combined_cash_net_amount = fields.Monetary(string="现金净额", currency_field="currency_id", readonly=True)
     position_direction = fields.Selection(
         [
             ("positive", "正向余额"),
@@ -55,7 +55,7 @@ class ScFinanceCounterpartyPositionSummary(models.Model):
         readonly=True,
         index=True,
     )
-    coverage_note = fields.Char(string="承载说明", readonly=True)
+    coverage_note = fields.Char(string="口径说明", readonly=True)
 
     def _raise_readonly_projection(self):
         raise UserError("往来对象资金总览是只读汇总，请从来源业务单据维护数据。")
@@ -94,7 +94,7 @@ class ScFinanceCounterpartyPositionSummary(models.Model):
         self.ensure_one()
         return {
             "type": "ir.actions.act_window",
-            "name": "项目往来明细",
+            "name": "项目与对象资金往来",
             "res_model": "sc.finance.project.counterparty.position",
             "view_mode": "tree,pivot,form",
             "domain": self._counterparty_identity_domain(),
@@ -165,7 +165,7 @@ class ScFinanceCounterpartyPositionSummary(models.Model):
                         WHEN combined_balance_effect < -0.005 THEN 'negative'
                         ELSE 'balanced'
                     END AS position_direction,
-                    '由项目往来明细跨项目归集；用于对象层面总余额判断，不替代来源业务单据' AS coverage_note
+                    '由项目与对象资金往来跨项目归集；用于对象层面总余额判断，不替代来源业务单据' AS coverage_note
                 FROM grouped
             )
             """

@@ -5,12 +5,12 @@ from odoo.exceptions import UserError
 
 class ScFinanceBusinessFact(models.Model):
     _name = "sc.finance.business.fact"
-    _description = "财务来源明细"
+    _description = "项目收付款来源明细"
     _auto = False
     _rec_name = "display_name"
     _order = "document_date desc, id desc"
 
-    display_name = fields.Char(string="事实摘要", readonly=True)
+    display_name = fields.Char(string="业务摘要", readonly=True)
     business_domain = fields.Selection(
         [
             ("arrival_settlement", "到款确认"),
@@ -19,7 +19,7 @@ class ScFinanceBusinessFact(models.Model):
             ("self_funding", "自筹收入/退回"),
             ("guarantee_deposit", "保证金收退"),
         ],
-        string="业务域",
+        string="收付款类型",
         readonly=True,
         index=True,
     )
@@ -35,7 +35,7 @@ class ScFinanceBusinessFact(models.Model):
             ("guarantee_out", "保证金支出"),
             ("guarantee_return", "保证金退回"),
         ],
-        string="事实类型",
+        string="业务类型",
         readonly=True,
         index=True,
     )
@@ -56,11 +56,11 @@ class ScFinanceBusinessFact(models.Model):
     source_res_id = fields.Integer(string="来源记录ID", readonly=True, index=True)
     source_record_name = fields.Char(string="来源单据号", readonly=True, index=True)
     source_document_no = fields.Char(string="来源编号", readonly=True, index=True)
-    source_menu_hint = fields.Char(string="来源业务入口提示", readonly=True, index=True)
+    source_menu_hint = fields.Char(string="来源业务入口", readonly=True, index=True)
     document_date = fields.Date(string="发生日期", readonly=True, index=True)
     company_id = fields.Many2one("res.company", string="公司", readonly=True, index=True)
     currency_id = fields.Many2one("res.currency", string="币种", readonly=True)
-    amount = fields.Monetary(string="事实金额", currency_field="currency_id", readonly=True)
+    amount = fields.Monetary(string="业务金额", currency_field="currency_id", readonly=True)
     balance_effect = fields.Monetary(string="余额影响", currency_field="currency_id", readonly=True)
     cash_in_amount = fields.Monetary(string="现金流入", currency_field="currency_id", readonly=True)
     cash_out_amount = fields.Monetary(string="现金流出", currency_field="currency_id", readonly=True)
@@ -77,7 +77,7 @@ class ScFinanceBusinessFact(models.Model):
     legacy_visible_note = fields.Text(string="历史可见说明", readonly=True)
 
     def _raise_readonly_projection(self):
-        raise UserError("财务来源明细是只读汇总，请从来源业务单据维护数据。")
+        raise UserError("项目收付款来源明细是只读汇总，请从来源业务单据维护数据。")
 
     @api.model_create_multi
     def create(self, vals_list):

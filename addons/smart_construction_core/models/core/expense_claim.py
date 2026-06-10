@@ -39,6 +39,7 @@ class ScExpenseClaim(models.Model):
         store=True,
         index=True,
     )
+    claim_flow_label = fields.Char(string="办理事项", compute="_compute_claim_flow_label")
     state = fields.Selection(
         [
             ("draft", "草稿"),
@@ -169,6 +170,36 @@ class ScExpenseClaim(models.Model):
                 if rec.claim_type in ("deposit_refund", "deposit_receive", "deduction_refund", "project_company_repay")
                 else "outflow"
             )
+
+    @api.depends("claim_type", "expense_type", "summary", "direction")
+    def _compute_claim_flow_label(self):
+        for rec in self:
+            expense_type = (rec.expense_type or "").strip()
+            summary = (rec.summary or "").strip()
+            text = f"{expense_type} {summary}"
+            if rec.claim_type == "project_company_repay":
+                if "项目还公司款" in text:
+                    rec.claim_flow_label = _("项目还公司款")
+                else:
+                    rec.claim_flow_label = _("还款登记")
+            elif rec.claim_type == "deposit_receive" and "承包人还项目款" in text:
+                rec.claim_flow_label = _("承包人还项目款")
+            elif rec.claim_type == "deduction_refund":
+                rec.claim_flow_label = _("扣款退回")
+            elif rec.claim_type == "deposit_pay":
+                rec.claim_flow_label = _("保证金支付")
+            elif rec.claim_type == "deposit_refund":
+                rec.claim_flow_label = _("保证金退回")
+            elif rec.claim_type == "deposit_receive":
+                rec.claim_flow_label = _("保证金收取")
+            elif "扣款" in text:
+                rec.claim_flow_label = expense_type or _("扣款办理")
+            elif "报销" in text:
+                rec.claim_flow_label = expense_type or _("费用报销")
+            elif "备用金" in text:
+                rec.claim_flow_label = _("备用金")
+            else:
+                rec.claim_flow_label = expense_type or _("费用办理")
 
     @api.onchange("amount")
     def _onchange_amount(self):
@@ -334,12 +365,14 @@ class ScExpenseClaim(models.Model):
                 raise UserError(_("费用/保证金已付款金额不能为负数。"))
             if (rec.paid_amount or 0.0) > expected:
                 raise UserError(_("费用/保证金已付款金额不能超过批准/申请金额。"))
+            rec._check_payment_request_scope_or_raise()
 
     def _sync_payment_request_done(self):
         for rec in self:
             request = rec.payment_request_id
             if not request or request.state == "done":
                 continue
+            rec._check_payment_request_scope_or_raise()
             expected_type = "receive" if rec.direction == "inflow" else "pay"
             if request.type != expected_type:
                 raise UserError(
@@ -374,6 +407,19 @@ class ScExpenseClaim(models.Model):
                     note=_("auto:expense_claim_done"),
                 )
                 request.with_context(allow_transition=True, payment_soft_gate=True).write({"state": "done"})
+
+    def _check_payment_request_scope_or_raise(self):
+        for rec in self:
+            request = rec.payment_request_id
+            if not request:
+                continue
+            if rec.source_origin == "legacy" and rec.state == "legacy_confirmed":
+                continue
+            expected_type = "receive" if rec.direction == "inflow" else "pay"
+            if request.type != expected_type:
+                raise UserError(_("费用/保证金资金方向与付款/收款申请类型不一致。"))
+            if rec.project_id and request.project_id and rec.project_id != request.project_id:
+                raise UserError(_("费用/保证金项目必须与付款/收款申请项目一致。"))
 
     def action_cancel(self):
         for rec in self:

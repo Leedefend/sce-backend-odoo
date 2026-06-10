@@ -74,6 +74,7 @@ class ScReceiptIncome(models.Model):
     legacy_receipt_type = fields.Char(string="收款类型", index=True)
     legacy_receipt_subtype = fields.Char(string="收款细分", index=True)
     income_category = fields.Char(string="收入类别", index=True)
+    receipt_flow_label = fields.Char(string="办理事项", compute="_compute_receipt_flow_label")
     payment_method = fields.Char(string="收款方式", index=True)
     receiving_account = fields.Char(string="收款账户", index=True)
     receiving_account_name = fields.Char(string="收款账户名称", index=True)
@@ -153,6 +154,31 @@ class ScReceiptIncome(models.Model):
                 vals["name"] = seq.next_by_code("sc.receipt.income") or _("Receipt Income")
         return super().create(vals_list)
 
+    @api.depends(
+        "source_kind",
+        "source_family",
+        "receipt_type",
+        "legacy_receipt_type",
+        "legacy_receipt_subtype",
+        "income_category",
+    )
+    def _compute_receipt_flow_label(self):
+        for rec in self:
+            if rec.source_family == "engineering_progress_receipt_visible" or rec.income_category == "工程进度款收入":
+                rec.receipt_flow_label = _("工程进度款收入")
+            elif rec.source_kind == "residual_receipt":
+                rec.receipt_flow_label = _("残余收款")
+            elif rec.income_category:
+                rec.receipt_flow_label = rec.income_category
+            elif rec.receipt_type:
+                rec.receipt_flow_label = rec.receipt_type
+            elif rec.legacy_receipt_subtype:
+                rec.receipt_flow_label = rec.legacy_receipt_subtype
+            elif rec.legacy_receipt_type:
+                rec.receipt_flow_label = rec.legacy_receipt_type
+            else:
+                rec.receipt_flow_label = _("收款收入")
+
     def write(self, vals):
         if any(rec.source_origin == "legacy" and rec.state == "legacy_confirmed" for rec in self):
             allowed = {
@@ -183,6 +209,7 @@ class ScReceiptIncome(models.Model):
                     reasons=[_("只有草稿状态的收款收入可以确认")],
                 )
             rec._check_business_anchor_or_raise()
+            rec._check_payment_request_scope_or_raise()
             if policy.is_approval_required(rec._name, company=rec.company_id):
                 company = rec.company_id or self.env.company
                 rec.with_company(company).with_context(allowed_company_ids=[company.id])._request_document_approval()
@@ -200,6 +227,7 @@ class ScReceiptIncome(models.Model):
                     reasons=[_("只有草稿或已确认状态的收款收入可以登记收款")],
                 )
             rec._check_business_anchor_or_raise()
+            rec._check_payment_request_scope_or_raise()
             if policy.is_approval_required(rec._name, company=rec.company_id) and rec.validation_status != "validated":
                 raise UserError(_("收款收入尚未完成统一审批流程。"))
             rec._sync_payment_request_done()
@@ -242,6 +270,20 @@ class ScReceiptIncome(models.Model):
                     reasons=[_("收款金额必须大于0")],
                 )
 
+    def _check_payment_request_scope_or_raise(self):
+        for rec in self:
+            request = rec.payment_request_id
+            if not request:
+                continue
+            if rec.source_origin == "legacy" and rec.state == "legacy_confirmed":
+                continue
+            if request.type != "receive":
+                raise UserError(_("收款收入只能关联收款类型的付款/收款申请。"))
+            if rec.project_id and request.project_id and rec.project_id != request.project_id:
+                raise UserError(_("收款收入项目必须与收款申请项目一致。"))
+            if rec.contract_id and request.contract_id and rec.contract_id != request.contract_id:
+                raise UserError(_("收款收入合同必须与收款申请合同一致。"))
+
     def _request_document_approval(self):
         self.ensure_one()
         if self.review_ids and self.validation_status == "rejected":
@@ -283,6 +325,7 @@ class ScReceiptIncome(models.Model):
             request = rec.payment_request_id
             if not request:
                 continue
+            rec._check_payment_request_scope_or_raise()
             if request.type != "receive":
                 raise UserError(_("收款收入只能关联收款类型的付款/收款申请。"))
             rounding = request.currency_id.rounding if request.currency_id else 0.01

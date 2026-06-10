@@ -30,6 +30,7 @@ class ScPaymentExecution(models.Model):
         required=True,
         index=True,
     )
+    execution_flow_label = fields.Char(string="办理事项", compute="_compute_execution_flow_label")
     state = fields.Selection(
         [
             ("draft", "草稿"),
@@ -134,6 +135,20 @@ class ScPaymentExecution(models.Model):
         ("invoice_amount_nonnegative", "CHECK(invoice_amount >= 0)", "Invoice amount must be non-negative."),
     ]
 
+    @api.depends("source_kind", "payment_family", "payment_method")
+    def _compute_execution_flow_label(self):
+        for record in self:
+            family = (record.payment_family or "").strip()
+            method = (record.payment_method or "").strip()
+            if family:
+                record.execution_flow_label = family
+            elif record.source_kind == "actual_outflow":
+                record.execution_flow_label = _("实际付款登记")
+            elif method:
+                record.execution_flow_label = _("付款执行：%s") % method
+            else:
+                record.execution_flow_label = _("付款执行")
+
     @api.model
     def _context_project_id(self):
         project_id = self.env.context.get("default_project_id") or self.env.context.get("current_project_id")
@@ -217,6 +232,7 @@ class ScPaymentExecution(models.Model):
                     reasons=[_("只有草稿状态的付款执行可以确认")],
                 )
             rec._check_business_anchor_or_raise()
+            rec._check_payment_request_scope_or_raise()
             if policy.is_approval_required(rec._name, company=rec.company_id):
                 company = rec.company_id or self.env.company
                 rec.with_company(company).with_context(allowed_company_ids=[company.id])._request_document_approval()
@@ -234,6 +250,7 @@ class ScPaymentExecution(models.Model):
                     reasons=[_("只有草稿或已确认状态的付款执行可以登记付款")],
                 )
             rec._check_business_anchor_or_raise()
+            rec._check_payment_request_scope_or_raise()
             if policy.is_approval_required(rec._name, company=rec.company_id) and rec.validation_status != "validated":
                 raise UserError(_("付款执行尚未完成统一审批流程。"))
             rec.state = "paid"
@@ -244,6 +261,7 @@ class ScPaymentExecution(models.Model):
             request = rec.payment_request_id
             if not request or request.state == "done":
                 continue
+            rec._check_payment_request_scope_or_raise()
             if request.state == "approve" and request.validation_status == "validated":
                 request.action_set_approved()
                 request.invalidate_recordset()
@@ -295,6 +313,20 @@ class ScPaymentExecution(models.Model):
                     _("办理付款执行"),
                     reasons=[_("实付金额必须大于0")],
                 )
+
+    def _check_payment_request_scope_or_raise(self):
+        for rec in self:
+            request = rec.payment_request_id
+            if not request:
+                continue
+            if rec.source_origin == "legacy" and rec.state == "legacy_confirmed":
+                continue
+            if request.type != "pay":
+                raise UserError(_("付款登记只能关联付款类型的付款申请。"))
+            if rec.project_id and request.project_id and rec.project_id != request.project_id:
+                raise UserError(_("付款登记项目必须与付款申请项目一致。"))
+            if rec.contract_id and request.contract_id and rec.contract_id != request.contract_id:
+                raise UserError(_("付款登记合同必须与付款申请合同一致。"))
 
     def _request_document_approval(self):
         self.ensure_one()

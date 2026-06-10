@@ -5,7 +5,7 @@ from odoo.exceptions import UserError
 
 class ScFinanceBusinessProjectSummary(models.Model):
     _name = "sc.finance.business.project.summary"
-    _description = "项目财务来源汇总"
+    _description = "项目收付款汇总"
     _auto = False
     _rec_name = "display_name"
     _order = "project_id, business_domain"
@@ -19,7 +19,7 @@ class ScFinanceBusinessProjectSummary(models.Model):
             ("self_funding", "自筹收入/退回"),
             ("guarantee_deposit", "保证金收退"),
         ],
-        string="业务域",
+        string="收付款类型",
         readonly=True,
         index=True,
     )
@@ -29,7 +29,7 @@ class ScFinanceBusinessProjectSummary(models.Model):
     source_line_count = fields.Integer(string="来源明细数", readonly=True)
     canonical_line_count = fields.Integer(string="正式余额明细数", readonly=True)
     visible_reference_line_count = fields.Integer(string="可见参考明细数", readonly=True)
-    amount = fields.Monetary(string="事实金额", currency_field="currency_id", readonly=True)
+    amount = fields.Monetary(string="业务金额", currency_field="currency_id", readonly=True)
     balance_effect = fields.Monetary(string="余额影响", currency_field="currency_id", readonly=True)
     cash_in_amount = fields.Monetary(string="现金流入", currency_field="currency_id", readonly=True)
     cash_out_amount = fields.Monetary(string="现金流出", currency_field="currency_id", readonly=True)
@@ -51,10 +51,10 @@ class ScFinanceBusinessProjectSummary(models.Model):
     guarantee_out_amount = fields.Monetary(string="保证金支出", currency_field="currency_id", readonly=True)
     guarantee_return_amount = fields.Monetary(string="保证金退回", currency_field="currency_id", readonly=True)
     guarantee_outstanding_amount = fields.Monetary(string="保证金在外余额", currency_field="currency_id", readonly=True)
-    coverage_note = fields.Char(string="承载说明", readonly=True)
+    coverage_note = fields.Char(string="口径说明", readonly=True)
 
     def _raise_readonly_projection(self):
-        raise UserError("项目财务来源汇总是只读汇总，请从来源业务单据维护数据。")
+        raise UserError("项目收付款汇总是只读汇总，请从来源业务单据维护数据。")
 
     @api.model_create_multi
     def create(self, vals_list):

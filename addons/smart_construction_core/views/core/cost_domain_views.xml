@@ -300,14 +300,17 @@
         <field name="name">project.cost.ledger.tree</field>
         <field name="model">project.cost.ledger</field>
         <field name="arch" type="xml">
-            <tree string="成本台账">
+            <tree string="成本归集台账">
                 <field name="date"/>
+                <field name="cost_flow_label"/>
                 <field name="project_id"/>
                 <field name="cost_code_id"/>
-                <field name="amount"/>
+                <field name="amount" sum="成本金额合计"/>
                 <field name="wbs_id"/>
                 <field name="period"/>
                 <field name="partner_id"/>
+                <field name="source_model" optional="hide"/>
+                <field name="source_id" optional="hide"/>
                 <field name="note"/>
             </tree>
         </field>
@@ -317,24 +320,36 @@
         <field name="name">project.cost.ledger.form</field>
         <field name="model">project.cost.ledger</field>
         <field name="arch" type="xml">
-            <form string="成本台账">
+            <form string="成本归集台账">
                 <sheet>
                     <group>
-                        <group>
+                        <group string="成本归集">
+                            <field name="cost_flow_label" readonly="1"/>
                             <field name="project_id"/>
                             <field name="date"/>
                             <field name="period" readonly="1"/>
+                            <field name="period_id"/>
+                        </group>
+                        <group string="项目与成本科目">
                             <field name="wbs_id"/>
                             <field name="cost_code_id"/>
+                            <field name="partner_id"/>
                         </group>
-                        <group>
+                        <group string="发生金额">
                             <field name="qty"/>
                             <field name="uom_id"/>
                             <field name="amount"/>
-                            <field name="partner_id"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group string="来源追溯">
+                            <field name="source_model"/>
+                            <field name="source_id"/>
+                            <field name="source_line_id"/>
                         </group>
                     </group>
-                    <field name="note"/>
+                    <group string="办理说明">
+                        <field name="note" nolabel="1"/>
+                    </group>
                 </sheet>
             </form>
         </field>
@@ -344,23 +359,26 @@
         <field name="name">project.cost.ledger.search</field>
         <field name="model">project.cost.ledger</field>
         <field name="arch" type="xml">
-            <search string="成本台账">
+            <search string="成本归集台账">
                 <field name="project_id"/>
                 <field name="cost_code_id"/>
                 <field name="wbs_id"/>
                 <field name="partner_id"/>
+                <field name="cost_flow_label"/>
                 <filter string="本月" name="filter_current_month" domain="[('period', '=', context_today().strftime('%Y-%m'))]"/>
                 <group expand="1" string="分组">
                     <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
                     <filter string="按科目" name="group_cost" context="{'group_by': 'cost_code_id'}"/>
                     <filter string="按工程结构" name="group_wbs" context="{'group_by': 'wbs_id'}"/>
+                    <filter string="按成本来源" name="group_cost_flow" context="{'group_by': 'cost_flow_label'}"/>
+                    <filter string="按往来单位" name="group_partner" context="{'group_by': 'partner_id'}"/>
                 </group>
             </search>
         </field>
     </record>
 
     <record id="action_project_cost_ledger" model="ir.actions.act_window">
-        <field name="name">成本台账</field>
+        <field name="name">成本归集台账</field>
         <field name="res_model">project.cost.ledger</field>
         <field name="view_mode">tree,form,pivot,graph</field>
         <field name="search_view_id" ref="view_project_cost_ledger_search"/>

@@ -84,6 +84,7 @@ class PaymentRequest(models.Model):
         required=True,
         tracking=True,
     )
+    payment_flow_label = fields.Char(string="办理事项", compute="_compute_payment_flow_label")
     receipt_type = fields.Char(
         string="登记类型",
         index=True,
@@ -439,6 +440,20 @@ class PaymentRequest(models.Model):
         default="draft",
         tracking=True,
     )
+
+    @api.depends("type", "receipt_type", "legacy_source_table", "cost_category_name")
+    def _compute_payment_flow_label(self):
+        for record in self:
+            if record.type == "receive":
+                record.payment_flow_label = record.receipt_type or _("收款申请")
+            elif record.legacy_source_table == "T_FK_Supplier":
+                record.payment_flow_label = _("往来单位付款申请")
+            elif record.legacy_source_table == "SCBSLY_DIRECT_PAYMENT_APPLY_ACCEPTED":
+                record.payment_flow_label = _("支付申请")
+            elif record.cost_category_name:
+                record.payment_flow_label = _("付款申请：%s") % record.cost_category_name
+            else:
+                record.payment_flow_label = _("付款申请")
 
     @api.depends("outflow_line_ids.source_line_type", "legacy_visible_cost_category_name")
     def _compute_reconciliation_summary(self):

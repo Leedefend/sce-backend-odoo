@@ -46,6 +46,7 @@ class ScSettlementOrder(models.Model):
         string="结算类型",
         default="out",
     )
+    settlement_flow_label = fields.Char(string="办理事项", compute="_compute_settlement_flow_label")
     expense_contract_category_id = fields.Many2one(
         "sc.dictionary",
         string="合同分类",
@@ -268,6 +269,17 @@ class ScSettlementOrder(models.Model):
         for order in self:
             category = order.settlement_category_id or order.expense_contract_category_id
             order.settlement_category_display = category.name or ""
+
+    @api.depends("settlement_type", "settlement_category_id.name", "expense_contract_category_id.name", "legacy_settlement_category")
+    def _compute_settlement_flow_label(self):
+        for order in self:
+            category = order.settlement_category_display or order.legacy_settlement_category
+            if category:
+                order.settlement_flow_label = category
+            elif order.settlement_type == "in":
+                order.settlement_flow_label = _("收入合同结算")
+            else:
+                order.settlement_flow_label = _("支出合同结算")
 
     @api.depends("settlement_type", "partner_id", "legacy_counterparty_name", "company_id.partner_id")
     def _compute_party_names(self):

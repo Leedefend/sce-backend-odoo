@@ -5,7 +5,7 @@
             <field name="name">sc.finance.business.fact.search</field>
             <field name="model">sc.finance.business.fact</field>
             <field name="arch" type="xml">
-                <search string="财务来源明细">
+                <search string="项目收付款来源明细">
                     <field name="source_record_name"/>
                     <field name="source_document_no"/>
                     <field name="project_id"/>
@@ -29,7 +29,7 @@
             <field name="name">sc.finance.business.fact.tree</field>
             <field name="model">sc.finance.business.fact</field>
             <field name="arch" type="xml">
-                <tree string="财务来源明细" create="0" edit="0" delete="0" default_order="document_date desc, id desc">
+                <tree string="项目收付款来源明细" create="0" edit="0" delete="0" default_order="document_date desc, id desc">
                     <field name="document_date"/>
                     <field name="business_domain"/>
                     <field name="fact_type"/>
@@ -54,10 +54,10 @@
             <field name="name">sc.finance.business.fact.form</field>
             <field name="model">sc.finance.business.fact</field>
             <field name="arch" type="xml">
-                <form string="财务来源明细" create="0" edit="0" delete="0">
+                <form string="项目收付款来源明细" create="0" edit="0" delete="0">
                     <sheet>
                         <group>
-                            <group string="事实分类">
+                            <group string="收付款分类">
                                 <field name="display_name"/>
                                 <field name="business_domain"/>
                                 <field name="fact_type"/>
@@ -106,7 +106,7 @@
             <field name="name">sc.finance.business.fact.pivot</field>
             <field name="model">sc.finance.business.fact</field>
             <field name="arch" type="xml">
-                <pivot string="财务来源明细">
+                <pivot string="项目收付款来源明细">
                     <field name="business_domain" type="row"/>
                     <field name="fact_type" type="row"/>
                     <field name="balance_policy" type="col"/>
@@ -117,7 +117,7 @@
         </record>
 
         <record id="action_sc_finance_business_fact" model="ir.actions.act_window">
-            <field name="name">财务来源明细</field>
+            <field name="name">项目收付款来源明细</field>
             <field name="res_model">sc.finance.business.fact</field>
             <field name="view_mode">tree,form,pivot</field>
             <field name="search_view_id" ref="view_sc_finance_business_fact_search"/>

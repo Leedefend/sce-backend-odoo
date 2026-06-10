@@ -44,6 +44,19 @@ class ScFundAccountOperation(models.Model):
         ondelete="restrict",
         tracking=True,
     )
+    source_project_id = fields.Many2one(
+        "project.project",
+        string="付款方项目",
+        related="source_account_id.project_id",
+        readonly=True,
+    )
+    target_project_id = fields.Many2one(
+        "project.project",
+        string="收款方项目",
+        related="target_account_id.project_id",
+        readonly=True,
+    )
+    fund_flow_label = fields.Char(string="业务方向", compute="_compute_fund_flow_label")
     fund_account_id = fields.Many2one(
         "sc.fund.account",
         string="账户",
@@ -125,6 +138,26 @@ class ScFundAccountOperation(models.Model):
             "同一历史资金操作只能迁移一次。",
         ),
     ]
+
+    @api.depends("operation_type", "source_account_id.project_id", "target_account_id.project_id")
+    def _compute_fund_flow_label(self):
+        for record in self:
+            if record.operation_type == "fund_daily_report":
+                record.fund_flow_label = _("账户日报")
+                continue
+            if record.operation_type == "balance_adjustment":
+                record.fund_flow_label = _("账户余额调整")
+                continue
+            source_project = record.source_account_id.project_id
+            target_project = record.target_account_id.project_id
+            if source_project and target_project:
+                record.fund_flow_label = _("同项目账户调拨") if source_project == target_project else _("项目间资金调拨")
+            elif source_project and not target_project:
+                record.fund_flow_label = _("项目转出到公司账户")
+            elif target_project and not source_project:
+                record.fund_flow_label = _("公司账户转入项目")
+            else:
+                record.fund_flow_label = _("公司账户间调拨")
 
     @api.model
     def _context_project_id(self):

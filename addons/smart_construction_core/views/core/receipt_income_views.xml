@@ -5,7 +5,7 @@
             <field name="name">sc.receipt.income.search</field>
             <field name="model">sc.receipt.income</field>
             <field name="arch" type="xml">
-                <search string="收款收入">
+                <search string="收款与收入办理">
                     <field name="name"/>
                     <field name="document_no"/>
                     <field name="project_id"/>
@@ -44,8 +44,9 @@
             <field name="name">sc.receipt.income.tree</field>
             <field name="model">sc.receipt.income</field>
             <field name="arch" type="xml">
-                <tree string="收款收入">
+                <tree string="收款与收入办理">
                     <field name="name"/>
+                    <field name="receipt_flow_label"/>
                     <field name="date_receipt"/>
                     <field name="project_id"/>
                     <field name="legacy_project_name" optional="show"/>
@@ -85,7 +86,7 @@
             <field name="name">sc.receipt.income.form</field>
             <field name="model">sc.receipt.income</field>
             <field name="arch" type="xml">
-                <form string="收款收入">
+                <form string="收款与收入办理">
                     <header>
                         <button name="action_confirm" string="提交审批" type="object" class="btn-primary"
                                 invisible="state != 'draft' or validation_status in ('waiting', 'pending', 'validated')"/>
@@ -104,12 +105,14 @@
                     </header>
                     <sheet>
                         <group>
-                            <group>
+                            <group string="业务方向">
                                 <field name="name" readonly="1"/>
+                                <field name="receipt_flow_label" readonly="1"/>
+                                <field name="source_kind" readonly="state == 'legacy_confirmed'"/>
                                 <field name="date_receipt" readonly="state == 'legacy_confirmed'"/>
                                 <field name="document_no" readonly="state == 'legacy_confirmed'"/>
                             </group>
-                            <group>
+                            <group string="项目与往来单位">
                                 <field name="project_id" readonly="state == 'legacy_confirmed'"/>
                                 <field name="legacy_project_name" readonly="1"/>
                                 <field name="operation_strategy" readonly="1"/>
@@ -132,19 +135,19 @@
                             <field name="bill_no" readonly="state == 'legacy_confirmed'"/>
                             <field name="invoice_ref" readonly="state == 'legacy_confirmed'"/>
                         </group>
-                        <group string="收款账户信息">
+                        <group string="收款账户">
                             <field name="receiving_account_name" readonly="state == 'legacy_confirmed'"/>
                             <field name="receiving_account_no" readonly="state == 'legacy_confirmed'"/>
                             <field name="receiving_bank_name" readonly="state == 'legacy_confirmed'"/>
                         </group>
-                        <group string="金额">
+                        <group string="收款金额/抵扣与结算">
                             <field name="amount" readonly="state == 'legacy_confirmed'"/>
                             <field name="deducted_invoice_amount" readonly="state == 'legacy_confirmed'"/>
                             <field name="deducted_tax_amount" readonly="state == 'legacy_confirmed'"/>
                             <field name="settlement_amount" readonly="state == 'legacy_confirmed'"/>
                             <field name="currency_id" invisible="1"/>
                         </group>
-                        <group>
+                        <group string="办理说明">
                             <field name="note"/>
                             <field name="attachment_ids" widget="many2many_binary"/>
                             <field name="active"/>
