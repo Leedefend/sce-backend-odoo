@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models, tools
+from odoo.osv import expression
 from odoo.exceptions import UserError
 
 
@@ -11,6 +12,8 @@ class ScFinanceCounterpartyPositionSummary(models.Model):
     _order = "counterparty_type, counterparty_name"
     _sc_readonly_navigation_button_methods = {
         "action_open_project_positions",
+        "action_open_finance_facts",
+        "action_open_interfund_facts",
     }
 
     display_name = fields.Char(string="往来对象", readonly=True)
@@ -99,6 +102,72 @@ class ScFinanceCounterpartyPositionSummary(models.Model):
             "view_mode": "tree,pivot,form",
             "domain": self._counterparty_identity_domain(),
             "context": {"search_default_group_project": 1},
+        }
+
+    def _finance_fact_counterparty_domain(self):
+        self.ensure_one()
+        if self.counterparty_type == "partner":
+            if self.partner_id:
+                return [("partner_id", "=", self.partner_id.id)]
+            return [("partner_id", "=", False), ("partner_name", "=", self.counterparty_name or False)]
+        if self.counterparty_type == "unknown":
+            return [("partner_id", "=", False), ("partner_name", "=", False)]
+        return [("id", "=", 0)]
+
+    def _interfund_fact_counterparty_domain(self):
+        self.ensure_one()
+        if self.counterparty_type == "project":
+            counterparty_project_id = self.counterparty_project_id.id if self.counterparty_project_id else False
+            if not counterparty_project_id:
+                return [("id", "=", 0)]
+            return expression.OR(
+                [
+                    [("source_project_id", "=", counterparty_project_id)],
+                    [("target_project_id", "=", counterparty_project_id)],
+                ]
+            )
+        if self.counterparty_type == "company":
+            return [
+                ("movement_type", "in", ("company_to_project_borrow", "company_to_project_transfer", "project_to_company_repay", "project_to_company_transfer")),
+                ("partner_id", "=", False),
+                ("partner_name", "in", (False, "")),
+            ]
+        if self.counterparty_type == "partner":
+            if not self.partner_id and self.counterparty_name == "未识别承包人":
+                return [
+                    ("movement_type", "in", ("contractor_to_project_repay", "project_to_contractor_borrow")),
+                    ("partner_id", "=", False),
+                    ("partner_name", "in", (False, "")),
+                ]
+            if self.partner_id:
+                return [("partner_id", "=", self.partner_id.id)]
+            return [("partner_id", "=", False), ("partner_name", "=", self.counterparty_name or False)]
+        if self.counterparty_type == "internal":
+            return [("movement_type", "in", ("same_project_account_transfer", "unclassified_account_transfer"))]
+        if self.counterparty_type == "unknown":
+            return [("partner_id", "=", False), ("partner_name", "=", False)]
+        return [("id", "=", 0)]
+
+    def action_open_finance_facts(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": "%s / 收付款来源明细" % (self.display_name or "往来对象"),
+            "res_model": "sc.finance.business.fact",
+            "view_mode": "tree,pivot,form",
+            "domain": self._finance_fact_counterparty_domain(),
+            "context": {"search_default_group_project": 1, "search_default_group_business_domain": 1},
+        }
+
+    def action_open_interfund_facts(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": "%s / 借款还款与调拨明细" % (self.display_name or "往来对象"),
+            "res_model": "sc.interfund.movement.fact",
+            "view_mode": "tree,pivot,form",
+            "domain": self._interfund_fact_counterparty_domain(),
+            "context": {"search_default_group_project": 1, "search_default_group_movement_type": 1},
         }
 
     def init(self):
