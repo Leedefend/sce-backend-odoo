@@ -9,6 +9,20 @@ class ScComprehensiveCostSummary(models.Model):
     _auto = False
     _rec_name = "display_name"
     _order = "project_id"
+    _sc_readonly_navigation_button_methods = {
+        "action_open_income_contracts",
+        "action_open_receipts",
+        "action_open_output_invoices",
+        "action_open_payable_contracts",
+        "action_open_supplier_contracts",
+        "action_open_material_costs",
+        "action_open_labor_costs",
+        "action_open_lease_costs",
+        "action_open_expenses",
+        "action_open_salary",
+        "action_open_input_invoices",
+        "action_open_payments",
+    }
 
     display_name = fields.Char(string="汇总项", readonly=True)
     company_id = fields.Many2one("res.company", string="公司", readonly=True, index=True)
@@ -54,6 +68,137 @@ class ScComprehensiveCostSummary(models.Model):
 
     def unlink(self):
         self._raise_readonly_projection()
+
+    def _project_domain(self):
+        self.ensure_one()
+        if self.project_id:
+            return [("project_id", "=", self.project_id.id)]
+        return [("project_id", "=", False)]
+
+    def _project_context(self):
+        self.ensure_one()
+        return {
+            "default_project_id": self.project_id.id if self.project_id else False,
+            "current_project_id": self.project_id.id if self.project_id else False,
+            "search_default_group_project": 1,
+        }
+
+    def _open_action(self, action_xmlid, name, domain, context=None):
+        self.ensure_one()
+        action = self.env.ref(action_xmlid, raise_if_not_found=False)
+        result = action.sudo().read()[0] if action else {"type": "ir.actions.act_window", "view_mode": "tree,form"}
+        result.update(
+            {
+                "name": "%s / %s" % (self.project_name or "项目", name),
+                "domain": domain,
+                "context": context or self._project_context(),
+                "target": "current",
+            }
+        )
+        return result
+
+    def action_open_income_contracts(self):
+        return self._open_action(
+            "smart_construction_core.action_construction_contract_income",
+            "收入合同",
+            self._project_domain() + [("type", "=", "out"), ("archived", "=", False), ("state", "!=", "cancel")],
+        )
+
+    def action_open_receipts(self):
+        return self._open_action(
+            "smart_construction_core.action_sc_receipt_income",
+            "收款登记",
+            self._project_domain() + [("active", "=", True), ("state", "!=", "cancel")],
+        )
+
+    def action_open_output_invoices(self):
+        return self._open_action(
+            "smart_construction_core.action_sc_invoice_registration",
+            "销项发票",
+            self._project_domain() + [("active", "=", True), ("state", "!=", "cancel"), ("direction", "=", "output")],
+            dict(self._project_context(), default_direction="output"),
+        )
+
+    def action_open_payable_contracts(self):
+        return self._open_action(
+            "smart_construction_core.action_construction_contract_expense",
+            "应付合同",
+            self._project_domain() + [("type", "=", "in"), ("archived", "=", False), ("state", "!=", "cancel")],
+        )
+
+    def action_open_supplier_contracts(self):
+        return self._open_action(
+            "smart_construction_core.action_sc_legacy_supplier_contract_pricing_fact",
+            "供应商合同",
+            self._project_domain() + [("active", "=", True), ("deleted_flag", "in", ["0", False, ""])],
+        )
+
+    def action_open_material_costs(self):
+        return self._open_action(
+            "smart_construction_core.action_sc_legacy_material_stock_fact",
+            "材料成本",
+            self._project_domain()
+            + [
+                ("active", "=", True),
+                ("state", "!=", "cancel"),
+                ("fact_type", "in", ["stock_in", "stock_in_line", "scbs_stock_in", "material_lease_settlement"]),
+            ],
+        )
+
+    def action_open_labor_costs(self):
+        return self._open_action(
+            "smart_construction_core.action_sc_legacy_labor_subcontract_fact",
+            "劳务/分包成本",
+            self._project_domain()
+            + [
+                ("active", "=", True),
+                ("state", "!=", "cancel"),
+                ("fact_type", "in", ["labor_settlement", "subcontract_settlement", "labor_contract", "subcontract_contract"]),
+            ],
+        )
+
+    def action_open_lease_costs(self):
+        return self._open_action(
+            "smart_construction_core.action_sc_legacy_equipment_lease_fact",
+            "租赁/机械成本",
+            self._project_domain()
+            + [
+                ("active", "=", True),
+                ("state", "!=", "cancel"),
+                ("fact_type", "in", ["lease_settlement", "lease_summary", "equipment_shift", "lease_contract_line", "lease_contract"]),
+            ],
+        )
+
+    def action_open_expenses(self):
+        return self._open_action(
+            "smart_construction_core.action_sc_expense_claim",
+            "费用报销",
+            self._project_domain() + [("active", "=", True), ("state", "!=", "cancel"), ("claim_type", "=", "expense")],
+            dict(self._project_context(), default_claim_type="expense"),
+        )
+
+    def action_open_salary(self):
+        return self._open_action(
+            "smart_construction_core.action_sc_salary_registration",
+            "工资登记",
+            self._project_domain() + [("state", "!=", "cancel"), ("fact_type", "=", "salary_registration")],
+            dict(self._project_context(), default_fact_type="salary_registration"),
+        )
+
+    def action_open_input_invoices(self):
+        return self._open_action(
+            "smart_construction_core.action_sc_invoice_registration",
+            "进项发票",
+            self._project_domain() + [("active", "=", True), ("state", "!=", "cancel"), ("direction", "=", "input")],
+            dict(self._project_context(), default_direction="input"),
+        )
+
+    def action_open_payments(self):
+        return self._open_action(
+            "smart_construction_core.action_sc_payment_execution",
+            "付款执行",
+            self._project_domain() + [("active", "=", True), ("state", "!=", "cancel")],
+        )
 
     def init(self):
         self._cr.execute(
