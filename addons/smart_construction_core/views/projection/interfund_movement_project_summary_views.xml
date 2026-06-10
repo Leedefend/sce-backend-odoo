@@ -47,6 +47,10 @@
             <field name="model">sc.interfund.movement.project.summary</field>
             <field name="arch" type="xml">
                 <form string="项目借还调拨汇总" create="0" edit="0" delete="0">
+                    <header>
+                        <button name="action_open_interfund_facts" type="object" string="查看来源明细" class="btn-primary"/>
+                        <button name="action_open_business_entry" type="object" string="进入正式办理" class="btn-secondary"/>
+                    </header>
                     <sheet>
                         <group>
                             <group string="汇总口径">

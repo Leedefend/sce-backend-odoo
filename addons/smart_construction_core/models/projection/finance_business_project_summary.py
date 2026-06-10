@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import ast
+
 from odoo import api, fields, models, tools
 from odoo.exceptions import UserError
 
@@ -9,6 +11,16 @@ class ScFinanceBusinessProjectSummary(models.Model):
     _auto = False
     _rec_name = "display_name"
     _order = "project_id, business_domain"
+    _sc_readonly_navigation_button_methods = {
+        "action_open_finance_facts",
+        "action_open_business_entry",
+    }
+
+    _BUSINESS_ENTRY_ACTION_BY_DOMAIN = {
+        "deduction_clearing": "smart_construction_core.action_sc_expense_claim_deduction_paid",
+        "tax_deduction": "smart_construction_core.action_sc_tax_deduction_registration_user",
+        "guarantee_deposit": "smart_construction_core.action_sc_expense_claim_deposit",
+    }
 
     display_name = fields.Char(string="汇总项", readonly=True)
     business_domain = fields.Selection(
@@ -65,6 +77,95 @@ class ScFinanceBusinessProjectSummary(models.Model):
 
     def unlink(self):
         self._raise_readonly_projection()
+
+    def _project_domain(self):
+        self.ensure_one()
+        if self.project_id:
+            return [("project_id", "=", self.project_id.id)]
+        return [("project_id", "=", False)]
+
+    def _action_domain(self, action_result):
+        raw_domain = action_result.get("domain") or []
+        if isinstance(raw_domain, str):
+            try:
+                parsed = ast.literal_eval(raw_domain)
+            except (SyntaxError, ValueError):
+                parsed = []
+            return list(parsed) if isinstance(parsed, list) else []
+        return list(raw_domain) if isinstance(raw_domain, list) else []
+
+    def _action_context(self, action_result, action_name):
+        raw_context = action_result.get("context") or {}
+        if isinstance(raw_context, str):
+            try:
+                parsed = ast.literal_eval(raw_context)
+            except (SyntaxError, ValueError):
+                parsed = {}
+            context = dict(parsed) if isinstance(parsed, dict) else {}
+        else:
+            context = dict(raw_context) if isinstance(raw_context, dict) else {}
+        if self.project_id:
+            context.update(
+                {
+                    "default_project_id": self.project_id.id,
+                    "current_project_id": self.project_id.id,
+                }
+            )
+        context.setdefault("default_summary", action_name)
+        context.setdefault("default_purpose", action_name)
+        context.setdefault(
+            "default_note",
+            "\n".join(
+                part
+                for part in (
+                    "办理来源：项目收付款汇总",
+                    "办理事项：%s" % action_name,
+                    "项目：%s" % self.project_id.display_name if self.project_id else False,
+                    "来源明细数：%s" % self.source_line_count,
+                    "余额影响：%s" % (self.balance_effect or 0.0),
+                    "现金流入：%s" % (self.cash_in_amount or 0.0),
+                    "现金流出：%s" % (self.cash_out_amount or 0.0),
+                    self.coverage_note,
+                )
+                if part
+            ),
+        )
+        return context
+
+    def action_open_finance_facts(self):
+        self.ensure_one()
+        domain = self._project_domain()
+        if self.business_domain:
+            domain.append(("business_domain", "=", self.business_domain))
+        return {
+            "type": "ir.actions.act_window",
+            "name": "%s / 收付款来源明细" % (self.display_name or "项目"),
+            "res_model": "sc.finance.business.fact",
+            "view_mode": "tree,pivot,form",
+            "domain": domain,
+            "context": {"search_default_group_business_domain": 1},
+        }
+
+    def action_open_business_entry(self):
+        self.ensure_one()
+        action_xmlid = self._BUSINESS_ENTRY_ACTION_BY_DOMAIN.get(self.business_domain)
+        action = self.env.ref(action_xmlid, raise_if_not_found=False) if action_xmlid else None
+        if not action:
+            return self.action_open_finance_facts()
+        result = action.sudo().read()[0]
+        action_name = result.get("name") or self._fields["business_domain"].convert_to_export(self.business_domain, self)
+        domain = self._action_domain(result)
+        if self.project_id and result.get("res_model") in {"sc.expense.claim", "sc.tax.deduction.registration"}:
+            domain.append(("project_id", "=", self.project_id.id))
+        result.update(
+            {
+                "name": "%s / %s" % (self.project_id.display_name if self.project_id else "项目", action_name),
+                "domain": domain,
+                "context": self._action_context(result, action_name),
+                "target": "current",
+            }
+        )
+        return result
 
     def init(self):
         self._cr.execute("SELECT to_regclass('sc_finance_business_fact'), to_regclass('project_project')")
