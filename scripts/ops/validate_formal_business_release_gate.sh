@@ -40,7 +40,10 @@ run_odoo_shell_check() {
   fi
   local summary_status
   summary_status="$(
-    grep -E '^\{.*"status"' "$output_file" | tail -n 1 | jq -r '.status // empty'
+    grep -E '(^\{.*"status")|^[A-Z0-9_]+=.*"status"' "$output_file" \
+      | tail -n 1 \
+      | sed -E 's/^[A-Z0-9_]+=//' \
+      | jq -r '.status // empty'
   )"
   rm -f "$output_file"
   if [[ "$summary_status" != "PASS" ]]; then
@@ -54,6 +57,9 @@ started_at="$(date -Iseconds)"
 echo "FORMAL_BUSINESS_RELEASE_GATE_START: db=${DB_NAME} started_at=${started_at}"
 
 run_odoo_shell_check "user_confirmed_menu_surface" "scripts/verify/user_confirmed_menu_surface_guard.py"
+run_odoo_shell_check "formal_action_runtime_drift" "scripts/verify/formal_action_runtime_drift_audit.py"
+run_odoo_shell_check "engineering_progress_income_visible_contract" "scripts/verify/engineering_progress_income_visible_contract_audit.py"
+run_odoo_shell_check "formal_entry_metadata" "scripts/verify/formal_entry_metadata_audit.py"
 run_odoo_shell_check "user_confirmed_form_capability" "scripts/verify/user_confirmed_form_capability_audit.py"
 run_odoo_shell_check "user_confirmed_form_data_alignment" "scripts/verify/user_confirmed_form_data_alignment_audit.py"
 run_odoo_shell_check "user_confirmed_settlement_usability" "scripts/verify/user_confirmed_settlement_usability_audit.py"

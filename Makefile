@@ -533,7 +533,7 @@ ACCEPTANCE_PASSWORD ?=
 verify.dev.acceptance.release: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) ACCEPTANCE_BACKUP_DIR="$(ACCEPTANCE_BACKUP_DIR)" ACCEPTANCE_BASE_URL="$(ACCEPTANCE_BASE_URL)" ACCEPTANCE_LOGIN="$(ACCEPTANCE_LOGIN)" ACCEPTANCE_PASSWORD="$(ACCEPTANCE_PASSWORD)" ACCEPTANCE_PROBE_OUTPUT="$(ACCEPTANCE_PROBE_OUTPUT)" python3 scripts/ops/dev_acceptance_release_probe.py
 
-release.dev.acceptance.publish: guard.prod.forbid check-compose-project check-compose-env verify.frontend.build verify.dev.acceptance.release
+release.dev.acceptance.publish: guard.prod.forbid check-compose-project check-compose-env verify.frontend.build verify.user_confirmed.formal_surface.locked verify.dev.acceptance.release
 	@echo "[release.dev.acceptance.publish] PASS base_url=$(ACCEPTANCE_BASE_URL) db=$(DB_NAME) artifact=$(ACCEPTANCE_PROBE_OUTPUT)"
 
 prod.restart.safe: guard.prod.danger check-compose-project check-compose-env
@@ -3551,6 +3551,10 @@ verify.engineering_progress_income.visible_contract.audit: guard.prod.forbid che
 .PHONY: verify.formal_action.runtime_drift.audit
 verify.formal_action.runtime_drift.audit: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/verify/formal_action_runtime_drift_audit.py
+
+.PHONY: verify.user_confirmed.formal_surface.locked
+verify.user_confirmed.formal_surface.locked: guard.prod.forbid verify.formal_action.runtime_drift.audit verify.engineering_progress_income.visible_contract.audit verify.formal_entry_metadata.audit
+	@echo "[OK] verify.user_confirmed.formal_surface.locked db=$(DB_NAME)"
 
 .PHONY: verify.prepaid_tax.visible_surface_alignment.audit
 verify.prepaid_tax.visible_surface_alignment.audit: guard.prod.forbid check-compose-project check-compose-env
