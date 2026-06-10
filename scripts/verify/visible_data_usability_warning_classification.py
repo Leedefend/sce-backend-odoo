@@ -160,6 +160,7 @@ def _classify_issue(
     settlement_contract_pass: bool,
     material_plan_note_pass: bool,
     material_rfq_source_pass: bool,
+    construction_diary_visible_pass: bool,
 ) -> tuple[str, str, set[str]]:
     fields = _fields(issue)
     business_fields = fields - ENTRY_METADATA_FIELDS - DERIVED_OR_SYSTEM_FIELDS
@@ -206,6 +207,13 @@ def _classify_issue(
     ):
         return "covered_by_material_rfq_source_coverage_gate", "targeted_material_rfq_source_coverage_gate_passed", set()
 
+    if (
+        issue.get("model") == "sc.construction.diary"
+        and business_fields <= {"legacy_visible_07", "legacy_visible_08"}
+        and construction_diary_visible_pass
+    ):
+        return "covered_by_construction_diary_visible_fields_gate", "targeted_construction_diary_visible_fields_gate_passed", set()
+
     if fields and business_fields:
         return "requires_model_specific_business_value_gate", "business_fields_need_source_value_rule_or_backfill", business_fields
 
@@ -222,6 +230,7 @@ def main() -> int:
     settlement_path, settlement = _latest_json("settlement_contract_surface_audit_result_v1.json")
     material_plan_path, material_plan = _latest_json("material_plan_visible_note_audit_result_v1.json")
     material_rfq_path, material_rfq = _latest_json("material_rfq_source_coverage_audit_result_v1.json")
+    construction_diary_path, construction_diary = _latest_json("construction_diary_visible_fields_audit_result_v1.json")
     project_path, project = _latest_json("project_migration_field_continuity_gap_probe_result_v1.json")
     formal_path, formal = _latest_json("formal_business_backfill_audit_probe_result_v1.json")
 
@@ -230,6 +239,7 @@ def main() -> int:
     settlement_contract_pass = _status(settlement) == "PASS"
     material_plan_note_pass = _status(material_plan) == "PASS"
     material_rfq_source_pass = _status(material_rfq) == "PASS"
+    construction_diary_visible_pass = _status(construction_diary) == "PASS"
 
     rows: list[dict[str, Any]] = []
     bucket_counts: Counter[str] = Counter()
@@ -244,6 +254,7 @@ def main() -> int:
             settlement_contract_pass=settlement_contract_pass,
             material_plan_note_pass=material_plan_note_pass,
             material_rfq_source_pass=material_rfq_source_pass,
+            construction_diary_visible_pass=construction_diary_visible_pass,
         )
         bucket_counts[bucket] += 1
         if unresolved:
@@ -285,6 +296,7 @@ def main() -> int:
         "settlement_contract_surface_audit": str(settlement_path) if settlement_path else None,
         "material_plan_visible_note_audit": str(material_plan_path) if material_plan_path else None,
         "material_rfq_source_coverage_audit": str(material_rfq_path) if material_rfq_path else None,
+        "construction_diary_visible_fields_audit": str(construction_diary_path) if construction_diary_path else None,
         "project_migration_field_continuity_probe": str(project_path) if project_path else None,
         "formal_business_backfill_audit": str(formal_path) if formal_path else None,
         "visible_warning_count": int(visible.get("warning_count") or 0),

@@ -63,6 +63,7 @@ run_odoo_shell_check "receipt_invoice_source_document" "scripts/verify/receipt_i
 run_odoo_shell_check "settlement_contract_surface" "scripts/verify/settlement_contract_surface_audit.py"
 run_odoo_shell_check "material_plan_visible_note" "scripts/verify/material_plan_visible_note_audit.py"
 run_odoo_shell_check "material_rfq_source_coverage" "scripts/verify/material_rfq_source_coverage_audit.py"
+run_odoo_shell_check "construction_diary_visible_fields" "scripts/verify/construction_diary_visible_fields_audit.py"
 
 echo "FORMAL_BUSINESS_RELEASE_GATE_CHECK_START: business_capability"
 DB_NAME="$DB_NAME" "$ROOT_DIR/scripts/ops/validate_business_capability_gate.sh"
