@@ -109,6 +109,8 @@ class ScPaymentExecution(models.Model):
     legacy_visible_request_no = fields.Char(string="历史可见支付申请单号", readonly=True)
     legacy_visible_voucher_no = fields.Char(string="历史可见凭证号", readonly=True)
     legacy_visible_payment_source = fields.Char(string="历史可见付款单关联来源", readonly=True)
+    push_result = fields.Char(string="推送结果", index=True, readonly=True)
+    kingdee_document_no = fields.Char(string="金蝶单据编号", index=True, readonly=True)
     creator_legacy_user_id = fields.Char(string="历史录入人ID", index=True, readonly=True)
     creator_name = fields.Char(string="历史录入人", index=True, readonly=True)
     legacy_visible_entry_date = fields.Char(string="历史可见录入日期", readonly=True)

@@ -14,6 +14,8 @@
                     <field name="contract_id"/>
                     <field name="payment_family"/>
                     <field name="payment_method"/>
+                    <field name="push_result"/>
+                    <field name="kingdee_document_no"/>
                     <filter string="付款申请残余" name="source_kind_outflow_request" domain="[('source_kind', '=', 'outflow_request')]"/>
                     <filter string="实付残余" name="source_kind_actual_outflow" domain="[('source_kind', '=', 'actual_outflow')]"/>
                     <filter string="已确认" name="state_confirmed" domain="[('state', 'in', ['confirmed', 'legacy_confirmed'])]"/>
@@ -24,6 +26,7 @@
                     <filter string="按经营策略" name="group_operation_strategy" context="{'group_by': 'operation_strategy'}"/>
                     <filter string="按单位" name="group_partner" context="{'group_by': 'partner_id'}"/>
                     <separator/>
+                    <filter string="按推送结果" name="group_push_result" context="{'group_by': 'push_result'}"/>
                     <filter string="按业务类型" name="group_source_kind" context="{'group_by': 'source_kind'}"/>
                     <filter string="按付款族" name="group_payment_family" context="{'group_by': 'payment_family'}"/>
                     <filter string="按付款方式" name="group_payment_method" context="{'group_by': 'payment_method'}"/>
@@ -49,6 +52,8 @@
                     <field name="document_no"/>
                     <field name="payment_family"/>
                     <field name="payment_method"/>
+                    <field name="push_result" optional="hide"/>
+                    <field name="kingdee_document_no" optional="hide"/>
                     <field name="bank_account"/>
                     <field name="payment_account_name"/>
                     <field name="payment_account_no"/>
@@ -110,6 +115,10 @@
                             <field name="payment_method" readonly="state == 'legacy_confirmed'"/>
                             <field name="bank_account" readonly="state == 'legacy_confirmed'"/>
                             <field name="handler_name" readonly="state == 'legacy_confirmed'"/>
+                        </group>
+                        <group string="金蝶推送">
+                            <field name="push_result" readonly="1"/>
+                            <field name="kingdee_document_no" readonly="1"/>
                         </group>
                         <group string="付款账户">
                             <field name="payment_account_name" readonly="state == 'legacy_confirmed'"/>
