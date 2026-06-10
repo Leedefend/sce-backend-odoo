@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 from collections import Counter
 from pathlib import Path
 
@@ -44,6 +45,27 @@ FINANCE_INTERFUND_ANALYSIS_PRODUCT_MENU_XMLIDS = {
     "smart_construction_core.menu_sc_finance_counterparty_position_summary",
     "smart_construction_core.menu_sc_finance_project_counterparty_position",
 }
+
+
+def artifact_root() -> Path:
+    raw = os.getenv("MIGRATION_ARTIFACT_ROOT")
+    candidates = [Path(raw)] if raw else []
+    candidates.extend([Path("/mnt/artifacts/backend"), Path.cwd() / "artifacts"])
+    for candidate in candidates:
+        try:
+            candidate.mkdir(parents=True, exist_ok=True)
+            probe = candidate / ".write_probe"
+            probe.write_text("ok\n", encoding="utf-8")
+            probe.unlink()
+            return candidate
+        except OSError:
+            continue
+    return Path("/tmp")
+
+
+def _write_artifact(result: dict) -> None:
+    target = artifact_root() / f"user_confirmed_menu_surface_guard.{env.cr.dbname}.json"  # noqa: F821
+    target.write_text(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True, default=str), encoding="utf-8")
 
 
 def _text(value) -> str:
@@ -256,23 +278,33 @@ def _assert_runtime_nav_locked() -> dict[str, int]:
 
 
 def main():
-    policy_counts = _assert_policy_matches_baseline()
-    runtime = _assert_runtime_nav_locked()
-    print(
-        json.dumps(
-            {
-                "status": "PASS",
-                "db": env.cr.dbname,  # noqa: F821
-                "guard": "user_confirmed_menu_surface_guard",
-                "baseline": BASELINE_FILE,
-                "policy_counts": policy_counts,
-                "runtime": runtime,
-                "check_login": CHECK_LOGIN,
-            },
-            ensure_ascii=False,
-            sort_keys=True,
-        )
-    )
+    try:
+        policy_counts = _assert_policy_matches_baseline()
+        runtime = _assert_runtime_nav_locked()
+        result = {
+            "status": "PASS",
+            "db": env.cr.dbname,  # noqa: F821
+            "guard": "user_confirmed_menu_surface_guard",
+            "baseline": BASELINE_FILE,
+            "policy_counts": policy_counts,
+            "runtime": runtime,
+            "check_login": CHECK_LOGIN,
+            "errors": [],
+        }
+    except Exception as exc:
+        result = {
+            "status": "FAIL",
+            "db": env.cr.dbname,  # noqa: F821
+            "guard": "user_confirmed_menu_surface_guard",
+            "baseline": BASELINE_FILE,
+            "check_login": CHECK_LOGIN,
+            "errors": [{"type": type(exc).__name__, "message": str(exc)}],
+        }
+        _write_artifact(result)
+        print(json.dumps(result, ensure_ascii=False, sort_keys=True, default=str))
+        raise SystemExit(1)
+    _write_artifact(result)
+    print(json.dumps(result, ensure_ascii=False, sort_keys=True, default=str))
 
 
-main()
+raise SystemExit(main())

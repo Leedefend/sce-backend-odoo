@@ -12,6 +12,8 @@ docker compose exec -T odoo odoo shell -d sc_demo -c /var/lib/odoo/odoo.conf < s
 """
 
 import json
+import os
+from pathlib import Path
 
 
 LOCKED_FORMAL_MODELS = [
@@ -79,6 +81,22 @@ FORMAL_SOURCE_MODELS = [
         "continuity_note": "formal fund operation carrier; account relationship gaps require mapping/new operation flow",
     },
 ]
+
+
+def artifact_root() -> Path:
+    raw = os.getenv("MIGRATION_ARTIFACT_ROOT")
+    candidates = [Path(raw)] if raw else []
+    candidates.extend([Path("/mnt/artifacts/backend"), Path.cwd() / "artifacts"])
+    for candidate in candidates:
+        try:
+            candidate.mkdir(parents=True, exist_ok=True)
+            probe = candidate / ".write_probe"
+            probe.write_text("ok\n", encoding="utf-8")
+            probe.unlink()
+            return candidate
+        except OSError:
+            continue
+    return Path("/tmp")
 
 
 def _value_for_field(record, field_name):
@@ -216,7 +234,9 @@ def main():
         "errors": errors,
     }
     print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True, default=str))
+    target = artifact_root() / f"locked_fact_formal_model_continuity_guard.{env.cr.dbname}.json"
+    target.write_text(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True, default=str), encoding="utf-8")
     return 0 if result["ok"] else 1
 
 
-main()
+raise SystemExit(main())
