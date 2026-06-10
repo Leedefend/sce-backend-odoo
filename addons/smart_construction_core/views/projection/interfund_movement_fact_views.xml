@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="view_sc_interfund_movement_fact_search" model="ir.ui.view">
+            <field name="name">sc.interfund.movement.fact.search</field>
+            <field name="model">sc.interfund.movement.fact</field>
+            <field name="arch" type="xml">
+                <search string="资金往来事实">
+                    <field name="source_record_name"/>
+                    <field name="source_document_no"/>
+                    <field name="source_project_id"/>
+                    <field name="target_project_id"/>
+                    <field name="partner_name"/>
+                    <filter string="公司借项目" name="company_to_project_borrow" domain="[('movement_type', '=', 'company_to_project_borrow')]"/>
+                    <filter string="项目还公司" name="project_to_company_repay" domain="[('movement_type', '=', 'project_to_company_repay')]"/>
+                    <filter string="项目间调拨" name="project_to_project_transfer" domain="[('movement_type', '=', 'project_to_project_transfer')]"/>
+                    <filter string="低置信度" name="low_confidence" domain="[('classification_confidence', '=', 'low')]"/>
+                    <filter string="按往来类型" name="group_movement_type" context="{'group_by': 'movement_type'}"/>
+                    <filter string="按来源项目" name="group_source_project" context="{'group_by': 'source_project_id'}"/>
+                    <filter string="按目标项目" name="group_target_project" context="{'group_by': 'target_project_id'}"/>
+                    <filter string="按来源模型" name="group_source_model" context="{'group_by': 'source_model'}"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_interfund_movement_fact_tree" model="ir.ui.view">
+            <field name="name">sc.interfund.movement.fact.tree</field>
+            <field name="model">sc.interfund.movement.fact</field>
+            <field name="arch" type="xml">
+                <tree string="资金往来事实" create="0" edit="0" delete="0" default_order="document_date desc, id desc">
+                    <field name="document_date"/>
+                    <field name="movement_type"/>
+                    <field name="source_project_id"/>
+                    <field name="target_project_id"/>
+                    <field name="partner_name"/>
+                    <field name="source_account_name"/>
+                    <field name="target_account_name"/>
+                    <field name="amount" sum="金额合计"/>
+                    <field name="classification_confidence"/>
+                    <field name="source_model"/>
+                    <field name="source_record_name"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_interfund_movement_fact_form" model="ir.ui.view">
+            <field name="name">sc.interfund.movement.fact.form</field>
+            <field name="model">sc.interfund.movement.fact</field>
+            <field name="arch" type="xml">
+                <form string="资金往来事实" create="0" edit="0" delete="0">
+                    <sheet>
+                        <group>
+                            <group string="事实分类">
+                                <field name="display_name"/>
+                                <field name="movement_type"/>
+                                <field name="direction"/>
+                                <field name="classification_confidence"/>
+                                <field name="classification_reason"/>
+                            </group>
+                            <group string="金额与日期">
+                                <field name="document_date"/>
+                                <field name="amount"/>
+                                <field name="company_id"/>
+                                <field name="state"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group string="来源方">
+                                <field name="source_project_id"/>
+                                <field name="source_account_id"/>
+                                <field name="source_account_name"/>
+                            </group>
+                            <group string="目标方">
+                                <field name="target_project_id"/>
+                                <field name="target_account_id"/>
+                                <field name="target_account_name"/>
+                                <field name="partner_id"/>
+                                <field name="partner_name"/>
+                            </group>
+                        </group>
+                        <group string="来源追溯">
+                            <group>
+                                <field name="source_model"/>
+                                <field name="source_res_id"/>
+                                <field name="source_record_name"/>
+                                <field name="source_document_no"/>
+                                <field name="source_menu_hint"/>
+                            </group>
+                            <group>
+                                <field name="legacy_source_model"/>
+                                <field name="legacy_source_table"/>
+                                <field name="legacy_record_id"/>
+                            </group>
+                        </group>
+                        <group>
+                            <field name="legacy_visible_note"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_sc_interfund_movement_fact_pivot" model="ir.ui.view">
+            <field name="name">sc.interfund.movement.fact.pivot</field>
+            <field name="model">sc.interfund.movement.fact</field>
+            <field name="arch" type="xml">
+                <pivot string="资金往来事实">
+                    <field name="movement_type" type="row"/>
+                    <field name="source_project_id" type="row"/>
+                    <field name="target_project_id" type="col"/>
+                    <field name="amount" type="measure"/>
+                </pivot>
+            </field>
+        </record>
+
+        <record id="action_sc_interfund_movement_fact" model="ir.actions.act_window">
+            <field name="name">资金往来事实</field>
+            <field name="res_model">sc.interfund.movement.fact</field>
+            <field name="view_mode">tree,form,pivot</field>
+            <field name="search_view_id" ref="view_sc_interfund_movement_fact_search"/>
+            <field name="context">{'create': False, 'search_default_group_movement_type': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+        </record>
+    </data>
+</odoo>

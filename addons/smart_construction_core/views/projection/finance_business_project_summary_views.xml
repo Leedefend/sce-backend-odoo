@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="view_sc_finance_business_project_summary_search" model="ir.ui.view">
+            <field name="name">sc.finance.business.project.summary.search</field>
+            <field name="model">sc.finance.business.project.summary</field>
+            <field name="arch" type="xml">
+                <search string="项目财务业务事实汇总">
+                    <field name="project_id"/>
+                    <filter string="到款确认" name="arrival_settlement" domain="[('business_domain', '=', 'arrival_settlement')]"/>
+                    <filter string="扣款清分" name="deduction_clearing" domain="[('business_domain', '=', 'deduction_clearing')]"/>
+                    <filter string="抵扣登记" name="tax_deduction" domain="[('business_domain', '=', 'tax_deduction')]"/>
+                    <filter string="自筹资金" name="self_funding" domain="[('business_domain', '=', 'self_funding')]"/>
+                    <filter string="保证金" name="guarantee_deposit" domain="[('business_domain', '=', 'guarantee_deposit')]"/>
+                    <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="按业务域" name="group_business_domain" context="{'group_by': 'business_domain'}"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_finance_business_project_summary_tree" model="ir.ui.view">
+            <field name="name">sc.finance.business.project.summary.tree</field>
+            <field name="model">sc.finance.business.project.summary</field>
+            <field name="arch" type="xml">
+                <tree string="项目财务业务事实汇总" create="0" edit="0" delete="0">
+                    <field name="project_id"/>
+                    <field name="business_domain"/>
+                    <field name="source_line_count" sum="事实明细数"/>
+                    <field name="canonical_line_count" sum="正式余额明细数"/>
+                    <field name="visible_reference_line_count" sum="可见参考明细数"/>
+                    <field name="arrival_amount" sum="到款金额"/>
+                    <field name="arrival_deduction_amount" sum="到款代扣"/>
+                    <field name="arrival_paid_amount" sum="到款拨付"/>
+                    <field name="deduction_paid_amount" sum="扣款实缴"/>
+                    <field name="deduction_refund_amount" sum="扣款退回"/>
+                    <field name="deduction_net_amount" sum="扣款净额"/>
+                    <field name="tax_deduction_tax_amount" sum="抵扣税额"/>
+                    <field name="self_funding_income_amount" sum="自筹收入"/>
+                    <field name="self_funding_refund_amount" sum="自筹退回"/>
+                    <field name="self_funding_balance" sum="自筹余额"/>
+                    <field name="guarantee_out_amount" sum="保证金支出"/>
+                    <field name="guarantee_return_amount" sum="保证金退回"/>
+                    <field name="guarantee_outstanding_amount" sum="保证金在外"/>
+                    <field name="balance_effect" sum="余额影响"/>
+                    <field name="coverage_note"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_finance_business_project_summary_form" model="ir.ui.view">
+            <field name="name">sc.finance.business.project.summary.form</field>
+            <field name="model">sc.finance.business.project.summary</field>
+            <field name="arch" type="xml">
+                <form string="项目财务业务事实汇总" create="0" edit="0" delete="0">
+                    <sheet>
+                        <group>
+                            <group string="归集维度">
+                                <field name="display_name"/>
+                                <field name="project_id"/>
+                                <field name="business_domain"/>
+                                <field name="company_id"/>
+                                <field name="coverage_note"/>
+                            </group>
+                            <group string="明细数量">
+                                <field name="source_line_count"/>
+                                <field name="canonical_line_count"/>
+                                <field name="visible_reference_line_count"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group string="通用金额">
+                                <field name="amount"/>
+                                <field name="balance_effect"/>
+                                <field name="cash_in_amount"/>
+                                <field name="cash_out_amount"/>
+                                <field name="deduction_amount"/>
+                                <field name="paid_amount"/>
+                                <field name="tax_amount"/>
+                            </group>
+                            <group string="业务分解">
+                                <field name="arrival_amount"/>
+                                <field name="arrival_deduction_amount"/>
+                                <field name="arrival_paid_amount"/>
+                                <field name="deduction_paid_amount"/>
+                                <field name="deduction_refund_amount"/>
+                                <field name="deduction_net_amount"/>
+                                <field name="tax_deduction_amount"/>
+                                <field name="tax_deduction_tax_amount"/>
+                                <field name="self_funding_income_amount"/>
+                                <field name="self_funding_refund_amount"/>
+                                <field name="self_funding_balance"/>
+                                <field name="self_funding_visible_reference_amount"/>
+                                <field name="guarantee_out_amount"/>
+                                <field name="guarantee_return_amount"/>
+                                <field name="guarantee_outstanding_amount"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_sc_finance_business_project_summary_pivot" model="ir.ui.view">
+            <field name="name">sc.finance.business.project.summary.pivot</field>
+            <field name="model">sc.finance.business.project.summary</field>
+            <field name="arch" type="xml">
+                <pivot string="项目财务业务事实汇总">
+                    <field name="business_domain" type="row"/>
+                    <field name="project_id" type="row"/>
+                    <field name="balance_effect" type="measure"/>
+                    <field name="source_line_count" type="measure"/>
+                </pivot>
+            </field>
+        </record>
+
+        <record id="action_sc_finance_business_project_summary" model="ir.actions.act_window">
+            <field name="name">项目财务业务事实汇总</field>
+            <field name="res_model">sc.finance.business.project.summary</field>
+            <field name="view_mode">tree,form,pivot</field>
+            <field name="search_view_id" ref="view_sc_finance_business_project_summary_search"/>
+            <field name="context">{'create': False, 'search_default_group_project': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+        </record>
+    </data>
+</odoo>

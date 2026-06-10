@@ -17,3 +17,10 @@ from . import salary_summary
 from . import material_stock_summary
 from . import comprehensive_cost_summary
 from . import tender_guarantee_summary
+from . import interfund_movement_fact
+from . import finance_business_fact
+from . import finance_business_project_summary
+from . import interfund_movement_project_summary
+from . import finance_project_capital_position
+from . import finance_project_counterparty_position
+from . import finance_counterparty_position_summary

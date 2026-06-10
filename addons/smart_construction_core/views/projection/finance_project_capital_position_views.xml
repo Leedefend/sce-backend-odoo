@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_sc_finance_project_capital_position_search" model="ir.ui.view">
+        <field name="name">sc.finance.project.capital.position.search</field>
+        <field name="model">sc.finance.project.capital.position</field>
+        <field name="arch" type="xml">
+            <search string="项目资金综合口径">
+                <field name="project_id"/>
+                <field name="company_id"/>
+                <filter string="有财务事实" name="has_finance" domain="[('finance_source_line_count', '&gt;', 0)]"/>
+                <filter string="有资金往来" name="has_interfund" domain="[('interfund_source_line_count', '&gt;', 0)]"/>
+                <filter string="综合正向" name="positive_combined" domain="[('combined_balance_effect', '&gt;', 0)]"/>
+                <filter string="综合负向" name="negative_combined" domain="[('combined_balance_effect', '&lt;', 0)]"/>
+                <group expand="0" string="分组">
+                    <filter string="项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="公司" name="group_company" context="{'group_by': 'company_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="view_sc_finance_project_capital_position_tree" model="ir.ui.view">
+        <field name="name">sc.finance.project.capital.position.tree</field>
+        <field name="model">sc.finance.project.capital.position</field>
+        <field name="arch" type="xml">
+            <tree string="项目资金综合口径" create="0" edit="0" delete="0">
+                <field name="project_id"/>
+                <field name="source_line_count" sum="综合明细数"/>
+                <field name="finance_balance_effect" sum="财务余额影响"/>
+                <field name="interfund_net_amount" sum="往来项目净流入"/>
+                <field name="combined_balance_effect" sum="综合余额影响"/>
+                <field name="finance_cash_net_amount" sum="财务现金净额"/>
+                <field name="combined_cash_net_amount" sum="综合现金净额"/>
+                <field name="arrival_amount" sum="到款金额"/>
+                <field name="deduction_net_amount" sum="扣款净额"/>
+                <field name="self_funding_balance" sum="自筹正式余额"/>
+                <field name="guarantee_outstanding_amount" sum="保证金在外余额"/>
+                <field name="company_borrow_in_amount" sum="公司借款流入"/>
+                <field name="company_repay_out_amount" sum="归还公司流出"/>
+                <field name="contractor_borrow_out_amount" sum="承包人借款流出"/>
+                <field name="contractor_repay_in_amount" sum="承包人还款流入"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_finance_project_capital_position_form" model="ir.ui.view">
+        <field name="name">sc.finance.project.capital.position.form</field>
+        <field name="model">sc.finance.project.capital.position</field>
+        <field name="arch" type="xml">
+            <form string="项目资金综合口径" create="0" edit="0" delete="0">
+                <sheet>
+                    <group>
+                        <field name="display_name"/>
+                        <field name="project_id"/>
+                        <field name="company_id"/>
+                        <field name="currency_id"/>
+                        <field name="coverage_note"/>
+                    </group>
+                    <group string="规模">
+                        <field name="finance_group_count"/>
+                        <field name="interfund_group_count"/>
+                        <field name="finance_source_line_count"/>
+                        <field name="interfund_source_line_count"/>
+                        <field name="source_line_count"/>
+                    </group>
+                    <group string="财务事实">
+                        <field name="arrival_amount"/>
+                        <field name="arrival_paid_amount"/>
+                        <field name="deduction_net_amount"/>
+                        <field name="tax_deduction_amount"/>
+                        <field name="tax_deduction_tax_amount"/>
+                        <field name="self_funding_balance"/>
+                        <field name="guarantee_outstanding_amount"/>
+                        <field name="finance_balance_effect"/>
+                        <field name="finance_cash_in_amount"/>
+                        <field name="finance_cash_out_amount"/>
+                        <field name="finance_cash_net_amount"/>
+                    </group>
+                    <group string="资金往来">
+                        <field name="interfund_inflow_amount"/>
+                        <field name="interfund_outflow_amount"/>
+                        <field name="interfund_net_amount"/>
+                        <field name="internal_transfer_amount"/>
+                        <field name="company_borrow_in_amount"/>
+                        <field name="company_repay_out_amount"/>
+                        <field name="project_transfer_in_amount"/>
+                        <field name="project_transfer_out_amount"/>
+                        <field name="contractor_borrow_out_amount"/>
+                        <field name="contractor_repay_in_amount"/>
+                    </group>
+                    <group string="综合口径">
+                        <field name="combined_balance_effect"/>
+                        <field name="combined_cash_net_amount"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_finance_project_capital_position_pivot" model="ir.ui.view">
+        <field name="name">sc.finance.project.capital.position.pivot</field>
+        <field name="model">sc.finance.project.capital.position</field>
+        <field name="arch" type="xml">
+            <pivot string="项目资金综合口径">
+                <field name="project_id" type="row"/>
+                <field name="finance_balance_effect" type="measure"/>
+                <field name="interfund_net_amount" type="measure"/>
+                <field name="combined_balance_effect" type="measure"/>
+                <field name="combined_cash_net_amount" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_sc_finance_project_capital_position" model="ir.actions.act_window">
+        <field name="name">项目资金综合口径</field>
+        <field name="res_model">sc.finance.project.capital.position</field>
+        <field name="view_mode">tree,pivot,form</field>
+        <field name="search_view_id" ref="view_sc_finance_project_capital_position_search"/>
+        <field name="context">{'search_default_group_project': 1}</field>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')), (4, ref('smart_construction_core.group_sc_cap_finance_user')), (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+    </record>
+</odoo>

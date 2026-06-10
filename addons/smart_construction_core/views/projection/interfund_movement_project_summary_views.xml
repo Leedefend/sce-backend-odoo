@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="view_sc_interfund_movement_project_summary_search" model="ir.ui.view">
+            <field name="name">sc.interfund.movement.project.summary.search</field>
+            <field name="model">sc.interfund.movement.project.summary</field>
+            <field name="arch" type="xml">
+                <search string="项目资金往来事实汇总">
+                    <field name="project_id"/>
+                    <filter string="公司借项目" name="company_to_project_borrow" domain="[('movement_type', '=', 'company_to_project_borrow')]"/>
+                    <filter string="项目还公司" name="project_to_company_repay" domain="[('movement_type', '=', 'project_to_company_repay')]"/>
+                    <filter string="项目间调拨" name="project_to_project_transfer" domain="[('movement_type', '=', 'project_to_project_transfer')]"/>
+                    <filter string="承包人往来" name="contractor" domain="[('movement_type', 'in', ['project_to_contractor_borrow', 'contractor_to_project_repay'])]"/>
+                    <filter string="低置信度" name="low_confidence" domain="[('low_confidence_count', '>', 0)]"/>
+                    <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="按往来类型" name="group_movement_type" context="{'group_by': 'movement_type'}"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_interfund_movement_project_summary_tree" model="ir.ui.view">
+            <field name="name">sc.interfund.movement.project.summary.tree</field>
+            <field name="model">sc.interfund.movement.project.summary</field>
+            <field name="arch" type="xml">
+                <tree string="项目资金往来事实汇总" create="0" edit="0" delete="0">
+                    <field name="project_id"/>
+                    <field name="movement_type"/>
+                    <field name="source_line_count" sum="事实明细数"/>
+                    <field name="low_confidence_count" sum="低置信度"/>
+                    <field name="inflow_amount" sum="项目流入"/>
+                    <field name="outflow_amount" sum="项目流出"/>
+                    <field name="net_amount" sum="项目净流入"/>
+                    <field name="internal_transfer_amount" sum="项目内调拨"/>
+                    <field name="company_borrow_in_amount" sum="公司借款流入"/>
+                    <field name="company_repay_out_amount" sum="归还公司流出"/>
+                    <field name="project_transfer_in_amount" sum="项目间调入"/>
+                    <field name="project_transfer_out_amount" sum="项目间调出"/>
+                    <field name="contractor_borrow_out_amount" sum="承包人借款流出"/>
+                    <field name="contractor_repay_in_amount" sum="承包人还款流入"/>
+                    <field name="coverage_note"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_interfund_movement_project_summary_form" model="ir.ui.view">
+            <field name="name">sc.interfund.movement.project.summary.form</field>
+            <field name="model">sc.interfund.movement.project.summary</field>
+            <field name="arch" type="xml">
+                <form string="项目资金往来事实汇总" create="0" edit="0" delete="0">
+                    <sheet>
+                        <group>
+                            <group string="归集维度">
+                                <field name="display_name"/>
+                                <field name="project_id"/>
+                                <field name="movement_type"/>
+                                <field name="company_id"/>
+                                <field name="coverage_note"/>
+                            </group>
+                            <group string="明细数量">
+                                <field name="source_line_count"/>
+                                <field name="low_confidence_count"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group string="项目视角金额">
+                                <field name="inflow_amount"/>
+                                <field name="outflow_amount"/>
+                                <field name="net_amount"/>
+                                <field name="internal_transfer_amount"/>
+                            </group>
+                            <group string="业务分解">
+                                <field name="company_borrow_in_amount"/>
+                                <field name="company_repay_out_amount"/>
+                                <field name="project_transfer_in_amount"/>
+                                <field name="project_transfer_out_amount"/>
+                                <field name="contractor_borrow_out_amount"/>
+                                <field name="contractor_repay_in_amount"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_sc_interfund_movement_project_summary_pivot" model="ir.ui.view">
+            <field name="name">sc.interfund.movement.project.summary.pivot</field>
+            <field name="model">sc.interfund.movement.project.summary</field>
+            <field name="arch" type="xml">
+                <pivot string="项目资金往来事实汇总">
+                    <field name="project_id" type="row"/>
+                    <field name="movement_type" type="row"/>
+                    <field name="net_amount" type="measure"/>
+                    <field name="inflow_amount" type="measure"/>
+                    <field name="outflow_amount" type="measure"/>
+                </pivot>
+            </field>
+        </record>
+
+        <record id="action_sc_interfund_movement_project_summary" model="ir.actions.act_window">
+            <field name="name">项目资金往来事实汇总</field>
+            <field name="res_model">sc.interfund.movement.project.summary</field>
+            <field name="view_mode">tree,form,pivot</field>
+            <field name="search_view_id" ref="view_sc_interfund_movement_project_summary_search"/>
+            <field name="context">{'create': False, 'search_default_group_project': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+        </record>
+    </data>
+</odoo>
