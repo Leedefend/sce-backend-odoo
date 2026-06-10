@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models, tools
+from odoo.osv import expression
 from odoo.exceptions import UserError
 
 
@@ -59,6 +60,48 @@ class ScFinanceProjectCapitalPosition(models.Model):
 
     def unlink(self):
         self._raise_readonly_projection()
+
+    def _project_domain(self, field_name):
+        self.ensure_one()
+        if self.project_id:
+            return [(field_name, "=", self.project_id.id)]
+        return [(field_name, "=", False)]
+
+    def action_open_finance_facts(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": "财务业务事实",
+            "res_model": "sc.finance.business.fact",
+            "view_mode": "tree,pivot,form",
+            "domain": self._project_domain("project_id"),
+            "context": {"search_default_group_business_domain": 1},
+        }
+
+    def action_open_interfund_facts(self):
+        self.ensure_one()
+        if self.project_id:
+            domain = expression.OR(
+                [
+                    [("source_project_id", "=", self.project_id.id)],
+                    [("target_project_id", "=", self.project_id.id)],
+                    [("project_id", "=", self.project_id.id)],
+                ]
+            )
+        else:
+            domain = [
+                ("source_project_id", "=", False),
+                ("target_project_id", "=", False),
+                ("project_id", "=", False),
+            ]
+        return {
+            "type": "ir.actions.act_window",
+            "name": "资金往来事实",
+            "res_model": "sc.interfund.movement.fact",
+            "view_mode": "tree,pivot,form",
+            "domain": domain,
+            "context": {"search_default_group_movement_type": 1},
+        }
 
     def init(self):
         self._cr.execute(

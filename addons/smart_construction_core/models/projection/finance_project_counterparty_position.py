@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models, tools
+from odoo.osv import expression
 from odoo.exceptions import UserError
 
 
@@ -56,6 +57,143 @@ class ScFinanceProjectCounterpartyPosition(models.Model):
 
     def unlink(self):
         self._raise_readonly_projection()
+
+    def _project_domain(self):
+        self.ensure_one()
+        if self.project_id:
+            return [("project_id", "=", self.project_id.id)]
+        return [("project_id", "=", False)]
+
+    def _counterparty_identity_domain(self):
+        self.ensure_one()
+        if self.counterparty_type == "project":
+            return [("counterparty_project_id", "=", self.counterparty_project_id.id or False)]
+        if self.counterparty_type == "partner":
+            if self.partner_id:
+                return [("partner_id", "=", self.partner_id.id)]
+            return [("partner_id", "=", False), ("counterparty_name", "=", self.counterparty_name or False)]
+        if self.counterparty_type in ("company", "internal", "unknown"):
+            return [
+                ("counterparty_project_id", "=", False),
+                ("partner_id", "=", False),
+                ("counterparty_name", "=", self.counterparty_name or False),
+            ]
+        return [("counterparty_name", "=", self.counterparty_name or False)]
+
+    def _finance_fact_counterparty_domain(self):
+        self.ensure_one()
+        domain = list(self._project_domain())
+        if self.counterparty_type == "partner":
+            if self.partner_id:
+                domain.append(("partner_id", "=", self.partner_id.id))
+            else:
+                domain.extend([("partner_id", "=", False), ("partner_name", "=", self.counterparty_name or False)])
+        elif self.counterparty_type == "unknown":
+            domain.extend([("partner_id", "=", False), ("partner_name", "=", False)])
+        else:
+            domain.append(("id", "=", 0))
+        return domain
+
+    def _interfund_fact_counterparty_domain(self):
+        self.ensure_one()
+        project_id = self.project_id.id if self.project_id else False
+        if not project_id:
+            return [("id", "=", 0)]
+        if self.counterparty_type == "project":
+            counterparty_project_id = self.counterparty_project_id.id if self.counterparty_project_id else False
+            return expression.OR(
+                [
+                    [("target_project_id", "=", project_id), ("source_project_id", "=", counterparty_project_id)],
+                    [("source_project_id", "=", project_id), ("target_project_id", "=", counterparty_project_id)],
+                ]
+            )
+        if self.counterparty_type == "company":
+            return expression.OR(
+                [
+                    [
+                        ("target_project_id", "=", project_id),
+                        ("source_project_id", "=", False),
+                        ("partner_id", "=", False),
+                        ("partner_name", "in", (False, "")),
+                        ("movement_type", "in", ("company_to_project_borrow", "company_to_project_transfer")),
+                    ],
+                    [
+                        ("source_project_id", "=", project_id),
+                        ("target_project_id", "=", False),
+                        ("partner_id", "=", False),
+                        ("partner_name", "in", (False, "")),
+                        ("movement_type", "in", ("project_to_company_repay", "project_to_company_transfer")),
+                    ],
+                ]
+            )
+        if self.counterparty_type == "partner":
+            if not self.partner_id and self.counterparty_name == "未识别承包人":
+                return expression.OR(
+                    [
+                        [
+                            ("target_project_id", "=", project_id),
+                            ("movement_type", "=", "contractor_to_project_repay"),
+                            ("partner_id", "=", False),
+                            ("partner_name", "in", (False, "")),
+                        ],
+                        [
+                            ("source_project_id", "=", project_id),
+                            ("movement_type", "=", "project_to_contractor_borrow"),
+                            ("partner_id", "=", False),
+                            ("partner_name", "in", (False, "")),
+                        ],
+                    ]
+                )
+            identity_domain = [("partner_id", "=", self.partner_id.id)] if self.partner_id else [("partner_id", "=", False), ("partner_name", "=", self.counterparty_name or False)]
+            project_domain = expression.OR(
+                [[("target_project_id", "=", project_id)], [("source_project_id", "=", project_id)], [("project_id", "=", project_id)]]
+            )
+            return expression.AND([project_domain, identity_domain])
+        if self.counterparty_type == "internal":
+            return expression.AND(
+                [
+                    [("movement_type", "in", ("same_project_account_transfer", "unclassified_account_transfer"))],
+                    expression.OR(
+                        [
+                            [("source_project_id", "=", project_id)],
+                            [("source_project_id", "=", False), ("target_project_id", "=", project_id)],
+                            [
+                                ("source_project_id", "=", False),
+                                ("target_project_id", "=", False),
+                                ("project_id", "=", project_id),
+                            ],
+                        ]
+                    ),
+                ]
+            )
+        if self.counterparty_type == "unknown":
+            project_domain = expression.OR(
+                [[("target_project_id", "=", project_id)], [("source_project_id", "=", project_id)], [("project_id", "=", project_id)]]
+            )
+            return expression.AND([project_domain, [("partner_id", "=", False), ("partner_name", "=", False)]])
+        return [("id", "=", 0)]
+
+    def action_open_finance_facts(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": "财务业务事实",
+            "res_model": "sc.finance.business.fact",
+            "view_mode": "tree,pivot,form",
+            "domain": self._finance_fact_counterparty_domain(),
+            "context": {"search_default_group_business_domain": 1},
+        }
+
+    def action_open_interfund_facts(self):
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": "资金往来事实",
+            "res_model": "sc.interfund.movement.fact",
+            "view_mode": "tree,pivot,form",
+            "domain": self._interfund_fact_counterparty_domain(),
+            "context": {"search_default_group_movement_type": 1},
+        }
 
     def init(self):
         self._cr.execute(
