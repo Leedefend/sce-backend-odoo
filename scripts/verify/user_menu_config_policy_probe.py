@@ -54,15 +54,40 @@ hidden_menu = ref("smart_construction_core.menu_sc_config_center")
 destination_menu = ref("smart_construction_core.menu_sc_contract_center")
 
 created = Policy.browse()
+created_menus = env["ir.ui.menu"].sudo().browse()  # noqa: F821
 try:
-    if target_menu:
+    Menu = env["ir.ui.menu"].sudo()  # noqa: F821
+    root_menu = ref("smart_construction_core.menu_sc_root")
+    probe_destination_menu = Menu.create(
+        {
+            "name": "__probe_menu_policy_destination__",
+            "parent_id": root_menu.id if root_menu else False,
+            "sequence": 9901,
+        }
+    )
+    probe_target_menu = Menu.create(
+        {
+            "name": "__probe_menu_policy_target__",
+            "parent_id": root_menu.id if root_menu else False,
+            "sequence": 9902,
+        }
+    )
+    probe_hidden_menu = Menu.create(
+        {
+            "name": "__probe_menu_policy_hidden__",
+            "parent_id": root_menu.id if root_menu else False,
+            "sequence": 9903,
+        }
+    )
+    created_menus |= probe_destination_menu | probe_target_menu | probe_hidden_menu
+    if probe_target_menu:
         created |= Policy.create(
             {
-                "menu_id": target_menu.id,
+                "menu_id": probe_target_menu.id,
                 "company_id": env.company.id,  # noqa: F821
                 "custom_label": "业务配置中心",
                 "sequence_override": 7,
-                "target_parent_menu_id": destination_menu.id if destination_menu else False,
+                "target_parent_menu_id": probe_destination_menu.id,
                 "visible": True,
             }
         )
@@ -71,7 +96,7 @@ try:
         if not (
             isinstance(current_parent_preview, list)
             and len(current_parent_preview) >= 2
-            and current_parent_preview[0] == target_menu.parent_id.id
+            and current_parent_preview[0] == probe_target_menu.parent_id.id
             and current_parent_preview[1]
         ):
             errors.append({"menu_config_current_parent_preview": current_parent_preview})
@@ -80,7 +105,7 @@ try:
         handler_payload = {
             "params": {
                 "model": "ui.menu.config.policy",
-                "values": {"company_id": env.company.id, "menu_id": target_menu.id, "visible": True},  # noqa: F821
+                "values": {"company_id": env.company.id, "menu_id": probe_target_menu.id, "visible": True},  # noqa: F821
                 "changed_fields": ["menu_id"],
                 "context": {},
             }
@@ -96,18 +121,30 @@ try:
             and handler_current_parent[1]
         ):
             errors.append({"menu_config_handler_current_parent_preview": handler_current_parent})
-    if hidden_menu:
+    if probe_hidden_menu:
         created |= Policy.create(
             {
-                "menu_id": hidden_menu.id,
+                "menu_id": probe_hidden_menu.id,
                 "company_id": env.company.id,  # noqa: F821
                 "visible": False,
             }
         )
     nav_fact = {
         "flat": [
-            {"menu_id": target_menu.id, "name": target_menu.name, "title": target_menu.name, "sequence": 85, "children": []},
-            {"menu_id": hidden_menu.id, "name": hidden_menu.name, "title": hidden_menu.name, "sequence": 95, "children": []},
+            {
+                "menu_id": probe_target_menu.id,
+                "name": probe_target_menu.name,
+                "title": probe_target_menu.name,
+                "sequence": 85,
+                "children": [],
+            },
+            {
+                "menu_id": probe_hidden_menu.id,
+                "name": probe_hidden_menu.name,
+                "title": probe_hidden_menu.name,
+                "sequence": 95,
+                "children": [],
+            },
         ],
         "tree": [
             {
@@ -117,26 +154,38 @@ try:
                 "sequence": 1,
                 "children": [
                     {
-                        "menu_id": destination_menu.id,
-                        "name": destination_menu.name,
-                        "title": destination_menu.name,
+                        "menu_id": probe_destination_menu.id,
+                        "name": probe_destination_menu.name,
+                        "title": probe_destination_menu.name,
                         "sequence": 1,
                         "children": [],
                     },
-                    {"menu_id": target_menu.id, "name": target_menu.name, "title": target_menu.name, "sequence": 85, "children": []},
-                    {"menu_id": hidden_menu.id, "name": hidden_menu.name, "title": hidden_menu.name, "sequence": 95, "children": []},
+                    {
+                        "menu_id": probe_target_menu.id,
+                        "name": probe_target_menu.name,
+                        "title": probe_target_menu.name,
+                        "sequence": 85,
+                        "children": [],
+                    },
+                    {
+                        "menu_id": probe_hidden_menu.id,
+                        "name": probe_hidden_menu.name,
+                        "title": probe_hidden_menu.name,
+                        "sequence": 95,
+                        "children": [],
+                    },
                 ],
             }
         ],
     }
     overlaid, stats = Policy.apply_runtime_overlay(nav_fact, user=env.user)  # noqa: F821
     flat_by_id = {row.get("menu_id"): row for row in overlaid.get("flat", [])}
-    if target_menu and flat_by_id.get(target_menu.id, {}).get("name") != "业务配置中心":
-        errors.append({"overlay_rename_failed": flat_by_id.get(target_menu.id)})
-    if target_menu and flat_by_id.get(target_menu.id, {}).get("sequence") != 7:
-        errors.append({"overlay_sequence_failed": flat_by_id.get(target_menu.id)})
-    if hidden_menu and hidden_menu.id in flat_by_id:
-        errors.append({"overlay_hide_failed": flat_by_id.get(hidden_menu.id)})
+    if flat_by_id.get(probe_target_menu.id, {}).get("name") != "业务配置中心":
+        errors.append({"overlay_rename_failed": flat_by_id.get(probe_target_menu.id)})
+    if flat_by_id.get(probe_target_menu.id, {}).get("sequence") != 7:
+        errors.append({"overlay_sequence_failed": flat_by_id.get(probe_target_menu.id)})
+    if probe_hidden_menu.id in flat_by_id:
+        errors.append({"overlay_hide_failed": flat_by_id.get(probe_hidden_menu.id)})
     if (stats or {}).get("hidden_count", 0) < 1:
         errors.append({"overlay_hidden_count": stats})
     if (stats or {}).get("moved_count", 0) < 1:
@@ -145,14 +194,16 @@ try:
         row
         for root in overlaid.get("tree", [])
         for row in (root.get("children") if isinstance(root.get("children"), list) else [])
-        if destination_menu and row.get("menu_id") == destination_menu.id
+        if row.get("menu_id") == probe_destination_menu.id
     ]
     destination_children = destination_rows[0].get("children", []) if destination_rows else []
-    if target_menu and target_menu.id not in {row.get("menu_id") for row in destination_children if isinstance(row, dict)}:
+    if probe_target_menu.id not in {row.get("menu_id") for row in destination_children if isinstance(row, dict)}:
         errors.append({"overlay_move_failed": destination_children})
 finally:
     if created:
         created.unlink()
+    if created_menus:
+        created_menus.unlink()
     env.cr.rollback()  # noqa: F821
 
 wutao = env["res.users"].sudo().search([("login", "=", "wutao")], limit=1)  # noqa: F821

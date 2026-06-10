@@ -214,6 +214,8 @@ class UiMenuConfigPolicy(models.Model):
             current_specific = bool(role_group_ids)
             if existing and existing_specific and not current_specific:
                 continue
+            if existing and existing_specific == current_specific:
+                continue
             applicable[menu_id] = policy
         return applicable
 
