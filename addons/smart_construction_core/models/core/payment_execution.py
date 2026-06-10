@@ -327,6 +327,8 @@ class ScPaymentExecution(models.Model):
                 raise UserError(_("付款登记只能关联付款类型的付款申请。"))
             if rec.project_id and request.project_id and rec.project_id != request.project_id:
                 raise UserError(_("付款登记项目必须与付款申请项目一致。"))
+            if rec.partner_id and request.partner_id and rec.partner_id != request.partner_id:
+                raise UserError(_("付款登记往来单位必须与付款申请往来单位一致。"))
             if rec.contract_id and request.contract_id and rec.contract_id != request.contract_id:
                 raise UserError(_("付款登记合同必须与付款申请合同一致。"))
 

@@ -281,6 +281,8 @@ class ScReceiptIncome(models.Model):
                 raise UserError(_("收款收入只能关联收款类型的付款/收款申请。"))
             if rec.project_id and request.project_id and rec.project_id != request.project_id:
                 raise UserError(_("收款收入项目必须与收款申请项目一致。"))
+            if rec.partner_id and request.partner_id and rec.partner_id != request.partner_id:
+                raise UserError(_("收款收入往来单位必须与收款申请往来单位一致。"))
             if rec.contract_id and request.contract_id and rec.contract_id != request.contract_id:
                 raise UserError(_("收款收入合同必须与收款申请合同一致。"))
 

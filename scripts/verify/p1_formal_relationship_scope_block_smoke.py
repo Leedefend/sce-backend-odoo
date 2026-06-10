@@ -37,6 +37,11 @@ def _sample_projects(exclude_id=False):
     return env["project.project"].sudo().search(domain, limit=1)  # noqa: F821
 
 
+def _sample_partner(exclude_id=False):
+    domain = [("id", "!=", int(exclude_id))] if exclude_id else []
+    return env["res.partner"].sudo().search(domain, limit=1)  # noqa: F821
+
+
 def _expect_block(label, func):
     try:
         func()
@@ -87,6 +92,7 @@ if not receive_request:
 
 if pay_request:
     mismatch_project = _sample_projects(exclude_id=pay_request.project_id.id)
+    mismatch_partner = _sample_partner(exclude_id=pay_request.partner_id.id)
     if not mismatch_project:
         errors.append({"key": "missing_mismatch_project_for_pay_request", "request_id": pay_request.id})
     else:
@@ -125,9 +131,48 @@ if pay_request:
             rec.action_submit()
 
         rows.append(_expect_block("expense_claim_project_scope", expense_claim_mismatch))
+    if not mismatch_partner:
+        errors.append({"key": "missing_mismatch_partner_for_pay_request", "request_id": pay_request.id})
+    else:
+        def payment_execution_partner_mismatch():
+            rec = PaymentExecution.create(
+                {
+                    "name": "REL-GUARD-PAY-EXEC-PARTNER",
+                    "source_origin": "manual",
+                    "source_kind": "actual_outflow",
+                    "project_id": pay_request.project_id.id,
+                    "partner_id": mismatch_partner.id,
+                    "payment_request_id": pay_request.id,
+                    "planned_amount": pay_request.amount or 1.0,
+                    "paid_amount": pay_request.amount or 1.0,
+                    "currency_id": pay_request.currency_id.id or env.company.currency_id.id,  # noqa: F821
+                }
+            )
+            rec.action_confirm()
+
+        rows.append(_expect_block("payment_execution_partner_scope", payment_execution_partner_mismatch))
+
+        def expense_claim_partner_mismatch():
+            rec = ExpenseClaim.create(
+                {
+                    "name": "REL-GUARD-EXPENSE-PARTNER",
+                    "source_origin": "manual",
+                    "claim_type": "expense",
+                    "project_id": pay_request.project_id.id,
+                    "partner_id": mismatch_partner.id,
+                    "payment_request_id": pay_request.id,
+                    "amount": pay_request.amount or 1.0,
+                    "approved_amount": pay_request.amount or 1.0,
+                    "currency_id": pay_request.currency_id.id or env.company.currency_id.id,  # noqa: F821
+                }
+            )
+            rec.action_submit()
+
+        rows.append(_expect_block("expense_claim_partner_scope", expense_claim_partner_mismatch))
 
 if receive_request:
     mismatch_project = _sample_projects(exclude_id=receive_request.project_id.id)
+    mismatch_partner = _sample_partner(exclude_id=receive_request.partner_id.id)
     if not mismatch_project:
         errors.append({"key": "missing_mismatch_project_for_receive_request", "request_id": receive_request.id})
     else:
@@ -147,6 +192,25 @@ if receive_request:
             rec.action_confirm()
 
         rows.append(_expect_block("receipt_income_project_scope", receipt_income_mismatch))
+    if not mismatch_partner:
+        errors.append({"key": "missing_mismatch_partner_for_receive_request", "request_id": receive_request.id})
+    else:
+        def receipt_income_partner_mismatch():
+            rec = ReceiptIncome.create(
+                {
+                    "name": "REL-GUARD-RECEIPT-PARTNER",
+                    "source_origin": "manual",
+                    "source_kind": "receipt_income",
+                    "project_id": receive_request.project_id.id,
+                    "partner_id": mismatch_partner.id,
+                    "payment_request_id": receive_request.id,
+                    "amount": receive_request.amount or 1.0,
+                    "currency_id": receive_request.currency_id.id or env.company.currency_id.id,  # noqa: F821
+                }
+            )
+            rec.action_confirm()
+
+        rows.append(_expect_block("receipt_income_partner_scope", receipt_income_partner_mismatch))
 
 for row in rows:
     if row["status"] != "BLOCKED":

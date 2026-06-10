@@ -420,6 +420,8 @@ class ScExpenseClaim(models.Model):
                 raise UserError(_("费用/保证金资金方向与付款/收款申请类型不一致。"))
             if rec.project_id and request.project_id and rec.project_id != request.project_id:
                 raise UserError(_("费用/保证金项目必须与付款/收款申请项目一致。"))
+            if rec.partner_id and request.partner_id and rec.partner_id != request.partner_id:
+                raise UserError(_("费用/保证金往来单位必须与付款/收款申请往来单位一致。"))
 
     def action_cancel(self):
         for rec in self:
