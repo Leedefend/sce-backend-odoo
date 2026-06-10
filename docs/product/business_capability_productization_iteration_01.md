@@ -6,6 +6,8 @@
 
 门禁：`scripts/verify/user_business_productization_baseline_guard.py`
 
+锁定事实正式模型连续性守卫：`scripts/verify/locked_fact_formal_model_continuity_guard.py`
+
 ## 不变边界
 
 1. 用户已验收的正式菜单、列表字段、数据可见面保持锁定。
@@ -185,10 +187,21 @@
 
 - `python3 scripts/verify/user_business_productization_baseline_guard.py`
 - `python3 -m py_compile scripts/verify/user_business_data_portrait.py scripts/verify/user_business_productization_baseline_guard.py`
+- `docker compose exec -T odoo odoo shell -d sc_demo -c /var/lib/odoo/odoo.conf < scripts/verify/locked_fact_formal_model_continuity_guard.py`
 - 用户已验收菜单/列表稳定性验收
 - P1 办理入口浏览器验收
 - P1 主模型关系缺口统计验收
 - 锁定事实只读策略验收
+
+当前本地 `sc_demo` 守卫结论：
+
+- `sc.receipt.income`：13,429 条锁定历史事实，非法改 `amount` 被拦截。
+- `sc.expense.claim`：65,295 条锁定历史事实，非法改 `amount` 被拦截。
+- `sc.invoice.registration`：69,485 条锁定历史事实，非法改 `amount_total` 被拦截。
+- `sc.tax.deduction.registration`：5,037 条锁定历史事实，非法改 `invoice_amount_total` 被拦截。
+- `sc.payment.execution`：37,716 条锁定历史事实，非法改 `planned_amount` 被拦截。
+- `sc.financing.loan`：463 条锁定历史事实，非法改 `amount` 被拦截。
+- `payment.request`、`sc.settlement.order`、`sc.fund.account.operation` 已有正式来源载体记录，后续连续办理通过新单据、派生视图或非侵入式映射层承载。
 
 ## 第二轮再进入的范围
 
