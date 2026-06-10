@@ -266,6 +266,29 @@ for xmlid, logins in visible_logins_by_menu.items():
 summary["visible_check_users"] = visible_by_login
 summary["visible_logins_by_product_menu"] = visible_logins_by_menu
 
+access_rows = []
+for login in VISIBLE_CHECK_USERS:
+    user = env["res.users"].sudo().search([("login", "=", login)], limit=1)  # noqa: F821
+    if not user:
+        continue
+    user_models = []
+    for spec in EXPECTED_MENUS.values():
+        model = env[spec["model"]].with_user(user)  # noqa: F821
+        can_read = bool(model.check_access_rights("read", raise_exception=False))
+        can_write = bool(model.check_access_rights("write", raise_exception=False))
+        row = {"model": spec["model"], "read": can_read, "write": can_write}
+        user_models.append(row)
+        if can_read and not can_write:
+            errors.append(
+                {
+                    "key": "finance_interfund_projection_missing_write_acl_for_page_load",
+                    "login": login,
+                    "model": spec["model"],
+                }
+            )
+    access_rows.append({"login": login, "models": user_models})
+summary["projection_access_rights_for_page_load"] = access_rows
+
 result = OrderedDict(
     [
         ("status", "PASS" if not errors else "FAIL"),

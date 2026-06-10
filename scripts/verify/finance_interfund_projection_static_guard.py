@@ -218,8 +218,21 @@ for model_name, spec in PROJECTIONS.items():
     if not access_matches:
         errors.append({"key": "missing_access_rows", "model": model_name, "model_id": model_external})
     for row in access_matches:
-        if row.get("perm_read") != "1" or row.get("perm_write") != "0" or row.get("perm_create") != "0" or row.get("perm_unlink") != "0":
-            errors.append({"key": "projection_access_not_readonly", "model": model_name, "access": row.get("id")})
+        if row.get("perm_read") != "1" or row.get("perm_write") != "1" or row.get("perm_create") != "0" or row.get("perm_unlink") != "0":
+            errors.append(
+                {
+                    "key": "projection_access_not_page_load_safe",
+                    "model": model_name,
+                    "access": row.get("id"),
+                    "expected": {"read": "1", "write": "1", "create": "0", "unlink": "0"},
+                    "actual": {
+                        "read": row.get("perm_read"),
+                        "write": row.get("perm_write"),
+                        "create": row.get("perm_create"),
+                        "unlink": row.get("perm_unlink"),
+                    },
+                }
+            )
 
     summary[model_name] = row_summary
 
