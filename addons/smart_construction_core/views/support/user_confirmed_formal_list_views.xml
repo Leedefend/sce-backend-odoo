@@ -422,20 +422,22 @@
         <field name="name">sc.receipt.income.engineering.progress.user.confirmed.tree</field>
         <field name="model">sc.receipt.income</field>
         <field name="arch" type="xml">
-            <tree string="工程进度收款" create="false" edit="false" delete="false" default_order="legacy_visible_13 desc, legacy_visible_02 desc, id desc">
-                <field name="legacy_visible_01" string="单据状态"/>
-                <field name="legacy_visible_02" string="单据编号"/>
-                <field name="legacy_visible_03" string="日期"/>
-                <field name="legacy_visible_04" string="对方单位/付款单位"/>
-                <field name="legacy_visible_05" string="承包单位"/>
-                <field name="legacy_visible_06" string="收入类别"/>
-                <field name="legacy_visible_07" string="工程款收入"/>
-                <field name="legacy_visible_08" string="备注"/>
-                <field name="legacy_visible_09" string="施工管理合同"/>
-                <field name="legacy_visible_10" string="项目名称"/>
-                <field name="legacy_visible_11" string="附件"/>
-                <field name="legacy_visible_12" string="录入人"/>
-                <field name="legacy_visible_13" string="录入时间"/>
+            <tree string="工程进度款收入登记" create="false" edit="false" delete="false" default_order="p1_visible_dfc25d77dc39 desc, p1_visible_8fa8662ad38f desc, id desc">
+                <field name="p1_visible_06fa8c6f628f" string="单据状态" readonly="1"/>
+                <field name="p1_visible_3e7255522b33" string="项目名称" readonly="1"/>
+                <field name="p1_visible_00381a68b952" string="往来单位" readonly="1"/>
+                <field name="p1_visible_8cd973ab9373" string="承包单位" readonly="1"/>
+                <field name="p1_visible_205fcc1bc5d4" string="施工管理合同" readonly="1"/>
+                <field name="p1_visible_8fa8662ad38f" string="单据编号" readonly="1"/>
+                <field name="p1_visible_71e47f617269" string="填写人" readonly="1"/>
+                <field name="p1_visible_49a5d541678c" string="收款账户" readonly="1"/>
+                <field name="p1_visible_2ff90909b29b" string="进账金额" readonly="1"/>
+                <field name="p1_visible_807b71479e35" string="收入类别" readonly="1"/>
+                <field name="p1_visible_0d20172efa91" string="收款时间" readonly="1"/>
+                <field name="p1_visible_e0361480e3a5" string="备注" readonly="1"/>
+                <field name="p1_visible_99f6fe6c41ad" string="附件" readonly="1"/>
+                <field name="p1_visible_ee6a4d9e2956" string="录入人" readonly="1"/>
+                <field name="p1_visible_dfc25d77dc39" string="录入时间" readonly="1"/>
             </tree>
         </field>
     </record>
@@ -657,13 +659,13 @@
         <field name="context">{'create': False, 'default_diary_type': '施工日志'}</field>
     </record>
     <record id="action_sc_receipt_income_engineering_progress" model="ir.actions.act_window">
-        <field name="name">工程进度收款</field>
+        <field name="name">工程进度款收入登记</field>
         <field name="view_id" ref="smart_construction_core.view_sc_receipt_income_engineering_progress_user_confirmed_tree"/>
         <field name="view_ids" eval="[(5, 0, 0),
             (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_receipt_income_engineering_progress_user_confirmed_tree')})
         ]"/>
-        <field name="domain">[('legacy_source_model', '=', 'online_old_scbsly:direct_acceptance:engineering_progress_receipt'), ('legacy_source_table', '=', 'direct_acceptance:工程进度收款')]</field>
-        <field name="context">{'create': False, 'default_source_kind': 'receipt_income', 'default_income_category': '工程进度收款'}</field>
+        <field name="domain">[('source_kind', '=', 'receipt_income'), ('legacy_source_model', '=', 'sc.legacy.receipt.income.fact'), ('legacy_source_table', '=', 'C_JFHKLR'), ('source_family', '=', 'engineering_progress_receipt_visible')]</field>
+        <field name="context">{'create': False, 'default_source_kind': 'receipt_income', 'default_receipt_type': '正常类型收款', 'default_income_category': '工程进度款收入', 'search_default_group_project': 1}</field>
     </record>
     <record id="action_sc_invoice_input_report_user" model="ir.actions.act_window">
         <field name="name">进项上报</field>
