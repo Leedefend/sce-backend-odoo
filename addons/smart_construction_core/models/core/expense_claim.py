@@ -216,11 +216,22 @@ class ScExpenseClaim(models.Model):
             return False
 
     @api.model
+    def _context_partner_id(self):
+        partner_id = self.env.context.get("default_partner_id") or self.env.context.get("current_partner_id")
+        try:
+            return int(partner_id) if partner_id else False
+        except (TypeError, ValueError):
+            return False
+
+    @api.model
     def default_get(self, fields_list):
         res = super().default_get(fields_list)
         project_id = res.get("project_id") or self._context_project_id()
         if project_id and "project_id" in fields_list:
             res["project_id"] = project_id
+        partner_id = res.get("partner_id") or self._context_partner_id()
+        if partner_id and "partner_id" in fields_list:
+            res["partner_id"] = partner_id
         return res
 
     @api.model_create_multi
@@ -230,6 +241,9 @@ class ScExpenseClaim(models.Model):
             project_id = self._context_project_id()
             if project_id:
                 vals.setdefault("project_id", project_id)
+            partner_id = self._context_partner_id()
+            if partner_id:
+                vals.setdefault("partner_id", partner_id)
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.expense.claim") or _("Expense Claim")
             vals.setdefault("approved_amount", vals.get("amount", 0.0))

@@ -113,6 +113,32 @@ class ScFinanceBusinessFact(models.Model):
             return list(parsed) if isinstance(parsed, list) else []
         return list(raw_domain) if isinstance(raw_domain, list) else []
 
+    def _action_context(self, action_result):
+        raw_context = action_result.get("context") or {}
+        if isinstance(raw_context, str):
+            try:
+                parsed = ast.literal_eval(raw_context)
+            except (SyntaxError, ValueError):
+                parsed = {}
+            context = dict(parsed) if isinstance(parsed, dict) else {}
+        else:
+            context = dict(raw_context) if isinstance(raw_context, dict) else {}
+        if self.project_id:
+            context.update(
+                {
+                    "default_project_id": self.project_id.id,
+                    "current_project_id": self.project_id.id,
+                }
+            )
+        if self.partner_id:
+            context.update(
+                {
+                    "default_partner_id": self.partner_id.id,
+                    "current_partner_id": self.partner_id.id,
+                }
+            )
+        return context
+
     def _source_record(self):
         self.ensure_one()
         if not self.source_model or not self.source_res_id or self.source_model not in self.env:
@@ -153,6 +179,7 @@ class ScFinanceBusinessFact(models.Model):
             {
                 "name": "%s / 同类正式办理" % (self.source_menu_hint or result.get("name") or "业务办理"),
                 "domain": domain,
+                "context": self._action_context(result),
                 "target": "current",
             }
         )
