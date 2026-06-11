@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Audit user accepted finance/account data against the interfund boundary.
+"""Audit user accepted finance/account data against the three-subject funds boundary.
 
 Run inside Odoo shell:
     DB_NAME=sc_demo bash scripts/ops/odoo_shell_exec.sh < scripts/verify/interfund_user_data_full_coverage_audit.py
@@ -237,6 +237,96 @@ fund_daily_summary_line_count = row_count("SELECT COALESCE(SUM(line_count), 0)::
 
 arrival_source_count = row_count("SELECT COUNT(*) FROM sc_legacy_fund_confirmation_document WHERE active IS TRUE")
 arrival_fact_count = int(finance_fact_source.get("sc.legacy.fund.confirmation.document:arrival_gross") or 0)
+arrival_partner_name_count = row_count(
+    """
+    SELECT COUNT(*)
+      FROM sc_legacy_fund_confirmation_document
+     WHERE active IS TRUE
+       AND NULLIF(construction_unit_name, '') IS NOT NULL
+    """
+)
+arrival_project_linked_count = row_count(
+    """
+    SELECT COUNT(*)
+      FROM sc_legacy_fund_confirmation_document
+     WHERE active IS TRUE
+       AND project_id IS NOT NULL
+    """
+)
+arrival_amount = amount(
+    """
+    SELECT COALESCE(SUM(actual_fund_amount), 0.0)
+      FROM sc_legacy_fund_confirmation_document
+     WHERE active IS TRUE
+    """
+)
+arrival_paid_amount = amount(
+    """
+    SELECT COALESCE(SUM(paid_amount_total), 0.0)
+      FROM sc_legacy_fund_confirmation_document
+     WHERE active IS TRUE
+    """
+)
+arrival_deducted_amount = amount(
+    """
+    SELECT COALESCE(SUM(deducted_amount_total), 0.0)
+      FROM sc_legacy_fund_confirmation_document
+     WHERE active IS TRUE
+    """
+)
+self_funding_canonical_income_count = int(self_funding_source.get("income") or 0)
+self_funding_canonical_refund_count = int(self_funding_source.get("refund") or 0)
+self_funding_income_amount = amount(
+    """
+    SELECT COALESCE(SUM(self_funding_amount), 0.0)
+      FROM sc_legacy_self_funding_fact
+     WHERE active IS TRUE
+       AND line_type = 'income'
+    """
+)
+self_funding_refund_amount = amount(
+    """
+    SELECT COALESCE(SUM(refund_amount), 0.0)
+      FROM sc_legacy_self_funding_fact
+     WHERE active IS TRUE
+       AND line_type = 'refund'
+    """
+)
+self_funding_unreturned_amount = amount(
+    """
+    SELECT COALESCE(SUM(unreturned_amount), 0.0)
+      FROM sc_legacy_self_funding_fact
+     WHERE active IS TRUE
+       AND line_type IN ('income', 'refund')
+    """
+)
+self_funding_partner_linked_count = row_count(
+    """
+    SELECT COUNT(*)
+      FROM sc_legacy_self_funding_fact
+     WHERE active IS TRUE
+       AND line_type IN ('income', 'refund')
+       AND partner_id IS NOT NULL
+    """
+)
+self_funding_partner_name_count = row_count(
+    """
+    SELECT COUNT(*)
+      FROM sc_legacy_self_funding_fact
+     WHERE active IS TRUE
+       AND line_type IN ('income', 'refund')
+       AND NULLIF(partner_name, '') IS NOT NULL
+    """
+)
+self_funding_project_linked_count = row_count(
+    """
+    SELECT COUNT(*)
+      FROM sc_legacy_self_funding_fact
+     WHERE active IS TRUE
+       AND line_type IN ('income', 'refund')
+       AND project_id IS NOT NULL
+    """
+)
 
 coverage["interfund_movement_facts"] = OrderedDict(
     [
@@ -273,7 +363,47 @@ coverage["interfund_movement_facts"] = OrderedDict(
     ]
 )
 
-coverage["not_interfund_by_design"] = OrderedDict(
+coverage["company_contractor_responsibility_facts"] = OrderedDict(
+    [
+        (
+            "arrival_confirmation",
+            {
+                "source": "sc.legacy.fund.confirmation.document",
+                "source_count": arrival_source_count,
+                "project_linked_count": arrival_project_linked_count,
+                "counterparty_name_count": arrival_partner_name_count,
+                "finance_fact_count": arrival_fact_count,
+                "actual_fund_amount": arrival_amount,
+                "paid_amount": arrival_paid_amount,
+                "deducted_amount": arrival_deducted_amount,
+                "boundary": "纳入公司-承包人责任口径：到款确认反映项目回款状态和公司对承包人的拨付/扣款责任；项目资金状态用于约束后续办理动作。",
+            },
+        ),
+        (
+            "self_funding_canonical",
+            {
+                "source": "sc.legacy.self.funding.fact / income + refund",
+                "income_count": self_funding_canonical_income_count,
+                "refund_count": self_funding_canonical_refund_count,
+                "project_linked_count": self_funding_project_linked_count,
+                "partner_linked_count": self_funding_partner_linked_count,
+                "partner_name_count": self_funding_partner_name_count,
+                "income_amount": self_funding_income_amount,
+                "refund_amount": self_funding_refund_amount,
+                "unreturned_amount": self_funding_unreturned_amount,
+                "finance_income_count": int(
+                    finance_fact_source.get("sc.legacy.self.funding.fact:self_funding_income") or 0
+                ),
+                "finance_refund_count": int(
+                    finance_fact_source.get("sc.legacy.self.funding.fact:self_funding_refund") or 0
+                ),
+                "boundary": "纳入公司-承包人责任口径：自筹垫付/退回反映承包人与公司的资金占用和归还关系，项目用于归集和办理约束。",
+            },
+        ),
+    ]
+)
+
+coverage["state_or_ledger_inputs_not_responsibility_facts"] = OrderedDict(
     [
         (
             "fund_daily_report",
@@ -282,7 +412,7 @@ coverage["not_interfund_by_design"] = OrderedDict(
                 "source_count": fund_daily_source_count,
                 "summary_source_count": fund_daily_summary_source,
                 "summary_line_count": fund_daily_summary_line_count,
-                "boundary": "不纳入往来款：资金日报是用户日报型台账/余额快照，后续资金台账口径以此承接",
+                "boundary": "不作为往来责任事实：资金日报是用户日报型台账/余额快照，用于判断项目资金状态和约束办理。",
             },
         ),
         (
@@ -291,28 +421,7 @@ coverage["not_interfund_by_design"] = OrderedDict(
                 "source": "sc.fund.account.operation / operation_type=balance_adjustment",
                 "source_count": int(fund_operation.get("balance_adjustment") or 0),
                 "source_amount": float(fund_operation_amount.get("balance_adjustment") or 0.0),
-                "boundary": "不纳入往来款：余额校准不直接产生对方应收应还关系",
-            },
-        ),
-        (
-            "arrival_confirmation",
-            {
-                "source": "sc.legacy.fund.confirmation.document",
-                "source_count": arrival_source_count,
-                "finance_fact_count": arrival_fact_count,
-                "boundary": "不直接纳入往来款：到款确认属于工程款到账清算事实",
-            },
-        ),
-        (
-            "self_funding_visible",
-            {
-                "source": "sc.legacy.self.funding.fact / visible families",
-                "income_visible_count": int(self_funding_source.get("income_visible") or 0),
-                "refund_visible_count": int(self_funding_source.get("refund_visible") or 0),
-                "finance_visible_count": int(
-                    finance_fact_source.get("sc.legacy.self.funding.fact:self_funding_visible_reference") or 0
-                ),
-                "boundary": "不直接纳入往来款：自筹垫资/退回先作为财务事实和余额权益口径治理",
+                "boundary": "不作为往来责任事实：余额校准不直接产生对方应收应还关系，只影响账户状态。",
             },
         ),
         (
@@ -321,7 +430,7 @@ coverage["not_interfund_by_design"] = OrderedDict(
                 "source": "sc.financing.loan / loan_registration + financing_in",
                 "source_count": financing_registration_count,
                 "source_amount": financing_registration_amount,
-                "boundary": "不纳入当前往来款：融资贷款登记属于融资债务能力域，应独立闭环",
+                "boundary": "不纳入当前三主体往来责任：融资贷款登记属于公司外部融资债务能力域，应独立闭环。",
             },
         ),
         (
@@ -331,7 +440,19 @@ coverage["not_interfund_by_design"] = OrderedDict(
                 "line_counts": account_transaction,
                 "line_amounts": account_transaction_amount,
                 "fund_daily_line_count": fund_daily_line_count,
-                "boundary": "不直接纳入往来款：账户明细承接账户收支/日报台账，避免和正式调拨单重复计算",
+                "boundary": "不作为往来责任事实：账户明细承接账户收支/日报台账，避免和正式调拨单重复计算。",
+            },
+        ),
+        (
+            "self_funding_visible_reference",
+            {
+                "source": "sc.legacy.self.funding.fact / visible families",
+                "income_visible_count": int(self_funding_source.get("income_visible") or 0),
+                "refund_visible_count": int(self_funding_source.get("refund_visible") or 0),
+                "finance_visible_count": int(
+                    finance_fact_source.get("sc.legacy.self.funding.fact:self_funding_visible_reference") or 0
+                ),
+                "boundary": "可见验收参考族：用于保持用户旧入口认知，不作为余额计算事实；公司-承包人责任余额使用 income/refund 正式族。",
             },
         ),
     ]
@@ -419,6 +540,18 @@ assert_equal(errors, "fund_daily_or_balance_adjustment_leak", 0, daily_or_balanc
 assert_equal(errors, "arrival_confirmation_finance_fact_coverage", arrival_source_count, arrival_fact_count)
 assert_equal(
     errors,
+    "self_funding_income_finance_fact_coverage",
+    self_funding_canonical_income_count,
+    finance_fact_source.get("sc.legacy.self.funding.fact:self_funding_income") or 0,
+)
+assert_equal(
+    errors,
+    "self_funding_refund_finance_fact_coverage",
+    self_funding_canonical_refund_count,
+    finance_fact_source.get("sc.legacy.self.funding.fact:self_funding_refund") or 0,
+)
+assert_equal(
+    errors,
     "self_funding_visible_reference_coverage",
     (self_funding_source.get("income_visible") or 0) + (self_funding_source.get("refund_visible") or 0),
     finance_fact_source.get("sc.legacy.self.funding.fact:self_funding_visible_reference") or 0,
@@ -443,7 +576,10 @@ summary = OrderedDict(
     [
         ("db", env.cr.dbname),  # noqa: F821
         ("status", "FAIL" if errors else "PASS"),
-        ("policy", "旧系统没有统一往来款概念；往来款按业务事实识别，用户入口名称只作为认知保留和追溯证据。"),
+        (
+            "policy",
+            "旧系统没有统一往来款概念；资金责任按公司、项目、承包人三主体识别。项目往来事实、公司-承包人责任事实、日报/余额状态输入必须分层承接。",
+        ),
         ("coverage", coverage),
         ("classification_evidence", classification_evidence),
         ("warnings", warnings),
