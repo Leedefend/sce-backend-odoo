@@ -7,7 +7,7 @@ from odoo.exceptions import ValidationError
 from odoo.osv import expression
 
 
-BUSINESS_CATEGORY_TEMPLATE_VERSION = "2026-06-11.8"
+BUSINESS_CATEGORY_TEMPLATE_VERSION = "2026-06-12.1"
 BUSINESS_CATEGORY_ACTION_BINDINGS = {
     "site.construction.diary": "smart_construction_core.action_sc_construction_diary",
     "site.quality.issue": "smart_construction_core.action_sc_quality_issue",
@@ -234,6 +234,20 @@ BUSINESS_CATEGORY_ATTACHMENT_POLICY_DEFAULTS = {
     "finance.repayment.contractor_project": "required",
     "finance.repayment.project_company": "required",
 }
+BUSINESS_CATEGORY_APPROVAL_POLICY_DEFAULTS = {
+    "finance.expense.reimbursement": "smart_construction_core.approval_policy_expense_claim",
+    "finance.expense.project": "smart_construction_core.approval_policy_expense_claim",
+    "finance.deposit.bid.pay": "smart_construction_core.approval_policy_expense_claim",
+    "finance.deposit.bid.return": "smart_construction_core.approval_policy_expense_claim",
+    "finance.deposit.contract.pay": "smart_construction_core.approval_policy_expense_claim",
+    "finance.deposit.contract.return": "smart_construction_core.approval_policy_expense_claim",
+    "finance.deduction.bill": "smart_construction_core.approval_policy_expense_claim",
+    "finance.deduction.paid": "smart_construction_core.approval_policy_expense_claim",
+    "finance.deduction.refund": "smart_construction_core.approval_policy_expense_claim",
+    "finance.repayment.registration": "smart_construction_core.approval_policy_expense_claim",
+    "finance.repayment.contractor_project": "smart_construction_core.approval_policy_expense_claim",
+    "finance.repayment.project_company": "smart_construction_core.approval_policy_expense_claim",
+}
 
 
 class ScBusinessCategory(models.Model):
@@ -451,6 +465,11 @@ class ScBusinessCategory(models.Model):
             attachment_policy = BUSINESS_CATEGORY_ATTACHMENT_POLICY_DEFAULTS.get(code)
             if attachment_policy and category.attachment_policy in (False, "none", "recommended"):
                 vals["attachment_policy"] = attachment_policy
+            approval_policy_xmlid = BUSINESS_CATEGORY_APPROVAL_POLICY_DEFAULTS.get(code)
+            if approval_policy_xmlid and not category.approval_policy_id:
+                approval_policy = self.env.ref(approval_policy_xmlid, raise_if_not_found=False)
+                if approval_policy:
+                    vals["approval_policy_id"] = approval_policy.id
             category.write(
                 vals
             )

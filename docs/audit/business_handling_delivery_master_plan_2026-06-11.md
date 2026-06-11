@@ -11,7 +11,7 @@
 - 正式业务闭环审计：`docs/audit/business_flow_closure_audit_2026-06-09.md`
 - 结算办理可用性审计：`docs/audit/user_confirmed_settlement_usability_2026-06-10.md`
 - 业务分类字典设计：`docs/audit/business_classification_dictionary_design_2026-06-11.md`
-- 公司与币种基线：本地开发库与开发服务器交付前必须统一为 `四川保盛建设集团有限公司`、`CNY`；开发服务器未升级前不得把本地验证结果表述为开发服务器已完成。
+- 公司与币种基线：用户业务币种已确定为人民币，本地开发库与开发服务器交付前必须统一为 `四川保盛建设集团有限公司`、`CNY`；后续只保留门禁防回退，不再把币种作为反复分析项。开发服务器未升级前不得把本地验证结果表述为开发服务器已完成。
 
 ## Current Business Data Reading
 
@@ -58,6 +58,7 @@
 - 数据画像用于确定业务域优先级、分类候选和验收样本，不再反复推翻已确认的主体关系和业务范围。
 - 数据治理只处理阻断办理、审批、台账、责任余额、附件追溯或用户验收一致性的缺口，例如公司、币种、来源挂接、幂等键、历史锁定事实和分类映射。
 - 发现台账、币种、来源或分类问题时，必须先说明其阻断的具体办理动作或验收口径，不能把问题扩大成新的全量分析任务。
+- 币种治理按已确认人民币基线直接修正为 `CNY`，只验证不一致数和防回退门禁，不再重新拉取全量数据或等待额外确认。
 - 本地开发库是当前实现和验证事实源；开发服务器只在本地闭环、文档口径和门禁脚本稳定后升级。
 - 在线旧系统只用于按需增量核实用户可见面和争议样本，不作为每轮任务的全量拉取前置步骤。
 - 浏览器验证只覆盖用户可见交互、菜单、表单、审批按钮和关键错误；优先使用 HTTP/API smoke 和只读审计门禁，避免重复下载或重型验证。
@@ -255,10 +256,11 @@
 - 已修正业务分类模板同步逻辑：升级同步只合并缺失的必填字段和下游 facts，不覆盖客户已维护配置；对 `payment_request_policy=not_applicable` 的往来类分类会剔除错误残留的 `payment.ledger`。借款分类入口改为按 `business_category_id.code` 切分，不再依赖 purpose 文本模式判断。
 - 已建立并通过 `make verify.finance_interfund_category.handling_policy.audit`，把账户调拨、借款、项目借公司款、承包人借项目款、项目还公司款、承包人还项目款统一纳入内部往来分类门禁：分类必须配置项目/往来单位/金额/日期或账户必填，`payment_request_policy=not_applicable`，下游只允许 `sc.interfund.movement.fact` 与 `sc.treasury.ledger`，不得进入 `payment.ledger` 或要求 `payment_request_id`。当前本地 `sc_demo` 内部往来事实 1,543 条全部为高置信分类，借款/还款正金额事实来源级资金台账缺口为 0。
 - 已把费用/保证金/扣款/还款附件策略从字典配置推进到模型动作执行：11 个 `sc.expense.claim` 分类默认 `attachment_policy=required`，手工新建单据在提交、批准或完成前必须上传附件；历史迁移事实不 retroactive 强制。增强后的 `make verify.finance_expense_category.handling_policy.audit` 已验证无附件提交会被拦截、补附件后可进入提交状态，并且 `scripts/ops/validate_core_document_processing_gate.sh` 复跑通过，费用、保证金和还款的原有提交、审批、完成链路未被破坏。
+- 已把费用/保证金/扣款/还款审批策略从全局模型配置推进到业务分类默认策略：12 个 `sc.expense.claim` 分类默认绑定 `expense_claim_approval`，且同步过程不覆盖客户已维护策略。新增并通过 `make verify.finance_expense.approval_policy.audit`，验证免审批配置下提交后可完成，启用审批配置下审批前不能批准/完成，统一审批通过后才能完成并写入内部往来资金台账。
 
 下一步收口顺序：
 
-1. 先围绕扣款单非现金办理、保证金收付与收付款申请边界、审批策略和浏览器抽样做验收，把“分类办理策略可验收”推进到“用户可操作闭环可验收”。
+1. 先围绕扣款单非现金办理、保证金收付与收付款申请边界、HTTP/浏览器抽样做验收，把“分类办理策略可验收”推进到“用户可操作闭环可验收”。
 2. 再制定剩余 2,341 条 source-less legacy 行处理策略，明确哪些保留为旧日报/总账快照、哪些需要补正式来源事实、哪些应作废后由来源级台账替代。
 3. 再进入开发服务器升级准备；升级前必须复跑业务分类、资金往来、费用分类和 HTTP/API 可见面门禁。
 

@@ -59,6 +59,13 @@ evidence: login, system.init navigation, ui.contract.v2 action_open, api.data li
 ```
 
 ```text
+COMPOSE_PROJECT_NAME=sc-backend-odoo-dev DB_NAME=sc_demo make verify.finance_expense.approval_policy.audit
+FINANCE_EXPENSE_APPROVAL_POLICY_AUDIT: status=PASS
+covered: 12 sc.expense.claim business categories
+evidence: category approval_policy_id=expense_claim_approval, optional approval path can complete, required approval path blocks approve/done before tier validation, validated approval can complete and write treasury ledger
+```
+
+```text
 COMPOSE_PROJECT_NAME=sc-backend-odoo-dev DB_NAME=sc_demo make verify.finance_legacy_cash_ledger.backfill_readiness.audit
 FINANCE_LEGACY_CASH_LEDGER_BACKFILL_READINESS_AUDIT: status=PASS
 expected_source_linked_ledger_count=113549
@@ -172,6 +179,7 @@ HTTP/API 可见面验收结论：
 - 已补齐剩余 97,543 条来源级历史现金流台账，其中费用/保证金/扣款 50,825 条、付款执行 23,439 条、收款登记 23,279 条；迁移只插入缺失 `sc.treasury.ledger`，不修改原办理事实，且历史来源级现金流 `payment_request_id` 保持为空。
 - 已补齐费用分类办理策略门禁：报销、项目费用、保证金支付/退回、扣款实缴/退回等经营现金类分类必须配置收付款申请和账户字段；还款登记、承包人还项目款、项目还公司款登记等往来类分类必须保持 `payment_request_id` 缺省且 `payment_request_policy=not_applicable`，下游只进入 `sc.interfund.movement.fact` 和 `sc.treasury.ledger`，不得进入 `payment.ledger`。
 - 已补齐费用/保证金/扣款/还款附件强制策略：11 个 `sc.expense.claim` 分类默认 `attachment_policy=required`，手工新建单据提交、批准或完成前必须上传附件；历史迁移事实不 retroactive 强制。增强后的费用分类门禁验证无附件提交会被拦截，补附件后可提交。
+- 已补齐费用/保证金/扣款/还款审批策略：12 个 `sc.expense.claim` 分类默认绑定 `expense_claim_approval`，同步时不覆盖客户已维护策略；免审批配置可提交后完成，启用审批配置时审批前不能批准或完成，tier validation 通过后才能完成并写入来源级资金台账。
 - 已修正借款类入口切分：承包人借项目款、项目借公司款登记按 `business_category_id.code` 明确切分，静态和运行时门禁均验证保存后仍留在正确入口，不再依赖 purpose 文本包含关系。
 - 剩余 source-less legacy 台账 2,341 条：2,322 条找不到正式候选，18 条方向不一致，1 条项目不一致，暂不自动补挂。
 - 后续迁移脚本不得重复追加 113,549 条来源级台账；应以 `source_model/source_res_id/project_id/direction/source_kind` 为幂等键，剩余 2,341 条 source-less legacy 行需单独判断保留、补来源或作废策略，防止现金流翻倍。
