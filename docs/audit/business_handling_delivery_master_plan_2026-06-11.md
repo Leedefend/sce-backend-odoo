@@ -236,6 +236,7 @@
 - 已补账户资金办理关系门禁：账户调拨必须有转出/转入账户、不同账户、正金额且账户币种一致；余额调整必须有调整账户且调整前后金额不同；资金日报必须有账户；表单“完成”按钮只在已确认状态显示。
 - 已补资金日报办理台账承接：`finance.fund.daily_report` 和 `finance.fund.balance_adjustment` 已进入业务分类字典。资金日报在 `action_done` 后按当日收入/支出写入来源级 `sc.treasury.ledger(source_kind='daily_line')`，不挂 `payment.request`，不写 `sc.interfund.movement.fact`；余额调整只作为账户状态校准，不生成现金流和往来责任事实。
 - 已补账户余额主档承接：`sc.fund.account` 增加当前账面余额、当前银行余额、余额日期、余额来源和来源单据。资金日报完成后回写账户账面/银行余额，余额调整完成后回写账户账面余额。转账类账户余额扣加仍需等历史期初余额和账户明细迁移基线确认后启用，避免在旧数据不完整时产生错误账户状态。
+- 已补账户余额历史初始化门禁：`make verify.fund_account.balance_backfill_readiness.audit` 按“最新资金日报余额优先，否则期初余额”只读审计正式账户余额初始化可行性。当前本地 `sc_demo` 111 个历史正式账户中，46 个可匹配最新资金日报行，65 个无日报匹配，61 个无日报且期初为 0；当前 111 个账户均未按新字段完成历史回填，下一步需写入迁移脚本，不能直接启用转账扣加余额。
 - 已修正借款分类口径：`项目借公司款` 不再因同时包含“项目/借/款”被误分为承包人借项目款；历史借出类按“借...项目...款”顺序语义进入 `project_to_contractor_borrow`。
 - 已建立 `scripts/ops/validate_interfund_account_loan_closure.sh`，验证办理动作 -> 审计日志 -> `sc.interfund.movement.fact` -> `sc.interfund.movement.project.summary` -> `sc.finance.project.capital.position`。
 - 已建立 `scripts/ops/validate_interfund_treasury_ledger_backfill_readiness.sh`，只读审计历史往来事实进入 `sc.treasury.ledger` 的回填候选、已存在台账和不可自动回填事实。
