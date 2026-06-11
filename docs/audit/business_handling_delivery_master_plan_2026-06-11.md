@@ -644,3 +644,22 @@ covered: payment_execution, receipt_income, expense_claim, fund_account_operatio
 - 将 `payment.request -> sc.payment.execution -> payment.ledger`、`payment.request(receive) -> sc.receipt.income -> sc.treasury.ledger`、经营类 `sc.expense.claim -> payment.request/payment.ledger`、往来类 `sc.expense.claim -> sc.interfund.movement.fact -> sc.treasury.ledger(source_kind=interfund)` 整理成一张用户办理链路矩阵。
 - 对“支付申请、往来单位付款、到款确认表、报销/保证金/扣款、账户调拨”补充入口级业务语言和验收证据。
 - 下一轮优先基于公司-承包人责任事实补到款确认、自筹收入/退回、拨付/扣款约束、收款发票核销和合同收款/开票余额硬阻断；若审计继续无 P0 阻断，再补入口清晰度、关系必填规则和下游事实追溯，不做报表扩展。
+
+### Company Contractor Responsibility Handling Evidence
+
+本轮把公司-承包人责任余额从付款执行扩展到扣款单办理：
+
+- 通用余额判断沉淀到 `sc.company.contractor.responsibility.context.mixin`，后续拨付、扣款、退回、核销可复用同一口径。
+- `sc.payment.execution` 继续用“本次实付金额”校验到款超处理和到款可处理余额。
+- `sc.expense.claim` 仅在 `finance.deduction.bill` / `扣款单` 这个非现金扣款事实上启用硬约束；扣款单仍不关联 `payment.request`，也不写现金台账。
+- `finance.deduction.paid`、`finance.deduction.refund`、`tax.deduction.registration` 保留原办理语义，不能为了统一入口把现金实缴、退回和税务抵扣混成同一种往来申请。
+- `self_funding_balance > 0` 当前仍是提示，不阻断扣款单和付款执行；自筹抵扣/退回的硬规则等自筹办理动作闭环时再收口。
+
+验证结果：
+
+```text
+DB_NAME=sc_demo scripts/ops/validate_company_contractor_responsibility_context.sh
+status=PASS
+payment_execution_responsibility_constraints: over_processed blocks, amount exceeding arrival balance blocks, amount within balance allows, self_funding_open does not block
+expense_claim_deduction_responsibility_constraints: over_processed blocks deduction bill, deduction amount exceeding arrival balance blocks, amount within balance allows, self_funding_open does not block
+```

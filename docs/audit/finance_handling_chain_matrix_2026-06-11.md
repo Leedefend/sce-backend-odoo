@@ -466,6 +466,28 @@ make verify.baseline DB_NAME=sc_demo
 [verify.baseline] PASS ALL on sc_demo
 ```
 
+## Iteration Evidence - 2026-06-12 Company Contractor Responsibility Gates
+
+本轮明确资金办理链路中的责任约束边界：
+
+- 付款执行：公司向承包人继续拨付时，读取公司-承包人责任余额；到款超处理阻断，实付金额超过到款可处理余额阻断。
+- 扣款单：非现金扣款事实不走 `payment.request`，但同样消耗到款可处理余额；到款超处理阻断，扣款金额超过到款可处理余额阻断。
+- 自筹未退：当前作为责任提示，不在付款执行和扣款单上硬阻断。
+- 税务抵扣登记、扣款实缴、扣款退回保留各自办理口径，不与扣款单合并为单一入口或单一台账口径。
+
+验证结果：
+
+```text
+python3 -m py_compile addons/smart_construction_core/models/support/company_contractor_responsibility_context_mixin.py addons/smart_construction_core/models/core/payment_execution.py addons/smart_construction_core/models/core/expense_claim.py scripts/verify/company_contractor_responsibility_context_audit.py
+PASS
+
+git diff --check
+PASS
+
+DB_NAME=sc_demo scripts/ops/validate_company_contractor_responsibility_context.sh
+PASS
+```
+
 ## Iteration Evidence - 2026-06-11 Finance Downstream Traceability Audit
 
 本轮已把 Phase 1 财务办理链路从“生成下游事实”推进到“下游事实可反查”：
