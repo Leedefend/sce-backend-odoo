@@ -176,8 +176,20 @@ class ScSelfFundingRegistration(models.Model):
             raise UserError(_("请先填写发生日期。"))
         if self.amount <= 0:
             raise UserError(_("自筹办理金额必须大于 0。"))
+        self._check_evidence_ready()
         if self.funding_type == "refund":
             self._check_refund_not_exceed_self_funding_balance()
+
+    def _check_evidence_ready(self):
+        self.ensure_one()
+        if self.source_origin != "manual":
+            return
+        if not self.attachment_ids:
+            raise UserError(_("请上传自筹办理附件，作为公司与承包人资金责任的办理依据。"))
+        if not self.payment_account_name:
+            raise UserError(_("请填写公司账户/户名。"))
+        if not self.partner_account_name:
+            raise UserError(_("请填写承包人账户/户名。"))
 
     def _check_refund_not_exceed_self_funding_balance(self):
         self.ensure_one()

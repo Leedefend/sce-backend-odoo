@@ -6,6 +6,7 @@ from __future__ import annotations
 import json
 import sys
 import traceback
+from base64 import b64encode
 from collections import OrderedDict
 
 from odoo.exceptions import UserError  # noqa: F401
@@ -17,6 +18,7 @@ def fail(message, **payload):
 
 def main():
     Registration = env["sc.self.funding.registration"].sudo()  # noqa: F821
+    Attachment = env["ir.attachment"].sudo()  # noqa: F821
     Ledger = env["sc.treasury.ledger"].sudo()  # noqa: F821
     Fact = env["sc.finance.business.fact"].sudo()  # noqa: F821
     Summary = env["sc.company.contractor.responsibility.summary"].sudo()  # noqa: F821
@@ -26,6 +28,20 @@ def main():
     partner = env["res.partner"].sudo().search([("name", "!=", False)], limit=1)  # noqa: F821
     if not project or not partner:
         fail("missing project or partner sample", project=project.id, partner=partner.id)
+
+    def attach(record, name):
+        attachment = Attachment.create(
+            {
+                "name": name,
+                "type": "binary",
+                "datas": b64encode(b"self-funding-audit-evidence").decode("ascii"),
+                "res_model": record._name,
+                "res_id": record.id,
+                "mimetype": "text/plain",
+            }
+        )
+        record.write({"attachment_ids": [(4, attachment.id)]})
+        return attachment
 
     old = Registration.search([("summary", "ilike", "[self-funding-audit]")])
     if old:
@@ -50,6 +66,50 @@ def main():
     if not income_action or not refund_action:
         fail("self funding actions missing")
 
+    missing_attachment = Registration.create(
+        {
+            "funding_type": "income",
+            "project_id": project.id,
+            "partner_id": partner.id,
+            "document_date": "2026-06-12",
+            "amount": 10.0,
+            "payment_account_name": "保盛公司账户",
+            "partner_account_name": "承包人账户",
+            "summary": "[self-funding-audit] missing attachment blocked",
+        }
+    )
+    try:
+        missing_attachment.action_confirm()
+    except UserError as exc:
+        missing_attachment_ok = "请上传自筹办理附件" in str(exc)
+    else:
+        missing_attachment_ok = False
+    if not missing_attachment_ok:
+        fail("missing attachment was not blocked", record_id=missing_attachment.id)
+    missing_attachment.write({"active": False})
+
+    missing_account = Registration.create(
+        {
+            "funding_type": "income",
+            "project_id": project.id,
+            "partner_id": partner.id,
+            "document_date": "2026-06-12",
+            "amount": 10.0,
+            "partner_account_name": "承包人账户",
+            "summary": "[self-funding-audit] missing company account blocked",
+        }
+    )
+    attach(missing_account, "self-funding-missing-account.txt")
+    try:
+        missing_account.action_confirm()
+    except UserError as exc:
+        missing_account_ok = "请填写公司账户/户名" in str(exc)
+    else:
+        missing_account_ok = False
+    if not missing_account_ok:
+        fail("missing company account was not blocked", record_id=missing_account.id)
+    missing_account.write({"active": False})
+
     income = Registration.create(
         {
             "funding_type": "income",
@@ -57,9 +117,12 @@ def main():
             "partner_id": partner.id,
             "document_date": "2026-06-12",
             "amount": 1234.56,
+            "payment_account_name": "保盛公司账户",
+            "partner_account_name": "承包人账户",
             "summary": "[self-funding-audit] income",
         }
     )
+    income_attachment = attach(income, "self-funding-income.txt")
     income.action_confirm()
     income.action_done()
     env.flush_all()  # noqa: F821
@@ -88,9 +151,12 @@ def main():
             "partner_id": partner.id,
             "document_date": "2026-06-12",
             "amount": 234.56,
+            "payment_account_name": "保盛公司账户",
+            "partner_account_name": "承包人账户",
             "summary": "[self-funding-audit] refund",
         }
     )
+    refund_attachment = attach(refund, "self-funding-refund.txt")
     refund.action_confirm()
     refund.action_done()
     env.flush_all()  # noqa: F821
@@ -119,9 +185,12 @@ def main():
             "partner_id": partner.id,
             "document_date": "2026-06-12",
             "amount": summary_after.self_funding_balance + 1000000.0,
+            "payment_account_name": "保盛公司账户",
+            "partner_account_name": "承包人账户",
             "summary": "[self-funding-audit] over refund blocked",
         }
     )
+    attach(blocked, "self-funding-over-refund.txt")
     try:
         blocked.action_done()
     except UserError as exc:
@@ -144,6 +213,10 @@ def main():
             ("refund_fact_id", refund_fact.id),
             ("income_ledger_id", income_ledger.id),
             ("refund_ledger_id", refund_ledger.id),
+            ("income_attachment_id", income_attachment.id),
+            ("refund_attachment_id", refund_attachment.id),
+            ("missing_attachment_blocked", missing_attachment_ok),
+            ("missing_account_blocked", missing_account_ok),
             ("payment_request_links", 0),
             ("self_funding_balance_after", summary_after.self_funding_balance),
         ]

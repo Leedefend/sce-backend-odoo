@@ -241,8 +241,22 @@ BUSINESS_CATEGORY_REQUIRED_FIELD_DEFAULTS = {
     "finance.repayment.registration": ["project_id", "partner_id", "amount", "expense_type"],
     "finance.repayment.contractor_project": ["project_id", "partner_id", "amount", "expense_type"],
     "finance.repayment.project_company": ["project_id", "partner_id", "amount", "expense_type"],
-    "finance.self_funding.income": ["project_id", "partner_id", "document_date", "amount"],
-    "finance.self_funding.refund": ["project_id", "partner_id", "document_date", "amount"],
+    "finance.self_funding.income": [
+        "project_id",
+        "partner_id",
+        "document_date",
+        "amount",
+        "payment_account_name",
+        "partner_account_name",
+    ],
+    "finance.self_funding.refund": [
+        "project_id",
+        "partner_id",
+        "document_date",
+        "amount",
+        "payment_account_name",
+        "partner_account_name",
+    ],
 }
 BUSINESS_CATEGORY_ATTACHMENT_POLICY_DEFAULTS = {
     "finance.expense.reimbursement": "required",
@@ -257,8 +271,8 @@ BUSINESS_CATEGORY_ATTACHMENT_POLICY_DEFAULTS = {
     "finance.repayment.registration": "required",
     "finance.repayment.contractor_project": "required",
     "finance.repayment.project_company": "required",
-    "finance.self_funding.income": "recommended",
-    "finance.self_funding.refund": "recommended",
+    "finance.self_funding.income": "required",
+    "finance.self_funding.refund": "required",
 }
 BUSINESS_CATEGORY_APPROVAL_POLICY_DEFAULTS = {
     "finance.expense.reimbursement": "smart_construction_core.approval_policy_expense_claim",
