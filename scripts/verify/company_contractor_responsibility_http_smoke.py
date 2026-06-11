@@ -30,6 +30,7 @@ PASSWORD = os.getenv("E2E_PASSWORD") or "123456"
 ARTIFACT_ROOT = Path(os.getenv("ARTIFACTS_DIR") or "artifacts/verify")
 TARGET_MENU_XMLID = "smart_construction_core.menu_sc_company_contractor_responsibility_summary"
 TARGET_MODEL = "sc.company.contractor.responsibility.summary"
+FACT_MODEL = "sc.company.contractor.responsibility.fact"
 TARGET_LABEL = "公司-承包人资金责任余额"
 
 
@@ -129,6 +130,14 @@ def assert_ok(errors: list[dict[str, Any]], key: str, status: int, payload: dict
         return True
     errors.append({"key": key, **compact_error(status, payload)})
     return False
+
+
+def action_domain(payload: dict[str, Any]) -> list[Any]:
+    data = payload.get("data") if isinstance(payload.get("data"), dict) else {}
+    result = data.get("result") if isinstance(data.get("result"), dict) else {}
+    raw_action = result.get("raw_action") if isinstance(result.get("raw_action"), dict) else {}
+    domain = raw_action.get("domain")
+    return domain if isinstance(domain, list) else []
 
 
 def main() -> int:
@@ -236,13 +245,29 @@ def main() -> int:
             "context": {},
         }
         list_status, list_payload = intent("api.data", list_params, token)
+        summary_sample: dict[str, Any] | None = None
         if assert_ok(errors, "api_data_list", list_status, list_payload):
             data = list_payload.get("data") or {}
+            records = data.get("records") or []
+            summary_sample = next(
+                (
+                    rec
+                    for rec in records
+                    if isinstance(rec, dict)
+                    and int(rec.get("id") or 0) > 0
+                    and int(rec.get("source_line_count") or 0) > 0
+                ),
+                None,
+            )
             evidence["list"] = {
                 "total": data.get("total"),
-                "records": len(data.get("records") or []),
-                "first_record_keys": sorted((data.get("records") or [{}])[0].keys()) if data.get("records") else [],
+                "records": len(records),
+                "first_record_keys": sorted((records or [{}])[0].keys()) if records else [],
+                "drilldown_sample_id": int((summary_sample or {}).get("id") or 0),
+                "drilldown_sample_source_line_count": int((summary_sample or {}).get("source_line_count") or 0),
             }
+            if not summary_sample:
+                errors.append({"key": "summary_drilldown_sample_missing"})
 
         grouped_params = {
             **list_params,
@@ -260,6 +285,79 @@ def main() -> int:
                 "group_summary": len(data.get("group_summary") or []),
                 "aggregates": sorted((data.get("aggregates") or {}).keys()),
             }
+
+        if summary_sample:
+            button_status, button_payload = intent(
+                "execute_button",
+                {
+                    "model": TARGET_MODEL,
+                    "res_id": int(summary_sample.get("id") or 0),
+                    "button": {"name": "action_open_responsibility_facts", "type": "object"},
+                },
+                token,
+            )
+            if assert_ok(errors, "summary_open_facts_button", button_status, button_payload):
+                domain = action_domain(button_payload)
+                if not domain:
+                    errors.append({"key": "summary_open_facts_domain_missing"})
+                fact_fields = [
+                    "id",
+                    "responsibility_type",
+                    "source_model",
+                    "source_res_id",
+                    "source_document_no",
+                    "source_menu_hint",
+                    "project_id",
+                    "partner_name",
+                    "amount",
+                    "arrival_amount",
+                    "paid_amount",
+                    "deducted_amount",
+                    "self_funding_income_amount",
+                    "self_funding_refund_amount",
+                    "coverage_note",
+                ]
+                fact_status, fact_payload = intent(
+                    "api.data",
+                    {
+                        "op": "list",
+                        "model": FACT_MODEL,
+                        "fields": fact_fields,
+                        "domain": domain,
+                        "limit": 20,
+                        "offset": 0,
+                        "order": "document_date desc, id desc",
+                        "context": {},
+                    },
+                    token,
+                )
+                if assert_ok(errors, "summary_facts_list", fact_status, fact_payload):
+                    fact_data = fact_payload.get("data") or {}
+                    fact_records = fact_data.get("records") or []
+                    expected_count = int(summary_sample.get("source_line_count") or 0)
+                    actual_count = int(fact_data.get("total") or len(fact_records) or 0)
+                    if expected_count and actual_count != expected_count:
+                        errors.append(
+                            {
+                                "key": "summary_facts_count_mismatch",
+                                "expected": expected_count,
+                                "actual": actual_count,
+                                "domain": domain,
+                            }
+                        )
+                    first_fact = fact_records[0] if fact_records and isinstance(fact_records[0], dict) else {}
+                    if not first_fact.get("responsibility_type") or not first_fact.get("source_model") or not first_fact.get("source_res_id"):
+                        errors.append({"key": "summary_fact_source_trace_missing", "first_fact": first_fact})
+                    evidence["drilldown"] = {
+                        "summary_id": int(summary_sample.get("id") or 0),
+                        "button_result_model": FACT_MODEL,
+                        "domain": domain,
+                        "expected_fact_count": expected_count,
+                        "actual_fact_count": actual_count,
+                        "first_fact_keys": sorted(first_fact.keys()) if first_fact else [],
+                        "first_fact_source_model": first_fact.get("source_model"),
+                        "first_fact_responsibility_type": first_fact.get("responsibility_type"),
+                    }
 
     result = OrderedDict()
     result["status"] = "PASS" if not errors else "FAIL"
