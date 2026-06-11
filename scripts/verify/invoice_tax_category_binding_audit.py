@@ -79,6 +79,22 @@ def _tax_binding_rows():
     )
 
 
+def _tax_branch_summary():
+    return _rows(
+        """
+        SELECT COUNT(*)::integer AS total_count,
+               COUNT(*) FILTER (WHERE COALESCE(is_transfer_out, false))::integer AS transfer_out_count,
+               COUNT(*) FILTER (WHERE COALESCE(withholding_amount, 0.0) <> 0.0)::integer AS withholding_count,
+               COUNT(*) FILTER (
+                   WHERE COALESCE(is_transfer_out, false) = false
+                     AND COALESCE(withholding_amount, 0.0) = 0.0
+               )::integer AS ordinary_deduction_count,
+               COUNT(*) FILTER (WHERE business_category_id IS NULL)::integer AS missing_category_count
+          FROM sc_tax_deduction_registration
+        """
+    )
+
+
 def _target_mismatches():
     return _rows(
         """
@@ -122,6 +138,7 @@ try:
 
     invoice_rows = _invoice_binding_rows()
     tax_rows = _tax_binding_rows()
+    tax_branch_rows = _tax_branch_summary()
     target_mismatches = _target_mismatches()
     for row in invoice_rows + tax_rows:
         if row["mismatch_count"]:
@@ -134,12 +151,27 @@ try:
             "%s/%s: bound category target_model=%s for %s rows"
             % (row["model_name"], row["code"], row["target_model"], row["row_count"])
         )
+    if tax_branch_rows:
+        tax_branch = tax_branch_rows[0]
+        if tax_branch["missing_category_count"]:
+            failures.append("tax.deduction.registration: %s rows missing business_category_id" % tax_branch["missing_category_count"])
+        if tax_branch["transfer_out_count"]:
+            failures.append(
+                "tax.deduction.registration: %s transfer-out rows require a dedicated business category before acceptance"
+                % tax_branch["transfer_out_count"]
+            )
+        if tax_branch["withholding_count"]:
+            failures.append(
+                "tax.deduction.registration: %s withholding deduction rows require a dedicated business category before acceptance"
+                % tax_branch["withholding_count"]
+            )
 
     summary = {
         "database": env.cr.dbname,  # noqa: F821
         "category_rows": category_rows,
         "invoice_bindings": invoice_rows,
         "tax_bindings": tax_rows,
+        "tax_branch_summary": tax_branch_rows,
         "target_mismatches": target_mismatches,
         "invoice_total": _scalar("SELECT COUNT(*) FROM sc_invoice_registration"),
         "tax_deduction_total": _scalar("SELECT COUNT(*) FROM sc_tax_deduction_registration"),
