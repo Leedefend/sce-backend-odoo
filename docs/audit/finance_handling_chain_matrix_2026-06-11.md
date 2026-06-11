@@ -89,6 +89,21 @@ exact_attachable_ledger_count=16006
 no_candidate_by_legacy_record_id=2322
 candidate_direction_mismatch=18
 candidate_project_mismatch=1
+
+COMPOSE_PROJECT_NAME=sc-backend-odoo-dev DB_NAME=sc_demo make backfill.finance_legacy_source_less_ledger.attach
+FINANCE_LEGACY_SOURCE_LESS_LEDGER_ATTACH: status=PASS updated_rows=16006
+before.source_less_legacy_ledger_count=18347
+after.source_less_legacy_ledger_count=2341
+after.source_linked_legacy_count=16006
+
+COMPOSE_PROJECT_NAME=sc-backend-odoo-dev DB_NAME=sc_demo make verify.finance_legacy_source_less_ledger.attach.audit
+FINANCE_LEGACY_SOURCE_LESS_LEDGER_ATTACH: status=PASS attachable_count=0 source_linked_legacy_count=16006
+
+COMPOSE_PROJECT_NAME=sc-backend-odoo-dev DB_NAME=sc_demo make verify.finance_legacy_source_less_ledger.reconciliation.audit
+FINANCE_LEGACY_SOURCE_LESS_LEDGER_RECONCILIATION_AUDIT: status=PASS
+source_less_legacy_ledger_count=2341
+already_source_linked=16006
+exact_attachable_ledger_count=0
 ```
 
 HTTP/API 可见面验收结论：
@@ -105,8 +120,9 @@ HTTP/API 可见面验收结论：
 - 按来源拆分：`sc.payment.execution` 36,285 条付款流出，`sc.receipt.income` 26,439 条收款流入，`sc.expense.claim` 41,138 条费用/保证金/扣款流出和 9,687 条退回/收取流入。
 - 现有 `sc.treasury.ledger` 已有 18,347 条 `legacy_actual_outflow`/`legacy_receipt` 台账，但 `source_model/source_res_id` 为空，不能证明与正式办理记录一一对应。
 - 已修正本地 source-less legacy 台账币种基线：18,347 条 legacy 资金台账按项目公司币种从 `USD` 对齐为 `CNY`，并修正 `fresh_db_treasury_ledger_projection_write.py`，避免未来重放继续继承旧 `payment_request.currency_id`。
-- 币种修正后，source-less legacy 台账中 16,006 条可按 `legacy_record_id + project_id + direction + source_kind + amount + currency` 一对一补挂到正式办理事实；2,322 条找不到正式候选，18 条方向不一致，1 条项目不一致，暂不自动补挂。
-- 后续迁移脚本不得直接追加 113,549 条来源级台账；应先补挂 16,006 条已有 source-less 台账的来源，再对剩余缺口生成来源级台账或保留为旧日报/总账快照，防止现金流翻倍。
+- 已将 16,006 条 source-less legacy 台账按 `legacy_record_id + project_id + direction + source_kind + amount + currency` 一对一补挂到正式办理事实，其中 12,846 条为 `sc.payment.execution`、3,160 条为 `sc.receipt.income`；补挂只更新来源字段和标记，不改业务金额、方向、日期和状态。
+- 剩余 source-less legacy 台账 2,341 条：2,322 条找不到正式候选，18 条方向不一致，1 条项目不一致，暂不自动补挂。
+- 后续迁移脚本不得直接追加 113,549 条来源级台账；应先识别已被 16,006 条 source-linked legacy 台账覆盖的来源事实，再对剩余缺口生成来源级台账或保留为旧日报/总账快照，防止现金流翻倍。
 
 ```text
 scripts/ops/validate_finance_business_categories.sh
@@ -162,7 +178,7 @@ evidence: create temp record from runtime action context, then verify current ru
 | 用户入口 | 正式模型 | 当前办理动作 | 下游事实 | 当前结论 | 下一步 |
 | --- | --- | --- | --- | --- | --- |
 | 支付申请 | `payment.request` | `action_submit`、`action_approval_decision`、`action_set_approved`、`action_done`、`action_cancel` | `payment.ledger`、`sc.treasury.ledger`、审批记录、审计日志 | 办理证据闭环、角色权限、下游追溯通过 | 补浏览器级验收：合同/结算拦截、取消、附件 |
-| 往来单位付款 | `sc.payment.execution` | `action_confirm`、`action_paid`、`action_cancel`、`action_on_tier_approved` | 新办理通过 `payment.request` 生成 `payment.ledger`；历史已办事实应通过 `sc.treasury.ledger` 来源级追溯现金流 | 办理入口可见面已通过 HTTP/API；source-less legacy 台账币种已修正，12,846 条付款流出可安全补挂到付款执行 | 执行 source-less 来源补挂，再对剩余付款流出缺口做来源级现金流迁移 |
+| 往来单位付款 | `sc.payment.execution` | `action_confirm`、`action_paid`、`action_cancel`、`action_on_tier_approved` | 新办理通过 `payment.request` 生成 `payment.ledger`；历史已办事实应通过 `sc.treasury.ledger` 来源级追溯现金流 | 办理入口可见面已通过 HTTP/API；12,846 条 source-less legacy 付款流出已补挂到付款执行；HTTP smoke 列表前 20 条抽样仍可能未命中已补挂样本 | 升级 HTTP smoke 为按来源台账反选样本，再对剩余付款流出缺口做来源级现金流迁移 |
 | 到款确认表 | `sc.receipt.income` | `action_confirm`、`action_received`、`action_cancel`、`action_on_tier_approved` | 新办理通过收款申请生成 `sc.treasury.ledger`；历史已办事实应通过 `sc.treasury.ledger` 来源级追溯现金流 | 办理入口可见面已通过 HTTP/API；26,439 条历史收款流入候选缺来源级台账 | 补项目收款状态约束、source-less legacy 台账对账和来源级现金流迁移 |
 | 报销/费用单据 | `sc.expense.claim` | `action_submit`、`action_approve`、`action_done`、`action_cancel`、审批回调 | 新办理通过 `payment.request` 或往来款现金流生成台账；历史已办事实按方向进入 `sc.treasury.ledger` | 办理入口可见面已通过 HTTP/API；50,825 条历史费用/保证金/扣款候选缺来源级台账 | 按 `claim_type` 和业务分类区分经营收付、保证金、扣款、往来款，再做来源级现金流迁移 |
 | 扣款单/扣款实缴/退回 | `sc.tax.deduction.registration` | 确认、已抵扣、取消 | 税务事实、项目经营口径 | 办理证据闭环、角色权限、下游税务事实追溯通过 | Phase 2 继续补正式分类字段或业务分类字典绑定 |

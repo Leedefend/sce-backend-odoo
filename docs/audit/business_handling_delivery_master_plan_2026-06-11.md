@@ -246,13 +246,15 @@
 - 已建立 `make verify.finance_legacy_source_less_ledger.reconciliation.audit`，对 source-less legacy 资金台账做补挂来源可行性审计；当前 18,347 条 source-less 行中，16,006 条可按 `legacy_record_id` 找到正式办理候选，但被币种冲突阻断：本地公司为 `CNY`，正式候选多为 `CNY`，旧台账全为 `USD`。因此下一步必须先修本地历史台账币种基线，再做来源补挂或增量迁移。
 - 已建立并执行 `make backfill.finance_legacy_treasury.currency`，本地 `sc_demo` 已将 18,347 条 legacy 资金台账按项目公司币种从 `USD` 对齐为 `CNY`，复跑 `make verify.finance_legacy_treasury.currency.audit` 后币种不一致为 0。已同步修正 `fresh_db_treasury_ledger_projection_write.py`，后续重放历史资金台账时使用项目公司币种或公司默认币种，避免再次写回 USD。
 - 币种修正后，`make verify.finance_legacy_source_less_ledger.reconciliation.audit` 识别 16,006 条 source-less legacy 台账可安全补挂到正式办理来源，其中付款执行 12,846 条、收款登记 3,160 条；剩余 2,322 条无正式候选、18 条方向不一致、1 条项目不一致，暂不自动补挂。
+- 已建立并执行 `make backfill.finance_legacy_source_less_ledger.attach`，本地 `sc_demo` 已将 16,006 条一对一精确匹配的 source-less legacy 资金台账补挂到正式办理来源，只写入 `source_model/source_res_id` 和补挂标记，不改金额、方向、日期、项目、往来单位、币种和状态。复跑补挂门禁后可补挂数为 0，复跑对账门禁显示 `already_source_linked=16006`、剩余 source-less legacy 台账 2,341 条。
+- 复跑 `make verify.finance_handling.http_surface.smoke` 后支付申请和到款确认可见样本可追到下游台账；往来单位付款 aggregate 已有 12,846 条来源级 `sc.treasury.ledger`，但 HTTP smoke 当前按列表前 20 条抽样仍可能未命中已补挂样本，后续应升级为“按来源台账反选办理样本”的强门禁；项目费用报销仍待分类后进入来源级历史现金流迁移。
 
 下一步收口顺序：
 
-1. 先执行 source-less legacy 台账来源补挂，只更新已一对一验证的 16,006 条，不改金额、方向、日期和币种。
-2. 再制定剩余 2,341 条 source-less legacy 行处理策略，明确哪些应保留为旧日报/总账快照、哪些需要补正式来源事实、哪些应作废后由来源级台账替代。
-3. 再实现来源级历史现金流迁移，幂等键为 `source_model/source_res_id/project_id/direction/source_kind`，且非真实收付款申请完成场景保持 `payment_request_id` 为空。
-4. 最后把 HTTP/API 入口 smoke 的 downstream trace 从“记录缺口”升级为“关键样本必有来源级台账”，再进入浏览器级抽样验收。
+1. 先制定剩余 2,341 条 source-less legacy 行处理策略，明确哪些应保留为旧日报/总账快照、哪些需要补正式来源事实、哪些应作废后由来源级台账替代。
+2. 再实现费用/保证金/扣款等剩余来源级历史现金流迁移，幂等键为 `source_model/source_res_id/project_id/direction/source_kind`，且非真实收付款申请完成场景保持 `payment_request_id` 为空。
+3. 再把 HTTP/API 入口 smoke 的 downstream trace 从“列表抽样记录缺口”升级为“按来源台账反选关键样本必有来源级台账”。
+4. 最后进入浏览器级抽样验收和开发服务器升级准备。
 
 ### Phase 2 - Invoice And Tax Closure
 

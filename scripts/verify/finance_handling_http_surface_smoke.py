@@ -53,8 +53,8 @@ ENTRIES = [
         "model": "sc.payment.execution",
         "fields": ["id", "name", "source_kind", "payment_family", "state", "project_id", "partner_id", "contract_id", "payment_request_id", "paid_amount", "attachment_ids"],
         "list_domain": [["payment_family", "=", "往来单位付款"]],
-        "handled_domain": [["payment_family", "=", "往来单位付款"], ["payment_request_id", "!=", False], ["state", "in", ["paid", "legacy_confirmed"]]],
-        "trace": {"model": "payment.ledger", "record_field": "payment_request_id", "domain_field": "payment_request_id"},
+        "handled_domain": [["payment_family", "=", "往来单位付款"], ["state", "in", ["paid", "legacy_confirmed"]]],
+        "trace": {"model": "sc.treasury.ledger", "source_model": "sc.payment.execution"},
         "trace_required": False,
     },
     {
@@ -298,7 +298,7 @@ def main() -> int:
                 if not records:
                     errors.append({"key": "%s.list_empty" % entry["key"], "domain": entry["list_domain"]})
 
-            handled_status, handled_payload = api_list(token, entry["model"], entry["fields"], entry["handled_domain"], limit=1)
+            handled_status, handled_payload = api_list(token, entry["model"], entry["fields"], entry["handled_domain"], limit=20)
             handled_records: list[dict[str, Any]] = []
             if assert_ok(errors, "%s.handled_sample" % entry["key"], handled_status, handled_payload):
                 handled_records = [row for row in (handled_payload.get("data") or {}).get("records") or [] if isinstance(row, dict)]
@@ -307,7 +307,6 @@ def main() -> int:
                     errors.append({"key": "%s.handled_sample_missing" % entry["key"], "domain": entry["handled_domain"]})
 
             if handled_records:
-                sample = handled_records[0]
                 trace = entry["trace"]
                 trace_fields = ["id", "amount", "payment_request_id", "project_id", "partner_id"]
                 if trace["model"] == "sc.treasury.ledger":
@@ -322,18 +321,37 @@ def main() -> int:
                         "project_id",
                         "partner_id",
                     ]
-                trace_status, trace_payload = api_list(
-                    token,
-                    trace["model"],
-                    trace_fields,
-                    trace_domain(entry, sample),
-                    limit=5,
-                )
-                if assert_ok(errors, "%s.downstream_trace" % entry["key"], trace_status, trace_payload):
-                    trace_records = [row for row in (trace_payload.get("data") or {}).get("records") or [] if isinstance(row, dict)]
-                    item["downstream_trace"] = {"model": trace["model"], "records": len(trace_records)}
-                    if not trace_records and entry.get("trace_required", False):
-                        errors.append({"key": "%s.downstream_trace_missing" % entry["key"], "trace_model": trace["model"], "sample_id": sample.get("id")})
+                sample = handled_records[0]
+                trace_records: list[dict[str, Any]] = []
+                trace_error_record = sample
+                for candidate in handled_records:
+                    trace_status, trace_payload = api_list(
+                        token,
+                        trace["model"],
+                        trace_fields,
+                        trace_domain(entry, candidate),
+                        limit=5,
+                    )
+                    if not assert_ok(errors, "%s.downstream_trace" % entry["key"], trace_status, trace_payload):
+                        break
+                    candidate_trace_records = [
+                        row for row in (trace_payload.get("data") or {}).get("records") or [] if isinstance(row, dict)
+                    ]
+                    trace_error_record = candidate
+                    if candidate_trace_records:
+                        sample = candidate
+                        trace_records = candidate_trace_records
+                        break
+                item["downstream_trace"] = {"model": trace["model"], "records": len(trace_records), "sample_id": as_id(sample.get("id"))}
+                if not trace_records and entry.get("trace_required", False):
+                    errors.append(
+                        {
+                            "key": "%s.downstream_trace_missing" % entry["key"],
+                            "trace_model": trace["model"],
+                            "sample_id": trace_error_record.get("id"),
+                            "sample_count": len(handled_records),
+                        }
+                    )
 
                 audit_status, audit_payload = api_list(
                     token,
