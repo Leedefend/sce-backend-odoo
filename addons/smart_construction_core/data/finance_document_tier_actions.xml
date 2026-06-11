@@ -106,6 +106,32 @@ if target_records:
 ]]></field>
         </record>
 
+        <record id="server_action_self_funding_registration_on_approved" model="ir.actions.server">
+            <field name="name">自筹办理审批通过回调</field>
+            <field name="model_id" ref="model_sc_self_funding_registration"/>
+            <field name="state">code</field>
+            <field name="code"><![CDATA[
+target_records = records or record
+if not target_records and env.context.get("active_model") == "sc.self.funding.registration" and env.context.get("active_id"):
+    target_records = env["sc.self.funding.registration"].browse(env.context["active_id"])
+if target_records:
+    target_records.action_on_tier_approved()
+]]></field>
+        </record>
+
+        <record id="server_action_self_funding_registration_on_rejected" model="ir.actions.server">
+            <field name="name">自筹办理审批驳回回调</field>
+            <field name="model_id" ref="model_sc_self_funding_registration"/>
+            <field name="state">code</field>
+            <field name="code"><![CDATA[
+target_records = records or record
+if not target_records and env.context.get("active_model") == "sc.self.funding.registration" and env.context.get("active_id"):
+    target_records = env["sc.self.funding.registration"].browse(env.context["active_id"])
+if target_records:
+    target_records.action_on_tier_rejected()
+]]></field>
+        </record>
+
         <record id="server_action_treasury_reconciliation_on_approved" model="ir.actions.server">
             <field name="name">资金对账审批通过回调</field>
             <field name="model_id" ref="model_sc_treasury_reconciliation"/>

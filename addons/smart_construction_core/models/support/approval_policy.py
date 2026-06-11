@@ -313,6 +313,7 @@ class ScApprovalPolicy(models.Model):
             "sc.payment.execution",
             "sc.invoice.registration",
             "sc.financing.loan",
+            "sc.self.funding.registration",
             "sc.treasury.reconciliation",
             "sc.settlement.adjustment",
         }
@@ -371,6 +372,10 @@ class ScApprovalPolicy(models.Model):
             "sc.financing.loan": (
                 "smart_construction_core.server_action_financing_loan_on_approved",
                 "smart_construction_core.server_action_financing_loan_on_rejected",
+            ),
+            "sc.self.funding.registration": (
+                "smart_construction_core.server_action_self_funding_registration_on_approved",
+                "smart_construction_core.server_action_self_funding_registration_on_rejected",
             ),
             "sc.treasury.reconciliation": (
                 "smart_construction_core.server_action_treasury_reconciliation_on_approved",
