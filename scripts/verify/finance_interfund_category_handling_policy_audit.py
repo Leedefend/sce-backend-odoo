@@ -13,6 +13,8 @@ import json
 import sys
 import traceback
 
+from odoo.exceptions import UserError
+
 
 INTERFUND_CATEGORY_REQUIREMENTS = {
     "finance.fund.transfer": {
@@ -178,6 +180,46 @@ def _domain_contains_category(category, code):
     return "business_category_id.code" in (category.domain_json or "") and code in (category.domain_json or "")
 
 
+def _assert_borrowing_done_guard(failures):
+    Project = env["project.project"].sudo()  # noqa: F821
+    Partner = env["res.partner"].sudo()  # noqa: F821
+    Category = env["sc.business.category"].sudo()  # noqa: F821
+    Loan = env["sc.financing.loan"].sudo()  # noqa: F821
+    project = Project.search([], limit=1)
+    partner = Partner.search([], limit=1)
+    generic = Category.search([("code", "=", "finance.loan.borrowing")], limit=1)
+    contractor_project = Category.search([("code", "=", "finance.loan.contractor_project_borrow")], limit=1)
+    project_company = Category.search([("code", "=", "finance.loan.project_borrow_company")], limit=1)
+    if not project or not partner or not generic or not contractor_project or not project_company:
+        failures.append("borrowing done guard probe missing project/partner/category fixture")
+        return
+
+    base_vals = {
+        "loan_type": "borrowing_request",
+        "direction": "borrowed_fund",
+        "project_id": project.id,
+        "partner_id": partner.id,
+        "document_date": "2026-06-12",
+        "amount": 100.0,
+        "currency_id": env.company.currency_id.id,  # noqa: F821
+    }
+    generic_loan = Loan.new(dict(base_vals, business_category_id=generic.id))
+    try:
+        generic_loan._check_done_ready()
+    except UserError as exc:
+        if "业务分类" not in str(exc):
+            failures.append("generic borrowing guard raised unexpected message: %s" % exc)
+    else:
+        failures.append("generic finance.loan.borrowing can pass done readiness without specific interfund category")
+
+    for category in (contractor_project, project_company):
+        specific = Loan.new(dict(base_vals, business_category_id=category.id))
+        try:
+            specific._check_done_ready()
+        except UserError as exc:
+            failures.append("%s should pass borrowing done readiness, got %s" % (category.code, exc))
+
+
 failures = []
 warnings = []
 rows = []
@@ -266,6 +308,7 @@ try:
                 "rows": unclassified_transfer,
             }
         )
+    _assert_borrowing_done_guard(failures)
 
     result = {
         "db": env.cr.dbname,  # noqa: F821

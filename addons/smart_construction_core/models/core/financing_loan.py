@@ -337,18 +337,25 @@ class ScFinancingLoan(models.Model):
             raise UserError(_("请先填写单据日期后再完成融资借款。"))
         if self.amount <= 0:
             raise UserError(_("融资借款金额必须大于 0。"))
+        if self.loan_type == "borrowing_request" and self.direction == "borrowed_fund":
+            allowed_codes = {
+                "finance.loan.contractor_project_borrow",
+                "finance.loan.project_borrow_company",
+            }
+            if self.business_category_id.code not in allowed_codes:
+                raise UserError(_("借款办理必须选择“承包人借项目款”或“项目借公司款登记”业务分类后才能完成。"))
 
     def _ensure_interfund_cash_ledger(self):
         Ledger = self.env["sc.treasury.ledger"]
         for rec in self:
             if rec.loan_type != "borrowing_request" or rec.direction != "borrowed_fund" or (rec.amount or 0.0) <= 0:
                 continue
-            purpose = rec.purpose or ""
-            direction = "out" if re.search(r"借.*项目.*款", purpose) else "in"
             if rec.business_category_id.code == "finance.loan.contractor_project_borrow":
                 direction = "out"
             elif rec.business_category_id.code == "finance.loan.project_borrow_company":
                 direction = "in"
+            else:
+                continue
             Ledger._ensure_interfund_ledger(
                 rec,
                 project=rec.project_id,
