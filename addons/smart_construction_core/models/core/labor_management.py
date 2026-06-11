@@ -393,6 +393,7 @@ class ScLaborSettlement(models.Model):
                 raise UserError(_("只有草稿劳务结算可以提交。"))
             if not record.line_ids:
                 raise ValidationError(_("提交结算前必须维护结算明细。"))
+            record._check_business_anchor()
             record.line_ids._check_values()
             record.write({"state": "submitted"})
         return True
@@ -401,6 +402,7 @@ class ScLaborSettlement(models.Model):
         for record in self:
             if record.state != "submitted":
                 raise UserError(_("只有已提交劳务结算可以确认。"))
+            record._check_business_anchor()
             record.line_ids._check_values()
             record.write({"state": "confirmed"})
         return True
@@ -419,6 +421,16 @@ class ScLaborSettlement(models.Model):
             record.write({"state": "draft"})
         return True
 
+    def _check_business_anchor(self):
+        for record in self:
+            for line in record.line_ids.filtered("source_usage_id"):
+                if line.source_usage_id.project_id != record.project_id:
+                    raise UserError(_("劳务结算明细引用的用工来源必须属于同一项目。"))
+                if line.source_usage_id.contractor_id and line.source_usage_id.contractor_id != record.contractor_id:
+                    raise UserError(_("劳务结算明细引用的用工来源劳务单位必须与结算单一致。"))
+                if line.source_usage_id.legacy_settlement_state not in ("unsettled", "unknown"):
+                    raise UserError(_("劳务结算只能引用旧系统未结算或需复核的用工来源。"))
+
 
 class ScLaborSettlementLine(models.Model):
     _name = "sc.labor.settlement.line"
@@ -428,6 +440,7 @@ class ScLaborSettlementLine(models.Model):
     settlement_id = fields.Many2one("sc.labor.settlement", string="结算单", required=True, ondelete="cascade", index=True)
     sequence = fields.Integer(default=10)
     project_id = fields.Many2one("project.project", string="项目", related="settlement_id.project_id", store=True, index=True)
+    source_usage_id = fields.Many2one("sc.labor.usage", string="来源用工", index=True)
     labor_team = fields.Char(string="班组")
     work_content = fields.Char(string="作业内容", required=True)
     qty = fields.Float(string="结算数量", required=True, default=1)
@@ -458,6 +471,26 @@ class ScLaborSettlementLine(models.Model):
                 raise ValidationError(_("结算单价不能为负数。"))
             if record.tax_rate < 0:
                 raise ValidationError(_("税率不能为负数。"))
+
+    @api.constrains("source_usage_id", "settlement_id")
+    def _check_source_usage_anchor(self):
+        for record in self.filtered("source_usage_id"):
+            settlement = record.settlement_id
+            usage = record.source_usage_id
+            if usage.project_id != settlement.project_id:
+                raise ValidationError(_("来源用工必须属于同一项目。"))
+            if usage.contractor_id and usage.contractor_id != settlement.contractor_id:
+                raise ValidationError(_("来源用工劳务单位必须与结算单一致。"))
+            duplicate = self.search(
+                [
+                    ("id", "!=", record.id),
+                    ("source_usage_id", "=", usage.id),
+                    ("settlement_id.state", "!=", "cancel"),
+                ],
+                limit=1,
+            )
+            if duplicate:
+                raise ValidationError(_("来源用工已经被其他未取消劳务结算引用，不能重复结算。"))
 
 
 class ScLaborPrice(models.Model):

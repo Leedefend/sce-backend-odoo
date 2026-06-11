@@ -495,6 +495,7 @@
                             <field name="line_ids">
                                 <tree editable="bottom">
                                     <field name="sequence" widget="handle"/>
+                                    <field name="source_usage_id"/>
                                     <field name="labor_team"/>
                                     <field name="work_content"/>
                                     <field name="qty"/>

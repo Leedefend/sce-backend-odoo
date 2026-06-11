@@ -127,6 +127,52 @@ if summary["missing_business_anchor"]:
 if not summary["ready_group_count"]:
     errors.append("no ready labor settlement candidates")
 
+smoke = {"status": "SKIP", "reason": "no ready candidate"}
+ready_candidate = env["sc.labor.settlement.candidate"].search([("candidate_state", "=", "ready")], order="legacy_settlement_amount desc", limit=1)  # noqa: F821
+if ready_candidate:
+    before_count = env["sc.labor.settlement.candidate"].search_count([])  # noqa: F821
+    try:
+        action = ready_candidate.action_create_draft_labor_settlement()
+        settlement = env["sc.labor.settlement"].browse(action["res_id"])  # noqa: F821
+        line_count = len(settlement.line_ids)
+        source_line_count = len(settlement.line_ids.filtered("source_usage_id"))
+        amount_delta = abs(float(settlement.amount_total or 0.0) - float(ready_candidate.legacy_settlement_amount or 0.0))
+        remaining_same_candidate = env["sc.labor.settlement.candidate"].search_count(  # noqa: F821
+            [
+                ("project_id", "=", ready_candidate.project_id.id),
+                ("contractor_id", "=", ready_candidate.contractor_id.id),
+                ("legacy_fact_type", "=", ready_candidate.legacy_fact_type),
+                ("legacy_settlement_state", "=", ready_candidate.legacy_settlement_state),
+            ]
+        )
+        smoke = {
+            "status": "PASS",
+            "candidate_id": ready_candidate.id,
+            "settlement_id": settlement.id,
+            "line_count": line_count,
+            "source_line_count": source_line_count,
+            "amount_delta": amount_delta,
+            "candidate_count_before": before_count,
+            "remaining_same_candidate": remaining_same_candidate,
+        }
+        if settlement.state != "draft":
+            errors.append("generated settlement must stay draft")
+        if line_count != ready_candidate.usage_count:
+            errors.append("generated settlement line_count mismatch")
+        if source_line_count != line_count:
+            errors.append("generated settlement lines must all keep source_usage_id")
+        if amount_delta > 0.0001:
+            errors.append("generated settlement amount mismatch")
+        if remaining_same_candidate:
+            errors.append("generated settlement did not exclude the source candidate")
+    except Exception as exc:
+        smoke = {"status": "FAIL", "error": str(exc)}
+        errors.append("draft settlement smoke failed: %s" % exc)
+    finally:
+        env.cr.rollback()  # noqa: F821
+
+summary["draft_generation_smoke"] = smoke
+
 result = {
     "audit": "labor_settlement_candidate_audit",
     "database": env.cr.dbname,  # noqa: F821

@@ -64,6 +64,73 @@ class ScLaborSettlementCandidate(models.Model):
             "context": {"create": False, "search_default_group_project": 1},
         }
 
+    def _source_usage_domain(self):
+        self.ensure_one()
+        return [
+            ("project_id", "=", self.project_id.id),
+            ("contractor_id", "=", self.contractor_id.id),
+            ("legacy_fact_type", "=", self.legacy_fact_type),
+            ("legacy_settlement_state", "=", self.legacy_settlement_state),
+        ]
+
+    def action_create_draft_labor_settlement(self):
+        self.ensure_one()
+        if self.candidate_state != "ready":
+            raise UserError("只有旧系统明确标记未结算的候选可以生成劳务结算草稿。")
+
+        usage_records = self.env["sc.labor.usage"].search(self._source_usage_domain(), order="usage_date, id")
+        used_usage_ids = set(
+            self.env["sc.labor.settlement.line"]
+            .search(
+                [
+                    ("source_usage_id", "in", usage_records.ids),
+                    ("settlement_id.state", "!=", "cancel"),
+                ]
+            )
+            .mapped("source_usage_id")
+            .ids
+        )
+        usage_records = usage_records.filtered(lambda usage: usage.id not in used_usage_ids)
+        if not usage_records:
+            raise UserError("该候选的用工来源已经被未取消劳务结算承接。")
+
+        settlement = self.env["sc.labor.settlement"].create(
+            {
+                "project_id": self.project_id.id,
+                "contractor_id": self.contractor_id.id,
+                "settlement_date": fields.Date.context_today(self),
+                "currency_id": self.currency_id.id,
+                "legacy_fact_model": "sc.labor.settlement.candidate",
+                "legacy_fact_type": self.legacy_fact_type,
+                "note": "由劳务结算候选核对生成草稿；提交前需人工核对来源用工、数量和金额。",
+                "line_ids": [
+                    (
+                        0,
+                        0,
+                        {
+                            "source_usage_id": usage.id,
+                            "labor_team": usage.labor_team,
+                            "work_content": usage.work_content,
+                            "qty": 1.0,
+                            "unit_name": "项",
+                            "unit_price": usage.legacy_settlement_amount,
+                            "tax_rate": 0.0,
+                            "note": usage.name,
+                        },
+                    )
+                    for usage in usage_records
+                ],
+            }
+        )
+        return {
+            "type": "ir.actions.act_window",
+            "name": "劳务结算草稿",
+            "res_model": "sc.labor.settlement",
+            "res_id": settlement.id,
+            "view_mode": "form",
+            "target": "current",
+        }
+
     def init(self):
         tools.drop_view_if_exists(self._cr, self._table)
         self._cr.execute(
@@ -84,6 +151,13 @@ class ScLaborSettlementCandidate(models.Model):
                       AND usage.legacy_settlement_state IN ('unsettled', 'unknown')
                       AND usage.project_id IS NOT NULL
                       AND usage.contractor_id IS NOT NULL
+                      AND NOT EXISTS (
+                          SELECT 1
+                            FROM sc_labor_settlement_line line
+                            JOIN sc_labor_settlement settlement ON settlement.id = line.settlement_id
+                           WHERE line.source_usage_id = usage.id
+                             AND settlement.state != 'cancel'
+                      )
                 ),
                 grouped AS (
                     SELECT
