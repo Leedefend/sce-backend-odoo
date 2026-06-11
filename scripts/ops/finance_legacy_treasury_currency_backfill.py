@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Normalize legacy treasury ledger currency to the project/company currency.
+"""Normalize legacy treasury ledger currency to CNY.
 
 Default mode is dry-run. Set APPLY=1 to update rows. The script is intentionally
 limited to demo/test databases unless explicitly allowed.
@@ -28,20 +28,20 @@ WITH expected AS (
         l.amount,
         l.currency_id AS current_currency_id,
         current_currency.name AS current_currency_name,
-        COALESCE(project_company.currency_id, default_company.currency_id) AS expected_currency_id,
+        expected_currency.currency_id AS expected_currency_id,
         expected_currency.name AS expected_currency_name
     FROM sc_treasury_ledger l
     JOIN project_project project ON project.id = l.project_id
-    LEFT JOIN res_company project_company ON project_company.id = project.company_id
     CROSS JOIN LATERAL (
-        SELECT currency_id
-        FROM res_company
-        ORDER BY id
+        SELECT currency.id AS currency_id, currency.name
+        FROM ir_model_data data
+        JOIN res_currency currency ON currency.id = data.res_id
+        WHERE data.module = 'base'
+          AND data.name = 'CNY'
+          AND data.model = 'res.currency'
         LIMIT 1
-    ) default_company
+    ) expected_currency
     LEFT JOIN res_currency current_currency ON current_currency.id = l.currency_id
-    LEFT JOIN res_currency expected_currency
-      ON expected_currency.id = COALESCE(project_company.currency_id, default_company.currency_id)
     WHERE l.source_kind IN %(source_kinds)s
       AND l.state != 'void'
 ),
@@ -142,16 +142,17 @@ def _apply():
         WITH expected AS (
             SELECT
                 l.id AS ledger_id,
-                COALESCE(project_company.currency_id, default_company.currency_id) AS expected_currency_id
+                expected_currency.currency_id AS expected_currency_id
             FROM sc_treasury_ledger l
             JOIN project_project project ON project.id = l.project_id
-            LEFT JOIN res_company project_company ON project_company.id = project.company_id
             CROSS JOIN LATERAL (
-                SELECT currency_id
-                FROM res_company
-                ORDER BY id
+                SELECT res_id AS currency_id
+                FROM ir_model_data
+                WHERE module = 'base'
+                  AND name = 'CNY'
+                  AND model = 'res.currency'
                 LIMIT 1
-            ) default_company
+            ) expected_currency
             WHERE l.source_kind IN %(source_kinds)s
               AND l.state != 'void'
         )
@@ -201,7 +202,7 @@ def main():
         "failures": failures,
         "policy": {
             "scope": "sc.treasury.ledger rows with source_kind legacy_actual_outflow/legacy_receipt and state != void",
-            "expected_currency": "project.company_id.currency_id, falling back to first company currency",
+            "expected_currency": "base.CNY; the user's legacy treasury facts are RMB facts",
             "db_write_guard": "APPLY=1 only on sc_demo/sc_test unless explicitly allowed",
         },
     }

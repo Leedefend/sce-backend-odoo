@@ -17,15 +17,9 @@ class ResCompany(models.Model):
         if not currency:
             return False
         currency.sudo().active = True
-        MoveLine = self.env["account.move.line"].sudo()
         for company in self.sudo().search([]):
             if company.currency_id == currency:
                 continue
-            if MoveLine.search_count([("company_id", "=", company.id)], limit=1):
-                _logger.info(
-                    "Skip CNY currency bootstrap for company %s because journal items already exist.",
-                    company.display_name,
-                )
-                continue
+            _logger.info("Set company %s currency to CNY.", company.display_name)
             company.currency_id = currency
         return True

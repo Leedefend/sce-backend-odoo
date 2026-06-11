@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Normalize legacy finance handling source facts to project/company currency.
+"""Normalize legacy finance handling source facts to CNY.
 
 The user's legacy finance facts are RMB facts. Default mode is dry-run; set
 APPLY=1 to update only currency_id and a note marker on eligible legacy rows.
@@ -43,10 +43,12 @@ def _assert_apply_allowed(apply):
 
 
 EXPECTED_CTE = """
-WITH default_company AS (
-    SELECT currency_id
-    FROM res_company
-    ORDER BY id
+WITH expected_currency AS (
+    SELECT res_id AS currency_id
+    FROM ir_model_data
+    WHERE module = 'base'
+      AND name = 'CNY'
+      AND model = 'res.currency'
     LIMIT 1
 ),
 expected AS (
@@ -56,12 +58,11 @@ expected AS (
         e.name AS source_record_name,
         e.project_id,
         e.currency_id AS current_currency_id,
-        COALESCE(project_company.currency_id, default_company.currency_id) AS expected_currency_id,
+        expected_currency.currency_id AS expected_currency_id,
         COALESCE(e.paid_amount, 0.0) AS amount
     FROM sc_payment_execution e
     JOIN project_project project ON project.id = e.project_id
-    LEFT JOIN res_company project_company ON project_company.id = project.company_id
-    CROSS JOIN default_company
+    CROSS JOIN expected_currency
     WHERE e.source_origin = 'legacy'
       AND e.state = 'legacy_confirmed'
       AND e.project_id IS NOT NULL
@@ -75,12 +76,11 @@ expected AS (
         r.name AS source_record_name,
         r.project_id,
         r.currency_id AS current_currency_id,
-        COALESCE(project_company.currency_id, default_company.currency_id) AS expected_currency_id,
+        expected_currency.currency_id AS expected_currency_id,
         COALESCE(r.amount, 0.0) AS amount
     FROM sc_receipt_income r
     JOIN project_project project ON project.id = r.project_id
-    LEFT JOIN res_company project_company ON project_company.id = project.company_id
-    CROSS JOIN default_company
+    CROSS JOIN expected_currency
     WHERE r.source_origin = 'legacy'
       AND r.state = 'legacy_confirmed'
       AND r.project_id IS NOT NULL
@@ -94,12 +94,11 @@ expected AS (
         c.name AS source_record_name,
         c.project_id,
         c.currency_id AS current_currency_id,
-        COALESCE(project_company.currency_id, default_company.currency_id) AS expected_currency_id,
+        expected_currency.currency_id AS expected_currency_id,
         COALESCE(c.approved_amount, c.amount, 0.0) AS amount
     FROM sc_expense_claim c
     JOIN project_project project ON project.id = c.project_id
-    LEFT JOIN res_company project_company ON project_company.id = project.company_id
-    CROSS JOIN default_company
+    CROSS JOIN expected_currency
     WHERE c.source_origin = 'legacy'
       AND c.state = 'legacy_confirmed'
       AND c.project_id IS NOT NULL
@@ -109,10 +108,10 @@ mismatched AS (
     SELECT
         e.*,
         current_currency.name AS current_currency,
-        expected_currency.name AS expected_currency
+        expected_currency_rec.name AS expected_currency
     FROM expected e
     LEFT JOIN res_currency current_currency ON current_currency.id = e.current_currency_id
-    LEFT JOIN res_currency expected_currency ON expected_currency.id = e.expected_currency_id
+    LEFT JOIN res_currency expected_currency_rec ON expected_currency_rec.id = e.expected_currency_id
     WHERE COALESCE(e.current_currency_id, 0) != COALESCE(e.expected_currency_id, 0)
 )
 """
@@ -172,20 +171,21 @@ def _samples():
 def _update_table(table, id_field="id"):
     env.cr.execute(  # noqa: F821
         """
-        WITH default_company AS (
-            SELECT currency_id
-            FROM res_company
-            ORDER BY id
+        WITH expected_currency AS (
+            SELECT res_id AS currency_id
+            FROM ir_model_data
+            WHERE module = 'base'
+              AND name = 'CNY'
+              AND model = 'res.currency'
             LIMIT 1
         ),
         expected AS (
             SELECT
                 source.id AS source_id,
-                COALESCE(project_company.currency_id, default_company.currency_id) AS expected_currency_id
+                expected_currency.currency_id AS expected_currency_id
             FROM {table} source
             JOIN project_project project ON project.id = source.project_id
-            LEFT JOIN res_company project_company ON project_company.id = project.company_id
-            CROSS JOIN default_company
+            CROSS JOIN expected_currency
             WHERE source.source_origin = 'legacy'
               AND source.state = 'legacy_confirmed'
               AND source.project_id IS NOT NULL
@@ -254,7 +254,7 @@ def main():
         "failures": failures,
         "policy": {
             "scope": "legacy confirmed positive finance handling facts with a project",
-            "expected_currency": "project.company_id.currency_id, falling back to first company currency; current user baseline is CNY",
+            "expected_currency": "base.CNY; the user's legacy finance facts are RMB facts",
             "write_fields": "currency_id, note marker, write metadata only",
             "db_write_guard": "APPLY=1 only on sc_demo/sc_test unless explicitly allowed",
         },
