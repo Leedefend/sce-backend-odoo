@@ -1,0 +1,753 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="business_category_site_construction_diary" model="sc.business.category">
+        <field name="name">施工日志</field>
+        <field name="code">site.construction.diary</field>
+        <field name="domain">site</field>
+        <field name="target_model">sc.construction.diary</field>
+        <field name="direction">reference</field>
+        <field name="sequence">1</field>
+        <field name="source_aliases">施工日志、现场日志、日报、工程日志</field>
+        <field name="default_values_json"><![CDATA[{"source_origin": "manual"}]]></field>
+        <field name="domain_json"><![CDATA[[]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "date_diary", "title", "diary_type"]]]></field>
+        <field name="visible_groups_json"><![CDATA[["diary_header", "site_status", "quality_safety", "attachments"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.construction.diary"], "terminal_action": "action_done", "evidence_role": "project_execution"}]]></field>
+        <field name="attachment_policy">recommended</field>
+        <field name="note">现场履约建筑行业模板分类；施工日志作为项目履约、质量安全和结算依据的证据入口。</field>
+    </record>
+
+    <record id="business_category_site_quality_issue" model="sc.business.category">
+        <field name="name">质量问题</field>
+        <field name="code">site.quality.issue</field>
+        <field name="domain">site</field>
+        <field name="target_model">sc.quality.issue</field>
+        <field name="direction">reference</field>
+        <field name="sequence">10</field>
+        <field name="source_aliases">质量问题、质量检查、工序验收问题、整改通知</field>
+        <field name="default_values_json"><![CDATA[{"issue_category": "quality"}]]></field>
+        <field name="domain_json"><![CDATA[[]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "name", "location", "description"]]]></field>
+        <field name="visible_groups_json"><![CDATA[["issue_header", "responsibility", "rectification", "recheck", "attachments"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.quality.issue", "sc.quality.rectification", "sc.quality.recheck", "sc.site.photo.batch"], "terminal_action": "action_close", "evidence_role": "quality_closure"}]]></field>
+        <field name="attachment_policy">recommended</field>
+        <field name="note">质量问题按登记、整改、复验、闭环办理；后续可扩展责任单位、逾期和结算依据策略。</field>
+    </record>
+
+    <record id="business_category_site_quality_rectification" model="sc.business.category">
+        <field name="name">质量整改</field>
+        <field name="code">site.quality.rectification</field>
+        <field name="domain">site</field>
+        <field name="target_model">sc.quality.rectification</field>
+        <field name="direction">reference</field>
+        <field name="sequence">11</field>
+        <field name="source_aliases">质量整改、整改执行、整改记录</field>
+        <field name="default_values_json"><![CDATA[{}]]></field>
+        <field name="domain_json"><![CDATA[[]]]></field>
+        <field name="required_fields_json"><![CDATA[["issue_id", "result"]]]></field>
+        <field name="visible_groups_json"><![CDATA[["rectification_header", "result", "attachments"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.quality.rectification", "sc.site.photo.batch"], "terminal_action": "create", "syncs": ["sc.quality.issue"]}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_site_quality_recheck" model="sc.business.category">
+        <field name="name">质量复验</field>
+        <field name="code">site.quality.recheck</field>
+        <field name="domain">site</field>
+        <field name="target_model">sc.quality.recheck</field>
+        <field name="direction">reference</field>
+        <field name="sequence">12</field>
+        <field name="source_aliases">质量复验、复查、验收闭环</field>
+        <field name="default_values_json"><![CDATA[{}]]></field>
+        <field name="domain_json"><![CDATA[[]]]></field>
+        <field name="required_fields_json"><![CDATA[["issue_id", "result"]]]></field>
+        <field name="visible_groups_json"><![CDATA[["recheck_header", "result", "attachments"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.quality.recheck", "sc.site.photo.batch"], "terminal_action": "create", "syncs": ["sc.quality.issue"]}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_site_safety_issue" model="sc.business.category">
+        <field name="name">安全问题</field>
+        <field name="code">site.safety.issue</field>
+        <field name="domain">site</field>
+        <field name="target_model">sc.safety.issue</field>
+        <field name="direction">reference</field>
+        <field name="sequence">20</field>
+        <field name="source_aliases">安全问题、安全检查、安全巡检问题、安全隐患</field>
+        <field name="default_values_json"><![CDATA[{"issue_category": "check"}]]></field>
+        <field name="domain_json"><![CDATA[[]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "name", "location", "description"]]]></field>
+        <field name="visible_groups_json"><![CDATA[["issue_header", "responsibility", "rectification", "recheck", "attachments"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.safety.issue", "sc.safety.rectification", "sc.safety.recheck", "sc.site.photo.batch"], "terminal_action": "action_close", "evidence_role": "safety_closure"}]]></field>
+        <field name="attachment_policy">recommended</field>
+        <field name="note">安全问题按登记、整改、复验、闭环办理；后续可扩展危险源、巡检任务和逾期责任策略。</field>
+    </record>
+
+    <record id="business_category_site_safety_rectification" model="sc.business.category">
+        <field name="name">安全整改</field>
+        <field name="code">site.safety.rectification</field>
+        <field name="domain">site</field>
+        <field name="target_model">sc.safety.rectification</field>
+        <field name="direction">reference</field>
+        <field name="sequence">21</field>
+        <field name="source_aliases">安全整改、隐患整改、整改记录</field>
+        <field name="default_values_json"><![CDATA[{}]]></field>
+        <field name="domain_json"><![CDATA[[]]]></field>
+        <field name="required_fields_json"><![CDATA[["issue_id", "result"]]]></field>
+        <field name="visible_groups_json"><![CDATA[["rectification_header", "result", "attachments"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.safety.rectification", "sc.site.photo.batch"], "terminal_action": "create", "syncs": ["sc.safety.issue"]}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_site_safety_recheck" model="sc.business.category">
+        <field name="name">安全复验</field>
+        <field name="code">site.safety.recheck</field>
+        <field name="domain">site</field>
+        <field name="target_model">sc.safety.recheck</field>
+        <field name="direction">reference</field>
+        <field name="sequence">22</field>
+        <field name="source_aliases">安全复验、安全复查、隐患闭环</field>
+        <field name="default_values_json"><![CDATA[{}]]></field>
+        <field name="domain_json"><![CDATA[[]]]></field>
+        <field name="required_fields_json"><![CDATA[["issue_id", "result"]]]></field>
+        <field name="visible_groups_json"><![CDATA[["recheck_header", "result", "attachments"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.safety.recheck", "sc.site.photo.batch"], "terminal_action": "create", "syncs": ["sc.safety.issue"]}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_contract_income" model="sc.business.category">
+        <field name="name">收入合同</field>
+        <field name="code">contract.income</field>
+        <field name="domain">contract</field>
+        <field name="target_model">construction.contract.income</field>
+        <field name="direction">income</field>
+        <field name="sequence">1</field>
+        <field name="source_aliases">收入合同、项目收入合同、施工合同、工程合同收入</field>
+        <field name="default_values_json"><![CDATA[{"type": "out"}]]></field>
+        <field name="domain_json"><![CDATA[["|", ["legacy_contract_id", "=", false], ["legacy_income_surface_visible", "=", true]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "subject", "tax_id"]]]></field>
+        <field name="visible_groups_json"><![CDATA[["contract_header", "amount", "execution", "attachments"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["construction.contract.income", "sc.receipt.income", "sc.invoice.registration"], "terminal_action": "action_confirm", "balance_fields": ["amount_total", "received_amount", "unreceived_amount", "invoice_amount", "uninvoiced_amount"]}]]></field>
+        <field name="attachment_policy">recommended</field>
+        <field name="note">合同结算域建筑行业模板分类；当前通过收入合同 action/context 承载，后续绑定合同分类字段和行业模板策略。</field>
+    </record>
+
+    <record id="business_category_contract_expense" model="sc.business.category">
+        <field name="name">支出合同</field>
+        <field name="code">contract.expense</field>
+        <field name="domain">contract</field>
+        <field name="target_model">construction.contract.expense</field>
+        <field name="direction">cost</field>
+        <field name="sequence">2</field>
+        <field name="source_aliases">支出合同、采购合同、分包合同、劳务合同、材料合同、设备租赁合同</field>
+        <field name="default_values_json"><![CDATA[{"type": "in"}]]></field>
+        <field name="domain_json"><![CDATA[[]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "subject", "tax_id"]]]></field>
+        <field name="visible_groups_json"><![CDATA[["contract_header", "amount", "execution", "attachments"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["construction.contract.expense", "sc.settlement.order", "payment.request", "sc.invoice.registration"], "terminal_action": "action_confirm", "balance_fields": ["amount_total", "settlement_amount", "paid_amount", "unpaid_amount", "invoice_amount", "uninvoiced_amount"]}]]></field>
+        <field name="attachment_policy">recommended</field>
+        <field name="note">合同结算域建筑行业模板分类；当前通过支出合同 action/context 承载，后续绑定合同分类字段和行业模板策略。</field>
+    </record>
+
+    <record id="business_category_settlement_income" model="sc.business.category">
+        <field name="name">收入合同结算</field>
+        <field name="code">settlement.income</field>
+        <field name="domain">contract</field>
+        <field name="target_model">sc.settlement.order</field>
+        <field name="direction">income</field>
+        <field name="sequence">3</field>
+        <field name="source_aliases">收入结算、收入合同结算、工程进度结算、业主结算</field>
+        <field name="default_values_json"><![CDATA[{"settlement_type": "in"}]]></field>
+        <field name="domain_json"><![CDATA[[["settlement_type", "=", "in"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "contract_id", "line_ids", "amount_total"]]]></field>
+        <field name="visible_groups_json"><![CDATA[["settlement_header", "settlement_lines", "contract", "invoice", "receipt"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.settlement.order", "sc.receipt.income", "sc.invoice.registration"], "terminal_action": "action_approve", "balance_fields": ["amount_total", "amount_paid", "amount_payable"]}]]></field>
+        <field name="attachment_policy">recommended</field>
+        <field name="note">收入结算使用同一正式结算模型，通过分类/domain/context 区分用户办理事项。</field>
+    </record>
+
+    <record id="business_category_settlement_expense" model="sc.business.category">
+        <field name="name">支出合同结算</field>
+        <field name="code">settlement.expense</field>
+        <field name="domain">contract</field>
+        <field name="target_model">sc.settlement.order</field>
+        <field name="direction">cost</field>
+        <field name="sequence">4</field>
+        <field name="source_aliases">支出结算、支出合同结算、采购结算、分包结算、劳务结算</field>
+        <field name="default_values_json"><![CDATA[{"settlement_type": "out"}]]></field>
+        <field name="domain_json"><![CDATA[[["settlement_type", "=", "out"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "contract_id", "line_ids", "amount_total"]]]></field>
+        <field name="visible_groups_json"><![CDATA[["settlement_header", "settlement_lines", "contract", "invoice", "payment"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.settlement.order", "payment.request", "payment.ledger", "sc.invoice.registration"], "terminal_action": "action_approve", "balance_fields": ["amount_total", "amount_paid", "amount_payable"]}]]></field>
+        <field name="attachment_policy">recommended</field>
+        <field name="note">支出结算使用同一正式结算模型，通过分类/domain/context 区分用户办理事项。</field>
+    </record>
+
+    <record id="business_category_finance_payment_apply_pay" model="sc.business.category">
+        <field name="name">付款申请</field>
+        <field name="code">finance.payment.apply.pay</field>
+        <field name="domain">finance</field>
+        <field name="target_model">payment.request</field>
+        <field name="direction">pay</field>
+        <field name="sequence">10</field>
+        <field name="source_aliases">支付申请、付款申请、往来单位付款申请</field>
+        <field name="default_values_json"><![CDATA[{"type": "pay"}]]></field>
+        <field name="domain_json"><![CDATA[["|", ["type", "=", "pay"], ["type", "=", false]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "contract_id", "amount"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["payment.ledger"], "terminal_action": "action_done"}]]></field>
+        <field name="attachment_policy">recommended</field>
+        <field name="note">建筑行业模板默认分类；现阶段由 action/domain/context 承载，后续绑定正式入口。</field>
+    </record>
+
+    <record id="business_category_finance_payment_apply_receive" model="sc.business.category">
+        <field name="name">收款申请</field>
+        <field name="code">finance.payment.apply.receive</field>
+        <field name="domain">finance</field>
+        <field name="target_model">payment.request</field>
+        <field name="direction">receive</field>
+        <field name="sequence">20</field>
+        <field name="source_aliases">收款申请、回款申请、到款申请</field>
+        <field name="default_values_json"><![CDATA[{"type": "receive"}]]></field>
+        <field name="domain_json"><![CDATA[[["type", "=", "receive"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "contract_id", "amount"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.treasury.ledger"], "terminal_action": "action_done"}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_finance_payment_execution_partner" model="sc.business.category">
+        <field name="name">往来单位付款</field>
+        <field name="code">finance.payment.execution.partner</field>
+        <field name="domain">finance</field>
+        <field name="target_model">sc.payment.execution</field>
+        <field name="direction">pay</field>
+        <field name="sequence">30</field>
+        <field name="source_aliases">往来单位付款、实际付款、付款执行</field>
+        <field name="default_values_json"><![CDATA[{"payment_family": "往来单位付款"}]]></field>
+        <field name="domain_json"><![CDATA[["|", ["payment_family", "=", "往来单位付款"], ["legacy_source_table", "!=", false]]]]></field>
+        <field name="required_fields_json"><![CDATA[["payment_request_id", "project_id", "partner_id", "contract_id", "payment_account_name", "payment_account_no", "receipt_account_name", "receipt_account_no", "paid_amount"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["payment.ledger"], "terminal_action": "action_paid", "syncs": ["payment.request"]}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_finance_receipt_income_project" model="sc.business.category">
+        <field name="name">收入</field>
+        <field name="code">finance.receipt.income.project</field>
+        <field name="domain">finance</field>
+        <field name="target_model">sc.receipt.income</field>
+        <field name="direction">receive</field>
+        <field name="sequence">40</field>
+        <field name="source_aliases">收入、到款确认、项目收款、收款登记</field>
+        <field name="default_values_json"><![CDATA[{"source_kind": "receipt_income", "income_category": "收入"}]]></field>
+        <field name="domain_json"><![CDATA[[["source_kind", "=", "receipt_income"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["payment_request_id", "project_id", "partner_id", "contract_id", "receiving_account_name", "receiving_account_no", "amount"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.treasury.ledger"], "terminal_action": "action_received", "syncs": ["payment.request"]}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_finance_expense_reimbursement" model="sc.business.category">
+        <field name="name">报销申请</field>
+        <field name="code">finance.expense.reimbursement</field>
+        <field name="domain">finance</field>
+        <field name="target_model">sc.expense.claim</field>
+        <field name="direction">pay</field>
+        <field name="sequence">50</field>
+        <field name="source_aliases">报销申请、报销、费用报销</field>
+        <field name="default_values_json"><![CDATA[{"claim_type": "expense", "expense_type": "报销申请", "summary": "报销申请"}]]></field>
+        <field name="domain_json"><![CDATA[["&", ["claim_type", "=", "expense"], ["expense_type", "=", "报销申请"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["payment_request_id", "project_id", "partner_id", "amount", "payee", "receipt_account_name", "payee_account", "payment_account_name", "payer_account"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["payment.ledger"], "terminal_action": "action_done", "syncs": ["payment.request"]}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_finance_deposit_bid_pay" model="sc.business.category">
+        <field name="name">投标保证金缴纳</field>
+        <field name="code">finance.deposit.bid.pay</field>
+        <field name="domain">finance</field>
+        <field name="target_model">sc.expense.claim</field>
+        <field name="direction">pay</field>
+        <field name="sequence">60</field>
+        <field name="source_aliases">投标保证金缴纳、投标保证金、保证金支付</field>
+        <field name="default_values_json"><![CDATA[{"claim_type": "deposit_pay", "guarantee_type": "bid", "expense_type": "投标保证金缴纳"}]]></field>
+        <field name="domain_json"><![CDATA[["&", ["claim_type", "=", "deposit_pay"], ["guarantee_type", "=", "bid"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "amount", "payee", "receipt_account_name", "payee_account"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["payment.ledger", "sc.finance.business.fact"], "terminal_action": "action_done"}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_finance_payment_execution_company" model="sc.business.category">
+        <field name="name">公司财务支出</field>
+        <field name="code">finance.payment.execution.company</field>
+        <field name="domain">finance</field>
+        <field name="target_model">sc.payment.execution</field>
+        <field name="direction">pay</field>
+        <field name="sequence">35</field>
+        <field name="source_aliases">公司财务支出、公司付款、财务支出</field>
+        <field name="default_values_json"><![CDATA[{"source_kind": "actual_outflow", "payment_family": "公司财务支出"}]]></field>
+        <field name="domain_json"><![CDATA[["&", ["source_kind", "=", "actual_outflow"], ["payment_family", "=", "公司财务支出"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "contract_id", "payment_account_name", "payment_account_no", "receipt_account_name", "receipt_account_no", "paid_amount"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["payment.ledger"], "terminal_action": "action_paid", "syncs": ["payment.request"]}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_finance_receipt_income_progress" model="sc.business.category">
+        <field name="name">工程进度款收入登记</field>
+        <field name="code">finance.receipt.income.progress</field>
+        <field name="domain">finance</field>
+        <field name="target_model">sc.receipt.income</field>
+        <field name="direction">receive</field>
+        <field name="sequence">45</field>
+        <field name="source_aliases">工程进度款收入登记、工程进度款、进度款收入</field>
+        <field name="default_values_json"><![CDATA[{"source_kind": "receipt_income", "income_category": "工程进度款收入"}]]></field>
+        <field name="domain_json"><![CDATA[["&", ["source_kind", "=", "receipt_income"], ["income_category", "=", "工程进度款收入"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["payment_request_id", "project_id", "partner_id", "contract_id", "receiving_account_name", "receiving_account_no", "amount"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.treasury.ledger"], "terminal_action": "action_received", "syncs": ["payment.request"]}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_finance_expense_project" model="sc.business.category">
+        <field name="name">项目费用报销单</field>
+        <field name="code">finance.expense.project</field>
+        <field name="domain">finance</field>
+        <field name="target_model">sc.expense.claim</field>
+        <field name="direction">pay</field>
+        <field name="sequence">55</field>
+        <field name="source_aliases">项目费用报销单、项目费用、费用报销</field>
+        <field name="default_values_json"><![CDATA[{"claim_type": "expense", "expense_type": "项目费用报销单", "summary": "项目费用报销单"}]]></field>
+        <field name="domain_json"><![CDATA[["&", ["claim_type", "=", "expense"], ["expense_type", "=", "项目费用报销单"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["payment_request_id", "project_id", "partner_id", "amount", "payee", "receipt_account_name", "payee_account", "payment_account_name", "payer_account"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["payment.ledger"], "terminal_action": "action_done", "syncs": ["payment.request"]}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_finance_deposit_bid_return" model="sc.business.category">
+        <field name="name">投标保证金退回</field>
+        <field name="code">finance.deposit.bid.return</field>
+        <field name="domain">finance</field>
+        <field name="target_model">sc.expense.claim</field>
+        <field name="direction">receive</field>
+        <field name="sequence">65</field>
+        <field name="source_aliases">投标保证金退回、保证金退回</field>
+        <field name="default_values_json"><![CDATA[{"claim_type": "deposit_refund", "guarantee_type": "bid", "expense_type": "投标保证金退回"}]]></field>
+        <field name="domain_json"><![CDATA[["&", ["claim_type", "=", "deposit_refund"], ["guarantee_type", "=", "bid"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "amount", "receipt_account_name", "payee_account"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.treasury.ledger", "sc.finance.business.fact"], "terminal_action": "action_done"}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_finance_deposit_contract_pay" model="sc.business.category">
+        <field name="name">合同保证金登记</field>
+        <field name="code">finance.deposit.contract.pay</field>
+        <field name="domain">finance</field>
+        <field name="target_model">sc.expense.claim</field>
+        <field name="direction">pay</field>
+        <field name="sequence">70</field>
+        <field name="source_aliases">合同保证金登记、合同保证金缴纳</field>
+        <field name="default_values_json"><![CDATA[{"claim_type": "deposit_pay", "guarantee_type": "contract", "expense_type": "合同保证金登记"}]]></field>
+        <field name="domain_json"><![CDATA[["&", ["claim_type", "=", "deposit_pay"], ["guarantee_type", "=", "contract"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "amount", "payee", "receipt_account_name", "payee_account"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["payment.ledger", "sc.finance.business.fact"], "terminal_action": "action_done"}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_finance_deposit_contract_return" model="sc.business.category">
+        <field name="name">合同保证金退回</field>
+        <field name="code">finance.deposit.contract.return</field>
+        <field name="domain">finance</field>
+        <field name="target_model">sc.expense.claim</field>
+        <field name="direction">receive</field>
+        <field name="sequence">75</field>
+        <field name="source_aliases">合同保证金退回</field>
+        <field name="default_values_json"><![CDATA[{"claim_type": "deposit_refund", "guarantee_type": "contract", "expense_type": "合同保证金退回"}]]></field>
+        <field name="domain_json"><![CDATA[["&", ["claim_type", "=", "deposit_refund"], ["guarantee_type", "=", "contract"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "amount", "receipt_account_name", "payee_account"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.treasury.ledger", "sc.finance.business.fact"], "terminal_action": "action_done"}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_finance_deduction_bill" model="sc.business.category">
+        <field name="name">扣款单</field>
+        <field name="code">finance.deduction.bill</field>
+        <field name="domain">finance</field>
+        <field name="target_model">sc.expense.claim</field>
+        <field name="direction">mixed</field>
+        <field name="sequence">80</field>
+        <field name="source_aliases">扣款单、扣款办理</field>
+        <field name="default_values_json"><![CDATA[{"claim_type": "expense", "expense_type": "扣款单", "summary": "扣款单"}]]></field>
+        <field name="domain_json"><![CDATA[["&", ["claim_type", "=", "expense"], ["expense_type", "=", "扣款单"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "amount", "expense_type"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.finance.business.fact"], "terminal_action": "action_done"}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_finance_deduction_paid" model="sc.business.category">
+        <field name="name">扣款实缴登记</field>
+        <field name="code">finance.deduction.paid</field>
+        <field name="domain">finance</field>
+        <field name="target_model">sc.expense.claim</field>
+        <field name="direction">pay</field>
+        <field name="sequence">85</field>
+        <field name="source_aliases">扣款实缴登记、扣款实缴</field>
+        <field name="default_values_json"><![CDATA[{"claim_type": "expense", "expense_type": "扣款实缴登记", "summary": "扣款实缴登记"}]]></field>
+        <field name="domain_json"><![CDATA[[["expense_type", "=", "扣款实缴登记"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "amount", "expense_type"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["payment.ledger", "sc.finance.business.fact"], "terminal_action": "action_done"}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_finance_deduction_refund" model="sc.business.category">
+        <field name="name">扣款实缴退回</field>
+        <field name="code">finance.deduction.refund</field>
+        <field name="domain">finance</field>
+        <field name="target_model">sc.expense.claim</field>
+        <field name="direction">receive</field>
+        <field name="sequence">90</field>
+        <field name="source_aliases">扣款实缴退回、扣款退回</field>
+        <field name="default_values_json"><![CDATA[{"claim_type": "deduction_refund", "expense_type": "扣款实缴退回", "summary": "扣款实缴退回"}]]></field>
+        <field name="domain_json"><![CDATA[[["expense_type", "=", "扣款实缴退回"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "amount", "expense_type"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.treasury.ledger", "sc.finance.business.fact"], "terminal_action": "action_done"}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_finance_fund_transfer" model="sc.business.category">
+        <field name="name">账户间资金往来</field>
+        <field name="code">finance.fund.transfer</field>
+        <field name="domain">finance</field>
+        <field name="target_model">sc.fund.account.operation</field>
+        <field name="direction">transfer</field>
+        <field name="sequence">95</field>
+        <field name="source_aliases">账户间资金往来、账户调拨、资金调拨</field>
+        <field name="default_values_json"><![CDATA[{"operation_type": "transfer_between", "operation_reason": "账户间资金往来"}]]></field>
+        <field name="domain_json"><![CDATA[[["operation_type", "=", "transfer_between"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["source_account_id", "target_account_id", "amount", "operation_reason"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.interfund.movement.fact", "sc.treasury.ledger"], "terminal_action": "action_done", "payment_request_policy": "not_applicable"}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_finance_loan_borrowing" model="sc.business.category">
+        <field name="name">借款申请</field>
+        <field name="code">finance.loan.borrowing</field>
+        <field name="domain">finance</field>
+        <field name="target_model">sc.financing.loan</field>
+        <field name="direction">receive</field>
+        <field name="sequence">100</field>
+        <field name="source_aliases">借款申请、融资借款</field>
+        <field name="default_values_json"><![CDATA[{"loan_type": "borrowing_request", "direction": "borrowed_fund"}]]></field>
+        <field name="domain_json"><![CDATA[[["loan_type", "=", "borrowing_request"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "amount", "loan_type", "direction"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.interfund.movement.fact", "sc.treasury.ledger"], "terminal_action": "action_done", "payment_request_policy": "not_applicable"}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_finance_loan_contractor_project_borrow" model="sc.business.category">
+        <field name="name">承包人借项目款</field>
+        <field name="code">finance.loan.contractor_project_borrow</field>
+        <field name="domain">finance</field>
+        <field name="target_model">sc.financing.loan</field>
+        <field name="direction">pay</field>
+        <field name="sequence">105</field>
+        <field name="source_aliases">承包人借项目款</field>
+        <field name="default_values_json"><![CDATA[{"loan_type": "borrowing_request", "direction": "borrowed_fund", "purpose": "承包人借项目款"}]]></field>
+        <field name="domain_json"><![CDATA[["&", ["loan_type", "=", "borrowing_request"], ["purpose", "ilike", "借%项目%款"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "amount", "purpose"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.interfund.movement.fact", "sc.treasury.ledger"], "terminal_action": "action_done", "payment_request_policy": "not_applicable"}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_finance_loan_project_borrow_company" model="sc.business.category">
+        <field name="name">项目借公司款登记</field>
+        <field name="code">finance.loan.project_borrow_company</field>
+        <field name="domain">finance</field>
+        <field name="target_model">sc.financing.loan</field>
+        <field name="direction">receive</field>
+        <field name="sequence">108</field>
+        <field name="source_aliases">项目借公司款登记、项目借款</field>
+        <field name="default_values_json"><![CDATA[{"loan_type": "borrowing_request", "direction": "borrowed_fund", "purpose": "项目借公司款登记"}]]></field>
+        <field name="domain_json"><![CDATA[["&", "&", ["loan_type", "=", "borrowing_request"], ["direction", "=", "borrowed_fund"], "|", ["purpose", "=", false], ["purpose", "not ilike", "借%项目%款"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "amount", "direction"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.interfund.movement.fact", "sc.treasury.ledger"], "terminal_action": "action_done", "payment_request_policy": "not_applicable"}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_finance_repayment_registration" model="sc.business.category">
+        <field name="name">还款登记</field>
+        <field name="code">finance.repayment.registration</field>
+        <field name="domain">finance</field>
+        <field name="target_model">sc.expense.claim</field>
+        <field name="direction">pay</field>
+        <field name="sequence">111</field>
+        <field name="source_aliases">还款登记</field>
+        <field name="default_values_json"><![CDATA[{"claim_type": "project_company_repay", "expense_type": "还款登记", "summary": "还款登记"}]]></field>
+        <field name="domain_json"><![CDATA[["&", ["claim_type", "=", "project_company_repay"], ["expense_type", "=", "还款登记"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "amount", "expense_type"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.interfund.movement.fact", "sc.treasury.ledger"], "terminal_action": "action_done", "payment_request_policy": "not_applicable"}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_finance_repayment_contractor_project" model="sc.business.category">
+        <field name="name">承包人还项目款</field>
+        <field name="code">finance.repayment.contractor_project</field>
+        <field name="domain">finance</field>
+        <field name="target_model">sc.expense.claim</field>
+        <field name="direction">receive</field>
+        <field name="sequence">112</field>
+        <field name="source_aliases">承包人还项目款</field>
+        <field name="default_values_json"><![CDATA[{"claim_type": "deposit_receive", "expense_type": "承包人还项目款", "summary": "承包人还项目款"}]]></field>
+        <field name="domain_json"><![CDATA[[["expense_type", "=", "承包人还项目款"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "amount", "expense_type"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.interfund.movement.fact", "sc.treasury.ledger"], "terminal_action": "action_done", "payment_request_policy": "not_applicable"}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_finance_repayment_project_company" model="sc.business.category">
+        <field name="name">项目还公司款登记</field>
+        <field name="code">finance.repayment.project_company</field>
+        <field name="domain">finance</field>
+        <field name="target_model">sc.expense.claim</field>
+        <field name="direction">pay</field>
+        <field name="sequence">113</field>
+        <field name="source_aliases">项目还公司款登记、项目还公司款</field>
+        <field name="default_values_json"><![CDATA[{"claim_type": "project_company_repay", "expense_type": "项目还公司款登记", "summary": "项目还公司款登记"}]]></field>
+        <field name="domain_json"><![CDATA[["&", ["claim_type", "=", "project_company_repay"], ["expense_type", "=", "项目还公司款登记"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "amount", "expense_type"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.interfund.movement.fact", "sc.treasury.ledger"], "terminal_action": "action_done", "payment_request_policy": "not_applicable"}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_invoice_output_application" model="sc.business.category">
+        <field name="name">销项开票申请</field>
+        <field name="code">invoice.output.application</field>
+        <field name="domain">invoice_tax</field>
+        <field name="target_model">sc.invoice.registration</field>
+        <field name="direction">income</field>
+        <field name="sequence">109</field>
+        <field name="source_aliases">销项开票申请、开票申请、收入开票申请</field>
+        <field name="default_values_json"><![CDATA[{"source_kind": "output_invoice_tax", "direction": "output", "invoice_content": "销项开票申请"}]]></field>
+        <field name="domain_json"><![CDATA[["&", ["source_kind", "=", "output_invoice_tax"], ["invoice_content", "=", "销项开票申请"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "contract_id", "invoice_date", "amount_total"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.invoice.category.summary"], "terminal_action": "action_confirm"}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_invoice_output_registration" model="sc.business.category">
+        <field name="name">销项开票登记</field>
+        <field name="code">invoice.output.registration</field>
+        <field name="domain">invoice_tax</field>
+        <field name="target_model">sc.invoice.registration</field>
+        <field name="direction">income</field>
+        <field name="sequence">110</field>
+        <field name="source_aliases">销项开票登记、开票登记、收入发票</field>
+        <field name="default_values_json"><![CDATA[{"source_kind": "output_invoice_tax", "direction": "output", "invoice_content": "销项开票登记"}]]></field>
+        <field name="domain_json"><![CDATA[["&", ["source_kind", "=", "output_invoice_tax"], ["direction", "=", "output"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "contract_id", "invoice_no", "invoice_date", "amount_total"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.invoice.category.summary"], "terminal_action": "action_register"}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_invoice_input_report" model="sc.business.category">
+        <field name="name">进项税额上报</field>
+        <field name="code">invoice.input.report</field>
+        <field name="domain">invoice_tax</field>
+        <field name="target_model">sc.invoice.registration</field>
+        <field name="direction">cost</field>
+        <field name="sequence">120</field>
+        <field name="source_aliases">进项发票、进项税额上报、收票登记</field>
+        <field name="default_values_json"><![CDATA[{"source_kind": "input_invoice_tax", "direction": "input", "invoice_content": "进项税额上报"}]]></field>
+        <field name="domain_json"><![CDATA[["&", ["source_kind", "=", "input_invoice_tax"], ["direction", "=", "input"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "contract_id", "invoice_no", "invoice_date", "amount_total"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.invoice.category.summary"], "terminal_action": "action_register"}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_invoice_prepaid_tax" model="sc.business.category">
+        <field name="name">预缴税款</field>
+        <field name="code">invoice.prepaid_tax</field>
+        <field name="domain">invoice_tax</field>
+        <field name="target_model">sc.invoice.registration</field>
+        <field name="direction">noncash_tax</field>
+        <field name="sequence">130</field>
+        <field name="source_aliases">预缴税款、完税凭证</field>
+        <field name="default_values_json"><![CDATA[{"source_kind": "prepaid_tax", "direction": "prepaid", "invoice_content": "预缴税款"}]]></field>
+        <field name="domain_json"><![CDATA[["&", ["source_kind", "=", "prepaid_tax"], ["direction", "=", "prepaid"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "tax_certificate_no", "invoice_date", "amount_total"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.invoice.category.summary"], "terminal_action": "action_register"}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_tax_deduction_registration" model="sc.business.category">
+        <field name="name">抵扣登记</field>
+        <field name="code">tax.deduction.registration</field>
+        <field name="domain">invoice_tax</field>
+        <field name="target_model">sc.tax.deduction.registration</field>
+        <field name="direction">noncash_tax</field>
+        <field name="sequence">140</field>
+        <field name="source_aliases">抵扣登记、进项抵扣、扣款抵扣</field>
+        <field name="default_values_json"><![CDATA[{"is_transfer_out": false, "deduction_reason": "抵扣登记"}]]></field>
+        <field name="domain_json"><![CDATA[[["is_transfer_out", "=", false]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "invoice_no", "deduction_confirm_date", "deduction_tax_amount"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.finance.business.fact", "sc.finance.business.project.summary", "sc.finance.project.capital.position"], "balance_policy": "noncash_tax", "terminal_action": "action_deduct"}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_material_plan" model="sc.business.category">
+        <field name="name">材料计划</field>
+        <field name="code">material.plan</field>
+        <field name="domain">material</field>
+        <field name="target_model">project.material.plan</field>
+        <field name="direction">cost</field>
+        <field name="sequence">210</field>
+        <field name="source_aliases">材料计划、物资计划、需用计划</field>
+        <field name="default_values_json"><![CDATA[{}]]></field>
+        <field name="domain_json"><![CDATA[]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "line_ids", "material_catalog_id", "quantity"]]]></field>
+        <field name="visible_groups_json"><![CDATA[["plan_header", "plan_lines", "attachments", "approval"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["project.material.plan"], "terminal_action": "action_done", "next_actions": ["material.rfq", "material.purchase.request"]}]]></field>
+        <field name="attachment_policy">recommended</field>
+        <field name="note">新办理入口绑定“我的物资计划”；用户确认历史材料计划入口保持只读追溯。</field>
+    </record>
+
+    <record id="business_category_material_purchase_request" model="sc.business.category">
+        <field name="name">采购申请</field>
+        <field name="code">material.purchase.request</field>
+        <field name="domain">material</field>
+        <field name="target_model">sc.material.purchase.request</field>
+        <field name="direction">cost</field>
+        <field name="sequence">220</field>
+        <field name="source_aliases">采购申请、材料采购申请、物资采购申请</field>
+        <field name="default_values_json"><![CDATA[{}]]></field>
+        <field name="domain_json"><![CDATA[]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "request_date", "line_ids", "material_catalog_id", "qty"]]]></field>
+        <field name="visible_groups_json"><![CDATA[["request_header", "request_lines", "source_trace", "approval"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.material.purchase.request"], "terminal_action": "action_approve", "next_actions": ["material.acceptance", "material.rfq"]}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_material_acceptance" model="sc.business.category">
+        <field name="name">材料进场验收</field>
+        <field name="code">material.acceptance</field>
+        <field name="domain">material</field>
+        <field name="target_model">sc.material.acceptance</field>
+        <field name="direction">cost</field>
+        <field name="sequence">230</field>
+        <field name="source_aliases">材料进场验收、进场验收、材料验收</field>
+        <field name="default_values_json"><![CDATA[{}]]></field>
+        <field name="domain_json"><![CDATA[]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "acceptance_date", "supplier_id", "line_ids", "accepted_qty"]]]></field>
+        <field name="visible_groups_json"><![CDATA[["acceptance_header", "acceptance_lines", "inspection", "attachments"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.material.acceptance"], "terminal_action": "action_accept", "next_actions": ["material.inbound"]}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_material_rfq" model="sc.business.category">
+        <field name="name">询比价</field>
+        <field name="code">material.rfq</field>
+        <field name="domain">material</field>
+        <field name="target_model">sc.material.rfq</field>
+        <field name="direction">cost</field>
+        <field name="sequence">240</field>
+        <field name="source_aliases">询比价、报价单、材料报价、采购询价</field>
+        <field name="default_values_json"><![CDATA[{}]]></field>
+        <field name="domain_json"><![CDATA[]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "rfq_date", "line_ids", "supplier_id", "quote_price"]]]></field>
+        <field name="visible_groups_json"><![CDATA[["rfq_header", "quote_lines", "selected_supplier", "attachments"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.material.rfq", "purchase.order"], "terminal_action": "action_select", "next_actions": ["purchase.order", "material.acceptance"]}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_material_inbound" model="sc.business.category">
+        <field name="name">入库单</field>
+        <field name="code">material.inbound</field>
+        <field name="domain">material</field>
+        <field name="target_model">sc.material.inbound</field>
+        <field name="direction">cost</field>
+        <field name="sequence">250</field>
+        <field name="source_aliases">入库、入库单、材料入库</field>
+        <field name="default_values_json"><![CDATA[{}]]></field>
+        <field name="domain_json"><![CDATA[]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "warehouse_id", "dest_location_id", "line_ids", "qty"]]]></field>
+        <field name="visible_groups_json"><![CDATA[["inbound_header", "inbound_lines", "stock", "attachments"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.material.inbound", "sc.material.stock.summary"], "terminal_action": "action_receive", "cost_triggers": {"receive_project_cost_ledger": false}}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_material_outbound" model="sc.business.category">
+        <field name="name">出库单</field>
+        <field name="code">material.outbound</field>
+        <field name="domain">material</field>
+        <field name="target_model">sc.material.outbound</field>
+        <field name="direction">cost</field>
+        <field name="sequence">260</field>
+        <field name="source_aliases">出库、出库单、材料出库、领料、领用出库</field>
+        <field name="default_values_json"><![CDATA[{"outbound_type": "issue"}]]></field>
+        <field name="domain_json"><![CDATA[[["outbound_type", "=", "issue"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "warehouse_id", "source_location_id", "line_ids", "qty"]]]></field>
+        <field name="visible_groups_json"><![CDATA[["outbound_header", "outbound_lines", "receiver", "stock"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.material.outbound", "sc.material.stock.summary", "project.cost.ledger"], "terminal_action": "action_issue", "cost_triggers": {"issue_project_cost_ledger": true}, "approval_triggers": {"issue_loss_before_project_cost": true}}]]></field>
+        <field name="attachment_policy">recommended</field>
+        <field name="approval_policy_id" ref="smart_construction_core.approval_policy_material_outbound"/>
+    </record>
+
+    <record id="business_category_material_return" model="sc.business.category">
+        <field name="name">退库办理</field>
+        <field name="code">material.return</field>
+        <field name="domain">material</field>
+        <field name="target_model">sc.material.outbound</field>
+        <field name="direction">cost_reversal</field>
+        <field name="sequence">261</field>
+        <field name="source_aliases">退库、退库办理、退供、材料退库</field>
+        <field name="default_values_json"><![CDATA[{"outbound_type": "return"}]]></field>
+        <field name="domain_json"><![CDATA[[["outbound_type", "=", "return"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "warehouse_id", "source_location_id", "receiver_id", "line_ids", "qty"]]]></field>
+        <field name="visible_groups_json"><![CDATA[["outbound_header", "outbound_lines", "receiver", "stock"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.material.outbound", "sc.material.inbound", "sc.material.stock.summary"], "terminal_action": "action_issue", "cost_triggers": {"issue_project_cost_ledger": false}}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_material_transfer" model="sc.business.category">
+        <field name="name">材料调拨</field>
+        <field name="code">material.transfer</field>
+        <field name="domain">material</field>
+        <field name="target_model">sc.material.outbound</field>
+        <field name="direction">transfer</field>
+        <field name="sequence">262</field>
+        <field name="source_aliases">材料调拨、库存调拨、仓库调拨</field>
+        <field name="default_values_json"><![CDATA[{"outbound_type": "transfer"}]]></field>
+        <field name="domain_json"><![CDATA[[["outbound_type", "=", "transfer"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "warehouse_id", "source_location_id", "dest_warehouse_id", "line_ids", "qty"]]]></field>
+        <field name="visible_groups_json"><![CDATA[["outbound_header", "outbound_lines", "transfer", "stock"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.material.outbound", "sc.material.stock.summary"], "terminal_action": "action_issue", "cost_triggers": {"issue_project_cost_ledger": false}}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_material_loss" model="sc.business.category">
+        <field name="name">材料损耗</field>
+        <field name="code">material.loss</field>
+        <field name="domain">material</field>
+        <field name="target_model">sc.material.outbound</field>
+        <field name="direction">cost</field>
+        <field name="sequence">263</field>
+        <field name="source_aliases">材料损耗、库存损耗、报损</field>
+        <field name="default_values_json"><![CDATA[{"outbound_type": "loss"}]]></field>
+        <field name="domain_json"><![CDATA[[["outbound_type", "=", "loss"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "warehouse_id", "source_location_id", "purpose", "line_ids", "qty"]]]></field>
+        <field name="visible_groups_json"><![CDATA[["outbound_header", "outbound_lines", "loss_reason", "stock"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.material.outbound", "sc.material.stock.summary", "project.cost.ledger"], "terminal_action": "action_issue", "cost_triggers": {"issue_project_cost_ledger": true}}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+
+    <record id="business_category_material_settlement" model="sc.business.category">
+        <field name="name">材料结算</field>
+        <field name="code">material.settlement</field>
+        <field name="domain">material</field>
+        <field name="target_model">sc.material.settlement</field>
+        <field name="direction">cost</field>
+        <field name="sequence">270</field>
+        <field name="source_aliases">材料结算、物资结算、采购结算</field>
+        <field name="default_values_json"><![CDATA[{}]]></field>
+        <field name="domain_json"><![CDATA[]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "supplier_id", "settlement_date", "line_ids", "qty", "unit_price"]]]></field>
+        <field name="visible_groups_json"><![CDATA[["settlement_header", "settlement_lines", "tax", "payment"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.material.settlement", "project.cost.ledger", "payment.request"], "terminal_action": "action_confirm", "cost_triggers": {"confirm_project_cost_ledger": true, "confirm_payment_request": true}}]]></field>
+        <field name="attachment_policy">recommended</field>
+    </record>
+</odoo>

@@ -18,6 +18,7 @@ class ScApprovalPolicy(models.Model):
         ("sc.general.contract", "一般合同（公司）"),
         ("sc.legacy.purchase.contract.fact", "历史采购/一般合同事实（只读）"),
         ("project.material.plan", "物资计划"),
+        ("sc.material.outbound", "材料出库/损耗"),
         ("purchase.order", "采购订单"),
         ("sc.settlement.order", "结算单"),
         ("payment.request", "付款/收款申请"),
@@ -300,6 +301,7 @@ class ScApprovalPolicy(models.Model):
         self.ensure_one()
         return self.target_model in {
             "project.material.plan",
+            "sc.material.outbound",
             "payment.request",
             "sc.expense.claim",
             "sc.settlement.order",
@@ -324,6 +326,10 @@ class ScApprovalPolicy(models.Model):
             "project.material.plan": (
                 "smart_construction_core.server_action_material_plan_tier_approved",
                 "smart_construction_core.server_action_material_plan_tier_rejected",
+            ),
+            "sc.material.outbound": (
+                "smart_construction_core.server_action_material_outbound_on_approved",
+                "smart_construction_core.server_action_material_outbound_on_rejected",
             ),
             "payment.request": (
                 "smart_construction_core.server_action_payment_request_on_approved",
@@ -384,6 +390,7 @@ class ScApprovalPolicy(models.Model):
         amount_field_by_model = {
             "payment.request": "amount",
             "sc.expense.claim": "amount",
+            "sc.material.outbound": "amount_total",
             "sc.settlement.order": "amount_total",
             "purchase.order": "amount_total",
             "construction.contract": "amount_total",

@@ -52,6 +52,7 @@
         'data/p1_daily_business_form_orchestration_contract_data.xml',
         'views/res_groups_menu_views.xml',
         'data/material_plan_tier_actions.xml',
+        'data/material_outbound_tier_actions.xml',
         'data/payment_request_tier_actions.xml',
         'data/settlement_order_tier_actions.xml',
         'data/expense_claim_tier_actions.xml',
@@ -61,6 +62,8 @@
         'data/approval_policy_seed.xml',
         'data/approval_scope_seed.xml',
         'data/approval_policy_tier_sync.xml',
+        'data/business_category_seed.xml',
+        'data/business_category_template_binding_sync.xml',
 
         # 顶级菜单基础
         'actions/project_list_actions.xml',
@@ -197,6 +200,7 @@
         'views/core/workflow_views.xml',
         'views/menu.xml',
         'views/support/legacy_report_inventory_views.xml',
+        'views/support/business_category_views.xml',
         'views/support/approval_policy_views.xml',
         'views/support/approval_scope_views.xml',
         'views/core/construction_diary_views.xml',

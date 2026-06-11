@@ -282,13 +282,13 @@
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_material_read')), (4, ref('smart_construction_core.group_sc_cap_material_user')), (4, ref('smart_construction_core.group_sc_cap_material_manager'))]"/>
     </record>
     <record id="action_sc_material_purchase_request" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_material_read')), (4, ref('smart_construction_core.group_sc_cap_material_user')), (4, ref('smart_construction_core.group_sc_cap_material_manager'))]"/>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_material_read')), (4, ref('smart_construction_core.group_sc_cap_material_user')), (4, ref('smart_construction_core.group_sc_cap_material_manager')), (4, ref('smart_construction_core.group_sc_cap_purchase_read')), (4, ref('smart_construction_core.group_sc_cap_purchase_user')), (4, ref('smart_construction_core.group_sc_cap_purchase_manager'))]"/>
     </record>
     <record id="action_sc_material_acceptance" model="ir.actions.act_window">
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_material_read')), (4, ref('smart_construction_core.group_sc_cap_material_user')), (4, ref('smart_construction_core.group_sc_cap_material_manager'))]"/>
     </record>
     <record id="action_sc_material_rfq" model="ir.actions.act_window">
-        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_material_read')), (4, ref('smart_construction_core.group_sc_cap_material_user')), (4, ref('smart_construction_core.group_sc_cap_material_manager'))]"/>
+        <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_material_read')), (4, ref('smart_construction_core.group_sc_cap_material_user')), (4, ref('smart_construction_core.group_sc_cap_material_manager')), (4, ref('smart_construction_core.group_sc_cap_purchase_read')), (4, ref('smart_construction_core.group_sc_cap_purchase_user')), (4, ref('smart_construction_core.group_sc_cap_purchase_manager'))]"/>
     </record>
     <record id="action_sc_material_inbound" model="ir.actions.act_window">
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_material_read')), (4, ref('smart_construction_core.group_sc_cap_material_user')), (4, ref('smart_construction_core.group_sc_cap_material_manager'))]"/>
