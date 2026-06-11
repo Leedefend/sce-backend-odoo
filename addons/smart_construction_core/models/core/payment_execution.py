@@ -242,6 +242,7 @@ class ScPaymentExecution(models.Model):
                 rec.write({"state": "confirmed", "reject_reason": False})
 
     def action_paid(self):
+        self._assert_finance_confirm_access()
         policy = self.env["sc.approval.policy"]
         for rec in self:
             if rec.state not in ("draft", "confirmed"):
@@ -258,6 +259,20 @@ class ScPaymentExecution(models.Model):
             rec.state = "paid"
             rec._sync_payment_request_done()
 
+    def _has_finance_confirm_access(self):
+        return (
+            self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager")
+            or self.env.user.has_group("smart_construction_custom.group_sc_role_finance")
+        )
+
+    def _assert_finance_confirm_access(self):
+        if not self._has_finance_confirm_access():
+            raise UserError(_("你没有登记付款的财务确认权限。"))
+
+    def _assert_finance_cancel_access(self):
+        if not self._has_finance_confirm_access():
+            raise UserError(_("你没有取消或撤销付款执行的财务权限。"))
+
     def _sync_payment_request_done(self):
         for rec in self:
             request = rec.payment_request_id
@@ -272,34 +287,88 @@ class ScPaymentExecution(models.Model):
             rounding = request.currency_id.rounding if request.currency_id else 0.01
             if float_compare(rec.paid_amount or 0.0, request.amount or 0.0, precision_rounding=rounding) == -1:
                 raise UserError(_("实付金额低于付款申请金额，不能自动完成付款申请。"))
+            before = request._snapshot_audit_payload()
             request.with_context(payment_soft_gate=True)._ensure_payment_ledger(
                 amount=request.amount or 0.0,
                 ref=rec.name,
                 note=_("auto:payment_execution_paid"),
             )
             request.with_context(allow_transition=True, payment_soft_gate=True).write({"state": "done"})
+            after = request._snapshot_audit_payload()
+            request._audit_transition("payment_paid", before, after, action_name="payment_execution_paid")
 
     def action_cancel(self):
+        self._assert_finance_cancel_access()
         for rec in self:
             if rec.source_origin == "legacy":
                 raise UserError(_("历史迁移付款执行单据不能在新系统取消。"))
-            if rec.state in ("paid", "legacy_confirmed", "cancel"):
+            if rec.state == "paid":
+                rec._reverse_paid_execution()
+                continue
+            if rec.state in ("legacy_confirmed", "cancel"):
                 raise_guard(
                     "PAYMENT_EXECUTION_INVALID_TRANSITION",
                     f"付款执行[{rec.display_name}]",
                     _("取消付款执行"),
-                    reasons=[_("已付款、历史已确认或已取消的付款执行不能取消")],
+                    reasons=[_("历史已确认或已取消的付款执行不能取消")],
                 )
             rec.state = "cancel"
 
+    def _reverse_paid_execution(self):
+        for rec in self:
+            request = rec.payment_request_id
+            if not request:
+                raise_guard(
+                    "PAYMENT_EXECUTION_MISSING_REQUEST",
+                    f"付款执行[{rec.display_name}]",
+                    _("撤销已付款"),
+                    reasons=[_("已付款执行必须关联付款申请才能撤销")],
+                )
+            ledger = self.env["payment.ledger"].sudo().search(
+                [("payment_request_id", "=", request.id)],
+                limit=1,
+            )
+            if not ledger:
+                raise_guard(
+                    "PAYMENT_LEDGER_NOT_FOUND",
+                    f"付款执行[{rec.display_name}]",
+                    _("撤销已付款"),
+                    reasons=[_("未找到对应付款台账，不能自动撤销")],
+                )
+            before = request._snapshot_audit_payload()
+            ledger.with_context(allow_payment_reversal=True).unlink()
+            if request.state == "done":
+                request.with_context(allow_transition=True, payment_soft_gate=True).write({"state": "approved"})
+            rec.write({"state": "cancel"})
+            after = request._snapshot_audit_payload()
+            request._audit_transition("payment_reversed", before, after, action_name="payment_execution_cancel")
+            rec.message_post(body=_("已撤销付款登记，并将付款申请退回已批准状态。"))
+
     def _check_business_anchor_or_raise(self):
         for rec in self:
+            if rec.source_origin == "legacy":
+                continue
             if not rec.project_id:
                 raise_guard(
                     "PAYMENT_EXECUTION_MISSING_PROJECT",
                     f"付款执行[{rec.display_name}]",
                     _("办理付款执行"),
                     reasons=[_("付款执行必须关联项目")],
+                )
+            if not rec.payment_request_id:
+                raise_guard(
+                    "PAYMENT_EXECUTION_MISSING_REQUEST",
+                    f"付款执行[{rec.display_name}]",
+                    _("办理付款执行"),
+                    reasons=[_("新系统付款执行必须关联已审批的付款申请")],
+                )
+            material_settlement = rec.payment_request_id.material_settlement_id if rec.payment_request_id else False
+            if not rec.contract_id and not material_settlement:
+                raise_guard(
+                    "PAYMENT_EXECUTION_MISSING_CONTRACT",
+                    f"付款执行[{rec.display_name}]",
+                    _("办理付款执行"),
+                    reasons=[_("新系统付款执行必须关联合同或材料结算")],
                 )
             if not rec.partner_id:
                 raise_guard(
@@ -314,6 +383,22 @@ class ScPaymentExecution(models.Model):
                     f"付款执行[{rec.display_name}]",
                     _("办理付款执行"),
                     reasons=[_("实付金额必须大于0")],
+                )
+            payer_account = rec.payment_account_no or rec.bank_account or rec.payment_account_name
+            payee_account = rec.receipt_account_no or rec.receipt_account_name
+            if not payer_account:
+                raise_guard(
+                    "PAYMENT_EXECUTION_MISSING_PAYER_ACCOUNT",
+                    f"付款执行[{rec.display_name}]",
+                    _("办理付款执行"),
+                    reasons=[_("新系统付款执行必须填写付款账户信息")],
+                )
+            if not payee_account:
+                raise_guard(
+                    "PAYMENT_EXECUTION_MISSING_PAYEE_ACCOUNT",
+                    f"付款执行[{rec.display_name}]",
+                    _("办理付款执行"),
+                    reasons=[_("新系统付款执行必须填写收款账户信息")],
                 )
 
     def _check_payment_request_scope_or_raise(self):

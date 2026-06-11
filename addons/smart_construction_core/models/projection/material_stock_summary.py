@@ -105,10 +105,35 @@ class ScMaterialStockSummary(models.Model):
 
     def init(self):
         self._cr.execute(
-            "SELECT to_regclass('sc_legacy_material_stock_fact'), to_regclass('project_project'), to_regclass('res_company')"
+            """
+            SELECT
+                to_regclass('sc_legacy_material_stock_fact'),
+                to_regclass('sc_material_inbound'),
+                to_regclass('sc_material_inbound_line'),
+                to_regclass('sc_material_outbound'),
+                to_regclass('sc_material_outbound_line'),
+                to_regclass('project_project'),
+                to_regclass('res_company')
+            """
         )
-        fact_table, project_table, company_table = self._cr.fetchone()
-        if not (fact_table and project_table and company_table):
+        (
+            legacy_fact_table,
+            inbound_table,
+            inbound_line_table,
+            outbound_table,
+            outbound_line_table,
+            project_table,
+            company_table,
+        ) = self._cr.fetchone()
+        if not (
+            legacy_fact_table
+            and inbound_table
+            and inbound_line_table
+            and outbound_table
+            and outbound_line_table
+            and project_table
+            and company_table
+        ):
             return
         tools.drop_view_if_exists(self._cr, self._table)
         self._cr.execute(
@@ -156,6 +181,62 @@ class ScMaterialStockSummary(models.Model):
                       AND f.state <> 'cancel'
                       AND f.fact_type IN ('stock_in', 'stock_in_line', 'scbs_stock_in', 'stock_out', 'stock_out_line')
                       AND COALESCE(NULLIF(f.material_name, ''), '') <> ''
+                    UNION ALL
+                    SELECT
+                        -il.id AS id,
+                        'formal_stock_in_line'::varchar AS fact_type,
+                        COALESCE(NULLIF(mc.code, ''), pp.default_code) AS material_code,
+                        COALESCE(NULLIF(mc.name, ''), pt.name->>'zh_CN', pt.name->>'en_US', '未填写材料') AS material_name,
+                        COALESCE(NULLIF(il.material_spec, ''), NULLIF(mc.spec_model, ''), pp.default_code) AS material_spec,
+                        COALESCE(u.name->>'zh_CN', u.name->>'en_US', NULLIF(mc.uom_text, '')) AS material_uom,
+                        ib.project_id AS project_id,
+                        NULL::varchar AS project_name,
+                        rp.name AS partner_name,
+                        NULL::varchar AS contract_no,
+                        sw.name AS department_name,
+                        ib.inbound_date AS document_date,
+                        COALESCE(il.qty, 0.0) AS stock_in_qty,
+                        COALESCE(il.amount, 0.0) AS stock_in_amount,
+                        0.0 AS stock_out_qty,
+                        0.0 AS stock_out_amount
+                    FROM sc_material_inbound_line il
+                    JOIN sc_material_inbound ib ON ib.id = il.inbound_id
+                    LEFT JOIN sc_material_catalog mc ON mc.id = il.material_catalog_id
+                    LEFT JOIN product_product pp ON pp.id = il.product_id
+                    LEFT JOIN product_template pt ON pt.id = pp.product_tmpl_id
+                    LEFT JOIN uom_uom u ON u.id = il.product_uom_id
+                    LEFT JOIN res_partner rp ON rp.id = ib.supplier_id
+                    LEFT JOIN stock_warehouse sw ON sw.id = ib.warehouse_id
+                    WHERE ib.state = 'received'
+                      AND COALESCE(NULLIF(mc.name, ''), pt.name->>'zh_CN', pt.name->>'en_US', '') <> ''
+                    UNION ALL
+                    SELECT
+                        -1000000000 - ol.id AS id,
+                        'formal_stock_out_line'::varchar AS fact_type,
+                        COALESCE(NULLIF(mc.code, ''), pp.default_code) AS material_code,
+                        COALESCE(NULLIF(mc.name, ''), pt.name->>'zh_CN', pt.name->>'en_US', '未填写材料') AS material_name,
+                        COALESCE(NULLIF(ol.material_spec, ''), NULLIF(mc.spec_model, ''), pp.default_code) AS material_spec,
+                        COALESCE(u.name->>'zh_CN', u.name->>'en_US', NULLIF(mc.uom_text, '')) AS material_uom,
+                        ob.project_id AS project_id,
+                        NULL::varchar AS project_name,
+                        rp.name AS partner_name,
+                        NULL::varchar AS contract_no,
+                        sw.name AS department_name,
+                        ob.outbound_date AS document_date,
+                        0.0 AS stock_in_qty,
+                        0.0 AS stock_in_amount,
+                        COALESCE(ol.qty, 0.0) AS stock_out_qty,
+                        0.0 AS stock_out_amount
+                    FROM sc_material_outbound_line ol
+                    JOIN sc_material_outbound ob ON ob.id = ol.outbound_id
+                    LEFT JOIN sc_material_catalog mc ON mc.id = ol.material_catalog_id
+                    LEFT JOIN product_product pp ON pp.id = ol.product_id
+                    LEFT JOIN product_template pt ON pt.id = pp.product_tmpl_id
+                    LEFT JOIN uom_uom u ON u.id = ol.product_uom_id
+                    LEFT JOIN res_partner rp ON rp.id = ob.receiver_id
+                    LEFT JOIN stock_warehouse sw ON sw.id = ob.warehouse_id
+                    WHERE ob.state = 'issued'
+                      AND COALESCE(NULLIF(mc.name, ''), pt.name->>'zh_CN', pt.name->>'en_US', '') <> ''
                 )
                 SELECT
                     row_number() OVER (
@@ -222,11 +303,11 @@ class ScMaterialStockSummary(models.Model):
                         ELSE (SUM(sf.stock_in_amount) - SUM(sf.stock_out_amount))
                             / (SUM(sf.stock_in_qty) - SUM(sf.stock_out_qty))
                     END AS stock_avg_price,
-                    COUNT(*) FILTER (WHERE sf.fact_type IN ('stock_in', 'stock_in_line', 'scbs_stock_in'))::integer AS stock_in_line_count,
-                    COUNT(*) FILTER (WHERE sf.fact_type IN ('stock_out', 'stock_out_line'))::integer AS stock_out_line_count,
+                    COUNT(*) FILTER (WHERE sf.fact_type IN ('stock_in', 'stock_in_line', 'scbs_stock_in', 'formal_stock_in_line'))::integer AS stock_in_line_count,
+                    COUNT(*) FILTER (WHERE sf.fact_type IN ('stock_out', 'stock_out_line', 'formal_stock_out_line'))::integer AS stock_out_line_count,
                     MIN(sf.document_date::date) AS first_date,
                     MAX(sf.document_date::date) AS last_date,
-                    '按项目、材料、规格和单位汇总历史出入库事实，库存=入库-出库' AS coverage_note
+                    '按项目、材料、规格和单位汇总历史出入库事实与新办理出入库单，库存=入库-出库' AS coverage_note
                 FROM stock_fact sf
                 JOIN project_project p ON p.id = sf.project_id AND p.active IS TRUE
                 LEFT JOIN res_company rc ON rc.id = COALESCE(p.company_id, (SELECT id FROM res_company ORDER BY id LIMIT 1))

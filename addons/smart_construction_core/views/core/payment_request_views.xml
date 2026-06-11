@@ -15,6 +15,7 @@
                     <field name="operation_strategy"/>
                     <field name="contract_id"/>
                     <field name="settlement_id"/>
+                    <field name="material_settlement_id" optional="show"/>
                     <field name="cost_category_name" optional="show"/>
                     <field name="settlement_amount_payable" sum="可用余额合计"/>
                     <field name="is_overpay_risk" invisible="1"/>
@@ -72,6 +73,7 @@
                                 <field name="operation_strategy" readonly="1"/>
                                 <field name="contract_id" domain="[('project_id', '=', project_id)]"/>
                                 <field name="settlement_id" domain="[('project_id', '=', project_id)]"/>
+                                <field name="material_settlement_id" domain="[('project_id', '=', project_id)]"/>
                             </group>
                         </group>
                         <group>
@@ -93,6 +95,7 @@
                         </group>
                         <group string="结算依据">
                             <field name="settlement_id" domain="[('state','=','approve'), ('project_id','=', project_id)]"/>
+                            <field name="material_settlement_id" domain="[('state','=','confirmed'), ('project_id','=', project_id)]"/>
                             <field name="settlement_amount_total"
                                    readonly="1"
                                    modifiers="{'invisible': [['settlement_id', '=', False]]}"/>
@@ -203,6 +206,7 @@
                     <field name="partner_id"/>
                     <field name="contract_id"/>
                     <field name="settlement_id"/>
+                    <field name="material_settlement_id"/>
                     <field name="cost_category_name"/>
                     <field name="partner_bank_name"/>
                     <field name="partner_bank_account"/>

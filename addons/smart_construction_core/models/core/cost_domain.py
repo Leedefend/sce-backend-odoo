@@ -426,6 +426,7 @@ class ProjectCostLedger(models.Model):
             "sc.settlement.order": _("合同结算成本"),
             "sc.settlement.order.line": _("合同结算成本"),
             "sc.material.acceptance": _("材料成本"),
+            "sc.material.outbound": _("材料出库成本"),
             "sc.material.settlement": _("材料结算成本"),
             "sc.labor.settlement": _("劳务结算成本"),
             "sc.equipment.settlement": _("机械结算成本"),

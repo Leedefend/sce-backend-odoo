@@ -87,7 +87,9 @@
                         <button name="action_paid" string="已付款" type="object" class="btn-primary"
                                 invisible="state not in ('draft', 'confirmed')"/>
                         <button name="action_cancel" string="取消" type="object"
-                                invisible="state in ('cancel', 'legacy_confirmed')"/>
+                                invisible="state not in ('draft', 'confirmed')"/>
+                        <button name="action_cancel" string="撤销付款" type="object" class="btn-secondary"
+                                invisible="state != 'paid'"/>
                         <field name="validation_status" invisible="1"/>
                         <field name="can_review" invisible="1"/>
                         <field name="state" widget="statusbar"

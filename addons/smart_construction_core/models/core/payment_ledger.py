@@ -8,6 +8,10 @@ class PaymentLedger(models.Model):
     _name = "payment.ledger"
     _description = "Payment Ledger"
     _order = "paid_at desc, id desc"
+    _sc_readonly_navigation_button_methods = {
+        "action_open_payment_request",
+        "action_open_settlement",
+    }
 
     _sql_constraints = [
         (
@@ -66,8 +70,14 @@ class PaymentLedger(models.Model):
     note = fields.Text(string="备注")
 
     def _check_request_state(self, request):
+        if self.env.context.get("allow_payment_reversal"):
+            return
         if not request or request.state != "approved":
             raise UserError("付款申请未处于已批准状态，不能登记付款。")
+        if request.material_settlement_id:
+            if request.material_settlement_id.state == "confirmed":
+                return
+            raise UserError("材料结算单未确认，不能登记付款。")
         if not request.settlement_id:
             raise UserError("付款申请未关联结算单，不能登记付款。")
         if request.settlement_id.state not in ("approve", "done"):
@@ -139,3 +149,46 @@ class PaymentLedger(models.Model):
         for rec in self:
             self._check_request_state(rec.payment_request_id)
         return super().unlink()
+
+    def action_open_payment_request(self):
+        self.ensure_one()
+        if not self.payment_request_id:
+            raise UserError(_("当前付款台账没有关联付款申请。"))
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("付款申请"),
+            "res_model": "payment.request",
+            "res_id": self.payment_request_id.id,
+            "view_mode": "form",
+            "target": "current",
+            "context": {
+                "default_project_id": self.project_id.id,
+                "default_partner_id": self.partner_id.id,
+            },
+        }
+
+    def action_open_settlement(self):
+        self.ensure_one()
+        material_settlement = self.payment_request_id.material_settlement_id
+        if material_settlement:
+            return {
+                "type": "ir.actions.act_window",
+                "name": _("材料结算"),
+                "res_model": "sc.material.settlement",
+                "res_id": material_settlement.id,
+                "view_mode": "form",
+                "target": "current",
+                "context": {"default_project_id": self.project_id.id},
+            }
+        settlement = self.payment_request_id.settlement_id
+        if not settlement:
+            raise UserError(_("当前付款台账没有关联结算单或材料结算单。"))
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("结算单"),
+            "res_model": "sc.settlement.order",
+            "res_id": settlement.id,
+            "view_mode": "form",
+            "target": "current",
+            "context": {"default_project_id": self.project_id.id},
+        }

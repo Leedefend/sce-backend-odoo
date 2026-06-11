@@ -132,6 +132,14 @@ class PaymentRequest(models.Model):
         domain="[('project_id', '=', project_id), ('state', '=', 'approve')]",
         tracking=True,
     )
+    material_settlement_id = fields.Many2one(
+        "sc.material.settlement",
+        string="材料结算单",
+        domain="[('project_id', '=', project_id), ('state', '=', 'confirmed')]",
+        index=True,
+        tracking=True,
+        ondelete="set null",
+    )
     settlement_currency_id = fields.Many2one(
         "res.currency",
         string="结算币种",
@@ -441,11 +449,13 @@ class PaymentRequest(models.Model):
         tracking=True,
     )
 
-    @api.depends("type", "receipt_type", "legacy_source_table", "cost_category_name")
+    @api.depends("type", "receipt_type", "legacy_source_table", "cost_category_name", "material_settlement_id")
     def _compute_payment_flow_label(self):
         for record in self:
             if record.type == "receive":
                 record.payment_flow_label = record.receipt_type or _("收款申请")
+            elif record.material_settlement_id:
+                record.payment_flow_label = _("材料结算付款申请")
             elif record.legacy_source_table == "T_FK_Supplier":
                 record.payment_flow_label = _("往来单位付款申请")
             elif record.legacy_source_table == "SCBSLY_DIRECT_PAYMENT_APPLY_ACCEPTED":
@@ -719,6 +729,16 @@ class PaymentRequest(models.Model):
             or self.env.user.has_group("smart_construction_custom.group_sc_role_finance")
         )
 
+    def _has_finance_approve_access(self):
+        return (
+            self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager")
+            or self.env.user.has_group("smart_construction_custom.group_sc_role_finance")
+        )
+
+    def _assert_finance_approve_access(self):
+        if not self._has_finance_approve_access():
+            raise ValidationError(_("你没有审批付款/收款申请的权限。"))
+
     @api.depends("settlement_id", "settlement_remaining_amount", "amount")
     def _compute_settlement_amount_insufficient(self):
         for rec in self:
@@ -804,6 +824,7 @@ class PaymentRequest(models.Model):
             lambda: self._check_settlement_state(self.settlement_id),
             lambda: self._check_project_funding_gate(self.project_id, self.amount, exclude_ids=self.ids),
             self._check_settlement_remaining_amount,
+            self._check_material_settlement_remaining_amount,
             self._check_not_overpay_settlement,
             self._check_settlement_consistency,
             lambda: self._check_settlement_compliance_or_raise(strict=False),
@@ -916,6 +937,21 @@ class PaymentRequest(models.Model):
             if rec.state in ("submit", "approve", "approved", "done"):
                 rec._check_settlement_remaining_amount()
 
+    @api.constrains("material_settlement_id", "type", "project_id", "partner_id", "amount", "state")
+    def _check_material_settlement_consistency(self):
+        for rec in self:
+            settlement = rec.material_settlement_id
+            if not settlement:
+                continue
+            if rec.type != "pay":
+                raise ValidationError(_("材料结算只能生成付款申请。"))
+            if settlement.project_id and rec.project_id and settlement.project_id != rec.project_id:
+                raise ValidationError(_("材料结算项目必须与付款申请项目一致。"))
+            if settlement.supplier_id and rec.partner_id and settlement.supplier_id != rec.partner_id:
+                raise ValidationError(_("材料结算供应商必须与付款申请往来单位一致。"))
+            if rec.state in ("submit", "approve", "approved", "done"):
+                rec._check_material_settlement_remaining_amount()
+
     @api.constrains("contract_id", "type")
     def _check_contract_direction(self):
         for rec in self:
@@ -972,10 +1008,68 @@ class PaymentRequest(models.Model):
                     hints=["请降低付款金额或先调整结算单余额"],
                 )
 
+    def _material_settlement_requested_amount_excluding_self(self):
+        self.ensure_one()
+        settlement = self.material_settlement_id
+        if not settlement:
+            return 0.0
+        domain = [
+            ("material_settlement_id", "=", settlement.id),
+            ("type", "=", "pay"),
+            ("state", "not in", ("draft", "cancel")),
+            ("id", "!=", self.id),
+        ]
+        data = self.sudo().read_group(domain, ["amount:sum"], [])
+        return data[0].get("amount_sum", data[0].get("amount", 0.0)) if data else 0.0
+
+    def _check_material_settlement_remaining_amount(self):
+        for rec in self:
+            settlement = rec.material_settlement_id
+            if rec.type != "pay" or not settlement:
+                continue
+            if settlement.state != "confirmed":
+                raise_guard(
+                    "P0_MATERIAL_SETTLEMENT_NOT_CONFIRMED",
+                    f"付款申请[{rec.display_name}]",
+                    "提交/审批材料付款申请",
+                    reasons=[_("材料结算单未确认")],
+                    hints=[_("请先确认材料结算单")],
+                )
+            precision = rec.currency_id.rounding if rec.currency_id else 0.01
+            requested = rec._material_settlement_requested_amount_excluding_self()
+            payable = (settlement.amount_total or 0.0) - (requested or 0.0)
+            amount = rec.amount or 0.0
+            if float_compare(payable, 0.0, precision_rounding=precision) <= 0:
+                raise_guard(
+                    "P0_MATERIAL_PAYMENT_OVER_BALANCE",
+                    f"付款申请[{rec.display_name}]",
+                    "提交/审批材料付款申请",
+                    reasons=[f"材料结算剩余可申请金额不足（剩余：{payable}）"],
+                    hints=[_("请先撤销多余付款申请或调整本次申请金额")],
+                )
+            if float_compare(amount, payable, precision_rounding=precision) == 1:
+                raise_guard(
+                    "P0_MATERIAL_PAYMENT_OVER_BALANCE",
+                    f"付款申请[{rec.display_name}]",
+                    "提交/审批材料付款申请",
+                    reasons=[f"本次申请金额 {amount} 超过材料结算剩余可申请金额 {payable}"],
+                    hints=[_("请降低付款金额或拆分到后续付款申请")],
+                )
+
     def _compute_is_overpay_risk(self):
         """用于 UI 高亮：金额 > 可付余额 时标记风险。"""
         for rec in self:
-            if rec.type != "pay" or not rec.settlement_id:
+            if rec.type != "pay":
+                rec.is_overpay_risk = False
+                continue
+            if rec.material_settlement_id:
+                precision = rec.currency_id.rounding if rec.currency_id else 0.01
+                payable = (rec.material_settlement_id.amount_total or 0.0) - (
+                    rec._material_settlement_requested_amount_excluding_self() or 0.0
+                )
+                rec.is_overpay_risk = float_compare(rec.amount or 0.0, payable, precision_rounding=precision) == 1
+                continue
+            if not rec.settlement_id:
                 rec.is_overpay_risk = False
                 continue
             metrics = opm.compute_payment_payable_excluding_self(rec)
@@ -988,10 +1082,11 @@ class PaymentRequest(models.Model):
             raise ValidationError(_("你没有提交付款/收款申请的权限。"))
         advisory_result = {}
         for rec in self:
-            if not rec.contract_id:
+            if not rec.contract_id and not rec.material_settlement_id:
                 raise UserError("请先选择关联合同后再提交付款/收款申请。")
-            if rec.contract_id.state == "cancel":
+            if rec.contract_id and rec.contract_id.state == "cancel":
                 raise UserError("关联合同已取消，不能提交付款/收款申请。")
+            rec._check_material_settlement_remaining_amount()
             advisory_result[rec.id] = rec._handle_payment_advisories(
                 "提交付款申请",
                 rec._collect_payment_advisories("submit"),
@@ -1011,6 +1106,7 @@ class PaymentRequest(models.Model):
         return {"warnings": advisory_result}
 
     def action_approve(self):
+        self._assert_finance_approve_access()
         advisory_result = {}
         for rec in self:
             if rec.state != "submit":
@@ -1022,6 +1118,7 @@ class PaymentRequest(models.Model):
                     "审批付款申请",
                     reasons=["tier validation not complete"],
                 )
+            rec._check_material_settlement_remaining_amount()
             advisory_result[rec.id] = rec._handle_payment_advisories(
                 "审批付款申请",
                 rec._collect_payment_advisories("approve"),
@@ -1038,12 +1135,14 @@ class PaymentRequest(models.Model):
 
     def action_approval_decision(self):
         """Execute the current approval step without forcing the frontend to know tier state."""
+        self._assert_finance_approve_access()
         result = None
         advisory_result = {}
         for rec in self:
             if rec.state != "submit":
                 continue
             if rec.validation_status in ("waiting", "pending"):
+                rec._check_material_settlement_remaining_amount()
                 advisory_result[rec.id] = rec._handle_payment_advisories(
                     "审批付款申请",
                     rec._collect_payment_advisories("approve"),
@@ -1055,6 +1154,7 @@ class PaymentRequest(models.Model):
             if rec.validation_status == "validated":
                 return rec.action_approve()
             if rec.validation_status in ("no", False) and not rec.review_ids:
+                rec._check_material_settlement_remaining_amount()
                 advisory_result[rec.id] = rec._handle_payment_advisories(
                     "审批付款申请",
                     rec._collect_payment_advisories("approve"),
@@ -1074,9 +1174,11 @@ class PaymentRequest(models.Model):
         return result or {"warnings": advisory_result}
 
     def action_set_approved(self):
+        self._assert_finance_approve_access()
         advisory_result = {}
         result = None
         for rec in self:
+            rec._check_material_settlement_remaining_amount()
             advisory_result[rec.id] = rec._handle_payment_advisories(
                 "批准付款申请",
                 rec._collect_payment_advisories("approve"),

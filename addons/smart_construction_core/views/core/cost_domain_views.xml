@@ -231,6 +231,10 @@
                        decoration-danger="gross_margin_rate &lt; 0"
                        decoration-warning="gross_margin_rate &lt; 10"
                        decoration-success="gross_margin_rate &gt;= 10"/>
+                <button name="action_open_actual_revenue_lines" type="object" string="实际收入" class="btn-primary" invisible="revenue_actual_amount == 0"/>
+                <button name="action_open_budget_revenue_lines" type="object" string="预算收入" class="btn-secondary" invisible="revenue_budget_amount == 0"/>
+                <button name="action_open_actual_cost_ledger" type="object" string="实际成本" class="btn-secondary" invisible="cost_actual_amount == 0"/>
+                <button name="action_open_budget_cost_allocations" type="object" string="预算成本" class="btn-secondary" invisible="cost_budget_amount == 0"/>
             </tree>
         </field>
     </record>
@@ -259,6 +263,12 @@
         <field name="model">project.profit.compare</field>
         <field name="arch" type="xml">
             <form string="项目经营利润" create="false" edit="false" delete="false">
+                <header>
+                    <button name="action_open_actual_revenue_lines" type="object" string="实际收入" class="btn-primary" invisible="revenue_actual_amount == 0"/>
+                    <button name="action_open_budget_revenue_lines" type="object" string="预算收入" class="btn-secondary" invisible="revenue_budget_amount == 0"/>
+                    <button name="action_open_actual_cost_ledger" type="object" string="实际成本" class="btn-secondary" invisible="cost_actual_amount == 0"/>
+                    <button name="action_open_budget_cost_allocations" type="object" string="预算成本" class="btn-secondary" invisible="cost_budget_amount == 0"/>
+                </header>
                 <sheet>
                     <group string="统计维度">
                         <group>

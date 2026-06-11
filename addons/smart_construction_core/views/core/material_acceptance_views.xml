@@ -21,11 +21,43 @@
         <field name="context">{'search_default_group_project': 1}</field>
     </record>
 
+    <record id="action_sc_material_inbound_handling" model="ir.actions.act_window">
+        <field name="name">入库办理</field>
+        <field name="res_model">sc.material.inbound</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_group_project': 1}</field>
+    </record>
+
     <record id="action_sc_material_outbound" model="ir.actions.act_window">
         <field name="name">出库单</field>
         <field name="res_model">sc.material.outbound</field>
         <field name="view_mode">tree,form</field>
-        <field name="context">{'search_default_group_project': 1}</field>
+        <field name="domain">[('outbound_type', '=', 'issue')]</field>
+        <field name="context">{'search_default_group_project': 1, 'default_outbound_type': 'issue'}</field>
+    </record>
+
+    <record id="action_sc_material_return" model="ir.actions.act_window">
+        <field name="name">退库办理</field>
+        <field name="res_model">sc.material.outbound</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('outbound_type', '=', 'return')]</field>
+        <field name="context">{'search_default_group_project': 1, 'default_outbound_type': 'return'}</field>
+    </record>
+
+    <record id="action_sc_material_transfer" model="ir.actions.act_window">
+        <field name="name">材料调拨</field>
+        <field name="res_model">sc.material.outbound</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('outbound_type', '=', 'transfer')]</field>
+        <field name="context">{'search_default_group_project': 1, 'default_outbound_type': 'transfer'}</field>
+    </record>
+
+    <record id="action_sc_material_loss" model="ir.actions.act_window">
+        <field name="name">材料损耗</field>
+        <field name="res_model">sc.material.outbound</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('outbound_type', '=', 'loss')]</field>
+        <field name="context">{'search_default_group_project': 1, 'default_outbound_type': 'loss'}</field>
     </record>
 
     <record id="action_sc_material_rfq" model="ir.actions.act_window">
@@ -97,6 +129,8 @@
                 <field name="required_date"/>
                 <field name="requester_id"/>
                 <field name="department_id"/>
+                <field name="supplier_id"/>
+                <field name="source_material_plan_id"/>
                 <field name="purpose"/>
                 <field name="legacy_fact_type"/>
                 <field name="sc_has_system_default"/>
@@ -111,23 +145,35 @@
         <field name="arch" type="xml">
             <form string="采购申请">
                 <header>
-                    <button name="action_submit" string="提交" type="object" class="btn-primary" invisible="state != 'draft'"/>
-                    <button name="action_approve" string="确认申请" type="object" class="btn-primary" invisible="state != 'submitted'"/>
-                    <button name="action_reset_draft" string="退回草稿" type="object" invisible="state != 'submitted'"/>
-                    <button name="action_cancel" string="取消" type="object" invisible="state in ('approved', 'cancel')"/>
+                    <button name="action_submit" string="提交" type="object" class="btn-primary" groups="smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager" invisible="state != 'draft'"/>
+                    <button name="action_approve" string="确认申请" type="object" class="btn-primary" groups="smart_construction_core.group_sc_cap_material_manager,smart_construction_core.group_sc_cap_purchase_manager" invisible="state != 'submitted'"/>
+                    <button name="action_create_rfq" string="生成询价单" type="object" class="btn-secondary" groups="smart_construction_core.group_sc_cap_purchase_user,smart_construction_core.group_sc_cap_purchase_manager,smart_construction_core.group_sc_cap_material_manager" invisible="state != 'approved'"/>
+                    <button name="action_create_purchase_order" string="生成采购订单" type="object" class="btn-secondary" groups="smart_construction_core.group_sc_cap_purchase_manager,smart_construction_core.group_sc_cap_material_manager" invisible="state != 'approved'"/>
+                    <button name="action_reset_draft" string="退回草稿" type="object" groups="smart_construction_core.group_sc_cap_material_manager" invisible="state != 'submitted'"/>
+                    <button name="action_cancel" string="取消" type="object" groups="smart_construction_core.group_sc_cap_material_manager" invisible="state in ('approved', 'cancel')"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved"/>
                 </header>
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object" name="action_view_rfqs" icon="fa-comments-o">
+                            <field name="rfq_count" widget="statinfo" string="询价单"/>
+                        </button>
+                        <button class="oe_stat_button" type="object" name="action_view_purchase_orders" icon="fa-shopping-cart">
+                            <field name="purchase_order_count" widget="statinfo" string="采购订单"/>
+                        </button>
+                    </div>
                     <group>
                         <group>
                             <field name="name"/>
                             <field name="project_id"/>
                             <field name="request_date"/>
                             <field name="required_date"/>
+                            <field name="source_material_plan_id"/>
                         </group>
                         <group>
                             <field name="requester_id"/>
                             <field name="department_id"/>
+                            <field name="supplier_id"/>
                             <field name="purpose"/>
                         </group>
                     </group>
@@ -141,6 +187,7 @@
                             <field name="line_ids">
                                 <tree editable="bottom">
                                     <field name="sequence" widget="handle"/>
+                                    <field name="source_material_plan_line_id"/>
                                     <field name="material_catalog_id" required="1"/>
                                     <field name="product_id" invisible="1"/>
                                     <field name="material_spec"/>
@@ -159,6 +206,7 @@
                         </page>
                         <page string="来源追溯">
                             <group>
+                                <field name="source_material_plan_id"/>
                                 <field name="legacy_fact_model"/>
                                 <field name="legacy_fact_id"/>
                                 <field name="legacy_fact_type"/>
@@ -218,11 +266,11 @@
         <field name="arch" type="xml">
             <form string="材料进场验收">
                 <header>
-                    <button name="action_submit" string="提交" type="object" class="btn-primary" invisible="state != 'draft'"/>
-                    <button name="action_accept" string="验收通过" type="object" class="btn-primary" invisible="state != 'submitted'"/>
-                    <button name="action_reject" string="验收不通过" type="object" invisible="state != 'submitted'"/>
-                    <button name="action_reset_draft" string="退回草稿" type="object" invisible="state not in ('submitted', 'rejected')"/>
-                    <button name="action_cancel" string="取消" type="object" invisible="state in ('accepted', 'cancel')"/>
+                    <button name="action_submit" string="提交" type="object" class="btn-primary" groups="smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager" invisible="state != 'draft'"/>
+                    <button name="action_accept" string="验收通过" type="object" class="btn-primary" groups="smart_construction_core.group_sc_cap_material_manager" invisible="state != 'submitted'"/>
+                    <button name="action_reject" string="验收不通过" type="object" groups="smart_construction_core.group_sc_cap_material_manager" invisible="state != 'submitted'"/>
+                    <button name="action_reset_draft" string="退回草稿" type="object" groups="smart_construction_core.group_sc_cap_material_manager" invisible="state not in ('submitted', 'rejected')"/>
+                    <button name="action_cancel" string="取消" type="object" groups="smart_construction_core.group_sc_cap_material_manager" invisible="state in ('accepted', 'cancel')"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,submitted,accepted,rejected"/>
                 </header>
                 <sheet>
@@ -233,13 +281,13 @@
                             <field name="acceptance_date"/>
                             <field name="supplier_id"/>
                             <field name="purchase_request_id"/>
-                            <button name="action_load_purchase_request_lines" string="带入申请明细" type="object" class="btn-secondary"/>
+                            <button name="action_load_purchase_request_lines" string="带入申请明细" type="object" class="btn-secondary" groups="smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"/>
                             <field name="acceptance_flow"/>
                             <field name="source_channel"/>
                         </group>
                         <group>
                             <field name="purchase_order_id"/>
-                            <button name="action_load_purchase_order_lines" string="带入采购明细" type="object" class="btn-secondary"/>
+                            <button name="action_load_purchase_order_lines" string="带入采购明细" type="object" class="btn-secondary" groups="smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"/>
                             <field name="inspector_id"/>
                             <field name="supervisor_inspector_id"/>
                             <field name="owner_inspector_id"/>
@@ -357,10 +405,10 @@
         <field name="arch" type="xml">
             <form string="入库单">
                 <header>
-                    <button name="action_submit" string="提交" type="object" class="btn-primary" invisible="state != 'draft'"/>
-                    <button name="action_receive" string="确认入库" type="object" class="btn-primary" invisible="state != 'submitted'"/>
-                    <button name="action_reset_draft" string="退回草稿" type="object" invisible="state != 'submitted'"/>
-                    <button name="action_cancel" string="取消" type="object" invisible="state in ('received', 'cancel')"/>
+                    <button name="action_submit" string="提交" type="object" class="btn-primary" groups="smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager" invisible="state != 'draft'"/>
+                    <button name="action_receive" string="确认入库" type="object" class="btn-primary" groups="smart_construction_core.group_sc_cap_material_manager" invisible="state != 'submitted'"/>
+                    <button name="action_reset_draft" string="退回草稿" type="object" groups="smart_construction_core.group_sc_cap_material_manager" invisible="state != 'submitted'"/>
+                    <button name="action_cancel" string="取消" type="object" groups="smart_construction_core.group_sc_cap_material_manager" invisible="state in ('received', 'cancel')"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,submitted,received"/>
                 </header>
                 <sheet>
@@ -371,7 +419,7 @@
                             <field name="operation_strategy" readonly="1"/>
                             <field name="inbound_date"/>
                             <field name="acceptance_id"/>
-                            <button name="action_load_acceptance_lines" string="带入验收明细" type="object" class="btn-secondary"/>
+                            <button name="action_load_acceptance_lines" string="带入验收明细" type="object" class="btn-secondary" groups="smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"/>
                         </group>
                         <group>
                             <field name="supplier_id"/>
@@ -414,6 +462,7 @@
                         </page>
                         <page string="来源追溯">
                             <group>
+                                <field name="source_transfer_outbound_id" readonly="1"/>
                                 <field name="legacy_fact_model"/>
                                 <field name="legacy_fact_id"/>
                                 <field name="legacy_fact_type"/>
@@ -458,11 +507,13 @@
         <field name="arch" type="xml">
             <tree string="出库单" default_order="outbound_date desc">
                 <field name="name" string="出库单号"/>
+                <field name="outbound_type"/>
                 <field name="project_id"/>
                 <field name="outbound_date" string="出库日期"/>
                 <field name="warehouse_id" string="出库仓库"/>
                 <field name="source_location_id" string="出库库位"/>
                 <field name="purpose" string="领用用途"/>
+                <field name="amount_total" sum="出库金额合计"/>
                 <field name="receiver_id" string="领用单位"/>
                 <field name="receiver_user_id" string="领料人"/>
                 <field name="keeper_id"/>
@@ -479,23 +530,31 @@
         <field name="arch" type="xml">
             <form string="出库单">
                 <header>
-                    <button name="action_submit" string="提交" type="object" class="btn-primary" invisible="state != 'draft'"/>
-                    <button name="action_issue" string="确认出库" type="object" class="btn-primary" invisible="state != 'submitted'"/>
-                    <button name="action_reset_draft" string="退回草稿" type="object" invisible="state != 'submitted'"/>
-                    <button name="action_cancel" string="取消" type="object" invisible="state in ('issued', 'cancel')"/>
+                    <button name="action_submit" string="提交" type="object" class="btn-primary" groups="smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager" invisible="state != 'draft'"/>
+                    <button name="action_issue" string="确认出库" type="object" class="btn-primary" groups="smart_construction_core.group_sc_cap_material_manager" invisible="state != 'submitted'"/>
+                    <button name="action_reset_draft" string="退回草稿" type="object" groups="smart_construction_core.group_sc_cap_material_manager" invisible="state != 'submitted'"/>
+                    <button name="action_cancel" string="取消" type="object" groups="smart_construction_core.group_sc_cap_material_manager" invisible="state in ('issued', 'cancel')"/>
+                    <button name="action_open_transfer_inbound" string="查看调入入库" type="object" groups="smart_construction_core.group_sc_cap_material_read,smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager" invisible="outbound_type != 'transfer' or not transfer_inbound_id"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,submitted,issued"/>
                 </header>
                 <sheet>
                     <group>
                         <group>
                             <field name="name"/>
+                            <field name="outbound_type"/>
                             <field name="project_id"/>
                             <field name="outbound_date"/>
                             <field name="purpose"/>
+                            <field name="validation_status" readonly="1" invisible="outbound_type != 'loss'"/>
+                            <field name="reject_reason" readonly="1" invisible="outbound_type != 'loss' or not reject_reason"/>
+                            <field name="amount_total" readonly="1"/>
                         </group>
                         <group>
                             <field name="warehouse_id"/>
                             <field name="source_location_id"/>
+                            <field name="dest_warehouse_id" invisible="outbound_type != 'transfer'"/>
+                            <field name="dest_location_id" invisible="outbound_type != 'transfer'"/>
+                            <field name="transfer_inbound_id" readonly="1" invisible="outbound_type != 'transfer'"/>
                             <field name="receiver_id"/>
                             <field name="receiver_user_id"/>
                             <field name="keeper_id"/>
@@ -517,6 +576,8 @@
                                     <field name="material_spec"/>
                                     <field name="product_uom_id"/>
                                     <field name="qty"/>
+                                    <field name="unit_price"/>
+                                    <field name="amount" sum="出库金额合计"/>
                                     <field name="note"/>
                                     <field name="sc_has_system_default"/>
                                 </tree>
@@ -545,14 +606,20 @@
         <field name="arch" type="xml">
             <search string="出库单">
                 <field name="name"/>
+                <field name="outbound_type"/>
                 <field name="project_id"/>
                 <field name="receiver_id"/>
                 <field name="warehouse_id"/>
                 <filter string="草稿" name="draft" domain="[('state', '=', 'draft')]"/>
                 <filter string="待出库" name="submitted" domain="[('state', '=', 'submitted')]"/>
                 <filter string="已出库" name="issued" domain="[('state', '=', 'issued')]"/>
+                <filter string="领用出库" name="type_issue" domain="[('outbound_type', '=', 'issue')]"/>
+                <filter string="退库" name="type_return" domain="[('outbound_type', '=', 'return')]"/>
+                <filter string="调拨" name="type_transfer" domain="[('outbound_type', '=', 'transfer')]"/>
+                <filter string="损耗" name="type_loss" domain="[('outbound_type', '=', 'loss')]"/>
                 <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
                 <filter string="按仓库" name="group_warehouse" context="{'group_by': 'warehouse_id'}"/>
+                <filter string="按出库类型" name="group_outbound_type" context="{'group_by': 'outbound_type'}"/>
                 <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
             </search>
         </field>
@@ -587,11 +654,11 @@
         <field name="arch" type="xml">
             <form string="询比价">
                 <header>
-                    <button name="action_submit" string="发起询价" type="object" class="btn-primary" invisible="state != 'draft'"/>
-                    <button name="action_select" string="确定报价" type="object" class="btn-primary" invisible="state != 'submitted'"/>
-                    <button name="action_create_purchase_order" string="生成采购订单" type="object" class="btn-primary" invisible="state == 'cancel'"/>
-                    <button name="action_reset_draft" string="退回草稿" type="object" invisible="state != 'submitted'"/>
-                    <button name="action_cancel" string="取消" type="object" invisible="state in ('selected', 'cancel')"/>
+                    <button name="action_submit" string="发起询价" type="object" class="btn-primary" groups="smart_construction_core.group_sc_cap_purchase_user,smart_construction_core.group_sc_cap_purchase_manager,smart_construction_core.group_sc_cap_material_manager" invisible="state != 'draft'"/>
+                    <button name="action_select" string="确定报价" type="object" class="btn-primary" groups="smart_construction_core.group_sc_cap_purchase_manager,smart_construction_core.group_sc_cap_material_manager" invisible="state != 'submitted'"/>
+                    <button name="action_create_purchase_order" string="生成采购订单" type="object" class="btn-primary" groups="smart_construction_core.group_sc_cap_purchase_manager,smart_construction_core.group_sc_cap_material_manager" invisible="state == 'cancel'"/>
+                    <button name="action_reset_draft" string="退回草稿" type="object" groups="smart_construction_core.group_sc_cap_purchase_manager,smart_construction_core.group_sc_cap_material_manager" invisible="state != 'submitted'"/>
+                    <button name="action_cancel" string="取消" type="object" groups="smart_construction_core.group_sc_cap_purchase_manager,smart_construction_core.group_sc_cap_material_manager" invisible="state in ('selected', 'cancel')"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,submitted,selected"/>
                 </header>
                 <sheet>
@@ -623,6 +690,7 @@
                                 <tree editable="bottom">
                                     <field name="sequence" widget="handle"/>
                                     <field name="source_material_plan_line_id"/>
+                                    <field name="source_material_purchase_request_line_id"/>
                                     <field name="supplier_id"/>
                                     <field name="supplier_contact_name"/>
                                     <field name="supplier_contact_phone"/>
@@ -700,6 +768,7 @@
                 <field name="tax_amount" sum="税额合计"/>
                 <field name="amount_total" sum="结算金额合计"/>
                 <field name="currency_id" invisible="1"/>
+                <field name="payment_request_id" optional="show"/>
                 <field name="owner_id"/>
                 <field name="legacy_fact_type"/>
                 <field name="sc_has_system_default"/>
@@ -714,13 +783,23 @@
         <field name="arch" type="xml">
             <form string="材料结算">
                 <header>
-                    <button name="action_submit" string="提交" type="object" class="btn-primary" invisible="state != 'draft'"/>
-                    <button name="action_confirm" string="确认结算" type="object" class="btn-primary" invisible="state != 'submitted'"/>
-                    <button name="action_reset_draft" string="退回草稿" type="object" invisible="state != 'submitted'"/>
-                    <button name="action_cancel" string="取消" type="object" invisible="state in ('confirmed', 'cancel')"/>
+                    <button name="action_submit" string="提交" type="object" class="btn-primary" groups="smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager" invisible="state != 'draft'"/>
+                    <button name="action_confirm" string="确认结算" type="object" class="btn-primary" groups="smart_construction_core.group_sc_cap_material_manager" invisible="state != 'submitted'"/>
+                    <button name="action_create_remaining_payment_request" string="生成剩余付款申请" type="object" class="btn-secondary" groups="smart_construction_core.group_sc_cap_material_manager" invisible="state != 'confirmed'"/>
+                    <button name="action_reset_draft" string="退回草稿" type="object" groups="smart_construction_core.group_sc_cap_material_manager" invisible="state != 'submitted'"/>
+                    <button name="action_cancel" string="取消" type="object" groups="smart_construction_core.group_sc_cap_material_manager" invisible="state in ('confirmed', 'cancel')"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,submitted,confirmed"/>
                 </header>
                 <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_open_payment_request"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-money"
+                                invisible="payment_request_count == 0">
+                            <field name="payment_request_count" widget="statinfo" string="付款申请"/>
+                        </button>
+                    </div>
                     <group>
                         <group>
                             <field name="name"/>
@@ -731,6 +810,7 @@
                         <group>
                             <field name="settlement_date"/>
                             <field name="owner_id"/>
+                            <field name="payment_request_id" readonly="1"/>
                             <field name="currency_id" invisible="1"/>
                         </group>
                     </group>
@@ -738,6 +818,9 @@
                         <field name="amount_untaxed"/>
                         <field name="tax_amount"/>
                         <field name="amount_total"/>
+                        <field name="payment_requested_amount" readonly="1"/>
+                        <field name="payment_paid_amount" readonly="1"/>
+                        <field name="payment_remaining_amount" readonly="1"/>
                     </group>
                     <group string="系统默认提示" invisible="not sc_has_system_default">
                         <field name="sc_has_system_default" readonly="1"/>

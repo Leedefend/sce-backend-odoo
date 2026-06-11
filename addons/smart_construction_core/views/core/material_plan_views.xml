@@ -46,7 +46,13 @@
                             invisible="not can_review or validation_status not in ('waiting', 'pending')"/>
                     <button name="%(action_material_plan_to_rfq_wizard)d"
                             type="action"
-                            string="生成采购单"
+                            string="生成询价单"
+                            class="btn-secondary"
+                            groups="smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"
+                            invisible="state != 'approved'"/>
+                    <button name="action_create_purchase_request"
+                            type="object"
+                            string="生成采购申请"
                             class="btn-secondary"
                             groups="smart_construction_core.group_sc_cap_material_user,smart_construction_core.group_sc_cap_material_manager"
                             invisible="state != 'approved'"/>
@@ -70,6 +76,9 @@
                     <div class="oe_button_box" name="button_box">
                         <button class="oe_stat_button" type="object" name="action_view_purchase_orders" icon="fa-shopping-cart">
                             <field name="purchase_order_count" widget="statinfo" string="采购单"/>
+                        </button>
+                        <button class="oe_stat_button" type="object" name="action_view_purchase_requests" icon="fa-file-text-o">
+                            <field name="purchase_request_count" widget="statinfo" string="采购申请"/>
                         </button>
                         <button class="oe_stat_button" type="object" name="action_view_purchase_lines" icon="fa-list">
                             <field name="purchase_line_count" widget="statinfo" string="采购明细"/>
