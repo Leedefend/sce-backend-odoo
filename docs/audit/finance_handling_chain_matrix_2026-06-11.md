@@ -488,6 +488,31 @@ DB_NAME=sc_demo scripts/ops/validate_company_contractor_responsibility_context.s
 PASS
 ```
 
+## Iteration Evidence - 2026-06-12 Self Funding Source Context
+
+本轮没有把历史自筹源表改造成可编辑办理单，而是先补齐用户验收和责任解释所需的可见上下文：
+
+- 自筹垫付收入和自筹垫付退回入口继续只读，保留用户旧认知。
+- 源单列表和表单展示公司-承包人责任状态、自筹未退余额，并提供责任余额钻取。
+- 责任余额仍以 `income/refund` 正式族计算；可见参考族只用于追溯。
+- 正式新增自筹办理还未完成，需要后续新增登记/审批/确认动作和现金台账或责任事实写入口径。
+
+验证结果：
+
+```text
+CODEX_MODE=fast CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_demo make mod.upgrade
+PASS
+
+DB_NAME=sc_demo scripts/ops/validate_company_contractor_responsibility_context.sh
+PASS
+
+DB_NAME=sc_demo make verify.company_contractor.responsibility_http.smoke
+PASS
+
+DB_NAME=sc_demo make verify.finance_handling.http_surface.smoke
+PASS entries=17, includes self_funding_income/self_funding_refund
+```
+
 ## Iteration Evidence - 2026-06-11 Finance Downstream Traceability Audit
 
 本轮已把 Phase 1 财务办理链路从“生成下游事实”推进到“下游事实可反查”：

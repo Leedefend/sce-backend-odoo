@@ -663,3 +663,29 @@ status=PASS
 payment_execution_responsibility_constraints: over_processed blocks, amount exceeding arrival balance blocks, amount within balance allows, self_funding_open does not block
 expense_claim_deduction_responsibility_constraints: over_processed blocks deduction bill, deduction amount exceeding arrival balance blocks, amount within balance allows, self_funding_open does not block
 ```
+
+### Self Funding Responsibility Source Evidence
+
+本轮把自筹历史源单从“只读旧入口”推进到“可解释责任余额来源”：
+
+- `sc.legacy.self.funding.fact` 继承公司-承包人责任上下文。
+- 自筹垫付收入、自筹垫付退回列表和表单展示责任状态、自筹未退余额，并可打开公司-承包人责任余额。
+- 正式余额仍只使用 `income/refund`，`income_visible/refund_visible` 仅作为旧入口可见参考，不参与余额计算。
+- 当前自筹入口仍为历史只读事实，不能作为新发生自筹垫付/退回的正式办理单据；正式登记、申请、审批、确认动作需要后续单独建模。
+
+验证结果：
+
+```text
+CODEX_MODE=fast CODEX_NEED_UPGRADE=1 MODULE=smart_construction_core DB_NAME=sc_demo make mod.upgrade
+PASS
+
+DB_NAME=sc_demo scripts/ops/validate_company_contractor_responsibility_context.sh
+PASS
+self_funding formal source context: partner_id matched 3700, partner_name matched 16
+
+DB_NAME=sc_demo make verify.company_contractor.responsibility_http.smoke
+PASS
+
+DB_NAME=sc_demo make verify.finance_handling.http_surface.smoke
+PASS entries=17, includes self_funding_income/self_funding_refund
+```
