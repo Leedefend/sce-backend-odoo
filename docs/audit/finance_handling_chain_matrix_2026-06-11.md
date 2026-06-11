@@ -104,6 +104,15 @@ FINANCE_LEGACY_SOURCE_LESS_LEDGER_RECONCILIATION_AUDIT: status=PASS
 source_less_legacy_ledger_count=2341
 already_source_linked=16006
 exact_attachable_ledger_count=0
+
+COMPOSE_PROJECT_NAME=sc-backend-odoo-dev DB_NAME=sc_demo make backfill.finance_legacy_source_linked_ledger.payment_request_boundary
+FINANCE_LEGACY_SOURCE_LINKED_LEDGER_PAYMENT_REQUEST_BOUNDARY: status=PASS updated_rows=16006
+after.boundary_violation_count=0
+
+COMPOSE_PROJECT_NAME=sc-backend-odoo-dev DB_NAME=sc_demo make verify.finance_legacy_cash_ledger.backfill_readiness.audit
+FINANCE_LEGACY_CASH_LEDGER_BACKFILL_READINESS_AUDIT: status=PASS
+existing_source_linked_ledger_count=16006
+missing_source_linked_ledger_count=97543
 ```
 
 HTTP/API 可见面验收结论：
@@ -121,6 +130,7 @@ HTTP/API 可见面验收结论：
 - 现有 `sc.treasury.ledger` 已有 18,347 条 `legacy_actual_outflow`/`legacy_receipt` 台账，但 `source_model/source_res_id` 为空，不能证明与正式办理记录一一对应。
 - 已修正本地 source-less legacy 台账币种基线：18,347 条 legacy 资金台账按项目公司币种从 `USD` 对齐为 `CNY`，并修正 `fresh_db_treasury_ledger_projection_write.py`，避免未来重放继续继承旧 `payment_request.currency_id`。
 - 已将 16,006 条 source-less legacy 台账按 `legacy_record_id + project_id + direction + source_kind + amount + currency` 一对一补挂到正式办理事实，其中 12,846 条为 `sc.payment.execution`、3,160 条为 `sc.receipt.income`；补挂只更新来源字段和标记，不改业务金额、方向、日期和状态。
+- 已清空上述 16,006 条来源级 legacy 台账的 `payment_request_id`，历史现金流以 `source_model/source_res_id` 为追溯口径；`payment_request_id` 仅保留给真实收付款申请生成的台账。
 - 剩余 source-less legacy 台账 2,341 条：2,322 条找不到正式候选，18 条方向不一致，1 条项目不一致，暂不自动补挂。
 - 后续迁移脚本不得直接追加 113,549 条来源级台账；应先识别已被 16,006 条 source-linked legacy 台账覆盖的来源事实，再对剩余缺口生成来源级台账或保留为旧日报/总账快照，防止现金流翻倍。
 

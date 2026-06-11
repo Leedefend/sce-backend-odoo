@@ -247,6 +247,7 @@
 - 已建立并执行 `make backfill.finance_legacy_treasury.currency`，本地 `sc_demo` 已将 18,347 条 legacy 资金台账按项目公司币种从 `USD` 对齐为 `CNY`，复跑 `make verify.finance_legacy_treasury.currency.audit` 后币种不一致为 0。已同步修正 `fresh_db_treasury_ledger_projection_write.py`，后续重放历史资金台账时使用项目公司币种或公司默认币种，避免再次写回 USD。
 - 币种修正后，`make verify.finance_legacy_source_less_ledger.reconciliation.audit` 识别 16,006 条 source-less legacy 台账可安全补挂到正式办理来源，其中付款执行 12,846 条、收款登记 3,160 条；剩余 2,322 条无正式候选、18 条方向不一致、1 条项目不一致，暂不自动补挂。
 - 已建立并执行 `make backfill.finance_legacy_source_less_ledger.attach`，本地 `sc_demo` 已将 16,006 条一对一精确匹配的 source-less legacy 资金台账补挂到正式办理来源，只写入 `source_model/source_res_id` 和补挂标记，不改金额、方向、日期、项目、往来单位、币种和状态。复跑补挂门禁后可补挂数为 0，复跑对账门禁显示 `already_source_linked=16006`、剩余 source-less legacy 台账 2,341 条。
+- 已建立并执行 `make backfill.finance_legacy_source_linked_ledger.payment_request_boundary`，本地 `sc_demo` 已将 16,006 条来源级 legacy 资金台账的 `payment_request_id` 清空，保持历史现金流只通过 `source_model/source_res_id` 追溯，不再伪装为收付款申请生成的台账；复跑边界门禁后违规数为 0，复跑历史现金流 readiness audit 恢复 PASS。
 - 已升级并复跑 `make verify.finance_handling.http_surface.smoke`，对来源级资金台账类入口支持“按 `sc.treasury.ledger.source_model/source_res_id` 反选办理样本”；往来单位付款命中 80 条来源级台账中的 20 条办理样本并追到下游资金台账，到款确认同样命中并追踪通过。项目费用报销仍待分类后进入来源级历史现金流迁移。
 
 下一步收口顺序：
