@@ -21,8 +21,10 @@ def main():
     Attachment = env["ir.attachment"].sudo()  # noqa: F821
     Ledger = env["sc.treasury.ledger"].sudo()  # noqa: F821
     Fact = env["sc.finance.business.fact"].sudo()  # noqa: F821
+    ResponsibilityFact = env["sc.company.contractor.responsibility.fact"].sudo()  # noqa: F821
     Summary = env["sc.company.contractor.responsibility.summary"].sudo()  # noqa: F821
     Category = env["sc.business.category"].sudo()  # noqa: F821
+    Audit = env["sc.audit.log"].sudo()  # noqa: F821
 
     project = env["project.project"].sudo().search([("active", "=", True), ("company_id", "!=", False)], limit=1)  # noqa: F821
     partner = env["res.partner"].sudo().search([("name", "!=", False)], limit=1)  # noqa: F821
@@ -42,6 +44,19 @@ def main():
         )
         record.write({"attachment_ids": [(4, attachment.id)]})
         return attachment
+
+    def audit_count(record, event_code):
+        return Audit.search_count([("model", "=", record._name), ("res_id", "=", record.id), ("event_code", "=", event_code)])
+
+    def responsibility_fact(record, responsibility_type):
+        return ResponsibilityFact.search(
+            [
+                ("source_model", "=", record._name),
+                ("source_res_id", "=", record.id),
+                ("responsibility_type", "=", responsibility_type),
+            ],
+            limit=1,
+        )
 
     old = Registration.search([("summary", "ilike", "[self-funding-audit]")])
     if old:
@@ -139,6 +154,16 @@ def main():
     )
     if not income_ledger or income_ledger.direction != "in" or income_ledger.payment_request_id:
         fail("income ledger invalid", income_id=income.id, ledger_id=income_ledger.id if income_ledger else False)
+    income_responsibility_fact = responsibility_fact(income, "self_funding_income")
+    if not income_responsibility_fact or income_responsibility_fact.self_funding_income_amount <= 0:
+        fail("income responsibility fact missing", income_id=income.id)
+    if audit_count(income, "self_funding_confirmed") != 1 or audit_count(income, "self_funding_done") != 1:
+        fail(
+            "income audit trail missing",
+            income_id=income.id,
+            confirmed=audit_count(income, "self_funding_confirmed"),
+            done=audit_count(income, "self_funding_done"),
+        )
 
     income_summary = Summary.search([("project_id", "=", project.id), ("partner_id", "=", partner.id)], limit=1)
     if not income_summary or income_summary.self_funding_balance < 1234.55:
@@ -173,6 +198,16 @@ def main():
     )
     if not refund_ledger or refund_ledger.direction != "out" or refund_ledger.payment_request_id:
         fail("refund ledger invalid", refund_id=refund.id, ledger_id=refund_ledger.id if refund_ledger else False)
+    refund_responsibility_fact = responsibility_fact(refund, "self_funding_refund")
+    if not refund_responsibility_fact or refund_responsibility_fact.self_funding_refund_amount <= 0:
+        fail("refund responsibility fact missing", refund_id=refund.id)
+    if audit_count(refund, "self_funding_confirmed") != 1 or audit_count(refund, "self_funding_done") != 1:
+        fail(
+            "refund audit trail missing",
+            refund_id=refund.id,
+            confirmed=audit_count(refund, "self_funding_confirmed"),
+            done=audit_count(refund, "self_funding_done"),
+        )
 
     summary_after = Summary.search([("project_id", "=", project.id), ("partner_id", "=", partner.id)], limit=1)
     if not summary_after or summary_after.self_funding_balance < 999.99:
@@ -211,8 +246,12 @@ def main():
             ("refund_id", refund.id),
             ("income_fact_id", income_fact.id),
             ("refund_fact_id", refund_fact.id),
+            ("income_responsibility_fact_id", income_responsibility_fact.id),
+            ("refund_responsibility_fact_id", refund_responsibility_fact.id),
             ("income_ledger_id", income_ledger.id),
             ("refund_ledger_id", refund_ledger.id),
+            ("income_audit_events", {"confirmed": 1, "done": 1}),
+            ("refund_audit_events", {"confirmed": 1, "done": 1}),
             ("income_attachment_id", income_attachment.id),
             ("refund_attachment_id", refund_attachment.id),
             ("missing_attachment_blocked", missing_attachment_ok),

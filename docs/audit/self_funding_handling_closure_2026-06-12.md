@@ -45,6 +45,9 @@
 - `sc.self.funding.registration` 在 `action_confirm/action_done` 统一校验：缺附件、缺公司账户/户名、缺承包人账户/户名均阻断。
 - 历史迁移来源 `source_origin=legacy` 不追加手工证据门禁，避免影响旧数据重放和用户历史追溯。
 - 审计脚本已覆盖缺附件阻断、缺账户阻断、垫付入账、退回出账、退回超余额阻断和 `payment_request_id` 为空。
+- 审计脚本已增强为直接校验 `sc.company.contractor.responsibility.fact`：正式自筹垫付生成 `self_funding_income` 责任事实，正式自筹退回生成 `self_funding_refund` 责任事实。
+- 审计脚本已校验 `sc.audit.log`：自筹垫付和自筹退回均必须写入 `self_funding_confirmed` 与 `self_funding_done`，确保办理动作可追溯。
+- 本地最新证据：`DB_NAME=sc_demo make verify.self_funding.handling.audit` 通过，样本 `income_id=45/refund_id=46`，对应责任事实 `1010000045/1010000046`，资金台账 `392994/392995`，确认/完成审计事件各 1 条。
 
 ## 审批运行时补充
 

@@ -238,6 +238,7 @@
 - 已补账户余额主档承接：`sc.fund.account` 增加当前账面余额、当前银行余额、余额日期、余额来源和来源单据。资金日报完成后回写账户账面/银行余额，余额调整完成后回写账户账面余额。转账类账户余额扣加仍需等历史期初余额和账户明细迁移基线确认后启用，避免在旧数据不完整时产生错误账户状态。
 - 已补账户余额历史初始化写入和门禁：`make backfill.fund_account.balance` 按“最新资金日报余额优先，否则期初余额”初始化本地 `sc_demo` 111 个历史正式账户；其中 46 个可匹配最新资金日报行，65 个无日报匹配，61 个无日报且期初为 0。复跑 `make verify.fund_account.balance_backfill_readiness.audit` 后 `current_state_mismatch_count=0`，且审计覆盖账面余额、银行余额、余额来源和余额日期。转账类账户余额扣加仍需等历史期初余额和账户明细迁移基线确认后启用，避免在旧数据不完整时产生错误账户状态。
 - 已修正借款分类口径：`项目借公司款` 不再因同时包含“项目/借/款”被误分为承包人借项目款；历史借出类按“借...项目...款”顺序语义进入 `project_to_contractor_borrow`。
+- 已补强自筹办理闭环门禁：`verify.self_funding.handling.audit` 现在同时验证附件和账户阻断、垫付/退回资金台账、`sc.company.contractor.responsibility.fact` 责任事实、`sc.audit.log` 确认/完成审计事件，以及 `payment_request_id` 为空。自筹仍定义为公司-承包人资金责任，不并入普通收付款申请。
 - 已建立 `scripts/ops/validate_interfund_account_loan_closure.sh`，验证办理动作 -> 审计日志 -> `sc.interfund.movement.fact` -> `sc.interfund.movement.project.summary` -> `sc.finance.project.capital.position`。
 - 已建立 `scripts/ops/validate_interfund_treasury_ledger_backfill_readiness.sh`，只读审计历史往来事实进入 `sc.treasury.ledger` 的回填候选、已存在台账和不可自动回填事实。
 - 已建立 `make verify.interfund_user_data.full_coverage.audit`，按用户数据事实区分项目借还调拨事实、公司-承包人责任事实和状态/台账输入：账户调拨 395、借款事实 872、还款事实 671 全量进入项目往来事实；到款确认 5205、自筹正式口径 2153/1575 进入公司-承包人责任事实；资金日报 7453、余额调整 519、融资登记 152、账户收支/日报明细不作为往来责任事实。
