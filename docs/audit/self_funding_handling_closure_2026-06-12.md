@@ -8,6 +8,7 @@
 - 自筹垫付、自筹退回是独立办理事实，不进入普通收付款申请；`payment.request` 只承载收付款申请意图。
 - 正式自筹办理完成后进入 `sc.treasury.ledger`，资金台账通过 `source_model/source_res_id` 追溯 `sc.self.funding.registration`，不写 `payment_request_id`。
 - 自筹退回必须受公司-承包人自筹未退余额约束，不能超过已形成的未退责任余额。
+- 新系统手工自筹办理必须有附件、公司账户/户名、承包人账户/户名；这三类证据是公司-承包人资金责任余额的办理依据。
 - 旧系统历史事实继续由 `sc.legacy.self.funding.fact` 承载，作为责任余额和历史追溯来源；新发生业务走正式办理单据。
 - 系统币种口径确定为人民币 CNY；业务办理不再把币种作为用户选择项。
 
@@ -31,3 +32,10 @@
 - `DB_NAME=sc_demo scripts/ops/validate_finance_business_category_runtime.sh`
 - `DB_NAME=sc_demo make verify.finance_handling.http_surface.smoke`
 - `DB_NAME=sc_demo make verify.company_contractor.responsibility_http.smoke`
+
+## 证据门禁补充
+
+- `finance.self_funding.income/refund` 的业务分类字段要求已补充 `payment_account_name`、`partner_account_name`，附件策略调整为 `required`。
+- `sc.self.funding.registration` 在 `action_confirm/action_done` 统一校验：缺附件、缺公司账户/户名、缺承包人账户/户名均阻断。
+- 历史迁移来源 `source_origin=legacy` 不追加手工证据门禁，避免影响旧数据重放和用户历史追溯。
+- 审计脚本已覆盖缺附件阻断、缺账户阻断、垫付入账、退回出账、退回超余额阻断和 `payment_request_id` 为空。
