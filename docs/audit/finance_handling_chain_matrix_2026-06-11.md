@@ -187,6 +187,7 @@ HTTP/API 可见面验收结论：
 - 已修正借款类入口切分：承包人借项目款、项目借公司款登记按 `business_category_id.code` 明确切分，静态和运行时门禁均验证保存后仍留在正确入口，不再依赖 purpose 文本包含关系。
 - 已修正通用借款申请默认分类：无明确“项目借公司款”或“借...项目...款”语义时保存为 `finance.loan.borrowing`，避免普通借款申请被默认归入项目借公司款；`validate_finance_business_category_runtime.sh` 已通过。
 - 已修复扣款单页面契约 500：`action_sc_expense_claim_deduction_bill` 曾残留绑定旧 `sc.tax.deduction.registration` tree 视图，当前清空 action 级视图绑定后由 `sc.expense.claim` 标准视图加载；`扣款单位/扣款金额/扣款事由/附件/录入时间` 可见别名字段已补映射。
+- 已增强公司-承包人责任余额可见面门禁：`make verify.company_contractor.responsibility_http.smoke` 现在覆盖入口打开、列表读取、按责任状态分组，以及从余额行执行“查看责任明细”并读取 `sc.company.contractor.responsibility.fact`；当前样本 `source_line_count=4`，钻取明细 4 条，首条明细保留来源模型 `sc.legacy.fund.confirmation.document`。
 - 剩余 source-less legacy 台账 2,341 条：2,322 条找不到正式候选，18 条方向不一致，1 条项目不一致，暂不自动补挂。
 - 后续迁移脚本不得重复追加 113,549 条来源级台账；应以 `source_model/source_res_id/project_id/direction/source_kind` 为幂等键，剩余 2,341 条 source-less legacy 行需单独判断保留、补来源或作废策略，防止现金流翻倍。
 
@@ -407,10 +408,10 @@ FINANCE_EXPENSE_CLAIM_ENTRY_CONTEXT_AUDIT: status=PASS
 
 当前审计未发现 P0 表单阻断，因此下一步不应做无目标的代码修补。Phase 1 下一轮按以下顺序推进：
 
-1. 浏览器级办理验收：为支付申请、往来单位付款、到款确认、费用单据补浏览器级验收记录，覆盖新建、附件、提交、审批、完成和取消。
-2. 扩展业务关系策略：账户间资金往来、项目/承包人借还款、扣款/税务登记进入 Phase 2 前继续补关系必填门禁。
-3. 正式交付清单：汇总角色账号、基础数据、首批真实业务数据导入/锁定、回滚和验收脚本。
-4. 浏览器级下游追溯验收：从台账、成本、结算页面回到申请、审批、附件和历史来源。
+1. 公司-承包人责任余额办理约束：先把到款确认、自筹垫付/退回、拨付、扣款、退回、自筹抵扣和收款核销的读取口径接到具体办理动作。
+2. 扩展业务关系策略：账户间资金往来、项目/承包人借还款、扣款/税务登记继续补关系必填门禁。
+3. 浏览器级办理验收：为支付申请、往来单位付款、到款确认、费用单据补浏览器级验收记录，覆盖新建、附件、提交、审批、完成和取消。
+4. 正式交付清单：汇总角色账号、基础数据、首批真实业务数据导入/锁定、回滚和验收脚本。
 5. 报表后置：只在以上办理事实稳定后，再完善应收应付、账户收支、资金日报等汇总入口。
 
 ## Iteration Evidence - 2026-06-11 Expense Claim Entry Clarity

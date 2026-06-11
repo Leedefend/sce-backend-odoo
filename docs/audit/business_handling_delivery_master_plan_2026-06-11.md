@@ -240,6 +240,7 @@
 - 已建立 `make verify.interfund_user_data.full_coverage.audit`，按用户数据事实区分项目借还调拨事实、公司-承包人责任事实和状态/台账输入：账户调拨 395、借款事实 872、还款事实 671 全量进入项目往来事实；到款确认 5205、自筹正式口径 2153/1575 进入公司-承包人责任事实；资金日报 7453、余额调整 519、融资登记 152、账户收支/日报明细不作为往来责任事实。
 - 已建立只读投影 `sc.company.contractor.responsibility.fact` 和 `make verify.company_contractor.responsibility_fact.audit`，把到款确认、自筹垫付、自筹退回从普通收付款分析口径中提升为公司-承包人责任事实，并保留项目资金状态影响用于约束后续办理动作。
 - 已建立只读汇总 `sc.company.contractor.responsibility.summary` 和 `make verify.company_contractor.responsibility_summary.audit`，按项目和承包人沉淀到款可处理余额、到款超处理金额、自筹未退余额和责任状态，作为后续拨付、扣款、退回、自筹抵扣、收款核销的办理约束读取口径。
+- 已增强 `make verify.company_contractor.responsibility_http.smoke`，不仅验证“公司-承包人资金责任余额”入口和列表可读，还验证余额行可通过“查看责任明细”钻取到 `sc.company.contractor.responsibility.fact`，且明细数量与 `source_line_count` 一致、首条明细具备 `source_model/source_res_id` 来源追溯。当前样本 4 条责任明细全部可追溯。
 - 已将公司-承包人责任口径纳入业务分类字典：`finance.responsibility.arrival_confirmation` 保留到款确认为项目收款状态并作为公司-承包人后续办理约束；`finance.responsibility.self_funding_income`、`finance.responsibility.self_funding_refund` 表达自筹垫付和自筹退回的责任影响；`finance.responsibility.company_contractor.balance` 作为只读办理约束余额。分类入口可复用同一个 action，但必须叠加字典 `domain_json`，不能让用户在泛化责任明细里自行判断类别。
 - 已确认旧入口“承包人借项目款”验收数 227 与当前事实分类 177 的差异不是覆盖缺口，而是旧入口名称和事实分类规则不等价；后续收口前必须将借还款分类规则字典化，并由用户确认新的验收口径。
 - 已建立 `make verify.finance_handling.http_surface.smoke`，不下载浏览器运行时，按业务用户可见面验证支付申请、往来单位付款、到款确认/项目收款、项目费用报销单四类高数据量入口；当前入口、页面契约、列表和已办样本通过，支付申请可追到 `payment.ledger`，往来单位付款、到款确认和项目费用报销均可通过来源级 `sc.treasury.ledger` 反选办理样本并追到下游资金台账。

@@ -102,6 +102,14 @@ DB_NAME=sc_demo MIGRATION_ARTIFACT_ROOT=artifacts/migration make verify.company_
 
 该汇总是后续拨付、扣款、退回、自筹抵扣和收款核销办理约束的读取口径；不作为最终财务报表口径，不替代来源单据。
 
+HTTP/API 可见面门禁：
+
+```bash
+DB_NAME=sc_demo make verify.company_contractor.responsibility_http.smoke
+```
+
+该门禁必须验证业务用户能打开“公司-承包人资金责任余额”入口、读取列表和按责任状态分组，并能从一条余额记录点击“查看责任明细”钻取到 `sc.company.contractor.responsibility.fact`。钻取明细数量必须等于余额行 `source_line_count`，且明细必须保留 `source_model/source_res_id`，否则办理人员无法解释余额来源，不能进入用户验收。
+
 ## 当前实现偏差
 
 上一版边界审计把到款确认、自筹放在“不直接纳入往来款”下，这会误导后续迭代。正确表达应是：
