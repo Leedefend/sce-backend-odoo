@@ -32,6 +32,13 @@
                   name="公司-承包人资金责任明细"
                   parent="menu_sc_finance_interfund_analysis"
                   action="action_sc_company_contractor_responsibility_fact"
+                  sequence="36"
+                  groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+
+        <menuitem id="menu_sc_company_contractor_responsibility_summary"
+                  name="公司-承包人资金责任余额"
+                  parent="menu_sc_finance_interfund_analysis"
+                  action="action_sc_company_contractor_responsibility_summary"
                   sequence="35"
                   groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
 

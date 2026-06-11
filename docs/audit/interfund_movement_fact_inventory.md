@@ -72,6 +72,7 @@ DB_NAME=sc_demo MIGRATION_ARTIFACT_ROOT=artifacts/migration make verify.interfun
 - 项目还公司款和承包人还项目款属于往来款闭环，不关联 `payment.request`，不借用经营收付款申请或结算单生成经营付款/收款台账；完成后通过来源模型和来源记录写入 `sc.treasury.ledger` 统一现金流台账。
 - 资金日报、余额快照不得混入资金往来事实。
 - 到款确认、自筹正式口径必须进入公司-承包人责任事实层；不得因未进入 `sc.interfund.movement.fact` 而被排除在往来责任之外。
+- 公司-承包人责任余额必须由 `sc.company.contractor.responsibility.summary` 从明细反算闭合，后续办理约束读取汇总，不从旧菜单名或临时文本规则推断。
 - 用户日报 `fund_daily_report`、余额调整 `balance_adjustment`、自筹可见参考族必须有明确承接口径，但不得被误纳入余额计算事实。
 - 同一来源模型和来源记录不得重复进入事实层。
 - 借款分类不得只按“借/项目/款”三个字无序匹配；`项目借公司款` 归入公司借款给项目，`借...项目...款` 归入项目借款给承包人。

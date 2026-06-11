@@ -85,6 +85,23 @@ DB_NAME=sc_demo MIGRATION_ARTIFACT_ROOT=artifacts/migration make verify.company_
 
 审计必须确保正式责任事实不丢不重：到款确认 5205、自筹垫付 2153、自筹退回 1575 全部进入投影；自筹可见参考族不得进入正式责任余额。
 
+已新增只读汇总 `sc.company.contractor.responsibility.summary`，按项目和承包人沉淀办理约束余额：
+
+- `arrival_unprocessed_amount`：到款可处理余额，等于到款金额 - 已拨付 - 已扣款。
+- `arrival_over_processed_amount`：到款超处理金额，用于识别旧数据中拨付/扣款超过到款的验收风险。
+- `self_funding_balance`：自筹未退余额，等于自筹垫付 - 自筹退回。
+- `responsibility_state`：将余额分成到款超处理、有待处理余额、自筹未退和已平衡。
+
+到款确认的用户认知应保留为项目收款状态：它先说明某个项目已经形成可用回款，再通过已拨付、已扣款、未处理和超处理状态约束公司与承包人之间的后续办理。实现上不得把到款确认改名成普通往来款，也不得只按项目余额做报表展示；办理侧必须读取项目资金状态来限制拨付、扣款、退回和收款核销动作。
+
+专项审计命令：
+
+```bash
+DB_NAME=sc_demo MIGRATION_ARTIFACT_ROOT=artifacts/migration make verify.company_contractor.responsibility_summary.audit
+```
+
+该汇总是后续拨付、扣款、退回、自筹抵扣和收款核销办理约束的读取口径；不作为最终财务报表口径，不替代来源单据。
+
 ## 当前实现偏差
 
 上一版边界审计把到款确认、自筹放在“不直接纳入往来款”下，这会误导后续迭代。正确表达应是：
@@ -97,6 +114,6 @@ DB_NAME=sc_demo MIGRATION_ARTIFACT_ROOT=artifacts/migration make verify.company_
 
 1. 保留用户旧入口认知：到款确认表、自筹垫付收入、自筹垫付退回。
 2. 在业务分类字典中增加或修正责任分类：公司-承包人到款责任、自筹垫付、自筹退回。
-3. 基于 `sc.company.contractor.responsibility.fact` 继续沉淀按公司、承包人、项目汇总的责任余额、可拨付余额、应扣余额和自筹未退余额。
+3. 基于 `sc.company.contractor.responsibility.summary` 继续把责任余额接入拨付、扣款、退回、自筹抵扣和收款核销办理约束。
 4. 用项目资金状态约束后续办理：付款、借款、还款、退回、自筹抵扣、收款发票核销。
 5. 不把这些事实强行挂到 `payment.request`，但发生真实现金流时仍应进入统一资金台账或日报台账口径。
