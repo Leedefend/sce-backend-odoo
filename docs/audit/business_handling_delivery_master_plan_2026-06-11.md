@@ -221,6 +221,13 @@
 - 已将公司-承包人责任口径纳入业务分类字典：`finance.responsibility.arrival_confirmation` 保留到款确认为项目收款状态并作为公司-承包人后续办理约束；`finance.responsibility.self_funding_income`、`finance.responsibility.self_funding_refund` 表达自筹垫付和自筹退回的责任影响；`finance.responsibility.company_contractor.balance` 作为只读办理约束余额。分类入口可复用同一个 action，但必须叠加字典 `domain_json`，不能让用户在泛化责任明细里自行判断类别。
 - 已确认旧入口“承包人借项目款”验收数 227 与当前事实分类 177 的差异不是覆盖缺口，而是旧入口名称和事实分类规则不等价；后续收口前必须将借还款分类规则字典化，并由用户确认新的验收口径。
 - 已建立 `make verify.finance_handling.http_surface.smoke`，不下载浏览器运行时，按业务用户可见面验证支付申请、往来单位付款、到款确认/项目收款、项目费用报销单四类高数据量入口；当前入口、页面契约、列表和已办样本通过，支付申请可追到 `payment.ledger`，往来单位付款、到款确认和项目费用报销旧样本的台账追踪缺口进入下一轮资金台账闭环。
+- 已建立 `make verify.finance_legacy_cash_ledger.backfill_readiness.audit`，只读审计历史已办事实进入来源级现金流台账的可回填性；当前识别 113,549 条具备项目和正金额的历史候选，其中付款执行 36,285、收款登记 26,439、费用/保证金/扣款 50,825，全部缺少 `source_model/source_res_id` 级台账反查。现有 18,347 条 legacy 资金台账为 source-less 行，后续迁移前必须先做对账、替换、作废或来源补挂策略，不能直接追加导致现金流翻倍。
+
+下一步收口顺序：
+
+1. 先制定 `sc.treasury.ledger` 历史 source-less legacy 行对账策略，明确哪些能补挂来源、哪些应保留为旧日报/总账快照、哪些应作废后由来源级台账替代。
+2. 再实现来源级历史现金流迁移，幂等键为 `source_model/source_res_id/project_id/direction/source_kind`，且非真实收付款申请完成场景保持 `payment_request_id` 为空。
+3. 最后把 HTTP/API 入口 smoke 的 downstream trace 从“记录缺口”升级为“关键样本必有来源级台账”，再进入浏览器级抽样验收。
 
 ### Phase 2 - Invoice And Tax Closure
 
