@@ -7,6 +7,7 @@ import json
 import os
 from collections import OrderedDict
 from pathlib import Path
+from types import SimpleNamespace
 
 
 def artifact_root() -> Path:
@@ -207,6 +208,59 @@ if not any(int(item["matched_rows"] or 0) > 0 for item in probe_results):
     errors.append({"key": "real_user_context_samples", "message": "no handling records matched name-only responsibility rows"})
 
 summary["handling_context_probes"] = probe_results
+
+PaymentExecution = env["sc.payment.execution"]  # noqa: F821
+currency = env.company.currency_id  # noqa: F821
+constraint_rows = []
+payment_execution_sample = PaymentExecution.search(
+    [
+        ("company_contractor_responsibility_summary_id", "!=", False),
+        ("company_contractor_responsibility_state", "=", "self_funding_open"),
+    ],
+    limit=1,
+)
+if payment_execution_sample:
+    failures = payment_execution_sample._company_contractor_payment_responsibility_failures(
+        payment_execution_sample.company_contractor_responsibility_summary_id,
+        payment_execution_sample.paid_amount or 0.0,
+    )
+    constraint_rows.append(
+        {
+            "case": "self_funding_open_does_not_block_payment_execution",
+            "record_id": payment_execution_sample.id,
+            "failure_count": len(failures),
+        }
+    )
+    if failures:
+        errors.append({"key": "payment_execution.self_funding_open_should_not_block", "failures": [str(item) for item in failures]})
+else:
+    errors.append({"key": "payment_execution.self_funding_open_sample_missing"})
+
+fake_over_processed = SimpleNamespace(
+    currency_id=currency,
+    arrival_over_processed_amount=100.0,
+    arrival_unprocessed_amount=0.0,
+)
+over_processed_failures = PaymentExecution._company_contractor_payment_responsibility_failures(fake_over_processed, 1.0)
+constraint_rows.append({"case": "over_processed_blocks_payment_execution", "failure_count": len(over_processed_failures)})
+if not over_processed_failures:
+    errors.append({"key": "payment_execution.over_processed_not_blocked"})
+
+fake_available = SimpleNamespace(
+    currency_id=currency,
+    arrival_over_processed_amount=0.0,
+    arrival_unprocessed_amount=50.0,
+)
+exceed_failures = PaymentExecution._company_contractor_payment_responsibility_failures(fake_available, 51.0)
+within_failures = PaymentExecution._company_contractor_payment_responsibility_failures(fake_available, 50.0)
+constraint_rows.append({"case": "amount_exceeding_arrival_balance_blocks", "failure_count": len(exceed_failures)})
+constraint_rows.append({"case": "amount_within_arrival_balance_allows", "failure_count": len(within_failures)})
+if not exceed_failures:
+    errors.append({"key": "payment_execution.exceeding_arrival_balance_not_blocked"})
+if within_failures:
+    errors.append({"key": "payment_execution.within_arrival_balance_should_not_block", "failures": [str(item) for item in within_failures]})
+
+summary["payment_execution_responsibility_constraints"] = constraint_rows
 
 result = OrderedDict()
 result["status"] = "PASS" if not errors else "FAIL"

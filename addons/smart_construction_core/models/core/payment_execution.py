@@ -235,6 +235,7 @@ class ScPaymentExecution(models.Model):
                 )
             rec._check_business_anchor_or_raise()
             rec._check_payment_request_scope_or_raise()
+            rec._check_company_contractor_payment_responsibility_or_raise()
             if policy.is_approval_required(rec._name, company=rec.company_id):
                 company = rec.company_id or self.env.company
                 rec.with_company(company).with_context(allowed_company_ids=[company.id])._request_document_approval()
@@ -254,6 +255,7 @@ class ScPaymentExecution(models.Model):
                 )
             rec._check_business_anchor_or_raise()
             rec._check_payment_request_scope_or_raise()
+            rec._check_company_contractor_payment_responsibility_or_raise()
             if policy.is_approval_required(rec._name, company=rec.company_id) and rec.validation_status != "validated":
                 raise UserError(_("付款执行尚未完成统一审批流程。"))
             rec.state = "paid"
@@ -416,6 +418,38 @@ class ScPaymentExecution(models.Model):
                 raise UserError(_("付款登记往来单位必须与付款申请往来单位一致。"))
             if rec.contract_id and request.contract_id and rec.contract_id != request.contract_id:
                 raise UserError(_("付款登记合同必须与付款申请合同一致。"))
+
+    def _company_contractor_payment_responsibility_failures(self, summary, paid_amount):
+        rounding = summary.currency_id.rounding if getattr(summary, "currency_id", False) else 0.01
+        over_processed = getattr(summary, "arrival_over_processed_amount", 0.0) or 0.0
+        available = getattr(summary, "arrival_unprocessed_amount", 0.0) or 0.0
+        amount = paid_amount or 0.0
+        failures = []
+        if float_compare(over_processed, 0.0, precision_rounding=rounding) == 1:
+            failures.append(_("公司-承包人责任余额已显示到款超处理，继续付款前需先复核到款、拨付或扣款来源。"))
+        if (
+            float_compare(available, 0.0, precision_rounding=rounding) == 1
+            and float_compare(amount, available, precision_rounding=rounding) == 1
+        ):
+            failures.append(_("本次实付金额 %.2f 超过到款可处理余额 %.2f。") % (amount, available))
+        return failures
+
+    def _check_company_contractor_payment_responsibility_or_raise(self):
+        for rec in self:
+            if rec.source_origin == "legacy" and rec.state == "legacy_confirmed":
+                continue
+            summary = rec.company_contractor_responsibility_summary_id
+            if not summary:
+                continue
+            failures = rec._company_contractor_payment_responsibility_failures(summary, rec.paid_amount or 0.0)
+            if failures:
+                raise_guard(
+                    "PAYMENT_EXECUTION_RESPONSIBILITY_BALANCE_BLOCKED",
+                    f"付款执行[{rec.display_name}]",
+                    _("办理付款执行"),
+                    reasons=failures,
+                    hints=[_("打开公司-承包人责任余额，核对到款确认、自筹、拨付和扣款明细后再继续办理。")],
+                )
 
     def _request_document_approval(self):
         self.ensure_one()
