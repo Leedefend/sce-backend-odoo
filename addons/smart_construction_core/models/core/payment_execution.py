@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
-from odoo.tools.float_utils import float_compare
 
 from ..support.state_guard import raise_guard
 
@@ -420,19 +419,7 @@ class ScPaymentExecution(models.Model):
                 raise UserError(_("付款登记合同必须与付款申请合同一致。"))
 
     def _company_contractor_payment_responsibility_failures(self, summary, paid_amount):
-        rounding = summary.currency_id.rounding if getattr(summary, "currency_id", False) else 0.01
-        over_processed = getattr(summary, "arrival_over_processed_amount", 0.0) or 0.0
-        available = getattr(summary, "arrival_unprocessed_amount", 0.0) or 0.0
-        amount = paid_amount or 0.0
-        failures = []
-        if float_compare(over_processed, 0.0, precision_rounding=rounding) == 1:
-            failures.append(_("公司-承包人责任余额已显示到款超处理，继续付款前需先复核到款、拨付或扣款来源。"))
-        if (
-            float_compare(available, 0.0, precision_rounding=rounding) == 1
-            and float_compare(amount, available, precision_rounding=rounding) == 1
-        ):
-            failures.append(_("本次实付金额 %.2f 超过到款可处理余额 %.2f。") % (amount, available))
-        return failures
+        return self._company_contractor_responsibility_balance_failures(summary, paid_amount, _("本次实付金额"))
 
     def _check_company_contractor_payment_responsibility_or_raise(self):
         for rec in self:

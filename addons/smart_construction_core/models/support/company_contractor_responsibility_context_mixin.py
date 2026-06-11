@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import _, api, fields, models
+from odoo.tools.float_utils import float_compare
 
 
 class CompanyContractorResponsibilityContextMixin(models.AbstractModel):
@@ -117,6 +118,22 @@ class CompanyContractorResponsibilityContextMixin(models.AbstractModel):
         if state == "settled":
             return _("公司-承包人责任已平衡")
         return _("未匹配公司-承包人责任余额")
+
+    def _company_contractor_responsibility_balance_failures(self, summary, amount, amount_label=None):
+        rounding = summary.currency_id.rounding if getattr(summary, "currency_id", False) else 0.01
+        over_processed = getattr(summary, "arrival_over_processed_amount", 0.0) or 0.0
+        available = getattr(summary, "arrival_unprocessed_amount", 0.0) or 0.0
+        checked_amount = amount or 0.0
+        label = amount_label or _("本次办理金额")
+        failures = []
+        if float_compare(over_processed, 0.0, precision_rounding=rounding) == 1:
+            failures.append(_("公司-承包人责任余额已显示到款超处理，继续办理前需先复核到款、拨付或扣款来源。"))
+        if (
+            float_compare(available, 0.0, precision_rounding=rounding) == 1
+            and float_compare(checked_amount, available, precision_rounding=rounding) == 1
+        ):
+            failures.append(_("%s %.2f 超过到款可处理余额 %.2f。") % (label, checked_amount, available))
+        return failures
 
     def action_view_company_contractor_responsibility_summary(self):
         self.ensure_one()

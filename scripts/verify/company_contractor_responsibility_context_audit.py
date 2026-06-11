@@ -262,6 +262,49 @@ if within_failures:
 
 summary["payment_execution_responsibility_constraints"] = constraint_rows
 
+ExpenseClaim = env["sc.expense.claim"]  # noqa: F821
+expense_constraint_rows = []
+expense_self_funding_sample = ExpenseClaim.search(
+    [
+        ("business_category_id.code", "=", "finance.repayment.contractor_project"),
+        ("company_contractor_responsibility_summary_id", "!=", False),
+        ("company_contractor_responsibility_state", "=", "self_funding_open"),
+    ],
+    limit=1,
+)
+if expense_self_funding_sample:
+    failures = expense_self_funding_sample._company_contractor_responsibility_balance_failures(
+        expense_self_funding_sample.company_contractor_responsibility_summary_id,
+        expense_self_funding_sample.approved_amount or expense_self_funding_sample.amount or 0.0,
+        "本次扣款金额",
+    )
+    expense_constraint_rows.append(
+        {
+            "case": "self_funding_open_does_not_block_deduction_bill_balance_helper",
+            "record_id": expense_self_funding_sample.id,
+            "failure_count": len(failures),
+        }
+    )
+    if failures:
+        errors.append({"key": "expense_claim.self_funding_open_should_not_block", "failures": [str(item) for item in failures]})
+else:
+    errors.append({"key": "expense_claim.self_funding_open_sample_missing"})
+
+expense_over_processed_failures = ExpenseClaim._company_contractor_responsibility_balance_failures(fake_over_processed, 1.0, "本次扣款金额")
+expense_exceed_failures = ExpenseClaim._company_contractor_responsibility_balance_failures(fake_available, 51.0, "本次扣款金额")
+expense_within_failures = ExpenseClaim._company_contractor_responsibility_balance_failures(fake_available, 50.0, "本次扣款金额")
+expense_constraint_rows.append({"case": "over_processed_blocks_deduction_bill", "failure_count": len(expense_over_processed_failures)})
+expense_constraint_rows.append({"case": "deduction_amount_exceeding_arrival_balance_blocks", "failure_count": len(expense_exceed_failures)})
+expense_constraint_rows.append({"case": "deduction_amount_within_arrival_balance_allows", "failure_count": len(expense_within_failures)})
+if not expense_over_processed_failures:
+    errors.append({"key": "expense_claim.over_processed_not_blocked"})
+if not expense_exceed_failures:
+    errors.append({"key": "expense_claim.exceeding_arrival_balance_not_blocked"})
+if expense_within_failures:
+    errors.append({"key": "expense_claim.within_arrival_balance_should_not_block", "failures": [str(item) for item in expense_within_failures]})
+
+summary["expense_claim_deduction_responsibility_constraints"] = expense_constraint_rows
+
 result = OrderedDict()
 result["status"] = "PASS" if not errors else "FAIL"
 result["database"] = env.cr.dbname  # noqa: F821
