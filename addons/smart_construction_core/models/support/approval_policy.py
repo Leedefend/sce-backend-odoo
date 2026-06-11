@@ -27,6 +27,7 @@ class ScApprovalPolicy(models.Model):
         ("sc.payment.execution", "付款执行"),
         ("sc.invoice.registration", "发票登记"),
         ("sc.financing.loan", "融资借款"),
+        ("sc.self.funding.registration", "自筹垫付/退回"),
         ("sc.treasury.reconciliation", "资金对账"),
         ("sc.settlement.adjustment", "结算调整"),
     ]

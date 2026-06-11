@@ -22,6 +22,8 @@ class ScFinanceBusinessFact(models.Model):
         "tax_deducted": "smart_construction_core.action_sc_tax_deduction_registration_user",
         "guarantee_out": "smart_construction_core.action_sc_expense_claim_deposit",
         "guarantee_return": "smart_construction_core.action_sc_expense_claim_deposit",
+        "self_funding_income": "smart_construction_core.action_sc_self_funding_registration_income",
+        "self_funding_refund": "smart_construction_core.action_sc_self_funding_registration_refund",
     }
 
     display_name = fields.Char(string="业务摘要", readonly=True)
@@ -255,7 +257,11 @@ class ScFinanceBusinessFact(models.Model):
         domain = self._action_domain(result)
         if self.project_id:
             domain.append(("project_id", "=", self.project_id.id))
-        if self.partner_id and result.get("res_model") in {"sc.expense.claim", "sc.tax.deduction.registration"}:
+        if self.partner_id and result.get("res_model") in {
+            "sc.expense.claim",
+            "sc.tax.deduction.registration",
+            "sc.self.funding.registration",
+        }:
             domain.append(("partner_id", "=", self.partner_id.id))
         result.update(
             {
@@ -275,6 +281,7 @@ class ScFinanceBusinessFact(models.Model):
                 to_regclass('sc_expense_claim'),
                 to_regclass('sc_tax_deduction_registration'),
                 to_regclass('sc_legacy_self_funding_fact'),
+                to_regclass('sc_self_funding_registration'),
                 to_regclass('tender_guarantee'),
                 to_regclass('tender_bid'),
                 to_regclass('project_project'),
@@ -510,6 +517,42 @@ class ScFinanceBusinessFact(models.Model):
                     WHERE f.active IS TRUE
                       AND COALESCE(f.deleted_flag, '0') IN ('0', '')
                 ),
+                formal_self_funding AS (
+                    SELECT
+                        410000000 + r.id AS id,
+                        COALESCE(r.name, r.document_no, r.summary, '自筹办理') AS display_name,
+                        'self_funding' AS business_domain,
+                        CASE WHEN r.funding_type = 'refund' THEN 'self_funding_refund' ELSE 'self_funding_income' END AS fact_type,
+                        'canonical' AS balance_policy,
+                        'formal self funding handling; project is attribution and company-contractor balance constraint' AS classification_reason,
+                        'sc.self.funding.registration' AS source_model,
+                        r.id AS source_res_id,
+                        r.name AS source_record_name,
+                        COALESCE(r.document_no, r.name) AS source_document_no,
+                        CASE WHEN r.funding_type = 'refund' THEN '自筹退回办理' ELSE '自筹垫付办理' END AS source_menu_hint,
+                        r.document_date,
+                        r.company_id,
+                        r.currency_id,
+                        COALESCE(r.amount, 0.0) AS amount,
+                        CASE WHEN r.funding_type = 'refund' THEN -COALESCE(r.amount, 0.0) ELSE COALESCE(r.amount, 0.0) END AS balance_effect,
+                        CASE WHEN r.funding_type = 'income' THEN COALESCE(r.amount, 0.0) ELSE 0.0 END AS cash_in_amount,
+                        CASE WHEN r.funding_type = 'refund' THEN COALESCE(r.amount, 0.0) ELSE 0.0 END AS cash_out_amount,
+                        0.0 AS deduction_amount,
+                        0.0 AS paid_amount,
+                        0.0 AS tax_amount,
+                        r.project_id,
+                        r.partner_id,
+                        rp.name AS partner_name,
+                        r.state,
+                        NULL::varchar AS legacy_source_model,
+                        NULL::varchar AS legacy_source_table,
+                        NULL::varchar AS legacy_record_id,
+                        COALESCE(r.note, r.summary) AS legacy_visible_note
+                    FROM sc_self_funding_registration r
+                    LEFT JOIN res_partner rp ON rp.id = r.partner_id
+                    WHERE r.active IS TRUE
+                      AND r.state = 'done'
+                ),
                 guarantee AS (
                     SELECT
                         500000000 + g.id AS id,
@@ -552,6 +595,7 @@ class ScFinanceBusinessFact(models.Model):
                 UNION ALL SELECT * FROM deduction_refund
                 UNION ALL SELECT * FROM tax_deduction
                 UNION ALL SELECT * FROM self_funding
+                UNION ALL SELECT * FROM formal_self_funding
                 UNION ALL SELECT * FROM guarantee
             )
             """

@@ -7,7 +7,7 @@ from odoo.exceptions import ValidationError
 from odoo.osv import expression
 
 
-BUSINESS_CATEGORY_TEMPLATE_VERSION = "2026-06-12.2"
+BUSINESS_CATEGORY_TEMPLATE_VERSION = "2026-06-12.3"
 BUSINESS_CATEGORY_ACTION_BINDINGS = {
     "site.construction.diary": "smart_construction_core.action_sc_construction_diary",
     "site.quality.issue": "smart_construction_core.action_sc_quality_issue",
@@ -39,6 +39,8 @@ BUSINESS_CATEGORY_ACTION_BINDINGS = {
     "finance.loan.borrowing": "smart_construction_core.action_sc_financing_loan_borrowing_request",
     "finance.loan.contractor_project_borrow": "smart_construction_core.action_sc_financing_loan_contractor_project_borrow",
     "finance.loan.project_borrow_company": "smart_construction_core.action_sc_financing_loan_project_borrow_company",
+    "finance.self_funding.income": "smart_construction_core.action_sc_self_funding_registration_income",
+    "finance.self_funding.refund": "smart_construction_core.action_sc_self_funding_registration_refund",
     "finance.repayment.registration": "smart_construction_core.action_sc_expense_claim_repayment_registration",
     "finance.repayment.contractor_project": "smart_construction_core.action_sc_expense_claim_contractor_project_repay",
     "finance.repayment.project_company": "smart_construction_core.action_sc_expense_claim_project_repay_company",
@@ -97,6 +99,19 @@ BUSINESS_CATEGORY_LEDGER_POLICY_DEFAULTS = {
         "facts": ["sc.interfund.movement.fact", "sc.treasury.ledger"],
         "terminal_action": "action_done",
         "payment_request_policy": "not_applicable",
+    },
+    "finance.self_funding.income": {
+        "facts": ["sc.treasury.ledger", "sc.finance.business.fact", "sc.company.contractor.responsibility.fact"],
+        "terminal_action": "action_done",
+        "payment_request_policy": "not_applicable",
+        "responsibility_scope": "company_contractor",
+    },
+    "finance.self_funding.refund": {
+        "facts": ["sc.treasury.ledger", "sc.finance.business.fact", "sc.company.contractor.responsibility.fact"],
+        "terminal_action": "action_done",
+        "payment_request_policy": "not_applicable",
+        "responsibility_scope": "company_contractor",
+        "balance_guard": "self_funding_balance",
     },
     "finance.deduction.bill": {
         "facts": ["sc.finance.business.fact"],
@@ -226,6 +241,8 @@ BUSINESS_CATEGORY_REQUIRED_FIELD_DEFAULTS = {
     "finance.repayment.registration": ["project_id", "partner_id", "amount", "expense_type"],
     "finance.repayment.contractor_project": ["project_id", "partner_id", "amount", "expense_type"],
     "finance.repayment.project_company": ["project_id", "partner_id", "amount", "expense_type"],
+    "finance.self_funding.income": ["project_id", "partner_id", "document_date", "amount"],
+    "finance.self_funding.refund": ["project_id", "partner_id", "document_date", "amount"],
 }
 BUSINESS_CATEGORY_ATTACHMENT_POLICY_DEFAULTS = {
     "finance.expense.reimbursement": "required",
@@ -240,6 +257,8 @@ BUSINESS_CATEGORY_ATTACHMENT_POLICY_DEFAULTS = {
     "finance.repayment.registration": "required",
     "finance.repayment.contractor_project": "required",
     "finance.repayment.project_company": "required",
+    "finance.self_funding.income": "recommended",
+    "finance.self_funding.refund": "recommended",
 }
 BUSINESS_CATEGORY_APPROVAL_POLICY_DEFAULTS = {
     "finance.expense.reimbursement": "smart_construction_core.approval_policy_expense_claim",
@@ -254,6 +273,8 @@ BUSINESS_CATEGORY_APPROVAL_POLICY_DEFAULTS = {
     "finance.repayment.registration": "smart_construction_core.approval_policy_expense_claim",
     "finance.repayment.contractor_project": "smart_construction_core.approval_policy_expense_claim",
     "finance.repayment.project_company": "smart_construction_core.approval_policy_expense_claim",
+    "finance.self_funding.income": "smart_construction_core.approval_policy_self_funding_registration",
+    "finance.self_funding.refund": "smart_construction_core.approval_policy_self_funding_registration",
 }
 
 

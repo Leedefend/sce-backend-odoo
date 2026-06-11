@@ -712,6 +712,9 @@ verify.finance_business_fact.projection.audit: guard.prod.forbid check-compose-p
 verify.finance_business_project.summary.audit: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/verify/finance_business_project_summary_audit.py
 
+verify.self_funding.handling.audit: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/self_funding_handling_audit.py
+
 verify.finance_project_capital.position.audit: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/verify/finance_project_capital_position_audit.py
 

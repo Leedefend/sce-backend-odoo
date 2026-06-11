@@ -26,6 +26,8 @@ CATEGORIES = [
     ("finance.loan.borrowing", "smart_construction_core.action_sc_financing_loan_borrowing_request"),
     ("finance.loan.contractor_project_borrow", "smart_construction_core.action_sc_financing_loan_contractor_project_borrow"),
     ("finance.loan.project_borrow_company", "smart_construction_core.action_sc_financing_loan_project_borrow_company"),
+    ("finance.self_funding.income", "smart_construction_core.action_sc_self_funding_registration_income"),
+    ("finance.self_funding.refund", "smart_construction_core.action_sc_self_funding_registration_refund"),
     ("finance.repayment.registration", "smart_construction_core.action_sc_expense_claim_repayment_registration"),
     ("finance.repayment.contractor_project", "smart_construction_core.action_sc_expense_claim_contractor_project_repay"),
     ("finance.repayment.project_company", "smart_construction_core.action_sc_expense_claim_project_repay_company"),
@@ -277,6 +279,18 @@ def _base_vals(model_name, context, shared):
                 "currency_id": currency.id,
                 "amount": 106.0,
                 "purpose": vals.get("purpose") or "FBCR借款申请",
+            }
+        )
+    elif model_name == "sc.self.funding.registration":
+        vals.update(
+            {
+                "funding_type": vals.get("funding_type") or "income",
+                "project_id": project.id,
+                "partner_id": partner.id,
+                "company_id": env.company.id,
+                "currency_id": currency.id,
+                "amount": 107.0,
+                "summary": vals.get("summary") or "FBCR自筹办理",
             }
         )
     else:

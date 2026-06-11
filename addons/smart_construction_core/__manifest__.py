@@ -155,6 +155,7 @@
         'views/core/invoice_registration_views.xml',
         'views/core/tax_deduction_registration_views.xml',
         'views/core/financing_loan_views.xml',
+        'views/core/self_funding_registration_views.xml',
         'views/core/funding_baseline_views.xml',
         'views/core/fund_account_views.xml',
         'views/core/fund_account_operation_views.xml',

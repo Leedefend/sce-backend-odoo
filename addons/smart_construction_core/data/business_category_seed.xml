@@ -514,13 +514,47 @@
         <field name="attachment_policy">recommended</field>
     </record>
 
+    <record id="business_category_finance_self_funding_income" model="sc.business.category">
+        <field name="name">自筹垫付办理</field>
+        <field name="code">finance.self_funding.income</field>
+        <field name="domain">finance</field>
+        <field name="target_model">sc.self.funding.registration</field>
+        <field name="direction">receive</field>
+        <field name="sequence">114</field>
+        <field name="source_aliases">自筹垫付、自筹收入、承包人垫付、公司自筹</field>
+        <field name="default_values_json"><![CDATA[{"funding_type": "income", "business_category_code": "finance.self_funding.income", "summary": "自筹垫付办理"}]]></field>
+        <field name="domain_json"><![CDATA[["&", ["funding_type", "=", "income"], ["business_category_id.code", "=", "finance.self_funding.income"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "document_date", "amount"]]]></field>
+        <field name="visible_groups_json"><![CDATA[["business_object", "self_funding_processing", "responsibility_balance", "source_trace"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.treasury.ledger", "sc.finance.business.fact", "sc.company.contractor.responsibility.fact", "sc.company.contractor.responsibility.summary"], "terminal_action": "action_done", "payment_request_policy": "not_applicable", "responsibility_scope": "company_contractor", "project_role": "attribution_and_constraint"}]]></field>
+        <field name="attachment_policy">recommended</field>
+        <field name="note">正式自筹垫付办理入口；反映承包人与公司的资金占用关系，完成后进入资金台账和公司-承包人责任余额，不进入普通收付款申请。</field>
+    </record>
+
+    <record id="business_category_finance_self_funding_refund" model="sc.business.category">
+        <field name="name">自筹退回办理</field>
+        <field name="code">finance.self_funding.refund</field>
+        <field name="domain">finance</field>
+        <field name="target_model">sc.self.funding.registration</field>
+        <field name="direction">pay</field>
+        <field name="sequence">115</field>
+        <field name="source_aliases">自筹退回、自筹垫付退回、承包人垫付退回</field>
+        <field name="default_values_json"><![CDATA[{"funding_type": "refund", "business_category_code": "finance.self_funding.refund", "summary": "自筹退回办理"}]]></field>
+        <field name="domain_json"><![CDATA[["&", ["funding_type", "=", "refund"], ["business_category_id.code", "=", "finance.self_funding.refund"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "document_date", "amount"]]]></field>
+        <field name="visible_groups_json"><![CDATA[["business_object", "self_funding_processing", "responsibility_balance", "source_trace"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.treasury.ledger", "sc.finance.business.fact", "sc.company.contractor.responsibility.fact", "sc.company.contractor.responsibility.summary"], "terminal_action": "action_done", "payment_request_policy": "not_applicable", "responsibility_scope": "company_contractor", "project_role": "attribution_and_constraint", "balance_guard": "self_funding_balance"}]]></field>
+        <field name="attachment_policy">recommended</field>
+        <field name="note">正式自筹退回办理入口；完成前校验自筹未退余额，完成后冲减公司-承包人自筹责任并进入资金台账，不进入普通收付款申请。</field>
+    </record>
+
     <record id="business_category_finance_responsibility_arrival_confirmation" model="sc.business.category">
         <field name="name">到款确认责任</field>
         <field name="code">finance.responsibility.arrival_confirmation</field>
         <field name="domain">finance</field>
         <field name="target_model">sc.company.contractor.responsibility.fact</field>
         <field name="direction">reference</field>
-        <field name="sequence">114</field>
+        <field name="sequence">116</field>
         <field name="source_aliases">到款确认、项目收款状态、公司-承包人到款约束</field>
         <field name="default_values_json"><![CDATA[{}]]></field>
         <field name="domain_json"><![CDATA[[["responsibility_type", "=", "arrival_confirmation"]]]]></field>
@@ -537,7 +571,7 @@
         <field name="domain">finance</field>
         <field name="target_model">sc.company.contractor.responsibility.fact</field>
         <field name="direction">reference</field>
-        <field name="sequence">115</field>
+        <field name="sequence">117</field>
         <field name="source_aliases">自筹垫付、自筹收入、自筹保证金、承包人垫付</field>
         <field name="default_values_json"><![CDATA[{}]]></field>
         <field name="domain_json"><![CDATA[[["responsibility_type", "=", "self_funding_income"]]]]></field>
@@ -554,7 +588,7 @@
         <field name="domain">finance</field>
         <field name="target_model">sc.company.contractor.responsibility.fact</field>
         <field name="direction">reference</field>
-        <field name="sequence">116</field>
+        <field name="sequence">118</field>
         <field name="source_aliases">自筹退回、自筹垫付退回、自筹保证金退回</field>
         <field name="default_values_json"><![CDATA[{}]]></field>
         <field name="domain_json"><![CDATA[[["responsibility_type", "=", "self_funding_refund"]]]]></field>
@@ -571,7 +605,7 @@
         <field name="domain">finance</field>
         <field name="target_model">sc.company.contractor.responsibility.summary</field>
         <field name="direction">reference</field>
-        <field name="sequence">117</field>
+        <field name="sequence">119</field>
         <field name="source_aliases">公司-承包人资金责任余额、承包人责任余额、到款与自筹约束余额</field>
         <field name="default_values_json"><![CDATA[{}]]></field>
         <field name="domain_json"><![CDATA[[]]]></field>

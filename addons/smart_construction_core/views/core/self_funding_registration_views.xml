@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <record id="view_sc_self_funding_registration_search" model="ir.ui.view">
+            <field name="name">sc.self.funding.registration.search</field>
+            <field name="model">sc.self.funding.registration</field>
+            <field name="arch" type="xml">
+                <search string="自筹办理">
+                    <field name="name"/>
+                    <field name="document_no"/>
+                    <field name="project_id"/>
+                    <field name="partner_id"/>
+                    <field name="business_category_id"/>
+                    <field name="summary"/>
+                    <filter string="自筹垫付" name="funding_income" domain="[('funding_type', '=', 'income')]"/>
+                    <filter string="自筹退回" name="funding_refund" domain="[('funding_type', '=', 'refund')]"/>
+                    <filter string="待完成" name="state_open" domain="[('state', 'in', ['draft', 'confirmed'])]"/>
+                    <filter string="已完成" name="state_done" domain="[('state', '=', 'done')]"/>
+                    <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                    <filter string="按承包人" name="group_partner" context="{'group_by': 'partner_id'}"/>
+                    <filter string="按类型" name="group_type" context="{'group_by': 'funding_type'}"/>
+                    <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="按日期" name="group_date" context="{'group_by': 'document_date'}"/>
+                </search>
+            </field>
+        </record>
+
+        <record id="view_sc_self_funding_registration_tree" model="ir.ui.view">
+            <field name="name">sc.self.funding.registration.tree</field>
+            <field name="model">sc.self.funding.registration</field>
+            <field name="arch" type="xml">
+                <tree string="自筹办理">
+                    <field name="name"/>
+                    <field name="document_date"/>
+                    <field name="funding_type"/>
+                    <field name="project_id"/>
+                    <field name="operation_strategy"/>
+                    <field name="partner_id"/>
+                    <field name="business_category_id" optional="show"/>
+                    <field name="amount" sum="金额"/>
+                    <field name="company_contractor_self_funding_balance" string="自筹未退余额" optional="show" sum="自筹未退余额"/>
+                    <field name="company_contractor_responsibility_state" optional="show"/>
+                    <field name="summary"/>
+                    <field name="document_no" optional="hide"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sc_self_funding_registration_form" model="ir.ui.view">
+            <field name="name">sc.self.funding.registration.form</field>
+            <field name="model">sc.self.funding.registration</field>
+            <field name="arch" type="xml">
+                <form string="自筹办理">
+                    <header>
+                        <button name="action_confirm" string="提交审批" type="object" class="btn-primary"
+                                invisible="state != 'draft' or validation_status in ('waiting', 'pending', 'validated')"/>
+                        <button name="validate_tier" string="审批通过" type="object" class="btn-primary"
+                                invisible="not can_review or validation_status not in ('waiting', 'pending')"/>
+                        <button name="reject_tier" string="审批驳回" type="object"
+                                invisible="not can_review or validation_status not in ('waiting', 'pending')"/>
+                        <button name="action_done" string="完成" type="object" class="btn-primary"
+                                invisible="state not in ('draft', 'confirmed')"/>
+                        <button name="action_cancel" string="取消" type="object"
+                                invisible="state not in ('draft', 'confirmed')"/>
+                        <field name="validation_status" invisible="1"/>
+                        <field name="can_review" invisible="1"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,done,cancel"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group string="业务对象">
+                                <field name="name" readonly="1"/>
+                                <field name="funding_type" readonly="state == 'done'"/>
+                                <field name="business_category_id" readonly="state == 'done'"/>
+                                <field name="project_id" readonly="state == 'done'"/>
+                                <field name="operation_strategy" readonly="1"/>
+                                <field name="partner_id" readonly="state == 'done'"/>
+                            </group>
+                            <group string="金额与日期">
+                                <field name="document_date" readonly="state == 'done'"/>
+                                <field name="document_no" readonly="state == 'done'"/>
+                                <field name="amount" readonly="state == 'done'"/>
+                                <field name="currency_id" invisible="1"/>
+                                <field name="summary" readonly="state == 'done'"/>
+                            </group>
+                        </group>
+                        <group string="责任余额">
+                            <field name="company_contractor_responsibility_state" readonly="1"/>
+                            <field name="company_contractor_arrival_unprocessed_amount" readonly="1"/>
+                            <field name="company_contractor_arrival_over_processed_amount" readonly="1"/>
+                            <field name="company_contractor_self_funding_balance" readonly="1"/>
+                            <field name="company_contractor_responsibility_notice" readonly="1"/>
+                            <button name="action_view_company_contractor_responsibility_summary" type="object" string="查看责任余额" class="btn-secondary"/>
+                        </group>
+                        <group string="账户信息">
+                            <field name="payment_account_name" readonly="state == 'done'"/>
+                            <field name="partner_account_name" readonly="state == 'done'"/>
+                            <field name="bank_name" readonly="state == 'done'"/>
+                            <field name="bank_account" readonly="state == 'done'"/>
+                        </group>
+                        <group>
+                            <field name="note"/>
+                            <field name="reject_reason" readonly="1"/>
+                            <field name="attachment_ids" widget="many2many_binary"/>
+                            <field name="active"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_sc_self_funding_registration" model="ir.actions.act_window">
+            <field name="name">自筹办理</field>
+            <field name="res_model">sc.self.funding.registration</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_sc_self_funding_registration_search"/>
+            <field name="context">{'search_default_group_project': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_business_initiator')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_read')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+        </record>
+
+        <record id="action_sc_self_funding_registration_income" model="ir.actions.act_window">
+            <field name="name">自筹垫付办理</field>
+            <field name="res_model">sc.self.funding.registration</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_sc_self_funding_registration_search"/>
+            <field name="domain">[('funding_type', '=', 'income')]</field>
+            <field name="context">{'default_funding_type': 'income', 'default_business_category_code': 'finance.self_funding.income', 'search_default_funding_income': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_business_initiator')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_read')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+        </record>
+
+        <record id="action_sc_self_funding_registration_refund" model="ir.actions.act_window">
+            <field name="name">自筹退回办理</field>
+            <field name="res_model">sc.self.funding.registration</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_sc_self_funding_registration_search"/>
+            <field name="domain">[('funding_type', '=', 'refund')]</field>
+            <field name="context">{'default_funding_type': 'refund', 'default_business_category_code': 'finance.self_funding.refund', 'search_default_funding_refund': 1}</field>
+            <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_business_initiator')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_read')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_user')),
+                                           (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
+        </record>
+    </data>
+</odoo>

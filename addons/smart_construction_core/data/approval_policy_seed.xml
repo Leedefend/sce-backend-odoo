@@ -275,6 +275,27 @@
             <field name="approve_group_id" ref="smart_construction_core.group_sc_cap_finance_manager"/>
         </record>
 
+        <record id="approval_policy_self_funding_registration" model="sc.approval.policy">
+            <field name="name">自筹垫付/退回</field>
+            <field name="code">self_funding_registration_optional_approval</field>
+            <field name="sequence">102</field>
+            <field name="target_model">sc.self.funding.registration</field>
+            <field name="approval_required">0</field>
+            <field name="trigger">submit</field>
+            <field name="mode">none</field>
+            <field name="runtime_state">tier_validation</field>
+            <field name="manager_scope_key">finance_manager</field>
+            <field name="manager_group_id" ref="smart_construction_core.group_sc_cap_finance_manager"/>
+            <field name="note">自筹办理默认不强制审核；启用后提交进入统一待办审批，完成后生成公司-承包人责任事实和资金台账，不生成付款申请。</field>
+        </record>
+        <record id="approval_step_self_funding_registration_10" model="sc.approval.step">
+            <field name="policy_id" ref="approval_policy_self_funding_registration"/>
+            <field name="sequence">10</field>
+            <field name="name">财务中心审核</field>
+            <field name="approval_scope_key">finance_manager</field>
+            <field name="approve_group_id" ref="smart_construction_core.group_sc_cap_finance_manager"/>
+        </record>
+
         <record id="approval_policy_treasury_reconciliation" model="sc.approval.policy">
             <field name="name">资金对账</field>
             <field name="code">treasury_reconciliation_optional_approval</field>
