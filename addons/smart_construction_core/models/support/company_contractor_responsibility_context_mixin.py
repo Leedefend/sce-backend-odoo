@@ -62,6 +62,7 @@ class CompanyContractorResponsibilityContextMixin(models.AbstractModel):
             "legacy_partner_name",
             "actual_payee_unit",
             "legacy_visible_actual_payee_unit",
+            "legacy_visible_supplier_name",
             "legacy_visible_payee_unit",
             "payee",
             "deduction_unit_name",

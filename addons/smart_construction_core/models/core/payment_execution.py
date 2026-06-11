@@ -9,7 +9,7 @@ from ..support.state_guard import raise_guard
 class ScPaymentExecution(models.Model):
     _name = "sc.payment.execution"
     _description = "付款执行"
-    _inherit = ["mail.thread", "mail.activity.mixin", "tier.validation"]
+    _inherit = ["mail.thread", "mail.activity.mixin", "tier.validation", "sc.company.contractor.responsibility.context.mixin"]
     _order = "date_payment desc, id desc"
 
     name = fields.Char(string="单据号", required=True, default="新建", copy=False)

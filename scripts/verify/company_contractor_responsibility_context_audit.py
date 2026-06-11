@@ -38,6 +38,12 @@ def sql_rows(query, params=None):
 
 MODEL_PROBES = [
     {
+        "model": "sc.payment.execution",
+        "table": "sc_payment_execution",
+        "match": "partner_id",
+        "label": "付款执行按正式往来单位匹配责任余额",
+    },
+    {
         "model": "sc.expense.claim",
         "table": "sc_expense_claim",
         "name_field": "payee",
@@ -86,44 +92,79 @@ summary["summary_without_partner_id"] = [
 probe_results = []
 for probe in MODEL_PROBES:
     table = probe["table"]
-    name_field = probe["name_field"]
     model = probe["model"]
-    match_count = sql_one(
-        f"""
-        SELECT COUNT(*)::integer
-          FROM {table} r
-         WHERE r.project_id IS NOT NULL
-           AND r.partner_id IS NULL
-           AND COALESCE(r.{name_field}, '') <> ''
-           AND EXISTS (
-                SELECT 1
-                  FROM sc_company_contractor_responsibility_summary s
-                 WHERE s.project_id = r.project_id
-                   AND s.partner_id IS NULL
-                   AND s.partner_name = r.{name_field}
-           )
-        """
-    )
-    sample_rows = sql_rows(
-        f"""
-        SELECT r.id,
-               s.id AS summary_id,
-               s.responsibility_state,
-               s.arrival_unprocessed_amount,
-               s.arrival_over_processed_amount,
-               s.self_funding_balance
-          FROM {table} r
-          JOIN sc_company_contractor_responsibility_summary s
-            ON s.project_id = r.project_id
-           AND s.partner_id IS NULL
-           AND s.partner_name = r.{name_field}
-         WHERE r.project_id IS NOT NULL
-           AND r.partner_id IS NULL
-           AND COALESCE(r.{name_field}, '') <> ''
-         ORDER BY r.id
-         LIMIT 5
-        """
-    )
+    match_mode = probe.get("match") or "name"
+    name_field = probe.get("name_field") or ""
+    if match_mode == "partner_id":
+        match_count = sql_one(
+            f"""
+            SELECT COUNT(*)::integer
+              FROM {table} r
+             WHERE r.project_id IS NOT NULL
+               AND r.partner_id IS NOT NULL
+               AND EXISTS (
+                    SELECT 1
+                      FROM sc_company_contractor_responsibility_summary s
+                     WHERE s.project_id = r.project_id
+                       AND s.partner_id = r.partner_id
+               )
+            """
+        )
+        sample_rows = sql_rows(
+            f"""
+            SELECT r.id,
+                   s.id AS summary_id,
+                   s.responsibility_state,
+                   s.arrival_unprocessed_amount,
+                   s.arrival_over_processed_amount,
+                   s.self_funding_balance
+              FROM {table} r
+              JOIN sc_company_contractor_responsibility_summary s
+                ON s.project_id = r.project_id
+               AND s.partner_id = r.partner_id
+             WHERE r.project_id IS NOT NULL
+               AND r.partner_id IS NOT NULL
+             ORDER BY r.id
+             LIMIT 5
+            """
+        )
+    else:
+        match_count = sql_one(
+            f"""
+            SELECT COUNT(*)::integer
+              FROM {table} r
+             WHERE r.project_id IS NOT NULL
+               AND r.partner_id IS NULL
+               AND COALESCE(r.{name_field}, '') <> ''
+               AND EXISTS (
+                    SELECT 1
+                      FROM sc_company_contractor_responsibility_summary s
+                     WHERE s.project_id = r.project_id
+                       AND s.partner_id IS NULL
+                       AND s.partner_name = r.{name_field}
+               )
+            """
+        )
+        sample_rows = sql_rows(
+            f"""
+            SELECT r.id,
+                   s.id AS summary_id,
+                   s.responsibility_state,
+                   s.arrival_unprocessed_amount,
+                   s.arrival_over_processed_amount,
+                   s.self_funding_balance
+              FROM {table} r
+              JOIN sc_company_contractor_responsibility_summary s
+                ON s.project_id = r.project_id
+               AND s.partner_id IS NULL
+               AND s.partner_name = r.{name_field}
+             WHERE r.project_id IS NOT NULL
+               AND r.partner_id IS NULL
+               AND COALESCE(r.{name_field}, '') <> ''
+             ORDER BY r.id
+             LIMIT 5
+            """
+        )
     checked = []
     for row in sample_rows:
         rec_id, summary_id, state, arrival_unprocessed, arrival_over_processed, self_funding = row
@@ -154,6 +195,7 @@ for probe in MODEL_PROBES:
             [
                 ("label", probe["label"]),
                 ("model", model),
+                ("match", match_mode),
                 ("name_field", name_field),
                 ("matched_rows", match_count),
                 ("sample_checked", checked),

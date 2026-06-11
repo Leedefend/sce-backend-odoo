@@ -11,6 +11,10 @@
                     <field name="project_id"/>
                     <field name="operation_strategy"/>
                     <field name="partner_id"/>
+                    <field name="company_contractor_responsibility_state" optional="show"/>
+                    <field name="company_contractor_arrival_unprocessed_amount" optional="hide" sum="到款可处理余额合计"/>
+                    <field name="company_contractor_arrival_over_processed_amount" optional="show" sum="到款超处理金额合计"/>
+                    <field name="company_contractor_self_funding_balance" optional="hide" sum="自筹未退余额合计"/>
                     <field name="contract_id"/>
                     <field name="payment_family"/>
                     <field name="payment_method"/>
@@ -137,6 +141,19 @@
                             <field name="paid_amount" readonly="state == 'legacy_confirmed'"/>
                             <field name="invoice_amount" readonly="state == 'legacy_confirmed'"/>
                             <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group string="公司-承包人资金责任">
+                            <field name="company_contractor_responsibility_summary_id" invisible="1"/>
+                            <field name="company_contractor_responsibility_state" readonly="1"/>
+                            <field name="company_contractor_arrival_unprocessed_amount" readonly="1"/>
+                            <field name="company_contractor_arrival_over_processed_amount" readonly="1"/>
+                            <field name="company_contractor_self_funding_balance" readonly="1"/>
+                            <field name="company_contractor_responsibility_notice" readonly="1" nolabel="1"/>
+                            <button name="action_view_company_contractor_responsibility_summary"
+                                    type="object"
+                                    string="查看责任余额"
+                                    class="btn-secondary"
+                                    invisible="not company_contractor_responsibility_summary_id"/>
                         </group>
                         <group>
                             <field name="note"/>
