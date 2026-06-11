@@ -143,6 +143,14 @@ legacy_source_linked_count=113549
 boundary_violation_count=0
 ```
 
+```text
+COMPOSE_PROJECT_NAME=sc-backend-odoo-dev DB_NAME=sc_demo make verify.finance_expense_category.handling_policy.audit
+FINANCE_EXPENSE_CATEGORY_HANDLING_POLICY_AUDIT: status=PASS
+category_count=11
+legacy_source_linked_ledger_missing_count=0
+policy=经营现金类必须要求 payment_request_id 和账户字段；往来还款类 payment_request_policy=not_applicable，且不进入 payment.ledger
+```
+
 HTTP/API 可见面验收结论：
 
 - 支付申请：用户可见入口 `smart_construction_core.menu_sc_user_payment_apply_acceptance` 打开 `payment.request`，本地用户数据 29,549 条，已办样本可追到 `payment.ledger`。
@@ -161,6 +169,8 @@ HTTP/API 可见面验收结论：
 - 已清空上述 16,006 条来源级 legacy 台账的 `payment_request_id`，历史现金流以 `source_model/source_res_id` 为追溯口径；`payment_request_id` 仅保留给真实收付款申请生成的台账。
 - 已确认用户历史财务办理事实币种基线为人民币，并在本地 `sc_demo` 将三类 legacy confirmed 正式办理事实按项目公司币种对齐为 `CNY`：费用/保证金/扣款 10,487 条、付款执行 6,098 条、收款登记 4,766 条，共 21,351 条；只更新 `currency_id` 和修正标记，不改金额、状态、项目、往来单位、来源和办理日期。复跑币种门禁后不一致数为 0。
 - 已补齐剩余 97,543 条来源级历史现金流台账，其中费用/保证金/扣款 50,825 条、付款执行 23,439 条、收款登记 23,279 条；迁移只插入缺失 `sc.treasury.ledger`，不修改原办理事实，且历史来源级现金流 `payment_request_id` 保持为空。
+- 已补齐费用分类办理策略门禁：报销、项目费用、保证金支付/退回、扣款实缴/退回等经营现金类分类必须配置收付款申请和账户字段；还款登记、承包人还项目款、项目还公司款登记等往来类分类必须保持 `payment_request_id` 缺省且 `payment_request_policy=not_applicable`，下游只进入 `sc.interfund.movement.fact` 和 `sc.treasury.ledger`，不得进入 `payment.ledger`。
+- 已修正借款类入口切分：承包人借项目款、项目借公司款登记按 `business_category_id.code` 明确切分，静态和运行时门禁均验证保存后仍留在正确入口，不再依赖 purpose 文本包含关系。
 - 剩余 source-less legacy 台账 2,341 条：2,322 条找不到正式候选，18 条方向不一致，1 条项目不一致，暂不自动补挂。
 - 后续迁移脚本不得重复追加 113,549 条来源级台账；应以 `source_model/source_res_id/project_id/direction/source_kind` 为幂等键，剩余 2,341 条 source-less legacy 行需单独判断保留、补来源或作废策略，防止现金流翻倍。
 

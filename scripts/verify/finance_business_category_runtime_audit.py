@@ -184,7 +184,11 @@ def _context_defaults(context):
 
 
 def _base_vals(model_name, context, shared):
-    vals = _context_defaults(context)
+    vals = {
+        key: value
+        for key, value in _context_defaults(context).items()
+        if key in env[model_name]._fields  # noqa: F821
+    }
     project = shared["project"]
     partner = shared["partner"]
     contract_in = shared["contract_in"]

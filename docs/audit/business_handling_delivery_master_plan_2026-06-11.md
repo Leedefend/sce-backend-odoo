@@ -251,11 +251,13 @@
 - 已建立并执行 `make backfill.finance_legacy_handling.currency`，本地 `sc_demo` 已将三类 legacy confirmed 正式财务办理事实统一到项目公司币种 `CNY`：费用/保证金/扣款 10,487 条、付款执行 6,098 条、收款登记 4,766 条，共 21,351 条。该修正只改币种和修正标记，不改金额、状态、项目、往来单位、来源和办理日期；复跑币种门禁后不一致数为 0。
 - 已建立并执行 `make backfill.finance_legacy_cash_ledger`，本地 `sc_demo` 已将剩余 97,543 条历史已办事实补齐来源级 `sc.treasury.ledger`：费用/保证金/扣款 50,825 条、付款执行 23,439 条、收款登记 23,279 条。该迁移只插入缺失台账，不修改原办理事实，幂等键为 `source_model/source_res_id/project_id/direction/source_kind`，且 `payment_request_id` 保持为空。复跑 readiness 后来源级台账覆盖 113,549/113,549，缺口为 0；复跑边界门禁违规数为 0。
 - 已升级并复跑 `make verify.finance_handling.http_surface.smoke`，对来源级资金台账类入口支持“按 `sc.treasury.ledger.source_model/source_res_id` 反选办理样本”；往来单位付款、到款确认、项目费用报销均命中 80 条来源级台账中的 20 条办理样本并追到下游资金台账。
+- 已建立 `make verify.finance_expense_category.handling_policy.audit`，把费用/保证金/扣款/还款分类从“入口可见”推进到“分类办理策略可验收”：经营现金类必须配置收付款申请、项目、往来单位、金额和账户必填；往来还款类必须明确 `payment_request_policy=not_applicable`，且下游只保留 `sc.interfund.movement.fact` 与 `sc.treasury.ledger`，不进入 `payment.ledger`。当前 11 个费用类分类策略通过，历史费用类来源级台账缺口为 0。
+- 已修正业务分类模板同步逻辑：升级同步只合并缺失的必填字段和下游 facts，不覆盖客户已维护配置；对 `payment_request_policy=not_applicable` 的往来类分类会剔除错误残留的 `payment.ledger`。借款分类入口改为按 `business_category_id.code` 切分，不再依赖 purpose 文本模式判断。
 
 下一步收口顺序：
 
 1. 先制定剩余 2,341 条 source-less legacy 行处理策略，明确哪些保留为旧日报/总账快照、哪些需要补正式来源事实、哪些应作废后由来源级台账替代。
-2. 再围绕费用/保证金/扣款分类细化办理入口、必填字段、附件策略和审批策略，把“台账已覆盖”继续推进到“分类办理可验收”。
+2. 再围绕扣款单非现金办理、保证金收付与收付款申请边界、附件强制策略和审批策略做浏览器级抽样验收，把“分类办理策略可验收”推进到“用户可操作闭环可验收”。
 3. 再进入浏览器级抽样验收和开发服务器升级准备。
 
 ### Phase 2 - Invoice And Tax Closure

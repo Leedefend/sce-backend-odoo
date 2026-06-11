@@ -63,6 +63,21 @@ BUSINESS_CATEGORY_ACTION_BINDINGS = {
     "material.settlement": "smart_construction_core.action_sc_material_settlement",
 }
 BUSINESS_CATEGORY_LEDGER_POLICY_DEFAULTS = {
+    "finance.repayment.registration": {
+        "facts": ["sc.interfund.movement.fact", "sc.treasury.ledger"],
+        "terminal_action": "action_done",
+        "payment_request_policy": "not_applicable",
+    },
+    "finance.repayment.contractor_project": {
+        "facts": ["sc.interfund.movement.fact", "sc.treasury.ledger"],
+        "terminal_action": "action_done",
+        "payment_request_policy": "not_applicable",
+    },
+    "finance.repayment.project_company": {
+        "facts": ["sc.interfund.movement.fact", "sc.treasury.ledger"],
+        "terminal_action": "action_done",
+        "payment_request_policy": "not_applicable",
+    },
     "material.inbound": {
         "facts": ["sc.material.inbound", "sc.material.stock.summary"],
         "terminal_action": "action_receive",
@@ -94,6 +109,92 @@ BUSINESS_CATEGORY_LEDGER_POLICY_DEFAULTS = {
         "terminal_action": "action_confirm",
         "cost_triggers": {"confirm_project_cost_ledger": True, "confirm_payment_request": True},
     },
+}
+BUSINESS_CATEGORY_REQUIRED_FIELD_DEFAULTS = {
+    "finance.expense.reimbursement": [
+        "payment_request_id",
+        "project_id",
+        "partner_id",
+        "amount",
+        "payee",
+        "receipt_account_name",
+        "payee_account",
+        "payment_account_name",
+        "payer_account",
+    ],
+    "finance.expense.project": [
+        "payment_request_id",
+        "project_id",
+        "partner_id",
+        "amount",
+        "payee",
+        "receipt_account_name",
+        "payee_account",
+        "payment_account_name",
+        "payer_account",
+    ],
+    "finance.deposit.bid.pay": [
+        "payment_request_id",
+        "project_id",
+        "partner_id",
+        "amount",
+        "payee",
+        "receipt_account_name",
+        "payee_account",
+        "payment_account_name",
+        "payer_account",
+    ],
+    "finance.deposit.contract.pay": [
+        "payment_request_id",
+        "project_id",
+        "partner_id",
+        "amount",
+        "payee",
+        "receipt_account_name",
+        "payee_account",
+        "payment_account_name",
+        "payer_account",
+    ],
+    "finance.deposit.bid.return": [
+        "payment_request_id",
+        "project_id",
+        "partner_id",
+        "amount",
+        "payment_account_name",
+        "payer_account",
+    ],
+    "finance.deposit.contract.return": [
+        "payment_request_id",
+        "project_id",
+        "partner_id",
+        "amount",
+        "payment_account_name",
+        "payer_account",
+    ],
+    "finance.deduction.paid": [
+        "payment_request_id",
+        "project_id",
+        "partner_id",
+        "amount",
+        "expense_type",
+        "payee",
+        "receipt_account_name",
+        "payee_account",
+        "payment_account_name",
+        "payer_account",
+    ],
+    "finance.deduction.refund": [
+        "payment_request_id",
+        "project_id",
+        "partner_id",
+        "amount",
+        "expense_type",
+        "payment_account_name",
+        "payer_account",
+    ],
+    "finance.repayment.registration": ["project_id", "partner_id", "amount", "expense_type"],
+    "finance.repayment.contractor_project": ["project_id", "partner_id", "amount", "expense_type"],
+    "finance.repayment.project_company": ["project_id", "partner_id", "amount", "expense_type"],
 }
 
 
@@ -303,10 +404,34 @@ class ScBusinessCategory(models.Model):
             )
             if ledger_policy is not None:
                 vals["ledger_policy_json"] = json.dumps(ledger_policy, ensure_ascii=False, sort_keys=True)
+            required_fields = self._merge_template_required_fields(
+                category.required_fields_json,
+                BUSINESS_CATEGORY_REQUIRED_FIELD_DEFAULTS.get(code),
+            )
+            if required_fields is not None:
+                vals["required_fields_json"] = json.dumps(required_fields, ensure_ascii=False)
             category.write(
                 vals
             )
         return True
+
+    @api.model
+    def _merge_template_required_fields(self, current_raw, defaults):
+        if not defaults:
+            return None
+        try:
+            current = json.loads(current_raw or "[]")
+        except (TypeError, ValueError):
+            current = []
+        if not isinstance(current, list):
+            current = []
+        merged = list(current)
+        changed = False
+        for field_name in defaults:
+            if field_name not in merged:
+                merged.append(field_name)
+                changed = True
+        return merged if changed else None
 
     @api.model
     def _merge_template_ledger_policy(self, current_raw, defaults):
@@ -330,7 +455,22 @@ class ScBusinessCategory(models.Model):
                     if trigger not in current_triggers:
                         current_triggers[trigger] = default_value
                         changed = True
+            elif key == "facts":
+                current_facts = current.get("facts")
+                if not isinstance(current_facts, list):
+                    current_facts = []
+                    current["facts"] = current_facts
+                    changed = True
+                for fact in value:
+                    if fact not in current_facts:
+                        current_facts.append(fact)
+                        changed = True
             elif key not in current:
                 current[key] = value
+                changed = True
+        if defaults.get("payment_request_policy") == "not_applicable":
+            current_facts = current.get("facts")
+            if isinstance(current_facts, list) and "payment.ledger" in current_facts:
+                current["facts"] = [fact for fact in current_facts if fact != "payment.ledger"]
                 changed = True
         return current if changed else None

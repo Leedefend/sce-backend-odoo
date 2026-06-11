@@ -226,10 +226,11 @@ CATEGORY_ACTIONS = {
         "context": {
             "default_loan_type": "borrowing_request",
             "default_direction": "borrowed_fund",
+            "default_business_category_code": "finance.loan.contractor_project_borrow",
             "default_purpose": "承包人借项目款",
         },
-        "domain_tokens": ["loan_type", "borrowing_request", "purpose", "借%项目%款"],
-        "new_record_tokens": ["purpose", "借%项目%款"],
+        "domain_tokens": ["loan_type", "borrowing_request", "business_category_id.code", "finance.loan.contractor_project_borrow"],
+        "new_record_tokens": ["business_category_id.code", "finance.loan.contractor_project_borrow"],
     },
     "finance.loan.project_borrow_company": {
         "label": "项目借公司款登记",
@@ -239,10 +240,11 @@ CATEGORY_ACTIONS = {
         "context": {
             "default_loan_type": "borrowing_request",
             "default_direction": "borrowed_fund",
+            "default_business_category_code": "finance.loan.project_borrow_company",
             "default_purpose": "项目借公司款登记",
         },
-        "domain_tokens": ["loan_type", "borrowing_request", "direction", "borrowed_fund"],
-        "new_record_tokens": ["direction", "borrowed_fund"],
+        "domain_tokens": ["loan_type", "borrowing_request", "business_category_id.code", "finance.loan.project_borrow_company"],
+        "new_record_tokens": ["business_category_id.code", "finance.loan.project_borrow_company"],
     },
     "finance.repayment.registration": {
         "label": "还款登记",

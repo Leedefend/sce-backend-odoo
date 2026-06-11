@@ -544,7 +544,7 @@
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="smart_construction_core.view_sc_financing_loan_search"/>
         <field name="domain">[('loan_type', '=', 'borrowing_request')]</field>
-        <field name="context">{'default_loan_type': 'borrowing_request', 'default_direction': 'borrowed_fund', 'search_default_group_project': 1}</field>
+        <field name="context">{'default_loan_type': 'borrowing_request', 'default_direction': 'borrowed_fund', 'default_business_category_code': 'finance.loan.borrowing', 'search_default_group_project': 1}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read'))]"/>
     </record>
     <record id="action_sc_financing_loan_borrowing_request" model="ir.actions.act_window">
