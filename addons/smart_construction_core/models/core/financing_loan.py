@@ -222,7 +222,10 @@ class ScFinancingLoan(models.Model):
         return super().create(vals_list)
 
     def write(self, vals):
-        if any(rec.source_origin == "legacy" and rec.state == "legacy_confirmed" for rec in self):
+        if (
+            not self.env.context.get("legacy_visible_surface_sync")
+            and any(rec.source_origin == "legacy" and rec.state == "legacy_confirmed" for rec in self)
+        ):
             allowed = {
                 "partner_id",
                 "note",

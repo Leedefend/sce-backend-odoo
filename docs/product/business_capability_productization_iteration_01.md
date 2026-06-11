@@ -187,6 +187,8 @@
 - 收款人、收款单位、收款账户、贷款账户等字段不能直接定义为借款责任往来方；它们可能只是代收对象或账户对象。此类候选必须进入在线可见面核实或人工确认，避免把收款对象误写成公司-项目/项目-承包人的责任主体。
 - 在线增量证据：`ONLINE_VISIBLE_SURFACE_MODE=incremental ONLINE_VISIBLE_SURFACE_SEQS=022,023,027,028,032,037,038 DB_NAME=sc_demo bash scripts/ops/validate_online_visible_surface_verification.sh` 已通过，产物 `artifacts/migration/live_old_system_strict_parity_gate/20260611T132349Z`。旧系统实时记录数：借款申请 37、还款登记 25、承包人还项目款 157、承包人借项目款 166、账户间资金往来 485、项目借公司款登记 164、项目还公司款登记 155。行数据：022/023/027/028 复用前次实时 dump，032/037/038 本次补拉并通过。
 - 本地 HTTP 可见面证据：`DB_NAME=sc_demo make verify.company_contractor.responsibility_http.smoke` 已通过，不依赖浏览器下载，覆盖 `system.init` 菜单、`ui.contract.v2` 页面契约、`api.data` 普通列表和按 `responsibility_state` 分组汇总。当前本地余额页 action=995、menu=823、模型 `sc.company.contractor.responsibility.summary`，分组列表总数 1,327、状态分组 3、汇总字段完整。
+- 本地增量同步策略已调整为按旧表 + 旧记录号幂等承载，`SCBS55_FINANCING_SURFACE_SEQS=22,23,27,28,37,38 DB_NAME=sc_demo make odoo.shell.exec < scripts/migration/scbs55_financing_loan_surfaces_online_patch.py` 使用本地 artifact 重放后均为 `created=0`、按旧系统行数 `updated`。`verify.interfund_borrow.classification_gap.audit` 已通过，确认旧入口活动记录不重复进入办理列表、往来事实和现金流台账。
+- 去重后的本地往来借款事实为 645 条，其中旧“承包人借项目款”入口活动数 166 条；当前文本分类进入 `project_to_contractor_borrow` 89 条。该差异不是覆盖缺口，而是旧入口、用途文本和三主体事实分类未完全等价；收口前必须把借还款分类规则沉淀为可维护业务分类字典或配套规则表，由用户确认验收口径。
 
 本轮任务：
 

@@ -116,6 +116,17 @@ interfund_type_amount = OrderedDict(
     )
 )
 
+contractor_borrow_old_entry_count = row_count(
+    """
+    SELECT COUNT(*)
+      FROM sc_financing_loan
+     WHERE active IS TRUE
+       AND loan_type = 'borrowing_request'
+       AND direction = 'borrowed_fund'
+       AND legacy_source_table = 'ZJGL_ZCDFSZ_FXJK_JK'
+    """
+)
+
 financing_borrow_count = row_count(
     """
     SELECT COUNT(*)
@@ -475,12 +486,12 @@ classification_evidence = OrderedDict(
                         int(interfund_type.get("company_to_project_borrow") or 0),
                     ),
                     (
-                        "legacy_user_confirmed_contractor_borrow_menu_count",
-                        227,
+                        "current_old_entry_contractor_borrow_count",
+                        contractor_borrow_old_entry_count,
                     ),
                     (
                         "note",
-                        "旧系统未统一往来款概念；当前按借...项目...款顺序文本识别承包人借项目款，差异必须沉淀为可维护分类字典后再作为新验收基线。",
+                        "旧系统未统一往来款概念；旧入口活动数只表示用户入口可见面，当前按借...项目...款顺序文本识别承包人借项目款，差异必须沉淀为可维护分类字典后再作为新验收基线。",
                     ),
                 ]
             ),
@@ -562,11 +573,11 @@ assert_equal(errors, "arrival_user_report_baseline", 5205, arrival_source_count)
 assert_equal(errors, "self_funding_income_visible_user_report_baseline", 2144, self_funding_source.get("income_visible") or 0)
 assert_equal(errors, "self_funding_refund_visible_user_report_baseline", 827, self_funding_source.get("refund_visible") or 0)
 
-if int(interfund_type.get("project_to_contractor_borrow") or 0) != 227:
+if int(interfund_type.get("project_to_contractor_borrow") or 0) != contractor_borrow_old_entry_count:
     warnings.append(
         {
             "key": "contractor_borrow_menu_baseline_requires_new_dictionary_confirmation",
-            "legacy_user_confirmed_count": 227,
+            "current_old_entry_count": contractor_borrow_old_entry_count,
             "current_fact_classifier_count": int(interfund_type.get("project_to_contractor_borrow") or 0),
             "policy": "不能按旧菜单名直接收口；需基于用户数据文本和可维护业务分类字典确认新验收口径。",
         }
