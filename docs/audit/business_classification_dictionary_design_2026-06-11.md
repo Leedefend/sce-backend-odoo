@@ -79,6 +79,8 @@
 - 合同与结算已作为 Phase 4 分类字典样例落地：`contract.income`、`contract.expense`、`settlement.income`、`settlement.expense` 保留收入/支出合同和收入/支出结算的用户认知，复用正式合同和结算模型，通过 action/domain/context、必填字段和下游策略区分办理动作。
 - 跨域只读权限可以服务下游校验，例如财务只读材料结算用于付款金额校验；但动作权限仍必须归属原能力域，不能因为下游付款需要读取材料结算就扩大材料结算的提交、确认、生成后续付款等办理权限。
 - 收付款申请与往来款已作为资金域分类边界样例落地：`finance.payment.*` 分类进入 `payment.request`、付款/收款执行和资金台账；`finance.loan.*`、`finance.repayment.*`、`finance.fund.transfer` 分类进入内部往来事实、项目资金口径和 `sc.treasury.ledger` 统一现金流台账，但不强制挂经营收付款申请或结算单，台账通过 `source_model/source_res_id` 追溯原始往来单据。
+- 往来款分类必须按业务事实识别，不按旧菜单名硬切。旧系统没有统一“往来款”概念；项目借公司款、承包人借项目款、项目还公司款、承包人还项目款、跨项目/账户调拨属于内部往来事实，资金日报、余额调整、到款确认、自筹垫付、融资贷款登记不直接纳入往来款，但必须通过日报台账、财务事实或融资债务能力域承接。
+- 借还款历史数据当前仍有文本分类遗留，例如旧入口“承包人借项目款”验收数 227 与当前事实分类 177 不一致。872 条借款事实已经全量覆盖，差异说明旧入口名称不能作为长期分类边界；后续应把 `finance.loan.project_borrow_company`、`finance.loan.contractor_project_borrow` 等分类的识别规则、默认字段和下游台账策略沉淀到 `sc.business.category` 或配套分类规则表，由客户确认新验收基线。
 
 客户可维护字段：
 
@@ -235,7 +237,13 @@
 | `finance.deposit.contract.return` | `sc.expense.claim` action | 配置合同保证金退回方向 |
 | `finance.deduction.bill` | `sc.expense.claim` / tax deduction | Phase 2 明确税务/成本归属 |
 | `finance.fund.transfer` | `sc.fund.account.operation` | 补账户方向必填和资金事实策略 |
-| `finance.loan.project` | `sc.financing.loan` | 补借款/还款/利息分类 |
+| `finance.loan.project_borrow_company` | `sc.financing.loan` | 公司借款给项目；进入内部往来事实和项目资金台账，不挂经营收付款申请 |
+| `finance.loan.contractor_project_borrow` | `sc.financing.loan` | 项目借款给承包人；当前由历史用途文本推断，后续沉淀为可维护分类规则 |
+| `finance.repayment.project_company` | `sc.expense.claim` | 项目还公司款；进入内部往来清偿事实 |
+| `finance.repayment.contractor_project` | `sc.expense.claim` | 承包人还项目款；进入内部往来清偿事实 |
+| `finance.fund.daily_report` | `sc.fund.account.operation` | 资金日报型台账，不进入往来款事实 |
+| `finance.fund.balance_adjustment` | `sc.fund.account.operation` | 账户余额校准，不进入往来款事实 |
+| `finance.loan.registration` | `sc.financing.loan` | 融资债务登记，独立于内部往来款闭环 |
 
 ## Contract Phase 4 Mapping
 

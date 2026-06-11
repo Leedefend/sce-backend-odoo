@@ -14,6 +14,12 @@
 DB_NAME=sc_demo MIGRATION_ARTIFACT_ROOT=artifacts/migration make verify.interfund_movement.fact.audit
 ```
 
+用户数据全覆盖边界审计：
+
+```bash
+DB_NAME=sc_demo MIGRATION_ARTIFACT_ROOT=artifacts/migration make verify.interfund_user_data.full_coverage.audit
+```
+
 本地开发库 `sc_demo` 审计结果：
 
 | 来源/分类 | 数量 | 金额 |
@@ -22,6 +28,24 @@ DB_NAME=sc_demo MIGRATION_ARTIFACT_ROOT=artifacts/migration make verify.interfun
 | 借款来源 `sc.financing.loan` | 872 | 459,578,783.31 |
 | 还款来源 `sc.expense.claim` | 671 | 491,228,204.93 |
 | 资金往来事实合计 | 1,938 | 1,259,959,601.92 |
+
+## 用户数据边界
+
+旧系统没有统一建立“往来款”概念，因此不能把旧菜单名称直接当成新系统往来款边界。当前统一规则是：只要事实形成公司、项目、承包人或账户之间的资金占用、借出、借入、归还或调拨关系，就纳入往来款；如果只是到账清算、自筹权益、日报余额、账户余额校准或融资债务登记，则不直接纳入往来款，但必须有其他明确承接口径。
+
+| 用户数据/来源 | 数量 | 当前承接口径 | 是否纳入往来款 | 说明 |
+| --- | ---: | --- | --- | --- |
+| 账户间资金往来 `transfer_between` | 395 | `sc.interfund.movement.fact` | 是 | 账户/项目之间发生调拨事实 |
+| 借款申请 `borrowing_request + borrowed_fund` | 872 | `sc.interfund.movement.fact` | 是 | 覆盖项目借公司款、承包人借项目款；旧入口名只作为认知追溯 |
+| 项目/承包人还款 | 671 | `sc.interfund.movement.fact` | 是 | 覆盖全部项目还公司款、承包人还项目款，不按单一旧菜单截断 |
+| 资金日报表 `fund_daily_report` | 7453 | 日报型资金台账/账户汇总 | 否 | 后续台账就是用户日报口径，不再作为往来款候选 |
+| 余额调整 `balance_adjustment` | 519 | 账户余额校准/台账口径 | 否 | 不产生对方应收应还关系 |
+| 到款确认表 | 5205 | `sc.finance.business.fact` 到账清算 | 否 | 工程款到账、扣款、拨付清算事实，不混为往来款 |
+| 自筹垫付收入/退回可见口径 | 2144 / 827 | `sc.finance.business.fact` 自筹事实 | 否 | 自筹权益与退回余额先走财务事实和余额策略 |
+| 融资贷款登记 | 152 | 融资债务能力域 | 否 | 不纳入当前内部往来款，应独立闭环 |
+| 账户收支/日报明细 | 430 对调拨明细、40524 累计收支明细、15316 日报明细 | 账户收支/资金日报台账 | 否 | 用于账户台账，不与正式调拨事实重复计算 |
+
+当前全覆盖审计结果为 `PASS`，但保留一个分类警戒项：用户已确认旧入口“承包人借项目款”记录数为 227，而当前事实分类按“借...项目...款”顺序语义识别为 177。872 条借款事实已全量覆盖，差异不是漏数，而是旧入口名称和事实分类规则不完全等价。后续必须把借还款分类沉淀为可维护业务分类字典，让客户确认新验收基线，不能继续把文本规则硬编码为长期产品边界。
 
 ## 事实分类
 
@@ -44,8 +68,10 @@ DB_NAME=sc_demo MIGRATION_ARTIFACT_ROOT=artifacts/migration make verify.interfun
 - `project_company_repay` 全部进入“项目归还公司款”事实，不按菜单 5 条截断。
 - 项目还公司款和承包人还项目款属于往来款闭环，不关联 `payment.request`，不借用经营收付款申请或结算单生成经营付款/收款台账；完成后通过来源模型和来源记录写入 `sc.treasury.ledger` 统一现金流台账。
 - 资金日报、余额快照不得混入资金往来事实。
+- 用户日报 `fund_daily_report`、余额调整 `balance_adjustment`、到款确认、自筹可见口径必须有明确承接口径，但不得被误纳入往来款。
 - 同一来源模型和来源记录不得重复进入事实层。
 - 借款分类不得只按“借/项目/款”三个字无序匹配；`项目借公司款` 归入公司借款给项目，`借...项目...款` 归入项目借款给承包人。
+- 旧菜单名称只作为用户认知和来源追溯，最终分类规则必须进入业务分类字典和行业模板。
 
 ## 后续判断
 
