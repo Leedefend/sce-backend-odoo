@@ -27,6 +27,7 @@
                     <field name="responsibility_state"/>
                     <field name="project_id"/>
                     <field name="partner_name"/>
+                    <field name="currency_id" column_invisible="1"/>
                     <field name="source_line_count" sum="明细数合计"/>
                     <field name="arrival_amount" sum="到款合计"/>
                     <field name="paid_amount" sum="拨付合计"/>
@@ -58,6 +59,7 @@
                                 <field name="partner_id"/>
                                 <field name="partner_name"/>
                                 <field name="company_id"/>
+                                <field name="currency_id"/>
                             </group>
                             <group string="来源统计">
                                 <field name="source_line_count"/>
@@ -100,6 +102,7 @@
                 <pivot string="公司-承包人资金责任余额">
                     <field name="responsibility_state" type="row"/>
                     <field name="project_id" type="row"/>
+                    <field name="currency_id" invisible="1"/>
                     <field name="arrival_unprocessed_amount" type="measure"/>
                     <field name="arrival_over_processed_amount" type="measure"/>
                     <field name="self_funding_balance" type="measure"/>
