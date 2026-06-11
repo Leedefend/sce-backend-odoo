@@ -23,6 +23,8 @@ CATEGORIES = [
     ("finance.deduction.paid", "smart_construction_core.action_sc_expense_claim_deduction_paid"),
     ("finance.deduction.refund", "smart_construction_core.action_sc_expense_claim_deduction_paid_refund"),
     ("finance.fund.transfer", "smart_construction_core.action_sc_fund_account_between_user"),
+    ("finance.fund.daily_report", "smart_construction_core.action_sc_fund_daily_user_report"),
+    ("finance.fund.balance_adjustment", "smart_construction_core.action_sc_fund_balance_adjustment"),
     ("finance.loan.borrowing", "smart_construction_core.action_sc_financing_loan_borrowing_request"),
     ("finance.loan.contractor_project_borrow", "smart_construction_core.action_sc_financing_loan_contractor_project_borrow"),
     ("finance.loan.project_borrow_company", "smart_construction_core.action_sc_financing_loan_project_borrow_company"),
@@ -257,18 +259,43 @@ def _base_vals(model_name, context, shared):
             }
         )
     elif model_name == "sc.fund.account.operation":
+        operation_type = vals.get("operation_type") or "transfer_between"
         vals.update(
             {
-                "operation_type": vals.get("operation_type") or "transfer_between",
+                "operation_type": operation_type,
                 "source_account_id": shared["source_account"].id,
                 "target_account_id": shared["target_account"].id,
                 "project_id": project.id,
                 "company_id": env.company.id,
                 "currency_id": currency.id,
                 "amount": 105.0,
-                "operation_reason": vals.get("operation_reason") or "账户间资金往来",
+                "operation_reason": vals.get("operation_reason") or "账户资金办理",
             }
         )
+        if operation_type == "fund_daily_report":
+            vals.update(
+                {
+                    "source_account_id": False,
+                    "target_account_id": False,
+                    "fund_account_id": shared["source_account"].id,
+                    "daily_income": 105.0,
+                    "daily_expense": 35.0,
+                    "account_balance": 1005.0,
+                    "bank_balance": 1005.0,
+                    "operation_reason": vals.get("operation_reason") or "资金日报表",
+                }
+            )
+        elif operation_type == "balance_adjustment":
+            vals.update(
+                {
+                    "source_account_id": False,
+                    "target_account_id": False,
+                    "fund_account_id": shared["source_account"].id,
+                    "before_balance": 1000.0,
+                    "after_balance": 1005.0,
+                    "operation_reason": vals.get("operation_reason") or "余额调整",
+                }
+            )
     elif model_name == "sc.financing.loan":
         vals.update(
             {

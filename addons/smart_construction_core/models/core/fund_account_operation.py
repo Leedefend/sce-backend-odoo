@@ -254,12 +254,59 @@ class ScFundAccountOperation(models.Model):
             rec._check_active_accounts()
             rec.write({"state": "done"})
             rec._ensure_interfund_cash_ledger()
+            rec._ensure_fund_daily_cash_ledger()
             rec._audit_transition(
                 "fund_account_operation_done",
                 before,
                 rec._snapshot_audit_payload(),
                 "action_done",
             )
+
+    def _ensure_fund_daily_cash_ledger(self):
+        for rec in self:
+            if rec.operation_type != "fund_daily_report":
+                continue
+            project = rec.project_id or rec.fund_account_id.project_id
+            if not project:
+                continue
+            Ledger = self.env["sc.treasury.ledger"]
+            currency = rec.currency_id or rec.fund_account_id.currency_id or project.company_id.currency_id
+            date = rec.operation_date
+            for direction, amount, note in (
+                ("in", rec.daily_income, _("auto:fund_daily_report_done:income")),
+                ("out", rec.daily_expense, _("auto:fund_daily_report_done:expense")),
+            ):
+                if not amount or amount <= 0:
+                    continue
+                domain = [
+                    ("source_model", "=", rec._name),
+                    ("source_res_id", "=", rec.id),
+                    ("project_id", "=", project.id),
+                    ("direction", "=", direction),
+                    ("source_kind", "=", "daily_line"),
+                ]
+                existing = Ledger.sudo().search(domain, limit=1)
+                vals = {
+                    "date": date,
+                    "partner_id": False,
+                    "amount": amount,
+                    "currency_id": currency.id,
+                    "state": "posted",
+                    "note": note,
+                }
+                if existing:
+                    existing.sudo().write(vals)
+                    continue
+                Ledger.sudo().with_context(allow_ledger_auto=True).create(
+                    dict(
+                        vals,
+                        project_id=project.id,
+                        direction=direction,
+                        source_kind="daily_line",
+                        source_model=rec._name,
+                        source_res_id=rec.id,
+                    )
+                )
 
     def _ensure_interfund_cash_ledger(self):
         for rec in self:

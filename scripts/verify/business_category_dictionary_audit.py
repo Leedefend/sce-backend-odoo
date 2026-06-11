@@ -194,6 +194,20 @@ EXPECTED = {
         "ledger_fact": "sc.interfund.movement.fact",
         "action_xmlid": "smart_construction_core.action_sc_fund_account_between_user",
     },
+    "finance.fund.daily_report": {
+        "domain": "finance",
+        "target_model": "sc.fund.account.operation",
+        "direction": "noncash",
+        "ledger_fact": "sc.treasury.ledger",
+        "action_xmlid": "smart_construction_core.action_sc_fund_daily_user_report",
+    },
+    "finance.fund.balance_adjustment": {
+        "domain": "finance",
+        "target_model": "sc.fund.account.operation",
+        "direction": "noncash",
+        "ledger_fact": None,
+        "action_xmlid": "smart_construction_core.action_sc_fund_balance_adjustment",
+    },
     "finance.loan.borrowing": {
         "domain": "finance",
         "target_model": "sc.financing.loan",
@@ -450,11 +464,12 @@ def _check_category(code, expected, failures):
     for field_name, expected_type in JSON_FIELDS.items():
         parsed[field_name] = _loads(category, field_name, expected_type, failures)
     ledger_policy = parsed.get("ledger_policy_json") or {}
-    _expect(
-        expected["ledger_fact"] in (ledger_policy.get("facts") or []),
-        "%s ledger policy missing fact %s" % (code, expected["ledger_fact"]),
-        failures,
-    )
+    if expected["ledger_fact"]:
+        _expect(
+            expected["ledger_fact"] in (ledger_policy.get("facts") or []),
+            "%s ledger policy missing fact %s" % (code, expected["ledger_fact"]),
+            failures,
+        )
     for trigger, expected_value in (expected.get("cost_triggers") or {}).items():
         triggers = ledger_policy.get("cost_triggers") or {}
         _expect(

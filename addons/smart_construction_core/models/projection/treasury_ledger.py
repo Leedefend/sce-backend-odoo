@@ -45,6 +45,7 @@ class TreasuryLedger(models.Model):
             ("runtime", "运行时"),
             ("interfund", "往来资金"),
             ("self_funding", "自筹资金"),
+            ("daily_line", "资金日报"),
             ("legacy_actual_outflow", "历史实付"),
             ("legacy_receipt", "历史收款"),
         ],

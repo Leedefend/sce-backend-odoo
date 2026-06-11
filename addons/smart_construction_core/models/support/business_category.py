@@ -7,7 +7,7 @@ from odoo.exceptions import ValidationError
 from odoo.osv import expression
 
 
-BUSINESS_CATEGORY_TEMPLATE_VERSION = "2026-06-12.3"
+BUSINESS_CATEGORY_TEMPLATE_VERSION = "2026-06-12.4"
 BUSINESS_CATEGORY_ACTION_BINDINGS = {
     "site.construction.diary": "smart_construction_core.action_sc_construction_diary",
     "site.quality.issue": "smart_construction_core.action_sc_quality_issue",
@@ -36,6 +36,8 @@ BUSINESS_CATEGORY_ACTION_BINDINGS = {
     "finance.deduction.paid": "smart_construction_core.action_sc_expense_claim_deduction_paid",
     "finance.deduction.refund": "smart_construction_core.action_sc_expense_claim_deduction_paid_refund",
     "finance.fund.transfer": "smart_construction_core.action_sc_fund_account_between_user",
+    "finance.fund.daily_report": "smart_construction_core.action_sc_fund_daily_user_report",
+    "finance.fund.balance_adjustment": "smart_construction_core.action_sc_fund_balance_adjustment",
     "finance.loan.borrowing": "smart_construction_core.action_sc_financing_loan_borrowing_request",
     "finance.loan.contractor_project_borrow": "smart_construction_core.action_sc_financing_loan_contractor_project_borrow",
     "finance.loan.project_borrow_company": "smart_construction_core.action_sc_financing_loan_project_borrow_company",
@@ -69,6 +71,19 @@ BUSINESS_CATEGORY_LEDGER_POLICY_DEFAULTS = {
         "facts": ["sc.interfund.movement.fact", "sc.treasury.ledger"],
         "terminal_action": "action_done",
         "payment_request_policy": "not_applicable",
+    },
+    "finance.fund.daily_report": {
+        "facts": ["sc.treasury.ledger"],
+        "terminal_action": "action_done",
+        "payment_request_policy": "not_applicable",
+        "responsibility_scope": "state_or_ledger_input",
+    },
+    "finance.fund.balance_adjustment": {
+        "facts": [],
+        "terminal_action": "action_done",
+        "payment_request_policy": "not_applicable",
+        "responsibility_scope": "account_state_adjustment",
+        "cashflow_policy": "not_applicable",
     },
     "finance.loan.borrowing": {
         "facts": ["sc.interfund.movement.fact", "sc.treasury.ledger"],
@@ -339,6 +354,7 @@ class ScBusinessCategory(models.Model):
             ("pay", "付款"),
             ("receive", "收款"),
             ("transfer", "转账"),
+            ("noncash", "非现金/状态"),
             ("noncash_tax", "非现金税务"),
             ("cost", "成本"),
             ("cost_reversal", "成本转回"),
