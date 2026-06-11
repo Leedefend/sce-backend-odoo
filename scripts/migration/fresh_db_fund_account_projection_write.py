@@ -57,9 +57,38 @@ legacy_before = int(scalar("SELECT COUNT(*) FROM sc_fund_account WHERE source_or
 
 env.cr.execute(  # noqa: F821
     """
+    WITH source_account AS (
+        SELECT
+            a.*,
+            latest.current_account_balance,
+            latest.current_bank_balance,
+            latest.document_date AS latest_balance_date,
+            latest.legacy_line_id AS latest_balance_line_id
+        FROM sc_legacy_account_master a
+        LEFT JOIN LATERAL (
+            SELECT
+                l.current_account_balance,
+                l.current_bank_balance,
+                l.document_date,
+                l.legacy_line_id
+            FROM sc_legacy_fund_daily_line l
+            WHERE l.active IS TRUE
+              AND (
+                    NULLIF(l.account_legacy_id, '') = NULLIF(a.legacy_account_id, '')
+                 OR NULLIF(l.bank_account_no, '') = NULLIF(a.account_no, '')
+                 OR lower(trim(NULLIF(l.account_name, ''))) = lower(trim(NULLIF(a.name, '')))
+              )
+            ORDER BY l.document_date DESC NULLS LAST, l.id DESC
+            LIMIT 1
+        ) latest ON TRUE
+        WHERE a.legacy_account_id IS NOT NULL
+          AND a.legacy_account_id <> ''
+    )
     INSERT INTO sc_fund_account (
       name, account_no, account_type, bank_name, project_id, company_id,
-      opening_balance, currency_id, is_default, fixed_account, state, note,
+      opening_balance, current_account_balance, current_bank_balance,
+      balance_as_of_date, current_balance_source, currency_id,
+      is_default, fixed_account, state, note,
       source_origin, legacy_source_model, legacy_source_table, legacy_record_id,
       legacy_account_id, legacy_state, legacy_project_id, active,
       create_uid, write_uid, create_date, write_date
@@ -72,6 +101,10 @@ env.cr.execute(  # noqa: F821
       a.project_id,
       %s,
       COALESCE(a.opening_balance, 0),
+      COALESCE(a.current_account_balance, a.opening_balance, 0),
+      COALESCE(a.current_bank_balance, 0),
+      a.latest_balance_date,
+      CASE WHEN a.latest_balance_line_id IS NOT NULL THEN 'fund_daily_report' ELSE 'opening' END,
       %s,
       COALESCE(a.is_default, FALSE),
       COALESCE(a.fixed_account, FALSE),
@@ -89,9 +122,7 @@ env.cr.execute(  # noqa: F821
       1,
       NOW(),
       NOW()
-    FROM sc_legacy_account_master a
-    WHERE a.legacy_account_id IS NOT NULL
-      AND a.legacy_account_id <> ''
+    FROM source_account a
     ON CONFLICT (legacy_source_model, legacy_record_id)
     DO UPDATE SET
       name = EXCLUDED.name,
@@ -101,6 +132,10 @@ env.cr.execute(  # noqa: F821
       project_id = EXCLUDED.project_id,
       company_id = EXCLUDED.company_id,
       opening_balance = EXCLUDED.opening_balance,
+      current_account_balance = EXCLUDED.current_account_balance,
+      current_bank_balance = EXCLUDED.current_bank_balance,
+      balance_as_of_date = EXCLUDED.balance_as_of_date,
+      current_balance_source = EXCLUDED.current_balance_source,
       currency_id = EXCLUDED.currency_id,
       is_default = EXCLUDED.is_default,
       fixed_account = EXCLUDED.fixed_account,
