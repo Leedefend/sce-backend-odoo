@@ -40,6 +40,13 @@ class ScExpenseClaim(models.Model):
         index=True,
     )
     claim_flow_label = fields.Char(string="办理事项", compute="_compute_claim_flow_label")
+    business_category_id = fields.Many2one(
+        "sc.business.category",
+        string="业务分类",
+        index=True,
+        ondelete="restrict",
+        domain="[('target_model', '=', 'sc.expense.claim')]",
+    )
     state = fields.Selection(
         [
             ("draft", "草稿"),
@@ -231,6 +238,47 @@ class ScExpenseClaim(models.Model):
             return False
 
     @api.model
+    def _resolve_business_category_code(self, vals):
+        code = self.env.context.get("default_business_category_code") or self.env.context.get(
+            "current_business_category_code"
+        )
+        if code:
+            return code
+        claim_type = vals.get("claim_type", self.env.context.get("default_claim_type") or "expense")
+        guarantee_type = vals.get("guarantee_type", self.env.context.get("default_guarantee_type") or "bid")
+        expense_type = (vals.get("expense_type") or self.env.context.get("default_expense_type") or "").strip()
+        summary = (vals.get("summary") or self.env.context.get("default_summary") or "").strip()
+        text = "%s %s" % (expense_type, summary)
+        if claim_type == "deposit_pay":
+            return "finance.deposit.contract.pay" if guarantee_type == "contract" else "finance.deposit.bid.pay"
+        if claim_type == "deposit_refund":
+            return "finance.deposit.contract.return" if guarantee_type == "contract" else "finance.deposit.bid.return"
+        if claim_type == "deduction_refund" or expense_type == "扣款实缴退回":
+            return "finance.deduction.refund"
+        if claim_type == "project_company_repay":
+            if expense_type == "项目还公司款登记" or "项目还公司款" in text:
+                return "finance.repayment.project_company"
+            return "finance.repayment.registration"
+        if claim_type == "deposit_receive" and "承包人还项目款" in text:
+            return "finance.repayment.contractor_project"
+        if expense_type == "扣款实缴登记":
+            return "finance.deduction.paid"
+        if expense_type == "扣款单" or "扣款单" in text:
+            return "finance.deduction.bill"
+        if expense_type == "项目费用报销单":
+            return "finance.expense.project"
+        return "finance.expense.reimbursement"
+
+    @api.model
+    def _resolve_business_category_id(self, vals):
+        code = self._resolve_business_category_code(vals)
+        category = self.env["sc.business.category"].sudo().search(
+            [("code", "=", code), ("target_model", "=", "sc.expense.claim")],
+            limit=1,
+        )
+        return category.id if category else False
+
+    @api.model
     def default_get(self, fields_list):
         res = super().default_get(fields_list)
         project_id = res.get("project_id") or self._context_project_id()
@@ -288,6 +336,7 @@ class ScExpenseClaim(models.Model):
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.expense.claim") or _("Expense Claim")
             vals.setdefault("approved_amount", vals.get("amount", 0.0))
+            vals.setdefault("business_category_id", self._resolve_business_category_id(vals))
         return super().create(vals_list)
 
     def write(self, vals):
@@ -337,6 +386,47 @@ class ScExpenseClaim(models.Model):
                    END,
                    paid_amount = COALESCE(paid_amount, approved_amount, amount, 0.0)
              WHERE source_origin = 'legacy'
+            """
+        )
+        self.env.cr.execute(
+            """
+            UPDATE sc_expense_claim claim
+               SET business_category_id = category.id
+              FROM sc_business_category category
+             WHERE claim.business_category_id IS NULL
+               AND category.target_model = 'sc.expense.claim'
+               AND category.code = CASE
+                   WHEN claim.claim_type = 'deposit_pay' AND claim.guarantee_type = 'contract'
+                       THEN 'finance.deposit.contract.pay'
+                   WHEN claim.claim_type = 'deposit_pay'
+                       THEN 'finance.deposit.bid.pay'
+                   WHEN claim.claim_type = 'deposit_refund' AND claim.guarantee_type = 'contract'
+                       THEN 'finance.deposit.contract.return'
+                   WHEN claim.claim_type = 'deposit_refund'
+                       THEN 'finance.deposit.bid.return'
+                   WHEN claim.claim_type = 'deduction_refund'
+                         OR COALESCE(claim.expense_type, '') = '扣款实缴退回'
+                       THEN 'finance.deduction.refund'
+                   WHEN claim.claim_type = 'project_company_repay'
+                         AND (
+                             COALESCE(claim.expense_type, '') = '项目还公司款登记'
+                             OR COALESCE(claim.expense_type, '') || ' ' || COALESCE(claim.summary, '') LIKE '%项目还公司款%'
+                         )
+                       THEN 'finance.repayment.project_company'
+                   WHEN claim.claim_type = 'project_company_repay'
+                       THEN 'finance.repayment.registration'
+                   WHEN claim.claim_type = 'deposit_receive'
+                         AND COALESCE(claim.expense_type, '') || ' ' || COALESCE(claim.summary, '') LIKE '%承包人还项目款%'
+                       THEN 'finance.repayment.contractor_project'
+                   WHEN COALESCE(claim.expense_type, '') = '扣款实缴登记'
+                       THEN 'finance.deduction.paid'
+                   WHEN COALESCE(claim.expense_type, '') = '扣款单'
+                         OR COALESCE(claim.expense_type, '') || ' ' || COALESCE(claim.summary, '') LIKE '%扣款单%'
+                       THEN 'finance.deduction.bill'
+                   WHEN COALESCE(claim.expense_type, '') = '项目费用报销单'
+                       THEN 'finance.expense.project'
+                   ELSE 'finance.expense.reimbursement'
+               END
             """
         )
         self.env.cr.execute(

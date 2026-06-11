@@ -54,6 +54,62 @@ READONLY_CATEGORIES = [
 ]
 
 
+def _expense_claim_category_bindings():
+    env.cr.execute(  # noqa: F821
+        """
+        WITH expected AS (
+            SELECT claim.id,
+                   CASE
+                       WHEN claim.claim_type = 'deposit_pay' AND claim.guarantee_type = 'contract'
+                           THEN 'finance.deposit.contract.pay'
+                       WHEN claim.claim_type = 'deposit_pay'
+                           THEN 'finance.deposit.bid.pay'
+                       WHEN claim.claim_type = 'deposit_refund' AND claim.guarantee_type = 'contract'
+                           THEN 'finance.deposit.contract.return'
+                       WHEN claim.claim_type = 'deposit_refund'
+                           THEN 'finance.deposit.bid.return'
+                       WHEN claim.claim_type = 'deduction_refund'
+                             OR COALESCE(claim.expense_type, '') = '扣款实缴退回'
+                           THEN 'finance.deduction.refund'
+                       WHEN claim.claim_type = 'project_company_repay'
+                             AND (
+                                 COALESCE(claim.expense_type, '') = '项目还公司款登记'
+                                 OR COALESCE(claim.expense_type, '') || ' ' || COALESCE(claim.summary, '') LIKE '%项目还公司款%'
+                             )
+                           THEN 'finance.repayment.project_company'
+                       WHEN claim.claim_type = 'project_company_repay'
+                           THEN 'finance.repayment.registration'
+                       WHEN claim.claim_type = 'deposit_receive'
+                             AND COALESCE(claim.expense_type, '') || ' ' || COALESCE(claim.summary, '') LIKE '%承包人还项目款%'
+                           THEN 'finance.repayment.contractor_project'
+                       WHEN COALESCE(claim.expense_type, '') = '扣款实缴登记'
+                           THEN 'finance.deduction.paid'
+                       WHEN COALESCE(claim.expense_type, '') = '扣款单'
+                             OR COALESCE(claim.expense_type, '') || ' ' || COALESCE(claim.summary, '') LIKE '%扣款单%'
+                           THEN 'finance.deduction.bill'
+                       WHEN COALESCE(claim.expense_type, '') = '项目费用报销单'
+                           THEN 'finance.expense.project'
+                       ELSE 'finance.expense.reimbursement'
+                   END AS expected_code,
+                   category.code AS actual_code,
+                   category.target_model AS actual_target_model
+              FROM sc_expense_claim claim
+              LEFT JOIN sc_business_category category ON category.id = claim.business_category_id
+        )
+        SELECT expected_code,
+               COUNT(*)::integer AS row_count,
+               SUM(CASE WHEN actual_code = expected_code THEN 1 ELSE 0 END)::integer AS matched_count,
+               SUM(CASE WHEN COALESCE(actual_code, '') != expected_code THEN 1 ELSE 0 END)::integer AS mismatch_count,
+               SUM(CASE WHEN COALESCE(actual_target_model, '') NOT IN ('', 'sc.expense.claim') THEN 1 ELSE 0 END)::integer
+                   AS target_mismatch_count
+          FROM expected
+         GROUP BY expected_code
+         ORDER BY expected_code
+        """
+    )
+    return env.cr.dictfetchall()  # noqa: F821
+
+
 def _token():
     return env["ir.sequence"].sudo().next_by_code("sc.business.fact") or str(fields.Datetime.now())
 
@@ -247,6 +303,13 @@ def _run_category(code, action_xmlid, shared, failures):
     model_name = action.res_model
     vals = _base_vals(model_name, context, shared)
     record = env[model_name].sudo().with_context(**context).create(vals)
+    if "business_category_id" in record._fields:
+        actual_code = record.business_category_id.code
+        if actual_code != code:
+            failures.append(
+                "%s: expected business_category_id.code=%s, got %s"
+                % (code, code, actual_code or "-")
+            )
     domain_with_record = ["&", ("id", "=", record.id)] + list(domain)
     matched = env[model_name].sudo().search(domain_with_record, limit=1)
     if matched.id != record.id:
@@ -259,6 +322,7 @@ def _run_category(code, action_xmlid, shared, failures):
         "action": action_xmlid,
         "model": model_name,
         "record_id": record.id,
+        "business_category": record.business_category_id.code if "business_category_id" in record._fields else False,
         "visible": matched.id == record.id,
     }
 
@@ -307,6 +371,18 @@ try:
             rows.append(_run_category(code, action_xmlid, shared, failures))
     for code, expected_responsibility_type, action_xmlid in READONLY_CATEGORIES:
         rows.append(_run_readonly_category(code, expected_responsibility_type, action_xmlid, failures))
+    expense_claim_bindings = _expense_claim_category_bindings()
+    for row in expense_claim_bindings:
+        if row["mismatch_count"]:
+            failures.append(
+                "%s: %s mismatched expense claim category rows of %s"
+                % (row["expected_code"], row["mismatch_count"], row["row_count"])
+            )
+        if row["target_mismatch_count"]:
+            failures.append(
+                "%s: %s expense claim rows bound to non-expense target model"
+                % (row["expected_code"], row["target_mismatch_count"])
+            )
 except Exception as err:
     failures.append("unexpected error: %s" % err)
     failures.append(traceback.format_exc())
@@ -316,6 +392,7 @@ result = {
     "status": "PASS" if not failures else "FAIL",
     "category_count": len(CATEGORIES) + len(READONLY_CATEGORIES),
     "rows": rows,
+    "expense_claim_bindings": expense_claim_bindings if "expense_claim_bindings" in locals() else [],
     "failures": failures,
 }
 print("FINANCE_BUSINESS_CATEGORY_RUNTIME_AUDIT: %s" % json.dumps(result, ensure_ascii=False, sort_keys=True))

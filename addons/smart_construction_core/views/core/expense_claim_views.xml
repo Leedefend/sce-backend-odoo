@@ -8,6 +8,7 @@
                 <tree string="费用、保证金与还款办理" decoration-muted="state == 'cancel'">
                     <field name="date_claim"/>
                     <field name="name"/>
+                    <field name="business_category_id" optional="show"/>
                     <field name="claim_flow_label"/>
                     <field name="direction"/>
                     <field name="project_id"/>
@@ -75,6 +76,7 @@
                         <group>
                             <group string="业务方向">
                                 <field name="name" readonly="1"/>
+                                <field name="business_category_id" readonly="state in ['legacy_confirmed']"/>
                                 <field name="claim_flow_label" readonly="1"/>
                                 <field name="claim_type" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="direction" readonly="1"/>
@@ -166,6 +168,7 @@
                     <field name="project_id"/>
                     <field name="operation_strategy"/>
                     <field name="partner_id"/>
+                    <field name="business_category_id"/>
                     <field name="applicant_name"/>
                     <field name="payee"/>
                     <field name="expense_type"/>
@@ -177,6 +180,7 @@
                     <filter name="confirmed" string="已确认/完成" domain="[('state', 'in', ['approved', 'done', 'legacy_confirmed'])]"/>
                     <group expand="0" string="分组">
                         <filter name="group_project" string="项目" context="{'group_by': 'project_id'}"/>
+                        <filter name="group_business_category" string="业务分类" context="{'group_by': 'business_category_id'}"/>
                         <filter name="group_operation_strategy" string="经营策略" context="{'group_by': 'operation_strategy'}"/>
                         <filter name="group_partner" string="往来单位" context="{'group_by': 'partner_id'}"/>
                         <filter name="group_type" string="业务类型" context="{'group_by': 'claim_type'}"/>
