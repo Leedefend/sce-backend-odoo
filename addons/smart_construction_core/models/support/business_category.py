@@ -7,7 +7,7 @@ from odoo.exceptions import ValidationError
 from odoo.osv import expression
 
 
-BUSINESS_CATEGORY_TEMPLATE_VERSION = "2026-06-11.6"
+BUSINESS_CATEGORY_TEMPLATE_VERSION = "2026-06-11.7"
 BUSINESS_CATEGORY_ACTION_BINDINGS = {
     "site.construction.diary": "smart_construction_core.action_sc_construction_diary",
     "site.quality.issue": "smart_construction_core.action_sc_quality_issue",
@@ -63,6 +63,26 @@ BUSINESS_CATEGORY_ACTION_BINDINGS = {
     "material.settlement": "smart_construction_core.action_sc_material_settlement",
 }
 BUSINESS_CATEGORY_LEDGER_POLICY_DEFAULTS = {
+    "finance.fund.transfer": {
+        "facts": ["sc.interfund.movement.fact", "sc.treasury.ledger"],
+        "terminal_action": "action_done",
+        "payment_request_policy": "not_applicable",
+    },
+    "finance.loan.borrowing": {
+        "facts": ["sc.interfund.movement.fact", "sc.treasury.ledger"],
+        "terminal_action": "action_done",
+        "payment_request_policy": "not_applicable",
+    },
+    "finance.loan.contractor_project_borrow": {
+        "facts": ["sc.interfund.movement.fact", "sc.treasury.ledger"],
+        "terminal_action": "action_done",
+        "payment_request_policy": "not_applicable",
+    },
+    "finance.loan.project_borrow_company": {
+        "facts": ["sc.interfund.movement.fact", "sc.treasury.ledger"],
+        "terminal_action": "action_done",
+        "payment_request_policy": "not_applicable",
+    },
     "finance.repayment.registration": {
         "facts": ["sc.interfund.movement.fact", "sc.treasury.ledger"],
         "terminal_action": "action_done",
@@ -111,6 +131,10 @@ BUSINESS_CATEGORY_LEDGER_POLICY_DEFAULTS = {
     },
 }
 BUSINESS_CATEGORY_REQUIRED_FIELD_DEFAULTS = {
+    "finance.fund.transfer": ["operation_date", "amount", "source_account_id", "target_account_id"],
+    "finance.loan.borrowing": ["project_id", "partner_id", "document_date", "amount"],
+    "finance.loan.contractor_project_borrow": ["project_id", "partner_id", "document_date", "amount"],
+    "finance.loan.project_borrow_company": ["project_id", "partner_id", "document_date", "amount"],
     "finance.expense.reimbursement": [
         "payment_request_id",
         "project_id",
@@ -466,6 +490,9 @@ class ScBusinessCategory(models.Model):
                         current_facts.append(fact)
                         changed = True
             elif key not in current:
+                current[key] = value
+                changed = True
+            elif key == "terminal_action" and value == "action_done" and current.get(key) == "action_confirm":
                 current[key] = value
                 changed = True
         if defaults.get("payment_request_policy") == "not_applicable":

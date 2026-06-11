@@ -463,15 +463,27 @@ class ScInterfundMovementFact(models.Model):
                         30000000 + claim.id AS id,
                         COALESCE(claim.name, '还款事实') AS display_name,
                         CASE
+                            WHEN category.code = 'finance.repayment.contractor_project'
+                                THEN 'contractor_to_project_repay'
+                            WHEN category.code IN ('finance.repayment.project_company', 'finance.repayment.registration')
+                                THEN 'project_to_company_repay'
                             WHEN claim.claim_type = 'project_company_repay'
                                 THEN 'project_to_company_repay'
                             ELSE 'contractor_to_project_repay'
                         END AS movement_type,
                         CASE
+                            WHEN category.code = 'finance.repayment.contractor_project' THEN 'in'
+                            WHEN category.code IN ('finance.repayment.project_company', 'finance.repayment.registration') THEN 'out'
                             WHEN claim.claim_type = 'project_company_repay' THEN 'out'
                             ELSE 'in'
                         END AS direction,
                         CASE
+                            WHEN category.code IN (
+                                'finance.repayment.contractor_project',
+                                'finance.repayment.project_company',
+                                'finance.repayment.registration'
+                            )
+                                THEN 'high'
                             WHEN claim.claim_type = 'project_company_repay'
                              AND claim.expense_type = '项目还公司款登记'
                                 THEN 'high'
@@ -480,6 +492,12 @@ class ScInterfundMovementFact(models.Model):
                             ELSE 'high'
                         END AS classification_confidence,
                         CASE
+                            WHEN category.code IN (
+                                'finance.repayment.contractor_project',
+                                'finance.repayment.project_company',
+                                'finance.repayment.registration'
+                            )
+                                THEN 'business_category=' || category.code
                             WHEN claim.claim_type = 'project_company_repay'
                              AND claim.expense_type = '项目还公司款登记'
                                 THEN 'claim_type=project_company_repay and expense_type=项目还公司款登记'
@@ -531,6 +549,7 @@ class ScInterfundMovementFact(models.Model):
                     FROM sc_expense_claim claim
                     LEFT JOIN project_names p ON p.id = claim.project_id
                     LEFT JOIN res_partner rp ON rp.id = claim.partner_id
+                    LEFT JOIN sc_business_category category ON category.id = claim.business_category_id
                     WHERE claim.active IS TRUE
                       AND (
                             claim.claim_type = 'project_company_repay'

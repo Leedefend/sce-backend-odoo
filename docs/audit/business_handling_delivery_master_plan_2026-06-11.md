@@ -253,12 +253,13 @@
 - 已升级并复跑 `make verify.finance_handling.http_surface.smoke`，对来源级资金台账类入口支持“按 `sc.treasury.ledger.source_model/source_res_id` 反选办理样本”；往来单位付款、到款确认、项目费用报销均命中 80 条来源级台账中的 20 条办理样本并追到下游资金台账。
 - 已建立 `make verify.finance_expense_category.handling_policy.audit`，把费用/保证金/扣款/还款分类从“入口可见”推进到“分类办理策略可验收”：经营现金类必须配置收付款申请、项目、往来单位、金额和账户必填；往来还款类必须明确 `payment_request_policy=not_applicable`，且下游只保留 `sc.interfund.movement.fact` 与 `sc.treasury.ledger`，不进入 `payment.ledger`。当前 11 个费用类分类策略通过，历史费用类来源级台账缺口为 0。
 - 已修正业务分类模板同步逻辑：升级同步只合并缺失的必填字段和下游 facts，不覆盖客户已维护配置；对 `payment_request_policy=not_applicable` 的往来类分类会剔除错误残留的 `payment.ledger`。借款分类入口改为按 `business_category_id.code` 切分，不再依赖 purpose 文本模式判断。
+- 已建立并通过 `make verify.finance_interfund_category.handling_policy.audit`，把账户调拨、借款、项目借公司款、承包人借项目款、项目还公司款、承包人还项目款统一纳入内部往来分类门禁：分类必须配置项目/往来单位/金额/日期或账户必填，`payment_request_policy=not_applicable`，下游只允许 `sc.interfund.movement.fact` 与 `sc.treasury.ledger`，不得进入 `payment.ledger` 或要求 `payment_request_id`。当前本地 `sc_demo` 内部往来事实 1,543 条全部为高置信分类，借款/还款正金额事实来源级资金台账缺口为 0。
 
 下一步收口顺序：
 
-1. 先制定剩余 2,341 条 source-less legacy 行处理策略，明确哪些保留为旧日报/总账快照、哪些需要补正式来源事实、哪些应作废后由来源级台账替代。
-2. 再围绕扣款单非现金办理、保证金收付与收付款申请边界、附件强制策略和审批策略做浏览器级抽样验收，把“分类办理策略可验收”推进到“用户可操作闭环可验收”。
-3. 再进入浏览器级抽样验收和开发服务器升级准备。
+1. 先围绕扣款单非现金办理、保证金收付与收付款申请边界、附件强制策略和审批策略做浏览器级抽样验收，把“分类办理策略可验收”推进到“用户可操作闭环可验收”。
+2. 再制定剩余 2,341 条 source-less legacy 行处理策略，明确哪些保留为旧日报/总账快照、哪些需要补正式来源事实、哪些应作废后由来源级台账替代。
+3. 再进入开发服务器升级准备；升级前必须复跑业务分类、资金往来、费用分类和 HTTP/API 可见面门禁。
 
 ### Phase 2 - Invoice And Tax Closure
 

@@ -232,8 +232,8 @@ evidence: create temp record from runtime action context, then verify current ru
 | 到款确认表 | `sc.receipt.income` | `action_confirm`、`action_received`、`action_cancel`、`action_on_tier_approved` | 新办理通过收款申请生成 `sc.treasury.ledger`；历史已办事实应通过 `sc.treasury.ledger` 来源级追溯现金流 | 办理入口可见面已通过 HTTP/API；26,439 条历史收款流入候选缺来源级台账 | 补项目收款状态约束、source-less legacy 台账对账和来源级现金流迁移 |
 | 报销/费用单据 | `sc.expense.claim` | `action_submit`、`action_approve`、`action_done`、`action_cancel`、审批回调 | 新办理通过 `payment.request` 或往来款现金流生成台账；历史已办事实按方向进入 `sc.treasury.ledger` | 办理入口可见面已通过 HTTP/API；50,825 条历史费用/保证金/扣款候选缺来源级台账 | 按 `claim_type` 和业务分类区分经营收付、保证金、扣款、往来款，再做来源级现金流迁移 |
 | 扣款单/扣款实缴/退回 | `sc.tax.deduction.registration` | 确认、已抵扣、取消 | 税务事实、项目经营口径 | 办理证据闭环、角色权限、下游税务事实追溯通过 | Phase 2 继续补正式分类字段或业务分类字典绑定 |
-| 账户间资金往来 | `sc.fund.account.operation` | 确认、完成、取消 | 账户资金往来事实、往来现金流台账 | 后端动作、关系必填、现金流追溯、历史回填就绪审计通过 | 补正式历史回填迁移脚本、浏览器级验收和账户余额回填策略 |
-| 项目/承包人借还款 | `sc.financing.loan` | 借款登记、还款登记 | 资金往来事实、项目资金口径 | 表单契约通过 | 明确借出、借入、还款、利息和账户关系 |
+| 账户间资金往来 | `sc.fund.account.operation` | 确认、完成、取消 | 账户资金往来事实、往来现金流台账 | 后端动作、关系必填、现金流追溯、历史回填就绪审计通过；内部往来分类策略已纳入 `verify.finance_interfund_category.handling_policy.audit` | 补浏览器级验收和账户余额回填策略 |
+| 项目/承包人借还款 | `sc.financing.loan` / `sc.expense.claim` | 借款登记、还款登记 | 资金往来事实、项目资金口径、来源级资金台账 | 借出、借入、还款分类已按 `sc.business.category` 固化；不走收付款申请，不写 `payment.ledger`，通过 `sc.interfund.movement.fact` 与 `sc.treasury.ledger` 追溯 | 补浏览器级验收、利息/账户关系和公司-承包人责任余额约束 |
 | 资金日报表 | `sc.legacy.fund.daily.snapshot.fact` | 历史事实查看 | 来源事实明细 | 表单契约通过 | 暂不作为办理主线，后置到 Phase 6 |
 
 ## Finance Classification Dictionary Candidates
@@ -257,8 +257,11 @@ evidence: create temp record from runtime action context, then verify current ru
 | `invoice.output.registration` | 销项开票登记 | `sc.invoice.registration` | 销项/税务 | 项目、合同、往来单位、发票号、金额、税额 | 进入发票分类汇总，作为收入合同和税务口径依据 |
 | `invoice.input.report` | 进项税额上报 | `sc.invoice.registration` | 进项/税务 | 项目、合同、往来单位、发票号、金额、税额 | 进入发票分类汇总，作为成本和抵扣来源候选 |
 | `tax.deduction.registration` | 抵扣登记 | `sc.tax.deduction.registration` | 非现金税务 | 项目、往来单位、发票号、认证日期、抵扣金额、抵扣税额 | 以 `noncash_tax` 进入项目税务事实，余额影响为 0 |
-| `finance.fund.transfer` | 账户间资金往来 | `sc.fund.account.operation` | 转账 | 来源账户、目标账户、金额、经办人、账户币种一致 | 生成账户资金往来事实和往来现金流台账 |
-| `finance.loan.project` | 项目/承包人借还款 | `sc.financing.loan` | 借款/还款 | 项目、借款人/还款人、账户、金额、期限 | 生成资金往来和项目资金事实 |
+| `finance.fund.transfer` | 账户间资金往来 | `sc.fund.account.operation` | 转账 | 来源账户、目标账户、金额、账户币种一致 | 生成账户资金往来事实和往来现金流台账；不关联收付款申请 |
+| `finance.loan.project_borrow_company` | 项目借公司款登记 | `sc.financing.loan` | 借入 | 项目、往来单位、金额、单据日期 | 生成内部往来事实和项目资金流入台账；不关联收付款申请 |
+| `finance.loan.contractor_project_borrow` | 承包人借项目款 | `sc.financing.loan` | 借出 | 项目、承包人、金额、单据日期 | 生成内部往来事实和项目资金流出台账；不关联收付款申请 |
+| `finance.repayment.project_company` | 项目还公司款登记 | `sc.expense.claim` | 还款流出 | 项目、往来单位、金额、还款类型 | 生成内部往来事实和项目资金流出台账；不关联收付款申请 |
+| `finance.repayment.contractor_project` | 承包人还项目款 | `sc.expense.claim` | 还款流入 | 项目、承包人、金额、还款类型 | 生成内部往来事实和项目资金流入台账；不关联收付款申请 |
 
 字典化落地要求：
 
@@ -271,6 +274,7 @@ evidence: create temp record from runtime action context, then verify current ru
 - 第一阶段已新增 `sc.business.category`，沉淀 22 个财务/资金类分类、5 个发票/税务分类和 7 个材料采购库存分类；现有 action/domain/context 暂不替换，后续按门禁逐步绑定字典默认值、必填字段和下游策略。
 - 模板同步只写 `template_key`、`template_version`、`action_xmlid` 三类系统绑定字段，避免升级覆盖客户维护的显示名称、启停、排序、附件、审批和表单策略。
 - 字典审计已验证 34 个分类的绑定 action 存在，且 action 目标模型与分类 `target_model` 一致。
+- `make verify.finance_interfund_category.handling_policy.audit` 已覆盖 7 个内部往来分类：账户间资金往来、借款申请、承包人借项目款、项目借公司款登记、还款登记、承包人还项目款、项目还公司款登记。当前 `sc_demo` 中 `sc.interfund.movement.fact` 共 1,543 条，全部为高置信分类；正金额借款/还款事实通过 `source_model/source_res_id` 追溯到 `sc.treasury.ledger` 的缺口为 0，零金额历史事实保留为可见分类事实，不强制生成现金流台账。
 
 ## Iteration Evidence - 2026-06-11 Finance Category Action Mapping
 
