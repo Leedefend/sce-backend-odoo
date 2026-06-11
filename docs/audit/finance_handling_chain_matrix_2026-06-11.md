@@ -181,6 +181,7 @@ HTTP/API 可见面验收结论：
 - 已补齐费用/保证金/扣款/还款附件强制策略：11 个 `sc.expense.claim` 分类默认 `attachment_policy=required`，手工新建单据提交、批准或完成前必须上传附件；历史迁移事实不 retroactive 强制。增强后的费用分类门禁验证无附件提交会被拦截，补附件后可提交。
 - 已补齐费用/保证金/扣款/还款审批策略：12 个 `sc.expense.claim` 分类默认绑定 `expense_claim_approval`，同步时不覆盖客户已维护策略；免审批配置可提交后完成，启用审批配置时审批前不能批准或完成，tier validation 通过后才能完成并写入来源级资金台账。
 - 已补齐扣款单非现金办理边界：`finance.deduction.bill` 不关联 `payment.request`，不生成 `payment.ledger` 或 `sc.treasury.ledger`，只作为非现金扣款事实完成办理；`finance.deduction.paid`、`finance.deduction.refund` 继续按真实付款/收款进入现金流。费用分类门禁已验证误挂收付款申请被拦截，无收付款申请完成后现金台账新增数为 0。
+- 已补齐保证金收付现金流边界：投标/合同保证金支付必须走付款申请并生成 `payment.ledger`，保证金退回必须走收款申请并生成 `sc.treasury.ledger`；方向错配在费用单提交阶段被拦截。增强后的费用分类门禁已验证支付申请和退回申请均自动完成，且分别只生成对应现金流台账。
 - 已修正借款类入口切分：承包人借项目款、项目借公司款登记按 `business_category_id.code` 明确切分，静态和运行时门禁均验证保存后仍留在正确入口，不再依赖 purpose 文本包含关系。
 - 剩余 source-less legacy 台账 2,341 条：2,322 条找不到正式候选，18 条方向不一致，1 条项目不一致，暂不自动补挂。
 - 后续迁移脚本不得重复追加 113,549 条来源级台账；应以 `source_model/source_res_id/project_id/direction/source_kind` 为幂等键，剩余 2,341 条 source-less legacy 行需单独判断保留、补来源或作废策略，防止现金流翻倍。
@@ -258,10 +259,10 @@ evidence: create temp record from runtime action context, then verify current ru
 | `finance.payment.execution.partner` | 往来单位付款 | `sc.payment.execution` | 付款执行 | 付款申请、项目、合同、往来单位、付款账户、收款账户、实付金额 | 同步付款申请，生成 `payment.ledger` |
 | `finance.receipt.income.project` | 到款确认/项目收款 | `sc.receipt.income` | 收款确认 | 收款申请、项目、合同、往来单位、收款账户、收款金额 | 同步收款申请，生成 `sc.treasury.ledger` |
 | `finance.expense.reimbursement` | 项目费用报销单 | `sc.expense.claim` | 付款 | 付款申请、项目、往来单位、报销金额、付款账户、收款账户 | 同步付款申请，生成 `payment.ledger` |
-| `finance.deposit.bid.pay` | 投标保证金支付 | `sc.expense.claim` | 付款 | 项目/投标事项、往来单位、金额、付款账户、收款账户 | 生成付款台账或保证金事实 |
-| `finance.deposit.bid.return` | 投标保证金退回 | `sc.expense.claim` | 收款/退回 | 项目/投标事项、往来单位、金额、收款账户 | 生成资金台账或保证金事实 |
-| `finance.deposit.contract.pay` | 合同保证金支付 | `sc.expense.claim` | 付款 | 项目、合同、往来单位、金额、付款账户、收款账户 | 生成付款台账或保证金事实 |
-| `finance.deposit.contract.return` | 合同保证金退回 | `sc.expense.claim` | 收款/退回 | 项目、合同、往来单位、金额、收款账户 | 生成资金台账或保证金事实 |
+| `finance.deposit.bid.pay` | 投标保证金支付 | `sc.expense.claim` | 付款 | 项目/投标事项、往来单位、金额、付款账户、收款账户、付款申请 | 完成付款申请并生成 `payment.ledger` |
+| `finance.deposit.bid.return` | 投标保证金退回 | `sc.expense.claim` | 收款/退回 | 项目/投标事项、往来单位、金额、收款账户、收款申请 | 完成收款申请并生成 `sc.treasury.ledger` |
+| `finance.deposit.contract.pay` | 合同保证金支付 | `sc.expense.claim` | 付款 | 项目、合同、往来单位、金额、付款账户、收款账户、付款申请 | 完成付款申请并生成 `payment.ledger` |
+| `finance.deposit.contract.return` | 合同保证金退回 | `sc.expense.claim` | 收款/退回 | 项目、合同、往来单位、金额、收款账户、收款申请 | 完成收款申请并生成 `sc.treasury.ledger` |
 | `finance.deduction.bill` | 扣款单 | `sc.expense.claim` / `sc.tax.deduction.registration` | 非现金/扣款 | 项目、合同/发票、往来单位、扣款金额、扣款原因 | 非现金扣款事实；不得关联收付款申请，不写现金流台账 |
 | `finance.deduction.paid` | 扣款实缴登记 | `sc.expense.claim` / `sc.tax.deduction.registration` | 付款/税务 | 项目、往来单位、金额、账户、税务依据 | 进入付款台账和税务事实 |
 | `finance.deduction.refund` | 扣款实缴退回 | `sc.expense.claim` / `sc.tax.deduction.registration` | 收款/退回 | 项目、往来单位、金额、收款账户、退回原因 | 进入资金台账和税务事实 |

@@ -16,6 +16,9 @@ import base64
 import json
 import sys
 import traceback
+import uuid
+
+from odoo import fields
 
 
 EXPENSE_CATEGORY_REQUIREMENTS = {
@@ -192,6 +195,7 @@ def _ensure_groups():
     user = env.user.sudo()  # noqa: F821
     for xmlid in (
         "smart_construction_core.group_sc_cap_business_initiator",
+        "smart_construction_core.group_sc_cap_project_manager",
         "smart_construction_core.group_sc_cap_finance_user",
         "smart_construction_core.group_sc_cap_finance_manager",
     ):
@@ -199,6 +203,15 @@ def _ensure_groups():
         if group and group.id not in user.groups_id.ids:
             user.write({"groups_id": [(4, group.id)]})
     env.invalidate_all()  # noqa: F821
+
+
+def _force_validated(record, table_name):
+    env.flush_all()  # noqa: F821
+    env.cr.execute("UPDATE %s SET validation_status=%%s WHERE id=%%s" % table_name, ("validated", record.id))  # noqa: F821
+    record.invalidate_recordset()
+    if "validation_status" in record._fields and record.validation_status != "validated":
+        record.write({"validation_status": "validated"})
+        record.invalidate_recordset()
 
 
 def _source_linked_ledger_counts():
@@ -411,11 +424,249 @@ def _noncash_deduction_runtime_check(failures):
     return runtime
 
 
+def _approved_payment_request(project, partner, request_type, amount, label):
+    vals = {
+        "name": label,
+        "type": request_type,
+        "project_id": project.id,
+        "partner_id": partner.id,
+        "amount": amount,
+        "currency_id": env.company.currency_id.id,  # noqa: F821
+    }
+    if request_type == "pay":
+        contract = _deposit_contract(project, partner, "in", label)
+        settlement = _approved_settlement(project, partner, contract, amount, label)
+        vals.update({"contract_id": contract.id, "settlement_id": settlement.id})
+    request = env["payment.request"].sudo().create(vals)  # noqa: F821
+    request.write({"validation_status": "validated"})
+    request.with_context(allow_transition=True, payment_soft_gate=True).write({"state": "approved"})
+    request.invalidate_recordset()
+    return request
+
+
+def _deposit_contract(project, partner, direction, label):
+    tax = env["account.tax"].sudo().create(  # noqa: F821
+        {
+            "name": "%s税率%s" % (label, uuid.uuid4().hex[:6]),
+            "amount": 0.0,
+            "amount_type": "percent",
+            "type_tax_use": "purchase" if direction == "in" else "sale",
+            "price_include": False,
+            "company_id": env.company.id,  # noqa: F821
+        }
+    )
+    return env["construction.contract"].sudo().create(  # noqa: F821
+        {
+            "subject": "%s合同%s" % (label, uuid.uuid4().hex[:6]),
+            "type": direction,
+            "project_id": project.id,
+            "partner_id": partner.id,
+            "company_id": env.company.id,  # noqa: F821
+            "currency_id": env.company.currency_id.id,  # noqa: F821
+            "tax_id": tax.id,
+        }
+    )
+
+
+def _approved_settlement(project, partner, contract, amount, label):
+    uom = env.ref("uom.product_uom_unit", raise_if_not_found=False) or env["uom.uom"].sudo().search([], limit=1)  # noqa: F821
+    product = env["product.product"].sudo().create(  # noqa: F821
+        {
+            "name": "%s服务%s" % (label, uuid.uuid4().hex[:6]),
+            "type": "service",
+            "uom_id": uom.id,
+            "uom_po_id": uom.id,
+        }
+    )
+    purchase_order = env["purchase.order"].sudo().create(  # noqa: F821
+        {
+            "partner_id": partner.id,
+            "company_id": env.company.id,  # noqa: F821
+            "currency_id": env.company.currency_id.id,  # noqa: F821
+            "state": "purchase",
+            "order_line": [
+                (
+                    0,
+                    0,
+                    {
+                        "name": product.name,
+                        "product_id": product.id,
+                        "product_qty": 1.0,
+                        "product_uom": uom.id,
+                        "price_unit": amount,
+                        "date_planned": fields.Datetime.now(),
+                    },
+                )
+            ],
+        }
+    )
+    settlement = env["sc.settlement.order"].sudo().create(  # noqa: F821
+        {
+            "project_id": project.id,
+            "partner_id": partner.id,
+            "contract_id": contract.id,
+            "settlement_type": "out",
+            "purchase_order_ids": [(6, 0, purchase_order.ids)],
+            "company_id": env.company.id,  # noqa: F821
+            "currency_id": env.company.currency_id.id,  # noqa: F821
+            "line_ids": [
+                (
+                    0,
+                    0,
+                    {
+                        "name": "%s结算行" % label,
+                        "contract_id": contract.id,
+                        "qty": 1.0,
+                        "price_unit": amount,
+                    },
+                )
+            ],
+        }
+    )
+    settlement.action_submit()
+    _force_validated(settlement, "sc_settlement_order")
+    settlement.action_on_tier_approved()
+    settlement.invalidate_recordset()
+    return settlement
+
+
+def _deposit_claim(project, partner, request, claim_type, guarantee_type, amount, label):
+    claim = env["sc.expense.claim"].sudo().create(  # noqa: F821
+        {
+            "claim_type": claim_type,
+            "guarantee_type": guarantee_type,
+            "expense_type": label,
+            "project_id": project.id,
+            "partner_id": partner.id,
+            "payment_request_id": request.id,
+            "amount": amount,
+            "approved_amount": amount,
+            "paid_amount": 0.0,
+            "summary": label,
+            "payee": "%s收款人" % label,
+            "receipt_account_name": "%s收款账户" % label,
+            "payee_account": "%s-PAYEE" % label,
+            "payment_account_name": "%s付款账户" % label,
+            "payer_account": "%s-PAYER" % label,
+        }
+    )
+    _create_attachment(claim)
+    return claim
+
+
+def _complete_claim(claim):
+    claim.action_submit()
+    claim.invalidate_recordset()
+    if claim.state == "submit":
+        claim.action_approve()
+        claim.invalidate_recordset()
+    claim.action_done()
+    claim.invalidate_recordset()
+
+
+def _deposit_cashflow_runtime_check(failures):
+    Project = env["project.project"].sudo()  # noqa: F821
+    Partner = env["res.partner"].sudo()  # noqa: F821
+    project = Project.create(
+        {
+            "name": "保证金收付边界门禁项目",
+            "code": "FIN-DEPOSIT-CASHFLOW",
+            "funding_enabled": True,
+            "company_id": env.company.id,  # noqa: F821
+        }
+    )
+    env["project.funding.baseline"].sudo().create(  # noqa: F821
+        {
+            "project_id": project.id,
+            "total_amount": 100000.0,
+            "state": "active",
+        }
+    )
+    partner = Partner.create({"name": "保证金收付边界门禁往来单位"})
+    policy = env.ref("smart_construction_core.approval_policy_expense_claim", raise_if_not_found=False)  # noqa: F821
+    original_policy_values = {}
+    runtime = {
+        "pay_claim_id": False,
+        "pay_request_id": False,
+        "pay_request_state": False,
+        "payment_ledger_count": 0,
+        "return_claim_id": False,
+        "return_request_id": False,
+        "return_request_state": False,
+        "treasury_ledger_count": 0,
+        "direction_mismatch_blocked": False,
+    }
+    try:
+        if policy:
+            policy = policy.sudo()
+            original_policy_values = {
+                "active": policy.active,
+                "approval_required": policy.approval_required,
+                "mode": policy.mode,
+                "runtime_state": policy.runtime_state,
+            }
+            policy.write({"active": True, "approval_required": False, "mode": "none", "runtime_state": "tier_validation"})
+            policy.sync_tier_definitions()
+
+        pay_request = _approved_payment_request(project, partner, "pay", 31.0, "保证金支付付款申请")
+        pay_claim = _deposit_claim(project, partner, pay_request, "deposit_pay", "bid", 31.0, "投标保证金支付")
+        _complete_claim(pay_claim)
+        pay_request.invalidate_recordset()
+        runtime.update(
+            {
+                "pay_claim_id": pay_claim.id,
+                "pay_request_id": pay_request.id,
+                "pay_request_state": pay_request.state,
+                "payment_ledger_count": env["payment.ledger"].sudo().search_count([("payment_request_id", "=", pay_request.id)]),  # noqa: F821
+            }
+        )
+        if pay_request.state != "done":
+            failures.append("deposit_cashflow_runtime: pay request expected done, got %s" % pay_request.state)
+        if runtime["payment_ledger_count"] != 1:
+            failures.append("deposit_cashflow_runtime: pay request expected one payment.ledger")
+
+        return_request = _approved_payment_request(project, partner, "receive", 32.0, "保证金退回收款申请")
+        return_claim = _deposit_claim(project, partner, return_request, "deposit_refund", "contract", 32.0, "合同保证金退回")
+        _complete_claim(return_claim)
+        return_request.invalidate_recordset()
+        runtime.update(
+            {
+                "return_claim_id": return_claim.id,
+                "return_request_id": return_request.id,
+                "return_request_state": return_request.state,
+                "treasury_ledger_count": env["sc.treasury.ledger"].sudo().search_count([("payment_request_id", "=", return_request.id)]),  # noqa: F821
+            }
+        )
+        if return_request.state != "done":
+            failures.append("deposit_cashflow_runtime: return request expected done, got %s" % return_request.state)
+        if runtime["treasury_ledger_count"] != 1:
+            failures.append("deposit_cashflow_runtime: return request expected one sc.treasury.ledger")
+
+        mismatch_request = _approved_payment_request(project, partner, "receive", 33.0, "保证金支付错配收款申请")
+        mismatch_claim = _deposit_claim(project, partner, mismatch_request, "deposit_pay", "bid", 33.0, "保证金支付方向错配")
+        try:
+            with env.cr.savepoint():  # noqa: F821
+                mismatch_claim.action_submit()
+        except Exception as err:  # noqa: BLE001
+            if "资金方向" in str(err) or "申请类型" in str(err):
+                runtime["direction_mismatch_blocked"] = True
+            else:
+                failures.append("deposit_cashflow_runtime: expected direction mismatch error, got %s" % err)
+        else:
+            failures.append("deposit_cashflow_runtime: deposit pay with receive request must fail")
+    finally:
+        if policy and original_policy_values:
+            policy.write(original_policy_values)
+            policy.sync_tier_definitions()
+    return runtime
+
+
 failures = []
 rows = []
 ledger_counts = []
 attachment_policy_runtime = {}
 noncash_deduction_runtime = {}
+deposit_cashflow_runtime = {}
 
 try:
     _ensure_groups()
@@ -483,6 +734,7 @@ try:
             )
     attachment_policy_runtime = _attachment_policy_runtime_check(failures)
     noncash_deduction_runtime = _noncash_deduction_runtime_check(failures)
+    deposit_cashflow_runtime = _deposit_cashflow_runtime_check(failures)
 except Exception as err:
     failures.append("unexpected error: %s" % err)
     failures.append(traceback.format_exc())
@@ -495,6 +747,7 @@ result = {
     "legacy_source_linked_ledger_counts": ledger_counts,
     "attachment_policy_runtime": attachment_policy_runtime,
     "noncash_deduction_runtime": noncash_deduction_runtime,
+    "deposit_cashflow_runtime": deposit_cashflow_runtime,
     "failures": failures,
     "policy": {
         "operating_cash": "requires payment_request_id and account fields",

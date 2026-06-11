@@ -258,10 +258,11 @@
 - 已把费用/保证金/扣款/还款附件策略从字典配置推进到模型动作执行：11 个 `sc.expense.claim` 分类默认 `attachment_policy=required`，手工新建单据在提交、批准或完成前必须上传附件；历史迁移事实不 retroactive 强制。增强后的 `make verify.finance_expense_category.handling_policy.audit` 已验证无附件提交会被拦截、补附件后可进入提交状态，并且 `scripts/ops/validate_core_document_processing_gate.sh` 复跑通过，费用、保证金和还款的原有提交、审批、完成链路未被破坏。
 - 已把费用/保证金/扣款/还款审批策略从全局模型配置推进到业务分类默认策略：12 个 `sc.expense.claim` 分类默认绑定 `expense_claim_approval`，且同步过程不覆盖客户已维护策略。新增并通过 `make verify.finance_expense.approval_policy.audit`，验证免审批配置下提交后可完成，启用审批配置下审批前不能批准/完成，统一审批通过后才能完成并写入内部往来资金台账。
 - 已明确扣款办理边界：`finance.deduction.bill` 是非现金扣款事实，默认 `payment_request_policy=not_applicable`、`balance_policy=noncash_deduction`，手工办理必须有项目、往来单位、金额、扣款类型、附件和审批，但不得关联收付款申请，不生成 `payment.ledger` 或 `sc.treasury.ledger`；`finance.deduction.paid` 和 `finance.deduction.refund` 才进入真实现金流。增强后的 `make verify.finance_expense_category.handling_policy.audit` 已验证扣款单误挂收付款申请会被拦截，无收付款申请可完成且现金台账新增数为 0。
+- 已补强保证金收付与收付款申请边界：保证金支付必须关联付款申请，完成后自动完成申请并生成 1 条 `payment.ledger`；保证金退回必须关联收款申请，完成后自动完成申请并生成 1 条 `sc.treasury.ledger`；支付类保证金误挂收款申请会被拦截。该运行时证据已纳入 `make verify.finance_expense_category.handling_policy.audit`。
 
 下一步收口顺序：
 
-1. 先围绕保证金收付与收付款申请边界、HTTP/浏览器抽样做验收，把“分类办理策略可验收”推进到“用户可操作闭环可验收”。
+1. 先围绕费用/保证金/扣款/还款 HTTP/浏览器抽样做验收，把“分类办理策略可验收”推进到“用户可操作闭环可验收”。
 2. 再制定剩余 2,341 条 source-less legacy 行处理策略，明确哪些保留为旧日报/总账快照、哪些需要补正式来源事实、哪些应作废后由来源级台账替代。
 3. 再进入开发服务器升级准备；升级前必须复跑业务分类、资金往来、费用分类和 HTTP/API 可见面门禁。
 
