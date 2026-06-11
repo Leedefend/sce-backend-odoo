@@ -82,7 +82,9 @@
 - 往来款分类必须按业务事实识别，不按旧菜单名硬切。旧系统没有统一“往来款”概念；系统口径必须围绕公司、项目、承包人三主体。项目借公司款、承包人借项目款、项目还公司款、承包人还项目款、跨项目/账户调拨属于项目借还调拨事实；到款确认、自筹垫付、自筹退回属于公司-承包人责任事实，项目用于归集资金状态和约束后续办理；资金日报、余额调整属于状态和台账输入。
 - 公司-承包人责任已进入正式业务分类字典：`finance.responsibility.arrival_confirmation`、`finance.responsibility.self_funding_income`、`finance.responsibility.self_funding_refund` 和 `finance.responsibility.company_contractor.balance` 分别表达到款确认责任、自筹垫付责任、自筹退回责任和只读责任余额。到款确认仍保留用户认知为项目收款状态，自筹仍保留用户认知为承包人与公司的资金占用/退回；分类策略只负责把这些事实提升为办理约束，不把它们改造成普通收付款申请。
 - 当多个业务分类共用同一个 action 时，`action_open_bound_entry` 必须把分类 `domain_json` 叠加到 action domain，确保入口可以整合、业务类别仍按用户数据切分。
-- 借还款历史数据当前仍有文本分类遗留。2026-06-11 本地去重后，借款往来事实为 645 条，旧入口“承包人借项目款”活动记录为 166 条，当前文本分类进入 `project_to_contractor_borrow` 为 89 条。差异说明旧入口名称、用途文本和三主体事实分类不能互相替代；后续应把 `finance.loan.project_borrow_company`、`finance.loan.contractor_project_borrow` 等分类的识别规则、默认字段和下游台账策略沉淀到 `sc.business.category` 或配套分类规则表，由客户确认新验收基线。
+- 借款分类已从文本推断推进到正式分类锚点：`sc.financing.loan.business_category_id` 绑定 `sc.business.category`，`finance.loan.project_borrow_company`、`finance.loan.contractor_project_borrow` 的入口 domain、默认值和下游台账策略已由业务分类承接。历史活动借款往来 645 条本地回填后全部有分类字段，`project_to_contractor_borrow` 89 条、`company_to_project_borrow` 556 条，往来事实 `classification_confidence=high` 覆盖 645 条。
+- 借还款历史数据仍保留一项用户验收差异：旧入口“承包人借项目款”活动记录为 166 条，但当前旧入口内部按三主体事实分类为 `project_to_contractor_borrow` 68 条、`company_to_project_borrow` 98 条。差异说明旧入口名称、用途文本和责任主体分类不能互相替代；后续应由客户确认旧入口中“借某项目工程款付材料款/借公司款/项目周转”等记录的验收分类，并把确认后的规则继续沉淀为可维护分类字典或配套分类规则表。
+- 往来资金台账同步已按业务事实口径收紧：`sc.treasury.ledger` 对 `source_model/source_res_id/project/direction/source_kind=interfund` 幂等刷新，模块升级同步会作废不再匹配当前往来事实的历史残留。这样现金流台账跟随办理事实，不把资金日报、余额调整或已失效来源误算为责任事实。
 - 发票/税务分类已从纯 action/context 推进到正式分类锚点：`sc.invoice.registration.business_category_id` 和 `sc.tax.deduction.registration.business_category_id` 绑定 `sc.business.category`，新办理按入口上下文或业务字段自动落类，升级时只给空值历史/既有记录补映射。`source_kind`、`direction`、`is_transfer_out` 继续保留为业务事实字段，但不再作为唯一分类来源；后续表单显隐、审批策略、附件策略和下游策略应优先读取业务分类。
 
 客户可维护字段：

@@ -64,13 +64,13 @@ class ScOperatingMetricsProject(models.Model):
         required_tables = self._cr.fetchone()
         if not all(required_tables):
             return
-        # 强制清理残留表/视图，再重建只读视图
-        tools.drop_view_if_exists(self._cr, self._table)
-        # 若曾误生成表，清理之
-        try:
-            self._cr.execute(f"DROP TABLE IF EXISTS {self._table} CASCADE")
-        except Exception:
-            self._cr.rollback()
+        # 强制清理残留表/视图，再重建只读视图；init 内不能 rollback 外层升级事务。
+        self._cr.execute("SELECT relkind FROM pg_class WHERE oid = to_regclass(%s)", [self._table])
+        existing = self._cr.fetchone()
+        if existing and existing[0] in ("v", "m"):
+            tools.drop_view_if_exists(self._cr, self._table)
+        elif existing and existing[0] == "r":
+            self._cr.execute(f"DROP TABLE {self._table} CASCADE")
         self._cr.execute(
             f"""
             CREATE OR REPLACE VIEW {self._table} AS (

@@ -447,8 +447,8 @@
         <field name="direction">pay</field>
         <field name="sequence">105</field>
         <field name="source_aliases">承包人借项目款</field>
-        <field name="default_values_json"><![CDATA[{"loan_type": "borrowing_request", "direction": "borrowed_fund", "purpose": "承包人借项目款"}]]></field>
-        <field name="domain_json"><![CDATA[["&", ["loan_type", "=", "borrowing_request"], ["purpose", "ilike", "借%项目%款"]]]]></field>
+        <field name="default_values_json"><![CDATA[{"loan_type": "borrowing_request", "direction": "borrowed_fund", "business_category_code": "finance.loan.contractor_project_borrow", "purpose": "承包人借项目款"}]]></field>
+        <field name="domain_json"><![CDATA[["&", "&", ["loan_type", "=", "borrowing_request"], ["direction", "=", "borrowed_fund"], ["business_category_id.code", "=", "finance.loan.contractor_project_borrow"]]]]></field>
         <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "amount", "purpose"]]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.interfund.movement.fact", "sc.treasury.ledger"], "terminal_action": "action_done", "payment_request_policy": "not_applicable"}]]></field>
         <field name="attachment_policy">recommended</field>
@@ -462,8 +462,8 @@
         <field name="direction">receive</field>
         <field name="sequence">108</field>
         <field name="source_aliases">项目借公司款登记、项目借款</field>
-        <field name="default_values_json"><![CDATA[{"loan_type": "borrowing_request", "direction": "borrowed_fund", "purpose": "项目借公司款登记"}]]></field>
-        <field name="domain_json"><![CDATA[["&", "&", ["loan_type", "=", "borrowing_request"], ["direction", "=", "borrowed_fund"], "|", ["purpose", "=", false], ["purpose", "not ilike", "借%项目%款"]]]]></field>
+        <field name="default_values_json"><![CDATA[{"loan_type": "borrowing_request", "direction": "borrowed_fund", "business_category_code": "finance.loan.project_borrow_company", "purpose": "项目借公司款登记"}]]></field>
+        <field name="domain_json"><![CDATA[["&", "&", ["loan_type", "=", "borrowing_request"], ["direction", "=", "borrowed_fund"], ["business_category_id.code", "=", "finance.loan.project_borrow_company"]]]]></field>
         <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "amount", "direction"]]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.interfund.movement.fact", "sc.treasury.ledger"], "terminal_action": "action_done", "payment_request_policy": "not_applicable"}]]></field>
         <field name="attachment_policy">recommended</field>

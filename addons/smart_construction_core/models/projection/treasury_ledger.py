@@ -104,6 +104,16 @@ class TreasuryLedger(models.Model):
         ]
         existing = self.sudo().search(domain, limit=1)
         if existing:
+            existing.sudo().write(
+                {
+                    "date": date or existing.date or fields.Date.context_today(self),
+                    "partner_id": partner.id if partner else False,
+                    "amount": amount,
+                    "currency_id": currency.id if currency else project.company_id.currency_id.id,
+                    "state": "posted",
+                    "note": note,
+                }
+            )
             return existing
         return self.sudo().with_context(allow_ledger_auto=True).create(
             {
@@ -119,6 +129,61 @@ class TreasuryLedger(models.Model):
                 "note": note,
             }
         )
+
+    @api.model
+    def _void_stale_interfund_ledgers(self):
+        """Void interfund ledger rows that no longer match current interfund facts."""
+        self.env.cr.execute(
+            """
+            WITH expected AS (
+                SELECT
+                    f.source_model,
+                    f.source_res_id,
+                    f.source_project_id AS project_id,
+                    'out'::varchar AS direction
+                FROM sc_interfund_movement_fact f
+                WHERE f.amount > 0
+                  AND f.source_project_id IS NOT NULL
+                  AND f.movement_type IN (
+                        'project_to_project_transfer',
+                        'project_to_company_transfer',
+                        'project_to_contractor_borrow',
+                        'project_to_company_repay'
+                  )
+                UNION ALL
+                SELECT
+                    f.source_model,
+                    f.source_res_id,
+                    f.target_project_id AS project_id,
+                    'in'::varchar AS direction
+                FROM sc_interfund_movement_fact f
+                WHERE f.amount > 0
+                  AND f.target_project_id IS NOT NULL
+                  AND f.movement_type IN (
+                        'project_to_project_transfer',
+                        'company_to_project_transfer',
+                        'company_to_project_borrow',
+                        'contractor_to_project_repay'
+                  )
+            )
+            UPDATE sc_treasury_ledger ledger
+               SET state = 'void',
+                   note = COALESCE(NULLIF(ledger.note, ''), 'auto:void_stale_interfund_ledger')
+             WHERE ledger.source_kind = 'interfund'
+               AND ledger.state != 'void'
+               AND ledger.source_model IS NOT NULL
+               AND ledger.source_res_id IS NOT NULL
+               AND NOT EXISTS (
+                   SELECT 1
+                     FROM expected e
+                    WHERE e.source_model = ledger.source_model
+                      AND e.source_res_id = ledger.source_res_id
+                      AND e.project_id = ledger.project_id
+                      AND e.direction = ledger.direction
+               )
+            """
+        )
+        return True
 
     @api.constrains("amount")
     def _check_amount_positive(self):

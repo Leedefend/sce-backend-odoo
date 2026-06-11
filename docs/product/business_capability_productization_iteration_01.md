@@ -188,7 +188,10 @@
 - 在线增量证据：`ONLINE_VISIBLE_SURFACE_MODE=incremental ONLINE_VISIBLE_SURFACE_SEQS=022,023,027,028,032,037,038 DB_NAME=sc_demo bash scripts/ops/validate_online_visible_surface_verification.sh` 已通过，产物 `artifacts/migration/live_old_system_strict_parity_gate/20260611T132349Z`。旧系统实时记录数：借款申请 37、还款登记 25、承包人还项目款 157、承包人借项目款 166、账户间资金往来 485、项目借公司款登记 164、项目还公司款登记 155。行数据：022/023/027/028 复用前次实时 dump，032/037/038 本次补拉并通过。
 - 本地 HTTP 可见面证据：`DB_NAME=sc_demo make verify.company_contractor.responsibility_http.smoke` 已通过，不依赖浏览器下载，覆盖 `system.init` 菜单、`ui.contract.v2` 页面契约、`api.data` 普通列表和按 `responsibility_state` 分组汇总。当前本地余额页 action=995、menu=823、模型 `sc.company.contractor.responsibility.summary`，分组列表总数 1,327、状态分组 3、汇总字段完整。
 - 本地增量同步策略已调整为按旧表 + 旧记录号幂等承载，`SCBS55_FINANCING_SURFACE_SEQS=22,23,27,28,37,38 DB_NAME=sc_demo make odoo.shell.exec < scripts/migration/scbs55_financing_loan_surfaces_online_patch.py` 使用本地 artifact 重放后均为 `created=0`、按旧系统行数 `updated`。`verify.interfund_borrow.classification_gap.audit` 已通过，确认旧入口活动记录不重复进入办理列表、往来事实和现金流台账。
-- 去重后的本地往来借款事实为 645 条，其中旧“承包人借项目款”入口活动数 166 条；当前文本分类进入 `project_to_contractor_borrow` 89 条。该差异不是覆盖缺口，而是旧入口、用途文本和三主体事实分类未完全等价；收口前必须把借还款分类规则沉淀为可维护业务分类字典或配套规则表，由用户确认验收口径。
+- 本地借款分类已从文本推断推进到正式业务分类字段：`sc.financing.loan.business_category_id` 绑定 `sc.business.category`，`finance.loan.contractor_project_borrow` 和 `finance.loan.project_borrow_company` 的入口 domain 已切到 `business_category_id.code`，新建入口通过 `default_business_category_code`/`business_category_code` 自动落类。历史活动借款往来 645 条已全部回填分类，其中 `project_to_contractor_borrow` 89 条、`company_to_project_borrow` 556 条，`classification_confidence=high` 覆盖 645 条。
+- 去重后的本地往来借款事实为 645 条，其中旧“承包人借项目款”入口活动数 166 条；旧入口内部当前业务分类为 `project_to_contractor_borrow` 68 条、`company_to_project_borrow` 98 条。该差异不是覆盖缺口，而是旧入口、用途文本和三主体事实分类未完全等价；收口前必须由用户按验收口径确认这些旧入口中“借某项目工程款付材料款/借公司款/项目周转”等记录应归入公司-项目还是项目-承包人。
+- 本地资金台账已按当前往来事实口径完成一致性清理：`sc.treasury.ledger._ensure_interfund_ledger` 会按来源幂等刷新金额、方向、币种和状态；`_void_stale_interfund_ledgers` 在模块升级同步中作废不再匹配当前 `sc.interfund.movement.fact` 的历史残留。`verify.interfund_treasury_ledger.backfill_readiness.audit` 通过，期望 1,171 条、已有 1,171 条、缺失 0、意外残留 0。
+- 2026-06-11 本地开发库 `sc_demo` 已升级并通过 `COMPOSE_PROJECT_NAME=sc-backend-odoo-dev DB_NAME=sc_demo make verify.finance_interfund.position.all`，结论 `FINANCE_INTERFUND_POSITION_AUDIT_ALL_PASS db=sc_demo`。该结论仅代表本地开发库；开发服务器尚未升级，不能作为用户可见面完成依据。
 
 本轮任务：
 

@@ -76,6 +76,78 @@ def category_status() -> OrderedDict:
     return OrderedDict((row["code"], row) for row in rows)
 
 
+def category_counts():
+    return sql_rows(
+        """
+        SELECT COALESCE(category.code, '<missing>') AS business_category_code,
+               COUNT(*)::integer AS active_rows,
+               COUNT(DISTINCT loan.legacy_record_id) FILTER (WHERE loan.legacy_record_id IS NOT NULL)::integer
+                   AS active_distinct_legacy_records,
+               COALESCE(SUM(loan.amount), 0.0) AS amount
+          FROM sc_financing_loan loan
+          LEFT JOIN sc_business_category category ON category.id = loan.business_category_id
+         WHERE loan.active IS TRUE
+           AND loan.loan_type = 'borrowing_request'
+           AND loan.direction = 'borrowed_fund'
+         GROUP BY COALESCE(category.code, '<missing>')
+         ORDER BY business_category_code
+        """
+    )
+
+
+def missing_business_category_count() -> int:
+    return int(
+        sql_one(
+            """
+            SELECT COUNT(*)::integer
+              FROM sc_financing_loan
+             WHERE active IS TRUE
+               AND loan_type = 'borrowing_request'
+               AND direction = 'borrowed_fund'
+               AND business_category_id IS NULL
+            """
+        )
+        or 0
+    )
+
+
+def classification_confidence_counts():
+    return sql_rows(
+        """
+        SELECT fact.classification_confidence,
+               COUNT(*)::integer AS active_rows
+          FROM sc_financing_loan loan
+          JOIN sc_interfund_movement_fact fact
+            ON fact.source_model = 'sc.financing.loan'
+           AND fact.source_res_id = loan.id
+         WHERE loan.active IS TRUE
+           AND loan.loan_type = 'borrowing_request'
+           AND loan.direction = 'borrowed_fund'
+         GROUP BY fact.classification_confidence
+         ORDER BY fact.classification_confidence
+        """
+    )
+
+
+def non_high_confidence_count() -> int:
+    return int(
+        sql_one(
+            """
+            SELECT COUNT(*)::integer
+              FROM sc_financing_loan loan
+              JOIN sc_interfund_movement_fact fact
+                ON fact.source_model = 'sc.financing.loan'
+               AND fact.source_res_id = loan.id
+             WHERE loan.active IS TRUE
+               AND loan.loan_type = 'borrowing_request'
+               AND loan.direction = 'borrowed_fund'
+               AND fact.classification_confidence <> 'high'
+            """
+        )
+        or 0
+    )
+
+
 duplicate_groups = sql_rows(
     """
     SELECT legacy_source_table,
@@ -185,6 +257,10 @@ text_classified_outside_old_menu = sql_rows(
 )
 
 categories = category_status()
+business_category_counts = category_counts()
+missing_business_categories_on_records = missing_business_category_count()
+confidence_counts = classification_confidence_counts()
+non_high_confidence_records = non_high_confidence_count()
 errors = []
 warnings = []
 
@@ -204,6 +280,37 @@ missing_categories = [
 ]
 if missing_categories:
     errors.append({"key": "missing_business_categories", "codes": missing_categories})
+
+if missing_business_categories_on_records:
+    errors.append(
+        {
+            "key": "missing_business_category_on_active_borrowing_records",
+            "count": missing_business_categories_on_records,
+            "policy": "借款往来办理分类必须落到可维护业务分类字段，不能长期依赖用途文本推断。",
+        }
+    )
+
+for code in (CONTRACTOR_BORROW_CATEGORY, PROJECT_COMPANY_BORROW_CATEGORY):
+    category = categories.get(code)
+    if category and "business_category_id.code" not in (category.get("domain_json") or ""):
+        errors.append(
+            {
+                "key": "business_category_domain_not_dictionary_anchored",
+                "code": code,
+                "domain_json": category.get("domain_json"),
+                "policy": "借款分类入口必须以 business_category_id.code 为长期锚点，文本只允许作为历史回填兜底。",
+            }
+        )
+
+if non_high_confidence_records:
+    errors.append(
+        {
+            "key": "financing_loan_interfund_fact_not_high_confidence",
+            "count": non_high_confidence_records,
+            "classification_confidence_counts": confidence_counts,
+            "policy": "已回填业务分类的借款往来事实必须由字典分类驱动，不能继续以中/低置信度进入台账。",
+        }
+    )
 
 contractor_active_count = table_count(CONTRACTOR_BORROW_TABLE)
 if contractor_menu_not_contractor:
@@ -235,6 +342,8 @@ summary = OrderedDict(
         ),
         ("table_summary", table_summary),
         ("movement_by_table", movement_by_table),
+        ("business_category_counts", business_category_counts),
+        ("classification_confidence_counts", confidence_counts),
         ("business_categories", categories),
         ("duplicate_groups", duplicate_groups),
         ("contractor_menu_not_contractor_samples", contractor_menu_not_contractor),

@@ -11,6 +11,7 @@
                     <field name="project_id"/>
                     <field name="operation_strategy"/>
                     <field name="partner_id"/>
+                    <field name="business_category_id"/>
                     <field name="purpose"/>
                     <filter string="贷款登记" name="loan_registration" domain="[('loan_type', '=', 'loan_registration')]"/>
                     <filter string="借款申请" name="borrowing_request" domain="[('loan_type', '=', 'borrowing_request')]"/>
@@ -21,6 +22,7 @@
                     <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
                     <filter string="按经营策略" name="group_operation_strategy" context="{'group_by': 'operation_strategy'}"/>
                     <filter string="按单位" name="group_partner" context="{'group_by': 'partner_id'}"/>
+                    <filter string="按业务分类" name="group_business_category" context="{'group_by': 'business_category_id'}"/>
                     <filter string="按类型" name="group_type" context="{'group_by': 'loan_type'}"/>
                     <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
                     <filter string="按日期" name="group_date" context="{'group_by': 'document_date'}"/>
@@ -40,6 +42,7 @@
                     <field name="project_id"/>
                     <field name="operation_strategy"/>
                     <field name="partner_id"/>
+                    <field name="business_category_id" optional="show"/>
                     <field name="amount" string="借款金额" sum="金额"/>
                     <field name="due_date"/>
                     <field name="purpose"/>
@@ -81,6 +84,7 @@
                             <group string="借款方向">
                                 <field name="name" readonly="1"/>
                                 <field name="loan_flow_label" readonly="1"/>
+                                <field name="business_category_id" readonly="state == 'legacy_confirmed'"/>
                                 <field name="loan_type" readonly="state == 'legacy_confirmed'"/>
                                 <field name="direction" readonly="state == 'legacy_confirmed'"/>
                                 <field name="document_no" readonly="state == 'legacy_confirmed'"/>

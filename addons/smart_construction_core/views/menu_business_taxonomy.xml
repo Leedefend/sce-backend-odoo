@@ -566,8 +566,8 @@
         <field name="res_model">sc.financing.loan</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="smart_construction_core.view_sc_financing_loan_search"/>
-        <field name="domain">[('loan_type', '=', 'borrowing_request'), ('purpose', 'ilike', '借%项目%款')]</field>
-        <field name="context">{'default_loan_type': 'borrowing_request', 'default_direction': 'borrowed_fund', 'default_purpose': '承包人借项目款', 'search_default_group_project': 1}</field>
+        <field name="domain">[('loan_type', '=', 'borrowing_request'), ('direction', '=', 'borrowed_fund'), ('business_category_id.code', '=', 'finance.loan.contractor_project_borrow')]</field>
+        <field name="context">{'default_loan_type': 'borrowing_request', 'default_direction': 'borrowed_fund', 'default_business_category_code': 'finance.loan.contractor_project_borrow', 'default_purpose': '承包人借项目款', 'search_default_group_project': 1}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
             ref('smart_construction_core.group_sc_cap_finance_read'),
@@ -580,8 +580,8 @@
         <field name="res_model">sc.financing.loan</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="smart_construction_core.view_sc_financing_loan_search"/>
-        <field name="domain">['&amp;', '&amp;', ('loan_type', '=', 'borrowing_request'), ('direction', '=', 'borrowed_fund'), '|', ('purpose', '=', False), ('purpose', 'not ilike', '借%项目%款')]</field>
-        <field name="context">{'default_loan_type': 'borrowing_request', 'default_direction': 'borrowed_fund', 'default_purpose': '项目借公司款登记', 'search_default_group_project': 1}</field>
+        <field name="domain">[('loan_type', '=', 'borrowing_request'), ('direction', '=', 'borrowed_fund'), ('business_category_id.code', '=', 'finance.loan.project_borrow_company')]</field>
+        <field name="context">{'default_loan_type': 'borrowing_request', 'default_direction': 'borrowed_fund', 'default_business_category_code': 'finance.loan.project_borrow_company', 'default_purpose': '项目借公司款登记', 'search_default_group_project': 1}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
             ref('smart_construction_core.group_sc_cap_finance_read'),
