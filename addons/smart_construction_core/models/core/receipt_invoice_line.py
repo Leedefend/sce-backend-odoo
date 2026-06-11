@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-from odoo import fields, models
+from odoo import api, fields, models
+from odoo.exceptions import UserError
+from odoo.tools.float_utils import float_compare
 
 
 class ReceiptInvoiceLine(models.Model):
@@ -76,6 +78,33 @@ class ReceiptInvoiceLine(models.Model):
     import_batch = fields.Char(string="导入批次", copy=False)
     active = fields.Boolean("有效", default=True)
     attachment_count = fields.Integer(string="附件数量", compute="_compute_attachment_count")
+
+    @api.constrains("request_id", "invoice_amount", "current_receipt_amount", "active", "import_batch")
+    def _check_manual_receipt_invoice_amounts(self):
+        for rec in self:
+            if rec.import_batch or not rec.active or (rec.current_receipt_amount or 0.0) <= 0.0:
+                continue
+            rounding = rec.currency_id.rounding if rec.currency_id else 0.01
+            if rec.invoice_amount and float_compare(
+                rec.current_receipt_amount or 0.0,
+                rec.invoice_amount or 0.0,
+                precision_rounding=rounding,
+            ) == 1:
+                raise UserError("本次收款金额不能超过发票金额。")
+            if not rec.request_id:
+                continue
+            rows = self.sudo().read_group(
+                [
+                    ("request_id", "=", rec.request_id.id),
+                    ("active", "=", True),
+                    ("current_receipt_amount", ">", 0.0),
+                ],
+                ["current_receipt_amount:sum"],
+                [],
+            )
+            current_total = rows[0].get("current_receipt_amount_sum", rows[0].get("current_receipt_amount", 0.0)) if rows else 0.0
+            if float_compare(current_total or 0.0, rec.request_id.amount or 0.0, precision_rounding=rounding) == 1:
+                raise UserError("收款发票明细的本次收款合计不能超过收款申请金额。")
 
     def _compute_attachment_count(self):
         grouped = {}

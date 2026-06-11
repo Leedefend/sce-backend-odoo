@@ -5,6 +5,7 @@ import sys
 import traceback
 
 from odoo import fields
+from odoo.exceptions import UserError, ValidationError
 
 
 def _token():
@@ -16,6 +17,19 @@ def _expect(condition, label, failures):
         failures.append(label)
         return False
     return True
+
+
+def _expect_exception(label, func, failures):
+    try:
+        with env.cr.savepoint():  # noqa: F821
+            func()
+    except (UserError, ValidationError):
+        return True
+    except Exception as err:  # noqa: BLE001
+        failures.append("%s: expected business exception, got %s: %s" % (label, type(err).__name__, err))
+        return False
+    failures.append("%s: expected business exception, got success" % label)
+    return False
 
 
 def _set_validated(record):
@@ -153,6 +167,50 @@ try:
     request.invalidate_recordset()
     _expect(request.state == "approved", "receipt_request.state_after_approval: expected approved", failures)
 
+    receipt_invoice_line = env["sc.receipt.invoice.line"].sudo().create(  # noqa: F821
+        {
+            "request_id": request.id,
+            "legacy_invoice_line_id": "ICRI-LINE-%s" % token,
+            "legacy_receipt_id": "ICRI-RECEIPT-%s" % token,
+            "invoice_no": "ICRI-LINE-INV-%s" % token,
+            "invoice_amount": invoice_total,
+            "current_receipt_amount": amount,
+        }
+    )
+    _expect(
+        receipt_invoice_line.current_receipt_amount == amount,
+        "receipt_invoice_line.current_receipt_amount: expected receipt amount",
+        failures,
+    )
+    _expect_exception(
+        "receipt_invoice_line.over_invoice_amount_blocked",
+        lambda: env["sc.receipt.invoice.line"].sudo().create(  # noqa: F821
+            {
+                "request_id": request.id,
+                "legacy_invoice_line_id": "ICRI-OVER-INV-LINE-%s" % token,
+                "legacy_receipt_id": "ICRI-OVER-INV-RECEIPT-%s" % token,
+                "invoice_no": "ICRI-OVER-INV-%s" % token,
+                "invoice_amount": 10.0,
+                "current_receipt_amount": 11.0,
+            }
+        ),
+        failures,
+    )
+    _expect_exception(
+        "receipt_invoice_line.over_request_amount_blocked",
+        lambda: env["sc.receipt.invoice.line"].sudo().create(  # noqa: F821
+            {
+                "request_id": request.id,
+                "legacy_invoice_line_id": "ICRI-OVER-REQ-LINE-%s" % token,
+                "legacy_receipt_id": "ICRI-OVER-REQ-RECEIPT-%s" % token,
+                "invoice_no": "ICRI-OVER-REQ-%s" % token,
+                "invoice_amount": 20.0,
+                "current_receipt_amount": 1.0,
+            }
+        ),
+        failures,
+    )
+
     receipt = env["sc.receipt.income"].sudo().create(  # noqa: F821
         {
             "source_kind": "receipt_income",
@@ -243,6 +301,7 @@ try:
         "receipt_income_id": receipt.id,
         "treasury_ledger_id": ledger.id if ledger else False,
         "invoice_id": invoice.id,
+        "receipt_invoice_line_id": receipt_invoice_line.id,
         "receipt_amount": amount,
         "invoice_total": invoice_total,
         "contract_received_amount": contract.received_amount,
