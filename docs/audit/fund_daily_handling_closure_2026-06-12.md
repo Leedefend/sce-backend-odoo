@@ -20,16 +20,17 @@
   - `finance.fund.balance_adjustment`
 - `sc.treasury.ledger.source_kind` 增加 `daily_line`。
 - `sc.fund.account.operation.action_done()` 对 `fund_daily_report` 按收入/支出生成幂等来源级现金流台账。
+- `sc.fund.account` 增加当前账面余额、当前银行余额、余额日期、余额来源和来源单据。资金日报完成后更新账面/银行余额；余额调整完成后只更新账面余额。
 - `finance_business_category_runtime_audit.py` 增加两个分类的 action/domain/context 运行时验证。
-- `fund_daily_handling_audit.py` 验证资金日报生成两条现金流台账、余额调整不生成现金流、两者均不泄漏到往来事实。
+- `fund_daily_handling_audit.py` 验证资金日报生成两条现金流台账、回写账户余额；余额调整不生成现金流但回写账户账面余额；两者均不泄漏到往来事实。
 
 ## Evidence
 
 ```text
 DB_NAME=sc_demo make verify.fund_daily.handling.audit
 FUND_DAILY_HANDLING_AUDIT: status=PASS
-daily_report ledger_count=2 interfund_count=0
-balance_adjustment ledger_count=0 interfund_count=0
+daily_report ledger_count=2 interfund_count=0 account_balance=1000.0 bank_balance=1000.0
+balance_adjustment ledger_count=0 interfund_count=0 account_balance=520.0
 ```
 
 ```text
@@ -55,6 +56,7 @@ interfund leak count=0
 
 ## Next
 
-- 补账户余额回写/核对策略，明确日报余额、银行余额、账户当前余额之间的约束。
+- 补历史账户余额初始化和迁移脚本，明确现有 7,453 条资金日报、519 条余额调整如何安全回填到账户当前状态。
+- 转账类账户余额扣加必须等待期初余额和历史账户明细基线确认后再启用，避免用不完整余额制造错误账户状态。
 - 对资金日报入口补浏览器或 HTTP/API 用户可见面抽样。
 - 后续资金日报汇总分析仍在报表阶段处理，但只能读取办理链路沉淀事实和历史快照，不替代资金日报登记入口。

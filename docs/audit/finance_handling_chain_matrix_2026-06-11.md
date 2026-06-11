@@ -253,7 +253,7 @@ evidence: create temp record from runtime action context, then verify current ru
 | 扣款单/扣款实缴/退回 | `sc.tax.deduction.registration` | 确认、已抵扣、取消 | 税务事实、项目经营口径 | 办理证据闭环、角色权限、下游税务事实追溯通过 | Phase 2 继续补正式分类字段或业务分类字典绑定 |
 | 账户间资金往来 | `sc.fund.account.operation` | 确认、完成、取消 | 账户资金往来事实、往来现金流台账 | 后端动作、关系必填、现金流追溯、历史回填就绪审计通过；内部往来分类策略已纳入 `verify.finance_interfund_category.handling_policy.audit` | 补浏览器级验收和账户余额回填策略 |
 | 项目/承包人借还款 | `sc.financing.loan` / `sc.expense.claim` | 借款登记、还款登记 | 资金往来事实、项目资金口径、来源级资金台账 | 借出、借入、还款分类已按 `sc.business.category` 固化；不走收付款申请，不写 `payment.ledger`，通过 `sc.interfund.movement.fact` 与 `sc.treasury.ledger` 追溯 | 补浏览器级验收、利息/账户关系和公司-承包人责任余额约束 |
-| 资金日报表 | `sc.fund.account.operation` | 确认、完成、取消 | 来源级 `sc.treasury.ledger(source_kind='daily_line')`、账户余额状态输入 | 办理分类、入口运行时、完成后现金流台账承接通过；不进入 `payment.request`，不进入 `sc.interfund.movement.fact` | 补账户余额回写/核对策略和浏览器级抽样验收 |
+| 资金日报表 | `sc.fund.account.operation` | 确认、完成、取消 | 来源级 `sc.treasury.ledger(source_kind='daily_line')`、`sc.fund.account` 当前账面/银行余额 | 办理分类、入口运行时、完成后现金流台账承接和账户余额回写通过；不进入 `payment.request`，不进入 `sc.interfund.movement.fact` | 补历史余额初始化/迁移策略和浏览器级抽样验收 |
 | 历史资金日报快照 | `sc.legacy.fund.daily.snapshot.fact` | 历史事实查看 | 来源事实明细 | 表单契约通过 | 只作为历史追溯和后续日报汇总分析来源 |
 
 ## Finance Classification Dictionary Candidates
