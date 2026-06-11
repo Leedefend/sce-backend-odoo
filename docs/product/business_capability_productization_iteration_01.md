@@ -8,6 +8,8 @@
 
 62 菜单整合矩阵：`artifacts/user_confirmed_62_business_entry_integration_matrix.md`
 
+在线可见面核实协议：`docs/product/online_visible_surface_verification_protocol_2026-06-11.md`
+
 门禁：`scripts/verify/user_business_productization_baseline_guard.py`
 
 锁定事实正式模型连续性守卫：`scripts/verify/locked_fact_formal_model_continuity_guard.py`
@@ -21,6 +23,7 @@
 5. 附件、历史流程、审批轨迹不能丢失。
 6. 用户已验收的历史业务事实数据不得被改写；所有事实画像、候选关系、口径分析只能只读使用。
 7. 新系统业务闭环可以基于锁定事实设计归集口径，但归集结果必须通过新办理单据、派生视图或非侵入式映射层承载，不写回锁定事实表。
+8. 用户在线系统实时可见面是业务口径最高优先级证据。后续每个业务域收口前，必须优先核实旧在线系统和在线开发系统的真实菜单、列表字段、记录数量、表单字段和办理动作；本地 SQL、迁移产物和静态代码只能作为解释与实现证据，不能替代在线可见面。
 
 ## 第一轮 P1 范围
 
@@ -235,6 +238,7 @@
 该门禁必须同时覆盖：
 
 - 用户确认 62 菜单整合矩阵。
+- 旧在线系统与在线开发系统真实用户可见面核实；缓存 dump 只能辅助定位，不能单独作为最终验收依据。
 - 用户业务产品化基线。
 - 用户已验收菜单/列表稳定性。
 - 锁定事实只读和正式模型连续性。
