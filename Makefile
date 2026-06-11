@@ -661,6 +661,12 @@ verify.finance_handling.http_surface.smoke:
 verify.finance_legacy_cash_ledger.backfill_readiness.audit: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) scripts/ops/validate_finance_legacy_cash_ledger_backfill_readiness.sh
 
+verify.finance_legacy_cash_ledger.backfill.audit: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) scripts/ops/validate_finance_legacy_cash_ledger_backfill.sh
+
+backfill.finance_legacy_cash_ledger: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) APPLY=1 scripts/ops/validate_finance_legacy_cash_ledger_backfill.sh
+
 verify.finance_legacy_source_less_ledger.reconciliation.audit: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) scripts/ops/validate_finance_legacy_source_less_ledger_reconciliation.sh
 

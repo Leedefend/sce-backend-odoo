@@ -241,22 +241,22 @@
 - 已建立只读汇总 `sc.company.contractor.responsibility.summary` 和 `make verify.company_contractor.responsibility_summary.audit`，按项目和承包人沉淀到款可处理余额、到款超处理金额、自筹未退余额和责任状态，作为后续拨付、扣款、退回、自筹抵扣、收款核销的办理约束读取口径。
 - 已将公司-承包人责任口径纳入业务分类字典：`finance.responsibility.arrival_confirmation` 保留到款确认为项目收款状态并作为公司-承包人后续办理约束；`finance.responsibility.self_funding_income`、`finance.responsibility.self_funding_refund` 表达自筹垫付和自筹退回的责任影响；`finance.responsibility.company_contractor.balance` 作为只读办理约束余额。分类入口可复用同一个 action，但必须叠加字典 `domain_json`，不能让用户在泛化责任明细里自行判断类别。
 - 已确认旧入口“承包人借项目款”验收数 227 与当前事实分类 177 的差异不是覆盖缺口，而是旧入口名称和事实分类规则不等价；后续收口前必须将借还款分类规则字典化，并由用户确认新的验收口径。
-- 已建立 `make verify.finance_handling.http_surface.smoke`，不下载浏览器运行时，按业务用户可见面验证支付申请、往来单位付款、到款确认/项目收款、项目费用报销单四类高数据量入口；当前入口、页面契约、列表和已办样本通过，支付申请可追到 `payment.ledger`，往来单位付款和到款确认可通过来源级 `sc.treasury.ledger` 反选办理样本并追到下游资金台账，项目费用报销旧样本的台账追踪缺口进入费用分类和历史现金流迁移。
-- 已建立 `make verify.finance_legacy_cash_ledger.backfill_readiness.audit`，只读审计历史已办事实进入来源级现金流台账的可回填性；当前识别 113,549 条具备项目和正金额的历史候选，其中付款执行 36,285、收款登记 26,439、费用/保证金/扣款 50,825，全部缺少 `source_model/source_res_id` 级台账反查。现有 18,347 条 legacy 资金台账为 source-less 行，后续迁移前必须先做对账、替换、作废或来源补挂策略，不能直接追加导致现金流翻倍。
+- 已建立 `make verify.finance_handling.http_surface.smoke`，不下载浏览器运行时，按业务用户可见面验证支付申请、往来单位付款、到款确认/项目收款、项目费用报销单四类高数据量入口；当前入口、页面契约、列表和已办样本通过，支付申请可追到 `payment.ledger`，往来单位付款、到款确认和项目费用报销均可通过来源级 `sc.treasury.ledger` 反选办理样本并追到下游资金台账。
+- 已建立 `make verify.finance_legacy_cash_ledger.backfill_readiness.audit`，只读审计历史已办事实进入来源级现金流台账的可回填性；当前识别 113,549 条具备项目和正金额的历史候选，其中付款执行 36,285、收款登记 26,439、费用/保证金/扣款 50,825，已全部具备 `source_model/source_res_id` 级台账反查。
 - 已建立 `make verify.finance_legacy_source_less_ledger.reconciliation.audit`，对 source-less legacy 资金台账做补挂来源可行性审计；当前 18,347 条 source-less 行中，16,006 条可按 `legacy_record_id` 找到正式办理候选，但被币种冲突阻断：本地公司为 `CNY`，正式候选多为 `CNY`，旧台账全为 `USD`。因此下一步必须先修本地历史台账币种基线，再做来源补挂或增量迁移。
 - 已建立并执行 `make backfill.finance_legacy_treasury.currency`，本地 `sc_demo` 已将 18,347 条 legacy 资金台账按项目公司币种从 `USD` 对齐为 `CNY`，复跑 `make verify.finance_legacy_treasury.currency.audit` 后币种不一致为 0。已同步修正 `fresh_db_treasury_ledger_projection_write.py`，后续重放历史资金台账时使用项目公司币种或公司默认币种，避免再次写回 USD。
 - 币种修正后，`make verify.finance_legacy_source_less_ledger.reconciliation.audit` 识别 16,006 条 source-less legacy 台账可安全补挂到正式办理来源，其中付款执行 12,846 条、收款登记 3,160 条；剩余 2,322 条无正式候选、18 条方向不一致、1 条项目不一致，暂不自动补挂。
 - 已建立并执行 `make backfill.finance_legacy_source_less_ledger.attach`，本地 `sc_demo` 已将 16,006 条一对一精确匹配的 source-less legacy 资金台账补挂到正式办理来源，只写入 `source_model/source_res_id` 和补挂标记，不改金额、方向、日期、项目、往来单位、币种和状态。复跑补挂门禁后可补挂数为 0，复跑对账门禁显示 `already_source_linked=16006`、剩余 source-less legacy 台账 2,341 条。
 - 已建立并执行 `make backfill.finance_legacy_source_linked_ledger.payment_request_boundary`，本地 `sc_demo` 已将 16,006 条来源级 legacy 资金台账的 `payment_request_id` 清空，保持历史现金流只通过 `source_model/source_res_id` 追溯，不再伪装为收付款申请生成的台账；复跑边界门禁后违规数为 0，复跑历史现金流 readiness audit 恢复 PASS。
 - 已建立并执行 `make backfill.finance_legacy_handling.currency`，本地 `sc_demo` 已将三类 legacy confirmed 正式财务办理事实统一到项目公司币种 `CNY`：费用/保证金/扣款 10,487 条、付款执行 6,098 条、收款登记 4,766 条，共 21,351 条。该修正只改币种和修正标记，不改金额、状态、项目、往来单位、来源和办理日期；复跑币种门禁后不一致数为 0。
-- 已升级并复跑 `make verify.finance_handling.http_surface.smoke`，对来源级资金台账类入口支持“按 `sc.treasury.ledger.source_model/source_res_id` 反选办理样本”；往来单位付款命中 80 条来源级台账中的 20 条办理样本并追到下游资金台账，到款确认同样命中并追踪通过。项目费用报销仍待分类后进入来源级历史现金流迁移。
+- 已建立并执行 `make backfill.finance_legacy_cash_ledger`，本地 `sc_demo` 已将剩余 97,543 条历史已办事实补齐来源级 `sc.treasury.ledger`：费用/保证金/扣款 50,825 条、付款执行 23,439 条、收款登记 23,279 条。该迁移只插入缺失台账，不修改原办理事实，幂等键为 `source_model/source_res_id/project_id/direction/source_kind`，且 `payment_request_id` 保持为空。复跑 readiness 后来源级台账覆盖 113,549/113,549，缺口为 0；复跑边界门禁违规数为 0。
+- 已升级并复跑 `make verify.finance_handling.http_surface.smoke`，对来源级资金台账类入口支持“按 `sc.treasury.ledger.source_model/source_res_id` 反选办理样本”；往来单位付款、到款确认、项目费用报销均命中 80 条来源级台账中的 20 条办理样本并追到下游资金台账。
 
 下一步收口顺序：
 
-1. 先制定剩余 2,341 条 source-less legacy 行处理策略，明确哪些应保留为旧日报/总账快照、哪些需要补正式来源事实、哪些应作废后由来源级台账替代。
-2. 再实现费用/保证金/扣款等剩余来源级历史现金流迁移，幂等键为 `source_model/source_res_id/project_id/direction/source_kind`，且非真实收付款申请完成场景保持 `payment_request_id` 为空。
-3. 再按费用/保证金/扣款分类升级 HTTP/API downstream trace，把项目费用报销从“可见入口”提升为“关键样本必有来源级台账”。
-4. 最后进入浏览器级抽样验收和开发服务器升级准备。
+1. 先制定剩余 2,341 条 source-less legacy 行处理策略，明确哪些保留为旧日报/总账快照、哪些需要补正式来源事实、哪些应作废后由来源级台账替代。
+2. 再围绕费用/保证金/扣款分类细化办理入口、必填字段、附件策略和审批策略，把“台账已覆盖”继续推进到“分类办理可验收”。
+3. 再进入浏览器级抽样验收和开发服务器升级准备。
 
 ### Phase 2 - Invoice And Tax Closure
 
