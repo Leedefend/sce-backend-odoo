@@ -133,3 +133,4 @@ DB_NAME=sc_demo make verify.company_contractor.responsibility_http.smoke
 - 历史名称匹配只用于读取责任余额，不反向写入 `partner_id`，也不把同名主数据自动绑定到历史事实；同名、缺名、跨项目等情况仍保留人工核对。
 - 当前用户数据中该规则覆盖付款执行办理 678 条、费用/还款/保证金办理 171 条、扣款抵扣办理 134 条；验证脚本为 `scripts/ops/validate_company_contractor_responsibility_context.sh`。
 - 付款执行是拨付/往来单位付款的主办理动作，必须在表单和列表直接暴露责任状态、到款可处理余额、到款超处理金额和自筹未退余额，并允许打开责任余额来源，避免办理人员在付款时脱离到款确认和自筹责任口径。
+- 付款执行动作约束：`arrival_over_processed_amount > 0` 时阻断继续付款；`arrival_unprocessed_amount > 0` 且本次实付超过该余额时阻断；`self_funding_balance > 0` 先作为提示不阻断，后续再结合自筹抵扣/退回业务确定硬规则。
