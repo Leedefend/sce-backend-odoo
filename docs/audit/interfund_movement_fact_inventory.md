@@ -40,8 +40,8 @@ DB_NAME=sc_demo MIGRATION_ARTIFACT_ROOT=artifacts/migration make verify.interfun
 | 账户间资金往来 `transfer_between` | 395 | `sc.interfund.movement.fact` | 是 | 账户/项目之间发生调拨事实 |
 | 借款申请 `borrowing_request + borrowed_fund` | 872 | `sc.interfund.movement.fact` | 是 | 覆盖项目借公司款、承包人借项目款；旧入口名只作为认知追溯 |
 | 项目/承包人还款 | 671 | `sc.interfund.movement.fact` | 是 | 覆盖全部项目还公司款、承包人还项目款，不按单一旧菜单截断 |
-| 到款确认表 | 5205 | `sc.finance.business.fact`，后续公司-承包人责任投影 | 是，公司-承包人责任事实 | 项目回款状态约束公司对承包人的拨付、扣款、退回和后续办理 |
-| 自筹垫付收入/退回正式口径 | 2153 / 1575 | `sc.finance.business.fact`，后续公司-承包人责任投影 | 是，公司-承包人责任事实 | 承包人与公司的资金占用和归还，项目用于归集和办理约束 |
+| 到款确认表 | 5205 | `sc.finance.business.fact`、`sc.company.contractor.responsibility.fact` | 是，公司-承包人责任事实 | 项目回款状态约束公司对承包人的拨付、扣款、退回和后续办理 |
+| 自筹垫付收入/退回正式口径 | 2153 / 1575 | `sc.finance.business.fact`、`sc.company.contractor.responsibility.fact` | 是，公司-承包人责任事实 | 承包人与公司的资金占用和归还，项目用于归集和办理约束 |
 | 资金日报表 `fund_daily_report` | 7453 | 日报型资金台账/账户汇总 | 否 | 后续台账就是用户日报口径，不再作为往来款候选 |
 | 余额调整 `balance_adjustment` | 519 | 账户余额校准/台账口径 | 否 | 不产生对方应收应还关系 |
 | 自筹垫付收入/退回可见口径 | 2144 / 827 | 用户旧入口验收参考 | 否，参考族 | 保持用户旧入口认知，不作为余额计算事实 |
@@ -76,6 +76,7 @@ DB_NAME=sc_demo MIGRATION_ARTIFACT_ROOT=artifacts/migration make verify.interfun
 - 同一来源模型和来源记录不得重复进入事实层。
 - 借款分类不得只按“借/项目/款”三个字无序匹配；`项目借公司款` 归入公司借款给项目，`借...项目...款` 归入项目借款给承包人。
 - 旧菜单名称只作为用户认知和来源追溯，最终分类规则必须进入业务分类字典和行业模板。
+- 公司-承包人责任事实必须由 `sc.company.contractor.responsibility.fact` 审计闭合，不能因为没有进入项目借还调拨事实层而被漏出办理约束。
 
 ## 后续判断
 

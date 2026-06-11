@@ -215,6 +215,7 @@
 - 已建立 `scripts/ops/validate_interfund_account_loan_closure.sh`，验证办理动作 -> 审计日志 -> `sc.interfund.movement.fact` -> `sc.interfund.movement.project.summary` -> `sc.finance.project.capital.position`。
 - 已建立 `scripts/ops/validate_interfund_treasury_ledger_backfill_readiness.sh`，只读审计历史往来事实进入 `sc.treasury.ledger` 的回填候选、已存在台账和不可自动回填事实。
 - 已建立 `make verify.interfund_user_data.full_coverage.audit`，按用户数据事实区分项目借还调拨事实、公司-承包人责任事实和状态/台账输入：账户调拨 395、借款事实 872、还款事实 671 全量进入项目往来事实；到款确认 5205、自筹正式口径 2153/1575 进入公司-承包人责任事实；资金日报 7453、余额调整 519、融资登记 152、账户收支/日报明细不作为往来责任事实。
+- 已建立只读投影 `sc.company.contractor.responsibility.fact` 和 `make verify.company_contractor.responsibility_fact.audit`，把到款确认、自筹垫付、自筹退回从普通收付款分析口径中提升为公司-承包人责任事实，并保留项目资金状态影响用于约束后续办理动作。
 - 已确认旧入口“承包人借项目款”验收数 227 与当前事实分类 177 的差异不是覆盖缺口，而是旧入口名称和事实分类规则不等价；后续收口前必须将借还款分类规则字典化，并由用户确认新的验收口径。
 
 ### Phase 2 - Invoice And Tax Closure
@@ -582,4 +583,4 @@ covered: payment_execution, receipt_income, expense_claim, fund_account_operatio
 
 - 将 `payment.request -> sc.payment.execution -> payment.ledger`、`payment.request(receive) -> sc.receipt.income -> sc.treasury.ledger`、经营类 `sc.expense.claim -> payment.request/payment.ledger`、往来类 `sc.expense.claim -> sc.interfund.movement.fact -> sc.treasury.ledger(source_kind=interfund)` 整理成一张用户办理链路矩阵。
 - 对“支付申请、往来单位付款、到款确认表、报销/保证金/扣款、账户调拨”补充入口级业务语言和验收证据。
-- 下一轮优先补收入与收款的工程进度款、自筹收入/退回、收款发票核销和合同收款/开票余额硬阻断；若审计继续无 P0 阻断，再补入口清晰度、关系必填规则和下游事实追溯，不做报表扩展。
+- 下一轮优先基于公司-承包人责任事实补到款确认、自筹收入/退回、拨付/扣款约束、收款发票核销和合同收款/开票余额硬阻断；若审计继续无 P0 阻断，再补入口清晰度、关系必填规则和下游事实追溯，不做报表扩展。

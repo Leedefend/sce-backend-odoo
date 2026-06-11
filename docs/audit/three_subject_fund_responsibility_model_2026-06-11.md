@@ -62,6 +62,29 @@
 
 因此，自筹应进入“公司-承包人责任事实”。正式余额使用 `income/refund`，旧入口验收使用 `income_visible/refund_visible` 作为认知和追溯参考。
 
+## 已落地投影
+
+已新增只读投影 `sc.company.contractor.responsibility.fact`，专门承接公司与承包人之间的资金责任事实，不混入 `sc.interfund.movement.fact` 的项目借还调拨口径。
+
+当前纳入范围：
+
+- 到款确认：`arrival_gross`，保留到款金额、拨付金额、扣款金额。
+- 自筹垫付：`self_funding_income`，计入自筹未退影响。
+- 自筹退回：`self_funding_refund`，冲减自筹未退影响。
+
+该投影同时保留两类办理约束指标：
+
+- `project_fund_status_effect`：项目资金状态影响，目前只承接到款确认金额，用于约束后续拨付、扣款、退回等动作。
+- `contractor_responsibility_effect`：承包人责任影响，目前由到款拨付/扣款、自筹垫付/退回组成，用于后续形成公司与承包人的责任余额和办理规则。
+
+专项审计命令：
+
+```bash
+DB_NAME=sc_demo MIGRATION_ARTIFACT_ROOT=artifacts/migration make verify.company_contractor.responsibility_fact.audit
+```
+
+审计必须确保正式责任事实不丢不重：到款确认 5205、自筹垫付 2153、自筹退回 1575 全部进入投影；自筹可见参考族不得进入正式责任余额。
+
 ## 当前实现偏差
 
 上一版边界审计把到款确认、自筹放在“不直接纳入往来款”下，这会误导后续迭代。正确表达应是：
@@ -74,6 +97,6 @@
 
 1. 保留用户旧入口认知：到款确认表、自筹垫付收入、自筹垫付退回。
 2. 在业务分类字典中增加或修正责任分类：公司-承包人到款责任、自筹垫付、自筹退回。
-3. 建立只读责任投影，按公司、承包人、项目汇总到款、扣款、拨付、自筹、退回、未退和可用余额。
+3. 基于 `sc.company.contractor.responsibility.fact` 继续沉淀按公司、承包人、项目汇总的责任余额、可拨付余额、应扣余额和自筹未退余额。
 4. 用项目资金状态约束后续办理：付款、借款、还款、退回、自筹抵扣、收款发票核销。
 5. 不把这些事实强行挂到 `payment.request`，但发生真实现金流时仍应进入统一资金台账或日报台账口径。

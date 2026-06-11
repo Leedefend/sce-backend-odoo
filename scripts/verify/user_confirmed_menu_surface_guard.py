@@ -35,7 +35,7 @@ EXPECTED_GROUP_COUNTS = {
     "合同中心": 6,
     "施工管理": 1,
     "物资与分包": 10,
-    "财务中心": 34,
+    "财务中心": 35,
     "人事行政": 7,
     "资料证照": 1,
     "基础设置": 1,
@@ -44,6 +44,7 @@ FINANCE_INTERFUND_ANALYSIS_PRODUCT_MENU_XMLIDS = {
     "smart_construction_core.menu_sc_finance_project_capital_position",
     "smart_construction_core.menu_sc_finance_counterparty_position_summary",
     "smart_construction_core.menu_sc_finance_project_counterparty_position",
+    "smart_construction_core.menu_sc_company_contractor_responsibility_fact",
 }
 
 

@@ -70,6 +70,14 @@ PROJECTIONS = {
         "action": "action_sc_finance_counterparty_position_summary",
         "menu": "menu_sc_finance_counterparty_position_summary",
     },
+    "sc.company.contractor.responsibility.fact": {
+        "model": "addons/smart_construction_core/models/projection/company_contractor_responsibility_fact.py",
+        "view": "addons/smart_construction_core/views/projection/company_contractor_responsibility_fact_views.xml",
+        "manifest_view": "views/projection/company_contractor_responsibility_fact_views.xml",
+        "table": "sc_company_contractor_responsibility_fact",
+        "action": "action_sc_company_contractor_responsibility_fact",
+        "menu": "menu_sc_company_contractor_responsibility_fact",
+    },
 }
 
 MENU_VIEW = "views/projection/finance_interfund_position_menu.xml"

@@ -61,6 +61,14 @@ EXPECTED_MENUS = OrderedDict(
             },
         ),
         (
+            f"{MODULE}.menu_sc_company_contractor_responsibility_fact",
+            {
+                "name": "公司-承包人资金责任明细",
+                "action": f"{MODULE}.action_sc_company_contractor_responsibility_fact",
+                "model": "sc.company.contractor.responsibility.fact",
+            },
+        ),
+        (
             f"{MODULE}.menu_sc_finance_business_project_summary",
             {
                 "name": "项目收付款汇总",
@@ -98,6 +106,7 @@ EXPECTED_PRODUCT_MENU_XMLIDS = (
     f"{MODULE}.menu_sc_finance_project_capital_position",
     f"{MODULE}.menu_sc_finance_counterparty_position_summary",
     f"{MODULE}.menu_sc_finance_project_counterparty_position",
+    f"{MODULE}.menu_sc_company_contractor_responsibility_fact",
 )
 PRODUCT_KEYS = ("construction.standard", "construction.preview")
 VISIBLE_CHECK_USERS = ("wutao", "demo_role_project_read", "sc_fx_pm")

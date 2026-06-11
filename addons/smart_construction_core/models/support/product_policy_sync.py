@@ -36,6 +36,7 @@ FINANCE_INTERFUND_ANALYSIS_PRODUCT_MENU_XMLIDS = (
     "smart_construction_core.menu_sc_finance_project_capital_position",
     "smart_construction_core.menu_sc_finance_counterparty_position_summary",
     "smart_construction_core.menu_sc_finance_project_counterparty_position",
+    "smart_construction_core.menu_sc_company_contractor_responsibility_fact",
 )
 
 USER_ACCEPTANCE_MENU_KEY_TOKENS = (

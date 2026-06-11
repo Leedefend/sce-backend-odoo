@@ -36,6 +36,7 @@ const TARGET_MENU_XMLIDS = [
   'smart_construction_core.menu_sc_finance_project_capital_position',
   'smart_construction_core.menu_sc_finance_counterparty_position_summary',
   'smart_construction_core.menu_sc_finance_project_counterparty_position',
+  'smart_construction_core.menu_sc_company_contractor_responsibility_fact',
 ];
 
 const DRILLDOWN_BUTTONS_BY_MODEL = {
@@ -175,7 +176,7 @@ async function runtimeProductMenus(page) {
   const rows = [...navRows, ...groupRows];
   const byXmlid = rows.filter((row) => TARGET_MENU_XMLIDS.includes(row.menuXmlid));
   if (byXmlid.length) return byXmlid;
-  const byLabel = rows.filter((row) => ['项目资金总览', '往来对象资金总览', '项目与对象资金往来'].includes(row.label));
+  const byLabel = rows.filter((row) => ['项目资金总览', '往来对象资金总览', '项目与对象资金往来', '公司-承包人资金责任明细'].includes(row.label));
   writeJson('runtime_menu_debug.json', {
     target_xmlids: TARGET_MENU_XMLIDS,
     matched_by_label: byLabel,
