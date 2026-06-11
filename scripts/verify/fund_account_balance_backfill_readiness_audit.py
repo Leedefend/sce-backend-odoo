@@ -112,6 +112,7 @@ try:
                 WHERE current_account_balance IS DISTINCT FROM expected_account_balance
                    OR current_balance_source IS DISTINCT FROM expected_balance_source
                    OR COALESCE(current_bank_balance, 0.0) IS DISTINCT FROM COALESCE(expected_bank_balance, 0.0)
+                   OR balance_as_of_date IS DISTINCT FROM document_date
             )::integer AS current_state_mismatch_count,
             COALESCE(SUM(expected_account_balance), 0.0) AS expected_account_balance_total,
             COALESCE(SUM(expected_bank_balance), 0.0) AS expected_bank_balance_total
@@ -142,6 +143,7 @@ try:
             expected_bank_balance,
             current_balance_source,
             expected_balance_source,
+            balance_as_of_date,
             legacy_line_id,
             document_date,
             match_key
@@ -149,6 +151,7 @@ try:
         WHERE current_account_balance IS DISTINCT FROM expected_account_balance
            OR current_balance_source IS DISTINCT FROM expected_balance_source
            OR COALESCE(current_bank_balance, 0.0) IS DISTINCT FROM COALESCE(expected_bank_balance, 0.0)
+           OR balance_as_of_date IS DISTINCT FROM document_date
         ORDER BY id
         LIMIT 20
         """
