@@ -266,6 +266,25 @@ try:
         failures,
     )
 
+    overpay = env["payment.request"].sudo().create(  # noqa: F821
+        {
+            "project_id": project.id,
+            "partner_id": partner.id,
+            "contract_id": contract.id,
+            "settlement_id": settlement.id,
+            "currency_id": company.currency_id.id,
+            "amount": settlement_amount,
+            "type": "pay",
+        }
+    )
+    _attachment(overpay)
+    _expect_guard(
+        "settlement overpay submit blocked",
+        "P0_PAYMENT_OVER_BALANCE",
+        overpay.action_submit,
+        failures,
+    )
+
     payment_events = _audit_events("payment.request", payment.id)
     _expect("payment_submitted" in payment_events, "payment.audit: missing payment_submitted", failures)
     _expect("payment_approved" in payment_events, "payment.audit: missing payment_approved", failures)
@@ -279,6 +298,7 @@ try:
         "settlement_total": summary.settlement_total,
         "payment_total": summary.payment_total,
         "delta": summary.delta,
+        "overpay_request_id": overpay.id,
         "payment_events": payment_events,
     }
 except Exception as err:
