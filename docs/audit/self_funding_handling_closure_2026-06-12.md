@@ -29,9 +29,15 @@
 ## 本轮验收命令
 
 - `DB_NAME=sc_demo make verify.self_funding.handling.audit`
+- `DB_NAME=sc_demo make verify.business.finance_document_tier_runtime_smoke`
 - `DB_NAME=sc_demo scripts/ops/validate_finance_business_category_runtime.sh`
 - `DB_NAME=sc_demo make verify.finance_handling.http_surface.smoke`
 - `DB_NAME=sc_demo make verify.company_contractor.responsibility_http.smoke`
+
+## 本地基线确认
+
+- 本地 `sc_demo` 可见公司/币种为 `四川保盛建设集团有限公司 / CNY / ¥`。
+- 历史办理事实币种修正以 CNY 为确定目标：办理事实 113549 条、资金台账 115890 条当前均无币种不一致。
 
 ## 证据门禁补充
 
@@ -39,3 +45,9 @@
 - `sc.self.funding.registration` 在 `action_confirm/action_done` 统一校验：缺附件、缺公司账户/户名、缺承包人账户/户名均阻断。
 - 历史迁移来源 `source_origin=legacy` 不追加手工证据门禁，避免影响旧数据重放和用户历史追溯。
 - 审计脚本已覆盖缺附件阻断、缺账户阻断、垫付入账、退回出账、退回超余额阻断和 `payment_request_id` 为空。
+
+## 审批运行时补充
+
+- `sc.self.funding.registration` 已纳入 `sc.approval.policy` 到 OCA `tier.definition` 的同步范围。
+- 自筹办理审批回调通过 `server_action_self_funding_registration_on_approved/rejected` 进入 `action_on_tier_approved/action_on_tier_rejected`。
+- `verify.business.finance_document_tier_runtime_smoke` 覆盖自筹办理提交、审批通过、驳回和完成动作，确保审批开启时仍保持办理闭环。
