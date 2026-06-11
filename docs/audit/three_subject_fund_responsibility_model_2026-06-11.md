@@ -131,4 +131,5 @@ DB_NAME=sc_demo make verify.company_contractor.responsibility_http.smoke
 - 新办理或已建立主数据关系的单据，优先用 `project_id + partner_id` 读取公司-承包人责任余额。
 - 历史办理单据没有正式 `partner_id` 时，可以使用同项目、`partner_id` 为空、历史承包人名称完全一致的责任余额，作为办理提示和约束读取口径。
 - 历史名称匹配只用于读取责任余额，不反向写入 `partner_id`，也不把同名主数据自动绑定到历史事实；同名、缺名、跨项目等情况仍保留人工核对。
-- 当前用户数据中该规则覆盖费用/还款/保证金办理 227 条、扣款抵扣办理 320 条；验证脚本为 `scripts/ops/validate_company_contractor_responsibility_context.sh`。
+- 当前用户数据中该规则覆盖付款执行办理 678 条、费用/还款/保证金办理 171 条、扣款抵扣办理 134 条；验证脚本为 `scripts/ops/validate_company_contractor_responsibility_context.sh`。
+- 付款执行是拨付/往来单位付款的主办理动作，必须在表单和列表直接暴露责任状态、到款可处理余额、到款超处理金额和自筹未退余额，并允许打开责任余额来源，避免办理人员在付款时脱离到款确认和自筹责任口径。

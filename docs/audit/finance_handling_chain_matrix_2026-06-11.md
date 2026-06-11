@@ -188,6 +188,7 @@ HTTP/API 可见面验收结论：
 - 已修正通用借款申请默认分类：无明确“项目借公司款”或“借...项目...款”语义时保存为 `finance.loan.borrowing`，避免普通借款申请被默认归入项目借公司款；`validate_finance_business_category_runtime.sh` 已通过。
 - 已修复扣款单页面契约 500：`action_sc_expense_claim_deduction_bill` 曾残留绑定旧 `sc.tax.deduction.registration` tree 视图，当前清空 action 级视图绑定后由 `sc.expense.claim` 标准视图加载；`扣款单位/扣款金额/扣款事由/附件/录入时间` 可见别名字段已补映射。
 - 已增强公司-承包人责任余额可见面门禁：`make verify.company_contractor.responsibility_http.smoke` 现在覆盖入口打开、列表读取、按责任状态分组，以及从余额行执行“查看责任明细”并读取 `sc.company.contractor.responsibility.fact`；当前样本 `source_line_count=4`，钻取明细 4 条，首条明细保留来源模型 `sc.legacy.fund.confirmation.document`。
+- 已把拨付/往来单位付款接入公司-承包人责任余额上下文：`sc.payment.execution` 继承责任上下文，列表和表单展示责任状态、到款可处理余额、到款超处理金额和自筹未退余额，并提供查看责任余额动作。`validate_company_contractor_responsibility_context.sh` 已验证付款执行按正式往来单位匹配责任余额 678 条。
 - 剩余 source-less legacy 台账 2,341 条：2,322 条找不到正式候选，18 条方向不一致，1 条项目不一致，暂不自动补挂。
 - 后续迁移脚本不得重复追加 113,549 条来源级台账；应以 `source_model/source_res_id/project_id/direction/source_kind` 为幂等键，剩余 2,341 条 source-less legacy 行需单独判断保留、补来源或作废策略，防止现金流翻倍。
 
