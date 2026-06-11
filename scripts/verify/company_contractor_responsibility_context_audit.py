@@ -9,6 +9,8 @@ from collections import OrderedDict
 from pathlib import Path
 from types import SimpleNamespace
 
+from odoo.exceptions import UserError
+
 
 def artifact_root() -> Path:
     raw = os.getenv("MIGRATION_ARTIFACT_ROOT") or os.getenv("COMPANY_CONTRACTOR_RESPONSIBILITY_ARTIFACT_ROOT")
@@ -323,6 +325,78 @@ if expense_within_failures:
     errors.append({"key": "expense_claim.within_arrival_balance_should_not_block", "failures": [str(item) for item in expense_within_failures]})
 
 summary["expense_claim_deduction_responsibility_constraints"] = expense_constraint_rows
+
+TaxDeduction = env["sc.tax.deduction.registration"]  # noqa: F821
+tax_constraint_rows = []
+tax_over_processed_failures = TaxDeduction._company_contractor_tax_deduction_responsibility_failures(
+    fake_over_processed,
+    1.0,
+)
+tax_exceed_failures = TaxDeduction._company_contractor_tax_deduction_responsibility_failures(fake_available, 51.0)
+tax_within_failures = TaxDeduction._company_contractor_tax_deduction_responsibility_failures(fake_available, 50.0)
+tax_zero_failures = TaxDeduction._company_contractor_tax_deduction_responsibility_failures(fake_available, 0.0)
+tax_constraint_rows.append({"case": "over_processed_blocks_tax_deduction", "failure_count": len(tax_over_processed_failures)})
+tax_constraint_rows.append({"case": "withholding_amount_exceeding_arrival_balance_blocks", "failure_count": len(tax_exceed_failures)})
+tax_constraint_rows.append({"case": "withholding_amount_within_arrival_balance_allows", "failure_count": len(tax_within_failures)})
+tax_constraint_rows.append({"case": "zero_withholding_amount_allows", "failure_count": len(tax_zero_failures)})
+if not tax_over_processed_failures:
+    errors.append({"key": "tax_deduction.over_processed_not_blocked"})
+if not tax_exceed_failures:
+    errors.append({"key": "tax_deduction.exceeding_arrival_balance_not_blocked"})
+if tax_within_failures:
+    errors.append({"key": "tax_deduction.within_arrival_balance_should_not_block", "failures": [str(item) for item in tax_within_failures]})
+if tax_zero_failures:
+    errors.append({"key": "tax_deduction.zero_withholding_amount_should_not_block", "failures": [str(item) for item in tax_zero_failures]})
+
+over_processed_summary_id = sql_one(
+    """
+    SELECT id
+      FROM sc_company_contractor_responsibility_summary
+     WHERE responsibility_state = 'over_processed'
+       AND project_id IS NOT NULL
+     ORDER BY arrival_over_processed_amount DESC
+     LIMIT 1
+    """
+)
+if over_processed_summary_id:
+    over_processed_summary = env["sc.company.contractor.responsibility.summary"].browse(over_processed_summary_id)  # noqa: F821
+    try:
+        with env.cr.savepoint():  # noqa: F821
+            temp_tax = TaxDeduction.create(
+                {
+                    "name": "CCR-TAX-TEMP",
+                    "source_origin": "manual",
+                    "state": "draft",
+                    "project_id": over_processed_summary.project_id.id,
+                    "partner_id": over_processed_summary.partner_id.id or False,
+                    "partner_name": False if over_processed_summary.partner_id else over_processed_summary.partner_name,
+                    "deduction_unit_name": False if over_processed_summary.partner_id else over_processed_summary.partner_name,
+                    "invoice_no": "CCR-TAX-TEMP",
+                    "invoice_amount_untaxed": 100.0,
+                    "invoice_tax_amount": 10.0,
+                    "invoice_amount_total": 110.0,
+                    "deduction_amount": 100.0,
+                    "deduction_tax_amount": 10.0,
+                    "withholding_amount": 1.0,
+                    "currency_id": over_processed_summary.currency_id.id or env.company.currency_id.id,  # noqa: F821
+                }
+            )
+            temp_tax.action_deduct()
+        errors.append({"key": "tax_deduction.action_deduct_over_processed_not_blocked"})
+        tax_action_failure_count = 0
+    except UserError:
+        tax_action_failure_count = 1
+    tax_constraint_rows.append(
+        {
+            "case": "action_deduct_blocks_over_processed_responsibility",
+            "summary_id": over_processed_summary_id,
+            "failure_count": tax_action_failure_count,
+        }
+    )
+else:
+    errors.append({"key": "tax_deduction.over_processed_partner_summary_sample_missing"})
+
+summary["tax_deduction_responsibility_constraints"] = tax_constraint_rows
 
 result = OrderedDict()
 result["status"] = "PASS" if not errors else "FAIL"

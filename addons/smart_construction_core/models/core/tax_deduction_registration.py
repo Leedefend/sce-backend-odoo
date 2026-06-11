@@ -3,6 +3,8 @@ from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 from odoo.tools.float_utils import float_compare
 
+from ..support.state_guard import raise_guard
+
 
 class ScTaxDeductionRegistration(models.Model):
     _name = "sc.tax.deduction.registration"
@@ -284,6 +286,7 @@ class ScTaxDeductionRegistration(models.Model):
             if vals:
                 rec.write(vals)
             rec._check_deduct_ready()
+            rec._check_company_contractor_deduction_responsibility_or_raise()
             rec.write({"state": "deducted"})
             rec._audit_transition(
                 "tax_deduction_deducted",
@@ -323,6 +326,29 @@ class ScTaxDeductionRegistration(models.Model):
                 precision_rounding=rounding,
             ) == 1:
                 raise UserError(_("抵扣金额不能超过发票不含税金额。"))
+
+    def _company_contractor_tax_deduction_responsibility_failures(self, summary, withholding_amount):
+        return self._company_contractor_responsibility_balance_failures(summary, withholding_amount, _("本次扣款金额"))
+
+    def _check_company_contractor_deduction_responsibility_or_raise(self):
+        for rec in self:
+            if rec.source_origin == "legacy" and rec.state == "legacy_confirmed":
+                continue
+            amount = rec.withholding_amount or 0.0
+            if amount <= 0:
+                continue
+            summary = rec.company_contractor_responsibility_summary_id
+            if not summary:
+                continue
+            failures = rec._company_contractor_tax_deduction_responsibility_failures(summary, amount)
+            if failures:
+                raise_guard(
+                    "TAX_DEDUCTION_RESPONSIBILITY_BALANCE_BLOCKED",
+                    f"抵扣登记[{rec.display_name}]",
+                    _("办理扣款抵扣"),
+                    reasons=failures,
+                    hints=[_("打开公司-承包人责任余额，核对到款确认、已拨付和已扣款明细后再继续办理。")],
+                )
 
     def action_cancel(self):
         for rec in self:
