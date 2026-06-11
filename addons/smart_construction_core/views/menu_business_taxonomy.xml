@@ -80,6 +80,7 @@
             ref('smart_construction_core.group_sc_cap_finance_read'),
             ref('smart_construction_core.group_sc_cap_finance_user'),
             ref('smart_construction_core.group_sc_cap_finance_manager'),
+            ref('smart_construction_core.group_sc_cap_business_initiator'),
             ref('smart_construction_core.group_sc_cap_settlement_read'),
             ref('smart_construction_core.group_sc_cap_settlement_user'),
             ref('smart_construction_core.group_sc_cap_settlement_manager')
@@ -491,6 +492,8 @@
         <field name="name">扣款单</field>
         <field name="res_model">sc.expense.claim</field>
         <field name="view_mode">tree,form</field>
+        <field name="view_id" eval="False"/>
+        <field name="view_ids" eval="[(5, 0, 0)]"/>
         <field name="search_view_id" ref="smart_construction_core.view_sc_expense_claim_search"/>
         <field name="domain">[('claim_type', '=', 'expense'), ('expense_type', '=', '扣款单')]</field>
         <field name="context">{'default_claim_type': 'expense', 'default_expense_type': '扣款单', 'default_summary': '扣款单', 'search_default_active_rows': 1, 'search_default_group_project': 1}</field>
@@ -1860,25 +1863,25 @@
               parent="smart_construction_core.menu_sc_deposit_management_group"
               action="smart_construction_core.action_sc_bid_deposit_pay"
               sequence="10"
-              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
     <menuitem id="menu_sc_bid_deposit_return"
               name="投标保证金退回"
               parent="smart_construction_core.menu_sc_deposit_management_group"
               action="smart_construction_core.action_sc_bid_deposit_return"
               sequence="20"
-              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
     <menuitem id="menu_sc_contract_deposit_register"
               name="合同保证金登记"
               parent="smart_construction_core.menu_sc_deposit_management_group"
               action="smart_construction_core.action_sc_contract_deposit_pay"
               sequence="30"
-              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
     <menuitem id="menu_sc_contract_deposit_return"
               name="合同保证金退回"
               parent="smart_construction_core.menu_sc_deposit_management_group"
               action="smart_construction_core.action_sc_contract_deposit_return"
               sequence="40"
-              groups="smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
+              groups="smart_construction_core.group_sc_cap_business_initiator,smart_construction_core.group_sc_cap_finance_read,smart_construction_core.group_sc_cap_finance_user,smart_construction_core.group_sc_cap_finance_manager"/>
 
     <menuitem id="menu_sc_fund_account_group"
               name="资金账户"

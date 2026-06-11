@@ -201,7 +201,9 @@ class ScFinancingLoan(models.Model):
         if loan_type == "borrowing_request" and direction == "borrowed_fund":
             if re.search(r"借.*项目.*款", purpose):
                 return "finance.loan.contractor_project_borrow"
-            return "finance.loan.project_borrow_company"
+            if "项目借公司款" in purpose:
+                return "finance.loan.project_borrow_company"
+            return "finance.loan.borrowing"
         return False
 
     @api.model

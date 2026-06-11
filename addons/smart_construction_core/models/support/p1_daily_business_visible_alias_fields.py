@@ -1343,8 +1343,13 @@ MODEL_LABEL_SOURCE_OVERRIDES = {
         '抵扣税额': ['deduction_tax_amount'],
         '抵扣总额': ['deduction_amount', 'invoice_amount_total'],
         '抵扣附加税': ['deduction_surcharge_amount'],
+        '扣款单位': ['deduction_unit_name', 'partner_name', 'partner_id'],
+        '扣款金额': ['withholding_amount'],
+        '扣款事由': ['deduction_reason', 'note'],
+        '附件': ['attachment_ids'],
         '备注': ['note'],
         '录入人': ['creator_name', 'source_created_by'],
+        '录入时间': ['created_time', 'source_created_at'],
         '单据日期': ['document_date'],
     },
     'sc.material.inbound': {

@@ -83,6 +83,145 @@ ENTRIES = [
     },
 ]
 
+EXPENSE_FIELDS = [
+    "id",
+    "name",
+    "business_category_id",
+    "claim_type",
+    "guarantee_type",
+    "expense_type",
+    "state",
+    "project_id",
+    "partner_id",
+    "payment_request_id",
+    "amount",
+    "approved_amount",
+    "attachment_ids",
+]
+
+
+def expense_category_entry(
+    key: str,
+    label: str,
+    menu_xmlid: str,
+    action_xmlid: str,
+    category_code: str,
+    *,
+    trace: dict[str, Any] | None = None,
+    trace_required: bool = False,
+    sample_required: bool = True,
+) -> dict[str, Any]:
+    domain = [["business_category_id.code", "=", category_code]]
+    return {
+        "key": key,
+        "label": label,
+        "menu_xmlid": menu_xmlid,
+        "action_xmlid": action_xmlid,
+        "model": "sc.expense.claim",
+        "fields": EXPENSE_FIELDS,
+        "list_domain": domain,
+        "handled_domain": domain + [["state", "in", ["done", "legacy_confirmed"]]],
+        "trace": trace,
+        "trace_required": trace_required,
+        "sample_required": sample_required,
+    }
+
+
+ENTRIES.extend(
+    [
+        expense_category_entry(
+            "expense_reimbursement",
+            "报销申请",
+            f"{MODULE}.menu_sc_reimbursement_request",
+            f"{MODULE}.action_sc_expense_claim_reimbursement_request",
+            "finance.expense.reimbursement",
+            trace={"model": "sc.treasury.ledger", "source_model": "sc.expense.claim"},
+        ),
+        expense_category_entry(
+            "deposit_bid_pay",
+            "投标保证金缴纳",
+            f"{MODULE}.menu_sc_bid_deposit_pay",
+            f"{MODULE}.action_sc_bid_deposit_pay",
+            "finance.deposit.bid.pay",
+            trace={"model": "sc.treasury.ledger", "source_model": "sc.expense.claim"},
+        ),
+        expense_category_entry(
+            "deposit_bid_return",
+            "投标保证金退回",
+            f"{MODULE}.menu_sc_bid_deposit_return",
+            f"{MODULE}.action_sc_bid_deposit_return",
+            "finance.deposit.bid.return",
+            trace={"model": "sc.treasury.ledger", "source_model": "sc.expense.claim"},
+        ),
+        expense_category_entry(
+            "deposit_contract_pay",
+            "合同保证金登记",
+            f"{MODULE}.menu_sc_contract_deposit_register",
+            f"{MODULE}.action_sc_contract_deposit_pay",
+            "finance.deposit.contract.pay",
+            trace={"model": "payment.ledger", "domain_field": "payment_request_id"},
+            trace_required=False,
+            sample_required=False,
+        ),
+        expense_category_entry(
+            "deposit_contract_return",
+            "合同保证金退回",
+            f"{MODULE}.menu_sc_contract_deposit_return",
+            f"{MODULE}.action_sc_contract_deposit_return",
+            "finance.deposit.contract.return",
+            trace={"model": "sc.treasury.ledger", "source_model": "sc.expense.claim"},
+            sample_required=False,
+        ),
+        expense_category_entry(
+            "deduction_bill",
+            "扣款单",
+            f"{MODULE}.menu_sc_deduction_bill",
+            f"{MODULE}.action_sc_expense_claim_deduction_bill",
+            "finance.deduction.bill",
+        ),
+        expense_category_entry(
+            "deduction_paid",
+            "扣款实缴登记",
+            f"{MODULE}.menu_sc_deduction_paid",
+            f"{MODULE}.action_sc_expense_claim_deduction_paid",
+            "finance.deduction.paid",
+            trace={"model": "payment.ledger", "domain_field": "payment_request_id"},
+        ),
+        expense_category_entry(
+            "deduction_refund",
+            "扣款实缴退回",
+            f"{MODULE}.menu_sc_deduction_paid_refund",
+            f"{MODULE}.action_sc_expense_claim_deduction_paid_refund",
+            "finance.deduction.refund",
+            trace={"model": "sc.treasury.ledger", "source_model": "sc.expense.claim"},
+        ),
+        expense_category_entry(
+            "repayment_registration",
+            "还款登记",
+            f"{MODULE}.menu_sc_repayment_registration",
+            f"{MODULE}.action_sc_expense_claim_repayment_registration",
+            "finance.repayment.registration",
+            trace={"model": "sc.treasury.ledger", "source_model": "sc.expense.claim"},
+        ),
+        expense_category_entry(
+            "repayment_contractor_project",
+            "承包人还项目款",
+            f"{MODULE}.menu_sc_contractor_project_repay",
+            f"{MODULE}.action_sc_expense_claim_contractor_project_repay",
+            "finance.repayment.contractor_project",
+            trace={"model": "sc.treasury.ledger", "source_model": "sc.expense.claim"},
+        ),
+        expense_category_entry(
+            "repayment_project_company",
+            "项目还公司款登记",
+            f"{MODULE}.menu_sc_project_repay_company",
+            f"{MODULE}.action_sc_expense_claim_project_repay_company",
+            "finance.repayment.project_company",
+            trace={"model": "sc.treasury.ledger", "source_model": "sc.expense.claim"},
+        ),
+    ]
+)
+
 
 def intent(name: str, params: dict[str, Any], token: str = "") -> tuple[int, dict[str, Any]]:
     headers = {
@@ -165,14 +304,38 @@ def nav_rows(system_init_data: dict[str, Any]) -> list[dict[str, Any]]:
     return rows
 
 
-def resolve_action_id(token: str, entry: dict[str, Any], rows: list[dict[str, Any]], errors: list[dict[str, Any]]) -> int:
+def resolve_action(token: str, entry: dict[str, Any], rows: list[dict[str, Any]], errors: list[dict[str, Any]]) -> dict[str, Any]:
     for row in rows:
         if row.get("menu_xmlid") == entry["menu_xmlid"] and int(row.get("action_id") or 0) > 0:
-            return int(row["action_id"])
+            return {"id": int(row["action_id"]), "source": "system_init_menu_xmlid"}
     for row in rows:
         if row.get("label") == entry["label"] and row.get("model") == entry["model"] and int(row.get("action_id") or 0) > 0:
-            return int(row["action_id"])
-    return 0
+            return {"id": int(row["action_id"]), "source": "system_init_label_model"}
+
+    status, payload = api_list(
+        token,
+        "ir.actions.act_window",
+        ["id", "name", "res_model"],
+        [["name", "=", entry["label"]], ["res_model", "=", entry["model"]]],
+        limit=2,
+    )
+    fallback_errors: list[dict[str, Any]] = []
+    if not assert_ok(fallback_errors, "%s.action_lookup" % entry["key"], status, payload):
+        errors.extend(fallback_errors)
+        return {"id": 0, "source": "unresolved"}
+    records = [row for row in (payload.get("data") or {}).get("records") or [] if isinstance(row, dict)]
+    if len(records) == 1:
+        return {"id": as_id(records[0].get("id")), "source": "action_name_model_fallback"}
+    if len(records) > 1:
+        errors.append(
+            {
+                "key": "%s.action_lookup_ambiguous" % entry["key"],
+                "label": entry["label"],
+                "model": entry["model"],
+                "matches": [as_id(row.get("id")) for row in records],
+            }
+        )
+    return {"id": 0, "source": "unresolved"}
 
 
 def api_list(token: str, model: str, fields: list[str], domain: list[Any], *, limit: int = 20, need_total: bool = False) -> tuple[int, dict[str, Any]]:
@@ -203,7 +366,9 @@ def as_id(value: Any) -> int:
 
 
 def trace_domain(entry: dict[str, Any], record: dict[str, Any]) -> list[Any]:
-    trace = entry["trace"]
+    trace = entry.get("trace")
+    if not trace:
+        return []
     if trace.get("source_model"):
         return [["source_model", "=", trace["source_model"]], ["source_res_id", "=", as_id(record.get("id"))], ["state", "!=", "void"]]
     record_field = trace.get("record_field")
@@ -212,7 +377,9 @@ def trace_domain(entry: dict[str, Any], record: dict[str, Any]) -> list[Any]:
 
 
 def trace_backed_handled_records(token: str, entry: dict[str, Any], errors: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    trace = entry["trace"]
+    trace = entry.get("trace")
+    if not trace:
+        return [], {"status": "not_applicable"}
     if trace.get("model") != "sc.treasury.ledger" or not trace.get("source_model"):
         return [], {"status": "not_applicable"}
     trace_status, trace_payload = api_list(
@@ -293,8 +460,10 @@ def main() -> int:
                     ("model", entry["model"]),
                 ]
             )
-            action_id = resolve_action_id(token, entry, rows, errors)
+            action_resolution = resolve_action(token, entry, rows, errors)
+            action_id = int(action_resolution.get("id") or 0)
             item["action_id"] = action_id
+            item["action_resolution"] = action_resolution.get("source")
             if action_id <= 0:
                 errors.append({"key": "%s.action_missing" % entry["key"], "action_xmlid": entry["action_xmlid"]})
                 evidence["entries"].append(item)
@@ -326,7 +495,7 @@ def main() -> int:
                 data = list_payload.get("data") or {}
                 records = [row for row in data.get("records") or [] if isinstance(row, dict)]
                 item["list"] = {"total": data.get("total"), "records": len(records), "first_record_keys": sorted(records[0].keys()) if records else []}
-                if not records:
+                if not records and entry.get("sample_required", True):
                     errors.append({"key": "%s.list_empty" % entry["key"], "domain": entry["list_domain"]})
 
             handled_status, handled_payload = api_list(token, entry["model"], entry["fields"], entry["handled_domain"], limit=20)
@@ -334,7 +503,7 @@ def main() -> int:
             if assert_ok(errors, "%s.handled_sample" % entry["key"], handled_status, handled_payload):
                 handled_records = [row for row in (handled_payload.get("data") or {}).get("records") or [] if isinstance(row, dict)]
                 item["handled_sample"] = {"records": len(handled_records), "domain": entry["handled_domain"]}
-                if not handled_records:
+                if not handled_records and entry.get("sample_required", True):
                     errors.append({"key": "%s.handled_sample_missing" % entry["key"], "domain": entry["handled_domain"]})
             trace_backed_records, trace_backed_evidence = trace_backed_handled_records(token, entry, errors)
             if trace_backed_evidence.get("status") != "not_applicable":
@@ -344,9 +513,9 @@ def main() -> int:
                 item["handled_sample"]["strategy"] = "trace_backed"
 
             if handled_records:
-                trace = entry["trace"]
+                trace = entry.get("trace")
                 trace_fields = ["id", "amount", "payment_request_id", "project_id", "partner_id"]
-                if trace["model"] == "sc.treasury.ledger":
+                if trace and trace["model"] == "sc.treasury.ledger":
                     trace_fields = [
                         "id",
                         "amount",
@@ -361,34 +530,40 @@ def main() -> int:
                 sample = handled_records[0]
                 trace_records: list[dict[str, Any]] = []
                 trace_error_record = sample
-                for candidate in handled_records:
-                    trace_status, trace_payload = api_list(
-                        token,
-                        trace["model"],
-                        trace_fields,
-                        trace_domain(entry, candidate),
-                        limit=5,
-                    )
-                    if not assert_ok(errors, "%s.downstream_trace" % entry["key"], trace_status, trace_payload):
-                        break
-                    candidate_trace_records = [
-                        row for row in (trace_payload.get("data") or {}).get("records") or [] if isinstance(row, dict)
-                    ]
-                    trace_error_record = candidate
-                    if candidate_trace_records:
-                        sample = candidate
-                        trace_records = candidate_trace_records
-                        break
-                item["downstream_trace"] = {"model": trace["model"], "records": len(trace_records), "sample_id": as_id(sample.get("id"))}
-                if not trace_records and entry.get("trace_required", False):
-                    errors.append(
-                        {
-                            "key": "%s.downstream_trace_missing" % entry["key"],
-                            "trace_model": trace["model"],
-                            "sample_id": trace_error_record.get("id"),
-                            "sample_count": len(handled_records),
-                        }
-                    )
+                if trace:
+                    for candidate in handled_records:
+                        domain = trace_domain(entry, candidate)
+                        if not domain:
+                            continue
+                        trace_status, trace_payload = api_list(
+                            token,
+                            trace["model"],
+                            trace_fields,
+                            domain,
+                            limit=5,
+                        )
+                        if not assert_ok(errors, "%s.downstream_trace" % entry["key"], trace_status, trace_payload):
+                            break
+                        candidate_trace_records = [
+                            row for row in (trace_payload.get("data") or {}).get("records") or [] if isinstance(row, dict)
+                        ]
+                        trace_error_record = candidate
+                        if candidate_trace_records:
+                            sample = candidate
+                            trace_records = candidate_trace_records
+                            break
+                    item["downstream_trace"] = {"model": trace["model"], "records": len(trace_records), "sample_id": as_id(sample.get("id"))}
+                    if not trace_records and entry.get("trace_required", False):
+                        errors.append(
+                            {
+                                "key": "%s.downstream_trace_missing" % entry["key"],
+                                "trace_model": trace["model"],
+                                "sample_id": trace_error_record.get("id"),
+                                "sample_count": len(handled_records),
+                            }
+                        )
+                else:
+                    item["downstream_trace"] = {"model": None, "records": None, "status": "not_applicable"}
 
                 audit_status, audit_payload = api_list(
                     token,
