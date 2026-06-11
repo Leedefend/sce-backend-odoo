@@ -7,7 +7,7 @@ from odoo.tools.float_utils import float_compare
 class ScTaxDeductionRegistration(models.Model):
     _name = "sc.tax.deduction.registration"
     _description = "抵扣登记"
-    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _inherit = ["mail.thread", "mail.activity.mixin", "sc.company.contractor.responsibility.context.mixin"]
     _order = "deduction_confirm_date desc, document_date desc, id desc"
 
     name = fields.Char(string="登记单号", required=True, default="新建", copy=False, index=True)

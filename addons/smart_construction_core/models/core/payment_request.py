@@ -70,7 +70,13 @@ def _amount_to_chinese_upper(value):
 class PaymentRequest(models.Model):
     _name = "payment.request"
     _description = "Payment Request"
-    _inherit = ["mail.thread", "mail.activity.mixin", "tier.validation", "sc.delete.guard.mixin"]
+    _inherit = [
+        "mail.thread",
+        "mail.activity.mixin",
+        "tier.validation",
+        "sc.delete.guard.mixin",
+        "sc.company.contractor.responsibility.context.mixin",
+    ]
     _order = "id desc"
     _sc_delete_guard_blocker_models = (
         "sc.material.rental.order",

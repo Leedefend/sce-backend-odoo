@@ -97,3 +97,4 @@ from . import legacy_ar_ap_report_fact
 from . import partner_business_fact_line
 from . import runtime_user_management
 from . import product_policy_sync
+from . import company_contractor_responsibility_context_mixin

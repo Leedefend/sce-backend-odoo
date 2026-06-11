@@ -7,7 +7,7 @@ from odoo.tools.float_utils import float_compare
 class ScExpenseClaim(models.Model):
     _name = "sc.expense.claim"
     _description = "费用与保证金单据"
-    _inherit = ["mail.thread", "mail.activity.mixin", "tier.validation"]
+    _inherit = ["mail.thread", "mail.activity.mixin", "tier.validation", "sc.company.contractor.responsibility.context.mixin"]
     _order = "date_claim desc, id desc"
 
     name = fields.Char(string="单据号", required=True, default="新建", copy=False)

@@ -9,7 +9,7 @@ from ..support.state_guard import raise_guard
 class ScReceiptIncome(models.Model):
     _name = "sc.receipt.income"
     _description = "收款与收入登记"
-    _inherit = ["mail.thread", "mail.activity.mixin", "tier.validation"]
+    _inherit = ["mail.thread", "mail.activity.mixin", "tier.validation", "sc.company.contractor.responsibility.context.mixin"]
     _order = "date_receipt desc, id desc"
 
     name = fields.Char(string="单据号", required=True, default="新建", copy=False)
