@@ -1302,7 +1302,33 @@ class PaymentRequest(models.Model):
         )
         if not has_finance_cancel_access:
             raise ValidationError(_("你没有取消付款/收款申请的权限。"))
-        self.with_context(allow_transition=True).write({"state": "cancel"})
+        for rec in self:
+            if rec.state in ("done", "cancel"):
+                raise_guard(
+                    "PAYMENT_CANCEL_INVALID_STATE",
+                    f"付款/收款申请[{rec.display_name}]",
+                    _("取消付款/收款申请"),
+                    reasons=[_("已完成或已取消的付款/收款申请不能直接取消。")],
+                    hints=[_("已付款执行请先从付款执行单撤销；已收款入账需走后续冲销/红冲流程。")],
+                )
+            payment_ledger_count = self.env["payment.ledger"].sudo().search_count(
+                [("payment_request_id", "=", rec.id)]
+            )
+            treasury_ledger_count = self.env["sc.treasury.ledger"].sudo().search_count(
+                [("payment_request_id", "=", rec.id), ("state", "!=", "void")]
+            )
+            if payment_ledger_count or treasury_ledger_count:
+                raise_guard(
+                    "PAYMENT_CANCEL_LEDGER_EXISTS",
+                    f"付款/收款申请[{rec.display_name}]",
+                    _("取消付款/收款申请"),
+                    reasons=[_("当前申请已生成付款或资金台账，不能直接取消。")],
+                    hints=[_("请先按对应业务链路撤销付款执行或办理收款冲销，保持台账可追溯。")],
+                )
+            before = rec._snapshot_audit_payload()
+            rec.with_context(allow_transition=True).write({"state": "cancel"})
+            after = rec._snapshot_audit_payload()
+            rec._audit_transition("payment_cancelled", before, after, action_name="action_cancel")
 
     def _check_state_from_condition(self):
         self.ensure_one()

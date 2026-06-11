@@ -322,6 +322,66 @@ def _run_payment_execution(failures):
     return {"execution": execution.id, "payment_request": request.id, "ledger_count": ledger_count, "attachment_count": _attachment_count(execution)}
 
 
+def _run_payment_cancel_and_reversal(failures):
+    project = _project("FHE Cancel Reversal Project", funding=True)
+    partner = _partner("FHE Cancel Reversal Partner")
+    contract = _contract(project, partner, "in")
+    settlement = _settlement(project, partner, contract, 170.0)
+
+    cancellable = _approved_request(project, partner, contract, 50.0, "pay", settlement=settlement)
+    cancellable.action_cancel()
+    _expect_state("payment_cancel.approved_without_ledger", cancellable, "cancel", failures)
+    _expect(_audit_count(cancellable, "payment_cancelled", "action_cancel") >= 1, "payment_cancel.audit_cancel missing", failures)
+    cancelled_ledger_count = env["payment.ledger"].sudo().search_count([("payment_request_id", "=", cancellable.id)])
+    _expect(cancelled_ledger_count == 0, "payment_cancel.cancelled request must not create payment ledger", failures)
+
+    request = _approved_request(project, partner, contract, 120.0, "pay", settlement=settlement)
+    execution = env["sc.payment.execution"].sudo().create(
+        {
+            "payment_request_id": request.id,
+            "project_id": project.id,
+            "partner_id": partner.id,
+            "contract_id": contract.id,
+            "planned_amount": 120.0,
+            "paid_amount": 120.0,
+            "payment_account_name": "FHE撤销付款户名",
+            "payment_account_no": "FHE-REVERSAL-PAYER",
+            "receipt_account_name": "FHE撤销收款户名",
+            "receipt_account_no": "FHE-REVERSAL-PAYEE",
+        }
+    )
+    _attach(execution, "payment-reversal")
+    execution.action_confirm()
+    if execution.validation_status not in ("no", "validated"):
+        _set_validated(execution, "sc_payment_execution")
+    execution.action_paid()
+    request.invalidate_recordset()
+    _expect_state("payment_reversal.request_done", request, "done", failures)
+    paid_ledger_count = env["payment.ledger"].sudo().search_count([("payment_request_id", "=", request.id)])
+    _expect(paid_ledger_count == 1, "payment_reversal.expected_one_ledger_before_cancel", failures)
+    _expect_exception("payment_reversal.done_request_direct_cancel_blocked", request.action_cancel, failures)
+
+    execution.action_cancel()
+    execution.invalidate_recordset()
+    request.invalidate_recordset()
+    _expect_state("payment_reversal.execution_cancel", execution, "cancel", failures)
+    _expect_state("payment_reversal.request_back_to_approved", request, "approved", failures)
+    reversed_ledger_count = env["payment.ledger"].sudo().search_count([("payment_request_id", "=", request.id)])
+    _expect(reversed_ledger_count == 0, "payment_reversal.ledger_removed_after_execution_cancel", failures)
+    _expect(
+        _audit_count(request, "payment_reversed", "payment_execution_cancel") >= 1,
+        "payment_reversal.audit_reversed missing",
+        failures,
+    )
+    return {
+        "cancelled_request": cancellable.id,
+        "cancelled_ledger_count": cancelled_ledger_count,
+        "reversal_execution": execution.id,
+        "reversal_request": request.id,
+        "reversal_ledger_count": reversed_ledger_count,
+    }
+
+
 def _run_receipt_income(failures):
     project = _project("FHE Receipt Project")
     partner = _partner("FHE Receipt Partner")
@@ -398,6 +458,7 @@ try:
     evidence["direct_payment_request"] = _run_direct_payment_request(failures)
     evidence["direct_receive_request"] = _run_direct_receive_request(failures)
     evidence["payment_execution"] = _run_payment_execution(failures)
+    evidence["payment_cancel_and_reversal"] = _run_payment_cancel_and_reversal(failures)
     evidence["receipt_income"] = _run_receipt_income(failures)
     evidence["expense_claim"] = _run_expense_claim(failures)
 except Exception as err:
