@@ -281,14 +281,20 @@ class ScSafetyIssue(models.Model):
             if issue.state != "draft":
                 raise UserError(_("只有草稿状态的安全问题可以提交。"))
             issue._check_business_anchor()
+        snapshots = {issue.id: issue._snapshot_audit_payload() for issue in self}
         self.write({"state": "submitted"})
+        for issue in self:
+            issue._audit_transition("safety_issue_submitted", snapshots[issue.id], issue._snapshot_audit_payload(), "action_submit")
         return True
 
     def action_start_rectification(self):
         for issue in self:
             if issue.state != "submitted":
                 raise UserError(_("只有已提交状态的安全问题可以开始整改。"))
+        snapshots = {issue.id: issue._snapshot_audit_payload() for issue in self}
         self.write({"state": "rectifying"})
+        for issue in self:
+            issue._audit_transition("safety_rectification_started", snapshots[issue.id], issue._snapshot_audit_payload(), "action_start_rectification")
         return True
 
     def action_request_recheck(self):
@@ -297,7 +303,10 @@ class ScSafetyIssue(models.Model):
                 raise UserError(_("只有整改中的安全问题可以申请复验。"))
             if not issue.rectification_ids:
                 raise UserError(_("申请复验前必须登记整改记录。"))
+        snapshots = {issue.id: issue._snapshot_audit_payload() for issue in self}
         self.write({"state": "rechecking"})
+        for issue in self:
+            issue._audit_transition("safety_recheck_requested", snapshots[issue.id], issue._snapshot_audit_payload(), "action_request_recheck")
         return True
 
     def action_close(self):
@@ -306,20 +315,52 @@ class ScSafetyIssue(models.Model):
                 raise UserError(_("只有待复验状态的安全问题可以闭环。"))
             if not issue.recheck_ids.filtered(lambda recheck: recheck.result == "passed"):
                 raise UserError(_("安全问题闭环前必须有通过的复验记录。"))
+        snapshots = {issue.id: issue._snapshot_audit_payload() for issue in self}
         self.write({"state": "closed", "closed_date": fields.Date.context_today(self)})
+        for issue in self:
+            issue._audit_transition("safety_issue_closed", snapshots[issue.id], issue._snapshot_audit_payload(), "action_close")
         return True
 
     def action_cancel(self):
         for issue in self:
             if issue.state not in ("draft", "submitted", "rectifying", "rechecking"):
                 raise UserError(_("只有未闭环的安全问题可以取消。"))
+        snapshots = {issue.id: issue._snapshot_audit_payload() for issue in self}
         self.write({"state": "cancel"})
+        for issue in self:
+            issue._audit_transition("safety_issue_cancelled", snapshots[issue.id], issue._snapshot_audit_payload(), "action_cancel")
         return True
 
     def _check_business_anchor(self):
         for issue in self:
             if not issue.location and not issue.description:
                 raise UserError(_("安全问题提交前必须维护问题位置或问题描述。"))
+
+    def _snapshot_audit_payload(self):
+        self.ensure_one()
+        return {
+            "state": self.state,
+            "project_id": self.project_id.id,
+            "name": self.name,
+            "issue_level": self.issue_level,
+            "location": self.location,
+            "rectification_count": len(self.rectification_ids),
+            "recheck_count": len(self.recheck_ids),
+            "closed_date": fields.Date.to_string(self.closed_date) if self.closed_date else False,
+        }
+
+    def _audit_transition(self, event_code, before, after, action_name):
+        self.ensure_one()
+        return self.env["sc.audit.log"].write_event(
+            event_code=event_code,
+            model=self._name,
+            res_id=self.id,
+            action=action_name,
+            before=before,
+            after=after,
+            project_id=self.project_id,
+            company_id=self.project_id.company_id,
+        )
 
 
 class ScSafetyRectification(models.Model):
@@ -351,7 +392,27 @@ class ScSafetyRectification(models.Model):
         invalid_issues = records.mapped("issue_id").filtered(lambda issue: issue.state not in ("submitted", "rectifying"))
         if invalid_issues:
             raise UserError(_("只有已提交或整改中的安全问题可以登记整改。"))
-        records.mapped("issue_id").filtered(lambda issue: issue.state == "submitted").write({"state": "rectifying"})
+        submitted_issues = records.mapped("issue_id").filtered(lambda issue: issue.state == "submitted")
+        snapshots = {issue.id: issue._snapshot_audit_payload() for issue in submitted_issues}
+        submitted_issues.write({"state": "rectifying"})
+        for issue in submitted_issues:
+            issue._audit_transition(
+                "safety_rectification_started",
+                snapshots[issue.id],
+                issue._snapshot_audit_payload(),
+                "safety_rectification_create",
+            )
+        for record in records:
+            issue = record.issue_id
+            self.env["sc.audit.log"].write_event(
+                event_code="safety_rectification_registered",
+                model=record._name,
+                res_id=record.id,
+                action="create",
+                after={"issue_id": issue.id, "issue_state": issue.state, "project_id": issue.project_id.id},
+                project_id=issue.project_id,
+                company_id=issue.project_id.company_id,
+            )
         return records
 
 
@@ -384,10 +445,26 @@ class ScSafetyRecheck(models.Model):
         for record in records:
             if record.issue_id.state != "rechecking":
                 raise UserError(_("只有待复验的安全问题可以登记复验。"))
+            before = record.issue_id._snapshot_audit_payload()
             if record.result == "passed":
                 record.issue_id.write({"state": "closed", "closed_date": fields.Date.context_today(record)})
+                event_code = "safety_issue_closed"
             elif record.result == "failed":
                 record.issue_id.write({"state": "rectifying"})
+                event_code = "safety_recheck_failed"
+            else:
+                event_code = "safety_recheck_registered"
+            after = record.issue_id._snapshot_audit_payload()
+            self.env["sc.audit.log"].write_event(
+                event_code="safety_recheck_registered",
+                model=record._name,
+                res_id=record.id,
+                action="create",
+                after={"issue_id": record.issue_id.id, "result": record.result, "issue_state": record.issue_id.state},
+                project_id=record.issue_id.project_id,
+                company_id=record.issue_id.project_id.company_id,
+            )
+            record.issue_id._audit_transition(event_code, before, after, "safety_recheck_create")
         return records
 
 
