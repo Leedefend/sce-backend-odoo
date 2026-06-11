@@ -514,6 +514,74 @@
         <field name="attachment_policy">recommended</field>
     </record>
 
+    <record id="business_category_finance_responsibility_arrival_confirmation" model="sc.business.category">
+        <field name="name">到款确认责任</field>
+        <field name="code">finance.responsibility.arrival_confirmation</field>
+        <field name="domain">finance</field>
+        <field name="target_model">sc.company.contractor.responsibility.fact</field>
+        <field name="direction">reference</field>
+        <field name="sequence">114</field>
+        <field name="source_aliases">到款确认、项目收款状态、公司-承包人到款约束</field>
+        <field name="default_values_json"><![CDATA[{}]]></field>
+        <field name="domain_json"><![CDATA[[["responsibility_type", "=", "arrival_confirmation"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_name", "amount", "source_document_no"]]]></field>
+        <field name="visible_groups_json"><![CDATA[["responsibility_caliber", "business_object", "arrival_processing", "source_trace"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.receipt.income", "sc.finance.business.fact", "sc.company.contractor.responsibility.fact", "sc.company.contractor.responsibility.summary"], "terminal_action": "action_received", "user_cognition": "project_receipt_status", "responsibility_scope": "company_contractor", "constraint_targets": ["payment.request", "sc.expense.claim", "sc.tax.deduction.registration"], "payment_request_policy": "not_ordinary_request"}]]></field>
+        <field name="attachment_policy">recommended</field>
+        <field name="note">到款确认仍按用户认知表示项目收款状态；责任事实用于约束公司与承包人的拨付、扣款和后续办理，不并入普通收付款申请。</field>
+    </record>
+
+    <record id="business_category_finance_responsibility_self_funding_income" model="sc.business.category">
+        <field name="name">自筹垫付责任</field>
+        <field name="code">finance.responsibility.self_funding_income</field>
+        <field name="domain">finance</field>
+        <field name="target_model">sc.company.contractor.responsibility.fact</field>
+        <field name="direction">reference</field>
+        <field name="sequence">115</field>
+        <field name="source_aliases">自筹垫付、自筹收入、自筹保证金、承包人垫付</field>
+        <field name="default_values_json"><![CDATA[{}]]></field>
+        <field name="domain_json"><![CDATA[[["responsibility_type", "=", "self_funding_income"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_name", "amount", "source_document_no"]]]></field>
+        <field name="visible_groups_json"><![CDATA[["responsibility_caliber", "business_object", "self_funding_processing", "source_trace"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.finance.business.fact", "sc.company.contractor.responsibility.fact", "sc.company.contractor.responsibility.summary"], "terminal_action": "action_done", "user_cognition": "self_funding_business", "responsibility_scope": "company_contractor", "project_role": "attribution_and_constraint", "payment_request_policy": "not_ordinary_request"}]]></field>
+        <field name="attachment_policy">recommended</field>
+        <field name="note">自筹垫付反映承包人与公司的资金占用关系，项目用于归属和办理约束，应纳入公司-承包人责任余额。</field>
+    </record>
+
+    <record id="business_category_finance_responsibility_self_funding_refund" model="sc.business.category">
+        <field name="name">自筹退回责任</field>
+        <field name="code">finance.responsibility.self_funding_refund</field>
+        <field name="domain">finance</field>
+        <field name="target_model">sc.company.contractor.responsibility.fact</field>
+        <field name="direction">reference</field>
+        <field name="sequence">116</field>
+        <field name="source_aliases">自筹退回、自筹垫付退回、自筹保证金退回</field>
+        <field name="default_values_json"><![CDATA[{}]]></field>
+        <field name="domain_json"><![CDATA[[["responsibility_type", "=", "self_funding_refund"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_name", "amount", "source_document_no"]]]></field>
+        <field name="visible_groups_json"><![CDATA[["responsibility_caliber", "business_object", "self_funding_processing", "source_trace"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.finance.business.fact", "sc.company.contractor.responsibility.fact", "sc.company.contractor.responsibility.summary"], "terminal_action": "action_done", "user_cognition": "self_funding_refund_business", "responsibility_scope": "company_contractor", "project_role": "attribution_and_constraint", "payment_request_policy": "not_ordinary_request"}]]></field>
+        <field name="attachment_policy">recommended</field>
+        <field name="note">自筹退回冲减承包人与公司的自筹占用关系，与到款可处理余额分开表达，避免改变用户旧业务认知。</field>
+    </record>
+
+    <record id="business_category_finance_responsibility_company_contractor_balance" model="sc.business.category">
+        <field name="name">公司-承包人责任余额</field>
+        <field name="code">finance.responsibility.company_contractor.balance</field>
+        <field name="domain">finance</field>
+        <field name="target_model">sc.company.contractor.responsibility.summary</field>
+        <field name="direction">reference</field>
+        <field name="sequence">117</field>
+        <field name="source_aliases">公司-承包人资金责任余额、承包人责任余额、到款与自筹约束余额</field>
+        <field name="default_values_json"><![CDATA[{}]]></field>
+        <field name="domain_json"><![CDATA[[]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_name", "responsibility_state"]]]></field>
+        <field name="visible_groups_json"><![CDATA[["business_object", "arrival_responsibility", "self_funding_responsibility", "handling_constraint"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.company.contractor.responsibility.fact", "sc.company.contractor.responsibility.summary"], "terminal_action": "read_only_summary", "user_cognition": "handling_constraint_balance", "responsibility_scope": "company_contractor", "arrival_balance_policy": "separate_from_self_funding", "payment_request_policy": "not_applicable"}]]></field>
+        <field name="attachment_policy">none</field>
+        <field name="note">只读办理约束余额，按项目和承包人归集到款确认、自筹垫付和自筹退回；用于办理判断，不替代来源单据维护。</field>
+    </record>
+
     <record id="business_category_invoice_output_application" model="sc.business.category">
         <field name="name">销项开票申请</field>
         <field name="code">invoice.output.application</field>

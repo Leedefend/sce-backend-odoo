@@ -143,11 +143,11 @@
 当前已落地第一阶段业务分类字典：
 
 - 新增 `sc.business.category`，用于维护业务分类编码、用户可见名称、能力域、正式模型、业务方向、默认值 JSON、入口过滤 JSON、必填字段 JSON、附件策略、审批策略和下游策略 JSON。
-- 新增建筑行业模板种子，覆盖 7 个现场履约分类、4 个合同/结算分类、22 个财务/资金类分类、5 个发票/税务分类和 10 个材料采购库存分类，共 48 个分类候选。
+- 新增建筑行业模板种子，覆盖 7 个现场履约分类、4 个合同/结算分类、26 个财务/资金类分类、5 个发票/税务分类和 10 个材料采购库存分类，共 52 个分类候选。
 - 新增模板同步边界：行业模板种子提供初始内容，升级同步只写 `template_key`、`template_version`、`action_xmlid` 等系统绑定字段，不覆盖客户维护的名称、启停、排序、默认值、必填、表单分组、附件和审批策略。
 - 暂不替换现有 action/domain/context；当前字典先绑定现有办理入口，作为产品化分类元数据和后续迁移锚点，避免改变用户现有办理认知。
 - 新增门禁 `DB_NAME=sc_demo scripts/ops/validate_business_category_dictionary.sh`，检查分类种子、模板版本、绑定 action、目标模型、JSON 策略和打开目标模型动作。
-- 当前已验证 48 个分类的绑定入口能回到对应正式模型，其中现场履约已覆盖施工日志、质量问题/整改/复验、安全问题/整改/复验，合同域已覆盖收入合同、支出合同、收入合同结算、支出合同结算；后续新增业务类别必须先进入分类候选或字典项，再决定是 action 域切分、表单分组切分，还是沉淀为行业模板。
+- 当前已验证 52 个分类的绑定入口能回到对应正式模型，其中现场履约已覆盖施工日志、质量问题/整改/复验、安全问题/整改/复验，合同域已覆盖收入合同、支出合同、收入合同结算、支出合同结算，资金责任已覆盖到款确认责任、自筹垫付责任、自筹退回责任和公司-承包人责任余额；后续新增业务类别必须先进入分类候选或字典项，再决定是 action 域切分、表单分组切分，还是沉淀为行业模板。
 
 ## Browser Acceptance Runtime Rule
 
@@ -217,6 +217,7 @@
 - 已建立 `make verify.interfund_user_data.full_coverage.audit`，按用户数据事实区分项目借还调拨事实、公司-承包人责任事实和状态/台账输入：账户调拨 395、借款事实 872、还款事实 671 全量进入项目往来事实；到款确认 5205、自筹正式口径 2153/1575 进入公司-承包人责任事实；资金日报 7453、余额调整 519、融资登记 152、账户收支/日报明细不作为往来责任事实。
 - 已建立只读投影 `sc.company.contractor.responsibility.fact` 和 `make verify.company_contractor.responsibility_fact.audit`，把到款确认、自筹垫付、自筹退回从普通收付款分析口径中提升为公司-承包人责任事实，并保留项目资金状态影响用于约束后续办理动作。
 - 已建立只读汇总 `sc.company.contractor.responsibility.summary` 和 `make verify.company_contractor.responsibility_summary.audit`，按项目和承包人沉淀到款可处理余额、到款超处理金额、自筹未退余额和责任状态，作为后续拨付、扣款、退回、自筹抵扣、收款核销的办理约束读取口径。
+- 已将公司-承包人责任口径纳入业务分类字典：`finance.responsibility.arrival_confirmation` 保留到款确认为项目收款状态并作为公司-承包人后续办理约束；`finance.responsibility.self_funding_income`、`finance.responsibility.self_funding_refund` 表达自筹垫付和自筹退回的责任影响；`finance.responsibility.company_contractor.balance` 作为只读办理约束余额。分类入口可复用同一个 action，但必须叠加字典 `domain_json`，不能让用户在泛化责任明细里自行判断类别。
 - 已确认旧入口“承包人借项目款”验收数 227 与当前事实分类 177 的差异不是覆盖缺口，而是旧入口名称和事实分类规则不等价；后续收口前必须将借还款分类规则字典化，并由用户确认新的验收口径。
 
 ### Phase 2 - Invoice And Tax Closure

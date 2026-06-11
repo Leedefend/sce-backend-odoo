@@ -236,6 +236,54 @@ EXPECTED = {
         "ledger_fact": "sc.interfund.movement.fact",
         "action_xmlid": "smart_construction_core.action_sc_expense_claim_project_repay_company",
     },
+    "finance.responsibility.arrival_confirmation": {
+        "domain": "finance",
+        "target_model": "sc.company.contractor.responsibility.fact",
+        "direction": "reference",
+        "ledger_fact": "sc.company.contractor.responsibility.summary",
+        "action_xmlid": "smart_construction_core.action_sc_company_contractor_responsibility_fact",
+        "ledger_expect": {
+            "user_cognition": "project_receipt_status",
+            "responsibility_scope": "company_contractor",
+            "payment_request_policy": "not_ordinary_request",
+        },
+    },
+    "finance.responsibility.self_funding_income": {
+        "domain": "finance",
+        "target_model": "sc.company.contractor.responsibility.fact",
+        "direction": "reference",
+        "ledger_fact": "sc.company.contractor.responsibility.summary",
+        "action_xmlid": "smart_construction_core.action_sc_company_contractor_responsibility_fact",
+        "ledger_expect": {
+            "user_cognition": "self_funding_business",
+            "responsibility_scope": "company_contractor",
+            "project_role": "attribution_and_constraint",
+        },
+    },
+    "finance.responsibility.self_funding_refund": {
+        "domain": "finance",
+        "target_model": "sc.company.contractor.responsibility.fact",
+        "direction": "reference",
+        "ledger_fact": "sc.company.contractor.responsibility.summary",
+        "action_xmlid": "smart_construction_core.action_sc_company_contractor_responsibility_fact",
+        "ledger_expect": {
+            "user_cognition": "self_funding_refund_business",
+            "responsibility_scope": "company_contractor",
+            "project_role": "attribution_and_constraint",
+        },
+    },
+    "finance.responsibility.company_contractor.balance": {
+        "domain": "finance",
+        "target_model": "sc.company.contractor.responsibility.summary",
+        "direction": "reference",
+        "ledger_fact": "sc.company.contractor.responsibility.summary",
+        "action_xmlid": "smart_construction_core.action_sc_company_contractor_responsibility_summary",
+        "ledger_expect": {
+            "terminal_action": "read_only_summary",
+            "responsibility_scope": "company_contractor",
+            "arrival_balance_policy": "separate_from_self_funding",
+        },
+    },
     "invoice.output.application": {
         "domain": "invoice_tax",
         "target_model": "sc.invoice.registration",
@@ -412,6 +460,12 @@ def _check_category(code, expected, failures):
         _expect(
             triggers.get(trigger) is expected_value,
             "%s expected cost trigger %s=%s, got %s" % (code, trigger, expected_value, triggers.get(trigger)),
+            failures,
+        )
+    for key, expected_value in (expected.get("ledger_expect") or {}).items():
+        _expect(
+            ledger_policy.get(key) == expected_value,
+            "%s expected ledger policy %s=%s, got %s" % (code, key, expected_value, ledger_policy.get(key)),
             failures,
         )
     required_fields = parsed.get("required_fields_json") or []

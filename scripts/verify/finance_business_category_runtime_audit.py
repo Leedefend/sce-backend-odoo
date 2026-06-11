@@ -30,6 +30,28 @@ CATEGORIES = [
     ("finance.repayment.contractor_project", "smart_construction_core.action_sc_expense_claim_contractor_project_repay"),
     ("finance.repayment.project_company", "smart_construction_core.action_sc_expense_claim_project_repay_company"),
 ]
+READONLY_CATEGORIES = [
+    (
+        "finance.responsibility.arrival_confirmation",
+        "arrival_confirmation",
+        "smart_construction_core.action_sc_company_contractor_responsibility_fact",
+    ),
+    (
+        "finance.responsibility.self_funding_income",
+        "self_funding_income",
+        "smart_construction_core.action_sc_company_contractor_responsibility_fact",
+    ),
+    (
+        "finance.responsibility.self_funding_refund",
+        "self_funding_refund",
+        "smart_construction_core.action_sc_company_contractor_responsibility_fact",
+    ),
+    (
+        "finance.responsibility.company_contractor.balance",
+        None,
+        "smart_construction_core.action_sc_company_contractor_responsibility_summary",
+    ),
+]
 
 
 def _token():
@@ -241,6 +263,40 @@ def _run_category(code, action_xmlid, shared, failures):
     }
 
 
+def _run_readonly_category(code, expected_responsibility_type, action_xmlid, failures):
+    category = env["sc.business.category"].sudo().search([("code", "=", code)], limit=1)
+    if not category:
+        failures.append("%s: missing business category" % code)
+        return {}
+    if category.action_xmlid != action_xmlid:
+        failures.append("%s: expected action %s, got %s" % (code, action_xmlid, category.action_xmlid))
+    action = category.action_open_bound_entry()
+    model_name = action.get("res_model")
+    domain = action.get("domain") or []
+    if model_name != category.target_model:
+        failures.append("%s: bound action model expected %s, got %s" % (code, category.target_model, model_name))
+    count = env[model_name].sudo().search_count(domain)
+    if count <= 0:
+        failures.append("%s: expected readonly category domain to match rows, got 0 for %s" % (code, domain))
+    if expected_responsibility_type:
+        wrong_count = env[model_name].sudo().search_count(
+            ["&"] + list(domain) + [("responsibility_type", "!=", expected_responsibility_type)]
+        )
+        if wrong_count:
+            failures.append(
+                "%s: category domain leaked %s rows outside responsibility_type=%s"
+                % (code, wrong_count, expected_responsibility_type)
+            )
+    return {
+        "code": code,
+        "action": action_xmlid,
+        "model": model_name,
+        "domain": domain,
+        "matched_count": count,
+        "responsibility_type": expected_responsibility_type,
+    }
+
+
 failures = []
 rows = []
 
@@ -249,6 +305,8 @@ try:
     for code, action_xmlid in CATEGORIES:
         with env.cr.savepoint():
             rows.append(_run_category(code, action_xmlid, shared, failures))
+    for code, expected_responsibility_type, action_xmlid in READONLY_CATEGORIES:
+        rows.append(_run_readonly_category(code, expected_responsibility_type, action_xmlid, failures))
 except Exception as err:
     failures.append("unexpected error: %s" % err)
     failures.append(traceback.format_exc())
@@ -256,7 +314,7 @@ except Exception as err:
 result = {
     "audit": "finance_business_category_runtime_audit",
     "status": "PASS" if not failures else "FAIL",
-    "category_count": len(CATEGORIES),
+    "category_count": len(CATEGORIES) + len(READONLY_CATEGORIES),
     "rows": rows,
     "failures": failures,
 }

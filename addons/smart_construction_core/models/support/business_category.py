@@ -4,9 +4,10 @@ import json
 
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
+from odoo.osv import expression
 
 
-BUSINESS_CATEGORY_TEMPLATE_VERSION = "2026-06-11.5"
+BUSINESS_CATEGORY_TEMPLATE_VERSION = "2026-06-11.6"
 BUSINESS_CATEGORY_ACTION_BINDINGS = {
     "site.construction.diary": "smart_construction_core.action_sc_construction_diary",
     "site.quality.issue": "smart_construction_core.action_sc_quality_issue",
@@ -41,6 +42,10 @@ BUSINESS_CATEGORY_ACTION_BINDINGS = {
     "finance.repayment.registration": "smart_construction_core.action_sc_expense_claim_repayment_registration",
     "finance.repayment.contractor_project": "smart_construction_core.action_sc_expense_claim_contractor_project_repay",
     "finance.repayment.project_company": "smart_construction_core.action_sc_expense_claim_project_repay_company",
+    "finance.responsibility.arrival_confirmation": "smart_construction_core.action_sc_company_contractor_responsibility_fact",
+    "finance.responsibility.self_funding_income": "smart_construction_core.action_sc_company_contractor_responsibility_fact",
+    "finance.responsibility.self_funding_refund": "smart_construction_core.action_sc_company_contractor_responsibility_fact",
+    "finance.responsibility.company_contractor.balance": "smart_construction_core.action_sc_company_contractor_responsibility_summary",
     "invoice.output.application": "smart_construction_core.action_sc_invoice_application_user",
     "invoice.output.registration": "smart_construction_core.action_sc_invoice_registration_user",
     "invoice.input.report": "smart_construction_core.action_sc_invoice_input_report_user",
@@ -241,14 +246,44 @@ class ScBusinessCategory(models.Model):
             context = dict(raw_context) if isinstance(raw_context, dict) else {}
         context.update({"default_%s" % key: value for key, value in defaults.items()})
         context["current_business_category_code"] = self.code
+        result_domain = self._combine_bound_action_domain(result.get("domain"))
         result.update(
             {
                 "name": self.name,
                 "context": context,
+                "domain": result_domain,
                 "target": "current",
             }
         )
         return result
+
+    def _combine_bound_action_domain(self, action_domain):
+        self.ensure_one()
+        bound_domain = self._parse_action_domain(action_domain)
+        try:
+            category_domain = json.loads(self.domain_json or "[]")
+        except (TypeError, ValueError):
+            category_domain = []
+        if bound_domain is None:
+            return category_domain or action_domain or []
+        if bound_domain and category_domain:
+            return expression.AND([bound_domain, category_domain])
+        return category_domain or bound_domain
+
+    def _parse_action_domain(self, action_domain):
+        if not action_domain:
+            return []
+        if isinstance(action_domain, list):
+            return action_domain
+        if isinstance(action_domain, tuple):
+            return list(action_domain)
+        if isinstance(action_domain, str):
+            try:
+                parsed = ast.literal_eval(action_domain)
+            except (SyntaxError, ValueError):
+                return None
+            return list(parsed) if isinstance(parsed, (list, tuple)) else []
+        return []
 
     @api.model
     def _sync_template_action_bindings(self):
