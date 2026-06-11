@@ -202,6 +202,9 @@ class ScFundAccountOperation(models.Model):
                     raise ValidationError(_("余额调整前后金额不能相同。"))
             if record.operation_type == "fund_daily_report" and not record.fund_account_id:
                 raise ValidationError(_("资金日报表必须填写账户。"))
+            if record.operation_type == "fund_daily_report":
+                if record.daily_income < 0 or record.daily_expense < 0:
+                    raise ValidationError(_("资金日报收入和支出不能为负数。"))
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -255,6 +258,7 @@ class ScFundAccountOperation(models.Model):
             rec.write({"state": "done"})
             rec._ensure_interfund_cash_ledger()
             rec._ensure_fund_daily_cash_ledger()
+            rec._apply_account_balance_state()
             rec._audit_transition(
                 "fund_account_operation_done",
                 before,
@@ -307,6 +311,31 @@ class ScFundAccountOperation(models.Model):
                         source_res_id=rec.id,
                     )
                 )
+
+    def _apply_account_balance_state(self):
+        for rec in self:
+            if rec.operation_type not in ("fund_daily_report", "balance_adjustment") or not rec.fund_account_id:
+                continue
+            vals = {
+                "balance_as_of_date": rec.operation_date,
+                "balance_source_operation_id": rec.id,
+            }
+            if rec.operation_type == "fund_daily_report":
+                vals.update(
+                    {
+                        "current_account_balance": rec.account_balance,
+                        "current_bank_balance": rec.bank_balance,
+                        "current_balance_source": "fund_daily_report",
+                    }
+                )
+            elif rec.operation_type == "balance_adjustment":
+                vals.update(
+                    {
+                        "current_account_balance": rec.after_balance,
+                        "current_balance_source": "balance_adjustment",
+                    }
+                )
+            rec.fund_account_id.sudo().write(vals)
 
     def _ensure_interfund_cash_ledger(self):
         for rec in self:

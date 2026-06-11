@@ -96,6 +96,7 @@ def _run_daily_report(failures):
     daily.action_confirm()
     daily.action_done()
     daily.invalidate_recordset()
+    account.invalidate_recordset()
     ledgers = _ledger_rows(daily, "daily_line")
     by_direction = {ledger.direction: ledger for ledger in ledgers}
     if daily.state != "done":
@@ -110,11 +111,23 @@ def _run_daily_report(failures):
         failures.append("fund_daily daily_line ledgers must not link payment_request")
     if _interfund_count(daily):
         failures.append("fund_daily must not create interfund movement fact")
+    if account.current_account_balance != 1000.0:
+        failures.append("fund_daily expected account current_account_balance=1000.0, got %s" % account.current_account_balance)
+    if account.current_bank_balance != 1000.0:
+        failures.append("fund_daily expected account current_bank_balance=1000.0, got %s" % account.current_bank_balance)
+    if account.current_balance_source != "fund_daily_report":
+        failures.append("fund_daily expected account balance source fund_daily_report, got %s" % account.current_balance_source)
+    if account.balance_source_operation_id != daily:
+        failures.append("fund_daily expected account balance source operation to be daily report")
     return {
         "operation_id": daily.id,
+        "fund_account_id": account.id,
         "ledger_ids": ledgers.ids,
         "ledger_count": len(ledgers),
         "interfund_count": _interfund_count(daily),
+        "account_balance": account.current_account_balance,
+        "bank_balance": account.current_bank_balance,
+        "balance_source": account.current_balance_source,
     }
 
 
@@ -135,17 +148,32 @@ def _run_balance_adjustment(failures):
             "operation_reason": "余额调整办理闭环审计",
         }
     )
+    _expect_exception("balance_adjustment.done_before_confirm", adjustment.action_done, failures)
     adjustment.action_confirm()
     adjustment.action_done()
+    account.invalidate_recordset()
     ledgers = _ledger_rows(adjustment, "daily_line") | _ledger_rows(adjustment, "interfund")
     if ledgers:
         failures.append("balance_adjustment must not create cashflow ledger rows")
     if _interfund_count(adjustment):
         failures.append("balance_adjustment must not create interfund movement fact")
+    if account.current_account_balance != 520.0:
+        failures.append(
+            "balance_adjustment expected account current_account_balance=520.0, got %s"
+            % account.current_account_balance
+        )
+    if account.current_balance_source != "balance_adjustment":
+        failures.append("balance_adjustment expected account balance source balance_adjustment")
+    if account.balance_source_operation_id != adjustment:
+        failures.append("balance_adjustment expected account balance source operation to be adjustment")
     return {
         "operation_id": adjustment.id,
+        "fund_account_id": account.id,
         "ledger_count": len(ledgers),
         "interfund_count": _interfund_count(adjustment),
+        "account_balance": account.current_account_balance,
+        "bank_balance": account.current_bank_balance,
+        "balance_source": account.current_balance_source,
     }
 
 
