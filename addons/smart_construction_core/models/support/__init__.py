@@ -46,6 +46,7 @@ from . import legacy_expense_deposit_fact
 from . import legacy_invoice_tax_fact
 from . import legacy_invoice_surcharge_fact
 from . import legacy_tax_deduction_fact
+from . import company_contractor_responsibility_context_mixin
 from . import legacy_self_funding_fact
 from . import legacy_project_fund_balance_fact
 from . import legacy_supplier_contract_pricing_fact
@@ -97,4 +98,3 @@ from . import legacy_ar_ap_report_fact
 from . import partner_business_fact_line
 from . import runtime_user_management
 from . import product_policy_sync
-from . import company_contractor_responsibility_context_mixin

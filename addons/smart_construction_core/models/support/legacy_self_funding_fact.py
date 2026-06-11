@@ -5,6 +5,7 @@ from odoo import fields, models
 class ScLegacySelfFundingFact(models.Model):
     _name = "sc.legacy.self.funding.fact"
     _description = "历史自筹资金事实"
+    _inherit = ["sc.company.contractor.responsibility.context.mixin"]
     _order = "entry_time desc nulls last, document_date desc nulls last, legacy_pid desc, source_table, legacy_record_id"
 
     source_table = fields.Char(string="来源表", required=True, index=True)

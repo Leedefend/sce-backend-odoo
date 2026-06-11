@@ -36,6 +36,10 @@
                     <field name="project_id"/>
                     <field name="project_name"/>
                     <field name="partner_name"/>
+                    <field name="company_contractor_responsibility_state" optional="show"/>
+                    <field name="company_contractor_arrival_unprocessed_amount" optional="hide" sum="到款可处理余额合计"/>
+                    <field name="company_contractor_arrival_over_processed_amount" optional="show" sum="到款超处理金额合计"/>
+                    <field name="company_contractor_self_funding_balance" optional="show" sum="自筹未退余额合计"/>
                     <field name="income_category"/>
                     <field name="payment_method"/>
                     <field name="account_name"/>
@@ -77,6 +81,8 @@
                     <field name="document_date" string="日期"/>
                     <field name="project_name" string="项目名称"/>
                     <field name="partner_name" string="对方单位/付款"/>
+                    <field name="company_contractor_responsibility_state" string="责任状态" optional="show"/>
+                    <field name="company_contractor_self_funding_balance" string="自筹未退余额" optional="show" sum="自筹未退余额合计"/>
                     <field name="self_funding_amount" string="自筹金额" sum="自筹金额合计"/>
                     <field name="income_category" string="收入类别"/>
                     <field name="account_name" string="收款账户"/>
@@ -120,6 +126,19 @@
                             <field name="unreturned_amount" string="未退金额" readonly="1"/>
                             <field name="need_refund" string="是否需要退回" readonly="1"/>
                         </group>
+                        <group string="公司-承包人责任约束">
+                            <field name="company_contractor_responsibility_summary_id" invisible="1"/>
+                            <field name="company_contractor_responsibility_state" readonly="1"/>
+                            <field name="company_contractor_arrival_unprocessed_amount" readonly="1"/>
+                            <field name="company_contractor_arrival_over_processed_amount" readonly="1"/>
+                            <field name="company_contractor_self_funding_balance" readonly="1"/>
+                            <field name="company_contractor_responsibility_notice" readonly="1" nolabel="1"/>
+                            <button name="action_view_company_contractor_responsibility_summary"
+                                    type="object"
+                                    string="查看责任余额"
+                                    class="btn-secondary"
+                                    invisible="not company_contractor_responsibility_summary_id"/>
+                        </group>
                         <group string="附件与审计">
                             <field name="title" string="标题" readonly="1"/>
                             <field name="attachment_text" string="附件" readonly="1"/>
@@ -143,6 +162,8 @@
                     <field name="project_name" string="项目名称"/>
                     <field name="refund_amount" string="退回金额" sum="退回金额合计"/>
                     <field name="partner_name" string="往来单位/付款单位"/>
+                    <field name="company_contractor_responsibility_state" string="责任状态" optional="show"/>
+                    <field name="company_contractor_self_funding_balance" string="自筹未退余额" optional="show" sum="自筹未退余额合计"/>
                     <field name="note" string="备注"/>
                     <field name="attachment_text" string="附件"/>
                     <field name="entry_user" string="录入人"/>
@@ -174,6 +195,19 @@
                         <group string="金额">
                             <field name="refund_amount" string="退回金额" readonly="1"/>
                             <field name="unreturned_amount" string="未退金额" readonly="1"/>
+                        </group>
+                        <group string="公司-承包人责任约束">
+                            <field name="company_contractor_responsibility_summary_id" invisible="1"/>
+                            <field name="company_contractor_responsibility_state" readonly="1"/>
+                            <field name="company_contractor_arrival_unprocessed_amount" readonly="1"/>
+                            <field name="company_contractor_arrival_over_processed_amount" readonly="1"/>
+                            <field name="company_contractor_self_funding_balance" readonly="1"/>
+                            <field name="company_contractor_responsibility_notice" readonly="1" nolabel="1"/>
+                            <button name="action_view_company_contractor_responsibility_summary"
+                                    type="object"
+                                    string="查看责任余额"
+                                    class="btn-secondary"
+                                    invisible="not company_contractor_responsibility_summary_id"/>
                         </group>
                         <group string="附件与审计">
                             <field name="note" string="备注" readonly="1"/>

@@ -68,6 +68,20 @@ MODEL_PROBES = [
         "name_field": "legacy_partner_name",
         "label": "收款登记按历史往来单位匹配责任余额",
     },
+    {
+        "model": "sc.legacy.self.funding.fact",
+        "table": "sc_legacy_self_funding_fact",
+        "match": "partner_id",
+        "extra_where": "AND r.line_type IN ('income', 'refund')",
+        "label": "自筹正式源单按正式往来单位匹配责任余额",
+    },
+    {
+        "model": "sc.legacy.self.funding.fact",
+        "table": "sc_legacy_self_funding_fact",
+        "name_field": "partner_name",
+        "extra_where": "AND r.line_type IN ('income', 'refund')",
+        "label": "自筹正式源单按历史往来单位匹配责任余额",
+    },
 ]
 
 
@@ -96,6 +110,7 @@ for probe in MODEL_PROBES:
     model = probe["model"]
     match_mode = probe.get("match") or "name"
     name_field = probe.get("name_field") or ""
+    extra_where = probe.get("extra_where") or ""
     if match_mode == "partner_id":
         match_count = sql_one(
             f"""
@@ -103,6 +118,7 @@ for probe in MODEL_PROBES:
               FROM {table} r
              WHERE r.project_id IS NOT NULL
                AND r.partner_id IS NOT NULL
+               {extra_where}
                AND EXISTS (
                     SELECT 1
                       FROM sc_company_contractor_responsibility_summary s
@@ -125,6 +141,7 @@ for probe in MODEL_PROBES:
                AND s.partner_id = r.partner_id
              WHERE r.project_id IS NOT NULL
                AND r.partner_id IS NOT NULL
+               {extra_where}
              ORDER BY r.id
              LIMIT 5
             """
@@ -137,6 +154,7 @@ for probe in MODEL_PROBES:
              WHERE r.project_id IS NOT NULL
                AND r.partner_id IS NULL
                AND COALESCE(r.{name_field}, '') <> ''
+               {extra_where}
                AND EXISTS (
                     SELECT 1
                       FROM sc_company_contractor_responsibility_summary s
@@ -162,6 +180,7 @@ for probe in MODEL_PROBES:
              WHERE r.project_id IS NOT NULL
                AND r.partner_id IS NULL
                AND COALESCE(r.{name_field}, '') <> ''
+               {extra_where}
              ORDER BY r.id
              LIMIT 5
             """
