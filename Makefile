@@ -661,6 +661,9 @@ verify.finance_handling.http_surface.smoke:
 verify.finance_legacy_cash_ledger.backfill_readiness.audit: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) scripts/ops/validate_finance_legacy_cash_ledger_backfill_readiness.sh
 
+verify.finance_legacy_source_less_ledger.reconciliation.audit: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) scripts/ops/validate_finance_legacy_source_less_ledger_reconciliation.sh
+
 verify.finance_business_fact.scope.audit: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/verify/finance_business_fact_scope_audit.py
 
