@@ -198,6 +198,7 @@
         'views/projection/company_contractor_responsibility_summary_views.xml',
         'views/projection/p1_relationship_suggestion_views.xml',
         'views/projection/p1_relationship_review_queue_views.xml',
+        'views/projection/labor_settlement_candidate_views.xml',
         'views/projection/finance_interfund_position_menu.xml',
         'views/core/workflow_views.xml',
         'views/menu.xml',

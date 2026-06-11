@@ -28,3 +28,4 @@ from . import company_contractor_responsibility_fact
 from . import company_contractor_responsibility_summary
 from . import p1_relationship_suggestion
 from . import p1_relationship_review_queue
+from . import labor_settlement_candidate

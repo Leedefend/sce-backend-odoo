@@ -1276,6 +1276,12 @@
               action="smart_construction_core.action_sc_labor_usage_casual"
               sequence="32"
               groups="smart_construction_core.group_sc_internal_user"/>
+    <menuitem id="menu_sc_labor_settlement_candidate"
+              name="劳务结算候选核对"
+              parent="smart_construction_core.menu_sc_labor_management_group"
+              action="smart_construction_core.action_sc_labor_settlement_candidate"
+              sequence="39"
+              groups="smart_construction_core.group_sc_internal_user"/>
     <menuitem id="menu_sc_labor_settlement"
               name="劳务结算"
               parent="smart_construction_core.menu_sc_labor_management_group"
