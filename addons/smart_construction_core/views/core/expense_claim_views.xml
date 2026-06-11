@@ -92,7 +92,7 @@
                                 <field name="project_id" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                                 <field name="operation_strategy" readonly="1"/>
                                 <field name="partner_id"/>
-                                <field name="payment_request_id"/>
+                                <field name="payment_request_id" invisible="claim_type == 'project_company_repay' or expense_type == '承包人还项目款'"/>
                                 <field name="company_name_text"/>
                                 <field name="guarantee_project_name"/>
                                 <field name="guarantee_type"/>

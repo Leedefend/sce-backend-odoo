@@ -718,6 +718,8 @@ class ScSettlementOrder(models.Model):
 
     def write(self, vals):
         self._normalize_feedback_defaults(vals)
+        if vals.get("state") == "cancel":
+            self._check_payments_before_cancel()
         res = super().write(vals)
         if {"contract_id", "partner_id", "date_settlement", "document_date", "final_approved_date", "approved_date"} & set(vals):
             self._apply_contract_defaults_if_needed()

@@ -208,15 +208,29 @@ class ScReceiptIncome(models.Model):
                     _("确认收款收入"),
                     reasons=[_("只有草稿状态的收款收入可以确认")],
                 )
+            before = rec._snapshot_audit_payload()
             rec._check_business_anchor_or_raise()
             rec._check_payment_request_scope_or_raise()
             if policy.is_approval_required(rec._name, company=rec.company_id):
                 company = rec.company_id or self.env.company
                 rec.with_company(company).with_context(allowed_company_ids=[company.id])._request_document_approval()
+                rec._audit_transition(
+                    "receipt_income_submitted",
+                    before,
+                    rec._snapshot_audit_payload(),
+                    "action_confirm",
+                )
             else:
                 rec.write({"state": "confirmed", "reject_reason": False})
+                rec._audit_transition(
+                    "receipt_income_confirmed",
+                    before,
+                    rec._snapshot_audit_payload(),
+                    "action_confirm",
+                )
 
     def action_received(self):
+        self._assert_finance_confirm_access()
         policy = self.env["sc.approval.policy"]
         for rec in self:
             if rec.state not in ("draft", "confirmed"):
@@ -230,8 +244,25 @@ class ScReceiptIncome(models.Model):
             rec._check_payment_request_scope_or_raise()
             if policy.is_approval_required(rec._name, company=rec.company_id) and rec.validation_status != "validated":
                 raise UserError(_("收款收入尚未完成统一审批流程。"))
+            before = rec._snapshot_audit_payload()
             rec._sync_payment_request_done()
-            rec.state = "received"
+            rec.write({"state": "received"})
+            rec._audit_transition(
+                "receipt_income_received",
+                before,
+                rec._snapshot_audit_payload(),
+                "action_received",
+            )
+
+    def _has_finance_confirm_access(self):
+        return (
+            self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager")
+            or self.env.user.has_group("smart_construction_custom.group_sc_role_finance")
+        )
+
+    def _assert_finance_confirm_access(self):
+        if not self._has_finance_confirm_access():
+            raise UserError(_("你没有登记收款的财务确认权限。"))
 
     def action_cancel(self):
         for rec in self:
@@ -244,16 +275,39 @@ class ScReceiptIncome(models.Model):
                     _("取消收款收入"),
                     reasons=[_("已收款、历史已确认或已取消的收款收入不能取消")],
                 )
-            rec.state = "cancel"
+            before = rec._snapshot_audit_payload()
+            rec.write({"state": "cancel"})
+            rec._audit_transition(
+                "receipt_income_cancelled",
+                before,
+                rec._snapshot_audit_payload(),
+                "action_cancel",
+            )
 
     def _check_business_anchor_or_raise(self):
         for rec in self:
+            if rec.source_origin == "legacy":
+                continue
             if not rec.project_id:
                 raise_guard(
                     "RECEIPT_INCOME_MISSING_PROJECT",
                     f"收款收入[{rec.display_name}]",
                     _("办理收款收入"),
                     reasons=[_("收款收入必须关联项目")],
+                )
+            if not rec.payment_request_id:
+                raise_guard(
+                    "RECEIPT_INCOME_MISSING_REQUEST",
+                    f"收款收入[{rec.display_name}]",
+                    _("办理收款收入"),
+                    reasons=[_("新系统收款收入必须关联已审批的收款申请")],
+                )
+            if not rec.contract_id:
+                raise_guard(
+                    "RECEIPT_INCOME_MISSING_CONTRACT",
+                    f"收款收入[{rec.display_name}]",
+                    _("办理收款收入"),
+                    reasons=[_("新系统收款收入必须关联合同")],
                 )
             if not rec.partner_id:
                 raise_guard(
@@ -268,6 +322,14 @@ class ScReceiptIncome(models.Model):
                     f"收款收入[{rec.display_name}]",
                     _("办理收款收入"),
                     reasons=[_("收款金额必须大于0")],
+                )
+            receiving_account = rec.receiving_account_no or rec.receiving_account or rec.receiving_account_name
+            if not receiving_account:
+                raise_guard(
+                    "RECEIPT_INCOME_MISSING_RECEIVING_ACCOUNT",
+                    f"收款收入[{rec.display_name}]",
+                    _("办理收款收入"),
+                    reasons=[_("新系统收款收入必须填写收款账户信息")],
                 )
 
     def _check_payment_request_scope_or_raise(self):
@@ -313,13 +375,27 @@ class ScReceiptIncome(models.Model):
     def action_on_tier_approved(self):
         for rec in self:
             if rec.state == "draft":
+                before = rec._snapshot_audit_payload()
                 rec.with_context(skip_validation_check=True).write({"state": "confirmed", "reject_reason": False})
+                rec._audit_transition(
+                    "receipt_income_confirmed",
+                    before,
+                    rec._snapshot_audit_payload(),
+                    "action_on_tier_approved",
+                )
 
     def action_on_tier_rejected(self, reason=None):
         for rec in self:
             if rec.state == "draft":
+                before = rec._snapshot_audit_payload()
                 rec.with_context(skip_validation_check=True).write(
                     {"reject_reason": reason or rec._get_tier_reject_reason()}
+                )
+                rec._audit_transition(
+                    "receipt_income_rejected",
+                    before,
+                    rec._snapshot_audit_payload(),
+                    "action_on_tier_rejected",
                 )
 
     def _sync_payment_request_done(self):
@@ -354,3 +430,40 @@ class ScReceiptIncome(models.Model):
             )
             if ledger:
                 rec.with_context(skip_validation_check=True).write({"treasury_ledger_id": ledger.id})
+
+    def _snapshot_audit_payload(self):
+        self.ensure_one()
+        return {
+            "state": self.state,
+            "source_origin": self.source_origin,
+            "source_kind": self.source_kind,
+            "source_family": self.source_family,
+            "project_id": self.project_id.id,
+            "company_id": self.company_id.id,
+            "partner_id": self.partner_id.id,
+            "contract_id": self.contract_id.id,
+            "payment_request_id": self.payment_request_id.id,
+            "treasury_ledger_id": self.treasury_ledger_id.id,
+            "date_receipt": fields.Date.to_string(self.date_receipt) if self.date_receipt else False,
+            "receipt_type": self.receipt_type,
+            "income_category": self.income_category,
+            "receiving_account_name": self.receiving_account_name,
+            "receiving_account_no": self.receiving_account_no,
+            "amount": self.amount,
+            "currency_id": self.currency_id.id,
+            "reject_reason": self.reject_reason,
+            "validation_status": self.validation_status,
+        }
+
+    def _audit_transition(self, event_code, before, after, action_name):
+        self.ensure_one()
+        return self.env["sc.audit.log"].write_event(
+            event_code,
+            self._name,
+            self.id,
+            action=action_name,
+            before=before,
+            after=after,
+            company_id=self.company_id,
+            project_id=self.project_id,
+        )

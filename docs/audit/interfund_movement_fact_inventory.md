@@ -4,7 +4,7 @@
 
 财务中心下公司与项目、项目与项目、承包人与项目之间的资金往来事实，不能由单一现有模型完整承接。当前已新增只读投影 `sc.interfund.movement.fact`，把账户调拨、借款、还款三类来源归一为资金往来事实层。
 
-该投影不改变用户已验收菜单，不修改源业务数据，不写入 `sc.treasury.ledger`。
+该投影不改变用户已验收菜单，不修改源业务数据。往来事实层仍用于项目资金归集和历史分析；新办理完成形成真实资金流入/流出时，必须另行通过 `source_model/source_res_id` 写入 `sc.treasury.ledger` 统一现金流台账，且不关联 `payment.request`。
 
 ## 来源覆盖
 
@@ -27,11 +27,11 @@ DB_NAME=sc_demo MIGRATION_ARTIFACT_ROOT=artifacts/migration make verify.interfun
 
 | 往来类型 | 数量 | 金额 | 说明 |
 | --- | ---: | ---: | --- |
-| 公司借款给项目 | 645 | 288,955,824.03 | 借款申请、借入资金，未命中承包人借项目款文本规则 |
+| 公司借款给项目 | 695 | 313,372,157.93 | 借款申请、借入资金，且未命中“借...项目...款”借出语义 |
 | 项目归还公司款 | 246 | 162,052,925.59 | 覆盖全部 `claim_type=project_company_repay`，不只覆盖当前菜单 5 条 |
 | 项目间账户调拨 | 12 | 2,583,578.68 | 转出账户项目与转入账户项目不同 |
 | 同项目账户调拨 | 383 | 306,569,035.00 | 转出账户项目与转入账户项目相同 |
-| 项目借款给承包人 | 227 | 170,622,959.28 | 借款用途文本命中“借/项目/款” |
+| 项目借款给承包人 | 177 | 146,206,625.38 | 借款用途按顺序命中“借...项目...款”；避免把“项目借公司款”误分为借出 |
 | 承包人归还项目款 | 425 | 329,175,279.34 | `expense_type=承包人还项目款` 且正式菜单 claim_type 范围内 |
 
 ## 审计约束
@@ -42,8 +42,10 @@ DB_NAME=sc_demo MIGRATION_ARTIFACT_ROOT=artifacts/migration make verify.interfun
 - 来源模型 `sc.fund.account.operation`、`sc.financing.loan`、`sc.expense.claim` 数量分别闭合。
 - 项目间账户调拨数量与金额从账户源头反算后必须完全一致。
 - `project_company_repay` 全部进入“项目归还公司款”事实，不按菜单 5 条截断。
+- 项目还公司款和承包人还项目款属于往来款闭环，不关联 `payment.request`，不借用经营收付款申请或结算单生成经营付款/收款台账；完成后通过来源模型和来源记录写入 `sc.treasury.ledger` 统一现金流台账。
 - 资金日报、余额快照不得混入资金往来事实。
 - 同一来源模型和来源记录不得重复进入事实层。
+- 借款分类不得只按“借/项目/款”三个字无序匹配；`项目借公司款` 归入公司借款给项目，`借...项目...款` 归入项目借款给承包人。
 
 ## 后续判断
 
@@ -63,7 +65,7 @@ DB_NAME=sc_demo MIGRATION_ARTIFACT_ROOT=artifacts/migration make verify.interfun
 - 公司借款给项目、公司账户转项目账户、承包人归还项目款：计入项目流入。
 - 项目归还公司款、项目账户转公司账户、项目借款给承包人：计入项目流出。
 - 项目间账户调拨：来源项目计流出，目标项目计流入，全局净额必须为 0。
-- 同项目账户调拨：只计项目内调拨，净额为 0。
+- 同项目账户调拨：只计项目内调拨，净额为 0；不重复写入项目流入/流出现金流台账，避免同一项目账户换户造成现金流虚增。
 - 未完全分类账户调拨：只保留为内部/待分析项目视角，不计净额。
 
 审计命令：
@@ -72,4 +74,4 @@ DB_NAME=sc_demo MIGRATION_ARTIFACT_ROOT=artifacts/migration make verify.interfun
 DB_NAME=sc_demo MIGRATION_ARTIFACT_ROOT=artifacts/migration make verify.interfund_movement_project.summary.audit
 ```
 
-还不建议直接把这些事实写入 `sc.treasury.ledger`。现有 `sc.treasury.ledger` 仍是支付/收款申请驱动台账，强行承接借款和账户调拨会混淆业务口径。
+边界修正：不能把往来款强行挂到 `payment.request`，但也不能让往来资金事实游离于现金流之外。当前策略是新增 `sc.treasury.ledger.source_model/source_res_id`，允许资金台账承接非收付款申请来源；往来款完成后生成 `source_kind=interfund` 的资金流水，`payment_request_id` 为空。历史往来事实是否批量回填资金台账，需要单独迁移审计，避免污染已锁定历史事实。

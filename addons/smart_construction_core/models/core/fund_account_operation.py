@@ -175,7 +175,15 @@ class ScFundAccountOperation(models.Model):
             res["project_id"] = project_id
         return res
 
-    @api.constrains("operation_type", "source_account_id", "target_account_id", "amount", "before_balance", "after_balance")
+    @api.constrains(
+        "operation_type",
+        "source_account_id",
+        "target_account_id",
+        "fund_account_id",
+        "amount",
+        "before_balance",
+        "after_balance",
+    )
     def _check_operation_values(self):
         for record in self:
             if record.operation_type in ("transfer_out", "transfer_between"):
@@ -185,7 +193,11 @@ class ScFundAccountOperation(models.Model):
                     raise ValidationError(_("转出账户和转入账户不能相同。"))
                 if record.amount <= 0:
                     raise ValidationError(_("资金划拨/调拨金额必须大于 0。"))
+                if record.source_account_id.currency_id != record.target_account_id.currency_id:
+                    raise ValidationError(_("转出账户和转入账户币种必须一致。"))
             if record.operation_type == "balance_adjustment":
+                if not record.fund_account_id:
+                    raise ValidationError(_("余额调整必须填写调整账户。"))
                 if record.before_balance == record.after_balance:
                     raise ValidationError(_("余额调整前后金额不能相同。"))
             if record.operation_type == "fund_daily_report" and not record.fund_account_id:
@@ -224,15 +236,60 @@ class ScFundAccountOperation(models.Model):
         for rec in self:
             if rec.state != "draft":
                 raise UserError(_("只有草稿状态的资金账户操作单可以确认。"))
+            before = rec._snapshot_audit_payload()
             rec._check_active_accounts()
-            rec.state = "confirmed"
+            rec.write({"state": "confirmed"})
+            rec._audit_transition(
+                "fund_account_operation_confirmed",
+                before,
+                rec._snapshot_audit_payload(),
+                "action_confirm",
+            )
 
     def action_done(self):
         for rec in self:
             if rec.state != "confirmed":
                 raise UserError(_("只有已确认的资金账户操作单可以完成。"))
+            before = rec._snapshot_audit_payload()
             rec._check_active_accounts()
-            rec.state = "done"
+            rec.write({"state": "done"})
+            rec._ensure_interfund_cash_ledger()
+            rec._audit_transition(
+                "fund_account_operation_done",
+                before,
+                rec._snapshot_audit_payload(),
+                "action_done",
+            )
+
+    def _ensure_interfund_cash_ledger(self):
+        for rec in self:
+            if rec.operation_type not in ("transfer_out", "transfer_between") or (rec.amount or 0.0) <= 0:
+                continue
+            source_project = rec.source_account_id.project_id
+            target_project = rec.target_account_id.project_id
+            if source_project and target_project and source_project == target_project:
+                continue
+            Ledger = self.env["sc.treasury.ledger"]
+            if source_project:
+                Ledger._ensure_interfund_ledger(
+                    rec,
+                    project=source_project,
+                    direction="out",
+                    amount=rec.amount,
+                    date=rec.operation_date,
+                    currency=rec.currency_id,
+                    note=_("auto:fund_account_operation_done:out"),
+                )
+            if target_project:
+                Ledger._ensure_interfund_ledger(
+                    rec,
+                    project=target_project,
+                    direction="in",
+                    amount=rec.amount,
+                    date=rec.operation_date,
+                    currency=rec.currency_id,
+                    note=_("auto:fund_account_operation_done:in"),
+                )
 
     def _check_active_accounts(self):
         self.ensure_one()
@@ -249,10 +306,59 @@ class ScFundAccountOperation(models.Model):
         for rec in self:
             if rec.state not in ("draft", "confirmed"):
                 raise UserError(_("只有草稿或已确认状态的资金账户操作单可以取消。"))
+            before = rec._snapshot_audit_payload()
             rec.write({"state": "cancelled"})
+            rec._audit_transition(
+                "fund_account_operation_cancelled",
+                before,
+                rec._snapshot_audit_payload(),
+                "action_cancel",
+            )
 
     def action_reset_draft(self):
         for rec in self:
             if rec.state != "cancelled":
                 raise UserError(_("只有已取消的资金账户操作单可以重置为草稿。"))
+            before = rec._snapshot_audit_payload()
             rec.write({"state": "draft"})
+            rec._audit_transition(
+                "fund_account_operation_reset_draft",
+                before,
+                rec._snapshot_audit_payload(),
+                "action_reset_draft",
+            )
+
+    def _snapshot_audit_payload(self):
+        self.ensure_one()
+        return {
+            "state": self.state,
+            "operation_type": self.operation_type,
+            "operation_date": fields.Date.to_string(self.operation_date) if self.operation_date else False,
+            "source_account_id": self.source_account_id.id,
+            "target_account_id": self.target_account_id.id,
+            "source_project_id": self.source_account_id.project_id.id,
+            "target_project_id": self.target_account_id.project_id.id,
+            "fund_account_id": self.fund_account_id.id,
+            "project_id": self.project_id.id,
+            "company_id": self.company_id.id,
+            "currency_id": self.currency_id.id,
+            "amount": self.amount,
+            "daily_income": self.daily_income,
+            "daily_expense": self.daily_expense,
+            "account_balance": self.account_balance,
+            "bank_balance": self.bank_balance,
+            "operation_reason": self.operation_reason,
+        }
+
+    def _audit_transition(self, event_code, before, after, action_name):
+        self.ensure_one()
+        return self.env["sc.audit.log"].write_event(
+            event_code,
+            self._name,
+            self.id,
+            action=action_name,
+            before=before,
+            after=after,
+            company_id=self.company_id,
+            project_id=self.project_id or self.source_account_id.project_id or self.target_account_id.project_id,
+        )

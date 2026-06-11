@@ -374,31 +374,23 @@ class ScInterfundMovementFact(models.Model):
                         20000000 + loan.id AS id,
                         COALESCE(loan.name, '借款事实') AS display_name,
                         CASE
-                            WHEN COALESCE(loan.purpose, '') ILIKE '%借%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%项目%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%款%'
+                            WHEN COALESCE(loan.purpose, '') ILIKE '%借%项目%款%'
                                 THEN 'project_to_contractor_borrow'
                             ELSE 'company_to_project_borrow'
                         END AS movement_type,
                         CASE
-                            WHEN COALESCE(loan.purpose, '') ILIKE '%借%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%项目%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%款%'
+                            WHEN COALESCE(loan.purpose, '') ILIKE '%借%项目%款%'
                                 THEN 'out'
                             ELSE 'in'
                         END AS direction,
                         CASE
-                            WHEN COALESCE(loan.purpose, '') ILIKE '%借%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%项目%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%款%'
+                            WHEN COALESCE(loan.purpose, '') ILIKE '%借%项目%款%'
                                 THEN 'medium'
                             ELSE 'medium'
                         END AS classification_confidence,
                         CASE
-                            WHEN COALESCE(loan.purpose, '') ILIKE '%借%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%项目%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%款%'
-                                THEN 'loan_type=borrowing_request and purpose text matches contractor/project borrow pattern'
+                            WHEN COALESCE(loan.purpose, '') ILIKE '%借%项目%款%'
+                                THEN 'loan_type=borrowing_request and ordered purpose text matches 借...项目...款'
                             ELSE 'loan_type=borrowing_request and direction=borrowed_fund'
                         END AS classification_reason,
                         'sc.financing.loan' AS source_model,
@@ -406,9 +398,7 @@ class ScInterfundMovementFact(models.Model):
                         loan.name AS source_record_name,
                         loan.document_no AS source_document_no,
                         CASE
-                            WHEN COALESCE(loan.purpose, '') ILIKE '%借%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%项目%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%款%'
+                            WHEN COALESCE(loan.purpose, '') ILIKE '%借%项目%款%'
                                 THEN '承包人借项目款'
                             ELSE '项目借公司款登记'
                         END AS source_menu_hint,
@@ -417,30 +407,22 @@ class ScInterfundMovementFact(models.Model):
                         loan.currency_id,
                         COALESCE(loan.amount, 0.0) AS amount,
                         CASE
-                            WHEN COALESCE(loan.purpose, '') ILIKE '%借%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%项目%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%款%'
+                            WHEN COALESCE(loan.purpose, '') ILIKE '%借%项目%款%'
                                 THEN loan.project_id
                             ELSE NULL::integer
                         END AS source_project_id,
                         CASE
-                            WHEN COALESCE(loan.purpose, '') ILIKE '%借%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%项目%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%款%'
+                            WHEN COALESCE(loan.purpose, '') ILIKE '%借%项目%款%'
                                 THEN p.project_name
                             ELSE NULL::varchar
                         END AS source_project_name,
                         CASE
-                            WHEN COALESCE(loan.purpose, '') ILIKE '%借%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%项目%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%款%'
+                            WHEN COALESCE(loan.purpose, '') ILIKE '%借%项目%款%'
                                 THEN NULL::integer
                             ELSE loan.project_id
                         END AS target_project_id,
                         CASE
-                            WHEN COALESCE(loan.purpose, '') ILIKE '%借%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%项目%'
-                             AND COALESCE(loan.purpose, '') ILIKE '%款%'
+                            WHEN COALESCE(loan.purpose, '') ILIKE '%借%项目%款%'
                                 THEN NULL::varchar
                             ELSE p.project_name
                         END AS target_project_name,

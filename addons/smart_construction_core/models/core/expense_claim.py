@@ -167,7 +167,7 @@ class ScExpenseClaim(models.Model):
         for rec in self:
             rec.direction = (
                 "inflow"
-                if rec.claim_type in ("deposit_refund", "deposit_receive", "deduction_refund", "project_company_repay")
+                if rec.claim_type in ("deposit_refund", "deposit_receive", "deduction_refund")
                 else "outflow"
             )
 
@@ -200,6 +200,13 @@ class ScExpenseClaim(models.Model):
                 rec.claim_flow_label = _("备用金")
             else:
                 rec.claim_flow_label = expense_type or _("费用办理")
+
+    def _is_interfund_repayment(self):
+        self.ensure_one()
+        text = "%s %s" % (self.expense_type or "", self.summary or "")
+        return self.claim_type == "project_company_repay" or (
+            self.claim_type == "deposit_receive" and "承包人还项目款" in text
+        )
 
     @api.onchange("amount")
     def _onchange_amount(self):
@@ -324,8 +331,20 @@ class ScExpenseClaim(models.Model):
                        NULLIF(legacy_visible_document_state, ''),
                        state
                    ),
+                   direction = CASE
+                       WHEN claim_type IN ('deposit_refund', 'deposit_receive', 'deduction_refund') THEN 'inflow'
+                       ELSE 'outflow'
+                   END,
                    paid_amount = COALESCE(paid_amount, approved_amount, amount, 0.0)
              WHERE source_origin = 'legacy'
+            """
+        )
+        self.env.cr.execute(
+            """
+            UPDATE sc_expense_claim
+               SET direction = 'outflow'
+             WHERE claim_type = 'project_company_repay'
+               AND direction IS DISTINCT FROM 'outflow'
             """
         )
 
@@ -334,6 +353,7 @@ class ScExpenseClaim(models.Model):
         for rec in self:
             if rec.state != "draft":
                 raise UserError(_("只有草稿状态的费用/保证金单据可以提交。"))
+            before = rec._snapshot_audit_payload()
             rec._check_business_ready()
             if policy.is_approval_required(rec._name, company=rec.company_id):
                 rec.write({"state": "submit", "reject_reason": False})
@@ -341,14 +361,28 @@ class ScExpenseClaim(models.Model):
                 rec.with_company(company).with_context(
                     allowed_company_ids=[company.id],
                 ).request_validation()
+                rec._audit_transition(
+                    "expense_claim_submitted",
+                    before,
+                    rec._snapshot_audit_payload(),
+                    "action_submit",
+                )
             else:
                 rec.write({"state": "approved", "reject_reason": False})
+                rec._audit_transition(
+                    "expense_claim_approved",
+                    before,
+                    rec._snapshot_audit_payload(),
+                    "action_submit",
+                )
 
     def action_approve(self):
+        self._assert_finance_approve_access()
         policy_model = self.env["sc.approval.policy"]
         for rec in self:
             if rec.state != "submit":
                 raise UserError(_("只有已提交的费用/保证金单据可以批准。"))
+            before = rec._snapshot_audit_payload()
             rec._check_business_ready()
             if policy_model.is_approval_required(rec._name, company=rec.company_id):
                 if rec.validation_status != "validated":
@@ -357,7 +391,13 @@ class ScExpenseClaim(models.Model):
                 policy = policy_model.get_active_policy(rec._name, company=rec.company_id)
                 if policy:
                     policy.assert_user_can_approve()
-            rec.state = "approved"
+            rec.write({"state": "approved", "reject_reason": False})
+            rec._audit_transition(
+                "expense_claim_approved",
+                before,
+                rec._snapshot_audit_payload(),
+                "action_approve",
+            )
 
     def _check_state_from_condition(self):
         self.ensure_one()
@@ -378,32 +418,77 @@ class ScExpenseClaim(models.Model):
                 raise UserError(_("只有已提交的费用/保证金单据可以完成统一审批回调。"))
             if rec.validation_status != "validated":
                 raise UserError(_("费用/保证金单据尚未完成统一审批流程。"))
+            before = rec._snapshot_audit_payload()
             rec._check_business_ready()
             rec.write({"state": "approved", "reject_reason": False})
+            rec._audit_transition(
+                "expense_claim_approved",
+                before,
+                rec._snapshot_audit_payload(),
+                "action_on_tier_approved",
+            )
 
     def action_on_tier_rejected(self, reason=None):
         for rec in self:
             if rec.state != "submit":
                 raise UserError(_("只有已提交的费用/保证金单据可以驳回。"))
+            before = rec._snapshot_audit_payload()
             rec.write(
                 {
                     "state": "draft",
                     "reject_reason": reason or rec._get_tier_reject_reason(),
                 }
             )
+            rec._audit_transition(
+                "expense_claim_rejected",
+                before,
+                rec._snapshot_audit_payload(),
+                "action_on_tier_rejected",
+            )
 
     def action_done(self):
+        self._assert_finance_confirm_access()
         for rec in self:
             if rec.state != "approved":
                 raise UserError(_("只有已批准的费用/保证金单据可以完成。"))
+            before = rec._snapshot_audit_payload()
             rec._check_business_ready()
             rec._sync_payment_request_done()
-            rec.state = "done"
+            rec.write({"state": "done"})
+            rec._ensure_interfund_cash_ledger()
+            rec._audit_transition(
+                "expense_claim_done",
+                before,
+                rec._snapshot_audit_payload(),
+                "action_done",
+            )
+
+    def _has_finance_confirm_access(self):
+        return (
+            self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager")
+            or self.env.user.has_group("smart_construction_custom.group_sc_role_finance")
+        )
+
+    def _assert_finance_confirm_access(self):
+        if not self._has_finance_confirm_access():
+            raise UserError(_("你没有完成费用/保证金单据的财务确认权限。"))
+
+    def _assert_finance_approve_access(self):
+        if not self._has_finance_confirm_access():
+            raise UserError(_("你没有批准费用/保证金单据的权限。"))
 
     def _check_business_ready(self):
         for rec in self:
+            if rec.source_origin == "legacy":
+                continue
             if not rec.project_id:
                 raise UserError(_("费用/保证金单据必须关联项目。"))
+            if rec._is_interfund_repayment() and rec.payment_request_id:
+                raise UserError(_("往来款办理应与经营收付款申请分开，不应关联付款/收款申请。"))
+            if not rec._is_interfund_repayment() and not rec.payment_request_id:
+                raise UserError(_("新系统费用/保证金单据必须关联付款/收款申请。"))
+            if not rec.partner_id:
+                raise UserError(_("新系统费用/保证金单据必须选择往来单位。"))
             if (rec.amount or 0.0) <= 0:
                 raise UserError(_("费用/保证金申请金额必须大于 0。"))
             if (rec.approved_amount or 0.0) < 0:
@@ -413,6 +498,17 @@ class ScExpenseClaim(models.Model):
                 raise UserError(_("费用/保证金已付款金额不能为负数。"))
             if (rec.paid_amount or 0.0) > expected:
                 raise UserError(_("费用/保证金已付款金额不能超过批准/申请金额。"))
+            if rec.direction == "outflow":
+                payee_account = rec.payee_account or rec.receipt_account_name or rec.payee
+                payer_account = rec.payer_account or rec.payment_account_name
+                if not payee_account:
+                    raise UserError(_("新系统费用/保证金流出单据必须填写收款账户信息。"))
+                if not payer_account:
+                    raise UserError(_("新系统费用/保证金流出单据必须填写付款账户信息。"))
+            else:
+                receiving_account = rec.payer_account or rec.payment_account_name
+                if not receiving_account:
+                    raise UserError(_("新系统费用/保证金流入单据必须填写收款账户信息。"))
             rec._check_payment_request_scope_or_raise()
 
     def _sync_payment_request_done(self):
@@ -449,12 +545,31 @@ class ScExpenseClaim(models.Model):
                 after = request._snapshot_audit_payload()
                 request._audit_transition("payment_paid", before, after, action_name="expense_claim_done")
             else:
+                before = request._snapshot_audit_payload()
                 request.with_context(payment_soft_gate=True)._ensure_payment_ledger(
                     amount=request.amount or 0.0,
                     ref=rec.name,
                     note=_("auto:expense_claim_done"),
                 )
                 request.with_context(allow_transition=True, payment_soft_gate=True).write({"state": "done"})
+                after = request._snapshot_audit_payload()
+                request._audit_transition("payment_paid", before, after, action_name="expense_claim_done")
+
+    def _ensure_interfund_cash_ledger(self):
+        Ledger = self.env["sc.treasury.ledger"]
+        for rec in self:
+            if not rec._is_interfund_repayment() or (rec.approved_amount or rec.amount or 0.0) <= 0:
+                continue
+            Ledger._ensure_interfund_ledger(
+                rec,
+                project=rec.project_id,
+                partner=rec.partner_id,
+                direction="in" if rec.direction == "inflow" else "out",
+                amount=rec.approved_amount or rec.amount or 0.0,
+                date=rec.date_claim,
+                currency=rec.currency_id,
+                note=_("auto:expense_claim_interfund_done"),
+            )
 
     def _check_payment_request_scope_or_raise(self):
         for rec in self:
@@ -477,4 +592,47 @@ class ScExpenseClaim(models.Model):
                 raise UserError(_("历史迁移费用/保证金单据不能在新系统取消。"))
             if rec.state not in ("draft", "submit", "approved"):
                 raise UserError(_("只有草稿、已提交或已批准的费用/保证金单据可以取消。"))
-            rec.state = "cancel"
+            before = rec._snapshot_audit_payload()
+            rec.write({"state": "cancel"})
+            rec._audit_transition(
+                "expense_claim_cancelled",
+                before,
+                rec._snapshot_audit_payload(),
+                "action_cancel",
+            )
+
+    def _snapshot_audit_payload(self):
+        self.ensure_one()
+        return {
+            "state": self.state,
+            "source_origin": self.source_origin,
+            "claim_type": self.claim_type,
+            "direction": self.direction,
+            "project_id": self.project_id.id,
+            "company_id": self.company_id.id,
+            "partner_id": self.partner_id.id,
+            "payment_request_id": self.payment_request_id.id,
+            "date_claim": fields.Date.to_string(self.date_claim) if self.date_claim else False,
+            "expense_type": self.expense_type,
+            "summary": self.summary,
+            "amount": self.amount,
+            "approved_amount": self.approved_amount,
+            "paid_amount": self.paid_amount,
+            "currency_id": self.currency_id.id,
+            "payment_state": self.payment_state,
+            "reject_reason": self.reject_reason,
+            "validation_status": self.validation_status,
+        }
+
+    def _audit_transition(self, event_code, before, after, action_name):
+        self.ensure_one()
+        return self.env["sc.audit.log"].write_event(
+            event_code,
+            self._name,
+            self.id,
+            action=action_name,
+            before=before,
+            after=after,
+            company_id=self.company_id,
+            project_id=self.project_id,
+        )

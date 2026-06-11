@@ -419,19 +419,19 @@
         </record>
         <record id="menu_sc_bid_deposit_pay" model="ir.ui.menu">
             <field name="name">投标保证金支付</field>
-            <field name="action" ref="smart_construction_core.action_sc_expense_claim_deposit_pay"/>
+            <field name="action" ref="smart_construction_core.action_sc_bid_deposit_pay"/>
         </record>
         <record id="menu_sc_bid_deposit_return" model="ir.ui.menu">
             <field name="name">投标保证金退回</field>
-            <field name="action" ref="smart_construction_core.action_sc_expense_claim_deposit_refund"/>
+            <field name="action" ref="smart_construction_core.action_sc_bid_deposit_return"/>
         </record>
         <record id="menu_sc_contract_deposit_register" model="ir.ui.menu">
             <field name="name">合同保证金支付</field>
-            <field name="action" ref="smart_construction_core.action_sc_expense_claim_deposit_pay"/>
+            <field name="action" ref="smart_construction_core.action_sc_contract_deposit_pay"/>
         </record>
         <record id="menu_sc_contract_deposit_return" model="ir.ui.menu">
             <field name="name">合同保证金退回</field>
-            <field name="action" ref="smart_construction_core.action_sc_expense_claim_deposit_refund"/>
+            <field name="action" ref="smart_construction_core.action_sc_contract_deposit_return"/>
         </record>
         <menuitem id="menu_sc_deposit_receive"
                   name="保证金收取"

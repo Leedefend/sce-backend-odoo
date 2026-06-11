@@ -64,7 +64,7 @@
             <form string="账户资金办理">
                 <header>
                     <button name="action_confirm" string="确认" type="object" class="oe_highlight" invisible="state != 'draft'"/>
-                    <button name="action_done" string="完成" type="object" class="oe_highlight" invisible="state not in ('draft', 'confirmed')"/>
+                    <button name="action_done" string="完成" type="object" class="oe_highlight" invisible="state != 'confirmed'"/>
                     <button name="action_cancel" string="取消" type="object" invisible="state in ('done', 'cancelled')"/>
                     <button name="action_reset_draft" string="重置草稿" type="object" invisible="state != 'cancelled'"/>
                     <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,done"/>
@@ -83,11 +83,11 @@
                         </group>
                         <group string="付款与收款">
                             <field name="currency_id" invisible="1"/>
-                            <field name="fund_account_id" invisible="operation_type != 'fund_daily_report'"/>
-                            <field name="source_account_id" invisible="operation_type == 'fund_daily_report'"/>
-                            <field name="source_project_id" readonly="1" invisible="operation_type == 'fund_daily_report'"/>
-                            <field name="target_account_id" invisible="operation_type == 'fund_daily_report'"/>
-                            <field name="target_project_id" readonly="1" invisible="operation_type == 'fund_daily_report'"/>
+                            <field name="fund_account_id" invisible="operation_type not in ('balance_adjustment', 'fund_daily_report')"/>
+                            <field name="source_account_id" invisible="operation_type in ('balance_adjustment', 'fund_daily_report')"/>
+                            <field name="source_project_id" readonly="1" invisible="operation_type in ('balance_adjustment', 'fund_daily_report')"/>
+                            <field name="target_account_id" invisible="operation_type in ('balance_adjustment', 'fund_daily_report')"/>
+                            <field name="target_project_id" readonly="1" invisible="operation_type in ('balance_adjustment', 'fund_daily_report')"/>
                             <field name="amount" string="办理金额" invisible="operation_type in ('balance_adjustment', 'fund_daily_report')"/>
                             <field name="daily_income" invisible="operation_type != 'fund_daily_report'"/>
                             <field name="daily_expense" invisible="operation_type != 'fund_daily_report'"/>

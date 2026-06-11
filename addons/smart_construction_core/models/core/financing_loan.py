@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import re
+
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
 
@@ -244,12 +246,25 @@ class ScFinancingLoan(models.Model):
         for rec in self:
             if rec.state != "draft":
                 raise UserError(_("只有草稿状态的融资借款可以确认。"))
+            before = rec._snapshot_audit_payload()
             rec._check_done_ready()
             if policy.is_approval_required(rec._name, company=rec.company_id):
                 company = rec.company_id or self.env.company
                 rec.with_company(company).with_context(allowed_company_ids=[company.id])._request_document_approval()
+                rec._audit_transition(
+                    "financing_loan_submitted",
+                    before,
+                    rec._snapshot_audit_payload(),
+                    "action_confirm",
+                )
             else:
                 rec.write({"state": "confirmed", "reject_reason": False})
+                rec._audit_transition(
+                    "financing_loan_confirmed",
+                    before,
+                    rec._snapshot_audit_payload(),
+                    "action_confirm",
+                )
 
     def action_done(self):
         policy = self.env["sc.approval.policy"]
@@ -258,8 +273,16 @@ class ScFinancingLoan(models.Model):
                 raise UserError(_("只有草稿或已确认状态的融资借款可以完成。"))
             if policy.is_approval_required(rec._name, company=rec.company_id) and rec.validation_status != "validated":
                 raise UserError(_("融资借款尚未完成统一审批流程。"))
+            before = rec._snapshot_audit_payload()
             rec._check_done_ready()
-            rec.state = "done"
+            rec.write({"state": "done"})
+            rec._ensure_interfund_cash_ledger()
+            rec._audit_transition(
+                "financing_loan_done",
+                before,
+                rec._snapshot_audit_payload(),
+                "action_done",
+            )
 
     def _check_done_ready(self):
         self.ensure_one()
@@ -270,13 +293,38 @@ class ScFinancingLoan(models.Model):
         if self.amount <= 0:
             raise UserError(_("融资借款金额必须大于 0。"))
 
+    def _ensure_interfund_cash_ledger(self):
+        Ledger = self.env["sc.treasury.ledger"]
+        for rec in self:
+            if rec.loan_type != "borrowing_request" or rec.direction != "borrowed_fund" or (rec.amount or 0.0) <= 0:
+                continue
+            purpose = rec.purpose or ""
+            direction = "out" if re.search(r"借.*项目.*款", purpose) else "in"
+            Ledger._ensure_interfund_ledger(
+                rec,
+                project=rec.project_id,
+                partner=rec.partner_id,
+                direction=direction,
+                amount=rec.amount,
+                date=rec.document_date,
+                currency=rec.currency_id,
+                note=_("auto:financing_loan_done"),
+            )
+
     def action_cancel(self):
         for rec in self:
             if rec.source_origin == "legacy":
                 raise UserError(_("历史迁移融资/借款单据不能在新系统取消。"))
             if rec.state not in ("draft", "confirmed"):
                 raise UserError(_("只有草稿或已确认状态的融资借款可以取消。"))
-            rec.state = "cancel"
+            before = rec._snapshot_audit_payload()
+            rec.write({"state": "cancel"})
+            rec._audit_transition(
+                "financing_loan_cancelled",
+                before,
+                rec._snapshot_audit_payload(),
+                "action_cancel",
+            )
 
     def _request_document_approval(self):
         self.ensure_one()
@@ -305,11 +353,58 @@ class ScFinancingLoan(models.Model):
     def action_on_tier_approved(self):
         for rec in self:
             if rec.state == "draft":
+                before = rec._snapshot_audit_payload()
                 rec.with_context(skip_validation_check=True).write({"state": "confirmed", "reject_reason": False})
+                rec._audit_transition(
+                    "financing_loan_confirmed",
+                    before,
+                    rec._snapshot_audit_payload(),
+                    "action_on_tier_approved",
+                )
 
     def action_on_tier_rejected(self, reason=None):
         for rec in self:
             if rec.state == "draft":
+                before = rec._snapshot_audit_payload()
                 rec.with_context(skip_validation_check=True).write(
                     {"reject_reason": reason or rec._get_tier_reject_reason()}
                 )
+                rec._audit_transition(
+                    "financing_loan_rejected",
+                    before,
+                    rec._snapshot_audit_payload(),
+                    "action_on_tier_rejected",
+                )
+
+    def _snapshot_audit_payload(self):
+        self.ensure_one()
+        return {
+            "state": self.state,
+            "source_origin": self.source_origin,
+            "loan_type": self.loan_type,
+            "direction": self.direction,
+            "project_id": self.project_id.id,
+            "company_id": self.company_id.id,
+            "partner_id": self.partner_id.id,
+            "document_no": self.document_no,
+            "document_date": fields.Date.to_string(self.document_date) if self.document_date else False,
+            "due_date": fields.Date.to_string(self.due_date) if self.due_date else False,
+            "amount": self.amount,
+            "currency_id": self.currency_id.id,
+            "purpose": self.purpose,
+            "reject_reason": self.reject_reason,
+            "validation_status": self.validation_status,
+        }
+
+    def _audit_transition(self, event_code, before, after, action_name):
+        self.ensure_one()
+        return self.env["sc.audit.log"].write_event(
+            event_code,
+            self._name,
+            self.id,
+            action=action_name,
+            before=before,
+            after=after,
+            company_id=self.company_id,
+            project_id=self.project_id,
+        )
