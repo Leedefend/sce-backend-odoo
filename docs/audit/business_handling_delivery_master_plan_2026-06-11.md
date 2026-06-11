@@ -650,12 +650,13 @@ covered: payment_execution, receipt_income, expense_claim, fund_account_operatio
 
 ### Company Contractor Responsibility Handling Evidence
 
-本轮把公司-承包人责任余额从付款执行扩展到扣款单办理：
+本轮把公司-承包人责任余额从付款执行扩展到扣款单和扣款抵扣办理：
 
 - 通用余额判断沉淀到 `sc.company.contractor.responsibility.context.mixin`，后续拨付、扣款、退回、核销可复用同一口径。
 - `sc.payment.execution` 继续用“本次实付金额”校验到款超处理和到款可处理余额。
 - `sc.expense.claim` 仅在 `finance.deduction.bill` / `扣款单` 这个非现金扣款事实上启用硬约束；扣款单仍不关联 `payment.request`，也不写现金台账。
-- `finance.deduction.paid`、`finance.deduction.refund`、`tax.deduction.registration` 保留原办理语义，不能为了统一入口把现金实缴、退回和税务抵扣混成同一种往来申请。
+- `sc.tax.deduction.registration` 仅在存在 `withholding_amount` 的扣款抵扣上启用硬约束，并在 `action_deduct` 终态动作阻断；普通进项抵扣不消耗公司-承包人责任余额。
+- `finance.deduction.paid`、`finance.deduction.refund` 保留原办理语义，不能为了统一入口把现金实缴、退回和税务抵扣混成同一种往来申请。
 - `self_funding_balance > 0` 当前仍是提示，不阻断扣款单和付款执行；自筹抵扣/退回的硬规则等自筹办理动作闭环时再收口。
 
 验证结果：
@@ -665,6 +666,7 @@ DB_NAME=sc_demo scripts/ops/validate_company_contractor_responsibility_context.s
 status=PASS
 payment_execution_responsibility_constraints: over_processed blocks, amount exceeding arrival balance blocks, amount within balance allows, self_funding_open does not block
 expense_claim_deduction_responsibility_constraints: over_processed blocks deduction bill, deduction amount exceeding arrival balance blocks, amount within balance allows, self_funding_open does not block
+tax_deduction_responsibility_constraints: over_processed blocks tax deduction, withholding amount exceeding arrival balance blocks, action_deduct blocks over_processed responsibility
 ```
 
 ### Self Funding Responsibility Source Evidence

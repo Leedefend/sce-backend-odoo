@@ -473,13 +473,14 @@ make verify.baseline DB_NAME=sc_demo
 
 - 付款执行：公司向承包人继续拨付时，读取公司-承包人责任余额；到款超处理阻断，实付金额超过到款可处理余额阻断。
 - 扣款单：非现金扣款事实不走 `payment.request`，但同样消耗到款可处理余额；到款超处理阻断，扣款金额超过到款可处理余额阻断。
+- 扣款抵扣：`sc.tax.deduction.registration` 保留税务抵扣办理口径；只有存在 `withholding_amount` 时，在 `action_deduct` 终态动作读取公司-承包人责任余额，到款超处理阻断，扣款金额超过到款可处理余额阻断。
 - 自筹未退：当前作为责任提示，不在付款执行和扣款单上硬阻断。
-- 税务抵扣登记、扣款实缴、扣款退回保留各自办理口径，不与扣款单合并为单一入口或单一台账口径。
+- 普通税务抵扣、扣款实缴、扣款退回保留各自办理口径，不与扣款单合并为单一入口或单一台账口径。
 
 验证结果：
 
 ```text
-python3 -m py_compile addons/smart_construction_core/models/support/company_contractor_responsibility_context_mixin.py addons/smart_construction_core/models/core/payment_execution.py addons/smart_construction_core/models/core/expense_claim.py scripts/verify/company_contractor_responsibility_context_audit.py
+python3 -m py_compile addons/smart_construction_core/models/support/company_contractor_responsibility_context_mixin.py addons/smart_construction_core/models/core/payment_execution.py addons/smart_construction_core/models/core/expense_claim.py addons/smart_construction_core/models/core/tax_deduction_registration.py scripts/verify/company_contractor_responsibility_context_audit.py
 PASS
 
 git diff --check
@@ -487,6 +488,7 @@ PASS
 
 DB_NAME=sc_demo scripts/ops/validate_company_contractor_responsibility_context.sh
 PASS
+tax_deduction_responsibility_constraints includes action_deduct_blocks_over_processed_responsibility
 ```
 
 ## Iteration Evidence - 2026-06-12 Self Funding Source Context
