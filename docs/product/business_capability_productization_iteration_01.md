@@ -275,6 +275,7 @@
 - 固化脚本：`scripts/verify/p1_formal_relationship_scope_block_smoke.py`，用于后续持续验证正式办理动作不会再产生项目串线关系。
 - 机械结算单办理对象已按旧可见字段 05 回填：561 条、15,630,457.05 元绑定到唯一往来单位；剩余 35 条、2,917,615.50 元为同名往来单位重复，73 条为旧字段为空且金额为 0，均保留为人工核对残差。验证脚本：`scripts/ops/validate_mechanical_settlement_partner.sh`。
 - 付款登记到付款申请补锚点已按 `document_no/name == 付款申请编号`、唯一付款申请、项目/往来单位/合同/金额不冲突的规则回填：781 条历史付款登记绑定到付款申请，其中 325 条同步补齐缺失往来单位；剩余 76 条为重复申请号，15,235 条为无申请编号命中，保留为后续人工核对或更强证据规则。验证脚本：`scripts/ops/validate_payment_execution_request_anchor.sh`。
+- 收款登记往来单位补锚点已按历史往来单位名称唯一匹配、且收款申请/合同往来单位不冲突的规则回填：87 条历史收款登记绑定到正式往来单位；剩余 1 条为历史名称无主数据匹配、8,330 条为历史往来单位为空，保留为后续更强证据规则。验证脚本：`scripts/ops/validate_receipt_income_partner_anchor.sh`。
 
 ## 第二轮再进入的范围
 
