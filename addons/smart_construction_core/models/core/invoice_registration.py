@@ -313,13 +313,18 @@ class ScInvoiceRegistration(models.Model):
             if rec.state != "draft":
                 raise UserError(_("只有草稿发票登记可以确认。"))
             rec._check_business_anchor()
+            before = rec._snapshot_audit_payload()
             if policy.is_approval_required(rec._name, company=rec.company_id):
                 company = rec.company_id or self.env.company
                 rec.with_company(company).with_context(allowed_company_ids=[company.id])._request_document_approval()
+                rec.invalidate_recordset()
+                rec._audit_transition("invoice_submitted", before, rec._snapshot_audit_payload(), action_name="action_confirm")
             else:
                 rec.write({"state": "confirmed", "reject_reason": False})
+                rec._audit_transition("invoice_confirmed", before, rec._snapshot_audit_payload(), action_name="action_confirm")
 
     def action_register(self):
+        self._assert_finance_register_access()
         policy = self.env["sc.approval.policy"]
         for rec in self:
             if rec.state != "confirmed":
@@ -327,7 +332,19 @@ class ScInvoiceRegistration(models.Model):
             rec._check_business_anchor()
             if policy.is_approval_required(rec._name, company=rec.company_id) and rec.validation_status != "validated":
                 raise UserError(_("发票登记尚未完成统一审批流程。"))
-            rec.state = "registered"
+            before = rec._snapshot_audit_payload()
+            rec.write({"state": "registered"})
+            rec._audit_transition("invoice_registered", before, rec._snapshot_audit_payload(), action_name="action_register")
+
+    def _has_finance_register_access(self):
+        return (
+            self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager")
+            or self.env.user.has_group("smart_construction_custom.group_sc_role_finance")
+        )
+
+    def _assert_finance_register_access(self):
+        if not self._has_finance_register_access():
+            raise UserError(_("你没有完成发票登记的财务确认权限。"))
 
     def action_cancel(self):
         for rec in self:
@@ -335,7 +352,42 @@ class ScInvoiceRegistration(models.Model):
                 raise UserError(_("历史迁移发票登记不能在新系统取消。"))
             if rec.state not in ("draft", "confirmed"):
                 raise UserError(_("只有草稿或已确认发票登记可以取消。"))
-            rec.state = "cancel"
+            before = rec._snapshot_audit_payload()
+            rec.write({"state": "cancel"})
+            rec._audit_transition("invoice_cancelled", before, rec._snapshot_audit_payload(), action_name="action_cancel")
+
+    def _snapshot_audit_payload(self):
+        self.ensure_one()
+        return {
+            "state": self.state,
+            "validation_status": self.validation_status,
+            "source_kind": self.source_kind,
+            "direction": self.direction,
+            "invoice_content": self.invoice_content,
+            "project_id": self.project_id.id,
+            "partner_id": self.partner_id.id,
+            "contract_id": self.contract_id.id,
+            "settlement_id": self.settlement_id.id,
+            "invoice_no": self.invoice_no,
+            "tax_certificate_no": self.tax_certificate_no,
+            "amount_no_tax": self.amount_no_tax,
+            "tax_amount": self.tax_amount,
+            "amount_total": self.amount_total,
+        }
+
+    def _audit_transition(self, event_code, before, after, reason=None, action_name=None):
+        self.ensure_one()
+        return self.env["sc.audit.log"].write_event(
+            event_code=event_code,
+            model=self._name,
+            res_id=self.id,
+            action=action_name or event_code,
+            before=before,
+            after=after,
+            reason=reason,
+            company_id=self.company_id or self.env.company,
+            project_id=self.project_id,
+        )
 
     def _check_business_anchor(self):
         for rec in self:
@@ -390,12 +442,22 @@ class ScInvoiceRegistration(models.Model):
             if rec.state != "draft":
                 raise UserError(_("只有草稿发票登记可以完成统一审批回调。"))
             rec._check_business_anchor()
+            before = rec._snapshot_audit_payload()
             rec.with_context(skip_validation_check=True).write({"state": "confirmed", "reject_reason": False})
+            rec._audit_transition("invoice_confirmed", before, rec._snapshot_audit_payload(), action_name="action_on_tier_approved")
 
     def action_on_tier_rejected(self, reason=None):
         for rec in self:
             if rec.state != "draft":
                 raise UserError(_("只有草稿发票登记可以驳回。"))
+            before = rec._snapshot_audit_payload()
             rec.with_context(skip_validation_check=True).write(
                 {"reject_reason": reason or rec._get_tier_reject_reason()}
+            )
+            rec._audit_transition(
+                "invoice_rejected",
+                before,
+                rec._snapshot_audit_payload(),
+                reason=reason or rec.reject_reason,
+                action_name="action_on_tier_rejected",
             )

@@ -226,12 +226,21 @@ class ScTaxDeductionRegistration(models.Model):
         for rec in self:
             if rec.state != "draft":
                 raise UserError(_("只有草稿状态的抵扣登记可以确认。"))
+            before = rec._snapshot_audit_payload()
             rec.write({"state": "confirmed"})
+            rec._audit_transition(
+                "tax_deduction_confirmed",
+                before,
+                rec._snapshot_audit_payload(),
+                action_name="action_confirm",
+            )
 
     def action_deduct(self):
+        self._assert_finance_deduct_access()
         for rec in self:
             if rec.state not in ("draft", "confirmed"):
                 raise UserError(_("只有草稿或已确认状态的抵扣登记可以确认抵扣。"))
+            before = rec._snapshot_audit_payload()
             vals = {}
             if not rec.deduction_confirm_date:
                 vals["deduction_confirm_date"] = fields.Date.context_today(rec)
@@ -243,6 +252,22 @@ class ScTaxDeductionRegistration(models.Model):
                 rec.write(vals)
             rec._check_deduct_ready()
             rec.write({"state": "deducted"})
+            rec._audit_transition(
+                "tax_deduction_deducted",
+                before,
+                rec._snapshot_audit_payload(),
+                action_name="action_deduct",
+            )
+
+    def _has_finance_deduct_access(self):
+        return (
+            self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager")
+            or self.env.user.has_group("smart_construction_custom.group_sc_role_finance")
+        )
+
+    def _assert_finance_deduct_access(self):
+        if not self._has_finance_deduct_access():
+            raise UserError(_("你没有确认抵扣的财务确认权限。"))
 
     def _check_deduct_ready(self):
         for rec in self:
@@ -272,4 +297,45 @@ class ScTaxDeductionRegistration(models.Model):
                 raise UserError(_("历史迁移抵扣登记不能在新系统取消。"))
             if rec.state not in ("draft", "confirmed"):
                 raise UserError(_("只有草稿或已确认状态的抵扣登记可以取消。"))
+            before = rec._snapshot_audit_payload()
             rec.write({"state": "cancel"})
+            rec._audit_transition(
+                "tax_deduction_cancelled",
+                before,
+                rec._snapshot_audit_payload(),
+                action_name="action_cancel",
+            )
+
+    def _snapshot_audit_payload(self):
+        self.ensure_one()
+        return {
+            "state": self.state,
+            "source_origin": self.source_origin,
+            "project_id": self.project_id.id,
+            "partner_id": self.partner_id.id,
+            "partner_name": self.partner_name,
+            "invoice_no": self.invoice_no,
+            "invoice_code": self.invoice_code,
+            "invoice_amount_untaxed": self.invoice_amount_untaxed,
+            "invoice_tax_amount": self.invoice_tax_amount,
+            "invoice_amount_total": self.invoice_amount_total,
+            "deduction_amount": self.deduction_amount,
+            "deduction_tax_amount": self.deduction_tax_amount,
+            "withholding_amount": self.withholding_amount,
+            "is_transfer_out": self.is_transfer_out,
+            "deduction_reason": self.deduction_reason,
+        }
+
+    def _audit_transition(self, event_code, before, after, reason=None, action_name=None):
+        self.ensure_one()
+        return self.env["sc.audit.log"].write_event(
+            event_code=event_code,
+            model=self._name,
+            res_id=self.id,
+            action=action_name or event_code,
+            before=before,
+            after=after,
+            reason=reason,
+            company_id=self.company_id or self.env.company,
+            project_id=self.project_id,
+        )

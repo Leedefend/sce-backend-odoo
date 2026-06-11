@@ -662,27 +662,31 @@
         <field name="name">工程进度款收入登记</field>
         <field name="view_id" ref="smart_construction_core.view_sc_receipt_income_engineering_progress_user_confirmed_tree"/>
         <field name="view_ids" eval="[(5, 0, 0),
-            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_receipt_income_engineering_progress_user_confirmed_tree')})
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_receipt_income_engineering_progress_user_confirmed_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_receipt_income_form')})
         ]"/>
-        <field name="domain">[('source_kind', '=', 'receipt_income'), ('legacy_source_model', '=', 'sc.legacy.receipt.income.fact'), ('legacy_source_table', '=', 'C_JFHKLR'), ('source_family', '=', 'engineering_progress_receipt_visible')]</field>
-        <field name="context">{'create': False, 'default_source_kind': 'receipt_income', 'default_receipt_type': '正常类型收款', 'default_income_category': '工程进度款收入', 'search_default_group_project': 1}</field>
+        <field name="domain">['&amp;', ('source_kind', '=', 'receipt_income'), '|', ('source_family', '=', 'engineering_progress_receipt_visible'), ('income_category', '=', '工程进度款收入')]</field>
+        <field name="context">{'create': True, 'edit': True, 'default_source_kind': 'receipt_income', 'default_receipt_type': '正常类型收款', 'default_income_category': '工程进度款收入', 'search_default_group_project': 1}</field>
     </record>
     <record id="action_sc_invoice_input_report_user" model="ir.actions.act_window">
-        <field name="name">进项上报</field>
+        <field name="name">进项税额上报</field>
         <field name="view_id" ref="smart_construction_core.view_sc_invoice_registration_input_tax_user_confirmed_tree"/>
         <field name="view_ids" eval="[(5, 0, 0),
-            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_invoice_registration_input_tax_user_confirmed_tree')})
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_invoice_registration_input_tax_user_confirmed_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_invoice_registration_form')})
         ]"/>
-        <field name="domain">[('legacy_source_model', '=', 'online_old_scbsly:direct_acceptance:input_tax_report:action932'), ('legacy_source_table', '=', 'SCBSLY_DIRECT_INPUT_TAX_REPORT')]</field>
-        <field name="context">{'create': False, 'default_source_kind': 'input_invoice_tax', 'default_direction': 'input', 'default_invoice_content': '进项上报'}</field>
+        <field name="domain">['|', '&amp;', ('legacy_source_model', '=', 'online_old_scbsly:direct_acceptance:input_tax_report:action932'), ('legacy_source_table', '=', 'SCBSLY_DIRECT_INPUT_TAX_REPORT'), '&amp;', ('source_kind', '=', 'input_invoice_tax'), '&amp;', ('direction', '=', 'input'), ('invoice_content', '=', '进项税额上报')]</field>
+        <field name="context">{'create': True, 'edit': True, 'default_source_kind': 'input_invoice_tax', 'default_direction': 'input', 'default_invoice_content': '进项税额上报', 'search_default_group_project': 1}</field>
     </record>
     <record id="action_sc_invoice_registration_user" model="ir.actions.act_window">
+        <field name="name">销项开票登记</field>
         <field name="view_id" ref="smart_construction_core.view_sc_invoice_registration_general_input_tax_user_confirmed_tree"/>
         <field name="view_ids" eval="[(5, 0, 0),
-            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_invoice_registration_general_input_tax_user_confirmed_tree')})
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_invoice_registration_general_input_tax_user_confirmed_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_invoice_registration_form')})
         ]"/>
-        <field name="domain">[('legacy_source_model', '=', 'online_old_scbsly:direct_acceptance:general_contract_input_tax_report:action933'), ('legacy_source_table', '=', 'SCBSLY_DIRECT_GENERAL_CONTRACT_INPUT_TAX_REPORT')]</field>
-        <field name="context">{'create': False, 'default_source_kind': 'output_invoice_tax', 'default_direction': 'output', 'default_invoice_content': '总包进项上报'}</field>
+        <field name="domain">['|', '&amp;', ('legacy_source_model', '=', 'online_old_scbsly:direct_acceptance:general_contract_input_tax_report:action933'), ('legacy_source_table', '=', 'SCBSLY_DIRECT_GENERAL_CONTRACT_INPUT_TAX_REPORT'), '&amp;', ('source_kind', '=', 'output_invoice_tax'), '&amp;', ('direction', '=', 'output'), ('invoice_content', '=', '销项开票登记')]</field>
+        <field name="context">{'create': True, 'edit': True, 'default_source_kind': 'output_invoice_tax', 'default_direction': 'output', 'default_invoice_content': '销项开票登记', 'search_default_group_project': 1}</field>
     </record>
     <record id="action_sc_settlement_order_income" model="ir.actions.act_window">
         <field name="view_id" ref="smart_construction_core.view_sc_settlement_order_user_confirmed_tree"/>
