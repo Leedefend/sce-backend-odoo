@@ -349,6 +349,9 @@
                 <field name="work_content"/>
                 <field name="worker_qty" sum="用工人数合计"/>
                 <field name="work_hours"/>
+                <field name="legacy_settlement_status"/>
+                <field name="legacy_settlement_amount" sum="旧系统结算金额合计"/>
+                <field name="currency_id" invisible="1"/>
                 <field name="foreman_name"/>
                 <field name="recorder_id"/>
                 <field name="legacy_fact_type"/>
@@ -383,6 +386,7 @@
                             <field name="recorder_id"/>
                             <field name="worker_qty"/>
                             <field name="work_hours"/>
+                            <field name="currency_id" invisible="1"/>
                         </group>
                     </group>
                     <notebook>
@@ -400,6 +404,9 @@
                                 <field name="legacy_fact_model"/>
                                 <field name="legacy_fact_id"/>
                                 <field name="legacy_fact_type"/>
+                                <field name="legacy_settlement_status"/>
+                                <field name="legacy_settlement_state"/>
+                                <field name="legacy_settlement_amount"/>
                             </group>
                         </page>
                     </notebook>
@@ -420,12 +427,16 @@
                 <field name="labor_team"/>
                 <field name="contractor_id"/>
                 <field name="foreman_name"/>
+                <field name="legacy_settlement_status"/>
                 <filter string="草稿" name="draft" domain="[('state', '=', 'draft')]"/>
                 <filter string="已提交" name="submitted" domain="[('state', '=', 'submitted')]"/>
                 <filter string="已确认" name="confirmed" domain="[('state', '=', 'confirmed')]"/>
+                <filter string="旧系统已结算" name="legacy_settled" domain="[('legacy_settlement_state', '=', 'settled')]"/>
+                <filter string="旧系统未结算" name="legacy_unsettled" domain="[('legacy_settlement_state', '=', 'unsettled')]"/>
                 <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
                 <filter string="按班组" name="group_labor_team" context="{'group_by': 'labor_team'}"/>
                 <filter string="按劳务单位" name="group_contractor" context="{'group_by': 'contractor_id'}"/>
+                <filter string="按旧结算状态" name="group_legacy_settlement_state" context="{'group_by': 'legacy_settlement_state'}"/>
                 <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
             </search>
         </field>
