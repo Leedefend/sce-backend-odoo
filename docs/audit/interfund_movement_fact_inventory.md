@@ -75,3 +75,36 @@ DB_NAME=sc_demo MIGRATION_ARTIFACT_ROOT=artifacts/migration make verify.interfun
 ```
 
 边界修正：不能把往来款强行挂到 `payment.request`，但也不能让往来资金事实游离于现金流之外。当前策略是新增 `sc.treasury.ledger.source_model/source_res_id`，允许资金台账承接非收付款申请来源；往来款完成后生成 `source_kind=interfund` 的资金流水，`payment_request_id` 为空。历史往来事实是否批量回填资金台账，需要单独迁移审计，避免污染已锁定历史事实。
+
+## 历史现金流台账回填就绪审计
+
+已新增只读门禁 `scripts/ops/validate_interfund_treasury_ledger_backfill_readiness.sh`，仅审计不写入，用于判断历史往来事实是否具备正式回填 `sc.treasury.ledger` 的条件。
+
+回填候选规则：
+
+- `company_to_project_borrow`：目标项目记流入。
+- `project_to_company_repay`：来源项目记流出。
+- `project_to_project_transfer`：来源项目记流出，目标项目记流入，生成两条现金流台账。
+- `project_to_company_transfer`：来源项目记流出。
+- `company_to_project_transfer`：目标项目记流入。
+- `project_to_contractor_borrow`：来源项目记流出。
+- `contractor_to_project_repay`：目标项目记流入。
+
+不自动回填规则：
+
+- 同项目账户调拨不进入项目流入/流出台账，只保留项目内调拨口径。
+- 未分类账户调拨缺少项目锚点，不自动写历史现金流。
+- 非正金额事实不写资金台账，需先回到来源单据核实。
+
+本地开发库 `sc_demo` 当前审计结果：
+
+| 口径 | 数量 | 金额 |
+| --- | ---: | ---: |
+| 应回填现金流台账行 | 1,566 | 955,974,145.60 |
+| 其中项目流入 | 1,131 | 645,131,015.95 |
+| 其中项目流出 | 435 | 310,843,129.65 |
+| 当前缺失现金流台账行 | 1,566 | 955,974,145.60 |
+| 排除同项目账户调拨 | 383 | 306,569,035.00 |
+| 非正金额事实 | 1 | 0.00 |
+
+结论：历史往来资金事实已经具备清晰的现金流回填候选集，但本轮只建立审计门禁，不直接写历史 `sc.treasury.ledger`。正式迁移脚本必须按上述候选集幂等写入，并在写入前再次验证金额、币种、项目、方向和来源唯一键。

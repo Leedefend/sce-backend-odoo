@@ -81,7 +81,7 @@
 | P0 | 审批附件与治理 | 941,104 | 所有业务办理的证据底座，贯穿每个域 | 持续作为每条闭环门禁的必检项，不单独扩展报表 |
 | P0 | 付款与费用 | 202,108 | 已有 `payment.request`、`sc.payment.execution`、`sc.expense.claim` 主链路，直接影响日常付款、报销、扣款、保证金 | 继续补分类策略、账户/合同/往来单位必填、付款撤销和浏览器抽样证据 |
 | P0 | 税务与发票 | 147,753 | 已有发票登记、抵扣登记和下游税务事实门禁，和合同/收付款强相关 | 继续补合同、结算、收付款余额一致性和红冲/抵扣边界 |
-| P0 | 账户与往来资金 | 84,410 | 已补账户调拨、项目借公司款、承包人借项目款、项目还公司款、承包人还项目款最小办理闭环，并接入资金事实、项目资金口径和统一现金流台账；往来款与收付款申请已拆分 | 继续补历史往来现金流台账回填策略、资金日报与账户关系必填、账户余额关系和借还款分类字典策略 |
+| P0 | 账户与往来资金 | 84,410 | 已补账户调拨、项目借公司款、承包人借项目款、项目还公司款、承包人还项目款最小办理闭环，并接入资金事实、项目资金口径和统一现金流台账；往来款与收付款申请已拆分；已形成历史往来现金流台账回填只读审计 | 继续补正式历史回填迁移脚本、资金日报与账户关系必填、账户余额关系和借还款分类字典策略 |
 | P0 | 收入与收款 | 60,514 | 已有收入合同 -> 收款申请 -> 收款登记 -> 资金台账 -> 开票证据，并补齐收款登记自身动作审计 | 继续补工程进度款、自筹收入/退回、收款发票核销和合同收款/开票余额硬阻断 |
 | P0 | 合同与结算 | 48,755 | 已有支出合同结算付款和收入合同收款开票闭环 | 继续补合同余额、结算余额、开票余额、回款余额硬阻断 |
 | P1 | 预算成本管控 | 88,636 | 成本台账体量高，是付款、材料、发票、分包劳务机械下游口径 | 先服务高体量办理链路，不先做成本报表扩展 |
@@ -211,6 +211,7 @@
 - 已补账户资金办理关系门禁：账户调拨必须有转出/转入账户、不同账户、正金额且账户币种一致；余额调整必须有调整账户且调整前后金额不同；资金日报必须有账户；表单“完成”按钮只在已确认状态显示。
 - 已修正借款分类口径：`项目借公司款` 不再因同时包含“项目/借/款”被误分为承包人借项目款；历史借出类按“借...项目...款”顺序语义进入 `project_to_contractor_borrow`。
 - 已建立 `scripts/ops/validate_interfund_account_loan_closure.sh`，验证办理动作 -> 审计日志 -> `sc.interfund.movement.fact` -> `sc.interfund.movement.project.summary` -> `sc.finance.project.capital.position`。
+- 已建立 `scripts/ops/validate_interfund_treasury_ledger_backfill_readiness.sh`，只读审计历史往来事实进入 `sc.treasury.ledger` 的回填候选、已存在台账和不可自动回填事实。
 
 ### Phase 2 - Invoice And Tax Closure
 
@@ -491,6 +492,21 @@ INTERFUND_ACCOUNT_LOAN_CLOSURE_AUDIT: status=PASS
 coverage=账户调拨、项目借公司款、承包人借项目款、项目还公司款、承包人还项目款
 policy=往来款不关联 payment.request，不借用经营收付款申请或结算单兜底
 cash_ledger=sc.treasury.ledger source_model/source_res_id 追溯，source_kind=interfund
+```
+
+历史往来现金流台账回填只读审计：
+
+```text
+DB_NAME=sc_demo scripts/ops/validate_interfund_treasury_ledger_backfill_readiness.sh
+INTERFUND_TREASURY_LEDGER_BACKFILL_READINESS_AUDIT: status=PASS
+expected_ledger_entry_count=1566
+missing_ledger_entry_count=1566
+expected_ledger_amount=955,974,145.60
+expected_inflow_amount=645,131,015.95
+expected_outflow_amount=310,843,129.65
+excluded_same_project_transfer=383 / 306,569,035.00
+blocked_non_positive_fact_count=1
+policy=只读审计，不写历史台账；同项目调拨和未分类调拨不自动回填
 ```
 
 同时通过：

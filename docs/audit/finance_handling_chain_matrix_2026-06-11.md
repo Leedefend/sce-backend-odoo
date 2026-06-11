@@ -109,7 +109,7 @@ evidence: create temp record from runtime action context, then verify current ru
 | 到款确认表 | `sc.receipt.income` | `action_confirm`、`action_received`、`action_cancel`、`action_on_tier_approved` | `sc.treasury.ledger`、收款申请完成 | 办理证据闭环、关系必填、角色权限、下游追溯通过 | 补浏览器级验收 |
 | 报销/费用单据 | `sc.expense.claim` | `action_submit`、`action_approve`、`action_done`、`action_cancel`、审批回调 | 关联 `payment.request`、`payment.ledger` | 办理证据闭环、关系必填、角色权限、下游追溯通过 | 补不同 `claim_type` 的浏览器级验收 |
 | 扣款单/扣款实缴/退回 | `sc.tax.deduction.registration` | 确认、已抵扣、取消 | 税务事实、项目经营口径 | 办理证据闭环、角色权限、下游税务事实追溯通过 | Phase 2 继续补正式分类字段或业务分类字典绑定 |
-| 账户间资金往来 | `sc.fund.account.operation` | 确认、完成、取消 | 账户资金往来事实、往来现金流台账 | 后端动作、关系必填、现金流追溯通过 | 补浏览器级验收和账户余额回填策略 |
+| 账户间资金往来 | `sc.fund.account.operation` | 确认、完成、取消 | 账户资金往来事实、往来现金流台账 | 后端动作、关系必填、现金流追溯、历史回填就绪审计通过 | 补正式历史回填迁移脚本、浏览器级验收和账户余额回填策略 |
 | 项目/承包人借还款 | `sc.financing.loan` | 借款登记、还款登记 | 资金往来事实、项目资金口径 | 表单契约通过 | 明确借出、借入、还款、利息和账户关系 |
 | 资金日报表 | `sc.legacy.fund.daily.snapshot.fact` | 历史事实查看 | 来源事实明细 | 表单契约通过 | 暂不作为办理主线，后置到 Phase 6 |
 
