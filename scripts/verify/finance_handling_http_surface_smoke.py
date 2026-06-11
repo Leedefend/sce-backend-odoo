@@ -211,6 +211,37 @@ def trace_domain(entry: dict[str, Any], record: dict[str, Any]) -> list[Any]:
     return [[trace["domain_field"], "=", domain_value]]
 
 
+def trace_backed_handled_records(token: str, entry: dict[str, Any], errors: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    trace = entry["trace"]
+    if trace.get("model") != "sc.treasury.ledger" or not trace.get("source_model"):
+        return [], {"status": "not_applicable"}
+    trace_status, trace_payload = api_list(
+        token,
+        "sc.treasury.ledger",
+        ["id", "source_model", "source_res_id", "state"],
+        [["source_model", "=", trace["source_model"]], ["source_res_id", "!=", False], ["state", "!=", "void"]],
+        limit=80,
+    )
+    if not assert_ok(errors, "%s.trace_backed_ledger_sample" % entry["key"], trace_status, trace_payload):
+        return [], {"status": "ledger_query_failed"}
+    ledgers = [row for row in (trace_payload.get("data") or {}).get("records") or [] if isinstance(row, dict)]
+    source_ids = [as_id(row.get("source_res_id")) for row in ledgers]
+    source_ids = [source_id for source_id in source_ids if source_id]
+    if not source_ids:
+        return [], {"status": "no_source_linked_ledger", "ledger_records": len(ledgers)}
+    handled_status, handled_payload = api_list(
+        token,
+        entry["model"],
+        entry["fields"],
+        entry["handled_domain"] + [["id", "in", source_ids]],
+        limit=20,
+    )
+    if not assert_ok(errors, "%s.trace_backed_handled_sample" % entry["key"], handled_status, handled_payload):
+        return [], {"status": "source_query_failed", "ledger_records": len(ledgers), "source_ids": len(source_ids)}
+    records = [row for row in (handled_payload.get("data") or {}).get("records") or [] if isinstance(row, dict)]
+    return records, {"status": "ok", "ledger_records": len(ledgers), "source_ids": len(source_ids), "records": len(records)}
+
+
 def main() -> int:
     errors: list[dict[str, Any]] = []
     evidence: OrderedDict[str, Any] = OrderedDict(
@@ -305,6 +336,12 @@ def main() -> int:
                 item["handled_sample"] = {"records": len(handled_records), "domain": entry["handled_domain"]}
                 if not handled_records:
                     errors.append({"key": "%s.handled_sample_missing" % entry["key"], "domain": entry["handled_domain"]})
+            trace_backed_records, trace_backed_evidence = trace_backed_handled_records(token, entry, errors)
+            if trace_backed_evidence.get("status") != "not_applicable":
+                item["trace_backed_sample"] = trace_backed_evidence
+            if trace_backed_records:
+                handled_records = trace_backed_records
+                item["handled_sample"]["strategy"] = "trace_backed"
 
             if handled_records:
                 trace = entry["trace"]

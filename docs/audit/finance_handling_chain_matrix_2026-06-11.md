@@ -109,8 +109,8 @@ exact_attachable_ledger_count=0
 HTTP/API 可见面验收结论：
 
 - 支付申请：用户可见入口 `smart_construction_core.menu_sc_user_payment_apply_acceptance` 打开 `payment.request`，本地用户数据 29,549 条，已办样本可追到 `payment.ledger`。
-- 往来单位付款：用户可见入口 `smart_construction_core.menu_sc_partner_payment` 打开 `sc.payment.execution`，本地用户数据 24,049 条，入口和已办样本可读；旧样本未稳定追到 `payment.ledger`，后续作为旧数据台账补齐任务处理。
-- 到款确认/项目收款：用户可见入口 `smart_construction_core.menu_sc_engineering_progress_income` 打开 `sc.receipt.income`，本地用户数据 15,905 条，入口和已办样本可读；旧样本未稳定追到 `sc.treasury.ledger`，后续进入项目收款状态约束和现金流台账补齐任务。
+- 往来单位付款：用户可见入口 `smart_construction_core.menu_sc_partner_payment` 打开 `sc.payment.execution`，本地用户数据 24,049 条，入口和已办样本可读；HTTP smoke 已支持按 `sc.treasury.ledger(source_model='sc.payment.execution')` 反选办理样本，当前 80 条来源级台账样本可反选 20 条办理样本并追到下游资金台账。
+- 到款确认/项目收款：用户可见入口 `smart_construction_core.menu_sc_engineering_progress_income` 打开 `sc.receipt.income`，本地用户数据 15,905 条，入口和已办样本可读；HTTP smoke 已支持按 `sc.treasury.ledger(source_model='sc.receipt.income')` 反选办理样本，当前 80 条来源级台账样本可反选 20 条办理样本并追到下游资金台账。
 - 项目费用报销单：用户可见入口 `smart_construction_core.menu_sc_project_expense_claim` 打开 `sc.expense.claim`，本地用户数据 37,013 条，入口和已办样本可读；旧样本台账追踪缺口后续按资金台账口径单独闭环。
 
 历史已办事实现金流审计结论：
@@ -178,7 +178,7 @@ evidence: create temp record from runtime action context, then verify current ru
 | 用户入口 | 正式模型 | 当前办理动作 | 下游事实 | 当前结论 | 下一步 |
 | --- | --- | --- | --- | --- | --- |
 | 支付申请 | `payment.request` | `action_submit`、`action_approval_decision`、`action_set_approved`、`action_done`、`action_cancel` | `payment.ledger`、`sc.treasury.ledger`、审批记录、审计日志 | 办理证据闭环、角色权限、下游追溯通过 | 补浏览器级验收：合同/结算拦截、取消、附件 |
-| 往来单位付款 | `sc.payment.execution` | `action_confirm`、`action_paid`、`action_cancel`、`action_on_tier_approved` | 新办理通过 `payment.request` 生成 `payment.ledger`；历史已办事实应通过 `sc.treasury.ledger` 来源级追溯现金流 | 办理入口可见面已通过 HTTP/API；12,846 条 source-less legacy 付款流出已补挂到付款执行；HTTP smoke 列表前 20 条抽样仍可能未命中已补挂样本 | 升级 HTTP smoke 为按来源台账反选样本，再对剩余付款流出缺口做来源级现金流迁移 |
+| 往来单位付款 | `sc.payment.execution` | `action_confirm`、`action_paid`、`action_cancel`、`action_on_tier_approved` | 新办理通过 `payment.request` 生成 `payment.ledger`；历史已办事实应通过 `sc.treasury.ledger` 来源级追溯现金流 | 办理入口可见面已通过 HTTP/API；12,846 条 source-less legacy 付款流出已补挂到付款执行；HTTP smoke 已按来源台账反选样本并追到 `sc.treasury.ledger` | 对剩余付款流出缺口做来源级现金流迁移，并补浏览器级抽样验收 |
 | 到款确认表 | `sc.receipt.income` | `action_confirm`、`action_received`、`action_cancel`、`action_on_tier_approved` | 新办理通过收款申请生成 `sc.treasury.ledger`；历史已办事实应通过 `sc.treasury.ledger` 来源级追溯现金流 | 办理入口可见面已通过 HTTP/API；26,439 条历史收款流入候选缺来源级台账 | 补项目收款状态约束、source-less legacy 台账对账和来源级现金流迁移 |
 | 报销/费用单据 | `sc.expense.claim` | `action_submit`、`action_approve`、`action_done`、`action_cancel`、审批回调 | 新办理通过 `payment.request` 或往来款现金流生成台账；历史已办事实按方向进入 `sc.treasury.ledger` | 办理入口可见面已通过 HTTP/API；50,825 条历史费用/保证金/扣款候选缺来源级台账 | 按 `claim_type` 和业务分类区分经营收付、保证金、扣款、往来款，再做来源级现金流迁移 |
 | 扣款单/扣款实缴/退回 | `sc.tax.deduction.registration` | 确认、已抵扣、取消 | 税务事实、项目经营口径 | 办理证据闭环、角色权限、下游税务事实追溯通过 | Phase 2 继续补正式分类字段或业务分类字典绑定 |
