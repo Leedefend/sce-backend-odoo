@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Run the live old-system strict parity gate for user acceptance data.
 
-This gate is intentionally conservative: cached old-system evidence is not
-enough for closure. It requires live SCBS/SCBSLY credentials, refreshes the
-old-system captures, then runs the strict new-system checks.
+This gate defaults to incremental, on-demand online evidence capture. Use
+ONLINE_VISIBLE_SURFACE_MODE=full for final acceptance, where cached old-system
+evidence is not enough for closure and the full old/new chain is required.
 """
 
 from __future__ import annotations
@@ -25,6 +25,8 @@ ROOT = Path(__file__).resolve().parents[2]
 INPUT_CSV = ROOT / "docs/migration_alignment/scbs_55_user_visible_surface_live_alignment_v1.csv"
 OUTPUT = ROOT / "artifacts/migration/live_old_system_business_data_strict_parity_gate_v1.json"
 OUTPUT_MD = ROOT / "artifacts/migration/live_old_system_business_data_strict_parity_gate_v1.md"
+MODE_INCREMENTAL = "incremental"
+MODE_FULL = "full"
 
 
 @dataclass(frozen=True)
@@ -56,7 +58,26 @@ def command_text(command: list[str] | str) -> str:
     return " ".join(shlex.quote(part) for part in command)
 
 
-def discover_scbs55_list_seqs() -> list[int]:
+def parse_bool(value: str | None) -> bool:
+    return clean(value).lower() in {"1", "true", "yes", "y", "on"}
+
+
+def parse_seq_filter(env: dict[str, str]) -> list[int]:
+    raw = (
+        env.get("ONLINE_VISIBLE_SURFACE_SEQS")
+        or env.get("SCBS55_OLD_FULL_DUMP_SEQS")
+        or ""
+    )
+    seqs: list[int] = []
+    for item in raw.replace("，", ",").split(","):
+        item = clean(item)
+        if item:
+            seqs.append(int(item))
+    return sorted(set(seqs))
+
+
+def discover_scbs55_list_seqs(requested_seqs: list[int] | None = None) -> list[int]:
+    requested = set(requested_seqs or [])
     seqs: list[int] = []
     with INPUT_CSV.open("r", encoding="utf-8-sig", newline="") as handle:
         for row in csv.DictReader(handle):
@@ -64,7 +85,10 @@ def discover_scbs55_list_seqs() -> list[int]:
                 continue
             if not clean(row.get("config_id")):
                 continue
-            seqs.append(int(clean(row["seq"])))
+            seq = int(clean(row["seq"]))
+            if requested and seq not in requested:
+                continue
+            seqs.append(seq)
     if not seqs:
         raise RuntimeError(f"no SCBS55 list seqs discovered from {INPUT_CSV}")
     return seqs
@@ -110,7 +134,7 @@ def env_missing(required: tuple[str, ...], env: dict[str, str]) -> list[str]:
     return [key for key in required if not clean(env.get(key))]
 
 
-def preflight(env: dict[str, str]) -> dict[str, Any]:
+def preflight(env: dict[str, str], mode: str, include_scbsly: bool, include_odoo: bool) -> dict[str, Any]:
     missing: list[str] = []
     if not clean(env.get("OLD_SCBS_USERNAME")):
         missing.append("OLD_SCBS_USERNAME")
@@ -119,10 +143,10 @@ def preflight(env: dict[str, str]) -> dict[str, Any]:
 
     scbsly_has_dedicated = clean(env.get("SCBSLY_USERNAME")) and clean(env.get("SCBSLY_PASSWORD"))
     scbsly_has_fallback = clean(env.get("OLD_SCBS_USERNAME")) and clean(env.get("OLD_SCBS_PASSWORD"))
-    if not scbsly_has_dedicated and not scbsly_has_fallback:
+    if include_scbsly and not scbsly_has_dedicated and not scbsly_has_fallback:
         missing.extend(["SCBSLY_USERNAME or OLD_SCBS_USERNAME", "SCBSLY_PASSWORD or OLD_SCBS_PASSWORD"])
 
-    if not clean(env.get("LIVE_STRICT_ODOO_SHELL_CMD")):
+    if include_odoo and not clean(env.get("LIVE_STRICT_ODOO_SHELL_CMD")):
         missing.append("LIVE_STRICT_ODOO_SHELL_CMD")
 
     if scbsly_has_dedicated:
@@ -139,15 +163,20 @@ def preflight(env: dict[str, str]) -> dict[str, Any]:
         "scbsly_base_url": env.get("SCBSLY_BASE_URL") or "https://www.builderp.cn/SCBSLY_V2",
         "scbsly_credentials_source": scbsly_credentials_source,
         "cached_evidence_allowed_for_closure": False,
+        "cached_evidence_allowed_for_incremental_reuse": mode == MODE_INCREMENTAL,
+        "mode": mode,
     }
 
 
-def build_steps(run_dir: Path, seqs: list[int], env: dict[str, str]) -> list[Step]:
+def build_steps(run_dir: Path, seqs: list[int], env: dict[str, str], mode: str) -> list[Step]:
     scbs55_dump_dir = run_dir / "scbs55_old_live_rows"
     scbsly_dump_dir = run_dir / "scbsly_direct_project_old_rows"
+    seq_csv = ",".join(str(seq) for seq in seqs)
     common_env = {
         "SCBS55_OLD_FULL_DUMP_DIR": str(scbs55_dump_dir),
-        "SCBS55_OLD_FULL_DUMP_SEQS": ",".join(str(seq) for seq in seqs),
+        "SCBS55_OLD_FULL_DUMP_SEQS": seq_csv,
+        "SCBS55_OLD_LIST_COUNT_SEQS": seq_csv,
+        "ONLINE_VISIBLE_SURFACE_SEQS": seq_csv,
         "SCBS55_OLD_FULL_DUMP_REUSE_EXISTING": "1",
         "MIGRATION_SCBS55_OLD_FULL_DUMP_DIR": str(scbs55_dump_dir),
         "SCBSLY_OLD_ROWS_DIR": str(scbsly_dump_dir),
@@ -172,6 +201,7 @@ def build_steps(run_dir: Path, seqs: list[int], env: dict[str, str]) -> list[Ste
             name="scbs55_online_list_count_probe",
             scope="SCBS55 live old system",
             command=["python3", "scripts/verify/scbs_55_old_system_list_count_probe.py"],
+            env=common_env,
             required_env=("OLD_SCBS_USERNAME", "OLD_SCBS_PASSWORD"),
         ),
         Step(
@@ -181,83 +211,108 @@ def build_steps(run_dir: Path, seqs: list[int], env: dict[str, str]) -> list[Ste
             required_env=("OLD_SCBS_USERNAME", "OLD_SCBS_PASSWORD"),
             env=common_env,
         ),
-        Step(
-            name="scbs55_old_new_browser_surface_compare",
-            scope="SCBS55 strict old/new visible surface",
-            command=["node", "scripts/verify/scbs_55_old_new_browser_surface_compare.js"],
-            required_env=("OLD_SCBS_USERNAME", "OLD_SCBS_PASSWORD"),
-            env=common_env,
-        ),
-        Step(
-            name="scbs55_browser_full_visible_data_coverage",
-            scope="SCBS55 browser full visible data coverage",
-            command=["node", "scripts/verify/scbs_55_browser_full_visible_data_coverage.js"],
-            env=common_env,
-        ),
-        Step(
-            name="scbs55_legacy_visible_field_full_reconcile",
-            scope="SCBS55 new system Odoo strict field reconcile",
-            command=odoo_env_prefix
-            + f"{odoo_shell} < scripts/migration/scbs_55_legacy_visible_field_full_reconcile_probe.py",
-            shell=True,
-            required_env=("LIVE_STRICT_ODOO_SHELL_CMD",),
-        ),
-        Step(
-            name="scbs55_user_visible_business_data_final_probe",
-            scope="SCBS55 new system Odoo final business data probe",
-            command=odoo_env_prefix
-            + f"{odoo_shell} < scripts/migration/scbs_55_user_visible_business_data_final_probe.py",
-            shell=True,
-            required_env=("LIVE_STRICT_ODOO_SHELL_CMD",),
-        ),
-        Step(
-            name="scbsly_online_menu_probe",
-            scope="SCBSLY live old system",
-            command=["python3", "scripts/verify/scbsly_direct_project_acceptance_menu_probe.py"],
-            required_env=("OLD_SCBS_USERNAME", "OLD_SCBS_PASSWORD"),
-            env=common_env,
-        ),
-        Step(
-            name="scbsly_online_old_row_dump",
-            scope="SCBSLY live old system",
-            command=["python3", "scripts/verify/scbsly_direct_project_old_row_dump.py"],
-            required_env=("OLD_SCBS_USERNAME", "OLD_SCBS_PASSWORD"),
-            env=common_env,
-        ),
-        Step(
-            name="scbsly_old_identity_lock",
-            scope="SCBSLY live old system",
-            command=["python3", "scripts/verify/scbsly_direct_project_old_identity_lock.py"],
-            env=common_env,
-        ),
-        Step(
-            name="scbsly_new_system_alignment_probe",
-            scope="SCBSLY new system alignment",
-            command=["node", "scripts/verify/scbsly_direct_project_new_system_alignment_probe.js"],
-            env=common_env,
-        ),
-        Step(
-            name="scbsly_strict_visible_acceptance",
-            scope="SCBSLY strict old/new visible acceptance",
-            command=["python3", "scripts/verify/scbsly_direct_project_strict_visible_acceptance.py"],
-            required_env=("OLD_SCBS_USERNAME", "OLD_SCBS_PASSWORD"),
-            env=common_env,
-        ),
-        Step(
-            name="user_visible_business_fact_alignment",
-            scope="Full user-visible business facts",
-            command=odoo_env_prefix + f"{odoo_shell} < scripts/migration/user_visible_business_fact_alignment_probe.py",
-            shell=True,
-            required_env=("LIVE_STRICT_ODOO_SHELL_CMD",),
-        ),
-        Step(
-            name="user_data_reconciliation_full_scope_probe",
-            scope="Full user acceptance data scope",
-            command=odoo_env_prefix + f"{odoo_shell} < scripts/verify/user_data_reconciliation_full_scope_probe.py",
-            shell=True,
-            required_env=("LIVE_STRICT_ODOO_SHELL_CMD",),
-        ),
     ]
+    if mode == MODE_INCREMENTAL:
+        if parse_bool(env.get("ONLINE_VISIBLE_RUN_BROWSER")):
+            steps.extend(
+                [
+                    Step(
+                        name="scbs55_old_new_browser_surface_compare",
+                        scope="SCBS55 strict old/new visible surface",
+                        command=["node", "scripts/verify/scbs_55_old_new_browser_surface_compare.js"],
+                        required_env=("OLD_SCBS_USERNAME", "OLD_SCBS_PASSWORD"),
+                        env=common_env,
+                    ),
+                    Step(
+                        name="scbs55_browser_full_visible_data_coverage",
+                        scope="SCBS55 browser full visible data coverage",
+                        command=["node", "scripts/verify/scbs_55_browser_full_visible_data_coverage.js"],
+                        env=common_env,
+                    ),
+                ]
+            )
+        return steps
+
+    steps.extend(
+        [
+            Step(
+                name="scbs55_old_new_browser_surface_compare",
+                scope="SCBS55 strict old/new visible surface",
+                command=["node", "scripts/verify/scbs_55_old_new_browser_surface_compare.js"],
+                required_env=("OLD_SCBS_USERNAME", "OLD_SCBS_PASSWORD"),
+                env=common_env,
+            ),
+            Step(
+                name="scbs55_browser_full_visible_data_coverage",
+                scope="SCBS55 browser full visible data coverage",
+                command=["node", "scripts/verify/scbs_55_browser_full_visible_data_coverage.js"],
+                env=common_env,
+            ),
+            Step(
+                name="scbs55_legacy_visible_field_full_reconcile",
+                scope="SCBS55 new system Odoo strict field reconcile",
+                command=odoo_env_prefix
+                + f"{odoo_shell} < scripts/migration/scbs_55_legacy_visible_field_full_reconcile_probe.py",
+                shell=True,
+                required_env=("LIVE_STRICT_ODOO_SHELL_CMD",),
+            ),
+            Step(
+                name="scbs55_user_visible_business_data_final_probe",
+                scope="SCBS55 new system Odoo final business data probe",
+                command=odoo_env_prefix
+                + f"{odoo_shell} < scripts/migration/scbs_55_user_visible_business_data_final_probe.py",
+                shell=True,
+                required_env=("LIVE_STRICT_ODOO_SHELL_CMD",),
+            ),
+            Step(
+                name="scbsly_online_menu_probe",
+                scope="SCBSLY live old system",
+                command=["python3", "scripts/verify/scbsly_direct_project_acceptance_menu_probe.py"],
+                required_env=("OLD_SCBS_USERNAME", "OLD_SCBS_PASSWORD"),
+                env=common_env,
+            ),
+            Step(
+                name="scbsly_online_old_row_dump",
+                scope="SCBSLY live old system",
+                command=["python3", "scripts/verify/scbsly_direct_project_old_row_dump.py"],
+                required_env=("OLD_SCBS_USERNAME", "OLD_SCBS_PASSWORD"),
+                env=common_env,
+            ),
+            Step(
+                name="scbsly_old_identity_lock",
+                scope="SCBSLY live old system",
+                command=["python3", "scripts/verify/scbsly_direct_project_old_identity_lock.py"],
+                env=common_env,
+            ),
+            Step(
+                name="scbsly_new_system_alignment_probe",
+                scope="SCBSLY new system alignment",
+                command=["node", "scripts/verify/scbsly_direct_project_new_system_alignment_probe.js"],
+                env=common_env,
+            ),
+            Step(
+                name="scbsly_strict_visible_acceptance",
+                scope="SCBSLY strict old/new visible acceptance",
+                command=["python3", "scripts/verify/scbsly_direct_project_strict_visible_acceptance.py"],
+                required_env=("OLD_SCBS_USERNAME", "OLD_SCBS_PASSWORD"),
+                env=common_env,
+            ),
+            Step(
+                name="user_visible_business_fact_alignment",
+                scope="Full user-visible business facts",
+                command=odoo_env_prefix + f"{odoo_shell} < scripts/migration/user_visible_business_fact_alignment_probe.py",
+                shell=True,
+                required_env=("LIVE_STRICT_ODOO_SHELL_CMD",),
+            ),
+            Step(
+                name="user_data_reconciliation_full_scope_probe",
+                scope="Full user acceptance data scope",
+                command=odoo_env_prefix + f"{odoo_shell} < scripts/verify/user_data_reconciliation_full_scope_probe.py",
+                shell=True,
+                required_env=("LIVE_STRICT_ODOO_SHELL_CMD",),
+            ),
+        ]
+    )
     return steps
 
 
@@ -321,6 +376,9 @@ def markdown(report: dict[str, Any]) -> str:
         f"- SCBS: `{report['preflight']['scbs_base_url']}`",
         f"- SCBSLY: `{report['preflight']['scbsly_base_url']}`",
         f"- Cached evidence allowed for closure: `{report['preflight']['cached_evidence_allowed_for_closure']}`",
+        f"- Cached evidence allowed for incremental reuse: `{report['preflight']['cached_evidence_allowed_for_incremental_reuse']}`",
+        f"- Mode: `{report.get('verification_mode') or ''}`",
+        f"- SCBS55 seqs: `{', '.join(str(seq) for seq in report.get('scbs55_list_seqs') or [])}`",
         f"- Missing env: `{', '.join(report['preflight']['missing_env']) or 'none'}`",
         "",
         "## Steps",
@@ -342,12 +400,22 @@ def markdown(report: dict[str, Any]) -> str:
 
 def main() -> int:
     env = os.environ.copy()
+    mode = clean(env.get("ONLINE_VISIBLE_SURFACE_MODE")) or MODE_INCREMENTAL
+    if mode not in {MODE_INCREMENTAL, MODE_FULL}:
+        raise RuntimeError("ONLINE_VISIBLE_SURFACE_MODE must be incremental or full")
+    requested_seqs = parse_seq_filter(env)
+    if mode == MODE_INCREMENTAL and not requested_seqs:
+        raise RuntimeError(
+            "ONLINE_VISIBLE_SURFACE_SEQS is required in incremental mode, e.g. 022,023,027,028"
+        )
     run_dir = ROOT / "artifacts/migration/live_old_system_strict_parity_gate" / utc_slug()
     run_dir.mkdir(parents=True, exist_ok=True)
-    seqs = discover_scbs55_list_seqs()
+    seqs = discover_scbs55_list_seqs(requested_seqs if requested_seqs else None)
     scbs55_seed = seed_scbs55_dump_dir(run_dir)
-    steps = build_steps(run_dir, seqs, env)
-    preflight_result = preflight(env)
+    steps = build_steps(run_dir, seqs, env, mode)
+    include_scbsly = mode == MODE_FULL
+    include_odoo = mode == MODE_FULL
+    preflight_result = preflight(env, mode, include_scbsly, include_odoo)
     step_results: list[dict[str, Any]] = []
 
     if preflight_result["status"] == "FAIL":
@@ -378,6 +446,7 @@ def main() -> int:
 
     report = {
         "mode": "live_old_system_business_data_strict_parity_gate",
+        "verification_mode": mode,
         "status": status,
         "blocking_reason": blocking_reason,
         "generated_at": datetime.now(timezone.utc).isoformat(),

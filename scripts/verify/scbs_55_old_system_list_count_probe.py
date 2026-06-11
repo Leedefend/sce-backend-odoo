@@ -26,6 +26,17 @@ POST_TIMEOUT = int(os.getenv("OLD_SCBS_POST_TIMEOUT", "180"))
 LOGIN_TIMEOUT = int(os.getenv("OLD_SCBS_LOGIN_TIMEOUT", "90"))
 API_RETRIES = int(os.getenv("OLD_SCBS_API_RETRIES", "8"))
 API_RETRY_SLEEP = float(os.getenv("OLD_SCBS_API_RETRY_SLEEP", "2"))
+SEQ_FILTER = {
+    int(item)
+    for item in (
+        os.getenv("SCBS55_OLD_LIST_COUNT_SEQS")
+        or os.getenv("ONLINE_VISIBLE_SURFACE_SEQS")
+        or os.getenv("SCBS55_OLD_FULL_DUMP_SEQS", "")
+    )
+    .replace("，", ",")
+    .split(",")
+    if item.strip()
+}
 
 
 def clean(value: object) -> str:
@@ -226,8 +237,11 @@ def main() -> int:
     token = user["Token"]
     result_rows: list[dict[str, Any]] = []
     for csv_row in csv.DictReader(INPUT_CSV.open("r", encoding="utf-8-sig", newline="")):
+        seq = int(csv_row["seq"])
+        if SEQ_FILTER and seq not in SEQ_FILTER:
+            continue
         row = {
-            "seq": int(csv_row["seq"]),
+            "seq": seq,
             "name": csv_row["name"],
             "config_type": csv_row.get("config_type") or "",
             "config_id": csv_row.get("config_id") or "",

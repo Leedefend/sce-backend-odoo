@@ -58,16 +58,30 @@ OLD_SCBS_PASSWORD=... \
 python3 scripts/verify/scbs55_user_acceptance_online_probe.py
 ```
 
-严格旧新系统实时一致性门禁：
+增量在线证据拉取（日常默认方式）：
 
 ```bash
-OLD_SCBS_USERNAME=... \
-OLD_SCBS_PASSWORD=... \
+set -a
+source .env.local
+set +a
+ONLINE_VISIBLE_SURFACE_MODE=incremental \
+ONLINE_VISIBLE_SURFACE_SEQS=022,023,027,028,032,037,038 \
 DB_NAME=sc_demo \
 bash scripts/ops/validate_online_visible_surface_verification.sh
 ```
 
-该严格门禁要求实时旧系统凭证；缓存的旧系统 dump 只能作为定位辅助，不能作为最终收口证据。
+完整旧新系统实时一致性门禁（最终交付前运行）：
+
+```bash
+set -a
+source .env.local
+set +a
+ONLINE_VISIBLE_SURFACE_MODE=full \
+DB_NAME=sc_demo \
+bash scripts/ops/validate_online_visible_surface_verification.sh
+```
+
+默认策略是按需增量：每次只拉当前业务域需要的旧系统菜单序号，复用已有在线 dump 作为定位缓存，避免重复拉取全量数据。最终交付收口必须显式运行 `ONLINE_VISIBLE_SURFACE_MODE=full`，缓存的旧系统 dump 只能作为定位辅助，不能作为最终收口证据。
 
 ## 使用原则
 
@@ -77,7 +91,8 @@ bash scripts/ops/validate_online_visible_surface_verification.sh
 - 菜单入口可以整合，但业务类别必须以用户可见数据和在线办理行为为依据，沉淀为可维护字典。
 - 收付款申请、往来款、公司-承包人责任、项目资金状态、资金日报必须分层核实，不能只凭表名或旧菜单名归类。
 - 每次业务域收口时，把在线证据路径、运行命令、产物路径和未覆盖残差写入对应迭代文档。
+- 日常迭代只运行当前业务域所需的 `ONLINE_VISIBLE_SURFACE_SEQS`；不得因为单点核实触发全量在线抓取。
 
 ## 当前状态
 
-本地当前 shell 环境尚未注入 `OLD_SCBS_USERNAME`、`OLD_SCBS_PASSWORD`、`FRONTEND_URL`、`E2E_LOGIN`、`E2E_PASSWORD` 等在线登录变量，因此本次只能确认工具链和协议，不能直接完成实时登录核实。后续拿到或注入凭证后，应优先运行上述在线核实命令，再继续收口具体业务域。
+在线登录变量应保存在本地忽略文件 `.env.local` 或当前 shell 环境中，不进入仓库。后续业务域推进时优先运行增量在线核实命令；最终交付前再运行完整门禁。
