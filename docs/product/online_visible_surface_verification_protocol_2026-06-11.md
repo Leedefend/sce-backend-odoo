@@ -63,8 +63,8 @@ python3 scripts/verify/scbs55_user_acceptance_online_probe.py
 ```bash
 OLD_SCBS_USERNAME=... \
 OLD_SCBS_PASSWORD=... \
-LIVE_STRICT_ODOO_SHELL_CMD="COMPOSE_PROJECT_NAME=sc-backend-odoo-dev DB_NAME=sc_demo bash scripts/ops/odoo_shell_exec.sh" \
-python3 scripts/verify/live_old_system_business_data_strict_parity_gate.py
+DB_NAME=sc_demo \
+bash scripts/ops/validate_online_visible_surface_verification.sh
 ```
 
 该严格门禁要求实时旧系统凭证；缓存的旧系统 dump 只能作为定位辅助，不能作为最终收口证据。
