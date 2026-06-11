@@ -76,7 +76,7 @@ for line in Line.search(source_domain, order="transaction_date desc, id desc"):
         "target_account_id": target_account.id,
         "project_id": line.project_id.id if line.project_id else False,
         "company_id": (line.project_id.company_id.id if line.project_id and line.project_id.company_id else env.company.id),  # noqa: F821
-        "currency_id": env.company.currency_id.id,  # noqa: F821
+        "currency_id": env.ref("base.CNY", raise_if_not_found=False).id,  # noqa: F821
         "amount": line.amount,
         "operation_reason": "账户间资金往来",
         "state": "done" if line.document_state == "2" else "confirmed",

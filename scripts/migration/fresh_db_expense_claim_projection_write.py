@@ -55,7 +55,7 @@ ensure_allowed_db()
 artifact_root = resolve_artifact_root()
 output_json = artifact_root / "fresh_db_expense_claim_projection_write_result_v1.json"
 uid = env.uid  # noqa: F821
-currency_id = env.company.currency_id.id  # noqa: F821
+currency_id = env.ref("base.CNY", raise_if_not_found=False).id  # noqa: F821
 fallback_project = env["project.project"].sudo().with_context(active_test=False).search(  # noqa: F821
     [("name", "=", "公司综合平台")],
     limit=1,

@@ -62,7 +62,7 @@ SubcontractSettlement = env["sc.subcontract.settlement"].sudo()  # noqa: F821
 EquipmentPlan = env["sc.equipment.plan"].sudo()  # noqa: F821
 EquipmentUsage = env["sc.equipment.usage"].sudo()  # noqa: F821
 EquipmentSettlement = env["sc.equipment.settlement"].sudo()  # noqa: F821
-currency_id = env.company.currency_id.id  # noqa: F821
+currency_id = env.ref("base.CNY", raise_if_not_found=False).id  # noqa: F821
 uid = env.uid  # noqa: F821
 
 counts = {

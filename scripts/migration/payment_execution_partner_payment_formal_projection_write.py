@@ -226,7 +226,7 @@ def values_for(row, source_model, fact=None):
         "planned_amount": money_float_abs(amount_value),
         "paid_amount": money_float_abs(amount_value),
         "invoice_amount": money_float_abs(row.get("f_FPJE")),
-        "currency_id": env.company.currency_id.id,  # noqa: F821
+        "currency_id": env.ref("base.CNY", raise_if_not_found=False).id,  # noqa: F821
         "legacy_source_model": source_model,
         "legacy_source_table": SOURCE_TABLE,
         "legacy_record_id": clean(row.get("Id") or row.get("ID") or (fact.legacy_record_id if fact else "")),

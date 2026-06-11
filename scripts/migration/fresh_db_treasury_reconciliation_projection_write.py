@@ -38,7 +38,7 @@ def scalar(sql: str) -> object:
 
 artifact_root = resolve_artifact_root()
 output_json = artifact_root / "fresh_db_treasury_reconciliation_projection_write_result_v1.json"
-currency_id = env.company.currency_id.id  # noqa: F821
+currency_id = env.ref("base.CNY", raise_if_not_found=False).id  # noqa: F821
 before = int(scalar("SELECT COUNT(*) FROM sc_treasury_reconciliation") or 0)
 
 env.cr.execute(  # noqa: F821

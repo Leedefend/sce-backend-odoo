@@ -297,7 +297,7 @@ def loan_vals(seq: int, spec: dict[str, Any], row: dict[str, Any], key: str) -> 
         "document_date": parse_date(date_value),
         "due_date": parse_date(row.get("YJGHSJ") or row.get("YDQX") or row.get("HKRQ")),
         "amount": amount(money),
-        "currency_id": env.company.currency_id.id,  # noqa: F821
+        "currency_id": env.ref("base.CNY", raise_if_not_found=False).id,  # noqa: F821
         "purpose": clean(row.get("ZYZJSYAP") or row.get("YT") or row.get("BZ")),
         "rate_label": clean(row.get("JKLX") or row.get("DKLL") or row.get("D_SCBSJS_SJNLL")),
         "extra_ref": clean(row.get("ZKZH") or row.get("DKZH") or row.get("HKZH")),
@@ -365,7 +365,7 @@ def expense_vals(spec: dict[str, Any], row: dict[str, Any], key: str) -> dict[st
         "summary": clean(row.get("YT") or row.get("BZ") or row.get("JKR")),
         "amount": amount(row.get("HKJE")),
         "approved_amount": amount(row.get("HKJE")),
-        "currency_id": env.company.currency_id.id,  # noqa: F821
+        "currency_id": env.ref("base.CNY", raise_if_not_found=False).id,  # noqa: F821
         "legacy_source_model": spec["surface"],
         "legacy_source_table": spec["table"],
         "legacy_record_id": key,
@@ -405,7 +405,7 @@ def tax_vals(spec: dict[str, Any], row: dict[str, Any], key: str) -> dict[str, A
         "partner_name": clean(row.get("KKDW")),
         "deduction_amount": amount(row.get("KKJE")),
         "deduction_tax_amount": amount(row.get("KKJE")),
-        "currency_id": env.company.currency_id.id,  # noqa: F821
+        "currency_id": env.ref("base.CNY", raise_if_not_found=False).id,  # noqa: F821
         "legacy_source_model": spec["surface"],
         "legacy_source_table": spec["table"],
         "legacy_record_id": key,

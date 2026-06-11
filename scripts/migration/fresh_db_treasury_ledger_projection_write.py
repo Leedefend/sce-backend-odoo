@@ -46,7 +46,7 @@ OUTPUT_JSON = ARTIFACT_ROOT / "fresh_db_treasury_ledger_projection_write_result_
 
 ensure_allowed_db()
 uid = env.uid  # noqa: F821
-company_currency_id = env.company.currency_id.id  # noqa: F821
+company_currency_id = env.ref("base.CNY", raise_if_not_found=False).id  # noqa: F821
 
 before = scalar("SELECT COUNT(*) FROM sc_treasury_ledger")
 candidates = scalar(

@@ -49,7 +49,7 @@ def scalar(sql: str, params: list[object] | None = None) -> object:
 ensure_allowed_db()
 artifact_root = resolve_artifact_root()
 output_json = artifact_root / "fresh_db_workbench_item_projection_write_result_v1.json"
-currency_id = env.company.currency_id.id  # noqa: F821
+currency_id = env.ref("base.CNY", raise_if_not_found=False).id  # noqa: F821
 
 before = int(scalar("SELECT COUNT(*) FROM sc_workbench_item") or 0)
 todo_before = int(

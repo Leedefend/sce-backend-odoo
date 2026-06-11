@@ -102,7 +102,7 @@ def existing_legacy_pairs():
 
 
 def currency_id():
-    return env.company.currency_id.id  # noqa: F821
+    return env.ref("base.CNY", raise_if_not_found=False).id  # noqa: F821
 
 
 def resolve_input_csv():

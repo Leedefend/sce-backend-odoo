@@ -63,7 +63,7 @@ def fetchall(sql: str, params: list[object] | tuple[object, ...] | None = None) 
 ensure_allowed_db()
 artifact_root = resolve_artifact_root()
 output_json = artifact_root / OUTPUT_NAME
-currency_id = env.company.currency_id.id  # noqa: F821
+currency_id = env.ref("base.CNY", raise_if_not_found=False).id  # noqa: F821
 
 env.cr.execute("ALTER TABLE sc_receipt_income DROP CONSTRAINT IF EXISTS sc_receipt_income_amount_nonnegative")  # noqa: F821
 env.cr.execute("ALTER TABLE sc_receipt_income DROP CONSTRAINT IF EXISTS sc_receipt_income_amount_manual_nonnegative")  # noqa: F821

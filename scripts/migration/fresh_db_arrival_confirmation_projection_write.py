@@ -38,7 +38,7 @@ def scalar(sql: str, params: list[object] | None = None) -> object:
 
 artifact_root = resolve_artifact_root()
 output_json = artifact_root / "fresh_db_arrival_confirmation_projection_write_result_v1.json"
-currency_id = env.company.currency_id.id  # noqa: F821
+currency_id = env.ref("base.CNY", raise_if_not_found=False).id  # noqa: F821
 uid = env.uid  # noqa: F821
 
 document_domain_sql = """

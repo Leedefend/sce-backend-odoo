@@ -118,7 +118,7 @@ updated = 0
 skipped = 0
 active_rows = 0
 amount_2026_by_type = {}
-currency_id = env.company.currency_id.id  # noqa: F821
+currency_id = env.ref("base.CNY", raise_if_not_found=False).id  # noqa: F821
 
 with source_csv.open(newline="", encoding="utf-8-sig") as handle:
     for row in csv.DictReader(handle):

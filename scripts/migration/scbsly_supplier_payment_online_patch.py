@@ -178,7 +178,7 @@ for row in rows:
         "planned_amount": amount(row.get("f_FKJE")),
         "paid_amount": amount(row.get("f_FKJE")),
         "invoice_amount": amount(row.get("f_FPJE")),
-        "currency_id": env.company.currency_id.id,  # noqa: F821
+        "currency_id": env.ref("base.CNY", raise_if_not_found=False).id,  # noqa: F821
         "legacy_source_model": SURFACE,
         "legacy_source_table": TABLE,
         "legacy_record_id": key,

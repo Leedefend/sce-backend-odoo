@@ -106,7 +106,7 @@ def loan_values_from_employee_row(row: dict[str, str]) -> dict[str, object]:
         "document_date": document_date,
         "due_date": clean(row.get("due_date")) or False,
         "amount": max(amount, 0.0),
-        "currency_id": env.company.currency_id.id,  # noqa: F821
+        "currency_id": env.ref("base.CNY", raise_if_not_found=False).id,  # noqa: F821
         "purpose": purpose or clean(row.get("note")) or False,
         "rate_label": clean(row.get("source_type_label")) or False,
         "extra_ref": " / ".join(part for part in extra_parts if part) or False,
@@ -249,7 +249,7 @@ def project_project_company_repayments() -> dict[str, object]:
             "document_date": line.transaction_date or False,
             "due_date": line.transaction_date or False,
             "amount": float(line.amount or 0.0),
-            "currency_id": env.company.currency_id.id,  # noqa: F821
+            "currency_id": env.ref("base.CNY", raise_if_not_found=False).id,  # noqa: F821
             "purpose": clean(line.source_summary) or "项目还公司款登记",
             "rate_label": clean(line.category) or False,
             "extra_ref": clean(line.account_name) or False,
@@ -288,7 +288,7 @@ def project_deduction_bills() -> dict[str, object]:
             "deduction_amount": amount,
             "deduction_tax_amount": 0.0,
             "deduction_surcharge_amount": 0.0,
-            "currency_id": env.company.currency_id.id,  # noqa: F821
+            "currency_id": env.ref("base.CNY", raise_if_not_found=False).id,  # noqa: F821
             "legacy_source_model": "sc.legacy.payment.residual.fact",
             "legacy_source_table": item.source_table,
             "legacy_record_id": f"{item.source_table}:{item.legacy_record_id}",
