@@ -676,6 +676,12 @@ verify.finance_legacy_source_linked_ledger.payment_request_boundary.audit: guard
 backfill.finance_legacy_source_linked_ledger.payment_request_boundary: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) APPLY=1 scripts/ops/validate_finance_legacy_source_linked_ledger_payment_request_boundary.sh
 
+verify.finance_legacy_handling.currency.audit: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) scripts/ops/validate_finance_legacy_handling_currency.sh
+
+backfill.finance_legacy_handling.currency: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) APPLY=1 scripts/ops/validate_finance_legacy_handling_currency.sh
+
 verify.finance_legacy_treasury.currency.audit: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) scripts/ops/validate_finance_legacy_treasury_currency.sh
 
