@@ -165,6 +165,8 @@ HTTP/API 可见面验收结论：
 - 往来单位付款：用户可见入口 `smart_construction_core.menu_sc_partner_payment` 打开 `sc.payment.execution`，本地用户数据 24,049 条，入口和已办样本可读；HTTP smoke 已支持按 `sc.treasury.ledger(source_model='sc.payment.execution')` 反选办理样本，当前 80 条来源级台账样本可反选 20 条办理样本并追到下游资金台账。
 - 到款确认/项目收款：用户可见入口 `smart_construction_core.menu_sc_engineering_progress_income` 打开 `sc.receipt.income`，本地用户数据 15,905 条，入口和已办样本可读；HTTP smoke 已支持按 `sc.treasury.ledger(source_model='sc.receipt.income')` 反选办理样本，当前 80 条来源级台账样本可反选 20 条办理样本并追到下游资金台账。
 - 项目费用报销单：用户可见入口 `smart_construction_core.menu_sc_project_expense_claim` 打开 `sc.expense.claim`，本地用户数据 37,013 条，入口和已办样本可读；HTTP smoke 已支持按 `sc.treasury.ledger(source_model='sc.expense.claim')` 反选办理样本，当前 80 条来源级台账样本可反选 20 条办理样本并追到下游资金台账。
+- 扩展入口：`make verify.finance_handling.http_surface.smoke` 已覆盖 15 个用户可见财务办理入口，包括支付申请、付款执行、到款确认、费用/报销、投标保证金、合同保证金、扣款单/实缴/退回、还款登记、承包人还项目款和项目还公司款。`system.init` 当前只返回前 300 个导航行，smoke 对后置菜单使用 action 名称和模型兜底解析；兜底只解决验证取数，不改变菜单最终 action 绑定。
+- 合同保证金支付/退回是行业模板入口，当前用户数据没有已办样本；HTTP smoke 只验证 action 可解析、页面契约可打开和分类策略可运行，不把样本数作为当前用户验收缺口。
 
 历史已办事实现金流审计结论：
 
@@ -183,6 +185,8 @@ HTTP/API 可见面验收结论：
 - 已补齐扣款单非现金办理边界：`finance.deduction.bill` 不关联 `payment.request`，不生成 `payment.ledger` 或 `sc.treasury.ledger`，只作为非现金扣款事实完成办理；`finance.deduction.paid`、`finance.deduction.refund` 继续按真实付款/收款进入现金流。费用分类门禁已验证误挂收付款申请被拦截，无收付款申请完成后现金台账新增数为 0。
 - 已补齐保证金收付现金流边界：投标/合同保证金支付必须走付款申请并生成 `payment.ledger`，保证金退回必须走收款申请并生成 `sc.treasury.ledger`；方向错配在费用单提交阶段被拦截。增强后的费用分类门禁已验证支付申请和退回申请均自动完成，且分别只生成对应现金流台账。
 - 已修正借款类入口切分：承包人借项目款、项目借公司款登记按 `business_category_id.code` 明确切分，静态和运行时门禁均验证保存后仍留在正确入口，不再依赖 purpose 文本包含关系。
+- 已修正通用借款申请默认分类：无明确“项目借公司款”或“借...项目...款”语义时保存为 `finance.loan.borrowing`，避免普通借款申请被默认归入项目借公司款；`validate_finance_business_category_runtime.sh` 已通过。
+- 已修复扣款单页面契约 500：`action_sc_expense_claim_deduction_bill` 曾残留绑定旧 `sc.tax.deduction.registration` tree 视图，当前清空 action 级视图绑定后由 `sc.expense.claim` 标准视图加载；`扣款单位/扣款金额/扣款事由/附件/录入时间` 可见别名字段已补映射。
 - 剩余 source-less legacy 台账 2,341 条：2,322 条找不到正式候选，18 条方向不一致，1 条项目不一致，暂不自动补挂。
 - 后续迁移脚本不得重复追加 113,549 条来源级台账；应以 `source_model/source_res_id/project_id/direction/source_kind` 为幂等键，剩余 2,341 条 source-less legacy 行需单独判断保留、补来源或作废策略，防止现金流翻倍。
 

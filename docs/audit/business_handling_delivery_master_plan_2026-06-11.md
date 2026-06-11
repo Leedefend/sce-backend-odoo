@@ -243,6 +243,7 @@
 - 已将公司-承包人责任口径纳入业务分类字典：`finance.responsibility.arrival_confirmation` 保留到款确认为项目收款状态并作为公司-承包人后续办理约束；`finance.responsibility.self_funding_income`、`finance.responsibility.self_funding_refund` 表达自筹垫付和自筹退回的责任影响；`finance.responsibility.company_contractor.balance` 作为只读办理约束余额。分类入口可复用同一个 action，但必须叠加字典 `domain_json`，不能让用户在泛化责任明细里自行判断类别。
 - 已确认旧入口“承包人借项目款”验收数 227 与当前事实分类 177 的差异不是覆盖缺口，而是旧入口名称和事实分类规则不等价；后续收口前必须将借还款分类规则字典化，并由用户确认新的验收口径。
 - 已建立 `make verify.finance_handling.http_surface.smoke`，不下载浏览器运行时，按业务用户可见面验证支付申请、往来单位付款、到款确认/项目收款、项目费用报销单四类高数据量入口；当前入口、页面契约、列表和已办样本通过，支付申请可追到 `payment.ledger`，往来单位付款、到款确认和项目费用报销均可通过来源级 `sc.treasury.ledger` 反选办理样本并追到下游资金台账。
+- 已把 `make verify.finance_handling.http_surface.smoke` 扩展到 15 个财务办理入口：支付申请、付款执行、到款确认、费用报销、项目费用、投标保证金支付/退回、合同保证金支付/退回、扣款单、扣款实缴、扣款退回、还款登记、承包人还项目款、项目还公司款。合同保证金支付/退回当前用户数据无已办样本，按行业模板入口验证 action 和页面契约，不强制样本数。
 - 已建立 `make verify.finance_legacy_cash_ledger.backfill_readiness.audit`，只读审计历史已办事实进入来源级现金流台账的可回填性；当前识别 113,549 条具备项目和正金额的历史候选，其中付款执行 36,285、收款登记 26,439、费用/保证金/扣款 50,825，已全部具备 `source_model/source_res_id` 级台账反查。
 - 已建立 `make verify.finance_legacy_source_less_ledger.reconciliation.audit`，对 source-less legacy 资金台账做补挂来源可行性审计；当前 18,347 条 source-less 行中，16,006 条可按 `legacy_record_id` 找到正式办理候选，但被币种冲突阻断：本地公司为 `CNY`，正式候选多为 `CNY`，旧台账全为 `USD`。因此下一步必须先修本地历史台账币种基线，再做来源补挂或增量迁移。
 - 已建立并执行 `make backfill.finance_legacy_treasury.currency`，本地 `sc_demo` 已将 18,347 条 legacy 资金台账按项目公司币种从 `USD` 对齐为 `CNY`，复跑 `make verify.finance_legacy_treasury.currency.audit` 后币种不一致为 0。已同步修正 `fresh_db_treasury_ledger_projection_write.py`，后续重放历史资金台账时使用项目公司币种或公司默认币种，避免再次写回 USD。
@@ -259,12 +260,15 @@
 - 已把费用/保证金/扣款/还款审批策略从全局模型配置推进到业务分类默认策略：12 个 `sc.expense.claim` 分类默认绑定 `expense_claim_approval`，且同步过程不覆盖客户已维护策略。新增并通过 `make verify.finance_expense.approval_policy.audit`，验证免审批配置下提交后可完成，启用审批配置下审批前不能批准/完成，统一审批通过后才能完成并写入内部往来资金台账。
 - 已明确扣款办理边界：`finance.deduction.bill` 是非现金扣款事实，默认 `payment_request_policy=not_applicable`、`balance_policy=noncash_deduction`，手工办理必须有项目、往来单位、金额、扣款类型、附件和审批，但不得关联收付款申请，不生成 `payment.ledger` 或 `sc.treasury.ledger`；`finance.deduction.paid` 和 `finance.deduction.refund` 才进入真实现金流。增强后的 `make verify.finance_expense_category.handling_policy.audit` 已验证扣款单误挂收付款申请会被拦截，无收付款申请可完成且现金台账新增数为 0。
 - 已补强保证金收付与收付款申请边界：保证金支付必须关联付款申请，完成后自动完成申请并生成 1 条 `payment.ledger`；保证金退回必须关联收款申请，完成后自动完成申请并生成 1 条 `sc.treasury.ledger`；支付类保证金误挂收款申请会被拦截。该运行时证据已纳入 `make verify.finance_expense_category.handling_policy.audit`。
+- 已修复扣款单可见面阻断：`finance.deduction.bill` action 曾残留绑定旧 `sc.tax.deduction.registration` 视图，导致 action 模型为 `sc.expense.claim` 时页面契约 500；当前已清空 action 级 `view_id/view_ids`，由 `sc.expense.claim` 标准视图加载，HTTP/API 可见面门禁通过。
+- 已修正通用借款申请分类：`sc.financing.loan` 在未明确“项目借公司款”或“借...项目...款”语义时保持 `finance.loan.borrowing`，不再默认落入 `finance.loan.project_borrow_company`；`validate_finance_business_category_runtime.sh` 已验证保存后分类不漂移。
 
 下一步收口顺序：
 
-1. 先围绕费用/保证金/扣款/还款 HTTP/浏览器抽样做验收，把“分类办理策略可验收”推进到“用户可操作闭环可验收”。
-2. 再制定剩余 2,341 条 source-less legacy 行处理策略，明确哪些保留为旧日报/总账快照、哪些需要补正式来源事实、哪些应作废后由来源级台账替代。
-3. 再进入开发服务器升级准备；升级前必须复跑业务分类、资金往来、费用分类和 HTTP/API 可见面门禁。
+1. 先围绕有用户业务数据的资金/往来办理入口做闭环收口，重点是公司-承包人责任余额、到款确认约束、自筹垫付/退回和借还款分类验收。
+2. 再补费用/保证金/扣款/还款浏览器抽样证据，把“分类办理策略可验收”推进到“用户可操作闭环可验收”。
+3. 再制定剩余 2,341 条 source-less legacy 行处理策略，明确哪些保留为旧日报/总账快照、哪些需要补正式来源事实、哪些应作废后由来源级台账替代。
+4. 再进入开发服务器升级准备；升级前必须复跑业务分类、资金往来、费用分类和 HTTP/API 可见面门禁。
 
 ### Phase 2 - Invoice And Tax Closure
 
