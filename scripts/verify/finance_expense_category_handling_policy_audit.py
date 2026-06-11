@@ -595,6 +595,7 @@ def _deposit_cashflow_runtime_check(failures):
         "return_request_state": False,
         "treasury_ledger_count": 0,
         "direction_mismatch_blocked": False,
+        "over_refund_blocked": False,
     }
     try:
         if policy:
@@ -625,8 +626,8 @@ def _deposit_cashflow_runtime_check(failures):
         if runtime["payment_ledger_count"] != 1:
             failures.append("deposit_cashflow_runtime: pay request expected one payment.ledger")
 
-        return_request = _approved_payment_request(project, partner, "receive", 32.0, "保证金退回收款申请")
-        return_claim = _deposit_claim(project, partner, return_request, "deposit_refund", "contract", 32.0, "合同保证金退回")
+        return_request = _approved_payment_request(project, partner, "receive", 30.0, "保证金退回收款申请")
+        return_claim = _deposit_claim(project, partner, return_request, "deposit_refund", "bid", 30.0, "投标保证金退回")
         _complete_claim(return_claim)
         return_request.invalidate_recordset()
         runtime.update(
@@ -641,6 +642,19 @@ def _deposit_cashflow_runtime_check(failures):
             failures.append("deposit_cashflow_runtime: return request expected done, got %s" % return_request.state)
         if runtime["treasury_ledger_count"] != 1:
             failures.append("deposit_cashflow_runtime: return request expected one sc.treasury.ledger")
+
+        over_request = _approved_payment_request(project, partner, "receive", 2.0, "保证金超额退回收款申请")
+        over_claim = _deposit_claim(project, partner, over_request, "deposit_refund", "bid", 2.0, "投标保证金超额退回")
+        try:
+            with env.cr.savepoint():  # noqa: F821
+                over_claim.action_submit()
+        except Exception as err:  # noqa: BLE001
+            if "可退余额" in str(err) or "已缴未退余额" in str(err):
+                runtime["over_refund_blocked"] = True
+            else:
+                failures.append("deposit_cashflow_runtime: expected over-refund balance error, got %s" % err)
+        else:
+            failures.append("deposit_cashflow_runtime: deposit refund over paid balance must fail")
 
         mismatch_request = _approved_payment_request(project, partner, "receive", 33.0, "保证金支付错配收款申请")
         mismatch_claim = _deposit_claim(project, partner, mismatch_request, "deposit_pay", "bid", 33.0, "保证金支付方向错配")

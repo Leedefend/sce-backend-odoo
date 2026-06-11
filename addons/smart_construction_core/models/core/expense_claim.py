@@ -599,6 +599,7 @@ class ScExpenseClaim(models.Model):
             if (rec.paid_amount or 0.0) > expected:
                 raise UserError(_("费用/保证金已付款金额不能超过批准/申请金额。"))
             rec._check_attachment_policy_or_raise()
+            rec._check_deposit_refund_balance_or_raise()
             if rec._is_noncash_deduction_bill():
                 rec._check_company_contractor_deduction_responsibility_or_raise()
                 continue
@@ -614,6 +615,61 @@ class ScExpenseClaim(models.Model):
                 if not receiving_account:
                     raise UserError(_("新系统费用/保证金流入单据必须填写收款账户信息。"))
             rec._check_payment_request_scope_or_raise()
+
+    def _check_deposit_refund_balance_or_raise(self):
+        for rec in self:
+            if rec.claim_type != "deposit_refund":
+                continue
+            amount = rec.approved_amount or rec.amount or 0.0
+            if amount <= 0:
+                continue
+            balance = rec._deposit_refund_available_balance()
+            rounding = rec.currency_id.rounding if rec.currency_id else 0.01
+            if float_compare(amount, balance, precision_rounding=rounding) == 1:
+                raise UserError(
+                    _("保证金退回金额不能超过同项目、同往来单位、同保证金类型的已缴未退余额。当前可退余额：%s。")
+                    % balance
+                )
+
+    def _deposit_refund_available_balance(self):
+        self.ensure_one()
+        if not self.project_id or not self.partner_id:
+            return 0.0
+        domain_base = [
+            ("active", "=", True),
+            ("project_id", "=", self.project_id.id),
+            ("partner_id", "=", self.partner_id.id),
+            ("guarantee_type", "=", self.guarantee_type or "bid"),
+            ("state", "in", ["done", "legacy_confirmed"]),
+        ]
+        if self.id:
+            domain_base.append(("id", "!=", self.id))
+        Claim = self.env["sc.expense.claim"].sudo()
+        Claim.flush_model(["active", "project_id", "partner_id", "guarantee_type", "state", "claim_type", "approved_amount", "amount"])
+        paid_rows = Claim.read_group(
+            domain_base + [("claim_type", "=", "deposit_pay")],
+            ["approved_amount:sum", "amount:sum"],
+            [],
+        )
+        refund_rows = Claim.read_group(
+            domain_base + [("claim_type", "=", "deposit_refund")],
+            ["approved_amount:sum", "amount:sum"],
+            [],
+        )
+
+        def total(rows):
+            if not rows:
+                return 0.0
+            row = rows[0]
+            return float(
+                row.get("approved_amount_sum")
+                or row.get("approved_amount")
+                or row.get("amount_sum")
+                or row.get("amount")
+                or 0.0
+            )
+
+        return max(total(paid_rows) - total(refund_rows), 0.0)
 
     def _check_company_contractor_deduction_responsibility_or_raise(self):
         for rec in self:
