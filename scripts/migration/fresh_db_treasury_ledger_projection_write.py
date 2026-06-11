@@ -46,6 +46,7 @@ OUTPUT_JSON = ARTIFACT_ROOT / "fresh_db_treasury_ledger_projection_write_result_
 
 ensure_allowed_db()
 uid = env.uid  # noqa: F821
+company_currency_id = env.company.currency_id.id  # noqa: F821
 
 before = scalar("SELECT COUNT(*) FROM sc_treasury_ledger")
 candidates = scalar(
@@ -88,7 +89,7 @@ env.cr.execute(  # noqa: F821
       pr.id AS payment_request_id,
       CASE WHEN pr.type = 'receive' THEN 'in' ELSE 'out' END AS direction,
       pr.amount,
-      pr.currency_id,
+      COALESCE(project_company.currency_id, %s),
       'posted' AS state,
       pr.note,
       CASE
@@ -109,6 +110,8 @@ env.cr.execute(  # noqa: F821
       END AS legacy_source_ref,
       %s, NOW(), %s, NOW()
     FROM payment_request pr
+    LEFT JOIN project_project project ON project.id = pr.project_id
+    LEFT JOIN res_company project_company ON project_company.id = project.company_id
     WHERE pr.amount > 0
       AND pr.project_id IS NOT NULL
       AND pr.partner_id IS NOT NULL
@@ -133,7 +136,7 @@ env.cr.execute(  # noqa: F821
       write_uid = EXCLUDED.write_uid,
       write_date = NOW()
     """,
-    [uid, uid],
+    [company_currency_id, uid, uid],
 )
 
 env.cr.commit()  # noqa: F821
