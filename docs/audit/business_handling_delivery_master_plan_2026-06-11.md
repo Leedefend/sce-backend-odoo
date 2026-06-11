@@ -510,13 +510,15 @@ cash_ledger=sc.treasury.ledger source_model/source_res_id 追溯，source_kind=i
 DB_NAME=sc_demo scripts/ops/validate_interfund_treasury_ledger_backfill_readiness.sh
 INTERFUND_TREASURY_LEDGER_BACKFILL_READINESS_AUDIT: status=PASS
 expected_ledger_entry_count=1566
-missing_ledger_entry_count=1566
+existing_ledger_entry_count=1566
+missing_ledger_entry_count=0
 expected_ledger_amount=955,974,145.60
 expected_inflow_amount=645,131,015.95
 expected_outflow_amount=310,843,129.65
 excluded_same_project_transfer=383 / 306,569,035.00
 blocked_non_positive_fact_count=1
-policy=只读审计，不写历史台账；同项目调拨和未分类调拨不自动回填
+policy=只读审计；当前 sc_demo 无待回填缺口，后续新增/重建库可用 APPLY=1 显式执行回填；同项目调拨和未分类调拨不自动回填
+guard=source_kind=interfund 的资金台账必须按 source_model/source_res_id/project/direction/source_kind 幂等匹配，且 payment_request_id 必须为空
 ```
 
 同时通过：

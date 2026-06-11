@@ -93,7 +93,8 @@ matched AS (
         l.id AS ledger_id,
         l.amount AS ledger_amount,
         l.currency_id AS ledger_currency_id,
-        l.state AS ledger_state
+        l.state AS ledger_state,
+        l.payment_request_id AS ledger_payment_request_id
     FROM expected e
     LEFT JOIN sc_treasury_ledger l
       ON l.source_model = e.source_model
@@ -165,12 +166,14 @@ mismatches = _fetchall_dict(
         ledger_amount,
         currency_id,
         ledger_currency_id,
+        ledger_payment_request_id,
         ledger_id
     FROM matched
     WHERE ledger_id IS NOT NULL
       AND (
             ABS(COALESCE(ledger_amount, 0.0) - COALESCE(amount, 0.0)) > 0.01
          OR COALESCE(ledger_currency_id, 0) != COALESCE(currency_id, 0)
+         OR ledger_payment_request_id IS NOT NULL
       )
     ORDER BY source_model, source_res_id, project_id, direction
     LIMIT 20
