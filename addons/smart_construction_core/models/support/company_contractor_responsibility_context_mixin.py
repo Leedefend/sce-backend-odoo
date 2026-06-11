@@ -40,12 +40,42 @@ class CompanyContractorResponsibilityContextMixin(models.AbstractModel):
 
     def _responsibility_context_domain(self):
         self.ensure_one()
-        if not self.project_id or not self.partner_id:
+        if not self.project_id:
             return []
+        if not self.partner_id:
+            partner_name = self._responsibility_context_partner_name()
+            if not partner_name:
+                return []
+            return [
+                ("project_id", "=", self.project_id.id),
+                ("partner_id", "=", False),
+                ("partner_name", "=", partner_name),
+            ]
         return [
             ("project_id", "=", self.project_id.id),
             ("partner_id", "=", self.partner_id.id),
         ]
+
+    def _responsibility_context_partner_name_fields(self):
+        return (
+            "partner_name",
+            "legacy_partner_name",
+            "actual_payee_unit",
+            "legacy_visible_actual_payee_unit",
+            "legacy_visible_payee_unit",
+            "payee",
+            "deduction_unit_name",
+        )
+
+    def _responsibility_context_partner_name(self):
+        self.ensure_one()
+        for field_name in self._responsibility_context_partner_name_fields():
+            if field_name not in self._fields:
+                continue
+            value = self[field_name]
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+        return False
 
     def _empty_company_contractor_responsibility_context(self):
         self.company_contractor_responsibility_summary_id = False
@@ -99,6 +129,7 @@ class CompanyContractorResponsibilityContextMixin(models.AbstractModel):
                 "context": {
                     "search_default_project_id": self.project_id.id if self.project_id else False,
                     "search_default_partner_id": self.partner_id.id if self.partner_id else False,
+                    "default_partner_name": self._responsibility_context_partner_name(),
                 },
             }
         )

@@ -117,3 +117,10 @@ DB_NAME=sc_demo MIGRATION_ARTIFACT_ROOT=artifacts/migration make verify.company_
 3. 基于 `sc.company.contractor.responsibility.summary` 继续把责任余额接入拨付、扣款、退回、自筹抵扣和收款核销办理约束。
 4. 用项目资金状态约束后续办理：付款、借款、还款、退回、自筹抵扣、收款发票核销。
 5. 不把这些事实强行挂到 `payment.request`，但发生真实现金流时仍应进入统一资金台账或日报台账口径。
+
+办理上下文匹配规则：
+
+- 新办理或已建立主数据关系的单据，优先用 `project_id + partner_id` 读取公司-承包人责任余额。
+- 历史办理单据没有正式 `partner_id` 时，可以使用同项目、`partner_id` 为空、历史承包人名称完全一致的责任余额，作为办理提示和约束读取口径。
+- 历史名称匹配只用于读取责任余额，不反向写入 `partner_id`，也不把同名主数据自动绑定到历史事实；同名、缺名、跨项目等情况仍保留人工核对。
+- 当前用户数据中该规则覆盖费用/还款/保证金办理 227 条、扣款抵扣办理 320 条；验证脚本为 `scripts/ops/validate_company_contractor_responsibility_context.sh`。
