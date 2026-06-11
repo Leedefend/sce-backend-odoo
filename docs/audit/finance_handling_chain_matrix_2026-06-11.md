@@ -253,7 +253,8 @@ evidence: create temp record from runtime action context, then verify current ru
 | 扣款单/扣款实缴/退回 | `sc.tax.deduction.registration` | 确认、已抵扣、取消 | 税务事实、项目经营口径 | 办理证据闭环、角色权限、下游税务事实追溯通过 | Phase 2 继续补正式分类字段或业务分类字典绑定 |
 | 账户间资金往来 | `sc.fund.account.operation` | 确认、完成、取消 | 账户资金往来事实、往来现金流台账 | 后端动作、关系必填、现金流追溯、历史回填就绪审计通过；内部往来分类策略已纳入 `verify.finance_interfund_category.handling_policy.audit` | 补浏览器级验收和账户余额回填策略 |
 | 项目/承包人借还款 | `sc.financing.loan` / `sc.expense.claim` | 借款登记、还款登记 | 资金往来事实、项目资金口径、来源级资金台账 | 借出、借入、还款分类已按 `sc.business.category` 固化；不走收付款申请，不写 `payment.ledger`，通过 `sc.interfund.movement.fact` 与 `sc.treasury.ledger` 追溯 | 补浏览器级验收、利息/账户关系和公司-承包人责任余额约束 |
-| 资金日报表 | `sc.legacy.fund.daily.snapshot.fact` | 历史事实查看 | 来源事实明细 | 表单契约通过 | 暂不作为办理主线，后置到 Phase 6 |
+| 资金日报表 | `sc.fund.account.operation` | 确认、完成、取消 | 来源级 `sc.treasury.ledger(source_kind='daily_line')`、账户余额状态输入 | 办理分类、入口运行时、完成后现金流台账承接通过；不进入 `payment.request`，不进入 `sc.interfund.movement.fact` | 补账户余额回写/核对策略和浏览器级抽样验收 |
+| 历史资金日报快照 | `sc.legacy.fund.daily.snapshot.fact` | 历史事实查看 | 来源事实明细 | 表单契约通过 | 只作为历史追溯和后续日报汇总分析来源 |
 
 ## Finance Classification Dictionary Candidates
 
@@ -414,7 +415,7 @@ FINANCE_EXPENSE_CLAIM_ENTRY_CONTEXT_AUDIT: status=PASS
 2. 扩展业务关系策略：账户间资金往来、项目/承包人借还款、扣款/税务登记继续补关系必填门禁。
 3. 浏览器级办理验收：为支付申请、往来单位付款、到款确认、费用单据补浏览器级验收记录，覆盖新建、附件、提交、审批、完成和取消。
 4. 正式交付清单：汇总角色账号、基础数据、首批真实业务数据导入/锁定、回滚和验收脚本。
-5. 报表后置：只在以上办理事实稳定后，再完善应收应付、账户收支、资金日报等汇总入口。
+5. 报表后置：只在以上办理事实稳定后，再完善应收应付、账户收支、资金日报汇总分析等汇总入口；资金日报登记本身属于账户资金办理链路，不能再作为纯报表后置。
 
 ## Iteration Evidence - 2026-06-11 Expense Claim Entry Clarity
 
