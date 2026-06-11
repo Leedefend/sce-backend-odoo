@@ -8,6 +8,7 @@ Run inside Odoo shell:
 from __future__ import annotations
 
 import ast
+import base64
 import json
 
 from odoo import fields
@@ -132,6 +133,22 @@ def _ensure_groups():
             user.write({"groups_id": [(4, group.id)]})
 
 
+def _attachment(record, name):
+    attachment = env["ir.attachment"].sudo().create(  # noqa: F821
+        {
+            "name": name,
+            "datas": base64.b64encode(b"interfund account loan closure evidence"),
+            "res_model": record._name,
+            "res_id": record.id,
+            "type": "binary",
+            "mimetype": "text/plain",
+        }
+    )
+    if "attachment_ids" in record._fields:
+        record.write({"attachment_ids": [(4, attachment.id)]})
+    return attachment
+
+
 def _approve_claim_if_needed(claim):
     claim.invalidate_recordset()
     if claim.state == "submit":
@@ -249,6 +266,7 @@ project_repay = env["sc.expense.claim"].sudo().create(  # noqa: F821
 )
 _assert(errors, "project_repay_direction_outflow", project_repay.direction == "outflow", {"direction": project_repay.direction})
 _assert(errors, "project_repay_action_visibility", _visible(project_repay_company_action, project_repay))
+_attachment(project_repay, "interfund-project-repay-company.txt")
 project_repay.action_submit()
 _assert(errors, "project_repay_submit_or_approved_state", project_repay.state in ("submit", "approved"), {"state": project_repay.state})
 _approve_claim_if_needed(project_repay)
@@ -277,6 +295,7 @@ contractor_repay = env["sc.expense.claim"].sudo().create(  # noqa: F821
 )
 _assert(errors, "contractor_repay_direction_inflow", contractor_repay.direction == "inflow", {"direction": contractor_repay.direction})
 _assert(errors, "contractor_repay_action_visibility", _visible(contractor_repay_action, contractor_repay))
+_attachment(contractor_repay, "interfund-contractor-repay-project.txt")
 contractor_repay.action_submit()
 _assert(errors, "contractor_repay_submit_or_approved_state", contractor_repay.state in ("submit", "approved"), {"state": contractor_repay.state})
 _approve_claim_if_needed(contractor_repay)
