@@ -115,6 +115,14 @@ EXPENSE_CATEGORY_REQUIREMENTS = {
         "ledger_facts": ["sc.treasury.ledger", "sc.finance.business.fact"],
         "terminal_action": "action_done",
     },
+    "finance.deduction.bill": {
+        "direction": "mixed",
+        "payment_request_policy": "not_applicable",
+        "required_fields": ["project_id", "partner_id", "amount", "expense_type"],
+        "ledger_facts": ["sc.finance.business.fact"],
+        "terminal_action": "action_done",
+        "legacy_cashflow_required": False,
+    },
     "finance.deduction.paid": {
         "direction": "pay",
         "payment_request_policy": "required",
@@ -178,6 +186,19 @@ def _json_loads(raw, default):
     except (TypeError, ValueError):
         return default
     return value if isinstance(value, type(default)) else default
+
+
+def _ensure_groups():
+    user = env.user.sudo()  # noqa: F821
+    for xmlid in (
+        "smart_construction_core.group_sc_cap_business_initiator",
+        "smart_construction_core.group_sc_cap_finance_user",
+        "smart_construction_core.group_sc_cap_finance_manager",
+    ):
+        group = env.ref(xmlid, raise_if_not_found=False)  # noqa: F821
+        if group and group.id not in user.groups_id.ids:
+            user.write({"groups_id": [(4, group.id)]})
+    env.invalidate_all()  # noqa: F821
 
 
 def _source_linked_ledger_counts():
@@ -277,12 +298,127 @@ def _attachment_policy_runtime_check(failures):
     return runtime
 
 
+def _noncash_deduction_runtime_check(failures):
+    Project = env["project.project"].sudo()  # noqa: F821
+    Partner = env["res.partner"].sudo()  # noqa: F821
+    Claim = env["sc.expense.claim"].sudo()  # noqa: F821
+    PaymentRequest = env["payment.request"].sudo()  # noqa: F821
+    policy = env.ref("smart_construction_core.approval_policy_expense_claim", raise_if_not_found=False)  # noqa: F821
+    original_policy_values = {}
+    project = Project.create(
+        {
+            "name": "扣款单非现金门禁项目",
+            "code": "FIN-DEDUCTION-NONCASH",
+            "company_id": env.company.id,  # noqa: F821
+        }
+    )
+    partner = Partner.create({"name": "扣款单非现金门禁往来单位"})
+    runtime = {
+        "category_code": False,
+        "record_id": False,
+        "blocked_with_payment_request": False,
+        "done_without_payment_request": False,
+        "payment_request_id": False,
+        "payment_ledger_count": 0,
+        "treasury_ledger_count": 0,
+    }
+    try:
+        if policy:
+            policy = policy.sudo()
+            original_policy_values = {
+                "active": policy.active,
+                "approval_required": policy.approval_required,
+                "mode": policy.mode,
+                "runtime_state": policy.runtime_state,
+            }
+            policy.write({"active": True, "approval_required": False, "mode": "none", "runtime_state": "tier_validation"})
+            policy.sync_tier_definitions()
+        request = PaymentRequest.create(
+            {
+                "name": "扣款单误挂收付款申请门禁",
+                "type": "pay",
+                "project_id": project.id,
+                "partner_id": partner.id,
+                "amount": 20.0,
+                "currency_id": env.company.currency_id.id,  # noqa: F821
+            }
+        )
+        blocked = Claim.create(
+            {
+                "claim_type": "expense",
+                "expense_type": "扣款单",
+                "project_id": project.id,
+                "partner_id": partner.id,
+                "amount": 20.0,
+                "approved_amount": 20.0,
+                "summary": "扣款单误挂收付款申请应被拦截",
+                "payment_request_id": request.id,
+            }
+        )
+        _create_attachment(blocked)
+        try:
+            with env.cr.savepoint():  # noqa: F821
+                blocked.action_submit()
+        except Exception as err:  # noqa: BLE001
+            if "不应关联付款/收款申请" in str(err):
+                runtime["blocked_with_payment_request"] = True
+            else:
+                failures.append("noncash_deduction_runtime: expected payment request boundary error, got %s" % err)
+        else:
+            failures.append("noncash_deduction_runtime: deduction bill with payment_request_id must fail")
+
+        claim = Claim.create(
+            {
+                "claim_type": "expense",
+                "expense_type": "扣款单",
+                "project_id": project.id,
+                "partner_id": partner.id,
+                "amount": 21.0,
+                "approved_amount": 21.0,
+                "summary": "扣款单非现金办理门禁",
+            }
+        )
+        _create_attachment(claim)
+        claim.action_submit()
+        claim.invalidate_recordset()
+        if claim.state == "submit":
+            claim.action_approve()
+            claim.invalidate_recordset()
+        claim.action_done()
+        claim.invalidate_recordset()
+        runtime.update(
+            {
+                "category_code": claim.business_category_id.code,
+                "record_id": claim.id,
+                "done_without_payment_request": claim.state == "done" and not bool(claim.payment_request_id),
+                "payment_request_id": claim.payment_request_id.id,
+                "payment_ledger_count": env["payment.ledger"].sudo().search_count([("payment_request_id", "=", request.id)]),  # noqa: F821
+                "treasury_ledger_count": env["sc.treasury.ledger"].sudo().search_count(  # noqa: F821
+                    [("source_model", "=", claim._name), ("source_res_id", "=", claim.id), ("state", "!=", "void")]
+                ),
+            }
+        )
+        if not runtime["done_without_payment_request"]:
+            failures.append("noncash_deduction_runtime: expected done without payment_request_id, got %s" % claim.state)
+        if runtime["payment_ledger_count"]:
+            failures.append("noncash_deduction_runtime: noncash deduction bill must not create payment.ledger")
+        if runtime["treasury_ledger_count"]:
+            failures.append("noncash_deduction_runtime: noncash deduction bill must not create sc.treasury.ledger")
+    finally:
+        if policy and original_policy_values:
+            policy.write(original_policy_values)
+            policy.sync_tier_definitions()
+    return runtime
+
+
 failures = []
 rows = []
 ledger_counts = []
 attachment_policy_runtime = {}
+noncash_deduction_runtime = {}
 
 try:
+    _ensure_groups()
     Category = env["sc.business.category"].sudo()  # noqa: F821
     for code, expected in EXPENSE_CATEGORY_REQUIREMENTS.items():
         category = Category.search([("code", "=", code)], limit=1)
@@ -320,9 +456,9 @@ try:
             if actual_payment_policy != "not_applicable":
                 failures.append("%s: expected payment_request_policy=not_applicable" % code)
             if "payment_request_id" in required_fields:
-                failures.append("%s: interfund repayment category must not require payment_request_id" % code)
+                failures.append("%s: not_applicable category must not require payment_request_id" % code)
             if "payment.ledger" in facts:
-                failures.append("%s: interfund repayment category must not write payment.ledger" % code)
+                failures.append("%s: not_applicable category must not write payment.ledger" % code)
         elif "payment_request_id" not in required_fields:
             failures.append("%s: operating cash category must require payment_request_id" % code)
         rows.append(
@@ -339,12 +475,14 @@ try:
         )
     ledger_counts = _source_linked_ledger_counts()
     for row in ledger_counts:
-        if row["category_code"] in EXPENSE_CATEGORY_REQUIREMENTS and row["missing_ledger_count"]:
+        expected = EXPENSE_CATEGORY_REQUIREMENTS.get(row["category_code"])
+        if expected and expected.get("legacy_cashflow_required", True) and row["missing_ledger_count"]:
             failures.append(
                 "%s: %s legacy expense claims missing source-linked treasury ledger"
                 % (row["category_code"], row["missing_ledger_count"])
             )
     attachment_policy_runtime = _attachment_policy_runtime_check(failures)
+    noncash_deduction_runtime = _noncash_deduction_runtime_check(failures)
 except Exception as err:
     failures.append("unexpected error: %s" % err)
     failures.append(traceback.format_exc())
@@ -356,10 +494,12 @@ result = {
     "rows": rows,
     "legacy_source_linked_ledger_counts": ledger_counts,
     "attachment_policy_runtime": attachment_policy_runtime,
+    "noncash_deduction_runtime": noncash_deduction_runtime,
     "failures": failures,
     "policy": {
         "operating_cash": "requires payment_request_id and account fields",
-        "interfund_repayment": "must keep payment_request_id out of required fields and ledger policy",
+        "noncash_deduction": "deduction bills do not use payment.request and must not create cash ledgers",
+        "not_applicable": "must keep payment_request_id out of required fields and ledger policy",
         "legacy_cashflow": "legacy confirmed expense claims must have sc.treasury.ledger source_model/source_res_id coverage",
     },
 }

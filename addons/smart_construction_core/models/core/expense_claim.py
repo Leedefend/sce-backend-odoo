@@ -215,6 +215,12 @@ class ScExpenseClaim(models.Model):
             self.claim_type == "deposit_receive" and "承包人还项目款" in text
         )
 
+    def _is_noncash_deduction_bill(self):
+        self.ensure_one()
+        return self.business_category_id.code == "finance.deduction.bill" or (
+            self.claim_type == "expense" and (self.expense_type or "").strip() == "扣款单"
+        )
+
     @api.onchange("amount")
     def _onchange_amount(self):
         for rec in self:
@@ -575,7 +581,9 @@ class ScExpenseClaim(models.Model):
                 raise UserError(_("费用/保证金单据必须关联项目。"))
             if rec._is_interfund_repayment() and rec.payment_request_id:
                 raise UserError(_("往来款办理应与经营收付款申请分开，不应关联付款/收款申请。"))
-            if not rec._is_interfund_repayment() and not rec.payment_request_id:
+            if rec._is_noncash_deduction_bill() and rec.payment_request_id:
+                raise UserError(_("扣款单是非现金扣款事实，不应关联付款/收款申请；扣款实缴或退回请使用对应现金办理入口。"))
+            if not rec._is_interfund_repayment() and not rec._is_noncash_deduction_bill() and not rec.payment_request_id:
                 raise UserError(_("新系统费用/保证金单据必须关联付款/收款申请。"))
             if not rec.partner_id:
                 raise UserError(_("新系统费用/保证金单据必须选择往来单位。"))
@@ -589,6 +597,8 @@ class ScExpenseClaim(models.Model):
             if (rec.paid_amount or 0.0) > expected:
                 raise UserError(_("费用/保证金已付款金额不能超过批准/申请金额。"))
             rec._check_attachment_policy_or_raise()
+            if rec._is_noncash_deduction_bill():
+                continue
             if rec.direction == "outflow":
                 payee_account = rec.payee_account or rec.receipt_account_name or rec.payee
                 payer_account = rec.payer_account or rec.payment_account_name

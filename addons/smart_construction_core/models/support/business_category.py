@@ -7,7 +7,7 @@ from odoo.exceptions import ValidationError
 from odoo.osv import expression
 
 
-BUSINESS_CATEGORY_TEMPLATE_VERSION = "2026-06-12.1"
+BUSINESS_CATEGORY_TEMPLATE_VERSION = "2026-06-12.2"
 BUSINESS_CATEGORY_ACTION_BINDINGS = {
     "site.construction.diary": "smart_construction_core.action_sc_construction_diary",
     "site.quality.issue": "smart_construction_core.action_sc_quality_issue",
@@ -97,6 +97,12 @@ BUSINESS_CATEGORY_LEDGER_POLICY_DEFAULTS = {
         "facts": ["sc.interfund.movement.fact", "sc.treasury.ledger"],
         "terminal_action": "action_done",
         "payment_request_policy": "not_applicable",
+    },
+    "finance.deduction.bill": {
+        "facts": ["sc.finance.business.fact"],
+        "terminal_action": "action_done",
+        "payment_request_policy": "not_applicable",
+        "balance_policy": "noncash_deduction",
     },
     "material.inbound": {
         "facts": ["sc.material.inbound", "sc.material.stock.summary"],
@@ -216,6 +222,7 @@ BUSINESS_CATEGORY_REQUIRED_FIELD_DEFAULTS = {
         "payment_account_name",
         "payer_account",
     ],
+    "finance.deduction.bill": ["project_id", "partner_id", "amount", "expense_type"],
     "finance.repayment.registration": ["project_id", "partner_id", "amount", "expense_type"],
     "finance.repayment.contractor_project": ["project_id", "partner_id", "amount", "expense_type"],
     "finance.repayment.project_company": ["project_id", "partner_id", "amount", "expense_type"],
@@ -456,9 +463,16 @@ class ScBusinessCategory(models.Model):
             )
             if ledger_policy is not None:
                 vals["ledger_policy_json"] = json.dumps(ledger_policy, ensure_ascii=False, sort_keys=True)
+            effective_ledger_policy = ledger_policy
+            if effective_ledger_policy is None:
+                try:
+                    effective_ledger_policy = json.loads(category.ledger_policy_json or "{}")
+                except (TypeError, ValueError):
+                    effective_ledger_policy = {}
             required_fields = self._merge_template_required_fields(
                 category.required_fields_json,
                 BUSINESS_CATEGORY_REQUIRED_FIELD_DEFAULTS.get(code),
+                effective_ledger_policy,
             )
             if required_fields is not None:
                 vals["required_fields_json"] = json.dumps(required_fields, ensure_ascii=False)
@@ -476,7 +490,7 @@ class ScBusinessCategory(models.Model):
         return True
 
     @api.model
-    def _merge_template_required_fields(self, current_raw, defaults):
+    def _merge_template_required_fields(self, current_raw, defaults, ledger_policy=None):
         if not defaults:
             return None
         try:
@@ -490,6 +504,10 @@ class ScBusinessCategory(models.Model):
         for field_name in defaults:
             if field_name not in merged:
                 merged.append(field_name)
+                changed = True
+        if isinstance(ledger_policy, dict) and ledger_policy.get("payment_request_policy") == "not_applicable":
+            if "payment_request_id" in merged:
+                merged = [field_name for field_name in merged if field_name != "payment_request_id"]
                 changed = True
         return merged if changed else None
 

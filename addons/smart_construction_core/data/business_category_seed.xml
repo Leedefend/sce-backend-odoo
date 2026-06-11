@@ -375,7 +375,7 @@
         <field name="default_values_json"><![CDATA[{"claim_type": "expense", "expense_type": "扣款单", "summary": "扣款单"}]]></field>
         <field name="domain_json"><![CDATA[["&", ["claim_type", "=", "expense"], ["expense_type", "=", "扣款单"]]]]></field>
         <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "amount", "expense_type"]]]></field>
-        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.finance.business.fact"], "terminal_action": "action_done"}]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.finance.business.fact"], "terminal_action": "action_done", "payment_request_policy": "not_applicable", "balance_policy": "noncash_deduction"}]]></field>
         <field name="attachment_policy">recommended</field>
     </record>
 
