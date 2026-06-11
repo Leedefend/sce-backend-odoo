@@ -136,6 +136,100 @@ visible_reference_count = sql_one(
 )
 assert_equal(errors, "visible_reference_rows_included", 0, visible_reference_count)
 
+source_family_rows = OrderedDict()
+source_family_specs = [
+    (
+        "legacy_arrival_confirmation",
+        "sc.legacy.fund.confirmation.document",
+        "arrival_confirmation",
+        """
+        SELECT COUNT(*)::integer
+          FROM sc_legacy_fund_confirmation_document
+         WHERE active IS TRUE
+        """,
+    ),
+    (
+        "legacy_self_funding_income",
+        "sc.legacy.self.funding.fact",
+        "self_funding_income",
+        """
+        SELECT COUNT(*)::integer
+          FROM sc_legacy_self_funding_fact
+         WHERE active IS TRUE
+           AND line_type = 'income'
+        """,
+    ),
+    (
+        "legacy_self_funding_refund",
+        "sc.legacy.self.funding.fact",
+        "self_funding_refund",
+        """
+        SELECT COUNT(*)::integer
+          FROM sc_legacy_self_funding_fact
+         WHERE active IS TRUE
+           AND line_type = 'refund'
+        """,
+    ),
+    (
+        "formal_self_funding_income",
+        "sc.self.funding.registration",
+        "self_funding_income",
+        """
+        SELECT COUNT(*)::integer
+          FROM sc_self_funding_registration
+         WHERE active IS TRUE
+           AND source_origin = 'manual'
+           AND state = 'done'
+           AND funding_type = 'income'
+        """,
+    ),
+    (
+        "formal_self_funding_refund",
+        "sc.self.funding.registration",
+        "self_funding_refund",
+        """
+        SELECT COUNT(*)::integer
+          FROM sc_self_funding_registration
+         WHERE active IS TRUE
+           AND source_origin = 'manual'
+           AND state = 'done'
+           AND funding_type = 'refund'
+        """,
+    ),
+]
+for key, source_model, responsibility_type, source_sql in source_family_specs:
+    expected = sql_one(source_sql)
+    actual = sql_one(
+        """
+        SELECT COUNT(*)::integer
+          FROM sc_company_contractor_responsibility_fact
+         WHERE source_model = %s
+           AND responsibility_type = %s
+        """,
+        [source_model, responsibility_type],
+    )
+    assert_equal(errors, f"{key}_coverage", expected, actual)
+    source_family_rows[key] = OrderedDict(
+        [
+            ("source_model", source_model),
+            ("responsibility_type", responsibility_type),
+            ("expected", expected),
+            ("actual", actual),
+        ]
+    )
+
+fund_daily_or_balance_leak = sql_one(
+    """
+    SELECT COUNT(*)::integer
+      FROM sc_company_contractor_responsibility_fact r
+      JOIN sc_fund_account_operation op
+        ON r.source_model = 'sc.fund.account.operation'
+       AND r.source_res_id = op.id
+     WHERE op.operation_type IN ('fund_daily_report', 'balance_adjustment')
+    """
+)
+assert_equal(errors, "fund_daily_or_balance_adjustment_responsibility_leak", 0, fund_daily_or_balance_leak)
+
 duplicate_sources = sql_rows(
     """
     SELECT source_model, source_res_id, responsibility_type, COUNT(*)::integer
@@ -228,6 +322,8 @@ summary["effect_totals"] = OrderedDict(
     ]
 )
 summary["visible_reference_rows_included"] = visible_reference_count
+summary["source_family_rows"] = source_family_rows
+summary["fund_daily_or_balance_adjustment_responsibility_leak"] = fund_daily_or_balance_leak
 
 result = OrderedDict()
 result["status"] = "PASS" if not errors else "FAIL"
