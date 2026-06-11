@@ -52,6 +52,20 @@ evidence: ledger -> request/settlement/source document/attachment/audit trail
 ```
 
 ```text
+COMPOSE_PROJECT_NAME=sc-backend-odoo-dev DB_NAME=sc_demo make verify.finance_handling.http_surface.smoke
+FINANCE_HANDLING_HTTP_SURFACE_SMOKE: status=PASS db=sc_demo entries=4
+covered: 支付申请、往来单位付款、到款确认/项目收款、项目费用报销单
+evidence: login, system.init navigation, ui.contract.v2 action_open, api.data list, handled sample; no browser runtime download
+```
+
+HTTP/API 可见面验收结论：
+
+- 支付申请：用户可见入口 `smart_construction_core.menu_sc_user_payment_apply_acceptance` 打开 `payment.request`，本地用户数据 29,549 条，已办样本可追到 `payment.ledger`。
+- 往来单位付款：用户可见入口 `smart_construction_core.menu_sc_partner_payment` 打开 `sc.payment.execution`，本地用户数据 24,049 条，入口和已办样本可读；旧样本未稳定追到 `payment.ledger`，后续作为旧数据台账补齐任务处理。
+- 到款确认/项目收款：用户可见入口 `smart_construction_core.menu_sc_engineering_progress_income` 打开 `sc.receipt.income`，本地用户数据 15,905 条，入口和已办样本可读；旧样本未稳定追到 `sc.treasury.ledger`，后续进入项目收款状态约束和现金流台账补齐任务。
+- 项目费用报销单：用户可见入口 `smart_construction_core.menu_sc_project_expense_claim` 打开 `sc.expense.claim`，本地用户数据 37,013 条，入口和已办样本可读；旧样本台账追踪缺口后续按资金台账口径单独闭环。
+
+```text
 scripts/ops/validate_finance_business_categories.sh
 FINANCE_BUSINESS_CATEGORY_ACTION_AUDIT: status=PASS
 covered: 21 finance category candidates
@@ -105,9 +119,9 @@ evidence: create temp record from runtime action context, then verify current ru
 | 用户入口 | 正式模型 | 当前办理动作 | 下游事实 | 当前结论 | 下一步 |
 | --- | --- | --- | --- | --- | --- |
 | 支付申请 | `payment.request` | `action_submit`、`action_approval_decision`、`action_set_approved`、`action_done`、`action_cancel` | `payment.ledger`、`sc.treasury.ledger`、审批记录、审计日志 | 办理证据闭环、角色权限、下游追溯通过 | 补浏览器级验收：合同/结算拦截、取消、附件 |
-| 往来单位付款 | `sc.payment.execution` | `action_confirm`、`action_paid`、`action_cancel`、`action_on_tier_approved` | `payment.ledger`、关联付款申请完成 | 办理证据闭环、关系必填、角色权限、下游追溯通过 | 补浏览器级验收 |
-| 到款确认表 | `sc.receipt.income` | `action_confirm`、`action_received`、`action_cancel`、`action_on_tier_approved` | `sc.treasury.ledger`、收款申请完成 | 办理证据闭环、关系必填、角色权限、下游追溯通过 | 补浏览器级验收 |
-| 报销/费用单据 | `sc.expense.claim` | `action_submit`、`action_approve`、`action_done`、`action_cancel`、审批回调 | 关联 `payment.request`、`payment.ledger` | 办理证据闭环、关系必填、角色权限、下游追溯通过 | 补不同 `claim_type` 的浏览器级验收 |
+| 往来单位付款 | `sc.payment.execution` | `action_confirm`、`action_paid`、`action_cancel`、`action_on_tier_approved` | `payment.ledger`、关联付款申请完成 | 办理入口可见面已通过 HTTP/API；旧样本台账追踪仍需补齐 | 补旧数据台账追踪口径，再做浏览器级验收 |
+| 到款确认表 | `sc.receipt.income` | `action_confirm`、`action_received`、`action_cancel`、`action_on_tier_approved` | `sc.treasury.ledger`、收款申请完成 | 办理入口可见面已通过 HTTP/API；旧样本台账追踪仍需补齐 | 补项目收款状态约束和现金流台账口径，再做浏览器级验收 |
+| 报销/费用单据 | `sc.expense.claim` | `action_submit`、`action_approve`、`action_done`、`action_cancel`、审批回调 | 关联 `payment.request`、`payment.ledger`、`sc.treasury.ledger` | 办理入口可见面已通过 HTTP/API；旧样本台账追踪仍需补齐 | 补不同 `claim_type` 台账策略和浏览器级验收 |
 | 扣款单/扣款实缴/退回 | `sc.tax.deduction.registration` | 确认、已抵扣、取消 | 税务事实、项目经营口径 | 办理证据闭环、角色权限、下游税务事实追溯通过 | Phase 2 继续补正式分类字段或业务分类字典绑定 |
 | 账户间资金往来 | `sc.fund.account.operation` | 确认、完成、取消 | 账户资金往来事实、往来现金流台账 | 后端动作、关系必填、现金流追溯、历史回填就绪审计通过 | 补正式历史回填迁移脚本、浏览器级验收和账户余额回填策略 |
 | 项目/承包人借还款 | `sc.financing.loan` | 借款登记、还款登记 | 资金往来事实、项目资金口径 | 表单契约通过 | 明确借出、借入、还款、利息和账户关系 |

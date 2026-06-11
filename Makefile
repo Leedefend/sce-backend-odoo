@@ -655,6 +655,9 @@ verify.company_contractor.responsibility_summary.audit: guard.prod.forbid check-
 verify.company_contractor.responsibility_http.smoke:
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) FRONTEND_URL="$${FRONTEND_URL:-http://127.0.0.1:18081}" E2E_LOGIN="$${E2E_LOGIN:-wutao}" E2E_PASSWORD="$${E2E_PASSWORD:-123456}" python3 scripts/verify/company_contractor_responsibility_http_smoke.py
 
+verify.finance_handling.http_surface.smoke:
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) FRONTEND_URL="$${FRONTEND_URL:-http://127.0.0.1:18081}" E2E_LOGIN="$${E2E_LOGIN:-wutao}" E2E_PASSWORD="$${E2E_PASSWORD:-123456}" python3 scripts/verify/finance_handling_http_surface_smoke.py
+
 verify.finance_business_fact.scope.audit: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/verify/finance_business_fact_scope_audit.py
 

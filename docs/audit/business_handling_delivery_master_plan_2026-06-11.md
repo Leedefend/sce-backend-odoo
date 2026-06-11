@@ -11,7 +11,7 @@
 - 正式业务闭环审计：`docs/audit/business_flow_closure_audit_2026-06-09.md`
 - 结算办理可用性审计：`docs/audit/user_confirmed_settlement_usability_2026-06-10.md`
 - 业务分类字典设计：`docs/audit/business_classification_dictionary_design_2026-06-11.md`
-- 公司与币种基线：本地开发库和开发服务器统一使用 `四川保盛建设集团有限公司`、`CNY`
+- 公司与币种基线：本地开发库与开发服务器交付前必须统一为 `四川保盛建设集团有限公司`、`CNY`；开发服务器未升级前不得把本地验证结果表述为开发服务器已完成。
 
 ## Current Business Data Reading
 
@@ -160,6 +160,7 @@
 - 如果浏览器运行时缺失，脚本应快速失败并提示环境问题，不把下载动作混入业务验收。
 - 浏览器验收产物只记录业务结果：入口、页面、按钮、动作、状态、台账、截图、错误上下文。
 - 环境准备单独沉淀到 ops 文档或镜像，不作为业务迭代的一部分。
+- 当前本地迭代优先使用 HTTP/API smoke 验证用户可见入口、页面契约和业务数据样本；只有需要截图、按钮交互或浏览器特有行为时才运行浏览器验收。
 
 ## Phased Plan
 
@@ -219,6 +220,7 @@
 - 已建立只读汇总 `sc.company.contractor.responsibility.summary` 和 `make verify.company_contractor.responsibility_summary.audit`，按项目和承包人沉淀到款可处理余额、到款超处理金额、自筹未退余额和责任状态，作为后续拨付、扣款、退回、自筹抵扣、收款核销的办理约束读取口径。
 - 已将公司-承包人责任口径纳入业务分类字典：`finance.responsibility.arrival_confirmation` 保留到款确认为项目收款状态并作为公司-承包人后续办理约束；`finance.responsibility.self_funding_income`、`finance.responsibility.self_funding_refund` 表达自筹垫付和自筹退回的责任影响；`finance.responsibility.company_contractor.balance` 作为只读办理约束余额。分类入口可复用同一个 action，但必须叠加字典 `domain_json`，不能让用户在泛化责任明细里自行判断类别。
 - 已确认旧入口“承包人借项目款”验收数 227 与当前事实分类 177 的差异不是覆盖缺口，而是旧入口名称和事实分类规则不等价；后续收口前必须将借还款分类规则字典化，并由用户确认新的验收口径。
+- 已建立 `make verify.finance_handling.http_surface.smoke`，不下载浏览器运行时，按业务用户可见面验证支付申请、往来单位付款、到款确认/项目收款、项目费用报销单四类高数据量入口；当前入口、页面契约、列表和已办样本通过，支付申请可追到 `payment.ledger`，往来单位付款、到款确认和项目费用报销旧样本的台账追踪缺口进入下一轮资金台账闭环。
 
 ### Phase 2 - Invoice And Tax Closure
 
