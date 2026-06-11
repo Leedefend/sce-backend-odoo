@@ -649,6 +649,9 @@ verify.company_contractor.responsibility_fact.audit: guard.prod.forbid check-com
 verify.company_contractor.responsibility_summary.audit: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/verify/company_contractor_responsibility_summary_audit.py
 
+verify.company_contractor.responsibility_http.smoke:
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) FRONTEND_URL="$${FRONTEND_URL:-http://127.0.0.1:18081}" E2E_LOGIN="$${E2E_LOGIN:-wutao}" E2E_PASSWORD="$${E2E_PASSWORD:-123456}" python3 scripts/verify/company_contractor_responsibility_http_smoke.py
+
 verify.finance_business_fact.scope.audit: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/verify/finance_business_fact_scope_audit.py
 
@@ -682,7 +685,7 @@ verify.finance_interfund.position.menu_runtime.audit: guard.prod.forbid check-co
 verify.finance_interfund.position.bundle_summary: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/verify/finance_interfund_position_bundle_summary.py
 
-verify.finance_interfund.position.all: verify.finance_interfund.projection.static_guard verify.interfund_user_data.full_coverage.audit verify.finance_business_fact.scope.audit verify.finance_business_fact.projection.audit verify.finance_business_project.summary.audit verify.interfund_movement.fact.audit verify.interfund_movement_project.summary.audit verify.interfund_treasury_ledger.backfill_readiness.audit verify.company_contractor.responsibility_fact.audit verify.company_contractor.responsibility_summary.audit verify.finance_project_capital.position.audit verify.finance_project_counterparty.position.audit verify.finance_counterparty.position_summary.audit verify.finance_counterparty.identity_quality.audit verify.finance_position.drilldown_usability.audit verify.finance_interfund.position.menu_runtime.audit verify.finance_interfund.position.bundle_summary
+verify.finance_interfund.position.all: verify.finance_interfund.projection.static_guard verify.interfund_user_data.full_coverage.audit verify.finance_business_fact.scope.audit verify.finance_business_fact.projection.audit verify.finance_business_project.summary.audit verify.interfund_movement.fact.audit verify.interfund_movement_project.summary.audit verify.interfund_treasury_ledger.backfill_readiness.audit verify.company_contractor.responsibility_fact.audit verify.company_contractor.responsibility_summary.audit verify.company_contractor.responsibility_http.smoke verify.finance_project_capital.position.audit verify.finance_project_counterparty.position.audit verify.finance_counterparty.position_summary.audit verify.finance_counterparty.identity_quality.audit verify.finance_position.drilldown_usability.audit verify.finance_interfund.position.menu_runtime.audit verify.finance_interfund.position.bundle_summary
 	@echo "FINANCE_INTERFUND_POSITION_AUDIT_ALL_PASS db=$(DB_NAME)"
 
 .PHONY: verify.business_capability.productization_p1
