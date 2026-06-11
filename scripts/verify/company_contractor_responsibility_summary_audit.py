@@ -8,6 +8,8 @@ import os
 from collections import OrderedDict
 from pathlib import Path
 
+from odoo.addons.smart_core.handlers.api_data import ApiDataHandler
+
 
 def artifact_root() -> Path:
     raw = os.getenv("MIGRATION_ARTIFACT_ROOT") or os.getenv("COMPANY_CONTRACTOR_RESPONSIBILITY_ARTIFACT_ROOT")
@@ -158,6 +160,86 @@ actual_states = dict(sql_rows("SELECT responsibility_state, COUNT(*)::integer FR
 if expected_states != actual_states:
     errors.append({"key": "state_counts", "expected": expected_states, "actual": actual_states})
 
+view_columns = {
+    row[0]
+    for row in sql_rows(
+        """
+        SELECT column_name
+          FROM information_schema.columns
+         WHERE table_name = 'sc_company_contractor_responsibility_summary'
+        """
+    )
+}
+required_view_columns = {
+    "id",
+    "display_name",
+    "company_id",
+    "currency_id",
+    "project_id",
+    "partner_id",
+    "partner_name",
+    "responsibility_state",
+    "arrival_unprocessed_amount",
+    "arrival_over_processed_amount",
+    "self_funding_balance",
+}
+missing_view_columns = sorted(required_view_columns - view_columns)
+if missing_view_columns:
+    errors.append({"key": "view_columns", "missing": missing_view_columns})
+
+action = env.ref("smart_construction_core.action_sc_company_contractor_responsibility_summary", raise_if_not_found=False)  # noqa: F821
+if not action or action.res_model != "sc.company.contractor.responsibility.summary":
+    errors.append(
+        {
+            "key": "menu_action",
+            "expected": "sc.company.contractor.responsibility.summary",
+            "actual": action.res_model if action else None,
+        }
+    )
+
+api_fields = [
+    "id",
+    "responsibility_state",
+    "project_id",
+    "partner_name",
+    "currency_id",
+    "source_line_count",
+    "arrival_amount",
+    "paid_amount",
+    "deducted_amount",
+    "arrival_processed_amount",
+    "arrival_unprocessed_amount",
+    "arrival_over_processed_amount",
+    "self_funding_income_amount",
+    "self_funding_refund_amount",
+    "self_funding_balance",
+]
+api_result = ApiDataHandler(env).handle(  # noqa: F821
+    params={
+        "op": "list",
+        "model": "sc.company.contractor.responsibility.summary",
+        "fields": api_fields,
+        "limit": 20,
+        "offset": 0,
+        "order": "project_id, partner_name",
+        "group_by": "responsibility_state",
+        "need_total": True,
+        "need_aggregates": True,
+        "need_group_total": True,
+    }
+)
+api_data = api_result[0] if isinstance(api_result, tuple) else api_result
+api_meta = api_result[1] if isinstance(api_result, tuple) and len(api_result) > 1 else {}
+if not isinstance(api_data, dict) or "records" not in api_data:
+    errors.append({"key": "api_data_list", "result": api_result})
+else:
+    if int(api_data.get("total") or 0) != int(actual_row_count or 0):
+        errors.append({"key": "api_data_total", "expected": actual_row_count, "actual": api_data.get("total")})
+    if not isinstance(api_data.get("group_summary"), list):
+        errors.append({"key": "api_data_group_summary", "actual": type(api_data.get("group_summary")).__name__})
+    if not isinstance(api_data.get("aggregates"), dict):
+        errors.append({"key": "api_data_aggregates", "actual": type(api_data.get("aggregates")).__name__})
+
 state_amounts = [
     list(row)
     for row in sql_rows(
@@ -193,6 +275,16 @@ summary["actual_totals"] = dict(zip(metric_names, actual_totals))
 summary["state_counts"] = actual_states
 summary["state_amounts"] = state_amounts
 summary["top_open_rows"] = top_open_rows
+summary["view_columns_checked"] = sorted(required_view_columns)
+summary["api_data_entry"] = OrderedDict(
+    [
+        ("records", len(api_data.get("records") or []) if isinstance(api_data, dict) else None),
+        ("total", api_data.get("total") if isinstance(api_data, dict) else None),
+        ("group_summary", len(api_data.get("group_summary") or []) if isinstance(api_data, dict) else None),
+        ("aggregates", sorted((api_data.get("aggregates") or {}).keys()) if isinstance(api_data, dict) else []),
+        ("meta_model", api_meta.get("model") if isinstance(api_meta, dict) else None),
+    ]
+)
 
 result = OrderedDict()
 result["status"] = "PASS" if not errors else "FAIL"
