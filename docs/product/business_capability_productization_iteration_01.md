@@ -146,6 +146,14 @@
 
 目标：发票登记、抵扣登记、销项台账统一进项目经营口径。
 
+本轮已落地的安全关系补强：
+
+- 发票登记往来单位锚点：基于 `legacy_visible_partner_name`、`legacy_partner_name`、`recipient_unit_name` 与 `res.partner.name` 的唯一匹配，并要求发票自身合同/结算往来单位不冲突；已补齐 `sc.invoice.registration.partner_id` 31,967 条。
+- 抵扣登记往来单位锚点：基于 `partner_name` 与 `res.partner.name` 的唯一匹配；已补齐 `sc.tax.deduction.registration.partner_id` 4,537 条。
+- 只补正式关系字段 `partner_id`，不改写发票金额、税额、历史名称、来源字段和锁定事实口径。
+- 验收脚本：`scripts/ops/validate_invoice_tax_partner_anchor.sh`，当前 `sc_demo` 结论为 PASS，发票/抵扣剩余安全候选均为 0；发票合同/结算范围冲突为 0。
+- 当前残差：发票仍有 9,926 条无正式往来单位，其中 304 条无可用历史名称，其他为同名重复、无唯一主数据或需要人工/上下文确认；抵扣仍有 665 条无正式往来单位，其中 10 条无可用历史名称。残差不得自动落正式关系，后续进入人工确认或更强上下文规则。
+
 本轮任务：
 
 - 固化发票登记、抵扣登记、销项发票台账入口。
