@@ -418,12 +418,12 @@ class ConstructionContract(models.Model):
         invoice_map = self._sum_amount_by_contract(
             "sc.invoice.registration",
             "amount_total",
-            excluded_states=("cancel", "cancelled"),
+            included_states=("registered", "legacy_confirmed"),
         )
         receipt_map = self._sum_amount_by_contract(
             "sc.receipt.income",
             "amount",
-            excluded_states=("cancel", "cancelled"),
+            included_states=("received", "legacy_confirmed"),
         )
         payment_map = self._sum_amount_by_contract(
             "sc.payment.execution",
@@ -443,7 +443,7 @@ class ConstructionContract(models.Model):
             contract.paid_amount = paid_amount
             contract.unpaid_amount = max(total - paid_amount, 0.0)
 
-    def _sum_amount_by_contract(self, model_name, amount_field, excluded_states=()):
+    def _sum_amount_by_contract(self, model_name, amount_field, excluded_states=(), included_states=()):
         contract_ids = self.ids
         if not contract_ids or model_name not in self.env.registry:
             return {}
@@ -451,7 +451,9 @@ class ConstructionContract(models.Model):
         if amount_field not in Model._fields or "contract_id" not in Model._fields:
             return {}
         domain = [("contract_id", "in", contract_ids)]
-        if excluded_states and "state" in Model._fields:
+        if included_states and "state" in Model._fields:
+            domain.append(("state", "in", list(included_states)))
+        elif excluded_states and "state" in Model._fields:
             domain.append(("state", "not in", list(excluded_states)))
         rows = Model.read_group(domain, [amount_field], ["contract_id"])
         return {

@@ -347,6 +347,9 @@ class ScReceiptIncome(models.Model):
                 raise UserError(_("收款收入往来单位必须与收款申请往来单位一致。"))
             if rec.contract_id and request.contract_id and rec.contract_id != request.contract_id:
                 raise UserError(_("收款收入合同必须与收款申请合同一致。"))
+            rounding = rec.currency_id.rounding if rec.currency_id else 0.01
+            if float_compare(rec.amount or 0.0, request.amount or 0.0, precision_rounding=rounding) == 1:
+                raise UserError(_("收款金额不能超过收款申请金额。"))
 
     def _request_document_approval(self):
         self.ensure_one()

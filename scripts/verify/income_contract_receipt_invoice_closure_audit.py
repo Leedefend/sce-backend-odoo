@@ -67,6 +67,7 @@ def _tax(company):
             ("company_id", "=", company.id),
             ("type_tax_use", "in", ["sale", "all"]),
             ("amount_type", "=", "percent"),
+            ("amount", "=", 0.0),
             ("price_include", "=", False),
         ],
         limit=1,
@@ -146,6 +147,15 @@ try:
             "tax_id": _tax(company).id,
         }
     )
+    env["construction.contract.line"].sudo().create(  # noqa: F821
+        {
+            "contract_id": contract.id,
+            "qty_contract": 1.0,
+            "price_contract": 1000.0,
+        }
+    )
+    contract.invalidate_recordset()
+    _expect(contract.amount_final == 1000.0, "contract.amount_final: expected contract amount", failures)
 
     request = env["payment.request"].sudo().create(  # noqa: F821
         {
@@ -247,6 +257,28 @@ try:
         _expect(ledger.amount == amount, "treasury_ledger.amount: expected receipt amount", failures)
         _expect(receipt.treasury_ledger_id == ledger, "receipt.treasury_ledger_id: expected linked ledger", failures)
 
+    over_receipt = env["sc.receipt.income"].sudo().create(  # noqa: F821
+        {
+            "source_kind": "receipt_income",
+            "project_id": project.id,
+            "partner_id": partner.id,
+            "contract_id": contract.id,
+            "payment_request_id": request.id,
+            "currency_id": company.currency_id.id,
+            "date_receipt": fields.Date.context_today(env.user),  # noqa: F821
+            "receipt_type": "工程进度款收入",
+            "income_category": "工程进度款收入",
+            "receiving_account_name": "ICRI 收款账户",
+            "receiving_account_no": "ICRI-RECEIPT-ACCOUNT",
+            "amount": amount + 1.0,
+        }
+    )
+    _expect_exception(
+        "receipt_income.over_request_amount_blocked",
+        over_receipt.action_confirm,
+        failures,
+    )
+
     invoice = env["sc.invoice.registration"].sudo().create(  # noqa: F821
         {
             "source_kind": "output_invoice_tax",
@@ -281,6 +313,34 @@ try:
     invoice.invalidate_recordset()
     _expect(invoice.state == "registered", "invoice.state_after_register: expected registered", failures)
 
+    over_invoice = env["sc.invoice.registration"].sudo().create(  # noqa: F821
+        {
+            "source_kind": "output_invoice_tax",
+            "direction": "output",
+            "invoice_content": "工程进度款销项开票",
+            "project_id": project.id,
+            "partner_id": partner.id,
+            "contract_id": contract.id,
+            "currency_id": company.currency_id.id,
+            "document_no": "ICRI-OVER-INV-DOC-%s" % token,
+            "document_date": fields.Date.context_today(env.user),  # noqa: F821
+            "application_date": fields.Date.context_today(env.user),  # noqa: F821
+            "invoice_date": fields.Date.context_today(env.user),  # noqa: F821
+            "invoice_no": "ICRI-OVER-INV-%s" % token,
+            "invoice_code": "ICRI-CODE",
+            "invoice_type": "增值税专用发票",
+            "tax_rate": "9%",
+            "amount_no_tax": 200.0,
+            "tax_amount": 0.0,
+            "amount_total": 200.0,
+        }
+    )
+    _expect_exception(
+        "invoice_registration.over_contract_invoice_balance_blocked",
+        over_invoice.action_confirm,
+        failures,
+    )
+
     contract.invalidate_recordset()
     _expect(contract.received_amount == amount, "contract.received_amount: expected receipt amount", failures)
     _expect(contract.invoice_amount == invoice_total, "contract.invoice_amount: expected invoice total", failures)
@@ -304,6 +364,7 @@ try:
         "receipt_invoice_line_id": receipt_invoice_line.id,
         "receipt_amount": amount,
         "invoice_total": invoice_total,
+        "contract_amount": contract.amount_final,
         "contract_received_amount": contract.received_amount,
         "contract_invoice_amount": contract.invoice_amount,
         "request_events": request_events,

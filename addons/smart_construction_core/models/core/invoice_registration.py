@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError
+from odoo.tools.float_utils import float_compare
 
 
 class ScInvoiceRegistration(models.Model):
@@ -483,6 +484,42 @@ class ScInvoiceRegistration(models.Model):
                     raise UserError(_("发票登记合同必须与结算单合同一致。"))
                 if rec.settlement_id.partner_id and rec.partner_id and rec.settlement_id.partner_id != rec.partner_id:
                     raise UserError(_("发票登记往来单位必须与结算单往来单位一致。"))
+            rec._check_output_invoice_contract_balance()
+
+    def _check_output_invoice_contract_balance(self):
+        for rec in self:
+            if rec.source_origin == "legacy":
+                continue
+            if rec.direction != "output" or not rec.contract_id:
+                continue
+            if rec.red_flush_adjustment_id or (rec.amount_total or 0.0) <= 0.0:
+                continue
+            contract_total = rec.contract_id.amount_final or rec.contract_id.amount_total or 0.0
+            if contract_total <= 0.0:
+                continue
+            rounding = rec.currency_id.rounding if rec.currency_id else 0.01
+            rows = self.sudo().read_group(
+                [
+                    ("contract_id", "=", rec.contract_id.id),
+                    ("direction", "=", "output"),
+                    ("state", "in", ["confirmed", "registered", "legacy_confirmed"]),
+                    ("amount_total", ">", 0.0),
+                    ("id", "!=", rec.id),
+                ],
+                ["amount_total:sum"],
+                [],
+            )
+            invoiced = rows[0].get("amount_total_sum", rows[0].get("amount_total", 0.0)) if rows else 0.0
+            requested = (invoiced or 0.0) + (rec.amount_total or 0.0)
+            if float_compare(requested, contract_total, precision_rounding=rounding) == 1:
+                raise UserError(
+                    _("销项开票金额不能超过合同剩余开票余额。合同金额：%(total)s，已开票：%(invoiced)s，本次：%(current)s。")
+                    % {
+                        "total": contract_total,
+                        "invoiced": invoiced or 0.0,
+                        "current": rec.amount_total or 0.0,
+                    }
+                )
 
     def _request_document_approval(self):
         self.ensure_one()
