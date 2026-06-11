@@ -588,6 +588,7 @@ class ScExpenseClaim(models.Model):
                 raise UserError(_("费用/保证金已付款金额不能为负数。"))
             if (rec.paid_amount or 0.0) > expected:
                 raise UserError(_("费用/保证金已付款金额不能超过批准/申请金额。"))
+            rec._check_attachment_policy_or_raise()
             if rec.direction == "outflow":
                 payee_account = rec.payee_account or rec.receipt_account_name or rec.payee
                 payer_account = rec.payer_account or rec.payment_account_name
@@ -600,6 +601,12 @@ class ScExpenseClaim(models.Model):
                 if not receiving_account:
                     raise UserError(_("新系统费用/保证金流入单据必须填写收款账户信息。"))
             rec._check_payment_request_scope_or_raise()
+
+    def _check_attachment_policy_or_raise(self):
+        self.ensure_one()
+        category = self.business_category_id
+        if category and category.attachment_policy == "required" and not self.attachment_ids:
+            raise UserError(_("当前业务分类要求上传附件后才能提交、批准或完成。"))
 
     def _sync_payment_request_done(self):
         for rec in self:

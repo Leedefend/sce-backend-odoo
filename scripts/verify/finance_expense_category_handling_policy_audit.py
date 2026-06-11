@@ -12,6 +12,7 @@ aligned with the current handling model:
 
 from __future__ import annotations
 
+import base64
 import json
 import sys
 import traceback
@@ -207,9 +208,79 @@ def _source_linked_ledger_counts():
     return env.cr.dictfetchall()  # noqa: F821
 
 
+def _create_attachment(record):
+    attachment = env["ir.attachment"].sudo().create(  # noqa: F821
+        {
+            "name": "finance-expense-category-policy-proof.txt",
+            "datas": base64.b64encode(b"finance expense attachment policy proof").decode("ascii"),
+            "res_model": record._name,
+            "res_id": record.id,
+            "mimetype": "text/plain",
+        }
+    )
+    record.write({"attachment_ids": [(4, attachment.id)]})
+    return attachment
+
+
+def _attachment_policy_runtime_check(failures):
+    Project = env["project.project"].sudo()  # noqa: F821
+    Partner = env["res.partner"].sudo()  # noqa: F821
+    Claim = env["sc.expense.claim"].sudo()  # noqa: F821
+    project = Project.create(
+        {
+            "name": "费用附件策略门禁项目",
+            "code": "FIN-EXP-ATTACH-POLICY",
+            "company_id": env.company.id,  # noqa: F821
+        }
+    )
+    partner = Partner.create({"name": "费用附件策略门禁往来单位"})
+    claim = Claim.create(
+        {
+            "claim_type": "project_company_repay",
+            "expense_type": "还款登记",
+            "project_id": project.id,
+            "partner_id": partner.id,
+            "amount": 18.0,
+            "approved_amount": 18.0,
+            "paid_amount": 0.0,
+            "summary": "附件策略门禁验证",
+            "payment_account_name": "附件策略付款账户",
+            "payer_account": "FIN-EXP-ATTACH-PAYER",
+            "receipt_account_name": "附件策略收款账户",
+            "payee_account": "FIN-EXP-ATTACH-RECEIPT",
+        }
+    )
+    runtime = {
+        "category_code": claim.business_category_id.code,
+        "blocked_without_attachment": False,
+        "submitted_after_attachment": False,
+        "record_id": claim.id,
+    }
+    try:
+        with env.cr.savepoint():  # noqa: F821
+            claim.action_submit()
+    except Exception as err:  # noqa: BLE001 - Odoo shell runtime check
+        if "附件" not in str(err):
+            failures.append("attachment_policy_runtime: expected attachment error, got %s" % err)
+        else:
+            runtime["blocked_without_attachment"] = True
+    else:
+        failures.append("attachment_policy_runtime: submit without attachment must fail")
+
+    _create_attachment(claim)
+    claim.action_submit()
+    if claim.state not in ("submit", "approved"):
+        failures.append("attachment_policy_runtime: expected submit/approved after attachment, got %s" % claim.state)
+    else:
+        runtime["submitted_after_attachment"] = True
+        runtime["state_after_attachment"] = claim.state
+    return runtime
+
+
 failures = []
 rows = []
 ledger_counts = []
+attachment_policy_runtime = {}
 
 try:
     Category = env["sc.business.category"].sudo()  # noqa: F821
@@ -233,8 +304,8 @@ try:
             failures.append("%s: missing action_xmlid" % code)
         elif not env.ref(category.action_xmlid, raise_if_not_found=False):  # noqa: F821
             failures.append("%s: action_xmlid not found: %s" % (code, category.action_xmlid))
-        if category.attachment_policy == "none":
-            failures.append("%s: attachment_policy must not be none" % code)
+        if category.attachment_policy != "required":
+            failures.append("%s: attachment_policy must be required, got %s" % (code, category.attachment_policy))
         if missing_required:
             failures.append("%s: missing required_fields %s" % (code, ",".join(missing_required)))
         if missing_facts:
@@ -273,6 +344,7 @@ try:
                 "%s: %s legacy expense claims missing source-linked treasury ledger"
                 % (row["category_code"], row["missing_ledger_count"])
             )
+    attachment_policy_runtime = _attachment_policy_runtime_check(failures)
 except Exception as err:
     failures.append("unexpected error: %s" % err)
     failures.append(traceback.format_exc())
@@ -283,6 +355,7 @@ result = {
     "category_count": len(EXPENSE_CATEGORY_REQUIREMENTS),
     "rows": rows,
     "legacy_source_linked_ledger_counts": ledger_counts,
+    "attachment_policy_runtime": attachment_policy_runtime,
     "failures": failures,
     "policy": {
         "operating_cash": "requires payment_request_id and account fields",

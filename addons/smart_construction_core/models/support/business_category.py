@@ -7,7 +7,7 @@ from odoo.exceptions import ValidationError
 from odoo.osv import expression
 
 
-BUSINESS_CATEGORY_TEMPLATE_VERSION = "2026-06-11.7"
+BUSINESS_CATEGORY_TEMPLATE_VERSION = "2026-06-11.8"
 BUSINESS_CATEGORY_ACTION_BINDINGS = {
     "site.construction.diary": "smart_construction_core.action_sc_construction_diary",
     "site.quality.issue": "smart_construction_core.action_sc_quality_issue",
@@ -219,6 +219,20 @@ BUSINESS_CATEGORY_REQUIRED_FIELD_DEFAULTS = {
     "finance.repayment.registration": ["project_id", "partner_id", "amount", "expense_type"],
     "finance.repayment.contractor_project": ["project_id", "partner_id", "amount", "expense_type"],
     "finance.repayment.project_company": ["project_id", "partner_id", "amount", "expense_type"],
+}
+BUSINESS_CATEGORY_ATTACHMENT_POLICY_DEFAULTS = {
+    "finance.expense.reimbursement": "required",
+    "finance.expense.project": "required",
+    "finance.deposit.bid.pay": "required",
+    "finance.deposit.bid.return": "required",
+    "finance.deposit.contract.pay": "required",
+    "finance.deposit.contract.return": "required",
+    "finance.deduction.bill": "required",
+    "finance.deduction.paid": "required",
+    "finance.deduction.refund": "required",
+    "finance.repayment.registration": "required",
+    "finance.repayment.contractor_project": "required",
+    "finance.repayment.project_company": "required",
 }
 
 
@@ -434,6 +448,9 @@ class ScBusinessCategory(models.Model):
             )
             if required_fields is not None:
                 vals["required_fields_json"] = json.dumps(required_fields, ensure_ascii=False)
+            attachment_policy = BUSINESS_CATEGORY_ATTACHMENT_POLICY_DEFAULTS.get(code)
+            if attachment_policy and category.attachment_policy in (False, "none", "recommended"):
+                vals["attachment_policy"] = attachment_policy
             category.write(
                 vals
             )

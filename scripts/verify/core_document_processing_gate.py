@@ -61,6 +61,21 @@ def _force_validated(record, table_name):
         record.invalidate_recordset()
 
 
+def _attach_proof(record, label):
+    attachment = env["ir.attachment"].sudo().create(
+        {
+            "name": "%s.txt" % label,
+            "datas": base64.b64encode(("proof:%s" % label).encode("utf-8")).decode("ascii"),
+            "res_model": record._name,
+            "res_id": record.id,
+            "mimetype": "text/plain",
+        }
+    )
+    if "attachment_ids" in record._fields:
+        record.sudo().write({"attachment_ids": [(4, attachment.id)]})
+    return attachment
+
+
 def _partner(name):
     return env["res.partner"].create({"name": name})
 
@@ -308,6 +323,7 @@ def _run_expense_claims(failures):
                 "payer_account": _name("CDP-GATE-PAYER"),
             }
         )
+        _attach_proof(claim, "expense-claim-%s" % claim_type)
         _expect_exception("expense_claim.%s.done_before_submit" % claim_type, claim.action_done, failures)
         claim.action_submit()
         if claim.state == "submit":
@@ -341,6 +357,7 @@ def _run_expense_claims(failures):
                 "payer_account": _name("CDP-GATE-INTERFUND-PAYER"),
             }
         )
+        _attach_proof(claim, "expense-claim-%s" % expense_type)
         _expect_exception("expense_claim.%s.done_before_submit" % expense_type, claim.action_done, failures)
         claim.action_submit()
         if claim.state == "submit":
