@@ -38,6 +38,16 @@ def _expect_action(label, action, model, res_id, failures):
     _expect(action.get("res_id") == res_id, "%s: expected res_id=%s, got %s" % (label, res_id, action.get("res_id")), failures)
 
 
+def _expect_category(label, record, expected_code, failures):
+    record.invalidate_recordset()
+    actual = record.business_category_id.code
+    _expect(
+        actual == expected_code,
+        "%s: expected business_category=%s, got %s" % (label, expected_code, actual),
+        failures,
+    )
+
+
 def _expect_action_domain_contains(label, action, record, failures):
     model = action.get("res_model")
     domain = action.get("domain") or []
@@ -274,6 +284,9 @@ def _run(failures):
         _invoice_vals(project, input_partner, input_contract, "input", "进项税额上报", 200.0, 18.0)
     )
     deduction = _deduct_tax(_tax_deduction_vals(project, deduction_partner))
+    _expect_category("output_invoice.category", output_invoice, "invoice.output.registration", failures)
+    _expect_category("input_invoice.category", input_invoice, "invoice.input.report", failures)
+    _expect_category("tax_deduction.category", deduction, "tax.deduction.registration", failures)
 
     output_summary = _invoice_summary(output_invoice, failures)
     input_summary = _invoice_summary(input_invoice, failures)

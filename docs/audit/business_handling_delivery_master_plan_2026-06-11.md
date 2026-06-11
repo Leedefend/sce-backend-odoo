@@ -246,6 +246,8 @@
 - 已建立发票/税务办理证据门禁，覆盖附件、状态闭环、业务锚点阻断和审计事件。
 - 已建立发票/税务角色权限门禁：只读可查不可建，业务经办可发起，普通财务经办不能执行终态登记/抵扣，财务经理可完成终态。
 - 已建立发票/税务下游追溯门禁：销项登记和进项上报进入 `sc.invoice.category.summary`，抵扣登记进入 `sc.finance.business.fact`、`sc.finance.business.project.summary` 和 `sc.finance.project.capital.position`。
+- 已补发票/税务正式分类锚点：`sc.invoice.registration` 和 `sc.tax.deduction.registration` 新增 `business_category_id`，新办理按入口上下文或业务字段自动绑定到 `invoice.output.application`、`invoice.output.registration`、`invoice.input.report`、`invoice.prepaid_tax`、`tax.deduction.registration`；历史和既有正式数据升级时只填空值，不改写用户可见来源字段。
+- 已建立发票/税务分类绑定门禁，直接扫描用户数据，验证可分类的发票登记和非转出抵扣登记都绑定到正确业务分类，且分类目标模型不串域。
 
 当前门禁：
 
@@ -256,13 +258,14 @@ DB_NAME=sc_demo scripts/ops/validate_invoice_tax_business_category_runtime.sh
 DB_NAME=sc_demo scripts/ops/validate_invoice_tax_handling_evidence.sh
 DB_NAME=sc_demo scripts/ops/validate_invoice_tax_role_permissions.sh
 DB_NAME=sc_demo scripts/ops/validate_invoice_tax_downstream_traceability.sh
+DB_NAME=sc_demo scripts/ops/validate_invoice_tax_category_binding.sh
 ```
 
 下一步：
 
-- 将发票/税务分类从 action/context 过渡实现推进到正式分类字段或业务分类字典绑定。
+- 将发票/税务分类字段继续接入表单显隐、附件策略和审批策略，减少对 `source_kind/direction/is_transfer_out` 的散落判断。
 - 明确 `sc.invoice.registration` 与合同、结算、收付款、成本的关系策略；当前发票分类汇总已验证，发票成本进度类报表仍后置到 Phase 6。
-- 补正式分类字段或业务分类字典绑定，替代抵扣登记当前对 `is_transfer_out` 的过渡分类依赖。
+- 为进项税额转出、红冲、收款核销等税务派生事项补分类候选和用户验收口径，再决定是否进入行业模板默认分类。
 
 ### Phase 3 - Material Procurement And Stock Closure
 

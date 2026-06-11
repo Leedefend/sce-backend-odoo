@@ -29,6 +29,13 @@ class ScInvoiceRegistration(models.Model):
         required=True,
         index=True,
     )
+    business_category_id = fields.Many2one(
+        "sc.business.category",
+        string="业务分类",
+        index=True,
+        ondelete="restrict",
+        domain="[('target_model', '=', 'sc.invoice.registration')]",
+    )
     direction = fields.Selection(
         [
             ("input", "进项"),
@@ -198,9 +205,33 @@ class ScInvoiceRegistration(models.Model):
             project_id = self._context_project_id()
             if project_id:
                 vals.setdefault("project_id", project_id)
+            vals.setdefault("business_category_id", self._resolve_business_category_id(vals))
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.invoice.registration") or _("Invoice Registration")
         return super().create(vals_list)
+
+    def _resolve_business_category_id(self, vals):
+        Category = self.env["sc.business.category"].sudo()
+        code = self.env.context.get("default_business_category_code") or self.env.context.get(
+            "current_business_category_code"
+        )
+        source_kind = vals.get("source_kind") or self.env.context.get("default_source_kind") or "invoice_registration"
+        direction = vals.get("direction") or self.env.context.get("default_direction") or "input"
+        invoice_content = vals.get("invoice_content") or self.env.context.get("default_invoice_content") or ""
+        if not code:
+            if source_kind == "prepaid_tax" or direction == "prepaid":
+                code = "invoice.prepaid_tax"
+            elif source_kind == "input_invoice_tax" or direction == "input":
+                code = "invoice.input.report"
+            elif invoice_content == "销项开票申请":
+                code = "invoice.output.application"
+            elif source_kind == "output_invoice_tax" or direction == "output":
+                code = "invoice.output.registration"
+        category = Category.search(
+            [("code", "=", code), ("target_model", "=", "sc.invoice.registration")],
+            limit=1,
+        )
+        return category.id if category else False
 
     @api.depends("source_kind", "direction", "invoice_content", "tax_type")
     def _compute_invoice_flow_label(self):
@@ -302,8 +333,47 @@ class ScInvoiceRegistration(models.Model):
                        END
                    ),
                    kingdee_document_no = COALESCE(NULLIF(kingdee_document_no, ''), NULLIF(legacy_visible_kingdee_no, '')),
-                   note = COALESCE(NULLIF(note, ''), NULLIF(legacy_visible_note, ''))
+                   note = COALESCE(NULLIF(note, ''), NULLIF(legacy_visible_note, '')),
+                   business_category_id = COALESCE(
+                       business_category_id,
+                       CASE
+                           WHEN source_kind = 'prepaid_tax' OR direction = 'prepaid' THEN (
+                               SELECT id FROM sc_business_category WHERE code = 'invoice.prepaid_tax' LIMIT 1
+                           )
+                           WHEN source_kind = 'input_invoice_tax' OR direction = 'input' THEN (
+                               SELECT id FROM sc_business_category WHERE code = 'invoice.input.report' LIMIT 1
+                           )
+                           WHEN source_kind = 'output_invoice_tax' AND invoice_content = '销项开票申请' THEN (
+                               SELECT id FROM sc_business_category WHERE code = 'invoice.output.application' LIMIT 1
+                           )
+                           WHEN source_kind = 'output_invoice_tax' OR direction = 'output' THEN (
+                               SELECT id FROM sc_business_category WHERE code = 'invoice.output.registration' LIMIT 1
+                           )
+                           ELSE NULL
+                       END
+                   )
              WHERE legacy_source_model IS NOT NULL OR legacy_source_table IS NOT NULL
+            """
+        )
+        self.env.cr.execute(
+            """
+            UPDATE sc_invoice_registration
+               SET business_category_id = CASE
+                   WHEN source_kind = 'prepaid_tax' OR direction = 'prepaid' THEN (
+                       SELECT id FROM sc_business_category WHERE code = 'invoice.prepaid_tax' LIMIT 1
+                   )
+                   WHEN source_kind = 'input_invoice_tax' OR direction = 'input' THEN (
+                       SELECT id FROM sc_business_category WHERE code = 'invoice.input.report' LIMIT 1
+                   )
+                   WHEN source_kind = 'output_invoice_tax' AND invoice_content = '销项开票申请' THEN (
+                       SELECT id FROM sc_business_category WHERE code = 'invoice.output.application' LIMIT 1
+                   )
+                   WHEN source_kind = 'output_invoice_tax' OR direction = 'output' THEN (
+                       SELECT id FROM sc_business_category WHERE code = 'invoice.output.registration' LIMIT 1
+                   )
+                   ELSE NULL
+               END
+             WHERE business_category_id IS NULL
             """
         )
 
@@ -362,6 +432,7 @@ class ScInvoiceRegistration(models.Model):
             "state": self.state,
             "validation_status": self.validation_status,
             "source_kind": self.source_kind,
+            "business_category_code": self.business_category_id.code,
             "direction": self.direction,
             "invoice_content": self.invoice_content,
             "project_id": self.project_id.id,

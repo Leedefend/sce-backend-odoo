@@ -155,6 +155,11 @@ def _run_category(code, action_xmlid, shared, failures):
     model_name = action.res_model
     vals = _base_vals(model_name, context, shared)
     record = env[model_name].sudo().with_context(**context).create(vals)
+    if record.business_category_id.code != code:
+        failures.append(
+            "%s: expected business_category_id.code=%s, got %s"
+            % (code, code, record.business_category_id.code)
+        )
     domain_with_record = ["&", ("id", "=", record.id)] + list(domain)
     matched = env[model_name].sudo().search(domain_with_record, limit=1)
     if matched.id != record.id:
@@ -167,6 +172,7 @@ def _run_category(code, action_xmlid, shared, failures):
         "action": action_xmlid,
         "model": model_name,
         "record_id": record.id,
+        "business_category": record.business_category_id.code,
         "visible": matched.id == record.id,
     }
 

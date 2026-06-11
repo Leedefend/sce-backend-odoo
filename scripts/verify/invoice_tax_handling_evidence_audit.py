@@ -36,6 +36,16 @@ def _expect_state(label, record, expected, failures):
     return _expect(record.state == expected, "%s: expected state=%s, got %s" % (label, expected, record.state), failures)
 
 
+def _expect_category(label, record, expected_code, failures):
+    record.invalidate_recordset()
+    actual = record.business_category_id.code
+    return _expect(
+        actual == expected_code,
+        "%s: expected business_category=%s, got %s" % (label, expected_code, actual),
+        failures,
+    )
+
+
 def _expect_exception(label, func, failures):
     try:
         with env.cr.savepoint():
@@ -186,6 +196,7 @@ def _run_invoice_registration(failures):
     invoice = env["sc.invoice.registration"].sudo().create(
         _invoice_vals(project, partner, contract, "output", "销项开票登记")
     )
+    _expect_category("invoice_registration.category", invoice, "invoice.output.registration", failures)
     _attach(invoice, "invoice-registration")
     _expect(_attachment_count(invoice) >= 1, "invoice_registration.attachment: expected attachment", failures)
     invoice.action_confirm()
@@ -215,6 +226,7 @@ def _run_invoice_registration(failures):
     _expect_exception("invoice_registration.contract_partner_mismatch", mismatch.action_confirm, failures)
 
     prepaid = env["sc.invoice.registration"].sudo().create(_prepaid_invoice_vals(project, partner, contract))
+    _expect_category("invoice_registration.prepaid_category", prepaid, "invoice.prepaid_tax", failures)
     prepaid.action_confirm()
     prepaid.action_register()
     _expect_state("invoice_registration.prepaid_register", prepaid, "registered", failures)
@@ -235,6 +247,7 @@ def _run_tax_deduction(failures):
     project = _project("ITHE Tax Deduction Project")
     partner = _partner("ITHE Tax Deduction Partner")
     deduction = env["sc.tax.deduction.registration"].sudo().create(_tax_deduction_vals(project, partner))
+    _expect_category("tax_deduction.category", deduction, "tax.deduction.registration", failures)
     _attach(deduction, "tax-deduction")
     _expect(_attachment_count(deduction) >= 1, "tax_deduction.attachment: expected attachment", failures)
     deduction.action_confirm()

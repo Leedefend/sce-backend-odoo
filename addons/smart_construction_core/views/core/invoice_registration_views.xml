@@ -8,6 +8,7 @@
                 <search string="发票税务办理">
                     <field name="name"/>
                     <field name="source_kind"/>
+                    <field name="business_category_id"/>
                     <field name="direction"/>
                     <field name="document_no"/>
                     <field name="application_date"/>
@@ -57,6 +58,7 @@
                 <tree string="发票税务办理">
                     <field name="name"/>
                     <field name="invoice_flow_label"/>
+                    <field name="business_category_id" optional="show"/>
                     <field name="source_kind"/>
                     <field name="direction"/>
                     <field name="state"/>
@@ -131,6 +133,7 @@
                             <group string="业务方向">
                                 <field name="name" readonly="1"/>
                                 <field name="invoice_flow_label" readonly="1"/>
+                                <field name="business_category_id" readonly="state == 'legacy_confirmed'"/>
                                 <field name="source_kind" readonly="state == 'legacy_confirmed'"/>
                                 <field name="direction" readonly="state == 'legacy_confirmed'"/>
                                 <field name="document_no" readonly="state == 'legacy_confirmed'"/>

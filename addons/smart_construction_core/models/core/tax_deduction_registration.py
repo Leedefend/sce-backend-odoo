@@ -31,6 +31,13 @@ class ScTaxDeductionRegistration(models.Model):
         required=True,
         index=True,
     )
+    business_category_id = fields.Many2one(
+        "sc.business.category",
+        string="业务分类",
+        index=True,
+        ondelete="restrict",
+        domain="[('target_model', '=', 'sc.tax.deduction.registration')]",
+    )
     deduction_flow_label = fields.Char(string="办理事项", compute="_compute_deduction_flow_label")
     document_no = fields.Char(string="单据编号", index=True)
     document_date = fields.Date(string="单据日期", default=fields.Date.context_today, index=True)
@@ -142,6 +149,7 @@ class ScTaxDeductionRegistration(models.Model):
             partner_id = self._context_partner_id()
             if partner_id:
                 vals.setdefault("partner_id", partner_id)
+            vals.setdefault("business_category_id", self._resolve_business_category_id(vals))
             context_date = self.env.context.get("default_document_date") or self.env.context.get("current_document_date")
             if context_date:
                 vals.setdefault("document_date", context_date)
@@ -178,6 +186,31 @@ class ScTaxDeductionRegistration(models.Model):
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.tax.deduction.registration") or _("Tax Deduction")
         return super().create(vals_list)
+
+    def _resolve_business_category_id(self, vals):
+        code = self.env.context.get("default_business_category_code") or self.env.context.get(
+            "current_business_category_code"
+        )
+        is_transfer_out = vals.get("is_transfer_out", self.env.context.get("default_is_transfer_out", False))
+        if not code and not is_transfer_out:
+            code = "tax.deduction.registration"
+        category = self.env["sc.business.category"].sudo().search(
+            [("code", "=", code), ("target_model", "=", "sc.tax.deduction.registration")],
+            limit=1,
+        )
+        return category.id if category else False
+
+    def init(self):
+        self.env.cr.execute(
+            """
+            UPDATE sc_tax_deduction_registration
+               SET business_category_id = (
+                   SELECT id FROM sc_business_category WHERE code = 'tax.deduction.registration' LIMIT 1
+               )
+             WHERE business_category_id IS NULL
+               AND COALESCE(is_transfer_out, false) = false
+            """
+        )
 
     @api.depends("invoice_amount_untaxed", "invoice_tax_amount")
     def _compute_tax_rate_text(self):
@@ -311,6 +344,7 @@ class ScTaxDeductionRegistration(models.Model):
         return {
             "state": self.state,
             "source_origin": self.source_origin,
+            "business_category_code": self.business_category_id.code,
             "project_id": self.project_id.id,
             "partner_id": self.partner_id.id,
             "partner_name": self.partner_name,
