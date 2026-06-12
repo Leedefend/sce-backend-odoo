@@ -333,6 +333,13 @@ EXPECTED = {
         "ledger_fact": "sc.finance.business.fact",
         "action_xmlid": "smart_construction_core.action_sc_tax_deduction_registration_user",
     },
+    "tax.certificate.registration": {
+        "domain": "invoice_tax",
+        "target_model": "sc.legacy.payment.residual.fact",
+        "direction": "noncash_tax",
+        "ledger_fact": "sc.legacy.payment.residual.fact",
+        "action_xmlid": "smart_construction_core.action_sc_tax_certificate_registration_user",
+    },
     "material.plan": {
         "domain": "material",
         "target_model": "project.material.plan",

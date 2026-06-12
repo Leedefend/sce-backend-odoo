@@ -4,6 +4,9 @@ from __future__ import annotations
 from odoo.addons.smart_construction_scene.services.workflow_rollout_handoff import (
     build_direct_runtime_handoff,
 )
+from odoo.addons.smart_construction_scene.services.handling_entry_catalog import (
+    clone_finance_handling_entry_catalog,
+)
 
 
 def build(scene_key: str = "finance.center", runtime: dict | None = None, context: dict | None = None) -> dict:
@@ -20,14 +23,19 @@ def build(scene_key: str = "finance.center", runtime: dict | None = None, contex
         "action_xmlid": "smart_construction_core.action_sc_finance_dashboard",
         "reason": "keep native finance root menu/action available while finance.center remains canonical root owner",
     }
+    handling_catalog = clone_finance_handling_entry_catalog()
     return {
         "scene_key": scene_key,
         "guidance": {
             "title": "财务中心",
-            "message": "先从财务中心总览进入资金主入口，再按工作台分流到收付与跟进动作。",
+            "message": "以业务分类字典承载旧业务认知，左侧菜单收敛为综合办理入口，进入后按分类继续办理。",
         },
         "primary_action": primary_action,
         "fallback_strategy": fallback_strategy,
+        "handling_entry_catalog": handling_catalog,
+        "extensions": {
+            "handling_entry_catalog_v1": handling_catalog,
+        },
         "shared_root_compatibility": {
             "used": True,
             "closure_status": "root_owner_retained",

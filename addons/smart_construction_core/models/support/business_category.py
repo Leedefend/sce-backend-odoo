@@ -55,6 +55,7 @@ BUSINESS_CATEGORY_ACTION_BINDINGS = {
     "invoice.input.report": "smart_construction_core.action_sc_invoice_input_report_user",
     "invoice.prepaid_tax": "smart_construction_core.action_sc_invoice_prepaid_tax_user",
     "tax.deduction.registration": "smart_construction_core.action_sc_tax_deduction_registration_user",
+    "tax.certificate.registration": "smart_construction_core.action_sc_tax_certificate_registration_user",
     "material.plan": "smart_construction_core.action_project_material_plan_my",
     "material.purchase.request": "smart_construction_core.action_sc_material_purchase_request",
     "material.acceptance": "smart_construction_core.action_sc_material_acceptance",

@@ -81,6 +81,10 @@ finance_center_provider = _load_module(
     "odoo.addons.smart_construction_scene.providers.finance_center_provider",
     SCENE_DIR / "providers" / "finance_center_provider.py",
 )
+finance_workspace_provider = _load_module(
+    "odoo.addons.smart_construction_scene.providers.finance_workspace_provider",
+    SCENE_DIR / "providers" / "finance_workspace_provider.py",
+)
 material_center_provider = _load_module(
     "odoo.addons.smart_construction_scene.providers.material_center_provider",
     SCENE_DIR / "providers" / "material_center_provider.py",
@@ -785,6 +789,42 @@ class TestActionOnlySceneSemanticSupply(unittest.TestCase):
         self.assertEqual(handoff.get("runtime_mode"), "direct")
         self.assertEqual(handoff.get("final_scene"), "finance.center")
         self.assertEqual(((handoff.get("acceptance") or {}).get("workflow_ready")), True)
+
+    def test_finance_provider_supplies_integrated_handling_catalog(self):
+        payload = finance_center_provider.build(scene_key="finance.center", runtime={"company_id": 9})
+        catalog = payload.get("handling_entry_catalog") or {}
+        groups = catalog.get("groups") or []
+        items = [item for group in groups for item in group.get("items", [])]
+
+        self.assertEqual(catalog.get("contract_version"), "handling_entry_catalog.v1")
+        self.assertEqual(catalog.get("entry_mode"), "integrated_handling")
+        self.assertEqual(catalog.get("group_count"), 4)
+        self.assertEqual(catalog.get("item_count"), 35)
+        self.assertEqual([group.get("title") for group in groups], [
+            "收付款办理",
+            "开票与税务办理",
+            "费用与报销办理",
+            "资金往来办理",
+        ])
+        self.assertTrue(all(item.get("business_category_code") for item in items))
+        self.assertTrue(all((item.get("target") or {}).get("action_xmlid") for item in items))
+        self.assertEqual(
+            ((catalog.get("preserve_data_policy") or {}).get("legacy_recognition_carrier")),
+            "business_category_code",
+        )
+        self.assertFalse((catalog.get("preserve_data_policy") or {}).get("delete_business_records"))
+
+    def test_finance_workspace_reuses_integrated_handling_catalog_contract(self):
+        payload = finance_workspace_provider.build(scene_key="finance.workspace", runtime={"company_id": 9})
+        catalog = payload.get("handling_entry_catalog") or {}
+
+        self.assertEqual(catalog.get("contract_version"), "handling_entry_catalog.v1")
+        self.assertEqual(catalog.get("group_count"), 4)
+        self.assertEqual(catalog.get("item_count"), 35)
+        self.assertEqual(
+            ((payload.get("extensions") or {}).get("handling_entry_catalog_v1") or {}).get("item_count"),
+            35,
+        )
 
     def test_wave1_task_provider_supplies_delivery_handoff_v1(self):
         payload = task_center_provider.build(scene_key="task.center", runtime={"company_id": 9})
