@@ -19,7 +19,9 @@
           :title="blockedTitle(node)"
           @click="onSelect(node)"
         >
-          {{ nodeLabel(node) }}
+          <span class="label-text">{{ nodeLabel(node) }}</span>
+          <span v-if="isHandlingGroup(node)" class="label-badge">办理</span>
+          <span v-if="node.children?.length" class="label-count">{{ node.children.length }}</span>
         </button>
       </div>
       <transition name="expand">
@@ -115,6 +117,10 @@ function normalizedNodeLabel(node: NavNode) {
   return nodeLabel(node).trim();
 }
 
+function isHandlingGroup(node: NavNode) {
+  return Boolean(node.children?.length) && /办理$/.test(normalizedNodeLabel(node));
+}
+
 function onSelect(node: NavNode) {
   if (isBlocked(node)) {
     return;
@@ -174,14 +180,14 @@ function ensureExpandedForActive(nodes: NavNode[], menuId?: number): Set<string>
   return next;
 }
 
-function ensureExpandedForAcceptanceMenus(nodes: NavNode[]): Set<string> {
+function ensureExpandedForDefaultGroups(nodes: NavNode[]): Set<string> {
   const next = new Set<string>();
   const walk = (items: NavNode[], insideJointAcceptance = false) => {
     for (const node of items) {
       const key = nodeKey(node);
       const label = normalizedNodeLabel(node);
       const isJointAcceptanceRoot = label === '联营项目数据核对';
-      const shouldExpand = isJointAcceptanceRoot || (insideJointAcceptance && Boolean(node.children?.length));
+      const shouldExpand = isJointAcceptanceRoot || isHandlingGroup(node) || (insideJointAcceptance && Boolean(node.children?.length));
       if (shouldExpand) {
         next.add(key);
       }
@@ -196,7 +202,7 @@ function ensureExpandedForAcceptanceMenus(nodes: NavNode[]): Set<string> {
 
 watchEffect(() => {
   const parents = ensureExpandedForActive(props.nodes, props.activeMenuId);
-  const defaults = ensureExpandedForAcceptanceMenus(props.nodes);
+  const defaults = ensureExpandedForDefaultGroups(props.nodes);
   if (parents.size || defaults.size) {
     session.ensureMenuExpanded([...parents, ...defaults]);
   }
@@ -252,6 +258,10 @@ onMounted(() => {
   text-align: left;
   cursor: pointer;
   color: var(--sc-app-text-primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
 }
 
 .node.active .label {
@@ -295,6 +305,33 @@ onMounted(() => {
   font-weight: 500;
   line-height: 1.35;
   transition: background-color 0.2s;
+}
+
+.label-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.label-badge,
+.label-count {
+  flex: 0 0 auto;
+  border: 1px solid var(--sc-app-border);
+  color: var(--sc-app-text-secondary);
+  background: var(--sc-app-subtle-bg);
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 2px 4px;
+}
+
+.label-count {
+  min-width: 18px;
+  text-align: center;
+  color: var(--sc-semantic-text-muted);
+  background: transparent;
 }
 
 .label:hover {
