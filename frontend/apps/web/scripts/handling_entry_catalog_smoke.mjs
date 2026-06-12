@@ -184,6 +184,8 @@ async function main() {
   const sidebarIntentLabels = sidebarLabels.filter((label) =>
     ["办理入口", "台账查询", "分析报表", "来源明细", "基础配置"].includes(label)
   );
+  const expectedMergeFamilyLabels = ["费用/扣款/保证金办理", "票税办理"];
+  const missingMergeFamilyLabels = expectedMergeFamilyLabels.filter((label) => !sidebarLabels.includes(label));
   const bodyText = await page.locator("body").innerText({ timeout: 10000 });
   const rawCodeVisible = /finance\.|invoice\.|tax\.certificate/.test(bodyText);
   const expectedGroups = ["收付款办理", "开票与税务办理", "费用与报销办理", "资金往来办理"];
@@ -212,6 +214,7 @@ async function main() {
   const report = {
     ok: missingGroups.length === 0 && groupTitles.length === 4 && itemLabels.length === 35 && !rawCodeVisible && consoleErrors.length === 0
       && missingSidebarIntentLabels.length === 0
+      && missingMergeFamilyLabels.length === 0
       && menuResolvedUrl.includes(`default_business_category_code=${encodeURIComponent(categoryNode.categoryCode)}`)
       && createResolvedUrl.includes(`default_business_category_code=${encodeURIComponent(categoryNode.categoryCode)}`),
     baseUrl: BASE_URL,
@@ -230,6 +233,7 @@ async function main() {
     groupTitles,
     sidebarIntentLabels,
     missingSidebarIntentLabels,
+    missingMergeFamilyLabels,
     itemCount: itemLabels.length,
     missingGroups,
     rawCodeVisible,

@@ -1195,6 +1195,54 @@ function businessIntentBucket(node: NavNode) {
   return BUSINESS_INTENT_BUCKETS.find((bucket) => bucket.intents.has(intent));
 }
 
+function mergeCategoryTargetKey(node: NavNode): string {
+  const meta = node.meta || {};
+  if (String(meta.disposition_policy || '').trim() !== 'merge_by_category') return '';
+  const target = String(meta.integration_target || '').trim();
+  const model = String(meta.fact_model || meta.model || '').trim();
+  if (!target || !model) return '';
+  return `${model}::${target}`;
+}
+
+function mergeCategoryTargetLabel(node: NavNode): string {
+  const target = String(node.meta?.integration_target || '').trim();
+  if (!target) return '分类办理';
+  return target
+    .replace(/^[A-Za-z0-9_.]+\s*/, '')
+    .trim() || target;
+}
+
+function groupMergeByCategoryTargets(nodes: NavNode[]): NavNode[] {
+  const grouped = new Map<string, NavNode[]>();
+  const passthrough: NavNode[] = [];
+  nodes.forEach((node) => {
+    const key = mergeCategoryTargetKey(node);
+    if (!key) {
+      passthrough.push(node);
+      return;
+    }
+    grouped.set(key, [...(grouped.get(key) || []), node]);
+  });
+  const syntheticGroups = Array.from(grouped.entries()).flatMap(([key, items]) => {
+    if (items.length <= 1) return items;
+    const first = items[0];
+    return [{
+      key: `${first.key || first.menu_id || first.id || 'menu'}.merge.${key}`,
+      label: mergeCategoryTargetLabel(first),
+      title: mergeCategoryTargetLabel(first),
+      sequence: Number(first.sequence || first.meta?.sequence || 0),
+      children: items,
+      meta: {
+        business_entry_group: true,
+        merge_by_category_group: true,
+        integration_target: first.meta?.integration_target,
+        fact_model: first.meta?.fact_model || first.meta?.model,
+      },
+    } as NavNode];
+  });
+  return [...passthrough, ...syntheticGroups];
+}
+
 function hasBusinessEntryIntent(node: NavNode): boolean {
   if (businessEntryIntent(node)) return true;
   return Boolean(node.children?.some((child) => hasBusinessEntryIntent(child)));
@@ -1227,12 +1275,15 @@ function groupMenuNodeByBusinessIntent(node: NavNode): NavNode {
     .map((bucket) => {
       const items = bucketed.get(bucket.key) || [];
       if (!items.length) return null;
+      const children = bucket.key === 'handling'
+        ? groupMergeByCategoryTargets(items)
+        : items;
       return {
         key: `${node.key || node.menu_id || node.id || 'menu'}.intent.${bucket.key}`,
         label: bucket.label,
         title: bucket.label,
         sequence: bucket.sequence,
-        children: items,
+        children,
         meta: {
           intent_group: bucket.key,
           business_entry_group: true,
