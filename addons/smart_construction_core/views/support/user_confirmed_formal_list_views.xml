@@ -604,8 +604,8 @@
             (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_construction_contract_expense_tree')}),
             (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_construction_contract_expense_form')})
         ]"/>
-        <field name="domain">['&amp;', '&amp;', ('state', 'in', ['confirmed', 'running']), ('legacy_visible_title', 'not ilike', '结算'), ('subject', 'not ilike', '结算')]</field>
-        <field name="context">{'default_type': 'in'}</field>
+        <field name="domain">['&amp;', '&amp;', '&amp;', ('business_category_id.code', '=', 'contract.expense'), ('state', 'in', ['confirmed', 'running']), ('legacy_visible_title', 'not ilike', '结算'), ('subject', 'not ilike', '结算')]</field>
+        <field name="context">{'default_type': 'in', 'default_business_category_code': 'contract.expense'}</field>
     </record>
     <record id="action_construction_contract_income_construction" model="ir.actions.act_window">
         <field name="view_id" ref="smart_construction_core.view_construction_contract_income_construction_user_confirmed_tree"/>
@@ -693,7 +693,7 @@
         <field name="view_ids" eval="[(5, 0, 0),
             (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_settlement_order_user_confirmed_tree')})
         ]"/>
-        <field name="domain">['&amp;', '|', ('business_category_id.code', '=', 'settlement.income'), ('settlement_type', '=', 'in'), ('legacy_fact_model', '=', 'sc.legacy.direct.acceptance.fact:direct_engineering_settlement_order')]</field>
+        <field name="domain">[('business_category_id.code', '=', 'settlement.income')]</field>
         <field name="context">{'create': False, 'default_settlement_type': 'in', 'default_business_category_code': 'settlement.income'}</field>
     </record>
     <record id="action_sc_settlement_order_expense" model="ir.actions.act_window">
@@ -701,7 +701,7 @@
         <field name="view_ids" eval="[(5, 0, 0),
             (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_settlement_order_user_confirmed_tree')})
         ]"/>
-        <field name="domain">['&amp;', '|', ('business_category_id.code', '=', 'settlement.expense'), ('settlement_type', '=', 'out'), ('legacy_fact_type', 'in', ['direct_acceptance_expense_settlement:材料结算单', 'direct_acceptance_expense_settlement:劳务结算', 'direct_acceptance_subcontract_settlement_expense_settlement', 'direct_acceptance_expense_settlement:机械结算单', 'direct_acceptance_expense_settlement:租赁结算单'])]</field>
+        <field name="domain">[('business_category_id.code', '=', 'settlement.expense')]</field>
         <field name="context">{'create': False, 'default_settlement_type': 'out', 'default_business_category_code': 'settlement.expense'}</field>
     </record>
 

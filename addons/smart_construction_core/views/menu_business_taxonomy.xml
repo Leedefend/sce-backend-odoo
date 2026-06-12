@@ -155,7 +155,7 @@
             (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_construction_contract_income_form')})
         ]"/>
         <field name="search_view_id" ref="smart_construction_core.view_construction_contract_income_search"/>
-        <field name="domain">['&amp;', '&amp;', '&amp;', '|', ('legacy_income_surface_visible', '=', True), '&amp;', ('state', 'in', ['confirmed', 'running']), ('legacy_contract_id', '=', False), ('legacy_visible_title', 'not ilike', '结算'), ('legacy_visible_title', 'not ilike', '报告'), ('legacy_visible_title', 'not ilike', '审核')]</field>
+        <field name="domain">['&amp;', '&amp;', '&amp;', '&amp;', ('business_category_id.code', '=', 'contract.income'), ('state', 'in', ['confirmed', 'running']), ('legacy_visible_title', 'not ilike', '结算'), ('legacy_visible_title', 'not ilike', '报告'), ('legacy_visible_title', 'not ilike', '审核')]</field>
         <field name="context">{'default_type': 'out', 'default_business_category_code': 'contract.income', 'search_default_visible_income': 1}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
     </record>
@@ -170,7 +170,7 @@
             (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_construction_contract_expense_form')})
         ]"/>
         <field name="search_view_id" ref="smart_construction_core.view_construction_contract_expense_search"/>
-        <field name="domain">['&amp;', '&amp;', ('state', 'in', ['confirmed', 'running']), ('legacy_visible_title', 'not ilike', '结算'), ('subject', 'not ilike', '结算')]</field>
+        <field name="domain">['&amp;', '&amp;', '&amp;', ('business_category_id.code', '=', 'contract.expense'), ('state', 'in', ['confirmed', 'running']), ('legacy_visible_title', 'not ilike', '结算'), ('subject', 'not ilike', '结算')]</field>
         <field name="context">{'default_type': 'in', 'default_business_category_code': 'contract.expense'}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
     </record>
@@ -179,7 +179,7 @@
         <field name="res_model">sc.settlement.order</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="smart_construction_core.view_sc_settlement_order_search"/>
-        <field name="domain">['|', ('business_category_id.code', '=', 'settlement.income'), ('settlement_type', '=', 'in')]</field>
+        <field name="domain">[('business_category_id.code', '=', 'settlement.income')]</field>
         <field name="context">{'default_settlement_type': 'in', 'default_business_category_code': 'settlement.income', 'search_default_group_project': 1}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_settlement_read'))]"/>
     </record>
@@ -188,7 +188,7 @@
         <field name="res_model">sc.settlement.order</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="smart_construction_core.view_sc_settlement_order_search"/>
-        <field name="domain">['|', ('business_category_id.code', '=', 'settlement.expense'), ('settlement_type', '=', 'out')]</field>
+        <field name="domain">[('business_category_id.code', '=', 'settlement.expense')]</field>
         <field name="context">{'default_settlement_type': 'out', 'default_business_category_code': 'settlement.expense', 'search_default_group_project': 1}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_settlement_read'))]"/>
     </record>

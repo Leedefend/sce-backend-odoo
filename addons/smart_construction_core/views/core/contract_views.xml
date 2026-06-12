@@ -599,7 +599,7 @@
         <field name="view_mode">tree,form</field>
         <field name="views" eval="[(ref('view_construction_contract_income_tree'), 'tree'), (ref('view_construction_contract_income_form'), 'form')]"/>
         <field name="search_view_id" ref="view_construction_contract_income_search"/>
-        <field name="domain">['|', ('business_category_id.code', '=', 'contract.income'), '|', ('legacy_contract_id', '=', False), ('legacy_income_surface_visible', '=', True)]</field>
+        <field name="domain">[('business_category_id.code', '=', 'contract.income')]</field>
         <field name="context">{'default_type': 'out', 'default_business_category_code': 'contract.income', 'search_default_visible_income': 1}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_contract_read'))]"/>
     </record>

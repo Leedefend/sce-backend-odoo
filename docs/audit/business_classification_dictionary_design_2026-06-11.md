@@ -77,7 +77,7 @@
 - 材料损耗已作为“分类策略 + 可选统一审批 + 下游成本门禁”样例落地：`material.loss` 复用 `sc.material.outbound`，启用审批策略后确认动作只发起审批，审批通过前不写项目成本，审批通过后才完成损耗确认和成本沉淀。
 - 材料结算分批付款、付款撤销和付款登记审批已作为分类策略样例落地：同一材料结算允许多个付款申请，剩余付款申请、累计金额占用、超付阻断、付款汇总、撤销后余额恢复和付款执行审批开关当前在模型门禁/审批策略中实现；后续应沉淀到 `material.settlement` 的付款策略或行业模板默认策略，允许客户配置是否允许分批、是否需要付款登记审批和撤销规则。
 - 材料采购库存已接入正式记录级分类锚点：`project.material.plan.business_category_id`、`sc.material.purchase.request.business_category_id`、`sc.material.acceptance.business_category_id`、`sc.material.inbound.business_category_id`、`sc.material.outbound.business_category_id`、`sc.material.rfq.business_category_id` 和 `sc.material.settlement.business_category_id` 均绑定 `sc.business.category`。入口 action 以 `business_category_id.code` 为长期分类锚点，`outbound_type` 继续保留为出库、退库、调拨、损耗的业务事实。
-- 合同与结算已作为 Phase 4 分类字典样例落地：`contract.income`、`contract.expense` 已接入 `construction.contract.business_category_id` 并通过收入/支出合同包装模型透出；`settlement.income`、`settlement.expense` 已接入 `sc.settlement.order.business_category_id`。入口 action 以 `business_category_id.code` 为分类锚点，`type`、`settlement_type` 保留为业务事实和历史兼容字段。
+- 合同与结算已作为 Phase 4 分类字典样例落地：`contract.income`、`contract.expense` 已接入 `construction.contract.business_category_id` 并通过收入/支出合同包装模型透出；`settlement.income`、`settlement.expense` 已接入 `sc.settlement.order.business_category_id`。合同/结算分类入口 domain 只按 `business_category_id.code` 收口；`type`、`settlement_type`、legacy 可见性字段保留为业务事实、执行态过滤或历史映射依据，但不再作为分类 fallback。
 - 跨域只读权限可以服务下游校验，例如财务只读材料结算用于付款金额校验；但动作权限仍必须归属原能力域，不能因为下游付款需要读取材料结算就扩大材料结算的提交、确认、生成后续付款等办理权限。
 - 收付款申请与往来款已作为资金域分类边界样例落地：`finance.payment.apply.pay`、`finance.payment.apply.receive` 已接入 `payment.request.business_category_id`，付款/收款申请按入口上下文和 `type` 自动落类；`finance.payment.execution.partner`、`finance.payment.execution.company` 已接入 `sc.payment.execution.business_category_id`，这里的“往来单位付款”是付款执行分类，不等同于内部往来款；`finance.loan.*`、`finance.repayment.*`、`finance.fund.transfer` 分类进入内部往来事实、项目资金口径和 `sc.treasury.ledger` 统一现金流台账，但不强制挂经营收付款申请或结算单，台账通过 `source_model/source_res_id` 追溯原始往来单据。
 - 往来款分类必须按业务事实识别，不按旧菜单名硬切。旧系统没有统一“往来款”概念；系统口径必须围绕公司、项目、承包人三主体。项目借公司款、承包人借项目款、项目还公司款、承包人还项目款、跨项目/账户调拨属于项目借还调拨事实；到款确认、自筹垫付、自筹退回属于公司-承包人责任事实，项目用于归集资金状态和约束后续办理；资金日报、余额调整属于状态和台账输入。
@@ -265,8 +265,8 @@
 | --- | --- | --- |
 | `contract.income` | `construction.contract.business_category_id`，通过 `construction.contract.income` 包装模型展示，入口默认 `contract.income` | 配置收入合同必填字段、附件策略、收款/开票/收入结算下游策略 |
 | `contract.expense` | `construction.contract.business_category_id`，通过 `construction.contract.expense` 包装模型展示，入口默认 `contract.expense` | 配置支出合同必填字段、附件策略、结算/付款/进项发票下游策略 |
-| `settlement.income` | `sc.settlement.order.business_category_id`，收入结算入口默认 `settlement.income`，`settlement_type=in` 仅作事实和兼容字段 | 配置收入结算、收款申请、销项开票和回款余额策略 |
-| `settlement.expense` | `sc.settlement.order.business_category_id`，支出结算入口默认 `settlement.expense`，`settlement_type=out` 仅作事实和兼容字段 | 配置支出结算、付款申请、进项发票、超付阻断和结算余额策略 |
+| `settlement.income` | `sc.settlement.order.business_category_id`，收入结算入口 domain 使用 `business_category_id.code='settlement.income'`，`settlement_type=in` 仅作事实和历史映射依据 | 配置收入结算、收款申请、销项开票和回款余额策略 |
+| `settlement.expense` | `sc.settlement.order.business_category_id`，支出结算入口 domain 使用 `business_category_id.code='settlement.expense'`，`settlement_type=out` 仅作事实和历史映射依据 | 配置支出结算、付款申请、进项发票、超付阻断和结算余额策略 |
 
 当前门禁：
 

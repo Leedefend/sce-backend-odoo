@@ -24,6 +24,7 @@ CATEGORY_ACTIONS = {
         "action": "action_construction_contract_income",
         "context": {"default_type": "out", "default_business_category_code": "contract.income"},
         "domain_tokens": ["business_category_id.code", "contract.income"],
+        "forbidden_domain_tokens": ["legacy_contract_id", "legacy_income_surface_visible"],
     },
     "contract.expense": {
         "label": "支出合同",
@@ -38,6 +39,7 @@ CATEGORY_ACTIONS = {
         "action": "action_sc_settlement_order_income",
         "context": {"default_settlement_type": "in", "default_business_category_code": "settlement.income"},
         "domain_tokens": ["business_category_id.code", "settlement.income"],
+        "forbidden_domain_tokens": ["settlement_type", "legacy_fact_model", "legacy_fact_type"],
     },
     "settlement.expense": {
         "label": "支出合同结算",
@@ -45,6 +47,7 @@ CATEGORY_ACTIONS = {
         "action": "action_sc_settlement_order_expense",
         "context": {"default_settlement_type": "out", "default_business_category_code": "settlement.expense"},
         "domain_tokens": ["business_category_id.code", "settlement.expense"],
+        "forbidden_domain_tokens": ["settlement_type", "legacy_fact_model", "legacy_fact_type"],
     },
 }
 
@@ -110,6 +113,9 @@ def main() -> int:
         for token in expected["domain_tokens"]:
             if token not in domain:
                 failures.append(f"{code}: domain missing token {token!r}")
+        for token in expected.get("forbidden_domain_tokens", []):
+            if token in domain:
+                failures.append(f"{code}: domain still contains fallback token {token!r}")
         rows.append({"code": code, "action": action_id, "label": name, "model": model})
 
     result = {
