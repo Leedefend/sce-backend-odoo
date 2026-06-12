@@ -444,6 +444,8 @@ class SystemInitPayloadBuilder:
                 "next_action",
                 "fallback_strategy",
                 "delivery_handoff_v1",
+                "handling_entry_catalog",
+                "extensions",
                 "runtime_handoff_surface",
                 "product_delivery_surface",
                 "permission_surface",

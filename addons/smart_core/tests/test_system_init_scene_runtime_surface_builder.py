@@ -196,6 +196,55 @@ class TestSystemInitSceneRuntimeSurfaceBuilder(unittest.TestCase):
         self.assertEqual(((first_scene.get("meta") or {}).get("target") or {}).get("action_id"), 506)
         self.assertEqual((result["data"].get("nav_meta") or {}).get("scene_ready_mode"), "registry")
 
+    def test_full_mode_includes_requested_scene_when_delivery_catalog_omits_it(self):
+        calls = {"bind_scenes": [], "full_scenes": []}
+
+        def _bind_scene_assets(*args, **kwargs):
+            scenes = kwargs.get("scenes") or []
+            calls["bind_scenes"] = scenes
+            return {"scenes": scenes}
+
+        def _build_full_contract(**kwargs):
+            scenes = kwargs.get("scenes") or []
+            calls["full_scenes"] = scenes
+            return {"scenes": scenes}
+
+        surface_ctx = context_module.SystemInitSceneRuntimeSurfaceContext(
+            env=_Env(),
+            params={"scene": "web", "scene_ready_mode": "full", "scene_key": "finance.workspace"},
+            data={
+                "nav": [],
+                "nav_meta": {},
+                "default_route": {"scene_key": "workspace.home", "route": "/"},
+                "scenes": [],
+                "scene_version": "v1",
+                "schema_version": "1.0.0",
+            },
+            role_surface={"role_code": "finance"},
+            contract_mode="strict",
+            scene_channel="stable",
+            nav_tree=[],
+            platform_minimum_surface_mode=False,
+            build_platform_minimum_nav_contract_fn=lambda: {},
+            resolve_delivery_policy_runtime_fn=lambda env, params: {},
+            filter_delivery_scenes_fn=lambda scene_rows, **kwargs: {"delivery_scenes": [], "deep_link_scenes": [], "meta": {"enabled": False}},
+            startup_scene_subset_resolver_fn=lambda data, params=None: set(),
+            filter_startup_scenes_for_preload_fn=lambda scene_rows, subset: [],
+            bind_scene_assets_fn=_bind_scene_assets,
+            build_scene_ready_contract_fn=_build_full_contract,
+            build_scene_nav_contract_fn=lambda data: {"nav": [], "meta": {}},
+        )
+
+        result = builder.SystemInitSceneRuntimeSurfaceBuilder.apply(surface_ctx=surface_ctx)
+        contract = result["data"].get("scene_ready_contract_v1") or {}
+        first_scene = (contract.get("scenes") or [])[0]
+
+        self.assertEqual(first_scene.get("code"), "finance.workspace")
+        self.assertEqual(((first_scene.get("target") or {}).get("route")), "/s/finance.workspace")
+        self.assertEqual(((first_scene.get("layout") or {}).get("kind")), "workspace")
+        self.assertEqual((calls["bind_scenes"][0] or {}).get("code"), "finance.workspace")
+        self.assertEqual((calls["full_scenes"][0] or {}).get("code"), "finance.workspace")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -150,6 +150,7 @@ class SystemInitSceneRuntimeSurfaceBuilder:
         requested_scene_key = str(params.get("scene_key") or "").strip()
         if requested_scene_key and requested_scene_key not in scene_ready_seen:
             scene_catalog = data.get("scenes") if isinstance(data.get("scenes"), list) else []
+            requested_scene_found = False
             for scene_row in scene_catalog:
                 if not isinstance(scene_row, dict):
                     continue
@@ -158,7 +159,18 @@ class SystemInitSceneRuntimeSurfaceBuilder:
                     continue
                 scene_ready_seen.add(scene_key)
                 scene_ready_input.append(scene_row)
+                requested_scene_found = True
                 break
+            if not requested_scene_found:
+                scene_ready_seen.add(requested_scene_key)
+                scene_ready_input.append(
+                    {
+                        "code": requested_scene_key,
+                        "name": requested_scene_key,
+                        "layout": {"kind": "workspace"},
+                        "target": {"route": f"/s/{requested_scene_key}"},
+                    }
+                )
 
         nav_contract_input = dict(data)
         nav_contract_input["scenes"] = preload_scenes

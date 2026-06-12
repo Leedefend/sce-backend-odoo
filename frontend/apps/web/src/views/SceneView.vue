@@ -64,7 +64,7 @@
       :style="pageSectionStyle('status_forbidden')"
     />
     <StatusPanel
-      v-else-if="status === 'idle' && !sceneContractEntryIntent && !productDeliverySurface.visible && embeddedRecordActionId <= 0 && embeddedActionId <= 0"
+      v-else-if="status === 'idle' && !sceneContractEntryIntent && !handlingEntryGroups.length && !productDeliverySurface.visible && embeddedRecordActionId <= 0 && embeddedActionId <= 0"
       :title="pageText('status_idle_diag_title', '场景已加载，但没有可渲染目标')"
       :message="idleDiagnosticMessage"
       variant="info"
@@ -91,10 +91,10 @@
     >
       <header class="handling-surface__header">
         <div>
-          <p class="handling-surface__eyebrow">{{ handlingEntryCatalog.domain || pageText('handling_surface_eyebrow', '办理入口') }}</p>
+          <p class="handling-surface__eyebrow">{{ pageText('handling_surface_eyebrow', '办理入口') }}</p>
           <h3 class="handling-surface__title">{{ pageText('handling_surface_title', '综合办理') }}</h3>
         </div>
-        <span class="handling-surface__badge">{{ handlingEntryCatalog.item_count || handlingEntryItemCount }}</span>
+        <span class="handling-surface__badge">{{ handlingEntryCatalog.item_count || handlingEntryItemCount }} 项</span>
       </header>
       <div class="handling-surface__grid">
         <article
@@ -117,7 +117,6 @@
               @click="openHandlingEntry(item)"
             >
               <span>{{ item.label }}</span>
-              <small>{{ item.business_category_code }}</small>
             </button>
           </div>
         </article>
@@ -304,6 +303,15 @@ const handlingEntryGroups = computed<HandlingEntryGroup[]>(() => {
 });
 
 const handlingEntryItemCount = computed(() => handlingEntryGroups.value.reduce((total, group) => total + group.items.length, 0));
+
+function hasHandlingEntryCatalog(currentScene: Scene | null) {
+  const catalog = currentScene?.scene_ready?.handling_entry_catalog;
+  return Boolean(
+    catalog
+    && typeof catalog === 'object'
+    && String((catalog as Record<string, unknown>).contract_version || '').trim() === 'handling_entry_catalog.v1',
+  );
+}
 
 const idleDiagnosticMessage = computed(() => {
   const sceneKey = String(route.meta?.sceneKey || route.params.sceneKey || '').trim();
@@ -991,7 +999,11 @@ async function resolveScene() {
     embeddedRecordActionId.value = 0;
     validationHint.value = '';
     const sceneKey = String(route.meta?.sceneKey || route.params.sceneKey || '');
-    const resolvedScene = getSceneByKey(sceneKey) || fallbackSceneFromSceneReady(sceneKey) || fallbackSceneFromEntryIntent(sceneKey);
+    let resolvedScene = getSceneByKey(sceneKey) || fallbackSceneFromSceneReady(sceneKey) || fallbackSceneFromEntryIntent(sceneKey);
+    if (!resolvedScene && sceneKey) {
+      await hydrateSceneReadyForCurrentScene(sceneKey);
+      resolvedScene = getSceneByKey(sceneKey) || fallbackSceneFromSceneReady(sceneKey) || fallbackSceneFromEntryIntent(sceneKey);
+    }
     if (!resolvedScene) {
       setError(new Error(`scene not found: ${sceneKey}`), 'scene not found');
       errorCopy.value = resolveErrorCopy(error.value, pageText('error_fallback', '场景加载失败'));
@@ -999,7 +1011,7 @@ async function resolveScene() {
       return;
     }
     scene.value = resolvedScene;
-    if (!sceneBlocks.value.length) {
+    if (!sceneBlocks.value.length || !hasHandlingEntryCatalog(scene.value)) {
       await hydrateSceneReadyForCurrentScene(sceneKey);
       scene.value = getSceneByKey(sceneKey) || resolvedScene;
     }
@@ -1067,6 +1079,10 @@ async function resolveScene() {
       return;
     }
     if (layout.kind === 'workspace') {
+      if (hasHandlingEntryCatalog(resolvedScene)) {
+        status.value = 'idle';
+        return;
+      }
       if (typeof target.route === 'string' && target.route.trim()) {
         const normalizedRoute = normalizeLegacyWorkbenchPath(target.route);
         if (isPortalPath(normalizedRoute)) {
