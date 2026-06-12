@@ -625,7 +625,7 @@
         <field name="res_model">sc.payment.execution</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="smart_construction_core.view_sc_payment_execution_search"/>
-        <field name="domain">['&amp;', ('source_kind', '=', 'actual_outflow'), ('payment_family', 'in', ['公司财务支出', 'actual_outflow'])]</field>
+        <field name="domain">[('source_kind', '=', 'actual_outflow'), ('business_category_id.code', '=', 'finance.payment.execution.company')]</field>
         <field name="context">{'default_source_kind': 'actual_outflow', 'default_payment_family': '公司财务支出', 'default_business_category_code': 'finance.payment.execution.company', 'search_default_group_project': 1}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
@@ -667,7 +667,7 @@
         <field name="res_model">sc.payment.execution</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="smart_construction_core.view_sc_payment_execution_search"/>
-        <field name="domain">['&amp;', ('source_kind', '=', 'actual_outflow'), '|', ('legacy_source_model', '=', 'online_old_scbsly:T_FK_SUPPLIER:list881'), ('payment_family', '=', '往来单位付款')]</field>
+        <field name="domain">[('source_kind', '=', 'actual_outflow'), ('business_category_id.code', '=', 'finance.payment.execution.partner')]</field>
         <field name="context">{'default_source_kind': 'actual_outflow', 'default_payment_family': '往来单位付款', 'default_business_category_code': 'finance.payment.execution.partner', 'search_default_group_project': 1}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
