@@ -4,74 +4,80 @@
         <field name="name">采购申请</field>
         <field name="res_model">sc.material.purchase.request</field>
         <field name="view_mode">tree,form</field>
-        <field name="context">{'search_default_group_project': 1}</field>
+        <field name="domain">[('business_category_id.code', '=', 'material.purchase.request')]</field>
+        <field name="context">{'search_default_group_project': 1, 'default_business_category_code': 'material.purchase.request', 'current_business_category_code': 'material.purchase.request'}</field>
     </record>
 
     <record id="action_sc_material_acceptance" model="ir.actions.act_window">
         <field name="name">材料进场验收</field>
         <field name="res_model">sc.material.acceptance</field>
         <field name="view_mode">tree,form</field>
-        <field name="context">{'search_default_group_project': 1}</field>
+        <field name="domain">[('business_category_id.code', '=', 'material.acceptance')]</field>
+        <field name="context">{'search_default_group_project': 1, 'default_business_category_code': 'material.acceptance', 'current_business_category_code': 'material.acceptance'}</field>
     </record>
 
     <record id="action_sc_material_inbound" model="ir.actions.act_window">
         <field name="name">入库单</field>
         <field name="res_model">sc.material.inbound</field>
         <field name="view_mode">tree,form</field>
-        <field name="context">{'search_default_group_project': 1}</field>
+        <field name="domain">[('business_category_id.code', '=', 'material.inbound')]</field>
+        <field name="context">{'search_default_group_project': 1, 'default_business_category_code': 'material.inbound', 'current_business_category_code': 'material.inbound'}</field>
     </record>
 
     <record id="action_sc_material_inbound_handling" model="ir.actions.act_window">
         <field name="name">入库办理</field>
         <field name="res_model">sc.material.inbound</field>
         <field name="view_mode">tree,form</field>
-        <field name="context">{'search_default_group_project': 1}</field>
+        <field name="domain">[('business_category_id.code', '=', 'material.inbound')]</field>
+        <field name="context">{'search_default_group_project': 1, 'default_business_category_code': 'material.inbound', 'current_business_category_code': 'material.inbound'}</field>
     </record>
 
     <record id="action_sc_material_outbound" model="ir.actions.act_window">
         <field name="name">出库单</field>
         <field name="res_model">sc.material.outbound</field>
         <field name="view_mode">tree,form</field>
-        <field name="domain">[('outbound_type', '=', 'issue')]</field>
-        <field name="context">{'search_default_group_project': 1, 'default_outbound_type': 'issue'}</field>
+        <field name="domain">[('outbound_type', '=', 'issue'), ('business_category_id.code', '=', 'material.outbound')]</field>
+        <field name="context">{'search_default_group_project': 1, 'default_outbound_type': 'issue', 'default_business_category_code': 'material.outbound', 'current_business_category_code': 'material.outbound'}</field>
     </record>
 
     <record id="action_sc_material_return" model="ir.actions.act_window">
         <field name="name">退库办理</field>
         <field name="res_model">sc.material.outbound</field>
         <field name="view_mode">tree,form</field>
-        <field name="domain">[('outbound_type', '=', 'return')]</field>
-        <field name="context">{'search_default_group_project': 1, 'default_outbound_type': 'return'}</field>
+        <field name="domain">[('outbound_type', '=', 'return'), ('business_category_id.code', '=', 'material.return')]</field>
+        <field name="context">{'search_default_group_project': 1, 'default_outbound_type': 'return', 'default_business_category_code': 'material.return', 'current_business_category_code': 'material.return'}</field>
     </record>
 
     <record id="action_sc_material_transfer" model="ir.actions.act_window">
         <field name="name">材料调拨</field>
         <field name="res_model">sc.material.outbound</field>
         <field name="view_mode">tree,form</field>
-        <field name="domain">[('outbound_type', '=', 'transfer')]</field>
-        <field name="context">{'search_default_group_project': 1, 'default_outbound_type': 'transfer'}</field>
+        <field name="domain">[('outbound_type', '=', 'transfer'), ('business_category_id.code', '=', 'material.transfer')]</field>
+        <field name="context">{'search_default_group_project': 1, 'default_outbound_type': 'transfer', 'default_business_category_code': 'material.transfer', 'current_business_category_code': 'material.transfer'}</field>
     </record>
 
     <record id="action_sc_material_loss" model="ir.actions.act_window">
         <field name="name">材料损耗</field>
         <field name="res_model">sc.material.outbound</field>
         <field name="view_mode">tree,form</field>
-        <field name="domain">[('outbound_type', '=', 'loss')]</field>
-        <field name="context">{'search_default_group_project': 1, 'default_outbound_type': 'loss'}</field>
+        <field name="domain">[('outbound_type', '=', 'loss'), ('business_category_id.code', '=', 'material.loss')]</field>
+        <field name="context">{'search_default_group_project': 1, 'default_outbound_type': 'loss', 'default_business_category_code': 'material.loss', 'current_business_category_code': 'material.loss'}</field>
     </record>
 
     <record id="action_sc_material_rfq" model="ir.actions.act_window">
         <field name="name">询比价</field>
         <field name="res_model">sc.material.rfq</field>
         <field name="view_mode">tree,form</field>
-        <field name="context">{'search_default_group_project': 1}</field>
+        <field name="domain">[('business_category_id.code', '=', 'material.rfq')]</field>
+        <field name="context">{'search_default_group_project': 1, 'default_business_category_code': 'material.rfq', 'current_business_category_code': 'material.rfq'}</field>
     </record>
 
     <record id="action_sc_material_settlement" model="ir.actions.act_window">
         <field name="name">材料结算</field>
         <field name="res_model">sc.material.settlement</field>
         <field name="view_mode">tree,form</field>
-        <field name="context">{'search_default_group_project': 1}</field>
+        <field name="domain">[('business_category_id.code', '=', 'material.settlement')]</field>
+        <field name="context">{'search_default_group_project': 1, 'default_business_category_code': 'material.settlement', 'current_business_category_code': 'material.settlement'}</field>
     </record>
 
     <record id="view_sc_material_settlement_line_search" model="ir.ui.view">
@@ -125,6 +131,7 @@
             <tree string="采购申请" default_order="request_date desc">
                 <field name="name"/>
                 <field name="project_id"/>
+                <field name="business_category_id" optional="hide"/>
                 <field name="request_date"/>
                 <field name="required_date"/>
                 <field name="requester_id"/>
@@ -166,6 +173,7 @@
                         <group>
                             <field name="name"/>
                             <field name="project_id"/>
+                            <field name="business_category_id" readonly="1"/>
                             <field name="request_date"/>
                             <field name="required_date"/>
                             <field name="source_material_plan_id"/>
@@ -226,12 +234,14 @@
             <search string="采购申请">
                 <field name="name"/>
                 <field name="project_id"/>
+                <field name="business_category_id"/>
                 <field name="requester_id"/>
                 <field name="department_id"/>
                 <filter string="草稿" name="draft" domain="[('state', '=', 'draft')]"/>
                 <filter string="待确认" name="submitted" domain="[('state', '=', 'submitted')]"/>
                 <filter string="已确认" name="approved" domain="[('state', '=', 'approved')]"/>
                 <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按业务分类" name="group_business_category" context="{'group_by': 'business_category_id'}"/>
                 <filter string="按申请人" name="group_requester" context="{'group_by': 'requester_id'}"/>
                 <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
             </search>
@@ -245,6 +255,7 @@
             <tree string="材料进场验收" default_order="acceptance_date desc">
                 <field name="name"/>
                 <field name="project_id"/>
+                <field name="business_category_id" optional="hide"/>
                 <field name="acceptance_date"/>
                 <field name="supplier_id"/>
                 <field name="purchase_request_id"/>
@@ -278,6 +289,7 @@
                         <group>
                             <field name="name"/>
                             <field name="project_id"/>
+                            <field name="business_category_id" readonly="1"/>
                             <field name="acceptance_date"/>
                             <field name="supplier_id"/>
                             <field name="purchase_request_id"/>
@@ -353,6 +365,7 @@
             <search string="材料进场验收">
                 <field name="name"/>
                 <field name="project_id"/>
+                <field name="business_category_id"/>
                 <field name="supplier_id"/>
                 <field name="purchase_request_id"/>
                 <field name="purchase_order_id"/>
@@ -364,6 +377,7 @@
                 <filter string="未通过" name="rejected" domain="[('state', '=', 'rejected')]"/>
                 <filter string="需要送检" name="sampling_required" domain="[('sampling_required', '=', True)]"/>
                 <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按业务分类" name="group_business_category" context="{'group_by': 'business_category_id'}"/>
                 <filter string="按供应商" name="group_supplier" context="{'group_by': 'supplier_id'}"/>
                 <filter string="按验收流程" name="group_acceptance_flow" context="{'group_by': 'acceptance_flow'}"/>
                 <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
@@ -378,6 +392,7 @@
             <tree string="入库单" default_order="inbound_date desc">
                 <field name="name"/>
                 <field name="project_id"/>
+                <field name="business_category_id" optional="hide"/>
                 <field name="operation_strategy"/>
                 <field name="inbound_date"/>
                 <field name="material_name_summary"/>
@@ -416,6 +431,7 @@
                         <group>
                             <field name="name"/>
                             <field name="project_id"/>
+                            <field name="business_category_id" readonly="1"/>
                             <field name="operation_strategy" readonly="1"/>
                             <field name="inbound_date"/>
                             <field name="acceptance_id"/>
@@ -482,6 +498,7 @@
             <search string="入库单">
                 <field name="name"/>
                 <field name="project_id"/>
+                <field name="business_category_id"/>
                 <field name="operation_strategy"/>
                 <field name="acceptance_id"/>
                 <field name="supplier_id"/>
@@ -492,6 +509,7 @@
                 <filter string="公司直营" name="operation_direct" domain="[('operation_strategy', '=', 'direct')]"/>
                 <filter string="联营项目" name="operation_joint" domain="[('operation_strategy', '=', 'joint')]"/>
                 <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按业务分类" name="group_business_category" context="{'group_by': 'business_category_id'}"/>
                 <filter string="按经营策略" name="group_operation_strategy" context="{'group_by': 'operation_strategy'}"/>
                 <filter string="按入库日期" name="group_inbound_date" context="{'group_by': 'inbound_date'}"/>
                 <filter string="按供应商" name="group_supplier" context="{'group_by': 'supplier_id'}"/>
@@ -509,6 +527,7 @@
                 <field name="name" string="出库单号"/>
                 <field name="outbound_type"/>
                 <field name="project_id"/>
+                <field name="business_category_id" optional="hide"/>
                 <field name="outbound_date" string="出库日期"/>
                 <field name="warehouse_id" string="出库仓库"/>
                 <field name="source_location_id" string="出库库位"/>
@@ -543,6 +562,7 @@
                             <field name="name"/>
                             <field name="outbound_type"/>
                             <field name="project_id"/>
+                            <field name="business_category_id" readonly="1"/>
                             <field name="outbound_date"/>
                             <field name="purpose"/>
                             <field name="validation_status" readonly="1" invisible="outbound_type != 'loss'"/>
@@ -608,6 +628,7 @@
                 <field name="name"/>
                 <field name="outbound_type"/>
                 <field name="project_id"/>
+                <field name="business_category_id"/>
                 <field name="receiver_id"/>
                 <field name="warehouse_id"/>
                 <filter string="草稿" name="draft" domain="[('state', '=', 'draft')]"/>
@@ -618,6 +639,7 @@
                 <filter string="调拨" name="type_transfer" domain="[('outbound_type', '=', 'transfer')]"/>
                 <filter string="损耗" name="type_loss" domain="[('outbound_type', '=', 'loss')]"/>
                 <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按业务分类" name="group_business_category" context="{'group_by': 'business_category_id'}"/>
                 <filter string="按仓库" name="group_warehouse" context="{'group_by': 'warehouse_id'}"/>
                 <filter string="按出库类型" name="group_outbound_type" context="{'group_by': 'outbound_type'}"/>
                 <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
@@ -632,6 +654,7 @@
             <tree string="询比价" default_order="rfq_date desc">
                 <field name="name"/>
                 <field name="project_id"/>
+                <field name="business_category_id" optional="hide"/>
                 <field name="rfq_date"/>
                 <field name="due_date"/>
                 <field name="purchase_request_id"/>
@@ -666,6 +689,7 @@
                         <group>
                             <field name="name"/>
                             <field name="project_id"/>
+                            <field name="business_category_id" readonly="1"/>
                             <field name="purchase_request_id"/>
                             <field name="source_material_plan_id"/>
                             <field name="rfq_date"/>
@@ -737,6 +761,7 @@
             <search string="询比价">
                 <field name="name"/>
                 <field name="project_id"/>
+                <field name="business_category_id"/>
                 <field name="purchase_request_id"/>
                 <field name="source_material_plan_id"/>
                 <field name="selected_supplier_id"/>
@@ -748,6 +773,7 @@
                 <filter string="已发起" name="submitted" domain="[('state', '=', 'submitted')]"/>
                 <filter string="已定价" name="selected" domain="[('state', '=', 'selected')]"/>
                 <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按业务分类" name="group_business_category" context="{'group_by': 'business_category_id'}"/>
                 <filter string="按供应商" name="group_supplier" context="{'group_by': 'selected_supplier_id'}"/>
                 <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
             </search>
@@ -761,6 +787,7 @@
             <tree string="材料结算" default_order="settlement_date desc">
                 <field name="name"/>
                 <field name="project_id"/>
+                <field name="business_category_id" optional="hide"/>
                 <field name="settlement_date"/>
                 <field name="supplier_id"/>
                 <field name="purchase_order_id"/>
@@ -804,6 +831,7 @@
                         <group>
                             <field name="name"/>
                             <field name="project_id"/>
+                            <field name="business_category_id" readonly="1"/>
                             <field name="supplier_id"/>
                             <field name="purchase_order_id"/>
                         </group>
@@ -871,12 +899,14 @@
             <search string="材料结算">
                 <field name="name"/>
                 <field name="project_id"/>
+                <field name="business_category_id"/>
                 <field name="supplier_id"/>
                 <field name="purchase_order_id"/>
                 <filter string="草稿" name="draft" domain="[('state', '=', 'draft')]"/>
                 <filter string="已提交" name="submitted" domain="[('state', '=', 'submitted')]"/>
                 <filter string="已确认" name="confirmed" domain="[('state', '=', 'confirmed')]"/>
                 <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按业务分类" name="group_business_category" context="{'group_by': 'business_category_id'}"/>
                 <filter string="按供应商" name="group_supplier" context="{'group_by': 'supplier_id'}"/>
                 <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
             </search>

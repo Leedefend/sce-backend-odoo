@@ -16,6 +16,13 @@ class ProjectMaterialPlan(models.Model):
 
     name = fields.Char("单号", default="新建", copy=False, readonly=True)
     project_id = fields.Many2one("project.project", string="项目", required=True, index=True)
+    business_category_id = fields.Many2one(
+        "sc.business.category",
+        string="业务分类",
+        index=True,
+        ondelete="restrict",
+        domain="[('target_model', '=', 'project.material.plan')]",
+    )
     company_id = fields.Many2one(
         "res.company",
         string="公司",
@@ -75,6 +82,34 @@ class ProjectMaterialPlan(models.Model):
             "来源通用材料计划已迁移为材料计划。",
         ),
     ]
+
+    def _resolve_business_category_id(self, vals):
+        code = self.env.context.get("default_business_category_code") or self.env.context.get(
+            "current_business_category_code"
+        ) or "material.plan"
+        category = self.env["sc.business.category"].sudo().search(
+            [("code", "=", code), ("target_model", "=", "project.material.plan")],
+            limit=1,
+        )
+        return category.id if category else False
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            vals.setdefault("business_category_id", self._resolve_business_category_id(vals))
+        return super().create(vals_list)
+
+    def init(self):
+        self.env.cr.execute(
+            """
+            UPDATE project_material_plan plan
+               SET business_category_id = category.id
+              FROM sc_business_category category
+             WHERE plan.business_category_id IS NULL
+               AND category.code = 'material.plan'
+               AND category.target_model = 'project.material.plan'
+            """
+        )
 
     @api.depends("line_ids.quantity", "line_ids.bill_qty")
     def _compute_plan_totals(self):

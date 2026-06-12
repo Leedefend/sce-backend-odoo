@@ -102,6 +102,48 @@ class ScMaterialSystemDefaultMixin(models.AbstractModel):
         return bool(triggers.get(trigger, default))
 
     @api.model
+    def _sc_material_business_category_code(self, vals=None):
+        vals = vals or {}
+        if self._name == "sc.material.outbound":
+            outbound_type = vals.get("outbound_type")
+            if not outbound_type:
+                code = self.env.context.get("default_business_category_code") or self.env.context.get(
+                    "current_business_category_code"
+                )
+                if code:
+                    return code
+                outbound_type = self.env.context.get("default_outbound_type") or "issue"
+            return {
+                "issue": "material.outbound",
+                "return": "material.return",
+                "transfer": "material.transfer",
+                "loss": "material.loss",
+            }.get(outbound_type, "material.outbound")
+        code = self.env.context.get("default_business_category_code") or self.env.context.get(
+            "current_business_category_code"
+        )
+        if code:
+            return code
+        return {
+            "sc.material.purchase.request": "material.purchase.request",
+            "sc.material.acceptance": "material.acceptance",
+            "sc.material.inbound": "material.inbound",
+            "sc.material.rfq": "material.rfq",
+            "sc.material.settlement": "material.settlement",
+        }.get(self._name)
+
+    @api.model
+    def _sc_resolve_material_business_category_id(self, vals=None):
+        code = self._sc_material_business_category_code(vals)
+        if not code:
+            return False
+        category = self.env["sc.business.category"].sudo().search(
+            [("code", "=", code), ("target_model", "=", self._name)],
+            limit=1,
+        )
+        return category.id if category else False
+
+    @api.model
     def _sc_apply_system_defaults(self, vals, default_getters):
         defaulted_fields = []
         for field_name, getter_name in default_getters.items():
@@ -275,6 +317,13 @@ class ScMaterialPurchaseRequest(models.Model):
 
     name = fields.Char(string="申请单号", required=True, default="新建", tracking=True)
     project_id = fields.Many2one("project.project", string="项目", required=True, index=True, tracking=True)
+    business_category_id = fields.Many2one(
+        "sc.business.category",
+        string="业务分类",
+        index=True,
+        ondelete="restrict",
+        domain="[('target_model', '=', 'sc.material.purchase.request')]",
+    )
     request_date = fields.Date(string="申请日期", default=fields.Date.context_today, index=True, tracking=True)
     required_date = fields.Date(string="期望到货日期", index=True)
     requester_id = fields.Many2one("res.users", string="申请人", default=lambda self: self.env.user, index=True)
@@ -320,10 +369,23 @@ class ScMaterialPurchaseRequest(models.Model):
     def create(self, vals_list):
         seq = self.env["ir.sequence"]
         for vals in vals_list:
+            vals.setdefault("business_category_id", self._sc_resolve_material_business_category_id(vals))
             self._sc_apply_system_defaults(vals, {"project_id": "_sc_default_project_id"})
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.material.purchase.request") or _("材料采购申请")
         return super().create(vals_list)
+
+    def init(self):
+        self.env.cr.execute(
+            """
+            UPDATE sc_material_purchase_request request
+               SET business_category_id = category.id
+              FROM sc_business_category category
+             WHERE request.business_category_id IS NULL
+               AND category.code = 'material.purchase.request'
+               AND category.target_model = 'sc.material.purchase.request'
+            """
+        )
 
     def action_submit(self):
         self._sc_require_material_user(_("提交采购申请"))
@@ -672,6 +734,13 @@ class ScMaterialAcceptance(models.Model):
 
     name = fields.Char(string="验收单号", required=True, default="新建", tracking=True)
     project_id = fields.Many2one("project.project", string="项目", required=True, index=True, tracking=True)
+    business_category_id = fields.Many2one(
+        "sc.business.category",
+        string="业务分类",
+        index=True,
+        ondelete="restrict",
+        domain="[('target_model', '=', 'sc.material.acceptance')]",
+    )
     acceptance_date = fields.Date(string="验收日期", default=fields.Date.context_today, index=True, tracking=True)
     supplier_id = fields.Many2one("res.partner", string="供应商", index=True)
     purchase_order_id = fields.Many2one("purchase.order", string="采购订单", index=True)
@@ -730,12 +799,25 @@ class ScMaterialAcceptance(models.Model):
     def create(self, vals_list):
         seq = self.env["ir.sequence"]
         for vals in vals_list:
+            vals.setdefault("business_category_id", self._sc_resolve_material_business_category_id(vals))
             self._apply_purchase_request_defaults(vals)
             self._apply_purchase_order_defaults(vals)
             self._sc_apply_system_defaults(vals, {"project_id": "_sc_default_project_id"})
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.material.acceptance") or _("材料进场验收")
         return super().create(vals_list)
+
+    def init(self):
+        self.env.cr.execute(
+            """
+            UPDATE sc_material_acceptance acceptance
+               SET business_category_id = category.id
+              FROM sc_business_category category
+             WHERE acceptance.business_category_id IS NULL
+               AND category.code = 'material.acceptance'
+               AND category.target_model = 'sc.material.acceptance'
+            """
+        )
 
     @api.model
     def _apply_purchase_request_defaults(self, vals):
@@ -983,6 +1065,13 @@ class ScMaterialInbound(models.Model):
 
     name = fields.Char(string="入库单号", required=True, default="新建", tracking=True)
     project_id = fields.Many2one("project.project", string="项目", required=True, index=True, tracking=True)
+    business_category_id = fields.Many2one(
+        "sc.business.category",
+        string="业务分类",
+        index=True,
+        ondelete="restrict",
+        domain="[('target_model', '=', 'sc.material.inbound')]",
+    )
     inbound_date = fields.Date(string="入库日期", default=fields.Date.context_today, index=True, tracking=True)
     acceptance_id = fields.Many2one(
         "sc.material.acceptance",
@@ -1155,6 +1244,7 @@ class ScMaterialInbound(models.Model):
     def create(self, vals_list):
         seq = self.env["ir.sequence"]
         for vals in vals_list:
+            vals.setdefault("business_category_id", self._sc_resolve_material_business_category_id(vals))
             self._sc_apply_system_defaults(
                 vals,
                 {
@@ -1168,6 +1258,18 @@ class ScMaterialInbound(models.Model):
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.material.inbound") or _("材料入库单")
         return super().create(vals_list)
+
+    def init(self):
+        self.env.cr.execute(
+            """
+            UPDATE sc_material_inbound inbound
+               SET business_category_id = category.id
+              FROM sc_business_category category
+             WHERE inbound.business_category_id IS NULL
+               AND category.code = 'material.inbound'
+               AND category.target_model = 'sc.material.inbound'
+            """
+        )
 
     @api.onchange("warehouse_id")
     def _onchange_warehouse_id(self):
@@ -1343,6 +1445,13 @@ class ScMaterialOutbound(models.Model):
     _order = "outbound_date desc, id desc"
 
     name = fields.Char(string="出库单号", required=True, default="新建", tracking=True)
+    business_category_id = fields.Many2one(
+        "sc.business.category",
+        string="业务分类",
+        index=True,
+        ondelete="restrict",
+        domain="[('target_model', '=', 'sc.material.outbound')]",
+    )
     outbound_type = fields.Selection(
         [
             ("issue", "领用出库"),
@@ -1441,6 +1550,7 @@ class ScMaterialOutbound(models.Model):
     def create(self, vals_list):
         seq = self.env["ir.sequence"]
         for vals in vals_list:
+            vals.setdefault("business_category_id", self._sc_resolve_material_business_category_id(vals))
             self._sc_apply_system_defaults(
                 vals,
                 {
@@ -1454,6 +1564,23 @@ class ScMaterialOutbound(models.Model):
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.material.outbound") or _("材料出库单")
         return super().create(vals_list)
+
+    def init(self):
+        self.env.cr.execute(
+            """
+            UPDATE sc_material_outbound outbound
+               SET business_category_id = category.id
+              FROM sc_business_category category
+             WHERE outbound.business_category_id IS NULL
+               AND category.code = CASE COALESCE(outbound.outbound_type, 'issue')
+                       WHEN 'return' THEN 'material.return'
+                       WHEN 'transfer' THEN 'material.transfer'
+                       WHEN 'loss' THEN 'material.loss'
+                       ELSE 'material.outbound'
+                   END
+               AND category.target_model = 'sc.material.outbound'
+            """
+        )
 
     def action_submit(self):
         self._sc_require_material_user(_("提交材料出库"))
@@ -1767,6 +1894,13 @@ class ScMaterialRfq(models.Model):
 
     name = fields.Char(string="询价单号", required=True, default="新建", tracking=True)
     project_id = fields.Many2one("project.project", string="项目", required=True, index=True, tracking=True)
+    business_category_id = fields.Many2one(
+        "sc.business.category",
+        string="业务分类",
+        index=True,
+        ondelete="restrict",
+        domain="[('target_model', '=', 'sc.material.rfq')]",
+    )
     purchase_request_id = fields.Many2one("sc.material.purchase.request", string="来源采购申请", index=True)
     source_material_plan_id = fields.Many2one("project.material.plan", string="来源材料计划", index=True)
     rfq_date = fields.Date(string="询价日期", default=fields.Date.context_today, index=True)
@@ -1804,10 +1938,23 @@ class ScMaterialRfq(models.Model):
     def create(self, vals_list):
         seq = self.env["ir.sequence"]
         for vals in vals_list:
+            vals.setdefault("business_category_id", self._sc_resolve_material_business_category_id(vals))
             self._sc_apply_system_defaults(vals, {"project_id": "_sc_default_project_id"})
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.material.rfq") or _("材料询比价")
         return super().create(vals_list)
+
+    def init(self):
+        self.env.cr.execute(
+            """
+            UPDATE sc_material_rfq rfq
+               SET business_category_id = category.id
+              FROM sc_business_category category
+             WHERE rfq.business_category_id IS NULL
+               AND category.code = 'material.rfq'
+               AND category.target_model = 'sc.material.rfq'
+            """
+        )
 
     @api.depends("line_ids.supplier_id")
     def _compute_supplier_ids(self):
@@ -2065,6 +2212,13 @@ class ScMaterialSettlement(models.Model):
 
     name = fields.Char(string="结算单号", required=True, default="新建", tracking=True)
     project_id = fields.Many2one("project.project", string="项目", required=True, index=True, tracking=True)
+    business_category_id = fields.Many2one(
+        "sc.business.category",
+        string="业务分类",
+        index=True,
+        ondelete="restrict",
+        domain="[('target_model', '=', 'sc.material.settlement')]",
+    )
     supplier_id = fields.Many2one("res.partner", string="供应商", required=True, index=True, tracking=True)
     purchase_order_id = fields.Many2one("purchase.order", string="采购订单", index=True)
     settlement_date = fields.Date(string="结算日期", default=fields.Date.context_today, index=True)
@@ -2150,6 +2304,7 @@ class ScMaterialSettlement(models.Model):
     def create(self, vals_list):
         seq = self.env["ir.sequence"]
         for vals in vals_list:
+            vals.setdefault("business_category_id", self._sc_resolve_material_business_category_id(vals))
             self._sc_apply_system_defaults(
                 vals,
                 {
@@ -2160,6 +2315,18 @@ class ScMaterialSettlement(models.Model):
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.material.settlement") or _("材料结算")
         return super().create(vals_list)
+
+    def init(self):
+        self.env.cr.execute(
+            """
+            UPDATE sc_material_settlement settlement
+               SET business_category_id = category.id
+              FROM sc_business_category category
+             WHERE settlement.business_category_id IS NULL
+               AND category.code = 'material.settlement'
+               AND category.target_model = 'sc.material.settlement'
+            """
+        )
 
     def action_submit(self):
         self._sc_require_material_user(_("提交材料结算"))

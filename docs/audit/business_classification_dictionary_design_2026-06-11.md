@@ -76,6 +76,7 @@
 - 材料调拨已作为“同模型分类切分 + 下游事实自动生成”样例落地：`material.transfer` 复用 `sc.material.outbound`，通过 `outbound_type` 和入口 action 保留用户认知，确认后自动生成调入侧 `sc.material.inbound`，用双向来源字段保证追溯。
 - 材料损耗已作为“分类策略 + 可选统一审批 + 下游成本门禁”样例落地：`material.loss` 复用 `sc.material.outbound`，启用审批策略后确认动作只发起审批，审批通过前不写项目成本，审批通过后才完成损耗确认和成本沉淀。
 - 材料结算分批付款、付款撤销和付款登记审批已作为分类策略样例落地：同一材料结算允许多个付款申请，剩余付款申请、累计金额占用、超付阻断、付款汇总、撤销后余额恢复和付款执行审批开关当前在模型门禁/审批策略中实现；后续应沉淀到 `material.settlement` 的付款策略或行业模板默认策略，允许客户配置是否允许分批、是否需要付款登记审批和撤销规则。
+- 材料采购库存已接入正式记录级分类锚点：`project.material.plan.business_category_id`、`sc.material.purchase.request.business_category_id`、`sc.material.acceptance.business_category_id`、`sc.material.inbound.business_category_id`、`sc.material.outbound.business_category_id`、`sc.material.rfq.business_category_id` 和 `sc.material.settlement.business_category_id` 均绑定 `sc.business.category`。入口 action 以 `business_category_id.code` 为长期分类锚点，`outbound_type` 继续保留为出库、退库、调拨、损耗的业务事实。
 - 合同与结算已作为 Phase 4 分类字典样例落地：`contract.income`、`contract.expense` 已接入 `construction.contract.business_category_id` 并通过收入/支出合同包装模型透出；`settlement.income`、`settlement.expense` 已接入 `sc.settlement.order.business_category_id`。入口 action 以 `business_category_id.code` 为分类锚点，`type`、`settlement_type` 保留为业务事实和历史兼容字段。
 - 跨域只读权限可以服务下游校验，例如财务只读材料结算用于付款金额校验；但动作权限仍必须归属原能力域，不能因为下游付款需要读取材料结算就扩大材料结算的提交、确认、生成后续付款等办理权限。
 - 收付款申请与往来款已作为资金域分类边界样例落地：`finance.payment.apply.pay`、`finance.payment.apply.receive` 已接入 `payment.request.business_category_id`，付款/收款申请按入口上下文和 `type` 自动落类；`finance.payment.execution.partner`、`finance.payment.execution.company` 已接入 `sc.payment.execution.business_category_id`，这里的“往来单位付款”是付款执行分类，不等同于内部往来款；`finance.loan.*`、`finance.repayment.*`、`finance.fund.transfer` 分类进入内部往来事实、项目资金口径和 `sc.treasury.ledger` 统一现金流台账，但不强制挂经营收付款申请或结算单，台账通过 `source_model/source_res_id` 追溯原始往来单据。
@@ -287,23 +288,34 @@ contract.expense=9294, contract.income=1810, settlement.expense=2674, settlement
 
 | 分类编码 | 当前实现方式 | 后续字典化动作 |
 | --- | --- | --- |
-| `material.plan` | `project.material.plan`，绑定“我的物资计划”新办理入口 | 配置计划明细必填、附件要求和后续采购/询价策略 |
-| `material.purchase.request` | `sc.material.purchase.request` | 配置采购申请审批、供应商和材料明细必填策略 |
-| `material.acceptance` | `sc.material.acceptance` | 配置验收动作、验收证据和入库联动策略 |
-| `material.rfq` | `sc.material.rfq` | 配置询比价供应商、报价明细和中选策略 |
-| `material.inbound` | `sc.material.inbound`，绑定新“入库办理”入口 | 配置库存位置、验收入库来源和库存汇总策略 |
-| `material.outbound` | `sc.material.outbound` | 配置领用出库、成本科目和项目成本沉淀策略 |
-| `material.return` | `sc.material.outbound`，通过 `outbound_type=return` 和“退库办理”入口切分 | 配置退库来源、供应商退货和库存扣减策略 |
-| `material.transfer` | `sc.material.outbound`，通过 `outbound_type=transfer` 和“材料调拨”入口切分；确认后自动生成 `sc.material.inbound` 调入事实 | 配置独立调拨接收确认、跨仓责任和仓间库存双边策略 |
-| `material.loss` | `sc.material.outbound`，通过 `outbound_type=loss` 和“材料损耗”入口切分；启用审批后确认前必须通过统一审批 | 配置损耗原因、审批、责任归集和项目成本沉淀策略 |
-| `material.settlement` | `sc.material.settlement` | 配置材料结算、成本台账、分批付款、付款撤销、付款登记审批、付款申请衔接和超付阻断策略 |
+| `material.plan` | `project.material.plan.business_category_id`，绑定“我的物资计划”新办理入口 | 配置计划明细必填、附件要求和后续采购/询价策略 |
+| `material.purchase.request` | `sc.material.purchase.request.business_category_id` | 配置采购申请审批、供应商和材料明细必填策略 |
+| `material.acceptance` | `sc.material.acceptance.business_category_id` | 配置验收动作、验收证据和入库联动策略 |
+| `material.rfq` | `sc.material.rfq.business_category_id` | 配置询比价供应商、报价明细和中选策略 |
+| `material.inbound` | `sc.material.inbound.business_category_id`，绑定新“入库办理”入口 | 配置库存位置、验收入库来源和库存汇总策略 |
+| `material.outbound` | `sc.material.outbound.business_category_id`，`outbound_type=issue` 作为业务事实 | 配置领用出库、成本科目和项目成本沉淀策略 |
+| `material.return` | `sc.material.outbound.business_category_id`，`outbound_type=return` 和“退库办理”入口切分 | 配置退库来源、供应商退货和库存扣减策略 |
+| `material.transfer` | `sc.material.outbound.business_category_id`，`outbound_type=transfer` 和“材料调拨”入口切分；确认后自动生成 `sc.material.inbound` 调入事实 | 配置独立调拨接收确认、跨仓责任和仓间库存双边策略 |
+| `material.loss` | `sc.material.outbound.business_category_id`，`outbound_type=loss` 和“材料损耗”入口切分；启用审批后确认前必须通过统一审批 | 配置损耗原因、审批、责任归集和项目成本沉淀策略 |
+| `material.settlement` | `sc.material.settlement.business_category_id` | 配置材料结算、成本台账、分批付款、付款撤销、付款登记审批、付款申请衔接和超付阻断策略 |
 
 边界说明：
 
 - 历史材料计划、直接验收、历史入库等用户已确认列表继续作为来源事实和追溯入口，不被新办理 action 覆盖。
 - 新材料计划办理使用 `action_project_material_plan_my`，避免把历史只读事实和当前待办计划混在同一入口。
 - 新入库办理使用 `action_sc_material_inbound_handling`，避免沿用历史“入库”来源事实 action 的 `legacy_fact_model` / `legacy_fact_type` 过滤。
-- 材料链路先以 action/context 和运行时门禁保证办理入口清晰；当前已补材料动作审计、办理证据、角色权限、下游成本/付款追溯、结算分批付款、付款撤销、付款登记审批、退库、调拨双边库存事实和损耗审批门禁，下一步继续把采购分支、退库来源、独立调拨接收、损耗责任归集等派生规则沉淀为分类策略。
+- 材料链路已从 action/context 过渡到记录级 `business_category_id` 分类锚点；当前已补材料动作审计、记录绑定审计、办理证据、角色权限、下游成本/付款追溯、结算分批付款、付款撤销、付款登记审批、退库、调拨双边库存事实和损耗审批门禁，下一步继续把采购分支、退库来源、独立调拨接收、损耗责任归集等派生规则沉淀为分类策略。
+
+本轮记录级分类锚点校验：
+
+```text
+DB_NAME=sc_demo scripts/ops/validate_material_business_categories.sh
+MATERIAL_BUSINESS_CATEGORY_ACTION_AUDIT: status=PASS, category_count=10
+
+DB_NAME=sc_demo scripts/ops/validate_material_business_category_binding.sh
+MATERIAL_BUSINESS_CATEGORY_BINDING_AUDIT: status=PASS
+material.inbound=13639, material.plan=687, material.rfq=126, material.outbound=3, mismatch=0
+```
 
 ## Acceptance Rules
 
@@ -328,6 +340,8 @@ DB_NAME=sc_demo scripts/ops/validate_invoice_tax_business_category_runtime.sh
 DB_NAME=sc_demo scripts/ops/validate_invoice_tax_handling_evidence.sh
 DB_NAME=sc_demo scripts/ops/validate_invoice_tax_role_permissions.sh
 DB_NAME=sc_demo scripts/ops/validate_invoice_tax_downstream_traceability.sh
+DB_NAME=sc_demo scripts/ops/validate_material_business_categories.sh
+DB_NAME=sc_demo scripts/ops/validate_material_business_category_binding.sh
 DB_NAME=sc_demo scripts/ops/validate_material_business_category_runtime.sh
 DB_NAME=sc_demo scripts/ops/validate_material_handling_evidence.sh
 DB_NAME=sc_demo scripts/ops/validate_material_downstream_traceability.sh
@@ -375,7 +389,7 @@ Phase 1 财务办理、Phase 2 发票税务、Phase 3 材料采购库存、Phase
 ```text
 DB_NAME=sc_demo scripts/ops/validate_business_category_dictionary.sh
 BUSINESS_CATEGORY_DICTIONARY_AUDIT: status=PASS
-category_count=48
+category_count=54
 site categories: site.construction.diary, site.quality.issue, site.quality.rectification, site.quality.recheck, site.safety.issue, site.safety.rectification, site.safety.recheck
 
 DB_NAME=sc_demo scripts/ops/validate_site_quality_safety_closure.sh
