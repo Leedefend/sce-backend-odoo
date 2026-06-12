@@ -190,8 +190,9 @@ def _assert_borrowing_done_guard(failures):
     generic = Category.search([("code", "=", "finance.loan.borrowing")], limit=1)
     contractor_project = Category.search([("code", "=", "finance.loan.contractor_project_borrow")], limit=1)
     project_company = Category.search([("code", "=", "finance.loan.project_borrow_company")], limit=1)
-    if not project or not partner or not generic or not contractor_project or not project_company:
-        failures.append("borrowing done guard probe missing project/partner/category fixture")
+    cny = env.ref("base.CNY", raise_if_not_found=False)  # noqa: F821
+    if not project or not partner or not generic or not contractor_project or not project_company or not cny:
+        failures.append("borrowing done guard probe missing project/partner/category/CNY fixture")
         return
 
     base_vals = {
@@ -201,7 +202,7 @@ def _assert_borrowing_done_guard(failures):
         "partner_id": partner.id,
         "document_date": "2026-06-12",
         "amount": 100.0,
-        "currency_id": env.company.currency_id.id,  # noqa: F821
+        "currency_id": cny.id,
     }
     generic_loan = Loan.new(dict(base_vals, business_category_id=generic.id))
     try:

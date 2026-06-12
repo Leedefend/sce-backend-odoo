@@ -82,7 +82,7 @@ class ScFinancingLoan(models.Model):
         "res.currency",
         string="币种",
         required=True,
-        default=lambda self: self.env.company.currency_id.id,
+        default=lambda self: self.env.ref("base.CNY", raise_if_not_found=False).id or self.env.company.currency_id.id,
     )
     purpose = fields.Text(string="用途说明")
     rate_label = fields.Char(string="利率/类型", index=True)

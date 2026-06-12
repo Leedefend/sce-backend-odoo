@@ -66,10 +66,16 @@ def _fund_account(project, name):
             "name": "%s %s" % (name, _token()),
             "project_id": project.id,
             "company_id": env.company.id,  # noqa: F821
-            "currency_id": env.company.currency_id.id,  # noqa: F821
+            "currency_id": _cny().id,
             "state": "active",
         }
     )
+
+
+def _cny():
+    currency = env.ref("base.CNY", raise_if_not_found=False)  # noqa: F821
+    _assert(errors, "missing_base_cny", bool(currency))
+    return currency or env.company.currency_id  # noqa: F821
 
 
 def _action(action_xmlid):
@@ -165,6 +171,7 @@ errors = []
 evidence = {}
 
 _ensure_groups()
+cny = _cny()
 
 source_project = _project("Interfund Source Project")
 target_project = _project("Interfund Target Project")
@@ -185,7 +192,7 @@ transfer = env["sc.fund.account.operation"].sudo().create(  # noqa: F821
         "target_account_id": target_account.id,
         "project_id": source_project.id,
         "company_id": env.company.id,  # noqa: F821
-        "currency_id": env.company.currency_id.id,  # noqa: F821
+        "currency_id": cny.id,
         "amount": transfer_amount,
         "operation_reason": "账户间资金往来闭环审计",
     }
@@ -197,6 +204,7 @@ transfer.action_done()
 _assert(errors, "transfer_done_state", transfer.state == "done", {"state": transfer.state})
 _assert(errors, "transfer_confirm_audit", _audit_count(transfer._name, transfer.id, "fund_account_operation_confirmed") == 1)
 _assert(errors, "transfer_done_audit", _audit_count(transfer._name, transfer.id, "fund_account_operation_done") == 1)
+_assert(errors, "transfer_currency_cny", transfer.currency_id == cny, {"currency": transfer.currency_id.name})
 
 borrow_amount = 800.0
 loan = env["sc.financing.loan"].sudo().create(  # noqa: F821
@@ -206,7 +214,7 @@ loan = env["sc.financing.loan"].sudo().create(  # noqa: F821
         "project_id": target_project.id,
         "partner_id": partner.id,
         "document_date": fields.Date.context_today(env["sc.financing.loan"]),  # noqa: F821
-        "currency_id": env.company.currency_id.id,  # noqa: F821
+        "currency_id": cny.id,
         "amount": borrow_amount,
         "purpose": "项目借公司款登记",
     }
@@ -219,6 +227,7 @@ loan.action_done()
 _assert(errors, "loan_done_state", loan.state == "done", {"state": loan.state})
 _assert(errors, "loan_confirm_audit", _audit_count(loan._name, loan.id, "financing_loan_confirmed") == 1)
 _assert(errors, "loan_done_audit", _audit_count(loan._name, loan.id, "financing_loan_done") == 1)
+_assert(errors, "loan_currency_cny", loan.currency_id == cny, {"currency": loan.currency_id.name})
 
 contractor_borrow_amount = 300.0
 contractor_loan = env["sc.financing.loan"].sudo().create(  # noqa: F821
@@ -228,7 +237,7 @@ contractor_loan = env["sc.financing.loan"].sudo().create(  # noqa: F821
         "project_id": source_project.id,
         "partner_id": partner.id,
         "document_date": fields.Date.context_today(env["sc.financing.loan"]),  # noqa: F821
-        "currency_id": env.company.currency_id.id,  # noqa: F821
+        "currency_id": cny.id,
         "amount": contractor_borrow_amount,
         "purpose": "承包人借项目款",
     }
@@ -241,6 +250,7 @@ contractor_loan.action_done()
 _assert(errors, "contractor_loan_done_state", contractor_loan.state == "done", {"state": contractor_loan.state})
 _assert(errors, "contractor_loan_confirm_audit", _audit_count(contractor_loan._name, contractor_loan.id, "financing_loan_confirmed") == 1)
 _assert(errors, "contractor_loan_done_audit", _audit_count(contractor_loan._name, contractor_loan.id, "financing_loan_done") == 1)
+_assert(errors, "contractor_loan_currency_cny", contractor_loan.currency_id == cny, {"currency": contractor_loan.currency_id.name})
 
 project_repay_company_action = _action("smart_construction_core.action_sc_expense_claim_project_repay_company")
 contractor_repay_action = _action("smart_construction_core.action_sc_expense_claim_contractor_project_repay")
@@ -254,7 +264,7 @@ project_repay = env["sc.expense.claim"].sudo().create(  # noqa: F821
         "project_id": target_project.id,
         "partner_id": partner.id,
         "date_claim": fields.Date.context_today(env["sc.expense.claim"]),  # noqa: F821
-        "currency_id": env.company.currency_id.id,  # noqa: F821
+        "currency_id": cny.id,
         "amount": project_repay_amount,
         "approved_amount": project_repay_amount,
         "payee": "Interfund Company",
@@ -276,6 +286,7 @@ _assert(errors, "project_repay_done_state", project_repay.state == "done", {"sta
 _assert(errors, "project_repay_approved_audit", _audit_count(project_repay._name, project_repay.id, "expense_claim_approved") >= 1)
 _assert(errors, "project_repay_done_audit", _audit_count(project_repay._name, project_repay.id, "expense_claim_done") == 1)
 _assert(errors, "project_repay_without_payment_request", not project_repay.payment_request_id)
+_assert(errors, "project_repay_currency_cny", project_repay.currency_id == cny, {"currency": project_repay.currency_id.name})
 
 contractor_repay_amount = 120.0
 contractor_repay = env["sc.expense.claim"].sudo().create(  # noqa: F821
@@ -286,7 +297,7 @@ contractor_repay = env["sc.expense.claim"].sudo().create(  # noqa: F821
         "project_id": source_project.id,
         "partner_id": partner.id,
         "date_claim": fields.Date.context_today(env["sc.expense.claim"]),  # noqa: F821
-        "currency_id": env.company.currency_id.id,  # noqa: F821
+        "currency_id": cny.id,
         "amount": contractor_repay_amount,
         "approved_amount": contractor_repay_amount,
         "payment_account_name": "Interfund Project Receipt Account",
@@ -305,6 +316,7 @@ _assert(errors, "contractor_repay_done_state", contractor_repay.state == "done",
 _assert(errors, "contractor_repay_approved_audit", _audit_count(contractor_repay._name, contractor_repay.id, "expense_claim_approved") >= 1)
 _assert(errors, "contractor_repay_done_audit", _audit_count(contractor_repay._name, contractor_repay.id, "expense_claim_done") == 1)
 _assert(errors, "contractor_repay_without_payment_request", not contractor_repay.payment_request_id)
+_assert(errors, "contractor_repay_currency_cny", contractor_repay.currency_id == cny, {"currency": contractor_repay.currency_id.name})
 
 env.invalidate_all()  # noqa: F821
 
@@ -429,6 +441,8 @@ if target_capital:
 
 evidence.update(
     {
+        "currency_id": cny.id,
+        "currency_name": cny.name,
         "source_project_id": source_project.id,
         "target_project_id": target_project.id,
         "source_account_id": source_account.id,
