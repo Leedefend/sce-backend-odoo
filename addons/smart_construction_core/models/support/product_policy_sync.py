@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
+import importlib.util
 from pathlib import Path
 
 from odoo import api, models
@@ -54,6 +55,10 @@ USER_CONFIRMED_POLICY_LOCK_NOTE = "user_confirmed_formal_menu_policy_62_locked"
 USER_CONFIRMED_POLICY_BASELINE_PATHS = (
     "/mnt/scripts/verify/baselines/user_confirmed_formal_menu_policy_62.json",
     "scripts/verify/baselines/user_confirmed_formal_menu_policy_62.json",
+)
+USER_CONFIRMED_ENTRY_MATRIX_SCRIPT_PATHS = (
+    "/mnt/scripts/verify/user_confirmed_62_business_entry_integration_matrix.py",
+    "scripts/verify/user_confirmed_62_business_entry_integration_matrix.py",
 )
 USER_CONFIRMED_FORMAL_HIDDEN_GROUP_LABELS = {"用户核对菜单", "用户验收", "用户数据验收"}
 USER_CONFIRMED_FORMAL_VISIBLE_PARENT_XMLIDS = {
@@ -133,6 +138,78 @@ class ScProductPolicy(models.Model):
         return {}
 
     @api.model
+    def _load_user_confirmed_entry_matrix_index(self):
+        candidates = []
+        for raw_path in USER_CONFIRMED_ENTRY_MATRIX_SCRIPT_PATHS:
+            path = Path(raw_path)
+            if not path.is_absolute():
+                path = Path(__file__).resolve().parents[4] / path
+            candidates.append(path)
+        for path in candidates:
+            if not path.is_file():
+                continue
+            try:
+                spec = importlib.util.spec_from_file_location("user_confirmed_business_entry_matrix_runtime", path)
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+                payload = module._build_matrix()
+            except Exception:
+                continue
+            rows = payload.get("rows") if isinstance(payload, dict) else []
+            index = {}
+            for row in rows:
+                if not isinstance(row, dict):
+                    continue
+                menu_xmlid = _text(row.get("menu_xmlid"))
+                if menu_xmlid:
+                    index[menu_xmlid] = row
+            if index:
+                return index
+        return {}
+
+    @api.model
+    def _annotate_user_confirmed_business_entry(self, row, matrix_index):
+        if not isinstance(row, dict):
+            return row
+        menu_xmlid = _text(row.get("menu_xmlid") or row.get("page_key") or row.get("menu_key"))
+        matrix = matrix_index.get(menu_xmlid) if isinstance(matrix_index, dict) else None
+        if not isinstance(matrix, dict):
+            return row
+        next_row = dict(row)
+        category_code = _text(matrix.get("default_business_category_code"))
+        product_domain = _text(matrix.get("product_domain"))
+        entry_intent = _text(matrix.get("entry_intent"))
+        disposition_policy = _text(matrix.get("disposition_policy"))
+        integration_target = _text(matrix.get("integration_target"))
+        next_row.update(
+            {
+                "product_domain": product_domain,
+                "product_domain_label": _text(matrix.get("product_domain_label")),
+                "entry_intent": entry_intent,
+                "entry_intent_label": _text(matrix.get("entry_intent_label")),
+                "fact_model": _text(matrix.get("fact_model") or matrix.get("model")),
+                "disposition_policy": disposition_policy,
+                "integration_target": integration_target,
+                "default_business_category_code": category_code,
+                "required_relationships": matrix.get("required_relationships") if isinstance(matrix.get("required_relationships"), list) else [],
+                "locked_data_policy": _text(matrix.get("locked_data_policy")) or "read_only_source_facts_no_rewrite",
+                "productization_source": "user_confirmed_62_business_entry_integration_matrix",
+                "business_entry_contract_version": "business_entry_disposition.v1",
+            }
+        )
+        if category_code:
+            next_row.setdefault("context_defaults", {})
+            if isinstance(next_row["context_defaults"], dict):
+                next_row["context_defaults"].setdefault("default_business_category_code", category_code)
+        if disposition_policy == "merge_by_category":
+            next_row["entry_target_policy"] = "merge_to_list_form_by_business_category"
+        elif entry_intent in {"query", "analysis", "config", "master_data", "source_fact"}:
+            next_row["entry_target_policy"] = "keep_separate_%s" % entry_intent
+        else:
+            next_row["entry_target_policy"] = "keep_list_form"
+        return next_row
+
+    @api.model
     def _capabilities_from_user_confirmed_menu_groups(self, menu_groups):
         capabilities = []
         seen = set()
@@ -168,6 +245,12 @@ class ScProductPolicy(models.Model):
                         "menu_xmlid": _text(menu.get("menu_xmlid") or page_key),
                         "action_id": int(menu.get("action_id") or 0),
                         "res_model": _text(menu.get("res_model")),
+                        "product_domain": _text(menu.get("product_domain")),
+                        "entry_intent": _text(menu.get("entry_intent")),
+                        "disposition_policy": _text(menu.get("disposition_policy")),
+                        "integration_target": _text(menu.get("integration_target")),
+                        "default_business_category_code": _text(menu.get("default_business_category_code")),
+                        "entry_target_policy": _text(menu.get("entry_target_policy")),
                     }
                 )
         return capabilities
@@ -213,14 +296,17 @@ class ScProductPolicy(models.Model):
         return row
 
     @api.model
-    def _formal_user_confirmed_menu_groups(self, menu_groups):
+    def _formal_user_confirmed_menu_groups(self, menu_groups, matrix_index=None):
         out = []
         for group in menu_groups or []:
             if not self._is_user_confirmed_formal_group(group):
                 continue
             next_group = dict(group)
             next_group["menus"] = [
-                self._hydrate_user_confirmed_formal_menu(menu)
+                self._annotate_user_confirmed_business_entry(
+                    self._hydrate_user_confirmed_formal_menu(menu),
+                    matrix_index or {},
+                )
                 for menu in (group.get("menus") or [])
                 if isinstance(menu, dict)
             ]
@@ -263,6 +349,19 @@ class ScProductPolicy(models.Model):
             "view_modes": view_modes,
             "release_domain": "finance_interfund_analysis",
             "policy_note": "released_as_finance_interfund_analysis_product_menu",
+            "product_domain": "finance",
+            "product_domain_label": "资金财务域",
+            "entry_intent": "analysis",
+            "entry_intent_label": "分析",
+            "fact_model": res_model,
+            "disposition_policy": "keep_analysis",
+            "integration_target": "资金往来分析",
+            "default_business_category_code": "",
+            "required_relationships": ["project_id", "partner_id", "fund_account_id"],
+            "locked_data_policy": "read_only_source_facts_no_rewrite",
+            "productization_source": "finance_interfund_analysis_product_overlay",
+            "business_entry_contract_version": "business_entry_disposition.v1",
+            "entry_target_policy": "keep_separate_analysis",
         }
 
     @api.model
@@ -331,11 +430,12 @@ class ScProductPolicy(models.Model):
         baseline = self._load_user_confirmed_policy_baseline()
         if not baseline:
             return False
+        matrix_index = self._load_user_confirmed_entry_matrix_index()
         model = self.sudo()
         for product_key in ("construction.standard", "construction.preview"):
             item = baseline.get(product_key) or {}
             baseline_menu_groups = item.get("menu_groups") if isinstance(item.get("menu_groups"), list) else []
-            menu_groups = self._formal_user_confirmed_menu_groups(baseline_menu_groups)
+            menu_groups = self._formal_user_confirmed_menu_groups(baseline_menu_groups, matrix_index=matrix_index)
             menu_groups = self._append_finance_interfund_analysis_product_menus(menu_groups)
             capabilities = self._capabilities_from_user_confirmed_menu_groups(menu_groups)
             values = {

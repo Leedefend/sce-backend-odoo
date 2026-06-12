@@ -14,9 +14,10 @@ from pathlib import Path
 
 PRODUCT_KEY = "construction.standard"
 EXPECTED_MENU_COUNT = 62
-BASELINE = Path("scripts/verify/baselines/user_confirmed_formal_menu_policy_62.json")
-OUTPUT_JSON = Path("artifacts/user_confirmed_62_business_entry_integration_matrix.json")
-OUTPUT_MD = Path("artifacts/user_confirmed_62_business_entry_integration_matrix.md")
+ROOT = Path(__file__).resolve().parents[2]
+BASELINE = ROOT / "scripts/verify/baselines/user_confirmed_formal_menu_policy_62.json"
+OUTPUT_JSON = ROOT / "artifacts/user_confirmed_62_business_entry_integration_matrix.json"
+OUTPUT_MD = ROOT / "artifacts/user_confirmed_62_business_entry_integration_matrix.md"
 
 
 PRODUCT_DOMAIN_BY_MODEL = {
@@ -143,8 +144,8 @@ DISPOSITION_BY_LABEL = {
     "租入": ("source_fact", "设备/租赁来源事实明细", "source_readonly", ""),
     "还租": ("source_fact", "设备/租赁来源事实明细", "source_readonly", ""),
     "分包方单": ("handling", "sc.subcontract.request 分包办理", "keep_list_form", ""),
-    "方单": ("handling", "sc.labor.usage 劳务办理", "merge_by_category", ""),
-    "零星用工": ("handling", "sc.labor.usage 劳务办理", "merge_by_category", ""),
+    "方单": ("handling", "sc.labor.usage 劳务办理", "merge_by_category", "labor.usage.ticket"),
+    "零星用工": ("handling", "sc.labor.usage 劳务办理", "merge_by_category", "labor.usage.casual"),
     "机械台班记录": ("handling", "sc.equipment.usage 设备台班办理", "keep_list_form", ""),
     "报价单": ("handling", "sc.material.rfq 询比价/报价办理", "keep_list_form", "material.rfq"),
     "入库单": ("handling", "sc.material.inbound 入库办理", "keep_list_form", "material.inbound"),
@@ -182,10 +183,10 @@ DISPOSITION_BY_LABEL = {
     "外经证登记": ("handling", "外经证登记", "keep_list_form", "tax.certificate.registration"),
     "请假/休假审批单": ("handling", "sc.office.admin.document 请假审批", "keep_list_form", ""),
     "公司人员名册": ("query", "人员名册查询", "keep_query", ""),
-    "项目管理人员工资登记": ("handling", "sc.hr.payroll.document 薪资办理", "merge_by_category", ""),
-    "社保人员登记": ("handling", "sc.hr.payroll.document 社保办理", "merge_by_category", ""),
-    "社保登记": ("handling", "sc.hr.payroll.document 社保办理", "merge_by_category", ""),
-    "补助": ("handling", "sc.hr.payroll.document 补助办理", "merge_by_category", ""),
+    "项目管理人员工资登记": ("handling", "sc.hr.payroll.document 薪资办理", "merge_by_category", "hr.payroll.salary"),
+    "社保人员登记": ("handling", "sc.hr.payroll.document 社保办理", "merge_by_category", "hr.payroll.social.person"),
+    "社保登记": ("handling", "sc.hr.payroll.document 社保办理", "merge_by_category", "hr.payroll.social.registration"),
+    "补助": ("handling", "sc.hr.payroll.document 补助办理", "merge_by_category", "hr.payroll.subsidy"),
     "公司资料存档": ("handling", "sc.document.admin.document 资料证照归档", "keep_list_form", ""),
     "菜单配置": ("config", "ui.menu.config.policy 菜单配置", "config_only", ""),
 }

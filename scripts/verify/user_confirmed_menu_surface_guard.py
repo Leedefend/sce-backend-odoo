@@ -47,6 +47,14 @@ FINANCE_INTERFUND_ANALYSIS_PRODUCT_MENU_XMLIDS = {
     "smart_construction_core.menu_sc_company_contractor_responsibility_summary",
     "smart_construction_core.menu_sc_company_contractor_responsibility_fact",
 }
+REQUIRED_PRODUCTIZATION_META_KEYS = {
+    "product_domain",
+    "entry_intent",
+    "disposition_policy",
+    "integration_target",
+    "business_entry_contract_version",
+    "entry_target_policy",
+}
 
 
 def artifact_root() -> Path:
@@ -160,6 +168,45 @@ def _effective_policy_rows(product_key: str) -> list[tuple[str, str, str, int, s
     return rows
 
 
+def _effective_policy_payload(product_key: str) -> dict:
+    return ProductPolicyService(env).get_policy(  # noqa: F821
+        product_key=product_key,
+        enforce_release=True,
+        enforce_access=False,
+    )
+
+
+def _assert_policy_productization_metadata(product_key: str) -> dict[str, int]:
+    policy = _effective_policy_payload(product_key)
+    groups = policy.get("menu_groups") if isinstance(policy.get("menu_groups"), list) else []
+    checked = 0
+    missing = []
+    merge_by_category = 0
+    for group in groups:
+        if not isinstance(group, dict):
+            continue
+        for menu in group.get("menus") or []:
+            if not isinstance(menu, dict):
+                continue
+            menu_xmlid = _text(menu.get("menu_xmlid") or menu.get("page_key") or menu.get("menu_key"))
+            if not menu_xmlid:
+                continue
+            checked += 1
+            missing_keys = sorted(key for key in REQUIRED_PRODUCTIZATION_META_KEYS if not _text(menu.get(key)))
+            if missing_keys:
+                missing.append({"menu_xmlid": menu_xmlid, "label": _text(menu.get("label")), "missing": missing_keys})
+            if _text(menu.get("disposition_policy")) == "merge_by_category":
+                merge_by_category += 1
+                if not _text(menu.get("default_business_category_code")):
+                    missing.append({"menu_xmlid": menu_xmlid, "label": _text(menu.get("label")), "missing": ["default_business_category_code"]})
+    if missing:
+        raise AssertionError("%s productization metadata missing: %s" % (product_key, missing[:20]))
+    return {
+        "policy_productized_menu_count": checked,
+        "policy_merge_by_category_count": merge_by_category,
+    }
+
+
 def _assert_policy_matches_baseline() -> dict[str, int]:
     baseline = _load_baseline()
     counts = {}
@@ -184,6 +231,7 @@ def _assert_policy_matches_baseline() -> dict[str, int]:
         )
         if missing_finance_interfund:
             raise AssertionError("%s missing finance interfund product menus: %s" % (product_key, missing_finance_interfund))
+        _assert_policy_productization_metadata(product_key)
         counts[product_key] = len(actual)
     return counts
 
@@ -273,9 +321,30 @@ def _assert_runtime_nav_locked() -> dict[str, int]:
     forbidden = sorted(label for label in labels if label in FORBIDDEN_USER_VISIBLE_GROUPS)
     if forbidden:
         raise AssertionError("forbidden user-visible groups leaked: %s" % forbidden)
+    productized_nodes = 0
+    merge_by_category_nodes = 0
+    missing_runtime_meta = []
+    for path, node in _walk(nav):
+        meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+        menu_xmlid = _text(meta.get("menu_xmlid") or node.get("menu_xmlid"))
+        if not menu_xmlid or not menu_xmlid.startswith("smart_construction_core."):
+            continue
+        if menu_xmlid in FINANCE_INTERFUND_ANALYSIS_PRODUCT_MENU_XMLIDS or _text(meta.get("business_entry_contract_version")):
+            productized_nodes += 1
+            missing_keys = sorted(key for key in REQUIRED_PRODUCTIZATION_META_KEYS if not _text(meta.get(key)))
+            if missing_keys:
+                missing_runtime_meta.append({"path": " / ".join(path), "menu_xmlid": menu_xmlid, "missing": missing_keys})
+            if _text(meta.get("disposition_policy")) == "merge_by_category":
+                merge_by_category_nodes += 1
+                if not _text(meta.get("default_business_category_code")):
+                    missing_runtime_meta.append({"path": " / ".join(path), "menu_xmlid": menu_xmlid, "missing": ["default_business_category_code"]})
+    if missing_runtime_meta:
+        raise AssertionError("runtime productization metadata missing: %s" % missing_runtime_meta[:20])
     return {
         "runtime_node_count": sum(1 for _path, _node in _walk(nav)),
         "runtime_root_count": len(nav),
+        "runtime_productized_node_count": productized_nodes,
+        "runtime_merge_by_category_node_count": merge_by_category_nodes,
     }
 
 

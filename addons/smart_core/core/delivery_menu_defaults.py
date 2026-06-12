@@ -74,6 +74,24 @@ def build_delivery_menu_child(menu: Dict[str, Any]) -> Dict[str, Any] | None:
     delivery_bucket = str(menu.get("delivery_bucket") or "").strip()
     if delivery_bucket:
         meta["delivery_bucket"] = delivery_bucket
+    for key in (
+        "product_domain",
+        "product_domain_label",
+        "entry_intent",
+        "entry_intent_label",
+        "fact_model",
+        "disposition_policy",
+        "integration_target",
+        "default_business_category_code",
+        "required_relationships",
+        "locked_data_policy",
+        "productization_source",
+        "business_entry_contract_version",
+        "entry_target_policy",
+    ):
+        value = menu.get(key)
+        if value not in (None, "", []):
+            meta[key] = value
     entry_target = normalize_entry_target(
         entry_target=menu.get("entry_target"),
         scene_key=scene_key,

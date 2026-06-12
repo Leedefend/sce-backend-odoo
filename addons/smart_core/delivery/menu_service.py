@@ -235,6 +235,21 @@ class MenuService:
     def _flatten_policy_menus(self, policy: dict) -> list[dict]:
         out = []
         index = 0
+        productization_keys = (
+            "product_domain",
+            "product_domain_label",
+            "entry_intent",
+            "entry_intent_label",
+            "fact_model",
+            "disposition_policy",
+            "integration_target",
+            "default_business_category_code",
+            "required_relationships",
+            "locked_data_policy",
+            "productization_source",
+            "business_entry_contract_version",
+            "entry_target_policy",
+        )
         for group in policy.get("menu_groups") or []:
             if not isinstance(group, dict):
                 continue
@@ -256,27 +271,30 @@ class MenuService:
                 model = str(menu.get("model") or menu.get("res_model") or "").strip()
                 if not action_id and not model and not scene_key and not route:
                     continue
-                out.append(
-                    {
-                        "menu_key": f"system.policy.{sanitized_anchor}",
-                        "label": str(menu.get("label") or "").strip(),
-                        "menu_id": menu_id,
-                        "route": route,
-                        "scene_key": scene_key,
-                        "product_key": str(menu.get("product_key") or "").strip(),
-                        "capability_key": str(menu.get("capability_key") or "").strip(),
-                        "menu_xmlid": menu_xmlid,
-                        "action_id": action_id,
-                        "action_xmlid": str(menu.get("action_xmlid") or "").strip(),
-                        "model": model,
-                        "view_modes": menu.get("view_modes") if isinstance(menu.get("view_modes"), list) else [],
-                        "scene_source": "delivery_policy",
-                        "policy_group_key": str(group.get("group_key") or "").strip(),
-                        "policy_group_label": str(group.get("group_label") or "").strip(),
-                        "visible_menu_path": str(menu.get("visible_menu_path") or "").strip(),
-                        "entry_target": menu.get("entry_target") if isinstance(menu.get("entry_target"), dict) else {},
-                    }
-                )
+                row = {
+                    "menu_key": f"system.policy.{sanitized_anchor}",
+                    "label": str(menu.get("label") or "").strip(),
+                    "menu_id": menu_id,
+                    "route": route,
+                    "scene_key": scene_key,
+                    "product_key": str(menu.get("product_key") or "").strip(),
+                    "capability_key": str(menu.get("capability_key") or "").strip(),
+                    "menu_xmlid": menu_xmlid,
+                    "action_id": action_id,
+                    "action_xmlid": str(menu.get("action_xmlid") or "").strip(),
+                    "model": model,
+                    "view_modes": menu.get("view_modes") if isinstance(menu.get("view_modes"), list) else [],
+                    "scene_source": "delivery_policy",
+                    "policy_group_key": str(group.get("group_key") or "").strip(),
+                    "policy_group_label": str(group.get("group_label") or "").strip(),
+                    "visible_menu_path": str(menu.get("visible_menu_path") or "").strip(),
+                    "entry_target": menu.get("entry_target") if isinstance(menu.get("entry_target"), dict) else {},
+                }
+                for key in productization_keys:
+                    value = menu.get(key)
+                    if value not in (None, "", []):
+                        row[key] = value
+                out.append(row)
         return [row for row in out if row.get("menu_key") and row.get("label")]
 
     def _policy_menu_path_parts(self, menu: dict) -> list[str]:
