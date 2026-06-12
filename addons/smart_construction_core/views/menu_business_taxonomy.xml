@@ -640,7 +640,7 @@
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="smart_construction_core.view_payment_request_search"/>
         <field name="domain">[('type', '=', 'pay')]</field>
-        <field name="context">{'default_type': 'pay', 'search_default_type_pay': 1, 'search_default_group_by_project_id': 1}</field>
+        <field name="context">{'default_type': 'pay', 'default_business_category_code': 'finance.payment.apply.pay', 'search_default_type_pay': 1, 'search_default_group_by_project_id': 1}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
             ref('smart_construction_core.group_sc_cap_finance_read'),
@@ -654,7 +654,7 @@
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="smart_construction_core.view_payment_request_search"/>
         <field name="domain">[('type', '=', 'pay')]</field>
-        <field name="context">{'default_type': 'pay', 'search_default_type_pay': 1, 'search_default_group_by_project_id': 1}</field>
+        <field name="context">{'default_type': 'pay', 'default_business_category_code': 'finance.payment.apply.pay', 'search_default_type_pay': 1, 'search_default_group_by_project_id': 1}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
             ref('smart_construction_core.group_sc_cap_finance_read'),

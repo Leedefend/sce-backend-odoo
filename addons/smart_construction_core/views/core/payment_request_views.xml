@@ -9,6 +9,7 @@
                 <tree string="付款与收款申请办理" decoration-danger="is_overpay_risk">
                     <field name="name"/>
                     <field name="payment_flow_label"/>
+                    <field name="business_category_id" optional="show"/>
                     <field name="type" optional="hide"/>
                     <field name="receipt_type" optional="show"/>
                     <field name="project_id"/>
@@ -68,6 +69,7 @@
                             <group string="业务方向">
                                 <field name="name" readonly="1"/>
                                 <field name="payment_flow_label" readonly="1"/>
+                                <field name="business_category_id" options="{'no_create': True}"/>
                                 <field name="type"/>
                                 <field name="receipt_type" invisible="type != 'receive'"/>
                                 <field name="date_request" required="1"/>
@@ -272,7 +274,7 @@
             <field name="view_mode">tree,form</field>
             <field name="search_view_id" ref="view_payment_request_search"/>
             <field name="domain">['&amp;', ('type', '=', 'pay'), '|', ('legacy_source_table', '=', False), ('legacy_source_table', '!=', 'T_FK_Supplier')]</field>
-            <field name="context">{'default_type': 'pay', 'search_default_type_pay': 1, 'search_default_group_by_project_id': 1}</field>
+            <field name="context">{'default_type': 'pay', 'default_business_category_code': 'finance.payment.apply.pay', 'search_default_type_pay': 1, 'search_default_group_by_project_id': 1}</field>
             <field name="groups_id" eval="[(6, 0, [
                 ref('smart_construction_core.group_sc_cap_finance_read'),
                 ref('smart_construction_core.group_sc_cap_finance_user'),
@@ -287,7 +289,7 @@
             <field name="view_mode">tree,form</field>
             <field name="search_view_id" ref="view_payment_request_search"/>
             <field name="domain">[('type', '=', 'receive'), ('legacy_source_table', 'not in', ['C_JFHKLR_DELETED', 'C_JFHKLR_ROUTED_OUT'])]</field>
-            <field name="context">{'default_type': 'receive', 'search_default_type_receive': 1, 'search_default_group_by_receipt_type': 1, 'search_default_group_by_project_id': 1}</field>
+            <field name="context">{'default_type': 'receive', 'default_business_category_code': 'finance.payment.apply.receive', 'search_default_type_receive': 1, 'search_default_group_by_receipt_type': 1, 'search_default_group_by_project_id': 1}</field>
             <field name="groups_id" eval="[(6, 0, [
                 ref('smart_construction_core.group_sc_cap_finance_read'),
                 ref('smart_construction_core.group_sc_cap_finance_user'),

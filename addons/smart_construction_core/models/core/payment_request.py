@@ -91,6 +91,13 @@ class PaymentRequest(models.Model):
         tracking=True,
     )
     payment_flow_label = fields.Char(string="办理事项", compute="_compute_payment_flow_label")
+    business_category_id = fields.Many2one(
+        "sc.business.category",
+        string="业务分类",
+        index=True,
+        ondelete="restrict",
+        domain="[('target_model', '=', 'payment.request')]",
+    )
     receipt_type = fields.Char(
         string="登记类型",
         index=True,
@@ -658,6 +665,7 @@ class PaymentRequest(models.Model):
             project_id = self._context_project_id()
             if project_id:
                 vals.setdefault("project_id", project_id)
+            vals.setdefault("business_category_id", self._resolve_business_category_id(vals))
             if not vals.get("name") or vals.get("name") == "New":
                 vals["name"] = seq.next_by_code("payment.request") or _("Payment Request")
         records = super().create(vals_list)
@@ -665,6 +673,27 @@ class PaymentRequest(models.Model):
             lambda r: r.type == "pay" and r.state in ("submit", "approve", "approved")
         )._enforce_funding_gate()
         return records
+
+    @api.model
+    def _resolve_business_category_code(self, vals):
+        code = self.env.context.get("default_business_category_code") or self.env.context.get(
+            "current_business_category_code"
+        )
+        if code:
+            return code
+        request_type = vals.get("type") or self.env.context.get("default_type") or "pay"
+        if request_type == "receive":
+            return "finance.payment.apply.receive"
+        return "finance.payment.apply.pay"
+
+    @api.model
+    def _resolve_business_category_id(self, vals):
+        code = self._resolve_business_category_code(vals)
+        category = self.env["sc.business.category"].sudo().search(
+            [("code", "=", code), ("target_model", "=", self._name)],
+            limit=1,
+        )
+        return category.id if category else False
 
     def write(self, vals):
         if "state" in vals and not self.env.context.get("allow_transition"):
@@ -709,6 +738,8 @@ class PaymentRequest(models.Model):
             "state": self.state,
             "amount": self.amount,
             "partner_id": self.partner_id.id if self.partner_id else False,
+            "business_category_id": self.business_category_id.id if self.business_category_id else False,
+            "business_category_code": self.business_category_id.code if self.business_category_id else False,
             "attachment_count": self._get_attachment_count(),
             "validation_status": self.validation_status,
         }
@@ -726,6 +757,22 @@ class PaymentRequest(models.Model):
             require_reason=require_reason,
             company_id=self.company_id,
             project_id=self.project_id,
+        )
+
+    def init(self):
+        self.env.cr.execute(
+            """
+            UPDATE payment_request request
+               SET business_category_id = category.id
+              FROM sc_business_category category
+             WHERE request.business_category_id IS NULL
+               AND category.target_model = 'payment.request'
+               AND category.code = CASE
+                   WHEN request.type = 'receive'
+                       THEN 'finance.payment.apply.receive'
+                   ELSE 'finance.payment.apply.pay'
+               END
+            """
         )
 
     def _has_submit_access(self):

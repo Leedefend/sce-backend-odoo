@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[2]
 TARGETS = [
     ROOT / "addons" / "smart_construction_core" / "views" / "menu_business_taxonomy.xml",
     ROOT / "addons" / "smart_construction_core" / "views" / "core" / "expense_business_fact_taxonomy_views.xml",
+    ROOT / "addons" / "smart_construction_core" / "views" / "core" / "payment_request_views.xml",
 ]
 
 
@@ -25,9 +26,24 @@ CATEGORY_ACTIONS = {
             "menu_sc_user_payment_apply",
             "menu_sc_user_payment_apply_acceptance",
         ],
-        "context": {"default_type": "pay"},
+        "context": {
+            "default_type": "pay",
+            "default_business_category_code": "finance.payment.apply.pay",
+        },
         "domain_tokens": ["type", "pay"],
         "new_record_tokens": ["type", "pay"],
+    },
+    "finance.payment.apply.receive": {
+        "label": "收款申请",
+        "model": "payment.request",
+        "action": "action_payment_request_receive",
+        "menus": ["menu_payment_request_receive"],
+        "context": {
+            "default_type": "receive",
+            "default_business_category_code": "finance.payment.apply.receive",
+        },
+        "domain_tokens": ["type", "receive"],
+        "new_record_tokens": ["type", "receive"],
     },
     "finance.payment.execution.partner": {
         "label": "往来单位付款",
@@ -377,8 +393,11 @@ def main() -> int:
                 continue
             menu_action = menu.get("action")
             expected_action_ref = f"smart_construction_core.{action_id}"
-            if menu_action != expected_action_ref:
-                failures.append(f"{code}: menu {menu_id} expected action {expected_action_ref!r}, got {menu_action!r}")
+            if menu_action not in {expected_action_ref, action_id}:
+                failures.append(
+                    f"{code}: menu {menu_id} expected action {expected_action_ref!r} or {action_id!r}, "
+                    f"got {menu_action!r}"
+                )
         rows.append(
             {
                 "code": code,

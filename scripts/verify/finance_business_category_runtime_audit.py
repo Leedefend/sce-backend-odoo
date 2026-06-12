@@ -9,6 +9,7 @@ from odoo.tools.safe_eval import safe_eval
 
 CATEGORIES = [
     ("finance.payment.apply.pay", "smart_construction_core.action_payment_request_user_payment_apply"),
+    ("finance.payment.apply.receive", "smart_construction_core.action_payment_request_receive"),
     ("finance.payment.execution.partner", "smart_construction_core.action_sc_payment_execution_partner_payment"),
     ("finance.payment.execution.company", "smart_construction_core.action_sc_payment_execution_company_finance_expense"),
     ("finance.receipt.income.project", "smart_construction_core.action_sc_receipt_income_user_income"),
@@ -143,6 +144,35 @@ def _receipt_income_category_bindings():
                    AS target_mismatch_count
           FROM expected
          WHERE expected_code IS NOT NULL
+         GROUP BY expected_code
+         ORDER BY expected_code
+        """
+    )
+    return env.cr.dictfetchall()  # noqa: F821
+
+
+def _payment_request_category_bindings():
+    env.cr.execute(  # noqa: F821
+        """
+        WITH expected AS (
+            SELECT request.id,
+                   CASE
+                       WHEN request.type = 'receive'
+                           THEN 'finance.payment.apply.receive'
+                       ELSE 'finance.payment.apply.pay'
+                   END AS expected_code,
+                   category.code AS actual_code,
+                   category.target_model AS actual_target_model
+              FROM payment_request request
+              LEFT JOIN sc_business_category category ON category.id = request.business_category_id
+        )
+        SELECT expected_code,
+               COUNT(*)::integer AS row_count,
+               SUM(CASE WHEN actual_code = expected_code THEN 1 ELSE 0 END)::integer AS matched_count,
+               SUM(CASE WHEN COALESCE(actual_code, '') != expected_code THEN 1 ELSE 0 END)::integer AS mismatch_count,
+               SUM(CASE WHEN COALESCE(actual_target_model, '') NOT IN ('', 'payment.request') THEN 1 ELSE 0 END)::integer
+                   AS target_mismatch_count
+          FROM expected
          GROUP BY expected_code
          ORDER BY expected_code
         """
@@ -476,6 +506,18 @@ try:
                 "%s: %s receipt income rows bound to non-receipt target model"
                 % (row["expected_code"], row["target_mismatch_count"])
             )
+    payment_request_bindings = _payment_request_category_bindings()
+    for row in payment_request_bindings:
+        if row["mismatch_count"]:
+            failures.append(
+                "%s: %s mismatched payment request category rows of %s"
+                % (row["expected_code"], row["mismatch_count"], row["row_count"])
+            )
+        if row["target_mismatch_count"]:
+            failures.append(
+                "%s: %s payment request rows bound to non-payment-request target model"
+                % (row["expected_code"], row["target_mismatch_count"])
+            )
 except Exception as err:
     failures.append("unexpected error: %s" % err)
     failures.append(traceback.format_exc())
@@ -487,6 +529,7 @@ result = {
     "rows": rows,
     "expense_claim_bindings": expense_claim_bindings if "expense_claim_bindings" in locals() else [],
     "receipt_income_bindings": receipt_income_bindings if "receipt_income_bindings" in locals() else [],
+    "payment_request_bindings": payment_request_bindings if "payment_request_bindings" in locals() else [],
     "failures": failures,
 }
 print("FINANCE_BUSINESS_CATEGORY_RUNTIME_AUDIT: %s" % json.dumps(result, ensure_ascii=False, sort_keys=True))
