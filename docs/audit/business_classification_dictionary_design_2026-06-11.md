@@ -87,7 +87,7 @@
 - 借还款历史数据仍保留一项用户验收差异：旧入口“承包人借项目款”活动记录为 166 条，但当前旧入口内部按三主体事实分类为 `project_to_contractor_borrow` 68 条、`company_to_project_borrow` 98 条。差异说明旧入口名称、用途文本和责任主体分类不能互相替代；后续应由客户确认旧入口中“借某项目工程款付材料款/借公司款/项目周转”等记录的验收分类，并把确认后的规则继续沉淀为可维护分类字典或配套分类规则表。
 - 往来资金台账同步已按业务事实口径收紧：`sc.treasury.ledger` 对 `source_model/source_res_id/project/direction/source_kind=interfund` 幂等刷新，模块升级同步会作废不再匹配当前往来事实的历史残留。这样现金流台账跟随办理事实，不把资金日报、余额调整或已失效来源误算为责任事实。
 - 公司-承包人责任事实必须同时覆盖历史事实和新系统正式办理事实：到款确认来自 `sc.legacy.fund.confirmation.document`，历史自筹来自 `sc.legacy.self.funding.fact` 的 `income/refund` 正式族，新发生自筹来自 `sc.self.funding.registration` 完成单据。资金日报、余额调整和自筹可见参考族不得进入责任余额，只能作为状态、台账或用户旧入口追溯证据。
-- 发票/税务分类已从纯 action/context 推进到正式分类锚点：`sc.invoice.registration.business_category_id` 和 `sc.tax.deduction.registration.business_category_id` 绑定 `sc.business.category`，新办理按入口上下文或业务字段自动落类，升级时只给空值历史/既有记录补映射。`source_kind`、`direction`、`is_transfer_out` 继续保留为业务事实字段，但不再作为唯一分类来源；后续表单显隐、审批策略、附件策略和下游策略应优先读取业务分类。
+- 发票/税务分类已从纯 action/context 推进到正式分类锚点：`sc.invoice.registration.business_category_id` 和 `sc.tax.deduction.registration.business_category_id` 绑定 `sc.business.category`，新办理按入口上下文或业务字段自动落类，升级时只给空值历史/既有记录补映射。发票/税务办理入口 domain 只按 `business_category_id.code` 收口；`source_kind`、`direction`、`invoice_content`、`is_transfer_out` 继续保留为业务事实字段和历史映射依据，但不再作为 action fallback。
 
 客户可维护字段：
 
@@ -514,11 +514,11 @@ category_count=5
 
 | 分类编码 | 用户可见事项 | 当前模型 | 当前实现方式 | 后续字典化动作 |
 | --- | --- | --- | --- | --- |
-| `invoice.output.application` | 销项开票申请 | `sc.invoice.registration.business_category_id` | 入口 domain 优先使用 `business_category_id.code='invoice.output.application'`，保留历史 `source_kind/direction/invoice_content` 兼容分支 | 绑定销项申请审批、附件和合同/收款关系策略 |
-| `invoice.output.registration` | 销项开票登记 | `sc.invoice.registration.business_category_id` | 用户确认列表和正式表单均写入 `default_business_category_code`，domain 优先按分类展示 | 绑定开票完成、税务口径和收入合同关系策略 |
-| `invoice.prepaid_tax` | 预缴税款 | `sc.invoice.registration.business_category_id` | 入口 domain 优先使用 `business_category_id.code='invoice.prepaid_tax'`，`prepaid_tax/prepaid` 保留为事实字段兜底 | 绑定完税凭证和项目税务事实策略 |
-| `invoice.input.report` | 进项税额上报 | `sc.invoice.registration.business_category_id` | 用户确认列表和正式表单均写入 `default_business_category_code`，domain 优先按分类展示 | 绑定进项发票、成本和抵扣来源关系策略 |
-| `tax.deduction.registration` | 抵扣登记 | `sc.tax.deduction.registration.business_category_id` | 入口 domain 优先使用 `business_category_id.code='tax.deduction.registration'`，`is_transfer_out=False` 仅作为历史/既有数据兼容分支 | 后续继续区分抵扣、转出、扣款抵扣的更细分类 |
+| `invoice.output.application` | 销项开票申请 | `sc.invoice.registration.business_category_id` | 入口 domain 使用 `business_category_id.code='invoice.output.application'`；`source_kind/direction/invoice_content` 仅保留为业务事实字段和历史映射依据 | 绑定销项申请审批、附件和合同/收款关系策略 |
+| `invoice.output.registration` | 销项开票登记 | `sc.invoice.registration.business_category_id` | 用户确认列表和正式表单均写入 `default_business_category_code`，入口 domain 使用 `business_category_id.code='invoice.output.registration'` | 绑定开票完成、税务口径和收入合同关系策略 |
+| `invoice.prepaid_tax` | 预缴税款 | `sc.invoice.registration.business_category_id` | 入口 domain 使用 `business_category_id.code='invoice.prepaid_tax'`；`prepaid_tax/prepaid` 仅保留为业务事实字段和历史映射依据 | 绑定完税凭证和项目税务事实策略 |
+| `invoice.input.report` | 进项税额上报 | `sc.invoice.registration.business_category_id` | 用户确认列表和正式表单均写入 `default_business_category_code`，入口 domain 使用 `business_category_id.code='invoice.input.report'` | 绑定进项发票、成本和抵扣来源关系策略 |
+| `tax.deduction.registration` | 抵扣登记 | `sc.tax.deduction.registration.business_category_id` | 入口 domain 使用 `business_category_id.code='tax.deduction.registration'`；`is_transfer_out` 仅保留为业务事实字段和历史映射依据 | 后续继续区分抵扣、转出、扣款抵扣的更细分类 |
 
 本轮结论：
 
