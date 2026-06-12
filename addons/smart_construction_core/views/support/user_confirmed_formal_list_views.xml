@@ -665,7 +665,7 @@
             (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_receipt_income_engineering_progress_user_confirmed_tree')}),
             (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_receipt_income_form')})
         ]"/>
-        <field name="domain">['&amp;', ('source_kind', '=', 'receipt_income'), '|', ('business_category_id.code', '=', 'finance.receipt.income.progress'), '|', ('source_family', '=', 'engineering_progress_receipt_visible'), ('income_category', '=', '工程进度款收入')]</field>
+        <field name="domain">[('business_category_id.code', '=', 'finance.receipt.income.progress')]</field>
         <field name="context">{'create': True, 'edit': True, 'default_source_kind': 'receipt_income', 'default_receipt_type': '正常类型收款', 'default_income_category': '工程进度款收入', 'default_business_category_code': 'finance.receipt.income.progress', 'search_default_group_project': 1}</field>
     </record>
     <record id="action_sc_invoice_input_report_user" model="ir.actions.act_window">

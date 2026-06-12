@@ -15,6 +15,7 @@ TARGETS = [
     ROOT / "addons" / "smart_construction_core" / "views" / "core" / "expense_business_fact_taxonomy_views.xml",
     ROOT / "addons" / "smart_construction_core" / "views" / "core" / "payment_request_views.xml",
     ROOT / "addons" / "smart_construction_core" / "views" / "core" / "fund_account_operation_views.xml",
+    ROOT / "addons" / "smart_construction_core" / "views" / "support" / "user_confirmed_formal_list_views.xml",
 ]
 
 
@@ -80,9 +81,10 @@ CATEGORY_ACTIONS = {
         "context": {
             "default_source_kind": "receipt_income",
             "default_income_category": "收入",
+            "default_business_category_code": "finance.receipt.income.project",
         },
-        "domain_tokens": ["source_kind", "receipt_income"],
-        "new_record_tokens": ["source_kind", "receipt_income"],
+        "domain_tokens": ["business_category_id.code", "finance.receipt.income.project"],
+        "new_record_tokens": ["business_category_id.code", "finance.receipt.income.project"],
     },
     "finance.receipt.income.progress": {
         "label": "工程进度款收入登记",
@@ -92,9 +94,10 @@ CATEGORY_ACTIONS = {
         "context": {
             "default_source_kind": "receipt_income",
             "default_income_category": "工程进度款收入",
+            "default_business_category_code": "finance.receipt.income.progress",
         },
-        "domain_tokens": ["source_kind", "receipt_income", "income_category", "工程进度款收入"],
-        "new_record_tokens": ["income_category", "工程进度款收入"],
+        "domain_tokens": ["business_category_id.code", "finance.receipt.income.progress"],
+        "new_record_tokens": ["business_category_id.code", "finance.receipt.income.progress"],
     },
     "finance.expense.reimbursement": {
         "label": "报销申请",
@@ -379,7 +382,18 @@ def _collect_records() -> tuple[dict[str, ET.Element], dict[str, dict[str, str]]
             xmlid = node.attrib.get("id")
             if not xmlid:
                 continue
-            records[xmlid] = node
+            existing = records.get(xmlid)
+            if existing is not None and node.attrib.get("model") == existing.attrib.get("model"):
+                for field in node.findall("field"):
+                    name = field.attrib.get("name")
+                    if not name:
+                        continue
+                    for old_field in list(existing.findall("field")):
+                        if old_field.attrib.get("name") == name:
+                            existing.remove(old_field)
+                    existing.append(field)
+            else:
+                records[xmlid] = node
             if node.attrib.get("model") == "ir.ui.menu":
                 menu = menus.setdefault(xmlid, {})
                 action = _field_ref(node, "action")

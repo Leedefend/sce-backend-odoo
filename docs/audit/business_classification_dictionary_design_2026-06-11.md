@@ -237,8 +237,8 @@
 | `finance.payment.apply.receive` | `payment.request.business_category_id` | 已接入正式分类锚点；按收款申请入口或 `type=receive` 自动绑定，配置资金台账策略 |
 | `finance.payment.execution.partner` | `sc.payment.execution.business_category_id` | 已接入正式分类锚点；覆盖往来单位付款、供应商付款、合同/供货合同付款和支付申请残余等付款执行事实，配置付款申请同步策略 |
 | `finance.payment.execution.company` | `sc.payment.execution.business_category_id` | 已接入正式分类锚点；覆盖公司财务支出付款执行事实 |
-| `finance.receipt.income.project` | `sc.receipt.income` | 已接入正式 `business_category_id`，继续配置收款申请同步和责任余额策略 |
-| `finance.receipt.income.progress` | `sc.receipt.income` | 已接入正式 `business_category_id`，按工程进度款收入入口切分 |
+| `finance.receipt.income.project` | `sc.receipt.income.business_category_id` | 已接入正式分类锚点；收入入口按 `business_category_id.code` 展示，继续配置收款申请同步和责任余额策略 |
+| `finance.receipt.income.progress` | `sc.receipt.income.business_category_id` | 已接入正式分类锚点；工程进度款收入入口按 `business_category_id.code` 展示，`income_category` 保留为业务事实 |
 | `finance.expense.reimbursement` | `sc.expense.claim.business_category_id` | 已接入正式分类入口锚点；继续配置费用报销必填账户和付款台账策略 |
 | `finance.deposit.bid.pay` | `sc.expense.claim.business_category_id` | 已接入正式分类入口锚点；配置保证金付款方向和附件策略 |
 | `finance.deposit.bid.return` | `sc.expense.claim.business_category_id` | 已接入正式分类入口锚点；配置保证金退回方向和资金台账策略 |
