@@ -118,7 +118,10 @@ function normalizedNodeLabel(node: NavNode) {
 }
 
 function isHandlingGroup(node: NavNode) {
-  return Boolean(node.children?.length) && /办理$/.test(normalizedNodeLabel(node));
+  return Boolean(node.children?.length) && (
+    /办理$/.test(normalizedNodeLabel(node))
+    || String(node.meta?.intent_group || '').trim() === 'handling'
+  );
 }
 
 function onSelect(node: NavNode) {

@@ -321,7 +321,8 @@ const roleSurface = computed(() => session.roleSurface);
 const shellLogoText = computed(() => config.appBrand.shellLogoText || 'SC');
 const rootNode = computed(() => (menuTree.value.length === 1 ? menuTree.value[0] : null));
 const menuNodes = computed(() => rootNode.value?.children ?? menuTree.value);
-const menuCount = computed(() => menuNodes.value.length);
+const visibleMenuNodes = computed(() => groupMenuNodesByBusinessIntent(menuNodes.value));
+const menuCount = computed(() => visibleMenuNodes.value.length);
 const routeAllowsEmptyMenu = computed(() => route.meta?.adminOnly === true || route.path.startsWith('/admin/'));
 const rootTitle = computed(() => {
   const root = rootNode.value;
@@ -1177,6 +1178,78 @@ function isRootContainerMenuId(menuId?: number): boolean {
   return rootId > 0 && rootId === Number(menuId);
 }
 
+const BUSINESS_INTENT_BUCKETS = [
+  { key: 'handling', label: '办理入口', sequence: 10, intents: new Set(['handling']) },
+  { key: 'ledger_query', label: '台账查询', sequence: 20, intents: new Set(['query', 'master_data']) },
+  { key: 'analysis', label: '分析报表', sequence: 30, intents: new Set(['analysis']) },
+  { key: 'source_fact', label: '来源明细', sequence: 40, intents: new Set(['source_fact']) },
+  { key: 'config', label: '基础配置', sequence: 50, intents: new Set(['config']) },
+] as const;
+
+function businessEntryIntent(node: NavNode): string {
+  return String(node.meta?.entry_intent || '').trim();
+}
+
+function businessIntentBucket(node: NavNode) {
+  const intent = businessEntryIntent(node);
+  return BUSINESS_INTENT_BUCKETS.find((bucket) => bucket.intents.has(intent));
+}
+
+function hasBusinessEntryIntent(node: NavNode): boolean {
+  if (businessEntryIntent(node)) return true;
+  return Boolean(node.children?.some((child) => hasBusinessEntryIntent(child)));
+}
+
+function groupMenuNodesByBusinessIntent(nodes: NavNode[]): NavNode[] {
+  return nodes.map((node) => groupMenuNodeByBusinessIntent(node));
+}
+
+function groupMenuNodeByBusinessIntent(node: NavNode): NavNode {
+  const children = Array.isArray(node.children) ? node.children : [];
+  if (!children.length) return node;
+  const groupedChildren = children.map((child) => groupMenuNodeByBusinessIntent(child));
+  const bucketed = new Map<string, NavNode[]>();
+  const passthrough: NavNode[] = [];
+  groupedChildren.forEach((child) => {
+    const bucket = businessIntentBucket(child);
+    if (!bucket) {
+      passthrough.push(child);
+      return;
+    }
+    bucketed.set(bucket.key, [...(bucketed.get(bucket.key) || []), child]);
+  });
+  const productizedChildCount = Array.from(bucketed.values()).reduce((total, items) => total + items.length, 0);
+  const shouldGroup = productizedChildCount >= 2 && bucketed.size >= 2;
+  if (!shouldGroup) {
+    return { ...node, children: groupedChildren };
+  }
+  const syntheticGroups = BUSINESS_INTENT_BUCKETS
+    .map((bucket) => {
+      const items = bucketed.get(bucket.key) || [];
+      if (!items.length) return null;
+      return {
+        key: `${node.key || node.menu_id || node.id || 'menu'}.intent.${bucket.key}`,
+        label: bucket.label,
+        title: bucket.label,
+        sequence: bucket.sequence,
+        children: items,
+        meta: {
+          intent_group: bucket.key,
+          business_entry_group: true,
+        },
+      } as NavNode;
+    })
+    .filter(Boolean) as NavNode[];
+  return {
+    ...node,
+    children: [
+      ...passthrough.filter((child) => !hasBusinessEntryIntent(child)),
+      ...syntheticGroups,
+      ...passthrough.filter((child) => hasBusinessEntryIntent(child)),
+    ],
+  };
+}
+
 const breadcrumb = computed(() => {
   const crumbs: Array<{ label: string; to?: string }> = [];
   const menuId = activeMenuId.value;
@@ -1245,7 +1318,7 @@ function filterNodes(nodes: NavNode[], q: string): NavNode[] {
   return walk(nodes);
 }
 
-const filteredMenu = computed(() => filterNodes(menuNodes.value, query.value));
+const filteredMenu = computed(() => filterNodes(visibleMenuNodes.value, query.value));
 
 function buildMenuSelectionQuery(): LocationQueryRaw {
   const next: LocationQueryRaw = {};

@@ -167,14 +167,29 @@ async function main() {
   await page.goto(`${BASE_URL}${SCENE_PATH}?db=${encodeURIComponent(DB_NAME)}`, { waitUntil: "domcontentloaded", timeout: 60000 });
   await page.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {});
   await page.locator(".handling-surface").waitFor({ state: "visible", timeout: 60000 });
+  for (const label of ["项目中心", "物资与分包", "财务中心", "人事行政"]) {
+    const button = page.locator('[data-component="SidebarNav"] button.label', { hasText: label }).first();
+    if (await button.count()) {
+      await button.click().catch(() => {});
+    }
+  }
+  await page.waitForTimeout(500);
   await page.screenshot({ path: SCREENSHOT_PATH, fullPage: true });
 
   const groupTitles = await page.locator(".handling-group__header h4").allTextContents();
   const itemLabels = await page.locator(".handling-item span").allTextContents();
+  const sidebarLabels = await page.locator('[data-component="SidebarNav"] button.label .label-text').evaluateAll((nodes) =>
+    nodes.map((node) => (node.textContent || "").trim()).filter(Boolean)
+  );
+  const sidebarIntentLabels = sidebarLabels.filter((label) =>
+    ["办理入口", "台账查询", "分析报表", "来源明细", "基础配置"].includes(label)
+  );
   const bodyText = await page.locator("body").innerText({ timeout: 10000 });
   const rawCodeVisible = /finance\.|invoice\.|tax\.certificate/.test(bodyText);
   const expectedGroups = ["收付款办理", "开票与税务办理", "费用与报销办理", "资金往来办理"];
   const missingGroups = expectedGroups.filter((title) => !groupTitles.includes(title));
+  const expectedSidebarIntentLabels = ["办理入口", "台账查询", "分析报表", "来源明细"];
+  const missingSidebarIntentLabels = expectedSidebarIntentLabels.filter((label) => !sidebarIntentLabels.includes(label));
 
   await page.goto(`${BASE_URL}/m/${categoryNode.menuId}?db=${encodeURIComponent(DB_NAME)}`, { waitUntil: "domcontentloaded", timeout: 60000 });
   await page.waitForURL((url) => (
@@ -196,6 +211,7 @@ async function main() {
 
   const report = {
     ok: missingGroups.length === 0 && groupTitles.length === 4 && itemLabels.length === 35 && !rawCodeVisible && consoleErrors.length === 0
+      && missingSidebarIntentLabels.length === 0
       && menuResolvedUrl.includes(`default_business_category_code=${encodeURIComponent(categoryNode.categoryCode)}`)
       && createResolvedUrl.includes(`default_business_category_code=${encodeURIComponent(categoryNode.categoryCode)}`),
     baseUrl: BASE_URL,
@@ -212,6 +228,8 @@ async function main() {
       createResolvedUrl,
     },
     groupTitles,
+    sidebarIntentLabels,
+    missingSidebarIntentLabels,
     itemCount: itemLabels.length,
     missingGroups,
     rawCodeVisible,
