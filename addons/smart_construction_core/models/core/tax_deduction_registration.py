@@ -94,7 +94,7 @@ class ScTaxDeductionRegistration(models.Model):
         "res.currency",
         string="币种",
         required=True,
-        default=lambda self: self.env.company.currency_id.id,
+        default=lambda self: (self.env.ref("base.CNY", raise_if_not_found=False) or self.env.company.currency_id).id,
     )
     legacy_source_model = fields.Char(string="历史来源模型", index=True, readonly=True)
     legacy_source_table = fields.Char(string="历史来源表", index=True, readonly=True)

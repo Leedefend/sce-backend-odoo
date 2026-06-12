@@ -703,6 +703,9 @@ verify.finance_legacy_treasury.currency.audit: guard.prod.forbid check-compose-p
 backfill.finance_legacy_treasury.currency: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) APPLY=1 scripts/ops/validate_finance_legacy_treasury_currency.sh
 
+verify.finance_p0.currency_default.audit: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/finance_p0_currency_default_audit.py
+
 verify.finance_business_fact.scope.audit: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) MIGRATION_ARTIFACT_ROOT="$(MIGRATION_ARTIFACT_ROOT)" bash scripts/ops/odoo_shell_exec.sh < scripts/verify/finance_business_fact_scope_audit.py
 

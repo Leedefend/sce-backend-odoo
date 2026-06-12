@@ -224,7 +224,7 @@ class PaymentRequest(models.Model):
         "res.currency",
         string="币种",
         required=True,
-        default=lambda self: self.env.company.currency_id,
+        default=lambda self: self.env.ref("base.CNY", raise_if_not_found=False) or self.env.company.currency_id,
     )
     amount = fields.Monetary(
         string="申请金额",

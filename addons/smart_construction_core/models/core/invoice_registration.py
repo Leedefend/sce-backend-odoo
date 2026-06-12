@@ -136,7 +136,7 @@ class ScInvoiceRegistration(models.Model):
         "res.currency",
         string="币种",
         required=True,
-        default=lambda self: self.env.company.currency_id.id,
+        default=lambda self: (self.env.ref("base.CNY", raise_if_not_found=False) or self.env.company.currency_id).id,
     )
     handler_name = fields.Char(string="经办人", index=True)
     invoice_holder = fields.Char(string="持票人", index=True)

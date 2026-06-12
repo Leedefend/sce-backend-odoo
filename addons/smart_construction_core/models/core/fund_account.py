@@ -54,7 +54,7 @@ class ScFundAccount(models.Model):
         "res.currency",
         string="币种",
         required=True,
-        default=lambda self: self.env.company.currency_id.id,
+        default=lambda self: (self.env.ref("base.CNY", raise_if_not_found=False) or self.env.company.currency_id).id,
     )
     is_default = fields.Boolean(string="默认账户")
     fixed_account = fields.Boolean(string="固定账户")

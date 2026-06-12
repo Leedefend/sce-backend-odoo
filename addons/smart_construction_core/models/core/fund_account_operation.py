@@ -83,7 +83,7 @@ class ScFundAccountOperation(models.Model):
         "res.currency",
         string="币种",
         required=True,
-        default=lambda self: self.env.company.currency_id.id,
+        default=lambda self: (self.env.ref("base.CNY", raise_if_not_found=False) or self.env.company.currency_id).id,
     )
     amount = fields.Monetary(string="金额", currency_field="currency_id", tracking=True)
     daily_income = fields.Monetary(string="当日收入", currency_field="currency_id", tracking=True)
