@@ -235,7 +235,8 @@
 | `finance.payment.apply.pay` | `payment.request` action/domain/context | 绑定付款申请分类，配置付款台账策略 |
 | `finance.payment.apply.receive` | `payment.request` type=receive | 绑定收款申请分类，配置资金台账策略 |
 | `finance.payment.execution.partner` | `sc.payment.execution` | 绑定付款执行分类，配置付款申请同步策略 |
-| `finance.receipt.income.project` | `sc.receipt.income` | 绑定收款确认分类，配置收款申请同步策略 |
+| `finance.receipt.income.project` | `sc.receipt.income` | 已接入正式 `business_category_id`，继续配置收款申请同步和责任余额策略 |
+| `finance.receipt.income.progress` | `sc.receipt.income` | 已接入正式 `business_category_id`，按工程进度款收入入口切分 |
 | `finance.expense.reimbursement` | `sc.expense.claim` expense context | 配置费用报销必填账户和付款台账策略 |
 | `finance.deposit.bid.pay` | `sc.expense.claim` action | 配置保证金付款方向和附件策略 |
 | `finance.deposit.bid.return` | `sc.expense.claim` action | 配置保证金退回方向和资金台账策略 |

@@ -598,7 +598,7 @@
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="smart_construction_core.view_sc_receipt_income_search"/>
         <field name="domain">[('source_kind', '=', 'receipt_income')]</field>
-        <field name="context">{'default_source_kind': 'receipt_income', 'default_income_category': '收入', 'search_default_group_project': 1}</field>
+        <field name="context">{'default_source_kind': 'receipt_income', 'default_income_category': '收入', 'default_business_category_code': 'finance.receipt.income.project', 'search_default_group_project': 1}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
             ref('smart_construction_core.group_sc_cap_finance_read'),
@@ -611,8 +611,8 @@
         <field name="res_model">sc.receipt.income</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="smart_construction_core.view_sc_receipt_income_search"/>
-        <field name="domain">['&amp;', ('source_kind', '=', 'receipt_income'), '|', ('source_family', '=', 'engineering_progress_receipt_visible'), ('income_category', '=', '工程进度款收入')]</field>
-        <field name="context">{'default_source_kind': 'receipt_income', 'default_receipt_type': '正常类型收款', 'default_income_category': '工程进度款收入', 'search_default_group_project': 1}</field>
+        <field name="domain">['&amp;', ('source_kind', '=', 'receipt_income'), '|', ('business_category_id.code', '=', 'finance.receipt.income.progress'), '|', ('source_family', '=', 'engineering_progress_receipt_visible'), ('income_category', '=', '工程进度款收入')]</field>
+        <field name="context">{'default_source_kind': 'receipt_income', 'default_receipt_type': '正常类型收款', 'default_income_category': '工程进度款收入', 'default_business_category_code': 'finance.receipt.income.progress', 'search_default_group_project': 1}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
             ref('smart_construction_core.group_sc_cap_finance_read'),

@@ -114,6 +114,42 @@ def _expense_claim_category_bindings():
     return env.cr.dictfetchall()  # noqa: F821
 
 
+def _receipt_income_category_bindings():
+    env.cr.execute(  # noqa: F821
+        """
+        WITH expected AS (
+            SELECT receipt.id,
+                   CASE
+                       WHEN receipt.source_kind = 'receipt_income'
+                            AND (
+                                COALESCE(receipt.source_family, '') = 'engineering_progress_receipt_visible'
+                                OR COALESCE(receipt.income_category, '') = '工程进度款收入'
+                            )
+                           THEN 'finance.receipt.income.progress'
+                       WHEN receipt.source_kind = 'receipt_income'
+                           THEN 'finance.receipt.income.project'
+                       ELSE NULL
+                   END AS expected_code,
+                   category.code AS actual_code,
+                   category.target_model AS actual_target_model
+              FROM sc_receipt_income receipt
+              LEFT JOIN sc_business_category category ON category.id = receipt.business_category_id
+        )
+        SELECT expected_code,
+               COUNT(*)::integer AS row_count,
+               SUM(CASE WHEN actual_code = expected_code THEN 1 ELSE 0 END)::integer AS matched_count,
+               SUM(CASE WHEN COALESCE(actual_code, '') != expected_code THEN 1 ELSE 0 END)::integer AS mismatch_count,
+               SUM(CASE WHEN COALESCE(actual_target_model, '') NOT IN ('', 'sc.receipt.income') THEN 1 ELSE 0 END)::integer
+                   AS target_mismatch_count
+          FROM expected
+         WHERE expected_code IS NOT NULL
+         GROUP BY expected_code
+         ORDER BY expected_code
+        """
+    )
+    return env.cr.dictfetchall()  # noqa: F821
+
+
 def _token():
     return env["ir.sequence"].sudo().next_by_code("sc.business.fact") or str(fields.Datetime.now())
 
@@ -428,6 +464,18 @@ try:
                 "%s: %s expense claim rows bound to non-expense target model"
                 % (row["expected_code"], row["target_mismatch_count"])
             )
+    receipt_income_bindings = _receipt_income_category_bindings()
+    for row in receipt_income_bindings:
+        if row["mismatch_count"]:
+            failures.append(
+                "%s: %s mismatched receipt income category rows of %s"
+                % (row["expected_code"], row["mismatch_count"], row["row_count"])
+            )
+        if row["target_mismatch_count"]:
+            failures.append(
+                "%s: %s receipt income rows bound to non-receipt target model"
+                % (row["expected_code"], row["target_mismatch_count"])
+            )
 except Exception as err:
     failures.append("unexpected error: %s" % err)
     failures.append(traceback.format_exc())
@@ -438,6 +486,7 @@ result = {
     "category_count": len(CATEGORIES) + len(READONLY_CATEGORIES),
     "rows": rows,
     "expense_claim_bindings": expense_claim_bindings if "expense_claim_bindings" in locals() else [],
+    "receipt_income_bindings": receipt_income_bindings if "receipt_income_bindings" in locals() else [],
     "failures": failures,
 }
 print("FINANCE_BUSINESS_CATEGORY_RUNTIME_AUDIT: %s" % json.dumps(result, ensure_ascii=False, sort_keys=True))

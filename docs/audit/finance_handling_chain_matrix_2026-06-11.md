@@ -164,6 +164,7 @@ HTTP/API 可见面验收结论：
 - 支付申请：用户可见入口 `smart_construction_core.menu_sc_user_payment_apply_acceptance` 打开 `payment.request`，本地用户数据 29,549 条，已办样本可追到 `payment.ledger`。
 - 往来单位付款：用户可见入口 `smart_construction_core.menu_sc_partner_payment` 打开 `sc.payment.execution`，本地用户数据 24,049 条，入口和已办样本可读；HTTP smoke 已支持按 `sc.treasury.ledger(source_model='sc.payment.execution')` 反选办理样本，当前 80 条来源级台账样本可反选 20 条办理样本并追到下游资金台账。
 - 到款确认/项目收款：用户可见入口 `smart_construction_core.menu_sc_engineering_progress_income` 打开 `sc.receipt.income`，本地用户数据 15,905 条，入口和已办样本可读；HTTP smoke 已支持按 `sc.treasury.ledger(source_model='sc.receipt.income')` 反选办理样本，当前 80 条来源级台账样本可反选 20 条办理样本并追到下游资金台账。
+- 收款收入分类：`sc.receipt.income` 已新增正式 `business_category_id`，普通收款收入绑定 `finance.receipt.income.project`，工程进度款收入绑定 `finance.receipt.income.progress`；运行时门禁验证本地 25,099 条普通收款收入和 3,902 条工程进度款收入分类不漏不串。
 - 项目费用报销单：用户可见入口 `smart_construction_core.menu_sc_project_expense_claim` 打开 `sc.expense.claim`，本地用户数据 37,013 条，入口和已办样本可读；HTTP smoke 已支持按 `sc.treasury.ledger(source_model='sc.expense.claim')` 反选办理样本，当前 80 条来源级台账样本可反选 20 条办理样本并追到下游资金台账。
 - 扩展入口：`make verify.finance_handling.http_surface.smoke` 已覆盖 15 个用户可见财务办理入口，包括支付申请、付款执行、到款确认、费用/报销、投标保证金、合同保证金、扣款单/实缴/退回、还款登记、承包人还项目款和项目还公司款。`system.init` 当前只返回前 300 个导航行，smoke 对后置菜单使用 action 名称和模型兜底解析；兜底只解决验证取数，不改变菜单最终 action 绑定。
 - 合同保证金支付/退回是行业模板入口，当前用户数据没有已办样本；HTTP smoke 只验证 action 可解析、页面契约可打开和分类策略可运行，不把样本数作为当前用户验收缺口。
@@ -250,7 +251,7 @@ evidence: create temp record from runtime action context, then verify current ru
 | --- | --- | --- | --- | --- | --- |
 | 支付申请 | `payment.request` | `action_submit`、`action_approval_decision`、`action_set_approved`、`action_done`、`action_cancel` | `payment.ledger`、`sc.treasury.ledger`、审批记录、审计日志 | 办理证据闭环、角色权限、下游追溯通过 | 补浏览器级验收：合同/结算拦截、取消、附件 |
 | 往来单位付款 | `sc.payment.execution` | `action_confirm`、`action_paid`、`action_cancel`、`action_on_tier_approved` | 新办理通过 `payment.request` 生成 `payment.ledger`；历史已办事实应通过 `sc.treasury.ledger` 来源级追溯现金流 | 办理入口可见面已通过 HTTP/API；12,846 条 source-less legacy 付款流出已补挂到付款执行；HTTP smoke 已按来源台账反选样本并追到 `sc.treasury.ledger` | 对剩余付款流出缺口做来源级现金流迁移，并补浏览器级抽样验收 |
-| 到款确认表 | `sc.receipt.income` | `action_confirm`、`action_received`、`action_cancel`、`action_on_tier_approved` | 新办理通过收款申请生成 `sc.treasury.ledger`；历史已办事实应通过 `sc.treasury.ledger` 来源级追溯现金流 | 办理入口可见面已通过 HTTP/API；26,439 条历史收款流入候选缺来源级台账 | 补项目收款状态约束、source-less legacy 台账对账和来源级现金流迁移 |
+| 到款确认表 | `sc.receipt.income` | `action_confirm`、`action_received`、`action_cancel`、`action_on_tier_approved` | 新办理通过收款申请生成 `sc.treasury.ledger`；历史已办事实通过 `sc.treasury.ledger` 来源级追溯现金流 | 办理入口可见面已通过 HTTP/API；普通收款收入和工程进度款收入已按 `business_category_id` 字典化，历史收款流入来源级台账覆盖已补齐 | 补项目收款状态约束与收款申请、销项发票、责任余额的分类策略联动 |
 | 报销/费用单据 | `sc.expense.claim` | `action_submit`、`action_approve`、`action_done`、`action_cancel`、审批回调 | 新办理通过 `payment.request` 或往来款现金流生成台账；历史已办事实按方向进入 `sc.treasury.ledger` | 办理入口可见面已通过 HTTP/API；50,825 条历史费用/保证金/扣款候选缺来源级台账 | 按 `claim_type` 和业务分类区分经营收付、保证金、扣款、往来款，再做来源级现金流迁移 |
 | 扣款单/扣款实缴/退回 | `sc.tax.deduction.registration` | 确认、已抵扣、取消 | 税务事实、项目经营口径 | 办理证据闭环、角色权限、下游税务事实追溯通过 | Phase 2 继续补正式分类字段或业务分类字典绑定 |
 | 账户间资金往来 | `sc.fund.account.operation` | 确认、完成、取消 | 账户资金往来事实、往来现金流台账 | 后端动作、关系必填、现金流追溯、历史回填就绪审计通过；内部往来分类策略已纳入 `verify.finance_interfund_category.handling_policy.audit` | 补浏览器级验收和账户余额回填策略 |
@@ -267,7 +268,7 @@ evidence: create temp record from runtime action context, then verify current ru
 | `finance.payment.apply.pay` | 付款申请 | `payment.request` | 付款 | 项目、合同、往来单位、金额、付款账户 | 完成后生成 `payment.ledger` |
 | `finance.payment.apply.receive` | 收款申请 | `payment.request` | 收款 | 项目、合同、往来单位、金额、收款类别 | 完成后生成 `sc.treasury.ledger` |
 | `finance.payment.execution.partner` | 往来单位付款 | `sc.payment.execution` | 付款执行 | 付款申请、项目、合同、往来单位、付款账户、收款账户、实付金额 | 同步付款申请，生成 `payment.ledger` |
-| `finance.receipt.income.project` | 到款确认/项目收款 | `sc.receipt.income` | 收款确认 | 收款申请、项目、合同、往来单位、收款账户、收款金额 | 同步收款申请，生成 `sc.treasury.ledger` |
+| `finance.receipt.income.project` | 到款确认/项目收款 | `sc.receipt.income` | 收款确认 | 收款申请、项目、合同、往来单位、收款账户、收款金额 | 绑定正式 `business_category_id`，同步收款申请，生成 `sc.treasury.ledger` |
 | `finance.expense.reimbursement` | 项目费用报销单 | `sc.expense.claim` | 付款 | 付款申请、项目、往来单位、报销金额、付款账户、收款账户 | 同步付款申请，生成 `payment.ledger` |
 | `finance.deposit.bid.pay` | 投标保证金支付 | `sc.expense.claim` | 付款 | 项目/投标事项、往来单位、金额、付款账户、收款账户、付款申请 | 完成付款申请并生成 `payment.ledger` |
 | `finance.deposit.bid.return` | 投标保证金退回 | `sc.expense.claim` | 收款/退回 | 项目/投标事项、往来单位、金额、收款账户、收款申请 | 完成收款申请并生成 `sc.treasury.ledger` |

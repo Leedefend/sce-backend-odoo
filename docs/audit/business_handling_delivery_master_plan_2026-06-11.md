@@ -263,6 +263,7 @@
 - 已升级并复跑 `make verify.finance_handling.http_surface.smoke`，对来源级资金台账类入口支持“按 `sc.treasury.ledger.source_model/source_res_id` 反选办理样本”；往来单位付款、到款确认、项目费用报销均命中 80 条来源级台账中的 20 条办理样本并追到下游资金台账。
 - 已建立 `make verify.finance_expense_category.handling_policy.audit`，把费用/保证金/扣款/还款分类从“入口可见”推进到“分类办理策略可验收”：经营现金类必须配置收付款申请、项目、往来单位、金额和账户必填；往来还款类必须明确 `payment_request_policy=not_applicable`，且下游只保留 `sc.interfund.movement.fact` 与 `sc.treasury.ledger`，不进入 `payment.ledger`。当前 11 个费用类分类策略通过，历史费用类来源级台账缺口为 0。
 - 已修正业务分类模板同步逻辑：升级同步只合并缺失的必填字段和下游 facts，不覆盖客户已维护配置；对 `payment_request_policy=not_applicable` 的往来类分类会剔除错误残留的 `payment.ledger`。借款分类入口改为按 `business_category_id.code` 切分，不再依赖 purpose 文本模式判断。
+- 已把 `sc.receipt.income` 收款收入推进到正式业务分类字段：新发生收款按入口上下文绑定 `finance.receipt.income.project` 或 `finance.receipt.income.progress`；升级只补空值，不覆盖客户已维护分类。`verify.finance_business_category_runtime` 当前验证普通收款收入 25,099 条、工程进度款收入 3,902 条全部分类正确，两个入口新建样本保存后仍留在对应入口。
 - 已建立并通过 `make verify.finance_interfund_category.handling_policy.audit`，把账户调拨、借款、项目借公司款、承包人借项目款、项目还公司款、承包人还项目款统一纳入内部往来分类门禁：分类必须配置项目/往来单位/金额/日期或账户必填，`payment_request_policy=not_applicable`，下游只允许 `sc.interfund.movement.fact` 与 `sc.treasury.ledger`，不得进入 `payment.ledger` 或要求 `payment_request_id`。当前本地 `sc_demo` 内部往来事实 1,543 条全部为高置信分类，借款/还款正金额事实来源级资金台账缺口为 0。
 - 已把 `sc.financing.loan` 与 `sc.expense.claim` 新发生借款/还款办理默认币种固定为 `base.CNY`，并在 `validate_interfund_account_loan_closure` 中校验账户调拨、项目借公司款、承包人借项目款、项目还公司款、承包人还项目款样本均为 CNY，避免公司币种漂移影响业务办理口径。
 - 已把费用/保证金/扣款/还款附件策略从字典配置推进到模型动作执行：11 个 `sc.expense.claim` 分类默认 `attachment_policy=required`，手工新建单据在提交、批准或完成前必须上传附件；历史迁移事实不 retroactive 强制。增强后的 `make verify.finance_expense_category.handling_policy.audit` 已验证无附件提交会被拦截、补附件后可进入提交状态，并且 `scripts/ops/validate_core_document_processing_gate.sh` 复跑通过，费用、保证金和还款的原有提交、审批、完成链路未被破坏。
@@ -611,7 +612,7 @@ expense_claims=经营类费用/保证金保留 payment.request；往来还款无
 
 ### Income Receipt Invoice Closure Evidence
 
-收入与收款域按用户数据优先级补齐“收入合同 -> 收款申请 -> 收款登记 -> 资金台账 -> 销项开票 -> 合同收款/开票累计”最小闭环，并补齐 `sc.receipt.income` 自身动作审计。
+收入与收款域按用户数据优先级补齐“收入合同 -> 收款申请 -> 收款登记 -> 资金台账 -> 销项开票 -> 合同收款/开票累计”最小闭环，并补齐 `sc.receipt.income` 自身动作审计。当前 `sc.receipt.income` 已具备正式业务分类字段，普通收款收入与工程进度款收入按字典分类切分，后续继续把合同、收款申请、销项发票和责任余额约束沉淀为分类策略。
 
 ```text
 DB_NAME=sc_demo scripts/ops/validate_income_contract_receipt_invoice_closure.sh

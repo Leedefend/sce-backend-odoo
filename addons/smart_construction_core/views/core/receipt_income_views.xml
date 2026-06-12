@@ -52,6 +52,7 @@
                     <field name="legacy_project_name" optional="show"/>
                     <field name="operation_strategy"/>
                     <field name="partner_id"/>
+                    <field name="business_category_id" optional="show"/>
                     <field name="company_contractor_responsibility_state" optional="show"/>
                     <field name="company_contractor_arrival_unprocessed_amount" optional="hide" sum="到款可处理余额合计"/>
                     <field name="company_contractor_arrival_over_processed_amount" optional="show" sum="到款超处理金额合计"/>
@@ -113,6 +114,7 @@
                                 <field name="name" readonly="1"/>
                                 <field name="receipt_flow_label" readonly="1"/>
                                 <field name="source_kind" readonly="state == 'legacy_confirmed'"/>
+                                <field name="business_category_id" readonly="state == 'legacy_confirmed'"/>
                                 <field name="date_receipt" readonly="state == 'legacy_confirmed'"/>
                                 <field name="document_no" readonly="state == 'legacy_confirmed'"/>
                             </group>

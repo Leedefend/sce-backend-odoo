@@ -31,6 +31,13 @@ class ScReceiptIncome(models.Model):
         index=True,
     )
     source_family = fields.Char(string="来源类别", index=True, readonly=True)
+    business_category_id = fields.Many2one(
+        "sc.business.category",
+        string="业务分类",
+        index=True,
+        ondelete="restrict",
+        domain="[('target_model', '=', 'sc.receipt.income')]",
+    )
     state = fields.Selection(
         [
             ("draft", "草稿"),
@@ -150,9 +157,39 @@ class ScReceiptIncome(models.Model):
             project_id = self._context_project_id()
             if project_id:
                 vals.setdefault("project_id", project_id)
+            vals.setdefault("business_category_id", self._resolve_business_category_id(vals))
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.receipt.income") or _("Receipt Income")
         return super().create(vals_list)
+
+    @api.model
+    def _resolve_business_category_code(self, vals):
+        code = self.env.context.get("default_business_category_code") or self.env.context.get(
+            "current_business_category_code"
+        )
+        if code:
+            return code
+        source_kind = vals.get("source_kind") or self.env.context.get("default_source_kind") or "receipt_income"
+        source_family = vals.get("source_family") or self.env.context.get("default_source_family") or ""
+        income_category = vals.get("income_category") or self.env.context.get("default_income_category") or ""
+        if source_kind == "receipt_income" and (
+            source_family == "engineering_progress_receipt_visible" or income_category == "工程进度款收入"
+        ):
+            return "finance.receipt.income.progress"
+        if source_kind == "receipt_income":
+            return "finance.receipt.income.project"
+        return False
+
+    @api.model
+    def _resolve_business_category_id(self, vals):
+        code = self._resolve_business_category_code(vals)
+        if not code:
+            return False
+        category = self.env["sc.business.category"].sudo().search(
+            [("code", "=", code), ("target_model", "=", self._name)],
+            limit=1,
+        )
+        return category.id if category else False
 
     @api.depends(
         "source_kind",
@@ -441,6 +478,8 @@ class ScReceiptIncome(models.Model):
             "source_origin": self.source_origin,
             "source_kind": self.source_kind,
             "source_family": self.source_family,
+            "business_category_id": self.business_category_id.id,
+            "business_category_code": self.business_category_id.code,
             "project_id": self.project_id.id,
             "company_id": self.company_id.id,
             "partner_id": self.partner_id.id,
@@ -469,4 +508,26 @@ class ScReceiptIncome(models.Model):
             after=after,
             company_id=self.company_id,
             project_id=self.project_id,
+        )
+
+    def init(self):
+        self.env.cr.execute(
+            """
+            UPDATE sc_receipt_income receipt
+               SET business_category_id = category.id
+              FROM sc_business_category category
+             WHERE receipt.business_category_id IS NULL
+               AND category.target_model = 'sc.receipt.income'
+               AND category.code = CASE
+                   WHEN receipt.source_kind = 'receipt_income'
+                        AND (
+                            COALESCE(receipt.source_family, '') = 'engineering_progress_receipt_visible'
+                            OR COALESCE(receipt.income_category, '') = '工程进度款收入'
+                        )
+                       THEN 'finance.receipt.income.progress'
+                   WHEN receipt.source_kind = 'receipt_income'
+                       THEN 'finance.receipt.income.project'
+                   ELSE NULL
+               END
+            """
         )
