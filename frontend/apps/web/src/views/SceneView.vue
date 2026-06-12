@@ -86,6 +86,44 @@
       variant="info"
     />
     <section
+      v-if="status === 'idle' && !sceneContractEntryIntent && handlingEntryGroups.length"
+      class="handling-surface"
+    >
+      <header class="handling-surface__header">
+        <div>
+          <p class="handling-surface__eyebrow">{{ handlingEntryCatalog.domain || pageText('handling_surface_eyebrow', '办理入口') }}</p>
+          <h3 class="handling-surface__title">{{ pageText('handling_surface_title', '综合办理') }}</h3>
+        </div>
+        <span class="handling-surface__badge">{{ handlingEntryCatalog.item_count || handlingEntryItemCount }}</span>
+      </header>
+      <div class="handling-surface__grid">
+        <article
+          v-for="group in handlingEntryGroups"
+          :key="group.key"
+          class="handling-group"
+        >
+          <header class="handling-group__header">
+            <h4>{{ group.title }}</h4>
+            <span>{{ group.items.length }}</span>
+          </header>
+          <div class="handling-group__items">
+            <button
+              v-for="item in group.items"
+              :key="item.key"
+              type="button"
+              class="handling-item"
+              :disabled="!isHandlingEntryActionable(item)"
+              :title="item.business_category_code"
+              @click="openHandlingEntry(item)"
+            >
+              <span>{{ item.label }}</span>
+              <small>{{ item.business_category_code }}</small>
+            </button>
+          </div>
+        </article>
+      </div>
+    </section>
+    <section
       v-if="status === 'idle' && !sceneContractEntryIntent && productDeliverySurface.visible"
       class="scene-delivery"
       :class="{ 'scene-delivery--advisory': productDeliverySurface.advisoryOnly }"
@@ -183,6 +221,19 @@ const embeddedRecordActionId = ref(0);
 const sceneReadyHydrateRequested = ref(false);
 const compactSceneControls = computed(() => currentSceneKey.value === 'projects.list');
 type SceneBlockViewMode = 'form' | 'list' | 'kanban';
+type HandlingEntryItem = {
+  key: string;
+  label: string;
+  business_category_code: string;
+  action_xmlid: string;
+  target: Record<string, unknown>;
+};
+type HandlingEntryGroup = {
+  key: string;
+  title: string;
+  items: HandlingEntryItem[];
+};
+
 function resolveSceneBlockViewMode(): SceneBlockViewMode {
   const routeMode = String(route.query.view_mode || '').trim().toLowerCase();
   if (routeMode === 'form') return 'form';
@@ -204,6 +255,55 @@ const sceneBlocks = computed(() => {
   const blocks = modeBlocks.length ? modeBlocks : fallbackBlocks;
   return blocks.filter((item) => item && typeof item === 'object') as Array<Record<string, unknown>>;
 });
+
+const handlingEntryCatalog = computed<Record<string, unknown>>(() => {
+  const currentScene = scene.value;
+  const direct = currentScene?.scene_ready?.handling_entry_catalog;
+  if (direct && typeof direct === 'object') {
+    return direct;
+  }
+  return {};
+});
+
+const handlingEntryGroups = computed<HandlingEntryGroup[]>(() => {
+  const catalog = handlingEntryCatalog.value;
+  if (String(catalog.contract_version || '').trim() !== 'handling_entry_catalog.v1') {
+    return [];
+  }
+  const groups = Array.isArray(catalog.groups) ? catalog.groups : [];
+  return groups
+    .map((rawGroup, groupIndex) => {
+      const group = rawGroup && typeof rawGroup === 'object' ? rawGroup as Record<string, unknown> : {};
+      const rawItems = Array.isArray(group.items) ? group.items : [];
+      const items = rawItems
+        .map((rawItem, itemIndex) => {
+          const item = rawItem && typeof rawItem === 'object' ? rawItem as Record<string, unknown> : {};
+          const label = String(item.label || '').trim();
+          const categoryCode = String(item.business_category_code || '').trim();
+          const target = item.target && typeof item.target === 'object' && !Array.isArray(item.target)
+            ? item.target as Record<string, unknown>
+            : {};
+          if (!label || !categoryCode) return null;
+          return {
+            key: String(item.key || `${String(group.key || 'group')}.${itemIndex + 1}`).trim(),
+            label,
+            business_category_code: categoryCode,
+            action_xmlid: String(item.action_xmlid || target.action_xmlid || '').trim(),
+            target,
+          };
+        })
+        .filter((item): item is HandlingEntryItem => Boolean(item));
+      if (!items.length) return null;
+      return {
+        key: String(group.key || `group-${groupIndex + 1}`).trim(),
+        title: String(group.title || group.key || `入口 ${groupIndex + 1}`).trim(),
+        items,
+      };
+    })
+    .filter((group): group is HandlingEntryGroup => Boolean(group));
+});
+
+const handlingEntryItemCount = computed(() => handlingEntryGroups.value.reduce((total, group) => total + group.items.length, 0));
 
 const idleDiagnosticMessage = computed(() => {
   const sceneKey = String(route.meta?.sceneKey || route.params.sceneKey || '').trim();
@@ -387,6 +487,55 @@ function handleSceneBlockAction(payload: { block: Record<string, unknown>; actio
   }
 }
 
+function isHandlingEntryActionable(item: HandlingEntryItem) {
+  const target = item.target || {};
+  return Boolean(
+    String(target.route || '').trim()
+    || String(target.scene_key || '').trim()
+    || String(target.action_xmlid || item.action_xmlid || '').trim()
+    || Number(target.action_id || target.menu_id || 0) > 0
+  );
+}
+
+function openHandlingEntry(item: HandlingEntryItem) {
+  if (!isHandlingEntryActionable(item)) return;
+  const target: Record<string, unknown> = {
+    ...(item.target || {}),
+    action_xmlid: String(item.target?.action_xmlid || item.action_xmlid || '').trim() || undefined,
+  };
+  const routeTarget = String(target.route || '').trim();
+  const workspaceContextQuery = resolveWorkspaceContextQuery() as Record<string, unknown>;
+  if (routeTarget) {
+    void router.push({ path: routeTarget, query: asRouteQuery(workspaceContextQuery) });
+    return;
+  }
+  const sceneKey = String(target.scene_key || '').trim();
+  if (sceneKey) {
+    const targetScene = getSceneByKey(sceneKey);
+    void router.push(buildCanonicalSceneRouteTarget(sceneKey, {
+      scene: targetScene,
+      query: asRouteQuery(workspaceContextQuery),
+      menuId: targetScene?.target?.menu_id,
+      actionId: targetScene?.target?.action_id,
+    }));
+    return;
+  }
+  const resolvedAction = resolveVisibleActionTarget(target as SceneTarget, currentSceneKey.value);
+  if (!resolvedAction) return;
+  const sceneLabel = String(scene.value?.label || currentSceneKey.value || '').trim();
+  void router.push({
+    path: route.path,
+    query: asRouteQuery({
+      ...workspaceContextQuery,
+      menu_id: Number(resolvedAction.menuId || 0) || undefined,
+      action_id: resolvedAction.actionId,
+      scene_key: currentSceneKey.value || undefined,
+      scene_label: sceneLabel || undefined,
+      business_category_code: item.business_category_code || undefined,
+    }),
+  });
+}
+
 async function hydrateSceneReadyForCurrentScene(sceneKey: string) {
   const key = String(sceneKey || '').trim();
   if (!key || sceneReadyHydrateRequested.value) {
@@ -498,10 +647,14 @@ function hasConsumableDeliveryRoot(scene: Scene | null) {
   const productDelivery = (currentScene.scene_ready?.product_delivery_surface && typeof currentScene.scene_ready.product_delivery_surface === 'object')
     ? currentScene.scene_ready.product_delivery_surface as Record<string, unknown>
     : {};
+  const handlingCatalog = (currentScene.scene_ready?.handling_entry_catalog && typeof currentScene.scene_ready.handling_entry_catalog === 'object')
+    ? currentScene.scene_ready.handling_entry_catalog as Record<string, unknown>
+    : {};
   return Boolean(
     String(runtimeHandoff.final_scene || '').trim()
     || String(productDelivery.final_scene || '').trim()
-    || String(productDelivery.delivery_mode || '').trim(),
+    || String(productDelivery.delivery_mode || '').trim()
+    || String(handlingCatalog.contract_version || '').trim(),
   );
 }
 
@@ -1395,6 +1548,134 @@ watch(
   white-space: nowrap;
 }
 
+.handling-surface {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.handling-surface__header {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 2px 0;
+  min-width: 0;
+}
+
+.handling-surface__eyebrow {
+  margin: 0 0 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--sc-app-text-secondary);
+}
+
+.handling-surface__title {
+  margin: 0;
+  font-size: 20px;
+  color: var(--sc-app-text-primary);
+}
+
+.handling-surface__badge {
+  flex: 0 0 auto;
+  min-width: 34px;
+  border: 1px solid var(--sc-app-border-strong);
+  border-radius: 999px;
+  padding: 4px 10px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--sc-app-text-secondary);
+  background: var(--sc-app-panel);
+}
+
+.handling-surface__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.handling-group {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  background: var(--sc-app-panel);
+  padding: 12px;
+  min-width: 0;
+}
+
+.handling-group__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.handling-group__header h4 {
+  margin: 0;
+  font-size: 15px;
+  color: var(--sc-app-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.handling-group__header span {
+  flex: 0 0 auto;
+  min-width: 26px;
+  border-radius: 999px;
+  padding: 2px 8px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--sc-app-info-text);
+  background: var(--sc-app-info-bg);
+  border: 1px solid var(--sc-app-info-border);
+}
+
+.handling-group__items {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+  gap: 8px;
+}
+
+.handling-item {
+  display: grid;
+  gap: 4px;
+  min-height: 66px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-primary);
+  padding: 9px 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.handling-item:hover:not(:disabled) {
+  border-color: var(--sc-semantic-surface-interactive);
+  box-shadow: 0 10px 22px var(--sc-app-focus-ring);
+}
+
+.handling-item:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.handling-item span {
+  font-size: 13px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.handling-item small {
+  font-size: 11px;
+  line-height: 1.25;
+  color: var(--sc-app-text-secondary);
+  overflow-wrap: anywhere;
+}
+
 .scene-top-controls--compact :deep(.ghost) {
   padding: 5px 11px;
   border-radius: 999px;
@@ -1420,6 +1701,18 @@ watch(
   .scene-delivery {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .handling-surface__header {
+    align-items: stretch;
+  }
+
+  .handling-surface__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .handling-group__items {
+    grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
   }
 }
 </style>
