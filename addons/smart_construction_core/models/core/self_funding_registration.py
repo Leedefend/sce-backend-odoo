@@ -70,7 +70,7 @@ class ScSelfFundingRegistration(models.Model):
         "res.currency",
         string="币种",
         required=True,
-        default=lambda self: self.env.ref("base.CNY", raise_if_not_found=False).id or self.env.company.currency_id.id,
+        default=lambda self: (self.env.ref("base.CNY", raise_if_not_found=False) or self.env.company.currency_id).id,
     )
     payment_account_name = fields.Char(string="公司账户/户名")
     partner_account_name = fields.Char(string="承包人账户/户名")

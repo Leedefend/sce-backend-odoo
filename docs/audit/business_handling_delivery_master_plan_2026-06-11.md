@@ -244,7 +244,7 @@
 - 已建立 `make verify.interfund_user_data.full_coverage.audit`，按用户数据事实区分项目借还调拨事实、公司-承包人责任事实和状态/台账输入：账户调拨 395、借款事实 872、还款事实 671 全量进入项目往来事实；到款确认 5205、自筹正式口径 2153/1575 进入公司-承包人责任事实；资金日报 7453、余额调整 519、融资登记 152、账户收支/日报明细不作为往来责任事实。
 - 已建立只读投影 `sc.company.contractor.responsibility.fact` 和 `make verify.company_contractor.responsibility_fact.audit`，把到款确认、自筹垫付、自筹退回从普通收付款分析口径中提升为公司-承包人责任事实，并保留项目资金状态影响用于约束后续办理动作。
 - 已建立只读汇总 `sc.company.contractor.responsibility.summary` 和 `make verify.company_contractor.responsibility_summary.audit`，按项目和承包人沉淀到款可处理余额、到款超处理金额、自筹未退余额和责任状态，作为后续拨付、扣款、退回、自筹抵扣、收款核销的办理约束读取口径。
-- 已增强 `make verify.company_contractor.responsibility_http.smoke`，不仅验证“公司-承包人资金责任余额”入口和列表可读，还验证余额行可通过“查看责任明细”钻取到 `sc.company.contractor.responsibility.fact`，且明细数量与 `source_line_count` 一致、首条明细具备 `source_model/source_res_id` 来源追溯。当前样本 4 条责任明细全部可追溯。
+- 已增强 `make verify.company_contractor.responsibility_http.smoke`，不仅验证“公司-承包人资金责任余额”入口和列表可读，还验证余额行可通过“查看责任明细”钻取到 `sc.company.contractor.responsibility.fact`，且明细数量与 `source_line_count` 一致、首条明细具备 `source_model/source_res_id` 来源追溯。当前 HTTP 样本 2 条责任明细全部可追溯。
 - 已把公司-承包人责任余额接入拨付/付款执行办理上下文：`sc.payment.execution` 表单和列表可读取责任状态、到款可处理余额、到款超处理金额和自筹未退余额，并可打开责任余额。`validate_company_contractor_responsibility_context.sh` 当前验证付款执行按正式往来单位匹配责任余额 678 条，费用/还款/保证金按收款人匹配 171 条，扣款抵扣按历史往来单位匹配 134 条。
 - 已把责任余额从“可读取”推进到付款执行动作约束：责任余额显示到款超处理时阻断继续付款；存在到款可处理余额且本次实付超过余额时阻断；自筹未退先作为办理提示不硬阻断。上下文门禁已覆盖自筹未退允许、超处理阻断、超余额阻断和余额内允许四种规则。
 - 已将公司-承包人责任口径纳入业务分类字典：`finance.responsibility.arrival_confirmation` 保留到款确认为项目收款状态并作为公司-承包人后续办理约束；`finance.responsibility.self_funding_income`、`finance.responsibility.self_funding_refund` 表达自筹垫付和自筹退回的责任影响；`finance.responsibility.company_contractor.balance` 作为只读办理约束余额。分类入口可复用同一个 action，但必须叠加字典 `domain_json`，不能让用户在泛化责任明细里自行判断类别。
@@ -679,7 +679,7 @@ tax_deduction_responsibility_constraints: over_processed blocks tax deduction, w
 - `sc.legacy.self.funding.fact` 继承公司-承包人责任上下文。
 - 自筹垫付收入、自筹垫付退回列表和表单展示责任状态、自筹未退余额，并可打开公司-承包人责任余额。
 - 正式余额仍只使用 `income/refund`，`income_visible/refund_visible` 仅作为旧入口可见参考，不参与余额计算。
-- 当前自筹入口仍为历史只读事实，不能作为新发生自筹垫付/退回的正式办理单据；正式登记、申请、审批、确认动作需要后续单独建模。
+- 历史自筹入口仍保持只读事实；新发生自筹垫付/退回使用 `sc.self.funding.registration` 正式办理单据，已覆盖附件、账户、提交/确认、完成、审批回调、资金台账、公司-承包人责任事实和超额退回阻断。后续重点是补用户可见面抽样和分类策略沉淀，不再重复建模。
 
 验证结果：
 

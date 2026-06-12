@@ -137,4 +137,4 @@ DB_NAME=sc_demo make verify.company_contractor.responsibility_http.smoke
 - 扣款单动作约束：`finance.deduction.bill` 是非现金扣款事实，不关联 `payment.request`，不进入现金台账；办理时同样读取公司-承包人责任余额，`arrival_over_processed_amount > 0` 时阻断继续扣款，`arrival_unprocessed_amount > 0` 且本次扣款金额超过该余额时阻断。扣款实缴、扣款退回和税务抵扣登记继续保留各自入口语义，不反向改造成同一类往来申请。
 - 当前约束实现复用 `sc.company.contractor.responsibility.context.mixin` 的余额判断，付款执行传入“本次实付金额”，扣款单传入“本次扣款金额”；验证脚本为 `scripts/ops/validate_company_contractor_responsibility_context.sh`。
 - 自筹源单上下文：`sc.legacy.self.funding.fact` 已接入同一责任上下文，正式 `income/refund` 源单可直接看到责任状态、自筹未退余额和责任明细钻取；旧可见参考族仍只作为用户认知和追溯，不作为余额计算事实。当前验证覆盖自筹正式源单按 `partner_id` 匹配 3700 条、按历史 `partner_name` 匹配 16 条。
-- 自筹正式办理缺口：现有自筹收入/退回入口仍是历史只读事实，不等于新系统新增登记、申请、审批、确认的办理单据。后续需要单独设计正式自筹垫付登记和自筹退回办理，不得直接把历史源表改成可编辑业务单。
+- 自筹正式办理现状：历史自筹收入/退回入口仍是只读事实；新系统新增自筹垫付登记和自筹退回办理使用 `sc.self.funding.registration`，不得直接把历史源表改成可编辑业务单。后续缺口转为补正式自筹办理的用户可见面抽样、分类策略沉淀，以及与付款、扣款、收款核销的责任余额联动。
