@@ -249,6 +249,10 @@ class MenuService:
             "productization_source",
             "business_entry_contract_version",
             "entry_target_policy",
+            "integration_action_id",
+            "integration_action_xmlid",
+            "integration_view_modes",
+            "integration_entry_target",
         )
         for group in policy.get("menu_groups") or []:
             if not isinstance(group, dict):

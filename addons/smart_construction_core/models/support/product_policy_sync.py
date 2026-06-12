@@ -77,6 +77,18 @@ USER_CONFIRMED_FORMAL_HIDE_MENU_XMLIDS = (
     "smart_construction_core.menu_scbsly_direct_project_acceptance_root",
     "smart_construction_core.menu_scbsly_acceptance_engineering_progress_receipt",
 )
+MERGE_BY_CATEGORY_INTEGRATION_ACTION_XMLIDS_BY_MODEL = {
+    "construction.contract.income": "smart_construction_core.action_construction_contract_income",
+    "construction.contract.expense": "smart_construction_core.action_construction_contract_expense",
+    "sc.settlement.order": "smart_construction_core.action_sc_settlement_order",
+    "sc.labor.usage": "smart_construction_core.action_sc_labor_usage",
+    "sc.material.outbound": "smart_construction_core.action_sc_material_outbound",
+    "sc.receipt.income": "smart_construction_core.action_sc_receipt_income",
+    "sc.payment.execution": "smart_construction_core.action_sc_payment_execution",
+    "sc.expense.claim": "smart_construction_core.action_sc_expense_claim",
+    "sc.financing.loan": "smart_construction_core.action_sc_financing_loan",
+    "sc.invoice.registration": "smart_construction_core.action_sc_invoice_registration",
+}
 
 
 def _text(value):
@@ -203,11 +215,40 @@ class ScProductPolicy(models.Model):
                 next_row["context_defaults"].setdefault("default_business_category_code", category_code)
         if disposition_policy == "merge_by_category":
             next_row["entry_target_policy"] = "merge_to_list_form_by_business_category"
+            self._annotate_merge_by_category_integration_target(next_row)
         elif entry_intent in {"query", "analysis", "config", "master_data", "source_fact"}:
             next_row["entry_target_policy"] = "keep_separate_%s" % entry_intent
         else:
             next_row["entry_target_policy"] = "keep_list_form"
         return next_row
+
+    @api.model
+    def _annotate_merge_by_category_integration_target(self, row):
+        model = _text(row.get("fact_model") or row.get("res_model"))
+        action_xmlid = MERGE_BY_CATEGORY_INTEGRATION_ACTION_XMLIDS_BY_MODEL.get(model)
+        if not action_xmlid:
+            return row
+        action = self.env.ref(action_xmlid, raise_if_not_found=False)
+        if not action or _text(getattr(action, "res_model", "")) != model:
+            return row
+        action_id = int(action.id or 0)
+        if action_id <= 0:
+            return row
+        view_modes = [_text(item) for item in _text(getattr(action, "view_mode", "")).split(",") if _text(item)]
+        row["integration_action_xmlid"] = action_xmlid
+        row["integration_action_id"] = action_id
+        row["integration_view_modes"] = view_modes
+        row["integration_entry_target"] = {
+            "type": "compatibility",
+            "route": "/a/%s" % action_id,
+            "compatibility_refs": {
+                "action_id": action_id,
+                "model": model,
+                "view_modes": view_modes,
+                "delivery_mode": "merge_by_category_integration",
+            },
+        }
+        return row
 
     @api.model
     def _capabilities_from_user_confirmed_menu_groups(self, menu_groups):

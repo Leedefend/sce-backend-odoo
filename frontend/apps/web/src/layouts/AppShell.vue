@@ -238,6 +238,7 @@ import { buildRuntimeNavigationRegistry } from '../app/navigationRegistry';
 import { applyTheme, nextTheme, persistTheme, type ScTheme } from '../styles/theme';
 import { config } from '../config';
 import { openAction } from '../services/action_service';
+import { buildBusinessEntryNavQuery } from '../app/navigationContext';
 import type { BusinessScopeOperationOption, NavNode, ProjectContextOption } from '@sc/schema';
 import {
   exportSuggestedActionTraces,
@@ -1208,8 +1209,26 @@ function mergeCategoryTargetLabel(node: NavNode): string {
   const target = String(node.meta?.integration_target || '').trim();
   if (!target) return '分类办理';
   return target
-    .replace(/^[A-Za-z0-9_.]+\s*/, '')
+    .replace(/^[A-Za-z0-9_.]+[\/\s]*/, '')
     .trim() || target;
+}
+
+function commonIntegrationMeta(items: NavNode[]): Record<string, unknown> {
+  const actionIds = new Set(
+    items
+      .map((item) => asInteger(item.meta?.integration_action_id))
+      .filter((item): item is number => Boolean(item)),
+  );
+  if (actionIds.size !== 1) return {};
+  const first = items.find((item) => asInteger(item.meta?.integration_action_id));
+  const meta = first?.meta || {};
+  return {
+    action_id: asInteger(meta.integration_action_id),
+    action_xmlid: String(meta.integration_action_xmlid || '').trim() || undefined,
+    model: String(meta.fact_model || meta.model || '').trim() || undefined,
+    view_modes: Array.isArray(meta.integration_view_modes) ? meta.integration_view_modes : undefined,
+    entry_target: asDict(meta.integration_entry_target),
+  };
 }
 
 function groupMergeByCategoryTargets(nodes: NavNode[]): NavNode[] {
@@ -1226,6 +1245,7 @@ function groupMergeByCategoryTargets(nodes: NavNode[]): NavNode[] {
   const syntheticGroups = Array.from(grouped.entries()).flatMap(([key, items]) => {
     if (items.length <= 1) return items;
     const first = items[0];
+    const integrationMeta = commonIntegrationMeta(items);
     return [{
       key: `${first.key || first.menu_id || first.id || 'menu'}.merge.${key}`,
       label: mergeCategoryTargetLabel(first),
@@ -1237,6 +1257,11 @@ function groupMergeByCategoryTargets(nodes: NavNode[]): NavNode[] {
         merge_by_category_group: true,
         integration_target: first.meta?.integration_target,
         fact_model: first.meta?.fact_model || first.meta?.model,
+        entry_intent: first.meta?.entry_intent,
+        disposition_policy: first.meta?.disposition_policy,
+        business_entry_contract_version: first.meta?.business_entry_contract_version,
+        entry_target_policy: 'merge_to_list_form_by_business_category',
+        ...integrationMeta,
       },
     } as NavNode];
   });
@@ -1388,9 +1413,40 @@ function handleSelect(node: NavNode) {
     node.menu_id = node.id as number;
   }
   const targetMenuId = Number(node.menu_id || node.id || 0);
+  const menuQuery = buildMenuSelectionQuery();
+  const directMeta = asDict(node.meta);
+  const directEntryTarget = asDict(directMeta?.entry_target);
+  const directActionId = asInteger(directMeta?.action_id);
+  if (directMeta?.merge_by_category_group && (directEntryTarget || directActionId)) {
+    const query: LocationQueryRaw = {
+      ...menuQuery,
+    };
+    Object.entries(buildBusinessEntryNavQuery(directMeta || {})).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        query[key] = String(value);
+      }
+    });
+    if (directEntryTarget) {
+      router.push(buildEntryTargetRouteTarget(directEntryTarget, {
+        query,
+        menuId: targetMenuId || undefined,
+        actionId: directActionId,
+      })).catch(() => {});
+      return;
+    }
+    router.push({
+      name: 'action',
+      params: { actionId: directActionId },
+      query: {
+        ...query,
+        menu_id: targetMenuId || undefined,
+        action_id: directActionId,
+      },
+    }).catch(() => {});
+    return;
+  }
   if (targetMenuId <= 0) return;
   const resolved = resolveMenuAction(menuTree.value, targetMenuId);
-  const menuQuery = buildMenuSelectionQuery();
   if (resolved.kind === 'redirect') {
     const entryTarget = asDict(resolved.target?.entry_target);
     if (entryTarget) {

@@ -88,6 +88,10 @@ def build_delivery_menu_child(menu: Dict[str, Any]) -> Dict[str, Any] | None:
         "productization_source",
         "business_entry_contract_version",
         "entry_target_policy",
+        "integration_action_id",
+        "integration_action_xmlid",
+        "integration_view_modes",
+        "integration_entry_target",
     ):
         value = menu.get(key)
         if value not in (None, "", []):
