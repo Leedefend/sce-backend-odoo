@@ -32,8 +32,8 @@ CATEGORY_ACTIONS = {
             "default_type": "pay",
             "default_business_category_code": "finance.payment.apply.pay",
         },
-        "domain_tokens": ["type", "pay"],
-        "new_record_tokens": ["type", "pay"],
+        "domain_tokens": ["type", "pay", "business_category_id.code", "finance.payment.apply.pay"],
+        "new_record_tokens": ["business_category_id.code", "finance.payment.apply.pay"],
     },
     "finance.payment.apply.receive": {
         "label": "收款申请",
@@ -44,8 +44,8 @@ CATEGORY_ACTIONS = {
             "default_type": "receive",
             "default_business_category_code": "finance.payment.apply.receive",
         },
-        "domain_tokens": ["type", "receive"],
-        "new_record_tokens": ["type", "receive"],
+        "domain_tokens": ["type", "receive", "business_category_id.code", "finance.payment.apply.receive"],
+        "new_record_tokens": ["business_category_id.code", "finance.payment.apply.receive"],
     },
     "finance.payment.execution.partner": {
         "label": "往来单位付款",

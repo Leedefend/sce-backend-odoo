@@ -233,8 +233,8 @@
 
 | 分类编码 | 当前实现方式 | 后续字典化动作 |
 | --- | --- | --- |
-| `finance.payment.apply.pay` | `payment.request.business_category_id` | 已接入正式分类锚点；按付款申请入口或 `type=pay` 自动绑定，配置付款台账策略 |
-| `finance.payment.apply.receive` | `payment.request.business_category_id` | 已接入正式分类锚点；按收款申请入口或 `type=receive` 自动绑定，配置资金台账策略 |
+| `finance.payment.apply.pay` | `payment.request.business_category_id` | 已接入正式分类入口锚点；付款申请入口按 `business_category_id.code` 展示，`type=pay` 保留为收付事实字段 |
+| `finance.payment.apply.receive` | `payment.request.business_category_id` | 已接入正式分类入口锚点；收款申请入口按 `business_category_id.code` 展示，`type=receive` 保留为收付事实字段 |
 | `finance.payment.execution.partner` | `sc.payment.execution.business_category_id` | 已接入正式分类锚点；覆盖往来单位付款、供应商付款、合同/供货合同付款和支付申请残余等付款执行事实，配置付款申请同步策略 |
 | `finance.payment.execution.company` | `sc.payment.execution.business_category_id` | 已接入正式分类锚点；覆盖公司财务支出付款执行事实 |
 | `finance.receipt.income.project` | `sc.receipt.income.business_category_id` | 已接入正式分类锚点；收入入口按 `business_category_id.code` 展示，继续配置收款申请同步和责任余额策略 |
