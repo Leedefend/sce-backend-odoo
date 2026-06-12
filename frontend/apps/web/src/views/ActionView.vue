@@ -774,6 +774,7 @@ import {
   buildWorkbenchRouteTarget,
 } from '../app/runtime/actionViewRouteRuntime';
 import { buildCanonicalSceneRouteTarget, buildEntryTargetRouteTarget } from '../app/routeQuery';
+import { buildBusinessEntryNavQuery, buildBusinessEntryRequestContext } from '../app/navigationContext';
 import {
   hasRoutePresetGroupPageStateChanged,
   resolveRoutePresetActiveFilterValue,
@@ -1918,6 +1919,13 @@ const {
   routerPush: (target) => router.push(target as never),
 });
 
+function resolveMenuCarryQuery(meta?: Record<string, unknown> | null, extra?: Record<string, unknown>) {
+  return resolveCarryQuery({
+    ...buildBusinessEntryNavQuery(meta || {}),
+    ...(extra || {}),
+  });
+}
+
 const suppressNextRouteReload = ref(false);
 const routePresetRuntime = useActionViewRoutePresetRuntime({
   routeQueryMap,
@@ -2112,6 +2120,7 @@ const {
 } = useActionViewRequestContextRuntime({
   routeDomainRaw: () => String(route.query.domain_raw || '').trim(),
   routeContextRaw: () => String(route.query.context_raw || '').trim(),
+  routeContext: () => buildBusinessEntryRequestContext(route.query as Record<string, unknown>),
   menuId,
   activeField,
   filterValue,
@@ -3023,7 +3032,7 @@ async function redirectMenuOnlyRouteIfNeeded(): Promise<boolean> {
     session.setActionMeta(result.meta);
     if (entryTarget) {
       await router.replace(buildEntryTargetRouteTarget(entryTarget, {
-        query: resolveCarryQuery(),
+        query: resolveMenuCarryQuery(result.meta),
         menuId: currentMenuId,
         actionId: targetActionId,
         keepSceneRoute: keepSceneRoute.value,
@@ -3034,14 +3043,14 @@ async function redirectMenuOnlyRouteIfNeeded(): Promise<boolean> {
     await router.replace({
       name: 'action',
       params: { actionId: targetActionId },
-      query: resolveCarryQuery({ menu_id: currentMenuId, action_id: targetActionId }),
+      query: resolveMenuCarryQuery(result.meta, { menu_id: currentMenuId, action_id: targetActionId }),
     });
     return true;
   }
   if (result.kind === 'redirect') {
     if (result.target.entry_target) {
       await router.replace(buildEntryTargetRouteTarget(result.target.entry_target, {
-        query: resolveCarryQuery(),
+        query: resolveMenuCarryQuery(result.target.meta),
         menuId: result.target.menu_id || currentMenuId,
         actionId: result.target.action_id,
         keepSceneRoute: keepSceneRoute.value,
@@ -3053,7 +3062,7 @@ async function redirectMenuOnlyRouteIfNeeded(): Promise<boolean> {
       const sceneKey = String(result.target.scene_key || '').trim();
       await router.replace(buildCanonicalSceneRouteTarget(sceneKey, {
         scene: getSceneByKey(sceneKey),
-        query: resolveCarryQuery(),
+        query: resolveMenuCarryQuery(result.target.meta),
         menuId: result.target.menu_id || currentMenuId,
         actionId: result.target.action_id,
       }));
@@ -3067,7 +3076,7 @@ async function redirectMenuOnlyRouteIfNeeded(): Promise<boolean> {
       await router.replace({
         name: 'action',
         params: { actionId: targetActionId },
-        query: resolveCarryQuery({
+        query: resolveMenuCarryQuery(result.target.meta, {
           menu_id: result.target.menu_id || currentMenuId,
           action_id: targetActionId,
         }),

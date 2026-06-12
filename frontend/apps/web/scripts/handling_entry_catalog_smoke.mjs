@@ -100,6 +100,36 @@ function findNodeByLabel(nodes, label) {
   return null;
 }
 
+function findBusinessCategoryNode(nodes, preferredLabels = []) {
+  const preferred = new Set(preferredLabels.map((item) => String(item || "").trim()).filter(Boolean));
+  let fallback = null;
+  function walk(source) {
+    for (const node of source || []) {
+      if (!node || typeof node !== "object") {
+        continue;
+      }
+      const meta = node.meta && typeof node.meta === "object" ? node.meta : {};
+      const categoryCode = String(meta.default_business_category_code || "").trim();
+      const menuId = Number(node.menu_id || node.id || meta.menu_id || 0);
+      const actionId = Number(meta.action_id || 0);
+      const label = String(node.label || node.title || "").trim();
+      if (categoryCode && menuId > 0 && actionId > 0) {
+        const row = { node, meta, categoryCode, menuId, actionId, label };
+        if (preferred.has(label)) {
+          return row;
+        }
+        fallback = fallback || row;
+      }
+      const found = walk(Array.isArray(node.children) ? node.children : []);
+      if (found) {
+        return found;
+      }
+    }
+    return null;
+  }
+  return walk(nodes) || fallback;
+}
+
 async function main() {
   await ensureDirs();
   const executablePath = findCachedChromiumExecutable();
@@ -130,6 +160,10 @@ async function main() {
   const financeEntry = financeChildren[0] || {};
   const financeEntryMeta = financeEntry.meta || {};
   const financeEntryTarget = financeEntryMeta.entry_target || {};
+  const categoryNode = findBusinessCategoryNode(deliveryNav, ["支付申请", "报销申请", "采购计划", "收入合同"]);
+  if (!categoryNode) {
+    throw new Error("productized business category menu node missing");
+  }
   await page.goto(`${BASE_URL}${SCENE_PATH}?db=${encodeURIComponent(DB_NAME)}`, { waitUntil: "domcontentloaded", timeout: 60000 });
   await page.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {});
   await page.locator(".handling-surface").waitFor({ state: "visible", timeout: 60000 });
@@ -142,13 +176,41 @@ async function main() {
   const expectedGroups = ["收付款办理", "开票与税务办理", "费用与报销办理", "资金往来办理"];
   const missingGroups = expectedGroups.filter((title) => !groupTitles.includes(title));
 
+  await page.goto(`${BASE_URL}/m/${categoryNode.menuId}?db=${encodeURIComponent(DB_NAME)}`, { waitUntil: "domcontentloaded", timeout: 60000 });
+  await page.waitForURL((url) => (
+    url.searchParams.get("default_business_category_code") === categoryNode.categoryCode
+    && url.searchParams.get("current_business_category_code") === categoryNode.categoryCode
+  ), { timeout: 60000 });
+  await page.locator(".action-toolbar").waitFor({ state: "visible", timeout: 60000 });
+  const menuResolvedUrl = page.url();
+  const createButton = page.locator(".action-toolbar .toolbar-actions button").first();
+  if (!(await createButton.isVisible({ timeout: 30000 }).catch(() => false))) {
+    throw new Error(`create button missing for productized entry ${categoryNode.label}`);
+  }
+  await createButton.click();
+  await page.waitForURL((url) => (
+    url.pathname.includes("/new")
+    && url.searchParams.get("default_business_category_code") === categoryNode.categoryCode
+  ), { timeout: 60000 });
+  const createResolvedUrl = page.url();
+
   const report = {
-    ok: missingGroups.length === 0 && groupTitles.length === 4 && itemLabels.length === 35 && !rawCodeVisible && consoleErrors.length === 0,
+    ok: missingGroups.length === 0 && groupTitles.length === 4 && itemLabels.length === 35 && !rawCodeVisible && consoleErrors.length === 0
+      && menuResolvedUrl.includes(`default_business_category_code=${encodeURIComponent(categoryNode.categoryCode)}`)
+      && createResolvedUrl.includes(`default_business_category_code=${encodeURIComponent(categoryNode.categoryCode)}`),
     baseUrl: BASE_URL,
     dbName: DB_NAME,
     scenePath: SCENE_PATH,
     financeChildLabels,
     financeEntryTarget,
+    categoryNavigation: {
+      label: categoryNode.label,
+      menuId: categoryNode.menuId,
+      actionId: categoryNode.actionId,
+      categoryCode: categoryNode.categoryCode,
+      menuResolvedUrl,
+      createResolvedUrl,
+    },
     groupTitles,
     itemCount: itemLabels.length,
     missingGroups,

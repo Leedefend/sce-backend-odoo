@@ -36,6 +36,7 @@ type GroupByChip = {
 type UseActionViewRequestContextRuntimeOptions = {
   routeDomainRaw: () => string;
   routeContextRaw: () => string;
+  routeContext?: () => Dict;
   menuId: Ref<number | null>;
   activeField: Ref<string>;
   filterValue: Ref<'all' | 'active' | 'archived'>;
@@ -115,7 +116,10 @@ export function useActionViewRequestContextRuntime(options: UseActionViewRequest
   }
 
   function resolveEffectiveRequestContext() {
-    return resolveEffectiveRequestContextRuntime(resolveEffectiveFilterContext(), resolveGroupByContext());
+    return {
+      ...(options.routeContext ? options.routeContext() : {}),
+      ...resolveEffectiveRequestContextRuntime(resolveEffectiveFilterContext(), resolveGroupByContext()),
+    };
   }
 
   function resolveEffectiveRequestContextRaw() {

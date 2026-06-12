@@ -42,7 +42,7 @@ import { resolveMenuAction } from '../app/resolvers/menuResolver';
 import StatusPanel from '../components/StatusPanel.vue';
 import { ErrorCodes } from '../app/error_codes';
 import { evaluateCapabilityPolicy } from '../app/capabilityPolicy';
-import { pickContractNavQuery } from '../app/navigationContext';
+import { buildBusinessEntryNavQuery, pickContractNavQuery } from '../app/navigationContext';
 import { usePageContract } from '../app/pageContract';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
 import { buildCanonicalSceneRouteTarget, buildEntryTargetRouteTarget } from '../app/routeQuery';
@@ -67,6 +67,13 @@ const headerActions = computed(() => pageGlobalActions.value);
 
 function resolveCarryQuery(extra?: Record<string, unknown>) {
   return pickContractNavQuery(route.query as Record<string, unknown>, extra);
+}
+
+function resolveMenuCarryQuery(meta?: Record<string, unknown> | null, extra?: Record<string, unknown>) {
+  return resolveCarryQuery({
+    ...buildBusinessEntryNavQuery(meta || {}),
+    ...(extra || {}),
+  });
 }
 
 function isRootContainerMenu(menuId: number): boolean {
@@ -112,13 +119,13 @@ async function resolve() {
       if (isMenuConfigurationAction(result.meta)) {
         await router.replace({
           path: '/admin/menu-config',
-          query: resolveCarryQuery({ menu_id: menuId, action_id: result.meta.action_id }),
+          query: resolveMenuCarryQuery(result.meta, { menu_id: menuId, action_id: result.meta.action_id }),
         });
         return;
       }
       if (entryTarget) {
         await router.replace(buildEntryTargetRouteTarget(entryTarget, {
-          query: resolveCarryQuery(),
+          query: resolveMenuCarryQuery(result.meta),
           menuId,
           actionId: result.meta.action_id,
         }) as never);
@@ -127,14 +134,14 @@ async function resolve() {
       await router.replace({
         name: 'action',
         params: { actionId: result.meta.action_id },
-        query: resolveCarryQuery({ menu_id: menuId, action_id: result.meta.action_id }),
+        query: resolveMenuCarryQuery(result.meta, { menu_id: menuId, action_id: result.meta.action_id }),
       });
       return;
     }
     if (result.kind === 'redirect') {
       if (result.target.entry_target) {
         await router.replace(buildEntryTargetRouteTarget(result.target.entry_target, {
-          query: resolveCarryQuery(),
+          query: resolveMenuCarryQuery(result.target.meta),
           menuId: result.target.menu_id,
           actionId: result.target.action_id,
         }) as never);
@@ -144,7 +151,7 @@ async function resolve() {
         const sceneKey = String(result.target.scene_key || '').trim();
         await router.replace(buildCanonicalSceneRouteTarget(sceneKey, {
           scene: getSceneByKey(sceneKey),
-          query: resolveCarryQuery(),
+          query: resolveMenuCarryQuery(result.target.meta),
           menuId: result.target.menu_id,
           actionId: result.target.action_id,
         }));
@@ -154,7 +161,7 @@ async function resolve() {
         if (isMenuConfigurationAction(result.target.meta)) {
           await router.replace({
             path: '/admin/menu-config',
-            query: resolveCarryQuery({ menu_id: result.target.menu_id, action_id: result.target.action_id }),
+            query: resolveMenuCarryQuery(result.target.meta, { menu_id: result.target.menu_id, action_id: result.target.action_id }),
           });
           return;
         }
@@ -177,7 +184,7 @@ async function resolve() {
         await router.replace({
           name: 'action',
           params: { actionId: result.target.action_id },
-          query: resolveCarryQuery({ menu_id: result.target.menu_id, action_id: result.target.action_id }),
+          query: resolveMenuCarryQuery(result.target.meta, { menu_id: result.target.menu_id, action_id: result.target.action_id }),
         });
         return;
       }
