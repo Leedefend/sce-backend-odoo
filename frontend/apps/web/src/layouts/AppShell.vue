@@ -238,7 +238,6 @@ import { buildRuntimeNavigationRegistry } from '../app/navigationRegistry';
 import { applyTheme, nextTheme, persistTheme, type ScTheme } from '../styles/theme';
 import { config } from '../config';
 import { openAction } from '../services/action_service';
-import { buildBusinessEntryNavQuery } from '../app/navigationContext';
 import type { BusinessScopeOperationOption, NavNode, ProjectContextOption } from '@sc/schema';
 import {
   exportSuggestedActionTraces,
@@ -322,7 +321,7 @@ const roleSurface = computed(() => session.roleSurface);
 const shellLogoText = computed(() => config.appBrand.shellLogoText || 'SC');
 const rootNode = computed(() => (menuTree.value.length === 1 ? menuTree.value[0] : null));
 const menuNodes = computed(() => rootNode.value?.children ?? menuTree.value);
-const visibleMenuNodes = computed(() => groupMenuNodesByBusinessIntent(menuNodes.value));
+const visibleMenuNodes = computed(() => menuNodes.value);
 const menuCount = computed(() => visibleMenuNodes.value.length);
 const routeAllowsEmptyMenu = computed(() => route.meta?.adminOnly === true || route.path.startsWith('/admin/'));
 const rootTitle = computed(() => {
@@ -1179,153 +1178,6 @@ function isRootContainerMenuId(menuId?: number): boolean {
   return rootId > 0 && rootId === Number(menuId);
 }
 
-const BUSINESS_INTENT_BUCKETS = [
-  { key: 'handling', label: '办理入口', sequence: 10, intents: new Set(['handling']) },
-  { key: 'ledger_query', label: '台账查询', sequence: 20, intents: new Set(['query', 'master_data']) },
-  { key: 'analysis', label: '分析报表', sequence: 30, intents: new Set(['analysis']) },
-  { key: 'source_fact', label: '来源明细', sequence: 40, intents: new Set(['source_fact']) },
-  { key: 'config', label: '基础配置', sequence: 50, intents: new Set(['config']) },
-] as const;
-
-function businessEntryIntent(node: NavNode): string {
-  return String(node.meta?.entry_intent || '').trim();
-}
-
-function businessIntentBucket(node: NavNode) {
-  const intent = businessEntryIntent(node);
-  return BUSINESS_INTENT_BUCKETS.find((bucket) => bucket.intents.has(intent));
-}
-
-function mergeCategoryTargetKey(node: NavNode): string {
-  const meta = node.meta || {};
-  if (String(meta.disposition_policy || '').trim() !== 'merge_by_category') return '';
-  const target = String(meta.integration_target || '').trim();
-  const model = String(meta.fact_model || meta.model || '').trim();
-  if (!target || !model) return '';
-  return `${model}::${target}`;
-}
-
-function mergeCategoryTargetLabel(node: NavNode): string {
-  const target = String(node.meta?.integration_target || '').trim();
-  if (!target) return '分类办理';
-  return target
-    .replace(/^[A-Za-z0-9_.]+[\/\s]*/, '')
-    .trim() || target;
-}
-
-function commonIntegrationMeta(items: NavNode[]): Record<string, unknown> {
-  const actionIds = new Set(
-    items
-      .map((item) => asInteger(item.meta?.integration_action_id))
-      .filter((item): item is number => Boolean(item)),
-  );
-  if (actionIds.size !== 1) return {};
-  const first = items.find((item) => asInteger(item.meta?.integration_action_id));
-  const meta = first?.meta || {};
-  return {
-    action_id: asInteger(meta.integration_action_id),
-    action_xmlid: String(meta.integration_action_xmlid || '').trim() || undefined,
-    model: String(meta.fact_model || meta.model || '').trim() || undefined,
-    view_modes: Array.isArray(meta.integration_view_modes) ? meta.integration_view_modes : undefined,
-    entry_target: asDict(meta.integration_entry_target),
-  };
-}
-
-function groupMergeByCategoryTargets(nodes: NavNode[]): NavNode[] {
-  const grouped = new Map<string, NavNode[]>();
-  const passthrough: NavNode[] = [];
-  nodes.forEach((node) => {
-    const key = mergeCategoryTargetKey(node);
-    if (!key) {
-      passthrough.push(node);
-      return;
-    }
-    grouped.set(key, [...(grouped.get(key) || []), node]);
-  });
-  const syntheticGroups = Array.from(grouped.entries()).flatMap(([key, items]) => {
-    if (items.length <= 1) return items;
-    const first = items[0];
-    const integrationMeta = commonIntegrationMeta(items);
-    return [{
-      key: `${first.key || first.menu_id || first.id || 'menu'}.merge.${key}`,
-      label: mergeCategoryTargetLabel(first),
-      title: mergeCategoryTargetLabel(first),
-      sequence: Number(first.sequence || first.meta?.sequence || 0),
-      children: items,
-      meta: {
-        business_entry_group: true,
-        merge_by_category_group: true,
-        integration_target: first.meta?.integration_target,
-        fact_model: first.meta?.fact_model || first.meta?.model,
-        entry_intent: first.meta?.entry_intent,
-        disposition_policy: first.meta?.disposition_policy,
-        business_entry_contract_version: first.meta?.business_entry_contract_version,
-        entry_target_policy: 'merge_to_list_form_by_business_category',
-        ...integrationMeta,
-      },
-    } as NavNode];
-  });
-  return [...passthrough, ...syntheticGroups];
-}
-
-function hasBusinessEntryIntent(node: NavNode): boolean {
-  if (businessEntryIntent(node)) return true;
-  return Boolean(node.children?.some((child) => hasBusinessEntryIntent(child)));
-}
-
-function groupMenuNodesByBusinessIntent(nodes: NavNode[]): NavNode[] {
-  return nodes.map((node) => groupMenuNodeByBusinessIntent(node));
-}
-
-function groupMenuNodeByBusinessIntent(node: NavNode): NavNode {
-  const children = Array.isArray(node.children) ? node.children : [];
-  if (!children.length) return node;
-  const groupedChildren = children.map((child) => groupMenuNodeByBusinessIntent(child));
-  const bucketed = new Map<string, NavNode[]>();
-  const passthrough: NavNode[] = [];
-  groupedChildren.forEach((child) => {
-    const bucket = businessIntentBucket(child);
-    if (!bucket) {
-      passthrough.push(child);
-      return;
-    }
-    bucketed.set(bucket.key, [...(bucketed.get(bucket.key) || []), child]);
-  });
-  const productizedChildCount = Array.from(bucketed.values()).reduce((total, items) => total + items.length, 0);
-  const shouldGroup = productizedChildCount >= 2 && bucketed.size >= 2;
-  if (!shouldGroup) {
-    return { ...node, children: groupedChildren };
-  }
-  const syntheticGroups = BUSINESS_INTENT_BUCKETS
-    .map((bucket) => {
-      const items = bucketed.get(bucket.key) || [];
-      if (!items.length) return null;
-      const children = bucket.key === 'handling'
-        ? groupMergeByCategoryTargets(items)
-        : items;
-      return {
-        key: `${node.key || node.menu_id || node.id || 'menu'}.intent.${bucket.key}`,
-        label: bucket.label,
-        title: bucket.label,
-        sequence: bucket.sequence,
-        children,
-        meta: {
-          intent_group: bucket.key,
-          business_entry_group: true,
-        },
-      } as NavNode;
-    })
-    .filter(Boolean) as NavNode[];
-  return {
-    ...node,
-    children: [
-      ...passthrough.filter((child) => !hasBusinessEntryIntent(child)),
-      ...syntheticGroups,
-      ...passthrough.filter((child) => hasBusinessEntryIntent(child)),
-    ],
-  };
-}
-
 const breadcrumb = computed(() => {
   const crumbs: Array<{ label: string; to?: string }> = [];
   const menuId = activeMenuId.value;
@@ -1414,37 +1266,6 @@ function handleSelect(node: NavNode) {
   }
   const targetMenuId = Number(node.menu_id || node.id || 0);
   const menuQuery = buildMenuSelectionQuery();
-  const directMeta = asDict(node.meta);
-  const directEntryTarget = asDict(directMeta?.entry_target);
-  const directActionId = asInteger(directMeta?.action_id);
-  if (directMeta?.merge_by_category_group && (directEntryTarget || directActionId)) {
-    const query: LocationQueryRaw = {
-      ...menuQuery,
-    };
-    Object.entries(buildBusinessEntryNavQuery(directMeta || {})).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
-        query[key] = String(value);
-      }
-    });
-    if (directEntryTarget) {
-      router.push(buildEntryTargetRouteTarget(directEntryTarget, {
-        query,
-        menuId: targetMenuId || undefined,
-        actionId: directActionId,
-      })).catch(() => {});
-      return;
-    }
-    router.push({
-      name: 'action',
-      params: { actionId: directActionId },
-      query: {
-        ...query,
-        menu_id: targetMenuId || undefined,
-        action_id: directActionId,
-      },
-    }).catch(() => {});
-    return;
-  }
   if (targetMenuId <= 0) return;
   const resolved = resolveMenuAction(menuTree.value, targetMenuId);
   if (resolved.kind === 'redirect') {

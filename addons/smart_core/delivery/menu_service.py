@@ -6,6 +6,7 @@ from odoo.addons.smart_core.core.delivery_menu_defaults import (
     build_delivery_menu_child,
     build_delivery_menu_group,
     build_delivery_menu_root,
+    synthetic_menu_id,
 )
 from odoo.addons.smart_core.delivery.menu_delivery_convergence_service import MenuDeliveryConvergenceService
 from odoo.addons.smart_core.delivery.native_config_menu_projection import native_config_delivery_groups
@@ -17,6 +18,13 @@ class MenuService:
     NO_BUSINESS_FACT_AUTHORITY = True
     NATIVE_PREVIEW_GROUP_KEY = "native_preview"
     NATIVE_PREVIEW_GROUP_LABEL = "系统菜单"
+    BUSINESS_INTENT_BUCKETS = (
+        ("handling", "办理入口", 10, {"handling"}),
+        ("ledger_query", "台账查询", 20, {"query", "master_data"}),
+        ("analysis", "分析报表", 30, {"analysis"}),
+        ("source_fact", "来源明细", 40, {"source_fact"}),
+        ("config", "基础配置", 50, {"config"}),
+    )
 
     def __init__(self, env=None):
         self.env = env
@@ -346,6 +354,175 @@ class MenuService:
             child=child,
         )
 
+    def _business_entry_intent(self, node: dict) -> str:
+        meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+        return str(meta.get("entry_intent") or "").strip()
+
+    def _business_intent_bucket(self, node: dict) -> tuple[str, str, int, set] | None:
+        intent = self._business_entry_intent(node)
+        if not intent:
+            return None
+        for bucket in self.BUSINESS_INTENT_BUCKETS:
+            if intent in bucket[3]:
+                return bucket
+        return None
+
+    def _has_business_entry_intent(self, node: dict) -> bool:
+        if self._business_entry_intent(node):
+            return True
+        return any(
+            self._has_business_entry_intent(child)
+            for child in (node.get("children") if isinstance(node.get("children"), list) else [])
+            if isinstance(child, dict)
+        )
+
+    def _merge_by_category_key(self, node: dict) -> str:
+        meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+        if str(meta.get("disposition_policy") or "").strip() != "merge_by_category":
+            return ""
+        target = str(meta.get("integration_target") or "").strip()
+        model = str(meta.get("fact_model") or meta.get("model") or "").strip()
+        if not target or not model:
+            return ""
+        return f"{model}::{target}"
+
+    def _merge_by_category_label(self, node: dict) -> str:
+        meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+        target = str(meta.get("integration_target") or "").strip()
+        if not target:
+            return "分类办理"
+        label = re.sub(r"^[A-Za-z0-9_.]+[/\s]*", "", target).strip()
+        return label or target
+
+    def _merged_integration_meta(self, items: list[dict]) -> dict:
+        action_ids = set()
+        first_meta = {}
+        for item in items:
+            meta = item.get("meta") if isinstance(item.get("meta"), dict) else {}
+            try:
+                action_id = int(meta.get("integration_action_id") or 0)
+            except Exception:
+                action_id = 0
+            if action_id > 0:
+                action_ids.add(action_id)
+                if not first_meta:
+                    first_meta = meta
+        if len(action_ids) != 1 or not first_meta:
+            return {}
+        view_modes = first_meta.get("integration_view_modes")
+        entry_target = first_meta.get("integration_entry_target")
+        return {
+            "action_id": next(iter(action_ids)),
+            "action_xmlid": str(first_meta.get("integration_action_xmlid") or "").strip(),
+            "model": str(first_meta.get("fact_model") or first_meta.get("model") or "").strip(),
+            "view_modes": view_modes if isinstance(view_modes, list) else [],
+            "entry_target": entry_target if isinstance(entry_target, dict) else {},
+        }
+
+    def _group_merge_by_category_nodes(self, nodes: list[dict], parent_key: str = "") -> list[dict]:
+        grouped = {}
+        passthrough = []
+        for node in nodes:
+            if not isinstance(node, dict):
+                continue
+            key = self._merge_by_category_key(node)
+            if not key:
+                passthrough.append(node)
+                continue
+            grouped.setdefault(key, []).append(node)
+        synthetic_groups = []
+        for key, items in grouped.items():
+            if len(items) <= 1:
+                synthetic_groups.extend(items)
+                continue
+            first = items[0]
+            meta = first.get("meta") if isinstance(first.get("meta"), dict) else {}
+            integration_meta = self._merged_integration_meta(items)
+            label = self._merge_by_category_label(first)
+            node_key = f"{parent_key}.merge_by_category:{key}" if parent_key else f"merge_by_category:{key}"
+            group_meta = {
+                "business_entry_group": True,
+                "merge_by_category_group": True,
+                "product_domain": meta.get("product_domain"),
+                "product_domain_label": meta.get("product_domain_label"),
+                "integration_target": meta.get("integration_target"),
+                "fact_model": meta.get("fact_model") or meta.get("model"),
+                "entry_intent": meta.get("entry_intent"),
+                "entry_intent_label": meta.get("entry_intent_label"),
+                "disposition_policy": meta.get("disposition_policy"),
+                "business_entry_contract_version": meta.get("business_entry_contract_version"),
+                "entry_target_policy": "merge_to_list_form_by_business_category",
+                "source": "delivery_engine_v1",
+                "source_authority": self.source_authority_contract(),
+            }
+            for field in ("action_id", "action_xmlid", "model", "view_modes", "entry_target"):
+                value = integration_meta.get(field)
+                if value not in (None, "", []):
+                    group_meta[field] = value
+            route = ""
+            entry_target = group_meta.get("entry_target") if isinstance(group_meta.get("entry_target"), dict) else {}
+            if entry_target:
+                route = str(entry_target.get("route") or "").strip()
+            if route:
+                group_meta["route"] = route
+            synthetic_groups.append(
+                {
+                    "key": node_key,
+                    "label": label,
+                    "title": label,
+                    "menu_id": synthetic_menu_id(node_key, base=870_000_000, span=10_000_000),
+                    "children": items,
+                    "sequence": int(first.get("sequence") or meta.get("sequence") or 0),
+                    "meta": group_meta,
+                }
+            )
+        return passthrough + synthetic_groups
+
+    def _group_children_by_business_intent(self, nodes: list[dict], parent_key: str = "") -> list[dict]:
+        next_nodes = []
+        for node in nodes:
+            if not isinstance(node, dict):
+                continue
+            children = node.get("children") if isinstance(node.get("children"), list) else []
+            if children:
+                node = dict(node)
+                child_key = str(node.get("key") or node.get("menu_id") or node.get("id") or parent_key).strip()
+                node["children"] = self._group_children_by_business_intent(children, parent_key=child_key)
+            next_nodes.append(node)
+        bucketed = {}
+        passthrough = []
+        for node in next_nodes:
+            bucket = self._business_intent_bucket(node)
+            if not bucket:
+                passthrough.append(node)
+                continue
+            bucketed.setdefault(bucket[0], []).append(node)
+        productized_count = sum(len(items) for items in bucketed.values())
+        if productized_count < 2 or len(bucketed) < 2:
+            return next_nodes
+        synthetic_groups = []
+        for bucket_key, label, sequence, _intents in self.BUSINESS_INTENT_BUCKETS:
+            items = bucketed.get(bucket_key) or []
+            if not items:
+                continue
+            intent_parent_key = parent_key or "root"
+            children = self._group_merge_by_category_nodes(items, parent_key=f"{intent_parent_key}.intent.{bucket_key}") if bucket_key == "handling" else items
+            group_key = f"{intent_parent_key}.intent.{bucket_key}"
+            group = build_delivery_menu_group(group_key, label, children)
+            group["sequence"] = sequence
+            group["meta"] = {
+                **(group.get("meta") if isinstance(group.get("meta"), dict) else {}),
+                "intent_group": bucket_key,
+                "business_entry_group": True,
+                "source_authority": self.source_authority_contract(),
+            }
+            synthetic_groups.append(group)
+        return (
+            [item for item in passthrough if not self._has_business_entry_intent(item)]
+            + synthetic_groups
+            + [item for item in passthrough if self._has_business_entry_intent(item)]
+        )
+
     def _native_preview_menus(self, *, native_nav: list[dict], policy: dict) -> list[dict]:
         preview_menus_by_group = {}
         group_order = []
@@ -621,6 +798,10 @@ class MenuService:
                     for menu in menus
                 ]
                 children = [child for child in children if child]
+                children = self._group_children_by_business_intent(
+                    children,
+                    parent_key=str(row.get("group_key") or group_key),
+                )
             if not children:
                 continue
             group_nodes.append(

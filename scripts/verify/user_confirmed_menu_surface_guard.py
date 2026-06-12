@@ -55,6 +55,18 @@ REQUIRED_PRODUCTIZATION_META_KEYS = {
     "business_entry_contract_version",
     "entry_target_policy",
 }
+MERGE_BY_CATEGORY_INTEGRATION_ACTION_XMLIDS_BY_MODEL = {
+    "construction.contract.income": "smart_construction_core.action_construction_contract_income",
+    "construction.contract.expense": "smart_construction_core.action_construction_contract_expense",
+    "sc.settlement.order": "smart_construction_core.action_sc_settlement_order",
+    "sc.labor.usage": "smart_construction_core.action_sc_labor_usage",
+    "sc.material.outbound": "smart_construction_core.action_sc_material_outbound",
+    "sc.receipt.income": "smart_construction_core.action_sc_receipt_income",
+    "sc.payment.execution": "smart_construction_core.action_sc_payment_execution",
+    "sc.expense.claim": "smart_construction_core.action_sc_expense_claim",
+    "sc.financing.loan": "smart_construction_core.action_sc_financing_loan",
+    "sc.invoice.registration": "smart_construction_core.action_sc_invoice_registration",
+}
 
 
 def artifact_root() -> Path:
@@ -80,6 +92,11 @@ def _write_artifact(result: dict) -> None:
 
 def _text(value) -> str:
     return str(value or "").strip()
+
+
+def _integration_entry_target_action_id(entry_target: dict) -> int:
+    compatibility_refs = entry_target.get("compatibility_refs") if isinstance(entry_target.get("compatibility_refs"), dict) else {}
+    return int(entry_target.get("action_id") or compatibility_refs.get("action_id") or 0)
 
 
 def _baseline_candidates() -> list[Path]:
@@ -182,6 +199,7 @@ def _assert_policy_productization_metadata(product_key: str) -> dict[str, int]:
     checked = 0
     missing = []
     merge_by_category = 0
+    integrated_merge_by_category = 0
     for group in groups:
         if not isinstance(group, dict):
             continue
@@ -199,11 +217,38 @@ def _assert_policy_productization_metadata(product_key: str) -> dict[str, int]:
                 merge_by_category += 1
                 if not _text(menu.get("default_business_category_code")):
                     missing.append({"menu_xmlid": menu_xmlid, "label": _text(menu.get("label")), "missing": ["default_business_category_code"]})
+                model_name = _text(menu.get("res_model") or menu.get("model") or menu.get("fact_model"))
+                expected_action_xmlid = MERGE_BY_CATEGORY_INTEGRATION_ACTION_XMLIDS_BY_MODEL.get(model_name)
+                if expected_action_xmlid:
+                    integrated_merge_by_category += 1
+                    entry_target = menu.get("integration_entry_target") if isinstance(menu.get("integration_entry_target"), dict) else {}
+                    integration_action_id = int(menu.get("integration_action_id") or 0)
+                    missing_integration = []
+                    if _text(menu.get("integration_action_xmlid")) != expected_action_xmlid:
+                        missing_integration.append("integration_action_xmlid")
+                    if integration_action_id <= 0:
+                        missing_integration.append("integration_action_id")
+                    if _text(entry_target.get("type")) != "compatibility":
+                        missing_integration.append("integration_entry_target.type")
+                    if _integration_entry_target_action_id(entry_target) != integration_action_id:
+                        missing_integration.append("integration_entry_target.action_id")
+                    if not _text(menu.get("integration_view_modes")):
+                        missing_integration.append("integration_view_modes")
+                    if missing_integration:
+                        missing.append(
+                            {
+                                "menu_xmlid": menu_xmlid,
+                                "label": _text(menu.get("label")),
+                                "model": model_name,
+                                "missing": missing_integration,
+                            }
+                        )
     if missing:
         raise AssertionError("%s productization metadata missing: %s" % (product_key, missing[:20]))
     return {
         "policy_productized_menu_count": checked,
         "policy_merge_by_category_count": merge_by_category,
+        "policy_integrated_merge_by_category_count": integrated_merge_by_category,
     }
 
 
@@ -323,9 +368,45 @@ def _assert_runtime_nav_locked() -> dict[str, int]:
         raise AssertionError("forbidden user-visible groups leaked: %s" % forbidden)
     productized_nodes = 0
     merge_by_category_nodes = 0
+    integrated_merge_by_category_nodes = 0
+    runtime_merge_group_nodes = 0
+    runtime_integrated_merge_group_nodes = 0
     missing_runtime_meta = []
     for path, node in _walk(nav):
         meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+        if meta.get("merge_by_category_group") is True:
+            runtime_merge_group_nodes += 1
+            children = node.get("children") if isinstance(node.get("children"), list) else []
+            entry_target = meta.get("entry_target") if isinstance(meta.get("entry_target"), dict) else {}
+            action_id = int(meta.get("action_id") or 0)
+            if action_id > 0:
+                runtime_integrated_merge_group_nodes += 1
+                missing_integration = []
+                if _text(meta.get("default_business_category_code")):
+                    missing_integration.append("default_business_category_code_must_be_empty")
+                if _text(meta.get("current_business_category_code")):
+                    missing_integration.append("current_business_category_code_must_be_empty")
+                if _text(entry_target.get("type")) != "compatibility":
+                    missing_integration.append("entry_target.type")
+                if _integration_entry_target_action_id(entry_target) != action_id:
+                    missing_integration.append("entry_target.action_id")
+                if len(children) <= 1:
+                    missing_integration.append("merged_children")
+                child_categories = [
+                    _text((child.get("meta") if isinstance(child.get("meta"), dict) else {}).get("default_business_category_code"))
+                    for child in children
+                    if isinstance(child, dict)
+                ]
+                if not all(child_categories):
+                    missing_integration.append("child_default_business_category_code")
+                if missing_integration:
+                    missing_runtime_meta.append(
+                        {
+                            "path": " / ".join(path),
+                            "label": _node_label(node),
+                            "missing": missing_integration,
+                        }
+                    )
         menu_xmlid = _text(meta.get("menu_xmlid") or node.get("menu_xmlid"))
         if not menu_xmlid or not menu_xmlid.startswith("smart_construction_core."):
             continue
@@ -338,6 +419,32 @@ def _assert_runtime_nav_locked() -> dict[str, int]:
                 merge_by_category_nodes += 1
                 if not _text(meta.get("default_business_category_code")):
                     missing_runtime_meta.append({"path": " / ".join(path), "menu_xmlid": menu_xmlid, "missing": ["default_business_category_code"]})
+                model_name = _text(meta.get("fact_model") or meta.get("res_model") or meta.get("model"))
+                expected_action_xmlid = MERGE_BY_CATEGORY_INTEGRATION_ACTION_XMLIDS_BY_MODEL.get(model_name)
+                if expected_action_xmlid:
+                    integrated_merge_by_category_nodes += 1
+                    entry_target = meta.get("integration_entry_target") if isinstance(meta.get("integration_entry_target"), dict) else {}
+                    integration_action_id = int(meta.get("integration_action_id") or 0)
+                    missing_integration = []
+                    if _text(meta.get("integration_action_xmlid")) != expected_action_xmlid:
+                        missing_integration.append("integration_action_xmlid")
+                    if integration_action_id <= 0:
+                        missing_integration.append("integration_action_id")
+                    if _text(entry_target.get("type")) != "compatibility":
+                        missing_integration.append("integration_entry_target.type")
+                    if _integration_entry_target_action_id(entry_target) != integration_action_id:
+                        missing_integration.append("integration_entry_target.action_id")
+                    if not _text(meta.get("integration_view_modes")):
+                        missing_integration.append("integration_view_modes")
+                    if missing_integration:
+                        missing_runtime_meta.append(
+                            {
+                                "path": " / ".join(path),
+                                "menu_xmlid": menu_xmlid,
+                                "model": model_name,
+                                "missing": missing_integration,
+                            }
+                        )
     if missing_runtime_meta:
         raise AssertionError("runtime productization metadata missing: %s" % missing_runtime_meta[:20])
     return {
@@ -345,6 +452,9 @@ def _assert_runtime_nav_locked() -> dict[str, int]:
         "runtime_root_count": len(nav),
         "runtime_productized_node_count": productized_nodes,
         "runtime_merge_by_category_node_count": merge_by_category_nodes,
+        "runtime_integrated_merge_by_category_node_count": integrated_merge_by_category_nodes,
+        "runtime_merge_group_node_count": runtime_merge_group_nodes,
+        "runtime_integrated_merge_group_node_count": runtime_integrated_merge_group_nodes,
     }
 
 

@@ -84,6 +84,48 @@ async function intent(page, token, intentName, params = {}) {
   }, { token, intentName, params, dbName: DB_NAME });
 }
 
+async function revealSidebarLabel(page, targetLabel) {
+  const target = page.locator('[data-component="SidebarNav"] button.label', { hasText: targetLabel }).first();
+  if (await target.isVisible({ timeout: 500 }).catch(() => false)) {
+    return;
+  }
+  for (const label of ["项目中心", "物资与分包", "财务中心", "人事行政"]) {
+    const button = page.locator('[data-component="SidebarNav"] button.label', { hasText: label }).first();
+    if (await button.count()) {
+      await button.click().catch(() => {});
+      await page.waitForTimeout(150);
+    }
+    if (await target.isVisible({ timeout: 500 }).catch(() => false)) {
+      return;
+    }
+  }
+  const intentButtons = await page.locator('[data-component="SidebarNav"] button.label', { hasText: "办理入口" }).count();
+  for (let index = 0; index < intentButtons; index += 1) {
+    await page.locator('[data-component="SidebarNav"] button.label', { hasText: "办理入口" }).nth(index).click().catch(() => {});
+    await page.waitForTimeout(150);
+    if (await target.isVisible({ timeout: 500 }).catch(() => false)) {
+      return;
+    }
+  }
+}
+
+async function openFinanceWorkspace(page, targetLabel = "") {
+  await page.goto(`${BASE_URL}${SCENE_PATH}?db=${encodeURIComponent(DB_NAME)}`, { waitUntil: "domcontentloaded", timeout: 60000 });
+  await page.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {});
+  await page.locator(".handling-surface").waitFor({ state: "visible", timeout: 60000 });
+  if (targetLabel) {
+    await revealSidebarLabel(page, targetLabel);
+  } else {
+    for (const label of ["项目中心", "物资与分包", "财务中心", "人事行政"]) {
+      const button = page.locator('[data-component="SidebarNav"] button.label', { hasText: label }).first();
+      if (await button.count()) {
+        await button.click().catch(() => {});
+      }
+    }
+  }
+  await page.waitForTimeout(500);
+}
+
 function findNodeByLabel(nodes, label) {
   for (const node of nodes || []) {
     if (!node || typeof node !== "object") {
@@ -164,16 +206,7 @@ async function main() {
   if (!categoryNode) {
     throw new Error("productized business category menu node missing");
   }
-  await page.goto(`${BASE_URL}${SCENE_PATH}?db=${encodeURIComponent(DB_NAME)}`, { waitUntil: "domcontentloaded", timeout: 60000 });
-  await page.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {});
-  await page.locator(".handling-surface").waitFor({ state: "visible", timeout: 60000 });
-  for (const label of ["项目中心", "物资与分包", "财务中心", "人事行政"]) {
-    const button = page.locator('[data-component="SidebarNav"] button.label', { hasText: label }).first();
-    if (await button.count()) {
-      await button.click().catch(() => {});
-    }
-  }
-  await page.waitForTimeout(500);
+  await openFinanceWorkspace(page);
   await page.screenshot({ path: SCREENSHOT_PATH, fullPage: true });
 
   const groupTitles = await page.locator(".handling-group__header h4").allTextContents();
@@ -192,18 +225,26 @@ async function main() {
   const missingGroups = expectedGroups.filter((title) => !groupTitles.includes(title));
   const expectedSidebarIntentLabels = ["办理入口", "台账查询", "分析报表", "来源明细"];
   const missingSidebarIntentLabels = expectedSidebarIntentLabels.filter((label) => !sidebarIntentLabels.includes(label));
-  const expenseFamilyButton = page.locator('[data-component="SidebarNav"] button.label', { hasText: "费用/扣款/保证金办理" }).first();
-  if (!(await expenseFamilyButton.isVisible({ timeout: 30000 }).catch(() => false))) {
-    throw new Error("merge family button missing: 费用/扣款/保证金办理");
+  const mergeFamilyNavigation = [];
+  for (const label of expectedMergeFamilyLabels) {
+    await openFinanceWorkspace(page, label);
+    const familyButton = page.locator('[data-component="SidebarNav"] button.label', { hasText: label }).first();
+    if (!(await familyButton.isVisible({ timeout: 30000 }).catch(() => false))) {
+      throw new Error(`merge family button missing: ${label}`);
+    }
+    const previousUrl = page.url();
+    await familyButton.click();
+    await page.waitForURL((url) => {
+      const actionId = Number(url.searchParams.get("action_id") || 0);
+      return url.href !== previousUrl
+        && url.pathname.startsWith("/a/")
+        && actionId > 0
+        && !url.searchParams.get("default_business_category_code")
+        && !url.searchParams.get("current_business_category_code");
+    }, { timeout: 60000 });
+    await page.locator(".action-toolbar").waitFor({ state: "visible", timeout: 60000 });
+    mergeFamilyNavigation.push({ label, resolvedUrl: page.url() });
   }
-  await expenseFamilyButton.click();
-  await page.waitForURL((url) => (
-    url.pathname.startsWith("/a/")
-    && !url.searchParams.get("default_business_category_code")
-    && !url.searchParams.get("current_business_category_code")
-  ), { timeout: 60000 });
-  await page.locator(".action-toolbar").waitFor({ state: "visible", timeout: 60000 });
-  const expenseFamilyResolvedUrl = page.url();
 
   await page.goto(`${BASE_URL}/m/${categoryNode.menuId}?db=${encodeURIComponent(DB_NAME)}`, { waitUntil: "domcontentloaded", timeout: 60000 });
   await page.waitForURL((url) => (
@@ -227,8 +268,8 @@ async function main() {
     ok: missingGroups.length === 0 && groupTitles.length === 4 && itemLabels.length === 35 && !rawCodeVisible && consoleErrors.length === 0
       && missingSidebarIntentLabels.length === 0
       && missingMergeFamilyLabels.length === 0
-      && expenseFamilyResolvedUrl.includes("/a/")
-      && !expenseFamilyResolvedUrl.includes("default_business_category_code=")
+      && mergeFamilyNavigation.length === expectedMergeFamilyLabels.length
+      && mergeFamilyNavigation.every((item) => item.resolvedUrl.includes("/a/") && !item.resolvedUrl.includes("default_business_category_code="))
       && menuResolvedUrl.includes(`default_business_category_code=${encodeURIComponent(categoryNode.categoryCode)}`)
       && createResolvedUrl.includes(`default_business_category_code=${encodeURIComponent(categoryNode.categoryCode)}`),
     baseUrl: BASE_URL,
@@ -241,10 +282,10 @@ async function main() {
       menuId: categoryNode.menuId,
       actionId: categoryNode.actionId,
       categoryCode: categoryNode.categoryCode,
-      expenseFamilyResolvedUrl,
       menuResolvedUrl,
       createResolvedUrl,
     },
+    mergeFamilyNavigation,
     groupTitles,
     sidebarIntentLabels,
     missingSidebarIntentLabels,
