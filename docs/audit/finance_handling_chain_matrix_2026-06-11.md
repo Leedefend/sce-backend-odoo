@@ -307,6 +307,7 @@ evidence: create temp record from runtime action context, then verify current ru
 - 新增 `scripts/verify/finance_business_category_action_audit.py`。
 - 新增 `scripts/ops/validate_finance_business_categories.sh`。
 - 覆盖 24 个财务分类候选，包括支付申请、往来单位付款、公司财务支出、收入、工程进度款收入、报销/项目费用、保证金、扣款、账户资金、资金日报、余额调整、借还款。
+- 费用/保证金/扣款/还款 12 个 `sc.expense.claim` 用户入口已收紧为 `business_category_id.code` 域，action context 同步写入 `default_business_category_code`；`claim_type`、`expense_type`、`guarantee_type` 继续作为业务事实字段和历史回填兜底，不再作为入口长期锚点。
 - 审计内容：
   - 分类编码候选必须绑定到明确 action。
   - action 必须使用正式模型。

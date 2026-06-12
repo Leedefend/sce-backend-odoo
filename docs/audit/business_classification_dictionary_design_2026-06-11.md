@@ -238,17 +238,17 @@
 | `finance.payment.execution.company` | `sc.payment.execution.business_category_id` | 已接入正式分类锚点；覆盖公司财务支出付款执行事实 |
 | `finance.receipt.income.project` | `sc.receipt.income` | 已接入正式 `business_category_id`，继续配置收款申请同步和责任余额策略 |
 | `finance.receipt.income.progress` | `sc.receipt.income` | 已接入正式 `business_category_id`，按工程进度款收入入口切分 |
-| `finance.expense.reimbursement` | `sc.expense.claim` expense context | 配置费用报销必填账户和付款台账策略 |
-| `finance.deposit.bid.pay` | `sc.expense.claim` action | 配置保证金付款方向和附件策略 |
-| `finance.deposit.bid.return` | `sc.expense.claim` action | 配置保证金退回方向和资金台账策略 |
-| `finance.deposit.contract.pay` | `sc.expense.claim` action | 配置合同保证金付款方向 |
-| `finance.deposit.contract.return` | `sc.expense.claim` action | 配置合同保证金退回方向 |
-| `finance.deduction.bill` | `sc.expense.claim` / tax deduction | Phase 2 明确税务/成本归属 |
+| `finance.expense.reimbursement` | `sc.expense.claim.business_category_id` | 已接入正式分类入口锚点；继续配置费用报销必填账户和付款台账策略 |
+| `finance.deposit.bid.pay` | `sc.expense.claim.business_category_id` | 已接入正式分类入口锚点；配置保证金付款方向和附件策略 |
+| `finance.deposit.bid.return` | `sc.expense.claim.business_category_id` | 已接入正式分类入口锚点；配置保证金退回方向和资金台账策略 |
+| `finance.deposit.contract.pay` | `sc.expense.claim.business_category_id` | 已接入正式分类入口锚点；配置合同保证金付款方向 |
+| `finance.deposit.contract.return` | `sc.expense.claim.business_category_id` | 已接入正式分类入口锚点；配置合同保证金退回方向 |
+| `finance.deduction.bill` | `sc.expense.claim.business_category_id` | 已接入正式分类入口锚点；保持非现金扣款事实边界 |
 | `finance.fund.transfer` | `sc.fund.account.operation.business_category_id` | 已接入正式分类锚点；账户划拨/调拨按入口上下文或 `operation_type` 自动绑定，继续配置账户方向必填和资金事实策略 |
 | `finance.loan.project_borrow_company` | `sc.financing.loan` | 公司借款给项目；进入内部往来事实和项目资金台账，不挂经营收付款申请 |
 | `finance.loan.contractor_project_borrow` | `sc.financing.loan` | 项目借款给承包人；当前由历史用途文本推断，后续沉淀为可维护分类规则 |
-| `finance.repayment.project_company` | `sc.expense.claim` | 项目还公司款；进入内部往来清偿事实 |
-| `finance.repayment.contractor_project` | `sc.expense.claim` | 承包人还项目款；进入内部往来清偿事实 |
+| `finance.repayment.project_company` | `sc.expense.claim.business_category_id` | 已接入正式分类入口锚点；项目还公司款进入内部往来清偿事实 |
+| `finance.repayment.contractor_project` | `sc.expense.claim.business_category_id` | 已接入正式分类入口锚点；承包人还项目款进入内部往来清偿事实 |
 | `finance.fund.daily_report` | `sc.fund.account.operation.business_category_id` | 已接入正式分类锚点；资金日报型台账，不进入往来款事实 |
 | `finance.fund.balance_adjustment` | `sc.fund.account.operation.business_category_id` | 已接入正式分类锚点；账户余额校准，不进入往来款事实 |
 | `finance.loan.registration` | `sc.financing.loan` | 融资债务登记，独立于内部往来款闭环 |
