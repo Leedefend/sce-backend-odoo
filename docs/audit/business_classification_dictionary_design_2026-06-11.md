@@ -487,17 +487,17 @@ category_count=5
 
 | 分类编码 | 用户可见事项 | 当前模型 | 当前实现方式 | 后续字典化动作 |
 | --- | --- | --- | --- | --- |
-| `invoice.output.application` | 销项开票申请 | `sc.invoice.registration` | action context/domain 绑定 `output_invoice_tax`、`output`、`销项开票申请` | 绑定销项申请审批、附件和合同/收款关系策略 |
-| `invoice.output.registration` | 销项开票登记 | `sc.invoice.registration` | 用户确认列表优先展示，正式表单可新建，domain 同时覆盖历史和新办理 | 绑定开票完成、税务口径和收入合同关系策略 |
-| `invoice.prepaid_tax` | 预缴税款 | `sc.invoice.registration` | action context/domain 绑定 `prepaid_tax`、`prepaid` | 绑定完税凭证和项目税务事实策略 |
-| `invoice.input.report` | 进项税额上报 | `sc.invoice.registration` | 用户确认列表优先展示，正式表单可新建，domain 同时覆盖历史和新办理 | 绑定进项发票、成本和抵扣来源关系策略 |
-| `tax.deduction.registration` | 抵扣登记 | `sc.tax.deduction.registration` | 以 `is_transfer_out=False` 和默认抵扣原因为过渡分类锚点 | 后续补正式分类字段或绑定业务分类字典，区分抵扣、转出、扣款抵扣 |
+| `invoice.output.application` | 销项开票申请 | `sc.invoice.registration.business_category_id` | 入口 domain 优先使用 `business_category_id.code='invoice.output.application'`，保留历史 `source_kind/direction/invoice_content` 兼容分支 | 绑定销项申请审批、附件和合同/收款关系策略 |
+| `invoice.output.registration` | 销项开票登记 | `sc.invoice.registration.business_category_id` | 用户确认列表和正式表单均写入 `default_business_category_code`，domain 优先按分类展示 | 绑定开票完成、税务口径和收入合同关系策略 |
+| `invoice.prepaid_tax` | 预缴税款 | `sc.invoice.registration.business_category_id` | 入口 domain 优先使用 `business_category_id.code='invoice.prepaid_tax'`，`prepaid_tax/prepaid` 保留为事实字段兜底 | 绑定完税凭证和项目税务事实策略 |
+| `invoice.input.report` | 进项税额上报 | `sc.invoice.registration.business_category_id` | 用户确认列表和正式表单均写入 `default_business_category_code`，domain 优先按分类展示 | 绑定进项发票、成本和抵扣来源关系策略 |
+| `tax.deduction.registration` | 抵扣登记 | `sc.tax.deduction.registration.business_category_id` | 入口 domain 优先使用 `business_category_id.code='tax.deduction.registration'`，`is_transfer_out=False` 仅作为历史/既有数据兼容分支 | 后续继续区分抵扣、转出、扣款抵扣的更细分类 |
 
 本轮结论：
 
 - 发票/税务入口不再只作为历史清单或报表来源，已具备从入口新建并回到同一入口的办理基础。
 - 后置用户确认列表仍保留为首屏，避免改变用户对历史字段和业务名称的认知。
-- 当前仍是 action/domain/context 过渡实现；抵扣登记尤其需要在正式字典模型落地时补充稳定分类字段，避免长期依赖 `is_transfer_out` 这类办理结果字段表达入口类别。
+- 当前入口已从 action 文本条件推进到 `business_category_id.code` 稳定分类锚点；`source_kind`、`direction`、`invoice_content`、`is_transfer_out` 继续作为业务事实字段和历史兼容条件，不再作为入口长期分类锚点。
 
 ## Iteration Evidence - 2026-06-11 Invoice And Tax Handling
 

@@ -224,8 +224,8 @@
         <field name="res_model">sc.invoice.registration</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="smart_construction_core.view_sc_invoice_registration_search"/>
-        <field name="domain">['|', ('legacy_source_model', '=', 'online_old_scbs:C_JXXP_KJFPSQ:list889'), '&amp;', ('source_kind', '=', 'output_invoice_tax'), '&amp;', ('direction', '=', 'output'), ('invoice_content', '=', '销项开票申请')]</field>
-        <field name="context">{'default_source_kind': 'output_invoice_tax', 'default_direction': 'output', 'default_invoice_content': '销项开票申请', 'search_default_group_project': 1}</field>
+        <field name="domain">['|', '|', ('business_category_id.code', '=', 'invoice.output.application'), ('legacy_source_model', '=', 'online_old_scbs:C_JXXP_KJFPSQ:list889'), '&amp;', ('source_kind', '=', 'output_invoice_tax'), '&amp;', ('direction', '=', 'output'), ('invoice_content', '=', '销项开票申请')]</field>
+        <field name="context">{'default_source_kind': 'output_invoice_tax', 'default_direction': 'output', 'default_invoice_content': '销项开票申请', 'default_business_category_code': 'invoice.output.application', 'search_default_group_project': 1}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
             ref('smart_construction_core.group_sc_cap_finance_read'),
@@ -238,8 +238,8 @@
         <field name="res_model">sc.invoice.registration</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="smart_construction_core.view_sc_invoice_registration_search"/>
-        <field name="domain">['|', ('legacy_source_model', 'in', ['online_old_scbs:C_JXXP_XXKPDJ:list890', 'online_old_scbsly:direct_acceptance:general_contract_input_tax_report:action933']), '&amp;', ('source_kind', '=', 'output_invoice_tax'), '&amp;', ('direction', '=', 'output'), ('invoice_content', '=', '销项开票登记')]</field>
-        <field name="context">{'default_source_kind': 'output_invoice_tax', 'default_direction': 'output', 'default_invoice_content': '销项开票登记', 'search_default_group_project': 1}</field>
+        <field name="domain">['|', '|', ('business_category_id.code', '=', 'invoice.output.registration'), ('legacy_source_model', 'in', ['online_old_scbs:C_JXXP_XXKPDJ:list890', 'online_old_scbsly:direct_acceptance:general_contract_input_tax_report:action933']), '&amp;', ('source_kind', '=', 'output_invoice_tax'), '&amp;', ('direction', '=', 'output'), ('invoice_content', '=', '销项开票登记')]</field>
+        <field name="context">{'default_source_kind': 'output_invoice_tax', 'default_direction': 'output', 'default_invoice_content': '销项开票登记', 'default_business_category_code': 'invoice.output.registration', 'search_default_group_project': 1}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
             ref('smart_construction_core.group_sc_cap_finance_read'),
@@ -252,8 +252,8 @@
         <field name="res_model">sc.invoice.registration</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="smart_construction_core.view_sc_invoice_registration_search"/>
-        <field name="domain">[('source_kind', '=', 'prepaid_tax'), ('direction', '=', 'prepaid')]</field>
-        <field name="context">{'default_source_kind': 'prepaid_tax', 'default_direction': 'prepaid', 'default_invoice_content': '预缴税款'}</field>
+        <field name="domain">['|', ('business_category_id.code', '=', 'invoice.prepaid_tax'), '&amp;', ('source_kind', '=', 'prepaid_tax'), ('direction', '=', 'prepaid')]</field>
+        <field name="context">{'default_source_kind': 'prepaid_tax', 'default_direction': 'prepaid', 'default_invoice_content': '预缴税款', 'default_business_category_code': 'invoice.prepaid_tax'}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
             ref('smart_construction_core.group_sc_cap_finance_read'),
@@ -266,8 +266,8 @@
         <field name="res_model">sc.invoice.registration</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="smart_construction_core.view_sc_invoice_registration_search"/>
-        <field name="domain">[('source_kind', '=', 'input_invoice_tax'), ('direction', '=', 'input')]</field>
-        <field name="context">{'default_source_kind': 'input_invoice_tax', 'default_direction': 'input', 'default_invoice_content': '进项税额上报', 'search_default_group_project': 1}</field>
+        <field name="domain">['|', ('business_category_id.code', '=', 'invoice.input.report'), '&amp;', ('source_kind', '=', 'input_invoice_tax'), ('direction', '=', 'input')]</field>
+        <field name="context">{'default_source_kind': 'input_invoice_tax', 'default_direction': 'input', 'default_invoice_content': '进项税额上报', 'default_business_category_code': 'invoice.input.report', 'search_default_group_project': 1}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
             ref('smart_construction_core.group_sc_cap_finance_read'),
@@ -280,8 +280,8 @@
         <field name="res_model">sc.tax.deduction.registration</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="smart_construction_core.view_sc_tax_deduction_registration_search"/>
-        <field name="domain">[('is_transfer_out', '=', False)]</field>
-        <field name="context">{'default_is_transfer_out': False, 'default_deduction_reason': '抵扣登记', 'search_default_group_project': 1}</field>
+        <field name="domain">['|', ('business_category_id.code', '=', 'tax.deduction.registration'), ('is_transfer_out', '=', False)]</field>
+        <field name="context">{'default_is_transfer_out': False, 'default_deduction_reason': '抵扣登记', 'default_business_category_code': 'tax.deduction.registration', 'search_default_group_project': 1}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_initiator'),
             ref('smart_construction_core.group_sc_cap_finance_read'),

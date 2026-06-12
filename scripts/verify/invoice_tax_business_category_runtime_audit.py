@@ -33,6 +33,7 @@ def _context_defaults(context):
         key[len("default_") :]: value
         for key, value in (context or {}).items()
         if isinstance(key, str) and key.startswith("default_")
+        and key not in {"default_business_category_code"}
     }
 
 
