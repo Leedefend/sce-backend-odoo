@@ -33,7 +33,8 @@ CATEGORY_ACTIONS = {
             "default_type": "pay",
             "default_business_category_code": "finance.payment.apply.pay",
         },
-        "domain_tokens": ["type", "pay", "business_category_id.code", "finance.payment.apply.pay"],
+        "domain_tokens": ["business_category_id.code", "finance.payment.apply.pay"],
+        "forbidden_domain_tokens": ["type"],
         "new_record_tokens": ["business_category_id.code", "finance.payment.apply.pay"],
     },
     "finance.payment.apply.receive": {
@@ -45,7 +46,8 @@ CATEGORY_ACTIONS = {
             "default_type": "receive",
             "default_business_category_code": "finance.payment.apply.receive",
         },
-        "domain_tokens": ["type", "receive", "business_category_id.code", "finance.payment.apply.receive"],
+        "domain_tokens": ["business_category_id.code", "finance.payment.apply.receive"],
+        "forbidden_domain_tokens": ["type"],
         "new_record_tokens": ["business_category_id.code", "finance.payment.apply.receive"],
     },
     "finance.payment.execution.partner": {
@@ -464,6 +466,9 @@ def main() -> int:
         for token in expected["domain_tokens"]:
             if token not in domain:
                 failures.append(f"{code}: domain missing token {token!r}")
+        for token in expected.get("forbidden_domain_tokens", []):
+            if token in domain:
+                failures.append(f"{code}: domain still contains fallback token {token!r}")
         for token in expected["new_record_tokens"]:
             if token not in domain:
                 failures.append(f"{code}: domain does not cover new-record token {token!r}")
