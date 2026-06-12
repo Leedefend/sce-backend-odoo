@@ -66,6 +66,13 @@ class ConstructionContract(models.Model):
         tracking=True,
         default="out",
     )
+    business_category_id = fields.Many2one(
+        "sc.business.category",
+        string="业务分类",
+        index=True,
+        ondelete="restrict",
+        domain="[('code', 'in', ['contract.income', 'contract.expense'])]",
+    )
     project_id = fields.Many2one(
         "project.project",
         string="项目名称",
@@ -354,6 +361,22 @@ class ConstructionContract(models.Model):
         except (TypeError, ValueError):
             return False
 
+    def _resolve_business_category_id(self, vals):
+        code = self.env.context.get("default_business_category_code") or self.env.context.get(
+            "current_business_category_code"
+        )
+        contract_type = vals.get("type") or self.env.context.get("default_type") or "out"
+        if not code:
+            code = "contract.income" if contract_type == "out" else "contract.expense"
+        category = self.env["sc.business.category"].sudo().search(
+            [
+                ("code", "=", code),
+                ("target_model", "in", ["construction.contract.income", "construction.contract.expense"]),
+            ],
+            limit=1,
+        )
+        return category.id if category else False
+
     @api.model
     def default_get(self, fields_list):
         res = super().default_get(fields_list)
@@ -624,6 +647,7 @@ class ConstructionContract(models.Model):
                 vals.setdefault("project_id", project_id)
             if not vals.get("type"):
                 vals["type"] = "out"
+            vals.setdefault("business_category_id", self._resolve_business_category_id(vals))
             tax = self.env["account.tax"].browse(vals.get("tax_id")).exists() if vals.get("tax_id") else False
             if not self._is_contract_tax_compatible(tax, vals.get("type")):
                 default_tax = self._get_default_tax(vals["type"])
@@ -655,6 +679,24 @@ class ConstructionContract(models.Model):
         for record in records.filtered(lambda rec: rec.type == "in" and not rec.expense_contract_category_id and rec.expense_contract_category_auto_id):
             record.expense_contract_category_id = record.expense_contract_category_auto_id.id
         return records
+
+    def init(self):
+        self.env.cr.execute(
+            """
+            UPDATE construction_contract contract
+               SET business_category_id = category.id
+              FROM sc_business_category category
+             WHERE contract.business_category_id IS NULL
+               AND category.code = CASE
+                       WHEN contract.type = 'in' THEN 'contract.expense'
+                       ELSE 'contract.income'
+                   END
+               AND category.target_model = CASE
+                       WHEN contract.type = 'in' THEN 'construction.contract.expense'
+                       ELSE 'construction.contract.income'
+                   END
+            """
+        )
 
     def write(self, vals):
         res = super().write(vals)

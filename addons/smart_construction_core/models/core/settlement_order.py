@@ -46,6 +46,13 @@ class ScSettlementOrder(models.Model):
         string="结算类型",
         default="out",
     )
+    business_category_id = fields.Many2one(
+        "sc.business.category",
+        string="业务分类",
+        index=True,
+        ondelete="restrict",
+        domain="[('target_model', '=', 'sc.settlement.order')]",
+    )
     settlement_flow_label = fields.Char(string="办理事项", compute="_compute_settlement_flow_label")
     expense_contract_category_id = fields.Many2one(
         "sc.dictionary",
@@ -694,6 +701,19 @@ class ScSettlementOrder(models.Model):
         except (TypeError, ValueError):
             return False
 
+    def _resolve_business_category_id(self, vals):
+        code = self.env.context.get("default_business_category_code") or self.env.context.get(
+            "current_business_category_code"
+        )
+        settlement_type = vals.get("settlement_type") or self.env.context.get("default_settlement_type") or "out"
+        if not code:
+            code = "settlement.income" if settlement_type == "in" else "settlement.expense"
+        category = self.env["sc.business.category"].sudo().search(
+            [("code", "=", code), ("target_model", "=", "sc.settlement.order")],
+            limit=1,
+        )
+        return category.id if category else False
+
     @api.model
     def default_get(self, fields_list):
         res = super().default_get(fields_list)
@@ -708,6 +728,7 @@ class ScSettlementOrder(models.Model):
             project_id = self._context_project_id()
             if project_id:
                 vals.setdefault("project_id", project_id)
+            vals.setdefault("business_category_id", self._resolve_business_category_id(vals))
             if vals.get("name", "新建") in (False, "新建"):
                 seq = self.env["ir.sequence"].next_by_code("sc.settlement.order")
                 vals["name"] = seq or _("Settlement")
@@ -715,6 +736,21 @@ class ScSettlementOrder(models.Model):
         records = super().create(vals_list)
         records._apply_contract_defaults_if_needed()
         return records
+
+    def init(self):
+        self.env.cr.execute(
+            """
+            UPDATE sc_settlement_order settlement
+               SET business_category_id = category.id
+              FROM sc_business_category category
+             WHERE settlement.business_category_id IS NULL
+               AND category.code = CASE
+                       WHEN settlement.settlement_type = 'in' THEN 'settlement.income'
+                       ELSE 'settlement.expense'
+                   END
+               AND category.target_model = 'sc.settlement.order'
+            """
+        )
 
     def write(self, vals):
         self._normalize_feedback_defaults(vals)

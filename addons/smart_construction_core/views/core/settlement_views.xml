@@ -11,6 +11,7 @@
                     <field name="name"/>
                     <field name="settlement_flow_label"/>
                     <field name="title"/>
+                    <field name="business_category_id" optional="hide"/>
                     <field name="settlement_category_id" string="结算类型"/>
                     <field name="settlement_category_display" string="结算类型"/>
                     <field name="settlement_type" invisible="1"/>
@@ -68,6 +69,7 @@
                     <field name="settlement_unit_id"/>
                     <field name="settlement_category_id" string="结算类型"/>
                     <field name="settlement_category_display" string="结算类型"/>
+                    <field name="business_category_id"/>
                     <field name="legacy_payment_state"/>
                     <field name="legacy_payment_request_state"/>
                     <field name="legacy_document_state"/>
@@ -135,6 +137,7 @@
                                 <field name="name" readonly="1"/>
                                 <field name="settlement_flow_label" readonly="1"/>
                                 <field name="title"/>
+                                <field name="business_category_id" options="{'no_create': True}"/>
                                 <field name="settlement_type" required="1"/>
                                 <field name="settlement_category_id" string="结算类型"/>
                                 <field name="settlement_stage"/>
