@@ -271,9 +271,10 @@ CATEGORY_ACTIONS = {
         "context": {
             "default_loan_type": "borrowing_request",
             "default_direction": "borrowed_fund",
+            "default_business_category_code": "finance.loan.borrowing",
         },
-        "domain_tokens": ["loan_type", "borrowing_request"],
-        "new_record_tokens": ["loan_type", "borrowing_request"],
+        "domain_tokens": ["loan_type", "borrowing_request", "business_category_id.code", "finance.loan.borrowing"],
+        "new_record_tokens": ["business_category_id.code", "finance.loan.borrowing"],
     },
     "finance.loan.contractor_project_borrow": {
         "label": "承包人借项目款",
