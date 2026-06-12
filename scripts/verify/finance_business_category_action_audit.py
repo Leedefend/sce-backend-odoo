@@ -251,7 +251,8 @@ CATEGORY_ACTIONS = {
             "default_operation_reason": "资金日报表",
             "default_business_category_code": "finance.fund.daily_report",
         },
-        "domain_tokens": ["operation_type", "fund_daily_report", "business_category_id.code", "finance.fund.daily_report"],
+        "domain_tokens": ["business_category_id.code", "finance.fund.daily_report"],
+        "forbidden_domain_tokens": ["operation_type"],
         "new_record_tokens": ["business_category_id.code", "finance.fund.daily_report"],
     },
     "finance.fund.balance_adjustment": {
@@ -263,7 +264,8 @@ CATEGORY_ACTIONS = {
             "default_operation_type": "balance_adjustment",
             "default_business_category_code": "finance.fund.balance_adjustment",
         },
-        "domain_tokens": ["operation_type", "balance_adjustment", "business_category_id.code", "finance.fund.balance_adjustment"],
+        "domain_tokens": ["business_category_id.code", "finance.fund.balance_adjustment"],
+        "forbidden_domain_tokens": ["operation_type"],
         "new_record_tokens": ["business_category_id.code", "finance.fund.balance_adjustment"],
     },
     "finance.loan.borrowing": {

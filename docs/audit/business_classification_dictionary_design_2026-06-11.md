@@ -253,8 +253,8 @@
 | `finance.loan.contractor_project_borrow` | `sc.financing.loan` | 项目借款给承包人；当前由历史用途文本推断，后续沉淀为可维护分类规则 |
 | `finance.repayment.project_company` | `sc.expense.claim.business_category_id` | 已接入正式分类入口锚点；项目还公司款进入内部往来清偿事实 |
 | `finance.repayment.contractor_project` | `sc.expense.claim.business_category_id` | 已接入正式分类入口锚点；承包人还项目款进入内部往来清偿事实 |
-| `finance.fund.daily_report` | `sc.fund.account.operation.business_category_id` | 已接入正式分类锚点；资金日报型台账，不进入往来款事实 |
-| `finance.fund.balance_adjustment` | `sc.fund.account.operation.business_category_id` | 已接入正式分类锚点；账户余额校准，不进入往来款事实 |
+| `finance.fund.daily_report` | `sc.fund.account.operation.business_category_id` | 已接入正式分类锚点；入口 domain 使用 `business_category_id.code`，`operation_type` 仅保留为新建默认值和资金日报事实字段 |
+| `finance.fund.balance_adjustment` | `sc.fund.account.operation.business_category_id` | 已接入正式分类锚点；入口 domain 使用 `business_category_id.code`，`operation_type` 仅保留为新建默认值和余额校准事实字段 |
 | `finance.loan.registration` | `sc.financing.loan` | 融资债务登记，独立于内部往来款闭环 |
 
 ## Contract Phase 4 Mapping
