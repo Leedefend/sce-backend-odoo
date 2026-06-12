@@ -244,13 +244,13 @@
 | `finance.deposit.contract.pay` | `sc.expense.claim` action | 配置合同保证金付款方向 |
 | `finance.deposit.contract.return` | `sc.expense.claim` action | 配置合同保证金退回方向 |
 | `finance.deduction.bill` | `sc.expense.claim` / tax deduction | Phase 2 明确税务/成本归属 |
-| `finance.fund.transfer` | `sc.fund.account.operation` | 补账户方向必填和资金事实策略 |
+| `finance.fund.transfer` | `sc.fund.account.operation.business_category_id` | 已接入正式分类锚点；账户划拨/调拨按入口上下文或 `operation_type` 自动绑定，继续配置账户方向必填和资金事实策略 |
 | `finance.loan.project_borrow_company` | `sc.financing.loan` | 公司借款给项目；进入内部往来事实和项目资金台账，不挂经营收付款申请 |
 | `finance.loan.contractor_project_borrow` | `sc.financing.loan` | 项目借款给承包人；当前由历史用途文本推断，后续沉淀为可维护分类规则 |
 | `finance.repayment.project_company` | `sc.expense.claim` | 项目还公司款；进入内部往来清偿事实 |
 | `finance.repayment.contractor_project` | `sc.expense.claim` | 承包人还项目款；进入内部往来清偿事实 |
-| `finance.fund.daily_report` | `sc.fund.account.operation` | 资金日报型台账，不进入往来款事实 |
-| `finance.fund.balance_adjustment` | `sc.fund.account.operation` | 账户余额校准，不进入往来款事实 |
+| `finance.fund.daily_report` | `sc.fund.account.operation.business_category_id` | 已接入正式分类锚点；资金日报型台账，不进入往来款事实 |
+| `finance.fund.balance_adjustment` | `sc.fund.account.operation.business_category_id` | 已接入正式分类锚点；账户余额校准，不进入往来款事实 |
 | `finance.loan.registration` | `sc.financing.loan` | 融资债务登记，独立于内部往来款闭环 |
 
 ## Contract Phase 4 Mapping
@@ -416,6 +416,8 @@ category_count=48
 | `finance.deduction.paid` | 扣款实缴登记 | `sc.expense.claim` | 付款 |
 | `finance.deduction.refund` | 扣款实缴退回 | `sc.expense.claim` | 收款/退回 |
 | `finance.fund.transfer` | 账户间资金往来 | `sc.fund.account.operation` | 转账，跨项目流入/流出进入现金流台账 |
+| `finance.fund.daily_report` | 资金日报表 | `sc.fund.account.operation` | 日报型现金流输入，不进入往来款事实 |
+| `finance.fund.balance_adjustment` | 余额调整 | `sc.fund.account.operation` | 账户状态校准，不进入现金流和往来款事实 |
 | `finance.loan.borrowing` | 借款申请 | `sc.financing.loan` | 借入，进入现金流台账，不关联收付款申请 |
 | `finance.loan.contractor_project_borrow` | 承包人借项目款 | `sc.financing.loan` | 借出，当前按“借...项目...款”顺序语义兼容历史数据，进入现金流台账 |
 | `finance.loan.project_borrow_company` | 项目借公司款登记 | `sc.financing.loan` | 借入，排除“借...项目...款”借出语义，进入现金流台账 |

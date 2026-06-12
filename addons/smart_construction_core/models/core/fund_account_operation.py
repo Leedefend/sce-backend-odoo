@@ -23,6 +23,14 @@ class ScFundAccountOperation(models.Model):
         tracking=True,
         index=True,
     )
+    business_category_id = fields.Many2one(
+        "sc.business.category",
+        string="业务分类",
+        domain="[('target_model', '=', 'sc.fund.account.operation')]",
+        index=True,
+        tracking=True,
+        ondelete="restrict",
+    )
     operation_date = fields.Date(
         string="单据日期",
         required=True,
@@ -231,9 +239,36 @@ class ScFundAccountOperation(models.Model):
             context_note = self.env.context.get("default_note")
             if context_note:
                 vals.setdefault("note", context_note)
+            vals.setdefault("business_category_id", self._resolve_business_category_id(vals))
             if vals.get("name", "/") == "/":
                 vals["name"] = seq.next_by_code("sc.fund.account.operation") or _("资金账户操作单")
         return super().create(vals_list)
+
+    @api.model
+    def _resolve_business_category_code(self, vals):
+        code = (
+            vals.get("business_category_code")
+            or self.env.context.get("default_business_category_code")
+            or self.env.context.get("business_category_code")
+            or self.env.context.get("current_business_category_code")
+        )
+        if code:
+            return code
+        operation_type = vals.get("operation_type") or self.env.context.get("default_operation_type")
+        if operation_type == "fund_daily_report":
+            return "finance.fund.daily_report"
+        if operation_type == "balance_adjustment":
+            return "finance.fund.balance_adjustment"
+        return "finance.fund.transfer"
+
+    @api.model
+    def _resolve_business_category_id(self, vals):
+        code = self._resolve_business_category_code(vals)
+        category = self.env["sc.business.category"].sudo().search(
+            [("code", "=", code), ("target_model", "=", self._name)],
+            limit=1,
+        )
+        return category.id if category else False
 
     def action_confirm(self):
         for rec in self:
@@ -409,6 +444,8 @@ class ScFundAccountOperation(models.Model):
         return {
             "state": self.state,
             "operation_type": self.operation_type,
+            "business_category_id": self.business_category_id.id,
+            "business_category_code": self.business_category_id.code,
             "operation_date": fields.Date.to_string(self.operation_date) if self.operation_date else False,
             "source_account_id": self.source_account_id.id,
             "target_account_id": self.target_account_id.id,
@@ -437,4 +474,22 @@ class ScFundAccountOperation(models.Model):
             after=after,
             company_id=self.company_id,
             project_id=self.project_id or self.source_account_id.project_id or self.target_account_id.project_id,
+        )
+
+    def init(self):
+        self.env.cr.execute(
+            """
+            UPDATE sc_fund_account_operation operation
+               SET business_category_id = category.id
+              FROM sc_business_category category
+             WHERE operation.business_category_id IS NULL
+               AND category.target_model = 'sc.fund.account.operation'
+               AND category.code = CASE
+                   WHEN operation.operation_type = 'fund_daily_report'
+                       THEN 'finance.fund.daily_report'
+                   WHEN operation.operation_type = 'balance_adjustment'
+                       THEN 'finance.fund.balance_adjustment'
+                   ELSE 'finance.fund.transfer'
+               END
+            """
         )

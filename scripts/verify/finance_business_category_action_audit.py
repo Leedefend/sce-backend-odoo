@@ -14,6 +14,7 @@ TARGETS = [
     ROOT / "addons" / "smart_construction_core" / "views" / "menu_business_taxonomy.xml",
     ROOT / "addons" / "smart_construction_core" / "views" / "core" / "expense_business_fact_taxonomy_views.xml",
     ROOT / "addons" / "smart_construction_core" / "views" / "core" / "payment_request_views.xml",
+    ROOT / "addons" / "smart_construction_core" / "views" / "core" / "fund_account_operation_views.xml",
 ]
 
 
@@ -220,9 +221,35 @@ CATEGORY_ACTIONS = {
         "context": {
             "default_operation_type": "transfer_between",
             "default_operation_reason": "账户间资金往来",
+            "default_business_category_code": "finance.fund.transfer",
         },
-        "domain_tokens": ["operation_type", "transfer_between"],
-        "new_record_tokens": ["operation_type", "transfer_between"],
+        "domain_tokens": ["operation_type", "transfer_between", "business_category_id.code", "finance.fund.transfer"],
+        "new_record_tokens": ["business_category_id.code", "finance.fund.transfer"],
+    },
+    "finance.fund.daily_report": {
+        "label": "资金日报表",
+        "model": "sc.fund.account.operation",
+        "action": "action_sc_fund_daily_user_report",
+        "menus": ["menu_sc_fund_daily_user_report"],
+        "context": {
+            "default_operation_type": "fund_daily_report",
+            "default_operation_reason": "资金日报表",
+            "default_business_category_code": "finance.fund.daily_report",
+        },
+        "domain_tokens": ["operation_type", "fund_daily_report", "business_category_id.code", "finance.fund.daily_report"],
+        "new_record_tokens": ["business_category_id.code", "finance.fund.daily_report"],
+    },
+    "finance.fund.balance_adjustment": {
+        "label": "余额调整",
+        "model": "sc.fund.account.operation",
+        "action": "action_sc_fund_balance_adjustment",
+        "menus": ["menu_sc_fund_balance_adjustment"],
+        "context": {
+            "default_operation_type": "balance_adjustment",
+            "default_business_category_code": "finance.fund.balance_adjustment",
+        },
+        "domain_tokens": ["operation_type", "balance_adjustment", "business_category_id.code", "finance.fund.balance_adjustment"],
+        "new_record_tokens": ["business_category_id.code", "finance.fund.balance_adjustment"],
     },
     "finance.loan.borrowing": {
         "label": "借款申请",

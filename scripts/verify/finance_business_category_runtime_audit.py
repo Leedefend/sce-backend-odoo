@@ -209,6 +209,37 @@ def _payment_execution_category_bindings():
     return env.cr.dictfetchall()  # noqa: F821
 
 
+def _fund_account_operation_category_bindings():
+    env.cr.execute(  # noqa: F821
+        """
+        WITH expected AS (
+            SELECT operation.id,
+                   CASE
+                       WHEN operation.operation_type = 'fund_daily_report'
+                           THEN 'finance.fund.daily_report'
+                       WHEN operation.operation_type = 'balance_adjustment'
+                           THEN 'finance.fund.balance_adjustment'
+                       ELSE 'finance.fund.transfer'
+                   END AS expected_code,
+                   category.code AS actual_code,
+                   category.target_model AS actual_target_model
+              FROM sc_fund_account_operation operation
+              LEFT JOIN sc_business_category category ON category.id = operation.business_category_id
+        )
+        SELECT expected_code,
+               COUNT(*)::integer AS row_count,
+               SUM(CASE WHEN actual_code = expected_code THEN 1 ELSE 0 END)::integer AS matched_count,
+               SUM(CASE WHEN COALESCE(actual_code, '') != expected_code THEN 1 ELSE 0 END)::integer AS mismatch_count,
+               SUM(CASE WHEN COALESCE(actual_target_model, '') NOT IN ('', 'sc.fund.account.operation') THEN 1 ELSE 0 END)::integer
+                   AS target_mismatch_count
+          FROM expected
+         GROUP BY expected_code
+         ORDER BY expected_code
+        """
+    )
+    return env.cr.dictfetchall()  # noqa: F821
+
+
 def _token():
     return env["ir.sequence"].sudo().next_by_code("sc.business.fact") or str(fields.Datetime.now())
 
@@ -559,6 +590,18 @@ try:
                 "%s: %s payment execution rows bound to non-payment-execution target model"
                 % (row["expected_code"], row["target_mismatch_count"])
             )
+    fund_account_operation_bindings = _fund_account_operation_category_bindings()
+    for row in fund_account_operation_bindings:
+        if row["mismatch_count"]:
+            failures.append(
+                "%s: %s mismatched fund account operation category rows of %s"
+                % (row["expected_code"], row["mismatch_count"], row["row_count"])
+            )
+        if row["target_mismatch_count"]:
+            failures.append(
+                "%s: %s fund account operation rows bound to non-fund-operation target model"
+                % (row["expected_code"], row["target_mismatch_count"])
+            )
 except Exception as err:
     failures.append("unexpected error: %s" % err)
     failures.append(traceback.format_exc())
@@ -572,6 +615,7 @@ result = {
     "receipt_income_bindings": receipt_income_bindings if "receipt_income_bindings" in locals() else [],
     "payment_request_bindings": payment_request_bindings if "payment_request_bindings" in locals() else [],
     "payment_execution_bindings": payment_execution_bindings if "payment_execution_bindings" in locals() else [],
+    "fund_account_operation_bindings": fund_account_operation_bindings if "fund_account_operation_bindings" in locals() else [],
     "failures": failures,
 }
 print("FINANCE_BUSINESS_CATEGORY_RUNTIME_AUDIT: %s" % json.dumps(result, ensure_ascii=False, sort_keys=True))

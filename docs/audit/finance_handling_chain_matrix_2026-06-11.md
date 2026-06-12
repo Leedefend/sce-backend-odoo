@@ -199,21 +199,21 @@ HTTP/API 可见面验收结论：
 ```text
 scripts/ops/validate_finance_business_categories.sh
 FINANCE_BUSINESS_CATEGORY_ACTION_AUDIT: status=PASS
-covered: 21 finance category candidates
+covered: 24 finance category candidates
 evidence: category -> action -> menu binding, context defaults, domain coverage for new records
 ```
 
 ```text
 DB_NAME=sc_demo scripts/ops/validate_finance_business_category_runtime.sh
 FINANCE_BUSINESS_CATEGORY_RUNTIME_AUDIT: status=PASS
-covered: 21 finance category candidates
-evidence: create temp record from runtime action context, then verify current runtime action domain can find it
+covered: 30 finance category candidates
+evidence: create temp record from runtime action context, verify current runtime action domain can find it, and verify record-level category bindings
 ```
 
 ```text
 DB_NAME=sc_demo scripts/ops/validate_business_category_dictionary.sh
 BUSINESS_CATEGORY_DICTIONARY_AUDIT: status=PASS
-covered: 34 business category template records
+covered: 54 business category template records
 evidence: user-visible category, stable code, template version, bound action, target model, direction, required fields, downstream policy
 ```
 
@@ -254,9 +254,9 @@ evidence: create temp record from runtime action context, then verify current ru
 | 到款确认表 | `sc.receipt.income` | `action_confirm`、`action_received`、`action_cancel`、`action_on_tier_approved` | 新办理通过收款申请生成 `sc.treasury.ledger`；历史已办事实通过 `sc.treasury.ledger` 来源级追溯现金流 | 办理入口可见面已通过 HTTP/API；普通收款收入和工程进度款收入已按 `business_category_id` 字典化，历史收款流入来源级台账覆盖已补齐 | 补项目收款状态约束与收款申请、销项发票、责任余额的分类策略联动 |
 | 报销/费用单据 | `sc.expense.claim` | `action_submit`、`action_approve`、`action_done`、`action_cancel`、审批回调 | 新办理通过 `payment.request` 或往来款现金流生成台账；历史已办事实按方向进入 `sc.treasury.ledger` | 办理入口可见面已通过 HTTP/API；50,825 条历史费用/保证金/扣款候选缺来源级台账 | 按 `claim_type` 和业务分类区分经营收付、保证金、扣款、往来款，再做来源级现金流迁移 |
 | 扣款单/扣款实缴/退回 | `sc.tax.deduction.registration` | 确认、已抵扣、取消 | 税务事实、项目经营口径 | 办理证据闭环、角色权限、下游税务事实追溯通过 | Phase 2 继续补正式分类字段或业务分类字典绑定 |
-| 账户间资金往来 | `sc.fund.account.operation` | 确认、完成、取消 | 账户资金往来事实、往来现金流台账 | 后端动作、关系必填、现金流追溯、历史回填就绪审计通过；内部往来分类策略已纳入 `verify.finance_interfund_category.handling_policy.audit` | 补浏览器级验收和账户余额回填策略 |
+| 账户间资金往来 | `sc.fund.account.operation` | 确认、完成、取消 | 账户资金往来事实、往来现金流台账 | 已接入 `business_category_id=finance.fund.transfer`；后端动作、关系必填、现金流追溯、历史回填就绪审计通过；内部往来分类策略已纳入 `verify.finance_interfund_category.handling_policy.audit` | 补浏览器级验收和账户余额回填策略 |
 | 项目/承包人借还款 | `sc.financing.loan` / `sc.expense.claim` | 借款登记、还款登记 | 资金往来事实、项目资金口径、来源级资金台账 | 借出、借入、还款分类已按 `sc.business.category` 固化；新发生办理默认 `CNY` 且纳入 P0 币种门禁；不走收付款申请，不写 `payment.ledger`，通过 `sc.interfund.movement.fact` 与 `sc.treasury.ledger` 追溯 | 补浏览器级验收、利息/账户关系和公司-承包人责任余额约束 |
-| 资金日报表 | `sc.fund.account.operation` | 确认、完成、取消 | 来源级 `sc.treasury.ledger(source_kind='daily_line')`、`sc.fund.account` 当前账面/银行余额 | 办理分类、入口运行时、完成后现金流台账承接和账户余额回写通过；不进入 `payment.request`，不进入 `sc.interfund.movement.fact` | 补历史余额初始化/迁移策略和浏览器级抽样验收 |
+| 资金日报表 | `sc.fund.account.operation` | 确认、完成、取消 | 来源级 `sc.treasury.ledger(source_kind='daily_line')`、`sc.fund.account` 当前账面/银行余额 | 已接入 `business_category_id=finance.fund.daily_report`；办理分类、入口运行时、完成后现金流台账承接和账户余额回写通过；不进入 `payment.request`，不进入 `sc.interfund.movement.fact` | 补历史余额初始化/迁移策略和浏览器级抽样验收 |
 | 历史资金日报快照 | `sc.legacy.fund.daily.snapshot.fact` | 历史事实查看 | 来源事实明细 | 表单契约通过 | 只作为历史追溯和后续日报汇总分析来源 |
 
 ## Finance Classification Dictionary Candidates
@@ -306,7 +306,7 @@ evidence: create temp record from runtime action context, then verify current ru
 
 - 新增 `scripts/verify/finance_business_category_action_audit.py`。
 - 新增 `scripts/ops/validate_finance_business_categories.sh`。
-- 覆盖 21 个财务分类候选，包括支付申请、往来单位付款、公司财务支出、收入、工程进度款收入、报销/项目费用、保证金、扣款、账户资金、借还款。
+- 覆盖 24 个财务分类候选，包括支付申请、往来单位付款、公司财务支出、收入、工程进度款收入、报销/项目费用、保证金、扣款、账户资金、资金日报、余额调整、借还款。
 - 审计内容：
   - 分类编码候选必须绑定到明确 action。
   - action 必须使用正式模型。

@@ -10,6 +10,7 @@
                 <field name="source_account_id"/>
                 <field name="target_account_id"/>
                 <field name="project_id"/>
+                <field name="business_category_id"/>
                 <field name="operation_strategy"/>
                 <filter string="资金划拨" name="type_transfer_out" domain="[('operation_type', '=', 'transfer_out')]"/>
                 <filter string="账户间资金往来" name="type_transfer_between" domain="[('operation_type', '=', 'transfer_between')]"/>
@@ -19,6 +20,7 @@
                 <filter string="公司直营" name="operation_direct" domain="[('operation_strategy', '=', 'direct')]"/>
                 <filter string="联营项目" name="operation_joint" domain="[('operation_strategy', '=', 'joint')]"/>
                 <filter string="按业务类型" name="group_operation_type" context="{'group_by': 'operation_type'}"/>
+                <filter string="按业务分类" name="group_business_category" context="{'group_by': 'business_category_id'}"/>
                 <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
                 <filter string="按经营策略" name="group_operation_strategy" context="{'group_by': 'operation_strategy'}"/>
                 <filter string="按日期" name="group_operation_date" context="{'group_by': 'operation_date'}"/>
@@ -42,6 +44,7 @@
                 <field name="target_project_id" optional="show"/>
                 <field name="amount" string="调拨金额" sum="金额合计"/>
                 <field name="operation_reason"/>
+                <field name="business_category_id" optional="show"/>
                 <field name="operation_type" optional="hide"/>
                 <field name="fund_account_id" optional="hide"/>
                 <field name="daily_income" sum="收入合计"/>
@@ -75,6 +78,7 @@
                             <field name="name" readonly="1"/>
                             <field name="fund_flow_label" readonly="1"/>
                             <field name="operation_type"/>
+                            <field name="business_category_id" options="{'no_create': True}"/>
                             <field name="operation_date" required="1"/>
                             <field name="project_id"/>
                             <field name="operation_strategy" readonly="1"/>
@@ -126,8 +130,8 @@
         <field name="res_model">sc.fund.account.operation</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="view_sc_fund_account_operation_search"/>
-        <field name="domain">[('operation_type', '=', 'transfer_out')]</field>
-        <field name="context">{'default_operation_type': 'transfer_out', 'search_default_type_transfer_out': 1}</field>
+        <field name="domain">[('operation_type', '=', 'transfer_out'), ('business_category_id.code', '=', 'finance.fund.transfer')]</field>
+        <field name="context">{'default_operation_type': 'transfer_out', 'default_business_category_code': 'finance.fund.transfer', 'search_default_type_transfer_out': 1}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')),
                                        (4, ref('smart_construction_core.group_sc_cap_finance_user')),
                                        (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
@@ -138,8 +142,8 @@
         <field name="res_model">sc.fund.account.operation</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="view_sc_fund_account_operation_search"/>
-        <field name="domain">[('operation_type', '=', 'transfer_between')]</field>
-        <field name="context">{'default_operation_type': 'transfer_between', 'search_default_type_transfer_between': 1}</field>
+        <field name="domain">[('operation_type', '=', 'transfer_between'), ('business_category_id.code', '=', 'finance.fund.transfer')]</field>
+        <field name="context">{'default_operation_type': 'transfer_between', 'default_business_category_code': 'finance.fund.transfer', 'search_default_type_transfer_between': 1}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')),
                                        (4, ref('smart_construction_core.group_sc_cap_finance_user')),
                                        (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
@@ -150,8 +154,8 @@
         <field name="res_model">sc.fund.account.operation</field>
         <field name="view_mode">tree,form</field>
         <field name="search_view_id" ref="view_sc_fund_account_operation_search"/>
-        <field name="domain">[('operation_type', '=', 'balance_adjustment')]</field>
-        <field name="context">{'default_operation_type': 'balance_adjustment', 'search_default_type_balance_adjustment': 1}</field>
+        <field name="domain">[('operation_type', '=', 'balance_adjustment'), ('business_category_id.code', '=', 'finance.fund.balance_adjustment')]</field>
+        <field name="context">{'default_operation_type': 'balance_adjustment', 'default_business_category_code': 'finance.fund.balance_adjustment', 'search_default_type_balance_adjustment': 1}</field>
         <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read')),
                                        (4, ref('smart_construction_core.group_sc_cap_finance_user')),
                                        (4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
