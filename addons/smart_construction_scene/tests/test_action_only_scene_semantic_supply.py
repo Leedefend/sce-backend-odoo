@@ -799,15 +799,26 @@ class TestActionOnlySceneSemanticSupply(unittest.TestCase):
         self.assertEqual(catalog.get("contract_version"), "handling_entry_catalog.v1")
         self.assertEqual(catalog.get("entry_mode"), "integrated_handling")
         self.assertEqual(catalog.get("group_count"), 4)
-        self.assertEqual(catalog.get("item_count"), 35)
+        self.assertEqual(catalog.get("item_count"), 13)
         self.assertEqual([group.get("title") for group in groups], [
             "收付款办理",
             "开票与税务办理",
             "费用与报销办理",
             "资金往来办理",
         ])
-        self.assertTrue(all(item.get("business_category_code") for item in items))
+        self.assertIn("票税办理", [item.get("label") for item in items])
+        self.assertIn("费用/扣款/保证金办理", [item.get("label") for item in items])
+        self.assertNotIn("报销申请", [item.get("label") for item in items])
+        self.assertNotIn("销项开票登记", [item.get("label") for item in items])
+        self.assertTrue(all(item.get("business_category_code") or item.get("business_category_options") for item in items))
         self.assertTrue(all((item.get("target") or {}).get("action_xmlid") for item in items))
+        category_options = [
+            option
+            for item in items
+            for option in (item.get("business_category_options") or [])
+        ]
+        self.assertIn("报销申请", [option.get("label") for option in category_options])
+        self.assertIn("销项开票登记", [option.get("label") for option in category_options])
         self.assertEqual(
             ((catalog.get("preserve_data_policy") or {}).get("legacy_recognition_carrier")),
             "business_category_code",
@@ -820,10 +831,10 @@ class TestActionOnlySceneSemanticSupply(unittest.TestCase):
 
         self.assertEqual(catalog.get("contract_version"), "handling_entry_catalog.v1")
         self.assertEqual(catalog.get("group_count"), 4)
-        self.assertEqual(catalog.get("item_count"), 35)
+        self.assertEqual(catalog.get("item_count"), 13)
         self.assertEqual(
             ((payload.get("extensions") or {}).get("handling_entry_catalog_v1") or {}).get("item_count"),
-            35,
+            13,
         )
 
     def test_wave1_task_provider_supplies_delivery_handoff_v1(self):

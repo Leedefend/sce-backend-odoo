@@ -55,21 +55,54 @@ def main() -> int:
     failures: list[dict[str, str]] = []
     groups = catalog.get("groups") or []
     items = [item for group in groups for item in group.get("items", [])]
+    category_options = [
+        option
+        for item in items
+        for option in (item.get("business_category_options") or [])
+        if isinstance(option, dict)
+    ]
+    category_rows = [
+        *[
+            {
+                "business_category_code": item.get("business_category_code"),
+                "category_action_xmlid": item.get("category_action_xmlid"),
+                "action_xmlid": (item.get("target") or {}).get("action_xmlid") or item.get("action_xmlid"),
+                "label": item.get("label"),
+            }
+            for item in items
+            if item.get("business_category_code")
+        ],
+        *[
+            {
+                "business_category_code": option.get("code"),
+                "category_action_xmlid": option.get("category_action_xmlid"),
+                "action_xmlid": option.get("action_xmlid"),
+                "label": option.get("label"),
+            }
+            for option in category_options
+        ],
+    ]
     if catalog.get("group_count") != 4 or len(groups) != 4:
         failures.append({"code": "group_count_mismatch", "actual": str(catalog.get("group_count"))})
-    if catalog.get("item_count") != 35 or len(items) != 35:
+    if catalog.get("item_count") != 13 or len(items) != 13:
         failures.append({"code": "item_count_mismatch", "actual": str(catalog.get("item_count"))})
 
     for item in items:
-        category_code = str(item.get("business_category_code") or "")
-        action_xmlid = str((item.get("target") or {}).get("action_xmlid") or item.get("action_xmlid") or "")
+        if not str(item.get("business_category_code") or "").strip() and not (item.get("business_category_options") or []):
+            failures.append({"code": "missing_category_carrier", "label": str(item.get("label") or "")})
+        if not str((item.get("target") or {}).get("action_xmlid") or item.get("action_xmlid") or "").strip():
+            failures.append({"code": "missing_entry_action", "label": str(item.get("label") or "")})
+
+    for row in category_rows:
+        category_code = str(row.get("business_category_code") or "")
+        action_xmlid = str(row.get("action_xmlid") or "")
         if not category_code:
-            failures.append({"code": "missing_category_code", "label": str(item.get("label") or "")})
+            failures.append({"code": "missing_category_code", "label": str(row.get("label") or "")})
             continue
         if category_code not in seed_codes:
             failures.append({"code": "category_seed_missing", "category_code": category_code})
         bound_action = bindings.get(category_code)
-        category_action = str(item.get("category_action_xmlid") or action_xmlid)
+        category_action = str(row.get("category_action_xmlid") or action_xmlid)
         if not bound_action:
             failures.append({"code": "action_binding_missing", "category_code": category_code})
         elif bound_action != category_action:
@@ -84,7 +117,7 @@ def main() -> int:
         "status": "FAIL" if failures else "PASS",
         "group_count": len(groups),
         "item_count": len(items),
-        "unique_category_count": len({str(item.get("business_category_code") or "") for item in items}),
+        "unique_category_count": len({str(row.get("business_category_code") or "") for row in category_rows}),
         "failures": failures,
     }
     print("FINANCE_HANDLING_ENTRY_CATALOG_AUDIT " + json.dumps(summary, ensure_ascii=False, sort_keys=True))

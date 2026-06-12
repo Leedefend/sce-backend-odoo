@@ -223,8 +223,10 @@ type SceneBlockViewMode = 'form' | 'list' | 'kanban';
 type HandlingEntryItem = {
   key: string;
   label: string;
-  business_category_code: string;
+  business_category_code?: string;
   action_xmlid: string;
+  entry_mode?: string;
+  business_category_options?: Array<Record<string, unknown>>;
   target: Record<string, unknown>;
 };
 type HandlingEntryGroup = {
@@ -279,17 +281,25 @@ const handlingEntryGroups = computed<HandlingEntryGroup[]>(() => {
           const item = rawItem && typeof rawItem === 'object' ? rawItem as Record<string, unknown> : {};
           const label = String(item.label || '').trim();
           const categoryCode = String(item.business_category_code || '').trim();
+          const actionXmlid = String(item.action_xmlid || '').trim();
+          const categoryOptions = Array.isArray(item.business_category_options)
+            ? item.business_category_options.filter((option) => option && typeof option === 'object') as Array<Record<string, unknown>>
+            : [];
           const target = item.target && typeof item.target === 'object' && !Array.isArray(item.target)
             ? item.target as Record<string, unknown>
             : {};
-          if (!label || !categoryCode) return null;
-          return {
+          const targetActionXmlid = String(target.action_xmlid || '').trim();
+          if (!label || (!categoryCode && !categoryOptions.length && !actionXmlid && !targetActionXmlid)) return null;
+          const mappedItem: HandlingEntryItem = {
             key: String(item.key || `${String(group.key || 'group')}.${itemIndex + 1}`).trim(),
             label,
-            business_category_code: categoryCode,
-            action_xmlid: String(item.action_xmlid || target.action_xmlid || '').trim(),
+            business_category_code: categoryCode || undefined,
+            action_xmlid: actionXmlid || targetActionXmlid,
+            entry_mode: String(item.entry_mode || '').trim() || undefined,
+            business_category_options: categoryOptions,
             target,
           };
+          return mappedItem;
         })
         .filter((item): item is HandlingEntryItem => Boolean(item));
       if (!items.length) return null;
@@ -530,15 +540,12 @@ function openHandlingEntry(item: HandlingEntryItem) {
   }
   const resolvedAction = resolveVisibleActionTarget(target as SceneTarget, currentSceneKey.value);
   if (!resolvedAction) return;
-  const sceneLabel = String(scene.value?.label || currentSceneKey.value || '').trim();
   void router.push({
-    path: route.path,
+    path: `/a/${resolvedAction.actionId}`,
     query: asRouteQuery({
       ...workspaceContextQuery,
       menu_id: Number(resolvedAction.menuId || 0) || undefined,
       action_id: resolvedAction.actionId,
-      scene_key: currentSceneKey.value || undefined,
-      scene_label: sceneLabel || undefined,
       business_category_code: item.business_category_code || undefined,
     }),
   });

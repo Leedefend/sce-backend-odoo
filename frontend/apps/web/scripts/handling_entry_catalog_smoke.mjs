@@ -221,12 +221,35 @@ async function main() {
   const missingMergeFamilyLabels = expectedMergeFamilyLabels.filter((label) => !sidebarLabels.includes(label));
   const hiddenLegacyHandlingLabels = ["报销申请", "扣款单", "进项发票", "销项开票申请", "销项开票登记", "预缴税款"];
   const leakedLegacyHandlingLabels = hiddenLegacyHandlingLabels.filter((label) => sidebarLabels.includes(label));
+  const leakedLegacyHandlingCards = hiddenLegacyHandlingLabels.filter((label) => itemLabels.includes(label));
   const bodyText = await page.locator("body").innerText({ timeout: 10000 });
   const rawCodeVisible = /finance\.|invoice\.|tax\.certificate/.test(bodyText);
   const expectedGroups = ["收付款办理", "开票与税务办理", "费用与报销办理", "资金往来办理"];
+  const expectedCatalogItems = ["收款登记", "付款执行", "票税办理", "费用/扣款/保证金办理", "借款办理", "还款办理"];
   const missingGroups = expectedGroups.filter((title) => !groupTitles.includes(title));
+  const missingCatalogItems = expectedCatalogItems.filter((label) => !itemLabels.includes(label));
   const expectedSidebarIntentLabels = ["办理入口", "台账查询", "分析报表", "来源明细"];
   const missingSidebarIntentLabels = expectedSidebarIntentLabels.filter((label) => !sidebarIntentLabels.includes(label));
+  const catalogEntryNavigation = [];
+  for (const label of ["票税办理", "费用/扣款/保证金办理"]) {
+    await openFinanceWorkspace(page);
+    const entryButton = page.locator(".handling-item", { hasText: label }).first();
+    if (!(await entryButton.isVisible({ timeout: 30000 }).catch(() => false))) {
+      throw new Error(`catalog entry button missing: ${label}`);
+    }
+    const previousUrl = page.url();
+    await entryButton.click();
+    await page.waitForURL((url) => {
+      const actionId = Number(url.searchParams.get("action_id") || 0);
+      return url.href !== previousUrl
+        && url.pathname.startsWith("/a/")
+        && actionId > 0
+        && !url.searchParams.get("default_business_category_code")
+        && !url.searchParams.get("current_business_category_code");
+    }, { timeout: 60000 });
+    await page.locator(".action-toolbar").waitFor({ state: "visible", timeout: 60000 });
+    catalogEntryNavigation.push({ label, resolvedUrl: page.url() });
+  }
   const mergeFamilyNavigation = [];
   for (const label of expectedMergeFamilyLabels) {
     await openFinanceWorkspace(page, label);
@@ -267,10 +290,14 @@ async function main() {
   const createResolvedUrl = page.url();
 
   const report = {
-    ok: missingGroups.length === 0 && groupTitles.length === 4 && itemLabels.length === 35 && !rawCodeVisible && consoleErrors.length === 0
+    ok: missingGroups.length === 0 && groupTitles.length === 4 && itemLabels.length === 13 && !rawCodeVisible && consoleErrors.length === 0
       && missingSidebarIntentLabels.length === 0
+      && missingCatalogItems.length === 0
       && missingMergeFamilyLabels.length === 0
       && leakedLegacyHandlingLabels.length === 0
+      && leakedLegacyHandlingCards.length === 0
+      && catalogEntryNavigation.length === 2
+      && catalogEntryNavigation.every((item) => item.resolvedUrl.includes("action_id=") && !item.resolvedUrl.includes("default_business_category_code="))
       && mergeFamilyNavigation.length === expectedMergeFamilyLabels.length
       && mergeFamilyNavigation.every((item) => item.resolvedUrl.includes("/a/") && !item.resolvedUrl.includes("default_business_category_code="))
       && menuResolvedUrl.includes(`default_business_category_code=${encodeURIComponent(categoryNode.categoryCode)}`)
@@ -292,8 +319,11 @@ async function main() {
     groupTitles,
     sidebarIntentLabels,
     missingSidebarIntentLabels,
+    missingCatalogItems,
     missingMergeFamilyLabels,
     leakedLegacyHandlingLabels,
+    leakedLegacyHandlingCards,
+    catalogEntryNavigation,
     itemCount: itemLabels.length,
     missingGroups,
     rawCodeVisible,
