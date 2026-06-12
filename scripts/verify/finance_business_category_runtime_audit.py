@@ -180,6 +180,35 @@ def _payment_request_category_bindings():
     return env.cr.dictfetchall()  # noqa: F821
 
 
+def _payment_execution_category_bindings():
+    env.cr.execute(  # noqa: F821
+        """
+        WITH expected AS (
+            SELECT execution.id,
+                   CASE
+                       WHEN COALESCE(execution.payment_family, '') IN ('公司财务支出', 'actual_outflow')
+                           THEN 'finance.payment.execution.company'
+                       ELSE 'finance.payment.execution.partner'
+                   END AS expected_code,
+                   category.code AS actual_code,
+                   category.target_model AS actual_target_model
+              FROM sc_payment_execution execution
+              LEFT JOIN sc_business_category category ON category.id = execution.business_category_id
+        )
+        SELECT expected_code,
+               COUNT(*)::integer AS row_count,
+               SUM(CASE WHEN actual_code = expected_code THEN 1 ELSE 0 END)::integer AS matched_count,
+               SUM(CASE WHEN COALESCE(actual_code, '') != expected_code THEN 1 ELSE 0 END)::integer AS mismatch_count,
+               SUM(CASE WHEN COALESCE(actual_target_model, '') NOT IN ('', 'sc.payment.execution') THEN 1 ELSE 0 END)::integer
+                   AS target_mismatch_count
+          FROM expected
+         GROUP BY expected_code
+         ORDER BY expected_code
+        """
+    )
+    return env.cr.dictfetchall()  # noqa: F821
+
+
 def _token():
     return env["ir.sequence"].sudo().next_by_code("sc.business.fact") or str(fields.Datetime.now())
 
@@ -518,6 +547,18 @@ try:
                 "%s: %s payment request rows bound to non-payment-request target model"
                 % (row["expected_code"], row["target_mismatch_count"])
             )
+    payment_execution_bindings = _payment_execution_category_bindings()
+    for row in payment_execution_bindings:
+        if row["mismatch_count"]:
+            failures.append(
+                "%s: %s mismatched payment execution category rows of %s"
+                % (row["expected_code"], row["mismatch_count"], row["row_count"])
+            )
+        if row["target_mismatch_count"]:
+            failures.append(
+                "%s: %s payment execution rows bound to non-payment-execution target model"
+                % (row["expected_code"], row["target_mismatch_count"])
+            )
 except Exception as err:
     failures.append("unexpected error: %s" % err)
     failures.append(traceback.format_exc())
@@ -530,6 +571,7 @@ result = {
     "expense_claim_bindings": expense_claim_bindings if "expense_claim_bindings" in locals() else [],
     "receipt_income_bindings": receipt_income_bindings if "receipt_income_bindings" in locals() else [],
     "payment_request_bindings": payment_request_bindings if "payment_request_bindings" in locals() else [],
+    "payment_execution_bindings": payment_execution_bindings if "payment_execution_bindings" in locals() else [],
     "failures": failures,
 }
 print("FINANCE_BUSINESS_CATEGORY_RUNTIME_AUDIT: %s" % json.dumps(result, ensure_ascii=False, sort_keys=True))

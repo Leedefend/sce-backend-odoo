@@ -47,6 +47,7 @@
                 <tree string="付款登记办理">
                     <field name="name"/>
                     <field name="execution_flow_label"/>
+                    <field name="business_category_id" optional="show"/>
                     <field name="date_payment"/>
                     <field name="project_id"/>
                     <field name="operation_strategy"/>
@@ -104,6 +105,7 @@
                             <group string="业务方向">
                                 <field name="name" readonly="1"/>
                                 <field name="execution_flow_label" readonly="1"/>
+                                <field name="business_category_id" options="{'no_create': True}"/>
                                 <field name="source_kind" readonly="state == 'legacy_confirmed'"/>
                                 <field name="date_payment" readonly="state == 'legacy_confirmed'"/>
                                 <field name="document_no" readonly="state == 'legacy_confirmed'"/>

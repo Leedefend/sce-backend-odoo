@@ -31,6 +31,13 @@ class ScPaymentExecution(models.Model):
         index=True,
     )
     execution_flow_label = fields.Char(string="办理事项", compute="_compute_execution_flow_label")
+    business_category_id = fields.Many2one(
+        "sc.business.category",
+        string="业务分类",
+        index=True,
+        ondelete="restrict",
+        domain="[('target_model', '=', 'sc.payment.execution')]",
+    )
     state = fields.Selection(
         [
             ("draft", "草稿"),
@@ -200,9 +207,31 @@ class ScPaymentExecution(models.Model):
                 request = self.env["payment.request"].browse(request_id).exists()
                 for field_name, value in self._payment_request_values(request).items():
                     vals.setdefault(field_name, value)
+            vals.setdefault("business_category_id", self._resolve_business_category_id(vals))
             if vals.get("name", "新建") == "新建":
                 vals["name"] = seq.next_by_code("sc.payment.execution") or _("Payment Execution")
         return super().create(vals_list)
+
+    @api.model
+    def _resolve_business_category_code(self, vals):
+        code = self.env.context.get("default_business_category_code") or self.env.context.get(
+            "current_business_category_code"
+        )
+        if code:
+            return code
+        payment_family = vals.get("payment_family") or self.env.context.get("default_payment_family") or ""
+        if payment_family in ("公司财务支出", "actual_outflow"):
+            return "finance.payment.execution.company"
+        return "finance.payment.execution.partner"
+
+    @api.model
+    def _resolve_business_category_id(self, vals):
+        code = self._resolve_business_category_code(vals)
+        category = self.env["sc.business.category"].sudo().search(
+            [("code", "=", code), ("target_model", "=", self._name)],
+            limit=1,
+        )
+        return category.id if category else False
 
     def write(self, vals):
         if any(rec.source_origin == "legacy" and rec.state == "legacy_confirmed" for rec in self):
@@ -474,3 +503,19 @@ class ScPaymentExecution(models.Model):
                 rec.with_context(skip_validation_check=True).write(
                     {"reject_reason": reason or rec._get_tier_reject_reason()}
                 )
+
+    def init(self):
+        self.env.cr.execute(
+            """
+            UPDATE sc_payment_execution execution
+               SET business_category_id = category.id
+              FROM sc_business_category category
+             WHERE execution.business_category_id IS NULL
+               AND category.target_model = 'sc.payment.execution'
+               AND category.code = CASE
+                   WHEN COALESCE(execution.payment_family, '') IN ('公司财务支出', 'actual_outflow')
+                       THEN 'finance.payment.execution.company'
+                   ELSE 'finance.payment.execution.partner'
+               END
+            """
+        )

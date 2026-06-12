@@ -53,6 +53,7 @@ CATEGORY_ACTIONS = {
         "context": {
             "default_source_kind": "actual_outflow",
             "default_payment_family": "往来单位付款",
+            "default_business_category_code": "finance.payment.execution.partner",
         },
         "domain_tokens": ["source_kind", "actual_outflow", "payment_family", "往来单位付款"],
         "new_record_tokens": ["payment_family", "往来单位付款"],
@@ -65,6 +66,7 @@ CATEGORY_ACTIONS = {
         "context": {
             "default_source_kind": "actual_outflow",
             "default_payment_family": "公司财务支出",
+            "default_business_category_code": "finance.payment.execution.company",
         },
         "domain_tokens": ["source_kind", "actual_outflow", "payment_family", "公司财务支出"],
         "new_record_tokens": ["payment_family", "公司财务支出"],

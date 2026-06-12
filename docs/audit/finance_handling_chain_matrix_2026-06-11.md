@@ -162,7 +162,7 @@ attachment_policy_runtime=无附件提交被拦截，补附件后可提交
 HTTP/API 可见面验收结论：
 
 - 支付申请：用户可见入口 `smart_construction_core.menu_sc_user_payment_apply_acceptance` 打开 `payment.request`，本地用户数据 29,549 条，已办样本可追到 `payment.ledger`；`payment.request.business_category_id` 已绑定 `finance.payment.apply.pay`/`finance.payment.apply.receive`，付款申请与收款申请按字典分类切分。
-- 往来单位付款：用户可见入口 `smart_construction_core.menu_sc_partner_payment` 打开 `sc.payment.execution`，本地用户数据 24,049 条，入口和已办样本可读；HTTP smoke 已支持按 `sc.treasury.ledger(source_model='sc.payment.execution')` 反选办理样本，当前 80 条来源级台账样本可反选 20 条办理样本并追到下游资金台账。
+- 往来单位付款：用户可见入口 `smart_construction_core.menu_sc_partner_payment` 打开 `sc.payment.execution`，本地用户数据 24,049 条，入口和已办样本可读；`sc.payment.execution.business_category_id` 已绑定 `finance.payment.execution.partner`/`finance.payment.execution.company`，当前运行时门禁验证 38,164 条往来单位付款类、403 条公司财务支出类全部分类正确（含运行时样本）；HTTP smoke 已支持按 `sc.treasury.ledger(source_model='sc.payment.execution')` 反选办理样本，当前 80 条来源级台账样本可反选 20 条办理样本并追到下游资金台账。
 - 到款确认/项目收款：用户可见入口 `smart_construction_core.menu_sc_engineering_progress_income` 打开 `sc.receipt.income`，本地用户数据 15,905 条，入口和已办样本可读；HTTP smoke 已支持按 `sc.treasury.ledger(source_model='sc.receipt.income')` 反选办理样本，当前 80 条来源级台账样本可反选 20 条办理样本并追到下游资金台账。
 - 收款收入分类：`sc.receipt.income` 已新增正式 `business_category_id`，普通收款收入绑定 `finance.receipt.income.project`，工程进度款收入绑定 `finance.receipt.income.progress`；运行时门禁验证本地 25,099 条普通收款收入和 3,902 条工程进度款收入分类不漏不串。
 - 项目费用报销单：用户可见入口 `smart_construction_core.menu_sc_project_expense_claim` 打开 `sc.expense.claim`，本地用户数据 37,013 条，入口和已办样本可读；HTTP smoke 已支持按 `sc.treasury.ledger(source_model='sc.expense.claim')` 反选办理样本，当前 80 条来源级台账样本可反选 20 条办理样本并追到下游资金台账。
@@ -267,7 +267,8 @@ evidence: create temp record from runtime action context, then verify current ru
 | --- | --- | --- | --- | --- | --- |
 | `finance.payment.apply.pay` | 付款申请 | `payment.request` | 付款 | 项目、合同、往来单位、金额、付款账户 | 绑定正式 `business_category_id`，完成后生成 `payment.ledger` |
 | `finance.payment.apply.receive` | 收款申请 | `payment.request` | 收款 | 项目、合同、往来单位、金额、收款类别 | 绑定正式 `business_category_id`，完成后生成 `sc.treasury.ledger` |
-| `finance.payment.execution.partner` | 往来单位付款 | `sc.payment.execution` | 付款执行 | 付款申请、项目、合同、往来单位、付款账户、收款账户、实付金额 | 同步付款申请，生成 `payment.ledger` |
+| `finance.payment.execution.partner` | 往来单位付款 | `sc.payment.execution` | 付款执行 | 付款申请、项目、合同、往来单位、付款账户、收款账户、实付金额 | 绑定正式 `business_category_id`，同步付款申请，生成 `payment.ledger` |
+| `finance.payment.execution.company` | 公司财务支出 | `sc.payment.execution` | 付款执行 | 项目、合同、往来单位、付款账户、收款账户、实付金额 | 绑定正式 `business_category_id`，生成付款执行现金流 |
 | `finance.receipt.income.project` | 到款确认/项目收款 | `sc.receipt.income` | 收款确认 | 收款申请、项目、合同、往来单位、收款账户、收款金额 | 绑定正式 `business_category_id`，同步收款申请，生成 `sc.treasury.ledger` |
 | `finance.expense.reimbursement` | 项目费用报销单 | `sc.expense.claim` | 付款 | 付款申请、项目、往来单位、报销金额、付款账户、收款账户 | 同步付款申请，生成 `payment.ledger` |
 | `finance.deposit.bid.pay` | 投标保证金支付 | `sc.expense.claim` | 付款 | 项目/投标事项、往来单位、金额、付款账户、收款账户、付款申请 | 完成付款申请并生成 `payment.ledger` |
