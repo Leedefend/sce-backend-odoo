@@ -419,6 +419,26 @@ class MenuService:
             "entry_target": entry_target if isinstance(entry_target, dict) else {},
         }
 
+    def _business_category_options(self, items: list[dict]) -> list[dict]:
+        options = []
+        seen = set()
+        for item in items:
+            meta = item.get("meta") if isinstance(item.get("meta"), dict) else {}
+            code = str(meta.get("default_business_category_code") or "").strip()
+            if not code or code in seen:
+                continue
+            seen.add(code)
+            options.append(
+                {
+                    "code": code,
+                    "label": str(item.get("label") or item.get("title") or "").strip() or code,
+                    "menu_id": item.get("menu_id") or item.get("id"),
+                    "menu_xmlid": str(meta.get("menu_xmlid") or "").strip(),
+                    "integration_target": str(meta.get("integration_target") or "").strip(),
+                }
+            )
+        return options
+
     def _group_merge_by_category_nodes(self, nodes: list[dict], parent_key: str = "") -> list[dict]:
         grouped = {}
         passthrough = []
@@ -443,6 +463,7 @@ class MenuService:
             group_meta = {
                 "business_entry_group": True,
                 "merge_by_category_group": True,
+                "business_category_options": self._business_category_options(items),
                 "product_domain": meta.get("product_domain"),
                 "product_domain_label": meta.get("product_domain_label"),
                 "integration_target": meta.get("integration_target"),
@@ -471,7 +492,7 @@ class MenuService:
                     "label": label,
                     "title": label,
                     "menu_id": synthetic_menu_id(node_key, base=870_000_000, span=10_000_000),
-                    "children": items,
+                    "children": [],
                     "sequence": int(first.get("sequence") or meta.get("sequence") or 0),
                     "meta": group_meta,
                 }

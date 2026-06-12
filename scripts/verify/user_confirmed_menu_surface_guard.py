@@ -378,6 +378,7 @@ def _assert_runtime_nav_locked() -> dict[str, int]:
             runtime_merge_group_nodes += 1
             children = node.get("children") if isinstance(node.get("children"), list) else []
             entry_target = meta.get("entry_target") if isinstance(meta.get("entry_target"), dict) else {}
+            category_options = meta.get("business_category_options") if isinstance(meta.get("business_category_options"), list) else []
             action_id = int(meta.get("action_id") or 0)
             if action_id > 0:
                 runtime_integrated_merge_group_nodes += 1
@@ -390,15 +391,17 @@ def _assert_runtime_nav_locked() -> dict[str, int]:
                     missing_integration.append("entry_target.type")
                 if _integration_entry_target_action_id(entry_target) != action_id:
                     missing_integration.append("entry_target.action_id")
-                if len(children) <= 1:
-                    missing_integration.append("merged_children")
-                child_categories = [
-                    _text((child.get("meta") if isinstance(child.get("meta"), dict) else {}).get("default_business_category_code"))
-                    for child in children
-                    if isinstance(child, dict)
+                if children:
+                    missing_integration.append("legacy_child_menu_entries_must_be_empty")
+                if len(category_options) <= 1:
+                    missing_integration.append("business_category_options")
+                category_codes = [
+                    _text(option.get("code"))
+                    for option in category_options
+                    if isinstance(option, dict)
                 ]
-                if not all(child_categories):
-                    missing_integration.append("child_default_business_category_code")
+                if not category_codes or not all(category_codes):
+                    missing_integration.append("business_category_options.code")
                 if missing_integration:
                     missing_runtime_meta.append(
                         {
