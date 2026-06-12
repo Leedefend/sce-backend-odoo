@@ -246,6 +246,8 @@
 | `finance.deposit.contract.return` | `sc.expense.claim.business_category_id` | 已接入正式分类入口锚点；配置合同保证金退回方向 |
 | `finance.deduction.bill` | `sc.expense.claim.business_category_id` | 已接入正式分类入口锚点；保持非现金扣款事实边界 |
 | `finance.fund.transfer` | `sc.fund.account.operation.business_category_id` | 已接入正式分类锚点；账户划拨/调拨按入口上下文或 `operation_type` 自动绑定，继续配置账户方向必填和资金事实策略 |
+| `finance.self_funding.income` | `sc.self.funding.registration.business_category_id` | 已接入正式分类入口锚点；自筹垫付办理入口按 `business_category_id.code` 展示，`funding_type` 保留为自筹事实字段 |
+| `finance.self_funding.refund` | `sc.self.funding.registration.business_category_id` | 已接入正式分类入口锚点；自筹退回办理入口按 `business_category_id.code` 展示，`funding_type` 保留为自筹事实字段 |
 | `finance.loan.borrowing` | `sc.financing.loan.business_category_id` | 已接入正式分类入口锚点；借款申请入口按 `business_category_id.code` 展示，`loan_type` 保留为借款事实字段 |
 | `finance.loan.project_borrow_company` | `sc.financing.loan` | 公司借款给项目；进入内部往来事实和项目资金台账，不挂经营收付款申请 |
 | `finance.loan.contractor_project_borrow` | `sc.financing.loan` | 项目借款给承包人；当前由历史用途文本推断，后续沉淀为可维护分类规则 |
@@ -441,6 +443,8 @@ category_count=48
 | `finance.fund.transfer` | 账户间资金往来 | `sc.fund.account.operation` | 转账，跨项目流入/流出进入现金流台账 |
 | `finance.fund.daily_report` | 资金日报表 | `sc.fund.account.operation` | 日报型现金流输入，不进入往来款事实 |
 | `finance.fund.balance_adjustment` | 余额调整 | `sc.fund.account.operation` | 账户状态校准，不进入现金流和往来款事实 |
+| `finance.self_funding.income` | 自筹垫付办理 | `sc.self.funding.registration` | 自筹流入责任，进入责任余额和现金流台账 |
+| `finance.self_funding.refund` | 自筹退回办理 | `sc.self.funding.registration` | 自筹退回责任，进入责任余额和现金流台账 |
 | `finance.loan.borrowing` | 借款申请 | `sc.financing.loan` | 借入，进入现金流台账，不关联收付款申请 |
 | `finance.loan.contractor_project_borrow` | 承包人借项目款 | `sc.financing.loan` | 借出，当前按“借...项目...款”顺序语义兼容历史数据，进入现金流台账 |
 | `finance.loan.project_borrow_company` | 项目借公司款登记 | `sc.financing.loan` | 借入，排除“借...项目...款”借出语义，进入现金流台账 |

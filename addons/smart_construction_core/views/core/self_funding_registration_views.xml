@@ -127,7 +127,7 @@
             <field name="res_model">sc.self.funding.registration</field>
             <field name="view_mode">tree,form</field>
             <field name="search_view_id" ref="view_sc_self_funding_registration_search"/>
-            <field name="domain">[('funding_type', '=', 'income')]</field>
+            <field name="domain">[('funding_type', '=', 'income'), ('business_category_id.code', '=', 'finance.self_funding.income')]</field>
             <field name="context">{'default_funding_type': 'income', 'default_business_category_code': 'finance.self_funding.income', 'search_default_funding_income': 1}</field>
             <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_business_initiator')),
                                            (4, ref('smart_construction_core.group_sc_cap_finance_read')),
@@ -140,7 +140,7 @@
             <field name="res_model">sc.self.funding.registration</field>
             <field name="view_mode">tree,form</field>
             <field name="search_view_id" ref="view_sc_self_funding_registration_search"/>
-            <field name="domain">[('funding_type', '=', 'refund')]</field>
+            <field name="domain">[('funding_type', '=', 'refund'), ('business_category_id.code', '=', 'finance.self_funding.refund')]</field>
             <field name="context">{'default_funding_type': 'refund', 'default_business_category_code': 'finance.self_funding.refund', 'search_default_funding_refund': 1}</field>
             <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_business_initiator')),
                                            (4, ref('smart_construction_core.group_sc_cap_finance_read')),

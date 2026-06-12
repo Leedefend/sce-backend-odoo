@@ -15,6 +15,7 @@ TARGETS = [
     ROOT / "addons" / "smart_construction_core" / "views" / "core" / "expense_business_fact_taxonomy_views.xml",
     ROOT / "addons" / "smart_construction_core" / "views" / "core" / "payment_request_views.xml",
     ROOT / "addons" / "smart_construction_core" / "views" / "core" / "fund_account_operation_views.xml",
+    ROOT / "addons" / "smart_construction_core" / "views" / "core" / "self_funding_registration_views.xml",
     ROOT / "addons" / "smart_construction_core" / "views" / "support" / "user_confirmed_formal_list_views.xml",
 ]
 
@@ -303,6 +304,30 @@ CATEGORY_ACTIONS = {
         },
         "domain_tokens": ["loan_type", "borrowing_request", "business_category_id.code", "finance.loan.project_borrow_company"],
         "new_record_tokens": ["business_category_id.code", "finance.loan.project_borrow_company"],
+    },
+    "finance.self_funding.income": {
+        "label": "自筹垫付办理",
+        "model": "sc.self.funding.registration",
+        "action": "action_sc_self_funding_registration_income",
+        "menus": ["menu_sc_self_funding_advance_income"],
+        "context": {
+            "default_funding_type": "income",
+            "default_business_category_code": "finance.self_funding.income",
+        },
+        "domain_tokens": ["funding_type", "income", "business_category_id.code", "finance.self_funding.income"],
+        "new_record_tokens": ["business_category_id.code", "finance.self_funding.income"],
+    },
+    "finance.self_funding.refund": {
+        "label": "自筹退回办理",
+        "model": "sc.self.funding.registration",
+        "action": "action_sc_self_funding_registration_refund",
+        "menus": ["menu_sc_self_funding_advance_refund"],
+        "context": {
+            "default_funding_type": "refund",
+            "default_business_category_code": "finance.self_funding.refund",
+        },
+        "domain_tokens": ["funding_type", "refund", "business_category_id.code", "finance.self_funding.refund"],
+        "new_record_tokens": ["business_category_id.code", "finance.self_funding.refund"],
     },
     "finance.repayment.registration": {
         "label": "还款登记",
