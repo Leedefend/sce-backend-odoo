@@ -40,7 +40,7 @@
 | DBS-040 | 入库 | sc.material.inbound | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 4 |  |
 | DBS-041 | 材料结算单 | sc.material.settlement | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 4 |  |
 | DBS-042 | 劳务合同 | sc.labor.request | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 3 |  |
-| DBS-043 | 劳务方单 | sc.labor.usage | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 6 |  |
+| DBS-043 | 劳务方单 | sc.labor.usage | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 7 |  |
 | DBS-044 | 劳务结算 | sc.labor.settlement | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 5 |  |
 | DBS-045 | 分包合同 | sc.subcontract.register | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 5 |  |
 | DBS-046 | 分包方单 | sc.subcontract.request | usable_contract_ready | Y | Y | Y | Y | 0 | 0 | 6 |  |

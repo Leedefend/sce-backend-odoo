@@ -198,7 +198,7 @@ EXPECTED_ACTIONS = OrderedDict(
                 "context": {
                     "default_source_kind": "input_invoice_tax",
                     "default_direction": "input",
-                    "default_invoice_content": "进项上报",
+                    "default_invoice_content": "进项税额上报",
                 },
             },
         ),

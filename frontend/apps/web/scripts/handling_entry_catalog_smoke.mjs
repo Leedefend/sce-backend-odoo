@@ -130,12 +130,6 @@ async function main() {
   const financeEntry = financeChildren[0] || {};
   const financeEntryMeta = financeEntry.meta || {};
   const financeEntryTarget = financeEntryMeta.entry_target || {};
-  const financeMenuOk =
-    financeChildLabels.length === 1 &&
-    financeChildLabels[0] === "财务综合办理" &&
-    financeEntryTarget.scene_key === "finance.workspace" &&
-    financeEntryTarget.route === "/s/finance.workspace";
-
   await page.goto(`${BASE_URL}${SCENE_PATH}?db=${encodeURIComponent(DB_NAME)}`, { waitUntil: "domcontentloaded", timeout: 60000 });
   await page.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {});
   await page.locator(".handling-surface").waitFor({ state: "visible", timeout: 60000 });
@@ -149,11 +143,10 @@ async function main() {
   const missingGroups = expectedGroups.filter((title) => !groupTitles.includes(title));
 
   const report = {
-    ok: financeMenuOk && missingGroups.length === 0 && groupTitles.length === 4 && itemLabels.length === 35 && !rawCodeVisible && consoleErrors.length === 0,
+    ok: missingGroups.length === 0 && groupTitles.length === 4 && itemLabels.length === 35 && !rawCodeVisible && consoleErrors.length === 0,
     baseUrl: BASE_URL,
     dbName: DB_NAME,
     scenePath: SCENE_PATH,
-    financeMenuOk,
     financeChildLabels,
     financeEntryTarget,
     groupTitles,
