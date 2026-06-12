@@ -316,7 +316,8 @@ CATEGORY_ACTIONS = {
             "default_funding_type": "income",
             "default_business_category_code": "finance.self_funding.income",
         },
-        "domain_tokens": ["funding_type", "income", "business_category_id.code", "finance.self_funding.income"],
+        "domain_tokens": ["business_category_id.code", "finance.self_funding.income"],
+        "forbidden_domain_tokens": ["funding_type"],
         "new_record_tokens": ["business_category_id.code", "finance.self_funding.income"],
     },
     "finance.self_funding.refund": {
@@ -328,7 +329,8 @@ CATEGORY_ACTIONS = {
             "default_funding_type": "refund",
             "default_business_category_code": "finance.self_funding.refund",
         },
-        "domain_tokens": ["funding_type", "refund", "business_category_id.code", "finance.self_funding.refund"],
+        "domain_tokens": ["business_category_id.code", "finance.self_funding.refund"],
+        "forbidden_domain_tokens": ["funding_type"],
         "new_record_tokens": ["business_category_id.code", "finance.self_funding.refund"],
     },
     "finance.repayment.registration": {

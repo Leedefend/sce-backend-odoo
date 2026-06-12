@@ -246,8 +246,8 @@
 | `finance.deposit.contract.return` | `sc.expense.claim.business_category_id` | 已接入正式分类入口锚点；配置合同保证金退回方向 |
 | `finance.deduction.bill` | `sc.expense.claim.business_category_id` | 已接入正式分类入口锚点；保持非现金扣款事实边界 |
 | `finance.fund.transfer` | `sc.fund.account.operation.business_category_id` | 已接入正式分类锚点；账户划拨/调拨按入口上下文或 `operation_type` 自动绑定，继续配置账户方向必填和资金事实策略 |
-| `finance.self_funding.income` | `sc.self.funding.registration.business_category_id` | 已接入正式分类入口锚点；自筹垫付办理入口按 `business_category_id.code` 展示，`funding_type` 保留为自筹事实字段 |
-| `finance.self_funding.refund` | `sc.self.funding.registration.business_category_id` | 已接入正式分类入口锚点；自筹退回办理入口按 `business_category_id.code` 展示，`funding_type` 保留为自筹事实字段 |
+| `finance.self_funding.income` | `sc.self.funding.registration.business_category_id` | 已接入正式分类入口锚点；自筹垫付办理入口 domain 使用 `business_category_id.code`，`funding_type` 仅保留为新建默认值和自筹事实字段 |
+| `finance.self_funding.refund` | `sc.self.funding.registration.business_category_id` | 已接入正式分类入口锚点；自筹退回办理入口 domain 使用 `business_category_id.code`，`funding_type` 仅保留为新建默认值和自筹事实字段 |
 | `finance.loan.borrowing` | `sc.financing.loan.business_category_id` | 已接入正式分类入口锚点；借款申请入口按 `business_category_id.code` 展示，`loan_type` 保留为借款事实字段 |
 | `finance.loan.project_borrow_company` | `sc.financing.loan` | 公司借款给项目；进入内部往来事实和项目资金台账，不挂经营收付款申请 |
 | `finance.loan.contractor_project_borrow` | `sc.financing.loan` | 项目借款给承包人；当前由历史用途文本推断，后续沉淀为可维护分类规则 |
