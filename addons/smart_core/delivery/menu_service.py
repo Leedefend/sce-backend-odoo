@@ -254,7 +254,7 @@ class MenuService:
                 raw_anchor = scene_key or (str(menu_id) if isinstance(menu_id, int) and menu_id > 0 else str(menu.get("menu_key") or "").strip() or str(index))
                 sanitized_anchor = raw_anchor.replace(":", "_").replace("/", "_").replace(".", "_")
                 model = str(menu.get("model") or menu.get("res_model") or "").strip()
-                if not action_id and not model and route != "/my-work":
+                if not action_id and not model and not scene_key and not route:
                     continue
                 out.append(
                     {

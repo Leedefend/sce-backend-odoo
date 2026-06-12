@@ -39,6 +39,9 @@ FINANCE_INTERFUND_ANALYSIS_PRODUCT_MENU_XMLIDS = (
     "smart_construction_core.menu_sc_company_contractor_responsibility_summary",
     "smart_construction_core.menu_sc_company_contractor_responsibility_fact",
 )
+FINANCE_HANDLING_ENTRY_MENU_XMLID = "smart_construction_core.menu_sc_finance_center"
+FINANCE_HANDLING_ENTRY_SCENE_KEY = "finance.workspace"
+FINANCE_HANDLING_ENTRY_ROUTE = "/s/finance.workspace"
 
 USER_ACCEPTANCE_MENU_KEY_TOKENS = (
     "_acceptance",
@@ -298,6 +301,82 @@ class ScProductPolicy(models.Model):
         return out
 
     @api.model
+    def _hydrate_finance_handling_entry_menu(self):
+        menu_record = self.env.ref(FINANCE_HANDLING_ENTRY_MENU_XMLID, raise_if_not_found=False)
+        action = menu_record.action if menu_record else None
+        action_id = int(action.id or 0) if action else 0
+        res_model = _text(getattr(action, "res_model", "") if action else "")
+        view_modes = [_text(item) for item in _text(getattr(action, "view_mode", "")).split(",") if _text(item)]
+        return {
+            "menu_key": "construction.finance.handling_entry",
+            "label": "财务综合办理",
+            "page_key": FINANCE_HANDLING_ENTRY_SCENE_KEY,
+            "page_label": "财务综合办理",
+            "route": FINANCE_HANDLING_ENTRY_ROUTE,
+            "scene_key": FINANCE_HANDLING_ENTRY_SCENE_KEY,
+            "product_key": "财务中心",
+            "capability_key": "construction.scene.finance_workspace.handling_entry",
+            "target_scene_key": FINANCE_HANDLING_ENTRY_SCENE_KEY,
+            "visible_menu_path": "智慧施工管理平台 / 财务中心 / 财务综合办理",
+            "control_granularity": "finance_handling_entry_catalog",
+            "enabled": True,
+            "release_state": "released",
+            "access_level": "public",
+            "control_object": "财务综合办理入口",
+            "source_kind": "finance_handling_entry_catalog_release_overlay",
+            "menu_id": int(menu_record.id) if menu_record else 0,
+            "menu_xmlid": FINANCE_HANDLING_ENTRY_MENU_XMLID,
+            "action_id": action_id,
+            "action_model": _text(getattr(action, "_name", "")),
+            "res_model": res_model,
+            "view_modes": view_modes,
+            "release_domain": "finance_handling_entry",
+            "policy_note": "collapsed_finance_legacy_pages_into_handling_entry_catalog",
+            "entry_target": {
+                "type": "scene",
+                "scene_key": FINANCE_HANDLING_ENTRY_SCENE_KEY,
+                "route": FINANCE_HANDLING_ENTRY_ROUTE,
+                "compatibility_refs": {
+                    "menu_xmlid": FINANCE_HANDLING_ENTRY_MENU_XMLID,
+                    **({"menu_id": int(menu_record.id)} if menu_record else {}),
+                    **({"action_id": action_id} if action_id else {}),
+                },
+            },
+        }
+
+    @api.model
+    def _collapse_finance_product_menu_group_to_handling_entry(self, menu_groups):
+        out = []
+        finance_seen = False
+        for group in menu_groups or []:
+            if not isinstance(group, dict):
+                continue
+            next_group = dict(group)
+            if _text(next_group.get("group_label") or next_group.get("label")) == "财务中心":
+                next_group.update(
+                    {
+                        "group_key": _text(next_group.get("group_key")) or "construction.财务中心",
+                        "group_label": "财务中心",
+                        "category": "user_visible_menu",
+                        "menus": [self._hydrate_finance_handling_entry_menu()],
+                        "policy_note": "finance_group_collapsed_to_scene_handling_entry",
+                    }
+                )
+                finance_seen = True
+            out.append(next_group)
+        if not finance_seen:
+            out.append(
+                {
+                    "group_key": "construction.财务中心",
+                    "group_label": "财务中心",
+                    "category": "user_visible_menu",
+                    "menus": [self._hydrate_finance_handling_entry_menu()],
+                    "policy_note": "finance_group_collapsed_to_scene_handling_entry",
+                }
+            )
+        return out
+
+    @api.model
     def _sync_user_confirmed_formal_menu_overlay(self):
         Policy = self.env["ui.menu.config.policy"].sudo().with_context(active_test=False)
         Menu = self.env["ir.ui.menu"].sudo().with_context(active_test=False)
@@ -338,6 +417,7 @@ class ScProductPolicy(models.Model):
             baseline_menu_groups = item.get("menu_groups") if isinstance(item.get("menu_groups"), list) else []
             menu_groups = self._formal_user_confirmed_menu_groups(baseline_menu_groups)
             menu_groups = self._append_finance_interfund_analysis_product_menus(menu_groups)
+            menu_groups = self._collapse_finance_product_menu_group_to_handling_entry(menu_groups)
             capabilities = self._capabilities_from_user_confirmed_menu_groups(menu_groups)
             values = {
                 "active": bool(item.get("active", True)),
@@ -431,6 +511,7 @@ class ScProductPolicy(models.Model):
             next_group = dict(group)
             next_group["menus"] = _apply_release_state(group.get("menus"))
             menu_groups.append(next_group)
+        menu_groups = self._collapse_finance_product_menu_group_to_handling_entry(menu_groups)
 
         policy.write(
             {

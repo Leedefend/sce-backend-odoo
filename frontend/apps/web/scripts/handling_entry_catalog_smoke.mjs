@@ -58,6 +58,48 @@ async function login(page) {
   await page.waitForTimeout(1000);
 }
 
+async function readAuthToken(page) {
+  return await page.evaluate(() => {
+    const key = Object.keys(sessionStorage).find((item) => item.startsWith("sc_auth_token")) || "";
+    return key ? sessionStorage.getItem(key) : "";
+  });
+}
+
+async function intent(page, token, intentName, params = {}) {
+  return await page.evaluate(async ({ token, intentName, params, dbName }) => {
+    const res = await fetch(`/api/v1/intent?db=${encodeURIComponent(dbName)}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Odoo-DB": dbName,
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ intent: intentName, params, meta: { startup_chain_bypass: true } }),
+    });
+    const body = await res.json();
+    if (!res.ok || body.ok === false) {
+      throw new Error(JSON.stringify(body.error || body).slice(0, 700));
+    }
+    return body.data || body;
+  }, { token, intentName, params, dbName: DB_NAME });
+}
+
+function findNodeByLabel(nodes, label) {
+  for (const node of nodes || []) {
+    if (!node || typeof node !== "object") {
+      continue;
+    }
+    if (String(node.label || node.title || "").trim() === label) {
+      return node;
+    }
+    const found = findNodeByLabel(Array.isArray(node.children) ? node.children : [], label);
+    if (found) {
+      return found;
+    }
+  }
+  return null;
+}
+
 async function main() {
   await ensureDirs();
   const executablePath = findCachedChromiumExecutable();
@@ -72,6 +114,28 @@ async function main() {
   page.on("pageerror", (err) => consoleErrors.push(err.message.slice(0, 500)));
 
   await login(page);
+  const token = await readAuthToken(page);
+  if (!token) {
+    throw new Error("login token missing");
+  }
+  const init = await intent(page, token, "system.init", {
+    with_preload: false,
+    with: ["workspace_home"],
+    root_xmlid: "smart_construction_core.menu_sc_root",
+  });
+  const deliveryNav = init?.delivery_engine_v1?.nav || init?.nav || [];
+  const financeNode = findNodeByLabel(deliveryNav, "财务中心");
+  const financeChildren = Array.isArray(financeNode?.children) ? financeNode.children : [];
+  const financeChildLabels = financeChildren.map((node) => String(node?.label || node?.title || "").trim()).filter(Boolean);
+  const financeEntry = financeChildren[0] || {};
+  const financeEntryMeta = financeEntry.meta || {};
+  const financeEntryTarget = financeEntryMeta.entry_target || {};
+  const financeMenuOk =
+    financeChildLabels.length === 1 &&
+    financeChildLabels[0] === "财务综合办理" &&
+    financeEntryTarget.scene_key === "finance.workspace" &&
+    financeEntryTarget.route === "/s/finance.workspace";
+
   await page.goto(`${BASE_URL}${SCENE_PATH}?db=${encodeURIComponent(DB_NAME)}`, { waitUntil: "domcontentloaded", timeout: 60000 });
   await page.waitForLoadState("networkidle", { timeout: 10000 }).catch(() => {});
   await page.locator(".handling-surface").waitFor({ state: "visible", timeout: 60000 });
@@ -85,10 +149,13 @@ async function main() {
   const missingGroups = expectedGroups.filter((title) => !groupTitles.includes(title));
 
   const report = {
-    ok: missingGroups.length === 0 && groupTitles.length === 4 && itemLabels.length === 35 && !rawCodeVisible && consoleErrors.length === 0,
+    ok: financeMenuOk && missingGroups.length === 0 && groupTitles.length === 4 && itemLabels.length === 35 && !rawCodeVisible && consoleErrors.length === 0,
     baseUrl: BASE_URL,
     dbName: DB_NAME,
     scenePath: SCENE_PATH,
+    financeMenuOk,
+    financeChildLabels,
+    financeEntryTarget,
     groupTitles,
     itemCount: itemLabels.length,
     missingGroups,

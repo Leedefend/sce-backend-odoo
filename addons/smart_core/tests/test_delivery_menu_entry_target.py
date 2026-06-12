@@ -279,6 +279,50 @@ class TestDeliveryMenuEntryTarget(unittest.TestCase):
         labels = [child.get("label") for group in groups for child in group.get("children") or []]
         self.assertEqual(labels, ["项目台账"])
 
+    def test_policy_scene_route_menu_is_allowed_when_authorized_by_route(self):
+        nav = menu_service.MenuService().build_nav(
+            policy={
+                "menu_groups": [
+                    {
+                        "group_key": "construction.finance",
+                        "group_label": "财务中心",
+                        "menus": [
+                            {
+                                "menu_key": "finance_workspace",
+                                "label": "财务综合办理",
+                                "route": "/s/finance.workspace",
+                                "scene_key": "finance.workspace",
+                                "release_state": "released",
+                                "enabled": True,
+                            }
+                        ],
+                    }
+                ]
+            },
+            role_surface={"role_code": "employee"},
+            native_nav=[
+                {
+                    "label": "财务中心",
+                    "children": [
+                        self._native_leaf(
+                            label="财务综合办理",
+                            menu_id=540,
+                            route="/s/finance.workspace",
+                            scene_key="finance.workspace",
+                            action_id=0,
+                            model="",
+                        )
+                    ],
+                }
+            ],
+        )
+
+        groups = (nav[0].get("children") or []) if nav else []
+        self.assertEqual([group.get("label") for group in groups], ["财务中心"])
+        child = groups[0]["children"][0]
+        self.assertEqual(child["label"], "财务综合办理")
+        self.assertEqual(child["meta"]["entry_target"]["scene_key"], "finance.workspace")
+
     def test_user_acceptance_container_is_not_used_as_native_preview_group(self):
         groups = menu_service.MenuService()._native_preview_menus(
             native_nav=[
