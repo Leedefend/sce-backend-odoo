@@ -30,7 +30,7 @@
                                 {'name': 'project_code', 'sequence': 20},
                                 {'name': 'short_name', 'sequence': 25},
                                 {'name': 'lifecycle_state', 'sequence': 30},
-                                {'name': 'partner_id', 'sequence': 40},
+                                {'name': 'partner_id', 'sequence': 40, 'string': '业主单位'},
                                 {'name': 'initiation_date', 'sequence': 50},
                                 {'name': 'project_type_id', 'sequence': 60},
                                 {'name': 'project_environment', 'sequence': 65},
@@ -61,33 +61,33 @@
                                 {'name': 'legacy_supervision_unit', 'sequence': 190},
                                 {'name': 'legacy_supervisory_engineer', 'sequence': 191},
                                 {'name': 'legacy_supervision_phone', 'sequence': 192},
-                                {'name': 'manager_id', 'sequence': 210},
+                                {'name': 'manager_id', 'sequence': 210, 'string': '项目负责人'},
                                 {'name': 'cost_manager_id', 'sequence': 220},
                                 {'name': 'doc_manager_id', 'sequence': 230},
                                 {'name': 'legacy_technical_responsibility_name', 'sequence': 236},
-                                {'name': 'responsibility_ids', 'sequence': 240},
-                                {'name': 'contract_count', 'sequence': 310},
-                                {'name': 'contract_income_total', 'sequence': 320},
-                                {'name': 'contract_expense_total', 'sequence': 330},
-                                {'name': 'contract_amount', 'sequence': 340},
-                                {'name': 'subcontract_amount', 'sequence': 350},
-                                {'name': 'dashboard_revenue_actual', 'sequence': 360},
-                                {'name': 'dashboard_cost_actual', 'sequence': 370},
-                                {'name': 'dashboard_profit_actual', 'sequence': 380},
-                                {'name': 'dashboard_invoice_amount', 'sequence': 390},
-                                {'name': 'dashboard_payment_in', 'sequence': 400},
-                                {'name': 'dashboard_payment_out', 'sequence': 410},
-                                {'name': 'dashboard_progress_rate', 'sequence': 420},
-                                {'name': 'dashboard_document_completion', 'sequence': 430},
-                                {'name': 'document_count', 'sequence': 510},
-                                {'name': 'document_required_count', 'sequence': 520},
-                                {'name': 'document_missing_count', 'sequence': 530},
-                                {'name': 'legacy_cost', 'sequence': 540},
-                                {'name': 'legacy_manage_fee_ratio', 'sequence': 550},
+                                {'name': 'responsibility_ids', 'sequence': 240, 'string': '项目责任分工'},
+                                {'name': 'collaborator_ids', 'sequence': 250, 'string': '项目协作成员'},
+                                {'name': 'contract_count', 'sequence': 310, 'visible': False},
+                                {'name': 'contract_income_total', 'sequence': 320, 'visible': False},
+                                {'name': 'contract_expense_total', 'sequence': 330, 'visible': False},
+                                {'name': 'contract_amount', 'sequence': 340, 'visible': False},
+                                {'name': 'subcontract_amount', 'sequence': 350, 'visible': False},
+                                {'name': 'dashboard_revenue_actual', 'sequence': 360, 'visible': False},
+                                {'name': 'dashboard_cost_actual', 'sequence': 370, 'visible': False},
+                                {'name': 'dashboard_profit_actual', 'sequence': 380, 'visible': False},
+                                {'name': 'dashboard_invoice_amount', 'sequence': 390, 'visible': False},
+                                {'name': 'dashboard_payment_in', 'sequence': 400, 'visible': False},
+                                {'name': 'dashboard_payment_out', 'sequence': 410, 'visible': False},
+                                {'name': 'dashboard_progress_rate', 'sequence': 420, 'visible': False},
+                                {'name': 'dashboard_document_completion', 'sequence': 430, 'visible': False},
+                                {'name': 'document_count', 'sequence': 510, 'visible': False},
+                                {'name': 'document_required_count', 'sequence': 520, 'visible': False},
+                                {'name': 'document_missing_count', 'sequence': 530, 'visible': False},
+                                {'name': 'legacy_cost', 'sequence': 540, 'visible': False},
+                                {'name': 'legacy_manage_fee_ratio', 'sequence': 550, 'visible': False},
                                 {'name': 'legacy_note', 'sequence': 610},
                                 {'name': 'legacy_contract_agreement', 'sequence': 620},
                                 {'name': 'legacy_project_file', 'sequence': 630},
-                                {'name': 'collaborator_ids', 'sequence': 930},
                                 {'name': 'analytic_account_id', 'sequence': 940},
                                 {'name': 'legacy_project_id', 'sequence': 9710, 'visible': False},
                                 {'name': 'legacy_project_code', 'sequence': 9720, 'visible': False},
@@ -121,6 +121,134 @@
                                 {'name': 'contract_ids', 'sequence': 9970, 'visible': False},
                                 {'name': 'document_ids', 'sequence': 9980, 'visible': False},
                                 {'name': 'tender_bid_ids', 'sequence': 9990, 'visible': False}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_tender_bid_registration_form_structure_v1" model="ui.business.config.contract">
+            <field name="name">tender_bid_registration_form_structure_v1</field>
+            <field name="model">tender.bid</field>
+            <field name="view_type">form</field>
+            <field name="priority">300</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'views': {
+                        'form': {
+                            'sections': [
+                                {'title': '报名信息'},
+                                {'title': '投标金额与时间'},
+                                {'title': '投标清单'},
+                                {'title': '结果与来源'}
+                            ],
+                            'fields': [
+                                {'name': 'state', 'sequence': 10},
+                                {'name': 'name', 'sequence': 20, 'readonly': True},
+                                {'name': 'project_id', 'sequence': 30},
+                                {'name': 'tender_name', 'sequence': 40},
+                                {'name': 'owner_id', 'sequence': 50},
+                                {'name': 'tender_round', 'sequence': 60},
+                                {'name': 'operation_strategy', 'sequence': 70, 'readonly': True},
+                                {'name': 'deadline', 'sequence': 80},
+                                {'name': 'open_date', 'sequence': 90},
+                                {'name': 'bid_amount', 'sequence': 100},
+                                {'name': 'amount_total', 'sequence': 110, 'readonly': True},
+                                {'name': 'line_ids', 'sequence': 120},
+                                {'name': 'guarantee_total', 'sequence': 130, 'readonly': True},
+                                {'name': 'guarantee_outstanding', 'sequence': 140, 'readonly': True},
+                                {'name': 'legacy_visible_document_state', 'sequence': 910, 'readonly': True},
+                                {'name': 'legacy_visible_registration_time', 'sequence': 920, 'readonly': True},
+                                {'name': 'legacy_visible_creator_name', 'sequence': 930, 'readonly': True},
+                                {'name': 'legacy_visible_opening_time', 'sequence': 940, 'readonly': True},
+                                {'name': 'legacy_visible_project_name', 'sequence': 950, 'readonly': True},
+                                {'name': 'legacy_owner_name', 'sequence': 960, 'readonly': True},
+                                {'name': 'legacy_note', 'sequence': 970, 'readonly': True},
+                                {'name': 'contract_id', 'sequence': 980, 'visible': False},
+                                {'name': 'currency_id', 'sequence': 981, 'visible': False},
+                                {'name': 'tech_attachment_ids', 'sequence': 982, 'visible': False},
+                                {'name': 'biz_attachment_ids', 'sequence': 983, 'visible': False},
+                                {'name': 'doc_purchase_ids', 'sequence': 984, 'visible': False},
+                                {'name': 'survey_ids', 'sequence': 985, 'visible': False},
+                                {'name': 'review_ids', 'sequence': 986, 'visible': False},
+                                {'name': 'opening_ids', 'sequence': 987, 'visible': False},
+                                {'name': 'guarantee_ids', 'sequence': 988, 'visible': False},
+                                {'name': 'legacy_fact_model', 'sequence': 989, 'visible': False},
+                                {'name': 'legacy_fact_id', 'sequence': 990, 'visible': False},
+                                {'name': 'legacy_fact_type', 'sequence': 991, 'visible': False},
+                                {'name': 'legacy_attachment_ref', 'sequence': 992, 'visible': False},
+                                {'name': 'business_scope_key', 'sequence': 993, 'visible': False},
+                                {'name': 'business_direction', 'sequence': 994, 'visible': False},
+                                {'name': 'carrier_type', 'sequence': 995, 'visible': False},
+                                {'name': 'carrier_model', 'sequence': 996, 'visible': False},
+                                {'name': 'carrier_res_id', 'sequence': 997, 'visible': False},
+                                {'name': 'p1_visible_06fa8c6f628f', 'sequence': 998, 'visible': False},
+                                {'name': 'p1_visible_f22832ce4781', 'sequence': 999, 'visible': False},
+                                {'name': 'p1_visible_8fa8662ad38f', 'sequence': 1000, 'visible': False},
+                                {'name': 'p1_visible_3e7255522b33', 'sequence': 1001, 'visible': False},
+                                {'name': 'p1_visible_3f2c92346bec', 'sequence': 1002, 'visible': False},
+                                {'name': 'p1_visible_880ab989a872', 'sequence': 1003, 'visible': False},
+                                {'name': 'p1_visible_2c346345746e', 'sequence': 1004, 'visible': False},
+                                {'name': 'p1_visible_34943c40c9af', 'sequence': 1005, 'visible': False},
+                                {'name': 'p1_visible_e0361480e3a5', 'sequence': 1006, 'visible': False},
+                                {'name': 'p1_visible_99f6fe6c41ad', 'sequence': 1007, 'visible': False},
+                                {'name': 'p1_visible_ee6a4d9e2956', 'sequence': 1008, 'visible': False},
+                                {'name': 'p1_visible_dfc25d77dc39', 'sequence': 1009, 'visible': False}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_tender_doc_purchase_form_structure_v1" model="ui.business.config.contract">
+            <field name="name">tender_doc_purchase_form_structure_v1</field>
+            <field name="model">tender.doc.purchase</field>
+            <field name="view_type">form</field>
+            <field name="priority">301</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'views': {
+                        'form': {
+                            'sections': [
+                                {'title': '申请信息'},
+                                {'title': '费用与缴费'},
+                                {'title': '收款信息'},
+                                {'title': '备注与来源'}
+                            ],
+                            'fields': [
+                                {'name': 'state', 'sequence': 10},
+                                {'name': 'bid_id', 'sequence': 20},
+                                {'name': 'project_id', 'sequence': 30, 'readonly': True},
+                                {'name': 'applicant_id', 'sequence': 40},
+                                {'name': 'apply_date', 'sequence': 50},
+                                {'name': 'amount', 'sequence': 60},
+                                {'name': 'payment_method', 'sequence': 70},
+                                {'name': 'invoice_no', 'sequence': 80},
+                                {'name': 'receipt_partner_id', 'sequence': 90},
+                                {'name': 'receipt_payee_name', 'sequence': 100},
+                                {'name': 'receipt_bank_name', 'sequence': 110},
+                                {'name': 'receipt_bank_account', 'sequence': 120},
+                                {'name': 'remark', 'sequence': 130},
+                                {'name': 'receipt_partner_name', 'sequence': 905, 'readonly': True},
+                                {'name': 'legacy_visible_document_state', 'sequence': 910, 'readonly': True},
+                                {'name': 'legacy_visible_applicant_name', 'sequence': 920, 'readonly': True},
+                                {'name': 'legacy_source_created_by', 'sequence': 930, 'readonly': True},
+                                {'name': 'legacy_source_created_at', 'sequence': 940, 'readonly': True},
+                                {'name': 'currency_id', 'sequence': 980, 'visible': False},
+                                {'name': 'attachment_ids', 'sequence': 981, 'visible': False},
+                                {'name': 'legacy_record_id', 'sequence': 982, 'visible': False},
+                                {'name': 'legacy_source_table', 'sequence': 983, 'visible': False},
+                                {'name': 'legacy_attachment_ref', 'sequence': 984, 'visible': False}
                             ]
                         }
                     }

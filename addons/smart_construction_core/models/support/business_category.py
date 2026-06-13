@@ -9,7 +9,7 @@ from odoo.modules.module import get_module_resource
 from odoo.osv import expression
 
 
-BUSINESS_CATEGORY_TEMPLATE_VERSION = "2026-06-12.4"
+BUSINESS_CATEGORY_TEMPLATE_VERSION = "2026-06-13.1"
 BUSINESS_CATEGORY_ACTION_BINDINGS = {
     "site.construction.diary": "smart_construction_core.action_sc_construction_diary",
     "site.quality.issue": "smart_construction_core.action_sc_quality_issue",
@@ -187,6 +187,8 @@ BUSINESS_CATEGORY_LEDGER_POLICY_DEFAULTS = {
     },
 }
 BUSINESS_CATEGORY_REQUIRED_FIELD_DEFAULTS = {
+    "settlement.income": ["project_id", "partner_id", "contract_id", "line_ids"],
+    "settlement.expense": ["project_id", "partner_id", "contract_id", "line_ids"],
     "finance.fund.transfer": ["operation_date", "amount", "source_account_id", "target_account_id"],
     "finance.loan.borrowing": ["project_id", "partner_id", "document_date", "amount"],
     "finance.loan.contractor_project_borrow": ["project_id", "partner_id", "document_date", "amount"],
@@ -292,6 +294,10 @@ BUSINESS_CATEGORY_REQUIRED_FIELD_DEFAULTS = {
         "payment_account_name",
         "partner_account_name",
     ],
+}
+BUSINESS_CATEGORY_OBSOLETE_REQUIRED_FIELDS = {
+    "settlement.income": ["amount_total"],
+    "settlement.expense": ["amount_total"],
 }
 BUSINESS_CATEGORY_ATTACHMENT_POLICY_DEFAULTS = {
     "finance.expense.reimbursement": "required",
@@ -556,6 +562,7 @@ class ScBusinessCategory(models.Model):
                 category.required_fields_json,
                 BUSINESS_CATEGORY_REQUIRED_FIELD_DEFAULTS.get(code),
                 effective_ledger_policy,
+                obsolete=BUSINESS_CATEGORY_OBSOLETE_REQUIRED_FIELDS.get(code),
             )
             if required_fields is not None:
                 vals["required_fields_json"] = json.dumps(required_fields, ensure_ascii=False)
@@ -623,7 +630,7 @@ class ScBusinessCategory(models.Model):
         return True
 
     @api.model
-    def _merge_template_required_fields(self, current_raw, defaults, ledger_policy=None):
+    def _merge_template_required_fields(self, current_raw, defaults, ledger_policy=None, obsolete=None):
         if not defaults:
             return None
         try:
@@ -634,6 +641,12 @@ class ScBusinessCategory(models.Model):
             current = []
         merged = list(current)
         changed = False
+        obsolete_fields = {str(field_name) for field_name in (obsolete or []) if field_name}
+        if obsolete_fields:
+            trimmed = [field_name for field_name in merged if field_name not in obsolete_fields]
+            if trimmed != merged:
+                merged = trimmed
+                changed = True
         for field_name in defaults:
             if field_name not in merged:
                 merged.append(field_name)

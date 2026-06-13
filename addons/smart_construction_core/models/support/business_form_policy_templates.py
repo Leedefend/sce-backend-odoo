@@ -187,18 +187,18 @@ def _settlement_policy(title: str, counterparty_title: str) -> dict:
     )
     return _policy(
         [
-            _section("business_identity", "办理类型", ["business_category_id", "settlement_flow_label", "settlement_type", "state", "name"], 10),
-            _section("business_object", counterparty_title, ["project_id", "operation_strategy", "contract_id", "partner_id", "settlement_unit_id"], 20),
-            _section("settlement_basis", "结算依据", ["title", "document_date", "date_settlement", "settlement_stage", "settlement_category_id", "expense_contract_category_id", "settlement_period_start", "settlement_period_end"], 30),
-            _section("amount", "结算金额", ["amount_total", "settlement_amount", "submitted_amount", "approved_amount", "deduction_amount", "line_ids"], 40),
-            _section("handling", "办理说明", ["settlement_description", "note", "attachment_ids"], 50),
-            _section("execution", "执行与匹配", list(ledger), 70, collapsed=True),
-            _section("source_trace", "来源与系统追溯", list(trace) + list(APPROVAL_FIELDS), 90, collapsed=True),
+            _section("business_object", counterparty_title, ["project_id", "contract_id", "partner_id", "operation_strategy"], 10),
+            _section("settlement_basis", "结算依据", ["title", "settlement_category_id", "settlement_stage_id", "document_date", "date_settlement", "settlement_period_start", "settlement_period_end"], 20),
+            _section("amount", "结算明细与金额", ["line_ids", "amount_total", "settlement_amount", "submitted_amount", "approved_amount", "deduction_amount"], 30),
+            _section("handling", "办理说明", ["settlement_description", "note"], 40),
+            _section("business_identity", "系统办理信息", ["business_category_id", "settlement_flow_label", "settlement_type", "state", "name"], 80, collapsed=True, visible_profiles=EDIT_READONLY),
+            _section("execution", "执行与匹配", list(ledger), 90, collapsed=True),
+            _section("source_trace", "历史与系统追溯", list(trace) + list(APPROVAL_FIELDS), 100, collapsed=True, visible_profiles=READONLY_ONLY),
         ],
-        required=("business_category_id", "project_id", "contract_id", "partner_id", "amount_total"),
+        required=("business_category_id", "project_id", "contract_id", "partner_id", "line_ids"),
         readonly_all=("operation_strategy", "settlement_flow_label", "settlement_type") + SYSTEM_FIELDS,
         trace=trace + APPROVAL_FIELDS,
-        ledger=ledger,
+        ledger=ledger + ("amount_total", "deduction_amount"),
     )
 
 

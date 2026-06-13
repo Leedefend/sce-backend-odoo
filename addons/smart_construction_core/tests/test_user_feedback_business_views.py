@@ -196,6 +196,7 @@ class TestUserFeedbackBusinessViews(TransactionCase):
         supplier_search = self.env.ref("smart_construction_core.view_sc_supplier_partner_search")
 
         self.assertIn("'default_customer_rank': 1", customer_action.context)
+        self.assertIn("'default_company_type': 'company'", customer_action.context)
         self.assertIn("'default_supplier_rank': 1", supplier_action.context)
         for arch in (customer_tree.arch_db, supplier_tree.arch_db):
             self.assertIn('name="active"', arch)
@@ -239,6 +240,11 @@ class TestUserFeedbackBusinessViews(TransactionCase):
             self.assertIn('name="sc_source_receipt_amount" string="收款金额" readonly="1"', arch)
             self.assertIn('name="sc_source_payment_amount" string="付款金额" readonly="1"', arch)
             self.assertIn('name="sc_supplier_type_label"', arch)
+        self.assertIn('name="company_type" string="客户类型"', customer_tree.arch_db)
+        for label in ("客户身份", "企业资质", "联系与地址", "账户与开票", "业务画像"):
+            self.assertIn('string="%s"' % label, customer_form.arch_db)
+        self.assertIn('name="company_type" string="客户类型"', customer_form.arch_db)
+        self.assertIn('name="property_account_receivable_id"', customer_form.arch_db)
         for arch in (customer_search.arch_db, supplier_search.arch_db):
             self.assertIn('name="phone"', arch)
             self.assertIn('name="mobile"', arch)

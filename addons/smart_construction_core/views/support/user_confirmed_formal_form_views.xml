@@ -71,7 +71,7 @@
         <field name="inherit_id" ref="smart_construction_core.view_sc_settlement_order_form"/>
         <field name="arch" type="xml">
             <xpath expr="//sheet" position="inside">
-                <group string="用户确认数据">
+                <group string="用户确认数据" invisible="not legacy_acceptance_label">
                     <field name="legacy_acceptance_label" readonly="1"/>
                     <field name="user_acceptance_document_state" readonly="1"/>
                     <field name="user_acceptance_document_no" readonly="1"/>

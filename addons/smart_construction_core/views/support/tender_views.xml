@@ -321,6 +321,7 @@
                 <field name="legacy_record_id"/>
                 <field name="invoice_no"/>
                 <field name="payment_method"/>
+                <field name="receipt_partner_id"/>
                 <field name="receipt_partner_name"/>
                 <field name="receipt_payee_name"/>
                 <field name="receipt_bank_name"/>
@@ -334,7 +335,7 @@
                     <filter string="按投标" name="group_bid" context="{'group_by': 'bid_id'}"/>
                     <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
                     <filter string="按申请日期" name="group_apply_date" context="{'group_by': 'apply_date'}"/>
-                    <filter string="按收款单位" name="group_receipt_partner" context="{'group_by': 'receipt_partner_name'}"/>
+                    <filter string="按收款单位" name="group_receipt_partner" context="{'group_by': 'receipt_partner_id'}"/>
                     <filter string="按申请人" name="group_applicant" context="{'group_by': 'applicant_id'}"/>
                     <filter string="按状态" name="group_state" context="{'group_by': 'state'}"/>
                 </group>
@@ -353,7 +354,7 @@
                 <field name="applicant_id"/>
                 <field name="amount" sum="报名费合计"/>
                 <field name="payment_method"/>
-                <field name="receipt_partner_name"/>
+                <field name="receipt_partner_id"/>
                 <field name="receipt_payee_name"/>
                 <field name="receipt_bank_name"/>
                 <field name="receipt_bank_account"/>
@@ -394,7 +395,8 @@
                     </group>
                     <group string="收款信息">
                         <group>
-                            <field name="receipt_partner_name"/>
+                            <field name="receipt_partner_id"/>
+                            <field name="receipt_partner_name" readonly="1"/>
                             <field name="receipt_payee_name"/>
                         </group>
                         <group>

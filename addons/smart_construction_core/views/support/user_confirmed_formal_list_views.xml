@@ -500,7 +500,7 @@
         <field name="name">sc.settlement.order.user.confirmed.tree</field>
         <field name="model">sc.settlement.order</field>
         <field name="arch" type="xml">
-            <tree string="合同结算" create="false" edit="false" delete="false" default_order="id desc">
+            <tree string="合同结算" create="true" edit="false" delete="false" default_order="id desc">
                 <field name="legacy_acceptance_label" string="业务分类"/>
                 <field name="user_acceptance_document_state" string="单据状态"/>
                 <field name="user_acceptance_document_no" string="单据编号"/>
@@ -693,18 +693,20 @@
     <record id="action_sc_settlement_order_income" model="ir.actions.act_window">
         <field name="view_id" ref="smart_construction_core.view_sc_settlement_order_user_confirmed_tree"/>
         <field name="view_ids" eval="[(5, 0, 0),
-            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_settlement_order_user_confirmed_tree')})
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_settlement_order_user_confirmed_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_settlement_order_form')})
         ]"/>
         <field name="domain">[('business_category_id.code', '=', 'settlement.income')]</field>
-        <field name="context">{'create': False, 'default_settlement_type': 'in', 'default_business_category_code': 'settlement.income'}</field>
+        <field name="context">{'create': True, 'edit': True, 'default_settlement_type': 'in', 'default_business_category_code': 'settlement.income', 'search_default_group_project': 1}</field>
     </record>
     <record id="action_sc_settlement_order_expense" model="ir.actions.act_window">
         <field name="view_id" ref="smart_construction_core.view_sc_settlement_order_user_confirmed_tree"/>
         <field name="view_ids" eval="[(5, 0, 0),
-            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_settlement_order_user_confirmed_tree')})
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_settlement_order_user_confirmed_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('smart_construction_core.view_sc_settlement_order_form')})
         ]"/>
         <field name="domain">[('business_category_id.code', '=', 'settlement.expense')]</field>
-        <field name="context">{'create': False, 'default_settlement_type': 'out', 'default_business_category_code': 'settlement.expense'}</field>
+        <field name="context">{'create': True, 'edit': True, 'default_settlement_type': 'out', 'default_business_category_code': 'settlement.expense', 'search_default_group_project': 1}</field>
     </record>
 
     <record id="menu_sc_material_quote_acceptance" model="ir.ui.menu">

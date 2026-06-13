@@ -327,7 +327,7 @@
         <field name="source_aliases">收入结算、收入合同结算、工程进度结算、业主结算</field>
         <field name="default_values_json"><![CDATA[{"settlement_type": "in"}]]></field>
         <field name="domain_json"><![CDATA[[["settlement_type", "=", "in"]]]]></field>
-        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "contract_id", "line_ids", "amount_total"]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "contract_id", "line_ids"]]]></field>
         <field name="visible_groups_json"><![CDATA[["settlement_header", "settlement_lines", "contract", "invoice", "receipt"]]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.settlement.order", "sc.receipt.income", "sc.invoice.registration"], "terminal_action": "action_approve", "balance_fields": ["amount_total", "amount_paid", "amount_payable"]}]]></field>
         <field name="attachment_policy">recommended</field>
@@ -344,7 +344,7 @@
         <field name="source_aliases">支出结算、支出合同结算、采购结算、分包结算、劳务结算</field>
         <field name="default_values_json"><![CDATA[{"settlement_type": "out"}]]></field>
         <field name="domain_json"><![CDATA[[["settlement_type", "=", "out"]]]]></field>
-        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "contract_id", "line_ids", "amount_total"]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "contract_id", "line_ids"]]]></field>
         <field name="visible_groups_json"><![CDATA[["settlement_header", "settlement_lines", "contract", "invoice", "payment"]]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.settlement.order", "payment.request", "payment.ledger", "sc.invoice.registration"], "terminal_action": "action_approve", "balance_fields": ["amount_total", "amount_paid", "amount_payable"]}]]></field>
         <field name="attachment_policy">recommended</field>
