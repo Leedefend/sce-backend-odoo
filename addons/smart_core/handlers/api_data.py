@@ -164,10 +164,11 @@ class ApiDataHandler(BaseIntentHandler):
         if company_id:
             context["allowed_company_ids"] = [company_id]
             context["company_id"] = company_id
-        project_id, project_error = parse_positive_int(
-            self._dig(p, "current_project_id", None) or self._dig(p, "project_id", None),
-            allow_empty=True,
-        )
+        op = (self._get_str(p, "op", "list") or "list").strip().lower()
+        project_scope_candidate = self._dig(p, "current_project_id", None)
+        if op not in {"create", "write"}:
+            project_scope_candidate = project_scope_candidate or self._dig(p, "project_id", None)
+        project_id, project_error = parse_positive_int(project_scope_candidate, allow_empty=True)
         if not project_error and project_id:
             context["current_project_id"] = project_id
             context.setdefault("default_project_id", project_id)
@@ -1702,7 +1703,7 @@ class ApiDataHandler(BaseIntentHandler):
                 safe_vals["operation_strategy"] = scope_operation_strategy
             elif incoming_operation_strategy != scope_operation_strategy:
                 return self._project_scope_denied("当前经营方式上下文不允许创建到其他经营方式", project_scope_meta)
-        if project_scope_meta.get("applied") and "project_id" in env_model._fields:
+        if project_scope_meta.get("project_id") and "project_id" in env_model._fields:
             incoming_project_id = safe_vals.get("project_id")
             if incoming_project_id in (None, False, ""):
                 safe_vals["project_id"] = project_id
@@ -1770,7 +1771,7 @@ class ApiDataHandler(BaseIntentHandler):
             return scoped_error
         project_id = self._current_project_id(p, ctx)
         _, project_scope_meta = self._apply_project_scope(env_model, [], p, ctx)
-        if project_scope_meta.get("applied") and "project_id" in env_model._fields and "project_id" in vals:
+        if project_scope_meta.get("project_id") and "project_id" in env_model._fields and "project_id" in vals:
             try:
                 incoming_project_id = int(vals.get("project_id") or 0)
             except Exception:

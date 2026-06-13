@@ -1502,6 +1502,8 @@ function createRouteQueryForBusinessCategory(categoryCode = '') {
   return resolveCarryQuery(code ? {
     current_business_category_code: code,
     default_business_category_code: code,
+    current_business_category_label: option?.label || code,
+    default_business_category_label: option?.label || code,
     ctx_source: 'business_category_create_picker',
     ...defaults,
   } : undefined);

@@ -22,6 +22,8 @@ export const CONTRACT_NAV_QUERY_KEYS = [
   'business_entry_contract_version',
   'current_business_category_code',
   'default_business_category_code',
+  'current_business_category_label',
+  'default_business_category_label',
 ] as const;
 
 export const BUSINESS_ENTRY_NAV_QUERY_KEYS = [
@@ -33,6 +35,8 @@ export const BUSINESS_ENTRY_NAV_QUERY_KEYS = [
   'business_entry_contract_version',
   'current_business_category_code',
   'default_business_category_code',
+  'current_business_category_label',
+  'default_business_category_label',
 ] as const;
 
 export function pickContractNavQuery(

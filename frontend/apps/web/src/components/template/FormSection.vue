@@ -177,7 +177,7 @@
                           type="button"
                           class="many2one-option"
                           @mousedown.prevent
-                          @click="emitFieldChange(field, option.value)"
+                          @click="emitMany2oneAction(field, option.value, $event)"
                         >
                           {{ option.label }}
                         </button>
@@ -188,7 +188,7 @@
                           type="button"
                           class="many2one-action many2one-action--record"
                           @mousedown.prevent
-                          @click="emitFieldChange(field, field.many2oneOpenToken || '')"
+                          @click="emitMany2oneAction(field, field.many2oneOpenToken || '', $event)"
                         >
                           {{ field.many2oneOpenLabel || '维护当前项' }}
                         </button>
@@ -197,7 +197,7 @@
                           type="button"
                           class="many2one-action"
                           @mousedown.prevent
-                          @click="emitFieldChange(field, field.many2oneSearchToken || '')"
+                          @click="emitMany2oneAction(field, field.many2oneSearchToken || '', $event)"
                         >
                           {{ field.many2oneSearchLabel }}
                         </button>
@@ -206,7 +206,7 @@
                           type="button"
                           class="many2one-action"
                           @mousedown.prevent
-                          @click="emitFieldChange(field, field.many2oneCreateToken || '')"
+                          @click="emitMany2oneAction(field, field.many2oneCreateToken || '', $event)"
                         >
                           {{ field.many2oneCreateLabel }}
                         </button>
@@ -215,7 +215,7 @@
                           type="button"
                           class="many2one-action"
                           @mousedown.prevent
-                          @click="emitMany2oneCommit(field, many2oneTextValue(field))"
+                          @click="emitMany2oneInlineCreate(field, $event)"
                         >
                           {{ field.many2oneInlineCreateLabel }}
                         </button>
@@ -502,6 +502,17 @@ function emitFieldChange(field: FormSectionFieldSchema, value: string | number |
   });
 }
 
+function collapseMany2oneDropdown(event: Event) {
+  const target = event.currentTarget instanceof HTMLElement ? event.currentTarget : null;
+  const input = target?.closest('.many2one-combobox')?.querySelector('input');
+  window.setTimeout(() => input?.blur(), 0);
+}
+
+function emitMany2oneAction(field: FormSectionFieldSchema, value: string | number | boolean | null, event: Event) {
+  emitFieldChange(field, value);
+  collapseMany2oneDropdown(event);
+}
+
 function emitMany2oneQuery(field: FormSectionFieldSchema, value: string) {
   emit('field-change', {
     name: field.name,
@@ -522,6 +533,11 @@ function emitMany2oneCommit(field: FormSectionFieldSchema, value: string) {
     action: 'commit',
     descriptor: field.descriptor,
   });
+}
+
+function emitMany2oneInlineCreate(field: FormSectionFieldSchema, event: Event) {
+  emitMany2oneCommit(field, many2oneTextValue(field));
+  collapseMany2oneDropdown(event);
 }
 
 function emitDateRangeEndChange(field: FormSectionFieldSchema, value: string | number | boolean | null) {

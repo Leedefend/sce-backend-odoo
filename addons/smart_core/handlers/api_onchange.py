@@ -426,10 +426,23 @@ class ApiOnchangeHandler(BaseIntentHandler):
 
         if not isinstance(onchange_result, dict):
             onchange_result = {}
-        if not any(onchange_result.get(key) for key in ("value", "domain", "warning", "modifiers_patch", "line_patches")):
-            manual_result = self._manual_onchange_result(env_model, values, changed_fields)
-            if manual_result:
-                onchange_result = manual_result
+        manual_result = self._manual_onchange_result(env_model, values, changed_fields)
+        if manual_result:
+            merged_result = dict(onchange_result)
+            for key in ("value", "domain", "modifiers_patch"):
+                base = merged_result.get(key) if isinstance(merged_result.get(key), dict) else {}
+                supplement = manual_result.get(key) if isinstance(manual_result.get(key), dict) else {}
+                if base or supplement:
+                    merged_result[key] = {**base, **supplement}
+            base_lines = merged_result.get("line_patches") if isinstance(merged_result.get("line_patches"), list) else []
+            supplement_lines = manual_result.get("line_patches") if isinstance(manual_result.get("line_patches"), list) else []
+            if base_lines or supplement_lines:
+                merged_result["line_patches"] = [*base_lines, *supplement_lines]
+            base_warnings = self._normalize_warning_list(merged_result.get("warning"))
+            supplement_warnings = self._normalize_warning_list(manual_result.get("warning"))
+            if base_warnings or supplement_warnings:
+                merged_result["warning"] = [*base_warnings, *supplement_warnings]
+            onchange_result = merged_result
 
         patch = self._normalize_patch(env_model, onchange_result.get("value"))
         domain_patch = self._normalize_domain_patch(env_model, onchange_result.get("domain"))

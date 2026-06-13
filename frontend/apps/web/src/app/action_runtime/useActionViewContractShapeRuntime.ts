@@ -196,18 +196,9 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
       if (widget.fieldCode && widget.label) labels[widget.fieldCode] = widget.label;
     });
     const listProfile = (contract.list_profile || {}) as Dict;
-    Object.entries((listProfile.column_labels || {}) as Dict).forEach(([name, labelRaw]) => {
-      const label = String(labelRaw || '').trim();
-      if (label) labels[name] = label;
-    });
     const semanticPage = (contract.semantic_page || {}) as Dict;
     const listSemantics = (semanticPage.list_semantics || {}) as Dict;
     const semanticColumns = Array.isArray(listSemantics.columns) ? (listSemantics.columns as Array<Dict>) : [];
-    semanticColumns.forEach((row) => {
-      const name = String(row.name || '').trim();
-      const label = String(row.label || '').trim();
-      if (name && label) labels[name] = label;
-    });
     const directViews = ((contract as Dict).views || {}) as Dict;
     Object.values(directViews).forEach((viewBlock) => {
       if (!viewBlock || typeof viewBlock !== 'object' || Array.isArray(viewBlock)) return;
@@ -219,6 +210,15 @@ export function useActionViewContractShapeRuntime(options: UseActionViewContract
       collectDisplayRowLabels(block.dimensions, labels);
       collectDisplayRowLabels(block.cards, labels);
       collectDisplayRowLabels(block.kpis, labels);
+    });
+    Object.entries((listProfile.column_labels || {}) as Dict).forEach(([name, labelRaw]) => {
+      const label = String(labelRaw || '').trim();
+      if (label) labels[name] = label;
+    });
+    semanticColumns.forEach((row) => {
+      const name = String(row.name || '').trim();
+      const label = String(row.label || '').trim();
+      if (name && label) labels[name] = label;
     });
     const head = ((contract as Dict).head && typeof (contract as Dict).head === 'object')
       ? (contract as Dict).head as Dict
