@@ -16,6 +16,7 @@ except ImportError:  # pragma: no cover - compatibility for lightweight boundary
     def record_in_business_scope(env_model, record_id, params=None, context=None):
         return record_in_project_scope(env_model, record_id, selected_project_id_from_context(params, context))
 from ..core.request_params import parse_positive_int
+from .collaboration_users import is_collaboration_visible_user
 from ..utils.reason_codes import (
     REASON_MISSING_PARAMS,
     REASON_NOT_FOUND,
@@ -95,17 +96,27 @@ class ChatterActivityScheduleHandler(BaseIntentHandler):
             model_rec = IrModel.sudo().search([("model", "=", model)], limit=1)
             if not model_rec:
                 return self._failure(REASON_NOT_FOUND, "模型元数据不存在", 404, trace_id)
+            assignee = self._activity_assignee(user_id)
+            if not assignee:
+                return self._failure(REASON_PERMISSION_DENIED, "指派人无效或不可用", 403, trace_id)
             activity_type = self.env.ref(activity_type_xmlid, raise_if_not_found=False)
             if not activity_type:
                 activity_type = self.env.ref("mail.mail_activity_data_todo", raise_if_not_found=False)
             if not activity_type:
                 return self._failure(REASON_NOT_FOUND, "活动类型不存在", 404, trace_id)
 
-            activity = Activity.create(
+            activity = Activity.with_context(
+                mail_create_nosubscribe=True,
+                mail_notify_noemail=True,
+                mail_notify_force_send=False,
+                mail_post_autofollow=False,
+                mail_activity_quick_update=True,
+                tracking_disable=True,
+            ).create(
                 {
                     "res_model_id": model_rec.id,
                     "res_id": record.id,
-                    "user_id": user_id,
+                    "user_id": assignee.id,
                     "activity_type_id": activity_type.id,
                     "summary": summary,
                     "note": note,
@@ -134,6 +145,17 @@ class ChatterActivityScheduleHandler(BaseIntentHandler):
             return self._failure(REASON_USER_ERROR, str(exc) or "业务规则不允许", 400, trace_id)
         except Exception:
             return self._failure(REASON_SYSTEM_ERROR, "安排活动失败", 500, trace_id)
+
+    def _activity_assignee(self, user_id: int):
+        user = self.env["res.users"].browse(user_id).exists()
+        if not user or not user.active:
+            return self.env["res.users"]
+        internal_group = self.env.ref("base.group_user", raise_if_not_found=False)
+        if internal_group and internal_group not in user.groups_id:
+            return self.env["res.users"]
+        if not is_collaboration_visible_user(user):
+            return self.env["res.users"]
+        return user
 
     def _failure(self, reason_code: str, message: str, status_code: int, trace_id: str):
         return {

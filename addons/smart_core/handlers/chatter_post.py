@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # 📁 smart_core/handlers/chatter_post.py
 import re
+from html import escape
 from email.utils import formataddr
 from typing import List
 
@@ -18,6 +19,7 @@ except ImportError:  # pragma: no cover - compatibility for lightweight boundary
     def record_in_business_scope(env_model, record_id, params=None, context=None):
         return record_in_project_scope(env_model, record_id, selected_project_id_from_context(params, context))
 from ..core.request_params import parse_positive_int
+from .collaboration_users import is_collaboration_visible_user
 from ..utils.reason_codes import (
     REASON_MISSING_PARAMS,
     REASON_METHOD_NOT_CALLABLE,
@@ -59,6 +61,8 @@ class ChatterPostHandler(BaseIntentHandler):
         body = params.get("body")
         subject = params.get("subject")
         mode = str(params.get("mode") or "message").strip().lower()
+        explicit_user_ids = _list_ints(params.get("mention_user_ids") or params.get("mentioned_user_ids"))
+        explicit_partner_ids = _list_ints(params.get("partner_ids") or params.get("mention_partner_ids"))
         trace_id = self.context.get("trace_id") if isinstance(self.context, dict) else ""
 
         if not model or _is_empty_param(res_id) or not body:
@@ -87,7 +91,11 @@ class ChatterPostHandler(BaseIntentHandler):
             if not hasattr(record, "message_post"):
                 return self._failure(REASON_METHOD_NOT_CALLABLE, "模型不支持 chatter", 400, trace_id)
 
-            mention_partner_ids = self._resolve_mentions(str(body or ""))
+            mention_partner_ids = self._resolve_mention_partners(
+                body=str(body or ""),
+                user_ids=explicit_user_ids,
+                partner_ids=explicit_partner_ids,
+            )
             subtype_xmlid = "mail.mt_note" if mode == "note" else "mail.mt_comment"
             post_kwargs = {
                 "body": body,
@@ -99,18 +107,14 @@ class ChatterPostHandler(BaseIntentHandler):
             if mention_partner_ids:
                 post_kwargs["partner_ids"] = mention_partner_ids
 
-            thread = record.with_context(mail_create_nosubscribe=True, mail_notify_noemail=True)
-            try:
-                message = thread.message_post(**post_kwargs)
-            except UserError as exc:
-                message = None
-                message_text = str(exc) or ""
-                if mode == "message" and "发件人的电子邮件地址" in message_text:
-                    fallback_kwargs = dict(post_kwargs)
-                    fallback_kwargs["subtype_xmlid"] = "mail.mt_note"
-                    message = thread.message_post(**fallback_kwargs)
-                if not message:
-                    raise
+            message = self._create_log_message(
+                model=model,
+                record_id=record.id,
+                body=str(body or ""),
+                subject=subject,
+                subtype_xmlid=subtype_xmlid,
+                partner_ids=mention_partner_ids,
+            )
             return {
                 "ok": True,
                 "data": {
@@ -136,13 +140,70 @@ class ChatterPostHandler(BaseIntentHandler):
         except Exception:
             return self._failure(REASON_SYSTEM_ERROR, "发布评论失败", 500, trace_id)
 
+    def _resolve_mention_partners(self, body: str, user_ids: List[int], partner_ids: List[int]) -> List[int]:
+        partner_ids_out: set[int] = set()
+        if partner_ids:
+            partners = self.env["res.partner"].browse(partner_ids).exists()
+            partner_ids_out.update(int(pid) for pid in partners.ids if pid)
+        if user_ids:
+            users = self._allowed_mention_users([int(uid) for uid in user_ids if uid])
+            partner_ids_out.update(int(pid) for pid in users.mapped("partner_id").ids if pid)
+        partner_ids_out.update(self._resolve_mentions(body))
+        return sorted(partner_ids_out)
+
+    def _allowed_mention_users(self, user_ids: List[int]):
+        if not user_ids:
+            return self.env["res.users"]
+        users = self.env["res.users"].browse(user_ids).exists().filtered(lambda user: bool(user.active))
+        internal_group = self.env.ref("base.group_user", raise_if_not_found=False)
+        if internal_group:
+            users = users.filtered(lambda user: internal_group in user.groups_id)
+        users = users.filtered(is_collaboration_visible_user)
+        return users
+
     def _resolve_mentions(self, body: str) -> List[int]:
         tokens = set(re.findall(r"@([A-Za-z0-9_.-]{2,64})", body or ""))
         if not tokens:
             return []
-        users = self.env["res.users"].search([("login", "in", list(tokens))], limit=20)
+        users = self._allowed_mention_users(self.env["res.users"].search([("login", "in", list(tokens))], limit=20).ids)
         partner_ids = users.mapped("partner_id").ids
         return [int(pid) for pid in partner_ids if pid]
+
+    def _create_log_message(self, *, model: str, record_id: int, body: str, subject, subtype_xmlid: str, partner_ids: List[int]):
+        subtype = self.env.ref(subtype_xmlid, raise_if_not_found=False)
+        vals = {
+            "model": model,
+            "res_id": int(record_id),
+            "body": f"<p>{escape(body).replace(chr(10), '<br/>')}</p>",
+            "subject": subject,
+            "message_type": "comment",
+            "author_id": self.env.user.partner_id.id,
+            "email_from": _resolve_email_from(self.env.user),
+        }
+        if subtype:
+            vals["subtype_id"] = subtype.id
+        message = self.env["mail.message"].with_context(
+            mail_create_nosubscribe=True,
+            mail_notify_noemail=True,
+            mail_notify_force_send=False,
+            mail_post_autofollow=False,
+            tracking_disable=True,
+        ).create(vals)
+        self._link_message_partners(message, partner_ids)
+        return message
+
+    def _link_message_partners(self, message, partner_ids: List[int]) -> None:
+        if not partner_ids:
+            return
+        field = self.env["mail.message"]._fields.get("partner_ids")
+        relation = getattr(field, "relation", "") or "mail_message_res_partner_rel"
+        column1 = getattr(field, "column1", "") or "mail_message_id"
+        column2 = getattr(field, "column2", "") or "res_partner_id"
+        for partner_id in sorted(set(int(pid) for pid in partner_ids if int(pid or 0) > 0)):
+            self.env.cr.execute(
+                f'INSERT INTO "{relation}" ("{column1}", "{column2}") VALUES (%s, %s) ON CONFLICT DO NOTHING',
+                (int(message.id), partner_id),
+            )
 
     def _failure(self, reason_code: str, message: str, status_code: int, trace_id: str):
         return {
@@ -170,3 +231,18 @@ def _resolve_email_from(user) -> str:
 
 def _is_empty_param(value) -> bool:
     return value is None or (isinstance(value, str) and not value.strip())
+
+
+def _list_ints(value) -> List[int]:
+    if value is None or value is False:
+        return []
+    raw = value if isinstance(value, (list, tuple, set)) else [value]
+    out: List[int] = []
+    for item in raw:
+        try:
+            parsed = int(item)
+        except Exception:
+            continue
+        if parsed > 0 and parsed not in out:
+            out.append(parsed)
+    return out

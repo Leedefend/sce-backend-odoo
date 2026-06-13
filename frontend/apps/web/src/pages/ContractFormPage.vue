@@ -59,10 +59,18 @@
           {{ action.label }}
         </button>
         <button
+          v-if="showDraftSaveAction"
+          class="ghost"
+          :disabled="draftSaveDisabled"
+          @click="() => saveRecord()"
+        >
+          {{ draftSaveButtonLabel }}
+        </button>
+        <button
           v-if="!isProjectIntakeCreateMode"
           class="primary"
-          :disabled="isQuickSubmitDisabled"
-          @click="() => saveRecord()"
+          :disabled="primaryFormActionDisabled"
+          @click="runPrimaryFormAction"
         >
           {{ submitButtonLabel }}
         </button>
@@ -298,7 +306,8 @@
           <template #chatter>
             <section v-if="(nativeChatterActions.length || nativeAttachments) && !isProjectIntakeCreateMode" class="block native-chatter-block">
               <h3>{{ nativeCollaborationTitle }}</h3>
-              <div class="chips">
+              <p v-if="nativeCollaborationUnavailableMessage" class="native-chatter-empty">{{ nativeCollaborationUnavailableMessage }}</p>
+              <div v-else class="chips">
                 <button
                   v-for="action in nativeChatterActions"
                   :key="`chatter-${action.key}`"
@@ -311,11 +320,26 @@
                   {{ action.label }}
                 </button>
               </div>
-              <section v-if="activeChatterMode" class="native-chatter-compose">
+              <section v-if="!nativeCollaborationUnavailableMessage && activeChatterMode" class="native-chatter-compose">
                 <template v-if="activeChatterIsActivity">
                   <label class="native-chatter-field">
+                    <span>{{ activityAssigneeLabel }}</span>
+                    <select class="input" :value="activityAssigneeId || ''" :disabled="chatterPosting || collaborationUsersLoading" @change="selectActivityAssignee">
+                      <option value="">当前用户</option>
+                      <option v-for="user in activityAssigneeOptions" :key="`activity-user-${user.id}`" :value="user.id">
+                        {{ collaborationUserLabel(user) }}
+                      </option>
+                    </select>
+                  </label>
+                  <label class="native-chatter-field">
                     <span>{{ activitySummaryLabel }}</span>
-                    <input v-model="activitySummary" class="input" type="text" :disabled="chatterPosting" />
+                    <input
+                      v-model="activitySummary"
+                      class="input"
+                      type="text"
+                      :placeholder="activitySummaryPlaceholder"
+                      :disabled="chatterPosting"
+                    />
                   </label>
                   <label class="native-chatter-field">
                     <span>{{ activityDeadlineLabel }}</span>
@@ -323,19 +347,60 @@
                   </label>
                   <label class="native-chatter-field">
                     <span>{{ activityNoteLabel }}</span>
-                    <textarea v-model="activityNote" class="native-chatter-input" :disabled="chatterPosting" />
+                    <textarea
+                      v-model="activityNote"
+                      class="native-chatter-input"
+                      :placeholder="activityNotePlaceholder"
+                      :disabled="chatterPosting"
+                    />
                   </label>
                 </template>
-                <textarea
-                  v-else
-                  v-model="chatterDraft"
-                  class="native-chatter-input"
-                  :placeholder="activeChatterPlaceholder"
-                  :disabled="chatterPosting"
-                />
+                <template v-else>
+                  <label class="native-chatter-field">
+                    <span>提醒对象</span>
+                    <input
+                      v-model="collaborationUserQuery"
+                      class="input"
+                      type="text"
+                      :disabled="chatterPosting || collaborationUsersLoading"
+                      placeholder="搜索姓名或账号"
+                      @input="() => loadCollaborationUsers(collaborationUserQuery)"
+                    />
+                  </label>
+                  <div v-if="selectedMentionUsers.length" class="native-collab-selected">
+                    <button
+                      v-for="user in selectedMentionUsers"
+                      :key="`mention-selected-${user.id}`"
+                      class="chip-btn"
+                      type="button"
+                      :disabled="chatterPosting"
+                      @click="removeMentionUser(user.id)"
+                    >
+                      @{{ collaborationUserLabel(user) }} ×
+                    </button>
+                  </div>
+                  <div v-if="collaborationUserChoices.length" class="native-collab-options">
+                    <button
+                      v-for="user in collaborationUserChoices.slice(0, 6)"
+                      :key="`mention-choice-${user.id}`"
+                      class="ghost mini"
+                      type="button"
+                      :disabled="chatterPosting"
+                      @click="selectMentionUser(user)"
+                    >
+                      @{{ collaborationUserLabel(user) }}
+                    </button>
+                  </div>
+                  <textarea
+                    v-model="chatterDraft"
+                    class="native-chatter-input"
+                    :placeholder="activeChatterPlaceholder"
+                    :disabled="chatterPosting"
+                  />
+                </template>
                 <div class="native-chatter-compose-actions">
                   <button class="primary" type="button" :disabled="isNativeChatterSubmitDisabled" @click="sendNativeChatter">
-                    {{ chatterPosting ? '发布中...' : activeChatterSubmitLabel }}
+                    {{ chatterPosting ? activeChatterPostingLabel : activeChatterSubmitLabel }}
                   </button>
                   <button class="ghost" type="button" :disabled="chatterPosting" @click="closeNativeChatterComposer">取消</button>
                 </div>
@@ -348,11 +413,37 @@
                 </label>
                 <p v-if="attachmentError" class="validation-error native-chatter-message">{{ attachmentError }}</p>
               </section>
-              <ul v-if="chatterTimeline.length" class="native-chatter-timeline">
+              <ul v-if="pendingNativeAttachments.length" class="native-pending-attachments">
+                <li v-for="item in pendingNativeAttachments" :key="item.key">
+                  <span>{{ item.name }}</span>
+                  <button class="ghost native-attachment-download" type="button" :disabled="attachmentUploading" @click="removePendingNativeAttachment(item.key)">移除</button>
+                </li>
+              </ul>
+              <ul v-if="!nativeCollaborationUnavailableMessage && chatterTimeline.length" class="native-chatter-timeline">
                 <li v-for="entry in chatterTimeline" :key="entry.key" class="native-chatter-entry">
                   <span class="native-chatter-type">{{ entry.typeLabel }}</span>
                   <span class="native-chatter-body">{{ entry.type === 'activity' ? entry.title : (entry.body || entry.title) }}</span>
                   <span class="native-chatter-meta">{{ entry.meta }}</span>
+                  <div v-if="entry.type === 'activity'" class="native-chatter-entry-actions">
+                    <button
+                      v-if="entry.activity?.can_complete"
+                      class="ghost native-chatter-entry-action"
+                      type="button"
+                      :disabled="isActivityUpdating(entry)"
+                      @click="updateNativeActivity(entry, 'done')"
+                    >
+                      完成
+                    </button>
+                    <button
+                      v-if="entry.activity?.can_cancel"
+                      class="ghost native-chatter-entry-action"
+                      type="button"
+                      :disabled="isActivityUpdating(entry)"
+                      @click="updateNativeActivity(entry, 'cancel')"
+                    >
+                      取消
+                    </button>
+                  </div>
                   <button
                     v-if="entry.type === 'attachment' && entry.attachment"
                     class="ghost native-attachment-download"
@@ -565,7 +656,8 @@
 
       <section v-if="(nativeChatterActions.length || nativeAttachments) && !isProjectIntakeCreateMode && !hasNativeChatterNode" class="block native-chatter-block">
         <h3>{{ nativeCollaborationTitle }}</h3>
-        <div class="chips">
+        <p v-if="nativeCollaborationUnavailableMessage" class="native-chatter-empty">{{ nativeCollaborationUnavailableMessage }}</p>
+        <div v-else class="chips">
           <button
             v-for="action in nativeChatterActions"
             :key="`chatter-${action.key}`"
@@ -578,11 +670,26 @@
             {{ action.label }}
           </button>
         </div>
-        <section v-if="activeChatterMode" class="native-chatter-compose">
+        <section v-if="!nativeCollaborationUnavailableMessage && activeChatterMode" class="native-chatter-compose">
           <template v-if="activeChatterIsActivity">
             <label class="native-chatter-field">
+              <span>{{ activityAssigneeLabel }}</span>
+              <select class="input" :value="activityAssigneeId || ''" :disabled="chatterPosting || collaborationUsersLoading" @change="selectActivityAssignee">
+                <option value="">当前用户</option>
+                <option v-for="user in activityAssigneeOptions" :key="`activity-user-fallback-${user.id}`" :value="user.id">
+                  {{ collaborationUserLabel(user) }}
+                </option>
+              </select>
+            </label>
+            <label class="native-chatter-field">
               <span>{{ activitySummaryLabel }}</span>
-              <input v-model="activitySummary" class="input" type="text" :disabled="chatterPosting" />
+              <input
+                v-model="activitySummary"
+                class="input"
+                type="text"
+                :placeholder="activitySummaryPlaceholder"
+                :disabled="chatterPosting"
+              />
             </label>
             <label class="native-chatter-field">
               <span>{{ activityDeadlineLabel }}</span>
@@ -590,19 +697,60 @@
             </label>
             <label class="native-chatter-field">
               <span>{{ activityNoteLabel }}</span>
-              <textarea v-model="activityNote" class="native-chatter-input" :disabled="chatterPosting" />
+              <textarea
+                v-model="activityNote"
+                class="native-chatter-input"
+                :placeholder="activityNotePlaceholder"
+                :disabled="chatterPosting"
+              />
             </label>
           </template>
-          <textarea
-            v-else
-            v-model="chatterDraft"
-            class="native-chatter-input"
-            :placeholder="activeChatterPlaceholder"
-            :disabled="chatterPosting"
-          />
+          <template v-else>
+            <label class="native-chatter-field">
+              <span>提醒对象</span>
+              <input
+                v-model="collaborationUserQuery"
+                class="input"
+                type="text"
+                :disabled="chatterPosting || collaborationUsersLoading"
+                placeholder="搜索姓名或账号"
+                @input="() => loadCollaborationUsers(collaborationUserQuery)"
+              />
+            </label>
+            <div v-if="selectedMentionUsers.length" class="native-collab-selected">
+              <button
+                v-for="user in selectedMentionUsers"
+                :key="`mention-selected-fallback-${user.id}`"
+                class="chip-btn"
+                type="button"
+                :disabled="chatterPosting"
+                @click="removeMentionUser(user.id)"
+              >
+                @{{ collaborationUserLabel(user) }} ×
+              </button>
+            </div>
+            <div v-if="collaborationUserChoices.length" class="native-collab-options">
+              <button
+                v-for="user in collaborationUserChoices.slice(0, 6)"
+                :key="`mention-choice-fallback-${user.id}`"
+                class="ghost mini"
+                type="button"
+                :disabled="chatterPosting"
+                @click="selectMentionUser(user)"
+              >
+                @{{ collaborationUserLabel(user) }}
+              </button>
+            </div>
+            <textarea
+              v-model="chatterDraft"
+              class="native-chatter-input"
+              :placeholder="activeChatterPlaceholder"
+              :disabled="chatterPosting"
+            />
+          </template>
           <div class="native-chatter-compose-actions">
             <button class="primary" type="button" :disabled="isNativeChatterSubmitDisabled" @click="sendNativeChatter">
-              {{ chatterPosting ? '发布中...' : activeChatterSubmitLabel }}
+              {{ chatterPosting ? activeChatterPostingLabel : activeChatterSubmitLabel }}
             </button>
             <button class="ghost" type="button" :disabled="chatterPosting" @click="closeNativeChatterComposer">取消</button>
           </div>
@@ -615,11 +763,37 @@
           </label>
           <p v-if="attachmentError" class="validation-error native-chatter-message">{{ attachmentError }}</p>
         </section>
-        <ul v-if="chatterTimeline.length" class="native-chatter-timeline">
+        <ul v-if="pendingNativeAttachments.length" class="native-pending-attachments">
+          <li v-for="item in pendingNativeAttachments" :key="item.key">
+            <span>{{ item.name }}</span>
+            <button class="ghost native-attachment-download" type="button" :disabled="attachmentUploading" @click="removePendingNativeAttachment(item.key)">移除</button>
+          </li>
+        </ul>
+        <ul v-if="!nativeCollaborationUnavailableMessage && chatterTimeline.length" class="native-chatter-timeline">
           <li v-for="entry in chatterTimeline" :key="entry.key" class="native-chatter-entry">
             <span class="native-chatter-type">{{ entry.typeLabel }}</span>
             <span class="native-chatter-body">{{ entry.type === 'activity' ? entry.title : (entry.body || entry.title) }}</span>
             <span class="native-chatter-meta">{{ entry.meta }}</span>
+            <div v-if="entry.type === 'activity'" class="native-chatter-entry-actions">
+              <button
+                v-if="entry.activity?.can_complete"
+                class="ghost native-chatter-entry-action"
+                type="button"
+                :disabled="isActivityUpdating(entry)"
+                @click="updateNativeActivity(entry, 'done')"
+              >
+                完成
+              </button>
+              <button
+                v-if="entry.activity?.can_cancel"
+                class="ghost native-chatter-entry-action"
+                type="button"
+                :disabled="isActivityUpdating(entry)"
+                @click="updateNativeActivity(entry, 'cancel')"
+              >
+                取消
+              </button>
+            </div>
             <button
               v-if="entry.type === 'attachment' && entry.attachment"
               class="ghost native-attachment-download"
@@ -755,7 +929,15 @@ import { intentRequest } from '../api/intents';
 import { loadActionContractRaw, loadModelContractRaw } from '../api/contract';
 import { ApiError } from '../api/client';
 import { executeButton } from '../api/executeButton';
-import { fetchChatterTimeline, postChatterMessage, scheduleChatterActivity, type ChatterTimelineEntry } from '../api/chatter';
+import {
+  fetchChatterTimeline,
+  postChatterMessage,
+  scheduleChatterActivity,
+  searchCollaborationUsers,
+  updateChatterActivity,
+  type ChatterTimelineEntry,
+  type CollaborationUserOption,
+} from '../api/chatter';
 import { fileToBase64, uploadFile } from '../api/files';
 import { previewOrDownloadFile } from '../utils/filePreview';
 import { triggerOnchange } from '../api/onchange';
@@ -1154,12 +1336,20 @@ const chatterDraft = ref('');
 const activitySummary = ref('');
 const activityDeadline = ref('');
 const activityNote = ref('');
+const collaborationUserQuery = ref('');
+const collaborationUserOptions = ref<CollaborationUserOption[]>([]);
+const collaborationUsersLoading = ref(false);
+const selectedMentionUserIds = ref<number[]>([]);
+const activityAssigneeId = ref(0);
 const chatterPosting = ref(false);
 const chatterLoading = ref(false);
 const chatterError = ref('');
 const chatterTimeline = ref<ChatterTimelineEntry[]>([]);
+const activityUpdatingIds = ref<number[]>([]);
 const attachmentUploading = ref(false);
 const attachmentError = ref('');
+const pendingNativeAttachments = ref<Array<{ key: string; name: string; size: number; file: File }>>([]);
+const nativeChatterAutoLoadKey = ref('');
 let activeReloadToken = 0;
 
 const model = computed(() => String(route.params.model || contract.value?.head?.model || contract.value?.model || ''));
@@ -1408,14 +1598,55 @@ const pageTitle = computed(() => {
   return '业务表单';
 });
 
+const currentBusinessCategoryLabel = computed(() => {
+  const headContext = contract.value?.head?.context && typeof contract.value.head.context === 'object'
+    ? contract.value.head.context as Record<string, unknown>
+    : {};
+  const contractContext = contract.value?.context && typeof contract.value.context === 'object'
+    ? contract.value.context as Record<string, unknown>
+    : {};
+  return String(
+    route.query.current_business_category_label
+    || route.query.default_business_category_label
+    || headContext.current_business_category_label
+    || headContext.default_business_category_label
+    || contractContext.current_business_category_label
+    || contractContext.default_business_category_label
+    || relationKeywords.business_category_id
+    || '',
+  ).trim();
+});
+
+const currentBusinessCategoryCode = computed(() => {
+  const headContext = contract.value?.head?.context && typeof contract.value.head.context === 'object'
+    ? contract.value.head.context as Record<string, unknown>
+    : {};
+  const contractContext = contract.value?.context && typeof contract.value.context === 'object'
+    ? contract.value.context as Record<string, unknown>
+    : {};
+  return String(
+    route.query.current_business_category_code
+    || route.query.default_business_category_code
+    || headContext.current_business_category_code
+    || headContext.default_business_category_code
+    || contractContext.current_business_category_code
+    || contractContext.default_business_category_code
+    || '',
+  ).trim();
+});
+
 const pageDisplayTitle = computed(() => {
   if (isProjectIntakeCreateMode.value) return '创建项目';
+  if (currentBusinessCategoryLabel.value) return currentBusinessCategoryLabel.value;
   return pageTitle.value;
 });
 
 const pageDisplaySubtitle = computed(() => {
   if (isProjectIntakeCreateMode.value) {
     return '填写核心信息即可完成项目立项';
+  }
+  if (currentBusinessCategoryLabel.value && pageTitle.value !== currentBusinessCategoryLabel.value) {
+    return pageTitle.value;
   }
   const recordTitle = String(formData.display_name || formData.name || '').trim();
   if (recordTitle && recordTitle !== pageDisplayTitle.value) return recordTitle;
@@ -1428,22 +1659,35 @@ const intakeCreateButtonLabel = computed(() => {
 });
 
 const submitButtonLabel = computed(() => {
-  if (busy.value && busyKind.value === 'save') {
-    return isProjectQuickIntakeMode.value ? '创建中...' : formUiLabel('saving');
+  if (busy.value && busyKind.value === 'save' && !primarySubmitAction.value) {
+    if (isProjectQuickIntakeMode.value) return '创建中...';
+    return !recordId.value ? '提交中...' : formUiLabel('saving');
+  }
+  if (busy.value && busyKind.value === 'action' && primarySubmitAction.value) {
+    return '提交中...';
+  }
+  if (primarySubmitAction.value) {
+    return '提交';
   }
   if (isProjectQuickIntakeMode.value && !recordId.value) {
     return '创建并进入项目驾驶舱';
   }
+  if (!recordId.value && !isProjectIntakeCreateMode.value) {
+    return '提交';
+  }
   return formUiLabel('save');
 });
+const showDraftSaveAction = computed(() => !isProjectIntakeCreateMode.value && !recordId.value && canSave.value);
+const draftSaveButtonLabel = computed(() => (busy.value && busyKind.value === 'save' ? formUiLabel('saving') : '保存草稿'));
 const showDiscardAction = computed(() => !isProjectIntakeCreateMode.value && Boolean(recordId.value) && hasChanges.value);
 
 const headerActionsVisible = computed(() => {
   if (isProjectIntakeCreateMode.value) return [];
+  const filterPrimarySubmit = (actions: ContractAction[]) => actions.filter((action) => !isUnifiedSubmitAction(action));
   if (useNativeFormTree.value) {
-    return headerActions.value.filter((action) => action.sourceWidgetId === 'page.header');
+    return filterPrimarySubmit(headerActions.value.filter((action) => action.sourceWidgetId === 'page.header'));
   }
-  return headerActions.value;
+  return filterPrimarySubmit(headerActions.value);
 });
 
 function contractV2ActionRules() {
@@ -2270,6 +2514,17 @@ const isQuickSubmitDisabled = computed(() => {
   if (isProjectQuickIntakeMode.value) return !quickRequiredReady.value;
   return Boolean(recordId.value) && !hasChanges.value;
 });
+const primaryFormActionDisabled = computed(() => {
+  if (busy.value) return true;
+  if (!canSave.value) return true;
+  if (primarySubmitAction.value) return false;
+  return isQuickSubmitDisabled.value;
+});
+const draftSaveDisabled = computed(() => {
+  if (busy.value) return true;
+  if (!canSave.value) return true;
+  return Boolean(recordId.value) && !hasChanges.value;
+});
 const isStandardCreateDisabled = computed(() => {
   if (busy.value) return true;
   if (!canSave.value) return true;
@@ -2675,6 +2930,33 @@ function nativeNodeFieldInfo(node?: Record<string, unknown> | NativeFormLayoutNo
     : {};
 }
 
+function nativeNodeFieldDescriptor(nodeRaw: NativeFormLayoutNode, fallback?: FieldDescriptor): FieldDescriptor | undefined {
+  const node = nodeRaw as Record<string, unknown>;
+  const fieldInfo = nativeNodeFieldInfo(node);
+  if (!Object.keys(fieldInfo).length && !fallback) return undefined;
+  const name = String(nodeRaw?.name || fieldInfo.name || fallback?.name || '').trim();
+  const label = String(contractFieldLabel(name) || fallback?.string || node.string || node.label || fieldInfo.string || fieldInfo.label || name || '').trim();
+  const type = String(fieldInfo.type || fieldInfo.ttype || fallback?.type || fallback?.ttype || '').trim();
+  const relation = String(fieldInfo.relation || fallback?.relation || '').trim();
+  const relationField = String(fieldInfo.relation_field || fallback?.relation_field || '').trim();
+  const widget = String(node.widget || fieldInfo.widget || (fallback as Record<string, unknown> | undefined)?.widget || '').trim();
+  const selection = Array.isArray(fieldInfo.selection)
+    ? fieldInfo.selection as FieldDescriptor['selection']
+    : fallback?.selection;
+  return {
+    ...(fallback || {}),
+    ...(name ? { name } : {}),
+    ...(label ? { string: label } : {}),
+    ...(type ? { type, ttype: type } : {}),
+    ...(typeof fieldInfo.required === 'boolean' ? { required: fieldInfo.required } : {}),
+    ...(typeof fieldInfo.readonly === 'boolean' ? { readonly: fieldInfo.readonly } : {}),
+    ...(selection ? { selection } : {}),
+    ...(relation ? { relation } : {}),
+    ...(relationField ? { relation_field: relationField } : {}),
+    ...(widget ? { widget } : {}),
+  } as FieldDescriptor;
+}
+
 function nativeFieldSubview(name: string): Record<string, unknown> | null {
   const target = String(name || '').trim();
   if (!target) return null;
@@ -2775,9 +3057,11 @@ function one2manyColumns(name: string): One2ManyColumn[] {
 
 function one2manyPolicies(name: string) {
   const subviews = (contract.value?.views?.form as Record<string, unknown> | undefined)?.subviews;
-  const fieldSubview = subviews && typeof subviews === 'object'
+  const legacySubview = subviews && typeof subviews === 'object'
     ? (subviews as Record<string, unknown>)[name]
     : undefined;
+  const nativeSubview = nativeFieldSubview(name);
+  const fieldSubview = nativeSubview || legacySubview;
   const policies = fieldSubview && typeof fieldSubview === 'object'
     ? (fieldSubview as Record<string, unknown>).policies
     : undefined;
@@ -2790,12 +3074,15 @@ function one2manyCanCreate(name: string) {
   return one2manyPolicies(name).can_create !== false;
 }
 
-function one2manyCreateLabel(name: string) {
+function one2manyCreateLabel(name: string, fieldLabel = '') {
   const policies = one2manyPolicies(name);
   const labels = policies.ui_labels && typeof policies.ui_labels === 'object' && !Array.isArray(policies.ui_labels)
     ? policies.ui_labels as Record<string, unknown>
     : {};
-  return String(labels.add_row || labels.create || '添加行').trim() || '添加行';
+  const explicit = String(labels.add_row || labels.create || '').trim();
+  if (explicit && explicit !== '添加行') return explicit;
+  const label = String(fieldLabel || contractFieldLabel(name) || contract.value?.fields?.[name]?.string || '').trim();
+  return label ? `添加${label}` : (explicit || '添加行');
 }
 
 function one2manyPrimaryColumn(name: string) {
@@ -3181,6 +3468,13 @@ function hasAmbiguousRelationMatches(rows: RelationOption[], keyword: string, ma
   return matchMode === 'single_contains_or_exact' && candidates.length > 1;
 }
 
+function singleContainingRelationOption(rows: RelationOption[], keyword: string) {
+  const normalized = String(keyword || '').trim().toLowerCase();
+  if (!normalized) return null;
+  const candidates = rows.filter((row) => row.label.trim().toLowerCase().includes(normalized));
+  return candidates.length === 1 ? candidates[0] : null;
+}
+
 function filteredRelationOptions(name: string) {
   const rows = relationOptionsForField(name);
   const kw = relationKeyword(name).trim().toLowerCase();
@@ -3382,10 +3676,12 @@ async function queryRelationOptions(name: string, keyword: string): Promise<Rela
     const mapped = records
       .map((row) => relationOptionFromRow(row as Record<string, unknown>, descriptor))
       .filter((item): item is RelationOption => Boolean(item));
-    relationOptions.value = {
-      ...relationOptions.value,
-      [name]: mapped,
-    };
+    if (mapped.length || !search) {
+      relationOptions.value = {
+        ...relationOptions.value,
+        [name]: mapped,
+      };
+    }
     return mapped;
   } catch (err) {
     if (err instanceof ApiError) {
@@ -4155,8 +4451,81 @@ const contractActions = computed<ContractAction[]>(() => {
 
 const headerActions = computed(() => contractActions.value.filter((item) => item.level === 'header' || item.level === 'toolbar'));
 const bodyActions = computed(() => contractActions.value.filter((item) => item.level !== 'header' && item.level !== 'toolbar'));
+
+function dictOrEmpty(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
+
+function mergeFieldLabelsFromSource(source: unknown, out: Record<string, string>) {
+  if (!source || typeof source !== 'object' || Array.isArray(source)) return;
+  const row = source as Record<string, unknown>;
+  const directLabels = dictOrEmpty(row.fieldLabels || row.field_labels);
+  Object.entries(directLabels).forEach(([name, value]) => {
+    const label = String(value || '').trim();
+    if (name && label) out[name] = label;
+  });
+  Object.values(row).forEach((value) => {
+    if (value && typeof value === 'object') {
+      if (Array.isArray(value)) {
+        value.forEach((item) => mergeFieldLabelsFromSource(item, out));
+      } else {
+        mergeFieldLabelsFromSource(value, out);
+      }
+    }
+  });
+}
+
+const contractFieldLabels = computed<Record<string, string>>(() => {
+  const labels: Record<string, string> = {};
+  const snapshot = dictOrEmpty(v2ContractStore.value?.snapshot);
+  const dataMeta = dictOrEmpty(dictOrEmpty(snapshot.dataContract).dataMeta);
+  const legacyProjection = dictOrEmpty(dataMeta.legacyContractProjection);
+  const businessProfile = dictOrEmpty(legacyProjection.business_operation_profile);
+  Object.entries(dictOrEmpty(businessProfile.field_labels)).forEach(([name, value]) => {
+    const label = String(value || '').trim();
+    if (name && label) labels[name] = label;
+  });
+  mergeFieldLabelsFromSource(legacyProjection.form_structure_contract, labels);
+  mergeFieldLabelsFromSource(snapshot.formStructureContract, labels);
+  mergeFieldLabelsFromSource((contract.value as Record<string, unknown> | null | undefined)?.formStructureContract, labels);
+  return labels;
+});
+
+function contractFieldLabel(name: string) {
+  return contractFieldLabels.value[String(name || '').trim()] || '';
+}
+
+const runtimeCollaborationContract = computed(() => {
+  const fromV2Store = dictOrEmpty(v2ContractStore.value?.snapshot?.runtimeContract);
+  const fromLegacy = dictOrEmpty((contract.value as Record<string, unknown> | null | undefined)?.runtimeContract);
+  return dictOrEmpty(Object.keys(fromV2Store).length ? fromV2Store.collaboration : fromLegacy.collaboration);
+});
+
+const nativeChatterContract = computed(() => {
+  const formView = dictOrEmpty(contract.value?.views?.form);
+  const projected = dictOrEmpty(formView.chatter);
+  if (Object.keys(projected).length) return projected;
+  return dictOrEmpty(runtimeCollaborationContract.value.chatter);
+});
+
+const nativeAttachmentContract = computed(() => {
+  const formView = dictOrEmpty(contract.value?.views?.form);
+  const projected = dictOrEmpty(formView.attachments);
+  if (Object.keys(projected).length) return projected;
+  return dictOrEmpty(runtimeCollaborationContract.value.attachments);
+});
+
+function nativeChatterActionLabel(mode: string, row: Record<string, unknown>) {
+  if (mode === 'message') return '记录沟通';
+  if (mode === 'note') return '记录备注';
+  if (mode === 'activity') return '安排计划';
+  return String(row.label || row.key || '').trim();
+}
+
 const nativeChatterActions = computed<NativeChatterAction[]>(() => {
-  const chatter = contract.value?.views?.form?.chatter as Record<string, unknown> | undefined;
+  const chatter = nativeChatterContract.value;
   if (!chatter || chatter.enabled !== true) return [];
   const actions = Array.isArray(chatter.actions) ? chatter.actions as Array<Record<string, unknown>> : [];
   return actions
@@ -4169,7 +4538,7 @@ const nativeChatterActions = computed<NativeChatterAction[]>(() => {
       const mode = String(payload.mode || intent || key).trim().toLowerCase();
       return {
         key,
-        label: String(row.label || row.key || '').trim(),
+        label: nativeChatterActionLabel(mode, row),
         intent,
         mode,
         payload,
@@ -4181,21 +4550,32 @@ const nativeChatterActions = computed<NativeChatterAction[]>(() => {
 });
 
 const nativeChatterTitle = computed(() => {
-  const chatter = contract.value?.views?.form?.chatter as Record<string, unknown> | undefined;
+  const chatter = nativeChatterContract.value;
   return String(chatter?.label || '').trim();
 });
 
-const nativeCollaborationTitle = computed(() => nativeChatterTitle.value || nativeAttachmentLabel('label', '附件'));
+const nativeCollaborationTitle = computed(() => nativeChatterTitle.value || '协作日志');
+const nativeCollaborationUnavailableMessage = computed(() => {
+  if (recordId.value && model.value) return '';
+  if (renderProfile.value === 'create') {
+    return nativeAttachments.value
+      ? '保存草稿或提交生成单据后，可记录沟通、记录备注和安排计划；附件会随保存草稿或提交一起上传。'
+      : '保存草稿或提交生成单据后，可记录沟通、记录备注和安排计划。';
+  }
+  return '当前记录尚未加载完成，暂不能写入协作日志。';
+});
 
 const activeChatterSubmitLabel = computed(() => {
-  if (activeChatterMode.value === 'activity') return activeChatterLabel.value || '安排活动';
+  if (activeChatterMode.value === 'activity') return activeChatterLabel.value || '安排计划';
   if (activeChatterMode.value === 'note') return '记录备注';
-  return '发送消息';
+  return '记录沟通';
 });
+
+const activeChatterPostingLabel = computed(() => (activeChatterMode.value === 'activity' ? '安排中...' : '发布中...'));
 
 const activeChatterPlaceholder = computed(() => {
   if (activeChatterMode.value === 'note') return '输入备注内容';
-  return '输入消息内容';
+  return '输入沟通内容';
 });
 
 const activeChatterIsActivity = computed(() => activeChatterMode.value === 'activity');
@@ -4216,6 +4596,18 @@ function activityFieldLabel(name: string, fallback: string) {
 const activitySummaryLabel = computed(() => activityFieldLabel('summary', '摘要'));
 const activityDeadlineLabel = computed(() => activityFieldLabel('date_deadline', '截止日期'));
 const activityNoteLabel = computed(() => activityFieldLabel('note', '备注'));
+const activitySummaryPlaceholder = computed(() => `填写需要跟进的计划事项，例如：补充资料、确认付款、复核合同`);
+const activityNotePlaceholder = computed(() => '补充计划背景、办理要求或注意事项');
+const selectedMentionUsers = computed(() => {
+  const selected = new Set(selectedMentionUserIds.value);
+  return collaborationUserOptions.value.filter((item) => selected.has(Number(item.id || 0)));
+});
+const collaborationUserChoices = computed(() => {
+  const selected = new Set(selectedMentionUserIds.value);
+  return collaborationUserOptions.value.filter((item) => !selected.has(Number(item.id || 0)));
+});
+const activityAssigneeOptions = computed(() => collaborationUserOptions.value);
+const activityAssigneeLabel = computed(() => activityFieldLabel('user_id', '指派给'));
 
 const isNativeChatterSubmitDisabled = computed(() => {
   if (chatterPosting.value) return true;
@@ -4224,8 +4616,7 @@ const isNativeChatterSubmitDisabled = computed(() => {
 });
 
 const nativeAttachments = computed(() => {
-  const formView = contract.value?.views?.form as (Record<string, unknown> | undefined);
-  const raw = formView?.attachments as Record<string, unknown> | undefined;
+  const raw = nativeAttachmentContract.value;
   if (!raw || raw.enabled !== true) return null;
   return raw;
 });
@@ -4313,6 +4704,43 @@ function contractActionFromNativeRow(row: Record<string, unknown>): ContractActi
     actionSafety: normalizeActionSafety(nativeAction.action_safety || row.action_safety),
   };
 }
+
+function isUnifiedSubmitMethod(methodName: string) {
+  const method = String(methodName || '').trim();
+  return method === 'action_submit'
+    || method === 'action_submit_progress'
+    || method === 'action_confirm'
+    || method === 'button_confirm';
+}
+
+function isUnifiedSubmitAction(action: ContractAction | null | undefined) {
+  return Boolean(action && isUnifiedSubmitMethod(action.methodName));
+}
+
+function nativeHeaderSubmitActionForCreate(): ContractAction | null {
+  const nativeFormContract = contract.value?.views?.form as Record<string, unknown> | undefined;
+  const rows = Array.isArray(nativeFormContract?.header_buttons)
+    ? nativeFormContract.header_buttons as Array<Record<string, unknown>>
+    : [];
+  for (const row of rows) {
+    const action = contractActionFromNativeRow(row);
+    if (!isUnifiedSubmitAction(action)) continue;
+    return {
+      ...action,
+      enabled: true,
+      hint: '',
+    };
+  }
+  return null;
+}
+
+const primarySubmitAction = computed<ContractAction | null>(() => {
+  if (isProjectIntakeCreateMode.value) return null;
+  if (!model.value) return null;
+  if (!recordId.value) return nativeHeaderSubmitActionForCreate();
+  const visibleAction = headerActions.value.find((action) => isUnifiedSubmitAction(action) && action.enabled);
+  return visibleAction || null;
+});
 
 function actionResponseNavQuery(result: object | null | undefined, extra?: Record<string, unknown>) {
   const payload = (result && typeof result === 'object' && !Array.isArray(result))
@@ -5101,11 +5529,12 @@ function nativeFieldLabel(nodeRaw: NativeFormLayoutNode, descriptor?: FieldDescr
   const node = nodeRaw as Record<string, unknown>;
   const fieldInfo = nativeNodeFieldInfo(node);
   return String(
-    node.string
+    contractFieldLabel(String(nodeRaw.name || ''))
+    || descriptor?.string
+    || node.string
     || node.label
     || fieldInfo.string
     || fieldInfo.label
-    || descriptor?.string
     || nodeRaw.name
     || '',
   );
@@ -5129,7 +5558,9 @@ function isNativeFieldVisible(name: string, nodeRaw?: NativeFormLayoutNode) {
   if (semantic.surface_role === 'hidden' && !showHud.value) return false;
   const state = runtimeState(normalized);
   if (state.invisible) return false;
-  const descriptor = contract.value?.fields?.[normalized];
+  const descriptor = nodeRaw
+    ? nativeNodeFieldDescriptor(nodeRaw, contract.value?.fields?.[normalized])
+    : contract.value?.fields?.[normalized];
   if (!descriptor) return false;
   const resolved = evaluateFieldPolicy(
     contract.value,
@@ -5141,6 +5572,11 @@ function isNativeFieldVisible(name: string, nodeRaw?: NativeFormLayoutNode) {
     policyContext.value,
   );
   if (resolved.visible) return true;
+  // Native layout is already a backend-scoped form contract. Do not re-apply
+  // the legacy core/advanced create-mode filter here, otherwise fields in
+  // later notebook pages disappear even though the action-bound view exposes
+  // them explicitly. Explicit invisible/status rules are handled above.
+  if (nodeRaw) return true;
   return renderProfile.value === 'create' && semantic.surface_role === 'advanced';
 }
 
@@ -5177,7 +5613,7 @@ function ensureFieldOrderDraftStartsFromCurrentLayout() {
 function nativeLayoutNodeToFieldNode(nodeRaw: NativeFormLayoutNode, index: number): LayoutNode | null {
   const name = String(nodeRaw?.name || '').trim();
   if (!name || !isNativeFieldVisible(name, nodeRaw)) return null;
-  const descriptor = contract.value?.fields?.[name];
+  const descriptor = nativeNodeFieldDescriptor(nodeRaw, contract.value?.fields?.[name]);
   if (!descriptor) return null;
   const resolved = evaluateFieldPolicy(
     contract.value,
@@ -5188,7 +5624,6 @@ function nativeLayoutNodeToFieldNode(nodeRaw: NativeFormLayoutNode, index: numbe
     },
     policyContext.value,
   );
-  if (!resolved.visible && !(renderProfile.value === 'create' && fieldSemanticMeta(name).surface_role === 'advanced')) return null;
   const state = runtimeState(name);
   const nativeReadonly = isStaticTruthyModifier(nativeModifierValue(nodeRaw, 'readonly'));
   const nativeRequired = isStaticTruthyModifier(nativeModifierValue(nodeRaw, 'required'));
@@ -5342,7 +5777,7 @@ const layoutNodes = computed<LayoutNode[]>(() => {
       key: `field_${name}`,
       kind: 'field',
       name,
-      label: String(descriptor?.string || name),
+      label: String(contractFieldLabel(name) || descriptor?.string || name),
       readonly: Boolean(resolved.readonly || state.readonly || containerStatus?.disabled === true || (recordId.value ? !rights.value.write : !rights.value.create)),
       required: Boolean(resolved.required || state.required),
       descriptor,
@@ -5704,10 +6139,19 @@ async function commitMany2oneInline(name: string, descriptor: FieldDescriptor | 
     setMany2oneOption(name, localQuickFill);
     return;
   }
+  const localSingleMatch = singleContainingRelationOption(relationOptionsForField(name), keyword);
+  if (localSingleMatch) {
+    setMany2oneOption(name, localSingleMatch);
+    return;
+  }
   const rows = await queryRelationOptions(name, keyword);
   const remoteQuickFill = resolveRelationQuickFillOption(rows, keyword, inline.match);
   if (remoteQuickFill) {
     setMany2oneOption(name, remoteQuickFill);
+    return;
+  }
+  if (rows.length === 1) {
+    setMany2oneOption(name, rows[0]);
     return;
   }
   if (hasAmbiguousRelationMatches(rows, keyword, inline.match)) {
@@ -6006,6 +6450,33 @@ function collectWritableValues() {
     values[statusField] = normalizeFieldValue(statusField, formData[statusField]);
   }
   return values;
+}
+
+function isRequiredFieldEmpty(value: unknown, descriptor?: FieldDescriptor | null) {
+  const ttype = fieldType(descriptor);
+  if (Array.isArray(value)) return value.length === 0;
+  if (ttype === 'many2one') return !Number(value || 0);
+  if (ttype === 'many2many' || ttype === 'one2many') return !Array.isArray(value) || value.length === 0;
+  if (value === false || value === null || value === undefined) return true;
+  if (typeof value === 'string') return value.trim() === '';
+  return false;
+}
+
+function collectRequiredFieldIssues(values: Record<string, unknown>) {
+  const missing = layoutNodes.value
+    .filter((node) => node.kind === 'field' && !node.readonly && isWritableFieldVisible(node.name))
+    .filter((node) => {
+      const descriptor = node.descriptor || contract.value?.fields?.[node.name];
+      if (!descriptor?.required) return false;
+      const value = Object.prototype.hasOwnProperty.call(values, node.name)
+        ? values[node.name]
+        : normalizeFieldValue(node.name, formData[node.name]);
+      return isRequiredFieldEmpty(value, descriptor);
+    })
+    .map((node) => String(node.label || node.descriptor?.string || node.name).trim())
+    .filter(Boolean);
+  if (!missing.length) return [];
+  return [`保存前请填写：${Array.from(new Set(missing)).slice(0, 5).join('、')}`];
 }
 
 function formCreateContext() {
@@ -6591,15 +7062,18 @@ async function loadRecord() {
     }
     return acc;
   }, {});
+  if (recordId.value && (nativeChatterActions.value.length || nativeAttachments.value)) {
+    await loadNativeChatterTimeline(recordId.value, model.value);
+  }
 }
 
-async function loadNativeChatterTimeline() {
-  if (!recordId.value || !model.value) return;
+async function loadNativeChatterTimeline(targetResId = recordId.value, targetModel = model.value) {
+  if (!targetResId || !targetModel) return;
   chatterLoading.value = true;
   try {
     const response = await fetchChatterTimeline({
-      model: model.value,
-      res_id: recordId.value,
+      model: targetModel,
+      res_id: targetResId,
       limit: 12,
       include_audit: false,
     });
@@ -6611,6 +7085,57 @@ async function loadNativeChatterTimeline() {
   }
 }
 
+async function loadCollaborationUsers(query = collaborationUserQuery.value) {
+  collaborationUsersLoading.value = true;
+  try {
+    const response = await searchCollaborationUsers({ query, limit: 20 });
+    const items = Array.isArray(response.items) ? response.items : [];
+    const merged = new Map<number, CollaborationUserOption>();
+    collaborationUserOptions.value.forEach((item) => {
+      const id = Number(item.id || 0);
+      if (id) merged.set(id, item);
+    });
+    items.forEach((item) => {
+      const id = Number(item.id || 0);
+      if (id) merged.set(id, item);
+    });
+    collaborationUserOptions.value = Array.from(merged.values());
+  } catch (err) {
+    chatterError.value = err instanceof Error ? err.message : '协作人员加载失败';
+  } finally {
+    collaborationUsersLoading.value = false;
+  }
+}
+
+function collaborationUserLabel(user: CollaborationUserOption) {
+  return String(user.name || user.login || user.email || user.id || '').trim();
+}
+
+function selectMentionUser(user: CollaborationUserOption) {
+  const id = Number(user.id || 0);
+  if (!id || selectedMentionUserIds.value.includes(id)) return;
+  selectedMentionUserIds.value = [...selectedMentionUserIds.value, id];
+  collaborationUserQuery.value = '';
+}
+
+function removeMentionUser(id: number) {
+  selectedMentionUserIds.value = selectedMentionUserIds.value.filter((item) => Number(item) !== Number(id));
+}
+
+function selectActivityAssignee(event: Event) {
+  const value = Number((event.target as HTMLSelectElement).value || 0);
+  activityAssigneeId.value = Number.isFinite(value) && value > 0 ? value : 0;
+}
+
+function nextBusinessDateInputValue() {
+  const date = new Date();
+  date.setDate(date.getDate() + 1);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 async function openNativeChatterAction(action: NativeChatterAction) {
   if (!action.enabled) return;
   chatterError.value = '';
@@ -6618,8 +7143,14 @@ async function openNativeChatterAction(action: NativeChatterAction) {
   if (mode === 'message' || mode === 'note' || mode === 'activity') {
     activeChatterMode.value = mode;
     activeChatterLabel.value = action.label;
+    if (mode === 'activity' && !activityDeadline.value) {
+      activityDeadline.value = nextBusinessDateInputValue();
+    }
     if (!chatterTimeline.value.length && !chatterLoading.value) {
       await loadNativeChatterTimeline();
+    }
+    if (!collaborationUserOptions.value.length && !collaborationUsersLoading.value) {
+      await loadCollaborationUsers('');
     }
     return;
   }
@@ -6658,6 +7189,9 @@ function closeNativeChatterComposer() {
   activitySummary.value = '';
   activityDeadline.value = '';
   activityNote.value = '';
+  selectedMentionUserIds.value = [];
+  activityAssigneeId.value = 0;
+  collaborationUserQuery.value = '';
 }
 
 async function sendNativeChatter() {
@@ -6676,8 +7210,11 @@ async function sendNativeChatter() {
       body,
       subject: activeChatterLabel.value || activeChatterSubmitLabel.value,
       mode: activeChatterMode.value === 'note' ? 'note' : 'message',
+      mention_user_ids: selectedMentionUserIds.value,
     });
     chatterDraft.value = '';
+    selectedMentionUserIds.value = [];
+    chatterError.value = '';
     await loadNativeChatterTimeline();
   } catch (err) {
     chatterError.value = err instanceof Error ? err.message : 'chatter post failed';
@@ -6688,7 +7225,11 @@ async function sendNativeChatter() {
 
 async function scheduleNativeChatterActivity() {
   const summary = activitySummary.value.trim();
-  if (!summary || !recordId.value || !model.value || chatterPosting.value) return;
+  if (!summary) {
+    chatterError.value = '请填写计划事项';
+    return;
+  }
+  if (!recordId.value || !model.value || chatterPosting.value) return;
   const action = activeActivityAction.value;
   chatterPosting.value = true;
   chatterError.value = '';
@@ -6700,10 +7241,13 @@ async function scheduleNativeChatterActivity() {
       note: activityNote.value.trim(),
       date_deadline: activityDeadline.value,
       activity_type_xmlid: String(action?.payload?.activity_type_xmlid || '').trim() || undefined,
+      user_id: activityAssigneeId.value || undefined,
     });
     activitySummary.value = '';
     activityDeadline.value = '';
     activityNote.value = '';
+    activityAssigneeId.value = 0;
+    chatterError.value = '';
     await loadNativeChatterTimeline();
   } catch (err) {
     chatterError.value = err instanceof Error ? err.message : 'chatter activity schedule failed';
@@ -6712,13 +7256,56 @@ async function scheduleNativeChatterActivity() {
   }
 }
 
+function activityEntryId(entry: ChatterTimelineEntry) {
+  return Number(entry.activity?.id || entry.id || 0);
+}
+
+function isActivityUpdating(entry: ChatterTimelineEntry) {
+  const id = activityEntryId(entry);
+  return Boolean(id && activityUpdatingIds.value.includes(id));
+}
+
+async function updateNativeActivity(entry: ChatterTimelineEntry, action: 'done' | 'cancel') {
+  const activityId = activityEntryId(entry);
+  if (!activityId || !recordId.value || !model.value || isActivityUpdating(entry)) return;
+  activityUpdatingIds.value = [...activityUpdatingIds.value, activityId];
+  chatterError.value = '';
+  try {
+    await updateChatterActivity({
+      model: model.value,
+      res_id: recordId.value,
+      activity_id: activityId,
+      action,
+      note: action === 'done' ? '计划已完成。' : '计划已取消。',
+    });
+    await loadNativeChatterTimeline();
+  } catch (err) {
+    chatterError.value = err instanceof Error ? err.message : action === 'done' ? '完成计划失败' : '取消计划失败';
+  } finally {
+    activityUpdatingIds.value = activityUpdatingIds.value.filter((id) => id !== activityId);
+  }
+}
+
 async function onNativeAttachmentSelected(event: Event) {
   const input = event.target as HTMLInputElement;
   const file = input.files?.[0];
-  if (!file || !recordId.value || !model.value || attachmentUploading.value) return;
+  if (!file || !model.value || attachmentUploading.value) return;
   attachmentError.value = '';
   if (file.size > nativeAttachmentMaxBytes.value) {
     attachmentError.value = nativeAttachmentLabel('size_exceeded', '文件过大');
+    input.value = '';
+    return;
+  }
+  if (!recordId.value) {
+    pendingNativeAttachments.value = [
+      ...pendingNativeAttachments.value,
+      {
+        key: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        name: file.name,
+        size: file.size,
+        file,
+      },
+    ];
     input.value = '';
     return;
   }
@@ -6738,6 +7325,39 @@ async function onNativeAttachmentSelected(event: Event) {
   } finally {
     attachmentUploading.value = false;
     input.value = '';
+  }
+}
+
+function removePendingNativeAttachment(key: string) {
+  pendingNativeAttachments.value = pendingNativeAttachments.value.filter((item) => item.key !== key);
+}
+
+async function uploadPendingNativeAttachments(resId: number): Promise<boolean> {
+  if (!pendingNativeAttachments.value.length || !model.value) return true;
+  attachmentError.value = '';
+  attachmentUploading.value = true;
+  try {
+    for (const item of pendingNativeAttachments.value) {
+      const { data, mimetype } = await fileToBase64(item.file);
+      await uploadFile({
+        model: model.value,
+        res_id: resId,
+        name: item.name,
+        mimetype,
+        data,
+      });
+    }
+    pendingNativeAttachments.value = [];
+    await loadNativeChatterTimeline(resId, model.value);
+    return true;
+  } catch (err) {
+    attachmentError.value = err instanceof Error ? err.message : nativeAttachmentLabel('upload_failed', '附件上传失败');
+    validationErrors.value = [attachmentError.value];
+    submissionFeedback.value = { kind: 'error', message: attachmentError.value };
+    status.value = 'error';
+    return false;
+  } finally {
+    attachmentUploading.value = false;
   }
 }
 
@@ -6821,7 +7441,7 @@ function confirmActionSafety(action: ContractAction) {
 
 async function ensureSavedBeforeRecordAction() {
   if (!hasChanges.value) return true;
-  return saveRecord({ on_success: ['scene_projection'] });
+  return Boolean(await saveRecord({ on_success: ['scene_projection'] }));
 }
 
 function applyClientMode(mode: string, toggle = true) {
@@ -7435,6 +8055,72 @@ async function runAction(action: ContractAction) {
   }
 }
 
+async function runPrimaryFormAction() {
+  const submitAction = primarySubmitAction.value;
+  if (!submitAction) {
+    await saveRecord();
+    return;
+  }
+  const saved = await saveRecord(submitAction.refreshPolicy);
+  if (!saved) return;
+  await nextTick();
+  const submittedRecordId = typeof saved === 'number' ? saved : recordId.value;
+  if (!submittedRecordId) {
+    errorMessage.value = '提交失败：记录尚未创建';
+    status.value = 'error';
+    return;
+  }
+  await executePrimarySubmitAction({
+    ...submitAction,
+    enabled: true,
+    hint: '',
+  }, submittedRecordId);
+}
+
+async function executePrimarySubmitAction(action: ContractAction, resId: number) {
+  if (!confirmActionSafety(action)) return;
+  busyKind.value = 'action';
+  try {
+    const response = await executeButton({
+      model: action.targetModel || model.value,
+      res_id: resId,
+      button: { name: action.methodName, type: action.kind === 'server' ? 'server' : 'object' },
+      context: action.context,
+      meta: {
+        menu_id: Number(route.query.menu_id || 0) || undefined,
+        action_id: actionId.value || undefined,
+      },
+    });
+    const result = response?.result;
+    if (result?.entry_target) {
+      await router.push(actionResponseRouteTarget(buildEntryTargetRouteTarget(result.entry_target, {
+        query: actionResponseNavQuery(result),
+        actionId: result.action_id,
+      }), result) as never);
+      return;
+    }
+    const nextActionId = toPositiveInt(result?.action_id);
+    if (nextActionId) {
+      await router.push({
+        name: 'action',
+        params: { actionId: String(nextActionId) },
+        query: actionResponseNavQuery(result, { action_id: nextActionId }),
+      });
+      return;
+    }
+    submissionFeedback.value = { kind: 'success', message: '提交成功' };
+    await applyProjectionRefreshPolicy(action.refreshPolicy || { on_success: ['scene_projection'] });
+    await reload();
+  } catch (err) {
+    const message = sanitizeUiErrorMessage(err instanceof Error ? err.message : err, '提交失败，请检查填写内容');
+    validationErrors.value = [message];
+    submissionFeedback.value = { kind: 'error', message: '提交失败，请检查填写内容' };
+    status.value = 'error';
+  } finally {
+    busyKind.value = null;
+  }
+}
+
 function isTierValidationActionHidden(methodName: string): boolean {
   const method = String(methodName || '').trim();
   const validationStatus = String(formData.validation_status || '').trim();
@@ -7508,7 +8194,7 @@ async function returnToProjectIntakeList(createdId: number | string) {
   return false;
 }
 
-async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']): Promise<boolean> {
+async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']): Promise<boolean | number> {
   if (!canSave.value || !model.value) return false;
   submissionFeedback.value = null;
   validationErrors.value = [];
@@ -7556,6 +8242,14 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']): Prom
     return false;
   }
   const editableMap = collectWritableValues();
+  if (!recordId.value) {
+    const requiredIssues = collectRequiredFieldIssues(editableMap);
+    if (requiredIssues.length) {
+      validationErrors.value = requiredIssues;
+      submissionFeedback.value = { kind: 'warn', message: '请先补充必填信息，再保存草稿或提交。' };
+      return false;
+    }
+  }
   if (!standardCreateMode) {
     const issues = validateContractFormData({
       contract: contract.value,
@@ -7568,12 +8262,12 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']): Prom
     });
     if (policyIssues.length) {
       validationErrors.value = Array.from(new Set(policyIssues)).slice(0, 5);
-      submissionFeedback.value = { kind: 'warn', message: '创建失败，请检查填写内容' };
+      submissionFeedback.value = { kind: 'warn', message: '请先补充必填信息，再保存草稿或提交。' };
       return false;
     }
     if (issues.length) {
       validationErrors.value = Array.from(new Set(issues.map((item) => item.message))).slice(0, 5);
-      submissionFeedback.value = { kind: 'warn', message: '创建失败，请检查填写内容' };
+      submissionFeedback.value = { kind: 'warn', message: '请先补充必填信息，再保存草稿或提交。' };
       return false;
     }
   }
@@ -7618,6 +8312,10 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']): Prom
     }
     const created = await createContractFormRecord({ model: model.value, vals: values, context: formCreateContext() });
     if (created?.id) {
+      const attachmentsUploaded = await uploadPendingNativeAttachments(Number(created.id));
+      if (!attachmentsUploaded) {
+        return false;
+      }
       const title = String(contract.value?.head?.title || '').trim();
       submissionFeedback.value = { kind: 'success', message: `${title || '记录'}已创建` };
       clearIntakeAutosave();
@@ -7658,13 +8356,13 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']): Prom
         params: { model: model.value, id: String(created.id) },
         query: pickContractNavQuery(route.query as Record<string, unknown>),
       });
-      return true;
+      return Number(created.id);
     }
   } catch (err) {
     const fallback = recordId.value ? '保存失败，请检查填写内容' : '创建失败，请检查填写内容';
     const message = sanitizeUiErrorMessage(err instanceof Error ? err.message : err, fallback);
     validationErrors.value = [message];
-    submissionFeedback.value = { kind: 'error', message: fallback };
+    submissionFeedback.value = { kind: 'error', message: message && message !== fallback ? message : fallback };
     return false;
   } finally {
     busyKind.value = null;
@@ -7720,6 +8418,28 @@ watch(
   { immediate: true },
 );
 
+watch(
+  () => ({
+    label: currentBusinessCategoryLabel.value,
+    code: currentBusinessCategoryCode.value,
+  }),
+  (state) => {
+    if (!state.label) return;
+    const hasRouteLabel = String(route.query.current_business_category_label || route.query.default_business_category_label || '').trim();
+    if (hasRouteLabel) return;
+    const query: Record<string, unknown> = {
+      ...(route.query as Record<string, unknown>),
+      current_business_category_label: state.label,
+      default_business_category_label: state.label,
+    };
+    if (state.code) {
+      query.current_business_category_code = String(route.query.current_business_category_code || state.code);
+      query.default_business_category_code = String(route.query.default_business_category_code || state.code);
+    }
+    void router.replace({ query });
+  },
+);
+
 function projectContextChangedProjectId(event: Event): number {
   const detail = event instanceof CustomEvent && event.detail && typeof event.detail === 'object'
     ? event.detail as Record<string, unknown>
@@ -7770,6 +8490,23 @@ watch(
   () => {
     persistIntakeAutosave();
   },
+);
+
+watch(
+  () => ({
+    model: model.value,
+    recordId: recordId.value,
+    collaborationReady: Boolean(nativeChatterActions.value.length || nativeAttachments.value),
+    projectIntake: isProjectIntakeCreateMode.value,
+  }),
+  (state) => {
+    if (state.projectIntake || !state.model || !state.recordId || !state.collaborationReady) return;
+    const key = `${state.model}:${state.recordId}`;
+    if (nativeChatterAutoLoadKey.value === key || chatterLoading.value) return;
+    nativeChatterAutoLoadKey.value = key;
+    void loadNativeChatterTimeline();
+  },
+  { immediate: true },
 );
 
 onMounted(() => {
@@ -7993,6 +8730,17 @@ onBeforeUnmount(() => {
   color: var(--sc-app-text-secondary);
 }
 
+.native-collab-selected,
+.native-collab-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.native-collab-options {
+  margin-top: -2px;
+}
+
 .native-chatter-input {
   min-height: 82px;
   resize: vertical;
@@ -8014,6 +8762,17 @@ onBeforeUnmount(() => {
 
 .native-chatter-message {
   margin-top: 8px;
+}
+
+.native-chatter-empty {
+  margin: 6px 0 0;
+  padding: 8px 10px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-muted-bg);
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .native-chatter-timeline {
@@ -8053,6 +8812,19 @@ onBeforeUnmount(() => {
   white-space: nowrap;
 }
 
+.native-chatter-entry-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.native-chatter-entry-action {
+  min-height: 26px;
+  padding: 3px 8px;
+  font-size: 12px;
+}
+
 .native-attachment-tools {
   display: flex;
   align-items: center;
@@ -8076,6 +8848,35 @@ onBeforeUnmount(() => {
 .native-attachment-download {
   padding: 4px 8px;
   font-size: 12px;
+  white-space: nowrap;
+}
+
+.native-pending-attachments {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.native-pending-attachments li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid var(--border-subtle, #d9e2ec);
+  border-radius: 6px;
+  color: var(--text-secondary, #475569);
+  font-size: 12px;
+  background: var(--surface-muted, #f8fafc);
+}
+
+.native-pending-attachments span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 

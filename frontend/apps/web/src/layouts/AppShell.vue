@@ -176,6 +176,7 @@
           <p v-if="!useMinimalTopbar && !sceneHeaderMinimal && topbarSubtitle" class="headline-subtitle">{{ topbarSubtitle }}</p>
         </div>
         <div class="topbar-actions">
+          <GlobalMessagePanel />
           <button class="theme-switch sc-btn sc-btn-sm" type="button" @click="toggleTheme">主题：{{ themeLabel }}</button>
         </div>
       </header>
@@ -228,6 +229,7 @@ import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router';
 import MenuTree from '../components/MenuTree.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
+import GlobalMessagePanel from '../components/GlobalMessagePanel.vue';
 import { useSessionStore } from '../stores/session';
 import { intentRequest } from '../api/intents';
 import { getSceneByKey, getSceneRegistryDiagnostics, resolveSceneLayout } from '../app/resolvers/sceneRegistry';
@@ -803,7 +805,15 @@ function resolveActionBusinessTitle(action: unknown) {
   return '';
 }
 
+const routeBusinessCategoryLabel = computed(() => asText(
+  route.query.current_business_category_label
+  || route.query.default_business_category_label,
+));
+
 const pageTitle = computed(() => {
+  if (routeBusinessCategoryLabel.value) {
+    return routeBusinessCategoryLabel.value;
+  }
   const sceneKey = routeSceneKey.value;
   if (sceneKey) {
     const scene = getSceneByKey(sceneKey);
@@ -1192,11 +1202,11 @@ const breadcrumb = computed(() => {
     });
   }
   if (route.name === 'action') {
-    const label = session.currentAction?.name || `动作 ${route.params.actionId ?? ''}`.trim();
+    const label = routeBusinessCategoryLabel.value || session.currentAction?.name || `动作 ${route.params.actionId ?? ''}`.trim();
     crumbs.push({ label });
   }
   if (route.name === 'record') {
-    const recordLabel = `记录 ${route.params.id ?? ''}`.trim();
+    const recordLabel = routeBusinessCategoryLabel.value || `记录 ${route.params.id ?? ''}`.trim();
     crumbs.push({ label: recordLabel });
   }
   if (!crumbs.length) {
@@ -1933,6 +1943,7 @@ async function logout() {
 .topbar-actions {
   display: flex;
   align-items: center;
+  gap: 8px;
 }
 
 .theme-switch {

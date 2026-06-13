@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
+from email.header import decode_header, make_header
+from email.utils import parseaddr
 from typing import Any, Dict, List, Optional
 
 from odoo.exceptions import AccessError, UserError
@@ -154,7 +156,7 @@ class ChatterTimelineHandler(BaseIntentHandler):
                     "type": "message",
                     "typeLabel": type_label,
                     "title": row.subject or type_label,
-                    "meta": f"{row.author_id.display_name or 'Unknown'} · {date_value or '-'}",
+                    "meta": f"{_message_author_display(row)} · {date_value or '-'}",
                     "body": _strip_html(row.body or ""),
                     "at": date_value,
                     "id": row.id,
@@ -223,16 +225,27 @@ class ChatterTimelineHandler(BaseIntentHandler):
         items: List[Dict[str, Any]] = []
         for row in rows:
             deadline = _to_iso(row.date_deadline)
+            assignee = row.user_id.display_name or "Unknown"
+            is_assignee = bool(row.user_id and row.user_id.id == self.env.user.id)
             items.append(
                 {
                     "key": f"act-{row.id}",
                     "type": "activity",
-                    "typeLabel": "活动",
-                    "title": row.summary or row.activity_type_id.display_name or "活动",
-                    "meta": f"{row.user_id.display_name or 'Unknown'} · {deadline or '-'}",
+                    "typeLabel": "计划",
+                    "title": row.summary or row.activity_type_id.display_name or "计划",
+                    "meta": f"{assignee} · {deadline or '-'}",
                     "body": _strip_html(row.note or ""),
                     "at": deadline,
                     "id": row.id,
+                    "activity": {
+                        "id": row.id,
+                        "assignee_user_id": row.user_id.id or 0,
+                        "assignee_name": assignee,
+                        "deadline": deadline,
+                        "activity_type": row.activity_type_id.display_name or "",
+                        "can_complete": is_assignee,
+                        "can_cancel": True,
+                    },
                 }
             )
         return items
@@ -304,6 +317,35 @@ def _strip_html(value: str) -> str:
         if not in_tag:
             out.append(ch)
     return "".join(out).strip()
+
+
+def _message_author_display(row: Any) -> str:
+    author = getattr(row, "author_id", None)
+    author_name = str(getattr(author, "display_name", "") or "").strip()
+    if author_name:
+        return author_name
+    email_from = str(getattr(row, "email_from", "") or "").strip()
+    if email_from:
+        display_name, email = parseaddr(email_from)
+        decoded_name = _decode_header_value(display_name)
+        if decoded_name:
+            return decoded_name
+        if email:
+            return email
+        return _decode_header_value(email_from) or email_from
+    create_user = getattr(row, "create_uid", None)
+    create_user_name = str(getattr(create_user, "display_name", "") or "").strip()
+    return create_user_name or "系统"
+
+
+def _decode_header_value(value: str) -> str:
+    raw = str(value or "").strip()
+    if not raw:
+        return ""
+    try:
+        return str(make_header(decode_header(raw))).strip()
+    except Exception:
+        return raw
 
 
 def _message_subtype_xmlid(row: Any) -> str:
