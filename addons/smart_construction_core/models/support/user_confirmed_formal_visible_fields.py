@@ -196,7 +196,7 @@ USER_CONFIRMED_FORMAL_VISIBLE_SOURCES = {
     "sc.financing.loan": _p1_field_pairs("sc.financing.loan", [label for label in P1_ALIAS_LABELS.get("sc.financing.loan", []) if label != "附件"]),
     "sc.payment.execution": _p1_field_pairs(
         "sc.payment.execution",
-        ["收款单位", "实际收款单位", "支付类别", "付款内容", "类型（成本）", "凭证号", "付款单关联来源"],
+        ["收款单位", "实际收款单位", "支付类别", "付款内容", "类型（成本）", "付款单关联来源"],
     ),
     "sc.legacy.fuel.card.recharge.fact": [
         ("accepted_visible_06", "充值总额"),

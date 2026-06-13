@@ -68,43 +68,95 @@
                         <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,done,cancel"/>
                     </header>
                     <sheet>
-                        <group>
-                            <group string="业务对象">
-                                <field name="name" readonly="1"/>
-                                <field name="funding_type" readonly="state == 'done'"/>
-                                <field name="business_category_id" readonly="state == 'done'"/>
-                                <field name="project_id" readonly="state == 'done'"/>
-                                <field name="operation_strategy" readonly="1"/>
-                                <field name="partner_id" readonly="state == 'done'"/>
-                            </group>
-                            <group string="金额与日期">
-                                <field name="document_date" readonly="state == 'done'"/>
-                                <field name="document_no" readonly="state == 'done'"/>
-                                <field name="amount" readonly="state == 'done'"/>
-                                <field name="currency_id" invisible="1"/>
-                                <field name="summary" readonly="state == 'done'"/>
-                            </group>
-                        </group>
-                        <group string="责任余额">
-                            <field name="company_contractor_responsibility_state" readonly="1"/>
-                            <field name="company_contractor_arrival_unprocessed_amount" readonly="1"/>
-                            <field name="company_contractor_arrival_over_processed_amount" readonly="1"/>
-                            <field name="company_contractor_self_funding_balance" readonly="1"/>
-                            <field name="company_contractor_responsibility_notice" readonly="1"/>
-                            <button name="action_view_company_contractor_responsibility_summary" type="object" string="查看责任余额" class="btn-secondary"/>
-                        </group>
-                        <group string="账户信息">
-                            <field name="payment_account_name" readonly="state == 'done'"/>
-                            <field name="partner_account_name" readonly="state == 'done'"/>
-                            <field name="bank_name" readonly="state == 'done'"/>
-                            <field name="bank_account" readonly="state == 'done'"/>
-                        </group>
-                        <group>
-                            <field name="note"/>
-                            <field name="reject_reason" readonly="1"/>
-                            <field name="attachment_ids" widget="many2many_binary"/>
-                            <field name="active"/>
-                        </group>
+                        <notebook>
+                            <page string="办理类型">
+                                <group>
+                                    <group>
+                                        <field name="name" readonly="1"/>
+                                        <field name="funding_type" readonly="state == 'done'"/>
+                                        <field name="business_category_id"
+                                               readonly="state == 'done'"
+                                               options="{'no_create': True}"/>
+                                    </group>
+                                    <group>
+                                        <field name="state" readonly="1"/>
+                                        <field name="source_origin" readonly="1"/>
+                                        <field name="active"/>
+                                        <field name="currency_id" invisible="1"/>
+                                    </group>
+                                </group>
+                            </page>
+                            <page string="项目与承包人">
+                                <group>
+                                    <group>
+                                        <field name="project_id"
+                                               readonly="state == 'done'"
+                                               options="{'no_create': True}"/>
+                                        <field name="operation_strategy" readonly="1"/>
+                                        <field name="company_id" readonly="1"/>
+                                    </group>
+                                    <group>
+                                        <field name="partner_id"
+                                               readonly="state == 'done'"
+                                               options="{'no_create_edit': True}"/>
+                                    </group>
+                                </group>
+                            </page>
+                            <page string="自筹金额">
+                                <group>
+                                    <group>
+                                        <field name="document_date" readonly="state == 'done'"/>
+                                        <field name="amount" readonly="state == 'done'"/>
+                                    </group>
+                                    <group>
+                                        <field name="summary" readonly="state == 'done'"/>
+                                    </group>
+                                </group>
+                            </page>
+                            <page string="办理依据">
+                                <group>
+                                    <group string="公司账户">
+                                        <field name="payment_account_name" readonly="state == 'done'"/>
+                                    </group>
+                                    <group string="承包人账户">
+                                        <field name="partner_account_name" readonly="state == 'done'"/>
+                                        <field name="bank_name" readonly="state == 'done'"/>
+                                        <field name="bank_account" readonly="state == 'done'"/>
+                                    </group>
+                                </group>
+                                <group string="附件">
+                                    <field name="attachment_ids" widget="many2many_binary" nolabel="1"/>
+                                </group>
+                            </page>
+                            <page string="责任余额">
+                                <group>
+                                    <field name="company_contractor_responsibility_state" readonly="1"/>
+                                    <field name="company_contractor_arrival_unprocessed_amount" readonly="1"/>
+                                    <field name="company_contractor_arrival_over_processed_amount" readonly="1"/>
+                                    <field name="company_contractor_self_funding_balance" readonly="1"/>
+                                    <field name="company_contractor_responsibility_notice" readonly="1"/>
+                                    <button name="action_view_company_contractor_responsibility_summary"
+                                            type="object"
+                                            string="查看责任余额"
+                                            class="btn-secondary"/>
+                                </group>
+                            </page>
+                            <page string="办理说明">
+                                <group>
+                                    <field name="note" nolabel="1"/>
+                                </group>
+                                <group string="审批结果"
+                                       invisible="not reject_reason and validation_status not in ('waiting', 'pending', 'rejected')">
+                                    <field name="validation_status" readonly="1"/>
+                                    <field name="reject_reason" readonly="1"/>
+                                </group>
+                            </page>
+                            <page string="迁移来源" invisible="source_origin != 'legacy'">
+                                <group>
+                                    <field name="document_no" readonly="1"/>
+                                </group>
+                            </page>
+                        </notebook>
                     </sheet>
                 </form>
             </field>
@@ -114,6 +166,12 @@
             <field name="name">自筹办理</field>
             <field name="res_model">sc.self.funding.registration</field>
             <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="view_sc_self_funding_registration_tree"/>
+            <field name="views" eval="[(ref('view_sc_self_funding_registration_tree'), 'tree'), (ref('view_sc_self_funding_registration_form'), 'form')]"/>
+            <field name="view_ids" eval="[(5, 0, 0),
+                (0, 0, {'view_mode': 'tree', 'view_id': ref('view_sc_self_funding_registration_tree')}),
+                (0, 0, {'view_mode': 'form', 'view_id': ref('view_sc_self_funding_registration_form')})
+            ]"/>
             <field name="search_view_id" ref="view_sc_self_funding_registration_search"/>
             <field name="context">{'search_default_group_project': 1}</field>
             <field name="groups_id" eval="[(4, ref('smart_construction_core.group_sc_cap_business_initiator')),
@@ -126,6 +184,12 @@
             <field name="name">自筹垫付办理</field>
             <field name="res_model">sc.self.funding.registration</field>
             <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="view_sc_self_funding_registration_tree"/>
+            <field name="views" eval="[(ref('view_sc_self_funding_registration_tree'), 'tree'), (ref('view_sc_self_funding_registration_form'), 'form')]"/>
+            <field name="view_ids" eval="[(5, 0, 0),
+                (0, 0, {'view_mode': 'tree', 'view_id': ref('view_sc_self_funding_registration_tree')}),
+                (0, 0, {'view_mode': 'form', 'view_id': ref('view_sc_self_funding_registration_form')})
+            ]"/>
             <field name="search_view_id" ref="view_sc_self_funding_registration_search"/>
             <field name="domain">[('business_category_id.code', '=', 'finance.self_funding.income')]</field>
             <field name="context">{'default_funding_type': 'income', 'default_business_category_code': 'finance.self_funding.income', 'search_default_funding_income': 1}</field>
@@ -139,6 +203,12 @@
             <field name="name">自筹退回办理</field>
             <field name="res_model">sc.self.funding.registration</field>
             <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="view_sc_self_funding_registration_tree"/>
+            <field name="views" eval="[(ref('view_sc_self_funding_registration_tree'), 'tree'), (ref('view_sc_self_funding_registration_form'), 'form')]"/>
+            <field name="view_ids" eval="[(5, 0, 0),
+                (0, 0, {'view_mode': 'tree', 'view_id': ref('view_sc_self_funding_registration_tree')}),
+                (0, 0, {'view_mode': 'form', 'view_id': ref('view_sc_self_funding_registration_form')})
+            ]"/>
             <field name="search_view_id" ref="view_sc_self_funding_registration_search"/>
             <field name="domain">[('business_category_id.code', '=', 'finance.self_funding.refund')]</field>
             <field name="context">{'default_funding_type': 'refund', 'default_business_category_code': 'finance.self_funding.refund', 'search_default_funding_refund': 1}</field>

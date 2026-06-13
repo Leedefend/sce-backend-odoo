@@ -332,6 +332,7 @@
                 <filter string="已提交" name="submitted" domain="[('state', '=', 'submitted')]"/>
                 <filter string="已确认" name="confirmed" domain="[('state', '=', 'confirmed')]"/>
                 <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按日期" name="group_usage_date" context="{'group_by': 'usage_date'}"/>
                 <filter string="按来源申请" name="group_request" context="{'group_by': 'request_id'}"/>
                 <filter string="按设备名称" name="group_equipment" context="{'group_by': 'equipment_name'}"/>
                 <filter string="按供应单位" name="group_supplier" context="{'group_by': 'supplier_id'}"/>

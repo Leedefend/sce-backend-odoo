@@ -4,6 +4,7 @@
 #   - 聚合：fields/views/search/permissions/actions/reports/workflow/validator
 #   - with_data=True 时返回首屏数据（严格遵循 views.tree.columns 顺序）
 #   - ★ 集成 P0 修复：从原始 <tree> 严格提取 columns，禁用“脏覆盖”，保证可渲染与顺序稳定
+import json
 import logging
 import re
 from odoo import _
@@ -449,6 +450,11 @@ class PageAssembler:
             view_id=requested_view_id,
             render_profile=requested_render_profile,
         )
+        self._inject_business_category_form_policy(
+            data,
+            model_name=model,
+            render_profile=requested_render_profile,
+        )
 
         # 8.x) 访问策略（后端唯一决策点）：allow/degrade/block
         self._apply_access_policy(data, model_name=model)
@@ -466,6 +472,140 @@ class PageAssembler:
             data["warnings"] = warnings
         data["source_authority"] = self.source_authority_contract()
         return data, versions
+
+    def _json_value(self, raw, default):
+        if isinstance(raw, type(default)):
+            return raw
+        if not isinstance(raw, str) or not raw.strip():
+            return default
+        try:
+            parsed = json.loads(raw)
+        except Exception:
+            return default
+        return parsed if isinstance(parsed, type(default)) else default
+
+    def _business_category_from_context(self, data: dict, model_name: str):
+        if "sc.business.category" not in self.env:
+            return None
+        context = data.get("context") if isinstance(data.get("context"), dict) else {}
+        code = str(
+            context.get("default_business_category_code")
+            or context.get("current_business_category_code")
+            or ""
+        ).strip()
+        if not code:
+            return None
+        try:
+            return self.env["sc.business.category"].sudo().search(
+                [("code", "=", code), ("target_model", "=", model_name)],
+                limit=1,
+            )
+        except Exception:
+            _logger.exception("business category form policy lookup failed model=%s code=%s", model_name, code)
+            return None
+
+    def _make_form_policy_field_node(self, name: str, fields_map: dict) -> dict:
+        descriptor = fields_map.get(name) if isinstance(fields_map.get(name), dict) else {}
+        label = str((descriptor or {}).get("string") or (descriptor or {}).get("label") or name).strip()
+        node = {"type": "field", "name": name}
+        if label:
+            node["string"] = label
+            node["label"] = label
+            node["fieldInfo"] = {"name": name, "label": label}
+        return node
+
+    def _inject_business_category_form_policy(self, data: dict, *, model_name: str, render_profile: str = "") -> None:
+        if not isinstance(data, dict) or not model_name:
+            return
+        category = self._business_category_from_context(data, model_name)
+        if not category:
+            return
+        form_policy = self._json_value(getattr(category, "form_policy_json", "{}") or "{}", {})
+        required_fields = self._json_value(getattr(category, "required_fields_json", "[]") or "[]", [])
+        if not form_policy and not required_fields:
+            return
+        fields_map = data.get("fields") if isinstance(data.get("fields"), dict) else {}
+        if not fields_map:
+            return
+        normalized_required = [
+            str(name or "").strip()
+            for name in required_fields
+            if str(name or "").strip() in fields_map
+        ]
+        if normalized_required:
+            form_policy = dict(form_policy or {})
+            existing_required = form_policy.get("required_fields")
+            merged = []
+            for name in (existing_required if isinstance(existing_required, list) else []) + normalized_required:
+                field_name = str(name or "").strip()
+                if field_name and field_name in fields_map and field_name not in merged:
+                    merged.append(field_name)
+            form_policy["required_fields"] = merged
+        sections = form_policy.get("sections") if isinstance(form_policy.get("sections"), list) else []
+        layout_children = []
+        field_groups = []
+        seen_fields = set()
+        profile = str(render_profile or "").strip().lower()
+        if profile in {"read", "view"}:
+            profile = "readonly"
+        for index, section in enumerate(sections):
+            if not isinstance(section, dict):
+                continue
+            visible_profiles = section.get("visible_profiles")
+            if isinstance(visible_profiles, list) and visible_profiles:
+                allowed_profiles = {str(item).strip().lower() for item in visible_profiles if str(item).strip()}
+                if profile and profile not in allowed_profiles:
+                    continue
+            title = str(section.get("title") or section.get("label") or section.get("name") or "").strip()
+            names = []
+            for raw_name in section.get("fields") if isinstance(section.get("fields"), list) else []:
+                name = str(raw_name or "").strip()
+                if name and name in fields_map and name not in names:
+                    names.append(name)
+            if not names:
+                continue
+            seen_fields.update(names)
+            group_name = str(section.get("name") or f"business_category_section_{index + 1}").strip()
+            layout_children.append({
+                "type": "group",
+                "name": group_name,
+                "string": title or group_name,
+                "children": [self._make_form_policy_field_node(name, fields_map) for name in names],
+            })
+            field_groups.append({
+                "name": group_name,
+                "label": title or group_name,
+                "priority": int(section.get("sequence") or (index + 1) * 10),
+                "collapsible": bool(section.get("collapsible", False)),
+                "collapsed_by_default": bool(section.get("collapsed_by_default", False)),
+                "visible_profiles": [str(item).strip() for item in visible_profiles if str(item).strip()]
+                if isinstance(visible_profiles, list) else [],
+                "fields": names,
+            })
+        if layout_children:
+            views = data.get("views") if isinstance(data.get("views"), dict) else {}
+            form = views.get("form") if isinstance(views.get("form"), dict) else {}
+            form["layout"] = [{
+                "type": "sheet",
+                "name": "business_category_form_sheet",
+                "children": layout_children,
+            }]
+            views["form"] = form
+            data["views"] = views
+        if field_groups:
+            data["field_groups"] = field_groups
+        policy_fields = form_policy.get("fields") if isinstance(form_policy.get("fields"), list) else []
+        data["business_form_policy"] = {
+            "source": "sc.business.category.form_policy_json",
+            "category_id": category.id,
+            "category_code": str(category.code or "").strip(),
+            "category_name": str(category.name or "").strip(),
+            "target_model": model_name,
+            "render_profile": str(render_profile or "").strip(),
+            "required_fields": normalized_required,
+            "fields": policy_fields,
+            "layout_fields": list(seen_fields),
+        }
 
     def _include_configured_orchestrated_view_types(self, view_types, *, model_name="", action_id=None):
         normalized = self.normalize_view_types(view_types)

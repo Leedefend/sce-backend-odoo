@@ -76,6 +76,7 @@ class ScOfficeAdminDocument(models.Model):
     legacy_visible_company = fields.Char(string="历史可见所属公司", readonly=True)
     legacy_visible_seal_company = fields.Char(string="历史可见使用印章公司", readonly=True)
     legacy_visible_take_out = fields.Char(string="历史可见是否外带", readonly=True)
+    legacy_visible_attachment = fields.Char(string="历史可见附件", readonly=True)
     attachment_ids = fields.Many2many(
         "ir.attachment",
         "sc_office_admin_document_attachment_rel",

@@ -232,6 +232,7 @@
                 <filter string="已确认" name="approved" domain="[('state', '=', 'approved')]"/>
                 <filter string="紧急" name="urgent" domain="[('priority', '=', 'urgent')]"/>
                 <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按日期" name="group_request_date" context="{'group_by': 'request_date'}"/>
                 <filter string="按分包计划" name="group_plan" context="{'group_by': 'plan_id'}"/>
                 <filter string="按关联合同" name="group_contract" context="{'group_by': 'contract_id'}"/>
                 <filter string="按建议分包单位" name="group_subcontractor" context="{'group_by': 'suggested_subcontractor_id'}"/>

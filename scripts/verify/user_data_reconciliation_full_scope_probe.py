@@ -163,6 +163,7 @@ AXES = {
         "document_no",
         "legacy_document_no",
         "legacy_visible_document_no",
+        "legacy_record_id",
         "name",
         "contract_no",
         "invoice_no",
@@ -184,6 +185,8 @@ AXES = {
         "date",
         "receipt_time",
         "settlement_date",
+        "rental_date",
+        "usage_date",
         "contract_date",
         "date_diary",
         "inbound_date",
@@ -284,24 +287,344 @@ def best_label_source(model_name: str, candidates: list[str], domain: list[objec
     return best_field, max(best_filled, 0)
 
 
+RENTAL_ORDER_LABEL_DOMAINS = {
+    "租赁合同": {
+        "合同编号",
+        "合同标题",
+        "租赁内容",
+        "总金额",
+        "已开票金额",
+        "已付款金额",
+        "未付款金额",
+        "未开票金额",
+        "开户行",
+        "银行账号",
+        "开户人姓名",
+        "签订时间",
+    },
+    "租入": {
+        "单据日期",
+        "材料名称",
+        "规格型号",
+        "数量",
+        "单价",
+        "租赁押金",
+    },
+}
+
+TENDER_GUARANTEE_SOURCE_LABEL_DOMAINS = {
+    "online_old_scbs:ZJGL_BZJGL_Branch_SBZJDJ:list868": {
+        "状态",
+        "单据编号",
+        "投标项目名称",
+        "项目名称",
+        "所属公司",
+        "金额",
+        "已退保证金金额",
+        "转款单位",
+        "汇款方式",
+        "保证金类型",
+        "收款账户",
+        "收款账户名称",
+        "备注",
+        "附件",
+        "录入人",
+        "录入时间",
+    },
+    "online_old_scbs:ZJGL_BZJGL_Branch_SBZJTH:list869": {
+        "状态",
+        "收保证金单号",
+        "单据编号",
+        "项目名称",
+        "投标项目名称",
+        "退还金额",
+        "备注",
+        "退还账号",
+        "退还开户行",
+        "单位",
+        "收款开户行",
+        "收款账号",
+        "录入人",
+        "录入时间",
+        "附件",
+    },
+    "online_old_scbs:ZJGL_BZJGL_Pay_FBZJ:list870": {
+        "状态",
+        "推送结果",
+        "金蝶单据编号",
+        "单据编号",
+        "投标项目",
+        "工程项目",
+        "保证金类型",
+        "所属公司",
+        "保证金金额",
+        "已退金额",
+        "未退金额",
+        "是否需要退回",
+        "收款单位",
+        "支付账户",
+        "备注",
+        "附件",
+        "录入人",
+        "录入时间",
+    },
+    "online_old_scbs:ZJGL_BZJGL_Pay_FBZJTH:list871": {
+        "状态",
+        "推送结果",
+        "退回单编号",
+        "所属公司",
+        "投标项目名称",
+        "保证金类型",
+        "退回项目",
+        "退回金额",
+        "退回账户",
+        "收款单位",
+        "备注",
+        "录入人",
+        "退回日期",
+        "附件",
+    },
+}
+
+
+DOCUMENT_ADMIN_PROJECT_SOURCE_TABLES = {
+    "online_old_scbs:SGZL_RZRJ:list856",
+    "online_old_scbs:SGZL_RZRJ:list856:hidden",
+    "fresh_db_legacy_document_borrow",
+    "online_old_scbs:ZJGL_ZSJYGL:list865",
+}
+
+DOCUMENT_ADMIN_LABEL_FACT_TYPE_DOMAINS = {
+    "company_document_archive": {
+        "单据状态",
+        "项目名称",
+        "资料类型",
+        "资料说明",
+        "录入人",
+        "备注",
+        "录入时间",
+    },
+    "certificate_registration": {
+        "证照名称",
+        "编号",
+        "持有人",
+        "有效期",
+    },
+    "document_borrow": {
+        "单据编号",
+        "借阅项目名称",
+        "证件名称",
+        "申请日期",
+        "借阅部门或项目部名称",
+        "借阅人",
+        "联系方式",
+        "借阅形式",
+        "借阅日期",
+        "负责人",
+        "归还申请日期",
+        "申请归还时间",
+        "是否归还",
+        "确认归还时间",
+        "归还日期",
+        "附件",
+        "修改人",
+        "修改日期",
+        "修改备注",
+        "审定人",
+        "审定时间",
+        "审定意见",
+    },
+}
+
+DOCUMENT_ADMIN_LABEL_SOURCE_TABLE_DOMAINS = {
+    "项目名称": {
+        "online_old_scbs:SGZL_RZRJ:list856",
+        "online_old_scbs:SGZL_RZRJ:list856:hidden",
+    },
+    "联系方式": {"online_old_scbs:ZJGL_ZSJYGL:list865"},
+    "负责人": {"online_old_scbs:ZJGL_ZSJYGL:list865"},
+    "附件": {"online_old_scbs:ZJGL_ZSJYGL:list865"},
+    "修改备注": {"online_old_scbs:ZJGL_ZSJYGL:list865"},
+    "审定人": {"online_old_scbs:ZJGL_ZSJYGL:list865"},
+    "审定时间": {"online_old_scbs:ZJGL_ZSJYGL:list865"},
+    "审定意见": {"online_old_scbs:ZJGL_ZSJYGL:list865"},
+}
+
+EXPENSE_CLAIM_LABEL_SOURCE_TABLE_DOMAINS = {
+    "部门": {
+        "CWGL_FYBX",
+        "CWGL_FYBX_CB",
+    },
+    "付款方式": {
+        "SCBSLY_DIRECT_PROJECT_EXPENSE_CLAIM",
+        "CWGL_FYBX_CB",
+        "C_JFHKLR",
+        "C_JFHKLR_TH_ZCDF_CB",
+        "C_ZFSQGL_BZJKD",
+    },
+}
+
+FINANCING_LOAN_LABEL_SOURCE_TABLE_DOMAINS = {
+    "申请部门": {"BGGL_JHK_JKSQ", "BGGL_JHK_HKDJ"},
+    "申请时间": {"BGGL_JHK_JKSQ", "BGGL_JHK_HKDJ"},
+    "申请人": {"BGGL_JHK_JKSQ", "BGGL_JHK_HKDJ"},
+    "是否预算内": {"BGGL_JHK_JKSQ"},
+    "实际借款金额": {"BGGL_JHK_JKSQ"},
+    "主要资金使用安排": {"BGGL_JHK_JKSQ"},
+    "收款人": {"BGGL_JHK_JKSQ"},
+    "收款账户": {"BGGL_JHK_JKSQ"},
+    "开户银行": {"BGGL_JHK_JKSQ"},
+    "公司名称": {"BGGL_JHK_JKSQ"},
+    "付款单位": {"BGGL_JHK_JKSQ"},
+    "收款单位": {"BGGL_JHK_JKSQ"},
+    "往来单位名称": {"BGGL_JHK_JKSQ", "BGGL_JHK_HKDJ"},
+    "往来单位账户": {"BGGL_JHK_JKSQ"},
+    "借款账号": {"BGGL_JHK_JKSQ"},
+    "实际批复金额": {"BGGL_JHK_JKSQ"},
+    "申请金额": {"BGGL_JHK_JKSQ"},
+    "预计归还时间": {"BGGL_JHK_JKSQ"},
+    "借款类型": {"BGGL_JHK_JKSQ"},
+    "借款人": {"ZJGL_ZCDFSZ_FXJK_JK"},
+    "借款金额": {"ZJGL_ZCDFSZ_FXJK_JK", "BGGL_JHK_HKDJ"},
+    "用途": {"ZJGL_ZCDFSZ_FXJK_JK"},
+    "约定期限": {"ZJGL_ZCDFSZ_FXJK_JK"},
+    "借款利息": {"ZJGL_ZCDFSZ_FXJK_JK"},
+    "贷款金额": {"ZJGL_ZJSZ_DKGL_DKDJ"},
+    "到期利息": {"ZJGL_ZJSZ_DKGL_DKDJ"},
+    "未还款金额": {"ZJGL_ZJSZ_DKGL_DKDJ"},
+    "贷款日期": {"ZJGL_ZJSZ_DKGL_DKDJ"},
+    "还款日期": {"ZJGL_ZJSZ_DKGL_DKDJ"},
+    "贷款天数": {"ZJGL_ZJSZ_DKGL_DKDJ"},
+    "年利率": {"ZJGL_ZJSZ_DKGL_DKDJ"},
+    "贷款账户": {"ZJGL_ZJSZ_DKGL_DKDJ", "ZJGL_ZJSZ_DKGL_HKDJ"},
+    "贷款银行": {"ZJGL_ZJSZ_DKGL_DKDJ", "ZJGL_ZJSZ_DKGL_HKDJ"},
+    "还款金额": {"ZJGL_ZJSZ_DKGL_HKDJ"},
+    "还款账户": {"ZJGL_ZJSZ_DKGL_HKDJ"},
+    "填写人": {"ZJGL_ZJSZ_DKGL_HKDJ"},
+}
+
+OFFICE_ADMIN_LABEL_FACT_TYPE_DOMAINS = {
+    "请假天数": {"leave_request"},
+    "请假类型": {"leave_request"},
+    "请假时间": {"leave_request"},
+    "销假时间": {"leave_request"},
+    "请假时长": {"leave_request"},
+    "用印时间": {"seal_use"},
+    "用印部门": {"seal_use"},
+    "用印申请人": {"seal_use"},
+    "用印部门负责人签字": {"seal_use"},
+    "用印种类": {"seal_use"},
+    "用印文本名称及文号": {"seal_use"},
+    "经办人签字": {"seal_use"},
+    "领导签字": {"seal_use"},
+    "份数": {"seal_use"},
+    "归还时间": {"seal_use"},
+    "合同金额": {"seal_use"},
+    "合同编号": {"seal_use"},
+    "所属公司": {"seal_use"},
+    "使用印章公司": {"seal_use"},
+    "是否外带": {"seal_use"},
+}
+
+OFFICE_ADMIN_LABEL_SOURCE_TABLE_DOMAINS = {
+    "附件": {"online_old_scbs:BGGL_XZD_YZSYSPB:list858"},
+}
+
+FUND_ACCOUNT_OPERATION_LABEL_SOURCE_TABLE_DOMAINS = {
+    "单据状态": {"C_FKGL_ZHJZJWL"},
+    "项目名称": {"C_FKGL_ZHJZJWL"},
+    "发生时间": {"C_FKGL_ZHJZJWL"},
+    "账户号码": {"C_FKGL_ZHJZJWL"},
+    "转账类别": {"C_FKGL_ZHJZJWL"},
+    "事由": {"C_FKGL_ZHJZJWL"},
+    "附件": {"C_FKGL_ZHJZJWL"},
+    "单据编号": {"C_FKGL_ZHJZJWL"},
+    "收款账户": {"C_FKGL_ZHJZJWL"},
+}
+
+PAYMENT_EXECUTION_EMPTY_LEGACY_LABELS = {
+    "凭证号",
+}
+
+
+def axis_domain(model_name: str, axis: str, base_domain: list[object]) -> list[object]:
+    if model_name == "sc.document.admin.document" and axis == "project":
+        return [
+            "|",
+            ("legacy_source_table", "in", sorted(DOCUMENT_ADMIN_PROJECT_SOURCE_TABLES)),
+            ("fact_type", "=", "document_borrow"),
+        ] + base_domain
+    return base_domain
+
+
+def label_domain(model_name: str, label: str, base_domain: list[object]) -> list[object]:
+    if model_name == "sc.office.admin.document":
+        source_tables = OFFICE_ADMIN_LABEL_SOURCE_TABLE_DOMAINS.get(label)
+        if source_tables:
+            return base_domain + [("legacy_source_table", "in", sorted(source_tables))]
+        fact_types = OFFICE_ADMIN_LABEL_FACT_TYPE_DOMAINS.get(label)
+        if fact_types:
+            return base_domain + [("fact_type", "in", sorted(fact_types))]
+    if model_name == "sc.fund.account.operation":
+        source_tables = FUND_ACCOUNT_OPERATION_LABEL_SOURCE_TABLE_DOMAINS.get(label)
+        if source_tables:
+            return base_domain + [("legacy_source_table", "in", sorted(source_tables))]
+    if model_name == "sc.payment.execution" and label in PAYMENT_EXECUTION_EMPTY_LEGACY_LABELS:
+        return base_domain + [("id", "=", 0)]
+    if model_name == "sc.financing.loan":
+        source_tables = FINANCING_LOAN_LABEL_SOURCE_TABLE_DOMAINS.get(label)
+        if source_tables:
+            return base_domain + [("legacy_source_table", "in", sorted(source_tables))]
+    if model_name == "sc.expense.claim":
+        source_tables = EXPENSE_CLAIM_LABEL_SOURCE_TABLE_DOMAINS.get(label)
+        if source_tables:
+            return base_domain + [("legacy_source_table", "in", sorted(source_tables))]
+    if model_name == "sc.document.admin.document":
+        source_tables = DOCUMENT_ADMIN_LABEL_SOURCE_TABLE_DOMAINS.get(label)
+        if source_tables:
+            return base_domain + [("legacy_source_table", "in", sorted(source_tables))]
+        fact_types = [
+            fact_type
+            for fact_type, labels in DOCUMENT_ADMIN_LABEL_FACT_TYPE_DOMAINS.items()
+            if label in labels
+        ]
+        if fact_types:
+            return base_domain + [("fact_type", "in", fact_types)]
+    if model_name == "sc.material.rental.order" and "legacy_acceptance_label" in existing_fields(model_name):
+        for acceptance_label, labels in RENTAL_ORDER_LABEL_DOMAINS.items():
+            if label in labels:
+                return base_domain + [("legacy_acceptance_label", "=", acceptance_label)]
+    if model_name == "tender.guarantee":
+        source_models = [
+            source_model
+            for source_model, labels in TENDER_GUARANTEE_SOURCE_LABEL_DOMAINS.items()
+            if label in labels
+        ]
+        if source_models:
+            return base_domain + [("bid_id.legacy_fact_model", "in", source_models)]
+    return base_domain
+
+
 def label_source_coverage(model_name: str, labels: list[str], domain: list[object], total: int) -> list[dict[str, object]]:
     rows = []
     for label in labels:
+        effective_domain = label_domain(model_name, label, domain)
+        effective_total = env[model_name].sudo().search_count(effective_domain)  # noqa: F821
         candidates = [
             name for name, field in env[model_name]._fields.items()  # noqa: F821
             if field.string == label and not name.startswith("p1_visible_")
         ]
         candidates += list(MODEL_LABEL_SOURCE_OVERRIDES.get(model_name, {}).get(label, ()))
         candidates += list(LABEL_SOURCE_OVERRIDES.get(label, ()))
-        field_name, filled = best_label_source(model_name, candidates, domain, total)
+        field_name, filled = best_label_source(model_name, candidates, effective_domain, effective_total)
         rows.append(
             {
                 "label": label,
                 "field": field_name,
                 "filled": filled,
-                "total": total,
-                "ratio": round(filled / total, 4) if total else 1.0,
-                "source_missing": field_name is None,
+                "total": effective_total,
+                "ratio": round(filled / effective_total, 4) if effective_total else 1.0,
+                "source_missing": field_name is None and effective_total > 0,
             }
         )
     return rows
@@ -335,19 +658,21 @@ for model_name, labels in sorted(P1_ALIAS_LABELS.items()):
     missing_axes = []
     weak_axes = []
     for axis, candidates in AXES.items():
-        field_name, filled = best_axis_field(model_name, candidates, domain, total, search["group_fields"])
-        ratio = round(filled / total, 4) if total else 1.0
+        effective_domain = axis_domain(model_name, axis, domain)
+        effective_total = Model.search_count(effective_domain)
+        field_name, filled = best_axis_field(model_name, candidates, effective_domain, effective_total, search["group_fields"])
+        ratio = round(filled / effective_total, 4) if effective_total else 1.0
         axes[axis] = {
             "field": field_name,
             "filled": filled,
-            "total": total,
+            "total": effective_total,
             "ratio": ratio,
             "grouped": bool(field_name and field_name in search["group_fields"]),
             "visible": bool(field_name and field_name in tree["visible_fields"]),
         }
-        if total >= 100 and axis in {"project", "document", "date", "type"} and not field_name:
+        if effective_total >= 100 and axis in {"project", "document", "date", "type"} and not field_name:
             missing_axes.append(axis)
-        if total >= 100 and field_name and ratio < 0.8 and axis in {"project", "document", "date", "type"}:
+        if effective_total >= 100 and field_name and ratio < 0.8 and axis in {"project", "document", "date", "type"}:
             weak_axes.append(axis)
 
     amount_visible = bool(amount_field and amount_field in tree["visible_fields"])
@@ -361,7 +686,7 @@ for model_name, labels in sorted(P1_ALIAS_LABELS.items()):
     label_source_missing = [row["label"] for row in label_rows if row["source_missing"]]
     low_label_coverage = [
         row for row in label_rows
-        if total >= 100 and not row["source_missing"] and row["ratio"] < 0.2
+        if row["total"] >= 100 and not row["source_missing"] and row["ratio"] < 0.2
     ]
 
     if total >= 100 and amount_field and not amount_summed:

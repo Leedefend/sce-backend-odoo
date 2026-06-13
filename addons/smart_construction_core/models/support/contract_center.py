@@ -71,7 +71,7 @@ class ConstructionContract(models.Model):
         string="业务分类",
         index=True,
         ondelete="restrict",
-        domain="[('code', 'in', ['contract.income', 'contract.expense'])]",
+        domain="[('code', 'in', ['contract.income', 'contract.expense', 'contract.expense.supplement'])]",
     )
     project_id = fields.Many2one(
         "project.project",
@@ -252,6 +252,13 @@ class ConstructionContract(models.Model):
     is_locked = fields.Boolean(string="被引用锁定", compute="_compute_ref_stats")
 
     note = fields.Text(string="备注")
+    attachment_ids = fields.Many2many(
+        "ir.attachment",
+        "construction_contract_attachment_rel",
+        "contract_id",
+        "attachment_id",
+        string="合同附件",
+    )
     reject_reason = fields.Char(string="驳回原因", readonly=True, copy=False, tracking=True)
 
     @api.model
@@ -391,6 +398,10 @@ class ConstructionContract(models.Model):
         if "tax_id" in fields_list and not res.get("tax_id"):
             default_tax = self._get_default_tax(contract_type)
             res["tax_id"] = default_tax.id
+        if "business_category_id" in fields_list and not res.get("business_category_id"):
+            category_id = self._resolve_business_category_id(res)
+            if category_id:
+                res["business_category_id"] = category_id
         return res
 
     @api.onchange("type")

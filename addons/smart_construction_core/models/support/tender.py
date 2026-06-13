@@ -97,6 +97,7 @@ class TenderBid(models.Model):
     legacy_visible_project_name = fields.Char("历史项目名称", readonly=True)
     legacy_visible_registration_time = fields.Datetime("历史登记时间", readonly=True)
     legacy_visible_creator_name = fields.Char("历史录入人", readonly=True)
+    legacy_attachment_ref = fields.Char("历史附件引用", readonly=True, index=True)
 
     _sql_constraints = [
         ("legacy_tender_bid_unique", "unique(legacy_fact_model, legacy_fact_id)", "来源通用投标事实已迁移为投标记录。"),
@@ -409,6 +410,7 @@ class TenderGuarantee(models.Model):
     legacy_visible_project_name = fields.Char("历史可见项目名称", readonly=True)
     legacy_visible_creator_name = fields.Char("历史可见录入人", readonly=True)
     legacy_visible_created_time = fields.Datetime("历史可见录入时间", readonly=True)
+    legacy_visible_attachment = fields.Char("历史可见附件", readonly=True)
     project_id = fields.Many2one(related="bid_id.project_id", store=True, readonly=True)
     type = fields.Selection([("out", "支出"), ("return", "退回")], string="类型", required=True, default="out")
     date = fields.Date("单据日期", default=fields.Date.context_today)

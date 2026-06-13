@@ -42,13 +42,19 @@
           <field name="name"/>
           <field name="requester_id"/>
           <field name="department_id"/>
+          <field name="legacy_visible_project_name" optional="hide"/>
+          <field name="legacy_visible_applicant" optional="show"/>
+          <field name="legacy_visible_department" optional="hide"/>
           <field name="leave_type" optional="show"/>
+          <field name="legacy_visible_leave_type" optional="hide"/>
           <field name="start_datetime" optional="hide"/>
           <field name="end_datetime" optional="hide"/>
           <field name="duration_days" optional="show" sum="天数合计"/>
           <field name="seal_type" optional="show"/>
+          <field name="legacy_visible_seal_type" optional="hide"/>
           <field name="use_purpose" optional="show"/>
           <field name="use_date" optional="show"/>
+          <field name="legacy_visible_attachment" optional="hide"/>
           <field name="legacy_document_no" optional="hide"/>
           <field name="legacy_document_state" optional="hide"/>
           <field name="state"/>
@@ -77,6 +83,7 @@
                 <field name="business_date"/>
                 <field name="requester_id"/>
                 <field name="department_id"/>
+                <field name="legacy_source_table" invisible="1"/>
               </group>
               <group string="请假/休假" invisible="fact_type != 'leave_request'">
                 <field name="leave_type" required="fact_type == 'leave_request'"/>
@@ -110,7 +117,51 @@
                 <field name="result_note"/>
               </page>
               <page string="附件">
+                <field name="legacy_visible_attachment" readonly="1"/>
                 <field name="attachment_ids" widget="many2many_binary"/>
+              </page>
+              <page string="历史可见信息" invisible="not legacy_source_table">
+                <group>
+                  <group string="历史基础信息">
+                    <field name="legacy_document_no" readonly="1"/>
+                    <field name="legacy_document_state" readonly="1"/>
+                    <field name="legacy_source_table" readonly="1"/>
+                    <field name="legacy_source_id" readonly="1"/>
+                    <field name="legacy_visible_project_name" readonly="1"/>
+                    <field name="legacy_visible_applicant" readonly="1"/>
+                    <field name="legacy_visible_department" readonly="1"/>
+                    <field name="legacy_visible_note" readonly="1"/>
+                    <field name="legacy_visible_creator_name" readonly="1"/>
+                    <field name="legacy_visible_created_time" readonly="1"/>
+                  </group>
+                  <group string="请假/休假">
+                    <field name="legacy_visible_leave_type" readonly="1"/>
+                    <field name="legacy_visible_leave_days" readonly="1"/>
+                    <field name="legacy_visible_leave_duration" readonly="1"/>
+                    <field name="legacy_visible_leave_time" readonly="1"/>
+                    <field name="legacy_visible_cancel_time" readonly="1"/>
+                  </group>
+                </group>
+                <group>
+                  <group string="印章使用">
+                    <field name="legacy_visible_seal_use_time" readonly="1"/>
+                    <field name="legacy_visible_seal_type" readonly="1"/>
+                    <field name="legacy_visible_seal_text" readonly="1"/>
+                    <field name="legacy_visible_department_manager_sign" readonly="1"/>
+                    <field name="legacy_visible_handler_sign" readonly="1"/>
+                    <field name="legacy_visible_leader_sign" readonly="1"/>
+                    <field name="legacy_visible_copy_count" readonly="1"/>
+                    <field name="legacy_visible_return_time" readonly="1"/>
+                  </group>
+                  <group string="合同与印章公司">
+                    <field name="legacy_visible_contract_amount" readonly="1"/>
+                    <field name="legacy_visible_contract_no" readonly="1"/>
+                    <field name="legacy_visible_company" readonly="1"/>
+                    <field name="legacy_visible_seal_company" readonly="1"/>
+                    <field name="legacy_visible_take_out" readonly="1"/>
+                    <field name="legacy_visible_attachment" readonly="1"/>
+                  </group>
+                </group>
               </page>
             </notebook>
           </sheet>

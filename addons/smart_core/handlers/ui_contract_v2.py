@@ -22,6 +22,7 @@ from ..core.unified_page_contract_v2_client import (
 )
 from ..core.scene_provider import load_scenes_from_db_or_fallback
 from ..core.request_params import parse_positive_int
+from ..utils.contract_governance import apply_contract_governance, resolve_contract_mode, resolve_contract_surface
 from ..utils.extension_hooks import call_extension_hook_first
 from .ui_contract import UiContractHandler
 
@@ -282,6 +283,13 @@ class UiContractV2Handler(BaseIntentHandler):
             model=str(model or "").strip(),
             view_type=str(view_type or "").strip().lower(),
         )
+        self._inject_business_category_form_policy(
+            source_contract,
+            params=params,
+            ui_params=ui_params,
+            model=str(model or "").strip(),
+            view_type=str(view_type or "").strip().lower(),
+        )
         self._inject_business_operation_contract(
             source_contract,
             model=str(model or "").strip(),
@@ -307,6 +315,7 @@ class UiContractV2Handler(BaseIntentHandler):
             client_type=client_type,
             request_id=str(request_id),
         )
+        self._apply_field_policies_to_v2_status(contract_v2, source_contract)
         self._apply_legacy_visible_list_layout(contract_v2, source_contract)
         if isinstance(source_contract.get("delete_policy"), dict):
             contract_v2["delete_policy"] = dict(source_contract.get("delete_policy") or {})
@@ -394,6 +403,69 @@ class UiContractV2Handler(BaseIntentHandler):
             data_meta["fieldCount"] = len(columns)
             data_contract["dataMeta"] = data_meta
             contract_v2["dataContract"] = data_contract
+
+    def _apply_field_policies_to_v2_status(self, contract_v2: dict[str, Any], source_contract: dict[str, Any]) -> None:
+        field_policies = source_contract.get("field_policies") if isinstance(source_contract.get("field_policies"), dict) else {}
+        if not field_policies:
+            return
+        business_policy = source_contract.get("business_form_policy") if isinstance(source_contract.get("business_form_policy"), dict) else {}
+        render_profile = str(
+            source_contract.get("render_profile")
+            or business_policy.get("render_profile")
+            or ""
+        ).strip().lower()
+        if render_profile in {"read", "view"}:
+            render_profile = "readonly"
+        if render_profile not in {"create", "edit", "readonly"}:
+            render_profile = "edit"
+        status_contract = contract_v2.get("statusContract") if isinstance(contract_v2.get("statusContract"), dict) else {}
+        widget_status = status_contract.get("widgetStatus") if isinstance(status_contract.get("widgetStatus"), list) else []
+        by_widget: dict[str, list[dict[str, Any]]] = {}
+        for row in widget_status:
+            if not isinstance(row, dict):
+                continue
+            widget_id = str(row.get("widgetId") or "").strip()
+            if widget_id:
+                by_widget.setdefault(widget_id, []).append(row)
+
+        def apply_policy(row: dict[str, Any], policy: dict[str, Any]) -> None:
+            visible_profiles = policy.get("visible_profiles")
+            if isinstance(visible_profiles, list) and visible_profiles:
+                row["visible"] = render_profile in {str(item) for item in visible_profiles}
+            readonly_profiles = policy.get("readonly_profiles")
+            if isinstance(readonly_profiles, list) and readonly_profiles:
+                row["readonly"] = render_profile in {str(item) for item in readonly_profiles}
+            required_profiles = policy.get("required_profiles")
+            if isinstance(required_profiles, list) and required_profiles:
+                row["required"] = render_profile in {str(item) for item in required_profiles}
+            for key in ("visible", "readonly", "required", "disabled"):
+                if isinstance(policy.get(key), bool):
+                    row[key] = bool(policy.get(key))
+            row["auth"] = "none" if row.get("visible") is False else "read" if row.get("readonly") else "edit"
+
+        for field_name, policy in field_policies.items():
+            if not isinstance(policy, dict):
+                continue
+            field_code = str(field_name or "").strip()
+            if not field_code:
+                continue
+            widget_id = f"field.{field_code}"
+            rows = by_widget.get(widget_id)
+            if not rows:
+                row = {
+                    "widgetId": widget_id,
+                    "visible": True,
+                    "readonly": False,
+                    "required": False,
+                    "disabled": False,
+                    "auth": "edit",
+                }
+                widget_status.append(row)
+                rows = [row]
+            for row in rows:
+                apply_policy(row, policy)
+        status_contract["widgetStatus"] = widget_status
+        contract_v2["statusContract"] = status_contract
 
     def _inject_action_window_contract(
         self,
@@ -520,7 +592,248 @@ class UiContractV2Handler(BaseIntentHandler):
         except Exception:
             _logger.debug("ui.contract.v2 current form settings action injection skipped", exc_info=True)
 
+    def _inject_business_category_form_policy(
+        self,
+        source_contract: dict[str, Any],
+        *,
+        params: dict[str, Any],
+        ui_params: dict[str, Any],
+        model: str,
+        view_type: str,
+    ) -> None:
+        if view_type != "form" or not model:
+            return
+        try:
+            from ..app_config_engine.services.assemblers.page_assembler import PageAssembler
+
+            request_context: dict[str, Any] = {}
+            for raw_context in (params.get("context"), ui_params.get("context")):
+                if isinstance(raw_context, dict):
+                    request_context.update(raw_context)
+            if request_context:
+                current_context = source_contract.get("context") if isinstance(source_contract.get("context"), dict) else {}
+                merged_context = dict(current_context)
+                merged_context.update(request_context)
+                source_contract["context"] = merged_context
+                head = source_contract.get("head") if isinstance(source_contract.get("head"), dict) else {}
+                head = dict(head)
+                head["context"] = merged_context
+                source_contract["head"] = head
+            render_profile = (
+                params.get("render_profile")
+                or params.get("renderProfile")
+                or ui_params.get("render_profile")
+                or ui_params.get("renderProfile")
+                or source_contract.get("render_profile")
+                or "edit"
+            )
+            normalized_render_profile = str(render_profile or "").strip().lower()
+            if normalized_render_profile in {"read", "view"}:
+                normalized_render_profile = "readonly"
+            if normalized_render_profile not in {"create", "edit", "readonly"}:
+                normalized_render_profile = "edit"
+            source_contract["render_profile"] = normalized_render_profile
+            assembler = PageAssembler(self.env, self.su_env)
+            assembler._inject_business_category_form_policy(
+                source_contract,
+                model_name=model,
+                render_profile=normalized_render_profile,
+            )
+            if not source_contract.get("business_form_policy"):
+                return
+            business_policy_groups = deepcopy(
+                source_contract.get("field_groups")
+                if isinstance(source_contract.get("field_groups"), list)
+                else []
+            )
+            business_policy_root = source_contract.get("business_form_policy") if isinstance(source_contract.get("business_form_policy"), dict) else {}
+            business_policy_fields = deepcopy(
+                business_policy_root.get("fields")
+                if isinstance(business_policy_root.get("fields"), list)
+                else []
+            )
+            contract_mode = resolve_contract_mode(params)
+            contract_surface = resolve_contract_surface(params, contract_mode)
+            governed = apply_contract_governance(
+                source_contract,
+                contract_mode,
+                contract_surface=contract_surface,
+                source_mode="ui.contract.v2",
+                inject_contract_mode=False,
+            )
+            if isinstance(governed, dict):
+                source_contract.clear()
+                source_contract.update(governed)
+                source_contract["render_profile"] = normalized_render_profile
+            if business_policy_fields:
+                business_policy = source_contract.get("business_form_policy") if isinstance(source_contract.get("business_form_policy"), dict) else {}
+                business_policy["fields"] = business_policy_fields
+                source_contract["business_form_policy"] = business_policy
+            if business_policy_groups:
+                source_contract["field_groups"] = business_policy_groups
+                self._ensure_business_policy_layout_fields_visible(source_contract, business_policy_groups)
+            self._inject_business_category_form_structure(source_contract, model=model)
+        except Exception:
+            _logger.debug("ui.contract.v2 business category form policy injection skipped", exc_info=True)
+
+    def _ensure_business_policy_layout_fields_visible(
+        self,
+        source_contract: dict[str, Any],
+        business_policy_groups: list[dict[str, Any]],
+    ) -> None:
+        business_policy = source_contract.get("business_form_policy") if isinstance(source_contract.get("business_form_policy"), dict) else {}
+        explicit_visibility_fields = set()
+        field_policies = source_contract.get("field_policies") if isinstance(source_contract.get("field_policies"), dict) else {}
+        for row in business_policy.get("fields") if isinstance(business_policy.get("fields"), list) else []:
+            if not isinstance(row, dict):
+                continue
+            name = str(row.get("name") or row.get("field") or "").strip()
+            if not name:
+                continue
+            policy = field_policies.get(name) if isinstance(field_policies.get(name), dict) else {}
+            for key in ("visible_profiles", "readonly_profiles", "required_profiles"):
+                if isinstance(row.get(key), list):
+                    policy[key] = list(row.get(key) or [])
+            if policy:
+                field_policies[name] = policy
+            if isinstance(row.get("visible_profiles"), list):
+                explicit_visibility_fields.add(name)
+        for group in business_policy_groups:
+            if not isinstance(group, dict):
+                continue
+            for raw_name in group.get("fields") if isinstance(group.get("fields"), list) else []:
+                name = str(raw_name or "").strip()
+                if not name or name in explicit_visibility_fields:
+                    continue
+                policy = field_policies.get(name) if isinstance(field_policies.get(name), dict) else {}
+                policy["visible_profiles"] = ["create", "edit", "readonly"]
+                field_policies[name] = policy
+        source_contract["field_policies"] = field_policies
+
+    def _inject_business_category_form_structure(self, source_contract: dict[str, Any], *, model: str) -> None:
+        policy = source_contract.get("business_form_policy") if isinstance(source_contract.get("business_form_policy"), dict) else {}
+        groups = source_contract.get("field_groups") if isinstance(source_contract.get("field_groups"), list) else []
+        field_map = source_contract.get("fields") if isinstance(source_contract.get("fields"), dict) else {}
+        if not policy or not groups or not field_map:
+            return
+        field_policies = source_contract.get("field_policies") if isinstance(source_contract.get("field_policies"), dict) else {}
+        render_profile = str(
+            source_contract.get("render_profile")
+            or policy.get("render_profile")
+            or ""
+        ).strip().lower()
+        if render_profile in {"read", "view"}:
+            render_profile = "readonly"
+        if render_profile not in {"create", "edit", "readonly"}:
+            render_profile = "edit"
+        explicit_visible_profiles: dict[str, list[str]] = {}
+        for row in policy.get("fields") if isinstance(policy.get("fields"), list) else []:
+            if not isinstance(row, dict):
+                continue
+            name = str(row.get("name") or row.get("field") or "").strip()
+            profiles = row.get("visible_profiles")
+            if name and isinstance(profiles, list) and profiles:
+                explicit_visible_profiles[name] = [str(item) for item in profiles]
+
+        def field_visible_for_profile(name: str) -> bool:
+            if name in explicit_visible_profiles:
+                return render_profile in set(explicit_visible_profiles.get(name) or [])
+            field_policy = field_policies.get(name) if isinstance(field_policies.get(name), dict) else {}
+            visible_profiles = field_policy.get("visible_profiles")
+            if isinstance(visible_profiles, list) and visible_profiles:
+                return render_profile in {str(item) for item in visible_profiles}
+            if isinstance(field_policy.get("visible"), bool):
+                return bool(field_policy.get("visible"))
+            return True
+
+        slots: list[dict[str, Any]] = []
+        field_roles: dict[str, dict[str, Any]] = {}
+        source_titles: list[str] = []
+        for index, group in enumerate(groups):
+            if not isinstance(group, dict):
+                continue
+            group_visible_profiles = group.get("visible_profiles")
+            if isinstance(group_visible_profiles, list) and group_visible_profiles:
+                allowed_profiles = {str(item).strip().lower() for item in group_visible_profiles if str(item).strip()}
+                if render_profile not in allowed_profiles:
+                    continue
+            group_name = str(group.get("name") or f"business_category_section_{index + 1}").strip()
+            title = str(group.get("label") or group.get("title") or group_name).strip()
+            field_refs: list[str] = []
+            for raw_name in group.get("fields") if isinstance(group.get("fields"), list) else []:
+                name = str(raw_name or "").strip()
+                if not name or name not in field_map or name in field_refs:
+                    continue
+                if not field_visible_for_profile(name):
+                    continue
+                field_refs.append(name)
+                field_roles.setdefault(name, {
+                    "role": "business_fact",
+                    "slot": group_name,
+                    "group": group_name,
+                })
+            if not field_refs:
+                continue
+            if title:
+                source_titles.append(title)
+            slots.append({
+                "slot": group_name,
+                "title": title or group_name,
+                "role": "business_category_section",
+                "groups": [{
+                    "name": group_name,
+                    "title": title or group_name,
+                    "role": "business_category_fields",
+                    "fieldRefs": field_refs,
+                    "fieldLabels": {
+                        name: str(
+                            (field_map.get(name) if isinstance(field_map.get(name), dict) else {}).get("string")
+                            or (field_map.get(name) if isinstance(field_map.get(name), dict) else {}).get("label")
+                            or name
+                        ).strip()
+                        for name in field_refs
+                    },
+                }],
+            })
+        if not slots:
+            return
+        source_contract["form_structure_contract"] = {
+            "source": "ui.contract.v2.business_category_form_policy",
+            "structureVersion": "1.0",
+            "model": model,
+            "viewType": "form",
+            "mode": "business_category_task_form",
+            "layoutPolicy": "category_sections_as_task_tabs",
+            "objectProfile": {
+                "model": model,
+                "kind": "business_form",
+                "factAuthority": "sc.business.category.form_policy_json",
+            },
+            "navigation": {
+                "title": str(policy.get("category_name") or "业务办理").strip() or "业务办理",
+            },
+            "sourceSectionTitles": source_titles,
+            "slots": slots,
+            "fieldRoles": field_roles,
+            "fieldPolicies": field_policies,
+            "sourceAuthority": {
+                "kind": self.SOURCE_KIND,
+                "runtime_carrier": "ui.contract.v2.business_category_form_policy",
+                "projection_only": True,
+                "no_business_fact_authority": True,
+                "governed_form_structure": True,
+                "governance_source": {
+                    "source": policy.get("source"),
+                    "category_id": policy.get("category_id"),
+                    "category_code": policy.get("category_code"),
+                    "target_model": policy.get("target_model"),
+                },
+            },
+        }
+
     def _inject_business_operation_contract(self, source_contract: dict[str, Any], *, model: str, view_type: str) -> None:
+        if view_type == "form" and isinstance(source_contract.get("business_form_policy"), dict):
+            return
         try:
             has_model = bool(model and model in self.env)
         except Exception:

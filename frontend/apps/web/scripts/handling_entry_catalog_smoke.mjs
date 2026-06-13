@@ -180,7 +180,11 @@ async function main() {
   const consoleErrors = [];
   page.on("console", (msg) => {
     if (msg.type() === "error") {
-      consoleErrors.push(msg.text().slice(0, 500));
+      const location = msg.location();
+      const url = String(location?.url || "");
+      if (!url.endsWith("/favicon.ico")) {
+        consoleErrors.push(msg.text().slice(0, 500));
+      }
     }
   });
   page.on("pageerror", (err) => consoleErrors.push(err.message.slice(0, 500)));
@@ -199,6 +203,37 @@ async function main() {
   const financeNode = findNodeByLabel(deliveryNav, "财务中心");
   const financeChildren = Array.isArray(financeNode?.children) ? financeNode.children : [];
   const financeChildLabels = financeChildren.map((node) => String(node?.label || node?.title || "").trim()).filter(Boolean);
+  const blockedIntentGroupLabels = ["办理入口", "台账查询", "分析报表", "来源明细", "基础配置"];
+  const leakedFinanceIntentGroups = financeChildLabels.filter((label) => blockedIntentGroupLabels.includes(label));
+  const financeHandlingLabels = financeChildLabels;
+  const expectedFinanceHandlingLabels = [
+    "收款登记",
+    "付款执行",
+    "付款申请",
+    "票税办理",
+    "费用/扣款/保证金办理",
+    "借款办理",
+    "还款办理",
+    "账户间资金往来",
+    "自筹垫付办理",
+    "自筹退回办理",
+  ];
+  const missingFinanceHandlingLabels = expectedFinanceHandlingLabels.filter((label) => !financeHandlingLabels.includes(label));
+  const duplicateFinanceHandlingLabels = financeHandlingLabels.filter((label, index) => financeHandlingLabels.indexOf(label) !== index);
+  const leakedFinanceHandlingLabels = [
+    "自筹保证金",
+    "自筹垫付收入",
+    "自筹垫付退回",
+    "保证金退回办理",
+    "保证金退还办理",
+    "支付申请",
+    "报销申请",
+    "扣款单",
+    "进项发票",
+    "销项开票申请",
+    "销项开票登记",
+    "预缴税款",
+  ].filter((label) => financeHandlingLabels.includes(label));
   const financeEntry = financeChildren[0] || {};
   const financeEntryMeta = financeEntry.meta || {};
   const financeEntryTarget = financeEntryMeta.entry_target || {};
@@ -214,9 +249,7 @@ async function main() {
   const sidebarLabels = await page.locator('[data-component="SidebarNav"] button.label .label-text').evaluateAll((nodes) =>
     nodes.map((node) => (node.textContent || "").trim()).filter(Boolean)
   );
-  const sidebarIntentLabels = sidebarLabels.filter((label) =>
-    ["办理入口", "台账查询", "分析报表", "来源明细", "基础配置"].includes(label)
-  );
+  const sidebarIntentLabels = sidebarLabels.filter((label) => blockedIntentGroupLabels.includes(label));
   const expectedMergeFamilyLabels = ["费用/扣款/保证金办理", "票税办理"];
   const missingMergeFamilyLabels = expectedMergeFamilyLabels.filter((label) => !sidebarLabels.includes(label));
   const hiddenLegacyHandlingLabels = ["报销申请", "扣款单", "进项发票", "销项开票申请", "销项开票登记", "预缴税款"];
@@ -228,8 +261,6 @@ async function main() {
   const expectedCatalogItems = ["收款登记", "付款执行", "票税办理", "费用/扣款/保证金办理", "借款办理", "还款办理"];
   const missingGroups = expectedGroups.filter((title) => !groupTitles.includes(title));
   const missingCatalogItems = expectedCatalogItems.filter((label) => !itemLabels.includes(label));
-  const expectedSidebarIntentLabels = ["办理入口", "台账查询", "分析报表", "来源明细"];
-  const missingSidebarIntentLabels = expectedSidebarIntentLabels.filter((label) => !sidebarIntentLabels.includes(label));
   const catalogEntryNavigation = [];
   for (const label of ["票税办理", "费用/扣款/保证金办理"]) {
     await openFinanceWorkspace(page);
@@ -291,9 +322,13 @@ async function main() {
 
   const report = {
     ok: missingGroups.length === 0 && groupTitles.length === 4 && itemLabels.length === 13 && !rawCodeVisible && consoleErrors.length === 0
-      && missingSidebarIntentLabels.length === 0
+      && sidebarIntentLabels.length === 0
       && missingCatalogItems.length === 0
       && missingMergeFamilyLabels.length === 0
+      && leakedFinanceIntentGroups.length === 0
+      && missingFinanceHandlingLabels.length === 0
+      && duplicateFinanceHandlingLabels.length === 0
+      && leakedFinanceHandlingLabels.length === 0
       && leakedLegacyHandlingLabels.length === 0
       && leakedLegacyHandlingCards.length === 0
       && catalogEntryNavigation.length === 2
@@ -306,6 +341,11 @@ async function main() {
     dbName: DB_NAME,
     scenePath: SCENE_PATH,
     financeChildLabels,
+    financeHandlingLabels,
+    leakedFinanceIntentGroups,
+    missingFinanceHandlingLabels,
+    duplicateFinanceHandlingLabels,
+    leakedFinanceHandlingLabels,
     financeEntryTarget,
     categoryNavigation: {
       label: categoryNode.label,
@@ -318,7 +358,6 @@ async function main() {
     mergeFamilyNavigation,
     groupTitles,
     sidebarIntentLabels,
-    missingSidebarIntentLabels,
     missingCatalogItems,
     missingMergeFamilyLabels,
     leakedLegacyHandlingLabels,

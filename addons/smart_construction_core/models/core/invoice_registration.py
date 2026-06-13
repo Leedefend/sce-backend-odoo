@@ -81,8 +81,18 @@ class ScInvoiceRegistration(models.Model):
         index=True,
     )
     partner_id = fields.Many2one("res.partner", string="往来单位", index=True)
-    contract_id = fields.Many2one("construction.contract", string="合同", index=True)
-    settlement_id = fields.Many2one("sc.settlement.order", string="结算单", index=True)
+    contract_id = fields.Many2one(
+        "construction.contract",
+        string="合同",
+        index=True,
+        domain="[('project_id', '=', project_id)]",
+    )
+    settlement_id = fields.Many2one(
+        "sc.settlement.order",
+        string="结算单",
+        index=True,
+        domain="[('project_id', '=', project_id)]",
+    )
     document_no = fields.Char(string="来源单号", index=True)
     document_date = fields.Date(string="单据日期", default=fields.Date.context_today, index=True)
     application_date = fields.Date(string="申请日期", index=True)

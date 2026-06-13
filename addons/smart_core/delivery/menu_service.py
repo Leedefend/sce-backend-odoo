@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
+import json
 import re
 from odoo.addons.smart_core.core.source_authority import build_source_authority_contract
 from odoo.addons.smart_core.core.delivery_menu_defaults import (
@@ -252,6 +253,7 @@ class MenuService:
             "disposition_policy",
             "integration_target",
             "default_business_category_code",
+            "allowed_business_category_codes",
             "required_relationships",
             "locked_data_policy",
             "productization_source",
@@ -261,6 +263,7 @@ class MenuService:
             "integration_action_xmlid",
             "integration_view_modes",
             "integration_entry_target",
+            "integration_model",
         )
         for group in policy.get("menu_groups") or []:
             if not isinstance(group, dict):
@@ -376,12 +379,46 @@ class MenuService:
             if isinstance(child, dict)
         )
 
+    def _intent_labeled_node(self, node: dict) -> dict:
+        if not isinstance(node, dict):
+            return node
+        meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+        intent = str(meta.get("entry_intent") or "").strip()
+        if not intent:
+            return node
+        label = str(node.get("label") or node.get("title") or "").strip()
+        if not label:
+            return node
+        next_label = label
+        if intent in {"query", "master_data"}:
+            if not any(token in label for token in ("台账", "查询", "名册", "资料", "客户", "供应商")):
+                next_label = f"{label}查询"
+        elif intent == "analysis":
+            if not any(token in label for token in ("报表", "分析", "总览", "余额", "明细")):
+                next_label = f"{label}报表"
+        elif intent == "source_fact":
+            if not any(token in label for token in ("明细", "来源", "表", "记录")):
+                next_label = f"{label}明细"
+        elif intent == "config":
+            if not any(token in label for token in ("配置", "设置", "字典")):
+                next_label = f"{label}配置"
+        if next_label == label:
+            return node
+        next_node = dict(node)
+        next_node["label"] = next_label
+        next_node["title"] = next_label
+        next_meta = dict(meta)
+        next_meta["original_label"] = label
+        next_meta["intent_label_applied"] = True
+        next_node["meta"] = next_meta
+        return next_node
+
     def _merge_by_category_key(self, node: dict) -> str:
         meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
         if str(meta.get("disposition_policy") or "").strip() != "merge_by_category":
             return ""
         target = str(meta.get("integration_target") or "").strip()
-        model = str(meta.get("fact_model") or meta.get("model") or "").strip()
+        model = str(meta.get("integration_model") or meta.get("fact_model") or meta.get("model") or "").strip()
         if not target or not model:
             return ""
         return f"{model}::{target}"
@@ -414,30 +451,87 @@ class MenuService:
         return {
             "action_id": next(iter(action_ids)),
             "action_xmlid": str(first_meta.get("integration_action_xmlid") or "").strip(),
-            "model": str(first_meta.get("fact_model") or first_meta.get("model") or "").strip(),
+            "model": str(first_meta.get("integration_model") or first_meta.get("fact_model") or first_meta.get("model") or "").strip(),
             "view_modes": view_modes if isinstance(view_modes, list) else [],
             "entry_target": entry_target if isinstance(entry_target, dict) else {},
         }
 
+    def _business_category_codes(self, items: list[dict]) -> list[str]:
+        codes = []
+        seen = set()
+        for item in items or []:
+            if not isinstance(item, dict):
+                continue
+            meta = item.get("meta") if isinstance(item.get("meta"), dict) else {}
+            raw_allowed = meta.get("allowed_business_category_codes")
+            candidates = raw_allowed if isinstance(raw_allowed, list) and raw_allowed else [meta.get("default_business_category_code")]
+            for candidate in candidates:
+                code = str(candidate or "").strip()
+                if code and code not in seen:
+                    seen.add(code)
+                    codes.append(code)
+        return codes
+
     def _business_category_options(self, items: list[dict]) -> list[dict]:
+        codes = self._business_category_codes(items)
+        category_by_code = self._business_category_default_index(codes)
         options = []
         seen = set()
-        for item in items:
+        item_by_code = {}
+        for item in items or []:
+            if not isinstance(item, dict):
+                continue
             meta = item.get("meta") if isinstance(item.get("meta"), dict) else {}
-            code = str(meta.get("default_business_category_code") or "").strip()
+            default_code = str(meta.get("default_business_category_code") or "").strip()
+            raw_allowed = meta.get("allowed_business_category_codes")
+            candidates = raw_allowed if isinstance(raw_allowed, list) and raw_allowed else [default_code]
+            for candidate in candidates:
+                code = str(candidate or "").strip()
+                if code and code not in item_by_code:
+                    item_by_code[code] = item
+        for code in codes:
             if not code or code in seen:
                 continue
             seen.add(code)
+            category = category_by_code.get(code, {})
+            default_values = category.get("default_values") if isinstance(category.get("default_values"), dict) else {}
+            category_id = category.get("id")
+            item = item_by_code.get(code, {})
+            meta = item.get("meta") if isinstance(item.get("meta"), dict) else {}
             options.append(
                 {
                     "code": code,
-                    "label": str(item.get("label") or item.get("title") or "").strip() or code,
+                    "label": str(category.get("name") or item.get("label") or item.get("title") or "").strip() or code,
+                    "category_id": category_id,
+                    "default_values": default_values,
                     "menu_id": item.get("menu_id") or item.get("id"),
                     "menu_xmlid": str(meta.get("menu_xmlid") or "").strip(),
                     "integration_target": str(meta.get("integration_target") or "").strip(),
                 }
             )
         return options
+
+    def _business_category_default_index(self, codes: list[str]) -> dict[str, dict]:
+        if not codes or self.env is None or "sc.business.category" not in self.env:
+            return {}
+        categories = self.env["sc.business.category"].sudo().search([("code", "in", codes)])
+        index = {}
+        for category in categories:
+            defaults = {}
+            raw_defaults = str(category.default_values_json or "").strip()
+            if raw_defaults:
+                try:
+                    parsed = json.loads(raw_defaults)
+                    if isinstance(parsed, dict):
+                        defaults = parsed
+                except Exception:
+                    defaults = {}
+            index[str(category.code or "").strip()] = {
+                "id": category.id,
+                "name": category.name,
+                "default_values": defaults,
+            }
+        return index
 
     def _group_merge_by_category_nodes(self, nodes: list[dict], parent_key: str = "") -> list[dict]:
         grouped = {}
@@ -452,22 +546,25 @@ class MenuService:
             grouped.setdefault(key, []).append(node)
         synthetic_groups = []
         for key, items in grouped.items():
-            if len(items) <= 1:
-                synthetic_groups.extend(items)
-                continue
             first = items[0]
             meta = first.get("meta") if isinstance(first.get("meta"), dict) else {}
             integration_meta = self._merged_integration_meta(items)
+            if not integration_meta:
+                synthetic_groups.extend(items)
+                continue
             label = self._merge_by_category_label(first)
             node_key = f"{parent_key}.merge_by_category:{key}" if parent_key else f"merge_by_category:{key}"
             group_meta = {
                 "business_entry_group": True,
-                "merge_by_category_group": True,
+                "merge_by_category_group": len(items) > 1,
+                "single_category_integrated_entry": len(items) <= 1,
+                "allowed_business_category_codes": self._business_category_codes(items),
                 "business_category_options": self._business_category_options(items),
                 "product_domain": meta.get("product_domain"),
                 "product_domain_label": meta.get("product_domain_label"),
                 "integration_target": meta.get("integration_target"),
                 "fact_model": meta.get("fact_model") or meta.get("model"),
+                "integration_model": meta.get("integration_model"),
                 "entry_intent": meta.get("entry_intent"),
                 "entry_intent_label": meta.get("entry_intent_label"),
                 "disposition_policy": meta.get("disposition_policy"),
@@ -519,30 +616,30 @@ class MenuService:
                 continue
             bucketed.setdefault(bucket[0], []).append(node)
         productized_count = sum(len(items) for items in bucketed.values())
-        if productized_count < 2 or len(bucketed) < 2:
+        if productized_count < 1:
             return next_nodes
-        synthetic_groups = []
+        flattened = []
         for bucket_key, label, sequence, _intents in self.BUSINESS_INTENT_BUCKETS:
             items = bucketed.get(bucket_key) or []
             if not items:
                 continue
             intent_parent_key = parent_key or "root"
-            children = self._group_merge_by_category_nodes(items, parent_key=f"{intent_parent_key}.intent.{bucket_key}") if bucket_key == "handling" else items
-            group_key = f"{intent_parent_key}.intent.{bucket_key}"
-            group = build_delivery_menu_group(group_key, label, children)
-            group["sequence"] = sequence
-            group["meta"] = {
-                **(group.get("meta") if isinstance(group.get("meta"), dict) else {}),
-                "intent_group": bucket_key,
-                "business_entry_group": True,
-                "source_authority": self.source_authority_contract(),
-            }
-            synthetic_groups.append(group)
-        return (
-            [item for item in passthrough if not self._has_business_entry_intent(item)]
-            + synthetic_groups
-            + [item for item in passthrough if self._has_business_entry_intent(item)]
-        )
+            children = (
+                self._group_merge_by_category_nodes(items, parent_key=f"{intent_parent_key}.intent.{bucket_key}")
+                if bucket_key == "handling"
+                else items
+            )
+            for child in children:
+                next_child = self._intent_labeled_node(child)
+                next_child = dict(next_child)
+                next_child.setdefault("sequence", int(next_child.get("sequence") or sequence))
+                meta = dict(next_child.get("meta") if isinstance(next_child.get("meta"), dict) else {})
+                meta.setdefault("intent_group", bucket_key)
+                meta.setdefault("business_entry_group", True)
+                meta.setdefault("source_authority", self.source_authority_contract())
+                next_child["meta"] = meta
+                flattened.append(next_child)
+        return [item for item in passthrough if not self._has_business_entry_intent(item)] + flattened
 
     def _native_preview_menus(self, *, native_nav: list[dict], policy: dict) -> list[dict]:
         preview_menus_by_group = {}

@@ -44,6 +44,9 @@
                     <field name="partner_id"/>
                     <field name="business_category_id" optional="show"/>
                     <field name="amount" string="借款金额" sum="金额"/>
+                    <field name="legacy_visible_project_name" optional="hide"/>
+                    <field name="legacy_visible_applicant" optional="show"/>
+                    <field name="legacy_visible_writer" optional="hide"/>
                     <field name="due_date"/>
                     <field name="purpose"/>
                     <field name="loan_type" optional="hide"/>
@@ -51,6 +54,7 @@
                     <field name="rate_label"/>
                     <field name="extra_ref"/>
                     <field name="extra_label"/>
+                    <field name="legacy_attachment_ref" optional="hide"/>
                     <field name="creator_name"/>
                     <field name="created_time"/>
                     <field name="state"/>
@@ -80,40 +84,108 @@
                                statusbar_visible="draft,confirmed,done,legacy_confirmed,cancel"/>
                     </header>
                     <sheet>
-                        <group>
-                            <group string="借款方向">
-                                <field name="name" readonly="1"/>
-                                <field name="loan_flow_label" readonly="1"/>
-                                <field name="business_category_id" readonly="state == 'legacy_confirmed'"/>
-                                <field name="loan_type" readonly="state == 'legacy_confirmed'"/>
-                                <field name="direction" readonly="state == 'legacy_confirmed'"/>
-                                <field name="document_no" readonly="state == 'legacy_confirmed'"/>
-                                <field name="document_date" required="1" readonly="state == 'legacy_confirmed'"/>
-                                <field name="due_date" readonly="state == 'legacy_confirmed'"/>
-                            </group>
-                            <group string="项目与往来单位">
-                                <field name="project_id" readonly="state == 'legacy_confirmed'"/>
-                                <field name="operation_strategy" readonly="1"/>
-                                <field name="partner_id"/>
-                                <field name="amount" string="借款金额" readonly="state == 'legacy_confirmed'"/>
-                                <field name="currency_id" invisible="1"/>
-                            </group>
-                        </group>
-                        <group string="办理说明">
-                            <field name="purpose" readonly="state == 'legacy_confirmed'"/>
-                            <field name="rate_label" readonly="state == 'legacy_confirmed'"/>
-                            <field name="extra_ref" readonly="state == 'legacy_confirmed'"/>
-                            <field name="extra_label" readonly="state == 'legacy_confirmed'"/>
-                        </group>
-                        <group>
-                            <field name="note"/>
-                            <field name="creator_name" readonly="1"/>
-                            <field name="creator_legacy_user_id" readonly="1"/>
-                            <field name="created_time" readonly="1"/>
-                            <field name="legacy_attachment_ref" readonly="1"/>
-                            <field name="attachment_ids" widget="many2many_binary"/>
-                            <field name="active"/>
-                        </group>
+                        <notebook>
+                            <page string="办理类型">
+                                <group>
+                                    <field name="name" readonly="1"/>
+                                    <field name="loan_flow_label" readonly="1"/>
+                                    <field name="source_origin" invisible="1"/>
+                                    <field name="business_category_id" readonly="state == 'legacy_confirmed'"/>
+                                    <field name="loan_type" readonly="state == 'legacy_confirmed'"/>
+                                    <field name="direction" readonly="state == 'legacy_confirmed'"/>
+                                    <field name="document_no" readonly="state == 'legacy_confirmed'"/>
+                                </group>
+                            </page>
+                            <page string="项目与借款方">
+                                <group>
+                                    <field name="project_id" readonly="state == 'legacy_confirmed'"/>
+                                    <field name="operation_strategy" readonly="1"/>
+                                    <field name="partner_id"/>
+                                </group>
+                            </page>
+                            <page string="项目借公司款">
+                                <group>
+                                    <field name="document_date" required="1" readonly="state == 'legacy_confirmed'"/>
+                                    <field name="due_date" readonly="state == 'legacy_confirmed'"/>
+                                    <field name="amount" string="借款金额" readonly="state == 'legacy_confirmed'"/>
+                                    <field name="currency_id" invisible="1"/>
+                                    <field name="purpose" readonly="state == 'legacy_confirmed'"/>
+                                    <field name="rate_label" readonly="state == 'legacy_confirmed'"/>
+                                    <field name="extra_ref" readonly="state == 'legacy_confirmed'"/>
+                                    <field name="extra_label" readonly="state == 'legacy_confirmed'"/>
+                                </group>
+                            </page>
+                            <page string="办理说明">
+                                <group>
+                                    <field name="note"/>
+                                    <field name="attachment_ids" widget="many2many_binary"/>
+                                </group>
+                            </page>
+                            <page string="历史办理信息" invisible="source_origin != 'legacy'">
+                                <group>
+                                    <group string="历史基础信息">
+                                        <field name="legacy_document_state" readonly="1"/>
+                                        <field name="legacy_visible_project_name" readonly="1"/>
+                                        <field name="legacy_visible_request_department" readonly="1"/>
+                                        <field name="legacy_visible_request_time" readonly="1"/>
+                                        <field name="legacy_visible_applicant" readonly="1"/>
+                                        <field name="legacy_visible_note" readonly="1"/>
+                                    </group>
+                                    <group string="借款申请">
+                                        <field name="legacy_visible_budget_included" readonly="1"/>
+                                        <field name="legacy_visible_actual_loan_amount" readonly="1"/>
+                                        <field name="legacy_visible_fund_usage_plan" readonly="1"/>
+                                        <field name="legacy_visible_payee" readonly="1"/>
+                                        <field name="legacy_visible_receipt_account" readonly="1"/>
+                                        <field name="legacy_visible_bank_name" readonly="1"/>
+                                        <field name="legacy_visible_company_name" readonly="1"/>
+                                        <field name="legacy_visible_expected_return_time" readonly="1"/>
+                                    </group>
+                                </group>
+                                <group>
+                                    <group string="单位与账户">
+                                        <field name="legacy_visible_payer_unit" readonly="1"/>
+                                        <field name="legacy_visible_receiver_unit" readonly="1"/>
+                                        <field name="legacy_visible_counterparty_name" readonly="1"/>
+                                        <field name="legacy_visible_counterparty_account" readonly="1"/>
+                                        <field name="legacy_visible_loan_account" readonly="1"/>
+                                        <field name="legacy_visible_loan_bank" readonly="1"/>
+                                        <field name="legacy_visible_repayment_account" readonly="1"/>
+                                    </group>
+                                    <group string="贷款与还款">
+                                        <field name="legacy_visible_loan_type" readonly="1"/>
+                                        <field name="legacy_visible_approved_amount" readonly="1"/>
+                                        <field name="legacy_visible_request_amount" readonly="1"/>
+                                        <field name="legacy_visible_due_interest" readonly="1"/>
+                                        <field name="legacy_visible_repayment_amount" readonly="1"/>
+                                        <field name="legacy_visible_unpaid_amount" readonly="1"/>
+                                        <field name="legacy_visible_loan_date" readonly="1"/>
+                                        <field name="legacy_visible_repayment_date" readonly="1"/>
+                                        <field name="legacy_visible_loan_days" readonly="1"/>
+                                        <field name="legacy_visible_annual_rate" readonly="1"/>
+                                        <field name="legacy_visible_actual_repayment_days" readonly="1"/>
+                                        <field name="legacy_visible_actual_annual_rate" readonly="1"/>
+                                        <field name="legacy_visible_loan_interest" readonly="1"/>
+                                        <field name="legacy_visible_writer" readonly="1"/>
+                                    </group>
+                                </group>
+                            </page>
+                            <page string="迁移来源" invisible="source_origin != 'legacy'">
+                                <group>
+                                    <field name="legacy_source_model" readonly="1"/>
+                                    <field name="legacy_source_table" readonly="1"/>
+                                    <field name="legacy_record_id" readonly="1"/>
+                                    <field name="legacy_counterparty_id" readonly="1"/>
+                                    <field name="legacy_counterparty_name" readonly="1"/>
+                                    <field name="legacy_amount_field" readonly="1"/>
+                                    <field name="legacy_attachment_ref" readonly="1"/>
+                                    <field name="creator_legacy_user_id" readonly="1"/>
+                                    <field name="creator_name" readonly="1"/>
+                                    <field name="created_time" readonly="1"/>
+                                    <field name="active"/>
+                                </group>
+                            </page>
+                        </notebook>
                     </sheet>
                 </form>
             </field>

@@ -434,6 +434,7 @@
                 <filter string="旧系统已结算" name="legacy_settled" domain="[('legacy_settlement_state', '=', 'settled')]"/>
                 <filter string="旧系统未结算" name="legacy_unsettled" domain="[('legacy_settlement_state', '=', 'unsettled')]"/>
                 <filter string="按项目" name="group_project" context="{'group_by': 'project_id'}"/>
+                <filter string="按日期" name="group_usage_date" context="{'group_by': 'usage_date'}"/>
                 <filter string="按班组" name="group_labor_team" context="{'group_by': 'labor_team'}"/>
                 <filter string="按劳务单位" name="group_contractor" context="{'group_by': 'contractor_id'}"/>
                 <filter string="按旧结算状态" name="group_legacy_settlement_state" context="{'group_by': 'legacy_settlement_state'}"/>

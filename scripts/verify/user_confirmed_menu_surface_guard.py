@@ -62,10 +62,16 @@ MERGE_BY_CATEGORY_INTEGRATION_ACTION_XMLIDS_BY_MODEL = {
     "sc.labor.usage": "smart_construction_core.action_sc_labor_usage",
     "sc.material.outbound": "smart_construction_core.action_sc_material_outbound",
     "sc.receipt.income": "smart_construction_core.action_sc_receipt_income",
+    "payment.request": "smart_construction_core.action_payment_request",
     "sc.payment.execution": "smart_construction_core.action_sc_payment_execution",
     "sc.expense.claim": "smart_construction_core.action_sc_expense_claim",
     "sc.financing.loan": "smart_construction_core.action_sc_financing_loan",
     "sc.invoice.registration": "smart_construction_core.action_sc_invoice_registration",
+    "sc.self.funding.registration": "smart_construction_core.action_sc_self_funding_registration",
+}
+MERGE_BY_CATEGORY_ACTIONS_REQUIRING_EXPLICIT_VIEWS = {
+    "smart_construction_core.action_construction_contract_income",
+    "smart_construction_core.action_construction_contract_expense",
 }
 
 
@@ -97,6 +103,11 @@ def _text(value) -> str:
 def _integration_entry_target_action_id(entry_target: dict) -> int:
     compatibility_refs = entry_target.get("compatibility_refs") if isinstance(entry_target.get("compatibility_refs"), dict) else {}
     return int(entry_target.get("action_id") or compatibility_refs.get("action_id") or 0)
+
+
+def _action_has_explicit_views(action_xmlid: str) -> bool:
+    action = env.ref(action_xmlid, raise_if_not_found=False)  # noqa: F821
+    return bool(action and (action.view_id or action.view_ids))
 
 
 def _baseline_candidates() -> list[Path]:
@@ -234,6 +245,11 @@ def _assert_policy_productization_metadata(product_key: str) -> dict[str, int]:
                         missing_integration.append("integration_entry_target.action_id")
                     if not _text(menu.get("integration_view_modes")):
                         missing_integration.append("integration_view_modes")
+                    if (
+                        expected_action_xmlid in MERGE_BY_CATEGORY_ACTIONS_REQUIRING_EXPLICIT_VIEWS
+                        and not _action_has_explicit_views(expected_action_xmlid)
+                    ):
+                        missing_integration.append("integration_action_explicit_views")
                     if missing_integration:
                         missing.append(
                             {
@@ -439,6 +455,11 @@ def _assert_runtime_nav_locked() -> dict[str, int]:
                         missing_integration.append("integration_entry_target.action_id")
                     if not _text(meta.get("integration_view_modes")):
                         missing_integration.append("integration_view_modes")
+                    if (
+                        expected_action_xmlid in MERGE_BY_CATEGORY_ACTIONS_REQUIRING_EXPLICIT_VIEWS
+                        and not _action_has_explicit_views(expected_action_xmlid)
+                    ):
+                        missing_integration.append("integration_action_explicit_views")
                     if missing_integration:
                         missing_runtime_meta.append(
                             {

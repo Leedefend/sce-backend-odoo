@@ -127,6 +127,56 @@
         <field name="domain_json"><![CDATA[["|", ["legacy_contract_id", "=", false], ["legacy_income_surface_visible", "=", true]]]]></field>
         <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "subject", "tax_id"]]]></field>
         <field name="visible_groups_json"><![CDATA[["contract_header", "amount", "execution", "attachments"]]]></field>
+        <field name="form_policy_json"><![CDATA[{
+            "sections": [
+                {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "subject", "type", "state", "name"]},
+                {"name": "project_counterparty", "title": "项目与发包人", "sequence": 20, "fields": ["project_id", "operation_strategy", "partner_id", "date_contract", "handler_id"]},
+                {"name": "contract_scope", "title": "合同范围", "sequence": 30, "fields": ["category_id", "contract_type_id", "engineering_address", "engineering_category_text", "engineering_content", "contract_duration_text", "contract_payment_method_text"]},
+                {"name": "amount_tax", "title": "合同明细与金额", "sequence": 40, "fields": ["tax_id", "line_ids", "line_amount_total", "amount_untaxed", "amount_tax", "amount_total", "amount_final"]},
+                {"name": "handling", "title": "办理说明", "sequence": 50, "fields": ["budget_id", "analytic_id", "archived", "note", "attachment_ids", "attachment_text"]},
+                {"name": "execution", "title": "执行情况", "sequence": 70, "collapsible": true, "collapsed_by_default": true, "fields": ["settlement_amount", "invoice_amount", "uninvoiced_amount", "received_amount", "unreceived_amount", "visible_invoice_amount", "visible_received_amount", "visible_unreceived_amount", "visible_unreceived_rate"]},
+                {"name": "source_trace", "title": "来源与系统追溯", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "fields": ["legacy_contract_no", "legacy_external_contract_no", "legacy_document_no", "document_status", "legacy_visible_title", "legacy_contract_amount", "entry_user_id", "entry_user_text", "entry_time", "legacy_status", "company_id", "reject_reason", "approval_info"]}
+            ],
+            "fields": [
+                {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"], "group": "core"},
+                {"name": "subject", "required_profiles": ["create", "edit"], "group": "core"},
+                {"name": "type", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "state", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "name", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "project_id", "required_profiles": ["create", "edit"], "group": "core"},
+                {"name": "partner_id", "required_profiles": ["create", "edit"], "group": "core"},
+                {"name": "tax_id", "required_profiles": ["create", "edit"], "group": "core"},
+                {"name": "operation_strategy", "readonly_profiles": ["create", "edit", "readonly"], "group": "core"},
+                {"name": "line_amount_total", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
+                {"name": "amount_untaxed", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
+                {"name": "amount_tax", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
+                {"name": "amount_total", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
+                {"name": "amount_final", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
+                {"name": "legacy_visible_attachment", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "settlement_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "ledger"},
+                {"name": "invoice_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "ledger"},
+                {"name": "uninvoiced_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "ledger"},
+                {"name": "received_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "ledger"},
+                {"name": "unreceived_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "ledger"},
+                {"name": "visible_invoice_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "legacy"},
+                {"name": "visible_received_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "legacy"},
+                {"name": "visible_unreceived_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "legacy"},
+                {"name": "visible_unreceived_rate", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "legacy"},
+                {"name": "legacy_contract_no", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "legacy_external_contract_no", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "legacy_document_no", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "document_status", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "legacy_visible_title", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "legacy_contract_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "entry_user_id", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "entry_user_text", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "entry_time", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "legacy_status", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "company_id", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "reject_reason", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "approval_info", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"}
+            ]
+        }]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["construction.contract.income", "sc.receipt.income", "sc.invoice.registration"], "terminal_action": "action_confirm", "balance_fields": ["amount_total", "received_amount", "unreceived_amount", "invoice_amount", "uninvoiced_amount"]}]]></field>
         <field name="attachment_policy">recommended</field>
         <field name="note">合同结算域建筑行业模板分类；当前通过收入合同 action/context 承载，后续绑定合同分类字段和行业模板策略。</field>
@@ -144,9 +194,127 @@
         <field name="domain_json"><![CDATA[[]]]></field>
         <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "subject", "tax_id"]]]></field>
         <field name="visible_groups_json"><![CDATA[["contract_header", "amount", "execution", "attachments"]]]></field>
+        <field name="form_policy_json"><![CDATA[{
+            "sections": [
+                {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "subject", "type", "state", "name"]},
+                {"name": "project_counterparty", "title": "项目与供应商/分包方", "sequence": 20, "fields": ["project_id", "operation_strategy", "partner_id", "expense_contract_category_id", "date_contract", "handler_id"]},
+                {"name": "contract_scope", "title": "合同范围", "sequence": 30, "fields": ["category_id", "contract_type_id", "engineering_address", "engineering_category_text", "engineering_content"]},
+                {"name": "amount_tax", "title": "合同明细与金额", "sequence": 40, "fields": ["tax_id", "line_ids", "line_amount_total", "amount_untaxed", "amount_tax", "amount_total", "amount_final"]},
+                {"name": "handling", "title": "办理说明", "sequence": 50, "fields": ["budget_id", "analytic_id", "archived", "note", "attachment_ids", "attachment_text", "legacy_visible_attachment"]},
+                {"name": "execution", "title": "执行情况", "sequence": 70, "collapsible": true, "collapsed_by_default": true, "fields": ["settlement_amount", "paid_amount", "unpaid_amount", "invoice_amount", "uninvoiced_amount"]},
+                {"name": "source_trace", "title": "来源与系统追溯", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "fields": ["legacy_contract_no", "legacy_external_contract_no", "legacy_document_no", "document_status", "legacy_visible_title", "legacy_visible_category", "legacy_contract_amount", "expense_contract_category_auto_id", "entry_user_id", "entry_user_text", "entry_time", "legacy_visible_creator_name", "legacy_visible_created_time", "legacy_status", "company_id", "reject_reason", "approval_info"]}
+            ],
+            "fields": [
+                {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"], "group": "core"},
+                {"name": "subject", "required_profiles": ["create", "edit"], "group": "core"},
+                {"name": "type", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "state", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "name", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "project_id", "required_profiles": ["create", "edit"], "group": "core"},
+                {"name": "partner_id", "required_profiles": ["create", "edit"], "group": "core"},
+                {"name": "expense_contract_category_id", "visible_profiles": ["create", "edit", "readonly"], "group": "core"},
+                {"name": "expense_contract_category_auto_id", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "tax_id", "required_profiles": ["create", "edit"], "group": "core"},
+                {"name": "operation_strategy", "readonly_profiles": ["create", "edit", "readonly"], "group": "core"},
+                {"name": "line_amount_total", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
+                {"name": "amount_untaxed", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
+                {"name": "amount_tax", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
+                {"name": "amount_total", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
+                {"name": "amount_final", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
+                {"name": "legacy_visible_attachment", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "settlement_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "ledger"},
+                {"name": "paid_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "ledger"},
+                {"name": "unpaid_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "ledger"},
+                {"name": "invoice_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "ledger"},
+                {"name": "uninvoiced_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "ledger"},
+                {"name": "legacy_contract_no", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "legacy_external_contract_no", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "legacy_document_no", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "document_status", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "legacy_visible_title", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "legacy_visible_category", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "legacy_contract_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "entry_user_id", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "entry_user_text", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "entry_time", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "legacy_visible_creator_name", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "legacy_visible_created_time", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "legacy_status", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "company_id", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "reject_reason", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "approval_info", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"}
+            ]
+        }]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["construction.contract.expense", "sc.settlement.order", "payment.request", "sc.invoice.registration"], "terminal_action": "action_confirm", "balance_fields": ["amount_total", "settlement_amount", "paid_amount", "unpaid_amount", "invoice_amount", "uninvoiced_amount"]}]]></field>
         <field name="attachment_policy">recommended</field>
         <field name="note">合同结算域建筑行业模板分类；当前通过支出合同 action/context 承载，后续绑定合同分类字段和行业模板策略。</field>
+    </record>
+
+    <record id="business_category_contract_expense_supplement" model="sc.business.category">
+        <field name="name">支出合同补充</field>
+        <field name="code">contract.expense.supplement</field>
+        <field name="domain">contract</field>
+        <field name="target_model">construction.contract.expense</field>
+        <field name="direction">cost</field>
+        <field name="sequence">3</field>
+        <field name="source_aliases">补充合同、支出补充合同、合同补充协议</field>
+        <field name="default_values_json"><![CDATA[{"type": "in", "subject": "补充合同", "business_category_code": "contract.expense.supplement"}]]></field>
+        <field name="domain_json"><![CDATA[["|", ["business_category_id.code", "=", "contract.expense.supplement"], ["subject", "=", "补充合同"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "subject", "tax_id"]]]></field>
+        <field name="visible_groups_json"><![CDATA[["contract_header", "amount", "execution", "attachments"]]]></field>
+        <field name="form_policy_json"><![CDATA[{
+            "sections": [
+                {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "subject", "type", "state", "name"]},
+                {"name": "project_counterparty", "title": "项目与供应商/分包方", "sequence": 20, "fields": ["project_id", "operation_strategy", "partner_id", "expense_contract_category_id", "date_contract", "handler_id"]},
+                {"name": "supplement_scope", "title": "补充事项", "sequence": 30, "fields": ["engineering_content", "note", "attachment_ids", "attachment_text", "legacy_visible_attachment"]},
+                {"name": "amount_tax", "title": "补充明细与金额", "sequence": 40, "fields": ["tax_id", "line_ids", "line_amount_total", "amount_untaxed", "amount_tax", "amount_total", "amount_final"]},
+                {"name": "execution", "title": "执行情况", "sequence": 70, "collapsible": true, "collapsed_by_default": true, "fields": ["settlement_amount", "paid_amount", "unpaid_amount", "invoice_amount", "uninvoiced_amount"]},
+                {"name": "source_trace", "title": "来源与系统追溯", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "fields": ["legacy_contract_no", "legacy_external_contract_no", "legacy_document_no", "document_status", "legacy_visible_title", "legacy_visible_category", "legacy_contract_amount", "expense_contract_category_auto_id", "entry_user_id", "entry_user_text", "entry_time", "legacy_visible_creator_name", "legacy_visible_created_time", "legacy_status", "company_id", "reject_reason", "approval_info"]}
+            ],
+            "fields": [
+                {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"], "group": "core"},
+                {"name": "subject", "required_profiles": ["create", "edit"], "group": "core"},
+                {"name": "type", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "state", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "name", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "project_id", "required_profiles": ["create", "edit"], "group": "core"},
+                {"name": "partner_id", "required_profiles": ["create", "edit"], "group": "core"},
+                {"name": "expense_contract_category_id", "visible_profiles": ["create", "edit", "readonly"], "group": "core"},
+                {"name": "expense_contract_category_auto_id", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "tax_id", "required_profiles": ["create", "edit"], "group": "core"},
+                {"name": "operation_strategy", "readonly_profiles": ["create", "edit", "readonly"], "group": "core"},
+                {"name": "line_amount_total", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
+                {"name": "amount_untaxed", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
+                {"name": "amount_tax", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
+                {"name": "amount_total", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
+                {"name": "amount_final", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "summary"},
+                {"name": "legacy_visible_attachment", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "settlement_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "ledger"},
+                {"name": "paid_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "ledger"},
+                {"name": "unpaid_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "ledger"},
+                {"name": "invoice_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "ledger"},
+                {"name": "uninvoiced_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "ledger"},
+                {"name": "legacy_contract_no", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "legacy_external_contract_no", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "legacy_document_no", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "document_status", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "legacy_visible_title", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "legacy_visible_category", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "legacy_contract_amount", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "entry_user_id", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "entry_user_text", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "entry_time", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "legacy_visible_creator_name", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "legacy_visible_created_time", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "legacy_status", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "company_id", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "reject_reason", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"},
+                {"name": "approval_info", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "source_trace"}
+            ]
+        }]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["construction.contract.expense", "sc.settlement.order", "payment.request", "sc.invoice.registration"], "terminal_action": "action_confirm", "balance_fields": ["amount_total", "settlement_amount", "paid_amount", "unpaid_amount", "invoice_amount", "uninvoiced_amount"]}]]></field>
+        <field name="attachment_policy">recommended</field>
+        <field name="note">旧菜单“补充合同”的业务认知分类；菜单并入支出合同办理，表单通过业务分类承接。</field>
     </record>
 
     <record id="business_category_settlement_income" model="sc.business.category">
@@ -255,6 +423,37 @@
         <field name="default_values_json"><![CDATA[{"claim_type": "expense", "expense_type": "报销申请", "summary": "报销申请"}]]></field>
         <field name="domain_json"><![CDATA[["&", ["claim_type", "=", "expense"], ["expense_type", "=", "报销申请"]]]]></field>
         <field name="required_fields_json"><![CDATA[["payment_request_id", "project_id", "partner_id", "amount", "payee", "receipt_account_name", "payee_account", "payment_account_name", "payer_account"]]]></field>
+        <field name="form_policy_json"><![CDATA[{
+            "sections": [
+                {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "claim_type", "claim_flow_label", "state", "name"]},
+                {"name": "project_counterparty", "title": "项目与报销人", "sequence": 20, "fields": ["project_id", "operation_strategy", "partner_id", "applicant_name", "department_name", "company_id"]},
+                {"name": "expense_amount", "title": "报销事项与金额", "sequence": 30, "fields": ["date_claim", "expense_type", "summary", "amount", "approved_amount", "paid_amount", "unpaid_amount"]},
+                {"name": "receipt_account", "title": "收款账户", "sequence": 40, "fields": ["payee", "receipt_account_name", "payee_account", "payee_bank"]},
+                {"name": "payment_account", "title": "付款账户", "sequence": 50, "fields": ["payment_request_id", "payment_account_name", "payer_account", "payer_bank", "payment_state"]},
+                {"name": "handling_note", "title": "办理说明", "sequence": 60, "fields": ["note", "attachment_ids"]},
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_department", "legacy_visible_expense_type", "legacy_visible_summary", "legacy_visible_amount", "legacy_visible_note", "legacy_visible_attachment", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
+            ],
+            "fields": [
+                {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"]},
+                {"name": "claim_type", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "claim_flow_label", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "state", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "name", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "project_id", "required_profiles": ["create", "edit"]},
+                {"name": "operation_strategy", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "partner_id", "required_profiles": ["create", "edit"]},
+                {"name": "company_id", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "date_claim", "required_profiles": ["create", "edit"]},
+                {"name": "expense_type", "required_profiles": ["create", "edit"]},
+                {"name": "summary", "required_profiles": ["create", "edit"]},
+                {"name": "amount", "required_profiles": ["create", "edit"]},
+                {"name": "unpaid_amount", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "payment_request_id", "visible_profiles": ["edit", "readonly"]},
+                {"name": "payment_state", "visible_profiles": ["edit", "readonly"]},
+                {"name": "source_origin", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "active", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]}
+            ]
+        }]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["payment.ledger"], "terminal_action": "action_done", "syncs": ["payment.request"]}]]></field>
         <field name="attachment_policy">recommended</field>
     </record>
@@ -270,6 +469,35 @@
         <field name="default_values_json"><![CDATA[{"claim_type": "deposit_pay", "guarantee_type": "bid", "expense_type": "投标保证金缴纳"}]]></field>
         <field name="domain_json"><![CDATA[["&", ["claim_type", "=", "deposit_pay"], ["guarantee_type", "=", "bid"]]]]></field>
         <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "amount", "payee", "receipt_account_name", "payee_account"]]]></field>
+        <field name="form_policy_json"><![CDATA[{
+            "sections": [
+                {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "claim_type", "guarantee_type", "claim_flow_label", "state", "name"]},
+                {"name": "project_counterparty", "title": "项目与收款方", "sequence": 20, "fields": ["project_id", "operation_strategy", "partner_id", "guarantee_project_name", "company_id"]},
+                {"name": "deposit_amount", "title": "保证金事项与金额", "sequence": 30, "fields": ["date_claim", "expense_type", "summary", "amount", "approved_amount", "paid_amount", "unpaid_amount"]},
+                {"name": "receipt_account", "title": "收款账户", "sequence": 40, "fields": ["payee", "receipt_account_name", "payee_account", "payee_bank"]},
+                {"name": "payment_account", "title": "付款账户", "sequence": 50, "fields": ["payment_method", "clearing_method", "payment_account_name", "payer_account", "payer_bank", "payment_state"]},
+                {"name": "handling_note", "title": "办理说明", "sequence": 60, "fields": ["note", "attachment_ids"]},
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_title", "legacy_visible_expense_type", "legacy_visible_summary", "legacy_visible_amount", "legacy_visible_note", "legacy_visible_attachment", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
+            ],
+            "fields": [
+                {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"]},
+                {"name": "claim_type", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "guarantee_type", "required_profiles": ["create", "edit"]},
+                {"name": "claim_flow_label", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "state", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "name", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "project_id", "required_profiles": ["create", "edit"]},
+                {"name": "operation_strategy", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "partner_id", "required_profiles": ["create", "edit"]},
+                {"name": "company_id", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "date_claim", "required_profiles": ["create", "edit"]},
+                {"name": "expense_type", "required_profiles": ["create", "edit"]},
+                {"name": "amount", "required_profiles": ["create", "edit"]},
+                {"name": "unpaid_amount", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "source_origin", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "active", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]}
+            ]
+        }]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["payment.ledger", "sc.finance.business.fact"], "terminal_action": "action_done"}]]></field>
         <field name="attachment_policy">recommended</field>
     </record>
@@ -304,6 +532,22 @@
         <field name="attachment_policy">recommended</field>
     </record>
 
+    <record id="business_category_finance_receipt_income_residual" model="sc.business.category">
+        <field name="name">其他/残余收款</field>
+        <field name="code">finance.receipt.income.residual</field>
+        <field name="domain">finance</field>
+        <field name="target_model">sc.receipt.income</field>
+        <field name="direction">receive</field>
+        <field name="sequence">46</field>
+        <field name="source_aliases">残余收款、其他收款、其他类型收款、材料款、利息、代理服务费</field>
+        <field name="default_values_json"><![CDATA[{"source_kind": "residual_receipt", "receipt_flow_label": "残余收款", "income_category": "其他收款"}]]></field>
+        <field name="domain_json"><![CDATA[["|", ["source_kind", "=", "residual_receipt"], ["receipt_type", "=", "其他类型收款"]]]]></field>
+        <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "receiving_account_name", "receiving_account_no", "amount"]]]></field>
+        <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.treasury.ledger"], "terminal_action": "action_received", "legacy_source_policy": "preserve_residual_receipt_semantics"}]]></field>
+        <field name="attachment_policy">recommended</field>
+        <field name="note">覆盖旧系统残余收款、其他类型收款、材料款、利息等历史收款认知；保留在收款登记入口下选择，不拆出单独菜单。</field>
+    </record>
+
     <record id="business_category_finance_expense_project" model="sc.business.category">
         <field name="name">项目费用报销单</field>
         <field name="code">finance.expense.project</field>
@@ -315,6 +559,37 @@
         <field name="default_values_json"><![CDATA[{"claim_type": "expense", "expense_type": "项目费用报销单", "summary": "项目费用报销单"}]]></field>
         <field name="domain_json"><![CDATA[["&", ["claim_type", "=", "expense"], ["expense_type", "=", "项目费用报销单"]]]]></field>
         <field name="required_fields_json"><![CDATA[["payment_request_id", "project_id", "partner_id", "amount", "payee", "receipt_account_name", "payee_account", "payment_account_name", "payer_account"]]]></field>
+        <field name="form_policy_json"><![CDATA[{
+            "sections": [
+                {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "claim_type", "claim_flow_label", "state", "name"]},
+                {"name": "project_counterparty", "title": "项目与报销人", "sequence": 20, "fields": ["project_id", "operation_strategy", "partner_id", "applicant_name", "department_name", "company_id"]},
+                {"name": "expense_amount", "title": "报销事项与金额", "sequence": 30, "fields": ["date_claim", "expense_type", "summary", "amount", "approved_amount", "paid_amount", "unpaid_amount"]},
+                {"name": "receipt_account", "title": "收款账户", "sequence": 40, "fields": ["payee", "receipt_account_name", "payee_account", "payee_bank"]},
+                {"name": "payment_account", "title": "付款账户", "sequence": 50, "fields": ["payment_request_id", "payment_account_name", "payer_account", "payer_bank", "payment_state"]},
+                {"name": "handling_note", "title": "办理说明", "sequence": 60, "fields": ["note", "attachment_ids"]},
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_department", "legacy_visible_expense_type", "legacy_visible_summary", "legacy_visible_amount", "legacy_visible_note", "legacy_visible_attachment", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
+            ],
+            "fields": [
+                {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"]},
+                {"name": "claim_type", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "claim_flow_label", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "state", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "name", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "project_id", "required_profiles": ["create", "edit"]},
+                {"name": "operation_strategy", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "partner_id", "required_profiles": ["create", "edit"]},
+                {"name": "company_id", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "date_claim", "required_profiles": ["create", "edit"]},
+                {"name": "expense_type", "required_profiles": ["create", "edit"]},
+                {"name": "summary", "required_profiles": ["create", "edit"]},
+                {"name": "amount", "required_profiles": ["create", "edit"]},
+                {"name": "unpaid_amount", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "payment_request_id", "visible_profiles": ["edit", "readonly"]},
+                {"name": "payment_state", "visible_profiles": ["edit", "readonly"]},
+                {"name": "source_origin", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "active", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]}
+            ]
+        }]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["payment.ledger"], "terminal_action": "action_done", "syncs": ["payment.request"]}]]></field>
         <field name="attachment_policy">recommended</field>
     </record>
@@ -330,6 +605,33 @@
         <field name="default_values_json"><![CDATA[{"claim_type": "deposit_refund", "guarantee_type": "bid", "expense_type": "投标保证金退回"}]]></field>
         <field name="domain_json"><![CDATA[["&", ["claim_type", "=", "deposit_refund"], ["guarantee_type", "=", "bid"]]]]></field>
         <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "amount", "receipt_account_name", "payee_account"]]]></field>
+        <field name="form_policy_json"><![CDATA[{
+            "sections": [
+                {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "claim_type", "guarantee_type", "claim_flow_label", "state", "name"]},
+                {"name": "project_counterparty", "title": "项目与退款方", "sequence": 20, "fields": ["project_id", "operation_strategy", "partner_id", "guarantee_project_name", "company_id"]},
+                {"name": "refund_amount", "title": "退回事项与金额", "sequence": 30, "fields": ["date_claim", "expense_type", "summary", "amount", "paid_amount", "is_returned", "return_reason"]},
+                {"name": "receipt_account", "title": "收款账户", "sequence": 40, "fields": ["receipt_account_name", "payee_account", "payee_bank"]},
+                {"name": "handling_note", "title": "办理说明", "sequence": 60, "fields": ["payment_method", "clearing_method", "note", "attachment_ids"]},
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_title", "legacy_visible_expense_type", "legacy_visible_summary", "legacy_visible_amount", "legacy_visible_returned_flag", "legacy_visible_note", "legacy_visible_attachment", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
+            ],
+            "fields": [
+                {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"]},
+                {"name": "claim_type", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "guarantee_type", "required_profiles": ["create", "edit"]},
+                {"name": "claim_flow_label", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "state", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "name", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "project_id", "required_profiles": ["create", "edit"]},
+                {"name": "operation_strategy", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "partner_id", "required_profiles": ["create", "edit"]},
+                {"name": "company_id", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "date_claim", "required_profiles": ["create", "edit"]},
+                {"name": "expense_type", "required_profiles": ["create", "edit"]},
+                {"name": "amount", "required_profiles": ["create", "edit"]},
+                {"name": "source_origin", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "active", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]}
+            ]
+        }]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.treasury.ledger", "sc.finance.business.fact"], "terminal_action": "action_done"}]]></field>
         <field name="attachment_policy">recommended</field>
     </record>
@@ -345,6 +647,35 @@
         <field name="default_values_json"><![CDATA[{"claim_type": "deposit_pay", "guarantee_type": "contract", "expense_type": "合同保证金登记"}]]></field>
         <field name="domain_json"><![CDATA[["&", ["claim_type", "=", "deposit_pay"], ["guarantee_type", "=", "contract"]]]]></field>
         <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "amount", "payee", "receipt_account_name", "payee_account"]]]></field>
+        <field name="form_policy_json"><![CDATA[{
+            "sections": [
+                {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "claim_type", "guarantee_type", "claim_flow_label", "state", "name"]},
+                {"name": "project_counterparty", "title": "项目与收款方", "sequence": 20, "fields": ["project_id", "operation_strategy", "partner_id", "guarantee_project_name", "company_id"]},
+                {"name": "deposit_amount", "title": "保证金事项与金额", "sequence": 30, "fields": ["date_claim", "expense_type", "summary", "amount", "approved_amount", "paid_amount", "unpaid_amount"]},
+                {"name": "receipt_account", "title": "收款账户", "sequence": 40, "fields": ["payee", "receipt_account_name", "payee_account", "payee_bank"]},
+                {"name": "payment_account", "title": "付款账户", "sequence": 50, "fields": ["payment_method", "clearing_method", "payment_account_name", "payer_account", "payer_bank", "payment_state"]},
+                {"name": "handling_note", "title": "办理说明", "sequence": 60, "fields": ["note", "attachment_ids"]},
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_title", "legacy_visible_expense_type", "legacy_visible_summary", "legacy_visible_amount", "legacy_visible_note", "legacy_visible_attachment", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
+            ],
+            "fields": [
+                {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"]},
+                {"name": "claim_type", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "guarantee_type", "required_profiles": ["create", "edit"]},
+                {"name": "claim_flow_label", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "state", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "name", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "project_id", "required_profiles": ["create", "edit"]},
+                {"name": "operation_strategy", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "partner_id", "required_profiles": ["create", "edit"]},
+                {"name": "company_id", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "date_claim", "required_profiles": ["create", "edit"]},
+                {"name": "expense_type", "required_profiles": ["create", "edit"]},
+                {"name": "amount", "required_profiles": ["create", "edit"]},
+                {"name": "unpaid_amount", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "source_origin", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "active", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]}
+            ]
+        }]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["payment.ledger", "sc.finance.business.fact"], "terminal_action": "action_done"}]]></field>
         <field name="attachment_policy">recommended</field>
     </record>
@@ -360,6 +691,33 @@
         <field name="default_values_json"><![CDATA[{"claim_type": "deposit_refund", "guarantee_type": "contract", "expense_type": "合同保证金退回"}]]></field>
         <field name="domain_json"><![CDATA[["&", ["claim_type", "=", "deposit_refund"], ["guarantee_type", "=", "contract"]]]]></field>
         <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "amount", "receipt_account_name", "payee_account"]]]></field>
+        <field name="form_policy_json"><![CDATA[{
+            "sections": [
+                {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "claim_type", "guarantee_type", "claim_flow_label", "state", "name"]},
+                {"name": "project_counterparty", "title": "项目与退款方", "sequence": 20, "fields": ["project_id", "operation_strategy", "partner_id", "guarantee_project_name", "company_id"]},
+                {"name": "refund_amount", "title": "退回事项与金额", "sequence": 30, "fields": ["date_claim", "expense_type", "summary", "amount", "paid_amount", "is_returned", "return_reason"]},
+                {"name": "receipt_account", "title": "收款账户", "sequence": 40, "fields": ["receipt_account_name", "payee_account", "payee_bank"]},
+                {"name": "handling_note", "title": "办理说明", "sequence": 60, "fields": ["payment_method", "clearing_method", "note", "attachment_ids"]},
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_title", "legacy_visible_expense_type", "legacy_visible_summary", "legacy_visible_amount", "legacy_visible_returned_flag", "legacy_visible_note", "legacy_visible_attachment", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
+            ],
+            "fields": [
+                {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"]},
+                {"name": "claim_type", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "guarantee_type", "required_profiles": ["create", "edit"]},
+                {"name": "claim_flow_label", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "state", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "name", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "project_id", "required_profiles": ["create", "edit"]},
+                {"name": "operation_strategy", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "partner_id", "required_profiles": ["create", "edit"]},
+                {"name": "company_id", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "date_claim", "required_profiles": ["create", "edit"]},
+                {"name": "expense_type", "required_profiles": ["create", "edit"]},
+                {"name": "amount", "required_profiles": ["create", "edit"]},
+                {"name": "source_origin", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "active", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]}
+            ]
+        }]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.treasury.ledger", "sc.finance.business.fact"], "terminal_action": "action_done"}]]></field>
         <field name="attachment_policy">recommended</field>
     </record>
@@ -375,6 +733,38 @@
         <field name="default_values_json"><![CDATA[{"claim_type": "expense", "expense_type": "扣款单", "summary": "扣款单"}]]></field>
         <field name="domain_json"><![CDATA[["&", ["claim_type", "=", "expense"], ["expense_type", "=", "扣款单"]]]]></field>
         <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "amount", "expense_type"]]]></field>
+        <field name="form_policy_json"><![CDATA[{
+            "sections": [
+                {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "claim_type", "claim_flow_label", "state", "name"]},
+                {"name": "project_counterparty", "title": "项目与责任方", "sequence": 20, "fields": ["project_id", "operation_strategy", "partner_id", "company_id"]},
+                {"name": "deduction_amount", "title": "扣款事项与金额", "sequence": 30, "fields": ["date_claim", "expense_type", "summary", "amount", "approved_amount"]},
+                {"name": "responsibility_balance", "title": "责任余额", "sequence": 40, "collapsible": true, "fields": ["company_contractor_responsibility_state", "company_contractor_arrival_unprocessed_amount", "company_contractor_arrival_over_processed_amount", "company_contractor_self_funding_balance", "company_contractor_responsibility_notice"]},
+                {"name": "handling_note", "title": "办理说明", "sequence": 60, "fields": ["note", "attachment_ids"]},
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_adjustment_item", "legacy_visible_expense_type", "legacy_visible_summary", "legacy_visible_amount", "legacy_visible_note", "legacy_visible_attachment", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
+            ],
+            "fields": [
+                {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"]},
+                {"name": "claim_type", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "claim_flow_label", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "state", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "name", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "project_id", "required_profiles": ["create", "edit"]},
+                {"name": "operation_strategy", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "partner_id", "required_profiles": ["create", "edit"]},
+                {"name": "company_id", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "date_claim", "required_profiles": ["create", "edit"]},
+                {"name": "expense_type", "required_profiles": ["create", "edit"]},
+                {"name": "summary", "required_profiles": ["create", "edit"]},
+                {"name": "amount", "required_profiles": ["create", "edit"]},
+                {"name": "company_contractor_responsibility_state", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "company_contractor_arrival_unprocessed_amount", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "company_contractor_arrival_over_processed_amount", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "company_contractor_self_funding_balance", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "company_contractor_responsibility_notice", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "source_origin", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "active", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]}
+            ]
+        }]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.finance.business.fact"], "terminal_action": "action_done", "payment_request_policy": "not_applicable", "balance_policy": "noncash_deduction"}]]></field>
         <field name="attachment_policy">recommended</field>
     </record>
@@ -390,6 +780,32 @@
         <field name="default_values_json"><![CDATA[{"claim_type": "expense", "expense_type": "扣款实缴登记", "summary": "扣款实缴登记"}]]></field>
         <field name="domain_json"><![CDATA[[["expense_type", "=", "扣款实缴登记"]]]]></field>
         <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "amount", "expense_type"]]]></field>
+        <field name="form_policy_json"><![CDATA[{
+            "sections": [
+                {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "claim_type", "claim_flow_label", "state", "name"]},
+                {"name": "project_counterparty", "title": "项目与缴款方", "sequence": 20, "fields": ["project_id", "operation_strategy", "partner_id", "company_id"]},
+                {"name": "deduction_amount", "title": "实缴事项与金额", "sequence": 30, "fields": ["date_claim", "expense_type", "summary", "amount", "approved_amount", "paid_amount"]},
+                {"name": "receipt_account", "title": "收款账户", "sequence": 40, "fields": ["payee", "receipt_account_name", "payee_account", "payee_bank"]},
+                {"name": "handling_note", "title": "办理说明", "sequence": 60, "fields": ["payment_method", "clearing_method", "note", "attachment_ids"]},
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_adjustment_item", "legacy_visible_expense_type", "legacy_visible_summary", "legacy_visible_amount", "legacy_visible_note", "legacy_visible_attachment", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
+            ],
+            "fields": [
+                {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"]},
+                {"name": "claim_type", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "claim_flow_label", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "state", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "name", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "project_id", "required_profiles": ["create", "edit"]},
+                {"name": "operation_strategy", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "partner_id", "required_profiles": ["create", "edit"]},
+                {"name": "company_id", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "date_claim", "required_profiles": ["create", "edit"]},
+                {"name": "expense_type", "required_profiles": ["create", "edit"]},
+                {"name": "amount", "required_profiles": ["create", "edit"]},
+                {"name": "source_origin", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "active", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]}
+            ]
+        }]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["payment.ledger", "sc.finance.business.fact"], "terminal_action": "action_done"}]]></field>
         <field name="attachment_policy">recommended</field>
     </record>
@@ -405,6 +821,32 @@
         <field name="default_values_json"><![CDATA[{"claim_type": "deduction_refund", "expense_type": "扣款实缴退回", "summary": "扣款实缴退回"}]]></field>
         <field name="domain_json"><![CDATA[[["expense_type", "=", "扣款实缴退回"]]]]></field>
         <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "amount", "expense_type"]]]></field>
+        <field name="form_policy_json"><![CDATA[{
+            "sections": [
+                {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "claim_type", "claim_flow_label", "state", "name"]},
+                {"name": "project_counterparty", "title": "项目与退款方", "sequence": 20, "fields": ["project_id", "operation_strategy", "partner_id", "company_id"]},
+                {"name": "refund_amount", "title": "退回事项与金额", "sequence": 30, "fields": ["date_claim", "expense_type", "summary", "amount", "paid_amount", "return_reason"]},
+                {"name": "receipt_account", "title": "收款账户", "sequence": 40, "fields": ["receipt_account_name", "payee_account", "payee_bank"]},
+                {"name": "handling_note", "title": "办理说明", "sequence": 60, "fields": ["payment_method", "clearing_method", "note", "attachment_ids"]},
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_adjustment_item", "legacy_visible_expense_type", "legacy_visible_summary", "legacy_visible_amount", "legacy_visible_note", "legacy_visible_attachment", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
+            ],
+            "fields": [
+                {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"]},
+                {"name": "claim_type", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "claim_flow_label", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "state", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "name", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "project_id", "required_profiles": ["create", "edit"]},
+                {"name": "operation_strategy", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "partner_id", "required_profiles": ["create", "edit"]},
+                {"name": "company_id", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "date_claim", "required_profiles": ["create", "edit"]},
+                {"name": "expense_type", "required_profiles": ["create", "edit"]},
+                {"name": "amount", "required_profiles": ["create", "edit"]},
+                {"name": "source_origin", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "active", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]}
+            ]
+        }]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.treasury.ledger", "sc.finance.business.fact"], "terminal_action": "action_done"}]]></field>
         <field name="attachment_policy">recommended</field>
     </record>
@@ -420,6 +862,36 @@
         <field name="default_values_json"><![CDATA[{"operation_type": "transfer_between", "operation_reason": "账户间资金往来"}]]></field>
         <field name="domain_json"><![CDATA[[["operation_type", "=", "transfer_between"]]]]></field>
         <field name="required_fields_json"><![CDATA[["source_account_id", "target_account_id", "amount", "operation_reason"]]]></field>
+        <field name="form_policy_json"><![CDATA[{
+            "sections": [
+                {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "operation_type", "fund_flow_label", "state", "name"]},
+                {"name": "account_object", "title": "项目与账户", "sequence": 20, "fields": ["project_id", "operation_strategy", "source_account_id", "source_project_id", "target_account_id", "target_project_id", "company_id"]},
+                {"name": "transfer_amount", "title": "调拨金额", "sequence": 30, "fields": ["operation_date", "amount"]},
+                {"name": "handling_note", "title": "办理说明", "sequence": 40, "fields": ["operation_reason", "note", "attachment_ids"]},
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_account_name", "legacy_visible_counterparty_account_name", "legacy_visible_transfer_type", "legacy_visible_reason", "legacy_visible_note", "legacy_visible_attachment", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
+            ],
+            "fields": [
+                {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"]},
+                {"name": "operation_type", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "fund_flow_label", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "state", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "name", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "project_id", "readonly_profiles": ["readonly"]},
+                {"name": "operation_strategy", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "source_account_id", "required_profiles": ["create", "edit"]},
+                {"name": "source_project_id", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "target_account_id", "required_profiles": ["create", "edit"]},
+                {"name": "target_project_id", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "company_id", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "operation_date", "required_profiles": ["create", "edit"]},
+                {"name": "amount", "required_profiles": ["create", "edit"]},
+                {"name": "operation_reason", "required_profiles": ["create", "edit"]},
+                {"name": "legacy_visible_document_no", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "legacy_source_table", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "legacy_record_id", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "active", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]}
+            ]
+        }]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.interfund.movement.fact", "sc.treasury.ledger"], "terminal_action": "action_done", "payment_request_policy": "not_applicable"}]]></field>
         <field name="attachment_policy">recommended</field>
     </record>
@@ -435,6 +907,36 @@
         <field name="default_values_json"><![CDATA[{"operation_type": "fund_daily_report", "operation_reason": "资金日报表"}]]></field>
         <field name="domain_json"><![CDATA[[["operation_type", "=", "fund_daily_report"]]]]></field>
         <field name="required_fields_json"><![CDATA[["operation_date", "fund_account_id", "daily_income", "daily_expense", "account_balance", "bank_balance", "operation_reason"]]]></field>
+        <field name="form_policy_json"><![CDATA[{
+            "sections": [
+                {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "operation_type", "fund_flow_label", "state", "name"]},
+                {"name": "account_object", "title": "项目与账户", "sequence": 20, "fields": ["project_id", "operation_strategy", "fund_account_id", "company_id"]},
+                {"name": "daily_report", "title": "资金日报", "sequence": 30, "fields": ["operation_date", "daily_income", "daily_expense", "account_balance", "bank_balance"]},
+                {"name": "handling_note", "title": "办理说明", "sequence": 40, "fields": ["operation_reason", "note", "attachment_ids"]},
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_account_name", "legacy_visible_reason", "legacy_visible_note", "legacy_visible_attachment", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
+            ],
+            "fields": [
+                {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"]},
+                {"name": "operation_type", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "fund_flow_label", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "state", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "name", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "project_id", "readonly_profiles": ["readonly"]},
+                {"name": "operation_strategy", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "fund_account_id", "required_profiles": ["create", "edit"]},
+                {"name": "company_id", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "operation_date", "required_profiles": ["create", "edit"]},
+                {"name": "daily_income", "required_profiles": ["create", "edit"]},
+                {"name": "daily_expense", "required_profiles": ["create", "edit"]},
+                {"name": "account_balance", "required_profiles": ["create", "edit"]},
+                {"name": "bank_balance", "required_profiles": ["create", "edit"]},
+                {"name": "operation_reason", "required_profiles": ["create", "edit"]},
+                {"name": "legacy_visible_document_no", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "legacy_source_table", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "legacy_record_id", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "active", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]}
+            ]
+        }]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.treasury.ledger"], "terminal_action": "action_done", "payment_request_policy": "not_applicable", "responsibility_scope": "state_or_ledger_input"}]]></field>
         <field name="attachment_policy">recommended</field>
     </record>
@@ -450,6 +952,34 @@
         <field name="default_values_json"><![CDATA[{"operation_type": "balance_adjustment", "operation_reason": "余额调整"}]]></field>
         <field name="domain_json"><![CDATA[[["operation_type", "=", "balance_adjustment"]]]]></field>
         <field name="required_fields_json"><![CDATA[["operation_date", "fund_account_id", "before_balance", "after_balance", "operation_reason"]]]></field>
+        <field name="form_policy_json"><![CDATA[{
+            "sections": [
+                {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "operation_type", "fund_flow_label", "state", "name"]},
+                {"name": "account_object", "title": "项目与账户", "sequence": 20, "fields": ["project_id", "operation_strategy", "fund_account_id", "company_id"]},
+                {"name": "balance_adjustment", "title": "余额调整", "sequence": 30, "fields": ["operation_date", "before_balance", "after_balance"]},
+                {"name": "handling_note", "title": "办理说明", "sequence": 40, "fields": ["operation_reason", "note", "attachment_ids"]},
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_account_name", "legacy_visible_reason", "legacy_visible_note", "legacy_visible_attachment", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
+            ],
+            "fields": [
+                {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"]},
+                {"name": "operation_type", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "fund_flow_label", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "state", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "name", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "project_id", "readonly_profiles": ["readonly"]},
+                {"name": "operation_strategy", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "fund_account_id", "required_profiles": ["create", "edit"]},
+                {"name": "company_id", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "operation_date", "required_profiles": ["create", "edit"]},
+                {"name": "before_balance", "required_profiles": ["create", "edit"]},
+                {"name": "after_balance", "required_profiles": ["create", "edit"]},
+                {"name": "operation_reason", "required_profiles": ["create", "edit"]},
+                {"name": "legacy_visible_document_no", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "legacy_source_table", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "legacy_record_id", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "active", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]}
+            ]
+        }]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": [], "terminal_action": "action_done", "payment_request_policy": "not_applicable", "responsibility_scope": "account_state_adjustment", "cashflow_policy": "not_applicable"}]]></field>
         <field name="attachment_policy">recommended</field>
     </record>
@@ -510,6 +1040,32 @@
         <field name="default_values_json"><![CDATA[{"claim_type": "project_company_repay", "expense_type": "还款登记", "summary": "还款登记"}]]></field>
         <field name="domain_json"><![CDATA[["&", ["claim_type", "=", "project_company_repay"], ["expense_type", "=", "还款登记"]]]]></field>
         <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "amount", "expense_type"]]]></field>
+        <field name="form_policy_json"><![CDATA[{
+            "sections": [
+                {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "claim_type", "claim_flow_label", "state", "name"]},
+                {"name": "project_counterparty", "title": "项目与还款方", "sequence": 20, "fields": ["project_id", "operation_strategy", "partner_id", "company_id"]},
+                {"name": "repayment_amount", "title": "还款事项与金额", "sequence": 30, "fields": ["date_claim", "expense_type", "summary", "amount", "approved_amount", "paid_amount", "unpaid_amount"]},
+                {"name": "payment_account", "title": "付款与收款账户", "sequence": 40, "fields": ["payee", "receipt_account_name", "payee_account", "payee_bank", "payment_account_name", "payer_account", "payer_bank"]},
+                {"name": "handling_note", "title": "办理说明", "sequence": 60, "fields": ["payment_method", "note", "attachment_ids"]},
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_borrower", "legacy_visible_loan_amount", "legacy_visible_repayment_amount", "legacy_visible_loan_rate", "legacy_visible_interest", "legacy_visible_repayment_time", "legacy_visible_note", "legacy_visible_attachment", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
+            ],
+            "fields": [
+                {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"]},
+                {"name": "claim_type", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "claim_flow_label", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "state", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "name", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "project_id", "required_profiles": ["create", "edit"]},
+                {"name": "operation_strategy", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "partner_id", "required_profiles": ["create", "edit"]},
+                {"name": "company_id", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "date_claim", "required_profiles": ["create", "edit"]},
+                {"name": "expense_type", "required_profiles": ["create", "edit"]},
+                {"name": "amount", "required_profiles": ["create", "edit"]},
+                {"name": "source_origin", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "active", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]}
+            ]
+        }]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.interfund.movement.fact", "sc.treasury.ledger"], "terminal_action": "action_done", "payment_request_policy": "not_applicable"}]]></field>
         <field name="attachment_policy">recommended</field>
     </record>
@@ -525,6 +1081,38 @@
         <field name="default_values_json"><![CDATA[{"claim_type": "deposit_receive", "expense_type": "承包人还项目款", "summary": "承包人还项目款"}]]></field>
         <field name="domain_json"><![CDATA[[["expense_type", "=", "承包人还项目款"]]]]></field>
         <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "amount", "expense_type"]]]></field>
+        <field name="form_policy_json"><![CDATA[{
+            "sections": [
+                {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "claim_type", "claim_flow_label", "state", "name"]},
+                {"name": "project_counterparty", "title": "项目与承包人", "sequence": 20, "fields": ["project_id", "operation_strategy", "partner_id", "company_id"]},
+                {"name": "repayment_amount", "title": "还款事项与金额", "sequence": 30, "fields": ["date_claim", "expense_type", "summary", "amount", "paid_amount"]},
+                {"name": "receipt_account", "title": "收款账户", "sequence": 40, "fields": ["receipt_account_name", "payee_account", "payee_bank"]},
+                {"name": "responsibility_balance", "title": "责任余额", "sequence": 50, "collapsible": true, "fields": ["company_contractor_responsibility_state", "company_contractor_arrival_unprocessed_amount", "company_contractor_arrival_over_processed_amount", "company_contractor_self_funding_balance", "company_contractor_responsibility_notice"]},
+                {"name": "handling_note", "title": "办理说明", "sequence": 60, "fields": ["payment_method", "note", "attachment_ids"]},
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_borrower", "legacy_visible_repayment_amount", "legacy_visible_note", "legacy_visible_attachment", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
+            ],
+            "fields": [
+                {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"]},
+                {"name": "claim_type", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "claim_flow_label", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "state", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "name", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "project_id", "required_profiles": ["create", "edit"]},
+                {"name": "operation_strategy", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "partner_id", "required_profiles": ["create", "edit"]},
+                {"name": "company_id", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "date_claim", "required_profiles": ["create", "edit"]},
+                {"name": "expense_type", "required_profiles": ["create", "edit"]},
+                {"name": "amount", "required_profiles": ["create", "edit"]},
+                {"name": "company_contractor_responsibility_state", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "company_contractor_arrival_unprocessed_amount", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "company_contractor_arrival_over_processed_amount", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "company_contractor_self_funding_balance", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "company_contractor_responsibility_notice", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "source_origin", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "active", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]}
+            ]
+        }]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.interfund.movement.fact", "sc.treasury.ledger"], "terminal_action": "action_done", "payment_request_policy": "not_applicable"}]]></field>
         <field name="attachment_policy">recommended</field>
     </record>
@@ -540,6 +1128,32 @@
         <field name="default_values_json"><![CDATA[{"claim_type": "project_company_repay", "expense_type": "项目还公司款登记", "summary": "项目还公司款登记"}]]></field>
         <field name="domain_json"><![CDATA[["&", ["claim_type", "=", "project_company_repay"], ["expense_type", "=", "项目还公司款登记"]]]]></field>
         <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "amount", "expense_type"]]]></field>
+        <field name="form_policy_json"><![CDATA[{
+            "sections": [
+                {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "claim_type", "claim_flow_label", "state", "name"]},
+                {"name": "project_counterparty", "title": "项目与公司", "sequence": 20, "fields": ["project_id", "operation_strategy", "partner_id", "company_id"]},
+                {"name": "repayment_amount", "title": "还款事项与金额", "sequence": 30, "fields": ["date_claim", "expense_type", "summary", "amount", "approved_amount", "paid_amount"]},
+                {"name": "payment_account", "title": "付款与收款账户", "sequence": 40, "fields": ["payee", "receipt_account_name", "payee_account", "payee_bank", "payment_account_name", "payer_account", "payer_bank"]},
+                {"name": "handling_note", "title": "办理说明", "sequence": 60, "fields": ["payment_method", "note", "attachment_ids"]},
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "legacy_visible_document_no", "legacy_visible_project_name", "legacy_visible_borrower", "legacy_visible_loan_amount", "legacy_visible_repayment_amount", "legacy_visible_loan_rate", "legacy_visible_interest", "legacy_visible_repayment_time", "legacy_visible_note", "legacy_visible_attachment", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "active"]}
+            ],
+            "fields": [
+                {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"]},
+                {"name": "claim_type", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "claim_flow_label", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "state", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "name", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "project_id", "required_profiles": ["create", "edit"]},
+                {"name": "operation_strategy", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "partner_id", "required_profiles": ["create", "edit"]},
+                {"name": "company_id", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "date_claim", "required_profiles": ["create", "edit"]},
+                {"name": "expense_type", "required_profiles": ["create", "edit"]},
+                {"name": "amount", "required_profiles": ["create", "edit"]},
+                {"name": "source_origin", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "active", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]}
+            ]
+        }]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.interfund.movement.fact", "sc.treasury.ledger"], "terminal_action": "action_done", "payment_request_policy": "not_applicable"}]]></field>
         <field name="attachment_policy">recommended</field>
     </record>
@@ -556,6 +1170,42 @@
         <field name="domain_json"><![CDATA[["&", ["funding_type", "=", "income"], ["business_category_id.code", "=", "finance.self_funding.income"]]]]></field>
         <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "document_date", "amount", "payment_account_name", "partner_account_name"]]]></field>
         <field name="visible_groups_json"><![CDATA[["business_object", "self_funding_processing", "responsibility_balance", "source_trace"]]]></field>
+        <field name="form_policy_json"><![CDATA[{
+            "sections": [
+                {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "funding_type", "state", "name"]},
+                {"name": "business_object", "title": "项目与承包人", "sequence": 20, "fields": ["project_id", "operation_strategy", "partner_id", "company_id"]},
+                {"name": "self_funding_amount", "title": "自筹金额", "sequence": 30, "fields": ["document_date", "amount", "summary"]},
+                {"name": "handling_evidence", "title": "办理依据", "sequence": 40, "fields": ["payment_account_name", "partner_account_name", "bank_name", "bank_account", "attachment_ids"]},
+                {"name": "responsibility_balance", "title": "责任余额", "sequence": 50, "collapsible": true, "fields": ["company_contractor_responsibility_state", "company_contractor_arrival_unprocessed_amount", "company_contractor_arrival_over_processed_amount", "company_contractor_self_funding_balance", "company_contractor_responsibility_notice"]},
+                {"name": "handling_note", "title": "办理说明", "sequence": 60, "fields": ["note", "reject_reason"]},
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "document_no", "active"]}
+            ],
+            "fields": [
+                {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"]},
+                {"name": "funding_type", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "state", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "name", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "project_id", "required_profiles": ["create", "edit"]},
+                {"name": "operation_strategy", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "partner_id", "required_profiles": ["create", "edit"]},
+                {"name": "company_id", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "document_date", "required_profiles": ["create", "edit"]},
+                {"name": "amount", "required_profiles": ["create", "edit"]},
+                {"name": "summary", "required_profiles": ["create", "edit"]},
+                {"name": "payment_account_name", "required_profiles": ["create", "edit"]},
+                {"name": "partner_account_name", "required_profiles": ["create", "edit"]},
+                {"name": "attachment_ids", "required_profiles": ["create", "edit"]},
+                {"name": "company_contractor_responsibility_state", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "company_contractor_arrival_unprocessed_amount", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "company_contractor_arrival_over_processed_amount", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "company_contractor_self_funding_balance", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "company_contractor_responsibility_notice", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "reject_reason", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "source_origin", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "document_no", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "active", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]}
+            ]
+        }]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.treasury.ledger", "sc.finance.business.fact", "sc.company.contractor.responsibility.fact", "sc.company.contractor.responsibility.summary"], "terminal_action": "action_done", "payment_request_policy": "not_applicable", "responsibility_scope": "company_contractor", "project_role": "attribution_and_constraint"}]]></field>
         <field name="attachment_policy">required</field>
         <field name="note">正式自筹垫付办理入口；反映承包人与公司的资金占用关系，完成后进入资金台账和公司-承包人责任余额，不进入普通收付款申请。</field>
@@ -573,6 +1223,42 @@
         <field name="domain_json"><![CDATA[["&", ["funding_type", "=", "refund"], ["business_category_id.code", "=", "finance.self_funding.refund"]]]]></field>
         <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "document_date", "amount", "payment_account_name", "partner_account_name"]]]></field>
         <field name="visible_groups_json"><![CDATA[["business_object", "self_funding_processing", "responsibility_balance", "source_trace"]]]></field>
+        <field name="form_policy_json"><![CDATA[{
+            "sections": [
+                {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "funding_type", "state", "name"]},
+                {"name": "business_object", "title": "项目与承包人", "sequence": 20, "fields": ["project_id", "operation_strategy", "partner_id", "company_id"]},
+                {"name": "self_funding_amount", "title": "自筹金额", "sequence": 30, "fields": ["document_date", "amount", "summary"]},
+                {"name": "handling_evidence", "title": "办理依据", "sequence": 40, "fields": ["payment_account_name", "partner_account_name", "bank_name", "bank_account", "attachment_ids"]},
+                {"name": "responsibility_balance", "title": "责任余额", "sequence": 50, "collapsible": true, "fields": ["company_contractor_responsibility_state", "company_contractor_arrival_unprocessed_amount", "company_contractor_arrival_over_processed_amount", "company_contractor_self_funding_balance", "company_contractor_responsibility_notice"]},
+                {"name": "handling_note", "title": "办理说明", "sequence": 60, "fields": ["note", "reject_reason"]},
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["source_origin", "document_no", "active"]}
+            ],
+            "fields": [
+                {"name": "business_category_id", "required_profiles": ["create", "edit"], "readonly_profiles": ["readonly"]},
+                {"name": "funding_type", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "state", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "name", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "project_id", "required_profiles": ["create", "edit"]},
+                {"name": "operation_strategy", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "partner_id", "required_profiles": ["create", "edit"]},
+                {"name": "company_id", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "document_date", "required_profiles": ["create", "edit"]},
+                {"name": "amount", "required_profiles": ["create", "edit"]},
+                {"name": "summary", "required_profiles": ["create", "edit"]},
+                {"name": "payment_account_name", "required_profiles": ["create", "edit"]},
+                {"name": "partner_account_name", "required_profiles": ["create", "edit"]},
+                {"name": "attachment_ids", "required_profiles": ["create", "edit"]},
+                {"name": "company_contractor_responsibility_state", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "company_contractor_arrival_unprocessed_amount", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "company_contractor_arrival_over_processed_amount", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "company_contractor_self_funding_balance", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "company_contractor_responsibility_notice", "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "reject_reason", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "source_origin", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "document_no", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]},
+                {"name": "active", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"]}
+            ]
+        }]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.treasury.ledger", "sc.finance.business.fact", "sc.company.contractor.responsibility.fact", "sc.company.contractor.responsibility.summary"], "terminal_action": "action_done", "payment_request_policy": "not_applicable", "responsibility_scope": "company_contractor", "project_role": "attribution_and_constraint", "balance_guard": "self_funding_balance"}]]></field>
         <field name="attachment_policy">required</field>
         <field name="note">正式自筹退回办理入口；完成前校验自筹未退余额，完成后冲减公司-承包人自筹责任并进入资金台账，不进入普通收付款申请。</field>
@@ -657,6 +1343,36 @@
         <field name="default_values_json"><![CDATA[{"source_kind": "output_invoice_tax", "direction": "output", "invoice_content": "销项开票申请"}]]></field>
         <field name="domain_json"><![CDATA[["&", ["source_kind", "=", "output_invoice_tax"], ["invoice_content", "=", "销项开票申请"]]]]></field>
         <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "contract_id", "invoice_date", "amount_total"]]]></field>
+        <field name="form_policy_json"><![CDATA[{
+            "sections": [
+                {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "invoice_content", "source_kind", "direction", "state", "name"]},
+                {"name": "business_object", "title": "项目与受票方", "sequence": 20, "fields": ["project_id", "operation_strategy", "partner_id", "contract_id", "settlement_id"]},
+                {"name": "invoice_request", "title": "开票申请信息", "sequence": 30, "fields": ["application_date", "invoice_date", "invoice_type", "tax_rate", "invoice_company_type", "recipient_unit_name", "invoice_issue_company", "expected_receipt_date", "applicant_name"]},
+                {"name": "amount", "title": "本次开票金额", "sequence": 40, "fields": ["amount_no_tax", "tax_amount", "amount_total", "contract_amount", "related_receipt_amount"]},
+                {"name": "handling", "title": "办理说明", "sequence": 50, "fields": ["handler_name", "note", "attachment_ids"]},
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["document_no", "document_date", "invoice_state", "push_result", "kingdee_document_no", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "legacy_attachment_ref", "active"]}
+            ],
+            "fields": [
+                {"name": "business_category_id", "readonly_profiles": ["create", "edit", "readonly"], "group": "core"},
+                {"name": "invoice_content", "readonly_profiles": ["create", "edit", "readonly"], "group": "core"},
+                {"name": "source_kind", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "direction", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "state", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "name", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "operation_strategy", "readonly_profiles": ["create", "edit", "readonly"], "group": "core"},
+                {"name": "document_no", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["readonly"], "group": "advanced"},
+                {"name": "document_date", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["readonly"], "group": "advanced"},
+                {"name": "invoice_state", "visible_profiles": ["edit", "readonly"], "group": "advanced"},
+                {"name": "push_result", "visible_profiles": ["edit", "readonly"], "group": "advanced"},
+                {"name": "kingdee_document_no", "visible_profiles": ["edit", "readonly"], "group": "advanced"},
+                {"name": "creator_name", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "created_time", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "legacy_source_table", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "legacy_record_id", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "legacy_attachment_ref", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "active", "visible_profiles": ["edit", "readonly"], "group": "advanced"}
+            ]
+        }]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.invoice.category.summary"], "terminal_action": "action_confirm"}]]></field>
         <field name="attachment_policy">recommended</field>
     </record>
@@ -672,6 +1388,39 @@
         <field name="default_values_json"><![CDATA[{"source_kind": "output_invoice_tax", "direction": "output", "invoice_content": "销项开票登记"}]]></field>
         <field name="domain_json"><![CDATA[["&", ["source_kind", "=", "output_invoice_tax"], ["direction", "=", "output"]]]]></field>
         <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "contract_id", "invoice_no", "invoice_date", "amount_total"]]]></field>
+        <field name="form_policy_json"><![CDATA[{
+            "sections": [
+                {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "invoice_content", "source_kind", "direction", "state", "name"]},
+                {"name": "business_object", "title": "项目与受票方", "sequence": 20, "fields": ["project_id", "operation_strategy", "partner_id", "contract_id", "settlement_id"]},
+                {"name": "invoice_register", "title": "发票登记信息", "sequence": 30, "fields": ["invoice_date", "invoice_no", "invoice_code", "invoice_type", "tax_rate", "invoice_count", "recipient_unit_name", "invoice_issue_company", "actual_invoice_issue_company"]},
+                {"name": "amount", "title": "发票金额", "sequence": 40, "fields": ["amount_no_tax", "tax_amount", "amount_total", "actual_invoice_amount", "surcharge_amount", "related_receipt_amount", "contract_amount"]},
+                {"name": "handling", "title": "办理说明", "sequence": 50, "fields": ["handler_name", "invoice_holder", "note", "attachment_ids"]},
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["document_no", "document_date", "application_date", "invoice_state", "expected_receipt_date", "applicant_name", "push_result", "kingdee_document_no", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "legacy_attachment_ref", "active"]}
+            ],
+            "fields": [
+                {"name": "business_category_id", "readonly_profiles": ["create", "edit", "readonly"], "group": "core"},
+                {"name": "invoice_content", "readonly_profiles": ["create", "edit", "readonly"], "group": "core"},
+                {"name": "source_kind", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "direction", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "state", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "name", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "operation_strategy", "readonly_profiles": ["create", "edit", "readonly"], "group": "core"},
+                {"name": "document_no", "visible_profiles": ["edit", "readonly"], "group": "advanced"},
+                {"name": "document_date", "visible_profiles": ["edit", "readonly"], "group": "advanced"},
+                {"name": "application_date", "visible_profiles": ["edit", "readonly"], "group": "advanced"},
+                {"name": "invoice_state", "visible_profiles": ["edit", "readonly"], "group": "advanced"},
+                {"name": "expected_receipt_date", "visible_profiles": ["edit", "readonly"], "group": "advanced"},
+                {"name": "applicant_name", "visible_profiles": ["edit", "readonly"], "group": "advanced"},
+                {"name": "push_result", "visible_profiles": ["edit", "readonly"], "group": "advanced"},
+                {"name": "kingdee_document_no", "visible_profiles": ["edit", "readonly"], "group": "advanced"},
+                {"name": "creator_name", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "created_time", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "legacy_source_table", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "legacy_record_id", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "legacy_attachment_ref", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "active", "visible_profiles": ["edit", "readonly"], "group": "advanced"}
+            ]
+        }]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.invoice.category.summary"], "terminal_action": "action_register"}]]></field>
         <field name="attachment_policy">recommended</field>
     </record>
@@ -687,6 +1436,35 @@
         <field name="default_values_json"><![CDATA[{"source_kind": "input_invoice_tax", "direction": "input", "invoice_content": "进项税额上报"}]]></field>
         <field name="domain_json"><![CDATA[["&", ["source_kind", "=", "input_invoice_tax"], ["direction", "=", "input"]]]]></field>
         <field name="required_fields_json"><![CDATA[["project_id", "partner_id", "contract_id", "invoice_no", "invoice_date", "amount_total"]]]></field>
+        <field name="form_policy_json"><![CDATA[{
+            "sections": [
+                {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "invoice_content", "source_kind", "direction", "state", "name"]},
+                {"name": "business_object", "title": "项目与供应商", "sequence": 20, "fields": ["project_id", "operation_strategy", "partner_id", "contract_id", "settlement_id"]},
+                {"name": "invoice_input", "title": "进项发票信息", "sequence": 30, "fields": ["invoice_date", "recognition_date", "invoice_no", "invoice_code", "invoice_type", "tax_rate", "invoice_provider_name", "invoice_company_type", "cost_category_name"]},
+                {"name": "amount", "title": "发票金额", "sequence": 40, "fields": ["amount_no_tax", "tax_amount", "amount_total", "contract_amount"]},
+                {"name": "handling", "title": "办理说明", "sequence": 50, "fields": ["handler_name", "invoice_holder", "accounting_state", "voucher_no", "note", "attachment_ids"]},
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["document_no", "document_date", "invoice_state", "kingdee_document_no", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "legacy_attachment_ref", "active"]}
+            ],
+            "fields": [
+                {"name": "business_category_id", "readonly_profiles": ["create", "edit", "readonly"], "group": "core"},
+                {"name": "invoice_content", "readonly_profiles": ["create", "edit", "readonly"], "group": "core"},
+                {"name": "source_kind", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "direction", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "state", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "name", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "operation_strategy", "readonly_profiles": ["create", "edit", "readonly"], "group": "core"},
+                {"name": "document_no", "visible_profiles": ["edit", "readonly"], "group": "advanced"},
+                {"name": "document_date", "visible_profiles": ["edit", "readonly"], "group": "advanced"},
+                {"name": "invoice_state", "visible_profiles": ["edit", "readonly"], "group": "advanced"},
+                {"name": "kingdee_document_no", "visible_profiles": ["edit", "readonly"], "group": "advanced"},
+                {"name": "creator_name", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "created_time", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "legacy_source_table", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "legacy_record_id", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "legacy_attachment_ref", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "active", "visible_profiles": ["edit", "readonly"], "group": "advanced"}
+            ]
+        }]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.invoice.category.summary"], "terminal_action": "action_register"}]]></field>
         <field name="attachment_policy">recommended</field>
     </record>
@@ -702,6 +1480,36 @@
         <field name="default_values_json"><![CDATA[{"source_kind": "prepaid_tax", "direction": "prepaid", "invoice_content": "预缴税款"}]]></field>
         <field name="domain_json"><![CDATA[["&", ["source_kind", "=", "prepaid_tax"], ["direction", "=", "prepaid"]]]]></field>
         <field name="required_fields_json"><![CDATA[["project_id", "tax_certificate_no", "invoice_date", "amount_total"]]]></field>
+        <field name="form_policy_json"><![CDATA[{
+            "sections": [
+                {"name": "business_identity", "title": "办理类型", "sequence": 10, "fields": ["business_category_id", "invoice_content", "source_kind", "direction", "state", "name"]},
+                {"name": "business_object", "title": "项目与税款归属", "sequence": 20, "fields": ["project_id", "operation_strategy", "partner_id", "contract_id"]},
+                {"name": "tax_payment", "title": "预缴税款信息", "sequence": 30, "fields": ["invoice_date", "prepaid_tax_date", "tax_certificate_no", "tax_type", "tax_rate", "caliber", "invoice_issue_company"]},
+                {"name": "amount", "title": "税款金额", "sequence": 40, "fields": ["amount_no_tax", "tax_amount", "amount_total", "surcharge_amount"]},
+                {"name": "handling", "title": "办理说明", "sequence": 50, "fields": ["handler_name", "accounting_state", "voucher_no", "note", "attachment_ids"]},
+                {"name": "source_trace", "title": "迁移来源", "sequence": 90, "collapsible": true, "collapsed_by_default": true, "visible_profiles": ["readonly"], "fields": ["document_no", "document_date", "kingdee_document_no", "creator_name", "created_time", "legacy_source_table", "legacy_record_id", "legacy_attachment_ref", "active"]}
+            ],
+            "fields": [
+                {"name": "business_category_id", "readonly_profiles": ["create", "edit", "readonly"], "group": "core"},
+                {"name": "invoice_content", "readonly_profiles": ["create", "edit", "readonly"], "group": "core"},
+                {"name": "source_kind", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "direction", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "state", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "name", "visible_profiles": ["edit", "readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "operation_strategy", "readonly_profiles": ["create", "edit", "readonly"], "group": "core"},
+                {"name": "partner_id", "visible_profiles": ["edit", "readonly"], "group": "advanced"},
+                {"name": "contract_id", "visible_profiles": ["edit", "readonly"], "group": "advanced"},
+                {"name": "document_no", "visible_profiles": ["edit", "readonly"], "group": "advanced"},
+                {"name": "document_date", "visible_profiles": ["edit", "readonly"], "group": "advanced"},
+                {"name": "kingdee_document_no", "visible_profiles": ["edit", "readonly"], "group": "advanced"},
+                {"name": "creator_name", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "created_time", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "legacy_source_table", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "legacy_record_id", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "legacy_attachment_ref", "visible_profiles": ["readonly"], "readonly_profiles": ["create", "edit", "readonly"], "group": "advanced"},
+                {"name": "active", "visible_profiles": ["edit", "readonly"], "group": "advanced"}
+            ]
+        }]]></field>
         <field name="ledger_policy_json"><![CDATA[{"facts": ["sc.invoice.category.summary"], "terminal_action": "action_register"}]]></field>
         <field name="attachment_policy">recommended</field>
     </record>

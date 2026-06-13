@@ -71,9 +71,20 @@ class ScReceiptIncome(models.Model):
     )
     partner_id = fields.Many2one("res.partner", string="往来单位", index=True)
     legacy_partner_name = fields.Char(string="历史往来单位", index=True, readonly=True)
-    contract_id = fields.Many2one("construction.contract", string="合同", index=True)
+    contract_id = fields.Many2one(
+        "construction.contract",
+        string="合同",
+        index=True,
+        domain="[('project_id', '=', project_id)]",
+    )
     legacy_contract_no = fields.Char(string="施工管理合同", index=True, readonly=True)
-    payment_request_id = fields.Many2one("payment.request", string="收款申请", index=True, ondelete="set null")
+    payment_request_id = fields.Many2one(
+        "payment.request",
+        string="收款申请",
+        index=True,
+        ondelete="set null",
+        domain="[('project_id', '=', project_id), ('type', '=', 'receive')]",
+    )
     treasury_ledger_id = fields.Many2one("sc.treasury.ledger", string="资金台账", index=True, ondelete="set null")
     date_receipt = fields.Date(string="单据日期", default=fields.Date.context_today, index=True)
     document_no = fields.Char(string="来源单号", index=True)
@@ -150,6 +161,49 @@ class ScReceiptIncome(models.Model):
             res["project_id"] = project_id
         return res
 
+    @api.onchange("payment_request_id")
+    def _onchange_payment_request_id(self):
+        for rec in self:
+            request = rec.payment_request_id
+            if not request:
+                continue
+            if request.type != "receive":
+                rec.payment_request_id = False
+                return {
+                    "warning": {
+                        "title": _("收款申请不匹配"),
+                        "message": _("收款登记只能选择收款类型的申请。"),
+                    }
+                }
+            if request.project_id and not rec.project_id:
+                rec.project_id = request.project_id
+            if request.contract_id and not rec.contract_id:
+                rec.contract_id = request.contract_id
+            if request.partner_id and not rec.partner_id:
+                rec.partner_id = request.partner_id
+            if request.amount and not rec.amount:
+                rec.amount = request.amount
+            if request.currency_id and not rec.currency_id:
+                rec.currency_id = request.currency_id
+            if request.receipt_type and not rec.receipt_type:
+                rec.receipt_type = request.receipt_type
+            if request.partner_account_name and not rec.receiving_account_name:
+                rec.receiving_account_name = request.partner_account_name
+            if request.partner_bank_account and not rec.receiving_account_no:
+                rec.receiving_account_no = request.partner_bank_account
+            if request.partner_bank_name and not rec.receiving_bank_name:
+                rec.receiving_bank_name = request.partner_bank_name
+
+    @api.onchange("project_id")
+    def _onchange_project_id_clear_invalid_receipt_links(self):
+        for rec in self:
+            if not rec.project_id:
+                continue
+            if rec.payment_request_id and rec.payment_request_id.project_id != rec.project_id:
+                rec.payment_request_id = False
+            if rec.contract_id and rec.contract_id.project_id != rec.project_id:
+                rec.contract_id = False
+
     @api.model_create_multi
     def create(self, vals_list):
         seq = self.env["ir.sequence"]
@@ -172,6 +226,10 @@ class ScReceiptIncome(models.Model):
         source_kind = vals.get("source_kind") or self.env.context.get("default_source_kind") or "receipt_income"
         source_family = vals.get("source_family") or self.env.context.get("default_source_family") or ""
         income_category = vals.get("income_category") or self.env.context.get("default_income_category") or ""
+        receipt_type = vals.get("receipt_type") or self.env.context.get("default_receipt_type") or ""
+        receipt_flow_label = vals.get("receipt_flow_label") or self.env.context.get("default_receipt_flow_label") or ""
+        if source_kind == "residual_receipt" or receipt_type == "其他类型收款" or receipt_flow_label == "残余收款":
+            return "finance.receipt.income.residual"
         if source_kind == "receipt_income" and (
             source_family == "engineering_progress_receipt_visible" or income_category == "工程进度款收入"
         ):
@@ -525,6 +583,9 @@ class ScReceiptIncome(models.Model):
                             OR COALESCE(receipt.income_category, '') = '工程进度款收入'
                         )
                        THEN 'finance.receipt.income.progress'
+                   WHEN receipt.source_kind = 'residual_receipt'
+                        OR COALESCE(receipt.receipt_type, '') = '其他类型收款'
+                       THEN 'finance.receipt.income.residual'
                    WHEN receipt.source_kind = 'receipt_income'
                        THEN 'finance.receipt.income.project'
                    ELSE NULL

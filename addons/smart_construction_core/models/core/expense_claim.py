@@ -121,7 +121,13 @@ class ScExpenseClaim(models.Model):
         required=True,
         default=lambda self: self.env.ref("base.CNY", raise_if_not_found=False).id or self.env.company.currency_id.id,
     )
-    payment_request_id = fields.Many2one("payment.request", string="付款/收款申请", index=True, ondelete="set null")
+    payment_request_id = fields.Many2one(
+        "payment.request",
+        string="付款/收款申请",
+        index=True,
+        ondelete="set null",
+        domain="[('project_id', '=', project_id)]",
+    )
     legacy_source_model = fields.Char(string="历史来源模型", index=True, readonly=True)
     legacy_source_table = fields.Char(string="历史来源表", index=True, readonly=True)
     legacy_record_id = fields.Char(string="历史记录ID", index=True, readonly=True)
@@ -134,6 +140,7 @@ class ScExpenseClaim(models.Model):
     legacy_visible_payment_time = fields.Char(string="历史可见付款时间", readonly=True)
     legacy_visible_expense_type = fields.Char(string="历史可见成本类别", readonly=True)
     legacy_visible_note = fields.Text(string="历史可见备注", readonly=True)
+    legacy_visible_attachment = fields.Char(string="历史可见附件", readonly=True)
     legacy_visible_project_name = fields.Char(string="历史可见项目名称", readonly=True)
     legacy_visible_department = fields.Char(string="历史可见部门", readonly=True)
     legacy_visible_summary = fields.Text(string="历史可见事项说明/用途", readonly=True)
@@ -360,6 +367,7 @@ class ScExpenseClaim(models.Model):
                 "creator_legacy_user_id",
                 "creator_name",
                 "created_time",
+                "legacy_visible_attachment",
                 "write_uid",
                 "write_date",
             }

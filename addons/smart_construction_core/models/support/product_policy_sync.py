@@ -84,10 +84,12 @@ MERGE_BY_CATEGORY_INTEGRATION_ACTION_XMLIDS_BY_MODEL = {
     "sc.labor.usage": "smart_construction_core.action_sc_labor_usage",
     "sc.material.outbound": "smart_construction_core.action_sc_material_outbound",
     "sc.receipt.income": "smart_construction_core.action_sc_receipt_income",
+    "payment.request": "smart_construction_core.action_payment_request",
     "sc.payment.execution": "smart_construction_core.action_sc_payment_execution",
     "sc.expense.claim": "smart_construction_core.action_sc_expense_claim",
     "sc.financing.loan": "smart_construction_core.action_sc_financing_loan",
     "sc.invoice.registration": "smart_construction_core.action_sc_invoice_registration",
+    "sc.self.funding.registration": "smart_construction_core.action_sc_self_funding_registration",
 }
 
 
@@ -98,6 +100,13 @@ def _text(value):
 def _is_user_acceptance_menu_key(value):
     key = _text(value)
     return key in USER_ACCEPTANCE_PRODUCT_MENU_XMLIDS or any(token in key for token in USER_ACCEPTANCE_MENU_KEY_TOKENS)
+
+
+def _integration_model_from_target(target):
+    first_token = _text(target).split(" ", 1)[0].split("/", 1)[0]
+    if first_token in MERGE_BY_CATEGORY_INTEGRATION_ACTION_XMLIDS_BY_MODEL:
+        return first_token
+    return ""
 
 
 class ScProductPolicy(models.Model):
@@ -203,6 +212,7 @@ class ScProductPolicy(models.Model):
                 "disposition_policy": disposition_policy,
                 "integration_target": integration_target,
                 "default_business_category_code": category_code,
+                "allowed_business_category_codes": matrix.get("allowed_business_category_codes") if isinstance(matrix.get("allowed_business_category_codes"), list) else [],
                 "required_relationships": matrix.get("required_relationships") if isinstance(matrix.get("required_relationships"), list) else [],
                 "locked_data_policy": _text(matrix.get("locked_data_policy")) or "read_only_source_facts_no_rewrite",
                 "productization_source": "user_confirmed_62_business_entry_integration_matrix",
@@ -224,17 +234,19 @@ class ScProductPolicy(models.Model):
 
     @api.model
     def _annotate_merge_by_category_integration_target(self, row):
-        model = _text(row.get("fact_model") or row.get("res_model"))
-        action_xmlid = MERGE_BY_CATEGORY_INTEGRATION_ACTION_XMLIDS_BY_MODEL.get(model)
+        source_model = _text(row.get("fact_model") or row.get("res_model"))
+        integration_model = _integration_model_from_target(row.get("integration_target")) or source_model
+        action_xmlid = MERGE_BY_CATEGORY_INTEGRATION_ACTION_XMLIDS_BY_MODEL.get(integration_model)
         if not action_xmlid:
             return row
         action = self.env.ref(action_xmlid, raise_if_not_found=False)
-        if not action or _text(getattr(action, "res_model", "")) != model:
+        if not action or _text(getattr(action, "res_model", "")) != integration_model:
             return row
         action_id = int(action.id or 0)
         if action_id <= 0:
             return row
         view_modes = [_text(item) for item in _text(getattr(action, "view_mode", "")).split(",") if _text(item)]
+        row["integration_model"] = integration_model
         row["integration_action_xmlid"] = action_xmlid
         row["integration_action_id"] = action_id
         row["integration_view_modes"] = view_modes
@@ -243,7 +255,7 @@ class ScProductPolicy(models.Model):
             "route": "/a/%s" % action_id,
             "compatibility_refs": {
                 "action_id": action_id,
-                "model": model,
+                "model": integration_model,
                 "view_modes": view_modes,
                 "delivery_mode": "merge_by_category_integration",
             },
@@ -291,6 +303,7 @@ class ScProductPolicy(models.Model):
                         "disposition_policy": _text(menu.get("disposition_policy")),
                         "integration_target": _text(menu.get("integration_target")),
                         "default_business_category_code": _text(menu.get("default_business_category_code")),
+                        "allowed_business_category_codes": menu.get("allowed_business_category_codes") if isinstance(menu.get("allowed_business_category_codes"), list) else [],
                         "entry_target_policy": _text(menu.get("entry_target_policy")),
                     }
                 )

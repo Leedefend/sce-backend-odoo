@@ -140,6 +140,21 @@ def visible_values(seq: int, row: dict[str, Any]) -> dict[str, str]:
     return {label: values.get(label, "") for label in SPECS[seq]["labels"]}
 
 
+def visible_model_values(payload: dict[str, str]) -> dict[str, object]:
+    return {
+        "legacy_visible_document_state": clean(payload.get("单据状态")) or False,
+        "legacy_visible_push_result": clean(payload.get("推送结果")) or False,
+        "legacy_visible_cooperation_type": clean(payload.get("合作类型")) or False,
+        "legacy_visible_bank_name": clean(payload.get("开户银行")) or False,
+        "legacy_visible_account_no": clean(payload.get("账号") or payload.get("开户账号") or payload.get("银行账号")) or False,
+        "legacy_visible_account_holder": clean(payload.get("开户姓名")) or False,
+        "legacy_visible_social_credit_code": clean(payload.get("统一社会信用代码")) or False,
+        "legacy_visible_main_tax_rate": clean(payload.get("主税率")) or False,
+        "legacy_visible_receipt_amount": clean(payload.get("收款金额")) or False,
+        "legacy_visible_payment_amount": clean(payload.get("付款金额")) or False,
+    }
+
+
 def ensure_payload_table() -> None:
     env.cr.execute(  # noqa: F821
         """
@@ -205,6 +220,7 @@ def import_surface(seq: int) -> dict[str, Any]:
             ],
             limit=1,
         )
+        visible_payload = visible_values(seq, row)
         vals = {
             "sequence": index,
             "name": clean(row.get("DWMC") or row.get("DWJC") or row.get("DJBH") or old_id),
@@ -221,13 +237,14 @@ def import_surface(seq: int) -> dict[str, Any]:
             % (surface, old_id, clean(row.get("DJBH"))),
             "active": True,
         }
+        vals.update(visible_model_values(visible_payload))
         if rec:
             rec.write(vals)
             updated += 1
         else:
             rec = Entity.create(vals)
             created += 1
-        write_payload(rec, visible_values(seq, row))
+        write_payload(rec, visible_payload)
 
     stale = Entity.search(
         [

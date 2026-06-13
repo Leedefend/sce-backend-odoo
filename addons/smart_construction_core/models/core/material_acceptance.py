@@ -347,6 +347,13 @@ class ScMaterialPurchaseRequest(models.Model):
     )
     line_ids = fields.One2many("sc.material.purchase.request.line", "request_id", string="申请明细")
     note = fields.Text(string="申请说明")
+    attachment_ids = fields.Many2many(
+        "ir.attachment",
+        "sc_material_purchase_request_attachment_rel",
+        "request_id",
+        "attachment_id",
+        string="申请附件",
+    )
     legacy_fact_model = fields.Char(string="来源通用模型", index=True)
     legacy_fact_id = fields.Integer(string="来源通用记录ID", index=True)
     legacy_fact_type = fields.Char(string="来源业务类型", index=True)
@@ -1493,6 +1500,13 @@ class ScMaterialOutbound(models.Model):
     receiver_user_id = fields.Many2one("res.users", string="领料人", index=True)
     keeper_id = fields.Many2one("res.users", string="仓管员", default=lambda self: self.env.user, index=True)
     dest_warehouse_id = fields.Many2one("stock.warehouse", string="调入仓库", index=True)
+    attachment_ids = fields.Many2many(
+        "ir.attachment",
+        "sc_material_outbound_attachment_rel",
+        "outbound_id",
+        "attachment_id",
+        string="出库附件",
+    )
     dest_location_id = fields.Many2one("stock.location", string="调入库位", index=True)
     transfer_inbound_id = fields.Many2one(
         "sc.material.inbound",
@@ -2248,6 +2262,13 @@ class ScMaterialSettlement(models.Model):
         string="已申请付款",
         currency_field="currency_id",
         compute="_compute_payment_summary",
+    )
+    attachment_ids = fields.Many2many(
+        "ir.attachment",
+        "sc_material_settlement_attachment_rel",
+        "settlement_id",
+        "attachment_id",
+        string="结算附件",
     )
     payment_paid_amount = fields.Monetary(
         string="已付款",

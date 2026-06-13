@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 import ast
 import json
+import xml.etree.ElementTree as ET
 
 from odoo import _, api, fields, models
 from odoo.exceptions import ValidationError
+from odoo.modules.module import get_module_resource
 from odoo.osv import expression
 
 
@@ -18,6 +20,7 @@ BUSINESS_CATEGORY_ACTION_BINDINGS = {
     "site.safety.recheck": "smart_construction_core.action_sc_safety_recheck",
     "contract.income": "smart_construction_core.action_construction_contract_income",
     "contract.expense": "smart_construction_core.action_construction_contract_expense",
+    "contract.expense.supplement": "smart_construction_core.action_construction_contract_expense",
     "settlement.income": "smart_construction_core.action_sc_settlement_order",
     "settlement.expense": "smart_construction_core.action_sc_settlement_order",
     "finance.payment.apply.pay": "smart_construction_core.action_payment_request_user_payment_apply",
@@ -26,6 +29,7 @@ BUSINESS_CATEGORY_ACTION_BINDINGS = {
     "finance.payment.execution.company": "smart_construction_core.action_sc_payment_execution_company_finance_expense",
     "finance.receipt.income.project": "smart_construction_core.action_sc_receipt_income_user_income",
     "finance.receipt.income.progress": "smart_construction_core.action_sc_receipt_income_engineering_progress",
+    "finance.receipt.income.residual": "smart_construction_core.action_sc_receipt_income_user_income",
     "finance.expense.reimbursement": "smart_construction_core.action_sc_expense_claim_reimbursement_request",
     "finance.expense.project": "smart_construction_core.action_sc_expense_claim_project",
     "finance.deposit.bid.pay": "smart_construction_core.action_sc_bid_deposit_pay",
@@ -66,6 +70,21 @@ BUSINESS_CATEGORY_ACTION_BINDINGS = {
     "material.transfer": "smart_construction_core.action_sc_material_transfer",
     "material.loss": "smart_construction_core.action_sc_material_loss",
     "material.settlement": "smart_construction_core.action_sc_material_settlement",
+}
+BUSINESS_CATEGORY_DEFAULT_VALUE_DEFAULTS = {
+    "finance.receipt.income.project": {
+        "source_kind": "receipt_income",
+        "income_category": "收入",
+    },
+    "finance.receipt.income.progress": {
+        "source_kind": "receipt_income",
+        "income_category": "工程进度款收入",
+    },
+    "finance.receipt.income.residual": {
+        "source_kind": "residual_receipt",
+        "receipt_flow_label": "残余收款",
+        "income_category": "其他收款",
+    },
 }
 BUSINESS_CATEGORY_LEDGER_POLICY_DEFAULTS = {
     "finance.fund.transfer": {
@@ -373,6 +392,7 @@ class ScBusinessCategory(models.Model):
     domain_json = fields.Text(string="入口过滤 JSON", default="[]")
     required_fields_json = fields.Text(string="必填字段 JSON", default="[]")
     visible_groups_json = fields.Text(string="表单分组 JSON", default="[]")
+    form_policy_json = fields.Text(string="表单策略 JSON", default="{}")
     ledger_policy_json = fields.Text(string="下游策略 JSON", default="{}")
     attachment_policy = fields.Selection(
         [
@@ -397,13 +417,21 @@ class ScBusinessCategory(models.Model):
         for category in self:
             category.display_name = "[%s] %s" % (category.code, category.name) if category.code else category.name
 
-    @api.constrains("default_values_json", "domain_json", "required_fields_json", "visible_groups_json", "ledger_policy_json")
+    @api.constrains(
+        "default_values_json",
+        "domain_json",
+        "required_fields_json",
+        "visible_groups_json",
+        "form_policy_json",
+        "ledger_policy_json",
+    )
     def _check_json_fields(self):
         json_fields = {
             "default_values_json": dict,
             "domain_json": list,
             "required_fields_json": list,
             "visible_groups_json": list,
+            "form_policy_json": dict,
             "ledger_policy_json": dict,
         }
         for record in self:
@@ -509,6 +537,9 @@ class ScBusinessCategory(models.Model):
                 "template_version": BUSINESS_CATEGORY_TEMPLATE_VERSION,
                 "action_xmlid": action_xmlid,
             }
+            default_values = BUSINESS_CATEGORY_DEFAULT_VALUE_DEFAULTS.get(code)
+            if default_values is not None:
+                vals["default_values_json"] = json.dumps(default_values, ensure_ascii=False, sort_keys=True)
             ledger_policy = self._merge_template_ledger_policy(
                 category.ledger_policy_json,
                 BUSINESS_CATEGORY_LEDGER_POLICY_DEFAULTS.get(code),
@@ -539,6 +570,56 @@ class ScBusinessCategory(models.Model):
             category.write(
                 vals
             )
+        return True
+
+    @api.model
+    def _sync_seed_form_policies(self):
+        """Sync product-owned form policies from noupdate seed records."""
+        xml_policy_codes = set()
+        seed_path = get_module_resource(
+            "smart_construction_core",
+            "data",
+            "business_category_seed.xml",
+        )
+        if seed_path:
+            try:
+                root = ET.parse(seed_path).getroot()
+            except Exception:
+                root = None
+            xmlid_prefix = "smart_construction_core."
+            if root is not None:
+                for record in root.findall(".//record"):
+                    if record.get("model") != "sc.business.category":
+                        continue
+                    xmlid = str(record.get("id") or "").strip()
+                    if not xmlid:
+                        continue
+                    form_policy = None
+                    for field in record.findall("field"):
+                        if field.get("name") == "form_policy_json":
+                            form_policy = (field.text or "").strip()
+                            break
+                    if not form_policy or form_policy == "{}":
+                        continue
+                    category = self.env.ref(f"{xmlid_prefix}{xmlid}", raise_if_not_found=False)
+                    if not category or category._name != "sc.business.category":
+                        continue
+                    xml_policy_codes.add(str(category.code or "").strip())
+                    if (category.form_policy_json or "").strip() != form_policy:
+                        category.sudo().write({"form_policy_json": form_policy})
+        try:
+            from .business_form_policy_templates import get_business_category_form_policy_templates
+        except Exception:
+            return bool(xml_policy_codes)
+        for code, policy in get_business_category_form_policy_templates().items():
+            if code in xml_policy_codes:
+                continue
+            category = self.sudo().search([("code", "=", code)], limit=1)
+            if not category:
+                continue
+            form_policy = json.dumps(policy or {}, ensure_ascii=False, sort_keys=True)
+            if form_policy and form_policy != "{}" and (category.form_policy_json or "").strip() != form_policy:
+                category.sudo().write({"form_policy_json": form_policy})
         return True
 
     @api.model

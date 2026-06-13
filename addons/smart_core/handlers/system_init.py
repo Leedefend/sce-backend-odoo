@@ -112,7 +112,6 @@ _INDUSTRY_EXTENSION_MODULES = (
     "smart_construction_core",
     "smart_construction_scene",
     "smart_construction_portal",
-    "smart_construction_demo",
 )
 LEGACY_INDUSTRY_EXTENSION_MODULES = _INDUSTRY_EXTENSION_MODULES
 
@@ -1232,6 +1231,25 @@ def _dedupe_nav_siblings_by_identity(nav: list[dict]) -> list[dict]:
     def node_identity(node: dict) -> str:
         meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
         target = node.get("target") if isinstance(node.get("target"), dict) else {}
+        children = node.get("children") if isinstance(node.get("children"), list) else []
+        label = _text(node.get("label") or node.get("title") or node.get("name"))
+        model = _text(node.get("model") or meta.get("model"))
+        category_code = _text(meta.get("default_business_category_code"))
+        integration_target = _text(meta.get("integration_target"))
+        entry_intent = _text(meta.get("entry_intent"))
+        if (
+            not children
+            and label
+            and model
+            and (category_code or integration_target or entry_intent)
+        ):
+            return "semantic:%s:%s:%s:%s:%s" % (
+                label,
+                model,
+                category_code,
+                integration_target,
+                entry_intent,
+            )
         return _text(
             node.get("menu_id")
             or meta.get("menu_id")

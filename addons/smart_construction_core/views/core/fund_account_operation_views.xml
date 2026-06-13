@@ -45,6 +45,10 @@
                 <field name="amount" string="调拨金额" sum="金额合计"/>
                 <field name="operation_reason"/>
                 <field name="business_category_id" optional="show"/>
+                <field name="legacy_visible_account_name" optional="hide"/>
+                <field name="legacy_visible_counterparty_account_name" optional="hide"/>
+                <field name="legacy_visible_transfer_type" optional="hide"/>
+                <field name="legacy_visible_attachment" optional="hide"/>
                 <field name="operation_type" optional="hide"/>
                 <field name="fund_account_id" optional="hide"/>
                 <field name="daily_income" sum="收入合计"/>
@@ -73,46 +77,99 @@
                     <field name="state" widget="statusbar" statusbar_visible="draft,confirmed,done"/>
                 </header>
                 <sheet>
-                    <group>
-                        <group string="业务方向">
-                            <field name="name" readonly="1"/>
-                            <field name="fund_flow_label" readonly="1"/>
-                            <field name="operation_type"/>
-                            <field name="business_category_id" options="{'no_create': True}"/>
-                            <field name="operation_date" required="1"/>
-                            <field name="project_id"/>
-                            <field name="operation_strategy" readonly="1"/>
-                            <field name="company_id"/>
-                            <field name="active"/>
-                        </group>
-                        <group string="付款与收款">
-                            <field name="currency_id" invisible="1"/>
-                            <field name="fund_account_id" invisible="operation_type not in ('balance_adjustment', 'fund_daily_report')"/>
-                            <field name="source_account_id" invisible="operation_type in ('balance_adjustment', 'fund_daily_report')"/>
-                            <field name="source_project_id" readonly="1" invisible="operation_type in ('balance_adjustment', 'fund_daily_report')"/>
-                            <field name="target_account_id" invisible="operation_type in ('balance_adjustment', 'fund_daily_report')"/>
-                            <field name="target_project_id" readonly="1" invisible="operation_type in ('balance_adjustment', 'fund_daily_report')"/>
-                            <field name="amount" string="办理金额" invisible="operation_type in ('balance_adjustment', 'fund_daily_report')"/>
-                            <field name="daily_income" invisible="operation_type != 'fund_daily_report'"/>
-                            <field name="daily_expense" invisible="operation_type != 'fund_daily_report'"/>
-                            <field name="account_balance" invisible="operation_type != 'fund_daily_report'"/>
-                            <field name="bank_balance" invisible="operation_type != 'fund_daily_report'"/>
-                            <field name="before_balance" invisible="operation_type != 'balance_adjustment'"/>
-                            <field name="after_balance" invisible="operation_type != 'balance_adjustment'"/>
-                        </group>
-                    </group>
-                    <group string="办理说明">
-                        <field name="operation_reason"/>
-                        <field name="note"/>
-                        <field name="attachment_ids" widget="many2many_binary"/>
-                    </group>
                     <notebook>
-                        <page string="历史来源">
+                        <page string="办理类型">
+                            <group>
+                                <group>
+                                    <field name="name" readonly="1"/>
+                                    <field name="fund_flow_label" readonly="1"/>
+                                    <field name="operation_type"/>
+                                    <field name="business_category_id" options="{'no_create': True}"/>
+                                </group>
+                                <group>
+                                    <field name="state" readonly="1"/>
+                                    <field name="operation_date" required="1"/>
+                                    <field name="company_id"/>
+                                    <field name="active"/>
+                                    <field name="currency_id" invisible="1"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="项目与账户">
+                            <group>
+                                <group>
+                                    <field name="project_id"/>
+                                    <field name="operation_strategy" readonly="1"/>
+                                    <field name="fund_account_id"
+                                           invisible="operation_type not in ('balance_adjustment', 'fund_daily_report')"/>
+                                </group>
+                                <group>
+                                    <field name="source_account_id"
+                                           invisible="operation_type in ('balance_adjustment', 'fund_daily_report')"/>
+                                    <field name="source_project_id"
+                                           readonly="1"
+                                           invisible="operation_type in ('balance_adjustment', 'fund_daily_report')"/>
+                                    <field name="target_account_id"
+                                           invisible="operation_type in ('balance_adjustment', 'fund_daily_report')"/>
+                                    <field name="target_project_id"
+                                           readonly="1"
+                                           invisible="operation_type in ('balance_adjustment', 'fund_daily_report')"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="调拨金额" invisible="operation_type in ('balance_adjustment', 'fund_daily_report')">
+                            <group>
+                                <field name="amount" string="办理金额"/>
+                            </group>
+                        </page>
+                        <page string="资金日报" invisible="operation_type != 'fund_daily_report'">
+                            <group>
+                                <field name="daily_income"/>
+                                <field name="daily_expense"/>
+                                <field name="account_balance"/>
+                                <field name="bank_balance"/>
+                            </group>
+                        </page>
+                        <page string="余额调整" invisible="operation_type != 'balance_adjustment'">
+                            <group>
+                                <field name="before_balance"/>
+                                <field name="after_balance"/>
+                            </group>
+                        </page>
+                        <page string="办理说明">
+                            <group>
+                                <field name="operation_reason"/>
+                                <field name="note"/>
+                                <field name="attachment_ids" widget="many2many_binary"/>
+                            </group>
+                        </page>
+                        <page string="历史办理信息" invisible="not legacy_source_table">
+                            <group>
+                                <group string="旧系统办理口径">
+                                    <field name="legacy_visible_document_no" readonly="1"/>
+                                    <field name="legacy_visible_project_name" readonly="1"/>
+                                    <field name="legacy_visible_account_name" readonly="1"/>
+                                    <field name="legacy_visible_counterparty_account_name" readonly="1"/>
+                                    <field name="legacy_visible_transfer_type" readonly="1"/>
+                                </group>
+                                <group string="旧系统办理说明">
+                                    <field name="legacy_document_state" readonly="1"/>
+                                    <field name="legacy_visible_reason" readonly="1"/>
+                                    <field name="legacy_visible_note" readonly="1"/>
+                                    <field name="legacy_visible_attachment" readonly="1"/>
+                                    <field name="creator_name" readonly="1"/>
+                                    <field name="created_time" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="迁移来源" invisible="not legacy_source_table">
                             <group>
                                 <field name="legacy_source_model"/>
                                 <field name="legacy_source_table"/>
                                 <field name="legacy_record_id"/>
                                 <field name="legacy_document_state"/>
+                                <field name="legacy_visible_attachment" readonly="1"/>
+                                <field name="legacy_attachment_ref" readonly="1"/>
                                 <field name="creator_legacy_user_id"/>
                                 <field name="creator_name"/>
                                 <field name="created_time"/>
@@ -129,6 +186,12 @@
         <field name="name">资金划拨</field>
         <field name="res_model">sc.fund.account.operation</field>
         <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_sc_fund_account_operation_tree"/>
+        <field name="views" eval="[(ref('view_sc_fund_account_operation_tree'), 'tree'), (ref('view_sc_fund_account_operation_form'), 'form')]"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('view_sc_fund_account_operation_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_sc_fund_account_operation_form')})
+        ]"/>
         <field name="search_view_id" ref="view_sc_fund_account_operation_search"/>
         <field name="domain">[('operation_type', '=', 'transfer_out'), ('business_category_id.code', '=', 'finance.fund.transfer')]</field>
         <field name="context">{'default_operation_type': 'transfer_out', 'default_business_category_code': 'finance.fund.transfer', 'search_default_type_transfer_out': 1}</field>
@@ -141,6 +204,12 @@
         <field name="name">资金调拨</field>
         <field name="res_model">sc.fund.account.operation</field>
         <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_sc_fund_account_operation_tree"/>
+        <field name="views" eval="[(ref('view_sc_fund_account_operation_tree'), 'tree'), (ref('view_sc_fund_account_operation_form'), 'form')]"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('view_sc_fund_account_operation_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_sc_fund_account_operation_form')})
+        ]"/>
         <field name="search_view_id" ref="view_sc_fund_account_operation_search"/>
         <field name="domain">[('operation_type', '=', 'transfer_between'), ('business_category_id.code', '=', 'finance.fund.transfer')]</field>
         <field name="context">{'default_operation_type': 'transfer_between', 'default_business_category_code': 'finance.fund.transfer', 'search_default_type_transfer_between': 1}</field>
@@ -153,6 +222,12 @@
         <field name="name">余额调整</field>
         <field name="res_model">sc.fund.account.operation</field>
         <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_sc_fund_account_operation_tree"/>
+        <field name="views" eval="[(ref('view_sc_fund_account_operation_tree'), 'tree'), (ref('view_sc_fund_account_operation_form'), 'form')]"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('view_sc_fund_account_operation_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_sc_fund_account_operation_form')})
+        ]"/>
         <field name="search_view_id" ref="view_sc_fund_account_operation_search"/>
         <field name="domain">[('business_category_id.code', '=', 'finance.fund.balance_adjustment')]</field>
         <field name="context">{'default_operation_type': 'balance_adjustment', 'default_business_category_code': 'finance.fund.balance_adjustment', 'search_default_type_balance_adjustment': 1}</field>

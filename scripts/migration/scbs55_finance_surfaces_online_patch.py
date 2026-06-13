@@ -347,6 +347,8 @@ def import_fund_operation(seq: int, rows: list[dict[str, Any]]) -> dict[str, Any
             "legacy_visible_transfer_type": clean(row.get("f_LB")),
             "legacy_visible_reason": clean(row.get("SY")),
             "legacy_visible_note": clean(row.get("BZ")),
+            "legacy_visible_attachment": clean(row.get("f_FJ") or row.get("FJ")),
+            "legacy_attachment_ref": clean(row.get("f_FJ") or row.get("FJ")),
             "creator_legacy_user_id": clean(row.get("LRRID")),
             "creator_name": clean(row.get("LRR")),
             "created_time": parse_dt(row.get("LRSJ")),

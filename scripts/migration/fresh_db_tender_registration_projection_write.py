@@ -210,6 +210,7 @@ def bid_by_fact(fact):
         "legacy_fact_id": fact.id,
         "legacy_fact_type": "legacy_tender_registration",
         "legacy_note": fact.note,
+        "legacy_attachment_ref": fact.attachment_ref,
     }
     if bid:
         bid.write(vals)

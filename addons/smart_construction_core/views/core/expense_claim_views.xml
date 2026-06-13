@@ -39,6 +39,7 @@
                     <field name="claim_type" optional="hide"/>
                     <field name="legacy_document_no"/>
                     <field name="legacy_document_state"/>
+                    <field name="legacy_visible_attachment" optional="show"/>
                     <field name="creator_name" optional="show"/>
                     <field name="created_time" optional="show"/>
                     <field name="state"/>
@@ -76,6 +77,7 @@
                         <group>
                             <group string="业务方向">
                                 <field name="name" readonly="1"/>
+                                <field name="source_origin" invisible="1"/>
                                 <field name="business_category_id" readonly="state in ['legacy_confirmed']"/>
                                 <field name="claim_flow_label" readonly="1"/>
                                 <field name="claim_type" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
@@ -119,7 +121,7 @@
                                 <field name="payer_bank" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                             </group>
                         </group>
-                        <group string="保证金办理">
+                        <group string="保证金办理" invisible="claim_type not in ['deposit_pay', 'deposit_refund', 'deposit_receive']">
                             <field name="payment_method" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                             <field name="clearing_method" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
                             <field name="is_returned" readonly="state in ['approved', 'done', 'legacy_confirmed', 'cancel']"/>
@@ -131,29 +133,75 @@
                             <field name="legacy_visible_title" readonly="1" invisible="not legacy_visible_title"/>
                             <field name="legacy_visible_adjustment_item" readonly="1" invisible="not legacy_visible_adjustment_item"/>
                         </group>
-                        <group string="公司-承包人责任约束">
-                            <field name="company_contractor_responsibility_summary_id" invisible="1"/>
-                            <field name="company_contractor_responsibility_state" readonly="1"/>
-                            <field name="company_contractor_arrival_unprocessed_amount" readonly="1"/>
-                            <field name="company_contractor_arrival_over_processed_amount" readonly="1"/>
-                            <field name="company_contractor_self_funding_balance" readonly="1"/>
-                            <field name="company_contractor_responsibility_notice" readonly="1" nolabel="1"/>
-                            <button name="action_view_company_contractor_responsibility_summary"
-                                    type="object"
-                                    string="查看责任余额"
-                                    class="btn-secondary"
-                                    invisible="not company_contractor_responsibility_summary_id"/>
-                        </group>
-                        <group>
+                        <group string="办理说明与附件">
                             <field name="note"/>
-                            <field name="legacy_visible_push_result" readonly="1" invisible="not legacy_visible_push_result"/>
-                            <field name="legacy_document_no" readonly="1" invisible="not legacy_document_no"/>
-                            <field name="legacy_document_state" readonly="1" invisible="not legacy_document_state"/>
-                            <field name="creator_name" readonly="1"/>
-                            <field name="creator_legacy_user_id" readonly="1"/>
-                            <field name="created_time" readonly="1"/>
                             <field name="attachment_ids" widget="many2many_binary"/>
                         </group>
+                        <notebook>
+                            <page string="责任余额" invisible="not company_contractor_responsibility_summary_id">
+                                <group string="公司-承包人责任约束">
+                                    <field name="company_contractor_responsibility_summary_id" invisible="1"/>
+                                    <field name="company_contractor_responsibility_state" readonly="1"/>
+                                    <field name="company_contractor_arrival_unprocessed_amount" readonly="1"/>
+                                    <field name="company_contractor_arrival_over_processed_amount" readonly="1"/>
+                                    <field name="company_contractor_self_funding_balance" readonly="1"/>
+                                    <field name="company_contractor_responsibility_notice" readonly="1" nolabel="1"/>
+                                    <button name="action_view_company_contractor_responsibility_summary"
+                                            type="object"
+                                            string="查看责任余额"
+                                            class="btn-secondary"
+                                            invisible="not company_contractor_responsibility_summary_id"/>
+                                </group>
+                            </page>
+                            <page string="历史办理信息" invisible="not legacy_source_table">
+                                <group>
+                                    <group string="旧系统单据口径">
+                                        <field name="legacy_visible_document_no" readonly="1"/>
+                                        <field name="legacy_document_no" readonly="1"/>
+                                        <field name="legacy_visible_document_state" readonly="1"/>
+                                        <field name="legacy_document_state" readonly="1"/>
+                                        <field name="legacy_visible_date" readonly="1"/>
+                                        <field name="legacy_visible_project_name" readonly="1"/>
+                                        <field name="legacy_visible_department" readonly="1"/>
+                                    </group>
+                                    <group string="旧系统事项与金额">
+                                        <field name="legacy_visible_title" readonly="1"/>
+                                        <field name="legacy_visible_expense_type" readonly="1"/>
+                                        <field name="legacy_visible_summary" readonly="1"/>
+                                        <field name="legacy_visible_amount" readonly="1"/>
+                                        <field name="legacy_visible_adjustment_item" readonly="1"/>
+                                        <field name="legacy_visible_returned_flag" readonly="1"/>
+                                    </group>
+                                </group>
+                                <group>
+                                    <group string="还款与利息线索">
+                                        <field name="legacy_visible_borrower" readonly="1"/>
+                                        <field name="legacy_visible_loan_amount" readonly="1"/>
+                                        <field name="legacy_visible_repayment_amount" readonly="1"/>
+                                        <field name="legacy_visible_loan_rate" readonly="1"/>
+                                        <field name="legacy_visible_interest" readonly="1"/>
+                                        <field name="legacy_visible_repayment_time" readonly="1"/>
+                                    </group>
+                                    <group string="状态、备注与附件">
+                                        <field name="legacy_visible_push_result" readonly="1"/>
+                                        <field name="legacy_visible_payment_time" readonly="1"/>
+                                        <field name="legacy_visible_note" readonly="1"/>
+                                        <field name="legacy_visible_attachment" readonly="1"/>
+                                    </group>
+                                </group>
+                            </page>
+                            <page string="迁移来源" invisible="not legacy_source_table">
+                                <group>
+                                    <field name="legacy_source_model" readonly="1"/>
+                                    <field name="legacy_source_table" readonly="1"/>
+                                    <field name="legacy_record_id" readonly="1"/>
+                                    <field name="creator_name" readonly="1"/>
+                                    <field name="creator_legacy_user_id" readonly="1"/>
+                                    <field name="created_time" readonly="1"/>
+                                    <field name="active"/>
+                                </group>
+                            </page>
+                        </notebook>
                     </sheet>
                 </form>
             </field>

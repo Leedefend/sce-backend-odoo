@@ -48,6 +48,22 @@ def _set_validated(record, table):
         record.invalidate_recordset()
 
 
+def _attach_evidence(record, name="role-permission-evidence.txt"):
+    attachment = env["ir.attachment"].sudo().create(
+        {
+            "name": name,
+            "res_model": record._name,
+            "res_id": record.id,
+            "type": "binary",
+            "datas": "cm9sZS1wZXJtaXNzaW9uLWF1ZGl0Cg==",
+            "mimetype": "text/plain",
+        }
+    )
+    if "attachment_ids" in record._fields:
+        record.sudo().write({"attachment_ids": [(4, attachment.id)]})
+    return attachment
+
+
 def _group(xmlid):
     return env.ref(xmlid).id
 
@@ -379,6 +395,7 @@ def _run_expense_claim_roles(users, failures):
             "payer_account": "FRP-CLAIM-PAYER-001",
         }
     )
+    _attach_evidence(claim, "expense-claim-role-permission-evidence.txt")
     claim.with_user(users["initiator"]).action_submit()
     _expect_state("expense_claim.initiator_submit", claim, "submit", failures)
     _set_validated(claim, "sc_expense_claim")

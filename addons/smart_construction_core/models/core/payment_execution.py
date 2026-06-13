@@ -68,8 +68,19 @@ class ScPaymentExecution(models.Model):
         index=True,
     )
     partner_id = fields.Many2one("res.partner", string="往来单位", index=True)
-    contract_id = fields.Many2one("construction.contract", string="合同", index=True)
-    payment_request_id = fields.Many2one("payment.request", string="付款申请", index=True, ondelete="set null")
+    contract_id = fields.Many2one(
+        "construction.contract",
+        string="合同",
+        index=True,
+        domain="[('project_id', '=', project_id)]",
+    )
+    payment_request_id = fields.Many2one(
+        "payment.request",
+        string="付款申请",
+        index=True,
+        ondelete="set null",
+        domain="[('project_id', '=', project_id), ('type', '=', 'pay')]",
+    )
     date_payment = fields.Date(string="单据日期", default=fields.Date.context_today, index=True)
     document_no = fields.Char(string="来源单号", index=True)
     payment_family = fields.Char(string="付款族", index=True)

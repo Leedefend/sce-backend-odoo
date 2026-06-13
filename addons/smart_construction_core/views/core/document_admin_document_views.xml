@@ -48,9 +48,14 @@
           <field name="holder_name" optional="show"/>
           <field name="valid_until" optional="show"/>
           <field name="document_title" optional="show"/>
+          <field name="legacy_visible_project_name" optional="show"/>
+          <field name="legacy_visible_document_type" optional="show"/>
+          <field name="legacy_visible_description" optional="hide"/>
           <field name="borrow_user_id" optional="show"/>
           <field name="borrow_date" optional="show"/>
           <field name="expected_return_date" optional="show"/>
+          <field name="legacy_visible_borrower" optional="hide"/>
+          <field name="legacy_visible_returned" optional="hide"/>
           <field name="legacy_document_no" optional="hide"/>
           <field name="legacy_document_state" optional="hide"/>
           <field name="state"/>
@@ -120,6 +125,44 @@
               </page>
               <page string="附件">
                 <field name="attachment_ids" widget="many2many_binary"/>
+              </page>
+              <page string="历史可见信息">
+                <group>
+                  <group string="基础信息">
+                    <field name="legacy_visible_project_name" readonly="1"/>
+                    <field name="legacy_visible_document_type" readonly="1"/>
+                    <field name="legacy_visible_description" readonly="1"/>
+                    <field name="legacy_visible_note" readonly="1"/>
+                    <field name="legacy_visible_creator_name" readonly="1"/>
+                    <field name="legacy_visible_created_time" readonly="1"/>
+                  </group>
+                  <group string="借阅归还" invisible="fact_type != 'document_borrow'">
+                    <field name="legacy_visible_application_date" readonly="1"/>
+                    <field name="legacy_visible_department" readonly="1"/>
+                    <field name="legacy_visible_borrower" readonly="1"/>
+                    <field name="legacy_visible_contact" readonly="1"/>
+                    <field name="legacy_visible_borrow_form" readonly="1"/>
+                    <field name="legacy_visible_borrow_date" readonly="1"/>
+                    <field name="legacy_visible_responsible_person" readonly="1"/>
+                    <field name="legacy_visible_return_request_date" readonly="1"/>
+                    <field name="legacy_visible_return_apply_time" readonly="1"/>
+                    <field name="legacy_visible_returned" readonly="1"/>
+                    <field name="legacy_visible_return_confirm_time" readonly="1"/>
+                    <field name="legacy_visible_return_date" readonly="1"/>
+                  </group>
+                </group>
+                <group string="历史审批与修改" invisible="fact_type != 'document_borrow'">
+                  <group>
+                    <field name="legacy_visible_modifier" readonly="1"/>
+                    <field name="legacy_visible_modified_date" readonly="1"/>
+                    <field name="legacy_visible_modify_note" readonly="1"/>
+                  </group>
+                  <group>
+                    <field name="legacy_visible_reviewer" readonly="1"/>
+                    <field name="legacy_visible_review_time" readonly="1"/>
+                    <field name="legacy_visible_review_opinion" readonly="1"/>
+                  </group>
+                </group>
               </page>
             </notebook>
           </sheet>

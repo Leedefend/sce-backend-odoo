@@ -5,13 +5,14 @@ from __future__ import annotations
 
 import gzip
 import json
+import os
 import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 
-INPUT = Path("/tmp/scbs_55_old_live_full_rows_seq042_进项上报.json.gz")
+INPUT = Path(os.getenv("SCBS55_INPUT_INVOICE_SOURCE_PATH", "/tmp/scbs_55_old_live_full_rows_seq042_进项上报.json.gz"))
 SURFACE = "online_old_scbs:C_JXXP_ZYFPJJD:list892"
 TABLE = "C_JXXP_ZYFPJJD"
 LABELS = [
@@ -35,6 +36,18 @@ def parse_date(value: object):
         return datetime.strptime(text[:10], "%Y-%m-%d").date()
     except ValueError:
         return False
+
+
+def parse_datetime(value: object):
+    text = clean(value)
+    if not text:
+        return False
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d"):
+        try:
+            return datetime.strptime(text[:19] if "%H" in fmt else text[:10], fmt)
+        except ValueError:
+            continue
+    return False
 
 
 def amount(value: object) -> float:
@@ -160,6 +173,9 @@ def import_rows() -> dict[str, Any]:
             "document_date": parse_date(row.get("DJRQ") or row.get("KPRQ$C_JXXP_ZYFPJJD_CB") or row.get("LRSJ")),
             "legacy_state": clean(row.get("DJZT")),
             "invoice_type": clean(row.get("FPLX$C_JXXP_ZYFPJJD_CB") or row.get("FPLX")),
+            "invoice_no": clean(row.get("FPHM$C_JXXP_ZYFPJJD_CB")),
+            "invoice_company_type": clean(row.get("D_SCBSJS_FPGSLX$C_JXXP_ZYFPJJD_CB") or row.get("D_SCBSJS_FPGSLX")),
+            "push_result": clean(row.get("TSJG")),
             "project_id": project.id,
             "legacy_project_id": clean(row.get("XMID")),
             "legacy_project_name": clean(row.get("XMMC")),
@@ -170,6 +186,8 @@ def import_rows() -> dict[str, Any]:
             "source_tax_amount": amount(row.get("JXSE$C_JXXP_ZYFPJJD_CB")),
             "source_amount_field": "HJJE$C_JXXP_ZYFPJJD_CB",
             "attachment_ref": attachment_refs(row),
+            "creator_name": clean(row.get("LRR")),
+            "created_time": parse_datetime(row.get("LRSJ")),
             "note": "SCBS55 old visible surface mirror: %s; header=%s; attachment=%s; invoice_note=%s"
             % (
                 SURFACE,

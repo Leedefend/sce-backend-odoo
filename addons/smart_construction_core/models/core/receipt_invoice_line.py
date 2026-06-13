@@ -78,6 +78,12 @@ class ReceiptInvoiceLine(models.Model):
     import_batch = fields.Char(string="导入批次", copy=False)
     active = fields.Boolean("有效", default=True)
     attachment_count = fields.Integer(string="附件数量", compute="_compute_attachment_count")
+    visible_attachment_count = fields.Integer(
+        string="附件",
+        compute="_compute_visible_attachment_count",
+        store=True,
+        readonly=True,
+    )
 
     @api.constrains("request_id", "invoice_amount", "current_receipt_amount", "active", "import_batch")
     def _check_manual_receipt_invoice_amounts(self):
@@ -106,7 +112,7 @@ class ReceiptInvoiceLine(models.Model):
             if float_compare(current_total or 0.0, rec.request_id.amount or 0.0, precision_rounding=rounding) == 1:
                 raise UserError("收款发票明细的本次收款合计不能超过收款申请金额。")
 
-    def _compute_attachment_count(self):
+    def _attachment_counts_by_id(self):
         grouped = {}
         if self.ids:
             data = self.env["ir.attachment"].sudo().read_group(
@@ -115,8 +121,18 @@ class ReceiptInvoiceLine(models.Model):
                 ["res_id"],
             )
             grouped = {int(row["res_id"]): int(row.get("__count", row.get("res_id_count", 0))) for row in data}
+        return grouped
+
+    def _compute_attachment_count(self):
+        grouped = self._attachment_counts_by_id()
         for rec in self:
             rec.attachment_count = grouped.get(rec.id, 0)
+
+    @api.depends("legacy_invoice_line_id", "legacy_receipt_id", "legacy_pid", "legacy_file_bill_id")
+    def _compute_visible_attachment_count(self):
+        grouped = self._attachment_counts_by_id()
+        for rec in self:
+            rec.visible_attachment_count = grouped.get(rec.id, 0)
 
     def action_open_attachments(self):
         self.ensure_one()

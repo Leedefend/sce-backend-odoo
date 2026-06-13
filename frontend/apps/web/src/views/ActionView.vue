@@ -527,6 +527,36 @@
       :title="vm.hud?.title || 'View Context'"
       :entries="vm.hud?.entries || []"
     />
+    <div
+      v-if="businessCategoryCreatePickerVisible"
+      class="business-category-picker-backdrop"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="business-category-picker-title"
+      @click.self="closeBusinessCategoryCreatePicker"
+    >
+      <section class="business-category-picker">
+        <header class="business-category-picker-head">
+          <div>
+            <h3 id="business-category-picker-title">选择办理类型</h3>
+            <p>{{ actionMetaName || vm.page.title || '新建业务' }}</p>
+          </div>
+          <button class="business-category-picker-close" type="button" aria-label="关闭" @click="closeBusinessCategoryCreatePicker">×</button>
+        </header>
+        <div class="business-category-picker-list">
+          <button
+            v-for="option in businessCategoryCreateOptions"
+            :key="option.code"
+            class="business-category-picker-option"
+            type="button"
+            @click="openCreateRecordWithBusinessCategory(option.code)"
+          >
+            <span>{{ option.label }}</span>
+            <small>{{ option.code }}</small>
+          </button>
+        </div>
+      </section>
+    </div>
   </section>
 </template>
 
@@ -1050,6 +1080,12 @@ type ContractActionGroupRaw = {
   overflow_actions?: Array<Record<string, unknown>>;
   overflow_count?: number;
 };
+type BusinessCategoryCreateOption = {
+  code: string;
+  label: string;
+  categoryId?: number;
+  defaultValues: Record<string, unknown>;
+};
 
 function stableActionContractId(value: unknown, fallback: string) {
   const raw = String(value || fallback || '').trim();
@@ -1098,6 +1134,7 @@ const actionId = computed(() => {
   return Number.isFinite(fromQuery) && fromQuery > 0 ? fromQuery : 0;
 });
 const actionMeta = computed(() => session.currentAction);
+const businessCategoryCreatePickerVisible = ref(false);
 const routeSceneLabel = computed(() => String(route.query.scene_label || '').trim());
 const menuId = computed(() => Number(route.query.menu_id ?? 0));
 const keepSceneRoute = computed(() => String(route.name || '').toLowerCase() === 'scene');
@@ -1421,14 +1458,75 @@ const showGlobalEmptyNext = computed(() =>
   }),
 );
 
-async function openCreateRecord() {
+const businessCategoryCreateOptions = computed<BusinessCategoryCreateOption[]>(() => {
+  const meta = actionMeta.value as Record<string, unknown> | null;
+  const rawOptions = Array.isArray(meta?.business_category_options) ? meta.business_category_options : [];
+  const seen = new Set<string>();
+  return rawOptions
+    .map((raw) => {
+      const row = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as Record<string, unknown> : {};
+      const code = String(row.code || '').trim();
+      const label = String(row.label || code || '').trim();
+      const defaultValuesRaw = row.default_values || row.defaultValues;
+      const defaultValues = defaultValuesRaw && typeof defaultValuesRaw === 'object' && !Array.isArray(defaultValuesRaw)
+        ? defaultValuesRaw as Record<string, unknown>
+        : {};
+      const categoryIdRaw = Number(row.category_id || row.categoryId || 0);
+      const categoryId = Number.isFinite(categoryIdRaw) && categoryIdRaw > 0 ? categoryIdRaw : undefined;
+      if (!code || seen.has(code)) return null;
+      seen.add(code);
+      const option: BusinessCategoryCreateOption = { code, label: label || code, defaultValues };
+      if (categoryId) option.categoryId = categoryId;
+      return option;
+    })
+    .filter((row): row is BusinessCategoryCreateOption => Boolean(row));
+});
+
+function closeBusinessCategoryCreatePicker() {
+  businessCategoryCreatePickerVisible.value = false;
+}
+
+function createRouteQueryForBusinessCategory(categoryCode = '') {
+  const code = String(categoryCode || '').trim();
+  const option = code ? businessCategoryCreateOptions.value.find((row) => row.code === code) : undefined;
+  const defaults: Record<string, string> = {};
+  if (option?.categoryId) {
+    defaults.default_business_category_id = String(option.categoryId);
+  }
+  Object.entries(option?.defaultValues || {}).forEach(([key, value]) => {
+    const normalizedKey = String(key || '').trim();
+    if (!normalizedKey || value === undefined || value === null) return;
+    if (Array.isArray(value) || typeof value === 'object') return;
+    defaults[`default_${normalizedKey}`] = String(value);
+  });
+  return resolveCarryQuery(code ? {
+    current_business_category_code: code,
+    default_business_category_code: code,
+    ctx_source: 'business_category_create_picker',
+    ...defaults,
+  } : undefined);
+}
+
+async function openCreateRecordWithBusinessCategory(categoryCode = '') {
   const targetModel = (resolvedModelRef.value || model.value || '').trim();
   if (!targetModel || !canCreateRecord.value) return;
+  closeBusinessCategoryCreatePicker();
   await router.push(buildModelFormRouteTarget({
     model: targetModel,
     id: 'new',
-    query: resolveCarryQuery(),
+    query: createRouteQueryForBusinessCategory(categoryCode),
   }) as never);
+}
+
+async function openCreateRecord() {
+  const targetModel = (resolvedModelRef.value || model.value || '').trim();
+  if (!targetModel || !canCreateRecord.value) return;
+  const existingCategoryCode = String(route.query.default_business_category_code || route.query.current_business_category_code || '').trim();
+  if (!existingCategoryCode && businessCategoryCreateOptions.value.length > 1) {
+    businessCategoryCreatePickerVisible.value = true;
+    return;
+  }
+  await openCreateRecordWithBusinessCategory(existingCategoryCode || businessCategoryCreateOptions.value[0]?.code || '');
 }
 const availableViewModes = computed(() =>
   resolveActionViewAvailableModes({
@@ -2480,7 +2578,11 @@ const {
     buildModelFormRouteTarget,
     resolveCarryQuery,
     extractActionResId,
-    resolveAction,
+    resolveAction: (menuTree, nextActionId, currentAction) => resolveAction(
+      menuTree,
+      nextActionId,
+      { ...(currentAction || {}), menu_id: menuId.value || currentAction?.menu_id },
+    ),
     setActionMeta: (meta: Record<string, unknown>) => {
       session.setActionMeta(meta);
     },
@@ -3424,10 +3526,114 @@ function refreshForProjectContextChange(): void {
 .ledger-overview-card.tone-info { background: var(--sc-app-info-bg); border-color: var(--sc-app-info-border); color: var(--sc-app-info-text); }
 .ledger-overview-card.tone-neutral { background: var(--sc-app-muted-bg); border-color: var(--sc-app-border); color: var(--sc-app-text-secondary); }
 
+.business-category-picker-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.38);
+}
+
+.business-category-picker {
+  width: min(560px, 100%);
+  max-height: min(720px, calc(100vh - 48px));
+  overflow: auto;
+  border: 1px solid var(--sc-app-border);
+  border-radius: var(--sc-component-panel-radius);
+  background: var(--sc-app-panel);
+  box-shadow: var(--sc-semantic-shadow-modal);
+}
+
+.business-category-picker-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid var(--sc-app-border);
+}
+
+.business-category-picker-head h3,
+.business-category-picker-head p {
+  margin: 0;
+}
+
+.business-category-picker-head h3 {
+  color: var(--sc-app-text-primary);
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.business-category-picker-head p {
+  margin-top: 4px;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.business-category-picker-close {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--sc-app-border-strong);
+  border-radius: 999px;
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-secondary);
+  cursor: pointer;
+}
+
+.business-category-picker-list {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.business-category-picker-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: var(--sc-component-control-radius);
+  background: var(--sc-app-muted-bg);
+  color: var(--sc-app-text-primary);
+  padding: 10px 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.business-category-picker-option:hover {
+  border-color: var(--sc-semantic-surface-interactive);
+  background: var(--sc-app-info-bg);
+}
+
+.business-category-picker-option span {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.business-category-picker-option small {
+  color: var(--sc-semantic-text-muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
 @media (max-width: 760px) {
   .focus-strip {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .business-category-picker-backdrop {
+    align-items: flex-end;
+    padding: 12px;
+  }
+
+  .business-category-picker-option {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }
 </style>

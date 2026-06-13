@@ -168,6 +168,7 @@ for index, row in enumerate(rows, start=1):
         "legacy_visible_adjustment_item": clean(row.get("NR$T_KK_SJTHB_CB")),
         "legacy_visible_amount": amount_text(row.get("BCTHS$T_KK_SJTHB_CB")),
         "legacy_visible_note": clean(row.get("BZ") or row.get("BZ$T_KK_SJTHB_CB")),
+        "legacy_visible_attachment": clean(row.get("FJ") or row.get("f_FJ")),
         "creator_legacy_user_id": clean(row.get("LRRID")),
         "creator_name": clean(row.get("LRR")),
         "created_time": parse_dt(row.get("LRSJ")),

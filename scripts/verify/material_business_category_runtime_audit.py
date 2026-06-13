@@ -82,11 +82,13 @@ def _warehouse():
     return env["stock.warehouse"].sudo().search([("company_id", "in", [env.company.id, False])], limit=1)  # noqa: F821
 
 
-def _context_defaults(context):
+def _context_defaults(model_name, context):
+    model_fields = env[model_name]._fields  # noqa: F821
     return {
         key[len("default_") :]: value
         for key, value in (context or {}).items()
         if isinstance(key, str) and key.startswith("default_")
+        and key[len("default_") :] in model_fields
     }
 
 
@@ -105,7 +107,7 @@ def _line_vals(shared, qty_field="qty", price_field=None):
 
 
 def _base_vals(model_name, context, shared):
-    vals = _context_defaults(context)
+    vals = _context_defaults(model_name, context)
     project = shared["project"]
     supplier = shared["supplier"]
     warehouse = shared["warehouse"]

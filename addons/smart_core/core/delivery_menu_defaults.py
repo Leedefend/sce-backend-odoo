@@ -83,6 +83,7 @@ def build_delivery_menu_child(menu: Dict[str, Any]) -> Dict[str, Any] | None:
         "disposition_policy",
         "integration_target",
         "default_business_category_code",
+        "allowed_business_category_codes",
         "required_relationships",
         "locked_data_policy",
         "productization_source",
@@ -92,6 +93,7 @@ def build_delivery_menu_child(menu: Dict[str, Any]) -> Dict[str, Any] | None:
         "integration_action_xmlid",
         "integration_view_modes",
         "integration_entry_target",
+        "integration_model",
     ):
         value = menu.get(key)
         if value not in (None, "", []):

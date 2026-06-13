@@ -74,7 +74,7 @@ env.cr.execute(  # noqa: F821
       expense_type, summary, amount, approved_amount, currency_id,
       legacy_source_model, legacy_source_table, legacy_record_id,
       legacy_document_no, legacy_document_state, creator_legacy_user_id, creator_name, created_time,
-      note, active,
+      legacy_visible_attachment, note, active,
       create_uid, create_date, write_uid, write_date
     )
     SELECT
@@ -107,6 +107,7 @@ env.cr.execute(  # noqa: F821
       NULLIF(l.creator_legacy_user_id, ''),
       NULLIF(l.creator_name, ''),
       l.created_time,
+      NULLIF(CONCAT_WS(' / ', NULLIF(l.attachment_ref, ''), NULLIF(l.line_attachment_ref, '')), ''),
       CONCAT(
         '[migration:expense_claim] legacy_line_id=', l.legacy_line_id,
         '; legacy_header_id=', COALESCE(l.legacy_header_id, ''),
@@ -151,6 +152,7 @@ env.cr.execute(  # noqa: F821
       creator_legacy_user_id = EXCLUDED.creator_legacy_user_id,
       creator_name = EXCLUDED.creator_name,
       created_time = EXCLUDED.created_time,
+      legacy_visible_attachment = EXCLUDED.legacy_visible_attachment,
       note = EXCLUDED.note,
       active = EXCLUDED.active,
       write_uid = EXCLUDED.write_uid,

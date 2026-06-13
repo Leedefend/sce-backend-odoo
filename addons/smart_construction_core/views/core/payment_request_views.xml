@@ -99,46 +99,6 @@
                                 <field name="is_fully_paid" readonly="1"/>
                             </group>
                         </group>
-                        <group string="公司-承包人责任约束">
-                            <field name="company_contractor_responsibility_summary_id" invisible="1"/>
-                            <field name="company_contractor_responsibility_state" readonly="1"/>
-                            <field name="company_contractor_arrival_unprocessed_amount" readonly="1"/>
-                            <field name="company_contractor_arrival_over_processed_amount" readonly="1"/>
-                            <field name="company_contractor_self_funding_balance" readonly="1"/>
-                            <field name="company_contractor_responsibility_notice" readonly="1" nolabel="1"/>
-                            <button name="action_view_company_contractor_responsibility_summary"
-                                    type="object"
-                                    string="查看责任余额"
-                                    class="btn-secondary"
-                                    invisible="not company_contractor_responsibility_summary_id"/>
-                        </group>
-                        <group string="结算依据">
-                            <field name="settlement_id" domain="[('state','=','approve'), ('project_id','=', project_id)]"/>
-                            <field name="material_settlement_id" domain="[('state','=','confirmed'), ('project_id','=', project_id)]"/>
-                            <field name="settlement_amount_total"
-                                   readonly="1"
-                                   modifiers="{'invisible': [['settlement_id', '=', False]]}"/>
-                            <field name="settlement_paid_amount"
-                                   readonly="1"
-                                   modifiers="{'invisible': [['settlement_id', '=', False]]}"/>
-                            <field name="settlement_amount_payable"
-                                   readonly="1"
-                                   modifiers="{'invisible': [['settlement_id', '=', False]]}"/>
-                            <field name="is_overpay_risk" readonly="1"/>
-                            <field name="settlement_remaining_amount"
-                                   readonly="1"
-                                   modifiers="{'invisible': [['settlement_id', '=', False], ['settlement_amount_insufficient', '=', True]]}"/>
-                            <field name="settlement_remaining_amount"
-                                   string="剩余额度（风险）"
-                                   readonly="1"
-                                   class="text-danger"
-                                   modifiers="{'invisible': [['settlement_id', '=', False], ['settlement_amount_insufficient', '=', False]]}"/>
-                            <field name="settlement_amount_insufficient" invisible="1"/>
-                            <div class="o_form_label text-danger"
-                                 modifiers="{'invisible': [['settlement_amount_insufficient', '=', False]]}">
-                                ⚠ 结算额度不足（剩余额度低于申请金额），系统将提示风险，是否继续办理由审批人判断。
-                            </div>
-                        </group>
                         <group string="收付款账户">
                             <field name="payment_account_name"/>
                             <field name="payment_bank_name"/>
@@ -147,67 +107,149 @@
                             <field name="partner_bank_name" readonly="1"/>
                             <field name="partner_bank_account" readonly="1"/>
                         </group>
-                        <group string="来源匹配">
-                            <field name="settlement_match_blocked" invisible="1"/>
-                            <field name="settlement_match_warn" invisible="1"/>
-                            <field name="settlement_compliance_message" nolabel="1" readonly="1"
-                                   class="text-danger"
-                                   modifiers="{'invisible': [['settlement_match_blocked', '=', False]]}"/>
-                            <field name="settlement_compliance_message" nolabel="1" readonly="1"
-                                   class="text-warning"
-                                   modifiers="{'invisible': [['settlement_match_warn', '=', False]]}"/>
-                            <field name="settlement_compliance_message" nolabel="1" readonly="1"
-                                   modifiers="{'invisible': ['|', ['settlement_match_blocked', '=', True], ['settlement_match_warn', '=', True]]}"/>
-                        </group>
-                        <group>
+                        <group string="办理说明与附件">
                             <field name="note"/>
                             <field name="attachment_ids" widget="many2many_binary"/>
                         </group>
-                        <group string="历史来源">
-                            <field name="legacy_source_table" readonly="1"/>
-                            <field name="legacy_record_id" readonly="1"/>
-                            <field name="legacy_visible_attachment" readonly="1"/>
-                            <field name="creator_legacy_user_id" readonly="1"/>
-                            <field name="creator_name" readonly="1"/>
-                            <field name="created_time" readonly="1"/>
-                        </group>
-                        <group string="付款申请明细">
-                            <field name="outflow_line_ids" nolabel="1">
-                                <tree editable="bottom" create="false" delete="false">
-                                    <field name="sequence" readonly="1"/>
-                                    <field name="source_line_type" readonly="1"/>
-                                    <field name="source_document_no" readonly="1"/>
-                                    <field name="contract_id"/>
-                                    <field name="amount"/>
-                                    <field name="paid_before_amount"/>
-                                    <field name="remaining_amount"/>
-                                    <field name="current_pay_amount"/>
-                                </tree>
-                            </field>
-                        </group>
-                        <group string="收款发票明细">
-                            <field name="receipt_invoice_line_ids" nolabel="1">
-                                <tree editable="bottom" create="false" delete="false">
-                                    <field name="sequence" readonly="1"/>
-                                    <field name="invoice_no"/>
-                                    <field name="invoice_party_name"/>
-                                    <field name="invoice_amount"/>
-                                    <field name="current_receipt_amount"/>
-                                    <field name="invoiced_before_amount"/>
-                                </tree>
-                            </field>
-                        </group>
-                        <group string="付款记录">
-                            <field name="ledger_line_ids" nolabel="1" readonly="1"
-                                   context="{'allow_payment_ledger_create': 1}">
-                                <tree create="false" edit="false" delete="false">
-                                    <field name="paid_at"/>
-                                    <field name="amount"/>
-                                    <field name="ref"/>
-                                    <field name="note"/>
-                                </tree>
-                            </field>
-                        </group>
+                        <notebook>
+                            <page string="责任余额" invisible="not company_contractor_responsibility_summary_id">
+                                <group string="公司-承包人责任约束">
+                                    <field name="company_contractor_responsibility_summary_id" invisible="1"/>
+                                    <field name="company_contractor_responsibility_state" readonly="1"/>
+                                    <field name="company_contractor_arrival_unprocessed_amount" readonly="1"/>
+                                    <field name="company_contractor_arrival_over_processed_amount" readonly="1"/>
+                                    <field name="company_contractor_self_funding_balance" readonly="1"/>
+                                    <field name="company_contractor_responsibility_notice" readonly="1" nolabel="1"/>
+                                    <button name="action_view_company_contractor_responsibility_summary"
+                                            type="object"
+                                            string="查看责任余额"
+                                            class="btn-secondary"
+                                            invisible="not company_contractor_responsibility_summary_id"/>
+                                </group>
+                            </page>
+                            <page string="结算与来源匹配">
+                                <group string="结算依据">
+                                    <field name="settlement_id" domain="[('state','=','approve'), ('project_id','=', project_id)]"/>
+                                    <field name="material_settlement_id" domain="[('state','=','confirmed'), ('project_id','=', project_id)]"/>
+                                    <field name="settlement_amount_total"
+                                           readonly="1"
+                                           modifiers="{'invisible': [['settlement_id', '=', False]]}"/>
+                                    <field name="settlement_paid_amount"
+                                           readonly="1"
+                                           modifiers="{'invisible': [['settlement_id', '=', False]]}"/>
+                                    <field name="settlement_amount_payable"
+                                           readonly="1"
+                                           modifiers="{'invisible': [['settlement_id', '=', False]]}"/>
+                                    <field name="is_overpay_risk" readonly="1"/>
+                                    <field name="settlement_remaining_amount"
+                                           readonly="1"
+                                           modifiers="{'invisible': [['settlement_id', '=', False], ['settlement_amount_insufficient', '=', True]]}"/>
+                                    <field name="settlement_remaining_amount"
+                                           string="剩余额度（风险）"
+                                           readonly="1"
+                                           class="text-danger"
+                                           modifiers="{'invisible': [['settlement_id', '=', False], ['settlement_amount_insufficient', '=', False]]}"/>
+                                    <field name="settlement_amount_insufficient" invisible="1"/>
+                                    <div class="o_form_label text-danger"
+                                         modifiers="{'invisible': [['settlement_amount_insufficient', '=', False]]}">
+                                        结算额度不足（剩余额度低于申请金额），系统将提示风险，是否继续办理由审批人判断。
+                                    </div>
+                                </group>
+                                <group string="来源匹配">
+                                    <field name="settlement_match_blocked" invisible="1"/>
+                                    <field name="settlement_match_warn" invisible="1"/>
+                                    <field name="settlement_compliance_message" nolabel="1" readonly="1"
+                                           class="text-danger"
+                                           modifiers="{'invisible': [['settlement_match_blocked', '=', False]]}"/>
+                                    <field name="settlement_compliance_message" nolabel="1" readonly="1"
+                                           class="text-warning"
+                                           modifiers="{'invisible': [['settlement_match_warn', '=', False]]}"/>
+                                    <field name="settlement_compliance_message" nolabel="1" readonly="1"
+                                           modifiers="{'invisible': ['|', ['settlement_match_blocked', '=', True], ['settlement_match_warn', '=', True]]}"/>
+                                </group>
+                            </page>
+                            <page string="历史办理信息" invisible="not legacy_source_table">
+                                <group>
+                                    <group string="旧系统单据口径">
+                                        <field name="legacy_visible_document_no" readonly="1"/>
+                                        <field name="legacy_document_state" readonly="1"/>
+                                        <field name="legacy_visible_project_name" readonly="1"/>
+                                        <field name="legacy_visible_request_date" readonly="1"/>
+                                        <field name="legacy_visible_writer" readonly="1"/>
+                                    </group>
+                                    <group string="旧系统单位与金额">
+                                        <field name="legacy_visible_payee_unit" readonly="1"/>
+                                        <field name="legacy_visible_actual_payee_unit" readonly="1"/>
+                                        <field name="legacy_visible_payer_unit" readonly="1"/>
+                                        <field name="legacy_visible_request_amount" readonly="1"/>
+                                        <field name="legacy_visible_actual_paid_amount" readonly="1"/>
+                                        <field name="legacy_visible_available_balance" readonly="1"/>
+                                        <field name="legacy_visible_amount_uppercase" readonly="1"/>
+                                    </group>
+                                </group>
+                                <group>
+                                    <group string="旧系统成本与备注">
+                                        <field name="legacy_visible_cost_category_name" readonly="1"/>
+                                        <field name="legacy_visible_cost_type" readonly="1"/>
+                                        <field name="legacy_visible_remark" readonly="1"/>
+                                        <field name="legacy_visible_attachment" readonly="1"/>
+                                    </group>
+                                    <group string="旧系统账户线索">
+                                        <field name="legacy_payment_account_name" readonly="1"/>
+                                        <field name="legacy_payment_account_no" readonly="1"/>
+                                        <field name="legacy_payee_account_name" readonly="1"/>
+                                        <field name="legacy_payee_bank_name" readonly="1"/>
+                                        <field name="legacy_payee_account_no" readonly="1"/>
+                                    </group>
+                                </group>
+                            </page>
+                            <page string="迁移来源" invisible="not legacy_source_table">
+                                <group>
+                                    <field name="legacy_source_table" readonly="1"/>
+                                    <field name="legacy_record_id" readonly="1"/>
+                                    <field name="creator_legacy_user_id" readonly="1"/>
+                                    <field name="creator_name" readonly="1"/>
+                                    <field name="created_time" readonly="1"/>
+                                </group>
+                            </page>
+                            <page string="付款申请明细" invisible="type != 'pay'">
+                                <field name="outflow_line_ids" nolabel="1">
+                                    <tree editable="bottom" create="false" delete="false">
+                                        <field name="sequence" readonly="1"/>
+                                        <field name="source_line_type" readonly="1"/>
+                                        <field name="source_document_no" readonly="1"/>
+                                        <field name="contract_id"/>
+                                        <field name="amount"/>
+                                        <field name="paid_before_amount"/>
+                                        <field name="remaining_amount"/>
+                                        <field name="current_pay_amount"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="收款发票明细" invisible="type != 'receive'">
+                                <field name="receipt_invoice_line_ids" nolabel="1">
+                                    <tree editable="bottom" create="false" delete="false">
+                                        <field name="sequence" readonly="1"/>
+                                        <field name="invoice_no"/>
+                                        <field name="invoice_party_name"/>
+                                        <field name="invoice_amount"/>
+                                        <field name="current_receipt_amount"/>
+                                        <field name="invoiced_before_amount"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="付款记录">
+                                <field name="ledger_line_ids" nolabel="1" readonly="1"
+                                       context="{'allow_payment_ledger_create': 1}">
+                                    <tree create="false" edit="false" delete="false">
+                                        <field name="paid_at"/>
+                                        <field name="amount"/>
+                                        <field name="ref"/>
+                                        <field name="note"/>
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
                     </sheet>
                 </form>
             </field>
@@ -287,6 +329,12 @@
             <field name="name">收款申请</field>
             <field name="res_model">payment.request</field>
             <field name="view_mode">tree,form</field>
+            <field name="view_id" ref="view_payment_request_tree"/>
+            <field name="views" eval="[(ref('view_payment_request_tree'), 'tree'), (ref('view_payment_request_form'), 'form')]"/>
+            <field name="view_ids" eval="[(5, 0, 0),
+                (0, 0, {'view_mode': 'tree', 'view_id': ref('view_payment_request_tree')}),
+                (0, 0, {'view_mode': 'form', 'view_id': ref('view_payment_request_form')})
+            ]"/>
             <field name="search_view_id" ref="view_payment_request_search"/>
             <field name="domain">[('business_category_id.code', '=', 'finance.payment.apply.receive'), ('legacy_source_table', 'not in', ['C_JFHKLR_DELETED', 'C_JFHKLR_ROUTED_OUT'])]</field>
             <field name="context">{'default_type': 'receive', 'default_business_category_code': 'finance.payment.apply.receive', 'search_default_type_receive': 1, 'search_default_group_by_receipt_type': 1, 'search_default_group_by_project_id': 1}</field>

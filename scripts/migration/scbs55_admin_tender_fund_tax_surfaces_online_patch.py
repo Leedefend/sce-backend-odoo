@@ -336,6 +336,7 @@ def vals_for(seq: int, spec: dict[str, Any], row: dict[str, Any], key: str) -> d
             "legacy_visible_company": clean(row.get("SSGS")),
             "legacy_visible_seal_company": clean(row.get("D_JCLY_SYYZGS")),
             "legacy_visible_take_out": clean(row.get("D_JCLY_SFWD")),
+            "legacy_visible_attachment": clean(row.get("f_FJ") or row.get("FJ")),
             "active": True,
         }
     if seq == 15:
