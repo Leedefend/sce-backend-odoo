@@ -24,6 +24,15 @@ class ConstructionContract(models.Model):
     _state_to = ["confirmed"]
     _cancel_state = "cancel"
     _order = "project_id, type, id desc"
+    _rec_names_search = [
+        "name",
+        "subject",
+        "legacy_contract_no",
+        "legacy_external_contract_no",
+        "legacy_document_no",
+        "project_id.name",
+        "partner_id.name",
+    ]
     _sc_delete_guard_blocker_models = (
         "payment.request",
         "sc.contract.event",
@@ -585,6 +594,41 @@ class ConstructionContract(models.Model):
             change_amount = 0.0
             contract.amount_change = change_amount
             contract.amount_final = (contract.amount_total or 0.0) + change_amount
+
+    @api.depends(
+        "name",
+        "subject",
+        "legacy_contract_no",
+        "legacy_external_contract_no",
+        "legacy_document_no",
+        "project_id.display_name",
+        "partner_id.display_name",
+    )
+    def _compute_display_name(self):
+        for contract in self:
+            subject = (contract.subject or "").strip()
+            contract_no = (
+                contract.legacy_contract_no
+                or contract.legacy_external_contract_no
+                or contract.legacy_document_no
+                or ""
+            ).strip()
+            context_parts = [
+                part
+                for part in (
+                    contract.project_id.display_name if contract.project_id else "",
+                    contract.partner_id.display_name if contract.partner_id else "",
+                )
+                if part
+            ]
+            label = subject or contract_no or contract.name or _("合同")
+            suffix_parts = []
+            if contract_no and contract_no != label:
+                suffix_parts.append(contract_no)
+            suffix_parts.extend(context_parts[:2])
+            if contract.name and contract.name not in (label, contract_no):
+                suffix_parts.append(contract.name)
+            contract.display_name = "%s（%s）" % (label, " / ".join(suffix_parts)) if suffix_parts else label
 
     def _expense_contract_category_rule_text(self):
         self.ensure_one()
