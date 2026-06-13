@@ -1961,24 +1961,26 @@ class PageAssembler:
                 form_view = assembled.get("views", {}).get("form", {}) if isinstance(assembled.get("views"), dict) else {}
                 try:
                     form_layout = form_view.get("layout") if isinstance(form_view, dict) else {}
-                    form_fields = self._collect_form_fields(form_layout)
+                    form_fields = self._collect_form_fields(form_layout, fields_map=fields_map)
                     if not form_fields:
                         vcfg = self.su_env["app.view.config"].sudo().search([("model", "=", model), ("view_type", "=", "form")], limit=1)
                         form_layout = (vcfg.arch_parsed or {}).get("layout") or {}
-                        form_fields = self._collect_form_fields(form_layout)
+                        form_fields = self._collect_form_fields(form_layout, fields_map=fields_map)
                     if not form_fields:
                         form_fields = list(fields_map.keys())[:20]
                 except Exception:
                     # 兜底：取前 20 个字段，避免一次性 read 全量大字段
                     form_fields = list(fields_map.keys())[:20]
+                form_fields = [name for name in form_fields if name in fields_map]
                 out["record"] = rec.read(form_fields)[0] if form_fields else {"id": rec.id, "display_name": rec.display_name}
                 out["form_layout"] = form_layout
         return out
 
-    def _collect_form_fields(self, layout):
+    def _collect_form_fields(self, layout, fields_map=None):
         """
         从 form 布局树中递归收集字段名，用于决定 read() 的字段集合。
         """
+        fields_map = fields_map if isinstance(fields_map, dict) else {}
         names = []
 
         def walk(node):
@@ -1990,8 +1992,11 @@ class PageAssembler:
                 return
             if node.get('type') == 'field':
                 n = node.get('name')
-                if n and n not in names:
+                if n and (not fields_map or n in fields_map) and n not in names:
                     names.append(n)
+                descriptor = fields_map.get(n) if isinstance(fields_map.get(n), dict) else {}
+                if descriptor.get("type") in {"one2many", "many2many"}:
+                    return
             for ch in node.get('children', []) or []:
                 walk(ch)
 

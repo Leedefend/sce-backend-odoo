@@ -295,6 +295,11 @@ class UiContractV2Handler(BaseIntentHandler):
             model=str(model or "").strip(),
             view_type=str(view_type or "").strip().lower(),
         )
+        self._inject_standard_submit_header_button(
+            source_contract,
+            model=str(model or "").strip(),
+            view_type=str(view_type or "").strip().lower(),
+        )
         self._inject_collaboration_contract(
             source_contract,
             model=str(model or "").strip(),
@@ -309,6 +314,31 @@ class UiContractV2Handler(BaseIntentHandler):
         )
         if hydrated_record:
             source_contract["record"] = hydrated_record
+        self._inject_record_business_category_context(
+            source_contract,
+            model=str(model or "").strip(),
+            record_id=params.get("record_id") or params.get("recordId") or ui_params.get("record_id") or ui_params.get("recordId"),
+        )
+        hook_payload = call_extension_hook_first(
+            self.env,
+            "smart_core_finalize_projected_contract_data",
+            self.env,
+            source_contract,
+            {
+                "view_type": str(view_type or "").strip().lower(),
+                "subject": "ui.contract.v2",
+                "versions": {},
+                "meta": {
+                    "intent": self.INTENT_TYPE,
+                    "client_type": client_type,
+                    "delivery_profile": delivery_profile,
+                    "params": dict(params),
+                    "ui_params": dict(ui_params),
+                },
+            },
+        )
+        if isinstance(hook_payload, dict):
+            source_contract = dict(hook_payload)
         contract_v2 = assemble_unified_page_contract_v2(
             source_contract,
             source_type="ui.contract",
@@ -316,7 +346,28 @@ class UiContractV2Handler(BaseIntentHandler):
             request_id=str(request_id),
         )
         self._apply_field_policies_to_v2_status(contract_v2, source_contract)
+        self._ensure_native_layout_widget_status_visible(contract_v2)
         self._apply_legacy_visible_list_layout(contract_v2, source_contract)
+        hook_payload = call_extension_hook_first(
+            self.env,
+            "smart_core_finalize_unified_page_contract_v2",
+            self.env,
+            contract_v2,
+            {
+                "source_contract": source_contract,
+                "view_type": str(view_type or "").strip().lower(),
+                "subject": "ui.contract.v2",
+                "meta": {
+                    "intent": self.INTENT_TYPE,
+                    "client_type": client_type,
+                    "delivery_profile": delivery_profile,
+                    "params": dict(params),
+                    "ui_params": dict(ui_params),
+                },
+            },
+        )
+        if isinstance(hook_payload, dict):
+            contract_v2 = dict(hook_payload)
         if isinstance(source_contract.get("delete_policy"), dict):
             contract_v2["delete_policy"] = dict(source_contract.get("delete_policy") or {})
         contract_v2 = trim_unified_page_contract_v2(
@@ -464,6 +515,83 @@ class UiContractV2Handler(BaseIntentHandler):
                 rows = [row]
             for row in rows:
                 apply_policy(row, policy)
+        status_contract["widgetStatus"] = widget_status
+        contract_v2["statusContract"] = status_contract
+
+    def _ensure_native_layout_widget_status_visible(self, contract_v2: dict[str, Any]) -> None:
+        layout_contract = contract_v2.get("layoutContract") if isinstance(contract_v2.get("layoutContract"), dict) else {}
+        container_tree = layout_contract.get("containerTree") if isinstance(layout_contract.get("containerTree"), list) else []
+        if not container_tree:
+            return
+
+        def modifier_true(value: Any) -> bool:
+            if value is True or value == 1:
+                return True
+            if isinstance(value, str):
+                return value.strip().lower() in {"1", "true", "yes"}
+            return False
+
+        def node_invisible(node: dict[str, Any]) -> bool:
+            if modifier_true(node.get("invisible")):
+                return True
+            attributes = node.get("attributes") if isinstance(node.get("attributes"), dict) else {}
+            modifiers = node.get("modifiers") if isinstance(node.get("modifiers"), dict) else {}
+            attribute_modifiers = attributes.get("modifiers") if isinstance(attributes.get("modifiers"), dict) else {}
+            return any(
+                modifier_true(value)
+                for value in (
+                    attributes.get("invisible"),
+                    modifiers.get("invisible"),
+                    attribute_modifiers.get("invisible"),
+                )
+            )
+
+        visible_widget_ids: set[str] = set()
+
+        def walk(rows: list[Any]) -> None:
+            for row in rows:
+                if not isinstance(row, dict):
+                    continue
+                node_type = str(row.get("type") or row.get("containerType") or "").strip().lower()
+                if node_type == "field" and not node_invisible(row):
+                    widget_id = str(row.get("widgetId") or "").strip()
+                    if not widget_id:
+                        field_name = str(row.get("name") or row.get("field") or "").strip()
+                        widget_id = f"field.{field_name}" if field_name else ""
+                    if widget_id:
+                        visible_widget_ids.add(widget_id)
+                for key in ("children", "pages", "tabs", "nodes", "items"):
+                    children = row.get(key)
+                    if isinstance(children, list):
+                        walk(children)
+
+        walk(container_tree)
+        if not visible_widget_ids:
+            return
+        status_contract = contract_v2.get("statusContract") if isinstance(contract_v2.get("statusContract"), dict) else {}
+        widget_status = status_contract.get("widgetStatus") if isinstance(status_contract.get("widgetStatus"), list) else []
+        seen: set[str] = set()
+        for row in widget_status:
+            if not isinstance(row, dict):
+                continue
+            widget_id = str(row.get("widgetId") or "").strip()
+            if widget_id not in visible_widget_ids:
+                continue
+            seen.add(widget_id)
+            row["visible"] = True
+            if row.get("readonly") is True:
+                row["auth"] = "read"
+            elif row.get("disabled") is not True:
+                row["auth"] = "edit"
+        for widget_id in sorted(visible_widget_ids - seen):
+            widget_status.append({
+                "widgetId": widget_id,
+                "visible": True,
+                "readonly": False,
+                "required": False,
+                "disabled": False,
+                "auth": "edit",
+            })
         status_contract["widgetStatus"] = widget_status
         contract_v2["statusContract"] = status_contract
 
@@ -880,7 +1008,12 @@ class UiContractV2Handler(BaseIntentHandler):
             meta = descriptor(name)
             return str(meta.get("relation") or getattr(model_fields.get(name), "comodel_name", "") or "").strip()
 
+        form_structure_field_labels: dict[str, str] = {}
+
         def field_label(name: str) -> str:
+            override = form_structure_field_labels.get(str(name or "").strip())
+            if override:
+                return override
             meta = descriptor(name)
             return str(meta.get("string") or getattr(model_fields.get(name), "string", "") or name).strip()
 
@@ -983,6 +1116,13 @@ class UiContractV2Handler(BaseIntentHandler):
             source_contract,
             model=model,
             view_type=view_type,
+        )
+        form_structure_field_labels.update(
+            {
+                str(key or "").strip(): str(value or "").strip()
+                for key, value in (form_structure_governance.get("field_labels") or {}).items()
+                if str(key or "").strip() and str(value or "").strip()
+            }
         )
         form_structure_governed_field_names.update(
             str(item or "").strip()
@@ -1134,6 +1274,7 @@ class UiContractV2Handler(BaseIntentHandler):
             business_contracts = []
         legacy_overlay = bool(view_trace.get("legacy_field_policy_overlay") or view_governance.get("legacy_field_policy_overlay"))
         field_names: list[str] = []
+        field_labels: dict[str, str] = {}
         section_titles: list[str] = []
         config_summaries: list[dict[str, Any]] = []
         try:
@@ -1174,6 +1315,9 @@ class UiContractV2Handler(BaseIntentHandler):
                     hidden_field_names.remove(name)
                 if name and name not in field_names:
                     field_names.append(name)
+                label = str(row.get("string") or row.get("label") or "").strip() if isinstance(row, dict) else ""
+                if name and label:
+                    field_labels[name] = label
             sections = form_spec.get("sections") if isinstance(form_spec.get("sections"), list) else []
             for row in sections:
                 if isinstance(row, dict):
@@ -1191,6 +1335,7 @@ class UiContractV2Handler(BaseIntentHandler):
             "business_config_contracts": [dict(item) for item in business_contracts if isinstance(item, dict)] or config_summaries,
             "legacy_field_policy_overlay": legacy_overlay,
             "field_names": field_names,
+            "field_labels": field_labels,
             "section_titles": section_titles,
         }
 
@@ -1588,7 +1733,7 @@ class UiContractV2Handler(BaseIntentHandler):
             label = str(row.get("label") or row.get("string") or "").strip()
             if label:
                 view_column_labels[name] = label
-        labels = {**labels, **{name: label_for(name) for name in columns}, **view_column_labels, **override_labels}
+        labels = {**{name: label_for(name) for name in columns}, **labels, **view_column_labels, **override_labels}
         deduped_columns: list[str] = []
         preserve_duplicate_labels = bool(columns) and all(str(name or "").startswith("legacy_visible_") for name in columns)
         seen_keys: set[str] = set()
@@ -1904,6 +2049,111 @@ class UiContractV2Handler(BaseIntentHandler):
             "runtime_carrier": "ui.contract.v2.collaboration",
         }
         source_contract["collaboration"] = collaboration
+
+    def _inject_standard_submit_header_button(self, source_contract: dict[str, Any], *, model: str, view_type: str) -> None:
+        try:
+            has_model = bool(model and model in self.env)
+        except Exception:
+            return
+        if view_type != "form" or not has_model:
+            return
+        try:
+            model_obj = self.env[model]
+            if getattr(model_obj, "_transient", False):
+                return
+        except Exception:
+            _logger.debug("ui.contract.v2 submit header injection skipped: model inspect failed", exc_info=True)
+            return
+        method = next(
+            (
+                name
+                for name in ("action_submit", "action_submit_progress", "action_confirm", "button_confirm")
+                if hasattr(model_obj, name)
+            ),
+            "",
+        )
+        if not method:
+            return
+        form = _ensure_source_form_contract(source_contract)
+        header_buttons = form.get("header_buttons") if isinstance(form.get("header_buttons"), list) else []
+        for button in header_buttons:
+            if not isinstance(button, dict):
+                continue
+            payload = button.get("payload") if isinstance(button.get("payload"), dict) else {}
+            existing_method = str(button.get("name") or payload.get("method") or "").strip()
+            if existing_method == method:
+                form["header_buttons"] = header_buttons
+                return
+        header_buttons.append({
+            "name": method,
+            "label": "提交",
+            "kind": "object",
+            "level": "header",
+            "selection": "none",
+            "visible_profiles": ["create", "edit", "readonly"],
+            "intent": "execute",
+            "action_safety": {
+                "classification": "danger",
+                "requires_confirm": False,
+                "confirm_message": "确认提交？",
+                "reason_code": "STANDARD_SUBMIT_ACTION",
+            },
+            "payload": {
+                "method": method,
+                "type": "object",
+                "url": "",
+                "confirm": "",
+                "groups_xmlids": [],
+            },
+            "source_authority": {
+                "kind": "ui_contract_v2_standard_submit_projection",
+                "authorities": ["odoo.model.method", "ir.model"],
+                "projection_only": True,
+                "rebuildable": True,
+                "no_business_fact_authority": True,
+                "runtime_carrier": "ui.contract.v2.standard_submit",
+            },
+        })
+        form["header_buttons"] = header_buttons
+
+    def _inject_record_business_category_context(self, source_contract: dict[str, Any], *, model: str, record_id: Any) -> None:
+        if not model or model not in self.env:
+            return
+        record_id_int, _record_id_error = parse_positive_int(record_id, allow_empty=True)
+        record_id_int = int(record_id_int or 0)
+        if record_id_int <= 0:
+            return
+        Model = self.env[model]
+        if "business_category_id" not in getattr(Model, "_fields", {}):
+            return
+        try:
+            record = Model.browse(record_id_int).exists()
+            category = record.business_category_id if record else None
+        except Exception:
+            _logger.debug("ui.contract.v2 business category context injection skipped", exc_info=True)
+            return
+        if not category:
+            return
+        code = str(getattr(category, "code", "") or "").strip()
+        label = str(getattr(category, "name", "") or getattr(category, "display_name", "") or code).strip()
+        if not code and not label:
+            return
+        context = source_contract.get("context") if isinstance(source_contract.get("context"), dict) else {}
+        merged_context = dict(context)
+        if code:
+            merged_context.setdefault("current_business_category_code", code)
+            merged_context.setdefault("default_business_category_code", code)
+        if label:
+            merged_context.setdefault("current_business_category_label", label)
+            merged_context.setdefault("default_business_category_label", label)
+        source_contract["context"] = merged_context
+        head = source_contract.get("head") if isinstance(source_contract.get("head"), dict) else {}
+        head = dict(head)
+        head_context = head.get("context") if isinstance(head.get("context"), dict) else {}
+        merged_head_context = dict(head_context)
+        merged_head_context.update(merged_context)
+        head["context"] = merged_head_context
+        source_contract["head"] = head
 
     def _hydrate_record_snapshot(
         self,
@@ -2249,7 +2499,7 @@ def _standard_chatter_actions(*, message_capable: bool, activity_capable: bool) 
         actions.extend([
             {
                 "key": "chatter_send_message",
-                "label": "发送消息",
+                "label": "记录沟通",
                 "kind": "chatter",
                 "level": "chatter",
                 "selection": "none",

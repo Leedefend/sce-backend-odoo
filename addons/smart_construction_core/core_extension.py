@@ -1,11 +1,206 @@
 # -*- coding: utf-8 -*-
 import logging
+from copy import deepcopy
 from typing import Any, Dict, List
 
 from odoo import fields
 from odoo.exceptions import AccessError
 
 _logger = logging.getLogger(__name__)
+
+
+def _sc_text(value) -> str:
+    return str(value or "").strip()
+
+
+def _sc_field_code(node: dict) -> str:
+    return _sc_text(node.get("fieldCode") or node.get("name") or node.get("field"))
+
+
+def _sc_set_project_label(node: dict, field_name: str, label: str) -> None:
+    code = _sc_field_code(node)
+    if code != field_name:
+        return
+    node["label"] = label
+    node["string"] = label
+    field_info = node.get("fieldInfo") if isinstance(node.get("fieldInfo"), dict) else {}
+    field_info["label"] = label
+    field_info["string"] = label
+    node["fieldInfo"] = field_info
+    if isinstance(node.get("field_info"), dict):
+        node["field_info"]["label"] = label
+        node["field_info"]["string"] = label
+    component_config = node.get("componentConfig") if isinstance(node.get("componentConfig"), dict) else {}
+    relation_entry = component_config.get("relationEntry") if isinstance(component_config.get("relationEntry"), dict) else {}
+    ui_labels = relation_entry.get("ui_labels") if isinstance(relation_entry.get("ui_labels"), dict) else {}
+    if ui_labels:
+        ui_labels["dialog_title"] = "%s：搜索更多" % label
+        relation_entry["ui_labels"] = ui_labels
+        component_config["relationEntry"] = relation_entry
+        node["componentConfig"] = component_config
+
+
+def _sc_prune_and_label_project_nodes(value):
+    if isinstance(value, list):
+        out = []
+        for item in value:
+            pruned = _sc_prune_and_label_project_nodes(item)
+            if pruned is not None:
+                out.append(pruned)
+        return out
+    if not isinstance(value, dict):
+        return value
+    if _sc_field_code(value) == "user_id" or _sc_text(value.get("widgetId")) == "field.user_id":
+        return None
+    node = dict(value)
+    for field_name, label in {
+        "partner_id": "业主单位",
+        "owner_id": "业主单位",
+        "manager_id": "项目负责人",
+        "responsibility_ids": "项目责任分工",
+        "collaborator_ids": "项目协作成员",
+    }.items():
+        _sc_set_project_label(node, field_name, label)
+    for key in ("children", "tabs", "pages", "nodes", "items", "widgetList"):
+        if isinstance(node.get(key), list):
+            node[key] = _sc_prune_and_label_project_nodes(node[key])
+    return node
+
+
+def _sc_project_field_widget(field_name: str, label: str, field_type: str, *, relation: str = "") -> dict:
+    config = {"fieldType": field_type}
+    if relation:
+        config["relation"] = relation
+    return {
+        "widgetId": "field.%s" % field_name,
+        "widgetType": "table" if field_type in {"one2many", "many2many"} else "select",
+        "fieldCode": field_name,
+        "label": label,
+        "span": 12,
+        "componentKey": "sc.table.data" if field_type in {"one2many", "many2many"} else "sc.select.remote",
+        "capabilities": [],
+        "componentConfig": config,
+    }
+
+
+def _sc_project_field_node(field_name: str, label: str, field_type: str, *, relation: str = "") -> dict:
+    widget = _sc_project_field_widget(field_name, label, field_type, relation=relation)
+    return {
+        "type": "field",
+        "name": field_name,
+        "string": label,
+        "label": label,
+        "fieldInfo": {
+            "name": field_name,
+            "label": label,
+            "string": label,
+            "type": field_type,
+            "relation": relation,
+            "widget": widget["widgetType"],
+        },
+        "field_info": {
+            "name": field_name,
+            "label": label,
+            "string": label,
+            "type": field_type,
+            "relation": relation,
+            "widget": widget["widgetType"],
+        },
+        "widget": widget["widgetType"],
+        "componentKey": widget["componentKey"],
+        "componentConfig": deepcopy(widget["componentConfig"]),
+        "widgetId": widget["widgetId"],
+    }
+
+
+def _sc_node_has_field(value, field_name: str) -> bool:
+    if isinstance(value, list):
+        return any(_sc_node_has_field(item, field_name) for item in value)
+    if not isinstance(value, dict):
+        return False
+    if _sc_field_code(value) == field_name:
+        return True
+    return any(_sc_node_has_field(value.get(key), field_name) for key in ("children", "tabs", "pages", "nodes", "items", "widgetList"))
+
+
+def _sc_append_project_responsibility_group(contract: dict, *, include_collaborators: bool) -> None:
+    layout = contract.get("layoutContract") if isinstance(contract.get("layoutContract"), dict) else {}
+    tree = layout.get("containerTree") if isinstance(layout.get("containerTree"), list) else []
+    if not tree:
+        return
+    children = []
+    if not _sc_node_has_field(tree, "responsibility_ids"):
+        children.append(_sc_project_field_node("responsibility_ids", "项目责任分工", "one2many", relation="project.responsibility"))
+    if include_collaborators and not _sc_node_has_field(tree, "collaborator_ids"):
+        children.append(_sc_project_field_node("collaborator_ids", "项目协作成员", "many2many", relation="res.users"))
+    if not children:
+        return
+    group = {
+        "type": "group",
+        "name": "sc_project_responsibility_collaboration",
+        "containerId": "sc_project_responsibility_collaboration",
+        "containerType": "group",
+        "string": "项目责任与协作",
+        "label": "项目责任与协作",
+        "children": children,
+        "widgetList": [
+            _sc_project_field_widget("responsibility_ids", "项目责任分工", "one2many", relation="project.responsibility"),
+            *(
+                [_sc_project_field_widget("collaborator_ids", "项目协作成员", "many2many", relation="res.users")]
+                if include_collaborators else []
+            ),
+        ],
+    }
+    target = tree[0] if isinstance(tree[0], dict) else None
+    if target is None:
+        return
+    if isinstance(target.get("children"), list):
+        target["children"].append(group)
+    else:
+        tree.append(group)
+    layout["containerTree"] = tree
+    registry = layout.get("componentRegistry") if isinstance(layout.get("componentRegistry"), dict) else {}
+    registry["sc.table.data"] = {"componentKey": "sc.table.data"}
+    layout["componentRegistry"] = registry
+    contract["layoutContract"] = layout
+    status = contract.get("statusContract") if isinstance(contract.get("statusContract"), dict) else {}
+    widget_status = [row for row in status.get("widgetStatus", []) if isinstance(row, dict) and _sc_text(row.get("widgetId")) != "field.user_id"]
+    field_names = ["responsibility_ids"]
+    if include_collaborators:
+        field_names.append("collaborator_ids")
+    for field_name in field_names:
+        widget_id = "field.%s" % field_name
+        if not any(_sc_text(row.get("widgetId")) == widget_id for row in widget_status):
+            widget_status.append({"widgetId": widget_id, "visible": True, "readonly": False, "required": False, "disabled": False, "auth": "edit"})
+    status["widgetStatus"] = widget_status
+    contract["statusContract"] = status
+
+
+def smart_core_finalize_unified_page_contract_v2(env, contract, context):
+    del env
+    if not isinstance(contract, dict):
+        return None
+    source = context.get("source_contract") if isinstance(context, dict) and isinstance(context.get("source_contract"), dict) else {}
+    head = source.get("head") if isinstance(source.get("head"), dict) else {}
+    model = _sc_text(source.get("model") or head.get("model"))
+    view_type = _sc_text(source.get("view_type") or head.get("view_type") or (context or {}).get("view_type")).lower()
+    render_profile = _sc_text(source.get("render_profile") or head.get("render_profile") or (((context or {}).get("meta") or {}).get("params") or {}).get("render_profile")).lower()
+    if model != "project.project" or view_type != "form":
+        return None
+    out = deepcopy(contract)
+    layout = out.get("layoutContract") if isinstance(out.get("layoutContract"), dict) else {}
+    tree = layout.get("containerTree") if isinstance(layout.get("containerTree"), list) else []
+    layout["containerTree"] = _sc_prune_and_label_project_nodes(tree)
+    out["layoutContract"] = layout
+    status = out.get("statusContract") if isinstance(out.get("statusContract"), dict) else {}
+    if isinstance(status.get("widgetStatus"), list):
+        status["widgetStatus"] = [
+            row for row in status["widgetStatus"]
+            if not (isinstance(row, dict) and _sc_text(row.get("widgetId")) == "field.user_id")
+        ]
+        out["statusContract"] = status
+    _sc_append_project_responsibility_group(out, include_collaborators=render_profile != "create")
+    return out
 
 
 ROLE_SURFACE_OVERRIDES = {
@@ -1680,10 +1875,23 @@ def _user_confirmed_formal_list_action_ids(env):
 
 
 def smart_core_finalize_projected_contract_data(env, data, context):
-    del context
     if not isinstance(data, dict):
         return None
     head = data.get("head") if isinstance(data.get("head"), dict) else {}
+    model = str(data.get("model") or head.get("model") or "").strip()
+    view_type = str(data.get("view_type") or head.get("view_type") or (context or {}).get("view_type") or "").strip().lower()
+    if model == "project.project" and (view_type == "form" or isinstance((data.get("views") or {}).get("form") if isinstance(data.get("views"), dict) else None, dict)):
+        projected = dict(data)
+        try:
+            from odoo.addons.smart_construction_core.services.contract_governance_overrides import (
+                _apply_project_ledger_form_surface_governance,
+            )
+
+            _apply_project_ledger_form_surface_governance(projected, "user")
+            return projected
+        except Exception:
+            _logger.exception("Failed to finalize project form contract surface")
+            return None
     try:
         action_id = int(data.get("action_id") or head.get("action_id") or 0)
     except Exception:

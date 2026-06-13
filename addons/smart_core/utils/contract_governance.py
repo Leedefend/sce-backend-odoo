@@ -291,19 +291,25 @@ _PROJECT_TASK_FIELD_LABELS = {
 _PROJECT_LIST_COLUMNS = [
     "name",
     "project_code",
+    "owner_id",
+    "sc_partner_display_name",
     "operation_strategy",
-    "business_nature",
     "lifecycle_state",
-    "manager_id",
+    "user_id",
+    "contract_amount",
+    "dashboard_progress_rate",
     "write_date",
 ]
 _PROJECT_LIST_COLUMN_LABELS = {
     "name": "名称",
     "project_code": "项目编号",
+    "owner_id": "业主单位",
+    "sc_partner_display_name": "关联单位",
     "operation_strategy": "经营方式",
-    "business_nature": "经营性质",
     "lifecycle_state": "项目状态",
-    "manager_id": "项目经理",
+    "user_id": "项目负责人",
+    "contract_amount": "合同总额",
+    "dashboard_progress_rate": "进度(%)",
     "write_date": "更新时间",
 }
 _BUSINESS_FIELD_LABEL_OVERRIDES = {
@@ -2100,7 +2106,9 @@ def _govern_standard_list_for_user(
     # business orchestration was applied to the native tree block, that
     # orchestrated order is the user-facing order and standard governance only
     # appends its defaults.
-    if has_orchestrated_tree and native_columns:
+    if strict_columns:
+        selected = [name for name in columns_order if name in fields_map]
+    elif has_orchestrated_tree and native_columns:
         selected = [name for name in native_columns if name in fields_map]
         for name in columns_order:
             if name in fields_map and name not in selected:
@@ -2122,7 +2130,7 @@ def _govern_standard_list_for_user(
         schema = dict(native_schema_by_name.get(name) or {})
         schema["name"] = name
         schema["label"] = _field_label(name)
-        schema["string"] = schema.get("string") or field.get("string") or schema["label"]
+        schema["string"] = schema["label"]
         schema["type"] = schema.get("type") or field.get("type") or "char"
         schema["widget"] = schema.get("widget") or field.get("type") or "char"
         if model_name == "project.project" and name == "is_favorite":
@@ -4429,6 +4437,7 @@ def apply_project_form_domain_override(data: dict, contract_mode: str) -> None:
             row_primary="name",
             row_secondary="",
             status_field="lifecycle_state",
+            strict_columns=True,
         )
         _govern_standard_list_for_user(
             data,
@@ -4496,13 +4505,6 @@ def apply_project_form_domain_override(data: dict, contract_mode: str) -> None:
         _govern_enterprise_user_form_for_user(data)
     if contract_mode == "user" and _is_project_kanban_contract(data):
         _govern_project_kanban_contract_for_user(data)
-
-
-register_contract_domain_override(
-    "smart_core_default_contract_domain_governance",
-    apply_project_form_domain_override,
-    priority=50,
-)
 
 
 def _apply_sanitize_governance(data: dict, contract_mode: str) -> None:

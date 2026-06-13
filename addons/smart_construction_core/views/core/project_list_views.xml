@@ -5,16 +5,20 @@
         <field name="model">project.project</field>
         <field name="arch" type="xml">
             <tree string="项目台账" default_order="write_date desc, id desc">
-                <field name="sc_partner_display_name" string="关联单位" optional="show"/>
                 <field name="name"/>
                 <field name="project_code" string="项目编号"/>
+                <field name="owner_id" string="业主单位" optional="show"/>
+                <field name="sc_partner_display_name" string="关联单位" optional="show"/>
                 <field name="operation_strategy" string="经营方式"/>
                 <field name="business_nature" string="经营性质" optional="show"/>
                 <field name="lifecycle_state" string="项目状态"/>
-                <field name="manager_id" string="项目经理"/>
-                <field name="legacy_source_created_by" string="原始录入人"/>
-                <field name="legacy_source_created_at" string="录入时间"/>
-                <field name="write_date" string="更新时间"/>
+                <field name="user_id" string="项目负责人" optional="show"/>
+                <field name="manager_id" string="项目经理" optional="hide"/>
+                <field name="contract_amount" string="合同总额" optional="show"/>
+                <field name="dashboard_progress_rate" string="进度(%)" optional="show"/>
+                <field name="write_date" string="更新时间" optional="show"/>
+                <field name="legacy_source_created_by" string="原始录入人" optional="hide"/>
+                <field name="legacy_source_created_at" string="录入时间" optional="hide"/>
             </tree>
         </field>
     </record>

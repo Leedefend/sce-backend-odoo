@@ -51,10 +51,13 @@
                     'columns': [
                         'name',
                         'project_code',
+                        'owner_id',
+                        'sc_partner_display_name',
                         'operation_strategy',
-                        'business_nature',
                         'lifecycle_state',
-                        'manager_id',
+                        'user_id',
+                        'contract_amount',
+                        'dashboard_progress_rate',
                         'write_date'
                     ],
                     'hidden_columns': [
@@ -67,10 +70,13 @@
                     'column_labels': {
                         'name': '名称',
                         'project_code': '项目编号',
+                        'owner_id': '业主单位',
+                        'sc_partner_display_name': '关联单位',
                         'operation_strategy': '经营方式',
-                        'business_nature': '经营性质',
                         'lifecycle_state': '项目状态',
-                        'manager_id': '项目经理',
+                        'user_id': '项目负责人',
+                        'contract_amount': '合同总额',
+                        'dashboard_progress_rate': '进度(%)',
                         'write_date': '更新时间'
                     },
                     'row_primary': 'name',

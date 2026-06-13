@@ -926,7 +926,28 @@ class AppViewConfig(models.Model, ContractSchemaMixin):
         # 小工具：把 arch 的 notebook/page/group/field 变成 layout 结构
         def _extract_layout(root):
             def field_node(f):
-                return {'type': 'field', 'name': f.get('name')}
+                fname = f.get('name')
+                node = {'type': 'field', 'name': fname}
+                meta = dict((fields_get or {}).get(fname) or {})
+                if f.get('string'):
+                    node['string'] = f.get('string')
+                    node['label'] = f.get('string')
+                    meta['string'] = f.get('string')
+                    meta['label'] = f.get('string')
+                if f.get('help'):
+                    meta['help'] = f.get('help')
+                if f.get('widget'):
+                    node['widget'] = f.get('widget')
+                    meta['widget'] = f.get('widget')
+                if f.get('options'):
+                    meta['options'] = f.get('options')
+                for attr in ('readonly', 'required', 'invisible', 'column_invisible'):
+                    if f.get(attr) is not None:
+                        node[attr] = f.get(attr)
+                        meta[attr] = f.get(attr)
+                if meta:
+                    node['fieldInfo'] = meta
+                return node
 
             def group_node(g):
                 children = []

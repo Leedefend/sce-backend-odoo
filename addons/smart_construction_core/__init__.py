@@ -38,6 +38,7 @@ from .core_extension import (  # noqa: F401
     smart_core_api_data_unlink_allowed_models,
     smart_core_model_code_mapping,
     smart_core_finalize_projected_contract_data,
+    smart_core_finalize_unified_page_contract_v2,
     smart_core_scene_package_service_class,
     smart_core_scene_governance_service_class,
     smart_core_build_portal_dashboard,
