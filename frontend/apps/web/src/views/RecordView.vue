@@ -160,9 +160,9 @@
                 v-if="entry.type === 'attachment' && entry.attachment"
                 class="ghost"
                 type="button"
-                @click="downloadAttachment(entry.attachment)"
+                @click="openAttachment(entry.attachment)"
               >
-                {{ pageText('action_download', 'Download') }}
+                {{ pageText('action_view_attachment', '查看') }}
               </button>
             </div>
           </li>
@@ -176,6 +176,7 @@
       :title="pageText('dev_context_title', 'Record Context')"
       :entries="hudEntries"
     />
+    <AttachmentViewer ref="attachmentViewerRef" />
   </section>
 </template>
 
@@ -186,7 +187,6 @@ import { ApiError } from '../api/client';
 import { executeButton } from '../api/executeButton';
 import { fetchChatterTimeline, postChatterMessage, type ChatterTimelineEntry } from '../api/chatter';
 import { fileToBase64, uploadFile } from '../api/files';
-import { previewOrDownloadFile } from '../utils/filePreview';
 import { loadActionContractRaw } from '../api/contract';
 import { buildRecordRuntimeFromContract } from '../app/contractRecordRuntime';
 import { readRecordDiagnosticsRaw, writeRecordDiagnosticsRaw } from '../app/runtime/recordDiagnosticsDataRuntime';
@@ -195,6 +195,7 @@ import type { ButtonEffect, ButtonEffectTarget, ViewButton, ViewContract } from 
 import ViewLayoutRenderer from '../components/view/ViewLayoutRenderer.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
 import StatusPanel from '../components/StatusPanel.vue';
+import AttachmentViewer from '../components/attachment/AttachmentViewer.vue';
 import { isHudEnabled } from '../config/debug';
 import { resolveEmptyCopy, resolveErrorCopy, useStatus } from '../composables/useStatus';
 import { useEditTx } from '../composables/useEditTx';
@@ -224,6 +225,7 @@ const chatterDraft = ref('');
 const chatterPosting = ref(false);
 const chatterUploading = ref(false);
 const chatterUploadError = ref('');
+const attachmentViewerRef = ref<InstanceType<typeof AttachmentViewer> | null>(null);
 const actionFeedback = ref<{ message: string; reasonCode: string; success: boolean } | null>(null);
 const draftName = ref('');
 const draftValues = ref<Record<string, unknown>>({});
@@ -694,10 +696,10 @@ async function onAttachmentSelected(event: Event) {
   }
 }
 
-async function downloadAttachment(att: { id?: number; name?: string; mimetype?: string }) {
+async function openAttachment(att: { id?: number; name?: string; mimetype?: string }) {
   if (!att?.id) return;
   try {
-    await previewOrDownloadFile({ id: Number(att.id) }, att.name);
+    await attachmentViewerRef.value?.open({ id: Number(att.id) }, att.name);
   } catch (err) {
     chatterUploadError.value = err instanceof Error ? err.message : pageText('chatter_download_failed', 'Failed to download file');
   }

@@ -552,7 +552,6 @@
             @click="openCreateRecordWithBusinessCategory(option.code)"
           >
             <span>{{ option.label }}</span>
-            <small>{{ option.code }}</small>
           </button>
         </div>
       </section>
@@ -1466,7 +1465,7 @@ const businessCategoryCreateOptions = computed<BusinessCategoryCreateOption[]>((
     .map((raw) => {
       const row = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as Record<string, unknown> : {};
       const code = String(row.code || '').trim();
-      const label = String(row.label || code || '').trim();
+      const label = String(row.label || '').trim();
       const defaultValuesRaw = row.default_values || row.defaultValues;
       const defaultValues = defaultValuesRaw && typeof defaultValuesRaw === 'object' && !Array.isArray(defaultValuesRaw)
         ? defaultValuesRaw as Record<string, unknown>
@@ -1475,7 +1474,7 @@ const businessCategoryCreateOptions = computed<BusinessCategoryCreateOption[]>((
       const categoryId = Number.isFinite(categoryIdRaw) && categoryIdRaw > 0 ? categoryIdRaw : undefined;
       if (!code || seen.has(code)) return null;
       seen.add(code);
-      const option: BusinessCategoryCreateOption = { code, label: label || code, defaultValues };
+      const option: BusinessCategoryCreateOption = { code, label, defaultValues };
       if (categoryId) option.categoryId = categoryId;
       return option;
     })
@@ -1499,11 +1498,12 @@ function createRouteQueryForBusinessCategory(categoryCode = '') {
     if (Array.isArray(value) || typeof value === 'object') return;
     defaults[`default_${normalizedKey}`] = String(value);
   });
+  const label = String(option?.label || actionMeta.value?.name || currentMenuTitle.value || '办理类型').trim();
   return resolveCarryQuery(code ? {
     current_business_category_code: code,
     default_business_category_code: code,
-    current_business_category_label: option?.label || code,
-    default_business_category_label: option?.label || code,
+    current_business_category_label: label,
+    default_business_category_label: label,
     ctx_source: 'business_category_create_picker',
     ...defaults,
   } : undefined);
@@ -1513,11 +1513,10 @@ async function openCreateRecordWithBusinessCategory(categoryCode = '') {
   const targetModel = (resolvedModelRef.value || model.value || '').trim();
   if (!targetModel || !canCreateRecord.value) return;
   closeBusinessCategoryCreatePicker();
-  await router.push(buildModelFormRouteTarget({
-    model: targetModel,
-    id: 'new',
+  await router.push({
+    path: `/f/${encodeURIComponent(targetModel)}/new`,
     query: createRouteQueryForBusinessCategory(categoryCode),
-  }) as never);
+  } as never);
 }
 
 async function openCreateRecord() {

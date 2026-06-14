@@ -448,9 +448,9 @@
                     v-if="entry.type === 'attachment' && entry.attachment"
                     class="ghost native-attachment-download"
                     type="button"
-                    @click="downloadNativeAttachment(entry.attachment)"
+                    @click="openNativeAttachment(entry.attachment)"
                   >
-                    {{ nativeAttachmentDownloadLabel }}
+                    {{ nativeAttachmentViewLabel }}
                   </button>
                 </li>
               </ul>
@@ -798,9 +798,9 @@
               v-if="entry.type === 'attachment' && entry.attachment"
               class="ghost native-attachment-download"
               type="button"
-              @click="downloadNativeAttachment(entry.attachment)"
+              @click="openNativeAttachment(entry.attachment)"
             >
-              {{ nativeAttachmentDownloadLabel }}
+              {{ nativeAttachmentViewLabel }}
             </button>
           </li>
         </ul>
@@ -898,6 +898,7 @@
         </footer>
       </section>
     </div>
+    <AttachmentViewer ref="attachmentViewerRef" />
   </LayoutShell>
 </template>
 
@@ -907,6 +908,7 @@ import { useRoute, useRouter } from 'vue-router';
 import FieldValue from '../components/FieldValue.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
+import AttachmentViewer from '../components/attachment/AttachmentViewer.vue';
 import LayoutShell from '../components/template/LayoutShell.vue';
 import PageHeaderTemplate from '../components/template/PageHeader.vue';
 import NativeFormTreeRenderer, { type NativeFormLayoutNode } from '../components/template/NativeFormTreeRenderer.vue';
@@ -939,7 +941,6 @@ import {
   type CollaborationUserOption,
 } from '../api/chatter';
 import { fileToBase64, uploadFile } from '../api/files';
-import { previewOrDownloadFile } from '../utils/filePreview';
 import { triggerOnchange } from '../api/onchange';
 import type { OnchangeLinePatch } from '../api/onchange';
 import type { ActionContract, FieldDescriptor } from '@sc/schema';
@@ -1133,6 +1134,11 @@ type RelationOption = {
   id: number;
   label: string;
   color?: number | null;
+  switchContext?: {
+    code: string;
+    label: string;
+    defaultValues: Record<string, unknown>;
+  };
 };
 
 type RelationSearchColumn = {
@@ -1348,6 +1354,7 @@ const chatterTimeline = ref<ChatterTimelineEntry[]>([]);
 const activityUpdatingIds = ref<number[]>([]);
 const attachmentUploading = ref(false);
 const attachmentError = ref('');
+const attachmentViewerRef = ref<InstanceType<typeof AttachmentViewer> | null>(null);
 const pendingNativeAttachments = ref<Array<{ key: string; name: string; size: number; file: File }>>([]);
 const nativeChatterAutoLoadKey = ref('');
 let activeReloadToken = 0;
@@ -1599,11 +1606,13 @@ const pageTitle = computed(() => {
 });
 
 const currentBusinessCategoryLabel = computed(() => {
-  const headContext = contract.value?.head?.context && typeof contract.value.head.context === 'object'
-    ? contract.value.head.context as Record<string, unknown>
+  const contractRecord = dictOrEmpty(contract.value);
+  const head = dictOrEmpty(contractRecord.head);
+  const headContext = head.context && typeof head.context === 'object'
+    ? head.context as Record<string, unknown>
     : {};
-  const contractContext = contract.value?.context && typeof contract.value.context === 'object'
-    ? contract.value.context as Record<string, unknown>
+  const contractContext = contractRecord.context && typeof contractRecord.context === 'object'
+    ? contractRecord.context as Record<string, unknown>
     : {};
   return String(
     route.query.current_business_category_label
@@ -1618,11 +1627,13 @@ const currentBusinessCategoryLabel = computed(() => {
 });
 
 const currentBusinessCategoryCode = computed(() => {
-  const headContext = contract.value?.head?.context && typeof contract.value.head.context === 'object'
-    ? contract.value.head.context as Record<string, unknown>
+  const contractRecord = dictOrEmpty(contract.value);
+  const head = dictOrEmpty(contractRecord.head);
+  const headContext = head.context && typeof head.context === 'object'
+    ? head.context as Record<string, unknown>
     : {};
-  const contractContext = contract.value?.context && typeof contract.value.context === 'object'
-    ? contract.value.context as Record<string, unknown>
+  const contractContext = contractRecord.context && typeof contractRecord.context === 'object'
+    ? contractRecord.context as Record<string, unknown>
     : {};
   return String(
     route.query.current_business_category_code
@@ -2791,20 +2802,51 @@ function relationColorField(descriptor?: FieldDescriptor) {
 
 function relationReadFields(descriptor?: FieldDescriptor) {
   const fields = new Set(['id', 'name', 'display_name']);
+  const entry = relationEntry(descriptor);
+  if (entry?.displayField) fields.add(entry.displayField);
+  if (entry?.switchContext?.enabled) {
+    if (entry.switchContext.codeField) fields.add(entry.switchContext.codeField);
+    if (entry.switchContext.labelField) fields.add(entry.switchContext.labelField);
+    if (entry.switchContext.defaultValuesField) fields.add(entry.switchContext.defaultValuesField);
+  }
   const colorField = relationColorField(descriptor);
   if (colorField) fields.add(colorField);
   return Array.from(fields);
 }
 
+function parseRelationDefaultValues(value: unknown): Record<string, unknown> {
+  if (value && typeof value === 'object' && !Array.isArray(value)) return value as Record<string, unknown>;
+  const raw = String(value || '').trim();
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? parsed as Record<string, unknown>
+      : {};
+  } catch {
+    return {};
+  }
+}
+
 function relationOptionFromRow(row: Record<string, unknown>, descriptor?: FieldDescriptor): RelationOption | null {
   const id = Number(row.id);
   if (!Number.isFinite(id) || id <= 0) return null;
-  const label = String(row.display_name || row.name || `#${id}`).trim();
+  const entry = relationEntry(descriptor);
+  const displayField = String(entry?.displayField || '').trim();
+  const displayValue = displayField ? row[displayField] : '';
+  const label = String(displayValue || row.display_name || row.name || `#${id}`).trim();
   const colorField = relationColorField(descriptor);
   const colorValue = colorField ? Number(row[colorField]) : NaN;
+  const switchContract = entry?.switchContext?.enabled ? entry.switchContext : null;
+  const switchCode = switchContract?.codeField ? String(row[switchContract.codeField] || '').trim() : '';
+  const switchLabel = switchContract?.labelField ? String(row[switchContract.labelField] || '').trim() : '';
+  const defaultValues = switchContract?.defaultValuesField
+    ? parseRelationDefaultValues(row[switchContract.defaultValuesField])
+    : {};
   return {
     id: Math.trunc(id),
     label: cleanRelationDisplayLabel(label, id),
+    ...(switchCode ? { switchContext: { code: switchCode, label: switchLabel || label, defaultValues } } : {}),
     ...(Number.isFinite(colorValue) ? { color: Math.trunc(colorValue) } : {}),
   };
 }
@@ -2857,12 +2899,14 @@ function upsertRelationOption(fieldName: string, option: RelationOption | null) 
 
 function mergeRelationOptions(fieldName: string, options: RelationOption[]) {
   const current = Array.isArray(relationOptions.value[fieldName]) ? relationOptions.value[fieldName] : [];
-  const byId = new Map<number, RelationOption>();
-  for (const item of current) byId.set(item.id, item);
-  for (const item of options) byId.set(item.id, item);
+  const incomingIds = new Set(options.map((item) => item.id));
+  const merged = [
+    ...options,
+    ...current.filter((item) => !incomingIds.has(item.id)),
+  ];
   relationOptions.value = {
     ...relationOptions.value,
-    [fieldName]: Array.from(byId.values()),
+    [fieldName]: merged,
   };
 }
 
@@ -3526,17 +3570,38 @@ function relationEntry(descriptor?: FieldDescriptor) {
   const defaultVals = row.default_vals && typeof row.default_vals === 'object' && !Array.isArray(row.default_vals)
     ? (row.default_vals as Record<string, unknown>)
     : {};
+  const defaultFromFields = row.default_from_fields && typeof row.default_from_fields === 'object' && !Array.isArray(row.default_from_fields)
+    ? (row.default_from_fields as Record<string, unknown>)
+    : {};
+  const domain = Array.isArray(row.domain) ? row.domain as unknown[] : [];
   const inlineRaw = row.inline_create && typeof row.inline_create === 'object' && !Array.isArray(row.inline_create)
     ? row.inline_create as Record<string, unknown>
+    : {};
+  const switchRaw = row.switch_context && typeof row.switch_context === 'object' && !Array.isArray(row.switch_context)
+    ? row.switch_context as Record<string, unknown>
     : {};
   return {
     model: String(row.model || '').trim(),
     actionId,
     menuId,
     canRead: row.can_read !== false,
+    canOpen: row.can_open !== false,
     canCreate: Boolean(row.can_create),
     createMode,
     defaultVals,
+    defaultFromFields,
+    domain,
+    order: String(row.order || '').trim(),
+    displayField: String(row.display_field || row.displayField || '').trim(),
+    switchContext: {
+      enabled: switchRaw.enabled === true,
+      codeField: String(switchRaw.code_field || switchRaw.codeField || '').trim(),
+      labelField: String(switchRaw.label_field || switchRaw.labelField || '').trim(),
+      defaultValuesField: String(switchRaw.default_values_field || switchRaw.defaultValuesField || '').trim(),
+      defaultClearFields: Array.isArray(switchRaw.default_clear_fields)
+        ? switchRaw.default_clear_fields.map((item) => String(item || '').trim()).filter(Boolean)
+        : [],
+    },
     reasonCode: String(row.reason_code || '').trim(),
     inlineCreate: {
       enabled: inlineRaw.enabled === true,
@@ -3624,12 +3689,47 @@ function relationInlineCreate(_fieldName: string, descriptor?: FieldDescriptor) 
   };
 }
 
+function dynamicDomainFromDescriptor(descriptor?: FieldDescriptor) {
+  const raw = (descriptor as Record<string, unknown> | undefined)?.domain;
+  if (typeof raw !== 'string' || !raw.trim()) return [];
+  const out: unknown[] = [];
+  const text = raw.trim();
+  const tuplePattern = /\\(['"]([\\w.]+)['"]\\s*,\\s*['"]([=!<>]{1,2}|in|not in|ilike|like)['"]\\s*,\\s*([A-Za-z_]\\w*)\\)/g;
+  let match: RegExpExecArray | null;
+  while ((match = tuplePattern.exec(text))) {
+    const [, fieldName, operator, valueField] = match;
+    if (!fieldName || !operator || !valueField) continue;
+    const value = formData[valueField]
+      ?? route.query[`default_${valueField}`]
+      ?? route.query[valueField];
+    if (value === undefined || value === null || value === '') continue;
+    const normalizedValue = normalizeFieldValue(valueField, value);
+    if (normalizedValue === undefined || normalizedValue === null || normalizedValue === '') continue;
+    out.push([fieldName, operator, normalizedValue]);
+  }
+  return out;
+}
+
 function relationDomain(descriptor?: FieldDescriptor) {
   const entry = relationEntry(descriptor);
   const out: unknown[] = [];
+  if (Array.isArray(entry?.domain)) out.push(...entry.domain);
+  out.push(...dynamicDomainFromDescriptor(descriptor));
+  const descriptorRecord = descriptor as Record<string, unknown> | undefined;
+  const fieldName = String(descriptorRecord?.name || descriptorRecord?.field || '').trim();
+  const relation = String(descriptorRecord?.relation || entry?.model || '').trim();
+  const routeDefaultType = String(route.query.default_type || '').trim();
+  if (!out.length && fieldName === 'original_contract_id' && relation === 'construction.contract' && ['out', 'in'].includes(routeDefaultType)) {
+    out.push(['type', '=', routeDefaultType]);
+  }
   const type = String(entry?.defaultVals?.type || '').trim();
   if (type) out.push(['type', '=', type]);
   return out.length ? out : undefined;
+}
+
+function relationOrder(descriptor?: FieldDescriptor) {
+  const entry = relationEntry(descriptor);
+  return String(entry?.order || '').trim() || 'id desc';
 }
 
 function runtimeRelationDomain(name: string) {
@@ -3667,7 +3767,7 @@ async function queryRelationOptions(name: string, keyword: string): Promise<Rela
       model: relation,
       fields: relationReadFields(descriptor),
       limit: search ? 40 : 80,
-      order: 'id desc',
+      order: relationOrder(descriptor),
       domain,
       search_term: search || undefined,
       silentErrors: true,
@@ -3704,7 +3804,7 @@ async function fetchRelationOptions(name: string, keyword: string, limit = 80): 
     model: relation,
     fields: relationReadFields(descriptor),
     limit,
-    order: 'id desc',
+    order: relationOrder(descriptor),
     domain,
     search_term: String(keyword || '').trim() || undefined,
     silentErrors: true,
@@ -3934,6 +4034,46 @@ function setMany2oneOption(fieldName: string, option: RelationOption) {
   markFieldChanged(fieldName);
   relationKeywords[fieldName] = option.label;
   mergeRelationOptions(fieldName, [option]);
+  void switchFormByRelationOption(fieldName, option);
+}
+
+function normalizedRouteQuery(): Record<string, string | string[]> {
+  return Object.fromEntries(
+    Object.entries(route.query).map(([key, value]) => [
+      key,
+      Array.isArray(value)
+        ? value.filter((item): item is string => typeof item === 'string')
+        : String(value || ''),
+    ]),
+  );
+}
+
+async function switchFormByRelationOption(fieldName: string, option: RelationOption) {
+  if (recordId.value) return;
+  const descriptor = contract.value?.fields?.[fieldName];
+  const entry = relationEntry(descriptor);
+  if (!entry?.switchContext?.enabled || !option.switchContext?.code) return;
+  const nextCode = option.switchContext.code;
+  const currentCode = String(route.query.current_business_category_code || route.query.default_business_category_code || '').trim();
+  if (currentCode === nextCode) return;
+  const query = normalizedRouteQuery();
+  for (const key of entry.switchContext.defaultClearFields || []) {
+    delete query[`default_${key}`];
+  }
+  query.current_business_category_code = nextCode;
+  query.default_business_category_code = nextCode;
+  query.current_business_category_label = option.switchContext.label || option.label;
+  query.default_business_category_label = option.switchContext.label || option.label;
+  query.default_business_category_id = String(option.id);
+  query.ctx_source = 'business_category_relation_switch';
+  Object.entries(option.switchContext.defaultValues || {}).forEach(([key, value]) => {
+    const normalizedKey = String(key || '').trim();
+    if (!normalizedKey || value === undefined || value === null) return;
+    if (Array.isArray(value) || typeof value === 'object') return;
+    query[`default_${normalizedKey}`] = String(value);
+  });
+  await router.replace({ query });
+  await reload();
 }
 
 async function createRelationFromSearchDialog() {
@@ -3997,14 +4137,18 @@ async function openRelationCreateForm(fieldName: string, descriptor?: FieldDescr
     validationErrors.value = [relationUiLabel(descriptor, 'missing_create_entry')];
     return;
   }
+  if (mode === 'quick') {
+    const currentKeyword = relationKeyword(fieldName).trim();
+    if (!currentKeyword) {
+      validationErrors.value = [relationUiLabel(descriptor, 'missing_name', relationUiLabel(descriptor, 'quick_create_prompt', '请先输入要新增的名称'))];
+      return;
+    }
+    await quickCreateRelation(fieldName, descriptor, currentKeyword);
+    return;
+  }
   const entry = relationEntry(descriptor);
   const relationActionId = entry?.actionId || null;
   const menuId = entry?.menuId || 0;
-  if (!relationActionId && mode === 'quick') {
-    const label = String(window.prompt(relationUiLabel(descriptor, 'quick_create_prompt')) || '').trim();
-    if (label) await quickCreateRelation(fieldName, descriptor, label);
-    return;
-  }
   if (!relationActionId) {
     validationErrors.value = [relationUiLabel(descriptor, 'missing_page_entry')];
     return;
@@ -4014,6 +4158,13 @@ async function openRelationCreateForm(fieldName: string, descriptor?: FieldDescr
     acc[`default_${key}`] = value;
     return acc;
   }, {});
+  Object.entries(entry?.defaultFromFields || {}).forEach(([targetField, sourceFieldRaw]) => {
+    const sourceField = String(sourceFieldRaw || '').trim();
+    if (!targetField || !sourceField) return;
+    const value = normalizeFieldValue(sourceField, formData[sourceField]);
+    if (value === undefined || value === null || value === '') return;
+    defaultQuery[`default_${targetField}`] = value;
+  });
   const nextQuery = pickContractNavQuery(route.query as Record<string, unknown>, {
     action_id: relationActionId,
     menu_id: menuId || undefined,
@@ -4052,7 +4203,7 @@ function currentRelationRecordId(fieldName: string) {
 function canOpenRelationRecordForm(fieldName: string, descriptor?: FieldDescriptor) {
   const relation = relationModel(fieldName);
   const entry = relationEntry(descriptor);
-  return Boolean(relation && currentRelationRecordId(fieldName) > 0 && entry?.canRead !== false);
+  return Boolean(relation && currentRelationRecordId(fieldName) > 0 && entry?.canRead !== false && entry?.canOpen !== false);
 }
 
 async function openRelationRecordForm(fieldName: string, descriptor?: FieldDescriptor) {
@@ -4164,7 +4315,7 @@ async function loadRelationOptions() {
         model: relation,
         fields: relationReadFields(descriptor as FieldDescriptor),
         limit: 80,
-        order: 'id desc',
+        order: relationOrder(descriptor as FieldDescriptor),
         domain,
         silentErrors: true,
       });
@@ -4634,7 +4785,7 @@ function nativeAttachmentLabel(key: string, fallback: string) {
 
 const nativeAttachmentUploadLabel = computed(() => nativeAttachmentLabel('upload', '上传附件'));
 const nativeAttachmentUploadingLabel = computed(() => nativeAttachmentLabel('uploading', '上传中...'));
-const nativeAttachmentDownloadLabel = computed(() => nativeAttachmentLabel('download', '下载'));
+const nativeAttachmentViewLabel = computed(() => nativeAttachmentLabel('view', '查看'));
 const nativeAttachmentMaxBytes = computed(() => {
   const upload = nativeAttachments.value?.upload;
   const raw = upload && typeof upload === 'object' && !Array.isArray(upload)
@@ -6110,6 +6261,7 @@ function setMany2oneField(name: string, descriptor: FieldDescriptor | undefined,
   const selected = relationOptionsForField(name).find((option) => option.id === normalizedId);
   if (selected) {
     relationKeywords[name] = selected.label;
+    void switchFormByRelationOption(name, selected);
   }
   markFieldChanged(name);
 }
@@ -6295,7 +6447,12 @@ async function quickCreateMany2manyTag(name: string) {
   }
   const nameField = inline.nameField || 'name';
   try {
-    const created = await createContractFormRecord({ model: relation, vals: { [nameField]: label } });
+    const entry = relationEntry(descriptor);
+    const vals: Record<string, unknown> = { ...(entry?.defaultVals || {}), [nameField]: label };
+    if (relation === 'sc.dictionary' && typeof vals.type === 'string' && String(vals.type || '').trim()) {
+      vals.code = label.toUpperCase().replace(/\s+/g, '_').slice(0, 60);
+    }
+    const created = await createContractFormRecord({ model: relation, vals });
     const id = Number(created?.id || 0);
     if (Number.isFinite(id) && id > 0) {
       addRelationId(name, { id: Math.trunc(id), label });
@@ -6869,6 +7026,25 @@ function routeContractContext() {
       context[key] = normalizeRouteDefault(value);
     }
   });
+  [
+    'current_business_category_code',
+    'default_business_category_code',
+    'allowed_business_category_codes',
+    'current_business_category_label',
+    'default_business_category_label',
+  ].forEach((key) => {
+    const value = (route.query as Record<string, unknown>)[key];
+    if (value === undefined || value === null || value === '') return;
+    if (Array.isArray(value)) {
+      const items = value
+        .map((item) => String(item || '').trim())
+        .filter((item) => item !== '');
+      if (items.length) context[key] = items;
+      return;
+    }
+    const text = String(value).trim();
+    if (text) context[key] = text;
+  });
   const intakeMode = String(route.query.intake_mode || '').trim().toLowerCase();
   if (intakeMode === 'quick' || intakeMode === 'standard') {
     context.intake_mode = intakeMode;
@@ -6954,6 +7130,11 @@ async function loadRecord() {
   closeNativeChatterComposer();
   chatterError.value = '';
   chatterTimeline.value = [];
+  attachmentError.value = '';
+  if (!recordId.value) {
+    pendingNativeAttachments.value = [];
+    nativeChatterAutoLoadKey.value = '';
+  }
   Object.keys(formData).forEach((key) => {
     delete formData[key];
   });
@@ -7361,11 +7542,11 @@ async function uploadPendingNativeAttachments(resId: number): Promise<boolean> {
   }
 }
 
-async function downloadNativeAttachment(att: { id?: number; name?: string; mimetype?: string }) {
+async function openNativeAttachment(att: { id?: number; name?: string; mimetype?: string }) {
   if (!att?.id) return;
   attachmentError.value = '';
   try {
-    await previewOrDownloadFile({ id: Number(att.id) }, att.name);
+    await attachmentViewerRef.value?.open({ id: Number(att.id) }, att.name);
   } catch (err) {
     attachmentError.value = err instanceof Error ? err.message : nativeAttachmentLabel('download_failed', '附件下载失败');
   }
@@ -8427,8 +8608,15 @@ watch(
     if (!state.label) return;
     const hasRouteLabel = String(route.query.current_business_category_label || route.query.default_business_category_label || '').trim();
     if (hasRouteLabel) return;
-    const query: Record<string, unknown> = {
-      ...(route.query as Record<string, unknown>),
+    const query: Record<string, string | string[]> = {
+      ...Object.fromEntries(
+        Object.entries(route.query).map(([key, value]) => [
+          key,
+          Array.isArray(value)
+            ? value.filter((item): item is string => typeof item === 'string')
+            : String(value || ''),
+        ]),
+      ),
       current_business_category_label: state.label,
       default_business_category_label: state.label,
     };

@@ -667,6 +667,7 @@
       </section>
 
     </template>
+    <AttachmentViewer ref="attachmentViewerRef" />
   </section>
 </template>
 
@@ -674,10 +675,11 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import PageHeader from '../components/page/PageHeader.vue';
+import AttachmentViewer from '../components/attachment/AttachmentViewer.vue';
 import { resolveEmptyCopy, resolveErrorCopy, type StatusError } from '../composables/useStatus';
 import type { SceneListProfile } from '../app/resolvers/sceneRegistry';
 import { formatAttachmentReferenceValue, parseAttachmentReferenceLinks } from '../utils/display';
-import { previewAttachmentReferenceLink, previewOrDownloadFile } from '../utils/filePreview';
+import { attachmentLinkDownloadParams, openExternalAttachmentUrl } from '../utils/filePreview';
 
 type SelectionAction = {
   key: string;
@@ -812,6 +814,7 @@ const emit = defineEmits<{
   'column-order-change': [payload: { columnOrder: string[] }];
   'column-widths-change': [payload: { columnWidths: Record<string, number> }];
 }>();
+const attachmentViewerRef = ref<InstanceType<typeof AttachmentViewer> | null>(null);
 function uiLabel(key: string, fallback: string, vars: Record<string, string | number> = {}) {
   const candidate = String(props.uiLabels?.[key] || '').trim();
   const template = candidate || fallback;
@@ -1033,10 +1036,16 @@ function attachmentLinks(value: unknown) {
 
 async function previewAttachmentLink(link: { name: string; url: string }, row: Record<string, unknown>) {
   try {
-    await previewAttachmentReferenceLink(link, {
+    const context = {
       model: props.model,
       res_id: Number(row.id || 0) || undefined,
-    });
+    };
+    const params = attachmentLinkDownloadParams(link, context);
+    if (params) {
+      await attachmentViewerRef.value?.open(params, link.name);
+      return;
+    }
+    openExternalAttachmentUrl(link.url);
   } catch (err) {
     window.alert(err instanceof Error ? err.message : '附件打开失败');
   }
@@ -1051,7 +1060,7 @@ function isAttachmentCountCell(field: string, value: unknown) {
 async function previewRecordAttachmentCount(row: Record<string, unknown>, value: unknown) {
   const text = String(normalizeCellRawValue(value) ?? '').trim() || '附件';
   try {
-    await previewOrDownloadFile({
+    await attachmentViewerRef.value?.open({
       model: props.model,
       res_id: Number(row.id || 0) || undefined,
     }, text);

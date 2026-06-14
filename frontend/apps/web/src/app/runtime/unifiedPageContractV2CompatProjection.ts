@@ -88,7 +88,8 @@ function buildLegacyFieldDescriptor(widget: UnifiedPageContractV2Widget, mainDat
   const readonly = componentConfig.readonly === true;
   const required = componentConfig.required === true;
   const componentRelation = String(componentConfig.relation || widget.relation || '').trim();
-  const relation = ['many2one', 'many2many'].includes(type) ? componentRelation : '';
+  const relation = ['many2one', 'one2many', 'many2many'].includes(type) ? componentRelation : '';
+  const relationField = String(componentConfig.relation_field || componentConfig.relationField || '').trim();
   const relationEntry = asDict(componentConfig.relationEntry || componentConfig.relation_entry);
   const descriptor: Dict = {
     name,
@@ -105,6 +106,9 @@ function buildLegacyFieldDescriptor(widget: UnifiedPageContractV2Widget, mainDat
   };
   if (relation) {
     descriptor.relation = relation;
+  }
+  if (relationField) {
+    descriptor.relation_field = relationField;
   }
   if (Object.keys(relationEntry).length) {
     descriptor.relation_entry = relationEntry;
@@ -289,6 +293,12 @@ function buildLegacySubViews(fieldWidgets: UnifiedPageContractV2Widget[], mainDa
     const fieldName = stableFieldName(widget.fieldCode);
     const type = inferFieldType(widget, mainData);
     if (type !== 'one2many' && type !== 'many2many') return;
+    const componentConfig = asDict(widget.componentConfig);
+    const subview = asDict(componentConfig.subview || componentConfig.subView);
+    if (Object.keys(subview).length) {
+      out[fieldName] = subview;
+      return;
+    }
     out[fieldName] = {
       tree: { columns: ['display_name'] },
       policies: {

@@ -12,15 +12,18 @@
     </a>
   </span>
   <span v-else>{{ display }}</span>
+  <AttachmentViewer ref="attachmentViewerRef" />
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import type { FieldDescriptor } from '@sc/schema';
+import AttachmentViewer from './attachment/AttachmentViewer.vue';
 import { formatDisplayValue, parseAttachmentReferenceLinks } from '../utils/display';
-import { previewAttachmentReferenceLink } from '../utils/filePreview';
+import { attachmentLinkDownloadParams, openExternalAttachmentUrl } from '../utils/filePreview';
 
 const props = defineProps<{ value: unknown; field?: FieldDescriptor }>();
+const attachmentViewerRef = ref<InstanceType<typeof AttachmentViewer> | null>(null);
 
 const display = computed(() => {
   return formatDisplayValue(props.value, props.field);
@@ -29,7 +32,12 @@ const display = computed(() => {
 const attachmentLinks = computed(() => parseAttachmentReferenceLinks(props.value));
 
 async function previewAttachmentLink(link: { name: string; url: string }) {
-  await previewAttachmentReferenceLink(link);
+  const params = attachmentLinkDownloadParams(link);
+  if (params) {
+    await attachmentViewerRef.value?.open(params, link.name);
+    return;
+  }
+  openExternalAttachmentUrl(link.url);
 }
 </script>
 

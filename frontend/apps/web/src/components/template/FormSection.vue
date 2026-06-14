@@ -202,7 +202,7 @@
                           {{ field.many2oneSearchLabel }}
                         </button>
                         <button
-                          v-if="field.relationCreateMode && field.relationCreateMode !== 'none' && field.many2oneCreateToken"
+                          v-if="field.relationCreateMode === 'page' && field.many2oneCreateToken"
                           type="button"
                           class="many2one-action"
                           @mousedown.prevent
@@ -453,7 +453,7 @@ function hasMany2oneDropdown(field: FormSectionFieldSchema) {
     field.relationOptions?.length
     || field.many2oneOpenToken
     || field.many2oneSearchToken
-    || (field.relationCreateMode && field.relationCreateMode !== 'none' && field.many2oneCreateToken)
+    || (field.relationCreateMode === 'page' && field.many2oneCreateToken)
     || showMany2oneInlineCreate(field),
   );
 }
