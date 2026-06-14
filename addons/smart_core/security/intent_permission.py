@@ -5,6 +5,7 @@ from odoo.http import request
 from odoo.exceptions import AccessError, MissingError
 from ..core.intent_operation_policy import access_mode_for_intent, nested_params
 from ..core.request_identity import identity_id
+from ..utils.extension_hooks import call_extension_hook_first
 from .auth import get_user_from_token
 
 SOURCE_KIND = "odoo_native_permission_projection"
@@ -49,6 +50,22 @@ def _param_value(ctx_params, key, default=None):
     if isinstance(nested, dict):
         return nested.get(key, default)
     return default
+
+
+def _model_acl_policy(env, *, intent_name: str, model: str, access_mode: str, params: dict) -> dict:
+    try:
+        payload = call_extension_hook_first(
+            env,
+            "smart_core_intent_permission_model_acl_policy",
+            env,
+            intent_name,
+            model,
+            access_mode,
+            params if isinstance(params, dict) else {},
+        )
+    except Exception:
+        payload = None
+    return payload if isinstance(payload, dict) else {}
 
 
 def _record_ids(ctx_params):
@@ -255,6 +272,15 @@ def check_intent_permission(ctx):
         # ✅ 校验模型访问权限
         model_obj = _resolve_model(env, model) if model else None
         skip_model_acl = _is_ui_only_user_preference_intent(intent_name)
+        if model and not skip_model_acl:
+            model_acl_policy = _model_acl_policy(
+                env,
+                intent_name=intent_name,
+                model=model,
+                access_mode=access_mode,
+                params=ctx_params,
+            )
+            skip_model_acl = bool(model_acl_policy.get("skip_model_acl"))
         if model and not skip_model_acl:
             try:
                 model_obj.check_access_rights(access_mode)

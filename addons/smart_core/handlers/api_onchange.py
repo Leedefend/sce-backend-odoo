@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List
 
+from odoo import fields as odoo_fields
 from odoo.exceptions import AccessError
 
 from ..core.base_handler import BaseIntentHandler
@@ -336,6 +337,11 @@ class ApiOnchangeHandler(BaseIntentHandler):
         except Exception:
             return {}
         merged: Dict[str, Any] = {"value": {}, "domain": {}, "warning": [], "modifiers_patch": {}, "line_patches": []}
+        baseline = {
+            name: self._serialize_onchange_record_value(record, name)
+            for name, field in (getattr(env_model, "_fields", {}) or {}).items()
+            if str(getattr(field, "type", "") or "") not in {"one2many", "many2many"}
+        }
         called = set()
         for field_name in changed_fields:
             for method in methods.get(field_name, []) or []:
@@ -368,11 +374,45 @@ class ApiOnchangeHandler(BaseIntentHandler):
                         merged["warning"].extend(warning)
                     else:
                         merged["warning"].append(warning)
+        for name, before in baseline.items():
+            if name in changed_fields:
+                continue
+            after = self._serialize_onchange_record_value(record, name)
+            if after != before:
+                merged["value"][name] = after
         if not merged["value"] and not merged["domain"] and not merged["warning"] and not merged["modifiers_patch"] and not merged["line_patches"]:
             return {}
         if len(merged["warning"]) == 1:
             merged["warning"] = merged["warning"][0]
         return merged
+
+    def _serialize_onchange_record_value(self, record, field_name: str) -> Any:
+        try:
+            field = record._fields.get(field_name)
+        except Exception:
+            return None
+        if not field:
+            return None
+        ftype = str(getattr(field, "type", "") or "").strip()
+        try:
+            value = record[field_name]
+        except Exception:
+            return None
+        if ftype == "many2one":
+            if not value:
+                return False
+            try:
+                rid = int(value.id or 0)
+            except Exception:
+                rid = 0
+            return [rid, value.display_name] if rid > 0 else False
+        if ftype == "date":
+            return odoo_fields.Date.to_string(value) if value else False
+        if ftype == "datetime":
+            return odoo_fields.Datetime.to_string(value) if value else False
+        if ftype in {"one2many", "many2many"}:
+            return None
+        return value if value not in (None, "") else False
 
     def handle(self, payload=None, ctx=None):
         payload = payload or {}

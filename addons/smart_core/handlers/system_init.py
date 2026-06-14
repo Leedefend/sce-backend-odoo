@@ -1904,20 +1904,24 @@ class SystemInitHandler(BaseIntentHandler):
                 user_data_acceptance_meta = {
                     "applied": False,
                     "projected": False,
-                    "reason": "user_confirmed_formal_product_menu_locked",
+                    "reason": "delivery_engine_product_navigation_authority",
                 }
-            delivery_nav = _remove_nav_groups_by_label(delivery_nav, {"用户核对菜单"})
+            else:
+                delivery_nav = _remove_nav_groups_by_label(delivery_nav, {"用户核对菜单"})
+                user_data_acceptance_meta["source_user_check_menu_hidden"] = True
             formal_product_menu_meta = {
                 "applied": False,
-                "reason": "formal_entries_released_by_product_policy",
+                "reason": "delivery_engine_released_by_product_policy",
             }
-            delivery_nav, post_append_user_menu_config_meta = _apply_user_menu_config_to_delivery_nav(env, delivery_nav)
-            delivery_nav = _unwrap_internal_nav_groups(delivery_nav, {"产品发布面", "正式业务菜单"})
-            delivery_nav = _rehome_business_master_data_nav_groups(delivery_nav)
-            delivery_nav = _dedupe_nav_siblings_by_identity(delivery_nav)
-            delivery_nav = _sort_business_nav_groups(delivery_nav)
-            if isinstance(user_data_acceptance_meta, dict):
-                user_data_acceptance_meta["source_user_check_menu_hidden"] = True
+            delivery_meta = delivery_payload.get("meta") if isinstance(delivery_payload.get("meta"), dict) else {}
+            delivery_user_menu_config_meta = (
+                delivery_meta.get("user_menu_config")
+                if isinstance(delivery_meta.get("user_menu_config"), dict)
+                else {
+                    "applied": False,
+                    "reason": "not_reported_by_delivery_pre_filter",
+                }
+            )
             delivery_payload["nav"] = delivery_nav
             if isinstance(data.get("delivery_engine_v1"), dict):
                 data["delivery_engine_v1"]["nav"] = delivery_nav
@@ -1929,7 +1933,16 @@ class SystemInitHandler(BaseIntentHandler):
                     data["release_navigation_v1"]["meta"] = release_meta
                 release_meta["user_data_acceptance_only"] = user_data_acceptance_meta
                 release_meta["formal_product_menu_policy"] = formal_product_menu_meta
-                release_meta["user_menu_config_post_append"] = post_append_user_menu_config_meta
+                release_meta["user_menu_config"] = delivery_user_menu_config_meta
+                release_meta["system_init_nav_boundary"] = {
+                    "authority": "delivery_engine_v1",
+                    "semantic_post_processing": False,
+                    "allowed_runtime_filters": [
+                        "platform_release_gate",
+                        "explicit_user_data_acceptance_only",
+                        "explicit_user_menu_config_overlay",
+                    ],
+                }
             data["nav_role_surface"] = data.get("nav") if isinstance(data.get("nav"), list) else []
             data["nav"] = delivery_nav
             nav_meta = data.get("nav_meta") if isinstance(data.get("nav_meta"), dict) else {}
@@ -1943,7 +1956,11 @@ class SystemInitHandler(BaseIntentHandler):
             )
             nav_meta["user_data_acceptance_only"] = user_data_acceptance_meta
             nav_meta["formal_product_menu_policy"] = formal_product_menu_meta
-            nav_meta["user_menu_config_post_append"] = post_append_user_menu_config_meta
+            nav_meta["user_menu_config"] = delivery_user_menu_config_meta
+            nav_meta["system_init_nav_boundary"] = {
+                "authority": "delivery_engine_v1",
+                "semantic_post_processing": False,
+            }
             data["nav_meta"] = nav_meta
 
         default_route_payload = data.get("default_route") if isinstance(data.get("default_route"), dict) else {}

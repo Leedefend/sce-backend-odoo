@@ -37,6 +37,10 @@ LEGACY_FILE_URL_PREFIX = "legacy-file://"
 LEGACY_FILE_ID_URL_PREFIX = "legacy-file-id://"
 LEGACY_ATTACHMENT_LABEL_RE = re.compile(r"^附件\([1-9]\d*\)$")
 DEFAULT_ONLINE_LEGACY_BASE_URL = "https://www.builderp.cn/SCBSLY_V2"
+DEFAULT_LEGACY_FILE_HTTP_BASE_URLS = (
+    "https://www.builderp.cn/SCBS",
+    "https://www.builderp.cn/SCBSLY_V2",
+)
 DEFAULT_LEGACY_FILE_ROOTS = (
     "/mnt/artifacts/legacy-online-mirror",
     "/mnt/legacy-online-mirror",
@@ -268,10 +272,15 @@ class FileDownloadHandler(BaseIntentHandler):
                 if online_url:
                     online_name = str((file_info or {}).get("ATTR_NAME") or "").strip()
                     return _read_online_legacy_file_url(online_url, online_name or attachment.name, "")
-            return {"error": True, "code": 404, "message": "历史附件索引不存在"}
+            return {"error": True, "code": 404, "message": "旧系统未返回该历史附件文件"}
         path = _resolve_legacy_file_path(relative_path)
         if not path:
-            remote_file = _read_remote_legacy_file_path(relative_path, attachment.name, attachment.mimetype)
+            remote_file = _read_remote_legacy_file_path(
+                relative_path,
+                attachment.name,
+                attachment.mimetype,
+                preferred_base_url=_online_legacy_base_url_for_attachment(attachment),
+            )
             if not remote_file.get("error"):
                 return remote_file
             _logger.warning("legacy attachment file missing: attachment=%s url=%s path=%s", attachment.id, url, relative_path)
@@ -308,6 +317,9 @@ class FileDownloadHandler(BaseIntentHandler):
         record = self.env[model].sudo().browse(res_id).exists()
         if not record:
             return None
+        path_attachment = self._legacy_path_attachment_for_record(record, model, res_id)
+        if path_attachment:
+            return path_attachment
         legacy_refs = self._legacy_attachment_refs(record)
         if not legacy_refs.primary and not legacy_refs.secondary:
             return None
@@ -338,6 +350,40 @@ class FileDownloadHandler(BaseIntentHandler):
                 "type": "url",
                 "url": url,
                 "mimetype": mimetypes.guess_type(path)[0] or "application/octet-stream",
+            }
+        )
+
+    def _legacy_path_attachment_for_record(self, record, model: str, res_id: int):
+        fields = getattr(record, "_fields", {}) or {}
+        if "legacy_attachment_path" not in fields:
+            return None
+        path = str(getattr(record, "legacy_attachment_path", "") or "").strip()
+        if not path:
+            return None
+        name = ""
+        if "legacy_attachment_name" in fields:
+            name = str(getattr(record, "legacy_attachment_name", "") or "").strip()
+        url = LEGACY_FILE_URL_PREFIX + path.lstrip("/")
+        attachment = self.env["ir.attachment"].sudo().search(
+            [
+                ("res_model", "=", model),
+                ("res_id", "=", res_id),
+                ("type", "=", "url"),
+                ("url", "=", url),
+            ],
+            order="id desc",
+            limit=1,
+        )
+        if attachment:
+            return attachment
+        return self.env["ir.attachment"].sudo().create(
+            {
+                "name": name or Path(path).name or "历史附件",
+                "res_model": model,
+                "res_id": res_id,
+                "type": "url",
+                "url": url,
+                "mimetype": mimetypes.guess_type(name or path)[0] or "application/octet-stream",
             }
         )
 
@@ -425,6 +471,7 @@ class FileDownloadHandler(BaseIntentHandler):
             "attachment_ref",
             "attachment_links",
             "legacy_attachment_ref",
+            "legacy_line_attachment_ref",
             "line_attachment_ref",
         ):
             if field not in fields:
@@ -601,30 +648,67 @@ def _read_online_legacy_file_url(url: str, fallback_name: str = "", fallback_mim
     }
 
 
-def _read_remote_legacy_file_path(relative_path: str, fallback_name: str = "", fallback_mimetype: str = "") -> dict[str, Any]:
-    base_url = str(os.environ.get("SC_LEGACY_FILE_HTTP_BASE") or "").strip().rstrip("/")
-    if not base_url:
+def _read_remote_legacy_file_path(
+    relative_path: str,
+    fallback_name: str = "",
+    fallback_mimetype: str = "",
+    preferred_base_url: str = "",
+) -> dict[str, Any]:
+    base_urls = _legacy_file_http_base_urls(preferred_base_url)
+    if not base_urls:
         return {"error": True}
-    clean = str(relative_path or "").strip().lstrip("/")
+    clean = str(relative_path or "").strip().replace("\\", "/").lstrip("/")
+    path_candidates = [clean]
     if clean.startswith("UploadFile/"):
-        clean = clean[len("UploadFile/"):]
-    quoted = "/".join(quote(part) for part in clean.split("/") if part)
-    url = urljoin(base_url + "/", quoted)
-    try:
-        request = Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urlopen(request, timeout=30) as response:
-            raw = response.read()
-            content_type = response.headers.get_content_type() if response.headers else ""
-    except (OSError, URLError):
-        _logger.exception("remote legacy file read failed: url=%s", url)
-        return {"error": True, "code": 404, "message": "历史附件文件不存在"}
-    name = fallback_name or Path(clean).name or "历史附件"
-    mimetype = fallback_mimetype or content_type or mimetypes.guess_type(name)[0] or "application/octet-stream"
-    return {
-        "datas": base64.b64encode(raw).decode("ascii"),
-        "name": name,
-        "mimetype": mimetype,
-    }
+        path_candidates.append(clean[len("UploadFile/"):])
+    elif clean and not clean.startswith(("http://", "https://")):
+        path_candidates.append("UploadFile/" + clean)
+    if clean.startswith("~/"):
+        without_home = clean[2:]
+        path_candidates.append(without_home)
+        if without_home.startswith("File_New/"):
+            path_candidates.append("OldSystem/" + without_home)
+            path_candidates.append("UploadFile/OldSystem/" + without_home)
+    if clean.startswith("File_New/"):
+        path_candidates.append("OldSystem/" + clean)
+        path_candidates.append("UploadFile/OldSystem/" + clean)
+    path_candidates = [item for item in dict.fromkeys(path_candidates) if item]
+    last_url = ""
+    for base_url in base_urls:
+        for candidate in path_candidates:
+            quoted = "/".join(quote(part) for part in candidate.split("/") if part)
+            url = urljoin(base_url.rstrip("/") + "/", quoted)
+            last_url = url
+            try:
+                request = Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                with urlopen(request, timeout=30) as response:
+                    raw = response.read()
+                    content_type = response.headers.get_content_type() if response.headers else ""
+            except (OSError, URLError):
+                continue
+            name = fallback_name or Path(candidate).name or "历史附件"
+            mimetype = fallback_mimetype or content_type or mimetypes.guess_type(name)[0] or "application/octet-stream"
+            return {
+                "datas": base64.b64encode(raw).decode("ascii"),
+                "name": name,
+                "mimetype": mimetype,
+            }
+    _logger.warning("remote legacy file read failed: last_url=%s", last_url)
+    return {"error": True, "code": 404, "message": "历史附件文件不存在"}
+
+
+def _legacy_file_http_base_urls(preferred_base_url: str = "") -> list[str]:
+    raw = str(os.environ.get("SC_LEGACY_FILE_HTTP_BASE") or "").strip()
+    values: list[str] = []
+    for item in raw.replace("\n", ",").replace("\r", ",").split(","):
+        clean = item.strip().rstrip("/")
+        if clean:
+            values.append(clean)
+    preferred = str(preferred_base_url or "").strip().rstrip("/")
+    if preferred:
+        values.append(preferred)
+    values.extend(DEFAULT_LEGACY_FILE_HTTP_BASE_URLS)
+    return list(dict.fromkeys(values))
 
 
 def _legacy_file_roots():

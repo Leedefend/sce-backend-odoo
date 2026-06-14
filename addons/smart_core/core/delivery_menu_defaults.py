@@ -112,7 +112,7 @@ def build_delivery_menu_child(menu: Dict[str, Any]) -> Dict[str, Any] | None:
     source_authority = menu.get("source_authority")
     if isinstance(source_authority, dict) and source_authority:
         meta["source_authority"] = source_authority
-    return {
+    node = {
         "key": key,
         "label": label,
         "title": label,
@@ -120,6 +120,13 @@ def build_delivery_menu_child(menu: Dict[str, Any]) -> Dict[str, Any] | None:
         "children": [],
         "meta": meta,
     }
+    try:
+        sequence = int(menu.get("sequence") or 0)
+    except Exception:
+        sequence = 0
+    if sequence > 0:
+        node["sequence"] = sequence
+    return node
 
 
 def build_delivery_menu_group(group_key: str, group_label: str, children: list[dict]) -> Dict[str, Any]:

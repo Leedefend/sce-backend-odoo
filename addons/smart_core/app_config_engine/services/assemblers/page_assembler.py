@@ -318,6 +318,8 @@ class PageAssembler:
         self._inject_search_view_orchestration(data, env=env, model=model, view_context=view_context, versions=versions)
         self._apply_action_search_defaults(data, effective_context)
         self._inject_view_orchestration_summary(data)
+        data["context"] = effective_context
+        data["context_raw"] = action_context_raw
 
         # 4.x) 关系字段维护入口（many2one/many2many/one2many）
         # 由后端契约提供 relation_entry，前端禁止自行猜测 action/menu。
@@ -455,6 +457,12 @@ class PageAssembler:
             model_name=model,
             render_profile=requested_render_profile,
         )
+        self._normalize_model_specific_form_contract(data, model_name=model)
+        self._apply_render_profile_action_visibility(
+            data,
+            render_profile=requested_render_profile,
+            record_id=requested_record_id,
+        )
 
         # 8.x) 访问策略（后端唯一决策点）：allow/degrade/block
         self._apply_access_policy(data, model_name=model)
@@ -472,6 +480,162 @@ class PageAssembler:
             data["warnings"] = warnings
         data["source_authority"] = self.source_authority_contract()
         return data, versions
+
+    def _native_action_needs_existing_record(self, action: dict) -> bool:
+        if not isinstance(action, dict):
+            return False
+        payload = action.get("payload") if isinstance(action.get("payload"), dict) else {}
+        kind = str(action.get("kind") or "").strip().lower()
+        level = str(action.get("level") or "").strip().lower()
+        intent = str(action.get("intent") or "").strip().lower()
+        button_type = str(action.get("buttonType") or action.get("button_type") or payload.get("type") or "").strip().lower()
+        method = str(action.get("method") or action.get("name") or payload.get("method") or "").strip()
+        has_open_target = bool(
+            action.get("action_id")
+            or action.get("actionId")
+            or payload.get("action_id")
+            or payload.get("ref")
+            or payload.get("url")
+            or action.get("url")
+        )
+        if kind in {"open", "url", "client"} or button_type in {"action", "url"} or intent in {"open", "url"}:
+            return False
+        if intent.startswith("ui."):
+            return False
+        if has_open_target and kind not in {"object", "server", "mutation"} and button_type not in {"object"}:
+            return False
+        if kind in {"object", "server", "mutation"} or button_type == "object":
+            return True
+        if level in {"row", "smart"}:
+            return True
+        if method:
+            return True
+        return not kind and not button_type
+
+    def _filter_render_profile_actions(self, rows, *, profile: str, record_id=None):
+        if not isinstance(rows, list):
+            return []
+        if profile != "create" or record_id:
+            return rows
+        out = []
+        for row in rows:
+            if isinstance(row, dict) and self._native_action_needs_existing_record(row):
+                continue
+            out.append(row)
+        return out
+
+    def _filter_render_profile_layout_nodes(self, nodes, *, profile: str, record_id=None):
+        if not isinstance(nodes, list):
+            return []
+        if profile != "create" or record_id:
+            return nodes
+        child_keys = ("children", "pages", "tabs", "nodes", "items")
+        out = []
+        for node in nodes:
+            if not isinstance(node, dict):
+                out.append(node)
+                continue
+            node_type = str(node.get("type") or node.get("containerType") or "").strip().lower()
+            action = node.get("action") if isinstance(node.get("action"), dict) else {}
+            button_payload = dict(action)
+            if node.get("buttonType"):
+                button_payload["buttonType"] = node.get("buttonType")
+            if node.get("name") and "name" not in button_payload:
+                button_payload["name"] = node.get("name")
+            if node_type == "button" and self._native_action_needs_existing_record(button_payload):
+                continue
+            copied = dict(node)
+            for key in child_keys:
+                children = copied.get(key)
+                if isinstance(children, list):
+                    copied[key] = self._filter_render_profile_layout_nodes(
+                        children,
+                        profile=profile,
+                        record_id=record_id,
+                    )
+            out.append(copied)
+        return out
+
+    def _apply_render_profile_action_visibility(self, data: dict, *, render_profile: str = "", record_id=None) -> None:
+        if not isinstance(data, dict):
+            return
+        profile = str(render_profile or data.get("render_profile") or "").strip().lower()
+        if profile in {"read", "view"}:
+            profile = "readonly"
+        if profile != "create" or record_id:
+            return
+        data["buttons"] = self._filter_render_profile_actions(data.get("buttons"), profile=profile, record_id=record_id)
+        toolbar = data.get("toolbar") if isinstance(data.get("toolbar"), dict) else {}
+        for key in ("header", "sidebar", "footer"):
+            toolbar[key] = self._filter_render_profile_actions(toolbar.get(key), profile=profile, record_id=record_id)
+        data["toolbar"] = toolbar if isinstance(toolbar, dict) else {"header": [], "sidebar": [], "footer": []}
+        views = data.get("views") if isinstance(data.get("views"), dict) else {}
+        form = views.get("form") if isinstance(views.get("form"), dict) else {}
+        for key in ("header_buttons", "button_box", "stat_buttons", "business_actions"):
+            form[key] = self._filter_render_profile_actions(form.get(key), profile=profile, record_id=record_id)
+        form["layout"] = self._filter_render_profile_layout_nodes(form.get("layout"), profile=profile, record_id=record_id)
+        views["form"] = form
+        data["views"] = views
+
+    def _remove_layout_field(self, raw, field_name: str):
+        if isinstance(raw, list):
+            return [
+                item
+                for item in (self._remove_layout_field(item, field_name) for item in raw)
+                if item is not None
+            ]
+        if not isinstance(raw, dict):
+            return raw
+        node_name = str(raw.get("name") or "").strip()
+        node_type = str(raw.get("type") or raw.get("kind") or "").strip().lower()
+        if node_name == field_name and (node_type == "field" or raw.get("fieldInfo") or raw.get("field_info")):
+            return None
+        copied = dict(raw)
+        for key in ("children", "pages", "tabs", "nodes", "items", "layout"):
+            if key in copied:
+                copied[key] = self._remove_layout_field(copied.get(key), field_name)
+        return copied
+
+    def _remove_field_from_groups(self, rows, field_name: str):
+        if not isinstance(rows, list):
+            return rows
+        out = []
+        for row in rows:
+            if not isinstance(row, dict):
+                out.append(row)
+                continue
+            copied = dict(row)
+            fields = copied.get("fields")
+            if isinstance(fields, list):
+                copied["fields"] = [item for item in fields if str(item or "").strip() != field_name]
+            out.append(copied)
+        return out
+
+    def _normalize_model_specific_form_contract(self, data: dict, *, model_name: str = "") -> None:
+        if not isinstance(data, dict):
+            return
+        if str(model_name or "").strip() != "sc.general.contract":
+            return
+        fields_map = data.get("fields") if isinstance(data.get("fields"), dict) else {}
+        if "tax_id" not in fields_map or "tax_rate" not in fields_map:
+            return
+        views = data.get("views") if isinstance(data.get("views"), dict) else {}
+        form = views.get("form") if isinstance(views.get("form"), dict) else {}
+        form["layout"] = self._remove_layout_field(form.get("layout"), "tax_rate")
+        views["form"] = form
+        data["views"] = views
+        data["field_groups"] = self._remove_field_from_groups(data.get("field_groups"), "tax_rate")
+        policy = data.get("business_form_policy") if isinstance(data.get("business_form_policy"), dict) else {}
+        if policy:
+            policy["layout_fields"] = [
+                item for item in (policy.get("layout_fields") or []) if str(item or "").strip() != "tax_rate"
+            ]
+            policy["fields"] = [
+                item
+                for item in (policy.get("fields") or [])
+                if not isinstance(item, dict) or str(item.get("name") or item.get("field") or "").strip() != "tax_rate"
+            ]
+            data["business_form_policy"] = policy
 
     def _json_value(self, raw, default):
         if isinstance(raw, type(default)):
@@ -504,14 +668,103 @@ class PageAssembler:
             _logger.exception("business category form policy lookup failed model=%s code=%s", model_name, code)
             return None
 
-    def _make_form_policy_field_node(self, name: str, fields_map: dict) -> dict:
+    def _form_policy_field_policies(self, form_policy: dict, fields_map: dict) -> dict:
+        policies = {}
+        for row in form_policy.get("fields") if isinstance(form_policy.get("fields"), list) else []:
+            if not isinstance(row, dict):
+                continue
+            name = str(row.get("name") or row.get("field") or row.get("field_name") or "").strip()
+            if not name or name not in fields_map:
+                continue
+            policies[name] = row
+        return policies
+
+    def _form_policy_field_labels(self, form_policy: dict, fields_map: dict) -> dict:
+        labels = {}
+        for name, row in self._form_policy_field_policies(form_policy, fields_map).items():
+            label = str(row.get("label") or row.get("string") or "").strip()
+            if label:
+                labels[name] = label
+        return labels
+
+    def _form_policy_one2many_subview(self, name: str, descriptor: dict, field_policy: dict | None = None) -> dict:
+        field_policy = field_policy if isinstance(field_policy, dict) else {}
+        columns_raw = (
+            field_policy.get("one2many_columns")
+            or field_policy.get("columns")
+            or field_policy.get("subview_columns")
+            or []
+        )
+        columns = [
+            str(column or "").strip()
+            for column in columns_raw
+            if str(column or "").strip()
+        ] if isinstance(columns_raw, list) else []
+        if not columns:
+            return {}
+        relation = str((descriptor or {}).get("relation") or "").strip()
+        if not relation or relation not in self.env:
+            return {}
+        try:
+            relation_fields = self.env[relation].sudo().fields_get(columns)
+        except Exception:
+            _logger.debug("business category one2many subview metadata skipped field=%s relation=%s", name, relation, exc_info=True)
+            relation_fields = {}
+        column_nodes = []
+        for column in columns:
+            meta = relation_fields.get(column) if isinstance(relation_fields.get(column), dict) else {}
+            if not meta:
+                continue
+            column_nodes.append({
+                "name": column,
+                "label": str(meta.get("string") or column).strip() or column,
+                "string": str(meta.get("string") or column).strip() or column,
+                "ttype": str(meta.get("type") or "char").strip() or "char",
+                "required": bool(meta.get("required")),
+                "readonly": bool(meta.get("readonly")),
+                **({"selection": meta.get("selection")} if isinstance(meta.get("selection"), list) else {}),
+            })
+        if not column_nodes:
+            return {}
+        return {
+            "tree": {
+                "columns": column_nodes,
+            },
+            "policies": {
+                "can_create": True,
+                "can_write": True,
+                "can_delete": True,
+                "ui_labels": {
+                    "add_row": "添加行",
+                },
+            },
+        }
+
+    def _make_form_policy_field_node(
+        self,
+        name: str,
+        fields_map: dict,
+        field_labels: dict | None = None,
+        field_policies: dict | None = None,
+    ) -> dict:
         descriptor = fields_map.get(name) if isinstance(fields_map.get(name), dict) else {}
-        label = str((descriptor or {}).get("string") or (descriptor or {}).get("label") or name).strip()
+        labels = field_labels if isinstance(field_labels, dict) else {}
+        label = str(labels.get(name) or (descriptor or {}).get("string") or (descriptor or {}).get("label") or name).strip()
         node = {"type": "field", "name": name}
+        field_info = {"name": name}
         if label:
             node["string"] = label
             node["label"] = label
-            node["fieldInfo"] = {"name": name, "label": label}
+            field_info["label"] = label
+        for key in ("type", "relation", "relation_field", "selection", "required", "readonly"):
+            if key in descriptor:
+                field_info[key] = descriptor[key]
+        field_policy = (field_policies or {}).get(name) if isinstance((field_policies or {}).get(name), dict) else {}
+        subview = self._form_policy_one2many_subview(name, descriptor, field_policy)
+        if subview:
+            field_info["subview"] = subview
+        if len(field_info) > 1 or subview:
+            node["fieldInfo"] = field_info
         return node
 
     def _inject_business_category_form_policy(self, data: dict, *, model_name: str, render_profile: str = "") -> None:
@@ -524,7 +777,7 @@ class PageAssembler:
         required_fields = self._json_value(getattr(category, "required_fields_json", "[]") or "[]", [])
         if not form_policy and not required_fields:
             return
-        fields_map = data.get("fields") if isinstance(data.get("fields"), dict) else {}
+        fields_map = dict(data.get("fields") if isinstance(data.get("fields"), dict) else {})
         if not fields_map:
             return
         normalized_required = [
@@ -545,6 +798,9 @@ class PageAssembler:
         layout_children = []
         field_groups = []
         seen_fields = set()
+        one2many_subviews = {}
+        policy_field_policies = self._form_policy_field_policies(form_policy, fields_map)
+        policy_field_labels = self._form_policy_field_labels(form_policy, fields_map)
         profile = str(render_profile or "").strip().lower()
         if profile in {"read", "view"}:
             profile = "readonly"
@@ -566,11 +822,33 @@ class PageAssembler:
                 continue
             seen_fields.update(names)
             group_name = str(section.get("name") or f"business_category_section_{index + 1}").strip()
+            field_nodes = [
+                self._make_form_policy_field_node(name, fields_map, policy_field_labels, policy_field_policies)
+                for name in names
+            ]
+            for field_node in field_nodes:
+                field_name = str(field_node.get("name") or "").strip()
+                field_info = field_node.get("fieldInfo") if isinstance(field_node.get("fieldInfo"), dict) else {}
+                if not field_name or not field_info:
+                    continue
+                descriptor = dict(fields_map.get(field_name) if isinstance(fields_map.get(field_name), dict) else {})
+                for key in ("type", "relation", "relation_field", "selection", "required", "readonly"):
+                    if key in field_info:
+                        descriptor[key] = field_info[key]
+                        if key == "type":
+                            descriptor.setdefault("ttype", field_info[key])
+                if field_info.get("label"):
+                    descriptor.setdefault("string", field_info["label"])
+                    descriptor.setdefault("label", field_info["label"])
+                if field_info.get("subview"):
+                    one2many_subviews[field_name] = field_info["subview"]
+                if descriptor:
+                    fields_map[field_name] = descriptor
             layout_children.append({
                 "type": "group",
                 "name": group_name,
                 "string": title or group_name,
-                "children": [self._make_form_policy_field_node(name, fields_map) for name in names],
+                "children": field_nodes,
             })
             field_groups.append({
                 "name": group_name,
@@ -590,8 +868,12 @@ class PageAssembler:
                 "name": "business_category_form_sheet",
                 "children": layout_children,
             }]
+            if one2many_subviews:
+                subviews = form.get("subviews") if isinstance(form.get("subviews"), dict) else {}
+                form["subviews"] = {**subviews, **one2many_subviews}
             views["form"] = form
             data["views"] = views
+            data["fields"] = fields_map
         if field_groups:
             data["field_groups"] = field_groups
         policy_fields = form_policy.get("fields") if isinstance(form_policy.get("fields"), list) else []
@@ -604,6 +886,7 @@ class PageAssembler:
             "render_profile": str(render_profile or "").strip(),
             "required_fields": normalized_required,
             "fields": policy_fields,
+            "field_labels": policy_field_labels,
             "layout_fields": list(seen_fields),
         }
 
@@ -1525,6 +1808,10 @@ class PageAssembler:
         if not isinstance(fields, dict) or not fields:
             return
         model_name = str(model_name or "").strip()
+        contract_context = data.get("context") if isinstance(data.get("context"), dict) else {}
+        record_defaults = data.get("record") if isinstance(data.get("record"), dict) else {}
+        if record_defaults:
+            contract_context = {**record_defaults, **contract_context}
         relation_models = set()
         for desc in fields.values():
             if not isinstance(desc, dict):
@@ -1546,6 +1833,7 @@ class PageAssembler:
                     desc,
                     relation_entry_map[relation],
                     model_name=model_name,
+                    contract_context=contract_context,
                 )
 
     def _extract_dictionary_type_from_domain(self, domain_raw):
@@ -1589,7 +1877,41 @@ class PageAssembler:
             return domain
         return None
 
-    def _build_relation_entry_for_field(self, field_name, descriptor, base_entry, model_name=""):
+    def _relation_create_disabled_by_options(self, descriptor):
+        if not isinstance(descriptor, dict):
+            return False
+        options = descriptor.get("widget_options")
+        if not isinstance(options, dict):
+            options = descriptor.get("options")
+        if not isinstance(options, dict):
+            return False
+        return any(
+            options.get(key) is True
+            for key in ("no_create", "no_create_edit", "no_quick_create")
+        )
+
+    def _relation_entry_override_from_options(self, descriptor):
+        if not isinstance(descriptor, dict):
+            return {}
+        options = descriptor.get("widget_options")
+        if not isinstance(options, dict):
+            options = descriptor.get("options")
+        if not isinstance(options, dict):
+            return {}
+        override = options.get("relation_entry")
+        return dict(override) if isinstance(override, dict) else {}
+
+    def _resolve_relation_entry_ref_id(self, xmlid):
+        xmlid = str(xmlid or "").strip()
+        if not xmlid:
+            return None
+        try:
+            record = self.env.ref(xmlid, raise_if_not_found=False)
+            return int(record.id) if record else None
+        except Exception:
+            return None
+
+    def _build_relation_entry_for_field(self, field_name, descriptor, base_entry, model_name="", contract_context=None):
         entry = dict(base_entry or {})
         relation = str(descriptor.get("relation") or "").strip()
         can_read = bool(entry.get("can_read", True))
@@ -1606,6 +1928,159 @@ class PageAssembler:
                 dict_type = self._extract_dictionary_type_from_domain(domain_hint)
             if dict_type:
                 default_vals = {"type": dict_type}
+        relation_domain = []
+        display_field = ""
+        relation_order = ""
+        can_open = True
+        switch_context = {}
+        ui_labels_extra = {}
+        is_contract_tax_field = False
+        create_disabled_by_options = self._relation_create_disabled_by_options(descriptor)
+        if create_disabled_by_options:
+            can_create = False
+            has_page = False
+        options_override = self._relation_entry_override_from_options(descriptor)
+        if relation == "sc.business.category" and str(field_name or "").strip() == "business_category_id":
+            display_field = "name"
+            relation_order = "sequence asc, id asc"
+            can_create = False
+            has_page = False
+            can_open = False
+            switch_context = {
+                "enabled": True,
+                "code_field": "code",
+                "label_field": "name",
+                "default_values_field": "default_values_json",
+            }
+            context = contract_context if isinstance(contract_context, dict) else {}
+            raw_codes = context.get("allowed_business_category_codes")
+            if not isinstance(raw_codes, list) or not raw_codes:
+                raw_codes = [
+                    context.get("default_business_category_code")
+                    or context.get("current_business_category_code")
+                ]
+            codes = [
+                str(code or "").strip()
+                for code in raw_codes
+                if str(code or "").strip()
+            ]
+            default_clear_fields = set()
+            if codes and "sc.business.category" in self.env:
+                try:
+                    rows = self.env["sc.business.category"].sudo().search([("code", "in", codes)])
+                    for row in rows:
+                        defaults = self._json_value(getattr(row, "default_values_json", "{}") or "{}", {})
+                        if isinstance(defaults, dict):
+                            default_clear_fields.update(str(key or "").strip() for key in defaults.keys() if str(key or "").strip())
+                except Exception:
+                    default_clear_fields = set()
+            if codes:
+                relation_domain.append(["code", "in", codes])
+            if model_name:
+                relation_domain.append(["target_model", "=", model_name])
+            switch_context["default_clear_fields"] = sorted(default_clear_fields)
+        if (
+            relation == "account.tax"
+            and str(field_name or "").strip() == "tax_id"
+            and str(model_name or "").strip() in {"construction.contract", "sc.general.contract"}
+        ):
+            is_contract_tax_field = True
+            display_field = "name"
+            relation_order = "amount asc, id asc"
+            has_page = False
+            can_open = False
+            can_create = True
+            try:
+                company = self.env.company
+                helper = self.env["construction.contract"].sudo().with_company(company)
+                group = helper._sc_contract_tax_group(company)
+                country = company.account_fiscal_country_id or company.partner_id.country_id or self.env.ref(
+                    "base.cn",
+                    raise_if_not_found=False,
+                )
+                default_vals = {
+                    "type_tax_use": "none",
+                    "amount_type": "percent",
+                    "price_include": False,
+                    "company_id": company.id,
+                    "tax_group_id": group.id,
+                }
+                if country:
+                    default_vals["country_id"] = country.id
+            except Exception:
+                default_vals = {
+                    "type_tax_use": "none",
+                    "amount_type": "percent",
+                    "price_include": False,
+                }
+            ui_labels_extra = {
+                "quick_create": _("新增税率..."),
+                "create_and_edit": _("新增税率..."),
+                "missing_name": _("请输入税率百分比，例如：3%、9%、13%"),
+                "quick_create_prompt": _("请输入税率百分比，例如：3%、9%、13%"),
+                "quick_create_failed": _("新增税率失败，请输入 0 到 100 之间的百分比"),
+                "inline_create": _("新增税率“%s”"),
+                "inline_create_failed": _("创建税率失败，请检查百分比格式"),
+            }
+            relation_domain.extend(
+                [
+                    ["type_tax_use", "=", "none"],
+                    ["amount_type", "=", "percent"],
+                    ["price_include", "=", False],
+                ]
+            )
+        if (
+            relation == "construction.contract"
+            and str(model_name or "").strip() == "construction.contract"
+            and str(field_name or "").strip() == "original_contract_id"
+        ):
+            has_page = False
+            can_open = False
+            can_create = False
+            display_field = "display_name"
+            relation_order = "id desc"
+            context = contract_context if isinstance(contract_context, dict) else {}
+            category_code = str(
+                context.get("current_business_category_code")
+                or context.get("default_business_category_code")
+                or ""
+            ).strip()
+            contract_type = str(context.get("default_type") or context.get("type") or "").strip()
+            if category_code == "contract.income.supplement":
+                relation_domain.append(["type", "=", "out"])
+            elif category_code == "contract.expense.supplement":
+                relation_domain.append(["type", "=", "in"])
+            elif contract_type in {"out", "in"}:
+                relation_domain.append(["type", "=", contract_type])
+            ui_labels_extra = {
+                "search_more": _("搜索原合同..."),
+                "dialog_title": _("原合同：搜索更多"),
+                "search_placeholder": _("输入原合同名称、编号、项目或往来单位搜索"),
+                "create_and_edit": _(""),
+                "quick_create": _(""),
+            }
+        if options_override:
+            action_id = options_override.get("action_id") or self._resolve_relation_entry_ref_id(options_override.get("action_xmlid"))
+            menu_id = options_override.get("menu_id") or self._resolve_relation_entry_ref_id(options_override.get("menu_xmlid"))
+            if action_id:
+                entry["action_id"] = int(action_id)
+                has_page = True
+            if menu_id:
+                entry["menu_id"] = int(menu_id)
+            if "can_create" in options_override:
+                can_create = bool(options_override.get("can_create"))
+            if isinstance(options_override.get("default_vals"), dict):
+                default_vals.update(options_override.get("default_vals") or {})
+            if isinstance(options_override.get("default_from_fields"), dict):
+                entry["default_from_fields"] = dict(options_override.get("default_from_fields") or {})
+            if isinstance(options_override.get("domain"), list):
+                relation_domain.extend(options_override.get("domain") or [])
+            if str(options_override.get("display_field") or "").strip():
+                display_field = str(options_override.get("display_field") or "").strip()
+            if str(options_override.get("order") or "").strip():
+                relation_order = str(options_override.get("order") or "").strip()
+            if isinstance(options_override.get("ui_labels"), dict):
+                ui_labels_extra.update(options_override.get("ui_labels") or {})
         inline_create = self._build_relation_inline_create_contract(
             relation,
             can_read=can_read,
@@ -1622,12 +2097,14 @@ class PageAssembler:
                 reason_code = reason_code or "PAGE_ENTRY_READY"
             else:
                 reason_code = reason_code or "PAGE_ENTRY_READONLY"
-        elif can_create and relation == "sc.dictionary":
-            if dict_type:
+        elif can_create and (relation == "sc.dictionary" or is_contract_tax_field):
+            if dict_type or is_contract_tax_field:
                 create_mode = "quick"
                 reason_code = "QUICK_CREATE_READY"
             else:
                 reason_code = reason_code or "DICT_TYPE_UNRESOLVED"
+        elif create_disabled_by_options:
+            reason_code = reason_code or "FIELD_CREATE_DISABLED"
         else:
             reason_code = reason_code or "NO_CREATE_ENTRY"
 
@@ -1636,7 +2113,14 @@ class PageAssembler:
                 "field": str(field_name or "").strip(),
                 "create_mode": create_mode,
                 "default_vals": default_vals,
+                "default_from_fields": entry.get("default_from_fields") if isinstance(entry.get("default_from_fields"), dict) else {},
+                "domain": relation_domain,
+                "display_field": display_field,
+                "order": relation_order,
+                "can_open": can_open,
+                "switch_context": switch_context,
                 "can_read": can_read,
+                "can_create": can_create,
                 "reason_code": reason_code,
                 "inline_create": inline_create,
                 "search_dialog": self._build_relation_search_dialog_contract(relation),
@@ -1664,6 +2148,7 @@ class PageAssembler:
                     "inline_searching": _("正在搜索..."),
                     "inline_create": _("保存时创建“%s”"),
                     "inline_create_failed": _("保存时创建失败"),
+                    **ui_labels_extra,
                 },
             }
         )

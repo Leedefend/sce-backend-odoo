@@ -1169,6 +1169,20 @@ class ApiDataHandler(BaseIntentHandler):
         error.setdefault("error", {})["policy_source"] = str(policy.get("source") or "").strip()
         return error
 
+    def _create_execution_policy(self, model: str, vals: Dict[str, Any], ctx: Dict[str, Any], params: Dict[str, Any]) -> Dict[str, Any]:
+        payload = call_extension_hook_first(
+            self.env,
+            "smart_core_api_data_create_execution_policy",
+            self.env,
+            model,
+            vals,
+            ctx,
+            params,
+        )
+        if isinstance(payload, dict):
+            return payload
+        return {"sudo": False, "source": "smart_core_default"}
+
     def _fill_not_null_column_fallback(self, env_model, safe_vals: Dict[str, Any], column: str) -> bool:
         if not column or column not in env_model._fields:
             return False
@@ -1667,6 +1681,16 @@ class ApiDataHandler(BaseIntentHandler):
         if denied:
             return denied
 
+        create_policy = self._create_execution_policy(model, vals, ctx, p)
+        if create_policy.get("allowed") is False:
+            return self._err(
+                int(create_policy.get("code") or 403),
+                str(create_policy.get("message") or "当前数据不允许创建。"),
+                reason_code=str(create_policy.get("reason_code") or "CREATE_POLICY_DENIED"),
+            )
+        if create_policy.get("sudo") and not sudo:
+            sudo = True
+
         env_model = self.env[model].with_context(ctx)
         if sudo:
             env_model = env_model.sudo()
@@ -1675,6 +1699,18 @@ class ApiDataHandler(BaseIntentHandler):
         safe_vals = self._prepare_create_vals(env_model, vals)
         if not safe_vals:
             return self._err(400, "vals 中无可写字段")
+        create_policy = self._create_execution_policy(model, safe_vals, ctx, p)
+        if create_policy.get("allowed") is False:
+            return self._err(
+                int(create_policy.get("code") or 403),
+                str(create_policy.get("message") or "当前数据不允许创建。"),
+                reason_code=str(create_policy.get("reason_code") or "CREATE_POLICY_DENIED"),
+            )
+        if create_policy.get("sudo") and not sudo:
+            env_model = env_model.sudo()
+            safe_vals = self._prepare_create_vals(env_model, vals)
+            if not safe_vals:
+                return self._err(400, "vals 中无可写字段")
         project_id = self._current_project_id(p, ctx)
         _, project_scope_meta = self._apply_project_scope(env_model, [], p, ctx)
         if project_scope_meta.get("project_operation_strategy_mismatch"):
